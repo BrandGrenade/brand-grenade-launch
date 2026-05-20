@@ -149,6 +149,8 @@ interface SessionData {
   stage_1_error: string | null;
   stage_2_output: string | null;
   stage_2_error: string | null;
+  stage_3_output: string | null;
+  stage_3_error: string | null;
 }
 
 function PipelineView() {
@@ -157,6 +159,7 @@ function PipelineView() {
   const runStage1bFn = useServerFn(runStage1b);
   const resubmitBriefFn = useServerFn(resubmitBrief);
   const runStage2Fn = useServerFn(runStage2);
+  const runStage3Fn = useServerFn(runStage3);
 
   const [session, setSession] = useState<SessionData | null>(null);
   const [stage1Output, setStage1Output] = useState<string | null>(null);
@@ -164,9 +167,12 @@ function PipelineView() {
   const [stage1Error, setStage1Error] = useState<string | null>(null);
   const [stage2Output, setStage2Output] = useState<string | null>(null);
   const [stage2Error, setStage2Error] = useState<string | null>(null);
+  const [stage3Output, setStage3Output] = useState<string | null>(null);
+  const [stage3Error, setStage3Error] = useState<string | null>(null);
   const [stage1Loading, setStage1Loading] = useState(false);
   const [stage1bLoading, setStage1bLoading] = useState(false);
   const [stage2Loading, setStage2Loading] = useState(false);
+  const [stage3Loading, setStage3Loading] = useState(false);
   const [resubmitting, setResubmitting] = useState(false);
   const [retryNonce, setRetryNonce] = useState(0);
 
