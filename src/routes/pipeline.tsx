@@ -506,12 +506,16 @@ function RightPanel({
   stage,
   status,
   showRationale,
+  showBrandIntel,
+  onSubmitBrandIntel,
   onNext,
   onConfirmCheckpoint,
 }: {
   stage: Stage;
   status: StageStatus;
   showRationale: boolean;
+  showBrandIntel: boolean;
+  onSubmitBrandIntel: () => void;
   onNext: () => void;
   onConfirmCheckpoint: (stageId: string) => void;
 }) {
@@ -529,6 +533,10 @@ function RightPanel({
             <SelectionRationale
               onConfirm={() => onConfirmCheckpoint(stage.id)}
             />
+          </div>
+        ) : showBrandIntel ? (
+          <div style={{ paddingBottom: 80 }}>
+            <BrandIntelligence onSubmit={onSubmitBrandIntel} />
           </div>
         ) : isCheckpoint && letter ? (
           <div style={{ paddingBottom: 80 }}>
