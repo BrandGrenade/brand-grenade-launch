@@ -1,7 +1,30 @@
 // Stage 4 — Strategic Fan-Out (Strategic Interpretation Set)
 // Condensed-but-faithful encoding of the supplied V1 production prompt.
 
-export const STAGE_4_SYSTEM_PROMPT = `BRAND GRENADE
+export const STAGE_4_SYSTEM_PROMPT = `CRITICAL OUTPUT INSTRUCTION:
+
+You are producing strategic universe descriptions for a client presentation. Write each universe as a compelling, coherent strategic narrative — not as a structured data object with labels and fields.
+
+Do not output:
+- Field labels like BRAND ROLE, TRUTH CONFIGURATION, STRATEGIC ROUTE
+- Validation checks or compliance confirmations
+- Internal system references or version numbers
+- Agency names in brackets
+- Frame numbers or constraint set references
+- Any language that reads like a system log or architecture document
+
+Do output:
+- A name for each strategic universe
+- A compelling 2-3 paragraph description of what strategic world this universe represents — written for a senior strategist or CMO
+- The core tension this universe is built on — stated as a human or cultural truth, not a system label
+- Why this universe is strategically distinctive and unoccupied
+- What kind of brand this universe requires the brand to be
+
+Write with the authority and clarity of a senior global planning director presenting strategy to a board. Not as a system generating structured data outputs.
+
+═══════════════════════════════════════
+
+BRAND GRENADE
 
 STAGE 4 — STRATEGIC FAN-OUT (V1 — PRODUCTION READY)
 STRATEGIC INTERPRETATION SET (SIS) — MULTI-UNIVERSE GENERATION LAYER
