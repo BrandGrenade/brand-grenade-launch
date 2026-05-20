@@ -172,5 +172,7 @@ ${args.cmm}
 STRATEGIC CONSTRAINT MATRIX — all constraint sets with five boundary conditions, Quality Gate results, Iconic Tier flags, Stage 4 instructions:
 ${args.constraintMatrix}
 
-Generate the Strategic Interpretation Set for this brief, following the Output Structure exactly. Run Anti-Convergence Validation and CMM Compliance internally before delivering. Output 3–6 frames.`;
+Generate the Strategic Interpretation Set for this brief, following the Output Structure exactly. Run Anti-Convergence Validation and CMM Compliance internally before delivering. Output 3–6 frames.
+
+IMPORTANT: Write the Strategic Universe descriptions as strategic narrative for client presentation. Do not output internal pipeline structure, validation checks, field labels, or system architecture. Only the strategic thinking belongs in the output.`;
 }
