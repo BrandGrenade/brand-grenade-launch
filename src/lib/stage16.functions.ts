@@ -69,6 +69,8 @@ export const runStage16 = createServerFn({ method: "POST" })
             "STAGE 15 — CONSISTENCY AUDIT REPORT": session.stage_15_output ?? "",
           },
         }),
+        sessionId: data.sessionId,
+        stageLabel: "Stage 16",
       });
 
       // Mark pipeline complete when all three variants exist.

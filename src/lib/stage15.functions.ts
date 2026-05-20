@@ -51,6 +51,8 @@ export const runStage15 = createServerFn({ method: "POST" })
             "STAGE 14C — STRATEGIC UNIVERSE DEFINITION": session.stage_14c_output ?? "",
           },
         }),
+        sessionId: data.sessionId,
+        stageLabel: "Stage 15",
       });
       const { error: ue } = await supabaseAdmin
         .from("sessions")
