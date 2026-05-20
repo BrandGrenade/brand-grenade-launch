@@ -270,6 +270,10 @@ function PipelineView() {
           setStage6Output(data.stage_6_output);
           setStatuses((p) => ({ ...p, "06": "complete" }));
         }
+        if (data.stage_7_output) {
+          setStage7Output(data.stage_7_output);
+          setStatuses((p) => ({ ...p, "07": "complete" }));
+        }
       });
     return () => {
       cancelled = true;
