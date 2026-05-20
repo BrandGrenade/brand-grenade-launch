@@ -26,7 +26,7 @@ export const runStage15 = createServerFn({ method: "POST" })
     try {
       const output = await callClaude({
         systemPrompt: STAGE_15_SYSTEM_PROMPT,
-        maxTokens: 8192,
+        maxTokens: 1200,
         userMessage: buildStage15UserMessage({
           brandName: session.brand_name,
           selectedSMP: session.selected_smp ?? "",
