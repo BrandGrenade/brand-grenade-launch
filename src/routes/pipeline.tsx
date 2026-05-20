@@ -134,8 +134,6 @@ A proposition for Hypernova must:
 // Component
 // ────────────────────────────────────────────────────────────────────────────
 
-function PipelineView() {
-  // Demo state — Stage 01 is the first human checkpoint (A).
 interface SessionData {
   id: string;
   brand_name: string;
