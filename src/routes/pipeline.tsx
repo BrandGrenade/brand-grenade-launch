@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { TopNav } from "@/components/TopNav";
+import { Checkpoint } from "@/components/Checkpoint";
 
 export const Route = createFileRoute("/pipeline")({
   component: PipelineView,
@@ -31,27 +32,33 @@ interface Stage {
 }
 
 const STAGES: Stage[] = [
-  { id: "01", number: "01", name: "Brief Sanitisation" },
+  { id: "01", number: "01", name: "Brief Sanitisation", checkpoint: true },
   { id: "01B", number: "01B", name: "Brief Escalation", conditional: true },
   { id: "02", number: "02", name: "Category Intelligence" },
   { id: "03", number: "03", name: "Constraint Generator" },
-  { id: "04", number: "04", name: "Strategic Fan-Out", checkpoint: true },
+  { id: "04", number: "04", name: "Strategic Fan-Out" },
   { id: "05", number: "05", name: "Insight Generation" },
   { id: "06", number: "06", name: "Insight Filter" },
   { id: "07", number: "07", name: "Field Synthesis" },
-  { id: "08", number: "08", name: "SMP Generation" },
+  { id: "08", number: "08", name: "SMP Generation", checkpoint: true },
   { id: "09", number: "09", name: "Divergence Validation" },
   { id: "10", number: "10", name: "SMP Scoring" },
-  { id: "11", number: "11", name: "Pressure Test", checkpoint: true },
-  { id: "12", number: "12", name: "SMP Selection" },
+  { id: "11", number: "11", name: "Pressure Test" },
+  { id: "12", number: "12", name: "SMP Selection", checkpoint: true },
   { id: "13", number: "13", name: "Brand Fit Validation" },
   { id: "13B", number: "13B", name: "Territory Reference", conditional: true },
-  { id: "14", number: "14", name: "Territory Mapping", checkpoint: true },
+  { id: "14", number: "14", name: "Territory Mapping" },
   { id: "14B", number: "14B", name: "Expression Mapping", conditional: true },
   { id: "14C", number: "14C", name: "Universe Definition", conditional: true },
   { id: "15", number: "15", name: "Consistency Audit" },
   { id: "16", number: "16", name: "Output Packaging" },
 ];
+
+const CHECKPOINT_LETTERS: Record<string, "A" | "B" | "C"> = {
+  "01": "A",
+  "08": "B",
+  "12": "C",
+};
 
 // Sample brief for demo state — first two stages complete, third running.
 const SAMPLE_BRAND = "Hypernova";
@@ -118,20 +125,18 @@ A proposition for Hypernova must:
 // ────────────────────────────────────────────────────────────────────────────
 
 function PipelineView() {
-  // Demo state — first two stages done, stage 3 running.
+  // Demo state — Stage 01 is the first human checkpoint (A).
   const initialStatuses = useMemo<Record<string, StageStatus>>(() => {
     const map: Record<string, StageStatus> = {};
     STAGES.forEach((s) => {
       map[s.id] = "pending";
     });
-    map["01"] = "complete";
-    map["02"] = "complete";
-    map["03"] = "running";
+    map["01"] = "checkpoint";
     return map;
   }, []);
 
-  const [statuses] = useState(initialStatuses);
-  const [selectedId, setSelectedId] = useState("03");
+  const [statuses, setStatuses] = useState(initialStatuses);
+  const [selectedId, setSelectedId] = useState("01");
   const selected = STAGES.find((s) => s.id === selectedId)!;
   const selectedStatus = statuses[selectedId];
 
@@ -178,6 +183,19 @@ function PipelineView() {
                 break;
               }
             }
+          }}
+          onConfirmCheckpoint={(stageId) => {
+            setStatuses((prev) => {
+              const next = { ...prev, [stageId]: "complete" as StageStatus };
+              const idx = STAGES.findIndex((s) => s.id === stageId);
+              for (let i = idx + 1; i < STAGES.length; i++) {
+                if (!STAGES[i].conditional) {
+                  next[STAGES[i].id] = "running";
+                  break;
+                }
+              }
+              return next;
+            });
           }}
         />
       </div>
@@ -462,30 +480,49 @@ function RightPanel({
   stage,
   status,
   onNext,
+  onConfirmCheckpoint,
 }: {
   stage: Stage;
   status: StageStatus;
   onNext: () => void;
+  onConfirmCheckpoint: (stageId: string) => void;
 }) {
   const fullOutput = STAGE_OUTPUTS[stage.id] ?? "Output pending.";
   const isRunning = status === "running";
+  const isCheckpoint = status === "checkpoint";
   const text = useStreamingText(fullOutput, isRunning);
+  const letter = CHECKPOINT_LETTERS[stage.id];
 
   return (
     <section className="relative flex min-w-0 flex-1 flex-col bg-background">
       <div className="flex-1 overflow-y-auto px-6 py-10 sm:px-12 sm:py-10">
-        <header>
-          <span className="text-label text-primary">
-            Stage {stage.number} — {stage.name}
-          </span>
-          <h1 className="text-h2 mt-3 text-text-primary">{stage.name}</h1>
-          <StatusLine status={status} />
-          <hr className="my-6 h-px border-0 bg-border" />
-        </header>
+        {isCheckpoint && letter ? (
+          <div style={{ paddingBottom: 80 }}>
+            <Checkpoint
+              letter={letter}
+              showLowScoreAlert={letter === "A"}
+              onConfirm={() => onConfirmCheckpoint(stage.id)}
+              reviewContent={
+                <StreamedOutput text={fullOutput} streaming={false} />
+              }
+            />
+          </div>
+        ) : (
+          <>
+            <header>
+              <span className="text-label text-primary">
+                Stage {stage.number} — {stage.name}
+              </span>
+              <h1 className="text-h2 mt-3 text-text-primary">{stage.name}</h1>
+              <StatusLine status={status} />
+              <hr className="my-6 h-px border-0 bg-border" />
+            </header>
 
-        <article style={{ paddingBottom: 80 }}>
-          <StreamedOutput text={text} streaming={isRunning} />
-        </article>
+            <article style={{ paddingBottom: 80 }}>
+              <StreamedOutput text={text} streaming={isRunning} />
+            </article>
+          </>
+        )}
       </div>
 
       <BottomBar stage={stage} status={status} onNext={onNext} />
