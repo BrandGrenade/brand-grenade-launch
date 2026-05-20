@@ -164,12 +164,17 @@ function cleanForDisplay(text: string): string {
 
 export function SMPSelection({
   stage12Output,
+  stage8Output,
   onSelect,
 }: {
   stage12Output: string;
+  stage8Output?: string;
   onSelect: (card: SMPCard) => void;
 }) {
-  const cards = useMemo(() => parseSMPCards(stage12Output), [stage12Output]);
+  const cards = useMemo(
+    () => parseSMPCards(stage8Output ?? "", stage12Output),
+    [stage8Output, stage12Output],
+  );
   const [selected, setSelected] = useState<number | null>(null);
   const [showRaw, setShowRaw] = useState(false);
   const [manualLine, setManualLine] = useState("");
