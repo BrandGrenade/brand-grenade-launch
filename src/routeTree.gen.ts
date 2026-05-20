@@ -9,10 +9,16 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as PipelineRouteImport } from './routes/pipeline'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as BriefRouteImport } from './routes/brief'
 import { Route as IndexRouteImport } from './routes/index'
 
+const PipelineRoute = PipelineRouteImport.update({
+  id: '/pipeline',
+  path: '/pipeline',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -33,34 +39,45 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/brief': typeof BriefRoute
   '/dashboard': typeof DashboardRoute
+  '/pipeline': typeof PipelineRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/brief': typeof BriefRoute
   '/dashboard': typeof DashboardRoute
+  '/pipeline': typeof PipelineRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/brief': typeof BriefRoute
   '/dashboard': typeof DashboardRoute
+  '/pipeline': typeof PipelineRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/brief' | '/dashboard'
+  fullPaths: '/' | '/brief' | '/dashboard' | '/pipeline'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/brief' | '/dashboard'
-  id: '__root__' | '/' | '/brief' | '/dashboard'
+  to: '/' | '/brief' | '/dashboard' | '/pipeline'
+  id: '__root__' | '/' | '/brief' | '/dashboard' | '/pipeline'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   BriefRoute: typeof BriefRoute
   DashboardRoute: typeof DashboardRoute
+  PipelineRoute: typeof PipelineRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/pipeline': {
+      id: '/pipeline'
+      path: '/pipeline'
+      fullPath: '/pipeline'
+      preLoaderRoute: typeof PipelineRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/dashboard': {
       id: '/dashboard'
       path: '/dashboard'
@@ -89,6 +106,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BriefRoute: BriefRoute,
   DashboardRoute: DashboardRoute,
+  PipelineRoute: PipelineRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
