@@ -1,10 +1,17 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { z } from "zod";
 import { TopNav } from "@/components/TopNav";
+import { supabase } from "@/integrations/supabase/client";
 import { generateStrategicPlatformPdf } from "@/lib/pdf-generator";
 import { SAMPLE_STAGE_16 } from "@/lib/stage16-sample";
 
+const completeSearchSchema = z.object({
+  session: z.string().uuid().optional(),
+});
+
 export const Route = createFileRoute("/complete")({
+  validateSearch: completeSearchSchema,
   component: CompletePage,
   head: () => ({
     meta: [
@@ -17,6 +24,7 @@ export const Route = createFileRoute("/complete")({
     ],
   }),
 });
+
 
 const BRAND = "Hypernova";
 const SMP =
