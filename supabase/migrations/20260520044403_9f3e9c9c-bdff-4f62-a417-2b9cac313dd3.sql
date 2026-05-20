@@ -1,0 +1,16 @@
+ALTER TABLE public.sessions
+  ADD COLUMN IF NOT EXISTS stage_8_output text,
+  ADD COLUMN IF NOT EXISTS stage_8_error text,
+  ADD COLUMN IF NOT EXISTS stage_9_output text,
+  ADD COLUMN IF NOT EXISTS stage_9_error text,
+  ADD COLUMN IF NOT EXISTS stage_10_output text,
+  ADD COLUMN IF NOT EXISTS stage_10_error text,
+  ADD COLUMN IF NOT EXISTS stage_11_output text,
+  ADD COLUMN IF NOT EXISTS stage_11_error text,
+  ADD COLUMN IF NOT EXISTS stage_12_output text,
+  ADD COLUMN IF NOT EXISTS stage_12_error text,
+  ADD COLUMN IF NOT EXISTS selected_smp text,
+  ADD COLUMN IF NOT EXISTS selected_smp_field_name text,
+  ADD COLUMN IF NOT EXISTS selection_rationale jsonb,
+  ADD COLUMN IF NOT EXISTS checkpoint_b_confirmed boolean NOT NULL DEFAULT false,
+  ADD COLUMN IF NOT EXISTS checkpoint_c_confirmed boolean NOT NULL DEFAULT false;

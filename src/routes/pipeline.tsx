@@ -6,6 +6,7 @@ import { TopNav } from "@/components/TopNav";
 import { Checkpoint } from "@/components/Checkpoint";
 import { SelectionRationale } from "@/components/SelectionRationale";
 import { BrandIntelligence } from "@/components/BrandIntelligence";
+import { SMPSelection, type SMPCard } from "@/components/SMPSelection";
 import { supabase } from "@/integrations/supabase/client";
 import { runStage1 } from "@/lib/stage1.functions";
 import { runStage1b, resubmitBrief } from "@/lib/stage1b.functions";
@@ -15,6 +16,11 @@ import { runStage4 } from "@/lib/stage4.functions";
 import { runStage5 } from "@/lib/stage5.functions";
 import { runStage6 } from "@/lib/stage6.functions";
 import { runStage7 } from "@/lib/stage7.functions";
+import { runStage8, confirmCheckpointB } from "@/lib/stage8.functions";
+import { runStage9 } from "@/lib/stage9.functions";
+import { runStage10 } from "@/lib/stage10.functions";
+import { runStage11 } from "@/lib/stage11.functions";
+import { runStage12, saveSelectedSMP, saveSelectionRationale } from "@/lib/stage12.functions";
 
 const pipelineSearchSchema = z.object({
   session: z.string().uuid().optional(),
@@ -163,6 +169,20 @@ interface SessionData {
   stage_6_error: string | null;
   stage_7_output: string | null;
   stage_7_error: string | null;
+  stage_8_output: string | null;
+  stage_8_error: string | null;
+  stage_9_output: string | null;
+  stage_9_error: string | null;
+  stage_10_output: string | null;
+  stage_10_error: string | null;
+  stage_11_output: string | null;
+  stage_11_error: string | null;
+  stage_12_output: string | null;
+  stage_12_error: string | null;
+  selected_smp: string | null;
+  selected_smp_field_name: string | null;
+  checkpoint_b_confirmed: boolean;
+  checkpoint_c_confirmed: boolean;
 }
 
 function PipelineView() {
@@ -176,6 +196,14 @@ function PipelineView() {
   const runStage5Fn = useServerFn(runStage5);
   const runStage6Fn = useServerFn(runStage6);
   const runStage7Fn = useServerFn(runStage7);
+  const runStage8Fn = useServerFn(runStage8);
+  const confirmCheckpointBFn = useServerFn(confirmCheckpointB);
+  const runStage9Fn = useServerFn(runStage9);
+  const runStage10Fn = useServerFn(runStage10);
+  const runStage11Fn = useServerFn(runStage11);
+  const runStage12Fn = useServerFn(runStage12);
+  const saveSelectedSMPFn = useServerFn(saveSelectedSMP);
+  const saveSelectionRationaleFn = useServerFn(saveSelectionRationale);
 
   const [session, setSession] = useState<SessionData | null>(null);
   const [stage1Output, setStage1Output] = useState<string | null>(null);
@@ -193,6 +221,17 @@ function PipelineView() {
   const [stage6Error, setStage6Error] = useState<string | null>(null);
   const [stage7Output, setStage7Output] = useState<string | null>(null);
   const [stage7Error, setStage7Error] = useState<string | null>(null);
+  const [stage8Output, setStage8Output] = useState<string | null>(null);
+  const [stage8Error, setStage8Error] = useState<string | null>(null);
+  const [stage9Output, setStage9Output] = useState<string | null>(null);
+  const [stage9Error, setStage9Error] = useState<string | null>(null);
+  const [stage10Output, setStage10Output] = useState<string | null>(null);
+  const [stage10Error, setStage10Error] = useState<string | null>(null);
+  const [stage11Output, setStage11Output] = useState<string | null>(null);
+  const [stage11Error, setStage11Error] = useState<string | null>(null);
+  const [stage12Output, setStage12Output] = useState<string | null>(null);
+  const [stage12Error, setStage12Error] = useState<string | null>(null);
+  const [selectedSMP, setSelectedSMP] = useState<SMPCard | null>(null);
   const [stage1Loading, setStage1Loading] = useState(false);
   const [stage1bLoading, setStage1bLoading] = useState(false);
   const [stage2Loading, setStage2Loading] = useState(false);
@@ -201,6 +240,11 @@ function PipelineView() {
   const [stage5Loading, setStage5Loading] = useState(false);
   const [stage6Loading, setStage6Loading] = useState(false);
   const [stage7Loading, setStage7Loading] = useState(false);
+  const [stage8Loading, setStage8Loading] = useState(false);
+  const [stage9Loading, setStage9Loading] = useState(false);
+  const [stage10Loading, setStage10Loading] = useState(false);
+  const [stage11Loading, setStage11Loading] = useState(false);
+  const [stage12Loading, setStage12Loading] = useState(false);
   const [resubmitting, setResubmitting] = useState(false);
   const [retryNonce, setRetryNonce] = useState(0);
 
