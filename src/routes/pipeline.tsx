@@ -176,6 +176,7 @@ function PipelineView() {
         <RightPanel
           stage={selected}
           status={selectedStatus}
+          showRationale={rationaleForId === selectedId}
           onNext={() => {
             const idx = STAGES.findIndex((s) => s.id === selectedId);
             for (let i = idx + 1; i < STAGES.length; i++) {
@@ -187,6 +188,12 @@ function PipelineView() {
             }
           }}
           onConfirmCheckpoint={(stageId) => {
+            // Checkpoint C (Stage 12): show rationale capture before advancing.
+            if (stageId === "12" && rationaleForId !== "12") {
+              setRationaleForId("12");
+              return;
+            }
+            setRationaleForId(null);
             setStatuses((prev) => {
               const next = { ...prev, [stageId]: "complete" as StageStatus };
               const idx = STAGES.findIndex((s) => s.id === stageId);
