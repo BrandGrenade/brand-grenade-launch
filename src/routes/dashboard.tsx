@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { TopNav } from "@/components/TopNav";
 
 export const Route = createFileRoute("/dashboard")({
   component: Dashboard,
@@ -72,35 +73,7 @@ function Dashboard() {
   );
 }
 
-function TopNav() {
-  return (
-    <nav className="flex h-14 items-center justify-between border-b border-border bg-background px-5 sm:px-8">
-      <Link
-        to="/dashboard"
-        className="text-label text-text-primary"
-        style={{ letterSpacing: "0.12em" }}
-      >
-        Brand Grenade
-      </Link>
 
-      <div className="flex items-center gap-3">
-        <div
-          aria-label="Account"
-          className="flex h-8 w-8 items-center justify-center rounded-full"
-          style={{ backgroundColor: "var(--color-border)" }}
-        >
-          <span className="text-body-sm text-text-secondary">BG</span>
-        </div>
-        <button
-          type="button"
-          className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 text-[13px] font-semibold text-primary-foreground transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-        >
-          New Run
-        </button>
-      </div>
-    </nav>
-  );
-}
 
 function GridIcon() {
   return (
@@ -133,13 +106,13 @@ function EmptyState() {
       <p className="text-body mt-2" style={{ color: "var(--color-text-tertiary)" }}>
         Start a new pipeline run to begin.
       </p>
-      <button
-        type="button"
+      <Link
+        to="/brief"
         className="mt-6 inline-flex items-center rounded-md bg-transparent px-5 py-2.5 text-[13px] font-medium text-primary transition-colors hover:bg-primary-subtle"
         style={{ border: "1px solid var(--color-primary)" }}
       >
         Start New Run
-      </button>
+      </Link>
     </div>
   );
 }
