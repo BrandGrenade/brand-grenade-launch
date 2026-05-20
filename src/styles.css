@@ -157,6 +157,44 @@
     color-scheme: dark;
   }
 
+  /* Global polish — selection, scrollbars, focus, transitions */
+  ::selection {
+    background-color: rgba(200, 135, 58, 0.30);
+    color: #F0EDE8;
+  }
+
+  /* WebKit scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: #141414; }
+  ::-webkit-scrollbar-thumb { background: #2A2A2A; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: #3A3A3A; }
+  /* Firefox */
+  * { scrollbar-width: thin; scrollbar-color: #2A2A2A #141414; }
+
+  /* Amber-glow focus ring for any keyboard-focused interactive element */
+  a:focus-visible,
+  button:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible,
+  [role="button"]:focus-visible,
+  [tabindex]:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(200, 135, 58, 0.30);
+    border-radius: 4px;
+  }
+
+  /* Cursor affordances */
+  button, a, [role="button"] { cursor: pointer; }
+  button:disabled, [aria-disabled="true"] { cursor: not-allowed; }
+
+  /* Tasteful default transitions on common interactive surfaces */
+  button, a, input, select, textarea {
+    transition: color 0.15s ease, background-color 0.15s ease,
+                border-color 0.15s ease, box-shadow 0.2s ease;
+  }
+
+
   body {
     background-color: var(--color-background);
     color: var(--color-text-primary);
