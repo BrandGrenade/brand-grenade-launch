@@ -8,7 +8,7 @@ export const Route = createFileRoute("/brief")({
   component: BriefIntake,
   head: () => ({
     meta: [
-      { title: "New Brief — Brand Grenade" },
+      { title: "New Run — Brand Grenade" },
       {
         name: "description",
         content:

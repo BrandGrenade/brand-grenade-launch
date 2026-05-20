@@ -9,6 +9,8 @@ import {
 } from "@tanstack/react-router";
 
 import appCss from "../styles.css?url";
+import { MobileGate } from "@/components/MobileGate";
+
 
 function NotFoundComponent() {
   return (
@@ -86,7 +88,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "stylesheet",
         href: appCss,
       },
+      { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
     ],
+
   }),
   shellComponent: RootShell,
   component: RootComponent,
@@ -114,6 +118,8 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <Outlet />
+      <MobileGate />
     </QueryClientProvider>
   );
 }
+
