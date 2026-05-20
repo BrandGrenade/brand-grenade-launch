@@ -338,6 +338,7 @@ function BriefIntake() {
           category: category.trim() || "Unspecified",
           strategicMode: "Auto",
           briefText,
+          devMode: getDevModeFromStorage(),
         },
       });
       navigate({ to: "/pipeline", search: { session: sessionId } });
