@@ -21,6 +21,7 @@ import { runStage9 } from "@/lib/stage9.functions";
 import { runStage10 } from "@/lib/stage10.functions";
 import { runStage11 } from "@/lib/stage11.functions";
 import { runStage12, saveSelectedSMP, saveSelectionRationale } from "@/lib/stage12.functions";
+import { runStage13, saveBrandIntelligence } from "@/lib/stage13.functions";
 import { sanitizeStageOutput } from "@/lib/sanitize-output";
 
 const pipelineSearchSchema = z.object({
