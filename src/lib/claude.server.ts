@@ -98,15 +98,26 @@ export async function callClaude({
   model = DEFAULT_MODEL,
   sessionId,
   stageLabel,
+  stageNumber,
+  stageName,
 }: CallClaudeArgs): Promise<string> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) throw new Error("ANTHROPIC_API_KEY is not configured");
 
+  // Dev Mode: swap in the compressed prompt + cap tokens at 500.
+  const devMode = await readDevMode(sessionId);
+  let effectiveSystem = systemPrompt;
+  let effectiveMaxTokens = maxTokens;
+  if (devMode && stageNumber && stageName) {
+    effectiveSystem = buildDevModePrompt(stageNumber, stageName);
+    effectiveMaxTokens = 500;
+  }
+
   const body = JSON.stringify({
     model,
-    max_tokens: maxTokens,
+    max_tokens: effectiveMaxTokens,
     temperature,
-    system: systemPrompt,
+    system: effectiveSystem,
     messages: [{ role: "user", content: userMessage }],
   });
 
