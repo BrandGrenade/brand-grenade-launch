@@ -71,9 +71,8 @@ const CHECKPOINT_LETTERS: Record<string, "A" | "B" | "C"> = {
   "12": "C",
 };
 
-// Sample brief for demo state — first two stages complete, third running.
+// Demo brand fallback when no session is loaded.
 const SAMPLE_BRAND = "Hypernova";
-const ELAPSED = "12:34";
 
 // Per-stage demo output. Replace with real generator output.
 const STAGE_OUTPUTS: Record<string, string> = {
@@ -137,14 +136,45 @@ A proposition for Hypernova must:
 
 function PipelineView() {
   // Demo state — Stage 01 is the first human checkpoint (A).
+interface SessionData {
+  id: string;
+  brand_name: string;
+  category: string;
+  strategic_mode: string;
+  stage_1_output: string | null;
+  stage_1_tension_score: number | null;
+  stage_1b_required: boolean;
+  stage_1_error: string | null;
+}
+
+function PipelineView() {
+  const { session: sessionId } = Route.useSearch();
+  const runStage1Fn = useServerFn(runStage1);
+
+  const [session, setSession] = useState<SessionData | null>(null);
+  const [stage1Output, setStage1Output] = useState<string | null>(null);
+  const [stage1Error, setStage1Error] = useState<string | null>(null);
+  const [stage1Loading, setStage1Loading] = useState(false);
+  const [retryNonce, setRetryNonce] = useState(0);
+
+  // Elapsed timer
+  const [startTime] = useState(() => Date.now());
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    const id = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(id);
+  }, []);
+  const elapsed = formatElapsed(now - startTime);
+
+  // Initial statuses — Stage 01 is running while Claude works, then transitions to checkpoint.
   const initialStatuses = useMemo<Record<string, StageStatus>>(() => {
     const map: Record<string, StageStatus> = {};
     STAGES.forEach((s) => {
       map[s.id] = "pending";
     });
-    map["01"] = "checkpoint";
+    map["01"] = sessionId ? "running" : "checkpoint";
     return map;
-  }, []);
+  }, [sessionId]);
 
   const [statuses, setStatuses] = useState(initialStatuses);
   const [selectedId, setSelectedId] = useState("01");
@@ -152,6 +182,85 @@ function PipelineView() {
   const [intelSubmitted, setIntelSubmitted] = useState(false);
   const selected = STAGES.find((s) => s.id === selectedId)!;
   const selectedStatus = statuses[selectedId];
+
+  // Load session metadata from DB.
+  useEffect(() => {
+    if (!sessionId) return;
+    let cancelled = false;
+    supabase
+      .from("sessions")
+      .select(
+        "id, brand_name, category, strategic_mode, stage_1_output, stage_1_tension_score, stage_1b_required, stage_1_error"
+      )
+      .eq("id", sessionId)
+      .single()
+      .then(({ data, error }) => {
+        if (cancelled) return;
+        if (error || !data) {
+          setStage1Error(error?.message ?? "Session not found");
+          setStatuses((p) => ({ ...p, "01": "error" }));
+          return;
+        }
+        setSession(data as SessionData);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [sessionId]);
+
+  // Trigger Stage 1 when session loads (or on retry).
+  useEffect(() => {
+    if (!sessionId || !session) return;
+    if (session.stage_1_output && retryNonce === 0) {
+      // Already complete — hydrate.
+      setStage1Output(session.stage_1_output);
+      setStatuses((p) => ({
+        ...p,
+        "01": "checkpoint",
+        "01B": session.stage_1b_required ? "running" : p["01B"],
+      }));
+      return;
+    }
+    let cancelled = false;
+    setStage1Loading(true);
+    setStage1Error(null);
+    setStatuses((p) => ({ ...p, "01": "running" }));
+
+    runStage1Fn({ data: { sessionId } })
+      .then((result) => {
+        if (cancelled) return;
+        setStage1Output(result.output);
+        setStage1Loading(false);
+        setStatuses((p) => {
+          const next = { ...p, "01": "checkpoint" as StageStatus };
+          if (result.stage1bRequired) next["01B"] = "running";
+          return next;
+        });
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        setStage1Loading(false);
+        setStage1Error(err instanceof Error ? err.message : "Stage 1 failed");
+        setStatuses((p) => ({ ...p, "01": "error" }));
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionId, session?.id, retryNonce]);
+
+  // Per-stage output: use live Stage 1 output for stage 01, demo stubs for others.
+  const stageOutputs = useMemo<Record<string, string>>(() => {
+    if (!sessionId) return STAGE_OUTPUTS;
+    return {
+      ...STAGE_OUTPUTS,
+      "01":
+        stage1Output ??
+        (stage1Loading
+          ? "Sanitising brief with Claude — this can take 20–60 seconds…"
+          : "Awaiting Stage 1 output."),
+    };
+  }, [sessionId, stage1Output, stage1Loading]);
 
   // Progress — count main (non-conditional) stages.
   const mainStages = STAGES.filter((s) => !s.conditional);
@@ -164,10 +273,19 @@ function PipelineView() {
     : completedMain;
   const progressPct = (completedMain / mainStages.length) * 100;
 
+  const brandLabel = session?.brand_name ?? SAMPLE_BRAND;
+  const pipelineStatus = stage1Loading
+    ? "Running"
+    : stage1Error
+    ? "Error"
+    : statuses["01"] === "checkpoint"
+    ? "Review Needed"
+    : "In Progress";
+
   return (
     <div className="flex h-screen flex-col bg-background">
       <TopNav />
-      <Breadcrumb brand={SAMPLE_BRAND} elapsed={ELAPSED} status="In Progress" />
+      <Breadcrumb brand={brandLabel} elapsed={elapsed} status={pipelineStatus} />
 
       <div className="flex flex-1 overflow-hidden">
         <LeftPanel
@@ -176,7 +294,7 @@ function PipelineView() {
           selectedId={selectedId}
           onSelect={(id) => {
             const st = statuses[id];
-            if (st === "complete" || st === "running" || st === "checkpoint") {
+            if (st === "complete" || st === "running" || st === "checkpoint" || st === "error") {
               setSelectedId(id);
             }
           }}
@@ -187,6 +305,11 @@ function PipelineView() {
         <RightPanel
           stage={selected}
           status={selectedStatus}
+          fullOutput={stageOutputs[selected.id] ?? "Output pending."}
+          stage1Error={selected.id === "01" ? stage1Error : null}
+          tensionScore={selected.id === "01" ? session?.stage_1_tension_score ?? null : null}
+          stage1bRequired={selected.id === "01" ? session?.stage_1b_required ?? false : false}
+          onRetry={() => setRetryNonce((n) => n + 1)}
           showRationale={rationaleForId === selectedId}
           showBrandIntel={selectedId === "13" && !intelSubmitted && selectedStatus === "running"}
           onSubmitBrandIntel={() => {
@@ -236,6 +359,13 @@ function PipelineView() {
       </div>
     </div>
   );
+}
+
+function formatElapsed(ms: number) {
+  const total = Math.floor(ms / 1000);
+  const m = Math.floor(total / 60);
+  const s = total % 60;
+  return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 }
 
 // ────────────────────────────────────────────────────────────────────────────
