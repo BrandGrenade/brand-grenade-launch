@@ -488,11 +488,13 @@ function StageIndicator({
 function RightPanel({
   stage,
   status,
+  showRationale,
   onNext,
   onConfirmCheckpoint,
 }: {
   stage: Stage;
   status: StageStatus;
+  showRationale: boolean;
   onNext: () => void;
   onConfirmCheckpoint: (stageId: string) => void;
 }) {
@@ -505,7 +507,13 @@ function RightPanel({
   return (
     <section className="relative flex min-w-0 flex-1 flex-col bg-background">
       <div className="flex-1 overflow-y-auto px-6 py-10 sm:px-12 sm:py-10">
-        {isCheckpoint && letter ? (
+        {showRationale ? (
+          <div style={{ paddingBottom: 80 }}>
+            <SelectionRationale
+              onConfirm={() => onConfirmCheckpoint(stage.id)}
+            />
+          </div>
+        ) : isCheckpoint && letter ? (
           <div style={{ paddingBottom: 80 }}>
             <Checkpoint
               letter={letter}
