@@ -209,7 +209,7 @@ function PipelineView() {
     supabase
       .from("sessions")
       .select(
-        "id, brand_name, category, strategic_mode, stage_1_output, stage_1_tension_score, stage_1b_required, stage_1b_output, stage_1_error, stage_2_output, stage_2_error"
+        "id, brand_name, category, strategic_mode, stage_1_output, stage_1_tension_score, stage_1b_required, stage_1b_output, stage_1_error, stage_2_output, stage_2_error, stage_3_output, stage_3_error"
       )
       .eq("id", sessionId)
       .single()
@@ -225,6 +225,10 @@ function PipelineView() {
         if (data.stage_2_output) {
           setStage2Output(data.stage_2_output);
           setStatuses((p) => ({ ...p, "02": "complete" }));
+        }
+        if (data.stage_3_output) {
+          setStage3Output(data.stage_3_output);
+          setStatuses((p) => ({ ...p, "03": "complete" }));
         }
       });
     return () => {
