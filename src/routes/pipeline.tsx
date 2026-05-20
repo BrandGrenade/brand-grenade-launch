@@ -1941,7 +1941,7 @@ function RightPanel({
       )}
       <div className="flex-1 overflow-y-auto px-6 py-10 sm:px-12 sm:py-10">
 
-        {isError && ["01","02","03","04","05","06","07","08","09","10","11","12"].includes(stage.id) ? (
+        {isError && ["01","02","03","04","05","06","07","08","09","10","11","12","13","13B","14","14B","14C","15","16"].includes(stage.id) ? (
           <div style={{ paddingBottom: 80 }}>
             <header>
               <span className="text-label text-primary">
