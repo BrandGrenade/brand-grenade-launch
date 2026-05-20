@@ -2,8 +2,10 @@ import { useState } from "react";
 
 interface SelectionRationaleProps {
   selectedSMP?: string;
-  onConfirm: () => void;
+  onConfirm: (values: Record<string, string>) => void;
+  submitting?: boolean;
 }
+
 
 const FIELDS: {
   key: string;
