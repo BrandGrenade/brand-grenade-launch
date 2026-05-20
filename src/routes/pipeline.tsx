@@ -12,6 +12,7 @@ import { runStage1b, resubmitBrief } from "@/lib/stage1b.functions";
 import { runStage2 } from "@/lib/stage2.functions";
 import { runStage3 } from "@/lib/stage3.functions";
 import { runStage4 } from "@/lib/stage4.functions";
+import { runStage5 } from "@/lib/stage5.functions";
 
 const pipelineSearchSchema = z.object({
   session: z.string().uuid().optional(),
@@ -154,6 +155,8 @@ interface SessionData {
   stage_3_error: string | null;
   stage_4_output: string | null;
   stage_4_error: string | null;
+  stage_5_output: string | null;
+  stage_5_error: string | null;
 }
 
 function PipelineView() {
@@ -164,6 +167,7 @@ function PipelineView() {
   const runStage2Fn = useServerFn(runStage2);
   const runStage3Fn = useServerFn(runStage3);
   const runStage4Fn = useServerFn(runStage4);
+  const runStage5Fn = useServerFn(runStage5);
 
   const [session, setSession] = useState<SessionData | null>(null);
   const [stage1Output, setStage1Output] = useState<string | null>(null);
@@ -175,6 +179,8 @@ function PipelineView() {
   const [stage3Error, setStage3Error] = useState<string | null>(null);
   const [stage4Output, setStage4Output] = useState<string | null>(null);
   const [stage4Error, setStage4Error] = useState<string | null>(null);
+  const [stage5Output, setStage5Output] = useState<string | null>(null);
+  const [stage5Error, setStage5Error] = useState<string | null>(null);
   const [stage1Loading, setStage1Loading] = useState(false);
   const [stage1bLoading, setStage1bLoading] = useState(false);
   const [stage2Loading, setStage2Loading] = useState(false);
