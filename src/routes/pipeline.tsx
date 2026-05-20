@@ -799,6 +799,12 @@ function RightPanel({
               </button>
             </div>
           </div>
+        ) : showStage1bResubmit ? (
+          <Stage1bResubmitView
+            output={fullOutput}
+            resubmitting={resubmitting}
+            onResubmit={onResubmitBrief}
+          />
         ) : showRationale ? (
           <div style={{ paddingBottom: 80 }}>
             <SelectionRationale
