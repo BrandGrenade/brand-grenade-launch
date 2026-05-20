@@ -1281,7 +1281,7 @@ function PipelineView() {
 
           tensionScore={selected.id === "01" ? session?.stage_1_tension_score ?? null : null}
           stage1bRequired={selected.id === "01" ? session?.stage_1b_required ?? false : false}
-          onRetry={() => {
+          onRetry={async () => {
             const id = selected.id;
             const map: Record<string, () => void> = {
               "02": () => { setStage2Error(null); setStage2Output(null); },
@@ -1303,6 +1303,16 @@ function PipelineView() {
               "15": () => { setStage15Error(null); setStage15Output(null); },
               "16": () => { setStage16Error(null); setStage16Output(null); },
             };
+            // Clear cached output in the DB FIRST so the server-side
+            // "return cached output if present" short-circuit doesn't fire.
+            const dbId = STAGE_ID_TO_DB[id];
+            if (sessionId && dbId) {
+              try {
+                await resetStageFn({ data: { sessionId, stageId: dbId } });
+              } catch (e) {
+                console.error("resetStage failed", e);
+              }
+            }
             if (map[id]) {
               map[id]();
               setStatuses((p) => ({ ...p, [id]: "running" }));
