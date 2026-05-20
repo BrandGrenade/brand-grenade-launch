@@ -3,6 +3,7 @@ import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { callClaude } from "./claude.server";
 import { STAGE_2_SYSTEM_PROMPT, buildStage2UserMessage } from "./stage2-prompt";
+import { trimStage1ForDownstream } from "./context-trim";
 
 const RunStage2Input = z.object({
   sessionId: z.string().uuid(),
