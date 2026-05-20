@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { callClaude } from "./claude.server";
+import { streamClaude } from "./claude.server";
 import { STAGE_1B_SYSTEM_PROMPT, buildStage1bUserMessage } from "./stage1b-prompt";
 
 const RunStage1bInput = z.object({
@@ -10,7 +10,7 @@ const RunStage1bInput = z.object({
 
 export const runStage1b = createServerFn({ method: "POST" })
   .inputValidator((input) => RunStage1bInput.parse(input))
-  .handler(async ({ data }): Promise<{ output: string }> => {
+  .handler(async function* ({ data }) {
     const { data: session, error: loadErr } = await supabaseAdmin
       .from("sessions")
       .select("brief_text, stage_1_output, stage_1b_output")
@@ -19,24 +19,35 @@ export const runStage1b = createServerFn({ method: "POST" })
     if (loadErr || !session) throw new Error(`Session not found: ${loadErr?.message ?? "no row"}`);
     if (!session.stage_1_output) throw new Error("Stage 1 output missing — cannot run Stage 1B");
 
-    // Idempotent.
-    if (session.stage_1b_output) return { output: session.stage_1b_output };
+    if (session.stage_1b_output) {
+      yield { kind: "delta" as const, text: session.stage_1b_output };
+      yield { kind: "done" as const, output: session.stage_1b_output };
+      return;
+    }
 
     const userMessage = buildStage1bUserMessage({
       stage1Output: session.stage_1_output,
       briefText: session.brief_text,
     });
 
-    const output = await callClaude({
-      systemPrompt: STAGE_1B_SYSTEM_PROMPT,
-      userMessage,
-      maxTokens: 800,
-      temperature: 0.7,
-      sessionId: data.sessionId,
-      stageLabel: "Stage 1B",
-    stageNumber: "1B",
-    stageName: "Brief Enhancement",
-    });
+    let output = "";
+    try {
+      for await (const delta of streamClaude({
+        systemPrompt: STAGE_1B_SYSTEM_PROMPT,
+        userMessage,
+        maxTokens: 1500,
+        temperature: 0.7,
+        sessionId: data.sessionId,
+        stageLabel: "Stage 1B",
+        stageNumber: "1B",
+        stageName: "Brief Enhancement",
+      })) {
+        output += delta;
+        yield { kind: "delta" as const, text: delta };
+      }
+    } catch (e) {
+      throw e instanceof Error ? e : new Error(String(e));
+    }
 
     const { error: updateErr } = await supabaseAdmin
       .from("sessions")
@@ -44,11 +55,9 @@ export const runStage1b = createServerFn({ method: "POST" })
       .eq("id", data.sessionId);
     if (updateErr) throw new Error(`Failed to save Stage 1B output: ${updateErr.message}`);
 
-    return { output };
+    yield { kind: "done" as const, output };
   });
 
-// Resubmit brief with additional info → clears Stage 1 + 1B outputs so the
-// pipeline re-runs Stage 1 with the enriched brief before reaching Stage 2.
 const ResubmitBriefInput = z.object({
   sessionId: z.string().uuid(),
   additionalBrief: z.string().min(20).max(50000),
