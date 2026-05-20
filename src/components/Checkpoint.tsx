@@ -174,7 +174,7 @@ export function Checkpoint({
             <button
               type="button"
               data-checkpoint-confirm="true"
-              onClick={onConfirm}
+              onClick={() => onConfirm?.(notes)}
               className="inline-flex h-11 items-center justify-center rounded-md px-6 text-[14px] font-semibold transition-colors"
               style={{
                 backgroundColor: "var(--color-success)",
