@@ -36,8 +36,8 @@ export const runStage5 = createServerFn({ method: "POST" })
       category: session.category,
       strategicMode: session.strategic_mode,
       sanitisedBrief: session.stage_1_output,
-      cmm: session.stage_2_output,
-      sis: session.stage_4_output,
+      cmm: trimCMMForDownstream(session.stage_2_output),
+      sis: trimSISForDownstream(session.stage_4_output),
     });
 
     let output: string;
