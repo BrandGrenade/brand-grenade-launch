@@ -1,7 +1,8 @@
 import { useState } from "react";
 
 interface Props {
-  onSubmit: () => void;
+  onSubmit: (values: Record<string, string>) => void | Promise<void>;
+  submitting?: boolean;
 }
 
 const FIELDS: {
@@ -54,7 +55,7 @@ const FIELDS: {
   },
 ];
 
-export function BrandIntelligence({ onSubmit }: Props) {
+export function BrandIntelligence({ onSubmit, submitting = false }: Props) {
   const [values, setValues] = useState<Record<string, string>>({});
 
   const filled = FIELDS.filter((f) => (values[f.key] ?? "").trim().length > 0)
@@ -207,7 +208,8 @@ export function BrandIntelligence({ onSubmit }: Props) {
 
         <button
           type="button"
-          onClick={onSubmit}
+          onClick={() => onSubmit(values)}
+          disabled={submitting || filled === 0}
           style={{
             width: "100%",
             height: 52,
@@ -216,12 +218,13 @@ export function BrandIntelligence({ onSubmit }: Props) {
             border: "none",
             fontWeight: 600,
             fontSize: 14,
-            cursor: "pointer",
+            cursor: submitting ? "wait" : "pointer",
             backgroundColor: "var(--color-primary)",
             color: "var(--color-background)",
+            opacity: submitting || filled === 0 ? 0.6 : 1,
           }}
         >
-          Submit Brand Intelligence — Continue Pipeline →
+          {submitting ? "Saving — running Stage 13…" : "Submit Brand Intelligence — Continue Pipeline →"}
         </button>
       </div>
     </div>
