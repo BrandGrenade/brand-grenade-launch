@@ -22,114 +22,200 @@ export interface SMPCard {
   pressureTestNote: string;
 }
 
-// Parse Stage 12 output into an ordered list of SMP cards.
+// ----------------------------- PARSER -----------------------------
+
+// Detect proposition blocks using four methods, then merge by block range.
 export function parseSMPCards(stage12Output: string): SMPCard[] {
   if (!stage12Output) return [];
+  const text = stage12Output;
 
-  // Split on "PROPOSITION N" markers. The full marker line is
-  // "PROPOSITION 1", "PROPOSITION 2", etc.
-  const cardRegex = /PROPOSITION\s+(\d+)\s*\n([\s\S]*?)(?=PROPOSITION\s+\d+\s*\n|====\s*DELIVERABLE\s+2|====\s*PRESENTATION\s+ORDER\s+LOG|$)/gi;
+  // Collect candidate start indices from each detection method.
+  const starts = new Set<number>();
+
+  // METHOD 3 — "PROPOSITION N" label
+  for (const m of text.matchAll(/^[ \t>*_#-]*\**\s*PROPOSITION\s+(\d+)\b/gim)) {
+    if (m.index !== undefined) starts.add(m.index);
+  }
+
+  // METHOD 4 — "Composite:" anchors — walk back to nearest separator/bold
+  for (const m of text.matchAll(/Composite\s*:\s*\d+/gi)) {
+    if (m.index === undefined) continue;
+    const back = text.slice(0, m.index);
+    // walk back to nearest separator or double newline
+    const sepIdx = Math.max(
+      back.lastIndexOf("\n═══"),
+      back.lastIndexOf("\n==="),
+      back.lastIndexOf("\n---"),
+      back.lastIndexOf("\n\n"),
+    );
+    starts.add(sepIdx > 0 ? sepIdx + 1 : 0);
+  }
+
+  // METHOD 1 — blockquote lines containing **bold**
+  for (const m of text.matchAll(/^>\s+.*\*\*[^*\n]+\*\*.*$/gim)) {
+    if (m.index !== undefined) starts.add(m.index);
+  }
+
+  // METHOD 2 — separator-delimited blocks containing **bold** near top
+  const sepSplits = [...text.matchAll(/\n(?:={3,}|—{3,}|═{3,}|-{3,})\s*\n/g)];
+  for (let i = 0; i < sepSplits.length; i++) {
+    const idx = (sepSplits[i].index ?? 0) + sepSplits[i][0].length;
+    const next = sepSplits[i + 1]?.index ?? text.length;
+    const chunk = text.slice(idx, next);
+    if (/\*\*[^*\n]{3,}\*\*/.test(chunk.slice(0, 400))) starts.add(idx);
+  }
+
+  if (starts.size === 0) return [];
+
+  const sorted = [...starts].sort((a, b) => a - b);
+  // Merge near-duplicate starts (within 50 chars)
+  const merged: number[] = [];
+  for (const s of sorted) {
+    if (merged.length === 0 || s - merged[merged.length - 1] > 80) merged.push(s);
+  }
+
+  // Stop boundary — DELIVERABLE 2, SECTION 3, STRATEGIC LANDSCAPE
+  const stopMatch =
+    text.search(/={2,}\s*DELIVERABLE\s+2/i) >= 0
+      ? text.search(/={2,}\s*DELIVERABLE\s+2/i)
+      : text.search(/SECTION\s+3\s*—\s*STRATEGIC\s+LANDSCAPE/i) >= 0
+        ? text.search(/SECTION\s+3\s*—\s*STRATEGIC\s+LANDSCAPE/i)
+        : text.length;
+
   const cards: SMPCard[] = [];
-  let match: RegExpExecArray | null;
-  while ((match = cardRegex.exec(stage12Output)) !== null) {
-    const cardNumber = Number(match[1]);
-    const body = match[2];
-    cards.push(parseCard(cardNumber, body));
+  for (let i = 0; i < merged.length; i++) {
+    const startIdx = merged[i];
+    if (startIdx >= stopMatch) break;
+    const endIdx = Math.min(merged[i + 1] ?? text.length, stopMatch);
+    const body = text.slice(startIdx, endIdx);
+    cards.push(parseCard(i + 1, body, text));
   }
   return cards;
 }
 
-const SECTIONS: Array<{ key: keyof Omit<SMPCard, "cardNumber" | "scores" | "fieldName" | "iconicTierStatus" | "pressureTestNote" | "smpLine">; heading: RegExp }> = [
-  { key: "whatItOwns", heading: /WHAT\s+THIS\s+PROPOSITION\s+OWNS/i },
-  { key: "truth", heading: /THE\s+TRUTH\s+IT\s+IS\s+BUILT\s+ON/i },
-  { key: "whatItChallenges", heading: /WHAT\s+IT\s+CHALLENGES/i },
-  { key: "whatItMakesPossible", heading: /WHAT\s+IT\s+MAKES\s+POSSIBLE/i },
-  { key: "whatItRequires", heading: /WHAT\s+IT\s+REQUIRES\s+OF\s+THE\s+BRAND/i },
-];
-
-function parseCard(cardNumber: number, body: string): SMPCard {
-  // The SMP line lives between the "═══" header close and the first "WHAT THIS PROPOSITION OWNS"
-  const ownsIdx = body.search(/WHAT\s+THIS\s+PROPOSITION\s+OWNS/i);
-  const headerEnd = body.indexOf("═══════════════════════════════════════════════════");
-  const preamble = body.substring(headerEnd > -1 ? headerEnd + 51 : 0, ownsIdx > -1 ? ownsIdx : body.length);
-  // Strip horizontal rule lines and surrounding whitespace
-  const smpLine = preamble
-    .split("\n")
-    .map((l) => l.trim())
-    .filter((l) => l.length > 0 && !/^[═─]+$/.test(l))
-    .join(" ")
-    .trim()
-    .replace(/^["']|["']$/g, "");
-
-  const result: SMPCard = {
-    cardNumber,
-    smpLine,
-    whatItOwns: "",
-    truth: "",
-    whatItChallenges: "",
-    whatItMakesPossible: "",
-    whatItRequires: "",
-    scores: {},
-    fieldName: "",
-    iconicTierStatus: "",
-    pressureTestNote: "",
-  };
-
-  for (let i = 0; i < SECTIONS.length; i++) {
-    const s = SECTIONS[i];
-    const startMatch = s.heading.exec(body);
-    if (!startMatch) continue;
-    const startIdx = startMatch.index + startMatch[0].length;
-    // End at next section heading or at "STRATEGIC QUALITY SCORES" or "[METADATA]"
-    let endIdx = body.length;
-    for (let j = i + 1; j < SECTIONS.length; j++) {
-      const next = SECTIONS[j].heading.exec(body);
-      if (next && next.index > startIdx) {
-        endIdx = Math.min(endIdx, next.index);
-      }
-    }
-    const stopRegexes = [/STRATEGIC\s+QUALITY\s+SCORES/i, /\[METADATA\]/i, /═══/];
-    for (const sr of stopRegexes) {
-      const m = sr.exec(body.slice(startIdx));
-      if (m) endIdx = Math.min(endIdx, startIdx + m.index);
-    }
-    const text = body
-      .slice(startIdx, endIdx)
+function extractSection(body: string, headings: RegExp[]): string {
+  for (const h of headings) {
+    const m = h.exec(body);
+    if (!m) continue;
+    const start = m.index + m[0].length;
+    const rest = body.slice(start);
+    const stopRe = /(?:\n[A-Z][A-Z \-]{6,}\n|═══|---|\n\n[A-Z][A-Z ]{4,}|\[METADATA\]|STRATEGIC\s+QUALITY\s+SCORES|Composite\s*:)/i;
+    const stop = stopRe.exec(rest);
+    const end = stop ? stop.index : Math.min(600, rest.length);
+    return rest
+      .slice(0, end)
       .split("\n")
-      .map((l) => l.trim())
-      .filter((l) => l.length > 0 && !/^[─]+$/.test(l))
+      .map((l) => l.replace(/^[>*\s-]+/, "").trim())
+      .filter((l) => l && !/^[─=*]+$/.test(l))
       .join(" ")
       .trim();
-    result[s.key] = text;
   }
+  return "";
+}
 
-  // Scores
-  const sg = (re: RegExp) => {
+function parseCard(cardNumber: number, body: string, _full: string): SMPCard {
+  // Proposition line — prefer first blockquote with bold; else largest bold; else first non-trivial line
+  let smpLine = "";
+  const bq = /^>\s+(.*\*\*[^*\n]+\*\*.*)$/m.exec(body);
+  if (bq) {
+    smpLine = bq[1].replace(/\*\*/g, "").trim();
+  } else {
+    const bolds = [...body.matchAll(/\*\*([^*\n]{6,300})\*\*/g)].map((m) => m[1].trim());
+    if (bolds.length) {
+      bolds.sort((a, b) => b.length - a.length);
+      smpLine = bolds[0];
+    }
+  }
+  if (!smpLine) {
+    // fallback — text after PROPOSITION N header line, first non-empty meaningful line
+    const lines = body.split("\n").map((l) => l.trim()).filter(Boolean);
+    for (const l of lines) {
+      if (/^PROPOSITION\s+\d+/i.test(l)) continue;
+      if (/^[═─=*\-]+$/.test(l)) continue;
+      if (l.length < 8) continue;
+      smpLine = l.replace(/^[>*\s]+/, "").replace(/\*\*/g, "").trim();
+      break;
+    }
+  }
+  smpLine = smpLine.replace(/^["']|["']$/g, "").trim();
+
+  const whatItOwns = extractSection(body, [
+    /WHAT\s+THIS\s+PROPOSITION\s+OWNS/i,
+    /What\s+it\s+owns/i,
+    /What\s+this\s+owns/i,
+  ]);
+  const truth = extractSection(body, [
+    /THE\s+TRUTH\s+IT\s+IS\s+BUILT\s+ON/i,
+    /Truth(?:\s+it\s+is\s+built\s+on)?\s*[:\-—]/i,
+    /^\s*Truth\s*$/im,
+  ]);
+  const whatItChallenges = extractSection(body, [
+    /WHAT\s+IT\s+CHALLENGES/i,
+    /Challenge[s]?\s*[:\-—]?/i,
+  ]);
+  const whatItMakesPossible = extractSection(body, [/WHAT\s+IT\s+MAKES\s+POSSIBLE/i]);
+  const whatItRequires = extractSection(body, [/WHAT\s+IT\s+REQUIRES\s+OF\s+THE\s+BRAND/i]);
+
+  const sg = (re: RegExp): number | undefined => {
     const m = re.exec(body);
     return m ? Number(m[1]) : undefined;
   };
-  result.scores.differentiation = sg(/Differentiation:\s*(\d+)\s*\/\s*10/i);
-  result.scores.truthStrength = sg(/Truth\s+Strength:\s*(\d+)\s*\/\s*10/i);
-  result.scores.culturalRelevance = sg(/Cultural\s+Relevance:\s*(\d+)\s*\/\s*10/i);
-  result.scores.commercialPlausibility = sg(/Commercial\s+Plausibility:\s*(\d+)\s*\/\s*10/i);
-  result.scores.creativeExpandability = sg(/Creative\s+Expandability:\s*(\d+)\s*\/\s*10/i);
-  result.scores.writerQuality = sg(/Writer\s+Quality:\s*(\d+)\s*\/\s*10/i);
-  result.scores.composite = sg(/Composite:\s*(\d+)\s*\/\s*60/i);
+  const scores = {
+    differentiation: sg(/Differentiation\s*:\s*(\d+)/i),
+    truthStrength: sg(/Truth\s+Strength\s*:\s*(\d+)/i),
+    culturalRelevance: sg(/Cultural\s+Relevance\s*:\s*(\d+)/i),
+    commercialPlausibility: sg(/Commercial\s+Plausibility\s*:\s*(\d+)/i),
+    creativeExpandability: sg(/Creative\s+Expandability\s*:\s*(\d+)/i),
+    writerQuality: sg(/Writer\s+Quality\s*:\s*(\d+)/i),
+    composite: sg(/Composite\s*:\s*(\d+)/i),
+  };
 
   // Metadata block
+  let fieldName = "";
+  let iconicTierStatus = "";
+  let pressureTestNote = "";
   const meta = /\[METADATA\]([\s\S]*?)\[\/METADATA\]/i.exec(body);
   if (meta) {
     const m = meta[1];
-    const fn = /FIELD_NAME:\s*(.+)/i.exec(m);
-    const it = /ICONIC_TIER_STATUS:\s*(.+)/i.exec(m);
-    const pn = /PRESSURE_TEST_NOTE:\s*(.+)/i.exec(m);
-    result.fieldName = fn ? fn[1].trim() : "";
-    result.iconicTierStatus = it ? it[1].trim() : "";
-    result.pressureTestNote = pn ? pn[1].trim() : "";
+    fieldName = /FIELD_NAME\s*:\s*(.+)/i.exec(m)?.[1].trim() ?? "";
+    iconicTierStatus = /ICONIC_TIER_STATUS\s*:\s*(.+)/i.exec(m)?.[1].trim() ?? "";
+    pressureTestNote = /PRESSURE_TEST_NOTE\s*:\s*(.+)/i.exec(m)?.[1].trim() ?? "";
   }
 
-  return result;
+  return {
+    cardNumber,
+    smpLine,
+    whatItOwns,
+    truth,
+    whatItChallenges,
+    whatItMakesPossible,
+    whatItRequires,
+    scores,
+    fieldName,
+    iconicTierStatus,
+    pressureTestNote,
+  };
 }
+
+// Strip internal blocks from any text being shown to the user.
+function cleanForDisplay(text: string): string {
+  if (!text) return text;
+  return text
+    .replace(/\[METADATA\][\s\S]*?\[\/METADATA\]/gi, "")
+    .replace(/\[SELECTION_RATIONALE_STUB\][\s\S]*?\[\/SELECTION_RATIONALE_STUB\]/gi, "")
+    .replace(/={2,}\s*PRESENTATION\s+ORDER\s+LOG[\s\S]*?(?=\n={2,}\s*\S|$)/gi, "")
+    .replace(/={2,}\s*SELF[-\s]AUDIT[\s\S]*?(?=\n={2,}\s*\S|$)/gi, "")
+    .split("\n")
+    .filter(
+      (l) =>
+        !/FIELD_NAME\s*:|ICONIC_TIER_STATUS\s*:|PRESSURE_TEST_NOTE\s*:|Randomisation\s+(Status|Confirmed)|Plain\s+Language\s+Compliance|Structural\s+Neutrality|Selection\s+Framework\s+Quality|internal,?\s*not\s+client[-\s]facing|Stage\s+12\s+awaiting\s+review/i.test(
+          l,
+        ),
+    )
+    .join("\n");
+}
+
+// ----------------------------- COMPONENT -----------------------------
 
 export function SMPSelection({
   stage12Output,
@@ -140,25 +226,148 @@ export function SMPSelection({
 }) {
   const cards = useMemo(() => parseSMPCards(stage12Output), [stage12Output]);
   const [selected, setSelected] = useState<number | null>(null);
+  const [showRaw, setShowRaw] = useState(false);
+  const [manualLine, setManualLine] = useState("");
+  const [manualField, setManualField] = useState("");
 
-  // Extract Section 1 (Presentation Context) — everything between DELIVERABLE 1 and "PROPOSITION 1"
+  const cleanedOutput = useMemo(() => cleanForDisplay(stage12Output), [stage12Output]);
+
   const context = useMemo(() => {
-    const d1 = stage12Output.search(/====\s*DELIVERABLE\s+1[^=]*====/i);
-    const p1 = stage12Output.search(/PROPOSITION\s+1\s*\n/i);
-    if (d1 < 0 || p1 < 0) return "";
-    return stage12Output.slice(d1, p1)
-      .replace(/====\s*DELIVERABLE\s+1[^=]*====/i, "")
+    const src = cleanedOutput;
+    const d1 = src.search(/={2,}\s*DELIVERABLE\s+1[^=]*={2,}/i);
+    const p1 = src.search(/PROPOSITION\s+1\b/i);
+    if (p1 < 0) return "";
+    return src
+      .slice(d1 >= 0 ? d1 : 0, p1)
+      .replace(/={2,}\s*DELIVERABLE\s+1[^=]*={2,}/i, "")
       .replace(/═+/g, "")
       .replace(/SECTION\s+1[^\n]*\n/i, "")
       .replace(/SECTION\s+2[^\n]*\n/i, "")
       .trim();
-  }, [stage12Output]);
+  }, [cleanedOutput]);
 
-  const handleSelect = (idx: number) => setSelected(idx);
   const handleConfirm = () => {
     if (selected === null) return;
     onSelect(cards[selected]);
   };
+
+  const handleManualConfirm = () => {
+    const line = manualLine.trim();
+    if (!line) return;
+    onSelect({
+      cardNumber: 1,
+      smpLine: line,
+      whatItOwns: "",
+      truth: "",
+      whatItChallenges: "",
+      whatItMakesPossible: "",
+      whatItRequires: "",
+      scores: {},
+      fieldName: manualField.trim() || line.slice(0, 60),
+      iconicTierStatus: "",
+      pressureTestNote: "",
+    });
+  };
+
+  const RawPanel = (
+    <div style={{ marginTop: 24 }}>
+      <button
+        type="button"
+        onClick={() => setShowRaw((v) => !v)}
+        className="inline-flex items-center gap-2 text-body-sm"
+        style={{ color: "#5A5652", background: "transparent", border: 0, cursor: "pointer", padding: 0 }}
+      >
+        <span
+          style={{
+            display: "inline-block",
+            transform: showRaw ? "rotate(90deg)" : "rotate(0deg)",
+            transition: "transform 150ms",
+          }}
+        >
+          ›
+        </span>
+        View raw strategy output
+      </button>
+      {showRaw && (
+        <pre
+          style={{
+            marginTop: 12,
+            maxHeight: 400,
+            overflow: "auto",
+            background: "#141414",
+            color: "#8A8680",
+            padding: 20,
+            borderRadius: 8,
+            fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+            fontSize: 12,
+            lineHeight: 1.5,
+            whiteSpace: "pre-wrap",
+          }}
+        >
+          {stage12Output}
+        </pre>
+      )}
+    </div>
+  );
+
+  const ManualFallback = (
+    <div
+      className="mt-8 rounded-md p-5"
+      style={{
+        border: "1px solid var(--color-border)",
+        backgroundColor: "var(--color-surface-2)",
+      }}
+    >
+      <p className="text-label" style={{ color: "var(--color-text-tertiary)", marginBottom: 8 }}>
+        MANUAL SELECTION
+      </p>
+      <p className="text-body-sm" style={{ color: "var(--color-text-secondary)", marginBottom: 12 }}>
+        Type or paste the proposition line you want to select, then confirm.
+      </p>
+      <textarea
+        value={manualLine}
+        onChange={(e) => setManualLine(e.target.value)}
+        placeholder="Paste proposition line here…"
+        rows={3}
+        style={{
+          width: "100%",
+          padding: 10,
+          borderRadius: 8,
+          border: "1px solid var(--color-border)",
+          background: "var(--color-surface)",
+          color: "var(--color-text-primary)",
+          fontFamily: "inherit",
+          fontSize: 14,
+          lineHeight: 1.5,
+        }}
+      />
+      <input
+        type="text"
+        value={manualField}
+        onChange={(e) => setManualField(e.target.value)}
+        placeholder="Optional: field name / short label"
+        style={{
+          marginTop: 8,
+          width: "100%",
+          padding: 10,
+          borderRadius: 8,
+          border: "1px solid var(--color-border)",
+          background: "var(--color-surface)",
+          color: "var(--color-text-primary)",
+          fontSize: 14,
+        }}
+      />
+      <button
+        type="button"
+        disabled={!manualLine.trim()}
+        onClick={handleManualConfirm}
+        className="mt-3 inline-flex h-10 items-center justify-center rounded-md px-5 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-50"
+        style={{ backgroundColor: "#C8873A", color: "#0A0A0A" }}
+      >
+        Confirm manual selection
+      </button>
+    </div>
+  );
 
   if (cards.length === 0) {
     return (
@@ -167,23 +376,15 @@ export function SMPSelection({
           <span className="text-label" style={{ color: "var(--color-warning)" }}>
             STRATEGY REVIEW — SELECTION
           </span>
-          <h1 className="text-h2 mt-3 text-text-primary">No propositions detected</h1>
+          <h1 className="text-h2 mt-3 text-text-primary">Manual proposition entry</h1>
           <p className="text-body mt-3 text-text-secondary">
-            No proposition cards could be parsed. Inspect the raw output below.
+            Automatic parsing could not detect distinct proposition cards. You can still select a
+            proposition by pasting it below, or expand the raw output to read the full strategy.
           </p>
           <hr className="my-6 h-px border-0 bg-border" />
         </header>
-        <pre
-          className="text-body-sm overflow-auto rounded-md p-4"
-          style={{
-            border: "1px solid var(--color-border)",
-            backgroundColor: "var(--color-surface-2)",
-            color: "var(--color-text-secondary)",
-            whiteSpace: "pre-wrap",
-          }}
-        >
-          {stage12Output}
-        </pre>
+        {ManualFallback}
+        {RawPanel}
       </div>
     );
   }
@@ -224,12 +425,14 @@ export function SMPSelection({
             <button
               key={card.cardNumber}
               type="button"
-              onClick={() => handleSelect(idx)}
+              onClick={() => setSelected(idx)}
               className="text-left transition-all animate-fade-in"
               style={{
                 borderRadius: 12,
                 border: `2px solid ${isSelected ? "var(--color-primary)" : "var(--color-border)"}`,
-                backgroundColor: isSelected ? "var(--color-primary-subtle)" : "var(--color-surface-2)",
+                backgroundColor: isSelected
+                  ? "var(--color-primary-subtle)"
+                  : "var(--color-surface-2)",
                 padding: 24,
                 cursor: "pointer",
                 animationDelay: `${idx * 80}ms`,
@@ -239,16 +442,11 @@ export function SMPSelection({
               <div className="flex items-center justify-between">
                 <span className="text-label text-primary">PROPOSITION {card.cardNumber}</span>
               </div>
-              <p
-                className="text-h3 mt-3 text-text-primary"
-                style={{ lineHeight: 1.35 }}
-              >
+              <p className="text-h3 mt-3 text-text-primary" style={{ lineHeight: 1.35 }}>
                 {card.smpLine || "(line missing)"}
               </p>
 
-              {card.whatItOwns && (
-                <Section title="What it owns" body={card.whatItOwns} />
-              )}
+              {card.whatItOwns && <Section title="What it owns" body={card.whatItOwns} />}
               {card.truth && <Section title="The truth it is built on" body={card.truth} />}
               {card.whatItChallenges && (
                 <Section title="What it challenges" body={card.whatItChallenges} />
@@ -294,10 +492,7 @@ export function SMPSelection({
         }}
       >
         <div className="flex items-center justify-between gap-4">
-          <p
-            className="text-body-sm"
-            style={{ color: "var(--color-text-tertiary)" }}
-          >
+          <p className="text-body-sm" style={{ color: "var(--color-text-tertiary)" }}>
             {selected !== null
               ? `Selected: Proposition ${cards[selected].cardNumber}`
               : "Select a proposition above to continue."}
@@ -316,6 +511,9 @@ export function SMPSelection({
           </button>
         </div>
       </div>
+
+      {ManualFallback}
+      {RawPanel}
     </div>
   );
 }
