@@ -1,5 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import { TopNav } from "@/components/TopNav";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/dashboard")({
   component: Dashboard,
@@ -15,33 +17,91 @@ export const Route = createFileRoute("/dashboard")({
   }),
 });
 
-type SessionStatus = "in_progress" | "complete" | "awaiting_review" | "held";
-
-interface Session {
+type DbSession = {
   id: string;
-  brand: string;
-  category: string;
-  status: SessionStatus;
-  stage: number;
-  created: string;
+  brand_name: string;
+  category: string | null;
+  status: string;
+  current_stage: number;
+  created_at: string;
+  updated_at: string;
+};
+
+type UIStatus = "in_progress" | "complete" | "awaiting_review" | "held" | "error" | "interrupted";
+
+function mapStatus(s: string): UIStatus {
+  switch (s) {
+    case "complete":
+      return "complete";
+    case "awaiting_checkpoint":
+      return "awaiting_review";
+    case "held":
+      return "held";
+    case "error":
+      return "error";
+    case "interrupted":
+      return "interrupted";
+    default:
+      return "in_progress";
+  }
 }
 
-// Replace with real data source. Empty array renders the empty state.
-const sessions: Session[] = [];
-
-const stats = [
-  { value: sessions.length, label: "Total Runs" },
-  { value: sessions.filter((s) => s.status === "complete").length, label: "Completed" },
-  { value: sessions.filter((s) => s.status === "in_progress").length, label: "In Progress" },
-];
-
 function Dashboard() {
+  const [sessions, setSessions] = useState<DbSession[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      const { data } = await supabase
+        .from("sessions")
+        .select("id,brand_name,category,status,current_stage,created_at,updated_at")
+        .order("updated_at", { ascending: false })
+        .limit(100);
+      if (!active) return;
+      setSessions((data ?? []) as DbSession[]);
+      setLoading(false);
+    })();
+
+    const channel = supabase
+      .channel("sessions:dashboard")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "sessions" },
+        async () => {
+          const { data } = await supabase
+            .from("sessions")
+            .select("id,brand_name,category,status,current_stage,created_at,updated_at")
+            .order("updated_at", { ascending: false })
+            .limit(100);
+          if (active) setSessions((data ?? []) as DbSession[]);
+        },
+      )
+      .subscribe();
+
+    return () => {
+      active = false;
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  const stats = [
+    { value: sessions.length, label: "Total Runs" },
+    { value: sessions.filter((s) => s.status === "complete").length, label: "Completed" },
+    {
+      value: sessions.filter((s) => s.status === "running" || s.status === "pending").length,
+      label: "In Progress",
+    },
+  ];
+
   return (
     <div className="min-h-screen bg-background">
       <TopNav />
-      <main className="px-5 py-10 sm:px-8 lg:px-8 lg:py-12" style={{ paddingLeft: "max(20px, min(32px, 5vw))", paddingRight: "max(20px, min(32px, 5vw))" }}>
+      <main
+        className="px-5 py-10 sm:px-8 lg:px-8 lg:py-12"
+        style={{ paddingLeft: "max(20px, min(32px, 5vw))", paddingRight: "max(20px, min(32px, 5vw))" }}
+      >
         <div className="mx-auto max-w-[1280px]">
-          {/* Section header */}
           <header>
             <span className="text-label text-primary">Your Pipeline Runs</span>
             <h1 className="text-h2 mt-3 text-text-primary">Strategy Sessions</h1>
@@ -50,22 +110,23 @@ function Dashboard() {
             </p>
           </header>
 
-          {/* Stats */}
           <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
             {stats.map((s) => (
-              <div
-                key={s.label}
-                className="bg-card-surface px-6 py-5"
-              >
+              <div key={s.label} className="bg-card-surface px-6 py-5">
                 <div className="text-h1 text-text-primary">{s.value}</div>
                 <div className="text-label mt-1 text-primary">{s.label}</div>
               </div>
             ))}
           </div>
 
-          {/* Sessions */}
           <div className="mt-8">
-            {sessions.length === 0 ? <EmptyState /> : <SessionsTable sessions={sessions} />}
+            {loading ? (
+              <p className="text-body text-text-tertiary">Loading sessions…</p>
+            ) : sessions.length === 0 ? (
+              <EmptyState />
+            ) : (
+              <SessionsTable sessions={sessions} />
+            )}
           </div>
         </div>
       </main>
@@ -73,18 +134,9 @@ function Dashboard() {
   );
 }
 
-
-
 function GridIcon() {
   return (
-    <svg
-      aria-hidden="true"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
+    <svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none">
       <rect x="2" y="2" width="9" height="9" rx="1.5" fill="var(--color-border-strong)" />
       <rect x="13" y="2" width="9" height="9" rx="1.5" fill="var(--color-border-strong)" />
       <rect x="2" y="13" width="9" height="9" rx="1.5" fill="var(--color-border-strong)" />
@@ -117,14 +169,16 @@ function EmptyState() {
   );
 }
 
-const STATUS_META: Record<SessionStatus, { label: string; bg: string; fg: string }> = {
+const STATUS_META: Record<UIStatus, { label: string; bg: string; fg: string }> = {
   in_progress: { label: "In Progress", bg: "var(--color-primary-subtle)", fg: "var(--color-primary)" },
   complete: { label: "Complete", bg: "oklch(0.55 0.08 150 / 0.10)", fg: "var(--color-success)" },
   awaiting_review: { label: "Awaiting Review", bg: "oklch(0.5 0.09 70 / 0.10)", fg: "var(--color-warning)" },
   held: { label: "Held", bg: "oklch(0.45 0.12 25 / 0.10)", fg: "var(--color-destructive)" },
+  error: { label: "Error", bg: "oklch(0.45 0.12 25 / 0.10)", fg: "var(--color-destructive)" },
+  interrupted: { label: "Interrupted", bg: "oklch(0.5 0.09 70 / 0.10)", fg: "var(--color-warning)" },
 };
 
-function StatusBadge({ status }: { status: SessionStatus }) {
+function StatusBadge({ status }: { status: UIStatus }) {
   const meta = STATUS_META[status];
   return (
     <span
@@ -136,8 +190,12 @@ function StatusBadge({ status }: { status: SessionStatus }) {
   );
 }
 
-function SessionsTable({ sessions }: { sessions: Session[] }) {
-  const headers = ["Brand", "Category", "Status", "Stage", "Created", "Actions"];
+function fmtDate(iso: string) {
+  return new Date(iso).toLocaleString();
+}
+
+function SessionsTable({ sessions }: { sessions: DbSession[] }) {
+  const headers = ["Brand", "Category", "Status", "Stage", "Updated", "Actions"];
   return (
     <div className="overflow-x-auto">
       <table className="w-full border-collapse">
@@ -155,32 +213,36 @@ function SessionsTable({ sessions }: { sessions: Session[] }) {
           </tr>
         </thead>
         <tbody>
-          {sessions.map((s, i) => (
-            <tr
-              key={s.id}
-              style={{
-                backgroundColor: i % 2 === 0 ? "var(--color-surface-2)" : "var(--color-card)",
-              }}
-            >
-              <td className="text-body px-4 py-4 text-text-primary">{s.brand}</td>
-              <td className="text-body px-4 py-4 text-text-secondary">{s.category}</td>
-              <td className="px-4 py-4">
-                <StatusBadge status={s.status} />
-              </td>
-              <td className="text-body px-4 py-4 text-text-secondary">
-                Stage {s.stage} of 20
-              </td>
-              <td className="text-body px-4 py-4 text-text-secondary">{s.created}</td>
-              <td className="px-4 py-4">
-                <a
-                  href="#"
-                  className="text-body font-medium text-primary transition-colors hover:text-primary-hover"
-                >
-                  {s.status === "complete" ? "View" : "Continue"}
-                </a>
-              </td>
-            </tr>
-          ))}
+          {sessions.map((s, i) => {
+            const ui = mapStatus(s.status);
+            return (
+              <tr
+                key={s.id}
+                style={{
+                  backgroundColor: i % 2 === 0 ? "var(--color-surface-2)" : "var(--color-card)",
+                }}
+              >
+                <td className="text-body px-4 py-4 text-text-primary">{s.brand_name}</td>
+                <td className="text-body px-4 py-4 text-text-secondary">{s.category ?? "—"}</td>
+                <td className="px-4 py-4">
+                  <StatusBadge status={ui} />
+                </td>
+                <td className="text-body px-4 py-4 text-text-secondary">
+                  Stage {s.current_stage} of 20
+                </td>
+                <td className="text-body px-4 py-4 text-text-secondary">{fmtDate(s.updated_at)}</td>
+                <td className="px-4 py-4">
+                  <Link
+                    to={ui === "complete" ? "/complete" : "/pipeline"}
+                    search={ui === "complete" ? undefined : { session: s.id }}
+                    className="text-body font-medium text-primary transition-colors hover:text-primary-hover"
+                  >
+                    {ui === "complete" ? "View" : "Continue"}
+                  </Link>
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>
