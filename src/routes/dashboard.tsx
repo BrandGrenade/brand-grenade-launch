@@ -102,12 +102,21 @@ function Dashboard() {
         style={{ paddingLeft: "max(20px, min(32px, 5vw))", paddingRight: "max(20px, min(32px, 5vw))" }}
       >
         <div className="mx-auto max-w-[1280px]">
-          <header>
-            <span className="text-label text-primary">Your Pipeline Runs</span>
-            <h1 className="text-h2 mt-3 text-text-primary">Strategy Sessions</h1>
-            <p className="text-body mt-2 text-text-secondary">
-              Each session is a complete 20-stage pipeline run for one brief.
-            </p>
+          <header className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <span className="text-label text-primary">Your Pipeline Runs</span>
+              <h1 className="text-h2 mt-3 text-text-primary">Strategy Sessions</h1>
+              <p className="text-body mt-2 text-text-secondary">
+                Each session is a complete 20-stage pipeline run for one brief.
+              </p>
+            </div>
+            <Link
+              to="/brief"
+              className="inline-flex h-9 shrink-0 items-center justify-center rounded-lg px-4 text-[13px] font-semibold transition-colors hover:opacity-90"
+              style={{ backgroundColor: "#C8873A", color: "#0A0A0A" }}
+            >
+              New Run
+            </Link>
           </header>
 
           <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -160,8 +169,8 @@ function EmptyState() {
       </p>
       <Link
         to="/brief"
-        className="mt-6 inline-flex items-center rounded-md bg-transparent px-5 py-2.5 text-[13px] font-medium text-primary transition-colors hover:bg-primary-subtle"
-        style={{ border: "1px solid var(--color-primary)" }}
+        className="mt-6 inline-flex items-center rounded-lg bg-transparent px-5 py-2.5 text-[13px] font-medium transition-colors hover:bg-primary-subtle"
+        style={{ border: "1px solid #C8873A", color: "#C8873A" }}
       >
         Start New Run
       </Link>
