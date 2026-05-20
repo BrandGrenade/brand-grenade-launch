@@ -1584,7 +1584,10 @@ function RightPanel({
             <Checkpoint
               letter={letter}
               showLowScoreAlert={letter === "A" && stage1bRequired}
-              onConfirm={() => onConfirmCheckpoint(stage.id)}
+              onConfirm={(notes) => onConfirmCheckpoint(stage.id, notes)}
+              onResubmit={onResubmitCheckpoint ? (fb) => onResubmitCheckpoint(stage.id, fb) : undefined}
+              onEscalate={onEscalateCheckpoint ? (r) => onEscalateCheckpoint(stage.id, r) : undefined}
+              resubmitting={checkpointResubmitting}
               reviewContent={
                 <>
                   {letter === "A" && tensionScore !== null && (
