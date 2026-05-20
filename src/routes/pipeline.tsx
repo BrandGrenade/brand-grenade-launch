@@ -1356,6 +1356,73 @@ function LeftPanel({
   );
 }
 
+function StageRowStatusLabel({
+  checkpoint,
+  conditional,
+  status,
+  selected,
+}: {
+  checkpoint: boolean;
+  conditional: boolean;
+  status: StageStatus;
+  selected: boolean;
+}) {
+  if (conditional && status === "pending") return null;
+
+  // Checkpoint stages (1, 8, 12): special handling
+  if (checkpoint && status === "checkpoint") {
+    return (
+      <span
+        className="text-label shrink-0 rounded-sm px-1.5 py-0.5"
+        style={{
+          backgroundColor: "oklch(0.5 0.09 70 / 0.10)",
+          color: "var(--color-warning)",
+          fontSize: 9,
+        }}
+      >
+        Review
+      </span>
+    );
+  }
+  if (checkpoint && status === "complete") {
+    return (
+      <span className="text-label shrink-0" style={{ color: "var(--color-success)", fontSize: 10 }}>
+        Confirmed
+      </span>
+    );
+  }
+
+  if (status === "running") {
+    return (
+      <span className="text-label shrink-0" style={{ color: "var(--color-primary)", fontSize: 10 }}>
+        Running…
+      </span>
+    );
+  }
+  if (status === "complete") {
+    return (
+      <span className="text-label shrink-0" style={{ color: "var(--color-success)", fontSize: 10 }}>
+        Done
+      </span>
+    );
+  }
+  if (status === "error") {
+    return (
+      <span className="text-label shrink-0" style={{ color: "var(--color-destructive)", fontSize: 10 }}>
+        Error
+      </span>
+    );
+  }
+  if (selected && status === "pending") {
+    return (
+      <span className="text-label shrink-0" style={{ color: "var(--color-text-tertiary)", fontSize: 10 }}>
+        Viewing
+      </span>
+    );
+  }
+  return null;
+}
+
 function stageNameStyle(
   status: StageStatus,
   selected: boolean,
