@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { callClaude } from "./claude.server";
+import { streamClaude } from "./claude.server";
 import { STAGE_3_SYSTEM_PROMPT, buildStage3UserMessage } from "./stage3-prompt";
 import { trimStage1ForDownstream } from "./context-trim";
 
@@ -11,7 +11,7 @@ const RunStage3Input = z.object({
 
 export const runStage3 = createServerFn({ method: "POST" })
   .inputValidator((input) => RunStage3Input.parse(input))
-  .handler(async ({ data }): Promise<{ output: string }> => {
+  .handler(async function* ({ data }) {
     const { data: session, error: loadErr } = await supabaseAdmin
       .from("sessions")
       .select(
@@ -23,7 +23,11 @@ export const runStage3 = createServerFn({ method: "POST" })
     if (!session.stage_1_output) throw new Error("Stage 1 output missing — cannot run Stage 3");
     if (!session.stage_2_output) throw new Error("Stage 2 output (CMM) missing — cannot run Stage 3");
 
-    if (session.stage_3_output) return { output: session.stage_3_output };
+    if (session.stage_3_output) {
+      yield { kind: "delta" as const, text: session.stage_3_output };
+      yield { kind: "done" as const, output: session.stage_3_output };
+      return;
+    }
 
     await supabaseAdmin
       .from("sessions")
@@ -38,18 +42,21 @@ export const runStage3 = createServerFn({ method: "POST" })
       cmm: session.stage_2_output,
     });
 
-    let output: string;
+    let output = "";
     try {
-      output = await callClaude({
+      for await (const delta of streamClaude({
         systemPrompt: STAGE_3_SYSTEM_PROMPT,
         userMessage,
-        maxTokens: 2000,
+        maxTokens: 3000,
         temperature: 0.7,
         sessionId: data.sessionId,
         stageLabel: "Stage 3",
-      stageNumber: "3",
-      stageName: "Strategic Frameworks",
-      });
+        stageNumber: "3",
+        stageName: "Strategic Frameworks",
+      })) {
+        output += delta;
+        yield { kind: "delta" as const, text: delta };
+      }
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Stage 3 failed";
       await supabaseAdmin
@@ -65,5 +72,5 @@ export const runStage3 = createServerFn({ method: "POST" })
       .eq("id", data.sessionId);
     if (updateErr) throw new Error(`Failed to save Stage 3 output: ${updateErr.message}`);
 
-    return { output };
+    yield { kind: "done" as const, output };
   });
