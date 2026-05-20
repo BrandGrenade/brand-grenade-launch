@@ -35,7 +35,7 @@ export const runStage4 = createServerFn({ method: "POST" })
       brandName: session.brand_name,
       category: session.category,
       strategicMode: session.strategic_mode,
-      sanitisedBrief: session.stage_1_output,
+      sanitisedBrief: trimStage1ForDownstream(session.stage_1_output),
       cmm: session.stage_2_output,
       constraintMatrix: session.stage_3_output,
     });
