@@ -2059,10 +2059,19 @@ function RightPanel({
 
             <article style={{ paddingBottom: 80 }}>
               <StreamedOutput text={text} streaming={isRunning} />
+              {isRunning ? (
+                <StallWatcher stageKey={stage.id} onAutoRetry={onRetry} />
+              ) : null}
             </article>
           </>
         )}
       </div>
+
+      <StageControlBar
+        stage={stage}
+        status={status}
+        onRetry={onRetry}
+      />
 
       <BottomBar
         stage={stage}
