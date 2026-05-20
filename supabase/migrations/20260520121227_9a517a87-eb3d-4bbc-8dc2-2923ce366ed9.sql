@@ -1,0 +1,1 @@
+UPDATE public.sessions SET stage_9_output = NULL, stage_9_error = NULL, stage_10_output = NULL, stage_10_error = NULL, stage_11_output = NULL, stage_11_error = NULL, current_stage = 9, status = 'running' WHERE id = '55a48e67-b303-4b98-bb17-c2eaaa414163';
