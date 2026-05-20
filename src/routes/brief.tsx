@@ -275,11 +275,7 @@ function BriefIntake() {
     return { done, count, total: 9 };
   }, [values, files]);
 
-  const canSubmitSections =
-    brand.trim().length >= 2 &&
-    completion.done["1"] &&
-    completion.done["2"] &&
-    completion.done["3"];
+  const canSubmitSections = brand.trim().length >= 2;
 
   const canSubmitAlt = !!altFile && brand.trim().length >= 2;
 
