@@ -111,7 +111,10 @@ export async function callClaude({
   if (devMode && stageNumber && stageName) {
     effectiveSystem = buildDevModePrompt(stageNumber, stageName);
     effectiveMaxTokens = 500;
+  } else {
+    effectiveSystem = `${OUTPUT_FORMATTING_PREAMBLE}\n\n${systemPrompt}`;
   }
+
 
   const body = JSON.stringify({
     model,
