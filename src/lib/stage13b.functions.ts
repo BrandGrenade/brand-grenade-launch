@@ -3,6 +3,7 @@ import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { callClaude } from "./claude.server";
 import { STAGE_13B_SYSTEM_PROMPT, buildStage13bUserMessage } from "./stage13b-prompt";
+import { trimBrandFitForDownstream } from "./context-trim";
 
 const Input = z.object({ sessionId: z.string().uuid() });
 
@@ -32,9 +33,9 @@ export const runStage13b = createServerFn({ method: "POST" })
           brandName: session.brand_name,
           category: session.category,
           selectedSMP: session.selected_smp ?? "",
-          stage13Output: session.stage_13_output,
-          stage12Output: session.stage_12_output ?? "",
-          cmm: session.stage_2_output ?? "",
+          stage13Output: trimBrandFitForDownstream(session.stage_13_output),
+          stage12Output: "",
+          cmm: "",
         }),
         sessionId: data.sessionId,
         stageLabel: "Stage 13B",
