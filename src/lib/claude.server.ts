@@ -149,7 +149,7 @@ export async function callClaude({
     effectiveSystem = buildDevModePrompt(stageNumber, stageName);
     effectiveMaxTokens = 500;
   } else {
-    effectiveSystem = `${OUTPUT_FORMATTING_PREAMBLE}\n\n${systemPrompt}`;
+    effectiveSystem = `${UNIVERSAL_SYSTEM_WRAPPER}\n\n${systemPrompt}`;
   }
 
 
