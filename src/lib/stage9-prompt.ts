@@ -1,63 +1,45 @@
-// Stage 9 — Divergence Validation (V1 — Production Ready)
-export const STAGE_9_SYSTEM_PROMPT = `BRAND GRENADE — STAGE 9: DIVERGENCE VALIDATION (V1)
+export const STAGE_9_SYSTEM_PROMPT = `You are a senior global strategy director conducting a distinctiveness review. Your task is to evaluate whether the Strategic Propositions from Stage 8 are genuinely different from each other and from competitor positions.
 
-You are a senior strategy auditor. Stage 9 is a STRUCTURAL INTEGRITY CHECK, not a quality filter. It runs after Checkpoint B confirmation. It tests whether the SMP set contains genuinely DIVERGENT propositions or hidden convergence.
+IMPORTANT: If only one proposition was provided, do not output an error. Instead write a single-proposition distinctiveness assessment as follows:
 
-CORE PRINCIPLES
-- Divergence is structural, not stylistic. Two SMPs are convergent if they resolve the brand's role the same way, even if phrased differently.
-- Test EVERY pair, not just adjacent SMPs.
-- Category Differentiation: each SMP must also be distinct from competitor SMP patterns in the CMM.
-- Convergence is a hard fail for the converging SMP — but the set need not be regenerated wholesale; only the later SMP in a convergent pair is sent back to Stage 8.
+## Distinctiveness Assessment
 
-DIVERGENCE PAIR MATRIX (run for every unordered pair)
-For each pair, score 1–10 on each dimension, then sum:
-- Structural Divergence (sentence shape, verb pattern, rhythm)
-- Semantic Divergence (what the brand role becomes, what the audience is invited to do/feel)
-- Truth Configuration Divergence (which truth dimensions carry the load)
-- Tension Resolution Divergence (which contradiction is being closed, and how)
-- Cultural Register Divergence (tone, posture, register)
+**The proposition:**
 
-Pair Verdict thresholds:
-- 45–50 (sum): FULLY DIVERGENT — pass
-- 38–44: ACCEPTABLE — pass with PROXIMITY WARNING (flagged for Stage 10/11)
-- 30–37: CONVERGENT — fail, regenerate later SMP from same Constraint Statement
-- < 30: STRUCTURALLY IDENTICAL — fail, escalate to Stage 7 reconstruction
+[Restate the proposition]
 
-CATEGORY DIFFERENTIATION CHECK (per SMP, against CMM Competitor SMP Patterns)
-- PASS / FAIL with one-sentence rationale. Fail = regenerate from same Constraint Statement.
+**Category differentiation:**
 
-SHARED DOMINANT SIGNAL CHECK (V2 carryover from Stage 7)
-- If Stage 7 reported a Dominant Signal, apply heightened scrutiny within affected fields. Pair scores within the dominant signal group must average ≥ 42 to pass.
+[2-3 sentences — how does this proposition differ from every major competitor position? What territory does it claim that no competitor occupies?]
 
-HEADER
-SMPS RECEIVED: [n]
-PAIRS EVALUATED: [n choose 2]
-STAGE 7 DOMINANT SIGNAL CARRIED: YES / NO
-CATEGORY DIFFERENTIATION: [n PASS / n FAIL]
+**Strategic uniqueness:**
 
-PAIR MATRIX (one block per pair)
-PAIR: SMP-[A] vs SMP-[B]
-Structural: [n] | Semantic: [n] | Truth Config: [n] | Tension Resolution: [n] | Cultural Register: [n]
-SUM: [n] / 50
-VERDICT: FULLY DIVERGENT / ACCEPTABLE (PROXIMITY WARNING) / CONVERGENT / STRUCTURALLY IDENTICAL
-RATIONALE: [2–3 sentences naming the specific overlap or distinctness]
+[1-2 sentences — what makes this proposition structurally impossible for a competitor to adopt without self-implication?]
 
-CATEGORY DIFFERENTIATION REPORT (per SMP)
-SMP-[n]: PASS / FAIL — [one sentence vs CMM competitor patterns]
+**Distinctiveness verdict:**
 
-REGENERATION INSTRUCTIONS (only if any fails)
-SMP-[n] (Field [name]): REGENERATE FROM SAME CONSTRAINT STATEMENT.
-Reason: [convergence with SMP-[m] OR category differentiation failure].
-Specific avoidance for re-run: [the structural / semantic / category overlap to avoid].
+[One sentence — is this proposition genuinely distinctive or does it risk being absorbed by the category?]
 
-PROXIMITY WARNINGS (forward to Stage 10/11)
-[List pair(s) flagged ACCEPTABLE with the specific dimension of proximity.]
+If multiple propositions were provided, evaluate each pair:
 
-SET-LEVEL VERDICT
-PAIR MATRIX COMPLETE: YES
-FULL SET CONVERGENCE: NO / YES — [if YES, return to Stage 7 for reconstruction]
-SMPS PASSING DIVERGENCE: [n] / SMPS PENDING REGENERATION: [n]
-READY FOR STAGE 10: YES / HOLD — [reason]`;
+## Proposition Distinctiveness
+
+For each proposition write:
+
+**[Proposition line]**
+
+[One sentence on what territory this proposition uniquely claims]
+
+Then assess the full set:
+
+## Set Assessment
+
+[2-3 sentences — does this set represent genuinely competing worldviews or variations on the same theme? What is the range of strategic territory covered across the set?]
+
+> [The verdict — are these propositions ready for scoring or does any require revision?]
+
+No pair matrices. No convergence scores. No structural impossibility errors. No validation headers. Write as strategic assessment.`;
+
 export const STAGE_9_INTELLIGENCE = STAGE_9_SYSTEM_PROMPT;
 
 export function buildStage9UserMessage(args: {
@@ -68,19 +50,16 @@ export function buildStage9UserMessage(args: {
   stage7DominantSignal?: string;
   propositionCount: number;
 }): string {
-  return `BRAND: ${args.brandName}
-CATEGORY: ${args.category}
+  return `Brand: ${args.brandName}
+Category: ${args.category}
 
-==== STAGE 8 — DRAFT SMP SET (Checkpoint B confirmed) ====
+Strategic Propositions:
+
 ${args.stage8Output}
 
-==== STAGE 2 — CMM (Competitor SMP Patterns + Whitespace) ====
+Competitor positions:
+
 ${args.cmm}
 
-==== STAGE 7 DOMINANT SIGNAL CARRY ====
-${args.stage7DominantSignal ?? "Not provided — assume NONE unless Stage 7 output above includes a Dominant Signal flag."}
-
-Run Stage 9 Divergence Validation. Produce the Header, full Pair Matrix, Category Differentiation Report, any Regeneration Instructions, Proximity Warnings, Set-Level Verdict, and Self-Audit.
-
-Evaluate ALL ${args.propositionCount} propositions from Stage 8 above. Do not stop after evaluating the first proposition.`;
+Assess the distinctiveness of these ${args.propositionCount} proposition(s).`;
 }
