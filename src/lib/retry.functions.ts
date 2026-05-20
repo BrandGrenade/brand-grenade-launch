@@ -28,7 +28,7 @@ export const resetStage = createServerFn({ method: "POST" })
     const base = { status: "running" as const, stage_status: `running:${id}` };
     switch (id) {
       case "1":   await supabaseAdmin.from("sessions").update({ status: base.status, stage_status: base.stage_status, stage_1_error: null }).eq("id", data.sessionId); break;
-      case "1b":  await supabaseAdmin.from("sessions").update({ status: base.status, stage_status: base.stage_status, stage_1b_error: null }).eq("id", data.sessionId); break;
+      case "1b":  await supabaseAdmin.from("sessions").update({ status: base.status, stage_status: base.stage_status, stage_1_error: null }).eq("id", data.sessionId); break;
       case "2":   await supabaseAdmin.from("sessions").update({ status: base.status, stage_status: base.stage_status, stage_2_error: null }).eq("id", data.sessionId); break;
       case "3":   await supabaseAdmin.from("sessions").update({ status: base.status, stage_status: base.stage_status, stage_3_error: null }).eq("id", data.sessionId); break;
       case "4":   await supabaseAdmin.from("sessions").update({ status: base.status, stage_status: base.stage_status, stage_4_error: null }).eq("id", data.sessionId); break;
