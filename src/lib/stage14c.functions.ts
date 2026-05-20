@@ -42,6 +42,8 @@ export const runStage14c = createServerFn({ method: "POST" })
         }),
         sessionId: data.sessionId,
         stageLabel: "Stage 14C",
+      stageNumber: "14C",
+      stageName: "Brand World Definition",
       });
       const { error: ue } = await supabaseAdmin
         .from("sessions")

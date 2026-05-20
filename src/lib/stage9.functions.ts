@@ -41,6 +41,8 @@ export const runStage9 = createServerFn({ method: "POST" })
         temperature: 0.4,
         sessionId: data.sessionId,
         stageLabel: "Stage 9",
+      stageNumber: "9",
+      stageName: "Distinctiveness Check",
       });
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Stage 9 failed";

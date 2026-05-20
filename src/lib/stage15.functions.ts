@@ -53,6 +53,8 @@ export const runStage15 = createServerFn({ method: "POST" })
         }),
         sessionId: data.sessionId,
         stageLabel: "Stage 15",
+      stageNumber: "15",
+      stageName: "Coherence Audit",
       });
       const { error: ue } = await supabaseAdmin
         .from("sessions")

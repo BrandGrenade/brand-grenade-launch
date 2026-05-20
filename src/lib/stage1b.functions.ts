@@ -34,6 +34,8 @@ export const runStage1b = createServerFn({ method: "POST" })
       temperature: 0.7,
       sessionId: data.sessionId,
       stageLabel: "Stage 1B",
+    stageNumber: "1B",
+    stageName: "Brief Enhancement",
     });
 
     const { error: updateErr } = await supabaseAdmin

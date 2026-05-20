@@ -71,6 +71,8 @@ export const runStage16 = createServerFn({ method: "POST" })
         }),
         sessionId: data.sessionId,
         stageLabel: "Stage 16",
+      stageNumber: "16",
+      stageName: "Document Assembly",
       });
 
       // Mark pipeline complete when all three variants exist.

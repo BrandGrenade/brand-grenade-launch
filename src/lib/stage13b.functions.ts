@@ -38,6 +38,8 @@ export const runStage13b = createServerFn({ method: "POST" })
         }),
         sessionId: data.sessionId,
         stageLabel: "Stage 13B",
+      stageNumber: "13B",
+      stageName: "Historical Validation",
       });
       const { error: ue } = await supabaseAdmin
         .from("sessions")
