@@ -13,6 +13,8 @@ export function TopNav({ session }: { session?: SessionContext }) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement | null>(null);
   const navigate = useNavigate();
+  const isAdmin = useIsAdmin();
+  const { enabled: devModeOn, setEnabled: setDevMode } = useDevMode();
 
   useEffect(() => {
     if (!open) return;
