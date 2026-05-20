@@ -1030,21 +1030,32 @@ function PipelineView() {
             const letter = CHECKPOINT_LETTERS[stageId];
             if (sessionId && letter) {
               const notesText = (notes ?? []).map((n) => n.trim()).filter(Boolean).join("\n\n");
-              const update: Record<string, unknown> = {};
+              const nowIso = new Date().toISOString();
+              const update: Partial<{
+                checkpoint_a_confirmed: boolean;
+                checkpoint_a_confirmed_at: string;
+                checkpoint_a_notes: string;
+                checkpoint_b_confirmed: boolean;
+                checkpoint_b_confirmed_at: string;
+                checkpoint_b_notes: string;
+                checkpoint_c_confirmed: boolean;
+                checkpoint_c_confirmed_at: string;
+                checkpoint_c_notes: string;
+              }> = {};
               if (letter === "A") {
                 update.checkpoint_a_confirmed = true;
-                update.checkpoint_a_confirmed_at = new Date().toISOString();
+                update.checkpoint_a_confirmed_at = nowIso;
                 if (notesText) update.checkpoint_a_notes = notesText;
               } else if (letter === "B") {
                 update.checkpoint_b_confirmed = true;
-                update.checkpoint_b_confirmed_at = new Date().toISOString();
+                update.checkpoint_b_confirmed_at = nowIso;
                 if (notesText) update.checkpoint_b_notes = notesText;
               } else if (letter === "C") {
                 update.checkpoint_c_confirmed = true;
-                update.checkpoint_c_confirmed_at = new Date().toISOString();
+                update.checkpoint_c_confirmed_at = nowIso;
                 if (notesText) update.checkpoint_c_notes = notesText;
               }
-              supabase.from("sessions").update(update).eq("id", sessionId).then(({ error }) => {
+              void supabase.from("sessions").update(update).eq("id", sessionId).then(({ error }) => {
                 if (error) console.error("[Checkpoint] failed to persist", error);
               });
             }
