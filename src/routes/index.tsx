@@ -1,5 +1,7 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/context/AuthContext";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -22,8 +24,35 @@ const proofPoints = [
 ];
 
 function Index() {
+  const navigate = useNavigate();
+  const { user, isAuthReady } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (isAuthReady && user) {
+      navigate({ to: "/dashboard" });
+    }
+  }, [isAuthReady, user, navigate]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (submitting) return;
+    setError("");
+    setSubmitting(true);
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email: email.trim(),
+      password,
+    });
+    setSubmitting(false);
+    if (signInError) {
+      setError("Incorrect email or password");
+      return;
+    }
+    navigate({ to: "/dashboard" });
+  };
 
   return (
     <main className="flex min-h-screen flex-col lg:flex-row">
@@ -38,12 +67,7 @@ function Index() {
             Sign in to continue
           </h2>
 
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-            }}
-            className="flex flex-col"
-          >
+          <form onSubmit={handleSubmit} className="flex flex-col">
             <label htmlFor="email" className="text-body-sm mb-2 text-text-secondary">
               Email address
             </label>
@@ -51,6 +75,7 @@ function Index() {
               id="email"
               type="email"
               autoComplete="email"
+              required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="input-base h-11"
@@ -64,6 +89,7 @@ function Index() {
               id="password"
               type="password"
               autoComplete="current-password"
+              required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="input-base h-11"
@@ -72,10 +98,21 @@ function Index() {
 
             <button
               type="submit"
-              className="mt-6 inline-flex h-12 items-center justify-center rounded-md bg-primary px-5 text-[14px] font-semibold text-primary-foreground transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface-2"
+              disabled={submitting}
+              className="mt-6 inline-flex h-12 items-center justify-center rounded-md bg-primary px-5 text-[14px] font-semibold text-primary-foreground transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface-2 disabled:opacity-60"
             >
-              Sign In
+              {submitting ? "Signing in…" : "Sign In"}
             </button>
+
+            {error && (
+              <p
+                role="alert"
+                className="text-body-sm mt-3"
+                style={{ color: "var(--color-destructive, #C0392B)" }}
+              >
+                {error}
+              </p>
+            )}
 
             <div className="mt-4 text-center">
               <a

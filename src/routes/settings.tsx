@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
 import { TopNav } from "@/components/TopNav";
-import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/context/AuthContext";
 
 export const Route = createFileRoute("/settings")({
   component: SettingsPage,
@@ -64,18 +64,12 @@ function SettingsPage() {
   const [hydrated, setHydrated] = useState(false);
   const [claudeKeyInput, setClaudeKeyInput] = useState("");
   const [savedFlash, setSavedFlash] = useState(false);
-  const [email, setEmail] = useState<string | null>(null);
+  const { user } = useAuth();
+  const email = user?.email ?? null;
 
   useEffect(() => {
     setPrefs(loadPrefs());
     setHydrated(true);
-    supabase.auth.getUser().then(({ data }) => {
-      setEmail(data.user?.email ?? null);
-    });
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
-      setEmail(session?.user?.email ?? null);
-    });
-    return () => sub.subscription.unsubscribe();
   }, []);
 
   useEffect(() => {
