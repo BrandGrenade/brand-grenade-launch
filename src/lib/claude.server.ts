@@ -16,10 +16,43 @@ export interface CallClaudeArgs {
   maxTokens?: number;
   temperature?: number;
   model?: string;
-  /** When provided, retry status is written to sessions.retry_status. */
+  /** When provided, retry status is written to sessions.retry_status and
+   *  Development Mode (sessions.dev_mode) overrides the system prompt + max_tokens. */
   sessionId?: string;
   /** Human-readable stage label, e.g. "Stage 2". Used in the retry message. */
   stageLabel?: string;
+  /** Stage number / id (e.g. "2", "1B") — used to build the Dev Mode prompt. */
+  stageNumber?: string;
+  /** Stage name (e.g. "Category Intelligence") — used to build the Dev Mode prompt. */
+  stageName?: string;
+}
+
+function buildDevModePrompt(stageNumber: string, stageName: string): string {
+  return `You are Brand Grenade Stage ${stageNumber} — ${stageName}.
+
+Produce a brief but structurally complete output for this stage.
+Include all required sections and headings but keep each section to
+2-3 sentences maximum.
+
+The goal is to confirm pipeline flow and data passing — not to produce
+full production-quality output.
+
+Label your output clearly:
+DEV MODE — ABBREVIATED OUTPUT`;
+}
+
+async function readDevMode(sessionId: string | undefined): Promise<boolean> {
+  if (!sessionId) return false;
+  try {
+    const { data } = await supabaseAdmin
+      .from("sessions")
+      .select("dev_mode")
+      .eq("id", sessionId)
+      .single();
+    return Boolean(data?.dev_mode);
+  } catch {
+    return false;
+  }
 }
 
 async function setRetryStatus(sessionId: string | undefined, message: string | null) {
