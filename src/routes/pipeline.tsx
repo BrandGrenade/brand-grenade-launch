@@ -195,7 +195,7 @@ function PipelineView() {
     supabase
       .from("sessions")
       .select(
-        "id, brand_name, category, strategic_mode, stage_1_output, stage_1_tension_score, stage_1b_required, stage_1_error"
+        "id, brand_name, category, strategic_mode, stage_1_output, stage_1_tension_score, stage_1b_required, stage_1b_output, stage_1_error"
       )
       .eq("id", sessionId)
       .single()
@@ -207,11 +207,12 @@ function PipelineView() {
           return;
         }
         setSession(data as SessionData);
+        if (data.stage_1b_output) setStage1bOutput(data.stage_1b_output);
       });
     return () => {
       cancelled = true;
     };
-  }, [sessionId]);
+  }, [sessionId, retryNonce]);
 
   // Trigger Stage 1 when session loads (or on retry).
   useEffect(() => {
