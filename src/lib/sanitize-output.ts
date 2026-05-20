@@ -184,6 +184,7 @@ export function sanitizeStageOutput(raw: string): string {
   const kept: string[] = [];
   for (const line of text.split("\n")) {
     if (LINE_STRIP_PATTERNS.some((p) => p.test(line))) continue;
+    if (NUCLEAR_LINE_PATTERNS.some((p) => p.test(line))) continue;
     if (LABEL_ONLY_LINE.test(line)) continue;
     kept.push(line);
   }
