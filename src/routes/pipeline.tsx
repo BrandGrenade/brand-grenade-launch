@@ -184,6 +184,19 @@ function PipelineView() {
               }
             }
           }}
+          onConfirmCheckpoint={(stageId) => {
+            setStatuses((prev) => {
+              const next = { ...prev, [stageId]: "complete" as StageStatus };
+              const idx = STAGES.findIndex((s) => s.id === stageId);
+              for (let i = idx + 1; i < STAGES.length; i++) {
+                if (!STAGES[i].conditional) {
+                  next[STAGES[i].id] = "running";
+                  break;
+                }
+              }
+              return next;
+            });
+          }}
         />
       </div>
     </div>
