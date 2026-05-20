@@ -31,7 +31,6 @@ const SMP =
   "Hypernova settles the books, not just the transfer — the only payments rail finance teams close their month around.";
 const FIELD = "Finance Stack Trust";
 const BRAND_ROLE = "Default Integration";
-const STRATEGIC_MODE = "Category Reframe";
 
 const STAGES = [
   "Brief Sanitisation",
@@ -207,8 +206,7 @@ function CompletePage() {
             className="text-body-sm"
             style={{ color: "var(--color-text-tertiary)" }}
           >
-            Field: {FIELD} | Brand Role: {BRAND_ROLE} | Strategic Mode:{" "}
-            {STRATEGIC_MODE}
+            Field: {FIELD} | Brand Role: {BRAND_ROLE}
           </p>
         </div>
 
