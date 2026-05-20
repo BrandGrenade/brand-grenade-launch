@@ -319,7 +319,28 @@ function PipelineView() {
           setStage7Output(data.stage_7_output);
           setStatuses((p) => ({ ...p, "07": "complete" }));
         }
+        if (data.stage_8_output) {
+          setStage8Output(data.stage_8_output);
+          setStatuses((p) => ({ ...p, "08": data.checkpoint_b_confirmed ? "complete" : "checkpoint" }));
+        }
+        if (data.stage_9_output) {
+          setStage9Output(data.stage_9_output);
+          setStatuses((p) => ({ ...p, "09": "complete" }));
+        }
+        if (data.stage_10_output) {
+          setStage10Output(data.stage_10_output);
+          setStatuses((p) => ({ ...p, "10": "complete" }));
+        }
+        if (data.stage_11_output) {
+          setStage11Output(data.stage_11_output);
+          setStatuses((p) => ({ ...p, "11": "complete" }));
+        }
+        if (data.stage_12_output) {
+          setStage12Output(data.stage_12_output);
+          setStatuses((p) => ({ ...p, "12": data.checkpoint_c_confirmed ? "complete" : "checkpoint" }));
+        }
       });
+
     return () => {
       cancelled = true;
     };
