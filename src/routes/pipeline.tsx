@@ -818,7 +818,7 @@ function RightPanel({
   return (
     <section className="relative flex min-w-0 flex-1 flex-col bg-background">
       <div className="flex-1 overflow-y-auto px-6 py-10 sm:px-12 sm:py-10">
-        {isError && stage.id === "01" ? (
+        {isError && (stage.id === "01" || stage.id === "02") ? (
           <div style={{ paddingBottom: 80 }}>
             <header>
               <span className="text-label text-primary">
@@ -829,7 +829,7 @@ function RightPanel({
                 className="text-body-sm mt-3"
                 style={{ color: "var(--color-destructive)" }}
               >
-                Stage 1 failed
+                Stage {stage.number} failed
               </p>
               <hr className="my-6 h-px border-0 bg-border" />
             </header>
@@ -852,7 +852,7 @@ function RightPanel({
                   color: "var(--color-primary-foreground)",
                 }}
               >
-                Retry Stage 1
+                Retry Stage {stage.number}
               </button>
             </div>
           </div>
