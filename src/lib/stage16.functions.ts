@@ -87,16 +87,17 @@ export const runStage16 = createServerFn({ method: "POST" })
       stageName: "Document Assembly",
       });
 
-      // Mark pipeline complete when all three variants exist.
-      const others = (Object.values(COLUMN_BY_FORMAT) as Array<
-        "stage_16_agency_output" | "stage_16_consulting_output" | "stage_16_workshop_output"
-      >).filter((c) => c !== column);
-      const otherFilled = others.every((c) => !!session[c]);
+      const outputUpdate =
+        data.format === "agency"
+          ? { stage_16_agency_output: output }
+          : data.format === "consulting"
+          ? { stage_16_consulting_output: output }
+          : { stage_16_workshop_output: output };
 
       const { error: ue } = await supabaseAdmin
         .from("sessions")
         .update({
-          [column]: output,
+          ...outputUpdate,
           stage_16_error: null,
           status: "complete",
         })
