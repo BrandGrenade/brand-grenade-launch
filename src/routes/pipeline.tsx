@@ -570,7 +570,8 @@ function PipelineView() {
         if (cancelled) return;
         setStage7Output(result.output);
         setStage7Loading(false);
-        setStatuses((p) => ({ ...p, "07": "complete" }));
+        setStatuses((p) => ({ ...p, "07": "complete", "08": "running" }));
+        setSelectedId("08");
       })
       .catch((err: unknown) => {
         if (cancelled) return;
@@ -583,6 +584,135 @@ function PipelineView() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId, session?.id, statuses["07"], stage7Output]);
+
+  // Stage 8 — SMP Generation, ends at Checkpoint B.
+  useEffect(() => {
+    if (!sessionId || !session) return;
+    if (statuses["08"] !== "running") return;
+    if (stage8Output) return;
+    let cancelled = false;
+    setStage8Loading(true);
+    setStage8Error(null);
+    runStage8Fn({ data: { sessionId } })
+      .then((result) => {
+        if (cancelled) return;
+        setStage8Output(result.output);
+        setStage8Loading(false);
+        setStatuses((p) => ({ ...p, "08": "checkpoint" }));
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        setStage8Loading(false);
+        setStage8Error(err instanceof Error ? err.message : "Stage 8 failed");
+        setStatuses((p) => ({ ...p, "08": "error" }));
+      });
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionId, session?.id, statuses["08"], stage8Output]);
+
+  // Stage 9 — Divergence Validation.
+  useEffect(() => {
+    if (!sessionId || !session) return;
+    if (statuses["09"] !== "running") return;
+    if (stage9Output) return;
+    let cancelled = false;
+    setStage9Loading(true);
+    setStage9Error(null);
+    runStage9Fn({ data: { sessionId } })
+      .then((result) => {
+        if (cancelled) return;
+        setStage9Output(result.output);
+        setStage9Loading(false);
+        setStatuses((p) => ({ ...p, "09": "complete", "10": "running" }));
+        setSelectedId("10");
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        setStage9Loading(false);
+        setStage9Error(err instanceof Error ? err.message : "Stage 9 failed");
+        setStatuses((p) => ({ ...p, "09": "error" }));
+      });
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionId, session?.id, statuses["09"], stage9Output]);
+
+  // Stage 10 — Scoring.
+  useEffect(() => {
+    if (!sessionId || !session) return;
+    if (statuses["10"] !== "running") return;
+    if (stage10Output) return;
+    let cancelled = false;
+    setStage10Loading(true);
+    setStage10Error(null);
+    runStage10Fn({ data: { sessionId } })
+      .then((result) => {
+        if (cancelled) return;
+        setStage10Output(result.output);
+        setStage10Loading(false);
+        setStatuses((p) => ({ ...p, "10": "complete", "11": "running" }));
+        setSelectedId("11");
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        setStage10Loading(false);
+        setStage10Error(err instanceof Error ? err.message : "Stage 10 failed");
+        setStatuses((p) => ({ ...p, "10": "error" }));
+      });
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionId, session?.id, statuses["10"], stage10Output]);
+
+  // Stage 11 — Pressure Test.
+  useEffect(() => {
+    if (!sessionId || !session) return;
+    if (statuses["11"] !== "running") return;
+    if (stage11Output) return;
+    let cancelled = false;
+    setStage11Loading(true);
+    setStage11Error(null);
+    runStage11Fn({ data: { sessionId } })
+      .then((result) => {
+        if (cancelled) return;
+        setStage11Output(result.output);
+        setStage11Loading(false);
+        setStatuses((p) => ({ ...p, "11": "complete", "12": "running" }));
+        setSelectedId("12");
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        setStage11Loading(false);
+        setStage11Error(err instanceof Error ? err.message : "Stage 11 failed");
+        setStatuses((p) => ({ ...p, "11": "error" }));
+      });
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionId, session?.id, statuses["11"], stage11Output]);
+
+  // Stage 12 — SMP Selection presentation. Ends at Checkpoint C (human selects).
+  useEffect(() => {
+    if (!sessionId || !session) return;
+    if (statuses["12"] !== "running") return;
+    if (stage12Output) return;
+    let cancelled = false;
+    setStage12Loading(true);
+    setStage12Error(null);
+    runStage12Fn({ data: { sessionId } })
+      .then((result) => {
+        if (cancelled) return;
+        setStage12Output(result.output);
+        setStage12Loading(false);
+        setStatuses((p) => ({ ...p, "12": "checkpoint" }));
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        setStage12Loading(false);
+        setStage12Error(err instanceof Error ? err.message : "Stage 12 failed");
+        setStatuses((p) => ({ ...p, "12": "error" }));
+      });
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionId, session?.id, statuses["12"], stage12Output]);
+
 
   // Per-stage output: use live Stage 1 / 1B / 2 / 3 output, demo stubs for others.
   const stageOutputs = useMemo<Record<string, string>>(() => {
