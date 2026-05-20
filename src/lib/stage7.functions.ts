@@ -53,7 +53,7 @@ export const runStage7 = createServerFn({ method: "POST" })
           "content-type": "application/json",
         },
         body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
+          model: "claude-sonnet-4-5",
           max_tokens: 8192,
           temperature: 0.6,
           system: STAGE_7_SYSTEM_PROMPT,
