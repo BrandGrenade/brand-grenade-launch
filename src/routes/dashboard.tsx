@@ -241,14 +241,24 @@ function SessionsTable({ sessions }: { sessions: DbSession[] }) {
                 </td>
                 <td className="text-body px-4 py-4 text-text-secondary">{fmtDate(s.updated_at)}</td>
                 <td className="px-4 py-4">
-                  <Link
-                    to={ui === "complete" ? "/complete" : "/pipeline"}
-                    search={{ session: s.id }}
-                    className="text-body font-medium text-primary transition-colors hover:text-primary-hover"
-                  >
-                    {ui === "complete" ? "View" : "Continue"}
-                  </Link>
-
+                  <div className="flex items-center gap-3">
+                    {ui === "complete" && (
+                      <Link
+                        to="/complete"
+                        search={{ session: s.id }}
+                        className="text-body font-medium text-primary transition-colors hover:text-primary-hover"
+                      >
+                        View document
+                      </Link>
+                    )}
+                    <Link
+                      to="/pipeline"
+                      search={{ session: s.id }}
+                      className="text-body font-medium text-primary transition-colors hover:text-primary-hover"
+                    >
+                      {ui === "complete" ? "View workflow" : "Continue"}
+                    </Link>
+                  </div>
                 </td>
               </tr>
             );
