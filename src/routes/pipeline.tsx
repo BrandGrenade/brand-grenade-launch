@@ -869,34 +869,28 @@ function PipelineView() {
           tensionScore={selected.id === "01" ? session?.stage_1_tension_score ?? null : null}
           stage1bRequired={selected.id === "01" ? session?.stage_1b_required ?? false : false}
           onRetry={() => {
-            if (selected.id === "02") {
-              setStage2Error(null);
-              setStage2Output(null);
-              setStatuses((p) => ({ ...p, "02": "running" }));
-            } else if (selected.id === "03") {
-              setStage3Error(null);
-              setStage3Output(null);
-              setStatuses((p) => ({ ...p, "03": "running" }));
-            } else if (selected.id === "04") {
-              setStage4Error(null);
-              setStage4Output(null);
-              setStatuses((p) => ({ ...p, "04": "running" }));
-            } else if (selected.id === "05") {
-              setStage5Error(null);
-              setStage5Output(null);
-              setStatuses((p) => ({ ...p, "05": "running" }));
-            } else if (selected.id === "06") {
-              setStage6Error(null);
-              setStage6Output(null);
-              setStatuses((p) => ({ ...p, "06": "running" }));
-            } else if (selected.id === "07") {
-              setStage7Error(null);
-              setStage7Output(null);
-              setStatuses((p) => ({ ...p, "07": "running" }));
+            const id = selected.id;
+            const map: Record<string, () => void> = {
+              "02": () => { setStage2Error(null); setStage2Output(null); },
+              "03": () => { setStage3Error(null); setStage3Output(null); },
+              "04": () => { setStage4Error(null); setStage4Output(null); },
+              "05": () => { setStage5Error(null); setStage5Output(null); },
+              "06": () => { setStage6Error(null); setStage6Output(null); },
+              "07": () => { setStage7Error(null); setStage7Output(null); },
+              "08": () => { setStage8Error(null); setStage8Output(null); },
+              "09": () => { setStage9Error(null); setStage9Output(null); },
+              "10": () => { setStage10Error(null); setStage10Output(null); },
+              "11": () => { setStage11Error(null); setStage11Output(null); },
+              "12": () => { setStage12Error(null); setStage12Output(null); },
+            };
+            if (map[id]) {
+              map[id]();
+              setStatuses((p) => ({ ...p, [id]: "running" }));
             } else {
               setRetryNonce((n) => n + 1);
             }
           }}
+
           showRationale={rationaleForId === selectedId}
           showBrandIntel={selectedId === "13" && !intelSubmitted && selectedStatus === "running"}
           showStage1bResubmit={
