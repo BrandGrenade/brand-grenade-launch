@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { runStage1 } from "@/lib/stage1.functions";
 import { runStage1b, resubmitBrief } from "@/lib/stage1b.functions";
 import { runStage2 } from "@/lib/stage2.functions";
+import { runStage3 } from "@/lib/stage3.functions";
 
 const pipelineSearchSchema = z.object({
   session: z.string().uuid().optional(),
@@ -148,6 +149,8 @@ interface SessionData {
   stage_1_error: string | null;
   stage_2_output: string | null;
   stage_2_error: string | null;
+  stage_3_output: string | null;
+  stage_3_error: string | null;
 }
 
 function PipelineView() {
@@ -156,6 +159,7 @@ function PipelineView() {
   const runStage1bFn = useServerFn(runStage1b);
   const resubmitBriefFn = useServerFn(resubmitBrief);
   const runStage2Fn = useServerFn(runStage2);
+  const runStage3Fn = useServerFn(runStage3);
 
   const [session, setSession] = useState<SessionData | null>(null);
   const [stage1Output, setStage1Output] = useState<string | null>(null);
@@ -163,9 +167,12 @@ function PipelineView() {
   const [stage1Error, setStage1Error] = useState<string | null>(null);
   const [stage2Output, setStage2Output] = useState<string | null>(null);
   const [stage2Error, setStage2Error] = useState<string | null>(null);
+  const [stage3Output, setStage3Output] = useState<string | null>(null);
+  const [stage3Error, setStage3Error] = useState<string | null>(null);
   const [stage1Loading, setStage1Loading] = useState(false);
   const [stage1bLoading, setStage1bLoading] = useState(false);
   const [stage2Loading, setStage2Loading] = useState(false);
+  const [stage3Loading, setStage3Loading] = useState(false);
   const [resubmitting, setResubmitting] = useState(false);
   const [retryNonce, setRetryNonce] = useState(0);
 
@@ -202,7 +209,7 @@ function PipelineView() {
     supabase
       .from("sessions")
       .select(
-        "id, brand_name, category, strategic_mode, stage_1_output, stage_1_tension_score, stage_1b_required, stage_1b_output, stage_1_error, stage_2_output, stage_2_error"
+        "id, brand_name, category, strategic_mode, stage_1_output, stage_1_tension_score, stage_1b_required, stage_1b_output, stage_1_error, stage_2_output, stage_2_error, stage_3_output, stage_3_error"
       )
       .eq("id", sessionId)
       .single()
@@ -218,6 +225,10 @@ function PipelineView() {
         if (data.stage_2_output) {
           setStage2Output(data.stage_2_output);
           setStatuses((p) => ({ ...p, "02": "complete" }));
+        }
+        if (data.stage_3_output) {
+          setStage3Output(data.stage_3_output);
+          setStatuses((p) => ({ ...p, "03": "complete" }));
         }
       });
     return () => {
@@ -306,7 +317,9 @@ function PipelineView() {
         if (cancelled) return;
         setStage2Output(result.output);
         setStage2Loading(false);
-        setStatuses((p) => ({ ...p, "02": "complete" }));
+        // Auto-advance: kick Stage 3 into "running" as soon as Stage 2 finishes.
+        setStatuses((p) => ({ ...p, "02": "complete", "03": "running" }));
+        setSelectedId("03");
       })
       .catch((err: unknown) => {
         if (cancelled) return;
@@ -320,7 +333,34 @@ function PipelineView() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId, session?.id, statuses["02"], stage2Output]);
 
-  // Per-stage output: use live Stage 1 / 1B / 2 output, demo stubs for others.
+  // Trigger Stage 3 when its status flips to "running".
+  useEffect(() => {
+    if (!sessionId || !session) return;
+    if (statuses["03"] !== "running") return;
+    if (stage3Output) return;
+    let cancelled = false;
+    setStage3Loading(true);
+    setStage3Error(null);
+    runStage3Fn({ data: { sessionId } })
+      .then((result) => {
+        if (cancelled) return;
+        setStage3Output(result.output);
+        setStage3Loading(false);
+        setStatuses((p) => ({ ...p, "03": "complete" }));
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        setStage3Loading(false);
+        setStage3Error(err instanceof Error ? err.message : "Stage 3 failed");
+        setStatuses((p) => ({ ...p, "03": "error" }));
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionId, session?.id, statuses["03"], stage3Output]);
+
+  // Per-stage output: use live Stage 1 / 1B / 2 / 3 output, demo stubs for others.
   const stageOutputs = useMemo<Record<string, string>>(() => {
     if (!sessionId) return STAGE_OUTPUTS;
     return {
@@ -340,6 +380,11 @@ function PipelineView() {
         (stage2Loading
           ? "Building Category Memory Object (CMM) with Claude — this can take 30–90 seconds…"
           : "Awaiting Stage 2 output."),
+      "03":
+        stage3Output ??
+        (stage3Loading
+          ? "Generating the Strategic Constraint Matrix with Claude — this can take 30–90 seconds…"
+          : "Awaiting Stage 3 output."),
     };
   }, [
     sessionId,
@@ -349,6 +394,8 @@ function PipelineView() {
     stage1bLoading,
     stage2Output,
     stage2Loading,
+    stage3Output,
+    stage3Loading,
   ]);
 
   // Progress — count main (non-conditional) stages.
@@ -400,6 +447,8 @@ function PipelineView() {
               ? stage1Error
               : selected.id === "02"
               ? stage2Error
+              : selected.id === "03"
+              ? stage3Error
               : null
           }
           tensionScore={selected.id === "01" ? session?.stage_1_tension_score ?? null : null}
@@ -409,6 +458,10 @@ function PipelineView() {
               setStage2Error(null);
               setStage2Output(null);
               setStatuses((p) => ({ ...p, "02": "running" }));
+            } else if (selected.id === "03") {
+              setStage3Error(null);
+              setStage3Output(null);
+              setStatuses((p) => ({ ...p, "03": "running" }));
             } else {
               setRetryNonce((n) => n + 1);
             }
@@ -826,7 +879,7 @@ function RightPanel({
   return (
     <section className="relative flex min-w-0 flex-1 flex-col bg-background">
       <div className="flex-1 overflow-y-auto px-6 py-10 sm:px-12 sm:py-10">
-        {isError && (stage.id === "01" || stage.id === "02") ? (
+        {isError && (stage.id === "01" || stage.id === "02" || stage.id === "03") ? (
           <div style={{ paddingBottom: 80 }}>
             <header>
               <span className="text-label text-primary">
