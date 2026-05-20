@@ -12,6 +12,7 @@ import { runStage1b, resubmitBrief } from "@/lib/stage1b.functions";
 import { runStage2 } from "@/lib/stage2.functions";
 import { runStage3 } from "@/lib/stage3.functions";
 import { runStage4 } from "@/lib/stage4.functions";
+import { runStage5 } from "@/lib/stage5.functions";
 
 const pipelineSearchSchema = z.object({
   session: z.string().uuid().optional(),
@@ -154,6 +155,8 @@ interface SessionData {
   stage_3_error: string | null;
   stage_4_output: string | null;
   stage_4_error: string | null;
+  stage_5_output: string | null;
+  stage_5_error: string | null;
 }
 
 function PipelineView() {
@@ -164,6 +167,7 @@ function PipelineView() {
   const runStage2Fn = useServerFn(runStage2);
   const runStage3Fn = useServerFn(runStage3);
   const runStage4Fn = useServerFn(runStage4);
+  const runStage5Fn = useServerFn(runStage5);
 
   const [session, setSession] = useState<SessionData | null>(null);
   const [stage1Output, setStage1Output] = useState<string | null>(null);
@@ -175,11 +179,14 @@ function PipelineView() {
   const [stage3Error, setStage3Error] = useState<string | null>(null);
   const [stage4Output, setStage4Output] = useState<string | null>(null);
   const [stage4Error, setStage4Error] = useState<string | null>(null);
+  const [stage5Output, setStage5Output] = useState<string | null>(null);
+  const [stage5Error, setStage5Error] = useState<string | null>(null);
   const [stage1Loading, setStage1Loading] = useState(false);
   const [stage1bLoading, setStage1bLoading] = useState(false);
   const [stage2Loading, setStage2Loading] = useState(false);
   const [stage3Loading, setStage3Loading] = useState(false);
   const [stage4Loading, setStage4Loading] = useState(false);
+  const [stage5Loading, setStage5Loading] = useState(false);
   const [resubmitting, setResubmitting] = useState(false);
   const [retryNonce, setRetryNonce] = useState(0);
 
@@ -216,7 +223,7 @@ function PipelineView() {
     supabase
       .from("sessions")
       .select(
-        "id, brand_name, category, strategic_mode, stage_1_output, stage_1_tension_score, stage_1b_required, stage_1b_output, stage_1_error, stage_2_output, stage_2_error, stage_3_output, stage_3_error, stage_4_output, stage_4_error"
+        "id, brand_name, category, strategic_mode, stage_1_output, stage_1_tension_score, stage_1b_required, stage_1b_output, stage_1_error, stage_2_output, stage_2_error, stage_3_output, stage_3_error, stage_4_output, stage_4_error, stage_5_output, stage_5_error"
       )
       .eq("id", sessionId)
       .single()
@@ -240,6 +247,10 @@ function PipelineView() {
         if (data.stage_4_output) {
           setStage4Output(data.stage_4_output);
           setStatuses((p) => ({ ...p, "04": "complete" }));
+        }
+        if (data.stage_5_output) {
+          setStage5Output(data.stage_5_output);
+          setStatuses((p) => ({ ...p, "05": "complete" }));
         }
       });
     return () => {
@@ -386,7 +397,9 @@ function PipelineView() {
         if (cancelled) return;
         setStage4Output(result.output);
         setStage4Loading(false);
-        setStatuses((p) => ({ ...p, "04": "complete" }));
+        // Auto-advance to Stage 5.
+        setStatuses((p) => ({ ...p, "04": "complete", "05": "running" }));
+        setSelectedId("05");
       })
       .catch((err: unknown) => {
         if (cancelled) return;
@@ -399,6 +412,33 @@ function PipelineView() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId, session?.id, statuses["04"], stage4Output]);
+
+  // Trigger Stage 5 when its status flips to "running".
+  useEffect(() => {
+    if (!sessionId || !session) return;
+    if (statuses["05"] !== "running") return;
+    if (stage5Output) return;
+    let cancelled = false;
+    setStage5Loading(true);
+    setStage5Error(null);
+    runStage5Fn({ data: { sessionId } })
+      .then((result) => {
+        if (cancelled) return;
+        setStage5Output(result.output);
+        setStage5Loading(false);
+        setStatuses((p) => ({ ...p, "05": "complete" }));
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        setStage5Loading(false);
+        setStage5Error(err instanceof Error ? err.message : "Stage 5 failed");
+        setStatuses((p) => ({ ...p, "05": "error" }));
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionId, session?.id, statuses["05"], stage5Output]);
 
   // Per-stage output: use live Stage 1 / 1B / 2 / 3 output, demo stubs for others.
   const stageOutputs = useMemo<Record<string, string>>(() => {
@@ -430,6 +470,11 @@ function PipelineView() {
         (stage4Loading
           ? "Generating the Strategic Interpretation Set (SIS) with Claude — this can take 30–90 seconds…"
           : "Awaiting Stage 4 output."),
+      "05":
+        stage5Output ??
+        (stage5Loading
+          ? "Generating per-frame insight sets with Claude — this can take 60–120 seconds…"
+          : "Awaiting Stage 5 output."),
     };
   }, [
     sessionId,
@@ -443,6 +488,8 @@ function PipelineView() {
     stage3Loading,
     stage4Output,
     stage4Loading,
+    stage5Output,
+    stage5Loading,
   ]);
 
   // Progress — count main (non-conditional) stages.
@@ -498,6 +545,8 @@ function PipelineView() {
               ? stage3Error
               : selected.id === "04"
               ? stage4Error
+              : selected.id === "05"
+              ? stage5Error
               : null
           }
           tensionScore={selected.id === "01" ? session?.stage_1_tension_score ?? null : null}
@@ -515,6 +564,10 @@ function PipelineView() {
               setStage4Error(null);
               setStage4Output(null);
               setStatuses((p) => ({ ...p, "04": "running" }));
+            } else if (selected.id === "05") {
+              setStage5Error(null);
+              setStage5Output(null);
+              setStatuses((p) => ({ ...p, "05": "running" }));
             } else {
               setRetryNonce((n) => n + 1);
             }
@@ -932,7 +985,7 @@ function RightPanel({
   return (
     <section className="relative flex min-w-0 flex-1 flex-col bg-background">
       <div className="flex-1 overflow-y-auto px-6 py-10 sm:px-12 sm:py-10">
-        {isError && (stage.id === "01" || stage.id === "02" || stage.id === "03" || stage.id === "04") ? (
+        {isError && (stage.id === "01" || stage.id === "02" || stage.id === "03" || stage.id === "04" || stage.id === "05") ? (
           <div style={{ paddingBottom: 80 }}>
             <header>
               <span className="text-label text-primary">
