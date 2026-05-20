@@ -35,9 +35,7 @@ export const runStage2 = createServerFn({ method: "POST" })
     const userMessage = buildStage2UserMessage({
       brandName: session.brand_name,
       category: session.category,
-      strategicMode: session.strategic_mode,
       sanitisedBrief: trimStage1ForDownstream(session.stage_1_output),
-      stage1bOutput: session.stage_1b_output ?? null,
     });
 
     let output: string;
