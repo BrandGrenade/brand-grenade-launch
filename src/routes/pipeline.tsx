@@ -841,6 +841,12 @@ function PipelineView() {
     stage8Loading || stage9Loading || stage10Loading || stage11Loading ||
     stage12Loading;
 
+  // Dynamic document title: "[Brand] — Stage X — Brand Grenade"
+  useEffect(() => {
+    document.title = `${brandLabel} — Stage ${Math.max(1, currentMainNumber)} — Brand Grenade`;
+  }, [brandLabel, currentMainNumber]);
+
+
   // Keyboard shortcut: Cmd/Ctrl+Enter confirms standard checkpoints.
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
