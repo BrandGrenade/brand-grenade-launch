@@ -895,6 +895,9 @@ function PipelineView() {
           stage={selected}
           status={selectedStatus}
           fullOutput={stageOutputs[selected.id] ?? "Output pending."}
+          isViewingHistorical={isViewingHistorical}
+          onBackToCurrent={() => setSelectedId(currentActiveId)}
+
           stage1Error={
             selected.id === "01" || selected.id === "01B"
               ? stage1Error
