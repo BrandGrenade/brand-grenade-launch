@@ -729,6 +729,9 @@ function RightPanel({
   onRetry,
   showRationale,
   showBrandIntel,
+  showStage1bResubmit,
+  resubmitting,
+  onResubmitBrief,
   onSubmitBrandIntel,
   onNext,
   onConfirmCheckpoint,
@@ -742,6 +745,9 @@ function RightPanel({
   onRetry: () => void;
   showRationale: boolean;
   showBrandIntel: boolean;
+  showStage1bResubmit: boolean;
+  resubmitting: boolean;
+  onResubmitBrief: (additionalBrief: string) => void | Promise<void>;
   onSubmitBrandIntel: () => void;
   onNext: () => void;
   onConfirmCheckpoint: (stageId: string) => void;
