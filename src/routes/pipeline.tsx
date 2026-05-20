@@ -514,7 +514,29 @@ function PipelineView() {
         (stage5Loading
           ? "Generating per-frame insight sets with Claude — this can take 60–120 seconds…"
           : "Awaiting Stage 5 output."),
+      "06":
+        stage6Output ??
+        (stage6Loading
+          ? "Filtering insights with the Calibrated Insight Intelligence Gate — this can take 60–120 seconds…"
+          : "Awaiting Stage 6 output."),
     };
+  }, [
+    sessionId,
+    stage1Output,
+    stage1Loading,
+    stage1bOutput,
+    stage1bLoading,
+    stage2Output,
+    stage2Loading,
+    stage3Output,
+    stage3Loading,
+    stage4Output,
+    stage4Loading,
+    stage5Output,
+    stage5Loading,
+    stage6Output,
+    stage6Loading,
+  ]);
   }, [
     sessionId,
     stage1Output,
