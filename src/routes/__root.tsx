@@ -10,6 +10,7 @@ import {
 
 import appCss from "../styles.css?url";
 import { MobileGate } from "@/components/MobileGate";
+import { DevModeBanner } from "@/components/DevModeBanner";
 import { AuthProvider } from "@/context/AuthContext";
 
 
