@@ -7,6 +7,12 @@ import {
   buildStage16UserMessage,
   type Stage16Format,
 } from "./stage16-prompt";
+import {
+  trimBrandFitForDownstream,
+  extractStrategicLineageStatement,
+  extractStage14Dimensions12,
+  extractStage14CCore,
+} from "./context-trim";
 
 const FormatSchema = z.enum(["agency", "consulting", "workshop"]);
 const Input = z.object({
