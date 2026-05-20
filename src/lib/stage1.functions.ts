@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { streamClaude } from "./claude.server";
+import { callClaude } from "./claude.server";
 import { STAGE_1_SYSTEM_PROMPT, buildStage1UserMessage } from "./stage1-prompt";
 
 const CreateSessionInput = z.object({
@@ -32,9 +32,9 @@ export const createSession = createServerFn({ method: "POST" })
     return { sessionId: row.id as string };
   });
 
-const RunStage1Input = z.object({
-  sessionId: z.string().uuid(),
-});
+const RunStage1Input = z.object({ sessionId: z.string().uuid() });
+
+interface Stage1Result { output: string; tensionScore: number | null; stage1bRequired: boolean; }
 
 function extractTensionScore(text: string): number | null {
   const m = text.match(/Strategic\s+Tension\s+Score\s*[:\-]?\s*\**\s*(\d{1,2})\s*\/\s*10/i);
@@ -45,7 +45,7 @@ function extractTensionScore(text: string): number | null {
 
 export const runStage1 = createServerFn({ method: "POST" })
   .inputValidator((input) => RunStage1Input.parse(input))
-  .handler(async function* ({ data }) {
+  .handler(async ({ data }): Promise<Stage1Result> => {
     const { data: session, error: loadErr } = await supabaseAdmin
       .from("sessions")
       .select("brand_name, category, strategic_mode, brief_text, stage_1_output")
@@ -55,14 +55,7 @@ export const runStage1 = createServerFn({ method: "POST" })
 
     if (session.stage_1_output) {
       const score = extractTensionScore(session.stage_1_output);
-      yield { kind: "delta" as const, text: session.stage_1_output };
-      yield {
-        kind: "done" as const,
-        output: session.stage_1_output,
-        tensionScore: score,
-        stage1bRequired: score !== null && score < 7,
-      };
-      return;
+      return { output: session.stage_1_output, tensionScore: score, stage1bRequired: score !== null && score < 7 };
     }
 
     const userMessage = buildStage1UserMessage({
@@ -72,9 +65,9 @@ export const runStage1 = createServerFn({ method: "POST" })
       briefText: session.brief_text,
     });
 
-    let output = "";
+    let output: string;
     try {
-      for await (const delta of streamClaude({
+      output = await callClaude({
         systemPrompt: STAGE_1_SYSTEM_PROMPT,
         userMessage,
         maxTokens: 3000,
@@ -83,16 +76,10 @@ export const runStage1 = createServerFn({ method: "POST" })
         stageLabel: "Stage 1",
         stageNumber: "1",
         stageName: "Brief Analysis",
-      })) {
-        output += delta;
-        yield { kind: "delta" as const, text: delta };
-      }
+      });
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Stage 1 failed";
-      await supabaseAdmin
-        .from("sessions")
-        .update({ stage_1_error: msg })
-        .eq("id", data.sessionId);
+      await supabaseAdmin.from("sessions").update({ stage_1_error: msg }).eq("id", data.sessionId);
       throw e instanceof Error ? e : new Error(msg);
     }
 
@@ -101,14 +88,9 @@ export const runStage1 = createServerFn({ method: "POST" })
 
     const { error: updateErr } = await supabaseAdmin
       .from("sessions")
-      .update({
-        stage_1_output: output,
-        stage_1_tension_score: tensionScore,
-        stage_1b_required: stage1bRequired,
-        stage_1_error: null,
-      })
+      .update({ stage_1_output: output, stage_1_tension_score: tensionScore, stage_1b_required: stage1bRequired, stage_1_error: null })
       .eq("id", data.sessionId);
     if (updateErr) throw new Error(`Failed to save Stage 1 output: ${updateErr.message}`);
 
-    yield { kind: "done" as const, output, tensionScore, stage1bRequired };
+    return { output, tensionScore, stage1bRequired };
   });
