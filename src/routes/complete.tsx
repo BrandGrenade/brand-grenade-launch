@@ -1,6 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { TopNav } from "@/components/TopNav";
+import { generateStrategicPlatformPdf } from "@/lib/pdf-generator";
+import { SAMPLE_STAGE_16 } from "@/lib/stage16-sample";
 
 export const Route = createFileRoute("/complete")({
   component: CompletePage,
