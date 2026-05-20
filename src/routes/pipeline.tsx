@@ -404,7 +404,15 @@ function PipelineView() {
           }
           tensionScore={selected.id === "01" ? session?.stage_1_tension_score ?? null : null}
           stage1bRequired={selected.id === "01" ? session?.stage_1b_required ?? false : false}
-          onRetry={() => setRetryNonce((n) => n + 1)}
+          onRetry={() => {
+            if (selected.id === "02") {
+              setStage2Error(null);
+              setStage2Output(null);
+              setStatuses((p) => ({ ...p, "02": "running" }));
+            } else {
+              setRetryNonce((n) => n + 1);
+            }
+          }}
           showRationale={rationaleForId === selectedId}
           showBrandIntel={selectedId === "13" && !intelSubmitted && selectedStatus === "running"}
           showStage1bResubmit={
