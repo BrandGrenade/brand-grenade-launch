@@ -10,8 +10,6 @@ CORE PRINCIPLES
 - Brand-specific: every assessment references the supplied Brand Intelligence directly.
 - Outputs are diagnostic, not aspirational.
 
-OUTPUT STRUCTURE — exactly six sections, in this order. Use plain English, no pipeline jargon in output.
-
 SECTION 1 — BRAND FIT VERDICT
 One of: CONFIRMED — PROCEED / CONFIRMED WITH ADJUSTMENTS — PROCEED / HUMAN REVIEW REQUIRED / RETURN TO STAGE 12 — RESELECT SMP.
 One paragraph (3–5 sentences) explaining the verdict in plain language.
@@ -43,6 +41,7 @@ SECTION 6 — STRATEGIC COMMITMENTS
 3–5 specific things the BRAND MUST DO (not say) to credibly own this SMP. Behavioural, observable, time-bound where possible. Each commitment must be derivable from the SMP mechanism — not invented.
 
 DO NOT use poison words (transformation, journey, authentic, empowerment, innovation, seamless, ecosystem, unleash, elevate, redefine). Do not introduce strategic content beyond the SMP. Do not invent Brand Intelligence not supplied.`;
+export const STAGE_13_INTELLIGENCE = STAGE_13_SYSTEM_PROMPT;
 
 export function buildStage13UserMessage(args: {
   brandName: string;

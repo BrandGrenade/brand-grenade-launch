@@ -33,8 +33,6 @@ PRIORITY RECOMMENDATION (after scoring)
 - Component B: highest minimum dimension (tie-break for ties on A)
 - Component C: best alignment with Stage 1 Strategic Opportunity (rationale required)
 
-OUTPUT STRUCTURE (strict)
-
 HEADER
 SMPS SCORED: [n]
 PROXIMITY WARNINGS RECEIVED FROM STAGE 9: [n / none]
@@ -66,15 +64,8 @@ SMPS PASSING TO STAGE 11: [n]
 SMPS ELIMINATED: [n]
 PROXIMITY WARNINGS FORWARDED: [n]
 ALL ELIMINATIONS ON DIFFERENT DIMENSIONS: YES / NO — [if NO, flag systemic failure]
-READY FOR STAGE 11: YES / HOLD — [if < 2 SMPs pass, hold for Stage 8 regen]
-
-SELF-AUDIT
-Anchor Discipline (1–10): [score] — [one sentence]
-Justification Specificity (1–10): [score] — [one sentence]
-Tie-Break Logic Applied: YES / N/A
-Overall: READY FOR STAGE 11 / HOLD
-
-Begin directly with the HEADER. No preamble.`;
+READY FOR STAGE 11: YES / HOLD — [if < 2 SMPs pass, hold for Stage 8 regen]`;
+export const STAGE_10_INTELLIGENCE = STAGE_10_SYSTEM_PROMPT;
 
 export function buildStage10UserMessage(args: {
   brandName: string;

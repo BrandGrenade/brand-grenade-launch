@@ -12,8 +12,6 @@ CHANNEL HIERARCHY (use as channel role):
 - Activation and Experiential: physical manifestation of SMP behaviour
 - Partnership and Sponsorship: cultural validation in external systems
 
-OUTPUT STRUCTURE
-
 HEADER
 - BRIEF BRAND
 - SELECTED SMP
@@ -51,6 +49,7 @@ CROSS-CHANNEL CONSISTENCY CONFIRMATION
 - SINGLE TRUTH EXPRESSION: CONFIRMED — [one sentence]
 - NO NEW STRATEGIC IDEAS: CONFIRMED — [one sentence]
 - EXECUTIONAL DRIFT: NOT DETECTED / DETECTED IN [channel]`;
+export const STAGE_14B_INTELLIGENCE = STAGE_14B_SYSTEM_PROMPT;
 
 export function buildStage14bUserMessage(args: {
   brandName: string;

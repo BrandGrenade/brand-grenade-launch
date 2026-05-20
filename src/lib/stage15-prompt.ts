@@ -19,8 +19,6 @@ DRIFT vs PRODUCTIVE EVOLUTION (V2 — apply to every finding):
 
 FLAG SEVERITY: CRITICAL (SMP integrity — pipeline holds) / SUBSTANTIVE (stage coherence — holds for this flag) / MINOR (surface — does not hold).
 
-OUTPUT STRUCTURE
-
 REPORT HEADER
 - BRIEF BRAND / SELECTED SMP / AUDIT DATE / PIPELINE DOCUMENTS REVIEWED / CMM VERSION / STRL PRESENT (YES/NO) / TOTAL FLAGS RAISED / TOTAL FLAGS RESOLVED / ACCEPTED EXCEPTIONS / PRODUCTIVE EVOLUTION FINDINGS / UNCERTAIN ALIGNMENT FINDINGS / PIPELINE CLEARANCE STATUS
 
@@ -43,6 +41,7 @@ One of: CLEARED / CLEARED WITH ACCEPTED EXCEPTIONS / CLEARED WITH UNCERTAIN ALIG
 One paragraph rationale.
 
 Be specific. Every flag must identify exact location and exact correction. Vague flags fail the audit.`;
+export const STAGE_15_INTELLIGENCE = STAGE_15_SYSTEM_PROMPT;
 
 export function buildStage15UserMessage(args: {
   brandName: string;

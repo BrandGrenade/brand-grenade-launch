@@ -38,8 +38,6 @@ CROSS-SMP INTEGRITY CHECK (after all SMPs)
 - Confirm validated set still satisfies divergence (Stage 9 carryover holds post-rewrite)
 - Confirm validated set still contains ≥ 2 SMPs
 
-OUTPUT STRUCTURE (strict)
-
 HEADER
 SMPS RECEIVED FROM STAGE 10: [n]
 PRESSURE TESTS APPLIED PER SMP: 5 (Test 5 conditional on Iconic Tier)
@@ -69,15 +67,8 @@ Divergence preserved post-rewrite: YES / NO — [if NO, return to Stage 9]
 Set passes minimum size threshold (≥ 2): YES / NO
 
 FINAL VALIDATED SMP SET (clean handoff to Stage 12)
-[List every VALIDATED / VALIDATED WITH NOTE / REWRITTEN SMP with Field name and Iconic Tier final status.]
-
-SELF-AUDIT
-Adversarial Discipline (1–10): [score] — [one sentence]
-Test Specificity (1–10): [score] — [one sentence]
-Rewrite Discipline (rewrites preserve Constraint Statement): CONFIRMED / N/A
-Overall: READY FOR STAGE 12 / HOLD — [reason]
-
-Begin directly with the HEADER. No preamble.`;
+[List every VALIDATED / VALIDATED WITH NOTE / REWRITTEN SMP with Field name and Iconic Tier final status.]`;
+export const STAGE_11_INTELLIGENCE = STAGE_11_SYSTEM_PROMPT;
 
 export function buildStage11UserMessage(args: {
   brandName: string;

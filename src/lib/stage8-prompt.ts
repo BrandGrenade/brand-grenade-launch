@@ -37,8 +37,6 @@ CROSS-SMP ANTI-CONVERGENCE (after all fields)
 - Semantic check: no two SMPs resolve the brand's role the same way, even if phrased differently.
 - Convergence detected → regenerate the later SMP (preserve the earlier).
 
-OUTPUT STRUCTURE (strict — repeat per field, then close with the Set Summary)
-
 OUTPUT HEADER
 BRIEF BRAND: [name]
 CATEGORY: [category]
@@ -79,16 +77,8 @@ CROSS-SMP STRUCTURAL CONVERGENCE: NONE / RESOLVED
 CROSS-SMP SEMANTIC CONVERGENCE: NONE / RESOLVED
 DRAFTS GENERATED TOTAL: [n]
 ALL SMPS PASS ALL SIX QUALITY THRESHOLDS: YES
-READY FOR HUMAN REVIEW CHECKPOINT B: YES
-
-SELF-AUDIT (mandatory)
-Constraint Lock Discipline (1–10): [score] — [one sentence]
-Writer Quality (1–10): [score] — [one sentence]
-Anti-Convergence Rigour (1–10): [score] — [one sentence]
-CMM Compliance (binary): ALL CLEARED / [specify breach]
-Overall Readiness: READY FOR CHECKPOINT B / HOLD — [reason]
-
-Begin directly with the OUTPUT HEADER. No preamble.`;
+READY FOR HUMAN REVIEW CHECKPOINT B: YES`;
+export const STAGE_8_INTELLIGENCE = STAGE_8_SYSTEM_PROMPT;
 
 export function buildStage8UserMessage(args: {
   brandName: string;

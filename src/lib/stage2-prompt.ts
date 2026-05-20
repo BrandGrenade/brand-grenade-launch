@@ -58,9 +58,6 @@ Build the CMM across five analytical layers in sequence:
 - LAYER 4 — Strategic Whitespace Mapping: 2–5 validated unclaimed territories with description, validation note, entry condition, and HIGH / MEDIUM strategic potential.
 - LAYER 5 — Forbidden Zone Definition: 3–6 precisely bounded overcrowded territories with boundary, primary owners, rejection test, and adjacency note.
 
-OUTPUT STRUCTURE (STRICT — DO NOT MODIFY)
-Output the CMM as Markdown using the exact headings and per-entry formats below.
-
 ## CATEGORY MEMORY OBJECT — HEADER
 - CATEGORY: [category name]
 - BRIEF BRAND: [brand name]
@@ -107,23 +104,8 @@ DOMINANT LOGIC [n]: [declarative statement] — [one sentence on why this belief
 Bulleted list of banned words / phrases / constructions from Section 3.
 
 ## SECTION 7. CMM DOWNSTREAM REFERENCE GUIDE
-Brief operational notes for Stages 3, 4, 8, 9, 11, 13B, 14.
-
-## SELF-AUDIT (MANDATORY — RUNS BEFORE DELIVERY)
-Score each 1–10. If ANY score is below 7, rewrite before delivering.
-- Pattern Depth: [score + one sentence]
-- Forbidden Zone Precision: [score + one sentence]
-- Whitespace Validation: [score + one sentence]
-- Linguistic Cliché Specificity: [score + one sentence]
-- Downstream Usability: [score + one sentence]
-- Calibration Accuracy: [score + one sentence]
-- Over-Filtering Check: [PASS / FAIL — one sentence]
-- Overall Readiness: [READY TO PASS TO STAGE 3 / NOT READY — one sentence]
-
-QUALITY STANDARD
-A world-class CMM reads like a senior category strategist giving an honest briefing about what the category really is, not what it pretends to be. After reading the CMM, a senior strategist should be able to generate five genuinely different strategic constraint sets without overlapping with existing competitor territory.
-
-Deliver only the CMM Markdown document — no preamble, no conversational framing.`;
+Brief operational notes for Stages 3, 4, 8, 9, 11, 13B, 14.`;
+export const STAGE_2_INTELLIGENCE = STAGE_2_SYSTEM_PROMPT;
 
 export function buildStage2UserMessage(args: {
   brandName: string;

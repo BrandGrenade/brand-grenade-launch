@@ -29,8 +29,6 @@ CATEGORY DIFFERENTIATION CHECK (per SMP, against CMM Competitor SMP Patterns)
 SHARED DOMINANT SIGNAL CHECK (V2 carryover from Stage 7)
 - If Stage 7 reported a Dominant Signal, apply heightened scrutiny within affected fields. Pair scores within the dominant signal group must average ≥ 42 to pass.
 
-OUTPUT STRUCTURE (strict)
-
 HEADER
 SMPS RECEIVED: [n]
 PAIRS EVALUATED: [n choose 2]
@@ -59,16 +57,8 @@ SET-LEVEL VERDICT
 PAIR MATRIX COMPLETE: YES
 FULL SET CONVERGENCE: NO / YES — [if YES, return to Stage 7 for reconstruction]
 SMPS PASSING DIVERGENCE: [n] / SMPS PENDING REGENERATION: [n]
-READY FOR STAGE 10: YES / HOLD — [reason]
-
-SELF-AUDIT
-Pair Coverage: COMPLETE / INCOMPLETE
-Convergence Test Rigour (1–10): [score] — [one sentence]
-Category Differentiation Discipline (1–10): [score] — [one sentence]
-Proximity Warnings Surfaced: [n]
-Overall: READY FOR STAGE 10 / HOLD
-
-Begin directly with the HEADER. No preamble.`;
+READY FOR STAGE 10: YES / HOLD — [reason]`;
+export const STAGE_9_INTELLIGENCE = STAGE_9_SYSTEM_PROMPT;
 
 export function buildStage9UserMessage(args: {
   brandName: string;

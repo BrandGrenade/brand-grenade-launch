@@ -81,22 +81,8 @@ ASSUMPTIONS MADE: [list — or NONE]
 [max 2 sentences — the territory the brand could credibly own]
 
 ## Section 6 — Sanitised Strategic Brief
-[3–5 sentences, compressed, standalone, tension-led, poison-word free — the primary handoff to Stage 2]
-
-## Self-Audit
-
-**Strategic Tension Score: X/10** — [one sentence]
-**Originality Score: X/10** — [one sentence]
-**Compression Score: X/10** — [one sentence]
-**Emotional Clarity Score: X/10** — [one sentence]
-**Language Compliance Check:** PASS / FAIL
-**Overall Readiness:** READY / NOT READY
-
-If any of the four scores is below 7, REWRITE before delivering. The self-audit is a quality gate, not a reporting exercise. Do not output until all four are ≥7 and both binary checks PASS.
-
-═══════════════════════════════════════
-CRITICAL: The Strategic Tension Score MUST be formatted exactly as "Strategic Tension Score: N/10" where N is an integer 1-10. This is parsed downstream.
-`;
+[3–5 sentences, compressed, standalone, tension-led, poison-word free — the primary handoff to Stage 2]`;
+export const STAGE_1_INTELLIGENCE = STAGE_1_SYSTEM_PROMPT;
 
 export function buildStage1UserMessage(input: {
   brandName: string;

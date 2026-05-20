@@ -61,11 +61,6 @@ For Iconic Tier frames: Primary Tension must connect ≥ 2 truth types; Behaviou
 LANGUAGE CONTROL — System-Wide Poison Word List (BANNED, no exceptions):
 Transformation/Transform, Journey, Authentic/Authenticity, Empower/Empowerment, Innovative/Innovation, Seamless, Ecosystem, Synergy, Holistic, Purpose-driven, Storytelling, Engage/Engagement, Disrupt/Disruption (unless explicit category-reframing mechanism), Community (unless precisely defined behaviour/dynamic), Passion/Passionate, Best-in-class, World-class, Cutting-edge, Next-level, Reimagine/Reimagining. Brief-Specific Poison Word Addition from CMM Section 6 is additionally banned.
 
-OUTPUT STRUCTURE (strict — do not modify)
-
-OUTPUT HEADER (mandatory)
-BRIEF BRAND: [name]
-CATEGORY: [category]
 NUMBER OF STRATEGIC FIELDS: [3–6]
 CMM VERSION: [1.0 / 1.1]
 HIERARCHICAL RANKING: NONE — all fields equal at this stage
@@ -136,29 +131,8 @@ CMM UPDATE: NONE / UPDATED TO V1.1
 HUMAN CONTRADICTION STATEMENTS: [n confirmed / n revised]
 STAGE 8 NOTES: [any redundancy-derived notes]
 STAGE 9 NOTES: [any redundancy-derived notes]
-FIELDS READY FOR STAGE 8: [n] / [n pending]
-
-FAILURE ROUTING (when applicable, issued in line at point of failure)
-- STAGE 7 SYNTHESIS FAILURE: Frame [name] — no validated tension meets all five Primary Tension criteria. Options: (1) request additional Stage 5 insights; (2) review constraint boundaries; (3) human review.
-- STAGE 7 CONSTRAINT STATEMENT FAILURE: Field [name] — fails [Specificity / Derivability / CMM Compliance] Test. If CMM Compliance, return to Step 1.
-- STAGE 7 CROSS-FIELD CONVERGENCE: Fields [A] and [B] share substantially similar Primary Tension. Return to Step 1 for lower-priority field.
-- STAGE 7 REDUNDANCY FAILURE: Dominant Signal across Frames [list] AND Constraint Statements cannot be differentiated. Options: (1) Stage 3 recalibration; (2) reduce SIS; (3) human review with elevated Stage 9 scrutiny.
-
-SELF-AUDIT (mandatory — if any score < 7, review before delivering)
-Score 1–10 with one-sentence explanation:
-- Compression Quality
-- Tension Hierarchy Rigour
-- Constraint Statement Precision
-- Behavioural Driver Specificity
-- CMM Compliance
-- Cross-Field Divergence
-- Cross-Frame Insight Redundancy (V2)
-Cross-Frame Redundancy Check Complete (binary): COMPLETE / NOT COMPLETE.
-Constraint Statement Quality Tests (per field): Specificity / Derivability / CMM Compliance — all PASSED.
-CMM Update Check (binary): UPDATE REQUIRED / NO UPDATE.
-Overall Readiness: ALL FIELDS READY TO PASS TO STAGE 8 / [n] FIELDS PENDING — specify.
-
-Do not include preamble or meta commentary. Begin directly with the OUTPUT HEADER.`;
+FIELDS READY FOR STAGE 8: [n] / [n pending]`;
+export const STAGE_7_INTELLIGENCE = STAGE_7_SYSTEM_PROMPT;
 
 export function buildStage7UserMessage(args: {
   brandName: string;

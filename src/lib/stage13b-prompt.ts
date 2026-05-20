@@ -35,6 +35,7 @@ SECTION 7 — DIFFERENTIATION SAFETY CHECK
 Direct creative-team instructions: what work in this SMP's territory must NOT do to avoid replicating the references' executional surface. Format: 4–6 imperative bullets.
 
 If fewer than 3 qualifying references can be confidently identified, deliver what you have and flag HUMAN REVIEW REQUIRED at the top. Never fabricate campaigns.`;
+export const STAGE_13B_INTELLIGENCE = STAGE_13B_SYSTEM_PROMPT;
 
 export function buildStage13bUserMessage(args: {
   brandName: string;

@@ -35,9 +35,8 @@ Four sub-blocks:
 - STRL DIFFERENTIATION PROTECTION: explicit instructions on what to avoid to differentiate from the STRL historical references.
 
 DIMENSION 7 — CREATIVE POTENTIAL ASSESSMENT
-One paragraph rating territory richness for 3–5 years of creative work. Cite: number of distinct creative directions available, ability to sustain multi-format expression, cultural durability.
-
-SELF-AUDIT — at the end, output a one-line PASS for each: no execution language, no campaign concepts, no tagline-like phrases, all Brand Fit constraints honoured, all STRL protections active. If any FAIL, rewrite before delivering.`;
+One paragraph rating territory richness for 3–5 years of creative work. Cite: number of distinct creative directions available, ability to sustain multi-format expression, cultural durability.`;
+export const STAGE_14_INTELLIGENCE = STAGE_14_SYSTEM_PROMPT;
 
 export function buildStage14UserMessage(args: {
   brandName: string;
