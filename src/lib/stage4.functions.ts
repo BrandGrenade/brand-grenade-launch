@@ -2,13 +2,34 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { callClaude } from "./claude.server";
-import { STAGE_4_SYSTEM_PROMPT, buildStage4UserMessage } from "./stage4-prompt";
+import {
+  STAGE_4_SYSTEM_PROMPT,
+  buildStage4UserMessage,
+  buildStage4ContinuationMessage,
+} from "./stage4-prompt";
 import { trimStage1ForDownstream } from "./context-trim";
 import { countSections } from "./count-helpers";
 
 const RunStage4Input = z.object({
   sessionId: z.string().uuid(),
 });
+
+const UNIVERSE_HEADING = /^##\s+\S/;
+
+function countUniverses(text: string): number {
+  return text.split("\n").filter((l) => UNIVERSE_HEADING.test(l)).length;
+}
+
+async function setStatus(sessionId: string, message: string | null) {
+  try {
+    await supabaseAdmin
+      .from("sessions")
+      .update({ retry_status: message })
+      .eq("id", sessionId);
+  } catch {
+    // best-effort
+  }
+}
 
 export const runStage4 = createServerFn({ method: "POST" })
   .inputValidator((input) => RunStage4Input.parse(input))
@@ -49,12 +70,12 @@ export const runStage4 = createServerFn({ method: "POST" })
       output = await callClaude({
         systemPrompt: STAGE_4_SYSTEM_PROMPT,
         userMessage,
-        maxTokens: 3000,
+        maxTokens: 4000,
         temperature: 0.7,
         sessionId: data.sessionId,
         stageLabel: "Stage 4",
-      stageNumber: "4",
-      stageName: "Strategic Universes",
+        stageNumber: "4",
+        stageName: "Strategic Universes",
       });
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Stage 4 failed";
@@ -65,9 +86,47 @@ export const runStage4 = createServerFn({ method: "POST" })
       throw e instanceof Error ? e : new Error(msg);
     }
 
+    // CHANGE 4 — count ## universes; continue if below 3 (max 3 attempts).
+    let universeCount = countUniverses(output);
+    let attempts = 0;
+    while (universeCount < 3 && attempts < 3) {
+      attempts++;
+      await setStatus(
+        data.sessionId,
+        `${universeCount} of 3 strategic universes generated. Continuing generation...`
+      );
+      try {
+        const continuation = await callClaude({
+          systemPrompt: STAGE_4_SYSTEM_PROMPT,
+          userMessage: buildStage4ContinuationMessage({
+            previousOutput: output,
+            currentCount: universeCount,
+          }),
+          maxTokens: 4000,
+          temperature: 0.7,
+          sessionId: data.sessionId,
+          stageLabel: `Stage 4 (continuation ${attempts})`,
+          stageNumber: "4",
+          stageName: "Strategic Universes",
+        });
+        output = `${output}\n\n${continuation}`;
+        universeCount = countUniverses(output);
+      } catch {
+        break;
+      }
+    }
+    await setStatus(data.sessionId, null);
+
+    const stillInsufficient = universeCount < 3;
+
     const { error: updateErr } = await supabaseAdmin
       .from("sessions")
-      .update({ stage_4_output: output, stage_4_error: null })
+      .update({
+        stage_4_output: output,
+        stage_4_error: stillInsufficient
+          ? `Stage 4 produced only ${universeCount} universe(s) after ${attempts} continuation attempt(s). Manual retry recommended.`
+          : null,
+      })
       .eq("id", data.sessionId);
     if (updateErr) throw new Error(`Failed to save Stage 4 output: ${updateErr.message}`);
 
