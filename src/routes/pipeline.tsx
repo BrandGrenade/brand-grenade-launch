@@ -1530,6 +1530,11 @@ function RightPanel({
               </span>
               <h1 className="text-h2 mt-3 text-text-primary">{stage.name}</h1>
               <StatusLine status={status} />
+              {isRunning && retryStatus ? (
+                <p className="text-body-sm mt-2" style={{ color: "#8A8680" }}>
+                  {retryStatus}
+                </p>
+              ) : null}
               <hr className="my-6 h-px border-0 bg-border" />
             </header>
 
