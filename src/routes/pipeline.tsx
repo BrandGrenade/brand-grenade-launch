@@ -1408,6 +1408,7 @@ function RightPanel({
   onNext: () => void;
   onConfirmCheckpoint: (stageId: string) => void;
   customCheckpoint?: ReactNode;
+  retryStatus?: string | null;
 
 }) {
 
