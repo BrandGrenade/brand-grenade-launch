@@ -124,20 +124,18 @@ A proposition for Hypernova must:
 // ────────────────────────────────────────────────────────────────────────────
 
 function PipelineView() {
-  // Demo state — first two stages done, stage 3 running.
+  // Demo state — Stage 01 is the first human checkpoint (A).
   const initialStatuses = useMemo<Record<string, StageStatus>>(() => {
     const map: Record<string, StageStatus> = {};
     STAGES.forEach((s) => {
       map[s.id] = "pending";
     });
-    map["01"] = "complete";
-    map["02"] = "complete";
-    map["03"] = "running";
+    map["01"] = "checkpoint";
     return map;
   }, []);
 
-  const [statuses] = useState(initialStatuses);
-  const [selectedId, setSelectedId] = useState("03");
+  const [statuses, setStatuses] = useState(initialStatuses);
+  const [selectedId, setSelectedId] = useState("01");
   const selected = STAGES.find((s) => s.id === selectedId)!;
   const selectedStatus = statuses[selectedId];
 
