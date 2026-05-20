@@ -246,7 +246,9 @@ function PipelineView() {
   const [stage11Loading, setStage11Loading] = useState(false);
   const [stage12Loading, setStage12Loading] = useState(false);
   const [resubmitting, setResubmitting] = useState(false);
+  const [savingRationale, setSavingRationale] = useState(false);
   const [retryNonce, setRetryNonce] = useState(0);
+
 
   // Elapsed timer
   const [startTime] = useState(() => Date.now());
