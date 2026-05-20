@@ -79,7 +79,7 @@ export function SelectionRationale({
     <div>
       <header>
         <span className="text-label" style={{ color: "var(--color-warning)" }}>
-          CHECKPOINT C — RATIONALE CAPTURE
+          STRATEGY REVIEW — SELECTION
         </span>
         <h1 className="text-h2 mt-3 text-text-primary">
           Document your selection rationale.
@@ -201,7 +201,7 @@ export function SelectionRationale({
             transition: "background-color 150ms",
           }}
         >
-          {submitting ? "Saving…" : "Confirm Checkpoint C — Proceed to Brand Validation →"}
+          {submitting ? "Saving…" : "Confirm selection — Continue →"}
         </button>
 
 
@@ -213,7 +213,7 @@ export function SelectionRationale({
             marginTop: 12,
           }}
         >
-          Stage 13: Brand Fit Validation begins after confirmation.
+          Brand Fit Validation begins after confirmation.
         </p>
       </div>
     </div>

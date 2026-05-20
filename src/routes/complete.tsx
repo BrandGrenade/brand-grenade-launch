@@ -33,22 +33,22 @@ const FIELD = "Finance Stack Trust";
 const BRAND_ROLE = "Default Integration";
 
 const STAGES = [
-  "Brief Sanitisation",
+  "Brief Analysis",
   "Category Intelligence",
-  "Constraint Generator",
-  "Strategic Fan-Out",
+  "Strategic Frameworks",
+  "Strategic Universes",
   "Insight Generation",
-  "Insight Filter",
-  "Field Synthesis",
-  "SMP Generation",
-  "Divergence Validation",
-  "SMP Scoring",
-  "Pressure Test",
-  "SMP Selection",
+  "Insight Validation",
+  "Territory Synthesis",
+  "Proposition Generation",
+  "Distinctiveness Check",
+  "Proposition Scoring",
+  "Integrity Testing",
+  "Proposition Selection",
   "Brand Fit Validation",
   "Territory Mapping",
-  "Consistency Audit",
-  "Output Packaging",
+  "Coherence Audit",
+  "Document Assembly",
 ];
 
 type Format = "pitch" | "consulting" | "workshop";
@@ -139,7 +139,7 @@ function CompletePage() {
               className="text-label"
               style={{ color: "var(--color-success)" }}
             >
-              PIPELINE COMPLETE
+              STRATEGY ENGINE COMPLETE
             </span>
           </div>
           <h1
@@ -152,8 +152,7 @@ function CompletePage() {
             className="text-body-lg"
             style={{ color: "var(--color-text-secondary)" }}
           >
-            20 stages complete. 3 human checkpoints confirmed. Strategic
-            platform document ready.
+            All quality checks passed. Your strategic platform document is ready.
           </p>
           <hr
             className="border-0 bg-border"
@@ -179,7 +178,7 @@ function CompletePage() {
           }}
         >
           <Stat value="20" label="STAGES COMPLETED" tone="success" />
-          <Stat value="3" label="CHECKPOINTS CONFIRMED" tone="success" />
+          <Stat value="3" label="REVIEWS CONFIRMED" tone="success" />
           <Stat value={smpPreview} label="SELECTED PROPOSITION" tone="primary" />
         </div>
 
@@ -206,7 +205,7 @@ function CompletePage() {
             className="text-body-sm"
             style={{ color: "var(--color-text-tertiary)" }}
           >
-            Field: {FIELD} | Brand Role: {BRAND_ROLE}
+            Strategic Territory: {FIELD} | Strategic Role: {BRAND_ROLE}
           </p>
         </div>
 
@@ -218,7 +217,7 @@ function CompletePage() {
           className="text-body"
           style={{ color: "var(--color-text-secondary)", marginBottom: 24 }}
         >
-          The same pipeline output packaged three different ways. Select the
+          The same strategic output packaged three different ways. Select the
           format appropriate for your audience.
         </p>
 
@@ -393,7 +392,7 @@ function CompletePage() {
             className="text-label flex w-full items-center justify-between border-t border-border py-4 text-left transition-colors"
             style={{ color: "var(--color-text-tertiary)" }}
           >
-            <span>VIEW FULL PIPELINE OUTPUT</span>
+            <span>VIEW FULL STRATEGY OUTPUT</span>
             <span
               style={{
                 transition: "transform 200ms",

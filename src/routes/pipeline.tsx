@@ -21,6 +21,7 @@ import { runStage9 } from "@/lib/stage9.functions";
 import { runStage10 } from "@/lib/stage10.functions";
 import { runStage11 } from "@/lib/stage11.functions";
 import { runStage12, saveSelectedSMP, saveSelectionRationale } from "@/lib/stage12.functions";
+import { sanitizeStageOutput } from "@/lib/sanitize-output";
 
 const pipelineSearchSchema = z.object({
   session: z.string().uuid().optional(),
@@ -1119,7 +1120,7 @@ function Breadcrumb({
         <span>→</span>
         <span className="text-text-secondary truncate">{brand}</span>
         <span>→</span>
-        <span>Pipeline</span>
+        <span>Strategy Process</span>
       </nav>
 
       <div className="ml-4 flex shrink-0 items-center gap-3">
@@ -1166,7 +1167,7 @@ function LeftPanel({
       className="hidden w-[280px] shrink-0 overflow-y-auto border-r border-border bg-background py-6 md:block"
     >
       <header className="px-5 pb-5">
-        <span className="text-label text-primary">Pipeline Stages</span>
+        <span className="text-label text-primary">Strategy Process</span>
         <div
           className="mt-3 h-1 w-full overflow-hidden rounded-sm"
           style={{ backgroundColor: "var(--color-border)" }}
@@ -2061,15 +2062,14 @@ function Stage1bResubmitView({
   return (
     <div style={{ paddingBottom: 80 }}>
       <header>
-        <span className="text-label text-primary">Stage 01B — Brief Escalation</span>
+        <span className="text-label text-primary">Brief Enhancement</span>
         <h1 className="text-h2 mt-3 text-text-primary">
           Additional brief information required
         </h1>
         <p className="text-body-sm mt-3 text-text-secondary">
-          Brief Sanitisation scored below the threshold required to proceed.
-          Please respond in writing to the diagnostic questions below — the
-          pipeline will re-run Stage 1 with the enriched brief before reaching
-          Stage 2.
+          The brief did not meet the threshold required to proceed. Please
+          respond in writing to the questions below — Brief Analysis will be
+          re-run with the enriched brief before moving forward.
         </p>
         <hr className="my-6 h-px border-0 bg-border" />
       </header>
@@ -2123,7 +2123,7 @@ function Stage1bResubmitView({
               color: "var(--color-primary-foreground)",
             }}
           >
-            {resubmitting ? "Resubmitting…" : "Resubmit Brief & Re-run Stage 1"}
+            {resubmitting ? "Resubmitting…" : "Resubmit Brief & Re-run Analysis"}
           </button>
         </div>
       </div>

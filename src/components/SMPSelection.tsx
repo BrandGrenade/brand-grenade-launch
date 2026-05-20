@@ -165,11 +165,11 @@ export function SMPSelection({
       <div style={{ paddingBottom: 80 }}>
         <header>
           <span className="text-label" style={{ color: "var(--color-warning)" }}>
-            CHECKPOINT C — SMP SELECTION
+            STRATEGY REVIEW — SELECTION
           </span>
           <h1 className="text-h2 mt-3 text-text-primary">No propositions detected</h1>
           <p className="text-body mt-3 text-text-secondary">
-            Stage 12 did not produce parseable proposition cards. Inspect the raw output below.
+            No proposition cards could be parsed. Inspect the raw output below.
           </p>
           <hr className="my-6 h-px border-0 bg-border" />
         </header>
@@ -192,13 +192,12 @@ export function SMPSelection({
     <div style={{ paddingBottom: 80 }}>
       <header>
         <span className="text-label" style={{ color: "var(--color-warning)" }}>
-          CHECKPOINT C — SMP SELECTION
+          STRATEGY REVIEW — SELECTION
         </span>
         <h1 className="text-h2 mt-3 text-text-primary">Select a proposition.</h1>
         <p className="text-body mt-3 text-text-secondary">
           Every proposition is presented with equal authority and in deliberately randomised order.
-          Read each one before choosing. Your selection sets the direction for every remaining
-          pipeline stage.
+          Read each one before choosing. Your selection sets the direction for every remaining stage.
         </p>
         <hr className="my-6 h-px border-0 bg-border" />
       </header>
@@ -239,17 +238,6 @@ export function SMPSelection({
             >
               <div className="flex items-center justify-between">
                 <span className="text-label text-primary">PROPOSITION {card.cardNumber}</span>
-                {card.iconicTierStatus === "CONFIRMED" && (
-                  <span
-                    className="text-label rounded-sm px-2 py-0.5"
-                    style={{
-                      backgroundColor: "oklch(0.5 0.09 70 / 0.10)",
-                      color: "var(--color-warning)",
-                    }}
-                  >
-                    Iconic
-                  </span>
-                )}
               </div>
               <p
                 className="text-h3 mt-3 text-text-primary"

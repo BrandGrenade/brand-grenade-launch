@@ -10,22 +10,24 @@ export type CheckpointLetter = "A" | "B" | "C";
 
 const COPY: Record<
   CheckpointLetter,
-  { heading: string; subtext: string; questions: string[] }
+  { label: string; heading: string; subtext: string; questions: string[] }
 > = {
   A: {
+    label: "Strategy Review — Brief",
     heading: "Is this the right strategic problem?",
     subtext:
-      "Review the sanitised brief below. Confirm the strategic reframe is correct before category intelligence begins. The pipeline cannot compensate for a wrong frame.",
+      "Review the analysed brief below. Confirm the strategic reframe is correct before category intelligence begins.",
     questions: [
       "Is the strategic reframe genuinely surprising — or merely well-structured? Does it reveal the hidden problem rather than restate the brief in cleaner language?",
       "Is the strategic tension specific to this brand and category — or could this reframe apply to any challenger in any category?",
-      "Is the sanitised brief strong enough to power genuinely original insight generation — or will it produce category-average insights?",
+      "Is the analysed brief strong enough to power genuinely original insight generation — or will it produce category-average insights?",
     ],
   },
   B: {
+    label: "Strategy Review — Propositions",
     heading: "Do these propositions represent genuinely different worldviews?",
     subtext:
-      "Review all generated propositions. Confirm the set represents genuinely competing worldviews before scoring and pressure testing begins.",
+      "Review all generated propositions. Confirm the set represents genuinely competing worldviews before scoring and integrity testing begins.",
     questions: [
       "Does this set represent genuinely competing worldviews — or do some feel like variations on the same theme?",
       "Which proposition is most unexpected — the one that challenges your assumption about what this brand should say?",
@@ -33,9 +35,10 @@ const COPY: Record<
     ],
   },
   C: {
+    label: "Strategy Review — Selection",
     heading: "Which proposition do we select?",
     subtext:
-      "This is the selection moment. The pipeline holds here. Your selection and rationale carry through every remaining stage.",
+      "This is the selection moment. Your selection and rationale carry through every remaining stage.",
     questions: [
       "Which proposition do you believe will still feel true and distinctive in five years?",
       "Which proposition gives your creative team the most room to surprise you?",
@@ -71,7 +74,7 @@ export function Checkpoint({
           className="text-label"
           style={{ color: "var(--color-warning)" }}
         >
-          Human Review Checkpoint {letter}
+          {copy.label}
         </span>
         <h1 className="text-h2 mt-3 text-text-primary">{copy.heading}</h1>
         <p className="text-body mt-3 text-text-secondary">{copy.subtext}</p>
@@ -288,9 +291,9 @@ export function Checkpoint({
             className="text-body-sm"
             style={{ color: "var(--color-warning)" }}
           >
-            Stage 1B has been triggered. Strategic tension score is below
-            threshold. Additional brief information will be requested before
-            proceeding to Stage 2.
+            Brief Enhancement has been triggered. Strategic tension score is
+            below threshold. Additional brief information will be requested
+            before continuing.
           </p>
         </div>
       )}
