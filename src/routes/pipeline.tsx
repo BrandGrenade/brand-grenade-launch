@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { TopNav } from "@/components/TopNav";
+import { Checkpoint } from "@/components/Checkpoint";
 
 export const Route = createFileRoute("/pipeline")({
   component: PipelineView,
