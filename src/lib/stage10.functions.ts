@@ -3,7 +3,7 @@ import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { callClaude } from "./claude.server";
 import { STAGE_10_SYSTEM_PROMPT, buildStage10UserMessage } from "./stage10-prompt";
-import { trimDraftSMPsForDownstream } from "./context-trim";
+
 import { countSections } from "./count-helpers";
 
 const Input = z.object({ sessionId: z.string().uuid() });
@@ -31,7 +31,7 @@ export const runStage10 = createServerFn({ method: "POST" })
     const userMessage = buildStage10UserMessage({
       brandName: session.brand_name,
       category: session.category,
-      stage8Output: trimDraftSMPsForDownstream(session.stage_8_output),
+      stage8Output: session.stage_8_output,
       stage9Output: session.stage_9_output,
       stage1Output: session.stage_1_output ?? "",
       propositionCount,

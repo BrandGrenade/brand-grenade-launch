@@ -53,13 +53,13 @@ export function buildStage9UserMessage(args: {
   return `Brand: ${args.brandName}
 Category: ${args.category}
 
-Strategic Propositions:
+ALL Strategic Propositions from Stage 8 — evaluate every single one below. Do not stop after the first proposition:
 
 ${args.stage8Output}
 
-Competitor positions:
+Competitor positions to differentiate from:
 
 ${args.cmm}
 
-Assess the distinctiveness of these ${args.propositionCount} proposition(s).`;
+Assess the distinctiveness of ALL ${args.propositionCount} propositions above.`;
 }
