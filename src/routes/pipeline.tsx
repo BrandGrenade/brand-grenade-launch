@@ -175,6 +175,7 @@ function PipelineView() {
   const runStage4Fn = useServerFn(runStage4);
   const runStage5Fn = useServerFn(runStage5);
   const runStage6Fn = useServerFn(runStage6);
+  const runStage7Fn = useServerFn(runStage7);
 
   const [session, setSession] = useState<SessionData | null>(null);
   const [stage1Output, setStage1Output] = useState<string | null>(null);
