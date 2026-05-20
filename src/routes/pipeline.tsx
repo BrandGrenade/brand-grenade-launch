@@ -558,6 +558,11 @@ function PipelineView() {
         (stage6Loading
           ? "Filtering insights with the Calibrated Insight Intelligence Gate — this can take 60–120 seconds…"
           : "Awaiting Stage 6 output."),
+      "07":
+        stage7Output ??
+        (stage7Loading
+          ? "Synthesising Strategic Fields and Constraint Statements with Claude — this can take 60–120 seconds…"
+          : "Awaiting Stage 7 output."),
     };
   }, [
     sessionId,
@@ -575,6 +580,8 @@ function PipelineView() {
     stage5Loading,
     stage6Output,
     stage6Loading,
+    stage7Output,
+    stage7Loading,
   ]);
 
   // Progress — count main (non-conditional) stages.
