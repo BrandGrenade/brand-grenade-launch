@@ -14,7 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      sessions: {
+        Row: {
+          brand_name: string
+          brief_text: string
+          category: string
+          created_at: string
+          current_stage: number
+          id: string
+          stage_1_error: string | null
+          stage_1_output: string | null
+          stage_1_tension_score: number | null
+          stage_1b_required: boolean
+          status: string
+          strategic_mode: string
+          updated_at: string
+        }
+        Insert: {
+          brand_name: string
+          brief_text: string
+          category: string
+          created_at?: string
+          current_stage?: number
+          id?: string
+          stage_1_error?: string | null
+          stage_1_output?: string | null
+          stage_1_tension_score?: number | null
+          stage_1b_required?: boolean
+          status?: string
+          strategic_mode: string
+          updated_at?: string
+        }
+        Update: {
+          brand_name?: string
+          brief_text?: string
+          category?: string
+          created_at?: string
+          current_stage?: number
+          id?: string
+          stage_1_error?: string | null
+          stage_1_output?: string | null
+          stage_1_tension_score?: number | null
+          stage_1b_required?: boolean
+          status?: string
+          strategic_mode?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

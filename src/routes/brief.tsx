@@ -1,6 +1,8 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useRef, useState } from "react";
 import { TopNav } from "@/components/TopNav";
+import { createSession } from "@/lib/stage1.functions";
 
 export const Route = createFileRoute("/brief")({
   component: BriefIntake,
@@ -47,12 +49,16 @@ function detect(text: string, keywords: string[]): boolean {
 }
 
 function BriefIntake() {
+  const navigate = useNavigate();
+  const createSessionFn = useServerFn(createSession);
   const [brand, setBrand] = useState("");
   const [category, setCategory] = useState("");
   const [mode, setMode] = useState(STRATEGIC_MODES[0]);
   const [brief, setBrief] = useState("");
   const [files, setFiles] = useState<File[]>([]);
   const [dragging, setDragging] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const validation = useMemo(() => {
@@ -84,10 +90,25 @@ function BriefIntake() {
     setFiles((prev) => prev.filter((_, i) => i !== index));
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!allValid) return;
-    // Hook into pipeline submission here.
+    if (!allValid || submitting) return;
+    setSubmitting(true);
+    setSubmitError(null);
+    try {
+      const { sessionId } = await createSessionFn({
+        data: {
+          brandName: brand.trim(),
+          category: category.trim(),
+          strategicMode: mode,
+          briefText: brief.trim(),
+        },
+      });
+      navigate({ to: "/pipeline", search: { session: sessionId } });
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : "Failed to start pipeline");
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -305,10 +326,10 @@ function BriefIntake() {
           {/* Submit */}
           <button
             type="submit"
-            disabled={!allValid}
+            disabled={!allValid || submitting}
             className="mt-6 inline-flex h-[52px] w-full items-center justify-center rounded-md text-[16px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             style={
-              allValid
+              allValid && !submitting
                 ? {
                     backgroundColor: "var(--color-primary)",
                     color: "var(--color-primary-foreground)",
@@ -320,17 +341,26 @@ function BriefIntake() {
                   }
             }
             onMouseEnter={(e) => {
-              if (allValid)
+              if (allValid && !submitting)
                 e.currentTarget.style.backgroundColor =
                   "var(--color-primary-hover)";
             }}
             onMouseLeave={(e) => {
-              if (allValid)
+              if (allValid && !submitting)
                 e.currentTarget.style.backgroundColor = "var(--color-primary)";
             }}
           >
-            Run Pipeline →
+            {submitting ? "Starting pipeline…" : "Run Pipeline →"}
           </button>
+
+          {submitError && (
+            <p
+              className="text-body-sm mt-3 text-center"
+              style={{ color: "var(--color-destructive)" }}
+            >
+              {submitError}
+            </p>
+          )}
 
           <p
             className="text-body-sm mt-3 text-center"
