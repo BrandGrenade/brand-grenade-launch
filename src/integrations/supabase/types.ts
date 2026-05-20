@@ -19,12 +19,23 @@ export type Database = {
           brand_name: string
           brief_text: string
           category: string
+          checkpoint_b_confirmed: boolean
+          checkpoint_c_confirmed: boolean
           created_at: string
           current_stage: number
           id: string
+          selected_smp: string | null
+          selected_smp_field_name: string | null
+          selection_rationale: Json | null
           stage_1_error: string | null
           stage_1_output: string | null
           stage_1_tension_score: number | null
+          stage_10_error: string | null
+          stage_10_output: string | null
+          stage_11_error: string | null
+          stage_11_output: string | null
+          stage_12_error: string | null
+          stage_12_output: string | null
           stage_1b_output: string | null
           stage_1b_required: boolean
           stage_2_error: string | null
@@ -39,6 +50,10 @@ export type Database = {
           stage_6_output: string | null
           stage_7_error: string | null
           stage_7_output: string | null
+          stage_8_error: string | null
+          stage_8_output: string | null
+          stage_9_error: string | null
+          stage_9_output: string | null
           status: string
           strategic_mode: string
           updated_at: string
@@ -47,12 +62,23 @@ export type Database = {
           brand_name: string
           brief_text: string
           category: string
+          checkpoint_b_confirmed?: boolean
+          checkpoint_c_confirmed?: boolean
           created_at?: string
           current_stage?: number
           id?: string
+          selected_smp?: string | null
+          selected_smp_field_name?: string | null
+          selection_rationale?: Json | null
           stage_1_error?: string | null
           stage_1_output?: string | null
           stage_1_tension_score?: number | null
+          stage_10_error?: string | null
+          stage_10_output?: string | null
+          stage_11_error?: string | null
+          stage_11_output?: string | null
+          stage_12_error?: string | null
+          stage_12_output?: string | null
           stage_1b_output?: string | null
           stage_1b_required?: boolean
           stage_2_error?: string | null
@@ -67,6 +93,10 @@ export type Database = {
           stage_6_output?: string | null
           stage_7_error?: string | null
           stage_7_output?: string | null
+          stage_8_error?: string | null
+          stage_8_output?: string | null
+          stage_9_error?: string | null
+          stage_9_output?: string | null
           status?: string
           strategic_mode: string
           updated_at?: string
@@ -75,12 +105,23 @@ export type Database = {
           brand_name?: string
           brief_text?: string
           category?: string
+          checkpoint_b_confirmed?: boolean
+          checkpoint_c_confirmed?: boolean
           created_at?: string
           current_stage?: number
           id?: string
+          selected_smp?: string | null
+          selected_smp_field_name?: string | null
+          selection_rationale?: Json | null
           stage_1_error?: string | null
           stage_1_output?: string | null
           stage_1_tension_score?: number | null
+          stage_10_error?: string | null
+          stage_10_output?: string | null
+          stage_11_error?: string | null
+          stage_11_output?: string | null
+          stage_12_error?: string | null
+          stage_12_output?: string | null
           stage_1b_output?: string | null
           stage_1b_required?: boolean
           stage_2_error?: string | null
@@ -95,6 +136,10 @@ export type Database = {
           stage_6_output?: string | null
           stage_7_error?: string | null
           stage_7_output?: string | null
+          stage_8_error?: string | null
+          stage_8_output?: string | null
+          stage_9_error?: string | null
+          stage_9_output?: string | null
           status?: string
           strategic_mode?: string
           updated_at?: string
