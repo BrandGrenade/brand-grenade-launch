@@ -11,6 +11,7 @@ import { runStage1 } from "@/lib/stage1.functions";
 import { runStage1b, resubmitBrief } from "@/lib/stage1b.functions";
 import { runStage2 } from "@/lib/stage2.functions";
 import { runStage3 } from "@/lib/stage3.functions";
+import { runStage4 } from "@/lib/stage4.functions";
 
 const pipelineSearchSchema = z.object({
   session: z.string().uuid().optional(),
@@ -151,6 +152,8 @@ interface SessionData {
   stage_2_error: string | null;
   stage_3_output: string | null;
   stage_3_error: string | null;
+  stage_4_output: string | null;
+  stage_4_error: string | null;
 }
 
 function PipelineView() {
@@ -160,6 +163,7 @@ function PipelineView() {
   const resubmitBriefFn = useServerFn(resubmitBrief);
   const runStage2Fn = useServerFn(runStage2);
   const runStage3Fn = useServerFn(runStage3);
+  const runStage4Fn = useServerFn(runStage4);
 
   const [session, setSession] = useState<SessionData | null>(null);
   const [stage1Output, setStage1Output] = useState<string | null>(null);
@@ -169,10 +173,13 @@ function PipelineView() {
   const [stage2Error, setStage2Error] = useState<string | null>(null);
   const [stage3Output, setStage3Output] = useState<string | null>(null);
   const [stage3Error, setStage3Error] = useState<string | null>(null);
+  const [stage4Output, setStage4Output] = useState<string | null>(null);
+  const [stage4Error, setStage4Error] = useState<string | null>(null);
   const [stage1Loading, setStage1Loading] = useState(false);
   const [stage1bLoading, setStage1bLoading] = useState(false);
   const [stage2Loading, setStage2Loading] = useState(false);
   const [stage3Loading, setStage3Loading] = useState(false);
+  const [stage4Loading, setStage4Loading] = useState(false);
   const [resubmitting, setResubmitting] = useState(false);
   const [retryNonce, setRetryNonce] = useState(0);
 
@@ -209,7 +216,7 @@ function PipelineView() {
     supabase
       .from("sessions")
       .select(
-        "id, brand_name, category, strategic_mode, stage_1_output, stage_1_tension_score, stage_1b_required, stage_1b_output, stage_1_error, stage_2_output, stage_2_error, stage_3_output, stage_3_error"
+        "id, brand_name, category, strategic_mode, stage_1_output, stage_1_tension_score, stage_1b_required, stage_1b_output, stage_1_error, stage_2_output, stage_2_error, stage_3_output, stage_3_error, stage_4_output, stage_4_error"
       )
       .eq("id", sessionId)
       .single()
@@ -229,6 +236,10 @@ function PipelineView() {
         if (data.stage_3_output) {
           setStage3Output(data.stage_3_output);
           setStatuses((p) => ({ ...p, "03": "complete" }));
+        }
+        if (data.stage_4_output) {
+          setStage4Output(data.stage_4_output);
+          setStatuses((p) => ({ ...p, "04": "complete" }));
         }
       });
     return () => {
