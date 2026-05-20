@@ -1328,6 +1328,7 @@ function RightPanel({
   onSubmitBrandIntel,
   onNext,
   onConfirmCheckpoint,
+  customCheckpoint,
 }: {
   stage: Stage;
   status: StageStatus;
@@ -1344,6 +1345,8 @@ function RightPanel({
   onSubmitBrandIntel: () => void;
   onNext: () => void;
   onConfirmCheckpoint: (stageId: string) => void;
+  customCheckpoint?: React.ReactNode;
+
 }) {
   const isRunning = status === "running";
   const isCheckpoint = status === "checkpoint";
