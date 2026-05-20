@@ -56,23 +56,21 @@ export const runStage16 = createServerFn({ method: "POST" })
           selectedSMP: session.selected_smp ?? "",
           format: data.format,
           payload: {
-            "STAGE 1 — SANITISED BRIEF": session.stage_1_output ?? "",
-            "STAGE 2 — CATEGORY MEMORY OBJECT": session.stage_2_output ?? "",
-            "STAGE 3 — CONSTRAINT MATRIX": session.stage_3_output ?? "",
-            "STAGE 4 — STRATEGIC INTERPRETATION SET": session.stage_4_output ?? "",
-            "STAGE 6 — VALIDATED INSIGHTS": session.stage_6_output ?? "",
-            "STAGE 7 — STRATEGIC FIELD SET": session.stage_7_output ?? "",
-            "STAGE 8 — DRAFT SMP SET": session.stage_8_output ?? "",
-            "STAGE 9 — DIVERGENCE VALIDATION": session.stage_9_output ?? "",
-            "STAGE 10 — SCORED SMP SET (ELIMINATION LOG + PRIORITY)": session.stage_10_output ?? "",
-            "STAGE 11 — PRESSURE TEST REPORT": session.stage_11_output ?? "",
-            "STAGE 12 — SELECTION RATIONALE & CHECKPOINT C": session.stage_12_output ?? "",
-            "STAGE 13 — BRAND FIT ASSESSMENT": session.stage_13_output ?? "",
-            "STAGE 13B — STRL REPORT": session.stage_13b_output ?? "",
-            "STAGE 14 — CREATIVE TERRITORY MAP": session.stage_14_output ?? "",
-            "STAGE 14B — CREATIVE EXPRESSION MAP": session.stage_14b_output ?? "",
-            "STAGE 14C — STRATEGIC UNIVERSE DEFINITION": session.stage_14c_output ?? "",
-            "STAGE 15 — CONSISTENCY AUDIT REPORT": session.stage_15_output ?? "",
+            "SELECTED SMP": session.selected_smp ?? "",
+            "STAGE 12 — SELECTION RATIONALE (FIELD 1)": session.selection_rationale_1 ?? "",
+            "STAGE 12 — SELECTION RATIONALE (FIELD 2)": session.selection_rationale_2 ?? "",
+            "STAGE 12 — SELECTION RATIONALE (FIELD 3)": session.selection_rationale_3 ?? "",
+            "STAGE 13 — BRAND FIT SUMMARY": trimBrandFitForDownstream(
+              session.stage_13_output ?? ""
+            ),
+            "STAGE 13B — STRATEGIC LINEAGE STATEMENT": extractStrategicLineageStatement(
+              session.stage_13b_output ?? ""
+            ),
+            "STAGE 14 — DIMENSIONS 1 & 2": extractStage14Dimensions12(
+              session.stage_14_output ?? ""
+            ),
+            "STAGE 14C — BRAND WORLD CORE": extractStage14CCore(session.stage_14c_output ?? ""),
+            "STAGE 15 — CLEARANCE STATUS": session.stage_15_clearance_status ?? "",
           },
         }),
         sessionId: data.sessionId,
