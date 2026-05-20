@@ -1200,3 +1200,92 @@ function XIcon({ color = "currentColor" }: { color?: string }) {
     </svg>
   );
 }
+
+// ────────────────────────────────────────────────────────────────────────────
+// Stage 1B — diagnostic output + brief-resubmission form
+// ────────────────────────────────────────────────────────────────────────────
+
+function Stage1bResubmitView({
+  output,
+  resubmitting,
+  onResubmit,
+}: {
+  output: string;
+  resubmitting: boolean;
+  onResubmit: (additionalBrief: string) => void | Promise<void>;
+}) {
+  const [text, setText] = useState("");
+  const canSubmit = text.trim().length >= 20 && !resubmitting;
+  return (
+    <div style={{ paddingBottom: 80 }}>
+      <header>
+        <span className="text-label text-primary">Stage 01B — Brief Escalation</span>
+        <h1 className="text-h2 mt-3 text-text-primary">
+          Additional brief information required
+        </h1>
+        <p className="text-body-sm mt-3 text-text-secondary">
+          Brief Sanitisation scored below the threshold required to proceed.
+          Please respond in writing to the diagnostic questions below — the
+          pipeline will re-run Stage 1 with the enriched brief before reaching
+          Stage 2.
+        </p>
+        <hr className="my-6 h-px border-0 bg-border" />
+      </header>
+
+      <article style={{ marginBottom: 32 }}>
+        <StreamedOutput text={output} streaming={false} />
+      </article>
+
+      <div
+        className="rounded-md p-5"
+        style={{
+          border: "1px solid var(--color-border)",
+          backgroundColor: "var(--color-surface)",
+        }}
+      >
+        <label
+          htmlFor="stage1b-response"
+          className="text-label text-text-secondary"
+        >
+          Your responses
+        </label>
+        <textarea
+          id="stage1b-response"
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          placeholder="Answer each diagnostic question above. Paragraph answers are fine — no need to repeat the questions."
+          rows={10}
+          className="text-body mt-2 w-full rounded-md p-3 outline-none"
+          style={{
+            border: "1px solid var(--color-border)",
+            backgroundColor: "var(--color-background)",
+            color: "var(--color-text-primary)",
+            resize: "vertical",
+            minHeight: 200,
+          }}
+        />
+        <div className="mt-4 flex items-center justify-between">
+          <span
+            className="text-body-sm"
+            style={{ color: "var(--color-text-tertiary)" }}
+          >
+            Minimum 20 characters. {text.trim().length} entered.
+          </span>
+          <button
+            type="button"
+            onClick={() => canSubmit && onResubmit(text.trim())}
+            disabled={!canSubmit}
+            className="inline-flex h-10 items-center justify-center rounded-md px-5 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+            style={{
+              backgroundColor: "var(--color-primary)",
+              color: "var(--color-primary-foreground)",
+            }}
+          >
+            {resubmitting ? "Resubmitting…" : "Resubmit Brief & Re-run Stage 1"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
