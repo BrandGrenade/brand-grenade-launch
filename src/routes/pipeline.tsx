@@ -759,26 +759,49 @@ function PipelineView() {
         (stage7Loading
           ? "Synthesising Strategic Fields and Constraint Statements with Claude — this can take 60–120 seconds…"
           : "Awaiting Stage 7 output."),
+      "08":
+        stage8Output ??
+        (stage8Loading
+          ? "Generating Single-Minded Propositions with Claude — this can take 60–120 seconds…"
+          : "Awaiting Stage 8 output."),
+      "09":
+        stage9Output ??
+        (stage9Loading
+          ? "Auditing SMP divergence with Claude — this can take 30–90 seconds…"
+          : "Awaiting Stage 9 output."),
+      "10":
+        stage10Output ??
+        (stage10Loading
+          ? "Scoring SMPs across six calibrated dimensions — this can take 60–120 seconds…"
+          : "Awaiting Stage 10 output."),
+      "11":
+        stage11Output ??
+        (stage11Loading
+          ? "Running five-test strategic pressure validation — this can take 60–120 seconds…"
+          : "Awaiting Stage 11 output."),
+      "12":
+        stage12Output ??
+        (stage12Loading
+          ? "Composing SMP presentation cards for selection — this can take 30–60 seconds…"
+          : "Awaiting Stage 12 output."),
     };
   }, [
     sessionId,
-    stage1Output,
-    stage1Loading,
-    stage1bOutput,
-    stage1bLoading,
-    stage2Output,
-    stage2Loading,
-    stage3Output,
-    stage3Loading,
-    stage4Output,
-    stage4Loading,
-    stage5Output,
-    stage5Loading,
-    stage6Output,
-    stage6Loading,
-    stage7Output,
-    stage7Loading,
+    stage1Output, stage1Loading,
+    stage1bOutput, stage1bLoading,
+    stage2Output, stage2Loading,
+    stage3Output, stage3Loading,
+    stage4Output, stage4Loading,
+    stage5Output, stage5Loading,
+    stage6Output, stage6Loading,
+    stage7Output, stage7Loading,
+    stage8Output, stage8Loading,
+    stage9Output, stage9Loading,
+    stage10Output, stage10Loading,
+    stage11Output, stage11Loading,
+    stage12Output, stage12Loading,
   ]);
+
 
   // Progress — count main (non-conditional) stages.
   const mainStages = STAGES.filter((s) => !s.conditional);
