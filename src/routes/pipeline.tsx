@@ -179,6 +179,21 @@ function PipelineView() {
           stage={selected}
           status={selectedStatus}
           showRationale={rationaleForId === selectedId}
+          showBrandIntel={selectedId === "13" && !intelSubmitted && selectedStatus === "running"}
+          onSubmitBrandIntel={() => {
+            setIntelSubmitted(true);
+            setStatuses((prev) => {
+              const next = { ...prev, "13": "complete" as StageStatus };
+              const idx = STAGES.findIndex((s) => s.id === "13");
+              for (let i = idx + 1; i < STAGES.length; i++) {
+                if (!STAGES[i].conditional) {
+                  next[STAGES[i].id] = "running";
+                  break;
+                }
+              }
+              return next;
+            });
+          }}
           onNext={() => {
             const idx = STAGES.findIndex((s) => s.id === selectedId);
             for (let i = idx + 1; i < STAGES.length; i++) {
