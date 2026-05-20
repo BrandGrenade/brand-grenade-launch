@@ -2659,6 +2659,161 @@ function BottomBar({
   );
 }
 
+// ────────────────────────────────────────────────────────────────────────────
+// Stage control bar — persistent status + retry, always visible
+// ────────────────────────────────────────────────────────────────────────────
+
+function StageControlBar({
+  stage,
+  status,
+  onRetry,
+}: {
+  stage: Stage;
+  status: StageStatus;
+  onRetry: () => void;
+}) {
+  let leftEl: ReactNode;
+  if (status === "running") {
+    leftEl = (
+      <span style={{ display: "inline-flex", alignItems: "center", gap: 8, color: "#5A5652" }}>
+        <span
+          style={{
+            width: 8, height: 8, borderRadius: "50%",
+            backgroundColor: "#C8873A",
+            animation: "bg-pulse 1.2s ease-in-out infinite",
+          }}
+        />
+        Generating {stage.name}…
+      </span>
+    );
+  } else if (status === "complete") {
+    leftEl = <span style={{ color: "#4A7C59" }}>✓ {stage.name} complete</span>;
+  } else if (status === "error") {
+    leftEl = <span style={{ color: "#8A6A2A" }}>⚠ Stage stalled</span>;
+  } else if (status === "checkpoint") {
+    leftEl = <span style={{ color: "#5A5652" }}>● Awaiting review</span>;
+  } else {
+    leftEl = <span style={{ color: "#5A5652" }}>Stage {stage.number} — pending</span>;
+  }
+
+  return (
+    <div
+      className="flex shrink-0 items-center justify-between border-t"
+      style={{
+        height: 44,
+        padding: "0 48px",
+        backgroundColor: "#0A0A0A",
+        borderColor: "#1C1C1C",
+      }}
+    >
+      <div className="text-body-sm">{leftEl}</div>
+      <button
+        type="button"
+        onClick={onRetry}
+        onMouseEnter={(e) => (e.currentTarget.style.color = "#C8873A")}
+        onMouseLeave={(e) => (e.currentTarget.style.color = "#8A8680")}
+        style={{
+          height: 32,
+          padding: "0 16px",
+          borderRadius: 8,
+          background: "transparent",
+          border: "none",
+          color: "#8A8680",
+          fontSize: 13,
+          fontWeight: 500,
+          cursor: "pointer",
+        }}
+        title="Re-run this stage from scratch"
+      >
+        ↺ Retry this stage
+      </button>
+    </div>
+  );
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// Stall watcher — warns at 45s of "running", auto-retries once at 90s
+// ────────────────────────────────────────────────────────────────────────────
+
+function StallWatcher({
+  stageKey,
+  onAutoRetry,
+}: {
+  stageKey: string;
+  onAutoRetry: () => void;
+}) {
+  const [phase, setPhase] = useState<"silent" | "warning" | "auto-retrying">("silent");
+  const autoRetriedRef = useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+    setPhase("silent");
+    const warnTimer = window.setTimeout(() => setPhase("warning"), 45_000);
+    const retryTimer = window.setTimeout(() => {
+      if (!autoRetriedRef.current.has(stageKey)) {
+        autoRetriedRef.current.add(stageKey);
+        setPhase("auto-retrying");
+        onAutoRetry();
+      }
+    }, 90_000);
+    return () => {
+      window.clearTimeout(warnTimer);
+      window.clearTimeout(retryTimer);
+    };
+  }, [stageKey, onAutoRetry]);
+
+  if (phase === "silent") return null;
+
+  if (phase === "auto-retrying") {
+    return (
+      <p className="text-body-sm" style={{ color: "#5A5652", marginTop: 16 }}>
+        Automatically retrying…
+      </p>
+    );
+  }
+
+  return (
+    <div
+      role="status"
+      style={{
+        marginTop: 16,
+        padding: "12px 16px",
+        borderRadius: 8,
+        border: "1px solid #8A6A2A",
+        backgroundColor: "rgba(138, 106, 42, 0.07)",
+      }}
+    >
+      <p className="text-body-sm" style={{ color: "#8A6A2A" }}>
+        Generation has paused. This sometimes happens with longer outputs.
+      </p>
+      <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+        <button
+          type="button"
+          onClick={() => setPhase("silent")}
+          style={{
+            height: 32, padding: "0 14px", borderRadius: 6,
+            background: "transparent", border: "1px solid #2A2A2A",
+            color: "#8A8680", fontSize: 13, cursor: "pointer",
+          }}
+        >
+          Wait
+        </button>
+        <button
+          type="button"
+          onClick={onAutoRetry}
+          style={{
+            height: 32, padding: "0 14px", borderRadius: 6,
+            background: "#C8873A", border: "none",
+            color: "var(--color-background)", fontSize: 13, fontWeight: 600,
+            cursor: "pointer",
+          }}
+        >
+          Retry this stage
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function PrimaryActionButton({ onClick, label }: { onClick: () => void; label: string }) {
   return (
     <button
