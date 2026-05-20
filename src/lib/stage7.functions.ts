@@ -36,7 +36,7 @@ export const runStage7 = createServerFn({ method: "POST" })
       brandName: session.brand_name,
       category: session.category,
       strategicMode: session.strategic_mode,
-      stage6Output: session.stage_6_output,
+      stage6Output: trimValidatedInsightsForDownstream(session.stage_6_output),
       sis: session.stage_4_output,
       cmm: session.stage_2_output,
       constraintMatrix: session.stage_3_output,
