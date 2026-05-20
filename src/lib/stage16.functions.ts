@@ -71,22 +71,19 @@ export const runStage16 = createServerFn({ method: "POST" })
         }),
       });
 
-      const update: Record<string, unknown> = {
-        [column]: output,
-        stage_16_error: null,
-      };
       // Mark pipeline complete when all three variants exist.
-      const others = (Object.values(COLUMN_BY_FORMAT) as (
-        | "stage_16_agency_output"
-        | "stage_16_consulting_output"
-        | "stage_16_workshop_output"
-      )[]).filter((c) => c !== column);
+      const others = (Object.values(COLUMN_BY_FORMAT) as Array<
+        "stage_16_agency_output" | "stage_16_consulting_output" | "stage_16_workshop_output"
+      >).filter((c) => c !== column);
       const otherFilled = others.every((c) => !!session[c]);
-      if (otherFilled) update.status = "complete";
 
       const { error: ue } = await supabaseAdmin
         .from("sessions")
-        .update(update)
+        .update({
+          [column]: output,
+          stage_16_error: null,
+          ...(otherFilled ? { status: "complete" } : {}),
+        })
         .eq("id", data.sessionId);
       if (ue) throw new Error(`Failed to save Stage 16 (${data.format}) output: ${ue.message}`);
       return { output, format: data.format };
