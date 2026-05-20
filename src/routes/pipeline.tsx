@@ -1365,6 +1365,8 @@ function RightPanel({
   stage,
   status,
   fullOutput,
+  isViewingHistorical,
+  onBackToCurrent,
   stage1Error,
   tensionScore,
   stage1bRequired,
@@ -1382,6 +1384,8 @@ function RightPanel({
   stage: Stage;
   status: StageStatus;
   fullOutput: string;
+  isViewingHistorical?: boolean;
+  onBackToCurrent?: () => void;
   stage1Error: string | null;
   tensionScore: number | null;
   stage1bRequired: boolean;
@@ -1397,6 +1401,7 @@ function RightPanel({
   customCheckpoint?: ReactNode;
 
 }) {
+
   const isRunning = status === "running";
   const isCheckpoint = status === "checkpoint";
   const isError = status === "error";
