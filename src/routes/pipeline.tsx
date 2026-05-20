@@ -56,26 +56,26 @@ interface Stage {
 }
 
 const STAGES: Stage[] = [
-  { id: "01", number: "01", name: "Brief Sanitisation", checkpoint: true },
-  { id: "01B", number: "01B", name: "Brief Escalation", conditional: true },
+  { id: "01", number: "01", name: "Brief Analysis", checkpoint: true },
+  { id: "01B", number: "01B", name: "Brief Enhancement", conditional: true },
   { id: "02", number: "02", name: "Category Intelligence" },
-  { id: "03", number: "03", name: "Constraint Generator" },
-  { id: "04", number: "04", name: "Strategic Fan-Out" },
+  { id: "03", number: "03", name: "Strategic Frameworks" },
+  { id: "04", number: "04", name: "Strategic Universes" },
   { id: "05", number: "05", name: "Insight Generation" },
-  { id: "06", number: "06", name: "Insight Filter" },
-  { id: "07", number: "07", name: "Field Synthesis" },
-  { id: "08", number: "08", name: "SMP Generation", checkpoint: true },
-  { id: "09", number: "09", name: "Divergence Validation" },
-  { id: "10", number: "10", name: "SMP Scoring" },
-  { id: "11", number: "11", name: "Pressure Test" },
-  { id: "12", number: "12", name: "SMP Selection", checkpoint: true },
+  { id: "06", number: "06", name: "Insight Validation" },
+  { id: "07", number: "07", name: "Territory Synthesis" },
+  { id: "08", number: "08", name: "Proposition Generation", checkpoint: true },
+  { id: "09", number: "09", name: "Distinctiveness Check" },
+  { id: "10", number: "10", name: "Proposition Scoring" },
+  { id: "11", number: "11", name: "Integrity Testing" },
+  { id: "12", number: "12", name: "Proposition Selection", checkpoint: true },
   { id: "13", number: "13", name: "Brand Fit Validation" },
-  { id: "13B", number: "13B", name: "Territory Reference", conditional: true },
+  { id: "13B", number: "13B", name: "Historical Validation", conditional: true },
   { id: "14", number: "14", name: "Territory Mapping" },
-  { id: "14B", number: "14B", name: "Expression Mapping", conditional: true },
-  { id: "14C", number: "14C", name: "Universe Definition", conditional: true },
-  { id: "15", number: "15", name: "Consistency Audit" },
-  { id: "16", number: "16", name: "Output Packaging" },
+  { id: "14B", number: "14B", name: "Channel Expression", conditional: true },
+  { id: "14C", number: "14C", name: "Brand World Definition", conditional: true },
+  { id: "15", number: "15", name: "Coherence Audit" },
+  { id: "16", number: "16", name: "Document Assembly" },
 ];
 
 const CHECKPOINT_LETTERS: Record<string, "A" | "B" | "C"> = {
@@ -718,76 +718,75 @@ function PipelineView() {
 
   // Per-stage output: use live Stage 1 / 1B / 2 / 3 output, demo stubs for others.
   const stageOutputs = useMemo<Record<string, string>>(() => {
-    const stripMode = (s: string) =>
-      s.replace(/^\s*STRATEGIC MODE SELECTED:.*\n?/gim, "");
+    const sanitize = (s: string) => sanitizeStageOutput(s);
     if (!sessionId) return STAGE_OUTPUTS;
     return {
       ...STAGE_OUTPUTS,
       "01":
-        (stage1Output && stripMode(stage1Output)) ??
+        (stage1Output && sanitize(stage1Output)) ??
         (stage1Loading
-          ? "Sanitising brief with Claude — this can take 20–60 seconds…"
-          : "Awaiting Stage 1 output."),
+          ? "Analysing brief — this can take 20–60 seconds…"
+          : "Awaiting output."),
       "01B":
-        (stage1bOutput && stripMode(stage1bOutput)) ??
+        (stage1bOutput && sanitize(stage1bOutput)) ??
         (stage1bLoading
-          ? "Generating Stage 1B diagnostic questions — this can take 20–60 seconds…"
-          : "Awaiting Stage 1B output."),
+          ? "Generating brief enhancement questions — this can take 20–60 seconds…"
+          : "Awaiting output."),
       "02":
-        (stage2Output && stripMode(stage2Output)) ??
+        (stage2Output && sanitize(stage2Output)) ??
         (stage2Loading
-          ? "Building Category Memory Object (CMM) with Claude — this can take 30–90 seconds…"
-          : "Awaiting Stage 2 output."),
+          ? "Building Category Intelligence — this can take 30–90 seconds…"
+          : "Awaiting output."),
       "03":
-        (stage3Output && stripMode(stage3Output)) ??
+        (stage3Output && sanitize(stage3Output)) ??
         (stage3Loading
-          ? "Generating the Strategic Constraint Matrix with Claude — this can take 30–90 seconds…"
-          : "Awaiting Stage 3 output."),
+          ? "Generating the Strategic Framework — this can take 30–90 seconds…"
+          : "Awaiting output."),
       "04":
-        (stage4Output && stripMode(stage4Output)) ??
+        (stage4Output && sanitize(stage4Output)) ??
         (stage4Loading
-          ? "Generating the Strategic Interpretation Set (SIS) with Claude — this can take 30–90 seconds…"
-          : "Awaiting Stage 4 output."),
+          ? "Mapping the Strategic Universes — this can take 30–90 seconds…"
+          : "Awaiting output."),
       "05":
-        (stage5Output && stripMode(stage5Output)) ??
+        (stage5Output && sanitize(stage5Output)) ??
         (stage5Loading
-          ? "Generating per-frame insight sets with Claude — this can take 60–120 seconds…"
-          : "Awaiting Stage 5 output."),
+          ? "Generating key insights — this can take 60–120 seconds…"
+          : "Awaiting output."),
       "06":
-        (stage6Output && stripMode(stage6Output)) ??
+        (stage6Output && sanitize(stage6Output)) ??
         (stage6Loading
-          ? "Filtering insights with the Calibrated Insight Intelligence Gate — this can take 60–120 seconds…"
-          : "Awaiting Stage 6 output."),
+          ? "Validating insights — this can take 60–120 seconds…"
+          : "Awaiting output."),
       "07":
-        (stage7Output && stripMode(stage7Output)) ??
+        (stage7Output && sanitize(stage7Output)) ??
         (stage7Loading
-          ? "Synthesising Strategic Fields and Constraint Statements with Claude — this can take 60–120 seconds…"
-          : "Awaiting Stage 7 output."),
+          ? "Synthesising Strategic Territories — this can take 60–120 seconds…"
+          : "Awaiting output."),
       "08":
-        (stage8Output && stripMode(stage8Output)) ??
+        (stage8Output && sanitize(stage8Output)) ??
         (stage8Loading
-          ? "Generating Single-Minded Propositions with Claude — this can take 60–120 seconds…"
-          : "Awaiting Stage 8 output."),
+          ? "Generating Strategic Propositions — this can take 60–120 seconds…"
+          : "Awaiting output."),
       "09":
-        (stage9Output && stripMode(stage9Output)) ??
+        (stage9Output && sanitize(stage9Output)) ??
         (stage9Loading
-          ? "Auditing SMP divergence with Claude — this can take 30–90 seconds…"
-          : "Awaiting Stage 9 output."),
+          ? "Auditing proposition distinctiveness — this can take 30–90 seconds…"
+          : "Awaiting output."),
       "10":
-        (stage10Output && stripMode(stage10Output)) ??
+        (stage10Output && sanitize(stage10Output)) ??
         (stage10Loading
-          ? "Scoring SMPs across six calibrated dimensions — this can take 60–120 seconds…"
-          : "Awaiting Stage 10 output."),
+          ? "Scoring propositions across six dimensions — this can take 60–120 seconds…"
+          : "Awaiting output."),
       "11":
-        (stage11Output && stripMode(stage11Output)) ??
+        (stage11Output && sanitize(stage11Output)) ??
         (stage11Loading
-          ? "Running five-test strategic pressure validation — this can take 60–120 seconds…"
-          : "Awaiting Stage 11 output."),
+          ? "Running integrity tests on shortlisted propositions — this can take 60–120 seconds…"
+          : "Awaiting output."),
       "12":
-        (stage12Output && stripMode(stage12Output)) ??
+        (stage12Output && sanitize(stage12Output)) ??
         (stage12Loading
-          ? "Composing SMP presentation cards for selection — this can take 30–60 seconds…"
-          : "Awaiting Stage 12 output."),
+          ? "Composing proposition cards for review — this can take 30–60 seconds…"
+          : "Awaiting output."),
     };
   }, [
     sessionId,
