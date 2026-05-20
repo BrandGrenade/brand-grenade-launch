@@ -19,7 +19,8 @@ export const runStage9 = createServerFn({ method: "POST" })
     if (error || !session) throw new Error(`Session not found: ${error?.message ?? "no row"}`);
     if (!session.stage_8_output) throw new Error("Stage 8 output missing — cannot run Stage 9");
     if (!session.checkpoint_b_confirmed) throw new Error("Checkpoint B not confirmed — cannot run Stage 9");
-    if (session.stage_9_output) return { output: session.stage_9_output };
+    // TEMP: cache bypass for debugging proposition count — re-enable after verification
+    // if (session.stage_9_output) return { output: session.stage_9_output };
 
     await supabaseAdmin
       .from("sessions")
