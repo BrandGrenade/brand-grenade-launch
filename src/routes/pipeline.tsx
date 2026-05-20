@@ -1045,14 +1045,24 @@ function PipelineView() {
               console.error("[Save Brand Intelligence] failed", err);
             }
           }}
-          onNext={() => {
-            const idx = STAGES.findIndex((s) => s.id === selectedId);
-            for (let i = idx + 1; i < STAGES.length; i++) {
-              const st = statuses[STAGES[i].id];
-              if (st === "complete" || st === "running") {
-                setSelectedId(STAGES[i].id);
-                break;
-              }
+          prevStage={prevStage}
+          nextStage={nextStage}
+          nextStageStatus={nextStageStatus}
+          pipelineComplete={pipelineComplete}
+          onBack={() => {
+            if (prevStage) setSelectedId(prevStage.id);
+          }}
+          onContinue={() => {
+            if (!nextStage) return;
+            const st = statuses[nextStage.id];
+            if (st === "pending") {
+              setStatuses((p) => ({ ...p, [nextStage.id]: "running" }));
+            }
+            setSelectedId(nextStage.id);
+          }}
+          onViewFinal={() => {
+            if (sessionId) {
+              window.location.href = `/complete?session=${sessionId}`;
             }
           }}
           onConfirmCheckpoint={(stageId, notes) => {
