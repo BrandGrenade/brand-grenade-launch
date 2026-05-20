@@ -64,10 +64,18 @@ function SettingsPage() {
   const [hydrated, setHydrated] = useState(false);
   const [claudeKeyInput, setClaudeKeyInput] = useState("");
   const [savedFlash, setSavedFlash] = useState(false);
+  const [email, setEmail] = useState<string | null>(null);
 
   useEffect(() => {
     setPrefs(loadPrefs());
     setHydrated(true);
+    supabase.auth.getUser().then(({ data }) => {
+      setEmail(data.user?.email ?? null);
+    });
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
+      setEmail(session?.user?.email ?? null);
+    });
+    return () => sub.subscription.unsubscribe();
   }, []);
 
   useEffect(() => {
