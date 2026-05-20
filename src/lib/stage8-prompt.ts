@@ -97,8 +97,19 @@ export function buildStage8UserMessage(args: {
   cmm: string;
   constraintMatrix: string;
   territoryCount: number;
+  territoryNames: string[];
 }): string {
-  return `BRAND: ${args.brandName}
+  const territoriesList = args.territoryNames.length
+    ? args.territoryNames.map((n) => `- ${n}`).join("\n")
+    : "(see Stage 7 output)";
+  return `TERRITORY COUNT: The Stage 7 output below contains ${args.territoryCount} strategic territories. You must generate exactly ${args.territoryCount} Strategic Propositions — one for each territory.
+
+This is mandatory. Do not stop after generating one proposition. You have not completed this task until every territory has a corresponding proposition.
+
+Territory names from Stage 7:
+${territoriesList}
+
+BRAND: ${args.brandName}
 CATEGORY: ${args.category}
 
 ==== STAGE 7 — STRATEGIC FIELD SET (with Constraint Statements) ====
@@ -110,7 +121,20 @@ ${args.cmm}
 ==== STAGE 3 — STRATEGIC CONSTRAINT MATRIX (boundary conditions) ====
 ${args.constraintMatrix}
 
-Run Stage 8: generate exactly one SMP per Strategic Field. Output the OUTPUT HEADER, one Per-Field SMP Block per field, the Set Summary, and the Self-Audit. Do not include preamble.
+Run Stage 8: generate exactly one SMP per Strategic Field. Each proposition must appear as a > blockquote line. Do not include preamble.
 
-COUNT CHECK: The Stage 7 output above contains ${args.territoryCount} Strategic Territories. Generate exactly ${args.territoryCount} Strategic Propositions — one per territory. Do not stop until all ${args.territoryCount} are complete.`;
+COUNT CHECK: Generate exactly ${args.territoryCount} Strategic Propositions — one per territory. Do not stop until all ${args.territoryCount} are complete.`;
+}
+
+export function buildStage8ContinuationMessage(args: {
+  done: string[];
+  remaining: string[];
+}): string {
+  return `You previously generated ${args.done.length} propositions for these territories:
+${args.done.map((n) => `- ${n}`).join("\n")}
+
+You still need to generate propositions for these remaining territories:
+${args.remaining.map((n) => `- ${n}`).join("\n")}
+
+Generate the remaining ${args.remaining.length} propositions now. Use the same per-field format as before, with each proposition on a > blockquote line.`;
 }
