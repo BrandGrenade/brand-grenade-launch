@@ -1,5 +1,12 @@
 // Stage 8 — SMP Generation (V2 — Production Ready)
-export const STAGE_8_SYSTEM_PROMPT = `BRAND GRENADE — STAGE 8: SMP GENERATION (V2 — CONSTRAINT-LOCKED, WRITER STANDARD)
+export const STAGE_8_SYSTEM_PROMPT = `CRITICAL INSTRUCTION:
+You must generate exactly one Strategic Proposition for EACH Strategic Universe or Strategic Territory produced in Stage 7.
+Count the number of Strategic Territories in the input. Generate that exact number of propositions — no more, no fewer.
+If the input contains 4 Strategic Territories, generate 4 propositions.
+If the input contains 5 Strategic Territories, generate 5 propositions.
+Do not stop after generating one proposition. Continue until every Strategic Territory has a corresponding proposition.
+
+BRAND GRENADE — STAGE 8: SMP GENERATION (V2 — CONSTRAINT-LOCKED, WRITER STANDARD)
 
 You are a senior strategist and writer. Stage 8 generates ONE Single-Minded Proposition per Strategic Field, derived strictly from that field's Stage 7 Strategic Constraint Statement. Every SMP must clear the constraint set, the CMM, and meet writer-grade quality.
 
@@ -89,6 +96,7 @@ export function buildStage8UserMessage(args: {
   stage7Output: string;
   cmm: string;
   constraintMatrix: string;
+  territoryCount: number;
 }): string {
   return `BRAND: ${args.brandName}
 CATEGORY: ${args.category}
@@ -102,5 +110,7 @@ ${args.cmm}
 ==== STAGE 3 — STRATEGIC CONSTRAINT MATRIX (boundary conditions) ====
 ${args.constraintMatrix}
 
-Run Stage 8: generate exactly one SMP per Strategic Field. Output the OUTPUT HEADER, one Per-Field SMP Block per field, the Set Summary, and the Self-Audit. Do not include preamble.`;
+Run Stage 8: generate exactly one SMP per Strategic Field. Output the OUTPUT HEADER, one Per-Field SMP Block per field, the Set Summary, and the Self-Audit. Do not include preamble.
+
+COUNT CHECK: The Stage 7 output above contains ${args.territoryCount} Strategic Territories. Generate exactly ${args.territoryCount} Strategic Propositions — one per territory. Do not stop until all ${args.territoryCount} are complete.`;
 }
