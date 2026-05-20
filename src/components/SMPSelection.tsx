@@ -226,13 +226,15 @@ export function SMPSelection({
               key={card.cardNumber}
               type="button"
               onClick={() => handleSelect(idx)}
-              className="text-left transition-all"
+              className="text-left transition-all animate-fade-in"
               style={{
                 borderRadius: 12,
                 border: `2px solid ${isSelected ? "var(--color-primary)" : "var(--color-border)"}`,
                 backgroundColor: isSelected ? "var(--color-primary-subtle)" : "var(--color-surface-2)",
                 padding: 24,
                 cursor: "pointer",
+                animationDelay: `${idx * 80}ms`,
+                animationFillMode: "both",
               }}
             >
               <div className="flex items-center justify-between">
