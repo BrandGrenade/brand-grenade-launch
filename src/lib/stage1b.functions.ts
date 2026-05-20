@@ -4,9 +4,7 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { callClaude } from "./claude.server";
 import { STAGE_1B_SYSTEM_PROMPT, buildStage1bUserMessage } from "./stage1b-prompt";
 
-const RunStage1bInput = z.object({
-  sessionId: z.string().uuid(),
-});
+const RunStage1bInput = z.object({ sessionId: z.string().uuid() });
 
 export const runStage1b = createServerFn({ method: "POST" })
   .inputValidator((input) => RunStage1bInput.parse(input))
@@ -18,8 +16,6 @@ export const runStage1b = createServerFn({ method: "POST" })
       .single();
     if (loadErr || !session) throw new Error(`Session not found: ${loadErr?.message ?? "no row"}`);
     if (!session.stage_1_output) throw new Error("Stage 1 output missing — cannot run Stage 1B");
-
-    // Idempotent.
     if (session.stage_1b_output) return { output: session.stage_1b_output };
 
     const userMessage = buildStage1bUserMessage({
@@ -30,12 +26,12 @@ export const runStage1b = createServerFn({ method: "POST" })
     const output = await callClaude({
       systemPrompt: STAGE_1B_SYSTEM_PROMPT,
       userMessage,
-      maxTokens: 800,
+      maxTokens: 1500,
       temperature: 0.7,
       sessionId: data.sessionId,
       stageLabel: "Stage 1B",
-    stageNumber: "1B",
-    stageName: "Brief Enhancement",
+      stageNumber: "1B",
+      stageName: "Brief Enhancement",
     });
 
     const { error: updateErr } = await supabaseAdmin
@@ -47,8 +43,6 @@ export const runStage1b = createServerFn({ method: "POST" })
     return { output };
   });
 
-// Resubmit brief with additional info → clears Stage 1 + 1B outputs so the
-// pipeline re-runs Stage 1 with the enriched brief before reaching Stage 2.
 const ResubmitBriefInput = z.object({
   sessionId: z.string().uuid(),
   additionalBrief: z.string().min(20).max(50000),

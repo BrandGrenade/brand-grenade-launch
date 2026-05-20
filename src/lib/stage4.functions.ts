@@ -10,25 +10,15 @@ import {
 import { trimStage1ForDownstream } from "./context-trim";
 import { countSections } from "./count-helpers";
 
-const RunStage4Input = z.object({
-  sessionId: z.string().uuid(),
-});
-
+const RunStage4Input = z.object({ sessionId: z.string().uuid() });
 const UNIVERSE_HEADING = /^##\s+\S/;
-
 function countUniverses(text: string): number {
   return text.split("\n").filter((l) => UNIVERSE_HEADING.test(l)).length;
 }
-
 async function setStatus(sessionId: string, message: string | null) {
   try {
-    await supabaseAdmin
-      .from("sessions")
-      .update({ retry_status: message })
-      .eq("id", sessionId);
-  } catch {
-    // best-effort
-  }
+    await supabaseAdmin.from("sessions").update({ retry_status: message }).eq("id", sessionId);
+  } catch { /* best-effort */ }
 }
 
 export const runStage4 = createServerFn({ method: "POST" })
@@ -36,16 +26,13 @@ export const runStage4 = createServerFn({ method: "POST" })
   .handler(async ({ data }): Promise<{ output: string }> => {
     const { data: session, error: loadErr } = await supabaseAdmin
       .from("sessions")
-      .select(
-        "brand_name, category, strategic_mode, stage_1_output, stage_2_output, stage_3_output, stage_4_output"
-      )
+      .select("brand_name, category, strategic_mode, stage_1_output, stage_2_output, stage_3_output, stage_4_output")
       .eq("id", data.sessionId)
       .single();
     if (loadErr || !session) throw new Error(`Session not found: ${loadErr?.message ?? "no row"}`);
     if (!session.stage_1_output) throw new Error("Stage 1 output missing — cannot run Stage 4");
     if (!session.stage_2_output) throw new Error("Stage 2 output (CMM) missing — cannot run Stage 4");
     if (!session.stage_3_output) throw new Error("Stage 3 output (Constraint Matrix) missing — cannot run Stage 4");
-
     if (session.stage_4_output) return { output: session.stage_4_output };
 
     await supabaseAdmin
@@ -54,7 +41,6 @@ export const runStage4 = createServerFn({ method: "POST" })
       .eq("id", data.sessionId);
 
     const constraintSetCount = countSections(session.stage_3_output, 4);
-
     const userMessage = buildStage4UserMessage({
       brandName: session.brand_name,
       category: session.category,
@@ -79,29 +65,19 @@ export const runStage4 = createServerFn({ method: "POST" })
       });
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Stage 4 failed";
-      await supabaseAdmin
-        .from("sessions")
-        .update({ stage_4_error: msg })
-        .eq("id", data.sessionId);
+      await supabaseAdmin.from("sessions").update({ stage_4_error: msg }).eq("id", data.sessionId);
       throw e instanceof Error ? e : new Error(msg);
     }
 
-    // CHANGE 4 — count ## universes; continue if below 3 (max 3 attempts).
     let universeCount = countUniverses(output);
     let attempts = 0;
     while (universeCount < 3 && attempts < 3) {
       attempts++;
-      await setStatus(
-        data.sessionId,
-        `${universeCount} of 3 strategic universes generated. Continuing generation...`
-      );
+      await setStatus(data.sessionId, `${universeCount} of 3 strategic universes generated. Continuing generation...`);
       try {
         const continuation = await callClaude({
           systemPrompt: STAGE_4_SYSTEM_PROMPT,
-          userMessage: buildStage4ContinuationMessage({
-            previousOutput: output,
-            currentCount: universeCount,
-          }),
+          userMessage: buildStage4ContinuationMessage({ previousOutput: output, currentCount: universeCount }),
           maxTokens: 4000,
           temperature: 0.7,
           sessionId: data.sessionId,
@@ -111,14 +87,11 @@ export const runStage4 = createServerFn({ method: "POST" })
         });
         output = `${output}\n\n${continuation}`;
         universeCount = countUniverses(output);
-      } catch {
-        break;
-      }
+      } catch { break; }
     }
     await setStatus(data.sessionId, null);
 
     const stillInsufficient = universeCount < 3;
-
     const { error: updateErr } = await supabaseAdmin
       .from("sessions")
       .update({

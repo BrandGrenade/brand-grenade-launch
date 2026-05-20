@@ -5,25 +5,20 @@ import { callClaude } from "./claude.server";
 import { STAGE_6_SYSTEM_PROMPT, buildStage6UserMessage } from "./stage6-prompt";
 import { trimCMMForDownstream } from "./context-trim";
 
-const RunStage6Input = z.object({
-  sessionId: z.string().uuid(),
-});
+const RunStage6Input = z.object({ sessionId: z.string().uuid() });
 
 export const runStage6 = createServerFn({ method: "POST" })
   .inputValidator((input) => RunStage6Input.parse(input))
   .handler(async ({ data }): Promise<{ output: string }> => {
     const { data: session, error: loadErr } = await supabaseAdmin
       .from("sessions")
-      .select(
-        "brand_name, category, strategic_mode, stage_2_output, stage_3_output, stage_5_output, stage_6_output"
-      )
+      .select("brand_name, category, strategic_mode, stage_2_output, stage_3_output, stage_5_output, stage_6_output")
       .eq("id", data.sessionId)
       .single();
     if (loadErr || !session) throw new Error(`Session not found: ${loadErr?.message ?? "no row"}`);
     if (!session.stage_2_output) throw new Error("Stage 2 output (CMM) missing — cannot run Stage 6");
     if (!session.stage_3_output) throw new Error("Stage 3 output (Constraint Matrix) missing — cannot run Stage 6");
     if (!session.stage_5_output) throw new Error("Stage 5 output (Insights) missing — cannot run Stage 6");
-
     if (session.stage_6_output) return { output: session.stage_6_output };
 
     await supabaseAdmin
@@ -45,19 +40,16 @@ export const runStage6 = createServerFn({ method: "POST" })
       output = await callClaude({
         systemPrompt: STAGE_6_SYSTEM_PROMPT,
         userMessage,
-        maxTokens: 2000,
+        maxTokens: 2500,
         temperature: 0.7,
         sessionId: data.sessionId,
         stageLabel: "Stage 6",
-      stageNumber: "6",
-      stageName: "Insight Validation",
+        stageNumber: "6",
+        stageName: "Insight Validation",
       });
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Stage 6 failed";
-      await supabaseAdmin
-        .from("sessions")
-        .update({ stage_6_error: msg })
-        .eq("id", data.sessionId);
+      await supabaseAdmin.from("sessions").update({ stage_6_error: msg }).eq("id", data.sessionId);
       throw e instanceof Error ? e : new Error(msg);
     }
 

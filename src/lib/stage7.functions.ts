@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { callClaude } from "./claude.server";
+import { streamClaude } from "./claude.server";
 import { STAGE_7_SYSTEM_PROMPT, buildStage7UserMessage } from "./stage7-prompt";
 import { trimValidatedInsightsForDownstream } from "./context-trim";
 
@@ -11,7 +11,7 @@ const RunStage7Input = z.object({
 
 export const runStage7 = createServerFn({ method: "POST" })
   .inputValidator((input) => RunStage7Input.parse(input))
-  .handler(async ({ data }): Promise<{ output: string }> => {
+  .handler(async function* ({ data }) {
     const { data: session, error: loadErr } = await supabaseAdmin
       .from("sessions")
       .select(
@@ -25,7 +25,11 @@ export const runStage7 = createServerFn({ method: "POST" })
     if (!session.stage_4_output) throw new Error("Stage 4 output (SIS) missing — cannot run Stage 7");
     if (!session.stage_6_output) throw new Error("Stage 6 output (validated insights) missing — cannot run Stage 7");
 
-    if (session.stage_7_output) return { output: session.stage_7_output };
+    if (session.stage_7_output) {
+      yield { kind: "delta" as const, text: session.stage_7_output };
+      yield { kind: "done" as const, output: session.stage_7_output };
+      return;
+    }
 
     await supabaseAdmin
       .from("sessions")
@@ -42,18 +46,21 @@ export const runStage7 = createServerFn({ method: "POST" })
       constraintMatrix: session.stage_3_output,
     });
 
-    let output: string;
+    let output = "";
     try {
-      output = await callClaude({
+      for await (const delta of streamClaude({
         systemPrompt: STAGE_7_SYSTEM_PROMPT,
         userMessage,
-        maxTokens: 3000,
+        maxTokens: 3500,
         temperature: 0.7,
         sessionId: data.sessionId,
         stageLabel: "Stage 7",
-      stageNumber: "7",
-      stageName: "Territory Synthesis",
-      });
+        stageNumber: "7",
+        stageName: "Territory Synthesis",
+      })) {
+        output += delta;
+        yield { kind: "delta" as const, text: delta };
+      }
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Stage 7 failed";
       await supabaseAdmin
@@ -69,5 +76,5 @@ export const runStage7 = createServerFn({ method: "POST" })
       .eq("id", data.sessionId);
     if (updateErr) throw new Error(`Failed to save Stage 7 output: ${updateErr.message}`);
 
-    return { output };
+    yield { kind: "done" as const, output };
   });
