@@ -1330,19 +1330,13 @@ function LeftPanel({
                 >
                   {s.name}
                 </span>
-                {s.checkpoint && (
-                  <span
-                    className="text-label shrink-0 rounded-sm px-1.5 py-0.5"
-                    style={{
-                      backgroundColor: "oklch(0.5 0.09 70 / 0.10)",
-                      color: "var(--color-warning)",
-                      fontSize: 9,
-                    }}
-                  >
-                    Review
-                  </span>
-                )}
-                {s.conditional && (
+                <StageRowStatusLabel
+                  checkpoint={!!s.checkpoint}
+                  conditional={!!s.conditional}
+                  status={status}
+                  selected={selected}
+                />
+                {s.conditional && status === "pending" && (
                   <span
                     className="text-label shrink-0"
                     style={{
