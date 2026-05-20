@@ -21,6 +21,7 @@ import { runStage9 } from "@/lib/stage9.functions";
 import { runStage10 } from "@/lib/stage10.functions";
 import { runStage11 } from "@/lib/stage11.functions";
 import { runStage12, saveSelectedSMP, saveSelectionRationale } from "@/lib/stage12.functions";
+import { runStage13, saveBrandIntelligence } from "@/lib/stage13.functions";
 import { sanitizeStageOutput } from "@/lib/sanitize-output";
 
 const pipelineSearchSchema = z.object({
@@ -206,6 +207,8 @@ function PipelineView() {
   const runStage12Fn = useServerFn(runStage12);
   const saveSelectedSMPFn = useServerFn(saveSelectedSMP);
   const saveSelectionRationaleFn = useServerFn(saveSelectionRationale);
+  const saveBrandIntelligenceFn = useServerFn(saveBrandIntelligence);
+  const runStage13Fn = useServerFn(runStage13);
 
   const [session, setSession] = useState<SessionData | null>(null);
   const [stage1Output, setStage1Output] = useState<string | null>(null);
@@ -980,19 +983,37 @@ function PipelineView() {
               setResubmitting(false);
             }
           }}
-          onSubmitBrandIntel={() => {
-            setIntelSubmitted(true);
-            setStatuses((prev) => {
-              const next: Record<string, StageStatus> = { ...prev, "13": "complete" };
-              const idx = STAGES.findIndex((s) => s.id === "13");
-              for (let i = idx + 1; i < STAGES.length; i++) {
-                if (!STAGES[i].conditional) {
-                  next[STAGES[i].id] = "running";
-                  break;
-                }
-              }
-              return next;
-            });
+          onSubmitBrandIntel={async (values) => {
+            if (!sessionId) {
+              console.log("[Submit Brand Intelligence] clicked — no session id");
+              return;
+            }
+            try {
+              await saveBrandIntelligenceFn({ data: { sessionId, brandIntelligence: values } });
+              setIntelSubmitted(true);
+              setStatuses((p) => ({ ...p, "13": "running" }));
+              // Fire Stage 13 — don't block the UI; mark complete on success.
+              runStage13Fn({ data: { sessionId } })
+                .then(() => {
+                  setStatuses((prev) => {
+                    const next: Record<string, StageStatus> = { ...prev, "13": "complete" };
+                    const idx = STAGES.findIndex((s) => s.id === "13");
+                    for (let i = idx + 1; i < STAGES.length; i++) {
+                      if (!STAGES[i].conditional) {
+                        next[STAGES[i].id] = "running";
+                        break;
+                      }
+                    }
+                    return next;
+                  });
+                })
+                .catch((err) => {
+                  console.error("[Stage 13] failed", err);
+                  setStatuses((p) => ({ ...p, "13": "error" }));
+                });
+            } catch (err) {
+              console.error("[Save Brand Intelligence] failed", err);
+            }
           }}
           onNext={() => {
             const idx = STAGES.findIndex((s) => s.id === selectedId);
@@ -1004,7 +1025,40 @@ function PipelineView() {
               }
             }
           }}
-          onConfirmCheckpoint={(stageId) => {
+          onConfirmCheckpoint={(stageId, notes) => {
+            // Persist notes + timestamp for the relevant checkpoint.
+            const letter = CHECKPOINT_LETTERS[stageId];
+            if (sessionId && letter) {
+              const notesText = (notes ?? []).map((n) => n.trim()).filter(Boolean).join("\n\n");
+              const nowIso = new Date().toISOString();
+              const update: Partial<{
+                checkpoint_a_confirmed: boolean;
+                checkpoint_a_confirmed_at: string;
+                checkpoint_a_notes: string;
+                checkpoint_b_confirmed: boolean;
+                checkpoint_b_confirmed_at: string;
+                checkpoint_b_notes: string;
+                checkpoint_c_confirmed: boolean;
+                checkpoint_c_confirmed_at: string;
+                checkpoint_c_notes: string;
+              }> = {};
+              if (letter === "A") {
+                update.checkpoint_a_confirmed = true;
+                update.checkpoint_a_confirmed_at = nowIso;
+                if (notesText) update.checkpoint_a_notes = notesText;
+              } else if (letter === "B") {
+                update.checkpoint_b_confirmed = true;
+                update.checkpoint_b_confirmed_at = nowIso;
+                if (notesText) update.checkpoint_b_notes = notesText;
+              } else if (letter === "C") {
+                update.checkpoint_c_confirmed = true;
+                update.checkpoint_c_confirmed_at = nowIso;
+                if (notesText) update.checkpoint_c_notes = notesText;
+              }
+              void supabase.from("sessions").update(update).eq("id", sessionId).then(({ error }) => {
+                if (error) console.error("[Checkpoint] failed to persist", error);
+              });
+            }
             // Checkpoint A with 1B required → route to Stage 1B instead of Stage 2.
             if (stageId === "01" && session?.stage_1b_required && !stage1bOutput) {
               setStatuses((prev) => ({
@@ -1036,6 +1090,26 @@ function PipelineView() {
               }
               return next;
             });
+          }}
+          onResubmitCheckpoint={async (stageId, feedback) => {
+            console.log(`[Checkpoint Resubmit] stage=${stageId} feedback=${feedback}`);
+            // Clear the relevant stage output and re-run it.
+            const resetMap: Record<string, () => void> = {
+              "01": () => { setStage1Output(null); setStage1Error(null); },
+              "08": () => { setStage8Output(null); setStage8Error(null); },
+              "12": () => { setStage12Output(null); setStage12Error(null); },
+            };
+            if (resetMap[stageId]) {
+              resetMap[stageId]();
+              if (stageId === "01") {
+                setRetryNonce((n) => n + 1);
+              } else {
+                setStatuses((p) => ({ ...p, [stageId]: "running" }));
+              }
+            }
+          }}
+          onEscalateCheckpoint={(stageId, reason) => {
+            console.log(`[Checkpoint Escalate] stage=${stageId} reason=${reason}`);
           }}
           customCheckpoint={
             selectedId === "12" && selectedStatus === "checkpoint" && rationaleForId !== "12" ? (
@@ -1389,6 +1463,9 @@ function RightPanel({
   onSubmitBrandIntel,
   onNext,
   onConfirmCheckpoint,
+  onResubmitCheckpoint,
+  onEscalateCheckpoint,
+  checkpointResubmitting,
   customCheckpoint,
   retryStatus,
 }: {
@@ -1406,9 +1483,12 @@ function RightPanel({
   showStage1bResubmit: boolean;
   resubmitting: boolean;
   onResubmitBrief: (additionalBrief: string) => void | Promise<void>;
-  onSubmitBrandIntel: () => void;
+  onSubmitBrandIntel: (values: Record<string, string>) => void | Promise<void>;
+  onResubmitCheckpoint?: (stageId: string, feedback: string) => void | Promise<void>;
+  onEscalateCheckpoint?: (stageId: string, reason: string) => void | Promise<void>;
+  checkpointResubmitting?: boolean;
   onNext: () => void;
-  onConfirmCheckpoint: (stageId: string) => void;
+  onConfirmCheckpoint: (stageId: string, notes?: string[]) => void;
   customCheckpoint?: ReactNode;
   retryStatus?: string | null;
 
@@ -1507,7 +1587,10 @@ function RightPanel({
             <Checkpoint
               letter={letter}
               showLowScoreAlert={letter === "A" && stage1bRequired}
-              onConfirm={() => onConfirmCheckpoint(stage.id)}
+              onConfirm={(notes) => onConfirmCheckpoint(stage.id, notes)}
+              onResubmit={onResubmitCheckpoint ? (fb) => onResubmitCheckpoint(stage.id, fb) : undefined}
+              onEscalate={onEscalateCheckpoint ? (r) => onEscalateCheckpoint(stage.id, r) : undefined}
+              resubmitting={checkpointResubmitting}
               reviewContent={
                 <>
                   {letter === "A" && tensionScore !== null && (

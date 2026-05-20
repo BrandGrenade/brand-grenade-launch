@@ -54,11 +54,17 @@ export function Checkpoint({
   reviewContent,
   showLowScoreAlert = false,
   onConfirm,
+  onResubmit,
+  onEscalate,
+  resubmitting = false,
 }: {
   letter: CheckpointLetter;
   reviewContent: React.ReactNode;
   showLowScoreAlert?: boolean;
-  onConfirm?: () => void;
+  onConfirm?: (notes: string[]) => void;
+  onResubmit?: (feedback: string) => void | Promise<void>;
+  onEscalate?: (reason: string) => void | Promise<void>;
+  resubmitting?: boolean;
 }) {
   const copy = COPY[letter];
   const [action, setAction] = useState<Action>(null);
@@ -168,7 +174,7 @@ export function Checkpoint({
             <button
               type="button"
               data-checkpoint-confirm="true"
-              onClick={onConfirm}
+              onClick={() => onConfirm?.(notes)}
               className="inline-flex h-11 items-center justify-center rounded-md px-6 text-[14px] font-semibold transition-colors"
               style={{
                 backgroundColor: "var(--color-success)",
@@ -207,10 +213,18 @@ export function Checkpoint({
             <div className="mt-3 flex justify-end">
               <button
                 type="button"
-                disabled={feedback.trim().length < 8}
+                disabled={feedback.trim().length < 8 || resubmitting}
+                onClick={() => {
+                  if (feedback.trim().length < 8 || resubmitting) return;
+                  if (onResubmit) {
+                    void onResubmit(feedback.trim());
+                  } else {
+                    console.log("[Checkpoint Resubmit] clicked — handler not yet implemented", feedback.trim());
+                  }
+                }}
                 className="inline-flex h-10 items-center justify-center rounded-md px-5 text-[13px] font-semibold transition-colors disabled:cursor-not-allowed"
                 style={
-                  feedback.trim().length >= 8
+                  feedback.trim().length >= 8 && !resubmitting
                     ? {
                         backgroundColor: "var(--color-primary)",
                         color: "var(--color-primary-foreground)",
@@ -221,7 +235,7 @@ export function Checkpoint({
                       }
                 }
               >
-                Resubmit
+                {resubmitting ? "Resubmitting…" : "Resubmit"}
               </button>
             </div>
           </div>
@@ -254,6 +268,16 @@ export function Checkpoint({
               <button
                 type="button"
                 disabled={escalation.trim().length < 8}
+                onClick={() => {
+                  if (escalation.trim().length < 8) return;
+                  if (onEscalate) {
+                    void onEscalate(escalation.trim());
+                  } else {
+                    console.log("[Checkpoint Escalate] clicked — handler not yet implemented", escalation.trim());
+                  }
+                  setAction(null);
+                  setEscalation("");
+                }}
                 className="inline-flex h-10 items-center justify-center rounded-md px-5 text-[13px] font-semibold transition-colors disabled:cursor-not-allowed"
                 style={
                   escalation.trim().length >= 8
