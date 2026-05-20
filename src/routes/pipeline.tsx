@@ -1326,25 +1326,7 @@ function PipelineView() {
               await saveBrandIntelligenceFn({ data: { sessionId, brandIntelligence: values } });
               setIntelSubmitted(true);
               setStatuses((p) => ({ ...p, "13": "running" }));
-              // Fire Stage 13 — don't block the UI; mark complete on success.
-              runStage13Fn({ data: { sessionId } })
-                .then(() => {
-                  setStatuses((prev) => {
-                    const next: Record<string, StageStatus> = { ...prev, "13": "complete" };
-                    const idx = STAGES.findIndex((s) => s.id === "13");
-                    for (let i = idx + 1; i < STAGES.length; i++) {
-                      if (!STAGES[i].conditional) {
-                        next[STAGES[i].id] = "running";
-                        break;
-                      }
-                    }
-                    return next;
-                  });
-                })
-                .catch((err) => {
-                  console.error("[Stage 13] failed", err);
-                  setStatuses((p) => ({ ...p, "13": "error" }));
-                });
+                    setSelectedId("13");
             } catch (err) {
               console.error("[Save Brand Intelligence] failed", err);
             }
