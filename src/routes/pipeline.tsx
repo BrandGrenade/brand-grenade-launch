@@ -1560,20 +1560,49 @@ function StreamedOutput({
   streaming: boolean;
 }) {
   const blocks = parseBlocks(text);
+  const tailRef = useRef<HTMLDivElement | null>(null);
+  // Auto-scroll: when streaming, keep the latest line visible.
+  useEffect(() => {
+    if (!streaming) return;
+    tailRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+  }, [text, streaming]);
+
   return (
     <div style={{ color: "var(--color-text-primary)", lineHeight: 1.7 }}>
       {blocks.map((b, i) => {
         const isLast = i === blocks.length - 1;
         const cursor = streaming && isLast ? <Caret /> : null;
         switch (b.kind) {
+          case "h1":
+            return (
+              <h1
+                key={i}
+                className="text-h1 text-text-primary"
+                style={{ marginTop: 36, marginBottom: 16 }}
+              >
+                <Inline text={b.text} />
+                {cursor}
+              </h1>
+            );
+          case "h2":
+            return (
+              <h2
+                key={i}
+                className="text-h2 text-text-primary"
+                style={{ marginTop: 32, marginBottom: 14 }}
+              >
+                <Inline text={b.text} />
+                {cursor}
+              </h2>
+            );
           case "h3":
             return (
               <h3
                 key={i}
                 className="text-h3 text-text-primary"
-                style={{ marginTop: 32, marginBottom: 12 }}
+                style={{ marginTop: 28, marginBottom: 12 }}
               >
-                {b.text}
+                <Inline text={b.text} />
                 {cursor}
               </h3>
             );
@@ -1589,7 +1618,7 @@ function StreamedOutput({
                   marginBottom: 8,
                 }}
               >
-                {b.text}
+                <Inline text={b.text} />
                 {cursor}
               </p>
             );
@@ -1606,7 +1635,7 @@ function StreamedOutput({
                   margin: "12px 0",
                 }}
               >
-                {b.text}
+                <Inline text={b.text} />
                 {cursor}
               </p>
             );
@@ -1638,7 +1667,7 @@ function StreamedOutput({
                         backgroundColor: "var(--color-primary)",
                       }}
                     />
-                    {item}
+                    <Inline text={item} />
                     {j === b.items.length - 1 ? cursor : null}
                   </li>
                 ))}
@@ -1648,17 +1677,45 @@ function StreamedOutput({
           default:
             return (
               <p key={i} className="text-body" style={{ margin: "10px 0" }}>
-                {b.text}
+                <Inline text={b.text} />
                 {cursor}
               </p>
             );
         }
       })}
+      <div ref={tailRef} aria-hidden="true" />
     </div>
   );
 }
 
+// Inline parser: **bold** + *em* segments
+function Inline({ text }: { text: string }) {
+  const parts: Array<{ kind: "t" | "b" | "i"; v: string }> = [];
+  const re = /(\*\*[^*]+\*\*|\*[^*]+\*)/g;
+  let last = 0;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(text)) !== null) {
+    if (m.index > last) parts.push({ kind: "t", v: text.slice(last, m.index) });
+    const tok = m[0];
+    if (tok.startsWith("**")) parts.push({ kind: "b", v: tok.slice(2, -2) });
+    else parts.push({ kind: "i", v: tok.slice(1, -1) });
+    last = m.index + tok.length;
+  }
+  if (last < text.length) parts.push({ kind: "t", v: text.slice(last) });
+  return (
+    <>
+      {parts.map((p, i) =>
+        p.kind === "b" ? <strong key={i} style={{ color: "var(--color-text-primary)" }}>{p.v}</strong> :
+        p.kind === "i" ? <em key={i}>{p.v}</em> :
+        <span key={i}>{p.v}</span>,
+      )}
+    </>
+  );
+}
+
 type Block =
+  | { kind: "h1"; text: string }
+  | { kind: "h2"; text: string }
   | { kind: "h3"; text: string }
   | { kind: "subhead"; text: string }
   | { kind: "para"; text: string }
@@ -1681,15 +1738,19 @@ function parseBlocks(text: string): Block[] {
       flush();
       continue;
     }
-    if (line.startsWith("- ")) {
+    if (line.startsWith("- ") || line.startsWith("* ")) {
       bulletBuf.push(line.slice(2));
       continue;
     }
     flush();
-    if (line.startsWith("## ")) {
-      blocks.push({ kind: "h3", text: line.slice(3) });
+    if (line.startsWith("#### ")) {
+      blocks.push({ kind: "subhead", text: line.slice(5) });
     } else if (line.startsWith("### ")) {
-      blocks.push({ kind: "subhead", text: line.slice(4) });
+      blocks.push({ kind: "h3", text: line.slice(4) });
+    } else if (line.startsWith("## ")) {
+      blocks.push({ kind: "h2", text: line.slice(3) });
+    } else if (line.startsWith("# ")) {
+      blocks.push({ kind: "h1", text: line.slice(2) });
     } else if (line.startsWith("> ")) {
       blocks.push({ kind: "callout", text: line.slice(2) });
     } else {
@@ -1699,6 +1760,105 @@ function parseBlocks(text: string): Block[] {
   flush();
   return blocks;
 }
+
+// Styled API-error card per spec.
+export function ErrorCard({
+  stageNumber,
+  message,
+  onRetry,
+}: {
+  stageNumber: string;
+  message: string;
+  onRetry?: () => void;
+}) {
+  return (
+    <div
+      role="alert"
+      className="animate-fade-in"
+      style={{
+        backgroundColor: "#7C3A3A12",
+        border: "1px solid #7C3A3A",
+        borderRadius: 8,
+        padding: 24,
+        marginTop: 16,
+      }}
+    >
+      <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path
+            d="M12 3L22 20H2L12 3Z"
+            stroke="#7C3A3A"
+            strokeWidth="1.75"
+            strokeLinejoin="round"
+          />
+          <path d="M12 10v5" stroke="#7C3A3A" strokeWidth="1.75" strokeLinecap="round" />
+          <circle cx="12" cy="17.5" r="0.9" fill="#7C3A3A" />
+        </svg>
+        <div style={{ flex: 1 }}>
+          <p style={{ fontWeight: 600, color: "#F0EDE8", fontSize: 14 }}>
+            Stage {stageNumber} encountered an error
+          </p>
+          <p className="text-body-sm" style={{ color: "#8A8680", marginTop: 6 }}>
+            {message}
+          </p>
+          <div style={{ display: "flex", gap: 12, marginTop: 16 }}>
+            <button
+              type="button"
+              onClick={onRetry}
+              style={{
+                height: 36,
+                padding: "0 16px",
+                borderRadius: 6,
+                border: "none",
+                backgroundColor: "#C8873A",
+                color: "var(--color-background)",
+                fontSize: 13,
+                fontWeight: 600,
+                cursor: onRetry ? "pointer" : "not-allowed",
+              }}
+            >
+              Retry this stage
+            </button>
+            <a
+              href="mailto:support@brandgrenade.com"
+              style={{
+                height: 36,
+                padding: "0 16px",
+                borderRadius: 6,
+                border: "1px solid #2A2A2A",
+                color: "#F0EDE8",
+                fontSize: 13,
+                fontWeight: 500,
+                display: "inline-flex",
+                alignItems: "center",
+                textDecoration: "none",
+              }}
+            >
+              Contact support
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Subtle inter-stage handoff message.
+export function NextStageHint({ name }: { name: string }) {
+  return (
+    <p
+      className="text-body-sm animate-fade-in"
+      style={{
+        color: "#5A5652",
+        textAlign: "center",
+        padding: "16px 0 8px",
+      }}
+    >
+      Next: {name} beginning…
+    </p>
+  );
+}
+
 
 function Caret() {
   return (
