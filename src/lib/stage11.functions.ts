@@ -3,6 +3,7 @@ import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { callClaude } from "./claude.server";
 import { STAGE_11_SYSTEM_PROMPT, buildStage11UserMessage } from "./stage11-prompt";
+import { countSections } from "./count-helpers";
 
 const Input = z.object({ sessionId: z.string().uuid() });
 
@@ -11,7 +12,7 @@ export const runStage11 = createServerFn({ method: "POST" })
   .handler(async ({ data }): Promise<{ output: string }> => {
     const { data: session, error } = await supabaseAdmin
       .from("sessions")
-      .select("brand_name, category, stage_2_output, stage_10_output, stage_11_output")
+      .select("brand_name, category, stage_2_output, stage_8_output, stage_10_output, stage_11_output")
       .eq("id", data.sessionId)
       .single();
     if (error || !session) throw new Error(`Session not found: ${error?.message ?? "no row"}`);
@@ -23,11 +24,14 @@ export const runStage11 = createServerFn({ method: "POST" })
       .update({ current_stage: 11, status: "running", stage_11_error: null })
       .eq("id", data.sessionId);
 
+    const propositionCount = countSections(session.stage_8_output ?? session.stage_10_output, 4);
+
     const userMessage = buildStage11UserMessage({
       brandName: session.brand_name,
       category: session.category,
       stage10Output: session.stage_10_output,
       cmm: session.stage_2_output ?? "",
+      propositionCount,
     });
 
     let output: string;
@@ -35,7 +39,7 @@ export const runStage11 = createServerFn({ method: "POST" })
       output = await callClaude({
         systemPrompt: STAGE_11_SYSTEM_PROMPT,
         userMessage,
-        maxTokens: 1000,
+        maxTokens: 2000,
         temperature: 0.5,
         sessionId: data.sessionId,
         stageLabel: "Stage 11",

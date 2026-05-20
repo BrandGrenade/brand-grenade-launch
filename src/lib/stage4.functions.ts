@@ -4,6 +4,7 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { callClaude } from "./claude.server";
 import { STAGE_4_SYSTEM_PROMPT, buildStage4UserMessage } from "./stage4-prompt";
 import { trimStage1ForDownstream } from "./context-trim";
+import { countSections } from "./count-helpers";
 
 const RunStage4Input = z.object({
   sessionId: z.string().uuid(),
@@ -31,6 +32,8 @@ export const runStage4 = createServerFn({ method: "POST" })
       .update({ current_stage: 4, status: "running", stage_4_error: null })
       .eq("id", data.sessionId);
 
+    const constraintSetCount = countSections(session.stage_3_output, 4);
+
     const userMessage = buildStage4UserMessage({
       brandName: session.brand_name,
       category: session.category,
@@ -38,6 +41,7 @@ export const runStage4 = createServerFn({ method: "POST" })
       sanitisedBrief: trimStage1ForDownstream(session.stage_1_output),
       cmm: session.stage_2_output,
       constraintMatrix: session.stage_3_output,
+      constraintSetCount,
     });
 
     let output: string;
@@ -45,7 +49,7 @@ export const runStage4 = createServerFn({ method: "POST" })
       output = await callClaude({
         systemPrompt: STAGE_4_SYSTEM_PROMPT,
         userMessage,
-        maxTokens: 1200,
+        maxTokens: 2500,
         temperature: 0.7,
         sessionId: data.sessionId,
         stageLabel: "Stage 4",

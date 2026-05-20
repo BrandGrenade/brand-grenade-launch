@@ -123,6 +123,7 @@ export function buildStage5UserMessage(args: {
   sanitisedBrief: string;
   cmm: string;
   sis: string;
+  universeCount: number;
 }): string {
   return `FROM STAGE 1 (SANITISED BRIEF — Sections 3, 4, 6 + Brief Depth Level), STAGE 2 (CMM), and STAGE 4 (FULL SIS):
 
@@ -139,5 +140,7 @@ ${args.cmm}
 STRATEGIC INTERPRETATION SET (SIS) — all frames with full architecture, boundaries, Stage 5 Briefs, Iconic Tier flags, Anti-Convergence confirmation:
 ${args.sis}
 
-Generate per-frame insight sets following the Output Structure exactly. Operate frame-by-frame; complete one frame fully before beginning the next. Run all five boundary compliance checks, CMM compliance, and both quality tests per insight. Run the Cross-Frame Divergence Check after all frames are complete. Run the per-frame Self-Audit before delivering each frame.`;
+Generate per-frame insight sets following the Output Structure exactly. Operate frame-by-frame; complete one frame fully before beginning the next. Run all five boundary compliance checks, CMM compliance, and both quality tests per insight. Run the Cross-Frame Divergence Check after all frames are complete. Run the per-frame Self-Audit before delivering each frame.
+
+Generate 3-5 insights for EACH of the ${args.universeCount} Strategic Universes above. Do not stop after the first universe.`;
 }

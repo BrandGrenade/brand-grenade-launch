@@ -76,6 +76,7 @@ export function buildStage9UserMessage(args: {
   stage8Output: string;
   cmm: string;
   stage7DominantSignal?: string;
+  propositionCount: number;
 }): string {
   return `BRAND: ${args.brandName}
 CATEGORY: ${args.category}
@@ -89,5 +90,7 @@ ${args.cmm}
 ==== STAGE 7 DOMINANT SIGNAL CARRY ====
 ${args.stage7DominantSignal ?? "Not provided — assume NONE unless Stage 7 output above includes a Dominant Signal flag."}
 
-Run Stage 9 Divergence Validation. Produce the Header, full Pair Matrix, Category Differentiation Report, any Regeneration Instructions, Proximity Warnings, Set-Level Verdict, and Self-Audit.`;
+Run Stage 9 Divergence Validation. Produce the Header, full Pair Matrix, Category Differentiation Report, any Regeneration Instructions, Proximity Warnings, Set-Level Verdict, and Self-Audit.
+
+Evaluate ALL ${args.propositionCount} propositions from Stage 8 above. Do not stop after evaluating the first proposition.`;
 }

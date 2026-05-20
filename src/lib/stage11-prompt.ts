@@ -84,6 +84,7 @@ export function buildStage11UserMessage(args: {
   category: string;
   stage10Output: string;
   cmm: string;
+  propositionCount: number;
 }): string {
   return `BRAND: ${args.brandName}
 CATEGORY: ${args.category}
@@ -94,5 +95,7 @@ ${args.stage10Output}
 ==== STAGE 2 — CMM (Forbidden Zones, Dominant Logic, Competitor SMP Patterns) ====
 ${args.cmm}
 
-Run Stage 11 Pressure Test. Produce the Header, Per-SMP Pressure Block for every Scored SMP, Pressure Test Report, Cross-SMP Integrity, Final Validated SMP Set, and Self-Audit.`;
+Run Stage 11 Pressure Test. Produce the Header, Per-SMP Pressure Block for every Scored SMP, Pressure Test Report, Cross-SMP Integrity, Final Validated SMP Set, and Self-Audit.
+
+Apply all five tests to EACH of the ${args.propositionCount} propositions. Do not stop after testing the first proposition.`;
 }

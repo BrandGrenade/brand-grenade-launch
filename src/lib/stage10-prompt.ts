@@ -82,6 +82,7 @@ export function buildStage10UserMessage(args: {
   stage8Output: string;
   stage9Output: string;
   stage1Output: string;
+  propositionCount: number;
 }): string {
   return `BRAND: ${args.brandName}
 CATEGORY: ${args.category}
@@ -95,5 +96,7 @@ ${args.stage9Output}
 ==== STAGE 1 — SANITISED BRIEF (Strategic Opportunity context) ====
 ${args.stage1Output}
 
-Run Stage 10 SMP Scoring. Produce the Header, Per-SMP Score Blocks for every divergence-validated SMP, Elimination Log, Priority Recommendation (all three components), Set-Level Verdict, and Self-Audit.`;
+Run Stage 10 SMP Scoring. Produce the Header, Per-SMP Score Blocks for every divergence-validated SMP, Elimination Log, Priority Recommendation (all three components), Set-Level Verdict, and Self-Audit.
+
+Score ALL ${args.propositionCount} propositions from the input. Do not stop after scoring the first proposition.`;
 }

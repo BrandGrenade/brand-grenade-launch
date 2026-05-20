@@ -3,6 +3,7 @@ import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { callClaude } from "./claude.server";
 import { STAGE_8_SYSTEM_PROMPT, buildStage8UserMessage } from "./stage8-prompt";
+import { countSections } from "./count-helpers";
 
 const Input = z.object({ sessionId: z.string().uuid() });
 
@@ -20,9 +21,16 @@ export const runStage8 = createServerFn({ method: "POST" })
     if (!session.stage_7_output) throw new Error("Stage 7 output missing — cannot run Stage 8");
     if (session.stage_8_output) return { output: session.stage_8_output };
 
+    const territoryCount = countSections(session.stage_7_output, 4);
+
     await supabaseAdmin
       .from("sessions")
-      .update({ current_stage: 8, status: "running", stage_8_error: null })
+      .update({
+        current_stage: 8,
+        status: "running",
+        stage_8_error: null,
+        stage_7_territory_count: territoryCount,
+      })
       .eq("id", data.sessionId);
 
     const userMessage = buildStage8UserMessage({
@@ -31,6 +39,7 @@ export const runStage8 = createServerFn({ method: "POST" })
       stage7Output: session.stage_7_output,
       cmm: session.stage_2_output,
       constraintMatrix: session.stage_3_output,
+      territoryCount,
     });
 
     let output: string;
@@ -38,7 +47,7 @@ export const runStage8 = createServerFn({ method: "POST" })
       output = await callClaude({
         systemPrompt: STAGE_8_SYSTEM_PROMPT,
         userMessage,
-        maxTokens: 1500,
+        maxTokens: 3000,
         temperature: 0.7,
         sessionId: data.sessionId,
         stageLabel: "Stage 8",

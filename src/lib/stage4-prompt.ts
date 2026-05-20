@@ -156,6 +156,7 @@ export function buildStage4UserMessage(args: {
   sanitisedBrief: string;
   cmm: string;
   constraintMatrix: string;
+  constraintSetCount: number;
 }): string {
   return `FROM STAGE 1 (SANITISED BRIEF), STAGE 2 (CMM), and STAGE 3 (CONSTRAINT MATRIX):
 
@@ -174,5 +175,7 @@ ${args.constraintMatrix}
 
 Generate the Strategic Interpretation Set for this brief, following the Output Structure exactly. Run Anti-Convergence Validation and CMM Compliance internally before delivering. Output 3–6 frames.
 
-IMPORTANT: Write the Strategic Universe descriptions as strategic narrative for client presentation. Do not output internal pipeline structure, validation checks, field labels, or system architecture. Only the strategic thinking belongs in the output.`;
+IMPORTANT: Write the Strategic Universe descriptions as strategic narrative for client presentation. Do not output internal pipeline structure, validation checks, field labels, or system architecture. Only the strategic thinking belongs in the output.
+
+Generate exactly ${args.constraintSetCount} Strategic Universes — one per Strategic Framework in the input above.`;
 }
