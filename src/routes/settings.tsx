@@ -127,7 +127,9 @@ function SettingsPage() {
 
         <Section title="Account">
           <Row label="Email">
-            <span className="text-body text-text-primary">demo@brandgrenade.com</span>
+            <span className="text-body text-text-primary">
+              {email ?? "Not signed in"}
+            </span>
           </Row>
           <Row label="Password">
             <button
