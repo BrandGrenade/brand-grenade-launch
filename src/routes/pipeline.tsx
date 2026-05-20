@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { runStage1 } from "@/lib/stage1.functions";
 import { runStage1b, resubmitBrief } from "@/lib/stage1b.functions";
 import { runStage2 } from "@/lib/stage2.functions";
+import { runStage3 } from "@/lib/stage3.functions";
 
 const pipelineSearchSchema = z.object({
   session: z.string().uuid().optional(),
