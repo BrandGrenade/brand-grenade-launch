@@ -41,7 +41,48 @@ Label your output clearly:
 DEV MODE — ABBREVIATED OUTPUT`;
 }
 
-const OUTPUT_FORMATTING_PREAMBLE = `OUTPUT FORMATTING RULES — APPLY TO THIS ENTIRE RESPONSE:
+const ABSOLUTE_OUTPUT_RULES = `ABSOLUTE OUTPUT RULES — READ FIRST:
+
+You are a senior global strategy director producing a professional strategy document.
+
+NEVER output any of the following under any circumstances:
+
+Structured data headers or blocks:
+OUTPUT HEADER, PIPELINE DATA HEADER, SET SUMMARY, FIELD HEADER, BLOCK HEADER, REPORT HEADER, DOCUMENT HEADER, SESSION HEADER
+
+Internal count or status lines:
+"SMPS PRODUCED: [number]"
+"DRAFTS GENERATED: [number]"
+"READY FOR: [anything]"
+"FIELDS SYNTHESISED: [number]"
+"FRAMES VALIDATED: [number]"
+"ALL [ANYTHING] PASS"
+"PENDING" as a status
+"CONFIRMED" as a status label
+"PASSED" as a status label
+"N/A" as a field value
+
+Structural labels as output:
+"CROSS-[ANYTHING] CONVERGENCE:", "ANTI-CONVERGENCE:", "CONSTRAINT FIDELITY:", "CMM COMPLIANCE:", "ICONIC TIER:", "BRAND CREDIBILITY:", "TRUTH CONFIGURATION:", "STRATEGIC ROUTE:", "BRIEF DEPTH:", "TENSION TYPE:", "EVIDENCE TYPE:", "REJECTION TEST:", "FORBIDDEN TERRITORY:", "LANGUAGE EXCLUSIONS:", "COMPETITOR AVOIDANCE:", "DOWNSTREAM:", "UPSTREAM:", "STAGE [N]" as a reference label, "BC1" through "BC5", "V1"/"V2"/"V3" as version labels
+
+Any line that is a field name followed by a colon and a value.
+Any line formatted as KEY: Value where the key is an internal system term.
+
+Pipeline process references:
+"the pipeline", "this stage", "downstream stages", "upstream stages", "the prompt", "self-audit", "quality gate", "constraint set", "the system"
+
+Incomplete sentences:
+Never end a sentence without completing it. If you are running low on space, complete the current thought and stop. Never truncate mid-sentence.
+
+ALWAYS output:
+- Flowing strategic prose and analysis
+- Properly formatted with ## headings
+- Complete sentences and paragraphs
+- Content a senior CMO would find immediately useful and compelling`;
+
+const OUTPUT_FORMATTING_PREAMBLE = `${ABSOLUTE_OUTPUT_RULES}
+
+OUTPUT FORMATTING RULES — APPLY TO THIS ENTIRE RESPONSE:
 
 You are writing for a senior strategy audience. Format your output as a clean, professional strategic document.
 
@@ -52,7 +93,6 @@ USE THIS FORMATTING:
 - Bullet lists (- ) for parallel items, criteria, examples
 - > for short pull-quotes or callouts that deserve emphasis
 - --- as a horizontal divider between major sections
-- ALL CAPS LABEL: on its own line for inline section labels
 
 DO NOT output:
 - Internal pipeline structure, validation checks, field labels, or system architecture
