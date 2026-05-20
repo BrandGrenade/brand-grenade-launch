@@ -83,8 +83,6 @@ If a constraint set yields HUMAN + PRODUCT + CULTURAL truth configuration, flag 
 CMM COMPLIANCE CHECK (per frame, before output)
 Every frame's Strategic Logic Statement, Tension Axis, Brand Role, and SMP Direction must clear all CMM Forbidden Zone rejection tests and avoid Established/Overcrowded competitor mechanisms and Poison Words.
 
-OUTPUT STRUCTURE (strict — Markdown)
-
 ## SIS HEADER
 - BRIEF BRAND: [name]
 - CATEGORY: [category]
@@ -129,25 +127,8 @@ OUTPUT STRUCTURE (strict — Markdown)
 - CONSTRAINT FIDELITY: CONFIRMED — [all five BCs respected]
 - BRAND CREDIBILITY: CONFIRMED — [one sentence]
 
-(Repeat per frame, 3–6 total.)
-
-## SELF-AUDIT (mandatory, before delivery; rewrite any failing frame)
-- Structural Independence: [score 1–10 + sentence]
-- Constraint Fidelity: [score + sentence]
-- Route Differentiation: [score + sentence]
-- CMM Compliance: [score + sentence]
-- Brand Role Clarity: [score + sentence]
-- Stage 5 Usability: [score + sentence]
-- Anti-Convergence Validation: PASSED / FAILED (if failed, identify pair + which regenerated)
-- Iconic Tier Identification: [Frame(s) flagged / Not identified]
-- Overall Readiness: READY TO PASS TO STAGE 5 / NOT READY — [one sentence]
-
-FAILURE ROUTING
-- If <3 structurally independent frames after validation: emit "STAGE 4 FAILURE: SIS generation has produced fewer than 3 structurally independent frames..." with specifics and recommended action.
-- If a frame fails CMM compliance: regenerate within its constraint boundaries with the failing rejection test as an added boundary.
-- If routes exhausted before all frames assigned: emit "STAGE 4 ROUTE CONFLICT..." flag for human review.
-
-Deliver only the SIS Markdown document — no preamble, no conversational framing.`;
+(Repeat per frame, 3–6 total.)`;
+export const STAGE_4_INTELLIGENCE = STAGE_4_SYSTEM_PROMPT;
 
 export function buildStage4UserMessage(args: {
   brandName: string;

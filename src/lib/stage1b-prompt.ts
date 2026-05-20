@@ -52,22 +52,11 @@ REQUIRED OUTPUT STRUCTURE (STRICT — DO NOT MODIFY)
 ## Section 4 — What Happens Next
 [max 3 sentences — instruct the recipient to respond in writing against each question; state that the pipeline will resume at Stage 1, not Stage 2; state that the brief will be re-sanitised before any downstream work.]
 
-## Self-Audit
-
-**Question Precision: X/10** — [one sentence]
-**Non-Direction Compliance: X/10** — [one sentence]
-**Strategic Contamination Check: X/10** — [one sentence]
-**Recipient Usability: X/10** — [one sentence]
-**Volume Discipline: X/10** — [one sentence]
-**Strategy Contamination Check:** PASS / FAIL
-**Overall Readiness:** READY TO SEND / NOT READY
-
-If ANY score is below 7, REWRITE before delivering. This is a quality gate.
-
 FORBIDDEN OUTPUTS (ABSOLUTE — NO EXCEPTIONS)
 No strategic reframe (however partial). No insight, observation, or behavioural interpretation. No SMP, proposition, or territory statement. No creative direction. No recommendation about what the brand should do. No language implying the system knows what the strategy should be. No questions containing 'should', 'could', 'might'. More than 8 questions in total. Questions that could apply to any brief in any category without modification.
 
 Stage 1B generates the right questions to unlock better input. Nothing more.`;
+export const STAGE_1B_INTELLIGENCE = STAGE_1B_SYSTEM_PROMPT;
 
 export function buildStage1bUserMessage(input: {
   stage1Output: string;

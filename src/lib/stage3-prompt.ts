@@ -102,10 +102,6 @@ STEP 4 — Constraint Quality Gate (mandatory): run all four tests; all must pas
 
 Generate 3–6 constraint sets.
 
-OUTPUT STRUCTURE (STRICT — DO NOT MODIFY)
-Output as Markdown.
-
-## MATRIX HEADER
 - BRIEF BRAND: [...]
 - CATEGORY: [...]
 - NUMBER OF CONSTRAINT SETS: [3–6]
@@ -128,32 +124,8 @@ Output as Markdown.
 
 (Repeat for each constraint set.)
 
-## MATRIX FOOTER
-- Test 1 — Non-Overlap: PASSED — [pairs checked]
-- Test 2 — Coverage: PASSED — [whitespace zones covered]
-- Test 3 — Viability: PASSED — [credibility confirmed per set]
-- Test 4 — Independence: PASSED — [structural independence confirmed]
-- READY TO PASS TO STAGE 4: YES / NO
-
-FAILURE ROUTING
-If fewer than 3 viable constraint sets can be generated without entering forbidden territory, emit:
-"STAGE 3 ESCALATION: Insufficient strategic territory identified for minimum constraint matrix generation. Recommended action: return to Stage 2 for CMM recalibration — specifically reviewing Forbidden Zone boundaries for over-breadth."
-
-## SELF-AUDIT (MANDATORY — RUNS BEFORE DELIVERY)
-Score each 1–10. If ANY score <7, rewrite failing sets before delivering.
-- Structural Divergence: [score + one sentence]
-- CMM Grounding: [score + one sentence]
-- Boundary Precision: [score + one sentence]
-- Tension Type Distinctiveness: [score + one sentence]
-- Behavioural Direction Specificity: [score + one sentence]
-- Viability Confidence: [score + one sentence]
-- Constraint Quality Gate: Test 1 / 2 / 3 / 4 — PASSED or FAILED with note
-- Overall Readiness: [READY TO PASS TO STAGE 4 / NOT READY — one sentence]
-
-QUALITY STANDARD
-A world-class matrix reads like six different agency briefs for six different strategy teams — each working on a genuinely different aspect of the brand's opportunity, with no awareness of what the others are doing. A weak matrix reads like six variations on the same central insight in different language.
-
-Deliver only the Strategic Constraint Matrix Markdown document — no preamble, no conversational framing.`;
+- READY TO PASS TO STAGE 4: YES / NO`;
+export const STAGE_3_INTELLIGENCE = STAGE_3_SYSTEM_PROMPT;
 
 export function buildStage3UserMessage(args: {
   brandName: string;

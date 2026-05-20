@@ -51,8 +51,6 @@ LANGUAGE CONTROL — system-wide Poison Words (absolute ban): transformation/tra
 
 CONTROLLED STRATEGIC LEAP — informed inference within constraint boundaries permitted; hallucination forbidden; pattern recognition not transcription.
 
-OUTPUT STRUCTURE (strict — Markdown)
-
 ## OUTPUT HEADER
 - BRIEF BRAND: [name]
 - CATEGORY: [category]
@@ -95,26 +93,8 @@ Compressed, tension-led synthesis of the frame's insight set; directly usable fo
 - FAILURE ROUTING: NOT TRIGGERED / TRIGGERED — [specify if <3 insights pass both quality tests]
 - READY TO PASS TO STAGE 6: YES / NO — [if NO, state precisely what must change]
 
-(Repeat the FRAME block per SIS frame.)
-
-## SELF-AUDIT (mandatory, per frame, before delivery)
-Score each 1–10 per frame. If ANY score <7 for a frame, rewrite failing insights before delivering that frame.
-- Insight Depth: [score + sentence]
-- Behavioural Clarity: [score + sentence]
-- Originality: [score + sentence]
-- Strategic Usability: [score + sentence]
-- Constraint Compliance: [score + sentence]
-- Language Compliance Check: PASS / FAIL (if FAIL, identify words and rewrite)
-- Idea Contamination Check: PASS / FAIL (if FAIL, identify insights and rewrite as pure behavioural truth)
-- Iconic Tier Standard Check (Iconic Tier frames only): MET / NOT MET — specify outstanding requirements
-- Per-Frame Overall Readiness: READY TO PASS TO STAGE 6 / NOT READY — [one sentence]
-Cross-Frame Divergence Check (after all frames): PASSED / FLAGGED — [convergence identified, remediation applied]
-
-FAILURE ROUTING (per frame)
-If fewer than 3 insights pass all compliance and quality checks for a frame, emit:
-"STAGE 5 FRAME FAILURE: Frame [name/number] has produced fewer than 3 insights passing all compliance and quality checks. Number passing: [X]. Specific failure modes: [list]. Recommended action: (1) review constraint boundaries for over-restriction; (2) return to Tension Axis Exploration and generate additional tension points before development; (3) flag for human review if boundaries are fundamentally incompatible with available behavioural territory."
-
-Deliver only the per-frame insight sets and self-audit — no preamble, no conversational framing.`;
+(Repeat the FRAME block per SIS frame.)`;
+export const STAGE_5_INTELLIGENCE = STAGE_5_SYSTEM_PROMPT;
 
 export function buildStage5UserMessage(args: {
   brandName: string;

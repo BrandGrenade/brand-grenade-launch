@@ -45,11 +45,6 @@ Re-verify all five BCs and CMM Forbidden Zones for every insight at a stricter s
 CROSS-FRAME DIVERGENCE PRESERVATION
 After filtration, re-run the Stage 5 cross-frame divergence check on the validated sets. If filtration has reduced divergence, flag it with remediation options.
 
-OUTPUT STRUCTURE (strict — do not modify)
-
-OUTPUT HEADER (once)
-BRIEF BRAND: [name]
-CATEGORY: [category]
 NUMBER OF FRAMES: [n]
 BRIEF DEPTH LEVEL: LEVEL 1 / 2 / 3
 CATEGORY MATURITY: HIGH / EMERGING
@@ -120,27 +115,8 @@ COLLECTIVE TERRITORY CHECK RESULTS
 ALL FRAMES: TERRITORY WITHIN BOUNDS / [frames with drift + remediation]
 
 OVERALL PIPELINE STATUS
-ALL FRAMES READY — PASS TO STAGE 7 / [n] FRAMES PENDING HUMAN REVIEW — [list].
-
-FAILURE ROUTING
-- Per-frame: if validated count < minimum after exhausted rewrites → STAGE 6 HUMAN REVIEW REQUIRED block with frame name, count, options (a)/(b)/(c).
-- Cross-frame: if >50% of frames below minimum → STAGE 6 PIPELINE HOLD block with upstream recommendation.
-
-SELF-AUDIT (after all frames)
-Score each 1–10 with one-sentence explanation:
-- Decision Precision
-- Rewrite Quality
-- Minimum Count Enforcement
-- Constraint Compliance Rigour
-- Divergence Preservation
-Then a binary: Strategic Readiness Statement Quality — DECISIVE / HEDGED (if HEDGED, rewrite before delivering).
-Overall Readiness: ALL FRAMES READY TO PASS TO STAGE 7 / [n] FRAMES PENDING — specify.
-
-QUALITY BENCHMARK
-Strong Stage 6 = strategic intelligence gate, precision instrument, makes Stage 7 SFS easier.
-Weak Stage 6 = commentary layer, inflated acceptance, vague rejection reasons.
-
-Do not include preamble or meta commentary. Begin directly with the OUTPUT HEADER.`;
+ALL FRAMES READY — PASS TO STAGE 7 / [n] FRAMES PENDING HUMAN REVIEW — [list].`;
+export const STAGE_6_INTELLIGENCE = STAGE_6_SYSTEM_PROMPT;
 
 export function buildStage6UserMessage(args: {
   brandName: string;

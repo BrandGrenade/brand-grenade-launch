@@ -90,8 +90,6 @@ TO BE COMPLETED AT CHECKPOINT C — after human selects an SMP.
 Sections required: Selection Confirmed | Selection Rationale (3–5 sentences referencing the alternatives) | What Was Sacrificed (per alternative) | Strategic Commitments (2–4 specific commitments) | Downstream Pipeline Direction (Stage 13, 13B, 14, 15, 16) | Checkpoint C Confirmation
 [/SELECTION_RATIONALE_STUB]
 
-OUTPUT STRUCTURE (strict — produce all three deliverables in order)
-
 ==== DELIVERABLE 1 — PRESENTATION DOCUMENT ====
 [Section 1, Section 2 (all SMP cards in randomised order with [METADATA] blocks), Section 3]
 
@@ -112,6 +110,7 @@ Randomisation Confirmed (binary): YES / NO — [if NO, regenerate]
 Overall Readiness: READY FOR CHECKPOINT C SELECTION / HOLD — [reason]
 
 Begin directly with "==== DELIVERABLE 1 ====". No preamble.`;
+export const STAGE_12_INTELLIGENCE = STAGE_12_SYSTEM_PROMPT;
 
 export function buildStage12UserMessage(args: {
   brandName: string;
