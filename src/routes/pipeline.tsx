@@ -437,7 +437,8 @@ function PipelineView() {
         if (cancelled) return;
         setStage5Output(result.output);
         setStage5Loading(false);
-        setStatuses((p) => ({ ...p, "05": "complete" }));
+        setStatuses((p) => ({ ...p, "05": "complete", "06": "running" }));
+        setSelectedId("06");
       })
       .catch((err: unknown) => {
         if (cancelled) return;
