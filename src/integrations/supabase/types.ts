@@ -31,6 +31,8 @@ export type Database = {
           stage_2_output: string | null
           stage_3_error: string | null
           stage_3_output: string | null
+          stage_4_error: string | null
+          stage_4_output: string | null
           status: string
           strategic_mode: string
           updated_at: string
@@ -51,6 +53,8 @@ export type Database = {
           stage_2_output?: string | null
           stage_3_error?: string | null
           stage_3_output?: string | null
+          stage_4_error?: string | null
+          stage_4_output?: string | null
           status?: string
           strategic_mode: string
           updated_at?: string
@@ -71,6 +75,8 @@ export type Database = {
           stage_2_output?: string | null
           stage_3_error?: string | null
           stage_3_output?: string | null
+          stage_4_error?: string | null
+          stage_4_output?: string | null
           status?: string
           strategic_mode?: string
           updated_at?: string
