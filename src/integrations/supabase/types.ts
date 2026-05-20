@@ -16,18 +16,39 @@ export type Database = {
     Tables: {
       sessions: {
         Row: {
+          brand_audience_relationship: string | null
+          brand_constraints: string | null
           brand_intelligence: Json | null
           brand_name: string
+          brand_organisational_context: string | null
+          brand_positioning: string | null
+          brand_product_truth: string | null
+          brand_tone_of_voice: string | null
           brief_text: string
           category: string
+          checkpoint_a_confirmed: boolean
+          checkpoint_a_confirmed_at: string | null
+          checkpoint_a_notes: string | null
           checkpoint_b_confirmed: boolean
+          checkpoint_b_confirmed_at: string | null
+          checkpoint_b_notes: string | null
           checkpoint_c_confirmed: boolean
+          checkpoint_c_confirmed_at: string | null
+          checkpoint_c_notes: string | null
           created_at: string
           current_stage: number
           id: string
+          interrupted_stage: number | null
+          selected_format: string | null
           selected_smp: string | null
           selected_smp_field_name: string | null
           selection_rationale: Json | null
+          selection_rationale_1: string | null
+          selection_rationale_2: string | null
+          selection_rationale_3: string | null
+          selection_rationale_4: string | null
+          selection_rationale_5: string | null
+          selection_rationale_6: string | null
           stage_1_error: string | null
           stage_1_output: string | null
           stage_1_tension_score: number | null
@@ -37,8 +58,10 @@ export type Database = {
           stage_11_output: string | null
           stage_12_error: string | null
           stage_12_output: string | null
+          stage_12_smps: Json | null
           stage_13_error: string | null
           stage_13_output: string | null
+          stage_13_verdict: string | null
           stage_13b_error: string | null
           stage_13b_output: string | null
           stage_14_error: string | null
@@ -47,6 +70,7 @@ export type Database = {
           stage_14b_output: string | null
           stage_14c_error: string | null
           stage_14c_output: string | null
+          stage_15_clearance_status: string | null
           stage_15_error: string | null
           stage_15_output: string | null
           stage_16_agency_output: string | null
@@ -72,23 +96,46 @@ export type Database = {
           stage_8_output: string | null
           stage_9_error: string | null
           stage_9_output: string | null
+          stage_status: string | null
           status: string
           strategic_mode: string
           updated_at: string
+          user_id: string | null
         }
         Insert: {
+          brand_audience_relationship?: string | null
+          brand_constraints?: string | null
           brand_intelligence?: Json | null
           brand_name: string
+          brand_organisational_context?: string | null
+          brand_positioning?: string | null
+          brand_product_truth?: string | null
+          brand_tone_of_voice?: string | null
           brief_text: string
           category: string
+          checkpoint_a_confirmed?: boolean
+          checkpoint_a_confirmed_at?: string | null
+          checkpoint_a_notes?: string | null
           checkpoint_b_confirmed?: boolean
+          checkpoint_b_confirmed_at?: string | null
+          checkpoint_b_notes?: string | null
           checkpoint_c_confirmed?: boolean
+          checkpoint_c_confirmed_at?: string | null
+          checkpoint_c_notes?: string | null
           created_at?: string
           current_stage?: number
           id?: string
+          interrupted_stage?: number | null
+          selected_format?: string | null
           selected_smp?: string | null
           selected_smp_field_name?: string | null
           selection_rationale?: Json | null
+          selection_rationale_1?: string | null
+          selection_rationale_2?: string | null
+          selection_rationale_3?: string | null
+          selection_rationale_4?: string | null
+          selection_rationale_5?: string | null
+          selection_rationale_6?: string | null
           stage_1_error?: string | null
           stage_1_output?: string | null
           stage_1_tension_score?: number | null
@@ -98,8 +145,10 @@ export type Database = {
           stage_11_output?: string | null
           stage_12_error?: string | null
           stage_12_output?: string | null
+          stage_12_smps?: Json | null
           stage_13_error?: string | null
           stage_13_output?: string | null
+          stage_13_verdict?: string | null
           stage_13b_error?: string | null
           stage_13b_output?: string | null
           stage_14_error?: string | null
@@ -108,6 +157,7 @@ export type Database = {
           stage_14b_output?: string | null
           stage_14c_error?: string | null
           stage_14c_output?: string | null
+          stage_15_clearance_status?: string | null
           stage_15_error?: string | null
           stage_15_output?: string | null
           stage_16_agency_output?: string | null
@@ -133,23 +183,46 @@ export type Database = {
           stage_8_output?: string | null
           stage_9_error?: string | null
           stage_9_output?: string | null
+          stage_status?: string | null
           status?: string
           strategic_mode: string
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
+          brand_audience_relationship?: string | null
+          brand_constraints?: string | null
           brand_intelligence?: Json | null
           brand_name?: string
+          brand_organisational_context?: string | null
+          brand_positioning?: string | null
+          brand_product_truth?: string | null
+          brand_tone_of_voice?: string | null
           brief_text?: string
           category?: string
+          checkpoint_a_confirmed?: boolean
+          checkpoint_a_confirmed_at?: string | null
+          checkpoint_a_notes?: string | null
           checkpoint_b_confirmed?: boolean
+          checkpoint_b_confirmed_at?: string | null
+          checkpoint_b_notes?: string | null
           checkpoint_c_confirmed?: boolean
+          checkpoint_c_confirmed_at?: string | null
+          checkpoint_c_notes?: string | null
           created_at?: string
           current_stage?: number
           id?: string
+          interrupted_stage?: number | null
+          selected_format?: string | null
           selected_smp?: string | null
           selected_smp_field_name?: string | null
           selection_rationale?: Json | null
+          selection_rationale_1?: string | null
+          selection_rationale_2?: string | null
+          selection_rationale_3?: string | null
+          selection_rationale_4?: string | null
+          selection_rationale_5?: string | null
+          selection_rationale_6?: string | null
           stage_1_error?: string | null
           stage_1_output?: string | null
           stage_1_tension_score?: number | null
@@ -159,8 +232,10 @@ export type Database = {
           stage_11_output?: string | null
           stage_12_error?: string | null
           stage_12_output?: string | null
+          stage_12_smps?: Json | null
           stage_13_error?: string | null
           stage_13_output?: string | null
+          stage_13_verdict?: string | null
           stage_13b_error?: string | null
           stage_13b_output?: string | null
           stage_14_error?: string | null
@@ -169,6 +244,7 @@ export type Database = {
           stage_14b_output?: string | null
           stage_14c_error?: string | null
           stage_14c_output?: string | null
+          stage_15_clearance_status?: string | null
           stage_15_error?: string | null
           stage_15_output?: string | null
           stage_16_agency_output?: string | null
@@ -194,9 +270,32 @@ export type Database = {
           stage_8_output?: string | null
           stage_9_error?: string | null
           stage_9_output?: string | null
+          stage_status?: string | null
           status?: string
           strategic_mode?: string
           updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      users: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          plan: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          plan?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          plan?: string
         }
         Relationships: []
       }
