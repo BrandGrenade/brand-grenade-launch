@@ -1357,7 +1357,7 @@ function RightPanel({
   return (
     <section className="relative flex min-w-0 flex-1 flex-col bg-background">
       <div className="flex-1 overflow-y-auto px-6 py-10 sm:px-12 sm:py-10">
-        {isError && (stage.id === "01" || stage.id === "02" || stage.id === "03" || stage.id === "04" || stage.id === "05") ? (
+        {isError && ["01","02","03","04","05","06","07","08","09","10","11","12"].includes(stage.id) ? (
           <div style={{ paddingBottom: 80 }}>
             <header>
               <span className="text-label text-primary">
