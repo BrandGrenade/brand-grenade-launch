@@ -1115,6 +1115,7 @@ function PipelineView() {
             selectedId === "12" && selectedStatus === "checkpoint" && rationaleForId !== "12" ? (
               <SMPSelection
                 stage12Output={stage12Output ?? ""}
+                stage8Output={stage8Output ?? ""}
                 onSelect={async (card) => {
                   if (!sessionId) return;
                   setSelectedSMP(card);
