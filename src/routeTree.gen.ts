@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as PipelineRouteImport } from './routes/pipeline'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as CompleteRouteImport } from './routes/complete'
 import { Route as BriefRouteImport } from './routes/brief'
 import { Route as IndexRouteImport } from './routes/index'
 
@@ -22,6 +23,11 @@ const PipelineRoute = PipelineRouteImport.update({
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CompleteRoute = CompleteRouteImport.update({
+  id: '/complete',
+  path: '/complete',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BriefRoute = BriefRouteImport.update({
@@ -38,12 +44,14 @@ const IndexRoute = IndexRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/brief': typeof BriefRoute
+  '/complete': typeof CompleteRoute
   '/dashboard': typeof DashboardRoute
   '/pipeline': typeof PipelineRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/brief': typeof BriefRoute
+  '/complete': typeof CompleteRoute
   '/dashboard': typeof DashboardRoute
   '/pipeline': typeof PipelineRoute
 }
@@ -51,20 +59,22 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/brief': typeof BriefRoute
+  '/complete': typeof CompleteRoute
   '/dashboard': typeof DashboardRoute
   '/pipeline': typeof PipelineRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/brief' | '/dashboard' | '/pipeline'
+  fullPaths: '/' | '/brief' | '/complete' | '/dashboard' | '/pipeline'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/brief' | '/dashboard' | '/pipeline'
-  id: '__root__' | '/' | '/brief' | '/dashboard' | '/pipeline'
+  to: '/' | '/brief' | '/complete' | '/dashboard' | '/pipeline'
+  id: '__root__' | '/' | '/brief' | '/complete' | '/dashboard' | '/pipeline'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   BriefRoute: typeof BriefRoute
+  CompleteRoute: typeof CompleteRoute
   DashboardRoute: typeof DashboardRoute
   PipelineRoute: typeof PipelineRoute
 }
@@ -83,6 +93,13 @@ declare module '@tanstack/react-router' {
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/complete': {
+      id: '/complete'
+      path: '/complete'
+      fullPath: '/complete'
+      preLoaderRoute: typeof CompleteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/brief': {
@@ -105,9 +122,20 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BriefRoute: BriefRoute,
+  CompleteRoute: CompleteRoute,
   DashboardRoute: DashboardRoute,
   PipelineRoute: PipelineRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
