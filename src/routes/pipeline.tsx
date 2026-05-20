@@ -230,7 +230,7 @@ function PipelineView() {
         setStage1Output(result.output);
         setStage1Loading(false);
         setStatuses((p) => {
-          const next = { ...p, "01": "checkpoint" as StageStatus };
+          const next: Record<string, StageStatus> = { ...p, "01": "checkpoint" };
           if (result.stage1bRequired) next["01B"] = "running";
           return next;
         });
