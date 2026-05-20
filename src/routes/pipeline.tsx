@@ -14,6 +14,7 @@ import { runStage3 } from "@/lib/stage3.functions";
 import { runStage4 } from "@/lib/stage4.functions";
 import { runStage5 } from "@/lib/stage5.functions";
 import { runStage6 } from "@/lib/stage6.functions";
+import { runStage7 } from "@/lib/stage7.functions";
 
 const pipelineSearchSchema = z.object({
   session: z.string().uuid().optional(),
@@ -160,6 +161,8 @@ interface SessionData {
   stage_5_error: string | null;
   stage_6_output: string | null;
   stage_6_error: string | null;
+  stage_7_output: string | null;
+  stage_7_error: string | null;
 }
 
 function PipelineView() {
@@ -172,6 +175,7 @@ function PipelineView() {
   const runStage4Fn = useServerFn(runStage4);
   const runStage5Fn = useServerFn(runStage5);
   const runStage6Fn = useServerFn(runStage6);
+  const runStage7Fn = useServerFn(runStage7);
 
   const [session, setSession] = useState<SessionData | null>(null);
   const [stage1Output, setStage1Output] = useState<string | null>(null);
@@ -187,6 +191,8 @@ function PipelineView() {
   const [stage5Error, setStage5Error] = useState<string | null>(null);
   const [stage6Output, setStage6Output] = useState<string | null>(null);
   const [stage6Error, setStage6Error] = useState<string | null>(null);
+  const [stage7Output, setStage7Output] = useState<string | null>(null);
+  const [stage7Error, setStage7Error] = useState<string | null>(null);
   const [stage1Loading, setStage1Loading] = useState(false);
   const [stage1bLoading, setStage1bLoading] = useState(false);
   const [stage2Loading, setStage2Loading] = useState(false);
@@ -194,6 +200,7 @@ function PipelineView() {
   const [stage4Loading, setStage4Loading] = useState(false);
   const [stage5Loading, setStage5Loading] = useState(false);
   const [stage6Loading, setStage6Loading] = useState(false);
+  const [stage7Loading, setStage7Loading] = useState(false);
   const [resubmitting, setResubmitting] = useState(false);
   const [retryNonce, setRetryNonce] = useState(0);
 
@@ -230,7 +237,7 @@ function PipelineView() {
     supabase
       .from("sessions")
       .select(
-        "id, brand_name, category, strategic_mode, stage_1_output, stage_1_tension_score, stage_1b_required, stage_1b_output, stage_1_error, stage_2_output, stage_2_error, stage_3_output, stage_3_error, stage_4_output, stage_4_error, stage_5_output, stage_5_error, stage_6_output, stage_6_error"
+        "id, brand_name, category, strategic_mode, stage_1_output, stage_1_tension_score, stage_1b_required, stage_1b_output, stage_1_error, stage_2_output, stage_2_error, stage_3_output, stage_3_error, stage_4_output, stage_4_error, stage_5_output, stage_5_error, stage_6_output, stage_6_error, stage_7_output, stage_7_error"
       )
       .eq("id", sessionId)
       .single()
@@ -262,6 +269,10 @@ function PipelineView() {
         if (data.stage_6_output) {
           setStage6Output(data.stage_6_output);
           setStatuses((p) => ({ ...p, "06": "complete" }));
+        }
+        if (data.stage_7_output) {
+          setStage7Output(data.stage_7_output);
+          setStatuses((p) => ({ ...p, "07": "complete" }));
         }
       });
     return () => {
@@ -465,7 +476,8 @@ function PipelineView() {
         if (cancelled) return;
         setStage6Output(result.output);
         setStage6Loading(false);
-        setStatuses((p) => ({ ...p, "06": "complete" }));
+        setStatuses((p) => ({ ...p, "06": "complete", "07": "running" }));
+        setSelectedId("07");
       })
       .catch((err: unknown) => {
         if (cancelled) return;
@@ -478,6 +490,33 @@ function PipelineView() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId, session?.id, statuses["06"], stage6Output]);
+
+  // Trigger Stage 7 when its status flips to "running".
+  useEffect(() => {
+    if (!sessionId || !session) return;
+    if (statuses["07"] !== "running") return;
+    if (stage7Output) return;
+    let cancelled = false;
+    setStage7Loading(true);
+    setStage7Error(null);
+    runStage7Fn({ data: { sessionId } })
+      .then((result) => {
+        if (cancelled) return;
+        setStage7Output(result.output);
+        setStage7Loading(false);
+        setStatuses((p) => ({ ...p, "07": "complete" }));
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        setStage7Loading(false);
+        setStage7Error(err instanceof Error ? err.message : "Stage 7 failed");
+        setStatuses((p) => ({ ...p, "07": "error" }));
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionId, session?.id, statuses["07"], stage7Output]);
 
   // Per-stage output: use live Stage 1 / 1B / 2 / 3 output, demo stubs for others.
   const stageOutputs = useMemo<Record<string, string>>(() => {
@@ -519,6 +558,11 @@ function PipelineView() {
         (stage6Loading
           ? "Filtering insights with the Calibrated Insight Intelligence Gate — this can take 60–120 seconds…"
           : "Awaiting Stage 6 output."),
+      "07":
+        stage7Output ??
+        (stage7Loading
+          ? "Synthesising Strategic Fields and Constraint Statements with Claude — this can take 60–120 seconds…"
+          : "Awaiting Stage 7 output."),
     };
   }, [
     sessionId,
@@ -536,6 +580,8 @@ function PipelineView() {
     stage5Loading,
     stage6Output,
     stage6Loading,
+    stage7Output,
+    stage7Loading,
   ]);
 
   // Progress — count main (non-conditional) stages.
@@ -595,6 +641,8 @@ function PipelineView() {
               ? stage5Error
               : selected.id === "06"
               ? stage6Error
+              : selected.id === "07"
+              ? stage7Error
               : null
           }
           tensionScore={selected.id === "01" ? session?.stage_1_tension_score ?? null : null}
@@ -620,6 +668,10 @@ function PipelineView() {
               setStage6Error(null);
               setStage6Output(null);
               setStatuses((p) => ({ ...p, "06": "running" }));
+            } else if (selected.id === "07") {
+              setStage7Error(null);
+              setStage7Output(null);
+              setStatuses((p) => ({ ...p, "07": "running" }));
             } else {
               setRetryNonce((n) => n + 1);
             }
