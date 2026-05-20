@@ -1258,6 +1258,13 @@ function PipelineView() {
               : selected.id === "10" ? stage10Error
               : selected.id === "11" ? stage11Error
               : selected.id === "12" ? stage12Error
+              : selected.id === "13" ? stage13Error
+              : selected.id === "13B" ? stage13bError
+              : selected.id === "14" ? stage14Error
+              : selected.id === "14B" ? stage14bError
+              : selected.id === "14C" ? stage14cError
+              : selected.id === "15" ? stage15Error
+              : selected.id === "16" ? stage16Error
               : null
           }
 
@@ -1277,6 +1284,13 @@ function PipelineView() {
               "10": () => { setStage10Error(null); setStage10Output(null); },
               "11": () => { setStage11Error(null); setStage11Output(null); },
               "12": () => { setStage12Error(null); setStage12Output(null); },
+              "13": () => { setStage13Error(null); setStage13Output(null); },
+              "13B": () => { setStage13bError(null); setStage13bOutput(null); },
+              "14": () => { setStage14Error(null); setStage14Output(null); },
+              "14B": () => { setStage14bError(null); setStage14bOutput(null); },
+              "14C": () => { setStage14cError(null); setStage14cOutput(null); },
+              "15": () => { setStage15Error(null); setStage15Output(null); },
+              "16": () => { setStage16Error(null); setStage16Output(null); },
             };
             if (map[id]) {
               map[id]();
