@@ -106,13 +106,13 @@ function EmptyState() {
       <p className="text-body mt-2" style={{ color: "var(--color-text-tertiary)" }}>
         Start a new pipeline run to begin.
       </p>
-      <button
-        type="button"
+      <Link
+        to="/brief"
         className="mt-6 inline-flex items-center rounded-md bg-transparent px-5 py-2.5 text-[13px] font-medium text-primary transition-colors hover:bg-primary-subtle"
         style={{ border: "1px solid var(--color-primary)" }}
       >
         Start New Run
-      </button>
+      </Link>
     </div>
   );
 }
