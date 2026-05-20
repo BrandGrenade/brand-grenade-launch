@@ -466,30 +466,49 @@ function RightPanel({
   stage,
   status,
   onNext,
+  onConfirmCheckpoint,
 }: {
   stage: Stage;
   status: StageStatus;
   onNext: () => void;
+  onConfirmCheckpoint: (stageId: string) => void;
 }) {
   const fullOutput = STAGE_OUTPUTS[stage.id] ?? "Output pending.";
   const isRunning = status === "running";
+  const isCheckpoint = status === "checkpoint";
   const text = useStreamingText(fullOutput, isRunning);
+  const letter = CHECKPOINT_LETTERS[stage.id];
 
   return (
     <section className="relative flex min-w-0 flex-1 flex-col bg-background">
       <div className="flex-1 overflow-y-auto px-6 py-10 sm:px-12 sm:py-10">
-        <header>
-          <span className="text-label text-primary">
-            Stage {stage.number} — {stage.name}
-          </span>
-          <h1 className="text-h2 mt-3 text-text-primary">{stage.name}</h1>
-          <StatusLine status={status} />
-          <hr className="my-6 h-px border-0 bg-border" />
-        </header>
+        {isCheckpoint && letter ? (
+          <div style={{ paddingBottom: 80 }}>
+            <Checkpoint
+              letter={letter}
+              showLowScoreAlert={letter === "A"}
+              onConfirm={() => onConfirmCheckpoint(stage.id)}
+              reviewContent={
+                <StreamedOutput text={fullOutput} streaming={false} />
+              }
+            />
+          </div>
+        ) : (
+          <>
+            <header>
+              <span className="text-label text-primary">
+                Stage {stage.number} — {stage.name}
+              </span>
+              <h1 className="text-h2 mt-3 text-text-primary">{stage.name}</h1>
+              <StatusLine status={status} />
+              <hr className="my-6 h-px border-0 bg-border" />
+            </header>
 
-        <article style={{ paddingBottom: 80 }}>
-          <StreamedOutput text={text} streaming={isRunning} />
-        </article>
+            <article style={{ paddingBottom: 80 }}>
+              <StreamedOutput text={text} streaming={isRunning} />
+            </article>
+          </>
+        )}
       </div>
 
       <BottomBar stage={stage} status={status} onNext={onNext} />
