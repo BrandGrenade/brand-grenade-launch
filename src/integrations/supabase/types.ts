@@ -37,6 +37,7 @@ export type Database = {
           checkpoint_c_notes: string | null
           created_at: string
           current_stage: number
+          dev_mode: boolean
           id: string
           interrupted_stage: number | null
           retry_status: string | null
@@ -125,6 +126,7 @@ export type Database = {
           checkpoint_c_notes?: string | null
           created_at?: string
           current_stage?: number
+          dev_mode?: boolean
           id?: string
           interrupted_stage?: number | null
           retry_status?: string | null
@@ -213,6 +215,7 @@ export type Database = {
           checkpoint_c_notes?: string | null
           created_at?: string
           current_stage?: number
+          dev_mode?: boolean
           id?: string
           interrupted_stage?: number | null
           retry_status?: string | null
@@ -286,18 +289,21 @@ export type Database = {
           created_at: string
           email: string
           id: string
+          is_admin: boolean
           plan: string
         }
         Insert: {
           created_at?: string
           email: string
           id?: string
+          is_admin?: boolean
           plan?: string
         }
         Update: {
           created_at?: string
           email?: string
           id?: string
+          is_admin?: boolean
           plan?: string
         }
         Relationships: []
