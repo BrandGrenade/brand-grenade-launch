@@ -447,6 +447,8 @@ function PipelineView() {
               ? stage1Error
               : selected.id === "02"
               ? stage2Error
+              : selected.id === "03"
+              ? stage3Error
               : null
           }
           tensionScore={selected.id === "01" ? session?.stage_1_tension_score ?? null : null}
@@ -456,6 +458,10 @@ function PipelineView() {
               setStage2Error(null);
               setStage2Output(null);
               setStatuses((p) => ({ ...p, "02": "running" }));
+            } else if (selected.id === "03") {
+              setStage3Error(null);
+              setStage3Output(null);
+              setStatuses((p) => ({ ...p, "03": "running" }));
             } else {
               setRetryNonce((n) => n + 1);
             }
