@@ -852,20 +852,20 @@ function PipelineView() {
           stage1Error={
             selected.id === "01" || selected.id === "01B"
               ? stage1Error
-              : selected.id === "02"
-              ? stage2Error
-              : selected.id === "03"
-              ? stage3Error
-              : selected.id === "04"
-              ? stage4Error
-              : selected.id === "05"
-              ? stage5Error
-              : selected.id === "06"
-              ? stage6Error
-              : selected.id === "07"
-              ? stage7Error
+              : selected.id === "02" ? stage2Error
+              : selected.id === "03" ? stage3Error
+              : selected.id === "04" ? stage4Error
+              : selected.id === "05" ? stage5Error
+              : selected.id === "06" ? stage6Error
+              : selected.id === "07" ? stage7Error
+              : selected.id === "08" ? stage8Error
+              : selected.id === "09" ? stage9Error
+              : selected.id === "10" ? stage10Error
+              : selected.id === "11" ? stage11Error
+              : selected.id === "12" ? stage12Error
               : null
           }
+
           tensionScore={selected.id === "01" ? session?.stage_1_tension_score ?? null : null}
           stage1bRequired={selected.id === "01" ? session?.stage_1b_required ?? false : false}
           onRetry={() => {
