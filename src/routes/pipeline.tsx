@@ -491,6 +491,33 @@ function PipelineView() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId, session?.id, statuses["06"], stage6Output]);
 
+  // Trigger Stage 7 when its status flips to "running".
+  useEffect(() => {
+    if (!sessionId || !session) return;
+    if (statuses["07"] !== "running") return;
+    if (stage7Output) return;
+    let cancelled = false;
+    setStage7Loading(true);
+    setStage7Error(null);
+    runStage7Fn({ data: { sessionId } })
+      .then((result) => {
+        if (cancelled) return;
+        setStage7Output(result.output);
+        setStage7Loading(false);
+        setStatuses((p) => ({ ...p, "07": "complete" }));
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        setStage7Loading(false);
+        setStage7Error(err instanceof Error ? err.message : "Stage 7 failed");
+        setStatuses((p) => ({ ...p, "07": "error" }));
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionId, session?.id, statuses["07"], stage7Output]);
+
   // Per-stage output: use live Stage 1 / 1B / 2 / 3 output, demo stubs for others.
   const stageOutputs = useMemo<Record<string, string>>(() => {
     if (!sessionId) return STAGE_OUTPUTS;
