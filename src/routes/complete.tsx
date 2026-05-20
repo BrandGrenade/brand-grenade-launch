@@ -229,9 +229,22 @@ function CompletePage() {
         <div style={{ marginTop: 32 }}>
           <button
             type="button"
-            onClick={() => {
+            onClick={async () => {
+              if (generating) return;
               setGenerating(true);
-              window.setTimeout(() => setGenerating(false), 2500);
+              try {
+                await generateStrategicPlatformPdf({
+                  brandName: BRAND,
+                  category: FIELD,
+                  smp: SMP,
+                  format,
+                  stage16Output: SAMPLE_STAGE_16(BRAND, SMP, format),
+                });
+              } catch (e) {
+                console.error("PDF generation failed", e);
+              } finally {
+                setGenerating(false);
+              }
             }}
             disabled={generating}
             style={{
@@ -247,7 +260,7 @@ function CompletePage() {
             }}
           >
             {generating
-              ? "Generating…"
+              ? "Generating PDF…"
               : "Download Strategic Platform Document ↓"}
           </button>
           {generating && (
@@ -259,7 +272,7 @@ function CompletePage() {
                 marginTop: 8,
               }}
             >
-              Generating PDF — this takes approximately 15 seconds.
+              Generating PDF — approximately 15 seconds.
             </p>
           )}
 
