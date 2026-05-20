@@ -1,11 +1,20 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { z } from "zod";
 import { TopNav } from "@/components/TopNav";
 import { Checkpoint } from "@/components/Checkpoint";
 import { SelectionRationale } from "@/components/SelectionRationale";
 import { BrandIntelligence } from "@/components/BrandIntelligence";
+import { supabase } from "@/integrations/supabase/client";
+import { runStage1 } from "@/lib/stage1.functions";
+
+const pipelineSearchSchema = z.object({
+  session: z.string().uuid().optional(),
+});
 
 export const Route = createFileRoute("/pipeline")({
+  validateSearch: pipelineSearchSchema,
   component: PipelineView,
   head: () => ({
     meta: [
