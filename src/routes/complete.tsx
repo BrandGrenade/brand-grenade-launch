@@ -235,6 +235,26 @@ function CompletePage() {
             onClick={async () => {
               if (generating) return;
               setGenerating(true);
+              setDone(false);
+              setProgress(0);
+              setProgressLabel("Assembling strategic platform document…");
+
+              // Realistic curve: fast to ~90%, slow tail.
+              const start = Date.now();
+              const DURATION = 14000;
+              const tick = window.setInterval(() => {
+                const t = Math.min(1, (Date.now() - start) / DURATION);
+                // ease: rapid early, decelerate. Caps at 95 until done.
+                const eased = 1 - Math.pow(1 - t, 3);
+                const pct = Math.min(95, Math.round(eased * 95));
+                setProgress(pct);
+                if (pct > 35 && pct < 75) {
+                  setProgressLabel(`Formatting ${format} variant…`);
+                } else if (pct >= 75) {
+                  setProgressLabel("Finalising PDF…");
+                }
+              }, 200);
+
               try {
                 await generateStrategicPlatformPdf({
                   brandName: BRAND,
@@ -243,10 +263,21 @@ function CompletePage() {
                   format,
                   stage16Output: SAMPLE_STAGE_16(BRAND, SMP, format),
                 });
+                window.clearInterval(tick);
+                setProgress(100);
+                setProgressLabel("Document ready");
+                setDone(true);
+                window.setTimeout(() => {
+                  setGenerating(false);
+                  setDone(false);
+                  setProgress(0);
+                }, 2200);
               } catch (e) {
+                window.clearInterval(tick);
                 console.error("PDF generation failed", e);
-              } finally {
                 setGenerating(false);
+                setProgress(0);
+                setProgressLabel("");
               }
             }}
             disabled={generating}
@@ -263,20 +294,44 @@ function CompletePage() {
             }}
           >
             {generating
-              ? "Generating PDF…"
+              ? done
+                ? "Document ready ✓"
+                : "Generating PDF…"
               : "Download Strategic Platform Document ↓"}
           </button>
+
           {generating && (
-            <p
-              className="text-body-sm"
-              style={{
-                color: "var(--color-text-tertiary)",
-                textAlign: "center",
-                marginTop: 8,
-              }}
-            >
-              Generating PDF — approximately 15 seconds.
-            </p>
+            <div style={{ marginTop: 16 }} className="animate-fade-in">
+              <div
+                style={{
+                  height: 4,
+                  width: "100%",
+                  backgroundColor: "var(--color-surface-3)",
+                  borderRadius: 999,
+                  overflow: "hidden",
+                }}
+              >
+                <div
+                  style={{
+                    height: "100%",
+                    width: `${progress}%`,
+                    backgroundColor: done ? "var(--color-success)" : "var(--color-primary)",
+                    transition: "width 300ms ease-out, background-color 200ms",
+                  }}
+                />
+              </div>
+              <p
+                className="text-body-sm"
+                style={{
+                  color: done ? "var(--color-success)" : "var(--color-text-tertiary)",
+                  textAlign: "center",
+                  marginTop: 10,
+                }}
+              >
+                {done ? "✓ " : ""}
+                {progressLabel}
+              </p>
+            </div>
           )}
 
           <div
