@@ -317,7 +317,9 @@ function PipelineView() {
         if (cancelled) return;
         setStage2Output(result.output);
         setStage2Loading(false);
-        setStatuses((p) => ({ ...p, "02": "complete" }));
+        // Auto-advance: kick Stage 3 into "running" as soon as Stage 2 finishes.
+        setStatuses((p) => ({ ...p, "02": "complete", "03": "running" }));
+        setSelectedId("03");
       })
       .catch((err: unknown) => {
         if (cancelled) return;
@@ -331,7 +333,34 @@ function PipelineView() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId, session?.id, statuses["02"], stage2Output]);
 
-  // Per-stage output: use live Stage 1 / 1B / 2 output, demo stubs for others.
+  // Trigger Stage 3 when its status flips to "running".
+  useEffect(() => {
+    if (!sessionId || !session) return;
+    if (statuses["03"] !== "running") return;
+    if (stage3Output) return;
+    let cancelled = false;
+    setStage3Loading(true);
+    setStage3Error(null);
+    runStage3Fn({ data: { sessionId } })
+      .then((result) => {
+        if (cancelled) return;
+        setStage3Output(result.output);
+        setStage3Loading(false);
+        setStatuses((p) => ({ ...p, "03": "complete" }));
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        setStage3Loading(false);
+        setStage3Error(err instanceof Error ? err.message : "Stage 3 failed");
+        setStatuses((p) => ({ ...p, "03": "error" }));
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionId, session?.id, statuses["03"], stage3Output]);
+
+  // Per-stage output: use live Stage 1 / 1B / 2 / 3 output, demo stubs for others.
   const stageOutputs = useMemo<Record<string, string>>(() => {
     if (!sessionId) return STAGE_OUTPUTS;
     return {
@@ -351,6 +380,11 @@ function PipelineView() {
         (stage2Loading
           ? "Building Category Memory Object (CMM) with Claude — this can take 30–90 seconds…"
           : "Awaiting Stage 2 output."),
+      "03":
+        stage3Output ??
+        (stage3Loading
+          ? "Generating the Strategic Constraint Matrix with Claude — this can take 30–90 seconds…"
+          : "Awaiting Stage 3 output."),
     };
   }, [
     sessionId,
@@ -360,6 +394,8 @@ function PipelineView() {
     stage1bLoading,
     stage2Output,
     stage2Loading,
+    stage3Output,
+    stage3Loading,
   ]);
 
   // Progress — count main (non-conditional) stages.
