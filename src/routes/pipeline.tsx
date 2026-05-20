@@ -1463,6 +1463,9 @@ function RightPanel({
   onSubmitBrandIntel,
   onNext,
   onConfirmCheckpoint,
+  onResubmitCheckpoint,
+  onEscalateCheckpoint,
+  checkpointResubmitting,
   customCheckpoint,
   retryStatus,
 }: {
