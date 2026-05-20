@@ -1345,7 +1345,7 @@ function RightPanel({
   onSubmitBrandIntel: () => void;
   onNext: () => void;
   onConfirmCheckpoint: (stageId: string) => void;
-  customCheckpoint?: React.ReactNode;
+  customCheckpoint?: ReactNode;
 
 }) {
   const isRunning = status === "running";
