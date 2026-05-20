@@ -31,27 +31,33 @@ interface Stage {
 }
 
 const STAGES: Stage[] = [
-  { id: "01", number: "01", name: "Brief Sanitisation" },
+  { id: "01", number: "01", name: "Brief Sanitisation", checkpoint: true },
   { id: "01B", number: "01B", name: "Brief Escalation", conditional: true },
   { id: "02", number: "02", name: "Category Intelligence" },
   { id: "03", number: "03", name: "Constraint Generator" },
-  { id: "04", number: "04", name: "Strategic Fan-Out", checkpoint: true },
+  { id: "04", number: "04", name: "Strategic Fan-Out" },
   { id: "05", number: "05", name: "Insight Generation" },
   { id: "06", number: "06", name: "Insight Filter" },
   { id: "07", number: "07", name: "Field Synthesis" },
-  { id: "08", number: "08", name: "SMP Generation" },
+  { id: "08", number: "08", name: "SMP Generation", checkpoint: true },
   { id: "09", number: "09", name: "Divergence Validation" },
   { id: "10", number: "10", name: "SMP Scoring" },
-  { id: "11", number: "11", name: "Pressure Test", checkpoint: true },
-  { id: "12", number: "12", name: "SMP Selection" },
+  { id: "11", number: "11", name: "Pressure Test" },
+  { id: "12", number: "12", name: "SMP Selection", checkpoint: true },
   { id: "13", number: "13", name: "Brand Fit Validation" },
   { id: "13B", number: "13B", name: "Territory Reference", conditional: true },
-  { id: "14", number: "14", name: "Territory Mapping", checkpoint: true },
+  { id: "14", number: "14", name: "Territory Mapping" },
   { id: "14B", number: "14B", name: "Expression Mapping", conditional: true },
   { id: "14C", number: "14C", name: "Universe Definition", conditional: true },
   { id: "15", number: "15", name: "Consistency Audit" },
   { id: "16", number: "16", name: "Output Packaging" },
 ];
+
+const CHECKPOINT_LETTERS: Record<string, "A" | "B" | "C"> = {
+  "01": "A",
+  "08": "B",
+  "12": "C",
+};
 
 // Sample brief for demo state — first two stages complete, third running.
 const SAMPLE_BRAND = "Hypernova";
