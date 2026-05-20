@@ -191,6 +191,8 @@ function PipelineView() {
   const [stage5Error, setStage5Error] = useState<string | null>(null);
   const [stage6Output, setStage6Output] = useState<string | null>(null);
   const [stage6Error, setStage6Error] = useState<string | null>(null);
+  const [stage7Output, setStage7Output] = useState<string | null>(null);
+  const [stage7Error, setStage7Error] = useState<string | null>(null);
   const [stage1Loading, setStage1Loading] = useState(false);
   const [stage1bLoading, setStage1bLoading] = useState(false);
   const [stage2Loading, setStage2Loading] = useState(false);
@@ -198,6 +200,7 @@ function PipelineView() {
   const [stage4Loading, setStage4Loading] = useState(false);
   const [stage5Loading, setStage5Loading] = useState(false);
   const [stage6Loading, setStage6Loading] = useState(false);
+  const [stage7Loading, setStage7Loading] = useState(false);
   const [resubmitting, setResubmitting] = useState(false);
   const [retryNonce, setRetryNonce] = useState(0);
 
