@@ -124,6 +124,21 @@ const SENTENCE_STRIP_PATTERNS: RegExp[] = [
   /\bquality (gate|check)\b/i,
 ];
 
+// Nuclear filter — last line of defence regardless of context.
+const NUCLEAR_LINE_PATTERNS: RegExp[] = [
+  /^[A-Z\s]+:\s*\d+/,
+  /^[A-Z\s]+:\s*(YES|NO|N\/A|PASSED|CONFIRMED|CLEARED|PENDING|COMPLETE)\b/i,
+  /^(SMPS?|FRAMES?|FIELDS?|STAGES?|UNIVERSES?|TERRITORIES?)\s+(PRODUCED|GENERATED|SYNTHESISED|VALIDATED|COMPLETED)\s*:/i,
+  /^READY\s+FOR/i,
+  /^CROSS-/i,
+  /^ALL\s+[A-Z]+\s+PASS/i,
+  /:\s*\d+\s+confirmed/i,
+  /:\s*0\s+(confirmed|downgraded|pending)/i,
+  /^DRAFTS?\s+GENERATED/i,
+  /^(TOTAL|COUNT|NUMBER OF)\s*:/i,
+  /N\/A\s+\(single/i,
+];
+
 // A "label-only" line: e.g. "Foo Bar:" or "**Foo Bar:**" with no content after.
 const LABEL_ONLY_LINE = /^[ \t#>*_\-]*\**[A-Za-z][A-Za-z0-9 _\-/&()]{0,80}\**\s*:\s*\**\s*$/;
 
