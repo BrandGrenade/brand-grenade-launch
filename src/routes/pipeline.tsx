@@ -293,7 +293,34 @@ function PipelineView() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId, session?.stage_1b_required, statuses["01B"], stage1bOutput]);
 
-  // Per-stage output: use live Stage 1 / 1B output, demo stubs for others.
+  // Trigger Stage 2 when its status flips to "running".
+  useEffect(() => {
+    if (!sessionId || !session) return;
+    if (statuses["02"] !== "running") return;
+    if (stage2Output) return;
+    let cancelled = false;
+    setStage2Loading(true);
+    setStage2Error(null);
+    runStage2Fn({ data: { sessionId } })
+      .then((result) => {
+        if (cancelled) return;
+        setStage2Output(result.output);
+        setStage2Loading(false);
+        setStatuses((p) => ({ ...p, "02": "complete" }));
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        setStage2Loading(false);
+        setStage2Error(err instanceof Error ? err.message : "Stage 2 failed");
+        setStatuses((p) => ({ ...p, "02": "error" }));
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionId, session?.id, statuses["02"], stage2Output]);
+
+  // Per-stage output: use live Stage 1 / 1B / 2 output, demo stubs for others.
   const stageOutputs = useMemo<Record<string, string>>(() => {
     if (!sessionId) return STAGE_OUTPUTS;
     return {
@@ -308,8 +335,21 @@ function PipelineView() {
         (stage1bLoading
           ? "Generating Stage 1B diagnostic questions — this can take 20–60 seconds…"
           : "Awaiting Stage 1B output."),
+      "02":
+        stage2Output ??
+        (stage2Loading
+          ? "Building Category Memory Object (CMM) with Claude — this can take 30–90 seconds…"
+          : "Awaiting Stage 2 output."),
     };
-  }, [sessionId, stage1Output, stage1Loading, stage1bOutput, stage1bLoading]);
+  }, [
+    sessionId,
+    stage1Output,
+    stage1Loading,
+    stage1bOutput,
+    stage1bLoading,
+    stage2Output,
+    stage2Loading,
+  ]);
 
   // Progress — count main (non-conditional) stages.
   const mainStages = STAGES.filter((s) => !s.conditional);
