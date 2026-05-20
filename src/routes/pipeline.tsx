@@ -143,17 +143,23 @@ interface SessionData {
   stage_1_output: string | null;
   stage_1_tension_score: number | null;
   stage_1b_required: boolean;
+  stage_1b_output: string | null;
   stage_1_error: string | null;
 }
 
 function PipelineView() {
   const { session: sessionId } = Route.useSearch();
   const runStage1Fn = useServerFn(runStage1);
+  const runStage1bFn = useServerFn(runStage1b);
+  const resubmitBriefFn = useServerFn(resubmitBrief);
 
   const [session, setSession] = useState<SessionData | null>(null);
   const [stage1Output, setStage1Output] = useState<string | null>(null);
+  const [stage1bOutput, setStage1bOutput] = useState<string | null>(null);
   const [stage1Error, setStage1Error] = useState<string | null>(null);
   const [stage1Loading, setStage1Loading] = useState(false);
+  const [stage1bLoading, setStage1bLoading] = useState(false);
+  const [resubmitting, setResubmitting] = useState(false);
   const [retryNonce, setRetryNonce] = useState(0);
 
   // Elapsed timer
