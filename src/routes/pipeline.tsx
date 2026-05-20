@@ -593,6 +593,8 @@ function PipelineView() {
               ? stage4Error
               : selected.id === "05"
               ? stage5Error
+              : selected.id === "06"
+              ? stage6Error
               : null
           }
           tensionScore={selected.id === "01" ? session?.stage_1_tension_score ?? null : null}
