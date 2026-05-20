@@ -395,7 +395,13 @@ function PipelineView() {
           stage={selected}
           status={selectedStatus}
           fullOutput={stageOutputs[selected.id] ?? "Output pending."}
-          stage1Error={selected.id === "01" ? stage1Error : selected.id === "01B" ? stage1Error : null}
+          stage1Error={
+            selected.id === "01" || selected.id === "01B"
+              ? stage1Error
+              : selected.id === "02"
+              ? stage2Error
+              : null
+          }
           tensionScore={selected.id === "01" ? session?.stage_1_tension_score ?? null : null}
           stage1bRequired={selected.id === "01" ? session?.stage_1b_required ?? false : false}
           onRetry={() => setRetryNonce((n) => n + 1)}
