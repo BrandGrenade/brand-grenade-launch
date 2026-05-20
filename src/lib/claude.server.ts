@@ -2,7 +2,7 @@
 // Reads ANTHROPIC_API_KEY from process.env at call time (server-only).
 
 const ANTHROPIC_URL = "https://api.anthropic.com/v1/messages";
-const DEFAULT_MODEL = "claude-sonnet-4-20250514";
+const DEFAULT_MODEL = "claude-sonnet-4-5";
 
 export interface CallClaudeArgs {
   systemPrompt: string;
