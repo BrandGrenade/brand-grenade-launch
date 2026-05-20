@@ -1,10 +1,17 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { z } from "zod";
 import { TopNav } from "@/components/TopNav";
+import { supabase } from "@/integrations/supabase/client";
 import { generateStrategicPlatformPdf } from "@/lib/pdf-generator";
 import { SAMPLE_STAGE_16 } from "@/lib/stage16-sample";
 
+const completeSearchSchema = z.object({
+  session: z.string().uuid().optional(),
+});
+
 export const Route = createFileRoute("/complete")({
+  validateSearch: completeSearchSchema,
   component: CompletePage,
   head: () => ({
     meta: [
@@ -17,6 +24,7 @@ export const Route = createFileRoute("/complete")({
     ],
   }),
 });
+
 
 const BRAND = "Hypernova";
 const SMP =
@@ -47,6 +55,7 @@ const STAGES = [
 type Format = "pitch" | "consulting" | "workshop";
 
 function CompletePage() {
+  const { session: sessionId } = Route.useSearch();
   const [format, setFormat] = useState<Format>("consulting");
   const [generating, setGenerating] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -54,12 +63,29 @@ function CompletePage() {
   const [done, setDone] = useState(false);
   const [stagesOpen, setStagesOpen] = useState(false);
   const [modalStage, setModalStage] = useState<string | null>(null);
+  const [brand, setBrand] = useState(BRAND);
+
+  useEffect(() => {
+    if (!sessionId) return;
+    let cancelled = false;
+    supabase
+      .from("sessions")
+      .select("brand_name")
+      .eq("id", sessionId)
+      .single()
+      .then(({ data }) => {
+        if (!cancelled && data?.brand_name) setBrand(data.brand_name);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [sessionId]);
 
   const smpPreview = SMP.split(" ").slice(0, 4).join(" ") + "…";
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
-      <TopNav />
+      <TopNav session={{ brand, currentStage: 20, totalStages: 20, isRunning: false }} />
       {/* Breadcrumb */}
       <div className="flex items-center border-b border-border bg-background px-5 py-3 sm:px-8">
         <nav
@@ -73,13 +99,14 @@ function CompletePage() {
             Sessions
           </Link>
           <span>→</span>
-          <span className="text-text-secondary truncate">{BRAND}</span>
+          <span className="text-text-secondary truncate">{brand}</span>
           <span>→</span>
           <span>Complete</span>
         </nav>
       </div>
 
       <main className="mx-auto w-full max-w-[800px] px-5 sm:px-8" style={{ paddingTop: 64, paddingBottom: 96 }}>
+
         {/* Hero */}
         <section style={{ textAlign: "center", paddingBottom: 48 }}>
           <div

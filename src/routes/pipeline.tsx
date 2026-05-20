@@ -825,10 +825,56 @@ function PipelineView() {
     ? "Review Needed"
     : "In Progress";
 
+  // Current active stage = the running/checkpoint stage furthest into the pipeline.
+  const currentActiveId = (() => {
+    for (let i = STAGES.length - 1; i >= 0; i--) {
+      const st = statuses[STAGES[i].id];
+      if (st === "running" || st === "checkpoint" || st === "error") return STAGES[i].id;
+    }
+    return STAGES[0].id;
+  })();
+  const isViewingHistorical = selectedId !== currentActiveId && statuses[selectedId] === "complete";
+  const pipelineIsRunning =
+    Object.values(statuses).some((s) => s === "running") ||
+    stage1Loading || stage1bLoading || stage2Loading || stage3Loading ||
+    stage4Loading || stage5Loading || stage6Loading || stage7Loading ||
+    stage8Loading || stage9Loading || stage10Loading || stage11Loading ||
+    stage12Loading;
+
+  // Keyboard shortcut: Cmd/Ctrl+Enter confirms standard checkpoints.
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (!(e.key === "Enter" && (e.metaKey || e.ctrlKey))) return;
+      const st = statuses[selectedId];
+      const letter = CHECKPOINT_LETTERS[selectedId];
+      if (st !== "checkpoint" || !letter) return;
+      // Skip when custom checkpoint UIs are active — they have their own submit.
+      if (selectedId === "12") return;
+      if (selectedId === "13" && !intelSubmitted) return;
+      if (selectedId === "01B") return;
+      e.preventDefault();
+      // Re-derive via DOM click on confirm button if present, else dispatch event.
+      const btn = document.querySelector<HTMLButtonElement>(
+        "[data-checkpoint-confirm='true']",
+      );
+      btn?.click();
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [selectedId, statuses, intelSubmitted]);
+
   return (
     <div className="flex h-screen flex-col bg-background">
-      <TopNav />
+      <TopNav
+        session={{
+          brand: brandLabel,
+          currentStage: Math.max(1, currentMainNumber),
+          totalStages: mainStages.length,
+          isRunning: pipelineIsRunning,
+        }}
+      />
       <Breadcrumb brand={brandLabel} elapsed={elapsed} status={pipelineStatus} />
+
 
       <div className="flex flex-1 overflow-hidden">
         <LeftPanel
@@ -849,6 +895,9 @@ function PipelineView() {
           stage={selected}
           status={selectedStatus}
           fullOutput={stageOutputs[selected.id] ?? "Output pending."}
+          isViewingHistorical={isViewingHistorical}
+          onBackToCurrent={() => setSelectedId(currentActiveId)}
+
           stage1Error={
             selected.id === "01" || selected.id === "01B"
               ? stage1Error
@@ -1316,6 +1365,8 @@ function RightPanel({
   stage,
   status,
   fullOutput,
+  isViewingHistorical,
+  onBackToCurrent,
   stage1Error,
   tensionScore,
   stage1bRequired,
@@ -1333,6 +1384,8 @@ function RightPanel({
   stage: Stage;
   status: StageStatus;
   fullOutput: string;
+  isViewingHistorical?: boolean;
+  onBackToCurrent?: () => void;
   stage1Error: string | null;
   tensionScore: number | null;
   stage1bRequired: boolean;
@@ -1348,6 +1401,7 @@ function RightPanel({
   customCheckpoint?: ReactNode;
 
 }) {
+
   const isRunning = status === "running";
   const isCheckpoint = status === "checkpoint";
   const isError = status === "error";
@@ -1356,7 +1410,29 @@ function RightPanel({
 
   return (
     <section className="relative flex min-w-0 flex-1 flex-col bg-background">
+      {isViewingHistorical && (
+        <div
+          className="flex items-center justify-between border-b px-6 py-2.5 sm:px-12"
+          style={{
+            backgroundColor: "var(--color-surface-2)",
+            borderColor: "var(--color-border)",
+          }}
+        >
+          <span className="text-body-sm" style={{ color: "var(--color-text-tertiary)" }}>
+            Viewing completed stage: <span style={{ color: "var(--color-text-secondary)" }}>{stage.number} — {stage.name}</span>
+          </span>
+          <button
+            type="button"
+            onClick={onBackToCurrent}
+            className="text-body-sm font-medium transition-colors"
+            style={{ color: "var(--color-primary)" }}
+          >
+            Back to current stage →
+          </button>
+        </div>
+      )}
       <div className="flex-1 overflow-y-auto px-6 py-10 sm:px-12 sm:py-10">
+
         {isError && ["01","02","03","04","05","06","07","08","09","10","11","12"].includes(stage.id) ? (
           <div style={{ paddingBottom: 80 }}>
             <header>

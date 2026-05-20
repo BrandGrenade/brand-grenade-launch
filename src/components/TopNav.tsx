@@ -1,31 +1,169 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
+import { useEffect, useRef, useState } from "react";
 
-export function TopNav() {
+export interface SessionContext {
+  brand: string;
+  currentStage: number; // 1..20
+  totalStages?: number;
+  isRunning?: boolean;
+}
+
+export function TopNav({ session }: { session?: SessionContext }) {
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!open) return;
+    const onDocClick = (e: MouseEvent) => {
+      if (!rootRef.current?.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("mousedown", onDocClick);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDocClick);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
   return (
-    <nav className="flex h-14 items-center justify-between border-b border-border bg-background px-5 sm:px-8">
-      <Link
-        to="/dashboard"
-        className="text-label text-text-primary"
-        style={{ letterSpacing: "0.12em" }}
+    <>
+      <div style={{ height: 56 }} />
+      <nav
+        className="fixed left-0 right-0 top-0 flex items-center justify-between px-5 sm:px-8"
+        style={{
+          height: 56,
+          backgroundColor: "#0A0A0A",
+          borderBottom: "1px solid #2A2A2A",
+          zIndex: 100,
+        }}
       >
-        Brand Grenade
-      </Link>
-
-      <div className="flex items-center gap-3">
-        <div
-          aria-label="Account"
-          className="flex h-8 w-8 items-center justify-center rounded-full"
-          style={{ backgroundColor: "var(--color-border)" }}
-        >
-          <span className="text-body-sm text-text-secondary">BG</span>
-        </div>
         <Link
-          to="/brief"
-          className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 text-[13px] font-semibold text-primary-foreground transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          to="/dashboard"
+          className="font-bold"
+          style={{
+            color: "#F0EDE8",
+            letterSpacing: "0.12em",
+            fontSize: 13,
+            fontWeight: 700,
+          }}
         >
-          New Run
+          BRAND GRENADE
         </Link>
-      </div>
-    </nav>
+
+        <div className="flex items-center gap-4">
+          {session && (
+            <div className="hidden items-center gap-3 md:flex">
+              <span style={{ color: "#5A5652", fontSize: 13 }}>
+                {session.brand}
+              </span>
+              <span
+                style={{
+                  color: "#8A8680",
+                  fontSize: 12,
+                  fontFamily:
+                    'ui-monospace, "JetBrains Mono", SFMono-Regular, Menlo, monospace',
+                }}
+              >
+                Stage {session.currentStage} / {session.totalStages ?? 20}
+              </span>
+              {session.isRunning && (
+                <span
+                  aria-label="Pipeline running"
+                  className="inline-block animate-pulse"
+                  style={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: 999,
+                    backgroundColor: "#C8873A",
+                    boxShadow: "0 0 8px rgba(200,135,58,0.6)",
+                  }}
+                />
+              )}
+            </div>
+          )}
+
+          <div ref={rootRef} className="relative">
+            <button
+              type="button"
+              aria-haspopup="menu"
+              aria-expanded={open}
+              onClick={() => setOpen((v) => !v)}
+              className="flex items-center justify-center transition-colors"
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: 999,
+                backgroundColor: "#1C1C1C",
+                border: "1px solid #2A2A2A",
+                color: "#8A8680",
+                fontSize: 12,
+              }}
+            >
+              BG
+            </button>
+            {open && (
+              <div
+                role="menu"
+                className="absolute right-0 mt-2 overflow-hidden"
+                style={{
+                  minWidth: 180,
+                  backgroundColor: "#1C1C1C",
+                  border: "1px solid #2A2A2A",
+                  borderRadius: 8,
+                  boxShadow:
+                    "0 16px 32px rgba(0,0,0,0.4), 0 4px 8px rgba(0,0,0,0.3)",
+                }}
+              >
+                <MenuItem
+                  label="Dashboard"
+                  onClick={() => {
+                    setOpen(false);
+                    navigate({ to: "/dashboard" });
+                  }}
+                />
+                <MenuItem
+                  label="Settings"
+                  onClick={() => {
+                    setOpen(false);
+                    navigate({ to: "/settings" });
+                  }}
+                />
+                <MenuItem
+                  label="Sign Out"
+                  onClick={() => {
+                    setOpen(false);
+                    navigate({ to: "/" });
+                  }}
+                />
+              </div>
+            )}
+          </div>
+        </div>
+      </nav>
+    </>
+  );
+}
+
+function MenuItem({ label, onClick }: { label: string; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      role="menuitem"
+      onClick={onClick}
+      className="block w-full px-4 py-2.5 text-left transition-colors"
+      style={{ color: "#F0EDE8", fontSize: 14 }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.backgroundColor = "#2A2A2A";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.backgroundColor = "transparent";
+      }}
+    >
+      {label}
+    </button>
   );
 }

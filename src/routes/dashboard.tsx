@@ -234,11 +234,12 @@ function SessionsTable({ sessions }: { sessions: DbSession[] }) {
                 <td className="px-4 py-4">
                   <Link
                     to={ui === "complete" ? "/complete" : "/pipeline"}
-                    search={ui === "complete" ? undefined : { session: s.id }}
+                    search={{ session: s.id }}
                     className="text-body font-medium text-primary transition-colors hover:text-primary-hover"
                   >
                     {ui === "complete" ? "View" : "Continue"}
                   </Link>
+
                 </td>
               </tr>
             );
