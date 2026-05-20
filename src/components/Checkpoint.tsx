@@ -213,10 +213,18 @@ export function Checkpoint({
             <div className="mt-3 flex justify-end">
               <button
                 type="button"
-                disabled={feedback.trim().length < 8}
+                disabled={feedback.trim().length < 8 || resubmitting}
+                onClick={() => {
+                  if (feedback.trim().length < 8 || resubmitting) return;
+                  if (onResubmit) {
+                    void onResubmit(feedback.trim());
+                  } else {
+                    console.log("[Checkpoint Resubmit] clicked — handler not yet implemented", feedback.trim());
+                  }
+                }}
                 className="inline-flex h-10 items-center justify-center rounded-md px-5 text-[13px] font-semibold transition-colors disabled:cursor-not-allowed"
                 style={
-                  feedback.trim().length >= 8
+                  feedback.trim().length >= 8 && !resubmitting
                     ? {
                         backgroundColor: "var(--color-primary)",
                         color: "var(--color-primary-foreground)",
@@ -227,7 +235,7 @@ export function Checkpoint({
                       }
                 }
               >
-                Resubmit
+                {resubmitting ? "Resubmitting…" : "Resubmit"}
               </button>
             </div>
           </div>
