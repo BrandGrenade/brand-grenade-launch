@@ -268,6 +268,16 @@ export function Checkpoint({
               <button
                 type="button"
                 disabled={escalation.trim().length < 8}
+                onClick={() => {
+                  if (escalation.trim().length < 8) return;
+                  if (onEscalate) {
+                    void onEscalate(escalation.trim());
+                  } else {
+                    console.log("[Checkpoint Escalate] clicked — handler not yet implemented", escalation.trim());
+                  }
+                  setAction(null);
+                  setEscalation("");
+                }}
                 className="inline-flex h-10 items-center justify-center rounded-md px-5 text-[13px] font-semibold transition-colors disabled:cursor-not-allowed"
                 style={
                   escalation.trim().length >= 8
