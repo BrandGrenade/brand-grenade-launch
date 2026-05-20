@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { callClaude } from "./claude.server";
+import { streamClaude } from "./claude.server";
 import {
   STAGE_4_SYSTEM_PROMPT,
   buildStage4UserMessage,
@@ -33,7 +33,7 @@ async function setStatus(sessionId: string, message: string | null) {
 
 export const runStage4 = createServerFn({ method: "POST" })
   .inputValidator((input) => RunStage4Input.parse(input))
-  .handler(async ({ data }): Promise<{ output: string }> => {
+  .handler(async function* ({ data }) {
     const { data: session, error: loadErr } = await supabaseAdmin
       .from("sessions")
       .select(
@@ -46,7 +46,11 @@ export const runStage4 = createServerFn({ method: "POST" })
     if (!session.stage_2_output) throw new Error("Stage 2 output (CMM) missing — cannot run Stage 4");
     if (!session.stage_3_output) throw new Error("Stage 3 output (Constraint Matrix) missing — cannot run Stage 4");
 
-    if (session.stage_4_output) return { output: session.stage_4_output };
+    if (session.stage_4_output) {
+      yield { kind: "delta" as const, text: session.stage_4_output };
+      yield { kind: "done" as const, output: session.stage_4_output };
+      return;
+    }
 
     await supabaseAdmin
       .from("sessions")
@@ -65,9 +69,9 @@ export const runStage4 = createServerFn({ method: "POST" })
       constraintSetCount,
     });
 
-    let output: string;
+    let output = "";
     try {
-      output = await callClaude({
+      for await (const delta of streamClaude({
         systemPrompt: STAGE_4_SYSTEM_PROMPT,
         userMessage,
         maxTokens: 4000,
@@ -76,7 +80,10 @@ export const runStage4 = createServerFn({ method: "POST" })
         stageLabel: "Stage 4",
         stageNumber: "4",
         stageName: "Strategic Universes",
-      });
+      })) {
+        output += delta;
+        yield { kind: "delta" as const, text: delta };
+      }
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Stage 4 failed";
       await supabaseAdmin
@@ -86,7 +93,7 @@ export const runStage4 = createServerFn({ method: "POST" })
       throw e instanceof Error ? e : new Error(msg);
     }
 
-    // CHANGE 4 — count ## universes; continue if below 3 (max 3 attempts).
+    // Continuation loop if fewer than 3 ## universes; max 3 attempts.
     let universeCount = countUniverses(output);
     let attempts = 0;
     while (universeCount < 3 && attempts < 3) {
@@ -96,7 +103,10 @@ export const runStage4 = createServerFn({ method: "POST" })
         `${universeCount} of 3 strategic universes generated. Continuing generation...`
       );
       try {
-        const continuation = await callClaude({
+        const separator = "\n\n";
+        output += separator;
+        yield { kind: "delta" as const, text: separator };
+        for await (const delta of streamClaude({
           systemPrompt: STAGE_4_SYSTEM_PROMPT,
           userMessage: buildStage4ContinuationMessage({
             previousOutput: output,
@@ -108,8 +118,10 @@ export const runStage4 = createServerFn({ method: "POST" })
           stageLabel: `Stage 4 (continuation ${attempts})`,
           stageNumber: "4",
           stageName: "Strategic Universes",
-        });
-        output = `${output}\n\n${continuation}`;
+        })) {
+          output += delta;
+          yield { kind: "delta" as const, text: delta };
+        }
         universeCount = countUniverses(output);
       } catch {
         break;
@@ -130,5 +142,5 @@ export const runStage4 = createServerFn({ method: "POST" })
       .eq("id", data.sessionId);
     if (updateErr) throw new Error(`Failed to save Stage 4 output: ${updateErr.message}`);
 
-    return { output };
+    yield { kind: "done" as const, output };
   });
