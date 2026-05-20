@@ -39,7 +39,15 @@ export const runStage16 = createServerFn({ method: "POST" })
 
     const column = COLUMN_BY_FORMAT[data.format];
     const existing = session[column] as string | null | undefined;
-    if (existing) return { output: existing, format: data.format };
+    if (existing) {
+      if (session.status !== "complete") {
+        await supabaseAdmin
+          .from("sessions")
+          .update({ status: "complete", current_stage: 16, stage_16_error: null, stage_16_format: data.format })
+          .eq("id", data.sessionId);
+      }
+      return { output: existing, format: data.format };
+    }
 
     await supabaseAdmin
       .from("sessions")
@@ -79,18 +87,19 @@ export const runStage16 = createServerFn({ method: "POST" })
       stageName: "Document Assembly",
       });
 
-      // Mark pipeline complete when all three variants exist.
-      const others = (Object.values(COLUMN_BY_FORMAT) as Array<
-        "stage_16_agency_output" | "stage_16_consulting_output" | "stage_16_workshop_output"
-      >).filter((c) => c !== column);
-      const otherFilled = others.every((c) => !!session[c]);
+      const outputUpdate =
+        data.format === "agency"
+          ? { stage_16_agency_output: output }
+          : data.format === "consulting"
+          ? { stage_16_consulting_output: output }
+          : { stage_16_workshop_output: output };
 
       const { error: ue } = await supabaseAdmin
         .from("sessions")
         .update({
-          [column]: output,
+          ...outputUpdate,
           stage_16_error: null,
-          ...(otherFilled ? { status: "complete" } : {}),
+          status: "complete",
         })
         .eq("id", data.sessionId);
       if (ue) throw new Error(`Failed to save Stage 16 (${data.format}) output: ${ue.message}`);

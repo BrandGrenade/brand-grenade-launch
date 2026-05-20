@@ -22,6 +22,12 @@ import { runStage10 } from "@/lib/stage10.functions";
 import { runStage11 } from "@/lib/stage11.functions";
 import { runStage12, saveSelectedSMP, saveSelectionRationale } from "@/lib/stage12.functions";
 import { runStage13, saveBrandIntelligence } from "@/lib/stage13.functions";
+import { runStage13b } from "@/lib/stage13b.functions";
+import { runStage14 } from "@/lib/stage14.functions";
+import { runStage14b } from "@/lib/stage14b.functions";
+import { runStage14c } from "@/lib/stage14c.functions";
+import { runStage15 } from "@/lib/stage15.functions";
+import { runStage16 } from "@/lib/stage16.functions";
 import { sanitizeStageOutput } from "@/lib/sanitize-output";
 
 const pipelineSearchSchema = z.object({
@@ -181,6 +187,21 @@ interface SessionData {
   stage_11_error: string | null;
   stage_12_output: string | null;
   stage_12_error: string | null;
+  stage_13_output: string | null;
+  stage_13_error: string | null;
+  stage_13b_output: string | null;
+  stage_13b_error: string | null;
+  stage_14_output: string | null;
+  stage_14_error: string | null;
+  stage_14b_output: string | null;
+  stage_14b_error: string | null;
+  stage_14c_output: string | null;
+  stage_14c_error: string | null;
+  stage_15_output: string | null;
+  stage_15_error: string | null;
+  stage_16_consulting_output: string | null;
+  stage_16_error: string | null;
+  brand_intelligence: Record<string, string> | null;
   selected_smp: string | null;
   selected_smp_field_name: string | null;
   current_stage: number;
@@ -211,6 +232,12 @@ function PipelineView() {
   const saveSelectionRationaleFn = useServerFn(saveSelectionRationale);
   const saveBrandIntelligenceFn = useServerFn(saveBrandIntelligence);
   const runStage13Fn = useServerFn(runStage13);
+  const runStage13bFn = useServerFn(runStage13b);
+  const runStage14Fn = useServerFn(runStage14);
+  const runStage14bFn = useServerFn(runStage14b);
+  const runStage14cFn = useServerFn(runStage14c);
+  const runStage15Fn = useServerFn(runStage15);
+  const runStage16Fn = useServerFn(runStage16);
 
   const [session, setSession] = useState<SessionData | null>(null);
   const [stage1Output, setStage1Output] = useState<string | null>(null);
@@ -238,6 +265,20 @@ function PipelineView() {
   const [stage11Error, setStage11Error] = useState<string | null>(null);
   const [stage12Output, setStage12Output] = useState<string | null>(null);
   const [stage12Error, setStage12Error] = useState<string | null>(null);
+  const [stage13Output, setStage13Output] = useState<string | null>(null);
+  const [stage13Error, setStage13Error] = useState<string | null>(null);
+  const [stage13bOutput, setStage13bOutput] = useState<string | null>(null);
+  const [stage13bError, setStage13bError] = useState<string | null>(null);
+  const [stage14Output, setStage14Output] = useState<string | null>(null);
+  const [stage14Error, setStage14Error] = useState<string | null>(null);
+  const [stage14bOutput, setStage14bOutput] = useState<string | null>(null);
+  const [stage14bError, setStage14bError] = useState<string | null>(null);
+  const [stage14cOutput, setStage14cOutput] = useState<string | null>(null);
+  const [stage14cError, setStage14cError] = useState<string | null>(null);
+  const [stage15Output, setStage15Output] = useState<string | null>(null);
+  const [stage15Error, setStage15Error] = useState<string | null>(null);
+  const [stage16Output, setStage16Output] = useState<string | null>(null);
+  const [stage16Error, setStage16Error] = useState<string | null>(null);
   const [selectedSMP, setSelectedSMP] = useState<SMPCard | null>(null);
   const [stage1Loading, setStage1Loading] = useState(false);
   const [stage1bLoading, setStage1bLoading] = useState(false);
@@ -252,6 +293,13 @@ function PipelineView() {
   const [stage10Loading, setStage10Loading] = useState(false);
   const [stage11Loading, setStage11Loading] = useState(false);
   const [stage12Loading, setStage12Loading] = useState(false);
+  const [stage13Loading, setStage13Loading] = useState(false);
+  const [stage13bLoading, setStage13bLoading] = useState(false);
+  const [stage14Loading, setStage14Loading] = useState(false);
+  const [stage14bLoading, setStage14bLoading] = useState(false);
+  const [stage14cLoading, setStage14cLoading] = useState(false);
+  const [stage15Loading, setStage15Loading] = useState(false);
+  const [stage16Loading, setStage16Loading] = useState(false);
   const [resubmitting, setResubmitting] = useState(false);
   const [savingRationale, setSavingRationale] = useState(false);
   const [retryNonce, setRetryNonce] = useState(0);
@@ -290,7 +338,7 @@ function PipelineView() {
     supabase
       .from("sessions")
       .select(
-        "id, brand_name, category, strategic_mode, current_stage, status, stage_1_output, stage_1_tension_score, stage_1b_required, stage_1b_output, stage_1_error, stage_2_output, stage_2_error, stage_3_output, stage_3_error, stage_4_output, stage_4_error, stage_5_output, stage_5_error, stage_6_output, stage_6_error, stage_7_output, stage_7_error, stage_8_output, stage_8_error, stage_9_output, stage_9_error, stage_10_output, stage_10_error, stage_11_output, stage_11_error, stage_12_output, stage_12_error, selected_smp, selected_smp_field_name, checkpoint_b_confirmed, checkpoint_c_confirmed, retry_status"
+        "id, brand_name, category, strategic_mode, current_stage, status, stage_1_output, stage_1_tension_score, stage_1b_required, stage_1b_output, stage_1_error, stage_2_output, stage_2_error, stage_3_output, stage_3_error, stage_4_output, stage_4_error, stage_5_output, stage_5_error, stage_6_output, stage_6_error, stage_7_output, stage_7_error, stage_8_output, stage_8_error, stage_9_output, stage_9_error, stage_10_output, stage_10_error, stage_11_output, stage_11_error, stage_12_output, stage_12_error, stage_13_output, stage_13_error, stage_13b_output, stage_13b_error, stage_14_output, stage_14_error, stage_14b_output, stage_14b_error, stage_14c_output, stage_14c_error, stage_15_output, stage_15_error, stage_16_consulting_output, stage_16_error, brand_intelligence, selected_smp, selected_smp_field_name, checkpoint_b_confirmed, checkpoint_c_confirmed, retry_status"
       )
 
       .eq("id", sessionId)
@@ -303,6 +351,7 @@ function PipelineView() {
           return;
         }
         setSession(data as SessionData);
+        if (data.brand_intelligence) setIntelSubmitted(true);
         if (data.stage_1b_output) setStage1bOutput(data.stage_1b_output);
         if (data.stage_2_output) {
           setStage2Output(data.stage_2_output);
@@ -348,6 +397,35 @@ function PipelineView() {
           setStage12Output(data.stage_12_output);
           setStatuses((p) => ({ ...p, "12": data.checkpoint_c_confirmed ? "complete" : "checkpoint" }));
         }
+        if (data.stage_13_output) {
+          setStage13Output(data.stage_13_output);
+          setStatuses((p) => ({ ...p, "13": "complete" }));
+          setIntelSubmitted(true);
+        }
+        if (data.stage_13b_output) {
+          setStage13bOutput(data.stage_13b_output);
+          setStatuses((p) => ({ ...p, "13B": "complete" }));
+        }
+        if (data.stage_14_output) {
+          setStage14Output(data.stage_14_output);
+          setStatuses((p) => ({ ...p, "14": "complete" }));
+        }
+        if (data.stage_14b_output) {
+          setStage14bOutput(data.stage_14b_output);
+          setStatuses((p) => ({ ...p, "14B": "complete" }));
+        }
+        if (data.stage_14c_output) {
+          setStage14cOutput(data.stage_14c_output);
+          setStatuses((p) => ({ ...p, "14C": "complete" }));
+        }
+        if (data.stage_15_output) {
+          setStage15Output(data.stage_15_output);
+          setStatuses((p) => ({ ...p, "15": "complete" }));
+        }
+        if (data.stage_16_consulting_output) {
+          setStage16Output(data.stage_16_consulting_output);
+          setStatuses((p) => ({ ...p, "16": "complete" }));
+        }
         if (data.status === "running") {
           // Resume: find the first stage that should be running.
           // Walk the linear sequence honoring human checkpoints (8 -> 9 needs
@@ -364,6 +442,13 @@ function PipelineView() {
             { id: "10", out: data.stage_10_output },
             { id: "11", out: data.stage_11_output },
             { id: "12", out: data.stage_12_output },
+            { id: "13", out: data.stage_13_output, gate: !data.checkpoint_c_confirmed && !!data.stage_12_output },
+            { id: "13B", out: data.stage_13b_output },
+            { id: "14", out: data.stage_14_output },
+            { id: "14B", out: data.stage_14b_output },
+            { id: "14C", out: data.stage_14c_output },
+            { id: "15", out: data.stage_15_output },
+            { id: "16", out: data.stage_16_consulting_output },
           ];
           for (const step of seq) {
             if (step.out) continue;
@@ -747,6 +832,167 @@ function PipelineView() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId, session?.id, statuses["12"], stage12Output]);
 
+  // Stages 13–16 — post-selection validation, territory mapping, audit, and assembly.
+  useEffect(() => {
+    if (!sessionId || !session || statuses["13"] !== "running" || stage13Output || !intelSubmitted) return;
+    let cancelled = false;
+    setStage13Loading(true);
+    setStage13Error(null);
+    runStage13Fn({ data: { sessionId } })
+      .then((result) => {
+        if (cancelled) return;
+        setStage13Output(result.output);
+        setStage13Loading(false);
+        setStatuses((p) => ({ ...p, "13": "complete", "13B": "running" }));
+        setSelectedId("13B");
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        setStage13Loading(false);
+        setStage13Error(err instanceof Error ? err.message : "Stage 13 failed");
+        setStatuses((p) => ({ ...p, "13": "error" }));
+      });
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionId, session?.id, statuses["13"], stage13Output, intelSubmitted]);
+
+  useEffect(() => {
+    if (!sessionId || !session || statuses["13B"] !== "running" || stage13bOutput) return;
+    let cancelled = false;
+    setStage13bLoading(true);
+    setStage13bError(null);
+    runStage13bFn({ data: { sessionId } })
+      .then((result) => {
+        if (cancelled) return;
+        setStage13bOutput(result.output);
+        setStage13bLoading(false);
+        setStatuses((p) => ({ ...p, "13B": "complete", "14": "running" }));
+        setSelectedId("14");
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        setStage13bLoading(false);
+        setStage13bError(err instanceof Error ? err.message : "Stage 13B failed");
+        setStatuses((p) => ({ ...p, "13B": "error" }));
+      });
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionId, session?.id, statuses["13B"], stage13bOutput]);
+
+  useEffect(() => {
+    if (!sessionId || !session || statuses["14"] !== "running" || stage14Output) return;
+    let cancelled = false;
+    setStage14Loading(true);
+    setStage14Error(null);
+    runStage14Fn({ data: { sessionId } })
+      .then((result) => {
+        if (cancelled) return;
+        setStage14Output(result.output);
+        setStage14Loading(false);
+        setStatuses((p) => ({ ...p, "14": "complete", "14B": "running" }));
+        setSelectedId("14B");
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        setStage14Loading(false);
+        setStage14Error(err instanceof Error ? err.message : "Stage 14 failed");
+        setStatuses((p) => ({ ...p, "14": "error" }));
+      });
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionId, session?.id, statuses["14"], stage14Output]);
+
+  useEffect(() => {
+    if (!sessionId || !session || statuses["14B"] !== "running" || stage14bOutput) return;
+    let cancelled = false;
+    setStage14bLoading(true);
+    setStage14bError(null);
+    runStage14bFn({ data: { sessionId } })
+      .then((result) => {
+        if (cancelled) return;
+        setStage14bOutput(result.output);
+        setStage14bLoading(false);
+        setStatuses((p) => ({ ...p, "14B": "complete", "14C": "running" }));
+        setSelectedId("14C");
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        setStage14bLoading(false);
+        setStage14bError(err instanceof Error ? err.message : "Stage 14B failed");
+        setStatuses((p) => ({ ...p, "14B": "error" }));
+      });
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionId, session?.id, statuses["14B"], stage14bOutput]);
+
+  useEffect(() => {
+    if (!sessionId || !session || statuses["14C"] !== "running" || stage14cOutput) return;
+    let cancelled = false;
+    setStage14cLoading(true);
+    setStage14cError(null);
+    runStage14cFn({ data: { sessionId } })
+      .then((result) => {
+        if (cancelled) return;
+        setStage14cOutput(result.output);
+        setStage14cLoading(false);
+        setStatuses((p) => ({ ...p, "14C": "complete", "15": "running" }));
+        setSelectedId("15");
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        setStage14cLoading(false);
+        setStage14cError(err instanceof Error ? err.message : "Stage 14C failed");
+        setStatuses((p) => ({ ...p, "14C": "error" }));
+      });
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionId, session?.id, statuses["14C"], stage14cOutput]);
+
+  useEffect(() => {
+    if (!sessionId || !session || statuses["15"] !== "running" || stage15Output) return;
+    let cancelled = false;
+    setStage15Loading(true);
+    setStage15Error(null);
+    runStage15Fn({ data: { sessionId } })
+      .then((result) => {
+        if (cancelled) return;
+        setStage15Output(result.output);
+        setStage15Loading(false);
+        setStatuses((p) => ({ ...p, "15": "complete", "16": "running" }));
+        setSelectedId("16");
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        setStage15Loading(false);
+        setStage15Error(err instanceof Error ? err.message : "Stage 15 failed");
+        setStatuses((p) => ({ ...p, "15": "error" }));
+      });
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionId, session?.id, statuses["15"], stage15Output]);
+
+  useEffect(() => {
+    if (!sessionId || !session || statuses["16"] !== "running" || stage16Output) return;
+    let cancelled = false;
+    setStage16Loading(true);
+    setStage16Error(null);
+    runStage16Fn({ data: { sessionId, format: "consulting" } })
+      .then((result) => {
+        if (cancelled) return;
+        setStage16Output(result.output);
+        setStage16Loading(false);
+        setStatuses((p) => ({ ...p, "16": "complete" }));
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        setStage16Loading(false);
+        setStage16Error(err instanceof Error ? err.message : "Stage 16 failed");
+        setStatuses((p) => ({ ...p, "16": "error" }));
+      });
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionId, session?.id, statuses["16"], stage16Output]);
+
 
   // Per-stage output: use live Stage 1 / 1B / 2 / 3 output, demo stubs for others.
   const stageOutputs = useMemo<Record<string, string>>(() => {
@@ -819,6 +1065,41 @@ function PipelineView() {
         (stage12Loading
           ? "Composing proposition cards for review — this can take 30–60 seconds…"
           : "Awaiting output."),
+      "13":
+        (stage13Output && sanitize(stage13Output)) ??
+        (stage13Loading
+          ? "Validating brand fit — this can take 30–90 seconds…"
+          : "Awaiting output."),
+      "13B":
+        (stage13bOutput && sanitize(stage13bOutput)) ??
+        (stage13bLoading
+          ? "Checking historical territory references — this can take 30–90 seconds…"
+          : "Awaiting output."),
+      "14":
+        (stage14Output && sanitize(stage14Output)) ??
+        (stage14Loading
+          ? "Mapping the creative territory — this can take 60–120 seconds…"
+          : "Awaiting output."),
+      "14B":
+        (stage14bOutput && sanitize(stage14bOutput)) ??
+        (stage14bLoading
+          ? "Mapping channel expression — this can take 60–120 seconds…"
+          : "Awaiting output."),
+      "14C":
+        (stage14cOutput && sanitize(stage14cOutput)) ??
+        (stage14cLoading
+          ? "Defining the brand world — this can take 60–120 seconds…"
+          : "Awaiting output."),
+      "15":
+        (stage15Output && sanitize(stage15Output)) ??
+        (stage15Loading
+          ? "Running final coherence audit — this can take 30–90 seconds…"
+          : "Awaiting output."),
+      "16":
+        (stage16Output && sanitize(stage16Output)) ??
+        (stage16Loading
+          ? "Assembling the consulting output — this can take 60–120 seconds…"
+          : "Awaiting output."),
     };
   }, [
     sessionId,
@@ -835,6 +1116,13 @@ function PipelineView() {
     stage10Output, stage10Loading,
     stage11Output, stage11Loading,
     stage12Output, stage12Loading,
+    stage13Output, stage13Loading,
+    stage13bOutput, stage13bLoading,
+    stage14Output, stage14Loading,
+    stage14bOutput, stage14bLoading,
+    stage14cOutput, stage14cLoading,
+    stage15Output, stage15Loading,
+    stage16Output, stage16Loading,
   ]);
 
 
@@ -872,7 +1160,8 @@ function PipelineView() {
     stage1Loading || stage1bLoading || stage2Loading || stage3Loading ||
     stage4Loading || stage5Loading || stage6Loading || stage7Loading ||
     stage8Loading || stage9Loading || stage10Loading || stage11Loading ||
-    stage12Loading;
+    stage12Loading || stage13Loading || stage13bLoading || stage14Loading ||
+    stage14bLoading || stage14cLoading || stage15Loading || stage16Loading;
 
   // Compute prev/next visible stages relative to the currently-viewed stage.
   const selectedIdx = STAGES.findIndex((s) => s.id === selectedId);
@@ -971,6 +1260,13 @@ function PipelineView() {
               : selected.id === "10" ? stage10Error
               : selected.id === "11" ? stage11Error
               : selected.id === "12" ? stage12Error
+              : selected.id === "13" ? stage13Error
+              : selected.id === "13B" ? stage13bError
+              : selected.id === "14" ? stage14Error
+              : selected.id === "14B" ? stage14bError
+              : selected.id === "14C" ? stage14cError
+              : selected.id === "15" ? stage15Error
+              : selected.id === "16" ? stage16Error
               : null
           }
 
@@ -990,6 +1286,13 @@ function PipelineView() {
               "10": () => { setStage10Error(null); setStage10Output(null); },
               "11": () => { setStage11Error(null); setStage11Output(null); },
               "12": () => { setStage12Error(null); setStage12Output(null); },
+              "13": () => { setStage13Error(null); setStage13Output(null); },
+              "13B": () => { setStage13bError(null); setStage13bOutput(null); },
+              "14": () => { setStage14Error(null); setStage14Output(null); },
+              "14B": () => { setStage14bError(null); setStage14bOutput(null); },
+              "14C": () => { setStage14cError(null); setStage14cOutput(null); },
+              "15": () => { setStage15Error(null); setStage15Output(null); },
+              "16": () => { setStage16Error(null); setStage16Output(null); },
             };
             if (map[id]) {
               map[id]();
@@ -1039,25 +1342,7 @@ function PipelineView() {
               await saveBrandIntelligenceFn({ data: { sessionId, brandIntelligence: values } });
               setIntelSubmitted(true);
               setStatuses((p) => ({ ...p, "13": "running" }));
-              // Fire Stage 13 — don't block the UI; mark complete on success.
-              runStage13Fn({ data: { sessionId } })
-                .then(() => {
-                  setStatuses((prev) => {
-                    const next: Record<string, StageStatus> = { ...prev, "13": "complete" };
-                    const idx = STAGES.findIndex((s) => s.id === "13");
-                    for (let i = idx + 1; i < STAGES.length; i++) {
-                      if (!STAGES[i].conditional) {
-                        next[STAGES[i].id] = "running";
-                        break;
-                      }
-                    }
-                    return next;
-                  });
-                })
-                .catch((err) => {
-                  console.error("[Stage 13] failed", err);
-                  setStatuses((p) => ({ ...p, "13": "error" }));
-                });
+                    setSelectedId("13");
             } catch (err) {
               console.error("[Save Brand Intelligence] failed", err);
             }
@@ -1656,7 +1941,7 @@ function RightPanel({
       )}
       <div className="flex-1 overflow-y-auto px-6 py-10 sm:px-12 sm:py-10">
 
-        {isError && ["01","02","03","04","05","06","07","08","09","10","11","12"].includes(stage.id) ? (
+        {isError && ["01","02","03","04","05","06","07","08","09","10","11","12","13","13B","14","14B","14C","15","16"].includes(stage.id) ? (
           <div style={{ paddingBottom: 80 }}>
             <header>
               <span className="text-label text-primary">
