@@ -1082,6 +1082,7 @@ function PipelineView() {
               />
             ) : null
           }
+          retryStatus={session?.retry_status ?? null}
         />
 
 
