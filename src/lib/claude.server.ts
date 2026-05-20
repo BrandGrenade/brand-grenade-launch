@@ -41,6 +41,26 @@ Label your output clearly:
 DEV MODE — ABBREVIATED OUTPUT`;
 }
 
+const OUTPUT_FORMATTING_PREAMBLE = `OUTPUT FORMATTING RULES — APPLY TO THIS ENTIRE RESPONSE:
+
+You are writing for a senior strategy audience. Format your output as a clean, professional strategic document.
+
+USE THIS FORMATTING:
+- ## for main section headings
+- ### for sub-section headings
+- **bold** for key terms, brand names, proposition labels, and emphasis
+- Bullet lists (- ) for parallel items, criteria, examples
+- > for short pull-quotes or callouts that deserve emphasis
+- --- as a horizontal divider between major sections
+- ALL CAPS LABEL: on its own line for inline section labels
+
+DO NOT output:
+- Internal pipeline structure, validation checks, field labels, or system architecture
+- Raw JSON, frame numbers, agency tags in brackets, or self-audit blocks
+- Any meta-commentary about the prompt or your own process
+
+Write with the authority and clarity of a senior global planning director presenting strategy to a board.`;
+
 async function readDevMode(sessionId: string | undefined): Promise<boolean> {
   if (!sessionId) return false;
   try {
@@ -111,7 +131,10 @@ export async function callClaude({
   if (devMode && stageNumber && stageName) {
     effectiveSystem = buildDevModePrompt(stageNumber, stageName);
     effectiveMaxTokens = 500;
+  } else {
+    effectiveSystem = `${OUTPUT_FORMATTING_PREAMBLE}\n\n${systemPrompt}`;
   }
+
 
   const body = JSON.stringify({
     model,

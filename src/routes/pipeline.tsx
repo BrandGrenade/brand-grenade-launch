@@ -1744,28 +1744,28 @@ function StreamedOutput({
   }, [text, streaming]);
 
   return (
-    <div style={{ color: "var(--color-text-primary)", lineHeight: 1.7 }}>
+    <div style={{ color: "#8A8680", lineHeight: 1.8 }}>
       {blocks.map((b, i) => {
         const isLast = i === blocks.length - 1;
         const cursor = streaming && isLast ? <Caret /> : null;
         switch (b.kind) {
           case "h1":
             return (
-              <h1
+              <h2
                 key={i}
-                className="text-h1 text-text-primary"
-                style={{ marginTop: 36, marginBottom: 16 }}
+                className="text-h2"
+                style={{ color: "#F0EDE8", fontWeight: 600, marginTop: 32, marginBottom: 12 }}
               >
                 <Inline text={b.text} />
                 {cursor}
-              </h1>
+              </h2>
             );
           case "h2":
             return (
               <h2
                 key={i}
-                className="text-h2 text-text-primary"
-                style={{ marginTop: 32, marginBottom: 14 }}
+                className="text-h2"
+                style={{ color: "#F0EDE8", fontWeight: 600, marginTop: 32, marginBottom: 12 }}
               >
                 <Inline text={b.text} />
                 {cursor}
@@ -1775,8 +1775,8 @@ function StreamedOutput({
             return (
               <h3
                 key={i}
-                className="text-h3 text-text-primary"
-                style={{ marginTop: 28, marginBottom: 12 }}
+                className="text-h3"
+                style={{ color: "#F0EDE8", fontWeight: 600, marginTop: 24, marginBottom: 8 }}
               >
                 <Inline text={b.text} />
                 {cursor}
@@ -1788,9 +1788,26 @@ function StreamedOutput({
                 key={i}
                 className="text-body"
                 style={{
+                  color: "#F0EDE8",
                   fontWeight: 600,
-                  color: "var(--color-primary)",
-                  marginTop: 20,
+                  marginTop: 16,
+                  marginBottom: 6,
+                }}
+              >
+                <Inline text={b.text} />
+                {cursor}
+              </p>
+            );
+          case "label":
+            return (
+              <p
+                key={i}
+                className="text-label"
+                style={{
+                  color: "#C8873A",
+                  letterSpacing: "0.08em",
+                  textTransform: "uppercase",
+                  marginTop: 24,
                   marginBottom: 8,
                 }}
               >
@@ -1798,15 +1815,26 @@ function StreamedOutput({
                 {cursor}
               </p>
             );
+          case "hr":
+            return (
+              <hr
+                key={i}
+                style={{
+                  border: 0,
+                  borderTop: "1px solid #2A2A2A",
+                  margin: "24px 0",
+                }}
+              />
+            );
           case "callout":
             return (
               <p
                 key={i}
                 className="text-body"
                 style={{
-                  borderLeft: "2px solid var(--color-primary)",
+                  borderLeft: "3px solid #C8873A",
                   paddingLeft: 16,
-                  color: "var(--color-text-secondary)",
+                  color: "#8A8680",
                   fontStyle: "italic",
                   margin: "12px 0",
                 }}
@@ -1819,7 +1847,7 @@ function StreamedOutput({
             return (
               <ul
                 key={i}
-                style={{ paddingLeft: 20, margin: "8px 0" }}
+                style={{ paddingLeft: 20, margin: "8px 0", listStyle: "none" }}
               >
                 {b.items.map((item, j) => (
                   <li
@@ -1828,7 +1856,8 @@ function StreamedOutput({
                     style={{
                       position: "relative",
                       margin: "4px 0",
-                      color: "var(--color-text-primary)",
+                      color: "#8A8680",
+                      lineHeight: 1.8,
                     }}
                   >
                     <span
@@ -1836,11 +1865,11 @@ function StreamedOutput({
                       style={{
                         position: "absolute",
                         left: -16,
-                        top: "0.6em",
-                        width: 5,
-                        height: 5,
+                        top: "0.7em",
+                        width: 6,
+                        height: 6,
                         borderRadius: "50%",
-                        backgroundColor: "var(--color-primary)",
+                        backgroundColor: "#C8873A",
                       }}
                     />
                     <Inline text={item} />
@@ -1852,7 +1881,11 @@ function StreamedOutput({
           case "para":
           default:
             return (
-              <p key={i} className="text-body" style={{ margin: "10px 0" }}>
+              <p
+                key={i}
+                className="text-body"
+                style={{ color: "#8A8680", lineHeight: 1.8, marginBottom: 12 }}
+              >
                 <Inline text={b.text} />
                 {cursor}
               </p>
@@ -1864,16 +1897,17 @@ function StreamedOutput({
   );
 }
 
-// Inline parser: **bold** + *em* segments
+// Inline parser: **bold** / __bold__ + *em* segments
 function Inline({ text }: { text: string }) {
   const parts: Array<{ kind: "t" | "b" | "i"; v: string }> = [];
-  const re = /(\*\*[^*]+\*\*|\*[^*]+\*)/g;
+  const re = /(\*\*[^*]+\*\*|__[^_]+__|\*[^*]+\*)/g;
   let last = 0;
   let m: RegExpExecArray | null;
   while ((m = re.exec(text)) !== null) {
     if (m.index > last) parts.push({ kind: "t", v: text.slice(last, m.index) });
     const tok = m[0];
     if (tok.startsWith("**")) parts.push({ kind: "b", v: tok.slice(2, -2) });
+    else if (tok.startsWith("__")) parts.push({ kind: "b", v: tok.slice(2, -2) });
     else parts.push({ kind: "i", v: tok.slice(1, -1) });
     last = m.index + tok.length;
   }
@@ -1881,7 +1915,7 @@ function Inline({ text }: { text: string }) {
   return (
     <>
       {parts.map((p, i) =>
-        p.kind === "b" ? <strong key={i} style={{ color: "var(--color-text-primary)" }}>{p.v}</strong> :
+        p.kind === "b" ? <strong key={i} style={{ color: "#F0EDE8", fontWeight: 600 }}>{p.v}</strong> :
         p.kind === "i" ? <em key={i}>{p.v}</em> :
         <span key={i}>{p.v}</span>,
       )}
@@ -1894,8 +1928,10 @@ type Block =
   | { kind: "h2"; text: string }
   | { kind: "h3"; text: string }
   | { kind: "subhead"; text: string }
+  | { kind: "label"; text: string }
   | { kind: "para"; text: string }
   | { kind: "callout"; text: string }
+  | { kind: "hr" }
   | { kind: "bullets"; items: string[] };
 
 function parseBlocks(text: string): Block[] {
@@ -1908,6 +1944,8 @@ function parseBlocks(text: string): Block[] {
       bulletBuf = [];
     }
   };
+  // ALL CAPS LABEL followed by colon, optionally inside ** **
+  const labelRe = /^(?:\*\*)?([A-Z0-9][A-Z0-9 \-—&/]{2,}):(?:\*\*)?\s*$/;
   for (const raw of lines) {
     const line = raw.trimEnd();
     if (!line.trim()) {
@@ -1919,7 +1957,9 @@ function parseBlocks(text: string): Block[] {
       continue;
     }
     flush();
-    if (line.startsWith("#### ")) {
+    if (/^---+\s*$/.test(line) || /^\*\*\*+\s*$/.test(line)) {
+      blocks.push({ kind: "hr" });
+    } else if (line.startsWith("#### ")) {
       blocks.push({ kind: "subhead", text: line.slice(5) });
     } else if (line.startsWith("### ")) {
       blocks.push({ kind: "h3", text: line.slice(4) });
@@ -1929,6 +1969,9 @@ function parseBlocks(text: string): Block[] {
       blocks.push({ kind: "h1", text: line.slice(2) });
     } else if (line.startsWith("> ")) {
       blocks.push({ kind: "callout", text: line.slice(2) });
+    } else if (labelRe.test(line)) {
+      const m = line.match(labelRe);
+      blocks.push({ kind: "label", text: m ? m[1] : line });
     } else {
       blocks.push({ kind: "para", text: line });
     }
@@ -1936,6 +1979,7 @@ function parseBlocks(text: string): Block[] {
   flush();
   return blocks;
 }
+
 
 // Styled API-error card per spec.
 export function ErrorCard({
