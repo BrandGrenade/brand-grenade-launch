@@ -326,10 +326,10 @@ function BriefIntake() {
           {/* Submit */}
           <button
             type="submit"
-            disabled={!allValid}
+            disabled={!allValid || submitting}
             className="mt-6 inline-flex h-[52px] w-full items-center justify-center rounded-md text-[16px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             style={
-              allValid
+              allValid && !submitting
                 ? {
                     backgroundColor: "var(--color-primary)",
                     color: "var(--color-primary-foreground)",
@@ -341,17 +341,26 @@ function BriefIntake() {
                   }
             }
             onMouseEnter={(e) => {
-              if (allValid)
+              if (allValid && !submitting)
                 e.currentTarget.style.backgroundColor =
                   "var(--color-primary-hover)";
             }}
             onMouseLeave={(e) => {
-              if (allValid)
+              if (allValid && !submitting)
                 e.currentTarget.style.backgroundColor = "var(--color-primary)";
             }}
           >
-            Run Pipeline →
+            {submitting ? "Starting pipeline…" : "Run Pipeline →"}
           </button>
+
+          {submitError && (
+            <p
+              className="text-body-sm mt-3 text-center"
+              style={{ color: "var(--color-destructive)" }}
+            >
+              {submitError}
+            </p>
+          )}
 
           <p
             className="text-body-sm mt-3 text-center"
