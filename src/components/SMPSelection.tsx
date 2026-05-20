@@ -172,7 +172,7 @@ export function SMPSelection({
   onSelect: (card: SMPCard) => void;
 }) {
   const cards = useMemo(
-    () => parseSMPCards(stage8Output ?? "", stage12Output),
+    () => parseSMPCards(stage12Output ?? "", stage8Output),
     [stage8Output, stage12Output],
   );
   const [selected, setSelected] = useState<number | null>(null);
