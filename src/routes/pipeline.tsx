@@ -349,11 +349,28 @@ function PipelineView() {
           setStatuses((p) => ({ ...p, "12": data.checkpoint_c_confirmed ? "complete" : "checkpoint" }));
         }
         if (data.status === "running") {
-          const currentStageId = String(data.current_stage).padStart(2, "0");
-          const outputForCurrentStage = data[`stage_${data.current_stage}_output` as keyof typeof data];
-          if (STAGES.some((s) => s.id === currentStageId) && !outputForCurrentStage) {
-            setStatuses((p) => ({ ...p, [currentStageId]: "running" }));
-            setSelectedId(currentStageId);
+          // Resume: find the first stage that should be running.
+          // Walk the linear sequence honoring human checkpoints (8 -> 9 needs
+          // checkpoint_b_confirmed; 12 -> 13 needs checkpoint_c_confirmed).
+          const seq: Array<{ id: string; out: unknown; gate?: boolean }> = [
+            { id: "02", out: data.stage_2_output },
+            { id: "03", out: data.stage_3_output },
+            { id: "04", out: data.stage_4_output },
+            { id: "05", out: data.stage_5_output },
+            { id: "06", out: data.stage_6_output },
+            { id: "07", out: data.stage_7_output },
+            { id: "08", out: data.stage_8_output },
+            { id: "09", out: data.stage_9_output, gate: !data.checkpoint_b_confirmed && !!data.stage_8_output },
+            { id: "10", out: data.stage_10_output },
+            { id: "11", out: data.stage_11_output },
+            { id: "12", out: data.stage_12_output },
+          ];
+          for (const step of seq) {
+            if (step.out) continue;
+            if (step.gate) break; // waiting on human checkpoint
+            setStatuses((p) => ({ ...p, [step.id]: "running" }));
+            setSelectedId(step.id);
+            break;
           }
         }
       });
