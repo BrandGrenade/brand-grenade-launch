@@ -1410,7 +1410,29 @@ function RightPanel({
 
   return (
     <section className="relative flex min-w-0 flex-1 flex-col bg-background">
+      {isViewingHistorical && (
+        <div
+          className="flex items-center justify-between border-b px-6 py-2.5 sm:px-12"
+          style={{
+            backgroundColor: "var(--color-surface-2)",
+            borderColor: "var(--color-border)",
+          }}
+        >
+          <span className="text-body-sm" style={{ color: "var(--color-text-tertiary)" }}>
+            Viewing completed stage: <span style={{ color: "var(--color-text-secondary)" }}>{stage.number} — {stage.name}</span>
+          </span>
+          <button
+            type="button"
+            onClick={onBackToCurrent}
+            className="text-body-sm font-medium transition-colors"
+            style={{ color: "var(--color-primary)" }}
+          >
+            Back to current stage →
+          </button>
+        </div>
+      )}
       <div className="flex-1 overflow-y-auto px-6 py-10 sm:px-12 sm:py-10">
+
         {isError && ["01","02","03","04","05","06","07","08","09","10","11","12"].includes(stage.id) ? (
           <div style={{ paddingBottom: 80 }}>
             <header>
