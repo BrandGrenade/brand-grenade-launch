@@ -337,7 +337,7 @@ function PipelineView() {
     supabase
       .from("sessions")
       .select(
-        "id, brand_name, category, strategic_mode, current_stage, status, stage_1_output, stage_1_tension_score, stage_1b_required, stage_1b_output, stage_1_error, stage_2_output, stage_2_error, stage_3_output, stage_3_error, stage_4_output, stage_4_error, stage_5_output, stage_5_error, stage_6_output, stage_6_error, stage_7_output, stage_7_error, stage_8_output, stage_8_error, stage_9_output, stage_9_error, stage_10_output, stage_10_error, stage_11_output, stage_11_error, stage_12_output, stage_12_error, selected_smp, selected_smp_field_name, checkpoint_b_confirmed, checkpoint_c_confirmed, retry_status"
+        "id, brand_name, category, strategic_mode, current_stage, status, stage_1_output, stage_1_tension_score, stage_1b_required, stage_1b_output, stage_1_error, stage_2_output, stage_2_error, stage_3_output, stage_3_error, stage_4_output, stage_4_error, stage_5_output, stage_5_error, stage_6_output, stage_6_error, stage_7_output, stage_7_error, stage_8_output, stage_8_error, stage_9_output, stage_9_error, stage_10_output, stage_10_error, stage_11_output, stage_11_error, stage_12_output, stage_12_error, stage_13_output, stage_13_error, stage_13b_output, stage_13b_error, stage_14_output, stage_14_error, stage_14b_output, stage_14b_error, stage_14c_output, stage_14c_error, stage_15_output, stage_15_error, stage_16_consulting_output, stage_16_error, selected_smp, selected_smp_field_name, checkpoint_b_confirmed, checkpoint_c_confirmed, retry_status"
       )
 
       .eq("id", sessionId)
@@ -395,6 +395,35 @@ function PipelineView() {
           setStage12Output(data.stage_12_output);
           setStatuses((p) => ({ ...p, "12": data.checkpoint_c_confirmed ? "complete" : "checkpoint" }));
         }
+        if (data.stage_13_output) {
+          setStage13Output(data.stage_13_output);
+          setStatuses((p) => ({ ...p, "13": "complete" }));
+          setIntelSubmitted(true);
+        }
+        if (data.stage_13b_output) {
+          setStage13bOutput(data.stage_13b_output);
+          setStatuses((p) => ({ ...p, "13B": "complete" }));
+        }
+        if (data.stage_14_output) {
+          setStage14Output(data.stage_14_output);
+          setStatuses((p) => ({ ...p, "14": "complete" }));
+        }
+        if (data.stage_14b_output) {
+          setStage14bOutput(data.stage_14b_output);
+          setStatuses((p) => ({ ...p, "14B": "complete" }));
+        }
+        if (data.stage_14c_output) {
+          setStage14cOutput(data.stage_14c_output);
+          setStatuses((p) => ({ ...p, "14C": "complete" }));
+        }
+        if (data.stage_15_output) {
+          setStage15Output(data.stage_15_output);
+          setStatuses((p) => ({ ...p, "15": "complete" }));
+        }
+        if (data.stage_16_consulting_output) {
+          setStage16Output(data.stage_16_consulting_output);
+          setStatuses((p) => ({ ...p, "16": "complete" }));
+        }
         if (data.status === "running") {
           // Resume: find the first stage that should be running.
           // Walk the linear sequence honoring human checkpoints (8 -> 9 needs
@@ -411,6 +440,13 @@ function PipelineView() {
             { id: "10", out: data.stage_10_output },
             { id: "11", out: data.stage_11_output },
             { id: "12", out: data.stage_12_output },
+            { id: "13", out: data.stage_13_output, gate: !data.checkpoint_c_confirmed && !!data.stage_12_output },
+            { id: "13B", out: data.stage_13b_output },
+            { id: "14", out: data.stage_14_output },
+            { id: "14B", out: data.stage_14b_output },
+            { id: "14C", out: data.stage_14c_output },
+            { id: "15", out: data.stage_15_output },
+            { id: "16", out: data.stage_16_consulting_output },
           ];
           for (const step of seq) {
             if (step.out) continue;
