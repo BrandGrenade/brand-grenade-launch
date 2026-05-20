@@ -207,6 +207,8 @@ function PipelineView() {
   const runStage12Fn = useServerFn(runStage12);
   const saveSelectedSMPFn = useServerFn(saveSelectedSMP);
   const saveSelectionRationaleFn = useServerFn(saveSelectionRationale);
+  const saveBrandIntelligenceFn = useServerFn(saveBrandIntelligence);
+  const runStage13Fn = useServerFn(runStage13);
 
   const [session, setSession] = useState<SessionData | null>(null);
   const [stage1Output, setStage1Output] = useState<string | null>(null);
