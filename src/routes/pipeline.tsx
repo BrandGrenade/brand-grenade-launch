@@ -1411,7 +1411,10 @@ function RightPanel({
           <div style={{ paddingBottom: 80 }}>
             <BrandIntelligence onSubmit={onSubmitBrandIntel} />
           </div>
+        ) : customCheckpoint ? (
+          <div style={{ paddingBottom: 80 }}>{customCheckpoint}</div>
         ) : isCheckpoint && letter ? (
+
           <div style={{ paddingBottom: 80 }}>
             <Checkpoint
               letter={letter}
