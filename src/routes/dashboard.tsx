@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { TopNav } from "@/components/TopNav";
 
 export const Route = createFileRoute("/dashboard")({
   component: Dashboard,
