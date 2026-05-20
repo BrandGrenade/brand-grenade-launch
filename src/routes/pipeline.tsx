@@ -161,6 +161,8 @@ interface SessionData {
   stage_5_error: string | null;
   stage_6_output: string | null;
   stage_6_error: string | null;
+  stage_7_output: string | null;
+  stage_7_error: string | null;
 }
 
 function PipelineView() {
