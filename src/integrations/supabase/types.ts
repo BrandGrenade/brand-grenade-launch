@@ -94,6 +94,7 @@ export type Database = {
           stage_6_output: string | null
           stage_7_error: string | null
           stage_7_output: string | null
+          stage_7_territory_count: number | null
           stage_8_error: string | null
           stage_8_output: string | null
           stage_9_error: string | null
@@ -183,6 +184,7 @@ export type Database = {
           stage_6_output?: string | null
           stage_7_error?: string | null
           stage_7_output?: string | null
+          stage_7_territory_count?: number | null
           stage_8_error?: string | null
           stage_8_output?: string | null
           stage_9_error?: string | null
@@ -272,6 +274,7 @@ export type Database = {
           stage_6_output?: string | null
           stage_7_error?: string | null
           stage_7_output?: string | null
+          stage_7_territory_count?: number | null
           stage_8_error?: string | null
           stage_8_output?: string | null
           stage_9_error?: string | null
