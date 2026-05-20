@@ -10,6 +10,7 @@ import {
 
 import appCss from "../styles.css?url";
 import { MobileGate } from "@/components/MobileGate";
+import { AuthProvider } from "@/context/AuthContext";
 
 
 function NotFoundComponent() {
@@ -117,8 +118,10 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <Outlet />
-      <MobileGate />
+      <AuthProvider>
+        <Outlet />
+        <MobileGate />
+      </AuthProvider>
     </QueryClientProvider>
   );
 }
