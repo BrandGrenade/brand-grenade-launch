@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { TopNav } from "@/components/TopNav";
 import { Checkpoint } from "@/components/Checkpoint";
 import { SelectionRationale } from "@/components/SelectionRationale";
+import { BrandIntelligence } from "@/components/BrandIntelligence";
 
 export const Route = createFileRoute("/pipeline")({
   component: PipelineView,
