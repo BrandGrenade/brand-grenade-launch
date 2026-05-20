@@ -830,6 +830,167 @@ function PipelineView() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId, session?.id, statuses["12"], stage12Output]);
 
+  // Stages 13–16 — post-selection validation, territory mapping, audit, and assembly.
+  useEffect(() => {
+    if (!sessionId || !session || statuses["13"] !== "running" || stage13Output || !intelSubmitted) return;
+    let cancelled = false;
+    setStage13Loading(true);
+    setStage13Error(null);
+    runStage13Fn({ data: { sessionId } })
+      .then((result) => {
+        if (cancelled) return;
+        setStage13Output(result.output);
+        setStage13Loading(false);
+        setStatuses((p) => ({ ...p, "13": "complete", "13B": "running" }));
+        setSelectedId("13B");
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        setStage13Loading(false);
+        setStage13Error(err instanceof Error ? err.message : "Stage 13 failed");
+        setStatuses((p) => ({ ...p, "13": "error" }));
+      });
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionId, session?.id, statuses["13"], stage13Output, intelSubmitted]);
+
+  useEffect(() => {
+    if (!sessionId || !session || statuses["13B"] !== "running" || stage13bOutput) return;
+    let cancelled = false;
+    setStage13bLoading(true);
+    setStage13bError(null);
+    runStage13bFn({ data: { sessionId } })
+      .then((result) => {
+        if (cancelled) return;
+        setStage13bOutput(result.output);
+        setStage13bLoading(false);
+        setStatuses((p) => ({ ...p, "13B": "complete", "14": "running" }));
+        setSelectedId("14");
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        setStage13bLoading(false);
+        setStage13bError(err instanceof Error ? err.message : "Stage 13B failed");
+        setStatuses((p) => ({ ...p, "13B": "error" }));
+      });
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionId, session?.id, statuses["13B"], stage13bOutput]);
+
+  useEffect(() => {
+    if (!sessionId || !session || statuses["14"] !== "running" || stage14Output) return;
+    let cancelled = false;
+    setStage14Loading(true);
+    setStage14Error(null);
+    runStage14Fn({ data: { sessionId } })
+      .then((result) => {
+        if (cancelled) return;
+        setStage14Output(result.output);
+        setStage14Loading(false);
+        setStatuses((p) => ({ ...p, "14": "complete", "14B": "running" }));
+        setSelectedId("14B");
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        setStage14Loading(false);
+        setStage14Error(err instanceof Error ? err.message : "Stage 14 failed");
+        setStatuses((p) => ({ ...p, "14": "error" }));
+      });
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionId, session?.id, statuses["14"], stage14Output]);
+
+  useEffect(() => {
+    if (!sessionId || !session || statuses["14B"] !== "running" || stage14bOutput) return;
+    let cancelled = false;
+    setStage14bLoading(true);
+    setStage14bError(null);
+    runStage14bFn({ data: { sessionId } })
+      .then((result) => {
+        if (cancelled) return;
+        setStage14bOutput(result.output);
+        setStage14bLoading(false);
+        setStatuses((p) => ({ ...p, "14B": "complete", "14C": "running" }));
+        setSelectedId("14C");
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        setStage14bLoading(false);
+        setStage14bError(err instanceof Error ? err.message : "Stage 14B failed");
+        setStatuses((p) => ({ ...p, "14B": "error" }));
+      });
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionId, session?.id, statuses["14B"], stage14bOutput]);
+
+  useEffect(() => {
+    if (!sessionId || !session || statuses["14C"] !== "running" || stage14cOutput) return;
+    let cancelled = false;
+    setStage14cLoading(true);
+    setStage14cError(null);
+    runStage14cFn({ data: { sessionId } })
+      .then((result) => {
+        if (cancelled) return;
+        setStage14cOutput(result.output);
+        setStage14cLoading(false);
+        setStatuses((p) => ({ ...p, "14C": "complete", "15": "running" }));
+        setSelectedId("15");
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        setStage14cLoading(false);
+        setStage14cError(err instanceof Error ? err.message : "Stage 14C failed");
+        setStatuses((p) => ({ ...p, "14C": "error" }));
+      });
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionId, session?.id, statuses["14C"], stage14cOutput]);
+
+  useEffect(() => {
+    if (!sessionId || !session || statuses["15"] !== "running" || stage15Output) return;
+    let cancelled = false;
+    setStage15Loading(true);
+    setStage15Error(null);
+    runStage15Fn({ data: { sessionId } })
+      .then((result) => {
+        if (cancelled) return;
+        setStage15Output(result.output);
+        setStage15Loading(false);
+        setStatuses((p) => ({ ...p, "15": "complete", "16": "running" }));
+        setSelectedId("16");
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        setStage15Loading(false);
+        setStage15Error(err instanceof Error ? err.message : "Stage 15 failed");
+        setStatuses((p) => ({ ...p, "15": "error" }));
+      });
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionId, session?.id, statuses["15"], stage15Output]);
+
+  useEffect(() => {
+    if (!sessionId || !session || statuses["16"] !== "running" || stage16Output) return;
+    let cancelled = false;
+    setStage16Loading(true);
+    setStage16Error(null);
+    runStage16Fn({ data: { sessionId, format: "consulting" } })
+      .then((result) => {
+        if (cancelled) return;
+        setStage16Output(result.output);
+        setStage16Loading(false);
+        setStatuses((p) => ({ ...p, "16": "complete" }));
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        setStage16Loading(false);
+        setStage16Error(err instanceof Error ? err.message : "Stage 16 failed");
+        setStatuses((p) => ({ ...p, "16": "error" }));
+      });
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionId, session?.id, statuses["16"], stage16Output]);
+
 
   // Per-stage output: use live Stage 1 / 1B / 2 / 3 output, demo stubs for others.
   const stageOutputs = useMemo<Record<string, string>>(() => {
