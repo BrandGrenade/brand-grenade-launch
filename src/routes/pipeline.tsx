@@ -255,7 +255,34 @@ function PipelineView() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId, session?.id, retryNonce]);
 
-  // Per-stage output: use live Stage 1 output for stage 01, demo stubs for others.
+  // Trigger Stage 1B when required and not yet generated.
+  useEffect(() => {
+    if (!sessionId || !session) return;
+    if (!session.stage_1b_required) return;
+    if (stage1bOutput) return;
+    if (statuses["01B"] !== "running") return;
+    let cancelled = false;
+    setStage1bLoading(true);
+    runStage1bFn({ data: { sessionId } })
+      .then((result) => {
+        if (cancelled) return;
+        setStage1bOutput(result.output);
+        setStage1bLoading(false);
+        setStatuses((p) => ({ ...p, "01B": "checkpoint" }));
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        setStage1bLoading(false);
+        setStage1Error(err instanceof Error ? err.message : "Stage 1B failed");
+        setStatuses((p) => ({ ...p, "01B": "error" }));
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionId, session?.stage_1b_required, statuses["01B"], stage1bOutput]);
+
+  // Per-stage output: use live Stage 1 / 1B output, demo stubs for others.
   const stageOutputs = useMemo<Record<string, string>>(() => {
     if (!sessionId) return STAGE_OUTPUTS;
     return {
@@ -265,8 +292,13 @@ function PipelineView() {
         (stage1Loading
           ? "Sanitising brief with Claude — this can take 20–60 seconds…"
           : "Awaiting Stage 1 output."),
+      "01B":
+        stage1bOutput ??
+        (stage1bLoading
+          ? "Generating Stage 1B diagnostic questions — this can take 20–60 seconds…"
+          : "Awaiting Stage 1B output."),
     };
-  }, [sessionId, stage1Output, stage1Loading]);
+  }, [sessionId, stage1Output, stage1Loading, stage1bOutput, stage1bLoading]);
 
   // Progress — count main (non-conditional) stages.
   const mainStages = STAGES.filter((s) => !s.conditional);
