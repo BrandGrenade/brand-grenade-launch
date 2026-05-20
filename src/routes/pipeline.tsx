@@ -357,7 +357,9 @@ function PipelineView() {
         if (cancelled) return;
         setStage3Output(result.output);
         setStage3Loading(false);
-        setStatuses((p) => ({ ...p, "03": "complete" }));
+        // Auto-advance to Stage 4.
+        setStatuses((p) => ({ ...p, "03": "complete", "04": "running" }));
+        setSelectedId("04");
       })
       .catch((err: unknown) => {
         if (cancelled) return;
@@ -370,6 +372,33 @@ function PipelineView() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId, session?.id, statuses["03"], stage3Output]);
+
+  // Trigger Stage 4 when its status flips to "running".
+  useEffect(() => {
+    if (!sessionId || !session) return;
+    if (statuses["04"] !== "running") return;
+    if (stage4Output) return;
+    let cancelled = false;
+    setStage4Loading(true);
+    setStage4Error(null);
+    runStage4Fn({ data: { sessionId } })
+      .then((result) => {
+        if (cancelled) return;
+        setStage4Output(result.output);
+        setStage4Loading(false);
+        setStatuses((p) => ({ ...p, "04": "complete" }));
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        setStage4Loading(false);
+        setStage4Error(err instanceof Error ? err.message : "Stage 4 failed");
+        setStatuses((p) => ({ ...p, "04": "error" }));
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionId, session?.id, statuses["04"], stage4Output]);
 
   // Per-stage output: use live Stage 1 / 1B / 2 / 3 output, demo stubs for others.
   const stageOutputs = useMemo<Record<string, string>>(() => {
@@ -396,6 +425,11 @@ function PipelineView() {
         (stage3Loading
           ? "Generating the Strategic Constraint Matrix with Claude — this can take 30–90 seconds…"
           : "Awaiting Stage 3 output."),
+      "04":
+        stage4Output ??
+        (stage4Loading
+          ? "Generating the Strategic Interpretation Set (SIS) with Claude — this can take 30–90 seconds…"
+          : "Awaiting Stage 4 output."),
     };
   }, [
     sessionId,
@@ -407,6 +441,8 @@ function PipelineView() {
     stage2Loading,
     stage3Output,
     stage3Loading,
+    stage4Output,
+    stage4Loading,
   ]);
 
   // Progress — count main (non-conditional) stages.
