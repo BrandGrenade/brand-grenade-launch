@@ -9,6 +9,7 @@ import { BrandIntelligence } from "@/components/BrandIntelligence";
 import { supabase } from "@/integrations/supabase/client";
 import { runStage1 } from "@/lib/stage1.functions";
 import { runStage1b, resubmitBrief } from "@/lib/stage1b.functions";
+import { runStage2 } from "@/lib/stage2.functions";
 
 const pipelineSearchSchema = z.object({
   session: z.string().uuid().optional(),
@@ -145,6 +146,8 @@ interface SessionData {
   stage_1b_required: boolean;
   stage_1b_output: string | null;
   stage_1_error: string | null;
+  stage_2_output: string | null;
+  stage_2_error: string | null;
 }
 
 function PipelineView() {
@@ -152,13 +155,17 @@ function PipelineView() {
   const runStage1Fn = useServerFn(runStage1);
   const runStage1bFn = useServerFn(runStage1b);
   const resubmitBriefFn = useServerFn(resubmitBrief);
+  const runStage2Fn = useServerFn(runStage2);
 
   const [session, setSession] = useState<SessionData | null>(null);
   const [stage1Output, setStage1Output] = useState<string | null>(null);
   const [stage1bOutput, setStage1bOutput] = useState<string | null>(null);
   const [stage1Error, setStage1Error] = useState<string | null>(null);
+  const [stage2Output, setStage2Output] = useState<string | null>(null);
+  const [stage2Error, setStage2Error] = useState<string | null>(null);
   const [stage1Loading, setStage1Loading] = useState(false);
   const [stage1bLoading, setStage1bLoading] = useState(false);
+  const [stage2Loading, setStage2Loading] = useState(false);
   const [resubmitting, setResubmitting] = useState(false);
   const [retryNonce, setRetryNonce] = useState(0);
 
@@ -195,7 +202,7 @@ function PipelineView() {
     supabase
       .from("sessions")
       .select(
-        "id, brand_name, category, strategic_mode, stage_1_output, stage_1_tension_score, stage_1b_required, stage_1b_output, stage_1_error"
+        "id, brand_name, category, strategic_mode, stage_1_output, stage_1_tension_score, stage_1b_required, stage_1b_output, stage_1_error, stage_2_output, stage_2_error"
       )
       .eq("id", sessionId)
       .single()
@@ -208,6 +215,10 @@ function PipelineView() {
         }
         setSession(data as SessionData);
         if (data.stage_1b_output) setStage1bOutput(data.stage_1b_output);
+        if (data.stage_2_output) {
+          setStage2Output(data.stage_2_output);
+          setStatuses((p) => ({ ...p, "02": "complete" }));
+        }
       });
     return () => {
       cancelled = true;
