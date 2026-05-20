@@ -32,8 +32,8 @@ export const runStage14b = createServerFn({ method: "POST" })
         userMessage: buildStage14bUserMessage({
           brandName: session.brand_name,
           selectedSMP: session.selected_smp ?? "",
-          stage12Output: session.stage_12_output ?? "",
-          stage13Output: session.stage_13_output ?? "",
+          stage12Output: "",
+          stage13Output: trimBrandFitForDownstream(session.stage_13_output ?? ""),
           stage13bOutput: session.stage_13b_output ?? "",
           stage14Output: session.stage_14_output,
         }),
