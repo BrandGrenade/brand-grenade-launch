@@ -28,7 +28,7 @@ export const runStage9 = createServerFn({ method: "POST" })
     const userMessage = buildStage9UserMessage({
       brandName: session.brand_name,
       category: session.category,
-      stage8Output: session.stage_8_output,
+      stage8Output: trimDraftSMPsForDownstream(session.stage_8_output),
       cmm: session.stage_2_output ?? "",
       stage7DominantSignal: session.stage_7_output ?? undefined,
     });
