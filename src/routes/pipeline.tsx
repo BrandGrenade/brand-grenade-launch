@@ -183,7 +183,7 @@ function PipelineView() {
           onSubmitBrandIntel={() => {
             setIntelSubmitted(true);
             setStatuses((prev) => {
-              const next = { ...prev, "13": "complete" as StageStatus };
+              const next: Record<string, StageStatus> = { ...prev, "13": "complete" };
               const idx = STAGES.findIndex((s) => s.id === "13");
               for (let i = idx + 1; i < STAGES.length; i++) {
                 if (!STAGES[i].conditional) {
