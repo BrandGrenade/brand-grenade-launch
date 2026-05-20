@@ -137,7 +137,43 @@ const NUCLEAR_LINE_PATTERNS: RegExp[] = [
   /^DRAFTS?\s+GENERATED/i,
   /^(TOTAL|COUNT|NUMBER OF)\s*:/i,
   /N\/A\s+\(single/i,
+  // Stage 3 specific
+  /MATRIX\s+HEADER/i,
+  /CONSTRAINT\s+MATRIX/i,
+  /CONSTRAINT\s+SET\s+\d/i,
+  /CONSTRAINT\s+SET\s+NAME\s*:/i,
+  /CONSTRAINT\s+SET\s+VALIDATION/i,
+  /CONSTRAINT\s+QUALITY/i,
+  /BOUNDARY\s+CONDITION/i,
+  /\bBC[1-5]\s*[:\-—]/i,
+  /^\s*FORBIDDEN\s+TERRITORY\s*:/i,
+  /REQUIRED\s+TENSION\s+TYPE\s*:/i,
+  /TRUTH\s+CONFIGURATION\s*:/i,
+  /STRATEGIC\s+ROUTE\s*:/i,
+  /TENSION\s+AXIS\s*:/i,
+  /^\s*BRAND\s+ROLE\s*:/i,
+  /DIFFERENTIATION\s+CONFIRMED/i,
+  /WHITESPACE\s+CONFIRMED/i,
+  /CMM\s+REFERENCED/i,
+  /FRAMEWORK\s+COUNT\s*:/i,
+  /SETS\s+GENERATED\s*:/i,
+  /DIVERGENCE\s+SUMMARY\s*:/i,
+  /STAGE\s+\d+\s+INSTRUCTION\s*:/i,
+  // Orphan colon-value lines (CHANGE 3 & 4)
+  /^\s*[*\-]?\s*:\s*\S/,
+  /^\s*[*\-]\s*$/,
+  // ALL-CAPS / Title Case label followed by short value (1-4 words)
+  /^\s*\**\s*[A-Z][A-Z0-9 _\-/&()]{2,40}\s*:\s*\**\s*\S+(?:\s+\S+){0,3}\s*\**\s*$/,
 ];
+
+// Bullet line with colon and very few words → structured data
+const BULLET_DATA_LINE = /^\s*[*\-]\s+[^\n]*:\s*\S/;
+function isShortBulletData(line: string): boolean {
+  if (!BULLET_DATA_LINE.test(line)) return false;
+  const words = line.replace(/^\s*[*\-]\s+/, "").split(/\s+/).filter(Boolean);
+  return words.length < 6;
+}
+
 
 // A "label-only" line: e.g. "Foo Bar:" or "**Foo Bar:**" with no content after.
 const LABEL_ONLY_LINE = /^[ \t#>*_\-]*\**[A-Za-z][A-Za-z0-9 _\-/&()]{0,80}\**\s*:\s*\**\s*$/;
@@ -201,6 +237,7 @@ export function sanitizeStageOutput(raw: string): string {
     if (LINE_STRIP_PATTERNS.some((p) => p.test(line))) continue;
     if (NUCLEAR_LINE_PATTERNS.some((p) => p.test(line))) continue;
     if (LABEL_ONLY_LINE.test(line)) continue;
+    if (isShortBulletData(line)) continue;
     kept.push(line);
   }
   text = kept.join("\n");
