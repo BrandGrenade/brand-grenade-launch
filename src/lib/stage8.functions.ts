@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { callClaude } from \"./claude.server\";
+import { callClaude } from "./claude.server";
 import { STAGE_8_SYSTEM_PROMPT, buildStage8UserMessage } from "./stage8-prompt";
 
 const Input = z.object({ sessionId: z.string().uuid() });
