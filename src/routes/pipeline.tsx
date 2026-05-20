@@ -184,6 +184,7 @@ interface SessionData {
   selected_smp_field_name: string | null;
   checkpoint_b_confirmed: boolean;
   checkpoint_c_confirmed: boolean;
+  retry_status: string | null;
 }
 
 function PipelineView() {
