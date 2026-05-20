@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { TopNav } from "@/components/TopNav";
 import { Checkpoint } from "@/components/Checkpoint";
+import { SelectionRationale } from "@/components/SelectionRationale";
 
 export const Route = createFileRoute("/pipeline")({
   component: PipelineView,
@@ -137,6 +138,7 @@ function PipelineView() {
 
   const [statuses, setStatuses] = useState(initialStatuses);
   const [selectedId, setSelectedId] = useState("01");
+  const [rationaleForId, setRationaleForId] = useState<string | null>(null);
   const selected = STAGES.find((s) => s.id === selectedId)!;
   const selectedStatus = statuses[selectedId];
 
@@ -174,6 +176,7 @@ function PipelineView() {
         <RightPanel
           stage={selected}
           status={selectedStatus}
+          showRationale={rationaleForId === selectedId}
           onNext={() => {
             const idx = STAGES.findIndex((s) => s.id === selectedId);
             for (let i = idx + 1; i < STAGES.length; i++) {
@@ -185,6 +188,12 @@ function PipelineView() {
             }
           }}
           onConfirmCheckpoint={(stageId) => {
+            // Checkpoint C (Stage 12): show rationale capture before advancing.
+            if (stageId === "12" && rationaleForId !== "12") {
+              setRationaleForId("12");
+              return;
+            }
+            setRationaleForId(null);
             setStatuses((prev) => {
               const next = { ...prev, [stageId]: "complete" as StageStatus };
               const idx = STAGES.findIndex((s) => s.id === stageId);
@@ -479,11 +488,13 @@ function StageIndicator({
 function RightPanel({
   stage,
   status,
+  showRationale,
   onNext,
   onConfirmCheckpoint,
 }: {
   stage: Stage;
   status: StageStatus;
+  showRationale: boolean;
   onNext: () => void;
   onConfirmCheckpoint: (stageId: string) => void;
 }) {
@@ -496,7 +507,13 @@ function RightPanel({
   return (
     <section className="relative flex min-w-0 flex-1 flex-col bg-background">
       <div className="flex-1 overflow-y-auto px-6 py-10 sm:px-12 sm:py-10">
-        {isCheckpoint && letter ? (
+        {showRationale ? (
+          <div style={{ paddingBottom: 80 }}>
+            <SelectionRationale
+              onConfirm={() => onConfirmCheckpoint(stage.id)}
+            />
+          </div>
+        ) : isCheckpoint && letter ? (
           <div style={{ paddingBottom: 80 }}>
             <Checkpoint
               letter={letter}
