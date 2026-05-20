@@ -344,12 +344,41 @@ function PipelineView() {
           stage={selected}
           status={selectedStatus}
           fullOutput={stageOutputs[selected.id] ?? "Output pending."}
-          stage1Error={selected.id === "01" ? stage1Error : null}
+          stage1Error={selected.id === "01" ? stage1Error : selected.id === "01B" ? stage1Error : null}
           tensionScore={selected.id === "01" ? session?.stage_1_tension_score ?? null : null}
           stage1bRequired={selected.id === "01" ? session?.stage_1b_required ?? false : false}
           onRetry={() => setRetryNonce((n) => n + 1)}
           showRationale={rationaleForId === selectedId}
           showBrandIntel={selectedId === "13" && !intelSubmitted && selectedStatus === "running"}
+          showStage1bResubmit={
+            selectedId === "01B" &&
+            !!stage1bOutput &&
+            !stage1bLoading &&
+            selectedStatus !== "complete"
+          }
+          resubmitting={resubmitting}
+          onResubmitBrief={async (additionalBrief) => {
+            if (!sessionId) return;
+            setResubmitting(true);
+            try {
+              await resubmitBriefFn({ data: { sessionId, additionalBrief } });
+              // Reset local state and re-run Stage 1.
+              setStage1Output(null);
+              setStage1bOutput(null);
+              setStage1Error(null);
+              setStatuses((p) => ({
+                ...p,
+                "01": "running",
+                "01B": "pending",
+              }));
+              setSelectedId("01");
+              setRetryNonce((n) => n + 1);
+            } catch (err) {
+              setStage1Error(err instanceof Error ? err.message : "Resubmit failed");
+            } finally {
+              setResubmitting(false);
+            }
+          }}
           onSubmitBrandIntel={() => {
             setIntelSubmitted(true);
             setStatuses((prev) => {
@@ -375,6 +404,16 @@ function PipelineView() {
             }
           }}
           onConfirmCheckpoint={(stageId) => {
+            // Checkpoint A with 1B required → route to Stage 1B instead of Stage 2.
+            if (stageId === "01" && session?.stage_1b_required && !stage1bOutput) {
+              setStatuses((prev) => ({
+                ...prev,
+                "01": "complete",
+                "01B": "running",
+              }));
+              setSelectedId("01B");
+              return;
+            }
             // Checkpoint C (Stage 12): show rationale capture before advancing.
             if (stageId === "12" && rationaleForId !== "12") {
               setRationaleForId("12");
@@ -394,6 +433,7 @@ function PipelineView() {
             });
           }}
         />
+
       </div>
     </div>
   );
