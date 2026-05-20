@@ -4,7 +4,7 @@ export function MobileGate() {
   const [tooNarrow, setTooNarrow] = useState(false);
 
   useEffect(() => {
-    const mq = window.matchMedia("(max-width: 1023.98px)");
+    const mq = window.matchMedia("(max-width: 559.98px)");
     const update = () => setTooNarrow(mq.matches);
     update();
     mq.addEventListener("change", update);
@@ -55,7 +55,7 @@ export function MobileGate() {
         <p style={{ color: "#8A8680", fontSize: 14, lineHeight: 1.55 }}>
           Brand Grenade is designed for desktop use. Please access on a screen
           wider than{" "}
-          <span style={{ color: "#C8873A", fontWeight: 600 }}>1024px</span>.
+          <span style={{ color: "#C8873A", fontWeight: 600 }}>560px</span>.
         </p>
       </div>
     </div>
