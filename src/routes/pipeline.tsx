@@ -1025,7 +1025,29 @@ function PipelineView() {
               }
             }
           }}
-          onConfirmCheckpoint={(stageId) => {
+          onConfirmCheckpoint={(stageId, notes) => {
+            // Persist notes + timestamp for the relevant checkpoint.
+            const letter = CHECKPOINT_LETTERS[stageId];
+            if (sessionId && letter) {
+              const notesText = (notes ?? []).map((n) => n.trim()).filter(Boolean).join("\n\n");
+              const update: Record<string, unknown> = {};
+              if (letter === "A") {
+                update.checkpoint_a_confirmed = true;
+                update.checkpoint_a_confirmed_at = new Date().toISOString();
+                if (notesText) update.checkpoint_a_notes = notesText;
+              } else if (letter === "B") {
+                update.checkpoint_b_confirmed = true;
+                update.checkpoint_b_confirmed_at = new Date().toISOString();
+                if (notesText) update.checkpoint_b_notes = notesText;
+              } else if (letter === "C") {
+                update.checkpoint_c_confirmed = true;
+                update.checkpoint_c_confirmed_at = new Date().toISOString();
+                if (notesText) update.checkpoint_c_notes = notesText;
+              }
+              supabase.from("sessions").update(update).eq("id", sessionId).then(({ error }) => {
+                if (error) console.error("[Checkpoint] failed to persist", error);
+              });
+            }
             // Checkpoint A with 1B required → route to Stage 1B instead of Stage 2.
             if (stageId === "01" && session?.stage_1b_required && !stage1bOutput) {
               setStatuses((prev) => ({
@@ -1057,6 +1079,26 @@ function PipelineView() {
               }
               return next;
             });
+          }}
+          onResubmitCheckpoint={async (stageId, feedback) => {
+            console.log(`[Checkpoint Resubmit] stage=${stageId} feedback=${feedback}`);
+            // Clear the relevant stage output and re-run it.
+            const resetMap: Record<string, () => void> = {
+              "01": () => { setStage1Output(null); setStage1Error(null); },
+              "08": () => { setStage8Output(null); setStage8Error(null); },
+              "12": () => { setStage12Output(null); setStage12Error(null); },
+            };
+            if (resetMap[stageId]) {
+              resetMap[stageId]();
+              if (stageId === "01") {
+                setRetryNonce((n) => n + 1);
+              } else {
+                setStatuses((p) => ({ ...p, [stageId]: "running" }));
+              }
+            }
+          }}
+          onEscalateCheckpoint={(stageId, reason) => {
+            console.log(`[Checkpoint Escalate] stage=${stageId} reason=${reason}`);
           }}
           customCheckpoint={
             selectedId === "12" && selectedStatus === "checkpoint" && rationaleForId !== "12" ? (
