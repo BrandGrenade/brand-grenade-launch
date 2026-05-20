@@ -24,177 +24,122 @@ export interface SMPCard {
 
 // ----------------------------- PARSER -----------------------------
 
-// Detect proposition blocks using four methods, then merge by block range.
-export function parseSMPCards(stage12Output: string): SMPCard[] {
-  if (!stage12Output) return [];
-  const text = stage12Output;
+function extractScore(text: string, label: string): number | undefined {
+  const pattern = new RegExp(label + "[:\\s]+(\\d+(?:\\.\\d+)?)\\s*\\/\\s*(?:10|60)", "i");
+  const m = text.match(pattern);
+  return m ? parseFloat(m[1]) : undefined;
+}
 
-  // Collect candidate start indices from each detection method.
-  const starts = new Set<number>();
+interface RawProp {
+  line: string;
+  owns: string;
+  truth: string;
+  challenge: string;
+  scores: SMPCard["scores"];
+}
 
-  // METHOD 3 — "PROPOSITION N" label
-  for (const m of text.matchAll(/^[ \t>*_#-]*\**\s*PROPOSITION\s+(\d+)\b/gim)) {
-    if (m.index !== undefined) starts.add(m.index);
-  }
+function parsePropositions(rawOutput: string): RawProp[] {
+  const propositions: RawProp[] = [];
+  if (!rawOutput) return propositions;
 
-  // METHOD 4 — "Composite:" anchors — walk back to nearest separator/bold
-  for (const m of text.matchAll(/Composite\s*:\s*\d+/gi)) {
-    if (m.index === undefined) continue;
-    const back = text.slice(0, m.index);
-    // walk back to nearest separator or double newline
-    const sepIdx = Math.max(
-      back.lastIndexOf("\n═══"),
-      back.lastIndexOf("\n==="),
-      back.lastIndexOf("\n---"),
-      back.lastIndexOf("\n\n"),
+  // Method 1: Split on === or ═══ dividers
+  const dividerPattern = /[═=]{3,}/g;
+  const blocks = rawOutput.split(dividerPattern).filter((b) => b.trim().length > 50);
+
+  // Method 2: Split on PROPOSITION N headers
+  const propPattern = /\*{0,2}PROPOSITION\s+\d+\*{0,2}/gi;
+  const propBlocks = rawOutput.split(propPattern).filter((b) => b.trim().length > 50);
+
+  const contentBlocks = propBlocks.length > blocks.length ? propBlocks : blocks;
+
+  for (const block of contentBlocks) {
+    if (
+      !block.includes("**") &&
+      !block.includes("Composite") &&
+      !block.includes("Differentiation")
+    ) {
+      continue;
+    }
+    if (
+      block.includes("[METADATA]") ||
+      block.includes("SELF-AUDIT") ||
+      block.includes("PRESENTATION ORDER") ||
+      block.includes("SELECTION FRAMEWORK") ||
+      block.includes("DELIVERABLE 2") ||
+      block.includes("DELIVERABLE 3")
+    ) {
+      continue;
+    }
+
+    let propositionLine = "";
+    const blockquoteBold = block.match(/>\s*\*\*([^*\n]+)\*\*/);
+    if (blockquoteBold) propositionLine = blockquoteBold[1].trim();
+    if (!propositionLine) {
+      const boldMatches = block.match(/\*\*([^*\n]{10,80})\*\*/g);
+      if (boldMatches && boldMatches.length > 0) {
+        propositionLine = boldMatches[0].replace(/\*\*/g, "").trim();
+      }
+    }
+    if (!propositionLine) continue;
+    if (
+      propositionLine.includes("PROPOSITION") ||
+      propositionLine.includes("WHAT THIS") ||
+      propositionLine.includes("THE TRUTH") ||
+      propositionLine.length > 100
+    ) {
+      continue;
+    }
+
+    const ownsMatch = block.match(
+      /WHAT THIS PROPOSITION OWNS[\s\S]*?\n\n([\s\S]*?)(?:\n---|\n═|$)/i,
     );
-    starts.add(sepIdx > 0 ? sepIdx + 1 : 0);
+    const owns = ownsMatch ? ownsMatch[1].trim().substring(0, 300) : "";
+
+    const truthMatch = block.match(
+      /THE TRUTH IT IS BUILT ON[\s\S]*?\n\n([\s\S]*?)(?:\n---|\n═|$)/i,
+    );
+    const truth = truthMatch ? truthMatch[1].trim().substring(0, 300) : "";
+
+    const challengeMatch = block.match(
+      /WHAT IT CHALLENGES[\s\S]*?\n\n([\s\S]*?)(?:\n---|\n═|$)/i,
+    );
+    const challenge = challengeMatch ? challengeMatch[1].trim().substring(0, 300) : "";
+
+    const scores: SMPCard["scores"] = {
+      differentiation: extractScore(block, "Differentiation"),
+      truthStrength: extractScore(block, "Truth Strength"),
+      culturalRelevance: extractScore(block, "Cultural Relevance"),
+      commercialPlausibility: extractScore(block, "Commercial Plausibility"),
+      creativeExpandability: extractScore(block, "Creative Expandability"),
+      writerQuality: extractScore(block, "Writer Quality"),
+      composite: extractScore(block, "Composite"),
+    };
+
+    propositions.push({ line: propositionLine, owns, truth, challenge, scores });
   }
 
-  // METHOD 1 — blockquote lines containing **bold**
-  for (const m of text.matchAll(/^>\s+.*\*\*[^*\n]+\*\*.*$/gim)) {
-    if (m.index !== undefined) starts.add(m.index);
-  }
-
-  // METHOD 2 — separator-delimited blocks containing **bold** near top
-  const sepSplits = [...text.matchAll(/\n(?:={3,}|—{3,}|═{3,}|-{3,})\s*\n/g)];
-  for (let i = 0; i < sepSplits.length; i++) {
-    const idx = (sepSplits[i].index ?? 0) + sepSplits[i][0].length;
-    const next = sepSplits[i + 1]?.index ?? text.length;
-    const chunk = text.slice(idx, next);
-    if (/\*\*[^*\n]{3,}\*\*/.test(chunk.slice(0, 400))) starts.add(idx);
-  }
-
-  if (starts.size === 0) return [];
-
-  const sorted = [...starts].sort((a, b) => a - b);
-  // Merge near-duplicate starts (within 50 chars)
-  const merged: number[] = [];
-  for (const s of sorted) {
-    if (merged.length === 0 || s - merged[merged.length - 1] > 80) merged.push(s);
-  }
-
-  // Stop boundary — DELIVERABLE 2, SECTION 3, STRATEGIC LANDSCAPE
-  const stopMatch =
-    text.search(/={2,}\s*DELIVERABLE\s+2/i) >= 0
-      ? text.search(/={2,}\s*DELIVERABLE\s+2/i)
-      : text.search(/SECTION\s+3\s*—\s*STRATEGIC\s+LANDSCAPE/i) >= 0
-        ? text.search(/SECTION\s+3\s*—\s*STRATEGIC\s+LANDSCAPE/i)
-        : text.length;
-
-  const cards: SMPCard[] = [];
-  for (let i = 0; i < merged.length; i++) {
-    const startIdx = merged[i];
-    if (startIdx >= stopMatch) break;
-    const endIdx = Math.min(merged[i + 1] ?? text.length, stopMatch);
-    const body = text.slice(startIdx, endIdx);
-    cards.push(parseCard(i + 1, body, text));
-  }
-  return cards;
+  return propositions;
 }
 
-function extractSection(body: string, headings: RegExp[]): string {
-  for (const h of headings) {
-    const m = h.exec(body);
-    if (!m) continue;
-    const start = m.index + m[0].length;
-    const rest = body.slice(start);
-    const stopRe = /(?:\n[A-Z][A-Z \-]{6,}\n|═══|---|\n\n[A-Z][A-Z ]{4,}|\[METADATA\]|STRATEGIC\s+QUALITY\s+SCORES|Composite\s*:)/i;
-    const stop = stopRe.exec(rest);
-    const end = stop ? stop.index : Math.min(600, rest.length);
-    return rest
-      .slice(0, end)
-      .split("\n")
-      .map((l) => l.replace(/^[>*\s-]+/, "").trim())
-      .filter((l) => l && !/^[─=*]+$/.test(l))
-      .join(" ")
-      .trim();
+export function parseSMPCards(primary: string, fallback?: string): SMPCard[] {
+  let raw = parsePropositions(primary);
+  if (raw.length === 0 && fallback) {
+    raw = parsePropositions(fallback);
   }
-  return "";
-}
-
-function parseCard(cardNumber: number, body: string, _full: string): SMPCard {
-  // Proposition line — prefer first blockquote with bold; else largest bold; else first non-trivial line
-  let smpLine = "";
-  const bq = /^>\s+(.*\*\*[^*\n]+\*\*.*)$/m.exec(body);
-  if (bq) {
-    smpLine = bq[1].replace(/\*\*/g, "").trim();
-  } else {
-    const bolds = [...body.matchAll(/\*\*([^*\n]{6,300})\*\*/g)].map((m) => m[1].trim());
-    if (bolds.length) {
-      bolds.sort((a, b) => b.length - a.length);
-      smpLine = bolds[0];
-    }
-  }
-  if (!smpLine) {
-    // fallback — text after PROPOSITION N header line, first non-empty meaningful line
-    const lines = body.split("\n").map((l) => l.trim()).filter(Boolean);
-    for (const l of lines) {
-      if (/^PROPOSITION\s+\d+/i.test(l)) continue;
-      if (/^[═─=*\-]+$/.test(l)) continue;
-      if (l.length < 8) continue;
-      smpLine = l.replace(/^[>*\s]+/, "").replace(/\*\*/g, "").trim();
-      break;
-    }
-  }
-  smpLine = smpLine.replace(/^["']|["']$/g, "").trim();
-
-  const whatItOwns = extractSection(body, [
-    /WHAT\s+THIS\s+PROPOSITION\s+OWNS/i,
-    /What\s+it\s+owns/i,
-    /What\s+this\s+owns/i,
-  ]);
-  const truth = extractSection(body, [
-    /THE\s+TRUTH\s+IT\s+IS\s+BUILT\s+ON/i,
-    /Truth(?:\s+it\s+is\s+built\s+on)?\s*[:\-—]/i,
-    /^\s*Truth\s*$/im,
-  ]);
-  const whatItChallenges = extractSection(body, [
-    /WHAT\s+IT\s+CHALLENGES/i,
-    /Challenge[s]?\s*[:\-—]?/i,
-  ]);
-  const whatItMakesPossible = extractSection(body, [/WHAT\s+IT\s+MAKES\s+POSSIBLE/i]);
-  const whatItRequires = extractSection(body, [/WHAT\s+IT\s+REQUIRES\s+OF\s+THE\s+BRAND/i]);
-
-  const sg = (re: RegExp): number | undefined => {
-    const m = re.exec(body);
-    return m ? Number(m[1]) : undefined;
-  };
-  const scores = {
-    differentiation: sg(/Differentiation\s*:\s*(\d+)/i),
-    truthStrength: sg(/Truth\s+Strength\s*:\s*(\d+)/i),
-    culturalRelevance: sg(/Cultural\s+Relevance\s*:\s*(\d+)/i),
-    commercialPlausibility: sg(/Commercial\s+Plausibility\s*:\s*(\d+)/i),
-    creativeExpandability: sg(/Creative\s+Expandability\s*:\s*(\d+)/i),
-    writerQuality: sg(/Writer\s+Quality\s*:\s*(\d+)/i),
-    composite: sg(/Composite\s*:\s*(\d+)/i),
-  };
-
-  // Metadata block
-  let fieldName = "";
-  let iconicTierStatus = "";
-  let pressureTestNote = "";
-  const meta = /\[METADATA\]([\s\S]*?)\[\/METADATA\]/i.exec(body);
-  if (meta) {
-    const m = meta[1];
-    fieldName = /FIELD_NAME\s*:\s*(.+)/i.exec(m)?.[1].trim() ?? "";
-    iconicTierStatus = /ICONIC_TIER_STATUS\s*:\s*(.+)/i.exec(m)?.[1].trim() ?? "";
-    pressureTestNote = /PRESSURE_TEST_NOTE\s*:\s*(.+)/i.exec(m)?.[1].trim() ?? "";
-  }
-
-  return {
-    cardNumber,
-    smpLine,
-    whatItOwns,
-    truth,
-    whatItChallenges,
-    whatItMakesPossible,
-    whatItRequires,
-    scores,
-    fieldName,
-    iconicTierStatus,
-    pressureTestNote,
-  };
+  console.log("Propositions found: " + raw.length);
+  return raw.map((p, idx) => ({
+    cardNumber: idx + 1,
+    smpLine: p.line,
+    whatItOwns: p.owns,
+    truth: p.truth,
+    whatItChallenges: p.challenge,
+    whatItMakesPossible: "",
+    whatItRequires: "",
+    scores: p.scores,
+    fieldName: "",
+    iconicTierStatus: "",
+    pressureTestNote: "",
+  }));
 }
 
 // Strip internal blocks from any text being shown to the user.
