@@ -1063,6 +1063,41 @@ function PipelineView() {
         (stage12Loading
           ? "Composing proposition cards for review — this can take 30–60 seconds…"
           : "Awaiting output."),
+      "13":
+        (stage13Output && sanitize(stage13Output)) ??
+        (stage13Loading
+          ? "Validating brand fit — this can take 30–90 seconds…"
+          : "Awaiting output."),
+      "13B":
+        (stage13bOutput && sanitize(stage13bOutput)) ??
+        (stage13bLoading
+          ? "Checking historical territory references — this can take 30–90 seconds…"
+          : "Awaiting output."),
+      "14":
+        (stage14Output && sanitize(stage14Output)) ??
+        (stage14Loading
+          ? "Mapping the creative territory — this can take 60–120 seconds…"
+          : "Awaiting output."),
+      "14B":
+        (stage14bOutput && sanitize(stage14bOutput)) ??
+        (stage14bLoading
+          ? "Mapping channel expression — this can take 60–120 seconds…"
+          : "Awaiting output."),
+      "14C":
+        (stage14cOutput && sanitize(stage14cOutput)) ??
+        (stage14cLoading
+          ? "Defining the brand world — this can take 60–120 seconds…"
+          : "Awaiting output."),
+      "15":
+        (stage15Output && sanitize(stage15Output)) ??
+        (stage15Loading
+          ? "Running final coherence audit — this can take 30–90 seconds…"
+          : "Awaiting output."),
+      "16":
+        (stage16Output && sanitize(stage16Output)) ??
+        (stage16Loading
+          ? "Assembling the consulting output — this can take 60–120 seconds…"
+          : "Awaiting output."),
     };
   }, [
     sessionId,
@@ -1079,6 +1114,13 @@ function PipelineView() {
     stage10Output, stage10Loading,
     stage11Output, stage11Loading,
     stage12Output, stage12Loading,
+    stage13Output, stage13Loading,
+    stage13bOutput, stage13bLoading,
+    stage14Output, stage14Loading,
+    stage14bOutput, stage14bLoading,
+    stage14cOutput, stage14cLoading,
+    stage15Output, stage15Loading,
+    stage16Output, stage16Loading,
   ]);
 
 
@@ -1116,7 +1158,8 @@ function PipelineView() {
     stage1Loading || stage1bLoading || stage2Loading || stage3Loading ||
     stage4Loading || stage5Loading || stage6Loading || stage7Loading ||
     stage8Loading || stage9Loading || stage10Loading || stage11Loading ||
-    stage12Loading;
+    stage12Loading || stage13Loading || stage13bLoading || stage14Loading ||
+    stage14bLoading || stage14cLoading || stage15Loading || stage16Loading;
 
   // Compute prev/next visible stages relative to the currently-viewed stage.
   const selectedIdx = STAGES.findIndex((s) => s.id === selectedId);
