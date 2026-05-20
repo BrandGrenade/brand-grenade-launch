@@ -857,6 +857,26 @@ function PipelineView() {
     stage8Loading || stage9Loading || stage10Loading || stage11Loading ||
     stage12Loading;
 
+  // Compute prev/next visible stages relative to the currently-viewed stage.
+  const selectedIdx = STAGES.findIndex((s) => s.id === selectedId);
+  const prevStage = (() => {
+    for (let i = selectedIdx - 1; i >= 0; i--) {
+      const st = statuses[STAGES[i].id];
+      if (st === "complete" || st === "checkpoint") return STAGES[i];
+    }
+    return null;
+  })();
+  const nextStage = (() => {
+    for (let i = selectedIdx + 1; i < STAGES.length; i++) {
+      // skip conditional stages that aren't relevant
+      if (STAGES[i].conditional && statuses[STAGES[i].id] === "pending") continue;
+      return STAGES[i];
+    }
+    return null;
+  })();
+  const nextStageStatus: StageStatus | null = nextStage ? statuses[nextStage.id] : null;
+  const pipelineComplete = mainStages.every((s) => statuses[s.id] === "complete");
+
   // Dynamic document title: "[Brand] — Stage X — Brand Grenade"
   useEffect(() => {
     document.title = `${brandLabel} — Stage ${Math.max(1, currentMainNumber)} — Brand Grenade`;
