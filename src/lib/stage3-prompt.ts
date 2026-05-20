@@ -1,130 +1,27 @@
-// Stage 3 — Strategic Constraint Generator (Constraint Matrix)
-// Condensed-but-faithful encoding of the supplied V1 production prompt. The
-// model is given the architectural intent, mandatory boundary conditions,
-// generation methodology, output structure, and self-audit.
+export const STAGE_3_SYSTEM_PROMPT = `You are a senior global strategy director. Your task is to generate between 3 and 6 distinct strategic frameworks — each defining a different strategic approach the brand could take.
 
-export const STAGE_3_SYSTEM_PROMPT = `CRITICAL OUTPUT INSTRUCTION:
-You are presenting strategic frameworks to a senior brand team. Write each framework as a compelling strategic narrative — not as a data structure with field labels.
+Each framework defines the rules and boundaries of a different strategic universe. They must be genuinely different from each other — different contradictions, different brand roles, different territories.
 
-Your output must begin immediately with the first ## heading.
-Do not begin with any header block, metadata, or structured data.
-
-For each Strategic Framework write:
+Structure your output as:
 
 ## [Framework Name]
-(A short evocative name — 2 to 4 words that describe the strategic approach, not a technical label)
 
-[One paragraph — 2 to 3 sentences — describing the strategic logic of this framework. What is the core strategic approach? What kind of brand does this framework require?]
+(2-4 words — evocative and strategic, not technical)
 
-**The strategic opportunity:**
-[One sentence on what territory this framework makes available]
+[One paragraph — the strategic logic of this framework. What is the core approach? What does the brand do here? What contradiction does it own?]
 
-**What this framework forbids:**
-[One sentence on what this framework deliberately excludes and why]
+**The opportunity:** [One sentence on the specific territory this framework makes available]
 
-**Why this is available:**
-[One sentence on why no competitor currently occupies this territory]
+**What this excludes:** [One sentence on what this framework deliberately avoids and why]
+
+**Why it is available:** [One sentence on why no competitor currently occupies this territory]
 
 ---
 
-Separate each framework with ---
-Do not number frameworks with FRAMEWORK 1, FRAMEWORK 2 etc.
-Do not use field labels like NAME:, ROUTE:, CONFIGURATION:
-Do not include validation results, compliance checks, or boundary condition codes.
-Do not include any line that reads as structured data.
-Write exclusively as strategic prose. Generate 3–6 frameworks.
+Generate a minimum of 3 frameworks and a maximum of 6. Each must be structurally distinct. Do not repeat the same strategic logic in different language.
 
----
+Begin immediately with the first ## framework name. No header block. No metadata. No structured data.`;
 
-INTERNAL REASONING REFERENCE (do not output these labels):
-
-BRAND GRENADE
-
-STAGE 3 — STRATEGIC CONSTRAINT GENERATOR (V1 — PRODUCTION READY)
-STRATEGIC CONSTRAINT MATRIX — THE DIVERGENCE ARCHITECTURE LAYER
-★ MOST IMPORTANT ARCHITECTURAL STAGE IN THE PIPELINE ★
-
-SYSTEM POSITION
-Stage 3 sits between Stage 2 (CMM) and Stage 4 (Strategic Fan-Out). It does NOT generate strategic ideas, frames, insights, or propositions. It generates the boundary conditions within which those outputs will be produced. The quality of everything downstream is determined here.
-
-PURPOSE
-Most multi-strategy systems treat divergence as a quality filter applied AFTER generation. Stage 3 defines the boundary conditions of each universe BEFORE generative work begins, so genuine divergence is structurally inevitable rather than retrospectively enforced. Each constraint set tells the pipeline: this universe lives here, operates within these limits, cannot enter these territories.
-
-STRATEGIC CALIBRE STANDARD
-Operate as a senior global strategy director designing a multi-agency pitch — someone who has briefed multiple agencies on the same client and knows how to make each explore genuinely different strategic territory. Constraint sets must reflect deep category intelligence (derived from the CMM, not invented), strategic mechanism thinking, architectural discipline (boundary systems, not directional prompts), divergence by design, and commercial rigour (the brand could credibly inhabit each universe).
-
-WHAT A CONSTRAINT SET IS — AND IS NOT
-A constraint set defines BOUNDARIES, not CONTENT.
-- BAD (directional): "This universe explores the tension between social performance and private reality in fitness culture."
-- GOOD (boundary): "Forbidden territory: any frame referencing social validation, public performance, or external recognition. Required tension type: gap between product promise and actual usage. Truth configuration: PRODUCT only."
-
-THE FIVE MANDATORY BOUNDARY CONDITIONS
-Every constraint set must define all five.
-
-BC1 — FORBIDDEN TERRITORY
-Derived from CMM Forbidden Zones / Competitor Patterns. Format:
-"Forbidden territory: [precise description]. CMM reference: [Forbidden Zone name]. Rejection test: [one-sentence test]."
-
-BC2 — REQUIRED TENSION TYPE
-Select ONE primary type per constraint set from: Behavioural Contradiction, Identity Conflict, Category Betrayal, Cultural Shift, Product Paradox, Permission Tension, Aspiration Reversal, Institutional Contradiction.
-RULE: No two constraint sets in the same matrix may share the same Required Tension Type. (Primary divergence enforcement mechanism #1.)
-
-BC3 — TRUTH CONFIGURATION LOCK
-Choose from: HUMAN only, PRODUCT only, CULTURAL only, HUMAN + PRODUCT, HUMAN + CULTURAL, PRODUCT + CULTURAL, HUMAN + PRODUCT + CULTURAL (ICONIC TIER).
-RULE: No two constraint sets may share the same truth configuration. (Primary divergence enforcement mechanism #2.) If HUMAN + PRODUCT + CULTURAL emerges naturally, flag: "ICONIC TIER CONFIGURATION — flag for priority treatment in Stage 4."
-
-BC4 — BEHAVIOURAL DIRECTION
-A specific, observable, category-grounded human behaviour — not a demographic / attitudinal description. 2–4 sentences. Must not duplicate the behavioural direction of any other set.
-
-BC5 — CATEGORY POSITION AVOIDANCE RULE
-Reference 1–3 specific competitor positions from the CMM Competitor Patterns. Name the mechanism (not just the competitor) and state why this avoidance is specific to this set.
-Format: "Avoid: the [mechanism name] mechanism used by [competitor(s)], specifically [aspect]. This constraint set must achieve [brand objective] without [thing to avoid]."
-
-COMPATIBLE TENSION-TYPE / TRUTH-CONFIGURATION COMBINATIONS
-- Behavioural Contradiction → HUMAN only / HUMAN + PRODUCT / HUMAN + CULTURAL
-- Identity Conflict → HUMAN only / HUMAN + CULTURAL
-- Category Betrayal → PRODUCT only / PRODUCT + CULTURAL / H+P+C
-- Cultural Shift → CULTURAL only / HUMAN + CULTURAL / PRODUCT + CULTURAL
-- Product Paradox → PRODUCT only / HUMAN + PRODUCT
-- Permission Tension → HUMAN only / HUMAN + CULTURAL
-- Aspiration Reversal → HUMAN only / HUMAN + PRODUCT / HUMAN + CULTURAL
-- Institutional Contradiction → CULTURAL only / PRODUCT + CULTURAL / H+P+C
-
-FOUR-STEP GENERATION METHODOLOGY
-STEP 1 — CMM Synthesis (internal): map all Forbidden Zones, Whitespace Zones, Competitor Patterns, Category Dominant Logic, and Poison Words. Identify the constraint generation space.
-STEP 2 — Tension Type Assignment (internal): assign tension types BEFORE writing any boundary conditions. Ensure at least one set grounded in product reality, one in human psychology, one in cultural/behavioural observation. Map to compatible truth configurations.
-STEP 3 — Constraint Set Drafting: draft ALL sets before finalising any. Complete BC1–BC5 in order for each.
-STEP 4 — Constraint Quality Gate (mandatory): run all four tests; all must pass.
-  TEST 1 Non-Overlap — no two sets share root tension, emotional register, or strategic mechanism.
-  TEST 2 Coverage — matrix collectively covers the CMM Whitespace Map (≥1 set per validated whitespace zone).
-  TEST 3 Viability — brief brand could credibly inhabit each universe.
-  TEST 4 Independence — no set's forbidden territory prohibits the tension type required by another set.
-
-Generate 3–6 constraint sets.
-
-- BRIEF BRAND: [...]
-- CATEGORY: [...]
-- NUMBER OF CONSTRAINT SETS: [3–6]
-- CMM VERSION REFERENCED: [1.0 / 1.1]
-- TENSION TYPES ASSIGNED: [list — no duplicates]
-- TRUTH CONFIGURATIONS ASSIGNED: [list — no duplicates]
-- CONSTRAINT QUALITY GATE: PASSED — all four tests confirmed
-- ICONIC TIER FLAGS: [none / Constraint Set [n] flagged]
-
-## CONSTRAINT SET [n]
-- CONSTRAINT SET NAME: [2–4 words]
-- ICONIC TIER: YES / NO
-- BC1 — FORBIDDEN TERRITORY: [...]
-- BC2 — REQUIRED TENSION TYPE: [...]
-- BC3 — TRUTH CONFIGURATION LOCK: [...]
-- BC4 — BEHAVIOURAL DIRECTION: [...]
-- BC5 — CATEGORY POSITION AVOIDANCE RULE: [...]
-- DIVERGENCE SUMMARY: [one sentence on what makes this set structurally different]
-- STAGE 4 INSTRUCTION: [one sentence telling the frame generator what kind of universe these constraints define — without specifying content]
-
-(Repeat for each constraint set.)
-
-- READY TO PASS TO STAGE 4: YES / NO`;
 export const STAGE_3_INTELLIGENCE = STAGE_3_SYSTEM_PROMPT;
 
 export function buildStage3UserMessage(args: {
@@ -134,17 +31,14 @@ export function buildStage3UserMessage(args: {
   sanitisedBrief: string;
   cmm: string;
 }): string {
-  return `FROM STAGE 1 (SANITISED BRIEF) and STAGE 2 (CMM):
+  return `Brand: ${args.brandName}
+Category: ${args.category}
 
-BRAND: ${args.brandName}
-CATEGORY: ${args.category}
-STRATEGIC MODE: ${args.strategicMode}
-
-SANITISED STRATEGIC BRIEF:
+Strategic brief:
 ${args.sanitisedBrief}
 
-CATEGORY MEMORY OBJECT (CMM):
+Category intelligence summary:
 ${args.cmm}
 
-Generate the Strategic Constraint Matrix for this brief, following the Output Structure exactly. Run the Constraint Quality Gate internally before delivering. Output 3–6 constraint sets.`;
+Generate 3 to 6 Strategic Frameworks.`;
 }

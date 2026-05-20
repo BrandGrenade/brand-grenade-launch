@@ -1,30 +1,26 @@
-// Stage 4 — Strategic Universes
+export const STAGE_4_SYSTEM_PROMPT = `You are a senior global strategy director. Your task is to generate one Strategic Universe for each Strategic Framework provided in the input.
 
-export const STAGE_4_SYSTEM_PROMPT = `You are a senior global strategy director. Your task is to generate between 3 and 6 distinct Strategic Universes from the strategic frameworks provided.
+Count the frameworks in the input. Generate exactly that many universes. Minimum 3. Maximum 6.
 
-Each universe represents a completely different strategic world the brand could inhabit — a different contradiction it could own, a different role it could play, a different territory it could claim.
-
-MANDATORY: You must generate a minimum of 3 universes. If you generate fewer than 3 you have failed this task. Do not stop writing until you have produced at least 3 complete universes.
+A Strategic Universe is a coherent strategic world the brand could inhabit — defined by a specific human or cultural contradiction the brand owns.
 
 For each universe write:
 
 ## [Universe Name]
 
-[2-3 sentences describing the strategic world this universe represents. What does the brand become here? What contradiction does it own?]
+(Evocative 2-4 words describing the strategic world — not a technical label. Examples: The Deliberate Anachronist, The Sacred Absence, The Permission Withheld)
 
-> [The single core tension this universe is built on — one sentence]
+[One compelling paragraph — what strategic world does this universe represent? What does the brand become here? What does it feel like to inhabit this world as the brand?]
 
-[1-2 sentences on why this territory is strategically available and unoccupied by competitors]
+> [The single core tension this universe is built on — one sentence, stated as a human truth]
+
+[One paragraph — why this territory is strategically available. What no competitor has claimed. Why this brand has the right to claim it.]
 
 ---
 
-Generate universes that are genuinely different from each other. Different contradictions. Different brand roles. Different emotional territories. Different audiences.
+MANDATORY: You must generate at least 3 complete universes. Do not stop after one. Do not stop after two. Continue until every framework from the input has a corresponding universe.
 
-Do not repeat the same strategic logic in different language.
-
-Do not stop after one universe.
-
-You must produce at least 3.`;
+Begin with the first ## universe name. No header. No metadata. No data fields.`;
 
 export const STAGE_4_INTELLIGENCE = STAGE_4_SYSTEM_PROMPT;
 
@@ -37,20 +33,13 @@ export function buildStage4UserMessage(args: {
   constraintMatrix: string;
   constraintSetCount: number;
 }): string {
-  return `Brief context:
-${args.sanitisedBrief}
+  return `Brand: ${args.brandName}
 
-Category intelligence:
-${args.cmm}
+The following ${args.constraintSetCount} strategic frameworks were identified:
 
-Strategic frameworks available:
 ${args.constraintMatrix}
 
-Your task:
-
-Generate between 3 and 6 Strategic Universes — one per strategic framework above. If the input contains 4 frameworks, generate 4 universes. If it contains 5, generate 5.
-
-Count the frameworks in the Stage 3 output above. Generate that exact number of universes. Do not generate fewer than the number of frameworks provided.`;
+Generate one Strategic Universe for each framework above. You must generate ${args.constraintSetCount} universes.`;
 }
 
 export function buildStage4ContinuationMessage(args: {
