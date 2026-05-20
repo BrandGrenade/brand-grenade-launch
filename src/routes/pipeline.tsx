@@ -957,9 +957,13 @@ function PipelineView() {
               setSelectedId("01B");
               return;
             }
-            // Checkpoint C (Stage 12): show rationale capture before advancing.
-            if (stageId === "12" && rationaleForId !== "12") {
-              setRationaleForId("12");
+            // Checkpoint B (Stage 8) → persist confirmation then advance to Stage 9.
+            if (stageId === "08") {
+              if (sessionId) {
+                confirmCheckpointBFn({ data: { sessionId } }).catch(() => {});
+              }
+              setStatuses((prev) => ({ ...prev, "08": "complete", "09": "running" }));
+              setSelectedId("09");
               return;
             }
             setRationaleForId(null);
@@ -975,7 +979,53 @@ function PipelineView() {
               return next;
             });
           }}
+          customCheckpoint={
+            selectedId === "12" && selectedStatus === "checkpoint" && rationaleForId !== "12" ? (
+              <SMPSelection
+                stage12Output={stage12Output ?? ""}
+                onSelect={async (card) => {
+                  if (!sessionId) return;
+                  setSelectedSMP(card);
+                  try {
+                    await saveSelectedSMPFn({
+                      data: {
+                        sessionId,
+                        smpLine: card.smpLine || `Proposition ${card.cardNumber}`,
+                        fieldName: card.fieldName || `Field ${card.cardNumber}`,
+                      },
+                    });
+                  } catch (err) {
+                    setStage12Error(err instanceof Error ? err.message : "Failed to save selection");
+                    return;
+                  }
+                  setRationaleForId("12");
+                }}
+              />
+            ) : selectedId === "12" && rationaleForId === "12" ? (
+              <SelectionRationale
+                selectedSMP={selectedSMP?.smpLine ?? session?.selected_smp ?? ""}
+                submitting={savingRationale}
+                onConfirm={async (values) => {
+                  if (!sessionId) return;
+                  setSavingRationale(true);
+                  try {
+                    await saveSelectionRationaleFn({
+                      data: { sessionId, rationale: values },
+                    });
+                    setRationaleForId(null);
+                    setStatuses((prev) => ({ ...prev, "12": "complete", "13": "running" }));
+                    setSelectedId("13");
+                  } catch (err) {
+                    setStage12Error(err instanceof Error ? err.message : "Failed to save rationale");
+                  } finally {
+                    setSavingRationale(false);
+                  }
+                }}
+              />
+            ) : null
+          }
         />
+
 
       </div>
     </div>
