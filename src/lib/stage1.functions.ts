@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { callClaude } from "./claude.server";
+import { streamClaude } from "./claude.server";
 import { STAGE_1_SYSTEM_PROMPT, buildStage1UserMessage } from "./stage1-prompt";
 
 const CreateSessionInput = z.object({
@@ -36,14 +36,7 @@ const RunStage1Input = z.object({
   sessionId: z.string().uuid(),
 });
 
-interface Stage1Result {
-  output: string;
-  tensionScore: number | null;
-  stage1bRequired: boolean;
-}
-
 function extractTensionScore(text: string): number | null {
-  // Looks for "Strategic Tension Score: N/10" (case-insensitive, tolerates **).
   const m = text.match(/Strategic\s+Tension\s+Score\s*[:\-]?\s*\**\s*(\d{1,2})\s*\/\s*10/i);
   if (!m) return null;
   const n = parseInt(m[1], 10);
@@ -52,8 +45,7 @@ function extractTensionScore(text: string): number | null {
 
 export const runStage1 = createServerFn({ method: "POST" })
   .inputValidator((input) => RunStage1Input.parse(input))
-  .handler(async ({ data }): Promise<Stage1Result> => {
-    // Load session
+  .handler(async function* ({ data }) {
     const { data: session, error: loadErr } = await supabaseAdmin
       .from("sessions")
       .select("brand_name, category, strategic_mode, brief_text, stage_1_output")
@@ -61,14 +53,16 @@ export const runStage1 = createServerFn({ method: "POST" })
       .single();
     if (loadErr || !session) throw new Error(`Session not found: ${loadErr?.message ?? "no row"}`);
 
-    // Idempotent: if already complete, return cached result
     if (session.stage_1_output) {
       const score = extractTensionScore(session.stage_1_output);
-      return {
+      yield { kind: "delta" as const, text: session.stage_1_output };
+      yield {
+        kind: "done" as const,
         output: session.stage_1_output,
         tensionScore: score,
         stage1bRequired: score !== null && score < 7,
       };
+      return;
     }
 
     const userMessage = buildStage1UserMessage({
@@ -78,18 +72,21 @@ export const runStage1 = createServerFn({ method: "POST" })
       briefText: session.brief_text,
     });
 
-    let output: string;
+    let output = "";
     try {
-      output = await callClaude({
+      for await (const delta of streamClaude({
         systemPrompt: STAGE_1_SYSTEM_PROMPT,
         userMessage,
-        maxTokens: 2500,
+        maxTokens: 3000,
         temperature: 0.7,
         sessionId: data.sessionId,
         stageLabel: "Stage 1",
-      stageNumber: "1",
-      stageName: "Brief Analysis",
-      });
+        stageNumber: "1",
+        stageName: "Brief Analysis",
+      })) {
+        output += delta;
+        yield { kind: "delta" as const, text: delta };
+      }
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Stage 1 failed";
       await supabaseAdmin
@@ -113,5 +110,5 @@ export const runStage1 = createServerFn({ method: "POST" })
       .eq("id", data.sessionId);
     if (updateErr) throw new Error(`Failed to save Stage 1 output: ${updateErr.message}`);
 
-    return { output, tensionScore, stage1bRequired };
+    yield { kind: "done" as const, output, tensionScore, stage1bRequired };
   });
