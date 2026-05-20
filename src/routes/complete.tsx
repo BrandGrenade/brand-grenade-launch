@@ -81,7 +81,12 @@ function CompletePage() {
     };
   }, [sessionId]);
 
+  useEffect(() => {
+    document.title = `${brand} Complete — Brand Grenade`;
+  }, [brand]);
+
   const smpPreview = SMP.split(" ").slice(0, 4).join(" ") + "…";
+
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
