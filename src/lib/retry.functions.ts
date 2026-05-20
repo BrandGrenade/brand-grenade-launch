@@ -26,28 +26,27 @@ export const resetStage = createServerFn({ method: "POST" })
     const id = data.stageId as StageId;
     // Inline switch keeps the column literal-typed for supabase-js.
     const base = { status: "running" as const, stage_status: `running:${id}` };
-    const sb = supabaseAdmin.from("sessions");
     switch (id) {
-      case "1":   await sb.update({ status: base.status, stage_status: base.stage_status, stage_1_error: null }).eq("id", data.sessionId); break;
-      case "1b":  await sb.update({ status: base.status, stage_status: base.stage_status, stage_1b_error: null }).eq("id", data.sessionId); break;
-      case "2":   await sb.update({ status: base.status, stage_status: base.stage_status, stage_2_error: null }).eq("id", data.sessionId); break;
-      case "3":   await sb.update({ status: base.status, stage_status: base.stage_status, stage_3_error: null }).eq("id", data.sessionId); break;
-      case "4":   await sb.update({ status: base.status, stage_status: base.stage_status, stage_4_error: null }).eq("id", data.sessionId); break;
-      case "5":   await sb.update({ status: base.status, stage_status: base.stage_status, stage_5_error: null }).eq("id", data.sessionId); break;
-      case "6":   await sb.update({ status: base.status, stage_status: base.stage_status, stage_6_error: null }).eq("id", data.sessionId); break;
-      case "7":   await sb.update({ status: base.status, stage_status: base.stage_status, stage_7_error: null }).eq("id", data.sessionId); break;
-      case "8":   await sb.update({ status: base.status, stage_status: base.stage_status, stage_8_error: null }).eq("id", data.sessionId); break;
-      case "9":   await sb.update({ status: base.status, stage_status: base.stage_status, stage_9_error: null }).eq("id", data.sessionId); break;
-      case "10":  await sb.update({ status: base.status, stage_status: base.stage_status, stage_10_error: null }).eq("id", data.sessionId); break;
-      case "11":  await sb.update({ status: base.status, stage_status: base.stage_status, stage_11_error: null }).eq("id", data.sessionId); break;
-      case "12":  await sb.update({ status: base.status, stage_status: base.stage_status, stage_12_error: null }).eq("id", data.sessionId); break;
-      case "13":  await sb.update({ status: base.status, stage_status: base.stage_status, stage_13_error: null }).eq("id", data.sessionId); break;
-      case "13b": await sb.update({ status: base.status, stage_status: base.stage_status, stage_13b_error: null }).eq("id", data.sessionId); break;
-      case "14":  await sb.update({ status: base.status, stage_status: base.stage_status, stage_14_error: null }).eq("id", data.sessionId); break;
-      case "14b": await sb.update({ status: base.status, stage_status: base.stage_status, stage_14b_error: null }).eq("id", data.sessionId); break;
-      case "14c": await sb.update({ status: base.status, stage_status: base.stage_status, stage_14c_error: null }).eq("id", data.sessionId); break;
-      case "15":  await sb.update({ status: base.status, stage_status: base.stage_status, stage_15_error: null }).eq("id", data.sessionId); break;
-      case "16":  await sb.update({ status: base.status, stage_status: base.stage_status, stage_16_error: null }).eq("id", data.sessionId); break;
+      case "1":   await supabaseAdmin.from("sessions").update({ status: base.status, stage_status: base.stage_status, stage_1_error: null }).eq("id", data.sessionId); break;
+      case "1b":  await supabaseAdmin.from("sessions").update({ status: base.status, stage_status: base.stage_status, stage_1b_error: null }).eq("id", data.sessionId); break;
+      case "2":   await supabaseAdmin.from("sessions").update({ status: base.status, stage_status: base.stage_status, stage_2_error: null }).eq("id", data.sessionId); break;
+      case "3":   await supabaseAdmin.from("sessions").update({ status: base.status, stage_status: base.stage_status, stage_3_error: null }).eq("id", data.sessionId); break;
+      case "4":   await supabaseAdmin.from("sessions").update({ status: base.status, stage_status: base.stage_status, stage_4_error: null }).eq("id", data.sessionId); break;
+      case "5":   await supabaseAdmin.from("sessions").update({ status: base.status, stage_status: base.stage_status, stage_5_error: null }).eq("id", data.sessionId); break;
+      case "6":   await supabaseAdmin.from("sessions").update({ status: base.status, stage_status: base.stage_status, stage_6_error: null }).eq("id", data.sessionId); break;
+      case "7":   await supabaseAdmin.from("sessions").update({ status: base.status, stage_status: base.stage_status, stage_7_error: null }).eq("id", data.sessionId); break;
+      case "8":   await supabaseAdmin.from("sessions").update({ status: base.status, stage_status: base.stage_status, stage_8_error: null }).eq("id", data.sessionId); break;
+      case "9":   await supabaseAdmin.from("sessions").update({ status: base.status, stage_status: base.stage_status, stage_9_error: null }).eq("id", data.sessionId); break;
+      case "10":  await supabaseAdmin.from("sessions").update({ status: base.status, stage_status: base.stage_status, stage_10_error: null }).eq("id", data.sessionId); break;
+      case "11":  await supabaseAdmin.from("sessions").update({ status: base.status, stage_status: base.stage_status, stage_11_error: null }).eq("id", data.sessionId); break;
+      case "12":  await supabaseAdmin.from("sessions").update({ status: base.status, stage_status: base.stage_status, stage_12_error: null }).eq("id", data.sessionId); break;
+      case "13":  await supabaseAdmin.from("sessions").update({ status: base.status, stage_status: base.stage_status, stage_13_error: null }).eq("id", data.sessionId); break;
+      case "13b": await supabaseAdmin.from("sessions").update({ status: base.status, stage_status: base.stage_status, stage_13b_error: null }).eq("id", data.sessionId); break;
+      case "14":  await supabaseAdmin.from("sessions").update({ status: base.status, stage_status: base.stage_status, stage_14_error: null }).eq("id", data.sessionId); break;
+      case "14b": await supabaseAdmin.from("sessions").update({ status: base.status, stage_status: base.stage_status, stage_14b_error: null }).eq("id", data.sessionId); break;
+      case "14c": await supabaseAdmin.from("sessions").update({ status: base.status, stage_status: base.stage_status, stage_14c_error: null }).eq("id", data.sessionId); break;
+      case "15":  await supabaseAdmin.from("sessions").update({ status: base.status, stage_status: base.stage_status, stage_15_error: null }).eq("id", data.sessionId); break;
+      case "16":  await supabaseAdmin.from("sessions").update({ status: base.status, stage_status: base.stage_status, stage_16_error: null }).eq("id", data.sessionId); break;
     }
     return { ok: true };
   });
