@@ -545,6 +545,8 @@ function PipelineView() {
               ? stage3Error
               : selected.id === "04"
               ? stage4Error
+              : selected.id === "05"
+              ? stage5Error
               : null
           }
           tensionScore={selected.id === "01" ? session?.stage_1_tension_score ?? null : null}
@@ -562,6 +564,10 @@ function PipelineView() {
               setStage4Error(null);
               setStage4Output(null);
               setStatuses((p) => ({ ...p, "04": "running" }));
+            } else if (selected.id === "05") {
+              setStage5Error(null);
+              setStage5Output(null);
+              setStatuses((p) => ({ ...p, "05": "running" }));
             } else {
               setRetryNonce((n) => n + 1);
             }
@@ -979,7 +985,7 @@ function RightPanel({
   return (
     <section className="relative flex min-w-0 flex-1 flex-col bg-background">
       <div className="flex-1 overflow-y-auto px-6 py-10 sm:px-12 sm:py-10">
-        {isError && (stage.id === "01" || stage.id === "02" || stage.id === "03" || stage.id === "04") ? (
+        {isError && (stage.id === "01" || stage.id === "02" || stage.id === "03" || stage.id === "04" || stage.id === "05") ? (
           <div style={{ paddingBottom: 80 }}>
             <header>
               <span className="text-label text-primary">
