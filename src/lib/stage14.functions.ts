@@ -1,0 +1,52 @@
+import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { callClaude } from "./claude.server";
+import { STAGE_14_SYSTEM_PROMPT, buildStage14UserMessage } from "./stage14-prompt";
+
+const Input = z.object({ sessionId: z.string().uuid() });
+
+export const runStage14 = createServerFn({ method: "POST" })
+  .inputValidator((i) => Input.parse(i))
+  .handler(async ({ data }): Promise<{ output: string }> => {
+    const { data: session, error } = await supabaseAdmin
+      .from("sessions")
+      .select(
+        "brand_name, category, selected_smp, stage_2_output, stage_12_output, stage_13_output, stage_13b_output, stage_14_output"
+      )
+      .eq("id", data.sessionId)
+      .single();
+    if (error || !session) throw new Error(`Session not found: ${error?.message ?? "no row"}`);
+    if (!session.stage_13b_output) throw new Error("Stage 13B output missing — cannot run Stage 14");
+    if (session.stage_14_output) return { output: session.stage_14_output };
+
+    await supabaseAdmin
+      .from("sessions")
+      .update({ current_stage: 14, status: "running", stage_14_error: null })
+      .eq("id", data.sessionId);
+
+    try {
+      const output = await callClaude({
+        systemPrompt: STAGE_14_SYSTEM_PROMPT,
+        userMessage: buildStage14UserMessage({
+          brandName: session.brand_name,
+          category: session.category,
+          selectedSMP: session.selected_smp ?? "",
+          stage12Output: session.stage_12_output ?? "",
+          stage13Output: session.stage_13_output ?? "",
+          stage13bOutput: session.stage_13b_output,
+          cmm: session.stage_2_output ?? "",
+        }),
+      });
+      const { error: ue } = await supabaseAdmin
+        .from("sessions")
+        .update({ stage_14_output: output, stage_14_error: null })
+        .eq("id", data.sessionId);
+      if (ue) throw new Error(`Failed to save Stage 14 output: ${ue.message}`);
+      return { output };
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Stage 14 failed";
+      await supabaseAdmin.from("sessions").update({ stage_14_error: msg }).eq("id", data.sessionId);
+      throw new Error(msg);
+    }
+  });
