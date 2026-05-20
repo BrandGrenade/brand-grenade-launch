@@ -54,11 +54,17 @@ export function Checkpoint({
   reviewContent,
   showLowScoreAlert = false,
   onConfirm,
+  onResubmit,
+  onEscalate,
+  resubmitting = false,
 }: {
   letter: CheckpointLetter;
   reviewContent: React.ReactNode;
   showLowScoreAlert?: boolean;
-  onConfirm?: () => void;
+  onConfirm?: (notes: string[]) => void;
+  onResubmit?: (feedback: string) => void | Promise<void>;
+  onEscalate?: (reason: string) => void | Promise<void>;
+  resubmitting?: boolean;
 }) {
   const copy = COPY[letter];
   const [action, setAction] = useState<Action>(null);
