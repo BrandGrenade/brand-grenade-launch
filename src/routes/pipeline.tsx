@@ -668,6 +668,10 @@ function PipelineView() {
               setStage6Error(null);
               setStage6Output(null);
               setStatuses((p) => ({ ...p, "06": "running" }));
+            } else if (selected.id === "07") {
+              setStage7Error(null);
+              setStage7Output(null);
+              setStatuses((p) => ({ ...p, "07": "running" }));
             } else {
               setRetryNonce((n) => n + 1);
             }
