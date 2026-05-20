@@ -237,6 +237,7 @@ export function sanitizeStageOutput(raw: string): string {
     if (LINE_STRIP_PATTERNS.some((p) => p.test(line))) continue;
     if (NUCLEAR_LINE_PATTERNS.some((p) => p.test(line))) continue;
     if (LABEL_ONLY_LINE.test(line)) continue;
+    if (isShortBulletData(line)) continue;
     kept.push(line);
   }
   text = kept.join("\n");
