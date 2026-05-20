@@ -1,0 +1,1 @@
+ALTER TABLE public.sessions ADD COLUMN IF NOT EXISTS stage_6_output text, ADD COLUMN IF NOT EXISTS stage_6_error text;

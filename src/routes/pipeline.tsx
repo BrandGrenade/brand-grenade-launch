@@ -13,6 +13,7 @@ import { runStage2 } from "@/lib/stage2.functions";
 import { runStage3 } from "@/lib/stage3.functions";
 import { runStage4 } from "@/lib/stage4.functions";
 import { runStage5 } from "@/lib/stage5.functions";
+import { runStage6 } from "@/lib/stage6.functions";
 
 const pipelineSearchSchema = z.object({
   session: z.string().uuid().optional(),
@@ -157,6 +158,8 @@ interface SessionData {
   stage_4_error: string | null;
   stage_5_output: string | null;
   stage_5_error: string | null;
+  stage_6_output: string | null;
+  stage_6_error: string | null;
 }
 
 function PipelineView() {
@@ -168,6 +171,7 @@ function PipelineView() {
   const runStage3Fn = useServerFn(runStage3);
   const runStage4Fn = useServerFn(runStage4);
   const runStage5Fn = useServerFn(runStage5);
+  const runStage6Fn = useServerFn(runStage6);
 
   const [session, setSession] = useState<SessionData | null>(null);
   const [stage1Output, setStage1Output] = useState<string | null>(null);
@@ -181,12 +185,15 @@ function PipelineView() {
   const [stage4Error, setStage4Error] = useState<string | null>(null);
   const [stage5Output, setStage5Output] = useState<string | null>(null);
   const [stage5Error, setStage5Error] = useState<string | null>(null);
+  const [stage6Output, setStage6Output] = useState<string | null>(null);
+  const [stage6Error, setStage6Error] = useState<string | null>(null);
   const [stage1Loading, setStage1Loading] = useState(false);
   const [stage1bLoading, setStage1bLoading] = useState(false);
   const [stage2Loading, setStage2Loading] = useState(false);
   const [stage3Loading, setStage3Loading] = useState(false);
   const [stage4Loading, setStage4Loading] = useState(false);
   const [stage5Loading, setStage5Loading] = useState(false);
+  const [stage6Loading, setStage6Loading] = useState(false);
   const [resubmitting, setResubmitting] = useState(false);
   const [retryNonce, setRetryNonce] = useState(0);
 
@@ -223,7 +230,7 @@ function PipelineView() {
     supabase
       .from("sessions")
       .select(
-        "id, brand_name, category, strategic_mode, stage_1_output, stage_1_tension_score, stage_1b_required, stage_1b_output, stage_1_error, stage_2_output, stage_2_error, stage_3_output, stage_3_error, stage_4_output, stage_4_error, stage_5_output, stage_5_error"
+        "id, brand_name, category, strategic_mode, stage_1_output, stage_1_tension_score, stage_1b_required, stage_1b_output, stage_1_error, stage_2_output, stage_2_error, stage_3_output, stage_3_error, stage_4_output, stage_4_error, stage_5_output, stage_5_error, stage_6_output, stage_6_error"
       )
       .eq("id", sessionId)
       .single()
@@ -251,6 +258,10 @@ function PipelineView() {
         if (data.stage_5_output) {
           setStage5Output(data.stage_5_output);
           setStatuses((p) => ({ ...p, "05": "complete" }));
+        }
+        if (data.stage_6_output) {
+          setStage6Output(data.stage_6_output);
+          setStatuses((p) => ({ ...p, "06": "complete" }));
         }
       });
     return () => {
@@ -426,7 +437,8 @@ function PipelineView() {
         if (cancelled) return;
         setStage5Output(result.output);
         setStage5Loading(false);
-        setStatuses((p) => ({ ...p, "05": "complete" }));
+        setStatuses((p) => ({ ...p, "05": "complete", "06": "running" }));
+        setSelectedId("06");
       })
       .catch((err: unknown) => {
         if (cancelled) return;
@@ -439,6 +451,33 @@ function PipelineView() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId, session?.id, statuses["05"], stage5Output]);
+
+  // Trigger Stage 6 when its status flips to "running".
+  useEffect(() => {
+    if (!sessionId || !session) return;
+    if (statuses["06"] !== "running") return;
+    if (stage6Output) return;
+    let cancelled = false;
+    setStage6Loading(true);
+    setStage6Error(null);
+    runStage6Fn({ data: { sessionId } })
+      .then((result) => {
+        if (cancelled) return;
+        setStage6Output(result.output);
+        setStage6Loading(false);
+        setStatuses((p) => ({ ...p, "06": "complete" }));
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        setStage6Loading(false);
+        setStage6Error(err instanceof Error ? err.message : "Stage 6 failed");
+        setStatuses((p) => ({ ...p, "06": "error" }));
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionId, session?.id, statuses["06"], stage6Output]);
 
   // Per-stage output: use live Stage 1 / 1B / 2 / 3 output, demo stubs for others.
   const stageOutputs = useMemo<Record<string, string>>(() => {
@@ -475,6 +514,11 @@ function PipelineView() {
         (stage5Loading
           ? "Generating per-frame insight sets with Claude — this can take 60–120 seconds…"
           : "Awaiting Stage 5 output."),
+      "06":
+        stage6Output ??
+        (stage6Loading
+          ? "Filtering insights with the Calibrated Insight Intelligence Gate — this can take 60–120 seconds…"
+          : "Awaiting Stage 6 output."),
     };
   }, [
     sessionId,
@@ -490,6 +534,8 @@ function PipelineView() {
     stage4Loading,
     stage5Output,
     stage5Loading,
+    stage6Output,
+    stage6Loading,
   ]);
 
   // Progress — count main (non-conditional) stages.
@@ -547,6 +593,8 @@ function PipelineView() {
               ? stage4Error
               : selected.id === "05"
               ? stage5Error
+              : selected.id === "06"
+              ? stage6Error
               : null
           }
           tensionScore={selected.id === "01" ? session?.stage_1_tension_score ?? null : null}
@@ -568,6 +616,10 @@ function PipelineView() {
               setStage5Error(null);
               setStage5Output(null);
               setStatuses((p) => ({ ...p, "05": "running" }));
+            } else if (selected.id === "06") {
+              setStage6Error(null);
+              setStage6Output(null);
+              setStatuses((p) => ({ ...p, "06": "running" }));
             } else {
               setRetryNonce((n) => n + 1);
             }
