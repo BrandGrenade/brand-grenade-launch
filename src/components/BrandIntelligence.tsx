@@ -66,15 +66,15 @@ export function BrandIntelligence({ onSubmit, submitting = false }: Props) {
     <div>
       <header>
         <span className="text-label text-primary">
-          STAGE 13 — BRAND INTELLIGENCE REQUIRED
+          BRAND INTELLIGENCE REQUIRED
         </span>
         <h1 className="text-h2 mt-3 text-text-primary">
           Supply brand intelligence.
         </h1>
         <p className="text-body mt-3 text-text-secondary">
           Brand Fit Validation cannot be automated. The following information
-          must come from you — not from the pipeline. The quality of this input
-          determines the accuracy of the brand fit assessment.
+          must come from you. The quality of this input determines the accuracy
+          of the brand fit assessment.
         </p>
 
         <div
@@ -90,8 +90,9 @@ export function BrandIntelligence({ onSubmit, submitting = false }: Props) {
             className="text-body-sm"
             style={{ color: "var(--color-warning)" }}
           >
-            This stage pauses the pipeline. Provide all available information
-            before proceeding. Partial information produces partial assessment.
+            This step pauses the strategy process. Provide all available
+            information before continuing. Partial information produces partial
+            assessment.
           </p>
         </div>
 
@@ -224,7 +225,7 @@ export function BrandIntelligence({ onSubmit, submitting = false }: Props) {
             opacity: submitting || filled === 0 ? 0.6 : 1,
           }}
         >
-          {submitting ? "Saving — running Stage 13…" : "Submit Brand Intelligence — Continue Pipeline →"}
+          {submitting ? "Saving — running validation…" : "Submit Brand Intelligence — Continue →"}
         </button>
       </div>
     </div>

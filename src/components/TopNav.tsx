@@ -72,7 +72,7 @@ export function TopNav({ session }: { session?: SessionContext }) {
               </span>
               {session.isRunning && (
                 <span
-                  aria-label="Pipeline running"
+                  aria-label="Strategy process running"
                   className="inline-block animate-pulse"
                   style={{
                     width: 8,
