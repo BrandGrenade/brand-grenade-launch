@@ -28,7 +28,15 @@ import { runStage14b } from "@/lib/stage14b.functions";
 import { runStage14c } from "@/lib/stage14c.functions";
 import { runStage15 } from "@/lib/stage15.functions";
 import { runStage16 } from "@/lib/stage16.functions";
+import { resetStage } from "@/lib/retry.functions";
 import { sanitizeStageOutput } from "@/lib/sanitize-output";
+
+// Map UI stage id (e.g. "01", "13B") to the DB stage id literal used by resetStage.
+const STAGE_ID_TO_DB: Record<string, "1" | "1b" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" | "10" | "11" | "12" | "13" | "13b" | "14" | "14b" | "14c" | "15" | "16"> = {
+  "01": "1", "01B": "1b", "02": "2", "03": "3", "04": "4", "05": "5", "06": "6",
+  "07": "7", "08": "8", "09": "9", "10": "10", "11": "11", "12": "12", "13": "13",
+  "13B": "13b", "14": "14", "14B": "14b", "14C": "14c", "15": "15", "16": "16",
+};
 
 const pipelineSearchSchema = z.object({
   session: z.string().uuid().optional(),
@@ -238,6 +246,7 @@ function PipelineView() {
   const runStage14cFn = useServerFn(runStage14c);
   const runStage15Fn = useServerFn(runStage15);
   const runStage16Fn = useServerFn(runStage16);
+  const resetStageFn = useServerFn(resetStage);
 
   const [session, setSession] = useState<SessionData | null>(null);
   const [stage1Output, setStage1Output] = useState<string | null>(null);
@@ -1272,7 +1281,7 @@ function PipelineView() {
 
           tensionScore={selected.id === "01" ? session?.stage_1_tension_score ?? null : null}
           stage1bRequired={selected.id === "01" ? session?.stage_1b_required ?? false : false}
-          onRetry={() => {
+          onRetry={async () => {
             const id = selected.id;
             const map: Record<string, () => void> = {
               "02": () => { setStage2Error(null); setStage2Output(null); },
@@ -1294,6 +1303,16 @@ function PipelineView() {
               "15": () => { setStage15Error(null); setStage15Output(null); },
               "16": () => { setStage16Error(null); setStage16Output(null); },
             };
+            // Clear cached output in the DB FIRST so the server-side
+            // "return cached output if present" short-circuit doesn't fire.
+            const dbId = STAGE_ID_TO_DB[id];
+            if (sessionId && dbId) {
+              try {
+                await resetStageFn({ data: { sessionId, stageId: dbId } });
+              } catch (e) {
+                console.error("resetStage failed", e);
+              }
+            }
             if (map[id]) {
               map[id]();
               setStatuses((p) => ({ ...p, [id]: "running" }));
@@ -2040,10 +2059,19 @@ function RightPanel({
 
             <article style={{ paddingBottom: 80 }}>
               <StreamedOutput text={text} streaming={isRunning} />
+              {isRunning ? (
+                <StallWatcher stageKey={stage.id} onAutoRetry={onRetry} />
+              ) : null}
             </article>
           </>
         )}
       </div>
+
+      <StageControlBar
+        stage={stage}
+        status={status}
+        onRetry={onRetry}
+      />
 
       <BottomBar
         stage={stage}
@@ -2627,6 +2655,161 @@ function BottomBar({
         )}
       </div>
       <div>{rightEl}</div>
+    </div>
+  );
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// Stage control bar — persistent status + retry, always visible
+// ────────────────────────────────────────────────────────────────────────────
+
+function StageControlBar({
+  stage,
+  status,
+  onRetry,
+}: {
+  stage: Stage;
+  status: StageStatus;
+  onRetry: () => void;
+}) {
+  let leftEl: ReactNode;
+  if (status === "running") {
+    leftEl = (
+      <span style={{ display: "inline-flex", alignItems: "center", gap: 8, color: "#5A5652" }}>
+        <span
+          style={{
+            width: 8, height: 8, borderRadius: "50%",
+            backgroundColor: "#C8873A",
+            animation: "bg-pulse 1.2s ease-in-out infinite",
+          }}
+        />
+        Generating {stage.name}…
+      </span>
+    );
+  } else if (status === "complete") {
+    leftEl = <span style={{ color: "#4A7C59" }}>✓ {stage.name} complete</span>;
+  } else if (status === "error") {
+    leftEl = <span style={{ color: "#8A6A2A" }}>⚠ Stage stalled</span>;
+  } else if (status === "checkpoint") {
+    leftEl = <span style={{ color: "#5A5652" }}>● Awaiting review</span>;
+  } else {
+    leftEl = <span style={{ color: "#5A5652" }}>Stage {stage.number} — pending</span>;
+  }
+
+  return (
+    <div
+      className="flex shrink-0 items-center justify-between border-t"
+      style={{
+        height: 44,
+        padding: "0 48px",
+        backgroundColor: "#0A0A0A",
+        borderColor: "#1C1C1C",
+      }}
+    >
+      <div className="text-body-sm">{leftEl}</div>
+      <button
+        type="button"
+        onClick={onRetry}
+        onMouseEnter={(e) => (e.currentTarget.style.color = "#C8873A")}
+        onMouseLeave={(e) => (e.currentTarget.style.color = "#8A8680")}
+        style={{
+          height: 32,
+          padding: "0 16px",
+          borderRadius: 8,
+          background: "transparent",
+          border: "none",
+          color: "#8A8680",
+          fontSize: 13,
+          fontWeight: 500,
+          cursor: "pointer",
+        }}
+        title="Re-run this stage from scratch"
+      >
+        ↺ Retry this stage
+      </button>
+    </div>
+  );
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// Stall watcher — warns at 45s of "running", auto-retries once at 90s
+// ────────────────────────────────────────────────────────────────────────────
+
+function StallWatcher({
+  stageKey,
+  onAutoRetry,
+}: {
+  stageKey: string;
+  onAutoRetry: () => void;
+}) {
+  const [phase, setPhase] = useState<"silent" | "warning" | "auto-retrying">("silent");
+  const autoRetriedRef = useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+    setPhase("silent");
+    const warnTimer = window.setTimeout(() => setPhase("warning"), 45_000);
+    const retryTimer = window.setTimeout(() => {
+      if (!autoRetriedRef.current.has(stageKey)) {
+        autoRetriedRef.current.add(stageKey);
+        setPhase("auto-retrying");
+        onAutoRetry();
+      }
+    }, 90_000);
+    return () => {
+      window.clearTimeout(warnTimer);
+      window.clearTimeout(retryTimer);
+    };
+  }, [stageKey, onAutoRetry]);
+
+  if (phase === "silent") return null;
+
+  if (phase === "auto-retrying") {
+    return (
+      <p className="text-body-sm" style={{ color: "#5A5652", marginTop: 16 }}>
+        Automatically retrying…
+      </p>
+    );
+  }
+
+  return (
+    <div
+      role="status"
+      style={{
+        marginTop: 16,
+        padding: "12px 16px",
+        borderRadius: 8,
+        border: "1px solid #8A6A2A",
+        backgroundColor: "rgba(138, 106, 42, 0.07)",
+      }}
+    >
+      <p className="text-body-sm" style={{ color: "#8A6A2A" }}>
+        Generation has paused. This sometimes happens with longer outputs.
+      </p>
+      <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+        <button
+          type="button"
+          onClick={() => setPhase("silent")}
+          style={{
+            height: 32, padding: "0 14px", borderRadius: 6,
+            background: "transparent", border: "1px solid #2A2A2A",
+            color: "#8A8680", fontSize: 13, cursor: "pointer",
+          }}
+        >
+          Wait
+        </button>
+        <button
+          type="button"
+          onClick={onAutoRetry}
+          style={{
+            height: 32, padding: "0 14px", borderRadius: 6,
+            background: "#C8873A", border: "none",
+            color: "var(--color-background)", fontSize: 13, fontWeight: 600,
+            cursor: "pointer",
+          }}
+        >
+          Retry this stage
+        </button>
+      </div>
     </div>
   );
 }
