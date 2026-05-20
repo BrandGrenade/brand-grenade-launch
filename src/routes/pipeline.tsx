@@ -1427,7 +1427,10 @@ function RightPanel({
   showStage1bResubmit: boolean;
   resubmitting: boolean;
   onResubmitBrief: (additionalBrief: string) => void | Promise<void>;
-  onSubmitBrandIntel: () => void;
+  onSubmitBrandIntel: (values: Record<string, string>) => void | Promise<void>;
+  onResubmitCheckpoint?: (stageId: string, feedback: string) => void | Promise<void>;
+  onEscalateCheckpoint?: (stageId: string, reason: string) => void | Promise<void>;
+  checkpointResubmitting?: boolean;
   onNext: () => void;
   onConfirmCheckpoint: (stageId: string) => void;
   customCheckpoint?: ReactNode;
