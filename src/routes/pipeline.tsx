@@ -397,7 +397,9 @@ function PipelineView() {
         if (cancelled) return;
         setStage4Output(result.output);
         setStage4Loading(false);
-        setStatuses((p) => ({ ...p, "04": "complete" }));
+        // Auto-advance to Stage 5.
+        setStatuses((p) => ({ ...p, "04": "complete", "05": "running" }));
+        setSelectedId("05");
       })
       .catch((err: unknown) => {
         if (cancelled) return;
@@ -410,6 +412,33 @@ function PipelineView() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId, session?.id, statuses["04"], stage4Output]);
+
+  // Trigger Stage 5 when its status flips to "running".
+  useEffect(() => {
+    if (!sessionId || !session) return;
+    if (statuses["05"] !== "running") return;
+    if (stage5Output) return;
+    let cancelled = false;
+    setStage5Loading(true);
+    setStage5Error(null);
+    runStage5Fn({ data: { sessionId } })
+      .then((result) => {
+        if (cancelled) return;
+        setStage5Output(result.output);
+        setStage5Loading(false);
+        setStatuses((p) => ({ ...p, "05": "complete" }));
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        setStage5Loading(false);
+        setStage5Error(err instanceof Error ? err.message : "Stage 5 failed");
+        setStatuses((p) => ({ ...p, "05": "error" }));
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionId, session?.id, statuses["05"], stage5Output]);
 
   // Per-stage output: use live Stage 1 / 1B / 2 / 3 output, demo stubs for others.
   const stageOutputs = useMemo<Record<string, string>>(() => {
@@ -441,6 +470,11 @@ function PipelineView() {
         (stage4Loading
           ? "Generating the Strategic Interpretation Set (SIS) with Claude — this can take 30–90 seconds…"
           : "Awaiting Stage 4 output."),
+      "05":
+        stage5Output ??
+        (stage5Loading
+          ? "Generating per-frame insight sets with Claude — this can take 60–120 seconds…"
+          : "Awaiting Stage 5 output."),
     };
   }, [
     sessionId,
@@ -454,6 +488,8 @@ function PipelineView() {
     stage3Loading,
     stage4Output,
     stage4Loading,
+    stage5Output,
+    stage5Loading,
   ]);
 
   // Progress — count main (non-conditional) stages.
