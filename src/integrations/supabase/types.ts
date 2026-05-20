@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       sessions: {
         Row: {
+          brand_intelligence: Json | null
           brand_name: string
           brief_text: string
           category: string
@@ -36,6 +37,23 @@ export type Database = {
           stage_11_output: string | null
           stage_12_error: string | null
           stage_12_output: string | null
+          stage_13_error: string | null
+          stage_13_output: string | null
+          stage_13b_error: string | null
+          stage_13b_output: string | null
+          stage_14_error: string | null
+          stage_14_output: string | null
+          stage_14b_error: string | null
+          stage_14b_output: string | null
+          stage_14c_error: string | null
+          stage_14c_output: string | null
+          stage_15_error: string | null
+          stage_15_output: string | null
+          stage_16_agency_output: string | null
+          stage_16_consulting_output: string | null
+          stage_16_error: string | null
+          stage_16_format: string | null
+          stage_16_workshop_output: string | null
           stage_1b_output: string | null
           stage_1b_required: boolean
           stage_2_error: string | null
@@ -59,6 +77,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          brand_intelligence?: Json | null
           brand_name: string
           brief_text: string
           category: string
@@ -79,6 +98,23 @@ export type Database = {
           stage_11_output?: string | null
           stage_12_error?: string | null
           stage_12_output?: string | null
+          stage_13_error?: string | null
+          stage_13_output?: string | null
+          stage_13b_error?: string | null
+          stage_13b_output?: string | null
+          stage_14_error?: string | null
+          stage_14_output?: string | null
+          stage_14b_error?: string | null
+          stage_14b_output?: string | null
+          stage_14c_error?: string | null
+          stage_14c_output?: string | null
+          stage_15_error?: string | null
+          stage_15_output?: string | null
+          stage_16_agency_output?: string | null
+          stage_16_consulting_output?: string | null
+          stage_16_error?: string | null
+          stage_16_format?: string | null
+          stage_16_workshop_output?: string | null
           stage_1b_output?: string | null
           stage_1b_required?: boolean
           stage_2_error?: string | null
@@ -102,6 +138,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          brand_intelligence?: Json | null
           brand_name?: string
           brief_text?: string
           category?: string
@@ -122,6 +159,23 @@ export type Database = {
           stage_11_output?: string | null
           stage_12_error?: string | null
           stage_12_output?: string | null
+          stage_13_error?: string | null
+          stage_13_output?: string | null
+          stage_13b_error?: string | null
+          stage_13b_output?: string | null
+          stage_14_error?: string | null
+          stage_14_output?: string | null
+          stage_14b_error?: string | null
+          stage_14b_output?: string | null
+          stage_14c_error?: string | null
+          stage_14c_output?: string | null
+          stage_15_error?: string | null
+          stage_15_output?: string | null
+          stage_16_agency_output?: string | null
+          stage_16_consulting_output?: string | null
+          stage_16_error?: string | null
+          stage_16_format?: string | null
+          stage_16_workshop_output?: string | null
           stage_1b_output?: string | null
           stage_1b_required?: boolean
           stage_2_error?: string | null
