@@ -1565,7 +1565,13 @@ function RightPanel({
   onResubmitCheckpoint?: (stageId: string, feedback: string) => void | Promise<void>;
   onEscalateCheckpoint?: (stageId: string, reason: string) => void | Promise<void>;
   checkpointResubmitting?: boolean;
-  onNext: () => void;
+  prevStage: Stage | null;
+  nextStage: Stage | null;
+  nextStageStatus: StageStatus | null;
+  pipelineComplete: boolean;
+  onContinue: () => void;
+  onBack: () => void;
+  onViewFinal: () => void;
   onConfirmCheckpoint: (stageId: string, notes?: string[]) => void;
   customCheckpoint?: ReactNode;
   retryStatus?: string | null;
