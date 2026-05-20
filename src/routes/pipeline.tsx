@@ -28,7 +28,15 @@ import { runStage14b } from "@/lib/stage14b.functions";
 import { runStage14c } from "@/lib/stage14c.functions";
 import { runStage15 } from "@/lib/stage15.functions";
 import { runStage16 } from "@/lib/stage16.functions";
+import { resetStage } from "@/lib/retry.functions";
 import { sanitizeStageOutput } from "@/lib/sanitize-output";
+
+// Map UI stage id (e.g. "01", "13B") to the DB stage id literal used by resetStage.
+const STAGE_ID_TO_DB: Record<string, "1" | "1b" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" | "10" | "11" | "12" | "13" | "13b" | "14" | "14b" | "14c" | "15" | "16"> = {
+  "01": "1", "01B": "1b", "02": "2", "03": "3", "04": "4", "05": "5", "06": "6",
+  "07": "7", "08": "8", "09": "9", "10": "10", "11": "11", "12": "12", "13": "13",
+  "13B": "13b", "14": "14", "14B": "14b", "14C": "14c", "15": "15", "16": "16",
+};
 
 const pipelineSearchSchema = z.object({
   session: z.string().uuid().optional(),
