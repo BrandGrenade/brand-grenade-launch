@@ -2174,41 +2174,122 @@ function Caret() {
 function BottomBar({
   stage,
   status,
-  onNext,
+  prevStage,
+  nextStage,
+  nextStageStatus,
+  isViewingHistorical,
+  pipelineComplete,
+  onContinue,
+  onBack,
+  onReturnToCurrent,
+  onViewFinal,
 }: {
   stage: Stage;
   status: StageStatus;
-  onNext: () => void;
+  prevStage: Stage | null;
+  nextStage: Stage | null;
+  nextStageStatus: StageStatus | null;
+  isViewingHistorical: boolean;
+  pipelineComplete: boolean;
+  onContinue: () => void;
+  onBack: () => void;
+  onReturnToCurrent: () => void;
+  onViewFinal: () => void;
 }) {
-  const label =
-    status === "running"
-      ? `Stage ${stage.number} running`
-      : status === "complete"
-      ? `Stage ${stage.number} complete`
-      : status === "checkpoint"
-      ? `Stage ${stage.number} awaiting review`
-      : `Stage ${stage.number}`;
+  // Right-side primary action
+  let rightEl: ReactNode = null;
+  if (status === "running") {
+    rightEl = (
+      <span className="text-body-sm" style={{ color: "#5A5652" }}>
+        Generating…
+      </span>
+    );
+  } else if (pipelineComplete && !isViewingHistorical) {
+    rightEl = (
+      <PrimaryActionButton onClick={onViewFinal} label="View Final Output →" />
+    );
+  } else if (isViewingHistorical) {
+    rightEl = (
+      <button
+        type="button"
+        onClick={onReturnToCurrent}
+        className="inline-flex h-9 items-center rounded-md px-4 text-sm font-medium transition-colors"
+        style={{
+          border: "1px solid var(--color-border)",
+          color: "var(--color-text-primary)",
+          backgroundColor: "transparent",
+        }}
+      >
+        Return to Current Stage →
+      </button>
+    );
+  } else if (status === "checkpoint") {
+    // Checkpoint UI already renders its own confirm — no duplicate button.
+    rightEl = (
+      <span className="text-body-sm" style={{ color: "#5A5652" }}>
+        Review and confirm above to continue
+      </span>
+    );
+  } else if (status === "complete" && nextStage && nextStageStatus === "pending") {
+    rightEl = (
+      <PrimaryActionButton
+        onClick={onContinue}
+        label={`Continue to ${nextStage.name} →`}
+      />
+    );
+  } else if (status === "complete" && nextStage && nextStageStatus === "running") {
+    rightEl = (
+      <span className="text-body-sm" style={{ color: "#5A5652" }}>
+        {nextStage.name} generating…
+      </span>
+    );
+  }
 
   return (
     <div
-      className="flex h-[52px] shrink-0 items-center justify-between border-t border-border bg-background px-6 sm:px-12"
+      className="flex h-[56px] shrink-0 items-center justify-between border-t bg-background"
+      style={{
+        borderColor: "#2A2A2A",
+        backgroundColor: "#0A0A0A",
+        padding: "0 48px",
+      }}
     >
-      <span
-        className="text-body-sm"
-        style={{ color: "var(--color-text-tertiary)" }}
-      >
-        {label}
-      </span>
-      {status === "complete" && (
-        <button
-          type="button"
-          onClick={onNext}
-          className="text-body-sm font-medium text-primary transition-colors hover:text-primary-hover"
-        >
-          View Next Stage →
-        </button>
-      )}
+      <div>
+        {prevStage && status !== "running" ? (
+          <button
+            type="button"
+            onClick={onBack}
+            className="text-body-sm font-medium transition-colors"
+            style={{ color: "#8A8680", background: "transparent", border: "none", cursor: "pointer" }}
+          >
+            ← {prevStage.name}
+          </button>
+        ) : (
+          <span className="text-body-sm" style={{ color: "var(--color-text-tertiary)" }}>
+            Stage {stage.number}
+          </span>
+        )}
+      </div>
+      <div>{rightEl}</div>
     </div>
+  );
+}
+
+function PrimaryActionButton({ onClick, label }: { onClick: () => void; label: string }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="inline-flex h-9 items-center rounded-md px-4 text-sm font-semibold transition-colors"
+      style={{
+        backgroundColor: "#C8873A",
+        color: "var(--color-background)",
+        border: "none",
+        cursor: "pointer",
+      }}
+    >
+      {label}
+    </button>
   );
 }
 
