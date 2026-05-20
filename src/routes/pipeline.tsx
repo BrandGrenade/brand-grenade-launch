@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { TopNav } from "@/components/TopNav";
 import { Checkpoint } from "@/components/Checkpoint";
 import { SelectionRationale } from "@/components/SelectionRationale";
+import { BrandIntelligence } from "@/components/BrandIntelligence";
 
 export const Route = createFileRoute("/pipeline")({
   component: PipelineView,
@@ -139,6 +140,7 @@ function PipelineView() {
   const [statuses, setStatuses] = useState(initialStatuses);
   const [selectedId, setSelectedId] = useState("01");
   const [rationaleForId, setRationaleForId] = useState<string | null>(null);
+  const [intelSubmitted, setIntelSubmitted] = useState(false);
   const selected = STAGES.find((s) => s.id === selectedId)!;
   const selectedStatus = statuses[selectedId];
 
@@ -177,6 +179,21 @@ function PipelineView() {
           stage={selected}
           status={selectedStatus}
           showRationale={rationaleForId === selectedId}
+          showBrandIntel={selectedId === "13" && !intelSubmitted && selectedStatus === "running"}
+          onSubmitBrandIntel={() => {
+            setIntelSubmitted(true);
+            setStatuses((prev) => {
+              const next: Record<string, StageStatus> = { ...prev, "13": "complete" };
+              const idx = STAGES.findIndex((s) => s.id === "13");
+              for (let i = idx + 1; i < STAGES.length; i++) {
+                if (!STAGES[i].conditional) {
+                  next[STAGES[i].id] = "running";
+                  break;
+                }
+              }
+              return next;
+            });
+          }}
           onNext={() => {
             const idx = STAGES.findIndex((s) => s.id === selectedId);
             for (let i = idx + 1; i < STAGES.length; i++) {
@@ -489,12 +506,16 @@ function RightPanel({
   stage,
   status,
   showRationale,
+  showBrandIntel,
+  onSubmitBrandIntel,
   onNext,
   onConfirmCheckpoint,
 }: {
   stage: Stage;
   status: StageStatus;
   showRationale: boolean;
+  showBrandIntel: boolean;
+  onSubmitBrandIntel: () => void;
   onNext: () => void;
   onConfirmCheckpoint: (stageId: string) => void;
 }) {
@@ -512,6 +533,10 @@ function RightPanel({
             <SelectionRationale
               onConfirm={() => onConfirmCheckpoint(stage.id)}
             />
+          </div>
+        ) : showBrandIntel ? (
+          <div style={{ paddingBottom: 80 }}>
+            <BrandIntelligence onSubmit={onSubmitBrandIntel} />
           </div>
         ) : isCheckpoint && letter ? (
           <div style={{ paddingBottom: 80 }}>
