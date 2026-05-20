@@ -18,16 +18,6 @@ export const Route = createFileRoute("/brief")({
   }),
 });
 
-const STRATEGIC_MODES = [
-  "Disruption Mode (Default)",
-  "Ogilvy Mode — Clarity and product truth",
-  "W+K Mode — Cultural tension and behavioural truth",
-  "Stephen King Mode — Deep human psychology",
-  "Behavioural Systems Mode — Habit and decision architecture",
-  "Product Truth Mode — Function-led meaning",
-  "Challenger Brand Mode — Anti-category framing",
-  "JWT Mode — Big idea simplicity",
-];
 
 const MAX_BRIEF_CHARS = 20000;
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
@@ -53,7 +43,6 @@ function BriefIntake() {
   const createSessionFn = useServerFn(createSession);
   const [brand, setBrand] = useState("");
   const [category, setCategory] = useState("");
-  const [mode, setMode] = useState(STRATEGIC_MODES[0]);
   const [brief, setBrief] = useState("");
   const [files, setFiles] = useState<File[]>([]);
   const [dragging, setDragging] = useState(false);
@@ -100,7 +89,7 @@ function BriefIntake() {
         data: {
           brandName: brand.trim(),
           category: category.trim(),
-          strategicMode: mode,
+          strategicMode: "Auto",
           briefText: brief.trim(),
         },
       });
@@ -159,28 +148,6 @@ function BriefIntake() {
                 className="input-base h-11 w-full"
                 autoComplete="off"
               />
-            </Field>
-
-            <Field
-              id="mode"
-              label="Strategic Mode"
-              helper="Determines the strategic lens applied to reframing. Leave as Disruption Mode if unsure."
-            >
-              <div className="relative">
-                <select
-                  id="mode"
-                  value={mode}
-                  onChange={(e) => setMode(e.target.value)}
-                  className="input-base h-11 w-full appearance-none pr-10"
-                >
-                  {STRATEGIC_MODES.map((m) => (
-                    <option key={m} value={m}>
-                      {m}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary" />
-              </div>
             </Field>
 
             <Field

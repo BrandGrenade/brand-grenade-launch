@@ -718,71 +718,73 @@ function PipelineView() {
 
   // Per-stage output: use live Stage 1 / 1B / 2 / 3 output, demo stubs for others.
   const stageOutputs = useMemo<Record<string, string>>(() => {
+    const stripMode = (s: string) =>
+      s.replace(/^\s*STRATEGIC MODE SELECTED:.*\n?/gim, "");
     if (!sessionId) return STAGE_OUTPUTS;
     return {
       ...STAGE_OUTPUTS,
       "01":
-        stage1Output ??
+        (stage1Output && stripMode(stage1Output)) ??
         (stage1Loading
           ? "Sanitising brief with Claude — this can take 20–60 seconds…"
           : "Awaiting Stage 1 output."),
       "01B":
-        stage1bOutput ??
+        (stage1bOutput && stripMode(stage1bOutput)) ??
         (stage1bLoading
           ? "Generating Stage 1B diagnostic questions — this can take 20–60 seconds…"
           : "Awaiting Stage 1B output."),
       "02":
-        stage2Output ??
+        (stage2Output && stripMode(stage2Output)) ??
         (stage2Loading
           ? "Building Category Memory Object (CMM) with Claude — this can take 30–90 seconds…"
           : "Awaiting Stage 2 output."),
       "03":
-        stage3Output ??
+        (stage3Output && stripMode(stage3Output)) ??
         (stage3Loading
           ? "Generating the Strategic Constraint Matrix with Claude — this can take 30–90 seconds…"
           : "Awaiting Stage 3 output."),
       "04":
-        stage4Output ??
+        (stage4Output && stripMode(stage4Output)) ??
         (stage4Loading
           ? "Generating the Strategic Interpretation Set (SIS) with Claude — this can take 30–90 seconds…"
           : "Awaiting Stage 4 output."),
       "05":
-        stage5Output ??
+        (stage5Output && stripMode(stage5Output)) ??
         (stage5Loading
           ? "Generating per-frame insight sets with Claude — this can take 60–120 seconds…"
           : "Awaiting Stage 5 output."),
       "06":
-        stage6Output ??
+        (stage6Output && stripMode(stage6Output)) ??
         (stage6Loading
           ? "Filtering insights with the Calibrated Insight Intelligence Gate — this can take 60–120 seconds…"
           : "Awaiting Stage 6 output."),
       "07":
-        stage7Output ??
+        (stage7Output && stripMode(stage7Output)) ??
         (stage7Loading
           ? "Synthesising Strategic Fields and Constraint Statements with Claude — this can take 60–120 seconds…"
           : "Awaiting Stage 7 output."),
       "08":
-        stage8Output ??
+        (stage8Output && stripMode(stage8Output)) ??
         (stage8Loading
           ? "Generating Single-Minded Propositions with Claude — this can take 60–120 seconds…"
           : "Awaiting Stage 8 output."),
       "09":
-        stage9Output ??
+        (stage9Output && stripMode(stage9Output)) ??
         (stage9Loading
           ? "Auditing SMP divergence with Claude — this can take 30–90 seconds…"
           : "Awaiting Stage 9 output."),
       "10":
-        stage10Output ??
+        (stage10Output && stripMode(stage10Output)) ??
         (stage10Loading
           ? "Scoring SMPs across six calibrated dimensions — this can take 60–120 seconds…"
           : "Awaiting Stage 10 output."),
       "11":
-        stage11Output ??
+        (stage11Output && stripMode(stage11Output)) ??
         (stage11Loading
           ? "Running five-test strategic pressure validation — this can take 60–120 seconds…"
           : "Awaiting Stage 11 output."),
       "12":
-        stage12Output ??
+        (stage12Output && stripMode(stage12Output)) ??
         (stage12Loading
           ? "Composing SMP presentation cards for selection — this can take 30–60 seconds…"
           : "Awaiting Stage 12 output."),

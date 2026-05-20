@@ -13,23 +13,10 @@ export const Route = createFileRoute("/settings")({
   }),
 });
 
-type StrategicMode =
-  | "Category Reframe"
-  | "Audience Reframe"
-  | "Constraint Reframe"
-  | "Insight-Led";
-const STRATEGIC_MODES: StrategicMode[] = [
-  "Category Reframe",
-  "Audience Reframe",
-  "Constraint Reframe",
-  "Insight-Led",
-];
-
 type Format = "Agency Pitch" | "Consulting Delivery" | "Brand Workshop";
 const FORMATS: Format[] = ["Agency Pitch", "Consulting Delivery", "Brand Workshop"];
 
 interface Prefs {
-  defaultMode: StrategicMode;
   defaultFormat: Format;
   autoProceed: boolean;
   claudeKeyLast4: string;
@@ -38,7 +25,6 @@ interface Prefs {
 }
 
 const DEFAULTS: Prefs = {
-  defaultMode: "Category Reframe",
   defaultFormat: "Consulting Delivery",
   autoProceed: true,
   claudeKeyLast4: "",
@@ -140,13 +126,6 @@ function SettingsPage() {
         </Section>
 
         <Section title="Pipeline Preferences">
-          <Row label="Default strategic mode">
-            <Select
-              value={prefs.defaultMode}
-              onChange={(v) => update("defaultMode", v as StrategicMode)}
-              options={STRATEGIC_MODES}
-            />
-          </Row>
           <Row label="Default output format">
             <Select
               value={prefs.defaultFormat}
