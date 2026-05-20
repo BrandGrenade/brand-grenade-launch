@@ -27,6 +27,7 @@ export const runStage9 = createServerFn({ method: "POST" })
       .eq("id", data.sessionId);
 
     const propositionCount = countSections(session.stage_8_output, 4);
+    console.log("Stage 9 proposition count:", propositionCount);
 
     const userMessage = buildStage9UserMessage({
       brandName: session.brand_name,
@@ -42,7 +43,7 @@ export const runStage9 = createServerFn({ method: "POST" })
       output = await callClaude({
         systemPrompt: STAGE_9_SYSTEM_PROMPT,
         userMessage,
-        maxTokens: 1500,
+        maxTokens: 3000,
         temperature: 0.4,
         sessionId: data.sessionId,
         stageLabel: "Stage 9",
