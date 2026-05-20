@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { z } from "zod";
 import { TopNav } from "@/components/TopNav";
 import { Checkpoint } from "@/components/Checkpoint";
@@ -246,7 +246,9 @@ function PipelineView() {
   const [stage11Loading, setStage11Loading] = useState(false);
   const [stage12Loading, setStage12Loading] = useState(false);
   const [resubmitting, setResubmitting] = useState(false);
+  const [savingRationale, setSavingRationale] = useState(false);
   const [retryNonce, setRetryNonce] = useState(0);
+
 
   // Elapsed timer
   const [startTime] = useState(() => Date.now());
@@ -281,8 +283,9 @@ function PipelineView() {
     supabase
       .from("sessions")
       .select(
-        "id, brand_name, category, strategic_mode, stage_1_output, stage_1_tension_score, stage_1b_required, stage_1b_output, stage_1_error, stage_2_output, stage_2_error, stage_3_output, stage_3_error, stage_4_output, stage_4_error, stage_5_output, stage_5_error, stage_6_output, stage_6_error, stage_7_output, stage_7_error"
+        "id, brand_name, category, strategic_mode, stage_1_output, stage_1_tension_score, stage_1b_required, stage_1b_output, stage_1_error, stage_2_output, stage_2_error, stage_3_output, stage_3_error, stage_4_output, stage_4_error, stage_5_output, stage_5_error, stage_6_output, stage_6_error, stage_7_output, stage_7_error, stage_8_output, stage_8_error, stage_9_output, stage_9_error, stage_10_output, stage_10_error, stage_11_output, stage_11_error, stage_12_output, stage_12_error, selected_smp, selected_smp_field_name, checkpoint_b_confirmed, checkpoint_c_confirmed"
       )
+
       .eq("id", sessionId)
       .single()
       .then(({ data, error }) => {
@@ -318,7 +321,28 @@ function PipelineView() {
           setStage7Output(data.stage_7_output);
           setStatuses((p) => ({ ...p, "07": "complete" }));
         }
+        if (data.stage_8_output) {
+          setStage8Output(data.stage_8_output);
+          setStatuses((p) => ({ ...p, "08": data.checkpoint_b_confirmed ? "complete" : "checkpoint" }));
+        }
+        if (data.stage_9_output) {
+          setStage9Output(data.stage_9_output);
+          setStatuses((p) => ({ ...p, "09": "complete" }));
+        }
+        if (data.stage_10_output) {
+          setStage10Output(data.stage_10_output);
+          setStatuses((p) => ({ ...p, "10": "complete" }));
+        }
+        if (data.stage_11_output) {
+          setStage11Output(data.stage_11_output);
+          setStatuses((p) => ({ ...p, "11": "complete" }));
+        }
+        if (data.stage_12_output) {
+          setStage12Output(data.stage_12_output);
+          setStatuses((p) => ({ ...p, "12": data.checkpoint_c_confirmed ? "complete" : "checkpoint" }));
+        }
       });
+
     return () => {
       cancelled = true;
     };
@@ -548,7 +572,8 @@ function PipelineView() {
         if (cancelled) return;
         setStage7Output(result.output);
         setStage7Loading(false);
-        setStatuses((p) => ({ ...p, "07": "complete" }));
+        setStatuses((p) => ({ ...p, "07": "complete", "08": "running" }));
+        setSelectedId("08");
       })
       .catch((err: unknown) => {
         if (cancelled) return;
@@ -561,6 +586,135 @@ function PipelineView() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId, session?.id, statuses["07"], stage7Output]);
+
+  // Stage 8 — SMP Generation, ends at Checkpoint B.
+  useEffect(() => {
+    if (!sessionId || !session) return;
+    if (statuses["08"] !== "running") return;
+    if (stage8Output) return;
+    let cancelled = false;
+    setStage8Loading(true);
+    setStage8Error(null);
+    runStage8Fn({ data: { sessionId } })
+      .then((result) => {
+        if (cancelled) return;
+        setStage8Output(result.output);
+        setStage8Loading(false);
+        setStatuses((p) => ({ ...p, "08": "checkpoint" }));
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        setStage8Loading(false);
+        setStage8Error(err instanceof Error ? err.message : "Stage 8 failed");
+        setStatuses((p) => ({ ...p, "08": "error" }));
+      });
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionId, session?.id, statuses["08"], stage8Output]);
+
+  // Stage 9 — Divergence Validation.
+  useEffect(() => {
+    if (!sessionId || !session) return;
+    if (statuses["09"] !== "running") return;
+    if (stage9Output) return;
+    let cancelled = false;
+    setStage9Loading(true);
+    setStage9Error(null);
+    runStage9Fn({ data: { sessionId } })
+      .then((result) => {
+        if (cancelled) return;
+        setStage9Output(result.output);
+        setStage9Loading(false);
+        setStatuses((p) => ({ ...p, "09": "complete", "10": "running" }));
+        setSelectedId("10");
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        setStage9Loading(false);
+        setStage9Error(err instanceof Error ? err.message : "Stage 9 failed");
+        setStatuses((p) => ({ ...p, "09": "error" }));
+      });
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionId, session?.id, statuses["09"], stage9Output]);
+
+  // Stage 10 — Scoring.
+  useEffect(() => {
+    if (!sessionId || !session) return;
+    if (statuses["10"] !== "running") return;
+    if (stage10Output) return;
+    let cancelled = false;
+    setStage10Loading(true);
+    setStage10Error(null);
+    runStage10Fn({ data: { sessionId } })
+      .then((result) => {
+        if (cancelled) return;
+        setStage10Output(result.output);
+        setStage10Loading(false);
+        setStatuses((p) => ({ ...p, "10": "complete", "11": "running" }));
+        setSelectedId("11");
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        setStage10Loading(false);
+        setStage10Error(err instanceof Error ? err.message : "Stage 10 failed");
+        setStatuses((p) => ({ ...p, "10": "error" }));
+      });
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionId, session?.id, statuses["10"], stage10Output]);
+
+  // Stage 11 — Pressure Test.
+  useEffect(() => {
+    if (!sessionId || !session) return;
+    if (statuses["11"] !== "running") return;
+    if (stage11Output) return;
+    let cancelled = false;
+    setStage11Loading(true);
+    setStage11Error(null);
+    runStage11Fn({ data: { sessionId } })
+      .then((result) => {
+        if (cancelled) return;
+        setStage11Output(result.output);
+        setStage11Loading(false);
+        setStatuses((p) => ({ ...p, "11": "complete", "12": "running" }));
+        setSelectedId("12");
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        setStage11Loading(false);
+        setStage11Error(err instanceof Error ? err.message : "Stage 11 failed");
+        setStatuses((p) => ({ ...p, "11": "error" }));
+      });
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionId, session?.id, statuses["11"], stage11Output]);
+
+  // Stage 12 — SMP Selection presentation. Ends at Checkpoint C (human selects).
+  useEffect(() => {
+    if (!sessionId || !session) return;
+    if (statuses["12"] !== "running") return;
+    if (stage12Output) return;
+    let cancelled = false;
+    setStage12Loading(true);
+    setStage12Error(null);
+    runStage12Fn({ data: { sessionId } })
+      .then((result) => {
+        if (cancelled) return;
+        setStage12Output(result.output);
+        setStage12Loading(false);
+        setStatuses((p) => ({ ...p, "12": "checkpoint" }));
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        setStage12Loading(false);
+        setStage12Error(err instanceof Error ? err.message : "Stage 12 failed");
+        setStatuses((p) => ({ ...p, "12": "error" }));
+      });
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionId, session?.id, statuses["12"], stage12Output]);
+
 
   // Per-stage output: use live Stage 1 / 1B / 2 / 3 output, demo stubs for others.
   const stageOutputs = useMemo<Record<string, string>>(() => {
@@ -607,26 +761,49 @@ function PipelineView() {
         (stage7Loading
           ? "Synthesising Strategic Fields and Constraint Statements with Claude — this can take 60–120 seconds…"
           : "Awaiting Stage 7 output."),
+      "08":
+        stage8Output ??
+        (stage8Loading
+          ? "Generating Single-Minded Propositions with Claude — this can take 60–120 seconds…"
+          : "Awaiting Stage 8 output."),
+      "09":
+        stage9Output ??
+        (stage9Loading
+          ? "Auditing SMP divergence with Claude — this can take 30–90 seconds…"
+          : "Awaiting Stage 9 output."),
+      "10":
+        stage10Output ??
+        (stage10Loading
+          ? "Scoring SMPs across six calibrated dimensions — this can take 60–120 seconds…"
+          : "Awaiting Stage 10 output."),
+      "11":
+        stage11Output ??
+        (stage11Loading
+          ? "Running five-test strategic pressure validation — this can take 60–120 seconds…"
+          : "Awaiting Stage 11 output."),
+      "12":
+        stage12Output ??
+        (stage12Loading
+          ? "Composing SMP presentation cards for selection — this can take 30–60 seconds…"
+          : "Awaiting Stage 12 output."),
     };
   }, [
     sessionId,
-    stage1Output,
-    stage1Loading,
-    stage1bOutput,
-    stage1bLoading,
-    stage2Output,
-    stage2Loading,
-    stage3Output,
-    stage3Loading,
-    stage4Output,
-    stage4Loading,
-    stage5Output,
-    stage5Loading,
-    stage6Output,
-    stage6Loading,
-    stage7Output,
-    stage7Loading,
+    stage1Output, stage1Loading,
+    stage1bOutput, stage1bLoading,
+    stage2Output, stage2Loading,
+    stage3Output, stage3Loading,
+    stage4Output, stage4Loading,
+    stage5Output, stage5Loading,
+    stage6Output, stage6Loading,
+    stage7Output, stage7Loading,
+    stage8Output, stage8Loading,
+    stage9Output, stage9Loading,
+    stage10Output, stage10Loading,
+    stage11Output, stage11Loading,
+    stage12Output, stage12Loading,
   ]);
+
 
   // Progress — count main (non-conditional) stages.
   const mainStages = STAGES.filter((s) => !s.conditional);
@@ -675,51 +852,45 @@ function PipelineView() {
           stage1Error={
             selected.id === "01" || selected.id === "01B"
               ? stage1Error
-              : selected.id === "02"
-              ? stage2Error
-              : selected.id === "03"
-              ? stage3Error
-              : selected.id === "04"
-              ? stage4Error
-              : selected.id === "05"
-              ? stage5Error
-              : selected.id === "06"
-              ? stage6Error
-              : selected.id === "07"
-              ? stage7Error
+              : selected.id === "02" ? stage2Error
+              : selected.id === "03" ? stage3Error
+              : selected.id === "04" ? stage4Error
+              : selected.id === "05" ? stage5Error
+              : selected.id === "06" ? stage6Error
+              : selected.id === "07" ? stage7Error
+              : selected.id === "08" ? stage8Error
+              : selected.id === "09" ? stage9Error
+              : selected.id === "10" ? stage10Error
+              : selected.id === "11" ? stage11Error
+              : selected.id === "12" ? stage12Error
               : null
           }
+
           tensionScore={selected.id === "01" ? session?.stage_1_tension_score ?? null : null}
           stage1bRequired={selected.id === "01" ? session?.stage_1b_required ?? false : false}
           onRetry={() => {
-            if (selected.id === "02") {
-              setStage2Error(null);
-              setStage2Output(null);
-              setStatuses((p) => ({ ...p, "02": "running" }));
-            } else if (selected.id === "03") {
-              setStage3Error(null);
-              setStage3Output(null);
-              setStatuses((p) => ({ ...p, "03": "running" }));
-            } else if (selected.id === "04") {
-              setStage4Error(null);
-              setStage4Output(null);
-              setStatuses((p) => ({ ...p, "04": "running" }));
-            } else if (selected.id === "05") {
-              setStage5Error(null);
-              setStage5Output(null);
-              setStatuses((p) => ({ ...p, "05": "running" }));
-            } else if (selected.id === "06") {
-              setStage6Error(null);
-              setStage6Output(null);
-              setStatuses((p) => ({ ...p, "06": "running" }));
-            } else if (selected.id === "07") {
-              setStage7Error(null);
-              setStage7Output(null);
-              setStatuses((p) => ({ ...p, "07": "running" }));
+            const id = selected.id;
+            const map: Record<string, () => void> = {
+              "02": () => { setStage2Error(null); setStage2Output(null); },
+              "03": () => { setStage3Error(null); setStage3Output(null); },
+              "04": () => { setStage4Error(null); setStage4Output(null); },
+              "05": () => { setStage5Error(null); setStage5Output(null); },
+              "06": () => { setStage6Error(null); setStage6Output(null); },
+              "07": () => { setStage7Error(null); setStage7Output(null); },
+              "08": () => { setStage8Error(null); setStage8Output(null); },
+              "09": () => { setStage9Error(null); setStage9Output(null); },
+              "10": () => { setStage10Error(null); setStage10Output(null); },
+              "11": () => { setStage11Error(null); setStage11Output(null); },
+              "12": () => { setStage12Error(null); setStage12Output(null); },
+            };
+            if (map[id]) {
+              map[id]();
+              setStatuses((p) => ({ ...p, [id]: "running" }));
             } else {
               setRetryNonce((n) => n + 1);
             }
           }}
+
           showRationale={rationaleForId === selectedId}
           showBrandIntel={selectedId === "13" && !intelSubmitted && selectedStatus === "running"}
           showStage1bResubmit={
@@ -786,9 +957,13 @@ function PipelineView() {
               setSelectedId("01B");
               return;
             }
-            // Checkpoint C (Stage 12): show rationale capture before advancing.
-            if (stageId === "12" && rationaleForId !== "12") {
-              setRationaleForId("12");
+            // Checkpoint B (Stage 8) → persist confirmation then advance to Stage 9.
+            if (stageId === "08") {
+              if (sessionId) {
+                confirmCheckpointBFn({ data: { sessionId } }).catch(() => {});
+              }
+              setStatuses((prev) => ({ ...prev, "08": "complete", "09": "running" }));
+              setSelectedId("09");
               return;
             }
             setRationaleForId(null);
@@ -804,7 +979,53 @@ function PipelineView() {
               return next;
             });
           }}
+          customCheckpoint={
+            selectedId === "12" && selectedStatus === "checkpoint" && rationaleForId !== "12" ? (
+              <SMPSelection
+                stage12Output={stage12Output ?? ""}
+                onSelect={async (card) => {
+                  if (!sessionId) return;
+                  setSelectedSMP(card);
+                  try {
+                    await saveSelectedSMPFn({
+                      data: {
+                        sessionId,
+                        smpLine: card.smpLine || `Proposition ${card.cardNumber}`,
+                        fieldName: card.fieldName || `Field ${card.cardNumber}`,
+                      },
+                    });
+                  } catch (err) {
+                    setStage12Error(err instanceof Error ? err.message : "Failed to save selection");
+                    return;
+                  }
+                  setRationaleForId("12");
+                }}
+              />
+            ) : selectedId === "12" && rationaleForId === "12" ? (
+              <SelectionRationale
+                selectedSMP={selectedSMP?.smpLine ?? session?.selected_smp ?? ""}
+                submitting={savingRationale}
+                onConfirm={async (values) => {
+                  if (!sessionId) return;
+                  setSavingRationale(true);
+                  try {
+                    await saveSelectionRationaleFn({
+                      data: { sessionId, rationale: values },
+                    });
+                    setRationaleForId(null);
+                    setStatuses((prev) => ({ ...prev, "12": "complete", "13": "running" }));
+                    setSelectedId("13");
+                  } catch (err) {
+                    setStage12Error(err instanceof Error ? err.message : "Failed to save rationale");
+                  } finally {
+                    setSavingRationale(false);
+                  }
+                }}
+              />
+            ) : null
+          }
         />
+
 
       </div>
     </div>
@@ -1107,6 +1328,7 @@ function RightPanel({
   onSubmitBrandIntel,
   onNext,
   onConfirmCheckpoint,
+  customCheckpoint,
 }: {
   stage: Stage;
   status: StageStatus;
@@ -1123,6 +1345,8 @@ function RightPanel({
   onSubmitBrandIntel: () => void;
   onNext: () => void;
   onConfirmCheckpoint: (stageId: string) => void;
+  customCheckpoint?: ReactNode;
+
 }) {
   const isRunning = status === "running";
   const isCheckpoint = status === "checkpoint";
@@ -1133,7 +1357,7 @@ function RightPanel({
   return (
     <section className="relative flex min-w-0 flex-1 flex-col bg-background">
       <div className="flex-1 overflow-y-auto px-6 py-10 sm:px-12 sm:py-10">
-        {isError && (stage.id === "01" || stage.id === "02" || stage.id === "03" || stage.id === "04" || stage.id === "05") ? (
+        {isError && ["01","02","03","04","05","06","07","08","09","10","11","12"].includes(stage.id) ? (
           <div style={{ paddingBottom: 80 }}>
             <header>
               <span className="text-label text-primary">
@@ -1187,7 +1411,10 @@ function RightPanel({
           <div style={{ paddingBottom: 80 }}>
             <BrandIntelligence onSubmit={onSubmitBrandIntel} />
           </div>
+        ) : customCheckpoint ? (
+          <div style={{ paddingBottom: 80 }}>{customCheckpoint}</div>
         ) : isCheckpoint && letter ? (
+
           <div style={{ paddingBottom: 80 }}>
             <Checkpoint
               letter={letter}

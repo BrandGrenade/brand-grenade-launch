@@ -2,8 +2,10 @@ import { useState } from "react";
 
 interface SelectionRationaleProps {
   selectedSMP?: string;
-  onConfirm: () => void;
+  onConfirm: (values: Record<string, string>) => void;
+  submitting?: boolean;
 }
+
 
 const FIELDS: {
   key: string;
@@ -62,10 +64,12 @@ const FIELDS: {
 ];
 
 export function SelectionRationale({
-  selectedSMP = "Hypernova settles the books, not just the transfer — the only payments rail finance teams close their month around.",
+  selectedSMP = "",
   onConfirm,
+  submitting = false,
 }: SelectionRationaleProps) {
   const [values, setValues] = useState<Record<string, string>>({});
+
 
   const canSubmit = FIELDS.filter((f) => f.required).every(
     (f) => (values[f.key] ?? "").trim().length > 0
@@ -177,8 +181,8 @@ export function SelectionRationale({
 
         <button
           type="button"
-          disabled={!canSubmit}
-          onClick={() => canSubmit && onConfirm()}
+          disabled={!canSubmit || submitting}
+          onClick={() => canSubmit && !submitting && onConfirm(values)}
           style={{
             width: "100%",
             height: 52,
@@ -187,7 +191,7 @@ export function SelectionRationale({
             border: "none",
             fontWeight: 600,
             fontSize: 14,
-            cursor: canSubmit ? "pointer" : "not-allowed",
+            cursor: canSubmit && !submitting ? "pointer" : "not-allowed",
             backgroundColor: canSubmit
               ? "var(--color-primary)"
               : "var(--color-border)",
@@ -197,8 +201,9 @@ export function SelectionRationale({
             transition: "background-color 150ms",
           }}
         >
-          Confirm Checkpoint C — Proceed to Brand Validation →
+          {submitting ? "Saving…" : "Confirm Checkpoint C — Proceed to Brand Validation →"}
         </button>
+
 
         <p
           className="text-body-sm"
