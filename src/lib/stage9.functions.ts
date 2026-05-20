@@ -4,7 +4,7 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { callClaude } from "./claude.server";
 import { STAGE_9_SYSTEM_PROMPT, buildStage9UserMessage } from "./stage9-prompt";
 
-import { countSections, countPropositions } from "./count-helpers";
+import { countPropositions } from "./count-helpers";
 
 const Input = z.object({ sessionId: z.string().uuid() });
 
@@ -19,8 +19,7 @@ export const runStage9 = createServerFn({ method: "POST" })
     if (error || !session) throw new Error(`Session not found: ${error?.message ?? "no row"}`);
     if (!session.stage_8_output) throw new Error("Stage 8 output missing — cannot run Stage 9");
     if (!session.checkpoint_b_confirmed) throw new Error("Checkpoint B not confirmed — cannot run Stage 9");
-    // TEMP: cache bypass for debugging proposition count — re-enable after verification
-    // if (session.stage_9_output) return { output: session.stage_9_output };
+    if (session.stage_9_output) return { output: session.stage_9_output };
 
     await supabaseAdmin
       .from("sessions")
