@@ -350,7 +350,8 @@ function PipelineView() {
         }
         if (data.status === "running") {
           const currentStageId = String(data.current_stage).padStart(2, "0");
-          if (STAGES.some((s) => s.id === currentStageId)) {
+          const outputForCurrentStage = data[`stage_${data.current_stage}_output` as keyof typeof data];
+          if (STAGES.some((s) => s.id === currentStageId) && !outputForCurrentStage) {
             setStatuses((p) => ({ ...p, [currentStageId]: "running" }));
             setSelectedId(currentStageId);
           }
