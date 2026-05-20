@@ -537,21 +537,6 @@ function PipelineView() {
     stage6Output,
     stage6Loading,
   ]);
-  }, [
-    sessionId,
-    stage1Output,
-    stage1Loading,
-    stage1bOutput,
-    stage1bLoading,
-    stage2Output,
-    stage2Loading,
-    stage3Output,
-    stage3Loading,
-    stage4Output,
-    stage4Loading,
-    stage5Output,
-    stage5Loading,
-  ]);
 
   // Progress — count main (non-conditional) stages.
   const mainStages = STAGES.filter((s) => !s.conditional);
