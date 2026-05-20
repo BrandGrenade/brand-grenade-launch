@@ -39,7 +39,15 @@ export const runStage16 = createServerFn({ method: "POST" })
 
     const column = COLUMN_BY_FORMAT[data.format];
     const existing = session[column] as string | null | undefined;
-    if (existing) return { output: existing, format: data.format };
+    if (existing) {
+      if (session.status !== "complete") {
+        await supabaseAdmin
+          .from("sessions")
+          .update({ status: "complete", current_stage: 16, stage_16_error: null, stage_16_format: data.format })
+          .eq("id", data.sessionId);
+      }
+      return { output: existing, format: data.format };
+    }
 
     await supabaseAdmin
       .from("sessions")
@@ -90,7 +98,7 @@ export const runStage16 = createServerFn({ method: "POST" })
         .update({
           [column]: output,
           stage_16_error: null,
-          ...(otherFilled ? { status: "complete" } : {}),
+          status: "complete",
         })
         .eq("id", data.sessionId);
       if (ue) throw new Error(`Failed to save Stage 16 (${data.format}) output: ${ue.message}`);
