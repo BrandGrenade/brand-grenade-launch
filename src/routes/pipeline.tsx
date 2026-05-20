@@ -183,6 +183,8 @@ interface SessionData {
   stage_12_error: string | null;
   selected_smp: string | null;
   selected_smp_field_name: string | null;
+  current_stage: number;
+  status: string;
   checkpoint_b_confirmed: boolean;
   checkpoint_c_confirmed: boolean;
   retry_status: string | null;
@@ -288,7 +290,7 @@ function PipelineView() {
     supabase
       .from("sessions")
       .select(
-        "id, brand_name, category, strategic_mode, stage_1_output, stage_1_tension_score, stage_1b_required, stage_1b_output, stage_1_error, stage_2_output, stage_2_error, stage_3_output, stage_3_error, stage_4_output, stage_4_error, stage_5_output, stage_5_error, stage_6_output, stage_6_error, stage_7_output, stage_7_error, stage_8_output, stage_8_error, stage_9_output, stage_9_error, stage_10_output, stage_10_error, stage_11_output, stage_11_error, stage_12_output, stage_12_error, selected_smp, selected_smp_field_name, checkpoint_b_confirmed, checkpoint_c_confirmed, retry_status"
+        "id, brand_name, category, strategic_mode, current_stage, status, stage_1_output, stage_1_tension_score, stage_1b_required, stage_1b_output, stage_1_error, stage_2_output, stage_2_error, stage_3_output, stage_3_error, stage_4_output, stage_4_error, stage_5_output, stage_5_error, stage_6_output, stage_6_error, stage_7_output, stage_7_error, stage_8_output, stage_8_error, stage_9_output, stage_9_error, stage_10_output, stage_10_error, stage_11_output, stage_11_error, stage_12_output, stage_12_error, selected_smp, selected_smp_field_name, checkpoint_b_confirmed, checkpoint_c_confirmed, retry_status"
       )
 
       .eq("id", sessionId)
@@ -345,6 +347,13 @@ function PipelineView() {
         if (data.stage_12_output) {
           setStage12Output(data.stage_12_output);
           setStatuses((p) => ({ ...p, "12": data.checkpoint_c_confirmed ? "complete" : "checkpoint" }));
+        }
+        if (data.status === "running") {
+          const currentStageId = String(data.current_stage).padStart(2, "0");
+          if (STAGES.some((s) => s.id === currentStageId)) {
+            setStatuses((p) => ({ ...p, [currentStageId]: "running" }));
+            setSelectedId(currentStageId);
+          }
         }
       });
 
