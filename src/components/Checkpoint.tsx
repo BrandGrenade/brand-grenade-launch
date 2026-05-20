@@ -164,6 +164,7 @@ export function Checkpoint({
           <div className="mt-5 animate-fade-in">
             <button
               type="button"
+              data-checkpoint-confirm="true"
               onClick={onConfirm}
               className="inline-flex h-11 items-center justify-center rounded-md px-6 text-[14px] font-semibold transition-colors"
               style={{
@@ -173,6 +174,7 @@ export function Checkpoint({
             >
               Proceed to next stage →
             </button>
+
           </div>
         )}
 
