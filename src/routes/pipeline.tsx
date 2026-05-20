@@ -1389,6 +1389,7 @@ function RightPanel({
   onNext,
   onConfirmCheckpoint,
   customCheckpoint,
+  retryStatus,
 }: {
   stage: Stage;
   status: StageStatus;
