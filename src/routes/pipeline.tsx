@@ -857,6 +857,26 @@ function PipelineView() {
     stage8Loading || stage9Loading || stage10Loading || stage11Loading ||
     stage12Loading;
 
+  // Compute prev/next visible stages relative to the currently-viewed stage.
+  const selectedIdx = STAGES.findIndex((s) => s.id === selectedId);
+  const prevStage = (() => {
+    for (let i = selectedIdx - 1; i >= 0; i--) {
+      const st = statuses[STAGES[i].id];
+      if (st === "complete" || st === "checkpoint") return STAGES[i];
+    }
+    return null;
+  })();
+  const nextStage = (() => {
+    for (let i = selectedIdx + 1; i < STAGES.length; i++) {
+      // skip conditional stages that aren't relevant
+      if (STAGES[i].conditional && statuses[STAGES[i].id] === "pending") continue;
+      return STAGES[i];
+    }
+    return null;
+  })();
+  const nextStageStatus: StageStatus | null = nextStage ? statuses[nextStage.id] : null;
+  const pipelineComplete = mainStages.every((s) => statuses[s.id] === "complete");
+
   // Dynamic document title: "[Brand] — Stage X — Brand Grenade"
   useEffect(() => {
     document.title = `${brandLabel} — Stage ${Math.max(1, currentMainNumber)} — Brand Grenade`;
@@ -1025,14 +1045,24 @@ function PipelineView() {
               console.error("[Save Brand Intelligence] failed", err);
             }
           }}
-          onNext={() => {
-            const idx = STAGES.findIndex((s) => s.id === selectedId);
-            for (let i = idx + 1; i < STAGES.length; i++) {
-              const st = statuses[STAGES[i].id];
-              if (st === "complete" || st === "running") {
-                setSelectedId(STAGES[i].id);
-                break;
-              }
+          prevStage={prevStage}
+          nextStage={nextStage}
+          nextStageStatus={nextStageStatus}
+          pipelineComplete={pipelineComplete}
+          onBack={() => {
+            if (prevStage) setSelectedId(prevStage.id);
+          }}
+          onContinue={() => {
+            if (!nextStage) return;
+            const st = statuses[nextStage.id];
+            if (st === "pending") {
+              setStatuses((p) => ({ ...p, [nextStage.id]: "running" }));
+            }
+            setSelectedId(nextStage.id);
+          }}
+          onViewFinal={() => {
+            if (sessionId) {
+              window.location.href = `/complete?session=${sessionId}`;
             }
           }}
           onConfirmCheckpoint={(stageId, notes) => {
@@ -1330,19 +1360,13 @@ function LeftPanel({
                 >
                   {s.name}
                 </span>
-                {s.checkpoint && (
-                  <span
-                    className="text-label shrink-0 rounded-sm px-1.5 py-0.5"
-                    style={{
-                      backgroundColor: "oklch(0.5 0.09 70 / 0.10)",
-                      color: "var(--color-warning)",
-                      fontSize: 9,
-                    }}
-                  >
-                    Review
-                  </span>
-                )}
-                {s.conditional && (
+                <StageRowStatusLabel
+                  checkpoint={!!s.checkpoint}
+                  conditional={!!s.conditional}
+                  status={status}
+                  selected={selected}
+                />
+                {s.conditional && status === "pending" && (
                   <span
                     className="text-label shrink-0"
                     style={{
@@ -1360,6 +1384,73 @@ function LeftPanel({
       </ul>
     </aside>
   );
+}
+
+function StageRowStatusLabel({
+  checkpoint,
+  conditional,
+  status,
+  selected,
+}: {
+  checkpoint: boolean;
+  conditional: boolean;
+  status: StageStatus;
+  selected: boolean;
+}) {
+  if (conditional && status === "pending") return null;
+
+  // Checkpoint stages (1, 8, 12): special handling
+  if (checkpoint && status === "checkpoint") {
+    return (
+      <span
+        className="text-label shrink-0 rounded-sm px-1.5 py-0.5"
+        style={{
+          backgroundColor: "oklch(0.5 0.09 70 / 0.10)",
+          color: "var(--color-warning)",
+          fontSize: 9,
+        }}
+      >
+        Review
+      </span>
+    );
+  }
+  if (checkpoint && status === "complete") {
+    return (
+      <span className="text-label shrink-0" style={{ color: "var(--color-success)", fontSize: 10 }}>
+        Confirmed
+      </span>
+    );
+  }
+
+  if (status === "running") {
+    return (
+      <span className="text-label shrink-0" style={{ color: "var(--color-primary)", fontSize: 10 }}>
+        Running…
+      </span>
+    );
+  }
+  if (status === "complete") {
+    return (
+      <span className="text-label shrink-0" style={{ color: "var(--color-success)", fontSize: 10 }}>
+        Done
+      </span>
+    );
+  }
+  if (status === "error") {
+    return (
+      <span className="text-label shrink-0" style={{ color: "var(--color-destructive)", fontSize: 10 }}>
+        Error
+      </span>
+    );
+  }
+  if (selected && status === "pending") {
+    return (
+      <span className="text-label shrink-0" style={{ color: "var(--color-text-tertiary)", fontSize: 10 }}>
+        Viewing
+      </span>
+    );
+  }
+  return null;
 }
 
 function stageNameStyle(
@@ -1472,7 +1563,13 @@ function RightPanel({
   resubmitting,
   onResubmitBrief,
   onSubmitBrandIntel,
-  onNext,
+  prevStage,
+  nextStage,
+  nextStageStatus,
+  pipelineComplete,
+  onContinue,
+  onBack,
+  onViewFinal,
   onConfirmCheckpoint,
   onResubmitCheckpoint,
   onEscalateCheckpoint,
@@ -1498,7 +1595,13 @@ function RightPanel({
   onResubmitCheckpoint?: (stageId: string, feedback: string) => void | Promise<void>;
   onEscalateCheckpoint?: (stageId: string, reason: string) => void | Promise<void>;
   checkpointResubmitting?: boolean;
-  onNext: () => void;
+  prevStage: Stage | null;
+  nextStage: Stage | null;
+  nextStageStatus: StageStatus | null;
+  pipelineComplete: boolean;
+  onContinue: () => void;
+  onBack: () => void;
+  onViewFinal: () => void;
   onConfirmCheckpoint: (stageId: string, notes?: string[]) => void;
   customCheckpoint?: ReactNode;
   retryStatus?: string | null;
@@ -1640,7 +1743,19 @@ function RightPanel({
         )}
       </div>
 
-      <BottomBar stage={stage} status={status} onNext={onNext} />
+      <BottomBar
+        stage={stage}
+        status={status}
+        prevStage={prevStage}
+        nextStage={nextStage}
+        nextStageStatus={nextStageStatus}
+        isViewingHistorical={!!isViewingHistorical}
+        pipelineComplete={pipelineComplete}
+        onContinue={onContinue}
+        onBack={onBack}
+        onReturnToCurrent={onBackToCurrent ?? (() => {})}
+        onViewFinal={onViewFinal}
+      />
     </section>
   );
 }
@@ -2113,41 +2228,122 @@ function Caret() {
 function BottomBar({
   stage,
   status,
-  onNext,
+  prevStage,
+  nextStage,
+  nextStageStatus,
+  isViewingHistorical,
+  pipelineComplete,
+  onContinue,
+  onBack,
+  onReturnToCurrent,
+  onViewFinal,
 }: {
   stage: Stage;
   status: StageStatus;
-  onNext: () => void;
+  prevStage: Stage | null;
+  nextStage: Stage | null;
+  nextStageStatus: StageStatus | null;
+  isViewingHistorical: boolean;
+  pipelineComplete: boolean;
+  onContinue: () => void;
+  onBack: () => void;
+  onReturnToCurrent: () => void;
+  onViewFinal: () => void;
 }) {
-  const label =
-    status === "running"
-      ? `Stage ${stage.number} running`
-      : status === "complete"
-      ? `Stage ${stage.number} complete`
-      : status === "checkpoint"
-      ? `Stage ${stage.number} awaiting review`
-      : `Stage ${stage.number}`;
+  // Right-side primary action
+  let rightEl: ReactNode = null;
+  if (status === "running") {
+    rightEl = (
+      <span className="text-body-sm" style={{ color: "#5A5652" }}>
+        Generating…
+      </span>
+    );
+  } else if (pipelineComplete && !isViewingHistorical) {
+    rightEl = (
+      <PrimaryActionButton onClick={onViewFinal} label="View Final Output →" />
+    );
+  } else if (isViewingHistorical) {
+    rightEl = (
+      <button
+        type="button"
+        onClick={onReturnToCurrent}
+        className="inline-flex h-9 items-center rounded-md px-4 text-sm font-medium transition-colors"
+        style={{
+          border: "1px solid var(--color-border)",
+          color: "var(--color-text-primary)",
+          backgroundColor: "transparent",
+        }}
+      >
+        Return to Current Stage →
+      </button>
+    );
+  } else if (status === "checkpoint") {
+    // Checkpoint UI already renders its own confirm — no duplicate button.
+    rightEl = (
+      <span className="text-body-sm" style={{ color: "#5A5652" }}>
+        Review and confirm above to continue
+      </span>
+    );
+  } else if (status === "complete" && nextStage && nextStageStatus === "pending") {
+    rightEl = (
+      <PrimaryActionButton
+        onClick={onContinue}
+        label={`Continue to ${nextStage.name} →`}
+      />
+    );
+  } else if (status === "complete" && nextStage && nextStageStatus === "running") {
+    rightEl = (
+      <span className="text-body-sm" style={{ color: "#5A5652" }}>
+        {nextStage.name} generating…
+      </span>
+    );
+  }
 
   return (
     <div
-      className="flex h-[52px] shrink-0 items-center justify-between border-t border-border bg-background px-6 sm:px-12"
+      className="flex h-[56px] shrink-0 items-center justify-between border-t bg-background"
+      style={{
+        borderColor: "#2A2A2A",
+        backgroundColor: "#0A0A0A",
+        padding: "0 48px",
+      }}
     >
-      <span
-        className="text-body-sm"
-        style={{ color: "var(--color-text-tertiary)" }}
-      >
-        {label}
-      </span>
-      {status === "complete" && (
-        <button
-          type="button"
-          onClick={onNext}
-          className="text-body-sm font-medium text-primary transition-colors hover:text-primary-hover"
-        >
-          View Next Stage →
-        </button>
-      )}
+      <div>
+        {prevStage && status !== "running" ? (
+          <button
+            type="button"
+            onClick={onBack}
+            className="text-body-sm font-medium transition-colors"
+            style={{ color: "#8A8680", background: "transparent", border: "none", cursor: "pointer" }}
+          >
+            ← {prevStage.name}
+          </button>
+        ) : (
+          <span className="text-body-sm" style={{ color: "var(--color-text-tertiary)" }}>
+            Stage {stage.number}
+          </span>
+        )}
+      </div>
+      <div>{rightEl}</div>
     </div>
+  );
+}
+
+function PrimaryActionButton({ onClick, label }: { onClick: () => void; label: string }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="inline-flex h-9 items-center rounded-md px-4 text-sm font-semibold transition-colors"
+      style={{
+        backgroundColor: "#C8873A",
+        color: "var(--color-background)",
+        border: "none",
+        cursor: "pointer",
+      }}
+    >
+      {label}
+    </button>
   );
 }
 
