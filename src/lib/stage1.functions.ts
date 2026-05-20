@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { callClaude } from "./claude.server";
 import { STAGE_1_SYSTEM_PROMPT, buildStage1UserMessage } from "./stage1-prompt";
 
 const CreateSessionInput = z.object({
@@ -50,9 +51,6 @@ function extractTensionScore(text: string): number | null {
 export const runStage1 = createServerFn({ method: "POST" })
   .inputValidator((input) => RunStage1Input.parse(input))
   .handler(async ({ data }): Promise<Stage1Result> => {
-    const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) throw new Error("ANTHROPIC_API_KEY is not configured");
-
     // Load session
     const { data: session, error: loadErr } = await supabaseAdmin
       .from("sessions")
@@ -78,58 +76,23 @@ export const runStage1 = createServerFn({ method: "POST" })
       briefText: session.brief_text,
     });
 
-    let resp: Response;
+    let output: string;
     try {
-      resp = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: {
-          "x-api-key": apiKey,
-          "anthropic-version": "2023-06-01",
-          "content-type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-5",
-          max_tokens: 4096,
-          temperature: 0.7,
-          system: STAGE_1_SYSTEM_PROMPT,
-          messages: [{ role: "user", content: userMessage }],
-        }),
+      output = await callClaude({
+        systemPrompt: STAGE_1_SYSTEM_PROMPT,
+        userMessage,
+        maxTokens: 4096,
+        temperature: 0.7,
+        sessionId: data.sessionId,
+        stageLabel: "Stage 1",
       });
     } catch (e) {
-      const msg = e instanceof Error ? e.message : "network error";
-      await supabaseAdmin
-        .from("sessions")
-        .update({ stage_1_error: `Network: ${msg}` })
-        .eq("id", data.sessionId);
-      throw new Error(`Claude API request failed: ${msg}`);
-    }
-
-    if (!resp.ok) {
-      const body = await resp.text();
-      const msg = `Claude API ${resp.status}: ${body.slice(0, 500)}`;
+      const msg = e instanceof Error ? e.message : "Stage 1 failed";
       await supabaseAdmin
         .from("sessions")
         .update({ stage_1_error: msg })
         .eq("id", data.sessionId);
-      throw new Error(msg);
-    }
-
-    const json = (await resp.json()) as {
-      content?: Array<{ type: string; text?: string }>;
-    };
-    const output = (json.content ?? [])
-      .filter((c) => c.type === "text" && c.text)
-      .map((c) => c.text!)
-      .join("\n")
-      .trim();
-
-    if (!output) {
-      const msg = "Claude returned an empty response";
-      await supabaseAdmin
-        .from("sessions")
-        .update({ stage_1_error: msg })
-        .eq("id", data.sessionId);
-      throw new Error(msg);
+      throw e instanceof Error ? e : new Error(msg);
     }
 
     const tensionScore = extractTensionScore(output);

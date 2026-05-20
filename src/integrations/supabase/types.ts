@@ -39,6 +39,7 @@ export type Database = {
           current_stage: number
           id: string
           interrupted_stage: number | null
+          retry_status: string | null
           selected_format: string | null
           selected_smp: string | null
           selected_smp_field_name: string | null
@@ -126,6 +127,7 @@ export type Database = {
           current_stage?: number
           id?: string
           interrupted_stage?: number | null
+          retry_status?: string | null
           selected_format?: string | null
           selected_smp?: string | null
           selected_smp_field_name?: string | null
@@ -213,6 +215,7 @@ export type Database = {
           current_stage?: number
           id?: string
           interrupted_stage?: number | null
+          retry_status?: string | null
           selected_format?: string | null
           selected_smp?: string | null
           selected_smp_field_name?: string | null

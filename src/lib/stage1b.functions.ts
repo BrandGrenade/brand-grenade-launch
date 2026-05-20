@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { callClaude } from "./claude.server";
 import { STAGE_1B_SYSTEM_PROMPT, buildStage1bUserMessage } from "./stage1b-prompt";
 
 const RunStage1bInput = z.object({
@@ -10,9 +11,6 @@ const RunStage1bInput = z.object({
 export const runStage1b = createServerFn({ method: "POST" })
   .inputValidator((input) => RunStage1bInput.parse(input))
   .handler(async ({ data }): Promise<{ output: string }> => {
-    const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) throw new Error("ANTHROPIC_API_KEY is not configured");
-
     const { data: session, error: loadErr } = await supabaseAdmin
       .from("sessions")
       .select("brief_text, stage_1_output, stage_1b_output")
@@ -29,37 +27,14 @@ export const runStage1b = createServerFn({ method: "POST" })
       briefText: session.brief_text,
     });
 
-    const resp = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-5",
-        max_tokens: 4096,
-        temperature: 0.7,
-        system: STAGE_1B_SYSTEM_PROMPT,
-        messages: [{ role: "user", content: userMessage }],
-      }),
+    const output = await callClaude({
+      systemPrompt: STAGE_1B_SYSTEM_PROMPT,
+      userMessage,
+      maxTokens: 4096,
+      temperature: 0.7,
+      sessionId: data.sessionId,
+      stageLabel: "Stage 1B",
     });
-
-    if (!resp.ok) {
-      const body = await resp.text();
-      throw new Error(`Claude API ${resp.status}: ${body.slice(0, 500)}`);
-    }
-
-    const json = (await resp.json()) as {
-      content?: Array<{ type: string; text?: string }>;
-    };
-    const output = (json.content ?? [])
-      .filter((c) => c.type === "text" && c.text)
-      .map((c) => c.text!)
-      .join("\n")
-      .trim();
-
-    if (!output) throw new Error("Claude returned an empty Stage 1B response");
 
     const { error: updateErr } = await supabaseAdmin
       .from("sessions")
