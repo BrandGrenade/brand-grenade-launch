@@ -16,6 +16,7 @@ const TERM_REPLACEMENTS: Array<[RegExp, string]> = [
   [/\bCategory\s+Memory\s+Object\b/gi, "Category Intelligence"],
   [/\bCMM\s+Forbidden\s+Zone\b/gi, "Overcrowded Territory"],
   [/\bForbidden\s+Zone\b/gi, "Overcrowded Territory"],
+  [/\bForbidden\s+Territory\b/gi, "Overcrowded Territory"],
   [/\bCMM\s+Whitespace\s+Zone\b/gi, "Available Territory"],
   [/\bWhitespace\s+Zone\b/gi, "Available Territory"],
   [/\bCategory\s+Dominant\s+Logic\b/gi, "Category Assumption"],
@@ -48,7 +49,7 @@ const TERM_REPLACEMENTS: Array<[RegExp, string]> = [
   [/\bPipeline\b/g, "Strategy Process"],
   // Version/Level markers
   [/\bLEVEL\s+[123]\b/g, ""],
-  [/\b[Vv][1-9]\b/g, ""],
+  [/\b[Vv][1-9](?:\.\d)?\b/g, ""],
 ];
 
 // Block headers that should be stripped along with everything that follows them,
@@ -59,47 +60,104 @@ const BLOCK_HEADER_PATTERNS: RegExp[] = [
   /FAILURE\s+ROUTING/i,
   /PIPELINE\s+ROUTING/i,
   /QUALITY\s+BENCHMARK/i,
+  /QUALITY\s+GATE/i,
   /CONSTRAINT\s+FIDELITY/i,
   /ANTI[-\s]CONVERGENCE/i,
   /FRAME\s+VALIDATION/i,
+  /FRAME\s+ARCHITECTURE/i,
+  /FRAME\s+LOGIC/i,
+  /FRAME\s+BOUNDARIES/i,
   /CMM\s+COMPLIANCE/i,
   /BRAND\s+CREDIBILITY/i,
+  /BRIEF\s+DEPTH\s+ADAPTATION/i,
+  /INPUT\s+REQUIREMENT/i,
+  /OUTPUT\s+STRUCTURE/i,
+  /INSIGHT\s+GENERATION/i,
   /STAGE\s+\d+[A-Z]?\s+BRIEF/i,
 ];
 
 // Per-line patterns. Any matching line is removed entirely.
 const LINE_STRIP_PATTERNS: RegExp[] = [
+  /^\s*BRIEF\s+BRAND\s*:/i,
+  /^\s*CATEGORY\s*:\s*\S/i, // strip "CATEGORY: foo" header lines
+  /^\s*NUMBER\s+OF\b/i,
   /VERSION\s+REFERENCED\s*:/i,
-  /\bVERSION\s*:/i,
-  /\bASSIGNED\s*:/i,
+  /^\s*VERSION\s*:/i,
+  /^\s*ASSIGNED\s*:/i,
   /TRUTH\s+CONFIGURATIONS?\s*:/i,
   /TENSION\s+TYPES?\s*:/i,
-  /\bFRAMES?\s*:\s*\d/i,
-  /REJECTION\s+TEST\s*:/i,
-  /BRIEF\s+DEPTH\s+ADAPTATION\s*:/i,
-  /^\s*[:\-]\s*(NO|YES)\b/i,
-  /^\s*Strategic\s+Framework\s+REFERENCE\s*:/i,
-  /^\s*Category\s+Intelligence\b/i,
-  /\((TBWA|BBH|JWT|W\+K|Droga5)/i,
-  /^\s*REQUIRED\s+TENSION\s+TYPE\s*:/i,
-  /^\s*EVIDENCE\s+TYPE\s*:/i,
+  /REQUIRED\s+TENSION\s*:/i,
+  /EVIDENCE\s+TYPE\s*:/i,
+  /^\s*BRAND\s+ROLE\s*:/i,
+  /^\s*STRATEGIC\s+ROUTE\s*:/i,
+  /^\s*ICONIC\s+TIER\s*:/i,
+  /^\s*BRIEF\s+DEPTH\b/i,
+  /^\s*FRAMES?\s*:\s*\d/i,
+  /^\s*ANTI[-\s]CONVERGENCE\b/i,
+  /^\s*CONSTRAINT\b.*:/i,
   /^\s*COMPETITOR\s+AVOIDANCE\s*:/i,
   /^\s*LANGUAGE\s+EXCLUSIONS?\s*:/i,
-  // Validation status lines (PASSED / CONFIRMED).
-  /\b(PASSED|CONFIRMED)\b/,
+  /^\s*REJECTION\s+TEST\s*:/i,
+  /^\s*FORBIDDEN\s+TERRITORY\s*:/i,
+  /^\s*STRATEGIC\s+LOGIC\s+STATEMENT\s*:/i,
+  /^\s*[:\-]\s*(NO|YES)\b/i,
+  /^\s*Strategic\s+Framework\s+REFERENCE\s*:/i,
+  // Validation status lines
+  /:\s*PASSED\b/i,
+  /:\s*CONFIRMED\b/i,
+  /:\s*CLEARED\b/i,
+  /:\s*FAILED\b/i,
+  /\b(PASSED|CONFIRMED|CLEARED)\b\s*$/,
+  // Agency name attributions
+  /\((TBWA|BBH|JWT|W\+K|Wieden\+Kennedy|Droga5|Ogilvy|DDB|Leo Burnett|McCann|BBDO|Publicis|Grey|Saatchi|Chiat)\b/i,
+];
+
+// Sentence-level removals applied to remaining paragraphs.
+const SENTENCE_STRIP_PATTERNS: RegExp[] = [
+  /\bthis prompt\b/i,
+  /\bthis stage\b/i,
+  /\bthe strategy process\b/i,
+  /\bdownstream stages?\b/i,
+  /\bupstream stages?\b/i,
+  /\bStage\s+\d+[A-Z]?\b/i,
+  /\bself[-\s]audit\b/i,
+  /\bquality (gate|check)\b/i,
 ];
 
 // A "label-only" line: e.g. "Foo Bar:" or "**Foo Bar:**" with no content after.
 const LABEL_ONLY_LINE = /^[ \t#>*_\-]*\**[A-Za-z][A-Za-z0-9 _\-/&()]{0,80}\**\s*:\s*\**\s*$/;
 
 function stripBlock(text: string, headerPattern: RegExp): string {
-  // Match an optional leading markdown heading or bold marker, the header
-  // text, then everything until the next markdown heading, HR, or EOF.
   const re = new RegExp(
     `(^|\\n)[ \\t]*(?:#{1,6}\\s*)?\\**\\s*${headerPattern.source}\\b[^\\n]*[\\s\\S]*?(?=\\n#{1,6}\\s|\\n={3,}|\\n-{3,}|$)`,
     "i"
   );
   return text.replace(re, "$1").replace(re, "$1");
+}
+
+function stripLeadingMetadata(text: string): string {
+  // If there is a ## heading anywhere, drop everything before the first one
+  // when that preamble looks like metadata (contains label-colon lines or
+  // ALL-CAPS field labels and no real prose).
+  const firstHeading = text.search(/^##\s+/m);
+  if (firstHeading <= 0) return text;
+  const preamble = text.slice(0, firstHeading);
+  const looksLikeMetadata =
+    /:\s*\S/.test(preamble) && !/[a-z]{3,}\s+[a-z]{3,}\s+[a-z]{3,}/.test(preamble);
+  return looksLikeMetadata ? text.slice(firstHeading) : text;
+}
+
+function stripBadSentences(text: string): string {
+  return text
+    .split("\n")
+    .map((line) => {
+      if (/^\s*[#>\-*]/.test(line) || !line.trim()) return line;
+      const sentences = line.split(/(?<=[.!?])\s+/);
+      return sentences
+        .filter((s) => !SENTENCE_STRIP_PATTERNS.some((p) => p.test(s)))
+        .join(" ");
+    })
+    .join("\n");
 }
 
 export function sanitizeStageOutput(raw: string): string {
@@ -111,20 +169,18 @@ export function sanitizeStageOutput(raw: string): string {
     text = stripBlock(text, header);
   }
 
-  // Also strip any stray header field lines that may appear at the top.
+  // Strip stray header field lines that may appear at the top.
   text = text.replace(
     /^[ \t]*(STRATEGIC MODE SELECTED|BRIEF DEPTH LEVEL|CATEGORY KNOWLEDGE CONFIDENCE|BRIEF ELEMENTS PRESENT|ASSUMPTIONS MADE|CMM VERSION|SIS VERSION|PROMPT VERSION):.*\n?/gim,
     ""
   );
 
-  // 2. Apply terminology translations BEFORE per-line stripping so the
-  //    line predicates match the original internal vocabulary.
+  // 2. Terminology translations.
   for (const [pattern, replacement] of TERM_REPLACEMENTS) {
     text = text.replace(pattern, replacement as string);
   }
 
-  // 3. Per-line filtering: drop any line matching a strip pattern or that is
-  //    a pure label with no content.
+  // 3. Per-line filtering.
   const kept: string[] = [];
   for (const line of text.split("\n")) {
     if (LINE_STRIP_PATTERNS.some((p) => p.test(line))) continue;
@@ -133,7 +189,13 @@ export function sanitizeStageOutput(raw: string): string {
   }
   text = kept.join("\n");
 
-  // 4. Collapse triple+ blank lines and trim.
+  // 4. Sentence-level filter for meta references.
+  text = stripBadSentences(text);
+
+  // 5. Drop any leading metadata block before the first ## heading.
+  text = stripLeadingMetadata(text);
+
+  // 6. Collapse triple+ blank lines and trim.
   text = text.replace(/\n{3,}/g, "\n\n").trim();
 
   return text;
