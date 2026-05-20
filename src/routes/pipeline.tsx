@@ -8,6 +8,7 @@ import { SelectionRationale } from "@/components/SelectionRationale";
 import { BrandIntelligence } from "@/components/BrandIntelligence";
 import { supabase } from "@/integrations/supabase/client";
 import { runStage1 } from "@/lib/stage1.functions";
+import { runStage1b, resubmitBrief } from "@/lib/stage1b.functions";
 
 const pipelineSearchSchema = z.object({
   session: z.string().uuid().optional(),
