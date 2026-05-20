@@ -8,6 +8,7 @@ import { SelectionRationale } from "@/components/SelectionRationale";
 import { BrandIntelligence } from "@/components/BrandIntelligence";
 import { supabase } from "@/integrations/supabase/client";
 import { runStage1 } from "@/lib/stage1.functions";
+import { runStage1b, resubmitBrief } from "@/lib/stage1b.functions";
 
 const pipelineSearchSchema = z.object({
   session: z.string().uuid().optional(),
@@ -142,17 +143,23 @@ interface SessionData {
   stage_1_output: string | null;
   stage_1_tension_score: number | null;
   stage_1b_required: boolean;
+  stage_1b_output: string | null;
   stage_1_error: string | null;
 }
 
 function PipelineView() {
   const { session: sessionId } = Route.useSearch();
   const runStage1Fn = useServerFn(runStage1);
+  const runStage1bFn = useServerFn(runStage1b);
+  const resubmitBriefFn = useServerFn(resubmitBrief);
 
   const [session, setSession] = useState<SessionData | null>(null);
   const [stage1Output, setStage1Output] = useState<string | null>(null);
+  const [stage1bOutput, setStage1bOutput] = useState<string | null>(null);
   const [stage1Error, setStage1Error] = useState<string | null>(null);
   const [stage1Loading, setStage1Loading] = useState(false);
+  const [stage1bLoading, setStage1bLoading] = useState(false);
+  const [resubmitting, setResubmitting] = useState(false);
   const [retryNonce, setRetryNonce] = useState(0);
 
   // Elapsed timer
@@ -188,7 +195,7 @@ function PipelineView() {
     supabase
       .from("sessions")
       .select(
-        "id, brand_name, category, strategic_mode, stage_1_output, stage_1_tension_score, stage_1b_required, stage_1_error"
+        "id, brand_name, category, strategic_mode, stage_1_output, stage_1_tension_score, stage_1b_required, stage_1b_output, stage_1_error"
       )
       .eq("id", sessionId)
       .single()
@@ -200,11 +207,12 @@ function PipelineView() {
           return;
         }
         setSession(data as SessionData);
+        if (data.stage_1b_output) setStage1bOutput(data.stage_1b_output);
       });
     return () => {
       cancelled = true;
     };
-  }, [sessionId]);
+  }, [sessionId, retryNonce]);
 
   // Trigger Stage 1 when session loads (or on retry).
   useEffect(() => {
@@ -247,7 +255,34 @@ function PipelineView() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId, session?.id, retryNonce]);
 
-  // Per-stage output: use live Stage 1 output for stage 01, demo stubs for others.
+  // Trigger Stage 1B when required and not yet generated.
+  useEffect(() => {
+    if (!sessionId || !session) return;
+    if (!session.stage_1b_required) return;
+    if (stage1bOutput) return;
+    if (statuses["01B"] !== "running") return;
+    let cancelled = false;
+    setStage1bLoading(true);
+    runStage1bFn({ data: { sessionId } })
+      .then((result) => {
+        if (cancelled) return;
+        setStage1bOutput(result.output);
+        setStage1bLoading(false);
+        setStatuses((p) => ({ ...p, "01B": "checkpoint" }));
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        setStage1bLoading(false);
+        setStage1Error(err instanceof Error ? err.message : "Stage 1B failed");
+        setStatuses((p) => ({ ...p, "01B": "error" }));
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionId, session?.stage_1b_required, statuses["01B"], stage1bOutput]);
+
+  // Per-stage output: use live Stage 1 / 1B output, demo stubs for others.
   const stageOutputs = useMemo<Record<string, string>>(() => {
     if (!sessionId) return STAGE_OUTPUTS;
     return {
@@ -257,8 +292,13 @@ function PipelineView() {
         (stage1Loading
           ? "Sanitising brief with Claude — this can take 20–60 seconds…"
           : "Awaiting Stage 1 output."),
+      "01B":
+        stage1bOutput ??
+        (stage1bLoading
+          ? "Generating Stage 1B diagnostic questions — this can take 20–60 seconds…"
+          : "Awaiting Stage 1B output."),
     };
-  }, [sessionId, stage1Output, stage1Loading]);
+  }, [sessionId, stage1Output, stage1Loading, stage1bOutput, stage1bLoading]);
 
   // Progress — count main (non-conditional) stages.
   const mainStages = STAGES.filter((s) => !s.conditional);
@@ -304,12 +344,41 @@ function PipelineView() {
           stage={selected}
           status={selectedStatus}
           fullOutput={stageOutputs[selected.id] ?? "Output pending."}
-          stage1Error={selected.id === "01" ? stage1Error : null}
+          stage1Error={selected.id === "01" ? stage1Error : selected.id === "01B" ? stage1Error : null}
           tensionScore={selected.id === "01" ? session?.stage_1_tension_score ?? null : null}
           stage1bRequired={selected.id === "01" ? session?.stage_1b_required ?? false : false}
           onRetry={() => setRetryNonce((n) => n + 1)}
           showRationale={rationaleForId === selectedId}
           showBrandIntel={selectedId === "13" && !intelSubmitted && selectedStatus === "running"}
+          showStage1bResubmit={
+            selectedId === "01B" &&
+            !!stage1bOutput &&
+            !stage1bLoading &&
+            selectedStatus !== "complete"
+          }
+          resubmitting={resubmitting}
+          onResubmitBrief={async (additionalBrief) => {
+            if (!sessionId) return;
+            setResubmitting(true);
+            try {
+              await resubmitBriefFn({ data: { sessionId, additionalBrief } });
+              // Reset local state and re-run Stage 1.
+              setStage1Output(null);
+              setStage1bOutput(null);
+              setStage1Error(null);
+              setStatuses((p) => ({
+                ...p,
+                "01": "running",
+                "01B": "pending",
+              }));
+              setSelectedId("01");
+              setRetryNonce((n) => n + 1);
+            } catch (err) {
+              setStage1Error(err instanceof Error ? err.message : "Resubmit failed");
+            } finally {
+              setResubmitting(false);
+            }
+          }}
           onSubmitBrandIntel={() => {
             setIntelSubmitted(true);
             setStatuses((prev) => {
@@ -335,6 +404,16 @@ function PipelineView() {
             }
           }}
           onConfirmCheckpoint={(stageId) => {
+            // Checkpoint A with 1B required → route to Stage 1B instead of Stage 2.
+            if (stageId === "01" && session?.stage_1b_required && !stage1bOutput) {
+              setStatuses((prev) => ({
+                ...prev,
+                "01": "complete",
+                "01B": "running",
+              }));
+              setSelectedId("01B");
+              return;
+            }
             // Checkpoint C (Stage 12): show rationale capture before advancing.
             if (stageId === "12" && rationaleForId !== "12") {
               setRationaleForId("12");
@@ -354,6 +433,7 @@ function PipelineView() {
             });
           }}
         />
+
       </div>
     </div>
   );
@@ -649,6 +729,9 @@ function RightPanel({
   onRetry,
   showRationale,
   showBrandIntel,
+  showStage1bResubmit,
+  resubmitting,
+  onResubmitBrief,
   onSubmitBrandIntel,
   onNext,
   onConfirmCheckpoint,
@@ -662,6 +745,9 @@ function RightPanel({
   onRetry: () => void;
   showRationale: boolean;
   showBrandIntel: boolean;
+  showStage1bResubmit: boolean;
+  resubmitting: boolean;
+  onResubmitBrief: (additionalBrief: string) => void | Promise<void>;
   onSubmitBrandIntel: () => void;
   onNext: () => void;
   onConfirmCheckpoint: (stageId: string) => void;
@@ -713,6 +799,12 @@ function RightPanel({
               </button>
             </div>
           </div>
+        ) : showStage1bResubmit ? (
+          <Stage1bResubmitView
+            output={fullOutput}
+            resubmitting={resubmitting}
+            onResubmit={onResubmitBrief}
+          />
         ) : showRationale ? (
           <div style={{ paddingBottom: 80 }}>
             <SelectionRationale
@@ -1108,3 +1200,92 @@ function XIcon({ color = "currentColor" }: { color?: string }) {
     </svg>
   );
 }
+
+// ────────────────────────────────────────────────────────────────────────────
+// Stage 1B — diagnostic output + brief-resubmission form
+// ────────────────────────────────────────────────────────────────────────────
+
+function Stage1bResubmitView({
+  output,
+  resubmitting,
+  onResubmit,
+}: {
+  output: string;
+  resubmitting: boolean;
+  onResubmit: (additionalBrief: string) => void | Promise<void>;
+}) {
+  const [text, setText] = useState("");
+  const canSubmit = text.trim().length >= 20 && !resubmitting;
+  return (
+    <div style={{ paddingBottom: 80 }}>
+      <header>
+        <span className="text-label text-primary">Stage 01B — Brief Escalation</span>
+        <h1 className="text-h2 mt-3 text-text-primary">
+          Additional brief information required
+        </h1>
+        <p className="text-body-sm mt-3 text-text-secondary">
+          Brief Sanitisation scored below the threshold required to proceed.
+          Please respond in writing to the diagnostic questions below — the
+          pipeline will re-run Stage 1 with the enriched brief before reaching
+          Stage 2.
+        </p>
+        <hr className="my-6 h-px border-0 bg-border" />
+      </header>
+
+      <article style={{ marginBottom: 32 }}>
+        <StreamedOutput text={output} streaming={false} />
+      </article>
+
+      <div
+        className="rounded-md p-5"
+        style={{
+          border: "1px solid var(--color-border)",
+          backgroundColor: "var(--color-surface)",
+        }}
+      >
+        <label
+          htmlFor="stage1b-response"
+          className="text-label text-text-secondary"
+        >
+          Your responses
+        </label>
+        <textarea
+          id="stage1b-response"
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          placeholder="Answer each diagnostic question above. Paragraph answers are fine — no need to repeat the questions."
+          rows={10}
+          className="text-body mt-2 w-full rounded-md p-3 outline-none"
+          style={{
+            border: "1px solid var(--color-border)",
+            backgroundColor: "var(--color-background)",
+            color: "var(--color-text-primary)",
+            resize: "vertical",
+            minHeight: 200,
+          }}
+        />
+        <div className="mt-4 flex items-center justify-between">
+          <span
+            className="text-body-sm"
+            style={{ color: "var(--color-text-tertiary)" }}
+          >
+            Minimum 20 characters. {text.trim().length} entered.
+          </span>
+          <button
+            type="button"
+            onClick={() => canSubmit && onResubmit(text.trim())}
+            disabled={!canSubmit}
+            className="inline-flex h-10 items-center justify-center rounded-md px-5 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+            style={{
+              backgroundColor: "var(--color-primary)",
+              color: "var(--color-primary-foreground)",
+            }}
+          >
+            {resubmitting ? "Resubmitting…" : "Resubmit Brief & Re-run Stage 1"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
