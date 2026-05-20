@@ -2,33 +2,52 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
+type StageId =
+  | "1" | "1b" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"
+  | "10" | "11" | "12" | "13" | "13b" | "14" | "14b" | "14c" | "15" | "16";
+
 /**
- * Clears the error and output for a single stage so the regular runner can
- * be invoked again. The actual stage runner is dispatched from the client
- * (it already exists per stage) — this just resets DB state.
+ * Clears the error for a single stage so the client can re-invoke the
+ * stage runner. The runner itself remains the source of truth for the
+ * stage's output column.
  */
 export const resetStage = createServerFn({ method: "POST" })
   .inputValidator((d) =>
     z
       .object({
         sessionId: z.string().uuid(),
-        stageId: z
-          .string()
-          .regex(/^(1|1b|2|3|4|5|6|7|8|9|10|11|12|13|13b|14|14b|14c|15|16)$/i),
+        stageId: z.enum([
+          "1","1b","2","3","4","5","6","7","8","9","10","11","12","13","13b","14","14b","14c","15","16",
+        ]),
       })
       .parse(d),
   )
   .handler(async ({ data }) => {
-    const id = data.stageId.toLowerCase();
-    const errorCol = `stage_${id}_error` as
-      | "stage_1_error" | "stage_1b_error" | "stage_2_error" | "stage_3_error"
-      | "stage_4_error" | "stage_5_error" | "stage_6_error" | "stage_7_error"
-      | "stage_8_error" | "stage_9_error" | "stage_10_error" | "stage_11_error"
-      | "stage_12_error" | "stage_13_error" | "stage_13b_error" | "stage_14_error"
-      | "stage_14b_error" | "stage_14c_error" | "stage_15_error" | "stage_16_error";
-    await supabaseAdmin
-      .from("sessions")
-      .update({ [errorCol]: null, status: "running", stage_status: `running:${id}` })
-      .eq("id", data.sessionId);
+    const id = data.stageId as StageId;
+    // Inline switch keeps the column literal-typed for supabase-js.
+    const base = { status: "running" as const, stage_status: `running:${id}` };
+    const sb = supabaseAdmin.from("sessions");
+    switch (id) {
+      case "1":   await sb.update({ ...base, stage_1_error: null }).eq("id", data.sessionId); break;
+      case "1b":  await sb.update({ ...base, stage_1b_error: null }).eq("id", data.sessionId); break;
+      case "2":   await sb.update({ ...base, stage_2_error: null }).eq("id", data.sessionId); break;
+      case "3":   await sb.update({ ...base, stage_3_error: null }).eq("id", data.sessionId); break;
+      case "4":   await sb.update({ ...base, stage_4_error: null }).eq("id", data.sessionId); break;
+      case "5":   await sb.update({ ...base, stage_5_error: null }).eq("id", data.sessionId); break;
+      case "6":   await sb.update({ ...base, stage_6_error: null }).eq("id", data.sessionId); break;
+      case "7":   await sb.update({ ...base, stage_7_error: null }).eq("id", data.sessionId); break;
+      case "8":   await sb.update({ ...base, stage_8_error: null }).eq("id", data.sessionId); break;
+      case "9":   await sb.update({ ...base, stage_9_error: null }).eq("id", data.sessionId); break;
+      case "10":  await sb.update({ ...base, stage_10_error: null }).eq("id", data.sessionId); break;
+      case "11":  await sb.update({ ...base, stage_11_error: null }).eq("id", data.sessionId); break;
+      case "12":  await sb.update({ ...base, stage_12_error: null }).eq("id", data.sessionId); break;
+      case "13":  await sb.update({ ...base, stage_13_error: null }).eq("id", data.sessionId); break;
+      case "13b": await sb.update({ ...base, stage_13b_error: null }).eq("id", data.sessionId); break;
+      case "14":  await sb.update({ ...base, stage_14_error: null }).eq("id", data.sessionId); break;
+      case "14b": await sb.update({ ...base, stage_14b_error: null }).eq("id", data.sessionId); break;
+      case "14c": await sb.update({ ...base, stage_14c_error: null }).eq("id", data.sessionId); break;
+      case "15":  await sb.update({ ...base, stage_15_error: null }).eq("id", data.sessionId); break;
+      case "16":  await sb.update({ ...base, stage_16_error: null }).eq("id", data.sessionId); break;
+    }
     return { ok: true };
   });
