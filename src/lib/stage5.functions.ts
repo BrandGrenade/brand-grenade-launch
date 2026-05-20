@@ -48,6 +48,8 @@ export const runStage5 = createServerFn({ method: "POST" })
         temperature: 0.7,
         sessionId: data.sessionId,
         stageLabel: "Stage 5",
+      stageNumber: "5",
+      stageName: "Insight Generation",
       });
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Stage 5 failed";

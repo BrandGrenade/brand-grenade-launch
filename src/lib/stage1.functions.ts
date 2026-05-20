@@ -9,6 +9,7 @@ const CreateSessionInput = z.object({
   category: z.string().min(1).max(200),
   strategicMode: z.string().min(1).max(200),
   briefText: z.string().min(20).max(50000),
+  devMode: z.boolean().optional(),
 });
 
 export const createSession = createServerFn({ method: "POST" })
@@ -23,6 +24,7 @@ export const createSession = createServerFn({ method: "POST" })
         brief_text: data.briefText,
         status: "running",
         current_stage: 1,
+        dev_mode: data.devMode ?? false,
       })
       .select("id")
       .single();
@@ -85,6 +87,8 @@ export const runStage1 = createServerFn({ method: "POST" })
         temperature: 0.7,
         sessionId: data.sessionId,
         stageLabel: "Stage 1",
+      stageNumber: "1",
+      stageName: "Brief Analysis",
       });
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Stage 1 failed";

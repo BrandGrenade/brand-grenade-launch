@@ -48,6 +48,8 @@ export const runStage4 = createServerFn({ method: "POST" })
         temperature: 0.7,
         sessionId: data.sessionId,
         stageLabel: "Stage 4",
+      stageNumber: "4",
+      stageName: "Strategic Universes",
       });
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Stage 4 failed";

@@ -4,6 +4,7 @@ import { useMemo, useRef, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { TopNav } from "@/components/TopNav";
 import { createSession } from "@/lib/stage1.functions";
+import { getDevModeFromStorage } from "@/lib/dev-mode";
 import {
   Collapsible,
   CollapsibleContent,
@@ -337,6 +338,7 @@ function BriefIntake() {
           category: category.trim() || "Unspecified",
           strategicMode: "Auto",
           briefText,
+          devMode: getDevModeFromStorage(),
         },
       });
       navigate({ to: "/pipeline", search: { session: sessionId } });
@@ -358,6 +360,7 @@ function BriefIntake() {
           category: category.trim() || "Unspecified",
           strategicMode: "Auto",
           briefText,
+          devMode: getDevModeFromStorage(),
         },
       });
       navigate({ to: "/pipeline", search: { session: sessionId } });

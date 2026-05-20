@@ -39,6 +39,8 @@ export const runStage11 = createServerFn({ method: "POST" })
         temperature: 0.5,
         sessionId: data.sessionId,
         stageLabel: "Stage 11",
+      stageNumber: "11",
+      stageName: "Integrity Testing",
       });
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Stage 11 failed";

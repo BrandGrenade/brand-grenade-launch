@@ -1,5 +1,6 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
+import { useDevMode, useIsAdmin } from "@/lib/dev-mode";
 
 export interface SessionContext {
   brand: string;
@@ -12,6 +13,8 @@ export function TopNav({ session }: { session?: SessionContext }) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement | null>(null);
   const navigate = useNavigate();
+  const isAdmin = useIsAdmin();
+  const { enabled: devModeOn, setEnabled: setDevMode } = useDevMode();
 
   useEffect(() => {
     if (!open) return;
@@ -55,6 +58,55 @@ export function TopNav({ session }: { session?: SessionContext }) {
         </Link>
 
         <div className="flex items-center gap-4">
+          {isAdmin && (
+            <button
+              type="button"
+              role="switch"
+              aria-checked={devModeOn}
+              onClick={() => setDevMode(!devModeOn)}
+              title="Toggle Development Mode — abbreviated AI output"
+              className="flex items-center gap-2 transition-colors"
+              style={{
+                padding: "4px 8px",
+                borderRadius: 6,
+                border: "1px solid #2A2A2A",
+                backgroundColor: devModeOn ? "rgba(200,135,58,0.15)" : "transparent",
+                color: devModeOn ? "#C8873A" : "#8A8680",
+                fontSize: 10,
+                fontWeight: 700,
+                letterSpacing: "0.10em",
+                fontFamily:
+                  'ui-monospace, "JetBrains Mono", SFMono-Regular, Menlo, monospace',
+              }}
+            >
+              <span
+                aria-hidden
+                style={{
+                  display: "inline-block",
+                  width: 22,
+                  height: 12,
+                  borderRadius: 999,
+                  backgroundColor: devModeOn ? "#C8873A" : "#2A2A2A",
+                  position: "relative",
+                  transition: "background-color 120ms ease",
+                }}
+              >
+                <span
+                  style={{
+                    position: "absolute",
+                    top: 1,
+                    left: devModeOn ? 11 : 1,
+                    width: 10,
+                    height: 10,
+                    borderRadius: 999,
+                    backgroundColor: "#0A0A0A",
+                    transition: "left 120ms ease",
+                  }}
+                />
+              </span>
+              DEV MODE
+            </button>
+          )}
           {session && (
             <div className="hidden items-center gap-3 md:flex">
               <span style={{ color: "#5A5652", fontSize: 13 }}>
