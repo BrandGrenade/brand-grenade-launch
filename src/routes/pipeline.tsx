@@ -1713,7 +1713,19 @@ function RightPanel({
         )}
       </div>
 
-      <BottomBar stage={stage} status={status} onNext={onNext} />
+      <BottomBar
+        stage={stage}
+        status={status}
+        prevStage={prevStage}
+        nextStage={nextStage}
+        nextStageStatus={nextStageStatus}
+        isViewingHistorical={!!isViewingHistorical}
+        pipelineComplete={pipelineComplete}
+        onContinue={onContinue}
+        onBack={onBack}
+        onReturnToCurrent={onBackToCurrent ?? (() => {})}
+        onViewFinal={onViewFinal}
+      />
     </section>
   );
 }
