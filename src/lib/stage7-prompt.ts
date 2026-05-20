@@ -168,7 +168,11 @@ export function buildStage7UserMessage(args: {
   sis: string;
   cmm: string;
   constraintMatrix: string;
+  enforceMinimum?: boolean;
 }): string {
+  const minimumNote = args.enforceMinimum
+    ? `\n\nIMPORTANT: You must produce a minimum of 3 and maximum of 6 distinct strategic territories. Each territory must have its own ## heading and strategic foundation statement. Do not produce fewer than 3 territories under any circumstances.`
+    : "";
   return `BRAND: ${args.brandName}
 CATEGORY: ${args.category}
 STRATEGIC MODE: ${args.strategicMode}
@@ -185,5 +189,5 @@ ${args.cmm}
 ==== STAGE 3 — STRATEGIC CONSTRAINT MATRIX ====
 ${args.constraintMatrix}
 
-Run Stage 7 synthesis on the above. Produce the full output exactly per the Stage 7 output structure: header, one Strategic Field per SIS frame, Cross-Frame Insight Redundancy Check Report, CMM Update Report if applicable, Strategic Field Set Summary, any failure routing blocks at the point of failure, and the Self-Audit.`;
+Run Stage 7 synthesis on the above. Produce the full output exactly per the Stage 7 output structure: header, one Strategic Field per SIS frame, Cross-Frame Insight Redundancy Check Report, CMM Update Report if applicable, Strategic Field Set Summary, any failure routing blocks at the point of failure, and the Self-Audit.${minimumNote}`;
 }

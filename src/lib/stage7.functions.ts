@@ -47,7 +47,7 @@ export const runStage7 = createServerFn({ method: "POST" })
       output = await callClaude({
         systemPrompt: STAGE_7_SYSTEM_PROMPT,
         userMessage,
-        maxTokens: 1500,
+        maxTokens: 3000,
         temperature: 0.7,
         sessionId: data.sessionId,
         stageLabel: "Stage 7",
