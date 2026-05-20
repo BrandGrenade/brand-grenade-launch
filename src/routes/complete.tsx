@@ -49,6 +49,9 @@ type Format = "pitch" | "consulting" | "workshop";
 function CompletePage() {
   const [format, setFormat] = useState<Format>("consulting");
   const [generating, setGenerating] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [progressLabel, setProgressLabel] = useState("");
+  const [done, setDone] = useState(false);
   const [stagesOpen, setStagesOpen] = useState(false);
   const [modalStage, setModalStage] = useState<string | null>(null);
 
