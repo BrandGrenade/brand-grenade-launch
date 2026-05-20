@@ -127,69 +127,53 @@ async function doFetch(apiKey: string, body: string): Promise<Response> {
   }
 }
 
-export async function callClaude({
-  systemPrompt,
-  userMessage,
-  maxTokens = 8192,
-  temperature = 0.5,
-  model = DEFAULT_MODEL,
-  sessionId,
-  stageLabel,
-  stageNumber,
-  stageName,
-}: CallClaudeArgs): Promise<string> {
+async function prepareCall(args: CallClaudeArgs): Promise<{ apiKey: string; body: string }> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) throw new Error("ANTHROPIC_API_KEY is not configured");
-
-  // Dev Mode: swap in the compressed prompt + cap tokens at 500.
-  const devMode = await readDevMode(sessionId);
-  let effectiveSystem = systemPrompt;
-  let effectiveMaxTokens = maxTokens;
-  if (devMode && stageNumber && stageName) {
-    effectiveSystem = buildDevModePrompt(stageNumber, stageName);
+  const devMode = await readDevMode(args.sessionId);
+  let effectiveSystem = args.systemPrompt;
+  let effectiveMaxTokens = args.maxTokens ?? 8192;
+  if (devMode && args.stageNumber && args.stageName) {
+    effectiveSystem = buildDevModePrompt(args.stageNumber, args.stageName);
     effectiveMaxTokens = 500;
   } else {
-    effectiveSystem = `${UNIVERSAL_SYSTEM_WRAPPER}\n\n${systemPrompt}`;
+    effectiveSystem = `${UNIVERSAL_SYSTEM_WRAPPER}\n\n${args.systemPrompt}`;
   }
+  return {
+    apiKey,
+    body: JSON.stringify({
+      model: args.model ?? DEFAULT_MODEL,
+      max_tokens: effectiveMaxTokens,
+      temperature: args.temperature ?? 0.5,
+      system: effectiveSystem,
+      messages: [{ role: "user", content: args.userMessage }],
+    }),
+  };
+}
 
-
-  const body = JSON.stringify({
-    model,
-    max_tokens: effectiveMaxTokens,
-    temperature,
-    system: effectiveSystem,
-    messages: [{ role: "user", content: userMessage }],
-  });
-
+async function openWithRetry(
+  apiKey: string,
+  body: string,
+  sessionId: string | undefined,
+  stageLabel: string | undefined,
+  stream: boolean
+): Promise<Response> {
   let attempt = 0;
-  const maxAttempts = 2; // initial + one retry
-  let lastError: string = "";
-
+  const maxAttempts = 2;
+  let lastError = "";
+  const bodyWithFlag = stream ? body.replace(/}$/, ',"stream":true}') : body;
   while (attempt < maxAttempts) {
     attempt++;
     try {
-      const resp = await doFetch(apiKey, body);
-
+      const resp = await doFetch(apiKey, bodyWithFlag);
       if (resp.ok) {
-        const json = (await resp.json()) as {
-          content?: Array<{ type: string; text?: string }>;
-        };
-        const output = (json.content ?? [])
-          .filter((c) => c.type === "text" && c.text)
-          .map((c) => c.text!)
-          .join("\n")
-          .trim();
-        if (!output) throw new Error("Claude returned an empty response");
         await setRetryStatus(sessionId, null);
-        return output;
+        return resp;
       }
-
-      // Non-OK response. Decide retry vs throw.
       const text = await resp.text();
       lastError = `Claude API ${resp.status}: ${text.slice(0, 500)}`;
       if (isRetryableStatus(resp.status) && attempt < maxAttempts) {
-        const label = stageLabel ?? "request";
-        await setRetryStatus(sessionId, `Connection timeout — retrying ${label}...`);
+        await setRetryStatus(sessionId, `Connection timeout — retrying ${stageLabel ?? "request"}...`);
         await new Promise((r) => setTimeout(r, RETRY_DELAY_MS));
         continue;
       }
@@ -200,10 +184,11 @@ export async function callClaude({
         e instanceof Error &&
         (e.name === "AbortError" || /aborted|timeout/i.test(e.message));
       const msg = e instanceof Error ? e.message : "network error";
-      lastError = isAbort ? `Claude API request timed out after ${REQUEST_TIMEOUT_MS / 1000}s` : `Claude API request failed: ${msg}`;
+      lastError = isAbort
+        ? `Claude API request timed out after ${REQUEST_TIMEOUT_MS / 1000}s`
+        : `Claude API request failed: ${msg}`;
       if ((isAbort || /network|fetch failed/i.test(msg)) && attempt < maxAttempts) {
-        const label = stageLabel ?? "request";
-        await setRetryStatus(sessionId, `Connection timeout — retrying ${label}...`);
+        await setRetryStatus(sessionId, `Connection timeout — retrying ${stageLabel ?? "request"}...`);
         await new Promise((r) => setTimeout(r, RETRY_DELAY_MS));
         continue;
       }
@@ -211,7 +196,68 @@ export async function callClaude({
       throw new Error(lastError);
     }
   }
-
   await setRetryStatus(sessionId, null);
   throw new Error(lastError || "Claude API call failed");
+}
+
+export async function callClaude(args: CallClaudeArgs): Promise<string> {
+  const { apiKey, body } = await prepareCall(args);
+  const resp = await openWithRetry(apiKey, body, args.sessionId, args.stageLabel, false);
+  const json = (await resp.json()) as {
+    content?: Array<{ type: string; text?: string }>;
+  };
+  const output = (json.content ?? [])
+    .filter((c) => c.type === "text" && c.text)
+    .map((c) => c.text!)
+    .join("\n")
+    .trim();
+  if (!output) throw new Error("Claude returned an empty response");
+  return output;
+}
+
+/**
+ * Streaming variant — yields text deltas as they arrive from the Anthropic
+ * Messages SSE stream. Caller is responsible for persisting the accumulated
+ * output. Retries are only attempted on the initial connection (not mid-stream).
+ */
+export async function* streamClaude(args: CallClaudeArgs): AsyncGenerator<string, void, unknown> {
+  const { apiKey, body } = await prepareCall(args);
+  const resp = await openWithRetry(apiKey, body, args.sessionId, args.stageLabel, true);
+  if (!resp.body) throw new Error("Claude streaming response had no body");
+
+  const reader = resp.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  let total = "";
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      let idx: number;
+      while ((idx = buffer.indexOf("\n")) !== -1) {
+        let line = buffer.slice(0, idx);
+        buffer = buffer.slice(idx + 1);
+        if (line.endsWith("\r")) line = line.slice(0, -1);
+        if (!line.startsWith("data:")) continue;
+        const payload = line.slice(5).trim();
+        if (!payload || payload === "[DONE]") continue;
+        try {
+          const evt = JSON.parse(payload) as {
+            type?: string;
+            delta?: { type?: string; text?: string };
+          };
+          if (evt.type === "content_block_delta" && evt.delta?.type === "text_delta" && evt.delta.text) {
+            total += evt.delta.text;
+            yield evt.delta.text;
+          }
+        } catch {
+          // ignore partial / non-JSON SSE lines
+        }
+      }
+    }
+  } finally {
+    try { reader.releaseLock(); } catch { /* noop */ }
+  }
+  if (!total.trim()) throw new Error("Claude returned an empty response");
 }
