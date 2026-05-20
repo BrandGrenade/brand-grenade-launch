@@ -215,6 +215,33 @@ export function sanitizeStageOutput(raw: string): string {
   if (!raw) return raw;
   let text = raw;
 
+  // 0. Strip bracketed metadata blocks and internal log sections.
+  text = text.replace(/\[METADATA\][\s\S]*?\[\/METADATA\]/gi, "");
+  text = text.replace(/\[SELECTION_RATIONALE_STUB\][\s\S]*?\[\/SELECTION_RATIONALE_STUB\]/gi, "");
+  text = text.replace(/={2,}\s*PRESENTATION\s+ORDER\s+LOG[\s\S]*?(?=\n={2,}\s*\S|$)/gi, "");
+  text = text.replace(/={2,}\s*SELF[-\s]AUDIT[\s\S]*?(?=\n={2,}\s*\S|$)/gi, "");
+
+  const extraLineStrips: RegExp[] = [
+    /PRESENTATION\s+ORDER\s+LOG/i,
+    /PRESENTATION\s+ORDER/i,
+    /Randomisation\s+(Status|Confirmed)/i,
+    /^\s*Card\s+\d+\s*:/i,
+    /Plain\s+Language\s+Compliance/i,
+    /Structural\s+Neutrality/i,
+    /Selection\s+Framework\s+Quality/i,
+    /internal,?\s*not\s+client[-\s]facing/i,
+    /FIELD_NAME\s*:/i,
+    /ICONIC_TIER_STATUS\s*:/i,
+    /PRESSURE_TEST_NOTE\s*:/i,
+    /Stage\s+12\s+awaiting\s+review/i,
+    /Overall\s+Readiness\s*:/i,
+    /READY\s+FOR\s+CHECKPOINT/i,
+  ];
+  text = text
+    .split("\n")
+    .filter((line) => !extraLineStrips.some((p) => p.test(line)))
+    .join("\n");
+
   // 1. Strip internal block sections (header + body until next section).
   for (const header of BLOCK_HEADER_PATTERNS) {
     text = stripBlock(text, header);
