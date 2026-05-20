@@ -4,7 +4,7 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { callClaude } from "./claude.server";
 import { STAGE_9_SYSTEM_PROMPT, buildStage9UserMessage } from "./stage9-prompt";
 
-import { countSections } from "./count-helpers";
+import { countSections, countPropositions } from "./count-helpers";
 
 const Input = z.object({ sessionId: z.string().uuid() });
 
@@ -26,8 +26,13 @@ export const runStage9 = createServerFn({ method: "POST" })
       .update({ current_stage: 9, status: "running", stage_9_error: null })
       .eq("id", data.sessionId);
 
-    const propositionCount = countSections(session.stage_8_output, 4);
-    console.log("Stage 9 proposition count:", propositionCount);
+    const propositionCount = countPropositions(session.stage_8_output);
+    console.log(
+      "Stage 9 proposition count:",
+      propositionCount,
+      "Stage 8 output length:",
+      session.stage_8_output?.length
+    );
 
     const userMessage = buildStage9UserMessage({
       brandName: session.brand_name,
