@@ -644,6 +644,11 @@ function StageIndicator({
 function RightPanel({
   stage,
   status,
+  fullOutput,
+  stage1Error,
+  tensionScore,
+  stage1bRequired,
+  onRetry,
   showRationale,
   showBrandIntel,
   onSubmitBrandIntel,
@@ -652,22 +657,65 @@ function RightPanel({
 }: {
   stage: Stage;
   status: StageStatus;
+  fullOutput: string;
+  stage1Error: string | null;
+  tensionScore: number | null;
+  stage1bRequired: boolean;
+  onRetry: () => void;
   showRationale: boolean;
   showBrandIntel: boolean;
   onSubmitBrandIntel: () => void;
   onNext: () => void;
   onConfirmCheckpoint: (stageId: string) => void;
 }) {
-  const fullOutput = STAGE_OUTPUTS[stage.id] ?? "Output pending.";
   const isRunning = status === "running";
   const isCheckpoint = status === "checkpoint";
+  const isError = status === "error";
   const text = useStreamingText(fullOutput, isRunning);
   const letter = CHECKPOINT_LETTERS[stage.id];
 
   return (
     <section className="relative flex min-w-0 flex-1 flex-col bg-background">
       <div className="flex-1 overflow-y-auto px-6 py-10 sm:px-12 sm:py-10">
-        {showRationale ? (
+        {isError && stage.id === "01" ? (
+          <div style={{ paddingBottom: 80 }}>
+            <header>
+              <span className="text-label text-primary">
+                Stage {stage.number} — {stage.name}
+              </span>
+              <h1 className="text-h2 mt-3 text-text-primary">{stage.name}</h1>
+              <p
+                className="text-body-sm mt-3"
+                style={{ color: "var(--color-destructive)" }}
+              >
+                Stage 1 failed
+              </p>
+              <hr className="my-6 h-px border-0 bg-border" />
+            </header>
+            <div
+              className="rounded-md p-5"
+              style={{
+                border: "1px solid var(--color-destructive)",
+                backgroundColor: "oklch(0.5 0.2 25 / 0.05)",
+              }}
+            >
+              <p className="text-body text-text-primary">
+                {stage1Error ?? "An unexpected error occurred."}
+              </p>
+              <button
+                type="button"
+                onClick={onRetry}
+                className="mt-4 inline-flex h-10 items-center justify-center rounded-md px-5 text-sm font-semibold transition-colors"
+                style={{
+                  backgroundColor: "var(--color-primary)",
+                  color: "var(--color-primary-foreground)",
+                }}
+              >
+                Retry Stage 1
+              </button>
+            </div>
+          </div>
+        ) : showRationale ? (
           <div style={{ paddingBottom: 80 }}>
             <SelectionRationale
               onConfirm={() => onConfirmCheckpoint(stage.id)}
@@ -681,10 +729,20 @@ function RightPanel({
           <div style={{ paddingBottom: 80 }}>
             <Checkpoint
               letter={letter}
-              showLowScoreAlert={letter === "A"}
+              showLowScoreAlert={letter === "A" && stage1bRequired}
               onConfirm={() => onConfirmCheckpoint(stage.id)}
               reviewContent={
-                <StreamedOutput text={fullOutput} streaming={false} />
+                <>
+                  {letter === "A" && tensionScore !== null && (
+                    <p
+                      className="text-body-sm mb-3"
+                      style={{ color: "var(--color-text-tertiary)" }}
+                    >
+                      Strategic Tension Score: <strong style={{ color: tensionScore >= 7 ? "var(--color-success)" : "var(--color-warning)" }}>{tensionScore}/10</strong>
+                    </p>
+                  )}
+                  <StreamedOutput text={fullOutput} streaming={false} />
+                </>
               }
             />
           </div>
