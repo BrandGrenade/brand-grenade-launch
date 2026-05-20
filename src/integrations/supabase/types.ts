@@ -27,6 +27,8 @@ export type Database = {
           stage_1_tension_score: number | null
           stage_1b_output: string | null
           stage_1b_required: boolean
+          stage_2_error: string | null
+          stage_2_output: string | null
           status: string
           strategic_mode: string
           updated_at: string
@@ -43,6 +45,8 @@ export type Database = {
           stage_1_tension_score?: number | null
           stage_1b_output?: string | null
           stage_1b_required?: boolean
+          stage_2_error?: string | null
+          stage_2_output?: string | null
           status?: string
           strategic_mode: string
           updated_at?: string
@@ -59,6 +63,8 @@ export type Database = {
           stage_1_tension_score?: number | null
           stage_1b_output?: string | null
           stage_1b_required?: boolean
+          stage_2_error?: string | null
+          stage_2_output?: string | null
           status?: string
           strategic_mode?: string
           updated_at?: string
