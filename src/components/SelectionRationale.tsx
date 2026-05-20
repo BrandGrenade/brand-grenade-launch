@@ -64,10 +64,12 @@ const FIELDS: {
 ];
 
 export function SelectionRationale({
-  selectedSMP = "Hypernova settles the books, not just the transfer — the only payments rail finance teams close their month around.",
+  selectedSMP = "",
   onConfirm,
+  submitting = false,
 }: SelectionRationaleProps) {
   const [values, setValues] = useState<Record<string, string>>({});
+
 
   const canSubmit = FIELDS.filter((f) => f.required).every(
     (f) => (values[f.key] ?? "").trim().length > 0
