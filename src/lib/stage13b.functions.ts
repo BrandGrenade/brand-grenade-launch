@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { callClaude } from "./claude.server";
+import { streamClaude } from "./claude.server";
 import { STAGE_13B_SYSTEM_PROMPT, buildStage13bUserMessage } from "./stage13b-prompt";
 import { trimBrandFitForDownstream } from "./context-trim";
 
@@ -9,7 +9,7 @@ const Input = z.object({ sessionId: z.string().uuid() });
 
 export const runStage13b = createServerFn({ method: "POST" })
   .inputValidator((i) => Input.parse(i))
-  .handler(async ({ data }): Promise<{ output: string }> => {
+  .handler(async function* ({ data }) {
     const { data: session, error } = await supabaseAdmin
       .from("sessions")
       .select(
@@ -19,15 +19,20 @@ export const runStage13b = createServerFn({ method: "POST" })
       .single();
     if (error || !session) throw new Error(`Session not found: ${error?.message ?? "no row"}`);
     if (!session.stage_13_output) throw new Error("Stage 13 output missing — cannot run Stage 13B");
-    if (session.stage_13b_output) return { output: session.stage_13b_output };
+    if (session.stage_13b_output) {
+      yield { delta: session.stage_13b_output };
+      yield { done: true as const, output: session.stage_13b_output };
+      return;
+    }
 
     await supabaseAdmin
       .from("sessions")
       .update({ current_stage: 13, status: "running", stage_13b_error: null })
       .eq("id", data.sessionId);
 
+    let output = "";
     try {
-      const output = await callClaude({
+      for await (const delta of streamClaude({
         systemPrompt: STAGE_13B_SYSTEM_PROMPT,
         userMessage: buildStage13bUserMessage({
           brandName: session.brand_name,
@@ -40,18 +45,23 @@ export const runStage13b = createServerFn({ method: "POST" })
         sessionId: data.sessionId,
         stageLabel: "Stage 13B",
         maxTokens: 2000,
-      stageNumber: "13B",
-      stageName: "Historical Validation",
-      });
-      const { error: ue } = await supabaseAdmin
-        .from("sessions")
-        .update({ stage_13b_output: output, stage_13b_error: null })
-        .eq("id", data.sessionId);
-      if (ue) throw new Error(`Failed to save Stage 13B output: ${ue.message}`);
-      return { output };
+        stageNumber: "13B",
+        stageName: "Historical Validation",
+      })) {
+        output += delta;
+        yield { delta };
+      }
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Stage 13B failed";
       await supabaseAdmin.from("sessions").update({ stage_13b_error: msg }).eq("id", data.sessionId);
       throw new Error(msg);
     }
+
+    const { error: ue } = await supabaseAdmin
+      .from("sessions")
+      .update({ stage_13b_output: output, stage_13b_error: null })
+      .eq("id", data.sessionId);
+    if (ue) throw new Error(`Failed to save Stage 13B output: ${ue.message}`);
+
+    yield { done: true as const, output };
   });

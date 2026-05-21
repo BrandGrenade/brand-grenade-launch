@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { callClaude } from "./claude.server";
+import { streamClaude } from "./claude.server";
 import { STAGE_2_SYSTEM_PROMPT, buildStage2UserMessage } from "./stage2-prompt";
 import { trimStage1ForDownstream } from "./context-trim";
 
@@ -9,7 +9,7 @@ const RunStage2Input = z.object({ sessionId: z.string().uuid() });
 
 export const runStage2 = createServerFn({ method: "POST" })
   .inputValidator((input) => RunStage2Input.parse(input))
-  .handler(async ({ data }): Promise<{ output: string }> => {
+  .handler(async function* ({ data }) {
     const { data: session, error: loadErr } = await supabaseAdmin
       .from("sessions")
       .select("brand_name, category, strategic_mode, stage_1_output, stage_1b_output, stage_2_output")
@@ -17,7 +17,11 @@ export const runStage2 = createServerFn({ method: "POST" })
       .single();
     if (loadErr || !session) throw new Error(`Session not found: ${loadErr?.message ?? "no row"}`);
     if (!session.stage_1_output) throw new Error("Stage 1 output missing — cannot run Stage 2");
-    if (session.stage_2_output) return { output: session.stage_2_output };
+    if (session.stage_2_output) {
+      yield { delta: session.stage_2_output };
+      yield { done: true as const, output: session.stage_2_output };
+      return;
+    }
 
     await supabaseAdmin
       .from("sessions")
@@ -30,9 +34,9 @@ export const runStage2 = createServerFn({ method: "POST" })
       sanitisedBrief: trimStage1ForDownstream(session.stage_1_output),
     });
 
-    let output: string;
+    let output = "";
     try {
-      output = await callClaude({
+      for await (const delta of streamClaude({
         systemPrompt: STAGE_2_SYSTEM_PROMPT,
         userMessage,
         maxTokens: 3000,
@@ -41,7 +45,10 @@ export const runStage2 = createServerFn({ method: "POST" })
         stageLabel: "Stage 2",
         stageNumber: "2",
         stageName: "Category Intelligence",
-      });
+      })) {
+        output += delta;
+        yield { delta };
+      }
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Stage 2 failed";
       await supabaseAdmin.from("sessions").update({ stage_2_error: msg }).eq("id", data.sessionId);
@@ -54,5 +61,5 @@ export const runStage2 = createServerFn({ method: "POST" })
       .eq("id", data.sessionId);
     if (updateErr) throw new Error(`Failed to save Stage 2 output: ${updateErr.message}`);
 
-    return { output };
+    yield { done: true as const, output };
   });
