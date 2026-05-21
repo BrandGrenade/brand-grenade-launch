@@ -420,7 +420,9 @@ function drawContent(doc: jsPDF, input: PdfInput) {
         setFont(doc, "bold");
         doc.setFontSize(9);
         ensureSpace(14);
-        doc.text(tracked(stripMd(b.text).toUpperCase()), M_SIDE, y + 9);
+        setTracking(doc, 0.12);
+        doc.text(stripMd(b.text).toUpperCase(), M_SIDE, y + 9);
+        clearTracking(doc);
         y += 16;
         break;
       }
