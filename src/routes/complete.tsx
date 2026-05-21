@@ -221,8 +221,7 @@ function CompletePage() {
           className="text-body"
           style={{ color: "var(--color-text-secondary)", marginBottom: 24 }}
         >
-          The same strategic output packaged three different ways. Select the
-          format appropriate for your audience.
+          Select how you want to present this strategy. Same intelligence, three different formats.
         </p>
 
         <div
@@ -238,7 +237,7 @@ function CompletePage() {
             onSelect={setFormat}
             icon={<DeckIcon />}
             title="Agency Pitch"
-            description="SMP-led, creative-territory-first, compressed. For agencies receiving the strategy to build from."
+            description="Proposition-led. Creative territory first. Built for the teams who will make the work."
             tag="~15 pages"
           />
           <FormatCard
@@ -247,7 +246,7 @@ function CompletePage() {
             onSelect={setFormat}
             icon={<DocsIcon />}
             title="Consulting Delivery"
-            description="Evidence-led, methodology-visible, comprehensive. For board-level client presentations."
+            description="Evidence-led. Methodology visible. Built for the room where decisions are made."
             tag="~25 pages"
           />
           <FormatCard
@@ -256,10 +255,11 @@ function CompletePage() {
             onSelect={setFormat}
             icon={<PeopleIcon />}
             title="Brand Workshop"
-            description="Facilitation-ready, participatory, session-structured. For internal team alignment."
+            description="Session-ready. Built for the internal conversation that turns strategy into action."
             tag="~20 pages + session guide"
           />
         </div>
+
 
         {/* Download section */}
         <div style={{ marginTop: 32 }}>
