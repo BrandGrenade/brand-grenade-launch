@@ -1961,43 +1961,13 @@ function RightPanel({
       <div className="flex-1 overflow-y-auto px-6 py-10 sm:px-12 sm:py-10">
 
         {isError && ["01","02","03","04","05","06","07","08","09","10","11","12","13","13B","14","14B","14C","15","16"].includes(stage.id) ? (
-          <div style={{ paddingBottom: 80 }}>
-            <header>
-              <span className="text-label text-primary">
-                Stage {stage.number} — {stage.name}
-              </span>
-              <h1 className="text-h2 mt-3 text-text-primary">{stage.name}</h1>
-              <p
-                className="text-body-sm mt-3"
-                style={{ color: "var(--color-destructive)" }}
-              >
-                Stage {stage.number} failed
-              </p>
-              <hr className="my-6 h-px border-0 bg-border" />
-            </header>
-            <div
-              className="rounded-md p-5"
-              style={{
-                border: "1px solid var(--color-destructive)",
-                backgroundColor: "oklch(0.5 0.2 25 / 0.05)",
-              }}
-            >
-              <p className="text-body text-text-primary">
-                {stage1Error ?? "An unexpected error occurred."}
-              </p>
-              <button
-                type="button"
-                onClick={onRetry}
-                className="mt-4 inline-flex h-10 items-center justify-center rounded-md px-5 text-sm font-semibold transition-colors"
-                style={{
-                  backgroundColor: "var(--color-primary)",
-                  color: "var(--color-primary-foreground)",
-                }}
-              >
-                Retry Stage {stage.number}
-              </button>
-            </div>
-          </div>
+          <ErrorStateCard
+            stage={stage}
+            errorMessage={stage1Error}
+            onRetry={onRetry}
+            onBack={prevStage ? onBack : undefined}
+            prevStageNumber={prevStage?.number}
+          />
         ) : showStage1bResubmit ? (
           <Stage1bResubmitView
             output={fullOutput}
