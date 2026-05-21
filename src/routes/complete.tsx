@@ -25,13 +25,6 @@ export const Route = createFileRoute("/complete")({
   }),
 });
 
-
-const BRAND = "Hypernova";
-const SMP =
-  "Hypernova settles the books, not just the transfer — the only payments rail finance teams close their month around.";
-const FIELD = "Finance Stack Trust";
-const BRAND_ROLE = "Default Integration";
-
 const STAGES = [
   "Brief Analysis",
   "Category Intelligence",
@@ -53,6 +46,14 @@ const STAGES = [
 
 type Format = "pitch" | "consulting" | "workshop";
 
+type SessionRow = {
+  id: string;
+  brand_name: string | null;
+  category: string | null;
+  selected_smp: string | null;
+  selected_smp_field_name: string | null;
+};
+
 function CompletePage() {
   const { session: sessionId } = Route.useSearch();
   const [format, setFormat] = useState<Format>("consulting");
@@ -62,31 +63,56 @@ function CompletePage() {
   const [done, setDone] = useState(false);
   const [stagesOpen, setStagesOpen] = useState(false);
   const [modalStage, setModalStage] = useState<string | null>(null);
-  const [brand, setBrand] = useState(BRAND);
+  const [session, setSession] = useState<SessionRow | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!sessionId) return;
+    if (!sessionId) {
+      setLoading(false);
+      return;
+    }
     let cancelled = false;
+    setLoading(true);
     supabase
       .from("sessions")
-      .select("brand_name")
+      .select("id, brand_name, category, selected_smp, selected_smp_field_name")
       .eq("id", sessionId)
-      .single()
-      .then(({ data }) => {
-        if (!cancelled && data?.brand_name) setBrand(data.brand_name);
+      .maybeSingle()
+      .then(({ data, error }) => {
+        if (cancelled) return;
+        if (error) console.error("Failed to load session", error);
+        setSession((data as SessionRow) ?? null);
+        setLoading(false);
+        const urlParams =
+          typeof window !== "undefined"
+            ? new URLSearchParams(window.location.search)
+            : new URLSearchParams();
+        // eslint-disable-next-line no-console
+        console.log("Final Output loading session:", {
+          sessionIdFromUrl: urlParams.get("session"),
+          sessionIdFromDb: (data as SessionRow | null)?.id,
+          brandName: (data as SessionRow | null)?.brand_name,
+          selectedSmp: (data as SessionRow | null)?.selected_smp,
+        });
       });
     return () => {
       cancelled = true;
     };
   }, [sessionId]);
 
+  const brand = session?.brand_name ?? "Untitled Brand";
+  const smp = session?.selected_smp ?? "";
+  const field = session?.selected_smp_field_name ?? session?.category ?? "";
+  const brandRole = "";
+  const hasSmp = Boolean(smp && smp.trim().length > 0);
+
   useEffect(() => {
     document.title = `${brand} Strategic Platform — Brand Grenade`;
   }, [brand]);
 
-  const smpPreview = SMP.split(" ").slice(0, 5).join(" ") + "…";
-
-
+  const smpPreview = hasSmp
+    ? smp.split(" ").slice(0, 5).join(" ") + "…"
+    : "—";
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -111,7 +137,23 @@ function CompletePage() {
       </div>
 
       <main className="mx-auto w-full max-w-[800px] px-5 sm:px-8" style={{ paddingTop: 64, paddingBottom: 96 }}>
-
+        {!sessionId && (
+          <p className="text-body" style={{ color: "#5A5652", textAlign: "center" }}>
+            No session specified.
+          </p>
+        )}
+        {sessionId && loading && (
+          <p className="text-body" style={{ color: "#5A5652", textAlign: "center" }}>
+            Loading session…
+          </p>
+        )}
+        {sessionId && !loading && !session && (
+          <p className="text-body" style={{ color: "#5A5652", textAlign: "center" }}>
+            Session not found.
+          </p>
+        )}
+        {sessionId && !loading && session && (
+          <>
         {/* Hero */}
         <section style={{ textAlign: "center", paddingBottom: 48 }}>
           <div
@@ -182,7 +224,6 @@ function CompletePage() {
           <Stat value="20" label="STAGES COMPLETED" tone="success" />
           <Stat value="3" label="CHECKPOINTS CONFIRMED" tone="success" />
           <Stat value={smpPreview} label="STRATEGIC PROPOSITION" tone="primary" />
-
         </div>
 
         {/* Selected proposition */}
@@ -198,19 +239,31 @@ function CompletePage() {
           <span className="text-label text-primary">
             THE PROPOSITION
           </span>
-          <h2
-            className="text-h1 text-text-primary"
-            style={{ margin: "16px 0 24px", lineHeight: 1.3, fontWeight: 700 }}
-          >
-            {SMP}
-          </h2>
-          <p
-            className="text-body-sm"
-            style={{ color: "var(--color-text-tertiary)" }}
-          >
-            {FIELD} — {BRAND_ROLE}
-          </p>
-
+          {hasSmp ? (
+            <>
+              <h2
+                className="text-h1 text-text-primary"
+                style={{ margin: "16px 0 24px", lineHeight: 1.3, fontWeight: 700 }}
+              >
+                {smp}
+              </h2>
+              {field && (
+                <p
+                  className="text-body-sm"
+                  style={{ color: "var(--color-text-tertiary)" }}
+                >
+                  {field}{brandRole ? ` — ${brandRole}` : ""}
+                </p>
+              )}
+            </>
+          ) : (
+            <p
+              className="text-body"
+              style={{ color: "#5A5652", margin: "16px 0 0" }}
+            >
+              Proposition not yet selected
+            </p>
+          )}
         </div>
 
         {/* Format selection */}
@@ -260,24 +313,22 @@ function CompletePage() {
           />
         </div>
 
-
         {/* Download section */}
         <div style={{ marginTop: 32 }}>
           <button
             type="button"
             onClick={async () => {
               if (generating) return;
+              if (!hasSmp) return;
               setGenerating(true);
               setDone(false);
               setProgress(0);
               setProgressLabel("Assembling strategic platform document…");
 
-              // Realistic curve: fast to ~90%, slow tail.
               const start = Date.now();
               const DURATION = 14000;
               const tick = window.setInterval(() => {
                 const t = Math.min(1, (Date.now() - start) / DURATION);
-                // ease: rapid early, decelerate. Caps at 95 until done.
                 const eased = 1 - Math.pow(1 - t, 3);
                 const pct = Math.min(95, Math.round(eased * 95));
                 setProgress(pct);
@@ -290,11 +341,11 @@ function CompletePage() {
 
               try {
                 await generateStrategicPlatformPdf({
-                  brandName: BRAND,
-                  category: FIELD,
-                  smp: SMP,
+                  brandName: brand,
+                  category: field,
+                  smp,
                   format,
-                  stage16Output: SAMPLE_STAGE_16(BRAND, SMP, format),
+                  stage16Output: SAMPLE_STAGE_16(brand, smp, format),
                 });
                 window.clearInterval(tick);
                 setProgress(100);
@@ -313,7 +364,7 @@ function CompletePage() {
                 setProgressLabel("");
               }
             }}
-            disabled={generating}
+            disabled={generating || !hasSmp}
             style={{
               width: "100%",
               height: 56,
@@ -323,7 +374,8 @@ function CompletePage() {
               color: "var(--color-background)",
               fontWeight: 600,
               fontSize: 16,
-              cursor: generating ? "wait" : "pointer",
+              cursor: generating ? "wait" : hasSmp ? "pointer" : "not-allowed",
+              opacity: hasSmp ? 1 : 0.5,
             }}
           >
             {generating
@@ -386,7 +438,6 @@ function CompletePage() {
               New brief →
             </Link>
           </div>
-
         </div>
 
         {/* Pipeline stages collapsible */}
@@ -474,8 +525,9 @@ function CompletePage() {
             </div>
           </div>
         </div>
+          </>
+        )}
       </main>
-
 
       {modalStage && (
         <StageModal
