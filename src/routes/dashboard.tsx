@@ -220,8 +220,15 @@ function fmtDate(iso: string) {
   return new Date(iso).toLocaleString();
 }
 
-function SessionsTable({ sessions }: { sessions: DbSession[] }) {
+function SessionsTable({
+  sessions,
+  onRequestDelete,
+}: {
+  sessions: DbSession[];
+  onRequestDelete: (s: DbSession) => void;
+}) {
   const headers = ["Brand", "Category", "Status", "Stage", "Updated", "Actions"];
+
   return (
     <div className="overflow-x-auto">
       <table className="w-full border-collapse">
