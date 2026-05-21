@@ -31,6 +31,27 @@ import { runStage16 } from "@/lib/stage16.functions";
 import { resetStage } from "@/lib/retry.functions";
 import { sanitizeStageOutput } from "@/lib/sanitize-output";
 
+// Consume an async-generator server function stream: forward delta chunks to a
+// setter for live rendering, return the final `done` payload.
+async function consumeStream<T extends { done: true }>(
+  gen: AsyncGenerator<{ delta?: string } | T, void, unknown>,
+  onDelta?: (text: string) => void,
+): Promise<T> {
+  let acc = "";
+  let final: T | null = null;
+  for await (const chunk of gen) {
+    if ("delta" in chunk && typeof chunk.delta === "string") {
+      acc += chunk.delta;
+      onDelta?.(acc);
+    } else if ("done" in chunk && chunk.done) {
+      final = chunk as T;
+    }
+  }
+  if (!final) throw new Error("Stream ended without a final payload");
+  return final;
+}
+
+
 // Map UI stage id (e.g. "01", "13B") to the DB stage id literal used by resetStage.
 const STAGE_ID_TO_DB: Record<string, "1" | "1b" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" | "10" | "11" | "12" | "13" | "13b" | "14" | "14b" | "14c" | "15" | "16"> = {
   "01": "1", "01B": "1b", "02": "2", "03": "3", "04": "4", "05": "5", "06": "6",
@@ -492,7 +513,7 @@ function PipelineView() {
     setStage1Error(null);
     setStatuses((p) => ({ ...p, "01": "running" }));
 
-    runStage1Fn({ data: { sessionId } })
+    (async () => consumeStream(await runStage1Fn({ data: { sessionId } }), setStage1Output))()
       .then((result) => {
         if (cancelled) return;
         setStage1Output(result.output);
@@ -523,7 +544,7 @@ function PipelineView() {
     if (statuses["01B"] !== "running") return;
     let cancelled = false;
     setStage1bLoading(true);
-    runStage1bFn({ data: { sessionId } })
+    (async () => consumeStream(await runStage1bFn({ data: { sessionId } }), setStage1bOutput))()
       .then((result) => {
         if (cancelled) return;
         setStage1bOutput(result.output);
@@ -550,7 +571,7 @@ function PipelineView() {
     let cancelled = false;
     setStage2Loading(true);
     setStage2Error(null);
-    runStage2Fn({ data: { sessionId } })
+    (async () => consumeStream(await runStage2Fn({ data: { sessionId } }), setStage2Output))()
       .then((result) => {
         if (cancelled) return;
         setStage2Output(result.output);
@@ -579,7 +600,7 @@ function PipelineView() {
     let cancelled = false;
     setStage3Loading(true);
     setStage3Error(null);
-    runStage3Fn({ data: { sessionId } })
+    (async () => consumeStream(await runStage3Fn({ data: { sessionId } }), setStage3Output))()
       .then((result) => {
         if (cancelled) return;
         setStage3Output(result.output);
@@ -608,7 +629,7 @@ function PipelineView() {
     let cancelled = false;
     setStage4Loading(true);
     setStage4Error(null);
-    runStage4Fn({ data: { sessionId } })
+    (async () => consumeStream(await runStage4Fn({ data: { sessionId } }), setStage4Output))()
       .then((result) => {
         if (cancelled) return;
         setStage4Output(result.output);
@@ -637,7 +658,7 @@ function PipelineView() {
     let cancelled = false;
     setStage5Loading(true);
     setStage5Error(null);
-    runStage5Fn({ data: { sessionId } })
+    (async () => consumeStream(await runStage5Fn({ data: { sessionId } }), setStage5Output))()
       .then((result) => {
         if (cancelled) return;
         setStage5Output(result.output);
@@ -665,7 +686,7 @@ function PipelineView() {
     let cancelled = false;
     setStage6Loading(true);
     setStage6Error(null);
-    runStage6Fn({ data: { sessionId } })
+    (async () => consumeStream(await runStage6Fn({ data: { sessionId } }), setStage6Output))()
       .then((result) => {
         if (cancelled) return;
         setStage6Output(result.output);
@@ -693,7 +714,7 @@ function PipelineView() {
     let cancelled = false;
     setStage7Loading(true);
     setStage7Error(null);
-    runStage7Fn({ data: { sessionId } })
+    (async () => consumeStream(await runStage7Fn({ data: { sessionId } }), setStage7Output))()
       .then((result) => {
         if (cancelled) return;
         setStage7Output(result.output);
@@ -721,7 +742,7 @@ function PipelineView() {
     let cancelled = false;
     setStage8Loading(true);
     setStage8Error(null);
-    runStage8Fn({ data: { sessionId } })
+    (async () => consumeStream(await runStage8Fn({ data: { sessionId } }), setStage8Output))()
       .then((result) => {
         if (cancelled) return;
         setStage8Output(result.output);
@@ -746,7 +767,7 @@ function PipelineView() {
     let cancelled = false;
     setStage9Loading(true);
     setStage9Error(null);
-    runStage9Fn({ data: { sessionId } })
+    (async () => consumeStream(await runStage9Fn({ data: { sessionId } }), setStage9Output))()
       .then((result) => {
         if (cancelled) return;
         setStage9Output(result.output);
@@ -772,7 +793,7 @@ function PipelineView() {
     let cancelled = false;
     setStage10Loading(true);
     setStage10Error(null);
-    runStage10Fn({ data: { sessionId } })
+    (async () => consumeStream(await runStage10Fn({ data: { sessionId } }), setStage10Output))()
       .then((result) => {
         if (cancelled) return;
         setStage10Output(result.output);
@@ -798,7 +819,7 @@ function PipelineView() {
     let cancelled = false;
     setStage11Loading(true);
     setStage11Error(null);
-    runStage11Fn({ data: { sessionId } })
+    (async () => consumeStream(await runStage11Fn({ data: { sessionId } }), setStage11Output))()
       .then((result) => {
         if (cancelled) return;
         setStage11Output(result.output);
@@ -824,7 +845,7 @@ function PipelineView() {
     let cancelled = false;
     setStage12Loading(true);
     setStage12Error(null);
-    runStage12Fn({ data: { sessionId } })
+    (async () => consumeStream(await runStage12Fn({ data: { sessionId } }), setStage12Output))()
       .then((result) => {
         if (cancelled) return;
         setStage12Output(result.output);
@@ -847,7 +868,7 @@ function PipelineView() {
     let cancelled = false;
     setStage13Loading(true);
     setStage13Error(null);
-    runStage13Fn({ data: { sessionId } })
+    (async () => consumeStream(await runStage13Fn({ data: { sessionId } }), setStage13Output))()
       .then((result) => {
         if (cancelled) return;
         setStage13Output(result.output);
@@ -870,7 +891,7 @@ function PipelineView() {
     let cancelled = false;
     setStage13bLoading(true);
     setStage13bError(null);
-    runStage13bFn({ data: { sessionId } })
+    (async () => consumeStream(await runStage13bFn({ data: { sessionId } }), setStage13bOutput))()
       .then((result) => {
         if (cancelled) return;
         setStage13bOutput(result.output);
@@ -893,7 +914,7 @@ function PipelineView() {
     let cancelled = false;
     setStage14Loading(true);
     setStage14Error(null);
-    runStage14Fn({ data: { sessionId } })
+    (async () => consumeStream(await runStage14Fn({ data: { sessionId } }), setStage14Output))()
       .then((result) => {
         if (cancelled) return;
         setStage14Output(result.output);
@@ -916,7 +937,7 @@ function PipelineView() {
     let cancelled = false;
     setStage14bLoading(true);
     setStage14bError(null);
-    runStage14bFn({ data: { sessionId } })
+    (async () => consumeStream(await runStage14bFn({ data: { sessionId } }), setStage14bOutput))()
       .then((result) => {
         if (cancelled) return;
         setStage14bOutput(result.output);
@@ -939,7 +960,7 @@ function PipelineView() {
     let cancelled = false;
     setStage14cLoading(true);
     setStage14cError(null);
-    runStage14cFn({ data: { sessionId } })
+    (async () => consumeStream(await runStage14cFn({ data: { sessionId } }), setStage14cOutput))()
       .then((result) => {
         if (cancelled) return;
         setStage14cOutput(result.output);
@@ -962,7 +983,7 @@ function PipelineView() {
     let cancelled = false;
     setStage15Loading(true);
     setStage15Error(null);
-    runStage15Fn({ data: { sessionId } })
+    (async () => consumeStream(await runStage15Fn({ data: { sessionId } }), setStage15Output))()
       .then((result) => {
         if (cancelled) return;
         setStage15Output(result.output);
@@ -985,7 +1006,7 @@ function PipelineView() {
     let cancelled = false;
     setStage16Loading(true);
     setStage16Error(null);
-    runStage16Fn({ data: { sessionId, format: "consulting" } })
+    (async () => consumeStream(await runStage16Fn({ data: { sessionId, format: "consulting" } }), setStage16Output))()
       .then((result) => {
         if (cancelled) return;
         setStage16Output(result.output);
