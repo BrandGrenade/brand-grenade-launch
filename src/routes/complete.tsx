@@ -330,7 +330,7 @@ function CompletePage() {
               ? done
                 ? "Document ready ✓"
                 : "Generating PDF…"
-              : "Download Strategic Platform Document ↓"}
+              : `Download ${brand} Strategic Platform ↓`}
           </button>
 
           {generating && (
@@ -376,16 +376,17 @@ function CompletePage() {
               flexWrap: "wrap",
             }}
           >
-            <TextLink color="primary">View in browser</TextLink>
-            <TextLink>Copy shareable link</TextLink>
+            <TextLink color="primary">Read in browser</TextLink>
+            <TextLink>Share this strategy</TextLink>
             <Link
               to="/brief"
               className="text-body-sm transition-colors hover:text-text-primary"
               style={{ color: "var(--color-text-secondary)" }}
             >
-              Start new run
+              New brief →
             </Link>
           </div>
+
         </div>
 
         {/* Pipeline stages collapsible */}
