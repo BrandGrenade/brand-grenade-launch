@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { TopNav } from "@/components/TopNav";
+import { BrandGrenadeIcon } from "@/components/BrandGrenadeIcon";
 import { supabase } from "@/integrations/supabase/client";
 import { generateStrategicPlatformPdf } from "@/lib/pdf-generator";
 import { runStage16 } from "@/lib/stage16.functions";
@@ -159,25 +160,13 @@ function CompletePage() {
         {/* Hero */}
         <section style={{ textAlign: "center", paddingBottom: 48 }}>
           <div
-            aria-hidden
             style={{
-              display: "inline-grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: 4,
-              width: 32,
-              height: 32,
+              display: "flex",
+              justifyContent: "center",
               marginBottom: 24,
             }}
           >
-            {[0, 1, 2, 3].map((i) => (
-              <span
-                key={i}
-                style={{
-                  backgroundColor: "var(--color-primary)",
-                  borderRadius: 2,
-                }}
-              />
-            ))}
+            <BrandGrenadeIcon size={40} />
           </div>
           <div>
             <span
