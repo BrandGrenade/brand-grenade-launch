@@ -64,10 +64,15 @@ function setFont(doc: jsPDF, weight: "normal" | "bold" | "italic" = "normal") {
 function setMono(doc: jsPDF) {
   doc.setFont("courier", "normal");
 }
-function tracked(text: string, factor = 1): string {
-  // Hair-space inter-letter tracking simulation.
-  const spacer = factor > 1 ? "\u2009" : "\u200A";
-  return text.split("").join(spacer);
+/** Set letter-spacing in em (relative to current font size, pt-based). */
+function setTracking(doc: jsPDF, em: number) {
+  const size = doc.getFontSize();
+  // @ts-expect-error - charSpace exists on jsPDF
+  doc.setCharSpace(em * size);
+}
+function clearTracking(doc: jsPDF) {
+  // @ts-expect-error - charSpace exists on jsPDF
+  doc.setCharSpace(0);
 }
 function monthYear(d = new Date()): string {
   return d.toLocaleDateString("en-GB", { month: "long", year: "numeric" });
