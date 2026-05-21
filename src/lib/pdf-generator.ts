@@ -67,11 +67,9 @@ function setMono(doc: jsPDF) {
 /** Set letter-spacing in em (relative to current font size, pt-based). */
 function setTracking(doc: jsPDF, em: number) {
   const size = doc.getFontSize();
-  // @ts-expect-error - charSpace exists on jsPDF
   doc.setCharSpace(em * size);
 }
 function clearTracking(doc: jsPDF) {
-  // @ts-expect-error - charSpace exists on jsPDF
   doc.setCharSpace(0);
 }
 function monthYear(d = new Date()): string {
