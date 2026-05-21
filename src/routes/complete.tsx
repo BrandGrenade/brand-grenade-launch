@@ -105,7 +105,7 @@ function CompletePage() {
 
   const brand = session?.brand_name ?? "Untitled Brand";
   const smp = session?.selected_smp ?? "";
-  const field = session?.selected_smp_field_name ?? session?.category ?? "";
+  const field = session?.category ?? session?.selected_smp_field_name ?? "";
   const brandRole = "";
   const hasSmp = Boolean(smp && smp.trim().length > 0);
 
