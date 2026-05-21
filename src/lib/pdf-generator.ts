@@ -539,8 +539,9 @@ function drawContent(doc: jsPDF, input: PdfInput) {
 // ─── Public entry ───────────────────────────────────────────────────────
 export async function generateStrategicPlatformPdf(input: PdfInput) {
   const doc = new jsPDF({ unit: "pt", format: "a4", compress: true });
+  const iconDataUrl = await loadIconDataUrl();
 
-  drawCover(doc, input);
+  drawCover(doc, input, iconDataUrl);
   drawContent(doc, input);
 
   const date = new Date().toISOString().slice(0, 10);
