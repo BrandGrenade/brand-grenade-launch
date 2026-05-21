@@ -225,19 +225,19 @@ function drawPropositionReveal(doc: jsPDF, smp: string) {
 
   doc.setTextColor(C_WHITE);
   setFont(doc, "bold");
-  doc.setFontSize(28); // ~36px screen
-  const maxW = 460;
+  doc.setFontSize(36); // 48px screen ≈ 36pt
+  const maxW = 420; // ~560px screen
   const lines = doc.splitTextToSize(stripMd(smp), maxW) as string[];
-  const lh = 28 * 1.3;
+  const lh = 36 * 1.25;
   const totalH = lines.length * lh;
   const startY = (PAGE_H - totalH) / 2;
   lines.forEach((ln, i) => {
     doc.text(ln, PAGE_W / 2, startY + i * lh, { align: "center" });
   });
 
-  // 32px gap then amber rule 48x2 centred
+  // 40px gap then amber rule 60x2 centred
   doc.setFillColor(C_ACCENT);
-  doc.rect(PAGE_W / 2 - 24, startY + totalH + 26, 48, 2, "F");
+  doc.rect(PAGE_W / 2 - 30, startY + totalH + 30, 60, 2, "F");
 }
 
 // ─── Content blocks ─────────────────────────────────────────────────────
