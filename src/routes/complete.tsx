@@ -57,6 +57,7 @@ type SessionRow = {
 
 function CompletePage() {
   const { session: sessionId } = Route.useSearch();
+  const runStage16Fn = useServerFn(runStage16);
   const [format, setFormat] = useState<Format>("consulting");
   const [generating, setGenerating] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -341,12 +342,23 @@ function CompletePage() {
               }, 200);
 
               try {
+                if (!sessionId) throw new Error("Missing session id");
+                setProgressLabel(`Generating ${format} document…`);
+                let stage16Output = "";
+                const gen = await runStage16Fn({ data: { sessionId, format } });
+                for await (const chunk of gen) {
+                  if (typeof chunk.delta === "string") {
+                    stage16Output += chunk.delta;
+                  } else if (chunk.done) {
+                    stage16Output = chunk.output;
+                  }
+                }
                 await generateStrategicPlatformPdf({
                   brandName: brand,
                   category: field,
                   smp,
                   format,
-                  stage16Output: SAMPLE_STAGE_16(brand, smp, format),
+                  stage16Output,
                 });
                 window.clearInterval(tick);
                 setProgress(100);
