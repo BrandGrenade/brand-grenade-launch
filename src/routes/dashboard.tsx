@@ -1,7 +1,24 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { MoreHorizontal } from "lucide-react";
+import { toast } from "sonner";
 import { TopNav } from "@/components/TopNav";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+} from "@/components/ui/alert-dialog";
+
 
 export const Route = createFileRoute("/dashboard")({
   component: Dashboard,
@@ -49,6 +66,27 @@ function mapStatus(s: string): UIStatus {
 function Dashboard() {
   const [sessions, setSessions] = useState<DbSession[]>([]);
   const [loading, setLoading] = useState(true);
+  const [pendingDelete, setPendingDelete] = useState<DbSession | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    if (!pendingDelete) return;
+    setDeleting(true);
+    const id = pendingDelete.id;
+    const { error } = await supabase.from("sessions").delete().eq("id", id);
+    setDeleting(false);
+    if (error) {
+      toast.error("Failed to delete session");
+      return;
+    }
+    setSessions((prev) => prev.filter((s) => s.id !== id));
+    setPendingDelete(null);
+    toast.success("Session deleted", {
+      duration: 3000,
+      style: { color: "#4A7C59" },
+    });
+  };
+
 
   useEffect(() => {
     let active = true;
@@ -134,14 +172,70 @@ function Dashboard() {
             ) : sessions.length === 0 ? (
               <EmptyState />
             ) : (
-              <SessionsTable sessions={sessions} />
+              <SessionsTable sessions={sessions} onRequestDelete={setPendingDelete} />
             )}
           </div>
         </div>
       </main>
+
+      <AlertDialog
+        open={pendingDelete !== null}
+        onOpenChange={(open) => {
+          if (!open && !deleting) setPendingDelete(null);
+        }}
+      >
+        <AlertDialogContent
+          className="border-0 p-0 sm:max-w-[400px]"
+          style={{
+            backgroundColor: "#1C1C1C",
+            border: "1px solid #7C3A3A",
+            borderRadius: 12,
+            padding: 32,
+          }}
+        >
+          <AlertDialogHeader>
+            <AlertDialogTitle asChild>
+              <h3 className="text-h3" style={{ color: "#F0EDE8" }}>
+                Delete this session?
+              </h3>
+            </AlertDialogTitle>
+            <AlertDialogDescription
+              className="text-body"
+              style={{ color: "#8A8680", marginTop: 8 }}
+            >
+              This will permanently delete the {pendingDelete?.brand_name ?? ""} session and all
+              its pipeline outputs. This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter
+            className="flex flex-row justify-end gap-3 sm:space-x-0"
+            style={{ marginTop: 24 }}
+          >
+            <button
+              type="button"
+              disabled={deleting}
+              onClick={() => setPendingDelete(null)}
+              className="inline-flex h-9 items-center justify-center rounded-lg px-4 text-[13px] font-medium transition-colors hover:bg-[var(--color-surface-2)] disabled:opacity-50"
+              style={{ border: "1px solid var(--color-border)", color: "var(--color-text-primary)" }}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              disabled={deleting}
+              onClick={handleDelete}
+              className="inline-flex h-9 items-center justify-center rounded-lg px-4 text-[13px] transition-opacity hover:opacity-90 disabled:opacity-50"
+              style={{ backgroundColor: "#7C3A3A", color: "#F0EDE8", fontWeight: 600 }}
+            >
+              {deleting ? "Deleting…" : "Delete permanently"}
+            </button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
+
 
 function GridIcon() {
   return (
@@ -203,8 +297,15 @@ function fmtDate(iso: string) {
   return new Date(iso).toLocaleString();
 }
 
-function SessionsTable({ sessions }: { sessions: DbSession[] }) {
+function SessionsTable({
+  sessions,
+  onRequestDelete,
+}: {
+  sessions: DbSession[];
+  onRequestDelete: (s: DbSession) => void;
+}) {
   const headers = ["Brand", "Category", "Status", "Stage", "Updated", "Actions"];
+
   return (
     <div className="overflow-x-auto">
       <table className="w-full border-collapse">
@@ -241,28 +342,40 @@ function SessionsTable({ sessions }: { sessions: DbSession[] }) {
                 </td>
                 <td className="text-body px-4 py-4 text-text-secondary">{fmtDate(s.updated_at)}</td>
                 <td className="px-4 py-4">
-                  <div className="flex items-center gap-3">
-                    {ui === "complete" && (
-                      <Link
-                        to="/complete"
-                        search={{ session: s.id }}
-                        className="text-body font-medium text-primary transition-colors hover:text-primary-hover"
+                  <div className="flex items-center justify-end">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger
+                        aria-label="Session actions"
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-md text-text-secondary transition-colors hover:bg-[var(--color-surface-2)] hover:text-text-primary focus:outline-none"
                       >
-                        View document
-                      </Link>
-                    )}
-                    <Link
-                      to="/pipeline"
-                      search={{ session: s.id }}
-                      className="text-body font-medium text-primary transition-colors hover:text-primary-hover"
-                    >
-                      {ui === "complete" ? "View workflow" : "Continue"}
-                    </Link>
+                        <MoreHorizontal className="h-4 w-4" />
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-44">
+                        <DropdownMenuItem asChild>
+                          <Link
+                            to={ui === "complete" ? "/complete" : "/pipeline"}
+                            search={{ session: s.id }}
+                          >
+                            {ui === "complete" ? "View" : "Continue"}
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onSelect={(e) => {
+                            e.preventDefault();
+                            onRequestDelete(s);
+                          }}
+                          style={{ color: "#7C3A3A" }}
+                        >
+                          Delete session
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 </td>
               </tr>
             );
           })}
+
         </tbody>
       </table>
     </div>
