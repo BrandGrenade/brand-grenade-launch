@@ -64,10 +64,13 @@ function setFont(doc: jsPDF, weight: "normal" | "bold" | "italic" = "normal") {
 function setMono(doc: jsPDF) {
   doc.setFont("courier", "normal");
 }
-function tracked(text: string, factor = 1): string {
-  // Hair-space inter-letter tracking simulation.
-  const spacer = factor > 1 ? "\u2009" : "\u200A";
-  return text.split("").join(spacer);
+/** Set letter-spacing in em (relative to current font size, pt-based). */
+function setTracking(doc: jsPDF, em: number) {
+  const size = doc.getFontSize();
+  doc.setCharSpace(em * size);
+}
+function clearTracking(doc: jsPDF) {
+  doc.setCharSpace(0);
 }
 function monthYear(d = new Date()): string {
   return d.toLocaleDateString("en-GB", { month: "long", year: "numeric" });
@@ -88,38 +91,73 @@ function normaliseForMatch(s: string): string {
 }
 
 // ─── Cover ──────────────────────────────────────────────────────────────
-function drawCover(doc: jsPDF, input: PdfInput) {
+async function loadIconDataUrl(): Promise<string | null> {
+  try {
+    const res = await fetch("/brand-grenade-icon.png");
+    if (!res.ok) return null;
+    const blob = await res.blob();
+    return await new Promise((resolve) => {
+      const r = new FileReader();
+      r.onloadend = () => resolve((r.result as string) ?? null);
+      r.onerror = () => resolve(null);
+      r.readAsDataURL(blob);
+    });
+  } catch {
+    return null;
+  }
+}
+
+function drawCover(doc: jsPDF, input: PdfInput, iconDataUrl: string | null) {
   doc.setFillColor(C_DARK);
   doc.rect(0, 0, PAGE_W, PAGE_H, "F");
 
-  // Top-left BRAND GRENADE
+  // Top-left lockup: [icon 28pt] [BRAND GRENADE]
+  const iconSize = 28;
+  const wordmarkBaseline = M_TOP;
+  if (iconDataUrl) {
+    try {
+      doc.addImage(
+        iconDataUrl,
+        "PNG",
+        M_SIDE,
+        wordmarkBaseline - iconSize + 3,
+        iconSize,
+        iconSize,
+      );
+    } catch {
+      /* ignore */
+    }
+  }
   doc.setTextColor(C_WHITE);
   setFont(doc, "bold");
-  doc.setFontSize(10);
-  doc.text(tracked("BRAND GRENADE", 1.2), M_SIDE, M_TOP);
+  doc.setFontSize(11);
+  setTracking(doc, 0.06);
+  const wordmarkX = M_SIDE + (iconDataUrl ? iconSize + 10 : 0);
+  doc.text("BRAND GRENADE", wordmarkX, wordmarkBaseline - 8);
+  clearTracking(doc);
 
   // Centre stack
   const cy = PAGE_H / 2;
 
   doc.setTextColor(C_ACCENT);
   setFont(doc, "bold");
-  doc.setFontSize(10);
-  doc.text(tracked(DOC_LABEL[input.format], 1.1), PAGE_W / 2, cy - 36, {
-    align: "center",
-  });
+  doc.setFontSize(11);
+  setTracking(doc, 0.08);
+  doc.text(DOC_LABEL[input.format], PAGE_W / 2, cy - 36, { align: "center" });
+  clearTracking(doc);
 
   doc.setTextColor(C_TEXT_3);
   setFont(doc, "normal");
-  doc.setFontSize(14);
+  doc.setFontSize(13);
   doc.text(input.category || "Strategic Platform", PAGE_W / 2, cy - 4, {
     align: "center",
   });
 
-  // 40px gap then amber rule 48x2
+  // amber rule 48x2 centred
   doc.setFillColor(C_ACCENT);
   doc.rect(PAGE_W / 2 - 24, cy + 28, 48, 2, "F");
 
-  // 40px gap then month/year
+  // month/year
   doc.setTextColor(C_DARK_FOOT);
   setFont(doc, "normal");
   doc.setFontSize(10);
@@ -129,7 +167,9 @@ function drawCover(doc: jsPDF, input: PdfInput) {
   doc.setTextColor(C_DARK_FOOT);
   setFont(doc, "normal");
   doc.setFontSize(9);
-  doc.text(tracked("CONFIDENTIAL"), M_SIDE, PAGE_H - M_BOTTOM);
+  setTracking(doc, 0.08);
+  doc.text("CONFIDENTIAL", M_SIDE, PAGE_H - M_BOTTOM);
+  clearTracking(doc);
   doc.text(
     "Brand Grenade Strategy Intelligence System",
     PAGE_W - M_SIDE,
@@ -137,6 +177,7 @@ function drawCover(doc: jsPDF, input: PdfInput) {
     { align: "right" },
   );
 }
+
 
 // ─── Section Opener Page ────────────────────────────────────────────────
 function drawSectionOpener(
@@ -184,19 +225,19 @@ function drawPropositionReveal(doc: jsPDF, smp: string) {
 
   doc.setTextColor(C_WHITE);
   setFont(doc, "bold");
-  doc.setFontSize(28); // ~36px screen
-  const maxW = 460;
+  doc.setFontSize(36); // 48px screen ≈ 36pt
+  const maxW = 420; // ~560px screen
   const lines = doc.splitTextToSize(stripMd(smp), maxW) as string[];
-  const lh = 28 * 1.3;
+  const lh = 36 * 1.25;
   const totalH = lines.length * lh;
   const startY = (PAGE_H - totalH) / 2;
   lines.forEach((ln, i) => {
     doc.text(ln, PAGE_W / 2, startY + i * lh, { align: "center" });
   });
 
-  // 32px gap then amber rule 48x2 centred
+  // 40px gap then amber rule 60x2 centred
   doc.setFillColor(C_ACCENT);
-  doc.rect(PAGE_W / 2 - 24, startY + totalH + 26, 48, 2, "F");
+  doc.rect(PAGE_W / 2 - 30, startY + totalH + 30, 60, 2, "F");
 }
 
 // ─── Content blocks ─────────────────────────────────────────────────────
@@ -383,7 +424,7 @@ function drawContent(doc: jsPDF, input: PdfInput) {
           doc.rect(0, 0, PAGE_W, M_TOP - 8, "F");
           drawChrome();
         }
-        const size = 20;
+        const size = 18;
         const lh = size * 1.25;
         ensureSpace(lh + 24);
         y += 12; // top margin
@@ -417,7 +458,9 @@ function drawContent(doc: jsPDF, input: PdfInput) {
         setFont(doc, "bold");
         doc.setFontSize(9);
         ensureSpace(14);
-        doc.text(tracked(stripMd(b.text).toUpperCase()), M_SIDE, y + 9);
+        setTracking(doc, 0.12);
+        doc.text(stripMd(b.text).toUpperCase(), M_SIDE, y + 9);
+        clearTracking(doc);
         y += 16;
         break;
       }
@@ -496,8 +539,9 @@ function drawContent(doc: jsPDF, input: PdfInput) {
 // ─── Public entry ───────────────────────────────────────────────────────
 export async function generateStrategicPlatformPdf(input: PdfInput) {
   const doc = new jsPDF({ unit: "pt", format: "a4", compress: true });
+  const iconDataUrl = await loadIconDataUrl();
 
-  drawCover(doc, input);
+  drawCover(doc, input, iconDataUrl);
   drawContent(doc, input);
 
   const date = new Date().toISOString().slice(0, 10);
