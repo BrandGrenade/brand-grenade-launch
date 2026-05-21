@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
+import { BrandGrenadeIcon } from "@/components/BrandGrenadeIcon";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -130,6 +131,9 @@ function Index() {
       <section className="order-2 flex w-full flex-col bg-background px-6 py-16 sm:px-10 lg:order-1 lg:w-[55%] lg:p-20">
         {/* Top — brand mark */}
         <div>
+          <div style={{ marginBottom: 16 }}>
+            <BrandGrenadeIcon size={48} />
+          </div>
           <h1
             className="text-display text-text-primary"
             style={{ fontSize: "clamp(32px, 5vw, 48px)" }}
