@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { useDevMode, useIsAdmin } from "@/lib/dev-mode";
+import { BrandGrenadeIcon } from "@/components/BrandGrenadeIcon";
 
 export interface SessionContext {
   brand: string;
