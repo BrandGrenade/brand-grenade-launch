@@ -1961,43 +1961,13 @@ function RightPanel({
       <div className="flex-1 overflow-y-auto px-6 py-10 sm:px-12 sm:py-10">
 
         {isError && ["01","02","03","04","05","06","07","08","09","10","11","12","13","13B","14","14B","14C","15","16"].includes(stage.id) ? (
-          <div style={{ paddingBottom: 80 }}>
-            <header>
-              <span className="text-label text-primary">
-                Stage {stage.number} — {stage.name}
-              </span>
-              <h1 className="text-h2 mt-3 text-text-primary">{stage.name}</h1>
-              <p
-                className="text-body-sm mt-3"
-                style={{ color: "var(--color-destructive)" }}
-              >
-                Stage {stage.number} failed
-              </p>
-              <hr className="my-6 h-px border-0 bg-border" />
-            </header>
-            <div
-              className="rounded-md p-5"
-              style={{
-                border: "1px solid var(--color-destructive)",
-                backgroundColor: "oklch(0.5 0.2 25 / 0.05)",
-              }}
-            >
-              <p className="text-body text-text-primary">
-                {stage1Error ?? "An unexpected error occurred."}
-              </p>
-              <button
-                type="button"
-                onClick={onRetry}
-                className="mt-4 inline-flex h-10 items-center justify-center rounded-md px-5 text-sm font-semibold transition-colors"
-                style={{
-                  backgroundColor: "var(--color-primary)",
-                  color: "var(--color-primary-foreground)",
-                }}
-              >
-                Retry Stage {stage.number}
-              </button>
-            </div>
-          </div>
+          <ErrorStateCard
+            stage={stage}
+            errorMessage={stage1Error}
+            onRetry={onRetry}
+            onBack={prevStage ? onBack : undefined}
+            prevStageNumber={prevStage?.number}
+          />
         ) : showStage1bResubmit ? (
           <Stage1bResubmitView
             output={fullOutput}
@@ -2058,6 +2028,9 @@ function RightPanel({
             </header>
 
             <article style={{ paddingBottom: 80 }}>
+              {isRunning && !text ? (
+                <ProgressMessages stageName={stage.name} />
+              ) : null}
               <StreamedOutput text={text} streaming={isRunning} />
               {isRunning ? (
                 <StallWatcher stageKey={stage.id} onAutoRetry={onRetry} />
@@ -2747,14 +2720,14 @@ function StallWatcher({
 
   useEffect(() => {
     setPhase("silent");
-    const warnTimer = window.setTimeout(() => setPhase("warning"), 45_000);
+    const warnTimer = window.setTimeout(() => setPhase("warning"), 15_000);
     const retryTimer = window.setTimeout(() => {
       if (!autoRetriedRef.current.has(stageKey)) {
         autoRetriedRef.current.add(stageKey);
         setPhase("auto-retrying");
         onAutoRetry();
       }
-    }, 90_000);
+    }, 30_000);
     return () => {
       window.clearTimeout(warnTimer);
       window.clearTimeout(retryTimer);
@@ -2809,6 +2782,152 @@ function StallWatcher({
         >
           Retry this stage
         </button>
+      </div>
+    </div>
+  );
+}
+
+function ProgressMessages({ stageName }: { stageName: string }) {
+  const [tick, setTick] = useState(0);
+  useEffect(() => {
+    const t1 = window.setTimeout(() => setTick(1), 3_000);
+    const t2 = window.setTimeout(() => setTick(2), 8_000);
+    const t3 = window.setTimeout(() => setTick(3), 15_000);
+    return () => {
+      window.clearTimeout(t1);
+      window.clearTimeout(t2);
+      window.clearTimeout(t3);
+    };
+  }, []);
+  if (tick === 0) return null;
+  const msg =
+    tick === 1
+      ? "Analysing brief…"
+      : tick === 2
+        ? `Building ${stageName}…`
+        : "This stage takes a little longer for complex briefs…";
+  const color = tick === 3 ? "#5A5652" : "#8A8680";
+  return (
+    <div style={{ padding: "32px 0", textAlign: "center" }}>
+      <p className={tick === 3 ? "text-body-sm" : "text-body"} style={{ color }}>
+        {msg}
+      </p>
+    </div>
+  );
+}
+
+function ErrorStateCard({
+  stage,
+  errorMessage,
+  onRetry,
+  onBack,
+  prevStageNumber,
+}: {
+  stage: Stage;
+  errorMessage: string | null;
+  onRetry: () => void;
+  onBack?: () => void;
+  prevStageNumber?: string;
+}) {
+  const [showDetails, setShowDetails] = useState(false);
+  return (
+    <div style={{ margin: "40px 48px", paddingBottom: 80 }}>
+      <div
+        style={{
+          background: "#1C1C1C",
+          border: "1px solid #7C3A3A",
+          borderRadius: 12,
+          padding: 32,
+          textAlign: "center",
+        }}
+      >
+        <div style={{ fontSize: 32, color: "#7C3A3A", lineHeight: 1 }}>⚠</div>
+        <h3 className="text-h3" style={{ color: "#F0EDE8", marginTop: 16 }}>
+          Stage {stage.number} didn't complete
+        </h3>
+        <p className="text-body" style={{ color: "#8A8680", marginTop: 8 }}>
+          The generation was interrupted. This is usually a temporary issue.
+        </p>
+        {errorMessage ? (
+          <div style={{ marginTop: 16 }}>
+            <button
+              type="button"
+              onClick={() => setShowDetails((s) => !s)}
+              className="text-body-sm"
+              style={{
+                background: "transparent",
+                border: "none",
+                color: "#5A5652",
+                cursor: "pointer",
+                textDecoration: "underline",
+              }}
+            >
+              {showDetails ? "Hide error details" : "Show error details"}
+            </button>
+            {showDetails ? (
+              <pre
+                style={{
+                  marginTop: 8,
+                  padding: 12,
+                  fontFamily: "ui-monospace, SFMono-Regular, monospace",
+                  fontSize: 12,
+                  color: "#5A5652",
+                  background: "#0A0A0A",
+                  border: "1px solid #2A2A2A",
+                  borderRadius: 6,
+                  whiteSpace: "pre-wrap",
+                  textAlign: "left",
+                }}
+              >
+                {errorMessage}
+              </pre>
+            ) : null}
+          </div>
+        ) : null}
+        <div
+          style={{
+            marginTop: 24,
+            display: "flex",
+            gap: 12,
+            justifyContent: "center",
+          }}
+        >
+          <button
+            type="button"
+            onClick={onRetry}
+            style={{
+              height: 40,
+              padding: "0 20px",
+              borderRadius: 8,
+              background: "#C8873A",
+              color: "#0A0A0A",
+              border: "none",
+              fontSize: 14,
+              fontWeight: 600,
+              cursor: "pointer",
+            }}
+          >
+            ↺ Retry Stage {stage.number}
+          </button>
+          {onBack && prevStageNumber ? (
+            <button
+              type="button"
+              onClick={onBack}
+              style={{
+                height: 40,
+                padding: "0 20px",
+                borderRadius: 8,
+                background: "transparent",
+                color: "#8A8680",
+                border: "1px solid #2A2A2A",
+                fontSize: 14,
+                cursor: "pointer",
+              }}
+            >
+              ← Go back to Stage {prevStageNumber}
+            </button>
+          ) : null}
+        </div>
       </div>
     </div>
   );
