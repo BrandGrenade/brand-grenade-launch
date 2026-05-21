@@ -1,10 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { TopNav } from "@/components/TopNav";
 import { supabase } from "@/integrations/supabase/client";
 import { generateStrategicPlatformPdf } from "@/lib/pdf-generator";
-import { SAMPLE_STAGE_16 } from "@/lib/stage16-sample";
+import { runStage16 } from "@/lib/stage16.functions";
 
 const completeSearchSchema = z.object({
   session: z.string().uuid().optional(),
@@ -44,7 +45,7 @@ const STAGES = [
   "Document Assembly",
 ];
 
-type Format = "pitch" | "consulting" | "workshop";
+type Format = "agency" | "consulting" | "workshop";
 
 type SessionRow = {
   id: string;
@@ -285,13 +286,13 @@ function CompletePage() {
           }}
         >
           <FormatCard
-            id="pitch"
-            selected={format === "pitch"}
+            id="agency"
+            selected={format === "agency"}
             onSelect={setFormat}
             icon={<DeckIcon />}
             title="Agency Pitch"
             description="Proposition-led. Creative territory first. Built for the teams who will make the work."
-            tag="~15 pages"
+            tag="25+ pages"
           />
           <FormatCard
             id="consulting"
