@@ -1,10 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { TopNav } from "@/components/TopNav";
 import { supabase } from "@/integrations/supabase/client";
 import { generateStrategicPlatformPdf } from "@/lib/pdf-generator";
-import { SAMPLE_STAGE_16 } from "@/lib/stage16-sample";
+import { runStage16 } from "@/lib/stage16.functions";
 
 const completeSearchSchema = z.object({
   session: z.string().uuid().optional(),
@@ -44,7 +45,7 @@ const STAGES = [
   "Document Assembly",
 ];
 
-type Format = "pitch" | "consulting" | "workshop";
+type Format = "agency" | "consulting" | "workshop";
 
 type SessionRow = {
   id: string;
@@ -56,6 +57,7 @@ type SessionRow = {
 
 function CompletePage() {
   const { session: sessionId } = Route.useSearch();
+  const runStage16Fn = useServerFn(runStage16);
   const [format, setFormat] = useState<Format>("consulting");
   const [generating, setGenerating] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -285,13 +287,13 @@ function CompletePage() {
           }}
         >
           <FormatCard
-            id="pitch"
-            selected={format === "pitch"}
+            id="agency"
+            selected={format === "agency"}
             onSelect={setFormat}
             icon={<DeckIcon />}
             title="Agency Pitch"
             description="Proposition-led. Creative territory first. Built for the teams who will make the work."
-            tag="~15 pages"
+            tag="25+ pages"
           />
           <FormatCard
             id="consulting"
@@ -340,12 +342,23 @@ function CompletePage() {
               }, 200);
 
               try {
+                if (!sessionId) throw new Error("Missing session id");
+                setProgressLabel(`Generating ${format} document…`);
+                let stage16Output = "";
+                const gen = await runStage16Fn({ data: { sessionId, format } });
+                for await (const chunk of gen) {
+                  if (typeof chunk.delta === "string") {
+                    stage16Output += chunk.delta;
+                  } else if (chunk.done) {
+                    stage16Output = chunk.output;
+                  }
+                }
                 await generateStrategicPlatformPdf({
                   brandName: brand,
                   category: field,
                   smp,
                   format,
-                  stage16Output: SAMPLE_STAGE_16(brand, smp, format),
+                  stage16Output,
                 });
                 window.clearInterval(tick);
                 setProgress(100);
