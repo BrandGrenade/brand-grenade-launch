@@ -177,9 +177,65 @@ function Dashboard() {
           </div>
         </div>
       </main>
+
+      <AlertDialog
+        open={pendingDelete !== null}
+        onOpenChange={(open) => {
+          if (!open && !deleting) setPendingDelete(null);
+        }}
+      >
+        <AlertDialogContent
+          className="border-0 p-0 sm:max-w-[400px]"
+          style={{
+            backgroundColor: "#1C1C1C",
+            border: "1px solid #7C3A3A",
+            borderRadius: 12,
+            padding: 32,
+          }}
+        >
+          <AlertDialogHeader>
+            <AlertDialogTitle asChild>
+              <h3 className="text-h3" style={{ color: "#F0EDE8" }}>
+                Delete this session?
+              </h3>
+            </AlertDialogTitle>
+            <AlertDialogDescription
+              className="text-body"
+              style={{ color: "#8A8680", marginTop: 8 }}
+            >
+              This will permanently delete the {pendingDelete?.brand_name ?? ""} session and all
+              its pipeline outputs. This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter
+            className="flex flex-row justify-end gap-3 sm:space-x-0"
+            style={{ marginTop: 24 }}
+          >
+            <button
+              type="button"
+              disabled={deleting}
+              onClick={() => setPendingDelete(null)}
+              className="inline-flex h-9 items-center justify-center rounded-lg px-4 text-[13px] font-medium transition-colors hover:bg-[var(--color-surface-2)] disabled:opacity-50"
+              style={{ border: "1px solid var(--color-border)", color: "var(--color-text-primary)" }}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              disabled={deleting}
+              onClick={handleDelete}
+              className="inline-flex h-9 items-center justify-center rounded-lg px-4 text-[13px] transition-opacity hover:opacity-90 disabled:opacity-50"
+              style={{ backgroundColor: "#7C3A3A", color: "#F0EDE8", fontWeight: 600 }}
+            >
+              {deleting ? "Deleting…" : "Delete permanently"}
+            </button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
+
 
 function GridIcon() {
   return (
