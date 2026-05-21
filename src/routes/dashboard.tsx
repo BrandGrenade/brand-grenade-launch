@@ -258,28 +258,40 @@ function SessionsTable({ sessions }: { sessions: DbSession[] }) {
                 </td>
                 <td className="text-body px-4 py-4 text-text-secondary">{fmtDate(s.updated_at)}</td>
                 <td className="px-4 py-4">
-                  <div className="flex items-center gap-3">
-                    {ui === "complete" && (
-                      <Link
-                        to="/complete"
-                        search={{ session: s.id }}
-                        className="text-body font-medium text-primary transition-colors hover:text-primary-hover"
+                  <div className="flex items-center justify-end">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger
+                        aria-label="Session actions"
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-md text-text-secondary transition-colors hover:bg-[var(--color-surface-2)] hover:text-text-primary focus:outline-none"
                       >
-                        View document
-                      </Link>
-                    )}
-                    <Link
-                      to="/pipeline"
-                      search={{ session: s.id }}
-                      className="text-body font-medium text-primary transition-colors hover:text-primary-hover"
-                    >
-                      {ui === "complete" ? "View workflow" : "Continue"}
-                    </Link>
+                        <MoreHorizontal className="h-4 w-4" />
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-44">
+                        <DropdownMenuItem asChild>
+                          <Link
+                            to={ui === "complete" ? "/complete" : "/pipeline"}
+                            search={{ session: s.id }}
+                          >
+                            {ui === "complete" ? "View" : "Continue"}
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onSelect={(e) => {
+                            e.preventDefault();
+                            onRequestDelete(s);
+                          }}
+                          style={{ color: "#7C3A3A" }}
+                        >
+                          Delete session
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 </td>
               </tr>
             );
           })}
+
         </tbody>
       </table>
     </div>
