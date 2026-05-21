@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { callClaude } from "./claude.server";
+import { streamClaude } from "./claude.server";
 import {
   getStage16SystemPrompt,
   buildStage16UserMessage,
@@ -28,7 +28,7 @@ const COLUMN_BY_FORMAT: Record<Stage16Format, "stage_16_agency_output" | "stage_
 
 export const runStage16 = createServerFn({ method: "POST" })
   .inputValidator((i) => Input.parse(i))
-  .handler(async ({ data }): Promise<{ output: string; format: Stage16Format }> => {
+  .handler(async function* ({ data }) {
     const { data: session, error } = await supabaseAdmin
       .from("sessions")
       .select("*")
@@ -46,7 +46,9 @@ export const runStage16 = createServerFn({ method: "POST" })
           .update({ status: "complete", current_stage: 16, stage_16_error: null, stage_16_format: data.format })
           .eq("id", data.sessionId);
       }
-      return { output: existing, format: data.format };
+      yield { delta: existing };
+      yield { done: true as const, output: existing, format: data.format };
+      return;
     }
 
     await supabaseAdmin
@@ -54,8 +56,9 @@ export const runStage16 = createServerFn({ method: "POST" })
       .update({ current_stage: 16, status: "running", stage_16_error: null, stage_16_format: data.format })
       .eq("id", data.sessionId);
 
+    let output = "";
     try {
-      const output = await callClaude({
+      for await (const delta of streamClaude({
         systemPrompt: getStage16SystemPrompt(data.format),
         maxTokens: 3000,
         userMessage: buildStage16UserMessage({
@@ -83,30 +86,34 @@ export const runStage16 = createServerFn({ method: "POST" })
         }),
         sessionId: data.sessionId,
         stageLabel: "Stage 16",
-      stageNumber: "16",
-      stageName: "Document Assembly",
-      });
-
-      const outputUpdate =
-        data.format === "agency"
-          ? { stage_16_agency_output: output }
-          : data.format === "consulting"
-          ? { stage_16_consulting_output: output }
-          : { stage_16_workshop_output: output };
-
-      const { error: ue } = await supabaseAdmin
-        .from("sessions")
-        .update({
-          ...outputUpdate,
-          stage_16_error: null,
-          status: "complete",
-        })
-        .eq("id", data.sessionId);
-      if (ue) throw new Error(`Failed to save Stage 16 (${data.format}) output: ${ue.message}`);
-      return { output, format: data.format };
+        stageNumber: "16",
+        stageName: "Document Assembly",
+      })) {
+        output += delta;
+        yield { delta };
+      }
     } catch (e) {
       const msg = e instanceof Error ? e.message : `Stage 16 (${data.format}) failed`;
       await supabaseAdmin.from("sessions").update({ stage_16_error: msg }).eq("id", data.sessionId);
       throw new Error(msg);
     }
+
+    const outputUpdate =
+      data.format === "agency"
+        ? { stage_16_agency_output: output }
+        : data.format === "consulting"
+        ? { stage_16_consulting_output: output }
+        : { stage_16_workshop_output: output };
+
+    const { error: ue } = await supabaseAdmin
+      .from("sessions")
+      .update({
+        ...outputUpdate,
+        stage_16_error: null,
+        status: "complete",
+      })
+      .eq("id", data.sessionId);
+    if (ue) throw new Error(`Failed to save Stage 16 (${data.format}) output: ${ue.message}`);
+
+    yield { done: true as const, output, format: data.format };
   });

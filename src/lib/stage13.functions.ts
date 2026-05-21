@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { callClaude } from "./claude.server";
+import { streamClaude } from "./claude.server";
 import { STAGE_13_SYSTEM_PROMPT, buildStage13UserMessage } from "./stage13-prompt";
 
 const BrandIntelInput = z.object({
@@ -33,7 +33,7 @@ function intelToText(intel: unknown): string {
 
 export const runStage13 = createServerFn({ method: "POST" })
   .inputValidator((i) => Input.parse(i))
-  .handler(async ({ data }): Promise<{ output: string }> => {
+  .handler(async function* ({ data }) {
     const { data: session, error } = await supabaseAdmin
       .from("sessions")
       .select(
@@ -44,15 +44,20 @@ export const runStage13 = createServerFn({ method: "POST" })
     if (error || !session) throw new Error(`Session not found: ${error?.message ?? "no row"}`);
     if (!session.selected_smp) throw new Error("Selected SMP missing — Stage 12 must be confirmed");
     if (!session.brand_intelligence) throw new Error("Brand Intelligence not supplied");
-    if (session.stage_13_output) return { output: session.stage_13_output };
+    if (session.stage_13_output) {
+      yield { delta: session.stage_13_output };
+      yield { done: true as const, output: session.stage_13_output };
+      return;
+    }
 
     await supabaseAdmin
       .from("sessions")
       .update({ current_stage: 13, status: "running", stage_13_error: null })
       .eq("id", data.sessionId);
 
+    let output = "";
     try {
-      const output = await callClaude({
+      for await (const delta of streamClaude({
         systemPrompt: STAGE_13_SYSTEM_PROMPT,
         userMessage: buildStage13UserMessage({
           brandName: session.brand_name,
@@ -68,18 +73,23 @@ export const runStage13 = createServerFn({ method: "POST" })
         sessionId: data.sessionId,
         stageLabel: "Stage 13",
         maxTokens: 2000,
-      stageNumber: "13",
-      stageName: "Brand Fit Validation",
-      });
-      const { error: ue } = await supabaseAdmin
-        .from("sessions")
-        .update({ stage_13_output: output, stage_13_error: null })
-        .eq("id", data.sessionId);
-      if (ue) throw new Error(`Failed to save Stage 13 output: ${ue.message}`);
-      return { output };
+        stageNumber: "13",
+        stageName: "Brand Fit Validation",
+      })) {
+        output += delta;
+        yield { delta };
+      }
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Stage 13 failed";
       await supabaseAdmin.from("sessions").update({ stage_13_error: msg }).eq("id", data.sessionId);
       throw new Error(msg);
     }
+
+    const { error: ue } = await supabaseAdmin
+      .from("sessions")
+      .update({ stage_13_output: output, stage_13_error: null })
+      .eq("id", data.sessionId);
+    if (ue) throw new Error(`Failed to save Stage 13 output: ${ue.message}`);
+
+    yield { done: true as const, output };
   });

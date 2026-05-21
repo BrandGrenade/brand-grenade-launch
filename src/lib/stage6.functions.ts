@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { callClaude } from "./claude.server";
+import { streamClaude } from "./claude.server";
 import { STAGE_6_SYSTEM_PROMPT, buildStage6UserMessage } from "./stage6-prompt";
 import { trimCMMForDownstream } from "./context-trim";
 
@@ -9,7 +9,7 @@ const RunStage6Input = z.object({ sessionId: z.string().uuid() });
 
 export const runStage6 = createServerFn({ method: "POST" })
   .inputValidator((input) => RunStage6Input.parse(input))
-  .handler(async ({ data }): Promise<{ output: string }> => {
+  .handler(async function* ({ data }) {
     const { data: session, error: loadErr } = await supabaseAdmin
       .from("sessions")
       .select("brand_name, category, strategic_mode, stage_2_output, stage_3_output, stage_5_output, stage_6_output")
@@ -19,7 +19,11 @@ export const runStage6 = createServerFn({ method: "POST" })
     if (!session.stage_2_output) throw new Error("Stage 2 output (CMM) missing — cannot run Stage 6");
     if (!session.stage_3_output) throw new Error("Stage 3 output (Constraint Matrix) missing — cannot run Stage 6");
     if (!session.stage_5_output) throw new Error("Stage 5 output (Insights) missing — cannot run Stage 6");
-    if (session.stage_6_output) return { output: session.stage_6_output };
+    if (session.stage_6_output) {
+      yield { delta: session.stage_6_output };
+      yield { done: true as const, output: session.stage_6_output };
+      return;
+    }
 
     await supabaseAdmin
       .from("sessions")
@@ -35,9 +39,9 @@ export const runStage6 = createServerFn({ method: "POST" })
       constraintMatrix: session.stage_3_output,
     });
 
-    let output: string;
+    let output = "";
     try {
-      output = await callClaude({
+      for await (const delta of streamClaude({
         systemPrompt: STAGE_6_SYSTEM_PROMPT,
         userMessage,
         maxTokens: 2500,
@@ -46,7 +50,10 @@ export const runStage6 = createServerFn({ method: "POST" })
         stageLabel: "Stage 6",
         stageNumber: "6",
         stageName: "Insight Validation",
-      });
+      })) {
+        output += delta;
+        yield { delta };
+      }
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Stage 6 failed";
       await supabaseAdmin.from("sessions").update({ stage_6_error: msg }).eq("id", data.sessionId);
@@ -59,5 +66,5 @@ export const runStage6 = createServerFn({ method: "POST" })
       .eq("id", data.sessionId);
     if (updateErr) throw new Error(`Failed to save Stage 6 output: ${updateErr.message}`);
 
-    return { output };
+    yield { done: true as const, output };
   });

@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { callClaude } from "./claude.server";
+import { streamClaude } from "./claude.server";
 import { STAGE_12_SYSTEM_PROMPT, buildStage12UserMessage } from "./stage12-prompt";
 import { trimScoredSMPsForDownstream } from "./context-trim";
 
@@ -9,7 +9,7 @@ const Input = z.object({ sessionId: z.string().uuid() });
 
 export const runStage12 = createServerFn({ method: "POST" })
   .inputValidator((i) => Input.parse(i))
-  .handler(async ({ data }): Promise<{ output: string }> => {
+  .handler(async function* ({ data }) {
     const { data: session, error } = await supabaseAdmin
       .from("sessions")
       .select("brand_name, category, stage_1_output, stage_2_output, stage_10_output, stage_11_output, stage_12_output")
@@ -17,7 +17,11 @@ export const runStage12 = createServerFn({ method: "POST" })
       .single();
     if (error || !session) throw new Error(`Session not found: ${error?.message ?? "no row"}`);
     if (!session.stage_11_output) throw new Error("Stage 11 output missing — cannot run Stage 12");
-    if (session.stage_12_output) return { output: session.stage_12_output };
+    if (session.stage_12_output) {
+      yield { delta: session.stage_12_output };
+      yield { done: true as const, output: session.stage_12_output };
+      return;
+    }
 
     await supabaseAdmin
       .from("sessions")
@@ -33,18 +37,21 @@ export const runStage12 = createServerFn({ method: "POST" })
       stage1Output: session.stage_1_output ?? "",
     });
 
-    let output: string;
+    let output = "";
     try {
-      output = await callClaude({
+      for await (const delta of streamClaude({
         systemPrompt: STAGE_12_SYSTEM_PROMPT,
         userMessage,
         maxTokens: 6000,
         temperature: 0.5,
         sessionId: data.sessionId,
         stageLabel: "Stage 12",
-      stageNumber: "12",
-      stageName: "Proposition Selection",
-      });
+        stageNumber: "12",
+        stageName: "Proposition Selection",
+      })) {
+        output += delta;
+        yield { delta };
+      }
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Stage 12 failed";
       await supabaseAdmin
@@ -60,10 +67,9 @@ export const runStage12 = createServerFn({ method: "POST" })
       .eq("id", data.sessionId);
     if (updateErr) throw new Error(`Failed to save Stage 12 output: ${updateErr.message}`);
 
-    return { output };
+    yield { done: true as const, output };
   });
 
-// Save the human's SMP selection (proposition line + field name).
 const SaveSelection = z.object({
   sessionId: z.string().uuid(),
   smpLine: z.string().min(1).max(1000),
@@ -84,7 +90,6 @@ export const saveSelectedSMP = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-// Save the six-field rationale and confirm Checkpoint C.
 const SaveRationale = z.object({
   sessionId: z.string().uuid(),
   rationale: z.record(z.string(), z.string().max(5000)),

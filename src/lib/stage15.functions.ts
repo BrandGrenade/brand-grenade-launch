@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { callClaude } from "./claude.server";
+import { streamClaude } from "./claude.server";
 import { STAGE_15_SYSTEM_PROMPT, buildStage15UserMessage } from "./stage15-prompt";
 import {
   trimBrandFitForDownstream,
@@ -13,7 +13,7 @@ const Input = z.object({ sessionId: z.string().uuid() });
 
 export const runStage15 = createServerFn({ method: "POST" })
   .inputValidator((i) => Input.parse(i))
-  .handler(async ({ data }): Promise<{ output: string }> => {
+  .handler(async function* ({ data }) {
     const { data: session, error } = await supabaseAdmin
       .from("sessions")
       .select("*")
@@ -21,15 +21,20 @@ export const runStage15 = createServerFn({ method: "POST" })
       .single();
     if (error || !session) throw new Error(`Session not found: ${error?.message ?? "no row"}`);
     if (!session.stage_14c_output) throw new Error("Stage 14C output missing — cannot run Stage 15");
-    if (session.stage_15_output) return { output: session.stage_15_output };
+    if (session.stage_15_output) {
+      yield { delta: session.stage_15_output };
+      yield { done: true as const, output: session.stage_15_output };
+      return;
+    }
 
     await supabaseAdmin
       .from("sessions")
       .update({ current_stage: 15, status: "running", stage_15_error: null })
       .eq("id", data.sessionId);
 
+    let output = "";
     try {
-      const output = await callClaude({
+      for await (const delta of streamClaude({
         systemPrompt: STAGE_15_SYSTEM_PROMPT,
         maxTokens: 2500,
         userMessage: buildStage15UserMessage({
@@ -47,18 +52,23 @@ export const runStage15 = createServerFn({ method: "POST" })
         }),
         sessionId: data.sessionId,
         stageLabel: "Stage 15",
-      stageNumber: "15",
-      stageName: "Coherence Audit",
-      });
-      const { error: ue } = await supabaseAdmin
-        .from("sessions")
-        .update({ stage_15_output: output, stage_15_error: null })
-        .eq("id", data.sessionId);
-      if (ue) throw new Error(`Failed to save Stage 15 output: ${ue.message}`);
-      return { output };
+        stageNumber: "15",
+        stageName: "Coherence Audit",
+      })) {
+        output += delta;
+        yield { delta };
+      }
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Stage 15 failed";
       await supabaseAdmin.from("sessions").update({ stage_15_error: msg }).eq("id", data.sessionId);
       throw new Error(msg);
     }
+
+    const { error: ue } = await supabaseAdmin
+      .from("sessions")
+      .update({ stage_15_output: output, stage_15_error: null })
+      .eq("id", data.sessionId);
+    if (ue) throw new Error(`Failed to save Stage 15 output: ${ue.message}`);
+
+    yield { done: true as const, output };
   });
