@@ -424,7 +424,7 @@ function drawContent(doc: jsPDF, input: PdfInput) {
           doc.rect(0, 0, PAGE_W, M_TOP - 8, "F");
           drawChrome();
         }
-        const size = 20;
+        const size = 18;
         const lh = size * 1.25;
         ensureSpace(lh + 24);
         y += 12; // top margin
