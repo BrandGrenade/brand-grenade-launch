@@ -109,7 +109,7 @@ export function SAMPLE_STAGE_16(
   format: PdfFormat,
 ): string {
   const tail =
-    format === "pitch"
+    format === "agency"
       ? PITCH_TAIL
       : format === "consulting"
         ? CONSULTING_TAIL
