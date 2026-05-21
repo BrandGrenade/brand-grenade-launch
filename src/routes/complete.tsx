@@ -448,7 +448,34 @@ function CompletePage() {
             </ul>
           )}
         </div>
+
+        {/* Brand Grenade signature */}
+        <div>
+          <hr
+            style={{
+              border: 0,
+              borderTop: "1px solid #2A2A2A",
+              width: "100%",
+              margin: "48px 0 32px",
+            }}
+          />
+          <div style={{ textAlign: "center" }}>
+            <div
+              className="text-label"
+              style={{ color: "#5A5652", letterSpacing: "0.12em" }}
+            >
+              BRAND GRENADE
+            </div>
+            <div
+              className="text-body-sm"
+              style={{ color: "#3A3A3A", marginTop: 6 }}
+            >
+              Strategy Intelligence System
+            </div>
+          </div>
+        </div>
       </main>
+
 
       {modalStage && (
         <StageModal
