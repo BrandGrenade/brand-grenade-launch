@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { callClaude } from "./claude.server";
+import { streamClaude, callClaude } from "./claude.server";
 import {
   STAGE_8_SYSTEM_PROMPT,
   buildStage8UserMessage,
@@ -13,7 +13,6 @@ import { trimValidatedInsightsForDownstream } from "./context-trim";
 const Input = z.object({ sessionId: z.string().uuid() });
 
 const TERRITORY_HEADING = /^##\s+(.+?)\s*$/;
-// SMP propositions are emitted as > blockquote lines.
 const PROPOSITION_LINE = /^\s*>\s+\S/;
 
 function extractTerritoryNames(stage7Output: string): string[] {
@@ -88,7 +87,7 @@ async function rerunStage7WithEnforcement(sessionId: string): Promise<string> {
 
 export const runStage8 = createServerFn({ method: "POST" })
   .inputValidator((i) => Input.parse(i))
-  .handler(async ({ data }): Promise<{ output: string }> => {
+  .handler(async function* ({ data }) {
     const { data: session, error } = await supabaseAdmin
       .from("sessions")
       .select(
@@ -100,9 +99,12 @@ export const runStage8 = createServerFn({ method: "POST" })
     if (!session.stage_2_output) throw new Error("Stage 2 output missing — cannot run Stage 8");
     if (!session.stage_3_output) throw new Error("Stage 3 output missing — cannot run Stage 8");
     if (!session.stage_7_output) throw new Error("Stage 7 output missing — cannot run Stage 8");
-    if (session.stage_8_output) return { output: session.stage_8_output };
+    if (session.stage_8_output) {
+      yield { delta: session.stage_8_output };
+      yield { done: true as const, output: session.stage_8_output };
+      return;
+    }
 
-    // ---- FIX 3 / CHANGE A: count territories before Stage 8 runs ----
     let stage7Output = session.stage_7_output;
     let territoryNames = extractTerritoryNames(stage7Output);
 
@@ -137,7 +139,6 @@ export const runStage8 = createServerFn({ method: "POST" })
       })
       .eq("id", data.sessionId);
 
-    // ---- CHANGE B: pass territory count + names to Stage 8 ----
     const userMessage = buildStage8UserMessage({
       brandName: session.brand_name,
       category: session.category,
@@ -148,9 +149,9 @@ export const runStage8 = createServerFn({ method: "POST" })
       territoryNames,
     });
 
-    let output: string;
+    let output = "";
     try {
-      output = await callClaude({
+      for await (const delta of streamClaude({
         systemPrompt: STAGE_8_SYSTEM_PROMPT,
         userMessage,
         maxTokens: 3500,
@@ -159,7 +160,10 @@ export const runStage8 = createServerFn({ method: "POST" })
         stageLabel: "Stage 8",
         stageNumber: "8",
         stageName: "Proposition Generation",
-      });
+      })) {
+        output += delta;
+        yield { delta };
+      }
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Stage 8 failed";
       await supabaseAdmin
@@ -169,7 +173,6 @@ export const runStage8 = createServerFn({ method: "POST" })
       throw e instanceof Error ? e : new Error(msg);
     }
 
-    // ---- CHANGE C: completion check + continuation (max 3 attempts) ----
     let propositionCount = countPropositions(output);
     let attempts = 0;
     while (propositionCount < territoryCount && attempts < 3) {
@@ -185,7 +188,10 @@ export const runStage8 = createServerFn({ method: "POST" })
 
       const continuationMessage = buildStage8ContinuationMessage({ done, remaining });
       try {
-        const continuation = await callClaude({
+        const sep = "\n\n";
+        output += sep;
+        yield { delta: sep };
+        for await (const delta of streamClaude({
           systemPrompt: STAGE_8_SYSTEM_PROMPT,
           userMessage: continuationMessage,
           maxTokens: 3500,
@@ -194,11 +200,12 @@ export const runStage8 = createServerFn({ method: "POST" })
           stageLabel: `Stage 8 (continuation ${attempts})`,
           stageNumber: "8",
           stageName: "Proposition Generation",
-        });
-        output = `${output}\n\n${continuation}`;
+        })) {
+          output += delta;
+          yield { delta };
+        }
         propositionCount = countPropositions(output);
-      } catch (e) {
-        // Continuation failed — stop trying, fall through with what we have.
+      } catch {
         break;
       }
     }
@@ -210,7 +217,7 @@ export const runStage8 = createServerFn({ method: "POST" })
       .eq("id", data.sessionId);
     if (updateErr) throw new Error(`Failed to save Stage 8 output: ${updateErr.message}`);
 
-    return { output };
+    yield { done: true as const, output };
   });
 
 const ConfirmB = z.object({ sessionId: z.string().uuid() });
