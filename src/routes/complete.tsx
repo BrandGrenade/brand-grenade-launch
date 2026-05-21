@@ -138,23 +138,24 @@ function CompletePage() {
           <div>
             <span
               className="text-label"
-              style={{ color: "var(--color-success)" }}
+              style={{ color: "var(--color-primary)", letterSpacing: "0.12em" }}
             >
-              STRATEGY ENGINE COMPLETE
+              BRAND GRENADE
             </span>
           </div>
           <h1
             className="text-display text-text-primary"
-            style={{ margin: "16px 0" }}
+            style={{ margin: "16px 0", fontWeight: 700 }}
           >
-            {BRAND} Strategic Platform
+            {brand} — Strategic Platform
           </h1>
           <p
             className="text-body-lg"
             style={{ color: "var(--color-text-secondary)" }}
           >
-            All quality checks passed. Your strategic platform document is ready.
+            20 stages. 3 human reviews. One complete brand strategy.
           </p>
+
           <hr
             className="border-0 bg-border"
             style={{
