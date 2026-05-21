@@ -2028,6 +2028,9 @@ function RightPanel({
             </header>
 
             <article style={{ paddingBottom: 80 }}>
+              {isRunning && !text ? (
+                <ProgressMessages stageName={stage.name} />
+              ) : null}
               <StreamedOutput text={text} streaming={isRunning} />
               {isRunning ? (
                 <StallWatcher stageKey={stage.id} onAutoRetry={onRetry} />
