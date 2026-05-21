@@ -49,13 +49,17 @@ export function TopNav({ session }: { session?: SessionContext }) {
           to="/dashboard"
           className="font-bold"
           style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 10,
             color: "#F0EDE8",
             letterSpacing: "0.12em",
             fontSize: 13,
             fontWeight: 700,
           }}
         >
-          BRAND GRENADE
+          <BrandGrenadeIcon size={24} />
+          <span>BRAND GRENADE</span>
         </Link>
 
         <div className="flex items-center gap-4">
