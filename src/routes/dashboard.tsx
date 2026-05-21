@@ -172,7 +172,7 @@ function Dashboard() {
             ) : sessions.length === 0 ? (
               <EmptyState />
             ) : (
-              <SessionsTable sessions={sessions} />
+              <SessionsTable sessions={sessions} onRequestDelete={setPendingDelete} />
             )}
           </div>
         </div>
