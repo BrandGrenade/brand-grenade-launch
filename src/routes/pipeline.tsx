@@ -2747,14 +2747,14 @@ function StallWatcher({
 
   useEffect(() => {
     setPhase("silent");
-    const warnTimer = window.setTimeout(() => setPhase("warning"), 45_000);
+    const warnTimer = window.setTimeout(() => setPhase("warning"), 15_000);
     const retryTimer = window.setTimeout(() => {
       if (!autoRetriedRef.current.has(stageKey)) {
         autoRetriedRef.current.add(stageKey);
         setPhase("auto-retrying");
         onAutoRetry();
       }
-    }, 90_000);
+    }, 30_000);
     return () => {
       window.clearTimeout(warnTimer);
       window.clearTimeout(retryTimer);
