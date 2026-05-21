@@ -180,8 +180,9 @@ function CompletePage() {
           }}
         >
           <Stat value="20" label="STAGES COMPLETED" tone="success" />
-          <Stat value="3" label="REVIEWS CONFIRMED" tone="success" />
-          <Stat value={smpPreview} label="SELECTED PROPOSITION" tone="primary" />
+          <Stat value="3" label="CHECKPOINTS CONFIRMED" tone="success" />
+          <Stat value={smpPreview} label="STRATEGIC PROPOSITION" tone="primary" />
+
         </div>
 
         {/* Selected proposition */}
