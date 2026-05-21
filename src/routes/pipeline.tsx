@@ -33,23 +33,24 @@ import { sanitizeStageOutput } from "@/lib/sanitize-output";
 
 // Consume an async-generator server function stream: forward delta chunks to a
 // setter for live rendering, return the final `done` payload.
-async function consumeStream<T extends { done: true }>(
-  gen: AsyncGenerator<{ delta?: string } | T, void, unknown>,
+async function consumeStream<C extends { delta?: string; done?: true }>(
+  gen: AsyncGenerator<C, void, unknown>,
   onDelta?: (text: string) => void,
-): Promise<T> {
+): Promise<Extract<C, { done: true }>> {
   let acc = "";
-  let final: T | null = null;
+  let final: Extract<C, { done: true }> | null = null;
   for await (const chunk of gen) {
-    if ("delta" in chunk && typeof chunk.delta === "string") {
+    if (typeof chunk.delta === "string") {
       acc += chunk.delta;
       onDelta?.(acc);
-    } else if ("done" in chunk && chunk.done) {
-      final = chunk as T;
+    } else if (chunk.done) {
+      final = chunk as Extract<C, { done: true }>;
     }
   }
   if (!final) throw new Error("Stream ended without a final payload");
   return final;
 }
+
 
 
 // Map UI stage id (e.g. "01", "13B") to the DB stage id literal used by resetStage.

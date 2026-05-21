@@ -81,10 +81,11 @@ function CompletePage() {
   }, [sessionId]);
 
   useEffect(() => {
-    document.title = `${brand} Complete — Brand Grenade`;
+    document.title = `${brand} Strategic Platform — Brand Grenade`;
   }, [brand]);
 
-  const smpPreview = SMP.split(" ").slice(0, 4).join(" ") + "…";
+  const smpPreview = SMP.split(" ").slice(0, 5).join(" ") + "…";
+
 
 
   return (
@@ -137,23 +138,24 @@ function CompletePage() {
           <div>
             <span
               className="text-label"
-              style={{ color: "var(--color-success)" }}
+              style={{ color: "var(--color-primary)", letterSpacing: "0.12em" }}
             >
-              STRATEGY ENGINE COMPLETE
+              BRAND GRENADE
             </span>
           </div>
           <h1
             className="text-display text-text-primary"
-            style={{ margin: "16px 0" }}
+            style={{ margin: "16px 0", fontWeight: 700 }}
           >
-            {BRAND} Strategic Platform
+            {brand} — Strategic Platform
           </h1>
           <p
             className="text-body-lg"
             style={{ color: "var(--color-text-secondary)" }}
           >
-            All quality checks passed. Your strategic platform document is ready.
+            20 stages. 3 human reviews. One complete brand strategy.
           </p>
+
           <hr
             className="border-0 bg-border"
             style={{
@@ -178,8 +180,9 @@ function CompletePage() {
           }}
         >
           <Stat value="20" label="STAGES COMPLETED" tone="success" />
-          <Stat value="3" label="REVIEWS CONFIRMED" tone="success" />
-          <Stat value={smpPreview} label="SELECTED PROPOSITION" tone="primary" />
+          <Stat value="3" label="CHECKPOINTS CONFIRMED" tone="success" />
+          <Stat value={smpPreview} label="STRATEGIC PROPOSITION" tone="primary" />
+
         </div>
 
         {/* Selected proposition */}
@@ -193,11 +196,11 @@ function CompletePage() {
           }}
         >
           <span className="text-label text-primary">
-            YOUR STRATEGIC PROPOSITION
+            THE PROPOSITION
           </span>
           <h2
             className="text-h1 text-text-primary"
-            style={{ margin: "16px 0 24px", lineHeight: 1.3 }}
+            style={{ margin: "16px 0 24px", lineHeight: 1.3, fontWeight: 700 }}
           >
             {SMP}
           </h2>
@@ -205,8 +208,9 @@ function CompletePage() {
             className="text-body-sm"
             style={{ color: "var(--color-text-tertiary)" }}
           >
-            Strategic Territory: {FIELD} | Strategic Role: {BRAND_ROLE}
+            {FIELD} — {BRAND_ROLE}
           </p>
+
         </div>
 
         {/* Format selection */}
@@ -217,8 +221,7 @@ function CompletePage() {
           className="text-body"
           style={{ color: "var(--color-text-secondary)", marginBottom: 24 }}
         >
-          The same strategic output packaged three different ways. Select the
-          format appropriate for your audience.
+          Select how you want to present this strategy. Same intelligence, three different formats.
         </p>
 
         <div
@@ -234,7 +237,7 @@ function CompletePage() {
             onSelect={setFormat}
             icon={<DeckIcon />}
             title="Agency Pitch"
-            description="SMP-led, creative-territory-first, compressed. For agencies receiving the strategy to build from."
+            description="Proposition-led. Creative territory first. Built for the teams who will make the work."
             tag="~15 pages"
           />
           <FormatCard
@@ -243,7 +246,7 @@ function CompletePage() {
             onSelect={setFormat}
             icon={<DocsIcon />}
             title="Consulting Delivery"
-            description="Evidence-led, methodology-visible, comprehensive. For board-level client presentations."
+            description="Evidence-led. Methodology visible. Built for the room where decisions are made."
             tag="~25 pages"
           />
           <FormatCard
@@ -252,10 +255,11 @@ function CompletePage() {
             onSelect={setFormat}
             icon={<PeopleIcon />}
             title="Brand Workshop"
-            description="Facilitation-ready, participatory, session-structured. For internal team alignment."
+            description="Session-ready. Built for the internal conversation that turns strategy into action."
             tag="~20 pages + session guide"
           />
         </div>
+
 
         {/* Download section */}
         <div style={{ marginTop: 32 }}>
@@ -326,7 +330,7 @@ function CompletePage() {
               ? done
                 ? "Document ready ✓"
                 : "Generating PDF…"
-              : "Download Strategic Platform Document ↓"}
+              : `Download ${brand} Strategic Platform ↓`}
           </button>
 
           {generating && (
@@ -372,16 +376,17 @@ function CompletePage() {
               flexWrap: "wrap",
             }}
           >
-            <TextLink color="primary">View in browser</TextLink>
-            <TextLink>Copy shareable link</TextLink>
+            <TextLink color="primary">Read in browser</TextLink>
+            <TextLink>Share this strategy</TextLink>
             <Link
               to="/brief"
               className="text-body-sm transition-colors hover:text-text-primary"
               style={{ color: "var(--color-text-secondary)" }}
             >
-              Start new run
+              New brief →
             </Link>
           </div>
+
         </div>
 
         {/* Pipeline stages collapsible */}
@@ -443,7 +448,34 @@ function CompletePage() {
             </ul>
           )}
         </div>
+
+        {/* Brand Grenade signature */}
+        <div>
+          <hr
+            style={{
+              border: 0,
+              borderTop: "1px solid #2A2A2A",
+              width: "100%",
+              margin: "48px 0 32px",
+            }}
+          />
+          <div style={{ textAlign: "center" }}>
+            <div
+              className="text-label"
+              style={{ color: "#5A5652", letterSpacing: "0.12em" }}
+            >
+              BRAND GRENADE
+            </div>
+            <div
+              className="text-body-sm"
+              style={{ color: "#3A3A3A", marginTop: 6 }}
+            >
+              Strategy Intelligence System
+            </div>
+          </div>
+        </div>
       </main>
+
 
       {modalStage && (
         <StageModal
