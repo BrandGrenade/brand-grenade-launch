@@ -91,38 +91,73 @@ function normaliseForMatch(s: string): string {
 }
 
 // ─── Cover ──────────────────────────────────────────────────────────────
-function drawCover(doc: jsPDF, input: PdfInput) {
+async function loadIconDataUrl(): Promise<string | null> {
+  try {
+    const res = await fetch("/brand-grenade-icon.png");
+    if (!res.ok) return null;
+    const blob = await res.blob();
+    return await new Promise((resolve) => {
+      const r = new FileReader();
+      r.onloadend = () => resolve((r.result as string) ?? null);
+      r.onerror = () => resolve(null);
+      r.readAsDataURL(blob);
+    });
+  } catch {
+    return null;
+  }
+}
+
+function drawCover(doc: jsPDF, input: PdfInput, iconDataUrl: string | null) {
   doc.setFillColor(C_DARK);
   doc.rect(0, 0, PAGE_W, PAGE_H, "F");
 
-  // Top-left BRAND GRENADE
+  // Top-left lockup: [icon 28pt] [BRAND GRENADE]
+  const iconSize = 28;
+  const wordmarkBaseline = M_TOP;
+  if (iconDataUrl) {
+    try {
+      doc.addImage(
+        iconDataUrl,
+        "PNG",
+        M_SIDE,
+        wordmarkBaseline - iconSize + 3,
+        iconSize,
+        iconSize,
+      );
+    } catch {
+      /* ignore */
+    }
+  }
   doc.setTextColor(C_WHITE);
   setFont(doc, "bold");
-  doc.setFontSize(10);
-  doc.text(tracked("BRAND GRENADE", 1.2), M_SIDE, M_TOP);
+  doc.setFontSize(11);
+  setTracking(doc, 0.06);
+  const wordmarkX = M_SIDE + (iconDataUrl ? iconSize + 10 : 0);
+  doc.text("BRAND GRENADE", wordmarkX, wordmarkBaseline - 8);
+  clearTracking(doc);
 
   // Centre stack
   const cy = PAGE_H / 2;
 
   doc.setTextColor(C_ACCENT);
   setFont(doc, "bold");
-  doc.setFontSize(10);
-  doc.text(tracked(DOC_LABEL[input.format], 1.1), PAGE_W / 2, cy - 36, {
-    align: "center",
-  });
+  doc.setFontSize(11);
+  setTracking(doc, 0.08);
+  doc.text(DOC_LABEL[input.format], PAGE_W / 2, cy - 36, { align: "center" });
+  clearTracking(doc);
 
   doc.setTextColor(C_TEXT_3);
   setFont(doc, "normal");
-  doc.setFontSize(14);
+  doc.setFontSize(13);
   doc.text(input.category || "Strategic Platform", PAGE_W / 2, cy - 4, {
     align: "center",
   });
 
-  // 40px gap then amber rule 48x2
+  // amber rule 48x2 centred
   doc.setFillColor(C_ACCENT);
   doc.rect(PAGE_W / 2 - 24, cy + 28, 48, 2, "F");
 
-  // 40px gap then month/year
+  // month/year
   doc.setTextColor(C_DARK_FOOT);
   setFont(doc, "normal");
   doc.setFontSize(10);
@@ -132,7 +167,9 @@ function drawCover(doc: jsPDF, input: PdfInput) {
   doc.setTextColor(C_DARK_FOOT);
   setFont(doc, "normal");
   doc.setFontSize(9);
-  doc.text(tracked("CONFIDENTIAL"), M_SIDE, PAGE_H - M_BOTTOM);
+  setTracking(doc, 0.08);
+  doc.text("CONFIDENTIAL", M_SIDE, PAGE_H - M_BOTTOM);
+  clearTracking(doc);
   doc.text(
     "Brand Grenade Strategy Intelligence System",
     PAGE_W - M_SIDE,
@@ -140,6 +177,7 @@ function drawCover(doc: jsPDF, input: PdfInput) {
     { align: "right" },
   );
 }
+
 
 // ─── Section Opener Page ────────────────────────────────────────────────
 function drawSectionOpener(
