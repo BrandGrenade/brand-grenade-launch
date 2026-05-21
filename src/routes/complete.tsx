@@ -81,10 +81,11 @@ function CompletePage() {
   }, [sessionId]);
 
   useEffect(() => {
-    document.title = `${brand} Complete — Brand Grenade`;
+    document.title = `${brand} Strategic Platform — Brand Grenade`;
   }, [brand]);
 
-  const smpPreview = SMP.split(" ").slice(0, 4).join(" ") + "…";
+  const smpPreview = SMP.split(" ").slice(0, 5).join(" ") + "…";
+
 
 
   return (
