@@ -66,6 +66,27 @@ function mapStatus(s: string): UIStatus {
 function Dashboard() {
   const [sessions, setSessions] = useState<DbSession[]>([]);
   const [loading, setLoading] = useState(true);
+  const [pendingDelete, setPendingDelete] = useState<DbSession | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    if (!pendingDelete) return;
+    setDeleting(true);
+    const id = pendingDelete.id;
+    const { error } = await supabase.from("sessions").delete().eq("id", id);
+    setDeleting(false);
+    if (error) {
+      toast.error("Failed to delete session");
+      return;
+    }
+    setSessions((prev) => prev.filter((s) => s.id !== id));
+    setPendingDelete(null);
+    toast.success("Session deleted", {
+      duration: 3000,
+      style: { color: "#4A7C59" },
+    });
+  };
+
 
   useEffect(() => {
     let active = true;
