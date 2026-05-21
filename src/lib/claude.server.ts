@@ -7,7 +7,7 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 const ANTHROPIC_URL = "https://api.anthropic.com/v1/messages";
 const DEFAULT_MODEL = "claude-sonnet-4-5";
-const REQUEST_TIMEOUT_MS = 120_000;
+const REQUEST_TIMEOUT_MS = 180_000;
 const RETRY_DELAY_MS = 3_000;
 
 export interface CallClaudeArgs {
@@ -200,19 +200,28 @@ async function openWithRetry(
   throw new Error(lastError || "Claude API call failed");
 }
 
+/**
+ * Stage-facing entry point. Internally streams from Anthropic (SSE) and
+ * accumulates the full text, returning it to the caller as a single string.
+ *
+ * Why streaming under the hood:
+ *  - Keeps the Anthropic HTTP connection live via SSE chunks (avoids the
+ *    single-shot 120-180s wait on `await resp.json()` for long generations
+ *    on Cloudflare Workers / Lovable Cloud).
+ *  - First bytes typically arrive within 1-3s and the connection stays
+ *    active throughout generation, which prevents intermediary timeouts.
+ *
+ * Stage runners keep their existing pattern: accumulate the full output
+ * and write it to the database exactly once when the stream ends.
+ */
 export async function callClaude(args: CallClaudeArgs): Promise<string> {
-  const { apiKey, body } = await prepareCall(args);
-  const resp = await openWithRetry(apiKey, body, args.sessionId, args.stageLabel, false);
-  const json = (await resp.json()) as {
-    content?: Array<{ type: string; text?: string }>;
-  };
-  const output = (json.content ?? [])
-    .filter((c) => c.type === "text" && c.text)
-    .map((c) => c.text!)
-    .join("\n")
-    .trim();
-  if (!output) throw new Error("Claude returned an empty response");
-  return output;
+  let output = "";
+  for await (const delta of streamClaude(args)) {
+    output += delta;
+  }
+  const trimmed = output.trim();
+  if (!trimmed) throw new Error("Claude returned an empty response");
+  return trimmed;
 }
 
 /**
