@@ -196,11 +196,11 @@ function CompletePage() {
           }}
         >
           <span className="text-label text-primary">
-            YOUR STRATEGIC PROPOSITION
+            THE PROPOSITION
           </span>
           <h2
             className="text-h1 text-text-primary"
-            style={{ margin: "16px 0 24px", lineHeight: 1.3 }}
+            style={{ margin: "16px 0 24px", lineHeight: 1.3, fontWeight: 700 }}
           >
             {SMP}
           </h2>
@@ -208,8 +208,9 @@ function CompletePage() {
             className="text-body-sm"
             style={{ color: "var(--color-text-tertiary)" }}
           >
-            Strategic Territory: {FIELD} | Strategic Role: {BRAND_ROLE}
+            {FIELD} — {BRAND_ROLE}
           </p>
+
         </div>
 
         {/* Format selection */}
