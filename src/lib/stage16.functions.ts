@@ -82,9 +82,15 @@ export const runStage16 = createServerFn({ method: "POST" })
     const column = COLUMN_BY_FORMAT[data.format];
 
     if (data.force) {
+      const clearUpdate =
+        column === "stage_16_agency_output"
+          ? { stage_16_agency_output: null, stage_16_error: null }
+          : column === "stage_16_consulting_output"
+          ? { stage_16_consulting_output: null, stage_16_error: null }
+          : { stage_16_workshop_output: null, stage_16_error: null };
       await supabaseAdmin
         .from("sessions")
-        .update({ [column]: null, stage_16_error: null })
+        .update(clearUpdate)
         .eq("id", data.sessionId);
     } else {
       const existing = session[column] as string | null | undefined;
