@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { MoreHorizontal } from "lucide-react";
+import { MoreHorizontal, Grid2x2, FileText, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { TopNav } from "@/components/TopNav";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,6 +18,7 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
 } from "@/components/ui/alert-dialog";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 
 export const Route = createFileRoute("/dashboard")({
