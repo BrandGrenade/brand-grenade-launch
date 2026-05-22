@@ -74,6 +74,8 @@ function CompletePage() {
   const [modalStage, setModalStage] = useState<string | null>(null);
   const [session, setSession] = useState<SessionRow | null>(null);
   const [loading, setLoading] = useState(true);
+  const [lastError, setLastError] = useState<string | null>(null);
+  const [lastOutput, setLastOutput] = useState<string>("");
 
   useEffect(() => {
     if (!sessionId) {
