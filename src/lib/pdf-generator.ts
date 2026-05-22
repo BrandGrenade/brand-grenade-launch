@@ -908,6 +908,7 @@ function drawContent(doc: jsPDF, input: PdfInput) {
 
 // ─── Public entry ───────────────────────────────────────────────────────
 export async function generateStrategicPlatformPdf(input: PdfInput) {
+  console.log("PDF: start", Date.now());
   // NOTE: compress:false is intentional. jsPDF's `compress: true` runs pako
   // gzip synchronously over every content stream inside doc.save() and was
   // the cause of the multi-second "Finalising PDF…" stall. Uncompressed
