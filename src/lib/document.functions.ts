@@ -162,24 +162,34 @@ export const generateDocument = createServerFn({ method: "POST" })
     };
 
     const sectionDefs = getSectionDefs(format, sessionForSections);
-    const sections: Record<string, string> = {};
 
     try {
-      for (let i = 0; i < sectionDefs.length; i++) {
-        const def = sectionDefs[i];
-        yield {
-          section: { index: i, total: sectionDefs.length, name: def.name },
-        };
-        try {
-          sections[def.name] = await callAnthropic(
-            def.systemPrompt,
-            def.userMessage,
-            def.maxTokens,
-          );
-        } catch (e) {
-          const msg = e instanceof Error ? e.message : "section call failed";
-          sections[def.name] = `*[Section "${def.name}" could not be generated: ${msg}]*`;
-        }
+      // Yield one progress event before parallel generation
+      yield {
+        section: { index: 0, total: sectionDefs.length, name: "generating all sections" },
+      };
+
+      // Generate all sections in parallel — total time = slowest single call.
+      const results = await Promise.all(
+        sectionDefs.map(async (def) => {
+          try {
+            const content = await callAnthropic(
+              def.systemPrompt,
+              def.userMessage,
+              def.maxTokens,
+            );
+            return { name: def.name, content };
+          } catch (e) {
+            const msg = e instanceof Error ? e.message : "section call failed";
+            return { name: def.name, content: `*[Section "${def.name}" could not be generated: ${msg}]*` };
+          }
+        }),
+      );
+
+      // Assemble into named object
+      const sections: Record<string, string> = {};
+      for (const r of results) {
+        sections[r.name] = r.content;
       }
 
       yield { section: { index: sectionDefs.length, total: sectionDefs.length, name: "assembling" } };
@@ -196,7 +206,6 @@ export const generateDocument = createServerFn({ method: "POST" })
           upsert: true,
         });
       if (uploadError) throw new Error(`Upload failed: ${uploadError.message}`);
-
 
       const { data: signed, error: signError } = await supabaseAdmin.storage
         .from("documents")
