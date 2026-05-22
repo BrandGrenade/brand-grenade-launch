@@ -725,6 +725,103 @@ function drawContent(doc: jsPDF, input: PdfInput) {
     if (intro) writeAppendixIntro(intro);
   };
 
+  // ─── Appendix C — proposition cards ─────────────────────────────────
+  const renderPropositionCards = (
+    rawStage8: string | null | undefined,
+    selectedSmp: string,
+  ) => {
+    const props = extractPropositions(rawStage8 ?? "");
+    if (!props.length) {
+      writeWrapped(
+        "Proposition data unavailable for this section.",
+        11.5,
+        C_TEXT_3,
+        "italic",
+        1.7,
+      );
+      return;
+    }
+    const selectedNorm = normaliseForMatch(selectedSmp);
+    props.forEach((p, idx) => {
+      const isSelected =
+        selectedNorm.length > 0 && normaliseForMatch(p.line) === selectedNorm;
+
+      // PROPOSITION N label
+      y += 14;
+      doc.setTextColor(C_ACCENT);
+      setFont(doc, "bold");
+      doc.setFontSize(9);
+      ensureSpace(14);
+      setTracking(doc, 0.12);
+      doc.text(`PROPOSITION ${idx + 1}`, M_SIDE, y + 9);
+      clearTracking(doc);
+      y += 16;
+
+      // Proposition line — sub-heading
+      writeWrapped(p.line, 14, C_TEXT, "bold", 1.35);
+      y += 4;
+
+      // Composite score + status badge row
+      ensureSpace(22);
+      doc.setTextColor(C_ACCENT);
+      setFont(doc, "bold");
+      doc.setFontSize(9);
+      setTracking(doc, 0.12);
+      const scoreLabel =
+        p.composite !== undefined
+          ? `COMPOSITE ${p.composite}/60`
+          : "COMPOSITE —";
+      doc.text(scoreLabel, M_SIDE, y + 9);
+      const scoreW = doc.getTextWidth(scoreLabel);
+      clearTracking(doc);
+
+      // Status badge
+      const badgeText = isSelected ? "SELECTED" : "NOT SELECTED";
+      setFont(doc, "bold");
+      doc.setFontSize(8);
+      setTracking(doc, 0.14);
+      const padX = 6;
+      const badgeTextW = doc.getTextWidth(badgeText);
+      const badgeW = badgeTextW + padX * 2;
+      const badgeH = 14;
+      const badgeX = M_SIDE + scoreW + 18;
+      const badgeY = y - 2;
+      if (isSelected) {
+        // green tint background + border
+        doc.setFillColor(234, 240, 233); // #4A7C59 @ ~15%
+        doc.rect(badgeX, badgeY, badgeW, badgeH, "F");
+        doc.setDrawColor("#4A7C59");
+        doc.setLineWidth(0.6);
+        doc.rect(badgeX, badgeY, badgeW, badgeH, "S");
+        doc.setTextColor("#4A7C59");
+      } else {
+        doc.setFillColor("#3A3A3A");
+        doc.rect(badgeX, badgeY, badgeW, badgeH, "F");
+        doc.setTextColor("#FAFAF8");
+      }
+      doc.text(badgeText, badgeX + padX, badgeY + 10);
+      clearTracking(doc);
+      y += 18;
+
+      // One-sentence strategic rationale from "what it owns"
+      const rationale = firstSentence(p.owns, 50);
+      if (rationale) {
+        writeWrapped(rationale, 11, C_TEXT_2, "normal", 1.6);
+      }
+
+      // Divider rule between propositions (not after last)
+      if (idx < props.length - 1) {
+        y += 8;
+        ensureSpace(20);
+        doc.setDrawColor(C_RULE);
+        doc.setLineWidth(0.5);
+        doc.line(M_SIDE, y, M_SIDE + COL_CONTENT_W, y);
+        y += 12;
+      }
+    });
+  };
+
+
   if (input.format === "consulting" && input.appendix) {
     onOpenerPage = true;
     drawSectionOpener(doc, "A", "Strategic Process and Evidence Base");
