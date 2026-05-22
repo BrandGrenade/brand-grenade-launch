@@ -445,10 +445,24 @@ function parseContent(raw: string): Block[] {
 
 // ─── Content pages ──────────────────────────────────────────────────────
 function drawContent(doc: jsPDF, input: PdfInput) {
-  const body =
+  const rawBody =
     input.stage16Output && input.stage16Output.trim().length > 0
       ? input.stage16Output
       : getTemplateContent(input.format);
+  const body = sanitiseForPdf(rawBody);
+  // Sanitise all appendix stage outputs once, upfront, so every renderer
+  // (raw-as-appendix, proposition cards, etc.) sees clean text.
+  const appendix: AppendixData | undefined = input.appendix
+    ? {
+        stage1Output: sanitiseForPdf(input.appendix.stage1Output ?? ""),
+        stage8Output: sanitiseForPdf(input.appendix.stage8Output ?? ""),
+        stage10Output: sanitiseForPdf(input.appendix.stage10Output ?? ""),
+        stage11Output: sanitiseForPdf(input.appendix.stage11Output ?? ""),
+        stage12Output: sanitiseForPdf(input.appendix.stage12Output ?? ""),
+        stage13Output: sanitiseForPdf(input.appendix.stage13Output ?? ""),
+      }
+    : undefined;
+  input = { ...input, appendix };
   const blocks = parseContent(body);
   const smpNorm = normaliseForMatch(input.smp);
 
