@@ -171,16 +171,11 @@ export const generateDocument = createServerFn({ method: "POST" })
           section: { index: i, total: sectionDefs.length, name: def.name },
         };
         try {
-          sections[def.name] = await callClaude({
-            systemPrompt: def.systemPrompt,
-            userMessage: def.userMessage,
-            maxTokens: def.maxTokens,
-            temperature: 0.7,
-            sessionId,
-            stageLabel: `Document — ${def.name}`,
-            stageNumber: "16",
-            stageName: "Document Assembly",
-          });
+          sections[def.name] = await callAnthropic(
+            def.systemPrompt,
+            def.userMessage,
+            def.maxTokens,
+          );
         } catch (e) {
           const msg = e instanceof Error ? e.message : "section call failed";
           sections[def.name] = `*[Section "${def.name}" could not be generated: ${msg}]*`;
@@ -192,13 +187,16 @@ export const generateDocument = createServerFn({ method: "POST" })
       const html = buildHtmlDocument(sections, sessionForSections, format);
       const filename = `${sessionId}/${format}.html`;
 
+      // Upload as explicit UTF-8 bytes so storage/CDN never reinterprets the encoding.
+      const htmlBytes = new TextEncoder().encode(html);
       const { error: uploadError } = await supabaseAdmin.storage
         .from("documents")
-        .upload(filename, html, {
-          contentType: "text/html",
+        .upload(filename, htmlBytes, {
+          contentType: "text/html; charset=utf-8",
           upsert: true,
         });
       if (uploadError) throw new Error(`Upload failed: ${uploadError.message}`);
+
 
       const { data: signed, error: signError } = await supabaseAdmin.storage
         .from("documents")
