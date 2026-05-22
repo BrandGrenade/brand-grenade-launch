@@ -931,6 +931,11 @@ async function drawContent(doc: jsPDF, input: PdfInput) {
 // ─── Public entry ───────────────────────────────────────────────────────
 export async function generateStrategicPlatformPdf(input: PdfInput) {
   console.log("PDF: start", Date.now());
+  // Hard cap on stage 16 length to prevent runaway page counts.
+  const MAX_CHARS = 40000;
+  if (input.stage16Output && input.stage16Output.length > MAX_CHARS) {
+    input = { ...input, stage16Output: input.stage16Output.substring(0, MAX_CHARS) };
+  }
   // Reset the per-run splitTextToSize cache.
   splitCache.clear();
   // NOTE: compress:false is intentional. jsPDF's `compress: true` runs pako
