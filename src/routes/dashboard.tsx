@@ -323,7 +323,7 @@ function ActionButton({ action }: { action: ActionConfig }) {
     alignItems: "center",
     gap: 6,
     transition: "background-color 150ms",
-    cursor: "pointer",
+    whiteSpace: "nowrap",
   };
   const inner = (
     <>
@@ -449,7 +449,7 @@ function SessionsTable({
                 <td className="px-4 py-4">
                   <StatusBadge status={status} />
                 </td>
-                <td className="px-4 py-4">
+                <td className="px-4 py-4" style={{ minWidth: 280, whiteSpace: "nowrap" }}>
                   <div className="flex items-center justify-end gap-2">
                     {isMobile ? (
                       <DropdownMenu>
