@@ -149,11 +149,17 @@ async function runGeneration(sessionId: string, format: DocFormat): Promise<void
   const sectionDefs = getSectionDefs(format, sessionForSections);
 
   try {
-    const results = await runInBatches(sectionDefs, 3);
-
-
     const sections: Record<string, string> = {};
-    for (const r of results) sections[r.name] = r.content;
+    for (const def of sectionDefs) {
+      const content = await callAnthropic(
+        def.systemPrompt,
+        def.userMessage,
+        def.maxTokens,
+        def.name,
+      );
+      sections[def.name] = content;
+      await new Promise((r) => setTimeout(r, 500));
+    }
 
     const html = buildHtmlDocument(sections, sessionForSections, format);
     const filename = `${sessionId}/${format}.html`;
