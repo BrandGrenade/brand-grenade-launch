@@ -122,7 +122,7 @@ Write the validation section. Five pressure tests the proposition passed. Two pa
       },
       {
         name: "why_brand",
-        maxTokens: 700,
+        maxTokens: 1200,
         systemPrompt:
           WRITING_STANDARD +
           `\nWrite the brand credibility section of a board strategy recommendation for ${brand}.\nThree paragraphs on the specific advantages that make this territory available to this brand and unavailable to competitors.\nTwo paragraphs honestly assessing what the brand cannot yet do and what must change.\nDo not soften the honest gap. Boards respect directness.`,
