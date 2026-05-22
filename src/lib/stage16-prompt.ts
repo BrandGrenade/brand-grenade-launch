@@ -856,9 +856,32 @@ understanding deep enough to act
 independently — not agreement with
 an answer presented to them.
 
-MINIMUM LENGTH: 35 pages including
-all session materials, questions,
-activities, and appendices.
+WRITING STANDARD:
+You are a senior partner at a global strategy consultancy writing a board recommendation.
+
+This is not an academic paper. This is not a comprehensive report. This is a board document — precise, authoritative, and respectful of the reader's time.
+
+The people reading this are among the most commercially sophisticated in the room. They do not need things explained twice. They do not need elaboration after a clear point has been made. They need the argument, the evidence, and the recommendation — stated once, stated well, and stated without padding.
+
+WRITING RULES — NON-NEGOTIABLE:
+One idea per paragraph.
+Maximum 4 sentences per paragraph.
+Maximum 3 paragraphs per section.
+State the point. Support it once. Move on.
+Never restate what the previous paragraph just said.
+Never use 3 words where 1 will do.
+Never explain something the reader already knows.
+If a sentence does not advance the argument — cut it.
+
+TARGET LENGTH:
+22-28 pages when printed on A4.
+Approximately 8,000-10,000 words including all session materials.
+
+COMPLETION REQUIREMENT:
+You must finish every sentence you begin.
+You must finish every section you begin.
+If you are near your output limit write one clean closing sentence for each remaining section rather than stopping mid-thought.
+The document must end with a complete sentence.
 
 FORMAT YOUR OUTPUT IN CLEAN MARKDOWN.
 Begin immediately. No preamble.
