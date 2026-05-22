@@ -330,21 +330,38 @@ function CompletePage() {
               try {
                 if (!sessionId) throw new Error("Missing session id");
 
-                // Phase 1 — stream Stage 16 markdown from the server.
-                // Progress crawls 0→80 based on accumulated characters (target ~30k).
+                // Phase 1 — multi-section Stage 16 generation. Progress advances
+                // 0→80 based on section index/total, with the section title shown.
                 let stage16Output = "";
                 let complete = true;
-                const TARGET_CHARS = 30000;
                 console.log("PDF: fetch start", Date.now());
                 const gen = await runStage16Fn({ data: { sessionId, format, force } });
-                for await (const chunk of gen) {
-                  if (typeof chunk.delta === "string") {
+                for await (const chunk of gen as AsyncIterable<{
+                  delta?: string;
+                  done?: boolean;
+                  output?: string;
+                  complete?: boolean;
+                  section?: { index: number; total: number; name: string; title: string };
+                }>) {
+                  if (chunk.section) {
+                    const { index, total, title } = chunk.section;
+                    const pretty = title.replace(
+                      /^(PART [A-Z]+ — |APPENDIX [A-Z] — |SESSION [A-Z]+ — )/i,
+                      "",
+                    );
+                    const titleCase = pretty
+                      .toLowerCase()
+                      .replace(/\b\w/g, (c) => c.toUpperCase());
+                    setProgressLabel(
+                      `Writing: ${titleCase} — Section ${index + 1} of ${total}`,
+                    );
+                    setProgress(Math.min(80, Math.round((index / total) * 80)));
+                  } else if (typeof chunk.delta === "string") {
                     stage16Output += chunk.delta;
-                    const pct = Math.min(80, Math.round((stage16Output.length / TARGET_CHARS) * 80));
-                    setProgress(pct);
                   } else if (chunk.done) {
-                    stage16Output = chunk.output;
+                    stage16Output = chunk.output ?? stage16Output;
                     complete = chunk.complete !== false;
+                    setProgress(80);
                   }
                 }
                 console.log("PDF: fetch complete", Date.now(), "(chars:", stage16Output.length, ")");
