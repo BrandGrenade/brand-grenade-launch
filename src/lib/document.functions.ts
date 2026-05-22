@@ -35,7 +35,7 @@ async function callAnthropic(
 
   for (let attempt = 0; attempt <= retries; attempt++) {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 30_000);
+    const timeout = setTimeout(() => controller.abort(), 60_000);
     try {
       const response = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
@@ -168,7 +168,7 @@ async function runGeneration(sessionId: string, format: DocFormat): Promise<void
     const { error: uploadError } = await supabaseAdmin.storage
       .from("documents")
       .upload(filename, htmlBytes, {
-        contentType: "text/html; charset=utf-8",
+        contentType: "text/html",
         upsert: true,
       });
     if (uploadError) throw new Error(`Upload failed: ${uploadError.message}`);
