@@ -363,7 +363,7 @@ function drawSectionOpener(
   setFont(doc, "bold");
   doc.setFontSize(24);
   const titleW = (PAGE_W - M_SIDE * 2) * 0.6;
-  const titleLines = doc.splitTextToSize(stripMd(title), titleW) as string[];
+  const titleLines = cachedSplitText(doc, stripMd(title), titleW);
   let ty = numberY + 16 + 3 + 28 + 24;
   for (const ln of titleLines) {
     doc.text(ln, M_SIDE, ty);
