@@ -54,6 +54,12 @@ type SessionRow = {
   category: string | null;
   selected_smp: string | null;
   selected_smp_field_name: string | null;
+  stage_1_output: string | null;
+  stage_8_output: string | null;
+  stage_10_output: string | null;
+  stage_11_output: string | null;
+  stage_12_output: string | null;
+  stage_13_output: string | null;
 };
 
 function CompletePage() {
