@@ -391,7 +391,7 @@ function CompletePage() {
 
                 if (!url) throw new Error("No document URL returned");
                 setDone(true);
-                window.open(url, "_blank", "noopener,noreferrer");
+                await openDocument(url);
 
                 window.setTimeout(() => {
                   setGenerating(false);
