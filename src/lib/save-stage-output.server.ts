@@ -43,7 +43,7 @@ export async function saveStageOutputWithRetry(
       const finalMsg = `Failed to save ${stageLabel} output after retry: ${msg2}`;
       // Best-effort: record the error column so the UI can show it.
       try {
-        await supabaseAdmin
+        await adminAny
           .from("sessions")
           .update({ [errorColumn]: finalMsg })
           .eq("id", sessionId);
