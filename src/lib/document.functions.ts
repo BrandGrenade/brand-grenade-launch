@@ -113,8 +113,6 @@ function scheduleBackground(p: Promise<unknown>): void {
 }
 
 async function runGeneration(sessionId: string, format: DocFormat): Promise<void> {
-  const urlCol = URL_COLS[format];
-  const statusCol = STATUS_COLS[format];
 
   const { data: session, error } = await supabaseAdmin
     .from("sessions")
