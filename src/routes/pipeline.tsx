@@ -2585,7 +2585,7 @@ function BottomBar({
     );
   } else if (pipelineComplete && !isViewingHistorical) {
     rightEl = (
-      <PrimaryActionButton onClick={onViewFinal} label="View Final Output →" />
+      <PrimaryActionButton onClick={onViewFinal} label="Open Deliverables →" />
     );
   } else if (isViewingHistorical) {
     rightEl = (
