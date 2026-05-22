@@ -30,7 +30,28 @@ export interface PdfInput {
   stage16Output: string;
   /** Optional pipeline outputs used to render the appendix (consulting/workshop only). */
   appendix?: AppendixData;
+  /** Optional progress callback fired during the main render loop. */
+  onProgress?: (current: number, total: number) => void;
 }
+
+// ─── splitTextToSize cache ──────────────────────────────────────────────
+// jsPDF's splitTextToSize is pure-JS text shaping and is the dominant cost
+// of PDF generation. Many blocks repeat identical text at the same width
+// and font (labels, list bullets, recurring headings), so caching results
+// avoids re-shaping the same string. The cache is cleared at the start of
+// each generateStrategicPlatformPdf() call.
+const splitCache = new Map<string, string[]>();
+function cachedSplitText(doc: jsPDF, text: string, maxWidth: number): string[] {
+  const size = doc.getFontSize();
+  const f = doc.getFont() as { fontName?: string; fontStyle?: string };
+  const key = `${f.fontName ?? ""}|${f.fontStyle ?? ""}|${size}|${maxWidth}|${text}`;
+  const hit = splitCache.get(key);
+  if (hit) return hit;
+  const result = doc.splitTextToSize(text, maxWidth) as string[];
+  splitCache.set(key, result);
+  return result;
+}
+
 
 // ─── Palette ────────────────────────────────────────────────────────────
 const C_PAGE = "#FAFAF8";
