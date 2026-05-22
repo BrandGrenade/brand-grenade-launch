@@ -110,7 +110,7 @@ function CompletePage() {
   const hasSmp = Boolean(smp && smp.trim().length > 0);
 
   useEffect(() => {
-    document.title = `${brand} Strategic Platform — Brand Grenade`;
+    document.title = `${brand} Deliverables — Brand Grenade`;
   }, [brand]);
 
   const smpPreview = hasSmp
