@@ -1580,7 +1580,7 @@ function Breadcrumb({
         <span>→</span>
         <span className="text-text-secondary truncate">{brand}</span>
         <span>→</span>
-        <span>Strategy Process</span>
+        <span>Engine Room</span>
       </nav>
 
       <div className="ml-4 flex shrink-0 items-center gap-3">
