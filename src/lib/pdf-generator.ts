@@ -680,7 +680,13 @@ function drawContent(doc: jsPDF, input: PdfInput) {
   };
 
   // Main document
-  for (const b of blocks) renderBlock(b);
+  console.log("PDF: blocks loop start", Date.now(), "blocks:", blocks.length);
+  for (let i = 0; i < blocks.length; i++) {
+    if (i === 0) console.log("PDF: first block processed", Date.now());
+    if (i % 100 === 0) console.log("PDF: block", i, "of", blocks.length, Date.now());
+    renderBlock(blocks[i]);
+  }
+  console.log("PDF: blocks loop end", Date.now());
 
   // ─── Appendix (consulting + workshop) ─────────────────────────────────
   const writeAppendixLabel = (text: string) => {
