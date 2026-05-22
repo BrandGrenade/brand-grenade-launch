@@ -63,6 +63,18 @@ type SessionRow = {
   stage_13_output: string | null;
 };
 
+async function openDocument(url: string) {
+  // Fetch the HTML and open it via a blob URL so the browser renders it
+  // regardless of the content-type the storage CDN returns.
+  const response = await fetch(url);
+  const html = await response.text();
+  const blob = new Blob([html], { type: "text/html" });
+  const blobUrl = URL.createObjectURL(blob);
+  window.open(blobUrl, "_blank", "noopener,noreferrer");
+  // Revoke after a delay so the new tab has time to load.
+  window.setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000);
+}
+
 function CompletePage() {
   const { session: sessionId } = Route.useSearch();
   const runStage16Fn = useServerFn(runStage16);
