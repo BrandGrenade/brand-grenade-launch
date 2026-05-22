@@ -323,7 +323,7 @@ function ActionButton({ action }: { action: ActionConfig }) {
     alignItems: "center",
     gap: 6,
     transition: "background-color 150ms",
-    cursor: "pointer",
+    whiteSpace: "nowrap",
   };
   const inner = (
     <>
