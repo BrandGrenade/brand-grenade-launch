@@ -25,8 +25,8 @@ const COLUMN_BY_FORMAT: Record<
 };
 
 const MAX_TOKENS_BY_FORMAT: Record<Stage16Format, number> = {
-  consulting: 5000,
-  agency: 4000,
+  consulting: 4000,
+  agency: 3500,
   workshop: 4000,
 };
 
