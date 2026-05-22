@@ -17,7 +17,7 @@ export const Route = createFileRoute("/complete")({
   component: CompletePage,
   head: () => ({
     meta: [
-      { title: "Pipeline Complete — Brand Grenade" },
+      { title: "Deliverables — Brand Grenade" },
       {
         name: "description",
         content:
