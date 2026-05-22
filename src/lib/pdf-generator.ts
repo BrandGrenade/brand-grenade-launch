@@ -700,7 +700,14 @@ async function drawContent(doc: jsPDF, input: PdfInput) {
     if (i === 0) console.log("PDF: first block processed", Date.now());
     if (i % 100 === 0) console.log("PDF: block", i, "of", blocks.length, Date.now());
     renderBlock(blocks[i]);
+    // Yield to the browser every 20 blocks so the progress bar can paint
+    // and the main thread does not freeze during text shaping.
+    if (i % 20 === 0 && i > 0) {
+      input.onProgress?.(i, blocks.length);
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    }
   }
+  input.onProgress?.(blocks.length, blocks.length);
   console.log("PDF: blocks loop end", Date.now());
 
   // ─── Appendix (consulting + workshop) ─────────────────────────────────
