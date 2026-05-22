@@ -69,6 +69,27 @@ export function getSectionDefs(format: DocFormat, session: SessionLike): Section
   const s14c = slice(session.stage_14c_output, 2000);
   const s15 = slice(session.stage_15_output, 1000);
 
+  // When upstream stage outputs are missing, fall back to a self-contained
+  // prompt built from brand/category/smp so the section still gets written.
+  const empty = (v: string | null | undefined) => !v || v.trim().length === 0;
+
+  const situationUser =
+    empty(session.stage_1_output) && empty(session.stage_2_output)
+      ? `Brand: ${brand}\nCategory: ${category}\nWrite the opening argument for why ${brand} needs a new brand strategy in ${category} right now.\nWhat has changed in this market.\nWhat the commercial stakes are.\nThree paragraphs. Board level.`
+      : `Brand: ${brand}\nCategory: ${category}\nCompetitive intelligence: ${s2}\nBrief context: ${s1}`;
+
+  const categoryUser = empty(session.stage_2_output)
+    ? `Brand: ${brand}\nCategory: ${category}\nWrite the competitive analysis.\nWhat every competitor owns.\nWhy none of them can enter the recommended territory.\nWhat the category has agreed not to say.\nOne paragraph per competitor.\nTwo closing paragraphs on the category silence.`
+    : `Brand: ${brand}\nCategory: ${category}\nCompetitive intelligence: ${s2}`;
+
+  const humanTruthUser = empty(session.stage_7_output)
+    ? `Brand: ${brand}\nCategory: ${category}\nSelected proposition: "${smp}"\nWrite the human insight section.\nThree paragraphs building to the core insight.\nThe specific behaviour — the gap between what this audience tells institutions and what they actually do.\nWrite as revelation, not description.\nEnd with the Human Contradiction Statement as a single-sentence pull quote.\nThen one paragraph on what this insight makes strategically possible.`
+    : `Brand: ${brand}\nCategory: ${category}\nStrategic territories: ${s7}\nPipeline insights: ${s5}`;
+
+  const evidenceUser = empty(session.stage_11_output)
+    ? `Brand: ${brand}\nCategory: ${category}\nSelected proposition: "${smp}"\nWrite the validation section.\nPresent the pressure tests that confirm the recommended territory is available, sustainable, and right for this brand.\nFor each test: what was tested, what it confirmed, what it exposed, what the exposure means for implementation.\nTwo paragraphs per test. No checklists or score tables.`
+    : `Brand: ${brand}\nPressure test results: ${s11}`;
+
   if (format === "consulting") {
     return [
       {
@@ -77,7 +98,7 @@ export function getSectionDefs(format: DocFormat, session: SessionLike): Section
         systemPrompt:
           WRITING_STANDARD +
           `\nWrite the opening argument of a board strategy recommendation for ${brand} in ${category}.\nThree paragraphs. 350 words maximum.\nWhat has changed commercially or culturally. Why it demands a strategic response now. The specific stakes if the brand does not move.\nSpecific to this brand. Not generic category observations.`,
-        userMessage: `Brand: ${brand}\nCategory: ${category}\nCompetitive intelligence: ${s2}\nBrief context: ${s1}`,
+        userMessage: situationUser,
       },
       {
         name: "category",
@@ -85,7 +106,7 @@ export function getSectionDefs(format: DocFormat, session: SessionLike): Section
         systemPrompt:
           WRITING_STANDARD +
           `\nWrite the competitive analysis section of a board strategy recommendation for ${brand}.\nOne paragraph per major competitor — what they genuinely own in the audience's mind and the precise structural reason they cannot enter the recommended territory.\nEnd with two paragraphs naming what the category has collectively agreed not to say and why that silence created the opportunity.\nClose with a pull quote:\n> [The single most important insight — one precise sentence]`,
-        userMessage: `Brand: ${brand}\nCategory: ${category}\nCompetitive intelligence: ${s2}`,
+        userMessage: categoryUser,
       },
       {
         name: "human_truth",
@@ -93,7 +114,7 @@ export function getSectionDefs(format: DocFormat, session: SessionLike): Section
         systemPrompt:
           WRITING_STANDARD +
           `\nWrite the human insight section of a board strategy recommendation for ${brand}.\nThree paragraphs building to the core insight.\nThe specific behaviour — the gap between what this audience tells institutions and what they actually do.\nWrite as revelation not description.\nEnd with the Human Contradiction Statement as a pull quote:\n> [The specific contradiction — one precise sentence]\nThen one paragraph on what this insight makes strategically possible.`,
-        userMessage: `Brand: ${brand}\nCategory: ${category}\nStrategic territories: ${s7}\nPipeline insights: ${s5}`,
+        userMessage: humanTruthUser,
       },
       {
         name: "why_brand",
@@ -117,7 +138,7 @@ export function getSectionDefs(format: DocFormat, session: SessionLike): Section
         systemPrompt:
           WRITING_STANDARD +
           `\nWrite the validation section of a board strategy recommendation for ${brand}.\nPresent each pressure test as a strategic argument — not a checklist or score table.\nFor each test: what was tested, what it confirmed, what it exposed, what the exposure means for implementation.\nTwo paragraphs per test.`,
-        userMessage: `Brand: ${brand}\nPressure test results: ${s11}`,
+        userMessage: evidenceUser,
       },
       {
         name: "recommendation_pre",
