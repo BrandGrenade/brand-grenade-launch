@@ -1216,7 +1216,7 @@ function PipelineView() {
 
   // Dynamic document title: "[Brand] — Stage X — Brand Grenade"
   useEffect(() => {
-    document.title = `${brandLabel} — Stage ${Math.max(1, currentMainNumber)} — Brand Grenade`;
+    document.title = `${brandLabel} Engine Room — Stage ${Math.max(1, currentMainNumber)} — Brand Grenade`;
   }, [brandLabel, currentMainNumber]);
 
 
