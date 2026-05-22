@@ -69,26 +69,30 @@ export function getSectionDefs(format: DocFormat, session: SessionLike): Section
   const s14c = slice(session.stage_14c_output, 2000);
   const s15 = slice(session.stage_15_output, 1000);
 
-  // When upstream stage outputs are missing, fall back to a self-contained
-  // prompt built from brand/category/smp so the section still gets written.
-  const empty = (v: string | null | undefined) => !v || v.trim().length === 0;
+  // Self-contained userMessages: if upstream stage outputs are empty, instruct
+  // the model to draw on general knowledge instead of receiving empty context.
+  const situationUser = `Brand: ${brand}
+Category: ${category}
+Brief: ${(session.stage_1_output ?? "").substring(0, 2000)}
+Write the opening argument for why ${brand} in ${category} faces a critical strategic moment right now. If no brief context is available, draw on general knowledge of this brand and category. Three paragraphs. 350 words maximum. Board level.`;
 
-  const situationUser =
-    empty(session.stage_1_output) && empty(session.stage_2_output)
-      ? `Brand: ${brand}\nCategory: ${category}\nWrite the opening argument for why ${brand} needs a new brand strategy in ${category} right now.\nWhat has changed in this market.\nWhat the commercial stakes are.\nThree paragraphs. Board level.`
-      : `Brand: ${brand}\nCategory: ${category}\nCompetitive intelligence: ${s2}\nBrief context: ${s1}`;
+  const categoryUser = `Brand: ${brand}
+Category: ${category}
+Selected proposition: "${smp}"
+Intelligence: ${s2 || "Draw on general knowledge of " + category}
+Analyse the competitive landscape for ${brand} in ${category}. One paragraph per major competitor. Two paragraphs on category silence. 400 words maximum.`;
 
-  const categoryUser = empty(session.stage_2_output)
-    ? `Brand: ${brand}\nCategory: ${category}\nWrite the competitive analysis.\nWhat every competitor owns.\nWhy none of them can enter the recommended territory.\nWhat the category has agreed not to say.\nOne paragraph per competitor.\nTwo closing paragraphs on the category silence.`
-    : `Brand: ${brand}\nCategory: ${category}\nCompetitive intelligence: ${s2}`;
+  const humanTruthUser = `Brand: ${brand}
+Category: ${category}
+Selected proposition: "${smp}"
+Context: ${s7 || "Draw on general knowledge of " + category + " customers"}
+Write the human insight section. The specific behaviour and contradiction of customers in ${category}. Three paragraphs building to the Human Contradiction Statement. 350 words maximum.`;
 
-  const humanTruthUser = empty(session.stage_7_output)
-    ? `Brand: ${brand}\nCategory: ${category}\nSelected proposition: "${smp}"\nWrite the human insight section.\nThree paragraphs building to the core insight.\nThe specific behaviour — the gap between what this audience tells institutions and what they actually do.\nWrite as revelation, not description.\nEnd with the Human Contradiction Statement as a single-sentence pull quote.\nThen one paragraph on what this insight makes strategically possible.`
-    : `Brand: ${brand}\nCategory: ${category}\nStrategic territories: ${s7}\nPipeline insights: ${s5}`;
-
-  const evidenceUser = empty(session.stage_11_output)
-    ? `Brand: ${brand}\nCategory: ${category}\nSelected proposition: "${smp}"\nWrite the validation section.\nPresent the pressure tests that confirm the recommended territory is available, sustainable, and right for this brand.\nFor each test: what was tested, what it confirmed, what it exposed, what the exposure means for implementation.\nTwo paragraphs per test. No checklists or score tables.`
-    : `Brand: ${brand}\nPressure test results: ${s11}`;
+  const evidenceUser = `Brand: ${brand}
+Category: ${category}
+Selected proposition: "${smp}"
+Tests: ${s11 || "Generate five integrity tests for this proposition"}
+Write the validation section. Five pressure tests the proposition passed. Two paragraphs per test. 400 words maximum.`;
 
   if (format === "consulting") {
     return [
