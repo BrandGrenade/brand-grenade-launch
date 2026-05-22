@@ -335,6 +335,7 @@ function CompletePage() {
                 let stage16Output = "";
                 let complete = true;
                 const TARGET_CHARS = 30000;
+                console.log("PDF: fetch start", Date.now());
                 const gen = await runStage16Fn({ data: { sessionId, format, force } });
                 for await (const chunk of gen) {
                   if (typeof chunk.delta === "string") {
@@ -346,6 +347,7 @@ function CompletePage() {
                     complete = chunk.complete !== false;
                   }
                 }
+                console.log("PDF: fetch complete", Date.now(), "(chars:", stage16Output.length, ")");
                 setLastOutput(stage16Output);
 
                 // Phase 2 — render PDF in the browser.
