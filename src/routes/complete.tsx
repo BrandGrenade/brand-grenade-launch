@@ -327,87 +327,58 @@ function CompletePage() {
               setLastError(null);
               setLastOutput("");
               setProgress(0);
-              setProgressLabel("Preparing document…");
+              setProgressLabel("Preparing your document…");
 
               try {
                 if (!sessionId) throw new Error("Missing session id");
 
-                // Phase 1 — multi-section Stage 16 generation. Progress advances
-                // 0→80 based on section index/total, with the section title shown.
-                let stage16Output = "";
-                let complete = true;
-                console.log("PDF: fetch start", Date.now());
-                const gen = await runStage16Fn({ data: { sessionId, format, force } });
+                let url: string | null = null;
+                const gen = await generateDocumentFn({
+                  data: { sessionId, format, force },
+                });
                 for await (const chunk of gen as AsyncIterable<{
-                  delta?: string;
+                  section?: { index: number; total: number; name: string };
                   done?: boolean;
-                  output?: string;
-                  complete?: boolean;
-                  section?: { index: number; total: number; name: string; title: string };
+                  url?: string;
+                  cached?: boolean;
                 }>) {
                   if (chunk.section) {
-                    const { index, total, title } = chunk.section;
-                    const pretty = title.replace(
-                      /^(PART [A-Z]+ — |APPENDIX [A-Z] — |SESSION [A-Z]+ — )/i,
-                      "",
-                    );
-                    const titleCase = pretty
-                      .toLowerCase()
+                    const { index, total, name } = chunk.section;
+                    const pretty = name
+                      .replace(/_/g, " ")
                       .replace(/\b\w/g, (c) => c.toUpperCase());
                     setProgressLabel(
-                      `Writing: ${titleCase} — Section ${index + 1} of ${total}`,
+                      name === "assembling"
+                        ? "Assembling document…"
+                        : `Writing: ${pretty} — ${index + 1} of ${total}`,
                     );
-                    setProgress(Math.min(80, Math.round((index / total) * 80)));
-                  } else if (typeof chunk.delta === "string") {
-                    stage16Output += chunk.delta;
+                    setProgress(Math.min(95, Math.round((index / total) * 95)));
                   } else if (chunk.done) {
-                    stage16Output = chunk.output ?? stage16Output;
-                    complete = chunk.complete !== false;
-                    setProgress(80);
+                    url = chunk.url ?? null;
+                    setProgress(100);
+                    setProgressLabel(
+                      chunk.cached ? "Opening document…" : "Document ready ✓",
+                    );
                   }
                 }
-                console.log("PDF: fetch complete", Date.now(), "(chars:", stage16Output.length, ")");
-                setLastOutput(stage16Output);
 
-                // Phase 2 — render PDF in the browser.
-                setProgressLabel("Building PDF…");
-                setProgress(90);
-                await generateStrategicPlatformPdf({
-                  brandName: brand,
-                  category: field,
-                  smp,
-                  format,
-                  stage16Output,
-                  appendix: undefined,
-
-                  onProgress: (current, total) => {
-                    const pct = Math.min(
-                      99,
-                      90 + Math.round((current / total) * 9),
-                    );
-                    setProgress(pct);
-                    const blockPct = Math.round((current / total) * 100);
-                    setProgressLabel(`Building PDF… ${blockPct}%`);
-                  },
-                });
-
-                // Phase 3 — download triggered.
-                setProgressLabel("Downloading…");
-                setProgress(100);
+                if (!url) throw new Error("No document URL returned");
                 setDone(true);
+                window.open(url, "_blank", "noopener,noreferrer");
+
                 window.setTimeout(() => {
                   setGenerating(false);
                   setDone(false);
                   setProgress(0);
-                  setProgressLabel(complete ? "" : "Document partial — try Regenerate if sections are missing");
+                  setProgressLabel("");
                 }, 1500);
               } catch (e) {
-                console.error("PDF generation failed", e);
+                console.error("Document generation failed", e);
                 setGenerating(false);
                 setProgress(0);
                 setProgressLabel("");
                 setLastError(
-                  e instanceof Error ? e.message : "PDF generation failed",
+                  e instanceof Error ? e.message : "Document generation failed",
                 );
               }
             };
