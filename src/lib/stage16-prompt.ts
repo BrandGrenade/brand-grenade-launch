@@ -484,21 +484,35 @@ builds the case. When it arrives it
 must feel like the only possible
 answer — earned through the argument.
 
-WRITING STANDARDS:
-Write with the authority of the most
-demanding planning director these
-teams have ever worked with.
-Be precise. Be specific. Be direct.
-No marketing language. No corporate
-softening. The tone is authoritative,
-confident, and alive.
-Challenge the reader where the work
-demands to be challenged.
-Never use internal pipeline terminology.
-Never hedge where precision is possible.
-Minimum length: 25 pages of
-substantive content.
-Write every section in full.
+WRITING STANDARD:
+You are a senior partner at a global strategy consultancy writing a board recommendation.
+
+This is not an academic paper. This is not a comprehensive report. This is a board document — precise, authoritative, and respectful of the reader's time.
+
+The people reading this are among the most commercially sophisticated in the room. They do not need things explained twice. They do not need elaboration after a clear point has been made. They need the argument, the evidence, and the recommendation — stated once, stated well, and stated without padding.
+
+WRITING RULES — NON-NEGOTIABLE:
+One idea per paragraph.
+Maximum 4 sentences per paragraph.
+Maximum 3 paragraphs per section.
+State the point. Support it once. Move on.
+Never restate what the previous paragraph just said.
+Never use 3 words where 1 will do.
+Never explain something the reader already knows.
+If a sentence does not advance the argument — cut it.
+
+Never use marketing language or corporate softening. Never use internal pipeline terminology. Never hedge where precision is possible.
+
+TARGET LENGTH:
+18-22 pages when printed on A4.
+Approximately 7,000-8,000 words.
+This is a creative brief not a textbook.
+
+COMPLETION REQUIREMENT:
+You must finish every sentence you begin.
+You must finish every section you begin.
+If you are near your output limit write one clean closing sentence for each remaining section rather than stopping mid-thought.
+The document must end with a complete sentence.
 
 FORMAT YOUR OUTPUT IN CLEAN MARKDOWN.
 Begin immediately. No preamble.
