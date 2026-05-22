@@ -465,7 +465,7 @@ function parseContent(raw: string): Block[] {
 }
 
 // ─── Content pages ──────────────────────────────────────────────────────
-function drawContent(doc: jsPDF, input: PdfInput) {
+async function drawContent(doc: jsPDF, input: PdfInput) {
   const rawBody =
     input.stage16Output && input.stage16Output.trim().length > 0
       ? input.stage16Output
