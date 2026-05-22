@@ -332,33 +332,60 @@ function CompletePage() {
               try {
                 if (!sessionId) throw new Error("Missing session id");
 
-                let url: string | null = null;
                 const gen = await generateDocumentFn({
                   data: { sessionId, format, force },
                 });
-                for await (const chunk of gen as AsyncIterable<{
-                  section?: { index: number; total: number; name: string };
-                  done?: boolean;
-                  url?: string;
-                  cached?: boolean;
-                }>) {
-                  if (chunk.section) {
-                    const { index, total, name } = chunk.section;
-                    const pretty = name
-                      .replace(/_/g, " ")
-                      .replace(/\b\w/g, (c) => c.toUpperCase());
+
+                let url: string | null = null;
+
+                if (gen.status === "ready" && gen.url) {
+                  url = gen.url;
+                  setProgress(100);
+                  setProgressLabel("Opening document…");
+                } else {
+                  // Poll the sessions table every 5s until status becomes
+                  // 'ready' or 'error'. Generation is running in the
+                  // background on the server (ctx.waitUntil).
+                  setProgressLabel("Preparing your document…");
+                  const statusCol = `doc_${format}_status` as const;
+                  const urlCol = `doc_${format}_url` as const;
+                  const startedAt = Date.now();
+                  const MAX_WAIT_MS = 5 * 60 * 1000;
+                  let tick = 0;
+                  while (true) {
+                    await new Promise((r) => setTimeout(r, 5000));
+                    tick++;
+                    // Gentle indeterminate progress: cap at 90%.
+                    setProgress((p) => (p < 90 ? Math.min(90, p + 5) : p));
                     setProgressLabel(
-                      name === "assembling"
-                        ? "Assembling document…"
-                        : `Writing: ${pretty} — ${index + 1} of ${total}`,
+                      `Preparing your document… (${tick * 5}s)`,
                     );
-                    setProgress(Math.min(95, Math.round((index / total) * 95)));
-                  } else if (chunk.done) {
-                    url = chunk.url ?? null;
-                    setProgress(100);
-                    setProgressLabel(
-                      chunk.cached ? "Opening document…" : "Document ready ✓",
-                    );
+                    const { data: row, error: pollError } = await supabase
+                      .from("sessions")
+                      .select(`${statusCol}, ${urlCol}`)
+                      .eq("id", sessionId)
+                      .maybeSingle();
+                    if (pollError) throw new Error(pollError.message);
+                    const status = (row as Record<string, unknown> | null)?.[statusCol] as
+                      | string
+                      | null
+                      | undefined;
+                    const docUrl = (row as Record<string, unknown> | null)?.[urlCol] as
+                      | string
+                      | null
+                      | undefined;
+                    if (status === "ready" && docUrl) {
+                      url = docUrl;
+                      setProgress(100);
+                      setProgressLabel("Document ready ✓");
+                      break;
+                    }
+                    if (status === "error") {
+                      throw new Error("Document generation failed on server");
+                    }
+                    if (Date.now() - startedAt > MAX_WAIT_MS) {
+                      throw new Error("Document generation timed out");
+                    }
                   }
                 }
 
