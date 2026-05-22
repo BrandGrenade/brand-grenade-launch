@@ -135,7 +135,7 @@ function CompletePage() {
           <span>→</span>
           <span className="text-text-secondary truncate">{brand}</span>
           <span>→</span>
-          <span>Complete</span>
+          <span>Deliverables</span>
         </nav>
       </div>
 
