@@ -20,7 +20,7 @@ export async function saveStageOutputWithRetry(
   stageLabel: string,
 ): Promise<void> {
   const attempt = async () => {
-    const { error } = await supabaseAdmin
+    const { error } = await adminAny
       .from("sessions")
       .update(updates)
       .eq("id", sessionId);
