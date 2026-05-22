@@ -637,7 +637,7 @@ async function drawContent(doc: jsPDF, input: PdfInput) {
         const calloutMaxW = CONTENT_W * 0.85 - 28;
         setFont(doc, "italic");
         doc.setFontSize(15);
-        const lines = doc.splitTextToSize(text, calloutMaxW) as string[];
+        const lines = cachedSplitText(doc, text, calloutMaxW);
         const lh = 15 * 1.65;
         const blockH = lines.length * lh + 24;
         ensureSpace(blockH);
