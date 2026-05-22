@@ -25,9 +25,9 @@ const COLUMN_BY_FORMAT: Record<
 };
 
 const MAX_TOKENS_BY_FORMAT: Record<Stage16Format, number> = {
-  consulting: 12000,
-  agency: 10000,
-  workshop: 10000,
+  consulting: 5000,
+  agency: 4000,
+  workshop: 4000,
 };
 
 const MIN_LENGTH_BY_FORMAT: Record<Stage16Format, number> = {
