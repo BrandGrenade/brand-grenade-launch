@@ -101,6 +101,132 @@ function normaliseForMatch(s: string): string {
     .trim();
 }
 
+// ─── PDF-safe sanitiser ─────────────────────────────────────────────────
+// Strips characters and patterns that the built-in jsPDF fonts (Helvetica /
+// Courier) cannot render correctly — box-drawing chars, %P encoded
+// separators, spaced-out heading treatments, raw === / ═══ dividers, etc.
+export function sanitiseForPdf(text: string): string {
+  if (!text) return text;
+  let t = text.replace(/\r\n/g, "\n");
+
+  // Strip box-drawing characters (Unicode 2500–257F) up front so divider
+  // lines collapse to whitespace and the separator rule catches them.
+  t = t.replace(/[\u2500-\u257F]/g, "");
+
+  // STEP 1 — Remove separator-only lines
+  t = t.replace(/^[=%P\-_*~#\s]{3,}$/gm, "");
+
+  // STEP 2 — Remove encoded separators
+  t = t.replace(/(%P){3,}/g, "");
+  t = t.replace(/%{3,}/g, "");
+
+  // STEP 3 — De-space heading lines like "W H A T  T H I S" → "WHAT THIS"
+  t = t.replace(/^(?:[A-Z]\s){4,}[A-Z]$/gm, (m) => m.replace(/\s+/g, ""));
+  t = t.replace(
+    /^(?:[A-Z](?:\s[A-Z])+)(?:\s{2,}[A-Z](?:\s[A-Z])+)+$/gm,
+    (m) =>
+      m
+        .split(/\s{2,}/)
+        .map((w) => w.replace(/\s+/g, ""))
+        .join(" "),
+  );
+
+  // STEP 4 — Proposition divider lines → blank separator
+  t = t.replace(/^={3,}$/gm, "");
+
+  // STEP 5 — Remove "PROPOSITION N" label lines
+  t = t.replace(/^\*{0,2}PROPOSITION\s+\d+\*{0,2}$/gim, "");
+
+  // STEP 6 — Collapse blank lines
+  t = t.replace(/\n{3,}/g, "\n\n");
+
+  return t.trim();
+}
+
+// ─── Lightweight proposition extractor for Appendix C ───────────────────
+interface ParsedProposition {
+  line: string;
+  owns: string;
+  composite?: number;
+}
+
+function extractCompositeScore(block: string): number | undefined {
+  const m = block.match(/Composite[:\s]+(\d+(?:\.\d+)?)\s*\/\s*60/i);
+  return m ? parseFloat(m[1]) : undefined;
+}
+
+function extractPropositions(rawOutput: string): ParsedProposition[] {
+  if (!rawOutput) return [];
+
+  const dividerPattern = /[═=]{3,}/g;
+  const blocksA = rawOutput.split(dividerPattern).filter((b) => b.trim().length > 50);
+  const propPattern = /\*{0,2}PROPOSITION\s+\d+\*{0,2}/gi;
+  const blocksB = rawOutput.split(propPattern).filter((b) => b.trim().length > 50);
+  const contentBlocks = blocksB.length > blocksA.length ? blocksB : blocksA;
+
+  const out: ParsedProposition[] = [];
+  for (const block of contentBlocks) {
+    if (
+      !block.includes("**") &&
+      !block.includes("Composite") &&
+      !block.includes("Differentiation")
+    ) {
+      continue;
+    }
+    if (
+      block.includes("[METADATA]") ||
+      block.includes("SELF-AUDIT") ||
+      block.includes("PRESENTATION ORDER") ||
+      block.includes("SELECTION FRAMEWORK") ||
+      block.includes("DELIVERABLE 2") ||
+      block.includes("DELIVERABLE 3")
+    ) {
+      continue;
+    }
+
+    let line = "";
+    const blockquoteBold = block.match(/>\s*\*\*([^*\n]+)\*\*/);
+    if (blockquoteBold) line = blockquoteBold[1].trim();
+    if (!line) {
+      const boldMatches = block.match(/\*\*([^*\n]{10,80})\*\*/g);
+      if (boldMatches && boldMatches.length > 0) {
+        line = boldMatches[0].replace(/\*\*/g, "").trim();
+      }
+    }
+    if (!line) continue;
+    if (
+      line.includes("PROPOSITION") ||
+      line.includes("WHAT THIS") ||
+      line.includes("THE TRUTH") ||
+      line.length > 100
+    ) {
+      continue;
+    }
+
+    const ownsMatch = block.match(
+      /WHAT THIS PROPOSITION OWNS[\s\S]*?\n\n([\s\S]*?)(?:\n---|\n═|\n===|$)/i,
+    );
+    const owns = ownsMatch ? stripMd(ownsMatch[1].trim()) : "";
+
+    out.push({
+      line: stripMd(line),
+      owns,
+      composite: extractCompositeScore(block),
+    });
+  }
+  return out;
+}
+
+function firstSentence(text: string, maxWords = 50): string {
+  if (!text) return "";
+  const clean = text.replace(/\s+/g, " ").trim();
+  const sentenceMatch = clean.match(/^[^.!?]*[.!?]/);
+  const sentence = (sentenceMatch ? sentenceMatch[0] : clean).trim();
+  const words = sentence.split(/\s+/);
+  if (words.length <= maxWords) return sentence;
+  return words.slice(0, maxWords).join(" ") + "…";
+}
+
 // ─── Cover ──────────────────────────────────────────────────────────────
 async function loadIconDataUrl(): Promise<string | null> {
   try {
