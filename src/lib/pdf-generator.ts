@@ -930,7 +930,8 @@ export async function generateStrategicPlatformPdf(input: PdfInput) {
   const date = new Date().toISOString().slice(0, 10);
   const safe = (input.brandName || "Brand").replace(/[^a-zA-Z0-9]+/g, "");
   const filename = `BrandGrenade_${safe}_${FORMAT_FILE[input.format]}_${date}.pdf`;
-  console.log("PDF: save start", Date.now());
+  console.log("PDF: before save", Date.now());
   doc.save(filename);
   console.log("PDF: save complete", Date.now(), "(save ms:", Date.now() - tRenderEnd, ")");
+  console.log("PDF: complete", Date.now());
 }
