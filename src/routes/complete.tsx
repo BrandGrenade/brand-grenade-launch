@@ -471,6 +471,57 @@ function CompletePage() {
             </div>
           )}
 
+          {lastError && !generating && (
+            <div
+              style={{
+                marginTop: 16,
+                padding: "16px 20px",
+                background: "#7C3A3A15",
+                border: "1px solid #7C3A3A",
+                borderRadius: 8,
+              }}
+            >
+              <p className="text-body-sm" style={{ color: "#8A8680", margin: 0 }}>
+                PDF generation failed. Try downloading as a text document instead.
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  const safe = brand.replace(/[^a-zA-Z0-9]/g, "_");
+                  const date = new Date().toISOString().split("T")[0];
+                  const suffix = {
+                    consulting: "BoardStrategyRecommendation",
+                    agency: "AgencyStrategyPlatform",
+                    workshop: "BrandStrategyWorkshopGuide",
+                  }[format];
+                  const blob = new Blob([lastOutput || "(no content available)"], {
+                    type: "text/plain;charset=utf-8",
+                  });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement("a");
+                  a.href = url;
+                  a.download = `BrandGrenade_${safe}_${suffix}_${date}.txt`;
+                  document.body.appendChild(a);
+                  a.click();
+                  document.body.removeChild(a);
+                  URL.revokeObjectURL(url);
+                }}
+                className="text-body-sm transition-colors hover:text-text-primary"
+                style={{
+                  marginTop: 8,
+                  background: "none",
+                  border: "none",
+                  padding: 0,
+                  color: "#8A8680",
+                  cursor: "pointer",
+                  textDecoration: "underline",
+                }}
+              >
+                Download as Text
+              </button>
+            </div>
+          )}
+
           <div
             style={{
               marginTop: 16,
