@@ -69,11 +69,11 @@ export const Route = createFileRoute("/pipeline")({
   component: PipelineView,
   head: () => ({
     meta: [
-      { title: "Pipeline — Brand Grenade" },
+      { title: "Engine Room — Brand Grenade" },
       {
         name: "description",
         content:
-          "20-stage strategy pipeline view. Track stages, review outputs, and act on human checkpoints.",
+          "20-stage strategy engine room. Track stages, review outputs, and act on human checkpoints.",
       },
     ],
   }),
