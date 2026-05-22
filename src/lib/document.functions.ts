@@ -178,24 +178,8 @@ async function runGeneration(sessionId: string, format: DocFormat): Promise<void
   const sectionDefs = getSectionDefs(format, sessionForSections);
 
   try {
-    const results = await Promise.all(
-      sectionDefs.map(async (def) => {
-        try {
-          const content = await callAnthropic(
-            def.systemPrompt,
-            def.userMessage,
-            def.maxTokens,
-          );
-          return { name: def.name, content };
-        } catch (e) {
-          const msg = e instanceof Error ? e.message : "section call failed";
-          return {
-            name: def.name,
-            content: `*[Section "${def.name}" could not be generated: ${msg}]*`,
-          };
-        }
-      }),
-    );
+    const results = await runInBatches(sectionDefs, 3);
+
 
     const sections: Record<string, string> = {};
     for (const r of results) sections[r.name] = r.content;
