@@ -12,6 +12,15 @@ import { getTemplateContent } from "./stage16-content";
 
 export type PdfFormat = Stage16Format;
 
+export interface AppendixData {
+  stage1Output?: string | null;
+  stage8Output?: string | null;
+  stage10Output?: string | null;
+  stage11Output?: string | null;
+  stage12Output?: string | null;
+  stage13Output?: string | null;
+}
+
 export interface PdfInput {
   brandName: string;
   category: string;
@@ -19,6 +28,8 @@ export interface PdfInput {
   format: PdfFormat;
   /** Raw Stage 16 markdown for the selected format. */
   stage16Output: string;
+  /** Optional pipeline outputs used to render the appendix (consulting/workshop only). */
+  appendix?: AppendixData;
 }
 
 // ─── Palette ────────────────────────────────────────────────────────────
