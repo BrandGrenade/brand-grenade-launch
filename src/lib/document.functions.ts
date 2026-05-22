@@ -75,9 +75,15 @@ export const generateDocument = createServerFn({ method: "POST" })
     }
 
     // Mark generating
+    const generatingUpdate =
+      format === "consulting"
+        ? { doc_consulting_status: "generating", doc_consulting_url: null }
+        : format === "agency"
+          ? { doc_agency_status: "generating", doc_agency_url: null }
+          : { doc_workshop_status: "generating", doc_workshop_url: null };
     await supabaseAdmin
       .from("sessions")
-      .update({ [statusCol]: "generating", [urlCol]: null })
+      .update(generatingUpdate)
       .eq("id", sessionId);
 
     const sessionForSections: SessionLike = {
