@@ -494,7 +494,7 @@ function CompletePage() {
                     onClick={() => setModalStage(name)}
                     className="text-body-sm font-medium text-primary transition-colors hover:text-primary-hover"
                   >
-                    View output
+                    Open in Engine Room
                   </button>
                 </li>
               ))}
