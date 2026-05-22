@@ -359,7 +359,7 @@ function CompletePage() {
                   smp,
                   format,
                   stage16Output,
-                  appendix: null,
+                  appendix: undefined,
 
                   onProgress: (current, total) => {
                     const pct = Math.min(
