@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { MoreHorizontal } from "lucide-react";
+import { MoreHorizontal, Grid2x2, FileText, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { TopNav } from "@/components/TopNav";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,6 +18,7 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
 } from "@/components/ui/alert-dialog";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 
 export const Route = createFileRoute("/dashboard")({
@@ -42,25 +43,20 @@ type DbSession = {
   current_stage: number;
   created_at: string;
   updated_at: string;
+  stage_16_consulting_output: string | null;
 };
 
-type UIStatus = "in_progress" | "complete" | "awaiting_review" | "held" | "error" | "interrupted";
+type UIStatus = "complete" | "in_progress" | "incomplete";
 
-function mapStatus(s: string): UIStatus {
-  switch (s) {
-    case "complete":
-      return "complete";
-    case "awaiting_checkpoint":
-      return "awaiting_review";
-    case "held":
-      return "held";
-    case "error":
-      return "error";
-    case "interrupted":
-      return "interrupted";
-    default:
-      return "in_progress";
+function deriveStatus(s: DbSession): UIStatus {
+  if (
+    (s.current_stage === 20 && s.status === "complete") ||
+    s.stage_16_consulting_output != null
+  ) {
+    return "complete";
   }
+  if (s.status === "running" || s.status === "pending") return "in_progress";
+  return "incomplete";
 }
 
 function Dashboard() {
@@ -93,7 +89,7 @@ function Dashboard() {
     (async () => {
       const { data } = await supabase
         .from("sessions")
-        .select("id,brand_name,category,status,current_stage,created_at,updated_at")
+        .select("id,brand_name,category,status,current_stage,created_at,updated_at,stage_16_consulting_output")
         .order("updated_at", { ascending: false })
         .limit(100);
       if (!active) return;
@@ -109,7 +105,7 @@ function Dashboard() {
         async () => {
           const { data } = await supabase
             .from("sessions")
-            .select("id,brand_name,category,status,current_stage,created_at,updated_at")
+            .select("id,brand_name,category,status,current_stage,created_at,updated_at,stage_16_consulting_output")
             .order("updated_at", { ascending: false })
             .limit(100);
           if (active) setSessions((data ?? []) as DbSession[]);
@@ -125,9 +121,9 @@ function Dashboard() {
 
   const stats = [
     { value: sessions.length, label: "Total Runs" },
-    { value: sessions.filter((s) => s.status === "complete").length, label: "Completed" },
+    { value: sessions.filter((s) => deriveStatus(s) === "complete").length, label: "Completed" },
     {
-      value: sessions.filter((s) => s.status === "running" || s.status === "pending").length,
+      value: sessions.filter((s) => deriveStatus(s) === "in_progress").length,
       label: "In Progress",
     },
   ];
@@ -272,21 +268,25 @@ function EmptyState() {
   );
 }
 
-const STATUS_META: Record<UIStatus, { label: string; bg: string; fg: string }> = {
-  in_progress: { label: "In Progress", bg: "var(--color-primary-subtle)", fg: "var(--color-primary)" },
-  complete: { label: "Complete", bg: "oklch(0.55 0.08 150 / 0.10)", fg: "var(--color-success)" },
-  awaiting_review: { label: "Awaiting Review", bg: "oklch(0.5 0.09 70 / 0.10)", fg: "var(--color-warning)" },
-  held: { label: "Held", bg: "oklch(0.45 0.12 25 / 0.10)", fg: "var(--color-destructive)" },
-  error: { label: "Error", bg: "oklch(0.45 0.12 25 / 0.10)", fg: "var(--color-destructive)" },
-  interrupted: { label: "Interrupted", bg: "oklch(0.5 0.09 70 / 0.10)", fg: "var(--color-warning)" },
+const STATUS_META: Record<UIStatus, { label: string; bg: string; border: string; fg: string }> = {
+  complete: { label: "Complete", bg: "#4A7C5915", border: "#4A7C59", fg: "#4A7C59" },
+  in_progress: { label: "In Progress", bg: "#C8873A15", border: "#C8873A", fg: "#C8873A" },
+  incomplete: { label: "Incomplete", bg: "#3A3A3A", border: "#5A5652", fg: "#5A5652" },
 };
 
 function StatusBadge({ status }: { status: UIStatus }) {
   const meta = STATUS_META[status];
   return (
     <span
-      className="text-label inline-flex items-center rounded-sm px-2 py-0.5"
-      style={{ backgroundColor: meta.bg, color: meta.fg }}
+      className="inline-flex items-center rounded-sm font-medium uppercase tracking-wider"
+      style={{
+        backgroundColor: meta.bg,
+        border: `1px solid ${meta.border}`,
+        color: meta.fg,
+        fontSize: 9,
+        padding: "2px 6px",
+        letterSpacing: "0.08em",
+      }}
     >
       {meta.label}
     </span>
@@ -297,6 +297,112 @@ function fmtDate(iso: string) {
   return new Date(iso).toLocaleString();
 }
 
+type ActionConfig = {
+  key: "engine" | "deliverables" | "continue" | "delete";
+  label: string;
+  color: string;
+  hoverBg: string;
+  icon: React.ReactNode;
+  onClick?: () => void;
+  to?: string;
+  search?: Record<string, string>;
+};
+
+function ActionButton({ action }: { action: ActionConfig }) {
+  const [hover, setHover] = useState(false);
+  const baseStyle: React.CSSProperties = {
+    height: 28,
+    padding: "0 12px",
+    borderRadius: 6,
+    fontSize: 13,
+    fontWeight: 500,
+    border: `1px solid ${action.color}66`,
+    color: action.color,
+    backgroundColor: hover ? action.hoverBg : "transparent",
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 6,
+    transition: "background-color 150ms",
+    cursor: "pointer",
+  };
+  const inner = (
+    <>
+      {action.icon}
+      <span>{action.label}</span>
+    </>
+  );
+  if (action.to) {
+    return (
+      <Link
+        to={action.to}
+        search={action.search as never}
+        style={baseStyle}
+        onMouseEnter={() => setHover(true)}
+        onMouseLeave={() => setHover(false)}
+      >
+        {inner}
+      </Link>
+    );
+  }
+  return (
+    <button
+      type="button"
+      onClick={action.onClick}
+      style={baseStyle}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+    >
+      {inner}
+    </button>
+  );
+}
+
+function buildActions(s: DbSession, status: UIStatus, onDelete: () => void): ActionConfig[] {
+  const deleteAction: ActionConfig = {
+    key: "delete",
+    label: "Delete",
+    color: "#7C3A3A",
+    hoverBg: "#7C3A3A15",
+    icon: <Trash2 size={14} />,
+    onClick: onDelete,
+  };
+  if (status === "complete") {
+    return [
+      {
+        key: "engine",
+        label: "Engine Room",
+        color: "#8A8680",
+        hoverBg: "#1C1C1C",
+        icon: <Grid2x2 size={14} />,
+        to: "/pipeline",
+        search: { session: s.id },
+      },
+      {
+        key: "deliverables",
+        label: "Deliverables",
+        color: "#C8873A",
+        hoverBg: "#C8873A15",
+        icon: <FileText size={14} />,
+        to: "/complete",
+        search: { session: s.id },
+      },
+      deleteAction,
+    ];
+  }
+  return [
+    {
+      key: "continue",
+      label: "Continue",
+      color: "#C8873A",
+      hoverBg: "#C8873A15",
+      icon: <Grid2x2 size={14} />,
+      to: "/pipeline",
+      search: { session: s.id },
+    },
+    deleteAction,
+  ];
+}
+
 function SessionsTable({
   sessions,
   onRequestDelete,
@@ -304,7 +410,8 @@ function SessionsTable({
   sessions: DbSession[];
   onRequestDelete: (s: DbSession) => void;
 }) {
-  const headers = ["Brand", "Category", "Status", "Stage", "Updated", "Actions"];
+  const isMobile = useIsMobile();
+  const headers = ["Brand", "Category", "Stage", "Updated", "Status", "Actions"];
 
   return (
     <div className="overflow-x-auto">
@@ -324,7 +431,8 @@ function SessionsTable({
         </thead>
         <tbody>
           {sessions.map((s, i) => {
-            const ui = mapStatus(s.status);
+            const status = deriveStatus(s);
+            const actions = buildActions(s, status, () => onRequestDelete(s));
             return (
               <tr
                 key={s.id}
@@ -334,47 +442,57 @@ function SessionsTable({
               >
                 <td className="text-body px-4 py-4 text-text-primary">{s.brand_name}</td>
                 <td className="text-body px-4 py-4 text-text-secondary">{s.category ?? "—"}</td>
-                <td className="px-4 py-4">
-                  <StatusBadge status={ui} />
-                </td>
                 <td className="text-body px-4 py-4 text-text-secondary">
                   Stage {s.current_stage} of 20
                 </td>
                 <td className="text-body px-4 py-4 text-text-secondary">{fmtDate(s.updated_at)}</td>
                 <td className="px-4 py-4">
-                  <div className="flex items-center justify-end">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger
-                        aria-label="Session actions"
-                        className="inline-flex h-8 w-8 items-center justify-center rounded-md text-text-secondary transition-colors hover:bg-[var(--color-surface-2)] hover:text-text-primary focus:outline-none"
-                      >
-                        <MoreHorizontal className="h-4 w-4" />
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-44">
-                        <DropdownMenuItem asChild>
-                          <Link to="/pipeline" search={{ session: s.id }}>
-                            {ui === "complete" ? "View" : "Continue"}
-                          </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onSelect={(e) => {
-                            e.preventDefault();
-                            onRequestDelete(s);
-                          }}
-                          style={{ color: "#7C3A3A" }}
+                  <StatusBadge status={status} />
+                </td>
+                <td className="px-4 py-4">
+                  <div className="flex items-center justify-end gap-2">
+                    {isMobile ? (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger
+                          aria-label="Session actions"
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-md text-text-secondary transition-colors hover:bg-[var(--color-surface-2)] hover:text-text-primary focus:outline-none"
                         >
-                          Delete session
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                          <MoreHorizontal className="h-4 w-4" />
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-48">
+                          {actions.map((a) =>
+                            a.to ? (
+                              <DropdownMenuItem key={a.key} asChild>
+                                <Link to={a.to} search={a.search as never} style={{ color: a.color }}>
+                                  {a.label}
+                                </Link>
+                              </DropdownMenuItem>
+                            ) : (
+                              <DropdownMenuItem
+                                key={a.key}
+                                onSelect={(e) => {
+                                  e.preventDefault();
+                                  a.onClick?.();
+                                }}
+                                style={{ color: a.color }}
+                              >
+                                {a.label}
+                              </DropdownMenuItem>
+                            ),
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    ) : (
+                      actions.map((a) => <ActionButton key={a.key} action={a} />)
+                    )}
                   </div>
                 </td>
               </tr>
             );
           })}
-
         </tbody>
       </table>
     </div>
   );
 }
+
