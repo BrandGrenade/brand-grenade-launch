@@ -35,7 +35,7 @@ async function callAnthropic(
 
   for (let attempt = 0; attempt <= retries; attempt++) {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 30_000);
+    const timeout = setTimeout(() => controller.abort(), 60_000);
     try {
       const response = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
@@ -61,7 +61,7 @@ async function callAnthropic(
       console.error(
         `[section: ${sectionName}] Response length: ${text?.length} First 200 chars: ${text?.substring(0, 200)}`,
       );
-      if (!text || text.trim().length < 10) {
+      if (!text || text.trim().length < 50) {
         throw new Error("Empty response");
       }
       return text.trim();
@@ -71,42 +71,13 @@ async function callAnthropic(
         console.error(`[generateDocument] section call failed after ${retries + 1} attempts: ${msg}`);
         return `This section could not be generated. Please regenerate the document.`;
       }
-      await new Promise((r) => setTimeout(r, 3000));
+      await new Promise((r) => setTimeout(r, 5000));
     } finally {
       clearTimeout(timeout);
     }
   }
   return "";
 }
-
-async function runInBatches(
-  defs: Array<{ name: string; systemPrompt: string; userMessage: string; maxTokens: number }>,
-  batchSize: number,
-): Promise<Array<{ name: string; content: string }>> {
-  const results: Array<{ name: string; content: string }> = [];
-  for (let i = 0; i < defs.length; i += batchSize) {
-    const batch = defs.slice(i, i + batchSize);
-    const batchResults = await Promise.all(
-      batch.map(async (def) => {
-        try {
-          const content = await callAnthropic(
-            def.systemPrompt,
-            def.userMessage,
-            def.maxTokens,
-            def.name,
-          );
-          return { name: def.name, content };
-        } catch (e) {
-          return { name: def.name, content: "Section generation failed." };
-        }
-      }),
-    );
-    results.push(...batchResults);
-  }
-  return results;
-}
-
-
 
 const Input = z.object({
   sessionId: z.string().uuid(),
@@ -178,11 +149,17 @@ async function runGeneration(sessionId: string, format: DocFormat): Promise<void
   const sectionDefs = getSectionDefs(format, sessionForSections);
 
   try {
-    const results = await runInBatches(sectionDefs, 3);
-
-
     const sections: Record<string, string> = {};
-    for (const r of results) sections[r.name] = r.content;
+    for (const def of sectionDefs) {
+      const content = await callAnthropic(
+        def.systemPrompt,
+        def.userMessage,
+        def.maxTokens,
+        def.name,
+      );
+      sections[def.name] = content;
+      await new Promise((r) => setTimeout(r, 500));
+    }
 
     const html = buildHtmlDocument(sections, sessionForSections, format);
     const filename = `${sessionId}/${format}.html`;
@@ -191,7 +168,7 @@ async function runGeneration(sessionId: string, format: DocFormat): Promise<void
     const { error: uploadError } = await supabaseAdmin.storage
       .from("documents")
       .upload(filename, htmlBytes, {
-        contentType: "text/html; charset=utf-8",
+        contentType: "text/html",
         upsert: true,
       });
     if (uploadError) throw new Error(`Upload failed: ${uploadError.message}`);
