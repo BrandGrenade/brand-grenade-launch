@@ -450,7 +450,7 @@ function CompletePage() {
             className="text-label flex w-full items-center justify-between border-t border-border py-4 text-left transition-colors"
             style={{ color: "var(--color-text-tertiary)" }}
           >
-            <span>VIEW FULL STRATEGY OUTPUT</span>
+            <span>OPEN ENGINE ROOM</span>
             <span
               style={{
                 transition: "transform 200ms",
