@@ -320,44 +320,35 @@ function CompletePage() {
               if (!hasSmp) return;
               setGenerating(true);
               setDone(false);
+              setLastError(null);
+              setLastOutput("");
               setProgress(0);
-              setProgressLabel(
-                force
-                  ? "Regenerating document — clearing previous output…"
-                  : "Assembling strategic platform document…",
-              );
-
-              const start = Date.now();
-              const DURATION = 14000;
-              const tick = window.setInterval(() => {
-                const t = Math.min(1, (Date.now() - start) / DURATION);
-                const eased = 1 - Math.pow(1 - t, 3);
-                const pct = Math.min(95, Math.round(eased * 95));
-                setProgress(pct);
-                if (pct > 35 && pct < 75) {
-                  setProgressLabel(`Formatting ${format} variant…`);
-                } else if (pct >= 75) {
-                  setProgressLabel("Finalising PDF…");
-                }
-              }, 200);
+              setProgressLabel("Preparing document…");
 
               try {
                 if (!sessionId) throw new Error("Missing session id");
-                setProgressLabel(`Generating ${format} document…`);
+
+                // Phase 1 — stream Stage 16 markdown from the server.
+                // Progress crawls 0→80 based on accumulated characters (target ~30k).
                 let stage16Output = "";
                 let complete = true;
+                const TARGET_CHARS = 30000;
                 const gen = await runStage16Fn({ data: { sessionId, format, force } });
                 for await (const chunk of gen) {
                   if (typeof chunk.delta === "string") {
                     stage16Output += chunk.delta;
+                    const pct = Math.min(80, Math.round((stage16Output.length / TARGET_CHARS) * 80));
+                    setProgress(pct);
                   } else if (chunk.done) {
                     stage16Output = chunk.output;
                     complete = chunk.complete !== false;
                   }
                 }
-                if (!complete) {
-                  setProgressLabel("Completing document generation…");
-                }
+                setLastOutput(stage16Output);
+
+                // Phase 2 — render PDF in the browser.
+                setProgressLabel("Building PDF…");
+                setProgress(90);
                 await generateStrategicPlatformPdf({
                   brandName: brand,
                   category: field,
@@ -376,21 +367,25 @@ function CompletePage() {
                         }
                       : undefined,
                 });
-                window.clearInterval(tick);
+
+                // Phase 3 — download triggered.
+                setProgressLabel("Downloading…");
                 setProgress(100);
-                setProgressLabel(complete ? "Document ready" : "Document ready (partial — try Regenerate if sections are missing)");
                 setDone(true);
                 window.setTimeout(() => {
                   setGenerating(false);
                   setDone(false);
                   setProgress(0);
-                }, 2200);
+                  setProgressLabel(complete ? "" : "Document partial — try Regenerate if sections are missing");
+                }, 1500);
               } catch (e) {
-                window.clearInterval(tick);
                 console.error("PDF generation failed", e);
                 setGenerating(false);
                 setProgress(0);
                 setProgressLabel("");
+                setLastError(
+                  e instanceof Error ? e.message : "PDF generation failed",
+                );
               }
             };
             return (
