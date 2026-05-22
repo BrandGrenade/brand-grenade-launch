@@ -902,14 +902,28 @@ function drawContent(doc: jsPDF, input: PdfInput) {
 
 // ─── Public entry ───────────────────────────────────────────────────────
 export async function generateStrategicPlatformPdf(input: PdfInput) {
-  const doc = new jsPDF({ unit: "pt", format: "a4", compress: true });
+  // NOTE: compress:false is intentional. jsPDF's `compress: true` runs pako
+  // gzip synchronously over every content stream inside doc.save() and was
+  // the cause of the multi-second "Finalising PDF…" stall. Uncompressed
+  // PDFs are larger on disk but generate in a fraction of the time.
+  const tInit = Date.now();
+  const doc = new jsPDF({ unit: "pt", format: "a4", compress: false });
   const iconDataUrl = await loadIconDataUrl();
+  console.log("PDF: render start", Date.now(), "(init+icon ms:", Date.now() - tInit, ")");
 
   drawCover(doc, input, iconDataUrl);
   drawContent(doc, input);
+  const tRenderEnd = Date.now();
+  console.log("PDF: render complete", tRenderEnd, "(render ms:", tRenderEnd - tInit, ")");
+
+  // Yield to the browser so the "Building PDF…" label can paint before the
+  // synchronous serialise/save pass runs.
+  await new Promise((r) => setTimeout(r, 0));
 
   const date = new Date().toISOString().slice(0, 10);
   const safe = (input.brandName || "Brand").replace(/[^a-zA-Z0-9]+/g, "");
   const filename = `BrandGrenade_${safe}_${FORMAT_FILE[input.format]}_${date}.pdf`;
+  console.log("PDF: save start", Date.now());
   doc.save(filename);
+  console.log("PDF: save complete", Date.now(), "(save ms:", Date.now() - tRenderEnd, ")");
 }
