@@ -385,7 +385,7 @@ function drawPropositionReveal(doc: jsPDF, smp: string) {
   setFont(doc, "bold");
   doc.setFontSize(36); // 48px screen ≈ 36pt
   const maxW = 420; // ~560px screen
-  const lines = doc.splitTextToSize(stripMd(smp), maxW) as string[];
+  const lines = cachedSplitText(doc, stripMd(smp), maxW);
   const lh = 36 * 1.25;
   const totalH = lines.length * lh;
   const startY = (PAGE_H - totalH) / 2;
