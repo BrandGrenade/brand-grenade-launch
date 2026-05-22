@@ -48,56 +48,49 @@ must feel earned — the conclusion of
 an argument, not the announcement
 of a decision.
 
-WRITING STANDARDS — NON-NEGOTIABLE:
-Every sentence earns its place or
-it is cut.
-No marketing language. No superlatives.
-No enthusiasm. No hedging. No corporate
-soft-focus language.
-The tone is authoritative, precise,
-and calm.
-Write as if the most commercially
-sophisticated person in the room
-will read every word.
-Never use these words or phrases:
-journey, seamless, innovative, empower,
-ecosystem, passionate, cutting-edge,
-best-in-class, stakeholder, leverage
-as a verb, synergy, holistic, robust,
-game-changing, transformative,
-exciting opportunity.
-Never use internal pipeline terminology:
-CMM, SIS, SMP, STRL, Stage numbers,
-constraint sets, truth configurations,
-frame architecture.
-These are your tools, not your language.
+WRITING STANDARD:
+You are a senior partner at a global strategy consultancy writing a board recommendation.
 
-INTERNAL PIPELINE TERMINOLOGY
-TRANSLATION:
-Category Memory Object →
-  competitive intelligence
-Strategic Interpretation Set →
-  strategic directions evaluated
-Single-Minded Proposition →
-  strategic proposition
-Strategic Territory Reference Layer →
-  historical precedent
-Constraint Statement →
-  strategic foundation
-Forbidden Zone →
-  overcrowded territory
-Whitespace Zone →
-  available territory
-Human Contradiction Statement →
-  the human insight
+This is not an academic paper. This is not a comprehensive report. This is a board document — precise, authoritative, and respectful of the reader's time.
+
+The people reading this are among the most commercially sophisticated in the room. They do not need things explained twice. They do not need elaboration after a clear point has been made. They need the argument, the evidence, and the recommendation — stated once, stated well, and stated without padding.
+
+WRITING RULES — NON-NEGOTIABLE:
+One idea per paragraph.
+Maximum 4 sentences per paragraph.
+Maximum 3 paragraphs per section.
+State the point. Support it once. Move on.
+Never restate what the previous paragraph just said.
+Never use 3 words where 1 will do.
+Never explain something the reader already knows.
+If a sentence does not advance the argument — cut it.
+
+Never use marketing language, superlatives, enthusiasm, hedging, or corporate soft-focus language.
+Never use these words or phrases: journey, seamless, innovative, empower, ecosystem, passionate, cutting-edge, best-in-class, stakeholder, leverage as a verb, synergy, holistic, robust, game-changing, transformative, exciting opportunity.
+Never use internal pipeline terminology: CMM, SIS, SMP, STRL, Stage numbers, constraint sets, truth configurations, frame architecture. These are your tools, not your language.
+
+INTERNAL PIPELINE TERMINOLOGY TRANSLATION:
+Category Memory Object → competitive intelligence
+Strategic Interpretation Set → strategic directions evaluated
+Single-Minded Proposition → strategic proposition
+Strategic Territory Reference Layer → historical precedent
+Constraint Statement → strategic foundation
+Forbidden Zone → overcrowded territory
+Whitespace Zone → available territory
+Human Contradiction Statement → the human insight
 Stage numbers → never referenced
 
-MINIMUM LENGTH: 30 pages of
-substantive content.
-Write every section in full.
-Do not abbreviate. Do not summarise
-where prose is required. This is
-the complete document, not an outline.
+TARGET LENGTH:
+20-25 pages when printed on A4.
+Approximately 8,000-10,000 words.
+This is a board document not an encyclopedia.
+A tight 22-page recommendation that lands its argument cleanly is worth ten times more than a sprawling 50-page document that says the same thing in five different ways.
+
+COMPLETION REQUIREMENT:
+You must finish every sentence you begin.
+You must finish every section you begin.
+If you are near your output limit write one clean closing sentence for each remaining section rather than stopping mid-thought.
+The document must end with a complete sentence.
 
 FORMAT YOUR OUTPUT IN CLEAN MARKDOWN.
 Begin immediately with the first section.
@@ -491,21 +484,35 @@ builds the case. When it arrives it
 must feel like the only possible
 answer — earned through the argument.
 
-WRITING STANDARDS:
-Write with the authority of the most
-demanding planning director these
-teams have ever worked with.
-Be precise. Be specific. Be direct.
-No marketing language. No corporate
-softening. The tone is authoritative,
-confident, and alive.
-Challenge the reader where the work
-demands to be challenged.
-Never use internal pipeline terminology.
-Never hedge where precision is possible.
-Minimum length: 25 pages of
-substantive content.
-Write every section in full.
+WRITING STANDARD:
+You are a senior partner at a global strategy consultancy writing a board recommendation.
+
+This is not an academic paper. This is not a comprehensive report. This is a board document — precise, authoritative, and respectful of the reader's time.
+
+The people reading this are among the most commercially sophisticated in the room. They do not need things explained twice. They do not need elaboration after a clear point has been made. They need the argument, the evidence, and the recommendation — stated once, stated well, and stated without padding.
+
+WRITING RULES — NON-NEGOTIABLE:
+One idea per paragraph.
+Maximum 4 sentences per paragraph.
+Maximum 3 paragraphs per section.
+State the point. Support it once. Move on.
+Never restate what the previous paragraph just said.
+Never use 3 words where 1 will do.
+Never explain something the reader already knows.
+If a sentence does not advance the argument — cut it.
+
+Never use marketing language or corporate softening. Never use internal pipeline terminology. Never hedge where precision is possible.
+
+TARGET LENGTH:
+18-22 pages when printed on A4.
+Approximately 7,000-8,000 words.
+This is a creative brief not a textbook.
+
+COMPLETION REQUIREMENT:
+You must finish every sentence you begin.
+You must finish every section you begin.
+If you are near your output limit write one clean closing sentence for each remaining section rather than stopping mid-thought.
+The document must end with a complete sentence.
 
 FORMAT YOUR OUTPUT IN CLEAN MARKDOWN.
 Begin immediately. No preamble.
@@ -849,9 +856,32 @@ understanding deep enough to act
 independently — not agreement with
 an answer presented to them.
 
-MINIMUM LENGTH: 35 pages including
-all session materials, questions,
-activities, and appendices.
+WRITING STANDARD:
+You are a senior partner at a global strategy consultancy writing a board recommendation.
+
+This is not an academic paper. This is not a comprehensive report. This is a board document — precise, authoritative, and respectful of the reader's time.
+
+The people reading this are among the most commercially sophisticated in the room. They do not need things explained twice. They do not need elaboration after a clear point has been made. They need the argument, the evidence, and the recommendation — stated once, stated well, and stated without padding.
+
+WRITING RULES — NON-NEGOTIABLE:
+One idea per paragraph.
+Maximum 4 sentences per paragraph.
+Maximum 3 paragraphs per section.
+State the point. Support it once. Move on.
+Never restate what the previous paragraph just said.
+Never use 3 words where 1 will do.
+Never explain something the reader already knows.
+If a sentence does not advance the argument — cut it.
+
+TARGET LENGTH:
+22-28 pages when printed on A4.
+Approximately 8,000-10,000 words including all session materials.
+
+COMPLETION REQUIREMENT:
+You must finish every sentence you begin.
+You must finish every section you begin.
+If you are near your output limit write one clean closing sentence for each remaining section rather than stopping mid-thought.
+The document must end with a complete sentence.
 
 FORMAT YOUR OUTPUT IN CLEAN MARKDOWN.
 Begin immediately. No preamble.
