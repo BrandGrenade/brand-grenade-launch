@@ -1107,14 +1107,28 @@ Use Only*
 // Public helpers
 // ───────────────────────────────────────────────────────────────────────────
 
+const COMPLETION_PRIORITY_PREAMBLE = `CRITICAL OUTPUT INSTRUCTION:
+You are operating within a token limit. Prioritise completing every section over expanding any individual section.
+If you are approaching your output limit:
+- Compress body paragraphs to 2 sentences minimum rather than stopping
+- Never stop mid-sentence
+- Never stop mid-section
+- The document footer 'Brand Grenade Strategy Intelligence System' MUST appear as the final line
+- If you cannot complete a section fully write [SECTION CONTINUES] and move to the next section
+- A complete document with compressed sections is always better than a truncated document with expanded sections
+
+The minimum viable complete document includes all section headings even if body content is compressed.
+
+`;
+
 export function getStage16SystemPrompt(format: Stage16Format): string {
   switch (format) {
     case "consulting":
-      return STAGE_16_CONSULTING_PROMPT;
+      return COMPLETION_PRIORITY_PREAMBLE + STAGE_16_CONSULTING_PROMPT;
     case "agency":
-      return STAGE_16_AGENCY_PROMPT;
+      return COMPLETION_PRIORITY_PREAMBLE + STAGE_16_AGENCY_PROMPT;
     case "workshop":
-      return STAGE_16_WORKSHOP_PROMPT;
+      return COMPLETION_PRIORITY_PREAMBLE + STAGE_16_WORKSHOP_PROMPT;
   }
 }
 

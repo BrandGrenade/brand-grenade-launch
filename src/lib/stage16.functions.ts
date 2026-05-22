@@ -12,6 +12,7 @@ const FormatSchema = z.enum(["agency", "consulting", "workshop"]);
 const Input = z.object({
   sessionId: z.string().uuid(),
   format: FormatSchema,
+  force: z.boolean().optional(),
 });
 
 const COLUMN_BY_FORMAT: Record<
@@ -22,6 +23,48 @@ const COLUMN_BY_FORMAT: Record<
   consulting: "stage_16_consulting_output",
   workshop: "stage_16_workshop_output",
 };
+
+const MAX_TOKENS_BY_FORMAT: Record<Stage16Format, number> = {
+  consulting: 12000,
+  agency: 10000,
+  workshop: 10000,
+};
+
+const MIN_LENGTH_BY_FORMAT: Record<Stage16Format, number> = {
+  consulting: 20000,
+  agency: 15000,
+  workshop: 18000,
+};
+
+const REQUIRED_SECTIONS: Record<Stage16Format, string[]> = {
+  consulting: ["PART TEN", "Brand Grenade Strategy"],
+  agency: ["PART NINE", "Brand Grenade Strategy"],
+  workshop: ["APPENDIX B", "Brand Grenade Strategy"],
+};
+
+const COMPLETION_CHARS = new Set([".", "!", "?", '"', "'", ")", "*"]);
+
+function isTruncated(output: string, format: Stage16Format): boolean {
+  const trimmed = output.trim();
+  if (!trimmed) return true;
+  if (trimmed.length < MIN_LENGTH_BY_FORMAT[format]) return true;
+  for (const section of REQUIRED_SECTIONS[format]) {
+    if (!trimmed.includes(section)) return true;
+  }
+  const lastChar = trimmed.slice(-1);
+  if (!COMPLETION_CHARS.has(lastChar)) return true;
+  return false;
+}
+
+const CONTINUATION_SYSTEM = `You are continuing a brand strategy document that was cut off mid-generation. Complete the document from exactly where it stopped. Do not repeat content already written. Do not add a preamble or explain that you are continuing. Begin immediately from the next word after the cutoff point. End with the footer 'Brand Grenade Strategy Intelligence System'.`;
+
+function buildContinuationMessage(currentOutput: string): string {
+  return `The document stopped here — complete it from this point:
+
+...${currentOutput.slice(-500)}
+
+Complete all remaining sections of the document through to the final footer.`;
+}
 
 export const runStage16 = createServerFn({ method: "POST" })
   .inputValidator((i) => Input.parse(i))
@@ -37,22 +80,36 @@ export const runStage16 = createServerFn({ method: "POST" })
       throw new Error("Stage 15 audit missing — Stage 16 cannot proceed");
 
     const column = COLUMN_BY_FORMAT[data.format];
-    const existing = session[column] as string | null | undefined;
-    if (existing) {
-      if (session.status !== "complete") {
-        await supabaseAdmin
-          .from("sessions")
-          .update({
-            status: "complete",
-            current_stage: 16,
-            stage_16_error: null,
-            stage_16_format: data.format,
-          })
-          .eq("id", data.sessionId);
+
+    if (data.force) {
+      const clearUpdate =
+        column === "stage_16_agency_output"
+          ? { stage_16_agency_output: null, stage_16_error: null }
+          : column === "stage_16_consulting_output"
+          ? { stage_16_consulting_output: null, stage_16_error: null }
+          : { stage_16_workshop_output: null, stage_16_error: null };
+      await supabaseAdmin
+        .from("sessions")
+        .update(clearUpdate)
+        .eq("id", data.sessionId);
+    } else {
+      const existing = session[column] as string | null | undefined;
+      if (existing && !isTruncated(existing, data.format)) {
+        if (session.status !== "complete") {
+          await supabaseAdmin
+            .from("sessions")
+            .update({
+              status: "complete",
+              current_stage: 16,
+              stage_16_error: null,
+              stage_16_format: data.format,
+            })
+            .eq("id", data.sessionId);
+        }
+        yield { delta: existing };
+        yield { done: true as const, output: existing, format: data.format };
+        return;
       }
-      yield { delta: existing };
-      yield { done: true as const, output: existing, format: data.format };
-      return;
     }
 
     await supabaseAdmin
@@ -69,7 +126,7 @@ export const runStage16 = createServerFn({ method: "POST" })
     try {
       for await (const delta of streamClaude({
         systemPrompt: getStage16SystemPrompt(data.format),
-        maxTokens: 8000,
+        maxTokens: MAX_TOKENS_BY_FORMAT[data.format],
         userMessage: buildStage16UserMessage({
           brandName: session.brand_name,
           category: session.category,
@@ -97,6 +154,38 @@ export const runStage16 = createServerFn({ method: "POST" })
       })) {
         output += delta;
         yield { delta };
+      }
+
+      // Truncation detection + up to 2 continuation calls.
+      let continuations = 0;
+      while (continuations < 2 && isTruncated(output, data.format)) {
+        continuations++;
+        console.log(
+          "Stage 16 truncation detected for format:",
+          data.format,
+          "Output length:",
+          output.length,
+          "Last characters:",
+          output.slice(-100),
+        );
+        for await (const delta of streamClaude({
+          systemPrompt: CONTINUATION_SYSTEM,
+          userMessage: buildContinuationMessage(output),
+          maxTokens: 6000,
+          temperature: 0.5,
+          sessionId: data.sessionId,
+          stageLabel: `Stage 16 continuation ${continuations}`,
+          stageNumber: "16",
+          stageName: "Document Assembly",
+        })) {
+          // ensure a separator so we don't fuse mid-word
+          if (!output.endsWith(" ") && !output.endsWith("\n") && !delta.startsWith(" ") && !delta.startsWith("\n")) {
+            output += " ";
+            yield { delta: " " };
+          }
+          output += delta;
+          yield { delta };
+        }
       }
     } catch (e) {
       const msg = e instanceof Error ? e.message : `Stage 16 (${data.format}) failed`;
@@ -127,5 +216,10 @@ export const runStage16 = createServerFn({ method: "POST" })
         `Failed to save Stage 16 (${data.format}) output: ${ue.message}`,
       );
 
-    yield { done: true as const, output, format: data.format };
+    yield {
+      done: true as const,
+      output,
+      format: data.format,
+      complete: !isTruncated(output, data.format),
+    };
   });
