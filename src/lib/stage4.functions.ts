@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { saveStageOutputWithRetry } from "./save-stage-output.server";
 import { streamClaude } from "./claude.server";
 import {
   STAGE_4_SYSTEM_PROMPT,
@@ -104,16 +105,17 @@ export const runStage4 = createServerFn({ method: "POST" })
     await setStatus(data.sessionId, null);
 
     const stillInsufficient = universeCount < 3;
-    const { error: updateErr } = await supabaseAdmin
-      .from("sessions")
-      .update({
+    await saveStageOutputWithRetry(
+      data.sessionId,
+      {
         stage_4_output: output,
         stage_4_error: stillInsufficient
           ? `Stage 4 produced only ${universeCount} universe(s) after ${attempts} continuation attempt(s). Manual retry recommended.`
           : null,
-      })
-      .eq("id", data.sessionId);
-    if (updateErr) throw new Error(`Failed to save Stage 4 output: ${updateErr.message}`);
+      },
+      "stage_4_error",
+      "Stage 4",
+    );
 
     yield { done: true as const, output };
   });
