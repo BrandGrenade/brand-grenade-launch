@@ -12,13 +12,69 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { callClaude } from "./claude.server";
 import {
   buildHtmlDocument,
   getSectionDefs,
   type DocFormat,
   type SessionLike,
 } from "./document-generator.server";
+
+// Direct Anthropic call with 30s timeout + retry + fallback.
+// Used in place of the streaming callClaude here because each section
+// is small (≤1200 tokens) and we want a hard per-section ceiling so a
+// single slow/empty response cannot block the whole document.
+async function callAnthropic(
+  systemPrompt: string,
+  userMessage: string,
+  maxTokens: number,
+  retries = 2,
+): Promise<string> {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) throw new Error("ANTHROPIC_API_KEY is not configured");
+
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 30_000);
+    try {
+      const response = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": apiKey,
+          "anthropic-version": "2023-06-01",
+        },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-5",
+          max_tokens: maxTokens,
+          messages: [{ role: "user", content: userMessage }],
+          system: systemPrompt,
+        }),
+        signal: controller.signal,
+      });
+      if (!response.ok) {
+        const t = await response.text().catch(() => "");
+        throw new Error(`API error: ${response.status} ${t.slice(0, 200)}`);
+      }
+      const data = (await response.json()) as { content?: Array<{ text?: string }> };
+      const text = data?.content?.[0]?.text ?? "";
+      if (!text || text.trim().length < 50) {
+        throw new Error("Empty response");
+      }
+      return text.trim();
+    } catch (err) {
+      if (attempt === retries) {
+        const msg = err instanceof Error ? err.message : "unknown error";
+        console.error(`[generateDocument] section call failed after ${retries + 1} attempts: ${msg}`);
+        return `This section could not be generated. Please regenerate the document.`;
+      }
+      await new Promise((r) => setTimeout(r, 2000));
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+  return "";
+}
+
 
 const Input = z.object({
   sessionId: z.string().uuid(),
@@ -115,16 +171,11 @@ export const generateDocument = createServerFn({ method: "POST" })
           section: { index: i, total: sectionDefs.length, name: def.name },
         };
         try {
-          sections[def.name] = await callClaude({
-            systemPrompt: def.systemPrompt,
-            userMessage: def.userMessage,
-            maxTokens: def.maxTokens,
-            temperature: 0.7,
-            sessionId,
-            stageLabel: `Document — ${def.name}`,
-            stageNumber: "16",
-            stageName: "Document Assembly",
-          });
+          sections[def.name] = await callAnthropic(
+            def.systemPrompt,
+            def.userMessage,
+            def.maxTokens,
+          );
         } catch (e) {
           const msg = e instanceof Error ? e.message : "section call failed";
           sections[def.name] = `*[Section "${def.name}" could not be generated: ${msg}]*`;
@@ -136,13 +187,16 @@ export const generateDocument = createServerFn({ method: "POST" })
       const html = buildHtmlDocument(sections, sessionForSections, format);
       const filename = `${sessionId}/${format}.html`;
 
+      // Upload as explicit UTF-8 bytes so storage/CDN never reinterprets the encoding.
+      const htmlBytes = new TextEncoder().encode(html);
       const { error: uploadError } = await supabaseAdmin.storage
         .from("documents")
-        .upload(filename, html, {
-          contentType: "text/html",
+        .upload(filename, htmlBytes, {
+          contentType: "text/html; charset=utf-8",
           upsert: true,
         });
       if (uploadError) throw new Error(`Upload failed: ${uploadError.message}`);
+
 
       const { data: signed, error: signError } = await supabaseAdmin.storage
         .from("documents")
