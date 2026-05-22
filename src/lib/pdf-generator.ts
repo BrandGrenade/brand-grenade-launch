@@ -756,20 +756,8 @@ function drawContent(doc: jsPDF, input: PdfInput) {
       "Strategic Propositions Evaluated",
       "The following propositions were developed and evaluated before the recommended position was selected. Each represents a genuinely distinct strategic direction. The recommended proposition survived direct comparison with all alternatives.",
     );
-    renderRawAsAppendix(input.appendix.stage8Output);
-    if (input.appendix.stage10Output || input.appendix.stage12Output) {
-      y += 12;
-      writeWrapped(
-        "Scoring and selection rationale:",
-        11.5,
-        C_ACCENT,
-        "bold",
-        1.4,
-      );
-      renderRawAsAppendix(
-        input.appendix.stage12Output || input.appendix.stage10Output,
-      );
-    }
+    renderPropositionCards(input.appendix.stage8Output, input.smp);
+
 
     startAppendixSection(
       "Appendix D",
