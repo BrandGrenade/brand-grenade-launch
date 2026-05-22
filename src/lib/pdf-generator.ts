@@ -604,10 +604,7 @@ async function drawContent(doc: jsPDF, input: PdfInput) {
         doc.setTextColor(C_TEXT);
         setFont(doc, "bold");
         doc.setFontSize(size);
-        const titleLines = doc.splitTextToSize(
-          stripMd(b.text),
-          COL_CONTENT_W - 14,
-        ) as string[];
+        const titleLines = cachedSplitText(doc, stripMd(b.text), COL_CONTENT_W - 14);
         for (const ln of titleLines) {
           ensureSpace(lh);
           doc.text(ln, M_SIDE + 12, y + size);
