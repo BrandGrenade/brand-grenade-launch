@@ -314,15 +314,18 @@ function CompletePage() {
 
         {/* Download section */}
         <div style={{ marginTop: 32 }}>
-          <button
-            type="button"
-            onClick={async () => {
+          {(() => {
+            const runGenerate = async (force: boolean) => {
               if (generating) return;
               if (!hasSmp) return;
               setGenerating(true);
               setDone(false);
               setProgress(0);
-              setProgressLabel("Assembling strategic platform document…");
+              setProgressLabel(
+                force
+                  ? "Regenerating document — clearing previous output…"
+                  : "Assembling strategic platform document…",
+              );
 
               const start = Date.now();
               const DURATION = 14000;
@@ -342,13 +345,18 @@ function CompletePage() {
                 if (!sessionId) throw new Error("Missing session id");
                 setProgressLabel(`Generating ${format} document…`);
                 let stage16Output = "";
-                const gen = await runStage16Fn({ data: { sessionId, format } });
+                let complete = true;
+                const gen = await runStage16Fn({ data: { sessionId, format, force } });
                 for await (const chunk of gen) {
                   if (typeof chunk.delta === "string") {
                     stage16Output += chunk.delta;
                   } else if (chunk.done) {
                     stage16Output = chunk.output;
+                    complete = chunk.complete !== false;
                   }
+                }
+                if (!complete) {
+                  setProgressLabel("Completing document generation…");
                 }
                 await generateStrategicPlatformPdf({
                   brandName: brand,
@@ -370,7 +378,7 @@ function CompletePage() {
                 });
                 window.clearInterval(tick);
                 setProgress(100);
-                setProgressLabel("Document ready");
+                setProgressLabel(complete ? "Document ready" : "Document ready (partial — try Regenerate if sections are missing)");
                 setDone(true);
                 window.setTimeout(() => {
                   setGenerating(false);
@@ -384,27 +392,53 @@ function CompletePage() {
                 setProgress(0);
                 setProgressLabel("");
               }
-            }}
-            disabled={generating || !hasSmp}
-            style={{
-              width: "100%",
-              height: 56,
-              borderRadius: 8,
-              border: "none",
-              backgroundColor: "var(--color-primary)",
-              color: "var(--color-background)",
-              fontWeight: 600,
-              fontSize: 16,
-              cursor: generating ? "wait" : hasSmp ? "pointer" : "not-allowed",
-              opacity: hasSmp ? 1 : 0.5,
-            }}
-          >
-            {generating
-              ? done
-                ? "Document ready ✓"
-                : "Generating PDF…"
-              : `Download ${brand} Strategic Platform ↓`}
-          </button>
+            };
+            return (
+              <>
+                <button
+                  type="button"
+                  onClick={() => runGenerate(false)}
+                  disabled={generating || !hasSmp}
+                  style={{
+                    width: "100%",
+                    height: 56,
+                    borderRadius: 8,
+                    border: "none",
+                    backgroundColor: "var(--color-primary)",
+                    color: "var(--color-background)",
+                    fontWeight: 600,
+                    fontSize: 16,
+                    cursor: generating ? "wait" : hasSmp ? "pointer" : "not-allowed",
+                    opacity: hasSmp ? 1 : 0.5,
+                  }}
+                >
+                  {generating
+                    ? done
+                      ? "Document ready ✓"
+                      : "Generating PDF…"
+                    : `Download ${brand} Strategic Platform ↓`}
+                </button>
+                <div style={{ marginTop: 10, textAlign: "center" }}>
+                  <button
+                    type="button"
+                    onClick={() => runGenerate(true)}
+                    disabled={generating || !hasSmp}
+                    className="text-body-sm transition-colors hover:text-text-primary"
+                    style={{
+                      background: "none",
+                      border: "none",
+                      padding: 0,
+                      color: "#5A5652",
+                      cursor: generating ? "wait" : "pointer",
+                    }}
+                  >
+                    Not complete? Regenerate →
+                  </button>
+                </div>
+              </>
+            );
+          })()}
+
 
           {generating && (
             <div style={{ marginTop: 16 }} className="animate-fade-in">
