@@ -54,6 +54,12 @@ type SessionRow = {
   category: string | null;
   selected_smp: string | null;
   selected_smp_field_name: string | null;
+  stage_1_output: string | null;
+  stage_8_output: string | null;
+  stage_10_output: string | null;
+  stage_11_output: string | null;
+  stage_12_output: string | null;
+  stage_13_output: string | null;
 };
 
 function CompletePage() {
@@ -78,7 +84,9 @@ function CompletePage() {
     setLoading(true);
     supabase
       .from("sessions")
-      .select("id, brand_name, category, selected_smp, selected_smp_field_name")
+      .select(
+        "id, brand_name, category, selected_smp, selected_smp_field_name, stage_1_output, stage_8_output, stage_10_output, stage_11_output, stage_12_output, stage_13_output",
+      )
       .eq("id", sessionId)
       .maybeSingle()
       .then(({ data, error }) => {
@@ -348,6 +356,17 @@ function CompletePage() {
                   smp,
                   format,
                   stage16Output,
+                  appendix:
+                    format === "consulting" || format === "workshop"
+                      ? {
+                          stage1Output: session?.stage_1_output,
+                          stage8Output: session?.stage_8_output,
+                          stage10Output: session?.stage_10_output,
+                          stage11Output: session?.stage_11_output,
+                          stage12Output: session?.stage_12_output,
+                          stage13Output: session?.stage_13_output,
+                        }
+                      : undefined,
                 });
                 window.clearInterval(tick);
                 setProgress(100);
