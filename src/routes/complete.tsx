@@ -370,6 +370,15 @@ function CompletePage() {
                           stage13Output: session?.stage_13_output,
                         }
                       : undefined,
+                  onProgress: (current, total) => {
+                    const pct = Math.min(
+                      99,
+                      90 + Math.round((current / total) * 9),
+                    );
+                    setProgress(pct);
+                    const blockPct = Math.round((current / total) * 100);
+                    setProgressLabel(`Building PDF… ${blockPct}%`);
+                  },
                 });
 
                 // Phase 3 — download triggered.

@@ -30,7 +30,28 @@ export interface PdfInput {
   stage16Output: string;
   /** Optional pipeline outputs used to render the appendix (consulting/workshop only). */
   appendix?: AppendixData;
+  /** Optional progress callback fired during the main render loop. */
+  onProgress?: (current: number, total: number) => void;
 }
+
+// ─── splitTextToSize cache ──────────────────────────────────────────────
+// jsPDF's splitTextToSize is pure-JS text shaping and is the dominant cost
+// of PDF generation. Many blocks repeat identical text at the same width
+// and font (labels, list bullets, recurring headings), so caching results
+// avoids re-shaping the same string. The cache is cleared at the start of
+// each generateStrategicPlatformPdf() call.
+const splitCache = new Map<string, string[]>();
+function cachedSplitText(doc: jsPDF, text: string, maxWidth: number): string[] {
+  const size = doc.getFontSize();
+  const f = doc.getFont() as { fontName?: string; fontStyle?: string };
+  const key = `${f.fontName ?? ""}|${f.fontStyle ?? ""}|${size}|${maxWidth}|${text}`;
+  const hit = splitCache.get(key);
+  if (hit) return hit;
+  const result = doc.splitTextToSize(text, maxWidth) as string[];
+  splitCache.set(key, result);
+  return result;
+}
+
 
 // ─── Palette ────────────────────────────────────────────────────────────
 const C_PAGE = "#FAFAF8";
@@ -342,7 +363,7 @@ function drawSectionOpener(
   setFont(doc, "bold");
   doc.setFontSize(24);
   const titleW = (PAGE_W - M_SIDE * 2) * 0.6;
-  const titleLines = doc.splitTextToSize(stripMd(title), titleW) as string[];
+  const titleLines = cachedSplitText(doc, stripMd(title), titleW);
   let ty = numberY + 16 + 3 + 28 + 24;
   for (const ln of titleLines) {
     doc.text(ln, M_SIDE, ty);
@@ -364,7 +385,7 @@ function drawPropositionReveal(doc: jsPDF, smp: string) {
   setFont(doc, "bold");
   doc.setFontSize(36); // 48px screen ≈ 36pt
   const maxW = 420; // ~560px screen
-  const lines = doc.splitTextToSize(stripMd(smp), maxW) as string[];
+  const lines = cachedSplitText(doc, stripMd(smp), maxW);
   const lh = 36 * 1.25;
   const totalH = lines.length * lh;
   const startY = (PAGE_H - totalH) / 2;
@@ -444,7 +465,7 @@ function parseContent(raw: string): Block[] {
 }
 
 // ─── Content pages ──────────────────────────────────────────────────────
-function drawContent(doc: jsPDF, input: PdfInput) {
+async function drawContent(doc: jsPDF, input: PdfInput) {
   const rawBody =
     input.stage16Output && input.stage16Output.trim().length > 0
       ? input.stage16Output
@@ -539,10 +560,7 @@ function drawContent(doc: jsPDF, input: PdfInput) {
     doc.setTextColor(color);
     setFont(doc, weight);
     doc.setFontSize(sizePt);
-    const lines = doc.splitTextToSize(
-      stripMd(text),
-      maxW - leftPad,
-    ) as string[];
+    const lines = cachedSplitText(doc, stripMd(text), maxW - leftPad);
     const lh = sizePt * lineFactor;
     for (const ln of lines) {
       ensureSpace(lh);
@@ -586,10 +604,7 @@ function drawContent(doc: jsPDF, input: PdfInput) {
         doc.setTextColor(C_TEXT);
         setFont(doc, "bold");
         doc.setFontSize(size);
-        const titleLines = doc.splitTextToSize(
-          stripMd(b.text),
-          COL_CONTENT_W - 14,
-        ) as string[];
+        const titleLines = cachedSplitText(doc, stripMd(b.text), COL_CONTENT_W - 14);
         for (const ln of titleLines) {
           ensureSpace(lh);
           doc.text(ln, M_SIDE + 12, y + size);
@@ -622,7 +637,7 @@ function drawContent(doc: jsPDF, input: PdfInput) {
         const calloutMaxW = CONTENT_W * 0.85 - 28;
         setFont(doc, "italic");
         doc.setFontSize(15);
-        const lines = doc.splitTextToSize(text, calloutMaxW) as string[];
+        const lines = cachedSplitText(doc, text, calloutMaxW);
         const lh = 15 * 1.65;
         const blockH = lines.length * lh + 24;
         ensureSpace(blockH);
@@ -685,7 +700,14 @@ function drawContent(doc: jsPDF, input: PdfInput) {
     if (i === 0) console.log("PDF: first block processed", Date.now());
     if (i % 100 === 0) console.log("PDF: block", i, "of", blocks.length, Date.now());
     renderBlock(blocks[i]);
+    // Yield to the browser every 20 blocks so the progress bar can paint
+    // and the main thread does not freeze during text shaping.
+    if (i % 20 === 0 && i > 0) {
+      input.onProgress?.(i, blocks.length);
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    }
   }
+  input.onProgress?.(blocks.length, blocks.length);
   console.log("PDF: blocks loop end", Date.now());
 
   // ─── Appendix (consulting + workshop) ─────────────────────────────────
@@ -708,7 +730,7 @@ function drawContent(doc: jsPDF, input: PdfInput) {
     doc.setTextColor(C_TEXT);
     setFont(doc, "bold");
     doc.setFontSize(size);
-    const lines = doc.splitTextToSize(text, COL_CONTENT_W) as string[];
+    const lines = cachedSplitText(doc, text, COL_CONTENT_W);
     for (const ln of lines) {
       ensureSpace(lh);
       doc.text(ln, M_SIDE, y + size);
@@ -909,6 +931,8 @@ function drawContent(doc: jsPDF, input: PdfInput) {
 // ─── Public entry ───────────────────────────────────────────────────────
 export async function generateStrategicPlatformPdf(input: PdfInput) {
   console.log("PDF: start", Date.now());
+  // Reset the per-run splitTextToSize cache.
+  splitCache.clear();
   // NOTE: compress:false is intentional. jsPDF's `compress: true` runs pako
   // gzip synchronously over every content stream inside doc.save() and was
   // the cause of the multi-second "Finalising PDF…" stall. Uncompressed
@@ -919,7 +943,7 @@ export async function generateStrategicPlatformPdf(input: PdfInput) {
   console.log("PDF: render start", Date.now(), "(init+icon ms:", Date.now() - tInit, ")");
 
   drawCover(doc, input, iconDataUrl);
-  drawContent(doc, input);
+  await drawContent(doc, input);
   const tRenderEnd = Date.now();
   console.log("PDF: render complete", tRenderEnd, "(render ms:", tRenderEnd - tInit, ")");
 
