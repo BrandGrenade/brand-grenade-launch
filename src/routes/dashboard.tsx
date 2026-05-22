@@ -352,10 +352,7 @@ function SessionsTable({
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-44">
                         <DropdownMenuItem asChild>
-                          <Link
-                            to={ui === "complete" ? "/complete" : "/pipeline"}
-                            search={{ session: s.id }}
-                          >
+                          <Link to="/pipeline" search={{ session: s.id }}>
                             {ui === "complete" ? "View" : "Continue"}
                           </Link>
                         </DropdownMenuItem>
