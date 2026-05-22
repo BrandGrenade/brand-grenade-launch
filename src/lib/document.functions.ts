@@ -98,16 +98,121 @@ const STATUS_COLS: Record<
 
 const SIGNED_URL_TTL = 60 * 60 * 24 * 7; // 7 days
 
+// Schedule background work on Cloudflare via ctx.waitUntil when available,
+// otherwise fall back to firing the promise unawaited (best-effort).
+function scheduleBackground(p: Promise<unknown>): void {
+  const ctx = (globalThis as unknown as { __cfCtx?: { waitUntil?: (p: Promise<unknown>) => void } })
+    .__cfCtx;
+  const wu = ctx?.waitUntil?.bind(ctx);
+  if (typeof wu === "function") {
+    wu(p.catch((e) => console.error("[generateDocument bg]", e)));
+  } else {
+    // Best-effort fallback (local dev / no Workers ctx).
+    void p.catch((e) => console.error("[generateDocument bg]", e));
+  }
+}
+
+async function runGeneration(sessionId: string, format: DocFormat): Promise<void> {
+  const urlCol = URL_COLS[format];
+  const statusCol = STATUS_COLS[format];
+
+  const { data: session, error } = await supabaseAdmin
+    .from("sessions")
+    .select("*")
+    .eq("id", sessionId)
+    .single();
+  if (error || !session) {
+    console.error(`[generateDocument] session not found: ${error?.message ?? "no row"}`);
+    return;
+  }
+
+  const sessionForSections: SessionLike = {
+    brand_name: session.brand_name,
+    category: session.category,
+    selected_smp: session.selected_smp,
+    stage_1_output: session.stage_1_output,
+    stage_2_output: session.stage_2_output,
+    stage_5_output: session.stage_5_output,
+    stage_7_output: session.stage_7_output,
+    stage_8_output: session.stage_8_output,
+    stage_10_output: session.stage_10_output,
+    stage_11_output: session.stage_11_output,
+    stage_12_output: session.stage_12_output,
+    stage_13_output: session.stage_13_output,
+    stage_14_output: session.stage_14_output,
+    stage_14b_output: session.stage_14b_output,
+    stage_14c_output: session.stage_14c_output,
+    stage_15_output: session.stage_15_output,
+  };
+
+  const sectionDefs = getSectionDefs(format, sessionForSections);
+
+  try {
+    const results = await Promise.all(
+      sectionDefs.map(async (def) => {
+        try {
+          const content = await callAnthropic(
+            def.systemPrompt,
+            def.userMessage,
+            def.maxTokens,
+          );
+          return { name: def.name, content };
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : "section call failed";
+          return {
+            name: def.name,
+            content: `*[Section "${def.name}" could not be generated: ${msg}]*`,
+          };
+        }
+      }),
+    );
+
+    const sections: Record<string, string> = {};
+    for (const r of results) sections[r.name] = r.content;
+
+    const html = buildHtmlDocument(sections, sessionForSections, format);
+    const filename = `${sessionId}/${format}.html`;
+    const htmlBytes = new TextEncoder().encode(html);
+
+    const { error: uploadError } = await supabaseAdmin.storage
+      .from("documents")
+      .upload(filename, htmlBytes, {
+        contentType: "text/html; charset=utf-8",
+        upsert: true,
+      });
+    if (uploadError) throw new Error(`Upload failed: ${uploadError.message}`);
+
+    const { data: signed, error: signError } = await supabaseAdmin.storage
+      .from("documents")
+      .createSignedUrl(filename, SIGNED_URL_TTL);
+    if (signError || !signed?.signedUrl) {
+      throw new Error(`Sign URL failed: ${signError?.message ?? "no url"}`);
+    }
+
+    await supabaseAdmin
+      .from("sessions")
+      .update({ [statusCol]: "ready", [urlCol]: signed.signedUrl })
+      .eq("id", sessionId);
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "Document generation failed";
+    console.error(`[generateDocument] failed: ${msg}`);
+    await supabaseAdmin
+      .from("sessions")
+      .update({ [statusCol]: "error" })
+      .eq("id", sessionId);
+  }
+}
+
 export const generateDocument = createServerFn({ method: "POST" })
   .inputValidator((i) => Input.parse(i))
-  .handler(async function* ({ data }) {
+  .handler(async ({ data }) => {
     const { sessionId, format, force } = data;
     const urlCol = URL_COLS[format];
     const statusCol = STATUS_COLS[format];
 
     const { data: session, error } = await supabaseAdmin
       .from("sessions")
-      .select("*")
+      .select(`id, ${urlCol}, ${statusCol}`)
       .eq("id", sessionId)
       .single();
     if (error || !session) {
@@ -125,119 +230,20 @@ export const generateDocument = createServerFn({ method: "POST" })
         | null
         | undefined;
       if (existingStatus === "ready" && existingUrl) {
-        yield { done: true as const, url: existingUrl, format, cached: true };
-        return;
+        return { status: "ready" as const, url: existingUrl, format, sessionId, cached: true };
       }
     }
 
-    // Mark generating
-    const generatingUpdate =
-      format === "consulting"
-        ? { doc_consulting_status: "generating", doc_consulting_url: null }
-        : format === "agency"
-          ? { doc_agency_status: "generating", doc_agency_url: null }
-          : { doc_workshop_status: "generating", doc_workshop_url: null };
+    // Mark generating immediately and respond. Generation continues in the
+    // background via ctx.waitUntil (Cloudflare Workers), so it isn't subject
+    // to the per-request timeout. The client polls doc_<format>_status.
     await supabaseAdmin
       .from("sessions")
-      .update(generatingUpdate)
+      .update({ [statusCol]: "generating", [urlCol]: null })
       .eq("id", sessionId);
 
-    const sessionForSections: SessionLike = {
-      brand_name: session.brand_name,
-      category: session.category,
-      selected_smp: session.selected_smp,
-      stage_1_output: session.stage_1_output,
-      stage_2_output: session.stage_2_output,
-      stage_5_output: session.stage_5_output,
-      stage_7_output: session.stage_7_output,
-      stage_8_output: session.stage_8_output,
-      stage_10_output: session.stage_10_output,
-      stage_11_output: session.stage_11_output,
-      stage_12_output: session.stage_12_output,
-      stage_13_output: session.stage_13_output,
-      stage_14_output: session.stage_14_output,
-      stage_14b_output: session.stage_14b_output,
-      stage_14c_output: session.stage_14c_output,
-      stage_15_output: session.stage_15_output,
-    };
+    scheduleBackground(runGeneration(sessionId, format));
 
-    const sectionDefs = getSectionDefs(format, sessionForSections);
-
-    try {
-      // Yield one progress event before parallel generation
-      yield {
-        section: { index: 0, total: sectionDefs.length, name: "generating all sections" },
-      };
-
-      // Generate all sections in parallel — total time = slowest single call.
-      const results = await Promise.all(
-        sectionDefs.map(async (def) => {
-          try {
-            const content = await callAnthropic(
-              def.systemPrompt,
-              def.userMessage,
-              def.maxTokens,
-            );
-            return { name: def.name, content };
-          } catch (e) {
-            const msg = e instanceof Error ? e.message : "section call failed";
-            return { name: def.name, content: `*[Section "${def.name}" could not be generated: ${msg}]*` };
-          }
-        }),
-      );
-
-      // Assemble into named object
-      const sections: Record<string, string> = {};
-      for (const r of results) {
-        sections[r.name] = r.content;
-      }
-
-      yield { section: { index: sectionDefs.length, total: sectionDefs.length, name: "assembling" } };
-
-      const html = buildHtmlDocument(sections, sessionForSections, format);
-      const filename = `${sessionId}/${format}.html`;
-
-      // Upload as explicit UTF-8 bytes so storage/CDN never reinterprets the encoding.
-      const htmlBytes = new TextEncoder().encode(html);
-      const { error: uploadError } = await supabaseAdmin.storage
-        .from("documents")
-        .upload(filename, htmlBytes, {
-          contentType: "text/html; charset=utf-8",
-          upsert: true,
-        });
-      if (uploadError) throw new Error(`Upload failed: ${uploadError.message}`);
-
-      const { data: signed, error: signError } = await supabaseAdmin.storage
-        .from("documents")
-        .createSignedUrl(filename, SIGNED_URL_TTL);
-      if (signError || !signed?.signedUrl) {
-        throw new Error(`Sign URL failed: ${signError?.message ?? "no url"}`);
-      }
-
-      const readyUpdate =
-        format === "consulting"
-          ? { doc_consulting_status: "ready", doc_consulting_url: signed.signedUrl }
-          : format === "agency"
-            ? { doc_agency_status: "ready", doc_agency_url: signed.signedUrl }
-            : { doc_workshop_status: "ready", doc_workshop_url: signed.signedUrl };
-      await supabaseAdmin
-        .from("sessions")
-        .update(readyUpdate)
-        .eq("id", sessionId);
-
-      yield { done: true as const, url: signed.signedUrl, format, cached: false };
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : "Document generation failed";
-      const errorUpdate =
-        format === "consulting"
-          ? { doc_consulting_status: "error" }
-          : format === "agency"
-            ? { doc_agency_status: "error" }
-            : { doc_workshop_status: "error" };
-      await supabaseAdmin
-        .from("sessions")
-        .update(errorUpdate)
-        .eq("id", sessionId);
-      throw new Error(msg);
-    }
+    return { status: "generating" as const, url: null, format, sessionId, cached: false };
   });
+
