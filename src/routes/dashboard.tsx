@@ -43,25 +43,20 @@ type DbSession = {
   current_stage: number;
   created_at: string;
   updated_at: string;
+  stage_16_consulting_output: string | null;
 };
 
-type UIStatus = "in_progress" | "complete" | "awaiting_review" | "held" | "error" | "interrupted";
+type UIStatus = "complete" | "in_progress" | "incomplete";
 
-function mapStatus(s: string): UIStatus {
-  switch (s) {
-    case "complete":
-      return "complete";
-    case "awaiting_checkpoint":
-      return "awaiting_review";
-    case "held":
-      return "held";
-    case "error":
-      return "error";
-    case "interrupted":
-      return "interrupted";
-    default:
-      return "in_progress";
+function deriveStatus(s: DbSession): UIStatus {
+  if (
+    (s.current_stage === 20 && s.status === "complete") ||
+    s.stage_16_consulting_output != null
+  ) {
+    return "complete";
   }
+  if (s.status === "running" || s.status === "pending") return "in_progress";
+  return "incomplete";
 }
 
 function Dashboard() {
