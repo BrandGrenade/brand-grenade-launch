@@ -101,6 +101,132 @@ function normaliseForMatch(s: string): string {
     .trim();
 }
 
+// ─── PDF-safe sanitiser ─────────────────────────────────────────────────
+// Strips characters and patterns that the built-in jsPDF fonts (Helvetica /
+// Courier) cannot render correctly — box-drawing chars, %P encoded
+// separators, spaced-out heading treatments, raw === / ═══ dividers, etc.
+export function sanitiseForPdf(text: string): string {
+  if (!text) return text;
+  let t = text.replace(/\r\n/g, "\n");
+
+  // Strip box-drawing characters (Unicode 2500–257F) up front so divider
+  // lines collapse to whitespace and the separator rule catches them.
+  t = t.replace(/[\u2500-\u257F]/g, "");
+
+  // STEP 1 — Remove separator-only lines
+  t = t.replace(/^[=%P\-_*~#\s]{3,}$/gm, "");
+
+  // STEP 2 — Remove encoded separators
+  t = t.replace(/(%P){3,}/g, "");
+  t = t.replace(/%{3,}/g, "");
+
+  // STEP 3 — De-space heading lines like "W H A T  T H I S" → "WHAT THIS"
+  t = t.replace(/^(?:[A-Z]\s){4,}[A-Z]$/gm, (m) => m.replace(/\s+/g, ""));
+  t = t.replace(
+    /^(?:[A-Z](?:\s[A-Z])+)(?:\s{2,}[A-Z](?:\s[A-Z])+)+$/gm,
+    (m) =>
+      m
+        .split(/\s{2,}/)
+        .map((w) => w.replace(/\s+/g, ""))
+        .join(" "),
+  );
+
+  // STEP 4 — Proposition divider lines → blank separator
+  t = t.replace(/^={3,}$/gm, "");
+
+  // STEP 5 — Remove "PROPOSITION N" label lines
+  t = t.replace(/^\*{0,2}PROPOSITION\s+\d+\*{0,2}$/gim, "");
+
+  // STEP 6 — Collapse blank lines
+  t = t.replace(/\n{3,}/g, "\n\n");
+
+  return t.trim();
+}
+
+// ─── Lightweight proposition extractor for Appendix C ───────────────────
+interface ParsedProposition {
+  line: string;
+  owns: string;
+  composite?: number;
+}
+
+function extractCompositeScore(block: string): number | undefined {
+  const m = block.match(/Composite[:\s]+(\d+(?:\.\d+)?)\s*\/\s*60/i);
+  return m ? parseFloat(m[1]) : undefined;
+}
+
+function extractPropositions(rawOutput: string): ParsedProposition[] {
+  if (!rawOutput) return [];
+
+  const dividerPattern = /[═=]{3,}/g;
+  const blocksA = rawOutput.split(dividerPattern).filter((b) => b.trim().length > 50);
+  const propPattern = /\*{0,2}PROPOSITION\s+\d+\*{0,2}/gi;
+  const blocksB = rawOutput.split(propPattern).filter((b) => b.trim().length > 50);
+  const contentBlocks = blocksB.length > blocksA.length ? blocksB : blocksA;
+
+  const out: ParsedProposition[] = [];
+  for (const block of contentBlocks) {
+    if (
+      !block.includes("**") &&
+      !block.includes("Composite") &&
+      !block.includes("Differentiation")
+    ) {
+      continue;
+    }
+    if (
+      block.includes("[METADATA]") ||
+      block.includes("SELF-AUDIT") ||
+      block.includes("PRESENTATION ORDER") ||
+      block.includes("SELECTION FRAMEWORK") ||
+      block.includes("DELIVERABLE 2") ||
+      block.includes("DELIVERABLE 3")
+    ) {
+      continue;
+    }
+
+    let line = "";
+    const blockquoteBold = block.match(/>\s*\*\*([^*\n]+)\*\*/);
+    if (blockquoteBold) line = blockquoteBold[1].trim();
+    if (!line) {
+      const boldMatches = block.match(/\*\*([^*\n]{10,80})\*\*/g);
+      if (boldMatches && boldMatches.length > 0) {
+        line = boldMatches[0].replace(/\*\*/g, "").trim();
+      }
+    }
+    if (!line) continue;
+    if (
+      line.includes("PROPOSITION") ||
+      line.includes("WHAT THIS") ||
+      line.includes("THE TRUTH") ||
+      line.length > 100
+    ) {
+      continue;
+    }
+
+    const ownsMatch = block.match(
+      /WHAT THIS PROPOSITION OWNS[\s\S]*?\n\n([\s\S]*?)(?:\n---|\n═|\n===|$)/i,
+    );
+    const owns = ownsMatch ? stripMd(ownsMatch[1].trim()) : "";
+
+    out.push({
+      line: stripMd(line),
+      owns,
+      composite: extractCompositeScore(block),
+    });
+  }
+  return out;
+}
+
+function firstSentence(text: string, maxWords = 50): string {
+  if (!text) return "";
+  const clean = text.replace(/\s+/g, " ").trim();
+  const sentenceMatch = clean.match(/^[^.!?]*[.!?]/);
+  const sentence = (sentenceMatch ? sentenceMatch[0] : clean).trim();
+  const words = sentence.split(/\s+/);
+  if (words.length <= maxWords) return sentence;
+  return words.slice(0, maxWords).join(" ") + "…";
+}
+
 // ─── Cover ──────────────────────────────────────────────────────────────
 async function loadIconDataUrl(): Promise<string | null> {
   try {
@@ -319,10 +445,24 @@ function parseContent(raw: string): Block[] {
 
 // ─── Content pages ──────────────────────────────────────────────────────
 function drawContent(doc: jsPDF, input: PdfInput) {
-  const body =
+  const rawBody =
     input.stage16Output && input.stage16Output.trim().length > 0
       ? input.stage16Output
       : getTemplateContent(input.format);
+  const body = sanitiseForPdf(rawBody);
+  // Sanitise all appendix stage outputs once, upfront, so every renderer
+  // (raw-as-appendix, proposition cards, etc.) sees clean text.
+  const appendix: AppendixData | undefined = input.appendix
+    ? {
+        stage1Output: sanitiseForPdf(input.appendix.stage1Output ?? ""),
+        stage8Output: sanitiseForPdf(input.appendix.stage8Output ?? ""),
+        stage10Output: sanitiseForPdf(input.appendix.stage10Output ?? ""),
+        stage11Output: sanitiseForPdf(input.appendix.stage11Output ?? ""),
+        stage12Output: sanitiseForPdf(input.appendix.stage12Output ?? ""),
+        stage13Output: sanitiseForPdf(input.appendix.stage13Output ?? ""),
+      }
+    : undefined;
+  input = { ...input, appendix };
   const blocks = parseContent(body);
   const smpNorm = normaliseForMatch(input.smp);
 
@@ -599,6 +739,103 @@ function drawContent(doc: jsPDF, input: PdfInput) {
     if (intro) writeAppendixIntro(intro);
   };
 
+  // ─── Appendix C — proposition cards ─────────────────────────────────
+  const renderPropositionCards = (
+    rawStage8: string | null | undefined,
+    selectedSmp: string,
+  ) => {
+    const props = extractPropositions(rawStage8 ?? "");
+    if (!props.length) {
+      writeWrapped(
+        "Proposition data unavailable for this section.",
+        11.5,
+        C_TEXT_3,
+        "italic",
+        1.7,
+      );
+      return;
+    }
+    const selectedNorm = normaliseForMatch(selectedSmp);
+    props.forEach((p, idx) => {
+      const isSelected =
+        selectedNorm.length > 0 && normaliseForMatch(p.line) === selectedNorm;
+
+      // PROPOSITION N label
+      y += 14;
+      doc.setTextColor(C_ACCENT);
+      setFont(doc, "bold");
+      doc.setFontSize(9);
+      ensureSpace(14);
+      setTracking(doc, 0.12);
+      doc.text(`PROPOSITION ${idx + 1}`, M_SIDE, y + 9);
+      clearTracking(doc);
+      y += 16;
+
+      // Proposition line — sub-heading
+      writeWrapped(p.line, 14, C_TEXT, "bold", 1.35);
+      y += 4;
+
+      // Composite score + status badge row
+      ensureSpace(22);
+      doc.setTextColor(C_ACCENT);
+      setFont(doc, "bold");
+      doc.setFontSize(9);
+      setTracking(doc, 0.12);
+      const scoreLabel =
+        p.composite !== undefined
+          ? `COMPOSITE ${p.composite}/60`
+          : "COMPOSITE —";
+      doc.text(scoreLabel, M_SIDE, y + 9);
+      const scoreW = doc.getTextWidth(scoreLabel);
+      clearTracking(doc);
+
+      // Status badge
+      const badgeText = isSelected ? "SELECTED" : "NOT SELECTED";
+      setFont(doc, "bold");
+      doc.setFontSize(8);
+      setTracking(doc, 0.14);
+      const padX = 6;
+      const badgeTextW = doc.getTextWidth(badgeText);
+      const badgeW = badgeTextW + padX * 2;
+      const badgeH = 14;
+      const badgeX = M_SIDE + scoreW + 18;
+      const badgeY = y - 2;
+      if (isSelected) {
+        // green tint background + border
+        doc.setFillColor(234, 240, 233); // #4A7C59 @ ~15%
+        doc.rect(badgeX, badgeY, badgeW, badgeH, "F");
+        doc.setDrawColor("#4A7C59");
+        doc.setLineWidth(0.6);
+        doc.rect(badgeX, badgeY, badgeW, badgeH, "S");
+        doc.setTextColor("#4A7C59");
+      } else {
+        doc.setFillColor("#3A3A3A");
+        doc.rect(badgeX, badgeY, badgeW, badgeH, "F");
+        doc.setTextColor("#FAFAF8");
+      }
+      doc.text(badgeText, badgeX + padX, badgeY + 10);
+      clearTracking(doc);
+      y += 18;
+
+      // One-sentence strategic rationale from "what it owns"
+      const rationale = firstSentence(p.owns, 50);
+      if (rationale) {
+        writeWrapped(rationale, 11, C_TEXT_2, "normal", 1.6);
+      }
+
+      // Divider rule between propositions (not after last)
+      if (idx < props.length - 1) {
+        y += 8;
+        ensureSpace(20);
+        doc.setDrawColor(C_RULE);
+        doc.setLineWidth(0.5);
+        doc.line(M_SIDE, y, M_SIDE + COL_CONTENT_W, y);
+        y += 12;
+      }
+    });
+  };
+
+
   if (input.format === "consulting" && input.appendix) {
     onOpenerPage = true;
     drawSectionOpener(doc, "A", "Strategic Process and Evidence Base");
@@ -630,20 +867,8 @@ function drawContent(doc: jsPDF, input: PdfInput) {
       "Strategic Propositions Evaluated",
       "The following propositions were developed and evaluated before the recommended position was selected. Each represents a genuinely distinct strategic direction. The recommended proposition survived direct comparison with all alternatives.",
     );
-    renderRawAsAppendix(input.appendix.stage8Output);
-    if (input.appendix.stage10Output || input.appendix.stage12Output) {
-      y += 12;
-      writeWrapped(
-        "Scoring and selection rationale:",
-        11.5,
-        C_ACCENT,
-        "bold",
-        1.4,
-      );
-      renderRawAsAppendix(
-        input.appendix.stage12Output || input.appendix.stage10Output,
-      );
-    }
+    renderPropositionCards(input.appendix.stage8Output, input.smp);
+
 
     startAppendixSection(
       "Appendix D",
