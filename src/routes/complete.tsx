@@ -356,6 +356,17 @@ function CompletePage() {
                   smp,
                   format,
                   stage16Output,
+                  appendix:
+                    format === "consulting" || format === "workshop"
+                      ? {
+                          stage1Output: session?.stage_1_output,
+                          stage8Output: session?.stage_8_output,
+                          stage10Output: session?.stage_10_output,
+                          stage11Output: session?.stage_11_output,
+                          stage12Output: session?.stage_12_output,
+                          stage13Output: session?.stage_13_output,
+                        }
+                      : undefined,
                 });
                 window.clearInterval(tick);
                 setProgress(100);
