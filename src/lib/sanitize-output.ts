@@ -278,5 +278,21 @@ export function sanitizeStageOutput(raw: string): string {
   // 6. Collapse triple+ blank lines and trim.
   text = text.replace(/\n{3,}/g, "\n\n").trim();
 
+  // 7. Strip encoded separator artifacts and stray formatting glyphs
+  //    that occasionally leak through from upstream models.
+  text = text
+    // Encoded separator sequences
+    .replace(/(%P){2,}/g, "")
+    .replace(/%{2,}/g, "")
+    // Box-drawing characters
+    .replace(/[═─│┌┐└┘├┤┬┴┼]/g, "")
+    // Spaced letter sequences e.g. "W H A T  T H I S"
+    .replace(/\b([A-Z])\s(?=[A-Z]\s)/g, "$1")
+    // Lines of only special characters
+    .replace(/^[^a-zA-Z0-9\s]{3,}$/gm, "")
+    // Collapse any new blank-line runs introduced above
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+
   return text;
 }
