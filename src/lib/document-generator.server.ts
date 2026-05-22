@@ -126,7 +126,7 @@ export function getSectionDefs(format: DocFormat, session: SessionLike): Section
       },
       {
         name: "alternatives",
-        maxTokens: 900,
+        maxTokens: 1500,
         systemPrompt:
           WRITING_STANDARD +
           `\nWrite the alternatives evaluation section of a board strategy recommendation for ${brand}.\nFor each alternative proposition — two paragraphs: what it was and its genuine strengths, then the precise strategic reason it was not selected.\nThe rejection must be so specific that a sceptical board member cannot respond with "but couldn't you just."`,
