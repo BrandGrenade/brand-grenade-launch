@@ -1107,7 +1107,9 @@ Use Only*
 // Public helpers
 // ───────────────────────────────────────────────────────────────────────────
 
-const COMPLETION_PRIORITY_PREAMBLE = `CRITICAL OUTPUT INSTRUCTION:
+const COMPLETION_PRIORITY_PREAMBLE = `CRITICAL: You must end every sentence you begin. You must end every section you begin. If you are running out of space compress remaining sections to 2 sentences each but never stop mid-sentence. Your final output must end with a complete sentence followed by the Brand Grenade footer. A document that ends mid-sentence is a failed output.
+
+CRITICAL OUTPUT INSTRUCTION:
 You are operating within a token limit. Prioritise completing every section over expanding any individual section.
 If you are approaching your output limit:
 - Compress body paragraphs to 2 sentences minimum rather than stopping
