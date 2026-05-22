@@ -414,23 +414,25 @@ function drawContent(doc: jsPDF, input: PdfInput) {
   // Start first content page
   newContentPage();
 
-  for (const b of blocks) {
+  const renderBlock = (b: Block, opts: { appendix?: boolean } = {}) => {
     switch (b.kind) {
       case "part": {
+        if (opts.appendix) {
+          // In appendix mode treat # as a sub-heading rather than a new Part opener.
+          renderBlock({ kind: "h3", text: b.title }, opts);
+          return;
+        }
         currentSection = stripMd(b.title);
         onOpenerPage = true;
         drawSectionOpener(doc, b.numberLabel, b.title);
-        pageNum += 1; // opener still counts in pagination
-        // Following block will trigger newContentPage on first write via ensureSpace? No — we need an explicit fresh page.
+        pageNum += 1;
         newContentPage();
         break;
       }
       case "h2": {
-        currentSection = stripMd(b.text);
-        // Page-break if less than 80pt remains
+        if (!opts.appendix) currentSection = stripMd(b.text);
         if (PAGE_H - M_BOTTOM - y < 80) newContentPage();
         else {
-          // Refresh header to show new section name on current page
           doc.setFillColor(C_PAGE);
           doc.rect(0, 0, PAGE_W, M_TOP - 8, "F");
           drawChrome();
@@ -438,8 +440,7 @@ function drawContent(doc: jsPDF, input: PdfInput) {
         const size = 18;
         const lh = size * 1.25;
         ensureSpace(lh + 24);
-        y += 12; // top margin
-        // Left amber rule
+        y += 12;
         doc.setFillColor(C_ACCENT);
         doc.rect(M_SIDE, y + 2, 3, size + 4, "F");
         doc.setTextColor(C_TEXT);
@@ -478,7 +479,6 @@ function drawContent(doc: jsPDF, input: PdfInput) {
       case "callout": {
         y += 12;
         const text = stripMd(b.text);
-        // Spans into right margin column — wider than content column.
         const calloutMaxW = CONTENT_W * 0.85 - 28;
         setFont(doc, "italic");
         doc.setFontSize(15);
@@ -486,10 +486,8 @@ function drawContent(doc: jsPDF, input: PdfInput) {
         const lh = 15 * 1.65;
         const blockH = lines.length * lh + 24;
         ensureSpace(blockH);
-        // Background
         doc.setFillColor(C_SURFACE_2);
         doc.rect(M_SIDE, y, CONTENT_W * 0.85, blockH, "F");
-        // Left amber rule
         doc.setFillColor(C_ACCENT);
         doc.rect(M_SIDE, y, 3, blockH, "F");
         doc.setTextColor(C_TEXT);
@@ -503,7 +501,6 @@ function drawContent(doc: jsPDF, input: PdfInput) {
       }
       case "li": {
         const text = stripMd(b.text);
-        // Bullet dot
         ensureSpace(16);
         doc.setFillColor(C_ACCENT);
         doc.circle(M_SIDE + 6, y + 7, 2, "F");
@@ -522,9 +519,8 @@ function drawContent(doc: jsPDF, input: PdfInput) {
       }
       case "p": {
         const text = stripMd(b.text);
-
-        // Proposition reveal detection
         if (
+          !opts.appendix &&
           !propositionRendered &&
           smpNorm.length > 0 &&
           normaliseForMatch(text) === smpNorm
@@ -536,13 +532,145 @@ function drawContent(doc: jsPDF, input: PdfInput) {
           newContentPage();
           break;
         }
-
         writeWrapped(text, 11.5, C_TEXT, "normal", 1.85);
         y += 6;
         break;
       }
     }
+  };
+
+  // Main document
+  for (const b of blocks) renderBlock(b);
+
+  // ─── Appendix (consulting + workshop) ─────────────────────────────────
+  const writeAppendixLabel = (text: string) => {
+    y += 18;
+    doc.setTextColor(C_ACCENT);
+    setFont(doc, "bold");
+    doc.setFontSize(10);
+    ensureSpace(16);
+    setTracking(doc, 0.14);
+    doc.text(text.toUpperCase(), M_SIDE, y + 10);
+    clearTracking(doc);
+    y += 20;
+  };
+
+  const writeAppendixHeading = (text: string) => {
+    const size = 22;
+    const lh = size * 1.2;
+    ensureSpace(lh + 18);
+    doc.setTextColor(C_TEXT);
+    setFont(doc, "bold");
+    doc.setFontSize(size);
+    const lines = doc.splitTextToSize(text, COL_CONTENT_W) as string[];
+    for (const ln of lines) {
+      ensureSpace(lh);
+      doc.text(ln, M_SIDE, y + size);
+      y += lh;
+    }
+    y += 14;
+  };
+
+  const writeAppendixIntro = (text: string) => {
+    writeWrapped(text, 11.5, C_TEXT_2, "italic", 1.7);
+    y += 10;
+  };
+
+  const renderRawAsAppendix = (raw: string | null | undefined) => {
+    if (!raw || !raw.trim()) {
+      writeWrapped(
+        "Source data unavailable for this section.",
+        11.5,
+        C_TEXT_3,
+        "italic",
+        1.7,
+      );
+      return;
+    }
+    const subBlocks = parseContent(raw);
+    for (const sb of subBlocks) renderBlock(sb, { appendix: true });
+  };
+
+  const startAppendixSection = (label: string, heading: string, intro?: string) => {
+    newContentPage();
+    currentSection = "Appendix";
+    writeAppendixLabel(label);
+    writeAppendixHeading(heading);
+    if (intro) writeAppendixIntro(intro);
+  };
+
+  if (input.format === "consulting" && input.appendix) {
+    onOpenerPage = true;
+    drawSectionOpener(doc, "A", "Strategic Process and Evidence Base");
+    pageNum += 1;
+
+    startAppendixSection(
+      "Appendix A",
+      "The Strategic Brief",
+      "The following brief was submitted as the foundation for this strategic engagement. Every recommendation in this document is traceable to the commercial context, audience insight, and strategic constraints defined here.",
+    );
+    renderRawAsAppendix(input.appendix.stage1Output);
+
+    startAppendixSection("Appendix B", "The Strategic Methodology");
+    const methodology = [
+      "This strategic recommendation was produced using the Brand Grenade Strategy Intelligence System — a 20-stage methodology designed to generate genuinely distinct strategic positions from competitive intelligence, human insight, and brand reality.",
+      "The methodology operates across four phases. The first phase builds competitive intelligence — mapping what every competitor in the category owns, what territories are overcrowded, and where genuine strategic whitespace exists.",
+      "The second phase generates strategic directions — producing multiple genuinely distinct universes, each built on a different type of truth about the brand and its audience. A minimum of three directions are developed before any evaluation begins.",
+      "The third phase validates and selects — scoring each direction across six dimensions, pressure testing the strongest candidates against five integrity tests, and assessing brand fit across five credibility dimensions. The proposition that emerges from this phase has survived rigorous comparison with genuine alternatives.",
+      "The fourth phase packages — synthesising the complete strategic intelligence into professional deliverables calibrated for the specific audience receiving them.",
+      "The methodology is designed to prevent the most common failure in brand strategy — the gravitational pull toward safe, familiar territories that produces category sameness. Every stage is constructed to enforce divergence, validate distinctiveness, and reject outputs that drift toward what competitors already own.",
+    ];
+    for (const para of methodology) {
+      writeWrapped(para, 11.5, C_TEXT, "normal", 1.85);
+      y += 8;
+    }
+
+    startAppendixSection(
+      "Appendix C",
+      "Strategic Propositions Evaluated",
+      "The following propositions were developed and evaluated before the recommended position was selected. Each represents a genuinely distinct strategic direction. The recommended proposition survived direct comparison with all alternatives.",
+    );
+    renderRawAsAppendix(input.appendix.stage8Output);
+    if (input.appendix.stage10Output || input.appendix.stage12Output) {
+      y += 12;
+      writeWrapped(
+        "Scoring and selection rationale:",
+        11.5,
+        C_ACCENT,
+        "bold",
+        1.4,
+      );
+      renderRawAsAppendix(
+        input.appendix.stage12Output || input.appendix.stage10Output,
+      );
+    }
+
+    startAppendixSection(
+      "Appendix D",
+      "Brand Fit Assessment",
+      "The recommended proposition was assessed across five credibility dimensions to confirm the brand can credibly occupy the recommended territory.",
+    );
+    renderRawAsAppendix(input.appendix.stage13Output);
+
+    startAppendixSection(
+      "Appendix E",
+      "Proposition Integrity Testing",
+      "The recommended proposition was subjected to five integrity tests before being presented as the strategic recommendation.",
+    );
+    renderRawAsAppendix(input.appendix.stage11Output);
+  } else if (input.format === "workshop" && input.appendix) {
+    onOpenerPage = true;
+    drawSectionOpener(doc, "A", "Facilitator Reference");
+    pageNum += 1;
+
+    startAppendixSection(
+      "Facilitator Reference",
+      "The Original Brief",
+      "This section is for facilitator reference only. It is not distributed to workshop participants. The brief content informs the facilitator's preparation but is revealed to participants only through the structured session content.",
+    );
+    renderRawAsAppendix(input.appendix.stage1Output);
   }
+
   // Suppress unused symbol lint
   void COL_MARGIN_X;
 }
