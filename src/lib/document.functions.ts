@@ -61,7 +61,7 @@ async function callAnthropic(
       console.error(
         `[section: ${sectionName}] Response length: ${text?.length} First 200 chars: ${text?.substring(0, 200)}`,
       );
-      if (!text || text.trim().length < 10) {
+      if (!text || text.trim().length < 50) {
         throw new Error("Empty response");
       }
       return text.trim();
@@ -71,42 +71,13 @@ async function callAnthropic(
         console.error(`[generateDocument] section call failed after ${retries + 1} attempts: ${msg}`);
         return `This section could not be generated. Please regenerate the document.`;
       }
-      await new Promise((r) => setTimeout(r, 3000));
+      await new Promise((r) => setTimeout(r, 5000));
     } finally {
       clearTimeout(timeout);
     }
   }
   return "";
 }
-
-async function runInBatches(
-  defs: Array<{ name: string; systemPrompt: string; userMessage: string; maxTokens: number }>,
-  batchSize: number,
-): Promise<Array<{ name: string; content: string }>> {
-  const results: Array<{ name: string; content: string }> = [];
-  for (let i = 0; i < defs.length; i += batchSize) {
-    const batch = defs.slice(i, i + batchSize);
-    const batchResults = await Promise.all(
-      batch.map(async (def) => {
-        try {
-          const content = await callAnthropic(
-            def.systemPrompt,
-            def.userMessage,
-            def.maxTokens,
-            def.name,
-          );
-          return { name: def.name, content };
-        } catch (e) {
-          return { name: def.name, content: "Section generation failed." };
-        }
-      }),
-    );
-    results.push(...batchResults);
-  }
-  return results;
-}
-
-
 
 const Input = z.object({
   sessionId: z.string().uuid(),
