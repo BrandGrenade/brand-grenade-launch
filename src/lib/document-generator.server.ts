@@ -342,8 +342,9 @@ function md(text: string | undefined): string {
       continue;
     }
     if (/^##\s+/.test(line)) {
+      // ## inside section content → h3 (section title h2 is added by assembly)
       closeUl();
-      out.push(`<h2>${fmt(line.replace(/^##\s+/, ""))}</h2>`);
+      out.push(`<h3>${fmt(line.replace(/^##\s+/, ""))}</h3>`);
       continue;
     }
     if (/^[-—]\s+/.test(line)) {
