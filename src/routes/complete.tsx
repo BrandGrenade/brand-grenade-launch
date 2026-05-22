@@ -74,6 +74,8 @@ function CompletePage() {
   const [modalStage, setModalStage] = useState<string | null>(null);
   const [session, setSession] = useState<SessionRow | null>(null);
   const [loading, setLoading] = useState(true);
+  const [lastError, setLastError] = useState<string | null>(null);
+  const [lastOutput, setLastOutput] = useState<string>("");
 
   useEffect(() => {
     if (!sessionId) {
@@ -320,44 +322,35 @@ function CompletePage() {
               if (!hasSmp) return;
               setGenerating(true);
               setDone(false);
+              setLastError(null);
+              setLastOutput("");
               setProgress(0);
-              setProgressLabel(
-                force
-                  ? "Regenerating document — clearing previous output…"
-                  : "Assembling strategic platform document…",
-              );
-
-              const start = Date.now();
-              const DURATION = 14000;
-              const tick = window.setInterval(() => {
-                const t = Math.min(1, (Date.now() - start) / DURATION);
-                const eased = 1 - Math.pow(1 - t, 3);
-                const pct = Math.min(95, Math.round(eased * 95));
-                setProgress(pct);
-                if (pct > 35 && pct < 75) {
-                  setProgressLabel(`Formatting ${format} variant…`);
-                } else if (pct >= 75) {
-                  setProgressLabel("Finalising PDF…");
-                }
-              }, 200);
+              setProgressLabel("Preparing document…");
 
               try {
                 if (!sessionId) throw new Error("Missing session id");
-                setProgressLabel(`Generating ${format} document…`);
+
+                // Phase 1 — stream Stage 16 markdown from the server.
+                // Progress crawls 0→80 based on accumulated characters (target ~30k).
                 let stage16Output = "";
                 let complete = true;
+                const TARGET_CHARS = 30000;
                 const gen = await runStage16Fn({ data: { sessionId, format, force } });
                 for await (const chunk of gen) {
                   if (typeof chunk.delta === "string") {
                     stage16Output += chunk.delta;
+                    const pct = Math.min(80, Math.round((stage16Output.length / TARGET_CHARS) * 80));
+                    setProgress(pct);
                   } else if (chunk.done) {
                     stage16Output = chunk.output;
                     complete = chunk.complete !== false;
                   }
                 }
-                if (!complete) {
-                  setProgressLabel("Completing document generation…");
-                }
+                setLastOutput(stage16Output);
+
+                // Phase 2 — render PDF in the browser.
+                setProgressLabel("Building PDF…");
+                setProgress(90);
                 await generateStrategicPlatformPdf({
                   brandName: brand,
                   category: field,
@@ -376,21 +369,25 @@ function CompletePage() {
                         }
                       : undefined,
                 });
-                window.clearInterval(tick);
+
+                // Phase 3 — download triggered.
+                setProgressLabel("Downloading…");
                 setProgress(100);
-                setProgressLabel(complete ? "Document ready" : "Document ready (partial — try Regenerate if sections are missing)");
                 setDone(true);
                 window.setTimeout(() => {
                   setGenerating(false);
                   setDone(false);
                   setProgress(0);
-                }, 2200);
+                  setProgressLabel(complete ? "" : "Document partial — try Regenerate if sections are missing");
+                }, 1500);
               } catch (e) {
-                window.clearInterval(tick);
                 console.error("PDF generation failed", e);
                 setGenerating(false);
                 setProgress(0);
                 setProgressLabel("");
+                setLastError(
+                  e instanceof Error ? e.message : "PDF generation failed",
+                );
               }
             };
             return (
@@ -471,6 +468,57 @@ function CompletePage() {
                 {done ? "✓ " : ""}
                 {progressLabel}
               </p>
+            </div>
+          )}
+
+          {lastError && !generating && (
+            <div
+              style={{
+                marginTop: 16,
+                padding: "16px 20px",
+                background: "#7C3A3A15",
+                border: "1px solid #7C3A3A",
+                borderRadius: 8,
+              }}
+            >
+              <p className="text-body-sm" style={{ color: "#8A8680", margin: 0 }}>
+                PDF generation failed. Try downloading as a text document instead.
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  const safe = brand.replace(/[^a-zA-Z0-9]/g, "_");
+                  const date = new Date().toISOString().split("T")[0];
+                  const suffix = {
+                    consulting: "BoardStrategyRecommendation",
+                    agency: "AgencyStrategyPlatform",
+                    workshop: "BrandStrategyWorkshopGuide",
+                  }[format];
+                  const blob = new Blob([lastOutput || "(no content available)"], {
+                    type: "text/plain;charset=utf-8",
+                  });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement("a");
+                  a.href = url;
+                  a.download = `BrandGrenade_${safe}_${suffix}_${date}.txt`;
+                  document.body.appendChild(a);
+                  a.click();
+                  document.body.removeChild(a);
+                  URL.revokeObjectURL(url);
+                }}
+                className="text-body-sm transition-colors hover:text-text-primary"
+                style={{
+                  marginTop: 8,
+                  background: "none",
+                  border: "none",
+                  padding: 0,
+                  color: "#8A8680",
+                  cursor: "pointer",
+                  textDecoration: "underline",
+                }}
+              >
+                Download as Text
+              </button>
             </div>
           )}
 
