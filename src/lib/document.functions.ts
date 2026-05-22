@@ -243,10 +243,13 @@ export const generateDocument = createServerFn({ method: "POST" })
     // Mark generating immediately and respond. Generation continues in the
     // background via ctx.waitUntil (Cloudflare Workers), so it isn't subject
     // to the per-request timeout. The client polls doc_<format>_status.
-    await supabaseAdmin
-      .from("sessions")
-      .update({ [statusCol]: "generating", [urlCol]: null })
-      .eq("id", sessionId);
+    const generatingUpdate =
+      format === "consulting"
+        ? { doc_consulting_status: "generating", doc_consulting_url: null }
+        : format === "agency"
+          ? { doc_agency_status: "generating", doc_agency_url: null }
+          : { doc_workshop_status: "generating", doc_workshop_url: null };
+    await supabaseAdmin.from("sessions").update(generatingUpdate).eq("id", sessionId);
 
     scheduleBackground(runGeneration(sessionId, format));
 
