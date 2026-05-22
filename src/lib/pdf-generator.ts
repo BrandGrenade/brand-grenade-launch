@@ -931,6 +931,8 @@ async function drawContent(doc: jsPDF, input: PdfInput) {
 // ─── Public entry ───────────────────────────────────────────────────────
 export async function generateStrategicPlatformPdf(input: PdfInput) {
   console.log("PDF: start", Date.now());
+  // Reset the per-run splitTextToSize cache.
+  splitCache.clear();
   // NOTE: compress:false is intentional. jsPDF's `compress: true` runs pako
   // gzip synchronously over every content stream inside doc.save() and was
   // the cause of the multi-second "Finalising PDF…" stall. Uncompressed
@@ -941,7 +943,7 @@ export async function generateStrategicPlatformPdf(input: PdfInput) {
   console.log("PDF: render start", Date.now(), "(init+icon ms:", Date.now() - tInit, ")");
 
   drawCover(doc, input, iconDataUrl);
-  drawContent(doc, input);
+  await drawContent(doc, input);
   const tRenderEnd = Date.now();
   console.log("PDF: render complete", tRenderEnd, "(render ms:", tRenderEnd - tInit, ")");
 
