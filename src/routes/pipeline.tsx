@@ -69,11 +69,11 @@ export const Route = createFileRoute("/pipeline")({
   component: PipelineView,
   head: () => ({
     meta: [
-      { title: "Pipeline — Brand Grenade" },
+      { title: "Engine Room — Brand Grenade" },
       {
         name: "description",
         content:
-          "20-stage strategy pipeline view. Track stages, review outputs, and act on human checkpoints.",
+          "20-stage strategy engine room. Track stages, review outputs, and act on human checkpoints.",
       },
     ],
   }),
@@ -1216,7 +1216,7 @@ function PipelineView() {
 
   // Dynamic document title: "[Brand] — Stage X — Brand Grenade"
   useEffect(() => {
-    document.title = `${brandLabel} — Stage ${Math.max(1, currentMainNumber)} — Brand Grenade`;
+    document.title = `${brandLabel} Engine Room — Stage ${Math.max(1, currentMainNumber)} — Brand Grenade`;
   }, [brandLabel, currentMainNumber]);
 
 
@@ -1580,7 +1580,7 @@ function Breadcrumb({
         <span>→</span>
         <span className="text-text-secondary truncate">{brand}</span>
         <span>→</span>
-        <span>Strategy Process</span>
+        <span>Engine Room</span>
       </nav>
 
       <div className="ml-4 flex shrink-0 items-center gap-3">
@@ -2585,7 +2585,7 @@ function BottomBar({
     );
   } else if (pipelineComplete && !isViewingHistorical) {
     rightEl = (
-      <PrimaryActionButton onClick={onViewFinal} label="View Final Output →" />
+      <PrimaryActionButton onClick={onViewFinal} label="Open Deliverables →" />
     );
   } else if (isViewingHistorical) {
     rightEl = (
