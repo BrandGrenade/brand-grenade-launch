@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { saveStageOutputWithRetry } from "./save-stage-output.server";
 import { streamClaude } from "./claude.server";
 import { STAGE_14_SYSTEM_PROMPT, buildStage14UserMessage } from "./stage14-prompt";
 import { trimBrandFitForDownstream } from "./context-trim";
@@ -58,11 +59,12 @@ export const runStage14 = createServerFn({ method: "POST" })
       throw new Error(msg);
     }
 
-    const { error: ue } = await supabaseAdmin
-      .from("sessions")
-      .update({ stage_14_output: output, stage_14_error: null })
-      .eq("id", data.sessionId);
-    if (ue) throw new Error(`Failed to save Stage 14 output: ${ue.message}`);
+    await saveStageOutputWithRetry(
+      data.sessionId,
+      { stage_14_output: output, stage_14_error: null },
+      "stage_14_error",
+      "Stage 14",
+    );
 
     yield { done: true as const, output };
   });
