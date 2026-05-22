@@ -680,7 +680,13 @@ function drawContent(doc: jsPDF, input: PdfInput) {
   };
 
   // Main document
-  for (const b of blocks) renderBlock(b);
+  console.log("PDF: blocks loop start", Date.now(), "blocks:", blocks.length);
+  for (let i = 0; i < blocks.length; i++) {
+    if (i === 0) console.log("PDF: first block processed", Date.now());
+    if (i % 100 === 0) console.log("PDF: block", i, "of", blocks.length, Date.now());
+    renderBlock(blocks[i]);
+  }
+  console.log("PDF: blocks loop end", Date.now());
 
   // ─── Appendix (consulting + workshop) ─────────────────────────────────
   const writeAppendixLabel = (text: string) => {
@@ -902,6 +908,7 @@ function drawContent(doc: jsPDF, input: PdfInput) {
 
 // ─── Public entry ───────────────────────────────────────────────────────
 export async function generateStrategicPlatformPdf(input: PdfInput) {
+  console.log("PDF: start", Date.now());
   // NOTE: compress:false is intentional. jsPDF's `compress: true` runs pako
   // gzip synchronously over every content stream inside doc.save() and was
   // the cause of the multi-second "Finalising PDF…" stall. Uncompressed
@@ -923,7 +930,8 @@ export async function generateStrategicPlatformPdf(input: PdfInput) {
   const date = new Date().toISOString().slice(0, 10);
   const safe = (input.brandName || "Brand").replace(/[^a-zA-Z0-9]+/g, "");
   const filename = `BrandGrenade_${safe}_${FORMAT_FILE[input.format]}_${date}.pdf`;
-  console.log("PDF: save start", Date.now());
+  console.log("PDF: before save", Date.now());
   doc.save(filename);
   console.log("PDF: save complete", Date.now(), "(save ms:", Date.now() - tRenderEnd, ")");
+  console.log("PDF: complete", Date.now());
 }
