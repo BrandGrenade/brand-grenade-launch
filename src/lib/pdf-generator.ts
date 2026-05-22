@@ -560,10 +560,7 @@ async function drawContent(doc: jsPDF, input: PdfInput) {
     doc.setTextColor(color);
     setFont(doc, weight);
     doc.setFontSize(sizePt);
-    const lines = doc.splitTextToSize(
-      stripMd(text),
-      maxW - leftPad,
-    ) as string[];
+    const lines = cachedSplitText(doc, stripMd(text), maxW - leftPad);
     const lh = sizePt * lineFactor;
     for (const ln of lines) {
       ensureSpace(lh);
