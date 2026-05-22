@@ -384,11 +384,27 @@ function propReveal(smp: string): string {
 </div>`;
 }
 
+export function sanitiseText(text: string): string {
+  if (!text) return "";
+  return text
+    .replace(/\u2014/g, "—")
+    .replace(/\u2013/g, "–")
+    .replace(/\u201C/g, '"')
+    .replace(/\u201D/g, '"')
+    .replace(/\u2018/g, "'")
+    .replace(/\u2019/g, "'")
+    .replace(/\u2026/g, "...");
+}
+
 export function buildHtmlDocument(
-  sections: Record<string, string>,
+  rawSections: Record<string, string>,
   session: SessionLike,
   format: DocFormat,
 ): string {
+  // Sanitise every section's text before it reaches md()
+  const sections: Record<string, string> = {};
+  for (const k of Object.keys(rawSections)) sections[k] = sanitiseText(rawSections[k] ?? "");
+
   const labels: Record<DocFormat, string> = {
     consulting: "BOARD STRATEGY RECOMMENDATION",
     agency: "AGENCY STRATEGY PLATFORM",
@@ -396,8 +412,9 @@ export function buildHtmlDocument(
   };
   const label = labels[format];
   const brand = session.brand_name ?? "Untitled Brand";
-  const smp = session.selected_smp ?? "";
+  const smp = sanitiseText(session.selected_smp ?? "");
   const date = new Date().toLocaleDateString("en-AU", { month: "long", year: "numeric" });
+
 
   let body = "";
 
