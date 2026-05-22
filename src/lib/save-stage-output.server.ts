@@ -10,6 +10,9 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 type Updates = Record<string, unknown>;
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const adminAny = supabaseAdmin as any;
+
 export async function saveStageOutputWithRetry(
   sessionId: string,
   updates: Updates,
