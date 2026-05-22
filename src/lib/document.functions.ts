@@ -151,17 +151,29 @@ export const generateDocument = createServerFn({ method: "POST" })
         throw new Error(`Sign URL failed: ${signError?.message ?? "no url"}`);
       }
 
+      const readyUpdate =
+        format === "consulting"
+          ? { doc_consulting_status: "ready", doc_consulting_url: signed.signedUrl }
+          : format === "agency"
+            ? { doc_agency_status: "ready", doc_agency_url: signed.signedUrl }
+            : { doc_workshop_status: "ready", doc_workshop_url: signed.signedUrl };
       await supabaseAdmin
         .from("sessions")
-        .update({ [statusCol]: "ready", [urlCol]: signed.signedUrl })
+        .update(readyUpdate)
         .eq("id", sessionId);
 
       yield { done: true as const, url: signed.signedUrl, format, cached: false };
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Document generation failed";
+      const errorUpdate =
+        format === "consulting"
+          ? { doc_consulting_status: "error" }
+          : format === "agency"
+            ? { doc_agency_status: "error" }
+            : { doc_workshop_status: "error" };
       await supabaseAdmin
         .from("sessions")
-        .update({ [statusCol]: "error" })
+        .update(errorUpdate)
         .eq("id", sessionId);
       throw new Error(msg);
     }
