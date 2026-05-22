@@ -2162,18 +2162,20 @@ function useStreamingText(full: string, streaming: boolean) {
 
   useEffect(() => {
     if (!streaming) {
-      setShown(full);
+      setShown(fullRef.current);
       return;
     }
-    setShown("");
     let i = 0;
+    setShown("");
     const id = window.setInterval(() => {
-      i += 6;
+      i = Math.min(i + 6, fullRef.current.length);
       setShown(fullRef.current.slice(0, i));
-      if (i >= fullRef.current.length) window.clearInterval(id);
     }, 24);
     return () => window.clearInterval(id);
-  }, [full, streaming]);
+    // Intentionally only depends on `streaming` — `full` is read via fullRef
+    // so incoming delta chunks don't restart the typewriter (which caused
+    // the text to reset to "" on every chunk, creating a visible loop).
+  }, [streaming]);
 
   return shown;
 }
