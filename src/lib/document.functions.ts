@@ -189,17 +189,23 @@ async function runGeneration(sessionId: string, format: DocFormat): Promise<void
       throw new Error(`Sign URL failed: ${signError?.message ?? "no url"}`);
     }
 
-    await supabaseAdmin
-      .from("sessions")
-      .update({ [statusCol]: "ready", [urlCol]: signed.signedUrl })
-      .eq("id", sessionId);
+    const readyUpdate =
+      format === "consulting"
+        ? { doc_consulting_status: "ready", doc_consulting_url: signed.signedUrl }
+        : format === "agency"
+          ? { doc_agency_status: "ready", doc_agency_url: signed.signedUrl }
+          : { doc_workshop_status: "ready", doc_workshop_url: signed.signedUrl };
+    await supabaseAdmin.from("sessions").update(readyUpdate).eq("id", sessionId);
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Document generation failed";
     console.error(`[generateDocument] failed: ${msg}`);
-    await supabaseAdmin
-      .from("sessions")
-      .update({ [statusCol]: "error" })
-      .eq("id", sessionId);
+    const errorUpdate =
+      format === "consulting"
+        ? { doc_consulting_status: "error" }
+        : format === "agency"
+          ? { doc_agency_status: "error" }
+          : { doc_workshop_status: "error" };
+    await supabaseAdmin.from("sessions").update(errorUpdate).eq("id", sessionId);
   }
 }
 
