@@ -53,3 +53,82 @@ export const resetStage = createServerFn({ method: "POST" })
     }
     return { ok: true };
   });
+
+const stageClearFields: Record<StageId, Record<string, null>> = {
+  "1": { stage_1_output: null, stage_1_error: null, stage_1_tension_score: null },
+  "1b": { stage_1b_output: null, stage_1_error: null },
+  "2": { stage_2_output: null, stage_2_error: null },
+  "3": { stage_3_output: null, stage_3_error: null },
+  "4": { stage_4_output: null, stage_4_error: null },
+  "5": { stage_5_output: null, stage_5_error: null },
+  "6": { stage_6_output: null, stage_6_error: null },
+  "7": { stage_7_output: null, stage_7_error: null },
+  "8": { stage_8_output: null, stage_8_error: null },
+  "9": { stage_9_output: null, stage_9_error: null },
+  "10": { stage_10_output: null, stage_10_error: null },
+  "11": { stage_11_output: null, stage_11_error: null },
+  "12": { stage_12_output: null, stage_12_error: null, stage_12_smps: null },
+  "13": { stage_13_output: null, stage_13_error: null, stage_13_verdict: null },
+  "13b": { stage_13b_output: null, stage_13b_error: null },
+  "14": { stage_14_output: null, stage_14_error: null },
+  "14b": { stage_14b_output: null, stage_14b_error: null },
+  "14c": { stage_14c_output: null, stage_14c_error: null },
+  "15": { stage_15_output: null, stage_15_error: null, stage_15_clearance_status: null },
+  "16": { stage_16_consulting_output: null, stage_16_agency_output: null, stage_16_workshop_output: null, stage_16_error: null },
+};
+
+const stageOrder = Object.keys(stageClearFields) as StageId[];
+
+export const resetStageCascade = createServerFn({ method: "POST" })
+  .inputValidator((d) =>
+    z
+      .object({
+        sessionId: z.string().uuid(),
+        stageId: z.enum([
+          "1","1b","2","3","4","5","6","7","8","9","10","11","12","13","13b","14","14b","14c","15","16",
+        ]),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data }) => {
+    const id = data.stageId as StageId;
+    const start = stageOrder.indexOf(id);
+    if (start < 0) throw new Error(`Unknown stage id: ${id}`);
+
+    const update: Record<string, unknown> = {
+      status: "running",
+      current_stage: parseInt(id, 10),
+      stage_status: `running:${id}`,
+      retry_status: null,
+    };
+
+    for (const stageId of stageOrder.slice(start)) {
+      Object.assign(update, stageClearFields[stageId]);
+    }
+
+    if (start <= stageOrder.indexOf("8")) {
+      Object.assign(update, {
+        checkpoint_b_confirmed: false,
+        checkpoint_b_confirmed_at: null,
+        checkpoint_b_notes: null,
+      });
+    }
+
+    if (start <= stageOrder.indexOf("12")) {
+      Object.assign(update, {
+        checkpoint_c_confirmed: false,
+        checkpoint_c_confirmed_at: null,
+        checkpoint_c_notes: null,
+        selected_smp: null,
+        selected_smp_field_name: null,
+        selection_rationale: null,
+      });
+    }
+
+    const { error } = await supabaseAdmin
+      .from("sessions")
+      .update(update as never)
+      .eq("id", data.sessionId);
+    if (error) throw new Error(`Failed to reset stage cascade: ${error.message}`);
+    return { ok: true };
+  });
