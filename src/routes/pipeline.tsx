@@ -1392,6 +1392,7 @@ function PipelineView() {
             selectedStatus !== "complete"
           }
           resubmitting={resubmitting}
+          checkpointResubmitting={resubmitting}
           onResubmitBrief={async (additionalBrief) => {
             if (!sessionId) return;
             setResubmitting(true);
@@ -1517,20 +1518,30 @@ function PipelineView() {
           onResubmitCheckpoint={async (stageId, feedback) => {
             console.log(`[Checkpoint Resubmit] stage=${stageId} feedback=${feedback}`);
             const fb = (feedback ?? "").trim();
-            // Clear the relevant stage output and re-run it, passing the feedback.
-            const resetMap: Record<string, () => void> = {
-              "01": () => { setStage1Output(null); setStage1Error(null); },
-              "08": () => { setStage8Output(null); setStage8Error(null); },
-              "12": () => { setStage12Output(null); setStage12Error(null); },
-            };
-            if (resetMap[stageId]) {
-              resetMap[stageId]();
-              if (fb) setPendingFeedback((p) => ({ ...p, [stageId]: fb }));
-              if (stageId === "01") {
-                setRetryNonce((n) => n + 1);
-              } else {
-                setStatuses((p) => ({ ...p, [stageId]: "running" }));
-              }
+            const dbId = STAGE_ID_TO_DB[stageId];
+            if (!sessionId || !dbId || !fb) return;
+
+            setResubmitting(true);
+            try {
+              await resetStageCascadeFn({ data: { sessionId, stageId: dbId } });
+              resetLocalFromStage(stageId);
+              setPendingFeedback((p) => ({ ...p, [stageId]: fb }));
+              setStatuses((p) => {
+                const next: Record<string, StageStatus> = { ...p, [stageId]: "running" };
+                const idx = STAGES.findIndex((s) => s.id === stageId);
+                for (let i = idx + 1; i < STAGES.length; i++) next[STAGES[i].id] = "pending";
+                return next;
+              });
+              setSelectedId(stageId);
+              if (stageId === "01") setRetryNonce((n) => n + 1);
+            } catch (err) {
+              const message = err instanceof Error ? err.message : "Feedback resubmit failed";
+              if (stageId === "01") setStage1Error(message);
+              if (stageId === "08") setStage8Error(message);
+              if (stageId === "12") setStage12Error(message);
+              setStatuses((p) => ({ ...p, [stageId]: "error" }));
+            } finally {
+              setResubmitting(false);
             }
           }}
           onEscalateCheckpoint={(stageId, reason) => {
