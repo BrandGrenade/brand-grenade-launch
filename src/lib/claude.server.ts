@@ -244,21 +244,21 @@ export async function* streamClaude(args: CallClaudeArgs): AsyncGenerator<string
   const decoder = new TextDecoder();
   let buffer = "";
   let total = "";
-  // Immediate heartbeat: flush a chunk before Anthropic's first delta so
-  // intermediaries don't idle-close during the model's initial think pause.
-  // Empty string is used (not " ") so callers that do `output += delta`
-  // don't get whitespace polluted into the final text.
+  // Immediate heartbeat: flush a zero-width space before Anthropic's first
+  // delta so intermediaries don't idle-close during the model's initial think
+  // pause. U+200B is invisible to users but is a real byte on the wire that
+  // keeps intermediaries (Cloudflare, proxies) alive.
   let lastDelta = Date.now();
-  yield "";
+  yield "\u200B";
   try {
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
-      // Periodic keep-alive during long Anthropic pauses (every 15s).
+      // Periodic keep-alive during long Anthropic pauses (every 8s).
       const now = Date.now();
-      if (now - lastDelta > 15000) {
+      if (now - lastDelta > 8000) {
         lastDelta = now;
-        yield "";
+        yield "\u200B";
       }
       buffer += decoder.decode(value, { stream: true });
       let idx: number;
