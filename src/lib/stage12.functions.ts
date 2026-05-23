@@ -20,10 +20,19 @@ export const runStage12 = createServerFn({ method: "POST" })
       .single();
     if (error || !session) throw new Error(`Session not found: ${error?.message ?? "no row"}`);
     if (!session.stage_11_output) throw new Error("Stage 11 output missing — cannot run Stage 12");
-    if (session.stage_12_output) {
+    const feedback = data.feedback?.trim();
+
+    if (session.stage_12_output && !feedback) {
       yield { delta: session.stage_12_output };
       yield { done: true as const, output: session.stage_12_output };
       return;
+    }
+
+    if (feedback) {
+      await supabaseAdmin
+        .from("sessions")
+        .update({ stage_12_output: null, stage_12_error: null })
+        .eq("id", data.sessionId);
     }
 
     await supabaseAdmin
@@ -31,7 +40,7 @@ export const runStage12 = createServerFn({ method: "POST" })
       .update({ current_stage: 12, status: "running", stage_12_error: null })
       .eq("id", data.sessionId);
 
-    const userMessage = buildStage12UserMessage({
+    let userMessage = buildStage12UserMessage({
       brandName: session.brand_name,
       category: session.category,
       stage11Output: trimScoredSMPsForDownstream(session.stage_11_output),
@@ -39,6 +48,9 @@ export const runStage12 = createServerFn({ method: "POST" })
       cmm: session.stage_2_output ?? "",
       stage1Output: session.stage_1_output ?? "",
     });
+    if (feedback) {
+      userMessage += `\n\n---\n\nHUMAN REVIEWER FEEDBACK ON PREVIOUS OUTPUT:\n${feedback}\n\nThe previous selection was rejected. Regenerate the full set, directly addressing the feedback above. Do not repeat the prior output — incorporate the requested changes.`;
+    }
 
     let output = "";
     try {
