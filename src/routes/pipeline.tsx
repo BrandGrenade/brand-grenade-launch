@@ -758,7 +758,7 @@ function PipelineView() {
       });
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionId, session?.id, statuses["08"], stage8Output]);
+  }, [sessionId, session?.id, statuses["08"]]);
 
   // Stage 9 — Divergence Validation.
   useEffect(() => {
