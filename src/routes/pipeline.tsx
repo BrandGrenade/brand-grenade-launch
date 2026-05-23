@@ -2162,17 +2162,27 @@ function useStreamingText(full: string, streaming: boolean) {
 
   useEffect(() => {
     if (!streaming) {
-      setShown(full);
+      setShown(fullRef.current);
       return;
     }
     setShown("");
     let i = 0;
     const id = window.setInterval(() => {
-      i += 6;
-      setShown(fullRef.current.slice(0, i));
-      if (i >= fullRef.current.length) window.clearInterval(id);
+      const len = fullRef.current.length;
+      if (i < len) {
+        i = Math.min(i + 6, len);
+        setShown(fullRef.current.slice(0, i));
+      }
     }, 24);
     return () => window.clearInterval(id);
+    // Intentionally only depend on `streaming`. `full` is read via ref to
+    // avoid resetting the typewriter on every delta (causes a visible loop).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [streaming]);
+
+  // Flush full text whenever it changes while not streaming (e.g. hydrate).
+  useEffect(() => {
+    if (!streaming) setShown(full);
   }, [full, streaming]);
 
   return shown;
