@@ -2111,11 +2111,17 @@ function useStreamingText(full: string, streaming: boolean) {
   const fullRef = useRef(full);
   fullRef.current = full;
 
+  // When not streaming, mirror `full` into `shown` whenever it changes
+  // (e.g. user switches between completed stages in the left panel).
   useEffect(() => {
-    if (!streaming) {
-      setShown(fullRef.current);
-      return;
-    }
+    if (streaming) return;
+    setShown(full);
+  }, [streaming, full]);
+
+  // When streaming flips on, run a typewriter that reads the latest text
+  // via fullRef so incoming delta chunks don't reset the interval.
+  useEffect(() => {
+    if (!streaming) return;
     let i = 0;
     setShown("");
     const id = window.setInterval(() => {
@@ -2123,9 +2129,6 @@ function useStreamingText(full: string, streaming: boolean) {
       setShown(fullRef.current.slice(0, i));
     }, 24);
     return () => window.clearInterval(id);
-    // Intentionally only depends on `streaming` — `full` is read via fullRef
-    // so incoming delta chunks don't restart the typewriter (which caused
-    // the text to reset to "" on every chunk, creating a visible loop).
   }, [streaming]);
 
   return shown;
