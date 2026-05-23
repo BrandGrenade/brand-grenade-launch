@@ -521,6 +521,7 @@ function PipelineView() {
         if (cancelled) return;
         setStage1Output(result.output);
         setStage1Loading(false);
+        if (fb1) setPendingFeedback((p) => { const n = { ...p }; delete n["01"]; return n; });
         setStatuses((p) => {
           const next: Record<string, StageStatus> = { ...p, "01": "checkpoint" };
           if (result.stage1bRequired) next["01B"] = "running";
