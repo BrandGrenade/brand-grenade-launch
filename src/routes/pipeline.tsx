@@ -861,7 +861,7 @@ function PipelineView() {
       });
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionId, session?.id, statuses["12"], stage12Output]);
+  }, [sessionId, session?.id, statuses["12"]]);
 
   // Stages 13–16 — post-selection validation, territory mapping, audit, and assembly.
   useEffect(() => {
