@@ -7,8 +7,8 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 const ANTHROPIC_URL = "https://api.anthropic.com/v1/messages";
 const DEFAULT_MODEL = "claude-sonnet-4-5";
-const REQUEST_TIMEOUT_MS = 60_000;
-const RETRY_DELAY_MS = 1_000;
+const REQUEST_TIMEOUT_MS = 180_000;
+const RETRY_DELAY_MS = 3_000;
 
 export interface CallClaudeArgs {
   systemPrompt: string;
@@ -161,13 +161,7 @@ async function openWithRetry(
   let attempt = 0;
   const maxAttempts = 2;
   let lastError = "";
-  const bodyWithFlag = stream
-    ? (() => {
-        const parsed = JSON.parse(body);
-        parsed.stream = true;
-        return JSON.stringify(parsed);
-      })()
-    : body;
+  const bodyWithFlag = stream ? body.replace(/}$/, ',"stream":true}') : body;
   while (attempt < maxAttempts) {
     attempt++;
     try {
@@ -244,22 +238,10 @@ export async function* streamClaude(args: CallClaudeArgs): AsyncGenerator<string
   const decoder = new TextDecoder();
   let buffer = "";
   let total = "";
-  // Immediate heartbeat: flush a zero-width space before Anthropic's first
-  // delta so intermediaries don't idle-close during the model's initial think
-  // pause. U+200B is invisible to users but is a real byte on the wire that
-  // keeps intermediaries (Cloudflare, proxies) alive.
-  let lastDelta = Date.now();
-  yield "\u200B";
   try {
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
-      // Periodic keep-alive during long Anthropic pauses (every 8s).
-      const now = Date.now();
-      if (now - lastDelta > 8000) {
-        lastDelta = now;
-        yield "\u200B";
-      }
       buffer += decoder.decode(value, { stream: true });
       let idx: number;
       while ((idx = buffer.indexOf("\n")) !== -1) {
@@ -276,7 +258,6 @@ export async function* streamClaude(args: CallClaudeArgs): AsyncGenerator<string
           };
           if (evt.type === "content_block_delta" && evt.delta?.type === "text_delta" && evt.delta.text) {
             total += evt.delta.text;
-            lastDelta = Date.now();
             yield evt.delta.text;
           }
         } catch {

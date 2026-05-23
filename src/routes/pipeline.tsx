@@ -126,7 +126,60 @@ const CHECKPOINT_LETTERS: Record<string, "A" | "B" | "C"> = {
 const SAMPLE_BRAND = "Hypernova";
 
 // Per-stage demo output. Replace with real generator output.
-const STAGE_OUTPUTS: Record<string, string> = {};
+const STAGE_OUTPUTS: Record<string, string> = {
+  "01": `## Sanitised Brief
+
+The brief has been parsed and structured. Four required elements were detected and locked.
+
+### Brand context
+Hypernova is a Series-B fintech building a cross-border payments rail for emerging-market freelancers. Founded 2022, ~140 staff, profitable.
+
+### Category context
+Cross-border payments — a category dominated by Wise, Remitly, and Revolut. Margins compressed; trust and speed are commoditised.
+
+> The brief originally conflated "audience" with "ICP". We've separated end-user (freelancer) from buyer (platform partner).
+
+### Objective
+Reposition Hypernova so partners (marketplaces, payroll SaaS) integrate it as a default — not a fallback.
+
+### Audience reference
+Operations leads at remote-first marketplaces, 50–500 employees, currently paying out via batch ACH or PayPal Mass Payments.
+
+- Tone: confident, technically literate
+- Constraints: no fee-led messaging, no comparison tables
+- Out of scope: end-user acquisition`,
+
+  "02": `## Category Intelligence
+
+Three structural truths about cross-border payments that constrain any proposition.
+
+### Truth 1 — Trust collapses to integrations
+Buyers don't trust brand promises; they trust the SDK that lives in their codebase for 18 months.
+
+### Truth 2 — Speed is a commodity floor, not a ceiling
+"Money in minutes" is table stakes. Every competitor claims it. No proposition can lead with speed.
+
+### Truth 3 — The real spend is reconciliation, not transfer
+Finance teams spend 4x more on reconciling cross-border payouts than on the fees themselves.
+
+> Most category players sell *transfer*. The opportunity is selling *resolved books*.
+
+### Competitor positioning map
+- Wise — consumer trust, B2B as afterthought
+- Remitly — corridor specialist, weak partner story
+- Revolut — bundling play, partner-hostile
+- Airwallex — finance-stack ambition, complex onboarding`,
+
+  "03": `## Constraint Generator
+
+Generating the constraint frame the proposition must satisfy. Loading category, brief, and audience priors…
+
+A proposition for Hypernova must:
+
+- Refuse to compete on fees or speed
+- Land with operations leads, not founders
+- Imply a finance-stack benefit, not a payments benefit`,
+};
 
 // ────────────────────────────────────────────────────────────────────────────
 // Component
@@ -331,10 +384,6 @@ function PipelineView() {
         setSession(data as SessionData);
         if (data.brand_intelligence) setIntelSubmitted(true);
         if (data.stage_1b_output) setStage1bOutput(data.stage_1b_output);
-        if (data.stage_1_output) {
-          setStage1Output(data.stage_1_output);
-          setStatuses((p) => ({ ...p, "01": "complete" }));
-        }
         if (data.stage_2_output) {
           setStage2Output(data.stage_2_output);
           setStatuses((p) => ({ ...p, "02": "complete" }));
@@ -446,10 +495,6 @@ function PipelineView() {
       cancelled = true;
     };
   }, [sessionId, retryNonce]);
-
-
-
-
 
   // Trigger Stage 1 when session loads (or on retry).
   useEffect(() => {
@@ -1019,7 +1064,7 @@ function PipelineView() {
       "06":
         (stage6Output && sanitize(stage6Output)) ??
         (stage6Loading
-          ? "Generating insight validation…"
+          ? "Validating insights — this can take 60–120 seconds…"
           : "Awaiting output."),
       "07":
         (stage7Output && sanitize(stage7Output)) ??

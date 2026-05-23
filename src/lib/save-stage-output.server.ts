@@ -54,34 +54,3 @@ export async function saveStageOutputWithRetry(
     }
   }
 }
-
-/**
- * Schedule the stage save in the background via Cloudflare's
- * ExecutionContext.waitUntil so it runs OUTSIDE the request CPU budget.
- * The Worker keeps the save promise alive after the HTTP response closes.
- *
- * Falls back to fire-and-forget if no waitUntil context is available
- * (e.g. local dev / non-Workers environments).
- */
-export function saveStageOutputInBackground(
-  sessionId: string,
-  updates: Updates,
-  errorColumn: string,
-  stageLabel: string,
-): void {
-  const promise = saveStageOutputWithRetry(sessionId, updates, errorColumn, stageLabel).catch(
-    (err) => {
-      const msg = err instanceof Error ? err.message : "unknown error";
-      console.error(`[${stageLabel}] background save failed: ${msg}`);
-    },
-  );
-  try {
-    const ctx = (globalThis as unknown as { __cfCtx?: { waitUntil?: (p: Promise<unknown>) => void } })
-      .__cfCtx;
-    if (ctx && typeof ctx.waitUntil === "function") {
-      ctx.waitUntil(promise);
-    }
-  } catch {
-    // ignore — promise still runs to completion either way
-  }
-}
