@@ -47,15 +47,25 @@ function parsePropositions(rawOutput: string): RawProp[] {
   const propositions: RawProp[] = [];
   if (!rawOutput) return propositions;
 
+  // Only parse content within DELIVERABLE 1 — everything after (selection
+  // framework, rationale stub, presentation order log, self-audit) contains
+  // bold text that can be mis-detected as additional propositions.
+  let scope = rawOutput;
+  const endMarker = scope.search(
+    /={2,}\s*DELIVERABLE\s+2|={2,}\s*DELIVERABLE\s+3|={2,}\s*PRESENTATION\s+ORDER|={2,}\s*SELF[-\s]AUDIT/i,
+  );
+  if (endMarker > 0) scope = scope.slice(0, endMarker);
+
   // Method 1: Split on === or ═══ dividers
   const dividerPattern = /[═=]{3,}/g;
-  const blocks = rawOutput.split(dividerPattern).filter((b) => b.trim().length > 50);
+  const blocks = scope.split(dividerPattern).filter((b) => b.trim().length > 50);
 
   // Method 2: Split on PROPOSITION N headers
   const propPattern = /\*{0,2}PROPOSITION\s+\d+\*{0,2}/gi;
-  const propBlocks = rawOutput.split(propPattern).filter((b) => b.trim().length > 50);
+  const propBlocks = scope.split(propPattern).filter((b) => b.trim().length > 50);
 
   const contentBlocks = propBlocks.length > blocks.length ? propBlocks : blocks;
+
 
   for (const block of contentBlocks) {
     if (
