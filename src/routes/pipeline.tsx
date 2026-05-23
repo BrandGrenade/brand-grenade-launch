@@ -857,6 +857,7 @@ function PipelineView() {
         if (cancelled) return;
         setStage12Output(result.output);
         setStage12Loading(false);
+        if (fb12) setPendingFeedback((p) => { const n = { ...p }; delete n["12"]; return n; });
         setStatuses((p) => ({ ...p, "12": "checkpoint" }));
       })
       .catch((err: unknown) => {
