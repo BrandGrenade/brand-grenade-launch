@@ -28,7 +28,7 @@ import { runStage14b } from "@/lib/stage14b.functions";
 import { runStage14c } from "@/lib/stage14c.functions";
 import { runStage15 } from "@/lib/stage15.functions";
 import { runStage16 } from "@/lib/stage16.functions";
-import { resetStage } from "@/lib/retry.functions";
+import { resetStage, resetStageCascade } from "@/lib/retry.functions";
 import { sanitizeStageOutput } from "@/lib/sanitize-output";
 
 // Consume an async-generator server function stream: forward delta chunks to a
@@ -269,6 +269,7 @@ function PipelineView() {
   const runStage15Fn = useServerFn(runStage15);
   const runStage16Fn = useServerFn(runStage16);
   const resetStageFn = useServerFn(resetStage);
+  const resetStageCascadeFn = useServerFn(resetStageCascade);
 
   const [session, setSession] = useState<SessionData | null>(null);
   const [stage1Output, setStage1Output] = useState<string | null>(null);
