@@ -836,7 +836,7 @@ function PipelineView() {
       });
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionId, session?.id, statuses["11"], stage11Output]);
+  }, [sessionId, session?.id, statuses["11"]]);
 
   // Stage 12 — SMP Selection presentation. Ends at Checkpoint C (human selects).
   useEffect(() => {
