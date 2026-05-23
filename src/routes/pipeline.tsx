@@ -931,7 +931,7 @@ function PipelineView() {
       });
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionId, session?.id, statuses["14"], stage14Output]);
+  }, [sessionId, session?.id, statuses["14"]]);
 
   useEffect(() => {
     if (!sessionId || !session || statuses["14B"] !== "running" || stage14bOutput) return;
