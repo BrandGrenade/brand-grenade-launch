@@ -5,7 +5,10 @@ import { streamClaude } from "./claude.server";
 import { STAGE_12_SYSTEM_PROMPT, buildStage12UserMessage } from "./stage12-prompt";
 import { trimScoredSMPsForDownstream } from "./context-trim";
 
-const Input = z.object({ sessionId: z.string().uuid() });
+const Input = z.object({
+  sessionId: z.string().uuid(),
+  feedback: z.string().max(5000).optional(),
+});
 
 export const runStage12 = createServerFn({ method: "POST" })
   .inputValidator((i) => Input.parse(i))
