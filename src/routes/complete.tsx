@@ -7,7 +7,7 @@ import { BrandGrenadeIcon } from "@/components/BrandGrenadeIcon";
 import { supabase } from "@/integrations/supabase/client";
 import { generateStrategicPlatformPdf } from "@/lib/pdf-generator";
 import { runStage16 } from "@/lib/stage16.functions";
-import { generateDocument } from "@/lib/document.functions";
+// generateDocument server fn replaced by supabase.functions.invoke('generate-document')
 
 const completeSearchSchema = z.object({
   session: z.string().uuid().optional(),
@@ -79,7 +79,7 @@ async function openDocument(url: string) {
 function CompletePage() {
   const { session: sessionId } = Route.useSearch();
   const runStage16Fn = useServerFn(runStage16);
-  const generateDocumentFn = useServerFn(generateDocument);
+  // edge fn invoked directly via supabase.functions.invoke
   const [format, setFormat] = useState<Format>("consulting");
   const [generating, setGenerating] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -345,14 +345,17 @@ function CompletePage() {
               try {
                 if (!sessionId) throw new Error("Missing session id");
 
-                const gen = await generateDocumentFn({
-                  data: { sessionId, format, force },
-                });
+                const { data: gen, error: invokeErr } = await supabase.functions.invoke(
+                  "generate-document",
+                  { body: { sessionId, format, force } },
+                );
+                if (invokeErr) throw new Error(invokeErr.message);
+
 
                 let url: string | null = null;
 
-                if (gen.status === "ready" && gen.url) {
-                  url = gen.url;
+                if ((gen as any)?.status === "ready" && (gen as any)?.url) {
+                  url = (gen as any).url as string;
                   setProgress(100);
                   setProgressLabel("Opening document…");
                 } else {
