@@ -752,6 +752,7 @@ function PipelineView() {
         if (cancelled) return;
         setStage8Output(result.output);
         setStage8Loading(false);
+        if (fb8) setPendingFeedback((p) => { const n = { ...p }; delete n["08"]; return n; });
         setStatuses((p) => ({ ...p, "08": "checkpoint" }));
       })
       .catch((err: unknown) => {
