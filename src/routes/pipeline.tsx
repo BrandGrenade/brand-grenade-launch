@@ -679,30 +679,64 @@ function PipelineView() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId, session?.id, statuses["05"], stage5Output]);
 
-  // Trigger Stage 6 when its status flips to "running".
+  // Trigger Stage 6 — background-job model.
+  //
+  // Cloudflare Workers kills long streaming responses, so Stage 6 runs as
+  // a background job: the server fn schedules the Claude call via
+  // ctx.waitUntil and returns immediately. The client polls
+  // sessions.stage_6_status every 3s until it flips to 'complete'.
   useEffect(() => {
     if (!sessionId || !session) return;
     if (statuses["06"] !== "running") return;
     if (stage6Output) return;
     let cancelled = false;
+    let pollTimer: ReturnType<typeof setInterval> | null = null;
     setStage6Loading(true);
     setStage6Error(null);
-    (async () => consumeStream(await runStage6Fn({ data: { sessionId } }), setStage6Output))()
-      .then((result) => {
-        if (cancelled) return;
-        setStage6Output(result.output);
+
+    const poll = async () => {
+      if (cancelled) return;
+      const { data, error } = await supabase
+        .from("sessions")
+        .select("stage_6_status, stage_6_output, stage_6_error")
+        .eq("id", sessionId)
+        .single();
+      if (cancelled || error || !data) return;
+      if (data.stage_6_output && data.stage_6_status === "complete") {
+        if (pollTimer) clearInterval(pollTimer);
+        setStage6Output(data.stage_6_output);
         setStage6Loading(false);
         setStatuses((p) => ({ ...p, "06": "complete", "07": "running" }));
         setSelectedId("07");
-      })
-      .catch((err: unknown) => {
+      } else if (data.stage_6_status === "error") {
+        if (pollTimer) clearInterval(pollTimer);
+        setStage6Loading(false);
+        setStage6Error(data.stage_6_error ?? "Stage 6 failed");
+        setStatuses((p) => ({ ...p, "06": "error" }));
+      }
+    };
+
+    (async () => {
+      try {
+        const result = await runStage6Fn({ data: { sessionId } });
+        if (cancelled) return;
+        if (result.status === "complete") {
+          await poll();
+          return;
+        }
+        pollTimer = setInterval(poll, 3000);
+        void poll();
+      } catch (err) {
         if (cancelled) return;
         setStage6Loading(false);
         setStage6Error(err instanceof Error ? err.message : "Stage 6 failed");
         setStatuses((p) => ({ ...p, "06": "error" }));
-      });
+      }
+    })();
+
     return () => {
       cancelled = true;
+      if (pollTimer) clearInterval(pollTimer);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId, session?.id, statuses["06"], stage6Output]);
@@ -1064,7 +1098,7 @@ function PipelineView() {
       "06":
         (stage6Output && sanitize(stage6Output)) ??
         (stage6Loading
-          ? "Validating insights — this can take 60–120 seconds…"
+          ? "Generating insight validation…"
           : "Awaiting output."),
       "07":
         (stage7Output && sanitize(stage7Output)) ??
