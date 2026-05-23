@@ -225,7 +225,28 @@ const stageClearFields: Record<StageId, Record<string, null>> = {
   },
 };
 
-const stageOrder = Object.keys(stageClearFields) as StageId[];
+const stageOrder: StageId[] = [
+  "1",
+  "1b",
+  "2",
+  "3",
+  "4",
+  "5",
+  "6",
+  "7",
+  "8",
+  "9",
+  "10",
+  "11",
+  "12",
+  "13",
+  "13b",
+  "14",
+  "14b",
+  "14c",
+  "15",
+  "16",
+];
 
 export const resetStageCascade = createServerFn({ method: "POST" })
   .inputValidator((d) =>
