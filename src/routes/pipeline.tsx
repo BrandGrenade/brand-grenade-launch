@@ -515,7 +515,8 @@ function PipelineView() {
     setStage1Error(null);
     setStatuses((p) => ({ ...p, "01": "running" }));
 
-    (async () => consumeStream(await runStage1Fn({ data: { sessionId } }), setStage1Output))()
+    const fb1 = pendingFeedback["01"];
+    (async () => consumeStream(await runStage1Fn({ data: { sessionId, feedback: fb1 } }), setStage1Output))()
       .then((result) => {
         if (cancelled) return;
         setStage1Output(result.output);
