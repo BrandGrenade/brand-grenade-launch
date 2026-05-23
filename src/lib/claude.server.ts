@@ -238,10 +238,22 @@ export async function* streamClaude(args: CallClaudeArgs): AsyncGenerator<string
   const decoder = new TextDecoder();
   let buffer = "";
   let total = "";
+  // Immediate heartbeat: flush a chunk before Anthropic's first delta so
+  // intermediaries don't idle-close during the model's initial think pause.
+  // Empty string is used (not " ") so callers that do `output += delta`
+  // don't get whitespace polluted into the final text.
+  let lastDelta = Date.now();
+  yield "";
   try {
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
+      // Periodic keep-alive during long Anthropic pauses (every 15s).
+      const now = Date.now();
+      if (now - lastDelta > 15000) {
+        lastDelta = now;
+        yield "";
+      }
       buffer += decoder.decode(value, { stream: true });
       let idx: number;
       while ((idx = buffer.indexOf("\n")) !== -1) {
@@ -258,6 +270,7 @@ export async function* streamClaude(args: CallClaudeArgs): AsyncGenerator<string
           };
           if (evt.type === "content_block_delta" && evt.delta?.type === "text_delta" && evt.delta.text) {
             total += evt.delta.text;
+            lastDelta = Date.now();
             yield evt.delta.text;
           }
         } catch {
