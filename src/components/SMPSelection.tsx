@@ -25,7 +25,12 @@ export interface SMPCard {
 // ----------------------------- PARSER -----------------------------
 
 function extractScore(text: string, label: string): number | undefined {
-  const pattern = new RegExp(label + "[:\\s]+(\\d+(?:\\.\\d+)?)\\s*\\/\\s*(?:10|60)", "i");
+  // Allow markdown bold/italic markers and stray punctuation between the
+  // label and the number, e.g. "**Differentiation:**  9/10" or "Differentiation — 9/10".
+  const pattern = new RegExp(
+    label.replace(/\s+/g, "\\s+") + "[\\s*_:\\-—–]+(\\d+(?:\\.\\d+)?)\\s*\\/\\s*(?:10|60)",
+    "i",
+  );
   const m = text.match(pattern);
   return m ? parseFloat(m[1]) : undefined;
 }
