@@ -334,6 +334,7 @@ function PipelineView() {
   const [resubmitting, setResubmitting] = useState(false);
   const [savingRationale, setSavingRationale] = useState(false);
   const [retryNonce, setRetryNonce] = useState(0);
+  const [pendingFeedback, setPendingFeedback] = useState<Record<string, string>>({});
 
 
   // Elapsed timer
