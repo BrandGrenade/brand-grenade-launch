@@ -1,7 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { saveStageOutputWithRetry } from "./save-stage-output.server";
 import { streamClaude } from "./claude.server";
 import { STAGE_1_SYSTEM_PROMPT, buildStage1UserMessage } from "./stage1-prompt";
 
@@ -95,12 +94,11 @@ export const runStage1 = createServerFn({ method: "POST" })
     const tensionScore = extractTensionScore(output);
     const stage1bRequired = tensionScore !== null && tensionScore < 7;
 
-    await saveStageOutputWithRetry(
-      data.sessionId,
-      { stage_1_output: output, stage_1_tension_score: tensionScore, stage_1b_required: stage1bRequired, stage_1_error: null },
-      "stage_1_error",
-      "Stage 1",
-    );
+    const { error: updateErr } = await supabaseAdmin
+      .from("sessions")
+      .update({ stage_1_output: output, stage_1_tension_score: tensionScore, stage_1b_required: stage1bRequired, stage_1_error: null })
+      .eq("id", data.sessionId);
+    if (updateErr) throw new Error(`Failed to save Stage 1 output: ${updateErr.message}`);
 
     yield { done: true as const, output, tensionScore, stage1bRequired };
   });
