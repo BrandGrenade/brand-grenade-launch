@@ -649,7 +649,7 @@ function PipelineView() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionId, session?.id, statuses["04"], stage4Output]);
+  }, [sessionId, session?.id, statuses["04"]]);
 
   // Trigger Stage 5 when its status flips to "running".
   useEffect(() => {
