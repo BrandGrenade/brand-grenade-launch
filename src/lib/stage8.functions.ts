@@ -143,6 +143,8 @@ export const runStage8 = createServerFn({ method: "POST" })
       constraintMatrix: session.stage_3_output,
       territoryCount,
       territoryNames,
+      previousOutput: session.stage_8_output ?? undefined,
+      feedback: session.stage_8_feedback ?? undefined,
     });
 
     let output = "";
