@@ -337,6 +337,38 @@ function PipelineView() {
   const [retryNonce, setRetryNonce] = useState(0);
   const [pendingFeedback, setPendingFeedback] = useState<Record<string, string>>({});
 
+  const resetLocalFromStage = (stageId: string) => {
+    if (stageId === "01") {
+      setStage1Output(null); setStage1bOutput(null); setStage2Output(null); setStage3Output(null);
+      setStage4Output(null); setStage5Output(null); setStage6Output(null); setStage7Output(null);
+      setStage8Output(null); setStage9Output(null); setStage10Output(null); setStage11Output(null);
+      setStage12Output(null); setStage13Output(null); setStage13bOutput(null); setStage14Output(null);
+      setStage14bOutput(null); setStage14cOutput(null); setStage15Output(null); setStage16Output(null);
+      setStage1Error(null); setStage2Error(null); setStage3Error(null); setStage4Error(null);
+      setStage5Error(null); setStage6Error(null); setStage7Error(null); setStage8Error(null);
+      setStage9Error(null); setStage10Error(null); setStage11Error(null); setStage12Error(null);
+      setStage13Error(null); setStage13bError(null); setStage14Error(null); setStage14bError(null);
+      setStage14cError(null); setStage15Error(null); setStage16Error(null);
+      return;
+    }
+    if (stageId === "08") {
+      setStage8Output(null); setStage9Output(null); setStage10Output(null); setStage11Output(null);
+      setStage12Output(null); setStage13Output(null); setStage13bOutput(null); setStage14Output(null);
+      setStage14bOutput(null); setStage14cOutput(null); setStage15Output(null); setStage16Output(null);
+      setStage8Error(null); setStage9Error(null); setStage10Error(null); setStage11Error(null);
+      setStage12Error(null); setStage13Error(null); setStage13bError(null); setStage14Error(null);
+      setStage14bError(null); setStage14cError(null); setStage15Error(null); setStage16Error(null);
+      return;
+    }
+    if (stageId === "12") {
+      setStage12Output(null); setStage13Output(null); setStage13bOutput(null); setStage14Output(null);
+      setStage14bOutput(null); setStage14cOutput(null); setStage15Output(null); setStage16Output(null);
+      setStage12Error(null); setStage13Error(null); setStage13bError(null); setStage14Error(null);
+      setStage14bError(null); setStage14cError(null); setStage15Error(null); setStage16Error(null);
+      setSelectedSMP(null); setRationaleForId(null); setIntelSubmitted(false);
+    }
+  };
+
 
   // Elapsed timer
   const [startTime] = useState(() => Date.now());
