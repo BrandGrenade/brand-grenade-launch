@@ -1022,7 +1022,7 @@ function PipelineView() {
       });
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionId, session?.id, statuses["16"], stage16Output]);
+  }, [sessionId, session?.id, statuses["16"]]);
 
 
   // Per-stage output: use live Stage 1 / 1B / 2 / 3 output, demo stubs for others.
