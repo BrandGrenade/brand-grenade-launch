@@ -63,9 +63,7 @@ Competitor positions to avoid:
 
 ${args.cmm}
 
-Write one Strategic Proposition per territory. Minimum 3 propositions. The input contains ${args.territoryCount} territories — generate exactly ${args.territoryCount} propositions.
-
-Generate a maximum of 5 propositions. If there are more than 5 territories, select the 5 strongest and most distinct ones only. Never generate more than 5 propositions.`;
+Write one Strategic Proposition per territory. Minimum 3 propositions. The input contains ${args.territoryCount} territories — generate exactly ${args.territoryCount} propositions.`;
 }
 
 export function buildStage8ContinuationMessage(args: {
