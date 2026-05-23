@@ -10,7 +10,10 @@ import {
 import { STAGE_7_SYSTEM_PROMPT, buildStage7UserMessage } from "./stage7-prompt";
 import { trimValidatedInsightsForDownstream } from "./context-trim";
 
-const Input = z.object({ sessionId: z.string().uuid() });
+const Input = z.object({
+  sessionId: z.string().uuid(),
+  feedback: z.string().max(5000).optional(),
+});
 
 const TERRITORY_HEADING = /^##\s+(.+?)\s*$/;
 const PROPOSITION_LINE = /^\s*>\s+\S/;
