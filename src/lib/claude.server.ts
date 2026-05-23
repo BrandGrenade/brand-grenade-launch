@@ -7,8 +7,8 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 const ANTHROPIC_URL = "https://api.anthropic.com/v1/messages";
 const DEFAULT_MODEL = "claude-sonnet-4-5";
-const REQUEST_TIMEOUT_MS = 180_000;
-const RETRY_DELAY_MS = 3_000;
+const REQUEST_TIMEOUT_MS = 60_000;
+const RETRY_DELAY_MS = 1_000;
 
 export interface CallClaudeArgs {
   systemPrompt: string;
