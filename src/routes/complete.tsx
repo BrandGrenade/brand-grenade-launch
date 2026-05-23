@@ -7,7 +7,7 @@ import { BrandGrenadeIcon } from "@/components/BrandGrenadeIcon";
 import { supabase } from "@/integrations/supabase/client";
 import { generateStrategicPlatformPdf } from "@/lib/pdf-generator";
 import { runStage16 } from "@/lib/stage16.functions";
-import { generateDocument } from "@/lib/document.functions";
+// generateDocument server fn replaced by supabase.functions.invoke('generate-document')
 
 const completeSearchSchema = z.object({
   session: z.string().uuid().optional(),
