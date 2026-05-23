@@ -849,7 +849,8 @@ function PipelineView() {
     let cancelled = false;
     setStage12Loading(true);
     setStage12Error(null);
-    (async () => consumeStream(await runStage12Fn({ data: { sessionId } }), setStage12Output))()
+    const fb12 = pendingFeedback["12"];
+    (async () => consumeStream(await runStage12Fn({ data: { sessionId, feedback: fb12 } }), setStage12Output))()
       .then((result) => {
         if (cancelled) return;
         setStage12Output(result.output);
