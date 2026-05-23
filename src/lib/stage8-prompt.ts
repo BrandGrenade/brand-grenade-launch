@@ -51,17 +51,7 @@ export function buildStage8UserMessage(args: {
   constraintMatrix: string;
   territoryCount: number;
   territoryNames: string[];
-  previousOutput?: string;
-  feedback?: string;
 }): string {
-  const feedbackBlock = args.feedback
-    ? `\n\nUSER FEEDBACK ON PREVIOUS PROPOSITIONS:\n${args.feedback}\n\nApply this feedback precisely. If the user asked to remove a proposition do not include it. If they asked for more generate additional ones. If they asked for changes apply them to the specific propositions mentioned.`
-    : "";
-
-  const previousBlock = args.previousOutput
-    ? `\n\nPREVIOUS PROPOSITIONS GENERATED:\n${args.previousOutput}\n\nRevise based on the feedback above.`
-    : "";
-
   return `Brand: ${args.brandName}
 Category: ${args.category}
 
@@ -72,7 +62,6 @@ ${args.stage7Output}
 Competitor positions to avoid:
 
 ${args.cmm}
-${feedbackBlock}${previousBlock}
 
 Write one Strategic Proposition per territory. Minimum 3 propositions. The input contains ${args.territoryCount} territories — generate exactly ${args.territoryCount} propositions.`;
 }

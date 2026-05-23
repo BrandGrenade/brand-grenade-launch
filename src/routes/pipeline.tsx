@@ -1566,19 +1566,10 @@ function PipelineView() {
           }}
           onResubmitCheckpoint={async (stageId, feedback) => {
             console.log(`[Checkpoint Resubmit] stage=${stageId} feedback=${feedback}`);
-            if (stageId === "08" && sessionId) {
-              await supabase
-                .from("sessions")
-                .update({ stage_8_output: null, stage_8_feedback: feedback })
-                .eq("id", sessionId);
-              setStage8Output(null);
-              setStage8Error(null);
-              setStatuses((p) => ({ ...p, "08": "running" }));
-              return;
-            }
             // Clear the relevant stage output and re-run it.
             const resetMap: Record<string, () => void> = {
               "01": () => { setStage1Output(null); setStage1Error(null); },
+              "08": () => { setStage8Output(null); setStage8Error(null); },
               "12": () => { setStage12Output(null); setStage12Error(null); },
             };
             if (resetMap[stageId]) {
