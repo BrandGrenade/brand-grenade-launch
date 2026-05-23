@@ -334,6 +334,7 @@ function PipelineView() {
   const [resubmitting, setResubmitting] = useState(false);
   const [savingRationale, setSavingRationale] = useState(false);
   const [retryNonce, setRetryNonce] = useState(0);
+  const [pendingFeedback, setPendingFeedback] = useState<Record<string, string>>({});
 
 
   // Elapsed timer
@@ -514,11 +515,13 @@ function PipelineView() {
     setStage1Error(null);
     setStatuses((p) => ({ ...p, "01": "running" }));
 
-    (async () => consumeStream(await runStage1Fn({ data: { sessionId } }), setStage1Output))()
+    const fb1 = pendingFeedback["01"];
+    (async () => consumeStream(await runStage1Fn({ data: { sessionId, feedback: fb1 } }), setStage1Output))()
       .then((result) => {
         if (cancelled) return;
         setStage1Output(result.output);
         setStage1Loading(false);
+        if (fb1) setPendingFeedback((p) => { const n = { ...p }; delete n["01"]; return n; });
         setStatuses((p) => {
           const next: Record<string, StageStatus> = { ...p, "01": "checkpoint" };
           if (result.stage1bRequired) next["01B"] = "running";
@@ -743,11 +746,13 @@ function PipelineView() {
     let cancelled = false;
     setStage8Loading(true);
     setStage8Error(null);
-    (async () => consumeStream(await runStage8Fn({ data: { sessionId } }), setStage8Output))()
+    const fb8 = pendingFeedback["08"];
+    (async () => consumeStream(await runStage8Fn({ data: { sessionId, feedback: fb8 } }), setStage8Output))()
       .then((result) => {
         if (cancelled) return;
         setStage8Output(result.output);
         setStage8Loading(false);
+        if (fb8) setPendingFeedback((p) => { const n = { ...p }; delete n["08"]; return n; });
         setStatuses((p) => ({ ...p, "08": "checkpoint" }));
       })
       .catch((err: unknown) => {
@@ -846,11 +851,13 @@ function PipelineView() {
     let cancelled = false;
     setStage12Loading(true);
     setStage12Error(null);
-    (async () => consumeStream(await runStage12Fn({ data: { sessionId } }), setStage12Output))()
+    const fb12 = pendingFeedback["12"];
+    (async () => consumeStream(await runStage12Fn({ data: { sessionId, feedback: fb12 } }), setStage12Output))()
       .then((result) => {
         if (cancelled) return;
         setStage12Output(result.output);
         setStage12Loading(false);
+        if (fb12) setPendingFeedback((p) => { const n = { ...p }; delete n["12"]; return n; });
         setStatuses((p) => ({ ...p, "12": "checkpoint" }));
       })
       .catch((err: unknown) => {
@@ -1476,7 +1483,8 @@ function PipelineView() {
           }}
           onResubmitCheckpoint={async (stageId, feedback) => {
             console.log(`[Checkpoint Resubmit] stage=${stageId} feedback=${feedback}`);
-            // Clear the relevant stage output and re-run it.
+            const fb = (feedback ?? "").trim();
+            // Clear the relevant stage output and re-run it, passing the feedback.
             const resetMap: Record<string, () => void> = {
               "01": () => { setStage1Output(null); setStage1Error(null); },
               "08": () => { setStage8Output(null); setStage8Error(null); },
@@ -1484,6 +1492,7 @@ function PipelineView() {
             };
             if (resetMap[stageId]) {
               resetMap[stageId]();
+              if (fb) setPendingFeedback((p) => ({ ...p, [stageId]: fb }));
               if (stageId === "01") {
                 setRetryNonce((n) => n + 1);
               } else {
