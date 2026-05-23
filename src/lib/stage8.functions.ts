@@ -102,10 +102,19 @@ export const runStage8 = createServerFn({ method: "POST" })
     if (!session.stage_2_output) throw new Error("Stage 2 output missing — cannot run Stage 8");
     if (!session.stage_3_output) throw new Error("Stage 3 output missing — cannot run Stage 8");
     if (!session.stage_7_output) throw new Error("Stage 7 output missing — cannot run Stage 8");
-    if (session.stage_8_output) {
+    const feedback = data.feedback?.trim();
+
+    if (session.stage_8_output && !feedback) {
       yield { delta: session.stage_8_output };
       yield { done: true as const, output: session.stage_8_output };
       return;
+    }
+
+    if (feedback) {
+      await supabaseAdmin
+        .from("sessions")
+        .update({ stage_8_output: null, stage_8_error: null })
+        .eq("id", data.sessionId);
     }
 
     let stage7Output = session.stage_7_output;
@@ -142,7 +151,7 @@ export const runStage8 = createServerFn({ method: "POST" })
       })
       .eq("id", data.sessionId);
 
-    const userMessage = buildStage8UserMessage({
+    let userMessage = buildStage8UserMessage({
       brandName: session.brand_name,
       category: session.category,
       stage7Output,
@@ -151,6 +160,9 @@ export const runStage8 = createServerFn({ method: "POST" })
       territoryCount,
       territoryNames,
     });
+    if (feedback) {
+      userMessage += `\n\n---\n\nHUMAN REVIEWER FEEDBACK ON PREVIOUS OUTPUT:\n${feedback}\n\nThe previous propositions were rejected. Regenerate the full set, directly addressing the feedback above. Do not repeat the prior propositions — incorporate the requested changes.`;
+    }
 
     let output = "";
     try {
