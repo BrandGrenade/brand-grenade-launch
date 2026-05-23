@@ -92,7 +92,7 @@ export const runStage8 = createServerFn({ method: "POST" })
     const { data: session, error } = await supabaseAdmin
       .from("sessions")
       .select(
-        "brand_name, category, stage_2_output, stage_3_output, stage_7_output, stage_8_output"
+        "brand_name, category, stage_2_output, stage_3_output, stage_7_output, stage_8_output, stage_8_feedback"
       )
       .eq("id", data.sessionId)
       .single();
@@ -100,11 +100,6 @@ export const runStage8 = createServerFn({ method: "POST" })
     if (!session.stage_2_output) throw new Error("Stage 2 output missing — cannot run Stage 8");
     if (!session.stage_3_output) throw new Error("Stage 3 output missing — cannot run Stage 8");
     if (!session.stage_7_output) throw new Error("Stage 7 output missing — cannot run Stage 8");
-    if (session.stage_8_output) {
-      yield { delta: session.stage_8_output };
-      yield { done: true as const, output: session.stage_8_output };
-      return;
-    }
 
     let stage7Output = session.stage_7_output;
     let territoryNames = extractTerritoryNames(stage7Output);
