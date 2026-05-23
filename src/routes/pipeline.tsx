@@ -1483,7 +1483,8 @@ function PipelineView() {
           }}
           onResubmitCheckpoint={async (stageId, feedback) => {
             console.log(`[Checkpoint Resubmit] stage=${stageId} feedback=${feedback}`);
-            // Clear the relevant stage output and re-run it.
+            const fb = (feedback ?? "").trim();
+            // Clear the relevant stage output and re-run it, passing the feedback.
             const resetMap: Record<string, () => void> = {
               "01": () => { setStage1Output(null); setStage1Error(null); },
               "08": () => { setStage8Output(null); setStage8Error(null); },
@@ -1491,6 +1492,7 @@ function PipelineView() {
             };
             if (resetMap[stageId]) {
               resetMap[stageId]();
+              if (fb) setPendingFeedback((p) => ({ ...p, [stageId]: fb }));
               if (stageId === "01") {
                 setRetryNonce((n) => n + 1);
               } else {
