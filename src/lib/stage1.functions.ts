@@ -32,7 +32,10 @@ export const createSession = createServerFn({ method: "POST" })
     return { sessionId: row.id as string };
   });
 
-const RunStage1Input = z.object({ sessionId: z.string().uuid() });
+const RunStage1Input = z.object({
+  sessionId: z.string().uuid(),
+  feedback: z.string().max(5000).optional(),
+});
 
 function extractTensionScore(text: string): number | null {
   const m = text.match(/Strategic\s+Tension\s+Score\s*[:\-]?\s*\**\s*(\d{1,2})\s*\/\s*10/i);
