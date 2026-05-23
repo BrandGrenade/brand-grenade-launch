@@ -562,7 +562,7 @@ function PipelineView() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionId, session?.stage_1b_required, statuses["01B"], stage1bOutput]);
+  }, [sessionId, session?.stage_1b_required, statuses["01B"]]);
 
   // Trigger Stage 2 when its status flips to "running".
   useEffect(() => {
@@ -591,7 +591,7 @@ function PipelineView() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionId, session?.id, statuses["02"], stage2Output]);
+  }, [sessionId, session?.id, statuses["02"]]);
 
   // Trigger Stage 3 when its status flips to "running".
   useEffect(() => {
@@ -620,7 +620,7 @@ function PipelineView() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionId, session?.id, statuses["03"], stage3Output]);
+  }, [sessionId, session?.id, statuses["03"]]);
 
   // Trigger Stage 4 when its status flips to "running".
   useEffect(() => {
@@ -649,7 +649,7 @@ function PipelineView() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionId, session?.id, statuses["04"], stage4Output]);
+  }, [sessionId, session?.id, statuses["04"]]);
 
   // Trigger Stage 5 when its status flips to "running".
   useEffect(() => {
@@ -677,7 +677,7 @@ function PipelineView() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionId, session?.id, statuses["05"], stage5Output]);
+  }, [sessionId, session?.id, statuses["05"]]);
 
   // Trigger Stage 6 when its status flips to "running".
   useEffect(() => {
@@ -705,7 +705,7 @@ function PipelineView() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionId, session?.id, statuses["06"], stage6Output]);
+  }, [sessionId, session?.id, statuses["06"]]);
 
   // Trigger Stage 7 when its status flips to "running".
   useEffect(() => {
@@ -733,7 +733,7 @@ function PipelineView() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionId, session?.id, statuses["07"], stage7Output]);
+  }, [sessionId, session?.id, statuses["07"]]);
 
   // Stage 8 — SMP Generation, ends at Checkpoint B.
   useEffect(() => {
@@ -758,7 +758,7 @@ function PipelineView() {
       });
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionId, session?.id, statuses["08"], stage8Output]);
+  }, [sessionId, session?.id, statuses["08"]]);
 
   // Stage 9 — Divergence Validation.
   useEffect(() => {
@@ -784,7 +784,7 @@ function PipelineView() {
       });
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionId, session?.id, statuses["09"], stage9Output]);
+  }, [sessionId, session?.id, statuses["09"]]);
 
   // Stage 10 — Scoring.
   useEffect(() => {
@@ -810,7 +810,7 @@ function PipelineView() {
       });
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionId, session?.id, statuses["10"], stage10Output]);
+  }, [sessionId, session?.id, statuses["10"]]);
 
   // Stage 11 — Pressure Test.
   useEffect(() => {
@@ -836,7 +836,7 @@ function PipelineView() {
       });
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionId, session?.id, statuses["11"], stage11Output]);
+  }, [sessionId, session?.id, statuses["11"]]);
 
   // Stage 12 — SMP Selection presentation. Ends at Checkpoint C (human selects).
   useEffect(() => {
@@ -861,7 +861,7 @@ function PipelineView() {
       });
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionId, session?.id, statuses["12"], stage12Output]);
+  }, [sessionId, session?.id, statuses["12"]]);
 
   // Stages 13–16 — post-selection validation, territory mapping, audit, and assembly.
   useEffect(() => {
@@ -885,7 +885,7 @@ function PipelineView() {
       });
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionId, session?.id, statuses["13"], stage13Output, intelSubmitted]);
+  }, [sessionId, session?.id, statuses["13"], intelSubmitted]);
 
   useEffect(() => {
     if (!sessionId || !session || statuses["13B"] !== "running" || stage13bOutput) return;
@@ -908,7 +908,7 @@ function PipelineView() {
       });
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionId, session?.id, statuses["13B"], stage13bOutput]);
+  }, [sessionId, session?.id, statuses["13B"]]);
 
   useEffect(() => {
     if (!sessionId || !session || statuses["14"] !== "running" || stage14Output) return;
@@ -931,7 +931,7 @@ function PipelineView() {
       });
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionId, session?.id, statuses["14"], stage14Output]);
+  }, [sessionId, session?.id, statuses["14"]]);
 
   useEffect(() => {
     if (!sessionId || !session || statuses["14B"] !== "running" || stage14bOutput) return;
@@ -954,7 +954,7 @@ function PipelineView() {
       });
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionId, session?.id, statuses["14B"], stage14bOutput]);
+  }, [sessionId, session?.id, statuses["14B"]]);
 
   useEffect(() => {
     if (!sessionId || !session || statuses["14C"] !== "running" || stage14cOutput) return;
@@ -977,7 +977,7 @@ function PipelineView() {
       });
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionId, session?.id, statuses["14C"], stage14cOutput]);
+  }, [sessionId, session?.id, statuses["14C"]]);
 
   useEffect(() => {
     if (!sessionId || !session || statuses["15"] !== "running" || stage15Output) return;
@@ -1000,7 +1000,7 @@ function PipelineView() {
       });
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionId, session?.id, statuses["15"], stage15Output]);
+  }, [sessionId, session?.id, statuses["15"]]);
 
   useEffect(() => {
     if (!sessionId || !session || statuses["16"] !== "running" || stage16Output) return;
@@ -1022,7 +1022,7 @@ function PipelineView() {
       });
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionId, session?.id, statuses["16"], stage16Output]);
+  }, [sessionId, session?.id, statuses["16"]]);
 
 
   // Per-stage output: use live Stage 1 / 1B / 2 / 3 output, demo stubs for others.
@@ -2162,17 +2162,27 @@ function useStreamingText(full: string, streaming: boolean) {
 
   useEffect(() => {
     if (!streaming) {
-      setShown(full);
+      setShown(fullRef.current);
       return;
     }
     setShown("");
     let i = 0;
     const id = window.setInterval(() => {
-      i += 6;
-      setShown(fullRef.current.slice(0, i));
-      if (i >= fullRef.current.length) window.clearInterval(id);
+      const len = fullRef.current.length;
+      if (i < len) {
+        i = Math.min(i + 6, len);
+        setShown(fullRef.current.slice(0, i));
+      }
     }, 24);
     return () => window.clearInterval(id);
+    // Intentionally only depend on `streaming`. `full` is read via ref to
+    // avoid resetting the typewriter on every delta (causes a visible loop).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [streaming]);
+
+  // Flush full text whenever it changes while not streaming (e.g. hydrate).
+  useEffect(() => {
+    if (!streaming) setShown(full);
   }, [full, streaming]);
 
   return shown;
