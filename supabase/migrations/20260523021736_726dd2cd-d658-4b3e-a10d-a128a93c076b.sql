@@ -1,0 +1,1 @@
+ALTER TABLE public.sessions ADD COLUMN stage_8_feedback text;
