@@ -496,6 +496,96 @@ function PipelineView() {
     };
   }, [sessionId, retryNonce]);
 
+  // Realtime subscription — detect stage completion even if the streaming
+  // serverFn connection drops mid-flight (Worker connection severed but the
+  // background generation still writes stage_N_output to the DB).
+  useEffect(() => {
+    if (!sessionId) return;
+    const channel = supabase
+      .channel(`session-${sessionId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "sessions",
+          filter: `id=eq.${sessionId}`,
+        },
+        (payload) => {
+          const u = payload.new as Partial<SessionData> & Record<string, unknown>;
+          setSession((prev) => ({ ...(prev ?? {}), ...u } as SessionData));
+
+          setStatuses((p) => {
+            const next = { ...p };
+            const advance = (id: string, nextId?: string) => {
+              if (next[id] !== "complete") next[id] = "complete";
+              if (nextId && next[nextId] === "pending") {
+                next[nextId] = "running";
+              }
+            };
+
+            if (u.stage_1_output && next["01"] !== "complete" && next["01"] !== "checkpoint") {
+              next["01"] = "checkpoint";
+            }
+            if (u.stage_1b_output && next["01B"] !== "complete") next["01B"] = "complete";
+            if (u.stage_2_output) advance("02", "03");
+            if (u.stage_3_output) advance("03", "04");
+            if (u.stage_4_output) advance("04", "05");
+            if (u.stage_5_output) advance("05", "06");
+            if (u.stage_6_output) advance("06", "07");
+            if (u.stage_7_output) advance("07", "08");
+            // Stage 8 ends at checkpoint B — do not auto-advance to 09.
+            if (u.stage_8_output) {
+              next["08"] = u.checkpoint_b_confirmed ? "complete" : "checkpoint";
+            }
+            if (u.stage_9_output) advance("09", "10");
+            if (u.stage_10_output) advance("10", "11");
+            if (u.stage_11_output) advance("11", "12");
+            // Stage 12 ends at checkpoint C — do not auto-advance to 13.
+            if (u.stage_12_output) {
+              next["12"] = u.checkpoint_c_confirmed ? "complete" : "checkpoint";
+            }
+            if (u.stage_13_output) advance("13", "13B");
+            if (u.stage_13b_output) advance("13B", "14");
+            if (u.stage_14_output) advance("14", "14B");
+            if (u.stage_14b_output) advance("14B", "14C");
+            if (u.stage_14c_output) advance("14C", "15");
+            if (u.stage_15_output) advance("15", "16");
+            if (u.stage_16_consulting_output) next["16"] = "complete";
+            return next;
+          });
+
+          // Hydrate output state so the panel renders without a reload.
+          if (u.stage_1_output) setStage1Output(u.stage_1_output);
+          if (u.stage_1b_output) setStage1bOutput(u.stage_1b_output);
+          if (u.stage_2_output) setStage2Output(u.stage_2_output);
+          if (u.stage_3_output) setStage3Output(u.stage_3_output);
+          if (u.stage_4_output) setStage4Output(u.stage_4_output);
+          if (u.stage_5_output) setStage5Output(u.stage_5_output);
+          if (u.stage_6_output) setStage6Output(u.stage_6_output);
+          if (u.stage_7_output) setStage7Output(u.stage_7_output);
+          if (u.stage_8_output) setStage8Output(u.stage_8_output);
+          if (u.stage_9_output) setStage9Output(u.stage_9_output);
+          if (u.stage_10_output) setStage10Output(u.stage_10_output);
+          if (u.stage_11_output) setStage11Output(u.stage_11_output);
+          if (u.stage_12_output) setStage12Output(u.stage_12_output);
+          if (u.stage_13_output) setStage13Output(u.stage_13_output);
+          if (u.stage_13b_output) setStage13bOutput(u.stage_13b_output);
+          if (u.stage_14_output) setStage14Output(u.stage_14_output);
+          if (u.stage_14b_output) setStage14bOutput(u.stage_14b_output);
+          if (u.stage_14c_output) setStage14cOutput(u.stage_14c_output);
+          if (u.stage_15_output) setStage15Output(u.stage_15_output);
+          if (u.stage_16_consulting_output) setStage16Output(u.stage_16_consulting_output);
+        },
+      )
+      .subscribe();
+
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [sessionId]);
+
+
   // Trigger Stage 1 when session loads (or on retry).
   useEffect(() => {
     if (!sessionId || !session) return;
