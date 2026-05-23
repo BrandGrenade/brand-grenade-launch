@@ -211,7 +211,7 @@ export const runStage8 = createServerFn({ method: "POST" })
 
     saveStageOutputInBackground(
       data.sessionId,
-      { stage_8_output: output, stage_8_error: null },
+      { stage_8_output: output, stage_8_error: null, stage_8_feedback: null },
       "stage_8_error",
       "Stage 8",
     );
