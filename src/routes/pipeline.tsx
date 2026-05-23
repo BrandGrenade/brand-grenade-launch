@@ -733,7 +733,7 @@ function PipelineView() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionId, session?.id, statuses["07"], stage7Output]);
+  }, [sessionId, session?.id, statuses["07"]]);
 
   // Stage 8 — SMP Generation, ends at Checkpoint B.
   useEffect(() => {
