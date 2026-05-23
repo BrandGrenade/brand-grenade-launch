@@ -745,7 +745,8 @@ function PipelineView() {
     let cancelled = false;
     setStage8Loading(true);
     setStage8Error(null);
-    (async () => consumeStream(await runStage8Fn({ data: { sessionId } }), setStage8Output))()
+    const fb8 = pendingFeedback["08"];
+    (async () => consumeStream(await runStage8Fn({ data: { sessionId, feedback: fb8 } }), setStage8Output))()
       .then((result) => {
         if (cancelled) return;
         setStage8Output(result.output);
