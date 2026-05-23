@@ -810,7 +810,7 @@ function PipelineView() {
       });
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionId, session?.id, statuses["10"], stage10Output]);
+  }, [sessionId, session?.id, statuses["10"]]);
 
   // Stage 11 — Pressure Test.
   useEffect(() => {
