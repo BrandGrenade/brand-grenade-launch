@@ -161,7 +161,13 @@ async function openWithRetry(
   let attempt = 0;
   const maxAttempts = 2;
   let lastError = "";
-  const bodyWithFlag = stream ? body.replace(/}$/, ',"stream":true}') : body;
+  const bodyWithFlag = stream
+    ? (() => {
+        const parsed = JSON.parse(body);
+        parsed.stream = true;
+        return JSON.stringify(parsed);
+      })()
+    : body;
   while (attempt < maxAttempts) {
     attempt++;
     try {
