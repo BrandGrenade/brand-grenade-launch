@@ -354,8 +354,8 @@ function CompletePage() {
 
                 let url: string | null = null;
 
-                if (gen.status === "ready" && gen.url) {
-                  url = gen.url;
+                if ((gen as any)?.status === "ready" && (gen as any)?.url) {
+                  url = (gen as any).url as string;
                   setProgress(100);
                   setProgressLabel("Opening document…");
                 } else {
