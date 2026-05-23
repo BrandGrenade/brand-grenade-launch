@@ -345,9 +345,12 @@ function CompletePage() {
               try {
                 if (!sessionId) throw new Error("Missing session id");
 
-                const gen = await generateDocumentFn({
-                  data: { sessionId, format, force },
-                });
+                const { data: gen, error: invokeErr } = await supabase.functions.invoke(
+                  "generate-document",
+                  { body: { sessionId, format, force } },
+                );
+                if (invokeErr) throw new Error(invokeErr.message);
+
 
                 let url: string | null = null;
 
