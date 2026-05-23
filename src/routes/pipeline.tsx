@@ -331,6 +331,10 @@ function PipelineView() {
         setSession(data as SessionData);
         if (data.brand_intelligence) setIntelSubmitted(true);
         if (data.stage_1b_output) setStage1bOutput(data.stage_1b_output);
+        if (data.stage_1_output) {
+          setStage1Output(data.stage_1_output);
+          setStatuses((p) => ({ ...p, "01": "complete" }));
+        }
         if (data.stage_2_output) {
           setStage2Output(data.stage_2_output);
           setStatuses((p) => ({ ...p, "02": "complete" }));
