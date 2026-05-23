@@ -892,11 +892,11 @@ function PipelineView() {
   useEffect(() => {
     if (!sessionId || !session) return;
     if (statuses["08"] !== "running") return;
-    if (stage8Output) return;
+    const fb8 = pendingFeedback["08"];
+    if (stage8Output && !fb8) return;
     let cancelled = false;
     setStage8Loading(true);
     setStage8Error(null);
-    const fb8 = pendingFeedback["08"];
     (async () =>
       consumeStream(await runStage8Fn({ data: { sessionId, feedback: fb8 } }), setStage8Output))()
       .then((result) => {
@@ -1011,11 +1011,11 @@ function PipelineView() {
   useEffect(() => {
     if (!sessionId || !session) return;
     if (statuses["12"] !== "running") return;
-    if (stage12Output) return;
+    const fb12 = pendingFeedback["12"];
+    if (stage12Output && !fb12) return;
     let cancelled = false;
     setStage12Loading(true);
     setStage12Error(null);
-    const fb12 = pendingFeedback["12"];
     (async () =>
       consumeStream(
         await runStage12Fn({ data: { sessionId, feedback: fb12 } }),
