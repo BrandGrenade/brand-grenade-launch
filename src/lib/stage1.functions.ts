@@ -54,7 +54,9 @@ export const runStage1 = createServerFn({ method: "POST" })
       .single();
     if (loadErr || !session) throw new Error(`Session not found: ${loadErr?.message ?? "no row"}`);
 
-    if (session.stage_1_output) {
+    const feedback = data.feedback?.trim();
+
+    if (session.stage_1_output && !feedback) {
       const score = extractTensionScore(session.stage_1_output);
       yield { delta: session.stage_1_output };
       yield {
@@ -66,12 +68,22 @@ export const runStage1 = createServerFn({ method: "POST" })
       return;
     }
 
-    const userMessage = buildStage1UserMessage({
+    if (feedback) {
+      await supabaseAdmin
+        .from("sessions")
+        .update({ stage_1_output: null, stage_1_tension_score: null, stage_1_error: null })
+        .eq("id", data.sessionId);
+    }
+
+    let userMessage = buildStage1UserMessage({
       brandName: session.brand_name,
       category: session.category,
       strategicMode: session.strategic_mode,
       briefText: session.brief_text,
     });
+    if (feedback) {
+      userMessage += `\n\n---\n\nHUMAN REVIEWER FEEDBACK ON PREVIOUS OUTPUT:\n${feedback}\n\nThe previous output was rejected. Regenerate the full deliverable from scratch, directly addressing the feedback above. Do not repeat the prior framing — incorporate the requested changes.`;
+    }
 
     let output = "";
     try {
