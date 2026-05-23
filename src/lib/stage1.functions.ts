@@ -94,11 +94,18 @@ export const runStage1 = createServerFn({ method: "POST" })
     const tensionScore = extractTensionScore(output);
     const stage1bRequired = tensionScore !== null && tensionScore < 7;
 
-    const { error: updateErr } = await supabaseAdmin
-      .from("sessions")
-      .update({ stage_1_output: output, stage_1_tension_score: tensionScore, stage_1b_required: stage1bRequired, stage_1_error: null })
-      .eq("id", data.sessionId);
-    if (updateErr) throw new Error(`Failed to save Stage 1 output: ${updateErr.message}`);
+    let lastSaveErr: { message: string } | null = null;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const { error } = await supabaseAdmin
+        .from("sessions")
+        .update({ stage_1_output: output, stage_1_tension_score: tensionScore, stage_1b_required: stage1bRequired, stage_1_error: null })
+        .eq("id", data.sessionId);
+      if (!error) { lastSaveErr = null; break; }
+      lastSaveErr = error;
+      console.error(`[stage1] save attempt ${attempt + 1} failed: ${error.message}`);
+      if (attempt < 2) await new Promise((r) => setTimeout(r, 5000));
+    }
+    if (lastSaveErr) throw new Error(`Failed to save Stage 1 output after 3 attempts: ${lastSaveErr.message}`);
 
     yield { done: true as const, output, tensionScore, stage1bRequired };
   });
