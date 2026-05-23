@@ -38,11 +38,17 @@ export type Database = {
           created_at: string
           current_stage: number
           dev_mode: boolean
+          doc_agency_sections: Json | null
           doc_agency_status: string | null
+          doc_agency_status_at: string | null
           doc_agency_url: string | null
+          doc_consulting_sections: Json | null
           doc_consulting_status: string | null
+          doc_consulting_status_at: string | null
           doc_consulting_url: string | null
+          doc_workshop_sections: Json | null
           doc_workshop_status: string | null
+          doc_workshop_status_at: string | null
           doc_workshop_url: string | null
           id: string
           interrupted_stage: number | null
@@ -136,11 +142,17 @@ export type Database = {
           created_at?: string
           current_stage?: number
           dev_mode?: boolean
+          doc_agency_sections?: Json | null
           doc_agency_status?: string | null
+          doc_agency_status_at?: string | null
           doc_agency_url?: string | null
+          doc_consulting_sections?: Json | null
           doc_consulting_status?: string | null
+          doc_consulting_status_at?: string | null
           doc_consulting_url?: string | null
+          doc_workshop_sections?: Json | null
           doc_workshop_status?: string | null
+          doc_workshop_status_at?: string | null
           doc_workshop_url?: string | null
           id?: string
           interrupted_stage?: number | null
@@ -234,11 +246,17 @@ export type Database = {
           created_at?: string
           current_stage?: number
           dev_mode?: boolean
+          doc_agency_sections?: Json | null
           doc_agency_status?: string | null
+          doc_agency_status_at?: string | null
           doc_agency_url?: string | null
+          doc_consulting_sections?: Json | null
           doc_consulting_status?: string | null
+          doc_consulting_status_at?: string | null
           doc_consulting_url?: string | null
+          doc_workshop_sections?: Json | null
           doc_workshop_status?: string | null
+          doc_workshop_status_at?: string | null
           doc_workshop_url?: string | null
           id?: string
           interrupted_stage?: number | null
