@@ -1098,7 +1098,7 @@ function PipelineView() {
       "06":
         (stage6Output && sanitize(stage6Output)) ??
         (stage6Loading
-          ? "Validating insights — this can take 60–120 seconds…"
+          ? "Generating insight validation…"
           : "Awaiting output."),
       "07":
         (stage7Output && sanitize(stage7Output)) ??
