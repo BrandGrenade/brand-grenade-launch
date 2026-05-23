@@ -440,13 +440,13 @@ export function SMPSelection({
       </div>
 
       <div
-        className="sticky bottom-0 mt-8 rounded-md p-5"
+        className="mt-8 rounded-md p-5"
         style={{
           border: "1px solid var(--color-border)",
           backgroundColor: "var(--color-surface)",
         }}
       >
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex flex-wrap items-center justify-between gap-4">
           <p className="text-body-sm" style={{ color: "var(--color-text-tertiary)" }}>
             {selected !== null
               ? `Selected: Proposition ${cards[selected].cardNumber}`
