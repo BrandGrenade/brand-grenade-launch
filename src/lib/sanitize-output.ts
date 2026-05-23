@@ -290,10 +290,6 @@ export function sanitizeStageOutput(raw: string): string {
     .replace(/\b([A-Z])\s(?=[A-Z]\s)/g, "$1")
     // Lines of only special characters
     .replace(/^[^a-zA-Z0-9\s]{3,}$/gm, "")
-    // Internal pipeline labels leaking into proposition titles (Stage 8 / Stage 12)
-    .replace(/^Q\d+\s*\([^)]+\):\s*/gm, "")
-    .replace(/^Randomisation confirmed:\s*/gm, "")
-    .replace(/^Structural Neutrality[^:]*:\s*/gm, "")
     // Collapse any new blank-line runs introduced above
     .replace(/\n{3,}/g, "\n\n")
     .trim();
