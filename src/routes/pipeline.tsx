@@ -51,13 +51,50 @@ async function consumeStream<C extends { delta?: string; done?: true }>(
   return final;
 }
 
-
-
 // Map UI stage id (e.g. "01", "13B") to the DB stage id literal used by resetStage.
-const STAGE_ID_TO_DB: Record<string, "1" | "1b" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" | "10" | "11" | "12" | "13" | "13b" | "14" | "14b" | "14c" | "15" | "16"> = {
-  "01": "1", "01B": "1b", "02": "2", "03": "3", "04": "4", "05": "5", "06": "6",
-  "07": "7", "08": "8", "09": "9", "10": "10", "11": "11", "12": "12", "13": "13",
-  "13B": "13b", "14": "14", "14B": "14b", "14C": "14c", "15": "15", "16": "16",
+const STAGE_ID_TO_DB: Record<
+  string,
+  | "1"
+  | "1b"
+  | "2"
+  | "3"
+  | "4"
+  | "5"
+  | "6"
+  | "7"
+  | "8"
+  | "9"
+  | "10"
+  | "11"
+  | "12"
+  | "13"
+  | "13b"
+  | "14"
+  | "14b"
+  | "14c"
+  | "15"
+  | "16"
+> = {
+  "01": "1",
+  "01B": "1b",
+  "02": "2",
+  "03": "3",
+  "04": "4",
+  "05": "5",
+  "06": "6",
+  "07": "7",
+  "08": "8",
+  "09": "9",
+  "10": "10",
+  "11": "11",
+  "12": "12",
+  "13": "13",
+  "13B": "13b",
+  "14": "14",
+  "14B": "14b",
+  "14C": "14c",
+  "15": "15",
+  "16": "16",
 };
 
 const pipelineSearchSchema = z.object({
@@ -339,36 +376,96 @@ function PipelineView() {
 
   const resetLocalFromStage = (stageId: string) => {
     if (stageId === "01") {
-      setStage1Output(null); setStage1bOutput(null); setStage2Output(null); setStage3Output(null);
-      setStage4Output(null); setStage5Output(null); setStage6Output(null); setStage7Output(null);
-      setStage8Output(null); setStage9Output(null); setStage10Output(null); setStage11Output(null);
-      setStage12Output(null); setStage13Output(null); setStage13bOutput(null); setStage14Output(null);
-      setStage14bOutput(null); setStage14cOutput(null); setStage15Output(null); setStage16Output(null);
-      setStage1Error(null); setStage2Error(null); setStage3Error(null); setStage4Error(null);
-      setStage5Error(null); setStage6Error(null); setStage7Error(null); setStage8Error(null);
-      setStage9Error(null); setStage10Error(null); setStage11Error(null); setStage12Error(null);
-      setStage13Error(null); setStage13bError(null); setStage14Error(null); setStage14bError(null);
-      setStage14cError(null); setStage15Error(null); setStage16Error(null);
+      setStage1Output(null);
+      setStage1bOutput(null);
+      setStage2Output(null);
+      setStage3Output(null);
+      setStage4Output(null);
+      setStage5Output(null);
+      setStage6Output(null);
+      setStage7Output(null);
+      setStage8Output(null);
+      setStage9Output(null);
+      setStage10Output(null);
+      setStage11Output(null);
+      setStage12Output(null);
+      setStage13Output(null);
+      setStage13bOutput(null);
+      setStage14Output(null);
+      setStage14bOutput(null);
+      setStage14cOutput(null);
+      setStage15Output(null);
+      setStage16Output(null);
+      setStage1Error(null);
+      setStage2Error(null);
+      setStage3Error(null);
+      setStage4Error(null);
+      setStage5Error(null);
+      setStage6Error(null);
+      setStage7Error(null);
+      setStage8Error(null);
+      setStage9Error(null);
+      setStage10Error(null);
+      setStage11Error(null);
+      setStage12Error(null);
+      setStage13Error(null);
+      setStage13bError(null);
+      setStage14Error(null);
+      setStage14bError(null);
+      setStage14cError(null);
+      setStage15Error(null);
+      setStage16Error(null);
       return;
     }
     if (stageId === "08") {
-      setStage8Output(null); setStage9Output(null); setStage10Output(null); setStage11Output(null);
-      setStage12Output(null); setStage13Output(null); setStage13bOutput(null); setStage14Output(null);
-      setStage14bOutput(null); setStage14cOutput(null); setStage15Output(null); setStage16Output(null);
-      setStage8Error(null); setStage9Error(null); setStage10Error(null); setStage11Error(null);
-      setStage12Error(null); setStage13Error(null); setStage13bError(null); setStage14Error(null);
-      setStage14bError(null); setStage14cError(null); setStage15Error(null); setStage16Error(null);
+      setStage8Output(null);
+      setStage9Output(null);
+      setStage10Output(null);
+      setStage11Output(null);
+      setStage12Output(null);
+      setStage13Output(null);
+      setStage13bOutput(null);
+      setStage14Output(null);
+      setStage14bOutput(null);
+      setStage14cOutput(null);
+      setStage15Output(null);
+      setStage16Output(null);
+      setStage8Error(null);
+      setStage9Error(null);
+      setStage10Error(null);
+      setStage11Error(null);
+      setStage12Error(null);
+      setStage13Error(null);
+      setStage13bError(null);
+      setStage14Error(null);
+      setStage14bError(null);
+      setStage14cError(null);
+      setStage15Error(null);
+      setStage16Error(null);
       return;
     }
     if (stageId === "12") {
-      setStage12Output(null); setStage13Output(null); setStage13bOutput(null); setStage14Output(null);
-      setStage14bOutput(null); setStage14cOutput(null); setStage15Output(null); setStage16Output(null);
-      setStage12Error(null); setStage13Error(null); setStage13bError(null); setStage14Error(null);
-      setStage14bError(null); setStage14cError(null); setStage15Error(null); setStage16Error(null);
-      setSelectedSMP(null); setRationaleForId(null); setIntelSubmitted(false);
+      setStage12Output(null);
+      setStage13Output(null);
+      setStage13bOutput(null);
+      setStage14Output(null);
+      setStage14bOutput(null);
+      setStage14cOutput(null);
+      setStage15Output(null);
+      setStage16Output(null);
+      setStage12Error(null);
+      setStage13Error(null);
+      setStage13bError(null);
+      setStage14Error(null);
+      setStage14bError(null);
+      setStage14cError(null);
+      setStage15Error(null);
+      setStage16Error(null);
+      setSelectedSMP(null);
+      setRationaleForId(null);
+      setIntelSubmitted(false);
     }
   };
-
 
   // Elapsed timer
   const [startTime] = useState(() => Date.now());
@@ -403,7 +500,7 @@ function PipelineView() {
     supabase
       .from("sessions")
       .select(
-        "id, brand_name, category, strategic_mode, current_stage, status, stage_1_output, stage_1_tension_score, stage_1b_required, stage_1b_output, stage_1_error, stage_2_output, stage_2_error, stage_3_output, stage_3_error, stage_4_output, stage_4_error, stage_5_output, stage_5_error, stage_6_output, stage_6_error, stage_7_output, stage_7_error, stage_8_output, stage_8_error, stage_9_output, stage_9_error, stage_10_output, stage_10_error, stage_11_output, stage_11_error, stage_12_output, stage_12_error, stage_13_output, stage_13_error, stage_13b_output, stage_13b_error, stage_14_output, stage_14_error, stage_14b_output, stage_14b_error, stage_14c_output, stage_14c_error, stage_15_output, stage_15_error, stage_16_consulting_output, stage_16_error, brand_intelligence, selected_smp, selected_smp_field_name, checkpoint_b_confirmed, checkpoint_c_confirmed, retry_status"
+        "id, brand_name, category, strategic_mode, current_stage, status, stage_1_output, stage_1_tension_score, stage_1b_required, stage_1b_output, stage_1_error, stage_2_output, stage_2_error, stage_3_output, stage_3_error, stage_4_output, stage_4_error, stage_5_output, stage_5_error, stage_6_output, stage_6_error, stage_7_output, stage_7_error, stage_8_output, stage_8_error, stage_9_output, stage_9_error, stage_10_output, stage_10_error, stage_11_output, stage_11_error, stage_12_output, stage_12_error, stage_13_output, stage_13_error, stage_13b_output, stage_13b_error, stage_14_output, stage_14_error, stage_14b_output, stage_14b_error, stage_14c_output, stage_14c_error, stage_15_output, stage_15_error, stage_16_consulting_output, stage_16_error, brand_intelligence, selected_smp, selected_smp_field_name, checkpoint_b_confirmed, checkpoint_c_confirmed, retry_status",
       )
 
       .eq("id", sessionId)
@@ -444,7 +541,10 @@ function PipelineView() {
         }
         if (data.stage_8_output) {
           setStage8Output(data.stage_8_output);
-          setStatuses((p) => ({ ...p, "08": data.checkpoint_b_confirmed ? "complete" : "checkpoint" }));
+          setStatuses((p) => ({
+            ...p,
+            "08": data.checkpoint_b_confirmed ? "complete" : "checkpoint",
+          }));
         }
         if (data.stage_9_output) {
           setStage9Output(data.stage_9_output);
@@ -460,7 +560,10 @@ function PipelineView() {
         }
         if (data.stage_12_output) {
           setStage12Output(data.stage_12_output);
-          setStatuses((p) => ({ ...p, "12": data.checkpoint_c_confirmed ? "complete" : "checkpoint" }));
+          setStatuses((p) => ({
+            ...p,
+            "12": data.checkpoint_c_confirmed ? "complete" : "checkpoint",
+          }));
         }
         if (data.stage_13_output) {
           setStage13Output(data.stage_13_output);
@@ -503,11 +606,19 @@ function PipelineView() {
             { id: "06", out: data.stage_6_output },
             { id: "07", out: data.stage_7_output },
             { id: "08", out: data.stage_8_output },
-            { id: "09", out: data.stage_9_output, gate: !data.checkpoint_b_confirmed && !!data.stage_8_output },
+            {
+              id: "09",
+              out: data.stage_9_output,
+              gate: !data.checkpoint_b_confirmed && !!data.stage_8_output,
+            },
             { id: "10", out: data.stage_10_output },
             { id: "11", out: data.stage_11_output },
             { id: "12", out: data.stage_12_output },
-            { id: "13", out: data.stage_13_output, gate: !data.checkpoint_c_confirmed && !!data.stage_12_output },
+            {
+              id: "13",
+              out: data.stage_13_output,
+              gate: !data.checkpoint_c_confirmed && !!data.stage_12_output,
+            },
             { id: "13B", out: data.stage_13b_output },
             { id: "14", out: data.stage_14_output },
             { id: "14B", out: data.stage_14b_output },
@@ -549,12 +660,18 @@ function PipelineView() {
     setStatuses((p) => ({ ...p, "01": "running" }));
 
     const fb1 = pendingFeedback["01"];
-    (async () => consumeStream(await runStage1Fn({ data: { sessionId, feedback: fb1 } }), setStage1Output))()
+    (async () =>
+      consumeStream(await runStage1Fn({ data: { sessionId, feedback: fb1 } }), setStage1Output))()
       .then((result) => {
         if (cancelled) return;
         setStage1Output(result.output);
         setStage1Loading(false);
-        if (fb1) setPendingFeedback((p) => { const n = { ...p }; delete n["01"]; return n; });
+        if (fb1)
+          setPendingFeedback((p) => {
+            const n = { ...p };
+            delete n["01"];
+            return n;
+          });
         setStatuses((p) => {
           const next: Record<string, StageStatus> = { ...p, "01": "checkpoint" };
           if (result.stage1bRequired) next["01B"] = "running";
@@ -780,12 +897,18 @@ function PipelineView() {
     setStage8Loading(true);
     setStage8Error(null);
     const fb8 = pendingFeedback["08"];
-    (async () => consumeStream(await runStage8Fn({ data: { sessionId, feedback: fb8 } }), setStage8Output))()
+    (async () =>
+      consumeStream(await runStage8Fn({ data: { sessionId, feedback: fb8 } }), setStage8Output))()
       .then((result) => {
         if (cancelled) return;
         setStage8Output(result.output);
         setStage8Loading(false);
-        if (fb8) setPendingFeedback((p) => { const n = { ...p }; delete n["08"]; return n; });
+        if (fb8)
+          setPendingFeedback((p) => {
+            const n = { ...p };
+            delete n["08"];
+            return n;
+          });
         setStatuses((p) => ({ ...p, "08": "checkpoint" }));
       })
       .catch((err: unknown) => {
@@ -794,7 +917,9 @@ function PipelineView() {
         setStage8Error(err instanceof Error ? err.message : "Stage 8 failed");
         setStatuses((p) => ({ ...p, "08": "error" }));
       });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId, session?.id, statuses["08"]]);
 
@@ -820,7 +945,9 @@ function PipelineView() {
         setStage9Error(err instanceof Error ? err.message : "Stage 9 failed");
         setStatuses((p) => ({ ...p, "09": "error" }));
       });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId, session?.id, statuses["09"]]);
 
@@ -846,7 +973,9 @@ function PipelineView() {
         setStage10Error(err instanceof Error ? err.message : "Stage 10 failed");
         setStatuses((p) => ({ ...p, "10": "error" }));
       });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId, session?.id, statuses["10"]]);
 
@@ -872,7 +1001,9 @@ function PipelineView() {
         setStage11Error(err instanceof Error ? err.message : "Stage 11 failed");
         setStatuses((p) => ({ ...p, "11": "error" }));
       });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId, session?.id, statuses["11"]]);
 
@@ -885,12 +1016,21 @@ function PipelineView() {
     setStage12Loading(true);
     setStage12Error(null);
     const fb12 = pendingFeedback["12"];
-    (async () => consumeStream(await runStage12Fn({ data: { sessionId, feedback: fb12 } }), setStage12Output))()
+    (async () =>
+      consumeStream(
+        await runStage12Fn({ data: { sessionId, feedback: fb12 } }),
+        setStage12Output,
+      ))()
       .then((result) => {
         if (cancelled) return;
         setStage12Output(result.output);
         setStage12Loading(false);
-        if (fb12) setPendingFeedback((p) => { const n = { ...p }; delete n["12"]; return n; });
+        if (fb12)
+          setPendingFeedback((p) => {
+            const n = { ...p };
+            delete n["12"];
+            return n;
+          });
         setStatuses((p) => ({ ...p, "12": "checkpoint" }));
       })
       .catch((err: unknown) => {
@@ -899,13 +1039,16 @@ function PipelineView() {
         setStage12Error(err instanceof Error ? err.message : "Stage 12 failed");
         setStatuses((p) => ({ ...p, "12": "error" }));
       });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId, session?.id, statuses["12"]]);
 
   // Stages 13–16 — post-selection validation, territory mapping, audit, and assembly.
   useEffect(() => {
-    if (!sessionId || !session || statuses["13"] !== "running" || stage13Output || !intelSubmitted) return;
+    if (!sessionId || !session || statuses["13"] !== "running" || stage13Output || !intelSubmitted)
+      return;
     let cancelled = false;
     setStage13Loading(true);
     setStage13Error(null);
@@ -923,7 +1066,9 @@ function PipelineView() {
         setStage13Error(err instanceof Error ? err.message : "Stage 13 failed");
         setStatuses((p) => ({ ...p, "13": "error" }));
       });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId, session?.id, statuses["13"], intelSubmitted]);
 
@@ -946,7 +1091,9 @@ function PipelineView() {
         setStage13bError(err instanceof Error ? err.message : "Stage 13B failed");
         setStatuses((p) => ({ ...p, "13B": "error" }));
       });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId, session?.id, statuses["13B"]]);
 
@@ -969,7 +1116,9 @@ function PipelineView() {
         setStage14Error(err instanceof Error ? err.message : "Stage 14 failed");
         setStatuses((p) => ({ ...p, "14": "error" }));
       });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId, session?.id, statuses["14"]]);
 
@@ -992,7 +1141,9 @@ function PipelineView() {
         setStage14bError(err instanceof Error ? err.message : "Stage 14B failed");
         setStatuses((p) => ({ ...p, "14B": "error" }));
       });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId, session?.id, statuses["14B"]]);
 
@@ -1015,7 +1166,9 @@ function PipelineView() {
         setStage14cError(err instanceof Error ? err.message : "Stage 14C failed");
         setStatuses((p) => ({ ...p, "14C": "error" }));
       });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId, session?.id, statuses["14C"]]);
 
@@ -1038,7 +1191,9 @@ function PipelineView() {
         setStage15Error(err instanceof Error ? err.message : "Stage 15 failed");
         setStatuses((p) => ({ ...p, "15": "error" }));
       });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId, session?.id, statuses["15"]]);
 
@@ -1047,7 +1202,11 @@ function PipelineView() {
     let cancelled = false;
     setStage16Loading(true);
     setStage16Error(null);
-    (async () => consumeStream(await runStage16Fn({ data: { sessionId, format: "consulting" } }), setStage16Output))()
+    (async () =>
+      consumeStream(
+        await runStage16Fn({ data: { sessionId, format: "consulting" } }),
+        setStage16Output,
+      ))()
       .then((result) => {
         if (cancelled) return;
         setStage16Output(result.output);
@@ -1060,10 +1219,11 @@ function PipelineView() {
         setStage16Error(err instanceof Error ? err.message : "Stage 16 failed");
         setStatuses((p) => ({ ...p, "16": "error" }));
       });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId, session?.id, statuses["16"]]);
-
 
   // Per-stage output: use live Stage 1 / 1B / 2 / 3 output, demo stubs for others.
   const stageOutputs = useMemo<Record<string, string>>(() => {
@@ -1073,9 +1233,7 @@ function PipelineView() {
       ...STAGE_OUTPUTS,
       "01":
         (stage1Output && sanitize(stage1Output)) ??
-        (stage1Loading
-          ? "Analysing brief — this can take 20–60 seconds…"
-          : "Awaiting output."),
+        (stage1Loading ? "Analysing brief — this can take 20–60 seconds…" : "Awaiting output."),
       "01B":
         (stage1bOutput && sanitize(stage1bOutput)) ??
         (stage1bLoading
@@ -1174,34 +1332,51 @@ function PipelineView() {
     };
   }, [
     sessionId,
-    stage1Output, stage1Loading,
-    stage1bOutput, stage1bLoading,
-    stage2Output, stage2Loading,
-    stage3Output, stage3Loading,
-    stage4Output, stage4Loading,
-    stage5Output, stage5Loading,
-    stage6Output, stage6Loading,
-    stage7Output, stage7Loading,
-    stage8Output, stage8Loading,
-    stage9Output, stage9Loading,
-    stage10Output, stage10Loading,
-    stage11Output, stage11Loading,
-    stage12Output, stage12Loading,
-    stage13Output, stage13Loading,
-    stage13bOutput, stage13bLoading,
-    stage14Output, stage14Loading,
-    stage14bOutput, stage14bLoading,
-    stage14cOutput, stage14cLoading,
-    stage15Output, stage15Loading,
-    stage16Output, stage16Loading,
+    stage1Output,
+    stage1Loading,
+    stage1bOutput,
+    stage1bLoading,
+    stage2Output,
+    stage2Loading,
+    stage3Output,
+    stage3Loading,
+    stage4Output,
+    stage4Loading,
+    stage5Output,
+    stage5Loading,
+    stage6Output,
+    stage6Loading,
+    stage7Output,
+    stage7Loading,
+    stage8Output,
+    stage8Loading,
+    stage9Output,
+    stage9Loading,
+    stage10Output,
+    stage10Loading,
+    stage11Output,
+    stage11Loading,
+    stage12Output,
+    stage12Loading,
+    stage13Output,
+    stage13Loading,
+    stage13bOutput,
+    stage13bLoading,
+    stage14Output,
+    stage14Loading,
+    stage14bOutput,
+    stage14bLoading,
+    stage14cOutput,
+    stage14cLoading,
+    stage15Output,
+    stage15Loading,
+    stage16Output,
+    stage16Loading,
   ]);
-
 
   // Progress — count main (non-conditional) stages.
   const mainStages = STAGES.filter((s) => !s.conditional);
-  const completedMain = mainStages.filter(
-    (s) => statuses[s.id] === "complete"
-  ).length;
+  const completedMain = mainStages.filter((s) => statuses[s.id] === "complete").length;
   const runningMain = mainStages.find((s) => statuses[s.id] === "running");
   const currentMainNumber = runningMain
     ? mainStages.findIndex((s) => s.id === runningMain.id) + 1
@@ -1212,10 +1387,10 @@ function PipelineView() {
   const pipelineStatus = stage1Loading
     ? "Running"
     : stage1Error
-    ? "Error"
-    : statuses["01"] === "checkpoint"
-    ? "Review Needed"
-    : "In Progress";
+      ? "Error"
+      : statuses["01"] === "checkpoint"
+        ? "Review Needed"
+        : "In Progress";
 
   // Current active stage = the running/checkpoint stage furthest into the pipeline.
   const currentActiveId = (() => {
@@ -1228,11 +1403,26 @@ function PipelineView() {
   const isViewingHistorical = selectedId !== currentActiveId && statuses[selectedId] === "complete";
   const pipelineIsRunning =
     Object.values(statuses).some((s) => s === "running") ||
-    stage1Loading || stage1bLoading || stage2Loading || stage3Loading ||
-    stage4Loading || stage5Loading || stage6Loading || stage7Loading ||
-    stage8Loading || stage9Loading || stage10Loading || stage11Loading ||
-    stage12Loading || stage13Loading || stage13bLoading || stage14Loading ||
-    stage14bLoading || stage14cLoading || stage15Loading || stage16Loading;
+    stage1Loading ||
+    stage1bLoading ||
+    stage2Loading ||
+    stage3Loading ||
+    stage4Loading ||
+    stage5Loading ||
+    stage6Loading ||
+    stage7Loading ||
+    stage8Loading ||
+    stage9Loading ||
+    stage10Loading ||
+    stage11Loading ||
+    stage12Loading ||
+    stage13Loading ||
+    stage13bLoading ||
+    stage14Loading ||
+    stage14bLoading ||
+    stage14cLoading ||
+    stage15Loading ||
+    stage16Loading;
 
   // Compute prev/next visible stages relative to the currently-viewed stage.
   const selectedIdx = STAGES.findIndex((s) => s.id === selectedId);
@@ -1259,7 +1449,6 @@ function PipelineView() {
     document.title = `${brandLabel} Engine Room — Stage ${Math.max(1, currentMainNumber)} — Brand Grenade`;
   }, [brandLabel, currentMainNumber]);
 
-
   // Keyboard shortcut: Cmd/Ctrl+Enter confirms standard checkpoints.
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -1273,9 +1462,7 @@ function PipelineView() {
       if (selectedId === "01B") return;
       e.preventDefault();
       // Re-derive via DOM click on confirm button if present, else dispatch event.
-      const btn = document.querySelector<HTMLButtonElement>(
-        "[data-checkpoint-confirm='true']",
-      );
+      const btn = document.querySelector<HTMLButtonElement>("[data-checkpoint-confirm='true']");
       btn?.click();
     };
     window.addEventListener("keydown", handler);
@@ -1293,7 +1480,6 @@ function PipelineView() {
         }}
       />
       <Breadcrumb brand={brandLabel} elapsed={elapsed} status={pipelineStatus} />
-
 
       <div className="flex flex-1 overflow-hidden">
         <LeftPanel
@@ -1316,54 +1502,124 @@ function PipelineView() {
           fullOutput={stageOutputs[selected.id] ?? "Output pending."}
           isViewingHistorical={isViewingHistorical}
           onBackToCurrent={() => setSelectedId(currentActiveId)}
-
           stage1Error={
             selected.id === "01" || selected.id === "01B"
               ? stage1Error
-              : selected.id === "02" ? stage2Error
-              : selected.id === "03" ? stage3Error
-              : selected.id === "04" ? stage4Error
-              : selected.id === "05" ? stage5Error
-              : selected.id === "06" ? stage6Error
-              : selected.id === "07" ? stage7Error
-              : selected.id === "08" ? stage8Error
-              : selected.id === "09" ? stage9Error
-              : selected.id === "10" ? stage10Error
-              : selected.id === "11" ? stage11Error
-              : selected.id === "12" ? stage12Error
-              : selected.id === "13" ? stage13Error
-              : selected.id === "13B" ? stage13bError
-              : selected.id === "14" ? stage14Error
-              : selected.id === "14B" ? stage14bError
-              : selected.id === "14C" ? stage14cError
-              : selected.id === "15" ? stage15Error
-              : selected.id === "16" ? stage16Error
-              : null
+              : selected.id === "02"
+                ? stage2Error
+                : selected.id === "03"
+                  ? stage3Error
+                  : selected.id === "04"
+                    ? stage4Error
+                    : selected.id === "05"
+                      ? stage5Error
+                      : selected.id === "06"
+                        ? stage6Error
+                        : selected.id === "07"
+                          ? stage7Error
+                          : selected.id === "08"
+                            ? stage8Error
+                            : selected.id === "09"
+                              ? stage9Error
+                              : selected.id === "10"
+                                ? stage10Error
+                                : selected.id === "11"
+                                  ? stage11Error
+                                  : selected.id === "12"
+                                    ? stage12Error
+                                    : selected.id === "13"
+                                      ? stage13Error
+                                      : selected.id === "13B"
+                                        ? stage13bError
+                                        : selected.id === "14"
+                                          ? stage14Error
+                                          : selected.id === "14B"
+                                            ? stage14bError
+                                            : selected.id === "14C"
+                                              ? stage14cError
+                                              : selected.id === "15"
+                                                ? stage15Error
+                                                : selected.id === "16"
+                                                  ? stage16Error
+                                                  : null
           }
-
-          tensionScore={selected.id === "01" ? session?.stage_1_tension_score ?? null : null}
-          stage1bRequired={selected.id === "01" ? session?.stage_1b_required ?? false : false}
+          tensionScore={selected.id === "01" ? (session?.stage_1_tension_score ?? null) : null}
+          stage1bRequired={selected.id === "01" ? (session?.stage_1b_required ?? false) : false}
           onRetry={async () => {
             const id = selected.id;
             const map: Record<string, () => void> = {
-              "02": () => { setStage2Error(null); setStage2Output(null); },
-              "03": () => { setStage3Error(null); setStage3Output(null); },
-              "04": () => { setStage4Error(null); setStage4Output(null); },
-              "05": () => { setStage5Error(null); setStage5Output(null); },
-              "06": () => { setStage6Error(null); setStage6Output(null); },
-              "07": () => { setStage7Error(null); setStage7Output(null); },
-              "08": () => { setStage8Error(null); setStage8Output(null); },
-              "09": () => { setStage9Error(null); setStage9Output(null); },
-              "10": () => { setStage10Error(null); setStage10Output(null); },
-              "11": () => { setStage11Error(null); setStage11Output(null); },
-              "12": () => { setStage12Error(null); setStage12Output(null); },
-              "13": () => { setStage13Error(null); setStage13Output(null); },
-              "13B": () => { setStage13bError(null); setStage13bOutput(null); },
-              "14": () => { setStage14Error(null); setStage14Output(null); },
-              "14B": () => { setStage14bError(null); setStage14bOutput(null); },
-              "14C": () => { setStage14cError(null); setStage14cOutput(null); },
-              "15": () => { setStage15Error(null); setStage15Output(null); },
-              "16": () => { setStage16Error(null); setStage16Output(null); },
+              "02": () => {
+                setStage2Error(null);
+                setStage2Output(null);
+              },
+              "03": () => {
+                setStage3Error(null);
+                setStage3Output(null);
+              },
+              "04": () => {
+                setStage4Error(null);
+                setStage4Output(null);
+              },
+              "05": () => {
+                setStage5Error(null);
+                setStage5Output(null);
+              },
+              "06": () => {
+                setStage6Error(null);
+                setStage6Output(null);
+              },
+              "07": () => {
+                setStage7Error(null);
+                setStage7Output(null);
+              },
+              "08": () => {
+                setStage8Error(null);
+                setStage8Output(null);
+              },
+              "09": () => {
+                setStage9Error(null);
+                setStage9Output(null);
+              },
+              "10": () => {
+                setStage10Error(null);
+                setStage10Output(null);
+              },
+              "11": () => {
+                setStage11Error(null);
+                setStage11Output(null);
+              },
+              "12": () => {
+                setStage12Error(null);
+                setStage12Output(null);
+              },
+              "13": () => {
+                setStage13Error(null);
+                setStage13Output(null);
+              },
+              "13B": () => {
+                setStage13bError(null);
+                setStage13bOutput(null);
+              },
+              "14": () => {
+                setStage14Error(null);
+                setStage14Output(null);
+              },
+              "14B": () => {
+                setStage14bError(null);
+                setStage14bOutput(null);
+              },
+              "14C": () => {
+                setStage14cError(null);
+                setStage14cOutput(null);
+              },
+              "15": () => {
+                setStage15Error(null);
+                setStage15Output(null);
+              },
+              "16": () => {
+                setStage16Error(null);
+                setStage16Output(null);
+              },
             };
             // Clear cached output in the DB FIRST so the server-side
             // "return cached output if present" short-circuit doesn't fire.
@@ -1382,7 +1638,6 @@ function PipelineView() {
               setRetryNonce((n) => n + 1);
             }
           }}
-
           showRationale={rationaleForId === selectedId}
           showBrandIntel={selectedId === "13" && !intelSubmitted && selectedStatus === "running"}
           showStage1bResubmit={
@@ -1424,7 +1679,7 @@ function PipelineView() {
               await saveBrandIntelligenceFn({ data: { sessionId, brandIntelligence: values } });
               setIntelSubmitted(true);
               setStatuses((p) => ({ ...p, "13": "running" }));
-                    setSelectedId("13");
+              setSelectedId("13");
             } catch (err) {
               console.error("[Save Brand Intelligence] failed", err);
             }
@@ -1453,7 +1708,10 @@ function PipelineView() {
             // Persist notes + timestamp for the relevant checkpoint.
             const letter = CHECKPOINT_LETTERS[stageId];
             if (sessionId && letter) {
-              const notesText = (notes ?? []).map((n) => n.trim()).filter(Boolean).join("\n\n");
+              const notesText = (notes ?? [])
+                .map((n) => n.trim())
+                .filter(Boolean)
+                .join("\n\n");
               const nowIso = new Date().toISOString();
               const update: Partial<{
                 checkpoint_a_confirmed: boolean;
@@ -1479,9 +1737,13 @@ function PipelineView() {
                 update.checkpoint_c_confirmed_at = nowIso;
                 if (notesText) update.checkpoint_c_notes = notesText;
               }
-              void supabase.from("sessions").update(update).eq("id", sessionId).then(({ error }) => {
-                if (error) console.error("[Checkpoint] failed to persist", error);
-              });
+              void supabase
+                .from("sessions")
+                .update(update)
+                .eq("id", sessionId)
+                .then(({ error }) => {
+                  if (error) console.error("[Checkpoint] failed to persist", error);
+                });
             }
             // Checkpoint A with 1B required → route to Stage 1B instead of Stage 2.
             if (stageId === "01" && session?.stage_1b_required && !stage1bOutput) {
@@ -1564,7 +1826,9 @@ function PipelineView() {
                       },
                     });
                   } catch (err) {
-                    setStage12Error(err instanceof Error ? err.message : "Failed to save selection");
+                    setStage12Error(
+                      err instanceof Error ? err.message : "Failed to save selection",
+                    );
                     return;
                   }
                   setRationaleForId("12");
@@ -1585,7 +1849,9 @@ function PipelineView() {
                     setStatuses((prev) => ({ ...prev, "12": "complete", "13": "running" }));
                     setSelectedId("13");
                   } catch (err) {
-                    setStage12Error(err instanceof Error ? err.message : "Failed to save rationale");
+                    setStage12Error(
+                      err instanceof Error ? err.message : "Failed to save rationale",
+                    );
                   } finally {
                     setSavingRationale(false);
                   }
@@ -1595,8 +1861,6 @@ function PipelineView() {
           }
           retryStatus={session?.retry_status ?? null}
         />
-
-
       </div>
     </div>
   );
@@ -1623,10 +1887,11 @@ function Breadcrumb({
   status: string;
 }) {
   return (
-    <div
-      className="flex items-center justify-between border-b border-border bg-background px-5 py-3 sm:px-8"
-    >
-      <nav className="text-body-sm flex items-center gap-1.5 truncate" style={{ color: "var(--color-text-tertiary)" }}>
+    <div className="flex items-center justify-between border-b border-border bg-background px-5 py-3 sm:px-8">
+      <nav
+        className="text-body-sm flex items-center gap-1.5 truncate"
+        style={{ color: "var(--color-text-tertiary)" }}
+      >
         <Link to="/dashboard" className="transition-colors hover:text-text-secondary">
           Sessions
         </Link>
@@ -1676,9 +1941,7 @@ function LeftPanel({
   totalMain: number;
 }) {
   return (
-    <aside
-      className="hidden w-[280px] shrink-0 overflow-y-auto border-r border-border bg-background py-6 md:block"
-    >
+    <aside className="hidden w-[280px] shrink-0 overflow-y-auto border-r border-border bg-background py-6 md:block">
       <header className="px-5 pb-5">
         <span className="text-label text-primary">Strategy Process</span>
         <div
@@ -1693,10 +1956,7 @@ function LeftPanel({
             }}
           />
         </div>
-        <p
-          className="text-body-sm mt-2"
-          style={{ color: "var(--color-text-tertiary)" }}
-        >
+        <p className="text-body-sm mt-2" style={{ color: "var(--color-text-tertiary)" }}>
           Stage {currentMainNumber} of {totalMain}
         </p>
       </header>
@@ -1706,33 +1966,24 @@ function LeftPanel({
           const status = statuses[s.id];
           const selected = s.id === selectedId;
           const interactive =
-            status === "complete" ||
-            status === "running" ||
-            status === "checkpoint";
+            status === "complete" || status === "running" || status === "checkpoint";
           return (
-            <li
-              key={s.id}
-              style={{ borderTop: "1px solid var(--color-surface-3)" }}
-            >
+            <li key={s.id} style={{ borderTop: "1px solid var(--color-surface-3)" }}>
               <button
                 type="button"
                 disabled={!interactive}
                 onClick={() => onSelect(s.id)}
                 className="flex w-full items-center gap-3 px-5 py-2.5 text-left transition-colors"
                 style={{
-                  backgroundColor: selected
-                    ? "var(--color-primary-subtle)"
-                    : "transparent",
+                  backgroundColor: selected ? "var(--color-primary-subtle)" : "transparent",
                   cursor: interactive ? "pointer" : "default",
                 }}
                 onMouseEnter={(e) => {
                   if (interactive && !selected)
-                    e.currentTarget.style.backgroundColor =
-                      "var(--color-surface-2)";
+                    e.currentTarget.style.backgroundColor = "var(--color-surface-2)";
                 }}
                 onMouseLeave={(e) => {
-                  if (!selected)
-                    e.currentTarget.style.backgroundColor = "transparent";
+                  if (!selected) e.currentTarget.style.backgroundColor = "transparent";
                 }}
               >
                 <StageIndicator
@@ -1834,14 +2085,20 @@ function StageRowStatusLabel({
   }
   if (status === "error") {
     return (
-      <span className="text-label shrink-0" style={{ color: "var(--color-destructive)", fontSize: 10 }}>
+      <span
+        className="text-label shrink-0"
+        style={{ color: "var(--color-destructive)", fontSize: 10 }}
+      >
         Error
       </span>
     );
   }
   if (selected && status === "pending") {
     return (
-      <span className="text-label shrink-0" style={{ color: "var(--color-text-tertiary)", fontSize: 10 }}>
+      <span
+        className="text-label shrink-0"
+        style={{ color: "var(--color-text-tertiary)", fontSize: 10 }}
+      >
         Viewing
       </span>
     );
@@ -1852,7 +2109,7 @@ function StageRowStatusLabel({
 function stageNameStyle(
   status: StageStatus,
   selected: boolean,
-  conditional?: boolean
+  conditional?: boolean,
 ): React.CSSProperties {
   if (conditional) return { color: "var(--color-text-tertiary)" };
   if (selected) return { color: "var(--color-text-primary)", fontWeight: 600 };
@@ -1907,7 +2164,7 @@ function StageIndicator({
       />
     );
   }
-  if (status === "checkpoint" || checkpoint && status !== "pending") {
+  if (status === "checkpoint" || (checkpoint && status !== "pending")) {
     return (
       <span
         style={{
@@ -2001,9 +2258,7 @@ function RightPanel({
   onConfirmCheckpoint: (stageId: string, notes?: string[]) => void;
   customCheckpoint?: ReactNode;
   retryStatus?: string | null;
-
 }) {
-
   const isRunning = status === "running";
   const isCheckpoint = status === "checkpoint";
   const isError = status === "error";
@@ -2021,7 +2276,10 @@ function RightPanel({
           }}
         >
           <span className="text-body-sm" style={{ color: "var(--color-text-tertiary)" }}>
-            Viewing completed stage: <span style={{ color: "var(--color-text-secondary)" }}>{stage.number} — {stage.name}</span>
+            Viewing completed stage:{" "}
+            <span style={{ color: "var(--color-text-secondary)" }}>
+              {stage.number} — {stage.name}
+            </span>
           </span>
           <button
             type="button"
@@ -2034,8 +2292,28 @@ function RightPanel({
         </div>
       )}
       <div className="flex-1 overflow-y-auto px-6 py-10 sm:px-12 sm:py-10">
-
-        {isError && ["01","02","03","04","05","06","07","08","09","10","11","12","13","13B","14","14B","14C","15","16"].includes(stage.id) ? (
+        {isError &&
+        [
+          "01",
+          "02",
+          "03",
+          "04",
+          "05",
+          "06",
+          "07",
+          "08",
+          "09",
+          "10",
+          "11",
+          "12",
+          "13",
+          "13B",
+          "14",
+          "14B",
+          "14C",
+          "15",
+          "16",
+        ].includes(stage.id) ? (
           <ErrorStateCard
             stage={stage}
             errorMessage={stage1Error}
@@ -2051,9 +2329,7 @@ function RightPanel({
           />
         ) : showRationale ? (
           <div style={{ paddingBottom: 80 }}>
-            <SelectionRationale
-              onConfirm={() => onConfirmCheckpoint(stage.id)}
-            />
+            <SelectionRationale onConfirm={() => onConfirmCheckpoint(stage.id)} />
           </div>
         ) : showBrandIntel ? (
           <div style={{ paddingBottom: 80 }}>
@@ -2062,14 +2338,17 @@ function RightPanel({
         ) : customCheckpoint ? (
           <div style={{ paddingBottom: 80 }}>{customCheckpoint}</div>
         ) : isCheckpoint && letter ? (
-
           <div style={{ paddingBottom: 80 }}>
             <Checkpoint
               letter={letter}
               showLowScoreAlert={letter === "A" && stage1bRequired}
               onConfirm={(notes) => onConfirmCheckpoint(stage.id, notes)}
-              onResubmit={onResubmitCheckpoint ? (fb) => onResubmitCheckpoint(stage.id, fb) : undefined}
-              onEscalate={onEscalateCheckpoint ? (r) => onEscalateCheckpoint(stage.id, r) : undefined}
+              onResubmit={
+                onResubmitCheckpoint ? (fb) => onResubmitCheckpoint(stage.id, fb) : undefined
+              }
+              onEscalate={
+                onEscalateCheckpoint ? (r) => onEscalateCheckpoint(stage.id, r) : undefined
+              }
               resubmitting={checkpointResubmitting}
               reviewContent={
                 <>
@@ -2078,7 +2357,15 @@ function RightPanel({
                       className="text-body-sm mb-3"
                       style={{ color: "var(--color-text-tertiary)" }}
                     >
-                      Strategic Tension Score: <strong style={{ color: tensionScore >= 7 ? "var(--color-success)" : "var(--color-warning)" }}>{tensionScore}/10</strong>
+                      Strategic Tension Score:{" "}
+                      <strong
+                        style={{
+                          color:
+                            tensionScore >= 7 ? "var(--color-success)" : "var(--color-warning)",
+                        }}
+                      >
+                        {tensionScore}/10
+                      </strong>
                     </p>
                   )}
                   <StreamedOutput text={fullOutput} streaming={false} />
@@ -2103,23 +2390,15 @@ function RightPanel({
             </header>
 
             <article style={{ paddingBottom: 80 }}>
-              {isRunning && !text ? (
-                <ProgressMessages stageName={stage.name} />
-              ) : null}
+              {isRunning && !text ? <ProgressMessages stageName={stage.name} /> : null}
               <StreamedOutput text={text} streaming={isRunning} />
-              {isRunning ? (
-                <StallWatcher stageKey={stage.id} onAutoRetry={onRetry} />
-              ) : null}
+              {isRunning ? <StallWatcher stageKey={stage.id} onAutoRetry={onRetry} /> : null}
             </article>
           </>
         )}
       </div>
 
-      <StageControlBar
-        stage={stage}
-        status={status}
-        onRetry={onRetry}
-      />
+      <StageControlBar stage={stage} status={status} onRetry={onRetry} />
 
       <BottomBar
         stage={stage}
@@ -2189,19 +2468,13 @@ function StatusLine({ status }: { status: StageStatus }) {
   }
   if (status === "error") {
     return (
-      <p
-        className="text-body-sm mt-3"
-        style={{ color: "var(--color-destructive)" }}
-      >
+      <p className="text-body-sm mt-3" style={{ color: "var(--color-destructive)" }}>
         Stage held — see errors below
       </p>
     );
   }
   return (
-    <p
-      className="text-body-sm mt-3"
-      style={{ color: "var(--color-text-tertiary)" }}
-    >
+    <p className="text-body-sm mt-3" style={{ color: "var(--color-text-tertiary)" }}>
       Pending — not yet started
     </p>
   );
@@ -2242,13 +2515,7 @@ function useStreamingText(full: string, streaming: boolean) {
 }
 
 // Render a minimal subset of markdown-like blocks per the spec.
-function StreamedOutput({
-  text,
-  streaming,
-}: {
-  text: string;
-  streaming: boolean;
-}) {
+function StreamedOutput({ text, streaming }: { text: string; streaming: boolean }) {
   const blocks = parseBlocks(text);
   const tailRef = useRef<HTMLDivElement | null>(null);
   // Auto-scroll: when streaming, keep the latest line visible.
@@ -2359,10 +2626,7 @@ function StreamedOutput({
             );
           case "bullets":
             return (
-              <ul
-                key={i}
-                style={{ paddingLeft: 20, margin: "8px 0", listStyle: "none" }}
-              >
+              <ul key={i} style={{ paddingLeft: 20, margin: "8px 0", listStyle: "none" }}>
                 {b.items.map((item, j) => (
                   <li
                     key={j}
@@ -2429,9 +2693,15 @@ function Inline({ text }: { text: string }) {
   return (
     <>
       {parts.map((p, i) =>
-        p.kind === "b" ? <strong key={i} style={{ color: "#F0EDE8", fontWeight: 600 }}>{p.v}</strong> :
-        p.kind === "i" ? <em key={i}>{p.v}</em> :
-        <span key={i}>{p.v}</span>,
+        p.kind === "b" ? (
+          <strong key={i} style={{ color: "#F0EDE8", fontWeight: 600 }}>
+            {p.v}
+          </strong>
+        ) : p.kind === "i" ? (
+          <em key={i}>{p.v}</em>
+        ) : (
+          <span key={i}>{p.v}</span>
+        ),
       )}
     </>
   );
@@ -2493,7 +2763,6 @@ function parseBlocks(text: string): Block[] {
   flush();
   return blocks;
 }
-
 
 // Styled API-error card per spec.
 export function ErrorCard({
@@ -2593,7 +2862,6 @@ export function NextStageHint({ name }: { name: string }) {
   );
 }
 
-
 function Caret() {
   return (
     <span
@@ -2647,9 +2915,7 @@ function BottomBar({
       </span>
     );
   } else if (pipelineComplete && !isViewingHistorical) {
-    rightEl = (
-      <PrimaryActionButton onClick={onViewFinal} label="Open Deliverables →" />
-    );
+    rightEl = <PrimaryActionButton onClick={onViewFinal} label="Open Deliverables →" />;
   } else if (isViewingHistorical) {
     rightEl = (
       <button
@@ -2674,10 +2940,7 @@ function BottomBar({
     );
   } else if (status === "complete" && nextStage && nextStageStatus === "pending") {
     rightEl = (
-      <PrimaryActionButton
-        onClick={onContinue}
-        label={`Continue to ${nextStage.name} →`}
-      />
+      <PrimaryActionButton onClick={onContinue} label={`Continue to ${nextStage.name} →`} />
     );
   } else if (status === "complete" && nextStage && nextStageStatus === "running") {
     rightEl = (
@@ -2702,7 +2965,12 @@ function BottomBar({
             type="button"
             onClick={onBack}
             className="text-body-sm font-medium transition-colors"
-            style={{ color: "#8A8680", background: "transparent", border: "none", cursor: "pointer" }}
+            style={{
+              color: "#8A8680",
+              background: "transparent",
+              border: "none",
+              cursor: "pointer",
+            }}
           >
             ← {prevStage.name}
           </button>
@@ -2736,7 +3004,9 @@ function StageControlBar({
       <span style={{ display: "inline-flex", alignItems: "center", gap: 8, color: "#5A5652" }}>
         <span
           style={{
-            width: 8, height: 8, borderRadius: "50%",
+            width: 8,
+            height: 8,
+            borderRadius: "50%",
             backgroundColor: "#C8873A",
             animation: "bg-pulse 1.2s ease-in-out infinite",
           }}
@@ -2793,13 +3063,7 @@ function StageControlBar({
 // Stall watcher — warns at 45s of "running", auto-retries once at 90s
 // ────────────────────────────────────────────────────────────────────────────
 
-function StallWatcher({
-  stageKey,
-  onAutoRetry,
-}: {
-  stageKey: string;
-  onAutoRetry: () => void;
-}) {
+function StallWatcher({ stageKey, onAutoRetry }: { stageKey: string; onAutoRetry: () => void }) {
   const [phase, setPhase] = useState<"silent" | "warning" | "auto-retrying">("silent");
   const autoRetriedRef = useRef<Set<string>>(new Set());
 
@@ -2848,9 +3112,14 @@ function StallWatcher({
           type="button"
           onClick={() => setPhase("silent")}
           style={{
-            height: 32, padding: "0 14px", borderRadius: 6,
-            background: "transparent", border: "1px solid #2A2A2A",
-            color: "#8A8680", fontSize: 13, cursor: "pointer",
+            height: 32,
+            padding: "0 14px",
+            borderRadius: 6,
+            background: "transparent",
+            border: "1px solid #2A2A2A",
+            color: "#8A8680",
+            fontSize: 13,
+            cursor: "pointer",
           }}
         >
           Wait
@@ -2859,9 +3128,14 @@ function StallWatcher({
           type="button"
           onClick={onAutoRetry}
           style={{
-            height: 32, padding: "0 14px", borderRadius: 6,
-            background: "#C8873A", border: "none",
-            color: "var(--color-background)", fontSize: 13, fontWeight: 600,
+            height: 32,
+            padding: "0 14px",
+            borderRadius: 6,
+            background: "#C8873A",
+            border: "none",
+            color: "var(--color-background)",
+            fontSize: 13,
+            fontWeight: 600,
             cursor: "pointer",
           }}
         >
@@ -3095,13 +3369,11 @@ function Stage1bResubmitView({
     <div style={{ paddingBottom: 80 }}>
       <header>
         <span className="text-label text-primary">Brief Enhancement</span>
-        <h1 className="text-h2 mt-3 text-text-primary">
-          Additional brief information required
-        </h1>
+        <h1 className="text-h2 mt-3 text-text-primary">Additional brief information required</h1>
         <p className="text-body-sm mt-3 text-text-secondary">
-          The brief did not meet the threshold required to proceed. Please
-          respond in writing to the questions below — Brief Analysis will be
-          re-run with the enriched brief before moving forward.
+          The brief did not meet the threshold required to proceed. Please respond in writing to the
+          questions below — Brief Analysis will be re-run with the enriched brief before moving
+          forward.
         </p>
         <hr className="my-6 h-px border-0 bg-border" />
       </header>
@@ -3117,10 +3389,7 @@ function Stage1bResubmitView({
           backgroundColor: "var(--color-surface)",
         }}
       >
-        <label
-          htmlFor="stage1b-response"
-          className="text-label text-text-secondary"
-        >
+        <label htmlFor="stage1b-response" className="text-label text-text-secondary">
           Your responses
         </label>
         <textarea
@@ -3139,10 +3408,7 @@ function Stage1bResubmitView({
           }}
         />
         <div className="mt-4 flex items-center justify-between">
-          <span
-            className="text-body-sm"
-            style={{ color: "var(--color-text-tertiary)" }}
-          >
+          <span className="text-body-sm" style={{ color: "var(--color-text-tertiary)" }}>
             Minimum 20 characters. {text.trim().length} entered.
           </span>
           <button
@@ -3162,4 +3428,3 @@ function Stage1bResubmitView({
     </div>
   );
 }
-
