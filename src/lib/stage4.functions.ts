@@ -60,7 +60,7 @@ export const runStage4 = createServerFn({ method: "POST" })
       for await (const delta of streamClaude({
         systemPrompt: STAGE_4_SYSTEM_PROMPT,
         userMessage,
-        maxTokens: 4000,
+        maxTokens: 12000,
         temperature: 0.7,
         sessionId: data.sessionId,
         stageLabel: "Stage 4",
@@ -88,7 +88,7 @@ export const runStage4 = createServerFn({ method: "POST" })
         for await (const delta of streamClaude({
           systemPrompt: STAGE_4_SYSTEM_PROMPT,
           userMessage: buildStage4ContinuationMessage({ previousOutput: output, currentCount: universeCount }),
-          maxTokens: 4000,
+          maxTokens: 12000,
           temperature: 0.7,
           sessionId: data.sessionId,
           stageLabel: `Stage 4 (continuation ${attempts})`,

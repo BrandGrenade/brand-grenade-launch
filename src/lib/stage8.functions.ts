@@ -72,7 +72,7 @@ async function rerunStage7WithEnforcement(sessionId: string): Promise<string> {
   const output = await callClaude({
     systemPrompt: STAGE_7_SYSTEM_PROMPT,
     userMessage,
-    maxTokens: 3000,
+    maxTokens: 12000,
     temperature: 0.7,
     sessionId,
     stageLabel: "Stage 7 (re-run for minimum territories)",
@@ -169,7 +169,7 @@ export const runStage8 = createServerFn({ method: "POST" })
       for await (const delta of streamClaude({
         systemPrompt: STAGE_8_SYSTEM_PROMPT,
         userMessage,
-        maxTokens: 3500,
+        maxTokens: 12000,
         temperature: 0.7,
         sessionId: data.sessionId,
         stageLabel: "Stage 8",
@@ -209,7 +209,7 @@ export const runStage8 = createServerFn({ method: "POST" })
         for await (const delta of streamClaude({
           systemPrompt: STAGE_8_SYSTEM_PROMPT,
           userMessage: continuationMessage,
-          maxTokens: 3500,
+          maxTokens: 12000,
           temperature: 0.7,
           sessionId: data.sessionId,
           stageLabel: `Stage 8 (continuation ${attempts})`,
