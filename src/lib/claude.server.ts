@@ -238,6 +238,8 @@ export async function* streamClaude(args: CallClaudeArgs): AsyncGenerator<string
   const decoder = new TextDecoder();
   let buffer = "";
   let total = "";
+  let stopReason: string | null = null;
+  let sawMessageStop = false;
   try {
     while (true) {
       const { done, value } = await reader.read();
@@ -254,11 +256,15 @@ export async function* streamClaude(args: CallClaudeArgs): AsyncGenerator<string
         try {
           const evt = JSON.parse(payload) as {
             type?: string;
-            delta?: { type?: string; text?: string };
+            delta?: { type?: string; text?: string; stop_reason?: string };
           };
           if (evt.type === "content_block_delta" && evt.delta?.type === "text_delta" && evt.delta.text) {
             total += evt.delta.text;
             yield evt.delta.text;
+          } else if (evt.type === "message_delta" && evt.delta?.stop_reason) {
+            stopReason = evt.delta.stop_reason;
+          } else if (evt.type === "message_stop") {
+            sawMessageStop = true;
           }
         } catch {
           // ignore partial / non-JSON SSE lines
@@ -269,4 +275,14 @@ export async function* streamClaude(args: CallClaudeArgs): AsyncGenerator<string
     try { reader.releaseLock(); } catch { /* noop */ }
   }
   if (!total.trim()) throw new Error("Claude returned an empty response");
+  if (stopReason === "max_tokens") {
+    throw new Error(
+      `Claude response truncated: hit max_tokens cap (${total.length} chars produced). Raise maxTokens for this stage.`,
+    );
+  }
+  if (!sawMessageStop) {
+    throw new Error(
+      `Claude stream ended without message_stop (${total.length} chars produced). Upstream connection likely dropped — retry the stage.`,
+    );
+  }
 }
