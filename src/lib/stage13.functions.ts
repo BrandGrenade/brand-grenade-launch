@@ -72,7 +72,7 @@ export const runStage13 = createServerFn({ method: "POST" })
         }),
         sessionId: data.sessionId,
         stageLabel: "Stage 13",
-        maxTokens: 2000,
+        maxTokens: 12000,
         stageNumber: "13",
         stageName: "Brand Fit Validation",
       })) {
