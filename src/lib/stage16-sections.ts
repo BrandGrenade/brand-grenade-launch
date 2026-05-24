@@ -557,7 +557,7 @@ export function getWorkshopSections(s: SessionForStage16): SectionDef[] {
     {
       name: "for_facilitator",
       title: "FOR THE FACILITATOR",
-      systemPrompt: WORKSHOP_FOR_FACILITATOR_PROMPT,
+      systemPrompt: STAGE_16_UNIVERSAL_RULES + WORKSHOP_FOR_FACILITATOR_PROMPT,
       pipelineInputs: [cut(s.stage_1_output, 1500)],
       targetWords: 300,
       maxTokens: 700,
@@ -565,7 +565,7 @@ export function getWorkshopSections(s: SessionForStage16): SectionDef[] {
     {
       name: "preparation",
       title: "PREPARATION",
-      systemPrompt: WORKSHOP_PREPARATION_PROMPT,
+      systemPrompt: STAGE_16_UNIVERSAL_RULES + WORKSHOP_PREPARATION_PROMPT,
       pipelineInputs: [cut(s.stage_1_output, 1000)],
       targetWords: 200,
       maxTokens: 500,
@@ -573,7 +573,7 @@ export function getWorkshopSections(s: SessionForStage16): SectionDef[] {
     {
       name: "session_one",
       title: "SESSION ONE — THE SITUATION WE'RE IN",
-      systemPrompt: WORKSHOP_SESSION_ONE_PROMPT,
+      systemPrompt: STAGE_16_UNIVERSAL_RULES + WORKSHOP_SESSION_ONE_PROMPT,
       pipelineInputs: [cut(s.stage_1_output, 2000)],
       targetWords: 400,
       maxTokens: 900,
@@ -581,7 +581,7 @@ export function getWorkshopSections(s: SessionForStage16): SectionDef[] {
     {
       name: "session_two",
       title: "SESSION TWO — THE CATEGORY WHITESPACE",
-      systemPrompt: WORKSHOP_SESSION_TWO_PROMPT,
+      systemPrompt: STAGE_16_UNIVERSAL_RULES + WORKSHOP_SESSION_TWO_PROMPT,
       pipelineInputs: [cut(s.stage_2_output, 2500)],
       targetWords: 400,
       maxTokens: 900,
@@ -589,7 +589,7 @@ export function getWorkshopSections(s: SessionForStage16): SectionDef[] {
     {
       name: "session_three",
       title: "SESSION THREE — THE HUMAN TRUTH",
-      systemPrompt: WORKSHOP_SESSION_THREE_PROMPT,
+      systemPrompt: STAGE_16_UNIVERSAL_RULES + WORKSHOP_SESSION_THREE_PROMPT,
       pipelineInputs: [cut(s.stage_7_output, 2500)],
       targetWords: 400,
       maxTokens: 900,
@@ -597,7 +597,7 @@ export function getWorkshopSections(s: SessionForStage16): SectionDef[] {
     {
       name: "session_four",
       title: "SESSION FOUR — THE REVEAL",
-      systemPrompt: WORKSHOP_SESSION_FOUR_PROMPT,
+      systemPrompt: STAGE_16_UNIVERSAL_RULES + WORKSHOP_SESSION_FOUR_PROMPT,
       pipelineInputs: [
         cut(s.stage_12_output, 1500),
         `SELECTED PROPOSITION: "${smp}"`,
@@ -609,7 +609,7 @@ export function getWorkshopSections(s: SessionForStage16): SectionDef[] {
     {
       name: "session_five",
       title: "SESSION FIVE — WHAT MUST CHANGE",
-      systemPrompt: WORKSHOP_SESSION_FIVE_PROMPT,
+      systemPrompt: STAGE_16_UNIVERSAL_RULES + WORKSHOP_SESSION_FIVE_PROMPT,
       pipelineInputs: [cut(s.stage_13_output, 1500), cut(s.stage_15_output, 1000)],
       targetWords: 350,
       maxTokens: 800,
@@ -617,7 +617,7 @@ export function getWorkshopSections(s: SessionForStage16): SectionDef[] {
     {
       name: "appendix_a",
       title: "APPENDIX A — PARTICIPANT CARDS",
-      systemPrompt: WORKSHOP_APPENDIX_A_PROMPT,
+      systemPrompt: STAGE_16_UNIVERSAL_RULES + WORKSHOP_APPENDIX_A_PROMPT,
       pipelineInputs: [cut(s.stage_7_output, 1500)],
       targetWords: 250,
       maxTokens: 600,
@@ -625,7 +625,7 @@ export function getWorkshopSections(s: SessionForStage16): SectionDef[] {
     {
       name: "appendix_b",
       title: "APPENDIX B — DIFFICULT MOMENTS",
-      systemPrompt: WORKSHOP_APPENDIX_B_PROMPT,
+      systemPrompt: STAGE_16_UNIVERSAL_RULES + WORKSHOP_APPENDIX_B_PROMPT,
       pipelineInputs: [cut(s.stage_13_output, 1500)],
       targetWords: 300,
       maxTokens: 700,
