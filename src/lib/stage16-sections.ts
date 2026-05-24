@@ -361,7 +361,7 @@ export function getConsultingSections(s: SessionForStage16): SectionDef[] {
     {
       name: "situation",
       title: "PART ONE — THE SITUATION",
-      systemPrompt: SECTION_SITUATION_PROMPT,
+      systemPrompt: STAGE_16_UNIVERSAL_RULES + SECTION_SITUATION_PROMPT,
       pipelineInputs: [cut(s.stage_1_output, 2000), cut(s.stage_2_output, 1500)],
       targetWords: 350,
       maxTokens: 800,
@@ -369,7 +369,7 @@ export function getConsultingSections(s: SessionForStage16): SectionDef[] {
     {
       name: "category",
       title: "PART TWO — WHAT THE CATEGORY HAS AGREED NOT TO SAY",
-      systemPrompt: SECTION_CATEGORY_PROMPT,
+      systemPrompt: STAGE_16_UNIVERSAL_RULES + SECTION_CATEGORY_PROMPT,
       pipelineInputs: [cut(s.stage_2_output, 3000)],
       targetWords: 400,
       maxTokens: 900,
@@ -377,7 +377,7 @@ export function getConsultingSections(s: SessionForStage16): SectionDef[] {
     {
       name: "human_truth",
       title: "PART THREE — THE PEOPLE THE CATEGORY IS FAILING",
-      systemPrompt: SECTION_HUMAN_TRUTH_PROMPT,
+      systemPrompt: STAGE_16_UNIVERSAL_RULES + SECTION_HUMAN_TRUTH_PROMPT,
       pipelineInputs: [cut(s.stage_7_output, 2000), cut(s.stage_5_output, 1500)],
       targetWords: 350,
       maxTokens: 800,
@@ -385,7 +385,7 @@ export function getConsultingSections(s: SessionForStage16): SectionDef[] {
     {
       name: "why_brand",
       title: "PART FOUR — WHY THIS BRAND",
-      systemPrompt: SECTION_WHY_BRAND_PROMPT,
+      systemPrompt: STAGE_16_UNIVERSAL_RULES + SECTION_WHY_BRAND_PROMPT,
       pipelineInputs: [cut(s.stage_13_output, 2500)],
       targetWords: 300,
       maxTokens: 700,
@@ -393,7 +393,7 @@ export function getConsultingSections(s: SessionForStage16): SectionDef[] {
     {
       name: "alternatives",
       title: "PART FIVE — WHAT WAS TESTED AND SET ASIDE",
-      systemPrompt: SECTION_ALTERNATIVES_PROMPT,
+      systemPrompt: STAGE_16_UNIVERSAL_RULES + SECTION_ALTERNATIVES_PROMPT,
       pipelineInputs: [
         cut(s.stage_8_output, 3000),
         cut(s.stage_10_output, 1500),
@@ -405,7 +405,7 @@ export function getConsultingSections(s: SessionForStage16): SectionDef[] {
     {
       name: "evidence",
       title: "PART SIX — THE EVIDENCE",
-      systemPrompt: SECTION_EVIDENCE_PROMPT,
+      systemPrompt: STAGE_16_UNIVERSAL_RULES + SECTION_EVIDENCE_PROMPT,
       pipelineInputs: [cut(s.stage_11_output, 3000)],
       targetWords: 400,
       maxTokens: 900,
@@ -413,7 +413,7 @@ export function getConsultingSections(s: SessionForStage16): SectionDef[] {
     {
       name: "recommendation",
       title: "PART SEVEN — THE RECOMMENDATION",
-      systemPrompt: SECTION_RECOMMENDATION_PROMPT,
+      systemPrompt: STAGE_16_UNIVERSAL_RULES + SECTION_RECOMMENDATION_PROMPT,
       pipelineInputs: [
         cut(s.stage_12_output, 1500),
         cut(s.stage_7_output, 1500),
@@ -426,7 +426,7 @@ export function getConsultingSections(s: SessionForStage16): SectionDef[] {
     {
       name: "creative_world",
       title: "PART EIGHT — THE CREATIVE WORLD",
-      systemPrompt: SECTION_CREATIVE_WORLD_PROMPT,
+      systemPrompt: STAGE_16_UNIVERSAL_RULES + SECTION_CREATIVE_WORLD_PROMPT,
       pipelineInputs: [cut(s.stage_14c_output, 2500), cut(s.stage_14_output, 1500)],
       targetWords: 350,
       maxTokens: 800,
@@ -434,7 +434,7 @@ export function getConsultingSections(s: SessionForStage16): SectionDef[] {
     {
       name: "what_must_change",
       title: "PART NINE — WHAT MUST CHANGE",
-      systemPrompt: SECTION_WHAT_MUST_CHANGE_PROMPT,
+      systemPrompt: STAGE_16_UNIVERSAL_RULES + SECTION_WHAT_MUST_CHANGE_PROMPT,
       pipelineInputs: [cut(s.stage_13_output, 1500), cut(s.stage_15_output, 1000)],
       targetWords: 300,
       maxTokens: 700,
@@ -442,7 +442,7 @@ export function getConsultingSections(s: SessionForStage16): SectionDef[] {
     {
       name: "next_steps",
       title: "PART TEN — NEXT STEPS",
-      systemPrompt: SECTION_NEXT_STEPS_PROMPT,
+      systemPrompt: STAGE_16_UNIVERSAL_RULES + SECTION_NEXT_STEPS_PROMPT,
       pipelineInputs: [cut(s.selection_rationale_1, 500)],
       targetWords: 200,
       maxTokens: 500,
