@@ -221,6 +221,12 @@ export function sanitizeStageOutput(raw: string): string {
   text = text.replace(/={2,}\s*PRESENTATION\s+ORDER\s+LOG[\s\S]*?(?=\n={2,}\s*\S|$)/gi, "");
   text = text.replace(/={2,}\s*SELF[-\s]AUDIT[\s\S]*?(?=\n={2,}\s*\S|$)/gi, "");
 
+  // 0a. Remove inline "— ICONIC TIER ...: <value>" trailing clauses BEFORE
+  // term replacement turns "Iconic Tier" into "" and leaves "— : N/A" orphans.
+  text = text.replace(/\s*[—–-]\s*ICONIC\s+TIER[^—–\n]*/gi, "");
+  // Defence for any other inline clause that would collapse to "— : <flag>".
+  text = text.replace(/\s*[—–-]\s*:\s*(N\/A|YES|NO|CONFIRMED|DOWNGRADED|PENDING|PASSED|CLEARED|FAILED)\b/gi, "");
+
   const extraLineStrips: RegExp[] = [
     /PRESENTATION\s+ORDER\s+LOG/i,
     /PRESENTATION\s+ORDER/i,
