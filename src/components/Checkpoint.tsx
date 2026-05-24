@@ -89,12 +89,13 @@ export function Checkpoint({
 
       {/* Review card */}
       <div
-        className="overflow-y-auto p-6 sm:p-8"
+        className="overflow-y-auto overflow-x-hidden p-6 sm:p-8"
         style={{
           backgroundColor: "var(--color-surface-2)",
           border: "1px solid var(--color-border)",
           borderRadius: 12,
           maxHeight: 400,
+          contain: "paint",
         }}
       >
         {reviewContent}
