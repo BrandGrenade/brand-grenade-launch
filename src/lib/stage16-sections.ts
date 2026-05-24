@@ -456,7 +456,7 @@ export function getAgencySections(s: SessionForStage16): SectionDef[] {
     {
       name: "before_you_read",
       title: "BEFORE YOU READ THIS",
-      systemPrompt: AGENCY_BEFORE_YOU_READ_PROMPT,
+      systemPrompt: STAGE_16_UNIVERSAL_RULES + AGENCY_BEFORE_YOU_READ_PROMPT,
       pipelineInputs: [cut(s.stage_1_output, 1500)],
       targetWords: 300,
       maxTokens: 700,
@@ -464,7 +464,7 @@ export function getAgencySections(s: SessionForStage16): SectionDef[] {
     {
       name: "strategic_context",
       title: "PART ONE — THE STRATEGIC CONTEXT",
-      systemPrompt: AGENCY_STRATEGIC_CONTEXT_PROMPT,
+      systemPrompt: STAGE_16_UNIVERSAL_RULES + AGENCY_STRATEGIC_CONTEXT_PROMPT,
       pipelineInputs: [cut(s.stage_1_output, 2000), cut(s.stage_2_output, 1500)],
       targetWords: 350,
       maxTokens: 800,
@@ -472,7 +472,7 @@ export function getAgencySections(s: SessionForStage16): SectionDef[] {
     {
       name: "category",
       title: "PART TWO — THE CATEGORY",
-      systemPrompt: AGENCY_CATEGORY_PROMPT,
+      systemPrompt: STAGE_16_UNIVERSAL_RULES + AGENCY_CATEGORY_PROMPT,
       pipelineInputs: [cut(s.stage_2_output, 3000)],
       targetWords: 400,
       maxTokens: 900,
@@ -480,7 +480,7 @@ export function getAgencySections(s: SessionForStage16): SectionDef[] {
     {
       name: "human_truth",
       title: "PART THREE — THE HUMAN TRUTH",
-      systemPrompt: AGENCY_HUMAN_TRUTH_PROMPT,
+      systemPrompt: STAGE_16_UNIVERSAL_RULES + AGENCY_HUMAN_TRUTH_PROMPT,
       pipelineInputs: [cut(s.stage_7_output, 2000), cut(s.stage_5_output, 1500)],
       targetWords: 350,
       maxTokens: 800,
@@ -488,7 +488,7 @@ export function getAgencySections(s: SessionForStage16): SectionDef[] {
     {
       name: "why_brand",
       title: "PART FOUR — WHY THIS BRAND",
-      systemPrompt: AGENCY_WHY_BRAND_PROMPT,
+      systemPrompt: STAGE_16_UNIVERSAL_RULES + AGENCY_WHY_BRAND_PROMPT,
       pipelineInputs: [cut(s.stage_13_output, 2500)],
       targetWords: 300,
       maxTokens: 700,
@@ -496,7 +496,7 @@ export function getAgencySections(s: SessionForStage16): SectionDef[] {
     {
       name: "what_was_set_aside",
       title: "PART FIVE — WHAT WAS SET ASIDE",
-      systemPrompt: AGENCY_WHAT_WAS_SET_ASIDE_PROMPT,
+      systemPrompt: STAGE_16_UNIVERSAL_RULES + AGENCY_WHAT_WAS_SET_ASIDE_PROMPT,
       pipelineInputs: [
         cut(s.stage_8_output, 3000),
         cut(s.stage_12_output, 1000),
@@ -507,7 +507,7 @@ export function getAgencySections(s: SessionForStage16): SectionDef[] {
     {
       name: "proposition",
       title: "PART SIX — THE PROPOSITION",
-      systemPrompt: AGENCY_PROPOSITION_PROMPT,
+      systemPrompt: STAGE_16_UNIVERSAL_RULES + AGENCY_PROPOSITION_PROMPT,
       pipelineInputs: [
         cut(s.stage_12_output, 1500),
         cut(s.stage_7_output, 1500),
@@ -520,7 +520,7 @@ export function getAgencySections(s: SessionForStage16): SectionDef[] {
     {
       name: "creative_world",
       title: "PART SEVEN — THE CREATIVE WORLD",
-      systemPrompt: AGENCY_CREATIVE_WORLD_PROMPT,
+      systemPrompt: STAGE_16_UNIVERSAL_RULES + AGENCY_CREATIVE_WORLD_PROMPT,
       pipelineInputs: [
         cut(s.stage_14c_output, 3000),
         cut(s.stage_14_output, 1500),
@@ -532,7 +532,7 @@ export function getAgencySections(s: SessionForStage16): SectionDef[] {
     {
       name: "across_channels",
       title: "PART EIGHT — ACROSS CHANNELS",
-      systemPrompt: AGENCY_ACROSS_CHANNELS_PROMPT,
+      systemPrompt: STAGE_16_UNIVERSAL_RULES + AGENCY_ACROSS_CHANNELS_PROMPT,
       pipelineInputs: [cut(s.stage_14b_output, 2500)],
       targetWords: 400,
       maxTokens: 900,
@@ -540,7 +540,7 @@ export function getAgencySections(s: SessionForStage16): SectionDef[] {
     {
       name: "brief_to_creative",
       title: "PART NINE — THE BRIEF TO CREATIVE TEAMS",
-      systemPrompt: AGENCY_BRIEF_TO_CREATIVE_PROMPT,
+      systemPrompt: STAGE_16_UNIVERSAL_RULES + AGENCY_BRIEF_TO_CREATIVE_PROMPT,
       pipelineInputs: [
         `PROPOSITION: "${smp}"`,
         cut(s.stage_14c_output, 1000),
