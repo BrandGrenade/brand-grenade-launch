@@ -38,6 +38,61 @@ export interface SectionDef {
   includesPropositionReveal?: boolean;
 }
 
+const STAGE_16_UNIVERSAL_RULES = `════════════════════════════════════════
+RULE 1 — NUMBERS RULE
+════════════════════════════════════════
+
+Never invent specific financial figures, percentage targets, headcounts, or dates unless they appear explicitly in the brief or pipeline intelligence.
+
+If a budget reference is needed write "significant investment required — quantum to be determined through business case."
+
+If a timeline is needed write "immediate priority — within 90 days" or "medium term — 6 to 12 months."
+
+If a metric target is needed write "measurable improvement in [specific outcome]" not a specific percentage.
+
+Invented precision is worse than honest uncertainty. Boards trust documents that acknowledge what they do not know.
+
+════════════════════════════════════════
+RULE 2 — ALTERNATIVES LOOP RULE
+════════════════════════════════════════
+
+The selected proposition must never appear in the alternatives section.
+
+The alternatives section covers only what was genuinely considered and set aside.
+
+Each alternative gets exactly two paragraphs:
+- Paragraph 1: what it was and its genuine strengths
+- Paragraph 2: the precise structural reason it was rejected
+
+No more than two paragraphs per alternative.
+The rejection must be specific enough that a sceptical board member cannot respond with "but couldn't you just."
+
+════════════════════════════════════════
+RULE 3 — EVIDENCE RULE
+════════════════════════════════════════
+
+Every specific claim about market size, competitor behaviour, or customer data must be traceable to the brief or pipeline intelligence.
+
+If it is not in the brief or pipeline outputs — do not include it.
+
+Do not generate market statistics, share figures, or research findings that do not appear in the evidence base.
+
+If evidence is thin write "available data suggests" or "category patterns indicate" rather than stating unverified facts as established truth.
+
+════════════════════════════════════════
+RULE 4 — SPECIFICITY RULE
+════════════════════════════════════════
+
+Every paragraph must name the brand.
+
+If you can remove the brand name and the paragraph still makes sense — rewrite it or cut it.
+
+Generic observations that could apply to any brand in any category have no place in this document.
+
+Every sentence must earn its place by being specific to this brand, this category, and this moment.
+
+`;
+
 // ────────────────────────────────────────────────────────────────────────
 // CONSULTING SECTION PROMPTS
 // ────────────────────────────────────────────────────────────────────────
@@ -306,7 +361,7 @@ export function getConsultingSections(s: SessionForStage16): SectionDef[] {
     {
       name: "situation",
       title: "PART ONE — THE SITUATION",
-      systemPrompt: SECTION_SITUATION_PROMPT,
+      systemPrompt: STAGE_16_UNIVERSAL_RULES + SECTION_SITUATION_PROMPT,
       pipelineInputs: [cut(s.stage_1_output, 2000), cut(s.stage_2_output, 1500)],
       targetWords: 350,
       maxTokens: 800,
@@ -314,7 +369,7 @@ export function getConsultingSections(s: SessionForStage16): SectionDef[] {
     {
       name: "category",
       title: "PART TWO — WHAT THE CATEGORY HAS AGREED NOT TO SAY",
-      systemPrompt: SECTION_CATEGORY_PROMPT,
+      systemPrompt: STAGE_16_UNIVERSAL_RULES + SECTION_CATEGORY_PROMPT,
       pipelineInputs: [cut(s.stage_2_output, 3000)],
       targetWords: 400,
       maxTokens: 900,
@@ -322,7 +377,7 @@ export function getConsultingSections(s: SessionForStage16): SectionDef[] {
     {
       name: "human_truth",
       title: "PART THREE — THE PEOPLE THE CATEGORY IS FAILING",
-      systemPrompt: SECTION_HUMAN_TRUTH_PROMPT,
+      systemPrompt: STAGE_16_UNIVERSAL_RULES + SECTION_HUMAN_TRUTH_PROMPT,
       pipelineInputs: [cut(s.stage_7_output, 2000), cut(s.stage_5_output, 1500)],
       targetWords: 350,
       maxTokens: 800,
@@ -330,7 +385,7 @@ export function getConsultingSections(s: SessionForStage16): SectionDef[] {
     {
       name: "why_brand",
       title: "PART FOUR — WHY THIS BRAND",
-      systemPrompt: SECTION_WHY_BRAND_PROMPT,
+      systemPrompt: STAGE_16_UNIVERSAL_RULES + SECTION_WHY_BRAND_PROMPT,
       pipelineInputs: [cut(s.stage_13_output, 2500)],
       targetWords: 300,
       maxTokens: 700,
@@ -338,7 +393,7 @@ export function getConsultingSections(s: SessionForStage16): SectionDef[] {
     {
       name: "alternatives",
       title: "PART FIVE — WHAT WAS TESTED AND SET ASIDE",
-      systemPrompt: SECTION_ALTERNATIVES_PROMPT,
+      systemPrompt: STAGE_16_UNIVERSAL_RULES + SECTION_ALTERNATIVES_PROMPT,
       pipelineInputs: [
         cut(s.stage_8_output, 3000),
         cut(s.stage_10_output, 1500),
@@ -350,7 +405,7 @@ export function getConsultingSections(s: SessionForStage16): SectionDef[] {
     {
       name: "evidence",
       title: "PART SIX — THE EVIDENCE",
-      systemPrompt: SECTION_EVIDENCE_PROMPT,
+      systemPrompt: STAGE_16_UNIVERSAL_RULES + SECTION_EVIDENCE_PROMPT,
       pipelineInputs: [cut(s.stage_11_output, 3000)],
       targetWords: 400,
       maxTokens: 900,
@@ -358,7 +413,7 @@ export function getConsultingSections(s: SessionForStage16): SectionDef[] {
     {
       name: "recommendation",
       title: "PART SEVEN — THE RECOMMENDATION",
-      systemPrompt: SECTION_RECOMMENDATION_PROMPT,
+      systemPrompt: STAGE_16_UNIVERSAL_RULES + SECTION_RECOMMENDATION_PROMPT,
       pipelineInputs: [
         cut(s.stage_12_output, 1500),
         cut(s.stage_7_output, 1500),
@@ -371,7 +426,7 @@ export function getConsultingSections(s: SessionForStage16): SectionDef[] {
     {
       name: "creative_world",
       title: "PART EIGHT — THE CREATIVE WORLD",
-      systemPrompt: SECTION_CREATIVE_WORLD_PROMPT,
+      systemPrompt: STAGE_16_UNIVERSAL_RULES + SECTION_CREATIVE_WORLD_PROMPT,
       pipelineInputs: [cut(s.stage_14c_output, 2500), cut(s.stage_14_output, 1500)],
       targetWords: 350,
       maxTokens: 800,
@@ -379,7 +434,7 @@ export function getConsultingSections(s: SessionForStage16): SectionDef[] {
     {
       name: "what_must_change",
       title: "PART NINE — WHAT MUST CHANGE",
-      systemPrompt: SECTION_WHAT_MUST_CHANGE_PROMPT,
+      systemPrompt: STAGE_16_UNIVERSAL_RULES + SECTION_WHAT_MUST_CHANGE_PROMPT,
       pipelineInputs: [cut(s.stage_13_output, 1500), cut(s.stage_15_output, 1000)],
       targetWords: 300,
       maxTokens: 700,
@@ -387,7 +442,7 @@ export function getConsultingSections(s: SessionForStage16): SectionDef[] {
     {
       name: "next_steps",
       title: "PART TEN — NEXT STEPS",
-      systemPrompt: SECTION_NEXT_STEPS_PROMPT,
+      systemPrompt: STAGE_16_UNIVERSAL_RULES + SECTION_NEXT_STEPS_PROMPT,
       pipelineInputs: [cut(s.selection_rationale_1, 500)],
       targetWords: 200,
       maxTokens: 500,
@@ -401,7 +456,7 @@ export function getAgencySections(s: SessionForStage16): SectionDef[] {
     {
       name: "before_you_read",
       title: "BEFORE YOU READ THIS",
-      systemPrompt: AGENCY_BEFORE_YOU_READ_PROMPT,
+      systemPrompt: STAGE_16_UNIVERSAL_RULES + AGENCY_BEFORE_YOU_READ_PROMPT,
       pipelineInputs: [cut(s.stage_1_output, 1500)],
       targetWords: 300,
       maxTokens: 700,
@@ -409,7 +464,7 @@ export function getAgencySections(s: SessionForStage16): SectionDef[] {
     {
       name: "strategic_context",
       title: "PART ONE — THE STRATEGIC CONTEXT",
-      systemPrompt: AGENCY_STRATEGIC_CONTEXT_PROMPT,
+      systemPrompt: STAGE_16_UNIVERSAL_RULES + AGENCY_STRATEGIC_CONTEXT_PROMPT,
       pipelineInputs: [cut(s.stage_1_output, 2000), cut(s.stage_2_output, 1500)],
       targetWords: 350,
       maxTokens: 800,
@@ -417,7 +472,7 @@ export function getAgencySections(s: SessionForStage16): SectionDef[] {
     {
       name: "category",
       title: "PART TWO — THE CATEGORY",
-      systemPrompt: AGENCY_CATEGORY_PROMPT,
+      systemPrompt: STAGE_16_UNIVERSAL_RULES + AGENCY_CATEGORY_PROMPT,
       pipelineInputs: [cut(s.stage_2_output, 3000)],
       targetWords: 400,
       maxTokens: 900,
@@ -425,7 +480,7 @@ export function getAgencySections(s: SessionForStage16): SectionDef[] {
     {
       name: "human_truth",
       title: "PART THREE — THE HUMAN TRUTH",
-      systemPrompt: AGENCY_HUMAN_TRUTH_PROMPT,
+      systemPrompt: STAGE_16_UNIVERSAL_RULES + AGENCY_HUMAN_TRUTH_PROMPT,
       pipelineInputs: [cut(s.stage_7_output, 2000), cut(s.stage_5_output, 1500)],
       targetWords: 350,
       maxTokens: 800,
@@ -433,7 +488,7 @@ export function getAgencySections(s: SessionForStage16): SectionDef[] {
     {
       name: "why_brand",
       title: "PART FOUR — WHY THIS BRAND",
-      systemPrompt: AGENCY_WHY_BRAND_PROMPT,
+      systemPrompt: STAGE_16_UNIVERSAL_RULES + AGENCY_WHY_BRAND_PROMPT,
       pipelineInputs: [cut(s.stage_13_output, 2500)],
       targetWords: 300,
       maxTokens: 700,
@@ -441,7 +496,7 @@ export function getAgencySections(s: SessionForStage16): SectionDef[] {
     {
       name: "what_was_set_aside",
       title: "PART FIVE — WHAT WAS SET ASIDE",
-      systemPrompt: AGENCY_WHAT_WAS_SET_ASIDE_PROMPT,
+      systemPrompt: STAGE_16_UNIVERSAL_RULES + AGENCY_WHAT_WAS_SET_ASIDE_PROMPT,
       pipelineInputs: [
         cut(s.stage_8_output, 3000),
         cut(s.stage_12_output, 1000),
@@ -452,7 +507,7 @@ export function getAgencySections(s: SessionForStage16): SectionDef[] {
     {
       name: "proposition",
       title: "PART SIX — THE PROPOSITION",
-      systemPrompt: AGENCY_PROPOSITION_PROMPT,
+      systemPrompt: STAGE_16_UNIVERSAL_RULES + AGENCY_PROPOSITION_PROMPT,
       pipelineInputs: [
         cut(s.stage_12_output, 1500),
         cut(s.stage_7_output, 1500),
@@ -465,7 +520,7 @@ export function getAgencySections(s: SessionForStage16): SectionDef[] {
     {
       name: "creative_world",
       title: "PART SEVEN — THE CREATIVE WORLD",
-      systemPrompt: AGENCY_CREATIVE_WORLD_PROMPT,
+      systemPrompt: STAGE_16_UNIVERSAL_RULES + AGENCY_CREATIVE_WORLD_PROMPT,
       pipelineInputs: [
         cut(s.stage_14c_output, 3000),
         cut(s.stage_14_output, 1500),
@@ -477,7 +532,7 @@ export function getAgencySections(s: SessionForStage16): SectionDef[] {
     {
       name: "across_channels",
       title: "PART EIGHT — ACROSS CHANNELS",
-      systemPrompt: AGENCY_ACROSS_CHANNELS_PROMPT,
+      systemPrompt: STAGE_16_UNIVERSAL_RULES + AGENCY_ACROSS_CHANNELS_PROMPT,
       pipelineInputs: [cut(s.stage_14b_output, 2500)],
       targetWords: 400,
       maxTokens: 900,
@@ -485,7 +540,7 @@ export function getAgencySections(s: SessionForStage16): SectionDef[] {
     {
       name: "brief_to_creative",
       title: "PART NINE — THE BRIEF TO CREATIVE TEAMS",
-      systemPrompt: AGENCY_BRIEF_TO_CREATIVE_PROMPT,
+      systemPrompt: STAGE_16_UNIVERSAL_RULES + AGENCY_BRIEF_TO_CREATIVE_PROMPT,
       pipelineInputs: [
         `PROPOSITION: "${smp}"`,
         cut(s.stage_14c_output, 1000),
@@ -502,7 +557,7 @@ export function getWorkshopSections(s: SessionForStage16): SectionDef[] {
     {
       name: "for_facilitator",
       title: "FOR THE FACILITATOR",
-      systemPrompt: WORKSHOP_FOR_FACILITATOR_PROMPT,
+      systemPrompt: STAGE_16_UNIVERSAL_RULES + WORKSHOP_FOR_FACILITATOR_PROMPT,
       pipelineInputs: [cut(s.stage_1_output, 1500)],
       targetWords: 300,
       maxTokens: 700,
@@ -510,7 +565,7 @@ export function getWorkshopSections(s: SessionForStage16): SectionDef[] {
     {
       name: "preparation",
       title: "PREPARATION",
-      systemPrompt: WORKSHOP_PREPARATION_PROMPT,
+      systemPrompt: STAGE_16_UNIVERSAL_RULES + WORKSHOP_PREPARATION_PROMPT,
       pipelineInputs: [cut(s.stage_1_output, 1000)],
       targetWords: 200,
       maxTokens: 500,
@@ -518,7 +573,7 @@ export function getWorkshopSections(s: SessionForStage16): SectionDef[] {
     {
       name: "session_one",
       title: "SESSION ONE — THE SITUATION WE'RE IN",
-      systemPrompt: WORKSHOP_SESSION_ONE_PROMPT,
+      systemPrompt: STAGE_16_UNIVERSAL_RULES + WORKSHOP_SESSION_ONE_PROMPT,
       pipelineInputs: [cut(s.stage_1_output, 2000)],
       targetWords: 400,
       maxTokens: 900,
@@ -526,7 +581,7 @@ export function getWorkshopSections(s: SessionForStage16): SectionDef[] {
     {
       name: "session_two",
       title: "SESSION TWO — THE CATEGORY WHITESPACE",
-      systemPrompt: WORKSHOP_SESSION_TWO_PROMPT,
+      systemPrompt: STAGE_16_UNIVERSAL_RULES + WORKSHOP_SESSION_TWO_PROMPT,
       pipelineInputs: [cut(s.stage_2_output, 2500)],
       targetWords: 400,
       maxTokens: 900,
@@ -534,7 +589,7 @@ export function getWorkshopSections(s: SessionForStage16): SectionDef[] {
     {
       name: "session_three",
       title: "SESSION THREE — THE HUMAN TRUTH",
-      systemPrompt: WORKSHOP_SESSION_THREE_PROMPT,
+      systemPrompt: STAGE_16_UNIVERSAL_RULES + WORKSHOP_SESSION_THREE_PROMPT,
       pipelineInputs: [cut(s.stage_7_output, 2500)],
       targetWords: 400,
       maxTokens: 900,
@@ -542,7 +597,7 @@ export function getWorkshopSections(s: SessionForStage16): SectionDef[] {
     {
       name: "session_four",
       title: "SESSION FOUR — THE REVEAL",
-      systemPrompt: WORKSHOP_SESSION_FOUR_PROMPT,
+      systemPrompt: STAGE_16_UNIVERSAL_RULES + WORKSHOP_SESSION_FOUR_PROMPT,
       pipelineInputs: [
         cut(s.stage_12_output, 1500),
         `SELECTED PROPOSITION: "${smp}"`,
@@ -554,7 +609,7 @@ export function getWorkshopSections(s: SessionForStage16): SectionDef[] {
     {
       name: "session_five",
       title: "SESSION FIVE — WHAT MUST CHANGE",
-      systemPrompt: WORKSHOP_SESSION_FIVE_PROMPT,
+      systemPrompt: STAGE_16_UNIVERSAL_RULES + WORKSHOP_SESSION_FIVE_PROMPT,
       pipelineInputs: [cut(s.stage_13_output, 1500), cut(s.stage_15_output, 1000)],
       targetWords: 350,
       maxTokens: 800,
@@ -562,7 +617,7 @@ export function getWorkshopSections(s: SessionForStage16): SectionDef[] {
     {
       name: "appendix_a",
       title: "APPENDIX A — PARTICIPANT CARDS",
-      systemPrompt: WORKSHOP_APPENDIX_A_PROMPT,
+      systemPrompt: STAGE_16_UNIVERSAL_RULES + WORKSHOP_APPENDIX_A_PROMPT,
       pipelineInputs: [cut(s.stage_7_output, 1500)],
       targetWords: 250,
       maxTokens: 600,
@@ -570,7 +625,7 @@ export function getWorkshopSections(s: SessionForStage16): SectionDef[] {
     {
       name: "appendix_b",
       title: "APPENDIX B — DIFFICULT MOMENTS",
-      systemPrompt: WORKSHOP_APPENDIX_B_PROMPT,
+      systemPrompt: STAGE_16_UNIVERSAL_RULES + WORKSHOP_APPENDIX_B_PROMPT,
       pipelineInputs: [cut(s.stage_13_output, 1500)],
       targetWords: 300,
       maxTokens: 700,
