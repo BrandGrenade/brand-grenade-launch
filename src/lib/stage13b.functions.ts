@@ -44,7 +44,7 @@ export const runStage13b = createServerFn({ method: "POST" })
         }),
         sessionId: data.sessionId,
         stageLabel: "Stage 13B",
-        maxTokens: 2000,
+        maxTokens: 12000,
         stageNumber: "13B",
         stageName: "Historical Validation",
       })) {
