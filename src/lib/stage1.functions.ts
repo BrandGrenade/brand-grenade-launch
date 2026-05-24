@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { streamClaude } from "./claude.server";
 import { STAGE_1_SYSTEM_PROMPT, buildStage1UserMessage } from "./stage1-prompt";
 
@@ -13,8 +14,9 @@ const CreateSessionInput = z.object({
 });
 
 export const createSession = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((input) => CreateSessionInput.parse(input))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const { data: row, error } = await supabaseAdmin
       .from("sessions")
       .insert({
@@ -25,12 +27,14 @@ export const createSession = createServerFn({ method: "POST" })
         status: "running",
         current_stage: 1,
         dev_mode: data.devMode ?? false,
+        user_id: context.userId,
       })
       .select("id")
       .single();
     if (error) throw new Error(`Failed to create session: ${error.message}`);
     return { sessionId: row.id as string };
   });
+
 
 const RunStage1Input = z.object({
   sessionId: z.string().uuid(),
