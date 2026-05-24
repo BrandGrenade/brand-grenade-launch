@@ -3,7 +3,6 @@ import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { streamClaude } from "./claude.server";
 import { STAGE_12_SYSTEM_PROMPT, buildStage12UserMessage } from "./stage12-prompt";
-import { trimScoredSMPsForDownstream } from "./context-trim";
 
 const Input = z.object({
   sessionId: z.string().uuid(),
