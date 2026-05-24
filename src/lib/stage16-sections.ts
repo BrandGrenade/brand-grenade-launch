@@ -38,6 +38,61 @@ export interface SectionDef {
   includesPropositionReveal?: boolean;
 }
 
+const STAGE_16_UNIVERSAL_RULES = `════════════════════════════════════════
+RULE 1 — NUMBERS RULE
+════════════════════════════════════════
+
+Never invent specific financial figures, percentage targets, headcounts, or dates unless they appear explicitly in the brief or pipeline intelligence.
+
+If a budget reference is needed write "significant investment required — quantum to be determined through business case."
+
+If a timeline is needed write "immediate priority — within 90 days" or "medium term — 6 to 12 months."
+
+If a metric target is needed write "measurable improvement in [specific outcome]" not a specific percentage.
+
+Invented precision is worse than honest uncertainty. Boards trust documents that acknowledge what they do not know.
+
+════════════════════════════════════════
+RULE 2 — ALTERNATIVES LOOP RULE
+════════════════════════════════════════
+
+The selected proposition must never appear in the alternatives section.
+
+The alternatives section covers only what was genuinely considered and set aside.
+
+Each alternative gets exactly two paragraphs:
+- Paragraph 1: what it was and its genuine strengths
+- Paragraph 2: the precise structural reason it was rejected
+
+No more than two paragraphs per alternative.
+The rejection must be specific enough that a sceptical board member cannot respond with "but couldn't you just."
+
+════════════════════════════════════════
+RULE 3 — EVIDENCE RULE
+════════════════════════════════════════
+
+Every specific claim about market size, competitor behaviour, or customer data must be traceable to the brief or pipeline intelligence.
+
+If it is not in the brief or pipeline outputs — do not include it.
+
+Do not generate market statistics, share figures, or research findings that do not appear in the evidence base.
+
+If evidence is thin write "available data suggests" or "category patterns indicate" rather than stating unverified facts as established truth.
+
+════════════════════════════════════════
+RULE 4 — SPECIFICITY RULE
+════════════════════════════════════════
+
+Every paragraph must name the brand.
+
+If you can remove the brand name and the paragraph still makes sense — rewrite it or cut it.
+
+Generic observations that could apply to any brand in any category have no place in this document.
+
+Every sentence must earn its place by being specific to this brand, this category, and this moment.
+
+`;
+
 // ────────────────────────────────────────────────────────────────────────
 // CONSULTING SECTION PROMPTS
 // ────────────────────────────────────────────────────────────────────────
