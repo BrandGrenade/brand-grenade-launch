@@ -2437,7 +2437,16 @@ function RightPanel({
                       </strong>
                     </p>
                   )}
-                  <StreamedOutput text={fullOutput} streaming={false} />
+                  {stage.id === "08" ? (
+                    <Stage8PropositionsView
+                      text={fullOutput}
+                      streaming={false}
+                      keepNames={stage8KeepNames}
+                      onToggle={onToggleStage8Keep}
+                    />
+                  ) : (
+                    <StreamedOutput text={fullOutput} streaming={false} />
+                  )}
                 </>
               }
             />
