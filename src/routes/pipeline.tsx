@@ -1572,6 +1572,37 @@ function PipelineView() {
           stage1bRequired={selected.id === "01" ? (session?.stage_1b_required ?? false) : false}
           onRetry={async () => {
             const id = selected.id;
+            // Stage 8 selective regenerate: if the user unchecked any
+            // proposition, regenerate only those instead of the full stage.
+            if (id === "08" && stage8Output && sessionId) {
+              const allBlocks = splitStage8Propositions(stage8Output);
+              const allNames = allBlocks.map((b) => b.name);
+              const allChecked = allNames.every((n) => stage8KeepNames.has(n));
+              if (!allChecked) {
+                setStage8Error(null);
+                setStatuses((p) => ({ ...p, "08": "running" }));
+                try {
+                  await consumeStream(
+                    await regenerateStage8SelectiveFn({
+                      data: {
+                        sessionId,
+                        keepTerritories: allNames.filter((n) =>
+                          stage8KeepNames.has(n),
+                        ),
+                      },
+                    }),
+                    setStage8Output,
+                  );
+                } catch (err) {
+                  setStage8Error(
+                    err instanceof Error ? err.message : "Stage 8 selective regenerate failed",
+                  );
+                  setStatuses((p) => ({ ...p, "08": "error" }));
+                }
+                return;
+              }
+              // all checked → fall through to the normal full-retry path
+            }
             const map: Record<string, () => void> = {
               "02": () => {
                 setStage2Error(null);
