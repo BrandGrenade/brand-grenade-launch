@@ -246,3 +246,146 @@ export const confirmCheckpointB = createServerFn({ method: "POST" })
     if (error) throw new Error(`Failed to confirm Checkpoint B: ${error.message}`);
     return { ok: true };
   });
+
+// Split a Stage 8 markdown output into proposition blocks, one per `## ` heading.
+function splitPropositionBlocks(text: string): Array<{ name: string; markdown: string }> {
+  const lines = text.split("\n");
+  const blocks: Array<{ name: string; markdown: string[] }> = [];
+  let current: { name: string; markdown: string[] } | null = null;
+  for (const raw of lines) {
+    const m = raw.match(/^##\s+(.+?)\s*$/);
+    if (m) {
+      if (current) blocks.push(current);
+      const name = m[1]
+        .replace(/^\*+|\*+$/g, "")
+        .replace(/^FIELD\s*\d+\s*[—\-:]\s*/i, "")
+        .trim();
+      current = { name, markdown: [raw] };
+    } else if (current) {
+      current.markdown.push(raw);
+    }
+  }
+  if (current) blocks.push(current);
+  return blocks.map((b) => ({
+    name: b.name,
+    markdown: b.markdown.join("\n").replace(/\s+$/g, ""),
+  }));
+}
+
+const SelectiveInput = z.object({
+  sessionId: z.string().uuid(),
+  keepTerritories: z.array(z.string()).default([]),
+});
+
+/**
+ * Regenerate ONLY the propositions whose territory names are NOT in
+ * `keepTerritories`. Kept propositions are preserved verbatim; the
+ * regenerated ones replace the rest, and the merged output is saved.
+ *
+ * Order in the saved output follows the current Stage 7 territory order.
+ */
+export const regenerateStage8Selective = createServerFn({ method: "POST" })
+  .inputValidator((i) => SelectiveInput.parse(i))
+  .handler(async function* ({ data }) {
+    const { data: session, error } = await supabaseAdmin
+      .from("sessions")
+      .select(
+        "brand_name, category, stage_2_output, stage_3_output, stage_7_output, stage_8_output",
+      )
+      .eq("id", data.sessionId)
+      .single();
+    if (error || !session) throw new Error(`Session not found: ${error?.message ?? "no row"}`);
+    if (!session.stage_7_output) throw new Error("Stage 7 output missing");
+    if (!session.stage_8_output) throw new Error("Stage 8 output missing");
+
+    const allTerritories = extractTerritoryNames(session.stage_7_output);
+    const existingBlocks = splitPropositionBlocks(session.stage_8_output);
+    const existingByName = new Map(existingBlocks.map((b) => [b.name, b]));
+
+    const keepSet = new Set(data.keepTerritories);
+    const toRegenerate = allTerritories.filter((n) => !keepSet.has(n));
+
+    if (toRegenerate.length === 0) {
+      yield { delta: session.stage_8_output };
+      yield { done: true as const, output: session.stage_8_output };
+      return;
+    }
+
+    await supabaseAdmin
+      .from("sessions")
+      .update({ current_stage: 8, status: "running", stage_8_error: null })
+      .eq("id", data.sessionId);
+
+    const baseUserMessage = buildStage8UserMessage({
+      brandName: session.brand_name,
+      category: session.category,
+      stage7Output: session.stage_7_output,
+      cmm: session.stage_2_output ?? "",
+      constraintMatrix: session.stage_3_output ?? "",
+      territoryCount: allTerritories.length,
+      territoryNames: allTerritories,
+    });
+
+    const done = allTerritories.filter((n) => keepSet.has(n));
+    const continuationMessage = buildStage8ContinuationMessage({
+      done,
+      remaining: toRegenerate,
+    });
+
+    let newOutput = "";
+    try {
+      for await (const delta of streamClaude({
+        systemPrompt: STAGE_8_SYSTEM_PROMPT,
+        userMessage: `${baseUserMessage}\n\n---\n\n${continuationMessage}\n\nGenerate fresh propositions for the listed remaining territories only. Do not repeat the kept ones.`,
+        maxTokens: 12000,
+        temperature: 0.7,
+        sessionId: data.sessionId,
+        stageLabel: "Stage 8 (selective regenerate)",
+        stageNumber: "8",
+        stageName: "Proposition Generation",
+      })) {
+        newOutput += delta;
+        yield { delta };
+      }
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Stage 8 selective regenerate failed";
+      await supabaseAdmin
+        .from("sessions")
+        .update({ stage_8_error: msg })
+        .eq("id", data.sessionId);
+      throw e instanceof Error ? e : new Error(msg);
+    }
+
+    const newBlocks = splitPropositionBlocks(newOutput);
+    const newByName = new Map(newBlocks.map((b) => [b.name, b]));
+    const positionalQueue = newBlocks.slice();
+
+    const mergedBlocks: Array<{ name: string; markdown: string }> = [];
+    for (const name of allTerritories) {
+      if (keepSet.has(name) && existingByName.has(name)) {
+        mergedBlocks.push(existingByName.get(name)!);
+        continue;
+      }
+      const matched = newByName.get(name);
+      if (matched) {
+        mergedBlocks.push(matched);
+        const idx = positionalQueue.indexOf(matched);
+        if (idx >= 0) positionalQueue.splice(idx, 1);
+      } else if (positionalQueue.length > 0) {
+        const next = positionalQueue.shift()!;
+        mergedBlocks.push({ name, markdown: next.markdown });
+      } else if (existingByName.has(name)) {
+        mergedBlocks.push(existingByName.get(name)!);
+      }
+    }
+
+    const merged = mergedBlocks.map((b) => b.markdown).join("\n\n");
+
+    const { error: updateErr } = await supabaseAdmin
+      .from("sessions")
+      .update({ stage_8_output: merged, stage_8_error: null })
+      .eq("id", data.sessionId);
+    if (updateErr) throw new Error(`Failed to save Stage 8 output: ${updateErr.message}`);
+
+    yield { done: true as const, output: merged };
+  });
