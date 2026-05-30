@@ -2770,7 +2770,112 @@ function parseBlocks(text: string): Block[] {
   return blocks;
 }
 
-// Styled API-error card per spec.
+// Split a Stage 8 markdown output into per-proposition blocks, keyed by
+// territory name (the text following `## `). Used to render checkboxes
+// per-proposition so the user can pick which ones to regenerate on Retry.
+export function splitStage8Propositions(
+  text: string,
+): Array<{ name: string; markdown: string }> {
+  const lines = text.split("\n");
+  const blocks: Array<{ name: string; markdown: string[] }> = [];
+  let current: { name: string; markdown: string[] } | null = null;
+  for (const raw of lines) {
+    const m = raw.match(/^##\s+(.+?)\s*$/);
+    if (m) {
+      if (current) blocks.push(current);
+      const name = m[1]
+        .replace(/^\*+|\*+$/g, "")
+        .replace(/^FIELD\s*\d+\s*[—\-:]\s*/i, "")
+        .trim();
+      current = { name, markdown: [raw] };
+    } else if (current) {
+      current.markdown.push(raw);
+    }
+  }
+  if (current) blocks.push(current);
+  return blocks.map((b) => ({
+    name: b.name,
+    markdown: b.markdown.join("\n").replace(/\s+$/g, ""),
+  }));
+}
+
+// Renders Stage 8 output as a list of proposition cards with a checkbox
+// per card. Checked = keep on next Retry. Unchecked = regenerate on next Retry.
+function Stage8PropositionsView({
+  text,
+  streaming,
+  keepNames,
+  onToggle,
+}: {
+  text: string;
+  streaming: boolean;
+  keepNames: Set<string>;
+  onToggle: (name: string, keep: boolean) => void;
+}) {
+  const blocks = splitStage8Propositions(text);
+  // While streaming with no complete blocks yet, fall back to the live stream.
+  if (blocks.length === 0) {
+    return <StreamedOutput text={text} streaming={streaming} />;
+  }
+  return (
+    <div>
+      <p
+        className="text-body-sm"
+        style={{ color: "#8A8680", marginBottom: 16 }}
+      >
+        Uncheck any proposition you want to regenerate. Checked propositions
+        are kept verbatim when you press Retry this stage.
+      </p>
+      {blocks.map((b, i) => {
+        const checked = keepNames.has(b.name);
+        const inputId = `stage8-keep-${i}`;
+        return (
+          <div
+            key={`${b.name}-${i}`}
+            style={{
+              display: "flex",
+              gap: 16,
+              alignItems: "flex-start",
+              borderTop: i === 0 ? "none" : "1px solid #2A2A2A",
+              paddingTop: i === 0 ? 0 : 24,
+              marginTop: i === 0 ? 0 : 8,
+            }}
+          >
+            <label
+              htmlFor={inputId}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                marginTop: 36,
+                cursor: streaming ? "not-allowed" : "pointer",
+                opacity: streaming ? 0.5 : 1,
+              }}
+            >
+              <input
+                id={inputId}
+                type="checkbox"
+                checked={checked}
+                disabled={streaming}
+                onChange={(e) => onToggle(b.name, e.target.checked)}
+                style={{
+                  width: 18,
+                  height: 18,
+                  accentColor: "#C8873A",
+                  cursor: streaming ? "not-allowed" : "pointer",
+                }}
+                aria-label={`Keep "${b.name}" on next retry`}
+              />
+            </label>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <StreamedOutput text={b.markdown} streaming={false} />
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 export function ErrorCard({
   stageNumber,
   message,
