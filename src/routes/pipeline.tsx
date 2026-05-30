@@ -374,11 +374,26 @@ function PipelineView() {
   const [resubmitting, setResubmitting] = useState(false);
   const [savingRationale, setSavingRationale] = useState(false);
   const [retryNonce, setRetryNonce] = useState(0);
-  const [pendingFeedback, setPendingFeedback] = useState<Record<string, string>>({});
-  // Stage 8 selective regenerate — set of territory names the user wants to KEEP
-  // (i.e. checkbox = checked). Defaults to all-checked whenever the underlying
-  // proposition set changes.
   const [stage8KeepNames, setStage8KeepNames] = useState<Set<string>>(new Set());
+
+  // Whenever Stage 8's set of proposition names changes (new generation,
+  // selective regenerate finished, etc.), default every proposition to
+  // checked = keep. We only react to the *name set* so toggling a checkbox
+  // does not reset the user's selection.
+  const stage8NamesKey = useMemo(() => {
+    if (!stage8Output) return "";
+    return splitStage8Propositions(stage8Output)
+      .map((b) => b.name)
+      .join("|");
+  }, [stage8Output]);
+  useEffect(() => {
+    if (!stage8NamesKey) {
+      setStage8KeepNames(new Set());
+      return;
+    }
+    setStage8KeepNames(new Set(stage8NamesKey.split("|").filter(Boolean)));
+  }, [stage8NamesKey]);
+
 
   const resetLocalFromStage = (stageId: string) => {
     if (stageId === "01") {
