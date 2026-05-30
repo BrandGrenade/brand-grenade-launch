@@ -2469,7 +2469,16 @@ function RightPanel({
 
             <article style={{ paddingBottom: 80 }}>
               {isRunning && !text ? <ProgressMessages stageName={stage.name} /> : null}
-              <StreamedOutput text={text} streaming={isRunning} />
+              {stage.id === "08" && !isRunning && text ? (
+                <Stage8PropositionsView
+                  text={text}
+                  streaming={isRunning}
+                  keepNames={stage8KeepNames}
+                  onToggle={onToggleStage8Keep}
+                />
+              ) : (
+                <StreamedOutput text={text} streaming={isRunning} />
+              )}
               {isRunning ? <StallWatcher stageKey={stage.id} onAutoRetry={onRetry} /> : null}
             </article>
           </>
