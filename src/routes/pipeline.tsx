@@ -16,7 +16,7 @@ import { runStage4 } from "@/lib/stage4.functions";
 import { runStage5 } from "@/lib/stage5.functions";
 import { runStage6 } from "@/lib/stage6.functions";
 import { runStage7 } from "@/lib/stage7.functions";
-import { runStage8, confirmCheckpointB } from "@/lib/stage8.functions";
+
 import { runStage9 } from "@/lib/stage9.functions";
 import { runStage10 } from "@/lib/stage10.functions";
 import { runStage11 } from "@/lib/stage11.functions";
