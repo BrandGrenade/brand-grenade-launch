@@ -2294,6 +2294,8 @@ function RightPanel({
   checkpointResubmitting,
   customCheckpoint,
   retryStatus,
+  stage8KeepNames,
+  onToggleStage8Keep,
 }: {
   stage: Stage;
   status: StageStatus;
@@ -2323,6 +2325,8 @@ function RightPanel({
   onConfirmCheckpoint: (stageId: string, notes?: string[]) => void;
   customCheckpoint?: ReactNode;
   retryStatus?: string | null;
+  stage8KeepNames: Set<string>;
+  onToggleStage8Keep: (name: string, keep: boolean) => void;
 }) {
   const isRunning = status === "running";
   const isCheckpoint = status === "checkpoint";
