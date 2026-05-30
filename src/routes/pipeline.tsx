@@ -28,6 +28,7 @@ import { runStage14b } from "@/lib/stage14b.functions";
 import { runStage14c } from "@/lib/stage14c.functions";
 import { runStage15 } from "@/lib/stage15.functions";
 import { runStage16 } from "@/lib/stage16.functions";
+import { runStage8, confirmCheckpointB, regenerateStage8Selective } from "@/lib/stage8.functions"; // re-imported above; alias here for selective regen
 import { resetStage, resetStageCascade } from "@/lib/retry.functions";
 import { sanitizeStageOutput } from "@/lib/sanitize-output";
 
