@@ -2876,6 +2876,8 @@ function Stage8PropositionsView({
     </div>
   );
 }
+
+// Styled API-error card per spec.
 export function ErrorCard({
   stageNumber,
   message,
