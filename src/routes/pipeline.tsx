@@ -16,7 +16,7 @@ import { runStage4 } from "@/lib/stage4.functions";
 import { runStage5 } from "@/lib/stage5.functions";
 import { runStage6 } from "@/lib/stage6.functions";
 import { runStage7 } from "@/lib/stage7.functions";
-import { runStage8, confirmCheckpointB } from "@/lib/stage8.functions";
+
 import { runStage9 } from "@/lib/stage9.functions";
 import { runStage10 } from "@/lib/stage10.functions";
 import { runStage11 } from "@/lib/stage11.functions";
@@ -28,6 +28,7 @@ import { runStage14b } from "@/lib/stage14b.functions";
 import { runStage14c } from "@/lib/stage14c.functions";
 import { runStage15 } from "@/lib/stage15.functions";
 import { runStage16 } from "@/lib/stage16.functions";
+import { runStage8, confirmCheckpointB, regenerateStage8Selective } from "@/lib/stage8.functions";
 import { resetStage, resetStageCascade } from "@/lib/retry.functions";
 import { sanitizeStageOutput } from "@/lib/sanitize-output";
 
@@ -291,6 +292,7 @@ function PipelineView() {
   const runStage7Fn = useServerFn(runStage7);
   const runStage8Fn = useServerFn(runStage8);
   const confirmCheckpointBFn = useServerFn(confirmCheckpointB);
+  const regenerateStage8SelectiveFn = useServerFn(regenerateStage8Selective);
   const runStage9Fn = useServerFn(runStage9);
   const runStage10Fn = useServerFn(runStage10);
   const runStage11Fn = useServerFn(runStage11);
@@ -373,6 +375,29 @@ function PipelineView() {
   const [savingRationale, setSavingRationale] = useState(false);
   const [retryNonce, setRetryNonce] = useState(0);
   const [pendingFeedback, setPendingFeedback] = useState<Record<string, string>>({});
+  // Stage 8 selective regenerate — set of territory names the user wants to KEEP
+  // (checkbox = checked). Defaults to all-checked whenever the underlying
+  // proposition set changes.
+  const [stage8KeepNames, setStage8KeepNames] = useState<Set<string>>(new Set());
+
+  // Whenever Stage 8's set of proposition names changes (new generation,
+  // selective regenerate finished, etc.), default every proposition to
+  // checked = keep. We only react to the *name set* so toggling a checkbox
+  // does not reset the user's selection.
+  const stage8NamesKey = useMemo(() => {
+    if (!stage8Output) return "";
+    return splitStage8Propositions(stage8Output)
+      .map((b) => b.name)
+      .join("|");
+  }, [stage8Output]);
+  useEffect(() => {
+    if (!stage8NamesKey) {
+      setStage8KeepNames(new Set());
+      return;
+    }
+    setStage8KeepNames(new Set(stage8NamesKey.split("|").filter(Boolean)));
+  }, [stage8NamesKey]);
+
 
   const resetLocalFromStage = (stageId: string) => {
     if (stageId === "01") {
@@ -1499,6 +1524,15 @@ function PipelineView() {
         <RightPanel
           stage={selected}
           status={selectedStatus}
+          stage8KeepNames={stage8KeepNames}
+          onToggleStage8Keep={(name, keep) =>
+            setStage8KeepNames((prev) => {
+              const next = new Set(prev);
+              if (keep) next.add(name);
+              else next.delete(name);
+              return next;
+            })
+          }
           fullOutput={stageOutputs[selected.id] ?? "Output pending."}
           isViewingHistorical={isViewingHistorical}
           onBackToCurrent={() => setSelectedId(currentActiveId)}
@@ -1547,6 +1581,37 @@ function PipelineView() {
           stage1bRequired={selected.id === "01" ? (session?.stage_1b_required ?? false) : false}
           onRetry={async () => {
             const id = selected.id;
+            // Stage 8 selective regenerate: if the user unchecked any
+            // proposition, regenerate only those instead of the full stage.
+            if (id === "08" && stage8Output && sessionId) {
+              const allBlocks = splitStage8Propositions(stage8Output);
+              const allNames = allBlocks.map((b) => b.name);
+              const allChecked = allNames.every((n) => stage8KeepNames.has(n));
+              if (!allChecked) {
+                setStage8Error(null);
+                setStatuses((p) => ({ ...p, "08": "running" }));
+                try {
+                  await consumeStream(
+                    await regenerateStage8SelectiveFn({
+                      data: {
+                        sessionId,
+                        keepTerritories: allNames.filter((n) =>
+                          stage8KeepNames.has(n),
+                        ),
+                      },
+                    }),
+                    setStage8Output,
+                  );
+                } catch (err) {
+                  setStage8Error(
+                    err instanceof Error ? err.message : "Stage 8 selective regenerate failed",
+                  );
+                  setStatuses((p) => ({ ...p, "08": "error" }));
+                }
+                return;
+              }
+              // all checked → fall through to the normal full-retry path
+            }
             const map: Record<string, () => void> = {
               "02": () => {
                 setStage2Error(null);
@@ -2229,6 +2294,8 @@ function RightPanel({
   checkpointResubmitting,
   customCheckpoint,
   retryStatus,
+  stage8KeepNames,
+  onToggleStage8Keep,
 }: {
   stage: Stage;
   status: StageStatus;
@@ -2258,6 +2325,8 @@ function RightPanel({
   onConfirmCheckpoint: (stageId: string, notes?: string[]) => void;
   customCheckpoint?: ReactNode;
   retryStatus?: string | null;
+  stage8KeepNames: Set<string>;
+  onToggleStage8Keep: (name: string, keep: boolean) => void;
 }) {
   const isRunning = status === "running";
   const isCheckpoint = status === "checkpoint";
@@ -2368,7 +2437,16 @@ function RightPanel({
                       </strong>
                     </p>
                   )}
-                  <StreamedOutput text={fullOutput} streaming={false} />
+                  {stage.id === "08" ? (
+                    <Stage8PropositionsView
+                      text={fullOutput}
+                      streaming={false}
+                      keepNames={stage8KeepNames}
+                      onToggle={onToggleStage8Keep}
+                    />
+                  ) : (
+                    <StreamedOutput text={fullOutput} streaming={false} />
+                  )}
                 </>
               }
             />
@@ -2391,7 +2469,16 @@ function RightPanel({
 
             <article style={{ paddingBottom: 80 }}>
               {isRunning && !text ? <ProgressMessages stageName={stage.name} /> : null}
-              <StreamedOutput text={text} streaming={isRunning} />
+              {stage.id === "08" && !isRunning && text ? (
+                <Stage8PropositionsView
+                  text={text}
+                  streaming={isRunning}
+                  keepNames={stage8KeepNames}
+                  onToggle={onToggleStage8Keep}
+                />
+              ) : (
+                <StreamedOutput text={text} streaming={isRunning} />
+              )}
               {isRunning ? <StallWatcher stageKey={stage.id} onAutoRetry={onRetry} /> : null}
             </article>
           </>
@@ -2762,6 +2849,113 @@ function parseBlocks(text: string): Block[] {
   }
   flush();
   return blocks;
+}
+
+// Split a Stage 8 markdown output into per-proposition blocks, keyed by
+// territory name (the text following `## `). Used to render checkboxes
+// per-proposition so the user can pick which ones to regenerate on Retry.
+export function splitStage8Propositions(
+  text: string,
+): Array<{ name: string; markdown: string }> {
+  const lines = text.split("\n");
+  const blocks: Array<{ name: string; markdown: string[] }> = [];
+  let current: { name: string; markdown: string[] } | null = null;
+  for (const raw of lines) {
+    const m = raw.match(/^##\s+(.+?)\s*$/);
+    if (m) {
+      if (current) blocks.push(current);
+      const name = m[1]
+        .replace(/^\*+|\*+$/g, "")
+        .replace(/^FIELD\s*\d+\s*[—\-:]\s*/i, "")
+        .trim();
+      current = { name, markdown: [raw] };
+    } else if (current) {
+      current.markdown.push(raw);
+    }
+  }
+  if (current) blocks.push(current);
+  return blocks.map((b) => ({
+    name: b.name,
+    markdown: b.markdown.join("\n").replace(/\s+$/g, ""),
+  }));
+}
+
+// Renders Stage 8 output as a list of proposition cards with a checkbox
+// per card. Checked = keep on next Retry. Unchecked = regenerate on next Retry.
+function Stage8PropositionsView({
+  text,
+  streaming,
+  keepNames,
+  onToggle,
+}: {
+  text: string;
+  streaming: boolean;
+  keepNames: Set<string>;
+  onToggle: (name: string, keep: boolean) => void;
+}) {
+  const blocks = splitStage8Propositions(text);
+  // While streaming with no complete blocks yet, fall back to the live stream.
+  if (blocks.length === 0) {
+    return <StreamedOutput text={text} streaming={streaming} />;
+  }
+  return (
+    <div>
+      <p
+        className="text-body-sm"
+        style={{ color: "#8A8680", marginBottom: 16 }}
+      >
+        Uncheck any proposition you want to regenerate. Checked propositions
+        are kept verbatim when you press Retry this stage.
+      </p>
+      {blocks.map((b, i) => {
+        const checked = keepNames.has(b.name);
+        const inputId = `stage8-keep-${i}`;
+        return (
+          <div
+            key={`${b.name}-${i}`}
+            style={{
+              display: "flex",
+              gap: 16,
+              alignItems: "flex-start",
+              borderTop: i === 0 ? "none" : "1px solid #2A2A2A",
+              paddingTop: i === 0 ? 0 : 24,
+              marginTop: i === 0 ? 0 : 8,
+            }}
+          >
+            <label
+              htmlFor={inputId}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                marginTop: 36,
+                cursor: streaming ? "not-allowed" : "pointer",
+                opacity: streaming ? 0.5 : 1,
+              }}
+            >
+              <input
+                id={inputId}
+                type="checkbox"
+                checked={checked}
+                disabled={streaming}
+                onChange={(e) => onToggle(b.name, e.target.checked)}
+                style={{
+                  width: 18,
+                  height: 18,
+                  accentColor: "#C8873A",
+                  cursor: streaming ? "not-allowed" : "pointer",
+                }}
+                aria-label={`Keep "${b.name}" on next retry`}
+              />
+            </label>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <StreamedOutput text={b.markdown} streaming={false} />
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
 }
 
 // Styled API-error card per spec.
