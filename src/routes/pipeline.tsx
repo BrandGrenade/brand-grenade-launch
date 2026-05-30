@@ -1524,6 +1524,15 @@ function PipelineView() {
         <RightPanel
           stage={selected}
           status={selectedStatus}
+          stage8KeepNames={stage8KeepNames}
+          onToggleStage8Keep={(name, keep) =>
+            setStage8KeepNames((prev) => {
+              const next = new Set(prev);
+              if (keep) next.add(name);
+              else next.delete(name);
+              return next;
+            })
+          }
           fullOutput={stageOutputs[selected.id] ?? "Output pending."}
           isViewingHistorical={isViewingHistorical}
           onBackToCurrent={() => setSelectedId(currentActiveId)}
