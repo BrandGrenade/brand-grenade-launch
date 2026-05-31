@@ -858,7 +858,7 @@ function Stage19({ session, onChange, goNext }: { session: SessionRow; onChange:
 // ═════════════════════════════════════════════════════════════════════════
 // STAGE 20 — Master Detonation Brief
 // ═════════════════════════════════════════════════════════════════════════
-function Stage20({ session, onChange, goNext }: { session: SessionRow; onChange: () => void; goNext: () => void }) {
+function Stage20({ session, onChange, goNext }: { session: SessionRow; onChange: () => void | Promise<void>; goNext: () => void }) {
   const run = useServerFn(runStage20);
   const load = useServerFn(loadStage20);
   const retry = useServerFn(retryStage20);
@@ -869,6 +869,7 @@ function Stage20({ session, onChange, goNext }: { session: SessionRow; onChange:
   const [approved, setApproved] = useState<boolean>(Boolean(session.stage_20_approved));
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [autoTriggered, setAutoTriggered] = useState(false);
 
   useEffect(() => {
     if (output === null) load({ data: { sessionId: session.id } }).then((r) => {
@@ -881,7 +882,7 @@ function Stage20({ session, onChange, goNext }: { session: SessionRow; onChange:
 
   const handleRun = async () => {
     setBusy(true); setErr(null);
-    try { const r = await run({ data: { sessionId: session.id } }); setOutput(r.output); onChange(); }
+    try { const r = await run({ data: { sessionId: session.id } }); setOutput(r.output); await onChange(); }
     catch (e) { setErr(e instanceof Error ? e.message : "Stage 20 failed"); }
     finally { setBusy(false); }
   };
@@ -889,24 +890,37 @@ function Stage20({ session, onChange, goNext }: { session: SessionRow; onChange:
     setBusy(true); setErr(null);
     try {
       const r = await retry({ data: { sessionId: session.id, cardIds: [], redirectInstructions: {} } });
-      setOutput(r.output); setApproved(false); onChange();
+      setOutput(r.output); setApproved(false); await onChange();
     } catch (e) { setErr(e instanceof Error ? e.message : "Retry failed"); }
     finally { setBusy(false); }
   };
 
   const handleSectionRegen = async (sectionId: string, feedback: string): Promise<string> => {
     const r = await regenSection({ data: { sessionId: session.id, sectionId, feedback } });
-    setOutput(r.output); setApproved(false); onChange();
+    setOutput(r.output); setApproved(false); await onChange();
     const updated = parseStage20Local(r.output).find((s) => s.id === sectionId);
     return updated?.content ?? "";
   };
 
   const handleApprove = async () => {
     setBusy(true); setErr(null);
-    try { await approve({ data: { sessionId: session.id } }); setApproved(true); onChange(); goNext(); }
+    try { await approve({ data: { sessionId: session.id } }); setApproved(true); await onChange(); goNext(); }
     catch (e) { setErr(e instanceof Error ? e.message : "Approval failed"); }
     finally { setBusy(false); }
   };
+
+  useEffect(() => {
+    if (autoTriggered) return;
+    if (!session.stage_19_output) return;
+    if (output !== null && output !== "") return;
+    if (busy) return;
+    setAutoTriggered(true);
+    void handleRun();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session.stage_19_output, output]);
+
+  const handleProceed = async () => { await onChange(); goNext(); };
+
 
   const composite = score.composite ?? 0;
   const canApprove = composite >= 40 && !approved;
