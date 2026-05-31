@@ -30,9 +30,10 @@ export function DetonationOutputCard({
   onRedirectChange,
   smp,
   children,
+  showCheckbox = false,
 }: DetonationOutputCardProps) {
   const inputId = `detonation-keep-${cardId}`;
-  const showRedirect = !isChecked;
+  const showRedirect = showCheckbox && !isChecked;
 
   return (
     <div
