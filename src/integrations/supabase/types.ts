@@ -99,10 +99,29 @@ export type Database = {
           stage_16_error: string | null
           stage_16_format: string | null
           stage_16_workshop_output: string | null
+          stage_17_error: string | null
+          stage_17_output: string | null
+          stage_17_selected_territory: string | null
+          stage_17b_error: string | null
+          stage_17b_output: string | null
+          stage_18_error: string | null
+          stage_18_output: string | null
+          stage_18_selected_detonation: string | null
+          stage_19_error: string | null
+          stage_19_output: string | null
           stage_1b_output: string | null
           stage_1b_required: boolean
           stage_2_error: string | null
           stage_2_output: string | null
+          stage_20_approved: boolean
+          stage_20_error: string | null
+          stage_20_output: string | null
+          stage_21_error: string | null
+          stage_21_outputs: Json | null
+          stage_22_brand_architecture: string | null
+          stage_22_distinctive_assets: string | null
+          stage_22_error: string | null
+          stage_22_output: string | null
           stage_3_error: string | null
           stage_3_output: string | null
           stage_4_error: string | null
@@ -215,10 +234,29 @@ export type Database = {
           stage_16_error?: string | null
           stage_16_format?: string | null
           stage_16_workshop_output?: string | null
+          stage_17_error?: string | null
+          stage_17_output?: string | null
+          stage_17_selected_territory?: string | null
+          stage_17b_error?: string | null
+          stage_17b_output?: string | null
+          stage_18_error?: string | null
+          stage_18_output?: string | null
+          stage_18_selected_detonation?: string | null
+          stage_19_error?: string | null
+          stage_19_output?: string | null
           stage_1b_output?: string | null
           stage_1b_required?: boolean
           stage_2_error?: string | null
           stage_2_output?: string | null
+          stage_20_approved?: boolean
+          stage_20_error?: string | null
+          stage_20_output?: string | null
+          stage_21_error?: string | null
+          stage_21_outputs?: Json | null
+          stage_22_brand_architecture?: string | null
+          stage_22_distinctive_assets?: string | null
+          stage_22_error?: string | null
+          stage_22_output?: string | null
           stage_3_error?: string | null
           stage_3_output?: string | null
           stage_4_error?: string | null
@@ -331,10 +369,29 @@ export type Database = {
           stage_16_error?: string | null
           stage_16_format?: string | null
           stage_16_workshop_output?: string | null
+          stage_17_error?: string | null
+          stage_17_output?: string | null
+          stage_17_selected_territory?: string | null
+          stage_17b_error?: string | null
+          stage_17b_output?: string | null
+          stage_18_error?: string | null
+          stage_18_output?: string | null
+          stage_18_selected_detonation?: string | null
+          stage_19_error?: string | null
+          stage_19_output?: string | null
           stage_1b_output?: string | null
           stage_1b_required?: boolean
           stage_2_error?: string | null
           stage_2_output?: string | null
+          stage_20_approved?: boolean
+          stage_20_error?: string | null
+          stage_20_output?: string | null
+          stage_21_error?: string | null
+          stage_21_outputs?: Json | null
+          stage_22_brand_architecture?: string | null
+          stage_22_distinctive_assets?: string | null
+          stage_22_error?: string | null
+          stage_22_output?: string | null
           stage_3_error?: string | null
           stage_3_output?: string | null
           stage_4_error?: string | null
