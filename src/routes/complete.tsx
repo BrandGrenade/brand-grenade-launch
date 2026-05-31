@@ -5,6 +5,7 @@ import { z } from "zod";
 import { TopNav } from "@/components/TopNav";
 import { BrandGrenadeIcon } from "@/components/BrandGrenadeIcon";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/context/AuthContext";
 import { generateStrategicPlatformPdf } from "@/lib/pdf-generator";
 import { runStage16 } from "@/lib/stage16.functions";
 // generateDocument server fn replaced by supabase.functions.invoke('generate-document')
@@ -55,6 +56,11 @@ type SessionRow = {
   category: string | null;
   selected_smp: string | null;
   selected_smp_field_name: string | null;
+  user_id: string | null;
+  doc_consulting_url: string | null;
+  doc_agency_url: string | null;
+  doc_workshop_url: string | null;
+  phase_2_status: string | null;
   stage_1_output: string | null;
   stage_8_output: string | null;
   stage_10_output: string | null;
@@ -79,6 +85,7 @@ async function openDocument(url: string) {
 function CompletePage() {
   const { session: sessionId } = Route.useSearch();
   const runStage16Fn = useServerFn(runStage16);
+  const { user } = useAuth();
   // edge fn invoked directly via supabase.functions.invoke
   const [format, setFormat] = useState<Format>("consulting");
   const [generating, setGenerating] = useState(false);
@@ -102,7 +109,7 @@ function CompletePage() {
     supabase
       .from("sessions")
       .select(
-        "id, brand_name, category, selected_smp, selected_smp_field_name, stage_1_output, stage_8_output, stage_10_output, stage_11_output, stage_12_output, stage_13_output",
+        "id, brand_name, category, selected_smp, selected_smp_field_name, user_id, doc_consulting_url, doc_agency_url, doc_workshop_url, phase_2_status, stage_1_output, stage_8_output, stage_10_output, stage_11_output, stage_12_output, stage_13_output",
       )
       .eq("id", sessionId)
       .maybeSingle()
@@ -578,7 +585,88 @@ function CompletePage() {
           </div>
         </div>
 
+        {/* ─── Phase 2: Brand Detonation ───────────────────────────────── */}
+        {(() => {
+          const allDocsReady = Boolean(
+            session.doc_consulting_url &&
+              session.doc_agency_url &&
+              session.doc_workshop_url,
+          );
+          if (!allDocsReady) return null;
+          const isOwner = Boolean(user && session.user_id && user.id === session.user_id);
+          const amber = "#C8873A";
+          return (
+            <section style={{ marginTop: 64 }}>
+              <hr
+                style={{
+                  border: 0,
+                  borderTop: `1px solid ${amber}`,
+                  margin: "0 0 40px",
+                }}
+              />
+              <div style={{ textAlign: "center" }}>
+                <p
+                  className="text-label"
+                  style={{ color: amber, letterSpacing: "0.12em" }}
+                >
+                  YOUR BRAND STRATEGY IS COMPLETE. NOW GIVE IT LIFE.
+                </p>
+                {hasSmp && (
+                  <h2
+                    style={{
+                      color: amber,
+                      fontSize: 36,
+                      lineHeight: 1.25,
+                      fontWeight: 700,
+                      margin: "24px auto 32px",
+                      maxWidth: 720,
+                    }}
+                  >
+                    {smp}
+                  </h2>
+                )}
+                <Link
+                  to="/detonation"
+                  search={{ session: session.id }}
+                  aria-disabled={!isOwner}
+                  onClick={(e) => {
+                    if (!isOwner) e.preventDefault();
+                  }}
+                  style={{
+                    display: "inline-flex",
+                    height: 56,
+                    alignItems: "center",
+                    justifyContent: "center",
+                    padding: "0 32px",
+                    borderRadius: 8,
+                    border: "none",
+                    backgroundColor: "var(--color-primary)",
+                    color: "var(--color-background)",
+                    fontWeight: 600,
+                    fontSize: 16,
+                    textDecoration: "none",
+                    cursor: isOwner ? "pointer" : "not-allowed",
+                    opacity: isOwner ? 1 : 0.5,
+                    pointerEvents: isOwner ? "auto" : "none",
+                  }}
+                >
+                  Begin Brand Detonation →
+                </Link>
+                {!isOwner && (
+                  <p
+                    className="text-body-sm"
+                    style={{ color: "var(--color-text-tertiary)", marginTop: 12 }}
+                  >
+                    Only the session owner can begin Brand Detonation.
+                  </p>
+                )}
+              </div>
+            </section>
+          );
+        })()}
+
         {/* Pipeline stages collapsible */}
+
         <div style={{ marginTop: 48 }}>
           <button
             type="button"

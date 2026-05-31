@@ -44,9 +44,11 @@ type DbSession = {
   created_at: string;
   updated_at: string;
   stage_16_consulting_output: string | null;
+  phase_2_status: string | null;
 };
 
 type UIStatus = "complete" | "in_progress" | "incomplete";
+type Phase2Status = "not_started" | "in_progress" | "complete";
 
 function deriveStatus(s: DbSession): UIStatus {
   if (
@@ -57,6 +59,12 @@ function deriveStatus(s: DbSession): UIStatus {
   }
   if (s.status === "running" || s.status === "pending") return "in_progress";
   return "incomplete";
+}
+
+function derivePhase2Status(s: DbSession): Phase2Status {
+  const v = (s.phase_2_status ?? "not_started") as Phase2Status;
+  if (v === "in_progress" || v === "complete") return v;
+  return "not_started";
 }
 
 function Dashboard() {
@@ -89,7 +97,7 @@ function Dashboard() {
     (async () => {
       const { data } = await supabase
         .from("sessions")
-        .select("id,brand_name,category,status,current_stage,created_at,updated_at,stage_16_consulting_output")
+        .select("id,brand_name,category,status,current_stage,created_at,updated_at,stage_16_consulting_output,phase_2_status")
         .order("updated_at", { ascending: false })
         .limit(100);
       if (!active) return;
@@ -105,7 +113,7 @@ function Dashboard() {
         async () => {
           const { data } = await supabase
             .from("sessions")
-            .select("id,brand_name,category,status,current_stage,created_at,updated_at,stage_16_consulting_output")
+            .select("id,brand_name,category,status,current_stage,created_at,updated_at,stage_16_consulting_output,phase_2_status")
             .order("updated_at", { ascending: false })
             .limit(100);
           if (active) setSessions((data ?? []) as DbSession[]);
@@ -274,8 +282,33 @@ const STATUS_META: Record<UIStatus, { label: string; bg: string; border: string;
   incomplete: { label: "Incomplete", bg: "#3A3A3A", border: "#5A5652", fg: "#5A5652" },
 };
 
+const PHASE_2_META: Record<Phase2Status, { label: string; bg: string; border: string; fg: string }> = {
+  not_started: { label: "Not Started", bg: "#3A3A3A", border: "#5A5652", fg: "#5A5652" },
+  in_progress: { label: "In Progress", bg: "#C8873A15", border: "#C8873A", fg: "#C8873A" },
+  complete: { label: "Complete", bg: "#4A7C5915", border: "#4A7C59", fg: "#4A7C59" },
+};
+
 function StatusBadge({ status }: { status: UIStatus }) {
   const meta = STATUS_META[status];
+  return (
+    <span
+      className="inline-flex items-center rounded-sm font-medium uppercase tracking-wider"
+      style={{
+        backgroundColor: meta.bg,
+        border: `1px solid ${meta.border}`,
+        color: meta.fg,
+        fontSize: 9,
+        padding: "2px 6px",
+        letterSpacing: "0.08em",
+      }}
+    >
+      {meta.label}
+    </span>
+  );
+}
+
+function Phase2Badge({ status }: { status: Phase2Status }) {
+  const meta = PHASE_2_META[status];
   return (
     <span
       className="inline-flex items-center rounded-sm font-medium uppercase tracking-wider"
@@ -411,7 +444,7 @@ function SessionsTable({
   onRequestDelete: (s: DbSession) => void;
 }) {
   const isMobile = useIsMobile();
-  const headers = ["Brand", "Category", "Stage", "Updated", "Status", "Actions"];
+  const headers = ["Brand", "Category", "Stage", "Updated", "Brand Strategy", "Brand Detonation", "Actions"];
 
   return (
     <div className="overflow-x-auto">
@@ -448,6 +481,9 @@ function SessionsTable({
                 <td className="text-body px-4 py-4 text-text-secondary">{fmtDate(s.updated_at)}</td>
                 <td className="px-4 py-4">
                   <StatusBadge status={status} />
+                </td>
+                <td className="px-4 py-4">
+                  <Phase2Badge status={derivePhase2Status(s)} />
                 </td>
                 <td className="px-4 py-4" style={{ minWidth: 280, whiteSpace: "nowrap" }}>
                   <div className="flex items-center justify-end gap-2">
