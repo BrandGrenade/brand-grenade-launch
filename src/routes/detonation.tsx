@@ -941,7 +941,12 @@ function Stage20({ session, onChange, goNext }: { session: SessionRow; onChange:
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session.stage_19_output, output]);
 
-  const handleProceed = async () => { await onChange(); goNext(); };
+  const handleProceed = async () => {
+    setProceeding(true);
+    try { await onChange(); goNext(); }
+    catch (e) { console.error("Stage advance error:", e); }
+    finally { setProceeding(false); }
+  };
 
 
   const composite = score.composite ?? 0;
