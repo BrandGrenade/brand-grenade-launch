@@ -57,7 +57,7 @@ type SessionRow = {
   selected_smp: string | null;
   user_id: string | null;
   phase_2_status: string | null;
-  phase_2_current_stage: number | null;
+  phase_2_current_stage: string | null;
   doc_consulting_url: string | null;
   doc_agency_url: string | null;
   doc_workshop_url: string | null;
