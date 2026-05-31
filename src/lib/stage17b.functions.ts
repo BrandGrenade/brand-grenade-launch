@@ -7,11 +7,12 @@ import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { callClaude } from "./claude.server";
 import { STAGE_17B_DETONATION_INTELLIGENCE_PROMPT } from "./stage17b-detonation-intelligence-prompt";
-import { appendRedirect, formatThreeTruths } from "./phase2-shared.server";
+import { appendRedirect, formatThreeTruths, smpGoverningBlock } from "./phase2-shared.server";
 
 const STAGE17B_SELECT = [
   "brand_name",
   "category",
+  "selected_smp",
   "stage_17_selected_territory",
   "truth_product",
   "truth_consumer",
@@ -22,12 +23,15 @@ const STAGE17B_SELECT = [
 function buildStage17bUserMessage(s: {
   brand_name: string | null;
   category: string | null;
+  selected_smp: string | null;
   stage_17_selected_territory: string | null;
   truth_product: string | null;
   truth_consumer: string | null;
   truth_cultural: string | null;
 }): string {
   return [
+    smpGoverningBlock(s.selected_smp),
+    "",
     `BRAND: ${s.brand_name ?? "—"}`,
     `CATEGORY: ${s.category ?? "—"}`,
     "",
