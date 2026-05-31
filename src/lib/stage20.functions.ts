@@ -258,7 +258,7 @@ export const approveStage20 = createServerFn({ method: "POST" })
     }
     const { error: upErr } = await supabaseAdmin
       .from("sessions")
-      .update({ stage_20_approved: true, phase_2_current_stage: '20' })
+      .update({ stage_20_approved: true, phase_2_current_stage: '21' })
       .eq("id", data.sessionId);
     if (upErr) throw new Error(upErr.message);
     return { ok: true };
