@@ -14,6 +14,7 @@ import {
   extractChannelRoles,
   formatThreeTruths,
   smpGoverningBlock,
+  withPhase2Formatting,
 } from "./phase2-shared.server";
 
 const STAGE21_SELECT = [
@@ -79,7 +80,7 @@ async function generateOne(
 ): Promise<string> {
   const system = appendRedirect(STAGE_21_CHANNEL_DETONATION_BRIEFS_PROMPT, redirectText);
   return callClaude({
-    systemPrompt: system,
+    systemPrompt: withPhase2Formatting(system),
     userMessage: buildStage21UserMessage(channel, role, s),
     maxTokens: 4000,
     temperature: 0.5,

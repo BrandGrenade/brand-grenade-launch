@@ -9,7 +9,7 @@ import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { callClaude } from "./claude.server";
 import { STAGE_22_BRAND_ARCHITECTURE_PROMPT } from "./stage22-brand-architecture-prompt";
-import { appendRedirect, formatThreeTruths, formatBrandIntelligence, smpGoverningBlock } from "./phase2-shared.server";
+import { appendRedirect, formatThreeTruths, formatBrandIntelligence, smpGoverningBlock, withPhase2Formatting } from "./phase2-shared.server";
 
 const DISTINCTIVE_ASSETS_PROMPT = `You are a senior brand architect producing the Distinctive Asset Architecture for this brand.
 
@@ -136,7 +136,7 @@ async function generateBoth(
   const userMessage = buildStage22UserMessage(s);
   const [architecture, assets] = await Promise.all([
     callClaude({
-      systemPrompt: appendRedirect(STAGE_22_BRAND_ARCHITECTURE_PROMPT, architectureRedirect),
+      systemPrompt: withPhase2Formatting(appendRedirect(STAGE_22_BRAND_ARCHITECTURE_PROMPT, architectureRedirect)),
       userMessage,
       maxTokens: 4000,
       temperature: 0.4,
@@ -146,7 +146,7 @@ async function generateBoth(
       stageName: "Brand Architecture",
     }),
     callClaude({
-      systemPrompt: appendRedirect(DISTINCTIVE_ASSETS_PROMPT, assetsRedirect),
+      systemPrompt: withPhase2Formatting(appendRedirect(DISTINCTIVE_ASSETS_PROMPT, assetsRedirect)),
       userMessage,
       maxTokens: 3000,
       temperature: 0.4,
@@ -277,10 +277,10 @@ export const retryStage22 = createServerFn({ method: "POST" })
     if (want.has("architecture")) {
       tasks.push(
         callClaude({
-          systemPrompt: appendRedirect(
+          systemPrompt: withPhase2Formatting(appendRedirect(
             STAGE_22_BRAND_ARCHITECTURE_PROMPT,
             data.redirectInstructions["architecture"] ?? "",
-          ),
+          )),
           userMessage: buildStage22UserMessage(s),
           maxTokens: 4000,
           temperature: 0.4,
@@ -296,10 +296,10 @@ export const retryStage22 = createServerFn({ method: "POST" })
     if (want.has("assets")) {
       tasks.push(
         callClaude({
-          systemPrompt: appendRedirect(
+          systemPrompt: withPhase2Formatting(appendRedirect(
             DISTINCTIVE_ASSETS_PROMPT,
             data.redirectInstructions["assets"] ?? "",
-          ),
+          )),
           userMessage: buildStage22UserMessage(s),
           maxTokens: 3000,
           temperature: 0.4,

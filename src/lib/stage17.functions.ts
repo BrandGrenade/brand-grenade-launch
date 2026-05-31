@@ -17,6 +17,7 @@ import {
   joinCards,
   formatBrandIntelligence,
   type Card,
+  withPhase2Formatting,
 } from "./phase2-shared.server";
 
 const STAGE17_SELECT = "brand_name, category, selected_smp, stage_2_output, stage_5_output, stage_13_output, stage_14c_output, truth_product, truth_consumer, truth_cultural, brand_intel_type, brand_intel_values, brand_intel_tone, brand_intel_assets, stage_17_output" as const;
@@ -109,7 +110,7 @@ export const runStage17 = createServerFn({ method: "POST" })
     let output: string;
     try {
       output = await callClaude({
-        systemPrompt: STAGE_17_DETONATION_TERRITORY_PROMPT,
+        systemPrompt: withPhase2Formatting(STAGE_17_DETONATION_TERRITORY_PROMPT),
         userMessage: buildStage17UserMessage(session as never),
         maxTokens: 12000,
         temperature: 0.8,
@@ -194,7 +195,7 @@ export const retryStage17 = createServerFn({ method: "POST" })
     if (regenAll) {
       const system = appendRedirect(STAGE_17_DETONATION_TERRITORY_PROMPT, combinedRedirect);
       const text = await callClaude({
-        systemPrompt: system,
+        systemPrompt: withPhase2Formatting(system),
         userMessage: `${baseUser}\n\nRegenerate all three Detonation Territory candidates.`,
         maxTokens: 12000,
         temperature: 0.85,
@@ -219,7 +220,7 @@ export const retryStage17 = createServerFn({ method: "POST" })
       const system = appendRedirect(STAGE_17_DETONATION_TERRITORY_PROMPT, redirect);
       const userMessage = `${baseUser}\n\nProduce ONE Detonation Territory candidate (a single card with one ## heading). This will replace candidate ${id}.`;
       const text = await callClaude({
-        systemPrompt: system,
+        systemPrompt: withPhase2Formatting(system),
         userMessage,
         maxTokens: 6000,
         temperature: 0.85,

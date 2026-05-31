@@ -37,6 +37,40 @@ export function joinCards(cards: Card[]): string {
   return cards.map((c) => c.markdown).join("\n\n");
 }
 
+/** Absolute formatting rules appended to every Phase 2 system prompt.
+ *  The UI renders plain text with uppercase section labels — any markdown
+ *  output from the model breaks the designed presentation. */
+export const PHASE_2_FORMATTING_RULES = `FORMATTING RULES — ABSOLUTE:
+
+Never use markdown formatting of any kind in your output.
+No asterisks for bold or italic.
+No hash symbols for headings.
+No horizontal rules using dashes or underscores.
+No bullet points using asterisks or hyphens.
+No backticks.
+No markdown of any kind.
+
+Section labels must be written as plain uppercase text followed by a colon and a line break.
+
+Example:
+TERRITORY NAME:
+content here
+
+Body text is plain prose.
+Section labels are plain uppercase text.
+Nothing else.
+
+The output will be rendered in a designed UI that handles all visual formatting.
+Your job is clean plain text with uppercase section labels.
+Markdown will break the UI. Do not use it under any circumstances.`;
+
+/** Wrap any Phase 2 system prompt with the absolute formatting rules.
+ *  Always call this at the system-prompt call site (after any redirect /
+ *  final-instruction wrapping) so the rules are the LAST thing the model sees. */
+export function withPhase2Formatting(systemPrompt: string): string {
+  return `${systemPrompt}\n\n---\n\n${PHASE_2_FORMATTING_RULES}`;
+}
+
 /** Append a per-card redirect instruction to a system prompt. */
 export function appendRedirect(systemPrompt: string, redirectText: string): string {
   const t = redirectText.trim();
