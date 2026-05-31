@@ -178,14 +178,41 @@ export const retryStage17 = createServerFn({ method: "POST" })
     if (!session.stage_17_output) throw new Error("Stage 17 has no prior output to retry");
 
     const existing = splitCards(session.stage_17_output as string);
-    const regenerateIds = data.cardIds.length === 0
-      ? existing.map((c) => c.id)
-      : data.cardIds;
+    const regenAll = data.cardIds.length === 0;
+    const regenerateIds = regenAll ? existing.map((c) => c.id) : data.cardIds;
     if (regenerateIds.length === 0) return { output: session.stage_17_output as string };
 
     const baseUser = buildStage17UserMessage(session as never);
+    const combinedRedirect = Object.values(data.redirectInstructions)
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .join("\n\n");
 
-    // Regenerate one card per id (so redirect instructions apply 1:1).
+    // Fast path: full-stage retry — one Claude call producing all three cards.
+    // Avoids three serial 6000-token calls that can silently exceed the
+    // worker's wall-clock window.
+    if (regenAll) {
+      const system = appendRedirect(STAGE_17_DETONATION_TERRITORY_PROMPT, combinedRedirect);
+      const text = await callClaude({
+        systemPrompt: system,
+        userMessage: `${baseUser}\n\nRegenerate all three Detonation Territory candidates.`,
+        maxTokens: 12000,
+        temperature: 0.85,
+        sessionId: data.sessionId,
+        stageLabel: "Stage 17 (retry all)",
+        stageNumber: "17",
+        stageName: "Detonation Territory",
+      });
+
+      const { error: saveErr } = await supabaseAdmin
+        .from("sessions")
+        .update({ stage_17_output: text, stage_17_error: null })
+        .eq("id", data.sessionId);
+      if (saveErr) throw new Error(saveErr.message);
+      return { output: text };
+    }
+
+    // Selective path: regenerate one card per id (1:1 with redirects).
     const regenerated: Record<string, Card> = {};
     for (const id of regenerateIds) {
       const redirect = data.redirectInstructions[id] ?? "";
