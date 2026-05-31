@@ -628,7 +628,6 @@ function CompletePage() {
                 <Link
                   to="/detonation"
                   search={{ session: session.id }}
-                  disabled={!isOwner}
                   aria-disabled={!isOwner}
                   onClick={(e) => {
                     if (!isOwner) e.preventDefault();
@@ -648,6 +647,7 @@ function CompletePage() {
                     textDecoration: "none",
                     cursor: isOwner ? "pointer" : "not-allowed",
                     opacity: isOwner ? 1 : 0.5,
+                    pointerEvents: isOwner ? "auto" : "none",
                   }}
                 >
                   Begin Brand Detonation →
