@@ -13,6 +13,7 @@ export interface DetonationOutputCardProps {
   onCheckChange: (cardId: string, checked: boolean) => void;
   redirectText: string;
   onRedirectChange: (cardId: string, text: string) => void;
+  smp?: string | null;
   children?: React.ReactNode;
 }
 
