@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 import { generateStrategicPlatformPdf } from "@/lib/pdf-generator";
 import { runStage16 } from "@/lib/stage16.functions";
+import { generatePhase2Document, generateCompleteBundle } from "@/lib/phase2-document.functions";
 // generateDocument server fn replaced by supabase.functions.invoke('generate-document')
 
 const completeSearchSchema = z.object({
