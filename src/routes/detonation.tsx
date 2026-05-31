@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { z } from "zod";
 import { TopNav } from "@/components/TopNav";
 import { BrandGrenadeIcon } from "@/components/BrandGrenadeIcon";
+import { SMPAnchor } from "@/components/SMPAnchor";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 
