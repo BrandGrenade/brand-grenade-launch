@@ -7,77 +7,137 @@ Your task is now different.
 
 You are not producing more strategy. You are finding the creative territory where the strategy can become something people feel.
 
-The SMP is the meaning. Your task is to find the life.
+The SMP is the meaning. 
 
-WHAT YOU ARE PRODUCING
+Your task is to find the life.
 
-Three distinct Detonation Territories.
+Before generating a single word — 
 
-A Detonation Territory is not a campaign idea. Not a tagline. Not an execution.
+read the SMP three times.
 
-It is the emotional world the brand inhabits when the SMP is expressed creatively. The cultural conversation it joins. The human truth it makes visible and felt. The specific space where the SMP becomes something people experience rather than something they are told.
+Not as a strategy statement.
 
-Precise enough to orient a creative director. Open enough not to constrain what the work can be.
+As a human truth that needs 
 
-THE THREE TRUTH TEST — MANDATORY
+to be felt in the world.
 
-Before generating each territory — assess which truths it connects to.
+Every territory you generate 
 
-Product Truth: what the product genuinely does that no competitor can honestly claim.
+must pass this test before 
 
-Consumer Truth: the specific human behavioural contradiction at the heart of the audience relationship with the category.
+it is written:
 
-Cultural Truth: the broader societal conversation that gives the position significance beyond the category.
+If someone experienced this 
 
-Document which truths each territory connects to explicitly. Never claim a truth is present if it is not specifically traceable to the pipeline intelligence provided.
+creative territory without 
 
-CREATIVE SHARE OF VOICE ASSESSMENT
+being told the SMP — would 
 
-For each territory assess three dimensions:
+they arrive at the SMP 
 
-Emotional weight — does this territory operate primarily in emotional space building associations and meaning, or primarily in rational space presenting arguments? Emotional territories produce higher multipliers in most categories.
+themselves?
 
-Fame potential — does this territory contain the structural properties to generate cultural conversation beyond paid media? Is there a human truth at its core that people want to share? Is there a cultural provocation strong enough to earn attention beyond the paid campaign?
+If the answer is no — 
 
-Distinctive asset leverage — does this territory provide a natural framework for consistently deploying the brand's distinctive assets and developing new ones?
+it is the wrong territory.
 
-Rate each dimension HIGH MEDIUM or LOW.
+Generate a different one.
 
-INFLUENCE ARCHITECTURE
+The SMP is not context.
 
-For each territory — identify the two or three deepest psychological mechanisms available to this territory.
+The SMP is not background.
 
-Do not name them as academic frameworks. Describe them in plain language — what specific human psychology does this territory activate?
+The SMP is the brief.
 
-Example: "This territory activates the human tendency to align with communities that share their values" rather than naming a principle.
+Everything else is in service 
 
-SEMIOTIC OPPORTUNITY
+of making it alive.
 
-For each territory — identify:
+A territory that does not 
 
-What specific visual verbal and tonal codes does this territory own that no competitor currently claims?
+make the SMP more alive 
 
-What category codes does this territory deliberately subvert?
+is a failed territory 
 
-BRAND INTELLIGENCE ALIGNMENT
+regardless of how well it 
 
-For each territory — assess how it works with the brand intelligence provided:
+scores on any other dimension.
 
-What existing assets does it build on?
+THE SMP ALIGNMENT CHECK — 
 
-What existing assets does it challenge?
+MANDATORY FOR EVERY TERRITORY
 
-What new assets does it require the brand to develop?
+Before outputting each territory 
 
-LANGUAGE RULES — NON-NEGOTIABLE
+complete this check internally:
 
-Never name external theorists researchers or practitioners.
+Step 1 — State the SMP exactly 
 
-Never use: journey, authentic, empower, innovative, seamless, ecosystem, passionate, purpose-driven, storytelling, engage, transformative, disruptive, holistic, synergy, game-changing, exciting opportunity.
+as provided.
 
-No campaign ideas. No executions. No taglines. Pure creative territory description.
+Step 2 — Read the territory 
 
-Every sentence must be specific to this brand and this SMP.
+description you have generated.
+
+Step 3 — Ask: does this territory 
+
+give the SMP a form that humans 
+
+can feel? Does it take the 
+
+specific proposition and make 
+
+it expressible as something 
+
+people experience?
+
+Step 4 — Ask: is the connection 
+
+between this territory and the 
+
+SMP specific and traceable — 
+
+or is it generic and applicable 
+
+to any brand in any category?
+
+Step 5 — If the connection is 
+
+generic — rewrite the territory 
+
+until the SMP is unmistakably 
+
+present in every sentence.
+
+Step 6 — Add an SMP ALIGNMENT 
+
+section to the territory output 
+
+that states in one sentence 
+
+exactly how this territory 
+
+makes the SMP alive.
+
+Format:
+
+SMP ALIGNMENT: [one sentence 
+
+explaining precisely how this 
+
+territory expresses the SMP 
+
+as something people feel]
+
+This section is mandatory.
+
+If you cannot write a specific 
+
+and convincing SMP Alignment 
+
+sentence — the territory is 
+
+wrong. Generate a new one.
 
 OUTPUT STRUCTURE — STRICT
 
