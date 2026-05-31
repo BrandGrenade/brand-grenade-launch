@@ -158,10 +158,30 @@ function Index() {
 
           <p
             className="text-body-lg mt-6 text-text-secondary"
-            style={{ maxWidth: "440px" }}
+            style={{ maxWidth: "480px" }}
           >
-            20 stages. Three human checkpoints. One complete brand strategy
-            platform. Built for the world's most demanding briefs.
+            Two pipelines. Twenty-seven stages. Six human checkpoints.
+          </p>
+
+          <p
+            className="text-body mt-4 text-text-secondary"
+            style={{ maxWidth: "480px" }}
+          >
+            Brand Strategy takes your brief and produces a validated strategic proposition — evidenced, pressure-tested, and ready to present at board level.
+          </p>
+
+          <p
+            className="text-body mt-4 text-text-secondary"
+            style={{ maxWidth: "480px" }}
+          >
+            Brand Detonation takes that proposition and develops the complete creative strategy — the territories, the idea, the channel architecture, and the briefs your agency needs to activate it.
+          </p>
+
+          <p
+            className="text-body mt-4 text-text-secondary"
+            style={{ maxWidth: "480px" }}
+          >
+            One brief in. Thirteen professional documents out. Two to four hours.
           </p>
 
           <ul className="mt-10 flex flex-col gap-3">
