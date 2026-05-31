@@ -499,7 +499,7 @@ function DetonationPage() {
 // ═════════════════════════════════════════════════════════════════════════
 // STAGE 17 — Detonation Territory
 // ═════════════════════════════════════════════════════════════════════════
-function Stage17({ session, onChange, goNext }: { session: SessionRow; onChange: () => void; goNext: () => void }) {
+function Stage17({ session, onChange, goNext }: { session: SessionRow; onChange: () => void | Promise<void>; goNext: () => void }) {
   const run = useServerFn(runStage17);
   const load = useServerFn(loadStage17);
   const retry = useServerFn(retryStage17);
