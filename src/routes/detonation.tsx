@@ -1039,7 +1039,7 @@ function Stage21({ session, onChange, goNext }: { session: SessionRow; onChange:
 // ═════════════════════════════════════════════════════════════════════════
 // STAGE 22 — Brand Architecture
 // ═════════════════════════════════════════════════════════════════════════
-const ARCH_COMPONENTS = ["REFLECTION", "DOMAIN", "HERITAGE", "VALUES", "ASSETS", "PERSONALITY", "RELATIONSHIP"] as const;
+const ARCH_COMPONENTS = ["REFLECTION", "DOMAIN", "HERITAGE", "VALUES", "ASSETS", "PERSONALITY"] as const;
 
 function extractArchSection(arch: string, label: string): string {
   const re = new RegExp(`(?:^|\\n)\\s*(?:#{1,4}\\s*|\\*+\\s*)?${label}\\b[^\\n]*\\n([\\s\\S]*?)(?=\\n\\s*(?:#{1,4}\\s*|\\*+\\s*)?(?:${ARCH_COMPONENTS.join("|")})\\b|$)`, "i");
