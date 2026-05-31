@@ -1044,3 +1044,140 @@ function PeopleIcon() {
     </svg>
   );
 }
+
+// ─── Phase 2 Deliverables ─────────────────────────────────────────────
+const PHASE_2_AMBER_DELIV = "#D4924A";
+
+function openHtmlInNewTab(html: string) {
+  const win = window.open("", "_blank");
+  if (!win) { alert("Please allow popups"); return; }
+  win.document.open("text/html");
+  win.document.write(html);
+  win.document.close();
+}
+
+function Phase2Deliverables({ session }: { session: SessionRow }) {
+  const gen = useServerFn(generatePhase2Document);
+  const genBundle = useServerFn(generateCompleteBundle);
+  const [busy, setBusy] = useState<string | null>(null);
+  const channels = session.stage_21_outputs ?? {};
+  const channelKeys = Object.keys(channels);
+  const amber = PHASE_2_AMBER_DELIV;
+
+  const download = async (
+    docType:
+      | "detonation_territory" | "detonation_intelligence" | "the_detonation"
+      | "activation_architecture" | "master_brief" | "channel_brief"
+      | "distinctive_assets" | "brand_architecture" | "all_phase2",
+    label: string,
+    channelKey?: string,
+  ) => {
+    setBusy(label);
+    try {
+      const r = await gen({ data: { sessionId: session.id, docType, channelKey } });
+      openHtmlInNewTab(r.html);
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "Failed to generate document");
+    } finally { setBusy(null); }
+  };
+
+  const downloadBundle = async () => {
+    setBusy("complete");
+    try {
+      const r = await genBundle({ data: { sessionId: session.id } });
+      openHtmlInNewTab(r.html);
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "Failed to generate bundle");
+    } finally { setBusy(null); }
+  };
+
+  const Card = ({ title, subtitle, onClick, busyKey }: {
+    title: string; subtitle?: string; onClick: () => void; busyKey: string;
+  }) => (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={busy !== null}
+      style={{
+        textAlign: "left", padding: "14px 16px", borderRadius: 8,
+        background: "var(--color-surface-2)", border: `1px solid ${amber}33`,
+        color: "var(--color-text-primary)", cursor: busy ? "wait" : "pointer",
+        display: "flex", flexDirection: "column", gap: 4,
+      }}
+    >
+      <span className="text-body" style={{ fontWeight: 600 }}>{title}</span>
+      {subtitle && <span className="text-body-sm" style={{ color: "#8A8680" }}>{subtitle}</span>}
+      <span className="text-mono" style={{
+        marginTop: 6, color: amber, fontSize: 9, letterSpacing: "0.14em",
+        textTransform: "uppercase",
+      }}>{busy === busyKey ? "Opening…" : "Download ↓"}</span>
+    </button>
+  );
+
+  const subhead = (label: string) => (
+    <div className="text-mono" style={{
+      color: amber, letterSpacing: "0.16em", textTransform: "uppercase",
+      fontSize: 10, margin: "24px 0 12px",
+    }}>{label}</div>
+  );
+
+  return (
+    <section style={{ marginTop: 64 }}>
+      <hr style={{ border: 0, borderTop: `1px solid ${amber}`, margin: "0 0 32px" }} />
+      <div className="text-mono" style={{
+        color: amber, letterSpacing: "0.18em", textTransform: "uppercase",
+        fontSize: 12, fontWeight: 700, marginBottom: 8,
+      }}>BRAND DETONATION</div>
+      <p className="text-body-sm" style={{ color: "#8A8680", marginBottom: 16 }}>
+        Phase 2 deliverables. Click any card to open and save as PDF.
+      </p>
+
+      {subhead("Strategic")}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: 12 }}>
+        <Card title="Detonation Territory" busyKey="Detonation Territory" onClick={() => download("detonation_territory", "Detonation Territory")} />
+        <Card title="Detonation Intelligence" busyKey="Detonation Intelligence" onClick={() => download("detonation_intelligence", "Detonation Intelligence")} />
+        <Card title="The Detonation" busyKey="The Detonation" onClick={() => download("the_detonation", "The Detonation")} />
+        <Card title="Activation Architecture" busyKey="Activation Architecture" onClick={() => download("activation_architecture", "Activation Architecture")} />
+      </div>
+
+      {subhead("Activation")}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: 12 }}>
+        <Card title="Master Detonation Brief" busyKey="Master Detonation Brief" onClick={() => download("master_brief", "Master Detonation Brief")} />
+        {channelKeys.map((ch) => {
+          const body = channels[ch] ?? "";
+          const m = body.match(/CHANNEL\s+ROLE\s*[:\-]?\s*([^\n]+)/i);
+          const role = m ? m[1].trim() : "Channel Brief";
+          return (
+            <Card key={ch} title={ch} subtitle={role} busyKey={`ch-${ch}`}
+              onClick={() => download("channel_brief", `ch-${ch}`, ch)} />
+          );
+        })}
+      </div>
+
+      {subhead("Brand Identity")}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: 12 }}>
+        <Card title="Distinctive Asset Architecture" busyKey="Distinctive Asset Architecture" onClick={() => download("distinctive_assets", "Distinctive Asset Architecture")} />
+        <Card title="Brand Architecture" busyKey="Brand Architecture" onClick={() => download("brand_architecture", "Brand Architecture")} />
+      </div>
+
+      <div style={{ marginTop: 32, display: "flex", flexDirection: "column", gap: 12 }}>
+        <button type="button" onClick={() => download("all_phase2", "all")} disabled={busy !== null}
+          style={{
+            height: 52, borderRadius: 8, border: "none", background: amber, color: "#0A0A0A",
+            fontWeight: 700, fontSize: 14, cursor: busy ? "wait" : "pointer",
+            letterSpacing: "0.04em",
+          }}>
+          {busy === "all" ? "Opening…" : "Download All Brand Detonation"}
+        </button>
+        <button type="button" onClick={downloadBundle} disabled={busy !== null}
+          style={{
+            height: 52, borderRadius: 8, border: `1px solid ${amber}`, background: "transparent",
+            color: amber, fontWeight: 700, fontSize: 14, cursor: busy ? "wait" : "pointer",
+            letterSpacing: "0.04em",
+          }}>
+          {busy === "complete" ? "Opening…" : "Download Complete Brand Grenade"}
+        </button>
+      </div>
+    </section>
+  );
+}
