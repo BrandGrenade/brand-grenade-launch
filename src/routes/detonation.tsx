@@ -227,7 +227,7 @@ function DetonationPage() {
               </div>
               <span
                 className="text-label"
-                style={{ color: "#C8873A", letterSpacing: "0.12em" }}
+                style={{ color: "#D4924A", letterSpacing: "0.12em" }}
               >
                 PHASE 2 — BRAND DETONATION
               </span>
@@ -240,7 +240,7 @@ function DetonationPage() {
               {smp && (
                 <p
                   style={{
-                    color: "#C8873A",
+                    color: "#D4924A",
                     fontSize: 24,
                     lineHeight: 1.3,
                     fontWeight: 600,
@@ -283,7 +283,7 @@ function DetonationPage() {
               >
                 <p
                   className="text-label"
-                  style={{ color: "#C8873A", letterSpacing: "0.12em" }}
+                  style={{ color: "#D4924A", letterSpacing: "0.12em" }}
                 >
                   STATUS
                 </p>
