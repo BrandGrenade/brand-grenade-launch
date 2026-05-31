@@ -666,7 +666,9 @@ function Stage17b({ session, onChange, goNext }: { session: SessionRow; onChange
           <RichOutput text={output} />
           <div style={{ marginTop: 28, display: "flex", gap: 12, justifyContent: "flex-end" }}>
             <AmberButton variant="ghost" onClick={handleRetry} disabled={busy}>{busy && <Spinner />} Retry</AmberButton>
-            <AmberButton onClick={handleProceed}>Proceed to Stage 18</AmberButton>
+            <AmberButton onClick={handleProceed} disabled={proceeding}>
+              {proceeding ? <><Spinner /> Loading...</> : "Proceed to Stage 18"}
+            </AmberButton>
           </div>
         </div>
       )}
