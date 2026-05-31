@@ -191,19 +191,21 @@ export const retryStage21 = createServerFn({ method: "POST" })
     const s = session as unknown as Stage21Session;
     if (!s.stage_19_output) throw new Error("Stage 19 missing");
 
-    const allChannels = extractStage19Channels(s.stage_19_output);
-    const roles = extractChannelRoles(s.stage_19_output);
+    const allEntries = extractStage19ChannelEntries(s.stage_19_output);
     const existing = s.stage_21_outputs ?? {};
-    const regenerate = data.cardIds.length === 0 ? allChannels : data.cardIds;
+    const regenerate =
+      data.cardIds.length === 0
+        ? allEntries
+        : allEntries.filter((e) => data.cardIds.includes(e.name));
 
     const results = await Promise.all(
-      regenerate.map((c) =>
-        generateOne(data.sessionId, c, roles[c] ?? "—", s, data.redirectInstructions[c] ?? ""),
+      regenerate.map((e) =>
+        generateOne(data.sessionId, e.name, e.role, e.content, s, data.redirectInstructions[e.name] ?? ""),
       ),
     );
     const merged: Record<string, string> = { ...existing };
-    regenerate.forEach((c, i) => {
-      merged[c] = results[i];
+    regenerate.forEach((e, i) => {
+      merged[e.name] = results[i];
     });
 
     const { error: saveErr } = await supabaseAdmin
