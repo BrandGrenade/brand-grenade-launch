@@ -202,7 +202,7 @@ export const runStage22 = createServerFn({ method: "POST" })
         stage_22_brand_architecture: architecture,
         stage_22_distinctive_assets: assets,
         stage_22_error: null,
-        phase_2_current_stage: 22,
+        phase_2_current_stage: '22',
         phase_2_status: "complete",
       })
       .eq("id", data.sessionId);

@@ -57,7 +57,7 @@ type SessionRow = {
   selected_smp: string | null;
   user_id: string | null;
   phase_2_status: string | null;
-  phase_2_current_stage: number | null;
+  phase_2_current_stage: string | null;
   doc_consulting_url: string | null;
   doc_agency_url: string | null;
   doc_workshop_url: string | null;
@@ -499,7 +499,7 @@ function DetonationPage() {
 // ═════════════════════════════════════════════════════════════════════════
 // STAGE 17 — Detonation Territory
 // ═════════════════════════════════════════════════════════════════════════
-function Stage17({ session, onChange, goNext }: { session: SessionRow; onChange: () => void; goNext: () => void }) {
+function Stage17({ session, onChange, goNext }: { session: SessionRow; onChange: () => void | Promise<void>; goNext: () => void }) {
   const run = useServerFn(runStage17);
   const load = useServerFn(loadStage17);
   const retry = useServerFn(retryStage17);
@@ -549,7 +549,8 @@ function Stage17({ session, onChange, goNext }: { session: SessionRow; onChange:
     setBusy(true); setErr(null);
     try {
       await select({ data: { sessionId: session.id, territoryMarkdown: markdown } });
-      onChange(); goNext();
+      await onChange();
+      goNext();
     } catch (e) { setErr(e instanceof Error ? e.message : "Selection failed"); }
     finally { setBusy(false); }
   };
@@ -595,13 +596,14 @@ function Stage17({ session, onChange, goNext }: { session: SessionRow; onChange:
 // ═════════════════════════════════════════════════════════════════════════
 // STAGE 17B — Detonation Intelligence
 // ═════════════════════════════════════════════════════════════════════════
-function Stage17b({ session, onChange, goNext }: { session: SessionRow; onChange: () => void; goNext: () => void }) {
+function Stage17b({ session, onChange, goNext }: { session: SessionRow; onChange: () => void | Promise<void>; goNext: () => void }) {
   const run = useServerFn(runStage17b);
   const load = useServerFn(loadStage17b);
   const retry = useServerFn(retryStage17b);
   const [output, setOutput] = useState<string | null>(session.stage_17b_output);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [autoTriggered, setAutoTriggered] = useState(false);
 
   useEffect(() => {
     if (output === null) load({ data: { sessionId: session.id } }).then((r) => r.output && setOutput(r.output)).catch(() => {});
@@ -611,7 +613,7 @@ function Stage17b({ session, onChange, goNext }: { session: SessionRow; onChange
     setBusy(true); setErr(null);
     try {
       const r = await run({ data: { sessionId: session.id } });
-      setOutput(r.output); onChange();
+      setOutput(r.output); await onChange();
     } catch (e) { setErr(e instanceof Error ? e.message : "Stage 17B failed"); }
     finally { setBusy(false); }
   };
@@ -619,18 +621,31 @@ function Stage17b({ session, onChange, goNext }: { session: SessionRow; onChange
     setBusy(true); setErr(null);
     try {
       const r = await retry({ data: { sessionId: session.id, cardIds: [], redirectInstructions: {} } });
-      setOutput(r.output); onChange();
+      setOutput(r.output); await onChange();
     } catch (e) { setErr(e instanceof Error ? e.message : "Retry failed"); }
     finally { setBusy(false); }
   };
 
+  // Auto-run once on mount when the prerequisite is in place and we have no output yet.
+  useEffect(() => {
+    if (autoTriggered) return;
+    if (!session.stage_17_selected_territory) return;
+    if (output !== null && output !== "") return;
+    if (busy) return;
+    setAutoTriggered(true);
+    void handleRun();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session.stage_17_selected_territory, output]);
+
+  const handleProceed = async () => { await onChange(); goNext(); };
+
   return (
     <section>
       <SectionTitle kicker="STAGE 17B" title="Detonation Intelligence"
-        subtitle={!session.stage_17_selected_territory ? "Select a Stage 17 territory first." : "Benchmark + differentiation guidance for the selected territory."} />
+        subtitle="Benchmark + differentiation guidance for the selected territory." />
       {err && <ErrorBanner message={err} />}
       {!output ? (
-        <AmberButton onClick={handleRun} disabled={busy || !session.stage_17_selected_territory}>
+        <AmberButton onClick={handleRun} disabled={busy}>
           {busy && <Spinner />} {busy ? "Generating…" : "Run Stage 17B"}
         </AmberButton>
       ) : (
@@ -641,7 +656,7 @@ function Stage17b({ session, onChange, goNext }: { session: SessionRow; onChange
           <RichOutput text={output} />
           <div style={{ marginTop: 28, display: "flex", gap: 12, justifyContent: "flex-end" }}>
             <AmberButton variant="ghost" onClick={handleRetry} disabled={busy}>{busy && <Spinner />} Retry</AmberButton>
-            <AmberButton onClick={goNext}>Proceed to Stage 18</AmberButton>
+            <AmberButton onClick={handleProceed}>Proceed to Stage 18</AmberButton>
           </div>
         </div>
       )}
@@ -652,7 +667,7 @@ function Stage17b({ session, onChange, goNext }: { session: SessionRow; onChange
 // ═════════════════════════════════════════════════════════════════════════
 // STAGE 18 — The Detonation
 // ═════════════════════════════════════════════════════════════════════════
-function Stage18({ session, onChange, goNext }: { session: SessionRow; onChange: () => void; goNext: () => void }) {
+function Stage18({ session, onChange, goNext }: { session: SessionRow; onChange: () => void | Promise<void>; goNext: () => void }) {
   const run = useServerFn(runStage18);
   const load = useServerFn(loadStage18);
   const retry = useServerFn(retryStage18);
@@ -713,7 +728,8 @@ function Stage18({ session, onChange, goNext }: { session: SessionRow; onChange:
     setBusy(true); setErr(null);
     try {
       await select({ data: { sessionId: session.id, detonationMarkdown: markdown } });
-      onChange(); goNext();
+      await onChange();
+      goNext();
     } catch (e) { setErr(e instanceof Error ? e.message : "Selection failed"); }
     finally { setBusy(false); }
   };
@@ -779,13 +795,14 @@ function Stage18({ session, onChange, goNext }: { session: SessionRow; onChange:
 // ═════════════════════════════════════════════════════════════════════════
 // STAGE 19 — Activation Architecture
 // ═════════════════════════════════════════════════════════════════════════
-function Stage19({ session, onChange, goNext }: { session: SessionRow; onChange: () => void; goNext: () => void }) {
+function Stage19({ session, onChange, goNext }: { session: SessionRow; onChange: () => void | Promise<void>; goNext: () => void }) {
   const run = useServerFn(runStage19);
   const load = useServerFn(loadStage19);
   const retry = useServerFn(retryStage19);
   const [output, setOutput] = useState<string | null>(session.stage_19_output);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [autoTriggered, setAutoTriggered] = useState(false);
 
   useEffect(() => {
     if (output === null) load({ data: { sessionId: session.id } }).then((r) => r.output && setOutput(r.output)).catch(() => {});
@@ -793,24 +810,36 @@ function Stage19({ session, onChange, goNext }: { session: SessionRow; onChange:
 
   const handleRun = async () => {
     setBusy(true); setErr(null);
-    try { const r = await run({ data: { sessionId: session.id } }); setOutput(r.output); onChange(); }
+    try { const r = await run({ data: { sessionId: session.id } }); setOutput(r.output); await onChange(); }
     catch (e) { setErr(e instanceof Error ? e.message : "Stage 19 failed"); }
     finally { setBusy(false); }
   };
   const handleRetry = async () => {
     setBusy(true); setErr(null);
-    try { const r = await retry({ data: { sessionId: session.id, cardIds: [], redirectInstructions: {} } }); setOutput(r.output); onChange(); }
+    try { const r = await retry({ data: { sessionId: session.id, cardIds: [], redirectInstructions: {} } }); setOutput(r.output); await onChange(); }
     catch (e) { setErr(e instanceof Error ? e.message : "Retry failed"); }
     finally { setBusy(false); }
   };
 
+  useEffect(() => {
+    if (autoTriggered) return;
+    if (!session.stage_18_selected_detonation) return;
+    if (output !== null && output !== "") return;
+    if (busy) return;
+    setAutoTriggered(true);
+    void handleRun();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session.stage_18_selected_detonation, output]);
+
+  const handleProceed = async () => { await onChange(); goNext(); };
+
   return (
     <section>
       <SectionTitle kicker="STAGE 19" title="Activation Architecture"
-        subtitle={!session.stage_18_selected_detonation ? "Select a Stage 18 Detonation first." : "Calibration, channel hierarchy, compounding strategy, and distinctive asset activation."} />
+        subtitle="Calibration, channel hierarchy, compounding strategy, and distinctive asset activation." />
       {err && <ErrorBanner message={err} />}
       {!output ? (
-        <AmberButton onClick={handleRun} disabled={busy || !session.stage_18_selected_detonation}>
+        <AmberButton onClick={handleRun} disabled={busy}>
           {busy && <Spinner />} {busy ? "Generating…" : "Run Stage 19"}
         </AmberButton>
       ) : (
@@ -818,7 +847,7 @@ function Stage19({ session, onChange, goNext }: { session: SessionRow; onChange:
           <RichOutput text={output} />
           <div style={{ marginTop: 28, display: "flex", gap: 12, justifyContent: "flex-end" }}>
             <AmberButton variant="ghost" onClick={handleRetry} disabled={busy}>{busy && <Spinner />} Retry</AmberButton>
-            <AmberButton onClick={goNext}>Proceed to Stage 20</AmberButton>
+            <AmberButton onClick={handleProceed}>Proceed to Stage 20</AmberButton>
           </div>
         </div>
       )}
@@ -829,7 +858,7 @@ function Stage19({ session, onChange, goNext }: { session: SessionRow; onChange:
 // ═════════════════════════════════════════════════════════════════════════
 // STAGE 20 — Master Detonation Brief
 // ═════════════════════════════════════════════════════════════════════════
-function Stage20({ session, onChange, goNext }: { session: SessionRow; onChange: () => void; goNext: () => void }) {
+function Stage20({ session, onChange, goNext }: { session: SessionRow; onChange: () => void | Promise<void>; goNext: () => void }) {
   const run = useServerFn(runStage20);
   const load = useServerFn(loadStage20);
   const retry = useServerFn(retryStage20);
@@ -840,6 +869,7 @@ function Stage20({ session, onChange, goNext }: { session: SessionRow; onChange:
   const [approved, setApproved] = useState<boolean>(Boolean(session.stage_20_approved));
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [autoTriggered, setAutoTriggered] = useState(false);
 
   useEffect(() => {
     if (output === null) load({ data: { sessionId: session.id } }).then((r) => {
@@ -852,7 +882,7 @@ function Stage20({ session, onChange, goNext }: { session: SessionRow; onChange:
 
   const handleRun = async () => {
     setBusy(true); setErr(null);
-    try { const r = await run({ data: { sessionId: session.id } }); setOutput(r.output); onChange(); }
+    try { const r = await run({ data: { sessionId: session.id } }); setOutput(r.output); await onChange(); }
     catch (e) { setErr(e instanceof Error ? e.message : "Stage 20 failed"); }
     finally { setBusy(false); }
   };
@@ -860,24 +890,37 @@ function Stage20({ session, onChange, goNext }: { session: SessionRow; onChange:
     setBusy(true); setErr(null);
     try {
       const r = await retry({ data: { sessionId: session.id, cardIds: [], redirectInstructions: {} } });
-      setOutput(r.output); setApproved(false); onChange();
+      setOutput(r.output); setApproved(false); await onChange();
     } catch (e) { setErr(e instanceof Error ? e.message : "Retry failed"); }
     finally { setBusy(false); }
   };
 
   const handleSectionRegen = async (sectionId: string, feedback: string): Promise<string> => {
     const r = await regenSection({ data: { sessionId: session.id, sectionId, feedback } });
-    setOutput(r.output); setApproved(false); onChange();
+    setOutput(r.output); setApproved(false); await onChange();
     const updated = parseStage20Local(r.output).find((s) => s.id === sectionId);
     return updated?.content ?? "";
   };
 
   const handleApprove = async () => {
     setBusy(true); setErr(null);
-    try { await approve({ data: { sessionId: session.id } }); setApproved(true); onChange(); goNext(); }
+    try { await approve({ data: { sessionId: session.id } }); setApproved(true); await onChange(); goNext(); }
     catch (e) { setErr(e instanceof Error ? e.message : "Approval failed"); }
     finally { setBusy(false); }
   };
+
+  useEffect(() => {
+    if (autoTriggered) return;
+    if (!session.stage_19_output) return;
+    if (output !== null && output !== "") return;
+    if (busy) return;
+    setAutoTriggered(true);
+    void handleRun();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session.stage_19_output, output]);
+
+  const handleProceed = async () => { await onChange(); goNext(); };
+
 
   const composite = score.composite ?? 0;
   const canApprove = composite >= 40 && !approved;
@@ -952,7 +995,7 @@ function Stage20({ session, onChange, goNext }: { session: SessionRow; onChange:
           <div style={{ marginTop: 24, display: "flex", gap: 12, justifyContent: "flex-end" }}>
             <AmberButton variant="ghost" onClick={handleRetry} disabled={busy}>{busy && <Spinner />} Retry</AmberButton>
             {approved ? (
-              <AmberButton onClick={goNext}>Proceed to Stage 21</AmberButton>
+              <AmberButton onClick={handleProceed}>Proceed to Stage 21</AmberButton>
             ) : (
               <AmberButton onClick={handleApprove} disabled={!canApprove || busy}>
                 {busy && <Spinner />} Approve Brief
@@ -968,13 +1011,14 @@ function Stage20({ session, onChange, goNext }: { session: SessionRow; onChange:
 // ═════════════════════════════════════════════════════════════════════════
 // STAGE 21 — Channel Briefs
 // ═════════════════════════════════════════════════════════════════════════
-function Stage21({ session, onChange, goNext }: { session: SessionRow; onChange: () => void; goNext: () => void }) {
+function Stage21({ session, onChange, goNext }: { session: SessionRow; onChange: () => void | Promise<void>; goNext: () => void }) {
   const run = useServerFn(runStage21);
   const load = useServerFn(loadStage21);
   const [outputs, setOutputs] = useState<Record<string, string> | null>(session.stage_21_outputs);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [autoTriggered, setAutoTriggered] = useState(false);
 
   useEffect(() => {
     if (outputs === null) load({ data: { sessionId: session.id } }).then((r) => r.outputs && setOutputs(r.outputs)).catch(() => {});
@@ -982,10 +1026,23 @@ function Stage21({ session, onChange, goNext }: { session: SessionRow; onChange:
 
   const handleRun = async () => {
     setBusy(true); setErr(null);
-    try { const r = await run({ data: { sessionId: session.id } }); setOutputs(r.outputs); onChange(); }
+    try { const r = await run({ data: { sessionId: session.id } }); setOutputs(r.outputs); await onChange(); }
     catch (e) { setErr(e instanceof Error ? e.message : "Stage 21 failed"); }
     finally { setBusy(false); }
   };
+
+  useEffect(() => {
+    if (autoTriggered) return;
+    if (!session.stage_20_approved) return;
+    if (outputs !== null && Object.keys(outputs).length > 0) return;
+    if (busy) return;
+    setAutoTriggered(true);
+    void handleRun();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session.stage_20_approved, outputs]);
+
+  const handleProceed = async () => { await onChange(); goNext(); };
+
 
   const download = (filename: string, content: string) => {
     const blob = new Blob([content], { type: "text/markdown" });
@@ -1044,7 +1101,7 @@ function Stage21({ session, onChange, goNext }: { session: SessionRow; onChange:
           </div>
           <div style={{ marginTop: 24, display: "flex", gap: 12, justifyContent: "flex-end" }}>
             <AmberButton variant="ghost" onClick={downloadAll}>Download All Channel Briefs</AmberButton>
-            <AmberButton onClick={goNext}>Proceed to Stage 22</AmberButton>
+            <AmberButton onClick={handleProceed}>Proceed to Stage 22</AmberButton>
           </div>
         </>
       )}
@@ -1063,13 +1120,14 @@ function extractArchSection(arch: string, label: string): string {
   return m ? m[1].trim() : "";
 }
 
-function Stage22({ session, onChange }: { session: SessionRow; onChange: () => void }) {
+function Stage22({ session, onChange }: { session: SessionRow; onChange: () => void | Promise<void> }) {
   const run = useServerFn(runStage22);
   const load = useServerFn(loadStage22);
   const [architecture, setArchitecture] = useState<string | null>(session.stage_22_brand_architecture);
   const [assets, setAssets] = useState<string | null>(session.stage_22_distinctive_assets);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [autoTriggered, setAutoTriggered] = useState(false);
 
   useEffect(() => {
     if (architecture === null && assets === null) {
@@ -1084,10 +1142,22 @@ function Stage22({ session, onChange }: { session: SessionRow; onChange: () => v
     setBusy(true); setErr(null);
     try {
       const r = await run({ data: { sessionId: session.id } });
-      setArchitecture(r.architecture); setAssets(r.assets); onChange();
+      setArchitecture(r.architecture); setAssets(r.assets); await onChange();
     } catch (e) { setErr(e instanceof Error ? e.message : "Stage 22 failed"); }
     finally { setBusy(false); }
   };
+
+  useEffect(() => {
+    if (autoTriggered) return;
+    const stage21Ready = session.stage_21_outputs && Object.keys(session.stage_21_outputs).length > 0;
+    if (!stage21Ready) return;
+    if (architecture !== null && architecture !== "") return;
+    if (busy) return;
+    setAutoTriggered(true);
+    void handleRun();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session.stage_21_outputs, architecture]);
+
 
   const printPdf = () => window.print();
 

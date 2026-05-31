@@ -136,7 +136,7 @@ export const runStage17 = createServerFn({ method: "POST" })
 
     const { error: saveErr } = await supabaseAdmin
       .from("sessions")
-      .update({ stage_17_output: output, stage_17_error: null, phase_2_current_stage: 17 })
+      .update({ stage_17_output: output, stage_17_error: null, phase_2_current_stage: '17' })
       .eq("id", data.sessionId);
     if (saveErr) throw new Error(`Failed to save Stage 17 output: ${saveErr.message}`);
 
@@ -264,7 +264,7 @@ export const selectStage17Territory = createServerFn({ method: "POST" })
       .from("sessions")
       .update({
         stage_17_selected_territory: data.territoryMarkdown,
-        phase_2_current_stage: 17,
+        phase_2_current_stage: '17b',
       })
       .eq("id", data.sessionId);
     if (error) throw new Error(error.message);
