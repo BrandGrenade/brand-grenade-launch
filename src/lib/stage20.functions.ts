@@ -119,7 +119,7 @@ export const runStage20 = createServerFn({ method: "POST" })
 
     const { error: saveErr } = await supabaseAdmin
       .from("sessions")
-      .update({ stage_20_output: output, stage_20_error: null, phase_2_current_stage: 20 })
+      .update({ stage_20_output: output, stage_20_error: null, phase_2_current_stage: '20' })
       .eq("id", data.sessionId);
     if (saveErr) throw new Error(`Failed to save Stage 20 output: ${saveErr.message}`);
     return { output };
@@ -258,7 +258,7 @@ export const approveStage20 = createServerFn({ method: "POST" })
     }
     const { error: upErr } = await supabaseAdmin
       .from("sessions")
-      .update({ stage_20_approved: true, phase_2_current_stage: 20 })
+      .update({ stage_20_approved: true, phase_2_current_stage: '20' })
       .eq("id", data.sessionId);
     if (upErr) throw new Error(upErr.message);
     return { ok: true };

@@ -113,7 +113,7 @@ export const runStage18 = createServerFn({ method: "POST" })
 
     const { error: saveErr } = await supabaseAdmin
       .from("sessions")
-      .update({ stage_18_output: output, stage_18_error: null, phase_2_current_stage: 18 })
+      .update({ stage_18_output: output, stage_18_error: null, phase_2_current_stage: '18' })
       .eq("id", data.sessionId);
     if (saveErr) throw new Error(`Failed to save Stage 18 output: ${saveErr.message}`);
     return { output };
@@ -214,7 +214,7 @@ export const selectStage18Detonation = createServerFn({ method: "POST" })
       .from("sessions")
       .update({
         stage_18_selected_detonation: data.detonationMarkdown,
-        phase_2_current_stage: 18,
+        phase_2_current_stage: '19',
       })
       .eq("id", data.sessionId);
     if (error) throw new Error(error.message);
