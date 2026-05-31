@@ -585,7 +585,88 @@ function CompletePage() {
           </div>
         </div>
 
+        {/* ─── Phase 2: Brand Detonation ───────────────────────────────── */}
+        {(() => {
+          const allDocsReady = Boolean(
+            session.doc_consulting_url &&
+              session.doc_agency_url &&
+              session.doc_workshop_url,
+          );
+          if (!allDocsReady) return null;
+          const isOwner = Boolean(user && session.user_id && user.id === session.user_id);
+          const amber = "#C8873A";
+          return (
+            <section style={{ marginTop: 64 }}>
+              <hr
+                style={{
+                  border: 0,
+                  borderTop: `1px solid ${amber}`,
+                  margin: "0 0 40px",
+                }}
+              />
+              <div style={{ textAlign: "center" }}>
+                <p
+                  className="text-label"
+                  style={{ color: amber, letterSpacing: "0.12em" }}
+                >
+                  YOUR BRAND STRATEGY IS COMPLETE. NOW GIVE IT LIFE.
+                </p>
+                {hasSmp && (
+                  <h2
+                    style={{
+                      color: amber,
+                      fontSize: 36,
+                      lineHeight: 1.25,
+                      fontWeight: 700,
+                      margin: "24px auto 32px",
+                      maxWidth: 720,
+                    }}
+                  >
+                    {smp}
+                  </h2>
+                )}
+                <Link
+                  to="/detonation"
+                  search={{ session: session.id }}
+                  disabled={!isOwner}
+                  aria-disabled={!isOwner}
+                  onClick={(e) => {
+                    if (!isOwner) e.preventDefault();
+                  }}
+                  style={{
+                    display: "inline-flex",
+                    height: 56,
+                    alignItems: "center",
+                    justifyContent: "center",
+                    padding: "0 32px",
+                    borderRadius: 8,
+                    border: "none",
+                    backgroundColor: "var(--color-primary)",
+                    color: "var(--color-background)",
+                    fontWeight: 600,
+                    fontSize: 16,
+                    textDecoration: "none",
+                    cursor: isOwner ? "pointer" : "not-allowed",
+                    opacity: isOwner ? 1 : 0.5,
+                  }}
+                >
+                  Begin Brand Detonation →
+                </Link>
+                {!isOwner && (
+                  <p
+                    className="text-body-sm"
+                    style={{ color: "var(--color-text-tertiary)", marginTop: 12 }}
+                  >
+                    Only the session owner can begin Brand Detonation.
+                  </p>
+                )}
+              </div>
+            </section>
+          );
+        })()}
+
         {/* Pipeline stages collapsible */}
+
         <div style={{ marginTop: 48 }}>
           <button
             type="button"
