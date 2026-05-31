@@ -6,6 +6,7 @@ import { BrandGrenadeIcon } from "@/components/BrandGrenadeIcon";
 import { SMPAnchor } from "@/components/SMPAnchor";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
+import { PHASE_2_STAGES, PHASE_2_AMBER } from "@/lib/phase2-stages";
 
 const detonationSearchSchema = z.object({
   session: z.string().uuid().optional(),
@@ -141,8 +142,65 @@ function DetonationPage() {
               ]}
             />
           </div>
-          {/* Stage list area (Phase 2 stages render here as they're added) */}
-          <div style={{ flex: 1, overflowY: "auto" }} />
+          {/* Stage list */}
+          <div style={{ flex: 1, overflowY: "auto", padding: "16px 12px" }}>
+            <div
+              className="text-label"
+              style={{
+                color: PHASE_2_AMBER,
+                letterSpacing: "0.18em",
+                fontFamily: "'DM Mono', monospace",
+                fontSize: 7,
+                textTransform: "uppercase",
+                padding: "0 8px 12px",
+              }}
+            >
+              STAGES
+            </div>
+            <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 2 }}>
+              {PHASE_2_STAGES.map((stage) => {
+                const current = session?.phase_2_current_stage ?? 0;
+                const stageNum = parseInt(stage.number, 10);
+                const isActive = current === stageNum || (stage.number === "17B" && current === 17);
+                return (
+                  <li key={stage.id}>
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 10,
+                        padding: "8px 10px",
+                        borderRadius: 6,
+                        backgroundColor: isActive ? "rgba(212,146,74,0.08)" : "transparent",
+                        borderLeft: `2px solid ${isActive ? PHASE_2_AMBER : "transparent"}`,
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontFamily: "'DM Mono', monospace",
+                          fontSize: 10,
+                          color: PHASE_2_AMBER,
+                          minWidth: 28,
+                          letterSpacing: "0.06em",
+                        }}
+                      >
+                        {stage.number}
+                      </span>
+                      <span
+                        style={{
+                          fontFamily: "'DM Sans', sans-serif",
+                          fontSize: 12,
+                          color: "var(--color-text-secondary)",
+                        }}
+                      >
+                        {stage.label}
+                      </span>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
         </aside>
 
         <main className="mx-auto w-full max-w-[800px] px-5 sm:px-8" style={{ paddingTop: 64, paddingBottom: 96 }}>
@@ -169,7 +227,7 @@ function DetonationPage() {
               </div>
               <span
                 className="text-label"
-                style={{ color: "#C8873A", letterSpacing: "0.12em" }}
+                style={{ color: "#D4924A", letterSpacing: "0.12em" }}
               >
                 PHASE 2 — BRAND DETONATION
               </span>
@@ -182,7 +240,7 @@ function DetonationPage() {
               {smp && (
                 <p
                   style={{
-                    color: "#C8873A",
+                    color: "#D4924A",
                     fontSize: 24,
                     lineHeight: 1.3,
                     fontWeight: 600,
@@ -225,7 +283,7 @@ function DetonationPage() {
               >
                 <p
                   className="text-label"
-                  style={{ color: "#C8873A", letterSpacing: "0.12em" }}
+                  style={{ color: "#D4924A", letterSpacing: "0.12em" }}
                 >
                   STATUS
                 </p>

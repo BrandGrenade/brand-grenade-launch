@@ -1,0 +1,1 @@
+export const STAGE_17_DETONATION_TERRITORY_PROMPT = "";

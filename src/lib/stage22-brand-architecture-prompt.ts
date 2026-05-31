@@ -1,0 +1,1 @@
+export const STAGE_22_BRAND_ARCHITECTURE_PROMPT = "";

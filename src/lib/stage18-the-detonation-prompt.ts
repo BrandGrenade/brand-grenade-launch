@@ -1,0 +1,1 @@
+export const STAGE_18_THE_DETONATION_PROMPT = "";
