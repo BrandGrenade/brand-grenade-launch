@@ -500,7 +500,7 @@ function SessionsTable({
                   <StatusBadge status={status} />
                 </td>
                 <td className="px-4 py-4">
-                  <Phase2Badge status={derivePhase2Status(s)} />
+                  <Phase2Button state={derivePhase2ButtonState(s)} sessionId={s.id} />
                 </td>
                 <td className="px-4 py-4" style={{ minWidth: 280, whiteSpace: "nowrap" }}>
                   <div className="flex items-center justify-end gap-2">
