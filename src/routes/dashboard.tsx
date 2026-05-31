@@ -314,10 +314,47 @@ function Phase2Button({ state, sessionId }: { state: Phase2ButtonState; sessionI
   const solid = meta.variant === "solid";
   const [hover, setHover] = useState(false);
   // COMMENCE routes through the Three Truth Canvas; IN PROGRESS / COMPLETE go straight to the pipeline.
-  const target = state === "commence" ? "/detonation/canvas" : "/detonation";
+  const linkStyle = {
+    display: "inline-flex" as const,
+    alignItems: "center" as const,
+    justifyContent: "center" as const,
+    height: 28,
+    padding: "0 14px",
+    borderRadius: 6,
+    fontSize: 11,
+    fontWeight: 600,
+    letterSpacing: "0.1em",
+    textTransform: "uppercase" as const,
+    border: "1px solid #C8873A",
+    backgroundColor: solid ? "#C8873A" : hover ? "#C8873A15" : "transparent",
+    color: solid ? "#0A0A0A" : "#C8873A",
+    transition: "background-color 150ms",
+    whiteSpace: "nowrap" as const,
+  };
+  const handlers = {
+    onMouseEnter: () => setHover(true),
+    onMouseLeave: () => setHover(false),
+  };
+  if (state === "commence") {
+    return (
+      <Link to="/detonation/canvas" search={{ session: sessionId }} {...handlers} style={linkStyle}>
+        {meta.label}
+      </Link>
+    );
+  }
+  return (
+    <Link to="/detonation" search={{ session: sessionId }} {...handlers} style={linkStyle}>
+      {meta.label}
+    </Link>
+  );
+}
+
+function _Phase2ButtonOld({ sessionId }: { sessionId: string }) {
+  const [hover, setHover] = useState(false);
+  const solid = true;
   return (
     <Link
-      to={target}
+      to="/detonation"
       search={{ session: sessionId }}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
