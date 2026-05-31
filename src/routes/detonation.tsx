@@ -1136,7 +1136,9 @@ function Stage21({ session, onChange, goNext }: { session: SessionRow; onChange:
           </div>
           <div style={{ marginTop: 24, display: "flex", gap: 12, justifyContent: "flex-end" }}>
             <AmberButton variant="ghost" onClick={downloadAll}>Download All Channel Briefs</AmberButton>
-            <AmberButton onClick={handleProceed}>Proceed to Stage 22</AmberButton>
+            <AmberButton onClick={handleProceed} disabled={proceeding}>
+              {proceeding ? <><Spinner /> Loading...</> : "Proceed to Stage 22"}
+            </AmberButton>
           </div>
         </>
       )}
