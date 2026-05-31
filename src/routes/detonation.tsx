@@ -889,6 +889,7 @@ function Stage20({ session, onChange, goNext }: { session: SessionRow; onChange:
   const [output, setOutput] = useState<string | null>(session.stage_20_output);
   const [approved, setApproved] = useState<boolean>(Boolean(session.stage_20_approved));
   const [busy, setBusy] = useState(false);
+  const [proceeding, setProceeding] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [autoTriggered, setAutoTriggered] = useState(false);
 
