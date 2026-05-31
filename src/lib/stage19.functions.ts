@@ -7,7 +7,7 @@ import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { callClaude } from "./claude.server";
 import { STAGE_19_ACTIVATION_ARCHITECTURE_PROMPT } from "./stage19-activation-architecture-prompt";
-import { appendRedirect, formatThreeTruths, smpGoverningBlock } from "./phase2-shared.server";
+import { appendRedirect, formatThreeTruths, smpGoverningBlock, withPhase2Formatting } from "./phase2-shared.server";
 
 const STAGE19_SELECT = [
   "brand_name",
@@ -75,7 +75,7 @@ export const runStage19 = createServerFn({ method: "POST" })
     let output: string;
     try {
       output = await callClaude({
-        systemPrompt: STAGE_19_ACTIVATION_ARCHITECTURE_PROMPT,
+        systemPrompt: withPhase2Formatting(STAGE_19_ACTIVATION_ARCHITECTURE_PROMPT),
         userMessage: buildStage19UserMessage(session as never),
         maxTokens: 10000,
         temperature: 0.6,
@@ -145,7 +145,7 @@ export const retryStage19 = createServerFn({ method: "POST" })
     const redirect = data.redirectInstructions["card-1"] ?? "";
     const system = appendRedirect(STAGE_19_ACTIVATION_ARCHITECTURE_PROMPT, redirect);
     const output = await callClaude({
-      systemPrompt: system,
+      systemPrompt: withPhase2Formatting(system),
       userMessage: buildStage19UserMessage(session as never),
       maxTokens: 10000,
       temperature: 0.6,

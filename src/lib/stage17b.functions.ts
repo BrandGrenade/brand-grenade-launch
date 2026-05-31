@@ -7,7 +7,7 @@ import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { callClaude } from "./claude.server";
 import { STAGE_17B_DETONATION_INTELLIGENCE_PROMPT } from "./stage17b-detonation-intelligence-prompt";
-import { appendRedirect, formatThreeTruths, smpGoverningBlock } from "./phase2-shared.server";
+import { appendRedirect, formatThreeTruths, smpGoverningBlock, withPhase2Formatting } from "./phase2-shared.server";
 
 const STAGE17B_SELECT = [
   "brand_name",
@@ -65,7 +65,7 @@ export const runStage17b = createServerFn({ method: "POST" })
     let output: string;
     try {
       output = await callClaude({
-        systemPrompt: STAGE_17B_DETONATION_INTELLIGENCE_PROMPT,
+        systemPrompt: withPhase2Formatting(STAGE_17B_DETONATION_INTELLIGENCE_PROMPT),
         userMessage: buildStage17bUserMessage(session as never),
         maxTokens: 8000,
         temperature: 0.6,
@@ -137,7 +137,7 @@ export const retryStage17b = createServerFn({ method: "POST" })
     const redirect = data.redirectInstructions["card-1"] ?? "";
     const system = appendRedirect(STAGE_17B_DETONATION_INTELLIGENCE_PROMPT, redirect);
     const output = await callClaude({
-      systemPrompt: system,
+      systemPrompt: withPhase2Formatting(system),
       userMessage: buildStage17bUserMessage(session as never),
       maxTokens: 8000,
       temperature: 0.6,

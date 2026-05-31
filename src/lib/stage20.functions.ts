@@ -17,7 +17,7 @@ import {
   recomputeScore,
   formatBriefQualityScore,
   STAGE_20_SECTION_DEFS,
-  smpGoverningBlock,
+  smpGoverningBlock,, withPhase2Formatting
 } from "./phase2-shared.server";
 
 const STAGE20_SELECT = [
@@ -98,7 +98,7 @@ export const runStage20 = createServerFn({ method: "POST" })
     let output: string;
     try {
       output = await callClaude({
-        systemPrompt: STAGE_20_MASTER_DETONATION_BRIEF_PROMPT,
+        systemPrompt: withPhase2Formatting(STAGE_20_MASTER_DETONATION_BRIEF_PROMPT),
         userMessage: buildStage20UserMessage(session as never),
         maxTokens: 8000,
         temperature: 0.5,
@@ -169,7 +169,7 @@ export const retryStage20 = createServerFn({ method: "POST" })
     const redirect = data.redirectInstructions["card-1"] ?? "";
     const system = appendRedirect(STAGE_20_MASTER_DETONATION_BRIEF_PROMPT, redirect);
     const output = await callClaude({
-      systemPrompt: system,
+      systemPrompt: withPhase2Formatting(system),
       userMessage: buildStage20UserMessage(session as never),
       maxTokens: 8000,
       temperature: 0.5,
@@ -212,7 +212,7 @@ export const regenerateStage20Section = createServerFn({ method: "POST" })
     const system = `You are rewriting one specific section of the Master Detonation Brief. Section: ${label}. Current content: ${section.content}. Human feedback: ${data.feedback}. Rewrite this section only. Match the length and voice of the original. Output only the rewritten section content. No labels. No preamble. No metadata.`;
 
     const newContent = await callClaude({
-      systemPrompt: system,
+      systemPrompt: withPhase2Formatting(system),
       userMessage: `Rewrite the ${label} section now. Output only the new section content.`,
       maxTokens: 2000,
       temperature: 0.5,

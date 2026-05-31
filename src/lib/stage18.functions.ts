@@ -15,7 +15,7 @@ import {
   joinCards,
   formatThreeTruths,
   smpGoverningBlock,
-  type Card,
+  type Card,, withPhase2Formatting
 } from "./phase2-shared.server";
 
 const STAGE18_SELECT = [
@@ -83,7 +83,7 @@ export const runStage18 = createServerFn({ method: "POST" })
     let output: string;
     try {
       output = await callClaude({
-        systemPrompt: STAGE_18_THE_DETONATION_PROMPT,
+        systemPrompt: withPhase2Formatting(STAGE_18_THE_DETONATION_PROMPT),
         userMessage: buildStage18UserMessage(session as never),
         maxTokens: 12000,
         temperature: 0.85,
@@ -169,7 +169,7 @@ export const retryStage18 = createServerFn({ method: "POST" })
       }
       const userMessage = `${baseUser}\n\nProduce ONE Detonation candidate (a single card with one ## heading). This will replace candidate ${id}.`;
       const text = await callClaude({
-        systemPrompt: system,
+        systemPrompt: withPhase2Formatting(system),
         userMessage,
         maxTokens: 6000,
         temperature: 0.9,
