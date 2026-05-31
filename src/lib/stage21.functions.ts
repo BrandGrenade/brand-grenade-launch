@@ -43,12 +43,19 @@ type Stage21Session = {
   stage_21_outputs: Record<string, string> | null;
 };
 
-function buildStage21UserMessage(channel: string, role: string, s: Stage21Session): string {
+function buildStage21UserMessage(
+  channel: string,
+  role: string,
+  context: string,
+  s: Stage21Session,
+): string {
   return [
     smpGoverningBlock(s.selected_smp),
     "",
     `CHANNEL: ${channel}`,
-    `CHANNEL ROLE: ${role}`,
+    `ROLE IN HIERARCHY: ${role}`,
+    "CHANNEL CONTEXT FROM STAGE 19:",
+    context?.trim() || "—",
     "",
     `BRAND: ${s.brand_name ?? "—"}`,
     `CATEGORY: ${s.category ?? "—"}`,
