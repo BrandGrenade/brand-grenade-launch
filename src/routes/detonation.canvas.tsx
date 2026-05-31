@@ -251,15 +251,11 @@ function ThreeTruthCanvas() {
   const intelComplete = useMemo(() => {
     if (intelType === "new") return newBrandAck;
     if (intelType === "existing") {
-      const hasAsset = assets.some((a) => a.name.trim().length > 0);
-      return (
-        valuesField.trim().length > 0 &&
-        toneField.trim().length > 0 &&
-        hasAsset
-      );
+      // Minimum bar: brand values present. Tone + assets optional.
+      return valuesField.trim().length > 0;
     }
     return false;
-  }, [intelType, newBrandAck, valuesField, toneField, assets]);
+  }, [intelType, newBrandAck, valuesField]);
 
   const intelQualityNotes = useMemo(() => {
     if (intelType !== "existing") return [];
@@ -276,7 +272,9 @@ function ThreeTruthCanvas() {
     return notes;
   }, [intelType, valuesField, toneField, assets]);
 
-  const canBegin = confirmedCount >= 1 && intelComplete && isOwner;
+  // TODO: reinstate owner check
+  // before commercial deployment
+  const canBegin = confirmedCount >= 1 && intelComplete;
 
   const handleBeginStage17 = async () => {
     if (!sessionId || !canBegin) return;
