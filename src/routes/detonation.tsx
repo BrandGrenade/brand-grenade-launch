@@ -1120,13 +1120,14 @@ function extractArchSection(arch: string, label: string): string {
   return m ? m[1].trim() : "";
 }
 
-function Stage22({ session, onChange }: { session: SessionRow; onChange: () => void }) {
+function Stage22({ session, onChange }: { session: SessionRow; onChange: () => void | Promise<void> }) {
   const run = useServerFn(runStage22);
   const load = useServerFn(loadStage22);
   const [architecture, setArchitecture] = useState<string | null>(session.stage_22_brand_architecture);
   const [assets, setAssets] = useState<string | null>(session.stage_22_distinctive_assets);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [autoTriggered, setAutoTriggered] = useState(false);
 
   useEffect(() => {
     if (architecture === null && assets === null) {
@@ -1141,10 +1142,22 @@ function Stage22({ session, onChange }: { session: SessionRow; onChange: () => v
     setBusy(true); setErr(null);
     try {
       const r = await run({ data: { sessionId: session.id } });
-      setArchitecture(r.architecture); setAssets(r.assets); onChange();
+      setArchitecture(r.architecture); setAssets(r.assets); await onChange();
     } catch (e) { setErr(e instanceof Error ? e.message : "Stage 22 failed"); }
     finally { setBusy(false); }
   };
+
+  useEffect(() => {
+    if (autoTriggered) return;
+    const stage21Ready = session.stage_21_outputs && Object.keys(session.stage_21_outputs).length > 0;
+    if (!stage21Ready) return;
+    if (architecture !== null && architecture !== "") return;
+    if (busy) return;
+    setAutoTriggered(true);
+    void handleRun();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session.stage_21_outputs, architecture]);
+
 
   const printPdf = () => window.print();
 
