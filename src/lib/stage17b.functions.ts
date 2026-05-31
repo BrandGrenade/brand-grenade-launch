@@ -54,7 +54,7 @@ export const runStage17b = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { data: session, error } = await supabaseAdmin
       .from("sessions")
-      .select("brand_name, category, stage_17_selected_territory, truth_product, truth_consumer, truth_cultural, stage_17b_output")
+      .select("brand_name, category, selected_smp, stage_17_selected_territory, truth_product, truth_consumer, truth_cultural, stage_17b_output")
       .eq("id", data.sessionId)
       .single();
     if (error || !session) throw new Error(`Session not found: ${error?.message ?? "no row"}`);
@@ -127,7 +127,7 @@ export const retryStage17b = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { data: session, error } = await supabaseAdmin
       .from("sessions")
-      .select("brand_name, category, stage_17_selected_territory, truth_product, truth_consumer, truth_cultural, stage_17b_output")
+      .select("brand_name, category, selected_smp, stage_17_selected_territory, truth_product, truth_consumer, truth_cultural, stage_17b_output")
       .eq("id", data.sessionId)
       .single();
     if (error || !session) throw new Error(`Session not found: ${error?.message ?? "no row"}`);
