@@ -667,7 +667,7 @@ function Stage17b({ session, onChange, goNext }: { session: SessionRow; onChange
 // ═════════════════════════════════════════════════════════════════════════
 // STAGE 18 — The Detonation
 // ═════════════════════════════════════════════════════════════════════════
-function Stage18({ session, onChange, goNext }: { session: SessionRow; onChange: () => void; goNext: () => void }) {
+function Stage18({ session, onChange, goNext }: { session: SessionRow; onChange: () => void | Promise<void>; goNext: () => void }) {
   const run = useServerFn(runStage18);
   const load = useServerFn(loadStage18);
   const retry = useServerFn(retryStage18);
