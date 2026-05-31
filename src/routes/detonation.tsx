@@ -1011,13 +1011,14 @@ function Stage20({ session, onChange, goNext }: { session: SessionRow; onChange:
 // ═════════════════════════════════════════════════════════════════════════
 // STAGE 21 — Channel Briefs
 // ═════════════════════════════════════════════════════════════════════════
-function Stage21({ session, onChange, goNext }: { session: SessionRow; onChange: () => void; goNext: () => void }) {
+function Stage21({ session, onChange, goNext }: { session: SessionRow; onChange: () => void | Promise<void>; goNext: () => void }) {
   const run = useServerFn(runStage21);
   const load = useServerFn(loadStage21);
   const [outputs, setOutputs] = useState<Record<string, string> | null>(session.stage_21_outputs);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [autoTriggered, setAutoTriggered] = useState(false);
 
   useEffect(() => {
     if (outputs === null) load({ data: { sessionId: session.id } }).then((r) => r.outputs && setOutputs(r.outputs)).catch(() => {});
@@ -1025,10 +1026,23 @@ function Stage21({ session, onChange, goNext }: { session: SessionRow; onChange:
 
   const handleRun = async () => {
     setBusy(true); setErr(null);
-    try { const r = await run({ data: { sessionId: session.id } }); setOutputs(r.outputs); onChange(); }
+    try { const r = await run({ data: { sessionId: session.id } }); setOutputs(r.outputs); await onChange(); }
     catch (e) { setErr(e instanceof Error ? e.message : "Stage 21 failed"); }
     finally { setBusy(false); }
   };
+
+  useEffect(() => {
+    if (autoTriggered) return;
+    if (!session.stage_20_approved) return;
+    if (outputs !== null && Object.keys(outputs).length > 0) return;
+    if (busy) return;
+    setAutoTriggered(true);
+    void handleRun();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session.stage_20_approved, outputs]);
+
+  const handleProceed = async () => { await onChange(); goNext(); };
+
 
   const download = (filename: string, content: string) => {
     const blob = new Blob([content], { type: "text/markdown" });
