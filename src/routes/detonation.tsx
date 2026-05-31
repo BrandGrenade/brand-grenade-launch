@@ -779,9 +779,10 @@ function Stage18({ session, onChange, goNext }: { session: SessionRow; onChange:
               redirectText={redirects[c.id] ?? ""}
               onRedirectChange={(id, v) => setRedirects((p) => ({ ...p, [id]: v }))}
               smp={session.selected_smp}
+              showCheckbox={true}
             >
               <AmberButton onClick={() => handleSelect(c.markdown)} disabled={busy}>
-                Select This Detonation
+                {busy && <Spinner />} {busy ? "Loading..." : "Select This Detonation"}
               </AmberButton>
             </DetonationOutputCard>
           ))}
