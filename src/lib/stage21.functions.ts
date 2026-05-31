@@ -10,8 +10,7 @@ import { callClaude } from "./claude.server";
 import { STAGE_21_CHANNEL_DETONATION_BRIEFS_PROMPT } from "./stage21-channel-detonation-briefs-prompt";
 import {
   appendRedirect,
-  extractStage19Channels,
-  extractChannelRoles,
+  extractStage19ChannelEntries,
   formatThreeTruths,
   smpGoverningBlock,
   withPhase2Formatting,
