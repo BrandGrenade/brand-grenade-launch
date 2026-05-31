@@ -99,7 +99,7 @@ function Dashboard() {
     (async () => {
       const { data } = await supabase
         .from("sessions")
-        .select("id,brand_name,category,status,current_stage,created_at,updated_at,stage_16_consulting_output,phase_2_status")
+        .select("id,brand_name,category,status,current_stage,created_at,updated_at,stage_16_consulting_output,phase_2_status,stage_17_output,stage_22_output")
         .order("updated_at", { ascending: false })
         .limit(100);
       if (!active) return;
@@ -115,7 +115,7 @@ function Dashboard() {
         async () => {
           const { data } = await supabase
             .from("sessions")
-            .select("id,brand_name,category,status,current_stage,created_at,updated_at,stage_16_consulting_output,phase_2_status")
+            .select("id,brand_name,category,status,current_stage,created_at,updated_at,stage_16_consulting_output,phase_2_status,stage_17_output,stage_22_output")
             .order("updated_at", { ascending: false })
             .limit(100);
           if (active) setSessions((data ?? []) as DbSession[]);
