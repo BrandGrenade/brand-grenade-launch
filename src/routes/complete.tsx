@@ -640,10 +640,6 @@ function CompletePage() {
                 <Link
                   to="/detonation/canvas"
                   search={{ session: session.id }}
-                  aria-disabled={!isOwner}
-                  onClick={(e) => {
-                    if (!isOwner) e.preventDefault();
-                  }}
                   style={{
                     display: "inline-flex",
                     height: 56,
@@ -657,21 +653,13 @@ function CompletePage() {
                     fontWeight: 600,
                     fontSize: 16,
                     textDecoration: "none",
-                    cursor: isOwner ? "pointer" : "not-allowed",
-                    opacity: isOwner ? 1 : 0.5,
-                    pointerEvents: isOwner ? "auto" : "none",
+                    cursor: "pointer",
+                    opacity: 1,
+                    pointerEvents: "auto",
                   }}
                 >
                   Begin Brand Detonation →
                 </Link>
-                {!isOwner && (
-                  <p
-                    className="text-body-sm"
-                    style={{ color: "var(--color-text-tertiary)", marginTop: 12 }}
-                  >
-                    Only the session owner can begin Brand Detonation.
-                  </p>
-                )}
               </div>
             </section>
           );
