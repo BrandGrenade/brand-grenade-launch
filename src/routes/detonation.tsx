@@ -124,7 +124,28 @@ function DetonationPage() {
         </nav>
       </div>
 
-      <main className="mx-auto w-full max-w-[800px] px-5 sm:px-8" style={{ paddingTop: 64, paddingBottom: 96 }}>
+      <div className="flex flex-1 min-h-0">
+        {/* Left panel — permanent SMP anchor + stage list area */}
+        <aside
+          className="hidden md:flex w-[280px] shrink-0 flex-col border-r border-border bg-background"
+          style={{ position: "sticky", top: 0, alignSelf: "flex-start", maxHeight: "100vh" }}
+        >
+          {/* SMP anchor — pinned, never scrolls, cannot collapse */}
+          <div style={{ flexShrink: 0 }}>
+            <SMPAnchor
+              smp={session?.selected_smp ?? ""}
+              truths={[
+                Boolean(session?.checkpoint_a_confirmed),
+                Boolean(session?.checkpoint_b_confirmed),
+                Boolean(session?.checkpoint_c_confirmed),
+              ]}
+            />
+          </div>
+          {/* Stage list area (Phase 2 stages render here as they're added) */}
+          <div style={{ flex: 1, overflowY: "auto" }} />
+        </aside>
+
+        <main className="mx-auto w-full max-w-[800px] px-5 sm:px-8" style={{ paddingTop: 64, paddingBottom: 96 }}>
         {!sessionId && (
           <p className="text-body" style={{ color: "#5A5652", textAlign: "center" }}>
             No session specified.
@@ -227,7 +248,8 @@ function DetonationPage() {
             )}
           </>
         )}
-      </main>
+        </main>
+      </div>
     </div>
   );
 }
