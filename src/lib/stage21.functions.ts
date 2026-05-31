@@ -10,8 +10,7 @@ import { callClaude } from "./claude.server";
 import { STAGE_21_CHANNEL_DETONATION_BRIEFS_PROMPT } from "./stage21-channel-detonation-briefs-prompt";
 import {
   appendRedirect,
-  extractStage19Channels,
-  extractChannelRoles,
+  extractStage19ChannelEntries,
   formatThreeTruths,
   smpGoverningBlock,
   withPhase2Formatting,
@@ -43,12 +42,19 @@ type Stage21Session = {
   stage_21_outputs: Record<string, string> | null;
 };
 
-function buildStage21UserMessage(channel: string, role: string, s: Stage21Session): string {
+function buildStage21UserMessage(
+  channel: string,
+  role: string,
+  context: string,
+  s: Stage21Session,
+): string {
   return [
     smpGoverningBlock(s.selected_smp),
     "",
     `CHANNEL: ${channel}`,
-    `CHANNEL ROLE: ${role}`,
+    `ROLE IN HIERARCHY: ${role}`,
+    "CHANNEL CONTEXT FROM STAGE 19:",
+    context?.trim() || "—",
     "",
     `BRAND: ${s.brand_name ?? "—"}`,
     `CATEGORY: ${s.category ?? "—"}`,
@@ -75,13 +81,14 @@ async function generateOne(
   sessionId: string,
   channel: string,
   role: string,
+  context: string,
   s: Stage21Session,
   redirectText: string,
 ): Promise<string> {
   const system = appendRedirect(STAGE_21_CHANNEL_DETONATION_BRIEFS_PROMPT, redirectText);
   return callClaude({
     systemPrompt: withPhase2Formatting(system),
-    userMessage: buildStage21UserMessage(channel, role, s),
+    userMessage: buildStage21UserMessage(channel, role, context, s),
     maxTokens: 4000,
     temperature: 0.5,
     sessionId,
@@ -110,17 +117,16 @@ export const runStage21 = createServerFn({ method: "POST" })
       return { outputs: s.stage_21_outputs };
     }
 
-    const channels = extractStage19Channels(s.stage_19_output);
-    const roles = extractChannelRoles(s.stage_19_output);
-    if (channels.length === 0)
+    const entries = extractStage19ChannelEntries(s.stage_19_output);
+    if (entries.length === 0)
       throw new Error("No active channels found in Stage 19 hierarchy");
 
     let outputs: Record<string, string>;
     try {
       const results = await Promise.all(
-        channels.map((c) => generateOne(data.sessionId, c, roles[c] ?? "—", s, "")),
+        entries.map((e) => generateOne(data.sessionId, e.name, e.role, e.content, s, "")),
       );
-      outputs = Object.fromEntries(channels.map((c, i) => [c, results[i]]));
+      outputs = Object.fromEntries(entries.map((e, i) => [e.name, results[i]]));
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Stage 21 failed";
       await supabaseAdmin
@@ -185,19 +191,21 @@ export const retryStage21 = createServerFn({ method: "POST" })
     const s = session as unknown as Stage21Session;
     if (!s.stage_19_output) throw new Error("Stage 19 missing");
 
-    const allChannels = extractStage19Channels(s.stage_19_output);
-    const roles = extractChannelRoles(s.stage_19_output);
+    const allEntries = extractStage19ChannelEntries(s.stage_19_output);
     const existing = s.stage_21_outputs ?? {};
-    const regenerate = data.cardIds.length === 0 ? allChannels : data.cardIds;
+    const regenerate =
+      data.cardIds.length === 0
+        ? allEntries
+        : allEntries.filter((e) => data.cardIds.includes(e.name));
 
     const results = await Promise.all(
-      regenerate.map((c) =>
-        generateOne(data.sessionId, c, roles[c] ?? "—", s, data.redirectInstructions[c] ?? ""),
+      regenerate.map((e) =>
+        generateOne(data.sessionId, e.name, e.role, e.content, s, data.redirectInstructions[e.name] ?? ""),
       ),
     );
     const merged: Record<string, string> = { ...existing };
-    regenerate.forEach((c, i) => {
-      merged[c] = results[i];
+    regenerate.forEach((e, i) => {
+      merged[e.name] = results[i];
     });
 
     const { error: saveErr } = await supabaseAdmin

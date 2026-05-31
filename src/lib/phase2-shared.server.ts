@@ -270,62 +270,96 @@ export function formatBriefQualityScore(score: BriefQualityScore): string {
   ].join("\n");
 }
 
-/** Pull active channel names from the Stage 19 output.
- *  Each channel role section lists channels; we collect every bullet line
- *  under a "ROLE" heading. */
-export function extractStage19Channels(stage19: string): string[] {
-  if (!stage19) return [];
-  const channels = new Set<string>();
-  const lines = stage19.split("\n");
-  let inHierarchy = false;
-  for (const raw of lines) {
-    if (/CHANNEL\s+HIERARCHY/i.test(raw)) {
-      inHierarchy = true;
-      continue;
-    }
-    if (inHierarchy && /COMPOUNDING\s+MEDIA\s+STRATEGY/i.test(raw)) break;
-    if (!inHierarchy) continue;
-    const m = raw.match(/^\s*[-*]\s+(.+?)\s*$/);
-    if (m) {
-      const name = m[1]
-        .replace(/^\*+|\*+$/g, "")
-        .replace(/\(.*?\)\s*$/, "")
-        .trim();
-      if (name && name.length < 80) channels.add(name);
-    }
+export type ChannelRole = "PRIMARY" | "AMPLIFICATION" | "ACTIVATION" | "SUSTAINING";
+export type ChannelEntry = { name: string; role: ChannelRole; content: string };
+
+const CHANNEL_NAME_MAP: Array<{ keywords: RegExp; name: string }> = [
+  { keywords: /\b(film|video|television|broadcast|long[-\s]?form|tvc)\b/i, name: "Film and Long-form" },
+  { keywords: /\b(social|instagram|facebook|tiktok|linkedin|short[-\s]?form)\b/i, name: "Social and Short-form" },
+  { keywords: /\b(outdoor|ooh|billboard|transit|street)\b/i, name: "Outdoor" },
+  { keywords: /\b(digital|search|google|display|programmatic|online advertising)\b/i, name: "Digital and Search" },
+  { keywords: /\b(audio|podcast|radio|spotify|sound)\b/i, name: "Audio and Podcast" },
+  { keywords: /\b(activation|experiential|event|sponsorship|in[-\s]?person|live)\b/i, name: "Activation and Experiential" },
+  { keywords: /\b(pr|earned|media relations|journalist|press|publicity)\b/i, name: "PR and Earned" },
+];
+
+function deriveChannelName(prose: string): string {
+  for (const m of CHANNEL_NAME_MAP) {
+    if (m.keywords.test(prose)) return m.name;
   }
-  return Array.from(channels);
+  const words = prose.trim().split(/\s+/).slice(0, 5).join(" ");
+  return words || "Channel";
 }
 
-/** Determine each channel's hierarchy role from the Stage 19 output. */
-export function extractChannelRoles(stage19: string): Record<string, string> {
-  const roles: Record<string, string> = {};
-  if (!stage19) return roles;
-  const lines = stage19.split("\n");
-  let currentRole: string | null = null;
-  let inHierarchy = false;
-  for (const raw of lines) {
-    if (/CHANNEL\s+HIERARCHY/i.test(raw)) {
-      inHierarchy = true;
-      continue;
+const DEFAULT_CHANNELS: ChannelEntry[] = [
+  { name: "Film and Long-form", role: "PRIMARY", content: "" },
+  { name: "Social and Short-form", role: "AMPLIFICATION", content: "" },
+  { name: "Outdoor", role: "AMPLIFICATION", content: "" },
+  { name: "Digital and Search", role: "ACTIVATION", content: "" },
+  { name: "PR and Earned", role: "AMPLIFICATION", content: "" },
+];
+
+/** Parse Stage 19 output into channel entries by section header. */
+export function extractStage19ChannelEntries(stage19: string): ChannelEntry[] {
+  if (!stage19 || !stage19.trim()) return [...DEFAULT_CHANNELS];
+
+  const sectionRegex = /^(PRIMARY\s+CHANNELS?|AMPLIFICATION\s+CHANNELS?|ACTIVATION\s+CHANNELS?|SUSTAINING\s+CHANNELS?)\b[^\n]*/gim;
+  const terminatorRegex = /^(DISTINCTIVE\s+ASSET\s+ACTIVATION\s+MAP|COMPOUNDING\s+MEDIA\s+STRATEGY|EMOTIONAL\s+TO\s+RATIONAL\s+CALIBRATION)\b/im;
+
+  type Match = { role: ChannelRole; start: number; bodyStart: number };
+  const matches: Match[] = [];
+  let m: RegExpExecArray | null;
+  while ((m = sectionRegex.exec(stage19)) !== null) {
+    const header = m[1].toUpperCase();
+    let role: ChannelRole = "PRIMARY";
+    if (header.startsWith("AMPLIFICATION")) role = "AMPLIFICATION";
+    else if (header.startsWith("ACTIVATION")) role = "ACTIVATION";
+    else if (header.startsWith("SUSTAINING")) role = "SUSTAINING";
+    matches.push({ role, start: m.index, bodyStart: m.index + m[0].length });
+  }
+
+  const entries: ChannelEntry[] = [];
+  const usedNames = new Set<string>();
+  for (let i = 0; i < matches.length; i++) {
+    const cur = matches[i];
+    const next = matches[i + 1];
+    let end = next ? next.start : stage19.length;
+    // Truncate at terminator section if encountered before next match
+    const tail = stage19.slice(cur.bodyStart, end);
+    const term = tail.search(terminatorRegex);
+    if (term >= 0) end = cur.bodyStart + term;
+    const body = stage19.slice(cur.bodyStart, end).trim();
+    if (!body) continue;
+
+    // Split body into paragraphs; PRIMARY is treated as single channel.
+    const paragraphs =
+      cur.role === "PRIMARY"
+        ? [body]
+        : body.split(/\n\s*\n+/).map((p) => p.trim()).filter(Boolean);
+
+    for (const para of paragraphs) {
+      const name = deriveChannelName(para);
+      const key = `${name}|${cur.role}`;
+      if (usedNames.has(key)) continue;
+      usedNames.add(key);
+      entries.push({ name, role: cur.role, content: para });
     }
-    if (inHierarchy && /COMPOUNDING\s+MEDIA\s+STRATEGY/i.test(raw)) break;
-    if (!inHierarchy) continue;
-    const roleMatch = raw.match(
-      /^\s*(?:#{1,4}\s*|\*+\s*)?(FAME\s+DRIVER|MEANING\s+BUILDER|CONVERSION\s+ENGINE|LOYALTY\s+REINFORCER)\b/i,
-    );
-    if (roleMatch) {
-      currentRole = roleMatch[1].toUpperCase().replace(/\s+/g, " ");
-      continue;
-    }
-    const bullet = raw.match(/^\s*[-*]\s+(.+?)\s*$/);
-    if (bullet && currentRole) {
-      const name = bullet[1]
-        .replace(/^\*+|\*+$/g, "")
-        .replace(/\(.*?\)\s*$/, "")
-        .trim();
-      if (name) roles[name] = currentRole;
-    }
+  }
+
+  if (entries.length === 0) return [...DEFAULT_CHANNELS];
+  return entries;
+}
+
+/** Backward-compatible: list of channel names from Stage 19. */
+export function extractStage19Channels(stage19: string): string[] {
+  return extractStage19ChannelEntries(stage19).map((e) => e.name);
+}
+
+/** Backward-compatible: name → role map. */
+export function extractChannelRoles(stage19: string): Record<string, ChannelRole> {
+  const roles: Record<string, ChannelRole> = {};
+  for (const e of extractStage19ChannelEntries(stage19)) {
+    roles[e.name] = e.role;
   }
   return roles;
 }
