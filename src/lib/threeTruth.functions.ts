@@ -156,19 +156,24 @@ export const saveBrandIntelligence = createServerFn({ method: "POST" })
         .parse(input),
   )
   .handler(async ({ data }) => {
-    const update: Record<string, unknown> = {
+    const baseUpdate = {
       brand_intel_type: data.type,
       brand_intel_confirmed: data.confirmed ?? false,
     };
-    if (data.type === "existing") {
-      update.brand_intel_values = data.values ?? "";
-      update.brand_intel_tone = data.tone ?? "";
-      update.brand_intel_assets = data.assets ?? [];
-    } else {
-      update.brand_intel_values = null;
-      update.brand_intel_tone = null;
-      update.brand_intel_assets = null;
-    }
+    const update =
+      data.type === "existing"
+        ? {
+            ...baseUpdate,
+            brand_intel_values: data.values ?? "",
+            brand_intel_tone: data.tone ?? "",
+            brand_intel_assets: (data.assets ?? []) as unknown as never,
+          }
+        : {
+            ...baseUpdate,
+            brand_intel_values: null,
+            brand_intel_tone: null,
+            brand_intel_assets: null,
+          };
     const { error } = await supabaseAdmin
       .from("sessions")
       .update(update)
