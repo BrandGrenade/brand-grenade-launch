@@ -26,6 +26,7 @@ const STAGE17_SELECT = [
   "selected_smp",
   "stage_2_output",
   "stage_5_output",
+  "stage_13_output",
   "stage_14c_output",
   "truth_product",
   "truth_consumer",
@@ -43,6 +44,7 @@ function buildStage17UserMessage(s: {
   selected_smp: string | null;
   stage_2_output: string | null;
   stage_5_output: string | null;
+  stage_13_output: string | null;
   stage_14c_output: string | null;
   truth_product: string | null;
   truth_consumer: string | null;
@@ -64,6 +66,9 @@ function buildStage17UserMessage(s: {
     "",
     "BRAND WORLD (Stage 14C)",
     s.stage_14c_output?.trim() || "—",
+    "",
+    "BRAND FIT ASSESSMENT",
+    s.stage_13_output?.trim() || "—",
     "",
     "THREE TRUTH CONFIRMATION",
     formatThreeTruths({
