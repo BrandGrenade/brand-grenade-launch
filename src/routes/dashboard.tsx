@@ -444,7 +444,7 @@ function SessionsTable({
   onRequestDelete: (s: DbSession) => void;
 }) {
   const isMobile = useIsMobile();
-  const headers = ["Brand", "Category", "Stage", "Updated", "Status", "Actions"];
+  const headers = ["Brand", "Category", "Stage", "Updated", "Brand Strategy", "Brand Detonation", "Actions"];
 
   return (
     <div className="overflow-x-auto">
