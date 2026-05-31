@@ -44,6 +44,8 @@ type Stage21Session = {
 
 function buildStage21UserMessage(channel: string, role: string, s: Stage21Session): string {
   return [
+    smpGoverningBlock(s.selected_smp),
+    "",
     `CHANNEL: ${channel}`,
     `CHANNEL ROLE: ${role}`,
     "",
