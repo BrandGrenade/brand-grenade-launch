@@ -15,6 +15,7 @@ export interface DetonationOutputCardProps {
   onRedirectChange: (cardId: string, text: string) => void;
   smp?: string | null;
   children?: React.ReactNode;
+  showCheckbox?: boolean;
 }
 
 const ACCENT = "#D4924A";
@@ -29,9 +30,10 @@ export function DetonationOutputCard({
   onRedirectChange,
   smp,
   children,
+  showCheckbox = false,
 }: DetonationOutputCardProps) {
   const inputId = `detonation-keep-${cardId}`;
-  const showRedirect = !isChecked;
+  const showRedirect = showCheckbox && !isChecked;
 
   return (
     <div
@@ -52,30 +54,32 @@ export function DetonationOutputCard({
       }
     >
       <div style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
-        <label
-          htmlFor={inputId}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            marginTop: 2,
-            cursor: "pointer",
-          }}
-        >
-          <input
-            id={inputId}
-            type="checkbox"
-            checked={isChecked}
-            onChange={(e) => onCheckChange(cardId, e.target.checked)}
+        {showCheckbox && (
+          <label
+            htmlFor={inputId}
             style={{
-              width: 18,
-              height: 18,
-              accentColor: ACCENT,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              marginTop: 2,
               cursor: "pointer",
             }}
-            aria-label={`Keep "${title}" on next retry`}
-          />
-        </label>
+          >
+            <input
+              id={inputId}
+              type="checkbox"
+              checked={isChecked}
+              onChange={(e) => onCheckChange(cardId, e.target.checked)}
+              style={{
+                width: 18,
+                height: 18,
+                accentColor: ACCENT,
+                cursor: "pointer",
+              }}
+              aria-label={`Keep "${title}" on next retry`}
+            />
+          </label>
+        )}
 
         <div style={{ flex: 1, minWidth: 0 }}>
           {smp && smp.trim() ? (

@@ -381,10 +381,13 @@ function DetonationPage() {
     session?.selected_smp && session.selected_smp.length > 0,
   );
 
+  const phase2Index = PHASE_2_STAGES.findIndex((s) => s.number === activeStage);
+  const unifiedStage = phase2Index >= 0 ? 16 + phase2Index + 1 : 17;
+
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-      <TopNav session={{ brand, currentStage: 0, totalStages: 22, isRunning: false }} />
+      <TopNav session={{ brand, currentStage: unifiedStage, totalStages: 23, isRunning: false }} />
       <div className="flex items-center border-b border-border bg-background px-5 py-3 sm:px-8">
         <nav className="text-body-sm flex items-center gap-1.5 truncate" style={{ color: "var(--color-text-tertiary)" }}>
           <Link to="/dashboard" className="transition-colors hover:text-text-secondary">Sessions</Link>
@@ -576,9 +579,10 @@ function Stage17({ session, onChange, goNext }: { session: SessionRow; onChange:
               redirectText={redirects[c.id] ?? ""}
               onRedirectChange={(id, v) => setRedirects((p) => ({ ...p, [id]: v }))}
               smp={session.selected_smp}
+              showCheckbox={true}
             >
               <AmberButton onClick={() => handleSelect(c.markdown)} disabled={busy}>
-                Select This Territory
+                {busy && <Spinner />} {busy ? "Loading..." : "Select This Territory"}
               </AmberButton>
             </DetonationOutputCard>
           ))}
@@ -602,6 +606,7 @@ function Stage17b({ session, onChange, goNext }: { session: SessionRow; onChange
   const retry = useServerFn(retryStage17b);
   const [output, setOutput] = useState<string | null>(session.stage_17b_output);
   const [busy, setBusy] = useState(false);
+  const [proceeding, setProceeding] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [autoTriggered, setAutoTriggered] = useState(false);
 
@@ -637,7 +642,12 @@ function Stage17b({ session, onChange, goNext }: { session: SessionRow; onChange
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session.stage_17_selected_territory, output]);
 
-  const handleProceed = async () => { await onChange(); goNext(); };
+  const handleProceed = async () => {
+    setProceeding(true);
+    try { await onChange(); goNext(); }
+    catch (e) { console.error("Stage advance error:", e); }
+    finally { setProceeding(false); }
+  };
 
   return (
     <section>
@@ -656,7 +666,9 @@ function Stage17b({ session, onChange, goNext }: { session: SessionRow; onChange
           <RichOutput text={output} />
           <div style={{ marginTop: 28, display: "flex", gap: 12, justifyContent: "flex-end" }}>
             <AmberButton variant="ghost" onClick={handleRetry} disabled={busy}>{busy && <Spinner />} Retry</AmberButton>
-            <AmberButton onClick={handleProceed}>Proceed to Stage 18</AmberButton>
+            <AmberButton onClick={handleProceed} disabled={proceeding}>
+              {proceeding ? <><Spinner /> Loading...</> : "Proceed to Stage 18"}
+            </AmberButton>
           </div>
         </div>
       )}
@@ -775,9 +787,10 @@ function Stage18({ session, onChange, goNext }: { session: SessionRow; onChange:
               redirectText={redirects[c.id] ?? ""}
               onRedirectChange={(id, v) => setRedirects((p) => ({ ...p, [id]: v }))}
               smp={session.selected_smp}
+              showCheckbox={true}
             >
               <AmberButton onClick={() => handleSelect(c.markdown)} disabled={busy}>
-                Select This Detonation
+                {busy && <Spinner />} {busy ? "Loading..." : "Select This Detonation"}
               </AmberButton>
             </DetonationOutputCard>
           ))}
@@ -801,6 +814,7 @@ function Stage19({ session, onChange, goNext }: { session: SessionRow; onChange:
   const retry = useServerFn(retryStage19);
   const [output, setOutput] = useState<string | null>(session.stage_19_output);
   const [busy, setBusy] = useState(false);
+  const [proceeding, setProceeding] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [autoTriggered, setAutoTriggered] = useState(false);
 
@@ -831,7 +845,12 @@ function Stage19({ session, onChange, goNext }: { session: SessionRow; onChange:
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session.stage_18_selected_detonation, output]);
 
-  const handleProceed = async () => { await onChange(); goNext(); };
+  const handleProceed = async () => {
+    setProceeding(true);
+    try { await onChange(); goNext(); }
+    catch (e) { console.error("Stage advance error:", e); }
+    finally { setProceeding(false); }
+  };
 
   return (
     <section>
@@ -847,7 +866,9 @@ function Stage19({ session, onChange, goNext }: { session: SessionRow; onChange:
           <RichOutput text={output} />
           <div style={{ marginTop: 28, display: "flex", gap: 12, justifyContent: "flex-end" }}>
             <AmberButton variant="ghost" onClick={handleRetry} disabled={busy}>{busy && <Spinner />} Retry</AmberButton>
-            <AmberButton onClick={handleProceed}>Proceed to Stage 20</AmberButton>
+            <AmberButton onClick={handleProceed} disabled={proceeding}>
+              {proceeding ? <><Spinner /> Loading...</> : "Proceed to Stage 20"}
+            </AmberButton>
           </div>
         </div>
       )}
@@ -868,6 +889,7 @@ function Stage20({ session, onChange, goNext }: { session: SessionRow; onChange:
   const [output, setOutput] = useState<string | null>(session.stage_20_output);
   const [approved, setApproved] = useState<boolean>(Boolean(session.stage_20_approved));
   const [busy, setBusy] = useState(false);
+  const [proceeding, setProceeding] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [autoTriggered, setAutoTriggered] = useState(false);
 
@@ -919,7 +941,12 @@ function Stage20({ session, onChange, goNext }: { session: SessionRow; onChange:
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session.stage_19_output, output]);
 
-  const handleProceed = async () => { await onChange(); goNext(); };
+  const handleProceed = async () => {
+    setProceeding(true);
+    try { await onChange(); goNext(); }
+    catch (e) { console.error("Stage advance error:", e); }
+    finally { setProceeding(false); }
+  };
 
 
   const composite = score.composite ?? 0;
@@ -995,7 +1022,9 @@ function Stage20({ session, onChange, goNext }: { session: SessionRow; onChange:
           <div style={{ marginTop: 24, display: "flex", gap: 12, justifyContent: "flex-end" }}>
             <AmberButton variant="ghost" onClick={handleRetry} disabled={busy}>{busy && <Spinner />} Retry</AmberButton>
             {approved ? (
-              <AmberButton onClick={handleProceed}>Proceed to Stage 21</AmberButton>
+              <AmberButton onClick={handleProceed} disabled={proceeding}>
+                {proceeding ? <><Spinner /> Loading...</> : "Proceed to Stage 21"}
+              </AmberButton>
             ) : (
               <AmberButton onClick={handleApprove} disabled={!canApprove || busy}>
                 {busy && <Spinner />} Approve Brief
@@ -1016,6 +1045,7 @@ function Stage21({ session, onChange, goNext }: { session: SessionRow; onChange:
   const load = useServerFn(loadStage21);
   const [outputs, setOutputs] = useState<Record<string, string> | null>(session.stage_21_outputs);
   const [busy, setBusy] = useState(false);
+  const [proceeding, setProceeding] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [autoTriggered, setAutoTriggered] = useState(false);
@@ -1041,7 +1071,12 @@ function Stage21({ session, onChange, goNext }: { session: SessionRow; onChange:
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session.stage_20_approved, outputs]);
 
-  const handleProceed = async () => { await onChange(); goNext(); };
+  const handleProceed = async () => {
+    setProceeding(true);
+    try { await onChange(); goNext(); }
+    catch (e) { console.error("Stage advance error:", e); }
+    finally { setProceeding(false); }
+  };
 
 
   const download = (filename: string, content: string) => {
@@ -1101,7 +1136,9 @@ function Stage21({ session, onChange, goNext }: { session: SessionRow; onChange:
           </div>
           <div style={{ marginTop: 24, display: "flex", gap: 12, justifyContent: "flex-end" }}>
             <AmberButton variant="ghost" onClick={downloadAll}>Download All Channel Briefs</AmberButton>
-            <AmberButton onClick={handleProceed}>Proceed to Stage 22</AmberButton>
+            <AmberButton onClick={handleProceed} disabled={proceeding}>
+              {proceeding ? <><Spinner /> Loading...</> : "Proceed to Stage 22"}
+            </AmberButton>
           </div>
         </>
       )}
