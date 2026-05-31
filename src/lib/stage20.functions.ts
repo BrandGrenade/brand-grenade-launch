@@ -48,6 +48,8 @@ function buildStage20UserMessage(s: {
   truth_cultural: string | null;
 }): string {
   return [
+    smpGoverningBlock(s.selected_smp),
+    "",
     `BRAND: ${s.brand_name ?? "—"}`,
     `CATEGORY: ${s.category ?? "—"}`,
     "",
