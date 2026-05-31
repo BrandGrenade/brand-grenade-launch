@@ -91,6 +91,15 @@ COMPETITIVE INTELLIGENCE (Stage 2):
 ${s.stage_2_output?.trim() || "Not available"}
 
 Now generate three Detonation Territories that give this specific SMP — "${smp}" — a life it cannot have on paper.
+
+For each territory — the first section after the territory name must be:
+
+WHY THIS TERRITORY SERVES THE SMP:
+[Two to three sentences that explicitly state why this specific territory — and no other — is the right creative expression of "${smp}". Not why it is interesting. Not why it is strategically valid. Why it makes THIS specific SMP alive in a way no other territory could. If you cannot write this statement specifically and convincingly — the territory is wrong. Generate a different one.]
+
+This section must appear before the Territory Description. Before everything else. It is the first thing the human reads after the territory name. It must answer one question: Why is this territory the right home for "${smp}"?
+
+The answer must be specific to the SMP as written. Not generic creative strategy. Not interesting thinking. A direct and specific answer to why THIS territory serves THIS proposition.
 `.trim();
 }
 

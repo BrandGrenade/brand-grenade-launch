@@ -61,6 +61,15 @@ function buildStage18UserMessage(s: {
     }),
     "",
     "Produce three Detonation candidates as requested in the system prompt.",
+    "",
+    "For each Detonation candidate — the first section after the Detonation name must be:",
+    "",
+    "WHY THIS DETONATION SERVES THE SMP:",
+    `[Two to three sentences that explicitly state why this specific Detonation — and no other — makes "${(s.selected_smp ?? "").trim() || "—"}" explosive in the world. Not why it is interesting. Not why it is strategically valid. Why it makes THIS specific SMP alive in a way no other Detonation could. If you cannot write this statement specifically and convincingly — the Detonation is wrong. Generate a different one.]`,
+    "",
+    "This section must appear before everything else for the candidate. It is the first thing the human reads after the Detonation name. It must answer one question: Why is this Detonation the right home for the SMP?",
+    "",
+    "The answer must be specific to the SMP as written. Not generic creative strategy. Not interesting thinking. A direct and specific answer to why THIS Detonation serves THIS proposition.",
   ].join("\n");
 }
 
