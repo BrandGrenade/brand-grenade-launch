@@ -164,7 +164,7 @@ export const runStage22 = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { data: session, error } = await supabaseAdmin
       .from("sessions")
-      .select(STAGE22_SELECT)
+      .select("brand_name, category, selected_smp, stage_5_output, stage_13_output, stage_14c_output, stage_17_selected_territory, stage_17b_output, stage_18_selected_detonation, stage_19_output, stage_20_output, truth_product, truth_consumer, truth_cultural, brand_intel_type, brand_intel_values, brand_intel_tone, brand_intel_assets, stage_22_output, stage_22_brand_architecture, stage_22_distinctive_assets")
       .eq("id", data.sessionId)
       .single();
     if (error || !session) throw new Error(`Session not found: ${error?.message ?? "no row"}`);
@@ -261,7 +261,7 @@ export const retryStage22 = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { data: session, error } = await supabaseAdmin
       .from("sessions")
-      .select(STAGE22_SELECT)
+      .select("brand_name, category, selected_smp, stage_5_output, stage_13_output, stage_14c_output, stage_17_selected_territory, stage_17b_output, stage_18_selected_detonation, stage_19_output, stage_20_output, truth_product, truth_consumer, truth_cultural, brand_intel_type, brand_intel_values, brand_intel_tone, brand_intel_assets, stage_22_output, stage_22_brand_architecture, stage_22_distinctive_assets")
       .eq("id", data.sessionId)
       .single();
     if (error || !session) throw new Error(`Session not found: ${error?.message ?? "no row"}`);
