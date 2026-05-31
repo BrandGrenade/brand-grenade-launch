@@ -81,13 +81,14 @@ async function generateOne(
   sessionId: string,
   channel: string,
   role: string,
+  context: string,
   s: Stage21Session,
   redirectText: string,
 ): Promise<string> {
   const system = appendRedirect(STAGE_21_CHANNEL_DETONATION_BRIEFS_PROMPT, redirectText);
   return callClaude({
     systemPrompt: withPhase2Formatting(system),
-    userMessage: buildStage21UserMessage(channel, role, s),
+    userMessage: buildStage21UserMessage(channel, role, context, s),
     maxTokens: 4000,
     temperature: 0.5,
     sessionId,
