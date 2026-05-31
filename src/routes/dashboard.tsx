@@ -44,9 +44,11 @@ type DbSession = {
   created_at: string;
   updated_at: string;
   stage_16_consulting_output: string | null;
+  phase_2_status: string | null;
 };
 
 type UIStatus = "complete" | "in_progress" | "incomplete";
+type Phase2Status = "not_started" | "in_progress" | "complete";
 
 function deriveStatus(s: DbSession): UIStatus {
   if (
@@ -57,6 +59,12 @@ function deriveStatus(s: DbSession): UIStatus {
   }
   if (s.status === "running" || s.status === "pending") return "in_progress";
   return "incomplete";
+}
+
+function derivePhase2Status(s: DbSession): Phase2Status {
+  const v = (s.phase_2_status ?? "not_started") as Phase2Status;
+  if (v === "in_progress" || v === "complete") return v;
+  return "not_started";
 }
 
 function Dashboard() {
