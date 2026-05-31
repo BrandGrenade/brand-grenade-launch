@@ -45,10 +45,12 @@ type DbSession = {
   updated_at: string;
   stage_16_consulting_output: string | null;
   phase_2_status: string | null;
+  stage_17_output: string | null;
+  stage_22_output: string | null;
 };
 
 type UIStatus = "complete" | "in_progress" | "incomplete";
-type Phase2Status = "not_started" | "in_progress" | "complete";
+type Phase2ButtonState = "commence" | "in_progress" | "complete";
 
 function deriveStatus(s: DbSession): UIStatus {
   if (
@@ -61,10 +63,10 @@ function deriveStatus(s: DbSession): UIStatus {
   return "incomplete";
 }
 
-function derivePhase2Status(s: DbSession): Phase2Status {
-  const v = (s.phase_2_status ?? "not_started") as Phase2Status;
-  if (v === "in_progress" || v === "complete") return v;
-  return "not_started";
+function derivePhase2ButtonState(s: DbSession): Phase2ButtonState {
+  if (s.stage_22_output) return "complete";
+  if (s.stage_17_output) return "in_progress";
+  return "commence";
 }
 
 function Dashboard() {
