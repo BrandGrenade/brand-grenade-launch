@@ -284,49 +284,45 @@ const STATUS_META: Record<UIStatus, { label: string; bg: string; border: string;
   incomplete: { label: "Incomplete", bg: "#3A3A3A", border: "#5A5652", fg: "#5A5652" },
 };
 
-const PHASE_2_META: Record<Phase2Status, { label: string; bg: string; border: string; fg: string }> = {
-  not_started: { label: "Not Started", bg: "#3A3A3A", border: "#5A5652", fg: "#5A5652" },
-  in_progress: { label: "In Progress", bg: "#C8873A15", border: "#C8873A", fg: "#C8873A" },
-  complete: { label: "Complete", bg: "#4A7C5915", border: "#4A7C59", fg: "#4A7C59" },
+const PHASE_2_BUTTON_META: Record<Phase2ButtonState, { label: string; variant: "solid" | "outline" }> = {
+  commence: { label: "Commence", variant: "solid" },
+  in_progress: { label: "In Progress", variant: "solid" },
+  complete: { label: "Complete", variant: "outline" },
 };
 
-function StatusBadge({ status }: { status: UIStatus }) {
-  const meta = STATUS_META[status];
+function Phase2Button({ state, sessionId }: { state: Phase2ButtonState; sessionId: string }) {
+  const meta = PHASE_2_BUTTON_META[state];
+  const solid = meta.variant === "solid";
+  const [hover, setHover] = useState(false);
   return (
-    <span
-      className="inline-flex items-center rounded-sm font-medium uppercase tracking-wider"
+    <Link
+      to="/detonation"
+      search={{ session: sessionId }}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
       style={{
-        backgroundColor: meta.bg,
-        border: `1px solid ${meta.border}`,
-        color: meta.fg,
-        fontSize: 9,
-        padding: "2px 6px",
-        letterSpacing: "0.08em",
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        height: 28,
+        padding: "0 14px",
+        borderRadius: 6,
+        fontSize: 11,
+        fontWeight: 600,
+        letterSpacing: "0.1em",
+        textTransform: "uppercase",
+        border: "1px solid #C8873A",
+        backgroundColor: solid ? "#C8873A" : hover ? "#C8873A15" : "transparent",
+        color: solid ? "#0A0A0A" : "#C8873A",
+        transition: "background-color 150ms",
+        whiteSpace: "nowrap",
       }}
     >
       {meta.label}
-    </span>
+    </Link>
   );
 }
 
-function Phase2Badge({ status }: { status: Phase2Status }) {
-  const meta = PHASE_2_META[status];
-  return (
-    <span
-      className="inline-flex items-center rounded-sm font-medium uppercase tracking-wider"
-      style={{
-        backgroundColor: meta.bg,
-        border: `1px solid ${meta.border}`,
-        color: meta.fg,
-        fontSize: 9,
-        padding: "2px 6px",
-        letterSpacing: "0.08em",
-      }}
-    >
-      {meta.label}
-    </span>
-  );
-}
 
 function fmtDate(iso: string) {
   return new Date(iso).toLocaleString();
