@@ -284,6 +284,25 @@ const STATUS_META: Record<UIStatus, { label: string; bg: string; border: string;
   incomplete: { label: "Incomplete", bg: "#3A3A3A", border: "#5A5652", fg: "#5A5652" },
 };
 
+function StatusBadge({ status }: { status: UIStatus }) {
+  const meta = STATUS_META[status];
+  return (
+    <span
+      className="inline-flex items-center rounded-sm font-medium uppercase tracking-wider"
+      style={{
+        backgroundColor: meta.bg,
+        border: `1px solid ${meta.border}`,
+        color: meta.fg,
+        fontSize: 9,
+        padding: "2px 6px",
+        letterSpacing: "0.08em",
+      }}
+    >
+      {meta.label}
+    </span>
+  );
+}
+
 const PHASE_2_BUTTON_META: Record<Phase2ButtonState, { label: string; variant: "solid" | "outline" }> = {
   commence: { label: "Commence", variant: "solid" },
   in_progress: { label: "In Progress", variant: "solid" },
