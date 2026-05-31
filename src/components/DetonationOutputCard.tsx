@@ -15,6 +15,7 @@ export interface DetonationOutputCardProps {
   onRedirectChange: (cardId: string, text: string) => void;
   smp?: string | null;
   children?: React.ReactNode;
+  showCheckbox?: boolean;
 }
 
 const ACCENT = "#D4924A";
