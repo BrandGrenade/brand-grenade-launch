@@ -118,7 +118,7 @@ function CompletePage() {
     supabase
       .from("sessions")
       .select(
-        "id, brand_name, category, selected_smp, selected_smp_field_name, user_id, doc_consulting_url, doc_agency_url, doc_workshop_url, phase_2_status, stage_1_output, stage_8_output, stage_10_output, stage_11_output, stage_12_output, stage_13_output",
+        "id, brand_name, category, selected_smp, selected_smp_field_name, user_id, doc_consulting_url, doc_agency_url, doc_workshop_url, phase_2_status, stage_1_output, stage_8_output, stage_10_output, stage_11_output, stage_12_output, stage_13_output, stage_17_selected_territory, stage_17b_output, stage_18_selected_detonation, stage_19_output, stage_20_output, stage_21_outputs, stage_22_brand_architecture, stage_22_distinctive_assets",
       )
       .eq("id", sessionId)
       .maybeSingle()
