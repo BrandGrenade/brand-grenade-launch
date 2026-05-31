@@ -1045,6 +1045,7 @@ function Stage21({ session, onChange, goNext }: { session: SessionRow; onChange:
   const load = useServerFn(loadStage21);
   const [outputs, setOutputs] = useState<Record<string, string> | null>(session.stage_21_outputs);
   const [busy, setBusy] = useState(false);
+  const [proceeding, setProceeding] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [autoTriggered, setAutoTriggered] = useState(false);
