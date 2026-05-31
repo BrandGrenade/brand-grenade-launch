@@ -466,9 +466,10 @@ function DetonationPage() {
               </header>
 
               {!docsReady && <ErrorBanner message="All Phase 1 documents must be generated before Brand Detonation can begin." />}
-              {docsReady && !isOwner && <ErrorBanner message="Only the session owner can run Brand Detonation." />}
+              {/* TODO: reinstate owner check */}
+              {/* before commercial deployment */}
 
-              {docsReady && isOwner && (
+              {docsReady && (
                 <div style={{ maxWidth: 880, margin: "0 auto" }}>
                   {activeStage === "17" && <Stage17 session={session} onChange={refresh} goNext={() => setActiveStage("17B")} />}
                   {activeStage === "17B" && <Stage17b session={session} onChange={refresh} goNext={() => setActiveStage("18")} />}

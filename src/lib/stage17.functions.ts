@@ -20,22 +20,7 @@ import {
   type Card,
 } from "./phase2-shared.server";
 
-const STAGE17_SELECT = [
-  "brand_name",
-  "category",
-  "selected_smp",
-  "stage_2_output",
-  "stage_5_output",
-  "stage_14c_output",
-  "truth_product",
-  "truth_consumer",
-  "truth_cultural",
-  "brand_intel_type",
-  "brand_intel_values",
-  "brand_intel_tone",
-  "brand_intel_assets",
-  "stage_17_output",
-].join(", ");
+const STAGE17_SELECT = "brand_name, category, selected_smp, stage_2_output, stage_5_output, stage_13_output, stage_14c_output, truth_product, truth_consumer, truth_cultural, brand_intel_type, brand_intel_values, brand_intel_tone, brand_intel_assets, stage_17_output" as const;
 
 function buildStage17UserMessage(s: {
   brand_name: string | null;
@@ -43,6 +28,7 @@ function buildStage17UserMessage(s: {
   selected_smp: string | null;
   stage_2_output: string | null;
   stage_5_output: string | null;
+  stage_13_output: string | null;
   stage_14c_output: string | null;
   truth_product: string | null;
   truth_consumer: string | null;
@@ -64,6 +50,9 @@ function buildStage17UserMessage(s: {
     "",
     "BRAND WORLD (Stage 14C)",
     s.stage_14c_output?.trim() || "—",
+    "",
+    "BRAND FIT ASSESSMENT",
+    s.stage_13_output?.trim() || "—",
     "",
     "THREE TRUTH CONFIRMATION",
     formatThreeTruths({
@@ -94,7 +83,7 @@ export const runStage17 = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { data: session, error } = await supabaseAdmin
       .from("sessions")
-      .select("brand_name, category, selected_smp, stage_2_output, stage_5_output, stage_14c_output, truth_product, truth_consumer, truth_cultural, brand_intel_type, brand_intel_values, brand_intel_tone, brand_intel_assets, stage_17_output")
+      .select(STAGE17_SELECT)
       .eq("id", data.sessionId)
       .single();
     if (error || !session) throw new Error(`Session not found: ${error?.message ?? "no row"}`);
@@ -165,7 +154,7 @@ export const retryStage17 = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { data: session, error } = await supabaseAdmin
       .from("sessions")
-      .select("brand_name, category, selected_smp, stage_2_output, stage_5_output, stage_14c_output, truth_product, truth_consumer, truth_cultural, brand_intel_type, brand_intel_values, brand_intel_tone, brand_intel_assets, stage_17_output")
+      .select(STAGE17_SELECT)
       .eq("id", data.sessionId)
       .single();
     if (error || !session) throw new Error(`Session not found: ${error?.message ?? "no row"}`);
