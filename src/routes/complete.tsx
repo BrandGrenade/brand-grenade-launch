@@ -603,7 +603,9 @@ function CompletePage() {
               session.doc_workshop_url,
           );
           if (!allDocsReady) return null;
-          const isOwner = Boolean(user && session.user_id && user.id === session.user_id);
+          // TODO: reinstate owner check
+          // before commercial deployment
+          const isOwner = true;
           const amber = "#C8873A";
           return (
             <section style={{ marginTop: 64 }}>
