@@ -689,7 +689,12 @@ function Stage18({ session, onChange, goNext }: { session: SessionRow; onChange:
         sessionId: session.id, cardIds: toRegen,
         redirectInstructions: redirects, courageRedirect: courage,
       } });
-      setOutput(r.output); setRedirects({}); setCourageDismissed(false); onChange();
+      setOutput(r.output); setRedirects({});
+      // After a courage redirect, suppress the banner for this generation cycle
+      // regardless of whether discomfort markers are present in the new output.
+      if (courage) setCourageDismissed(true);
+      else setCourageDismissed(false);
+      onChange();
     } catch (e) { setErr(e instanceof Error ? e.message : "Retry failed"); }
     finally { setBusy(false); }
   };
@@ -1039,7 +1044,7 @@ function Stage21({ session, onChange, goNext }: { session: SessionRow; onChange:
 // ═════════════════════════════════════════════════════════════════════════
 // STAGE 22 — Brand Architecture
 // ═════════════════════════════════════════════════════════════════════════
-const ARCH_COMPONENTS = ["REFLECTION", "DOMAIN", "HERITAGE", "VALUES", "ASSETS", "PERSONALITY", "RELATIONSHIP"] as const;
+const ARCH_COMPONENTS = ["REFLECTION", "DOMAIN", "HERITAGE", "VALUES", "ASSETS", "PERSONALITY"] as const;
 
 function extractArchSection(arch: string, label: string): string {
   const re = new RegExp(`(?:^|\\n)\\s*(?:#{1,4}\\s*|\\*+\\s*)?${label}\\b[^\\n]*\\n([\\s\\S]*?)(?=\\n\\s*(?:#{1,4}\\s*|\\*+\\s*)?(?:${ARCH_COMPONENTS.join("|")})\\b|$)`, "i");
@@ -1076,13 +1081,12 @@ function Stage22({ session, onChange }: { session: SessionRow; onChange: () => v
   const printPdf = () => window.print();
 
   const reflection = architecture ? extractArchSection(architecture, "REFLECTION") : "";
-  const peripherals = (["DOMAIN", "HERITAGE", "VALUES", "ASSETS", "PERSONALITY", "RELATIONSHIP"] as const)
-    .map((label) => ({ label, content: architecture ? extractArchSection(architecture, label) : "" }))
-    .filter((c) => c.content);
+  const peripherals = (["DOMAIN", "HERITAGE", "VALUES", "ASSETS", "PERSONALITY"] as const)
+    .map((label) => ({ label, content: architecture ? extractArchSection(architecture, label) : "" }));
 
   return (
     <section>
-      <SectionTitle kicker="STAGE 22" title="Brand Architecture" subtitle="The completed six-component architecture and distinctive asset architecture." />
+      <SectionTitle kicker="STAGE 22" title="Brand Architecture" subtitle="The completed brand architecture and distinctive asset architecture." />
       {err && <ErrorBanner message={err} />}
       {!architecture ? (
         <AmberButton onClick={handleRun} disabled={busy || !session.stage_20_approved}>
@@ -1090,15 +1094,16 @@ function Stage22({ session, onChange }: { session: SessionRow; onChange: () => v
         </AmberButton>
       ) : (
         <div id="phase2-print-region">
-          {/* Visual layout: central reflection + surrounding boxes */}
+          {/* Visual layout: 5 peripherals around central reflection */}
           <div style={{
             display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16,
             backgroundColor: "#0E0E0E", border: "1px solid #2A2A2A",
             borderRadius: 12, padding: 24,
           }}>
             {peripherals.slice(0, 3).map((p) => <ArchBox key={p.label} {...p} />)}
+            <ArchBox {...peripherals[3]} />
             <div style={{
-              gridColumn: "2 / 3", backgroundColor: AMBER, color: "#0A0A0A",
+              backgroundColor: AMBER, color: "#0A0A0A",
               borderRadius: 8, padding: 24, display: "flex", flexDirection: "column", justifyContent: "center",
             }}>
               <div className="text-mono" style={{
@@ -1108,9 +1113,9 @@ function Stage22({ session, onChange }: { session: SessionRow; onChange: () => v
                 fontSize: 18, lineHeight: 1.4, marginTop: 8, fontWeight: 600, whiteSpace: "pre-wrap",
               }}>{reflection || "—"}</div>
             </div>
-            {peripherals.slice(0, 3).length < 3 && <div />}
-            {peripherals.slice(3).map((p) => <ArchBox key={p.label} {...p} />)}
+            <ArchBox {...peripherals[4]} />
           </div>
+
 
           {/* Distinctive Assets */}
           {assets && (
