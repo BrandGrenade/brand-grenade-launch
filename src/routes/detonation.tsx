@@ -569,7 +569,7 @@ function Stage17({ session, onChange, goNext }: { session: SessionRow; onChange:
               key={c.id}
               cardId={c.id}
               title={c.name}
-              content={c.markdown.replace(/^##\s+.+\n?/, "").trim()}
+              content={sanitiseOutput(c.markdown.replace(/^##\s+.+\n?/, ""))}
               isChecked={checked[c.id] ?? true}
               onCheckChange={(id, v) => setChecked((p) => ({ ...p, [id]: v }))}
               redirectText={redirects[c.id] ?? ""}
@@ -752,7 +752,7 @@ function Stage18({ session, onChange, goNext }: { session: SessionRow; onChange:
               key={c.id}
               cardId={c.id}
               title={c.name}
-              content={c.markdown.replace(/^##\s+.+\n?/, "").trim()}
+              content={sanitiseOutput(c.markdown.replace(/^##\s+.+\n?/, ""))}
               isChecked={checked[c.id] ?? true}
               onCheckChange={(id, v) => setChecked((p) => ({ ...p, [id]: v }))}
               redirectText={redirects[c.id] ?? ""}
@@ -897,7 +897,7 @@ function Stage20({ session, onChange, goNext }: { session: SessionRow; onChange:
                   key={s.id}
                   sectionId={s.id}
                   label={s.label}
-                  content={s.content}
+                  content={sanitiseOutput(s.content)}
                   onRegenerate={handleSectionRegen}
                   onContentUpdate={() => { /* state already updated via handler */ }}
                 />
@@ -1120,7 +1120,7 @@ function Stage22({ session, onChange }: { session: SessionRow; onChange: () => v
               }}>REFLECTION</div>
               <div className="text-mono" style={{
                 fontSize: 18, lineHeight: 1.4, marginTop: 8, fontWeight: 600, whiteSpace: "pre-wrap",
-              }}>{reflection || "—"}</div>
+              }}>{sanitiseOutput(reflection) || "—"}</div>
             </div>
             <ArchBox {...peripherals[4]} />
           </div>
@@ -1158,7 +1158,7 @@ function ArchBox({ label, content }: { label: string; content: string }) {
         color: AMBER, textTransform: "uppercase", fontSize: 10,
         letterSpacing: "0.16em", marginBottom: 8,
       }}>{label}</div>
-      <div className="text-body-sm" style={{ color: "#FFFFFF", lineHeight: 1.5, whiteSpace: "pre-wrap" }}>{content}</div>
+      <div className="text-body-sm" style={{ color: "#FFFFFF", lineHeight: 1.5, whiteSpace: "pre-wrap" }}>{sanitiseOutput(content)}</div>
     </div>
   );
 }
