@@ -728,7 +728,8 @@ function Stage18({ session, onChange, goNext }: { session: SessionRow; onChange:
     setBusy(true); setErr(null);
     try {
       await select({ data: { sessionId: session.id, detonationMarkdown: markdown } });
-      onChange(); goNext();
+      await onChange();
+      goNext();
     } catch (e) { setErr(e instanceof Error ? e.message : "Selection failed"); }
     finally { setBusy(false); }
   };
