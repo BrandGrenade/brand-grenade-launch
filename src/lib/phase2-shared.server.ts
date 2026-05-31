@@ -295,3 +295,19 @@ export function extractChannelRoles(stage19: string): Record<string, string> {
   }
   return roles;
 }
+
+/** SMP-first governing block. Prepended to every Phase 2 stage user message
+ *  so the model is anchored to the validated SMP before any other context. */
+export function smpGoverningBlock(selectedSmp: string | null | undefined): string {
+  const smp = (selectedSmp ?? "").trim() || "—";
+  return `THE SMP — THIS GOVERNS EVERYTHING:
+"${smp}"
+
+Read this SMP three times before generating anything.
+Every output you produce must be an expression of this specific SMP.
+Not generic strategy. Not interesting territory. A specific answer to:
+What does "${smp}" look and feel like when humans experience it in the world?
+
+If your output could exist without this specific SMP — it is wrong.
+Regenerate until the SMP is unmistakably present.`;
+}
