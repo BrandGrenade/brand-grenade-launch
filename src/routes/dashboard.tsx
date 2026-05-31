@@ -282,8 +282,33 @@ const STATUS_META: Record<UIStatus, { label: string; bg: string; border: string;
   incomplete: { label: "Incomplete", bg: "#3A3A3A", border: "#5A5652", fg: "#5A5652" },
 };
 
+const PHASE_2_META: Record<Phase2Status, { label: string; bg: string; border: string; fg: string }> = {
+  not_started: { label: "Not Started", bg: "#3A3A3A", border: "#5A5652", fg: "#5A5652" },
+  in_progress: { label: "In Progress", bg: "#C8873A15", border: "#C8873A", fg: "#C8873A" },
+  complete: { label: "Complete", bg: "#4A7C5915", border: "#4A7C59", fg: "#4A7C59" },
+};
+
 function StatusBadge({ status }: { status: UIStatus }) {
   const meta = STATUS_META[status];
+  return (
+    <span
+      className="inline-flex items-center rounded-sm font-medium uppercase tracking-wider"
+      style={{
+        backgroundColor: meta.bg,
+        border: `1px solid ${meta.border}`,
+        color: meta.fg,
+        fontSize: 9,
+        padding: "2px 6px",
+        letterSpacing: "0.08em",
+      }}
+    >
+      {meta.label}
+    </span>
+  );
+}
+
+function Phase2Badge({ status }: { status: Phase2Status }) {
+  const meta = PHASE_2_META[status];
   return (
     <span
       className="inline-flex items-center rounded-sm font-medium uppercase tracking-wider"
