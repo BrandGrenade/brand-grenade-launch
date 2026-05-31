@@ -356,8 +356,8 @@ function DetonationPage() {
   useEffect(() => {
     if (!isAuthReady || !user || !session) return;
     if (session.user_id !== user.id) return;
-    const docsReady = Boolean(session.doc_consulting_url && session.doc_agency_url && session.doc_workshop_url);
-    if (!docsReady) return;
+    const phase1Complete = Boolean(session.selected_smp && session.selected_smp.length > 0);
+    if (!phase1Complete) return;
     if (session.phase_2_status === "not_started" || session.phase_2_status == null) {
       supabase.from("sessions").update({ phase_2_status: "in_progress" }).eq("id", session.id)
         .then(({ error: upErr }) => {
@@ -369,8 +369,8 @@ function DetonationPage() {
 
   const brand = session?.brand_name ?? "Untitled Brand";
   const isOwner = Boolean(user && session?.user_id && user.id === session.user_id);
-  const docsReady = Boolean(
-    session?.doc_consulting_url && session?.doc_agency_url && session?.doc_workshop_url,
+  const phase1Complete = Boolean(
+    session?.selected_smp && session.selected_smp.length > 0,
   );
 
   return (
