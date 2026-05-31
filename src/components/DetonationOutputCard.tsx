@@ -27,6 +27,7 @@ export function DetonationOutputCard({
   onCheckChange,
   redirectText,
   onRedirectChange,
+  smp,
   children,
 }: DetonationOutputCardProps) {
   const inputId = `detonation-keep-${cardId}`;
