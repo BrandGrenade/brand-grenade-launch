@@ -16,6 +16,7 @@ import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as CompleteRouteImport } from './routes/complete'
 import { Route as BriefRouteImport } from './routes/brief'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as DetonationCanvasRouteImport } from './routes/detonation.canvas'
 
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
@@ -52,24 +53,31 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DetonationCanvasRoute = DetonationCanvasRouteImport.update({
+  id: '/canvas',
+  path: '/canvas',
+  getParentRoute: () => DetonationRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/brief': typeof BriefRoute
   '/complete': typeof CompleteRoute
   '/dashboard': typeof DashboardRoute
-  '/detonation': typeof DetonationRoute
+  '/detonation': typeof DetonationRouteWithChildren
   '/pipeline': typeof PipelineRoute
   '/settings': typeof SettingsRoute
+  '/detonation/canvas': typeof DetonationCanvasRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/brief': typeof BriefRoute
   '/complete': typeof CompleteRoute
   '/dashboard': typeof DashboardRoute
-  '/detonation': typeof DetonationRoute
+  '/detonation': typeof DetonationRouteWithChildren
   '/pipeline': typeof PipelineRoute
   '/settings': typeof SettingsRoute
+  '/detonation/canvas': typeof DetonationCanvasRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -77,9 +85,10 @@ export interface FileRoutesById {
   '/brief': typeof BriefRoute
   '/complete': typeof CompleteRoute
   '/dashboard': typeof DashboardRoute
-  '/detonation': typeof DetonationRoute
+  '/detonation': typeof DetonationRouteWithChildren
   '/pipeline': typeof PipelineRoute
   '/settings': typeof SettingsRoute
+  '/detonation/canvas': typeof DetonationCanvasRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -91,6 +100,7 @@ export interface FileRouteTypes {
     | '/detonation'
     | '/pipeline'
     | '/settings'
+    | '/detonation/canvas'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -100,6 +110,7 @@ export interface FileRouteTypes {
     | '/detonation'
     | '/pipeline'
     | '/settings'
+    | '/detonation/canvas'
   id:
     | '__root__'
     | '/'
@@ -109,6 +120,7 @@ export interface FileRouteTypes {
     | '/detonation'
     | '/pipeline'
     | '/settings'
+    | '/detonation/canvas'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -116,7 +128,7 @@ export interface RootRouteChildren {
   BriefRoute: typeof BriefRoute
   CompleteRoute: typeof CompleteRoute
   DashboardRoute: typeof DashboardRoute
-  DetonationRoute: typeof DetonationRoute
+  DetonationRoute: typeof DetonationRouteWithChildren
   PipelineRoute: typeof PipelineRoute
   SettingsRoute: typeof SettingsRoute
 }
@@ -172,15 +184,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/detonation/canvas': {
+      id: '/detonation/canvas'
+      path: '/canvas'
+      fullPath: '/detonation/canvas'
+      preLoaderRoute: typeof DetonationCanvasRouteImport
+      parentRoute: typeof DetonationRoute
+    }
   }
 }
+
+interface DetonationRouteChildren {
+  DetonationCanvasRoute: typeof DetonationCanvasRoute
+}
+
+const DetonationRouteChildren: DetonationRouteChildren = {
+  DetonationCanvasRoute: DetonationCanvasRoute,
+}
+
+const DetonationRouteWithChildren = DetonationRoute._addFileChildren(
+  DetonationRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BriefRoute: BriefRoute,
   CompleteRoute: CompleteRoute,
   DashboardRoute: DashboardRoute,
-  DetonationRoute: DetonationRoute,
+  DetonationRoute: DetonationRouteWithChildren,
   PipelineRoute: PipelineRoute,
   SettingsRoute: SettingsRoute,
 }

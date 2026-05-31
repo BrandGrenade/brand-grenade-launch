@@ -626,7 +626,7 @@ function CompletePage() {
                   </h2>
                 )}
                 <Link
-                  to="/detonation"
+                  to="/detonation/canvas"
                   search={{ session: session.id }}
                   aria-disabled={!isOwner}
                   onClick={(e) => {
