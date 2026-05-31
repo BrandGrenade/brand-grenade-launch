@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as PipelineRouteImport } from './routes/pipeline'
+import { Route as DetonationRouteImport } from './routes/detonation'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as CompleteRouteImport } from './routes/complete'
 import { Route as BriefRouteImport } from './routes/brief'
@@ -24,6 +25,11 @@ const SettingsRoute = SettingsRouteImport.update({
 const PipelineRoute = PipelineRouteImport.update({
   id: '/pipeline',
   path: '/pipeline',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DetonationRoute = DetonationRouteImport.update({
+  id: '/detonation',
+  path: '/detonation',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardRoute = DashboardRouteImport.update({
@@ -52,6 +58,7 @@ export interface FileRoutesByFullPath {
   '/brief': typeof BriefRoute
   '/complete': typeof CompleteRoute
   '/dashboard': typeof DashboardRoute
+  '/detonation': typeof DetonationRoute
   '/pipeline': typeof PipelineRoute
   '/settings': typeof SettingsRoute
 }
@@ -60,6 +67,7 @@ export interface FileRoutesByTo {
   '/brief': typeof BriefRoute
   '/complete': typeof CompleteRoute
   '/dashboard': typeof DashboardRoute
+  '/detonation': typeof DetonationRoute
   '/pipeline': typeof PipelineRoute
   '/settings': typeof SettingsRoute
 }
@@ -69,6 +77,7 @@ export interface FileRoutesById {
   '/brief': typeof BriefRoute
   '/complete': typeof CompleteRoute
   '/dashboard': typeof DashboardRoute
+  '/detonation': typeof DetonationRoute
   '/pipeline': typeof PipelineRoute
   '/settings': typeof SettingsRoute
 }
@@ -79,16 +88,25 @@ export interface FileRouteTypes {
     | '/brief'
     | '/complete'
     | '/dashboard'
+    | '/detonation'
     | '/pipeline'
     | '/settings'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/brief' | '/complete' | '/dashboard' | '/pipeline' | '/settings'
+  to:
+    | '/'
+    | '/brief'
+    | '/complete'
+    | '/dashboard'
+    | '/detonation'
+    | '/pipeline'
+    | '/settings'
   id:
     | '__root__'
     | '/'
     | '/brief'
     | '/complete'
     | '/dashboard'
+    | '/detonation'
     | '/pipeline'
     | '/settings'
   fileRoutesById: FileRoutesById
@@ -98,6 +116,7 @@ export interface RootRouteChildren {
   BriefRoute: typeof BriefRoute
   CompleteRoute: typeof CompleteRoute
   DashboardRoute: typeof DashboardRoute
+  DetonationRoute: typeof DetonationRoute
   PipelineRoute: typeof PipelineRoute
   SettingsRoute: typeof SettingsRoute
 }
@@ -116,6 +135,13 @@ declare module '@tanstack/react-router' {
       path: '/pipeline'
       fullPath: '/pipeline'
       preLoaderRoute: typeof PipelineRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/detonation': {
+      id: '/detonation'
+      path: '/detonation'
+      fullPath: '/detonation'
+      preLoaderRoute: typeof DetonationRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboard': {
@@ -154,9 +180,20 @@ const rootRouteChildren: RootRouteChildren = {
   BriefRoute: BriefRoute,
   CompleteRoute: CompleteRoute,
   DashboardRoute: DashboardRoute,
+  DetonationRoute: DetonationRoute,
   PipelineRoute: PipelineRoute,
   SettingsRoute: SettingsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
