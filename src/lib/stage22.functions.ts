@@ -9,7 +9,7 @@ import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { callClaude } from "./claude.server";
 import { STAGE_22_BRAND_ARCHITECTURE_PROMPT } from "./stage22-brand-architecture-prompt";
-import { appendRedirect, formatThreeTruths, formatBrandIntelligence } from "./phase2-shared.server";
+import { appendRedirect, formatThreeTruths, formatBrandIntelligence, smpGoverningBlock } from "./phase2-shared.server";
 
 const DISTINCTIVE_ASSETS_PROMPT = `You are a senior brand architect producing the Distinctive Asset Architecture for this brand.
 
@@ -78,6 +78,8 @@ type Stage22Session = {
 
 function buildStage22UserMessage(s: Stage22Session): string {
   return [
+    smpGoverningBlock(s.selected_smp),
+    "",
     `BRAND: ${s.brand_name ?? "—"}`,
     `CATEGORY: ${s.category ?? "—"}`,
     "",

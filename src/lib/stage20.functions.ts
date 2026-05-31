@@ -17,6 +17,7 @@ import {
   recomputeScore,
   formatBriefQualityScore,
   STAGE_20_SECTION_DEFS,
+  smpGoverningBlock,
 } from "./phase2-shared.server";
 
 const STAGE20_SELECT = [
@@ -48,6 +49,8 @@ function buildStage20UserMessage(s: {
   truth_cultural: string | null;
 }): string {
   return [
+    smpGoverningBlock(s.selected_smp),
+    "",
     `BRAND: ${s.brand_name ?? "—"}`,
     `CATEGORY: ${s.category ?? "—"}`,
     "",

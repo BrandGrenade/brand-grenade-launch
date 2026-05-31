@@ -15,7 +15,6 @@ import {
   appendRedirect,
   splitCards,
   joinCards,
-  formatThreeTruths,
   formatBrandIntelligence,
   type Card,
 } from "./phase2-shared.server";
@@ -38,42 +37,60 @@ function buildStage17UserMessage(s: {
   brand_intel_tone: string | null;
   brand_intel_assets: unknown;
 }): string {
-  return [
-    `BRAND: ${s.brand_name ?? "—"}`,
-    `CATEGORY: ${s.category ?? "—"}`,
-    "",
-    "VALIDATED SMP",
-    s.selected_smp?.trim() || "—",
-    "",
-    "HUMAN CONTRADICTION STATEMENT (Stage 5)",
-    s.stage_5_output?.trim() || "—",
-    "",
-    "BRAND WORLD (Stage 14C)",
-    s.stage_14c_output?.trim() || "—",
-    "",
-    "BRAND FIT ASSESSMENT",
-    s.stage_13_output?.trim() || "—",
-    "",
-    "THREE TRUTH CONFIRMATION",
-    formatThreeTruths({
-      product: s.truth_product,
-      consumer: s.truth_consumer,
-      cultural: s.truth_cultural,
-    }),
-    "",
-    "BRAND INTELLIGENCE",
-    formatBrandIntelligence({
-      type: s.brand_intel_type,
-      values: s.brand_intel_values,
-      tone: s.brand_intel_tone,
-      assets: s.brand_intel_assets,
-    }),
-    "",
-    "COMPETITIVE INTELLIGENCE (Stage 2)",
-    s.stage_2_output?.trim() || "—",
-    "",
-    "Produce three Detonation Territory candidates as requested in the system prompt.",
-  ].join("\n");
+  const smp = s.selected_smp?.trim() || "—";
+  const assetsText = formatBrandIntelligence({
+    type: s.brand_intel_type,
+    values: s.brand_intel_values,
+    tone: s.brand_intel_tone,
+    assets: s.brand_intel_assets,
+  });
+  return `
+THE SMP — THIS GOVERNS EVERYTHING:
+"${smp}"
+
+Read this SMP three times before generating anything.
+Every territory you generate must be an expression of this specific SMP given creative life.
+Not a generic creative territory.
+Not an interesting strategic space.
+A specific answer to this question:
+What does "${smp}" look and feel like when humans experience it in the world?
+
+If a territory could exist without this specific SMP — it is wrong.
+Regenerate it until the SMP is unmistakably present.
+
+BRAND: ${s.brand_name ?? "—"}
+CATEGORY: ${s.category ?? "—"}
+
+BRAND INTELLIGENCE:
+Type: ${s.brand_intel_type || "Not specified"}
+Values: ${s.brand_intel_values || "Not specified"}
+Tone of Voice: ${s.brand_intel_tone || "Not specified"}
+Existing Assets:
+${assetsText}
+
+PRODUCT TRUTH:
+${s.truth_product?.trim() || "Not confirmed"}
+
+CONSUMER TRUTH:
+${s.truth_consumer?.trim() || "Not confirmed"}
+
+CULTURAL TRUTH:
+${s.truth_cultural?.trim() || "Not confirmed"}
+
+HUMAN CONTRADICTION STATEMENT (Stage 5):
+${s.stage_5_output?.trim() || "Not available"}
+
+BRAND WORLD (Stage 14C):
+${s.stage_14c_output?.trim() || "Not available"}
+
+BRAND FIT ASSESSMENT (Stage 13):
+${s.stage_13_output?.trim() || "Not available"}
+
+COMPETITIVE INTELLIGENCE (Stage 2):
+${s.stage_2_output?.trim() || "Not available"}
+
+Now generate three Detonation Territories that give this specific SMP — "${smp}" — a life it cannot have on paper.
+`.trim();
 }
 
 const RunInput = z.object({ sessionId: z.string().uuid() });
@@ -161,14 +178,41 @@ export const retryStage17 = createServerFn({ method: "POST" })
     if (!session.stage_17_output) throw new Error("Stage 17 has no prior output to retry");
 
     const existing = splitCards(session.stage_17_output as string);
-    const regenerateIds = data.cardIds.length === 0
-      ? existing.map((c) => c.id)
-      : data.cardIds;
+    const regenAll = data.cardIds.length === 0;
+    const regenerateIds = regenAll ? existing.map((c) => c.id) : data.cardIds;
     if (regenerateIds.length === 0) return { output: session.stage_17_output as string };
 
     const baseUser = buildStage17UserMessage(session as never);
+    const combinedRedirect = Object.values(data.redirectInstructions)
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .join("\n\n");
 
-    // Regenerate one card per id (so redirect instructions apply 1:1).
+    // Fast path: full-stage retry — one Claude call producing all three cards.
+    // Avoids three serial 6000-token calls that can silently exceed the
+    // worker's wall-clock window.
+    if (regenAll) {
+      const system = appendRedirect(STAGE_17_DETONATION_TERRITORY_PROMPT, combinedRedirect);
+      const text = await callClaude({
+        systemPrompt: system,
+        userMessage: `${baseUser}\n\nRegenerate all three Detonation Territory candidates.`,
+        maxTokens: 12000,
+        temperature: 0.85,
+        sessionId: data.sessionId,
+        stageLabel: "Stage 17 (retry all)",
+        stageNumber: "17",
+        stageName: "Detonation Territory",
+      });
+
+      const { error: saveErr } = await supabaseAdmin
+        .from("sessions")
+        .update({ stage_17_output: text, stage_17_error: null })
+        .eq("id", data.sessionId);
+      if (saveErr) throw new Error(saveErr.message);
+      return { output: text };
+    }
+
+    // Selective path: regenerate one card per id (1:1 with redirects).
     const regenerated: Record<string, Card> = {};
     for (const id of regenerateIds) {
       const redirect = data.redirectInstructions[id] ?? "";
