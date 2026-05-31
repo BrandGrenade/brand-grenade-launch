@@ -52,6 +52,8 @@ export type Database = {
           doc_workshop_url: string | null
           id: string
           interrupted_stage: number | null
+          phase_2_current_stage: number
+          phase_2_status: string
           retry_status: string | null
           selected_format: string | null
           selected_smp: string | null
@@ -156,6 +158,8 @@ export type Database = {
           doc_workshop_url?: string | null
           id?: string
           interrupted_stage?: number | null
+          phase_2_current_stage?: number
+          phase_2_status?: string
           retry_status?: string | null
           selected_format?: string | null
           selected_smp?: string | null
@@ -260,6 +264,8 @@ export type Database = {
           doc_workshop_url?: string | null
           id?: string
           interrupted_stage?: number | null
+          phase_2_current_stage?: number
+          phase_2_status?: string
           retry_status?: string | null
           selected_format?: string | null
           selected_smp?: string | null
