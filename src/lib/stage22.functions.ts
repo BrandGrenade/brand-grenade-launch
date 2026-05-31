@@ -78,6 +78,8 @@ type Stage22Session = {
 
 function buildStage22UserMessage(s: Stage22Session): string {
   return [
+    smpGoverningBlock(s.selected_smp),
+    "",
     `BRAND: ${s.brand_name ?? "—"}`,
     `CATEGORY: ${s.category ?? "—"}`,
     "",
