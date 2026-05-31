@@ -85,6 +85,7 @@ async function openDocument(url: string) {
 function CompletePage() {
   const { session: sessionId } = Route.useSearch();
   const runStage16Fn = useServerFn(runStage16);
+  const { user } = useAuth();
   // edge fn invoked directly via supabase.functions.invoke
   const [format, setFormat] = useState<Format>("consulting");
   const [generating, setGenerating] = useState(false);
