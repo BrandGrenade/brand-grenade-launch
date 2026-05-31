@@ -1,0 +1,1 @@
+export const STAGE_20_MASTER_DETONATION_BRIEF_PROMPT = "";
