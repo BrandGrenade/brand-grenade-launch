@@ -313,9 +313,11 @@ function Phase2Button({ state, sessionId }: { state: Phase2ButtonState; sessionI
   const meta = PHASE_2_BUTTON_META[state];
   const solid = meta.variant === "solid";
   const [hover, setHover] = useState(false);
+  // COMMENCE routes through the Three Truth Canvas; IN PROGRESS / COMPLETE go straight to the pipeline.
+  const target = state === "commence" ? "/detonation/canvas" : "/detonation";
   return (
     <Link
-      to="/detonation"
+      to={target}
       search={{ session: sessionId }}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
