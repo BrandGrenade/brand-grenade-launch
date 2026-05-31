@@ -117,17 +117,16 @@ export const runStage21 = createServerFn({ method: "POST" })
       return { outputs: s.stage_21_outputs };
     }
 
-    const channels = extractStage19Channels(s.stage_19_output);
-    const roles = extractChannelRoles(s.stage_19_output);
-    if (channels.length === 0)
+    const entries = extractStage19ChannelEntries(s.stage_19_output);
+    if (entries.length === 0)
       throw new Error("No active channels found in Stage 19 hierarchy");
 
     let outputs: Record<string, string>;
     try {
       const results = await Promise.all(
-        channels.map((c) => generateOne(data.sessionId, c, roles[c] ?? "—", s, "")),
+        entries.map((e) => generateOne(data.sessionId, e.name, e.role, e.content, s, "")),
       );
-      outputs = Object.fromEntries(channels.map((c, i) => [c, results[i]]));
+      outputs = Object.fromEntries(entries.map((e, i) => [e.name, results[i]]));
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Stage 21 failed";
       await supabaseAdmin
