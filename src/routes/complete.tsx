@@ -67,6 +67,15 @@ type SessionRow = {
   stage_11_output: string | null;
   stage_12_output: string | null;
   stage_13_output: string | null;
+  // Phase 2 deliverables source
+  stage_17_selected_territory: string | null;
+  stage_17b_output: string | null;
+  stage_18_selected_detonation: string | null;
+  stage_19_output: string | null;
+  stage_20_output: string | null;
+  stage_21_outputs: Record<string, string> | null;
+  stage_22_brand_architecture: string | null;
+  stage_22_distinctive_assets: string | null;
 };
 
 async function openDocument(url: string) {
