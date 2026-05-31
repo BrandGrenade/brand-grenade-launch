@@ -161,7 +161,7 @@ function CompletePage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
-      <TopNav session={{ brand, currentStage: 20, totalStages: 20, isRunning: false }} />
+      <TopNav session={{ brand, currentStage: session?.stage_22_brand_architecture ? 23 : 16, totalStages: 23, isRunning: false }} />
       {/* Breadcrumb */}
       <div className="flex items-center border-b border-border bg-background px-5 py-3 sm:px-8">
         <nav
