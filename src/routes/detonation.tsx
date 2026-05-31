@@ -689,7 +689,12 @@ function Stage18({ session, onChange, goNext }: { session: SessionRow; onChange:
         sessionId: session.id, cardIds: toRegen,
         redirectInstructions: redirects, courageRedirect: courage,
       } });
-      setOutput(r.output); setRedirects({}); setCourageDismissed(false); onChange();
+      setOutput(r.output); setRedirects({});
+      // After a courage redirect, suppress the banner for this generation cycle
+      // regardless of whether discomfort markers are present in the new output.
+      if (courage) setCourageDismissed(true);
+      else setCourageDismissed(false);
+      onChange();
     } catch (e) { setErr(e instanceof Error ? e.message : "Retry failed"); }
     finally { setBusy(false); }
   };
