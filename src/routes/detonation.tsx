@@ -814,6 +814,7 @@ function Stage19({ session, onChange, goNext }: { session: SessionRow; onChange:
   const retry = useServerFn(retryStage19);
   const [output, setOutput] = useState<string | null>(session.stage_19_output);
   const [busy, setBusy] = useState(false);
+  const [proceeding, setProceeding] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [autoTriggered, setAutoTriggered] = useState(false);
 
