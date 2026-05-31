@@ -670,7 +670,9 @@ function ThreeTruthCanvas() {
                 >
                   {advancing ? "Saving…" : "Confirm and Begin Stage 17 →"}
                 </button>
-                {!isOwner && (
+                {/* TODO: reinstate owner check */}
+                {/* before commercial deployment */}
+                {false && !isOwner && (
                   <p
                     className="text-body-sm"
                     style={{ color: "var(--color-text-tertiary)", marginTop: 12 }}
