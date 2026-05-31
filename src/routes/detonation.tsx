@@ -795,13 +795,14 @@ function Stage18({ session, onChange, goNext }: { session: SessionRow; onChange:
 // ═════════════════════════════════════════════════════════════════════════
 // STAGE 19 — Activation Architecture
 // ═════════════════════════════════════════════════════════════════════════
-function Stage19({ session, onChange, goNext }: { session: SessionRow; onChange: () => void; goNext: () => void }) {
+function Stage19({ session, onChange, goNext }: { session: SessionRow; onChange: () => void | Promise<void>; goNext: () => void }) {
   const run = useServerFn(runStage19);
   const load = useServerFn(loadStage19);
   const retry = useServerFn(retryStage19);
   const [output, setOutput] = useState<string | null>(session.stage_19_output);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [autoTriggered, setAutoTriggered] = useState(false);
 
   useEffect(() => {
     if (output === null) load({ data: { sessionId: session.id } }).then((r) => r.output && setOutput(r.output)).catch(() => {});
@@ -809,24 +810,36 @@ function Stage19({ session, onChange, goNext }: { session: SessionRow; onChange:
 
   const handleRun = async () => {
     setBusy(true); setErr(null);
-    try { const r = await run({ data: { sessionId: session.id } }); setOutput(r.output); onChange(); }
+    try { const r = await run({ data: { sessionId: session.id } }); setOutput(r.output); await onChange(); }
     catch (e) { setErr(e instanceof Error ? e.message : "Stage 19 failed"); }
     finally { setBusy(false); }
   };
   const handleRetry = async () => {
     setBusy(true); setErr(null);
-    try { const r = await retry({ data: { sessionId: session.id, cardIds: [], redirectInstructions: {} } }); setOutput(r.output); onChange(); }
+    try { const r = await retry({ data: { sessionId: session.id, cardIds: [], redirectInstructions: {} } }); setOutput(r.output); await onChange(); }
     catch (e) { setErr(e instanceof Error ? e.message : "Retry failed"); }
     finally { setBusy(false); }
   };
 
+  useEffect(() => {
+    if (autoTriggered) return;
+    if (!session.stage_18_selected_detonation) return;
+    if (output !== null && output !== "") return;
+    if (busy) return;
+    setAutoTriggered(true);
+    void handleRun();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session.stage_18_selected_detonation, output]);
+
+  const handleProceed = async () => { await onChange(); goNext(); };
+
   return (
     <section>
       <SectionTitle kicker="STAGE 19" title="Activation Architecture"
-        subtitle={!session.stage_18_selected_detonation ? "Select a Stage 18 Detonation first." : "Calibration, channel hierarchy, compounding strategy, and distinctive asset activation."} />
+        subtitle="Calibration, channel hierarchy, compounding strategy, and distinctive asset activation." />
       {err && <ErrorBanner message={err} />}
       {!output ? (
-        <AmberButton onClick={handleRun} disabled={busy || !session.stage_18_selected_detonation}>
+        <AmberButton onClick={handleRun} disabled={busy}>
           {busy && <Spinner />} {busy ? "Generating…" : "Run Stage 19"}
         </AmberButton>
       ) : (
@@ -834,7 +847,7 @@ function Stage19({ session, onChange, goNext }: { session: SessionRow; onChange:
           <RichOutput text={output} />
           <div style={{ marginTop: 28, display: "flex", gap: 12, justifyContent: "flex-end" }}>
             <AmberButton variant="ghost" onClick={handleRetry} disabled={busy}>{busy && <Spinner />} Retry</AmberButton>
-            <AmberButton onClick={goNext}>Proceed to Stage 20</AmberButton>
+            <AmberButton onClick={handleProceed}>Proceed to Stage 20</AmberButton>
           </div>
         </div>
       )}
