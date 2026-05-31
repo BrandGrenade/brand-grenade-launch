@@ -18,6 +18,11 @@ export type Database = {
         Row: {
           brand_audience_relationship: string | null
           brand_constraints: string | null
+          brand_intel_assets: Json | null
+          brand_intel_confirmed: boolean
+          brand_intel_tone: string | null
+          brand_intel_type: string | null
+          brand_intel_values: string | null
           brand_intelligence: Json | null
           brand_name: string
           brand_organisational_context: string | null
@@ -118,12 +123,22 @@ export type Database = {
           stage_status: string | null
           status: string
           strategic_mode: string
+          truth_consumer: string | null
+          truth_cultural: string | null
+          truth_cultural_confidence: string | null
+          truth_cultural_confirmed: boolean
+          truth_product: string | null
           updated_at: string
           user_id: string | null
         }
         Insert: {
           brand_audience_relationship?: string | null
           brand_constraints?: string | null
+          brand_intel_assets?: Json | null
+          brand_intel_confirmed?: boolean
+          brand_intel_tone?: string | null
+          brand_intel_type?: string | null
+          brand_intel_values?: string | null
           brand_intelligence?: Json | null
           brand_name: string
           brand_organisational_context?: string | null
@@ -224,12 +239,22 @@ export type Database = {
           stage_status?: string | null
           status?: string
           strategic_mode: string
+          truth_consumer?: string | null
+          truth_cultural?: string | null
+          truth_cultural_confidence?: string | null
+          truth_cultural_confirmed?: boolean
+          truth_product?: string | null
           updated_at?: string
           user_id?: string | null
         }
         Update: {
           brand_audience_relationship?: string | null
           brand_constraints?: string | null
+          brand_intel_assets?: Json | null
+          brand_intel_confirmed?: boolean
+          brand_intel_tone?: string | null
+          brand_intel_type?: string | null
+          brand_intel_values?: string | null
           brand_intelligence?: Json | null
           brand_name?: string
           brand_organisational_context?: string | null
@@ -330,6 +355,11 @@ export type Database = {
           stage_status?: string | null
           status?: string
           strategic_mode?: string
+          truth_consumer?: string | null
+          truth_cultural?: string | null
+          truth_cultural_confidence?: string | null
+          truth_cultural_confirmed?: boolean
+          truth_product?: string | null
           updated_at?: string
           user_id?: string | null
         }
