@@ -1022,7 +1022,9 @@ function Stage20({ session, onChange, goNext }: { session: SessionRow; onChange:
           <div style={{ marginTop: 24, display: "flex", gap: 12, justifyContent: "flex-end" }}>
             <AmberButton variant="ghost" onClick={handleRetry} disabled={busy}>{busy && <Spinner />} Retry</AmberButton>
             {approved ? (
-              <AmberButton onClick={handleProceed}>Proceed to Stage 21</AmberButton>
+              <AmberButton onClick={handleProceed} disabled={proceeding}>
+                {proceeding ? <><Spinner /> Loading...</> : "Proceed to Stage 21"}
+              </AmberButton>
             ) : (
               <AmberButton onClick={handleApprove} disabled={!canApprove || busy}>
                 {busy && <Spinner />} Approve Brief
