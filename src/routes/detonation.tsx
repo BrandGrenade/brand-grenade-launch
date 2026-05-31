@@ -606,6 +606,7 @@ function Stage17b({ session, onChange, goNext }: { session: SessionRow; onChange
   const retry = useServerFn(retryStage17b);
   const [output, setOutput] = useState<string | null>(session.stage_17b_output);
   const [busy, setBusy] = useState(false);
+  const [proceeding, setProceeding] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [autoTriggered, setAutoTriggered] = useState(false);
 
