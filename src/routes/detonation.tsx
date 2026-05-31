@@ -155,27 +155,34 @@ function ErrorBanner({ message }: { message: string }) {
   );
 }
 
-// Render text with **bold** lines treated as amber section headings.
+// Render Phase 2 prose with markdown punctuation stripped. Heading-style
+// lines (originally ##/###/**…**/all-caps short titles) are rendered with
+// the .detonation-heading class (amber DM Mono uppercase). All other raw
+// markdown markers are removed via sanitiseOutput before rendering.
 function RichOutput({ text }: { text: string }) {
   const lines = text.split("\n");
   return (
     <div className="text-body" style={{ color: "#FFFFFF", lineHeight: 1.6, whiteSpace: "pre-wrap" }}>
       {lines.map((line, i) => {
-        // Heading-style lines: all caps short lines, or markdown ##, or **wrapped**
+        // Drop markdown horizontal rules entirely.
+        if (/^\s*-{3,}\s*$/.test(line) || /^\s*\*{3,}\s*$/.test(line)) {
+          return null;
+        }
+        // Heading detection runs on the RAW line so we can still recognise
+        // ## / ### / **wrapped** before stripping the markers.
         const isHeading =
           /^#{1,4}\s+/.test(line) ||
           /^\*\*[^*]+\*\*\s*$/.test(line) ||
           (/^[A-Z][A-Z0-9 \-&/]{4,}$/.test(line.trim()) && line.trim().length < 60);
         if (isHeading) {
-          const clean = line.replace(/^#{1,4}\s+/, "").replace(/^\*\*|\*\*$/g, "").trim();
+          const clean = sanitiseOutput(line);
+          if (!clean) return null;
           return (
-            <div key={i} className="text-mono" style={{
-              color: AMBER, textTransform: "uppercase", fontSize: 11,
-              letterSpacing: "0.14em", marginTop: i === 0 ? 0 : 20, marginBottom: 8,
-            }}>{clean}</div>
+            <span key={i} className="detonation-heading">{clean}</span>
           );
         }
-        return <div key={i}>{line || "\u00A0"}</div>;
+        const clean = sanitiseOutput(line);
+        return <div key={i}>{clean || "\u00A0"}</div>;
       })}
     </div>
   );
