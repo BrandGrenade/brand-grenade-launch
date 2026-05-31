@@ -13,7 +13,8 @@ import {
   extractStage19Channels,
   extractChannelRoles,
   formatThreeTruths,
-  smpGoverningBlock,, withPhase2Formatting
+  smpGoverningBlock,
+  withPhase2Formatting,
 } from "./phase2-shared.server";
 
 const STAGE21_SELECT = [

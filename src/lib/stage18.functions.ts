@@ -15,7 +15,8 @@ import {
   joinCards,
   formatThreeTruths,
   smpGoverningBlock,
-  type Card,, withPhase2Formatting
+  type Card,
+  withPhase2Formatting,
 } from "./phase2-shared.server";
 
 const STAGE18_SELECT = [

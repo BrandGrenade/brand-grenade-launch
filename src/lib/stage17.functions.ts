@@ -16,7 +16,8 @@ import {
   splitCards,
   joinCards,
   formatBrandIntelligence,
-  type Card,, withPhase2Formatting
+  type Card,
+  withPhase2Formatting,
 } from "./phase2-shared.server";
 
 const STAGE17_SELECT = "brand_name, category, selected_smp, stage_2_output, stage_5_output, stage_13_output, stage_14c_output, truth_product, truth_consumer, truth_cultural, brand_intel_type, brand_intel_values, brand_intel_tone, brand_intel_assets, stage_17_output" as const;

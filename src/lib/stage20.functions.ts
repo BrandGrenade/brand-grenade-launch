@@ -17,7 +17,8 @@ import {
   recomputeScore,
   formatBriefQualityScore,
   STAGE_20_SECTION_DEFS,
-  smpGoverningBlock,, withPhase2Formatting
+  smpGoverningBlock,
+  withPhase2Formatting,
 } from "./phase2-shared.server";
 
 const STAGE20_SELECT = [
