@@ -5,6 +5,7 @@ import { z } from "zod";
 import { TopNav } from "@/components/TopNav";
 import { BrandGrenadeIcon } from "@/components/BrandGrenadeIcon";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/context/AuthContext";
 import { generateStrategicPlatformPdf } from "@/lib/pdf-generator";
 import { runStage16 } from "@/lib/stage16.functions";
 // generateDocument server fn replaced by supabase.functions.invoke('generate-document')
