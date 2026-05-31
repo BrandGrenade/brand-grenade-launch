@@ -15,7 +15,6 @@ import {
   appendRedirect,
   splitCards,
   joinCards,
-  formatThreeTruths,
   formatBrandIntelligence,
   type Card,
 } from "./phase2-shared.server";
