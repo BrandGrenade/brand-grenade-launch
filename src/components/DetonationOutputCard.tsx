@@ -78,6 +78,39 @@ export function DetonationOutputCard({
         </label>
 
         <div style={{ flex: 1, minWidth: 0 }}>
+          {smp && smp.trim() ? (
+            <div style={{ marginBottom: 18 }}>
+              <div
+                className="text-mono"
+                style={{
+                  color: ACCENT,
+                  textTransform: "uppercase",
+                  fontSize: 7,
+                  letterSpacing: "0.18em",
+                  margin: 0,
+                }}
+              >
+                STRATEGIC PROPOSITION
+              </div>
+              <div
+                className="text-body"
+                style={{
+                  color: ACCENT,
+                  fontStyle: "italic",
+                  marginTop: 6,
+                  lineHeight: 1.5,
+                }}
+              >
+                {smp.trim()}
+              </div>
+              <div
+                style={{
+                  marginTop: 12,
+                  borderTop: `1px solid ${ACCENT}33`,
+                }}
+              />
+            </div>
+          ) : null}
           <h3
             className="text-mono"
             style={{
