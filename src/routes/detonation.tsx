@@ -36,6 +36,9 @@ type SessionRow = {
   doc_consulting_url: string | null;
   doc_agency_url: string | null;
   doc_workshop_url: string | null;
+  checkpoint_a_confirmed: boolean | null;
+  checkpoint_b_confirmed: boolean | null;
+  checkpoint_c_confirmed: boolean | null;
 };
 
 function DetonationPage() {
