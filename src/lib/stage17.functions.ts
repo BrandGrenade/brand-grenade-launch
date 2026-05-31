@@ -38,42 +38,60 @@ function buildStage17UserMessage(s: {
   brand_intel_tone: string | null;
   brand_intel_assets: unknown;
 }): string {
-  return [
-    `BRAND: ${s.brand_name ?? "—"}`,
-    `CATEGORY: ${s.category ?? "—"}`,
-    "",
-    "VALIDATED SMP",
-    s.selected_smp?.trim() || "—",
-    "",
-    "HUMAN CONTRADICTION STATEMENT (Stage 5)",
-    s.stage_5_output?.trim() || "—",
-    "",
-    "BRAND WORLD (Stage 14C)",
-    s.stage_14c_output?.trim() || "—",
-    "",
-    "BRAND FIT ASSESSMENT",
-    s.stage_13_output?.trim() || "—",
-    "",
-    "THREE TRUTH CONFIRMATION",
-    formatThreeTruths({
-      product: s.truth_product,
-      consumer: s.truth_consumer,
-      cultural: s.truth_cultural,
-    }),
-    "",
-    "BRAND INTELLIGENCE",
-    formatBrandIntelligence({
-      type: s.brand_intel_type,
-      values: s.brand_intel_values,
-      tone: s.brand_intel_tone,
-      assets: s.brand_intel_assets,
-    }),
-    "",
-    "COMPETITIVE INTELLIGENCE (Stage 2)",
-    s.stage_2_output?.trim() || "—",
-    "",
-    "Produce three Detonation Territory candidates as requested in the system prompt.",
-  ].join("\n");
+  const smp = s.selected_smp?.trim() || "—";
+  const assetsText = formatBrandIntelligence({
+    type: s.brand_intel_type,
+    values: s.brand_intel_values,
+    tone: s.brand_intel_tone,
+    assets: s.brand_intel_assets,
+  });
+  return `
+THE SMP — THIS GOVERNS EVERYTHING:
+"${smp}"
+
+Read this SMP three times before generating anything.
+Every territory you generate must be an expression of this specific SMP given creative life.
+Not a generic creative territory.
+Not an interesting strategic space.
+A specific answer to this question:
+What does "${smp}" look and feel like when humans experience it in the world?
+
+If a territory could exist without this specific SMP — it is wrong.
+Regenerate it until the SMP is unmistakably present.
+
+BRAND: ${s.brand_name ?? "—"}
+CATEGORY: ${s.category ?? "—"}
+
+BRAND INTELLIGENCE:
+Type: ${s.brand_intel_type || "Not specified"}
+Values: ${s.brand_intel_values || "Not specified"}
+Tone of Voice: ${s.brand_intel_tone || "Not specified"}
+Existing Assets:
+${assetsText}
+
+PRODUCT TRUTH:
+${s.truth_product?.trim() || "Not confirmed"}
+
+CONSUMER TRUTH:
+${s.truth_consumer?.trim() || "Not confirmed"}
+
+CULTURAL TRUTH:
+${s.truth_cultural?.trim() || "Not confirmed"}
+
+HUMAN CONTRADICTION STATEMENT (Stage 5):
+${s.stage_5_output?.trim() || "Not available"}
+
+BRAND WORLD (Stage 14C):
+${s.stage_14c_output?.trim() || "Not available"}
+
+BRAND FIT ASSESSMENT (Stage 13):
+${s.stage_13_output?.trim() || "Not available"}
+
+COMPETITIVE INTELLIGENCE (Stage 2):
+${s.stage_2_output?.trim() || "Not available"}
+
+Now generate three Detonation Territories that give this specific SMP — "${smp}" — a life it cannot have on paper.
+`.trim();
 }
 
 const RunInput = z.object({ sessionId: z.string().uuid() });
