@@ -57,7 +57,7 @@ function DetonationPage() {
     supabase
       .from("sessions")
       .select(
-        "id, brand_name, selected_smp, user_id, phase_2_status, phase_2_current_stage, doc_consulting_url, doc_agency_url, doc_workshop_url",
+        "id, brand_name, selected_smp, user_id, phase_2_status, phase_2_current_stage, doc_consulting_url, doc_agency_url, doc_workshop_url, checkpoint_a_confirmed, checkpoint_b_confirmed, checkpoint_c_confirmed",
       )
       .eq("id", sessionId)
       .maybeSingle()
