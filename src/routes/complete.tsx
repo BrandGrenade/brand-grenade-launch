@@ -55,6 +55,11 @@ type SessionRow = {
   category: string | null;
   selected_smp: string | null;
   selected_smp_field_name: string | null;
+  user_id: string | null;
+  doc_consulting_url: string | null;
+  doc_agency_url: string | null;
+  doc_workshop_url: string | null;
+  phase_2_status: string | null;
   stage_1_output: string | null;
   stage_8_output: string | null;
   stage_10_output: string | null;
