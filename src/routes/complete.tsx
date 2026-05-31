@@ -674,6 +674,11 @@ function CompletePage() {
           );
         })()}
 
+        {/* ─── Phase 2: Brand Detonation Deliverables ───────────────── */}
+        {session.stage_22_brand_architecture && (
+          <Phase2Deliverables session={session} />
+        )}
+
         {/* Pipeline stages collapsible */}
 
         <div style={{ marginTop: 48 }}>
