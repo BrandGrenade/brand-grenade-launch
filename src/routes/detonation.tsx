@@ -596,13 +596,14 @@ function Stage17({ session, onChange, goNext }: { session: SessionRow; onChange:
 // ═════════════════════════════════════════════════════════════════════════
 // STAGE 17B — Detonation Intelligence
 // ═════════════════════════════════════════════════════════════════════════
-function Stage17b({ session, onChange, goNext }: { session: SessionRow; onChange: () => void; goNext: () => void }) {
+function Stage17b({ session, onChange, goNext }: { session: SessionRow; onChange: () => void | Promise<void>; goNext: () => void }) {
   const run = useServerFn(runStage17b);
   const load = useServerFn(loadStage17b);
   const retry = useServerFn(retryStage17b);
   const [output, setOutput] = useState<string | null>(session.stage_17b_output);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [autoTriggered, setAutoTriggered] = useState(false);
 
   useEffect(() => {
     if (output === null) load({ data: { sessionId: session.id } }).then((r) => r.output && setOutput(r.output)).catch(() => {});
@@ -612,7 +613,7 @@ function Stage17b({ session, onChange, goNext }: { session: SessionRow; onChange
     setBusy(true); setErr(null);
     try {
       const r = await run({ data: { sessionId: session.id } });
-      setOutput(r.output); onChange();
+      setOutput(r.output); await onChange();
     } catch (e) { setErr(e instanceof Error ? e.message : "Stage 17B failed"); }
     finally { setBusy(false); }
   };
@@ -620,18 +621,31 @@ function Stage17b({ session, onChange, goNext }: { session: SessionRow; onChange
     setBusy(true); setErr(null);
     try {
       const r = await retry({ data: { sessionId: session.id, cardIds: [], redirectInstructions: {} } });
-      setOutput(r.output); onChange();
+      setOutput(r.output); await onChange();
     } catch (e) { setErr(e instanceof Error ? e.message : "Retry failed"); }
     finally { setBusy(false); }
   };
 
+  // Auto-run once on mount when the prerequisite is in place and we have no output yet.
+  useEffect(() => {
+    if (autoTriggered) return;
+    if (!session.stage_17_selected_territory) return;
+    if (output !== null && output !== "") return;
+    if (busy) return;
+    setAutoTriggered(true);
+    void handleRun();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session.stage_17_selected_territory, output]);
+
+  const handleProceed = async () => { await onChange(); goNext(); };
+
   return (
     <section>
       <SectionTitle kicker="STAGE 17B" title="Detonation Intelligence"
-        subtitle={!session.stage_17_selected_territory ? "Select a Stage 17 territory first." : "Benchmark + differentiation guidance for the selected territory."} />
+        subtitle="Benchmark + differentiation guidance for the selected territory." />
       {err && <ErrorBanner message={err} />}
       {!output ? (
-        <AmberButton onClick={handleRun} disabled={busy || !session.stage_17_selected_territory}>
+        <AmberButton onClick={handleRun} disabled={busy}>
           {busy && <Spinner />} {busy ? "Generating…" : "Run Stage 17B"}
         </AmberButton>
       ) : (
@@ -642,7 +656,7 @@ function Stage17b({ session, onChange, goNext }: { session: SessionRow; onChange
           <RichOutput text={output} />
           <div style={{ marginTop: 28, display: "flex", gap: 12, justifyContent: "flex-end" }}>
             <AmberButton variant="ghost" onClick={handleRetry} disabled={busy}>{busy && <Spinner />} Retry</AmberButton>
-            <AmberButton onClick={goNext}>Proceed to Stage 18</AmberButton>
+            <AmberButton onClick={handleProceed}>Proceed to Stage 18</AmberButton>
           </div>
         </div>
       )}
