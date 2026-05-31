@@ -349,37 +349,8 @@ function Phase2Button({ state, sessionId }: { state: Phase2ButtonState; sessionI
   );
 }
 
-function _Phase2ButtonOld({ sessionId }: { sessionId: string }) {
-  const [hover, setHover] = useState(false);
-  const solid = true;
-  return (
-    <Link
-      to="/detonation"
-      search={{ session: sessionId }}
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        justifyContent: "center",
-        height: 28,
-        padding: "0 14px",
-        borderRadius: 6,
-        fontSize: 11,
-        fontWeight: 600,
-        letterSpacing: "0.1em",
-        textTransform: "uppercase",
-        border: "1px solid #C8873A",
-        backgroundColor: solid ? "#C8873A" : hover ? "#C8873A15" : "transparent",
-        color: solid ? "#0A0A0A" : "#C8873A",
-        transition: "background-color 150ms",
-        whiteSpace: "nowrap",
-      }}
-    >
-      {meta.label}
-    </Link>
-  );
-}
+
+
 
 
 function fmtDate(iso: string) {
