@@ -373,7 +373,7 @@ function fmtDate(iso: string) {
 }
 
 type ActionConfig = {
-  key: "engine" | "deliverables" | "continue" | "delete";
+  key: "engine" | "detonation" | "deliverables" | "continue" | "delete";
   label: string;
   color: string;
   hoverBg: string;
