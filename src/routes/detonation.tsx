@@ -229,7 +229,13 @@ function splitCardsLocal(text: string): LocalCard[] {
   };
 
   // Primary: name line + blank line + WHY THIS TERRITORY (Stage 17 signal)
-  let matches = collect(new RegExp(`(?:^|\\n)\\s*(${NAME})\\s*\\n\\s*\\n\\s*WHY THIS TERRITORY`, "gm"));
+  let matches: Array<{ name: string; start: number }> = [];
+  if (/WHY THIS TERRITORY/i.test(t)) {
+    matches = collect(new RegExp(`(?:^|\\n)\\s*(${NAME})\\s*\\n\\s*\\n\\s*WHY THIS TERRITORY`, "gm"));
+  } else if (/WHY THIS DETONATION/i.test(t)) {
+    // Stage 18 signal: name line + blank line + WHY THIS DETONATION
+    matches = collect(new RegExp(`(?:^|\\n)\\s*(${NAME})\\s*\\n\\s*\\n\\s*WHY THIS DETONATION`, "gm"));
+  }
 
   // Fallback: blank line(s) + an all-caps line that does NOT end in a colon
   if (matches.length === 0) {
