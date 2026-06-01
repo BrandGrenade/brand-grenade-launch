@@ -274,13 +274,16 @@ export type ChannelRole = "PRIMARY" | "AMPLIFICATION" | "ACTIVATION" | "SUSTAINI
 export type ChannelEntry = { name: string; role: ChannelRole; content: string };
 
 const CHANNEL_NAME_MAP: Array<{ keywords: RegExp; name: string }> = [
+  { keywords: /\b(tool|transaction analysis|interactive|analyse|transaction data|itemised|merchant analysis)\b/i, name: "Transaction Analysis Tool" },
+  { keywords: /\b(industry media|business publication|journalism|trade media|press|editorial|publication)\b/i, name: "Industry and Trade Media" },
+  { keywords: /\b(email|crm|sequence|weekly|educational email|ongoing|literacy)\b/i, name: "Email and CRM" },
   { keywords: /\b(film|video|television|broadcast|long[-\s]?form|tvc)\b/i, name: "Film and Long-form" },
   { keywords: /\b(social|instagram|facebook|tiktok|linkedin|short[-\s]?form)\b/i, name: "Social and Short-form" },
   { keywords: /\b(outdoor|ooh|billboard|transit|street)\b/i, name: "Outdoor" },
   { keywords: /\b(digital|search|google|display|programmatic|online advertising)\b/i, name: "Digital and Search" },
   { keywords: /\b(audio|podcast|radio|spotify|sound)\b/i, name: "Audio and Podcast" },
   { keywords: /\b(activation|experiential|event|sponsorship|in[-\s]?person|live)\b/i, name: "Activation and Experiential" },
-  { keywords: /\b(pr|earned|media relations|journalist|press|publicity)\b/i, name: "PR and Earned" },
+  { keywords: /\b(pr|earned|media relations|journalist|publicity)\b/i, name: "PR and Earned" },
 ];
 
 function deriveChannelName(prose: string): string {
@@ -337,13 +340,34 @@ export function extractStage19ChannelEntries(stage19: string): ChannelEntry[] {
     const body = stage19.slice(cur.bodyStart, end).trim();
     if (!body) continue;
 
-    // One channel per section: filter garbage paragraphs, then concatenate
-    // the surviving paragraphs as the single channel's content.
+    // Split body into paragraph blocks and filter garbage.
     const cleanParas = body
       .split(/\n\s*\n+/)
       .map((p) => p.trim())
       .filter((p) => !isGarbage(p));
     if (cleanParas.length === 0) continue;
+
+    if (cur.role === "AMPLIFICATION") {
+      // AMPLIFICATION can contain multiple channels — each block > 200 chars
+      // becomes its own channel entry. Shorter blocks attach to the previous.
+      const blocks: string[] = [];
+      for (const p of cleanParas) {
+        if (p.length > 200) {
+          blocks.push(p);
+        } else if (blocks.length > 0) {
+          blocks[blocks.length - 1] += `\n\n${p}`;
+        }
+      }
+      const finalBlocks = blocks.length > 0 ? blocks : [cleanParas.join("\n\n")];
+      const usedNames = new Set<string>();
+      for (const block of finalBlocks) {
+        const name = deriveChannelName(block);
+        if (usedNames.has(name)) continue;
+        usedNames.add(name);
+        entries.push({ name, role: "AMPLIFICATION", content: block });
+      }
+      continue;
+    }
 
     const content = cleanParas.join("\n\n");
     const name = deriveChannelName(content);
