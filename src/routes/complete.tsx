@@ -11,14 +11,14 @@ import { runStage16 } from "@/lib/stage16.functions";
 import { generatePhase2Document, generateCompleteBundle } from "@/lib/phase2-document.functions";
 // generateDocument server fn replaced by supabase.functions.invoke('generate-document')
 
-// Force a Supabase session refresh so the bearer token sent to the
-// generate-document edge fn / server fns is not expired.
-async function refreshSupabaseSession() {
-  try {
-    await supabase.auth.refreshSession();
-  } catch {
-    // ignore — caller will surface any subsequent auth error
-  }
+// Force a Supabase session refresh and return the token that must be sent to
+// protected document generation endpoints.
+async function refreshSupabaseSession(): Promise<string> {
+  const { data, error } = await supabase.auth.refreshSession();
+  if (error) throw error;
+  const token = data.session?.access_token;
+  if (!token) throw new Error("No active session. Please sign in again.");
+  return token;
 }
 
 function isJwtExpiredError(err: unknown): boolean {
@@ -33,7 +33,21 @@ function isJwtExpiredError(err: unknown): boolean {
   return /InvalidJWT|exp.*claim|jwt.*expired|token.*expired/i.test(msg);
 }
 
-// Run a fetch/invoke call; on JWT-expired error, refresh once and retry.
+async function readFunctionError(error: unknown): Promise<Error> {
+  const response = (error as { context?: Response })?.context;
+  if (response) {
+    try {
+      const body = await response.clone().text();
+      return new Error(body || (error instanceof Error ? error.message : "Document generation failed"));
+    } catch {
+      // fall through to the generic message below
+    }
+  }
+
+  return error instanceof Error ? error : new Error("Document generation failed");
+}
+
+// Run an authenticated call; on JWT-expired error, refresh once and retry.
 async function withJwtRetry<T>(fn: () => Promise<T>): Promise<T> {
   await refreshSupabaseSession();
   try {
@@ -43,6 +57,24 @@ async function withJwtRetry<T>(fn: () => Promise<T>): Promise<T> {
     await refreshSupabaseSession();
     return await fn();
   }
+}
+
+async function invokeGenerateDocument(body: {
+  sessionId: string;
+  format: Format;
+  force: boolean;
+}) {
+  const call = async () => {
+    const token = await refreshSupabaseSession();
+    const { data, error } = await supabase.functions.invoke("generate-document", {
+      body,
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (error) throw await readFunctionError(error);
+    return data;
+  };
+
+  return withJwtRetry(call);
 }
 
 const completeSearchSchema = z.object({
@@ -396,12 +428,7 @@ function CompletePage() {
               try {
                 if (!sessionId) throw new Error("Missing session id");
 
-                const { data: gen, error: invokeErr } = await withJwtRetry(() =>
-                  supabase.functions.invoke("generate-document", {
-                    body: { sessionId, format, force },
-                  }),
-                );
-                if (invokeErr) throw new Error(invokeErr.message);
+                const gen = await invokeGenerateDocument({ sessionId, format, force });
 
 
                 let url: string | null = null;
