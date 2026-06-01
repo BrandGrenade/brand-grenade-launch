@@ -441,6 +441,18 @@ function buildActions(s: DbSession, status: UIStatus, onDelete: () => void): Act
     icon: <Trash2 size={14} />,
     onClick: onDelete,
   };
+  const detonationAction: ActionConfig | null =
+    s.stage_16_consulting_output != null
+      ? {
+          key: "detonation",
+          label: "Detonation Room",
+          color: "#C8873A",
+          hoverBg: "#C8873A15",
+          icon: <Zap size={14} />,
+          to: s.stage_17_output != null ? "/detonation" : "/detonation/canvas",
+          search: { session: s.id },
+        }
+      : null;
   if (status === "complete") {
     return [
       {
@@ -452,6 +464,7 @@ function buildActions(s: DbSession, status: UIStatus, onDelete: () => void): Act
         to: "/pipeline",
         search: { session: s.id },
       },
+      ...(detonationAction ? [detonationAction] : []),
       {
         key: "deliverables",
         label: "Deliverables",
@@ -474,6 +487,7 @@ function buildActions(s: DbSession, status: UIStatus, onDelete: () => void): Act
       to: "/pipeline",
       search: { session: s.id },
     },
+    ...(detonationAction ? [detonationAction] : []),
     deleteAction,
   ];
 }
