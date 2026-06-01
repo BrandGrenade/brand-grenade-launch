@@ -1262,7 +1262,10 @@ function Stage22({ session, onChange }: { session: SessionRow; onChange: () => v
             </div>
           )}
 
-          <div style={{ marginTop: 24, display: "flex", justifyContent: "flex-end" }}>
+          <div style={{ marginTop: 24, display: "flex", gap: 12, justifyContent: "flex-end" }}>
+            <AmberButton variant="ghost" onClick={handleRegenerate} disabled={busy}>
+              {busy ? <><Spinner /> Regenerating…</> : "Regenerate This Stage"}
+            </AmberButton>
             <AmberButton onClick={printPdf}>Download Brand Architecture</AmberButton>
           </div>
         </div>
