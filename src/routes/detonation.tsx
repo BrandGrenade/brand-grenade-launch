@@ -578,6 +578,21 @@ function Stage17({ session, onChange, goNext }: { session: SessionRow; onChange:
     finally { setBusy(false); }
   };
 
+  // Auto-run Stage 17 on first arrival if SMP exists and no output yet.
+  useEffect(() => {
+    if (
+      session.selected_smp &&
+      !session.stage_17_output &&
+      !output &&
+      !busy &&
+      !autoTriggered
+    ) {
+      setAutoTriggered(true);
+      void handleRun();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session.selected_smp, session.stage_17_output, output]);
+
   const handleRetry = async () => {
     setBusy(true); setErr(null);
     try {
