@@ -28,7 +28,12 @@ export function splitCards(text: string): Card[] {
     return hits;
   };
 
-  let matches = collect(new RegExp(`(?:^|\\n)\\s*(${NAME})\\s*\\n\\s*\\n\\s*WHY THIS TERRITORY`, "gm"));
+  let matches: Array<{ name: string; start: number }> = [];
+  if (/WHY THIS TERRITORY/i.test(t)) {
+    matches = collect(new RegExp(`(?:^|\\n)\\s*(${NAME})\\s*\\n\\s*\\n\\s*WHY THIS TERRITORY`, "gm"));
+  } else if (/WHY THIS DETONATION/i.test(t)) {
+    matches = collect(new RegExp(`(?:^|\\n)\\s*(${NAME})\\s*\\n\\s*\\n\\s*WHY THIS DETONATION`, "gm"));
+  }
   if (matches.length === 0) {
     matches = collect(new RegExp(`(?:^|\\n\\s*\\n)\\s*(${NAME})(?!:)\\s*\\n`, "g"));
   }

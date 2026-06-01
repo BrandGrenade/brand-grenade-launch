@@ -229,7 +229,13 @@ function splitCardsLocal(text: string): LocalCard[] {
   };
 
   // Primary: name line + blank line + WHY THIS TERRITORY (Stage 17 signal)
-  let matches = collect(new RegExp(`(?:^|\\n)\\s*(${NAME})\\s*\\n\\s*\\n\\s*WHY THIS TERRITORY`, "gm"));
+  let matches: Array<{ name: string; start: number }> = [];
+  if (/WHY THIS TERRITORY/i.test(t)) {
+    matches = collect(new RegExp(`(?:^|\\n)\\s*(${NAME})\\s*\\n\\s*\\n\\s*WHY THIS TERRITORY`, "gm"));
+  } else if (/WHY THIS DETONATION/i.test(t)) {
+    // Stage 18 signal: name line + blank line + WHY THIS DETONATION
+    matches = collect(new RegExp(`(?:^|\\n)\\s*(${NAME})\\s*\\n\\s*\\n\\s*WHY THIS DETONATION`, "gm"));
+  }
 
   // Fallback: blank line(s) + an all-caps line that does NOT end in a colon
   if (matches.length === 0) {
@@ -638,7 +644,7 @@ function Stage17({ session, onChange, goNext }: { session: SessionRow; onChange:
   useEffect(() => {
     setChecked((prev) => {
       const next: Record<string, boolean> = {};
-      cards.forEach((c) => { next[c.id] = prev[c.id] ?? true; });
+      cards.forEach((c) => { next[c.id] = prev[c.id] ?? false; });
       return next;
     });
   }, [cards.length]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -703,7 +709,7 @@ function Stage17({ session, onChange, goNext }: { session: SessionRow; onChange:
               cardId={c.id}
               title={c.name}
               content={sanitiseOutput(stripCardTitle(c.markdown, c.name))}
-              isChecked={checked[c.id] ?? true}
+              isChecked={checked[c.id] ?? false}
               onCheckChange={(id, v) => setChecked((p) => ({ ...p, [id]: v }))}
               redirectText={redirects[c.id] ?? ""}
               onRedirectChange={(id, v) => setRedirects((p) => ({ ...p, [id]: v }))}
@@ -829,7 +835,7 @@ function Stage18({ session, onChange, goNext }: { session: SessionRow; onChange:
   useEffect(() => {
     setChecked((prev) => {
       const next: Record<string, boolean> = {};
-      cards.forEach((c) => { next[c.id] = prev[c.id] ?? true; });
+      cards.forEach((c) => { next[c.id] = prev[c.id] ?? false; });
       return next;
     });
   }, [cards.length]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -911,7 +917,7 @@ function Stage18({ session, onChange, goNext }: { session: SessionRow; onChange:
               cardId={c.id}
               title={c.name}
               content={sanitiseOutput(stripCardTitle(c.markdown, c.name))}
-              isChecked={checked[c.id] ?? true}
+              isChecked={checked[c.id] ?? false}
               onCheckChange={(id, v) => setChecked((p) => ({ ...p, [id]: v }))}
               redirectText={redirects[c.id] ?? ""}
               onRedirectChange={(id, v) => setRedirects((p) => ({ ...p, [id]: v }))}
