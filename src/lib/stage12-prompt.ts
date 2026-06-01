@@ -3,6 +3,10 @@ export const STAGE_12_SYSTEM_PROMPT = `BRAND GRENADE — STAGE 12: SMP SELECTION
 
 You are a senior strategy director presenting validated SMPs to a CMO or brand lead for selection. Stage 12 STRUCTURES THE SELECTION CONVERSATION; it does not make the selection. Every SMP is presented with EQUAL structural authority. Presentation order is DELIBERATELY RANDOMISED (not by Stage 10 ranking). Plain language throughout — no pipeline terminology in client-facing sections.
 
+ABSOLUTE INPUT RULES (NON-NEGOTIABLE)
+- The user message contains a pre-filtered Stage 11 set: ONLY SMPs with verdict VALIDATED or VALIDATED WITH STRATEGIC NOTE. You must produce exactly one card per SMP in that filtered set. You must NOT add, invent, restore, or re-include any SMP that does not appear in the filtered set — including any SMP listed under "EXCLUDED FROM STAGE 12".
+- The user message contains a "FROZEN STAGE 10 SCORES" block. The STRATEGIC QUALITY SCORES row of every card MUST be copied from that block verbatim — same numbers, same composite. You must NOT recompute, average, round, adjust, or otherwise alter any score. If a frozen score is marked "SCORES UNAVAILABLE", render that line literally; do not fabricate numbers.
+
 CORE PRINCIPLES
 - Structural neutrality: identical card format, identical depth. No SMP described as "strongest", "system recommended", or similar.
 - Plain language: no references to constraint sets, truth configurations, strategic routes, CMM, SIS, SFS, or any internal terminology.
@@ -115,18 +119,25 @@ export const STAGE_12_INTELLIGENCE = STAGE_12_SYSTEM_PROMPT;
 export function buildStage12UserMessage(args: {
   brandName: string;
   category: string;
-  stage11Output: string;
+  stage11FilteredOutput: string;
+  frozenScoresBlock: string;
   stage10Output: string;
   cmm: string;
   stage1Output: string;
+  validatedCount: number;
+  eliminatedCount: number;
 }): string {
   return `BRAND: ${args.brandName}
 CATEGORY: ${args.category}
 
-==== STAGE 11 — FINAL VALIDATED SMP SET + PRESSURE TEST REPORT ====
-${args.stage11Output}
+INPUT CONTROL: ${args.validatedCount} SMP(s) forwarded from Stage 11. ${args.eliminatedCount} SMP(s) excluded (ELIMINATED / REWRITTEN / other). Produce exactly ${args.validatedCount} card(s).
 
-==== STAGE 10 — SCORED SMP SET (full six-dimension scores) ====
+==== STAGE 11 — FILTERED VALIDATED SMP SET (VALIDATED + VALIDATED WITH STRATEGIC NOTE ONLY) ====
+${args.stage11FilteredOutput}
+
+${args.frozenScoresBlock}
+
+==== STAGE 10 — FULL SCORED SMP SET (REFERENCE ONLY — DO NOT RECOMPUTE; USE FROZEN SCORES ABOVE) ====
 ${args.stage10Output}
 
 ==== STAGE 2 — CMM (Whitespace, Dominant Logic, Competitor SMP Patterns) ====
@@ -135,5 +146,5 @@ ${args.cmm}
 ==== STAGE 1 — SANITISED BRIEF (Sections 2, 5, 6 for selection context) ====
 ${args.stage1Output}
 
-Run Stage 12. Produce all three deliverables in the specified order, plus the Presentation Order Log and Self-Audit. Randomise SMP card presentation order — DO NOT present in Stage 10 composite order. Use plain language in all client-facing sections. Include the [METADATA] block after each SMP card and the [SELECTION_RATIONALE_STUB] block as specified.`;
+Run Stage 12. Produce all three deliverables in the specified order, plus the Presentation Order Log and Self-Audit. Randomise SMP card presentation order — DO NOT present in Stage 10 composite order. Use plain language in all client-facing sections. Include the [METADATA] block after each SMP card and the [SELECTION_RATIONALE_STUB] block as specified. Card count MUST equal ${args.validatedCount}. Scores MUST match the FROZEN STAGE 10 SCORES block exactly.`;
 }

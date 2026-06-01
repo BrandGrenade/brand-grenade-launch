@@ -3,6 +3,11 @@ import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { streamClaude } from "./claude.server";
 import { STAGE_12_SYSTEM_PROMPT, buildStage12UserMessage } from "./stage12-prompt";
+import {
+  filterValidatedFromStage11,
+  parseStage10Scores,
+  buildFrozenScoresBlock,
+} from "./stage12-filter";
 
 const Input = z.object({
   sessionId: z.string().uuid(),
@@ -39,13 +44,24 @@ export const runStage12 = createServerFn({ method: "POST" })
       .update({ current_stage: 12, status: "running", stage_12_error: null })
       .eq("id", data.sessionId);
 
+    const stage10Output = session.stage_10_output ?? "";
+    const { filteredOutput, validated, eliminated } = filterValidatedFromStage11(session.stage_11_output);
+    if (validated.length === 0) {
+      throw new Error("Stage 11 produced no VALIDATED SMPs — cannot run Stage 12. Re-run Stage 11 or revisit Stage 8.");
+    }
+    const scores = parseStage10Scores(stage10Output);
+    const frozenScoresBlock = buildFrozenScoresBlock(validated, scores);
+
     let userMessage = buildStage12UserMessage({
       brandName: session.brand_name,
       category: session.category,
-      stage11Output: session.stage_11_output,
-      stage10Output: session.stage_10_output ?? "",
+      stage11FilteredOutput: filteredOutput,
+      frozenScoresBlock,
+      stage10Output,
       cmm: session.stage_2_output ?? "",
       stage1Output: session.stage_1_output ?? "",
+      validatedCount: validated.length,
+      eliminatedCount: eliminated.length,
     });
     if (feedback) {
       userMessage += `\n\n---\n\nHUMAN REVIEWER FEEDBACK ON PREVIOUS OUTPUT:\n${feedback}\n\nThe previous selection was rejected. Regenerate the full set, directly addressing the feedback above. Do not repeat the prior output — incorporate the requested changes.`;
