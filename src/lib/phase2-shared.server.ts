@@ -330,68 +330,145 @@ const DEFAULT_CHANNELS: ChannelEntry[] = [
  *  Role is assigned by position: 1st=PRIMARY, 2nd&3rd=AMPLIFICATION,
  *  4th=ACTIVATION (the "conversion" slot), remainder=SUSTAINING.
  *  Capped at 7. Falls back to DEFAULT_CHANNELS if fewer than 3 detected. */
-export function extractStage19ChannelEntries(stage19: string): ChannelEntry[] {
-  if (!stage19 || !stage19.trim()) return [...DEFAULT_CHANNELS];
+export function extractStage19ChannelEntries(
+  stage19: string
+): ChannelEntry[] {
+  if (!stage19?.trim())
+    return [...DEFAULT_CHANNELS];
 
-  const headerRe = /^([A-Z][A-Z\s,\-]{10,})\n+WHY THIS CHANNEL/gm;
-  const terminatorRe = /^(THE\s+)?(CHANNEL\s+ECOSYSTEM\s+VIEW|DISTINCTIVE\s+ASSET\s+ACTIVATION\s+MAP|COMPOUNDING\s+MEDIA\s+STRATEGY|CREATIVE\s+CONSISTENCY\s+BRIEF)\b/im;
-
-  type Hit = { rawName: string; start: number; bodyStart: number };
-  const hits: Hit[] = [];
-  let m: RegExpExecArray | null;
-  while ((m = headerRe.exec(stage19)) !== null) {
-    const rawName = m[1].trim().replace(/[\s,\-]+$/, "");
-    if (!rawName || rawName.endsWith(":")) continue;
-    hits.push({ rawName, start: m.index, bodyStart: m.index + m[1].length });
-  }
-
-  if (hits.length < 3) return [...DEFAULT_CHANNELS];
-
-  const roleFor = (i: number): ChannelRole => {
-    if (i === 0) return "PRIMARY";
-    if (i === 1 || i === 2) return "AMPLIFICATION";
-    if (i === 3) return "ACTIVATION";
-    return "SUSTAINING";
+  const roleFor = (
+    label: string
+  ): ChannelRole => {
+    const u = label.toUpperCase();
+    if (u.includes("PRIMARY"))
+      return "PRIMARY";
+    if (u.includes("AMPLIFICATION"))
+      return "AMPLIFICATION";
+    if (
+      u.includes("CONVERSION") ||
+      u.includes("ACTIVATION")
+    ) return "ACTIVATION";
+    if (u.includes("SUSTAINING"))
+      return "SUSTAINING";
+    return "AMPLIFICATION";
   };
 
   const normalise = (name: string): string => {
     const u = name.toUpperCase();
-    if (/TELEVISION|CINEMA|VIDEO|BROADCAST|FILM|LONG[-\s]?FORM/.test(u)) return "Film and Long-form";
-    if (/SOCIAL|SHORT[-\s]?FORM|INSTAGRAM|TIKTOK|FACEBOOK|LINKEDIN/.test(u)) return "Social and Short-form";
-    if (/INFLUENCER|CREATOR/.test(u)) return "Influencer and Creator";
-    if (/SEARCH|RETAIL\s+MEDIA|DIGITAL|PROGRAMMATIC|DISPLAY/.test(u)) return "Digital and Search";
-    if (/EMAIL|CRM/.test(u)) return "Email and CRM";
-    if (/OUTDOOR|IN[-\s]?STORE|OOH|BILLBOARD|TRANSIT/.test(u)) return "Outdoor and In-store";
-    if (/AUDIO|PODCAST|RADIO|SPOTIFY/.test(u)) return "Audio and Podcast";
-    if (/\bPR\b|EARNED|PUBLICITY|MEDIA\s+RELATIONS/.test(u)) return "PR and Earned";
-    if (/ACTIVATION|EXPERIENTIAL|EVENT|SPONSORSHIP/.test(u)) return "Activation and Experiential";
-    // Title-case fallback from the raw header.
-    return name
-      .toLowerCase()
-      .split(/\s+/)
-      .map((w) => (w ? w[0].toUpperCase() + w.slice(1) : w))
+    if (/TELEVISION|CINEMA|BROADCAST|LONG.?FORM/.test(u))
+      return "Film and Long-form";
+    if (/SOCIAL|SHORT.?FORM|INSTAGRAM|TIKTOK/.test(u))
+      return "Social and Short-form";
+    if (/INFLUENCER|CREATOR/.test(u))
+      return "Influencer and Creator";
+    if (/SEARCH|RETAIL\s+MEDIA|DIGITAL/.test(u))
+      return "Digital and Search";
+    if (/EMAIL|CRM/.test(u))
+      return "Email and CRM";
+    if (/OUTDOOR|IN.?STORE|OOH/.test(u))
+      return "Outdoor and In-store";
+    if (/AUDIO|PODCAST|RADIO/.test(u))
+      return "Audio and Podcast";
+    if (/\bPR\b|EARNED|PUBLICITY/.test(u))
+      return "PR and Earned";
+    if (/ACTIVATION|EXPERIENTIAL/.test(u))
+      return "Activation and Experiential";
+    const words = name.trim().split(/\s+/).slice(0, 6);
+    return words
+      .map(w => w.charAt(0).toUpperCase() +
+        w.slice(1).toLowerCase())
       .join(" ");
   };
 
-  const capped = hits.slice(0, 7);
   const entries: ChannelEntry[] = [];
   const usedNames = new Set<string>();
-  for (let i = 0; i < capped.length; i++) {
-    const cur = capped[i];
-    const next = capped[i + 1];
-    let end = next ? next.start : stage19.length;
-    const tail = stage19.slice(cur.bodyStart, end);
-    const term = tail.search(terminatorRe);
-    if (term >= 0) end = cur.bodyStart + term;
-    const content = stage19.slice(cur.bodyStart, end).trim();
-    const name = normalise(cur.rawName);
-    if (usedNames.has(name)) continue;
-    usedNames.add(name);
-    entries.push({ name, role: roleFor(i), content });
+
+  const roleBlockRe =
+    /^(PRIMARY CHANNEL|AMPLIFICATION CHANNELS?|CONVERSION CHANNELS?|ACTIVATION CHANNELS?|SUSTAINING CHANNELS?):\s*\n/gim;
+  const terminatorRe =
+    /^(CHANNEL ECOSYSTEM VIEW|DISTINCTIVE ASSET|COMPOUNDING MEDIA|CREATIVE CONSISTENCY)/im;
+
+  let roleMatch: RegExpExecArray | null;
+  const roleBlocks: Array<{
+    role: ChannelRole;
+    start: number;
+    end: number;
+  }> = [];
+
+  while (
+    (roleMatch = roleBlockRe.exec(stage19)) !== null
+  ) {
+    if (roleBlocks.length > 0) {
+      roleBlocks[roleBlocks.length - 1].end =
+        roleMatch.index;
+    }
+    roleBlocks.push({
+      role: roleFor(roleMatch[1]),
+      start: roleMatch.index + roleMatch[0].length,
+      end: stage19.length,
+    });
   }
 
-  if (entries.length < 3) return [...DEFAULT_CHANNELS];
-  return entries;
+  if (roleBlocks.length === 0)
+    return [...DEFAULT_CHANNELS];
+
+  const termIdx = stage19.search(terminatorRe);
+  if (termIdx > 0 && roleBlocks.length > 0) {
+    roleBlocks[roleBlocks.length - 1].end = termIdx;
+  }
+
+  for (const block of roleBlocks) {
+    const blockText = stage19
+      .slice(block.start, block.end)
+      .trim();
+    const whyRe = /WHY THIS CHANNEL:?\s*\n/gi;
+    let whyMatch: RegExpExecArray | null;
+    let lastEnd = 0;
+    while (
+      (whyMatch = whyRe.exec(blockText)) !== null
+    ) {
+      const channelNameSection = blockText
+        .slice(lastEnd, whyMatch.index)
+        .trim();
+      const nameLine = channelNameSection
+        .split("\n")
+        .map(l => l.trim())
+        .filter(l => l.length > 3)
+        .find(l =>
+          !l.match(/^(WHY|THE|AND|OR|BUT)\s/) &&
+          l.length < 120
+        ) || "";
+      const nextWhyIdx = blockText
+        .indexOf("WHY THIS CHANNEL",
+          whyMatch.index + 1);
+      const contentEnd = nextWhyIdx > 0
+        ? nextWhyIdx
+        : blockText.length;
+      const content = blockText
+        .slice(
+          whyMatch.index + whyMatch[0].length,
+          contentEnd
+        )
+        .trim();
+      const name = normalise(nameLine);
+      if (!usedNames.has(name) &&
+          content.length > 50) {
+        usedNames.add(name);
+        entries.push({
+          name,
+          role: block.role,
+          content: blockText
+            .slice(lastEnd, contentEnd)
+            .trim(),
+        });
+      }
+      lastEnd = contentEnd;
+    }
+  }
+
+  if (entries.length < 2)
+    return [...DEFAULT_CHANNELS];
+  return entries.slice(0, 7);
 }
 
 /** Backward-compatible: list of channel names from Stage 19. */
