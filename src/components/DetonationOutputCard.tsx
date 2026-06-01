@@ -8,7 +8,7 @@ import * as React from "react";
 export interface DetonationOutputCardProps {
   cardId: string;
   title: string;
-  content: string;
+  content: React.ReactNode;
   isChecked: boolean;
   onCheckChange: (cardId: string, checked: boolean) => void;
   redirectText: string;
