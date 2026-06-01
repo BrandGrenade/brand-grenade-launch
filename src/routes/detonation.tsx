@@ -909,9 +909,9 @@ function Stage18({ session, onChange, goNext }: { session: SessionRow; onChange:
               backgroundColor: "#1A1208", borderLeft: `4px solid ${AMBER}`,
               border: "1px solid #2A2A2A", borderRadius: 8, padding: 20, marginBottom: 20,
             }}>
-              <div className="text-mono" style={{
-                color: AMBER, textTransform: "uppercase", fontSize: 11,
-                letterSpacing: "0.14em", marginBottom: 8,
+              <div style={{
+                color: AMBER, textTransform: "uppercase", fontSize: "7pt",
+                letterSpacing: "0.18em", marginBottom: 8, fontFamily: "'DM Mono', monospace", fontWeight: 500,
               }}>COURAGE REVIEW</div>
               <p className="text-body" style={{ color: "#FFFFFF", lineHeight: 1.6, margin: 0 }}>
                 None of these ideas generated strategic discomfort. This may indicate the territory is not being pushed hard enough.
