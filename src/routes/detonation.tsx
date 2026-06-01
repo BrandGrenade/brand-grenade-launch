@@ -1407,14 +1407,14 @@ function Stage22({ session, onChange }: { session: SessionRow; onChange: () => v
             {peripherals.slice(0, 3).map((p) => <ArchBox key={p.label} {...p} />)}
             <ArchBox {...peripherals[3]} />
             <div style={{
-              backgroundColor: AMBER, color: "#0A0A0A",
+              backgroundColor: "#0A0A0A", border: `1px solid ${AMBER}`,
               borderRadius: 8, padding: 24, display: "flex", flexDirection: "column", justifyContent: "center",
             }}>
+              <div className="phase2-label" style={{ marginTop: 0 }}>REFLECTION</div>
               <div className="text-mono" style={{
-                textTransform: "uppercase", fontSize: 11, letterSpacing: "0.18em", opacity: 0.7,
-              }}>REFLECTION</div>
-              <div className="text-mono" style={{
-                fontSize: 18, lineHeight: 1.4, marginTop: 8, fontWeight: 600, whiteSpace: "pre-wrap",
+                color: AMBER, fontSize: 28, lineHeight: 1.2, marginTop: 8,
+                fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase",
+                whiteSpace: "pre-wrap",
               }}>{sanitiseOutput(reflection) || "—"}</div>
             </div>
             <ArchBox {...peripherals[4]} />
