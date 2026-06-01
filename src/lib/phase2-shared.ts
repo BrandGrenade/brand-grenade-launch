@@ -443,9 +443,25 @@ export function extractStage19ChannelEntries(
       const content = blockText
         .slice(match.whyEnd, contentEnd)
         .trim();
-      const name = normalise(match.nameLine);
-      if (!usedNames.has(name) &&
-          content.length > 50) {
+
+      // Validate the candidate channel name. A valid name must contain at
+      // least one canonical channel keyword. If the matched line fails,
+      // walk backwards through the preceding lines (in the same role
+      // block) until a line passes. If nothing passes, fall back to the
+      // role label (e.g. "Primary Channel").
+      const blockBefore = blockText.slice(0, match.start);
+      const candidates = [
+        match.nameLine,
+        ...blockBefore.split(/\n/).map((l) => l.trim()).filter(Boolean).reverse(),
+      ];
+      let validRaw: string | null = null;
+      for (const c of candidates) {
+        if (isValidChannelName(c)) { validRaw = c; break; }
+      }
+      const rawName = validRaw ?? roleLabelFor(block.role);
+      const name = normalise(rawName);
+
+      if (!usedNames.has(name) && content.length > 50) {
         usedNames.add(name);
         entries.push({
           name,
@@ -456,6 +472,7 @@ export function extractStage19ChannelEntries(
         });
       }
     }
+
   }
 
   if (entries.length < 2)
