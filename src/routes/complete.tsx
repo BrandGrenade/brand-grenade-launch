@@ -8,12 +8,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 import { generateStrategicPlatformPdf } from "@/lib/pdf-generator";
 import { runStage16 } from "@/lib/stage16.functions";
-import { generatePhase2Document, generateCompleteBundle } from "@/lib/phase2-document.functions";
 import {
-  openPhase1Document,
-  PHASE_1_SESSION_COLUMNS,
-  type Phase1Format,
-} from "@/lib/phase1-document-builder";
+  buildPhase2Document,
+  buildAllPhase2,
+  type Phase2DocType,
+} from "@/lib/phase2-document-generator";
+import { buildPhase1Document, openPhase1Document, PHASE_1_SESSION_COLUMNS, type Phase1Format } from "@/lib/phase1-document-builder";
+
 
 
 const completeSearchSchema = z.object({
