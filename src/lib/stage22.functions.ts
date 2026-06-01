@@ -323,3 +323,55 @@ export const retryStage22 = createServerFn({ method: "POST" })
     if (saveErr) throw new Error(saveErr.message);
     return { output: combined, architecture, assets };
   });
+
+export const regenerateStage22 = createServerFn({ method: "POST" })
+  .inputValidator((i) => z.object({ sessionId: z.string().uuid() }).parse(i))
+  .handler(async ({ data }) => {
+    // Clear existing outputs so the generation starts from scratch.
+    await supabaseAdmin
+      .from("sessions")
+      .update({
+        stage_22_output: null,
+        stage_22_brand_architecture: null,
+        stage_22_distinctive_assets: null,
+        stage_22_error: null,
+      })
+      .eq("id", data.sessionId);
+
+    const { data: session, error } = await supabaseAdmin
+      .from("sessions")
+      .select("brand_name, category, selected_smp, stage_5_output, stage_13_output, stage_14c_output, stage_17_selected_territory, stage_17b_output, stage_18_selected_detonation, stage_19_output, stage_20_output, truth_product, truth_consumer, truth_cultural, brand_intel_type, brand_intel_values, brand_intel_tone, brand_intel_assets")
+      .eq("id", data.sessionId)
+      .single();
+    if (error || !session) throw new Error(`Session not found: ${error?.message ?? "no row"}`);
+    const s = session as unknown as Stage22Session;
+    if (!s.stage_20_output) throw new Error("Stage 20 must complete before Stage 22");
+
+    let architecture: string;
+    let assets: string;
+    try {
+      ({ architecture, assets } = await generateBoth(data.sessionId, s, "", ""));
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Stage 22 regeneration failed";
+      await supabaseAdmin
+        .from("sessions")
+        .update({ stage_22_error: msg })
+        .eq("id", data.sessionId);
+      throw e instanceof Error ? e : new Error(msg);
+    }
+
+    const combined = `${architecture.trim()}\n\n---\n\n${assets.trim()}`;
+    const { error: saveErr } = await supabaseAdmin
+      .from("sessions")
+      .update({
+        stage_22_output: combined,
+        stage_22_brand_architecture: architecture,
+        stage_22_distinctive_assets: assets,
+        stage_22_error: null,
+        phase_2_current_stage: "22",
+        phase_2_status: "complete",
+      })
+      .eq("id", data.sessionId);
+    if (saveErr) throw new Error(`Failed to save Stage 22 output: ${saveErr.message}`);
+    return { output: combined, architecture, assets };
+  });
