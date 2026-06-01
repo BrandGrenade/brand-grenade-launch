@@ -724,6 +724,7 @@ function Stage17b({ session, onChange, goNext }: { session: SessionRow; onChange
   const [proceeding, setProceeding] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [autoTriggered, setAutoTriggered] = useState(false);
+  const [stage19Checked, setStage19Checked] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     if (output === null) load({ data: { sessionId: session.id } }).then((r) => r.output && setOutput(r.output)).catch(() => {});
@@ -763,6 +764,8 @@ function Stage17b({ session, onChange, goNext }: { session: SessionRow; onChange
     catch (e) { console.error("Stage advance error:", e); }
     finally { setProceeding(false); }
   };
+
+  const stage19Blocks = useMemo(() => parseStage19BlocksLocal(output ?? ""), [output]);
 
   return (
     <section>
@@ -978,7 +981,28 @@ function Stage19({ session, onChange, goNext }: { session: SessionRow; onChange:
         </AmberButton>
       ) : (
         <div style={{ backgroundColor: "#111111", border: "1px solid #2A2A2A", borderRadius: 8, padding: 28 }}>
-          <RichOutput text={output} />
+          {stage19Blocks.map((block, index) => (
+            <div
+              key={block.id}
+              style={{
+                borderTop: index === 0 ? "none" : `1px solid ${AMBER}26`,
+                paddingTop: index === 0 ? 0 : 20,
+                marginTop: index === 0 ? 0 : 20,
+              }}
+            >
+              <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 12 }}>
+                {block.selectable && (
+                  <OptionCheck
+                    checked={Boolean(stage19Checked[block.id])}
+                    onChange={(checked) => setStage19Checked((prev) => ({ ...prev, [block.id]: checked }))}
+                    label={block.label}
+                  />
+                )}
+                <span className="detonation-heading" style={{ margin: 0 }}>{block.label}</span>
+              </div>
+              {block.content && <RichOutput text={block.content} />}
+            </div>
+          ))}
           <div style={{ marginTop: 28, display: "flex", gap: 12, justifyContent: "flex-end" }}>
             <AmberButton variant="ghost" onClick={handleRetry} disabled={busy}>{busy && <Spinner />} Retry</AmberButton>
             <AmberButton onClick={handleProceed} disabled={proceeding}>
