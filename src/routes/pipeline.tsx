@@ -2040,12 +2040,13 @@ function LeftPanel({
                 onClick={() => onSelect(s.id)}
                 className="flex w-full items-center gap-3 px-5 py-2.5 text-left transition-colors"
                 style={{
-                  backgroundColor: selected ? "var(--color-primary-subtle)" : "transparent",
+                  backgroundColor: selected ? "#1c1c17" : "transparent",
+                  borderLeft: `2px solid ${selected ? "#D4924A" : "transparent"}`,
                   cursor: interactive ? "pointer" : "default",
                 }}
                 onMouseEnter={(e) => {
                   if (interactive && !selected)
-                    e.currentTarget.style.backgroundColor = "var(--color-surface-2)";
+                    e.currentTarget.style.backgroundColor = "#161612";
                 }}
                 onMouseLeave={(e) => {
                   if (!selected) e.currentTarget.style.backgroundColor = "transparent";
@@ -2057,9 +2058,10 @@ function LeftPanel({
                   checkpoint={s.checkpoint}
                 />
                 <span
-                  className="text-mono shrink-0"
+                  className="shrink-0"
                   style={{
-                    color: "var(--color-text-tertiary)",
+                    fontFamily: "'DM Mono', monospace",
+                    color: "#7a776f",
                     minWidth: 28,
                     fontSize: 12,
                   }}
@@ -2067,8 +2069,12 @@ function LeftPanel({
                   {s.number}
                 </span>
                 <span
-                  className="text-body flex-1 truncate"
-                  style={stageNameStyle(status, selected, s.conditional)}
+                  className="flex-1 truncate"
+                  style={{
+                    fontFamily: "'DM Sans', sans-serif",
+                    color: "#f2efe9",
+                    fontWeight: 400,
+                  }}
                 >
                   {s.name}
                 </span>
@@ -2082,7 +2088,7 @@ function LeftPanel({
                   <span
                     className="text-label shrink-0"
                     style={{
-                      color: "var(--color-text-tertiary)",
+                      color: "#7a776f",
                       fontSize: 9,
                     }}
                   >
