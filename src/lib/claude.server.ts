@@ -117,6 +117,7 @@ async function doFetch(apiKey: string, body: string): Promise<Response> {
       headers: {
         "x-api-key": apiKey,
         "anthropic-version": "2023-06-01",
+        "anthropic-beta": "prompt-caching-2024-07-31",
         "content-type": "application/json",
       },
       body,
@@ -145,7 +146,13 @@ async function prepareCall(args: CallClaudeArgs): Promise<{ apiKey: string; body
       model: args.model ?? DEFAULT_MODEL,
       max_tokens: effectiveMaxTokens,
       temperature: args.temperature ?? 0.5,
-      system: effectiveSystem,
+      system: [
+        {
+          type: "text",
+          text: effectiveSystem,
+          cache_control: { type: "ephemeral" },
+        },
+      ],
       messages: [{ role: "user", content: args.userMessage }],
     }),
   };
