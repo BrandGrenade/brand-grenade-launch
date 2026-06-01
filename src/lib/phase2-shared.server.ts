@@ -274,13 +274,16 @@ export type ChannelRole = "PRIMARY" | "AMPLIFICATION" | "ACTIVATION" | "SUSTAINI
 export type ChannelEntry = { name: string; role: ChannelRole; content: string };
 
 const CHANNEL_NAME_MAP: Array<{ keywords: RegExp; name: string }> = [
+  { keywords: /\b(tool|transaction analysis|interactive|analyse|transaction data|itemised|merchant analysis)\b/i, name: "Transaction Analysis Tool" },
+  { keywords: /\b(industry media|business publication|journalism|trade media|press|editorial|publication)\b/i, name: "Industry and Trade Media" },
+  { keywords: /\b(email|crm|sequence|weekly|educational email|ongoing|literacy)\b/i, name: "Email and CRM" },
   { keywords: /\b(film|video|television|broadcast|long[-\s]?form|tvc)\b/i, name: "Film and Long-form" },
   { keywords: /\b(social|instagram|facebook|tiktok|linkedin|short[-\s]?form)\b/i, name: "Social and Short-form" },
   { keywords: /\b(outdoor|ooh|billboard|transit|street)\b/i, name: "Outdoor" },
   { keywords: /\b(digital|search|google|display|programmatic|online advertising)\b/i, name: "Digital and Search" },
   { keywords: /\b(audio|podcast|radio|spotify|sound)\b/i, name: "Audio and Podcast" },
   { keywords: /\b(activation|experiential|event|sponsorship|in[-\s]?person|live)\b/i, name: "Activation and Experiential" },
-  { keywords: /\b(pr|earned|media relations|journalist|press|publicity)\b/i, name: "PR and Earned" },
+  { keywords: /\b(pr|earned|media relations|journalist|publicity)\b/i, name: "PR and Earned" },
 ];
 
 function deriveChannelName(prose: string): string {
