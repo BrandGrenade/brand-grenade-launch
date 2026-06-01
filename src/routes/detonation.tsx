@@ -170,17 +170,19 @@ function RichOutput({ text }: { text: string }) {
         if (/^\s*-{3,}\s*$/.test(line) || /^\s*\*{3,}\s*$/.test(line)) {
           return null;
         }
-        // Heading detection runs on the RAW line so we can still recognise
-        // ## / ### / **wrapped** before stripping the markers.
+        const trimmed = line.trim();
+        // Heading detection: markdown headings, bold-wrapped lines,
+        // short all-caps titles, OR all-caps labels ending in a colon.
         const isHeading =
           /^#{1,4}\s+/.test(line) ||
           /^\*\*[^*]+\*\*\s*$/.test(line) ||
-          (/^[A-Z][A-Z0-9 \-&/]{4,}$/.test(line.trim()) && line.trim().length < 60);
+          (/^[A-Z][A-Z0-9 \-&/]{4,}$/.test(trimmed) && trimmed.length < 60) ||
+          /^[A-Z][A-Z0-9 \-&/]{2,}:$/.test(trimmed);
         if (isHeading) {
-          const clean = sanitiseOutput(line);
+          const clean = sanitiseOutput(line).replace(/:$/, "");
           if (!clean) return null;
           return (
-            <span key={i} className="detonation-heading">{clean}</span>
+            <span key={i} className="detonation-heading section-label">{clean}</span>
           );
         }
         const clean = sanitiseOutput(line);
