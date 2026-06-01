@@ -1215,6 +1215,7 @@ function Stage20({ session, onChange, goNext }: { session: SessionRow; onChange:
 function Stage21({ session, onChange, goNext }: { session: SessionRow; onChange: () => void | Promise<void>; goNext: () => void }) {
   const run = useServerFn(runStage21);
   const load = useServerFn(loadStage21);
+  const clear = useServerFn(clearStage21);
   const [outputs, setOutputs] = useState<Record<string, string> | null>(session.stage_21_outputs);
   const [busy, setBusy] = useState(false);
   const [proceeding, setProceeding] = useState(false);
