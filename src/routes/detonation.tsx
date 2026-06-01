@@ -547,9 +547,9 @@ function DetonationPage() {
             />
           </div>
           <div style={{ flex: 1, overflowY: "auto", padding: "16px 12px" }}>
-            <div className="text-label" style={{
+            <div style={{
               color: AMBER, letterSpacing: "0.18em", fontFamily: "'DM Mono', monospace",
-              fontSize: 7, textTransform: "uppercase", padding: "0 8px 12px",
+              fontSize: "7pt", textTransform: "uppercase", padding: "0 8px 12px", fontWeight: 500,
             }}>STAGES</div>
             <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 2 }}>
               {PHASE_2_STAGES.map((stage) => {
