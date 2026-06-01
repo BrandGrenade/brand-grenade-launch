@@ -1312,7 +1312,7 @@ function Stage21({ session, onChange, goNext }: { session: SessionRow; onChange:
   const downloadAll = () => {
     if (!outputs) return;
     const combined = getStage21OutputEntries(outputs)
-      .map(([channel, body]) => `# ${channel}\n\n${body}`).join("\n\n---\n\n");
+      .map(({ channel, body }) => `# ${channel}\n\n${body}`).join("\n\n---\n\n");
     download(`${session.brand_name ?? "brand"}-channel-briefs.md`, combined);
   };
   const outputEntries = outputs ? getStage21OutputEntries(outputs) : [];
