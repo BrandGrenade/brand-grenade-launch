@@ -977,14 +977,12 @@ function openHtmlInNewTab(html: string) {
 }
 
 function Phase2Deliverables({ session }: { session: SessionRow }) {
-  const gen = useServerFn(generatePhase2Document);
-  const genBundle = useServerFn(generateCompleteBundle);
   const [busy, setBusy] = useState<string | null>(null);
   const channels = session.stage_21_outputs ?? {};
   const channelKeys = Object.keys(channels);
   const amber = PHASE_2_AMBER_DELIV;
 
-  const download = async (
+  const download = (
     docType:
       | "detonation_territory" | "detonation_intelligence" | "the_detonation"
       | "activation_architecture" | "master_brief" | "channel_brief"
@@ -994,22 +992,38 @@ function Phase2Deliverables({ session }: { session: SessionRow }) {
   ) => {
     setBusy(label);
     try {
-      const r = await gen({ data: { sessionId: session.id, docType, channelKey } });
-      openHtmlInNewTab(r.html);
+      const html = docType === "all_phase2"
+        ? buildAllPhase2(session)
+        : buildPhase2Document(session, docType as Phase2DocType, channelKey);
+      openHtmlInNewTab(html);
     } catch (e) {
       alert(e instanceof Error ? e.message : "Failed to generate document");
     } finally { setBusy(null); }
   };
 
-  const downloadBundle = async () => {
+  const downloadBundle = () => {
     setBusy("complete");
     try {
-      const r = await genBundle({ data: { sessionId: session.id } });
-      openHtmlInNewTab(r.html);
+      // Build phase 1 (consulting) + phase 2 client-side and merge into one tab.
+      const phase1Html = buildPhase1Document(session, "consulting");
+      const phase2Html = buildAllPhase2(session);
+      const extract = (html: string): string => {
+        const m = html.match(/<div class="page">([\s\S]*?)<\/div>\s*<script>/);
+        return m ? m[1] : html;
+      };
+      const brand = session.brand_name ?? "Untitled Brand";
+      const merged = phase1Html.replace(
+        /<div class="page">[\s\S]*?<\/div>\s*<script>/,
+        `<div class="page"><div class="part-label">PHASE 1</div>${extract(phase1Html)}<div class="doc-break"></div><div class="part-label">PHASE 2</div>${extract(phase2Html)}</div><script>`,
+      );
+      // Update the document title for the merged bundle.
+      const titled = merged.replace(/<title>[^<]*<\/title>/, `<title>Complete Brand Grenade — ${brand.replace(/</g, "&lt;")}</title>`);
+      openHtmlInNewTab(titled);
     } catch (e) {
       alert(e instanceof Error ? e.message : "Failed to generate bundle");
     } finally { setBusy(null); }
   };
+
 
 
   const Card = ({ title, subtitle, onClick, busyKey }: {
