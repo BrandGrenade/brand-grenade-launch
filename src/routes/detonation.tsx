@@ -1154,9 +1154,9 @@ function Stage20({ session, onChange, goNext }: { session: SessionRow; onChange:
             marginTop: 24, backgroundColor: "#111111", border: "1px solid #2A2A2A",
             borderRadius: 8, padding: 24,
           }}>
-            <div className="text-mono" style={{
-              color: AMBER, textTransform: "uppercase", fontSize: 11,
-              letterSpacing: "0.14em", marginBottom: 16,
+            <div style={{
+              color: AMBER, textTransform: "uppercase", fontSize: "7pt",
+              letterSpacing: "0.18em", marginBottom: 16, fontFamily: "'DM Mono', monospace", fontWeight: 500,
             }}>BRIEF QUALITY SCORE</div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12 }}>
               {[
