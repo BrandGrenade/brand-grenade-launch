@@ -44,7 +44,7 @@ export function DetonationBriefSection({
     <div
       style={{
         padding: "20px 0",
-        borderBottom: `1px solid ${ACCENT}26`, // ~15% opacity
+        borderBottom: `1px solid ${ACCENT}33`, // ~15% opacity
       }}
     >
       <button
@@ -62,12 +62,13 @@ export function DetonationBriefSection({
         aria-expanded={open}
       >
         <div
-          className="text-mono"
           style={{
             color: ACCENT,
             textTransform: "uppercase",
-            fontSize: 7,
+            fontSize: "7pt",
             letterSpacing: "0.18em",
+            fontFamily: "'DM Mono', monospace",
+            fontWeight: 500,
           }}
         >
           {label}
