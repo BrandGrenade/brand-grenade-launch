@@ -230,23 +230,21 @@ function splitCardsLocal(text: string): LocalCard[] {
     return hits;
   };
 
-  // Primary: name line + blank line + WHY THIS TERRITORY (Stage 17 signal)
+  // Try ALL boundary patterns universally; use whichever finds matches.
+  // Pattern A: name + blank + WHY THIS TERRITORY (Stage 17)
+  // Pattern B: name + blank + WHY THIS DETONATION (Stage 18)
+  // Pattern C: markdown ## headings
+  // Pattern D: blank line + all-caps title (no trailing colon)
   let matches: Array<{ name: string; start: number }> = [];
-  if (/WHY THIS TERRITORY/i.test(t)) {
-    matches = collect(new RegExp(`(?:^|\\n)\\s*(${NAME})\\s*\\n\\s*\\n\\s*WHY THIS TERRITORY`, "gm"));
-  } else if (/WHY THIS DETONATION/i.test(t)) {
-    // Stage 18 signal: name line + blank line + WHY THIS DETONATION
+  matches = collect(new RegExp(`(?:^|\\n)\\s*(${NAME})\\s*\\n\\s*\\n\\s*WHY THIS TERRITORY`, "gm"));
+  if (matches.length === 0) {
     matches = collect(new RegExp(`(?:^|\\n)\\s*(${NAME})\\s*\\n\\s*\\n\\s*WHY THIS DETONATION`, "gm"));
   }
-
-  // Fallback: blank line(s) + an all-caps line that does NOT end in a colon
-  if (matches.length === 0) {
-    matches = collect(new RegExp(`(?:^|\\n\\s*\\n)\\s*(${NAME})(?!:)\\s*\\n`, "g"));
-  }
-
-  // Legacy: original `## heading` markdown format
   if (matches.length === 0) {
     matches = collect(/(?:^|\n)##\s+(.+?)\s*\n/g);
+  }
+  if (matches.length === 0) {
+    matches = collect(new RegExp(`(?:^|\\n\\s*\\n)\\s*(${NAME})(?!:)\\s*\\n`, "g"));
   }
 
   if (matches.length === 0) {
