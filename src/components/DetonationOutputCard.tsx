@@ -85,12 +85,13 @@ export function DetonationOutputCard({
           {smp && smp.trim() ? (
             <div style={{ marginBottom: 18 }}>
               <div
-                className="text-mono"
                 style={{
                   color: ACCENT,
                   textTransform: "uppercase",
-                  fontSize: 7,
+                  fontSize: "7pt",
                   letterSpacing: "0.18em",
+                  fontFamily: "'DM Mono', monospace",
+                  fontWeight: 500,
                   margin: 0,
                 }}
               >
