@@ -1262,11 +1262,24 @@ function Stage22({ session, onChange }: { session: SessionRow; onChange: () => v
             </div>
           )}
 
+          {busy && (
+            <div style={{
+              marginTop: 24, padding: 20, borderRadius: 8,
+              backgroundColor: "#1a1a1a", border: `1px solid ${AMBER}44`,
+              display: "flex", alignItems: "center", gap: 12,
+            }}>
+              <Spinner />
+              <span className="text-mono" style={{ color: AMBER, fontSize: 12, letterSpacing: "0.12em", textTransform: "uppercase" }}>
+                Regenerating Brand Architecture — this may take a few minutes…
+              </span>
+            </div>
+          )}
+
           <div style={{ marginTop: 24, display: "flex", gap: 12, justifyContent: "flex-end" }}>
             <AmberButton variant="ghost" onClick={handleRegenerate} disabled={busy}>
               {busy ? <><Spinner /> Regenerating…</> : "Regenerate This Stage"}
             </AmberButton>
-            <AmberButton onClick={printPdf}>Download Brand Architecture</AmberButton>
+            <AmberButton onClick={printPdf} disabled={busy}>Download Brand Architecture</AmberButton>
           </div>
         </div>
       )}
