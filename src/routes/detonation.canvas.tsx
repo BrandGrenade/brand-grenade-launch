@@ -438,6 +438,8 @@ function ThreeTruthCanvas() {
                     <Field
                       label="Brand Values"
                       hint="What are the defined values of this brand?"
+                      placeholder="Single words only — Transparency, Integrity, Courage"
+                      helper="What does this brand believe? Not what it does."
                       value={valuesField}
                       onChange={setValuesField}
                       multiline
@@ -479,7 +481,7 @@ function ThreeTruthCanvas() {
                             <input
                               type="text"
                               value={a.name}
-                              placeholder="e.g. orange swoosh wordmark"
+                              placeholder="Visual, verbal and tonal elements only — logo colour, specific words, tone of voice. Not products or features."
                               onChange={(e) => updateAsset(i, { name: e.target.value })}
                               style={inputStyle}
                             />
@@ -529,6 +531,15 @@ function ThreeTruthCanvas() {
                           + Add asset
                         </button>
                       </div>
+                      <p
+                        style={{
+                          color: "var(--color-text-tertiary)",
+                          fontSize: 12,
+                          margin: "6px 0 0",
+                        }}
+                      >
+                        What makes it recognisable without its name?
+                      </p>
                     </div>
 
                     <div
@@ -986,12 +997,16 @@ function RadioCard({
 function Field({
   label,
   hint,
+  helper,
+  placeholder,
   value,
   onChange,
   multiline,
 }: {
   label: string;
   hint?: string;
+  helper?: string;
+  placeholder?: string;
   value: string;
   onChange: (v: string) => void;
   multiline?: boolean;
@@ -1017,6 +1032,7 @@ function Field({
       {multiline ? (
         <textarea
           value={value}
+          placeholder={placeholder}
           onChange={(e) => onChange(e.target.value)}
           rows={3}
           style={{ ...inputStyle, resize: "vertical" }}
@@ -1025,9 +1041,15 @@ function Field({
         <input
           type="text"
           value={value}
+          placeholder={placeholder}
           onChange={(e) => onChange(e.target.value)}
           style={inputStyle}
         />
+      )}
+      {helper && (
+        <p style={{ color: "var(--color-text-tertiary)", fontSize: 12, margin: "6px 0 0" }}>
+          {helper}
+        </p>
       )}
     </div>
   );
