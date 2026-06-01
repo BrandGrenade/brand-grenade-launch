@@ -42,12 +42,27 @@ type Stage21Session = {
   stage_21_outputs: Record<string, string> | null;
 };
 
+function extractSection(context: string, label: string): string {
+  if (!context) return "";
+  // Match LABEL: ... until next ALL-CAPS header (3+ words/letters) followed by ":" or end of string
+  const re = new RegExp(
+    `${label}\\s*:?\\s*([\\s\\S]*?)(?=\\n\\s*[A-Z][A-Z0-9 \\-]{2,}\\s*:|$)`,
+    "i",
+  );
+  const m = context.match(re);
+  return m ? m[1].trim() : "";
+}
+
 function buildStage21UserMessage(
   channel: string,
   role: string,
   context: string,
   s: Stage21Session,
 ): string {
+  const smpTranslationRaw = extractSection(context, "SMP TRANSLATION");
+  const smpTranslation = smpTranslationRaw || (context?.trim() || "—");
+  const audienceMindstate = extractSection(context, "AUDIENCE MINDSTATE");
+
   return [
     smpGoverningBlock(s.selected_smp),
     "",
@@ -55,6 +70,12 @@ function buildStage21UserMessage(
     `ROLE IN HIERARCHY: ${role}`,
     "CHANNEL CONTEXT FROM STAGE 19:",
     context?.trim() || "—",
+    "",
+    "SMP TRANSLATION FOR THIS CHANNEL:",
+    smpTranslation,
+    "",
+    "AUDIENCE MINDSTATE IN THIS CHANNEL:",
+    audienceMindstate,
     "",
     `BRAND: ${s.brand_name ?? "—"}`,
     `CATEGORY: ${s.category ?? "—"}`,
