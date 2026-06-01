@@ -112,8 +112,8 @@ function AmberButton({
         textTransform: "uppercase",
         fontSize: 11,
         letterSpacing: "0.12em",
-        cursor: disabled ? "not-allowed" : "pointer",
-        opacity: disabled ? 0.5 : 1,
+        cursor: disabled ? "wait" : "pointer",
+        opacity: 1,
         fontWeight: 600,
       }}
     >
@@ -128,8 +128,9 @@ function Spinner() {
       aria-hidden="true"
       style={{
         width: 12, height: 12, borderRadius: "50%",
-        border: `2px solid ${AMBER}`, borderTopColor: "transparent",
+        border: "2px solid currentColor", borderTopColor: "transparent",
         display: "inline-block", animation: "spin 0.8s linear infinite",
+        flex: "0 0 auto",
       }}
     />
   );
