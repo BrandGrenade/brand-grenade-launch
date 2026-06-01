@@ -835,7 +835,7 @@ function Stage18({ session, onChange, goNext }: { session: SessionRow; onChange:
   useEffect(() => {
     setChecked((prev) => {
       const next: Record<string, boolean> = {};
-      cards.forEach((c) => { next[c.id] = prev[c.id] ?? true; });
+      cards.forEach((c) => { next[c.id] = prev[c.id] ?? false; });
       return next;
     });
   }, [cards.length]); // eslint-disable-line react-hooks/exhaustive-deps
