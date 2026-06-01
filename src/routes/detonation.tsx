@@ -139,7 +139,7 @@ function Spinner() {
 function SectionTitle({ kicker, title, subtitle }: { kicker: string; title: string; subtitle?: string }) {
   return (
     <div style={{ marginBottom: 24 }}>
-      <span className="text-label" style={{ color: AMBER, letterSpacing: "0.12em" }}>{kicker}</span>
+      <span style={{ color: AMBER, fontFamily: "'DM Mono', monospace", fontSize: "7pt", textTransform: "uppercase", letterSpacing: "0.18em", fontWeight: 500, display: "block" }}>{kicker}</span>
       <h2 className="text-h2 text-text-primary" style={{ margin: "12px 0 8px", fontWeight: 700 }}>{title}</h2>
       {subtitle && <p className="text-body" style={{ color: "var(--color-text-secondary)" }}>{subtitle}</p>}
     </div>
