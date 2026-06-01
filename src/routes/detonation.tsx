@@ -917,7 +917,7 @@ function Stage18({ session, onChange, goNext }: { session: SessionRow; onChange:
               cardId={c.id}
               title={c.name}
               content={sanitiseOutput(stripCardTitle(c.markdown, c.name))}
-              isChecked={checked[c.id] ?? true}
+              isChecked={checked[c.id] ?? false}
               onCheckChange={(id, v) => setChecked((p) => ({ ...p, [id]: v }))}
               redirectText={redirects[c.id] ?? ""}
               onRedirectChange={(id, v) => setRedirects((p) => ({ ...p, [id]: v }))}
