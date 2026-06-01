@@ -190,28 +190,67 @@ function RichOutput({ text }: { text: string }) {
 }
 
 // ── Card split helper (mirrors splitCards on the server) ──────────────────
+// Phase 2 outputs are plain text (no markdown). Card titles are short
+// all-caps lines (no trailing colon) that introduce each candidate block.
+// Stage 17 names are followed by a blank line then "WHY THIS TERRITORY
+// SERVES THE SMP:" — that's the strongest signal. If absent (Stage 18 etc.)
+// we fall back to detecting any all-caps title line that isn't a section
+// label (i.e. doesn't end in a colon).
 type LocalCard = { id: string; name: string; markdown: string };
 function splitCardsLocal(text: string): LocalCard[] {
   if (!text?.trim()) return [];
-  const lines = text.split("\n");
-  const blocks: Array<{ name: string; lines: string[] }> = [];
-  let current: { name: string; lines: string[] } | null = null;
-  for (const raw of lines) {
-    const m = raw.match(/^##\s+(.+?)\s*$/);
-    if (m) {
-      if (current) blocks.push(current);
-      current = { name: m[1].replace(/^\*+|\*+$/g, "").trim(), lines: [raw] };
-    } else if (current) {
-      current.lines.push(raw);
+  const t = text.trim();
+
+  const NAME = "[A-Z][A-Z0-9 '\\-&/]{3,79}";
+  const collect = (re: RegExp): Array<{ name: string; start: number }> => {
+    const hits: Array<{ name: string; start: number }> = [];
+    let m: RegExpExecArray | null;
+    while ((m = re.exec(t)) !== null) {
+      const name = m[1].trim();
+      const start = m.index + m[0].indexOf(m[1]);
+      hits.push({ name, start });
     }
+    return hits;
+  };
+
+  // Primary: name line + blank line + WHY THIS TERRITORY (Stage 17 signal)
+  let matches = collect(new RegExp(`(?:^|\\n)\\s*(${NAME})\\s*\\n\\s*\\n\\s*WHY THIS TERRITORY`, "gm"));
+
+  // Fallback: blank line(s) + an all-caps line that does NOT end in a colon
+  if (matches.length === 0) {
+    matches = collect(new RegExp(`(?:^|\\n\\s*\\n)\\s*(${NAME})(?!:)\\s*\\n`, "g"));
   }
-  if (current) blocks.push(current);
-  if (blocks.length === 0) return [{ id: "card-1", name: "Output", markdown: text.trim() }];
-  return blocks.map((b, i) => ({
-    id: `card-${i + 1}`,
-    name: b.name,
-    markdown: b.lines.join("\n").trim(),
-  }));
+
+  // Legacy: original `## heading` markdown format
+  if (matches.length === 0) {
+    matches = collect(/(?:^|\n)##\s+(.+?)\s*\n/g);
+  }
+
+  if (matches.length === 0) {
+    return [{ id: "card-1", name: "Territory", markdown: t }];
+  }
+
+  return matches.map((mat, i) => {
+    const end = i + 1 < matches.length ? matches[i + 1].start : t.length;
+    return {
+      id: `card-${i + 1}`,
+      name: mat.name.replace(/^#+\s*/, "").replace(/^\*+|\*+$/g, "").trim(),
+      markdown: t.slice(mat.start, end).trim(),
+    };
+  });
+}
+
+// Strip the leading title line from a card's markdown so the body content
+// renders without duplicating the title that's shown in the card header.
+function stripCardTitle(markdown: string, name: string): string {
+  const lines = markdown.split("\n");
+  const first = (lines[0] ?? "").replace(/^#+\s*/, "").replace(/^\*+|\*+$/g, "").trim();
+  if (first === name) {
+    let i = 1;
+    while (i < lines.length && lines[i].trim() === "") i++;
+    return lines.slice(i).join("\n");
+  }
+  return markdown.replace(/^##\s+.+\n?/, "");
 }
 
 // Brief Quality Score parsing (mirrors server helper)
@@ -513,6 +552,7 @@ function Stage17({ session, onChange, goNext }: { session: SessionRow; onChange:
   const [err, setErr] = useState<string | null>(null);
   const [checked, setChecked] = useState<Record<string, boolean>>({});
   const [redirects, setRedirects] = useState<Record<string, string>>({});
+  const [autoTriggered, setAutoTriggered] = useState(false);
 
   useEffect(() => {
     if (output === null) {
@@ -537,6 +577,21 @@ function Stage17({ session, onChange, goNext }: { session: SessionRow; onChange:
     } catch (e) { setErr(e instanceof Error ? e.message : "Stage 17 failed"); }
     finally { setBusy(false); }
   };
+
+  // Auto-run Stage 17 on first arrival if SMP exists and no output yet.
+  useEffect(() => {
+    if (
+      session.selected_smp &&
+      !session.stage_17_output &&
+      !output &&
+      !busy &&
+      !autoTriggered
+    ) {
+      setAutoTriggered(true);
+      void handleRun();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session.selected_smp, session.stage_17_output, output]);
 
   const handleRetry = async () => {
     setBusy(true); setErr(null);
@@ -573,7 +628,7 @@ function Stage17({ session, onChange, goNext }: { session: SessionRow; onChange:
               key={c.id}
               cardId={c.id}
               title={c.name}
-              content={sanitiseOutput(c.markdown.replace(/^##\s+.+\n?/, ""))}
+              content={sanitiseOutput(stripCardTitle(c.markdown, c.name))}
               isChecked={checked[c.id] ?? true}
               onCheckChange={(id, v) => setChecked((p) => ({ ...p, [id]: v }))}
               redirectText={redirects[c.id] ?? ""}
@@ -781,7 +836,7 @@ function Stage18({ session, onChange, goNext }: { session: SessionRow; onChange:
               key={c.id}
               cardId={c.id}
               title={c.name}
-              content={sanitiseOutput(c.markdown.replace(/^##\s+.+\n?/, ""))}
+              content={sanitiseOutput(stripCardTitle(c.markdown, c.name))}
               isChecked={checked[c.id] ?? true}
               onCheckChange={(id, v) => setChecked((p) => ({ ...p, [id]: v }))}
               redirectText={redirects[c.id] ?? ""}

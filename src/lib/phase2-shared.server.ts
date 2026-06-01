@@ -1,36 +1,51 @@
 // Shared helpers for Phase 2 stage server functions.
 // Card splitting, redirect-instruction formatting, and Three-Truth assembly.
 
-const HEADING = /^##\s+(.+?)\s*$/;
+
 
 export type Card = { id: string; name: string; markdown: string };
 
-/** Split a Phase 2 output into cards by top-level `## ` headings.
+/** Split a Phase 2 output into cards.
+ *  Phase 2 outputs are plain text (no markdown). Card titles are short
+ *  all-caps lines (no trailing colon). Stage 17 follows the strong pattern
+ *  "<NAME>\n\nWHY THIS TERRITORY SERVES THE SMP:". For other stages we
+ *  fall back to detecting any all-caps title line that isn't a section
+ *  label, and finally to the legacy `## heading` markdown format.
  *  IDs are stable positional slugs: card-1, card-2, card-3, … */
 export function splitCards(text: string): Card[] {
   if (!text || !text.trim()) return [];
-  const lines = text.split("\n");
-  const blocks: Array<{ name: string; lines: string[] }> = [];
-  let current: { name: string; lines: string[] } | null = null;
-  for (const raw of lines) {
-    const m = raw.match(HEADING);
-    if (m) {
-      if (current) blocks.push(current);
-      const name = m[1].replace(/^\*+|\*+$/g, "").trim();
-      current = { name, lines: [raw] };
-    } else if (current) {
-      current.lines.push(raw);
+  const t = text.trim();
+
+  const NAME = "[A-Z][A-Z0-9 '\\-&/]{3,79}";
+  const collect = (re: RegExp): Array<{ name: string; start: number }> => {
+    const hits: Array<{ name: string; start: number }> = [];
+    let m: RegExpExecArray | null;
+    while ((m = re.exec(t)) !== null) {
+      const name = m[1].trim();
+      const start = m.index + m[0].indexOf(m[1]);
+      hits.push({ name, start });
     }
+    return hits;
+  };
+
+  let matches = collect(new RegExp(`(?:^|\\n)\\s*(${NAME})\\s*\\n\\s*\\n\\s*WHY THIS TERRITORY`, "gm"));
+  if (matches.length === 0) {
+    matches = collect(new RegExp(`(?:^|\\n\\s*\\n)\\s*(${NAME})(?!:)\\s*\\n`, "g"));
   }
-  if (current) blocks.push(current);
-  if (blocks.length === 0) {
-    return [{ id: "card-1", name: "Output", markdown: text.trim() }];
+  if (matches.length === 0) {
+    matches = collect(/(?:^|\n)##\s+(.+?)\s*\n/g);
   }
-  return blocks.map((b, i) => ({
-    id: `card-${i + 1}`,
-    name: b.name,
-    markdown: b.lines.join("\n").replace(/\s+$/g, ""),
-  }));
+  if (matches.length === 0) {
+    return [{ id: "card-1", name: "Territory", markdown: t }];
+  }
+  return matches.map((mat, i) => {
+    const end = i + 1 < matches.length ? matches[i + 1].start : t.length;
+    return {
+      id: `card-${i + 1}`,
+      name: mat.name.replace(/^#+\s*/, "").replace(/^\*+|\*+$/g, "").trim(),
+      markdown: t.slice(mat.start, end).replace(/\s+$/g, ""),
+    };
+  });
 }
 
 export function joinCards(cards: Card[]): string {
