@@ -88,10 +88,10 @@
   --text-tertiary: oklch(0.43 0.008 75);
 
   /* Accent — #D4924A amber */
-  --primary: oklch(0.68 0.12 65);
+  --primary: oklch(0.695 0.118 58.5);
   --primary-foreground: oklch(0.145 0 0);
-  --primary-hover: oklch(0.73 0.13 65);
-  --primary-subtle: oklch(0.68 0.12 65 / 0.10);
+  --primary-hover: oklch(0.745 0.125 58.5);
+  --primary-subtle: oklch(0.695 0.118 58.5 / 0.10);
 
   --secondary: oklch(0.22 0 0);
   --secondary-foreground: oklch(0.94 0.005 80);
