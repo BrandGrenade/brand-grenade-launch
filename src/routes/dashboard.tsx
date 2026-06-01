@@ -138,7 +138,7 @@ function Dashboard() {
     },
     {
       value: sessions.filter(
-        (s) => s.current_stage > 1 && s.stage_22_output == null,
+        (s) => s.stage_1_output != null && s.stage_22_output == null,
       ).length,
       label: "In Progress",
     },
