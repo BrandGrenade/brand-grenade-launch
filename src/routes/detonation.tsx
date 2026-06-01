@@ -27,7 +27,7 @@ import {
   runStage20, loadStage20, retryStage20,
   regenerateStage20Section, approveStage20,
 } from "@/lib/stage20.functions";
-import { runStage21, loadStage21 } from "@/lib/stage21.functions";
+import { runStage21, loadStage21, clearStage21 } from "@/lib/stage21.functions";
 import { runStage22, loadStage22, regenerateStage22 } from "@/lib/stage22.functions";
 
 const AMBER = PHASE_2_AMBER;
