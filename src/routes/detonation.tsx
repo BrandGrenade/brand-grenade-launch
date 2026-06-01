@@ -1141,7 +1141,7 @@ function Stage20({ session, onChange, goNext }: { session: SessionRow; onChange:
                   key={s.id}
                   sectionId={s.id}
                   label={s.label}
-                  content={sanitiseOutput(s.content)}
+                  content={<RichOutput text={s.content} />}
                   onRegenerate={handleSectionRegen}
                   onContentUpdate={() => { /* state already updated via handler */ }}
                 />
