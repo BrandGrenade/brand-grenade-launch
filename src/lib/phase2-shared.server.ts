@@ -304,7 +304,7 @@ export function extractStage19ChannelEntries(stage19: string): ChannelEntry[] {
   if (!stage19 || !stage19.trim()) return [...DEFAULT_CHANNELS];
 
   const sectionRegex = /^(PRIMARY\s+CHANNELS?|AMPLIFICATION\s+CHANNELS?|ACTIVATION\s+CHANNELS?|SUSTAINING\s+CHANNELS?)\b[^\n]*/gim;
-  const terminatorRegex = /^(DISTINCTIVE\s+ASSET\s+ACTIVATION\s+MAP|COMPOUNDING\s+MEDIA\s+STRATEGY|EMOTIONAL\s+TO\s+RATIONAL\s+CALIBRATION)\b/im;
+  const terminatorRegex = /^(THE\s+)?(DISTINCTIVE\s+ASSET\s+ACTIVATION\s+MAP|COMPOUNDING\s+MEDIA\s+STRATEGY|EMOTIONAL\s+TO\s+RATIONAL\s+CALIBRATION)\b/im;
 
   type Match = { role: ChannelRole; start: number; bodyStart: number };
   const matches: Match[] = [];
@@ -318,32 +318,38 @@ export function extractStage19ChannelEntries(stage19: string): ChannelEntry[] {
     matches.push({ role, start: m.index, bodyStart: m.index + m[0].length });
   }
 
+  const isGarbage = (p: string) =>
+    !p ||
+    p.length < 80 ||
+    /^[-=*_\s]+$/.test(p) ||
+    /^---/.test(p) ||
+    !p.trim();
+
   const entries: ChannelEntry[] = [];
-  const usedNames = new Set<string>();
+  const usedRoles = new Set<ChannelRole>();
   for (let i = 0; i < matches.length; i++) {
     const cur = matches[i];
     const next = matches[i + 1];
     let end = next ? next.start : stage19.length;
-    // Truncate at terminator section if encountered before next match
     const tail = stage19.slice(cur.bodyStart, end);
     const term = tail.search(terminatorRegex);
     if (term >= 0) end = cur.bodyStart + term;
     const body = stage19.slice(cur.bodyStart, end).trim();
     if (!body) continue;
 
-    // Split body into paragraphs; PRIMARY is treated as single channel.
-    const paragraphs =
-      cur.role === "PRIMARY"
-        ? [body]
-        : body.split(/\n\s*\n+/).map((p) => p.trim()).filter(Boolean);
+    // One channel per section: filter garbage paragraphs, then concatenate
+    // the surviving paragraphs as the single channel's content.
+    const cleanParas = body
+      .split(/\n\s*\n+/)
+      .map((p) => p.trim())
+      .filter((p) => !isGarbage(p));
+    if (cleanParas.length === 0) continue;
 
-    for (const para of paragraphs) {
-      const name = deriveChannelName(para);
-      const key = `${name}|${cur.role}`;
-      if (usedNames.has(key)) continue;
-      usedNames.add(key);
-      entries.push({ name, role: cur.role, content: para });
-    }
+    const content = cleanParas.join("\n\n");
+    const name = deriveChannelName(content);
+    if (usedRoles.has(cur.role)) continue;
+    usedRoles.add(cur.role);
+    entries.push({ name, role: cur.role, content });
   }
 
   if (entries.length === 0) return [...DEFAULT_CHANNELS];
