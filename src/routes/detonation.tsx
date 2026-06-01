@@ -171,18 +171,28 @@ function RichOutput({ text }: { text: string }) {
           return null;
         }
         const trimmed = line.trim();
-        // Heading detection: markdown headings, bold-wrapped lines,
+        // Channel heading: long all-caps line (>20 chars, no trailing colon).
+        // Used for Stage 19 channel role labels — rendered larger with an
+        // amber underline as the primary navigation hierarchy.
+        const isChannelHeading =
+          /^[A-Z][A-Z0-9 \-&/]{19,}$/.test(trimmed) && !trimmed.endsWith(":");
+        // Standard section label: markdown headings, bold-wrapped lines,
         // short all-caps titles, OR all-caps labels ending in a colon.
         const isHeading =
           /^#{1,4}\s+/.test(line) ||
           /^\*\*[^*]+\*\*\s*$/.test(line) ||
           (/^[A-Z][A-Z0-9 \-&/]{4,}$/.test(trimmed) && trimmed.length < 60) ||
           /^[A-Z][A-Z0-9 \-&/]{2,}:$/.test(trimmed);
+        if (isChannelHeading) {
+          const clean = sanitiseOutput(line).replace(/:$/, "");
+          if (!clean) return null;
+          return <span key={i} className="phase2-channel-heading">{clean}</span>;
+        }
         if (isHeading) {
           const clean = sanitiseOutput(line).replace(/:$/, "");
           if (!clean) return null;
           return (
-            <span key={i} className="detonation-heading section-label">{clean}</span>
+            <span key={i} className="phase2-label detonation-heading section-label">{clean}</span>
           );
         }
         const clean = sanitiseOutput(line);
@@ -325,14 +335,15 @@ function parseStage19BlocksLocal(output: string): Stage19Block[] {
 // Strip the leading title line from a card's markdown so the body content
 // renders without duplicating the title that's shown in the card header.
 function stripCardTitle(markdown: string, name: string): string {
-  const lines = markdown.split("\n");
-  const first = (lines[0] ?? "").replace(/^#+\s*/, "").replace(/^\*+|\*+$/g, "").trim();
-  if (first === name) {
-    let i = 1;
-    while (i < lines.length && lines[i].trim() === "") i++;
-    return lines.slice(i).join("\n");
-  }
-  return markdown.replace(/^##\s+.+\n?/, "");
+  if (!name) return markdown;
+  const cleaned = markdown
+    .replace(/^#+\s*/, "")
+    .replace(/^\*+/, "");
+  const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const pattern = new RegExp(`^${escaped}\\.?\\s*\\n?`, "i");
+  const stripped = cleaned.replace(pattern, "").trim();
+  // Also strip a leading markdown heading line if the title was wrapped.
+  return stripped.replace(/^##\s+.+\n?/, "").trim();
 }
 
 // Brief Quality Score parsing (mirrors server helper)
@@ -1130,7 +1141,7 @@ function Stage20({ session, onChange, goNext }: { session: SessionRow; onChange:
                   key={s.id}
                   sectionId={s.id}
                   label={s.label}
-                  content={sanitiseOutput(s.content)}
+                  content={<RichOutput text={s.content} />}
                   onRegenerate={handleSectionRegen}
                   onContentUpdate={() => { /* state already updated via handler */ }}
                 />

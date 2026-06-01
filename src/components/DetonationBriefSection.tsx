@@ -8,7 +8,7 @@ import * as React from "react";
 export interface DetonationBriefSectionProps {
   sectionId: string;
   label: string;
-  content: string;
+  content: React.ReactNode;
   onRegenerate: (sectionId: string, feedback: string) => Promise<string>;
   onContentUpdate: (sectionId: string, newContent: string) => void;
 }

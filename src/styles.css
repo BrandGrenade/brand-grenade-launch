@@ -289,14 +289,31 @@
   /* Phase 2 detonation output section heading
      (replaces raw markdown #/##/### markers, and uppercase-colon labels). */
   .detonation-heading,
-  .section-label {
+  .section-label,
+  .phase2-label {
     display: block;
     font-family: 'DM Mono', monospace;
     font-size: 7pt;
     text-transform: uppercase;
     letter-spacing: 0.18em;
     color: #D4924A;
-    margin-top: 16px;
-    margin-bottom: 4px;
+    margin-top: 20px;
+    margin-bottom: 6px;
+    font-weight: 500;
+  }
+  /* Phase 2 channel heading (Stage 19 primary navigation). Larger and
+     underlined to outrank standard section labels. */
+  .phase2-channel-heading {
+    display: block;
+    font-family: 'DM Mono', monospace;
+    font-size: 10pt;
+    color: #D4924A;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-top: 32px;
+    margin-bottom: 12px;
+    font-weight: 500;
+    border-bottom: 1px solid rgba(212, 146, 74, 0.3);
+    padding-bottom: 8px;
   }
 }
