@@ -28,7 +28,7 @@ export function MobileGate() {
             height: 48,
             margin: "0 auto 24px",
             borderRadius: 10,
-            backgroundColor: "#C8873A",
+            backgroundColor: "#D4924A",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -55,7 +55,7 @@ export function MobileGate() {
         <p style={{ color: "#8A8680", fontSize: 14, lineHeight: 1.55 }}>
           Brand Grenade is designed for desktop use. Please access on a screen
           wider than{" "}
-          <span style={{ color: "#C8873A", fontWeight: 600 }}>560px</span>.
+          <span style={{ color: "#D4924A", fontWeight: 600 }}>560px</span>.
         </p>
       </div>
     </div>

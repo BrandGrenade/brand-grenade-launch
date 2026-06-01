@@ -302,17 +302,29 @@ const CHANNEL_NAME_KEYWORDS = [
   "Television", "TV", "Social", "Film", "Audio", "Search", "Email",
   "CRM", "Outdoor", "Print", "Influencer", "Creator", "Activation",
   "Experiential", "Partnership", "Sponsorship", "LinkedIn", "Digital",
-  "Podcast", "Radio", "Cinema", "Press",
+  "Podcast", "Radio", "Cinema", "Press", "Broadcast",
 ];
 const CHANNEL_NAME_KEYWORD_RE = new RegExp(
   `\\b(${CHANNEL_NAME_KEYWORDS.join("|")})\\b`,
   "i",
 );
+// Lines that start with one of these leading words are sentence fragments,
+// not channel names ("The detonation achieves…", "This campaign…").
+const SENTENCE_LEADER_RE = /^(the|this|a|an)\s+/i;
+// Heuristic: any common English verb form in a sentence-like structure
+// (e.g. "achieves", "delivers", "creates", "is", "are"). Channel names
+// are noun phrases — they do not contain finite verbs.
+const SENTENCE_VERB_RE =
+  /\b(is|are|was|were|be|been|being|has|have|had|do|does|did|achieves?|achieved|delivers?|delivered|creates?|created|drives?|drove|builds?|built|generates?|generated|provides?|provided|enables?|enabled|requires?|required|becomes?|became|makes?|made|takes?|took|gives?|gave|brings?|brought|turns?|turned|reaches?|reached|targets?|targeted|amplif(?:y|ies|ied)|activates?|activated)\b/i;
 
 export function isValidChannelName(line: string): boolean {
   if (!line) return false;
-  const stripped = line.replace(/[*#:_>\-—•]/g, " ").trim();
+  const stripped = line.replace(/[*#:_>\-—•]/g, " ").replace(/\s+/g, " ").trim();
   if (!stripped || stripped.length > 120) return false;
+  const wordCount = stripped.split(/\s+/).length;
+  if (wordCount < 1 || wordCount > 6) return false;
+  if (SENTENCE_LEADER_RE.test(stripped)) return false;
+  if (SENTENCE_VERB_RE.test(stripped)) return false;
   return CHANNEL_NAME_KEYWORD_RE.test(stripped);
 }
 

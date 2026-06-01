@@ -2680,7 +2680,7 @@ function StreamedOutput({ text, streaming }: { text: string; streaming: boolean 
                 key={i}
                 className="text-label"
                 style={{
-                  color: "#C8873A",
+                  color: "#D4924A",
                   letterSpacing: "0.08em",
                   textTransform: "uppercase",
                   marginTop: 24,
@@ -2708,7 +2708,7 @@ function StreamedOutput({ text, streaming }: { text: string; streaming: boolean 
                 key={i}
                 className="text-body"
                 style={{
-                  borderLeft: "3px solid #C8873A",
+                  borderLeft: "3px solid #D4924A",
                   paddingLeft: 16,
                   color: "#8A8680",
                   fontStyle: "italic",
@@ -2742,7 +2742,7 @@ function StreamedOutput({ text, streaming }: { text: string; streaming: boolean 
                         width: 6,
                         height: 6,
                         borderRadius: "50%",
-                        backgroundColor: "#C8873A",
+                        backgroundColor: "#D4924A",
                       }}
                     />
                     <Inline text={item} />
@@ -2950,7 +2950,7 @@ function Stage8PropositionsView({
                 style={{
                   width: 18,
                   height: 18,
-                  accentColor: "#C8873A",
+                  accentColor: "#D4924A",
                   cursor: streaming ? "not-allowed" : "pointer",
                 }}
                 aria-label={`Keep "${b.name}" on next retry`}
@@ -3015,7 +3015,7 @@ export function ErrorCard({
                 padding: "0 16px",
                 borderRadius: 6,
                 border: "none",
-                backgroundColor: "#C8873A",
+                backgroundColor: "#D4924A",
                 color: "var(--color-background)",
                 fontSize: 13,
                 fontWeight: 600,
@@ -3209,7 +3209,7 @@ function StageControlBar({
             width: 8,
             height: 8,
             borderRadius: "50%",
-            backgroundColor: "#C8873A",
+            backgroundColor: "#D4924A",
             animation: "bg-pulse 1.2s ease-in-out infinite",
           }}
         />
@@ -3240,7 +3240,7 @@ function StageControlBar({
       <button
         type="button"
         onClick={onRetry}
-        onMouseEnter={(e) => (e.currentTarget.style.color = "#C8873A")}
+        onMouseEnter={(e) => (e.currentTarget.style.color = "#D4924A")}
         onMouseLeave={(e) => (e.currentTarget.style.color = "#8A8680")}
         style={{
           height: 32,
@@ -3333,7 +3333,7 @@ function StallWatcher({ stageKey, onAutoRetry }: { stageKey: string; onAutoRetry
             height: 32,
             padding: "0 14px",
             borderRadius: 6,
-            background: "#C8873A",
+            background: "#D4924A",
             border: "none",
             color: "var(--color-background)",
             fontSize: 13,
@@ -3460,7 +3460,7 @@ function ErrorStateCard({
               height: 40,
               padding: "0 20px",
               borderRadius: 8,
-              background: "#C8873A",
+              background: "#D4924A",
               color: "#0A0A0A",
               border: "none",
               fontSize: 14,
@@ -3501,7 +3501,7 @@ function PrimaryActionButton({ onClick, label }: { onClick: () => void; label: s
       onClick={onClick}
       className="inline-flex h-9 items-center rounded-md px-4 text-sm font-semibold transition-colors"
       style={{
-        backgroundColor: "#C8873A",
+        backgroundColor: "#D4924A",
         color: "var(--color-background)",
         border: "none",
         cursor: "pointer",

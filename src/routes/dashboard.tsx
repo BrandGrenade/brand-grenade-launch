@@ -269,7 +269,7 @@ function EmptyState() {
       <Link
         to="/brief"
         className="mt-6 inline-flex items-center rounded-lg bg-transparent px-5 py-2.5 text-[13px] font-medium transition-colors hover:bg-primary-subtle"
-        style={{ border: "1px solid #C8873A", color: "#C8873A" }}
+        style={{ border: "1px solid #D4924A", color: "#D4924A" }}
       >
         Start New Run
       </Link>
@@ -279,7 +279,7 @@ function EmptyState() {
 
 const STATUS_META: Record<UIStatus, { label: string; bg: string; border: string; fg: string }> = {
   complete: { label: "Complete", bg: "#4A7C5915", border: "#4A7C59", fg: "#4A7C59" },
-  in_progress: { label: "In Progress", bg: "#C8873A15", border: "#C8873A", fg: "#C8873A" },
+  in_progress: { label: "In Progress", bg: "#D4924A15", border: "#D4924A", fg: "#D4924A" },
   incomplete: { label: "Incomplete", bg: "#3A3A3A", border: "#5A5652", fg: "#5A5652" },
 };
 
@@ -326,9 +326,9 @@ function Phase2Button({ state, sessionId }: { state: Phase2ButtonState; sessionI
     fontWeight: 600,
     letterSpacing: "0.1em",
     textTransform: "uppercase" as const,
-    border: "1px solid #C8873A",
-    backgroundColor: solid ? "#C8873A" : hover ? "#C8873A15" : "transparent",
-    color: solid ? "#0A0A0A" : "#C8873A",
+    border: "1px solid #D4924A",
+    backgroundColor: solid ? "#D4924A" : hover ? "#D4924A15" : "transparent",
+    color: solid ? "#0A0A0A" : "#D4924A",
     transition: "background-color 150ms",
     whiteSpace: "nowrap" as const,
   };
@@ -449,8 +449,8 @@ function buildActions(s: DbSession, status: UIStatus, onDelete: () => void): Act
       ? {
           key: "detonation",
           label: "Detonation Room",
-          color: "#C8873A",
-          hoverBg: "#C8873A15",
+          color: "#D4924A",
+          hoverBg: "#D4924A15",
           icon: <Zap size={14} />,
           to: s.stage_17_output != null ? "/detonation" : "/detonation/canvas",
           search: { session: s.id },
@@ -471,8 +471,8 @@ function buildActions(s: DbSession, status: UIStatus, onDelete: () => void): Act
       {
         key: "deliverables",
         label: "Deliverables",
-        color: "#C8873A",
-        hoverBg: "#C8873A15",
+        color: "#D4924A",
+        hoverBg: "#D4924A15",
         icon: <FileText size={14} />,
         to: "/complete",
         search: { session: s.id },
@@ -484,8 +484,8 @@ function buildActions(s: DbSession, status: UIStatus, onDelete: () => void): Act
     {
       key: "continue",
       label: "Continue",
-      color: "#C8873A",
-      hoverBg: "#C8873A15",
+      color: "#D4924A",
+      hoverBg: "#D4924A15",
       icon: <Grid2x2 size={14} />,
       to: "/pipeline",
       search: { session: s.id },

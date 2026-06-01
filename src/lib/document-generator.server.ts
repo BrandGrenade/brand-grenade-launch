@@ -518,7 +518,7 @@ body {
 }
 #toolbar span { color: #8a8680; font-size: 12px; }
 #toolbar .actions button {
-  background: #c8873a; color: #000; border: none;
+  background: #D4924A; color: #000; border: none;
   padding: 8px 20px; border-radius: 4px;
   font-size: 13px; font-weight: bold; cursor: pointer; margin-left: 8px;
 }
@@ -538,7 +538,7 @@ body {
   min-height: 80vh;
   display: flex; flex-direction: column; justify-content: center;
   padding: 40pt 0;
-  border-bottom: 2pt solid #c8873a;
+  border-bottom: 2pt solid #D4924A;
   margin-bottom: 32pt;
 }
 .cover-brand {
@@ -547,25 +547,25 @@ body {
 }
 .cover-label {
   font-size: 9pt; font-weight: bold; letter-spacing: 0.12em;
-  color: #c8873a; text-transform: uppercase; margin-bottom: 24pt;
+  color: #D4924A; text-transform: uppercase; margin-bottom: 24pt;
 }
 .cover-title {
   font-size: 22pt; font-weight: 700; color: #1a1a18;
   line-height: 1.2; margin-bottom: 24pt;
 }
-.cover-rule { width: 40pt; height: 2pt; background: #c8873a; margin-bottom: 20pt; }
+.cover-rule { width: 40pt; height: 2pt; background: #D4924A; margin-bottom: 20pt; }
 .cover-date { font-size: 9pt; color: #666; }
 .cover-confidential { font-size: 8pt; color: #999; margin-top: 8pt; letter-spacing: 0.06em; }
 .section { margin-bottom: 32pt; padding-top: 8pt; }
 .part-label {
   font-size: 8pt; font-weight: bold; letter-spacing: 0.12em;
-  color: #c8873a; text-transform: uppercase; margin-bottom: 6pt;
+  color: #D4924A; text-transform: uppercase; margin-bottom: 6pt;
 }
 .session-time { font-size: 9pt; color: #999; margin-bottom: 12pt; font-style: italic; }
 h2 {
   font-size: 14pt; font-weight: bold; color: #1a1a18;
   margin-bottom: 12pt; padding-left: 10pt;
-  border-left: 3pt solid #c8873a; line-height: 1.3;
+  border-left: 3pt solid #D4924A; line-height: 1.3;
 }
 h3 {
   font-size: 11pt; font-weight: bold; color: #1a1a18;
@@ -573,27 +573,27 @@ h3 {
 }
 p { margin-bottom: 10pt; orphans: 3; widows: 3; }
 blockquote {
-  border-left: 3pt solid #c8873a;
+  border-left: 3pt solid #D4924A;
   padding: 8pt 12pt; margin: 14pt 0;
   background: #f9f9f7; font-style: italic;
   font-size: 11pt; line-height: 1.65;
 }
 ul { margin: 10pt 0; padding: 0; list-style: none; }
 li { padding-left: 14pt; position: relative; margin-bottom: 5pt; }
-li::before { content: '—'; position: absolute; left: 0; color: #c8873a; }
+li::before { content: '—'; position: absolute; left: 0; color: #D4924A; }
 hr { border: none; border-top: 0.5pt solid #ddd; margin: 16pt 0; }
 strong { font-weight: bold; }
 em { font-style: italic; }
 .prop-reveal {
   text-align: center; padding: 80pt 20pt;
-  border-top: 2pt solid #c8873a; border-bottom: 2pt solid #c8873a;
+  border-top: 2pt solid #D4924A; border-bottom: 2pt solid #D4924A;
   margin: 40pt 0;
 }
 .prop-text {
   font-size: 24pt; font-weight: bold; color: #1a1a18;
   line-height: 1.3; max-width: 400pt; margin: 0 auto;
 }
-.prop-rule { width: 40pt; height: 2pt; background: #c8873a; margin: 20pt auto 0; }
+.prop-rule { width: 40pt; height: 2pt; background: #D4924A; margin: 20pt auto 0; }
 .footer {
   margin-top: 40pt; padding-top: 16pt;
   border-top: 0.5pt solid #ddd;

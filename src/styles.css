@@ -66,7 +66,7 @@
   /* Shadows */
   --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.4), 0 4px 12px rgba(0, 0, 0, 0.3);
   --shadow-elevated: 0 4px 16px rgba(0, 0, 0, 0.5), 0 12px 40px rgba(0, 0, 0, 0.4);
-  --shadow-glow: 0 0 0 1px rgba(200, 135, 58, 0.25), 0 4px 16px rgba(200, 135, 58, 0.15);
+  --shadow-glow: 0 0 0 1px rgba(212, 146, 74, 0.25), 0 4px 16px rgba(212, 146, 74, 0.15);
 }
 
 :root {
@@ -87,17 +87,17 @@
   --text-secondary: oklch(0.6 0.008 75);
   --text-tertiary: oklch(0.43 0.008 75);
 
-  /* Accent — #C8873A amber */
-  --primary: oklch(0.68 0.12 65);
+  /* Accent — #D4924A amber */
+  --primary: oklch(0.695 0.118 58.5);
   --primary-foreground: oklch(0.145 0 0);
-  --primary-hover: oklch(0.73 0.13 65);
-  --primary-subtle: oklch(0.68 0.12 65 / 0.10);
+  --primary-hover: oklch(0.745 0.125 58.5);
+  --primary-subtle: oklch(0.695 0.118 58.5 / 0.10);
 
   --secondary: oklch(0.22 0 0);
   --secondary-foreground: oklch(0.94 0.005 80);
   --muted: oklch(0.185 0 0);
   --muted-foreground: oklch(0.6 0.008 75);
-  --accent: oklch(0.68 0.12 65 / 0.10);
+  --accent: oklch(0.695 0.118 58.5 / 0.10);
   --accent-foreground: oklch(0.94 0.005 80);
 
   /* Status */
@@ -110,17 +110,17 @@
   --border: oklch(0.27 0 0);
   --border-strong: oklch(0.33 0 0);
   --input: oklch(0.185 0 0);
-  --ring: oklch(0.68 0.12 65);
+  --ring: oklch(0.695 0.118 58.5);
 
   /* Sidebar (shadcn) */
   --sidebar: oklch(0.185 0 0);
   --sidebar-foreground: oklch(0.94 0.005 80);
-  --sidebar-primary: oklch(0.68 0.12 65);
+  --sidebar-primary: oklch(0.695 0.118 58.5);
   --sidebar-primary-foreground: oklch(0.145 0 0);
   --sidebar-accent: oklch(0.22 0 0);
   --sidebar-accent-foreground: oklch(0.94 0.005 80);
   --sidebar-border: oklch(0.27 0 0);
-  --sidebar-ring: oklch(0.68 0.12 65);
+  --sidebar-ring: oklch(0.695 0.118 58.5);
 }
 
 /* Single theme — dark by design. .dark mirrors :root. */
@@ -133,19 +133,19 @@
   --popover: oklch(0.22 0 0);
   --popover-foreground: oklch(0.94 0.005 80);
   --foreground: oklch(0.94 0.005 80);
-  --primary: oklch(0.68 0.12 65);
+  --primary: oklch(0.695 0.118 58.5);
   --primary-foreground: oklch(0.145 0 0);
   --secondary: oklch(0.22 0 0);
   --secondary-foreground: oklch(0.94 0.005 80);
   --muted: oklch(0.185 0 0);
   --muted-foreground: oklch(0.6 0.008 75);
-  --accent: oklch(0.68 0.12 65 / 0.10);
+  --accent: oklch(0.695 0.118 58.5 / 0.10);
   --accent-foreground: oklch(0.94 0.005 80);
   --destructive: oklch(0.45 0.12 25);
   --destructive-foreground: oklch(0.94 0.005 80);
   --border: oklch(0.27 0 0);
   --input: oklch(0.185 0 0);
-  --ring: oklch(0.68 0.12 65);
+  --ring: oklch(0.695 0.118 58.5);
 }
 
 @layer base {
@@ -283,7 +283,7 @@
   .input-base:focus-visible {
     outline: none;
     border-color: var(--color-primary);
-    box-shadow: 0 0 0 3px oklch(0.68 0.12 65 / 0.20);
+    box-shadow: 0 0 0 3px oklch(0.695 0.118 58.5 / 0.20);
   }
 
   /* Phase 2 detonation output section heading
