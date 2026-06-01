@@ -238,49 +238,75 @@ export async function callClaude(args: CallClaudeArgs): Promise<string> {
  */
 export async function* streamClaude(args: CallClaudeArgs): AsyncGenerator<string, void, unknown> {
   const { apiKey, body } = await prepareCall(args);
-  const resp = await openWithRetry(apiKey, body, args.sessionId, args.stageLabel, true);
-  if (!resp.body) throw new Error("Claude streaming response had no body");
 
-  const reader = resp.body.getReader();
-  const decoder = new TextDecoder();
-  let buffer = "";
-  let total = "";
-  let stopReason: string | null = null;
-  let sawMessageStop = false;
-  try {
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      buffer += decoder.decode(value, { stream: true });
-      let idx: number;
-      while ((idx = buffer.indexOf("\n")) !== -1) {
-        let line = buffer.slice(0, idx);
-        buffer = buffer.slice(idx + 1);
-        if (line.endsWith("\r")) line = line.slice(0, -1);
-        if (!line.startsWith("data:")) continue;
-        const payload = line.slice(5).trim();
-        if (!payload || payload === "[DONE]") continue;
-        try {
-          const evt = JSON.parse(payload) as {
-            type?: string;
-            delta?: { type?: string; text?: string; stop_reason?: string };
-          };
-          if (evt.type === "content_block_delta" && evt.delta?.type === "text_delta" && evt.delta.text) {
-            total += evt.delta.text;
-            yield evt.delta.text;
-          } else if (evt.type === "message_delta" && evt.delta?.stop_reason) {
-            stopReason = evt.delta.stop_reason;
-          } else if (evt.type === "message_stop") {
-            sawMessageStop = true;
+  // Single attempt: opens an SSE stream, accumulates text, returns
+  // { total, stopReason, sawMessageStop }. Throws only on initial connection
+  // failure (handled by openWithRetry). Mid-stream drops surface as
+  // sawMessageStop === false so the outer loop can retry.
+  async function attempt(): Promise<{ total: string; stopReason: string | null; sawMessageStop: boolean }> {
+    const resp = await openWithRetry(apiKey, body, args.sessionId, args.stageLabel, true);
+    if (!resp.body) throw new Error("Claude streaming response had no body");
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+    let total = "";
+    let stopReason: string | null = null;
+    let sawMessageStop = false;
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        let idx: number;
+        while ((idx = buffer.indexOf("\n")) !== -1) {
+          let line = buffer.slice(0, idx);
+          buffer = buffer.slice(idx + 1);
+          if (line.endsWith("\r")) line = line.slice(0, -1);
+          if (!line.startsWith("data:")) continue;
+          const payload = line.slice(5).trim();
+          if (!payload || payload === "[DONE]") continue;
+          try {
+            const evt = JSON.parse(payload) as {
+              type?: string;
+              delta?: { type?: string; text?: string; stop_reason?: string };
+            };
+            if (evt.type === "content_block_delta" && evt.delta?.type === "text_delta" && evt.delta.text) {
+              total += evt.delta.text;
+            } else if (evt.type === "message_delta" && evt.delta?.stop_reason) {
+              stopReason = evt.delta.stop_reason;
+            } else if (evt.type === "message_stop") {
+              sawMessageStop = true;
+            }
+          } catch {
+            // ignore partial / non-JSON SSE lines
           }
-        } catch {
-          // ignore partial / non-JSON SSE lines
         }
       }
+    } catch {
+      // Network drop mid-stream — return what we have so the outer loop decides.
+    } finally {
+      try { reader.releaseLock(); } catch { /* noop */ }
     }
-  } finally {
-    try { reader.releaseLock(); } catch { /* noop */ }
+    return { total, stopReason, sawMessageStop };
   }
+
+  // Up to 2 attempts. If attempt 1 drops mid-stream (no message_stop and not
+  // max_tokens), surface a "retrying automatically" status, wait 5s, and try
+  // once more. Only yield deltas from the successful attempt so callers never
+  // see duplicated text.
+  let result = await attempt();
+  if (!result.sawMessageStop && result.stopReason !== "max_tokens") {
+    await setRetryStatus(args.sessionId, "Connection interrupted — retrying automatically...");
+    await new Promise((r) => setTimeout(r, 5000));
+    try {
+      result = await attempt();
+    } finally {
+      await setRetryStatus(args.sessionId, null);
+    }
+  }
+
+  const { total, stopReason, sawMessageStop } = result;
+  if (total) yield total;
   if (!total.trim()) throw new Error("Claude returned an empty response");
   if (stopReason === "max_tokens") {
     throw new Error(
