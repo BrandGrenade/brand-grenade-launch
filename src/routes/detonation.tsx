@@ -27,7 +27,7 @@ import {
   runStage20, loadStage20, retryStage20,
   regenerateStage20Section, approveStage20,
 } from "@/lib/stage20.functions";
-import { runStage21, loadStage21 } from "@/lib/stage21.functions";
+import { runStage21, loadStage21, clearStage21 } from "@/lib/stage21.functions";
 import { runStage22, loadStage22, regenerateStage22 } from "@/lib/stage22.functions";
 
 const AMBER = PHASE_2_AMBER;
@@ -1215,6 +1215,7 @@ function Stage20({ session, onChange, goNext }: { session: SessionRow; onChange:
 function Stage21({ session, onChange, goNext }: { session: SessionRow; onChange: () => void | Promise<void>; goNext: () => void }) {
   const run = useServerFn(runStage21);
   const load = useServerFn(loadStage21);
+  const clear = useServerFn(clearStage21);
   const [outputs, setOutputs] = useState<Record<string, string> | null>(session.stage_21_outputs);
   const [busy, setBusy] = useState(false);
   const [proceeding, setProceeding] = useState(false);
@@ -1235,6 +1236,22 @@ function Stage21({ session, onChange, goNext }: { session: SessionRow; onChange:
       setAutoTriggered(false);
     }
     finally { setBusy(false); }
+  };
+
+  const handleForceRegenerate = async () => {
+    if (busy) return;
+    if (!confirm("Force regenerate will clear all saved channel briefs and re-run Stage 21 from scratch using the latest extractor. Continue?")) return;
+    setBusy(true); setErr(null);
+    try {
+      await clear({ data: { sessionId: session.id } });
+      setOutputs(null);
+      const r = await run({ data: { sessionId: session.id } });
+      setOutputs(r.outputs);
+      await onChange();
+    } catch (e) {
+      console.error("Stage 21 force regenerate failed:", e);
+      setErr(e instanceof Error ? e.message : "Stage 21 force regenerate failed");
+    } finally { setBusy(false); }
   };
 
   useEffect(() => {
@@ -1310,7 +1327,10 @@ function Stage21({ session, onChange, goNext }: { session: SessionRow; onChange:
               );
             })}
           </div>
-          <div style={{ marginTop: 24, display: "flex", gap: 12, justifyContent: "flex-end" }}>
+          <div style={{ marginTop: 24, display: "flex", gap: 12, justifyContent: "flex-end", flexWrap: "wrap" }}>
+            <AmberButton variant="ghost" onClick={handleForceRegenerate} disabled={busy}>
+              {busy ? <><Spinner /> Regenerating…</> : "Force Regenerate"}
+            </AmberButton>
             <AmberButton variant="ghost" onClick={downloadAll}>Download All Channel Briefs</AmberButton>
             <AmberButton onClick={handleProceed} disabled={proceeding}>
               {proceeding ? <><Spinner /> Loading...</> : "Proceed to Stage 22"}

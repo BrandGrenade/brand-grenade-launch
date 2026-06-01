@@ -195,6 +195,17 @@ export const loadStage21 = createServerFn({ method: "POST" })
     };
   });
 
+export const clearStage21 = createServerFn({ method: "POST" })
+  .inputValidator((i) => z.object({ sessionId: z.string().uuid() }).parse(i))
+  .handler(async ({ data }) => {
+    const { error } = await supabaseAdmin
+      .from("sessions")
+      .update({ stage_21_outputs: null, stage_21_error: null })
+      .eq("id", data.sessionId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
 const RetryInput = z.object({
   sessionId: z.string().uuid(),
   // For Stage 21, cardIds == channel names. Empty = regenerate all.
