@@ -295,6 +295,37 @@ export function formatBriefQualityScore(score: BriefQualityScore): string {
 export type ChannelRole = "PRIMARY" | "AMPLIFICATION" | "ACTIVATION" | "SUSTAINING";
 export type ChannelEntry = { name: string; role: ChannelRole; content: string };
 
+// Canonical channel-name validation keyword list. A valid channel name MUST
+// contain at least one of these words. Applied universally to every
+// candidate line extracted from Stage 19 output.
+const CHANNEL_NAME_KEYWORDS = [
+  "Television", "TV", "Social", "Film", "Audio", "Search", "Email",
+  "CRM", "Outdoor", "Print", "Influencer", "Creator", "Activation",
+  "Experiential", "Partnership", "Sponsorship", "LinkedIn", "Digital",
+  "Podcast", "Radio", "Cinema", "Press",
+];
+const CHANNEL_NAME_KEYWORD_RE = new RegExp(
+  `\\b(${CHANNEL_NAME_KEYWORDS.join("|")})\\b`,
+  "i",
+);
+
+export function isValidChannelName(line: string): boolean {
+  if (!line) return false;
+  const stripped = line.replace(/[*#:_>\-—•]/g, " ").trim();
+  if (!stripped || stripped.length > 120) return false;
+  return CHANNEL_NAME_KEYWORD_RE.test(stripped);
+}
+
+function roleLabelFor(role: ChannelRole): string {
+  switch (role) {
+    case "PRIMARY": return "Primary Channel";
+    case "AMPLIFICATION": return "Amplification Channel";
+    case "ACTIVATION": return "Activation Channel";
+    case "SUSTAINING": return "Sustaining Channel";
+  }
+}
+
+
 const CHANNEL_NAME_MAP: Array<{ keywords: RegExp; name: string }> = [
   { keywords: /\b(tool|transaction analysis|interactive|analyse|transaction data|itemised|merchant analysis)\b/i, name: "Transaction Analysis Tool" },
   { keywords: /\b(industry media|business publication|journalism|trade media|press|editorial|publication)\b/i, name: "Industry and Trade Media" },
