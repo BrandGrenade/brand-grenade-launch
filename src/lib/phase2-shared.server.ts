@@ -324,81 +324,73 @@ const DEFAULT_CHANNELS: ChannelEntry[] = [
   { name: "PR and Earned", role: "AMPLIFICATION", content: "" },
 ];
 
-/** Parse Stage 19 output into channel entries by section header. */
+/** Parse Stage 19 output into channel entries by named channel header.
+ *  A channel header is an ALL-CAPS line (>15 chars, no trailing colon)
+ *  immediately followed (after one or more newlines) by "WHY THIS CHANNEL".
+ *  Role is assigned by position: 1st=PRIMARY, 2nd&3rd=AMPLIFICATION,
+ *  4th=ACTIVATION (the "conversion" slot), remainder=SUSTAINING.
+ *  Capped at 7. Falls back to DEFAULT_CHANNELS if fewer than 3 detected. */
 export function extractStage19ChannelEntries(stage19: string): ChannelEntry[] {
   if (!stage19 || !stage19.trim()) return [...DEFAULT_CHANNELS];
 
-  const sectionRegex = /^(PRIMARY\s+CHANNELS?|AMPLIFICATION\s+CHANNELS?|ACTIVATION\s+CHANNELS?|SUSTAINING\s+CHANNELS?)\b[^\n]*/gim;
-  const terminatorRegex = /^(THE\s+)?(DISTINCTIVE\s+ASSET\s+ACTIVATION\s+MAP|COMPOUNDING\s+MEDIA\s+STRATEGY|EMOTIONAL\s+TO\s+RATIONAL\s+CALIBRATION)\b/im;
+  const headerRe = /^([A-Z][A-Z\s,\-]{10,})\n+WHY THIS CHANNEL/gm;
+  const terminatorRe = /^(THE\s+)?(CHANNEL\s+ECOSYSTEM\s+VIEW|DISTINCTIVE\s+ASSET\s+ACTIVATION\s+MAP|COMPOUNDING\s+MEDIA\s+STRATEGY|CREATIVE\s+CONSISTENCY\s+BRIEF)\b/im;
 
-  type Match = { role: ChannelRole; start: number; bodyStart: number };
-  const matches: Match[] = [];
+  type Hit = { rawName: string; start: number; bodyStart: number };
+  const hits: Hit[] = [];
   let m: RegExpExecArray | null;
-  while ((m = sectionRegex.exec(stage19)) !== null) {
-    const header = m[1].toUpperCase();
-    let role: ChannelRole = "PRIMARY";
-    if (header.startsWith("AMPLIFICATION")) role = "AMPLIFICATION";
-    else if (header.startsWith("ACTIVATION")) role = "ACTIVATION";
-    else if (header.startsWith("SUSTAINING")) role = "SUSTAINING";
-    matches.push({ role, start: m.index, bodyStart: m.index + m[0].length });
+  while ((m = headerRe.exec(stage19)) !== null) {
+    const rawName = m[1].trim().replace(/[\s,\-]+$/, "");
+    if (!rawName || rawName.endsWith(":")) continue;
+    hits.push({ rawName, start: m.index, bodyStart: m.index + m[1].length });
   }
 
-  const isGarbage = (p: string) =>
-    !p ||
-    p.length < 80 ||
-    /^[-=*_\s]+$/.test(p) ||
-    /^---/.test(p) ||
-    !p.trim();
+  if (hits.length < 3) return [...DEFAULT_CHANNELS];
 
+  const roleFor = (i: number): ChannelRole => {
+    if (i === 0) return "PRIMARY";
+    if (i === 1 || i === 2) return "AMPLIFICATION";
+    if (i === 3) return "ACTIVATION";
+    return "SUSTAINING";
+  };
+
+  const normalise = (name: string): string => {
+    const u = name.toUpperCase();
+    if (/TELEVISION|CINEMA|VIDEO|BROADCAST|FILM|LONG[-\s]?FORM/.test(u)) return "Film and Long-form";
+    if (/SOCIAL|SHORT[-\s]?FORM|INSTAGRAM|TIKTOK|FACEBOOK|LINKEDIN/.test(u)) return "Social and Short-form";
+    if (/INFLUENCER|CREATOR/.test(u)) return "Influencer and Creator";
+    if (/SEARCH|RETAIL\s+MEDIA|DIGITAL|PROGRAMMATIC|DISPLAY/.test(u)) return "Digital and Search";
+    if (/EMAIL|CRM/.test(u)) return "Email and CRM";
+    if (/OUTDOOR|IN[-\s]?STORE|OOH|BILLBOARD|TRANSIT/.test(u)) return "Outdoor and In-store";
+    if (/AUDIO|PODCAST|RADIO|SPOTIFY/.test(u)) return "Audio and Podcast";
+    if (/\bPR\b|EARNED|PUBLICITY|MEDIA\s+RELATIONS/.test(u)) return "PR and Earned";
+    if (/ACTIVATION|EXPERIENTIAL|EVENT|SPONSORSHIP/.test(u)) return "Activation and Experiential";
+    // Title-case fallback from the raw header.
+    return name
+      .toLowerCase()
+      .split(/\s+/)
+      .map((w) => (w ? w[0].toUpperCase() + w.slice(1) : w))
+      .join(" ");
+  };
+
+  const capped = hits.slice(0, 7);
   const entries: ChannelEntry[] = [];
-  const usedRoles = new Set<ChannelRole>();
-  for (let i = 0; i < matches.length; i++) {
-    const cur = matches[i];
-    const next = matches[i + 1];
+  const usedNames = new Set<string>();
+  for (let i = 0; i < capped.length; i++) {
+    const cur = capped[i];
+    const next = capped[i + 1];
     let end = next ? next.start : stage19.length;
     const tail = stage19.slice(cur.bodyStart, end);
-    const term = tail.search(terminatorRegex);
+    const term = tail.search(terminatorRe);
     if (term >= 0) end = cur.bodyStart + term;
-    const body = stage19.slice(cur.bodyStart, end).trim();
-    if (!body) continue;
-
-    // Split body into paragraph blocks and filter garbage.
-    const cleanParas = body
-      .split(/\n\s*\n+/)
-      .map((p) => p.trim())
-      .filter((p) => !isGarbage(p));
-    if (cleanParas.length === 0) continue;
-
-    if (cur.role === "AMPLIFICATION") {
-      // AMPLIFICATION can contain multiple channels — each block > 200 chars
-      // becomes its own channel entry. Shorter blocks attach to the previous.
-      const blocks: string[] = [];
-      for (const p of cleanParas) {
-        if (p.length > 200) {
-          blocks.push(p);
-        } else if (blocks.length > 0) {
-          blocks[blocks.length - 1] += `\n\n${p}`;
-        }
-      }
-      const finalBlocks = blocks.length > 0 ? blocks : [cleanParas.join("\n\n")];
-      const usedNames = new Set<string>();
-      for (const block of finalBlocks) {
-        const name = deriveChannelName(block);
-        if (usedNames.has(name)) continue;
-        usedNames.add(name);
-        entries.push({ name, role: "AMPLIFICATION", content: block });
-      }
-      continue;
-    }
-
-    const content = cleanParas.join("\n\n");
-    const name = deriveChannelName(content);
-    if (usedRoles.has(cur.role)) continue;
-    usedRoles.add(cur.role);
-    entries.push({ name, role: cur.role, content });
+    const content = stage19.slice(cur.bodyStart, end).trim();
+    const name = normalise(cur.rawName);
+    if (usedNames.has(name)) continue;
+    usedNames.add(name);
+    entries.push({ name, role: roleFor(i), content });
   }
 
-  if (entries.length === 0) return [...DEFAULT_CHANNELS];
+  if (entries.length < 3) return [...DEFAULT_CHANNELS];
   return entries;
 }
 
