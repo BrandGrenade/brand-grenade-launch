@@ -119,18 +119,25 @@ export const STAGE_12_INTELLIGENCE = STAGE_12_SYSTEM_PROMPT;
 export function buildStage12UserMessage(args: {
   brandName: string;
   category: string;
-  stage11Output: string;
+  stage11FilteredOutput: string;
+  frozenScoresBlock: string;
   stage10Output: string;
   cmm: string;
   stage1Output: string;
+  validatedCount: number;
+  eliminatedCount: number;
 }): string {
   return `BRAND: ${args.brandName}
 CATEGORY: ${args.category}
 
-==== STAGE 11 — FINAL VALIDATED SMP SET + PRESSURE TEST REPORT ====
-${args.stage11Output}
+INPUT CONTROL: ${args.validatedCount} SMP(s) forwarded from Stage 11. ${args.eliminatedCount} SMP(s) excluded (ELIMINATED / REWRITTEN / other). Produce exactly ${args.validatedCount} card(s).
 
-==== STAGE 10 — SCORED SMP SET (full six-dimension scores) ====
+==== STAGE 11 — FILTERED VALIDATED SMP SET (VALIDATED + VALIDATED WITH STRATEGIC NOTE ONLY) ====
+${args.stage11FilteredOutput}
+
+${args.frozenScoresBlock}
+
+==== STAGE 10 — FULL SCORED SMP SET (REFERENCE ONLY — DO NOT RECOMPUTE; USE FROZEN SCORES ABOVE) ====
 ${args.stage10Output}
 
 ==== STAGE 2 — CMM (Whitespace, Dominant Logic, Competitor SMP Patterns) ====
@@ -139,5 +146,5 @@ ${args.cmm}
 ==== STAGE 1 — SANITISED BRIEF (Sections 2, 5, 6 for selection context) ====
 ${args.stage1Output}
 
-Run Stage 12. Produce all three deliverables in the specified order, plus the Presentation Order Log and Self-Audit. Randomise SMP card presentation order — DO NOT present in Stage 10 composite order. Use plain language in all client-facing sections. Include the [METADATA] block after each SMP card and the [SELECTION_RATIONALE_STUB] block as specified.`;
+Run Stage 12. Produce all three deliverables in the specified order, plus the Presentation Order Log and Self-Audit. Randomise SMP card presentation order — DO NOT present in Stage 10 composite order. Use plain language in all client-facing sections. Include the [METADATA] block after each SMP card and the [SELECTION_RATIONALE_STUB] block as specified. Card count MUST equal ${args.validatedCount}. Scores MUST match the FROZEN STAGE 10 SCORES block exactly.`;
 }
