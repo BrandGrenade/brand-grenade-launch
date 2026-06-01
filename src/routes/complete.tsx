@@ -9,73 +9,12 @@ import { useAuth } from "@/context/AuthContext";
 import { generateStrategicPlatformPdf } from "@/lib/pdf-generator";
 import { runStage16 } from "@/lib/stage16.functions";
 import { generatePhase2Document, generateCompleteBundle } from "@/lib/phase2-document.functions";
-// generateDocument server fn replaced by supabase.functions.invoke('generate-document')
+import {
+  openPhase1Document,
+  PHASE_1_SESSION_COLUMNS,
+  type Phase1Format,
+} from "@/lib/phase1-document-builder";
 
-// Force a Supabase session refresh and return the token that must be sent to
-// protected document generation endpoints.
-async function refreshSupabaseSession(): Promise<string> {
-  const { data, error } = await supabase.auth.refreshSession();
-  if (error) throw error;
-  const token = data.session?.access_token;
-  if (!token) throw new Error("No active session. Please sign in again.");
-  return token;
-}
-
-function isJwtExpiredError(err: unknown): boolean {
-  const msg =
-    err instanceof Error
-      ? err.message
-      : typeof err === "string"
-        ? err
-        : (() => {
-            try { return JSON.stringify(err); } catch { return ""; }
-          })();
-  return /InvalidJWT|exp.*claim|jwt.*expired|token.*expired/i.test(msg);
-}
-
-async function readFunctionError(error: unknown): Promise<Error> {
-  const response = (error as { context?: Response })?.context;
-  if (response) {
-    try {
-      const body = await response.clone().text();
-      return new Error(body || (error instanceof Error ? error.message : "Document generation failed"));
-    } catch {
-      // fall through to the generic message below
-    }
-  }
-
-  return error instanceof Error ? error : new Error("Document generation failed");
-}
-
-// Run an authenticated call; on JWT-expired error, refresh once and retry.
-async function withJwtRetry<T>(fn: () => Promise<T>): Promise<T> {
-  await refreshSupabaseSession();
-  try {
-    return await fn();
-  } catch (err) {
-    if (!isJwtExpiredError(err)) throw err;
-    await refreshSupabaseSession();
-    return await fn();
-  }
-}
-
-async function invokeGenerateDocument(body: {
-  sessionId: string;
-  format: Format;
-  force: boolean;
-}) {
-  const call = async () => {
-    const token = await refreshSupabaseSession();
-    const { data, error } = await supabase.functions.invoke("generate-document", {
-      body,
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    if (error) throw await readFunctionError(error);
-    return data;
-  };
-
-  return withJwtRetry(call);
-}
 
 const completeSearchSchema = z.object({
   session: z.string().uuid().optional(),
@@ -129,11 +68,21 @@ type SessionRow = {
   doc_workshop_url: string | null;
   phase_2_status: string | null;
   stage_1_output: string | null;
+  stage_2_output: string | null;
+  stage_3_output: string | null;
+  stage_4_output: string | null;
+  stage_5_output: string | null;
+  stage_6_output: string | null;
+  stage_7_output: string | null;
   stage_8_output: string | null;
+  stage_9_output: string | null;
   stage_10_output: string | null;
   stage_11_output: string | null;
   stage_12_output: string | null;
   stage_13_output: string | null;
+  stage_14_output: string | null;
+  stage_15_output: string | null;
+
   // Phase 2 deliverables source
   stage_17_selected_territory: string | null;
   stage_17b_output: string | null;
@@ -185,7 +134,7 @@ function CompletePage() {
     supabase
       .from("sessions")
       .select(
-        "id, brand_name, category, selected_smp, selected_smp_field_name, user_id, doc_consulting_url, doc_agency_url, doc_workshop_url, phase_2_status, stage_1_output, stage_8_output, stage_10_output, stage_11_output, stage_12_output, stage_13_output, stage_17_selected_territory, stage_17b_output, stage_18_selected_detonation, stage_19_output, stage_20_output, stage_21_outputs, stage_22_brand_architecture, stage_22_distinctive_assets",
+        `id, brand_name, category, selected_smp, selected_smp_field_name, user_id, doc_consulting_url, doc_agency_url, doc_workshop_url, phase_2_status, ${PHASE_1_SESSION_COLUMNS}, stage_17_selected_territory, stage_17b_output, stage_18_selected_detonation, stage_19_output, stage_20_output, stage_21_outputs, stage_22_brand_architecture, stage_22_distinctive_assets`,
       )
       .eq("id", sessionId)
       .maybeSingle()
@@ -415,92 +364,15 @@ function CompletePage() {
         {/* Download section */}
         <div style={{ marginTop: 32 }}>
           {(() => {
-            const runGenerate = async (force: boolean) => {
-              if (generating) return;
-              if (!hasSmp) return;
-              setGenerating(true);
-              setDone(false);
+            const runGenerate = () => {
+              if (!hasSmp || !session) return;
               setLastError(null);
-              setLastOutput("");
-              setProgress(0);
-              setProgressLabel("Preparing your document…");
-
               try {
-                if (!sessionId) throw new Error("Missing session id");
-
-                const gen = await invokeGenerateDocument({ sessionId, format, force });
-
-
-                let url: string | null = null;
-
-                if ((gen as any)?.status === "ready" && (gen as any)?.url) {
-                  url = (gen as any).url as string;
-                  setProgress(100);
-                  setProgressLabel("Opening document…");
-                } else {
-                  // Poll the sessions table every 5s until status becomes
-                  // 'ready' or 'error'. Generation is running in the
-                  // background on the server (ctx.waitUntil).
-                  setProgressLabel("Preparing your document…");
-                  const statusCol = `doc_${format}_status` as const;
-                  const urlCol = `doc_${format}_url` as const;
-                  const startedAt = Date.now();
-                  const MAX_WAIT_MS = 5 * 60 * 1000;
-                  let tick = 0;
-                  while (true) {
-                    await new Promise((r) => setTimeout(r, 5000));
-                    tick++;
-                    // Gentle indeterminate progress: cap at 90%.
-                    setProgress((p) => (p < 90 ? Math.min(90, p + 5) : p));
-                    setProgressLabel(
-                      `Preparing your document… (${tick * 5}s)`,
-                    );
-                    const { data: row, error: pollError } = await supabase
-                      .from("sessions")
-                      .select(`${statusCol}, ${urlCol}`)
-                      .eq("id", sessionId)
-                      .maybeSingle();
-                    if (pollError) throw new Error(pollError.message);
-                    const status = (row as Record<string, unknown> | null)?.[statusCol] as
-                      | string
-                      | null
-                      | undefined;
-                    const docUrl = (row as Record<string, unknown> | null)?.[urlCol] as
-                      | string
-                      | null
-                      | undefined;
-                    if (status === "ready" && docUrl) {
-                      url = docUrl;
-                      setProgress(100);
-                      setProgressLabel("Document ready ✓");
-                      break;
-                    }
-                    if (status === "error") {
-                      throw new Error("Document generation failed on server");
-                    }
-                    if (Date.now() - startedAt > MAX_WAIT_MS) {
-                      throw new Error("Document generation timed out");
-                    }
-                  }
-                }
-
-                if (!url) throw new Error("No document URL returned");
-                setDone(true);
-                await openDocument(url);
-
-                window.setTimeout(() => {
-                  setGenerating(false);
-                  setDone(false);
-                  setProgress(0);
-                  setProgressLabel("");
-                }, 1500);
+                openPhase1Document(session, format as Phase1Format);
               } catch (e) {
-                console.error("Document generation failed", e);
-                setGenerating(false);
-                setProgress(0);
-                setProgressLabel("");
+                console.error("Document open failed", e);
                 setLastError(
-                  e instanceof Error ? e.message : "Document generation failed",
+                  e instanceof Error ? e.message : "Document open failed",
                 );
               }
             };
@@ -508,8 +380,8 @@ function CompletePage() {
               <>
                 <button
                   type="button"
-                  onClick={() => runGenerate(false)}
-                  disabled={generating || !hasSmp}
+                  onClick={runGenerate}
+                  disabled={!hasSmp}
                   style={{
                     width: "100%",
                     height: 56,
@@ -519,36 +391,26 @@ function CompletePage() {
                     color: "var(--color-background)",
                     fontWeight: 600,
                     fontSize: 16,
-                    cursor: generating ? "wait" : hasSmp ? "pointer" : "not-allowed",
+                    cursor: hasSmp ? "pointer" : "not-allowed",
                     opacity: hasSmp ? 1 : 0.5,
                   }}
                 >
-                  {generating
-                    ? done
-                      ? "Document ready ✓"
-                      : "Generating PDF…"
-                    : `Download ${brand} Strategic Platform ↓`}
+                  {`Download ${brand} Strategic Platform ↓`}
                 </button>
-                <div style={{ marginTop: 10, textAlign: "center" }}>
-                  <button
-                    type="button"
-                    onClick={() => runGenerate(true)}
-                    disabled={generating || !hasSmp}
-                    className="text-body-sm transition-colors hover:text-text-primary"
-                    style={{
-                      background: "none",
-                      border: "none",
-                      padding: 0,
-                      color: "#5A5652",
-                      cursor: generating ? "wait" : "pointer",
-                    }}
-                  >
-                    Not complete? Regenerate →
-                  </button>
-                </div>
+                <p
+                  className="text-body-sm"
+                  style={{
+                    marginTop: 10,
+                    textAlign: "center",
+                    color: "#5A5652",
+                  }}
+                >
+                  Opens in a new tab — save as PDF from the print dialog.
+                </p>
               </>
             );
           })()}
+
 
 
           {generating && (
@@ -1131,9 +993,7 @@ function Phase2Deliverables({ session }: { session: SessionRow }) {
   ) => {
     setBusy(label);
     try {
-      const r = await withJwtRetry(() =>
-        gen({ data: { sessionId: session.id, docType, channelKey } }),
-      );
+      const r = await gen({ data: { sessionId: session.id, docType, channelKey } });
       openHtmlInNewTab(r.html);
     } catch (e) {
       alert(e instanceof Error ? e.message : "Failed to generate document");
@@ -1143,14 +1003,13 @@ function Phase2Deliverables({ session }: { session: SessionRow }) {
   const downloadBundle = async () => {
     setBusy("complete");
     try {
-      const r = await withJwtRetry(() =>
-        genBundle({ data: { sessionId: session.id } }),
-      );
+      const r = await genBundle({ data: { sessionId: session.id } });
       openHtmlInNewTab(r.html);
     } catch (e) {
       alert(e instanceof Error ? e.message : "Failed to generate bundle");
     } finally { setBusy(null); }
   };
+
 
   const Card = ({ title, subtitle, onClick, busyKey }: {
     title: string; subtitle?: string; onClick: () => void; busyKey: string;
