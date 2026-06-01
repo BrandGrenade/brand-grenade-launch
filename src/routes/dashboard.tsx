@@ -505,7 +505,7 @@ function SessionsTable({
                 <td className="text-body px-4 py-4 text-text-primary">{s.brand_name}</td>
                 <td className="text-body px-4 py-4 text-text-secondary">{s.category ?? "—"}</td>
                 <td className="text-body px-4 py-4 text-text-secondary">
-                  Stage {s.current_stage} of 20
+                  Stage {s.current_stage} of 23
                 </td>
                 <td className="text-body px-4 py-4 text-text-secondary">{fmtDate(s.updated_at)}</td>
                 <td className="px-4 py-4">
