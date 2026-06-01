@@ -120,11 +120,13 @@ export function DetonationOutputCard({
             style={{
               color: ACCENT,
               textTransform: "uppercase",
-              fontSize: 16,
+              fontSize: 18,
               fontWeight: 500,
-              letterSpacing: "0.05em",
+              letterSpacing: "0.06em",
               margin: 0,
-              marginBottom: 12,
+              marginBottom: 16,
+              display: "block",
+              fontFamily: "'DM Mono', monospace",
             }}
           >
             {title}
