@@ -1212,6 +1212,37 @@ function Stage20({ session, onChange, goNext }: { session: SessionRow; onChange:
 // ═════════════════════════════════════════════════════════════════════════
 // STAGE 21 — Channel Briefs
 // ═════════════════════════════════════════════════════════════════════════
+function resolveStage21ChannelName(channel: string, body: string): string {
+  const trimmed = channel.trim();
+  if (trimmed) return trimmed;
+  const u = body.toUpperCase();
+  if (/INFLUENCER|CREATOR/.test(u)) return "Influencer and Creator";
+  return "Channel Brief";
+}
+
+function getStage21OutputEntries(outputs: Record<string, string>) {
+  const preferredOrder = [
+    "Film and Long-form",
+    "Social and Short-form",
+    "Influencer and Creator",
+    "Digital and Search",
+    "Email and CRM",
+    "Outdoor and In-store",
+  ];
+  return Object.entries(outputs)
+    .map(([rawChannel, body], index) => ({
+      key: `${rawChannel || "channel"}-${index}`,
+      channel: resolveStage21ChannelName(rawChannel, body),
+      body,
+    }))
+    .sort((a, b) => {
+      const ai = preferredOrder.indexOf(a.channel);
+      const bi = preferredOrder.indexOf(b.channel);
+      if (ai !== -1 || bi !== -1) return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi);
+      return a.channel.localeCompare(b.channel);
+    });
+}
+
 function Stage21({ session, onChange, goNext }: { session: SessionRow; onChange: () => void | Promise<void>; goNext: () => void }) {
   const run = useServerFn(runStage21);
   const load = useServerFn(loadStage21);
@@ -1280,28 +1311,29 @@ function Stage21({ session, onChange, goNext }: { session: SessionRow; onChange:
   };
   const downloadAll = () => {
     if (!outputs) return;
-    const combined = Object.entries(outputs)
+    const combined = getStage21OutputEntries(outputs)
       .map(([channel, body]) => `# ${channel}\n\n${body}`).join("\n\n---\n\n");
     download(`${session.brand_name ?? "brand"}-channel-briefs.md`, combined);
   };
+  const outputEntries = outputs ? getStage21OutputEntries(outputs) : [];
 
   return (
     <section>
       <SectionTitle kicker="STAGE 21" title="Channel Briefs" subtitle="One detonation brief per active channel. Click a card to expand." />
       {err && <ErrorBanner message={err} />}
-      {!outputs || Object.keys(outputs).length === 0 ? (
+      {!outputs || outputEntries.length === 0 ? (
         <AmberButton onClick={handleRun} disabled={busy || !session.stage_20_approved}>
           {busy && <Spinner />} {busy ? "Generating channel briefs…" : "Run Stage 21"}
         </AmberButton>
       ) : (
         <>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 16 }}>
-            {Object.entries(outputs).map(([channel, body]) => {
+            {outputEntries.map(({ key, channel, body }) => {
               const isOpen = expanded === channel;
               const roleMatch = body.match(/CHANNEL\s+ROLE\s*[:\-]?\s*([^\n]+)/i);
               const role = roleMatch ? roleMatch[1].trim() : "Channel Brief";
               return (
-                <div key={channel} style={{
+                <div key={key} style={{
                   backgroundColor: "#111111", border: "1px solid #2A2A2A",
                   borderRadius: 8, padding: 20,
                 }}>
