@@ -335,14 +335,15 @@ function parseStage19BlocksLocal(output: string): Stage19Block[] {
 // Strip the leading title line from a card's markdown so the body content
 // renders without duplicating the title that's shown in the card header.
 function stripCardTitle(markdown: string, name: string): string {
-  const lines = markdown.split("\n");
-  const first = (lines[0] ?? "").replace(/^#+\s*/, "").replace(/^\*+|\*+$/g, "").trim();
-  if (first === name) {
-    let i = 1;
-    while (i < lines.length && lines[i].trim() === "") i++;
-    return lines.slice(i).join("\n");
-  }
-  return markdown.replace(/^##\s+.+\n?/, "");
+  if (!name) return markdown;
+  const cleaned = markdown
+    .replace(/^#+\s*/, "")
+    .replace(/^\*+/, "");
+  const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const pattern = new RegExp(`^${escaped}\\.?\\s*\\n?`, "i");
+  const stripped = cleaned.replace(pattern, "").trim();
+  // Also strip a leading markdown heading line if the title was wrapped.
+  return stripped.replace(/^##\s+.+\n?/, "").trim();
 }
 
 // Brief Quality Score parsing (mirrors server helper)
