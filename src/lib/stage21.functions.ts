@@ -200,11 +200,19 @@ export const retryStage21 = createServerFn({ method: "POST" })
         ? allEntries
         : allEntries.filter((e) => data.cardIds.includes(e.name));
 
-    const results = await Promise.all(
-      regenerate.map((e) =>
-        generateOne(data.sessionId, e.name, e.role, e.content, s, data.redirectInstructions[e.name] ?? ""),
-      ),
-    );
+    const results: string[] = [];
+    for (const e of regenerate) {
+      const result = await generateOne(
+        data.sessionId,
+        e.name,
+        e.role,
+        e.content,
+        s,
+        data.redirectInstructions[e.name] ?? "",
+      );
+      results.push(result);
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+    }
     const merged: Record<string, string> = { ...existing };
     regenerate.forEach((e, i) => {
       merged[e.name] = results[i];
