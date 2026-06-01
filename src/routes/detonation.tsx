@@ -1189,6 +1189,15 @@ function Stage22({ session, onChange }: { session: SessionRow; onChange: () => v
     finally { setBusy(false); }
   };
 
+  const handleRegenerate = async () => {
+    setBusy(true); setErr(null);
+    try {
+      const r = await regenerate({ data: { sessionId: session.id } });
+      setArchitecture(r.architecture); setAssets(r.assets); await onChange();
+    } catch (e) { setErr(e instanceof Error ? e.message : "Regeneration failed"); }
+    finally { setBusy(false); }
+  };
+
   useEffect(() => {
     if (autoTriggered) return;
     const stage21Ready = session.stage_21_outputs && Object.keys(session.stage_21_outputs).length > 0;
