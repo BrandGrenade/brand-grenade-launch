@@ -310,9 +310,12 @@ const PHASE_2_BUTTON_META: Record<Phase2ButtonState, { label: string; variant: "
 
 function Phase2Button({ state, sessionId }: { state: Phase2ButtonState; sessionId: string }) {
   const meta = PHASE_2_BUTTON_META[state];
-  const solid = meta.variant === "solid";
   const [hover, setHover] = useState(false);
-  // COMMENCE routes through the Three Truth Canvas; IN PROGRESS / COMPLETE go straight to the pipeline.
+  // Complete is a status, not an action — render the same green outlined badge as Brand Strategy.
+  if (state === "complete") {
+    return <StatusBadge status="complete" />;
+  }
+  const solid = meta.variant === "solid";
   const linkStyle = {
     display: "inline-flex" as const,
     alignItems: "center" as const,
