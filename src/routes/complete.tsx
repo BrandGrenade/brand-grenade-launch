@@ -364,92 +364,15 @@ function CompletePage() {
         {/* Download section */}
         <div style={{ marginTop: 32 }}>
           {(() => {
-            const runGenerate = async (force: boolean) => {
-              if (generating) return;
-              if (!hasSmp) return;
-              setGenerating(true);
-              setDone(false);
+            const runGenerate = () => {
+              if (!hasSmp || !session) return;
               setLastError(null);
-              setLastOutput("");
-              setProgress(0);
-              setProgressLabel("Preparing your document…");
-
               try {
-                if (!sessionId) throw new Error("Missing session id");
-
-                const gen = await invokeGenerateDocument({ sessionId, format, force });
-
-
-                let url: string | null = null;
-
-                if ((gen as any)?.status === "ready" && (gen as any)?.url) {
-                  url = (gen as any).url as string;
-                  setProgress(100);
-                  setProgressLabel("Opening document…");
-                } else {
-                  // Poll the sessions table every 5s until status becomes
-                  // 'ready' or 'error'. Generation is running in the
-                  // background on the server (ctx.waitUntil).
-                  setProgressLabel("Preparing your document…");
-                  const statusCol = `doc_${format}_status` as const;
-                  const urlCol = `doc_${format}_url` as const;
-                  const startedAt = Date.now();
-                  const MAX_WAIT_MS = 5 * 60 * 1000;
-                  let tick = 0;
-                  while (true) {
-                    await new Promise((r) => setTimeout(r, 5000));
-                    tick++;
-                    // Gentle indeterminate progress: cap at 90%.
-                    setProgress((p) => (p < 90 ? Math.min(90, p + 5) : p));
-                    setProgressLabel(
-                      `Preparing your document… (${tick * 5}s)`,
-                    );
-                    const { data: row, error: pollError } = await supabase
-                      .from("sessions")
-                      .select(`${statusCol}, ${urlCol}`)
-                      .eq("id", sessionId)
-                      .maybeSingle();
-                    if (pollError) throw new Error(pollError.message);
-                    const status = (row as Record<string, unknown> | null)?.[statusCol] as
-                      | string
-                      | null
-                      | undefined;
-                    const docUrl = (row as Record<string, unknown> | null)?.[urlCol] as
-                      | string
-                      | null
-                      | undefined;
-                    if (status === "ready" && docUrl) {
-                      url = docUrl;
-                      setProgress(100);
-                      setProgressLabel("Document ready ✓");
-                      break;
-                    }
-                    if (status === "error") {
-                      throw new Error("Document generation failed on server");
-                    }
-                    if (Date.now() - startedAt > MAX_WAIT_MS) {
-                      throw new Error("Document generation timed out");
-                    }
-                  }
-                }
-
-                if (!url) throw new Error("No document URL returned");
-                setDone(true);
-                await openDocument(url);
-
-                window.setTimeout(() => {
-                  setGenerating(false);
-                  setDone(false);
-                  setProgress(0);
-                  setProgressLabel("");
-                }, 1500);
+                openPhase1Document(session, format as Phase1Format);
               } catch (e) {
-                console.error("Document generation failed", e);
-                setGenerating(false);
-                setProgress(0);
-                setProgressLabel("");
+                console.error("Document open failed", e);
                 setLastError(
-                  e instanceof Error ? e.message : "Document generation failed",
+                  e instanceof Error ? e.message : "Document open failed",
                 );
               }
             };
@@ -457,8 +380,8 @@ function CompletePage() {
               <>
                 <button
                   type="button"
-                  onClick={() => runGenerate(false)}
-                  disabled={generating || !hasSmp}
+                  onClick={runGenerate}
+                  disabled={!hasSmp}
                   style={{
                     width: "100%",
                     height: 56,
@@ -468,36 +391,26 @@ function CompletePage() {
                     color: "var(--color-background)",
                     fontWeight: 600,
                     fontSize: 16,
-                    cursor: generating ? "wait" : hasSmp ? "pointer" : "not-allowed",
+                    cursor: hasSmp ? "pointer" : "not-allowed",
                     opacity: hasSmp ? 1 : 0.5,
                   }}
                 >
-                  {generating
-                    ? done
-                      ? "Document ready ✓"
-                      : "Generating PDF…"
-                    : `Download ${brand} Strategic Platform ↓`}
+                  {`Download ${brand} Strategic Platform ↓`}
                 </button>
-                <div style={{ marginTop: 10, textAlign: "center" }}>
-                  <button
-                    type="button"
-                    onClick={() => runGenerate(true)}
-                    disabled={generating || !hasSmp}
-                    className="text-body-sm transition-colors hover:text-text-primary"
-                    style={{
-                      background: "none",
-                      border: "none",
-                      padding: 0,
-                      color: "#5A5652",
-                      cursor: generating ? "wait" : "pointer",
-                    }}
-                  >
-                    Not complete? Regenerate →
-                  </button>
-                </div>
+                <p
+                  className="text-body-sm"
+                  style={{
+                    marginTop: 10,
+                    textAlign: "center",
+                    color: "#5A5652",
+                  }}
+                >
+                  Opens in a new tab — save as PDF from the print dialog.
+                </p>
               </>
             );
           })()}
+
 
 
           {generating && (
