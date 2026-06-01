@@ -289,12 +289,26 @@ function parseStage19BlocksLocal(output: string): Stage19Block[] {
     hits.push({ label: m[2].toUpperCase(), start: m.index + (m[1]?.length ?? 0), bodyStart: pattern.lastIndex });
   }
   if (hits.length === 0) return [{ id: "stage19-output", label: "Activation Architecture", content: output.trim(), selectable: true }];
-  return hits.map((hit, i) => {
+  return hits.flatMap((hit, i) => {
     const end = hits[i + 1]?.start ?? output.length;
+    const body = output.slice(hit.bodyStart, end).trim();
+    if (STAGE_19_OPTION_LABELS.has(hit.label)) {
+      return body.split(/^\s*---\s*$/gm).map((segment, segmentIndex) => {
+        const cleanSegment = segment.trim();
+        const [firstLine = hit.label, ...rest] = cleanSegment.split("\n");
+        const optionName = firstLine.trim() || hit.label;
+        return {
+          id: `${hit.label}-${segmentIndex + 1}`.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""),
+          label: optionName,
+          content: rest.join("\n").trim(),
+          selectable: true,
+        };
+      }).filter((block) => block.content || block.label !== hit.label);
+    }
     return {
       id: hit.label.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""),
       label: hit.label,
-      content: output.slice(hit.bodyStart, end).replace(/^\s*---\s*/gm, "").trim(),
+      content: body.replace(/^\s*---\s*/gm, "").trim(),
       selectable: STAGE_19_OPTION_LABELS.has(hit.label),
     };
   });
