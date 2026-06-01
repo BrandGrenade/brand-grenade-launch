@@ -287,14 +287,17 @@ function StatusBadge({ status }: { status: UIStatus }) {
   const meta = STATUS_META[status];
   return (
     <span
-      className="inline-flex items-center rounded-sm font-medium uppercase tracking-wider"
+      className="inline-flex items-center justify-center font-semibold uppercase"
       style={{
         backgroundColor: meta.bg,
         border: `1px solid ${meta.border}`,
         color: meta.fg,
-        fontSize: 9,
-        padding: "2px 6px",
-        letterSpacing: "0.08em",
+        height: 28,
+        padding: "0 14px",
+        borderRadius: 6,
+        fontSize: 11,
+        letterSpacing: "0.1em",
+        whiteSpace: "nowrap",
       }}
     >
       {meta.label}
