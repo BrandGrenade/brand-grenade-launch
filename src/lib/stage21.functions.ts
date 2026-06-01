@@ -122,9 +122,12 @@ export const runStage21 = createServerFn({ method: "POST" })
 
     let outputs: Record<string, string>;
     try {
-      const results = await Promise.all(
-        entries.map((e) => generateOne(data.sessionId, e.name, e.role, e.content, s, "")),
-      );
+      const results: string[] = [];
+      for (const e of entries) {
+        const result = await generateOne(data.sessionId, e.name, e.role, e.content, s, "");
+        results.push(result);
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+      }
       outputs = Object.fromEntries(entries.map((e, i) => [e.name, results[i]]));
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Stage 21 failed";
