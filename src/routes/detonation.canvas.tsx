@@ -438,6 +438,8 @@ function ThreeTruthCanvas() {
                     <Field
                       label="Brand Values"
                       hint="What are the defined values of this brand?"
+                      placeholder="Single words only — Transparency, Integrity, Courage"
+                      helper="What does this brand believe? Not what it does."
                       value={valuesField}
                       onChange={setValuesField}
                       multiline
