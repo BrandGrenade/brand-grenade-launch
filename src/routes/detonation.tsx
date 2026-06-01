@@ -1517,9 +1517,9 @@ function ArchBox({ label, content }: { label: string; content: string }) {
       backgroundColor: "#161616", border: `1px solid ${AMBER}33`,
       borderRadius: 8, padding: 16, minHeight: 140,
     }}>
-      <div className="text-mono" style={{
-        color: AMBER, textTransform: "uppercase", fontSize: 10,
-        letterSpacing: "0.16em", marginBottom: 8,
+      <div style={{
+        color: AMBER, textTransform: "uppercase", fontSize: "7pt",
+        letterSpacing: "0.18em", marginBottom: 8, fontFamily: "'DM Mono', monospace", fontWeight: 500,
       }}>{label}</div>
       <div className="text-body-sm" style={{ color: "#FFFFFF", lineHeight: 1.5, whiteSpace: "pre-wrap" }}>{sanitiseOutput(content)}</div>
     </div>
