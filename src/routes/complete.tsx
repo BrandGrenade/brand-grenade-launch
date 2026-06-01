@@ -68,11 +68,21 @@ type SessionRow = {
   doc_workshop_url: string | null;
   phase_2_status: string | null;
   stage_1_output: string | null;
+  stage_2_output: string | null;
+  stage_3_output: string | null;
+  stage_4_output: string | null;
+  stage_5_output: string | null;
+  stage_6_output: string | null;
+  stage_7_output: string | null;
   stage_8_output: string | null;
+  stage_9_output: string | null;
   stage_10_output: string | null;
   stage_11_output: string | null;
   stage_12_output: string | null;
   stage_13_output: string | null;
+  stage_14_output: string | null;
+  stage_15_output: string | null;
+
   // Phase 2 deliverables source
   stage_17_selected_territory: string | null;
   stage_17b_output: string | null;
