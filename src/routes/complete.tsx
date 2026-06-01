@@ -414,12 +414,7 @@ function CompletePage() {
               try {
                 if (!sessionId) throw new Error("Missing session id");
 
-                const { data: gen, error: invokeErr } = await withJwtRetry(() =>
-                  supabase.functions.invoke("generate-document", {
-                    body: { sessionId, format, force },
-                  }),
-                );
-                if (invokeErr) throw new Error(invokeErr.message);
+                const gen = await invokeGenerateDocument({ sessionId, format, force });
 
 
                 let url: string | null = null;
