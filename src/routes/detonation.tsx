@@ -112,8 +112,8 @@ function AmberButton({
         textTransform: "uppercase",
         fontSize: 11,
         letterSpacing: "0.12em",
-        cursor: disabled ? "not-allowed" : "pointer",
-        opacity: disabled ? 0.5 : 1,
+        cursor: disabled ? "wait" : "pointer",
+        opacity: 1,
         fontWeight: 600,
       }}
     >
@@ -128,8 +128,9 @@ function Spinner() {
       aria-hidden="true"
       style={{
         width: 12, height: 12, borderRadius: "50%",
-        border: `2px solid ${AMBER}`, borderTopColor: "transparent",
+        border: "2px solid currentColor", borderTopColor: "transparent",
         display: "inline-block", animation: "spin 0.8s linear infinite",
+        flex: "0 0 auto",
       }}
     />
   );
@@ -189,6 +190,20 @@ function RichOutput({ text }: { text: string }) {
   );
 }
 
+function OptionCheck({ checked, onChange, label }: { checked: boolean; onChange: (checked: boolean) => void; label: string }) {
+  return (
+    <label style={{ display: "inline-flex", alignItems: "center", gap: 10, cursor: "pointer" }}>
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+        style={{ width: 18, height: 18, accentColor: AMBER, cursor: "pointer" }}
+        aria-label={`Select ${label}`}
+      />
+    </label>
+  );
+}
+
 // ── Card split helper (mirrors splitCards on the server) ──────────────────
 // Phase 2 outputs are plain text (no markdown). Card titles are short
 // all-caps lines (no trailing colon) that introduce each candidate block.
@@ -236,6 +251,65 @@ function splitCardsLocal(text: string): LocalCard[] {
       id: `card-${i + 1}`,
       name: mat.name.replace(/^#+\s*/, "").replace(/^\*+|\*+$/g, "").trim(),
       markdown: t.slice(mat.start, end).trim(),
+    };
+  });
+}
+
+type Stage19Block = { id: string; label: string; content: string; selectable: boolean };
+const STAGE_19_OPTION_LABELS = new Set([
+  "PRIMARY CHANNEL",
+  "PRIMARY CHANNELS",
+  "AMPLIFICATION CHANNEL",
+  "AMPLIFICATION CHANNELS",
+  "CONVERSION CHANNEL",
+  "CONVERSION CHANNELS",
+  "ACTIVATION CHANNEL",
+  "ACTIVATION CHANNELS",
+  "SUSTAINING CHANNEL",
+  "SUSTAINING CHANNELS",
+]);
+const STAGE_19_LABELS = [
+  "EMOTIONAL TO RATIONAL CALIBRATION",
+  "CHANNEL HIERARCHY",
+  ...Array.from(STAGE_19_OPTION_LABELS),
+  "CHANNEL ECOSYSTEM VIEW",
+  "CREATIVE CONSISTENCY BRIEF",
+  "COMPOUNDING MEDIA STRATEGY",
+  "THE COMPOUNDING MEDIA STRATEGY",
+  "DISTINCTIVE ASSET ACTIVATION MAP",
+];
+
+function parseStage19BlocksLocal(output: string): Stage19Block[] {
+  if (!output.trim()) return [];
+  const escaped = STAGE_19_LABELS.map((l) => l.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+  const pattern = new RegExp(`(^|\\n)\\s*(${escaped.join("|")})\\s*:?\\s*(?:\\n|$)`, "gi");
+  const hits: Array<{ label: string; start: number; bodyStart: number }> = [];
+  let m: RegExpExecArray | null;
+  while ((m = pattern.exec(output)) !== null) {
+    hits.push({ label: m[2].toUpperCase(), start: m.index + (m[1]?.length ?? 0), bodyStart: pattern.lastIndex });
+  }
+  if (hits.length === 0) return [{ id: "stage19-output", label: "Activation Architecture", content: output.trim(), selectable: true }];
+  return hits.flatMap((hit, i) => {
+    const end = hits[i + 1]?.start ?? output.length;
+    const body = output.slice(hit.bodyStart, end).trim();
+    if (STAGE_19_OPTION_LABELS.has(hit.label)) {
+      return body.split(/^\s*---\s*$/gm).map((segment, segmentIndex) => {
+        const cleanSegment = segment.trim();
+        const [firstLine = hit.label, ...rest] = cleanSegment.split("\n");
+        const optionName = firstLine.trim() || hit.label;
+        return {
+          id: `${hit.label}-${segmentIndex + 1}`.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""),
+          label: optionName,
+          content: rest.join("\n").trim(),
+          selectable: true,
+        };
+      }).filter((block) => block.content || block.label !== hit.label);
+    }
+    return {
+      id: hit.label.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""),
+      label: hit.label,
+      content: body.replace(/^\s*---\s*/gm, "").trim(),
+      selectable: STAGE_19_OPTION_LABELS.has(hit.label),
     };
   });
 }
@@ -872,6 +946,7 @@ function Stage19({ session, onChange, goNext }: { session: SessionRow; onChange:
   const [proceeding, setProceeding] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [autoTriggered, setAutoTriggered] = useState(false);
+  const [stage19Checked, setStage19Checked] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     if (output === null) load({ data: { sessionId: session.id } }).then((r) => r.output && setOutput(r.output)).catch(() => {});
@@ -907,6 +982,8 @@ function Stage19({ session, onChange, goNext }: { session: SessionRow; onChange:
     finally { setProceeding(false); }
   };
 
+  const stage19Blocks = useMemo(() => parseStage19BlocksLocal(output ?? ""), [output]);
+
   return (
     <section>
       <SectionTitle kicker="STAGE 19" title="Activation Architecture"
@@ -918,7 +995,28 @@ function Stage19({ session, onChange, goNext }: { session: SessionRow; onChange:
         </AmberButton>
       ) : (
         <div style={{ backgroundColor: "#111111", border: "1px solid #2A2A2A", borderRadius: 8, padding: 28 }}>
-          <RichOutput text={output} />
+          {stage19Blocks.map((block, index) => (
+            <div
+              key={block.id}
+              style={{
+                borderTop: index === 0 ? "none" : `1px solid ${AMBER}26`,
+                paddingTop: index === 0 ? 0 : 20,
+                marginTop: index === 0 ? 0 : 20,
+              }}
+            >
+              <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 12 }}>
+                {block.selectable && (
+                  <OptionCheck
+                    checked={Boolean(stage19Checked[block.id])}
+                    onChange={(checked) => setStage19Checked((prev) => ({ ...prev, [block.id]: checked }))}
+                    label={block.label}
+                  />
+                )}
+                <span className="detonation-heading" style={{ margin: 0 }}>{block.label}</span>
+              </div>
+              {block.content && <RichOutput text={block.content} />}
+            </div>
+          ))}
           <div style={{ marginTop: 28, display: "flex", gap: 12, justifyContent: "flex-end" }}>
             <AmberButton variant="ghost" onClick={handleRetry} disabled={busy}>{busy && <Spinner />} Retry</AmberButton>
             <AmberButton onClick={handleProceed} disabled={proceeding}>
