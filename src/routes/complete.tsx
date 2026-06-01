@@ -666,7 +666,12 @@ function CompletePage() {
         })()}
 
         {/* ─── Phase 2: Brand Detonation Deliverables ───────────────── */}
-        {session.stage_22_brand_architecture && (
+        {(session.stage_17_selected_territory ||
+          session.stage_18_selected_detonation ||
+          session.stage_19_output ||
+          session.stage_20_output ||
+          session.stage_21_outputs ||
+          session.stage_22_brand_architecture) && (
           <Phase2Deliverables session={session} />
         )}
 
