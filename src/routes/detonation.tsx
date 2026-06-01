@@ -218,12 +218,14 @@ function splitCardsLocal(text: string): LocalCard[] {
   if (!text?.trim()) return [];
   const t = text.trim();
 
-  const NAME = "[A-Z][A-Z0-9 '\\-&/]{3,79}";
+  const NAME = "[A-Z][A-Z0-9 '\\-&/.,]{3,79}";
+  const cleanName = (s: string) =>
+    s.replace(/^#+\s*/, "").replace(/^\*+|\*+$/g, "").replace(/[.,;:\s]+$/g, "").trim();
   const collect = (re: RegExp): Array<{ name: string; start: number }> => {
     const hits: Array<{ name: string; start: number }> = [];
     let m: RegExpExecArray | null;
     while ((m = re.exec(t)) !== null) {
-      const name = m[1].trim();
+      const name = cleanName(m[1]);
       const start = m.index + m[0].indexOf(m[1]);
       hits.push({ name, start });
     }
@@ -255,7 +257,7 @@ function splitCardsLocal(text: string): LocalCard[] {
     const end = i + 1 < matches.length ? matches[i + 1].start : t.length;
     return {
       id: `card-${i + 1}`,
-      name: mat.name.replace(/^#+\s*/, "").replace(/^\*+|\*+$/g, "").trim(),
+      name: cleanName(mat.name),
       markdown: t.slice(mat.start, end).trim(),
     };
   });
