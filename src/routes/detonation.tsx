@@ -1339,7 +1339,7 @@ function Stage21({ session, onChange, goNext }: { session: SessionRow; onChange:
                 }}>
                   <button type="button" onClick={() => setExpanded(isOpen ? null : channel)}
                     style={{ width: "100%", textAlign: "left", background: "none", border: "none", cursor: "pointer", padding: 0 }}>
-                    <div className="text-mono" style={{ color: AMBER, textTransform: "uppercase", fontSize: 11, letterSpacing: "0.14em" }}>{channel}</div>
+                    <div style={{ color: AMBER, textTransform: "uppercase", fontSize: 16, letterSpacing: "0.06em", fontFamily: "'DM Mono', monospace", fontWeight: 500, lineHeight: 1.3 }}>{channel}</div>
                     <div className="text-body-sm" style={{ color: "#8A8680", marginTop: 4 }}>{role}</div>
                   </button>
                   {isOpen && (
