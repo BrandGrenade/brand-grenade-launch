@@ -11,6 +11,40 @@ import { runStage16 } from "@/lib/stage16.functions";
 import { generatePhase2Document, generateCompleteBundle } from "@/lib/phase2-document.functions";
 // generateDocument server fn replaced by supabase.functions.invoke('generate-document')
 
+// Force a Supabase session refresh so the bearer token sent to the
+// generate-document edge fn / server fns is not expired.
+async function refreshSupabaseSession() {
+  try {
+    await supabase.auth.refreshSession();
+  } catch {
+    // ignore — caller will surface any subsequent auth error
+  }
+}
+
+function isJwtExpiredError(err: unknown): boolean {
+  const msg =
+    err instanceof Error
+      ? err.message
+      : typeof err === "string"
+        ? err
+        : (() => {
+            try { return JSON.stringify(err); } catch { return ""; }
+          })();
+  return /InvalidJWT|exp.*claim|jwt.*expired|token.*expired/i.test(msg);
+}
+
+// Run a fetch/invoke call; on JWT-expired error, refresh once and retry.
+async function withJwtRetry<T>(fn: () => Promise<T>): Promise<T> {
+  await refreshSupabaseSession();
+  try {
+    return await fn();
+  } catch (err) {
+    if (!isJwtExpiredError(err)) throw err;
+    await refreshSupabaseSession();
+    return await fn();
+  }
+}
+
 const completeSearchSchema = z.object({
   session: z.string().uuid().optional(),
 });
@@ -362,9 +396,10 @@ function CompletePage() {
               try {
                 if (!sessionId) throw new Error("Missing session id");
 
-                const { data: gen, error: invokeErr } = await supabase.functions.invoke(
-                  "generate-document",
-                  { body: { sessionId, format, force } },
+                const { data: gen, error: invokeErr } = await withJwtRetry(() =>
+                  supabase.functions.invoke("generate-document", {
+                    body: { sessionId, format, force },
+                  }),
                 );
                 if (invokeErr) throw new Error(invokeErr.message);
 
@@ -1069,7 +1104,9 @@ function Phase2Deliverables({ session }: { session: SessionRow }) {
   ) => {
     setBusy(label);
     try {
-      const r = await gen({ data: { sessionId: session.id, docType, channelKey } });
+      const r = await withJwtRetry(() =>
+        gen({ data: { sessionId: session.id, docType, channelKey } }),
+      );
       openHtmlInNewTab(r.html);
     } catch (e) {
       alert(e instanceof Error ? e.message : "Failed to generate document");
@@ -1079,7 +1116,9 @@ function Phase2Deliverables({ session }: { session: SessionRow }) {
   const downloadBundle = async () => {
     setBusy("complete");
     try {
-      const r = await genBundle({ data: { sessionId: session.id } });
+      const r = await withJwtRetry(() =>
+        genBundle({ data: { sessionId: session.id } }),
+      );
       openHtmlInNewTab(r.html);
     } catch (e) {
       alert(e instanceof Error ? e.message : "Failed to generate bundle");
