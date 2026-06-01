@@ -1018,7 +1018,7 @@ function Stage19({ session, onChange, goNext }: { session: SessionRow; onChange:
             <div
               key={block.id}
               style={{
-                borderTop: index === 0 ? "none" : `1px solid ${AMBER}26`,
+                borderTop: index === 0 ? "none" : `1px solid ${AMBER}33`,
                 paddingTop: index === 0 ? 0 : 20,
                 marginTop: index === 0 ? 0 : 20,
               }}
@@ -1166,7 +1166,7 @@ function Stage20({ session, onChange, goNext }: { session: SessionRow; onChange:
                 ["Psychological Leverage", score.psychological_leverage],
                 ["Creative SoV Ambition", score.creative_sov_ambition],
               ].map(([label, val]) => (
-                <div key={label as string} style={{ borderTop: `1px solid ${AMBER}26`, paddingTop: 10 }}>
+                <div key={label as string} style={{ borderTop: `1px solid ${AMBER}33`, paddingTop: 10 }}>
                   <div className="text-mono" style={{ color: "#8A8680", fontSize: 9, textTransform: "uppercase", letterSpacing: "0.1em" }}>{label}</div>
                   <div className="text-body" style={{ color: "#FFFFFF", fontSize: 18, marginTop: 4 }}>
                     {typeof val === "number" ? `${val}/10` : "—/10"}
@@ -1176,7 +1176,7 @@ function Stage20({ session, onChange, goNext }: { session: SessionRow; onChange:
             </div>
             <div style={{
               marginTop: 20, display: "flex", alignItems: "center", justifyContent: "space-between",
-              borderTop: `1px solid ${AMBER}26`, paddingTop: 16,
+              borderTop: `1px solid ${AMBER}33`, paddingTop: 16,
             }}>
               <div>
                 <div className="text-mono" style={{ color: "#8A8680", fontSize: 9, textTransform: "uppercase", letterSpacing: "0.1em" }}>Composite</div>
@@ -1343,7 +1343,7 @@ function Stage21({ session, onChange, goNext }: { session: SessionRow; onChange:
                     <div className="text-body-sm" style={{ color: "#8A8680", marginTop: 4 }}>{role}</div>
                   </button>
                   {isOpen && (
-                    <div style={{ marginTop: 16, paddingTop: 16, borderTop: `1px solid ${AMBER}26` }}>
+                    <div style={{ marginTop: 16, paddingTop: 16, borderTop: `1px solid ${AMBER}33` }}>
                       <RichOutput text={body} />
                     </div>
                   )}

@@ -44,7 +44,7 @@ export function DetonationBriefSection({
     <div
       style={{
         padding: "20px 0",
-        borderBottom: `1px solid ${ACCENT}26`, // ~15% opacity
+        borderBottom: `1px solid ${ACCENT}33`, // ~15% opacity
       }}
     >
       <button
