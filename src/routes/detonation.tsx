@@ -724,6 +724,7 @@ function Stage17b({ session, onChange, goNext }: { session: SessionRow; onChange
   const [proceeding, setProceeding] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [autoTriggered, setAutoTriggered] = useState(false);
+  const [stage19Checked, setStage19Checked] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     if (output === null) load({ data: { sessionId: session.id } }).then((r) => r.output && setOutput(r.output)).catch(() => {});
@@ -763,6 +764,8 @@ function Stage17b({ session, onChange, goNext }: { session: SessionRow; onChange
     catch (e) { console.error("Stage advance error:", e); }
     finally { setProceeding(false); }
   };
+
+  const stage19Blocks = useMemo(() => parseStage19BlocksLocal(output ?? ""), [output]);
 
   return (
     <section>
