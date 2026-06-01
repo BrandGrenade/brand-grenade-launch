@@ -29,7 +29,7 @@ export const Route = createFileRoute("/dashboard")({
       {
         name: "description",
         content:
-          "Your strategy pipeline runs. Each session is a complete 20-stage pipeline run for one brief.",
+          "Your strategy pipeline runs. Each session is a complete 27-stage pipeline run for one brief — Brand Strategy and Brand Detonation.",
       },
     ],
   }),
@@ -43,6 +43,7 @@ type DbSession = {
   current_stage: number;
   created_at: string;
   updated_at: string;
+  stage_1_output: string | null;
   stage_16_consulting_output: string | null;
   phase_2_status: string | null;
   stage_17_output: string | null;
@@ -99,7 +100,7 @@ function Dashboard() {
     (async () => {
       const { data } = await supabase
         .from("sessions")
-        .select("id,brand_name,category,status,current_stage,created_at,updated_at,stage_16_consulting_output,phase_2_status,stage_17_output,stage_22_output")
+        .select("id,brand_name,category,status,current_stage,created_at,updated_at,stage_1_output,stage_16_consulting_output,phase_2_status,stage_17_output,stage_22_output")
         .order("updated_at", { ascending: false })
         .limit(100);
       if (!active) return;
@@ -115,7 +116,7 @@ function Dashboard() {
         async () => {
           const { data } = await supabase
             .from("sessions")
-            .select("id,brand_name,category,status,current_stage,created_at,updated_at,stage_16_consulting_output,phase_2_status,stage_17_output,stage_22_output")
+            .select("id,brand_name,category,status,current_stage,created_at,updated_at,stage_1_output,stage_16_consulting_output,phase_2_status,stage_17_output,stage_22_output")
             .order("updated_at", { ascending: false })
             .limit(100);
           if (active) setSessions((data ?? []) as DbSession[]);
@@ -131,9 +132,14 @@ function Dashboard() {
 
   const stats = [
     { value: sessions.length, label: "Total Runs" },
-    { value: sessions.filter((s) => deriveStatus(s) === "complete").length, label: "Completed" },
     {
-      value: sessions.filter((s) => deriveStatus(s) === "in_progress").length,
+      value: sessions.filter((s) => s.stage_22_output != null).length,
+      label: "Completed",
+    },
+    {
+      value: sessions.filter(
+        (s) => s.stage_1_output != null && s.stage_22_output == null,
+      ).length,
       label: "In Progress",
     },
   ];
@@ -146,21 +152,14 @@ function Dashboard() {
         style={{ paddingLeft: "max(20px, min(32px, 5vw))", paddingRight: "max(20px, min(32px, 5vw))" }}
       >
         <div className="mx-auto max-w-[1280px]">
-          <header className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+          <header className="flex flex-col gap-5">
             <div>
               <span className="text-label text-primary">Your Pipeline Runs</span>
               <h1 className="text-h2 mt-3 text-text-primary">Strategy Sessions</h1>
               <p className="text-body mt-2 text-text-secondary">
-                Each session is a complete 20-stage pipeline run for one brief.
+                Each session is a complete 27-stage pipeline run for one brief — Brand Strategy and Brand Detonation.
               </p>
             </div>
-            <Link
-              to="/brief"
-              className="inline-flex h-9 shrink-0 items-center justify-center rounded-lg px-4 text-[13px] font-semibold transition-colors hover:opacity-90"
-              style={{ backgroundColor: "#C8873A", color: "#0A0A0A" }}
-            >
-              New Run
-            </Link>
           </header>
 
           <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -311,9 +310,12 @@ const PHASE_2_BUTTON_META: Record<Phase2ButtonState, { label: string; variant: "
 
 function Phase2Button({ state, sessionId }: { state: Phase2ButtonState; sessionId: string }) {
   const meta = PHASE_2_BUTTON_META[state];
-  const solid = meta.variant === "solid";
   const [hover, setHover] = useState(false);
-  // COMMENCE routes through the Three Truth Canvas; IN PROGRESS / COMPLETE go straight to the pipeline.
+  // Complete is a status, not an action — render the same green outlined badge as Brand Strategy.
+  if (state === "complete") {
+    return <StatusBadge status="complete" />;
+  }
+  const solid = meta.variant === "solid";
   const linkStyle = {
     display: "inline-flex" as const,
     alignItems: "center" as const,
@@ -471,7 +473,7 @@ function SessionsTable({
   onRequestDelete: (s: DbSession) => void;
 }) {
   const isMobile = useIsMobile();
-  const headers = ["Brand", "Category", "Stage", "Updated", "Brand Strategy", "Brand Detonation", "Actions"];
+  const headers = ["Brand", "Category", "Stage", "Updated", "Brand Strategy", "Detonation", "Actions"];
 
   return (
     <div className="overflow-x-auto">
@@ -503,7 +505,7 @@ function SessionsTable({
                 <td className="text-body px-4 py-4 text-text-primary">{s.brand_name}</td>
                 <td className="text-body px-4 py-4 text-text-secondary">{s.category ?? "—"}</td>
                 <td className="text-body px-4 py-4 text-text-secondary">
-                  Stage {s.current_stage} of 20
+                  Stage {s.current_stage} of 23
                 </td>
                 <td className="text-body px-4 py-4 text-text-secondary">{fmtDate(s.updated_at)}</td>
                 <td className="px-4 py-4">
