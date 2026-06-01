@@ -561,7 +561,7 @@ function DetonationPage() {
                       type="button"
                       onClick={() => setActiveStage(stage.number)}
                       onMouseEnter={(e) => {
-                        if (!isActive) e.currentTarget.style.backgroundColor = "#161612";
+                        if (!isActive) e.currentTarget.style.backgroundColor = tokens.bgSecondary;
                       }}
                       onMouseLeave={(e) => {
                         if (!isActive) e.currentTarget.style.backgroundColor = "transparent";
@@ -570,28 +570,29 @@ function DetonationPage() {
                         width: "100%", textAlign: "left", background: "none", cursor: "pointer",
                         display: "flex", alignItems: "center", gap: 10, padding: "8px 10px",
                         borderRadius: 6, border: "none",
-                        backgroundColor: isActive ? "#1c1c17" : "transparent",
-                        borderLeft: `2px solid ${isActive ? AMBER : "transparent"}`,
+                        backgroundColor: isActive ? tokens.bgTertiary : "transparent",
+                        borderLeft: `2px solid ${isActive ? tokens.amber : "transparent"}`,
                       }}
                     >
                       <span style={{
-                        fontFamily: "'DM Mono', monospace", fontSize: 12,
-                        color: "#7a776f", minWidth: 28, letterSpacing: "0.06em",
+                        fontFamily: `'${tokens.fontMono}', monospace`, fontSize: 12,
+                        color: tokens.muted, minWidth: 28, letterSpacing: "0.06em",
                       }}>{stage.number}</span>
                       <span style={{
-                        fontFamily: "'DM Sans', sans-serif", fontSize: 13,
-                        color: "#f2efe9", flex: 1, fontWeight: 400,
+                        fontFamily: `'${tokens.fontBody}', sans-serif`, fontSize: 13,
+                        color: tokens.white, flex: 1, fontWeight: 400,
                       }}>{stage.label}</span>
                       <span style={{
-                        fontFamily: "'DM Mono', monospace", fontSize: 8,
+                        fontFamily: `'${tokens.fontMono}', monospace`, fontSize: 8,
                         textTransform: "uppercase", letterSpacing: "0.1em",
-                        color: status === "approved" ? AMBER
-                          : status === "complete" ? "#7AB179" : "#5A5652",
+                        color: status === "approved" ? tokens.amber
+                          : status === "complete" ? "#7AB179" : tokens.muted,
                       }}>
                         {status === "approved" ? "Approved"
                           : status === "complete" ? "Complete" : "Pending"}
                       </span>
                     </button>
+
                   </li>
                 );
               })}
