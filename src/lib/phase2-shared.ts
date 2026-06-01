@@ -295,6 +295,37 @@ export function formatBriefQualityScore(score: BriefQualityScore): string {
 export type ChannelRole = "PRIMARY" | "AMPLIFICATION" | "ACTIVATION" | "SUSTAINING";
 export type ChannelEntry = { name: string; role: ChannelRole; content: string };
 
+// Canonical channel-name validation keyword list. A valid channel name MUST
+// contain at least one of these words. Applied universally to every
+// candidate line extracted from Stage 19 output.
+const CHANNEL_NAME_KEYWORDS = [
+  "Television", "TV", "Social", "Film", "Audio", "Search", "Email",
+  "CRM", "Outdoor", "Print", "Influencer", "Creator", "Activation",
+  "Experiential", "Partnership", "Sponsorship", "LinkedIn", "Digital",
+  "Podcast", "Radio", "Cinema", "Press",
+];
+const CHANNEL_NAME_KEYWORD_RE = new RegExp(
+  `\\b(${CHANNEL_NAME_KEYWORDS.join("|")})\\b`,
+  "i",
+);
+
+export function isValidChannelName(line: string): boolean {
+  if (!line) return false;
+  const stripped = line.replace(/[*#:_>\-—•]/g, " ").trim();
+  if (!stripped || stripped.length > 120) return false;
+  return CHANNEL_NAME_KEYWORD_RE.test(stripped);
+}
+
+function roleLabelFor(role: ChannelRole): string {
+  switch (role) {
+    case "PRIMARY": return "Primary Channel";
+    case "AMPLIFICATION": return "Amplification Channel";
+    case "ACTIVATION": return "Activation Channel";
+    case "SUSTAINING": return "Sustaining Channel";
+  }
+}
+
+
 const CHANNEL_NAME_MAP: Array<{ keywords: RegExp; name: string }> = [
   { keywords: /\b(tool|transaction analysis|interactive|analyse|transaction data|itemised|merchant analysis)\b/i, name: "Transaction Analysis Tool" },
   { keywords: /\b(industry media|business publication|journalism|trade media|press|editorial|publication)\b/i, name: "Industry and Trade Media" },
@@ -443,9 +474,25 @@ export function extractStage19ChannelEntries(
       const content = blockText
         .slice(match.whyEnd, contentEnd)
         .trim();
-      const name = normalise(match.nameLine);
-      if (!usedNames.has(name) &&
-          content.length > 50) {
+
+      // Validate the candidate channel name. A valid name must contain at
+      // least one canonical channel keyword. If the matched line fails,
+      // walk backwards through the preceding lines (in the same role
+      // block) until a line passes. If nothing passes, fall back to the
+      // role label (e.g. "Primary Channel").
+      const blockBefore = blockText.slice(0, match.start);
+      const candidates = [
+        match.nameLine,
+        ...blockBefore.split(/\n/).map((l) => l.trim()).filter(Boolean).reverse(),
+      ];
+      let validRaw: string | null = null;
+      for (const c of candidates) {
+        if (isValidChannelName(c)) { validRaw = c; break; }
+      }
+      const rawName = validRaw ?? roleLabelFor(block.role);
+      const name = normalise(rawName);
+
+      if (!usedNames.has(name) && content.length > 50) {
         usedNames.add(name);
         entries.push({
           name,
@@ -456,6 +503,7 @@ export function extractStage19ChannelEntries(
         });
       }
     }
+
   }
 
   if (entries.length < 2)

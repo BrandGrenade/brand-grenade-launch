@@ -17,7 +17,7 @@ import {
   smpGoverningBlock,
   type Card,
   withPhase2Formatting,
-} from "./phase2-shared.server";
+} from "./phase2-shared";
 
 const STAGE18_SELECT = [
   "brand_name",

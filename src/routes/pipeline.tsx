@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { tokens } from "@/styles/tokens";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { z } from "zod";
@@ -2040,13 +2041,13 @@ function LeftPanel({
                 onClick={() => onSelect(s.id)}
                 className="flex w-full items-center gap-3 px-5 py-2.5 text-left transition-colors"
                 style={{
-                  backgroundColor: selected ? "#1c1c17" : "transparent",
-                  borderLeft: `2px solid ${selected ? "#D4924A" : "transparent"}`,
+                  backgroundColor: selected ? tokens.bgTertiary : "transparent",
+                  borderLeft: `2px solid ${selected ? tokens.amber : "transparent"}`,
                   cursor: interactive ? "pointer" : "default",
                 }}
                 onMouseEnter={(e) => {
                   if (interactive && !selected)
-                    e.currentTarget.style.backgroundColor = "#161612";
+                    e.currentTarget.style.backgroundColor = tokens.bgSecondary;
                 }}
                 onMouseLeave={(e) => {
                   if (!selected) e.currentTarget.style.backgroundColor = "transparent";
@@ -2060,8 +2061,8 @@ function LeftPanel({
                 <span
                   className="shrink-0"
                   style={{
-                    fontFamily: "'DM Mono', monospace",
-                    color: "#7a776f",
+                    fontFamily: `'${tokens.fontMono}', monospace`,
+                    color: tokens.muted,
                     minWidth: 28,
                     fontSize: 12,
                   }}
@@ -2071,8 +2072,8 @@ function LeftPanel({
                 <span
                   className="flex-1 truncate"
                   style={{
-                    fontFamily: "'DM Sans', sans-serif",
-                    color: "#f2efe9",
+                    fontFamily: `'${tokens.fontBody}', sans-serif`,
+                    color: tokens.white,
                     fontWeight: 400,
                   }}
                 >
@@ -2088,13 +2089,14 @@ function LeftPanel({
                   <span
                     className="text-label shrink-0"
                     style={{
-                      color: "#7a776f",
+                      color: tokens.muted,
                       fontSize: 9,
                     }}
                   >
                     Cond.
                   </span>
                 )}
+
               </button>
             </li>
           );
