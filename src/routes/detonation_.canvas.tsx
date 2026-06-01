@@ -22,7 +22,7 @@ const AMBER = "#C8873A";
 
 const searchSchema = z.object({ session: z.string().uuid().optional() });
 
-export const Route = createFileRoute("/detonation/canvas")({
+export const Route = createFileRoute("/detonation_/canvas")({
   validateSearch: searchSchema,
   component: ThreeTruthCanvas,
   head: () => ({

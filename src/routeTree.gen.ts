@@ -16,7 +16,7 @@ import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as CompleteRouteImport } from './routes/complete'
 import { Route as BriefRouteImport } from './routes/brief'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as DetonationCanvasRouteImport } from './routes/detonation.canvas'
+import { Route as DetonationCanvasRouteImport } from './routes/detonation_.canvas'
 
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
@@ -54,9 +54,9 @@ const IndexRoute = IndexRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const DetonationCanvasRoute = DetonationCanvasRouteImport.update({
-  id: '/canvas',
-  path: '/canvas',
-  getParentRoute: () => DetonationRoute,
+  id: '/detonation_/canvas',
+  path: '/detonation/canvas',
+  getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -64,7 +64,7 @@ export interface FileRoutesByFullPath {
   '/brief': typeof BriefRoute
   '/complete': typeof CompleteRoute
   '/dashboard': typeof DashboardRoute
-  '/detonation': typeof DetonationRouteWithChildren
+  '/detonation': typeof DetonationRoute
   '/pipeline': typeof PipelineRoute
   '/settings': typeof SettingsRoute
   '/detonation/canvas': typeof DetonationCanvasRoute
@@ -74,7 +74,7 @@ export interface FileRoutesByTo {
   '/brief': typeof BriefRoute
   '/complete': typeof CompleteRoute
   '/dashboard': typeof DashboardRoute
-  '/detonation': typeof DetonationRouteWithChildren
+  '/detonation': typeof DetonationRoute
   '/pipeline': typeof PipelineRoute
   '/settings': typeof SettingsRoute
   '/detonation/canvas': typeof DetonationCanvasRoute
@@ -85,10 +85,10 @@ export interface FileRoutesById {
   '/brief': typeof BriefRoute
   '/complete': typeof CompleteRoute
   '/dashboard': typeof DashboardRoute
-  '/detonation': typeof DetonationRouteWithChildren
+  '/detonation': typeof DetonationRoute
   '/pipeline': typeof PipelineRoute
   '/settings': typeof SettingsRoute
-  '/detonation/canvas': typeof DetonationCanvasRoute
+  '/detonation_/canvas': typeof DetonationCanvasRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -120,7 +120,7 @@ export interface FileRouteTypes {
     | '/detonation'
     | '/pipeline'
     | '/settings'
-    | '/detonation/canvas'
+    | '/detonation_/canvas'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -128,9 +128,10 @@ export interface RootRouteChildren {
   BriefRoute: typeof BriefRoute
   CompleteRoute: typeof CompleteRoute
   DashboardRoute: typeof DashboardRoute
-  DetonationRoute: typeof DetonationRouteWithChildren
+  DetonationRoute: typeof DetonationRoute
   PipelineRoute: typeof PipelineRoute
   SettingsRoute: typeof SettingsRoute
+  DetonationCanvasRoute: typeof DetonationCanvasRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -184,37 +185,36 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/detonation/canvas': {
-      id: '/detonation/canvas'
-      path: '/canvas'
+    '/detonation_/canvas': {
+      id: '/detonation_/canvas'
+      path: '/detonation/canvas'
       fullPath: '/detonation/canvas'
       preLoaderRoute: typeof DetonationCanvasRouteImport
-      parentRoute: typeof DetonationRoute
+      parentRoute: typeof rootRouteImport
     }
   }
 }
-
-interface DetonationRouteChildren {
-  DetonationCanvasRoute: typeof DetonationCanvasRoute
-}
-
-const DetonationRouteChildren: DetonationRouteChildren = {
-  DetonationCanvasRoute: DetonationCanvasRoute,
-}
-
-const DetonationRouteWithChildren = DetonationRoute._addFileChildren(
-  DetonationRouteChildren,
-)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BriefRoute: BriefRoute,
   CompleteRoute: CompleteRoute,
   DashboardRoute: DashboardRoute,
-  DetonationRoute: DetonationRouteWithChildren,
+  DetonationRoute: DetonationRoute,
   PipelineRoute: PipelineRoute,
   SettingsRoute: SettingsRoute,
+  DetonationCanvasRoute: DetonationCanvasRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
