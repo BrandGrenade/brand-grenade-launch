@@ -340,13 +340,34 @@ export function extractStage19ChannelEntries(stage19: string): ChannelEntry[] {
     const body = stage19.slice(cur.bodyStart, end).trim();
     if (!body) continue;
 
-    // One channel per section: filter garbage paragraphs, then concatenate
-    // the surviving paragraphs as the single channel's content.
+    // Split body into paragraph blocks and filter garbage.
     const cleanParas = body
       .split(/\n\s*\n+/)
       .map((p) => p.trim())
       .filter((p) => !isGarbage(p));
     if (cleanParas.length === 0) continue;
+
+    if (cur.role === "AMPLIFICATION") {
+      // AMPLIFICATION can contain multiple channels — each block > 200 chars
+      // becomes its own channel entry. Shorter blocks attach to the previous.
+      const blocks: string[] = [];
+      for (const p of cleanParas) {
+        if (p.length > 200) {
+          blocks.push(p);
+        } else if (blocks.length > 0) {
+          blocks[blocks.length - 1] += `\n\n${p}`;
+        }
+      }
+      const finalBlocks = blocks.length > 0 ? blocks : [cleanParas.join("\n\n")];
+      const usedNames = new Set<string>();
+      for (const block of finalBlocks) {
+        const name = deriveChannelName(block);
+        if (usedNames.has(name)) continue;
+        usedNames.add(name);
+        entries.push({ name, role: "AMPLIFICATION", content: block });
+      }
+      continue;
+    }
 
     const content = cleanParas.join("\n\n");
     const name = deriveChannelName(content);
