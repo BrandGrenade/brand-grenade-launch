@@ -481,7 +481,7 @@ function ThreeTruthCanvas() {
                             <input
                               type="text"
                               value={a.name}
-                              placeholder="e.g. orange swoosh wordmark"
+                              placeholder="Visual, verbal and tonal elements only — logo colour, specific words, tone of voice. Not products or features."
                               onChange={(e) => updateAsset(i, { name: e.target.value })}
                               style={inputStyle}
                             />
@@ -531,6 +531,15 @@ function ThreeTruthCanvas() {
                           + Add asset
                         </button>
                       </div>
+                      <p
+                        style={{
+                          color: "var(--color-text-tertiary)",
+                          fontSize: 12,
+                          margin: "6px 0 0",
+                        }}
+                      >
+                        What makes it recognisable without its name?
+                      </p>
                     </div>
 
                     <div
