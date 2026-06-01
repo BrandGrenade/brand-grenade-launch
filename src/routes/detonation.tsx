@@ -171,18 +171,28 @@ function RichOutput({ text }: { text: string }) {
           return null;
         }
         const trimmed = line.trim();
-        // Heading detection: markdown headings, bold-wrapped lines,
+        // Channel heading: long all-caps line (>20 chars, no trailing colon).
+        // Used for Stage 19 channel role labels — rendered larger with an
+        // amber underline as the primary navigation hierarchy.
+        const isChannelHeading =
+          /^[A-Z][A-Z0-9 \-&/]{19,}$/.test(trimmed) && !trimmed.endsWith(":");
+        // Standard section label: markdown headings, bold-wrapped lines,
         // short all-caps titles, OR all-caps labels ending in a colon.
         const isHeading =
           /^#{1,4}\s+/.test(line) ||
           /^\*\*[^*]+\*\*\s*$/.test(line) ||
           (/^[A-Z][A-Z0-9 \-&/]{4,}$/.test(trimmed) && trimmed.length < 60) ||
           /^[A-Z][A-Z0-9 \-&/]{2,}:$/.test(trimmed);
+        if (isChannelHeading) {
+          const clean = sanitiseOutput(line).replace(/:$/, "");
+          if (!clean) return null;
+          return <span key={i} className="phase2-channel-heading">{clean}</span>;
+        }
         if (isHeading) {
           const clean = sanitiseOutput(line).replace(/:$/, "");
           if (!clean) return null;
           return (
-            <span key={i} className="detonation-heading section-label">{clean}</span>
+            <span key={i} className="phase2-label detonation-heading section-label">{clean}</span>
           );
         }
         const clean = sanitiseOutput(line);
