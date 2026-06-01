@@ -1116,6 +1116,20 @@ function Phase2Deliverables({ session }: { session: SessionRow }) {
     }}>{label}</div>
   );
 
+  const showStrategic =
+    session.stage_17_selected_territory ||
+    session.stage_17b_output ||
+    session.stage_18_selected_detonation ||
+    session.stage_19_output;
+
+  const showActivation =
+    session.stage_20_output ||
+    channelKeys.length > 0;
+
+  const showBrandIdentity =
+    session.stage_22_distinctive_assets ||
+    session.stage_22_brand_architecture;
+
   return (
     <section style={{ marginTop: 64 }}>
       <hr style={{ border: 0, borderTop: `1px solid ${amber}`, margin: "0 0 32px" }} />
@@ -1127,33 +1141,59 @@ function Phase2Deliverables({ session }: { session: SessionRow }) {
         Phase 2 deliverables. Click any card to open and save as PDF.
       </p>
 
-      {subhead("Strategic")}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: 12 }}>
-        <Card title="Detonation Territory" busyKey="Detonation Territory" onClick={() => download("detonation_territory", "Detonation Territory")} />
-        <Card title="Detonation Intelligence" busyKey="Detonation Intelligence" onClick={() => download("detonation_intelligence", "Detonation Intelligence")} />
-        <Card title="The Detonation" busyKey="The Detonation" onClick={() => download("the_detonation", "The Detonation")} />
-        <Card title="Activation Architecture" busyKey="Activation Architecture" onClick={() => download("activation_architecture", "Activation Architecture")} />
-      </div>
+      {showStrategic && (
+        <>
+          {subhead("Strategic")}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: 12 }}>
+            {session.stage_17_selected_territory && (
+              <Card title="Detonation Territory" busyKey="Detonation Territory" onClick={() => download("detonation_territory", "Detonation Territory")} />
+            )}
+            {session.stage_17b_output && (
+              <Card title="Detonation Intelligence" busyKey="Detonation Intelligence" onClick={() => download("detonation_intelligence", "Detonation Intelligence")} />
+            )}
+            {session.stage_18_selected_detonation && (
+              <Card title="The Detonation" busyKey="The Detonation" onClick={() => download("the_detonation", "The Detonation")} />
+            )}
+            {session.stage_19_output && (
+              <Card title="Activation Architecture" busyKey="Activation Architecture" onClick={() => download("activation_architecture", "Activation Architecture")} />
+            )}
+          </div>
+        </>
+      )}
 
-      {subhead("Activation")}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: 12 }}>
-        <Card title="Master Detonation Brief" busyKey="Master Detonation Brief" onClick={() => download("master_brief", "Master Detonation Brief")} />
-        {channelKeys.map((ch) => {
-          const body = channels[ch] ?? "";
-          const m = body.match(/CHANNEL\s+ROLE\s*[:\-]?\s*([^\n]+)/i);
-          const role = m ? m[1].trim() : "Channel Brief";
-          return (
-            <Card key={ch} title={ch} subtitle={role} busyKey={`ch-${ch}`}
-              onClick={() => download("channel_brief", `ch-${ch}`, ch)} />
-          );
-        })}
-      </div>
+      {showActivation && (
+        <>
+          {subhead("Activation")}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: 12 }}>
+            {session.stage_20_output && (
+              <Card title="Master Detonation Brief" busyKey="Master Detonation Brief" onClick={() => download("master_brief", "Master Detonation Brief")} />
+            )}
+            {channelKeys.map((ch) => {
+              const body = channels[ch] ?? "";
+              const m = body.match(/CHANNEL\s+ROLE\s*[:\-]?\s*([^\n]+)/i);
+              const role = m ? m[1].trim() : "Channel Brief";
+              return (
+                <Card key={ch} title={ch} subtitle={role} busyKey={`ch-${ch}`}
+                  onClick={() => download("channel_brief", `ch-${ch}`, ch)} />
+              );
+            })}
+          </div>
+        </>
+      )}
 
-      {subhead("Brand Identity")}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: 12 }}>
-        <Card title="Distinctive Asset Architecture" busyKey="Distinctive Asset Architecture" onClick={() => download("distinctive_assets", "Distinctive Asset Architecture")} />
-        <Card title="Brand Architecture" busyKey="Brand Architecture" onClick={() => download("brand_architecture", "Brand Architecture")} />
-      </div>
+      {showBrandIdentity && (
+        <>
+          {subhead("Brand Identity")}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: 12 }}>
+            {session.stage_22_distinctive_assets && (
+              <Card title="Distinctive Asset Architecture" busyKey="Distinctive Asset Architecture" onClick={() => download("distinctive_assets", "Distinctive Asset Architecture")} />
+            )}
+            {session.stage_22_brand_architecture && (
+              <Card title="Brand Architecture" busyKey="Brand Architecture" onClick={() => download("brand_architecture", "Brand Architecture")} />
+            )}
+          </div>
+        </>
+      )}
 
       <div style={{ marginTop: 32, display: "flex", flexDirection: "column", gap: 12 }}>
         <button type="button" onClick={() => download("all_phase2", "all")} disabled={busy !== null}
