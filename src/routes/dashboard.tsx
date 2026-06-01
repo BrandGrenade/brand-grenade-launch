@@ -131,9 +131,14 @@ function Dashboard() {
 
   const stats = [
     { value: sessions.length, label: "Total Runs" },
-    { value: sessions.filter((s) => deriveStatus(s) === "complete").length, label: "Completed" },
     {
-      value: sessions.filter((s) => deriveStatus(s) === "in_progress").length,
+      value: sessions.filter((s) => s.stage_22_output != null).length,
+      label: "Completed",
+    },
+    {
+      value: sessions.filter(
+        (s) => s.current_stage > 1 && s.stage_22_output == null,
+      ).length,
       label: "In Progress",
     },
   ];
