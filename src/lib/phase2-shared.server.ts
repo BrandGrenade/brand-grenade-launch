@@ -421,37 +421,29 @@ export function extractStage19ChannelEntries(
     const blockText = stage19
       .slice(block.start, block.end)
       .trim();
-    const whyRe = /WHY THIS CHANNEL:?\s*\n/gi;
-    let whyMatch: RegExpExecArray | null;
-    let lastEnd = 0;
-    while (
-      (whyMatch = whyRe.exec(blockText)) !== null
-    ) {
-      const channelNameSection = blockText
-        .slice(lastEnd, whyMatch.index)
-        .trim();
-      const nameLine = channelNameSection
-        .split("\n")
-        .map(l => l.trim())
-        .filter(l => l.length > 3)
-        .find(l =>
-          !l.match(/^(WHY|THE|AND|OR|BUT)\s/) &&
-          l.length < 120
-        ) || "";
-      const nextWhyIdx = blockText
-        .indexOf("WHY THIS CHANNEL",
-          whyMatch.index + 1);
-      const contentEnd = nextWhyIdx > 0
-        ? nextWhyIdx
+    const channelRe = /(?:^|\n)\s*([^\n:][^\n]{3,119}?)\s*:?\s*\n\s*WHY THIS CHANNEL:?\s*\n/gi;
+    const channelMatches: Array<{
+      nameLine: string;
+      start: number;
+      whyEnd: number;
+    }> = [];
+    let channelMatch: RegExpExecArray | null;
+    while ((channelMatch = channelRe.exec(blockText)) !== null) {
+      channelMatches.push({
+        nameLine: channelMatch[1].trim(),
+        start: channelMatch.index,
+        whyEnd: channelMatch.index + channelMatch[0].length,
+      });
+    }
+    for (let i = 0; i < channelMatches.length; i += 1) {
+      const match = channelMatches[i];
+      const contentEnd = i + 1 < channelMatches.length
+        ? channelMatches[i + 1].start
         : blockText.length;
       const content = blockText
-        .slice(
-          whyMatch.index + whyMatch[0].length,
-          contentEnd
-        )
+        .slice(match.whyEnd, contentEnd)
         .trim();
-      console.log('Channel name extracted:', nameLine);
-      const name = normalise(nameLine);
+      const name = normalise(match.nameLine);
       if (!usedNames.has(name) &&
           content.length > 50) {
         usedNames.add(name);
@@ -459,11 +451,10 @@ export function extractStage19ChannelEntries(
           name,
           role: block.role,
           content: blockText
-            .slice(lastEnd, contentEnd)
+            .slice(match.start, contentEnd)
             .trim(),
         });
       }
-      lastEnd = contentEnd;
     }
   }
 
