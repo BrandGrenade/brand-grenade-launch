@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { MoreHorizontal, Grid2x2, FileText, Trash2 } from "lucide-react";
+import { MoreHorizontal, Grid2x2, FileText, Trash2, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { TopNav } from "@/components/TopNav";
 import { supabase } from "@/integrations/supabase/client";
@@ -311,10 +311,6 @@ const PHASE_2_BUTTON_META: Record<Phase2ButtonState, { label: string; variant: "
 function Phase2Button({ state, sessionId }: { state: Phase2ButtonState; sessionId: string }) {
   const meta = PHASE_2_BUTTON_META[state];
   const [hover, setHover] = useState(false);
-  // Complete is a status, not an action — render the same green outlined badge as Brand Strategy.
-  if (state === "complete") {
-    return <StatusBadge status="complete" />;
-  }
   const solid = meta.variant === "solid";
   const linkStyle = {
     display: "inline-flex" as const,
@@ -337,6 +333,23 @@ function Phase2Button({ state, sessionId }: { state: Phase2ButtonState; sessionI
     onMouseEnter: () => setHover(true),
     onMouseLeave: () => setHover(false),
   };
+  if (state === "complete") {
+    return (
+      <Link
+        to="/detonation"
+        search={{ session: sessionId }}
+        {...handlers}
+        style={{
+          ...linkStyle,
+          backgroundColor: "#4A7C5915",
+          border: "1px solid #4A7C59",
+          color: "#4A7C59",
+        }}
+      >
+        Complete
+      </Link>
+    );
+  }
   if (state === "commence") {
     return (
       <Link to="/detonation/canvas" search={{ session: sessionId }} {...handlers} style={linkStyle}>
@@ -360,7 +373,7 @@ function fmtDate(iso: string) {
 }
 
 type ActionConfig = {
-  key: "engine" | "deliverables" | "continue" | "delete";
+  key: "engine" | "detonation" | "deliverables" | "continue" | "delete";
   label: string;
   color: string;
   hoverBg: string;
@@ -428,6 +441,18 @@ function buildActions(s: DbSession, status: UIStatus, onDelete: () => void): Act
     icon: <Trash2 size={14} />,
     onClick: onDelete,
   };
+  const detonationAction: ActionConfig | null =
+    s.stage_16_consulting_output != null
+      ? {
+          key: "detonation",
+          label: "Detonation Room",
+          color: "#C8873A",
+          hoverBg: "#C8873A15",
+          icon: <Zap size={14} />,
+          to: s.stage_17_output != null ? "/detonation" : "/detonation/canvas",
+          search: { session: s.id },
+        }
+      : null;
   if (status === "complete") {
     return [
       {
@@ -439,6 +464,7 @@ function buildActions(s: DbSession, status: UIStatus, onDelete: () => void): Act
         to: "/pipeline",
         search: { session: s.id },
       },
+      ...(detonationAction ? [detonationAction] : []),
       {
         key: "deliverables",
         label: "Deliverables",
@@ -461,6 +487,7 @@ function buildActions(s: DbSession, status: UIStatus, onDelete: () => void): Act
       to: "/pipeline",
       search: { session: s.id },
     },
+    ...(detonationAction ? [detonationAction] : []),
     deleteAction,
   ];
 }
