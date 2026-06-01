@@ -1,7 +1,7 @@
 // Stage 22 — Brand Architecture
 // Two sequential Claude calls:
 //   1. Brand Architecture — six-component synthesis from STAGE_22_BRAND_ARCHITECTURE_PROMPT
-//   2. Distinctive Asset Architecture — focused three-section breakdown
+//   2. Conceptual Assets — focused three-section breakdown
 // Combined transcript stored in stage_22_output, each piece in its own column.
 
 import { createServerFn } from "@tanstack/react-start";
@@ -11,22 +11,22 @@ import { callClaude } from "./claude.server";
 import { STAGE_22_BRAND_ARCHITECTURE_PROMPT } from "./stage22-brand-architecture-prompt";
 import { appendRedirect, formatThreeTruths, formatBrandIntelligence, smpGoverningBlock, withPhase2Formatting } from "./phase2-shared.server";
 
-const DISTINCTIVE_ASSETS_PROMPT = `You are a senior brand architect producing the Distinctive Asset Architecture for this brand.
+const DISTINCTIVE_ASSETS_PROMPT = `You are a senior brand architect producing the Conceptual Assets for this brand.
 
 Synthesise the brand's existing distinctive assets, the pipeline's strategic outputs, and the selected Detonation into a single one-page architecture.
 
 OUTPUT EXACTLY THREE SECTIONS, EACH WITH AN UPPERCASE LABEL:
 
-OWNABLE ASSETS
+RECOMMENDED ASSETS
 A bulleted list of 4–6 assets the brand already owns or can credibly own. Each item: 2–6 words. Tag each with (Visual), (Verbal), (Sonic), or (Behavioural).
 
-ACTIVATION RULES
+DEPLOYMENT PRINCIPLES
 A numbered list of 4–6 rules describing how these assets must behave across the Detonation. Each rule: one sentence, imperative voice.
 
 THE RECOGNITION TEST
 Two sentences. Sentence one: the test the assets must pass for the brand to be recognisable without its logo. Sentence two: what fails the test.
 
-No preamble. No metadata. No pipeline terminology. Begin immediately with OWNABLE ASSETS.`;
+No preamble. No metadata. No pipeline terminology. Begin immediately with RECOMMENDED ASSETS.`;
 
 const STAGE22_SELECT = [
   "brand_name",
@@ -151,7 +151,7 @@ async function generateBoth(
       sessionId,
       stageLabel: "Stage 22 (assets)",
       stageNumber: "22",
-      stageName: "Distinctive Asset Architecture",
+      stageName: "Conceptual Assets",
     }),
   ]);
   return { architecture, assets };
@@ -302,7 +302,7 @@ export const retryStage22 = createServerFn({ method: "POST" })
           sessionId: data.sessionId,
           stageLabel: "Stage 22 (assets retry)",
           stageNumber: "22",
-          stageName: "Distinctive Asset Architecture",
+          stageName: "Conceptual Assets",
         }).then((t) => {
           assets = t;
         }),

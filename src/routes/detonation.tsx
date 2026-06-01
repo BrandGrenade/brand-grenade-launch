@@ -1447,7 +1447,7 @@ function Stage22({ session, onChange }: { session: SessionRow; onChange: () => v
               <div className="text-mono" style={{
                 color: AMBER, textTransform: "uppercase", fontSize: 12,
                 letterSpacing: "0.16em", marginBottom: 16,
-              }}>DISTINCTIVE ASSET ARCHITECTURE</div>
+              }}>CONCEPTUAL ASSETS</div>
               <div style={{ backgroundColor: "#111111", border: "1px solid #2A2A2A", borderRadius: 8, padding: 24 }}>
                 <RichOutput text={assets} />
               </div>
