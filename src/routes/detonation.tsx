@@ -604,7 +604,7 @@ function DetonationPage() {
                 <div style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}>
                   <BrandGrenadeIcon size={32} />
                 </div>
-                <span className="text-label" style={{ color: AMBER, letterSpacing: "0.12em" }}>PHASE 2 — BRAND DETONATION</span>
+                <span style={{ color: AMBER, fontFamily: "'DM Mono', monospace", fontSize: "7pt", textTransform: "uppercase", letterSpacing: "0.18em", fontWeight: 500, display: "block" }}>PHASE 2 — BRAND DETONATION</span>
                 <h1 className="text-h2 text-text-primary" style={{ margin: "12px 0 0", fontWeight: 700 }}>{brand}</h1>
               </header>
 
