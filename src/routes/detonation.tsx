@@ -28,7 +28,7 @@ import {
   regenerateStage20Section, approveStage20,
 } from "@/lib/stage20.functions";
 import { runStage21, loadStage21 } from "@/lib/stage21.functions";
-import { runStage22, loadStage22 } from "@/lib/stage22.functions";
+import { runStage22, loadStage22, regenerateStage22 } from "@/lib/stage22.functions";
 
 const AMBER = PHASE_2_AMBER;
 
@@ -1164,6 +1164,7 @@ function extractArchSection(arch: string, label: string): string {
 function Stage22({ session, onChange }: { session: SessionRow; onChange: () => void | Promise<void> }) {
   const run = useServerFn(runStage22);
   const load = useServerFn(loadStage22);
+  const regenerate = useServerFn(regenerateStage22);
   const [architecture, setArchitecture] = useState<string | null>(session.stage_22_brand_architecture);
   const [assets, setAssets] = useState<string | null>(session.stage_22_distinctive_assets);
   const [busy, setBusy] = useState(false);
