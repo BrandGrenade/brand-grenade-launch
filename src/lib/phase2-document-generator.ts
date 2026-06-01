@@ -5,7 +5,7 @@
 // per type, styled identically to Phase 1 except the accent colour is
 // the Phase 2 amber #D4924A. Open in a new tab; user prints natively.
 
-import { parseStage20Output, parseBriefQualityScore, type BriefQualityScore } from "./phase2-shared.server";
+import { parseStage20Output, parseBriefQualityScore, type BriefQualityScore } from "./phase2-shared";
 
 export type Phase2DocType =
   | "detonation_territory"

@@ -14,7 +14,7 @@ import {
   formatThreeTruths,
   smpGoverningBlock,
   withPhase2Formatting,
-} from "./phase2-shared.server";
+} from "./phase2-shared";
 
 const STAGE21_SELECT = [
   "brand_name",

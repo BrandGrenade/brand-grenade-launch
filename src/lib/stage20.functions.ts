@@ -19,7 +19,7 @@ import {
   STAGE_20_SECTION_DEFS,
   smpGoverningBlock,
   withPhase2Formatting,
-} from "./phase2-shared.server";
+} from "./phase2-shared";
 
 const STAGE20_SELECT = [
   "brand_name",

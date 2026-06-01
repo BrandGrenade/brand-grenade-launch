@@ -13,7 +13,7 @@ import {
   buildCompleteBundle,
   type Phase2DocType,
   type Phase2Session,
-} from "./phase2-document-generator.server";
+} from "./phase2-document-generator";
 
 const PHASE_2_COLS =
   "id, brand_name, selected_smp, stage_17_selected_territory, stage_17b_output, stage_18_selected_detonation, stage_19_output, stage_20_output, stage_21_outputs, stage_22_brand_architecture, stage_22_distinctive_assets, doc_consulting_url";

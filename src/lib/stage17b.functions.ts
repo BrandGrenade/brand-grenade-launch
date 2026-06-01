@@ -7,7 +7,7 @@ import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { callClaude } from "./claude.server";
 import { STAGE_17B_DETONATION_INTELLIGENCE_PROMPT } from "./stage17b-detonation-intelligence-prompt";
-import { appendRedirect, formatThreeTruths, smpGoverningBlock, withPhase2Formatting } from "./phase2-shared.server";
+import { appendRedirect, formatThreeTruths, smpGoverningBlock, withPhase2Formatting } from "./phase2-shared";
 
 const STAGE17B_SELECT = [
   "brand_name",
