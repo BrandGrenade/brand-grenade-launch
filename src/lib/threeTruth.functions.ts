@@ -72,7 +72,6 @@ Return JSON:
       userMessage: user,
       model: MODEL,
       maxTokens: 1000,
-      temperature: 0.4,
       sessionId: data.sessionId,
       stageLabel: "Three Truths",
     });
@@ -200,7 +199,6 @@ export const extractBrandGuidelinesFromPdf = createServerFn({ method: "POST" })
     const body = JSON.stringify({
       model: MODEL,
       max_tokens: 2000,
-      temperature: 0.2,
       system: `You extract brand guideline information from PDF documents.
 Return ONLY a valid JSON object — no prose, no markdown fences.`,
       messages: [

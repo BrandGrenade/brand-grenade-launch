@@ -14,7 +14,6 @@ export interface CallClaudeArgs {
   systemPrompt: string;
   userMessage: string;
   maxTokens?: number;
-  temperature?: number;
   model?: string;
   /** When provided, retry status is written to sessions.retry_status and
    *  Development Mode (sessions.dev_mode) overrides the system prompt + max_tokens. */
@@ -145,7 +144,6 @@ async function prepareCall(args: CallClaudeArgs): Promise<{ apiKey: string; body
     body: JSON.stringify({
       model: args.model ?? DEFAULT_MODEL,
       max_tokens: effectiveMaxTokens,
-      temperature: args.temperature ?? 0.5,
       system: [
         {
           type: "text",
