@@ -986,12 +986,16 @@ function RadioCard({
 function Field({
   label,
   hint,
+  helper,
+  placeholder,
   value,
   onChange,
   multiline,
 }: {
   label: string;
   hint?: string;
+  helper?: string;
+  placeholder?: string;
   value: string;
   onChange: (v: string) => void;
   multiline?: boolean;
@@ -1017,6 +1021,7 @@ function Field({
       {multiline ? (
         <textarea
           value={value}
+          placeholder={placeholder}
           onChange={(e) => onChange(e.target.value)}
           rows={3}
           style={{ ...inputStyle, resize: "vertical" }}
@@ -1025,9 +1030,15 @@ function Field({
         <input
           type="text"
           value={value}
+          placeholder={placeholder}
           onChange={(e) => onChange(e.target.value)}
           style={inputStyle}
         />
+      )}
+      {helper && (
+        <p style={{ color: "var(--color-text-tertiary)", fontSize: 12, margin: "6px 0 0" }}>
+          {helper}
+        </p>
       )}
     </div>
   );
