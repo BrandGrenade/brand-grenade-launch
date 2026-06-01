@@ -22,26 +22,49 @@ const AuthContext = createContext<AuthContextType>({
   signOut: async () => {},
 });
 
+const initialSessionPromise =
+  typeof window !== "undefined"
+    ? supabase.auth.getSession()
+    : Promise.resolve({ data: { session: null }, error: null });
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [isAuthReady, setIsAuthReady] = useState(false);
 
   useEffect(() => {
-    // 1. Subscribe FIRST so we never miss an event.
+    let isMounted = true;
+
+    initialSessionPromise
+      .then(({ data }) => {
+        if (!isMounted) return;
+        setSession(data.session);
+        setIsAuthReady(true);
+      })
+      .catch(() => {
+        if (!isMounted) return;
+        setSession(null);
+        setIsAuthReady(true);
+      });
+
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, newSession) => {
+    } = supabase.auth.onAuthStateChange((event, newSession) => {
+      if (event === "TOKEN_REFRESHED") {
+        console.log("Token refreshed successfully");
+      }
+
+      if (event === "SIGNED_OUT") {
+        // redirect to login
+      }
+
       setSession(newSession);
       setIsAuthReady(true);
     });
 
-    // 2. Then load any persisted session.
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-      setIsAuthReady(true);
-    });
-
-    return () => subscription.unsubscribe();
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const value: AuthContextType = {
@@ -52,6 +75,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await supabase.auth.signOut();
     },
   };
+
+  if (!isAuthReady) return null;
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
