@@ -217,6 +217,84 @@ before moving to the next.
 
 ---
 
+# EXECUTIVE SUMMARY
+
+One page maximum.
+Written last but presented first.
+Four components only.
+
+## The Situation In One Sentence
+
+The single most important thing
+a board member needs to understand
+about the strategic moment this
+brand is in. Not background.
+The precise tension that makes
+this decision urgent now.
+
+## The Recommendation
+
+State the proposition clearly
+and without preamble.
+
+The proposition must appear in
+the Executive Summary exactly
+as it will appear in Part Seven.
+The same words. Unchanged.
+
+Follow with one sentence on
+why this proposition and
+no other.
+
+## What This Requires
+
+Three bullet points maximum.
+The most important things the
+brand must do to own this
+proposition credibly.
+Not communications. Actions.
+
+## What Success Looks Like
+
+Two to three specific measurable
+outcomes that confirm the
+strategy is working.
+Not vanity metrics.
+The specific behaviour changes
+that prove the proposition
+has taken hold.
+
+The Executive Summary must be
+written so that a board member
+who reads only this page
+understands the recommendation
+completely and can make a
+decision to proceed.
+
+The Executive Summary is not
+a teaser. It states the
+recommendation clearly.
+The argument in Parts One
+through Six earns the
+recommendation retroactively
+for readers who continue
+past the summary.
+
+---
+
+# TABLE OF CONTENTS
+
+List all ten parts by name
+with a one line description
+of what each part contains.
+No page numbers — this is
+a digital document.
+Format as a clean list.
+Each part name in the
+platform's amber styling.
+
+---
+
 # PART ONE — THE SITUATION
 
 ## [Write a section title specific
