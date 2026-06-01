@@ -993,9 +993,7 @@ function Phase2Deliverables({ session }: { session: SessionRow }) {
   ) => {
     setBusy(label);
     try {
-      const r = await withJwtRetry(() =>
-        gen({ data: { sessionId: session.id, docType, channelKey } }),
-      );
+      const r = await gen({ data: { sessionId: session.id, docType, channelKey } });
       openHtmlInNewTab(r.html);
     } catch (e) {
       alert(e instanceof Error ? e.message : "Failed to generate document");
@@ -1005,14 +1003,13 @@ function Phase2Deliverables({ session }: { session: SessionRow }) {
   const downloadBundle = async () => {
     setBusy("complete");
     try {
-      const r = await withJwtRetry(() =>
-        genBundle({ data: { sessionId: session.id } }),
-      );
+      const r = await genBundle({ data: { sessionId: session.id } });
       openHtmlInNewTab(r.html);
     } catch (e) {
       alert(e instanceof Error ? e.message : "Failed to generate bundle");
     } finally { setBusy(null); }
   };
+
 
   const Card = ({ title, subtitle, onClick, busyKey }: {
     title: string; subtitle?: string; onClick: () => void; busyKey: string;
