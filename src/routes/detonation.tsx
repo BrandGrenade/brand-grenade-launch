@@ -560,21 +560,27 @@ function DetonationPage() {
                     <button
                       type="button"
                       onClick={() => setActiveStage(stage.number)}
+                      onMouseEnter={(e) => {
+                        if (!isActive) e.currentTarget.style.backgroundColor = "#161612";
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!isActive) e.currentTarget.style.backgroundColor = "transparent";
+                      }}
                       style={{
                         width: "100%", textAlign: "left", background: "none", cursor: "pointer",
                         display: "flex", alignItems: "center", gap: 10, padding: "8px 10px",
                         borderRadius: 6, border: "none",
-                        backgroundColor: isActive ? "rgba(212,146,74,0.08)" : "transparent",
+                        backgroundColor: isActive ? "#1c1c17" : "transparent",
                         borderLeft: `2px solid ${isActive ? AMBER : "transparent"}`,
                       }}
                     >
                       <span style={{
-                        fontFamily: "'DM Mono', monospace", fontSize: 10,
-                        color: AMBER, minWidth: 28, letterSpacing: "0.06em",
+                        fontFamily: "'DM Mono', monospace", fontSize: 12,
+                        color: "#7a776f", minWidth: 28, letterSpacing: "0.06em",
                       }}>{stage.number}</span>
                       <span style={{
-                        fontFamily: "'DM Sans', sans-serif", fontSize: 12,
-                        color: "var(--color-text-secondary)", flex: 1,
+                        fontFamily: "'DM Sans', sans-serif", fontSize: 13,
+                        color: "#f2efe9", flex: 1, fontWeight: 400,
                       }}>{stage.label}</span>
                       <span style={{
                         fontFamily: "'DM Mono', monospace", fontSize: 8,
