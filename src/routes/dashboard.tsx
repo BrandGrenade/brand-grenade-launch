@@ -29,7 +29,7 @@ export const Route = createFileRoute("/dashboard")({
       {
         name: "description",
         content:
-          "Your strategy pipeline runs. Each session is a complete 20-stage pipeline run for one brief.",
+          "Your strategy pipeline runs. Each session is a complete 27-stage pipeline run for one brief — Brand Strategy and Brand Detonation.",
       },
     ],
   }),
