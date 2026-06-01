@@ -287,15 +287,16 @@
   }
 
   /* Phase 2 detonation output section heading
-     (replaces raw markdown #/##/### markers). */
-  .detonation-heading {
+     (replaces raw markdown #/##/### markers, and uppercase-colon labels). */
+  .detonation-heading,
+  .section-label {
     display: block;
     font-family: 'DM Mono', monospace;
     font-size: 7pt;
     text-transform: uppercase;
     letter-spacing: 0.18em;
     color: #D4924A;
-    margin-top: 1.5rem;
-    margin-bottom: 0.5rem;
+    margin-top: 16px;
+    margin-bottom: 4px;
   }
 }
