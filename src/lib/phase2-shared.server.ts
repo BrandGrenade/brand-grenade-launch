@@ -1,7 +1,7 @@
 // Shared helpers for Phase 2 stage server functions.
 // Card splitting, redirect-instruction formatting, and Three-Truth assembly.
 
-const HEADING = /^##\s+(.+?)\s*$/;
+
 
 export type Card = { id: string; name: string; markdown: string };
 
