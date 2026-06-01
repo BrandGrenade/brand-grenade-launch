@@ -43,6 +43,7 @@ type DbSession = {
   current_stage: number;
   created_at: string;
   updated_at: string;
+  stage_1_output: string | null;
   stage_16_consulting_output: string | null;
   phase_2_status: string | null;
   stage_17_output: string | null;
