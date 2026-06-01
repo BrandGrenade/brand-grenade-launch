@@ -190,6 +190,20 @@ function RichOutput({ text }: { text: string }) {
   );
 }
 
+function OptionCheck({ checked, onChange, label }: { checked: boolean; onChange: (checked: boolean) => void; label: string }) {
+  return (
+    <label style={{ display: "inline-flex", alignItems: "center", gap: 10, cursor: "pointer" }}>
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+        style={{ width: 18, height: 18, accentColor: AMBER, cursor: "pointer" }}
+        aria-label={`Select ${label}`}
+      />
+    </label>
+  );
+}
+
 // ── Card split helper (mirrors splitCards on the server) ──────────────────
 // Phase 2 outputs are plain text (no markdown). Card titles are short
 // all-caps lines (no trailing colon) that introduce each candidate block.
@@ -237,6 +251,51 @@ function splitCardsLocal(text: string): LocalCard[] {
       id: `card-${i + 1}`,
       name: mat.name.replace(/^#+\s*/, "").replace(/^\*+|\*+$/g, "").trim(),
       markdown: t.slice(mat.start, end).trim(),
+    };
+  });
+}
+
+type Stage19Block = { id: string; label: string; content: string; selectable: boolean };
+const STAGE_19_OPTION_LABELS = new Set([
+  "PRIMARY CHANNEL",
+  "PRIMARY CHANNELS",
+  "AMPLIFICATION CHANNEL",
+  "AMPLIFICATION CHANNELS",
+  "CONVERSION CHANNEL",
+  "CONVERSION CHANNELS",
+  "ACTIVATION CHANNEL",
+  "ACTIVATION CHANNELS",
+  "SUSTAINING CHANNEL",
+  "SUSTAINING CHANNELS",
+]);
+const STAGE_19_LABELS = [
+  "EMOTIONAL TO RATIONAL CALIBRATION",
+  "CHANNEL HIERARCHY",
+  ...Array.from(STAGE_19_OPTION_LABELS),
+  "CHANNEL ECOSYSTEM VIEW",
+  "CREATIVE CONSISTENCY BRIEF",
+  "COMPOUNDING MEDIA STRATEGY",
+  "THE COMPOUNDING MEDIA STRATEGY",
+  "DISTINCTIVE ASSET ACTIVATION MAP",
+];
+
+function parseStage19BlocksLocal(output: string): Stage19Block[] {
+  if (!output.trim()) return [];
+  const escaped = STAGE_19_LABELS.map((l) => l.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+  const pattern = new RegExp(`(^|\\n)\\s*(${escaped.join("|")})\\s*:?\\s*(?:\\n|$)`, "gi");
+  const hits: Array<{ label: string; start: number; bodyStart: number }> = [];
+  let m: RegExpExecArray | null;
+  while ((m = pattern.exec(output)) !== null) {
+    hits.push({ label: m[2].toUpperCase(), start: m.index + (m[1]?.length ?? 0), bodyStart: pattern.lastIndex });
+  }
+  if (hits.length === 0) return [{ id: "stage19-output", label: "Activation Architecture", content: output.trim(), selectable: true }];
+  return hits.map((hit, i) => {
+    const end = hits[i + 1]?.start ?? output.length;
+    return {
+      id: hit.label.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""),
+      label: hit.label,
+      content: output.slice(hit.bodyStart, end).replace(/^\s*---\s*/gm, "").trim(),
+      selectable: STAGE_19_OPTION_LABELS.has(hit.label),
     };
   });
 }
