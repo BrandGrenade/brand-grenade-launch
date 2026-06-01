@@ -1057,7 +1057,11 @@ function Stage21({ session, onChange, goNext }: { session: SessionRow; onChange:
   const handleRun = async () => {
     setBusy(true); setErr(null);
     try { const r = await run({ data: { sessionId: session.id } }); setOutputs(r.outputs); await onChange(); }
-    catch (e) { setErr(e instanceof Error ? e.message : "Stage 21 failed"); }
+    catch (e) {
+      console.error("Stage 21 run failed:", e);
+      setErr(e instanceof Error ? e.message : "Stage 21 failed");
+      setAutoTriggered(false);
+    }
     finally { setBusy(false); }
   };
 
