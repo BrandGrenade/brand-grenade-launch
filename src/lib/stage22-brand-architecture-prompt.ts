@@ -18,45 +18,73 @@ DOMAIN
 
 The category or cultural space this brand owns. Not just the product category — the broader human or cultural territory the brand has earned the right to speak in. Sourced from Stage 2 and Stage 7 outputs.
 
-3 to 5 words. Maximum.
+Maximum 3 words.
+
+No sentences. No verbs.
+
+The territory only.
+
+Example: Power and Performance
 
 HERITAGE
 
 The specific proof points, earned associations, and factual history that give this brand credibility in its domain. Not aspirational. Demonstrated. Things that are already true. Sourced from Stage 13 brand fit assessment.
 
-3 to 7 words per item. Maximum five items.
+Maximum 3 items.
+
+Maximum 4 words each.
+
+Proven facts only.
+
+No aspirational statements.
 
 VALUES
 
 The specific behavioural principles that govern how this brand acts. Not aspirational values — demonstrated values. Things the brand has actually done that prove these principles. Sourced from Stage 13 strategic commitments and Stage 14C brand world rules.
 
-2 to 4 words each. Maximum five.
+Maximum 3 items.
+
+Maximum 3 words each.
+
+Behaviours not beliefs.
 
 ASSETS
 
 The specific distinctive assets — visual, verbal, sonic, tonal — that are uniquely associated with this brand in memory. Includes existing strong assets confirmed in the Brand Intelligence input AND new assets identified through the Brand Detonation pipeline that the brand must now develop and consistently deploy.
 
-2 to 4 words each. Maximum six.
+Maximum 4 items.
+
+Maximum 4 words each.
+
+Specific and ownable only.
+
+Not category conventions.
 
 PERSONALITY
 
 The specific human character this brand embodies. Described as a character type. Specific enough that a creative director can ask "would this brand do that?" and answer immediately without deliberating. One line character description. One real-world exemplar if helpful — a public figure, archetype, or character who embodies this personality precisely. Sourced from Stage 14C human roles and brand function.
 
+Maximum 3 words.
+
+A character type.
+
+Not a description.
+
+Example: The Captain. Cameron Smith.
+
 REFLECTION
 
-The single statement at the absolute centre of the brand.
+Maximum 6 words.
 
-The intersection of all three truths — product, consumer, and cultural — expressed as the brand's fundamental reason for being.
+The brand's core belief.
 
-Not the tagline.
+The thing it would say if it could only say one thing forever.
 
-Not the SMP.
+This is the most important output in the entire system.
 
-Not a marketing statement.
+It must be specific to this brand only.
 
-The brand's core belief. The thing it would say if it could only say one thing forever.
-
-Maximum six words.
+It must be impossible for any competitor to claim.
 
 The Reflection must:
 
