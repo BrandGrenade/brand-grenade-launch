@@ -1186,7 +1186,7 @@ function Phase2Deliverables({ session }: { session: SessionRow }) {
           {subhead("Brand Identity")}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: 12 }}>
             {session.stage_22_distinctive_assets && (
-              <Card title="Distinctive Asset Architecture" busyKey="Distinctive Asset Architecture" onClick={() => download("distinctive_assets", "Distinctive Asset Architecture")} />
+              <Card title="Conceptual Assets" busyKey="Conceptual Assets" onClick={() => download("distinctive_assets", "Conceptual Assets")} />
             )}
             {session.stage_22_brand_architecture && (
               <Card title="Brand Architecture" busyKey="Brand Architecture" onClick={() => download("brand_architecture", "Brand Architecture")} />

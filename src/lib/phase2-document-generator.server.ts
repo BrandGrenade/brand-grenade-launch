@@ -345,7 +345,7 @@ export function buildPhase2Document(
       break;
     }
     case "distinctive_assets":
-      title = "Distinctive Asset Architecture";
+      title = "Conceptual Assets";
       body = plainBody("BRAND DETONATION", title, brand, session.stage_22_distinctive_assets ?? "");
       break;
     case "brand_architecture":
@@ -371,7 +371,7 @@ export function buildAllPhase2(session: Phase2Session): string {
     "Activation Architecture",
     "Master Detonation Brief",
     ...channelKeys.map((c) => `${c} — Detonation Brief`),
-    "Distinctive Asset Architecture",
+    "Conceptual Assets",
     "Brand Architecture",
   ];
 
@@ -400,7 +400,7 @@ export function buildAllPhase2(session: Phase2Session): string {
     const role = roleMatch ? roleMatch[1].trim() : "";
     sections.push(`<div class="doc-break"></div><h2>${escapeHtml(ch)} — Detonation Brief</h2>${role ? `<p style="color:#666;font-style:italic;margin-bottom:14pt">${escapeHtml(role)}</p>` : ""}<div class="section">${md(body)}</div>`);
   }
-  sections.push(`<div class="doc-break"></div><div class="section"><h2>Distinctive Asset Architecture</h2>${md(sanitise(session.stage_22_distinctive_assets ?? ""))}</div>`);
+  sections.push(`<div class="doc-break"></div><div class="section"><h2>Conceptual Assets</h2>${md(sanitise(session.stage_22_distinctive_assets ?? ""))}</div>`);
   {
     const arch = sanitise(session.stage_22_brand_architecture ?? "");
     const reflection = extractArch(arch, "REFLECTION");
