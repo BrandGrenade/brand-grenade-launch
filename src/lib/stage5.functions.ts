@@ -48,7 +48,6 @@ export const runStage5 = createServerFn({ method: "POST" })
         systemPrompt: STAGE_5_SYSTEM_PROMPT,
         userMessage,
         maxTokens: 12000,
-        temperature: 0.7,
         sessionId: data.sessionId,
         stageLabel: "Stage 5",
         stageNumber: "5",

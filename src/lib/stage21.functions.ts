@@ -90,7 +90,6 @@ async function generateOne(
     systemPrompt: withPhase2Formatting(system),
     userMessage: buildStage21UserMessage(channel, role, context, s),
     maxTokens: 4000,
-    temperature: 0.5,
     sessionId,
     stageLabel: `Stage 21 (${channel})`,
     stageNumber: "21",
