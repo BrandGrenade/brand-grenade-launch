@@ -62,12 +62,13 @@ export function DetonationBriefSection({
         aria-expanded={open}
       >
         <div
-          className="text-mono"
           style={{
             color: ACCENT,
             textTransform: "uppercase",
-            fontSize: 7,
+            fontSize: "7pt",
             letterSpacing: "0.18em",
+            fontFamily: "'DM Mono', monospace",
+            fontWeight: 500,
           }}
         >
           {label}
