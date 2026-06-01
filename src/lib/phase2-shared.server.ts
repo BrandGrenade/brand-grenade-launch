@@ -450,6 +450,7 @@ export function extractStage19ChannelEntries(
           contentEnd
         )
         .trim();
+      console.log('Channel name extracted:', nameLine);
       const name = normalise(nameLine);
       if (!usedNames.has(name) &&
           content.length > 50) {
