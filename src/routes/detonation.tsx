@@ -1238,6 +1238,22 @@ function Stage21({ session, onChange, goNext }: { session: SessionRow; onChange:
     finally { setBusy(false); }
   };
 
+  const handleForceRegenerate = async () => {
+    if (busy) return;
+    if (!confirm("Force regenerate will clear all saved channel briefs and re-run Stage 21 from scratch using the latest extractor. Continue?")) return;
+    setBusy(true); setErr(null);
+    try {
+      await clear({ data: { sessionId: session.id } });
+      setOutputs(null);
+      const r = await run({ data: { sessionId: session.id } });
+      setOutputs(r.outputs);
+      await onChange();
+    } catch (e) {
+      console.error("Stage 21 force regenerate failed:", e);
+      setErr(e instanceof Error ? e.message : "Stage 21 force regenerate failed");
+    } finally { setBusy(false); }
+  };
+
   useEffect(() => {
     if (autoTriggered) return;
     if (!session.stage_20_approved) return;
