@@ -522,16 +522,14 @@ function CompletePage() {
 
         {/* ─── Phase 2: Brand Detonation ───────────────────────────────── */}
         {(() => {
-          const allDocsReady = Boolean(
-            session.doc_consulting_url &&
-              session.doc_agency_url &&
-              session.doc_workshop_url,
-          );
-          if (!allDocsReady) return null;
+          // Phase 1 documents are now generated client-side on demand
+          // (openPhase1Document), so Phase 2 unlocks as soon as an SMP
+          // is selected — no signed-URL readiness check required.
+          if (!hasSmp) return null;
           // TODO: reinstate owner check
           // before commercial deployment
           const isOwner = true;
-          const amber = "#C8873A";
+          const amber = "#D4924A";
           return (
             <section style={{ marginTop: 64 }}>
               <hr
