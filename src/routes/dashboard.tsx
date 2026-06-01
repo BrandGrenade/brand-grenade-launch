@@ -311,24 +311,6 @@ const PHASE_2_BUTTON_META: Record<Phase2ButtonState, { label: string; variant: "
 function Phase2Button({ state, sessionId }: { state: Phase2ButtonState; sessionId: string }) {
   const meta = PHASE_2_BUTTON_META[state];
   const [hover, setHover] = useState(false);
-  // Complete is a status, not an action — render the same green outlined badge as Brand Strategy.
-  if (state === "complete") {
-    return (
-      <Link
-        to="/detonation"
-        search={{ session: sessionId }}
-        {...handlers}
-        style={{
-          ...linkStyle,
-          backgroundColor: "#4A7C5915",
-          border: "1px solid #4A7C59",
-          color: "#4A7C59",
-        }}
-      >
-        Complete
-      </Link>
-    );
-  }
   const solid = meta.variant === "solid";
   const linkStyle = {
     display: "inline-flex" as const,
@@ -351,6 +333,23 @@ function Phase2Button({ state, sessionId }: { state: Phase2ButtonState; sessionI
     onMouseEnter: () => setHover(true),
     onMouseLeave: () => setHover(false),
   };
+  if (state === "complete") {
+    return (
+      <Link
+        to="/detonation"
+        search={{ session: sessionId }}
+        {...handlers}
+        style={{
+          ...linkStyle,
+          backgroundColor: "#4A7C5915",
+          border: "1px solid #4A7C59",
+          color: "#4A7C59",
+        }}
+      >
+        Complete
+      </Link>
+    );
+  }
   if (state === "commence") {
     return (
       <Link to="/detonation/canvas" search={{ session: sessionId }} {...handlers} style={linkStyle}>
