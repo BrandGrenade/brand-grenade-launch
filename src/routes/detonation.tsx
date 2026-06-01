@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 import { PHASE_2_STAGES, PHASE_2_AMBER } from "@/lib/phase2-stages";
 import { sanitiseOutput } from "@/lib/sanitise-output";
+import { tokens } from "@/styles/tokens";
 
 // ── Server fn imports ─────────────────────────────────────────────────────
 import {
