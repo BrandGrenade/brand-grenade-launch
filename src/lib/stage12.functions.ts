@@ -3,6 +3,11 @@ import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { streamClaude } from "./claude.server";
 import { STAGE_12_SYSTEM_PROMPT, buildStage12UserMessage } from "./stage12-prompt";
+import {
+  filterValidatedFromStage11,
+  parseStage10Scores,
+  buildFrozenScoresBlock,
+} from "./stage12-filter";
 
 const Input = z.object({
   sessionId: z.string().uuid(),
