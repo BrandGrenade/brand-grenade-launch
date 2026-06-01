@@ -78,7 +78,7 @@ export function TopNav({ session }: { session?: SessionContext }) {
                 borderRadius: 6,
                 border: "1px solid #2A2A2A",
                 backgroundColor: devModeOn ? "rgba(200,135,58,0.15)" : "transparent",
-                color: devModeOn ? "#C8873A" : "#8A8680",
+                color: devModeOn ? "#D4924A" : "#8A8680",
                 fontSize: 10,
                 fontWeight: 700,
                 letterSpacing: "0.10em",
@@ -93,7 +93,7 @@ export function TopNav({ session }: { session?: SessionContext }) {
                   width: 22,
                   height: 12,
                   borderRadius: 999,
-                  backgroundColor: devModeOn ? "#C8873A" : "#2A2A2A",
+                  backgroundColor: devModeOn ? "#D4924A" : "#2A2A2A",
                   position: "relative",
                   transition: "background-color 120ms ease",
                 }}
@@ -137,7 +137,7 @@ export function TopNav({ session }: { session?: SessionContext }) {
                     width: 8,
                     height: 8,
                     borderRadius: 999,
-                    backgroundColor: "#C8873A",
+                    backgroundColor: "#D4924A",
                     boxShadow: "0 0 8px rgba(200,135,58,0.6)",
                   }}
                 />
@@ -153,7 +153,7 @@ export function TopNav({ session }: { session?: SessionContext }) {
               height: 36,
               padding: "0 16px",
               borderRadius: 8,
-              backgroundColor: "#C8873A",
+              backgroundColor: "#D4924A",
               color: "#0A0A0A",
               fontWeight: 600,
               fontSize: 13,

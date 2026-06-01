@@ -29,7 +29,7 @@ export interface Phase1Session {
   stage_15_output?: string | null;
 }
 
-const ACCENT = "#C8873A";
+const ACCENT = "#D4924A";
 
 export const PHASE_1_SESSION_COLUMNS =
   "stage_1_output, stage_2_output, stage_3_output, stage_4_output, stage_5_output, stage_6_output, stage_7_output, stage_8_output, stage_9_output, stage_10_output, stage_11_output, stage_12_output, stage_13_output, stage_14_output, stage_15_output";

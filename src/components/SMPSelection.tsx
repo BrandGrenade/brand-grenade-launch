@@ -327,7 +327,7 @@ export function SMPSelection({
         disabled={!manualLine.trim()}
         onClick={handleManualConfirm}
         className="mt-3 inline-flex h-10 items-center justify-center rounded-md px-5 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-50"
-        style={{ backgroundColor: "#C8873A", color: "#0A0A0A" }}
+        style={{ backgroundColor: "#D4924A", color: "#0A0A0A" }}
       >
         Confirm manual selection
       </button>

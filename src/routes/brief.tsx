@@ -553,7 +553,7 @@ function BriefIntake() {
                 className="h-full transition-all"
                 style={{
                   width: `${(completion.count / completion.total) * 100}%`,
-                  backgroundColor: "#C8873A",
+                  backgroundColor: "#D4924A",
                 }}
               />
             </div>
@@ -565,7 +565,7 @@ function BriefIntake() {
             disabled={!canSubmitSections || submitting}
             className="mt-6 inline-flex h-[52px] w-full items-center justify-center rounded-md text-[16px] transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             style={{
-              backgroundColor: canSubmitSections ? "#C8873A" : "var(--color-border)",
+              backgroundColor: canSubmitSections ? "#D4924A" : "var(--color-border)",
               color: canSubmitSections ? "#0A0A0A" : "var(--color-text-tertiary)",
               fontWeight: 600,
               cursor: canSubmitSections && !submitting ? "pointer" : "not-allowed",
@@ -670,7 +670,7 @@ function BriefIntake() {
                 >
                   <span
                     className="inline-block h-2 w-2 animate-pulse rounded-full"
-                    style={{ backgroundColor: "#C8873A" }}
+                    style={{ backgroundColor: "#D4924A" }}
                   />
                   Reading document…
                 </p>
@@ -701,7 +701,7 @@ function BriefIntake() {
           disabled={!canSubmitAlt || submitting}
           className="mt-6 inline-flex h-[52px] w-full items-center justify-center rounded-md text-[16px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           style={{
-            backgroundColor: canSubmitAlt ? "#C8873A" : "var(--color-border)",
+            backgroundColor: canSubmitAlt ? "#D4924A" : "var(--color-border)",
             color: canSubmitAlt ? "#0A0A0A" : "var(--color-text-tertiary)",
             fontWeight: 600,
             cursor: canSubmitAlt && !submitting ? "pointer" : "not-allowed",
@@ -835,7 +835,7 @@ function EssentialDot() {
       aria-label="Essential"
       title="Essential"
       className="inline-block h-2 w-2 shrink-0 rounded-full"
-      style={{ backgroundColor: "#C8873A" }}
+      style={{ backgroundColor: "#D4924A" }}
     />
   );
 }
@@ -894,7 +894,7 @@ function BigUploadIcon() {
     <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
       <path
         d="M16 21V5M16 5L9 12M16 5L23 12M5 23V26C5 26.8 5.7 27.5 6.5 27.5H25.5C26.3 27.5 27 26.8 27 26V23"
-        stroke="#C8873A"
+        stroke="#D4924A"
         strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"

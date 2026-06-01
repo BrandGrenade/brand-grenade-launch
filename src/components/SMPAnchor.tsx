@@ -7,7 +7,7 @@ type SMPAnchorProps = {
   truths: [boolean, boolean, boolean];
 };
 
-const AMBER = "#C8873A";
+const AMBER = "#D4924A";
 
 const labelStyle: React.CSSProperties = {
   color: AMBER,

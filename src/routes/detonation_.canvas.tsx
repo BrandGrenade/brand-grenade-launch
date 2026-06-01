@@ -18,7 +18,7 @@ import {
   extractBrandGuidelinesFromPdf,
 } from "@/lib/threeTruth.functions";
 
-const AMBER = "#C8873A";
+const AMBER = "#D4924A";
 
 const searchSchema = z.object({ session: z.string().uuid().optional() });
 
