@@ -32,6 +32,7 @@ export function DetonationOutputCard({
   smp,
   children,
   showCheckbox = false,
+  selected = false,
 }: DetonationOutputCardProps) {
   const inputId = `detonation-keep-${cardId}`;
   const showRedirect = showCheckbox && !isChecked;
@@ -42,16 +43,21 @@ export function DetonationOutputCard({
       style={{
         backgroundColor: "#111111",
         border: "1px solid #2A2A2A",
+        borderLeft: selected ? `4px solid ${ACCENT}` : "1px solid #2A2A2A",
         borderRadius: 8,
         padding: 24,
         marginTop: 16,
-        boxShadow: "0 1px 2px rgba(0,0,0,0.4)",
+        boxShadow: selected
+          ? `0 4px 14px ${ACCENT}33`
+          : "0 1px 2px rgba(0,0,0,0.4)",
       }}
       onMouseEnter={(e) =>
         (e.currentTarget.style.boxShadow = `0 4px 14px ${ACCENT}1f`)
       }
       onMouseLeave={(e) =>
-        (e.currentTarget.style.boxShadow = "0 1px 2px rgba(0,0,0,0.4)")
+        (e.currentTarget.style.boxShadow = selected
+          ? `0 4px 14px ${ACCENT}33`
+          : "0 1px 2px rgba(0,0,0,0.4)")
       }
     >
       <div style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
