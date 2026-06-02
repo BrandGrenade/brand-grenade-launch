@@ -500,6 +500,10 @@ function DetonationPage() {
   const [error, setError] = useState<string | null>(null);
   const [activeStage, setActiveStage] = useState<string>("17");
 
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [activeStage]);
+
   const refresh = useCallback(async () => {
     if (!sessionId) return;
     const { data, error: e } = await supabase
