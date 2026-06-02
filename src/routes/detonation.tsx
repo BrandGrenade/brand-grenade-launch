@@ -1120,11 +1120,14 @@ function Stage20({ session, onChange, goNext }: { session: SessionRow; onChange:
   const [err, setErr] = useState<string | null>(null);
   const [autoTriggered, setAutoTriggered] = useState(false);
 
+  useEffect(() => { setOutput(session.stage_20_output); }, [session.stage_20_output]);
+  useEffect(() => { setApproved(Boolean(session.stage_20_approved)); }, [session.stage_20_approved]);
+
   useEffect(() => {
-    if (output === null) load({ data: { sessionId: session.id } }).then((r) => {
+    if (output === null && !session.stage_20_output) load({ data: { sessionId: session.id } }).then((r) => {
       if (r.output) setOutput(r.output); setApproved(r.approved);
     }).catch(() => {});
-  }, [output, load, session.id]);
+  }, [output, load, session.id, session.stage_20_output]);
 
   const sections = useMemo(() => parseStage20Local(output ?? ""), [output]);
   const { score } = useMemo(() => parseScoreLocal(output ?? ""), [output]);
