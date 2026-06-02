@@ -440,9 +440,9 @@ function parseStage20Local(output: string): Array<{ id: string; label: string; c
   const out: Array<{ id: string; label: string; content: string }> = [];
   for (let i = 0; i < hits.length; i++) {
     const cur = hits[i];
-    const next = hits[i + 1];
-    const end = next ? next.start : body.length;
     if (out.find((s) => s.id === cur.id)) continue;
+    const next = hits.slice(i + 1).find((hit) => hit.id !== cur.id);
+    const end = next ? next.start : body.length;
     out.push({ id: cur.id, label: cur.label, content: body.slice(cur.bodyStart, end).trim() });
   }
   return out;
