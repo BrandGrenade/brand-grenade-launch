@@ -1567,7 +1567,7 @@ function Stage22({ session, onChange }: { session: SessionRow; onChange: () => v
                 letterSpacing: "0.18em", marginBottom: 16, fontFamily: "'DM Mono', monospace", fontWeight: 500,
               }}>CONCEPTUAL ASSETS</div>
               <div style={{ backgroundColor: "#111111", border: "1px solid #2A2A2A", borderRadius: 8, padding: 24 }}>
-                <RichOutput text={assets} />
+                <RichOutput text={stripLeadingLabels(assets, ["CONCEPTUAL ASSETS", "DISTINCTIVE ASSETS", "DISTINCTIVE ASSET ARCHITECTURE", "ASSETS"])} />
               </div>
             </div>
           )}
