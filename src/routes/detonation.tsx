@@ -675,11 +675,14 @@ function Stage17({ session, onChange, goNext }: { session: SessionRow; onChange:
   const [redirects, setRedirects] = useState<Record<string, string>>({});
   const [autoTriggered, setAutoTriggered] = useState(false);
 
+  // Source of truth: Supabase. Re-sync display whenever the session row updates.
+  useEffect(() => { setOutput(session.stage_17_output); }, [session.stage_17_output]);
+
   useEffect(() => {
-    if (output === null) {
+    if (output === null && !session.stage_17_output) {
       load({ data: { sessionId: session.id } }).then((r) => r.output && setOutput(r.output)).catch(() => {});
     }
-  }, [output, load, session.id]);
+  }, [output, load, session.id, session.stage_17_output]);
 
   const cards = useMemo(() => splitCardsLocal(output ?? ""), [output]);
   useEffect(() => {
@@ -786,9 +789,11 @@ function Stage17b({ session, onChange, goNext }: { session: SessionRow; onChange
   const [err, setErr] = useState<string | null>(null);
   const [autoTriggered, setAutoTriggered] = useState(false);
 
+  useEffect(() => { setOutput(session.stage_17b_output); }, [session.stage_17b_output]);
+
   useEffect(() => {
-    if (output === null) load({ data: { sessionId: session.id } }).then((r) => r.output && setOutput(r.output)).catch(() => {});
-  }, [output, load, session.id]);
+    if (output === null && !session.stage_17b_output) load({ data: { sessionId: session.id } }).then((r) => r.output && setOutput(r.output)).catch(() => {});
+  }, [output, load, session.id, session.stage_17b_output]);
 
   const handleRun = async () => {
     setBusy(true); setErr(null);
@@ -868,9 +873,11 @@ function Stage18({ session, onChange, goNext }: { session: SessionRow; onChange:
   const [redirects, setRedirects] = useState<Record<string, string>>({});
   const [courageDismissed, setCourageDismissed] = useState(false);
 
+  useEffect(() => { setOutput(session.stage_18_output); }, [session.stage_18_output]);
+
   useEffect(() => {
-    if (output === null) load({ data: { sessionId: session.id } }).then((r) => r.output && setOutput(r.output)).catch(() => {});
-  }, [output, load, session.id]);
+    if (output === null && !session.stage_18_output) load({ data: { sessionId: session.id } }).then((r) => r.output && setOutput(r.output)).catch(() => {});
+  }, [output, load, session.id, session.stage_18_output]);
 
   const cards = useMemo(() => splitCardsLocal(output ?? ""), [output]);
   useEffect(() => {
