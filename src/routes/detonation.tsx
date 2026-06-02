@@ -1455,14 +1455,17 @@ function Stage22({ session, onChange }: { session: SessionRow; onChange: () => v
   const [err, setErr] = useState<string | null>(null);
   const [autoTriggered, setAutoTriggered] = useState(false);
 
+  useEffect(() => { setArchitecture(session.stage_22_brand_architecture); }, [session.stage_22_brand_architecture]);
+  useEffect(() => { setAssets(session.stage_22_distinctive_assets); }, [session.stage_22_distinctive_assets]);
+
   useEffect(() => {
-    if (architecture === null && assets === null) {
+    if (architecture === null && assets === null && !session.stage_22_brand_architecture && !session.stage_22_distinctive_assets) {
       load({ data: { sessionId: session.id } }).then((r) => {
         if (r.architecture) setArchitecture(r.architecture);
         if (r.assets) setAssets(r.assets);
       }).catch(() => {});
     }
-  }, [architecture, assets, load, session.id]);
+  }, [architecture, assets, load, session.id, session.stage_22_brand_architecture, session.stage_22_distinctive_assets]);
 
   const handleRun = async () => {
     setBusy(true); setErr(null);
