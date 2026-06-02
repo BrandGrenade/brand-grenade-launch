@@ -51,11 +51,17 @@ function slice(value: string | null | undefined, n: number): string {
   return (value ?? "").substring(0, n);
 }
 
+const STAGE1_INTERNAL_LINE = /(PIPELINE DATA HEADER|BRIEF DEPTH LEVEL:|CATEGORY KNOWLEDGE CONFIDENCE:|BRIEF ELEMENTS PRESENT:|ASSUMPTIONS MADE:)/i;
+
+function stripStage1Internals(value: string | null | undefined): string {
+  return (value ?? "").split("\n").filter((l) => !STAGE1_INTERNAL_LINE.test(l)).join("\n");
+}
+
 export function getSectionDefs(format: DocFormat, session: SessionLike): SectionDef[] {
   const brand = session.brand_name ?? "Untitled Brand";
   const category = session.category ?? "";
   const smp = session.selected_smp ?? "";
-  const s1 = slice(session.stage_1_output, 1500);
+  const s1 = slice(stripStage1Internals(session.stage_1_output), 1500);
   const s2 = slice(session.stage_2_output, 3000);
   const s5 = slice(session.stage_5_output, 1500);
   const s7 = slice(session.stage_7_output, 2000);
@@ -73,7 +79,7 @@ export function getSectionDefs(format: DocFormat, session: SessionLike): Section
   // the model to draw on general knowledge instead of receiving empty context.
   const situationUser = `Brand: ${brand}
 Category: ${category}
-Brief: ${(session.stage_1_output ?? "").substring(0, 2000)}
+Brief: ${stripStage1Internals(session.stage_1_output).substring(0, 2000)}
 Write the opening argument for why ${brand} in ${category} faces a critical strategic moment right now. If no brief context is available, draw on general knowledge of this brand and category. Three paragraphs. 350 words maximum. Board level.`;
 
   const categoryUser = `Brand: ${brand}

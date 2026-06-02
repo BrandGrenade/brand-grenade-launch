@@ -85,6 +85,12 @@ function sanitise(t: string | null | undefined): string {
     .replace(/\u2026/g, "...");
 }
 
+const STAGE1_INTERNAL_LINE = /(PIPELINE DATA HEADER|BRIEF DEPTH LEVEL:|CATEGORY KNOWLEDGE CONFIDENCE:|BRIEF ELEMENTS PRESENT:|ASSUMPTIONS MADE:)/i;
+
+function stripStage1Internals(text: string): string {
+  return text.split("\n").filter((l) => !STAGE1_INTERNAL_LINE.test(l)).join("\n");
+}
+
 function baseStyles(): string {
   return `@page { size: A4; margin: 20mm 22mm 20mm 22mm; }
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -238,7 +244,8 @@ export function buildPhase1Document(session: Phase1Session, format: Phase1Format
     toc(sections, session) +
     sections
       .map((s) => {
-        const raw = (session[s.key] ?? "").toString();
+        let raw = (session[s.key] ?? "").toString();
+        if (s.key === "stage_1_output") raw = stripStage1Internals(raw);
         if (!raw.trim()) return "";
         return `<div class="section"><div class="part-label">${escapeHtml(s.label)}</div><h2>${escapeHtml(s.title)}</h2>${md(sanitise(raw))}</div>`;
       })
