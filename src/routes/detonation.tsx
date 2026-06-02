@@ -351,6 +351,29 @@ function stripCardTitle(markdown: string, name: string): string {
   return stripped.replace(/^##\s+.+\n?/, "").trim();
 }
 
+// Generic: strip any of the given leading label lines from content so a
+// component-rendered header is not duplicated by the raw text below it.
+// Applied at render sites where a header chip/title is shown above raw
+// model output that may also emit the same label.
+function stripLeadingLabels(content: string, labels: string[]): string {
+  if (!content) return content;
+  let out = content.replace(/^\uFEFF/, "").trimStart();
+  const escaped = labels
+    .filter(Boolean)
+    .map((l) => l.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+  if (escaped.length === 0) return out;
+  const re = new RegExp(
+    `^(?:#{1,4}\\s*|\\*+\\s*)?(?:${escaped.join("|")})\\s*:?\\s*\\n+`,
+    "i",
+  );
+  for (let i = 0; i < 3; i++) {
+    const next = out.replace(re, "");
+    if (next === out) break;
+    out = next.trimStart();
+  }
+  return out;
+}
+
 // Brief Quality Score parsing (mirrors server helper)
 type LocalScore = {
   emotional_clarity: number | null;
