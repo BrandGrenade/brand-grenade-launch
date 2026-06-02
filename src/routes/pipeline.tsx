@@ -667,6 +667,60 @@ function PipelineView() {
     };
   }, [sessionId, retryNonce]);
 
+  // ── Source-of-truth sync ───────────────────────────────────────────────
+  // Supabase is the source of truth for all stage outputs. Display state
+  // re-syncs whenever the session row changes (via initial load, retry,
+  // realtime UPDATE, or manual refresh). The `if (value)` guard ensures we
+  // never clobber a streaming buffer with a null DB value mid-stream; once
+  // the streamer saves to Supabase, the session updates and local state
+  // converges to the final saved value.
+  useEffect(() => { if (session?.stage_1_output) setStage1Output(session.stage_1_output); }, [session?.stage_1_output]);
+  useEffect(() => { if (session?.stage_1b_output) setStage1bOutput(session.stage_1b_output); }, [session?.stage_1b_output]);
+  useEffect(() => { if (session?.stage_2_output) setStage2Output(session.stage_2_output); }, [session?.stage_2_output]);
+  useEffect(() => { if (session?.stage_3_output) setStage3Output(session.stage_3_output); }, [session?.stage_3_output]);
+  useEffect(() => { if (session?.stage_4_output) setStage4Output(session.stage_4_output); }, [session?.stage_4_output]);
+  useEffect(() => { if (session?.stage_5_output) setStage5Output(session.stage_5_output); }, [session?.stage_5_output]);
+  useEffect(() => { if (session?.stage_6_output) setStage6Output(session.stage_6_output); }, [session?.stage_6_output]);
+  useEffect(() => { if (session?.stage_7_output) setStage7Output(session.stage_7_output); }, [session?.stage_7_output]);
+  useEffect(() => { if (session?.stage_8_output) setStage8Output(session.stage_8_output); }, [session?.stage_8_output]);
+  useEffect(() => { if (session?.stage_9_output) setStage9Output(session.stage_9_output); }, [session?.stage_9_output]);
+  useEffect(() => { if (session?.stage_10_output) setStage10Output(session.stage_10_output); }, [session?.stage_10_output]);
+  useEffect(() => { if (session?.stage_11_output) setStage11Output(session.stage_11_output); }, [session?.stage_11_output]);
+  useEffect(() => { if (session?.stage_12_output) setStage12Output(session.stage_12_output); }, [session?.stage_12_output]);
+  useEffect(() => { if (session?.stage_13_output) setStage13Output(session.stage_13_output); }, [session?.stage_13_output]);
+  useEffect(() => { if (session?.stage_13b_output) setStage13bOutput(session.stage_13b_output); }, [session?.stage_13b_output]);
+  useEffect(() => { if (session?.stage_14_output) setStage14Output(session.stage_14_output); }, [session?.stage_14_output]);
+  useEffect(() => { if (session?.stage_14b_output) setStage14bOutput(session.stage_14b_output); }, [session?.stage_14b_output]);
+  useEffect(() => { if (session?.stage_14c_output) setStage14cOutput(session.stage_14c_output); }, [session?.stage_14c_output]);
+  useEffect(() => { if (session?.stage_15_output) setStage15Output(session.stage_15_output); }, [session?.stage_15_output]);
+  useEffect(() => { if (session?.stage_16_consulting_output) setStage16Output(session.stage_16_consulting_output); }, [session?.stage_16_consulting_output]);
+
+  // Realtime: any server-side write to this session row triggers a fresh
+  // SELECT, which updates `session`, which fires the sync effects above so
+  // display reflects Supabase.
+  useEffect(() => {
+    if (!sessionId) return;
+    const refetch = async () => {
+      const { data } = await supabase
+        .from("sessions")
+        .select(
+          "id, brand_name, category, strategic_mode, current_stage, status, stage_1_output, stage_1_tension_score, stage_1b_required, stage_1b_output, stage_1_error, stage_2_output, stage_2_error, stage_3_output, stage_3_error, stage_4_output, stage_4_error, stage_5_output, stage_5_error, stage_6_output, stage_6_error, stage_7_output, stage_7_error, stage_8_output, stage_8_error, stage_9_output, stage_9_error, stage_10_output, stage_10_error, stage_11_output, stage_11_error, stage_12_output, stage_12_error, stage_13_output, stage_13_error, stage_13b_output, stage_13b_error, stage_14_output, stage_14_error, stage_14b_output, stage_14b_error, stage_14c_output, stage_14c_error, stage_15_output, stage_15_error, stage_16_consulting_output, stage_16_error, brand_intelligence, selected_smp, selected_smp_field_name, checkpoint_b_confirmed, checkpoint_c_confirmed, retry_status",
+        )
+        .eq("id", sessionId)
+        .single();
+      if (data) setSession(data as SessionData);
+    };
+    const channel = supabase
+      .channel(`pipeline-session:${sessionId}`)
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "sessions", filter: `id=eq.${sessionId}` },
+        () => { void refetch(); },
+      )
+      .subscribe();
+    return () => { void supabase.removeChannel(channel); };
+  }, [sessionId]);
+
   // Trigger Stage 1 when session loads (or on retry).
   useEffect(() => {
     if (!sessionId || !session) return;

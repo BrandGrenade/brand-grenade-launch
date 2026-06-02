@@ -498,6 +498,22 @@ function DetonationPage() {
     return () => { cancelled = true; };
   }, [sessionId]);
 
+  // Realtime: Supabase is the source of truth. Any server-side write to this
+  // session row (stage saves, retries, selections) propagates here so all
+  // child display state re-syncs via the session prop.
+  useEffect(() => {
+    if (!sessionId) return;
+    const channel = supabase
+      .channel(`detonation-session:${sessionId}`)
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "sessions", filter: `id=eq.${sessionId}` },
+        () => { void refresh(); },
+      )
+      .subscribe();
+    return () => { void supabase.removeChannel(channel); };
+  }, [sessionId, refresh]);
+
   useEffect(() => {
     if (!isAuthReady || !user || !session) return;
     if (session.user_id !== user.id) return;
@@ -659,11 +675,14 @@ function Stage17({ session, onChange, goNext }: { session: SessionRow; onChange:
   const [redirects, setRedirects] = useState<Record<string, string>>({});
   const [autoTriggered, setAutoTriggered] = useState(false);
 
+  // Source of truth: Supabase. Re-sync display whenever the session row updates.
+  useEffect(() => { setOutput(session.stage_17_output); }, [session.stage_17_output]);
+
   useEffect(() => {
-    if (output === null) {
+    if (output === null && !session.stage_17_output) {
       load({ data: { sessionId: session.id } }).then((r) => r.output && setOutput(r.output)).catch(() => {});
     }
-  }, [output, load, session.id]);
+  }, [output, load, session.id, session.stage_17_output]);
 
   const cards = useMemo(() => splitCardsLocal(output ?? ""), [output]);
   useEffect(() => {
@@ -770,9 +789,11 @@ function Stage17b({ session, onChange, goNext }: { session: SessionRow; onChange
   const [err, setErr] = useState<string | null>(null);
   const [autoTriggered, setAutoTriggered] = useState(false);
 
+  useEffect(() => { setOutput(session.stage_17b_output); }, [session.stage_17b_output]);
+
   useEffect(() => {
-    if (output === null) load({ data: { sessionId: session.id } }).then((r) => r.output && setOutput(r.output)).catch(() => {});
-  }, [output, load, session.id]);
+    if (output === null && !session.stage_17b_output) load({ data: { sessionId: session.id } }).then((r) => r.output && setOutput(r.output)).catch(() => {});
+  }, [output, load, session.id, session.stage_17b_output]);
 
   const handleRun = async () => {
     setBusy(true); setErr(null);
@@ -852,9 +873,11 @@ function Stage18({ session, onChange, goNext }: { session: SessionRow; onChange:
   const [redirects, setRedirects] = useState<Record<string, string>>({});
   const [courageDismissed, setCourageDismissed] = useState(false);
 
+  useEffect(() => { setOutput(session.stage_18_output); }, [session.stage_18_output]);
+
   useEffect(() => {
-    if (output === null) load({ data: { sessionId: session.id } }).then((r) => r.output && setOutput(r.output)).catch(() => {});
-  }, [output, load, session.id]);
+    if (output === null && !session.stage_18_output) load({ data: { sessionId: session.id } }).then((r) => r.output && setOutput(r.output)).catch(() => {});
+  }, [output, load, session.id, session.stage_18_output]);
 
   const cards = useMemo(() => splitCardsLocal(output ?? ""), [output]);
   useEffect(() => {
@@ -997,9 +1020,11 @@ function Stage19({ session, onChange, goNext }: { session: SessionRow; onChange:
   const [autoTriggered, setAutoTriggered] = useState(false);
   const [stage19Checked, setStage19Checked] = useState<Record<string, boolean>>({});
 
+  useEffect(() => { setOutput(session.stage_19_output); }, [session.stage_19_output]);
+
   useEffect(() => {
-    if (output === null) load({ data: { sessionId: session.id } }).then((r) => r.output && setOutput(r.output)).catch(() => {});
-  }, [output, load, session.id]);
+    if (output === null && !session.stage_19_output) load({ data: { sessionId: session.id } }).then((r) => r.output && setOutput(r.output)).catch(() => {});
+  }, [output, load, session.id, session.stage_19_output]);
 
   const handleRun = async () => {
     setBusy(true); setErr(null);
@@ -1095,11 +1120,14 @@ function Stage20({ session, onChange, goNext }: { session: SessionRow; onChange:
   const [err, setErr] = useState<string | null>(null);
   const [autoTriggered, setAutoTriggered] = useState(false);
 
+  useEffect(() => { setOutput(session.stage_20_output); }, [session.stage_20_output]);
+  useEffect(() => { setApproved(Boolean(session.stage_20_approved)); }, [session.stage_20_approved]);
+
   useEffect(() => {
-    if (output === null) load({ data: { sessionId: session.id } }).then((r) => {
+    if (output === null && !session.stage_20_output) load({ data: { sessionId: session.id } }).then((r) => {
       if (r.output) setOutput(r.output); setApproved(r.approved);
     }).catch(() => {});
-  }, [output, load, session.id]);
+  }, [output, load, session.id, session.stage_20_output]);
 
   const sections = useMemo(() => parseStage20Local(output ?? ""), [output]);
   const { score } = useMemo(() => parseScoreLocal(output ?? ""), [output]);
@@ -1284,9 +1312,11 @@ function Stage21({ session, onChange, goNext }: { session: SessionRow; onChange:
   const [expanded, setExpanded] = useState<string | null>(null);
   const [autoTriggered, setAutoTriggered] = useState(false);
 
+  useEffect(() => { setOutputs(session.stage_21_outputs); }, [session.stage_21_outputs]);
+
   useEffect(() => {
-    if (outputs === null) load({ data: { sessionId: session.id } }).then((r) => r.outputs && setOutputs(r.outputs)).catch(() => {});
-  }, [outputs, load, session.id]);
+    if (outputs === null && !session.stage_21_outputs) load({ data: { sessionId: session.id } }).then((r) => r.outputs && setOutputs(r.outputs)).catch(() => {});
+  }, [outputs, load, session.id, session.stage_21_outputs]);
 
   const handleRun = async () => {
     setBusy(true); setErr(null);
@@ -1425,14 +1455,17 @@ function Stage22({ session, onChange }: { session: SessionRow; onChange: () => v
   const [err, setErr] = useState<string | null>(null);
   const [autoTriggered, setAutoTriggered] = useState(false);
 
+  useEffect(() => { setArchitecture(session.stage_22_brand_architecture); }, [session.stage_22_brand_architecture]);
+  useEffect(() => { setAssets(session.stage_22_distinctive_assets); }, [session.stage_22_distinctive_assets]);
+
   useEffect(() => {
-    if (architecture === null && assets === null) {
+    if (architecture === null && assets === null && !session.stage_22_brand_architecture && !session.stage_22_distinctive_assets) {
       load({ data: { sessionId: session.id } }).then((r) => {
         if (r.architecture) setArchitecture(r.architecture);
         if (r.assets) setAssets(r.assets);
       }).catch(() => {});
     }
-  }, [architecture, assets, load, session.id]);
+  }, [architecture, assets, load, session.id, session.stage_22_brand_architecture, session.stage_22_distinctive_assets]);
 
   const handleRun = async () => {
     setBusy(true); setErr(null);
