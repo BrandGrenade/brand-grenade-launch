@@ -902,6 +902,8 @@ function Stage18({ session, onChange, goNext }: { session: SessionRow; onChange:
     finally { setBusy(false); }
   };
 
+  const selectedMarkdown = session.stage_18_selected_detonation ?? null;
+
   return (
     <section>
       <SectionTitle kicker="STAGE 18" title="The Detonation" subtitle="Three Detonation candidates. Uncheck any to regenerate; add a redirect to steer the rewrite." />
