@@ -91,6 +91,7 @@ type SessionRow = {
   stage_19_output: string | null;
   stage_20_output: string | null;
   stage_21_outputs: Record<string, string> | null;
+  stage_22_output: string | null;
   stage_22_brand_architecture: string | null;
   stage_22_distinctive_assets: string | null;
 };
