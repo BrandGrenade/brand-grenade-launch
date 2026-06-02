@@ -609,7 +609,7 @@ function CompletePage() {
             className="text-label flex w-full items-center justify-between border-t border-border py-4 text-left transition-colors"
             style={{ color: "var(--color-text-tertiary)" }}
           >
-            <span>OPEN ENGINE ROOM</span>
+            <span>OPEN STRATEGY ROOM</span>
             <span
               style={{
                 transition: "transform 200ms",
@@ -653,7 +653,7 @@ function CompletePage() {
                     onClick={() => setModalStage(name)}
                     className="text-body-sm font-medium text-primary transition-colors hover:text-primary-hover"
                   >
-                    Open in Engine Room
+                    Open in Strategy Room
                   </button>
                 </li>
               ))}
