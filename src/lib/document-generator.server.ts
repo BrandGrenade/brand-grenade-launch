@@ -79,7 +79,7 @@ export function getSectionDefs(format: DocFormat, session: SessionLike): Section
   // the model to draw on general knowledge instead of receiving empty context.
   const situationUser = `Brand: ${brand}
 Category: ${category}
-Brief: ${(session.stage_1_output ?? "").substring(0, 2000)}
+Brief: ${stripStage1Internals(session.stage_1_output).substring(0, 2000)}
 Write the opening argument for why ${brand} in ${category} faces a critical strategic moment right now. If no brief context is available, draw on general knowledge of this brand and category. Three paragraphs. 350 words maximum. Board level.`;
 
   const categoryUser = `Brand: ${brand}
