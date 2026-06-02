@@ -351,6 +351,29 @@ function stripCardTitle(markdown: string, name: string): string {
   return stripped.replace(/^##\s+.+\n?/, "").trim();
 }
 
+// Generic: strip any of the given leading label lines from content so a
+// component-rendered header is not duplicated by the raw text below it.
+// Applied at render sites where a header chip/title is shown above raw
+// model output that may also emit the same label.
+function stripLeadingLabels(content: string, labels: string[]): string {
+  if (!content) return content;
+  let out = content.replace(/^\uFEFF/, "").trimStart();
+  const escaped = labels
+    .filter(Boolean)
+    .map((l) => l.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+  if (escaped.length === 0) return out;
+  const re = new RegExp(
+    `^(?:#{1,4}\\s*|\\*+\\s*)?(?:${escaped.join("|")})\\s*:?\\s*\\n+`,
+    "i",
+  );
+  for (let i = 0; i < 3; i++) {
+    const next = out.replace(re, "");
+    if (next === out) break;
+    out = next.trimStart();
+  }
+  return out;
+}
+
 // Brief Quality Score parsing (mirrors server helper)
 type LocalScore = {
   emotional_clarity: number | null;
@@ -1404,7 +1427,7 @@ function Stage21({ session, onChange, goNext }: { session: SessionRow; onChange:
                   </button>
                   {isOpen && (
                     <div style={{ marginTop: 16, paddingTop: 16, borderTop: `1px solid ${AMBER}33` }}>
-                      <RichOutput text={body} />
+                      <RichOutput text={stripLeadingLabels(body, [channel, "CHANNEL BRIEF", role])} />
                     </div>
                   )}
                   <div style={{ marginTop: 16, display: "flex", justifyContent: "flex-end" }}>
@@ -1544,7 +1567,7 @@ function Stage22({ session, onChange }: { session: SessionRow; onChange: () => v
                 letterSpacing: "0.18em", marginBottom: 16, fontFamily: "'DM Mono', monospace", fontWeight: 500,
               }}>CONCEPTUAL ASSETS</div>
               <div style={{ backgroundColor: "#111111", border: "1px solid #2A2A2A", borderRadius: 8, padding: 24 }}>
-                <RichOutput text={assets} />
+                <RichOutput text={stripLeadingLabels(assets, ["CONCEPTUAL ASSETS", "DISTINCTIVE ASSETS", "DISTINCTIVE ASSET ARCHITECTURE", "ASSETS"])} />
               </div>
             </div>
           )}
