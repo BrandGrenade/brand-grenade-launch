@@ -934,24 +934,28 @@ function Stage18({ session, onChange, goNext }: { session: SessionRow; onChange:
               </div>
             </div>
           )}
-          {cards.map((c) => (
-            <DetonationOutputCard
-              key={c.id}
-              cardId={c.id}
-              title={c.name}
-              content={<RichOutput text={stripCardTitle(c.markdown, c.name)} />}
-              isChecked={checked[c.id] ?? false}
-              onCheckChange={(id, v) => setChecked((p) => ({ ...p, [id]: v }))}
-              redirectText={redirects[c.id] ?? ""}
-              onRedirectChange={(id, v) => setRedirects((p) => ({ ...p, [id]: v }))}
-              smp={session.selected_smp}
-              showCheckbox={true}
-            >
-              <AmberButton onClick={() => handleSelect(c.markdown)} disabled={busy}>
-                {busy && <Spinner />} {busy ? "Loading..." : "Select This Detonation"}
-              </AmberButton>
-            </DetonationOutputCard>
-          ))}
+          {cards.map((c) => {
+            const isSelected = selectedMarkdown !== null && selectedMarkdown.trim() === c.markdown.trim();
+            return (
+              <DetonationOutputCard
+                key={c.id}
+                cardId={c.id}
+                title={c.name}
+                content={<RichOutput text={stripCardTitle(c.markdown, c.name)} />}
+                isChecked={checked[c.id] ?? false}
+                onCheckChange={(id, v) => setChecked((p) => ({ ...p, [id]: v }))}
+                redirectText={redirects[c.id] ?? ""}
+                onRedirectChange={(id, v) => setRedirects((p) => ({ ...p, [id]: v }))}
+                smp={session.selected_smp}
+                showCheckbox={true}
+                selected={isSelected}
+              >
+                <AmberButton onClick={() => handleSelect(c.markdown)} disabled={busy}>
+                  {busy && <Spinner />} {isSelected ? "Selected ✓" : (busy ? "Loading..." : "Select This Detonation")}
+                </AmberButton>
+              </DetonationOutputCard>
+            );
+          })}
           <div style={{ marginTop: 24, display: "flex", gap: 12, justifyContent: "flex-end" }}>
             <AmberButton variant="ghost" onClick={() => handleRetry(false)} disabled={busy}>
               {busy && <Spinner />} Retry This Stage
