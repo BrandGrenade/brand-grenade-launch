@@ -527,6 +527,7 @@ function CompletePage() {
           // (openPhase1Document), so Phase 2 unlocks as soon as an SMP
           // is selected — no signed-URL readiness check required.
           if (!hasSmp) return null;
+          if (session.phase_2_status === "complete" || session.stage_22_output) return null;
           // TODO: reinstate owner check
           // before commercial deployment
           const isOwner = true;
