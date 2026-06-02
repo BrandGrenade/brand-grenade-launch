@@ -460,7 +460,7 @@ function buildActions(s: DbSession, status: UIStatus, onDelete: () => void): Act
     return [
       {
         key: "engine",
-        label: "Engine Room",
+        label: "Strategy Room",
         color: "#8A8680",
         hoverBg: "#1C1C1C",
         icon: <Grid2x2 size={14} />,

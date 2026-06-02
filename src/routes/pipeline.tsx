@@ -108,11 +108,11 @@ export const Route = createFileRoute("/pipeline")({
   component: PipelineView,
   head: () => ({
     meta: [
-      { title: "Engine Room — Brand Grenade" },
+      { title: "Strategy Room — Brand Grenade" },
       {
         name: "description",
         content:
-          "20-stage strategy engine room. Track stages, review outputs, and act on human checkpoints.",
+          "20-stage strategy room. Track stages, review outputs, and act on human checkpoints.",
       },
     ],
   }),
@@ -1526,7 +1526,7 @@ function PipelineView() {
 
   // Dynamic document title: "[Brand] — Stage X — Brand Grenade"
   useEffect(() => {
-    document.title = `${brandLabel} Engine Room — Stage ${Math.max(1, currentMainNumber)} — Brand Grenade`;
+    document.title = `${brandLabel} Strategy Room — Stage ${Math.max(1, currentMainNumber)} — Brand Grenade`;
   }, [brandLabel, currentMainNumber]);
 
   // Keyboard shortcut: Cmd/Ctrl+Enter confirms standard checkpoints.
@@ -2018,7 +2018,7 @@ function Breadcrumb({
         <span>→</span>
         <span className="text-text-secondary truncate">{brand}</span>
         <span>→</span>
-        <span>Engine Room</span>
+        <span>Strategy Room</span>
       </nav>
 
       <div className="ml-4 flex shrink-0 items-center gap-3">
