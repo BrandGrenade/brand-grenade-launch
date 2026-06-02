@@ -251,6 +251,10 @@ function splitCardsLocal(text: string): LocalCard[] {
   let matches: Array<{ name: string; start: number }> = [];
   matches = collect(new RegExp(`(?:^|\\n)\\s*(${NAME})\\s*\\n\\s*\\n\\s*WHY THIS TERRITORY`, "gm"));
   if (matches.length === 0) {
+    // Stage 18: "DETONATION ONE: KEEP YOUR OPTIONS OPEN" — name includes a colon.
+    matches = collect(/(?:^|\n)\s*(DETONATION\s+[A-Z]+\s*:\s*[^\n]+?)\s*\n\s*\n\s*WHY THIS DETONATION/g);
+  }
+  if (matches.length === 0) {
     matches = collect(new RegExp(`(?:^|\\n)\\s*(${NAME})\\s*\\n\\s*\\n\\s*WHY THIS DETONATION`, "gm"));
   }
   if (matches.length === 0) {
@@ -892,17 +896,26 @@ function Stage18({ session, onChange, goNext }: { session: SessionRow; onChange:
     finally { setBusy(false); }
   };
 
+  // Extract the line following "THE DETONATION STATEMENT:" — that's the
+  // canonical statement to persist. Falls back to the full card markdown.
+  const extractStatement = (markdown: string): string => {
+    const m = markdown.match(/THE DETONATION STATEMENT:\s*\n+\s*([^\n]+(?:\n(?!\s*\n)[^\n]+)*)/i);
+    return m ? m[1].trim() : markdown.trim();
+  };
+
   const handleSelect = async (markdown: string) => {
     setBusy(true); setErr(null);
     try {
-      await select({ data: { sessionId: session.id, detonationMarkdown: markdown } });
+      const statement = extractStatement(markdown);
+      await select({ data: { sessionId: session.id, detonationMarkdown: statement } });
       await onChange();
       goNext();
     } catch (e) { setErr(e instanceof Error ? e.message : "Selection failed"); }
     finally { setBusy(false); }
   };
 
-  const selectedMarkdown = session.stage_18_selected_detonation ?? null;
+  const selectedStatement = session.stage_18_selected_detonation ?? null;
+
 
   return (
     <section>
@@ -935,7 +948,10 @@ function Stage18({ session, onChange, goNext }: { session: SessionRow; onChange:
             </div>
           )}
           {cards.map((c) => {
-            const isSelected = selectedMarkdown !== null && selectedMarkdown.trim() === c.markdown.trim();
+            const cardStatement = extractStatement(c.markdown);
+            const isSelected =
+              selectedStatement !== null &&
+              selectedStatement.trim() === cardStatement.trim();
             return (
               <DetonationOutputCard
                 key={c.id}
@@ -950,7 +966,7 @@ function Stage18({ session, onChange, goNext }: { session: SessionRow; onChange:
                 showCheckbox={true}
                 selected={isSelected}
               >
-                <AmberButton onClick={() => handleSelect(c.markdown)} disabled={busy}>
+                <AmberButton variant="ghost" onClick={() => handleSelect(c.markdown)} disabled={busy}>
                   {busy && <Spinner />} {isSelected ? "Selected ✓" : (busy ? "Loading..." : "Select This Detonation")}
                 </AmberButton>
               </DetonationOutputCard>

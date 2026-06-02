@@ -34,6 +34,10 @@ export function splitCards(text: string): Card[] {
   let matches: Array<{ name: string; start: number }> = [];
   matches = collect(new RegExp(`(?:^|\\n)\\s*(${NAME})\\s*\\n\\s*\\n\\s*WHY THIS TERRITORY`, "gm"));
   if (matches.length === 0) {
+    // Stage 18 pattern: "DETONATION ONE: KEEP YOUR OPTIONS OPEN" — name contains a colon.
+    matches = collect(/(?:^|\n)\s*(DETONATION\s+[A-Z]+\s*:\s*[^\n]+?)\s*\n\s*\n\s*WHY THIS DETONATION/g);
+  }
+  if (matches.length === 0) {
     matches = collect(new RegExp(`(?:^|\\n)\\s*(${NAME})\\s*\\n\\s*\\n\\s*WHY THIS DETONATION`, "gm"));
   }
   if (matches.length === 0) {
