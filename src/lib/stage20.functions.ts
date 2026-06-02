@@ -220,8 +220,17 @@ export const regenerateStage20Section = createServerFn({ method: "POST" })
       stageName: "Master Detonation Brief",
     });
 
+    // Strip any leading label the model may have re-emitted (e.g. "THE DETONATION"
+    // or "THE DETONATION:") despite the prompt instruction. Repeats once in case
+    // the model emits both the canonical label and a sub-label.
+    const labelEsc = label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const stripLeadingLabel = (s: string) =>
+      s.replace(new RegExp(`^\\s*${labelEsc}\\s*:?\\s*\\n+`, "i"), "");
+    let cleaned = stripLeadingLabel(newContent.trim());
+    cleaned = stripLeadingLabel(cleaned).trim();
+
     parsed.sections = parsed.sections.map((s) =>
-      s.id === data.sectionId ? { ...s, content: newContent.trim() } : s,
+      s.id === data.sectionId ? { ...s, content: cleaned } : s,
     );
 
     // Recompute score against new content. We re-parse the existing score
