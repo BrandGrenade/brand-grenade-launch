@@ -1427,7 +1427,7 @@ function Stage21({ session, onChange, goNext }: { session: SessionRow; onChange:
                   </button>
                   {isOpen && (
                     <div style={{ marginTop: 16, paddingTop: 16, borderTop: `1px solid ${AMBER}33` }}>
-                      <RichOutput text={body} />
+                      <RichOutput text={stripLeadingLabels(body, [channel, "CHANNEL BRIEF", role])} />
                     </div>
                   )}
                   <div style={{ marginTop: 16, display: "flex", justifyContent: "flex-end" }}>
