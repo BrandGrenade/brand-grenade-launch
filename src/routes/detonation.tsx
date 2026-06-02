@@ -896,17 +896,26 @@ function Stage18({ session, onChange, goNext }: { session: SessionRow; onChange:
     finally { setBusy(false); }
   };
 
+  // Extract the line following "THE DETONATION STATEMENT:" — that's the
+  // canonical statement to persist. Falls back to the full card markdown.
+  const extractStatement = (markdown: string): string => {
+    const m = markdown.match(/THE DETONATION STATEMENT:\s*\n+\s*([^\n]+(?:\n(?!\s*\n)[^\n]+)*)/i);
+    return m ? m[1].trim() : markdown.trim();
+  };
+
   const handleSelect = async (markdown: string) => {
     setBusy(true); setErr(null);
     try {
-      await select({ data: { sessionId: session.id, detonationMarkdown: markdown } });
+      const statement = extractStatement(markdown);
+      await select({ data: { sessionId: session.id, detonationMarkdown: statement } });
       await onChange();
       goNext();
     } catch (e) { setErr(e instanceof Error ? e.message : "Selection failed"); }
     finally { setBusy(false); }
   };
 
-  const selectedMarkdown = session.stage_18_selected_detonation ?? null;
+  const selectedStatement = session.stage_18_selected_detonation ?? null;
+
 
   return (
     <section>
