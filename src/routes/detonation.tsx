@@ -251,6 +251,10 @@ function splitCardsLocal(text: string): LocalCard[] {
   let matches: Array<{ name: string; start: number }> = [];
   matches = collect(new RegExp(`(?:^|\\n)\\s*(${NAME})\\s*\\n\\s*\\n\\s*WHY THIS TERRITORY`, "gm"));
   if (matches.length === 0) {
+    // Stage 18: "DETONATION ONE: KEEP YOUR OPTIONS OPEN" — name includes a colon.
+    matches = collect(/(?:^|\n)\s*(DETONATION\s+[A-Z]+\s*:\s*[^\n]+?)\s*\n\s*\n\s*WHY THIS DETONATION/g);
+  }
+  if (matches.length === 0) {
     matches = collect(new RegExp(`(?:^|\\n)\\s*(${NAME})\\s*\\n\\s*\\n\\s*WHY THIS DETONATION`, "gm"));
   }
   if (matches.length === 0) {
