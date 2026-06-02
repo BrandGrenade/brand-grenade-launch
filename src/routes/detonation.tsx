@@ -498,6 +498,22 @@ function DetonationPage() {
     return () => { cancelled = true; };
   }, [sessionId]);
 
+  // Realtime: Supabase is the source of truth. Any server-side write to this
+  // session row (stage saves, retries, selections) propagates here so all
+  // child display state re-syncs via the session prop.
+  useEffect(() => {
+    if (!sessionId) return;
+    const channel = supabase
+      .channel(`detonation-session:${sessionId}`)
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "sessions", filter: `id=eq.${sessionId}` },
+        () => { void refresh(); },
+      )
+      .subscribe();
+    return () => { void supabase.removeChannel(channel); };
+  }, [sessionId, refresh]);
+
   useEffect(() => {
     if (!isAuthReady || !user || !session) return;
     if (session.user_id !== user.id) return;
