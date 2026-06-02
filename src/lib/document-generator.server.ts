@@ -51,6 +51,12 @@ function slice(value: string | null | undefined, n: number): string {
   return (value ?? "").substring(0, n);
 }
 
+const STAGE1_INTERNAL_LINE = /(PIPELINE DATA HEADER|BRIEF DEPTH LEVEL:|CATEGORY KNOWLEDGE CONFIDENCE:|BRIEF ELEMENTS PRESENT:|ASSUMPTIONS MADE:)/i;
+
+function stripStage1Internals(value: string | null | undefined): string {
+  return (value ?? "").split("\n").filter((l) => !STAGE1_INTERNAL_LINE.test(l)).join("\n");
+}
+
 export function getSectionDefs(format: DocFormat, session: SessionLike): SectionDef[] {
   const brand = session.brand_name ?? "Untitled Brand";
   const category = session.category ?? "";
