@@ -85,6 +85,12 @@ function sanitise(t: string | null | undefined): string {
     .replace(/\u2026/g, "...");
 }
 
+const STAGE1_INTERNAL_LINE = /(PIPELINE DATA HEADER|BRIEF DEPTH LEVEL:|CATEGORY KNOWLEDGE CONFIDENCE:|BRIEF ELEMENTS PRESENT:|ASSUMPTIONS MADE:)/i;
+
+function stripStage1Internals(text: string): string {
+  return text.split("\n").filter((l) => !STAGE1_INTERNAL_LINE.test(l)).join("\n");
+}
+
 function baseStyles(): string {
   return `@page { size: A4; margin: 20mm 22mm 20mm 22mm; }
 * { margin: 0; padding: 0; box-sizing: border-box; }
