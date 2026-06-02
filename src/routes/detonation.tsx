@@ -1312,9 +1312,11 @@ function Stage21({ session, onChange, goNext }: { session: SessionRow; onChange:
   const [expanded, setExpanded] = useState<string | null>(null);
   const [autoTriggered, setAutoTriggered] = useState(false);
 
+  useEffect(() => { setOutputs(session.stage_21_outputs); }, [session.stage_21_outputs]);
+
   useEffect(() => {
-    if (outputs === null) load({ data: { sessionId: session.id } }).then((r) => r.outputs && setOutputs(r.outputs)).catch(() => {});
-  }, [outputs, load, session.id]);
+    if (outputs === null && !session.stage_21_outputs) load({ data: { sessionId: session.id } }).then((r) => r.outputs && setOutputs(r.outputs)).catch(() => {});
+  }, [outputs, load, session.id, session.stage_21_outputs]);
 
   const handleRun = async () => {
     setBusy(true); setErr(null);
