@@ -1020,9 +1020,11 @@ function Stage19({ session, onChange, goNext }: { session: SessionRow; onChange:
   const [autoTriggered, setAutoTriggered] = useState(false);
   const [stage19Checked, setStage19Checked] = useState<Record<string, boolean>>({});
 
+  useEffect(() => { setOutput(session.stage_19_output); }, [session.stage_19_output]);
+
   useEffect(() => {
-    if (output === null) load({ data: { sessionId: session.id } }).then((r) => r.output && setOutput(r.output)).catch(() => {});
-  }, [output, load, session.id]);
+    if (output === null && !session.stage_19_output) load({ data: { sessionId: session.id } }).then((r) => r.output && setOutput(r.output)).catch(() => {});
+  }, [output, load, session.id, session.stage_19_output]);
 
   const handleRun = async () => {
     setBusy(true); setErr(null);
