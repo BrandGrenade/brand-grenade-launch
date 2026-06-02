@@ -514,6 +514,10 @@ function PipelineView() {
 
   const [statuses, setStatuses] = useState(initialStatuses);
   const [selectedId, setSelectedId] = useState("01");
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [selectedId]);
   const [rationaleForId, setRationaleForId] = useState<string | null>(null);
   const [intelSubmitted, setIntelSubmitted] = useState(false);
   const selected = STAGES.find((s) => s.id === selectedId)!;
