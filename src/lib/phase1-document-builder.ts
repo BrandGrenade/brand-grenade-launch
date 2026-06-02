@@ -244,7 +244,8 @@ export function buildPhase1Document(session: Phase1Session, format: Phase1Format
     toc(sections, session) +
     sections
       .map((s) => {
-        const raw = (session[s.key] ?? "").toString();
+        let raw = (session[s.key] ?? "").toString();
+        if (s.key === "stage_1_output") raw = stripStage1Internals(raw);
         if (!raw.trim()) return "";
         return `<div class="section"><div class="part-label">${escapeHtml(s.label)}</div><h2>${escapeHtml(s.title)}</h2>${md(sanitise(raw))}</div>`;
       })
