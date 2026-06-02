@@ -16,6 +16,7 @@ export interface DetonationOutputCardProps {
   smp?: string | null;
   children?: React.ReactNode;
   showCheckbox?: boolean;
+  selected?: boolean;
 }
 
 const ACCENT = "#D4924A";
