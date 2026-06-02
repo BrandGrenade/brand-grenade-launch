@@ -667,6 +667,53 @@ function PipelineView() {
     };
   }, [sessionId, retryNonce]);
 
+  // ── Source-of-truth sync ───────────────────────────────────────────────
+  // Supabase is the source of truth for all stage outputs. Display state
+  // re-syncs whenever the session row changes (via initial load, retry,
+  // realtime UPDATE, or manual refresh). The `if (value)` guard ensures we
+  // never clobber a streaming buffer with a null DB value mid-stream; once
+  // the streamer saves to Supabase, the session updates and local state
+  // converges to the final saved value.
+  useEffect(() => { if (session?.stage_1_output) setStage1Output(session.stage_1_output); }, [session?.stage_1_output]);
+  useEffect(() => { if (session?.stage_1b_output) setStage1bOutput(session.stage_1b_output); }, [session?.stage_1b_output]);
+  useEffect(() => { if (session?.stage_2_output) setStage2Output(session.stage_2_output); }, [session?.stage_2_output]);
+  useEffect(() => { if (session?.stage_3_output) setStage3Output(session.stage_3_output); }, [session?.stage_3_output]);
+  useEffect(() => { if (session?.stage_4_output) setStage4Output(session.stage_4_output); }, [session?.stage_4_output]);
+  useEffect(() => { if (session?.stage_5_output) setStage5Output(session.stage_5_output); }, [session?.stage_5_output]);
+  useEffect(() => { if (session?.stage_6_output) setStage6Output(session.stage_6_output); }, [session?.stage_6_output]);
+  useEffect(() => { if (session?.stage_7_output) setStage7Output(session.stage_7_output); }, [session?.stage_7_output]);
+  useEffect(() => { if (session?.stage_8_output) setStage8Output(session.stage_8_output); }, [session?.stage_8_output]);
+  useEffect(() => { if (session?.stage_9_output) setStage9Output(session.stage_9_output); }, [session?.stage_9_output]);
+  useEffect(() => { if (session?.stage_10_output) setStage10Output(session.stage_10_output); }, [session?.stage_10_output]);
+  useEffect(() => { if (session?.stage_11_output) setStage11Output(session.stage_11_output); }, [session?.stage_11_output]);
+  useEffect(() => { if (session?.stage_12_output) setStage12Output(session.stage_12_output); }, [session?.stage_12_output]);
+  useEffect(() => { if (session?.stage_13_output) setStage13Output(session.stage_13_output); }, [session?.stage_13_output]);
+  useEffect(() => { if (session?.stage_13b_output) setStage13bOutput(session.stage_13b_output); }, [session?.stage_13b_output]);
+  useEffect(() => { if (session?.stage_14_output) setStage14Output(session.stage_14_output); }, [session?.stage_14_output]);
+  useEffect(() => { if (session?.stage_14b_output) setStage14bOutput(session.stage_14b_output); }, [session?.stage_14b_output]);
+  useEffect(() => { if (session?.stage_14c_output) setStage14cOutput(session.stage_14c_output); }, [session?.stage_14c_output]);
+  useEffect(() => { if (session?.stage_15_output) setStage15Output(session.stage_15_output); }, [session?.stage_15_output]);
+  useEffect(() => { if (session?.stage_16_consulting_output) setStage16Output(session.stage_16_consulting_output); }, [session?.stage_16_consulting_output]);
+
+  // Realtime: any server-side write to this session row triggers a fresh
+  // SELECT, which updates `session`, which fires the sync effects above so
+  // display reflects Supabase.
+  useEffect(() => {
+    if (!sessionId) return;
+    const channel = supabase
+      .channel(`pipeline-session:${sessionId}`)
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "sessions", filter: `id=eq.${sessionId}` },
+        (payload) => {
+          const row = payload.new as SessionData;
+          if (row) setSession(row);
+        },
+      )
+      .subscribe();
+    return () => { void supabase.removeChannel(channel); };
+  }, [sessionId]);
+
   // Trigger Stage 1 when session loads (or on retry).
   useEffect(() => {
     if (!sessionId || !session) return;
