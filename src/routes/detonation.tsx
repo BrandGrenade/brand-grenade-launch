@@ -466,7 +466,11 @@ function parseStage20Local(output: string): Array<{ id: string; label: string; c
     if (out.find((s) => s.id === cur.id)) continue;
     const next = hits.slice(i + 1).find((hit) => hit.id !== cur.id);
     const end = next ? next.start : body.length;
-    out.push({ id: cur.id, label: cur.label, content: body.slice(cur.bodyStart, end).trim() });
+    out.push({
+      id: cur.id,
+      label: cur.label,
+      content: stripLeadingLabels(body.slice(cur.bodyStart, end).trim(), [cur.label]),
+    });
   }
   return out;
 }
