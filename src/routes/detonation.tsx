@@ -948,7 +948,10 @@ function Stage18({ session, onChange, goNext }: { session: SessionRow; onChange:
             </div>
           )}
           {cards.map((c) => {
-            const isSelected = selectedMarkdown !== null && selectedMarkdown.trim() === c.markdown.trim();
+            const cardStatement = extractStatement(c.markdown);
+            const isSelected =
+              selectedStatement !== null &&
+              selectedStatement.trim() === cardStatement.trim();
             return (
               <DetonationOutputCard
                 key={c.id}
@@ -963,7 +966,7 @@ function Stage18({ session, onChange, goNext }: { session: SessionRow; onChange:
                 showCheckbox={true}
                 selected={isSelected}
               >
-                <AmberButton onClick={() => handleSelect(c.markdown)} disabled={busy}>
+                <AmberButton variant="ghost" onClick={() => handleSelect(c.markdown)} disabled={busy}>
                   {busy && <Spinner />} {isSelected ? "Selected ✓" : (busy ? "Loading..." : "Select This Detonation")}
                 </AmberButton>
               </DetonationOutputCard>
