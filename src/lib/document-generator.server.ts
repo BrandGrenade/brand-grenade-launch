@@ -61,7 +61,7 @@ export function getSectionDefs(format: DocFormat, session: SessionLike): Section
   const brand = session.brand_name ?? "Untitled Brand";
   const category = session.category ?? "";
   const smp = session.selected_smp ?? "";
-  const s1 = slice(session.stage_1_output, 1500);
+  const s1 = slice(stripStage1Internals(session.stage_1_output), 1500);
   const s2 = slice(session.stage_2_output, 3000);
   const s5 = slice(session.stage_5_output, 1500);
   const s7 = slice(session.stage_7_output, 2000);
