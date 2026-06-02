@@ -210,12 +210,14 @@ export function parseStage20Output(output: string): Stage20Parsed {
   const sections: Array<{ id: string; label: string; content: string }> = [];
   for (let i = 0; i < matches.length; i++) {
     const cur = matches[i];
-    const next = matches[i + 1];
+    if (sections.find((s) => s.id === cur.id)) continue;
+    const next = matches.slice(i + 1).find((hit) => hit.id !== cur.id);
     const end = next ? next.start : briefPart.length;
     const content = briefPart.slice(cur.bodyStart, end).trim();
-    // De-duplicate: only keep the first hit per id (the CSV_TARGET label
-    // appears twice in the defs to tolerate model phrasing).
-    if (sections.find((s) => s.id === cur.id)) continue;
+    // De-duplicate same-section labels without treating them as boundaries.
+    // Some briefs contain an inner label like "THE DETONATION:" immediately
+    // under the canonical "THE DETONATION" heading; that inner label is body
+    // content, not a new empty section.
     sections.push({ id: cur.id, label: cur.label, content });
   }
 
