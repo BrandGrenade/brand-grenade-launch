@@ -2075,6 +2075,7 @@ function LeftPanel({
   progressPct,
   currentMainNumber,
   totalMain,
+  hasBrief,
 }: {
   stages: Stage[];
   statuses: Record<string, StageStatus>;
@@ -2083,7 +2084,9 @@ function LeftPanel({
   progressPct: number;
   currentMainNumber: number;
   totalMain: number;
+  hasBrief: boolean;
 }) {
+  const briefSelected = selectedId === "BRIEF";
   return (
     <aside className="hidden w-[280px] shrink-0 overflow-y-auto border-r border-border bg-background py-6 md:block">
       <header className="px-5 pb-5">
@@ -2104,6 +2107,67 @@ function LeftPanel({
           Stage {currentMainNumber} of {totalMain}
         </p>
       </header>
+
+      {hasBrief && (
+        <div style={{ borderTop: "1px solid var(--color-surface-3)", borderBottom: "1px solid var(--color-surface-3)" }}>
+          <button
+            type="button"
+            onClick={() => onSelect("BRIEF")}
+            className="flex w-full items-center gap-3 px-5 py-2.5 text-left transition-colors"
+            style={{
+              backgroundColor: briefSelected ? tokens.bgTertiary : "transparent",
+              borderLeft: `2px solid ${briefSelected ? tokens.amber : "transparent"}`,
+              cursor: "pointer",
+            }}
+            onMouseEnter={(e) => {
+              if (!briefSelected) e.currentTarget.style.backgroundColor = tokens.bgSecondary;
+            }}
+            onMouseLeave={(e) => {
+              if (!briefSelected) e.currentTarget.style.backgroundColor = "transparent";
+            }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: tokens.amber, flexShrink: 0 }}>
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <polyline points="14 2 14 8 20 8" />
+              <line x1="8" y1="13" x2="16" y2="13" />
+              <line x1="8" y1="17" x2="16" y2="17" />
+            </svg>
+            <span
+              className="shrink-0"
+              style={{
+                fontFamily: `'${tokens.fontMono}', monospace`,
+                color: tokens.muted,
+                minWidth: 28,
+                fontSize: 12,
+              }}
+            >
+              —
+            </span>
+            <span
+              className="flex-1 truncate"
+              style={{
+                fontFamily: `'${tokens.fontBody}', sans-serif`,
+                color: tokens.white,
+                fontWeight: 500,
+                fontStyle: "italic",
+              }}
+            >
+              Brief
+            </span>
+            <span
+              className="text-label shrink-0 rounded-sm px-1.5 py-0.5"
+              style={{
+                backgroundColor: "oklch(0.5 0.09 70 / 0.10)",
+                color: "var(--color-warning)",
+                fontSize: 9,
+              }}
+            >
+              Source
+            </span>
+          </button>
+        </div>
+      )}
+
 
       <ul>
         {stages.map((s) => {
