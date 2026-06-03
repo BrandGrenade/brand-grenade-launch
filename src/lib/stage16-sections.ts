@@ -39,6 +39,12 @@ export interface SectionDef {
 }
 
 const STAGE_16_UNIVERSAL_RULES = `════════════════════════════════════════
+RULE 0 — NO PIPELINE METADATA
+════════════════════════════════════════
+
+Do not include any pipeline metadata, system labels, processing notes, or internal flags in the output. This includes but is not limited to phrases like STRATEGIC MODE APPLIED, BRIEF DEPTH LEVEL, PIPELINE DATA HEADER, CATEGORY KNOWLEDGE CONFIDENCE, or any other label that references the internal system rather than the strategic content. These are internal processing markers and must never appear in client-facing documents.
+
+════════════════════════════════════════
 RULE 1 — NUMBERS RULE
 ════════════════════════════════════════
 
