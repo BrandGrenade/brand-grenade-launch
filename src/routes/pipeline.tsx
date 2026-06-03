@@ -220,6 +220,44 @@ A proposition for Hypernova must:
 - Imply a finance-stack benefit, not a payments benefit`,
 };
 
+function formatSubmittedBriefForStageOutput(text: string): string {
+  const lines = text
+    .replace(/\r\n/g, "\n")
+    .replace(/\u00a0/g, " ")
+    .split("\n");
+  const blocks: string[] = [];
+  let paragraph: string[] = [];
+  const structuralLine = (line: string) =>
+    /^#{1,6}\s/.test(line) ||
+    /^[-*]\s+/.test(line) ||
+    /^\d+[.)]\s+/.test(line) ||
+    /^>\s/.test(line) ||
+    /^---+\s*$/.test(line) ||
+    /^\*\*\*+\s*$/.test(line) ||
+    /^(?:\*\*)?[A-Z0-9][A-Z0-9 \-—&/]{2,}:(?:\*\*)?\s*$/.test(line);
+  const flushParagraph = () => {
+    if (!paragraph.length) return;
+    blocks.push(paragraph.join(" ").replace(/\s+/g, " ").trim());
+    paragraph = [];
+  };
+
+  for (const rawLine of lines) {
+    const line = rawLine.trim();
+    if (!line) {
+      flushParagraph();
+      continue;
+    }
+    if (structuralLine(line)) {
+      flushParagraph();
+      blocks.push(line);
+      continue;
+    }
+    paragraph.push(line);
+  }
+  flushParagraph();
+  return blocks.join("\n\n");
+}
+
 // ────────────────────────────────────────────────────────────────────────────
 // Component
 // ────────────────────────────────────────────────────────────────────────────
@@ -400,7 +438,6 @@ function PipelineView() {
     }
     setStage8KeepNames(new Set(stage8NamesKey.split("|").filter(Boolean)));
   }, [stage8NamesKey]);
-
 
   const resetLocalFromStage = (stageId: string) => {
     if (stageId === "01") {
@@ -696,26 +733,66 @@ function PipelineView() {
   // never clobber a streaming buffer with a null DB value mid-stream; once
   // the streamer saves to Supabase, the session updates and local state
   // converges to the final saved value.
-  useEffect(() => { if (session?.stage_1_output) setStage1Output(session.stage_1_output); }, [session?.stage_1_output]);
-  useEffect(() => { if (session?.stage_1b_output) setStage1bOutput(session.stage_1b_output); }, [session?.stage_1b_output]);
-  useEffect(() => { if (session?.stage_2_output) setStage2Output(session.stage_2_output); }, [session?.stage_2_output]);
-  useEffect(() => { if (session?.stage_3_output) setStage3Output(session.stage_3_output); }, [session?.stage_3_output]);
-  useEffect(() => { if (session?.stage_4_output) setStage4Output(session.stage_4_output); }, [session?.stage_4_output]);
-  useEffect(() => { if (session?.stage_5_output) setStage5Output(session.stage_5_output); }, [session?.stage_5_output]);
-  useEffect(() => { if (session?.stage_6_output) setStage6Output(session.stage_6_output); }, [session?.stage_6_output]);
-  useEffect(() => { if (session?.stage_7_output) setStage7Output(session.stage_7_output); }, [session?.stage_7_output]);
-  useEffect(() => { if (session?.stage_8_output) setStage8Output(session.stage_8_output); }, [session?.stage_8_output]);
-  useEffect(() => { if (session?.stage_9_output) setStage9Output(session.stage_9_output); }, [session?.stage_9_output]);
-  useEffect(() => { if (session?.stage_10_output) setStage10Output(session.stage_10_output); }, [session?.stage_10_output]);
-  useEffect(() => { if (session?.stage_11_output) setStage11Output(session.stage_11_output); }, [session?.stage_11_output]);
-  useEffect(() => { if (session?.stage_12_output) setStage12Output(session.stage_12_output); }, [session?.stage_12_output]);
-  useEffect(() => { if (session?.stage_13_output) setStage13Output(session.stage_13_output); }, [session?.stage_13_output]);
-  useEffect(() => { if (session?.stage_13b_output) setStage13bOutput(session.stage_13b_output); }, [session?.stage_13b_output]);
-  useEffect(() => { if (session?.stage_14_output) setStage14Output(session.stage_14_output); }, [session?.stage_14_output]);
-  useEffect(() => { if (session?.stage_14b_output) setStage14bOutput(session.stage_14b_output); }, [session?.stage_14b_output]);
-  useEffect(() => { if (session?.stage_14c_output) setStage14cOutput(session.stage_14c_output); }, [session?.stage_14c_output]);
-  useEffect(() => { if (session?.stage_15_output) setStage15Output(session.stage_15_output); }, [session?.stage_15_output]);
-  useEffect(() => { if (session?.stage_16_consulting_output) setStage16Output(session.stage_16_consulting_output); }, [session?.stage_16_consulting_output]);
+  useEffect(() => {
+    if (session?.stage_1_output) setStage1Output(session.stage_1_output);
+  }, [session?.stage_1_output]);
+  useEffect(() => {
+    if (session?.stage_1b_output) setStage1bOutput(session.stage_1b_output);
+  }, [session?.stage_1b_output]);
+  useEffect(() => {
+    if (session?.stage_2_output) setStage2Output(session.stage_2_output);
+  }, [session?.stage_2_output]);
+  useEffect(() => {
+    if (session?.stage_3_output) setStage3Output(session.stage_3_output);
+  }, [session?.stage_3_output]);
+  useEffect(() => {
+    if (session?.stage_4_output) setStage4Output(session.stage_4_output);
+  }, [session?.stage_4_output]);
+  useEffect(() => {
+    if (session?.stage_5_output) setStage5Output(session.stage_5_output);
+  }, [session?.stage_5_output]);
+  useEffect(() => {
+    if (session?.stage_6_output) setStage6Output(session.stage_6_output);
+  }, [session?.stage_6_output]);
+  useEffect(() => {
+    if (session?.stage_7_output) setStage7Output(session.stage_7_output);
+  }, [session?.stage_7_output]);
+  useEffect(() => {
+    if (session?.stage_8_output) setStage8Output(session.stage_8_output);
+  }, [session?.stage_8_output]);
+  useEffect(() => {
+    if (session?.stage_9_output) setStage9Output(session.stage_9_output);
+  }, [session?.stage_9_output]);
+  useEffect(() => {
+    if (session?.stage_10_output) setStage10Output(session.stage_10_output);
+  }, [session?.stage_10_output]);
+  useEffect(() => {
+    if (session?.stage_11_output) setStage11Output(session.stage_11_output);
+  }, [session?.stage_11_output]);
+  useEffect(() => {
+    if (session?.stage_12_output) setStage12Output(session.stage_12_output);
+  }, [session?.stage_12_output]);
+  useEffect(() => {
+    if (session?.stage_13_output) setStage13Output(session.stage_13_output);
+  }, [session?.stage_13_output]);
+  useEffect(() => {
+    if (session?.stage_13b_output) setStage13bOutput(session.stage_13b_output);
+  }, [session?.stage_13b_output]);
+  useEffect(() => {
+    if (session?.stage_14_output) setStage14Output(session.stage_14_output);
+  }, [session?.stage_14_output]);
+  useEffect(() => {
+    if (session?.stage_14b_output) setStage14bOutput(session.stage_14b_output);
+  }, [session?.stage_14b_output]);
+  useEffect(() => {
+    if (session?.stage_14c_output) setStage14cOutput(session.stage_14c_output);
+  }, [session?.stage_14c_output]);
+  useEffect(() => {
+    if (session?.stage_15_output) setStage15Output(session.stage_15_output);
+  }, [session?.stage_15_output]);
+  useEffect(() => {
+    if (session?.stage_16_consulting_output) setStage16Output(session.stage_16_consulting_output);
+  }, [session?.stage_16_consulting_output]);
 
   // Realtime: any server-side write to this session row triggers a fresh
   // SELECT, which updates `session`, which fires the sync effects above so
@@ -737,10 +814,14 @@ function PipelineView() {
       .on(
         "postgres_changes",
         { event: "UPDATE", schema: "public", table: "sessions", filter: `id=eq.${sessionId}` },
-        () => { void refetch(); },
+        () => {
+          void refetch();
+        },
       )
       .subscribe();
-    return () => { void supabase.removeChannel(channel); };
+    return () => {
+      void supabase.removeChannel(channel);
+    };
   }, [sessionId]);
 
   // Trigger Stage 1 when session loads (or on retry).
@@ -753,7 +834,9 @@ function PipelineView() {
         ...p,
         "01": session.checkpoint_a_confirmed ? "complete" : "checkpoint",
         "01B": session.stage_1b_required
-          ? (session.stage_1b_output ? "complete" : "running")
+          ? session.stage_1b_output
+            ? "complete"
+            : "running"
           : p["01B"],
       }));
       return;
@@ -1608,8 +1691,11 @@ function PipelineView() {
           hasBrief={Boolean(session?.brief_text)}
         />
         {selectedId === "BRIEF" ? (
-          <section className="flex flex-1 flex-col overflow-hidden bg-background">
-            <div ref={contentScrollRef} className="flex-1 overflow-y-auto px-6 py-10 sm:px-12 sm:py-10">
+          <section className="relative flex min-w-0 flex-1 flex-col bg-background">
+            <div
+              ref={contentScrollRef}
+              className="flex-1 overflow-y-auto px-6 py-10 sm:px-12 sm:py-10"
+            >
               <header>
                 <span className="text-label text-primary">Source Document</span>
                 <h1 className="text-h2 mt-3 text-text-primary">Submitted Brief</h1>
@@ -1626,419 +1712,419 @@ function PipelineView() {
               </header>
               <article style={{ paddingBottom: 80 }}>
                 <StreamedOutput
-                  text={session?.brief_text ?? "No brief text on file for this session."}
+                  text={formatSubmittedBriefForStageOutput(
+                    session?.brief_text ?? "No brief text on file for this session.",
+                  )}
                   streaming={false}
                 />
               </article>
             </div>
           </section>
         ) : (
-        <RightPanel
-          stage={selected}
-          status={selectedStatus}
-          stage8KeepNames={stage8KeepNames}
-          onToggleStage8Keep={(name, keep) =>
-            setStage8KeepNames((prev) => {
-              const next = new Set(prev);
-              if (keep) next.add(name);
-              else next.delete(name);
-              return next;
-            })
-          }
-          fullOutput={stageOutputs[selected.id] ?? "Output pending."}
-          contentScrollRef={contentScrollRef}
-          isViewingHistorical={isViewingHistorical}
-          onBackToCurrent={() => setSelectedId(currentActiveId)}
-          stage1Error={
-            selected.id === "01" || selected.id === "01B"
-              ? stage1Error
-              : selected.id === "02"
-                ? stage2Error
-                : selected.id === "03"
-                  ? stage3Error
-                  : selected.id === "04"
-                    ? stage4Error
-                    : selected.id === "05"
-                      ? stage5Error
-                      : selected.id === "06"
-                        ? stage6Error
-                        : selected.id === "07"
-                          ? stage7Error
-                          : selected.id === "08"
-                            ? stage8Error
-                            : selected.id === "09"
-                              ? stage9Error
-                              : selected.id === "10"
-                                ? stage10Error
-                                : selected.id === "11"
-                                  ? stage11Error
-                                  : selected.id === "12"
-                                    ? stage12Error
-                                    : selected.id === "13"
-                                      ? stage13Error
-                                      : selected.id === "13B"
-                                        ? stage13bError
-                                        : selected.id === "14"
-                                          ? stage14Error
-                                          : selected.id === "14B"
-                                            ? stage14bError
-                                            : selected.id === "14C"
-                                              ? stage14cError
-                                              : selected.id === "15"
-                                                ? stage15Error
-                                                : selected.id === "16"
-                                                  ? stage16Error
-                                                  : null
-          }
-          tensionScore={selected.id === "01" ? (session?.stage_1_tension_score ?? null) : null}
-          stage1bRequired={selected.id === "01" ? (session?.stage_1b_required ?? false) : false}
-          onRetry={async () => {
-            const id = selected.id;
-            // Stage 8 selective regenerate: if the user unchecked any
-            // proposition, regenerate only those instead of the full stage.
-            if (id === "08" && stage8Output && sessionId) {
-              const allBlocks = splitStage8Propositions(stage8Output);
-              const allNames = allBlocks.map((b) => b.name);
-              const allChecked = allNames.every((n) => stage8KeepNames.has(n));
-              if (!allChecked) {
-                setStage8Error(null);
-                setStatuses((p) => ({ ...p, "08": "running" }));
-                try {
-                  await consumeStream(
-                    await regenerateStage8SelectiveFn({
-                      data: {
-                        sessionId,
-                        keepTerritories: allNames.filter((n) =>
-                          stage8KeepNames.has(n),
-                        ),
-                      },
-                    }),
-                    setStage8Output,
-                  );
-                } catch (err) {
-                  setStage8Error(
-                    err instanceof Error ? err.message : "Stage 8 selective regenerate failed",
-                  );
-                  setStatuses((p) => ({ ...p, "08": "error" }));
+          <RightPanel
+            stage={selected}
+            status={selectedStatus}
+            stage8KeepNames={stage8KeepNames}
+            onToggleStage8Keep={(name, keep) =>
+              setStage8KeepNames((prev) => {
+                const next = new Set(prev);
+                if (keep) next.add(name);
+                else next.delete(name);
+                return next;
+              })
+            }
+            fullOutput={stageOutputs[selected.id] ?? "Output pending."}
+            contentScrollRef={contentScrollRef}
+            isViewingHistorical={isViewingHistorical}
+            onBackToCurrent={() => setSelectedId(currentActiveId)}
+            stage1Error={
+              selected.id === "01" || selected.id === "01B"
+                ? stage1Error
+                : selected.id === "02"
+                  ? stage2Error
+                  : selected.id === "03"
+                    ? stage3Error
+                    : selected.id === "04"
+                      ? stage4Error
+                      : selected.id === "05"
+                        ? stage5Error
+                        : selected.id === "06"
+                          ? stage6Error
+                          : selected.id === "07"
+                            ? stage7Error
+                            : selected.id === "08"
+                              ? stage8Error
+                              : selected.id === "09"
+                                ? stage9Error
+                                : selected.id === "10"
+                                  ? stage10Error
+                                  : selected.id === "11"
+                                    ? stage11Error
+                                    : selected.id === "12"
+                                      ? stage12Error
+                                      : selected.id === "13"
+                                        ? stage13Error
+                                        : selected.id === "13B"
+                                          ? stage13bError
+                                          : selected.id === "14"
+                                            ? stage14Error
+                                            : selected.id === "14B"
+                                              ? stage14bError
+                                              : selected.id === "14C"
+                                                ? stage14cError
+                                                : selected.id === "15"
+                                                  ? stage15Error
+                                                  : selected.id === "16"
+                                                    ? stage16Error
+                                                    : null
+            }
+            tensionScore={selected.id === "01" ? (session?.stage_1_tension_score ?? null) : null}
+            stage1bRequired={selected.id === "01" ? (session?.stage_1b_required ?? false) : false}
+            onRetry={async () => {
+              const id = selected.id;
+              // Stage 8 selective regenerate: if the user unchecked any
+              // proposition, regenerate only those instead of the full stage.
+              if (id === "08" && stage8Output && sessionId) {
+                const allBlocks = splitStage8Propositions(stage8Output);
+                const allNames = allBlocks.map((b) => b.name);
+                const allChecked = allNames.every((n) => stage8KeepNames.has(n));
+                if (!allChecked) {
+                  setStage8Error(null);
+                  setStatuses((p) => ({ ...p, "08": "running" }));
+                  try {
+                    await consumeStream(
+                      await regenerateStage8SelectiveFn({
+                        data: {
+                          sessionId,
+                          keepTerritories: allNames.filter((n) => stage8KeepNames.has(n)),
+                        },
+                      }),
+                      setStage8Output,
+                    );
+                  } catch (err) {
+                    setStage8Error(
+                      err instanceof Error ? err.message : "Stage 8 selective regenerate failed",
+                    );
+                    setStatuses((p) => ({ ...p, "08": "error" }));
+                  }
+                  return;
                 }
+                // all checked → fall through to the normal full-retry path
+              }
+              const map: Record<string, () => void> = {
+                "02": () => {
+                  setStage2Error(null);
+                  setStage2Output(null);
+                },
+                "03": () => {
+                  setStage3Error(null);
+                  setStage3Output(null);
+                },
+                "04": () => {
+                  setStage4Error(null);
+                  setStage4Output(null);
+                },
+                "05": () => {
+                  setStage5Error(null);
+                  setStage5Output(null);
+                },
+                "06": () => {
+                  setStage6Error(null);
+                  setStage6Output(null);
+                },
+                "07": () => {
+                  setStage7Error(null);
+                  setStage7Output(null);
+                },
+                "08": () => {
+                  setStage8Error(null);
+                  setStage8Output(null);
+                },
+                "09": () => {
+                  setStage9Error(null);
+                  setStage9Output(null);
+                },
+                "10": () => {
+                  setStage10Error(null);
+                  setStage10Output(null);
+                },
+                "11": () => {
+                  setStage11Error(null);
+                  setStage11Output(null);
+                },
+                "12": () => {
+                  setStage12Error(null);
+                  setStage12Output(null);
+                },
+                "13": () => {
+                  setStage13Error(null);
+                  setStage13Output(null);
+                },
+                "13B": () => {
+                  setStage13bError(null);
+                  setStage13bOutput(null);
+                },
+                "14": () => {
+                  setStage14Error(null);
+                  setStage14Output(null);
+                },
+                "14B": () => {
+                  setStage14bError(null);
+                  setStage14bOutput(null);
+                },
+                "14C": () => {
+                  setStage14cError(null);
+                  setStage14cOutput(null);
+                },
+                "15": () => {
+                  setStage15Error(null);
+                  setStage15Output(null);
+                },
+                "16": () => {
+                  setStage16Error(null);
+                  setStage16Output(null);
+                },
+              };
+              // Clear cached output in the DB FIRST so the server-side
+              // "return cached output if present" short-circuit doesn't fire.
+              const dbId = STAGE_ID_TO_DB[id];
+              if (sessionId && dbId) {
+                try {
+                  await resetStageFn({ data: { sessionId, stageId: dbId } });
+                } catch (e) {
+                  console.error("resetStage failed", e);
+                }
+              }
+              if (map[id]) {
+                map[id]();
+                setStatuses((p) => ({ ...p, [id]: "running" }));
+              } else {
+                setRetryNonce((n) => n + 1);
+              }
+            }}
+            showRationale={rationaleForId === selectedId}
+            showBrandIntel={selectedId === "13" && !intelSubmitted && selectedStatus === "running"}
+            showStage1bResubmit={
+              selectedId === "01B" &&
+              !!stage1bOutput &&
+              !stage1bLoading &&
+              selectedStatus !== "complete"
+            }
+            resubmitting={resubmitting}
+            checkpointResubmitting={resubmitting}
+            onResubmitBrief={async (additionalBrief) => {
+              if (!sessionId) return;
+              setResubmitting(true);
+              try {
+                await resubmitBriefFn({ data: { sessionId, additionalBrief } });
+                // Reset local state and re-run Stage 1.
+                setStage1Output(null);
+                setStage1bOutput(null);
+                setStage1Error(null);
+                setStatuses((p) => ({
+                  ...p,
+                  "01": "running",
+                  "01B": "pending",
+                }));
+                setSelectedId("01");
+                setRetryNonce((n) => n + 1);
+              } catch (err) {
+                setStage1Error(err instanceof Error ? err.message : "Resubmit failed");
+              } finally {
+                setResubmitting(false);
+              }
+            }}
+            onSubmitBrandIntel={async (values) => {
+              if (!sessionId) {
+                console.log("[Submit Brand Intelligence] clicked — no session id");
                 return;
               }
-              // all checked → fall through to the normal full-retry path
-            }
-            const map: Record<string, () => void> = {
-              "02": () => {
-                setStage2Error(null);
-                setStage2Output(null);
-              },
-              "03": () => {
-                setStage3Error(null);
-                setStage3Output(null);
-              },
-              "04": () => {
-                setStage4Error(null);
-                setStage4Output(null);
-              },
-              "05": () => {
-                setStage5Error(null);
-                setStage5Output(null);
-              },
-              "06": () => {
-                setStage6Error(null);
-                setStage6Output(null);
-              },
-              "07": () => {
-                setStage7Error(null);
-                setStage7Output(null);
-              },
-              "08": () => {
-                setStage8Error(null);
-                setStage8Output(null);
-              },
-              "09": () => {
-                setStage9Error(null);
-                setStage9Output(null);
-              },
-              "10": () => {
-                setStage10Error(null);
-                setStage10Output(null);
-              },
-              "11": () => {
-                setStage11Error(null);
-                setStage11Output(null);
-              },
-              "12": () => {
-                setStage12Error(null);
-                setStage12Output(null);
-              },
-              "13": () => {
-                setStage13Error(null);
-                setStage13Output(null);
-              },
-              "13B": () => {
-                setStage13bError(null);
-                setStage13bOutput(null);
-              },
-              "14": () => {
-                setStage14Error(null);
-                setStage14Output(null);
-              },
-              "14B": () => {
-                setStage14bError(null);
-                setStage14bOutput(null);
-              },
-              "14C": () => {
-                setStage14cError(null);
-                setStage14cOutput(null);
-              },
-              "15": () => {
-                setStage15Error(null);
-                setStage15Output(null);
-              },
-              "16": () => {
-                setStage16Error(null);
-                setStage16Output(null);
-              },
-            };
-            // Clear cached output in the DB FIRST so the server-side
-            // "return cached output if present" short-circuit doesn't fire.
-            const dbId = STAGE_ID_TO_DB[id];
-            if (sessionId && dbId) {
               try {
-                await resetStageFn({ data: { sessionId, stageId: dbId } });
-              } catch (e) {
-                console.error("resetStage failed", e);
+                await saveBrandIntelligenceFn({ data: { sessionId, brandIntelligence: values } });
+                setIntelSubmitted(true);
+                setStatuses((p) => ({ ...p, "13": "running" }));
+                setSelectedId("13");
+              } catch (err) {
+                console.error("[Save Brand Intelligence] failed", err);
               }
-            }
-            if (map[id]) {
-              map[id]();
-              setStatuses((p) => ({ ...p, [id]: "running" }));
-            } else {
-              setRetryNonce((n) => n + 1);
-            }
-          }}
-          showRationale={rationaleForId === selectedId}
-          showBrandIntel={selectedId === "13" && !intelSubmitted && selectedStatus === "running"}
-          showStage1bResubmit={
-            selectedId === "01B" &&
-            !!stage1bOutput &&
-            !stage1bLoading &&
-            selectedStatus !== "complete"
-          }
-          resubmitting={resubmitting}
-          checkpointResubmitting={resubmitting}
-          onResubmitBrief={async (additionalBrief) => {
-            if (!sessionId) return;
-            setResubmitting(true);
-            try {
-              await resubmitBriefFn({ data: { sessionId, additionalBrief } });
-              // Reset local state and re-run Stage 1.
-              setStage1Output(null);
-              setStage1bOutput(null);
-              setStage1Error(null);
-              setStatuses((p) => ({
-                ...p,
-                "01": "running",
-                "01B": "pending",
-              }));
-              setSelectedId("01");
-              setRetryNonce((n) => n + 1);
-            } catch (err) {
-              setStage1Error(err instanceof Error ? err.message : "Resubmit failed");
-            } finally {
-              setResubmitting(false);
-            }
-          }}
-          onSubmitBrandIntel={async (values) => {
-            if (!sessionId) {
-              console.log("[Submit Brand Intelligence] clicked — no session id");
-              return;
-            }
-            try {
-              await saveBrandIntelligenceFn({ data: { sessionId, brandIntelligence: values } });
-              setIntelSubmitted(true);
-              setStatuses((p) => ({ ...p, "13": "running" }));
-              setSelectedId("13");
-            } catch (err) {
-              console.error("[Save Brand Intelligence] failed", err);
-            }
-          }}
-          prevStage={prevStage}
-          nextStage={nextStage}
-          nextStageStatus={nextStageStatus}
-          pipelineComplete={pipelineComplete}
-          onBack={() => {
-            if (prevStage) setSelectedId(prevStage.id);
-          }}
-          onContinue={() => {
-            if (!nextStage) return;
-            const st = statuses[nextStage.id];
-            if (st === "pending") {
-              setStatuses((p) => ({ ...p, [nextStage.id]: "running" }));
-            }
-            setSelectedId(nextStage.id);
-          }}
-          onViewFinal={() => {
-            if (sessionId) {
-              window.location.href = `/complete?session=${sessionId}`;
-            }
-          }}
-          onConfirmCheckpoint={(stageId, notes) => {
-            // Persist notes + timestamp for the relevant checkpoint.
-            const letter = CHECKPOINT_LETTERS[stageId];
-            if (sessionId && letter) {
-              const notesText = (notes ?? [])
-                .map((n) => n.trim())
-                .filter(Boolean)
-                .join("\n\n");
-              const nowIso = new Date().toISOString();
-              const update: Partial<{
-                checkpoint_a_confirmed: boolean;
-                checkpoint_a_confirmed_at: string;
-                checkpoint_a_notes: string;
-                checkpoint_b_confirmed: boolean;
-                checkpoint_b_confirmed_at: string;
-                checkpoint_b_notes: string;
-                checkpoint_c_confirmed: boolean;
-                checkpoint_c_confirmed_at: string;
-                checkpoint_c_notes: string;
-              }> = {};
-              if (letter === "A") {
-                update.checkpoint_a_confirmed = true;
-                update.checkpoint_a_confirmed_at = nowIso;
-                if (notesText) update.checkpoint_a_notes = notesText;
-              } else if (letter === "B") {
-                update.checkpoint_b_confirmed = true;
-                update.checkpoint_b_confirmed_at = nowIso;
-                if (notesText) update.checkpoint_b_notes = notesText;
-              } else if (letter === "C") {
-                update.checkpoint_c_confirmed = true;
-                update.checkpoint_c_confirmed_at = nowIso;
-                if (notesText) update.checkpoint_c_notes = notesText;
+            }}
+            prevStage={prevStage}
+            nextStage={nextStage}
+            nextStageStatus={nextStageStatus}
+            pipelineComplete={pipelineComplete}
+            onBack={() => {
+              if (prevStage) setSelectedId(prevStage.id);
+            }}
+            onContinue={() => {
+              if (!nextStage) return;
+              const st = statuses[nextStage.id];
+              if (st === "pending") {
+                setStatuses((p) => ({ ...p, [nextStage.id]: "running" }));
               }
-              void supabase
-                .from("sessions")
-                .update(update)
-                .eq("id", sessionId)
-                .then(({ error }) => {
-                  if (error) console.error("[Checkpoint] failed to persist", error);
-                });
-            }
-            // Checkpoint A with 1B required → route to Stage 1B instead of Stage 2.
-            if (stageId === "01" && session?.stage_1b_required && !stage1bOutput) {
-              setStatuses((prev) => ({
-                ...prev,
-                "01": "complete",
-                "01B": "running",
-              }));
-              setSelectedId("01B");
-              return;
-            }
-            // Checkpoint B (Stage 8) → persist confirmation then advance to Stage 9.
-            if (stageId === "08") {
+              setSelectedId(nextStage.id);
+            }}
+            onViewFinal={() => {
               if (sessionId) {
-                confirmCheckpointBFn({ data: { sessionId } }).catch(() => {});
+                window.location.href = `/complete?session=${sessionId}`;
               }
-              setStatuses((prev) => ({ ...prev, "08": "complete", "09": "running" }));
-              setSelectedId("09");
-              return;
-            }
-            setRationaleForId(null);
-            setStatuses((prev) => {
-              const next = { ...prev, [stageId]: "complete" as StageStatus };
-              const idx = STAGES.findIndex((s) => s.id === stageId);
-              for (let i = idx + 1; i < STAGES.length; i++) {
-                if (!STAGES[i].conditional) {
-                  next[STAGES[i].id] = "running";
-                  break;
+            }}
+            onConfirmCheckpoint={(stageId, notes) => {
+              // Persist notes + timestamp for the relevant checkpoint.
+              const letter = CHECKPOINT_LETTERS[stageId];
+              if (sessionId && letter) {
+                const notesText = (notes ?? [])
+                  .map((n) => n.trim())
+                  .filter(Boolean)
+                  .join("\n\n");
+                const nowIso = new Date().toISOString();
+                const update: Partial<{
+                  checkpoint_a_confirmed: boolean;
+                  checkpoint_a_confirmed_at: string;
+                  checkpoint_a_notes: string;
+                  checkpoint_b_confirmed: boolean;
+                  checkpoint_b_confirmed_at: string;
+                  checkpoint_b_notes: string;
+                  checkpoint_c_confirmed: boolean;
+                  checkpoint_c_confirmed_at: string;
+                  checkpoint_c_notes: string;
+                }> = {};
+                if (letter === "A") {
+                  update.checkpoint_a_confirmed = true;
+                  update.checkpoint_a_confirmed_at = nowIso;
+                  if (notesText) update.checkpoint_a_notes = notesText;
+                } else if (letter === "B") {
+                  update.checkpoint_b_confirmed = true;
+                  update.checkpoint_b_confirmed_at = nowIso;
+                  if (notesText) update.checkpoint_b_notes = notesText;
+                } else if (letter === "C") {
+                  update.checkpoint_c_confirmed = true;
+                  update.checkpoint_c_confirmed_at = nowIso;
+                  if (notesText) update.checkpoint_c_notes = notesText;
                 }
+                void supabase
+                  .from("sessions")
+                  .update(update)
+                  .eq("id", sessionId)
+                  .then(({ error }) => {
+                    if (error) console.error("[Checkpoint] failed to persist", error);
+                  });
               }
-              return next;
-            });
-          }}
-          onResubmitCheckpoint={async (stageId, feedback) => {
-            console.log(`[Checkpoint Resubmit] stage=${stageId} feedback=${feedback}`);
-            const fb = (feedback ?? "").trim();
-            const dbId = STAGE_ID_TO_DB[stageId];
-            if (!sessionId || !dbId || !fb) return;
-
-            setResubmitting(true);
-            try {
-              await resetStageCascadeFn({ data: { sessionId, stageId: dbId } });
-              resetLocalFromStage(stageId);
-              setPendingFeedback((p) => ({ ...p, [stageId]: fb }));
-              setStatuses((p) => {
-                const next: Record<string, StageStatus> = { ...p, [stageId]: "running" };
+              // Checkpoint A with 1B required → route to Stage 1B instead of Stage 2.
+              if (stageId === "01" && session?.stage_1b_required && !stage1bOutput) {
+                setStatuses((prev) => ({
+                  ...prev,
+                  "01": "complete",
+                  "01B": "running",
+                }));
+                setSelectedId("01B");
+                return;
+              }
+              // Checkpoint B (Stage 8) → persist confirmation then advance to Stage 9.
+              if (stageId === "08") {
+                if (sessionId) {
+                  confirmCheckpointBFn({ data: { sessionId } }).catch(() => {});
+                }
+                setStatuses((prev) => ({ ...prev, "08": "complete", "09": "running" }));
+                setSelectedId("09");
+                return;
+              }
+              setRationaleForId(null);
+              setStatuses((prev) => {
+                const next = { ...prev, [stageId]: "complete" as StageStatus };
                 const idx = STAGES.findIndex((s) => s.id === stageId);
-                for (let i = idx + 1; i < STAGES.length; i++) next[STAGES[i].id] = "pending";
+                for (let i = idx + 1; i < STAGES.length; i++) {
+                  if (!STAGES[i].conditional) {
+                    next[STAGES[i].id] = "running";
+                    break;
+                  }
+                }
                 return next;
               });
-              setSelectedId(stageId);
-              if (stageId === "01") setRetryNonce((n) => n + 1);
-            } catch (err) {
-              const message = err instanceof Error ? err.message : "Feedback resubmit failed";
-              if (stageId === "01") setStage1Error(message);
-              if (stageId === "08") setStage8Error(message);
-              if (stageId === "12") setStage12Error(message);
-              setStatuses((p) => ({ ...p, [stageId]: "error" }));
-            } finally {
-              setResubmitting(false);
+            }}
+            onResubmitCheckpoint={async (stageId, feedback) => {
+              console.log(`[Checkpoint Resubmit] stage=${stageId} feedback=${feedback}`);
+              const fb = (feedback ?? "").trim();
+              const dbId = STAGE_ID_TO_DB[stageId];
+              if (!sessionId || !dbId || !fb) return;
+
+              setResubmitting(true);
+              try {
+                await resetStageCascadeFn({ data: { sessionId, stageId: dbId } });
+                resetLocalFromStage(stageId);
+                setPendingFeedback((p) => ({ ...p, [stageId]: fb }));
+                setStatuses((p) => {
+                  const next: Record<string, StageStatus> = { ...p, [stageId]: "running" };
+                  const idx = STAGES.findIndex((s) => s.id === stageId);
+                  for (let i = idx + 1; i < STAGES.length; i++) next[STAGES[i].id] = "pending";
+                  return next;
+                });
+                setSelectedId(stageId);
+                if (stageId === "01") setRetryNonce((n) => n + 1);
+              } catch (err) {
+                const message = err instanceof Error ? err.message : "Feedback resubmit failed";
+                if (stageId === "01") setStage1Error(message);
+                if (stageId === "08") setStage8Error(message);
+                if (stageId === "12") setStage12Error(message);
+                setStatuses((p) => ({ ...p, [stageId]: "error" }));
+              } finally {
+                setResubmitting(false);
+              }
+            }}
+            onEscalateCheckpoint={(stageId, reason) => {
+              console.log(`[Checkpoint Escalate] stage=${stageId} reason=${reason}`);
+            }}
+            customCheckpoint={
+              selectedId === "12" && selectedStatus === "checkpoint" && rationaleForId !== "12" ? (
+                <SMPSelection
+                  stage12Output={stage12Output ?? ""}
+                  stage8Output={stage8Output ?? ""}
+                  onSelect={async (card) => {
+                    if (!sessionId) return;
+                    setSelectedSMP(card);
+                    try {
+                      await saveSelectedSMPFn({
+                        data: {
+                          sessionId,
+                          smpLine: card.smpLine || `Proposition ${card.cardNumber}`,
+                          fieldName: card.fieldName || `Field ${card.cardNumber}`,
+                        },
+                      });
+                    } catch (err) {
+                      setStage12Error(
+                        err instanceof Error ? err.message : "Failed to save selection",
+                      );
+                      return;
+                    }
+                    setRationaleForId("12");
+                  }}
+                />
+              ) : selectedId === "12" && rationaleForId === "12" ? (
+                <SelectionRationale
+                  selectedSMP={selectedSMP?.smpLine ?? session?.selected_smp ?? ""}
+                  submitting={savingRationale}
+                  onConfirm={async (values) => {
+                    if (!sessionId) return;
+                    setSavingRationale(true);
+                    try {
+                      await saveSelectionRationaleFn({
+                        data: { sessionId, rationale: values },
+                      });
+                      setRationaleForId(null);
+                      setStatuses((prev) => ({ ...prev, "12": "complete", "13": "running" }));
+                      setSelectedId("13");
+                    } catch (err) {
+                      setStage12Error(
+                        err instanceof Error ? err.message : "Failed to save rationale",
+                      );
+                    } finally {
+                      setSavingRationale(false);
+                    }
+                  }}
+                />
+              ) : null
             }
-          }}
-          onEscalateCheckpoint={(stageId, reason) => {
-            console.log(`[Checkpoint Escalate] stage=${stageId} reason=${reason}`);
-          }}
-          customCheckpoint={
-            selectedId === "12" && selectedStatus === "checkpoint" && rationaleForId !== "12" ? (
-              <SMPSelection
-                stage12Output={stage12Output ?? ""}
-                stage8Output={stage8Output ?? ""}
-                onSelect={async (card) => {
-                  if (!sessionId) return;
-                  setSelectedSMP(card);
-                  try {
-                    await saveSelectedSMPFn({
-                      data: {
-                        sessionId,
-                        smpLine: card.smpLine || `Proposition ${card.cardNumber}`,
-                        fieldName: card.fieldName || `Field ${card.cardNumber}`,
-                      },
-                    });
-                  } catch (err) {
-                    setStage12Error(
-                      err instanceof Error ? err.message : "Failed to save selection",
-                    );
-                    return;
-                  }
-                  setRationaleForId("12");
-                }}
-              />
-            ) : selectedId === "12" && rationaleForId === "12" ? (
-              <SelectionRationale
-                selectedSMP={selectedSMP?.smpLine ?? session?.selected_smp ?? ""}
-                submitting={savingRationale}
-                onConfirm={async (values) => {
-                  if (!sessionId) return;
-                  setSavingRationale(true);
-                  try {
-                    await saveSelectionRationaleFn({
-                      data: { sessionId, rationale: values },
-                    });
-                    setRationaleForId(null);
-                    setStatuses((prev) => ({ ...prev, "12": "complete", "13": "running" }));
-                    setSelectedId("13");
-                  } catch (err) {
-                    setStage12Error(
-                      err instanceof Error ? err.message : "Failed to save rationale",
-                    );
-                  } finally {
-                    setSavingRationale(false);
-                  }
-                }}
-              />
-            ) : null
-          }
-          retryStatus={session?.retry_status ?? null}
-        />
+            retryStatus={session?.retry_status ?? null}
+          />
         )}
       </div>
     </div>
@@ -2144,7 +2230,12 @@ function LeftPanel({
       </header>
 
       {hasBrief && (
-        <div style={{ borderTop: "1px solid var(--color-surface-3)", borderBottom: "1px solid var(--color-surface-3)" }}>
+        <div
+          style={{
+            borderTop: "1px solid var(--color-surface-3)",
+            borderBottom: "1px solid var(--color-surface-3)",
+          }}
+        >
           <button
             type="button"
             onClick={() => onSelect("BRIEF")}
@@ -2161,7 +2252,17 @@ function LeftPanel({
               if (!briefSelected) e.currentTarget.style.backgroundColor = "transparent";
             }}
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: tokens.amber, flexShrink: 0 }}>
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              style={{ color: tokens.amber, flexShrink: 0 }}
+            >
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
               <polyline points="14 2 14 8 20 8" />
               <line x1="8" y1="13" x2="16" y2="13" />
@@ -2201,7 +2302,6 @@ function LeftPanel({
           </button>
         </div>
       )}
-
 
       <ul>
         {stages.map((s) => {
@@ -2272,7 +2372,6 @@ function LeftPanel({
                     Skipped
                   </span>
                 )}
-
               </button>
             </li>
           );
@@ -2776,7 +2875,6 @@ function useStreamingText(full: string, streaming: boolean) {
     return () => window.clearInterval(id);
     // Intentionally only depend on `streaming`. `full` is read via ref to
     // avoid resetting the typewriter on every delta (causes a visible loop).
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [streaming]);
 
   // Flush full text whenever it changes while not streaming (e.g. hydrate).
@@ -3040,9 +3138,7 @@ function parseBlocks(text: string): Block[] {
 // Split a Stage 8 markdown output into per-proposition blocks, keyed by
 // territory name (the text following `## `). Used to render checkboxes
 // per-proposition so the user can pick which ones to regenerate on Retry.
-export function splitStage8Propositions(
-  text: string,
-): Array<{ name: string; markdown: string }> {
+export function splitStage8Propositions(text: string): Array<{ name: string; markdown: string }> {
   const lines = text.split("\n");
   const blocks: Array<{ name: string; markdown: string[] }> = [];
   let current: { name: string; markdown: string[] } | null = null;
@@ -3086,12 +3182,9 @@ function Stage8PropositionsView({
   }
   return (
     <div>
-      <p
-        className="text-body-sm"
-        style={{ color: "#8A8680", marginBottom: 16 }}
-      >
-        Uncheck any proposition you want to regenerate. Checked propositions
-        are kept verbatim when you press Retry this stage.
+      <p className="text-body-sm" style={{ color: "#8A8680", marginBottom: 16 }}>
+        Uncheck any proposition you want to regenerate. Checked propositions are kept verbatim when
+        you press Retry this stage.
       </p>
       {blocks.map((b, i) => {
         const checked = keepNames.has(b.name);
