@@ -2190,8 +2190,7 @@ function LeftPanel({
               style={{
                 fontFamily: `'${tokens.fontBody}', sans-serif`,
                 color: tokens.white,
-                fontWeight: 500,
-                fontStyle: "italic",
+                fontWeight: 400,
               }}
             >
               Brief
