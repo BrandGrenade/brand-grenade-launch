@@ -1608,7 +1608,7 @@ function PipelineView() {
           hasBrief={Boolean(session?.brief_text)}
         />
         {selectedId === "BRIEF" ? (
-          <section className="flex flex-1 flex-col overflow-hidden bg-background">
+          <section className="relative flex min-w-0 flex-1 flex-col bg-background">
             <div ref={contentScrollRef} className="flex-1 overflow-y-auto px-6 py-10 sm:px-12 sm:py-10">
               <header>
                 <span className="text-label text-primary">Source Document</span>
@@ -1626,7 +1626,9 @@ function PipelineView() {
               </header>
               <article style={{ paddingBottom: 80 }}>
                 <StreamedOutput
-                  text={session?.brief_text ?? "No brief text on file for this session."}
+                  text={formatSubmittedBriefForStageOutput(
+                    session?.brief_text ?? "No brief text on file for this session.",
+                  )}
                   streaming={false}
                 />
               </article>
