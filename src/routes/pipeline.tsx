@@ -751,8 +751,10 @@ function PipelineView() {
       setStage1Output(session.stage_1_output);
       setStatuses((p) => ({
         ...p,
-        "01": "checkpoint",
-        "01B": session.stage_1b_required ? "running" : p["01B"],
+        "01": session.checkpoint_a_confirmed ? "complete" : "checkpoint",
+        "01B": session.stage_1b_required
+          ? (session.stage_1b_output ? "complete" : "running")
+          : p["01B"],
       }));
       return;
     }
