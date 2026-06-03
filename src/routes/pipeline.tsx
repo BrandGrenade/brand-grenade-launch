@@ -1589,6 +1589,11 @@ function PipelineView() {
           statuses={statuses}
           selectedId={selectedId}
           onSelect={(id) => {
+            if (id === "BRIEF") {
+              scrollToTop();
+              setSelectedId("BRIEF");
+              return;
+            }
             const st = statuses[id];
             if (st === "complete" || st === "running" || st === "checkpoint" || st === "error") {
               scrollToTop();
@@ -1598,7 +1603,41 @@ function PipelineView() {
           progressPct={progressPct}
           currentMainNumber={Math.max(1, currentMainNumber)}
           totalMain={mainStages.length}
+          hasBrief={Boolean(session?.brief_text)}
         />
+        {selectedId === "BRIEF" ? (
+          <main className="flex-1 overflow-hidden bg-background">
+            <div ref={contentScrollRef} className="h-full overflow-y-auto px-6 py-8 md:px-12 md:py-10">
+              <div className="mx-auto max-w-3xl">
+                <span className="text-label" style={{ color: tokens.amber }}>Source Document</span>
+                <h1
+                  className="mt-2 mb-6"
+                  style={{
+                    fontFamily: `'${tokens.fontDisplay}', serif`,
+                    color: tokens.white,
+                    fontSize: 32,
+                    fontWeight: 400,
+                    lineHeight: 1.2,
+                  }}
+                >
+                  Submitted Brief
+                </h1>
+                <pre
+                  className="whitespace-pre-wrap break-words rounded-md border border-border p-5"
+                  style={{
+                    fontFamily: `'${tokens.fontBody}', sans-serif`,
+                    color: tokens.white,
+                    fontSize: 14,
+                    lineHeight: 1.6,
+                    backgroundColor: tokens.bgSecondary,
+                  }}
+                >
+                  {session?.brief_text ?? "No brief text on file for this session."}
+                </pre>
+              </div>
+            </div>
+          </main>
+        ) : (
         <RightPanel
           stage={selected}
           status={selectedStatus}
