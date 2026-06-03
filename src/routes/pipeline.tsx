@@ -1613,7 +1613,7 @@ function PipelineView() {
                 <h1
                   className="mt-2 mb-6"
                   style={{
-                    fontFamily: `'${tokens.fontDisplay}', serif`,
+                    fontFamily: `'${tokens.fontBody}', sans-serif`,
                     color: tokens.white,
                     fontSize: 32,
                     fontWeight: 400,
