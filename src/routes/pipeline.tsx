@@ -1608,29 +1608,30 @@ function PipelineView() {
           hasBrief={Boolean(session?.brief_text)}
         />
         {selectedId === "BRIEF" ? (
-          <main className="flex-1 overflow-hidden bg-background">
-            <div ref={contentScrollRef} className="h-full overflow-y-auto px-6 py-8 md:px-12 md:py-10">
-              <div className="mx-auto max-w-3xl">
-                <span className="text-label" style={{ color: tokens.amber }}>Source Document</span>
-                <h1
-                  className="mt-2 mb-6"
-                  style={{
-                    fontFamily: `'${tokens.fontBody}', sans-serif`,
-                    color: tokens.white,
-                    fontSize: 32,
-                    fontWeight: 400,
-                    lineHeight: 1.2,
-                  }}
-                >
-                  Submitted Brief
-                </h1>
+          <section className="flex flex-1 flex-col overflow-hidden bg-background">
+            <div ref={contentScrollRef} className="flex-1 overflow-y-auto px-6 py-10 sm:px-12 sm:py-10">
+              <header>
+                <span className="text-label text-primary">Source Document</span>
+                <h1 className="text-h2 mt-3 text-text-primary">Submitted Brief</h1>
+                <p className="text-body-sm mt-3 flex items-center gap-2 text-text-secondary">
+                  <span
+                    className="inline-flex h-4 w-4 items-center justify-center rounded-full"
+                    style={{ backgroundColor: "var(--color-success)" }}
+                  >
+                    <CheckIcon color="var(--color-background)" />
+                  </span>
+                  On file
+                </p>
+                <hr className="my-6 h-px border-0 bg-border" />
+              </header>
+              <article style={{ paddingBottom: 80 }}>
                 <StreamedOutput
                   text={session?.brief_text ?? "No brief text on file for this session."}
                   streaming={false}
                 />
-              </div>
+              </article>
             </div>
-          </main>
+          </section>
         ) : (
         <RightPanel
           stage={selected}
