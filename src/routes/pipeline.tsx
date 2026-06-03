@@ -2044,6 +2044,7 @@ function PipelineView() {
           }
           retryStatus={session?.retry_status ?? null}
         />
+        )}
       </div>
     </div>
   );
