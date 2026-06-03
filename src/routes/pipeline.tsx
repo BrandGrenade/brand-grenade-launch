@@ -220,6 +220,41 @@ A proposition for Hypernova must:
 - Imply a finance-stack benefit, not a payments benefit`,
 };
 
+function formatSubmittedBriefForStageOutput(text: string): string {
+  const lines = text.replace(/\r\n/g, "\n").replace(/\u00a0/g, " ").split("\n");
+  const blocks: string[] = [];
+  let paragraph: string[] = [];
+  const structuralLine = (line: string) =>
+    /^#{1,6}\s/.test(line) ||
+    /^[-*]\s+/.test(line) ||
+    /^\d+[.)]\s+/.test(line) ||
+    /^>\s/.test(line) ||
+    /^---+\s*$/.test(line) ||
+    /^\*\*\*+\s*$/.test(line) ||
+    /^(?:\*\*)?[A-Z0-9][A-Z0-9 \-—&/]{2,}:(?:\*\*)?\s*$/.test(line);
+  const flushParagraph = () => {
+    if (!paragraph.length) return;
+    blocks.push(paragraph.join(" ").replace(/\s+/g, " ").trim());
+    paragraph = [];
+  };
+
+  for (const rawLine of lines) {
+    const line = rawLine.trim();
+    if (!line) {
+      flushParagraph();
+      continue;
+    }
+    if (structuralLine(line)) {
+      flushParagraph();
+      blocks.push(line);
+      continue;
+    }
+    paragraph.push(line);
+  }
+  flushParagraph();
+  return blocks.join("\n\n");
+}
+
 // ────────────────────────────────────────────────────────────────────────────
 // Component
 // ────────────────────────────────────────────────────────────────────────────
