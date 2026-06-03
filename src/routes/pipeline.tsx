@@ -2273,10 +2273,10 @@ function LeftPanel({
                     className="text-label shrink-0"
                     style={{
                       color: tokens.muted,
-                      fontSize: 9,
+                      fontSize: 10,
                     }}
                   >
-                    Cond.
+                    Skipped
                   </span>
                 )}
 
