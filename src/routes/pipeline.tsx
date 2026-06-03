@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { tokens } from "@/styles/tokens";
 import { useServerFn } from "@tanstack/react-start";
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
 import { z } from "zod";
 import { TopNav } from "@/components/TopNav";
 import { Checkpoint } from "@/components/Checkpoint";
@@ -514,9 +514,15 @@ function PipelineView() {
 
   const [statuses, setStatuses] = useState(initialStatuses);
   const [selectedId, setSelectedId] = useState("01");
+  const contentScrollRef = useRef<HTMLDivElement | null>(null);
+
+  function scrollToTop() {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    contentScrollRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+  }
 
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    scrollToTop();
   }, [selectedId]);
   const [rationaleForId, setRationaleForId] = useState<string | null>(null);
   const [intelSubmitted, setIntelSubmitted] = useState(false);
@@ -1573,6 +1579,7 @@ function PipelineView() {
           onSelect={(id) => {
             const st = statuses[id];
             if (st === "complete" || st === "running" || st === "checkpoint" || st === "error") {
+              scrollToTop();
               setSelectedId(id);
             }
           }}
@@ -1593,6 +1600,7 @@ function PipelineView() {
             })
           }
           fullOutput={stageOutputs[selected.id] ?? "Output pending."}
+          contentScrollRef={contentScrollRef}
           isViewingHistorical={isViewingHistorical}
           onBackToCurrent={() => setSelectedId(currentActiveId)}
           stage1Error={
