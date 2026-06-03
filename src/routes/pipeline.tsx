@@ -751,8 +751,10 @@ function PipelineView() {
       setStage1Output(session.stage_1_output);
       setStatuses((p) => ({
         ...p,
-        "01": "checkpoint",
-        "01B": session.stage_1b_required ? "running" : p["01B"],
+        "01": session.checkpoint_a_confirmed ? "complete" : "checkpoint",
+        "01B": session.stage_1b_required
+          ? (session.stage_1b_output ? "complete" : "running")
+          : p["01B"],
       }));
       return;
     }
@@ -2188,8 +2190,7 @@ function LeftPanel({
               style={{
                 fontFamily: `'${tokens.fontBody}', sans-serif`,
                 color: tokens.white,
-                fontWeight: 500,
-                fontStyle: "italic",
+                fontWeight: 400,
               }}
             >
               Brief
@@ -2272,10 +2273,10 @@ function LeftPanel({
                     className="text-label shrink-0"
                     style={{
                       color: tokens.muted,
-                      fontSize: 9,
+                      fontSize: 10,
                     }}
                   >
-                    Cond.
+                    Skipped
                   </span>
                 )}
 
