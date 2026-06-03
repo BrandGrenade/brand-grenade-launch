@@ -221,7 +221,10 @@ A proposition for Hypernova must:
 };
 
 function formatSubmittedBriefForStageOutput(text: string): string {
-  const lines = text.replace(/\r\n/g, "\n").replace(/\u00a0/g, " ").split("\n");
+  const lines = text
+    .replace(/\r\n/g, "\n")
+    .replace(/\u00a0/g, " ")
+    .split("\n");
   const blocks: string[] = [];
   let paragraph: string[] = [];
   const structuralLine = (line: string) =>
