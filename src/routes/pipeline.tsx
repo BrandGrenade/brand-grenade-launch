@@ -229,6 +229,7 @@ interface SessionData {
   brand_name: string;
   category: string;
   strategic_mode: string;
+  brief_text: string | null;
   stage_1_output: string | null;
   stage_1_tension_score: number | null;
   stage_1b_required: boolean;
@@ -275,6 +276,7 @@ interface SessionData {
   selected_smp_field_name: string | null;
   current_stage: number;
   status: string;
+  checkpoint_a_confirmed: boolean;
   checkpoint_b_confirmed: boolean;
   checkpoint_c_confirmed: boolean;
   retry_status: string | null;
