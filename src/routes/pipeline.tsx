@@ -229,6 +229,7 @@ interface SessionData {
   brand_name: string;
   category: string;
   strategic_mode: string;
+  brief_text: string | null;
   stage_1_output: string | null;
   stage_1_tension_score: number | null;
   stage_1b_required: boolean;
@@ -275,6 +276,7 @@ interface SessionData {
   selected_smp_field_name: string | null;
   current_stage: number;
   status: string;
+  checkpoint_a_confirmed: boolean;
   checkpoint_b_confirmed: boolean;
   checkpoint_c_confirmed: boolean;
   retry_status: string | null;
@@ -536,7 +538,7 @@ function PipelineView() {
     supabase
       .from("sessions")
       .select(
-        "id, brand_name, category, strategic_mode, current_stage, status, stage_1_output, stage_1_tension_score, stage_1b_required, stage_1b_output, stage_1_error, stage_2_output, stage_2_error, stage_3_output, stage_3_error, stage_4_output, stage_4_error, stage_5_output, stage_5_error, stage_6_output, stage_6_error, stage_7_output, stage_7_error, stage_8_output, stage_8_error, stage_9_output, stage_9_error, stage_10_output, stage_10_error, stage_11_output, stage_11_error, stage_12_output, stage_12_error, stage_13_output, stage_13_error, stage_13b_output, stage_13b_error, stage_14_output, stage_14_error, stage_14b_output, stage_14b_error, stage_14c_output, stage_14c_error, stage_15_output, stage_15_error, stage_16_consulting_output, stage_16_error, brand_intelligence, selected_smp, selected_smp_field_name, checkpoint_b_confirmed, checkpoint_c_confirmed, retry_status",
+        "id, brand_name, category, strategic_mode, brief_text, current_stage, status, stage_1_output, stage_1_tension_score, stage_1b_required, stage_1b_output, stage_1_error, stage_2_output, stage_2_error, stage_3_output, stage_3_error, stage_4_output, stage_4_error, stage_5_output, stage_5_error, stage_6_output, stage_6_error, stage_7_output, stage_7_error, stage_8_output, stage_8_error, stage_9_output, stage_9_error, stage_10_output, stage_10_error, stage_11_output, stage_11_error, stage_12_output, stage_12_error, stage_13_output, stage_13_error, stage_13b_output, stage_13b_error, stage_14_output, stage_14_error, stage_14b_output, stage_14b_error, stage_14c_output, stage_14c_error, stage_15_output, stage_15_error, stage_16_consulting_output, stage_16_error, brand_intelligence, selected_smp, selected_smp_field_name, checkpoint_a_confirmed, checkpoint_b_confirmed, checkpoint_c_confirmed, retry_status",
       )
 
       .eq("id", sessionId)
@@ -550,7 +552,17 @@ function PipelineView() {
         }
         setSession(data as SessionData);
         if (data.brand_intelligence) setIntelSubmitted(true);
-        if (data.stage_1b_output) setStage1bOutput(data.stage_1b_output);
+        if (data.stage_1_output) {
+          setStage1Output(data.stage_1_output);
+          setStatuses((p) => ({
+            ...p,
+            "01": data.checkpoint_a_confirmed ? "complete" : "checkpoint",
+          }));
+        }
+        if (data.stage_1b_output) {
+          setStage1bOutput(data.stage_1b_output);
+          setStatuses((p) => ({ ...p, "01B": "complete" }));
+        }
         if (data.stage_2_output) {
           setStage2Output(data.stage_2_output);
           setStatuses((p) => ({ ...p, "02": "complete" }));
@@ -714,7 +726,7 @@ function PipelineView() {
       const { data } = await supabase
         .from("sessions")
         .select(
-          "id, brand_name, category, strategic_mode, current_stage, status, stage_1_output, stage_1_tension_score, stage_1b_required, stage_1b_output, stage_1_error, stage_2_output, stage_2_error, stage_3_output, stage_3_error, stage_4_output, stage_4_error, stage_5_output, stage_5_error, stage_6_output, stage_6_error, stage_7_output, stage_7_error, stage_8_output, stage_8_error, stage_9_output, stage_9_error, stage_10_output, stage_10_error, stage_11_output, stage_11_error, stage_12_output, stage_12_error, stage_13_output, stage_13_error, stage_13b_output, stage_13b_error, stage_14_output, stage_14_error, stage_14b_output, stage_14b_error, stage_14c_output, stage_14c_error, stage_15_output, stage_15_error, stage_16_consulting_output, stage_16_error, brand_intelligence, selected_smp, selected_smp_field_name, checkpoint_b_confirmed, checkpoint_c_confirmed, retry_status",
+          "id, brand_name, category, strategic_mode, brief_text, current_stage, status, stage_1_output, stage_1_tension_score, stage_1b_required, stage_1b_output, stage_1_error, stage_2_output, stage_2_error, stage_3_output, stage_3_error, stage_4_output, stage_4_error, stage_5_output, stage_5_error, stage_6_output, stage_6_error, stage_7_output, stage_7_error, stage_8_output, stage_8_error, stage_9_output, stage_9_error, stage_10_output, stage_10_error, stage_11_output, stage_11_error, stage_12_output, stage_12_error, stage_13_output, stage_13_error, stage_13b_output, stage_13b_error, stage_14_output, stage_14_error, stage_14b_output, stage_14b_error, stage_14c_output, stage_14c_error, stage_15_output, stage_15_error, stage_16_consulting_output, stage_16_error, brand_intelligence, selected_smp, selected_smp_field_name, checkpoint_a_confirmed, checkpoint_b_confirmed, checkpoint_c_confirmed, retry_status",
         )
         .eq("id", sessionId)
         .single();
@@ -1577,6 +1589,11 @@ function PipelineView() {
           statuses={statuses}
           selectedId={selectedId}
           onSelect={(id) => {
+            if (id === "BRIEF") {
+              scrollToTop();
+              setSelectedId("BRIEF");
+              return;
+            }
             const st = statuses[id];
             if (st === "complete" || st === "running" || st === "checkpoint" || st === "error") {
               scrollToTop();
@@ -1586,7 +1603,41 @@ function PipelineView() {
           progressPct={progressPct}
           currentMainNumber={Math.max(1, currentMainNumber)}
           totalMain={mainStages.length}
+          hasBrief={Boolean(session?.brief_text)}
         />
+        {selectedId === "BRIEF" ? (
+          <main className="flex-1 overflow-hidden bg-background">
+            <div ref={contentScrollRef} className="h-full overflow-y-auto px-6 py-8 md:px-12 md:py-10">
+              <div className="mx-auto max-w-3xl">
+                <span className="text-label" style={{ color: tokens.amber }}>Source Document</span>
+                <h1
+                  className="mt-2 mb-6"
+                  style={{
+                    fontFamily: `'${tokens.fontBody}', sans-serif`,
+                    color: tokens.white,
+                    fontSize: 32,
+                    fontWeight: 400,
+                    lineHeight: 1.2,
+                  }}
+                >
+                  Submitted Brief
+                </h1>
+                <pre
+                  className="whitespace-pre-wrap break-words rounded-md border border-border p-5"
+                  style={{
+                    fontFamily: `'${tokens.fontBody}', sans-serif`,
+                    color: tokens.white,
+                    fontSize: 14,
+                    lineHeight: 1.6,
+                    backgroundColor: tokens.bgSecondary,
+                  }}
+                >
+                  {session?.brief_text ?? "No brief text on file for this session."}
+                </pre>
+              </div>
+            </div>
+          </main>
+        ) : (
         <RightPanel
           stage={selected}
           status={selectedStatus}
@@ -1993,6 +2044,7 @@ function PipelineView() {
           }
           retryStatus={session?.retry_status ?? null}
         />
+        )}
       </div>
     </div>
   );
@@ -2063,6 +2115,7 @@ function LeftPanel({
   progressPct,
   currentMainNumber,
   totalMain,
+  hasBrief,
 }: {
   stages: Stage[];
   statuses: Record<string, StageStatus>;
@@ -2071,7 +2124,9 @@ function LeftPanel({
   progressPct: number;
   currentMainNumber: number;
   totalMain: number;
+  hasBrief: boolean;
 }) {
+  const briefSelected = selectedId === "BRIEF";
   return (
     <aside className="hidden w-[280px] shrink-0 overflow-y-auto border-r border-border bg-background py-6 md:block">
       <header className="px-5 pb-5">
@@ -2092,6 +2147,67 @@ function LeftPanel({
           Stage {currentMainNumber} of {totalMain}
         </p>
       </header>
+
+      {hasBrief && (
+        <div style={{ borderTop: "1px solid var(--color-surface-3)", borderBottom: "1px solid var(--color-surface-3)" }}>
+          <button
+            type="button"
+            onClick={() => onSelect("BRIEF")}
+            className="flex w-full items-center gap-3 px-5 py-2.5 text-left transition-colors"
+            style={{
+              backgroundColor: briefSelected ? tokens.bgTertiary : "transparent",
+              borderLeft: `2px solid ${briefSelected ? tokens.amber : "transparent"}`,
+              cursor: "pointer",
+            }}
+            onMouseEnter={(e) => {
+              if (!briefSelected) e.currentTarget.style.backgroundColor = tokens.bgSecondary;
+            }}
+            onMouseLeave={(e) => {
+              if (!briefSelected) e.currentTarget.style.backgroundColor = "transparent";
+            }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: tokens.amber, flexShrink: 0 }}>
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <polyline points="14 2 14 8 20 8" />
+              <line x1="8" y1="13" x2="16" y2="13" />
+              <line x1="8" y1="17" x2="16" y2="17" />
+            </svg>
+            <span
+              className="shrink-0"
+              style={{
+                fontFamily: `'${tokens.fontMono}', monospace`,
+                color: tokens.muted,
+                minWidth: 28,
+                fontSize: 12,
+              }}
+            >
+              —
+            </span>
+            <span
+              className="flex-1 truncate"
+              style={{
+                fontFamily: `'${tokens.fontBody}', sans-serif`,
+                color: tokens.white,
+                fontWeight: 500,
+                fontStyle: "italic",
+              }}
+            >
+              Brief
+            </span>
+            <span
+              className="text-label shrink-0 rounded-sm px-1.5 py-0.5"
+              style={{
+                backgroundColor: "oklch(0.5 0.09 70 / 0.10)",
+                color: "var(--color-warning)",
+                fontSize: 9,
+              }}
+            >
+              Source
+            </span>
+          </button>
+        </div>
+      )}
+
 
       <ul>
         {stages.map((s) => {
