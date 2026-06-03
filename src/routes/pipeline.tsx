@@ -1624,18 +1624,10 @@ function PipelineView() {
                 >
                   Submitted Brief
                 </h1>
-                <pre
-                  className="whitespace-pre-wrap break-words rounded-md border border-border p-5"
-                  style={{
-                    fontFamily: `'${tokens.fontBody}', sans-serif`,
-                    color: tokens.white,
-                    fontSize: 14,
-                    lineHeight: 1.6,
-                    backgroundColor: tokens.bgSecondary,
-                  }}
-                >
-                  {session?.brief_text ?? "No brief text on file for this session."}
-                </pre>
+                <StreamedOutput
+                  text={session?.brief_text ?? "No brief text on file for this session."}
+                  streaming={false}
+                />
               </div>
             </div>
           </main>
