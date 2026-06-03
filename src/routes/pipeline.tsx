@@ -2370,10 +2370,12 @@ function RightPanel({
   retryStatus,
   stage8KeepNames,
   onToggleStage8Keep,
+  contentScrollRef,
 }: {
   stage: Stage;
   status: StageStatus;
   fullOutput: string;
+  contentScrollRef: RefObject<HTMLDivElement | null>;
   isViewingHistorical?: boolean;
   onBackToCurrent?: () => void;
   stage1Error: string | null;
@@ -2434,7 +2436,7 @@ function RightPanel({
           </button>
         </div>
       )}
-      <div className="flex-1 overflow-y-auto px-6 py-10 sm:px-12 sm:py-10">
+      <div ref={contentScrollRef} className="flex-1 overflow-y-auto px-6 py-10 sm:px-12 sm:py-10">
         {isError &&
         [
           "01",
