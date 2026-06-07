@@ -15,6 +15,7 @@ export interface CallClaudeArgs {
   userMessage: string;
   maxTokens?: number;
   model?: string;
+  skipUniversalWrapper?: boolean;
   /** When provided, retry status is written to sessions.retry_status and
    *  Development Mode (sessions.dev_mode) overrides the system prompt + max_tokens. */
   sessionId?: string;
@@ -136,7 +137,7 @@ async function prepareCall(args: CallClaudeArgs): Promise<{ apiKey: string; body
   if (devMode && args.stageNumber && args.stageName) {
     effectiveSystem = buildDevModePrompt(args.stageNumber, args.stageName);
     effectiveMaxTokens = 500;
-  } else {
+  } else if (!args.skipUniversalWrapper) {
     effectiveSystem = `${UNIVERSAL_SYSTEM_WRAPPER}\n\n${args.systemPrompt}`;
   }
   return {
@@ -253,8 +254,15 @@ export async function* streamClaude(args: CallClaudeArgs): AsyncGenerator<string
     try {
       while (true) {
         const { done, value } = await reader.read();
-        if (done) break;
-        buffer += decoder.decode(value, { stream: true });
+        if (done) {
+          await new Promise((r) => setTimeout(r, 500));
+          const rest = decoder.decode();
+          if (rest) buffer += rest;
+          if (!buffer.trim()) break;
+          buffer += "\n";
+        } else {
+          buffer += decoder.decode(value, { stream: true });
+        }
         let idx: number;
         while ((idx = buffer.indexOf("\n")) !== -1) {
           let line = buffer.slice(0, idx);
@@ -279,6 +287,7 @@ export async function* streamClaude(args: CallClaudeArgs): AsyncGenerator<string
             // ignore partial / non-JSON SSE lines
           }
         }
+        if (done) break;
       }
     } catch {
       // Network drop mid-stream — return what we have so the outer loop decides.
