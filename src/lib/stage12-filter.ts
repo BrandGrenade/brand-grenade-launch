@@ -38,9 +38,12 @@ function norm(s: string): string {
 
 function splitSmpBlocks(text: string): string[] {
   if (!text) return [];
-  // Split on the start of an SMP block; keep the leading "SMP:" marker on each chunk.
-  const parts = text.split(/\n(?=SMP:\s*")/g);
-  return parts.map((p) => p.trim()).filter(Boolean);
+  // Split on the start of an SMP block; keep the leading marker on each chunk.
+  // Upstream stages may emit either `SMP:` or markdown headings like `### SMP:`.
+  const parts = text.split(/\n(?=(?:#{1,6}\s*)?\*{0,2}SMP:\s*")/g);
+  return parts
+    .map((p) => p.trim())
+    .filter((p) => /^(?:#{1,6}\s*)?\*{0,2}SMP:\s*"/m.test(p));
 }
 
 function pickNumber(block: string, label: string): number {
@@ -52,7 +55,7 @@ function pickNumber(block: string, label: string): number {
 export function parseStage10Scores(text: string): Stage10Score[] {
   const out: Stage10Score[] = [];
   for (const block of splitSmpBlocks(text)) {
-    const head = block.match(/^SMP:\s*"([^"]+)"\s*[—\-–]\s*FIELD:\s*([^\n]+?)\s*$/m);
+    const head = block.match(/^(?:#{1,6}\s*)?\*{0,2}SMP:\s*"([^"]+)"\s*[—\-–]\s*FIELD:\s*([^\n*]+?)(?:\*{0,2})\s*$/m);
     if (!head) continue;
     const composite = block.match(/COMPOSITE\s*:\s*(\d+(?:\.\d+)?)\s*\/\s*60/i);
     const score: Stage10Score = {
@@ -74,7 +77,7 @@ export function parseStage10Scores(text: string): Stage10Score[] {
 export function parseStage11Verdicts(text: string): Stage11Verdict[] {
   const out: Stage11Verdict[] = [];
   for (const block of splitSmpBlocks(text)) {
-    const head = block.match(/^SMP:\s*"([^"]+)"\s*[—\-–]\s*FIELD:\s*([^—\-–\n]+?)(?:\s*[—\-–]\s*ICONIC[^\n]*)?\s*$/m);
+    const head = block.match(/^(?:#{1,6}\s*)?\*{0,2}SMP:\s*"([^"]+)"\s*[—\-–]\s*FIELD:\s*([^—\-–\n*]+?)(?:\s*[—\-–]\s*ICONIC[^\n]*)?(?:\*{0,2})\s*$/m);
     if (!head) continue;
     const verdictLine = block.match(/SMP\s+VERDICT\s*:\s*([^\n]+)/i);
     const rawVerdict = verdictLine ? verdictLine[1].trim().toUpperCase() : "";
