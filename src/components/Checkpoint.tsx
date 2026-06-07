@@ -87,15 +87,19 @@ export function Checkpoint({
         <hr className="my-6 h-px border-0 bg-border" />
       </header>
 
-      {/* Review card */}
+      {/* Review card — sticky so the proposition / review content stays visible while typing in fields below */}
       <div
         className="overflow-y-auto overflow-x-hidden p-6 sm:p-8"
         style={{
           backgroundColor: "var(--color-surface-2)",
           border: "1px solid var(--color-border)",
           borderRadius: 12,
-          maxHeight: 400,
+          maxHeight: "min(50vh, 480px)",
           contain: "paint",
+          position: "sticky",
+          top: 72,
+          zIndex: 20,
+          boxShadow: "0 8px 24px rgba(0,0,0,0.35)",
         }}
       >
         {reviewContent}
