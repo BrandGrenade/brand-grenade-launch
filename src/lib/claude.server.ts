@@ -258,10 +258,11 @@ export async function* streamClaude(args: CallClaudeArgs): AsyncGenerator<string
           await new Promise((r) => setTimeout(r, 500));
           const rest = decoder.decode();
           if (rest) buffer += rest;
-          if (buffer.trim()) buffer += "\n";
-          break;
+          if (!buffer.trim()) break;
+          buffer += "\n";
+        } else {
+          buffer += decoder.decode(value, { stream: true });
         }
-        buffer += decoder.decode(value, { stream: true });
         let idx: number;
         while ((idx = buffer.indexOf("\n")) !== -1) {
           let line = buffer.slice(0, idx);
@@ -286,6 +287,7 @@ export async function* streamClaude(args: CallClaudeArgs): AsyncGenerator<string
             // ignore partial / non-JSON SSE lines
           }
         }
+        if (done) break;
       }
     } catch {
       // Network drop mid-stream — return what we have so the outer loop decides.
