@@ -17,6 +17,7 @@ import { Route as CompleteRouteImport } from './routes/complete'
 import { Route as BriefRouteImport } from './routes/brief'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DetonationCanvasRouteImport } from './routes/detonation_.canvas'
+import { Route as ApiPublicKickStage12RouteImport } from './routes/api/public/kick-stage12'
 
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
@@ -58,6 +59,11 @@ const DetonationCanvasRoute = DetonationCanvasRouteImport.update({
   path: '/detonation/canvas',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicKickStage12Route = ApiPublicKickStage12RouteImport.update({
+  id: '/api/public/kick-stage12',
+  path: '/api/public/kick-stage12',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -68,6 +74,7 @@ export interface FileRoutesByFullPath {
   '/pipeline': typeof PipelineRoute
   '/settings': typeof SettingsRoute
   '/detonation/canvas': typeof DetonationCanvasRoute
+  '/api/public/kick-stage12': typeof ApiPublicKickStage12Route
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -78,6 +85,7 @@ export interface FileRoutesByTo {
   '/pipeline': typeof PipelineRoute
   '/settings': typeof SettingsRoute
   '/detonation/canvas': typeof DetonationCanvasRoute
+  '/api/public/kick-stage12': typeof ApiPublicKickStage12Route
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -89,6 +97,7 @@ export interface FileRoutesById {
   '/pipeline': typeof PipelineRoute
   '/settings': typeof SettingsRoute
   '/detonation_/canvas': typeof DetonationCanvasRoute
+  '/api/public/kick-stage12': typeof ApiPublicKickStage12Route
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -101,6 +110,7 @@ export interface FileRouteTypes {
     | '/pipeline'
     | '/settings'
     | '/detonation/canvas'
+    | '/api/public/kick-stage12'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -111,6 +121,7 @@ export interface FileRouteTypes {
     | '/pipeline'
     | '/settings'
     | '/detonation/canvas'
+    | '/api/public/kick-stage12'
   id:
     | '__root__'
     | '/'
@@ -121,6 +132,7 @@ export interface FileRouteTypes {
     | '/pipeline'
     | '/settings'
     | '/detonation_/canvas'
+    | '/api/public/kick-stage12'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -132,6 +144,7 @@ export interface RootRouteChildren {
   PipelineRoute: typeof PipelineRoute
   SettingsRoute: typeof SettingsRoute
   DetonationCanvasRoute: typeof DetonationCanvasRoute
+  ApiPublicKickStage12Route: typeof ApiPublicKickStage12Route
 }
 
 declare module '@tanstack/react-router' {
@@ -192,6 +205,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DetonationCanvasRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/kick-stage12': {
+      id: '/api/public/kick-stage12'
+      path: '/api/public/kick-stage12'
+      fullPath: '/api/public/kick-stage12'
+      preLoaderRoute: typeof ApiPublicKickStage12RouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -204,6 +224,7 @@ const rootRouteChildren: RootRouteChildren = {
   PipelineRoute: PipelineRoute,
   SettingsRoute: SettingsRoute,
   DetonationCanvasRoute: DetonationCanvasRoute,
+  ApiPublicKickStage12Route: ApiPublicKickStage12Route,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
