@@ -3648,6 +3648,8 @@ function ProgressMessages({ stageName }: { stageName: string }) {
   );
 }
 
+const ERROR_AUTO_RETRIED = new Set<string>();
+
 function ErrorStateCard({
   stage,
   errorMessage,
@@ -3662,6 +3664,29 @@ function ErrorStateCard({
   prevStageNumber?: string;
 }) {
   const [showDetails, setShowDetails] = useState(false);
+  const [autoRetrying, setAutoRetrying] = useState(false);
+  const autoRetryKey = `${typeof window !== "undefined" ? window.location.pathname + window.location.search : ""}::${stage.id}`;
+
+  useEffect(() => {
+    if (ERROR_AUTO_RETRIED.has(autoRetryKey)) return;
+    ERROR_AUTO_RETRIED.add(autoRetryKey);
+    setAutoRetrying(true);
+    const t = window.setTimeout(() => {
+      onRetry();
+    }, 800);
+    return () => window.clearTimeout(t);
+  }, [autoRetryKey, onRetry]);
+
+  if (autoRetrying) {
+    return (
+      <div style={{ margin: "40px 48px", paddingBottom: 80, textAlign: "center" }}>
+        <p className="text-body-sm" style={{ color: "#8A8680" }}>
+          Stage {stage.number} was interrupted. Automatically retrying…
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div style={{ margin: "40px 48px", paddingBottom: 80 }}>
       <div
