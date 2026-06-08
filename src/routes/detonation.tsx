@@ -158,6 +158,63 @@ function ErrorBanner({ message }: { message: string }) {
   );
 }
 
+// Global Creative Direction input for multi-card stages (Stage 17, Stage 18).
+// Rendered directly above the "Retry This Stage" button. The text entered
+// here is merged into every regenerated card's redirect on retry. Persists
+// across retries so the user can iterate on the same direction.
+function GlobalRetryDirection({
+  value,
+  onChange,
+  disabled,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  disabled?: boolean;
+}) {
+  return (
+    <div style={{ marginTop: 24 }}>
+      <label
+        className="text-mono"
+        htmlFor="global-creative-direction"
+        style={{
+          display: "block",
+          color: AMBER,
+          textTransform: "uppercase",
+          fontSize: 10,
+          letterSpacing: "0.16em",
+          marginBottom: 8,
+          fontWeight: 500,
+        }}
+      >
+        Creative Direction — applied to all cards on retry
+      </label>
+      <textarea
+        id="global-creative-direction"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        disabled={disabled}
+        rows={3}
+        placeholder="Optional. e.g. push harder on cultural tension; ground every candidate in a specific Australian ritual."
+        style={{
+          width: "100%",
+          backgroundColor: "#0E0E0E",
+          color: "#FFFFFF",
+          border: "1px solid #2A2A2A",
+          borderRadius: 8,
+          padding: "12px 14px",
+          fontFamily: "inherit",
+          fontSize: 14,
+          lineHeight: 1.5,
+          resize: "vertical",
+          outline: "none",
+        }}
+      />
+    </div>
+  );
+}
+
+
+
 // Render Phase 2 prose with markdown punctuation stripped. Heading-style
 // lines (originally ##/###/**…**/all-caps short titles) are rendered with
 // the .detonation-heading class (amber DM Mono uppercase). All other raw
@@ -742,6 +799,7 @@ function Stage17({ session, onChange, goNext }: { session: SessionRow; onChange:
   const [err, setErr] = useState<string | null>(null);
   const [checked, setChecked] = useState<Record<string, boolean>>({});
   const [redirects, setRedirects] = useState<Record<string, string>>({});
+  const [globalRedirect, setGlobalRedirect] = useState<string>("");
   const [autoTriggered, setAutoTriggered] = useState(false);
 
   // Source of truth: Supabase. Re-sync display whenever the session row updates.
@@ -790,8 +848,16 @@ function Stage17({ session, onChange, goNext }: { session: SessionRow; onChange:
     setBusy(true); setErr(null);
     try {
       const toRegen = cards.filter((c) => !checked[c.id]).map((c) => c.id);
-      const r = await retry({ data: { sessionId: session.id, cardIds: toRegen, redirectInstructions: redirects } });
+      const g = globalRedirect.trim();
+      const mergedRedirects: Record<string, string> = {};
+      toRegen.forEach((id) => {
+        const perCard = (redirects[id] ?? "").trim();
+        const combined = [g, perCard].filter(Boolean).join("\n\n");
+        if (combined) mergedRedirects[id] = combined;
+      });
+      const r = await retry({ data: { sessionId: session.id, cardIds: toRegen, redirectInstructions: mergedRedirects } });
       setOutput(r.output); setRedirects({}); onChange();
+      // Persist globalRedirect intentionally — user may iterate on the same direction.
     } catch (e) { setErr(e instanceof Error ? e.message : "Retry failed"); }
     finally { setBusy(false); }
   };
@@ -834,7 +900,8 @@ function Stage17({ session, onChange, goNext }: { session: SessionRow; onChange:
               </AmberButton>
             </DetonationOutputCard>
           ))}
-          <div style={{ marginTop: 24, display: "flex", gap: 12, justifyContent: "flex-end" }}>
+          <GlobalRetryDirection value={globalRedirect} onChange={setGlobalRedirect} disabled={busy} />
+          <div style={{ marginTop: 12, display: "flex", gap: 12, justifyContent: "flex-end" }}>
             <AmberButton variant="ghost" onClick={handleRetry} disabled={busy}>
               {busy && <Spinner />} Retry This Stage
             </AmberButton>
@@ -940,6 +1007,7 @@ function Stage18({ session, onChange, goNext }: { session: SessionRow; onChange:
   const [err, setErr] = useState<string | null>(null);
   const [checked, setChecked] = useState<Record<string, boolean>>({});
   const [redirects, setRedirects] = useState<Record<string, string>>({});
+  const [globalRedirect, setGlobalRedirect] = useState<string>("");
   const [courageDismissed, setCourageDismissed] = useState(false);
 
   useEffect(() => { setOutput(session.stage_18_output); }, [session.stage_18_output]);
@@ -974,19 +1042,26 @@ function Stage18({ session, onChange, goNext }: { session: SessionRow; onChange:
     setBusy(true); setErr(null);
     try {
       const toRegen = courage ? cards.map((c) => c.id) : cards.filter((c) => !checked[c.id]).map((c) => c.id);
+      const g = globalRedirect.trim();
+      const mergedRedirects: Record<string, string> = {};
+      toRegen.forEach((id) => {
+        const perCard = (redirects[id] ?? "").trim();
+        const combined = [g, perCard].filter(Boolean).join("\n\n");
+        if (combined) mergedRedirects[id] = combined;
+      });
       const r = await retry({ data: {
         sessionId: session.id, cardIds: toRegen,
-        redirectInstructions: redirects, courageRedirect: courage,
+        redirectInstructions: mergedRedirects, courageRedirect: courage,
       } });
       setOutput(r.output); setRedirects({});
-      // After a courage redirect, suppress the banner for this generation cycle
-      // regardless of whether discomfort markers are present in the new output.
+      // globalRedirect intentionally preserved so the user can iterate.
       if (courage) setCourageDismissed(true);
       else setCourageDismissed(false);
       onChange();
     } catch (e) { setErr(e instanceof Error ? e.message : "Retry failed"); }
     finally { setBusy(false); }
   };
+
 
   // Extract the line following "THE DETONATION STATEMENT:" — that's the
   // canonical statement to persist. Falls back to the full card markdown.
@@ -1064,7 +1139,8 @@ function Stage18({ session, onChange, goNext }: { session: SessionRow; onChange:
               </DetonationOutputCard>
             );
           })}
-          <div style={{ marginTop: 24, display: "flex", gap: 12, justifyContent: "flex-end" }}>
+          <GlobalRetryDirection value={globalRedirect} onChange={setGlobalRedirect} disabled={busy} />
+          <div style={{ marginTop: 12, display: "flex", gap: 12, justifyContent: "flex-end" }}>
             <AmberButton variant="ghost" onClick={() => handleRetry(false)} disabled={busy}>
               {busy && <Spinner />} Retry This Stage
             </AmberButton>
