@@ -21,6 +21,7 @@ const STAGE21_SELECT = [
   "category",
   "selected_smp",
   "stage_18_selected_detonation",
+  "stage_18_detonation_line",
   "stage_19_output",
   "stage_20_output",
   "truth_product",
@@ -34,6 +35,7 @@ type Stage21Session = {
   category: string | null;
   selected_smp: string | null;
   stage_18_selected_detonation: string | null;
+  stage_18_detonation_line: string | null;
   stage_19_output: string | null;
   stage_20_output: string | null;
   truth_product: string | null;
@@ -83,7 +85,10 @@ function buildStage21UserMessage(
     "VALIDATED SMP",
     s.selected_smp?.trim() || "—",
     "",
-    "SELECTED DETONATION (Stage 18)",
+    "SELECTED DETONATION LINE (Stage 18 — short campaign line, must appear first under THE DETONATION)",
+    s.stage_18_detonation_line?.trim() || "—",
+    "",
+    "SELECTED DETONATION STATEMENT (Stage 18 — full statement, must appear directly below the line under THE DETONATION)",
     s.stage_18_selected_detonation?.trim() || "—",
     "",
     "THREE TRUTH POSITIONING",
@@ -127,7 +132,7 @@ export const runStage21 = createServerFn({ method: "POST" })
     await requireConfirmedSelection(data.sessionId, "F");
     const { data: session, error } = await supabaseAdmin
       .from("sessions")
-      .select("brand_name, category, selected_smp, stage_18_selected_detonation, stage_19_output, stage_20_output, truth_product, truth_consumer, truth_cultural, stage_21_outputs")
+      .select("brand_name, category, selected_smp, stage_18_selected_detonation, stage_18_detonation_line, stage_19_output, stage_20_output, truth_product, truth_consumer, truth_cultural, stage_21_outputs")
       .eq("id", data.sessionId)
       .single();
     if (error || !session) throw new Error(`Session not found: ${error?.message ?? "no row"}`);
@@ -222,7 +227,7 @@ export const retryStage21 = createServerFn({ method: "POST" })
     await requireConfirmedSelection(data.sessionId, "F");
     const { data: session, error } = await supabaseAdmin
       .from("sessions")
-      .select("brand_name, category, selected_smp, stage_18_selected_detonation, stage_19_output, stage_20_output, truth_product, truth_consumer, truth_cultural, stage_21_outputs")
+      .select("brand_name, category, selected_smp, stage_18_selected_detonation, stage_18_detonation_line, stage_19_output, stage_20_output, truth_product, truth_consumer, truth_cultural, stage_21_outputs")
       .eq("id", data.sessionId)
       .single();
     if (error || !session) throw new Error(`Session not found: ${error?.message ?? "no row"}`);

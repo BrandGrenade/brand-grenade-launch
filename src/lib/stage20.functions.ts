@@ -29,6 +29,7 @@ const STAGE20_SELECT = [
   "stage_17b_output",
   "stage_18_output",
   "stage_18_selected_detonation",
+  "stage_18_detonation_line",
   "stage_19_output",
   "truth_product",
   "truth_consumer",
@@ -44,6 +45,7 @@ function buildStage20UserMessage(s: {
   stage_17b_output: string | null;
   stage_18_output: string | null;
   stage_18_selected_detonation: string | null;
+  stage_18_detonation_line: string | null;
   stage_19_output: string | null;
   truth_product: string | null;
   truth_consumer: string | null;
@@ -68,7 +70,10 @@ function buildStage20UserMessage(s: {
       cultural: s.truth_cultural,
     }),
     "",
-    "SELECTED DETONATION (Stage 18)",
+    "SELECTED DETONATION LINE (Stage 18 — short campaign line, must appear first under THE DETONATION)",
+    s.stage_18_detonation_line?.trim() || "—",
+    "",
+    "SELECTED DETONATION STATEMENT (Stage 18 — full statement, must appear directly below the line under THE DETONATION)",
     s.stage_18_selected_detonation?.trim() || "—",
     "",
     "DETONATION SYSTEM PRINCIPLES & AMBITION BENCHMARK (Stage 17B)",
@@ -89,7 +94,7 @@ export const runStage20 = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { data: session, error } = await supabaseAdmin
       .from("sessions")
-      .select("brand_name, category, selected_smp, stage_5_output, stage_17b_output, stage_18_output, stage_18_selected_detonation, stage_19_output, truth_product, truth_consumer, truth_cultural, stage_20_output")
+      .select("brand_name, category, selected_smp, stage_5_output, stage_17b_output, stage_18_output, stage_18_selected_detonation, stage_18_detonation_line, stage_19_output, truth_product, truth_consumer, truth_cultural, stage_20_output")
       .eq("id", data.sessionId)
       .single();
     if (error || !session) throw new Error(`Session not found: ${error?.message ?? "no row"}`);
@@ -161,7 +166,7 @@ export const retryStage20 = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { data: session, error } = await supabaseAdmin
       .from("sessions")
-      .select("brand_name, category, selected_smp, stage_5_output, stage_17b_output, stage_18_output, stage_18_selected_detonation, stage_19_output, truth_product, truth_consumer, truth_cultural, stage_20_output")
+      .select("brand_name, category, selected_smp, stage_5_output, stage_17b_output, stage_18_output, stage_18_selected_detonation, stage_18_detonation_line, stage_19_output, truth_product, truth_consumer, truth_cultural, stage_20_output")
       .eq("id", data.sessionId)
       .single();
     if (error || !session) throw new Error(`Session not found: ${error?.message ?? "no row"}`);
