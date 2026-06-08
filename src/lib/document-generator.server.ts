@@ -415,9 +415,11 @@ function propReveal(smp: string): string {
 </div>`;
 }
 
+import { stripDocumentMetadata } from "./strip-document-metadata";
+
 export function sanitiseText(text: string): string {
   if (!text) return "";
-  return text
+  return stripDocumentMetadata(text)
     .replace(/\u2014/g, "—")
     .replace(/\u2013/g, "–")
     .replace(/\u201C/g, '"')
