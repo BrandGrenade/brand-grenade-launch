@@ -950,6 +950,7 @@ function Stage18({ session, onChange, goNext }: { session: SessionRow; onChange:
   const [err, setErr] = useState<string | null>(null);
   const [checked, setChecked] = useState<Record<string, boolean>>({});
   const [redirects, setRedirects] = useState<Record<string, string>>({});
+  const [globalRedirect, setGlobalRedirect] = useState<string>("");
   const [courageDismissed, setCourageDismissed] = useState(false);
 
   useEffect(() => { setOutput(session.stage_18_output); }, [session.stage_18_output]);
