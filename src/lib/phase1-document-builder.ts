@@ -77,8 +77,10 @@ function md(text: string): string {
   return out.join("\n");
 }
 
+import { stripDocumentMetadata } from "./strip-document-metadata";
+
 function sanitise(t: string | null | undefined): string {
-  return (t ?? "")
+  return stripDocumentMetadata(t ?? "")
     .replace(/\u2014/g, "—").replace(/\u2013/g, "–")
     .replace(/\u201C/g, '"').replace(/\u201D/g, '"')
     .replace(/\u2018/g, "'").replace(/\u2019/g, "'")

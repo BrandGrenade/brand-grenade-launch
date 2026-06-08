@@ -6,6 +6,7 @@
 // the Phase 2 amber #D4924A. Open in a new tab; user prints natively.
 
 import { parseStage20Output, parseBriefQualityScore, type BriefQualityScore } from "./phase2-shared";
+import { stripDocumentMetadata } from "./strip-document-metadata";
 
 export type Phase2DocType =
   | "detonation_territory"
@@ -83,7 +84,7 @@ export function md(text: string): string {
 }
 
 function sanitise(t: string | null | undefined): string {
-  return (t ?? "")
+  return stripDocumentMetadata(t ?? "")
     .replace(/\u2014/g, "—").replace(/\u2013/g, "–")
     .replace(/\u201C/g, '"').replace(/\u201D/g, '"')
     .replace(/\u2018/g, "'").replace(/\u2019/g, "'")
