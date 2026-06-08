@@ -791,8 +791,16 @@ function Stage17({ session, onChange, goNext }: { session: SessionRow; onChange:
     setBusy(true); setErr(null);
     try {
       const toRegen = cards.filter((c) => !checked[c.id]).map((c) => c.id);
-      const r = await retry({ data: { sessionId: session.id, cardIds: toRegen, redirectInstructions: redirects } });
+      const g = globalRedirect.trim();
+      const mergedRedirects: Record<string, string> = {};
+      toRegen.forEach((id) => {
+        const perCard = (redirects[id] ?? "").trim();
+        const combined = [g, perCard].filter(Boolean).join("\n\n");
+        if (combined) mergedRedirects[id] = combined;
+      });
+      const r = await retry({ data: { sessionId: session.id, cardIds: toRegen, redirectInstructions: mergedRedirects } });
       setOutput(r.output); setRedirects({}); onChange();
+      // Persist globalRedirect intentionally — user may iterate on the same direction.
     } catch (e) { setErr(e instanceof Error ? e.message : "Retry failed"); }
     finally { setBusy(false); }
   };
