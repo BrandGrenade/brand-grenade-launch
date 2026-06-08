@@ -114,9 +114,13 @@ Generate exactly three Detonation candidates. All must score 64 or above before 
 
 For each candidate:
 
+THE DETONATION LINE
+
+A short campaign line — three to seven words. The line creative teams could put on screen, on a poster, or at the front of the brief. Memorable. Ownable. Carries the idea on its own. This is NOT the long statement — it is the short headline form of the Detonation.
+
 THE DETONATION STATEMENT
 
-One sentence. The precise expression of the idea. Specific enough that any creative director in any market can work from it.
+One sentence. The precise expression of the idea — the full strategic articulation that sits underneath the Line. Specific enough that any creative director in any market can work from it.
 
 Not a tagline. The idea itself.
 
