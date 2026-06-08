@@ -104,6 +104,7 @@ export type Database = {
           stage_17_selected_territory: string | null
           stage_17b_error: string | null
           stage_17b_output: string | null
+          stage_18_detonation_line: string | null
           stage_18_error: string | null
           stage_18_output: string | null
           stage_18_selected_detonation: string | null
@@ -239,6 +240,7 @@ export type Database = {
           stage_17_selected_territory?: string | null
           stage_17b_error?: string | null
           stage_17b_output?: string | null
+          stage_18_detonation_line?: string | null
           stage_18_error?: string | null
           stage_18_output?: string | null
           stage_18_selected_detonation?: string | null
@@ -374,6 +376,7 @@ export type Database = {
           stage_17_selected_territory?: string | null
           stage_17b_error?: string | null
           stage_17b_output?: string | null
+          stage_18_detonation_line?: string | null
           stage_18_error?: string | null
           stage_18_output?: string | null
           stage_18_selected_detonation?: string | null
