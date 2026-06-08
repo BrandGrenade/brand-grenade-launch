@@ -21,6 +21,7 @@ const STAGE21_SELECT = [
   "category",
   "selected_smp",
   "stage_18_selected_detonation",
+  "stage_18_detonation_line",
   "stage_19_output",
   "stage_20_output",
   "truth_product",
@@ -34,6 +35,7 @@ type Stage21Session = {
   category: string | null;
   selected_smp: string | null;
   stage_18_selected_detonation: string | null;
+  stage_18_detonation_line: string | null;
   stage_19_output: string | null;
   stage_20_output: string | null;
   truth_product: string | null;
