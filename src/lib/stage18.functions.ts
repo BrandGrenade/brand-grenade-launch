@@ -78,6 +78,8 @@ const RunInput = z.object({ sessionId: z.string().uuid() });
 export const runStage18 = createServerFn({ method: "POST" })
   .inputValidator((i) => RunInput.parse(i))
   .handler(async ({ data }) => {
+    const { requireConfirmedSelection } = await import("./checkpoint-gate");
+    await requireConfirmedSelection(data.sessionId, "D");
     const { data: session, error } = await supabaseAdmin
       .from("sessions")
       .select("brand_name, category, selected_smp, stage_17_selected_territory, stage_17b_output, truth_product, truth_consumer, truth_cultural, stage_18_output")
