@@ -62,6 +62,8 @@ const RunInput = z.object({ sessionId: z.string().uuid() });
 export const runStage19 = createServerFn({ method: "POST" })
   .inputValidator((i) => RunInput.parse(i))
   .handler(async ({ data }) => {
+    const { requireConfirmedSelection } = await import("./checkpoint-gate");
+    await requireConfirmedSelection(data.sessionId, "E");
     const { data: session, error } = await supabaseAdmin
       .from("sessions")
       .select("brand_name, category, selected_smp, stage_18_selected_detonation, stage_18_output, stage_14b_output, truth_product, truth_consumer, truth_cultural, stage_19_output")
@@ -132,6 +134,8 @@ const RetryInput = z.object({
 export const retryStage19 = createServerFn({ method: "POST" })
   .inputValidator((i) => RetryInput.parse(i))
   .handler(async ({ data }) => {
+    const { requireConfirmedSelection } = await import("./checkpoint-gate");
+    await requireConfirmedSelection(data.sessionId, "E");
     const { data: session, error } = await supabaseAdmin
       .from("sessions")
       .select("brand_name, category, selected_smp, stage_18_selected_detonation, stage_18_output, stage_14b_output, truth_product, truth_consumer, truth_cultural, stage_19_output")

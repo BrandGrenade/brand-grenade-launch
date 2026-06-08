@@ -11,6 +11,8 @@ const Input = z.object({ sessionId: z.string().uuid() });
 export const runStage9 = createServerFn({ method: "POST" })
   .inputValidator((i) => Input.parse(i))
   .handler(async function* ({ data }) {
+    const { requireConfirmedSelection } = await import("./checkpoint-gate");
+    await requireConfirmedSelection(data.sessionId, "B");
     const { data: session, error } = await supabaseAdmin
       .from("sessions")
       .select("brand_name, category, stage_2_output, stage_7_output, stage_8_output, stage_9_output, checkpoint_b_confirmed")
@@ -18,7 +20,6 @@ export const runStage9 = createServerFn({ method: "POST" })
       .single();
     if (error || !session) throw new Error(`Session not found: ${error?.message ?? "no row"}`);
     if (!session.stage_8_output) throw new Error("Stage 8 output missing — cannot run Stage 9");
-    if (!session.checkpoint_b_confirmed) throw new Error("Checkpoint B not confirmed — cannot run Stage 9");
     if (session.stage_9_output) {
       yield { delta: session.stage_9_output };
       yield { done: true as const, output: session.stage_9_output };
