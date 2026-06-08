@@ -38,7 +38,7 @@ THE CHANNEL: Name the channel. State its role in the hierarchy — PRIMARY, AMPL
 
 THE SMP: Exactly as validated in Phase 1. Unchanged. One line.
 
-THE DETONATION: The Detonation Statement from Stage 18. Unchanged. One line.
+THE DETONATION: First the short Detonation Line from Stage 18 on its own line (three to seven words). Then on the next line, the full Detonation Statement from Stage 18. Both unchanged. Short line first, explanatory statement below it. Always.
 
 THE SMP IN THIS CHANNEL: The SMP translation from Stage 19 for this channel. Stated as: In this channel the SMP feels like — [complete] This is the creative brief in one sentence. Everything below serves it.
 
