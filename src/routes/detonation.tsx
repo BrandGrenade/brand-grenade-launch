@@ -843,7 +843,8 @@ function Stage17({ session, onChange, goNext }: { session: SessionRow; onChange:
               </AmberButton>
             </DetonationOutputCard>
           ))}
-          <div style={{ marginTop: 24, display: "flex", gap: 12, justifyContent: "flex-end" }}>
+          <GlobalRetryDirection value={globalRedirect} onChange={setGlobalRedirect} disabled={busy} />
+          <div style={{ marginTop: 12, display: "flex", gap: 12, justifyContent: "flex-end" }}>
             <AmberButton variant="ghost" onClick={handleRetry} disabled={busy}>
               {busy && <Spinner />} Retry This Stage
             </AmberButton>
