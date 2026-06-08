@@ -48,7 +48,7 @@ One line. Exactly as validated in Phase 1. Unchanged. Unedited.
 
 THE DETONATION
 
-One line. The Detonation Statement from Stage 18. Unchanged. Unedited.
+Two lines. First line: the short Detonation Line from Stage 18 (three to seven words — the short campaign line). Second line, directly below, separated by one blank line: the full Detonation Statement from Stage 18. Both unchanged. Both unedited. The short line MUST appear first. The longer explanatory statement MUST appear below it.
 
 THE THREE TRUTHS
 
