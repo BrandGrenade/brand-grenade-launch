@@ -985,19 +985,26 @@ function Stage18({ session, onChange, goNext }: { session: SessionRow; onChange:
     setBusy(true); setErr(null);
     try {
       const toRegen = courage ? cards.map((c) => c.id) : cards.filter((c) => !checked[c.id]).map((c) => c.id);
+      const g = globalRedirect.trim();
+      const mergedRedirects: Record<string, string> = {};
+      toRegen.forEach((id) => {
+        const perCard = (redirects[id] ?? "").trim();
+        const combined = [g, perCard].filter(Boolean).join("\n\n");
+        if (combined) mergedRedirects[id] = combined;
+      });
       const r = await retry({ data: {
         sessionId: session.id, cardIds: toRegen,
-        redirectInstructions: redirects, courageRedirect: courage,
+        redirectInstructions: mergedRedirects, courageRedirect: courage,
       } });
       setOutput(r.output); setRedirects({});
-      // After a courage redirect, suppress the banner for this generation cycle
-      // regardless of whether discomfort markers are present in the new output.
+      // globalRedirect intentionally preserved so the user can iterate.
       if (courage) setCourageDismissed(true);
       else setCourageDismissed(false);
       onChange();
     } catch (e) { setErr(e instanceof Error ? e.message : "Retry failed"); }
     finally { setBusy(false); }
   };
+
 
   // Extract the line following "THE DETONATION STATEMENT:" — that's the
   // canonical statement to persist. Falls back to the full card markdown.
