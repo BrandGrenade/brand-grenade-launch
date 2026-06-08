@@ -82,6 +82,9 @@ export const runStage17b = createServerFn({ method: "POST" })
       throw e instanceof Error ? e : new Error(msg);
     }
 
+    const { canonicaliseStage17bOutput } = await import("./canonical-format");
+    output = canonicaliseStage17bOutput(output);
+
     const { error: saveErr } = await supabaseAdmin
       .from("sessions")
       .update({ stage_17b_output: output, stage_17b_error: null, phase_2_current_stage: '18' })
@@ -135,7 +138,7 @@ export const retryStage17b = createServerFn({ method: "POST" })
 
     const redirect = data.redirectInstructions["card-1"] ?? "";
     const system = appendRedirect(STAGE_17B_DETONATION_INTELLIGENCE_PROMPT, redirect);
-    const output = await callClaude({
+    let output = await callClaude({
       systemPrompt: withPhase2Formatting(system),
       userMessage: buildStage17bUserMessage(session as never),
       maxTokens: 8000,
@@ -144,6 +147,9 @@ export const retryStage17b = createServerFn({ method: "POST" })
       stageNumber: "17B",
       stageName: "Detonation Intelligence",
     });
+
+    const { canonicaliseStage17bOutput } = await import("./canonical-format");
+    output = canonicaliseStage17bOutput(output);
 
     const { error: saveErr } = await supabaseAdmin
       .from("sessions")
