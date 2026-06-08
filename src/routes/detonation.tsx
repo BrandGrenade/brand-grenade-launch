@@ -1066,15 +1066,23 @@ function Stage18({ session, onChange, goNext }: { session: SessionRow; onChange:
   // Extract the line following "THE DETONATION STATEMENT:" — that's the
   // canonical statement to persist. Falls back to the full card markdown.
   const extractStatement = (markdown: string): string => {
-    const m = markdown.match(/THE DETONATION STATEMENT:\s*\n+\s*([^\n]+(?:\n(?!\s*\n)[^\n]+)*)/i);
+    const m = markdown.match(/THE DETONATION STATEMENT:?\s*\n+\s*([^\n]+(?:\n(?!\s*\n)[^\n]+)*)/i);
     return m ? m[1].trim() : markdown.trim();
   };
 
-  const handleSelect = async (markdown: string) => {
+  // Extract the short Detonation Line — labelled "THE DETONATION LINE".
+  // Falls back to the card name when the model omits the label.
+  const extractLine = (markdown: string, fallbackName: string): string => {
+    const m = markdown.match(/THE DETONATION LINE:?\s*\n+\s*([^\n]+)/i);
+    return (m ? m[1] : fallbackName).trim();
+  };
+
+  const handleSelect = async (markdown: string, fallbackName: string) => {
     setBusy(true); setErr(null);
     try {
       const statement = extractStatement(markdown);
-      await select({ data: { sessionId: session.id, detonationMarkdown: statement } });
+      const line = extractLine(markdown, fallbackName);
+      await select({ data: { sessionId: session.id, detonationMarkdown: statement, detonationLine: line } });
       await onChange();
       goNext();
     } catch (e) { setErr(e instanceof Error ? e.message : "Selection failed"); }
