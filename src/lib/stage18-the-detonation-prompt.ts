@@ -176,12 +176,12 @@ CAMPAIGN or PLATFORM.
 
 One sentence rationale.
 
-Begin immediately with the first DETONATION STATEMENT.
+Begin immediately with the first DETONATION LINE.
 
 No preamble. No metadata.
 
 No pipeline terminology.
 
-Your first words are the Detonation Statement.
+Your first words are the Detonation Line, then on the next labelled section the Detonation Statement.
 
 `;
