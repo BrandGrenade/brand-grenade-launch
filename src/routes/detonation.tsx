@@ -158,6 +158,63 @@ function ErrorBanner({ message }: { message: string }) {
   );
 }
 
+// Global Creative Direction input for multi-card stages (Stage 17, Stage 18).
+// Rendered directly above the "Retry This Stage" button. The text entered
+// here is merged into every regenerated card's redirect on retry. Persists
+// across retries so the user can iterate on the same direction.
+function GlobalRetryDirection({
+  value,
+  onChange,
+  disabled,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  disabled?: boolean;
+}) {
+  return (
+    <div style={{ marginTop: 24 }}>
+      <label
+        className="text-mono"
+        htmlFor="global-creative-direction"
+        style={{
+          display: "block",
+          color: AMBER,
+          textTransform: "uppercase",
+          fontSize: 10,
+          letterSpacing: "0.16em",
+          marginBottom: 8,
+          fontWeight: 500,
+        }}
+      >
+        Creative Direction — applied to all cards on retry
+      </label>
+      <textarea
+        id="global-creative-direction"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        disabled={disabled}
+        rows={3}
+        placeholder="Optional. e.g. push harder on cultural tension; ground every candidate in a specific Australian ritual."
+        style={{
+          width: "100%",
+          backgroundColor: "#0E0E0E",
+          color: "#FFFFFF",
+          border: "1px solid #2A2A2A",
+          borderRadius: 8,
+          padding: "12px 14px",
+          fontFamily: "inherit",
+          fontSize: 14,
+          lineHeight: 1.5,
+          resize: "vertical",
+          outline: "none",
+        }}
+      />
+    </div>
+  );
+}
+
+
+
 // Render Phase 2 prose with markdown punctuation stripped. Heading-style
 // lines (originally ##/###/**…**/all-caps short titles) are rendered with
 // the .detonation-heading class (amber DM Mono uppercase). All other raw
