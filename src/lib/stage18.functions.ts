@@ -162,6 +162,9 @@ export const retryStage18 = createServerFn({ method: "POST" })
       .single();
     if (error || !session) throw new Error(`Session not found: ${error?.message ?? "no row"}`);
     if (!session.stage_18_output) throw new Error("Stage 18 has no prior output to retry");
+    const { parseStage17Territory } = await import("./canonical-format");
+    const parsed = parseStage17Territory(session.stage_17_selected_territory);
+    (session as { stage_17_selected_territory: string }).stage_17_selected_territory = parsed.canonical;
 
     const existing = splitCards(session.stage_18_output as string);
     const regenerateIds = data.cardIds.length === 0
