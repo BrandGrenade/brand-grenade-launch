@@ -257,10 +257,14 @@ export const selectStage17Territory = createServerFn({ method: "POST" })
     z.object({ sessionId: z.string().uuid(), territoryMarkdown: z.string().min(1) }).parse(i),
   )
   .handler(async ({ data }) => {
+    const { canonicaliseStage17Territory } = await import("./canonical-format");
+    // Normalise to the canonical inter-stage contract before persisting.
+    // The UI may render the card however it likes; the DB write is fixed.
+    const canonical = canonicaliseStage17Territory(data.territoryMarkdown);
     const { error } = await supabaseAdmin
       .from("sessions")
       .update({
-        stage_17_selected_territory: data.territoryMarkdown,
+        stage_17_selected_territory: canonical,
         phase_2_current_stage: '17b',
       })
       .eq("id", data.sessionId);
