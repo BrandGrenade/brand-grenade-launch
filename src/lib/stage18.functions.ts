@@ -214,13 +214,18 @@ export const retryStage18 = createServerFn({ method: "POST" })
 /** Save the human-selected Detonation and advance. */
 export const selectStage18Detonation = createServerFn({ method: "POST" })
   .inputValidator((i) =>
-    z.object({ sessionId: z.string().uuid(), detonationMarkdown: z.string().min(1) }).parse(i),
+    z.object({
+      sessionId: z.string().uuid(),
+      detonationMarkdown: z.string().min(1),
+      detonationLine: z.string().min(1).optional(),
+    }).parse(i),
   )
   .handler(async ({ data }) => {
     const { error } = await supabaseAdmin
       .from("sessions")
       .update({
         stage_18_selected_detonation: data.detonationMarkdown,
+        stage_18_detonation_line: data.detonationLine ?? null,
         phase_2_current_stage: '19',
       })
       .eq("id", data.sessionId);
