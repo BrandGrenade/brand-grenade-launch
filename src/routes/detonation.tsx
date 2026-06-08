@@ -232,6 +232,30 @@ function splitCardsLocal(text: string): LocalCard[] {
   const NAME = "[A-Z][A-Z0-9 '\\-&/.,]{3,79}";
   const cleanName = (s: string) =>
     s.replace(/^#+\s*/, "").replace(/^\*+|\*+$/g, "").replace(/[.,;:\s]+$/g, "").trim();
+
+  // Primary strategy — top-level `---` separator lines. Both Stage 17 and
+  // Stage 18 emit exactly two between three candidate cards. Most reliable
+  // boundary; works whether the candidate has a name line or not.
+  const dashSegments = t.split(/\n\s*---+\s*\n/g).map((s) => s.trim()).filter(Boolean);
+  if (dashSegments.length >= 2) {
+    return dashSegments.map((seg, i) => {
+      const lines = seg.split("\n").map((l) => l.trim()).filter(Boolean);
+      const titleLine = lines.find(
+        (l) => /^[A-Z][A-Z0-9 '\-&/.,]{2,79}$/.test(l) && !l.endsWith(":"),
+      );
+      const fallback = /WHY THIS DETONATION/i.test(seg)
+        ? `Detonation ${i + 1}`
+        : /WHY THIS TERRITORY/i.test(seg)
+          ? `Territory ${i + 1}`
+          : `Option ${i + 1}`;
+      return {
+        id: `card-${i + 1}`,
+        name: cleanName(titleLine ?? fallback) || fallback,
+        markdown: seg,
+      };
+    });
+  }
+
   const collect = (re: RegExp): Array<{ name: string; start: number }> => {
     const hits: Array<{ name: string; start: number }> = [];
     let m: RegExpExecArray | null;
@@ -243,15 +267,9 @@ function splitCardsLocal(text: string): LocalCard[] {
     return hits;
   };
 
-  // Try ALL boundary patterns universally; use whichever finds matches.
-  // Pattern A: name + blank + WHY THIS TERRITORY (Stage 17)
-  // Pattern B: name + blank + WHY THIS DETONATION (Stage 18)
-  // Pattern C: markdown ## headings
-  // Pattern D: blank line + all-caps title (no trailing colon)
   let matches: Array<{ name: string; start: number }> = [];
   matches = collect(new RegExp(`(?:^|\\n)\\s*(${NAME})\\s*\\n\\s*\\n\\s*WHY THIS TERRITORY`, "gm"));
   if (matches.length === 0) {
-    // Stage 18: "DETONATION ONE: KEEP YOUR OPTIONS OPEN" — name includes a colon.
     matches = collect(/(?:^|\n)\s*(DETONATION\s+[A-Z]+\s*:\s*[^\n]+?)\s*\n\s*\n\s*WHY THIS DETONATION/g);
   }
   if (matches.length === 0) {
@@ -264,7 +282,27 @@ function splitCardsLocal(text: string): LocalCard[] {
     matches = collect(new RegExp(`(?:^|\\n\\s*\\n)\\s*(${NAME})(?!:)\\s*\\n`, "g"));
   }
 
+  // Last resort: anchor on each "WHY THIS (TERRITORY|DETONATION)" occurrence
+  // and synthesise a generic name. Better to render 3 distinct cards with
+  // generic titles than collapse 3 candidates into a single wall of text.
   if (matches.length === 0) {
+    const anchorRe = /WHY THIS (?:TERRITORY|DETONATION)/g;
+    const anchors: number[] = [];
+    let am: RegExpExecArray | null;
+    while ((am = anchorRe.exec(t)) !== null) anchors.push(am.index);
+    if (anchors.length >= 2) {
+      return anchors.map((idx, i) => {
+        const start = i === 0 ? 0 : anchors[i - 1];
+        const end = i + 1 < anchors.length ? anchors[i + 1] : t.length;
+        const seg = t.slice(start, end).trim();
+        const isDet = /WHY THIS DETONATION/i.test(seg);
+        return {
+          id: `card-${i + 1}`,
+          name: isDet ? `Detonation ${i + 1}` : `Territory ${i + 1}`,
+          markdown: seg,
+        };
+      });
+    }
     return [{ id: "card-1", name: "Territory", markdown: t }];
   }
 
