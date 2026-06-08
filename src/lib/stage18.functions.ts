@@ -157,6 +157,8 @@ const COURAGE_REDIRECT_INSTRUCTION = `COURAGE REDIRECT ACTIVE: Generate a new ca
 export const retryStage18 = createServerFn({ method: "POST" })
   .inputValidator((i) => RetryInput.parse(i))
   .handler(async ({ data }) => {
+    const { requireConfirmedSelection } = await import("./checkpoint-gate");
+    await requireConfirmedSelection(data.sessionId, "D");
     const { data: session, error } = await supabaseAdmin
       .from("sessions")
       .select("brand_name, category, selected_smp, stage_17_selected_territory, stage_17b_output, truth_product, truth_consumer, truth_cultural, stage_18_output")
