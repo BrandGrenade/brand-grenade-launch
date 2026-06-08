@@ -94,7 +94,7 @@ export const runStage20 = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { data: session, error } = await supabaseAdmin
       .from("sessions")
-      .select("brand_name, category, selected_smp, stage_5_output, stage_17b_output, stage_18_output, stage_18_selected_detonation, stage_19_output, truth_product, truth_consumer, truth_cultural, stage_20_output")
+      .select("brand_name, category, selected_smp, stage_5_output, stage_17b_output, stage_18_output, stage_18_selected_detonation, stage_18_detonation_line, stage_19_output, truth_product, truth_consumer, truth_cultural, stage_20_output")
       .eq("id", data.sessionId)
       .single();
     if (error || !session) throw new Error(`Session not found: ${error?.message ?? "no row"}`);
@@ -166,7 +166,7 @@ export const retryStage20 = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { data: session, error } = await supabaseAdmin
       .from("sessions")
-      .select("brand_name, category, selected_smp, stage_5_output, stage_17b_output, stage_18_output, stage_18_selected_detonation, stage_19_output, truth_product, truth_consumer, truth_cultural, stage_20_output")
+      .select("brand_name, category, selected_smp, stage_5_output, stage_17b_output, stage_18_output, stage_18_selected_detonation, stage_18_detonation_line, stage_19_output, truth_product, truth_consumer, truth_cultural, stage_20_output")
       .eq("id", data.sessionId)
       .single();
     if (error || !session) throw new Error(`Session not found: ${error?.message ?? "no row"}`);

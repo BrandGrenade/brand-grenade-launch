@@ -127,7 +127,7 @@ export const runStage21 = createServerFn({ method: "POST" })
     await requireConfirmedSelection(data.sessionId, "F");
     const { data: session, error } = await supabaseAdmin
       .from("sessions")
-      .select("brand_name, category, selected_smp, stage_18_selected_detonation, stage_19_output, stage_20_output, truth_product, truth_consumer, truth_cultural, stage_21_outputs")
+      .select("brand_name, category, selected_smp, stage_18_selected_detonation, stage_18_detonation_line, stage_19_output, stage_20_output, truth_product, truth_consumer, truth_cultural, stage_21_outputs")
       .eq("id", data.sessionId)
       .single();
     if (error || !session) throw new Error(`Session not found: ${error?.message ?? "no row"}`);
@@ -222,7 +222,7 @@ export const retryStage21 = createServerFn({ method: "POST" })
     await requireConfirmedSelection(data.sessionId, "F");
     const { data: session, error } = await supabaseAdmin
       .from("sessions")
-      .select("brand_name, category, selected_smp, stage_18_selected_detonation, stage_19_output, stage_20_output, truth_product, truth_consumer, truth_cultural, stage_21_outputs")
+      .select("brand_name, category, selected_smp, stage_18_selected_detonation, stage_18_detonation_line, stage_19_output, stage_20_output, truth_product, truth_consumer, truth_cultural, stage_21_outputs")
       .eq("id", data.sessionId)
       .single();
     if (error || !session) throw new Error(`Session not found: ${error?.message ?? "no row"}`);
