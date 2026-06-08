@@ -84,10 +84,12 @@ export const runStage18 = createServerFn({ method: "POST" })
       .eq("id", data.sessionId)
       .single();
     if (error || !session) throw new Error(`Session not found: ${error?.message ?? "no row"}`);
-    if (!session.stage_17_selected_territory)
-      throw new Error("Stage 17 territory must be selected before Stage 18");
     if (!session.stage_17b_output)
       throw new Error("Stage 17B must complete before Stage 18");
+    // Defensive parse — refuse to generate against a NULL or malformed territory.
+    const { parseStage17Territory } = await import("./canonical-format");
+    const parsed = parseStage17Territory(session.stage_17_selected_territory);
+    (session as { stage_17_selected_territory: string }).stage_17_selected_territory = parsed.canonical;
     if (session.stage_18_output) return { output: session.stage_18_output as string };
 
     let output: string;
