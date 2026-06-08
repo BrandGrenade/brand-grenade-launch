@@ -34,6 +34,8 @@ function intelToText(intel: unknown): string {
 export const runStage13 = createServerFn({ method: "POST" })
   .inputValidator((i) => Input.parse(i))
   .handler(async function* ({ data }) {
+    const { requireConfirmedSelection } = await import("./checkpoint-gate");
+    await requireConfirmedSelection(data.sessionId, "C");
     const { data: session, error } = await supabaseAdmin
       .from("sessions")
       .select(
