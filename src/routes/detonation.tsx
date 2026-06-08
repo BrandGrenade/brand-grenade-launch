@@ -1141,7 +1141,7 @@ function Stage18({ session, onChange, goNext }: { session: SessionRow; onChange:
                 showCheckbox={true}
                 selected={isSelected}
               >
-                <AmberButton variant="ghost" onClick={() => handleSelect(c.markdown)} disabled={busy}>
+                <AmberButton variant="ghost" onClick={() => handleSelect(c.markdown, c.name)} disabled={busy}>
                   {busy && <Spinner />} {isSelected ? "Selected ✓" : (busy ? "Loading..." : "Select This Detonation")}
                 </AmberButton>
               </DetonationOutputCard>
