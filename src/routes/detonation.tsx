@@ -742,6 +742,7 @@ function Stage17({ session, onChange, goNext }: { session: SessionRow; onChange:
   const [err, setErr] = useState<string | null>(null);
   const [checked, setChecked] = useState<Record<string, boolean>>({});
   const [redirects, setRedirects] = useState<Record<string, string>>({});
+  const [globalRedirect, setGlobalRedirect] = useState<string>("");
   const [autoTriggered, setAutoTriggered] = useState(false);
 
   // Source of truth: Supabase. Re-sync display whenever the session row updates.
