@@ -82,7 +82,7 @@ export const runStage12 = createServerFn({ method: "POST" })
       for await (const delta of streamClaude({
         systemPrompt: STAGE_12_SYSTEM_PROMPT,
         userMessage,
-        maxTokens: 12000,
+        maxTokens: 16000,
         skipUniversalWrapper: true,
         sessionId: data.sessionId,
         stageLabel: "Stage 12",

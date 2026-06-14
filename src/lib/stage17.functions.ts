@@ -121,7 +121,7 @@ export const runStage17 = createServerFn({ method: "POST" })
       output = await callClaude({
         systemPrompt: withPhase2Formatting(STAGE_17_DETONATION_TERRITORY_PROMPT),
         userMessage: buildStage17UserMessage(session as never),
-        maxTokens: 12000,
+        maxTokens: 16000,
         sessionId: data.sessionId,
         stageLabel: "Stage 17",
         stageNumber: "17",
@@ -205,7 +205,7 @@ export const retryStage17 = createServerFn({ method: "POST" })
       const text = await callClaude({
         systemPrompt: withPhase2Formatting(system),
         userMessage: `${baseUser}\n\nRegenerate all three Detonation Territory candidates.`,
-        maxTokens: 12000,
+        maxTokens: 16000,
         sessionId: data.sessionId,
         stageLabel: "Stage 17 (retry all)",
         stageNumber: "17",

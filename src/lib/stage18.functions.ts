@@ -99,7 +99,7 @@ export const runStage18 = createServerFn({ method: "POST" })
       output = await callClaude({
         systemPrompt: withPhase2Formatting(STAGE_18_THE_DETONATION_PROMPT),
         userMessage: buildStage18UserMessage(session as never),
-        maxTokens: 12000,
+        maxTokens: 20000,
         sessionId: data.sessionId,
         stageLabel: "Stage 18",
         stageNumber: "18",
@@ -189,7 +189,7 @@ export const retryStage18 = createServerFn({ method: "POST" })
       const text = await callClaude({
         systemPrompt: withPhase2Formatting(system),
         userMessage,
-        maxTokens: 6000,
+        maxTokens: 20000,
         sessionId: data.sessionId,
         stageLabel: `Stage 18 (retry ${id}${data.courageRedirect ? " courage" : ""})`,
         stageNumber: "18",

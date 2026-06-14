@@ -79,7 +79,7 @@ export const runStage19 = createServerFn({ method: "POST" })
       output = await callClaude({
         systemPrompt: withPhase2Formatting(STAGE_19_ACTIVATION_ARCHITECTURE_PROMPT),
         userMessage: buildStage19UserMessage(session as never),
-        maxTokens: 10000,
+        maxTokens: 20000,
         sessionId: data.sessionId,
         stageLabel: "Stage 19",
         stageNumber: "19",
@@ -150,7 +150,7 @@ export const retryStage19 = createServerFn({ method: "POST" })
     const output = await callClaude({
       systemPrompt: withPhase2Formatting(system),
       userMessage: buildStage19UserMessage(session as never),
-      maxTokens: 10000,
+      maxTokens: 20000,
       sessionId: data.sessionId,
       stageLabel: "Stage 19 (retry)",
       stageNumber: "19",
