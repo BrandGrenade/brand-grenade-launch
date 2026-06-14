@@ -230,21 +230,24 @@ function cleanForDisplay(text: string): string {
 
 export function SMPSelection({
   stage12Output,
-  stage8Output,
+  stage11Output,
+  stage10Output,
   onSelect,
   onResubmit,
   resubmitting = false,
 }: {
   stage12Output: string;
-  stage8Output?: string;
+  stage11Output?: string;
+  stage10Output?: string;
   onSelect: (card: SMPCard) => void;
   onResubmit?: (feedback: string) => void | Promise<void>;
   resubmitting?: boolean;
 }) {
   const cards = useMemo(
-    () => parseSMPCards(stage12Output ?? "", stage8Output),
-    [stage8Output, stage12Output],
+    () => parseSMPCards(stage12Output ?? "", stage11Output, stage10Output),
+    [stage12Output, stage11Output, stage10Output],
   );
+
   const [selected, setSelected] = useState<number | null>(null);
   const [showRaw, setShowRaw] = useState(false);
   const [manualLine, setManualLine] = useState("");
