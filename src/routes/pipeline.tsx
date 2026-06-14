@@ -2075,7 +2075,7 @@ function PipelineView() {
             }}
             onViewFinal={() => {
               if (sessionId) {
-                window.location.href = `/complete?session=${sessionId}`;
+                window.location.href = `/detonation?session=${sessionId}`;
               }
             }}
             onConfirmCheckpoint={(stageId, notes) => {
