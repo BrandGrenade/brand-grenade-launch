@@ -666,7 +666,7 @@ function DetonationPage() {
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-      <TopNav session={{ brand, currentStage: unifiedStage, totalStages: 23, isRunning: false }} />
+      <TopNav session={{ brand, currentStage: unifiedStage, totalStages: 27, isRunning: false }} />
       <div className="flex items-center border-b border-border bg-background px-5 py-3 sm:px-8">
         <nav className="text-body-sm flex items-center gap-1.5 truncate" style={{ color: "var(--color-text-tertiary)" }}>
           <Link to="/dashboard" className="transition-colors hover:text-text-secondary">Sessions</Link>
