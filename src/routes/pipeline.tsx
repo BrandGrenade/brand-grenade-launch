@@ -1841,6 +1841,125 @@ function PipelineView() {
     }
   };
 
+  const getRawStageOutput = (stageId: string): string | null => {
+    const outputs: Record<string, string | null> = {
+      "01": stage1Output,
+      "01B": stage1bOutput,
+      "02": stage2Output,
+      "03": stage3Output,
+      "04": stage4Output,
+      "05": stage5Output,
+      "06": stage6Output,
+      "07": stage7Output,
+      "08": stage8Output,
+      "09": stage9Output,
+      "10": stage10Output,
+      "11": stage11Output,
+      "12": stage12Output,
+      "13": stage13Output,
+      "13B": stage13bOutput,
+      "14": stage14Output,
+      "14B": stage14bOutput,
+      "14C": stage14cOutput,
+      "15": stage15Output,
+      "16": stage16Output,
+    };
+    return outputs[stageId] ?? null;
+  };
+
+  const advanceFromStage8 = async () => {
+    if (!sessionId) return false;
+    const currentStage8 = stage8Output ?? session?.stage_8_output ?? "";
+    const blocks = splitStage8Propositions(currentStage8);
+    const kept = blocks.filter((b) => stage8KeepNames.has(b.name));
+    if (kept.length === 0) {
+      alert("At least one proposition must be checked before moving to Stage 9.");
+      return false;
+    }
+
+    const filtered = kept.map((b) => b.markdown).join("\n\n");
+    const { error: filterErr } = await supabase
+      .from("sessions")
+      .update({ stage_8_output: filtered })
+      .eq("id", sessionId);
+    if (filterErr) {
+      console.error("[Checkpoint B] failed to filter Stage 8 output", filterErr);
+      return false;
+    }
+
+    await resetStageCascadeFn({ data: { sessionId, stageId: "9" } });
+    await confirmCheckpointBFn({ data: { sessionId } });
+    setSession((prev) =>
+      prev
+        ? ({
+            ...prev,
+            stage_8_output: filtered,
+            stage_9_output: null,
+            stage_10_output: null,
+            stage_11_output: null,
+            stage_12_output: null,
+            stage_13_output: null,
+            stage_13b_output: null,
+            stage_14_output: null,
+            stage_14b_output: null,
+            stage_14c_output: null,
+            stage_15_output: null,
+            stage_16_consulting_output: null,
+            checkpoint_b_confirmed: true,
+          } as SessionData)
+        : prev,
+    );
+    setStage8Output(filtered);
+    resetLocalFromStage("09");
+    return true;
+  };
+
+  const markFollowingPending = (stageId: string, activeStatus: StageStatus = "running") => {
+    setStatuses((prev) => {
+      const next: Record<string, StageStatus> = { ...prev, [stageId]: activeStatus };
+      const idx = STAGES.findIndex((s) => s.id === stageId);
+      for (let i = idx + 1; i < STAGES.length; i++) next[STAGES[i].id] = "pending";
+      return next;
+    });
+  };
+
+  const handleRetryStage = async (stageId: string) => {
+    if (!sessionId) return;
+    const dbId = STAGE_ID_TO_DB[stageId];
+    if (!dbId) return;
+    const note = amendmentNotes[stageId]?.trim();
+    const previousOutput = getRawStageOutput(stageId)?.trim();
+    try {
+      if (note) setPendingFeedback((p) => ({ ...p, [stageId]: note }));
+      if (previousOutput) setPendingPreviousOutput((p) => ({ ...p, [stageId]: previousOutput }));
+      await resetStageCascadeFn({ data: { sessionId, stageId: dbId } });
+      resetLocalFromStage(stageId);
+      markFollowingPending(stageId, "running");
+      setSelectedId(stageId);
+      if (stageId === "01") setRetryNonce((n) => n + 1);
+    } catch (e) {
+      console.error("retry cascade failed", e);
+      setStatuses((p) => ({ ...p, [stageId]: "error" }));
+    }
+  };
+
+  const handleContinueStage = async () => {
+    const stageId = selected.id;
+    if (stageId === "08") {
+      const ok = await advanceFromStage8();
+      if (!ok) return;
+      markFollowingPending("09", "running");
+      setStatuses((p) => ({ ...p, "08": "complete", "09": "running" }));
+      setSelectedId("09");
+      return;
+    }
+    if (stageId === "12" && selectedStatus === "checkpoint") return;
+    if (stageId === "13" && !intelSubmitted) return;
+    if (!nextStage) return;
+    setStatuses((p) => ({ ...p, [stageId]: "complete", [nextStage.id]: "running" }));
+    setSelectedId(nextStage.id);
+  };
+
   return (
     <div className="flex h-screen flex-col bg-background">
       <TopNav
