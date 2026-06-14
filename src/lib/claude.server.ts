@@ -238,6 +238,19 @@ export async function callClaude(args: CallClaudeArgs): Promise<string> {
 export async function* streamClaude(args: CallClaudeArgs): AsyncGenerator<string, void, unknown> {
   const { apiKey, body } = await prepareCall(args);
 
+  // [TELEMETRY] Per-stage instrumentation — emitted as structured log lines so
+  // the diagnostic harness / log tail can build a pass-fail-per-stage report.
+  const __telemetryStart = Date.now();
+  const __telemetryLabel = args.stageLabel ?? args.stageNumber ?? "unknown";
+  const __telemetrySession = args.sessionId ?? "no-session";
+  console.log(
+    `[TELEMETRY] stage=${__telemetryLabel} session=${__telemetrySession} event=start ts=${__telemetryStart}`,
+  );
+  let __telemetryChars = 0;
+  let __telemetryFailed = false;
+  let __telemetryError = "";
+  try {
+
   // Single attempt: opens an SSE stream, accumulates text, returns
   // { total, stopReason, sawMessageStop }. Throws only on initial connection
   // failure (handled by openWithRetry). Mid-stream drops surface as
