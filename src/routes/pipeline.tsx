@@ -2851,7 +2851,7 @@ function RightPanel({
               ) : (
                 <StreamedOutput text={text} streaming={isRunning} />
               )}
-              {isRunning ? <StallWatcher onRetry={onRetry} /> : null}
+              {isRunning ? <StallWatcher stageKey={stage.id} onRetry={onRetry} /> : null}
             </article>
           </>
         )}
@@ -3623,7 +3623,7 @@ function StageControlBar({
 // Stall watcher — warns after a pause, but never auto-retries without a user click.
 // ────────────────────────────────────────────────────────────────────────────
 
-function StallWatcher({ onRetry }: { onRetry: () => void }) {
+function StallWatcher({ stageKey, onRetry }: { stageKey: string; onRetry: () => void }) {
   const [showWarning, setShowWarning] = useState(false);
 
   useEffect(() => {
@@ -3632,7 +3632,7 @@ function StallWatcher({ onRetry }: { onRetry: () => void }) {
     return () => {
       window.clearTimeout(warnTimer);
     };
-  }, []);
+  }, [stageKey]);
 
   if (!showWarning) return null;
 
