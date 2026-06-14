@@ -238,6 +238,19 @@ export async function callClaude(args: CallClaudeArgs): Promise<string> {
 export async function* streamClaude(args: CallClaudeArgs): AsyncGenerator<string, void, unknown> {
   const { apiKey, body } = await prepareCall(args);
 
+  // [TELEMETRY] Per-stage instrumentation — emitted as structured log lines so
+  // the diagnostic harness / log tail can build a pass-fail-per-stage report.
+  const __telemetryStart = Date.now();
+  const __telemetryLabel = args.stageLabel ?? args.stageNumber ?? "unknown";
+  const __telemetrySession = args.sessionId ?? "no-session";
+  console.log(
+    `[TELEMETRY] stage=${__telemetryLabel} session=${__telemetrySession} event=start ts=${__telemetryStart}`,
+  );
+  let __telemetryChars = 0;
+  let __telemetryFailed = false;
+  let __telemetryError = "";
+  try {
+
   // Single attempt: opens an SSE stream, accumulates text, returns
   // { total, stopReason, sawMessageStop }. Throws only on initial connection
   // failure (handled by openWithRetry). Mid-stream drops surface as
@@ -313,16 +326,29 @@ export async function* streamClaude(args: CallClaudeArgs): AsyncGenerator<string
   }
 
   const { total, stopReason, sawMessageStop } = result;
+  __telemetryChars = total.length;
   if (total) yield total;
-  if (!total.trim()) throw new Error("Claude returned an empty response");
+  if (!total.trim()) { __telemetryFailed = true; __telemetryError = "empty"; throw new Error("Claude returned an empty response"); }
   if (stopReason === "max_tokens") {
+    __telemetryFailed = true; __telemetryError = "max_tokens_truncation";
     throw new Error(
       `Claude response truncated: hit max_tokens cap (${total.length} chars produced). Raise maxTokens for this stage.`,
     );
   }
   if (!sawMessageStop) {
+    __telemetryFailed = true; __telemetryError = "no_message_stop";
     throw new Error(
       `Claude stream ended without message_stop (${total.length} chars produced). Upstream connection likely dropped — retry the stage.`,
+    );
+  }
+  } catch (e) {
+    __telemetryFailed = true;
+    if (!__telemetryError) __telemetryError = e instanceof Error ? e.message.slice(0, 200) : String(e).slice(0, 200);
+    throw e;
+  } finally {
+    const __dur = Date.now() - __telemetryStart;
+    console.log(
+      `[TELEMETRY] stage=${__telemetryLabel} session=${__telemetrySession} event=end status=${__telemetryFailed ? "FAIL" : "PASS"} duration_ms=${__dur} chars=${__telemetryChars}${__telemetryFailed ? ` error="${__telemetryError}"` : ""}`,
     );
   }
 }
