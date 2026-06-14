@@ -416,6 +416,7 @@ function PipelineView() {
   const [savingRationale, setSavingRationale] = useState(false);
   const [retryNonce, setRetryNonce] = useState(0);
   const [pendingFeedback, setPendingFeedback] = useState<Record<string, string>>({});
+  const [pendingPreviousOutput, setPendingPreviousOutput] = useState<Record<string, string>>({});
   // Stage 8 selective regenerate — set of territory names the user wants to KEEP
   // (checkbox = checked). Defaults to all-checked whenever the underlying
   // proposition set changes.
@@ -1085,13 +1086,24 @@ function PipelineView() {
     setStage8Loading(true);
     setStage8Error(null);
     (async () =>
-      consumeStream(await runStage8Fn({ data: { sessionId, feedback: fb8 } }), setStage8Output))()
+      consumeStream(
+        await runStage8Fn({
+          data: { sessionId, feedback: fb8, previousOutput: pendingPreviousOutput["08"] },
+        }),
+        setStage8Output,
+      ))()
       .then((result) => {
         if (cancelled) return;
         setStage8Output(result.output);
         setStage8Loading(false);
         if (fb8)
           setPendingFeedback((p) => {
+            const n = { ...p };
+            delete n["08"];
+            return n;
+          });
+        if (fb8)
+          setPendingPreviousOutput((p) => {
             const n = { ...p };
             delete n["08"];
             return n;
