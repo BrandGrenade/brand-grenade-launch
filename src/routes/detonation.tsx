@@ -923,7 +923,7 @@ function Stage17b({ session, onChange, goNext }: { session: SessionRow; onChange
   const [busy, setBusy] = useState(false);
   const [proceeding, setProceeding] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-  const [autoTriggered, setAutoTriggered] = useState(false);
+  const autoTriggeredRef = useRef(false);
 
   useEffect(() => { setOutput(session.stage_17b_output); }, [session.stage_17b_output]);
 
