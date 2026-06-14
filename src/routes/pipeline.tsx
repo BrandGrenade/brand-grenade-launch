@@ -2066,12 +2066,23 @@ function PipelineView() {
               const fb = (feedback ?? "").trim();
               const dbId = STAGE_ID_TO_DB[stageId];
               if (!sessionId || !dbId || !fb) return;
+              const rejectedOutput =
+                stageId === "08"
+                  ? stage8Output?.trim()
+                  : stageId === "12"
+                    ? stage12Output?.trim()
+                    : stageId === "01"
+                      ? stage1Output?.trim()
+                      : null;
 
               setResubmitting(true);
               try {
                 await resetStageCascadeFn({ data: { sessionId, stageId: dbId } });
                 resetLocalFromStage(stageId);
                 setPendingFeedback((p) => ({ ...p, [stageId]: fb }));
+                if (rejectedOutput) {
+                  setPendingPreviousOutput((p) => ({ ...p, [stageId]: rejectedOutput }));
+                }
                 setStatuses((p) => {
                   const next: Record<string, StageStatus> = { ...p, [stageId]: "running" };
                   const idx = STAGES.findIndex((s) => s.id === stageId);
@@ -2098,6 +2109,8 @@ function PipelineView() {
                 <SMPSelection
                   stage12Output={stage12Output ?? ""}
                   stage8Output={stage8Output ?? ""}
+                  onResubmit={(feedback) => onResubmitCheckpoint?.("12", feedback)}
+                  resubmitting={resubmitting}
                   onSelect={async (card) => {
                     if (!sessionId) return;
                     setSelectedSMP(card);
