@@ -2205,7 +2205,6 @@ function PipelineView() {
               selectedId === "12" && selectedStatus === "checkpoint" && rationaleForId !== "12" ? (
                 <SMPSelection
                   stage12Output={stage12Output ?? ""}
-                  stage8Output={stage8Output ?? ""}
                   onResubmit={(feedback) => handleResubmitCheckpoint("12", feedback)}
                   resubmitting={resubmitting}
                   onSelect={async (card) => {
