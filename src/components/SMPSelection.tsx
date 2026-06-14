@@ -177,18 +177,37 @@ export function parseSMPCards(
     const s =
       scoreByField.get(v.fieldName.trim().toLowerCase()) ??
       scoreByLine.get(v.smpLine.trim().toLowerCase());
-    // Try to pull a one-line rationale / note from the verdict block.
-    const noteMatch = v.block.match(
-      /(?:STRATEGIC\s+NOTE|RATIONALE|VERDICT\s+RATIONALE)\s*:\s*([^\n]+)/i,
+    // Pull as much strategic detail from the Stage 11 verdict block as we can,
+    // so the fallback card is genuinely readable — not just a one-line stub.
+    const block = v.block;
+    const grab = (label: RegExp): string => {
+      const m = block.match(label);
+      return m ? m[1].trim().slice(0, 400) : "";
+    };
+    const strategicNote = grab(
+      /(?:STRATEGIC\s+NOTE|VERDICT\s+RATIONALE|RATIONALE)\s*:?\s*([^\n]+(?:\n(?!\s*[A-Z][A-Z ]{3,}:)[^\n]+)*)/i,
     );
+    const whatItOwns = grab(/WHAT\s+IT\s+OWNS\s*:?\s*([^\n]+(?:\n(?!\s*[A-Z][A-Z ]{3,}:)[^\n]+)*)/i);
+    const truth = grab(
+      /(?:THE\s+TRUTH(?:\s+IT(?:\s+IS)?\s+BUILT\s+ON)?|TRUTH)\s*:?\s*([^\n]+(?:\n(?!\s*[A-Z][A-Z ]{3,}:)[^\n]+)*)/i,
+    );
+    const challenges = grab(
+      /(?:WHAT\s+IT\s+CHALLENGES|CHALLENGES)\s*:?\s*([^\n]+(?:\n(?!\s*[A-Z][A-Z ]{3,}:)[^\n]+)*)/i,
+    );
+    const ownsLine =
+      whatItOwns ||
+      [v.verdict, v.iconicStatus && v.iconicStatus !== "N/A" ? `Iconic: ${v.iconicStatus}` : ""]
+        .filter(Boolean)
+        .join(" · ");
+
     return {
       cardNumber: idx + 1,
       smpLine: v.smpLine,
-      whatItOwns: noteMatch ? noteMatch[1].trim() : "",
-      truth: "",
-      whatItChallenges: "",
+      whatItOwns: ownsLine,
+      truth,
+      whatItChallenges: challenges,
       whatItMakesPossible: "",
-      whatItRequires: "",
+      whatItRequires: strategicNote,
       scores: s
         ? {
             differentiation: s.differentiation,
