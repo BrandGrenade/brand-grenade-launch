@@ -121,7 +121,7 @@ export const runStage17 = createServerFn({ method: "POST" })
       output = await callClaude({
         systemPrompt: withPhase2Formatting(STAGE_17_DETONATION_TERRITORY_PROMPT),
         userMessage: buildStage17UserMessage(session as never),
-        maxTokens: 12000,
+        maxTokens: 16000,
         sessionId: data.sessionId,
         stageLabel: "Stage 17",
         stageNumber: "17",
@@ -205,7 +205,7 @@ export const retryStage17 = createServerFn({ method: "POST" })
       const text = await callClaude({
         systemPrompt: withPhase2Formatting(system),
         userMessage: `${baseUser}\n\nRegenerate all three Detonation Territory candidates.`,
-        maxTokens: 12000,
+        maxTokens: 16000,
         sessionId: data.sessionId,
         stageLabel: "Stage 17 (retry all)",
         stageNumber: "17",
@@ -266,6 +266,10 @@ export const selectStage17Territory = createServerFn({ method: "POST" })
       .update({
         stage_17_selected_territory: canonical,
         phase_2_current_stage: '17b',
+        // Checkpoint D — explicit human confirmation that Detonation Territory
+        // has been selected. Mirrors checkpoint_a/b/c_confirmed structure.
+        checkpoint_d_confirmed: true,
+        checkpoint_d_confirmed_at: new Date().toISOString(),
       })
       .eq("id", data.sessionId);
     if (error) throw new Error(error.message);

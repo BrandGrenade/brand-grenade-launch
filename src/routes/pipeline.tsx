@@ -1420,11 +1420,49 @@ function PipelineView() {
     let cancelled = false;
     setStage16Loading(true);
     setStage16Error(null);
-    (async () =>
-      consumeStream(
+    // Stage 16 auto-trio — all three document variants generate simultaneously
+    // on every pipeline run: Board Strategy Recommendation (consulting), Agency
+    // Strategy Platform (agency), and Brand Workshop Guide (workshop). The UI
+    // streams the consulting variant for the live render; the other two
+    // generate in the background and are persisted to their own DB columns.
+    (async () => {
+      // Background generators — fire-and-forget. Failures are logged but do
+      // not block completion of the consulting variant. Re-runs are no-ops
+      // because runStage16 returns cached output unless `force: true`.
+      const bgAgency = (async () => {
+        try {
+          for await (const _chunk of await runStage16Fn({
+            data: { sessionId, format: "agency" },
+          })) {
+            // consume stream; output is persisted server-side
+            void _chunk;
+          }
+        } catch (e) {
+          console.error("[Stage 16] agency variant failed:", e);
+        }
+      })();
+      const bgWorkshop = (async () => {
+        try {
+          for await (const _chunk of await runStage16Fn({
+            data: { sessionId, format: "workshop" },
+          })) {
+            void _chunk;
+          }
+        } catch (e) {
+          console.error("[Stage 16] workshop variant failed:", e);
+        }
+      })();
+
+      const consultingResult = await consumeStream(
         await runStage16Fn({ data: { sessionId, format: "consulting" } }),
         setStage16Output,
-      ))()
+      );
+
+      // Wait for background variants to finish so the realtime hook surfaces
+      // all three columns before we mark the stage complete.
+      await Promise.allSettled([bgAgency, bgWorkshop]);
+      return consultingResult;
+    })()
       .then((result) => {
         if (cancelled) return;
         setStage16Output(result.output);

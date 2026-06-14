@@ -40,6 +40,15 @@ export type Database = {
           checkpoint_c_confirmed: boolean
           checkpoint_c_confirmed_at: string | null
           checkpoint_c_notes: string | null
+          checkpoint_d_confirmed: boolean
+          checkpoint_d_confirmed_at: string | null
+          checkpoint_d_notes: string | null
+          checkpoint_e_confirmed: boolean
+          checkpoint_e_confirmed_at: string | null
+          checkpoint_e_notes: string | null
+          checkpoint_f_confirmed: boolean
+          checkpoint_f_confirmed_at: string | null
+          checkpoint_f_notes: string | null
           created_at: string
           current_stage: number
           dev_mode: boolean
@@ -176,6 +185,15 @@ export type Database = {
           checkpoint_c_confirmed?: boolean
           checkpoint_c_confirmed_at?: string | null
           checkpoint_c_notes?: string | null
+          checkpoint_d_confirmed?: boolean
+          checkpoint_d_confirmed_at?: string | null
+          checkpoint_d_notes?: string | null
+          checkpoint_e_confirmed?: boolean
+          checkpoint_e_confirmed_at?: string | null
+          checkpoint_e_notes?: string | null
+          checkpoint_f_confirmed?: boolean
+          checkpoint_f_confirmed_at?: string | null
+          checkpoint_f_notes?: string | null
           created_at?: string
           current_stage?: number
           dev_mode?: boolean
@@ -312,6 +330,15 @@ export type Database = {
           checkpoint_c_confirmed?: boolean
           checkpoint_c_confirmed_at?: string | null
           checkpoint_c_notes?: string | null
+          checkpoint_d_confirmed?: boolean
+          checkpoint_d_confirmed_at?: string | null
+          checkpoint_d_notes?: string | null
+          checkpoint_e_confirmed?: boolean
+          checkpoint_e_confirmed_at?: string | null
+          checkpoint_e_notes?: string | null
+          checkpoint_f_confirmed?: boolean
+          checkpoint_f_confirmed_at?: string | null
+          checkpoint_f_notes?: string | null
           created_at?: string
           current_stage?: number
           dev_mode?: boolean
