@@ -2085,6 +2085,88 @@ function PipelineView() {
               }
             }}
             onConfirmCheckpoint={async (stageId, notes) => {
+              const advanceFromStage8 = async () => {
+                if (!sessionId) return false;
+                const currentStage8 = stage8Output ?? session?.stage_8_output ?? "";
+                const blocks = splitStage8Propositions(currentStage8);
+                const kept = blocks.filter((b) => stage8KeepNames.has(b.name));
+                if (kept.length === 0) {
+                  console.error("[Checkpoint B] at least one proposition must be checked");
+                  alert("At least one proposition must be checked before moving to Stage 9.");
+                  return false;
+                }
+
+                const filtered = kept.map((b) => b.markdown).join("\n\n");
+                const { error: filterErr } = await supabase
+                  .from("sessions")
+                  .update({ stage_8_output: filtered })
+                  .eq("id", sessionId);
+                if (filterErr) {
+                  console.error("[Checkpoint B] failed to filter Stage 8 output", filterErr);
+                  return false;
+                }
+
+                await resetStageCascadeFn({ data: { sessionId, stageId: "9" } });
+                await confirmCheckpointBFn({ data: { sessionId } });
+                setSession((prev) =>
+                  prev
+                    ? ({
+                        ...prev,
+                        stage_8_output: filtered,
+                        stage_9_output: null,
+                        stage_10_output: null,
+                        stage_11_output: null,
+                        stage_12_output: null,
+                        stage_13_output: null,
+                        stage_13b_output: null,
+                        stage_14_output: null,
+                        stage_14b_output: null,
+                        stage_14c_output: null,
+                        stage_15_output: null,
+                        stage_16_consulting_output: null,
+                        checkpoint_b_confirmed: true,
+                      } as SessionData)
+                    : prev,
+                );
+                setStage8Output(filtered);
+                setStage9Output(null);
+                setStage10Output(null);
+                setStage11Output(null);
+                setStage12Output(null);
+                setStage13Output(null);
+                setStage13bOutput(null);
+                setStage14Output(null);
+                setStage14bOutput(null);
+                setStage14cOutput(null);
+                setStage15Output(null);
+                setStage16Output(null);
+                setStage9Error(null);
+                setStage10Error(null);
+                setStage11Error(null);
+                setStage12Error(null);
+                setStage13Error(null);
+                setStage13bError(null);
+                setStage14Error(null);
+                setStage14bError(null);
+                setStage14cError(null);
+                setStage15Error(null);
+                setStage16Error(null);
+                return true;
+              };
+
+              if (stageId === "08") {
+                const ok = await advanceFromStage8();
+                if (!ok) return;
+                setStatuses((prev) => {
+                  const next = { ...prev, "08": "complete" as StageStatus, "09": "running" as StageStatus };
+                  const idx = STAGES.findIndex((s) => s.id === "09");
+                  for (let i = idx + 1; i < STAGES.length; i++) next[STAGES[i].id] = "pending";
+                  return next;
+                });
+                setSelectedId("09");
+                return;
+              }
+
               // Persist notes + timestamp for the relevant checkpoint.
               const letter = CHECKPOINT_LETTERS[stageId];
               if (sessionId && letter) {
@@ -2135,43 +2217,6 @@ function PipelineView() {
                   "01B": "running",
                 }));
                 setSelectedId("01B");
-                return;
-              }
-              // Checkpoint B (Stage 8) → filter stage_8_output to ONLY the
-              // checked propositions so unchecked ones are excluded from
-              // Stage 9 and every downstream stage, then persist confirmation
-              // and advance.
-              if (stageId === "08") {
-                if (sessionId) {
-                  const currentStage8 = stage8Output ?? session?.stage_8_output ?? "";
-                  const blocks = splitStage8Propositions(currentStage8);
-                  const kept = blocks.filter((b) => stage8KeepNames.has(b.name));
-                  if (kept.length === 0) {
-                    console.error("[Checkpoint B] at least one proposition must be checked");
-                    alert(
-                      "At least one proposition must be checked before confirming Checkpoint B.",
-                    );
-                    return;
-                  }
-                  if (kept.length < blocks.length) {
-                    const filtered = kept.map((b) => b.markdown).join("\n\n");
-                    const { error: filterErr } = await supabase
-                      .from("sessions")
-                      .update({ stage_8_output: filtered })
-                      .eq("id", sessionId);
-                    if (filterErr) {
-                      console.error("[Checkpoint B] failed to filter Stage 8 output", filterErr);
-                      return;
-                    }
-                    setSession((prev) =>
-                      prev ? ({ ...prev, stage_8_output: filtered } as SessionData) : prev,
-                    );
-                    setStage8Output(filtered);
-                  }
-                  await confirmCheckpointBFn({ data: { sessionId } });
-                }
-                setStatuses((prev) => ({ ...prev, "08": "complete", "09": "running" }));
-                setSelectedId("09");
                 return;
               }
               setRationaleForId(null);
