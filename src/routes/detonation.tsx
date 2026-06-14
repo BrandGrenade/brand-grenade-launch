@@ -1610,7 +1610,7 @@ function Stage22({ session, onChange }: { session: SessionRow; onChange: () => v
   const [assets, setAssets] = useState<string | null>(session.stage_22_distinctive_assets);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-  const [autoTriggered, setAutoTriggered] = useState(false);
+  const autoTriggeredRef = useRef(false);
 
   useEffect(() => { setArchitecture(session.stage_22_brand_architecture); }, [session.stage_22_brand_architecture]);
   useEffect(() => { setAssets(session.stage_22_distinctive_assets); }, [session.stage_22_distinctive_assets]);
