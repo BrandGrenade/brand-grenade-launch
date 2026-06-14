@@ -1772,7 +1772,7 @@ function PipelineView() {
         session={{
           brand: brandLabel,
           currentStage: Math.max(1, currentMainNumber),
-          totalStages: mainStages.length,
+          totalStages: 27,
           isRunning: pipelineIsRunning,
         }}
       />
