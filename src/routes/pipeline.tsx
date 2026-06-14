@@ -2158,7 +2158,11 @@ function PipelineView() {
                 const ok = await advanceFromStage8();
                 if (!ok) return;
                 setStatuses((prev) => {
-                  const next = { ...prev, "08": "complete" as StageStatus, "09": "running" as StageStatus };
+                  const next: Record<string, StageStatus> = {
+                    ...prev,
+                    "08": "complete",
+                    "09": "running",
+                  };
                   const idx = STAGES.findIndex((s) => s.id === "09");
                   for (let i = idx + 1; i < STAGES.length; i++) next[STAGES[i].id] = "pending";
                   return next;
