@@ -925,7 +925,7 @@ function PipelineView() {
           });
         setStatuses((p) => {
           const next: Record<string, StageStatus> = { ...p, "01": "checkpoint" };
-          if (result.stage1bRequired) next["01B"] = "running";
+          if (result.stage1bRequired) next["01B"] = "pending";
           return next;
         });
       })
@@ -981,9 +981,7 @@ function PipelineView() {
         if (cancelled) return;
         setStage2Output(result.output);
         setStage2Loading(false);
-        // Auto-advance: kick Stage 3 into "running" as soon as Stage 2 finishes.
-        setStatuses((p) => ({ ...p, "02": "complete", "03": "running" }));
-        setSelectedId("03");
+        setStatuses((p) => ({ ...p, "02": "complete" }));
       })
       .catch((err: unknown) => {
         if (cancelled) return;
@@ -1010,9 +1008,7 @@ function PipelineView() {
         if (cancelled) return;
         setStage3Output(result.output);
         setStage3Loading(false);
-        // Auto-advance to Stage 4.
-        setStatuses((p) => ({ ...p, "03": "complete", "04": "running" }));
-        setSelectedId("04");
+        setStatuses((p) => ({ ...p, "03": "complete" }));
       })
       .catch((err: unknown) => {
         if (cancelled) return;
@@ -1039,9 +1035,7 @@ function PipelineView() {
         if (cancelled) return;
         setStage4Output(result.output);
         setStage4Loading(false);
-        // Auto-advance to Stage 5.
-        setStatuses((p) => ({ ...p, "04": "complete", "05": "running" }));
-        setSelectedId("05");
+        setStatuses((p) => ({ ...p, "04": "complete" }));
       })
       .catch((err: unknown) => {
         if (cancelled) return;
@@ -1068,8 +1062,7 @@ function PipelineView() {
         if (cancelled) return;
         setStage5Output(result.output);
         setStage5Loading(false);
-        setStatuses((p) => ({ ...p, "05": "complete", "06": "running" }));
-        setSelectedId("06");
+        setStatuses((p) => ({ ...p, "05": "complete" }));
       })
       .catch((err: unknown) => {
         if (cancelled) return;
@@ -1096,8 +1089,7 @@ function PipelineView() {
         if (cancelled) return;
         setStage6Output(result.output);
         setStage6Loading(false);
-        setStatuses((p) => ({ ...p, "06": "complete", "07": "running" }));
-        setSelectedId("07");
+        setStatuses((p) => ({ ...p, "06": "complete" }));
       })
       .catch((err: unknown) => {
         if (cancelled) return;
@@ -1124,8 +1116,7 @@ function PipelineView() {
         if (cancelled) return;
         setStage7Output(result.output);
         setStage7Loading(false);
-        setStatuses((p) => ({ ...p, "07": "complete", "08": "running" }));
-        setSelectedId("08");
+        setStatuses((p) => ({ ...p, "07": "complete" }));
       })
       .catch((err: unknown) => {
         if (cancelled) return;
