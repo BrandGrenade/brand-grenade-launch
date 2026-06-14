@@ -72,6 +72,8 @@ export const runStage1 = createServerFn({ method: "POST" })
       return;
     }
 
+    const previousOutput = session.stage_1_output ?? null;
+
     if (feedback) {
       await supabaseAdmin
         .from("sessions")
@@ -86,8 +88,15 @@ export const runStage1 = createServerFn({ method: "POST" })
       briefText: session.brief_text,
     });
     if (feedback) {
-      userMessage += `\n\n---\n\nHUMAN REVIEWER FEEDBACK ON PREVIOUS OUTPUT:\n${feedback}\n\nThe previous output was rejected. Regenerate the full deliverable from scratch, directly addressing the feedback above. Do not repeat the prior framing — incorporate the requested changes.`;
+      const { buildFeedbackInjection } = await import("./feedback-injection");
+      const { prefix, suffix } = buildFeedbackInjection({
+        feedback,
+        previousOutput,
+        stageLabel: "Stage 1 — Brief Analysis",
+      });
+      userMessage = `${prefix}${userMessage}${suffix}`;
     }
+
 
     let output = "";
     try {
