@@ -3960,9 +3960,25 @@ function Stage1bResubmitView({
         <hr className="my-6 h-px border-0 bg-border" />
       </header>
 
-      <article style={{ marginBottom: 32 }}>
+      <article
+        style={{
+          marginBottom: 32,
+          maxHeight: "min(45vh, 460px)",
+          overflowY: "auto",
+          overflowX: "hidden",
+          padding: "20px 24px",
+          border: "1px solid var(--color-border)",
+          borderRadius: 12,
+          backgroundColor: "var(--color-surface-2)",
+          position: "relative",
+          zIndex: 1,
+          boxShadow: "0 8px 24px rgba(0,0,0,0.35)",
+        }}
+      >
         <StreamedOutput text={output} streaming={false} />
       </article>
+
+      <hr className="my-6 h-px border-0 bg-border" />
 
       <div
         className="rounded-md p-5"
