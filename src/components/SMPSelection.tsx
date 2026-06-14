@@ -386,6 +386,8 @@ export function SMPSelection({
         <hr className="my-6 h-px border-0 bg-border" />
       </header>
 
+      <div className="mb-6">{ManualFallback}</div>
+
       {context && (
         <div
           className="mb-8 rounded-md p-5"
