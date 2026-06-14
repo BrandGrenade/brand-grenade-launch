@@ -266,6 +266,10 @@ export const selectStage17Territory = createServerFn({ method: "POST" })
       .update({
         stage_17_selected_territory: canonical,
         phase_2_current_stage: '17b',
+        // Checkpoint D — explicit human confirmation that Detonation Territory
+        // has been selected. Mirrors checkpoint_a/b/c_confirmed structure.
+        checkpoint_d_confirmed: true,
+        checkpoint_d_confirmed_at: new Date().toISOString(),
       })
       .eq("id", data.sessionId);
     if (error) throw new Error(error.message);

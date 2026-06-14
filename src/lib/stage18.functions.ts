@@ -227,6 +227,10 @@ export const selectStage18Detonation = createServerFn({ method: "POST" })
         stage_18_selected_detonation: data.detonationMarkdown,
         stage_18_detonation_line: data.detonationLine ?? null,
         phase_2_current_stage: '19',
+        // Checkpoint E — explicit human confirmation that a Detonation has
+        // been selected. Mirrors checkpoint_a/b/c_confirmed structure.
+        checkpoint_e_confirmed: true,
+        checkpoint_e_confirmed_at: new Date().toISOString(),
       })
       .eq("id", data.sessionId);
     if (error) throw new Error(error.message);
