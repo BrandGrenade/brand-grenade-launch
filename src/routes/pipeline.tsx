@@ -849,13 +849,24 @@ function PipelineView() {
 
     const fb1 = pendingFeedback["01"];
     (async () =>
-      consumeStream(await runStage1Fn({ data: { sessionId, feedback: fb1 } }), setStage1Output))()
+      consumeStream(
+        await runStage1Fn({
+          data: { sessionId, feedback: fb1, previousOutput: pendingPreviousOutput["01"] },
+        }),
+        setStage1Output,
+      ))()
       .then((result) => {
         if (cancelled) return;
         setStage1Output(result.output);
         setStage1Loading(false);
         if (fb1)
           setPendingFeedback((p) => {
+            const n = { ...p };
+            delete n["01"];
+            return n;
+          });
+        if (fb1)
+          setPendingPreviousOutput((p) => {
             const n = { ...p };
             delete n["01"];
             return n;
