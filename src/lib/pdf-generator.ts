@@ -129,7 +129,7 @@ function normaliseForMatch(s: string): string {
 // separators, spaced-out heading treatments, raw === / ═══ dividers, etc.
 export function sanitiseForPdf(text: string): string {
   if (!text) return text;
-  let t = stripDocumentMetadata(text).replace(/\r\n/g, "\n");
+  let t = stripDocumentMetadata(text, "pdf").replace(/\r\n/g, "\n");
 
   // Strip box-drawing characters (Unicode 2500–257F) up front so divider
   // lines collapse to whitespace and the separator rule catches them.
