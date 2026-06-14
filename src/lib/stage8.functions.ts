@@ -103,6 +103,8 @@ export const runStage8 = createServerFn({ method: "POST" })
     if (!session.stage_7_output) throw new Error("Stage 7 output missing — cannot run Stage 8");
     const feedback = data.feedback?.trim();
 
+    const previousOutput = session.stage_8_output ?? null;
+
     if (session.stage_8_output && !feedback) {
       yield { delta: session.stage_8_output };
       yield { done: true as const, output: session.stage_8_output };
@@ -160,8 +162,15 @@ export const runStage8 = createServerFn({ method: "POST" })
       territoryNames,
     });
     if (feedback) {
-      userMessage += `\n\n---\n\nHUMAN REVIEWER FEEDBACK ON PREVIOUS OUTPUT:\n${feedback}\n\nThe previous propositions were rejected. Regenerate the full set, directly addressing the feedback above. Do not repeat the prior propositions — incorporate the requested changes.`;
+      const { buildFeedbackInjection } = await import("./feedback-injection");
+      const { prefix, suffix } = buildFeedbackInjection({
+        feedback,
+        previousOutput,
+        stageLabel: "Stage 8 — Strategic Propositions",
+      });
+      userMessage = `${prefix}${userMessage}${suffix}`;
     }
+
 
     let output = "";
     try {
