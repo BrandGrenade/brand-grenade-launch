@@ -38,6 +38,173 @@ function countPropositions(text: string): number {
   return text.split("\n").filter((l) => PROPOSITION_LINE.test(l)).length;
 }
 
+// ===== Deterministic Universal Proposition Quality Gate enforcer =====
+// Mirrors the rejection triggers in src/lib/proposition-quality-gate.ts so
+// the server can actually reject and regenerate failing propositions
+// instead of trusting the model to do it silently.
+const BANNED_WORD_PATTERNS: Array<{ pattern: RegExp; reason: string }> = [
+  { pattern: /\breward(s|ed|ing)?\b/i, reason: "contains banned word 'reward'" },
+  { pattern: /\bearn(s|ed|ing)?\b/i, reason: "contains banned word 'earn/earned'" },
+  { pattern: /\bdeserv(e|es|ed|ing)\b/i, reason: "contains banned word 'deserve/deserved'" },
+  { pattern: /\bapolog(y|ise|ize|ies|ised|ized)\b/i, reason: "contains banned word 'apology/apologise'" },
+  { pattern: /\bguilt(y|less)?\b/i, reason: "contains banned word 'guilt/guilty'" },
+  { pattern: /end of (the |a )?day/i, reason: "contains banned phrase 'end of the day'" },
+  { pattern: /day well spent/i, reason: "contains banned phrase 'day well spent'" },
+];
+
+function extractHeroProposition(blockMarkdown: string): string | null {
+  for (const raw of blockMarkdown.split("\n")) {
+    if (PROPOSITION_LINE.test(raw)) {
+      return raw
+        .replace(/^\s*>\s+/, "")
+        .replace(/\*+/g, "")
+        .replace(/[.!?"'`]+$/g, "")
+        .trim();
+    }
+  }
+  return null;
+}
+
+function gateFailures(line: string): string[] {
+  const failures: string[] = [];
+  const wordCount = line.split(/\s+/).filter(Boolean).length;
+  if (wordCount > 8) failures.push(`exceeds 8 words (has ${wordCount})`);
+  for (const { pattern, reason } of BANNED_WORD_PATTERNS) {
+    if (pattern.test(line)) failures.push(reason);
+  }
+  return failures;
+}
+
+async function regenerateTerritoryBlock(args: {
+  sessionId: string;
+  territoryName: string;
+  stage7Output: string;
+  brandName: string;
+  category: string;
+  cmm: string;
+  rejectedLines: string[];
+  failureReasons: string[];
+}): Promise<string> {
+  const rejectedBlock = args.rejectedLines.length
+    ? `\n\nPREVIOUSLY REJECTED PROPOSITIONS FOR THIS TERRITORY (do NOT reproduce, do NOT paraphrase):\n${args.rejectedLines.map((l) => `  • "${l}"`).join("\n")}\n\nReason(s) for rejection:\n${args.failureReasons.map((r) => `  • ${r}`).join("\n")}`
+    : "";
+
+  const userMessage = `Brand: ${args.brandName}
+Category: ${args.category}
+
+Source Strategic Territories (full Stage 7 output for context):
+
+${args.stage7Output}
+
+Competitor positions to avoid:
+
+${args.cmm}
+${rejectedBlock}
+
+TASK: Generate ONE Strategic Proposition for the territory named below, and ONLY that territory. The proposition MUST pass every criterion of the Universal Proposition Quality Gate, MUST be 8 words or fewer, MUST contain none of the banned words (reward, earn/earned, deserve/deserved, apology/apologise, guilt/guilty), MUST NOT contain the phrases "end of the day" or "day well spent", and MUST be demonstrably different in substance, structure and language from the rejected propositions listed above.
+
+Territory: ${args.territoryName}
+
+Output format — exactly:
+
+## ${args.territoryName}
+
+> **[THE PROPOSITION]**
+
+**Why this proposition works:**
+
+[2-3 sentences]
+
+**What it owns:**
+
+[1-2 sentences]
+
+**What it challenges:**
+
+[One sentence]
+
+**What it makes possible:**
+
+[2-3 sentences]`;
+
+  return await callClaude({
+    systemPrompt: STAGE_8_SYSTEM_PROMPT,
+    userMessage,
+    maxTokens: 2000,
+    sessionId: args.sessionId,
+    stageLabel: `Stage 8 (gate enforcement: ${args.territoryName})`,
+    stageNumber: "8",
+    stageName: "Proposition Generation",
+  });
+}
+
+async function enforceQualityGate(args: {
+  sessionId: string;
+  output: string;
+  stage7Output: string;
+  brandName: string;
+  category: string;
+  cmm: string;
+}): Promise<{ output: string; replaced: number }> {
+  const blocks = splitPropositionBlocks(args.output);
+  if (blocks.length === 0) return { output: args.output, replaced: 0 };
+
+  let replaced = 0;
+  const newBlocks: typeof blocks = [];
+  for (const block of blocks) {
+    const hero = extractHeroProposition(block.markdown);
+    let failures = hero ? gateFailures(hero) : ["could not extract proposition line"];
+    if (failures.length === 0) {
+      newBlocks.push(block);
+      continue;
+    }
+    const rejected: string[] = hero ? [hero] : [];
+    const allReasons: string[] = [...failures];
+    let current = block;
+    for (let attempt = 0; attempt < 3 && failures.length > 0; attempt++) {
+      await setStatus(
+        args.sessionId,
+        `Quality gate rejected proposition for "${block.name}" — regenerating (attempt ${attempt + 1}/3)...`,
+      );
+      try {
+        const regenerated = await regenerateTerritoryBlock({
+          sessionId: args.sessionId,
+          territoryName: block.name,
+          stage7Output: args.stage7Output,
+          brandName: args.brandName,
+          category: args.category,
+          cmm: args.cmm,
+          rejectedLines: rejected,
+          failureReasons: allReasons,
+        });
+        const regenBlocks = splitPropositionBlocks(regenerated);
+        const match =
+          regenBlocks.find((b) => b.name.toLowerCase() === block.name.toLowerCase()) ??
+          regenBlocks[0];
+        if (!match) break;
+        const newHero = extractHeroProposition(match.markdown);
+        const newFailures = newHero ? gateFailures(newHero) : ["could not extract proposition line"];
+        current = { name: block.name, markdown: match.markdown };
+        if (newFailures.length === 0) {
+          failures = [];
+          replaced++;
+          break;
+        }
+        if (newHero) rejected.push(newHero);
+        for (const r of newFailures) if (!allReasons.includes(r)) allReasons.push(r);
+        failures = newFailures;
+      } catch {
+        break;
+      }
+    }
+    newBlocks.push(current);
+  }
+
+  await setStatus(args.sessionId, null);
+  const merged = newBlocks.map((b) => b.markdown).join("\n\n");
+  return { output: merged, replaced };
+}
+
 async function setStatus(sessionId: string, message: string | null) {
   try {
     await supabaseAdmin
