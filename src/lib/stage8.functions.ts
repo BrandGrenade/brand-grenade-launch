@@ -400,6 +400,22 @@ export const runStage8 = createServerFn({ method: "POST" })
     }
     await setStatus(data.sessionId, null);
 
+    // ----- Enforce Universal Proposition Quality Gate (server-side) -----
+    const gateResult = await enforceQualityGate({
+      sessionId: data.sessionId,
+      output,
+      stage7Output,
+      brandName: session.brand_name,
+      category: session.category,
+      cmm: session.stage_2_output ?? "",
+    });
+    if (gateResult.replaced > 0) {
+      output = gateResult.output;
+      const banner = `\n\n---\n\n*[Quality Gate: ${gateResult.replaced} proposition${gateResult.replaced === 1 ? "" : "s"} regenerated to meet the Universal Proposition Quality Gate]*\n\n---\n\n`;
+      yield { delta: banner };
+      yield { delta: output };
+    }
+
     const { error: updateErr } = await supabaseAdmin
       .from("sessions")
       .update({ stage_8_output: output, stage_8_error: null })
