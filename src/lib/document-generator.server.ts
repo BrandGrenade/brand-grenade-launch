@@ -419,7 +419,7 @@ import { stripDocumentMetadata } from "./strip-document-metadata";
 
 export function sanitiseText(text: string): string {
   if (!text) return "";
-  return stripDocumentMetadata(text)
+  return stripDocumentMetadata(text, "doc-generator")
     .replace(/\u2014/g, "—")
     .replace(/\u2013/g, "–")
     .replace(/\u201C/g, '"')
