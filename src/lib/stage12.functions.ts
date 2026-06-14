@@ -32,6 +32,8 @@ export const runStage12 = createServerFn({ method: "POST" })
       return;
     }
 
+    const previousOutput = session.stage_12_output ?? null;
+
     if (feedback) {
       await supabaseAdmin
         .from("sessions")
@@ -64,8 +66,15 @@ export const runStage12 = createServerFn({ method: "POST" })
       eliminatedCount: eliminated.length,
     });
     if (feedback) {
-      userMessage += `\n\n---\n\nHUMAN REVIEWER FEEDBACK ON PREVIOUS OUTPUT:\n${feedback}\n\nThe previous selection was rejected. Regenerate the full set, directly addressing the feedback above. Do not repeat the prior output — incorporate the requested changes.`;
+      const { buildFeedbackInjection } = await import("./feedback-injection");
+      const { prefix, suffix } = buildFeedbackInjection({
+        feedback,
+        previousOutput,
+        stageLabel: "Stage 12 — Strategic Master Propositions",
+      });
+      userMessage = `${prefix}${userMessage}${suffix}`;
     }
+
 
     let output = "";
     try {
