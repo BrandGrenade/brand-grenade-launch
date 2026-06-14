@@ -3620,7 +3620,7 @@ function StageControlBar({
 }
 
 // ────────────────────────────────────────────────────────────────────────────
-// Stall watcher — warns at 45s of "running", auto-retries once at 90s
+// Stall watcher — warns after a pause, but never auto-retries without a user click.
 // ────────────────────────────────────────────────────────────────────────────
 
 function StallWatcher({ onRetry }: { onRetry: () => void }) {
