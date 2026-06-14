@@ -2045,7 +2045,7 @@ function PipelineView() {
             tensionScore={selected.id === "01" ? (session?.stage_1_tension_score ?? null) : null}
             stage1bRequired={selected.id === "01" ? (session?.stage_1b_required ?? false) : false}
             amendmentNote={amendmentNotes[selected.id] ?? ""}
-            onAmendmentChange={(value) =>
+            onAmendmentChange={(value: string) =>
               setAmendmentNotes((prev) => ({ ...prev, [selected.id]: value }))
             }
             onRetry={async () => {
@@ -3023,6 +3023,7 @@ function RightPanel({
         pipelineComplete={pipelineComplete}
         onContinue={onContinue}
         onBack={onBack}
+        onRetry={onRetry}
         onReturnToCurrent={onBackToCurrent ?? (() => {})}
         onViewFinal={onViewFinal}
       />
