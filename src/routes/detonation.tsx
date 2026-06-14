@@ -1720,11 +1720,17 @@ function Stage22({ session, onChange }: { session: SessionRow; onChange: () => v
             </div>
           )}
 
-          <div style={{ marginTop: 24, display: "flex", gap: 12, justifyContent: "flex-end" }}>
+          <div style={{ marginTop: 24, display: "flex", gap: 12, justifyContent: "flex-end", flexWrap: "wrap" }}>
             <AmberButton variant="ghost" onClick={handleRegenerate} disabled={busy}>
               {busy ? <><Spinner /> Regenerating…</> : "Regenerate This Stage"}
             </AmberButton>
-            <AmberButton onClick={printPdf} disabled={busy}>Download Brand Architecture</AmberButton>
+            <AmberButton variant="ghost" onClick={printPdf} disabled={busy}>Download Brand Architecture</AmberButton>
+            <AmberButton
+              onClick={() => { window.location.href = `/complete?session=${session.id}`; }}
+              disabled={busy}
+            >
+              Session Complete →
+            </AmberButton>
           </div>
         </div>
       )}
