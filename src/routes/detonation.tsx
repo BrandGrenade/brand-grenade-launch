@@ -1480,7 +1480,7 @@ function Stage21({ session, onChange, goNext }: { session: SessionRow; onChange:
     catch (e) {
       console.error("Stage 21 run failed:", e);
       setErr(e instanceof Error ? e.message : "Stage 21 failed");
-      setAutoTriggered(false);
+      autoTriggeredRef.current = false;
     }
     finally { setBusy(false); }
   };
