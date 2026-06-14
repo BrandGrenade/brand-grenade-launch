@@ -1171,7 +1171,7 @@ function Stage19({ session, onChange, goNext }: { session: SessionRow; onChange:
   const [busy, setBusy] = useState(false);
   const [proceeding, setProceeding] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-  const [autoTriggered, setAutoTriggered] = useState(false);
+  const autoTriggeredRef = useRef(false);
   const [stage19Checked, setStage19Checked] = useState<Record<string, boolean>>({});
 
   useEffect(() => { setOutput(session.stage_19_output); }, [session.stage_19_output]);
