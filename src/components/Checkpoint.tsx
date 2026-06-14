@@ -71,6 +71,7 @@ function buildRevisionInstruction(notes: string[], feedback: string): string {
 export function Checkpoint({
   letter,
   reviewContent,
+  confirmLabel,
   showLowScoreAlert = false,
   onConfirm,
   onResubmit,
@@ -79,6 +80,7 @@ export function Checkpoint({
 }: {
   letter: CheckpointLetter;
   reviewContent: React.ReactNode;
+  confirmLabel?: string;
   showLowScoreAlert?: boolean;
   onConfirm?: (notes: string[]) => void;
   onResubmit?: (feedback: string) => void | Promise<void>;
@@ -166,6 +168,22 @@ export function Checkpoint({
       {/* Actions */}
       <section>
         <span className="text-label text-primary">Your Decision</span>
+        {confirmLabel ? (
+          <div className="mt-4">
+            <button
+              type="button"
+              data-checkpoint-confirm="true"
+              onClick={() => onConfirm?.(notes)}
+              className="inline-flex h-11 items-center justify-center rounded-md px-6 text-[14px] font-semibold transition-colors"
+              style={{
+                backgroundColor: "var(--color-success)",
+                color: "var(--color-background)",
+              }}
+            >
+              {confirmLabel}
+            </button>
+          </div>
+        ) : null}
         <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-3">
           <ActionCard
             selected={action === "confirm"}
@@ -206,7 +224,7 @@ export function Checkpoint({
                 color: "var(--color-background)",
               }}
             >
-              Proceed to next stage →
+              {confirmLabel ?? "Proceed to next stage →"}
             </button>
 
           </div>
