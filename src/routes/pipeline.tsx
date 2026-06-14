@@ -2864,6 +2864,7 @@ function RightPanel({
           <div style={{ paddingBottom: 80 }}>
             <Checkpoint
               letter={letter}
+              confirmLabel={stage.id === "08" ? "Move selected propositions to Stage 9 →" : undefined}
               showLowScoreAlert={letter === "A" && stage1bRequired}
               onConfirm={(notes) => onConfirmCheckpoint(stage.id, notes)}
               onResubmit={
