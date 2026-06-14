@@ -3270,8 +3270,9 @@ function Stage8PropositionsView({
   return (
     <div>
       <p className="text-body-sm" style={{ color: "#8A8680", marginBottom: 16 }}>
-        Uncheck any proposition you want to regenerate. Checked propositions are kept verbatim when
-        you press Retry this stage.
+        Uncheck any proposition to exclude it from Stage 9 and all downstream stages. Only
+        checked propositions advance past Checkpoint B. Use Retry this stage to regenerate
+        unchecked propositions instead of excluding them.
       </p>
       {blocks.map((b, i) => {
         const checked = keepNames.has(b.name);
