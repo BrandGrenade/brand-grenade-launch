@@ -416,6 +416,7 @@ function PipelineView() {
   const [savingRationale, setSavingRationale] = useState(false);
   const [retryNonce, setRetryNonce] = useState(0);
   const [pendingFeedback, setPendingFeedback] = useState<Record<string, string>>({});
+  const [pendingPreviousOutput, setPendingPreviousOutput] = useState<Record<string, string>>({});
   // Stage 8 selective regenerate — set of territory names the user wants to KEEP
   // (checkbox = checked). Defaults to all-checked whenever the underlying
   // proposition set changes.
@@ -848,13 +849,24 @@ function PipelineView() {
 
     const fb1 = pendingFeedback["01"];
     (async () =>
-      consumeStream(await runStage1Fn({ data: { sessionId, feedback: fb1 } }), setStage1Output))()
+      consumeStream(
+        await runStage1Fn({
+          data: { sessionId, feedback: fb1, previousOutput: pendingPreviousOutput["01"] },
+        }),
+        setStage1Output,
+      ))()
       .then((result) => {
         if (cancelled) return;
         setStage1Output(result.output);
         setStage1Loading(false);
         if (fb1)
           setPendingFeedback((p) => {
+            const n = { ...p };
+            delete n["01"];
+            return n;
+          });
+        if (fb1)
+          setPendingPreviousOutput((p) => {
             const n = { ...p };
             delete n["01"];
             return n;
@@ -1085,13 +1097,24 @@ function PipelineView() {
     setStage8Loading(true);
     setStage8Error(null);
     (async () =>
-      consumeStream(await runStage8Fn({ data: { sessionId, feedback: fb8 } }), setStage8Output))()
+      consumeStream(
+        await runStage8Fn({
+          data: { sessionId, feedback: fb8, previousOutput: pendingPreviousOutput["08"] },
+        }),
+        setStage8Output,
+      ))()
       .then((result) => {
         if (cancelled) return;
         setStage8Output(result.output);
         setStage8Loading(false);
         if (fb8)
           setPendingFeedback((p) => {
+            const n = { ...p };
+            delete n["08"];
+            return n;
+          });
+        if (fb8)
+          setPendingPreviousOutput((p) => {
             const n = { ...p };
             delete n["08"];
             return n;
@@ -1205,7 +1228,9 @@ function PipelineView() {
     setStage12Error(null);
     (async () =>
       consumeStream(
-        await runStage12Fn({ data: { sessionId, feedback: fb12 } }),
+        await runStage12Fn({
+          data: { sessionId, feedback: fb12, previousOutput: pendingPreviousOutput["12"] },
+        }),
         setStage12Output,
       ))()
       .then((result) => {
@@ -1214,6 +1239,12 @@ function PipelineView() {
         setStage12Loading(false);
         if (fb12)
           setPendingFeedback((p) => {
+            const n = { ...p };
+            delete n["12"];
+            return n;
+          });
+        if (fb12)
+          setPendingPreviousOutput((p) => {
             const n = { ...p };
             delete n["12"];
             return n;
@@ -1656,6 +1687,47 @@ function PipelineView() {
     return () => window.removeEventListener("keydown", handler);
   }, [selectedId, statuses, intelSubmitted]);
 
+  const handleResubmitCheckpoint = async (stageId: string, feedback: string) => {
+    console.log(`[Checkpoint Resubmit] stage=${stageId} feedback=${feedback}`);
+    const fb = (feedback ?? "").trim();
+    const dbId = STAGE_ID_TO_DB[stageId];
+    if (!sessionId || !dbId || !fb) return;
+    const rejectedOutput =
+      stageId === "08"
+        ? stage8Output?.trim()
+        : stageId === "12"
+          ? stage12Output?.trim()
+          : stageId === "01"
+            ? stage1Output?.trim()
+            : null;
+
+    setResubmitting(true);
+    try {
+      await resetStageCascadeFn({ data: { sessionId, stageId: dbId } });
+      resetLocalFromStage(stageId);
+      setPendingFeedback((p) => ({ ...p, [stageId]: fb }));
+      if (rejectedOutput) {
+        setPendingPreviousOutput((p) => ({ ...p, [stageId]: rejectedOutput }));
+      }
+      setStatuses((p) => {
+        const next: Record<string, StageStatus> = { ...p, [stageId]: "running" };
+        const idx = STAGES.findIndex((s) => s.id === stageId);
+        for (let i = idx + 1; i < STAGES.length; i++) next[STAGES[i].id] = "pending";
+        return next;
+      });
+      setSelectedId(stageId);
+      if (stageId === "01") setRetryNonce((n) => n + 1);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Feedback resubmit failed";
+      if (stageId === "01") setStage1Error(message);
+      if (stageId === "08") setStage8Error(message);
+      if (stageId === "12") setStage12Error(message);
+      setStatuses((p) => ({ ...p, [stageId]: "error" }));
+    } finally {
+      setResubmitting(false);
+    }
+  };
+
   return (
     <div className="flex h-screen flex-col bg-background">
       <TopNav
@@ -2041,35 +2113,7 @@ function PipelineView() {
                 return next;
               });
             }}
-            onResubmitCheckpoint={async (stageId, feedback) => {
-              console.log(`[Checkpoint Resubmit] stage=${stageId} feedback=${feedback}`);
-              const fb = (feedback ?? "").trim();
-              const dbId = STAGE_ID_TO_DB[stageId];
-              if (!sessionId || !dbId || !fb) return;
-
-              setResubmitting(true);
-              try {
-                await resetStageCascadeFn({ data: { sessionId, stageId: dbId } });
-                resetLocalFromStage(stageId);
-                setPendingFeedback((p) => ({ ...p, [stageId]: fb }));
-                setStatuses((p) => {
-                  const next: Record<string, StageStatus> = { ...p, [stageId]: "running" };
-                  const idx = STAGES.findIndex((s) => s.id === stageId);
-                  for (let i = idx + 1; i < STAGES.length; i++) next[STAGES[i].id] = "pending";
-                  return next;
-                });
-                setSelectedId(stageId);
-                if (stageId === "01") setRetryNonce((n) => n + 1);
-              } catch (err) {
-                const message = err instanceof Error ? err.message : "Feedback resubmit failed";
-                if (stageId === "01") setStage1Error(message);
-                if (stageId === "08") setStage8Error(message);
-                if (stageId === "12") setStage12Error(message);
-                setStatuses((p) => ({ ...p, [stageId]: "error" }));
-              } finally {
-                setResubmitting(false);
-              }
-            }}
+            onResubmitCheckpoint={handleResubmitCheckpoint}
             onEscalateCheckpoint={(stageId, reason) => {
               console.log(`[Checkpoint Escalate] stage=${stageId} reason=${reason}`);
             }}
@@ -2078,6 +2122,8 @@ function PipelineView() {
                 <SMPSelection
                   stage12Output={stage12Output ?? ""}
                   stage8Output={stage8Output ?? ""}
+                  onResubmit={(feedback) => handleResubmitCheckpoint("12", feedback)}
+                  resubmitting={resubmitting}
                   onSelect={async (card) => {
                     if (!sessionId) return;
                     setSelectedSMP(card);

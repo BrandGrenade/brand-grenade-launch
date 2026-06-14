@@ -11,7 +11,8 @@ import {
 
 const Input = z.object({
   sessionId: z.string().uuid(),
-  feedback: z.string().max(5000).optional(),
+  feedback: z.string().max(10000).optional(),
+  previousOutput: z.string().max(50000).optional(),
 });
 
 export const runStage12 = createServerFn({ method: "POST" })
@@ -32,7 +33,7 @@ export const runStage12 = createServerFn({ method: "POST" })
       return;
     }
 
-    const previousOutput = session.stage_12_output ?? null;
+    const previousOutput = data.previousOutput?.trim() || session.stage_12_output || null;
 
     if (feedback) {
       await supabaseAdmin
