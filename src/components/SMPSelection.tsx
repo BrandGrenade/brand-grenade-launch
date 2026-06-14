@@ -497,7 +497,6 @@ export function SMPSelection({
         </div>
       </div>
 
-      {ManualFallback}
       {onResubmit && (
         <RevisionPanel
           feedback={revisionFeedback}
