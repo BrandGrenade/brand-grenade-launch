@@ -3607,6 +3607,7 @@ function BottomBar({
   pipelineComplete,
   onContinue,
   onBack,
+  onRetry,
   onReturnToCurrent,
   onViewFinal,
 }: {
@@ -3619,6 +3620,7 @@ function BottomBar({
   pipelineComplete: boolean;
   onContinue: () => void;
   onBack: () => void;
+  onRetry: () => void;
   onReturnToCurrent: () => void;
   onViewFinal: () => void;
 }) {
@@ -3708,10 +3710,14 @@ function BottomBar({
 function StageControlBar({
   stage,
   status,
+  amendmentNote,
+  onAmendmentChange,
   onRetry,
 }: {
   stage: Stage;
   status: StageStatus;
+  amendmentNote: string;
+  onAmendmentChange: (value: string) => void;
   onRetry: () => void;
 }) {
   let leftEl: ReactNode;
