@@ -2309,7 +2309,7 @@ function LeftPanel({
           />
         </div>
         <p className="text-body-sm mt-2" style={{ color: "var(--color-text-tertiary)" }}>
-          Stage {currentMainNumber} of {totalMain}
+          Stage {currentMainNumber} of 27
         </p>
       </header>
 
