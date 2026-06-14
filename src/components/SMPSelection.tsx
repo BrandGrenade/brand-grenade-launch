@@ -181,10 +181,14 @@ export function SMPSelection({
   stage12Output,
   stage8Output,
   onSelect,
+  onResubmit,
+  resubmitting = false,
 }: {
   stage12Output: string;
   stage8Output?: string;
   onSelect: (card: SMPCard) => void;
+  onResubmit?: (feedback: string) => void | Promise<void>;
+  resubmitting?: boolean;
 }) {
   const cards = useMemo(
     () => parseSMPCards(stage12Output ?? "", stage8Output),
@@ -194,6 +198,7 @@ export function SMPSelection({
   const [showRaw, setShowRaw] = useState(false);
   const [manualLine, setManualLine] = useState("");
   const [manualField, setManualField] = useState("");
+  const [revisionFeedback, setRevisionFeedback] = useState("");
 
   const cleanedOutput = useMemo(() => cleanForDisplay(stage12Output), [stage12Output]);
 
@@ -478,7 +483,75 @@ export function SMPSelection({
       </div>
 
       {ManualFallback}
+      {onResubmit && (
+        <RevisionPanel
+          feedback={revisionFeedback}
+          onChange={setRevisionFeedback}
+          onSubmit={() => {
+            const fb = revisionFeedback.trim();
+            if (fb.length >= 8 && !resubmitting) void onResubmit(fb);
+          }}
+          resubmitting={resubmitting}
+        />
+      )}
       {RawPanel}
+    </div>
+  );
+}
+
+function RevisionPanel({
+  feedback,
+  onChange,
+  onSubmit,
+  resubmitting,
+}: {
+  feedback: string;
+  onChange: (value: string) => void;
+  onSubmit: () => void;
+  resubmitting: boolean;
+}) {
+  const canSubmit = feedback.trim().length >= 8 && !resubmitting;
+
+  return (
+    <div
+      className="mt-8 rounded-md p-5"
+      style={{
+        border: "1px solid var(--color-border)",
+        backgroundColor: "var(--color-surface-2)",
+      }}
+    >
+      <label className="text-body-sm mb-2 block text-text-secondary" htmlFor="smp-revision-feedback">
+        What needs to change?
+      </label>
+      <textarea
+        id="smp-revision-feedback"
+        value={feedback}
+        onChange={(e) => onChange(e.target.value.slice(0, 5000))}
+        className="input-base w-full resize-y"
+        style={{ height: 120 }}
+        placeholder="Be specific — these notes will be injected as mandatory constraints for the regenerated proposition set."
+      />
+      <div className="mt-3 flex justify-end">
+        <button
+          type="button"
+          disabled={!canSubmit}
+          onClick={onSubmit}
+          className="inline-flex h-10 items-center justify-center rounded-md px-5 text-[13px] font-semibold transition-colors disabled:cursor-not-allowed"
+          style={
+            canSubmit
+              ? {
+                  backgroundColor: "var(--color-primary)",
+                  color: "var(--color-primary-foreground)",
+                }
+              : {
+                  backgroundColor: "var(--color-border)",
+                  color: "var(--color-text-tertiary)",
+                }
+          }
+        >
+          {resubmitting ? "Resubmitting…" : "Resubmit with direction"}
+        </button>
+      </div>
     </div>
   );
 }
