@@ -96,9 +96,8 @@ export function Checkpoint({
           borderRadius: 12,
           maxHeight: "min(50vh, 480px)",
           contain: "paint",
-          position: "sticky",
-          top: 72,
-          zIndex: 20,
+          position: "relative",
+          zIndex: 1,
           boxShadow: "0 8px 24px rgba(0,0,0,0.35)",
         }}
       >
