@@ -1194,14 +1194,15 @@ function Stage19({ session, onChange, goNext }: { session: SessionRow; onChange:
   };
 
   useEffect(() => {
-    if (autoTriggered) return;
+    if (autoTriggeredRef.current) return;
     if (!session.stage_18_selected_detonation) return;
+    if (session.stage_19_output) return;
     if (output !== null && output !== "") return;
     if (busy) return;
-    setAutoTriggered(true);
+    autoTriggeredRef.current = true;
     void handleRun();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session.stage_18_selected_detonation, output]);
+  }, [session.stage_18_selected_detonation, session.stage_19_output, output]);
 
   const handleProceed = async () => {
     setProceeding(true);
