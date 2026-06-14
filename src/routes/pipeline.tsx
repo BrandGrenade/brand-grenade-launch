@@ -417,6 +417,7 @@ function PipelineView() {
   const [retryNonce, setRetryNonce] = useState(0);
   const [pendingFeedback, setPendingFeedback] = useState<Record<string, string>>({});
   const [pendingPreviousOutput, setPendingPreviousOutput] = useState<Record<string, string>>({});
+  const [amendmentNotes, setAmendmentNotes] = useState<Record<string, string>>({});
   // Stage 8 selective regenerate — set of territory names the user wants to KEEP
   // (checkbox = checked). Defaults to all-checked whenever the underlying
   // proposition set changes.
@@ -441,6 +442,57 @@ function PipelineView() {
   }, [stage8NamesKey]);
 
   const resetLocalFromStage = (stageId: string) => {
+    const clearFrom = (startId: string) => {
+      const order = STAGES.map((s) => s.id);
+      const start = order.indexOf(startId);
+      const shouldClear = (id: string) => start >= 0 && order.indexOf(id) >= start;
+      if (shouldClear("01")) setStage1Output(null);
+      if (shouldClear("01B")) setStage1bOutput(null);
+      if (shouldClear("02")) setStage2Output(null);
+      if (shouldClear("03")) setStage3Output(null);
+      if (shouldClear("04")) setStage4Output(null);
+      if (shouldClear("05")) setStage5Output(null);
+      if (shouldClear("06")) setStage6Output(null);
+      if (shouldClear("07")) setStage7Output(null);
+      if (shouldClear("08")) setStage8Output(null);
+      if (shouldClear("09")) setStage9Output(null);
+      if (shouldClear("10")) setStage10Output(null);
+      if (shouldClear("11")) setStage11Output(null);
+      if (shouldClear("12")) setStage12Output(null);
+      if (shouldClear("13")) setStage13Output(null);
+      if (shouldClear("13B")) setStage13bOutput(null);
+      if (shouldClear("14")) setStage14Output(null);
+      if (shouldClear("14B")) setStage14bOutput(null);
+      if (shouldClear("14C")) setStage14cOutput(null);
+      if (shouldClear("15")) setStage15Output(null);
+      if (shouldClear("16")) setStage16Output(null);
+      if (shouldClear("01")) setStage1Error(null);
+      if (shouldClear("02")) setStage2Error(null);
+      if (shouldClear("03")) setStage3Error(null);
+      if (shouldClear("04")) setStage4Error(null);
+      if (shouldClear("05")) setStage5Error(null);
+      if (shouldClear("06")) setStage6Error(null);
+      if (shouldClear("07")) setStage7Error(null);
+      if (shouldClear("08")) setStage8Error(null);
+      if (shouldClear("09")) setStage9Error(null);
+      if (shouldClear("10")) setStage10Error(null);
+      if (shouldClear("11")) setStage11Error(null);
+      if (shouldClear("12")) setStage12Error(null);
+      if (shouldClear("13")) setStage13Error(null);
+      if (shouldClear("13B")) setStage13bError(null);
+      if (shouldClear("14")) setStage14Error(null);
+      if (shouldClear("14B")) setStage14bError(null);
+      if (shouldClear("14C")) setStage14cError(null);
+      if (shouldClear("15")) setStage15Error(null);
+      if (shouldClear("16")) setStage16Error(null);
+      if (shouldClear("12")) {
+        setSelectedSMP(null);
+        setRationaleForId(null);
+        setIntelSubmitted(false);
+      }
+    };
+
+    clearFrom(stageId);
     if (stageId === "01") {
       setStage1Output(null);
       setStage1bOutput(null);
