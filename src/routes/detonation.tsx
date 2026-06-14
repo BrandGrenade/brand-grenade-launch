@@ -1643,15 +1643,16 @@ function Stage22({ session, onChange }: { session: SessionRow; onChange: () => v
   };
 
   useEffect(() => {
-    if (autoTriggered) return;
+    if (autoTriggeredRef.current) return;
     const stage21Ready = session.stage_21_outputs && Object.keys(session.stage_21_outputs).length > 0;
     if (!stage21Ready) return;
+    if (session.stage_22_brand_architecture) return;
     if (architecture !== null && architecture !== "") return;
     if (busy) return;
-    setAutoTriggered(true);
+    autoTriggeredRef.current = true;
     void handleRun();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session.stage_21_outputs, architecture]);
+  }, [session.stage_21_outputs, session.stage_22_brand_architecture, architecture]);
 
 
   const printPdf = () => window.print();
