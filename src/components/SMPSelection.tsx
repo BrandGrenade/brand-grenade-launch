@@ -254,6 +254,7 @@ export function SMPSelection({
   onSelect,
   onResubmit,
   resubmitting = false,
+  enhancing = false,
 }: {
   stage12Output: string;
   stage11Output?: string;
@@ -261,6 +262,8 @@ export function SMPSelection({
   onSelect: (card: SMPCard) => void;
   onResubmit?: (feedback: string) => void | Promise<void>;
   resubmitting?: boolean;
+  /** True while Stage 12 Claude card formatting is still streaming in the background. */
+  enhancing?: boolean;
 }) {
   const cards = useMemo(
     () => parseSMPCards(stage12Output ?? "", stage11Output, stage10Output),
