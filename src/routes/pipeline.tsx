@@ -417,6 +417,7 @@ function PipelineView() {
   const [retryNonce, setRetryNonce] = useState(0);
   const [pendingFeedback, setPendingFeedback] = useState<Record<string, string>>({});
   const [pendingPreviousOutput, setPendingPreviousOutput] = useState<Record<string, string>>({});
+  const [amendmentNotes, setAmendmentNotes] = useState<Record<string, string>>({});
   // Stage 8 selective regenerate — set of territory names the user wants to KEEP
   // (checkbox = checked). Defaults to all-checked whenever the underlying
   // proposition set changes.
@@ -441,6 +442,57 @@ function PipelineView() {
   }, [stage8NamesKey]);
 
   const resetLocalFromStage = (stageId: string) => {
+    const clearFrom = (startId: string) => {
+      const order = STAGES.map((s) => s.id);
+      const start = order.indexOf(startId);
+      const shouldClear = (id: string) => start >= 0 && order.indexOf(id) >= start;
+      if (shouldClear("01")) setStage1Output(null);
+      if (shouldClear("01B")) setStage1bOutput(null);
+      if (shouldClear("02")) setStage2Output(null);
+      if (shouldClear("03")) setStage3Output(null);
+      if (shouldClear("04")) setStage4Output(null);
+      if (shouldClear("05")) setStage5Output(null);
+      if (shouldClear("06")) setStage6Output(null);
+      if (shouldClear("07")) setStage7Output(null);
+      if (shouldClear("08")) setStage8Output(null);
+      if (shouldClear("09")) setStage9Output(null);
+      if (shouldClear("10")) setStage10Output(null);
+      if (shouldClear("11")) setStage11Output(null);
+      if (shouldClear("12")) setStage12Output(null);
+      if (shouldClear("13")) setStage13Output(null);
+      if (shouldClear("13B")) setStage13bOutput(null);
+      if (shouldClear("14")) setStage14Output(null);
+      if (shouldClear("14B")) setStage14bOutput(null);
+      if (shouldClear("14C")) setStage14cOutput(null);
+      if (shouldClear("15")) setStage15Output(null);
+      if (shouldClear("16")) setStage16Output(null);
+      if (shouldClear("01")) setStage1Error(null);
+      if (shouldClear("02")) setStage2Error(null);
+      if (shouldClear("03")) setStage3Error(null);
+      if (shouldClear("04")) setStage4Error(null);
+      if (shouldClear("05")) setStage5Error(null);
+      if (shouldClear("06")) setStage6Error(null);
+      if (shouldClear("07")) setStage7Error(null);
+      if (shouldClear("08")) setStage8Error(null);
+      if (shouldClear("09")) setStage9Error(null);
+      if (shouldClear("10")) setStage10Error(null);
+      if (shouldClear("11")) setStage11Error(null);
+      if (shouldClear("12")) setStage12Error(null);
+      if (shouldClear("13")) setStage13Error(null);
+      if (shouldClear("13B")) setStage13bError(null);
+      if (shouldClear("14")) setStage14Error(null);
+      if (shouldClear("14B")) setStage14bError(null);
+      if (shouldClear("14C")) setStage14cError(null);
+      if (shouldClear("15")) setStage15Error(null);
+      if (shouldClear("16")) setStage16Error(null);
+      if (shouldClear("12")) {
+        setSelectedSMP(null);
+        setRationaleForId(null);
+        setIntelSubmitted(false);
+      }
+    };
+
+    clearFrom(stageId);
     if (stageId === "01") {
       setStage1Output(null);
       setStage1bOutput(null);
@@ -680,46 +732,6 @@ function PipelineView() {
           setStage16Output(data.stage_16_consulting_output);
           setStatuses((p) => ({ ...p, "16": "complete" }));
         }
-        if (data.status === "running") {
-          // Resume: find the first stage that should be running.
-          // Walk the linear sequence honoring human checkpoints (8 -> 9 needs
-          // checkpoint_b_confirmed; 12 -> 13 needs checkpoint_c_confirmed).
-          const seq: Array<{ id: string; out: unknown; gate?: boolean }> = [
-            { id: "02", out: data.stage_2_output },
-            { id: "03", out: data.stage_3_output },
-            { id: "04", out: data.stage_4_output },
-            { id: "05", out: data.stage_5_output },
-            { id: "06", out: data.stage_6_output },
-            { id: "07", out: data.stage_7_output },
-            { id: "08", out: data.stage_8_output },
-            {
-              id: "09",
-              out: data.stage_9_output,
-              gate: !data.checkpoint_b_confirmed && !!data.stage_8_output,
-            },
-            { id: "10", out: data.stage_10_output },
-            { id: "11", out: data.stage_11_output },
-            { id: "12", out: data.stage_12_output },
-            {
-              id: "13",
-              out: data.stage_13_output,
-              gate: !data.checkpoint_c_confirmed && !!data.stage_12_output,
-            },
-            { id: "13B", out: data.stage_13b_output },
-            { id: "14", out: data.stage_14_output },
-            { id: "14B", out: data.stage_14b_output },
-            { id: "14C", out: data.stage_14c_output },
-            { id: "15", out: data.stage_15_output },
-            { id: "16", out: data.stage_16_consulting_output },
-          ];
-          for (const step of seq) {
-            if (step.out) continue;
-            if (step.gate) break; // waiting on human checkpoint
-            setStatuses((p) => ({ ...p, [step.id]: "running" }));
-            setSelectedId(step.id);
-            break;
-          }
-        }
       });
 
     return () => {
@@ -835,13 +847,14 @@ function PipelineView() {
         ...p,
         "01": session.checkpoint_a_confirmed ? "complete" : "checkpoint",
         "01B": session.stage_1b_required
-          ? session.stage_1b_output
-            ? "complete"
-            : "running"
+            ? session.stage_1b_output
+              ? "complete"
+              : "pending"
           : p["01B"],
       }));
       return;
     }
+    if (statuses["01"] !== "running" && retryNonce === 0) return;
     let cancelled = false;
     setStage1Loading(true);
     setStage1Error(null);
@@ -873,7 +886,7 @@ function PipelineView() {
           });
         setStatuses((p) => {
           const next: Record<string, StageStatus> = { ...p, "01": "checkpoint" };
-          if (result.stage1bRequired) next["01B"] = "running";
+          if (result.stage1bRequired) next["01B"] = "pending";
           return next;
         });
       })
@@ -929,9 +942,7 @@ function PipelineView() {
         if (cancelled) return;
         setStage2Output(result.output);
         setStage2Loading(false);
-        // Auto-advance: kick Stage 3 into "running" as soon as Stage 2 finishes.
-        setStatuses((p) => ({ ...p, "02": "complete", "03": "running" }));
-        setSelectedId("03");
+        setStatuses((p) => ({ ...p, "02": "complete" }));
       })
       .catch((err: unknown) => {
         if (cancelled) return;
@@ -958,9 +969,7 @@ function PipelineView() {
         if (cancelled) return;
         setStage3Output(result.output);
         setStage3Loading(false);
-        // Auto-advance to Stage 4.
-        setStatuses((p) => ({ ...p, "03": "complete", "04": "running" }));
-        setSelectedId("04");
+        setStatuses((p) => ({ ...p, "03": "complete" }));
       })
       .catch((err: unknown) => {
         if (cancelled) return;
@@ -987,9 +996,7 @@ function PipelineView() {
         if (cancelled) return;
         setStage4Output(result.output);
         setStage4Loading(false);
-        // Auto-advance to Stage 5.
-        setStatuses((p) => ({ ...p, "04": "complete", "05": "running" }));
-        setSelectedId("05");
+        setStatuses((p) => ({ ...p, "04": "complete" }));
       })
       .catch((err: unknown) => {
         if (cancelled) return;
@@ -1016,8 +1023,7 @@ function PipelineView() {
         if (cancelled) return;
         setStage5Output(result.output);
         setStage5Loading(false);
-        setStatuses((p) => ({ ...p, "05": "complete", "06": "running" }));
-        setSelectedId("06");
+        setStatuses((p) => ({ ...p, "05": "complete" }));
       })
       .catch((err: unknown) => {
         if (cancelled) return;
@@ -1044,8 +1050,7 @@ function PipelineView() {
         if (cancelled) return;
         setStage6Output(result.output);
         setStage6Loading(false);
-        setStatuses((p) => ({ ...p, "06": "complete", "07": "running" }));
-        setSelectedId("07");
+        setStatuses((p) => ({ ...p, "06": "complete" }));
       })
       .catch((err: unknown) => {
         if (cancelled) return;
@@ -1072,8 +1077,7 @@ function PipelineView() {
         if (cancelled) return;
         setStage7Output(result.output);
         setStage7Loading(false);
-        setStatuses((p) => ({ ...p, "07": "complete", "08": "running" }));
-        setSelectedId("08");
+        setStatuses((p) => ({ ...p, "07": "complete" }));
       })
       .catch((err: unknown) => {
         if (cancelled) return;
@@ -1146,8 +1150,7 @@ function PipelineView() {
         if (cancelled) return;
         setStage9Output(result.output);
         setStage9Loading(false);
-        setStatuses((p) => ({ ...p, "09": "complete", "10": "running" }));
-        setSelectedId("10");
+        setStatuses((p) => ({ ...p, "09": "complete" }));
       })
       .catch((err: unknown) => {
         if (cancelled) return;
@@ -1174,8 +1177,7 @@ function PipelineView() {
         if (cancelled) return;
         setStage10Output(result.output);
         setStage10Loading(false);
-        setStatuses((p) => ({ ...p, "10": "complete", "11": "running" }));
-        setSelectedId("11");
+        setStatuses((p) => ({ ...p, "10": "complete" }));
       })
       .catch((err: unknown) => {
         if (cancelled) return;
@@ -1202,8 +1204,7 @@ function PipelineView() {
         if (cancelled) return;
         setStage11Output(result.output);
         setStage11Loading(false);
-        setStatuses((p) => ({ ...p, "11": "complete", "12": "running" }));
-        setSelectedId("12");
+        setStatuses((p) => ({ ...p, "11": "complete" }));
       })
       .catch((err: unknown) => {
         if (cancelled) return;
@@ -1275,8 +1276,7 @@ function PipelineView() {
         if (cancelled) return;
         setStage13Output(result.output);
         setStage13Loading(false);
-        setStatuses((p) => ({ ...p, "13": "complete", "13B": "running" }));
-        setSelectedId("13B");
+        setStatuses((p) => ({ ...p, "13": "complete" }));
       })
       .catch((err: unknown) => {
         if (cancelled) return;
@@ -1300,8 +1300,7 @@ function PipelineView() {
         if (cancelled) return;
         setStage13bOutput(result.output);
         setStage13bLoading(false);
-        setStatuses((p) => ({ ...p, "13B": "complete", "14": "running" }));
-        setSelectedId("14");
+        setStatuses((p) => ({ ...p, "13B": "complete" }));
       })
       .catch((err: unknown) => {
         if (cancelled) return;
@@ -1325,8 +1324,7 @@ function PipelineView() {
         if (cancelled) return;
         setStage14Output(result.output);
         setStage14Loading(false);
-        setStatuses((p) => ({ ...p, "14": "complete", "14B": "running" }));
-        setSelectedId("14B");
+        setStatuses((p) => ({ ...p, "14": "complete" }));
       })
       .catch((err: unknown) => {
         if (cancelled) return;
@@ -1350,8 +1348,7 @@ function PipelineView() {
         if (cancelled) return;
         setStage14bOutput(result.output);
         setStage14bLoading(false);
-        setStatuses((p) => ({ ...p, "14B": "complete", "14C": "running" }));
-        setSelectedId("14C");
+        setStatuses((p) => ({ ...p, "14B": "complete" }));
       })
       .catch((err: unknown) => {
         if (cancelled) return;
@@ -1375,8 +1372,7 @@ function PipelineView() {
         if (cancelled) return;
         setStage14cOutput(result.output);
         setStage14cLoading(false);
-        setStatuses((p) => ({ ...p, "14C": "complete", "15": "running" }));
-        setSelectedId("15");
+        setStatuses((p) => ({ ...p, "14C": "complete" }));
       })
       .catch((err: unknown) => {
         if (cancelled) return;
@@ -1400,8 +1396,7 @@ function PipelineView() {
         if (cancelled) return;
         setStage15Output(result.output);
         setStage15Loading(false);
-        setStatuses((p) => ({ ...p, "15": "complete", "16": "running" }));
-        setSelectedId("16");
+        setStatuses((p) => ({ ...p, "15": "complete" }));
       })
       .catch((err: unknown) => {
         if (cancelled) return;
@@ -1695,9 +1690,12 @@ function PipelineView() {
       const st = statuses[STAGES[i].id];
       if (st === "running" || st === "checkpoint" || st === "error") return STAGES[i].id;
     }
+    for (let i = STAGES.length - 1; i >= 0; i--) {
+      if (statuses[STAGES[i].id] === "complete") return STAGES[i].id;
+    }
     return STAGES[0].id;
   })();
-  const isViewingHistorical = selectedId !== currentActiveId && statuses[selectedId] === "complete";
+  const isViewingHistorical = false;
   const pipelineIsRunning =
     Object.values(statuses).some((s) => s === "running") ||
     stage1Loading ||
@@ -1732,8 +1730,7 @@ function PipelineView() {
   })();
   const nextStage = (() => {
     for (let i = selectedIdx + 1; i < STAGES.length; i++) {
-      // skip conditional stages that aren't relevant
-      if (STAGES[i].conditional && statuses[STAGES[i].id] === "pending") continue;
+      if (STAGES[i].id === "01B" && !session?.stage_1b_required) continue;
       return STAGES[i];
     }
     return null;
@@ -1805,6 +1802,142 @@ function PipelineView() {
     } finally {
       setResubmitting(false);
     }
+  };
+
+  const getRawStageOutput = (stageId: string): string | null => {
+    const outputs: Record<string, string | null> = {
+      "01": stage1Output,
+      "01B": stage1bOutput,
+      "02": stage2Output,
+      "03": stage3Output,
+      "04": stage4Output,
+      "05": stage5Output,
+      "06": stage6Output,
+      "07": stage7Output,
+      "08": stage8Output,
+      "09": stage9Output,
+      "10": stage10Output,
+      "11": stage11Output,
+      "12": stage12Output,
+      "13": stage13Output,
+      "13B": stage13bOutput,
+      "14": stage14Output,
+      "14B": stage14bOutput,
+      "14C": stage14cOutput,
+      "15": stage15Output,
+      "16": stage16Output,
+    };
+    return outputs[stageId] ?? null;
+  };
+
+  const advanceFromStage8 = async () => {
+    if (!sessionId) return false;
+    const currentStage8 = stage8Output ?? session?.stage_8_output ?? "";
+    const blocks = splitStage8Propositions(currentStage8);
+    const kept = blocks.filter((b) => stage8KeepNames.has(b.name));
+    if (kept.length === 0) {
+      alert("At least one proposition must be checked before moving to Stage 9.");
+      return false;
+    }
+
+    const filtered = kept.map((b) => b.markdown).join("\n\n");
+    const { error: filterErr } = await supabase
+      .from("sessions")
+      .update({ stage_8_output: filtered })
+      .eq("id", sessionId);
+    if (filterErr) {
+      console.error("[Checkpoint B] failed to filter Stage 8 output", filterErr);
+      return false;
+    }
+
+    await resetStageCascadeFn({ data: { sessionId, stageId: "9" } });
+    await confirmCheckpointBFn({ data: { sessionId } });
+    setSession((prev) =>
+      prev
+        ? ({
+            ...prev,
+            stage_8_output: filtered,
+            stage_9_output: null,
+            stage_10_output: null,
+            stage_11_output: null,
+            stage_12_output: null,
+            stage_13_output: null,
+            stage_13b_output: null,
+            stage_14_output: null,
+            stage_14b_output: null,
+            stage_14c_output: null,
+            stage_15_output: null,
+            stage_16_consulting_output: null,
+            checkpoint_b_confirmed: true,
+          } as SessionData)
+        : prev,
+    );
+    setStage8Output(filtered);
+    resetLocalFromStage("09");
+    return true;
+  };
+
+  const markFollowingPending = (stageId: string, activeStatus: StageStatus = "running") => {
+    setStatuses((prev) => {
+      const next: Record<string, StageStatus> = { ...prev, [stageId]: activeStatus };
+      const idx = STAGES.findIndex((s) => s.id === stageId);
+      for (let i = idx + 1; i < STAGES.length; i++) next[STAGES[i].id] = "pending";
+      return next;
+    });
+  };
+
+  const handleRetryStage = async (stageId: string) => {
+    if (!sessionId) return;
+    const dbId = STAGE_ID_TO_DB[stageId];
+    if (!dbId) return;
+    const note = amendmentNotes[stageId]?.trim();
+    const previousOutput = getRawStageOutput(stageId)?.trim();
+    try {
+      if (note) setPendingFeedback((p) => ({ ...p, [stageId]: note }));
+      if (previousOutput) setPendingPreviousOutput((p) => ({ ...p, [stageId]: previousOutput }));
+      await resetStageCascadeFn({ data: { sessionId, stageId: dbId } });
+      resetLocalFromStage(stageId);
+      markFollowingPending(stageId, "running");
+      setSelectedId(stageId);
+      if (stageId === "01") setRetryNonce((n) => n + 1);
+    } catch (e) {
+      console.error("retry cascade failed", e);
+      setStatuses((p) => ({ ...p, [stageId]: "error" }));
+    }
+  };
+
+  const handleContinueStage = async () => {
+    const stageId = selected.id;
+    if (stageId === "01" && selectedStatus === "checkpoint") {
+      if (sessionId) {
+        const { error } = await supabase
+          .from("sessions")
+          .update({ checkpoint_a_confirmed: true, checkpoint_a_confirmed_at: new Date().toISOString() })
+          .eq("id", sessionId);
+        if (error) {
+          console.error("[Checkpoint A] failed to persist", error);
+          return;
+        }
+      }
+      if (session?.stage_1b_required && !stage1bOutput) {
+        setStatuses((p) => ({ ...p, "01": "complete", "01B": "running" }));
+        setSelectedId("01B");
+        return;
+      }
+    }
+    if (stageId === "08") {
+      const ok = await advanceFromStage8();
+      if (!ok) return;
+      markFollowingPending("09", "running");
+      setStatuses((p) => ({ ...p, "08": "complete", "09": "running" }));
+      setSelectedId("09");
+      return;
+    }
+    if (stageId === "12" && selectedStatus === "checkpoint") return;
+    if (stageId === "13" && !intelSubmitted) return;
+    if (!nextStage) return;
+    setStatuses((p) => ({ ...p, [stageId]: "complete", [nextStage.id]: "running" }));
+    setSelectedId(nextStage.id);
   };
 
   return (
@@ -1891,6 +2024,10 @@ function PipelineView() {
             stage1Error={selectedError}
             tensionScore={selected.id === "01" ? (session?.stage_1_tension_score ?? null) : null}
             stage1bRequired={selected.id === "01" ? (session?.stage_1b_required ?? false) : false}
+            amendmentNote={amendmentNotes[selected.id] ?? ""}
+            onAmendmentChange={(value: string) =>
+              setAmendmentNotes((prev) => ({ ...prev, [selected.id]: value }))
+            }
             onRetry={async () => {
               const id = selected.id;
               // Stage 8 selective regenerate: if the user unchecked any
@@ -1927,96 +2064,7 @@ function PipelineView() {
                 }
                 // all checked → fall through to the normal full-retry path
               }
-              const map: Record<string, () => void> = {
-                "02": () => {
-                  setStage2Error(null);
-                  setStage2Output(null);
-                },
-                "03": () => {
-                  setStage3Error(null);
-                  setStage3Output(null);
-                },
-                "04": () => {
-                  setStage4Error(null);
-                  setStage4Output(null);
-                },
-                "05": () => {
-                  setStage5Error(null);
-                  setStage5Output(null);
-                },
-                "06": () => {
-                  setStage6Error(null);
-                  setStage6Output(null);
-                },
-                "07": () => {
-                  setStage7Error(null);
-                  setStage7Output(null);
-                },
-                "08": () => {
-                  setStage8Error(null);
-                  setStage8Output(null);
-                },
-                "09": () => {
-                  setStage9Error(null);
-                  setStage9Output(null);
-                },
-                "10": () => {
-                  setStage10Error(null);
-                  setStage10Output(null);
-                },
-                "11": () => {
-                  setStage11Error(null);
-                  setStage11Output(null);
-                },
-                "12": () => {
-                  setStage12Error(null);
-                  setStage12Output(null);
-                },
-                "13": () => {
-                  setStage13Error(null);
-                  setStage13Output(null);
-                },
-                "13B": () => {
-                  setStage13bError(null);
-                  setStage13bOutput(null);
-                },
-                "14": () => {
-                  setStage14Error(null);
-                  setStage14Output(null);
-                },
-                "14B": () => {
-                  setStage14bError(null);
-                  setStage14bOutput(null);
-                },
-                "14C": () => {
-                  setStage14cError(null);
-                  setStage14cOutput(null);
-                },
-                "15": () => {
-                  setStage15Error(null);
-                  setStage15Output(null);
-                },
-                "16": () => {
-                  setStage16Error(null);
-                  setStage16Output(null);
-                },
-              };
-              // Clear cached output in the DB FIRST so the server-side
-              // "return cached output if present" short-circuit doesn't fire.
-              const dbId = STAGE_ID_TO_DB[id];
-              if (sessionId && dbId) {
-                try {
-                  await resetStageFn({ data: { sessionId, stageId: dbId } });
-                } catch (e) {
-                  console.error("resetStage failed", e);
-                }
-              }
-              if (map[id]) {
-                map[id]();
-                setStatuses((p) => ({ ...p, [id]: "running" }));
-              } else {
-                setRetryNonce((n) => n + 1);
-              }
+              await handleRetryStage(id);
             }}
             showRationale={rationaleForId === selectedId}
             showBrandIntel={selectedId === "13" && !intelSubmitted && selectedStatus === "running"}
@@ -2071,89 +2119,13 @@ function PipelineView() {
             onBack={() => {
               if (prevStage) setSelectedId(prevStage.id);
             }}
-            onContinue={() => {
-              if (!nextStage) return;
-              const st = statuses[nextStage.id];
-              if (st === "pending") {
-                setStatuses((p) => ({ ...p, [nextStage.id]: "running" }));
-              }
-              setSelectedId(nextStage.id);
-            }}
+            onContinue={handleContinueStage}
             onViewFinal={() => {
               if (sessionId) {
                 window.location.href = `/detonation?session=${sessionId}`;
               }
             }}
             onConfirmCheckpoint={async (stageId, notes) => {
-              const advanceFromStage8 = async () => {
-                if (!sessionId) return false;
-                const currentStage8 = stage8Output ?? session?.stage_8_output ?? "";
-                const blocks = splitStage8Propositions(currentStage8);
-                const kept = blocks.filter((b) => stage8KeepNames.has(b.name));
-                if (kept.length === 0) {
-                  console.error("[Checkpoint B] at least one proposition must be checked");
-                  alert("At least one proposition must be checked before moving to Stage 9.");
-                  return false;
-                }
-
-                const filtered = kept.map((b) => b.markdown).join("\n\n");
-                const { error: filterErr } = await supabase
-                  .from("sessions")
-                  .update({ stage_8_output: filtered })
-                  .eq("id", sessionId);
-                if (filterErr) {
-                  console.error("[Checkpoint B] failed to filter Stage 8 output", filterErr);
-                  return false;
-                }
-
-                await resetStageCascadeFn({ data: { sessionId, stageId: "9" } });
-                await confirmCheckpointBFn({ data: { sessionId } });
-                setSession((prev) =>
-                  prev
-                    ? ({
-                        ...prev,
-                        stage_8_output: filtered,
-                        stage_9_output: null,
-                        stage_10_output: null,
-                        stage_11_output: null,
-                        stage_12_output: null,
-                        stage_13_output: null,
-                        stage_13b_output: null,
-                        stage_14_output: null,
-                        stage_14b_output: null,
-                        stage_14c_output: null,
-                        stage_15_output: null,
-                        stage_16_consulting_output: null,
-                        checkpoint_b_confirmed: true,
-                      } as SessionData)
-                    : prev,
-                );
-                setStage8Output(filtered);
-                setStage9Output(null);
-                setStage10Output(null);
-                setStage11Output(null);
-                setStage12Output(null);
-                setStage13Output(null);
-                setStage13bOutput(null);
-                setStage14Output(null);
-                setStage14bOutput(null);
-                setStage14cOutput(null);
-                setStage15Output(null);
-                setStage16Output(null);
-                setStage9Error(null);
-                setStage10Error(null);
-                setStage11Error(null);
-                setStage12Error(null);
-                setStage13Error(null);
-                setStage13bError(null);
-                setStage14Error(null);
-                setStage14bError(null);
-                setStage14cError(null);
-                setStage15Error(null);
-                setStage16Error(null);
-                return true;
-              };
-
               if (stageId === "08") {
                 const ok = await advanceFromStage8();
                 if (!ok) return;
@@ -2218,23 +2190,12 @@ function PipelineView() {
                 setStatuses((prev) => ({
                   ...prev,
                   "01": "complete",
-                  "01B": "running",
+                  "01B": "pending",
                 }));
-                setSelectedId("01B");
                 return;
               }
               setRationaleForId(null);
-              setStatuses((prev) => {
-                const next = { ...prev, [stageId]: "complete" as StageStatus };
-                const idx = STAGES.findIndex((s) => s.id === stageId);
-                for (let i = idx + 1; i < STAGES.length; i++) {
-                  if (!STAGES[i].conditional) {
-                    next[STAGES[i].id] = "running";
-                    break;
-                  }
-                }
-                return next;
-              });
+              setStatuses((prev) => ({ ...prev, [stageId]: "complete" as StageStatus }));
             }}
             onResubmitCheckpoint={handleResubmitCheckpoint}
             onEscalateCheckpoint={(stageId, reason) => {
@@ -2279,8 +2240,7 @@ function PipelineView() {
                         data: { sessionId, rationale: values },
                       });
                       setRationaleForId(null);
-                      setStatuses((prev) => ({ ...prev, "12": "complete", "13": "running" }));
-                      setSelectedId("13");
+                      setStatuses((prev) => ({ ...prev, "12": "complete" }));
                     } catch (err) {
                       setStage12Error(
                         err instanceof Error ? err.message : "Failed to save rationale",
@@ -2726,6 +2686,8 @@ function RightPanel({
   stage1Error,
   tensionScore,
   stage1bRequired,
+  amendmentNote,
+  onAmendmentChange,
   onRetry,
   showRationale,
   showBrandIntel,
@@ -2759,6 +2721,8 @@ function RightPanel({
   stage1Error: string | null;
   tensionScore: number | null;
   stage1bRequired: boolean;
+  amendmentNote: string;
+  onAmendmentChange: (value: string) => void;
   onRetry: () => void;
   showRationale: boolean;
   showBrandIntel: boolean;
@@ -2940,7 +2904,13 @@ function RightPanel({
         )}
       </div>
 
-      <StageControlBar stage={stage} status={status} onRetry={onRetry} />
+      <StageControlBar
+        stage={stage}
+        status={status}
+        amendmentNote={amendmentNote}
+        onAmendmentChange={onAmendmentChange}
+        onRetry={onRetry}
+      />
 
       <BottomBar
         stage={stage}
@@ -2952,6 +2922,7 @@ function RightPanel({
         pipelineComplete={pipelineComplete}
         onContinue={onContinue}
         onBack={onBack}
+        onRetry={onRetry}
         onReturnToCurrent={onBackToCurrent ?? (() => {})}
         onViewFinal={onViewFinal}
       />
@@ -3530,11 +3501,11 @@ function BottomBar({
   status,
   prevStage,
   nextStage,
-  nextStageStatus,
   isViewingHistorical,
   pipelineComplete,
   onContinue,
   onBack,
+  onRetry,
   onReturnToCurrent,
   onViewFinal,
 }: {
@@ -3547,84 +3518,66 @@ function BottomBar({
   pipelineComplete: boolean;
   onContinue: () => void;
   onBack: () => void;
+  onRetry: () => void;
   onReturnToCurrent: () => void;
   onViewFinal: () => void;
 }) {
-  // Right-side primary action
-  let rightEl: ReactNode = null;
-  if (status === "running") {
-    rightEl = (
-      <span className="text-body-sm" style={{ color: "#5A5652" }}>
-        Generating…
-      </span>
-    );
-  } else if (pipelineComplete && !isViewingHistorical) {
-    rightEl = <PrimaryActionButton onClick={onViewFinal} label="Begin Phase 2 →" />;
-  } else if (isViewingHistorical) {
-    rightEl = (
-      <button
-        type="button"
-        onClick={onReturnToCurrent}
-        className="inline-flex h-9 items-center rounded-md px-4 text-sm font-medium transition-colors"
-        style={{
-          border: "1px solid var(--color-border)",
-          color: "var(--color-text-primary)",
-          backgroundColor: "transparent",
-        }}
-      >
-        Return to Current Stage →
-      </button>
-    );
-  } else if (status === "checkpoint") {
-    // Checkpoint UI already renders its own confirm — no duplicate button.
-    rightEl = (
-      <span className="text-body-sm" style={{ color: "#5A5652" }}>
-        Review and confirm above to continue
-      </span>
-    );
-  } else if (status === "complete" && nextStage && nextStageStatus === "pending") {
-    rightEl = (
-      <PrimaryActionButton onClick={onContinue} label={`Continue to ${nextStage.name} →`} />
-    );
-  } else if (status === "complete" && nextStage && nextStageStatus === "running") {
-    rightEl = (
-      <span className="text-body-sm" style={{ color: "#5A5652" }}>
-        {nextStage.name} generating…
-      </span>
-    );
-  }
+  const continueLabel = pipelineComplete
+    ? "Begin Phase 2 →"
+    : nextStage
+      ? `Continue to Stage ${nextStage.number} →`
+      : "Continue →";
+  const continueDisabled = status === "running" || (!pipelineComplete && !nextStage);
 
   return (
     <div
-      className="flex h-[56px] shrink-0 items-center justify-between border-t bg-background"
+      className="flex h-[60px] shrink-0 items-center justify-between gap-4 border-t bg-background"
       style={{
         borderColor: "#2A2A2A",
         backgroundColor: "#0A0A0A",
         padding: "0 48px",
       }}
     >
-      <div>
-        {prevStage && status !== "running" ? (
-          <button
-            type="button"
-            onClick={onBack}
-            className="text-body-sm font-medium transition-colors"
-            style={{
-              color: "#8A8680",
-              background: "transparent",
-              border: "none",
-              cursor: "pointer",
-            }}
-          >
-            ← {prevStage.name}
-          </button>
-        ) : (
-          <span className="text-body-sm" style={{ color: "var(--color-text-tertiary)" }}>
-            Stage {stage.number}
-          </span>
-        )}
+      <button
+        type="button"
+        onClick={isViewingHistorical ? onReturnToCurrent : onBack}
+        disabled={!isViewingHistorical && !prevStage}
+        className="inline-flex h-10 items-center rounded-md px-4 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40"
+        style={{
+          border: "1px solid var(--color-border)",
+          color: "var(--color-text-primary)",
+          backgroundColor: "transparent",
+        }}
+      >
+        {isViewingHistorical ? "Return to current stage" : prevStage ? `← Go Back to Stage ${prevStage.number}` : "← Go Back"}
+      </button>
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          onClick={onRetry}
+          className="inline-flex h-10 items-center rounded-md px-4 text-sm font-semibold transition-colors"
+          style={{
+            border: "1px solid var(--color-primary)",
+            color: "var(--color-primary)",
+            backgroundColor: "transparent",
+          }}
+        >
+          ↺ Retry This Stage
+        </button>
+        <button
+          type="button"
+          onClick={pipelineComplete ? onViewFinal : onContinue}
+          disabled={continueDisabled}
+          className="inline-flex h-10 items-center rounded-md px-5 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-40"
+          style={{
+            border: "none",
+            backgroundColor: "var(--color-success)",
+            color: "var(--color-background)",
+          }}
+        >
+          {continueLabel}
+        </button>
       </div>
-      <div>{rightEl}</div>
     </div>
   );
 }
@@ -3636,10 +3589,14 @@ function BottomBar({
 function StageControlBar({
   stage,
   status,
+  amendmentNote,
+  onAmendmentChange,
   onRetry,
 }: {
   stage: Stage;
   status: StageStatus;
+  amendmentNote: string;
+  onAmendmentChange: (value: string) => void;
   onRetry: () => void;
 }) {
   let leftEl: ReactNode;
@@ -3670,35 +3627,23 @@ function StageControlBar({
 
   return (
     <div
-      className="flex shrink-0 items-center justify-between border-t"
+      className="grid shrink-0 grid-cols-[minmax(160px,240px)_1fr] items-center gap-4 border-t"
       style={{
-        height: 44,
+        minHeight: 58,
         padding: "0 48px",
         backgroundColor: "#0A0A0A",
         borderColor: "#1C1C1C",
       }}
     >
       <div className="text-body-sm">{leftEl}</div>
-      <button
-        type="button"
-        onClick={onRetry}
-        onMouseEnter={(e) => (e.currentTarget.style.color = "#D4924A")}
-        onMouseLeave={(e) => (e.currentTarget.style.color = "#8A8680")}
-        style={{
-          height: 32,
-          padding: "0 16px",
-          borderRadius: 8,
-          background: "transparent",
-          border: "none",
-          color: "#8A8680",
-          fontSize: 13,
-          fontWeight: 500,
-          cursor: "pointer",
-        }}
-        title="Re-run this stage from scratch"
-      >
-        ↺ Retry this stage
-      </button>
+      <input
+        type="text"
+        value={amendmentNote}
+        onChange={(e) => onAmendmentChange(e.target.value.slice(0, 2000))}
+        placeholder="Optional amendment notes for Retry This Stage"
+        className="input-base h-9 w-full"
+        aria-label="Amendment notes for retry"
+      />
     </div>
   );
 }
