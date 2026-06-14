@@ -472,18 +472,26 @@ export function SMPSelection({
         <div
           className="mb-6 rounded-md p-4"
           style={{
-            border: "1px solid var(--color-warning)",
-            backgroundColor: "color-mix(in oklab, var(--color-warning) 10%, transparent)",
+            border: `1px solid var(${enhancing ? "--color-primary" : "--color-warning"})`,
+            backgroundColor: `color-mix(in oklab, var(${enhancing ? "--color-primary" : "--color-warning"}) 10%, transparent)`,
             color: "var(--color-text-primary)",
           }}
         >
-          <p className="text-label" style={{ color: "var(--color-warning)", marginBottom: 6 }}>
-            FALLBACK DISPLAY — STAGE 11 VALIDATED PROPOSITIONS
+          <p
+            className="text-label"
+            style={{
+              color: `var(${enhancing ? "--color-primary" : "--color-warning"})`,
+              marginBottom: 6,
+            }}
+          >
+            {enhancing
+              ? "VALIDATED PROPOSITIONS — RICH CARDS LOADING IN BACKGROUND"
+              : "FALLBACK DISPLAY — STAGE 11 VALIDATED PROPOSITIONS"}
           </p>
           <p className="text-body-sm" style={{ color: "var(--color-text-secondary)" }}>
-            Stage 12 card formatting could not be parsed, so the validated propositions from Stage 11
-            are shown below so you can still select. You can retry Stage 12 from the controls above to
-            regenerate the full proposition cards.
+            {enhancing
+              ? "These are the validated propositions from Stage 11. You can select right now — the formatted Stage 12 cards will replace this view automatically when they finish generating."
+              : "Stage 12 card formatting was not produced, so the validated propositions from Stage 11 are shown so you can still select. You can retry Stage 12 from the controls above to regenerate the full proposition cards."}
           </p>
         </div>
       )}
