@@ -2102,46 +2102,7 @@ function PipelineView() {
                 return next;
               });
             }}
-            onResubmitCheckpoint={async (stageId, feedback) => {
-              console.log(`[Checkpoint Resubmit] stage=${stageId} feedback=${feedback}`);
-              const fb = (feedback ?? "").trim();
-              const dbId = STAGE_ID_TO_DB[stageId];
-              if (!sessionId || !dbId || !fb) return;
-              const rejectedOutput =
-                stageId === "08"
-                  ? stage8Output?.trim()
-                  : stageId === "12"
-                    ? stage12Output?.trim()
-                    : stageId === "01"
-                      ? stage1Output?.trim()
-                      : null;
-
-              setResubmitting(true);
-              try {
-                await resetStageCascadeFn({ data: { sessionId, stageId: dbId } });
-                resetLocalFromStage(stageId);
-                setPendingFeedback((p) => ({ ...p, [stageId]: fb }));
-                if (rejectedOutput) {
-                  setPendingPreviousOutput((p) => ({ ...p, [stageId]: rejectedOutput }));
-                }
-                setStatuses((p) => {
-                  const next: Record<string, StageStatus> = { ...p, [stageId]: "running" };
-                  const idx = STAGES.findIndex((s) => s.id === stageId);
-                  for (let i = idx + 1; i < STAGES.length; i++) next[STAGES[i].id] = "pending";
-                  return next;
-                });
-                setSelectedId(stageId);
-                if (stageId === "01") setRetryNonce((n) => n + 1);
-              } catch (err) {
-                const message = err instanceof Error ? err.message : "Feedback resubmit failed";
-                if (stageId === "01") setStage1Error(message);
-                if (stageId === "08") setStage8Error(message);
-                if (stageId === "12") setStage12Error(message);
-                setStatuses((p) => ({ ...p, [stageId]: "error" }));
-              } finally {
-                setResubmitting(false);
-              }
-            }}
+            onResubmitCheckpoint={handleResubmitCheckpoint}
             onEscalateCheckpoint={(stageId, reason) => {
               console.log(`[Checkpoint Escalate] stage=${stageId} reason=${reason}`);
             }}
@@ -2150,7 +2111,7 @@ function PipelineView() {
                 <SMPSelection
                   stage12Output={stage12Output ?? ""}
                   stage8Output={stage8Output ?? ""}
-                  onResubmit={(feedback) => onResubmitCheckpoint?.("12", feedback)}
+                  onResubmit={(feedback) => handleResubmitCheckpoint("12", feedback)}
                   resubmitting={resubmitting}
                   onSelect={async (card) => {
                     if (!sessionId) return;
