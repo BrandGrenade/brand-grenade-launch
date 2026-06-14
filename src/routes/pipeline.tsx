@@ -1945,6 +1945,23 @@ function PipelineView() {
 
   const handleContinueStage = async () => {
     const stageId = selected.id;
+    if (stageId === "01" && selectedStatus === "checkpoint") {
+      if (sessionId) {
+        const { error } = await supabase
+          .from("sessions")
+          .update({ checkpoint_a_confirmed: true, checkpoint_a_confirmed_at: new Date().toISOString() })
+          .eq("id", sessionId);
+        if (error) {
+          console.error("[Checkpoint A] failed to persist", error);
+          return;
+        }
+      }
+      if (session?.stage_1b_required && !stage1bOutput) {
+        setStatuses((p) => ({ ...p, "01": "complete", "01B": "running" }));
+        setSelectedId("01B");
+        return;
+      }
+    }
     if (stageId === "08") {
       const ok = await advanceFromStage8();
       if (!ok) return;
