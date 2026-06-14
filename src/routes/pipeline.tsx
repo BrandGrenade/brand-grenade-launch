@@ -1189,8 +1189,7 @@ function PipelineView() {
         if (cancelled) return;
         setStage9Output(result.output);
         setStage9Loading(false);
-        setStatuses((p) => ({ ...p, "09": "complete", "10": "running" }));
-        setSelectedId("10");
+        setStatuses((p) => ({ ...p, "09": "complete" }));
       })
       .catch((err: unknown) => {
         if (cancelled) return;
@@ -1217,8 +1216,7 @@ function PipelineView() {
         if (cancelled) return;
         setStage10Output(result.output);
         setStage10Loading(false);
-        setStatuses((p) => ({ ...p, "10": "complete", "11": "running" }));
-        setSelectedId("11");
+        setStatuses((p) => ({ ...p, "10": "complete" }));
       })
       .catch((err: unknown) => {
         if (cancelled) return;
@@ -1245,8 +1243,7 @@ function PipelineView() {
         if (cancelled) return;
         setStage11Output(result.output);
         setStage11Loading(false);
-        setStatuses((p) => ({ ...p, "11": "complete", "12": "running" }));
-        setSelectedId("12");
+        setStatuses((p) => ({ ...p, "11": "complete" }));
       })
       .catch((err: unknown) => {
         if (cancelled) return;
@@ -1318,8 +1315,7 @@ function PipelineView() {
         if (cancelled) return;
         setStage13Output(result.output);
         setStage13Loading(false);
-        setStatuses((p) => ({ ...p, "13": "complete", "13B": "running" }));
-        setSelectedId("13B");
+        setStatuses((p) => ({ ...p, "13": "complete" }));
       })
       .catch((err: unknown) => {
         if (cancelled) return;
@@ -1343,8 +1339,7 @@ function PipelineView() {
         if (cancelled) return;
         setStage13bOutput(result.output);
         setStage13bLoading(false);
-        setStatuses((p) => ({ ...p, "13B": "complete", "14": "running" }));
-        setSelectedId("14");
+        setStatuses((p) => ({ ...p, "13B": "complete" }));
       })
       .catch((err: unknown) => {
         if (cancelled) return;
@@ -1368,8 +1363,7 @@ function PipelineView() {
         if (cancelled) return;
         setStage14Output(result.output);
         setStage14Loading(false);
-        setStatuses((p) => ({ ...p, "14": "complete", "14B": "running" }));
-        setSelectedId("14B");
+        setStatuses((p) => ({ ...p, "14": "complete" }));
       })
       .catch((err: unknown) => {
         if (cancelled) return;
@@ -1393,8 +1387,7 @@ function PipelineView() {
         if (cancelled) return;
         setStage14bOutput(result.output);
         setStage14bLoading(false);
-        setStatuses((p) => ({ ...p, "14B": "complete", "14C": "running" }));
-        setSelectedId("14C");
+        setStatuses((p) => ({ ...p, "14B": "complete" }));
       })
       .catch((err: unknown) => {
         if (cancelled) return;
@@ -1418,8 +1411,7 @@ function PipelineView() {
         if (cancelled) return;
         setStage14cOutput(result.output);
         setStage14cLoading(false);
-        setStatuses((p) => ({ ...p, "14C": "complete", "15": "running" }));
-        setSelectedId("15");
+        setStatuses((p) => ({ ...p, "14C": "complete" }));
       })
       .catch((err: unknown) => {
         if (cancelled) return;
@@ -1443,8 +1435,7 @@ function PipelineView() {
         if (cancelled) return;
         setStage15Output(result.output);
         setStage15Loading(false);
-        setStatuses((p) => ({ ...p, "15": "complete", "16": "running" }));
-        setSelectedId("16");
+        setStatuses((p) => ({ ...p, "15": "complete" }));
       })
       .catch((err: unknown) => {
         if (cancelled) return;
