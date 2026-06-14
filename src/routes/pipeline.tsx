@@ -1481,6 +1481,47 @@ function PipelineView() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId, session?.id, statuses["16"]]);
 
+  const selectedError =
+    selected.id === "01" || selected.id === "01B"
+      ? stage1Error
+      : selected.id === "02"
+        ? stage2Error
+        : selected.id === "03"
+          ? stage3Error
+          : selected.id === "04"
+            ? stage4Error
+            : selected.id === "05"
+              ? stage5Error
+              : selected.id === "06"
+                ? stage6Error
+                : selected.id === "07"
+                  ? stage7Error
+                  : selected.id === "08"
+                    ? stage8Error
+                    : selected.id === "09"
+                      ? stage9Error
+                      : selected.id === "10"
+                        ? stage10Error
+                        : selected.id === "11"
+                          ? stage11Error
+                          : selected.id === "12"
+                            ? stage12Error
+                            : selected.id === "13"
+                              ? stage13Error
+                              : selected.id === "13B"
+                                ? stage13bError
+                                : selected.id === "14"
+                                  ? stage14Error
+                                  : selected.id === "14B"
+                                    ? stage14bError
+                                    : selected.id === "14C"
+                                      ? stage14cError
+                                      : selected.id === "15"
+                                        ? stage15Error
+                                        : selected.id === "16"
+                                          ? stage16Error
+                                          : null;
+
   // Per-stage output: use live Stage 1 / 1B / 2 / 3 output, demo stubs for others.
   const stageOutputs = useMemo<Record<string, string>>(() => {
     const sanitize = (s: string) => sanitizeStageOutput(s);
@@ -1847,47 +1888,7 @@ function PipelineView() {
             contentScrollRef={contentScrollRef}
             isViewingHistorical={isViewingHistorical}
             onBackToCurrent={() => setSelectedId(currentActiveId)}
-            stage1Error={
-              selected.id === "01" || selected.id === "01B"
-                ? stage1Error
-                : selected.id === "02"
-                  ? stage2Error
-                  : selected.id === "03"
-                    ? stage3Error
-                    : selected.id === "04"
-                      ? stage4Error
-                      : selected.id === "05"
-                        ? stage5Error
-                        : selected.id === "06"
-                          ? stage6Error
-                          : selected.id === "07"
-                            ? stage7Error
-                            : selected.id === "08"
-                              ? stage8Error
-                              : selected.id === "09"
-                                ? stage9Error
-                                : selected.id === "10"
-                                  ? stage10Error
-                                  : selected.id === "11"
-                                    ? stage11Error
-                                    : selected.id === "12"
-                                      ? stage12Error
-                                      : selected.id === "13"
-                                        ? stage13Error
-                                        : selected.id === "13B"
-                                          ? stage13bError
-                                          : selected.id === "14"
-                                            ? stage14Error
-                                            : selected.id === "14B"
-                                              ? stage14bError
-                                              : selected.id === "14C"
-                                                ? stage14cError
-                                                : selected.id === "15"
-                                                  ? stage15Error
-                                                  : selected.id === "16"
-                                                    ? stage16Error
-                                                    : null
-            }
+            stage1Error={selectedError}
             tensionScore={selected.id === "01" ? (session?.stage_1_tension_score ?? null) : null}
             stage1bRequired={selected.id === "01" ? (session?.stage_1b_required ?? false) : false}
             onRetry={async () => {
@@ -2078,7 +2079,7 @@ function PipelineView() {
                 window.location.href = `/detonation?session=${sessionId}`;
               }
             }}
-            onConfirmCheckpoint={(stageId, notes) => {
+            onConfirmCheckpoint={async (stageId, notes) => {
               // Persist notes + timestamp for the relevant checkpoint.
               const letter = CHECKPOINT_LETTERS[stageId];
               if (sessionId && letter) {
@@ -2111,13 +2112,15 @@ function PipelineView() {
                   update.checkpoint_c_confirmed_at = nowIso;
                   if (notesText) update.checkpoint_c_notes = notesText;
                 }
-                void supabase
+                const { error } = await supabase
                   .from("sessions")
                   .update(update)
-                  .eq("id", sessionId)
-                  .then(({ error }) => {
-                    if (error) console.error("[Checkpoint] failed to persist", error);
-                  });
+                  .eq("id", sessionId);
+                if (error) {
+                  console.error("[Checkpoint] failed to persist", error);
+                  return;
+                }
+                setSession((prev) => (prev ? ({ ...prev, ...update } as SessionData) : prev));
               }
               // Checkpoint A with 1B required → route to Stage 1B instead of Stage 2.
               if (stageId === "01" && session?.stage_1b_required && !stage1bOutput) {
@@ -2132,7 +2135,7 @@ function PipelineView() {
               // Checkpoint B (Stage 8) → persist confirmation then advance to Stage 9.
               if (stageId === "08") {
                 if (sessionId) {
-                  confirmCheckpointBFn({ data: { sessionId } }).catch(() => {});
+                  await confirmCheckpointBFn({ data: { sessionId } });
                 }
                 setStatuses((prev) => ({ ...prev, "08": "complete", "09": "running" }));
                 setSelectedId("09");
@@ -2848,7 +2851,7 @@ function RightPanel({
               ) : (
                 <StreamedOutput text={text} streaming={isRunning} />
               )}
-              {isRunning ? <StallWatcher stageKey={stage.id} onAutoRetry={onRetry} /> : null}
+              {isRunning ? <StallWatcher stageKey={stage.id} onRetry={onRetry} /> : null}
             </article>
           </>
         )}
@@ -3617,38 +3620,21 @@ function StageControlBar({
 }
 
 // ────────────────────────────────────────────────────────────────────────────
-// Stall watcher — warns at 45s of "running", auto-retries once at 90s
+// Stall watcher — warns after a pause, but never auto-retries without a user click.
 // ────────────────────────────────────────────────────────────────────────────
 
-function StallWatcher({ stageKey, onAutoRetry }: { stageKey: string; onAutoRetry: () => void }) {
-  const [phase, setPhase] = useState<"silent" | "warning" | "auto-retrying">("silent");
-  const autoRetriedRef = useRef<Set<string>>(new Set());
+function StallWatcher({ stageKey, onRetry }: { stageKey: string; onRetry: () => void }) {
+  const [showWarning, setShowWarning] = useState(false);
 
   useEffect(() => {
-    setPhase("silent");
-    const warnTimer = window.setTimeout(() => setPhase("warning"), 15_000);
-    const retryTimer = window.setTimeout(() => {
-      if (!autoRetriedRef.current.has(stageKey)) {
-        autoRetriedRef.current.add(stageKey);
-        setPhase("auto-retrying");
-        onAutoRetry();
-      }
-    }, 30_000);
+    setShowWarning(false);
+    const warnTimer = window.setTimeout(() => setShowWarning(true), 45_000);
     return () => {
       window.clearTimeout(warnTimer);
-      window.clearTimeout(retryTimer);
     };
-  }, [stageKey, onAutoRetry]);
+  }, [stageKey]);
 
-  if (phase === "silent") return null;
-
-  if (phase === "auto-retrying") {
-    return (
-      <p className="text-body-sm" style={{ color: "#5A5652", marginTop: 16 }}>
-        Automatically retrying…
-      </p>
-    );
-  }
+  if (!showWarning) return null;
 
   return (
     <div
@@ -3667,7 +3653,7 @@ function StallWatcher({ stageKey, onAutoRetry }: { stageKey: string; onAutoRetry
       <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
         <button
           type="button"
-          onClick={() => setPhase("silent")}
+          onClick={() => setShowWarning(false)}
           style={{
             height: 32,
             padding: "0 14px",
@@ -3683,7 +3669,7 @@ function StallWatcher({ stageKey, onAutoRetry }: { stageKey: string; onAutoRetry
         </button>
         <button
           type="button"
-          onClick={onAutoRetry}
+          onClick={onRetry}
           style={{
             height: 32,
             padding: "0 14px",
@@ -3732,8 +3718,6 @@ function ProgressMessages({ stageName }: { stageName: string }) {
   );
 }
 
-const ERROR_AUTO_RETRIED = new Set<string>();
-
 function ErrorStateCard({
   stage,
   errorMessage,
@@ -3748,28 +3732,6 @@ function ErrorStateCard({
   prevStageNumber?: string;
 }) {
   const [showDetails, setShowDetails] = useState(false);
-  const [autoRetrying, setAutoRetrying] = useState(false);
-  const autoRetryKey = `${typeof window !== "undefined" ? window.location.pathname + window.location.search : ""}::${stage.id}`;
-
-  useEffect(() => {
-    if (ERROR_AUTO_RETRIED.has(autoRetryKey)) return;
-    ERROR_AUTO_RETRIED.add(autoRetryKey);
-    setAutoRetrying(true);
-    const t = window.setTimeout(() => {
-      onRetry();
-    }, 800);
-    return () => window.clearTimeout(t);
-  }, [autoRetryKey, onRetry]);
-
-  if (autoRetrying) {
-    return (
-      <div style={{ margin: "40px 48px", paddingBottom: 80, textAlign: "center" }}>
-        <p className="text-body-sm" style={{ color: "#8A8680" }}>
-          Stage {stage.number} was interrupted. Automatically retrying…
-        </p>
-      </div>
-    );
-  }
 
   return (
     <div style={{ margin: "40px 48px", paddingBottom: 80 }}>
