@@ -950,14 +950,15 @@ function Stage17b({ session, onChange, goNext }: { session: SessionRow; onChange
 
   // Auto-run once on mount when the prerequisite is in place and we have no output yet.
   useEffect(() => {
-    if (autoTriggered) return;
+    if (autoTriggeredRef.current) return;
     if (!session.stage_17_selected_territory) return;
+    if (session.stage_17b_output) return;
     if (output !== null && output !== "") return;
     if (busy) return;
-    setAutoTriggered(true);
+    autoTriggeredRef.current = true;
     void handleRun();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session.stage_17_selected_territory, output]);
+  }, [session.stage_17_selected_territory, session.stage_17b_output, output]);
 
   const handleProceed = async () => {
     setProceeding(true);
