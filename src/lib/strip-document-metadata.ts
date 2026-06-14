@@ -31,19 +31,45 @@ const LINE_STRIP: RegExp[] = [
   /^\s*={2,}\s+[A-Z][A-Z0-9 _\-/]*\s*={0,}\s*$/,
 ];
 
-export function stripDocumentMetadata(input: string | null | undefined): string {
+export function stripDocumentMetadata(input: string | null | undefined, telemetryLabel?: string): string {
   if (!input) return "";
   let t = input;
 
-  for (const re of BLOCK_PATTERNS) t = t.replace(re, "");
-  for (const re of EQUALS_SECTION_PATTERNS) t = t.replace(re, "");
+  const found: string[] = [];
+  for (const re of BLOCK_PATTERNS) {
+    if (re.test(t)) found.push(re.source.slice(0, 40));
+    t = t.replace(re, "");
+  }
+  for (const re of EQUALS_SECTION_PATTERNS) {
+    if (re.test(t)) found.push(re.source.slice(0, 40));
+    t = t.replace(re, "");
+  }
 
+  let strippedLines = 0;
   t = t
     .split("\n")
-    .filter((line) => !LINE_STRIP.some((re) => re.test(line)))
+    .filter((line) => {
+      const hit = LINE_STRIP.some((re) => re.test(line));
+      if (hit) strippedLines++;
+      return !hit;
+    })
     .join("\n");
 
-  // Collapse runs of blank lines created by removals.
   t = t.replace(/\n{3,}/g, "\n\n").trim();
+
+  if (telemetryLabel && (found.length > 0 || strippedLines > 0)) {
+    console.log(
+      `[TELEMETRY] metadata-scan doc=${telemetryLabel} blocks_found=${found.length} lines_stripped=${strippedLines} patterns="${found.join("|")}"`,
+    );
+  } else if (telemetryLabel) {
+    console.log(`[TELEMETRY] metadata-scan doc=${telemetryLabel} status=CLEAN`);
+  }
+
+  // Post-strip sanity check — any residual marker words = renderer leak.
+  if (telemetryLabel) {
+    const residual = /\[METADATA\]|\[SELECTION_RATIONALE_STUB\]|FIELD_NAME\s*:|ICONIC_TIER_STATUS\s*:|PRESSURE_TEST_NOTE\s*:|={3,}/.test(t);
+    if (residual) console.log(`[TELEMETRY] metadata-scan doc=${telemetryLabel} status=RESIDUAL_LEAK`);
+  }
+
   return t;
 }
