@@ -1690,9 +1690,12 @@ function PipelineView() {
       const st = statuses[STAGES[i].id];
       if (st === "running" || st === "checkpoint" || st === "error") return STAGES[i].id;
     }
+    for (let i = STAGES.length - 1; i >= 0; i--) {
+      if (statuses[STAGES[i].id] === "complete") return STAGES[i].id;
+    }
     return STAGES[0].id;
   })();
-  const isViewingHistorical = selectedId !== currentActiveId && statuses[selectedId] === "complete";
+  const isViewingHistorical = false;
   const pipelineIsRunning =
     Object.values(statuses).some((s) => s === "running") ||
     stage1Loading ||
@@ -1727,8 +1730,7 @@ function PipelineView() {
   })();
   const nextStage = (() => {
     for (let i = selectedIdx + 1; i < STAGES.length; i++) {
-      // skip conditional stages that aren't relevant
-      if (STAGES[i].conditional && statuses[STAGES[i].id] === "pending") continue;
+      if (STAGES[i].id === "01B" && !session?.stage_1b_required) continue;
       return STAGES[i];
     }
     return null;
