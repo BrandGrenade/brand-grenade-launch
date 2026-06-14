@@ -2787,6 +2787,8 @@ function RightPanel({
   stage1Error,
   tensionScore,
   stage1bRequired,
+  amendmentNote,
+  onAmendmentChange,
   onRetry,
   showRationale,
   showBrandIntel,
@@ -2820,6 +2822,8 @@ function RightPanel({
   stage1Error: string | null;
   tensionScore: number | null;
   stage1bRequired: boolean;
+  amendmentNote: string;
+  onAmendmentChange: (value: string) => void;
   onRetry: () => void;
   showRationale: boolean;
   showBrandIntel: boolean;
@@ -3001,7 +3005,13 @@ function RightPanel({
         )}
       </div>
 
-      <StageControlBar stage={stage} status={status} onRetry={onRetry} />
+      <StageControlBar
+        stage={stage}
+        status={status}
+        amendmentNote={amendmentNote}
+        onAmendmentChange={onAmendmentChange}
+        onRetry={onRetry}
+      />
 
       <BottomBar
         stage={stage}
