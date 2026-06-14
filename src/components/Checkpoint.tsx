@@ -60,7 +60,9 @@ function buildRevisionInstruction(notes: string[], feedback: string): string {
     checkpointNotes
       ? `CHECKPOINT FIELD NOTES — mandatory constraints from the human reviewer:\n${checkpointNotes}`
       : "",
-    `EXPLICIT REVISION INSTRUCTION — mandatory constraints from the human reviewer:\n${feedback.trim()}`,
+    feedback.trim()
+      ? `EXPLICIT REVISION INSTRUCTION — mandatory constraints from the human reviewer:\n${feedback.trim()}`
+      : "",
   ]
     .filter(Boolean)
     .join("\n\n");
@@ -88,6 +90,8 @@ export function Checkpoint({
   const [notes, setNotes] = useState<string[]>(["", "", ""]);
   const [feedback, setFeedback] = useState("");
   const [escalation, setEscalation] = useState("");
+  const revisionInstruction = buildRevisionInstruction(notes, feedback);
+  const canResubmit = revisionInstruction.trim().length >= 8 && !resubmitting;
 
   return (
     <div>
@@ -234,18 +238,18 @@ export function Checkpoint({
             <div className="mt-3 flex justify-end">
               <button
                 type="button"
-                disabled={feedback.trim().length < 8 || resubmitting}
+                disabled={!canResubmit}
                 onClick={() => {
-                  if (feedback.trim().length < 8 || resubmitting) return;
+                  if (!canResubmit) return;
                   if (onResubmit) {
-                    void onResubmit(buildRevisionInstruction(notes, feedback));
+                    void onResubmit(revisionInstruction.trim());
                   } else {
                     console.log("[Checkpoint Resubmit] clicked — handler not yet implemented", feedback.trim());
                   }
                 }}
                 className="inline-flex h-10 items-center justify-center rounded-md px-5 text-[13px] font-semibold transition-colors disabled:cursor-not-allowed"
                 style={
-                  feedback.trim().length >= 8 && !resubmitting
+                  canResubmit
                     ? {
                         backgroundColor: "var(--color-primary)",
                         color: "var(--color-primary-foreground)",
