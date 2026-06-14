@@ -220,6 +220,16 @@ PERSONALITY: [three words] — [exemplar if applicable]
 
 REFLECTION: [maximum six words]
 
+MINIMUM OUTPUT LENGTH:
+
+The full output across all six components must be at least 800 characters and may extend up to 1200 characters.
+
+Every component must be present and fully populated. None may be empty, abbreviated, or compressed into a single word when the format permits more.
+
+If any single component would render in fewer than the maximum allowable items or words specified above, expand it to the maximum so the architecture is complete.
+
+A response shorter than 800 characters is a FAILED output and must be regenerated.
+
 Nothing else.
 
 No prose. No explanation.
