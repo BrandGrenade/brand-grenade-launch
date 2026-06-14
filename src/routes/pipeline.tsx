@@ -1481,6 +1481,47 @@ function PipelineView() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId, session?.id, statuses["16"]]);
 
+  const selectedError =
+    selected.id === "01" || selected.id === "01B"
+      ? stage1Error
+      : selected.id === "02"
+        ? stage2Error
+        : selected.id === "03"
+          ? stage3Error
+          : selected.id === "04"
+            ? stage4Error
+            : selected.id === "05"
+              ? stage5Error
+              : selected.id === "06"
+                ? stage6Error
+                : selected.id === "07"
+                  ? stage7Error
+                  : selected.id === "08"
+                    ? stage8Error
+                    : selected.id === "09"
+                      ? stage9Error
+                      : selected.id === "10"
+                        ? stage10Error
+                        : selected.id === "11"
+                          ? stage11Error
+                          : selected.id === "12"
+                            ? stage12Error
+                            : selected.id === "13"
+                              ? stage13Error
+                              : selected.id === "13B"
+                                ? stage13bError
+                                : selected.id === "14"
+                                  ? stage14Error
+                                  : selected.id === "14B"
+                                    ? stage14bError
+                                    : selected.id === "14C"
+                                      ? stage14cError
+                                      : selected.id === "15"
+                                        ? stage15Error
+                                        : selected.id === "16"
+                                          ? stage16Error
+                                          : null;
+
   // Per-stage output: use live Stage 1 / 1B / 2 / 3 output, demo stubs for others.
   const stageOutputs = useMemo<Record<string, string>>(() => {
     const sanitize = (s: string) => sanitizeStageOutput(s);
