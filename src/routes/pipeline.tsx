@@ -1217,7 +1217,9 @@ function PipelineView() {
     setStage12Error(null);
     (async () =>
       consumeStream(
-        await runStage12Fn({ data: { sessionId, feedback: fb12 } }),
+        await runStage12Fn({
+          data: { sessionId, feedback: fb12, previousOutput: pendingPreviousOutput["12"] },
+        }),
         setStage12Output,
       ))()
       .then((result) => {
@@ -1226,6 +1228,12 @@ function PipelineView() {
         setStage12Loading(false);
         if (fb12)
           setPendingFeedback((p) => {
+            const n = { ...p };
+            delete n["12"];
+            return n;
+          });
+        if (fb12)
+          setPendingPreviousOutput((p) => {
             const n = { ...p };
             delete n["12"];
             return n;
