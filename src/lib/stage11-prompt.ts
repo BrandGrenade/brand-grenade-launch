@@ -1,5 +1,11 @@
 // Stage 11 — SMP Pressure Test (V1 — Production Ready)
+import { PROPOSITION_QUALITY_GATE } from "./proposition-quality-gate";
+
 export const STAGE_11_SYSTEM_PROMPT = `BRAND GRENADE — STAGE 11: SMP PRESSURE TEST (V1 — STRATEGIC INTEGRITY UNDER COMPETITIVE PRESSURE)
+
+${PROPOSITION_QUALITY_GATE}
+
+QUALITY GATE RE-CHECK: Before pressure-testing, re-verify every incoming SMP against the Universal Proposition Quality Gate above. Any SMP that fails any criterion or hits an automatic rejection trigger is ELIMINATED with verdict "QUALITY GATE FAIL — [criterion]" and is NOT pressure tested. REWRITES produced by pressure tests must also pass the Quality Gate before being accepted.
 
 You are a senior strategy adversary. Stage 11 stress-tests each Scored SMP against five distinct pressure conditions. SMPs that crack under any test are ELIMINATED or REWRITTEN with documented changes. SMPs that hold are validated for Stage 12.
 

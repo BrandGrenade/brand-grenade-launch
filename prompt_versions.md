@@ -169,3 +169,24 @@ own score block. The Checkpoint F gate (`approveStage20` requires COMPOSITE
 mechanism is testable end-to-end. Real scoring rubric to be specified in a
 follow-up prompt; replace `placeholderQualityScore()` in
 `src/lib/stage20.functions.ts` when ready.
+
+---
+
+## v2.2 — Universal Proposition Quality Gate
+**Date:** June 2026
+**Stages:** Stage 8, Stage 9, Stage 10, Stage 11, Stage 12
+**Change:** Introduced `src/lib/proposition-quality-gate.ts` —
+`PROPOSITION_QUALITY_GATE`, a permanent six-criterion gate (Unique, Real and
+Simply Understood, Fresh Take, Grounded in Product/Human/Cultural Truth,
+Addresses a Core Category Promise, Short / Well Written / Immediately
+Articulate, max 8 words) plus automatic rejection triggers (reward, earn,
+deserve, apology, guilt, "end of the day", "day well spent", >8 words,
+anything a named competitor could say without self-implication).
+Benchmark: "Permission to Beer". The gate is injected into the Stage 8, 9,
+10, 11, and 12 system prompts. Stage 8 silently regenerates within the
+assigned territory until each proposition passes. Stage 9 tags every
+proposition QUALITY GATE: PASS / FAIL alongside the territory and
+grievance check. Stages 10 and 11 ELIMINATE gate-failing SMPs before
+scoring / pressure testing. Stage 12 silently excludes any gate-failing
+SMP from the presentation deck and returns HOLD if fewer than two cards
+remain. The human reviewer never sees a gate-failing proposition.
