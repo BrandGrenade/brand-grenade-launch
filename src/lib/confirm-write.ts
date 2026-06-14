@@ -9,7 +9,7 @@ export interface WriteResult {
 }
 
 export async function confirmWrite(
-  write: () => Promise<{ error: { message: string } | null }>,
+  write: () => PromiseLike<{ error: { message: string } | null }>,
   label = "write",
 ): Promise<WriteResult> {
   for (let attempt = 1; attempt <= 2; attempt++) {
