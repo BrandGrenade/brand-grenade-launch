@@ -49,6 +49,23 @@ const COPY: Record<
 
 type Action = "confirm" | "revise" | "escalate" | null;
 
+function buildRevisionInstruction(notes: string[], feedback: string): string {
+  const checkpointNotes = notes
+    .map((note, index) => ({ note: note.trim(), index }))
+    .filter(({ note }) => note.length > 0)
+    .map(({ note, index }) => `Checkpoint note ${index + 1}:\n${note}`)
+    .join("\n\n");
+
+  return [
+    checkpointNotes
+      ? `CHECKPOINT FIELD NOTES — mandatory constraints from the human reviewer:\n${checkpointNotes}`
+      : "",
+    `EXPLICIT REVISION INSTRUCTION — mandatory constraints from the human reviewer:\n${feedback.trim()}`,
+  ]
+    .filter(Boolean)
+    .join("\n\n");
+}
+
 export function Checkpoint({
   letter,
   reviewContent,
@@ -221,7 +238,7 @@ export function Checkpoint({
                 onClick={() => {
                   if (feedback.trim().length < 8 || resubmitting) return;
                   if (onResubmit) {
-                    void onResubmit(feedback.trim());
+                    void onResubmit(buildRevisionInstruction(notes, feedback));
                   } else {
                     console.log("[Checkpoint Resubmit] clicked — handler not yet implemented", feedback.trim());
                   }
