@@ -847,13 +847,14 @@ function PipelineView() {
         ...p,
         "01": session.checkpoint_a_confirmed ? "complete" : "checkpoint",
         "01B": session.stage_1b_required
-          ? session.stage_1b_output
-            ? "complete"
-            : "running"
+            ? session.stage_1b_output
+              ? "complete"
+              : "pending"
           : p["01B"],
       }));
       return;
     }
+    if (statuses["01"] !== "running" && retryNonce === 0) return;
     let cancelled = false;
     setStage1Loading(true);
     setStage1Error(null);
