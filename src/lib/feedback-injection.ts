@@ -42,7 +42,12 @@ REGENERATION RULES — NON-NEGOTIABLE:
    substance, framing, and language.
 3. Every directive in the human direction MUST be visibly applied. If a
    directive contradicts the default prompt, the human direction wins.
-4. Do not reproduce any line, phrase, or proposition from the previous output
+4. Any "stop", "avoid", "remove", "zero", or "do not generate" instruction
+   is a hard exclusion. The regenerated output must contain zero instances of
+   the rejected pattern, territory, narrative, or framing.
+5. Any benchmark, example, or named standard provided by the human direction
+   is a mandatory quality and territory reference for the regenerated output.
+6. Do not reproduce any line, phrase, or proposition from the previous output
    unless the human direction explicitly asks you to keep it.${prevBlock}
 ==== END MANDATORY HUMAN REDIRECT ====
 
