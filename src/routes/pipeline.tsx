@@ -2227,23 +2227,12 @@ function PipelineView() {
                 setStatuses((prev) => ({
                   ...prev,
                   "01": "complete",
-                  "01B": "running",
+                  "01B": "pending",
                 }));
-                setSelectedId("01B");
                 return;
               }
               setRationaleForId(null);
-              setStatuses((prev) => {
-                const next = { ...prev, [stageId]: "complete" as StageStatus };
-                const idx = STAGES.findIndex((s) => s.id === stageId);
-                for (let i = idx + 1; i < STAGES.length; i++) {
-                  if (!STAGES[i].conditional) {
-                    next[STAGES[i].id] = "running";
-                    break;
-                  }
-                }
-                return next;
-              });
+              setStatuses((prev) => ({ ...prev, [stageId]: "complete" as StageStatus }));
             }}
             onResubmitCheckpoint={handleResubmitCheckpoint}
             onEscalateCheckpoint={(stageId, reason) => {
