@@ -2849,7 +2849,7 @@ function RightPanel({
               ) : (
                 <StreamedOutput text={text} streaming={isRunning} />
               )}
-              {isRunning ? <StallWatcher stageKey={stage.id} onAutoRetry={onRetry} /> : null}
+              {isRunning ? <StallWatcher onRetry={onRetry} /> : null}
             </article>
           </>
         )}
@@ -3651,7 +3651,7 @@ function StallWatcher({ onRetry }: { onRetry: () => void }) {
       <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
         <button
           type="button"
-          onClick={() => setPhase("silent")}
+          onClick={() => setShowWarning(false)}
           style={{
             height: 32,
             padding: "0 14px",
