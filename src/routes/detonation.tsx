@@ -1273,7 +1273,7 @@ function Stage20({ session, onChange, goNext }: { session: SessionRow; onChange:
   const [busy, setBusy] = useState(false);
   const [proceeding, setProceeding] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-  const [autoTriggered, setAutoTriggered] = useState(false);
+  const autoTriggeredRef = useRef(false);
 
   useEffect(() => { setOutput(session.stage_20_output); }, [session.stage_20_output]);
   useEffect(() => { setApproved(Boolean(session.stage_20_approved)); }, [session.stage_20_approved]);
