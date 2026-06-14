@@ -354,6 +354,17 @@ export function SMPSelection({
           <hr className="my-6 h-px border-0 bg-border" />
         </header>
         {ManualFallback}
+        {onResubmit && (
+          <RevisionPanel
+            feedback={revisionFeedback}
+            onChange={setRevisionFeedback}
+            onSubmit={() => {
+              const fb = revisionFeedback.trim();
+              if (fb.length >= 8 && !resubmitting) void onResubmit(fb);
+            }}
+            resubmitting={resubmitting}
+          />
+        )}
         {RawPanel}
       </div>
     );
