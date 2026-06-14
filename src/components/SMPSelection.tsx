@@ -177,18 +177,37 @@ export function parseSMPCards(
     const s =
       scoreByField.get(v.fieldName.trim().toLowerCase()) ??
       scoreByLine.get(v.smpLine.trim().toLowerCase());
-    // Try to pull a one-line rationale / note from the verdict block.
-    const noteMatch = v.block.match(
-      /(?:STRATEGIC\s+NOTE|RATIONALE|VERDICT\s+RATIONALE)\s*:\s*([^\n]+)/i,
+    // Pull as much strategic detail from the Stage 11 verdict block as we can,
+    // so the fallback card is genuinely readable — not just a one-line stub.
+    const block = v.block;
+    const grab = (label: RegExp): string => {
+      const m = block.match(label);
+      return m ? m[1].trim().slice(0, 400) : "";
+    };
+    const strategicNote = grab(
+      /(?:STRATEGIC\s+NOTE|VERDICT\s+RATIONALE|RATIONALE)\s*:?\s*([^\n]+(?:\n(?!\s*[A-Z][A-Z ]{3,}:)[^\n]+)*)/i,
     );
+    const whatItOwns = grab(/WHAT\s+IT\s+OWNS\s*:?\s*([^\n]+(?:\n(?!\s*[A-Z][A-Z ]{3,}:)[^\n]+)*)/i);
+    const truth = grab(
+      /(?:THE\s+TRUTH(?:\s+IT(?:\s+IS)?\s+BUILT\s+ON)?|TRUTH)\s*:?\s*([^\n]+(?:\n(?!\s*[A-Z][A-Z ]{3,}:)[^\n]+)*)/i,
+    );
+    const challenges = grab(
+      /(?:WHAT\s+IT\s+CHALLENGES|CHALLENGES)\s*:?\s*([^\n]+(?:\n(?!\s*[A-Z][A-Z ]{3,}:)[^\n]+)*)/i,
+    );
+    const ownsLine =
+      whatItOwns ||
+      [v.verdict, v.iconicStatus && v.iconicStatus !== "N/A" ? `Iconic: ${v.iconicStatus}` : ""]
+        .filter(Boolean)
+        .join(" · ");
+
     return {
       cardNumber: idx + 1,
       smpLine: v.smpLine,
-      whatItOwns: noteMatch ? noteMatch[1].trim() : "",
-      truth: "",
-      whatItChallenges: "",
+      whatItOwns: ownsLine,
+      truth,
+      whatItChallenges: challenges,
       whatItMakesPossible: "",
-      whatItRequires: "",
+      whatItRequires: strategicNote,
       scores: s
         ? {
             differentiation: s.differentiation,
@@ -235,6 +254,7 @@ export function SMPSelection({
   onSelect,
   onResubmit,
   resubmitting = false,
+  enhancing = false,
 }: {
   stage12Output: string;
   stage11Output?: string;
@@ -242,6 +262,8 @@ export function SMPSelection({
   onSelect: (card: SMPCard) => void;
   onResubmit?: (feedback: string) => void | Promise<void>;
   resubmitting?: boolean;
+  /** True while Stage 12 Claude card formatting is still streaming in the background. */
+  enhancing?: boolean;
 }) {
   const cards = useMemo(
     () => parseSMPCards(stage12Output ?? "", stage11Output, stage10Output),
@@ -450,18 +472,26 @@ export function SMPSelection({
         <div
           className="mb-6 rounded-md p-4"
           style={{
-            border: "1px solid var(--color-warning)",
-            backgroundColor: "color-mix(in oklab, var(--color-warning) 10%, transparent)",
+            border: `1px solid var(${enhancing ? "--color-primary" : "--color-warning"})`,
+            backgroundColor: `color-mix(in oklab, var(${enhancing ? "--color-primary" : "--color-warning"}) 10%, transparent)`,
             color: "var(--color-text-primary)",
           }}
         >
-          <p className="text-label" style={{ color: "var(--color-warning)", marginBottom: 6 }}>
-            FALLBACK DISPLAY — STAGE 11 VALIDATED PROPOSITIONS
+          <p
+            className="text-label"
+            style={{
+              color: `var(${enhancing ? "--color-primary" : "--color-warning"})`,
+              marginBottom: 6,
+            }}
+          >
+            {enhancing
+              ? "VALIDATED PROPOSITIONS — RICH CARDS LOADING IN BACKGROUND"
+              : "FALLBACK DISPLAY — STAGE 11 VALIDATED PROPOSITIONS"}
           </p>
           <p className="text-body-sm" style={{ color: "var(--color-text-secondary)" }}>
-            Stage 12 card formatting could not be parsed, so the validated propositions from Stage 11
-            are shown below so you can still select. You can retry Stage 12 from the controls above to
-            regenerate the full proposition cards.
+            {enhancing
+              ? "These are the validated propositions from Stage 11. You can select right now — the formatted Stage 12 cards will replace this view automatically when they finish generating."
+              : "Stage 12 card formatting was not produced, so the validated propositions from Stage 11 are shown so you can still select. You can retry Stage 12 from the controls above to regenerate the full proposition cards."}
           </p>
         </div>
       )}

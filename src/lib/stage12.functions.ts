@@ -101,11 +101,20 @@ export const runStage12 = createServerFn({ method: "POST" })
       throw e instanceof Error ? e : new Error(msg);
     }
 
-    const { error: updateErr } = await supabaseAdmin
-      .from("sessions")
-      .update({ stage_12_output: output, stage_12_error: null, status: "awaiting_checkpoint" })
-      .eq("id", data.sessionId);
-    if (updateErr) throw new Error(`Failed to save Stage 12 output: ${updateErr.message}`);
+    // Stage 12 card output is a background enhancement — do NOT downgrade
+    // session status from awaiting_checkpoint, because the human may have
+    // already selected an SMP from the Stage 11 fallback by the time this
+    // finishes streaming.
+    const { confirmWrite } = await import("./confirm-write");
+    const writeRes = await confirmWrite(
+      () =>
+        supabaseAdmin
+          .from("sessions")
+          .update({ stage_12_output: output, stage_12_error: null })
+          .eq("id", data.sessionId),
+      "Stage 12 output save",
+    );
+    if (!writeRes.ok) throw new Error(writeRes.error);
 
     yield { done: true as const, output };
   });
@@ -116,17 +125,24 @@ const SaveSelection = z.object({
   fieldName: z.string().min(1).max(500),
 });
 
+// Instant write — fires the moment the human picks a card. Unblocks Stage 13.
+// Does NOT touch stage_12_output (which may still be streaming in the bg).
 export const saveSelectedSMP = createServerFn({ method: "POST" })
   .inputValidator((i) => SaveSelection.parse(i))
   .handler(async ({ data }) => {
-    const { error } = await supabaseAdmin
-      .from("sessions")
-      .update({
-        selected_smp: data.smpLine,
-        selected_smp_field_name: data.fieldName,
-      })
-      .eq("id", data.sessionId);
-    if (error) throw new Error(`Failed to save SMP selection: ${error.message}`);
+    const { confirmWrite } = await import("./confirm-write");
+    const res = await confirmWrite(
+      () =>
+        supabaseAdmin
+          .from("sessions")
+          .update({
+            selected_smp: data.smpLine,
+            selected_smp_field_name: data.fieldName,
+          })
+          .eq("id", data.sessionId),
+      "SMP selection save",
+    );
+    if (!res.ok) throw new Error(res.error);
     return { ok: true };
   });
 

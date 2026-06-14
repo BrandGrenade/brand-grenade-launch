@@ -1218,12 +1218,27 @@ function PipelineView() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId, session?.id, statuses["11"]]);
 
-  // Stage 12 — SMP Selection presentation. Ends at Checkpoint C (human selects).
+  // Stage 12 — TYPE 1 (Display & Select).
+  // Render Stage 11 validated propositions immediately so the human can read
+  // and select without waiting for the Stage 12 Claude card-formatting pass.
+  // The Claude run executes in the background and enhances the cards in place
+  // when it finishes. A Claude failure does NOT block selection — Stage 11
+  // fallback remains usable.
   useEffect(() => {
     if (!sessionId || !session) return;
     if (statuses["12"] !== "running") return;
+
     const fb12 = pendingFeedback["12"];
+    const hasStage11 = !!session.stage_11_output;
+
+    // Enter checkpoint the moment Stage 11 data is available — no Claude required.
+    if (hasStage11) {
+      setStatuses((p) => (p["12"] === "checkpoint" ? p : { ...p, "12": "checkpoint" }));
+    }
+
+    // If we already have Stage 12 output and no feedback, no Claude work to do.
     if (stage12Output && !fb12) return;
+
     let cancelled = false;
     setStage12Loading(true);
     setStage12Error(null);
@@ -1238,25 +1253,32 @@ function PipelineView() {
         if (cancelled) return;
         setStage12Output(result.output);
         setStage12Loading(false);
-        if (fb12)
+        if (fb12) {
           setPendingFeedback((p) => {
             const n = { ...p };
             delete n["12"];
             return n;
           });
-        if (fb12)
           setPendingPreviousOutput((p) => {
             const n = { ...p };
             delete n["12"];
             return n;
           });
-        setStatuses((p) => ({ ...p, "12": "checkpoint" }));
+        }
+        // Stay in checkpoint (or complete, if the human already moved on).
+        setStatuses((p) =>
+          p["12"] === "complete" || p["12"] === "checkpoint" ? p : { ...p, "12": "checkpoint" },
+        );
       })
       .catch((err: unknown) => {
         if (cancelled) return;
         setStage12Loading(false);
         setStage12Error(err instanceof Error ? err.message : "Stage 12 failed");
-        setStatuses((p) => ({ ...p, "12": "error" }));
+        // Only mark as error if there's no Stage 11 fallback to render — otherwise
+        // the human can still select from the validated propositions.
+        if (!hasStage11) {
+          setStatuses((p) => ({ ...p, "12": "error" }));
+        }
       });
     return () => {
       cancelled = true;
@@ -2209,6 +2231,8 @@ function PipelineView() {
                   stage10Output={stage10Output ?? undefined}
                   onResubmit={(feedback) => handleResubmitCheckpoint("12", feedback)}
                   resubmitting={resubmitting}
+                  enhancing={stage12Loading}
+
 
                   onSelect={async (card) => {
                     if (!sessionId) return;
