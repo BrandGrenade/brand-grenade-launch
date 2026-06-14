@@ -3621,35 +3621,18 @@ function StageControlBar({
 // Stall watcher — warns at 45s of "running", auto-retries once at 90s
 // ────────────────────────────────────────────────────────────────────────────
 
-function StallWatcher({ stageKey, onAutoRetry }: { stageKey: string; onAutoRetry: () => void }) {
-  const [phase, setPhase] = useState<"silent" | "warning" | "auto-retrying">("silent");
-  const autoRetriedRef = useRef<Set<string>>(new Set());
+function StallWatcher({ onRetry }: { onRetry: () => void }) {
+  const [showWarning, setShowWarning] = useState(false);
 
   useEffect(() => {
-    setPhase("silent");
-    const warnTimer = window.setTimeout(() => setPhase("warning"), 15_000);
-    const retryTimer = window.setTimeout(() => {
-      if (!autoRetriedRef.current.has(stageKey)) {
-        autoRetriedRef.current.add(stageKey);
-        setPhase("auto-retrying");
-        onAutoRetry();
-      }
-    }, 30_000);
+    setShowWarning(false);
+    const warnTimer = window.setTimeout(() => setShowWarning(true), 45_000);
     return () => {
       window.clearTimeout(warnTimer);
-      window.clearTimeout(retryTimer);
     };
-  }, [stageKey, onAutoRetry]);
+  }, []);
 
-  if (phase === "silent") return null;
-
-  if (phase === "auto-retrying") {
-    return (
-      <p className="text-body-sm" style={{ color: "#5A5652", marginTop: 16 }}>
-        Automatically retrying…
-      </p>
-    );
-  }
+  if (!showWarning) return null;
 
   return (
     <div
@@ -3684,7 +3667,7 @@ function StallWatcher({ stageKey, onAutoRetry }: { stageKey: string; onAutoRetry
         </button>
         <button
           type="button"
-          onClick={onAutoRetry}
+          onClick={onRetry}
           style={{
             height: 32,
             padding: "0 14px",
