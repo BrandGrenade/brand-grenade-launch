@@ -281,23 +281,26 @@ export function SMPSelection({
 
   const ManualFallback = (
     <div
-      className="mt-8 rounded-md p-5"
+      className="rounded-md p-5"
       style={{
-        border: "1px solid var(--color-border)",
+        border: "1px solid var(--color-primary)",
         backgroundColor: "var(--color-surface-2)",
+        position: "sticky",
+        top: 12,
+        zIndex: 20,
       }}
     >
-      <p className="text-label" style={{ color: "var(--color-text-tertiary)", marginBottom: 8 }}>
-        MANUAL SELECTION
+      <p className="text-label" style={{ color: "var(--color-primary)", marginBottom: 8 }}>
+        MANUAL SELECTION — ALWAYS AVAILABLE
       </p>
       <p className="text-body-sm" style={{ color: "var(--color-text-secondary)", marginBottom: 12 }}>
-        Type or paste the proposition line you want to select, then confirm.
+        Type or paste any proposition line you want to confirm as the selected SMP. This overrides card selection.
       </p>
       <textarea
         value={manualLine}
         onChange={(e) => setManualLine(e.target.value)}
         placeholder="Paste proposition line here…"
-        rows={3}
+        rows={2}
         style={{
           width: "100%",
           padding: 10,
@@ -331,7 +334,7 @@ export function SMPSelection({
         disabled={!manualLine.trim()}
         onClick={handleManualConfirm}
         className="mt-3 inline-flex h-10 items-center justify-center rounded-md px-5 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-50"
-        style={{ backgroundColor: "#D4924A", color: "#0A0A0A" }}
+        style={{ backgroundColor: "var(--color-primary)", color: "var(--color-primary-foreground)" }}
       >
         Confirm manual selection
       </button>
