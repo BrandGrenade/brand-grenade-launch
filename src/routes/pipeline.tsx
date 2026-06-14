@@ -2079,7 +2079,7 @@ function PipelineView() {
                 window.location.href = `/detonation?session=${sessionId}`;
               }
             }}
-            onConfirmCheckpoint={(stageId, notes) => {
+            onConfirmCheckpoint={async (stageId, notes) => {
               // Persist notes + timestamp for the relevant checkpoint.
               const letter = CHECKPOINT_LETTERS[stageId];
               if (sessionId && letter) {
@@ -2112,13 +2112,15 @@ function PipelineView() {
                   update.checkpoint_c_confirmed_at = nowIso;
                   if (notesText) update.checkpoint_c_notes = notesText;
                 }
-                void supabase
+                const { error } = await supabase
                   .from("sessions")
                   .update(update)
-                  .eq("id", sessionId)
-                  .then(({ error }) => {
-                    if (error) console.error("[Checkpoint] failed to persist", error);
-                  });
+                  .eq("id", sessionId);
+                if (error) {
+                  console.error("[Checkpoint] failed to persist", error);
+                  return;
+                }
+                setSession((prev) => (prev ? ({ ...prev, ...update } as SessionData) : prev));
               }
               // Checkpoint A with 1B required → route to Stage 1B instead of Stage 2.
               if (stageId === "01" && session?.stage_1b_required && !stage1bOutput) {
@@ -2133,7 +2135,7 @@ function PipelineView() {
               // Checkpoint B (Stage 8) → persist confirmation then advance to Stage 9.
               if (stageId === "08") {
                 if (sessionId) {
-                  confirmCheckpointBFn({ data: { sessionId } }).catch(() => {});
+                  await confirmCheckpointBFn({ data: { sessionId } });
                 }
                 setStatuses((prev) => ({ ...prev, "08": "complete", "09": "running" }));
                 setSelectedId("09");
