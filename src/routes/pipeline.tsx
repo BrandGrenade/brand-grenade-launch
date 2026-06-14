@@ -3472,7 +3472,7 @@ function BottomBar({
       </span>
     );
   } else if (pipelineComplete && !isViewingHistorical) {
-    rightEl = <PrimaryActionButton onClick={onViewFinal} label="Open Deliverables →" />;
+    rightEl = <PrimaryActionButton onClick={onViewFinal} label="Begin Phase 2 →" />;
   } else if (isViewingHistorical) {
     rightEl = (
       <button
