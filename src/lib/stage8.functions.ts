@@ -568,7 +568,23 @@ export const regenerateStage8Selective = createServerFn({ method: "POST" })
       }
     }
 
-    const merged = mergedBlocks.map((b) => b.markdown).join("\n\n");
+    let merged = mergedBlocks.map((b) => b.markdown).join("\n\n");
+
+    // ----- Enforce Universal Proposition Quality Gate on merged output -----
+    const gateResult = await enforceQualityGate({
+      sessionId: data.sessionId,
+      output: merged,
+      stage7Output: session.stage_7_output,
+      brandName: session.brand_name,
+      category: session.category,
+      cmm: session.stage_2_output ?? "",
+    });
+    if (gateResult.replaced > 0) {
+      merged = gateResult.output;
+      const banner = `\n\n---\n\n*[Quality Gate: ${gateResult.replaced} proposition${gateResult.replaced === 1 ? "" : "s"} regenerated to meet the Universal Proposition Quality Gate]*\n\n---\n\n`;
+      yield { delta: banner };
+      yield { delta: merged };
+    }
 
     const { error: updateErr } = await supabaseAdmin
       .from("sessions")
