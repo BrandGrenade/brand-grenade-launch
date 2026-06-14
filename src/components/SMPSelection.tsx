@@ -247,6 +247,11 @@ export function SMPSelection({
     () => parseSMPCards(stage12Output ?? "", stage11Output, stage10Output),
     [stage12Output, stage11Output, stage10Output],
   );
+  const usingStage11Fallback = useMemo(
+    () => (stage12Output ? parsePropositions(stage12Output).length === 0 : true) && cards.length > 0,
+    [stage12Output, cards.length],
+  );
+
 
   const [selected, setSelected] = useState<number | null>(null);
   const [showRaw, setShowRaw] = useState(false);
