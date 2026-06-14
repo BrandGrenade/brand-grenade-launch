@@ -2044,6 +2044,10 @@ function PipelineView() {
             stage1Error={selectedError}
             tensionScore={selected.id === "01" ? (session?.stage_1_tension_score ?? null) : null}
             stage1bRequired={selected.id === "01" ? (session?.stage_1b_required ?? false) : false}
+            amendmentNote={amendmentNotes[selected.id] ?? ""}
+            onAmendmentChange={(value) =>
+              setAmendmentNotes((prev) => ({ ...prev, [selected.id]: value }))
+            }
             onRetry={async () => {
               const id = selected.id;
               // Stage 8 selective regenerate: if the user unchecked any
@@ -2080,96 +2084,7 @@ function PipelineView() {
                 }
                 // all checked → fall through to the normal full-retry path
               }
-              const map: Record<string, () => void> = {
-                "02": () => {
-                  setStage2Error(null);
-                  setStage2Output(null);
-                },
-                "03": () => {
-                  setStage3Error(null);
-                  setStage3Output(null);
-                },
-                "04": () => {
-                  setStage4Error(null);
-                  setStage4Output(null);
-                },
-                "05": () => {
-                  setStage5Error(null);
-                  setStage5Output(null);
-                },
-                "06": () => {
-                  setStage6Error(null);
-                  setStage6Output(null);
-                },
-                "07": () => {
-                  setStage7Error(null);
-                  setStage7Output(null);
-                },
-                "08": () => {
-                  setStage8Error(null);
-                  setStage8Output(null);
-                },
-                "09": () => {
-                  setStage9Error(null);
-                  setStage9Output(null);
-                },
-                "10": () => {
-                  setStage10Error(null);
-                  setStage10Output(null);
-                },
-                "11": () => {
-                  setStage11Error(null);
-                  setStage11Output(null);
-                },
-                "12": () => {
-                  setStage12Error(null);
-                  setStage12Output(null);
-                },
-                "13": () => {
-                  setStage13Error(null);
-                  setStage13Output(null);
-                },
-                "13B": () => {
-                  setStage13bError(null);
-                  setStage13bOutput(null);
-                },
-                "14": () => {
-                  setStage14Error(null);
-                  setStage14Output(null);
-                },
-                "14B": () => {
-                  setStage14bError(null);
-                  setStage14bOutput(null);
-                },
-                "14C": () => {
-                  setStage14cError(null);
-                  setStage14cOutput(null);
-                },
-                "15": () => {
-                  setStage15Error(null);
-                  setStage15Output(null);
-                },
-                "16": () => {
-                  setStage16Error(null);
-                  setStage16Output(null);
-                },
-              };
-              // Clear cached output in the DB FIRST so the server-side
-              // "return cached output if present" short-circuit doesn't fire.
-              const dbId = STAGE_ID_TO_DB[id];
-              if (sessionId && dbId) {
-                try {
-                  await resetStageFn({ data: { sessionId, stageId: dbId } });
-                } catch (e) {
-                  console.error("resetStage failed", e);
-                }
-              }
-              if (map[id]) {
-                map[id]();
-                setStatuses((p) => ({ ...p, [id]: "running" }));
-              } else {
-                setRetryNonce((n) => n + 1);
-              }
+              await handleRetryStage(id);
             }}
             showRationale={rationaleForId === selectedId}
             showBrandIntel={selectedId === "13" && !intelSubmitted && selectedStatus === "running"}
@@ -2224,14 +2139,7 @@ function PipelineView() {
             onBack={() => {
               if (prevStage) setSelectedId(prevStage.id);
             }}
-            onContinue={() => {
-              if (!nextStage) return;
-              const st = statuses[nextStage.id];
-              if (st === "pending") {
-                setStatuses((p) => ({ ...p, [nextStage.id]: "running" }));
-              }
-              setSelectedId(nextStage.id);
-            }}
+            onContinue={handleContinueStage}
             onViewFinal={() => {
               if (sessionId) {
                 window.location.href = `/detonation?session=${sessionId}`;
