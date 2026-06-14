@@ -13,6 +13,7 @@ import { trimValidatedInsightsForDownstream } from "./context-trim";
 const Input = z.object({
   sessionId: z.string().uuid(),
   feedback: z.string().max(5000).optional(),
+  previousOutput: z.string().max(50000).optional(),
 });
 
 const TERRITORY_HEADING = /^##\s+(.+?)\s*$/;
@@ -103,7 +104,7 @@ export const runStage8 = createServerFn({ method: "POST" })
     if (!session.stage_7_output) throw new Error("Stage 7 output missing — cannot run Stage 8");
     const feedback = data.feedback?.trim();
 
-    const previousOutput = session.stage_8_output ?? null;
+    const previousOutput = data.previousOutput?.trim() || session.stage_8_output || null;
 
     if (session.stage_8_output && !feedback) {
       yield { delta: session.stage_8_output };
