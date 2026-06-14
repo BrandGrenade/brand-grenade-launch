@@ -2231,6 +2231,8 @@ function PipelineView() {
                   stage10Output={stage10Output ?? undefined}
                   onResubmit={(feedback) => handleResubmitCheckpoint("12", feedback)}
                   resubmitting={resubmitting}
+                  enhancing={stage12Loading}
+
 
                   onSelect={async (card) => {
                     if (!sessionId) return;
