@@ -39,6 +39,7 @@ export const createSession = createServerFn({ method: "POST" })
 const RunStage1Input = z.object({
   sessionId: z.string().uuid(),
   feedback: z.string().max(5000).optional(),
+  previousOutput: z.string().max(50000).optional(),
 });
 
 function extractTensionScore(text: string): number | null {
@@ -72,7 +73,7 @@ export const runStage1 = createServerFn({ method: "POST" })
       return;
     }
 
-    const previousOutput = session.stage_1_output ?? null;
+    const previousOutput = data.previousOutput?.trim() || session.stage_1_output || null;
 
     if (feedback) {
       await supabaseAdmin
