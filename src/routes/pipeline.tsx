@@ -1901,9 +1901,10 @@ function PipelineView() {
                 const allChecked = allNames.every((n) => stage8KeepNames.has(n));
                 if (!allChecked) {
                   setStage8Error(null);
+                  setStage8Loading(true);
                   setStatuses((p) => ({ ...p, "08": "running" }));
                   try {
-                    await consumeStream(
+                    const result = await consumeStream(
                       await regenerateStage8SelectiveFn({
                         data: {
                           sessionId,
@@ -1912,7 +1913,11 @@ function PipelineView() {
                       }),
                       setStage8Output,
                     );
+                    setStage8Output(result.output);
+                    setStage8Loading(false);
+                    setStatuses((p) => ({ ...p, "08": "checkpoint" }));
                   } catch (err) {
+                    setStage8Loading(false);
                     setStage8Error(
                       err instanceof Error ? err.message : "Stage 8 selective regenerate failed",
                     );
@@ -2138,7 +2143,7 @@ function PipelineView() {
               // and advance.
               if (stageId === "08") {
                 if (sessionId) {
-                  const currentStage8 = session?.stage_8_output ?? "";
+                  const currentStage8 = stage8Output ?? session?.stage_8_output ?? "";
                   const blocks = splitStage8Propositions(currentStage8);
                   const kept = blocks.filter((b) => stage8KeepNames.has(b.name));
                   if (kept.length === 0) {
@@ -2161,6 +2166,7 @@ function PipelineView() {
                     setSession((prev) =>
                       prev ? ({ ...prev, stage_8_output: filtered } as SessionData) : prev,
                     );
+                    setStage8Output(filtered);
                   }
                   await confirmCheckpointBFn({ data: { sessionId } });
                 }
