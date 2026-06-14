@@ -1317,14 +1317,15 @@ function Stage20({ session, onChange, goNext }: { session: SessionRow; onChange:
   };
 
   useEffect(() => {
-    if (autoTriggered) return;
+    if (autoTriggeredRef.current) return;
     if (!session.stage_19_output) return;
+    if (session.stage_20_output) return;
     if (output !== null && output !== "") return;
     if (busy) return;
-    setAutoTriggered(true);
+    autoTriggeredRef.current = true;
     void handleRun();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session.stage_19_output, output]);
+  }, [session.stage_19_output, session.stage_20_output, output]);
 
   const handleProceed = async () => {
     setProceeding(true);
