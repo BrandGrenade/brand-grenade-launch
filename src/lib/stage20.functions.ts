@@ -199,18 +199,25 @@ export const retryStage20 = createServerFn({ method: "POST" })
 
     const redirect = data.redirectInstructions["card-1"] ?? "";
     const system = appendRedirect(STAGE_20_MASTER_DETONATION_BRIEF_PROMPT, redirect);
-    const output = await callClaude({
+    let output = await callClaude({
       systemPrompt: withPhase2Formatting(system),
       userMessage: buildStage20UserMessage(session as never),
-      maxTokens: 8000,
+      maxTokens: 16000,
       sessionId: data.sessionId,
       stageLabel: "Stage 20 (retry)",
       stageNumber: "20",
       stageName: "Master Detonation Brief",
     });
+    output = ensureQualityScoreBlock(output);
     const { error: saveErr } = await supabaseAdmin
       .from("sessions")
-      .update({ stage_20_output: output, stage_20_error: null, stage_20_approved: false })
+      .update({
+        stage_20_output: output,
+        stage_20_error: null,
+        stage_20_approved: false,
+        checkpoint_f_confirmed: false,
+        checkpoint_f_confirmed_at: null,
+      })
       .eq("id", data.sessionId);
     if (saveErr) throw new Error(saveErr.message);
     return { output };
@@ -295,7 +302,15 @@ export const approveStage20 = createServerFn({ method: "POST" })
     }
     const { error: upErr } = await supabaseAdmin
       .from("sessions")
-      .update({ stage_20_approved: true, phase_2_current_stage: '21' })
+      .update({
+        stage_20_approved: true,
+        phase_2_current_stage: '21',
+        // Checkpoint F — explicit human approval of the Master Detonation
+        // Brief. Mirrors checkpoint_a/b/c_confirmed structure. Gate enforces
+        // composite score >= 40 above before this row is reached.
+        checkpoint_f_confirmed: true,
+        checkpoint_f_confirmed_at: new Date().toISOString(),
+      })
       .eq("id", data.sessionId);
     if (upErr) throw new Error(upErr.message);
     return { ok: true };
