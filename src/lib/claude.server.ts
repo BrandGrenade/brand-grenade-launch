@@ -326,16 +326,29 @@ export async function* streamClaude(args: CallClaudeArgs): AsyncGenerator<string
   }
 
   const { total, stopReason, sawMessageStop } = result;
+  __telemetryChars = total.length;
   if (total) yield total;
-  if (!total.trim()) throw new Error("Claude returned an empty response");
+  if (!total.trim()) { __telemetryFailed = true; __telemetryError = "empty"; throw new Error("Claude returned an empty response"); }
   if (stopReason === "max_tokens") {
+    __telemetryFailed = true; __telemetryError = "max_tokens_truncation";
     throw new Error(
       `Claude response truncated: hit max_tokens cap (${total.length} chars produced). Raise maxTokens for this stage.`,
     );
   }
   if (!sawMessageStop) {
+    __telemetryFailed = true; __telemetryError = "no_message_stop";
     throw new Error(
       `Claude stream ended without message_stop (${total.length} chars produced). Upstream connection likely dropped — retry the stage.`,
+    );
+  }
+  } catch (e) {
+    __telemetryFailed = true;
+    if (!__telemetryError) __telemetryError = e instanceof Error ? e.message.slice(0, 200) : String(e).slice(0, 200);
+    throw e;
+  } finally {
+    const __dur = Date.now() - __telemetryStart;
+    console.log(
+      `[TELEMETRY] stage=${__telemetryLabel} session=${__telemetrySession} event=end status=${__telemetryFailed ? "FAIL" : "PASS"} duration_ms=${__dur} chars=${__telemetryChars}${__telemetryFailed ? ` error="${__telemetryError}"` : ""}`,
     );
   }
 }
