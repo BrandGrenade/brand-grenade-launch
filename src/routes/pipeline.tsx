@@ -3619,7 +3619,6 @@ function BottomBar({
   status,
   prevStage,
   nextStage,
-  nextStageStatus,
   isViewingHistorical,
   pipelineComplete,
   onContinue,
@@ -3641,81 +3640,62 @@ function BottomBar({
   onReturnToCurrent: () => void;
   onViewFinal: () => void;
 }) {
-  // Right-side primary action
-  let rightEl: ReactNode = null;
-  if (status === "running") {
-    rightEl = (
-      <span className="text-body-sm" style={{ color: "#5A5652" }}>
-        Generating…
-      </span>
-    );
-  } else if (pipelineComplete && !isViewingHistorical) {
-    rightEl = <PrimaryActionButton onClick={onViewFinal} label="Begin Phase 2 →" />;
-  } else if (isViewingHistorical) {
-    rightEl = (
-      <button
-        type="button"
-        onClick={onReturnToCurrent}
-        className="inline-flex h-9 items-center rounded-md px-4 text-sm font-medium transition-colors"
-        style={{
-          border: "1px solid var(--color-border)",
-          color: "var(--color-text-primary)",
-          backgroundColor: "transparent",
-        }}
-      >
-        Return to Current Stage →
-      </button>
-    );
-  } else if (status === "checkpoint") {
-    // Checkpoint UI already renders its own confirm — no duplicate button.
-    rightEl = (
-      <span className="text-body-sm" style={{ color: "#5A5652" }}>
-        Review and confirm above to continue
-      </span>
-    );
-  } else if (status === "complete" && nextStage && nextStageStatus === "pending") {
-    rightEl = (
-      <PrimaryActionButton onClick={onContinue} label={`Continue to ${nextStage.name} →`} />
-    );
-  } else if (status === "complete" && nextStage && nextStageStatus === "running") {
-    rightEl = (
-      <span className="text-body-sm" style={{ color: "#5A5652" }}>
-        {nextStage.name} generating…
-      </span>
-    );
-  }
+  const continueLabel = pipelineComplete
+    ? "Begin Phase 2 →"
+    : nextStage
+      ? `Continue to Stage ${nextStage.number} →`
+      : "Continue →";
+  const continueDisabled = status === "running" || (!pipelineComplete && !nextStage);
 
   return (
     <div
-      className="flex h-[56px] shrink-0 items-center justify-between border-t bg-background"
+      className="flex h-[60px] shrink-0 items-center justify-between gap-4 border-t bg-background"
       style={{
         borderColor: "#2A2A2A",
         backgroundColor: "#0A0A0A",
         padding: "0 48px",
       }}
     >
-      <div>
-        {prevStage && status !== "running" ? (
-          <button
-            type="button"
-            onClick={onBack}
-            className="text-body-sm font-medium transition-colors"
-            style={{
-              color: "#8A8680",
-              background: "transparent",
-              border: "none",
-              cursor: "pointer",
-            }}
-          >
-            ← {prevStage.name}
-          </button>
-        ) : (
-          <span className="text-body-sm" style={{ color: "var(--color-text-tertiary)" }}>
-            Stage {stage.number}
-          </span>
-        )}
+      <button
+        type="button"
+        onClick={isViewingHistorical ? onReturnToCurrent : onBack}
+        disabled={!isViewingHistorical && !prevStage}
+        className="inline-flex h-10 items-center rounded-md px-4 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40"
+        style={{
+          border: "1px solid var(--color-border)",
+          color: "var(--color-text-primary)",
+          backgroundColor: "transparent",
+        }}
+      >
+        {isViewingHistorical ? "Return to current stage" : prevStage ? `← Go Back to Stage ${prevStage.number}` : "← Go Back"}
+      </button>
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          onClick={onRetry}
+          className="inline-flex h-10 items-center rounded-md px-4 text-sm font-semibold transition-colors"
+          style={{
+            border: "1px solid var(--color-primary)",
+            color: "var(--color-primary)",
+            backgroundColor: "transparent",
+          }}
+        >
+          ↺ Retry This Stage
+        </button>
+        <button
+          type="button"
+          onClick={pipelineComplete ? onViewFinal : onContinue}
+          disabled={continueDisabled}
+          className="inline-flex h-10 items-center rounded-md px-5 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-40"
+          style={{
+            border: "none",
+            backgroundColor: "var(--color-success)",
+            color: "var(--color-background)",
+          }}
+        >
+          {continueLabel}
+        </button>
       </div>
-      <div>{rightEl}</div>
     </div>
   );
 }
