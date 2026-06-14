@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import { z } from "zod";
 import { useServerFn } from "@tanstack/react-start";
 import { TopNav } from "@/components/TopNav";
