@@ -138,25 +138,75 @@ function parsePropositions(rawOutput: string): RawProp[] {
   return propositions;
 }
 
-export function parseSMPCards(primary: string, _fallback?: string): SMPCard[] {
-  // IMPORTANT: never fall back to Stage 8. Stage 12 must only display
-  // propositions that survived Stage 11 validation.
+export function parseSMPCards(
+  primary: string,
+  stage11Fallback?: string,
+  stage10ForScores?: string,
+): SMPCard[] {
   const raw = parsePropositions(primary);
-  console.log("Propositions found: " + raw.length);
-  return raw.map((p, idx) => ({
-    cardNumber: idx + 1,
-    smpLine: p.line,
-    whatItOwns: p.owns,
-    truth: p.truth,
-    whatItChallenges: p.challenge,
-    whatItMakesPossible: "",
-    whatItRequires: "",
-    scores: p.scores,
-    fieldName: "",
-    iconicTierStatus: "",
-    pressureTestNote: "",
-  }));
+  console.log("Propositions found (stage 12): " + raw.length);
+  if (raw.length > 0) {
+    return raw.map((p, idx) => ({
+      cardNumber: idx + 1,
+      smpLine: p.line,
+      whatItOwns: p.owns,
+      truth: p.truth,
+      whatItChallenges: p.challenge,
+      whatItMakesPossible: "",
+      whatItRequires: "",
+      scores: p.scores,
+      fieldName: "",
+      iconicTierStatus: "",
+      pressureTestNote: "",
+    }));
+  }
+
+  // Fallback: render the VALIDATED propositions from Stage 11 directly so the
+  // human always sees the propositions, even when Stage 12 parsing fails or
+  // Stage 12 output has not yet been produced.
+  if (!stage11Fallback) return [];
+  const verdicts = parseStage11Verdicts(stage11Fallback).filter(
+    (v) => v.verdict === "VALIDATED" || v.verdict === "VALIDATED WITH STRATEGIC NOTE",
+  );
+  console.log("Propositions found (stage 11 fallback): " + verdicts.length);
+  const scores = stage10ForScores ? parseStage10Scores(stage10ForScores) : [];
+  const scoreByField = new Map(scores.map((s) => [s.fieldName.trim().toLowerCase(), s]));
+  const scoreByLine = new Map(scores.map((s) => [s.smpLine.trim().toLowerCase(), s]));
+
+  return verdicts.map((v, idx) => {
+    const s =
+      scoreByField.get(v.fieldName.trim().toLowerCase()) ??
+      scoreByLine.get(v.smpLine.trim().toLowerCase());
+    // Try to pull a one-line rationale / note from the verdict block.
+    const noteMatch = v.block.match(
+      /(?:STRATEGIC\s+NOTE|RATIONALE|VERDICT\s+RATIONALE)\s*:\s*([^\n]+)/i,
+    );
+    return {
+      cardNumber: idx + 1,
+      smpLine: v.smpLine,
+      whatItOwns: noteMatch ? noteMatch[1].trim() : "",
+      truth: "",
+      whatItChallenges: "",
+      whatItMakesPossible: "",
+      whatItRequires: "",
+      scores: s
+        ? {
+            differentiation: s.differentiation,
+            truthStrength: s.truthStrength,
+            culturalRelevance: s.culturalRelevance,
+            commercialPlausibility: s.commercialPlausibility,
+            creativeExpandability: s.creativeExpandability,
+            writerQuality: s.writerQuality,
+            composite: s.composite,
+          }
+        : {},
+      fieldName: v.fieldName,
+      iconicTierStatus: v.iconicStatus,
+      pressureTestNote: v.verdict,
+    };
+  });
 }
+
 
 // Strip internal blocks from any text being shown to the user.
 function cleanForDisplay(text: string): string {
