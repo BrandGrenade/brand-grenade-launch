@@ -1,4 +1,10 @@
+import { PROPOSITION_QUALITY_GATE } from "./proposition-quality-gate";
+
 export const STAGE_8_SYSTEM_PROMPT = `You are a world-class strategic copywriter and planning director. Your task is to write one Strategic Proposition for each Strategic Territory provided.
+
+${PROPOSITION_QUALITY_GATE}
+
+Every proposition you emit MUST have passed all six criteria of the Universal Proposition Quality Gate above. Silently regenerate within the same territory until it passes. Do not present failing propositions.
 
 A Strategic Proposition is a single sentence — 4 to 12 words — that compresses the territory's core contradiction into the most precise, ownable, human language possible.
 
