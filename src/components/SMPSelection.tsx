@@ -446,7 +446,28 @@ export function SMPSelection({
         <hr className="my-6 h-px border-0 bg-border" />
       </header>
 
+      {usingStage11Fallback && (
+        <div
+          className="mb-6 rounded-md p-4"
+          style={{
+            border: "1px solid var(--color-warning)",
+            backgroundColor: "color-mix(in oklab, var(--color-warning) 10%, transparent)",
+            color: "var(--color-text-primary)",
+          }}
+        >
+          <p className="text-label" style={{ color: "var(--color-warning)", marginBottom: 6 }}>
+            FALLBACK DISPLAY — STAGE 11 VALIDATED PROPOSITIONS
+          </p>
+          <p className="text-body-sm" style={{ color: "var(--color-text-secondary)" }}>
+            Stage 12 card formatting could not be parsed, so the validated propositions from Stage 11
+            are shown below so you can still select. You can retry Stage 12 from the controls above to
+            regenerate the full proposition cards.
+          </p>
+        </div>
+      )}
+
       <div className="mb-6">{ManualFallback}</div>
+
 
       {context && (
         <div
