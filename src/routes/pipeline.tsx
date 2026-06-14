@@ -3745,35 +3745,23 @@ function StageControlBar({
 
   return (
     <div
-      className="flex shrink-0 items-center justify-between border-t"
+      className="grid shrink-0 grid-cols-[minmax(160px,240px)_1fr] items-center gap-4 border-t"
       style={{
-        height: 44,
+        minHeight: 58,
         padding: "0 48px",
         backgroundColor: "#0A0A0A",
         borderColor: "#1C1C1C",
       }}
     >
       <div className="text-body-sm">{leftEl}</div>
-      <button
-        type="button"
-        onClick={onRetry}
-        onMouseEnter={(e) => (e.currentTarget.style.color = "#D4924A")}
-        onMouseLeave={(e) => (e.currentTarget.style.color = "#8A8680")}
-        style={{
-          height: 32,
-          padding: "0 16px",
-          borderRadius: 8,
-          background: "transparent",
-          border: "none",
-          color: "#8A8680",
-          fontSize: 13,
-          fontWeight: 500,
-          cursor: "pointer",
-        }}
-        title="Re-run this stage from scratch"
-      >
-        ↺ Retry this stage
-      </button>
+      <input
+        type="text"
+        value={amendmentNote}
+        onChange={(e) => onAmendmentChange(e.target.value.slice(0, 2000))}
+        placeholder="Optional amendment notes for Retry This Stage"
+        className="input-base h-9 w-full"
+        aria-label="Amendment notes for retry"
+      />
     </div>
   );
 }
