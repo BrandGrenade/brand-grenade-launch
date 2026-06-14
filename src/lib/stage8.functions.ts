@@ -12,7 +12,7 @@ import { trimValidatedInsightsForDownstream } from "./context-trim";
 
 const Input = z.object({
   sessionId: z.string().uuid(),
-  feedback: z.string().max(5000).optional(),
+  feedback: z.string().max(10000).optional(),
   previousOutput: z.string().max(50000).optional(),
 });
 
