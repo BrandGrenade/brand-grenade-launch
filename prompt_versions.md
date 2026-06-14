@@ -190,3 +190,29 @@ grievance check. Stages 10 and 11 ELIMINATE gate-failing SMPs before
 scoring / pressure testing. Stage 12 silently excludes any gate-failing
 SMP from the presentation deck and returns HOLD if fewer than two cards
 remain. The human reviewer never sees a gate-failing proposition.
+
+---
+
+## v2.1 — Universal World Class SMP Generator — Stage 9
+**Date:** June 2026
+**Stages:** Stage 9
+**Change:** Replaced the prior Stage 9 distinctiveness-check prompt
+entirely with the Universal World Class SMP Generator. Stage 9 now
+generates 5–7 Single-Minded Propositions from the validated inputs
+(Stages 1–8) rather than only evaluating Stage 8 output. The new prompt
+enforces: seven Automatic Disqualification filters (generic category
+language, clichés, competitor claimability, >8 words, comprehension,
+strategy-document language, abstraction); the mandatory Emotional
+Direction Test (brand gives/adds/restores — no grievance propositions);
+the Reinterpretation Requirement (three reinterpretation questions per
+input before generation; summaries are auto-rejected); the Universal
+Quality Benchmark (six criteria: unique, real, fresh take, grounded in
+truth, addresses a core category promise, ≤8 words and immediately
+articulate); a mandatory pre-output Cliché Detection scan across five
+cliché categories (lifestyle, permission, identity, quality, masculine);
+and the Six Territory Coverage requirement (Tension, Abundance,
+Identity, Cultural Moment, Product Truth, Whitespace — no two
+propositions sharing the same emotional mechanism). Each SMP is
+presented with foundation, proof of ownership, and creative territory,
+followed by a full-set ranking and a top-1–2 recommendation with
+strategic rationale. File: `src/lib/stage9-prompt.ts`.
