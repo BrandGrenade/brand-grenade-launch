@@ -136,11 +136,10 @@ function parsePropositions(rawOutput: string): RawProp[] {
   return propositions;
 }
 
-export function parseSMPCards(primary: string, fallback?: string): SMPCard[] {
-  let raw = parsePropositions(primary);
-  if (raw.length === 0 && fallback) {
-    raw = parsePropositions(fallback);
-  }
+export function parseSMPCards(primary: string, _fallback?: string): SMPCard[] {
+  // IMPORTANT: never fall back to Stage 8. Stage 12 must only display
+  // propositions that survived Stage 11 validation.
+  const raw = parsePropositions(primary);
   console.log("Propositions found: " + raw.length);
   return raw.map((p, idx) => ({
     cardNumber: idx + 1,
