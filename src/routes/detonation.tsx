@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import { z } from "zod";
 import { useServerFn } from "@tanstack/react-start";
 import { TopNav } from "@/components/TopNav";
@@ -666,7 +666,7 @@ function DetonationPage() {
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-      <TopNav session={{ brand, currentStage: unifiedStage, totalStages: 23, isRunning: false }} />
+      <TopNav session={{ brand, currentStage: unifiedStage, totalStages: 27, isRunning: false }} />
       <div className="flex items-center border-b border-border bg-background px-5 py-3 sm:px-8">
         <nav className="text-body-sm flex items-center gap-1.5 truncate" style={{ color: "var(--color-text-tertiary)" }}>
           <Link to="/dashboard" className="transition-colors hover:text-text-secondary">Sessions</Link>
@@ -923,7 +923,7 @@ function Stage17b({ session, onChange, goNext }: { session: SessionRow; onChange
   const [busy, setBusy] = useState(false);
   const [proceeding, setProceeding] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-  const [autoTriggered, setAutoTriggered] = useState(false);
+  const autoTriggeredRef = useRef(false);
 
   useEffect(() => { setOutput(session.stage_17b_output); }, [session.stage_17b_output]);
 
@@ -950,14 +950,15 @@ function Stage17b({ session, onChange, goNext }: { session: SessionRow; onChange
 
   // Auto-run once on mount when the prerequisite is in place and we have no output yet.
   useEffect(() => {
-    if (autoTriggered) return;
+    if (autoTriggeredRef.current) return;
     if (!session.stage_17_selected_territory) return;
+    if (session.stage_17b_output) return;
     if (output !== null && output !== "") return;
     if (busy) return;
-    setAutoTriggered(true);
+    autoTriggeredRef.current = true;
     void handleRun();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session.stage_17_selected_territory, output]);
+  }, [session.stage_17_selected_territory, session.stage_17b_output, output]);
 
   const handleProceed = async () => {
     setProceeding(true);
@@ -1170,7 +1171,7 @@ function Stage19({ session, onChange, goNext }: { session: SessionRow; onChange:
   const [busy, setBusy] = useState(false);
   const [proceeding, setProceeding] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-  const [autoTriggered, setAutoTriggered] = useState(false);
+  const autoTriggeredRef = useRef(false);
   const [stage19Checked, setStage19Checked] = useState<Record<string, boolean>>({});
 
   useEffect(() => { setOutput(session.stage_19_output); }, [session.stage_19_output]);
@@ -1193,14 +1194,15 @@ function Stage19({ session, onChange, goNext }: { session: SessionRow; onChange:
   };
 
   useEffect(() => {
-    if (autoTriggered) return;
+    if (autoTriggeredRef.current) return;
     if (!session.stage_18_selected_detonation) return;
+    if (session.stage_19_output) return;
     if (output !== null && output !== "") return;
     if (busy) return;
-    setAutoTriggered(true);
+    autoTriggeredRef.current = true;
     void handleRun();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session.stage_18_selected_detonation, output]);
+  }, [session.stage_18_selected_detonation, session.stage_19_output, output]);
 
   const handleProceed = async () => {
     setProceeding(true);
@@ -1271,7 +1273,7 @@ function Stage20({ session, onChange, goNext }: { session: SessionRow; onChange:
   const [busy, setBusy] = useState(false);
   const [proceeding, setProceeding] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-  const [autoTriggered, setAutoTriggered] = useState(false);
+  const autoTriggeredRef = useRef(false);
 
   useEffect(() => { setOutput(session.stage_20_output); }, [session.stage_20_output]);
   useEffect(() => { setApproved(Boolean(session.stage_20_approved)); }, [session.stage_20_approved]);
@@ -1315,14 +1317,15 @@ function Stage20({ session, onChange, goNext }: { session: SessionRow; onChange:
   };
 
   useEffect(() => {
-    if (autoTriggered) return;
+    if (autoTriggeredRef.current) return;
     if (!session.stage_19_output) return;
+    if (session.stage_20_output) return;
     if (output !== null && output !== "") return;
     if (busy) return;
-    setAutoTriggered(true);
+    autoTriggeredRef.current = true;
     void handleRun();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session.stage_19_output, output]);
+  }, [session.stage_19_output, session.stage_20_output, output]);
 
   const handleProceed = async () => {
     setProceeding(true);
@@ -1463,7 +1466,7 @@ function Stage21({ session, onChange, goNext }: { session: SessionRow; onChange:
   const [proceeding, setProceeding] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
-  const [autoTriggered, setAutoTriggered] = useState(false);
+  const autoTriggeredRef = useRef(false);
 
   useEffect(() => { setOutputs(session.stage_21_outputs); }, [session.stage_21_outputs]);
 
@@ -1477,7 +1480,7 @@ function Stage21({ session, onChange, goNext }: { session: SessionRow; onChange:
     catch (e) {
       console.error("Stage 21 run failed:", e);
       setErr(e instanceof Error ? e.message : "Stage 21 failed");
-      setAutoTriggered(false);
+      autoTriggeredRef.current = false;
     }
     finally { setBusy(false); }
   };
@@ -1499,14 +1502,15 @@ function Stage21({ session, onChange, goNext }: { session: SessionRow; onChange:
   };
 
   useEffect(() => {
-    if (autoTriggered) return;
+    if (autoTriggeredRef.current) return;
     if (!session.stage_20_approved) return;
+    if (session.stage_21_outputs && Object.keys(session.stage_21_outputs).length > 0) return;
     if (outputs !== null && Object.keys(outputs).length > 0) return;
     if (busy) return;
-    setAutoTriggered(true);
+    autoTriggeredRef.current = true;
     void handleRun();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session.stage_20_approved, outputs]);
+  }, [session.stage_20_approved, session.stage_21_outputs, outputs]);
 
   const handleProceed = async () => {
     setProceeding(true);
@@ -1606,7 +1610,7 @@ function Stage22({ session, onChange }: { session: SessionRow; onChange: () => v
   const [assets, setAssets] = useState<string | null>(session.stage_22_distinctive_assets);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-  const [autoTriggered, setAutoTriggered] = useState(false);
+  const autoTriggeredRef = useRef(false);
 
   useEffect(() => { setArchitecture(session.stage_22_brand_architecture); }, [session.stage_22_brand_architecture]);
   useEffect(() => { setAssets(session.stage_22_distinctive_assets); }, [session.stage_22_distinctive_assets]);
@@ -1639,15 +1643,16 @@ function Stage22({ session, onChange }: { session: SessionRow; onChange: () => v
   };
 
   useEffect(() => {
-    if (autoTriggered) return;
+    if (autoTriggeredRef.current) return;
     const stage21Ready = session.stage_21_outputs && Object.keys(session.stage_21_outputs).length > 0;
     if (!stage21Ready) return;
+    if (session.stage_22_brand_architecture) return;
     if (architecture !== null && architecture !== "") return;
     if (busy) return;
-    setAutoTriggered(true);
+    autoTriggeredRef.current = true;
     void handleRun();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session.stage_21_outputs, architecture]);
+  }, [session.stage_21_outputs, session.stage_22_brand_architecture, architecture]);
 
 
   const printPdf = () => window.print();
@@ -1715,11 +1720,17 @@ function Stage22({ session, onChange }: { session: SessionRow; onChange: () => v
             </div>
           )}
 
-          <div style={{ marginTop: 24, display: "flex", gap: 12, justifyContent: "flex-end" }}>
+          <div style={{ marginTop: 24, display: "flex", gap: 12, justifyContent: "flex-end", flexWrap: "wrap" }}>
             <AmberButton variant="ghost" onClick={handleRegenerate} disabled={busy}>
               {busy ? <><Spinner /> Regenerating…</> : "Regenerate This Stage"}
             </AmberButton>
-            <AmberButton onClick={printPdf} disabled={busy}>Download Brand Architecture</AmberButton>
+            <AmberButton variant="ghost" onClick={printPdf} disabled={busy}>Download Brand Architecture</AmberButton>
+            <AmberButton
+              onClick={() => { window.location.href = `/complete?session=${session.id}`; }}
+              disabled={busy}
+            >
+              Session Complete →
+            </AmberButton>
           </div>
         </div>
       )}

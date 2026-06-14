@@ -127,7 +127,7 @@ export function TopNav({ session }: { session?: SessionContext }) {
                     'ui-monospace, "JetBrains Mono", SFMono-Regular, Menlo, monospace',
                 }}
               >
-                Stage {session.currentStage} / {session.totalStages ?? 23}
+                Stage {session.currentStage} / {session.totalStages ?? 27}
               </span>
               {session.isRunning && (
                 <span

@@ -1772,7 +1772,7 @@ function PipelineView() {
         session={{
           brand: brandLabel,
           currentStage: Math.max(1, currentMainNumber),
-          totalStages: mainStages.length,
+          totalStages: 27,
           isRunning: pipelineIsRunning,
         }}
       />
@@ -2075,7 +2075,7 @@ function PipelineView() {
             }}
             onViewFinal={() => {
               if (sessionId) {
-                window.location.href = `/complete?session=${sessionId}`;
+                window.location.href = `/detonation?session=${sessionId}`;
               }
             }}
             onConfirmCheckpoint={(stageId, notes) => {
@@ -2309,7 +2309,7 @@ function LeftPanel({
           />
         </div>
         <p className="text-body-sm mt-2" style={{ color: "var(--color-text-tertiary)" }}>
-          Stage {currentMainNumber} of {totalMain}
+          Stage {currentMainNumber} of 27
         </p>
       </header>
 
@@ -3472,7 +3472,7 @@ function BottomBar({
       </span>
     );
   } else if (pipelineComplete && !isViewingHistorical) {
-    rightEl = <PrimaryActionButton onClick={onViewFinal} label="Open Deliverables →" />;
+    rightEl = <PrimaryActionButton onClick={onViewFinal} label="Begin Phase 2 →" />;
   } else if (isViewingHistorical) {
     rightEl = (
       <button
@@ -3960,9 +3960,25 @@ function Stage1bResubmitView({
         <hr className="my-6 h-px border-0 bg-border" />
       </header>
 
-      <article style={{ marginBottom: 32 }}>
+      <article
+        style={{
+          marginBottom: 32,
+          maxHeight: "min(45vh, 460px)",
+          overflowY: "auto",
+          overflowX: "hidden",
+          padding: "20px 24px",
+          border: "1px solid var(--color-border)",
+          borderRadius: 12,
+          backgroundColor: "var(--color-surface-2)",
+          position: "relative",
+          zIndex: 1,
+          boxShadow: "0 8px 24px rgba(0,0,0,0.35)",
+        }}
+      >
         <StreamedOutput text={output} streaming={false} />
       </article>
+
+      <hr className="my-6 h-px border-0 bg-border" />
 
       <div
         className="rounded-md p-5"
