@@ -2205,8 +2205,11 @@ function PipelineView() {
               selectedId === "12" && selectedStatus === "checkpoint" && rationaleForId !== "12" ? (
                 <SMPSelection
                   stage12Output={stage12Output ?? ""}
+                  stage11Output={stage11Output ?? undefined}
+                  stage10Output={stage10Output ?? undefined}
                   onResubmit={(feedback) => handleResubmitCheckpoint("12", feedback)}
                   resubmitting={resubmitting}
+
                   onSelect={async (card) => {
                     if (!sessionId) return;
                     setSelectedSMP(card);
