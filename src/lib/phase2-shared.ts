@@ -97,11 +97,33 @@ export function withPhase2Formatting(systemPrompt: string): string {
   return `${systemPrompt}\n\n---\n\n${PHASE_2_FORMATTING_RULES}`;
 }
 
-/** Append a per-card redirect instruction to a system prompt. */
+/** Append a per-card redirect instruction to a system prompt. The redirect
+ *  is framed as a mandatory non-negotiable constraint so the model cannot
+ *  ignore it and reproduce the previous output. */
 export function appendRedirect(systemPrompt: string, redirectText: string): string {
   const t = redirectText.trim();
   if (!t) return systemPrompt;
-  return `${systemPrompt}\n\n---\n\nREDIRECT INSTRUCTION: ${t}. Apply this to this output only. It overrides any general direction in the prompt where they conflict. The human has given you a specific direction. Follow it precisely.`;
+  return `${systemPrompt}
+
+---
+
+==== MANDATORY HUMAN REDIRECT — NON-NEGOTIABLE ====
+The human reviewer has rejected the previous output and given a specific
+direction for this regeneration. You MUST follow it precisely. It overrides
+any default direction in the prompt where they conflict.
+
+HUMAN DIRECTION (apply to this output only, in full, visibly):
+${t}
+
+RULES:
+1. Start fresh from the human direction above. Do not start from the
+   previous output and edit it.
+2. The new output MUST be demonstrably different from the previous output
+   in substance, framing, and language.
+3. Every directive in the human direction MUST be visibly applied. If a
+   directive contradicts the default prompt, the human direction wins.
+4. Do not soften, partially apply, or generalise the direction.
+==== END MANDATORY HUMAN REDIRECT ====`;
 }
 
 /** Append an arbitrary final instruction to a system prompt (used for
