@@ -2132,9 +2132,36 @@ function PipelineView() {
                 setSelectedId("01B");
                 return;
               }
-              // Checkpoint B (Stage 8) → persist confirmation then advance to Stage 9.
+              // Checkpoint B (Stage 8) → filter stage_8_output to ONLY the
+              // checked propositions so unchecked ones are excluded from
+              // Stage 9 and every downstream stage, then persist confirmation
+              // and advance.
               if (stageId === "08") {
                 if (sessionId) {
+                  const currentStage8 = session?.stage_8_output ?? "";
+                  const blocks = splitStage8Propositions(currentStage8);
+                  const kept = blocks.filter((b) => stage8KeepNames.has(b.name));
+                  if (kept.length === 0) {
+                    console.error("[Checkpoint B] at least one proposition must be checked");
+                    alert(
+                      "At least one proposition must be checked before confirming Checkpoint B.",
+                    );
+                    return;
+                  }
+                  if (kept.length < blocks.length) {
+                    const filtered = kept.map((b) => b.markdown).join("\n\n");
+                    const { error: filterErr } = await supabase
+                      .from("sessions")
+                      .update({ stage_8_output: filtered })
+                      .eq("id", sessionId);
+                    if (filterErr) {
+                      console.error("[Checkpoint B] failed to filter Stage 8 output", filterErr);
+                      return;
+                    }
+                    setSession((prev) =>
+                      prev ? ({ ...prev, stage_8_output: filtered } as SessionData) : prev,
+                    );
+                  }
                   await confirmCheckpointBFn({ data: { sessionId } });
                 }
                 setStatuses((prev) => ({ ...prev, "08": "complete", "09": "running" }));
@@ -3270,8 +3297,9 @@ function Stage8PropositionsView({
   return (
     <div>
       <p className="text-body-sm" style={{ color: "#8A8680", marginBottom: 16 }}>
-        Uncheck any proposition you want to regenerate. Checked propositions are kept verbatim when
-        you press Retry this stage.
+        Uncheck any proposition to exclude it from Stage 9 and all downstream stages. Only
+        checked propositions advance past Checkpoint B. Use Retry this stage to regenerate
+        unchecked propositions instead of excluding them.
       </p>
       {blocks.map((b, i) => {
         const checked = keepNames.has(b.name);
