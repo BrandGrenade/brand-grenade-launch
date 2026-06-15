@@ -713,22 +713,18 @@ export const runTierTwoFullCheck = createServerFn({ method: "POST" })
             if (!/sanitise|sanitize|strip|clean/i.test(sanitiseSource))
               throw new Error("sanitise-output.ts source lacks expected sanitisation keywords");
 
-            // Token caps: scan claude.server.ts for maxTokens callers in every stage.
-            const stageRefs: string[] = [];
-            for (let n = 1; n <= 22; n++) {
-              stageRefs.push(`stage${n}.functions.ts`);
-            }
-            const stageFiles = await Promise.all(
-              [
-                "stage1", "stage1b", "stage2", "stage3", "stage4", "stage5", "stage6", "stage7",
-                "stage8", "stage9", "stage10", "stage11", "stage12", "stage13", "stage13b",
-                "stage14", "stage14b", "stage14c", "stage15", "stage16", "stage17", "stage17b",
-                "stage18", "stage19", "stage20", "stage21", "stage22",
-              ].map(async (name) => {
-                const src = (await import(`@/lib/${name}.functions.ts?raw`)) as { default: string };
-                return { name, src: src.default };
-              }),
-            );
+            // Token caps: scan every stage*.functions.ts source for an explicit maxTokens cap.
+            const stageSources = import.meta.glob("@/lib/stage*.functions.ts", {
+              query: "?raw",
+              import: "default",
+              eager: true,
+            }) as Record<string, string>;
+            const stageFiles = Object.entries(stageSources).map(([path, src]) => ({
+              name: path.split("/").pop() ?? path,
+              src,
+            }));
+            if (stageFiles.length < 20)
+              throw new Error(`Expected ≥20 stage*.functions.ts files, found ${stageFiles.length}`);
             const missingCap: string[] = [];
             for (const { name, src } of stageFiles) {
               if (!/maxTokens\s*:\s*\d+/.test(src)) missingCap.push(name);
