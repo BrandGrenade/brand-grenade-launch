@@ -284,6 +284,22 @@ export function sanitizeStageOutput(raw: string): string {
   // 6. Collapse triple+ blank lines and trim.
   text = text.replace(/\n{3,}/g, "\n\n").trim();
 
+  // 6a. FORBIDDEN TOKEN NUCLEAR PASS — strip any line that contains an
+  //     internal-only header phrase (case-insensitive, any position, any
+  //     punctuation). Inline-prose mentions of these tokens are never valid
+  //     user-facing output, so the whole containing line is removed.
+  const FORBIDDEN_TOKENS = [
+    /strategic\s+mode\s+applied/i,
+    /strategic\s+mode\s+selected/i,
+    /brief\s+depth\s+level/i,
+    /category\s+knowledge\s+confidence/i,
+    /pipeline\s+data\s+header/i,
+  ];
+  text = text
+    .split("\n")
+    .filter((line) => !FORBIDDEN_TOKENS.some((p) => p.test(line)))
+    .join("\n");
+
   // 7. Strip encoded separator artifacts and stray formatting glyphs
   //    that occasionally leak through from upstream models.
   text = text
