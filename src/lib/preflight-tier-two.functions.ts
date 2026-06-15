@@ -110,9 +110,9 @@ const CHECK_DEFS: ReadonlyArray<{ id: FullCheckId; name: string }> = [
 // ---------------------------------------------------------------------------
 
 const TESTBRAND_BRAND_NAME = "Preflight TestBrand";
-const TESTBRAND_CATEGORY = "Functional beverage (cold-pressed adaptogenic tonic)";
+const TESTBRAND_CATEGORY = "Australian premium energy drink";
 const TESTBRAND_STRATEGIC_MODE = "Brand Detonation";
-const TESTBRAND_BRIEF = `Preflight TestBrand is an automated integrity-check brand used by the Brand Grenade pre-flight system. It exists ONLY to validate that the strategic pipeline executes end-to-end. The fictional product is a cold-pressed adaptogenic tonic targeting urban professionals aged 28–42 who are exhausted by wellness performance theatre. The cultural tension: consumers say they want calm but reward intensity. The brand's job is to disrupt the functional-beverage category's earnestness with confident, deadpan irreverence. Competitive set includes incumbent functional drinks brands that lean heavily on pseudo-science and clinical typography. Distribution is DTC + premium grocery. Pricing is premium. Voice should be witty, sharp, never preachy. Do not produce sentimental, apologetic, or permission-seeking copy.`;
+const TESTBRAND_BRIEF = `Brand: TestBrand. Category: Australian premium energy drink. Challenge: the entire energy drink category sells urgency, crash, and artificial stimulation to men who have moved on. The disciplined man who trains, tracks his macros, and demands performance from everything he consumes has no energy drink that matches his standard. TestBrand is the first energy drink built for deliberate performance, not emergency rescue. Product: natural caffeine from green tea plus adaptogens plus electrolytes. Full strength. No apology. Target: males 28 to 42 who train seriously, track their intake, and read the category's crash-and-recover narrative as an insult to their discipline. Competitors: Monster and Red Bull own urgency and youth. V owns the casual drinker. None own the disciplined performance male. Business objective: own the deliberate performance territory the category has never addressed.`;
 
 // ---------------------------------------------------------------------------
 // Helpers
