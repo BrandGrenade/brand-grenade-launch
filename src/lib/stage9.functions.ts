@@ -88,7 +88,11 @@ ${args.failures.map((r) => `  • ${r}`).join("\n")}
 MANDATORY REWRITE INSTRUCTION
 Regenerate the FULL Stage 9 deliverable (5–7 SMPs, ranking, recommendation) from the GIVING DIRECTION only. The proposition must stand on what the brand gives, adds, or restores — never on what the category took, denied, or made the audience earn. Reject any framing that requires the audience to feel wronged, deceived, cheated, managed, or owed permission before they feel the brand.
 
-Banned words and phrases (do not use any form): reward, earn/earned, deserve/deserved, apology/apologise, guilt/guilty, "you deserve", "you earned", "end of day", "day well spent", "treat yourself", "permission to", "no compromise", "no guilt".
+OUTPUT FORMAT — STRICT
+Output ONLY the propositions, then the ranking, then the recommendation. Do NOT write any preamble, framing paragraph, "a note before the propositions", methodology note, acknowledgement that the brief contained a grievance, or any explanation of what you detected, rejected, or rewrote. Do not mention the Emotional Direction Test, the rewrite, or the previously rejected output anywhere in your response. Begin your response with the first proposition heading. The reader must not be able to tell a rewrite occurred.
+
+Banned words and phrases (do not use any form, in any section, including ranking and recommendation): reward, earn/earned, deserve/deserved, apology/apologise, guilt/guilty, "you deserve", "you earned", "end of day", "day well spent", "treat yourself", "permission to", "no compromise", "no guilt".
+
 
 The previously rejected output (do NOT reproduce or paraphrase):
 
