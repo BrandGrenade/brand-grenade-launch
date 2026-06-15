@@ -132,11 +132,12 @@ export const runTierOneFastCheck = createServerFn({ method: "POST" })
 
     // -------- Fast Check 1: Database Connectivity (5s budget) --------
     const c1 = await runCheck("db_connectivity", async () => {
-      const q = supabaseAdmin
-        .from("sessions")
-        .select("id, updated_at")
-        .order("updated_at", { ascending: false })
-        .limit(5);
+      const q = (async () =>
+        supabaseAdmin
+          .from("sessions")
+          .select("id, updated_at")
+          .order("updated_at", { ascending: false })
+          .limit(5))();
       const { error } = await withTimeout(q, 5_000, "sessions query");
       if (error) return { status: "fail", detail: error.message };
       return { status: "pass", detail: "5 most recent sessions fetched" };
