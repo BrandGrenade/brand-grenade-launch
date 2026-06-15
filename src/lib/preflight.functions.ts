@@ -185,12 +185,13 @@ export const runTierOneFastCheck = createServerFn({ method: "POST" })
 
     // -------- Fast Check 4: Stage 12 Database Query Speed (2s budget) --------
     const c4 = await runCheck("stage12_query_speed", async () => {
-      const q = supabaseAdmin
-        .from("sessions")
-        .select("id, stage_11_output")
-        .not("stage_11_output", "is", null)
-        .order("updated_at", { ascending: false })
-        .limit(1);
+      const q = (async () =>
+        supabaseAdmin
+          .from("sessions")
+          .select("id, stage_11_output")
+          .not("stage_11_output", "is", null)
+          .order("updated_at", { ascending: false })
+          .limit(1))();
       const { data, error } = await withTimeout(q, 2_000, "stage_11_output query");
       if (error) return { status: "fail", detail: error.message };
       if (!data || data.length === 0) {
