@@ -239,7 +239,7 @@ export const runTierOneFastCheck = createServerFn({ method: "POST" })
       .from("preflight_checks")
       .update({
         status: "complete",
-        tier_one_results: checks as unknown as object,
+        tier_one_results: checks as unknown as never,
         overall_result: overall,
         completed_at: finishedAt.toISOString(),
       })
