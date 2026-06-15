@@ -21,9 +21,18 @@ const completeSearchSchema = z.object({
   session: z.string().uuid().optional(),
 });
 
+// P7 cross-session guard: re-key CompletePage on sessionId so every session
+// change forces a fresh mount. Without this, stale session state from the
+// previous deliverables view leaks into the new session (e.g. another
+// session's Stage 16 document being assembled into the current download).
+function CompleteRoute() {
+  const { session: sessionId } = Route.useSearch();
+  return <CompletePage key={sessionId ?? "__no_session__"} />;
+}
+
 export const Route = createFileRoute("/complete")({
   validateSearch: completeSearchSchema,
-  component: CompletePage,
+  component: CompleteRoute,
   head: () => ({
     meta: [
       { title: "Deliverables — Brand Grenade" },
