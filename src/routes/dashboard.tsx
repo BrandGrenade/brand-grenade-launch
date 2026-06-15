@@ -4,6 +4,7 @@ import { MoreHorizontal, Grid2x2, FileText, Trash2, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { TopNav } from "@/components/TopNav";
 import { PreflightStatusBanner } from "@/components/PreflightStatusBanner";
+import { PreflightFullCheckPanel } from "@/components/PreflightFullCheckPanel";
 import { supabase } from "@/integrations/supabase/client";
 import {
   DropdownMenu,
