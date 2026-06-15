@@ -155,6 +155,8 @@ function Dashboard() {
         style={{ paddingLeft: "max(20px, min(32px, 5vw))", paddingRight: "max(20px, min(32px, 5vw))" }}
       >
         <div className="mx-auto max-w-[1280px]">
+          <PreflightStatusBanner />
+
           <header className="flex flex-col gap-5">
             <div>
               <span className="text-label text-primary">Your Pipeline Runs</span>
