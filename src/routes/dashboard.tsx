@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { MoreHorizontal, Grid2x2, FileText, Trash2, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { TopNav } from "@/components/TopNav";
+import { PreflightStatusBanner } from "@/components/PreflightStatusBanner";
 import { supabase } from "@/integrations/supabase/client";
 import {
   DropdownMenu,
@@ -154,6 +155,8 @@ function Dashboard() {
         style={{ paddingLeft: "max(20px, min(32px, 5vw))", paddingRight: "max(20px, min(32px, 5vw))" }}
       >
         <div className="mx-auto max-w-[1280px]">
+          <PreflightStatusBanner />
+
           <header className="flex flex-col gap-5">
             <div>
               <span className="text-label text-primary">Your Pipeline Runs</span>
