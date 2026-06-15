@@ -279,6 +279,7 @@ function ThreeTruthCanvas() {
   const handleBeginStage17 = async () => {
     if (!sessionId || !canBegin) return;
     setAdvancing(true);
+    setError(null);
     try {
       await saveIntelFn({
         data: {
@@ -291,9 +292,21 @@ function ThreeTruthCanvas() {
         },
       });
       // Route forward into the Phase 2 pipeline (stages render under /detonation).
-      navigate({ to: "/detonation", search: { session: sessionId } });
+      // Await the navigate Promise so any router-side rejection surfaces in catch,
+      // and fall back to a hard navigation if the client router fails to transition
+      // (defensive — observed cases where the SPA transition stalls silently when
+      // moving between sibling top-level routes).
+      try {
+        await navigate({ to: "/detonation", search: { session: sessionId } });
+      } catch {
+        // swallow — fallback below handles it
+      }
+      if (typeof window !== "undefined" && window.location.pathname !== "/detonation") {
+        window.location.assign(`/detonation?session=${encodeURIComponent(sessionId)}`);
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to save brand intelligence");
+    } finally {
       setAdvancing(false);
     }
   };
