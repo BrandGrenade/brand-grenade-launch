@@ -1207,10 +1207,18 @@ function Stage19({ session, onChange, goNext }: { session: SessionRow; onChange:
     if (session.stage_19_output) return;
     if (output !== null && output !== "") return;
     if (busy) return;
+    // P8 double-run guard: persist the autorun flag per-session so a
+    // component remount (route revisit, parent re-render, StrictMode double
+    // mount, etc.) cannot fire a second auto-run before the first write to
+    // stage_19_output lands. The server fn is already idempotent, but this
+    // also prevents the cosmetic duplicate "running" event in the UI.
+    const key = `bg:stage19-autorun:${session.id}`;
+    if (typeof window !== "undefined" && window.sessionStorage.getItem(key)) return;
+    if (typeof window !== "undefined") window.sessionStorage.setItem(key, "1");
     autoTriggeredRef.current = true;
     void handleRun();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session.stage_18_selected_detonation, session.stage_19_output, output]);
+  }, [session.stage_18_selected_detonation, session.stage_19_output, output, session.id]);
 
   const handleProceed = async () => {
     setProceeding(true);
