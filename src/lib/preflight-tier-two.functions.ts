@@ -714,7 +714,15 @@ export const runTierTwoFullCheck = createServerFn({ method: "POST" })
               throw new Error("sanitise-output.ts source lacks expected sanitisation keywords");
 
             // Token caps: scan every stage*.functions.ts source for an explicit maxTokens cap.
+            // Accept either a numeric literal (`maxTokens: 8000`) or an identifier reference
+            // (`maxTokens: section.maxTokens`) — the latter resolves to caps defined in a
+            // companion `stage*-sections.ts` config file, which we also verify contains literals.
             const stageSources = import.meta.glob("@/lib/stage*.functions.ts", {
+              query: "?raw",
+              import: "default",
+              eager: true,
+            }) as Record<string, string>;
+            const sectionSources = import.meta.glob("@/lib/stage*-sections.ts", {
               query: "?raw",
               import: "default",
               eager: true,
@@ -725,9 +733,16 @@ export const runTierTwoFullCheck = createServerFn({ method: "POST" })
             }));
             if (stageFiles.length < 20)
               throw new Error(`Expected ≥20 stage*.functions.ts files, found ${stageFiles.length}`);
+            const sectionLiteralFiles = Object.values(sectionSources).filter((src) =>
+              /maxTokens\s*:\s*\d+/.test(src),
+            ).length;
             const missingCap: string[] = [];
             for (const { name, src } of stageFiles) {
-              if (!/maxTokens\s*:\s*\d+/.test(src)) missingCap.push(name);
+              const hasLiteralCap = /maxTokens\s*:\s*\d+/.test(src);
+              const hasIdentifierCap =
+                /maxTokens\s*:\s*[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]+)+/.test(src) &&
+                sectionLiteralFiles > 0;
+              if (!hasLiteralCap && !hasIdentifierCap) missingCap.push(name);
             }
             if (missingCap.length)
               throw new Error(`Stages missing explicit maxTokens cap: ${missingCap.join(", ")}`);
