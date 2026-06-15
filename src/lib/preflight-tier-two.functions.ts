@@ -306,7 +306,7 @@ export const runTierTwoFullCheck = createServerFn({ method: "POST" })
                 brief_text: TESTBRAND_BRIEF,
                 status: "running",
                 current_stage: 1,
-                dev_mode: true,
+                dev_mode: false,
                 user_id: context.userId,
                 is_preflight_test: true,
               })
