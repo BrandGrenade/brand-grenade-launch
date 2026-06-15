@@ -1,0 +1,2 @@
+ALTER TABLE public.preflight_checks DROP CONSTRAINT preflight_checks_check_type_check;
+ALTER TABLE public.preflight_checks ADD CONSTRAINT preflight_checks_check_type_check CHECK (check_type = ANY (ARRAY['fast'::text, 'full'::text, 'pipeline_run_override'::text]));
