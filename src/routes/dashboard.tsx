@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { MoreHorizontal, Grid2x2, FileText, Trash2, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { TopNav } from "@/components/TopNav";
+import { PreflightStatusBanner } from "@/components/PreflightStatusBanner";
 import { supabase } from "@/integrations/supabase/client";
 import {
   DropdownMenu,
