@@ -169,7 +169,9 @@ export const runStage9 = createServerFn({ method: "POST" })
       rewriteAttempts++;
       const statusMsg = `Emotional Direction Test caught grievance language (${failures.join(", ")}) — rewriting from the giving direction (attempt ${rewriteAttempts}/${MAX_REWRITES})...`;
       await setRetryStatus(data.sessionId, statusMsg);
-      yield { delta: `\n\n[EDT-GUARD] ${statusMsg}\n\n` };
+      // Status is communicated via retry_status (out-of-band). Do NOT yield
+      // an [EDT-GUARD] delta — the client-facing stream must contain only the
+      // final clean deliverable, with no hint that a rewrite occurred.
 
       const rewriteMessage = buildStage9RewriteMessage({
         originalUserMessage: userMessage,
