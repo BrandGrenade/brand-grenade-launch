@@ -37,9 +37,17 @@ const detonationSearchSchema = z.object({
   session: z.string().uuid().optional(),
 });
 
+// P7 cross-session guard: re-key on sessionId so every session change forces
+// a fresh mount and prevents stale Phase 2 stage state from the previous
+// session leaking into the current view.
+function DetonationRoute() {
+  const { session: sessionId } = Route.useSearch();
+  return <DetonationPage key={sessionId ?? "__no_session__"} />;
+}
+
 export const Route = createFileRoute("/detonation")({
   validateSearch: detonationSearchSchema,
-  component: DetonationPage,
+  component: DetonationRoute,
   head: () => ({
     meta: [
       { title: "Brand Detonation — Brand Grenade" },
