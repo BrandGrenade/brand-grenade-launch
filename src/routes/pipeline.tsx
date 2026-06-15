@@ -103,9 +103,19 @@ const pipelineSearchSchema = z.object({
   session: z.string().uuid().optional(),
 });
 
+// P7 cross-session guard: re-key PipelineView on sessionId so every session
+// change forces a fresh mount. Without this, navigating between sessions in
+// the same tab leaves stale stage outputs (incl. Stage 16) in React state
+// from the previous session until the new fetch completes — visible as
+// cross-session contamination in deliverables.
+function PipelineRoute() {
+  const { session: sessionId } = Route.useSearch();
+  return <PipelineView key={sessionId ?? "__no_session__"} />;
+}
+
 export const Route = createFileRoute("/pipeline")({
   validateSearch: pipelineSearchSchema,
-  component: PipelineView,
+  component: PipelineRoute,
   head: () => ({
     meta: [
       { title: "Strategy Room — Brand Grenade" },
