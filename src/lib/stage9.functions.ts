@@ -31,10 +31,31 @@ const STAGE_9_BANNED_PATTERNS: Array<{ pattern: RegExp; reason: string }> = [
   { pattern: /no guilt/i, reason: "banned phrase 'no guilt'" },
 ];
 
+// Strip any preamble/meta-commentary that appears before the first proposition
+// marker. Stage 9 must output ONLY the propositions + ranking + recommendation;
+// any preface text (e.g. "the brief arrives wearing a grievance…") would
+// otherwise let descriptive uses of banned words slip past the scan.
+function extractStage9PropositionRegion(text: string): string {
+  const markers: RegExp[] = [
+    /^\s*##\s+\S/m,
+    /^\s*\*?\*?1\.\s+/m,
+    /^\s*(SMP|Proposition)\s*1\b/im,
+  ];
+  let earliest = -1;
+  for (const re of markers) {
+    const m = text.match(re);
+    if (m && m.index !== undefined && (earliest === -1 || m.index < earliest)) {
+      earliest = m.index;
+    }
+  }
+  return earliest > 0 ? text.slice(earliest) : text;
+}
+
 function scanStage9ForGrievance(text: string): string[] {
+  const region = extractStage9PropositionRegion(text);
   const failures: string[] = [];
   for (const { pattern, reason } of STAGE_9_BANNED_PATTERNS) {
-    if (pattern.test(text)) failures.push(reason);
+    if (pattern.test(region)) failures.push(reason);
   }
   return failures;
 }
