@@ -14,6 +14,68 @@ export type Database = {
   }
   public: {
     Tables: {
+      preflight_checks: {
+        Row: {
+          check_type: string
+          completed_at: string | null
+          created_at: string
+          id: string
+          overall_result: string | null
+          override_reason: string | null
+          override_session_id: string | null
+          override_timestamp: string | null
+          override_used: boolean
+          started_at: string
+          started_by: string | null
+          status: string
+          tier_one_results: Json | null
+          tier_two_results: Json | null
+          updated_at: string
+        }
+        Insert: {
+          check_type: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          overall_result?: string | null
+          override_reason?: string | null
+          override_session_id?: string | null
+          override_timestamp?: string | null
+          override_used?: boolean
+          started_at?: string
+          started_by?: string | null
+          status?: string
+          tier_one_results?: Json | null
+          tier_two_results?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          check_type?: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          overall_result?: string | null
+          override_reason?: string | null
+          override_session_id?: string | null
+          override_timestamp?: string | null
+          override_used?: boolean
+          started_at?: string
+          started_by?: string | null
+          status?: string
+          tier_one_results?: Json | null
+          tier_two_results?: Json | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "preflight_checks_override_session_id_fkey"
+            columns: ["override_session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sessions: {
         Row: {
           brand_audience_relationship: string | null
@@ -66,6 +128,7 @@ export type Database = {
           doc_workshop_url: string | null
           id: string
           interrupted_stage: number | null
+          is_preflight_test: boolean
           phase_2_current_stage: string
           phase_2_status: string
           retry_status: string | null
@@ -211,6 +274,7 @@ export type Database = {
           doc_workshop_url?: string | null
           id?: string
           interrupted_stage?: number | null
+          is_preflight_test?: boolean
           phase_2_current_stage?: string
           phase_2_status?: string
           retry_status?: string | null
@@ -356,6 +420,7 @@ export type Database = {
           doc_workshop_url?: string | null
           id?: string
           interrupted_stage?: number | null
+          is_preflight_test?: boolean
           phase_2_current_stage?: string
           phase_2_status?: string
           retry_status?: string | null
