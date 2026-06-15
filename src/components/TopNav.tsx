@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { useDevMode, useIsAdmin } from "@/lib/dev-mode";
 import { useAuth } from "@/context/AuthContext";
 import { BrandGrenadeIcon } from "@/components/BrandGrenadeIcon";
+import { NewRunGateButton } from "@/components/NewRunGateButton";
 
 export interface SessionContext {
   brand: string;
@@ -145,22 +146,7 @@ export function TopNav({ session }: { session?: SessionContext }) {
             </div>
           )}
 
-          <Link
-            to="/brief"
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              height: 36,
-              padding: "0 16px",
-              borderRadius: 8,
-              backgroundColor: "#D4924A",
-              color: "#0A0A0A",
-              fontWeight: 600,
-              fontSize: 13,
-            }}
-          >
-            New Run
-          </Link>
+          <NewRunGateButton variant="topnav" label="New Run" />
 
           <div ref={rootRef} className="relative">
 
