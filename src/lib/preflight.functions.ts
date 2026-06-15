@@ -167,10 +167,15 @@ export const runTierOneFastCheck = createServerFn({ method: "POST" })
     // -------- Fast Check 3: Stage 9 EDT Guard Prompt Presence --------
     const c3 = await runCheck("stage9_edt_guard_prompt", async () => {
       const prompt = STAGE_9_SYSTEM_PROMPT;
-      const requiredTokens = ["earned", "deserved", "guilt", "apology", "permission"];
-      const missing = requiredTokens.filter(
-        (t) => !new RegExp(`\\b${t}\\b`, "i").test(prompt),
-      );
+      // Match stems so either form (e.g. "deserve" or "deserved") satisfies the check.
+      const requiredTokens: Array<{ label: string; pattern: RegExp }> = [
+        { label: "earned", pattern: /\bearn(s|ed|ing)?\b/i },
+        { label: "deserved", pattern: /\bdeserv(e|es|ed|ing)\b/i },
+        { label: "guilt", pattern: /\bguilt(y|less)?\b/i },
+        { label: "apology", pattern: /\bapolog(y|ies|ise|ize|ised|ized)\b/i },
+        { label: "permission", pattern: /\bpermission\b/i },
+      ];
+      const missing = requiredTokens.filter((t) => !t.pattern.test(prompt)).map((t) => t.label);
       if (missing.length > 0) {
         return {
           status: "fail",
