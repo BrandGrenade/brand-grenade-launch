@@ -292,18 +292,15 @@ function ThreeTruthCanvas() {
         },
       });
       // Route forward into the Phase 2 pipeline (stages render under /detonation).
-      // Await the navigate Promise so any router-side rejection surfaces in catch,
-      // and fall back to a hard navigation if the client router fails to transition
-      // (defensive — observed cases where the SPA transition stalls silently when
-      // moving between sibling top-level routes).
-      try {
-        await navigate({ to: "/detonation", search: { session: sessionId } });
-      } catch {
-        // swallow — fallback below handles it
+      // Do not await TanStack navigate here: in this flow the promise can remain
+      // pending during route transition, which prevents the fallback from firing
+      // and leaves the button stuck on "Saving…". Use the same hard navigation
+      // pattern already used by the Stage 13 → Phase 2 handoff.
+      if (typeof window !== "undefined") {
+        window.location.href = `/detonation?session=${encodeURIComponent(sessionId)}`;
+        return;
       }
-      if (typeof window !== "undefined" && window.location.pathname !== "/detonation") {
-        window.location.assign(`/detonation?session=${encodeURIComponent(sessionId)}`);
-      }
+      await navigate({ to: "/detonation", search: { session: sessionId } });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to save brand intelligence");
     } finally {
