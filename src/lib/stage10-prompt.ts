@@ -80,7 +80,21 @@ export function buildStage10UserMessage(args: {
   stage9Output: string;
   stage1Output: string;
   propositionCount: number;
+  isPreflight?: boolean;
 }): string {
+  const preflightOverride = args.isPreflight
+    ? `
+
+==== PRE-FLIGHT INTEGRITY MODE — ELIMINATION THRESHOLD BYPASS ====
+This run is an automated pre-flight integrity test of the pipeline, not a live client engagement.
+- DO NOT eliminate any proposition for failing the composite ≥ 48/60 floor or for individual dimensions < 7.
+- Score every proposition honestly against the six dimensions, but VERDICT every proposition as PASS regardless of score.
+- The Priority Recommendation must still rank the highest composite first.
+- Set-Level Verdict: SMPS PASSING TO STAGE 11 must equal SMPS SCORED. SMPS ELIMINATED must be 0. READY FOR STAGE 11: YES.
+- Quality Gate Pre-Check still applies — only genuine garbage (no Strategic Constraint linkage at all) may be excluded.
+This override exists so the pipeline can validate end-to-end execution even when proposition strength is marginal.
+`
+    : "";
   return `BRAND: ${args.brandName}
 CATEGORY: ${args.category}
 
@@ -92,7 +106,7 @@ ${args.stage9Output}
 
 ==== STAGE 1 — SANITISED BRIEF (Strategic Opportunity context) ====
 ${args.stage1Output}
-
+${preflightOverride}
 Run Stage 10 SMP Scoring. Produce the Header, Per-SMP Score Blocks for every divergence-validated SMP, Elimination Log, Priority Recommendation (all three components), Set-Level Verdict, and Self-Audit.
 
 Score ALL ${args.propositionCount} propositions from the input. Do not stop after scoring the first proposition.`;
