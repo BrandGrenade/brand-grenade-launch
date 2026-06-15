@@ -120,7 +120,10 @@ export const runStage1 = createServerFn({ method: "POST" })
     }
 
     const tensionScore = extractTensionScore(output);
-    const stage1bRequired = tensionScore !== null && tensionScore < 7;
+    // Strict gate: a Stage 1 pass requires an extractable numeric tension
+    // score of 7 or higher. A null score (unparseable) is treated as a fail
+    // and routes the user into Stage 1B for brief enhancement.
+    const stage1bRequired = !(tensionScore !== null && tensionScore >= 7);
 
     let lastSaveErr: { message: string } | null = null;
     for (let attempt = 0; attempt < 3; attempt++) {
