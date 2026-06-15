@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { TopNav } from "@/components/TopNav";
 import { PreflightStatusBanner } from "@/components/PreflightStatusBanner";
 import { PreflightFullCheckPanel } from "@/components/PreflightFullCheckPanel";
+import { NewRunGateButton } from "@/components/NewRunGateButton";
 import { supabase } from "@/integrations/supabase/client";
 import {
   DropdownMenu,
@@ -273,13 +274,9 @@ function EmptyState() {
       <p className="text-body mt-2" style={{ color: "var(--color-text-tertiary)" }}>
         Start a new pipeline run to begin.
       </p>
-      <Link
-        to="/brief"
-        className="mt-6 inline-flex items-center rounded-lg bg-transparent px-5 py-2.5 text-[13px] font-medium transition-colors hover:bg-primary-subtle"
-        style={{ border: "1px solid #D4924A", color: "#D4924A" }}
-      >
-        Start New Run
-      </Link>
+      <div className="mt-6">
+        <NewRunGateButton variant="empty" label="Start New Run" />
+      </div>
     </div>
   );
 }
