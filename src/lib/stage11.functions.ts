@@ -12,7 +12,7 @@ export const runStage11 = createServerFn({ method: "POST" })
   .handler(async function* ({ data }) {
     const { data: session, error } = await supabaseAdmin
       .from("sessions")
-      .select("brand_name, category, stage_2_output, stage_8_output, stage_10_output, stage_11_output")
+      .select("brand_name, category, stage_2_output, stage_8_output, stage_10_output, stage_11_output, is_preflight_test")
       .eq("id", data.sessionId)
       .single();
     if (error || !session) throw new Error(`Session not found: ${error?.message ?? "no row"}`);
@@ -36,6 +36,7 @@ export const runStage11 = createServerFn({ method: "POST" })
       stage10Output: session.stage_10_output,
       cmm: session.stage_2_output ?? "",
       propositionCount,
+      isPreflight: session.is_preflight_test === true,
     });
 
     let output = "";
