@@ -179,7 +179,7 @@ function Dashboard() {
             ))}
           </div>
 
-          <div className="mt-8">
+          <div id="completed-sessions" className="mt-8 scroll-mt-24">
             {loading ? (
               <p className="text-body text-text-tertiary">Loading sessions…</p>
             ) : sessions.length === 0 ? (

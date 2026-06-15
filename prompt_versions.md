@@ -241,3 +241,63 @@ fire a second auto-run for the same session. Combined with the P7
 cached short-circuit, Stage 19 is now triple-guarded against duplicate
 execution. Files: `src/routes/detonation.tsx`, `src/lib/stage18.functions.ts`,
 `src/lib/stage19.functions.ts`.
+
+---
+
+## v2.3 — Two-Tier Pre-Flight Integrity System
+**Date:** June 2026
+**Scope:** Platform-wide (pre-session integrity gate)
+**Change:** Shipped a permanent two-tier automated pre-flight integrity
+system that validates platform health before every live client session.
+Replaces ad-hoc manual smoke-testing.
+
+**Tier One — Fast Check (auto on every dashboard load, <3 min):**
+five fast probes — database connectivity, Claude API health
+(claude-haiku-4-5 READY probe), Stage 9 EDT-guard prompt presence
+(banned-words: earned/deserved/guilt/apology/permission), Stage 12 DB
+query speed, and Stage 17 route registration (detonation route +
+DetonationRoute export + `await navigate({ to: '/detonation' …})` in
+detonation_.canvas.tsx). Renders green "Platform Systems Live" or red
+"System Issue Detected — {failed check name}". File:
+`src/components/PreflightStatusBanner.tsx`, `src/lib/preflight.functions.ts`.
+
+**Tier Two — Full Integrity Check (manual "Run System Check", ~20 min):**
+12 deep checks using the hybrid approach. Real-run checks (1, 2, 3, 5,
+6, 7, 8, 10, 12) execute Stages 1→16 sequentially on a single TestBrand
+session, plus the Phase 2 chain (17→select→17B→18) and two parallel
+Stage 1 sessions for concurrency safety. Structural probes (4, 9, 11)
+scan all 22 stage system prompts, sanitiser config + per-stage
+maxTokens caps, and the Canvas→Detonation navigation pattern. All test
+sessions are tagged `is_preflight_test = true` (excluded from the user
+sessions list) and deleted in a finally block on completion or failure.
+A unique partial index on preflight_checks enforces a single global
+runner; rows older than 25 minutes can be force-overridden. Auto-selects
+top-ranked option at every decision point — no human input required.
+Files: `src/components/PreflightFullCheckPanel.tsx`,
+`src/lib/preflight-tier-two.functions.ts`,
+migration `20260615100559_*.sql`.
+
+**Persistence:** all results log to `public.preflight_checks` with
+check_type (fast/full/pipeline_run_override), status, tier_one_results /
+tier_two_results jsonb, overall_result, started_by, started_at,
+completed_at, override_used, override_timestamp, override_reason. Rows
+are immutable once finalised (trigger
+`preflight_checks_enforce_immutability`) and undeletable (trigger
+`preflight_checks_block_delete`) — full audit log.
+
+**Platform Not Verified gate:** the New Pipeline Run button is disabled
+and renders "Platform Not Verified" if the last Tier Two check is more
+than 24 hours old or did not pass. Users can override with an explicit
+typed reason; the override is persisted to preflight_checks
+(check_type='pipeline_run_override', override_used=true, timestamp,
+reason, user id) before /brief is opened. Files:
+`src/components/NewRunGateButton.tsx`,
+`src/lib/pipeline-gate.functions.ts`.
+
+**Escalation protocol:** when any Tier Two check fails the panel
+surfaces two clickable options — (1) Generate draft postponement
+communication (renders an on-brand draft naming the failed checks,
+copy-to-clipboard); (2) Present completed sessions instead (scrolls to
+the completed-sessions anchor on the dashboard). Each failed check
+displays the exact remediation instruction and estimated fix time from
+the central REMEDIATION_BY_ID registry — not a generic error message.
