@@ -162,6 +162,7 @@ export const runStage9 = createServerFn({ method: "POST" })
 
     // ===== Emotional Direction Test enforcement =====
     let failures = scanStage9ForGrievance(output);
+    console.log(`[EDT-GUARD] Stage 9 session=${data.sessionId} initial-scan failures=${failures.length} list=${JSON.stringify(failures)}`);
     let rewriteAttempts = 0;
     const MAX_REWRITES = 2;
 
