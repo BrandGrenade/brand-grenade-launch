@@ -646,17 +646,24 @@ export const runTierTwoFullCheck = createServerFn({ method: "POST" })
           async (emit) => {
             if (!primarySessionId || results[6].status !== "pass")
               throw new Error("Skipped: Stage 12 selection did not complete");
-            emit("Running Stage 13 (Brand Intelligence draft)...");
-            await drainGenerator(runStage13({ data: { sessionId: primarySessionId } }));
-            emit("Saving brand intelligence (auto)");
+            // Seed Brand Intelligence BEFORE Stage 13 — runStage13 throws
+            // "Brand Intelligence not supplied" if brand_intelligence is null.
+            emit("Seeding Brand Intelligence (auto, preflight fixture)");
             await saveBrandIntelligence({
               data: {
                 sessionId: primarySessionId,
                 brandIntelligence: {
-                  notes: "Preflight TestBrand — automated brand intelligence stub for integrity check.",
+                  brand_values: "Legend. Gregarious. Abundant.",
+                  tone_of_voice: "Confident. Cheeky. Witty.",
+                  asset_1: "Live Large — Strong and ownable.",
+                  asset_2: "Wrestle Responsibly — Strong and ownable.",
+                  asset_3: "TestBrand Hero Campaign — Present but weak.",
+                  notes: "Preflight TestBrand — automated brand intelligence fixture for integrity check.",
                 },
               },
             });
+            emit("Running Stage 13 (Brand Intelligence draft)...");
+            await drainGenerator(runStage13({ data: { sessionId: primarySessionId } }));
             emit("Running Stage 13B...");
             await drainGenerator(runStage13b({ data: { sessionId: primarySessionId } }));
             emit("Running Stage 14...");
