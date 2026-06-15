@@ -216,3 +216,28 @@ propositions sharing the same emotional mechanism). Each SMP is
 presented with foundation, proof of ownership, and creative territory,
 followed by a full-set ranking and a top-1–2 recommendation with
 strategic rationale. File: `src/lib/stage9-prompt.ts`.
+
+---
+
+## v2.2 — Stage 18 and 19 double-run investigation
+**Date:** June 2026
+**Stages:** Stage 18, Stage 19
+**Change:** Diagnostic confirmed Stage 18 is strictly user-triggered via the
+`handleRun` button click (`disabled={busy}` guard); the observed "double
+run" was either a user double-click or a component remount that hit the
+server-side cached short-circuit (`runStage18` returns the existing
+`stage_18_output` without re-calling Claude when present) — expected
+behaviour, no fix required. Stage 19 auto-triggers via `useEffect` once
+`stage_18_selected_detonation` lands, guarded by a `useRef` flag that
+resets on every component remount and could therefore re-fire before the
+first DB write to `stage_19_output` landed. Server-side `runStage19` is
+already idempotent (returns existing output if present), so the duplicate
+incurred zero Claude cost but appeared as two executions in the worker
+logs. Stage 19 hardened: the per-session autorun flag is now persisted in
+`sessionStorage` under `bg:stage19-autorun:<sessionId>`, so component
+remounts, parent re-renders, and StrictMode double-mounts can no longer
+fire a second auto-run for the same session. Combined with the P7
+`key={sessionId}` route-wrapper remount and the existing server-side
+cached short-circuit, Stage 19 is now triple-guarded against duplicate
+execution. Files: `src/routes/detonation.tsx`, `src/lib/stage18.functions.ts`,
+`src/lib/stage19.functions.ts`.
