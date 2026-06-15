@@ -292,14 +292,7 @@ function ThreeTruthCanvas() {
         },
       });
       // Route forward into the Phase 2 pipeline (stages render under /detonation).
-      // Do not await TanStack navigate here: in this flow the promise can remain
-      // pending during route transition, which prevents the fallback from firing
-      // and leaves the button stuck on "Saving…". Use the same hard navigation
-      // pattern already used by the Stage 13 → Phase 2 handoff.
-      if (typeof window !== "undefined") {
-        window.location.href = `/detonation?session=${encodeURIComponent(sessionId)}`;
-        return;
-      }
+      // Use the TanStack SPA transition; do not hard-reload from this route.
       await navigate({ to: "/detonation", search: { session: sessionId } });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to save brand intelligence");
