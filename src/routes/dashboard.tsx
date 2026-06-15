@@ -101,6 +101,7 @@ function Dashboard() {
       const { data } = await supabase
         .from("sessions")
         .select("id,brand_name,category,status,current_stage,created_at,updated_at,stage_1_output,stage_16_consulting_output,phase_2_status,stage_17_output,stage_22_output")
+        .eq("is_preflight_test", false)
         .order("updated_at", { ascending: false })
         .limit(100);
       if (!active) return;
@@ -117,6 +118,7 @@ function Dashboard() {
           const { data } = await supabase
             .from("sessions")
             .select("id,brand_name,category,status,current_stage,created_at,updated_at,stage_1_output,stage_16_consulting_output,phase_2_status,stage_17_output,stage_22_output")
+            .eq("is_preflight_test", false)
             .order("updated_at", { ascending: false })
             .limit(100);
           if (active) setSessions((data ?? []) as DbSession[]);
