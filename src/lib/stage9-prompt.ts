@@ -82,6 +82,10 @@ No two propositions in the set may share the same emotional mechanism. If two pr
 TASK
 Generate five to seven Single-Minded Propositions that have passed all disqualification filters, the Emotional Direction Test, the Reinterpretation Requirement, the Cliché Detection scan, and all six quality criteria. For each proposition present the following.
 
+OUTPUT FORMAT — STRICT
+Output ONLY the propositions, then the ranking, then the recommendation. Do NOT write any preamble, framing paragraph, methodology note, acknowledgement of the brief, commentary on what you detected or rewrote, or any explanation of how the propositions were derived. Do not reference grievance, the category's wrongs, or the Emotional Direction Test in the output. Begin the output with the first proposition heading. No preface. No meta. No apology. No "a note before…". Just the deliverable.
+
+
 1. The SMP. One sentence. Maximum eight words. The proposition itself stated plainly.
 2. The foundation. Which territory it comes from. Which truth — product, human, or cultural — it is grounded in. Which input was reinterpreted to generate this proposition and what the reinterpretation revealed. One sentence each.
 3. The proof of ownership. Why no named competitor can say this without self-implication. One sentence.

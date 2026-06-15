@@ -31,10 +31,31 @@ const STAGE_9_BANNED_PATTERNS: Array<{ pattern: RegExp; reason: string }> = [
   { pattern: /no guilt/i, reason: "banned phrase 'no guilt'" },
 ];
 
+// Strip any preamble/meta-commentary that appears before the first proposition
+// marker. Stage 9 must output ONLY the propositions + ranking + recommendation;
+// any preface text (e.g. "the brief arrives wearing a grievance…") would
+// otherwise let descriptive uses of banned words slip past the scan.
+function extractStage9PropositionRegion(text: string): string {
+  const markers: RegExp[] = [
+    /^\s*##\s+\S/m,
+    /^\s*\*?\*?1\.\s+/m,
+    /^\s*(SMP|Proposition)\s*1\b/im,
+  ];
+  let earliest = -1;
+  for (const re of markers) {
+    const m = text.match(re);
+    if (m && m.index !== undefined && (earliest === -1 || m.index < earliest)) {
+      earliest = m.index;
+    }
+  }
+  return earliest > 0 ? text.slice(earliest) : text;
+}
+
 function scanStage9ForGrievance(text: string): string[] {
+  const region = extractStage9PropositionRegion(text);
   const failures: string[] = [];
   for (const { pattern, reason } of STAGE_9_BANNED_PATTERNS) {
-    if (pattern.test(text)) failures.push(reason);
+    if (pattern.test(region)) failures.push(reason);
   }
   return failures;
 }
@@ -67,7 +88,11 @@ ${args.failures.map((r) => `  • ${r}`).join("\n")}
 MANDATORY REWRITE INSTRUCTION
 Regenerate the FULL Stage 9 deliverable (5–7 SMPs, ranking, recommendation) from the GIVING DIRECTION only. The proposition must stand on what the brand gives, adds, or restores — never on what the category took, denied, or made the audience earn. Reject any framing that requires the audience to feel wronged, deceived, cheated, managed, or owed permission before they feel the brand.
 
-Banned words and phrases (do not use any form): reward, earn/earned, deserve/deserved, apology/apologise, guilt/guilty, "you deserve", "you earned", "end of day", "day well spent", "treat yourself", "permission to", "no compromise", "no guilt".
+OUTPUT FORMAT — STRICT
+Output ONLY the propositions, then the ranking, then the recommendation. Do NOT write any preamble, framing paragraph, "a note before the propositions", methodology note, acknowledgement that the brief contained a grievance, or any explanation of what you detected, rejected, or rewrote. Do not mention the Emotional Direction Test, the rewrite, or the previously rejected output anywhere in your response. Begin your response with the first proposition heading. The reader must not be able to tell a rewrite occurred.
+
+Banned words and phrases (do not use any form, in any section, including ranking and recommendation): reward, earn/earned, deserve/deserved, apology/apologise, guilt/guilty, "you deserve", "you earned", "end of day", "day well spent", "treat yourself", "permission to", "no compromise", "no guilt".
+
 
 The previously rejected output (do NOT reproduce or paraphrase):
 
@@ -144,7 +169,9 @@ export const runStage9 = createServerFn({ method: "POST" })
       rewriteAttempts++;
       const statusMsg = `Emotional Direction Test caught grievance language (${failures.join(", ")}) — rewriting from the giving direction (attempt ${rewriteAttempts}/${MAX_REWRITES})...`;
       await setRetryStatus(data.sessionId, statusMsg);
-      yield { delta: `\n\n[EDT-GUARD] ${statusMsg}\n\n` };
+      // Status is communicated via retry_status (out-of-band). Do NOT yield
+      // an [EDT-GUARD] delta — the client-facing stream must contain only the
+      // final clean deliverable, with no hint that a rewrite occurred.
 
       const rewriteMessage = buildStage9RewriteMessage({
         originalUserMessage: userMessage,
