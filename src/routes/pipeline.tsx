@@ -1793,6 +1793,7 @@ function PipelineView() {
     stage2Loading ||
     stage3Loading ||
     stage4Loading ||
+    stage4bLoading ||
     stage5Loading ||
     stage6Loading ||
     stage7Loading ||
