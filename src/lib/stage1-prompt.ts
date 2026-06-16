@@ -57,13 +57,7 @@ Reject any output that could apply to multiple brands/categories without modific
 ═══════════════════════════════════════
 REQUIRED OUTPUT STRUCTURE — STRICT
 ═══════════════════════════════════════
-Output MUST follow this exact format. Use the exact headings.
-
-PIPELINE DATA HEADER
-BRIEF DEPTH LEVEL: LEVEL 1 / LEVEL 2 / LEVEL 3
-CATEGORY KNOWLEDGE CONFIDENCE: HIGH / MEDIUM / LOW
-BRIEF ELEMENTS PRESENT: [list confirmed elements]
-ASSUMPTIONS MADE: [list — or NONE]
+Output MUST follow this exact format. Use the exact headings. The output must begin directly with Section 1. Do not output any header block, metadata summary, or classification preamble before Section 1.
 
 ## Section 1 — Surface Request
 [max 2 sentences — what the client explicitly asks for]
