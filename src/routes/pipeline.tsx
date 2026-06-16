@@ -61,6 +61,7 @@ const STAGE_ID_TO_DB: Record<
   | "2"
   | "3"
   | "4"
+  | "4b"
   | "5"
   | "6"
   | "7"
