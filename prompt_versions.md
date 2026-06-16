@@ -317,7 +317,7 @@ now begins directly with Section 1 — Surface Request. File:
 
 ---
 
-## v2.4 — Stage 9 universal craft standard with SMP creative function classification
+## v2.5 — Stage 9 universal craft standard with SMP creative function classification
 **Date:** June 2026
 **Stage:** Stage 9
 **Change:** Replaced the Stage 9 craft standard with the final universal version.
@@ -333,7 +333,7 @@ carried forward to Stage 17. File: `src/lib/stage9-prompt.ts`.
 
 ---
 
-## v2.5 — Stage 9 craft standard addition
+## v2.6 — Stage 9 craft standard addition
 **Date:** June 2026
 **Stage:** Stage 9
 **Change:** Added the CRAFT STANDARD — LANGUAGE AND SENTENCE STRUCTURE
