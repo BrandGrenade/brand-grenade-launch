@@ -471,6 +471,7 @@ function PipelineView() {
       if (shouldClear("02")) setStage2Output(null);
       if (shouldClear("03")) setStage3Output(null);
       if (shouldClear("04")) setStage4Output(null);
+      if (shouldClear("04B")) setStage4bOutput(null);
       if (shouldClear("05")) setStage5Output(null);
       if (shouldClear("06")) setStage6Output(null);
       if (shouldClear("07")) setStage7Output(null);
