@@ -394,3 +394,24 @@ Files: `src/lib/stage4b-prompt.ts` (new), `src/lib/stage4b.functions.ts`
 > Note: This change was requested as v2.7, but v2.7 was already issued for
 > the Stage 2 core category promise map. Numbered v2.8 to preserve
 > sequential ordering.
+
+---
+
+## v2.9 — Stage 20 real scoring rubric replacing placeholder
+**Date:** June 2026
+**Stage:** Stage 20
+**Change:** Replaced the placeholder quality score logic in
+`src/lib/stage20-master-detonation-brief-prompt.ts` with a real BRIEF
+QUALITY ASSESSMENT rubric. The model must now score the brief against
+five dimensions (Emotional Clarity, Fame Invitation, Distinctive Asset
+Integration, Psychological Leverage, Creative Share of Voice Ambition)
+on a 1–10 scale, with concrete anchors at each end of the scale for
+every dimension. Briefs scoring below 40/50 composite must be rewritten
+before output — placeholder/fixed scores are explicitly prohibited and
+the score must reflect actual brief quality. Output format updated: the
+quality score block appears at the end of the brief using the exact
+labels Emotional Clarity, Fame Invitation, Distinctive Assets,
+Psychological Leverage, Creative SoV Ambition, COMPOSITE, and STATUS,
+with STATUS = PASS at 40+ or STATUS = REWRITE below 40 (naming every
+dimension under 7 with one sentence on what must be strengthened).
+File: `src/lib/stage20-master-detonation-brief-prompt.ts`.
