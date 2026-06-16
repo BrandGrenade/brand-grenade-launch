@@ -5,12 +5,16 @@ import { streamClaude } from "./claude.server";
 import { STAGE_5_SYSTEM_PROMPT, buildStage5UserMessage } from "./stage5-prompt";
 import { trimCMMForDownstream, trimSISForDownstream } from "./context-trim";
 import { countSections } from "./count-helpers";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { assertSessionOwner } from "@/lib/auth-helpers.server";
 
 const RunStage5Input = z.object({ sessionId: z.string().uuid() });
 
 export const runStage5 = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((input) => RunStage5Input.parse(input))
-  .handler(async function* ({ data }) {
+  .handler(async function* ({ data, context }) {
+    await assertSessionOwner(data.sessionId, context.userId);
     const { data: session, error: loadErr } = await supabaseAdmin
       .from("sessions")
       .select("brand_name, category, strategic_mode, stage_1_output, stage_2_output, stage_4_output, stage_5_output")

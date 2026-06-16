@@ -5,6 +5,8 @@ import { streamClaude, callClaude } from "./claude.server";
 import { STAGE_9_SYSTEM_PROMPT, buildStage9UserMessage } from "./stage9-prompt";
 
 import { countPropositions } from "./count-helpers";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { assertSessionOwner } from "@/lib/auth-helpers.server";
 
 const Input = z.object({ sessionId: z.string().uuid() });
 
@@ -104,8 +106,10 @@ Produce the complete Stage 9 deliverable now, from the giving direction, with ze
 }
 
 export const runStage9 = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((i) => Input.parse(i))
-  .handler(async function* ({ data }) {
+  .handler(async function* ({ data, context }) {
+    await assertSessionOwner(data.sessionId, context.userId);
     const { requireConfirmedSelection } = await import("./checkpoint-gate");
     await requireConfirmedSelection(data.sessionId, "B");
     const { data: session, error } = await supabaseAdmin

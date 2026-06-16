@@ -1,6 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { assertSessionOwner } from "@/lib/auth-helpers.server";
 
 const STALE_MS = 2 * 60 * 1000; // 2 minutes
 
@@ -9,10 +11,12 @@ const STALE_MS = 2 * 60 * 1000; // 2 minutes
  * stage runner so we can detect interruptions on resume.
  */
 export const beginStage = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d) =>
     z.object({ sessionId: z.string().uuid(), stageId: z.string().min(1) }).parse(d),
   )
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    await assertSessionOwner(data.sessionId, context.userId);
     await supabaseAdmin
       .from("sessions")
       .update({
@@ -30,8 +34,10 @@ export const beginStage = createServerFn({ method: "POST" })
  * mark it interrupted and surface the affected stage id.
  */
 export const detectInterruption = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d) => z.object({ sessionId: z.string().uuid() }).parse(d))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    await assertSessionOwner(data.sessionId, context.userId);
     const { data: row, error } = await supabaseAdmin
       .from("sessions")
       .select("stage_status, updated_at, status")

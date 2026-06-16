@@ -8,6 +8,8 @@ import {
   type SessionForStage16,
   type Stage16Format,
 } from "./stage16-sections";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { assertSessionOwner } from "@/lib/auth-helpers.server";
 
 const FormatSchema = z.enum(["agency", "consulting", "workshop"]);
 const Input = z.object({
@@ -38,8 +40,10 @@ function documentHeader(brand: string, category: string, format: Stage16Format):
 const DOCUMENT_FOOTER = `\n---\n\n*Brand Grenade Strategy Intelligence System*\n*Confidential*\n`;
 
 export const runStage16 = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((i) => Input.parse(i))
-  .handler(async function* ({ data }) {
+  .handler(async function* ({ data, context }) {
+    await assertSessionOwner(data.sessionId, context.userId);
     const { data: session, error } = await supabaseAdmin
       .from("sessions")
       .select("*")

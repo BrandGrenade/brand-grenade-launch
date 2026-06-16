@@ -8,16 +8,20 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { callClaude } from "@/lib/claude.server";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { assertSessionOwner } from "@/lib/auth-helpers.server";
 
 const MODEL = "claude-sonnet-4-5";
 
 // --- prepareThreeTruths --------------------------------------------------
 
 export const prepareThreeTruths = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((input: { sessionId: string }) =>
     z.object({ sessionId: z.string().uuid() }).parse(input),
   )
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    await assertSessionOwner(data.sessionId, context.userId);
     const { data: row, error } = await supabaseAdmin
       .from("sessions")
       .select(
@@ -105,6 +109,7 @@ Return JSON:
 // --- saveCulturalTruth ---------------------------------------------------
 
 export const saveCulturalTruth = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((input: { sessionId: string; text: string; confirm?: boolean }) =>
     z
       .object({
@@ -114,7 +119,8 @@ export const saveCulturalTruth = createServerFn({ method: "POST" })
       })
       .parse(input),
   )
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    await assertSessionOwner(data.sessionId, context.userId);
     const { error } = await supabaseAdmin
       .from("sessions")
       .update({
@@ -134,6 +140,7 @@ const assetSchema = z.object({
 });
 
 export const saveBrandIntelligence = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator(
     (input: {
       sessionId: string;
@@ -154,7 +161,8 @@ export const saveBrandIntelligence = createServerFn({ method: "POST" })
         })
         .parse(input),
   )
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    await assertSessionOwner(data.sessionId, context.userId);
     const baseUpdate = {
       brand_intel_type: data.type,
       brand_intel_confirmed: data.confirmed ?? false,
@@ -184,6 +192,7 @@ export const saveBrandIntelligence = createServerFn({ method: "POST" })
 // --- extractBrandGuidelinesFromPdf --------------------------------------
 
 export const extractBrandGuidelinesFromPdf = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((input: { sessionId: string; pdfBase64: string }) =>
     z
       .object({
@@ -192,7 +201,7 @@ export const extractBrandGuidelinesFromPdf = createServerFn({ method: "POST" })
       })
       .parse(input),
   )
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) throw new Error("ANTHROPIC_API_KEY is not configured");
 

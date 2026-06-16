@@ -18,6 +18,7 @@ import {
   type DocFormat,
   type SessionLike,
 } from "./document-generator.server";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 // Direct Anthropic call with 30s timeout + retry + fallback.
 // Used in place of the streaming callClaude here because each section
@@ -201,8 +202,9 @@ async function runGeneration(sessionId: string, format: DocFormat): Promise<void
 }
 
 export const generateDocument = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((i) => Input.parse(i))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const { sessionId, format, force } = data;
     const urlCol = URL_COLS[format];
     const statusCol = STATUS_COLS[format];

@@ -18,6 +18,8 @@ import {
   type Card,
   withPhase2Formatting,
 } from "./phase2-shared";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { assertSessionOwner } from "@/lib/auth-helpers.server";
 
 const STAGE18_SELECT = [
   "brand_name",
@@ -76,8 +78,10 @@ function buildStage18UserMessage(s: {
 const RunInput = z.object({ sessionId: z.string().uuid() });
 
 export const runStage18 = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((i) => RunInput.parse(i))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    await assertSessionOwner(data.sessionId, context.userId);
     const { requireConfirmedSelection } = await import("./checkpoint-gate");
     await requireConfirmedSelection(data.sessionId, "D");
     const { data: session, error } = await supabaseAdmin
@@ -123,8 +127,10 @@ export const runStage18 = createServerFn({ method: "POST" })
   });
 
 export const saveStage18 = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((i) => z.object({ sessionId: z.string().uuid(), output: z.string() }).parse(i))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    await assertSessionOwner(data.sessionId, context.userId);
     const { error } = await supabaseAdmin
       .from("sessions")
       .update({ stage_18_output: data.output, stage_18_error: null })
@@ -134,8 +140,10 @@ export const saveStage18 = createServerFn({ method: "POST" })
   });
 
 export const loadStage18 = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((i) => z.object({ sessionId: z.string().uuid() }).parse(i))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    await assertSessionOwner(data.sessionId, context.userId);
     const { data: row, error } = await supabaseAdmin
       .from("sessions")
       .select("stage_18_output")
@@ -155,8 +163,10 @@ const RetryInput = z.object({
 const COURAGE_REDIRECT_INSTRUCTION = `COURAGE REDIRECT ACTIVE: Generate a new candidate that names something the category has been unwilling to say. Push until it generates genuine strategic discomfort arising from truth not provocation.`;
 
 export const retryStage18 = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((i) => RetryInput.parse(i))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    await assertSessionOwner(data.sessionId, context.userId);
     const { requireConfirmedSelection } = await import("./checkpoint-gate");
     await requireConfirmedSelection(data.sessionId, "D");
     const { data: session, error } = await supabaseAdmin
@@ -213,6 +223,7 @@ export const retryStage18 = createServerFn({ method: "POST" })
 
 /** Save the human-selected Detonation and advance. */
 export const selectStage18Detonation = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((i) =>
     z.object({
       sessionId: z.string().uuid(),
@@ -220,7 +231,8 @@ export const selectStage18Detonation = createServerFn({ method: "POST" })
       detonationLine: z.string().min(1).optional(),
     }).parse(i),
   )
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    await assertSessionOwner(data.sessionId, context.userId);
     const { error } = await supabaseAdmin
       .from("sessions")
       .update({

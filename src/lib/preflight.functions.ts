@@ -6,12 +6,12 @@
 // Result is persisted to public.preflight_checks (check_type='fast') for audit.
 
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { STAGE_9_SYSTEM_PROMPT } from "@/lib/stage9-prompt";
 // Vite raw imports — bundled as strings at build time so the Worker can
 // statically inspect the route source for the Stage 17 navigation handler.
 import detonationCanvasSource from "@/routes/detonation_.canvas.tsx?raw";
 import detonationSource from "@/routes/detonation.tsx?raw";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 export type FastCheckId =
   | "db_connectivity"
