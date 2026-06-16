@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { MoreHorizontal, Grid2x2, FileText, Trash2, Zap } from "lucide-react";
 import { toast } from "sonner";
@@ -6,6 +6,11 @@ import { TopNav } from "@/components/TopNav";
 import { PreflightStatusBanner } from "@/components/PreflightStatusBanner";
 import { PreflightFullCheckPanel } from "@/components/PreflightFullCheckPanel";
 import { NewRunGateButton } from "@/components/NewRunGateButton";
+import {
+  SavedBriefsSection,
+  PENDING_BRIEF_STORAGE_KEY,
+  type SavedBrief,
+} from "@/components/SavedBriefsLibrary";
 import { supabase } from "@/integrations/supabase/client";
 import {
   DropdownMenu,
