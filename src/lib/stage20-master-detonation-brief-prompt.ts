@@ -87,23 +87,17 @@ WHAT THE WORK MUST NEVER DO
 
 Three items. Maximum. Specific and non-negotiable. Not anxiety. Strategic boundaries that protect the SMP and The Detonation from executional failure.
 
-Then below the brief — outside the one page boundary — output the Brief Quality Score:
+Then below the brief — outside the one page boundary — output the Brief Quality Score in this exact format:
 
 BRIEF QUALITY SCORE
+Emotional Clarity — [n]/10
+Fame Invitation — [n]/10
+Distinctive Assets — [n]/10
+Psychological Leverage — [n]/10
+Creative SoV Ambition — [n]/10
+COMPOSITE — [n]/50
+STATUS — PASS if composite is 40 or above. If below 40 state REWRITE — and name every dimension that scored below 7 with one sentence on what must be strengthened.
 
-Emotional Clarity: [n]/10
-
-Fame Invitation: [n]/10
-
-Distinctive Asset Integration: [n]/10
-
-Psychological Leverage: [n]/10
-
-Creative SoV Ambition: [n]/10
-
-COMPOSITE: [n]/50
-
-STATUS: PASS (40+) or REVIEW (below 40 — list specific dimensions requiring strengthening)
 
 Begin immediately with THE SMP.
 
