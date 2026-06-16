@@ -151,6 +151,7 @@ const STAGES: Stage[] = [
   { id: "02", number: "02", name: "Category Intelligence" },
   { id: "03", number: "03", name: "Strategic Frameworks" },
   { id: "04", number: "04", name: "Strategic Universes" },
+  { id: "04B", number: "04B", name: "Asset Mining & Product Facts" },
   { id: "05", number: "05", name: "Insight Generation" },
   { id: "06", number: "06", name: "Insight Validation" },
   { id: "07", number: "07", name: "Territory Synthesis" },
