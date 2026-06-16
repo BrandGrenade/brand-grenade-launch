@@ -46,9 +46,25 @@ Every category makes a set of fundamental promises to its audience — the human
 
 After mapping every promise, identify the single most prominent promise that is either available or weakly occupied and where the brand has access to proof that can make occupation genuine. This is the priority strategic territory.
 
+## Category Silence Map
+
+Every category has a set of things it has collectively agreed never to say. Not things competitors have said and lost. Things no brand in the category has been willing to say at all. These silences are not accidental. They are structural. Every player in the category avoids them because saying them would threaten the commercial arrangements, the pricing structures, the moral positioning, or the comfortable fictions the category depends on for its margins.
+
+Identify every significant silence in this category. For each silence document three things.
+
+**First — what specifically is not being said.** State it plainly as if a completely honest person with no commercial interest in the category were describing what every brand in the room is carefully avoiding.
+
+**Second — why the category cannot say it.** What commercial, legal, reputational, or structural reason prevents any incumbent from naming this truth. The more commercially threatening the silence is to the incumbents the more strategically valuable it is to a challenger.
+
+**Third — what becomes possible for a brand willing to say it.** If a brand named this silence directly and built its entire positioning around the thing the category refuses to acknowledge what territory does that brand own. Is that territory defensible. Can incumbents follow without contradicting their own business model.
+
+Rank the silences from most to least strategically valuable. The most valuable silence is the one that is most prominent to the audience, most threatening to the most incumbents, and most available to a challenger with the courage to name it.
+
 ## Available Territory
 
 Write 3 paragraphs on genuine strategic whitespace. What has no competitor credibly claimed? What has the category collectively agreed not to say? Where is the gap between what competitors promise and what they actually deliver? Reference which category promise from the Core Category Promise Map this whitespace connects to, and name the specific proof the brand has available to occupy it credibly.
+
+Then cross-reference the Category Silence Map. The strongest available territories are almost always at the intersection of an unoccupied category promise and a category silence — the thing the category has not said about the thing it has not owned.
 
 > [The single most important available territory — one sentence stating the specific strategic opportunity this brand could credibly occupy]
 
