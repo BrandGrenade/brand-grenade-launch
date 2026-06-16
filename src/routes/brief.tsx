@@ -270,6 +270,39 @@ function BriefIntake() {
 
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  function loadSavedBrief(b: SavedBrief) {
+    setBrand(b.brand_name);
+    setCategory(b.category);
+    setBriefTitle((prev) => prev || b.brand_name);
+    setValues((prev) => ({ ...prev, s1_core: b.brief_text }));
+    setOpenMap((m) => ({ ...m, "1": true }));
+    toast.success(`Loaded "${b.brand_name}" — review and click Submit when ready`);
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }
+
+  async function handleSaveBrief() {
+    if (saving) return;
+    if (brand.trim().length < 2) {
+      toast.error("Add a brand name before saving");
+      return;
+    }
+    setSaving(true);
+    const briefText = composeBriefText();
+    const saved = await saveBrief({
+      brandName: brand.trim(),
+      category: category.trim() || "Unspecified",
+      briefText,
+    });
+    setSaving(false);
+    if (saved) {
+      toast.success(`Saved "${saved.brand_name}" to your brief library`);
+    }
+  }
+
 
   // Section completion (any field has 10+ chars)
   const completion = useMemo(() => {
