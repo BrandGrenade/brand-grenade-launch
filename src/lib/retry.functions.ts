@@ -249,6 +249,7 @@ const stageOrder: StageId[] = [
   "2",
   "3",
   "4",
+  "4b",
   "5",
   "6",
   "7",
