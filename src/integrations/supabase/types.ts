@@ -76,6 +76,33 @@ export type Database = {
           },
         ]
       }
+      saved_briefs: {
+        Row: {
+          brand_name: string
+          brief_id: string
+          brief_text: string
+          category: string
+          created_at: string
+          user_id: string
+        }
+        Insert: {
+          brand_name: string
+          brief_id?: string
+          brief_text?: string
+          category?: string
+          created_at?: string
+          user_id: string
+        }
+        Update: {
+          brand_name?: string
+          brief_id?: string
+          brief_text?: string
+          category?: string
+          created_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       sessions: {
         Row: {
           brand_audience_relationship: string | null

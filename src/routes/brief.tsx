@@ -1,15 +1,23 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronDown } from "lucide-react";
+import { toast } from "sonner";
 import { TopNav } from "@/components/TopNav";
 import { createSession } from "@/lib/stage1.functions";
 import { getDevModeFromStorage } from "@/lib/dev-mode";
+import {
+  SavedBriefsPicker,
+  saveBrief,
+  PENDING_BRIEF_STORAGE_KEY,
+  type SavedBrief,
+} from "@/components/SavedBriefsLibrary";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+
 
 export const Route = createFileRoute("/brief")({
   component: BriefIntake,
@@ -263,6 +271,55 @@ function BriefIntake() {
 
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  function loadSavedBrief(b: SavedBrief) {
+    setBrand(b.brand_name);
+    setCategory(b.category);
+    setBriefTitle((prev) => prev || b.brand_name);
+    setValues((prev) => ({ ...prev, s1_core: b.brief_text }));
+    setOpenMap((m) => ({ ...m, "1": true }));
+    toast.success(`Loaded "${b.brand_name}" — review and click Submit when ready`);
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }
+
+  async function handleSaveBrief() {
+    if (saving) return;
+    if (brand.trim().length < 2) {
+      toast.error("Add a brand name before saving");
+      return;
+    }
+    setSaving(true);
+    const briefText = composeBriefText();
+    const saved = await saveBrief({
+      brandName: brand.trim(),
+      category: category.trim() || "Unspecified",
+      briefText,
+    });
+    setSaving(false);
+    if (saved) {
+      toast.success(`Saved "${saved.brand_name}" to your brief library`);
+    }
+  }
+
+  // Consume any brief queued from the dashboard's Saved Briefs library.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const raw = sessionStorage.getItem(PENDING_BRIEF_STORAGE_KEY);
+    if (!raw) return;
+    sessionStorage.removeItem(PENDING_BRIEF_STORAGE_KEY);
+    try {
+      const b = JSON.parse(raw) as SavedBrief;
+      if (b && b.brand_name) loadSavedBrief(b);
+    } catch {
+      /* ignore */
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+
 
   // Section completion (any field has 10+ chars)
   const completion = useMemo(() => {
@@ -425,8 +482,14 @@ function BriefIntake() {
           </HeaderField>
         </div>
 
+        {/* LOAD SAVED BRIEF */}
+        <div className="mt-8">
+          <SavedBriefsPicker onSelect={loadSavedBrief} />
+        </div>
+
         {/* SECTION CARDS */}
         <form onSubmit={handleSubmitSections} className="mt-8" noValidate>
+
           <div className="flex flex-col gap-4">
             {SECTIONS.map((s) => (
               <SectionCard
@@ -559,21 +622,41 @@ function BriefIntake() {
             </div>
           </div>
 
-          {/* SUBMIT */}
-          <button
-            type="submit"
-            disabled={!canSubmitSections || submitting}
-            className="mt-6 inline-flex h-[52px] w-full items-center justify-center rounded-md text-[16px] transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-            style={{
-              backgroundColor: canSubmitSections ? "#D4924A" : "var(--color-border)",
-              color: canSubmitSections ? "#0A0A0A" : "var(--color-text-tertiary)",
-              fontWeight: 600,
-              cursor: canSubmitSections && !submitting ? "pointer" : "not-allowed",
-              opacity: submitting ? 0.7 : 1,
-            }}
-          >
-            {submitting ? "Submitting…" : "Submit Brief to Strategy Engine →"}
-          </button>
+          {/* SUBMIT + SAVE */}
+          <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+            <button
+              type="submit"
+              disabled={!canSubmitSections || submitting}
+              className="inline-flex h-[52px] flex-1 items-center justify-center rounded-md text-[16px] transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+              style={{
+                backgroundColor: canSubmitSections ? "#D4924A" : "var(--color-border)",
+                color: canSubmitSections ? "#0A0A0A" : "var(--color-text-tertiary)",
+                fontWeight: 600,
+                cursor: canSubmitSections && !submitting ? "pointer" : "not-allowed",
+                opacity: submitting ? 0.7 : 1,
+              }}
+            >
+              {submitting ? "Submitting…" : "Submit Brief to Strategy Engine →"}
+            </button>
+            <button
+              type="button"
+              onClick={handleSaveBrief}
+              disabled={!canSubmitSections || saving}
+              className="inline-flex h-[52px] items-center justify-center rounded-md px-6 text-[15px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background sm:w-auto"
+              style={{
+                border: "1px solid #D4924A",
+                color: canSubmitSections ? "#D4924A" : "var(--color-text-tertiary)",
+                backgroundColor: "transparent",
+                fontWeight: 600,
+                cursor: canSubmitSections && !saving ? "pointer" : "not-allowed",
+                opacity: saving ? 0.7 : 1,
+              }}
+              title="Save this brief to your library without starting a pipeline run"
+            >
+              {saving ? "Saving…" : "Save Brief"}
+            </button>
+          </div>
+
           <p
             className="text-body-sm mt-3 text-center"
             style={{ color: "#5A5652" }}

@@ -415,3 +415,27 @@ Psychological Leverage, Creative SoV Ambition, COMPOSITE, and STATUS,
 with STATUS = PASS at 40+ or STATUS = REWRITE below 40 (naming every
 dimension under 7 with one sentence on what must be strengthened).
 File: `src/lib/stage20-master-detonation-brief-prompt.ts`.
+
+---
+
+## v3.0 — Saved Briefs library (UX addition)
+**Date:** June 2026
+**Stage:** Stage 1 / Dashboard (platform UX, no prompt changes)
+**Change:** Added a Saved Briefs library for pre-written briefs ready to
+activate in one click. Three components: (1) **Save Brief** button on the
+Stage 1 brief screen alongside Submit — persists brand name, category,
+composed brief text, and saved date to the new `saved_briefs` Supabase
+table without starting a pipeline run; (2) **Saved Briefs section on
+the dashboard** — cards showing brand name, category, and date saved,
+each with Load Brief and Delete actions; Load Brief opens the Stage 1
+brief screen with the saved brief pre-populated and ready to submit;
+(3) **Load Saved Brief picker on Stage 1** above the brief input fields
+— expands the user's saved briefs library and pre-populates brand,
+category, and brief text instantly on selection. New table
+`public.saved_briefs` (brief_id, user_id, brand_name, category,
+brief_text, created_at) with RLS scoped to `auth.uid()` for view,
+insert, update, and delete. No interrogation, no synthesis, no approval
+flow — a simple save-and-load mechanism for demo readiness. Files:
+`src/components/SavedBriefsLibrary.tsx` (new), `src/routes/brief.tsx`,
+`src/routes/dashboard.tsx`, migration creating `public.saved_briefs`.
+

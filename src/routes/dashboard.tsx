@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { MoreHorizontal, Grid2x2, FileText, Trash2, Zap } from "lucide-react";
 import { toast } from "sonner";
@@ -6,6 +6,11 @@ import { TopNav } from "@/components/TopNav";
 import { PreflightStatusBanner } from "@/components/PreflightStatusBanner";
 import { PreflightFullCheckPanel } from "@/components/PreflightFullCheckPanel";
 import { NewRunGateButton } from "@/components/NewRunGateButton";
+import {
+  SavedBriefsSection,
+  PENDING_BRIEF_STORAGE_KEY,
+  type SavedBrief,
+} from "@/components/SavedBriefsLibrary";
 import { supabase } from "@/integrations/supabase/client";
 import {
   DropdownMenu,
@@ -74,10 +79,18 @@ function derivePhase2ButtonState(s: DbSession): Phase2ButtonState {
 }
 
 function Dashboard() {
+  const navigate = useNavigate();
   const [sessions, setSessions] = useState<DbSession[]>([]);
   const [loading, setLoading] = useState(true);
   const [pendingDelete, setPendingDelete] = useState<DbSession | null>(null);
   const [deleting, setDeleting] = useState(false);
+
+  const handleLoadSavedBrief = (b: SavedBrief) => {
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem(PENDING_BRIEF_STORAGE_KEY, JSON.stringify(b));
+    }
+    navigate({ to: "/brief" });
+  };
 
   const handleDelete = async () => {
     if (!pendingDelete) return;
@@ -188,6 +201,8 @@ function Dashboard() {
               <SessionsTable sessions={sessions} onRequestDelete={setPendingDelete} />
             )}
           </div>
+
+          <SavedBriefsSection onLoad={handleLoadSavedBrief} />
         </div>
       </main>
 
