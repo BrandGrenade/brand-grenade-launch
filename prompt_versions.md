@@ -345,3 +345,24 @@ sentence structure, deliberate opening), and the Language Benchmark
 (half-second pause, unexpected word usage, reader completion). The
 greatest propositions standard is now explicit in the prompt. File:
 `src/lib/stage9-prompt.ts`.
+
+---
+
+## v2.7 — Stage 2 core category promise mapping with single word ownership classification
+**Date:** June 2026
+**Stage:** Stage 2
+**Change:** Added the CORE CATEGORY PROMISE MAP section to the Stage 2 system
+prompt. Inserted after Overcrowded Territories and before Available Territory.
+Introduces a four-step mapping process (Occupancy, Strength of ownership,
+Availability, Proof gap) and a three-level ownership classification —
+Level one (Word ownership: brand and a single word have merged, e.g. HiLux/
+unbreakable, Volvo/safety, FedEx/overnight; cannot be challenged directly),
+Level two (Claimed with proof), Level three (Claimed without proof).
+Availability states are Owned, Weakly occupied, Available. The Available
+Territory section now references which category promise the identified
+whitespace connects to and what proof the brand has available to occupy it
+credibly. File: `src/lib/stage2-prompt.ts`.
+
+> Note: This change was requested as v2.6, but v2.6 was already issued for
+> the Stage 9 craft standard addition. Numbered v2.7 to preserve sequential
+> ordering.
