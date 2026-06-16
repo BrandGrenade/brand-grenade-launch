@@ -439,3 +439,21 @@ flow — a simple save-and-load mechanism for demo readiness. Files:
 `src/components/SavedBriefsLibrary.tsx` (new), `src/routes/brief.tsx`,
 `src/routes/dashboard.tsx`, migration creating `public.saved_briefs`.
 
+
+---
+
+## v3.1 — Stage 6 Unexpected Behaviour Filter addition
+**Date:** June 2026
+**Stage:** Stage 6
+**Change:** Added a mandatory UNEXPECTED BEHAVIOUR FILTER to the Stage 6
+insight validation system prompt. Every insight classified as a human
+truth must now pass an additional test before being validated: "Would
+a smart, self-aware person in this audience read this insight and say
+— I never thought of it that way." Insights producing revelation
+(genuine human truths) are validated; insights producing only
+recognition (category observations dressed as human truths) are
+rejected and returned to Stage 5 for regeneration from a deeper angle
+on the same territory. Each insight must be documented as PASSED
+UNEXPECTED BEHAVIOUR FILTER or FAILED — CATEGORY OBSERVATION with one
+sentence of specific reasoning for every failed insight. File:
+`src/lib/stage6-prompt.ts`.
