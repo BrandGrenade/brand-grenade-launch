@@ -56,31 +56,49 @@ Every proposition generated must be measured against the following six criteria.
 5. Addresses a core category promise. The proposition must take a position on what this category is fundamentally for. Not what this brand does differently. What this category means and what this brand believes about that meaning.
 6. Short, well written, and immediately articulate. Maximum eight words. Every word earns its place. It lands on first reading. It is the kind of line someone repeats to the person next to them. If it requires punctuation beyond a full stop it is too complicated. If a senior creative director would not fight for it regenerate it.
 
-CRAFT STANDARD — LANGUAGE AND SENTENCE STRUCTURE
+CRAFT STANDARD — LANGUAGE, SENTENCE STRUCTURE, AND CREATIVE FUNCTION
 
-Every SMP must pass four craft questions before being presented to the human. These are applied after all six quality criteria are met. A proposition that passes all six criteria but fails any craft question must be rewritten at the language level while preserving the strategic idea.
+Every SMP must meet four craft standards before being presented to the human. These standards are applied after all six quality criteria are satisfied. Meeting the quality criteria is the strategic floor. Meeting the craft standards is the creative ceiling. A proposition that satisfies all quality criteria but fails any craft standard must be rewritten at the language level while preserving the strategic idea underneath.
 
-Question one — Is it the sharpest possible expression of this idea. Every word must be load-bearing. If any word can be removed without loss remove it. If any word can be replaced with a more precise word replace it. Stop only when every word is irreplaceable.
+Craft Standard One — Sharpness. Every word must be load-bearing and irreplaceable. Test each word by removing it. If the proposition loses nothing the word is cut. Test each word by replacing it with a more precise alternative. If a better word exists use it. The proposition is sharp when no word can be removed or improved without loss.
 
-Question two — Is it the crispest possible expression of this idea. It must land whole on first reading for anyone in the room without requiring a second pass. No subordinate clauses. No qualifications. If a person who has never seen the brief needs it explained it is not crisp. Rewrite until no explanation is needed.
+Craft Standard Two — Crispness. The proposition must land whole on first reading without requiring a second pass. No subordinate clauses. No qualifications embedded in the line. The proposition is crisp when a person who has never encountered the brief understands it immediately and feels something before they have time to reason about whether they agree.
 
-Question three — Is it interesting. It must contain at least one element the reader did not anticipate. An unexpected subject. A verb used in a way the category has never used it. A deliberate grammatical subversion. A word used with such unexpected precision it becomes extraordinary. There must be a half-second pause between reading and comprehension — not confusion but productive surprise. If the line is immediately and completely transparent with no pause it is correct but not interesting. Rewrite until the pause exists.
+Craft Standard Three — Interest. The proposition must contain at least one element the reader did not anticipate. This can be an unexpected subject, a verb used in a way the category has never used it, a deliberate grammatical subversion, or an ordinary word deployed with such unexpected precision that it becomes extraordinary. The signal that a proposition is interesting is a half-second pause between reading and comprehension — not confusion, which means the line failed, but productive surprise, which means the line succeeded. A proposition that is immediately and completely transparent produces no pause. It may be correct. It is not interesting. Rewrite until the pause exists.
 
-Question four — Does it create category space and consumer mindset attraction simultaneously. Category space means no named competitor can say it without self-implication. Consumer mindset attraction means it pulls the right person toward the brand with conviction while making the wrong person feel it is not for them. If it could be for everyone it is for no one. Rewrite until the answer to who is this for is a specific human being not a demographic.
+Craft Standard Four — Polarity. The proposition must attract the right person with conviction while making the wrong person feel it is not addressed to them. A proposition that could resonate with everyone resonates with no one at the level required to build a brand. The proposition is polar when the answer to who feels this was written specifically for them is a specific observable human being and not a demographic description or a general audience.
 
 LANGUAGE REQUIREMENTS
 
-Every word must be interrogated before finalising. Replace any word that appears in a competitor brief without modification. Replace any word that sounds like it came from a strategy document. Replace any word that is an advertising cliché. What remains must be language that feels genuinely new in this category.
+Before finalising any proposition interrogate every word against three tests. First — could this word appear unmodified in any competitor brief in this category. If yes replace it. Second — does this word belong to the vocabulary of strategy documents rather than human speech. If yes replace it. Third — is this word a worn advertising construct that has lost its ability to create meaning. If yes replace it. What remains after these three tests must be language that feels genuinely new in this category and genuinely true to the human being it addresses.
 
-The sentence structure must contain at least one unexpected element. An unexpected subject. A verb used in a way it has never been used in this category before. A deliberate grammatical subversion that creates productive dissonance. If the sentence structure is entirely conventional the line has not found its expression. Rewrite the same idea in five structurally different ways and select the one that creates the most productive surprise.
+The sentence structure of every proposition must contain at least one unexpected element. Generate the same strategic idea in five structurally different sentence forms before selecting. The selected form must be the one that creates the greatest productive surprise on first reading while remaining immediately comprehensible on second reading.
 
-Every line must leave one deliberate opening. One unspecified thing the reader must complete with their own experience. The completion invitation is not vagueness. It is precision about what to leave open. The reader who completes the line owns it.
+Every proposition must contain one deliberate opening — one unspecified element the reader must complete with their own experience, their own life, their own version of the truth the proposition names. This is not vagueness. It is the most precise form of communication available because the reader who completes the proposition makes it their own and cannot forget it.
 
-THE LANGUAGE BENCHMARK
+SMP CREATIVE FUNCTION CLASSIFICATION
 
-The quality standard for language craft is a line that a senior creative director would fight for — not because it is strategically correct but because the words themselves are doing something unexpected. The test is this. Read the proposition aloud. Does it create a half-second pause before comprehension. Does it use at least one word in a way this category has never used it before. Does it leave something for the reader to complete with their own experience. If all three answers are yes the line has found its language. If any answer is no rewrite the expression until it does.
+After generating and refining every proposition classify it against one of two creative functions. This classification is presented alongside each proposition and governs how the proposition is used in Phase 2.
 
-The greatest propositions in advertising history are remembered not because they said the right thing but because they said it in a way nobody had said it before. That is the standard every SMP must reach before being presented to the human.
+Classification one — SELF-EXECUTING. The proposition is already written at the level of a consumer-facing idea. It could run as a campaign line, appear on a poster, or be repeated by a person in conversation without translation. It stimulates the creative mind directly. A self-executing proposition makes Phase 2 Detonation a creative amplification exercise — finding the most powerful expression of an idea that is already alive.
+
+Classification two — PLATFORM. The proposition is a strategic platform that names a territory or a truth but requires a creative idea to become alive in the world. It is strategically precise and competitively defensible but does not yet stimulate creative work on its own. A platform proposition makes Phase 2 Detonation a creative activation exercise — finding the idea that makes the strategy explosive and turns a strategic statement into something a creative director fights for.
+
+Neither classification is superior. A platform proposition that generates an extraordinary detonation in Phase 2 is more commercially powerful than a self-executing proposition that generates mediocre creative work. The classification simply determines what Phase 2 must achieve.
+
+PHASE 2 DETONATION INSTRUCTION
+
+For every proposition classified as PLATFORM the following instruction is recorded alongside the classification and carried forward to Stage 17.
+
+This proposition is a strategic platform. Phase 2 Detonation must find the creative idea that makes this platform explosive in the world. The detonation is not a rephrasing of the proposition. It is the specific thought that makes the proposition impossible to ignore — the idea that spreads through culture, compounds in value with every execution, and makes every dollar of media work harder. The detonation must do what the proposition alone cannot do — give creative teams something to make.
+
+For every proposition classified as SELF-EXECUTING the following instruction is recorded.
+
+This proposition is already operating at the creative level. Phase 2 Detonation must amplify and extend it — finding the executional idea that makes an already strong line feel inevitable in the world. The detonation must not replace or reframe the proposition. It must make it more alive.
+
+THE CRAFT BENCHMARK
+
+The craft benchmark is a proposition that a senior creative director would fight for not because it is strategically defensible but because the words themselves are doing something no words in this category have done before. The test is three questions applied in sequence. Does the proposition create a half-second pause before comprehension. Does it use at least one word in a way this category has never used it. Does it leave something for the reader to complete with their own experience. All three must be yes before the proposition is presented to the human.
 
 CLICHÉ DETECTION — MANDATORY PRE-OUTPUT SCAN
 Before presenting any proposition to the human run a mandatory cliché detection scan. The scan checks every proposition against the following categories of worn language and familiar constructs.
