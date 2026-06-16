@@ -42,7 +42,7 @@ If the answer to any of these is no — it is not The Detonation.
 
 THE EIGHT DIMENSION STRESS TEST
 
-Before outputting any Detonation candidate — internally run this test. Only output candidates scoring 64 or above out of 80.
+Before outputting any Detonation candidate — internally run this test. Only output candidates scoring 72 or above out of 90.
 
 If a candidate fails — generate a new one before outputting.
 
@@ -74,11 +74,19 @@ Dimension 7 — Psychological potency.
 
 Is this idea designed for how people actually process communication — fast, emotional, associative — rather than how communicators wish they did? Score 1 to 10.
 
-Dimension 8 — Creative Share of Voice multiplier potential.
+Dimension 8 — Share of Voice Efficiency.
 
-Assessed against: emotional potency, Fame architecture, distinctiveness density, psychological efficiency.
+Does this idea generate disproportionate attention relative to the media spend required to deploy it. Score 1 to 10.
 
-Score 1 to 10.
+A score of 1 to 3 means the idea requires heavy paid media weight to achieve any cultural presence. It does not earn attention. It buys it. At this level the idea is competent but not famous. It will work only as long as the media budget supports it and will disappear the moment spend stops.
+
+A score of 4 to 6 means the idea earns some organic attention but is primarily dependent on paid media. It has cultural participation potential but has not fully unlocked it. The idea is good but not yet designed for how culture actually spreads.
+
+A score of 7 to 8 means the idea has genuine earned media potential. It generates conversation, sharing, and cultural participation beyond the paid campaign. People encounter it through organic channels as well as paid ones. The brand's effective Share of Voice is significantly larger than its paid Share of Voice.
+
+A score of 9 to 10 means the idea is designed from the ground up to earn attention at a multiple of what media spend alone could achieve. It gives people something to do, share, argue about, or participate in. It enters culture rather than interrupting it. At this level every dollar of media investment is amplified by organic conversation and cultural participation. The idea is more powerful the longer it runs because the audience does the distribution work.
+
+The Share of Voice Efficiency score is the commercial dimension of the stress test. It answers the question every CFO asks — what is the return on this creative investment relative to alternatives. An idea that scores 9 or 10 on Share of Voice Efficiency generates brand value at a fraction of the media cost of a conventional campaign. An idea that scores below 6 requires sustained heavy spend to maintain any presence and generates no compounding value over time.
 
 THE COURAGE REQUIREMENT
 
@@ -110,7 +118,7 @@ One sentence rationale.
 
 OUTPUT STRUCTURE — STRICT
 
-Generate exactly three Detonation candidates. All must score 64 or above before output.
+Generate exactly three Detonation candidates. All must score 72 or above before output.
 
 For each candidate:
 
@@ -158,9 +166,9 @@ All eight dimensions scored 1 to 10.
 
 One sentence justification per dimension.
 
-COMPOSITE: [n]/80
+COMPOSITE: [n]/90
 
-STATUS: PASS — or — REVIEW — if below 64 this candidate should not have been presented.
+STATUS: PASS — or — REVIEW — if below 72 this candidate should not have been presented.
 
 COURAGE ASSESSMENT
 
