@@ -79,10 +79,18 @@ function derivePhase2ButtonState(s: DbSession): Phase2ButtonState {
 }
 
 function Dashboard() {
+  const navigate = useNavigate();
   const [sessions, setSessions] = useState<DbSession[]>([]);
   const [loading, setLoading] = useState(true);
   const [pendingDelete, setPendingDelete] = useState<DbSession | null>(null);
   const [deleting, setDeleting] = useState(false);
+
+  const handleLoadSavedBrief = (b: SavedBrief) => {
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem(PENDING_BRIEF_STORAGE_KEY, JSON.stringify(b));
+    }
+    navigate({ to: "/brief" });
+  };
 
   const handleDelete = async () => {
     if (!pendingDelete) return;
