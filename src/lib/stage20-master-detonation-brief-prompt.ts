@@ -24,19 +24,20 @@ This brief must contain everything a creative team needs to start making great w
 
 Written in the voice of a senior creative director addressing the most talented team they have ever worked with. Direct. Demanding. Specific. No hedging. No softening.
 
-THE BRIEF QUALITY STANDARD
+BRIEF QUALITY ASSESSMENT — MANDATORY BEFORE OUTPUT
 
-Before outputting — internally assess the brief against five dimensions. Only output the brief if the composite score is 40 or above out of 50. If below 40 — rewrite the specific dimensions before outputting.
+Before outputting the brief assess it against five dimensions. Score each dimension 1 to 10. Only output the brief if the composite score is 40 or above out of 50. If the composite is below 40 identify the specific failing dimensions and rewrite those sections of the brief before outputting. Never output a brief that scores below 40. Never output a placeholder score. The score must reflect the actual quality of the brief being assessed.
 
-Emotional clarity — does it specify the precise emotional response required with enough specificity that a creative team can design for it? Not a general positive feeling. A specific named emotional state. Score 1 to 10.
+Dimension one — Emotional Clarity. Does the brief specify the precise emotional response required from the audience. Not a general positive feeling. A specific named emotional state the audience must leave with after encountering the work. A brief that says the audience should feel good scores 1. A brief that names the precise emotional state — the half-second of recognition followed by relief, the quiet vindication of being seen accurately — scores 9 or 10.
 
-Fame invitation — does it contain a specific cultural tension or human truth that gives creative teams permission to make work designed to generate cultural conversation beyond the paid campaign? Score 1 to 10.
+Dimension two — Fame Invitation. Does the brief contain a specific cultural tension or human truth that gives creative teams permission to make work designed to generate cultural conversation beyond the paid campaign. A brief built entirely on product features has no fame invitation. A brief built on a human truth the category has never named has a high fame invitation. Score based on how much creative latitude the brief creates for work that earns attention rather than buying it.
 
-Distinctive asset integration — does it specify exactly which brand assets must appear in every execution and how they should be deployed to build memory structures? Score 1 to 10.
+Dimension three — Distinctive Asset Integration. Does the brief specify exactly which brand assets must appear in every execution and how they should be deployed to build memory structures over time. Vague references to brand guidelines score low. Specific instructions on how a named asset should function in the work — what it should make the audience feel, what it should never do, how it connects to the proposition — score high.
 
-Psychological leverage — does it identify the specific way this work must operate on how people actually process communication? Score 1 to 10.
+Dimension four — Psychological Leverage. Does the brief identify the specific way this work must operate on how people actually process communication. People process communication fast, emotionally, and associatively — not rationally and sequentially. A brief that instructs creative teams to argue a case scores low. A brief that identifies the specific emotional trigger, the precise moment of recognition, and the associative connection the work must create scores high.
 
-Creative Share of Voice ambition — does it set a specific ambition expressed as the multiplier this work is designed to achieve above average category creative quality? Score 1 to 10.
+Dimension five — Creative Share of Voice Ambition. Does the brief set a specific ambition for the quality multiplier this work is designed to achieve above average category creative quality. A brief with no stated ambition scores 1. A brief that names a specific standard — the work must operate at the level of the most famous campaign this category has ever produced — and explains why that standard is achievable given the proposition and the territory scores 9 or 10.
+
 
 THE BRIEF STRUCTURE — ONE PAGE MAXIMUM
 
