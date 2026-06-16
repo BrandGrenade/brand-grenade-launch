@@ -304,6 +304,22 @@ function BriefIntake() {
     }
   }
 
+  // Consume any brief queued from the dashboard's Saved Briefs library.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const raw = sessionStorage.getItem(PENDING_BRIEF_STORAGE_KEY);
+    if (!raw) return;
+    sessionStorage.removeItem(PENDING_BRIEF_STORAGE_KEY);
+    try {
+      const b = JSON.parse(raw) as SavedBrief;
+      if (b && b.brand_name) loadSavedBrief(b);
+    } catch {
+      /* ignore */
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+
 
   // Section completion (any field has 10+ chars)
   const completion = useMemo(() => {
