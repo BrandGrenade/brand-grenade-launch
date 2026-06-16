@@ -1629,6 +1629,11 @@ function PipelineView() {
         (stage4Loading
           ? "Mapping the Strategic Universes — this can take 30–90 seconds…"
           : "Awaiting output."),
+      "04B":
+        (stage4bOutput && sanitize(stage4bOutput)) ??
+        (stage4bLoading
+          ? "Mining distinctive assets and product facts — this can take 30–90 seconds…"
+          : "Awaiting output."),
       "05":
         (stage5Output && sanitize(stage5Output)) ??
         (stage5Loading
