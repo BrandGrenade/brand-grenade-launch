@@ -13,6 +13,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import {
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
   buildHtmlDocument,
   getSectionDefs,
   type DocFormat,
@@ -201,8 +202,9 @@ async function runGeneration(sessionId: string, format: DocFormat): Promise<void
 }
 
 export const generateDocument = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((i) => Input.parse(i))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const { sessionId, format, force } = data;
     const urlCol = URL_COLS[format];
     const statusCol = STATUS_COLS[format];

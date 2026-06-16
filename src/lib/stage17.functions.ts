@@ -12,6 +12,8 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { callClaude } from "./claude.server";
 import { STAGE_17_DETONATION_TERRITORY_PROMPT } from "./stage17-detonation-territory-prompt";
 import {
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { assertSessionOwner } from "@/lib/auth-helpers.server";
   appendRedirect,
   splitCards,
   joinCards,
@@ -106,8 +108,10 @@ The answer must be specific to the SMP as written. Not generic creative strategy
 const RunInput = z.object({ sessionId: z.string().uuid() });
 
 export const runStage17 = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((i) => RunInput.parse(i))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    await assertSessionOwner(data.sessionId, context.userId);
     const { data: session, error } = await supabaseAdmin
       .from("sessions")
       .select(STAGE17_SELECT)
@@ -143,8 +147,10 @@ export const runStage17 = createServerFn({ method: "POST" })
   });
 
 export const saveStage17 = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((i) => z.object({ sessionId: z.string().uuid(), output: z.string() }).parse(i))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    await assertSessionOwner(data.sessionId, context.userId);
     const { error } = await supabaseAdmin
       .from("sessions")
       .update({ stage_17_output: data.output, stage_17_error: null })
@@ -154,8 +160,10 @@ export const saveStage17 = createServerFn({ method: "POST" })
   });
 
 export const loadStage17 = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((i) => z.object({ sessionId: z.string().uuid() }).parse(i))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    await assertSessionOwner(data.sessionId, context.userId);
     const { data: row, error } = await supabaseAdmin
       .from("sessions")
       .select("stage_17_output")
@@ -176,8 +184,10 @@ const RetryInput = z.object({
  *  - redirectInstructions: { cardId: redirectText } — applied per regenerated card.
  *  Cards not in cardIds are preserved verbatim. */
 export const retryStage17 = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((i) => RetryInput.parse(i))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    await assertSessionOwner(data.sessionId, context.userId);
     const { data: session, error } = await supabaseAdmin
       .from("sessions")
       .select(STAGE17_SELECT)
@@ -253,10 +263,12 @@ export const retryStage17 = createServerFn({ method: "POST" })
 
 /** Persist the user's selected Stage 17 territory and advance the stage pointer. */
 export const selectStage17Territory = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((i) =>
     z.object({ sessionId: z.string().uuid(), territoryMarkdown: z.string().min(1) }).parse(i),
   )
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    await assertSessionOwner(data.sessionId, context.userId);
     const { canonicaliseStage17Territory } = await import("./canonical-format");
     // Normalise to the canonical inter-stage contract before persisting.
     // The UI may render the card however it likes; the DB write is fixed.

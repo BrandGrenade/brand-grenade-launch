@@ -10,6 +10,8 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { callClaude } from "./claude.server";
 import { STAGE_22_BRAND_ARCHITECTURE_PROMPT } from "./stage22-brand-architecture-prompt";
 import { appendRedirect, formatThreeTruths, formatBrandIntelligence, smpGoverningBlock, withPhase2Formatting } from "./phase2-shared";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { assertSessionOwner } from "@/lib/auth-helpers.server";
 
 const DISTINCTIVE_ASSETS_PROMPT = `You are a senior brand architect producing the Conceptual Assets for this brand.
 
@@ -160,8 +162,10 @@ async function generateBoth(
 const RunInput = z.object({ sessionId: z.string().uuid() });
 
 export const runStage22 = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((i) => RunInput.parse(i))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    await assertSessionOwner(data.sessionId, context.userId);
     const { data: session, error } = await supabaseAdmin
       .from("sessions")
       .select("brand_name, category, selected_smp, stage_5_output, stage_13_output, stage_14c_output, stage_17_selected_territory, stage_17b_output, stage_18_selected_detonation, stage_19_output, stage_20_output, truth_product, truth_consumer, truth_cultural, brand_intel_type, brand_intel_values, brand_intel_tone, brand_intel_assets, stage_22_output, stage_22_brand_architecture, stage_22_distinctive_assets")
@@ -209,6 +213,7 @@ export const runStage22 = createServerFn({ method: "POST" })
   });
 
 export const saveStage22 = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((i) =>
     z
       .object({
@@ -218,7 +223,8 @@ export const saveStage22 = createServerFn({ method: "POST" })
       })
       .parse(i),
   )
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    await assertSessionOwner(data.sessionId, context.userId);
     const combined = `${data.architecture.trim()}\n\n---\n\n${data.assets.trim()}`;
     const { error } = await supabaseAdmin
       .from("sessions")
@@ -234,8 +240,10 @@ export const saveStage22 = createServerFn({ method: "POST" })
   });
 
 export const loadStage22 = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((i) => z.object({ sessionId: z.string().uuid() }).parse(i))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    await assertSessionOwner(data.sessionId, context.userId);
     const { data: row, error } = await supabaseAdmin
       .from("sessions")
       .select("stage_22_output, stage_22_brand_architecture, stage_22_distinctive_assets")
@@ -257,8 +265,10 @@ const RetryInput = z.object({
 });
 
 export const retryStage22 = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((i) => RetryInput.parse(i))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    await assertSessionOwner(data.sessionId, context.userId);
     const { data: session, error } = await supabaseAdmin
       .from("sessions")
       .select("brand_name, category, selected_smp, stage_5_output, stage_13_output, stage_14c_output, stage_17_selected_territory, stage_17b_output, stage_18_selected_detonation, stage_19_output, stage_20_output, truth_product, truth_consumer, truth_cultural, brand_intel_type, brand_intel_values, brand_intel_tone, brand_intel_assets, stage_22_output, stage_22_brand_architecture, stage_22_distinctive_assets")
@@ -325,8 +335,10 @@ export const retryStage22 = createServerFn({ method: "POST" })
   });
 
 export const regenerateStage22 = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((i) => z.object({ sessionId: z.string().uuid() }).parse(i))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    await assertSessionOwner(data.sessionId, context.userId);
     // Clear existing outputs so the generation starts from scratch.
     await supabaseAdmin
       .from("sessions")

@@ -4,6 +4,8 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { streamClaude } from "./claude.server";
 import { STAGE_15_SYSTEM_PROMPT, buildStage15UserMessage } from "./stage15-prompt";
 import {
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { assertSessionOwner } from "@/lib/auth-helpers.server";
   trimBrandFitForDownstream,
   firstParagraph,
   extractStrategicContinuityStatement,
@@ -12,8 +14,10 @@ import {
 const Input = z.object({ sessionId: z.string().uuid() });
 
 export const runStage15 = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((i) => Input.parse(i))
-  .handler(async function* ({ data }) {
+  .handler(async function* ({ data, context }) {
+    await assertSessionOwner(data.sessionId, context.userId);
     const { data: session, error } = await supabaseAdmin
       .from("sessions")
       .select("*")

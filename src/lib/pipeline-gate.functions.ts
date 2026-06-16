@@ -29,7 +29,7 @@ export const getPipelineGate = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async (): Promise<PipelineGateStatus> => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data, error } = await supabaseAdmin
+    const { data, context, error } = await supabaseAdmin
       .from("preflight_checks")
       .select("id, started_at, completed_at, status, overall_result")
       .eq("check_type", "full")

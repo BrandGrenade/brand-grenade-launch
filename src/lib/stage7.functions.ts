@@ -4,14 +4,18 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { streamClaude } from "./claude.server";
 import { STAGE_7_SYSTEM_PROMPT, buildStage7UserMessage } from "./stage7-prompt";
 import { trimValidatedInsightsForDownstream } from "./context-trim";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { assertSessionOwner } from "@/lib/auth-helpers.server";
 
 const RunStage7Input = z.object({
   sessionId: z.string().uuid(),
 });
 
 export const runStage7 = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((input) => RunStage7Input.parse(input))
-  .handler(async function* ({ data }) {
+  .handler(async function* ({ data, context }) {
+    await assertSessionOwner(data.sessionId, context.userId);
     const { data: session, error: loadErr } = await supabaseAdmin
       .from("sessions")
       .select(

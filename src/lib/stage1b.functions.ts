@@ -3,12 +3,16 @@ import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { streamClaude } from "./claude.server";
 import { STAGE_1B_SYSTEM_PROMPT, buildStage1bUserMessage } from "./stage1b-prompt";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { assertSessionOwner } from "@/lib/auth-helpers.server";
 
 const RunStage1bInput = z.object({ sessionId: z.string().uuid() });
 
 export const runStage1b = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((input) => RunStage1bInput.parse(input))
-  .handler(async function* ({ data }) {
+  .handler(async function* ({ data, context }) {
+    await assertSessionOwner(data.sessionId, context.userId);
     const { data: session, error: loadErr } = await supabaseAdmin
       .from("sessions")
       .select("brief_text, stage_1_output, stage_1b_output")
@@ -61,8 +65,10 @@ const ResubmitBriefInput = z.object({
 });
 
 export const resubmitBrief = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((input) => ResubmitBriefInput.parse(input))
-  .handler(async ({ data }): Promise<{ ok: true }> => {
+  .handler(async ({ data, context }): Promise<{
+    await assertSessionOwner(data.sessionId, context.userId); ok: true }> => {
     const { data: session, error: loadErr } = await supabaseAdmin
       .from("sessions")
       .select("brief_text")

@@ -1,6 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { assertSessionOwner } from "@/lib/auth-helpers.server";
 
 type StageId =
   | "1"
@@ -30,6 +32,7 @@ type StageId =
  * "if (existing output) return it" short-circuit no longer applies.
  */
 export const resetStage = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d) =>
     z
       .object({
@@ -59,7 +62,8 @@ export const resetStage = createServerFn({ method: "POST" })
       })
       .parse(d),
   )
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    await assertSessionOwner(data.sessionId, context.userId);
     const id = data.stageId as StageId;
     const baseFields = {
       status: "running" as const,
@@ -249,6 +253,7 @@ const stageOrder: StageId[] = [
 ];
 
 export const resetStageCascade = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d) =>
     z
       .object({
@@ -278,7 +283,8 @@ export const resetStageCascade = createServerFn({ method: "POST" })
       })
       .parse(d),
   )
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    await assertSessionOwner(data.sessionId, context.userId);
     const id = data.stageId as StageId;
     const start = stageOrder.indexOf(id);
     if (start < 0) throw new Error(`Unknown stage id: ${id}`);

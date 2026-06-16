@@ -4,6 +4,8 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { streamClaude } from "./claude.server";
 import { STAGE_12_SYSTEM_PROMPT, buildStage12UserMessage } from "./stage12-prompt";
 import {
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { assertSessionOwner } from "@/lib/auth-helpers.server";
   filterValidatedFromStage11,
   parseStage10Scores,
   buildFrozenScoresBlock,
@@ -16,8 +18,10 @@ const Input = z.object({
 });
 
 export const runStage12 = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((i) => Input.parse(i))
-  .handler(async function* ({ data }) {
+  .handler(async function* ({ data, context }) {
+    await assertSessionOwner(data.sessionId, context.userId);
     const { data: session, error } = await supabaseAdmin
       .from("sessions")
       .select("brand_name, category, stage_1_output, stage_2_output, stage_10_output, stage_11_output, stage_12_output")
@@ -128,8 +132,10 @@ const SaveSelection = z.object({
 // Instant write — fires the moment the human picks a card. Unblocks Stage 13.
 // Does NOT touch stage_12_output (which may still be streaming in the bg).
 export const saveSelectedSMP = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((i) => SaveSelection.parse(i))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    await assertSessionOwner(data.sessionId, context.userId);
     const { confirmWrite } = await import("./confirm-write");
     const res = await confirmWrite(
       () =>
@@ -152,8 +158,10 @@ const SaveRationale = z.object({
 });
 
 export const saveSelectionRationale = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((i) => SaveRationale.parse(i))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    await assertSessionOwner(data.sessionId, context.userId);
     const { error } = await supabaseAdmin
       .from("sessions")
       .update({

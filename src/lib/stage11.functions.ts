@@ -4,12 +4,16 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { streamClaude } from "./claude.server";
 import { STAGE_11_SYSTEM_PROMPT, buildStage11UserMessage } from "./stage11-prompt";
 import { countPropositions } from "./count-helpers";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { assertSessionOwner } from "@/lib/auth-helpers.server";
 
 const Input = z.object({ sessionId: z.string().uuid() });
 
 export const runStage11 = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((i) => Input.parse(i))
-  .handler(async function* ({ data }) {
+  .handler(async function* ({ data, context }) {
+    await assertSessionOwner(data.sessionId, context.userId);
     const { data: session, error } = await supabaseAdmin
       .from("sessions")
       .select("brand_name, category, stage_2_output, stage_8_output, stage_10_output, stage_11_output, is_preflight_test")
