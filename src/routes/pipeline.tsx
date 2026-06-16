@@ -689,6 +689,10 @@ function PipelineView() {
           setStage4Output(data.stage_4_output);
           setStatuses((p) => ({ ...p, "04": "complete" }));
         }
+        if (data.stage_4b_output) {
+          setStage4bOutput(data.stage_4b_output);
+          setStatuses((p) => ({ ...p, "04B": "complete" }));
+        }
         if (data.stage_5_output) {
           setStage5Output(data.stage_5_output);
           setStatuses((p) => ({ ...p, "05": "complete" }));
