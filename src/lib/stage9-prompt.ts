@@ -56,6 +56,32 @@ Every proposition generated must be measured against the following six criteria.
 5. Addresses a core category promise. The proposition must take a position on what this category is fundamentally for. Not what this brand does differently. What this category means and what this brand believes about that meaning.
 6. Short, well written, and immediately articulate. Maximum eight words. Every word earns its place. It lands on first reading. It is the kind of line someone repeats to the person next to them. If it requires punctuation beyond a full stop it is too complicated. If a senior creative director would not fight for it regenerate it.
 
+CRAFT STANDARD — LANGUAGE AND SENTENCE STRUCTURE
+
+Every SMP must pass four craft questions before being presented to the human. These are applied after all six quality criteria are met. A proposition that passes all six criteria but fails any craft question must be rewritten at the language level while preserving the strategic idea.
+
+Question one — Is it the sharpest possible expression of this idea. Every word must be load-bearing. If any word can be removed without loss remove it. If any word can be replaced with a more precise word replace it. Stop only when every word is irreplaceable.
+
+Question two — Is it the crispest possible expression of this idea. It must land whole on first reading for anyone in the room without requiring a second pass. No subordinate clauses. No qualifications. If a person who has never seen the brief needs it explained it is not crisp. Rewrite until no explanation is needed.
+
+Question three — Is it interesting. It must contain at least one element the reader did not anticipate. An unexpected subject. A verb used in a way the category has never used it. A deliberate grammatical subversion. A word used with such unexpected precision it becomes extraordinary. There must be a half-second pause between reading and comprehension — not confusion but productive surprise. If the line is immediately and completely transparent with no pause it is correct but not interesting. Rewrite until the pause exists.
+
+Question four — Does it create category space and consumer mindset attraction simultaneously. Category space means no named competitor can say it without self-implication. Consumer mindset attraction means it pulls the right person toward the brand with conviction while making the wrong person feel it is not for them. If it could be for everyone it is for no one. Rewrite until the answer to who is this for is a specific human being not a demographic.
+
+LANGUAGE REQUIREMENTS
+
+Every word must be interrogated before finalising. Replace any word that appears in a competitor brief without modification. Replace any word that sounds like it came from a strategy document. Replace any word that is an advertising cliché. What remains must be language that feels genuinely new in this category.
+
+The sentence structure must contain at least one unexpected element. An unexpected subject. A verb used in a way it has never been used in this category before. A deliberate grammatical subversion that creates productive dissonance. If the sentence structure is entirely conventional the line has not found its expression. Rewrite the same idea in five structurally different ways and select the one that creates the most productive surprise.
+
+Every line must leave one deliberate opening. One unspecified thing the reader must complete with their own experience. The completion invitation is not vagueness. It is precision about what to leave open. The reader who completes the line owns it.
+
+THE LANGUAGE BENCHMARK
+
+The quality standard for language craft is a line that a senior creative director would fight for — not because it is strategically correct but because the words themselves are doing something unexpected. The test is this. Read the proposition aloud. Does it create a half-second pause before comprehension. Does it use at least one word in a way this category has never used it before. Does it leave something for the reader to complete with their own experience. If all three answers are yes the line has found its language. If any answer is no rewrite the expression until it does.
+
+The greatest propositions in advertising history are remembered not because they said the right thing but because they said it in a way nobody had said it before. That is the standard every SMP must reach before being presented to the human.
+
 CLICHÉ DETECTION — MANDATORY PRE-OUTPUT SCAN
 Before presenting any proposition to the human run a mandatory cliché detection scan. The scan checks every proposition against the following categories of worn language and familiar constructs.
 

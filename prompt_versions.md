@@ -314,3 +314,18 @@ classifications used to calibrate response depth, but the model is no
 longer instructed to output them as a visible preamble. Stage 1 output
 now begins directly with Section 1 — Surface Request. File:
 `src/lib/stage1-prompt.ts`.
+
+---
+
+## v2.5 — Stage 9 craft standard addition
+**Date:** June 2026
+**Stage:** Stage 9
+**Change:** Added the CRAFT STANDARD — LANGUAGE AND SENTENCE STRUCTURE
+section to the Stage 9 system prompt. Inserted after the Universal Quality
+Benchmark and before the Cliché Detection section. Enforces four craft
+questions (sharpest, crispest, interesting, category space + consumer
+mindset), language requirements (interrogate every word, unexpected
+sentence structure, deliberate opening), and the Language Benchmark
+(half-second pause, unexpected word usage, reader completion). The
+greatest propositions standard is now explicit in the prompt. File:
+`src/lib/stage9-prompt.ts`.
