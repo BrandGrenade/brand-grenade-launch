@@ -476,3 +476,21 @@ Territory section now cross-references the Category Silence Map,
 identifying the strongest territories at the intersection of an
 unoccupied category promise and a category silence. File:
 `src/lib/stage2-prompt.ts`.
+
+---
+
+## v3.3 — Stage 18 eighth detonation dimension Share of Voice Efficiency
+**Date:** June 2026
+**Stage:** Stage 18
+**Change:** Replaced the placeholder Dimension 8 (Creative Share of Voice
+multiplier potential) with a full Share of Voice Efficiency dimension in
+the Stage 18 system prompt. The new dimension assesses whether the idea
+generates disproportionate attention relative to media spend, with
+concrete anchors at every score band (1–3 buys attention; 4–6 partially
+earns it; 7–8 genuinely earns organic participation; 9–10 is designed
+from the ground up for cultural distribution at a multiple of paid
+spend). Includes explicit commercial framing for CFO relevance and
+compounding value over time. All references to the Eight Dimension
+Stress Test composite updated from out of 80 to out of 90; pass
+threshold raised from 64/80 to 72/90 (maintaining the 80 % standard).
+File: `src/lib/stage18-the-detonation-prompt.ts`.
