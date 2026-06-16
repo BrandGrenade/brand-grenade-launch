@@ -220,6 +220,7 @@ const stageClearFields: Record<StageId, Record<string, null>> = {
   "2": { stage_2_output: null, stage_2_error: null },
   "3": { stage_3_output: null, stage_3_error: null },
   "4": { stage_4_output: null, stage_4_error: null },
+  "4b": { stage_4b_output: null, stage_4b_error: null },
   "5": { stage_5_output: null, stage_5_error: null },
   "6": { stage_6_output: null, stage_6_error: null },
   "7": { stage_7_output: null, stage_7_error: null },
