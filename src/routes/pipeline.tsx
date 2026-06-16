@@ -521,6 +521,7 @@ function PipelineView() {
       setStage2Output(null);
       setStage3Output(null);
       setStage4Output(null);
+      setStage4bOutput(null);
       setStage5Output(null);
       setStage6Output(null);
       setStage7Output(null);
