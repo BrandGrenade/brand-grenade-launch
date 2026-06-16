@@ -2,14 +2,21 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useRef, useState } from "react";
 import { ChevronDown } from "lucide-react";
+import { toast } from "sonner";
 import { TopNav } from "@/components/TopNav";
 import { createSession } from "@/lib/stage1.functions";
 import { getDevModeFromStorage } from "@/lib/dev-mode";
+import {
+  SavedBriefsPicker,
+  saveBrief,
+  type SavedBrief,
+} from "@/components/SavedBriefsLibrary";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+
 
 export const Route = createFileRoute("/brief")({
   component: BriefIntake,
