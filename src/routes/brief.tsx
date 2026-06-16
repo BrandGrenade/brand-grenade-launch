@@ -605,21 +605,41 @@ function BriefIntake() {
             </div>
           </div>
 
-          {/* SUBMIT */}
-          <button
-            type="submit"
-            disabled={!canSubmitSections || submitting}
-            className="mt-6 inline-flex h-[52px] w-full items-center justify-center rounded-md text-[16px] transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-            style={{
-              backgroundColor: canSubmitSections ? "#D4924A" : "var(--color-border)",
-              color: canSubmitSections ? "#0A0A0A" : "var(--color-text-tertiary)",
-              fontWeight: 600,
-              cursor: canSubmitSections && !submitting ? "pointer" : "not-allowed",
-              opacity: submitting ? 0.7 : 1,
-            }}
-          >
-            {submitting ? "Submitting…" : "Submit Brief to Strategy Engine →"}
-          </button>
+          {/* SUBMIT + SAVE */}
+          <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+            <button
+              type="submit"
+              disabled={!canSubmitSections || submitting}
+              className="inline-flex h-[52px] flex-1 items-center justify-center rounded-md text-[16px] transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+              style={{
+                backgroundColor: canSubmitSections ? "#D4924A" : "var(--color-border)",
+                color: canSubmitSections ? "#0A0A0A" : "var(--color-text-tertiary)",
+                fontWeight: 600,
+                cursor: canSubmitSections && !submitting ? "pointer" : "not-allowed",
+                opacity: submitting ? 0.7 : 1,
+              }}
+            >
+              {submitting ? "Submitting…" : "Submit Brief to Strategy Engine →"}
+            </button>
+            <button
+              type="button"
+              onClick={handleSaveBrief}
+              disabled={!canSubmitSections || saving}
+              className="inline-flex h-[52px] items-center justify-center rounded-md px-6 text-[15px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background sm:w-auto"
+              style={{
+                border: "1px solid #D4924A",
+                color: canSubmitSections ? "#D4924A" : "var(--color-text-tertiary)",
+                backgroundColor: "transparent",
+                fontWeight: 600,
+                cursor: canSubmitSections && !saving ? "pointer" : "not-allowed",
+                opacity: saving ? 0.7 : 1,
+              }}
+              title="Save this brief to your library without starting a pipeline run"
+            >
+              {saving ? "Saving…" : "Save Brief"}
+            </button>
+          </div>
+
           <p
             className="text-body-sm mt-3 text-center"
             style={{ color: "#5A5652" }}
