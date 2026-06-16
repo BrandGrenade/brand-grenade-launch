@@ -17,13 +17,14 @@ export const runStage5 = createServerFn({ method: "POST" })
     await assertSessionOwner(data.sessionId, context.userId);
     const { data: session, error: loadErr } = await supabaseAdmin
       .from("sessions")
-      .select("brand_name, category, strategic_mode, stage_1_output, stage_2_output, stage_4_output, stage_5_output")
+      .select("brand_name, category, strategic_mode, stage_1_output, stage_2_output, stage_4_output, stage_4b_output, stage_5_output")
       .eq("id", data.sessionId)
       .single();
     if (loadErr || !session) throw new Error(`Session not found: ${loadErr?.message ?? "no row"}`);
     if (!session.stage_1_output) throw new Error("Stage 1 output missing — cannot run Stage 5");
     if (!session.stage_2_output) throw new Error("Stage 2 output (CMM) missing — cannot run Stage 5");
     if (!session.stage_4_output) throw new Error("Stage 4 output (SIS) missing — cannot run Stage 5");
+    if (!session.stage_4b_output) throw new Error("Stage 4B output (Asset Mining) missing — cannot run Stage 5");
     if (session.stage_5_output) {
       yield { delta: session.stage_5_output };
       yield { done: true as const, output: session.stage_5_output };
@@ -44,7 +45,9 @@ export const runStage5 = createServerFn({ method: "POST" })
       cmm: trimCMMForDownstream(session.stage_2_output),
       sis: trimSISForDownstream(session.stage_4_output),
       universeCount,
+      assetMining: session.stage_4b_output,
     });
+
 
     let output = "";
     try {
