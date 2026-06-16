@@ -457,3 +457,22 @@ on the same territory. Each insight must be documented as PASSED
 UNEXPECTED BEHAVIOUR FILTER or FAILED — CATEGORY OBSERVATION with one
 sentence of specific reasoning for every failed insight. File:
 `src/lib/stage6-prompt.ts`.
+
+---
+
+## v3.2 — Stage 2 Category Silence Map addition
+**Date:** June 2026
+**Stage:** Stage 2
+**Change:** Added the CATEGORY SILENCE MAP section to the Stage 2 system
+prompt. Inserted after the Core Category Promise Map and before Available
+Territory. The new section requires identification of every significant
+structural silence in the category — things no brand has been willing to
+say — with three components per silence: what is not being said, why the
+category cannot say it (commercial, legal, reputational, structural
+barriers), and what becomes possible for a brand willing to name it.
+Silences are ranked by strategic value (prominence to audience,
+threat to incumbents, availability to challenger). The Available
+Territory section now cross-references the Category Silence Map,
+identifying the strongest territories at the intersection of an
+unoccupied category promise and a category silence. File:
+`src/lib/stage2-prompt.ts`.
