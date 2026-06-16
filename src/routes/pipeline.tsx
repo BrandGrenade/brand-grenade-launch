@@ -15,6 +15,7 @@ import { runStage2 } from "@/lib/stage2.functions";
 import { runStage3 } from "@/lib/stage3.functions";
 import { runStage4 } from "@/lib/stage4.functions";
 import { runStage5 } from "@/lib/stage5.functions";
+import { runStage4b } from "@/lib/stage4b.functions";
 import { runStage6 } from "@/lib/stage6.functions";
 import { runStage7 } from "@/lib/stage7.functions";
 
