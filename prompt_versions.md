@@ -301,3 +301,16 @@ copy-to-clipboard); (2) Present completed sessions instead (scrolls to
 the completed-sessions anchor on the dashboard). Each failed check
 displays the exact remediation instruction and estimated fix time from
 the central REMEDIATION_BY_ID registry — not a generic error message.
+
+---
+
+## v2.4 — Stage 1 metadata leak fix
+**Date:** June 2026
+**Stage:** Stage 1
+**Change:** Removed the `PIPELINE DATA HEADER` output block from the Stage 1
+system prompt. BRIEF DEPTH LEVEL, CATEGORY KNOWLEDGE CONFIDENCE, BRIEF
+ELEMENTS PRESENT, and ASSUMPTIONS MADE remain as internal silent
+classifications used to calibrate response depth, but the model is no
+longer instructed to output them as a visible preamble. Stage 1 output
+now begins directly with Section 1 — Surface Request. File:
+`src/lib/stage1-prompt.ts`.
