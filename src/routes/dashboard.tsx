@@ -201,6 +201,8 @@ function Dashboard() {
               <SessionsTable sessions={sessions} onRequestDelete={setPendingDelete} />
             )}
           </div>
+
+          <SavedBriefsSection onLoad={handleLoadSavedBrief} />
         </div>
       </main>
 
