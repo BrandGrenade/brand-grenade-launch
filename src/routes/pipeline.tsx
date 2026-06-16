@@ -416,6 +416,7 @@ function PipelineView() {
   const [stage2Loading, setStage2Loading] = useState(false);
   const [stage3Loading, setStage3Loading] = useState(false);
   const [stage4Loading, setStage4Loading] = useState(false);
+  const [stage4bLoading, setStage4bLoading] = useState(false);
   const [stage5Loading, setStage5Loading] = useState(false);
   const [stage6Loading, setStage6Loading] = useState(false);
   const [stage7Loading, setStage7Loading] = useState(false);
