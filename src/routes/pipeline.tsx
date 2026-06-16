@@ -15,6 +15,7 @@ import { runStage2 } from "@/lib/stage2.functions";
 import { runStage3 } from "@/lib/stage3.functions";
 import { runStage4 } from "@/lib/stage4.functions";
 import { runStage5 } from "@/lib/stage5.functions";
+import { runStage4b } from "@/lib/stage4b.functions";
 import { runStage6 } from "@/lib/stage6.functions";
 import { runStage7 } from "@/lib/stage7.functions";
 
@@ -61,6 +62,7 @@ const STAGE_ID_TO_DB: Record<
   | "2"
   | "3"
   | "4"
+  | "4b"
   | "5"
   | "6"
   | "7"
@@ -82,6 +84,7 @@ const STAGE_ID_TO_DB: Record<
   "02": "2",
   "03": "3",
   "04": "4",
+  "04B": "4b",
   "05": "5",
   "06": "6",
   "07": "7",
@@ -148,6 +151,7 @@ const STAGES: Stage[] = [
   { id: "02", number: "02", name: "Category Intelligence" },
   { id: "03", number: "03", name: "Strategic Frameworks" },
   { id: "04", number: "04", name: "Strategic Universes" },
+  { id: "04B", number: "04B", name: "Asset Mining & Product Facts" },
   { id: "05", number: "05", name: "Insight Generation" },
   { id: "06", number: "06", name: "Insight Validation" },
   { id: "07", number: "07", name: "Territory Synthesis" },
@@ -289,6 +293,8 @@ interface SessionData {
   stage_3_error: string | null;
   stage_4_output: string | null;
   stage_4_error: string | null;
+  stage_4b_output: string | null;
+  stage_4b_error: string | null;
   stage_5_output: string | null;
   stage_5_error: string | null;
   stage_6_output: string | null;
@@ -338,6 +344,7 @@ function PipelineView() {
   const runStage2Fn = useServerFn(runStage2);
   const runStage3Fn = useServerFn(runStage3);
   const runStage4Fn = useServerFn(runStage4);
+  const runStage4bFn = useServerFn(runStage4b);
   const runStage5Fn = useServerFn(runStage5);
   const runStage6Fn = useServerFn(runStage6);
   const runStage7Fn = useServerFn(runStage7);
@@ -371,6 +378,8 @@ function PipelineView() {
   const [stage3Error, setStage3Error] = useState<string | null>(null);
   const [stage4Output, setStage4Output] = useState<string | null>(null);
   const [stage4Error, setStage4Error] = useState<string | null>(null);
+  const [stage4bOutput, setStage4bOutput] = useState<string | null>(null);
+  const [stage4bError, setStage4bError] = useState<string | null>(null);
   const [stage5Output, setStage5Output] = useState<string | null>(null);
   const [stage5Error, setStage5Error] = useState<string | null>(null);
   const [stage6Output, setStage6Output] = useState<string | null>(null);
@@ -407,6 +416,7 @@ function PipelineView() {
   const [stage2Loading, setStage2Loading] = useState(false);
   const [stage3Loading, setStage3Loading] = useState(false);
   const [stage4Loading, setStage4Loading] = useState(false);
+  const [stage4bLoading, setStage4bLoading] = useState(false);
   const [stage5Loading, setStage5Loading] = useState(false);
   const [stage6Loading, setStage6Loading] = useState(false);
   const [stage7Loading, setStage7Loading] = useState(false);
@@ -461,6 +471,7 @@ function PipelineView() {
       if (shouldClear("02")) setStage2Output(null);
       if (shouldClear("03")) setStage3Output(null);
       if (shouldClear("04")) setStage4Output(null);
+      if (shouldClear("04B")) setStage4bOutput(null);
       if (shouldClear("05")) setStage5Output(null);
       if (shouldClear("06")) setStage6Output(null);
       if (shouldClear("07")) setStage7Output(null);
@@ -480,6 +491,7 @@ function PipelineView() {
       if (shouldClear("02")) setStage2Error(null);
       if (shouldClear("03")) setStage3Error(null);
       if (shouldClear("04")) setStage4Error(null);
+      if (shouldClear("04B")) setStage4bError(null);
       if (shouldClear("05")) setStage5Error(null);
       if (shouldClear("06")) setStage6Error(null);
       if (shouldClear("07")) setStage7Error(null);
@@ -509,6 +521,7 @@ function PipelineView() {
       setStage2Output(null);
       setStage3Output(null);
       setStage4Output(null);
+      setStage4bOutput(null);
       setStage5Output(null);
       setStage6Output(null);
       setStage7Output(null);
@@ -528,6 +541,7 @@ function PipelineView() {
       setStage2Error(null);
       setStage3Error(null);
       setStage4Error(null);
+      setStage4bError(null);
       setStage5Error(null);
       setStage6Error(null);
       setStage7Error(null);
@@ -638,7 +652,7 @@ function PipelineView() {
     supabase
       .from("sessions")
       .select(
-        "id, brand_name, category, strategic_mode, brief_text, current_stage, status, stage_1_output, stage_1_tension_score, stage_1b_required, stage_1b_output, stage_1_error, stage_2_output, stage_2_error, stage_3_output, stage_3_error, stage_4_output, stage_4_error, stage_5_output, stage_5_error, stage_6_output, stage_6_error, stage_7_output, stage_7_error, stage_8_output, stage_8_error, stage_9_output, stage_9_error, stage_10_output, stage_10_error, stage_11_output, stage_11_error, stage_12_output, stage_12_error, stage_13_output, stage_13_error, stage_13b_output, stage_13b_error, stage_14_output, stage_14_error, stage_14b_output, stage_14b_error, stage_14c_output, stage_14c_error, stage_15_output, stage_15_error, stage_16_consulting_output, stage_16_error, brand_intelligence, selected_smp, selected_smp_field_name, checkpoint_a_confirmed, checkpoint_b_confirmed, checkpoint_c_confirmed, retry_status",
+        "id, brand_name, category, strategic_mode, brief_text, current_stage, status, stage_1_output, stage_1_tension_score, stage_1b_required, stage_1b_output, stage_1_error, stage_2_output, stage_2_error, stage_3_output, stage_3_error, stage_4_output, stage_4_error, stage_4b_output, stage_4b_error, stage_5_output, stage_5_error, stage_6_output, stage_6_error, stage_7_output, stage_7_error, stage_8_output, stage_8_error, stage_9_output, stage_9_error, stage_10_output, stage_10_error, stage_11_output, stage_11_error, stage_12_output, stage_12_error, stage_13_output, stage_13_error, stage_13b_output, stage_13b_error, stage_14_output, stage_14_error, stage_14b_output, stage_14b_error, stage_14c_output, stage_14c_error, stage_15_output, stage_15_error, stage_16_consulting_output, stage_16_error, brand_intelligence, selected_smp, selected_smp_field_name, checkpoint_a_confirmed, checkpoint_b_confirmed, checkpoint_c_confirmed, retry_status",
       )
 
       .eq("id", sessionId)
@@ -674,6 +688,10 @@ function PipelineView() {
         if (data.stage_4_output) {
           setStage4Output(data.stage_4_output);
           setStatuses((p) => ({ ...p, "04": "complete" }));
+        }
+        if (data.stage_4b_output) {
+          setStage4bOutput(data.stage_4b_output);
+          setStatuses((p) => ({ ...p, "04B": "complete" }));
         }
         if (data.stage_5_output) {
           setStage5Output(data.stage_5_output);
@@ -772,6 +790,9 @@ function PipelineView() {
     if (session?.stage_4_output) setStage4Output(session.stage_4_output);
   }, [session?.stage_4_output]);
   useEffect(() => {
+    if (session?.stage_4b_output) setStage4bOutput(session.stage_4b_output);
+  }, [session?.stage_4b_output]);
+  useEffect(() => {
     if (session?.stage_5_output) setStage5Output(session.stage_5_output);
   }, [session?.stage_5_output]);
   useEffect(() => {
@@ -826,7 +847,7 @@ function PipelineView() {
       const { data } = await supabase
         .from("sessions")
         .select(
-          "id, brand_name, category, strategic_mode, brief_text, current_stage, status, stage_1_output, stage_1_tension_score, stage_1b_required, stage_1b_output, stage_1_error, stage_2_output, stage_2_error, stage_3_output, stage_3_error, stage_4_output, stage_4_error, stage_5_output, stage_5_error, stage_6_output, stage_6_error, stage_7_output, stage_7_error, stage_8_output, stage_8_error, stage_9_output, stage_9_error, stage_10_output, stage_10_error, stage_11_output, stage_11_error, stage_12_output, stage_12_error, stage_13_output, stage_13_error, stage_13b_output, stage_13b_error, stage_14_output, stage_14_error, stage_14b_output, stage_14b_error, stage_14c_output, stage_14c_error, stage_15_output, stage_15_error, stage_16_consulting_output, stage_16_error, brand_intelligence, selected_smp, selected_smp_field_name, checkpoint_a_confirmed, checkpoint_b_confirmed, checkpoint_c_confirmed, retry_status",
+          "id, brand_name, category, strategic_mode, brief_text, current_stage, status, stage_1_output, stage_1_tension_score, stage_1b_required, stage_1b_output, stage_1_error, stage_2_output, stage_2_error, stage_3_output, stage_3_error, stage_4_output, stage_4_error, stage_4b_output, stage_4b_error, stage_5_output, stage_5_error, stage_6_output, stage_6_error, stage_7_output, stage_7_error, stage_8_output, stage_8_error, stage_9_output, stage_9_error, stage_10_output, stage_10_error, stage_11_output, stage_11_error, stage_12_output, stage_12_error, stage_13_output, stage_13_error, stage_13b_output, stage_13b_error, stage_14_output, stage_14_error, stage_14b_output, stage_14b_error, stage_14c_output, stage_14c_error, stage_15_output, stage_15_error, stage_16_consulting_output, stage_16_error, brand_intelligence, selected_smp, selected_smp_field_name, checkpoint_a_confirmed, checkpoint_b_confirmed, checkpoint_c_confirmed, retry_status",
         )
         .eq("id", sessionId)
         .single();
@@ -1019,6 +1040,34 @@ function PipelineView() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId, session?.id, statuses["04"]]);
+
+  // Trigger Stage 4B when its status flips to "running".
+  useEffect(() => {
+    if (!sessionId || !session) return;
+    if (statuses["04B"] !== "running") return;
+    if (stage4bOutput) return;
+    let cancelled = false;
+    setStage4bLoading(true);
+    setStage4bError(null);
+    (async () => consumeStream(await runStage4bFn({ data: { sessionId } }), setStage4bOutput))()
+      .then((result) => {
+        if (cancelled) return;
+        setStage4bOutput(result.output);
+        setStage4bLoading(false);
+        setStatuses((p) => ({ ...p, "04B": "complete" }));
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        setStage4bLoading(false);
+        setStage4bError(err instanceof Error ? err.message : "Stage 4B failed");
+        setStatuses((p) => ({ ...p, "04B": "error" }));
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionId, session?.id, statuses["04B"]]);
+
 
   // Trigger Stage 5 when its status flips to "running".
   useEffect(() => {
@@ -1517,6 +1566,8 @@ function PipelineView() {
           ? stage3Error
           : selected.id === "04"
             ? stage4Error
+            : selected.id === "04B"
+              ? stage4bError
             : selected.id === "05"
               ? stage5Error
               : selected.id === "06"
@@ -1577,6 +1628,11 @@ function PipelineView() {
         (stage4Output && sanitize(stage4Output)) ??
         (stage4Loading
           ? "Mapping the Strategic Universes — this can take 30–90 seconds…"
+          : "Awaiting output."),
+      "04B":
+        (stage4bOutput && sanitize(stage4bOutput)) ??
+        (stage4bLoading
+          ? "Mining distinctive assets and product facts — this can take 30–90 seconds…"
           : "Awaiting output."),
       "05":
         (stage5Output && sanitize(stage5Output)) ??
@@ -1666,6 +1722,8 @@ function PipelineView() {
     stage3Loading,
     stage4Output,
     stage4Loading,
+    stage4bOutput,
+    stage4bLoading,
     stage5Output,
     stage5Loading,
     stage6Output,
@@ -1735,6 +1793,7 @@ function PipelineView() {
     stage2Loading ||
     stage3Loading ||
     stage4Loading ||
+    stage4bLoading ||
     stage5Loading ||
     stage6Loading ||
     stage7Loading ||
@@ -1843,6 +1902,7 @@ function PipelineView() {
       "02": stage2Output,
       "03": stage3Output,
       "04": stage4Output,
+      "04B": stage4bOutput,
       "05": stage5Output,
       "06": stage6Output,
       "07": stage7Output,
@@ -2821,6 +2881,7 @@ function RightPanel({
           "02",
           "03",
           "04",
+          "04B",
           "05",
           "06",
           "07",

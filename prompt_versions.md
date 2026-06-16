@@ -366,3 +366,31 @@ credibly. File: `src/lib/stage2-prompt.ts`.
 > Note: This change was requested as v2.6, but v2.6 was already issued for
 > the Stage 9 craft standard addition. Numbered v2.7 to preserve sequential
 > ordering.
+
+---
+
+## v2.8 — Stage 4B distinctive asset mining and product fact inventory (new stage)
+**Date:** June 2026
+**Stage:** Stage 4B (new)
+**Change:** Added Stage 4B to the pipeline sequence between Stage 4 and
+Stage 5. Stage 4B fires automatically when its status flips to running and
+requires no human checkpoint. The new prompt interrogates the brand's
+distinctive assets and the product itself for generative strategic
+potential, structured in three parts: PART ONE — Product Fact Inventory
+(real vs perceived facts, liability reinterpretation, three most
+strategically potent facts); PART TWO — Distinctive Asset Mining (three
+questions per asset, with special interrogation of the brand name itself);
+PART THREE — Strategic Potential Summary (single most potent
+product-fact + asset combination). Output is emitted under the heading
+`ASSET MINING AND PRODUCT FACTS` and is now passed to Stage 5 as a
+mandatory additional input labelled `STAGE 4B — ASSET MINING AND PRODUCT
+FACTS` alongside the Stage 1 sanitised brief and Stage 4 strategic
+universes. Stage 5 now hard-requires stage_4b_output before it will run.
+Files: `src/lib/stage4b-prompt.ts` (new), `src/lib/stage4b.functions.ts`
+(new), `src/lib/stage5-prompt.ts`, `src/lib/stage5.functions.ts`,
+`src/lib/retry.functions.ts`, `src/routes/pipeline.tsx`, migration adding
+`stage_4b_output` and `stage_4b_error` columns to `public.sessions`.
+
+> Note: This change was requested as v2.7, but v2.7 was already issued for
+> the Stage 2 core category promise map. Numbered v2.8 to preserve
+> sequential ordering.

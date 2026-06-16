@@ -199,6 +199,8 @@ export type Database = {
           stage_3_output: string | null
           stage_4_error: string | null
           stage_4_output: string | null
+          stage_4b_error: string | null
+          stage_4b_output: string | null
           stage_5_error: string | null
           stage_5_output: string | null
           stage_6_error: string | null
@@ -345,6 +347,8 @@ export type Database = {
           stage_3_output?: string | null
           stage_4_error?: string | null
           stage_4_output?: string | null
+          stage_4b_error?: string | null
+          stage_4b_output?: string | null
           stage_5_error?: string | null
           stage_5_output?: string | null
           stage_6_error?: string | null
@@ -491,6 +495,8 @@ export type Database = {
           stage_3_output?: string | null
           stage_4_error?: string | null
           stage_4_output?: string | null
+          stage_4b_error?: string | null
+          stage_4b_output?: string | null
           stage_5_error?: string | null
           stage_5_output?: string | null
           stage_6_error?: string | null

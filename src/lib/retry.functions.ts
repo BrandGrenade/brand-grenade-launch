@@ -10,6 +10,7 @@ type StageId =
   | "2"
   | "3"
   | "4"
+  | "4b"
   | "5"
   | "6"
   | "7"
@@ -43,6 +44,7 @@ export const resetStage = createServerFn({ method: "POST" })
           "2",
           "3",
           "4",
+          "4b",
           "5",
           "6",
           "7",
@@ -101,7 +103,18 @@ export const resetStage = createServerFn({ method: "POST" })
           .update({ ...baseFields, stage_4_output: null, stage_4_error: null })
           .eq("id", data.sessionId);
         break;
+      case "4b":
+        await supabaseAdmin
+          .from("sessions")
+          .update({ ...baseFields, stage_4b_output: null, stage_4b_error: null })
+          .eq("id", data.sessionId);
+        break;
       case "5":
+        await supabaseAdmin
+          .from("sessions")
+          .update({ ...baseFields, stage_5_output: null, stage_5_error: null })
+          .eq("id", data.sessionId);
+        break;
         await supabaseAdmin
           .from("sessions")
           .update({ ...baseFields, stage_5_output: null, stage_5_error: null })
@@ -207,6 +220,7 @@ const stageClearFields: Record<StageId, Record<string, null>> = {
   "2": { stage_2_output: null, stage_2_error: null },
   "3": { stage_3_output: null, stage_3_error: null },
   "4": { stage_4_output: null, stage_4_error: null },
+  "4b": { stage_4b_output: null, stage_4b_error: null },
   "5": { stage_5_output: null, stage_5_error: null },
   "6": { stage_6_output: null, stage_6_error: null },
   "7": { stage_7_output: null, stage_7_error: null },
@@ -235,6 +249,7 @@ const stageOrder: StageId[] = [
   "2",
   "3",
   "4",
+  "4b",
   "5",
   "6",
   "7",
@@ -264,6 +279,7 @@ export const resetStageCascade = createServerFn({ method: "POST" })
           "2",
           "3",
           "4",
+          "4b",
           "5",
           "6",
           "7",
