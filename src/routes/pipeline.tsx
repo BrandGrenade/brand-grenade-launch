@@ -1902,6 +1902,7 @@ function PipelineView() {
       "02": stage2Output,
       "03": stage3Output,
       "04": stage4Output,
+      "04B": stage4bOutput,
       "05": stage5Output,
       "06": stage6Output,
       "07": stage7Output,
