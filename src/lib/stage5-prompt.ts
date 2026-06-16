@@ -52,6 +52,7 @@ export function buildStage5UserMessage(args: {
   cmm: string;
   sis: string;
   universeCount: number;
+  assetMining?: string;
 }): string {
   return `Brand: ${args.brandName}
 Category: ${args.category}
@@ -59,9 +60,14 @@ Category: ${args.category}
 Brief:
 ${args.sanitisedBrief}
 
-The following Strategic Universes were identified:
+${args.assetMining ? `STAGE 4B — ASSET MINING AND PRODUCT FACTS (mandatory input):
+
+${args.assetMining}
+
+` : ""}The following Strategic Universes were identified:
 
 ${args.sis}
 
-Generate insights for each of the ${args.universeCount} universes above using the SIX TERRITORY MODEL. All six territories (Tension, Abundance, Identity, Cultural Moment, Product Truth, Whitespace) must be represented per universe. Maximum two Tension insights per universe.`;
+Generate insights for each of the ${args.universeCount} universes above using the SIX TERRITORY MODEL. All six territories (Tension, Abundance, Identity, Cultural Moment, Product Truth, Whitespace) must be represented per universe. Maximum two Tension insights per universe.${args.assetMining ? " Where insights can be grounded in product facts or distinctive assets from the Stage 4B asset mining input above, do so — those facts are the most defensible proof material available to the brand." : ""}`;
 }
+
