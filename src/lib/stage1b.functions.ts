@@ -67,8 +67,8 @@ const ResubmitBriefInput = z.object({
 export const resubmitBrief = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => ResubmitBriefInput.parse(input))
-  .handler(async ({ data, context }): Promise<{
-    await assertSessionOwner(data.sessionId, context.userId); ok: true }> => {
+  .handler(async ({ data, context }): Promise<{ ok: true }> => {
+    await assertSessionOwner(data.sessionId, context.userId);
     const { data: session, error: loadErr } = await supabaseAdmin
       .from("sessions")
       .select("brief_text")
