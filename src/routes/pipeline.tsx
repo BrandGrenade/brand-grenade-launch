@@ -1566,6 +1566,8 @@ function PipelineView() {
           ? stage3Error
           : selected.id === "04"
             ? stage4Error
+            : selected.id === "04B"
+              ? stage4bError
             : selected.id === "05"
               ? stage5Error
               : selected.id === "06"
