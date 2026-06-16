@@ -344,6 +344,7 @@ function PipelineView() {
   const runStage2Fn = useServerFn(runStage2);
   const runStage3Fn = useServerFn(runStage3);
   const runStage4Fn = useServerFn(runStage4);
+  const runStage4bFn = useServerFn(runStage4b);
   const runStage5Fn = useServerFn(runStage5);
   const runStage6Fn = useServerFn(runStage6);
   const runStage7Fn = useServerFn(runStage7);
