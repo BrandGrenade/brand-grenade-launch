@@ -790,6 +790,9 @@ function PipelineView() {
     if (session?.stage_4_output) setStage4Output(session.stage_4_output);
   }, [session?.stage_4_output]);
   useEffect(() => {
+    if (session?.stage_4b_output) setStage4bOutput(session.stage_4b_output);
+  }, [session?.stage_4b_output]);
+  useEffect(() => {
     if (session?.stage_5_output) setStage5Output(session.stage_5_output);
   }, [session?.stage_5_output]);
   useEffect(() => {
