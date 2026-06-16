@@ -1041,6 +1041,34 @@ function PipelineView() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId, session?.id, statuses["04"]]);
 
+  // Trigger Stage 4B when its status flips to "running".
+  useEffect(() => {
+    if (!sessionId || !session) return;
+    if (statuses["04B"] !== "running") return;
+    if (stage4bOutput) return;
+    let cancelled = false;
+    setStage4bLoading(true);
+    setStage4bError(null);
+    (async () => consumeStream(await runStage4bFn({ data: { sessionId } }), setStage4bOutput))()
+      .then((result) => {
+        if (cancelled) return;
+        setStage4bOutput(result.output);
+        setStage4bLoading(false);
+        setStatuses((p) => ({ ...p, "04B": "complete" }));
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        setStage4bLoading(false);
+        setStage4bError(err instanceof Error ? err.message : "Stage 4B failed");
+        setStatuses((p) => ({ ...p, "04B": "error" }));
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionId, session?.id, statuses["04B"]]);
+
+
   // Trigger Stage 5 when its status flips to "running".
   useEffect(() => {
     if (!sessionId || !session) return;
