@@ -1000,7 +1000,7 @@ export const getLatestTierTwoCheck = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async () => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data, context, error } = await supabaseAdmin
+    const { data, error } = await supabaseAdmin
       .from("preflight_checks")
       .select("id, status, started_at, completed_at, tier_two_results, overall_result")
       .eq("check_type", "full")
