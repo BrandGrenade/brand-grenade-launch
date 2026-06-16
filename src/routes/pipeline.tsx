@@ -1722,6 +1722,8 @@ function PipelineView() {
     stage3Loading,
     stage4Output,
     stage4Loading,
+    stage4bOutput,
+    stage4bLoading,
     stage5Output,
     stage5Loading,
     stage6Output,
