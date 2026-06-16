@@ -465,8 +465,14 @@ function BriefIntake() {
           </HeaderField>
         </div>
 
+        {/* LOAD SAVED BRIEF */}
+        <div className="mt-8">
+          <SavedBriefsPicker onSelect={loadSavedBrief} />
+        </div>
+
         {/* SECTION CARDS */}
         <form onSubmit={handleSubmitSections} className="mt-8" noValidate>
+
           <div className="flex flex-col gap-4">
             {SECTIONS.map((s) => (
               <SectionCard
