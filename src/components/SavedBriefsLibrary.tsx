@@ -3,6 +3,8 @@ import { Trash2, FolderOpen } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
+export const PENDING_BRIEF_STORAGE_KEY = "brand-grenade:pending-saved-brief";
+
 export type SavedBrief = {
   brief_id: string;
   brand_name: string;
