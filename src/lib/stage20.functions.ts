@@ -9,8 +9,6 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { callClaude } from "./claude.server";
 import { STAGE_20_MASTER_DETONATION_BRIEF_PROMPT } from "./stage20-master-detonation-brief-prompt";
 import {
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { assertSessionOwner } from "@/lib/auth-helpers.server";
   appendRedirect,
   formatThreeTruths,
   parseStage20Output,
@@ -22,6 +20,8 @@ import { assertSessionOwner } from "@/lib/auth-helpers.server";
   smpGoverningBlock,
   withPhase2Formatting,
 } from "./phase2-shared";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { assertSessionOwner } from "@/lib/auth-helpers.server";
 
 const STAGE20_SELECT = [
   "brand_name",

@@ -3,13 +3,13 @@ import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { callClaude } from "./claude.server";
 import {
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { assertSessionOwner } from "@/lib/auth-helpers.server";
   buildSectionUserMessage,
   getSectionsForFormat,
   type SessionForStage16,
   type Stage16Format,
 } from "./stage16-sections";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { assertSessionOwner } from "@/lib/auth-helpers.server";
 
 const FormatSchema = z.enum(["agency", "consulting", "workshop"]);
 const Input = z.object({

@@ -16,7 +16,6 @@
 
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { STAGE_9_SYSTEM_PROMPT } from "@/lib/stage9-prompt";
 import detonationCanvasSource from "@/routes/detonation_.canvas.tsx?raw";
 import detonationSource from "@/routes/detonation.tsx?raw";
@@ -45,6 +44,7 @@ import { runStage16 } from "@/lib/stage16.functions";
 import { runStage17, selectStage17Territory } from "@/lib/stage17.functions";
 import { runStage17b } from "@/lib/stage17b.functions";
 import { runStage18 } from "@/lib/stage18.functions";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 // ---------------------------------------------------------------------------
 // Types

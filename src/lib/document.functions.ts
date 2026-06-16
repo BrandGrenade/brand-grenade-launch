@@ -13,12 +13,12 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import {
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
   buildHtmlDocument,
   getSectionDefs,
   type DocFormat,
   type SessionLike,
 } from "./document-generator.server";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 // Direct Anthropic call with 30s timeout + retry + fallback.
 // Used in place of the streaming callClaude here because each section

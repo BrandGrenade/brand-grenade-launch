@@ -9,8 +9,6 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { callClaude } from "./claude.server";
 import { STAGE_18_THE_DETONATION_PROMPT } from "./stage18-the-detonation-prompt";
 import {
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { assertSessionOwner } from "@/lib/auth-helpers.server";
   appendFinalInstruction,
   appendRedirect,
   splitCards,
@@ -20,6 +18,8 @@ import { assertSessionOwner } from "@/lib/auth-helpers.server";
   type Card,
   withPhase2Formatting,
 } from "./phase2-shared";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { assertSessionOwner } from "@/lib/auth-helpers.server";
 
 const STAGE18_SELECT = [
   "brand_name",

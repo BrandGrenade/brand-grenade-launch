@@ -12,8 +12,6 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { callClaude } from "./claude.server";
 import { STAGE_17_DETONATION_TERRITORY_PROMPT } from "./stage17-detonation-territory-prompt";
 import {
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { assertSessionOwner } from "@/lib/auth-helpers.server";
   appendRedirect,
   splitCards,
   joinCards,
@@ -21,6 +19,8 @@ import { assertSessionOwner } from "@/lib/auth-helpers.server";
   type Card,
   withPhase2Formatting,
 } from "./phase2-shared";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { assertSessionOwner } from "@/lib/auth-helpers.server";
 
 const STAGE17_SELECT = "brand_name, category, selected_smp, stage_2_output, stage_5_output, stage_13_output, stage_14c_output, truth_product, truth_consumer, truth_cultural, brand_intel_type, brand_intel_values, brand_intel_tone, brand_intel_assets, stage_17_output" as const;
 
