@@ -170,5 +170,5 @@ ${args.stage7DominantSignal ?? "(not provided)"}
 ==== STAGE 2 — COMPETITIVE LANDSCAPE (CMM) ====
 ${args.cmm}
 
-Generate 5–7 Single-Minded Propositions per the Stage 9 specification. Apply every disqualification filter, the Emotional Direction Test, the Reinterpretation Requirement, the Cliché Detection scan, and all six quality criteria silently before presenting. Cover the Six Territories where material allows. For each proposition present: (1) The SMP, (2) The foundation, (3) The proof of ownership, (4) The creative territory. Then provide the ranking with one-sentence rationales and the top 1–2 recommendation with full strategic rationale.`;
+Generate 5–7 Single-Minded Propositions per the Stage 9 specification. Apply every disqualification filter, the Emotional Direction Test, the Reinterpretation Requirement, the Cliché Detection scan, all six quality criteria, the four craft standards, and the creative function classification silently before presenting. Cover the Six Territories where material allows. For each proposition present: (1) The SMP, (2) The foundation, (3) The proof of ownership, (4) The creative territory, (5) The creative function classification with Phase 2 Detonation instruction. Then provide the ranking with one-sentence rationales and the top 1–2 recommendation with full strategic rationale.`;
 }
