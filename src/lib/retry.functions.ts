@@ -103,7 +103,18 @@ export const resetStage = createServerFn({ method: "POST" })
           .update({ ...baseFields, stage_4_output: null, stage_4_error: null })
           .eq("id", data.sessionId);
         break;
+      case "4b":
+        await supabaseAdmin
+          .from("sessions")
+          .update({ ...baseFields, stage_4b_output: null, stage_4b_error: null })
+          .eq("id", data.sessionId);
+        break;
       case "5":
+        await supabaseAdmin
+          .from("sessions")
+          .update({ ...baseFields, stage_5_output: null, stage_5_error: null })
+          .eq("id", data.sessionId);
+        break;
         await supabaseAdmin
           .from("sessions")
           .update({ ...baseFields, stage_5_output: null, stage_5_error: null })
