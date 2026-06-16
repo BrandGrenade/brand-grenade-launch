@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { Trash2, FolderOpen } from "lucide-react";
+import { Trash2, FolderOpen, Plus } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -94,9 +95,14 @@ export function SavedBriefsSection({
     toast.success("Brief deleted");
   };
 
+  const confirmDelete = (id: string, name: string) => {
+    if (typeof window !== "undefined" && !window.confirm(`Delete the saved brief "${name}"?`)) return;
+    handleDelete(id);
+  };
+
   return (
     <section className="mt-10">
-      <div className="flex items-baseline justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <span className="text-label text-primary">Pre-Written Briefs</span>
           <h2 className="text-h2 mt-2 text-text-primary">Saved Briefs</h2>
@@ -104,6 +110,14 @@ export function SavedBriefsSection({
             Pre-written briefs ready to load into a new pipeline run with one click.
           </p>
         </div>
+        <Link
+          to="/brief/new"
+          className="inline-flex h-10 shrink-0 items-center gap-1.5 self-start rounded-md px-4 text-[13px] font-semibold transition-opacity hover:opacity-90"
+          style={{ backgroundColor: "#D4924A", color: "#0A0A0A" }}
+        >
+          <Plus size={14} />
+          New Brief
+        </Link>
       </div>
 
       <div className="mt-6">
@@ -115,7 +129,7 @@ export function SavedBriefsSection({
             style={{ border: "1px dashed var(--color-border)" }}
           >
             <p className="text-body" style={{ color: "var(--color-text-tertiary)" }}>
-              No saved briefs yet. Save a brief from the Stage 1 brief screen to build your library.
+              No saved briefs yet. Click <strong>New Brief</strong> to build your library.
             </p>
           </div>
         ) : (
@@ -144,11 +158,11 @@ export function SavedBriefsSection({
                     style={{ backgroundColor: "#D4924A", color: "#0A0A0A" }}
                   >
                     <FolderOpen size={14} />
-                    Load Brief
+                    Load and Run
                   </button>
                   <button
                     type="button"
-                    onClick={() => handleDelete(b.brief_id)}
+                    onClick={() => confirmDelete(b.brief_id, b.brand_name)}
                     className="inline-flex h-9 items-center gap-1.5 rounded-md px-3 text-[13px] font-medium transition-colors hover:bg-[#7C3A3A15]"
                     style={{ border: "1px solid #7C3A3A66", color: "#7C3A3A" }}
                   >
