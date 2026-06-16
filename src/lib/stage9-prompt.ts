@@ -134,6 +134,7 @@ Output ONLY the propositions, then the ranking, then the recommendation. Do NOT 
 2. The foundation. Which territory it comes from. Which truth — product, human, or cultural — it is grounded in. Which input was reinterpreted to generate this proposition and what the reinterpretation revealed. One sentence each.
 3. The proof of ownership. Why no named competitor can say this without self-implication. One sentence.
 4. The creative territory. What kinds of work this proposition generates. What the tone feels like. Why it will produce ideas that last years not campaigns. Two to three sentences maximum.
+5. The creative function classification. SELF-EXECUTING or PLATFORM, with a one-sentence rationale and the specific Phase 2 Detonation instruction for that classification.
 
 RANKING AND RECOMMENDATION
 After generating the full set rank all propositions from strongest to weakest with a one sentence rationale for each ranking decision.
