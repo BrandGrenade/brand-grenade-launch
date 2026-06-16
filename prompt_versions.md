@@ -317,6 +317,22 @@ now begins directly with Section 1 — Surface Request. File:
 
 ---
 
+## v2.4 — Stage 9 universal craft standard with SMP creative function classification
+**Date:** June 2026
+**Stage:** Stage 9
+**Change:** Replaced the Stage 9 craft standard with the final universal version.
+The new standard introduces four craft standards (Sharpness, Crispness,
+Interest, Polarity), expanded language requirements, the SMP Creative
+Function Classification (SELF-EXECUTING vs PLATFORM), and Phase 2
+Detonation instructions tailored to each classification. The craft benchmark
+now requires a half-second pause, unexpected word usage, and reader
+completion — without relying on category-specific examples. The output
+format now includes the creative function classification alongside each
+proposition, and the classification with its detonation instruction is
+carried forward to Stage 17. File: `src/lib/stage9-prompt.ts`.
+
+---
+
 ## v2.5 — Stage 9 craft standard addition
 **Date:** June 2026
 **Stage:** Stage 9
