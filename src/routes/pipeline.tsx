@@ -378,6 +378,8 @@ function PipelineView() {
   const [stage3Error, setStage3Error] = useState<string | null>(null);
   const [stage4Output, setStage4Output] = useState<string | null>(null);
   const [stage4Error, setStage4Error] = useState<string | null>(null);
+  const [stage4bOutput, setStage4bOutput] = useState<string | null>(null);
+  const [stage4bError, setStage4bError] = useState<string | null>(null);
   const [stage5Output, setStage5Output] = useState<string | null>(null);
   const [stage5Error, setStage5Error] = useState<string | null>(null);
   const [stage6Output, setStage6Output] = useState<string | null>(null);
