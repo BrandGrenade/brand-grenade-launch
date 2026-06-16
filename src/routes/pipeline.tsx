@@ -541,6 +541,7 @@ function PipelineView() {
       setStage2Error(null);
       setStage3Error(null);
       setStage4Error(null);
+      setStage4bError(null);
       setStage5Error(null);
       setStage6Error(null);
       setStage7Error(null);
