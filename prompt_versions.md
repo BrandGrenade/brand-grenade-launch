@@ -494,3 +494,24 @@ compounding value over time. All references to the Eight Dimension
 Stress Test composite updated from out of 80 to out of 90; pass
 threshold raised from 64/80 to 72/90 (maintaining the 80 % standard).
 File: `src/lib/stage18-the-detonation-prompt.ts`.
+
+---
+
+## v3.4 — Stage 15 Voice and Specificity Audit
+**Date:** June 2026
+**Stage:** Stage 15
+**Change:** Added Check 8 (Voice Consistency Audit) and Check 9
+(Specificity Audit) to the Stage 15 Strategic Consistency Audit system
+prompt. Check 8 applies three tests across Stage 7–14C outputs: a poison
+word sweep against the Stage 1 banned language list; a tone register
+consistency check confirming the Stage 13 Brand Fit register is present
+across Stages 14, 14B, 14C; and a brand voice authenticity check
+flagging generic territory descriptions that could apply to any
+challenger brand. Check 9 applies the brand name removal test to every
+paragraph in Stage 7–14C outputs that feeds Stage 16 — if a paragraph
+still makes sense as a generic strategic statement once the brand name
+is removed it is flagged as insufficiently specific, with one sentence
+of correction instruction per flagged paragraph. Severity bands defined
+for both checks (MINOR / SUBSTANTIVE / CRITICAL). Header updated from
+seven to nine audit checks; report block count updated to 9. File:
+`src/lib/stage15-prompt.ts`.
