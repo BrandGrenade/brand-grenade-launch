@@ -258,7 +258,7 @@ export async function* streamClaude(args: CallClaudeArgs): AsyncGenerator<string
   // failure (handled by openWithRetry). Mid-stream drops surface as
   // sawMessageStop === false so the outer loop can retry.
   async function attempt(): Promise<{ total: string; stopReason: string | null; sawMessageStop: boolean }> {
-    const resp = await openWithRetry(apiKey, body, args.sessionId, args.stageLabel, true);
+    const resp = await openWithRetry(apiKey, body, args.sessionId, args.stageLabel, true, args.timeoutMs);
     if (!resp.body) throw new Error("Claude streaming response had no body");
     const reader = resp.body.getReader();
     const decoder = new TextDecoder();
