@@ -49,7 +49,7 @@ const COPY: Record<
 
 type Action = "confirm" | "revise" | "escalate" | null;
 
-function buildRevisionInstruction(notes: string[], feedback: string): string {
+export function buildRevisionInstruction(notes: string[], feedback: string): string {
   const checkpointNotes = notes
     .map((note, index) => ({ note: note.trim(), index }))
     .filter(({ note }) => note.length > 0)
@@ -76,6 +76,7 @@ export function Checkpoint({
   onConfirm,
   onResubmit,
   onEscalate,
+  onNotesChange,
   resubmitting = false,
 }: {
   letter: CheckpointLetter;
@@ -85,6 +86,7 @@ export function Checkpoint({
   onConfirm?: (notes: string[]) => void;
   onResubmit?: (feedback: string) => void | Promise<void>;
   onEscalate?: (reason: string) => void | Promise<void>;
+  onNotesChange?: (notes: string[]) => void;
   resubmitting?: boolean;
 }) {
   const copy = COPY[letter];
@@ -152,6 +154,7 @@ export function Checkpoint({
                     const next = [...notes];
                     next[i] = e.target.value.slice(0, 1000);
                     setNotes(next);
+                    onNotesChange?.(next);
                   }}
                   placeholder="Your notes..."
                   className="input-base w-full resize-none"
