@@ -2055,7 +2055,36 @@ function PipelineView() {
           isRunning: pipelineIsRunning,
         }}
       />
-      <Breadcrumb brand={brandLabel} elapsed={elapsed} status={pipelineStatus} />
+      <Breadcrumb
+        brand={brandLabel}
+        elapsed={elapsed}
+        status={pipelineStatus}
+        hasBrief={Boolean(session?.brief_text || (session?.brief_versions?.length ?? 0) > 0)}
+        briefVersionCount={session?.brief_versions?.length ?? 0}
+        onViewBrief={() => {
+          scrollToTop();
+          setSelectedId("BRIEF");
+        }}
+        onEditBrief={() => {
+          if (!sessionId) return;
+          const latest =
+            (session?.brief_versions && session.brief_versions.length > 0
+              ? session.brief_versions[session.brief_versions.length - 1].fields
+              : null) ??
+            briefFieldsFromLegacyText({
+              brandName: session?.brand_name ?? "",
+              category: session?.category ?? "",
+              briefText: session?.brief_text ?? null,
+            });
+          try {
+            sessionStorage.setItem(
+              PENDING_BRIEF_EDIT_STORAGE_KEY,
+              JSON.stringify(latest),
+            );
+          } catch {/* ignore */}
+          navigate({ to: "/brief", search: { edit: sessionId } });
+        }}
+      />
 
       <div className="flex flex-1 overflow-hidden">
         <LeftPanel
