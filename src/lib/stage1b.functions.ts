@@ -181,9 +181,9 @@ export const resubmitBriefStructured = createServerFn({ method: "POST" })
       .single();
     if (loadErr || !session) throw new Error(`Session not found: ${loadErr?.message ?? "no row"}`);
 
-    const existing = Array.isArray(session.brief_versions) ? session.brief_versions : [];
+    const existing = (Array.isArray(session.brief_versions) ? session.brief_versions : []) as Array<{ version?: number }>;
     const nextVersion = existing.length > 0
-      ? Math.max(...existing.map((v: { version?: number }) => Number(v?.version) || 0)) + 1
+      ? Math.max(...existing.map((v) => Number(v?.version) || 0)) + 1
       : 2; // first edit always becomes v2 even if v1 was never recorded (legacy)
     const newVersion = {
       version: nextVersion,
