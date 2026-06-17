@@ -2965,6 +2965,7 @@ function RightPanel({
   stage8KeepNames,
   onToggleStage8Keep,
   onManualStage8Submit,
+  onCheckpointNotesChange,
   contentScrollRef,
 }: {
   stage: Stage;
@@ -3001,6 +3002,7 @@ function RightPanel({
   stage8KeepNames: Set<string>;
   onToggleStage8Keep: (name: string, keep: boolean) => void;
   onManualStage8Submit?: (line: string, label: string) => void | Promise<void>;
+  onCheckpointNotesChange?: (notes: string[]) => void;
 }) {
   const isRunning = status === "running";
   const isCheckpoint = status === "checkpoint";
