@@ -105,6 +105,69 @@ async function setRetryStatus(sessionId: string | undefined, message: string | n
   }
 }
 
+// ---------------------------------------------------------------------------
+// Amendment notes — universal injection.
+//
+// `sessions.stage_amendments` is a JSONB map keyed by lowercase stage id
+// (e.g. "1", "1b", "2", "13b") with shape:
+//   { feedback: string, previousOutput?: string, ts?: string }
+//
+// When a stage runs and an amendment exists for its stage id, the human
+// direction is prefixed/suffixed onto the user message via the shared
+// `buildFeedbackInjection` helper so it is applied as a mandatory constraint.
+// On successful completion of the call the amendment is cleared so it does
+// not re-apply on subsequent natural runs.
+//
+// Stages that handle feedback inline (1 / 8 / 12) inject the same wrapper
+// themselves; the universal layer detects the marker and skips re-injection
+// to avoid duplicate constraint blocks, but still clears the amendment.
+// ---------------------------------------------------------------------------
+
+const AMENDMENT_MARKER = "==== MANDATORY HUMAN REDIRECT";
+
+type AmendmentEntry = { feedback?: string; previousOutput?: string | null };
+
+async function readAmendment(
+  sessionId: string | undefined,
+  stageNumber: string | undefined,
+): Promise<{ key: string; entry: AmendmentEntry } | null> {
+  if (!sessionId || !stageNumber) return null;
+  const key = stageNumber.toLowerCase();
+  try {
+    const { data } = await supabaseAdmin
+      .from("sessions")
+      .select("stage_amendments")
+      .eq("id", sessionId)
+      .single();
+    const map = (data?.stage_amendments ?? {}) as Record<string, AmendmentEntry>;
+    const entry = map[key];
+    if (!entry || !entry.feedback || !entry.feedback.trim()) return null;
+    return { key, entry };
+  } catch {
+    return null;
+  }
+}
+
+async function clearAmendment(sessionId: string | undefined, key: string | undefined) {
+  if (!sessionId || !key) return;
+  try {
+    const { data } = await supabaseAdmin
+      .from("sessions")
+      .select("stage_amendments")
+      .eq("id", sessionId)
+      .single();
+    const map = { ...((data?.stage_amendments ?? {}) as Record<string, unknown>) };
+    if (!(key in map)) return;
+    delete map[key];
+    await supabaseAdmin
+      .from("sessions")
+      .update({ stage_amendments: map })
+      .eq("id", sessionId);
+  } catch {
+    // best-effort
+  }
+}
+
 function isRetryableStatus(status: number) {
   return status === 524 || status === 503 || status === 502 || status === 504;
 }
