@@ -322,14 +322,20 @@ function BriefIntake() {
 
       <main className="mx-auto w-full max-w-[840px] px-5 pb-16 pt-12 sm:px-6">
         <header>
-          <span className="text-label text-primary">Strategy Brief</span>
-          <h1 className="text-h1 mt-3 text-text-primary">Submit your brief</h1>
+          <span className="text-label text-primary">
+            {isEditMode ? "Edit Submitted Brief" : "Strategy Brief"}
+          </span>
+          <h1 className="text-h1 mt-3 text-text-primary">
+            {isEditMode ? "Edit your brief" : "Submit your brief"}
+          </h1>
           <p className="text-body-lg mt-3 text-text-secondary">
-            Complete the structured brief below, or upload an existing document
-            and the Strategy Engine will extract the strategic inputs.
+            {isEditMode
+              ? "Every field is pre-populated from the original submission. Edit any field and click Resubmit — Stage 1 will rerun with the amended brief and every downstream stage will reset. The original version is preserved as Version 1."
+              : "Complete the structured brief below, or upload an existing document and the Strategy Engine will extract the strategic inputs."}
           </p>
           <hr className="my-8 h-px border-0 bg-border" />
         </header>
+
 
         {/* HEADER FIELDS — 2x2 grid */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
