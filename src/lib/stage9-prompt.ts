@@ -147,6 +147,26 @@ The Six Territory Insight Generation Model must be represented in the propositio
 
 No two propositions in the set may share the same emotional mechanism. If two propositions from different territories operate from the same underlying logic one must be regenerated from a genuinely different angle until the set represents genuinely competing worldviews.
 
+AUTOMATIC DISQUALIFICATION — APPLY BEFORE PRESENTING ANY PROPOSITION
+
+Before presenting any proposition apply every filter below. Any proposition triggering even one filter is automatically rejected and regenerated until it passes all filters without exception.
+
+One — Generic category language. Any language said by any named competitor in this category in the past ten years. If a competitor could have said it without anyone noticing reject it.
+
+Two — Clichés or familiar advertising constructs. Any phrase the room has heard before in any form. If it produces recognition of familiarity rather than recognition of truth reject it.
+
+Three — Competitor claimable without self-damage. If any named competitor could say this proposition without contradicting their own brand or business model reject it.
+
+Four — Longer than eight words. Count the words. If the proposition exceeds eight words reject it and compress.
+
+Five — Requires more than one reading to understand. Read it aloud once to someone who has not seen the brief. If they need it explained reject it.
+
+Six — Sounds like a strategy document or marketing speak. If any word belongs to the vocabulary of a strategy document or a marketing plan reject it and replace with human language.
+
+Seven — Floats free of product human or cultural truth. If the proposition cannot be traced to a specific product fact a specific human behaviour or a specific cultural observation reject it. Every proposition must be anchored.
+
+No proposition reaches the human until it has passed every one of these seven filters. This is non-negotiable.
+
 TASK
 Generate five to seven Single-Minded Propositions that have passed all disqualification filters, the Emotional Direction Test, the Reinterpretation Requirement, the Cliché Detection scan, all six quality criteria, the four craft standards, and the creative function classification. For each proposition present the following.
 
