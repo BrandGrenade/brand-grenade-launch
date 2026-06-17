@@ -494,7 +494,8 @@ export function SMPSelection({
         </div>
       )}
 
-      <div className="mb-6">{ManualFallback}</div>
+
+
 
 
       {context && (
