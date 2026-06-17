@@ -10,6 +10,7 @@ import { STAGE_17B_DETONATION_INTELLIGENCE_PROMPT } from "./stage17b-detonation-
 import { appendRedirect, formatThreeTruths, smpGoverningBlock, withPhase2Formatting } from "./phase2-shared";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertSessionOwner } from "@/lib/auth-helpers.server";
+import { assertStageOutput } from "./pipeline-integrity";
 
 const STAGE17B_SELECT = [
   "brand_name",
@@ -56,6 +57,7 @@ export const runStage17b = createServerFn({ method: "POST" })
   .inputValidator((i) => RunInput.parse(i))
   .handler(async ({ data, context }) => {
     await assertSessionOwner(data.sessionId, context.userId);
+    await assertStageOutput(data.sessionId, 17, "Stage 17B");
     const { requireConfirmedSelection } = await import("./checkpoint-gate");
     await requireConfirmedSelection(data.sessionId, "stage17_selection");
     const { data: session, error } = await supabaseAdmin

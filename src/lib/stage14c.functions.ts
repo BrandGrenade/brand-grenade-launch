@@ -6,6 +6,7 @@ import { STAGE_14C_SYSTEM_PROMPT, buildStage14cUserMessage } from "./stage14c-pr
 import { trimBrandFitForDownstream } from "./context-trim";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertSessionOwner } from "@/lib/auth-helpers.server";
+import { assertStageOutput } from "./pipeline-integrity";
 
 const Input = z.object({ sessionId: z.string().uuid() });
 
@@ -14,6 +15,7 @@ export const runStage14c = createServerFn({ method: "POST" })
   .inputValidator((i) => Input.parse(i))
   .handler(async function* ({ data, context }) {
     await assertSessionOwner(data.sessionId, context.userId);
+    await assertStageOutput(data.sessionId, 14, "Stage 14C");
     const { data: session, error } = await supabaseAdmin
       .from("sessions")
       .select(
