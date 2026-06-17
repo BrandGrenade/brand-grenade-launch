@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { parseStage11Verdicts, parseStage10Scores } from "@/lib/stage12-filter";
+import { parseStage11Verdicts, parseStage10Scores, type Stage11Verdict } from "@/lib/stage12-filter";
 
 
 export interface SMPCard {
@@ -173,6 +173,17 @@ function parsePropositions(rawOutput: string): RawProp[] {
   return propositions;
 }
 
+function parseStage10PassingAsVerdicts(stage10Output: string): Stage11Verdict[] {
+  const scores = parseStage10Scores(stage10Output);
+  return scores.map((score) => ({
+    smpLine: score.smpLine,
+    fieldName: score.fieldName,
+    verdict: "VALIDATED",
+    iconicStatus: "N/A",
+    block: `SMP: "${score.smpLine}" — FIELD: ${score.fieldName}\nSMP VERDICT: VALIDATED`,
+  }));
+}
+
 export function parseSMPCards(
   primary: string,
   stage11Fallback?: string,
@@ -199,10 +210,17 @@ export function parseSMPCards(
   // Fallback: render the VALIDATED propositions from Stage 11 directly so the
   // human always sees the propositions, even when Stage 12 parsing fails or
   // Stage 12 output has not yet been produced.
-  if (!stage11Fallback) return [];
-  const verdicts = parseStage11Verdicts(stage11Fallback).filter(
-    (v) => v.verdict === "VALIDATED" || v.verdict === "VALIDATED WITH STRATEGIC NOTE",
-  );
+  const stage11Verdicts = stage11Fallback
+    ? parseStage11Verdicts(stage11Fallback).filter(
+        (v) => v.verdict === "VALIDATED" || v.verdict === "VALIDATED WITH STRATEGIC NOTE",
+      )
+    : [];
+  const verdicts = stage11Verdicts.length
+    ? stage11Verdicts
+    : stage10ForScores
+      ? parseStage10PassingAsVerdicts(stage10ForScores)
+      : [];
+  if (verdicts.length === 0) return [];
   console.log("Propositions found (stage 11 fallback): " + verdicts.length);
   const scores = stage10ForScores ? parseStage10Scores(stage10ForScores) : [];
   const scoreByField = new Map(scores.map((s) => [s.fieldName.trim().toLowerCase(), s]));
