@@ -152,10 +152,8 @@ export const runStage1 = createServerFn({ method: "POST" })
     }
 
     const tensionScore = extractTensionScore(output);
-    // Strict gate: a Stage 1 pass requires an extractable numeric tension
-    // score of 7 or higher. A null score (unparseable) is treated as a fail
-    // and routes the user into Stage 1B for brief enhancement.
-    const stage1bRequired = !(tensionScore !== null && tensionScore >= 7);
+    // NOTE: stage1bRequired is determined purely by brief completeness above.
+    // The tension score is informational only and never gates Stage 1B.
 
     let lastSaveErr: { message: string } | null = null;
     for (let attempt = 0; attempt < 3; attempt++) {
@@ -172,3 +170,36 @@ export const runStage1 = createServerFn({ method: "POST" })
 
     yield { done: true as const, output, tensionScore, stage1bRequired };
   });
+
+// Returns true iff one or more of the nine mandatory brief sections is empty.
+// The nine sections are the 8 structured sections in BRIEF_SECTIONS plus
+// the supporting-materials list. A section counts as "present" when at least
+// one of its fields contains non-whitespace text. Supporting materials count
+// as "present" when the array contains at least one entry.
+// If the session has no structured brief_versions (legacy plain-text brief),
+// the gate is OFF — Stage 1 always advances.
+function computeStage1bRequiredFromBrief(briefVersions: unknown): boolean {
+  if (!Array.isArray(briefVersions) || briefVersions.length === 0) return false;
+  const latest = briefVersions[briefVersions.length - 1] as { fields?: { sections?: Record<string, string>; supportingMaterials?: string[] } } | undefined;
+  const fields = latest?.fields;
+  if (!fields) return false;
+  const sections = fields.sections ?? {};
+  // 8 structured sections — each has a known set of field keys.
+  const sectionKeyGroups: string[][] = [
+    ["s1_core"],
+    ["s2_business", "s2_comms", "s2_strategic"],
+    ["s3_behaviour", "s3_tension", "s3_relationship"],
+    ["s4_provable", "s4_believed"],
+    ["s5_believes", "s5_changing", "s5_unsaid"],
+    ["s6_competitors", "s6_territory"],
+    ["s7_never", "s7_commit", "s7_equities"],
+    ["s8_measure"],
+  ];
+  for (const keys of sectionKeyGroups) {
+    const anyFilled = keys.some((k) => (sections[k] ?? "").trim().length > 0);
+    if (!anyFilled) return true;
+  }
+  // 9th section: supporting materials.
+  if (!Array.isArray(fields.supportingMaterials) || fields.supportingMaterials.length === 0) return true;
+  return false;
+}
