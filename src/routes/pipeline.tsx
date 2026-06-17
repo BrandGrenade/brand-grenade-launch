@@ -2417,15 +2417,23 @@ function Breadcrumb({
   brand,
   elapsed,
   status,
+  hasBrief,
+  briefVersionCount,
+  onViewBrief,
+  onEditBrief,
 }: {
   brand: string;
   elapsed: string;
   status: string;
+  hasBrief: boolean;
+  briefVersionCount: number;
+  onViewBrief: () => void;
+  onEditBrief: () => void;
 }) {
   return (
-    <div className="flex items-center justify-between border-b border-border bg-background px-5 py-3 sm:px-8">
+    <div className="flex items-center justify-between gap-3 border-b border-border bg-background px-5 py-3 sm:px-8">
       <nav
-        className="text-body-sm flex items-center gap-1.5 truncate"
+        className="text-body-sm flex min-w-0 items-center gap-1.5 truncate"
         style={{ color: "var(--color-text-tertiary)" }}
       >
         <Link to="/dashboard" className="transition-colors hover:text-text-secondary">
@@ -2437,7 +2445,39 @@ function Breadcrumb({
         <span>Strategy Room</span>
       </nav>
 
-      <div className="ml-4 flex shrink-0 items-center gap-3">
+      <div className="ml-4 flex shrink-0 items-center gap-2">
+        {hasBrief && (
+          <>
+            <button
+              type="button"
+              onClick={onViewBrief}
+              className="inline-flex h-8 items-center gap-1.5 rounded-md px-2.5 text-[12px] font-semibold transition-colors hover:bg-[#D4924A15]"
+              style={{ border: "1px solid #D4924A66", color: "#D4924A", backgroundColor: "transparent" }}
+              title="View the submitted brief in full"
+            >
+              <FileText size={13} />
+              View Brief
+              {briefVersionCount > 1 ? (
+                <span
+                  className="ml-1 rounded-sm px-1 text-[10px]"
+                  style={{ backgroundColor: "#D4924A33" }}
+                >
+                  v{briefVersionCount}
+                </span>
+              ) : null}
+            </button>
+            <button
+              type="button"
+              onClick={onEditBrief}
+              className="inline-flex h-8 items-center gap-1.5 rounded-md px-2.5 text-[12px] font-semibold transition-opacity hover:opacity-90"
+              style={{ backgroundColor: "#D4924A", color: "#0A0A0A" }}
+              title="Edit the brief and rerun Stage 1 — downstream stages will reset"
+            >
+              <PencilLine size={13} />
+              Edit Brief
+            </button>
+          </>
+        )}
         <span
           className="text-label inline-flex items-center rounded-sm px-2 py-0.5"
           style={{
