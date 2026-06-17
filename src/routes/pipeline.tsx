@@ -2235,6 +2235,9 @@ function PipelineView() {
             tensionScore={selected.id === "01" ? (session?.stage_1_tension_score ?? null) : null}
             stage1bRequired={selected.id === "01" ? (session?.stage_1b_required ?? false) : false}
             amendmentNote={amendmentNotes[selected.id] ?? ""}
+            onCheckpointNotesChange={(notes) =>
+              setCheckpointFieldNotes((prev) => ({ ...prev, [selected.id]: notes }))
+            }
             onAmendmentChange={(value: string) =>
               setAmendmentNotes((prev) => ({ ...prev, [selected.id]: value }))
             }
