@@ -10,6 +10,7 @@ import {
 } from "./context-trim";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertSessionOwner } from "@/lib/auth-helpers.server";
+import { assertUpstreamStageOutput } from "./pipeline-integrity";
 
 const Input = z.object({ sessionId: z.string().uuid() });
 
@@ -18,6 +19,7 @@ export const runStage15 = createServerFn({ method: "POST" })
   .inputValidator((i) => Input.parse(i))
   .handler(async function* ({ data, context }) {
     await assertSessionOwner(data.sessionId, context.userId);
+    await assertUpstreamStageOutput(data.sessionId, 15);
     const { data: session, error } = await supabaseAdmin
       .from("sessions")
       .select("*")

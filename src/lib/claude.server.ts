@@ -14,6 +14,7 @@ export interface CallClaudeArgs {
   systemPrompt: string;
   userMessage: string;
   maxTokens?: number;
+  timeoutMs?: number;
   model?: string;
   skipUniversalWrapper?: boolean;
   /** When provided, retry status is written to sessions.retry_status and
@@ -108,9 +109,9 @@ function isRetryableStatus(status: number) {
   return status === 524 || status === 503 || status === 502 || status === 504;
 }
 
-async function doFetch(apiKey: string, body: string): Promise<Response> {
+async function doFetch(apiKey: string, body: string, timeoutMs = REQUEST_TIMEOUT_MS): Promise<Response> {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
   try {
     return await fetch(ANTHROPIC_URL, {
       method: "POST",
@@ -162,7 +163,8 @@ async function openWithRetry(
   body: string,
   sessionId: string | undefined,
   stageLabel: string | undefined,
-  stream: boolean
+  stream: boolean,
+  timeoutMs = REQUEST_TIMEOUT_MS,
 ): Promise<Response> {
   let attempt = 0;
   const maxAttempts = 2;
@@ -171,7 +173,7 @@ async function openWithRetry(
   while (attempt < maxAttempts) {
     attempt++;
     try {
-      const resp = await doFetch(apiKey, bodyWithFlag);
+      const resp = await doFetch(apiKey, bodyWithFlag, timeoutMs);
       if (resp.ok) {
         await setRetryStatus(sessionId, null);
         return resp;
@@ -191,7 +193,7 @@ async function openWithRetry(
         (e.name === "AbortError" || /aborted|timeout/i.test(e.message));
       const msg = e instanceof Error ? e.message : "network error";
       lastError = isAbort
-        ? `Claude API request timed out after ${REQUEST_TIMEOUT_MS / 1000}s`
+        ? `Claude API request timed out after ${timeoutMs / 1000}s`
         : `Claude API request failed: ${msg}`;
       if ((isAbort || /network|fetch failed/i.test(msg)) && attempt < maxAttempts) {
         await setRetryStatus(sessionId, `Connection timeout — retrying ${stageLabel ?? "request"}...`);
@@ -256,7 +258,7 @@ export async function* streamClaude(args: CallClaudeArgs): AsyncGenerator<string
   // failure (handled by openWithRetry). Mid-stream drops surface as
   // sawMessageStop === false so the outer loop can retry.
   async function attempt(): Promise<{ total: string; stopReason: string | null; sawMessageStop: boolean }> {
-    const resp = await openWithRetry(apiKey, body, args.sessionId, args.stageLabel, true);
+    const resp = await openWithRetry(apiKey, body, args.sessionId, args.stageLabel, true, args.timeoutMs);
     if (!resp.body) throw new Error("Claude streaming response had no body");
     const reader = resp.body.getReader();
     const decoder = new TextDecoder();

@@ -7,6 +7,7 @@ import { STAGE_9_SYSTEM_PROMPT, buildStage9UserMessage } from "./stage9-prompt";
 import { countPropositions } from "./count-helpers";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertSessionOwner } from "@/lib/auth-helpers.server";
+import { assertUpstreamStageOutput } from "./pipeline-integrity";
 
 const Input = z.object({ sessionId: z.string().uuid() });
 
@@ -112,6 +113,7 @@ export const runStage9 = createServerFn({ method: "POST" })
     await assertSessionOwner(data.sessionId, context.userId);
     const { requireConfirmedSelection } = await import("./checkpoint-gate");
     await requireConfirmedSelection(data.sessionId, "B");
+    await assertUpstreamStageOutput(data.sessionId, 9);
     const { data: session, error } = await supabaseAdmin
       .from("sessions")
       .select("brand_name, category, stage_2_output, stage_7_output, stage_8_output, stage_9_output, checkpoint_b_confirmed")

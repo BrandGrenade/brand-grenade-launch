@@ -20,6 +20,7 @@ import {
 } from "./phase2-shared";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertSessionOwner } from "@/lib/auth-helpers.server";
+import { assertUpstreamStageOutput } from "./pipeline-integrity";
 
 const STAGE18_SELECT = [
   "brand_name",
@@ -84,6 +85,7 @@ export const runStage18 = createServerFn({ method: "POST" })
     await assertSessionOwner(data.sessionId, context.userId);
     const { requireConfirmedSelection } = await import("./checkpoint-gate");
     await requireConfirmedSelection(data.sessionId, "D");
+    await assertUpstreamStageOutput(data.sessionId, 18);
     const { data: session, error } = await supabaseAdmin
       .from("sessions")
       .select("brand_name, category, selected_smp, stage_17_selected_territory, stage_17b_output, truth_product, truth_consumer, truth_cultural, stage_18_output")

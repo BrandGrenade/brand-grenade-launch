@@ -22,6 +22,7 @@ import {
 } from "./phase2-shared";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertSessionOwner } from "@/lib/auth-helpers.server";
+import { assertUpstreamStageOutput } from "./pipeline-integrity";
 
 const STAGE20_SELECT = [
   "brand_name",
@@ -121,6 +122,7 @@ export const runStage20 = createServerFn({ method: "POST" })
   .inputValidator((i) => RunInput.parse(i))
   .handler(async ({ data, context }) => {
     await assertSessionOwner(data.sessionId, context.userId);
+    await assertUpstreamStageOutput(data.sessionId, 20);
     const { data: session, error } = await supabaseAdmin
       .from("sessions")
       .select("brand_name, category, selected_smp, stage_5_output, stage_17b_output, stage_18_output, stage_18_selected_detonation, stage_18_detonation_line, stage_19_output, truth_product, truth_consumer, truth_cultural, stage_20_output")

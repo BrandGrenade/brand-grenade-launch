@@ -11,6 +11,7 @@ import { STAGE_7_SYSTEM_PROMPT, buildStage7UserMessage } from "./stage7-prompt";
 import { trimValidatedInsightsForDownstream } from "./context-trim";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertSessionOwner } from "@/lib/auth-helpers.server";
+import { assertUpstreamStageOutput } from "./pipeline-integrity";
 
 const Input = z.object({
   sessionId: z.string().uuid(),
@@ -262,6 +263,7 @@ export const runStage8 = createServerFn({ method: "POST" })
   .inputValidator((i) => Input.parse(i))
   .handler(async function* ({ data, context }) {
     await assertSessionOwner(data.sessionId, context.userId);
+    await assertUpstreamStageOutput(data.sessionId, 8);
     const { data: session, error } = await supabaseAdmin
       .from("sessions")
       .select(
