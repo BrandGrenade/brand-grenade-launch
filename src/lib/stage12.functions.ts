@@ -30,8 +30,8 @@ function buildDeterministicStage12Output(args: {
   validated: Stage11Verdict[];
   scores: Stage10Score[];
 }): string {
-  const byField = new Map(scores.map((score) => [score.fieldName.trim().toLowerCase(), score]));
-  const byLine = new Map(scores.map((score) => [score.smpLine.trim().toLowerCase(), score]));
+  const byField = new Map(args.scores.map((score) => [score.fieldName.trim().toLowerCase(), score]));
+  const byLine = new Map(args.scores.map((score) => [score.smpLine.trim().toLowerCase(), score]));
   const cards = args.validated.map((verdict, index) => {
     const score =
       byField.get(verdict.fieldName.trim().toLowerCase()) ??
@@ -103,7 +103,7 @@ PRESSURE_TEST_NOTE: ${verdict.verdict}
   });
 
   const opportunityMatch = args.stage1Output.match(
-    new RegExp(`${escapeRegex("Strategic Opportunity")}[^\n]*\n+([\s\S]{0,600})`, "i"),
+    new RegExp(`${escapeRegex("Strategic Opportunity")}[^\n]*\n+([\\s\\S]{0,600})`, "i"),
   );
   const context = opportunityMatch?.[1]?.trim().replace(/\s+/g, " ").slice(0, 500);
   return `==== DELIVERABLE 1 — PRESENTATION DOCUMENT ====
