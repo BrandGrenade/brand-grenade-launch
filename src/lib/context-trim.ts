@@ -1,7 +1,64 @@
-// Context trimming utilities used between pipeline stages.
-// Goal: pass only the minimum context required for each stage to function,
-// so demo/dev runs stay within token budgets. Production runs can bypass
-// these by passing the full upstream output directly.
+// Context utilities used between pipeline stages.
+//
+// IMPORTANT — TRUNCATION POLICY:
+// Every stage in the pipeline must receive the COMPLETE upstream output from
+// the previous stage. The historical `trim*ForDownstream` helpers used to
+// pick a few lines or sections out of the upstream output to save tokens;
+// that behaviour caused downstream stages (notably Stage 7, which consumes
+// Stage 6's validated insight set) to receive only a fragment of the
+// upstream output and produce partial results.
+//
+// All `trim*ForDownstream` helpers below are now pass-through. They keep
+// their original names so existing call sites do not need to change, but
+// they return the full upstream output verbatim.
+//
+// The `extract*` / `firstParagraph` helpers further down are NOT generic
+// stage handoffs — they are deliberate, narrow extractions of named
+// statements (e.g. the Strategic Lineage Statement) that are wired in as
+// specific inputs to specific stages. They remain unchanged.
+
+function passThrough(s: string | null | undefined): string {
+  return (s ?? "").trim();
+}
+
+/** Stage 1 → Stages 2/3/4: full Stage 1 output. */
+export function trimStage1ForDownstream(s1: string): string {
+  return passThrough(s1);
+}
+
+/** Stage 2 (CMM) → Stages 5/6: full CMM. */
+export function trimCMMForDownstream(cmm: string): string {
+  return passThrough(cmm);
+}
+
+/** Stage 4 (SIS) → Stages 5/6: full SIS. */
+export function trimSISForDownstream(sis: string): string {
+  return passThrough(sis);
+}
+
+/** Stage 6 (Validated Insights) → Stages 7/8: full validated insight set. */
+export function trimValidatedInsightsForDownstream(s6: string): string {
+  return passThrough(s6);
+}
+
+/** Stage 8 (Draft SMPs) → Stages 9/10/11: full Draft SMP set. */
+export function trimDraftSMPsForDownstream(s8: string): string {
+  return passThrough(s8);
+}
+
+/** Stage 10/11 (Scored / Pressure-tested SMPs) → Stage 12: full scored set. */
+export function trimScoredSMPsForDownstream(s: string): string {
+  return passThrough(s);
+}
+
+/** Stage 13 (Brand Fit) → Stages 13B/14/14B/14C: full Brand Fit verdict. */
+export function trimBrandFitForDownstream(s13: string): string {
+  return passThrough(s13);
+}
+
+// ---------------------------------------------------------------------------
+// Narrow extraction helpers (intentional, not stage-wide handoffs).
+// ---------------------------------------------------------------------------
 
 function clip(s: string, max: number): string {
   const t = (s ?? "").trim();
@@ -9,7 +66,6 @@ function clip(s: string, max: number): string {
   return t.slice(0, max).trimEnd() + "…";
 }
 
-/** Extract the body of a markdown section by a heading regex (match must include the trailing newline). */
 function sectionBody(text: string, headingRe: RegExp): string {
   const m = text.match(headingRe);
   if (!m || m.index === undefined) return "";
@@ -17,114 +73,6 @@ function sectionBody(text: string, headingRe: RegExp): string {
   const rest = text.slice(start);
   const next = rest.search(/\n#{1,4}\s/);
   return (next === -1 ? rest : rest.slice(0, next)).trim();
-}
-
-function pickLines(text: string, predicates: RegExp[]): string {
-  const out: string[] = [];
-  for (const line of (text ?? "").split("\n")) {
-    if (predicates.some((re) => re.test(line))) out.push(line);
-  }
-  return out.join("\n").trim();
-}
-
-/** Stage 1 → Stages 2/3/4: keep only Sections 1, 4, 6 (clipped). */
-export function trimStage1ForDownstream(s1: string): string {
-  if (!s1) return "";
-  const sec1 = clip(sectionBody(s1, /##\s*Section\s*1[^\n]*\n/i), 200);
-  const sec4 = clip(sectionBody(s1, /##\s*Section\s*4[^\n]*\n/i), 200);
-  const sec6 = clip(sectionBody(s1, /##\s*Section\s*6[^\n]*\n/i), 400);
-  return [
-    sec1 && `## Core Challenge\n${sec1}`,
-    sec4 && `## Category Assumption Challenged\n${sec4}`,
-    sec6 && `## Sanitised Strategic Brief\n${sec6}`,
-  ]
-    .filter(Boolean)
-    .join("\n\n");
-}
-
-/** Stage 2 (CMM) → Stages 5/6: keep Forbidden Zones, Whitespace Zones, Dominant Logic. */
-export function trimCMMForDownstream(cmm: string): string {
-  if (!cmm) return "";
-  const forb = sectionBody(cmm, /#{1,4}\s*[^\n]*Forbidden\s+Zones?[^\n]*\n/i);
-  const white = sectionBody(cmm, /#{1,4}\s*[^\n]*Whitespace\s+Zones?[^\n]*\n/i);
-  const dom = sectionBody(cmm, /#{1,4}\s*[^\n]*(Category\s+)?Dominant\s+Logic[^\n]*\n/i);
-  const parts = [
-    forb && `## Forbidden Zones\n${forb}`,
-    white && `## Whitespace Zones\n${white}`,
-    dom && `## Category Dominant Logic\n${dom}`,
-  ].filter(Boolean);
-  return parts.length ? parts.join("\n\n") : clip(cmm, 600);
-}
-
-/** Stage 4 (SIS) → Stages 5/6: keep frame names/numbers, brand roles, required tension types. */
-export function trimSISForDownstream(sis: string): string {
-  if (!sis) return "";
-  const kept = pickLines(sis, [
-    /^#{1,4}\s*Frame\s*\d+/i,
-    /^Frame\s*\d+/i,
-    /Brand\s+Role/i,
-    /Required\s+Tension/i,
-    /Tension\s+Type/i,
-  ]);
-  return kept || clip(sis, 800);
-}
-
-/** Stage 6 (Validated Insights) → Stages 7/8: titles, one-line tensions, priority flags, Human Contradictions. */
-export function trimValidatedInsightsForDownstream(s6: string): string {
-  if (!s6) return "";
-  const kept = pickLines(s6, [
-    /^#{2,4}\s*Insight\s*\d+/i,
-    /^Insight\s*\d+/i,
-    /^\s*Tension\s*[:\-]/i,
-    /^\s*Priority/i,
-    /Human\s+Contradiction/i,
-  ]);
-  return kept || clip(s6, 1000);
-}
-
-/** Stage 8 (Draft SMPs) → Stages 9/10/11: SMP lines, brand roles, composite scores. */
-export function trimDraftSMPsForDownstream(s8: string): string {
-  if (!s8) return "";
-  const kept = pickLines(s8, [
-    /^#{2,4}\s*SMP\s*\d+/i,
-    /^SMP\s*\d+/i,
-    /^\s*Line\s*[:\-]/i,
-    /^\s*Proposition\s*[:\-]/i,
-    /Brand\s+Role/i,
-    /Composite\s+Score/i,
-    /^\s*Score\s*[:\-]/i,
-  ]);
-  return kept || clip(s8, 1200);
-}
-
-/** Stage 10/11 (Scored / Pressure-tested SMPs) → Stage 12: SMP lines, six dimension scores, pass/fail, one-line rationale. */
-export function trimScoredSMPsForDownstream(s: string): string {
-  if (!s) return "";
-  const kept = pickLines(s, [
-    /^#{2,4}\s*SMP\s*\d+/i,
-    /^SMP\s*\d+/i,
-    /^\s*Line\s*[:\-]/i,
-    /^\s*(Distinctiveness|Tension|Memorability|Ownability|Provocation|Coherence|Brand\s+Role)\s*[:\-]/i,
-    /\bPASS\b|\bFAIL\b/,
-    /^\s*Rationale\s*[:\-]/i,
-  ]);
-  return kept || clip(s, 1200);
-}
-
-/** Stage 13 (Brand Fit) → Stages 13B/14/14B/14C: Brand Fit verdict + positioning adjustments only. */
-export function trimBrandFitForDownstream(s13: string): string {
-  if (!s13) return "";
-  const verdict =
-    sectionBody(s13, /#{1,4}\s*[^\n]*Brand\s*Fit\s*Verdict[^\n]*\n/i) ||
-    sectionBody(s13, /#{1,4}\s*[^\n]*Verdict[^\n]*\n/i);
-  const adj =
-    sectionBody(s13, /#{1,4}\s*[^\n]*Positioning\s*Adjustments?[^\n]*\n/i) ||
-    sectionBody(s13, /#{1,4}\s*[^\n]*Adjustments?[^\n]*\n/i);
-  const parts = [
-    verdict && `## Brand Fit Verdict\n${clip(verdict, 500)}`,
-    adj && `## Positioning Adjustments\n${clip(adj, 700)}`,
-  ].filter(Boolean);
-  return parts.length ? parts.join("\n\n") : clip(s13, 800);
 }
 
 /** First paragraph of a text block. */

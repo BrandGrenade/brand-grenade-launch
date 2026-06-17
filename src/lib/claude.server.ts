@@ -105,6 +105,69 @@ async function setRetryStatus(sessionId: string | undefined, message: string | n
   }
 }
 
+// ---------------------------------------------------------------------------
+// Amendment notes — universal injection.
+//
+// `sessions.stage_amendments` is a JSONB map keyed by lowercase stage id
+// (e.g. "1", "1b", "2", "13b") with shape:
+//   { feedback: string, previousOutput?: string, ts?: string }
+//
+// When a stage runs and an amendment exists for its stage id, the human
+// direction is prefixed/suffixed onto the user message via the shared
+// `buildFeedbackInjection` helper so it is applied as a mandatory constraint.
+// On successful completion of the call the amendment is cleared so it does
+// not re-apply on subsequent natural runs.
+//
+// Stages that handle feedback inline (1 / 8 / 12) inject the same wrapper
+// themselves; the universal layer detects the marker and skips re-injection
+// to avoid duplicate constraint blocks, but still clears the amendment.
+// ---------------------------------------------------------------------------
+
+const AMENDMENT_MARKER = "==== MANDATORY HUMAN REDIRECT";
+
+type AmendmentEntry = { feedback?: string; previousOutput?: string | null };
+
+async function readAmendment(
+  sessionId: string | undefined,
+  stageNumber: string | undefined,
+): Promise<{ key: string; entry: AmendmentEntry } | null> {
+  if (!sessionId || !stageNumber) return null;
+  const key = stageNumber.toLowerCase();
+  try {
+    const { data } = await supabaseAdmin
+      .from("sessions")
+      .select("stage_amendments")
+      .eq("id", sessionId)
+      .single();
+    const map = (data?.stage_amendments ?? {}) as Record<string, AmendmentEntry>;
+    const entry = map[key];
+    if (!entry || !entry.feedback || !entry.feedback.trim()) return null;
+    return { key, entry };
+  } catch {
+    return null;
+  }
+}
+
+async function clearAmendment(sessionId: string | undefined, key: string | undefined) {
+  if (!sessionId || !key) return;
+  try {
+    const { data } = await supabaseAdmin
+      .from("sessions")
+      .select("stage_amendments")
+      .eq("id", sessionId)
+      .single();
+    const map = { ...((data?.stage_amendments ?? {}) as Record<string, AmendmentEntry>) };
+    if (!(key in map)) return;
+    delete map[key];
+    await supabaseAdmin
+      .from("sessions")
+      .update({ stage_amendments: map as never })
+      .eq("id", sessionId);
+  } catch {
+    // best-effort
+  }
+}
+
 function isRetryableStatus(status: number) {
   return status === 524 || status === 503 || status === 502 || status === 504;
 }
@@ -129,7 +192,9 @@ async function doFetch(apiKey: string, body: string, timeoutMs = REQUEST_TIMEOUT
   }
 }
 
-async function prepareCall(args: CallClaudeArgs): Promise<{ apiKey: string; body: string }> {
+async function prepareCall(
+  args: CallClaudeArgs,
+): Promise<{ apiKey: string; body: string; amendmentKey?: string }> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) throw new Error("ANTHROPIC_API_KEY is not configured");
   const devMode = await readDevMode(args.sessionId);
@@ -141,8 +206,33 @@ async function prepareCall(args: CallClaudeArgs): Promise<{ apiKey: string; body
   } else if (!args.skipUniversalWrapper) {
     effectiveSystem = `${UNIVERSAL_SYSTEM_WRAPPER}\n\n${args.systemPrompt}`;
   }
+
+  // Universal amendment-note injection. If a human reviewer entered amendment
+  // notes before retrying this stage, wrap them onto the user message as a
+  // mandatory constraint block. Skip wrapping if the caller already injected
+  // the same block inline (stages 1 / 8 / 12) — detect via the shared marker.
+  let effectiveUserMessage = args.userMessage;
+  let amendmentKey: string | undefined;
+  if (!devMode) {
+    const amendment = await readAmendment(args.sessionId, args.stageNumber);
+    if (amendment) {
+      amendmentKey = amendment.key;
+      const alreadyWrapped = args.userMessage.includes(AMENDMENT_MARKER);
+      if (!alreadyWrapped) {
+        const { buildFeedbackInjection } = await import("./feedback-injection");
+        const { prefix, suffix } = buildFeedbackInjection({
+          feedback: amendment.entry.feedback ?? "",
+          previousOutput: amendment.entry.previousOutput ?? null,
+          stageLabel: args.stageLabel ?? `Stage ${args.stageNumber ?? ""}`.trim(),
+        });
+        effectiveUserMessage = `${prefix}${args.userMessage}${suffix}`;
+      }
+    }
+  }
+
   return {
     apiKey,
+    amendmentKey,
     body: JSON.stringify({
       model: args.model ?? DEFAULT_MODEL,
       max_tokens: effectiveMaxTokens,
@@ -153,7 +243,7 @@ async function prepareCall(args: CallClaudeArgs): Promise<{ apiKey: string; body
           cache_control: { type: "ephemeral" },
         },
       ],
-      messages: [{ role: "user", content: args.userMessage }],
+      messages: [{ role: "user", content: effectiveUserMessage }],
     }),
   };
 }
@@ -238,7 +328,7 @@ export async function callClaude(args: CallClaudeArgs): Promise<string> {
  * output. Retries are only attempted on the initial connection (not mid-stream).
  */
 export async function* streamClaude(args: CallClaudeArgs): AsyncGenerator<string, void, unknown> {
-  const { apiKey, body } = await prepareCall(args);
+  const { apiKey, body, amendmentKey } = await prepareCall(args);
 
   // [TELEMETRY] Per-stage instrumentation — emitted as structured log lines so
   // the diagnostic harness / log tail can build a pass-fail-per-stage report.
@@ -342,6 +432,11 @@ export async function* streamClaude(args: CallClaudeArgs): AsyncGenerator<string
     throw new Error(
       `Claude stream ended without message_stop (${total.length} chars produced). Upstream connection likely dropped — retry the stage.`,
     );
+  }
+  // Successful completion — consume the amendment so it does not re-apply
+  // on the next natural run of this stage.
+  if (amendmentKey) {
+    await clearAmendment(args.sessionId, amendmentKey);
   }
   } catch (e) {
     __telemetryFailed = true;

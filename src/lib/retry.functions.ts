@@ -296,6 +296,8 @@ export const resetStageCascade = createServerFn({ method: "POST" })
           "15",
           "16",
         ]),
+        feedback: z.string().max(10000).optional(),
+        previousOutput: z.string().max(200000).optional(),
       })
       .parse(d),
   )
@@ -305,11 +307,38 @@ export const resetStageCascade = createServerFn({ method: "POST" })
     const start = stageOrder.indexOf(id);
     if (start < 0) throw new Error(`Unknown stage id: ${id}`);
 
+    // Persist any amendment note + previous output keyed by stage id so the
+    // shared Claude wrapper injects it into the very next run of this stage.
+    // We read-modify-write so concurrent retries do not clobber each other.
+    const feedback = data.feedback?.trim();
+    let nextAmendments: Record<string, unknown> | null = null;
+    {
+      const { data: current } = await supabaseAdmin
+        .from("sessions")
+        .select("stage_amendments")
+        .eq("id", data.sessionId)
+        .single();
+      const map = { ...((current?.stage_amendments ?? {}) as Record<string, unknown>) };
+      if (feedback) {
+        map[id] = {
+          feedback,
+          previousOutput: data.previousOutput?.slice(0, 200000) ?? null,
+          ts: new Date().toISOString(),
+        };
+      } else if (id in map) {
+        // No new note on this retry — clear any stale amendment for this stage
+        // so an old note does not silently re-apply.
+        delete map[id];
+      }
+      nextAmendments = map;
+    }
+
     const update: Record<string, unknown> = {
       status: "running",
       current_stage: parseInt(id, 10),
       stage_status: `running:${id}`,
       retry_status: null,
+      stage_amendments: nextAmendments,
     };
 
     for (const stageId of stageOrder.slice(start)) {
