@@ -433,6 +433,11 @@ export async function* streamClaude(args: CallClaudeArgs): AsyncGenerator<string
       `Claude stream ended without message_stop (${total.length} chars produced). Upstream connection likely dropped — retry the stage.`,
     );
   }
+  // Successful completion — consume the amendment so it does not re-apply
+  // on the next natural run of this stage.
+  if (amendmentKey) {
+    await clearAmendment(args.sessionId, amendmentKey);
+  }
   } catch (e) {
     __telemetryFailed = true;
     if (!__telemetryError) __telemetryError = e instanceof Error ? e.message.slice(0, 200) : String(e).slice(0, 200);
