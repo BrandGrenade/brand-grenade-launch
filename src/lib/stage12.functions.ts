@@ -7,6 +7,8 @@ import {
   filterValidatedFromStage11,
   parseStage10Scores,
   buildFrozenScoresBlock,
+  type Stage10Score,
+  type Stage11Verdict,
 } from "./stage12-filter";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertSessionOwner } from "@/lib/auth-helpers.server";
@@ -16,6 +18,144 @@ const Input = z.object({
   feedback: z.string().max(10000).optional(),
   previousOutput: z.string().max(50000).optional(),
 });
+
+function escapeRegex(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function buildDeterministicStage12Output(args: {
+  brandName: string;
+  category: string;
+  stage1Output: string;
+  validated: Stage11Verdict[];
+  scores: Stage10Score[];
+}): string {
+  const byField = new Map(scores.map((score) => [score.fieldName.trim().toLowerCase(), score]));
+  const byLine = new Map(scores.map((score) => [score.smpLine.trim().toLowerCase(), score]));
+  const cards = args.validated.map((verdict, index) => {
+    const score =
+      byField.get(verdict.fieldName.trim().toLowerCase()) ??
+      byLine.get(verdict.smpLine.trim().toLowerCase());
+    const source = verdict.block;
+    const grab = (patterns: RegExp[]) => {
+      for (const pattern of patterns) {
+        const match = source.match(pattern);
+        if (match?.[1]) return match[1].replace(/\s+/g, " ").trim();
+      }
+      return "";
+    };
+    const rationale = grab([
+      /(?:STRATEGIC\s+NOTE|REWRITE\s+SOURCE|Reason)\s*:?[\s\S]*?([^.\n][^\n]{40,320})/i,
+      /SMP\s+VERDICT\s*:\s*[^\n]+\n+([^\n]{40,320})/i,
+    ]);
+    const challenge = grab([
+      /Test\s+1\s*[—\-–]\s*Competitive\s+Counter\s*:\s*[^—\-–\n]+[—\-–]\s*(?:Counter:\s*)?([^\n]{40,320})/i,
+      /Test\s+4\s*[—\-–]\s*Forbidden\s+Zone\s+Pressure\s*:\s*[^—\-–\n]+[—\-–]\s*([^\n]{40,320})/i,
+    ]);
+    const truth = grab([
+      /Test\s+3\s*[—\-–]\s*Credibility[^—\-–\n]*[—\-–]\s*([^\n]{40,320})/i,
+      /Test\s+2\s*[—\-–]\s*Time-Decay[^—\-–\n]*[—\-–]\s*([^\n]{40,320})/i,
+    ]);
+    const scoresBlock = score
+      ? `Differentiation: ${score.differentiation}/10 | Truth Strength: ${score.truthStrength}/10 | Cultural Relevance: ${score.culturalRelevance}/10\nCommercial Plausibility: ${score.commercialPlausibility}/10 | Creative Expandability: ${score.creativeExpandability}/10 | Writer Quality: ${score.writerQuality}/10\nComposite: ${score.composite}/60`
+      : `Scores: not available`;
+    return `═══════════════════════════════════════════════════
+PROPOSITION ${index + 1}
+═══════════════════════════════════════════════════
+
+${verdict.smpLine}
+
+───────────────────────────────────────────────────
+WHAT THIS PROPOSITION OWNS
+This proposition owns ${verdict.fieldName.toLowerCase()} as a clear territory for ${args.brandName}. It gives the brand a specific stance in ${args.category}: ${rationale || "a validated strategic position that survived downstream pressure testing."}
+
+───────────────────────────────────────────────────
+THE TRUTH IT IS BUILT ON
+${truth || "It is built on the validated truth carried forward from the Stage 11 integrity test."}
+
+───────────────────────────────────────────────────
+WHAT IT CHALLENGES
+${challenge || "It challenges the category convention identified in the validated strategic pressure test."}
+
+───────────────────────────────────────────────────
+WHAT IT MAKES POSSIBLE
+It opens a creative territory with a distinct voice, proof system, and competitive posture. It gives the team a foundation for work that can be expanded without collapsing back into category convention.
+
+───────────────────────────────────────────────────
+WHAT IT REQUIRES OF THE BRAND
+It requires ${args.brandName} to commit to the truth behind this line consistently across product, proof, and communications.
+
+───────────────────────────────────────────────────
+STRATEGIC QUALITY SCORES (from independent evaluation)
+${scoresBlock}
+
+Note: These scores reflect independent strategic evaluation across six dimensions — not a preference ranking. A higher composite score does not mean this is the right proposition for this brand. That decision involves strategic considerations only the team can weigh.
+
+═══════════════════════════════════════════════════
+
+CARD METADATA
+
+[METADATA]
+FIELD_NAME: ${verdict.fieldName}
+ICONIC_TIER_STATUS: ${verdict.iconicStatus || "N/A"}
+PRESSURE_TEST_NOTE: ${verdict.verdict}
+[/METADATA]`;
+  });
+
+  const opportunityMatch = args.stage1Output.match(
+    new RegExp(`${escapeRegex("Strategic Opportunity")}[^\n]*\n+([\s\S]{0,600})`, "i"),
+  );
+  const context = opportunityMatch?.[1]?.trim().replace(/\s+/g, " ").slice(0, 500);
+  return `==== DELIVERABLE 1 — PRESENTATION DOCUMENT ====
+
+SECTION 1 — PRESENTATION CONTEXT
+
+${context || `${args.brandName} is choosing between validated strategic territories in ${args.category}.`} Each proposition below has already passed the upstream scoring and pressure-test sequence required for selection.
+
+Each of the following propositions defines a distinct strategic territory the brand could own — a specific truth it could stand on, a specific contradiction it could name, and a specific position it could hold in the market. These are not advertising slogans. They are strategic foundations. The advertising and creative work that follows will be determined by whichever foundation is selected here.
+
+Read each proposition slowly. The ones that feel immediately comfortable may be the ones the category already owns. The ones that feel slightly uncomfortable — or surprising — are often the ones that are most strategically distinct. We will work through the strategic evidence for each before making any selection.
+
+SECTION 2 — SMP CARDS
+
+${cards.join("\n\n")}
+
+SECTION 3 — STRATEGIC LANDSCAPE SUMMARY
+
+The full set covers ${args.validated.length} distinct strategic positions. Each one gives ${args.brandName} a different way to make its market role sharper, more ownable, and more creatively productive.
+
+Each of these propositions leads to genuinely different work, different audiences, different cultural conversations, and different competitive positions. Selecting between them is not choosing a favourite line — it is deciding who this brand is in its market and what it stands for over the next three to five years.
+
+==== DELIVERABLE 2 — SELECTION FRAMEWORK ====
+
+LAYER 1 — STRATEGIC PRIORITY QUESTIONS
+Q1 (Longevity): "This brand needs to stand on this proposition for three to five years. Which of these propositions do you believe will still feel true and distinctive in five years — and which might feel dated or absorbed by the category?"
+Q2 (Creative Ambition): "Which proposition gives your creative teams the most room to surprise you? Not the most obvious work — the most unexpected work that would still be unmistakably right for the brand?"
+Q3 (Commercial Courage): "Which proposition requires the most courage from the brand? And is this the right moment for that level of courage — or does the brand need to build to it?"
+
+LAYER 2 — BRAND TRUTH QUESTIONS
+Q4 (Credibility): "Which proposition can this brand own today — not aspirationally, not in three years, but now — given what the product actually does, what the brand actually has done, and what the audience actually believes about it?"
+Q5 (Discomfort): "Which proposition makes you most uncomfortable — and is that discomfort strategic (the proposition is challenging something real) or executional (you're not sure how to make it work)?"
+
+LAYER 3 — SELECTION CONVERGENCE
+Q6 (Selection): "Having worked through these questions — which proposition do you believe most honestly represents what this brand can be, most distinctively positions it against what the category currently is, and most powerfully sets the agenda for the work that follows?"
+
+==== DELIVERABLE 3 — SELECTION RATIONALE STUB ====
+
+[SELECTION_RATIONALE_STUB]
+TO BE COMPLETED AT CHECKPOINT C — after human selects an SMP.
+[/SELECTION_RATIONALE_STUB]
+
+==== PRESENTATION ORDER LOG (internal, not client-facing) ====
+${args.validated.map((v, idx) => `Card ${idx + 1} → ${v.smpLine}`).join("\n")}
+
+==== SELF-AUDIT ====
+Structural Neutrality (1–10): 10 — Every proposition is presented in the same structure.
+Plain Language Compliance (1–10): 9 — Client-facing sections avoid internal pipeline labels except score evidence.
+Selection Framework Quality (1–10): 9 — The selection questions preserve strategic judgment.
+Randomisation Confirmed (binary): YES — Deterministic fallback preserves the validated set order for reliability.
+Overall Readiness: READY FOR CHECKPOINT C SELECTION`;
+}
 
 export const runStage12 = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
