@@ -29,6 +29,10 @@ export const getPipelineGate = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async (): Promise<PipelineGateStatus> => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const finish = (result: PipelineGateStatus): PipelineGateStatus => {
+      console.info("[PipelineGate] getPipelineGate result", JSON.stringify(result));
+      return result;
+    };
     const { data, error } = await supabaseAdmin
       .from("preflight_checks")
       .select("id, started_at, completed_at, status, overall_result")
@@ -39,13 +43,13 @@ export const getPipelineGate = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
 
     if (!data) {
-      return {
+      return finish({
         allowed: false,
         reason: "no_check",
         message:
           "Platform Not Verified — no Tier Two integrity check has ever been run. Run a System Check first.",
         lastCheck: null,
-      };
+      });
     }
 
     const startedAt = data.started_at as string;
@@ -64,37 +68,37 @@ export const getPipelineGate = createServerFn({ method: "POST" })
     };
 
     if (status === "running") {
-      return {
+      return finish({
         allowed: false,
         reason: "running",
         message: "Platform Not Verified — a Tier Two check is currently in progress.",
         lastCheck,
-      };
+      });
     }
     if (status !== "complete" || overall !== "ready") {
-      return {
+      return finish({
         allowed: false,
         reason: "failed",
         message:
           "Platform Not Verified — the last Tier Two integrity check did not pass. Re-run System Check or override.",
         lastCheck,
-      };
+      });
     }
     if (ageMs !== null && ageMs > TWENTY_FOUR_HOURS_MS) {
       const hours = Math.floor(ageMs / (60 * 60 * 1000));
-      return {
+      return finish({
         allowed: false,
         reason: "stale",
         message: `Platform Not Verified — last Tier Two check was ${hours}h ago (must be within 24h). Re-run System Check or override.`,
         lastCheck,
-      };
+      });
     }
-    return {
+    return finish({
       allowed: true,
       reason: "ready",
       message: "Platform Verified.",
       lastCheck,
-    };
+    });
   });
 
 const OverrideInput = z.object({
