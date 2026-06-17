@@ -2084,31 +2084,35 @@ function PipelineView() {
               ref={contentScrollRef}
               className="flex-1 overflow-y-auto px-6 py-10 sm:px-12 sm:py-10"
             >
-              <header>
-                <span className="text-label text-primary">Source Document</span>
-                <h1 className="text-h2 mt-3 text-text-primary">Submitted Brief</h1>
-                <p className="text-body-sm mt-3 flex items-center gap-2 text-text-secondary">
-                  <span
-                    className="inline-flex h-4 w-4 items-center justify-center rounded-full"
-                    style={{ backgroundColor: "var(--color-success)" }}
-                  >
-                    <CheckIcon color="var(--color-background)" />
-                  </span>
-                  On file
-                </p>
-                <hr className="my-6 h-px border-0 bg-border" />
-              </header>
-              <article style={{ paddingBottom: 80 }}>
-                <StreamedOutput
-                  text={formatSubmittedBriefForStageOutput(
-                    session?.brief_text ?? "No brief text on file for this session.",
-                  )}
-                  streaming={false}
-                />
-              </article>
+              <StructuredBriefView
+                brandName={session?.brand_name ?? ""}
+                category={session?.category ?? ""}
+                briefVersions={session?.brief_versions ?? null}
+                legacyBriefText={session?.brief_text ?? null}
+                onEdit={() => {
+                  if (!sessionId) return;
+                  const latest =
+                    (session?.brief_versions && session.brief_versions.length > 0
+                      ? session.brief_versions[session.brief_versions.length - 1].fields
+                      : null) ??
+                    briefFieldsFromLegacyText({
+                      brandName: session?.brand_name ?? "",
+                      category: session?.category ?? "",
+                      briefText: session?.brief_text ?? null,
+                    });
+                  try {
+                    sessionStorage.setItem(
+                      PENDING_BRIEF_EDIT_STORAGE_KEY,
+                      JSON.stringify(latest),
+                    );
+                  } catch {/* ignore */}
+                  navigate({ to: "/brief", search: { edit: sessionId } });
+                }}
+              />
             </div>
           </section>
         ) : (
+
           <RightPanel
             stage={selected}
             status={selectedStatus}
