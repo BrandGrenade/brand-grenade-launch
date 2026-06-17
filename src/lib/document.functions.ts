@@ -207,6 +207,7 @@ export const generateDocument = createServerFn({ method: "POST" })
   .inputValidator((i) => Input.parse(i))
   .handler(async ({ data, context }) => {
     const { sessionId, format, force } = data;
+    await assertSessionOwner(sessionId, context.userId);
     const urlCol = URL_COLS[format];
     const statusCol = STATUS_COLS[format];
 
