@@ -163,7 +163,8 @@ async function openWithRetry(
   body: string,
   sessionId: string | undefined,
   stageLabel: string | undefined,
-  stream: boolean
+  stream: boolean,
+  timeoutMs = REQUEST_TIMEOUT_MS,
 ): Promise<Response> {
   let attempt = 0;
   const maxAttempts = 2;
@@ -172,7 +173,7 @@ async function openWithRetry(
   while (attempt < maxAttempts) {
     attempt++;
     try {
-      const resp = await doFetch(apiKey, bodyWithFlag);
+      const resp = await doFetch(apiKey, bodyWithFlag, timeoutMs);
       if (resp.ok) {
         await setRetryStatus(sessionId, null);
         return resp;
@@ -192,7 +193,7 @@ async function openWithRetry(
         (e.name === "AbortError" || /aborted|timeout/i.test(e.message));
       const msg = e instanceof Error ? e.message : "network error";
       lastError = isAbort
-        ? `Claude API request timed out after ${REQUEST_TIMEOUT_MS / 1000}s`
+        ? `Claude API request timed out after ${timeoutMs / 1000}s`
         : `Claude API request failed: ${msg}`;
       if ((isAbort || /network|fetch failed/i.test(msg)) && attempt < maxAttempts) {
         await setRetryStatus(sessionId, `Connection timeout — retrying ${stageLabel ?? "request"}...`);
