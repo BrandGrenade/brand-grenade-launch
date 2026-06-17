@@ -156,12 +156,12 @@ async function clearAmendment(sessionId: string | undefined, key: string | undef
       .select("stage_amendments")
       .eq("id", sessionId)
       .single();
-    const map = { ...((data?.stage_amendments ?? {}) as Record<string, unknown>) };
+    const map = { ...((data?.stage_amendments ?? {}) as Record<string, AmendmentEntry>) };
     if (!(key in map)) return;
     delete map[key];
     await supabaseAdmin
       .from("sessions")
-      .update({ stage_amendments: map })
+      .update({ stage_amendments: map as never })
       .eq("id", sessionId);
   } catch {
     // best-effort
