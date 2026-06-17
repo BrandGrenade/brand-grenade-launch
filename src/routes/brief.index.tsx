@@ -1,10 +1,12 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { z } from "zod";
 import { ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { TopNav } from "@/components/TopNav";
 import { createSession } from "@/lib/stage1.functions";
+import { resubmitBriefStructured } from "@/lib/stage1b.functions";
 import { getDevModeFromStorage } from "@/lib/dev-mode";
 import {
   SavedBriefsPicker,
@@ -17,10 +19,25 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import {
+  BRIEF_SECTIONS as SECTIONS,
+  BRIEF_FIELD_KEYS,
+  composeBriefText as composeStructuredBriefText,
+  briefFieldsFromLegacyText,
+  type BriefFields,
+  type BriefSection as Section,
+  type BriefField as SubField,
+} from "@/lib/brief-schema";
 
+export const PENDING_BRIEF_EDIT_STORAGE_KEY = "brand-grenade:pending-brief-edit";
+
+const BriefSearchSchema = z.object({
+  edit: z.string().uuid().optional(),
+}).partial();
 
 export const Route = createFileRoute("/brief/")({
   component: BriefIntake,
+  validateSearch: (search) => BriefSearchSchema.parse(search),
   head: () => ({
     meta: [
       { title: "New Run — Brand Grenade" },
@@ -32,6 +49,7 @@ export const Route = createFileRoute("/brief/")({
     ],
   }),
 });
+
 
 const MAX_FILE_BYTES = 50 * 1024 * 1024;
 const ACCEPTED_TYPES = [".pdf", ".docx", ".pptx", ".txt"];
