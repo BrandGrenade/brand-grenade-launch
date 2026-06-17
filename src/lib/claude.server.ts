@@ -192,7 +192,9 @@ async function doFetch(apiKey: string, body: string, timeoutMs = REQUEST_TIMEOUT
   }
 }
 
-async function prepareCall(args: CallClaudeArgs): Promise<{ apiKey: string; body: string }> {
+async function prepareCall(
+  args: CallClaudeArgs,
+): Promise<{ apiKey: string; body: string; amendmentKey?: string }> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) throw new Error("ANTHROPIC_API_KEY is not configured");
   const devMode = await readDevMode(args.sessionId);
@@ -204,8 +206,33 @@ async function prepareCall(args: CallClaudeArgs): Promise<{ apiKey: string; body
   } else if (!args.skipUniversalWrapper) {
     effectiveSystem = `${UNIVERSAL_SYSTEM_WRAPPER}\n\n${args.systemPrompt}`;
   }
+
+  // Universal amendment-note injection. If a human reviewer entered amendment
+  // notes before retrying this stage, wrap them onto the user message as a
+  // mandatory constraint block. Skip wrapping if the caller already injected
+  // the same block inline (stages 1 / 8 / 12) — detect via the shared marker.
+  let effectiveUserMessage = args.userMessage;
+  let amendmentKey: string | undefined;
+  if (!devMode) {
+    const amendment = await readAmendment(args.sessionId, args.stageNumber);
+    if (amendment) {
+      amendmentKey = amendment.key;
+      const alreadyWrapped = args.userMessage.includes(AMENDMENT_MARKER);
+      if (!alreadyWrapped) {
+        const { buildFeedbackInjection } = await import("./feedback-injection");
+        const { prefix, suffix } = buildFeedbackInjection({
+          feedback: amendment.entry.feedback ?? "",
+          previousOutput: amendment.entry.previousOutput ?? null,
+          stageLabel: args.stageLabel ?? `Stage ${args.stageNumber ?? ""}`.trim(),
+        });
+        effectiveUserMessage = `${prefix}${args.userMessage}${suffix}`;
+      }
+    }
+  }
+
   return {
     apiKey,
+    amendmentKey,
     body: JSON.stringify({
       model: args.model ?? DEFAULT_MODEL,
       max_tokens: effectiveMaxTokens,
@@ -216,7 +243,7 @@ async function prepareCall(args: CallClaudeArgs): Promise<{ apiKey: string; body
           cache_control: { type: "ephemeral" },
         },
       ],
-      messages: [{ role: "user", content: args.userMessage }],
+      messages: [{ role: "user", content: effectiveUserMessage }],
     }),
   };
 }
