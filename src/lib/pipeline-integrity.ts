@@ -16,7 +16,7 @@ export const STAGE_OUTPUT_COLUMNS = {
   13: "stage_13_output",
   14: "stage_14_output",
   15: "stage_15_output",
-  16: "stage_16_consulting_output",
+  16: ["stage_16_consulting_output", "stage_16_agency_output", "stage_16_workshop_output"],
   17: "stage_17_output",
   18: "stage_18_output",
   19: "stage_19_output",
@@ -40,14 +40,19 @@ export async function assertUpstreamStageOutput(
 ): Promise<void> {
   if (stageNumber < 2) return;
   const upstreamStage = (stageNumber - 1) as StageNumber;
-  const column = STAGE_OUTPUT_COLUMNS[upstreamStage];
+  const columns = STAGE_OUTPUT_COLUMNS[upstreamStage];
+  const selectColumns = Array.isArray(columns) ? columns.join(", ") : columns;
   const { data, error } = await supabaseAdmin
     .from("sessions")
-    .select(column)
+    .select(selectColumns)
     .eq("id", sessionId)
     .single();
   if (error) throw new Error(`Failed to verify Stage ${upstreamStage} output before Stage ${stageNumber}: ${error.message}`);
-  if (!hasPersistedOutput((data as Record<string, unknown> | null)?.[column])) {
+  const row = data as Record<string, unknown> | null;
+  const hasOutput = Array.isArray(columns)
+    ? columns.some((column) => hasPersistedOutput(row?.[column]))
+    : hasPersistedOutput(row?.[columns]);
+  if (!hasOutput) {
     throw new Error(`Stage ${stageNumber} cannot run because Stage ${upstreamStage} output is missing`);
   }
 }
