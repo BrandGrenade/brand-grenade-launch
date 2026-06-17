@@ -267,7 +267,7 @@ export const runStage8 = createServerFn({ method: "POST" })
     const { data: session, error } = await supabaseAdmin
       .from("sessions")
       .select(
-        "brand_name, category, stage_2_output, stage_3_output, stage_7_output, stage_8_output"
+        "brand_name, category, stage_2_output, stage_3_output, stage_4b_output, stage_7_output, stage_8_output"
       )
       .eq("id", data.sessionId)
       .single();
@@ -334,6 +334,7 @@ export const runStage8 = createServerFn({ method: "POST" })
       constraintMatrix: session.stage_3_output,
       territoryCount,
       territoryNames,
+      stage4bOutput: session.stage_4b_output ?? undefined,
     });
     if (feedback) {
       const { buildFeedbackInjection } = await import("./feedback-injection");

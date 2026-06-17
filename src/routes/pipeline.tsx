@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
 import { z } from "zod";
 import { TopNav } from "@/components/TopNav";
-import { Checkpoint } from "@/components/Checkpoint";
+import { Checkpoint, buildRevisionInstruction } from "@/components/Checkpoint";
 import { SelectionRationale } from "@/components/SelectionRationale";
 import { BrandIntelligence } from "@/components/BrandIntelligence";
 import { SMPSelection, type SMPCard } from "@/components/SMPSelection";
@@ -448,6 +448,10 @@ function PipelineView() {
   const [pendingFeedback, setPendingFeedback] = useState<Record<string, string>>({});
   const [pendingPreviousOutput, setPendingPreviousOutput] = useState<Record<string, string>>({});
   const [amendmentNotes, setAmendmentNotes] = useState<Record<string, string>>({});
+  // Review-question field notes from the inline Checkpoint UI, keyed by stage id.
+  // Lifted up so "Retry This Stage" can inject them into the regeneration prompt
+  // even when the user has not also typed into the bottom-bar amendment input.
+  const [checkpointFieldNotes, setCheckpointFieldNotes] = useState<Record<string, string[]>>({});
   // Stage 8 selective regenerate — set of territory names the user wants to KEEP
   // (checkbox = checked). Defaults to all-checked whenever the underlying
   // proposition set changes.
@@ -2002,7 +2006,9 @@ function PipelineView() {
     if (!sessionId) return;
     const dbId = STAGE_ID_TO_DB[stageId];
     if (!dbId) return;
-    const note = amendmentNotes[stageId]?.trim();
+    const amendment = amendmentNotes[stageId]?.trim() ?? "";
+    const fieldNotes = checkpointFieldNotes[stageId] ?? [];
+    const note = buildRevisionInstruction(fieldNotes, amendment).trim();
     const previousOutput = getRawStageOutput(stageId)?.trim();
     try {
       if (note) setPendingFeedback((p) => ({ ...p, [stageId]: note }));
@@ -2229,6 +2235,9 @@ function PipelineView() {
             tensionScore={selected.id === "01" ? (session?.stage_1_tension_score ?? null) : null}
             stage1bRequired={selected.id === "01" ? (session?.stage_1b_required ?? false) : false}
             amendmentNote={amendmentNotes[selected.id] ?? ""}
+            onCheckpointNotesChange={(notes) =>
+              setCheckpointFieldNotes((prev) => ({ ...prev, [selected.id]: notes }))
+            }
             onAmendmentChange={(value: string) =>
               setAmendmentNotes((prev) => ({ ...prev, [selected.id]: value }))
             }
@@ -2959,6 +2968,7 @@ function RightPanel({
   stage8KeepNames,
   onToggleStage8Keep,
   onManualStage8Submit,
+  onCheckpointNotesChange,
   contentScrollRef,
 }: {
   stage: Stage;
@@ -2995,6 +3005,7 @@ function RightPanel({
   stage8KeepNames: Set<string>;
   onToggleStage8Keep: (name: string, keep: boolean) => void;
   onManualStage8Submit?: (line: string, label: string) => void | Promise<void>;
+  onCheckpointNotesChange?: (notes: string[]) => void;
 }) {
   const isRunning = status === "running";
   const isCheckpoint = status === "checkpoint";
@@ -3089,6 +3100,7 @@ function RightPanel({
                 onEscalateCheckpoint ? (r) => onEscalateCheckpoint(stage.id, r) : undefined
               }
               resubmitting={checkpointResubmitting}
+              onNotesChange={onCheckpointNotesChange}
               reviewContent={
                 <>
                   {letter === "A" && tensionScore !== null && (

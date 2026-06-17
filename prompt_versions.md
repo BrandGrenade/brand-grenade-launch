@@ -515,3 +515,38 @@ of correction instruction per flagged paragraph. Severity bands defined
 for both checks (MINOR / SUBSTANTIVE / CRITICAL). Header updated from
 seven to nine audit checks; report block count updated to 9. File:
 `src/lib/stage15-prompt.ts`.
+
+---
+
+## v3.5 — Stage 8 product truth mandate + checkpoint amendment injection fix
+**Date:** June 2026
+**Stages:** Stage 8 (system prompt + user message); Checkpoint UI (A/B/C
+review-question notes plumbing)
+**Change:** Two fixes shipped together.
+
+1. **Product Truth Mandate (Stage 8 system prompt).** Added a mandatory
+   instruction requiring at least half of all generated propositions to be
+   built directly from the specific, observable, verifiable product truths
+   in the Stage 4B Asset Mining and Product Facts output — not from the
+   positioning territory or category intelligence. A proposition built on a
+   product truth must name or imply the specific fact that makes it true; a
+   proposition that could apply to any brand in any category without
+   modification fails the mandate and must be regenerated. The Stage 4B
+   output is now also injected at the top of the Stage 8 user message as the
+   PRIMARY INPUT (was previously not passed at all), with a closing
+   reminder of the mandate. File: `src/lib/stage8-prompt.ts`,
+   `src/lib/stage8.functions.ts`.
+
+2. **Checkpoint amendment injection fix.** The three Review Question
+   textareas inside Checkpoints A, B, and C were previously stranded in
+   local component state and never reached the Retry This Stage path —
+   only the small bottom-bar amendment input was used as feedback on
+   retry, so checkpoint field notes were silently dropped. The Checkpoint
+   component now lifts its notes via a new `onNotesChange` callback, and
+   `handleRetryStage` combines those notes with the bottom-bar amendment
+   note via the shared `buildRevisionInstruction` helper before passing the
+   merged feedback to `resetStageCascade`. The existing universal
+   amendment-note injection in `claude.server.ts` then wraps the merged
+   instruction onto the regeneration user message as a mandatory
+   constraint block. Files: `src/components/Checkpoint.tsx`,
+   `src/routes/pipeline.tsx`.

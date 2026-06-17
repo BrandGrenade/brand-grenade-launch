@@ -45,6 +45,10 @@ Write one proposition for every territory in the input. Minimum 3. Do not stop a
 
 This is the most important stage in the pipeline. Take time with each proposition. Generate internally 3 to 4 candidate lines per territory and select the strongest before outputting. Show only the selected proposition — not the rejected drafts.
 
+PRODUCT TRUTH MANDATE — MANDATORY
+
+At least half of all propositions generated must be built directly from the specific product facts identified in the Stage 4B Asset Mining and Product Facts output. Not from the positioning territory. Not from the category intelligence. From the specific observable verifiable product truths that no competitor can honestly claim. A proposition built on a product truth must name or imply the specific fact that makes it true. A proposition that could apply to any brand in any category without modification fails this mandate and must be regenerated. The Stage 4B output is the primary input for proposition generation not a secondary reference. Read it first. Build from it first. Let the positioning territory serve as the frame not the foundation.
+
 Begin with the first ## territory name. No header. No set summary. No count fields. No metadata.`;
 
 export const STAGE_8_INTELLIGENCE = STAGE_8_SYSTEM_PROMPT;
@@ -57,11 +61,20 @@ export function buildStage8UserMessage(args: {
   constraintMatrix: string;
   territoryCount: number;
   territoryNames: string[];
+  stage4bOutput?: string;
 }): string {
+  const productFactsBlock = args.stage4bOutput?.trim()
+    ? `Stage 4B — Distinctive Asset Mining and Product Facts (PRIMARY INPUT — at least half of propositions must be built directly from these specific verifiable product truths):
+
+${args.stage4bOutput}
+
+`
+    : "";
+
   return `Brand: ${args.brandName}
 Category: ${args.category}
 
-Strategic Territories:
+${productFactsBlock}Strategic Territories:
 
 ${args.stage7Output}
 
@@ -69,7 +82,7 @@ Competitor positions to avoid:
 
 ${args.cmm}
 
-Write one Strategic Proposition per territory. Minimum 3 propositions. The input contains ${args.territoryCount} territories — generate exactly ${args.territoryCount} propositions.`;
+Write one Strategic Proposition per territory. Minimum 3 propositions. The input contains ${args.territoryCount} territories — generate exactly ${args.territoryCount} propositions. Per the PRODUCT TRUTH MANDATE in your system prompt, at least half of the propositions must be built from the specific product facts above, not from the positioning territory or category intelligence.`;
 }
 
 export function buildStage8ContinuationMessage(args: {
