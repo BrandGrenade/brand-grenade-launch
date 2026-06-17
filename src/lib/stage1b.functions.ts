@@ -5,6 +5,7 @@ import { streamClaude } from "./claude.server";
 import { STAGE_1B_SYSTEM_PROMPT, buildStage1bUserMessage } from "./stage1b-prompt";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertSessionOwner } from "@/lib/auth-helpers.server";
+import { assertStageOutput } from "./pipeline-integrity";
 
 const RunStage1bInput = z.object({ sessionId: z.string().uuid() });
 
@@ -13,6 +14,7 @@ export const runStage1b = createServerFn({ method: "POST" })
   .inputValidator((input) => RunStage1bInput.parse(input))
   .handler(async function* ({ data, context }) {
     await assertSessionOwner(data.sessionId, context.userId);
+    await assertStageOutput(data.sessionId, 1, "Stage 1B");
     const { data: session, error: loadErr } = await supabaseAdmin
       .from("sessions")
       .select("brief_text, stage_1_output, stage_1b_output")

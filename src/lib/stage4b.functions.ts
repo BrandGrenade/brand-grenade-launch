@@ -6,6 +6,7 @@ import { STAGE_4B_SYSTEM_PROMPT, buildStage4bUserMessage } from "./stage4b-promp
 import { trimStage1ForDownstream } from "./context-trim";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertSessionOwner } from "@/lib/auth-helpers.server";
+import { assertStageOutput } from "./pipeline-integrity";
 
 const RunStage4bInput = z.object({ sessionId: z.string().uuid() });
 
@@ -14,6 +15,7 @@ export const runStage4b = createServerFn({ method: "POST" })
   .inputValidator((input) => RunStage4bInput.parse(input))
   .handler(async function* ({ data, context }) {
     await assertSessionOwner(data.sessionId, context.userId);
+    await assertStageOutput(data.sessionId, 4, "Stage 4B");
     const { data: session, error: loadErr } = await supabaseAdmin
       .from("sessions")
       .select("brand_name, category, strategic_mode, stage_1_output, stage_4_output, stage_4b_output")

@@ -583,7 +583,25 @@ export const runTierTwoFullCheck = createServerFn({ method: "POST" })
           async (emit) => {
             if (!primarySessionId || results[5].status !== "pass")
               throw new Error("Skipped: Stage 10/11 chain did not complete");
-            emit("Running Stage 12 (SMP synthesis)...");
+
+            // Pipeline integrity: verify Stage 11 output is persisted in the
+            // column Stage 12 actually reads from BEFORE invoking Stage 12.
+            emit("Verifying Stage 11 output is persisted to stage_11_output...");
+            const { assertStageOutput } = await import("./pipeline-integrity");
+            await assertStageOutput(primarySessionId, 11, "Stage 12 (preflight check 7)");
+
+            // Count validated SMPs Stage 11 produced — Stage 12 must render
+            // a card per validated SMP, never fewer.
+            const { data: pre } = await supabaseAdmin
+              .from("sessions")
+              .select("stage_11_output")
+              .eq("id", primarySessionId)
+              .single();
+            const { filterValidatedFromStage11, countStage12PropositionCards } = await import("./stage12-filter");
+            const validatedCount = filterValidatedFromStage11(pre?.stage_11_output ?? "").validated.length;
+            if (validatedCount === 0) throw new Error("Stage 11 produced no VALIDATED SMPs to feed Stage 12");
+
+            emit(`Running Stage 12 (SMP synthesis, expecting >= ${validatedCount} cards)...`);
             await drainGenerator(runStage12({ data: { sessionId: primarySessionId } }));
             const { data: row } = await supabaseAdmin
               .from("sessions")
@@ -591,7 +609,19 @@ export const runTierTwoFullCheck = createServerFn({ method: "POST" })
               .eq("id", primarySessionId)
               .single();
             const stage12 = row?.stage_12_output ?? "";
-            if (!stage12) throw new Error("Stage 12 output missing");
+            if (!stage12) throw new Error("Stage 12 output missing after run");
+
+            // Universal card-integrity assertion: Stage 12 must yield at least
+            // as many proposition cards as Stage 11 validated. Catches every
+            // future parser / column / timeout regression.
+            const cardCount = countStage12PropositionCards(stage12);
+            if (cardCount < validatedCount) {
+              throw new Error(
+                `Stage 12 card-integrity failure: only ${cardCount} card(s) rendered for ${validatedCount} validated SMP(s)`,
+              );
+            }
+            emit(`Stage 12 rendered ${cardCount} cards for ${validatedCount} validated SMPs.`);
+
             // Auto-select first SMP-ish line (top-ranked).
             const firstSmpLine =
               stage12
@@ -620,9 +650,12 @@ export const runTierTwoFullCheck = createServerFn({ method: "POST" })
               .single();
             if (!verify?.selected_smp) throw new Error("selected_smp did not persist");
             if (!verify?.checkpoint_c_confirmed) throw new Error("Checkpoint C did not flip to true");
-            return { detail: "Stage 12 SMP synthesis + selection + rationale persisted; Checkpoint C confirmed." };
+            return {
+              detail: `Stage 12 SMP synthesis (${cardCount}/${validatedCount} cards) + selection + rationale persisted; Checkpoint C confirmed.`,
+            };
           },
-          "Inspect stage12.functions.ts saveSelectedSMP / saveSelectionRationale handlers and confirmWrite path.",
+          "Inspect stage12.functions.ts saveSelectedSMP / saveSelectionRationale and the Stage 11 → Stage 12 column wiring in pipeline-integrity.ts.",
+
         );
         let result!: FullCheckResult;
         for (;;) {
