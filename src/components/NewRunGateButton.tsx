@@ -54,28 +54,33 @@ export function NewRunGateButton({ variant = "topnav", label = "New Run" }: NewR
         const { data: sess } = await supabase.auth.getSession();
         const token = sess.session?.access_token;
         if (!token) {
-          setGate({
+          const fallbackGate: PipelineGateStatus = {
             allowed: true,
             reason: "ready",
             message: "Not signed in",
             lastCheck: null,
-          });
+          };
+          console.info("[PipelineGate] dashboard gate result", fallbackGate);
+          setGate(fallbackGate);
           return;
         }
         const g = await getGate({
           headers: { Authorization: `Bearer ${token}` },
         });
+        console.info("[PipelineGate] dashboard gate result", g);
         setGate(g);
         fetchedAtRef.current = Date.now();
       } catch (e) {
         // Fail-open: if the gate itself errors, do NOT silently block the user
         // from starting a run. Surface "ready" so the New Run flow still works.
-        setGate({
+        const fallbackGate: PipelineGateStatus = {
           allowed: true,
           reason: "ready",
           message: e instanceof Error ? e.message : "Gate unavailable",
           lastCheck: null,
-        });
+        };
+        console.info("[PipelineGate] dashboard gate result", fallbackGate);
+        setGate(fallbackGate);
       } finally {
         setLoading(false);
       }
@@ -183,11 +188,12 @@ export function NewRunGateButton({ variant = "topnav", label = "New Run" }: NewR
     <>
       <button
         type="button"
+        aria-label={`${label} — ${gate?.message ?? "Platform Not Verified"}`}
         onClick={() => setDialogOpen(true)}
         style={baseDisabledStyle}
         title={gate?.message ?? "Platform Not Verified"}
       >
-        Platform Not Verified
+        {label}
       </button>
       <AlertDialog
         open={dialogOpen}
