@@ -2169,6 +2169,58 @@ function PipelineView() {
                 return next;
               })
             }
+            onManualStage8Submit={async (line, label) => {
+              if (!sessionId) return;
+              const safeText = line.trim();
+              if (!safeText) return;
+              const safeLabel = (label.trim() || "Manual Proposition").slice(0, 80);
+              const block = `## ${safeLabel}\n\n> **${safeText}**\n`;
+              const { error } = await supabase
+                .from("sessions")
+                .update({ stage_8_output: block })
+                .eq("id", sessionId);
+              if (error) {
+                console.error("[Stage 8 manual] failed to persist", error);
+                return;
+              }
+              await resetStageCascadeFn({ data: { sessionId, stageId: "9" } });
+              await confirmCheckpointBFn({ data: { sessionId } });
+              setStage8Output(block);
+              setStage8KeepNames(new Set([safeLabel]));
+              setSession((prev) =>
+                prev
+                  ? ({
+                      ...prev,
+                      stage_8_output: block,
+                      stage_9_output: null,
+                      stage_10_output: null,
+                      stage_11_output: null,
+                      stage_12_output: null,
+                      stage_13_output: null,
+                      stage_13b_output: null,
+                      stage_14_output: null,
+                      stage_14b_output: null,
+                      stage_14c_output: null,
+                      stage_15_output: null,
+                      stage_16_consulting_output: null,
+                      checkpoint_b_confirmed: true,
+                    } as SessionData)
+                  : prev,
+              );
+              resetLocalFromStage("09");
+              setStatuses((prev) => {
+                const next: Record<string, StageStatus> = {
+                  ...prev,
+                  "08": "complete",
+                  "09": "running",
+                };
+                const idx = STAGES.findIndex((s) => s.id === "09");
+                for (let i = idx + 1; i < STAGES.length; i++)
+                  next[STAGES[i].id] = "pending";
+                return next;
+              });
+              setSelectedId("09");
+            }}
             fullOutput={stageOutputs[selected.id] ?? "Output pending."}
             contentScrollRef={contentScrollRef}
             isViewingHistorical={isViewingHistorical}
@@ -2906,6 +2958,7 @@ function RightPanel({
   retryStatus,
   stage8KeepNames,
   onToggleStage8Keep,
+  onManualStage8Submit,
   contentScrollRef,
 }: {
   stage: Stage;
@@ -2941,6 +2994,7 @@ function RightPanel({
   retryStatus?: string | null;
   stage8KeepNames: Set<string>;
   onToggleStage8Keep: (name: string, keep: boolean) => void;
+  onManualStage8Submit?: (line: string, label: string) => void | Promise<void>;
 }) {
   const isRunning = status === "running";
   const isCheckpoint = status === "checkpoint";
@@ -3059,6 +3113,7 @@ function RightPanel({
                       streaming={false}
                       keepNames={stage8KeepNames}
                       onToggle={onToggleStage8Keep}
+                      onManualSubmit={onManualStage8Submit}
                     />
                   ) : (
                     <StreamedOutput text={fullOutput} streaming={false} />
@@ -3091,6 +3146,7 @@ function RightPanel({
                   streaming={isRunning}
                   keepNames={stage8KeepNames}
                   onToggle={onToggleStage8Keep}
+                  onManualSubmit={onManualStage8Submit}
                 />
               ) : (
                 <StreamedOutput text={text} streaming={isRunning} />
@@ -3477,23 +3533,83 @@ function parseBlocks(text: string): Block[] {
 // territory name (the text following `## `). Used to render checkboxes
 // per-proposition so the user can pick which ones to regenerate on Retry.
 export function splitStage8Propositions(text: string): Array<{ name: string; markdown: string }> {
+  if (!text || !text.trim()) return [];
+
+  const cleanName = (raw: string): string =>
+    raw
+      .replace(/^\*+|\*+$/g, "")
+      .replace(/^FIELD\s*\d+\s*[—\-:]\s*/i, "")
+      .replace(/^(?:PROPOSITION|TERRITORY)\s*\d+\s*[—\-:]?\s*/i, "")
+      .trim();
+
+  // A "header" line opens a new proposition block. Accept any of:
+  //   - markdown headings (#, ##, ###, ####)
+  //   - bold-only label lines like "**Proposition 1 — Name**" / "**Territory 2: …**"
+  const isHeader = (raw: string): { name: string } | null => {
+    const h = raw.match(/^\s*#{1,4}\s+(.+?)\s*$/);
+    if (h) {
+      const name = cleanName(h[1]);
+      if (name) return { name };
+    }
+    const b = raw.match(/^\s*\*\*\s*((?:PROPOSITION|TERRITORY|FIELD)\s*\d+[^*]*)\*\*\s*$/i);
+    if (b) {
+      const name = cleanName(b[1]);
+      if (name) return { name };
+    }
+    return null;
+  };
+
   const lines = text.split("\n");
   const blocks: Array<{ name: string; markdown: string[] }> = [];
   let current: { name: string; markdown: string[] } | null = null;
   for (const raw of lines) {
-    const m = raw.match(/^##\s+(.+?)\s*$/);
-    if (m) {
+    const header = isHeader(raw);
+    if (header) {
       if (current) blocks.push(current);
-      const name = m[1]
-        .replace(/^\*+|\*+$/g, "")
-        .replace(/^FIELD\s*\d+\s*[—\-:]\s*/i, "")
-        .trim();
-      current = { name, markdown: [raw] };
+      current = { name: header.name, markdown: [raw] };
     } else if (current) {
       current.markdown.push(raw);
     }
   }
   if (current) blocks.push(current);
+
+  // Fallback 1: split on horizontal-rule dividers (---, ***, ___).
+  if (blocks.length <= 1) {
+    const parts = text
+      .split(/\n\s*(?:[-*_]\s*){3,}\s*\n/)
+      .map((p) => p.trim())
+      .filter((p) => p.length > 0);
+    if (parts.length > 1) {
+      return parts.map((md, i) => {
+        const firstLine = md.split("\n").find((l) => l.trim()) ?? "";
+        const name =
+          cleanName(firstLine.replace(/^#+\s*/, "").replace(/^>\s*/, "")) ||
+          `Proposition ${i + 1}`;
+        return { name, markdown: md };
+      });
+    }
+  }
+
+  // Fallback 2: split on blockquote proposition anchors like `> **...**`.
+  if (blocks.length <= 1) {
+    const anchorRe = /^\s*>\s*\*\*[^*\n]+\*\*\s*$/gm;
+    const starts: number[] = [];
+    let m: RegExpExecArray | null;
+    while ((m = anchorRe.exec(text)) !== null) starts.push(m.index);
+    if (starts.length > 1) {
+      const parts: Array<{ name: string; markdown: string }> = [];
+      for (let i = 0; i < starts.length; i++) {
+        const end = i + 1 < starts.length ? starts[i + 1] : text.length;
+        const slice = text.slice(starts[i], end).trim();
+        const nameMatch = slice.match(/>\s*\*\*([^*\n]+)\*\*/);
+        const name =
+          (nameMatch ? cleanName(nameMatch[1]) : "") || `Proposition ${i + 1}`;
+        parts.push({ name, markdown: slice });
+      }
+      return parts;
+    }
+  }
+
   return blocks.map((b) => ({
     name: b.name,
     markdown: b.markdown.join("\n").replace(/\s+$/g, ""),
@@ -3507,16 +3623,102 @@ function Stage8PropositionsView({
   streaming,
   keepNames,
   onToggle,
+  onManualSubmit,
 }: {
   text: string;
   streaming: boolean;
   keepNames: Set<string>;
   onToggle: (name: string, keep: boolean) => void;
+  onManualSubmit?: (line: string, label: string) => void | Promise<void>;
 }) {
   const blocks = splitStage8Propositions(text);
+  const [manualLine, setManualLine] = useState("");
+  const [manualLabel, setManualLabel] = useState("");
+  const [manualSubmitting, setManualSubmitting] = useState(false);
+
+  const handleManualSubmit = async () => {
+    const line = manualLine.trim();
+    if (!line || !onManualSubmit || manualSubmitting) return;
+    setManualSubmitting(true);
+    try {
+      await onManualSubmit(line, manualLabel.trim());
+    } finally {
+      setManualSubmitting(false);
+    }
+  };
+
+  const ManualPanel = onManualSubmit ? (
+    <div
+      style={{
+        marginTop: 32,
+        padding: 20,
+        border: "1px solid #2A2A2A",
+        borderRadius: 8,
+        backgroundColor: "#141414",
+      }}
+    >
+      <p className="text-label" style={{ color: "#8A8680", marginBottom: 8 }}>
+        MANUAL SELECTION — OVERRIDE
+      </p>
+      <p className="text-body-sm" style={{ color: "#8A8680", marginBottom: 12 }}>
+        Type or paste any proposition line to use as the selected SMP. This bypasses card
+        selection and advances directly to Stage 9.
+      </p>
+      <textarea
+        value={manualLine}
+        onChange={(e) => setManualLine(e.target.value)}
+        placeholder="Paste proposition line here…"
+        rows={2}
+        disabled={streaming || manualSubmitting}
+        style={{
+          width: "100%",
+          padding: 10,
+          borderRadius: 8,
+          border: "1px solid #2A2A2A",
+          background: "#0A0A0A",
+          color: "#E8E4DE",
+          fontFamily: "inherit",
+          fontSize: 14,
+          lineHeight: 1.5,
+        }}
+      />
+      <input
+        type="text"
+        value={manualLabel}
+        onChange={(e) => setManualLabel(e.target.value)}
+        placeholder="Optional: short label / territory name"
+        disabled={streaming || manualSubmitting}
+        style={{
+          marginTop: 8,
+          width: "100%",
+          padding: 10,
+          borderRadius: 8,
+          border: "1px solid #2A2A2A",
+          background: "#0A0A0A",
+          color: "#E8E4DE",
+          fontSize: 14,
+        }}
+      />
+      <button
+        type="button"
+        disabled={!manualLine.trim() || streaming || manualSubmitting}
+        onClick={handleManualSubmit}
+        className="mt-3 inline-flex h-10 items-center justify-center rounded-md px-5 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-50"
+        style={{ backgroundColor: "#D4924A", color: "#0A0A0A" }}
+      >
+        {manualSubmitting ? "Submitting…" : "Use manual proposition →"}
+      </button>
+    </div>
+  ) : null;
+
   // While streaming with no complete blocks yet, fall back to the live stream.
   if (blocks.length === 0) {
-    return <StreamedOutput text={text} streaming={streaming} />;
+    return (
+      <div>
+        <StreamedOutput text={text} streaming={streaming} />
+        {ManualPanel}
+      </div>
+    );
   }
   return (
     <div>
@@ -3572,6 +3774,7 @@ function Stage8PropositionsView({
           </div>
         );
       })}
+      {ManualPanel}
     </div>
   );
 }
