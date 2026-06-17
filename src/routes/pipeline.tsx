@@ -448,6 +448,10 @@ function PipelineView() {
   const [pendingFeedback, setPendingFeedback] = useState<Record<string, string>>({});
   const [pendingPreviousOutput, setPendingPreviousOutput] = useState<Record<string, string>>({});
   const [amendmentNotes, setAmendmentNotes] = useState<Record<string, string>>({});
+  // Review-question field notes from the inline Checkpoint UI, keyed by stage id.
+  // Lifted up so "Retry This Stage" can inject them into the regeneration prompt
+  // even when the user has not also typed into the bottom-bar amendment input.
+  const [checkpointFieldNotes, setCheckpointFieldNotes] = useState<Record<string, string[]>>({});
   // Stage 8 selective regenerate — set of territory names the user wants to KEEP
   // (checkbox = checked). Defaults to all-checked whenever the underlying
   // proposition set changes.
@@ -2002,7 +2006,9 @@ function PipelineView() {
     if (!sessionId) return;
     const dbId = STAGE_ID_TO_DB[stageId];
     if (!dbId) return;
-    const note = amendmentNotes[stageId]?.trim();
+    const amendment = amendmentNotes[stageId]?.trim() ?? "";
+    const fieldNotes = checkpointFieldNotes[stageId] ?? [];
+    const note = buildRevisionInstruction(fieldNotes, amendment).trim();
     const previousOutput = getRawStageOutput(stageId)?.trim();
     try {
       if (note) setPendingFeedback((p) => ({ ...p, [stageId]: note }));
