@@ -548,8 +548,8 @@ review-question notes plumbing)
    merged feedback to `resetStageCascade`. The existing universal
    amendment-note injection in `claude.server.ts` then wraps the merged
    instruction onto the regeneration user message as a mandatory
-constraint block. Files: `src/components/Checkpoint.tsx`,
-`src/routes/pipeline.tsx`.
+   constraint block. Files: `src/components/Checkpoint.tsx`,
+   `src/routes/pipeline.tsx`.
 
 ---
 
