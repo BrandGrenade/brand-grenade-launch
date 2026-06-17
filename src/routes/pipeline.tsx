@@ -291,6 +291,7 @@ interface SessionData {
   strategic_mode: string;
   brief_text: string | null;
   brief_versions: BriefVersion[] | null;
+  stage_1_output: string | null;
   stage_1_tension_score: number | null;
   stage_1b_required: boolean;
   stage_1b_output: string | null;
