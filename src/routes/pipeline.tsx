@@ -2000,7 +2000,14 @@ function PipelineView() {
     try {
       if (note) setPendingFeedback((p) => ({ ...p, [stageId]: note }));
       if (previousOutput) setPendingPreviousOutput((p) => ({ ...p, [stageId]: previousOutput }));
-      await resetStageCascadeFn({ data: { sessionId, stageId: dbId } });
+      await resetStageCascadeFn({
+        data: {
+          sessionId,
+          stageId: dbId,
+          feedback: note || undefined,
+          previousOutput: previousOutput || undefined,
+        },
+      });
       resetLocalFromStage(stageId);
       markFollowingPending(stageId, "running");
       setSelectedId(stageId);
