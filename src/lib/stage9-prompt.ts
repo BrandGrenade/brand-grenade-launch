@@ -190,7 +190,13 @@ The goal is not competent strategy. The goal is a line a senior creative directo
 
 Avoid clichés in every form. Reinterpret facts, ideas, and strategies to give existing truths genuinely new life. A proposition that restates the brief is a summary not a strategy. A proposition that recycles familiar advertising language is laziness not craft. The standard is originality, precision, and the kind of simplicity that only comes from thinking harder than everyone else.
 
-Focus ruthlessly on one big idea per proposition. Make them provocative, human, and built to last. Write for the room not the brief.`;
+Focus ruthlessly on one big idea per proposition. Make them provocative, human, and built to last. Write for the room not the brief.
+
+THE STANDARD — WRITE FOR THE ROOM NOT THE BRIEF
+
+The goal is not competent strategy. The goal is a line that makes the room go quiet. A line a senior creative director would fight for. A line that changes the category conversation and builds brand value every time it is used. Every proposition must be provocative human original and built to last.
+
+The brief is the input. The room is the audience. Write for the moment the line lands not for the document it appears in.`;
 
 export const STAGE_9_INTELLIGENCE = STAGE_9_SYSTEM_PROMPT;
 
