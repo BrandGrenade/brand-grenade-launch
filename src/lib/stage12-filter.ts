@@ -173,6 +173,15 @@ export function filterValidatedFromStage11(stage11Output: string): FilteredStage
   return { filteredOutput: sections.join("\n\n"), validated, eliminated };
 }
 
+export function countStage12PropositionCards(output: string): number {
+  if (!output?.trim()) return 0;
+  const scoped = output.split(/={2,}\s*DELIVERABLE\s+2|={2,}\s*DELIVERABLE\s+3|={2,}\s*PRESENTATION\s+ORDER|={2,}\s*SELF[-\s]AUDIT/i)[0] ?? output;
+  const propositionBlocks = scoped.match(/(?:^|\n)\s*(?:[═=]{3,}\s*\n)?\s*\*{0,2}PROPOSITION\s+\d+\*{0,2}/gi);
+  if (propositionBlocks?.length) return propositionBlocks.length;
+  const metadataBlocks = scoped.match(/\[METADATA\][\s\S]*?FIELD_NAME\s*:/gi);
+  return metadataBlocks?.length ?? 0;
+}
+
 export function buildFrozenScoresBlock(
   validated: Stage11Verdict[],
   scores: Stage10Score[],
