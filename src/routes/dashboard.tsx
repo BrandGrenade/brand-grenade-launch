@@ -173,7 +173,7 @@ function Dashboard() {
           <PreflightFullCheckPanel />
           <PreflightStatusBanner />
 
-          <header className="flex flex-col gap-5">
+          <header className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <span className="text-label text-primary">Your Pipeline Runs</span>
               <h1 className="text-h2 mt-3 text-text-primary">Strategy Sessions</h1>
@@ -181,6 +181,7 @@ function Dashboard() {
                 Each session is a complete 27-stage pipeline run for one brief — Brand Strategy and Brand Detonation.
               </p>
             </div>
+            <NewRunGateButton variant="topnav" label="New Run" />
           </header>
 
           <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
