@@ -363,6 +363,7 @@ export const runTierTwoFullCheck = createServerFn({ method: "POST" })
               ["Stage 2", () => drainGenerator(runStage2({ data: { sessionId: primarySessionId! } }))],
               ["Stage 3", () => drainGenerator(runStage3({ data: { sessionId: primarySessionId! } }))],
               ["Stage 4", () => drainGenerator(runStage4({ data: { sessionId: primarySessionId! } }))],
+              ["Stage 4B", () => drainGenerator(runStage4b({ data: { sessionId: primarySessionId! } }))],
               ["Stage 5", () => drainGenerator(runStage5({ data: { sessionId: primarySessionId! } }))],
               ["Stage 6", () => drainGenerator(runStage6({ data: { sessionId: primarySessionId! } }))],
               ["Stage 7", () => drainGenerator(runStage7({ data: { sessionId: primarySessionId! } }))],
