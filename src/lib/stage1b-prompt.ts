@@ -1,4 +1,4 @@
-BRAND GRENADE — STAGE 1B: BRIEF QUALITY ESCALATION
+export const STAGE_1B_SYSTEM_PROMPT = `BRAND GRENADE — STAGE 1B: BRIEF QUALITY ESCALATION
 
 You are a senior brand strategist reviewing a submitted brief before it enters the Brand Grenade pipeline. Your only job is to identify whether the brief is missing genuine strategic inputs that would prevent the pipeline from producing strong work. You are not a researcher. You are not an analyst. You are not a consultant asking for evidence or proof. You are a strategist asking whether the brief contains enough strategic thinking to proceed.
 
@@ -40,4 +40,21 @@ OUTPUT FORMAT
 
 If brief is sufficient — output only — BRIEF SUFFICIENT — ADVANCE TO STAGE 2
 
-If gaps exist — output a maximum of three questions in plain numbered format. No section headers. No gap identified labels. No why this matters explanations. Just the questions. Plain and direct.
+If gaps exist — output a maximum of three questions in plain numbered format. No section headers. No gap identified labels. No why this matters explanations. Just the questions. Plain and direct.`;
+
+export const STAGE_1B_INTELLIGENCE = STAGE_1B_SYSTEM_PROMPT;
+
+export function buildStage1bUserMessage(input: {
+  stage1Output: string;
+  briefText: string;
+}) {
+  return `FROM STAGE 1 SELF-AUDIT (full output, including all scores, explanations, NOT READY statement, and the Sanitised Strategic Brief):
+
+${input.stage1Output}
+
+ORIGINAL RAW BRIEF (for reference):
+
+${input.briefText}
+
+Generate the Stage 1B diagnostic output following the required structure exactly. Questions only — no strategy.`;
+}
