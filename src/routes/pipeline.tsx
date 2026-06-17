@@ -3095,6 +3095,7 @@ function RightPanel({
                 onEscalateCheckpoint ? (r) => onEscalateCheckpoint(stage.id, r) : undefined
               }
               resubmitting={checkpointResubmitting}
+              onNotesChange={onCheckpointNotesChange}
               reviewContent={
                 <>
                   {letter === "A" && tensionScore !== null && (
