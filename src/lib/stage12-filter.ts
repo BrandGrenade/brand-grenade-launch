@@ -2,7 +2,8 @@
 //
 // Two permanent guarantees enforced HERE, not in the prompt alone:
 //   1. ELIMINATED SMPs from Stage 11 are stripped from the input.
-//      Only VALIDATED and VALIDATED WITH STRATEGIC NOTE are forwarded.
+//      VALIDATED, VALIDATED WITH STRATEGIC NOTE, and accepted REWRITTEN SMPs
+//      are forwarded.
 //   2. Stage 10 scores are parsed and re-emitted as a FROZEN SCORES block
 //      so Stage 12 cannot invent or recalculate scores per SMP.
 
@@ -39,11 +40,39 @@ function norm(s: string): string {
 function splitSmpBlocks(text: string): string[] {
   if (!text) return [];
   // Split on the start of an SMP block; keep the leading marker on each chunk.
-  // Upstream stages may emit either `SMP:` or markdown headings like `### SMP:`.
-  const parts = text.split(/\n(?=(?:#{1,6}\s*)?\*{0,2}SMP:\s*")/g);
+  // Upstream stages may emit either `SMP: "..."` or markdown headings like
+  // `### SMP One — "..." — FIELD: ...`. Stage 12 must support both because
+  // live Stage 10/11 outputs use the latter format.
+  const parts = text.split(
+    /\n(?=(?:#{1,6}\s*)?\*{0,2}(?:SMP:\s*"|SMP\s+(?:One|Two|Three|Four|Five|Six|Seven|Eight|Nine|Ten|\d+)\s*[—–-]\s*"))/gi,
+  );
   return parts
     .map((p) => p.trim())
-    .filter((p) => /^(?:#{1,6}\s*)?\*{0,2}SMP:\s*"/m.test(p));
+    .filter((p) =>
+      /^(?:#{1,6}\s*)?\*{0,2}(?:SMP:\s*"|SMP\s+(?:One|Two|Three|Four|Five|Six|Seven|Eight|Nine|Ten|\d+)\s*[—–-]\s*")/im.test(
+        p,
+      ),
+    );
+}
+
+function parseSmpHeading(block: string): { smpLine: string; fieldName: string } | null {
+  const structured = block.match(
+    /^(?:#{1,6}\s*)?\*{0,2}SMP:\s*"([^"]+)"\s*[—\-–]\s*FIELD:\s*(.+?)(?:\s*[—\-–]\s*ICONIC\b[^\n]*)?(?:\*{0,2})\s*$/im,
+  );
+  const heading = block.match(
+    /^(?:#{1,6}\s*)?\*{0,2}SMP\s+(?:One|Two|Three|Four|Five|Six|Seven|Eight|Nine|Ten|\d+)\s*[—\-–]\s*"([^"]+)"\s*[—\-–]\s*FIELD:\s*(.+?)(?:\s*[—\-–]\s*ICONIC\b[^\n]*)?(?:\*{0,2})\s*$/im,
+  );
+  const match = structured ?? heading;
+  if (!match) return null;
+  return {
+    smpLine: match[1].trim(),
+    fieldName: match[2].replace(/\*+$/g, "").trim(),
+  };
+}
+
+function extractRewriteLine(block: string): string | null {
+  const rewrite = block.match(/REWRITE\s*(?:\([^)]*\))?\s*:\s*"([^"]+)"/i);
+  return rewrite ? rewrite[1].trim() : null;
 }
 
 function pickNumber(block: string, label: string): number {
@@ -55,12 +84,12 @@ function pickNumber(block: string, label: string): number {
 export function parseStage10Scores(text: string): Stage10Score[] {
   const out: Stage10Score[] = [];
   for (const block of splitSmpBlocks(text)) {
-    const head = block.match(/^(?:#{1,6}\s*)?\*{0,2}SMP:\s*"([^"]+)"\s*[—\-–]\s*FIELD:\s*([^\n*]+?)(?:\*{0,2})\s*$/m);
+    const head = parseSmpHeading(block);
     if (!head) continue;
     const composite = block.match(/COMPOSITE\s*:\s*(\d+(?:\.\d+)?)\s*\/\s*60/i);
     const score: Stage10Score = {
-      smpLine: head[1].trim(),
-      fieldName: head[2].trim(),
+      smpLine: head.smpLine,
+      fieldName: head.fieldName,
       differentiation: pickNumber(block, "Differentiation"),
       truthStrength: pickNumber(block, "Truth Strength"),
       culturalRelevance: pickNumber(block, "Cultural Relevance"),
@@ -77,7 +106,7 @@ export function parseStage10Scores(text: string): Stage10Score[] {
 export function parseStage11Verdicts(text: string): Stage11Verdict[] {
   const out: Stage11Verdict[] = [];
   for (const block of splitSmpBlocks(text)) {
-    const head = block.match(/^(?:#{1,6}\s*)?\*{0,2}SMP:\s*"([^"]+)"\s*[—\-–]\s*FIELD:\s*([^—\-–\n*]+?)(?:\s*[—\-–]\s*ICONIC[^\n]*)?(?:\*{0,2})\s*$/m);
+    const head = parseSmpHeading(block);
     if (!head) continue;
     const verdictLine = block.match(/SMP\s+VERDICT\s*:\s*([^\n]+)/i);
     const rawVerdict = verdictLine ? verdictLine[1].trim().toUpperCase() : "";
@@ -89,12 +118,17 @@ export function parseStage11Verdicts(text: string): Stage11Verdict[] {
     else if (/VALIDATED/.test(rawVerdict)) verdict = "VALIDATED";
 
     const iconic = block.match(/ICONIC\s+TIER\s+FINAL\s+STATUS\s*:\s*([A-Z\/ ]+)/i);
+    const rewriteLine = verdict === "REWRITTEN" ? extractRewriteLine(block) : null;
+    const smpLine = rewriteLine ?? head.smpLine;
+    const fieldName = head.fieldName;
     out.push({
-      smpLine: head[1].trim(),
-      fieldName: head[2].trim(),
+      smpLine,
+      fieldName,
       verdict,
       iconicStatus: iconic ? iconic[1].trim().toUpperCase() : "N/A",
-      block,
+      block: rewriteLine
+        ? `SMP: "${rewriteLine}" — FIELD: ${fieldName}\nSMP VERDICT: REWRITTEN\nREWRITE SOURCE: original line "${head.smpLine}"\n\n${block}`
+        : block,
     });
   }
   return out;
@@ -108,7 +142,8 @@ export interface FilteredStage11 {
 
 export function filterValidatedFromStage11(stage11Output: string): FilteredStage11 {
   const verdicts = parseStage11Verdicts(stage11Output);
-  const keep = (v: string) => v === "VALIDATED" || v === "VALIDATED WITH STRATEGIC NOTE";
+  const keep = (v: string) =>
+    v === "VALIDATED" || v === "VALIDATED WITH STRATEGIC NOTE" || v === "REWRITTEN";
   const validated = verdicts.filter((v) => keep(v.verdict));
   const eliminated = verdicts.filter((v) => !keep(v.verdict));
 
