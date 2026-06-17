@@ -21,13 +21,12 @@ import {
 } from "@/components/ui/collapsible";
 import {
   BRIEF_SECTIONS as SECTIONS,
-  BRIEF_FIELD_KEYS,
   composeBriefText as composeStructuredBriefText,
   briefFieldsFromLegacyText,
   type BriefFields,
   type BriefSection as Section,
-  type BriefField as SubField,
 } from "@/lib/brief-schema";
+
 
 export const PENDING_BRIEF_EDIT_STORAGE_KEY = "brand-grenade:pending-brief-edit";
 
