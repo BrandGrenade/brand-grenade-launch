@@ -535,7 +535,9 @@ function BriefIntake() {
                 opacity: submitting ? 0.7 : 1,
               }}
             >
-              {submitting ? "Submitting…" : "Submit Brief to Strategy Engine →"}
+              {submitting
+                ? (isEditMode ? "Resubmitting…" : "Submitting…")
+                : (isEditMode ? "Resubmit Amended Brief →" : "Submit Brief to Strategy Engine →")}
             </button>
             <button
               type="button"
