@@ -7,11 +7,13 @@ import {
   filterValidatedFromStage11,
   parseStage10Scores,
   buildFrozenScoresBlock,
+  countStage12PropositionCards,
   type Stage10Score,
   type Stage11Verdict,
 } from "./stage12-filter";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertSessionOwner } from "@/lib/auth-helpers.server";
+import { assertUpstreamStageOutput } from "./pipeline-integrity";
 
 const Input = z.object({
   sessionId: z.string().uuid(),
@@ -162,6 +164,7 @@ export const runStage12 = createServerFn({ method: "POST" })
   .inputValidator((i) => Input.parse(i))
   .handler(async function* ({ data, context }) {
     await assertSessionOwner(data.sessionId, context.userId);
+    await assertUpstreamStageOutput(data.sessionId, 12);
     const { data: session, error } = await supabaseAdmin
       .from("sessions")
       .select("brand_name, category, stage_1_output, stage_2_output, stage_10_output, stage_11_output, stage_12_output")
@@ -234,6 +237,7 @@ export const runStage12 = createServerFn({ method: "POST" })
         systemPrompt: STAGE_12_SYSTEM_PROMPT,
         userMessage,
         maxTokens: 32000,
+        timeoutMs: 30_000,
         skipUniversalWrapper: true,
         sessionId: data.sessionId,
         stageLabel: "Stage 12",
@@ -246,6 +250,15 @@ export const runStage12 = createServerFn({ method: "POST" })
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Stage 12 failed";
       console.warn(`[Stage 12] Claude card generation failed; using deterministic card fallback: ${msg}`);
+      output = deterministicOutput;
+      yield { delta: deterministicOutput };
+    }
+
+    const cardCount = countStage12PropositionCards(output);
+    if (cardCount < validated.length) {
+      console.warn(
+        `[Stage 12] Claude card output contained ${cardCount}/${validated.length} validated cards; using deterministic card fallback`,
+      );
       output = deterministicOutput;
       yield { delta: deterministicOutput };
     }
