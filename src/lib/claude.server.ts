@@ -328,7 +328,7 @@ export async function callClaude(args: CallClaudeArgs): Promise<string> {
  * output. Retries are only attempted on the initial connection (not mid-stream).
  */
 export async function* streamClaude(args: CallClaudeArgs): AsyncGenerator<string, void, unknown> {
-  const { apiKey, body } = await prepareCall(args);
+  const { apiKey, body, amendmentKey } = await prepareCall(args);
 
   // [TELEMETRY] Per-stage instrumentation — emitted as structured log lines so
   // the diagnostic harness / log tail can build a pass-fail-per-stage report.
