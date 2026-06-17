@@ -3061,6 +3061,7 @@ function RightPanel({
                       streaming={false}
                       keepNames={stage8KeepNames}
                       onToggle={onToggleStage8Keep}
+                      onManualSubmit={onManualStage8Submit}
                     />
                   ) : (
                     <StreamedOutput text={fullOutput} streaming={false} />
