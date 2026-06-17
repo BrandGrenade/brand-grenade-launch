@@ -6,18 +6,40 @@ import { STAGE_1_SYSTEM_PROMPT, buildStage1UserMessage } from "./stage1-prompt";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertSessionOwner } from "@/lib/auth-helpers.server";
 
+const BriefFieldsSchema = z
+  .object({
+    briefTitle: z.string().max(500).default(""),
+    brandName: z.string().max(500).default(""),
+    category: z.string().max(500).default(""),
+    date: z.string().max(40).default(""),
+    submittedBy: z.string().max(500).default(""),
+    sections: z.record(z.string(), z.string().max(20000)).default({}),
+    supportingMaterials: z.array(z.string().max(500)).default([]),
+  })
+  .optional();
+
 const CreateSessionInput = z.object({
   brandName: z.string().min(1).max(200),
   category: z.string().min(1).max(200),
   strategicMode: z.string().min(1).max(200),
   briefText: z.string().min(20).max(50000),
   devMode: z.boolean().optional(),
+  briefFields: BriefFieldsSchema,
 });
 
 export const createSession = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => CreateSessionInput.parse(input))
   .handler(async ({ data, context }) => {
+    const briefVersions = data.briefFields
+      ? [
+          {
+            version: 1,
+            fields: data.briefFields,
+            submitted_at: new Date().toISOString(),
+          },
+        ]
+      : [];
     const { data: row, error } = await supabaseAdmin
       .from("sessions")
       .insert({
@@ -25,6 +47,7 @@ export const createSession = createServerFn({ method: "POST" })
         category: data.category,
         strategic_mode: data.strategicMode,
         brief_text: data.briefText,
+        brief_versions: briefVersions,
         status: "running",
         current_stage: 1,
         dev_mode: data.devMode ?? false,
@@ -35,6 +58,7 @@ export const createSession = createServerFn({ method: "POST" })
     if (error) throw new Error(`Failed to create session: ${error.message}`);
     return { sessionId: row.id as string };
   });
+
 
 
 const RunStage1Input = z.object({
