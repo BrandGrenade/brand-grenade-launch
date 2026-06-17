@@ -13,6 +13,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+
 import {
   AlertDialog,
   AlertDialogContent,
@@ -47,6 +49,18 @@ export function NewRunGateButton({ variant = "topnav", label = "New Run" }: NewR
   const refresh = useMemo(
     () => async () => {
       try {
+        // Skip server call when the user has no session — the gate fn
+        // requires auth and would 401, blanking the page in some dev flows.
+        const { data: sess } = await supabase.auth.getSession();
+        if (!sess.session?.access_token) {
+          setGate({
+            allowed: true,
+            reason: "ready",
+            message: "Not signed in",
+            lastCheck: null,
+          });
+          return;
+        }
         const g = await getGate();
         setGate(g);
         fetchedAtRef.current = Date.now();
@@ -65,6 +79,7 @@ export function NewRunGateButton({ variant = "topnav", label = "New Run" }: NewR
     },
     [getGate],
   );
+
 
   useEffect(() => {
     void refresh();
