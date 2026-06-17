@@ -3477,23 +3477,83 @@ function parseBlocks(text: string): Block[] {
 // territory name (the text following `## `). Used to render checkboxes
 // per-proposition so the user can pick which ones to regenerate on Retry.
 export function splitStage8Propositions(text: string): Array<{ name: string; markdown: string }> {
+  if (!text || !text.trim()) return [];
+
+  const cleanName = (raw: string): string =>
+    raw
+      .replace(/^\*+|\*+$/g, "")
+      .replace(/^FIELD\s*\d+\s*[—\-:]\s*/i, "")
+      .replace(/^(?:PROPOSITION|TERRITORY)\s*\d+\s*[—\-:]?\s*/i, "")
+      .trim();
+
+  // A "header" line opens a new proposition block. Accept any of:
+  //   - markdown headings (#, ##, ###, ####)
+  //   - bold-only label lines like "**Proposition 1 — Name**" / "**Territory 2: …**"
+  const isHeader = (raw: string): { name: string } | null => {
+    const h = raw.match(/^\s*#{1,4}\s+(.+?)\s*$/);
+    if (h) {
+      const name = cleanName(h[1]);
+      if (name) return { name };
+    }
+    const b = raw.match(/^\s*\*\*\s*((?:PROPOSITION|TERRITORY|FIELD)\s*\d+[^*]*)\*\*\s*$/i);
+    if (b) {
+      const name = cleanName(b[1]);
+      if (name) return { name };
+    }
+    return null;
+  };
+
   const lines = text.split("\n");
   const blocks: Array<{ name: string; markdown: string[] }> = [];
   let current: { name: string; markdown: string[] } | null = null;
   for (const raw of lines) {
-    const m = raw.match(/^##\s+(.+?)\s*$/);
-    if (m) {
+    const header = isHeader(raw);
+    if (header) {
       if (current) blocks.push(current);
-      const name = m[1]
-        .replace(/^\*+|\*+$/g, "")
-        .replace(/^FIELD\s*\d+\s*[—\-:]\s*/i, "")
-        .trim();
-      current = { name, markdown: [raw] };
+      current = { name: header.name, markdown: [raw] };
     } else if (current) {
       current.markdown.push(raw);
     }
   }
   if (current) blocks.push(current);
+
+  // Fallback 1: split on horizontal-rule dividers (---, ***, ___).
+  if (blocks.length <= 1) {
+    const parts = text
+      .split(/\n\s*(?:[-*_]\s*){3,}\s*\n/)
+      .map((p) => p.trim())
+      .filter((p) => p.length > 0);
+    if (parts.length > 1) {
+      return parts.map((md, i) => {
+        const firstLine = md.split("\n").find((l) => l.trim()) ?? "";
+        const name =
+          cleanName(firstLine.replace(/^#+\s*/, "").replace(/^>\s*/, "")) ||
+          `Proposition ${i + 1}`;
+        return { name, markdown: md };
+      });
+    }
+  }
+
+  // Fallback 2: split on blockquote proposition anchors like `> **...**`.
+  if (blocks.length <= 1) {
+    const anchorRe = /^\s*>\s*\*\*[^*\n]+\*\*\s*$/gm;
+    const starts: number[] = [];
+    let m: RegExpExecArray | null;
+    while ((m = anchorRe.exec(text)) !== null) starts.push(m.index);
+    if (starts.length > 1) {
+      const parts: Array<{ name: string; markdown: string }> = [];
+      for (let i = 0; i < starts.length; i++) {
+        const end = i + 1 < starts.length ? starts[i + 1] : text.length;
+        const slice = text.slice(starts[i], end).trim();
+        const nameMatch = slice.match(/>\s*\*\*([^*\n]+)\*\*/);
+        const name =
+          (nameMatch ? cleanName(nameMatch[1]) : "") || `Proposition ${i + 1}`;
+        parts.push({ name, markdown: slice });
+      }
+      return parts;
+    }
+  }
+
   return blocks.map((b) => ({
     name: b.name,
     markdown: b.markdown.join("\n").replace(/\s+$/g, ""),
