@@ -54,11 +54,10 @@ export const Route = createFileRoute("/brief/")({
 const MAX_FILE_BYTES = 50 * 1024 * 1024;
 const ACCEPTED_TYPES = [".pdf", ".docx", ".pptx", ".txt"];
 
-// SECTIONS / Section / SubField are imported from @/lib/brief-schema
-// to guarantee the form, the saved-brief load path, the pipeline View Brief,
-// and the server-side composeBriefText() all use the same field definitions.
-void SECTIONS; void BRIEF_FIELD_KEYS;
-type _Section = Section; type _SubField = SubField;
+// SECTIONS / Section types come from @/lib/brief-schema so the form,
+// the saved-brief load path, the pipeline View Brief, and the server-side
+// composeBriefText() all share one canonical field definition.
+
 
 
 const INSTRUCTION_STYLE: React.CSSProperties = {
