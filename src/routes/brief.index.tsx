@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/collapsible";
 
 
-export const Route = createFileRoute("/brief")({
+export const Route = createFileRoute("/brief/")({
   component: BriefIntake,
   head: () => ({
     meta: [
