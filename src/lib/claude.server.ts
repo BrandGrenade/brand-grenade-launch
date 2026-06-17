@@ -14,6 +14,7 @@ export interface CallClaudeArgs {
   systemPrompt: string;
   userMessage: string;
   maxTokens?: number;
+  timeoutMs?: number;
   model?: string;
   skipUniversalWrapper?: boolean;
   /** When provided, retry status is written to sessions.retry_status and
@@ -108,9 +109,9 @@ function isRetryableStatus(status: number) {
   return status === 524 || status === 503 || status === 502 || status === 504;
 }
 
-async function doFetch(apiKey: string, body: string): Promise<Response> {
+async function doFetch(apiKey: string, body: string, timeoutMs = REQUEST_TIMEOUT_MS): Promise<Response> {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
   try {
     return await fetch(ANTHROPIC_URL, {
       method: "POST",
