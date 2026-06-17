@@ -550,3 +550,22 @@ review-question notes plumbing)
    instruction onto the regeneration user message as a mandatory
    constraint block. Files: `src/components/Checkpoint.tsx`,
    `src/routes/pipeline.tsx`.
+
+---
+
+## v3.6 — Stage 9 product hero mandate and reinterpretation questions addition
+**Date:** June 2026
+**Stage:** Stage 9
+**Change:** Added three new mandatory sections to the Stage 9 system prompt
+after the Reinterpretation Requirement and before the Universal Quality
+Benchmark: (1) PRODUCT AND BRAND AS HERO — EXPLICITLY ALLOWED AND MANDATORY
+CONSIDERATION, requiring at least two of the five to seven propositions to
+attempt to make the product or brand the hero using specific, verifiable
+product truths from Stage 4B; (2) REINTERPRETATION QUESTIONS — MANDATORY
+BEFORE GENERATION, requiring explicit three-question reinterpretation for at
+least two key inputs from Stage 4B and the validated insight set, with
+documented reinterpretation before any proposition is written; (3) BENCHMARK
+STANDARD FOR PRODUCT HERO PROPOSITIONS, measuring every product hero
+proposition against the "1000 songs in your pocket" / "Melts in your mouth
+not in your hands" standard. Existing prompt content is unchanged. File:
+`src/lib/stage9-prompt.ts`.
