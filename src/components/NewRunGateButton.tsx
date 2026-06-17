@@ -52,7 +52,8 @@ export function NewRunGateButton({ variant = "topnav", label = "New Run" }: NewR
         // Skip server call when the user has no session — the gate fn
         // requires auth and would 401, blanking the page in some dev flows.
         const { data: sess } = await supabase.auth.getSession();
-        if (!sess.session?.access_token) {
+        const token = sess.session?.access_token;
+        if (!token) {
           setGate({
             allowed: true,
             reason: "ready",
@@ -61,7 +62,9 @@ export function NewRunGateButton({ variant = "topnav", label = "New Run" }: NewR
           });
           return;
         }
-        const g = await getGate();
+        const g = await getGate({
+          headers: { Authorization: `Bearer ${token}` },
+        });
         setGate(g);
         fetchedAtRef.current = Date.now();
       } catch (e) {
@@ -99,7 +102,13 @@ export function NewRunGateButton({ variant = "topnav", label = "New Run" }: NewR
     }
     setSubmitting(true);
     try {
-      await logOverride({ data: { reason: reason.trim() } });
+      const { data: sess } = await supabase.auth.getSession();
+      const token = sess.session?.access_token;
+      if (!token) throw new Error("Please sign in again.");
+      await logOverride({
+        data: { reason: reason.trim() },
+        headers: { Authorization: `Bearer ${token}` },
+      });
       toast.success("Override logged. Starting new run.");
       setDialogOpen(false);
       setReason("");
