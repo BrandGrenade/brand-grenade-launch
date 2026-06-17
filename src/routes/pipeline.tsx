@@ -102,6 +102,25 @@ const STAGE_ID_TO_DB: Record<
   "16": "16",
 };
 
+const CURRENT_STAGE_TO_UI: Record<number, string> = {
+  1: "01",
+  2: "02",
+  3: "03",
+  4: "04",
+  5: "05",
+  6: "06",
+  7: "07",
+  8: "08",
+  9: "09",
+  10: "10",
+  11: "11",
+  12: "12",
+  13: "13",
+  14: "14",
+  15: "15",
+  16: "16",
+};
+
 const pipelineSearchSchema = z.object({
   session: z.string().uuid().optional(),
 });
