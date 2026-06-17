@@ -3567,16 +3567,102 @@ function Stage8PropositionsView({
   streaming,
   keepNames,
   onToggle,
+  onManualSubmit,
 }: {
   text: string;
   streaming: boolean;
   keepNames: Set<string>;
   onToggle: (name: string, keep: boolean) => void;
+  onManualSubmit?: (line: string, label: string) => void | Promise<void>;
 }) {
   const blocks = splitStage8Propositions(text);
+  const [manualLine, setManualLine] = useState("");
+  const [manualLabel, setManualLabel] = useState("");
+  const [manualSubmitting, setManualSubmitting] = useState(false);
+
+  const handleManualSubmit = async () => {
+    const line = manualLine.trim();
+    if (!line || !onManualSubmit || manualSubmitting) return;
+    setManualSubmitting(true);
+    try {
+      await onManualSubmit(line, manualLabel.trim());
+    } finally {
+      setManualSubmitting(false);
+    }
+  };
+
+  const ManualPanel = onManualSubmit ? (
+    <div
+      style={{
+        marginTop: 32,
+        padding: 20,
+        border: "1px solid #2A2A2A",
+        borderRadius: 8,
+        backgroundColor: "#141414",
+      }}
+    >
+      <p className="text-label" style={{ color: "#8A8680", marginBottom: 8 }}>
+        MANUAL SELECTION — OVERRIDE
+      </p>
+      <p className="text-body-sm" style={{ color: "#8A8680", marginBottom: 12 }}>
+        Type or paste any proposition line to use as the selected SMP. This bypasses card
+        selection and advances directly to Stage 9.
+      </p>
+      <textarea
+        value={manualLine}
+        onChange={(e) => setManualLine(e.target.value)}
+        placeholder="Paste proposition line here…"
+        rows={2}
+        disabled={streaming || manualSubmitting}
+        style={{
+          width: "100%",
+          padding: 10,
+          borderRadius: 8,
+          border: "1px solid #2A2A2A",
+          background: "#0A0A0A",
+          color: "#E8E4DE",
+          fontFamily: "inherit",
+          fontSize: 14,
+          lineHeight: 1.5,
+        }}
+      />
+      <input
+        type="text"
+        value={manualLabel}
+        onChange={(e) => setManualLabel(e.target.value)}
+        placeholder="Optional: short label / territory name"
+        disabled={streaming || manualSubmitting}
+        style={{
+          marginTop: 8,
+          width: "100%",
+          padding: 10,
+          borderRadius: 8,
+          border: "1px solid #2A2A2A",
+          background: "#0A0A0A",
+          color: "#E8E4DE",
+          fontSize: 14,
+        }}
+      />
+      <button
+        type="button"
+        disabled={!manualLine.trim() || streaming || manualSubmitting}
+        onClick={handleManualSubmit}
+        className="mt-3 inline-flex h-10 items-center justify-center rounded-md px-5 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-50"
+        style={{ backgroundColor: "#D4924A", color: "#0A0A0A" }}
+      >
+        {manualSubmitting ? "Submitting…" : "Use manual proposition →"}
+      </button>
+    </div>
+  ) : null;
+
   // While streaming with no complete blocks yet, fall back to the live stream.
   if (blocks.length === 0) {
-    return <StreamedOutput text={text} streaming={streaming} />;
+    return (
+      <div>
+        <StreamedOutput text={text} streaming={streaming} />
+        {ManualPanel}
+      </div>
+    );
   }
   return (
     <div>
@@ -3632,6 +3718,7 @@ function Stage8PropositionsView({
           </div>
         );
       })}
+      {ManualPanel}
     </div>
   );
 }
