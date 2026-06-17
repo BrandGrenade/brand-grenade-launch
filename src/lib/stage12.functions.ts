@@ -194,10 +194,17 @@ export const runStage12 = createServerFn({ method: "POST" })
     const stage10Output = session.stage_10_output ?? "";
     const { filteredOutput, validated, eliminated } = filterValidatedFromStage11(session.stage_11_output);
     if (validated.length === 0) {
-      throw new Error("Stage 11 produced no VALIDATED SMPs — cannot run Stage 12. Re-run Stage 11 or revisit Stage 8.");
+      throw new Error("Stage 11 produced no selectable SMPs — cannot run Stage 12. Re-run Stage 11 or revisit Stage 8.");
     }
     const scores = parseStage10Scores(stage10Output);
     const frozenScoresBlock = buildFrozenScoresBlock(validated, scores);
+    const deterministicOutput = buildDeterministicStage12Output({
+      brandName: session.brand_name,
+      category: session.category,
+      stage1Output: session.stage_1_output ?? "",
+      validated,
+      scores,
+    });
 
     let userMessage = buildStage12UserMessage({
       brandName: session.brand_name,
@@ -238,11 +245,9 @@ export const runStage12 = createServerFn({ method: "POST" })
       }
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Stage 12 failed";
-      await supabaseAdmin
-        .from("sessions")
-        .update({ stage_12_error: msg })
-        .eq("id", data.sessionId);
-      throw e instanceof Error ? e : new Error(msg);
+      console.warn(`[Stage 12] Claude card generation failed; using deterministic card fallback: ${msg}`);
+      output = deterministicOutput;
+      yield { delta: deterministicOutput };
     }
 
     // Stage 12 card output is a background enhancement — do NOT downgrade
@@ -254,7 +259,7 @@ export const runStage12 = createServerFn({ method: "POST" })
       () =>
         supabaseAdmin
           .from("sessions")
-          .update({ stage_12_output: output, stage_12_error: null })
+          .update({ stage_12_output: output, stage_12_error: null, status: "awaiting_checkpoint" })
           .eq("id", data.sessionId),
       "Stage 12 output save",
     );
