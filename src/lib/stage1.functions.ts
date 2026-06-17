@@ -81,12 +81,17 @@ export const runStage1 = createServerFn({ method: "POST" })
     await assertSessionOwner(data.sessionId, context.userId);
     const { data: session, error: loadErr } = await supabaseAdmin
       .from("sessions")
-      .select("brand_name, category, strategic_mode, brief_text, stage_1_output")
+      .select("brand_name, category, strategic_mode, brief_text, stage_1_output, brief_versions")
       .eq("id", data.sessionId)
       .single();
     if (loadErr || !session) throw new Error(`Session not found: ${loadErr?.message ?? "no row"}`);
 
     const feedback = data.feedback?.trim();
+
+    // Stage 1B gate: fires ONLY when one or more of the nine mandatory brief
+    // sections (8 structured sections + supporting materials) is completely
+    // empty. Tension score is NEVER used to gate Stage 1B.
+    const stage1bRequired = computeStage1bRequiredFromBrief(session.brief_versions);
 
     if (session.stage_1_output && !feedback) {
       const score = extractTensionScore(session.stage_1_output);
@@ -95,7 +100,7 @@ export const runStage1 = createServerFn({ method: "POST" })
         done: true as const,
         output: session.stage_1_output,
         tensionScore: score,
-        stage1bRequired: score !== null && score < 7,
+        stage1bRequired,
       };
       return;
     }
