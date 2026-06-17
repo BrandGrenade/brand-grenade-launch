@@ -154,8 +154,8 @@ export function NewRunGateButton({ variant = "topnav", label = "New Run" }: NewR
   const baseDisabledStyle: React.CSSProperties = {
     ...baseEnabledStyle,
     backgroundColor: "transparent",
-    border: "1px solid #7C3A3A",
-    color: "#C77272",
+    border: "1px solid #FF3B3B",
+    color: "#FF3B3B",
     cursor: "pointer",
   };
 
