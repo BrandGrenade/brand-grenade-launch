@@ -1,31 +1,29 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
-export const STAGE_OUTPUT_COLUMNS = {
-  1: "stage_1_output",
-  2: "stage_2_output",
-  3: "stage_3_output",
-  4: "stage_4_output",
-  5: "stage_5_output",
-  6: "stage_6_output",
-  7: "stage_7_output",
-  8: "stage_8_output",
-  9: "stage_9_output",
-  10: "stage_10_output",
-  11: "stage_11_output",
-  12: "stage_12_output",
-  13: "stage_13_output",
-  14: "stage_14_output",
-  15: "stage_15_output",
+export const STAGE_OUTPUT_COLUMNS: Record<number, readonly string[]> = {
+  1: ["stage_1_output"],
+  2: ["stage_2_output"],
+  3: ["stage_3_output"],
+  4: ["stage_4_output"],
+  5: ["stage_5_output"],
+  6: ["stage_6_output"],
+  7: ["stage_7_output"],
+  8: ["stage_8_output"],
+  9: ["stage_9_output"],
+  10: ["stage_10_output"],
+  11: ["stage_11_output"],
+  12: ["stage_12_output"],
+  13: ["stage_13_output"],
+  14: ["stage_14_output"],
+  15: ["stage_15_output"],
   16: ["stage_16_consulting_output", "stage_16_agency_output", "stage_16_workshop_output"],
-  17: "stage_17_output",
-  18: "stage_18_output",
-  19: "stage_19_output",
-  20: "stage_20_output",
-  21: "stage_21_outputs",
-  22: "stage_22_output",
-} as const;
-
-type StageNumber = keyof typeof STAGE_OUTPUT_COLUMNS;
+  17: ["stage_17_output"],
+  18: ["stage_18_output"],
+  19: ["stage_19_output"],
+  20: ["stage_20_output"],
+  21: ["stage_21_outputs"],
+  22: ["stage_22_output"],
+};
 
 function hasPersistedOutput(value: unknown): boolean {
   if (typeof value === "string") return value.trim().length > 0;
@@ -36,11 +34,12 @@ function hasPersistedOutput(value: unknown): boolean {
 
 export async function assertUpstreamStageOutput(
   sessionId: string,
-  stageNumber: StageNumber,
+  stageNumber: number,
 ): Promise<void> {
   if (stageNumber < 2) return;
-  const upstreamStage = (stageNumber - 1) as StageNumber;
+  const upstreamStage = stageNumber - 1;
   const columns = STAGE_OUTPUT_COLUMNS[upstreamStage];
+  if (!columns) return;
   const selectColumns = Array.isArray(columns) ? columns.join(", ") : columns;
   const { data, error } = await supabaseAdmin
     .from("sessions")
@@ -48,10 +47,8 @@ export async function assertUpstreamStageOutput(
     .eq("id", sessionId)
     .single();
   if (error) throw new Error(`Failed to verify Stage ${upstreamStage} output before Stage ${stageNumber}: ${error.message}`);
-  const row = data as Record<string, unknown> | null;
-  const hasOutput = Array.isArray(columns)
-    ? columns.some((column) => hasPersistedOutput(row?.[column]))
-    : hasPersistedOutput(row?.[columns]);
+  const row = data as unknown as Record<string, unknown> | null;
+  const hasOutput = columns.some((column) => hasPersistedOutput(row?.[column]));
   if (!hasOutput) {
     throw new Error(`Stage ${stageNumber} cannot run because Stage ${upstreamStage} output is missing`);
   }
