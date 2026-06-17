@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { parseStage11Verdicts, parseStage10Scores } from "@/lib/stage12-filter";
+import { parseStage11Verdicts, parseStage10Scores, type Stage11Verdict } from "@/lib/stage12-filter";
 
 
 export interface SMPCard {
@@ -58,15 +58,18 @@ function parsePropositions(rawOutput: string): RawProp[] {
   );
   if (endMarker > 0) scope = scope.slice(0, endMarker);
 
-  // Method 1: Split on === or ═══ dividers
-  const dividerPattern = /[═=]{3,}/g;
-  const blocks = scope.split(dividerPattern).filter((b) => b.trim().length > 50);
+  const propBlockPattern =
+    /(?:^|\n)(?:[═=]{3,}\s*\n)?\s*\*{0,2}PROPOSITION\s+\d+\*{0,2}[\s\S]*?(?=\n(?:[═=]{3,}\s*\n)?\s*\*{0,2}PROPOSITION\s+\d+\*{0,2}|$)/gi;
+  const propBlocks = Array.from(scope.matchAll(propBlockPattern), (m) => m[0]).filter(
+    (b) => b.trim().length > 50,
+  );
 
-  // Method 2: Split on PROPOSITION N headers
-  const propPattern = /\*{0,2}PROPOSITION\s+\d+\*{0,2}/gi;
-  const propBlocks = scope.split(propPattern).filter((b) => b.trim().length > 50);
-
-  const contentBlocks = propBlocks.length > blocks.length ? propBlocks : blocks;
+  // Prefer PROPOSITION blocks. Stage 12 cards contain many internal divider
+  // lines, so divider-first splitting fragments a single card into unusable
+  // sections and causes the UI to fall through to manual entry.
+  const contentBlocks = propBlocks.length
+    ? propBlocks
+    : scope.split(/[═=]{3,}/g).filter((b) => b.trim().length > 50);
 
 
   for (const block of contentBlocks) {
@@ -88,6 +91,22 @@ function parsePropositions(rawOutput: string): RawProp[] {
       continue;
     }
 
+    const grabSection = (label: string, stops: string[]): string => {
+      const stopPattern = stops.map((s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|");
+      const pattern = new RegExp(
+        `${label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*\\n+([\\s\\S]*?)(?=\\n\\s*(?:[─═=\\-]{3,}\\s*\\n\\s*)?(?:${stopPattern})|\\n\\[METADATA\\]|$)`,
+        "i",
+      );
+      const m = block.match(pattern);
+      return m
+        ? m[1]
+            .replace(/^[─═=\-]{3,}$/gm, "")
+            .replace(/\[\/?METADATA\]/gi, "")
+            .trim()
+            .substring(0, 300)
+        : "";
+    };
+
     let propositionLine = "";
     const blockquoteBold = block.match(/>\s*\*\*([^*\n]+)\*\*/);
     if (blockquoteBold) propositionLine = blockquoteBold[1].trim();
@@ -96,6 +115,21 @@ function parsePropositions(rawOutput: string): RawProp[] {
       if (boldMatches && boldMatches.length > 0) {
         propositionLine = boldMatches[0].replace(/\*\*/g, "").trim();
       }
+    }
+    if (!propositionLine) {
+      const beforeOwns = block.split(/WHAT THIS PROPOSITION OWNS/i)[0] ?? "";
+      const candidates = beforeOwns
+        .replace(/\*{0,2}PROPOSITION\s+\d+\*{0,2}/gi, "")
+        .replace(/^[\s═=─\-]+$/gm, "")
+        .split("\n")
+        .map((line) => line.replace(/^>\s*/, "").replace(/^\*\*|\*\*$/g, "").trim())
+        .filter(
+          (line) =>
+            line.length >= 2 &&
+            line.length <= 120 &&
+            !/^(DELIVERABLE|SECTION|CARD METADATA|STRATEGIC QUALITY|Note:)/i.test(line),
+        );
+      propositionLine = candidates[0] ?? "";
     }
     if (!propositionLine) continue;
     if (
@@ -107,20 +141,21 @@ function parsePropositions(rawOutput: string): RawProp[] {
       continue;
     }
 
-    const ownsMatch = block.match(
-      /WHAT THIS PROPOSITION OWNS[\s\S]*?\n\n([\s\S]*?)(?:\n---|\n═|$)/i,
-    );
-    const owns = ownsMatch ? ownsMatch[1].trim().substring(0, 300) : "";
-
-    const truthMatch = block.match(
-      /THE TRUTH IT IS BUILT ON[\s\S]*?\n\n([\s\S]*?)(?:\n---|\n═|$)/i,
-    );
-    const truth = truthMatch ? truthMatch[1].trim().substring(0, 300) : "";
-
-    const challengeMatch = block.match(
-      /WHAT IT CHALLENGES[\s\S]*?\n\n([\s\S]*?)(?:\n---|\n═|$)/i,
-    );
-    const challenge = challengeMatch ? challengeMatch[1].trim().substring(0, 300) : "";
+    const owns = grabSection("WHAT THIS PROPOSITION OWNS", [
+      "THE TRUTH IT IS BUILT ON",
+      "WHAT IT CHALLENGES",
+      "WHAT IT MAKES POSSIBLE",
+    ]);
+    const truth = grabSection("THE TRUTH IT IS BUILT ON", [
+      "WHAT IT CHALLENGES",
+      "WHAT IT MAKES POSSIBLE",
+      "WHAT IT REQUIRES OF THE BRAND",
+    ]);
+    const challenge = grabSection("WHAT IT CHALLENGES", [
+      "WHAT IT MAKES POSSIBLE",
+      "WHAT IT REQUIRES OF THE BRAND",
+      "STRATEGIC QUALITY SCORES",
+    ]);
 
     const scores: SMPCard["scores"] = {
       differentiation: extractScore(block, "Differentiation"),
@@ -136,6 +171,17 @@ function parsePropositions(rawOutput: string): RawProp[] {
   }
 
   return propositions;
+}
+
+function parseStage10PassingAsVerdicts(stage10Output: string): Stage11Verdict[] {
+  const scores = parseStage10Scores(stage10Output);
+  return scores.map((score) => ({
+    smpLine: score.smpLine,
+    fieldName: score.fieldName,
+    verdict: "VALIDATED",
+    iconicStatus: "N/A",
+    block: `SMP: "${score.smpLine}" — FIELD: ${score.fieldName}\nSMP VERDICT: VALIDATED`,
+  }));
 }
 
 export function parseSMPCards(
@@ -164,10 +210,17 @@ export function parseSMPCards(
   // Fallback: render the VALIDATED propositions from Stage 11 directly so the
   // human always sees the propositions, even when Stage 12 parsing fails or
   // Stage 12 output has not yet been produced.
-  if (!stage11Fallback) return [];
-  const verdicts = parseStage11Verdicts(stage11Fallback).filter(
-    (v) => v.verdict === "VALIDATED" || v.verdict === "VALIDATED WITH STRATEGIC NOTE",
-  );
+  const stage11Verdicts = stage11Fallback
+    ? parseStage11Verdicts(stage11Fallback).filter(
+        (v) => v.verdict === "VALIDATED" || v.verdict === "VALIDATED WITH STRATEGIC NOTE",
+      )
+    : [];
+  const verdicts = stage11Verdicts.length
+    ? stage11Verdicts
+    : stage10ForScores
+      ? parseStage10PassingAsVerdicts(stage10ForScores)
+      : [];
+  if (verdicts.length === 0) return [];
   console.log("Propositions found (stage 11 fallback): " + verdicts.length);
   const scores = stage10ForScores ? parseStage10Scores(stage10ForScores) : [];
   const scoreByField = new Map(scores.map((s) => [s.fieldName.trim().toLowerCase(), s]));

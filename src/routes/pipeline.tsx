@@ -731,6 +731,16 @@ function PipelineView() {
             "12": data.checkpoint_c_confirmed ? "complete" : "checkpoint",
           }));
         }
+        if (
+          data.current_stage === 12 &&
+          data.status === "running" &&
+          data.stage_11_output &&
+          !data.stage_12_output &&
+          !data.checkpoint_c_confirmed
+        ) {
+          setStatuses((p) => ({ ...p, "12": "running" }));
+          setSelectedId("12");
+        }
         if (data.stage_13_output) {
           setStage13Output(data.stage_13_output);
           setStatuses((p) => ({ ...p, "13": "complete" }));
@@ -1278,25 +1288,22 @@ function PipelineView() {
   }, [sessionId, session?.id, statuses["11"]]);
 
   // Stage 12 — TYPE 1 (Display & Select).
-  // Render Stage 11 validated propositions immediately so the human can read
-  // and select without waiting for the Stage 12 Claude card-formatting pass.
-  // The Claude run executes in the background and enhances the cards in place
-  // when it finishes. A Claude failure does NOT block selection — Stage 11
-  // fallback remains usable.
+  // Stage 12 must actually execute before the human selection UI appears.
+  // Keep the stage in `running` while Claude composes the presentation cards;
+  // only enter Checkpoint C after the Stage 12 stream has completed.
   useEffect(() => {
     if (!sessionId || !session) return;
     if (statuses["12"] !== "running") return;
 
     const fb12 = pendingFeedback["12"];
-    const hasStage11 = !!session.stage_11_output;
-
-    // Enter checkpoint the moment Stage 11 data is available — no Claude required.
-    if (hasStage11) {
-      setStatuses((p) => (p["12"] === "checkpoint" ? p : { ...p, "12": "checkpoint" }));
-    }
+    const hasStage11 = !!(stage11Output ?? session.stage_11_output);
+    if (!hasStage11) return;
 
     // If we already have Stage 12 output and no feedback, no Claude work to do.
-    if (stage12Output && !fb12) return;
+    if (stage12Output && !fb12) {
+      setStatuses((p) => (p["12"] === "checkpoint" ? p : { ...p, "12": "checkpoint" }));
+      return;
+    }
 
     let cancelled = false;
     setStage12Loading(true);
@@ -1324,7 +1331,7 @@ function PipelineView() {
             return n;
           });
         }
-        // Stay in checkpoint (or complete, if the human already moved on).
+        // Only now should Checkpoint C render the card-selection interface.
         setStatuses((p) =>
           p["12"] === "complete" || p["12"] === "checkpoint" ? p : { ...p, "12": "checkpoint" },
         );
@@ -1333,11 +1340,7 @@ function PipelineView() {
         if (cancelled) return;
         setStage12Loading(false);
         setStage12Error(err instanceof Error ? err.message : "Stage 12 failed");
-        // Only mark as error if there's no Stage 11 fallback to render — otherwise
-        // the human can still select from the validated propositions.
-        if (!hasStage11) {
-          setStatuses((p) => ({ ...p, "12": "error" }));
-        }
+        setStatuses((p) => ({ ...p, "12": "error" }));
       });
     return () => {
       cancelled = true;
