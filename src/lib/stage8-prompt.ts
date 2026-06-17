@@ -61,11 +61,20 @@ export function buildStage8UserMessage(args: {
   constraintMatrix: string;
   territoryCount: number;
   territoryNames: string[];
+  stage4bOutput?: string;
 }): string {
+  const productFactsBlock = args.stage4bOutput?.trim()
+    ? `Stage 4B — Distinctive Asset Mining and Product Facts (PRIMARY INPUT — at least half of propositions must be built directly from these specific verifiable product truths):
+
+${args.stage4bOutput}
+
+`
+    : "";
+
   return `Brand: ${args.brandName}
 Category: ${args.category}
 
-Strategic Territories:
+${productFactsBlock}Strategic Territories:
 
 ${args.stage7Output}
 
@@ -73,7 +82,7 @@ Competitor positions to avoid:
 
 ${args.cmm}
 
-Write one Strategic Proposition per territory. Minimum 3 propositions. The input contains ${args.territoryCount} territories — generate exactly ${args.territoryCount} propositions.`;
+Write one Strategic Proposition per territory. Minimum 3 propositions. The input contains ${args.territoryCount} territories — generate exactly ${args.territoryCount} propositions. Per the PRODUCT TRUTH MANDATE in your system prompt, at least half of the propositions must be built from the specific product facts above, not from the positioning territory or category intelligence.`;
 }
 
 export function buildStage8ContinuationMessage(args: {
