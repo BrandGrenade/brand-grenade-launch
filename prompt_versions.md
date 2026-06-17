@@ -569,3 +569,20 @@ STANDARD FOR PRODUCT HERO PROPOSITIONS, measuring every product hero
 proposition against the "1000 songs in your pocket" / "Melts in your mouth
 not in your hands" standard. Existing prompt content is unchanged. File:
 `src/lib/stage9-prompt.ts`.
+
+---
+
+## v3.7 — Stage 9 automatic disqualification checklist and closing standard addition
+**Date:** June 2026
+**Stage:** Stage 9
+**Change:** Added two new mandatory sections to the Stage 9 system prompt.
+(1) AUTOMATIC DISQUALIFICATION — APPLY BEFORE PRESENTING ANY PROPOSITION,
+inserted at the beginning of the output generation section immediately before
+TASK. It lists seven non-negotiable filters (generic category language,
+clichés, competitor claimability, >8 words, comprehension, strategy-speak,
+unanchored truth) that every proposition must pass before it reaches the
+human. (2) THE STANDARD — WRITE FOR THE ROOM NOT THE BRIEF, inserted at the
+very end of the prompt after all other instructions. It reframes the goal as
+writing a line that makes the room go quiet, that a senior creative director
+would fight for, and that changes the category conversation. Existing prompt
+content is unchanged. File: `src/lib/stage9-prompt.ts`.
