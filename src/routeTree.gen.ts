@@ -14,6 +14,7 @@ import { Route as PipelineRouteImport } from './routes/pipeline'
 import { Route as DetonationRouteImport } from './routes/detonation'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as CompleteRouteImport } from './routes/complete'
+import { Route as BriefRouteImport } from './routes/brief'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as BriefIndexRouteImport } from './routes/brief.index'
 import { Route as DetonationCanvasRouteImport } from './routes/detonation_.canvas'
@@ -44,15 +45,20 @@ const CompleteRoute = CompleteRouteImport.update({
   path: '/complete',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BriefRoute = BriefRouteImport.update({
+  id: '/brief',
+  path: '/brief',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BriefIndexRoute = BriefIndexRouteImport.update({
-  id: '/brief/',
-  path: '/brief/',
-  getParentRoute: () => rootRouteImport,
+  id: '/',
+  path: '/',
+  getParentRoute: () => BriefRoute,
 } as any)
 const DetonationCanvasRoute = DetonationCanvasRouteImport.update({
   id: '/detonation_/canvas',
@@ -60,13 +66,14 @@ const DetonationCanvasRoute = DetonationCanvasRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const BriefNewRoute = BriefNewRouteImport.update({
-  id: '/brief/new',
-  path: '/brief/new',
-  getParentRoute: () => rootRouteImport,
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => BriefRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/brief': typeof BriefRouteWithChildren
   '/complete': typeof CompleteRoute
   '/dashboard': typeof DashboardRoute
   '/detonation': typeof DetonationRoute
@@ -90,6 +97,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/brief': typeof BriefRouteWithChildren
   '/complete': typeof CompleteRoute
   '/dashboard': typeof DashboardRoute
   '/detonation': typeof DetonationRoute
@@ -103,6 +111,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/brief'
     | '/complete'
     | '/dashboard'
     | '/detonation'
@@ -125,6 +134,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/brief'
     | '/complete'
     | '/dashboard'
     | '/detonation'
@@ -137,14 +147,13 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  BriefRoute: typeof BriefRouteWithChildren
   CompleteRoute: typeof CompleteRoute
   DashboardRoute: typeof DashboardRoute
   DetonationRoute: typeof DetonationRoute
   PipelineRoute: typeof PipelineRoute
   SettingsRoute: typeof SettingsRoute
-  BriefNewRoute: typeof BriefNewRoute
   DetonationCanvasRoute: typeof DetonationCanvasRoute
-  BriefIndexRoute: typeof BriefIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -184,6 +193,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CompleteRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/brief': {
+      id: '/brief'
+      path: '/brief'
+      fullPath: '/brief'
+      preLoaderRoute: typeof BriefRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -193,10 +209,10 @@ declare module '@tanstack/react-router' {
     }
     '/brief/': {
       id: '/brief/'
-      path: '/brief'
+      path: '/'
       fullPath: '/brief/'
       preLoaderRoute: typeof BriefIndexRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof BriefRoute
     }
     '/detonation_/canvas': {
       id: '/detonation_/canvas'
@@ -207,35 +223,36 @@ declare module '@tanstack/react-router' {
     }
     '/brief/new': {
       id: '/brief/new'
-      path: '/brief/new'
+      path: '/new'
       fullPath: '/brief/new'
       preLoaderRoute: typeof BriefNewRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof BriefRoute
     }
   }
 }
 
+interface BriefRouteChildren {
+  BriefNewRoute: typeof BriefNewRoute
+  BriefIndexRoute: typeof BriefIndexRoute
+}
+
+const BriefRouteChildren: BriefRouteChildren = {
+  BriefNewRoute: BriefNewRoute,
+  BriefIndexRoute: BriefIndexRoute,
+}
+
+const BriefRouteWithChildren = BriefRoute._addFileChildren(BriefRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  BriefRoute: BriefRouteWithChildren,
   CompleteRoute: CompleteRoute,
   DashboardRoute: DashboardRoute,
   DetonationRoute: DetonationRoute,
   PipelineRoute: PipelineRoute,
   SettingsRoute: SettingsRoute,
-  BriefNewRoute: BriefNewRoute,
   DetonationCanvasRoute: DetonationCanvasRoute,
-  BriefIndexRoute: BriefIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
