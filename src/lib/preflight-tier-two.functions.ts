@@ -598,7 +598,7 @@ export const runTierTwoFullCheck = createServerFn({ method: "POST" })
               .eq("id", primarySessionId)
               .single();
             const { filterValidatedFromStage11, countStage12PropositionCards } = await import("./stage12-filter");
-            const validatedCount = filterValidatedFromStage11(pre?.stage_11_output ?? "").length;
+            const validatedCount = filterValidatedFromStage11(pre?.stage_11_output ?? "").validated.length;
             if (validatedCount === 0) throw new Error("Stage 11 produced no VALIDATED SMPs to feed Stage 12");
 
             emit(`Running Stage 12 (SMP synthesis, expecting >= ${validatedCount} cards)...`);
