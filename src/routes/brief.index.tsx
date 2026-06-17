@@ -1,10 +1,12 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { z } from "zod";
 import { ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { TopNav } from "@/components/TopNav";
 import { createSession } from "@/lib/stage1.functions";
+import { resubmitBriefStructured } from "@/lib/stage1b.functions";
 import { getDevModeFromStorage } from "@/lib/dev-mode";
 import {
   SavedBriefsPicker,
@@ -17,10 +19,24 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import {
+  BRIEF_SECTIONS as SECTIONS,
+  composeBriefText as composeStructuredBriefText,
+  briefFieldsFromLegacyText,
+  type BriefFields,
+  type BriefSection as Section,
+} from "@/lib/brief-schema";
 
+
+export const PENDING_BRIEF_EDIT_STORAGE_KEY = "brand-grenade:pending-brief-edit";
+
+const BriefSearchSchema = z.object({
+  edit: z.string().uuid().optional(),
+}).partial();
 
 export const Route = createFileRoute("/brief/")({
   component: BriefIntake,
+  validateSearch: (search) => BriefSearchSchema.parse(search),
   head: () => ({
     meta: [
       { title: "New Run — Brand Grenade" },
@@ -33,195 +49,15 @@ export const Route = createFileRoute("/brief/")({
   }),
 });
 
+
 const MAX_FILE_BYTES = 50 * 1024 * 1024;
 const ACCEPTED_TYPES = [".pdf", ".docx", ".pptx", ".txt"];
 
-type SubField = {
-  key: string;
-  label: string;
-  instruction: string;
-  minHeight: number;
-};
+// SECTIONS / Section types come from @/lib/brief-schema so the form,
+// the saved-brief load path, the pipeline View Brief, and the server-side
+// composeBriefText() all share one canonical field definition.
 
-type Section = {
-  num: string;
-  title: string;
-  instruction?: string;
-  fields: SubField[];
-  tag?: "essential" | "optional";
-};
 
-const SECTIONS: Section[] = [
-  {
-    num: "1",
-    title: "The Core Challenge",
-    instruction:
-      "What is the real problem or opportunity beneath the stated brief? 1–3 sentences. Be brutal. The most useful briefs name the uncomfortable truth the organisation is not saying out loud.",
-    tag: "essential",
-    fields: [{ key: "s1_core", label: "", instruction: "", minHeight: 120 }],
-  },
-  {
-    num: "2",
-    title: "What Success Requires",
-    tag: "essential",
-    fields: [
-      {
-        key: "s2_business",
-        label: "Business objective",
-        instruction: "What commercial outcome must this strategy produce? Be specific.",
-        minHeight: 80,
-      },
-      {
-        key: "s2_comms",
-        label: "Communication objective",
-        instruction: "What must shift in how the audience thinks, feels, or behaves?",
-        minHeight: 80,
-      },
-      {
-        key: "s2_strategic",
-        label: "Strategic objective",
-        instruction: "What position must the brand own that it does not currently own?",
-        minHeight: 80,
-      },
-    ],
-  },
-  {
-    num: "3",
-    title: "Who We Are Talking To",
-    tag: "essential",
-    fields: [
-      {
-        key: "s3_behaviour",
-        label: "Behavioural description",
-        instruction:
-          "How do these people actually behave in this category — including contradictions between what they say and what they do. Avoid age ranges. Describe behaviour.",
-        minHeight: 100,
-      },
-      {
-        key: "s3_tension",
-        label: "The tension",
-        instruction:
-          "What is the specific gap between what this audience wants to believe about themselves and how they actually behave in this category?",
-        minHeight: 100,
-      },
-      {
-        key: "s3_relationship",
-        label: "Current relationship with the brand",
-        instruction: "How does this audience currently see, use, or ignore the brand?",
-        minHeight: 80,
-      },
-    ],
-  },
-  {
-    num: "4",
-    title: "What Is Genuinely True About This Brand",
-    tag: "essential",
-    fields: [
-      {
-        key: "s4_provable",
-        label: "Provable truths",
-        instruction:
-          "What does this brand or product do that no competitor can honestly claim? Hard facts, performance data, structural advantages.",
-        minHeight: 100,
-      },
-      {
-        key: "s4_believed",
-        label: "Believed but unproven truths",
-        instruction:
-          "What do you believe is true about the brand that you cannot yet demonstrate with evidence?",
-        minHeight: 80,
-      },
-    ],
-  },
-  {
-    num: "5",
-    title: "The Category This Brand Operates In",
-    fields: [
-      {
-        key: "s5_believes",
-        label: "What does the category currently believe?",
-        instruction:
-          "The dominant assumption every competitor is making — the thing every brand in this space says or implies.",
-        minHeight: 80,
-      },
-      {
-        key: "s5_changing",
-        label: "What is changing?",
-        instruction:
-          "The behavioural, cultural, or structural shift that makes now a different moment. What has the category not yet caught up with?",
-        minHeight: 80,
-      },
-      {
-        key: "s5_unsaid",
-        label: "What has the category never been willing to say?",
-        instruction:
-          "The uncomfortable truth no established player has named — possibly because naming it would implicate their own model.",
-        minHeight: 100,
-      },
-    ],
-  },
-  {
-    num: "6",
-    title: "The Competitive Landscape",
-    fields: [
-      {
-        key: "s6_competitors",
-        label: "Primary competitors and what they own",
-        instruction:
-          "For each main competitor — what is the one thing they stand for in the audience's mind? Not their tagline. What they actually mean.",
-        minHeight: 120,
-      },
-      {
-        key: "s6_territory",
-        label: "Territory no competitor credibly occupies",
-        instruction:
-          "Where is the gap? What is available that no one has claimed or been willing to claim?",
-        minHeight: 80,
-      },
-    ],
-  },
-  {
-    num: "7",
-    title: "Constraints and Commitments",
-    fields: [
-      {
-        key: "s7_never",
-        label: "What the brand must never say or imply",
-        instruction:
-          "Specific language, claims, associations, or tonal territories that are off-limits and why.",
-        minHeight: 80,
-      },
-      {
-        key: "s7_commit",
-        label: "What the brand must commit to beyond communications",
-        instruction:
-          "If this strategy works, what will the brand need to actually do in its product, pricing, or behaviour to make the positioning credible?",
-        minHeight: 80,
-      },
-      {
-        key: "s7_equities",
-        label: "Existing equities to protect",
-        instruction:
-          "What has the brand built that any new strategy must not contradict or abandon?",
-        minHeight: 80,
-      },
-    ],
-  },
-  {
-    num: "8",
-    title: "How We Will Know It Worked",
-    tag: "optional",
-    fields: [
-      {
-        key: "s8_measure",
-        label: "",
-        instruction:
-          "Specific measurable outcomes that would confirm the strategy has succeeded. Commercial, perceptual, or behavioural.",
-        minHeight: 80,
-      },
-    ],
-  },
-];
 
 const INSTRUCTION_STYLE: React.CSSProperties = {
   color: "#8A8680",
@@ -240,6 +76,9 @@ function todayISO() {
 function BriefIntake() {
   const navigate = useNavigate();
   const createSessionFn = useServerFn(createSession);
+  const resubmitStructuredFn = useServerFn(resubmitBriefStructured);
+  const { edit: editSessionId } = Route.useSearch();
+  const isEditMode = !!editSessionId;
 
   // Header fields
   const [briefTitle, setBriefTitle] = useState("");
@@ -260,6 +99,7 @@ function BriefIntake() {
 
   // Section-9 supporting files
   const [files, setFiles] = useState<File[]>([]);
+  const [existingFileNames, setExistingFileNames] = useState<string[]>([]);
   const [dragging, setDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -273,16 +113,51 @@ function BriefIntake() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
-  function loadSavedBrief(b: SavedBrief) {
-    setBrand(b.brand_name);
-    setCategory(b.category);
-    setBriefTitle((prev) => prev || b.brand_name);
-    setValues((prev) => ({ ...prev, s1_core: b.brief_text }));
-    setOpenMap((m) => ({ ...m, "1": true }));
-    toast.success(`Loaded "${b.brand_name}" — review and click Submit when ready`);
+  /** Populate every field from a structured BriefFields object. */
+  function applyBriefFields(b: BriefFields) {
+    setBriefTitle(b.briefTitle ?? "");
+    setBrand(b.brandName ?? "");
+    setCategory(b.category ?? "");
+    if (b.date) setDate(b.date);
+    setSubmittedBy(b.submittedBy ?? "");
+    setValues(() => ({ ...b.sections }));
+    setExistingFileNames(b.supportingMaterials ?? []);
+    setOpenMap(Object.fromEntries(SECTIONS.map((s) => [s.num, true])));
     if (typeof window !== "undefined") {
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
+  }
+
+  function loadSavedBrief(b: SavedBrief) {
+    if (b.brief_fields) {
+      applyBriefFields(b.brief_fields);
+      toast.success(`Loaded "${b.brand_name}" — every field pre-populated. Review and click Submit.`);
+      return;
+    }
+    // Legacy text-only brief — drop into the Core Challenge field so the
+    // user can review/clean it up rather than losing the content entirely.
+    const fallback = briefFieldsFromLegacyText({
+      brandName: b.brand_name,
+      category: b.category,
+      briefText: b.brief_text,
+    });
+    applyBriefFields(fallback);
+    toast.message(`Loaded legacy brief "${b.brand_name}" — content placed in Section 1 for review.`);
+  }
+
+  function currentBriefFields(): BriefFields {
+    return {
+      briefTitle: briefTitle.trim(),
+      brandName: brand.trim(),
+      category: category.trim() || "Unspecified",
+      date,
+      submittedBy: submittedBy.trim(),
+      sections: { ...values },
+      supportingMaterials: [
+        ...existingFileNames,
+        ...files.map((f) => f.name),
+      ],
+    };
   }
 
   async function handleSaveBrief() {
@@ -292,11 +167,13 @@ function BriefIntake() {
       return;
     }
     setSaving(true);
-    const briefText = composeBriefText();
+    const briefFields = currentBriefFields();
+    const briefText = composeStructuredBriefText(briefFields);
     const saved = await saveBrief({
       brandName: brand.trim(),
       category: category.trim() || "Unspecified",
       briefText,
+      briefFields,
     });
     setSaving(false);
     if (saved) {
@@ -304,9 +181,24 @@ function BriefIntake() {
     }
   }
 
-  // Consume any brief queued from the dashboard's Saved Briefs library.
+  // Consume any brief queued from the dashboard's Saved Briefs library OR
+  // any brief queued by the pipeline Edit Brief button.
   useEffect(() => {
     if (typeof window === "undefined") return;
+    // 1) Edit-mode prefill — wins over saved-brief queue.
+    const editRaw = sessionStorage.getItem(PENDING_BRIEF_EDIT_STORAGE_KEY);
+    if (editRaw) {
+      sessionStorage.removeItem(PENDING_BRIEF_EDIT_STORAGE_KEY);
+      try {
+        const f = JSON.parse(editRaw) as BriefFields;
+        if (f && typeof f === "object") {
+          applyBriefFields(f);
+          toast.message("Editing the submitted brief. Resubmit to rerun Stage 1 with the amended brief.");
+          return;
+        }
+      } catch {/* ignore */}
+    }
+    // 2) Saved-brief load queue.
     const raw = sessionStorage.getItem(PENDING_BRIEF_STORAGE_KEY);
     if (!raw) return;
     sessionStorage.removeItem(PENDING_BRIEF_STORAGE_KEY);
@@ -327,10 +219,10 @@ function BriefIntake() {
     for (const s of SECTIONS) {
       done[s.num] = s.fields.some((f) => (values[f.key] ?? "").trim().length >= 10);
     }
-    done["9"] = files.length > 0;
+    done["9"] = files.length > 0 || existingFileNames.length > 0;
     const count = Object.values(done).filter(Boolean).length;
     return { done, count, total: 9 };
-  }, [values, files]);
+  }, [values, files, existingFileNames]);
 
   const canSubmitSections = brand.trim().length >= 2;
 
@@ -352,31 +244,6 @@ function BriefIntake() {
     }
   }
 
-  function composeBriefText(): string {
-    const parts: string[] = [];
-    if (briefTitle.trim()) parts.push(`# ${briefTitle.trim()}`);
-    parts.push(`Date: ${date}`);
-    if (submittedBy.trim()) parts.push(`Submitted by: ${submittedBy.trim()}`);
-    parts.push("");
-    for (const s of SECTIONS) {
-      const lines: string[] = [];
-      for (const f of s.fields) {
-        const v = (values[f.key] ?? "").trim();
-        if (!v) continue;
-        if (f.label) lines.push(`**${f.label}**`);
-        lines.push(v);
-        lines.push("");
-      }
-      if (lines.length === 0) continue;
-      parts.push(`## ${s.num}. ${s.title}`);
-      parts.push(...lines);
-    }
-    if (files.length > 0) {
-      parts.push(`## 9. Supporting Materials`);
-      parts.push(files.map((f) => `- ${f.name}`).join("\n"));
-    }
-    return parts.join("\n");
-  }
 
   async function handleSubmitSections(e: React.FormEvent) {
     e.preventDefault();
@@ -384,7 +251,18 @@ function BriefIntake() {
     setSubmitting(true);
     setSubmitError(null);
     try {
-      const briefText = composeBriefText();
+      const briefFields = currentBriefFields();
+      const briefText = composeStructuredBriefText(briefFields);
+      if (isEditMode && editSessionId) {
+        // Resubmit amended brief — server appends Version N, rewrites brief_text,
+        // hard-resets every downstream stage so the pipeline reruns from Stage 1.
+        await resubmitStructuredFn({
+          data: { sessionId: editSessionId, briefFields, briefText },
+        });
+        toast.success("Brief resubmitted. Rerunning Stage 1 with the amended brief.");
+        navigate({ to: "/pipeline", search: { session: editSessionId } });
+        return;
+      }
       const { sessionId } = await createSessionFn({
         data: {
           brandName: brand.trim(),
@@ -392,6 +270,7 @@ function BriefIntake() {
           strategicMode: "Auto",
           briefText,
           devMode: getDevModeFromStorage(),
+          briefFields,
         },
       });
       navigate({ to: "/pipeline", search: { session: sessionId } });
@@ -407,6 +286,15 @@ function BriefIntake() {
     setSubmitError(null);
     try {
       const briefText = `# ${briefTitle.trim() || altFile.name}\nDate: ${date}\n${submittedBy.trim() ? `Submitted by: ${submittedBy.trim()}\n` : ""}\nUploaded document: ${altFile.name} (${(altFile.size / 1024).toFixed(0)} KB)\n\n[The Strategy Engine will extract strategic inputs from the uploaded document.]`;
+      const briefFields: BriefFields = {
+        briefTitle: briefTitle.trim() || altFile.name,
+        brandName: brand.trim(),
+        category: category.trim() || "Unspecified",
+        date,
+        submittedBy: submittedBy.trim(),
+        sections: { s1_core: `Uploaded document: ${altFile.name}` },
+        supportingMaterials: [altFile.name],
+      };
       const { sessionId } = await createSessionFn({
         data: {
           brandName: brand.trim(),
@@ -414,6 +302,7 @@ function BriefIntake() {
           strategicMode: "Auto",
           briefText,
           devMode: getDevModeFromStorage(),
+          briefFields,
         },
       });
       navigate({ to: "/pipeline", search: { session: sessionId } });
@@ -423,20 +312,27 @@ function BriefIntake() {
     }
   }
 
+
   return (
     <div className="min-h-screen bg-background">
       <TopNav />
 
       <main className="mx-auto w-full max-w-[840px] px-5 pb-16 pt-12 sm:px-6">
         <header>
-          <span className="text-label text-primary">Strategy Brief</span>
-          <h1 className="text-h1 mt-3 text-text-primary">Submit your brief</h1>
+          <span className="text-label text-primary">
+            {isEditMode ? "Edit Submitted Brief" : "Strategy Brief"}
+          </span>
+          <h1 className="text-h1 mt-3 text-text-primary">
+            {isEditMode ? "Edit your brief" : "Submit your brief"}
+          </h1>
           <p className="text-body-lg mt-3 text-text-secondary">
-            Complete the structured brief below, or upload an existing document
-            and the Strategy Engine will extract the strategic inputs.
+            {isEditMode
+              ? "Every field is pre-populated from the original submission. Edit any field and click Resubmit — Stage 1 will rerun with the amended brief and every downstream stage will reset. The original version is preserved as Version 1."
+              : "Complete the structured brief below, or upload an existing document and the Strategy Engine will extract the strategic inputs."}
           </p>
           <hr className="my-8 h-px border-0 bg-border" />
         </header>
+
 
         {/* HEADER FIELDS — 2x2 grid */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -636,7 +532,9 @@ function BriefIntake() {
                 opacity: submitting ? 0.7 : 1,
               }}
             >
-              {submitting ? "Submitting…" : "Submit Brief to Strategy Engine →"}
+              {submitting
+                ? (isEditMode ? "Resubmitting…" : "Submitting…")
+                : (isEditMode ? "Resubmit Amended Brief →" : "Submit Brief to Strategy Engine →")}
             </button>
             <button
               type="button"

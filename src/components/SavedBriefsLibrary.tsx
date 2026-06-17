@@ -3,6 +3,7 @@ import { Trash2, FolderOpen, Plus } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import type { BriefFields } from "@/lib/brief-schema";
 
 export const PENDING_BRIEF_STORAGE_KEY = "brand-grenade:pending-saved-brief";
 
@@ -11,25 +12,28 @@ export type SavedBrief = {
   brand_name: string;
   category: string;
   brief_text: string;
+  /** Full structured brief — present for briefs saved after the structured-brief upgrade. */
+  brief_fields: BriefFields | null;
   created_at: string;
 };
 
 export async function fetchSavedBriefs(): Promise<SavedBrief[]> {
   const { data, error } = await supabase
     .from("saved_briefs")
-    .select("brief_id,brand_name,category,brief_text,created_at")
+    .select("brief_id,brand_name,category,brief_text,brief_fields,created_at")
     .order("created_at", { ascending: false });
   if (error) {
     console.error("[saved_briefs] fetch error", error);
     return [];
   }
-  return (data ?? []) as SavedBrief[];
+  return (data ?? []) as unknown as SavedBrief[];
 }
 
 export async function saveBrief(input: {
   brandName: string;
   category: string;
   briefText: string;
+  briefFields?: BriefFields;
 }): Promise<SavedBrief | null> {
   const { data: userRes } = await supabase.auth.getUser();
   const userId = userRes.user?.id;
@@ -44,14 +48,15 @@ export async function saveBrief(input: {
       brand_name: input.brandName,
       category: input.category,
       brief_text: input.briefText,
+      brief_fields: (input.briefFields ?? null) as unknown as never,
     })
-    .select("brief_id,brand_name,category,brief_text,created_at")
+    .select("brief_id,brand_name,category,brief_text,brief_fields,created_at")
     .single();
   if (error) {
     toast.error("Failed to save brief");
     return null;
   }
-  return data as SavedBrief;
+  return data as unknown as SavedBrief;
 }
 
 export async function deleteSavedBrief(briefId: string): Promise<boolean> {
@@ -62,6 +67,7 @@ export async function deleteSavedBrief(briefId: string): Promise<boolean> {
   }
   return true;
 }
+
 
 function fmt(iso: string) {
   return new Date(iso).toLocaleDateString(undefined, {

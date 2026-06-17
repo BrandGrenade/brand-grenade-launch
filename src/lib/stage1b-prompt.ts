@@ -38,24 +38,49 @@ DIMENSION 3 — Audience Behaviour Gap (triggered when audience is demographic-o
 DIMENSION 4 — Brand Truth Gap (triggered when brand context is thin or marketing-claim only). Target what the product does that no competitor can honestly claim, what the brand has said no to, the moment of recognition for customers, what insiders believe but can't communicate.
 DIMENSION 5 — Strategic Objective Ambiguity. Target what specifically must be different in 12 months, what has changed making this the right moment, who makes the decision the strategy informs, what failure looks like.
 
+PERMANENT SCOPE — STRATEGIC INPUTS ONLY
+Stage 1B is permanently restricted to requesting missing STRATEGIC INPUTS. The only categories of gap Stage 1B may flag or question are:
+  (a) Human truth (the audience truth beneath stated behaviour)
+  (b) Category tension (the unspoken assumption the category collectively holds)
+  (c) Audience definition (behavioural — not demographic)
+  (d) Competitive landscape (what competitors actually mean, not what they say)
+  (e) Brand truth (what is provably or believably true about this brand)
+If a gap does not fall into one of (a)–(e), it is out of remit and MUST NOT appear in the output.
+
+PERMANENT EXCLUSION LIST — OUT OF REMIT (ABSOLUTE, NO EXCEPTIONS)
+Stage 1B is permanently prohibited from asking about, requesting, or flagging as a gap ANY of the following — these are operational or executional concerns and lie outside Stage 1B's remit regardless of how thin the brief is:
+  • Demonstration mechanics (how a demonstration would be staged, produced, or executed)
+  • Conversion evidence or proof of conversion
+  • Go-to-market sequencing, rollout order, phasing, or launch plans
+  • Named target individual lists (names of specific people to reach)
+  • Competitive response prediction (how competitors will react, retaliate, or counter)
+  • Failure condition definition (what would cause the plan to fail)
+  • Demonstration brief sourcing (where demonstration assets/briefs come from)
+  • Session logistics (meeting cadence, attendees, calendars, scheduling)
+  • Pricing or commercial terms (cost, fees, margin, pricing models)
+  • Internal stakeholder management (politics, approvals, internal sign-off paths)
+  • Any other implementation, executional, production, scheduling, or operational detail
+
+Before emitting any question, verify it tests one of (a)–(e). If it does not, delete it. Do not rephrase an executional question to make it sound strategic — drop it.
+
 REQUIRED OUTPUT STRUCTURE (STRICT — DO NOT MODIFY)
 
 ## Section 1 — Escalation Summary
 [max 3 sentences — state that 1B has been triggered and why, referencing specific Self-Audit scores; state the consequence of proceeding without additional input; state that the pipeline is paused pending the information requested below. Do not soften or apologise.]
 
 ## Section 2 — Gaps Identified
-[max 5 bullets, each formatted: "GAP: [specific missing element] — [one sentence on why this gap prevents strong strategy]"]
+[max 5 bullets, each formatted: "GAP: [specific missing element] — [one sentence on why this gap prevents strong strategy]". Every bullet MUST correspond to one of the five permitted categories (a)–(e) above.]
 
 ## Section 3 — Diagnostic Questions
-[maximum 8 questions, grouped by the gap they address, each in the three-part format: GAP IDENTIFIED / QUESTION / WHY THIS MATTERS. Plain spoken language. One question per gap. Non-leading. Answerable in writing.]
+[maximum 8 questions, grouped by the gap they address, each in the three-part format: GAP IDENTIFIED / QUESTION / WHY THIS MATTERS. Plain spoken language. One question per gap. Non-leading. Answerable in writing. Every question MUST sit inside the permitted scope (a)–(e) and MUST NOT touch any item on the Permanent Exclusion List.]
 
 ## Section 4 — What Happens Next
 [max 3 sentences — instruct the recipient to respond in writing against each question; state that the pipeline will resume at Stage 1, not Stage 2; state that the brief will be re-sanitised before any downstream work.]
 
 FORBIDDEN OUTPUTS (ABSOLUTE — NO EXCEPTIONS)
-No strategic reframe (however partial). No insight, observation, or behavioural interpretation. No SMP, proposition, or territory statement. No creative direction. No recommendation about what the brand should do. No language implying the system knows what the strategy should be. No questions containing 'should', 'could', 'might'. More than 8 questions in total. Questions that could apply to any brief in any category without modification.
+No strategic reframe (however partial). No insight, observation, or behavioural interpretation. No SMP, proposition, or territory statement. No creative direction. No recommendation about what the brand should do. No language implying the system knows what the strategy should be. No questions containing 'should', 'could', 'might'. More than 8 questions in total. Questions that could apply to any brief in any category without modification. ANY question or gap touching the Permanent Exclusion List above.
 
-Stage 1B generates the right questions to unlock better input. Nothing more.`;
+Stage 1B generates the right questions to unlock better STRATEGIC input. Nothing more.`;
 export const STAGE_1B_INTELLIGENCE = STAGE_1B_SYSTEM_PROMPT;
 
 export function buildStage1bUserMessage(input: {

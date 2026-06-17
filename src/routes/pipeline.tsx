@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { tokens } from "@/styles/tokens";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
@@ -33,6 +33,14 @@ import { runStage16 } from "@/lib/stage16.functions";
 import { runStage8, confirmCheckpointB, regenerateStage8Selective } from "@/lib/stage8.functions";
 import { resetStage, resetStageCascade } from "@/lib/retry.functions";
 import { sanitizeStageOutput } from "@/lib/sanitize-output";
+import {
+  BRIEF_SECTIONS,
+  briefFieldsFromLegacyText,
+  type BriefFields,
+  type BriefVersion,
+} from "@/lib/brief-schema";
+import { PENDING_BRIEF_EDIT_STORAGE_KEY } from "@/routes/brief.index";
+import { FileText, PencilLine } from "lucide-react";
 
 // Consume an async-generator server function stream: forward delta chunks to a
 // setter for live rendering, return the final `done` payload.
@@ -282,6 +290,7 @@ interface SessionData {
   category: string;
   strategic_mode: string;
   brief_text: string | null;
+  brief_versions: BriefVersion[] | null;
   stage_1_output: string | null;
   stage_1_tension_score: number | null;
   stage_1b_required: boolean;
@@ -338,6 +347,7 @@ interface SessionData {
 
 function PipelineView() {
   const { session: sessionId } = Route.useSearch();
+  const navigate = useNavigate();
   const runStage1Fn = useServerFn(runStage1);
   const runStage1bFn = useServerFn(runStage1b);
   const resubmitBriefFn = useServerFn(resubmitBrief);
@@ -652,7 +662,7 @@ function PipelineView() {
     supabase
       .from("sessions")
       .select(
-        "id, brand_name, category, strategic_mode, brief_text, current_stage, status, stage_1_output, stage_1_tension_score, stage_1b_required, stage_1b_output, stage_1_error, stage_2_output, stage_2_error, stage_3_output, stage_3_error, stage_4_output, stage_4_error, stage_4b_output, stage_4b_error, stage_5_output, stage_5_error, stage_6_output, stage_6_error, stage_7_output, stage_7_error, stage_8_output, stage_8_error, stage_9_output, stage_9_error, stage_10_output, stage_10_error, stage_11_output, stage_11_error, stage_12_output, stage_12_error, stage_13_output, stage_13_error, stage_13b_output, stage_13b_error, stage_14_output, stage_14_error, stage_14b_output, stage_14b_error, stage_14c_output, stage_14c_error, stage_15_output, stage_15_error, stage_16_consulting_output, stage_16_error, brand_intelligence, selected_smp, selected_smp_field_name, checkpoint_a_confirmed, checkpoint_b_confirmed, checkpoint_c_confirmed, retry_status",
+        "id, brand_name, category, strategic_mode, brief_text, brief_versions, current_stage, status, stage_1_output, stage_1_tension_score, stage_1b_required, stage_1b_output, stage_1_error, stage_2_output, stage_2_error, stage_3_output, stage_3_error, stage_4_output, stage_4_error, stage_4b_output, stage_4b_error, stage_5_output, stage_5_error, stage_6_output, stage_6_error, stage_7_output, stage_7_error, stage_8_output, stage_8_error, stage_9_output, stage_9_error, stage_10_output, stage_10_error, stage_11_output, stage_11_error, stage_12_output, stage_12_error, stage_13_output, stage_13_error, stage_13b_output, stage_13b_error, stage_14_output, stage_14_error, stage_14b_output, stage_14b_error, stage_14c_output, stage_14c_error, stage_15_output, stage_15_error, stage_16_consulting_output, stage_16_error, brand_intelligence, selected_smp, selected_smp_field_name, checkpoint_a_confirmed, checkpoint_b_confirmed, checkpoint_c_confirmed, retry_status",
       )
 
       .eq("id", sessionId)
@@ -664,7 +674,7 @@ function PipelineView() {
           setStatuses((p) => ({ ...p, "01": "error" }));
           return;
         }
-        setSession(data as SessionData);
+        setSession(data as unknown as SessionData);
         if (data.brand_intelligence) setIntelSubmitted(true);
         if (data.stage_1_output) {
           setStage1Output(data.stage_1_output);
@@ -857,11 +867,11 @@ function PipelineView() {
       const { data } = await supabase
         .from("sessions")
         .select(
-          "id, brand_name, category, strategic_mode, brief_text, current_stage, status, stage_1_output, stage_1_tension_score, stage_1b_required, stage_1b_output, stage_1_error, stage_2_output, stage_2_error, stage_3_output, stage_3_error, stage_4_output, stage_4_error, stage_4b_output, stage_4b_error, stage_5_output, stage_5_error, stage_6_output, stage_6_error, stage_7_output, stage_7_error, stage_8_output, stage_8_error, stage_9_output, stage_9_error, stage_10_output, stage_10_error, stage_11_output, stage_11_error, stage_12_output, stage_12_error, stage_13_output, stage_13_error, stage_13b_output, stage_13b_error, stage_14_output, stage_14_error, stage_14b_output, stage_14b_error, stage_14c_output, stage_14c_error, stage_15_output, stage_15_error, stage_16_consulting_output, stage_16_error, brand_intelligence, selected_smp, selected_smp_field_name, checkpoint_a_confirmed, checkpoint_b_confirmed, checkpoint_c_confirmed, retry_status",
+          "id, brand_name, category, strategic_mode, brief_text, brief_versions, current_stage, status, stage_1_output, stage_1_tension_score, stage_1b_required, stage_1b_output, stage_1_error, stage_2_output, stage_2_error, stage_3_output, stage_3_error, stage_4_output, stage_4_error, stage_4b_output, stage_4b_error, stage_5_output, stage_5_error, stage_6_output, stage_6_error, stage_7_output, stage_7_error, stage_8_output, stage_8_error, stage_9_output, stage_9_error, stage_10_output, stage_10_error, stage_11_output, stage_11_error, stage_12_output, stage_12_error, stage_13_output, stage_13_error, stage_13b_output, stage_13b_error, stage_14_output, stage_14_error, stage_14b_output, stage_14b_error, stage_14c_output, stage_14c_error, stage_15_output, stage_15_error, stage_16_consulting_output, stage_16_error, brand_intelligence, selected_smp, selected_smp_field_name, checkpoint_a_confirmed, checkpoint_b_confirmed, checkpoint_c_confirmed, retry_status",
         )
         .eq("id", sessionId)
         .single();
-      if (data) setSession(data as SessionData);
+      if (data) setSession(data as unknown as SessionData);
     };
     const channel = supabase
       .channel(`pipeline-session:${sessionId}`)
@@ -2045,7 +2055,36 @@ function PipelineView() {
           isRunning: pipelineIsRunning,
         }}
       />
-      <Breadcrumb brand={brandLabel} elapsed={elapsed} status={pipelineStatus} />
+      <Breadcrumb
+        brand={brandLabel}
+        elapsed={elapsed}
+        status={pipelineStatus}
+        hasBrief={Boolean(session?.brief_text || (session?.brief_versions?.length ?? 0) > 0)}
+        briefVersionCount={session?.brief_versions?.length ?? 0}
+        onViewBrief={() => {
+          scrollToTop();
+          setSelectedId("BRIEF");
+        }}
+        onEditBrief={() => {
+          if (!sessionId) return;
+          const latest =
+            (session?.brief_versions && session.brief_versions.length > 0
+              ? session.brief_versions[session.brief_versions.length - 1].fields
+              : null) ??
+            briefFieldsFromLegacyText({
+              brandName: session?.brand_name ?? "",
+              category: session?.category ?? "",
+              briefText: session?.brief_text ?? null,
+            });
+          try {
+            sessionStorage.setItem(
+              PENDING_BRIEF_EDIT_STORAGE_KEY,
+              JSON.stringify(latest),
+            );
+          } catch {/* ignore */}
+          navigate({ to: "/brief", search: { edit: sessionId } });
+        }}
+      />
 
       <div className="flex flex-1 overflow-hidden">
         <LeftPanel
@@ -2075,31 +2114,35 @@ function PipelineView() {
               ref={contentScrollRef}
               className="flex-1 overflow-y-auto px-6 py-10 sm:px-12 sm:py-10"
             >
-              <header>
-                <span className="text-label text-primary">Source Document</span>
-                <h1 className="text-h2 mt-3 text-text-primary">Submitted Brief</h1>
-                <p className="text-body-sm mt-3 flex items-center gap-2 text-text-secondary">
-                  <span
-                    className="inline-flex h-4 w-4 items-center justify-center rounded-full"
-                    style={{ backgroundColor: "var(--color-success)" }}
-                  >
-                    <CheckIcon color="var(--color-background)" />
-                  </span>
-                  On file
-                </p>
-                <hr className="my-6 h-px border-0 bg-border" />
-              </header>
-              <article style={{ paddingBottom: 80 }}>
-                <StreamedOutput
-                  text={formatSubmittedBriefForStageOutput(
-                    session?.brief_text ?? "No brief text on file for this session.",
-                  )}
-                  streaming={false}
-                />
-              </article>
+              <StructuredBriefView
+                brandName={session?.brand_name ?? ""}
+                category={session?.category ?? ""}
+                briefVersions={session?.brief_versions ?? null}
+                legacyBriefText={session?.brief_text ?? null}
+                onEdit={() => {
+                  if (!sessionId) return;
+                  const latest =
+                    (session?.brief_versions && session.brief_versions.length > 0
+                      ? session.brief_versions[session.brief_versions.length - 1].fields
+                      : null) ??
+                    briefFieldsFromLegacyText({
+                      brandName: session?.brand_name ?? "",
+                      category: session?.category ?? "",
+                      briefText: session?.brief_text ?? null,
+                    });
+                  try {
+                    sessionStorage.setItem(
+                      PENDING_BRIEF_EDIT_STORAGE_KEY,
+                      JSON.stringify(latest),
+                    );
+                  } catch {/* ignore */}
+                  navigate({ to: "/brief", search: { edit: sessionId } });
+                }}
+              />
             </div>
           </section>
         ) : (
+
           <RightPanel
             stage={selected}
             status={selectedStatus}
@@ -2374,15 +2417,23 @@ function Breadcrumb({
   brand,
   elapsed,
   status,
+  hasBrief,
+  briefVersionCount,
+  onViewBrief,
+  onEditBrief,
 }: {
   brand: string;
   elapsed: string;
   status: string;
+  hasBrief: boolean;
+  briefVersionCount: number;
+  onViewBrief: () => void;
+  onEditBrief: () => void;
 }) {
   return (
-    <div className="flex items-center justify-between border-b border-border bg-background px-5 py-3 sm:px-8">
+    <div className="flex items-center justify-between gap-3 border-b border-border bg-background px-5 py-3 sm:px-8">
       <nav
-        className="text-body-sm flex items-center gap-1.5 truncate"
+        className="text-body-sm flex min-w-0 items-center gap-1.5 truncate"
         style={{ color: "var(--color-text-tertiary)" }}
       >
         <Link to="/dashboard" className="transition-colors hover:text-text-secondary">
@@ -2394,7 +2445,39 @@ function Breadcrumb({
         <span>Strategy Room</span>
       </nav>
 
-      <div className="ml-4 flex shrink-0 items-center gap-3">
+      <div className="ml-4 flex shrink-0 items-center gap-2">
+        {hasBrief && (
+          <>
+            <button
+              type="button"
+              onClick={onViewBrief}
+              className="inline-flex h-8 items-center gap-1.5 rounded-md px-2.5 text-[12px] font-semibold transition-colors hover:bg-[#D4924A15]"
+              style={{ border: "1px solid #D4924A66", color: "#D4924A", backgroundColor: "transparent" }}
+              title="View the submitted brief in full"
+            >
+              <FileText size={13} />
+              View Brief
+              {briefVersionCount > 1 ? (
+                <span
+                  className="ml-1 rounded-sm px-1 text-[10px]"
+                  style={{ backgroundColor: "#D4924A33" }}
+                >
+                  v{briefVersionCount}
+                </span>
+              ) : null}
+            </button>
+            <button
+              type="button"
+              onClick={onEditBrief}
+              className="inline-flex h-8 items-center gap-1.5 rounded-md px-2.5 text-[12px] font-semibold transition-opacity hover:opacity-90"
+              style={{ backgroundColor: "#D4924A", color: "#0A0A0A" }}
+              title="Edit the brief and rerun Stage 1 — downstream stages will reset"
+            >
+              <PencilLine size={13} />
+              Edit Brief
+            </button>
+          </>
+        )}
         <span
           className="text-label inline-flex items-center rounded-sm px-2 py-0.5"
           style={{
@@ -4114,6 +4197,216 @@ function Stage1bResubmitView({
           </button>
         </div>
       </div>
+    </div>
+  );
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// Structured Brief View — renders the submitted brief in nine-section format.
+// Reads from sessions.brief_versions (preferred) and falls back to brief_text
+// for legacy sessions submitted before structured briefs existed.
+// ────────────────────────────────────────────────────────────────────────────
+
+function StructuredBriefView({
+  brandName,
+  category,
+  briefVersions,
+  legacyBriefText,
+  onEdit,
+}: {
+  brandName: string;
+  category: string;
+  briefVersions: BriefVersion[] | null;
+  legacyBriefText: string | null;
+  onEdit: () => void;
+}) {
+  const versions = briefVersions ?? [];
+  const [selectedVersion, setSelectedVersion] = useState<number>(
+    versions.length > 0 ? versions[versions.length - 1].version : 0,
+  );
+  const active = versions.find((v) => v.version === selectedVersion) ?? null;
+  const fields: BriefFields | null = active
+    ? active.fields
+    : versions.length > 0
+      ? versions[versions.length - 1].fields
+      : null;
+
+  const hasStructured = !!fields;
+
+  return (
+    <>
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <span className="text-label text-primary">Source Document</span>
+          <h1 className="text-h2 mt-3 text-text-primary">Submitted Brief</h1>
+          <p className="text-body-sm mt-3 flex items-center gap-2 text-text-secondary">
+            <span
+              className="inline-flex h-4 w-4 items-center justify-center rounded-full"
+              style={{ backgroundColor: "var(--color-success)" }}
+            >
+              <CheckIcon color="var(--color-background)" />
+            </span>
+            On file{versions.length > 1 ? ` · ${versions.length} versions` : ""}
+          </p>
+        </div>
+        <div className="flex shrink-0 items-center gap-2">
+          {versions.length > 1 && (
+            <select
+              value={selectedVersion}
+              onChange={(e) => setSelectedVersion(Number(e.target.value))}
+              className="input-base h-9 px-2 text-[13px]"
+              aria-label="Brief version"
+            >
+              {versions.map((v) => (
+                <option key={v.version} value={v.version}>
+                  Version {v.version}
+                  {v.version === versions[versions.length - 1].version ? " (current)" : ""}
+                </option>
+              ))}
+            </select>
+          )}
+          <button
+            type="button"
+            onClick={onEdit}
+            className="inline-flex h-9 items-center gap-1.5 rounded-md px-3 text-[13px] font-semibold transition-opacity hover:opacity-90"
+            style={{ backgroundColor: "#D4924A", color: "#0A0A0A" }}
+          >
+            <PencilLine size={14} />
+            Edit Brief
+          </button>
+        </div>
+      </header>
+      <hr className="my-6 h-px border-0 bg-border" />
+
+      <article style={{ paddingBottom: 80 }}>
+        {hasStructured ? (
+          <StructuredBriefBody brandName={brandName} category={category} fields={fields!} />
+        ) : (
+          <>
+            <p className="text-body-sm mb-4" style={{ color: "var(--color-text-tertiary)" }}>
+              This session was submitted before structured briefs were introduced.
+              Showing the original brief text. Click <strong>Edit Brief</strong> to
+              upgrade it to the structured format.
+            </p>
+            <StreamedOutput
+              text={formatSubmittedBriefForStageOutput(
+                legacyBriefText ?? "No brief text on file for this session.",
+              )}
+              streaming={false}
+            />
+          </>
+        )}
+      </article>
+    </>
+  );
+}
+
+function StructuredBriefBody({
+  brandName,
+  category,
+  fields,
+}: {
+  brandName: string;
+  category: string;
+  fields: BriefFields;
+}) {
+  return (
+    <div className="flex flex-col gap-6">
+      {/* Header block */}
+      <div
+        className="rounded-lg p-5"
+        style={{
+          backgroundColor: "var(--color-card-surface, var(--color-surface-2))",
+          border: "1px solid var(--color-border)",
+        }}
+      >
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <BriefHeaderRow label="Brief Title" value={fields.briefTitle} />
+          <BriefHeaderRow label="Brand Name" value={fields.brandName || brandName} />
+          <BriefHeaderRow label="Category" value={fields.category || category} />
+          <BriefHeaderRow label="Date" value={fields.date} />
+          <BriefHeaderRow label="Submitted By" value={fields.submittedBy} />
+        </div>
+      </div>
+
+      {BRIEF_SECTIONS.map((s) => {
+        const hasAny = s.fields.some((f) => (fields.sections[f.key] ?? "").trim().length > 0);
+        if (!hasAny) return null;
+        return (
+          <div
+            key={s.num}
+            className="rounded-lg p-5"
+            style={{
+              backgroundColor: "var(--color-card-surface, var(--color-surface-2))",
+              border: "1px solid var(--color-border)",
+            }}
+          >
+            <h3 className="text-h3 text-text-primary">
+              {s.num}. {s.title}
+            </h3>
+            <div className="mt-4 flex flex-col gap-4">
+              {s.fields.map((f) => {
+                const v = (fields.sections[f.key] ?? "").trim();
+                if (!v) return null;
+                return (
+                  <div key={f.key}>
+                    {f.label && (
+                      <p
+                        className="text-body-sm mb-1 font-medium"
+                        style={{ color: "var(--color-text-secondary)" }}
+                      >
+                        {f.label}
+                      </p>
+                    )}
+                    <p className="text-body whitespace-pre-wrap text-text-primary">{v}</p>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
+
+      {fields.supportingMaterials.length > 0 && (
+        <div
+          className="rounded-lg p-5"
+          style={{
+            backgroundColor: "var(--color-card-surface, var(--color-surface-2))",
+            border: "1px solid var(--color-border)",
+          }}
+        >
+          <h3 className="text-h3 text-text-primary">9. Supporting Materials</h3>
+          <ul className="mt-3 flex flex-wrap gap-2">
+            {fields.supportingMaterials.map((name, i) => (
+              <li
+                key={`${name}-${i}`}
+                className="text-body-sm inline-flex items-center gap-2 rounded-md px-3 py-1.5"
+                style={{
+                  backgroundColor: "var(--color-surface-2)",
+                  border: "1px solid var(--color-border)",
+                }}
+              >
+                <FileText size={14} />
+                <span className="text-text-primary">{name}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function BriefHeaderRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <p
+        className="text-body-sm mb-1 font-medium"
+        style={{ color: "var(--color-text-secondary)" }}
+      >
+        {label}
+      </p>
+      <p className="text-body text-text-primary">{value || "—"}</p>
     </div>
   );
 }

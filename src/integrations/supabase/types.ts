@@ -79,6 +79,7 @@ export type Database = {
       saved_briefs: {
         Row: {
           brand_name: string
+          brief_fields: Json | null
           brief_id: string
           brief_text: string
           category: string
@@ -87,6 +88,7 @@ export type Database = {
         }
         Insert: {
           brand_name: string
+          brief_fields?: Json | null
           brief_id?: string
           brief_text?: string
           category?: string
@@ -95,6 +97,7 @@ export type Database = {
         }
         Update: {
           brand_name?: string
+          brief_fields?: Json | null
           brief_id?: string
           brief_text?: string
           category?: string
@@ -119,6 +122,7 @@ export type Database = {
           brand_product_truth: string | null
           brand_tone_of_voice: string | null
           brief_text: string
+          brief_versions: Json
           category: string
           checkpoint_a_confirmed: boolean
           checkpoint_a_confirmed_at: string | null
@@ -267,6 +271,7 @@ export type Database = {
           brand_product_truth?: string | null
           brand_tone_of_voice?: string | null
           brief_text: string
+          brief_versions?: Json
           category: string
           checkpoint_a_confirmed?: boolean
           checkpoint_a_confirmed_at?: string | null
@@ -415,6 +420,7 @@ export type Database = {
           brand_product_truth?: string | null
           brand_tone_of_voice?: string | null
           brief_text?: string
+          brief_versions?: Json
           category?: string
           checkpoint_a_confirmed?: boolean
           checkpoint_a_confirmed_at?: string | null
