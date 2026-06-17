@@ -33,6 +33,14 @@ import { runStage16 } from "@/lib/stage16.functions";
 import { runStage8, confirmCheckpointB, regenerateStage8Selective } from "@/lib/stage8.functions";
 import { resetStage, resetStageCascade } from "@/lib/retry.functions";
 import { sanitizeStageOutput } from "@/lib/sanitize-output";
+import {
+  BRIEF_SECTIONS,
+  briefFieldsFromLegacyText,
+  type BriefFields,
+  type BriefVersion,
+} from "@/lib/brief-schema";
+import { PENDING_BRIEF_EDIT_STORAGE_KEY } from "@/routes/brief.index";
+import { FileText, PencilLine } from "lucide-react";
 
 // Consume an async-generator server function stream: forward delta chunks to a
 // setter for live rendering, return the final `done` payload.
