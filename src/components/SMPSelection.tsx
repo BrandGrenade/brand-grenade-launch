@@ -607,7 +607,10 @@ export function SMPSelection({
         </div>
       </div>
 
+      <div className="mt-8">{ManualFallback}</div>
+
       {onResubmit && (
+
         <RevisionPanel
           feedback={revisionFeedback}
           onChange={setRevisionFeedback}
