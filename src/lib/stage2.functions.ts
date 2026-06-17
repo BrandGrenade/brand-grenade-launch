@@ -6,6 +6,7 @@ import { STAGE_2_SYSTEM_PROMPT, buildStage2UserMessage } from "./stage2-prompt";
 import { trimStage1ForDownstream } from "./context-trim";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertSessionOwner } from "@/lib/auth-helpers.server";
+import { assertUpstreamStageOutput } from "./pipeline-integrity";
 
 const RunStage2Input = z.object({ sessionId: z.string().uuid() });
 
@@ -16,6 +17,7 @@ export const runStage2 = createServerFn({ method: "POST" })
     await assertSessionOwner(data.sessionId, context.userId);
     const { requireConfirmedSelection } = await import("./checkpoint-gate");
     await requireConfirmedSelection(data.sessionId, "A");
+    await assertUpstreamStageOutput(data.sessionId, 2);
     const { data: session, error: loadErr } = await supabaseAdmin
       .from("sessions")
       .select("brand_name, category, strategic_mode, stage_1_output, stage_1b_output, stage_2_output")
