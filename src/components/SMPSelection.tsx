@@ -365,16 +365,14 @@ export function SMPSelection({
     <div
       className="rounded-md p-5"
       style={{
-        border: "1px solid var(--color-primary)",
+        border: "1px solid var(--color-border)",
         backgroundColor: "var(--color-surface-2)",
-        position: "sticky",
-        top: 12,
-        zIndex: 20,
       }}
     >
-      <p className="text-label" style={{ color: "var(--color-primary)", marginBottom: 8 }}>
-        MANUAL SELECTION — ALWAYS AVAILABLE
+      <p className="text-label" style={{ color: "var(--color-text-secondary)", marginBottom: 8 }}>
+        MANUAL SELECTION — FALLBACK
       </p>
+
       <p className="text-body-sm" style={{ color: "var(--color-text-secondary)", marginBottom: 12 }}>
         Type or paste any proposition line you want to confirm as the selected SMP. This overrides card selection.
       </p>
