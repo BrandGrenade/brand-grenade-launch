@@ -673,7 +673,7 @@ function PipelineView() {
           setStatuses((p) => ({ ...p, "01": "error" }));
           return;
         }
-        setSession(data as SessionData);
+        setSession(data as unknown as SessionData);
         if (data.brand_intelligence) setIntelSubmitted(true);
         if (data.stage_1_output) {
           setStage1Output(data.stage_1_output);
@@ -870,7 +870,7 @@ function PipelineView() {
         )
         .eq("id", sessionId)
         .single();
-      if (data) setSession(data as SessionData);
+      if (data) setSession(data as unknown as SessionData);
     };
     const channel = supabase
       .channel(`pipeline-session:${sessionId}`)
