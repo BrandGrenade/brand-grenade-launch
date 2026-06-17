@@ -2906,6 +2906,7 @@ function RightPanel({
   retryStatus,
   stage8KeepNames,
   onToggleStage8Keep,
+  onManualStage8Submit,
   contentScrollRef,
 }: {
   stage: Stage;
