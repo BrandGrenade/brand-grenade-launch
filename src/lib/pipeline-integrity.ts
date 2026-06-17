@@ -40,7 +40,7 @@ export async function assertUpstreamStageOutput(
   const upstreamStage = stageNumber - 1;
   const columns = STAGE_OUTPUT_COLUMNS[upstreamStage];
   if (!columns) return;
-  const selectColumns = Array.isArray(columns) ? columns.join(", ") : columns;
+  const selectColumns = columns.join(", ");
   const { data, error } = await supabaseAdmin
     .from("sessions")
     .select(selectColumns)
