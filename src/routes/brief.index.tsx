@@ -244,9 +244,6 @@ function BriefIntake() {
     }
   }
 
-  function composeBriefText(): string {
-    return composeStructuredBriefText(currentBriefFields());
-  }
 
   async function handleSubmitSections(e: React.FormEvent) {
     e.preventDefault();
