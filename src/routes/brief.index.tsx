@@ -76,6 +76,9 @@ function todayISO() {
 function BriefIntake() {
   const navigate = useNavigate();
   const createSessionFn = useServerFn(createSession);
+  const resubmitStructuredFn = useServerFn(resubmitBriefStructured);
+  const { edit: editSessionId } = Route.useSearch();
+  const isEditMode = !!editSessionId;
 
   // Header fields
   const [briefTitle, setBriefTitle] = useState("");
@@ -96,6 +99,7 @@ function BriefIntake() {
 
   // Section-9 supporting files
   const [files, setFiles] = useState<File[]>([]);
+  const [existingFileNames, setExistingFileNames] = useState<string[]>([]);
   const [dragging, setDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -109,16 +113,51 @@ function BriefIntake() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
-  function loadSavedBrief(b: SavedBrief) {
-    setBrand(b.brand_name);
-    setCategory(b.category);
-    setBriefTitle((prev) => prev || b.brand_name);
-    setValues((prev) => ({ ...prev, s1_core: b.brief_text }));
-    setOpenMap((m) => ({ ...m, "1": true }));
-    toast.success(`Loaded "${b.brand_name}" — review and click Submit when ready`);
+  /** Populate every field from a structured BriefFields object. */
+  function applyBriefFields(b: BriefFields) {
+    setBriefTitle(b.briefTitle ?? "");
+    setBrand(b.brandName ?? "");
+    setCategory(b.category ?? "");
+    if (b.date) setDate(b.date);
+    setSubmittedBy(b.submittedBy ?? "");
+    setValues(() => ({ ...b.sections }));
+    setExistingFileNames(b.supportingMaterials ?? []);
+    setOpenMap(Object.fromEntries(SECTIONS.map((s) => [s.num, true])));
     if (typeof window !== "undefined") {
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
+  }
+
+  function loadSavedBrief(b: SavedBrief) {
+    if (b.brief_fields) {
+      applyBriefFields(b.brief_fields);
+      toast.success(`Loaded "${b.brand_name}" — every field pre-populated. Review and click Submit.`);
+      return;
+    }
+    // Legacy text-only brief — drop into the Core Challenge field so the
+    // user can review/clean it up rather than losing the content entirely.
+    const fallback = briefFieldsFromLegacyText({
+      brandName: b.brand_name,
+      category: b.category,
+      briefText: b.brief_text,
+    });
+    applyBriefFields(fallback);
+    toast.message(`Loaded legacy brief "${b.brand_name}" — content placed in Section 1 for review.`);
+  }
+
+  function currentBriefFields(): BriefFields {
+    return {
+      briefTitle: briefTitle.trim(),
+      brandName: brand.trim(),
+      category: category.trim() || "Unspecified",
+      date,
+      submittedBy: submittedBy.trim(),
+      sections: { ...values },
+      supportingMaterials: [
+        ...existingFileNames,
+        ...files.map((f) => f.name),
+      ],
+    };
   }
 
   async function handleSaveBrief() {
@@ -128,11 +167,13 @@ function BriefIntake() {
       return;
     }
     setSaving(true);
-    const briefText = composeBriefText();
+    const briefFields = currentBriefFields();
+    const briefText = composeStructuredBriefText(briefFields);
     const saved = await saveBrief({
       brandName: brand.trim(),
       category: category.trim() || "Unspecified",
       briefText,
+      briefFields,
     });
     setSaving(false);
     if (saved) {
@@ -140,9 +181,24 @@ function BriefIntake() {
     }
   }
 
-  // Consume any brief queued from the dashboard's Saved Briefs library.
+  // Consume any brief queued from the dashboard's Saved Briefs library OR
+  // any brief queued by the pipeline Edit Brief button.
   useEffect(() => {
     if (typeof window === "undefined") return;
+    // 1) Edit-mode prefill — wins over saved-brief queue.
+    const editRaw = sessionStorage.getItem(PENDING_BRIEF_EDIT_STORAGE_KEY);
+    if (editRaw) {
+      sessionStorage.removeItem(PENDING_BRIEF_EDIT_STORAGE_KEY);
+      try {
+        const f = JSON.parse(editRaw) as BriefFields;
+        if (f && typeof f === "object") {
+          applyBriefFields(f);
+          toast.message("Editing the submitted brief. Resubmit to rerun Stage 1 with the amended brief.");
+          return;
+        }
+      } catch {/* ignore */}
+    }
+    // 2) Saved-brief load queue.
     const raw = sessionStorage.getItem(PENDING_BRIEF_STORAGE_KEY);
     if (!raw) return;
     sessionStorage.removeItem(PENDING_BRIEF_STORAGE_KEY);
@@ -163,10 +219,10 @@ function BriefIntake() {
     for (const s of SECTIONS) {
       done[s.num] = s.fields.some((f) => (values[f.key] ?? "").trim().length >= 10);
     }
-    done["9"] = files.length > 0;
+    done["9"] = files.length > 0 || existingFileNames.length > 0;
     const count = Object.values(done).filter(Boolean).length;
     return { done, count, total: 9 };
-  }, [values, files]);
+  }, [values, files, existingFileNames]);
 
   const canSubmitSections = brand.trim().length >= 2;
 
@@ -189,29 +245,7 @@ function BriefIntake() {
   }
 
   function composeBriefText(): string {
-    const parts: string[] = [];
-    if (briefTitle.trim()) parts.push(`# ${briefTitle.trim()}`);
-    parts.push(`Date: ${date}`);
-    if (submittedBy.trim()) parts.push(`Submitted by: ${submittedBy.trim()}`);
-    parts.push("");
-    for (const s of SECTIONS) {
-      const lines: string[] = [];
-      for (const f of s.fields) {
-        const v = (values[f.key] ?? "").trim();
-        if (!v) continue;
-        if (f.label) lines.push(`**${f.label}**`);
-        lines.push(v);
-        lines.push("");
-      }
-      if (lines.length === 0) continue;
-      parts.push(`## ${s.num}. ${s.title}`);
-      parts.push(...lines);
-    }
-    if (files.length > 0) {
-      parts.push(`## 9. Supporting Materials`);
-      parts.push(files.map((f) => `- ${f.name}`).join("\n"));
-    }
-    return parts.join("\n");
+    return composeStructuredBriefText(currentBriefFields());
   }
 
   async function handleSubmitSections(e: React.FormEvent) {
@@ -220,7 +254,18 @@ function BriefIntake() {
     setSubmitting(true);
     setSubmitError(null);
     try {
-      const briefText = composeBriefText();
+      const briefFields = currentBriefFields();
+      const briefText = composeStructuredBriefText(briefFields);
+      if (isEditMode && editSessionId) {
+        // Resubmit amended brief — server appends Version N, rewrites brief_text,
+        // hard-resets every downstream stage so the pipeline reruns from Stage 1.
+        await resubmitStructuredFn({
+          data: { sessionId: editSessionId, briefFields, briefText },
+        });
+        toast.success("Brief resubmitted. Rerunning Stage 1 with the amended brief.");
+        navigate({ to: "/pipeline", search: { session: editSessionId } });
+        return;
+      }
       const { sessionId } = await createSessionFn({
         data: {
           brandName: brand.trim(),
@@ -228,6 +273,7 @@ function BriefIntake() {
           strategicMode: "Auto",
           briefText,
           devMode: getDevModeFromStorage(),
+          briefFields,
         },
       });
       navigate({ to: "/pipeline", search: { session: sessionId } });
@@ -243,6 +289,15 @@ function BriefIntake() {
     setSubmitError(null);
     try {
       const briefText = `# ${briefTitle.trim() || altFile.name}\nDate: ${date}\n${submittedBy.trim() ? `Submitted by: ${submittedBy.trim()}\n` : ""}\nUploaded document: ${altFile.name} (${(altFile.size / 1024).toFixed(0)} KB)\n\n[The Strategy Engine will extract strategic inputs from the uploaded document.]`;
+      const briefFields: BriefFields = {
+        briefTitle: briefTitle.trim() || altFile.name,
+        brandName: brand.trim(),
+        category: category.trim() || "Unspecified",
+        date,
+        submittedBy: submittedBy.trim(),
+        sections: { s1_core: `Uploaded document: ${altFile.name}` },
+        supportingMaterials: [altFile.name],
+      };
       const { sessionId } = await createSessionFn({
         data: {
           brandName: brand.trim(),
@@ -250,6 +305,7 @@ function BriefIntake() {
           strategicMode: "Auto",
           briefText,
           devMode: getDevModeFromStorage(),
+          briefFields,
         },
       });
       navigate({ to: "/pipeline", search: { session: sessionId } });
@@ -258,6 +314,7 @@ function BriefIntake() {
       setSubmitting(false);
     }
   }
+
 
   return (
     <div className="min-h-screen bg-background">
