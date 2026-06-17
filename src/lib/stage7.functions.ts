@@ -2,7 +2,11 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { streamClaude } from "./claude.server";
-import { STAGE_7_SYSTEM_PROMPT, buildStage7UserMessage } from "./stage7-prompt";
+import {
+  STAGE_7_SYSTEM_PROMPT,
+  buildStage7UserMessage,
+  extractStage6UniverseNames,
+} from "./stage7-prompt";
 import { trimValidatedInsightsForDownstream } from "./context-trim";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertSessionOwner } from "@/lib/auth-helpers.server";
@@ -11,6 +15,29 @@ import { assertUpstreamStageOutput } from "./pipeline-integrity";
 const RunStage7Input = z.object({
   sessionId: z.string().uuid(),
 });
+
+/** Names present as "## …" headings in a given block of text. */
+function headingsIn(text: string): string[] {
+  const names: string[] = [];
+  const re = /^##\s+(.+?)\s*$/gm;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(text)) !== null) {
+    const n = m[1].trim();
+    if (n && !names.includes(n)) names.push(n);
+  }
+  return names;
+}
+
+/** Universes from Stage 6 that have no matching "## …" heading in Stage 7 output. */
+function findMissingUniverses(stage6Universes: string[], stage7Output: string): string[] {
+  const produced = headingsIn(stage7Output).map((s) => s.toLowerCase());
+  return stage6Universes.filter((u) => {
+    const low = u.toLowerCase();
+    // Match if the territory heading either equals or contains the universe name
+    // (territory names may rephrase the universe name slightly).
+    return !produced.some((p) => p === low || p.includes(low) || low.includes(p));
+  });
+}
 
 export const runStage7 = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -41,14 +68,25 @@ export const runStage7 = createServerFn({ method: "POST" })
       .update({ current_stage: 7, status: "running", stage_7_error: null })
       .eq("id", data.sessionId);
 
+    const stage6Full = trimValidatedInsightsForDownstream(session.stage_6_output);
+    const stage6Universes = extractStage6UniverseNames(stage6Full);
+
+    // Diagnostic: prove the full Stage 6 output reaches the Stage 7 prompt.
+    console.log(
+      `[stage7] session=${data.sessionId} stage6_db_chars=${session.stage_6_output.length} ` +
+        `stage6_to_prompt_chars=${stage6Full.length} universes=${stage6Universes.length} ` +
+        `[${stage6Universes.join(" | ")}]`,
+    );
+
     const userMessage = buildStage7UserMessage({
       brandName: session.brand_name,
       category: session.category,
       strategicMode: session.strategic_mode,
-      stage6Output: trimValidatedInsightsForDownstream(session.stage_6_output),
+      stage6Output: stage6Full,
       sis: session.stage_4_output,
       cmm: session.stage_2_output,
       constraintMatrix: session.stage_3_output,
+      enforceMinimum: true,
     });
 
     let output = "";
@@ -56,7 +94,7 @@ export const runStage7 = createServerFn({ method: "POST" })
       for await (const delta of streamClaude({
         systemPrompt: STAGE_7_SYSTEM_PROMPT,
         userMessage,
-        maxTokens: 12000,
+        maxTokens: 16000,
         sessionId: data.sessionId,
         stageLabel: "Stage 7",
         stageNumber: "7",
@@ -69,6 +107,59 @@ export const runStage7 = createServerFn({ method: "POST" })
       const msg = e instanceof Error ? e.message : "Stage 7 failed";
       await supabaseAdmin.from("sessions").update({ stage_7_error: msg }).eq("id", data.sessionId);
       throw e instanceof Error ? e : new Error(msg);
+    }
+
+    // Completeness check + automatic continuation for missing universes.
+    // The model occasionally stops after the first territory because the
+    // template uses "---" as a separator. If any Stage 6 universe is not
+    // represented as a "##" heading in the output, re-prompt for exactly
+    // those missing universes and append the continuation.
+    let missing = findMissingUniverses(stage6Universes, output);
+    let continuationAttempts = 0;
+    while (missing.length > 0 && continuationAttempts < 3) {
+      continuationAttempts += 1;
+      console.log(
+        `[stage7] session=${data.sessionId} missing_after_attempt_${continuationAttempts - 1}=${missing.length} [${missing.join(" | ")}] — requesting continuation`,
+      );
+      const continuationMessage = buildStage7UserMessage({
+        brandName: session.brand_name,
+        category: session.category,
+        strategicMode: session.strategic_mode,
+        stage6Output: stage6Full,
+        sis: session.stage_4_output,
+        cmm: session.stage_2_output,
+        constraintMatrix: session.stage_3_output,
+        enforceMinimum: true,
+        missingUniverses: missing,
+      });
+      let continuation = "";
+      try {
+        for await (const delta of streamClaude({
+          systemPrompt: STAGE_7_SYSTEM_PROMPT,
+          userMessage: continuationMessage,
+          maxTokens: 16000,
+          sessionId: data.sessionId,
+          stageLabel: "Stage 7",
+          stageNumber: "7",
+          stageName: "Territory Synthesis",
+        })) {
+          continuation += delta;
+          yield { delta };
+        }
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : "Stage 7 continuation failed";
+        await supabaseAdmin.from("sessions").update({ stage_7_error: msg }).eq("id", data.sessionId);
+        throw e instanceof Error ? e : new Error(msg);
+      }
+      // Stitch with a clean separator.
+      output = `${output.trimEnd()}\n\n---\n\n${continuation.trimStart()}`;
+      missing = findMissingUniverses(stage6Universes, output);
+    }
+
+    if (missing.length > 0) {
+      console.warn(
+        `[stage7] session=${data.sessionId} still missing after ${continuationAttempts} continuation(s): [${missing.join(" | ")}]`,
+      );
     }
 
     const { error: updateErr } = await supabaseAdmin
