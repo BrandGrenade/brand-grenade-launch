@@ -4131,3 +4131,213 @@ function Stage1bResubmitView({
     </div>
   );
 }
+
+// ────────────────────────────────────────────────────────────────────────────
+// Structured Brief View — renders the submitted brief in nine-section format.
+// Reads from sessions.brief_versions (preferred) and falls back to brief_text
+// for legacy sessions submitted before structured briefs existed.
+// ────────────────────────────────────────────────────────────────────────────
+
+function StructuredBriefView({
+  brandName,
+  category,
+  briefVersions,
+  legacyBriefText,
+  onEdit,
+}: {
+  brandName: string;
+  category: string;
+  briefVersions: BriefVersion[] | null;
+  legacyBriefText: string | null;
+  onEdit: () => void;
+}) {
+  const versions = briefVersions ?? [];
+  const [selectedVersion, setSelectedVersion] = useState<number>(
+    versions.length > 0 ? versions[versions.length - 1].version : 0,
+  );
+  const active = versions.find((v) => v.version === selectedVersion) ?? null;
+  const fields: BriefFields | null = active
+    ? active.fields
+    : versions.length > 0
+      ? versions[versions.length - 1].fields
+      : null;
+
+  const hasStructured = !!fields;
+
+  return (
+    <>
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <span className="text-label text-primary">Source Document</span>
+          <h1 className="text-h2 mt-3 text-text-primary">Submitted Brief</h1>
+          <p className="text-body-sm mt-3 flex items-center gap-2 text-text-secondary">
+            <span
+              className="inline-flex h-4 w-4 items-center justify-center rounded-full"
+              style={{ backgroundColor: "var(--color-success)" }}
+            >
+              <CheckIcon color="var(--color-background)" />
+            </span>
+            On file{versions.length > 1 ? ` · ${versions.length} versions` : ""}
+          </p>
+        </div>
+        <div className="flex shrink-0 items-center gap-2">
+          {versions.length > 1 && (
+            <select
+              value={selectedVersion}
+              onChange={(e) => setSelectedVersion(Number(e.target.value))}
+              className="input-base h-9 px-2 text-[13px]"
+              aria-label="Brief version"
+            >
+              {versions.map((v) => (
+                <option key={v.version} value={v.version}>
+                  Version {v.version}
+                  {v.version === versions[versions.length - 1].version ? " (current)" : ""}
+                </option>
+              ))}
+            </select>
+          )}
+          <button
+            type="button"
+            onClick={onEdit}
+            className="inline-flex h-9 items-center gap-1.5 rounded-md px-3 text-[13px] font-semibold transition-opacity hover:opacity-90"
+            style={{ backgroundColor: "#D4924A", color: "#0A0A0A" }}
+          >
+            <PencilLine size={14} />
+            Edit Brief
+          </button>
+        </div>
+      </header>
+      <hr className="my-6 h-px border-0 bg-border" />
+
+      <article style={{ paddingBottom: 80 }}>
+        {hasStructured ? (
+          <StructuredBriefBody brandName={brandName} category={category} fields={fields!} />
+        ) : (
+          <>
+            <p className="text-body-sm mb-4" style={{ color: "var(--color-text-tertiary)" }}>
+              This session was submitted before structured briefs were introduced.
+              Showing the original brief text. Click <strong>Edit Brief</strong> to
+              upgrade it to the structured format.
+            </p>
+            <StreamedOutput
+              text={formatSubmittedBriefForStageOutput(
+                legacyBriefText ?? "No brief text on file for this session.",
+              )}
+              streaming={false}
+            />
+          </>
+        )}
+      </article>
+    </>
+  );
+}
+
+function StructuredBriefBody({
+  brandName,
+  category,
+  fields,
+}: {
+  brandName: string;
+  category: string;
+  fields: BriefFields;
+}) {
+  return (
+    <div className="flex flex-col gap-6">
+      {/* Header block */}
+      <div
+        className="rounded-lg p-5"
+        style={{
+          backgroundColor: "var(--color-card-surface, var(--color-surface-2))",
+          border: "1px solid var(--color-border)",
+        }}
+      >
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <BriefHeaderRow label="Brief Title" value={fields.briefTitle} />
+          <BriefHeaderRow label="Brand Name" value={fields.brandName || brandName} />
+          <BriefHeaderRow label="Category" value={fields.category || category} />
+          <BriefHeaderRow label="Date" value={fields.date} />
+          <BriefHeaderRow label="Submitted By" value={fields.submittedBy} />
+        </div>
+      </div>
+
+      {BRIEF_SECTIONS.map((s) => {
+        const hasAny = s.fields.some((f) => (fields.sections[f.key] ?? "").trim().length > 0);
+        if (!hasAny) return null;
+        return (
+          <div
+            key={s.num}
+            className="rounded-lg p-5"
+            style={{
+              backgroundColor: "var(--color-card-surface, var(--color-surface-2))",
+              border: "1px solid var(--color-border)",
+            }}
+          >
+            <h3 className="text-h3 text-text-primary">
+              {s.num}. {s.title}
+            </h3>
+            <div className="mt-4 flex flex-col gap-4">
+              {s.fields.map((f) => {
+                const v = (fields.sections[f.key] ?? "").trim();
+                if (!v) return null;
+                return (
+                  <div key={f.key}>
+                    {f.label && (
+                      <p
+                        className="text-body-sm mb-1 font-medium"
+                        style={{ color: "var(--color-text-secondary)" }}
+                      >
+                        {f.label}
+                      </p>
+                    )}
+                    <p className="text-body whitespace-pre-wrap text-text-primary">{v}</p>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
+
+      {fields.supportingMaterials.length > 0 && (
+        <div
+          className="rounded-lg p-5"
+          style={{
+            backgroundColor: "var(--color-card-surface, var(--color-surface-2))",
+            border: "1px solid var(--color-border)",
+          }}
+        >
+          <h3 className="text-h3 text-text-primary">9. Supporting Materials</h3>
+          <ul className="mt-3 flex flex-wrap gap-2">
+            {fields.supportingMaterials.map((name, i) => (
+              <li
+                key={`${name}-${i}`}
+                className="text-body-sm inline-flex items-center gap-2 rounded-md px-3 py-1.5"
+                style={{
+                  backgroundColor: "var(--color-surface-2)",
+                  border: "1px solid var(--color-border)",
+                }}
+              >
+                <FileText size={14} />
+                <span className="text-text-primary">{name}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function BriefHeaderRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <p
+        className="text-body-sm mb-1 font-medium"
+        style={{ color: "var(--color-text-secondary)" }}
+      >
+        {label}
+      </p>
+      <p className="text-body text-text-primary">{value || "—"}</p>
+    </div>
+  );
+}
