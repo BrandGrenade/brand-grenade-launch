@@ -1883,7 +1883,14 @@ function PipelineView() {
 
     setResubmitting(true);
     try {
-      await resetStageCascadeFn({ data: { sessionId, stageId: dbId } });
+      await resetStageCascadeFn({
+        data: {
+          sessionId,
+          stageId: dbId,
+          feedback: fb,
+          previousOutput: rejectedOutput || undefined,
+        },
+      });
       resetLocalFromStage(stageId);
       setPendingFeedback((p) => ({ ...p, [stageId]: fb }));
       if (rejectedOutput) {
