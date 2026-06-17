@@ -347,6 +347,7 @@ interface SessionData {
 
 function PipelineView() {
   const { session: sessionId } = Route.useSearch();
+  const navigate = useNavigate();
   const runStage1Fn = useServerFn(runStage1);
   const runStage1bFn = useServerFn(runStage1b);
   const resubmitBriefFn = useServerFn(resubmitBrief);
