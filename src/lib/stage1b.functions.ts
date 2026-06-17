@@ -52,14 +52,69 @@ export const runStage1b = createServerFn({ method: "POST" })
       throw e instanceof Error ? e : new Error(msg);
     }
 
+    const cleaned = sanitizeStage1bOutput(output);
+
     const { error: updateErr } = await supabaseAdmin
       .from("sessions")
-      .update({ stage_1b_output: output })
+      .update({ stage_1b_output: cleaned })
       .eq("id", data.sessionId);
     if (updateErr) throw new Error(`Failed to save Stage 1B output: ${updateErr.message}`);
 
-    yield { done: true as const, output };
+    if (cleaned !== output) {
+      yield { delta: "\n\n---\n(Out-of-remit questions automatically removed by Stage 1B exclusion filter.)" };
+    }
+    yield { done: true as const, output: cleaned };
   });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Post-generation safety net — strips any "GAP IDENTIFIED / QUESTION / WHY
+// THIS MATTERS" block whose text matches the Permanent Exclusion List or any
+// Forbidden Question Pattern from stage1b-prompt.ts. Belt-and-braces against
+// model drift; the prompt is the primary defence.
+// ─────────────────────────────────────────────────────────────────────────────
+const STAGE_1B_BANNED_PATTERNS: RegExp[] = [
+  /\bsource[ds]?\b/i, /\bcit(e|ed|ation|ations)\b/i, /\brefere(nce|nces)\b/i,
+  /\bevidence\b/i, /\bproof\b/i, /\bdocument(ed|ation)?\b/i,
+  /\bdata showing\b/i, /\bresearch showing\b/i, /\bstud(y|ies)\b/i,
+  /\bsurvey(s)?\b/i, /\bstatistic(s)?\b/i, /\breport(s)?\b/i, /\bbibliograph/i,
+  /\brate (the |each |these )?competitor/i, /\bscore (the |each |these )?competitor/i,
+  /\brank the competitor/i, /\bcompetitor (matrix|benchmark)/i, /\bbenchmark(ing)?\b/i,
+  /\bobserv(ed|ation|ations|ing)\b/i, /\bethnograph/i, /\bshadow(ed|ing)\b/i,
+  /\bfield stud(y|ies)\b/i, /\bday[- ]in[- ]the[- ]life\b/i,
+  /\bdemonstrat(e|ion|ions)\b/i, /\bproof point/i, /\bcase stud(y|ies)\b/i,
+  /\btrack record\b/i, /\bprior example/i,
+  /\bwho will attend\b/i, /\bbudget\b/i, /\btimeline\b/i, /\brollout\b/i, /\bphasing\b/i,
+  /\bwhen will (you|the) (launch|roll|go[- ]to[- ]market)/i,
+];
+
+function blockIsBanned(block: string): boolean {
+  return STAGE_1B_BANNED_PATTERNS.some((re) => re.test(block));
+}
+
+export function sanitizeStage1bOutput(raw: string): string {
+  if (!raw) return raw;
+  // Split into question blocks delimited by "GAP IDENTIFIED:"
+  // Preserve everything before the first GAP IDENTIFIED.
+  const marker = /(^|\n)\s*GAP IDENTIFIED\s*:/i;
+  const firstIdx = raw.search(marker);
+  if (firstIdx === -1) return raw;
+  const preamble = raw.slice(0, firstIdx);
+  const rest = raw.slice(firstIdx);
+  // Split rest by occurrences of "GAP IDENTIFIED:" while keeping the marker.
+  const blocks = rest.split(/(?=(?:^|\n)\s*GAP IDENTIFIED\s*:)/i);
+  const kept: string[] = [];
+  let removed = 0;
+  for (const b of blocks) {
+    if (!b.trim()) continue;
+    if (blockIsBanned(b)) { removed++; continue; }
+    kept.push(b.replace(/^\n+/, "\n"));
+  }
+  let out = preamble + kept.join("");
+  if (removed > 0) {
+    out += `\n\n_Stage 1B exclusion filter removed ${removed} out-of-remit question${removed === 1 ? "" : "s"} (sources / ratings / observed behaviour / documented proof / operational detail)._`;
+  }
+  return out;
+}
 
 const ResubmitBriefInput = z.object({
   sessionId: z.string().uuid(),
