@@ -2106,7 +2106,7 @@ function PipelineView() {
           progressPct={progressPct}
           currentMainNumber={Math.max(1, currentMainNumber)}
           totalMain={mainStages.length}
-          hasBrief={Boolean(session?.brief_text)}
+          hasBrief={Boolean(session?.brief_text || (session?.brief_versions?.length ?? 0) > 0)}
         />
         {selectedId === "BRIEF" ? (
           <section className="relative flex min-w-0 flex-1 flex-col bg-background">
