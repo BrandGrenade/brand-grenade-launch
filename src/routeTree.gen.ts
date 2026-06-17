@@ -14,8 +14,8 @@ import { Route as PipelineRouteImport } from './routes/pipeline'
 import { Route as DetonationRouteImport } from './routes/detonation'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as CompleteRouteImport } from './routes/complete'
-import { Route as BriefRouteImport } from './routes/brief'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as BriefIndexRouteImport } from './routes/brief.index'
 import { Route as DetonationCanvasRouteImport } from './routes/detonation_.canvas'
 import { Route as BriefNewRouteImport } from './routes/brief.new'
 
@@ -44,14 +44,14 @@ const CompleteRoute = CompleteRouteImport.update({
   path: '/complete',
   getParentRoute: () => rootRouteImport,
 } as any)
-const BriefRoute = BriefRouteImport.update({
-  id: '/brief',
-  path: '/brief',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BriefIndexRoute = BriefIndexRouteImport.update({
+  id: '/brief/',
+  path: '/brief/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DetonationCanvasRoute = DetonationCanvasRouteImport.update({
@@ -60,14 +60,13 @@ const DetonationCanvasRoute = DetonationCanvasRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const BriefNewRoute = BriefNewRouteImport.update({
-  id: '/new',
-  path: '/new',
-  getParentRoute: () => BriefRoute,
+  id: '/brief/new',
+  path: '/brief/new',
+  getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/brief': typeof BriefRouteWithChildren
   '/complete': typeof CompleteRoute
   '/dashboard': typeof DashboardRoute
   '/detonation': typeof DetonationRoute
@@ -75,10 +74,10 @@ export interface FileRoutesByFullPath {
   '/settings': typeof SettingsRoute
   '/brief/new': typeof BriefNewRoute
   '/detonation/canvas': typeof DetonationCanvasRoute
+  '/brief/': typeof BriefIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/brief': typeof BriefRouteWithChildren
   '/complete': typeof CompleteRoute
   '/dashboard': typeof DashboardRoute
   '/detonation': typeof DetonationRoute
@@ -86,11 +85,11 @@ export interface FileRoutesByTo {
   '/settings': typeof SettingsRoute
   '/brief/new': typeof BriefNewRoute
   '/detonation/canvas': typeof DetonationCanvasRoute
+  '/brief': typeof BriefIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/brief': typeof BriefRouteWithChildren
   '/complete': typeof CompleteRoute
   '/dashboard': typeof DashboardRoute
   '/detonation': typeof DetonationRoute
@@ -98,12 +97,12 @@ export interface FileRoutesById {
   '/settings': typeof SettingsRoute
   '/brief/new': typeof BriefNewRoute
   '/detonation_/canvas': typeof DetonationCanvasRoute
+  '/brief/': typeof BriefIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/brief'
     | '/complete'
     | '/dashboard'
     | '/detonation'
@@ -111,10 +110,10 @@ export interface FileRouteTypes {
     | '/settings'
     | '/brief/new'
     | '/detonation/canvas'
+    | '/brief/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/brief'
     | '/complete'
     | '/dashboard'
     | '/detonation'
@@ -122,10 +121,10 @@ export interface FileRouteTypes {
     | '/settings'
     | '/brief/new'
     | '/detonation/canvas'
+    | '/brief'
   id:
     | '__root__'
     | '/'
-    | '/brief'
     | '/complete'
     | '/dashboard'
     | '/detonation'
@@ -133,17 +132,19 @@ export interface FileRouteTypes {
     | '/settings'
     | '/brief/new'
     | '/detonation_/canvas'
+    | '/brief/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  BriefRoute: typeof BriefRouteWithChildren
   CompleteRoute: typeof CompleteRoute
   DashboardRoute: typeof DashboardRoute
   DetonationRoute: typeof DetonationRoute
   PipelineRoute: typeof PipelineRoute
   SettingsRoute: typeof SettingsRoute
+  BriefNewRoute: typeof BriefNewRoute
   DetonationCanvasRoute: typeof DetonationCanvasRoute
+  BriefIndexRoute: typeof BriefIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -183,18 +184,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CompleteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/brief': {
-      id: '/brief'
-      path: '/brief'
-      fullPath: '/brief'
-      preLoaderRoute: typeof BriefRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/': {
       id: '/'
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/brief/': {
+      id: '/brief/'
+      path: '/brief'
+      fullPath: '/brief/'
+      preLoaderRoute: typeof BriefIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/detonation_/canvas': {
@@ -206,33 +207,24 @@ declare module '@tanstack/react-router' {
     }
     '/brief/new': {
       id: '/brief/new'
-      path: '/new'
+      path: '/brief/new'
       fullPath: '/brief/new'
       preLoaderRoute: typeof BriefNewRouteImport
-      parentRoute: typeof BriefRoute
+      parentRoute: typeof rootRouteImport
     }
   }
 }
 
-interface BriefRouteChildren {
-  BriefNewRoute: typeof BriefNewRoute
-}
-
-const BriefRouteChildren: BriefRouteChildren = {
-  BriefNewRoute: BriefNewRoute,
-}
-
-const BriefRouteWithChildren = BriefRoute._addFileChildren(BriefRouteChildren)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  BriefRoute: BriefRouteWithChildren,
   CompleteRoute: CompleteRoute,
   DashboardRoute: DashboardRoute,
   DetonationRoute: DetonationRoute,
   PipelineRoute: PipelineRoute,
   SettingsRoute: SettingsRoute,
+  BriefNewRoute: BriefNewRoute,
   DetonationCanvasRoute: DetonationCanvasRoute,
+  BriefIndexRoute: BriefIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
