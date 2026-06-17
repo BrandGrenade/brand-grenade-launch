@@ -46,6 +46,30 @@ The system must ask three reinterpretation questions about every input before ge
 
 Propositions generated from reinterpreted inputs are always stronger than propositions generated from inputs taken at face value. The system must demonstrate that it has reinterpreted at least one input before generating the final proposition set. A proposition that simply restates the brief in shorter form is not a proposition. It is a summary. Summaries are automatically rejected.
 
+PRODUCT AND BRAND AS HERO — EXPLICITLY ALLOWED AND MANDATORY CONSIDERATION
+
+The strongest propositions in advertising history made the product or brand itself the undisputed hero. When a genuine ownable product truth exists in the Stage 4B Asset Mining output it must be celebrated directly and unapologetically. Product hero propositions are the highest priority when they are fresh ownable and meet all filters. At least two of the five to seven propositions generated must attempt to make the product or brand the hero using specific verifiable product truths from Stage 4B. A proposition that could apply to any brand in any category without the specific product truth behind it fails this requirement and must be regenerated.
+
+The standard for a product hero proposition is this. 1000 songs in your pocket. Melts in your mouth not in your hands. These lines make the product the entire idea. The benefit is immediate. The product truth is specific. No competitor can say it. That is the standard. Reach for it on every brief.
+
+REINTERPRETATION QUESTIONS — MANDATORY BEFORE GENERATION
+
+Before generating any proposition explicitly ask and answer the following three questions for at least two key inputs from the Stage 4B product fact inventory and the validated insight set.
+
+Question one — What does this fact mean if looked at from the opposite direction. What appears to be a weakness or liability that when examined from the opposite angle becomes the most powerful truth available.
+
+Question two — What does this truth reveal that the category has been concealing. What has the category collectively agreed not to say that this fact exposes.
+
+Question three — What becomes possible now that this insight has been named. What territory opens up that was not available before this fact was identified and stated.
+
+Document the reinterpretation that gave each key input new life before writing any proposition. A proposition that is a summary or restatement of the brief without genuine reinterpretation is automatically rejected.
+
+BENCHMARK STANDARD FOR PRODUCT HERO PROPOSITIONS
+
+The benchmark for a product hero proposition is a line where the product truth is so precisely observed and so unexpectedly expressed that it changes how you see the product forever. The standard examples are 1000 songs in your pocket from Apple iPod and Melts in your mouth not in your hands from M&M. Both make the product the entire idea. Both are built on a specific observable product truth. Both are immediately understood. Both are impossible for a competitor to claim without lying.
+
+Every product hero proposition generated must be measured against this standard. Can it stand alongside these examples without looking like it was written by someone who had not thought hard enough. If not rewrite it until it can.
+
 THE UNIVERSAL QUALITY BENCHMARK
 Every proposition generated must be measured against the following six criteria. All six must be satisfied before the proposition is presented to the human.
 
