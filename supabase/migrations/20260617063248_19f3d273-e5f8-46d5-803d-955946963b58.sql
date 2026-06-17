@@ -1,0 +1,1 @@
+ALTER TABLE public.sessions ADD COLUMN IF NOT EXISTS stage_amendments JSONB NOT NULL DEFAULT '{}'::jsonb;

@@ -245,6 +245,7 @@ export type Database = {
           stage_8_output: string | null
           stage_9_error: string | null
           stage_9_output: string | null
+          stage_amendments: Json
           stage_status: string | null
           status: string
           strategic_mode: string
@@ -394,6 +395,7 @@ export type Database = {
           stage_8_output?: string | null
           stage_9_error?: string | null
           stage_9_output?: string | null
+          stage_amendments?: Json
           stage_status?: string | null
           status?: string
           strategic_mode: string
@@ -543,6 +545,7 @@ export type Database = {
           stage_8_output?: string | null
           stage_9_error?: string | null
           stage_9_output?: string | null
+          stage_amendments?: Json
           stage_status?: string | null
           status?: string
           strategic_mode?: string
