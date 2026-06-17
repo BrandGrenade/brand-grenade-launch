@@ -750,6 +750,16 @@ function PipelineView() {
             "12": data.checkpoint_c_confirmed ? "complete" : "checkpoint",
           }));
         }
+        if (
+          data.current_stage === 12 &&
+          data.status === "running" &&
+          data.stage_11_output &&
+          !data.stage_12_output &&
+          !data.checkpoint_c_confirmed
+        ) {
+          setStatuses((p) => ({ ...p, "12": "running" }));
+          setSelectedId("12");
+        }
         if (data.stage_13_output) {
           setStage13Output(data.stage_13_output);
           setStatuses((p) => ({ ...p, "13": "complete" }));
