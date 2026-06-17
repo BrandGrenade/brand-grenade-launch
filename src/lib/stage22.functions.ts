@@ -12,6 +12,7 @@ import { STAGE_22_BRAND_ARCHITECTURE_PROMPT } from "./stage22-brand-architecture
 import { appendRedirect, formatThreeTruths, formatBrandIntelligence, smpGoverningBlock, withPhase2Formatting } from "./phase2-shared";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertSessionOwner } from "@/lib/auth-helpers.server";
+import { assertUpstreamStageOutput } from "./pipeline-integrity";
 
 const DISTINCTIVE_ASSETS_PROMPT = `You are a senior brand architect producing the Conceptual Assets for this brand.
 
