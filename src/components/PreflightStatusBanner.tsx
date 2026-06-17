@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { runTierOneFastCheck, type TierOneResult } from "@/lib/preflight.functions";
+import { supabase } from "@/integrations/supabase/client";
 
 type Phase = "running" | "ready" | "issue_detected" | "error";
 
@@ -14,17 +15,28 @@ export function PreflightStatusBanner() {
     let active = true;
     setPhase("running");
     setErrorMsg(null);
-    run({})
-      .then((r) => {
+    (async () => {
+      // Skip the protected server fn when there's no session — otherwise
+      // it 401s and the resulting runtime error blanks the dashboard.
+      const { data: sess } = await supabase.auth.getSession();
+      const token = sess.session?.access_token;
+      if (!token) {
+        if (!active) return;
+        setErrorMsg("Sign in to run pre-flight checks.");
+        setPhase("error");
+        return;
+      }
+      try {
+        const r = await run({ headers: { Authorization: `Bearer ${token}` } } as never);
         if (!active) return;
         setResult(r);
         setPhase(r.overall);
-      })
-      .catch((e: unknown) => {
+      } catch (e: unknown) {
         if (!active) return;
         setErrorMsg(e instanceof Error ? e.message : String(e));
         setPhase("error");
-      });
+      }
+    })();
     return () => {
       active = false;
     };
