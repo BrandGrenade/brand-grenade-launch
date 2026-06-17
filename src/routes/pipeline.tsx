@@ -4220,16 +4220,34 @@ function StructuredBriefView({
   legacyBriefText: string | null;
   onEdit: () => void;
 }) {
-  const versions = briefVersions ?? [];
-  const [selectedVersion, setSelectedVersion] = useState<number>(
-    versions.length > 0 ? versions[versions.length - 1].version : 0,
-  );
-  const active = versions.find((v) => v.version === selectedVersion) ?? null;
-  const fields: BriefFields | null = active
-    ? active.fields
-    : versions.length > 0
-      ? versions[versions.length - 1].fields
-      : null;
+  // brief_versions is JSONB — defensively normalise every entry so a
+  // legacy/partial row never crashes the read-only viewer.
+  const versions: BriefVersion[] = Array.isArray(briefVersions)
+    ? briefVersions
+        .filter((v): v is BriefVersion => !!v && typeof v === "object" && !!(v as BriefVersion).fields)
+        .map((v) => ({
+          version: typeof v.version === "number" ? v.version : 0,
+          submitted_at: typeof v.submitted_at === "string" ? v.submitted_at : "",
+          fields: {
+            briefTitle: v.fields?.briefTitle ?? "",
+            brandName: v.fields?.brandName ?? "",
+            category: v.fields?.category ?? "",
+            date: v.fields?.date ?? "",
+            submittedBy: v.fields?.submittedBy ?? "",
+            sections:
+              v.fields?.sections && typeof v.fields.sections === "object"
+                ? (v.fields.sections as Record<string, string>)
+                : {},
+            supportingMaterials: Array.isArray(v.fields?.supportingMaterials)
+              ? v.fields!.supportingMaterials
+              : [],
+          },
+        }))
+    : [];
+  const latest = versions.length > 0 ? versions[versions.length - 1] : null;
+  const [selectedVersion, setSelectedVersion] = useState<number>(latest?.version ?? 0);
+  const active = versions.find((v) => v.version === selectedVersion) ?? latest;
+  const fields: BriefFields | null = active ? active.fields : null;
 
   const hasStructured = !!fields;
 
