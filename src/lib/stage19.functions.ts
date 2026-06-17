@@ -10,6 +10,7 @@ import { STAGE_19_ACTIVATION_ARCHITECTURE_PROMPT } from "./stage19-activation-ar
 import { appendRedirect, formatThreeTruths, smpGoverningBlock, withPhase2Formatting } from "./phase2-shared";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertSessionOwner } from "@/lib/auth-helpers.server";
+import { assertUpstreamStageOutput } from "./pipeline-integrity";
 
 const STAGE19_SELECT = [
   "brand_name",
@@ -68,6 +69,7 @@ export const runStage19 = createServerFn({ method: "POST" })
     await assertSessionOwner(data.sessionId, context.userId);
     const { requireConfirmedSelection } = await import("./checkpoint-gate");
     await requireConfirmedSelection(data.sessionId, "E");
+    await assertUpstreamStageOutput(data.sessionId, 19);
     const { data: session, error } = await supabaseAdmin
       .from("sessions")
       .select("brand_name, category, selected_smp, stage_18_selected_detonation, stage_18_output, stage_14b_output, truth_product, truth_consumer, truth_cultural, stage_19_output")
