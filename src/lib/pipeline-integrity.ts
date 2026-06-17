@@ -32,12 +32,11 @@ function hasPersistedOutput(value: unknown): boolean {
   return value !== null && value !== undefined;
 }
 
-export async function assertUpstreamStageOutput(
+export async function assertStageOutput(
   sessionId: string,
-  stageNumber: number,
+  upstreamStage: number,
+  forStageLabel?: string,
 ): Promise<void> {
-  if (stageNumber < 2) return;
-  const upstreamStage = stageNumber - 1;
   const columns = STAGE_OUTPUT_COLUMNS[upstreamStage];
   if (!columns) return;
   const selectColumns = columns.join(", ");
@@ -46,10 +45,19 @@ export async function assertUpstreamStageOutput(
     .select(selectColumns)
     .eq("id", sessionId)
     .single();
-  if (error) throw new Error(`Failed to verify Stage ${upstreamStage} output before Stage ${stageNumber}: ${error.message}`);
+  const label = forStageLabel ?? `Stage ${upstreamStage + 1}`;
+  if (error) throw new Error(`Failed to verify Stage ${upstreamStage} output before ${label}: ${error.message}`);
   const row = data as unknown as Record<string, unknown> | null;
   const hasOutput = columns.some((column) => hasPersistedOutput(row?.[column]));
   if (!hasOutput) {
-    throw new Error(`Stage ${stageNumber} cannot run because Stage ${upstreamStage} output is missing`);
+    throw new Error(`${label} cannot run because Stage ${upstreamStage} output is missing`);
   }
+}
+
+export async function assertUpstreamStageOutput(
+  sessionId: string,
+  stageNumber: number,
+): Promise<void> {
+  if (stageNumber < 2) return;
+  await assertStageOutput(sessionId, stageNumber - 1, `Stage ${stageNumber}`);
 }
