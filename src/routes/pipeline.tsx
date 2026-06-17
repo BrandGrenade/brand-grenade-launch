@@ -2169,6 +2169,58 @@ function PipelineView() {
                 return next;
               })
             }
+            onManualStage8Submit={async (line, label) => {
+              if (!sessionId) return;
+              const safeText = line.trim();
+              if (!safeText) return;
+              const safeLabel = (label.trim() || "Manual Proposition").slice(0, 80);
+              const block = `## ${safeLabel}\n\n> **${safeText}**\n`;
+              const { error } = await supabase
+                .from("sessions")
+                .update({ stage_8_output: block })
+                .eq("id", sessionId);
+              if (error) {
+                console.error("[Stage 8 manual] failed to persist", error);
+                return;
+              }
+              await resetStageCascadeFn({ data: { sessionId, stageId: "9" } });
+              await confirmCheckpointBFn({ data: { sessionId } });
+              setStage8Output(block);
+              setStage8KeepNames(new Set([safeLabel]));
+              setSession((prev) =>
+                prev
+                  ? ({
+                      ...prev,
+                      stage_8_output: block,
+                      stage_9_output: null,
+                      stage_10_output: null,
+                      stage_11_output: null,
+                      stage_12_output: null,
+                      stage_13_output: null,
+                      stage_13b_output: null,
+                      stage_14_output: null,
+                      stage_14b_output: null,
+                      stage_14c_output: null,
+                      stage_15_output: null,
+                      stage_16_consulting_output: null,
+                      checkpoint_b_confirmed: true,
+                    } as SessionData)
+                  : prev,
+              );
+              resetLocalFromStage("09");
+              setStatuses((prev) => {
+                const next: Record<string, StageStatus> = {
+                  ...prev,
+                  "08": "complete",
+                  "09": "running",
+                };
+                const idx = STAGES.findIndex((s) => s.id === "09");
+                for (let i = idx + 1; i < STAGES.length; i++)
+                  next[STAGES[i].id] = "pending";
+                return next;
+              });
+              setSelectedId("09");
+            }}
             fullOutput={stageOutputs[selected.id] ?? "Output pending."}
             contentScrollRef={contentScrollRef}
             isViewingHistorical={isViewingHistorical}
