@@ -206,8 +206,9 @@ export const resetStage = createServerFn({ method: "POST" })
             stage_16_consulting_output: null,
             stage_16_agency_output: null,
             stage_16_workshop_output: null,
+            stage_16_vision_output: null,
             stage_16_error: null,
-          })
+          } as never)
           .eq("id", data.sessionId);
         break;
     }
