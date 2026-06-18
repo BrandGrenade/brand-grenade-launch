@@ -29,6 +29,7 @@ const STAGE_9_BANNED_PATTERNS: Array<{ pattern: RegExp; reason: string }> = [
   { pattern: /end of (the |a )?day/i, reason: "banned phrase 'end of day'" },
   { pattern: /day well spent/i, reason: "banned phrase 'day well spent'" },
   { pattern: /treat yourself/i, reason: "banned phrase 'treat yourself'" },
+  { pattern: /\bpermission\b/i, reason: "banned word 'permission'" },
   { pattern: /permission to\b/i, reason: "banned phrase 'permission to'" },
   { pattern: /no compromise/i, reason: "banned phrase 'no compromise'" },
   { pattern: /no guilt/i, reason: "banned phrase 'no guilt'" },
