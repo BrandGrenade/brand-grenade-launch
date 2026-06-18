@@ -1,0 +1,1 @@
+UPDATE public.preflight_checks SET status='abandoned', completed_at=now() WHERE id='faf5d66e-fdf4-4062-8009-32fe26e10dc5' AND status='running';
