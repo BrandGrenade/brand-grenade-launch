@@ -276,8 +276,39 @@ function ThreeTruthCanvas() {
   // before commercial deployment
   const canBegin = confirmedCount >= 1 && intelComplete;
 
+  // Explain exactly why the button is disabled so a populated-looking form
+  // doesn't silently block the user (the previous behaviour: click = no-op).
+  const beginBlockers = useMemo(() => {
+    const reasons: string[] = [];
+    if (confirmedCount < 1) {
+      reasons.push(
+        "Confirm at least one of the three truths above (Product, Consumer, or Cultural).",
+      );
+    }
+    if (intelType === "") {
+      reasons.push(
+        "Select Brand Intelligence type — 'Existing brand' or 'New brand'.",
+      );
+    } else if (intelType === "existing" && valuesField.trim().length === 0) {
+      reasons.push("Enter Brand Values (at minimum) to continue.");
+    } else if (intelType === "new" && !newBrandAck) {
+      reasons.push(
+        "Tick the acknowledgement that this brand has no existing guidelines.",
+      );
+    }
+    return reasons;
+  }, [confirmedCount, intelType, valuesField, newBrandAck]);
+
   const handleBeginStage17 = async () => {
-    if (!sessionId || !canBegin) return;
+    if (!sessionId) {
+      setError("No session — reload from Sessions and try again.");
+      return;
+    }
+    if (!canBegin) {
+      // Surface blockers as a visible error so a misclick is never a silent no-op.
+      setError(beginBlockers.join(" "));
+      return;
+    }
     setAdvancing(true);
     setError(null);
     try {
