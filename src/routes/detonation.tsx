@@ -1446,6 +1446,198 @@ function Stage20({ session, onChange, goNext }: { session: SessionRow; onChange:
 }
 
 // ═════════════════════════════════════════════════════════════════════════
+// STAGE 20B — Channel Strategy and Audience Intelligence
+// ═════════════════════════════════════════════════════════════════════════
+type Stage20bInputs = {
+  audienceAsHumans: string;
+  dayInTheirLife: string;
+  influenceMap: string;
+  decisionJourney: string;
+  psychologicalProfile: string;
+  channelUniverseAndBudget: string;
+};
+const STAGE_20B_EMPTY: Stage20bInputs = {
+  audienceAsHumans: "",
+  dayInTheirLife: "",
+  influenceMap: "",
+  decisionJourney: "",
+  psychologicalProfile: "",
+  channelUniverseAndBudget: "",
+};
+const STAGE_20B_FIELDS: Array<{
+  key: keyof Stage20bInputs;
+  label: string;
+  description: string;
+  placeholder: string;
+}> = [
+  {
+    key: "audienceAsHumans",
+    label: "Who is this audience as humans",
+    description: "Not job titles or demographics. The specific person — private fears, public performance, the gap between what they say and what they think.",
+    placeholder: "What do they privately fear in this category? What do they need to be seen to know or to have decided? What keeps them awake at three in the morning?",
+  },
+  {
+    key: "dayInTheirLife",
+    label: "A day in their life",
+    description: "Walk through a typical day. Name the specific moments when their guard is up and when it is down.",
+    placeholder: "Wake-up, morning, commute, working day, evening, weekend. When are they most open to a new idea and most closed to being sold to?",
+  },
+  {
+    key: "influenceMap",
+    label: "Their influence map",
+    description: "Who do they call, watch, quote, attend, trust — and why.",
+    placeholder: "Peers, publications, events, voices. Which voices do they trust and why?",
+  },
+  {
+    key: "decisionJourney",
+    label: "Their decision journey for this specific category",
+    description: "Trigger, research, objections, internal approval process, typical time from first exposure to signed engagement.",
+    placeholder: "What triggers the thought that they need this? What research do they do? What objections must they overcome internally before they can act?",
+  },
+  {
+    key: "psychologicalProfile",
+    label: "Their psychological profile in this category",
+    description: "The two or three most powerful cognitive biases operating in this specific audience at this specific decision moment.",
+    placeholder: "e.g. loss aversion (fear of a brand misstep in market), authority bias, social proof from named peer brands.",
+  },
+  {
+    key: "channelUniverseAndBudget",
+    label: "Channel universe and budget orientation",
+    description: "Named channels this audience actually uses, plus the approximate Long brand-building vs Short sales-activation weighting.",
+    placeholder: "Specific publications, events, platforms, formats. Approximate Long / Short split available for this plan.",
+  },
+];
+
+function Stage20b({ session, onChange, goNext }: { session: SessionRow; onChange: () => void | Promise<void>; goNext: () => void }) {
+  const run = useServerFn(runStage20b);
+  const load = useServerFn(loadStage20b);
+
+  const initialInputs: Stage20bInputs = {
+    ...STAGE_20B_EMPTY,
+    ...((session.stage_20b_audience_input as Partial<Stage20bInputs> | null) ?? {}),
+  };
+  const [inputs, setInputs] = useState<Stage20bInputs>(initialInputs);
+  const [output, setOutput] = useState<string | null>(session.stage_20b_output);
+  const [editing, setEditing] = useState<boolean>(!session.stage_20b_output);
+  const [busy, setBusy] = useState(false);
+  const [proceeding, setProceeding] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  useEffect(() => {
+    setOutput(session.stage_20b_output);
+    setEditing(!session.stage_20b_output);
+  }, [session.stage_20b_output]);
+
+  useEffect(() => {
+    if (output === null && !session.stage_20b_output) {
+      load({ data: { sessionId: session.id } })
+        .then((r) => {
+          if (r.output) setOutput(r.output);
+          if (r.audienceInput) {
+            setInputs({ ...STAGE_20B_EMPTY, ...(r.audienceInput as Partial<Stage20bInputs>) });
+          }
+        })
+        .catch(() => {});
+    }
+  }, [output, load, session.id, session.stage_20b_output]);
+
+  const allFilled = STAGE_20B_FIELDS.every((f) => inputs[f.key].trim().length > 0);
+
+  const handleRun = async () => {
+    if (!allFilled) {
+      setErr("All six audience-intelligence inputs are mandatory. Please complete every field before generating the channel strategy.");
+      return;
+    }
+    setBusy(true); setErr(null);
+    try {
+      const r = await run({ data: { sessionId: session.id, audienceInput: inputs } });
+      setOutput(r.output); setEditing(false); await onChange();
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Stage 20B failed");
+    } finally { setBusy(false); }
+  };
+
+  const handleProceed = async () => {
+    setProceeding(true);
+    try { await onChange(); goNext(); }
+    catch (e) { console.error("Stage advance error:", e); }
+    finally { setProceeding(false); }
+  };
+
+  const canRun = session.stage_20_approved === true;
+
+  return (
+    <section>
+      <SectionTitle
+        kicker="STAGE 20B"
+        title="Channel Strategy and Audience Intelligence"
+        subtitle="Before the channel briefs are written, capture the audience intelligence that drives every channel decision. The output of this stage is the primary brief that Stage 21 writes from."
+      />
+      {err && <ErrorBanner message={err} />}
+      {!canRun && (
+        <ErrorBanner message="Stage 20 must be approved before Stage 20B can run." />
+      )}
+
+      {editing ? (
+        <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+          {STAGE_20B_FIELDS.map((f) => (
+            <div key={f.key} style={{ backgroundColor: "#111111", border: "1px solid #2A2A2A", borderRadius: 8, padding: 20 }}>
+              <label
+                htmlFor={`stage20b-${f.key}`}
+                className="text-mono"
+                style={{ display: "block", color: AMBER, fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: 8, fontWeight: 500 }}
+              >
+                {f.label}
+              </label>
+              <div className="text-body-sm" style={{ color: "#8A8680", marginBottom: 10, lineHeight: 1.5 }}>
+                {f.description}
+              </div>
+              <textarea
+                id={`stage20b-${f.key}`}
+                value={inputs[f.key]}
+                onChange={(e) => setInputs((p) => ({ ...p, [f.key]: e.target.value }))}
+                rows={5}
+                placeholder={f.placeholder}
+                disabled={busy}
+                style={{
+                  width: "100%", backgroundColor: "#000", color: "#E8E4DE",
+                  border: "1px solid #2A2A2A", borderRadius: 6, padding: 12,
+                  fontFamily: "inherit", fontSize: 14, lineHeight: 1.5, resize: "vertical",
+                }}
+              />
+            </div>
+          ))}
+          <div style={{ display: "flex", gap: 12, justifyContent: "flex-end", flexWrap: "wrap" }}>
+            {output && (
+              <AmberButton variant="ghost" onClick={() => setEditing(false)} disabled={busy}>
+                Cancel
+              </AmberButton>
+            )}
+            <AmberButton onClick={handleRun} disabled={busy || !canRun}>
+              {busy ? <><Spinner /> Generating Channel Strategy…</> : "Generate Channel Strategy"}
+            </AmberButton>
+          </div>
+        </div>
+      ) : output ? (
+        <>
+          <div style={{ backgroundColor: "#111111", border: "1px solid #2A2A2A", borderRadius: 8, padding: 28 }}>
+            <RichOutput text={output} />
+          </div>
+          <div style={{ marginTop: 24, display: "flex", gap: 12, justifyContent: "flex-end", flexWrap: "wrap" }}>
+            <AmberButton variant="ghost" onClick={() => setEditing(true)} disabled={busy}>
+              Edit Inputs and Regenerate
+            </AmberButton>
+            <AmberButton onClick={handleProceed} disabled={proceeding}>
+              {proceeding ? <><Spinner /> Loading...</> : "Proceed to Stage 21"}
+            </AmberButton>
+          </div>
+        </>
+      ) : null}
+    </section>
+  );
+}
+
+// ═════════════════════════════════════════════════════════════════════════
 // STAGE 21 — Channel Briefs
 // ═════════════════════════════════════════════════════════════════════════
 function resolveStage21ChannelName(channel: string, body: string): string {
