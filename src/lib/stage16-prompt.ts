@@ -1,8 +1,8 @@
 // Stage 16 — Output Packaging
-// Three format variants.
+// Four format variants.
 // Partner-level writing standard.
 
-export type Stage16Format = "consulting" | "agency" | "workshop";
+export type Stage16Format = "consulting" | "agency" | "workshop" | "vision";
 
 export const STAGE_16_CONSULTING_PROMPT = `
 ════════════════════════════════════════
