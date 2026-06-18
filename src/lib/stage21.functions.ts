@@ -27,6 +27,7 @@ const STAGE21_SELECT = [
   "stage_18_detonation_line",
   "stage_19_output",
   "stage_20_output",
+  "stage_20b_output",
   "truth_product",
   "truth_consumer",
   "truth_cultural",
@@ -41,6 +42,7 @@ type Stage21Session = {
   stage_18_detonation_line: string | null;
   stage_19_output: string | null;
   stage_20_output: string | null;
+  stage_20b_output: string | null;
   truth_product: string | null;
   truth_consumer: string | null;
   truth_cultural: string | null;
