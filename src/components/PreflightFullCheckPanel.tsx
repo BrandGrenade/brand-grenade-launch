@@ -161,6 +161,16 @@ Speak shortly,
 export function PreflightFullCheckPanel() {
   const runTierTwoFn = useServerFn(runTierTwoFullCheck);
   const getLatestFn = useServerFn(getLatestTierTwoCheck);
+  const runResumeFn = useServerFn(runTierTwoChecksFrom9);
+  const recordCheck8Fn = useServerFn(recordPreflightCheck8Result);
+  const seedBrandIntelFn = useServerFn(saveBrandIntelligence);
+  const stage13Fn = useServerFn(runStage13);
+  const stage13bFn = useServerFn(runStage13b);
+  const stage14Fn = useServerFn(runStage14);
+  const stage14bFn = useServerFn(runStage14b);
+  const stage14cFn = useServerFn(runStage14c);
+  const stage15Fn = useServerFn(runStage15);
+  const stage16Fn = useServerFn(runStage16);
 
   const [state, setState] = useState<RunState>("idle");
   const [results, setResults] = useState<FullCheckResult[]>([]);
