@@ -38,7 +38,9 @@ function documentHeader(brand: string, category: string, format: Stage16Format):
       ? "BOARD STRATEGY RECOMMENDATION"
       : format === "agency"
         ? "STRATEGIC PLATFORM"
-        : "BRAND STRATEGY WORKSHOP";
+        : format === "vision"
+          ? "STRATEGY AND CREATIVE VISION"
+          : "BRAND STRATEGY WORKSHOP";
   return `# ${title}\n## ${brand} — ${category}\n\n*Brand Grenade Strategy Intelligence System*\n\n---\n`;
 }
 
