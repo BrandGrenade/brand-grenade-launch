@@ -1618,7 +1618,7 @@ function Stage21({ session, onChange, goNext }: { session: SessionRow; onChange:
           </div>
           <div style={{ marginTop: 16, display: "flex", gap: 12, justifyContent: "flex-end", flexWrap: "wrap" }}>
             <AmberButton variant="ghost" onClick={handleForceRegenerate} disabled={busy}>
-              {busy ? <><Spinner /> Regenerating…</> : "Force Regenerate"}
+              {busy ? <><Spinner /> Regenerating…</> : "Retry"}
             </AmberButton>
             <AmberButton variant="ghost" onClick={downloadAll}>Download All Channel Briefs</AmberButton>
             <AmberButton onClick={handleProceed} disabled={proceeding}>
