@@ -155,7 +155,11 @@ export const runStage21 = createServerFn({ method: "POST" })
     if (!s.stage_19_output) throw new Error("Stage 19 missing");
     if (!s.stage_20_output) throw new Error("Stage 20 missing");
 
-    if (s.stage_21_outputs && Object.keys(s.stage_21_outputs).length > 0) {
+    if (
+      s.stage_21_outputs &&
+      Object.keys(s.stage_21_outputs).length > 0 &&
+      !data.audienceChannelDirection?.trim()
+    ) {
       return { outputs: s.stage_21_outputs };
     }
 
