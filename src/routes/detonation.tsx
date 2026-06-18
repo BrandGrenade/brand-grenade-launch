@@ -1721,13 +1721,14 @@ function Stage21({ session, onChange, goNext }: { session: SessionRow; onChange:
   useEffect(() => {
     if (autoTriggeredRef.current) return;
     if (!session.stage_20_approved) return;
+    if (!session.stage_20b_output) return;
     if (session.stage_21_outputs && Object.keys(session.stage_21_outputs).length > 0) return;
     if (outputs !== null && Object.keys(outputs).length > 0) return;
     if (busy) return;
     autoTriggeredRef.current = true;
     void handleRun();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session.stage_20_approved, session.stage_21_outputs, outputs]);
+  }, [session.stage_20_approved, session.stage_20b_output, session.stage_21_outputs, outputs]);
 
   const handleProceed = async () => {
     setProceeding(true);
