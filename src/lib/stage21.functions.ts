@@ -105,6 +105,9 @@ function buildStage21UserMessage(
     "",
     "MASTER DETONATION BRIEF (Stage 20)",
     s.stage_20_output?.trim() || "—",
+    "",
+    "CHANNEL STRATEGY AND AUDIENCE INTELLIGENCE (Stage 20B — PRIMARY INPUT)",
+    s.stage_20b_output?.trim() || "—",
   ].join("\n");
 }
 
