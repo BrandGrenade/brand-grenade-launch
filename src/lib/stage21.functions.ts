@@ -152,13 +152,14 @@ export const runStage21 = createServerFn({ method: "POST" })
     await requireConfirmedSelection(data.sessionId, "F");
     const { data: session, error } = await supabaseAdmin
       .from("sessions")
-      .select("brand_name, category, selected_smp, stage_18_selected_detonation, stage_18_detonation_line, stage_19_output, stage_20_output, truth_product, truth_consumer, truth_cultural, stage_21_outputs")
+      .select(STAGE21_SELECT)
       .eq("id", data.sessionId)
       .single();
     if (error || !session) throw new Error(`Session not found: ${error?.message ?? "no row"}`);
     const s = session as unknown as Stage21Session;
     if (!s.stage_19_output) throw new Error("Stage 19 missing");
     if (!s.stage_20_output) throw new Error("Stage 20 missing");
+    if (!s.stage_20b_output) throw new Error("Stage 20B (Channel Strategy and Audience Intelligence) must complete before Stage 21");
 
     if (
       s.stage_21_outputs &&
