@@ -265,21 +265,31 @@ export type BriefQualityScore = {
 };
 
 export function parseBriefQualityScore(scoreBlock: string): BriefQualityScore {
-  const pick = (label: string): number | null => {
-    const re = new RegExp(`${label}\\s*[:\\-]?\\s*(\\d{1,2})\\s*/\\s*10`, "i");
+  // Separators accepted between a label and its value: ASCII colon/hyphen,
+  // en-dash (U+2013), em-dash (U+2014). Models sometimes substitute dashes
+  // for the colon in the prompt template.
+  const SEP = "[:\\-\\u2013\\u2014]?";
+  const pick = (labelPattern: string): number | null => {
+    const re = new RegExp(`${labelPattern}\\s*${SEP}\\s*(\\d{1,2})\\s*/\\s*10`, "i");
     const m = scoreBlock.match(re);
     return m ? parseInt(m[1], 10) : null;
   };
-  const compositeMatch = scoreBlock.match(/COMPOSITE\s*[:\-]?\s*(\d{1,2})\s*\/\s*50/i);
+  const compositeMatch = scoreBlock.match(
+    new RegExp(`COMPOSITE\\s*${SEP}\\s*(\\d{1,2})\\s*/\\s*50`, "i"),
+  );
   const composite = compositeMatch ? parseInt(compositeMatch[1], 10) : null;
-  const statusMatch = scoreBlock.match(/STATUS\s*[:\-]?\s*(PASS|REVIEW)/i);
+  const statusMatch = scoreBlock.match(
+    new RegExp(`STATUS\\s*${SEP}\\s*(PASS|REVIEW)`, "i"),
+  );
   const status = statusMatch
     ? (statusMatch[1].toUpperCase() as "PASS" | "REVIEW")
     : null;
   return {
     emotional_clarity: pick("Emotional Clarity"),
     fame_invitation: pick("Fame Invitation"),
-    distinctive_asset_integration: pick("Distinctive Asset Integration"),
+    // Model occasionally shortens "Distinctive Asset Integration" to
+    // "Distinctive Assets" — accept both.
+    distinctive_asset_integration: pick("Distinctive Assets?(?:\\s+Integration)?"),
     psychological_leverage: pick("Psychological Leverage"),
     creative_sov_ambition: pick("Creative SoV Ambition"),
     composite,
