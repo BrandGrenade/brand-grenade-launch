@@ -1511,7 +1511,7 @@ function Stage21({ session, onChange, goNext }: { session: SessionRow; onChange:
     try {
       await clear({ data: { sessionId: session.id } });
       setOutputs(null);
-      const r = await run({ data: { sessionId: session.id } });
+      const r = await run({ data: { sessionId: session.id, audienceChannelDirection: audienceChannelDirection.trim() || undefined } });
       setOutputs(r.outputs);
       await onChange();
     } catch (e) {
@@ -1519,6 +1519,7 @@ function Stage21({ session, onChange, goNext }: { session: SessionRow; onChange:
       setErr(e instanceof Error ? e.message : "Stage 21 force regenerate failed");
     } finally { setBusy(false); }
   };
+
 
   useEffect(() => {
     if (autoTriggeredRef.current) return;
