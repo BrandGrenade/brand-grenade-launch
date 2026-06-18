@@ -645,3 +645,21 @@ length 4,000–5,000 words. Files: `src/lib/stage16-prompt.ts`,
 `src/lib/stage16-content.ts`, `src/lib/pdf-generator.ts`,
 `src/lib/pipeline-integrity.ts`, `src/lib/retry.functions.ts`,
 `src/lib/stage1b.functions.ts`, migration adding `stage_16_vision_output`.
+
+## v4.1 — Stage 9 EDT Hard Block Reinforcement (2026-06-18)
+
+Check 5 in Tier Two caught the banned word "earned" in Stage 9 output. The
+prompt-level EDT guard was present but not reliably applied by the model at
+runtime. Two reinforcements landed:
+
+1. Added an "EDT HARD BLOCK — RUNS BEFORE ANY OUTPUT IS EMITTED" section to
+   `STAGE_9_SYSTEM_PROMPT` (`src/lib/stage9-prompt.ts`), inserted directly
+   before the TASK section. Lists banned words (earned, deserved, guilt,
+   guilty, apology, apologise, permission) and mandates silent
+   delete-and-regenerate within the same territory before emission.
+
+2. Extended the server-side sanitiser in `src/lib/stage9.functions.ts` to
+   catch standalone `permission` (previously only `permission to` matched).
+   The existing post-generation scan + up-to-2 silent rewrite attempts +
+   needs_review flag on persistent failure remains the enforcement floor
+   that prevents banned tokens from ever reaching the database or human.
