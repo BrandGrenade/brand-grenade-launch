@@ -696,8 +696,9 @@ function ThreeTruthCanvas() {
               <div style={{ marginTop: 48, textAlign: "center" }}>
                 <button
                   type="button"
-                  disabled={!canBegin || advancing}
+                  disabled={advancing}
                   onClick={handleBeginStage17}
+                  aria-disabled={!canBegin || advancing}
                   style={{
                     display: "inline-flex",
                     height: 56,
@@ -710,11 +711,29 @@ function ThreeTruthCanvas() {
                     color: canBegin ? "var(--color-background)" : "var(--color-text-tertiary)",
                     fontWeight: 600,
                     fontSize: 16,
-                    cursor: canBegin ? "pointer" : "not-allowed",
+                    cursor: advancing ? "wait" : canBegin ? "pointer" : "pointer",
                   }}
                 >
                   {advancing ? "Saving…" : "Confirm and Begin Stage 17 →"}
                 </button>
+                {!canBegin && beginBlockers.length > 0 && (
+                  <ul
+                    className="text-body-sm"
+                    style={{
+                      color: "var(--color-text-tertiary)",
+                      marginTop: 12,
+                      listStyle: "disc",
+                      paddingLeft: 20,
+                      textAlign: "left",
+                      maxWidth: 520,
+                      marginInline: "auto",
+                    }}
+                  >
+                    {beginBlockers.map((r) => (
+                      <li key={r}>{r}</li>
+                    ))}
+                  </ul>
+                )}
                 {/* TODO: reinstate owner check */}
                 {/* before commercial deployment */}
                 {false && !isOwner && (
