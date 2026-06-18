@@ -82,6 +82,18 @@ export type TierTwoEvent =
   | { type: "check_progress"; index: number; message: string }
   | { type: "check_done"; result: FullCheckResult }
   | {
+      // Emitted after checks 1–7 complete. The client is expected to drive
+      // Check 8 (Stages 13–16) by invoking each stage as a separate server
+      // function call — each call is a fresh Worker invocation with its own
+      // wall-clock budget — then resume checks 9–12 via runTierTwoChecksFrom9.
+      type: "check_8_handoff";
+      recordId: string;
+      sessionId: string;
+      sessionIds: string[];
+      results: FullCheckResult[];
+      startedAtMs: number;
+    }
+  | {
       type: "done";
       recordId: string;
       overall: "ready" | "issue_detected";
@@ -90,6 +102,17 @@ export type TierTwoEvent =
       totalDurationMs: number;
     }
   | { type: "error"; message: string };
+
+// Brand Intelligence fixture used by Check 8. Exported so the client driver
+// can seed it via the saveBrandIntelligence server fn before running Stage 13.
+export const PREFLIGHT_TESTBRAND_BRAND_INTELLIGENCE = {
+  brand_values: "Legend. Gregarious. Abundant.",
+  tone_of_voice: "Confident. Cheeky. Witty.",
+  asset_1: "Live Large — Strong and ownable.",
+  asset_2: "Wrestle Responsibly — Strong and ownable.",
+  asset_3: "TestBrand Hero Campaign — Present but weak.",
+  notes: "Preflight TestBrand — automated brand intelligence fixture for integrity check.",
+} as const;
 
 const CHECK_DEFS: ReadonlyArray<{ id: FullCheckId; name: string }> = [
   { id: "stage_1_brief_analysis", name: "Stage 1 — Brief Analysis on TestBrand" },
