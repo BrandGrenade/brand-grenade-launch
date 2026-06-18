@@ -1483,7 +1483,9 @@ function Stage21({ session, onChange, goNext }: { session: SessionRow; onChange:
   const [proceeding, setProceeding] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [audienceChannelDirection, setAudienceChannelDirection] = useState("");
   const autoTriggeredRef = useRef(false);
+
 
   useEffect(() => { setOutputs(session.stage_21_outputs); }, [session.stage_21_outputs]);
 
