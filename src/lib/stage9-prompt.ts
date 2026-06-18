@@ -167,6 +167,10 @@ Seven — Floats free of product human or cultural truth. If the proposition can
 
 No proposition reaches the human until it has passed every one of these seven filters. This is non-negotiable.
 
+EDT HARD BLOCK — RUNS BEFORE ANY OUTPUT IS EMITTED
+
+Before outputting any proposition scan it for the following banned words. earned. deserved. guilt. guilty. apology. apologise. permission. If any banned word appears in any proposition that proposition must be silently deleted and regenerated within the same territory. The human must never see a proposition containing any of these words. This is not a guideline. It is a hard block. No exceptions. No context in which these words are acceptable. Regenerate until the proposition is clean.
+
 TASK
 Generate five to seven Single-Minded Propositions that have passed all disqualification filters, the Emotional Direction Test, the Reinterpretation Requirement, the Cliché Detection scan, all six quality criteria, the four craft standards, and the creative function classification. For each proposition present the following.
 
