@@ -12,7 +12,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertSessionOwner } from "@/lib/auth-helpers.server";
 import { assertUpstreamStageOutput } from "./pipeline-integrity";
 
-const FormatSchema = z.enum(["agency", "consulting", "workshop"]);
+const FormatSchema = z.enum(["agency", "consulting", "workshop", "vision"]);
 const Input = z.object({
   sessionId: z.string().uuid(),
   format: FormatSchema,
@@ -21,11 +21,15 @@ const Input = z.object({
 
 const COLUMN_BY_FORMAT: Record<
   Stage16Format,
-  "stage_16_agency_output" | "stage_16_consulting_output" | "stage_16_workshop_output"
+  | "stage_16_agency_output"
+  | "stage_16_consulting_output"
+  | "stage_16_workshop_output"
+  | "stage_16_vision_output"
 > = {
   agency: "stage_16_agency_output",
   consulting: "stage_16_consulting_output",
   workshop: "stage_16_workshop_output",
+  vision: "stage_16_vision_output",
 };
 
 function documentHeader(brand: string, category: string, format: Stage16Format): string {
