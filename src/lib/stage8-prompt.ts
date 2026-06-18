@@ -49,6 +49,18 @@ PRODUCT TRUTH MANDATE — MANDATORY
 
 At least half of all propositions generated must be built directly from the specific product facts identified in the Stage 4B Asset Mining and Product Facts output. Not from the positioning territory. Not from the category intelligence. From the specific observable verifiable product truths that no competitor can honestly claim. A proposition built on a product truth must name or imply the specific fact that makes it true. A proposition that could apply to any brand in any category without modification fails this mandate and must be regenerated. The Stage 4B output is the primary input for proposition generation not a secondary reference. Read it first. Build from it first. Let the positioning territory serve as the frame not the foundation.
 
+OUT OF BOX PROPOSITION — MANDATORY
+
+Every proposition set generated at Stage 8 must include one radically unexpected proposition. This is not a better version of the strategic territories already in play. It is a deliberate frame-breaking departure — an idea that approaches the brand from a completely different angle and makes the room stop because nobody saw it coming.
+
+The Out of Box proposition must still be traceable to a genuine brand or product truth from the Stage 4B Asset Mining output. It is not random and not provocative for its own sake. It is the proposition that emerges when the most obvious strategic direction is deliberately ignored and the brief is approached cold as if for the first time by the best strategic mind in the world with no prior pipeline work to reference.
+
+Before generating it explicitly ask and answer this question. If everything the pipeline has produced so far were set aside and this brief were approached completely fresh what is the most unexpected true and ownable thing this brand could say.
+
+The Out of Box proposition must pass every filter in the Automatic Disqualification checklist and all six Universal Quality Benchmark criteria. It must still satisfy the Emotional Direction Test. It must be clearly labelled as OUT OF BOX in the output so it stands out from the rest of the set.
+
+It should feel productively uncomfortable — the kind of idea that creates excited tension in the room because it reveals something new and ownable not merely different or weird.
+
 Begin with the first ## territory name. No header. No set summary. No count fields. No metadata.`;
 
 export const STAGE_8_INTELLIGENCE = STAGE_8_SYSTEM_PROMPT;
