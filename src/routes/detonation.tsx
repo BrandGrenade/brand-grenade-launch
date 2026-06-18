@@ -1483,7 +1483,9 @@ function Stage21({ session, onChange, goNext }: { session: SessionRow; onChange:
   const [proceeding, setProceeding] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [audienceChannelDirection, setAudienceChannelDirection] = useState("");
   const autoTriggeredRef = useRef(false);
+
 
   useEffect(() => { setOutputs(session.stage_21_outputs); }, [session.stage_21_outputs]);
 
@@ -1509,7 +1511,7 @@ function Stage21({ session, onChange, goNext }: { session: SessionRow; onChange:
     try {
       await clear({ data: { sessionId: session.id } });
       setOutputs(null);
-      const r = await run({ data: { sessionId: session.id } });
+      const r = await run({ data: { sessionId: session.id, audienceChannelDirection: audienceChannelDirection.trim() || undefined } });
       setOutputs(r.outputs);
       await onChange();
     } catch (e) {
@@ -1517,6 +1519,7 @@ function Stage21({ session, onChange, goNext }: { session: SessionRow; onChange:
       setErr(e instanceof Error ? e.message : "Stage 21 force regenerate failed");
     } finally { setBusy(false); }
   };
+
 
   useEffect(() => {
     if (autoTriggeredRef.current) return;
@@ -1593,7 +1596,27 @@ function Stage21({ session, onChange, goNext }: { session: SessionRow; onChange:
               );
             })}
           </div>
-          <div style={{ marginTop: 24, display: "flex", gap: 12, justifyContent: "flex-end", flexWrap: "wrap" }}>
+          <div style={{ marginTop: 24, padding: 16, border: `1px solid ${AMBER}33`, borderRadius: 8, backgroundColor: "#0E0E0E" }}>
+            <label htmlFor="stage21-audience-channel" className="text-mono" style={{ display: "block", color: AMBER, fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 8 }}>
+              Audience and Channel Direction
+            </label>
+            <div className="text-body-sm" style={{ color: "#8A8680", marginBottom: 10 }}>
+              Free-text correction to the channel selection when the default recommendations are wrong for the specific audience. Injected into the regeneration prompt as a mandatory constraint. Not a creative direction field.
+            </div>
+            <textarea
+              id="stage21-audience-channel"
+              value={audienceChannelDirection}
+              onChange={(e) => setAudienceChannelDirection(e.target.value)}
+              rows={4}
+              placeholder="e.g. Audience is procurement leads aged 45+ in regional Australia — LinkedIn and TikTok are wrong, prioritise trade press and industry events instead."
+              style={{
+                width: "100%", backgroundColor: "#000", color: "#E8E4DE",
+                border: "1px solid #2A2A2A", borderRadius: 6, padding: 12,
+                fontFamily: "inherit", fontSize: 14, lineHeight: 1.5, resize: "vertical",
+              }}
+            />
+          </div>
+          <div style={{ marginTop: 16, display: "flex", gap: 12, justifyContent: "flex-end", flexWrap: "wrap" }}>
             <AmberButton variant="ghost" onClick={handleForceRegenerate} disabled={busy}>
               {busy ? <><Spinner /> Regenerating…</> : "Force Regenerate"}
             </AmberButton>
@@ -1602,6 +1625,7 @@ function Stage21({ session, onChange, goNext }: { session: SessionRow; onChange:
               {proceeding ? <><Spinner /> Loading...</> : "Proceed to Stage 22"}
             </AmberButton>
           </div>
+
         </>
       )}
     </section>

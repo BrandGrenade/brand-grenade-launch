@@ -126,7 +126,21 @@ async function generateOne(
   });
 }
 
-const RunInput = z.object({ sessionId: z.string().uuid() });
+const RunInput = z.object({
+  sessionId: z.string().uuid(),
+  audienceChannelDirection: z.string().trim().max(4000).optional(),
+});
+
+function buildAudienceChannelRedirect(text: string): string {
+  const t = text.trim();
+  if (!t) return "";
+  return [
+    "AUDIENCE AND CHANNEL DIRECTION (mandatory constraint from human reviewer):",
+    t,
+    "",
+    "Treat this as authoritative context about the real audience and the channels that actually reach them. Where the default channel recommendations or audience assumptions conflict with this direction, this direction wins. Apply it visibly to channel role, audience mindstate, and execution choices in this brief.",
+  ].join("\n");
+}
 
 export const runStage21 = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -154,11 +168,13 @@ export const runStage21 = createServerFn({ method: "POST" })
     if (entries.length === 0)
       throw new Error("No active channels found in Stage 19 hierarchy");
 
+    const redirectText = buildAudienceChannelRedirect(data.audienceChannelDirection ?? "");
+
     let outputs: Record<string, string>;
     try {
       const results: string[] = [];
       for (const e of entries) {
-        const result = await generateOne(data.sessionId, e.name, e.role, e.content, s, "");
+        const result = await generateOne(data.sessionId, e.name, e.role, e.content, s, redirectText);
         results.push(result);
         await new Promise((resolve) => setTimeout(resolve, 2000));
       }
@@ -179,6 +195,7 @@ export const runStage21 = createServerFn({ method: "POST" })
     if (saveErr) throw new Error(`Failed to save Stage 21 outputs: ${saveErr.message}`);
     return { outputs };
   });
+
 
 export const saveStage21 = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
