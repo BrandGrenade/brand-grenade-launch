@@ -16,7 +16,7 @@ export const STAGE_OUTPUT_COLUMNS: Record<number, readonly string[]> = {
   13: ["stage_13_output"],
   14: ["stage_14_output"],
   15: ["stage_15_output"],
-  16: ["stage_16_consulting_output", "stage_16_agency_output", "stage_16_workshop_output"],
+  16: ["stage_16_consulting_output", "stage_16_agency_output", "stage_16_workshop_output", "stage_16_vision_output"],
   17: ["stage_17_output"],
   18: ["stage_18_output"],
   19: ["stage_19_output"],

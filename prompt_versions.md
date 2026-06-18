@@ -622,3 +622,26 @@ Disqualification checklist and all six Universal Quality Benchmark
 criteria, satisfies the Emotional Direction Test, and is clearly labelled
 OUT OF BOX in the output. Existing prompt content is unchanged. File:
 `src/lib/stage8-prompt.ts`.
+
+---
+
+## v4.0 — Stage 16 Document Four: Strategy and Creative Vision
+**Date:** June 2026
+**Stage:** Stage 16
+**Change:** Added a fourth Stage 16 document — STRATEGY AND CREATIVE VISION
+— alongside the existing Board Strategy Recommendation, Agency Strategy
+Platform, and Brand Workshop Guide. The three existing documents are
+unchanged. The new document is exported as `STAGE_16_VISION_PROMPT` from
+`src/lib/stage16-prompt.ts` and wired into the Stage 16 document assembly
+function (`src/lib/stage16.functions.ts`) as the `vision` format. Vision is
+generated as a single unified narrative (not sectioned) and saved to the new
+`stage_16_vision_output` column. The document is structured as Opening,
+Part One (The Territory No One Else Can Take), Part Two (The Human Truth at
+the Centre), Part Three (Why This Is Right), Part Four (The World This
+Strategy Opens), Part Five (The Creative Detonation including master idea
+and top three springboard directions from Stage 18), and Closing. Target
+length 4,000–5,000 words. Files: `src/lib/stage16-prompt.ts`,
+`src/lib/stage16.functions.ts`, `src/lib/stage16-sections.ts`,
+`src/lib/stage16-content.ts`, `src/lib/pdf-generator.ts`,
+`src/lib/pipeline-integrity.ts`, `src/lib/retry.functions.ts`,
+`src/lib/stage1b.functions.ts`, migration adding `stage_16_vision_output`.

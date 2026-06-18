@@ -6,7 +6,7 @@
 // impossible. Sections are stitched together by `assembleDocument` with the
 // proposition reveal inserted at the correct location.
 
-export type Stage16Format = "consulting" | "agency" | "workshop";
+export type Stage16Format = "consulting" | "agency" | "workshop" | "vision";
 
 export interface SessionForStage16 {
   brand_name: string | null;
@@ -650,6 +650,10 @@ export function getSectionsForFormat(
       return getAgencySections(session);
     case "workshop":
       return getWorkshopSections(session);
+    case "vision":
+      // Vision is generated as a single unified narrative — not sectioned.
+      // The runStage16 handler special-cases this format.
+      return [];
   }
 }
 
