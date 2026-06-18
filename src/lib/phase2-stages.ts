@@ -12,6 +12,7 @@ export const PHASE_2_STAGES: Phase2Stage[] = [
   { id: "stage-18", number: "18", label: "The Detonation" },
   { id: "stage-19", number: "19", label: "Activation Architecture" },
   { id: "stage-20", number: "20", label: "Detonation Brief" },
+  { id: "stage-20b", number: "20B", label: "Channel Strategy" },
   { id: "stage-21", number: "21", label: "Channel Briefs" },
   { id: "stage-22", number: "22", label: "Brand Architecture" },
 ];
