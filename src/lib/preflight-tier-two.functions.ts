@@ -267,6 +267,10 @@ export const runTierTwoFullCheck = createServerFn({ method: "POST" })
     const startedAtMs = Date.now();
     const createdSessionIds = new Set<string>();
     let primarySessionId: string | null = null;
+    // When true, the run hands off Check 8 to the client driver. The finally
+    // block must NOT cleanup or finalise in that case — the resume server fn
+    // (runTierTwoChecksFrom9) owns both responsibilities.
+    let handedOff = false;
 
     // -----------------------------------------------------------------------
     // Per-check runner helper
