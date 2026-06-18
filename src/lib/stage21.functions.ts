@@ -134,12 +134,7 @@ const RunInput = z.object({
 function buildAudienceChannelRedirect(text: string): string {
   const t = text.trim();
   if (!t) return "";
-  return [
-    "AUDIENCE AND CHANNEL DIRECTION (mandatory constraint from human reviewer):",
-    t,
-    "",
-    "Treat this as authoritative context about the real audience and the channels that actually reach them. Where the default channel recommendations or audience assumptions conflict with this direction, this direction wins. Apply it visibly to channel role, audience mindstate, and execution choices in this brief.",
-  ].join("\n");
+  return `MANDATORY CHANNEL AND AUDIENCE CONSTRAINT — THIS OVERRIDES ALL DEFAULT CHANNEL RECOMMENDATIONS — ${t}`;
 }
 
 export const runStage21 = createServerFn({ method: "POST" })
