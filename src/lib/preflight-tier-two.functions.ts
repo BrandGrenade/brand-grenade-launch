@@ -700,68 +700,40 @@ export const runTierTwoFullCheck = createServerFn({ method: "POST" })
 
       // ---------------------------------------------------------------------
       // CHECK 8 — Phase 1 completion: Stages 13–16
+      //
+      // STRUCTURAL: Each of Stages 13, 13B, 14, 14B, 14C, 15, 16 is a slow
+      // Claude call. If they all ran inside this single server-fn invocation,
+      // the Cloudflare Worker wall-clock budget would be consumed mid-chain
+      // (Stage 14 was reproducibly killed at ~15min). Instead, we hand off
+      // to the client driver which invokes each stage as its own server fn
+      // RPC — each is a fresh Worker invocation with its own wall-clock
+      // budget. The driver records the Check 8 result then resumes checks
+      // 9–12 via runTierTwoChecksFrom9.
       // ---------------------------------------------------------------------
-      yield { type: "check_start", index: 8, id: CHECK_DEFS[7].id, name: CHECK_DEFS[7].name };
-      {
-        const gen = runCheck(
-          8,
-          async (emit) => {
-            if (!primarySessionId || results[6].status !== "pass")
-              throw new Error("Skipped: Stage 12 selection did not complete");
-            // Seed Brand Intelligence BEFORE Stage 13 — runStage13 throws
-            // "Brand Intelligence not supplied" if brand_intelligence is null.
-            emit("Seeding Brand Intelligence (auto, preflight fixture)");
-            await saveBrandIntelligence({
-              data: {
-                sessionId: primarySessionId,
-                brandIntelligence: {
-                  brand_values: "Legend. Gregarious. Abundant.",
-                  tone_of_voice: "Confident. Cheeky. Witty.",
-                  asset_1: "Live Large — Strong and ownable.",
-                  asset_2: "Wrestle Responsibly — Strong and ownable.",
-                  asset_3: "TestBrand Hero Campaign — Present but weak.",
-                  notes: "Preflight TestBrand — automated brand intelligence fixture for integrity check.",
-                },
-              },
-            });
-            emit("Running Stage 13 (Brand Intelligence draft)...");
-            await drainGenerator(runStage13({ data: { sessionId: primarySessionId } }));
-            emit("Running Stage 13B...");
-            await drainGenerator(runStage13b({ data: { sessionId: primarySessionId } }));
-            emit("Running Stage 14...");
-            await drainGenerator(runStage14({ data: { sessionId: primarySessionId } }));
-            emit("Running Stage 14B...");
-            await drainGenerator(runStage14b({ data: { sessionId: primarySessionId } }));
-            emit("Running Stage 14C...");
-            await drainGenerator(runStage14c({ data: { sessionId: primarySessionId } }));
-            emit("Running Stage 15 (Audit)...");
-            await drainGenerator(runStage15({ data: { sessionId: primarySessionId } }));
-            emit("Running Stage 16 (Document — agency format)...");
-            await drainGenerator(
-              runStage16({ data: { sessionId: primarySessionId, format: "agency" } }) as unknown as AsyncGenerator<{ delta?: string; done?: true }, void, unknown>,
-            );
-            const { data: row } = await supabaseAdmin
-              .from("sessions")
-              .select("stage_13_output, stage_14_output, stage_15_output, stage_16_agency_output, status")
-              .eq("id", primarySessionId)
-              .single();
-            if (!row?.stage_16_agency_output) throw new Error("Stage 16 agency output missing");
-            return {
-              detail: `Phase 1 complete (Stages 13–16). Session status: ${row?.status ?? "unknown"}. Stage 16 output: ${row?.stage_16_agency_output.length ?? 0} chars.`,
-            };
-          },
-          "Identify the first failing stage in the 13–16 chain from progress log; check brand_intelligence persistence and Stage 15 audit gate.",
-        );
-        let result!: FullCheckResult;
-        for (;;) {
-          const r = await gen.next();
-          if (r.done) {
-            result = r.value;
-            break;
-          }
-          yield r.value;
-        }
-        yield { type: "check_done", result };
+      if (!primarySessionId || results[6].status !== "pass") {
+        // Stage 12 didn't pass — mark Check 8 failed inline, no handoff.
+        yield { type: "check_start", index: 8, id: CHECK_DEFS[7].id, name: CHECK_DEFS[7].name };
+        results[7] = {
+          ...results[7],
+          status: "fail",
+          durationMs: 0,
+          detail: "Skipped: Stage 12 selection did not complete",
+          remediation: "Fix the upstream Check 7 failure before re-running.",
+        };
+        await persistResults(supabaseAdmin, recordId, results);
+        yield { type: "check_done", result: results[7] };
+      } else {
+        // Hand off Check 8 + remaining checks to the client driver.
+        handedOff = true;
+        yield {
+          type: "check_8_handoff",
+          recordId,
+          sessionId: primarySessionId,
+          sessionIds: Array.from(createdSessionIds),
+          results,
+          startedAtMs,
+        };
+        return;
       }
 
       // ---------------------------------------------------------------------
