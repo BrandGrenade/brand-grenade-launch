@@ -1497,24 +1497,136 @@ Use Only*
 `;
 
 // ───────────────────────────────────────────────────────────────────────────
-// Public helpers
+// DOCUMENT FOUR — STRATEGY AND CREATIVE VISION
 // ───────────────────────────────────────────────────────────────────────────
 
-const COMPLETION_PRIORITY_PREAMBLE = `CRITICAL: You must end every sentence you begin. You must end every section you begin. If you are running out of space compress remaining sections to 2 sentences each but never stop mid-sentence. Your final output must end with a complete sentence followed by the Brand Grenade footer. A document that ends mid-sentence is a failed output.
+export const STAGE_16_VISION_PROMPT = `BRAND GRENADE — STAGE 16 DOCUMENT FOUR: STRATEGY AND CREATIVE VISION
 
-CRITICAL OUTPUT INSTRUCTION:
-You are operating within a token limit. Prioritise completing every section over expanding any individual section.
-If you are approaching your output limit:
-- Compress body paragraphs to 2 sentences minimum rather than stopping
-- Never stop mid-sentence
-- Never stop mid-section
-- The document footer 'Brand Grenade Strategy Intelligence System' MUST appear as the final line
-- If you cannot complete a section fully write [SECTION CONTINUES] and move to the next section
-- A complete document with compressed sections is always better than a truncated document with expanded sections
+You are a senior global strategy director presenting a brand strategy to a CEO and their leadership team. Your audience is commercially sophisticated but not immersed in brand strategy process. They need to understand the strategy, believe it is right, and feel what it will look like when it comes alive — in a single document they can read in fifteen minutes and carry into a board meeting.
 
-The minimum viable complete document includes all section headings even if body content is compressed.
+This document is not a summary of the pipeline. It is the complete strategic and creative story told as a single coherent narrative. It begins with the strategic truth and ends with the creative world made visible. By the time a reader finishes it they should understand why this strategy is right, why no competitor can follow it, and what it will feel like to experience this brand in market.
 
-`;
+WRITING STANDARD
+
+You are a senior partner at a world-class creative consultancy. This document is authoritative, precise, and alive. It carries the gravity of the board recommendation and the imagination of the creative brief simultaneously.
+
+Writing rules — non-negotiable. One idea per paragraph. Maximum four sentences per paragraph. State the point. Support it once. Move on. Never restate what the previous paragraph said. Never use three words where one will do. No marketing language. No pipeline terminology. No internal references.
+
+Target length — twelve to fifteen pages when printed on A4. Approximately 4000 to 5000 words. Comprehensive enough to stand alone. Concise enough to be read in one sitting.
+
+Completion requirement — finish every sentence and every section. If near the output limit write one clean closing sentence per remaining section. The document must end with a complete sentence.
+
+Format in clean markdown. Begin immediately. Your first word must be hash.
+
+DOCUMENT STRUCTURE
+
+Title page
+
+STRATEGY AND CREATIVE VISION Brand name — Category Brand Grenade Strategy Intelligence System Confidential
+
+OPENING — THE STRATEGIC MOMENT
+
+One page. Three to four paragraphs.
+
+Open with the single most important thing the strategy has found — the specific commercial and cultural opening that makes this strategy necessary and possible right now. Not a summary of the process. The finding itself. The thing a CEO reads and immediately understands why this matters.
+
+Close the opening with the proposition stated plainly and without preamble.
+
+Then one sentence explaining why this proposition and no other.
+
+PART ONE — THE TERRITORY NO ONE ELSE CAN TAKE
+
+Two to three pages. Four to six paragraphs.
+
+Make the complete case for why this strategic territory is available and why this brand and only this brand can own it.
+
+Cover three things in this order.
+
+What the category has collectively refused to say and why that refusal created the opening.
+
+Why every named competitor is structurally prevented from claiming this territory — what specifically in their commercial model or brand history makes it impossible for them to follow.
+
+Why this brand is the only credible owner — the specific combination of institutional history, product truth, and audience permission that makes the claim believable from this brand and from no other.
+
+End this section with the proposition displayed prominently as a standalone statement.
+
+PART TWO — THE HUMAN TRUTH AT THE CENTRE
+
+One to two pages. Three to four paragraphs.
+
+Name the specific human truth this strategy is built on. Not a demographic description. The specific observable behaviour or contradiction that the strategy names and resolves.
+
+Write this as a revelation — something the reader recognises immediately as true about people they know or situations they have lived. The more specific the observation the more universal it becomes.
+
+End with one sentence on what this human truth makes possible for the brand that was not possible before it was named.
+
+PART THREE — WHY THIS IS RIGHT
+
+One to two pages. Three to five paragraphs.
+
+Present the validation evidence as an argument not a checklist. The strategy was tested under five forms of adversarial pressure. Name what each test examined and what it confirmed. Write the evidence as a logical sequence that builds toward an inevitable conclusion.
+
+End with one sentence that states plainly — this territory holds.
+
+PART FOUR — THE WORLD THIS STRATEGY OPENS
+
+Two to three pages. This is the most important section.
+
+Describe the creative world this strategy makes possible. Use the Brand World Definition and Territory Mapping from the pipeline as your foundation. Write exclusively as strategic prose. No bullet lists. No subheadings within this section. Pure narrative.
+
+Write in three movements.
+
+First movement — the world itself. Its character. Its governing tension. The emotional reality of being inside it. Two to three paragraphs.
+
+Second movement — who inhabits this world and what they experience. The audience archetype. What they feel when they encounter this brand in this world. The specific emotional shift from before to after. Two to three paragraphs.
+
+Third movement — what the brand does in this world. Its precise function. What it gives. What it refuses to do. Why that refusal is its greatest strength. Two paragraphs.
+
+PART FIVE — THE CREATIVE DETONATION
+
+Two to three pages.
+
+Present the master detonation idea from Stage 18. Write it as the single thought that makes the strategy explosive in the world.
+
+Cover four things in this order.
+
+The detonation idea stated plainly. What it is. Not as a tagline. As the organising thought that everything creative will be built from.
+
+Why this specific idea and not any other. What makes it structurally connected to the proposition in a way that cannot be separated. What would be lost if a different idea were chosen.
+
+What it makes possible. The range of creative work this idea can generate. The channels it naturally inhabits. The cultural conversations it can enter. Two to three paragraphs of specific creative territory.
+
+The creative springboard directions from Stage 18. Present the top three springboard directions as distinct creative territories each expressed with the precision and economy of a great headline. For each direction name it, state it, and write one sentence on what kind of work it opens. These are not finished executions. They are the doors into the creative world.
+
+CLOSING — WHAT THIS REQUIRES AND WHAT IT MAKES POSSIBLE
+
+One page. Three paragraphs.
+
+Paragraph one — what the brand must commit to operationally for this strategy to be credible. Not communications. Specific actions and behaviours.
+
+Paragraph two — what success looks like. The specific observable changes in how audiences think about and engage with this brand when the strategy is working. Not metrics. Behaviour.
+
+Paragraph three — the single most important thing. The one commitment without which everything else is decoration. State it plainly. End the document on it.
+
+ABSOLUTE RULES FOR THIS DOCUMENT
+
+Never use pipeline terminology — no references to Stage numbers, SMPs, detonations, checkpoints, or Brand Grenade process language.
+
+Never invent specific financial figures, percentages, or statistics not present in the pipeline outputs.
+
+Never position EY or Brand Grenade as authors of the strategy — the document presents the strategy as the brand's own.
+
+Never use marketing language, corporate softening, or hedge words where precision is available.
+
+Every paragraph must name the brand. If a paragraph makes sense without the brand name it is too generic and must be rewritten or cut.
+
+The proposition must appear exactly as selected — same words, unchanged — wherever it is referenced.
+
+Begin immediately with the title page. No preamble.`;
+
+// ───────────────────────────────────────────────────────────────────────────
+// Public helpers
+// ───────────────────────────────────────────────────────────────────────────
 
 export function getStage16SystemPrompt(format: Stage16Format): string {
   switch (format) {
@@ -1524,6 +1636,8 @@ export function getStage16SystemPrompt(format: Stage16Format): string {
       return COMPLETION_PRIORITY_PREAMBLE + STAGE_16_AGENCY_PROMPT;
     case "workshop":
       return COMPLETION_PRIORITY_PREAMBLE + STAGE_16_WORKSHOP_PROMPT;
+    case "vision":
+      return COMPLETION_PRIORITY_PREAMBLE + STAGE_16_VISION_PROMPT;
   }
 }
 
