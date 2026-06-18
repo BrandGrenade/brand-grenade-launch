@@ -663,3 +663,36 @@ runtime. Two reinforcements landed:
    The existing post-generation scan + up-to-2 silent rewrite attempts +
    needs_review flag on persistent failure remains the enforcement floor
    that prevents banned tokens from ever reaching the database or human.
+
+## v4.2 — Stage 20B: Channel Strategy and Audience Intelligence (2026-06-18)
+
+**Stage:** New Stage 20B inserted between Stage 20 approval and Stage 21.
+**Change:** Added a new Phase 2 stage — Channel Strategy and Audience
+Intelligence — that sits after the Master Detonation Brief is approved and
+before Stage 21 Channel Briefs runs. Stage 20B collects six mandatory
+user-provided audience intelligence inputs (Who is this audience as humans,
+A day in their life, Their influence map, Their decision journey for this
+category, Their psychological profile in this category, Channel universe
+and budget orientation) and combines them with the approved SMP, selected
+detonation, three truths, Stage 14C brand world, Stage 1 / Stage 3 audience
+definition, Stage 19 activation architecture, and the Stage 20 Master
+Detonation Brief to produce a seven-section channel strategy document
+(Audience Behavioural Portrait, Media Journey Map, Channel Role Assignment,
+Mindstate Map, Behavioural Economics Activation Plan, Distinctive Asset
+Deployment Plan, Orchestration Logic). The document is then handed to
+Stage 21 as its primary input alongside the approved detonation and SMP —
+Stage 21 no longer makes channel selection decisions, it executes the
+selection that Stage 20B has set. Stage 21 now hard-blocks if
+`stage_20b_output` is missing. New prompt:
+`src/lib/stage20b-prompt.ts`. New server functions:
+`src/lib/stage20b.functions.ts` (`runStage20b`, `loadStage20b`,
+`saveStage20bInput`, `clearStage20b`). New columns on `sessions`:
+`stage_20b_audience_input` (jsonb), `stage_20b_output` (text),
+`stage_20b_error` (text). UI: new `Stage20b` component in
+`src/routes/detonation.tsx` with the six-field input form, generate /
+edit-and-regenerate / proceed flow, and Stage 21 entry gating. Files:
+`src/lib/stage20b-prompt.ts`, `src/lib/stage20b.functions.ts`,
+`src/lib/stage21.functions.ts`, `src/lib/phase2-stages.ts`,
+`src/routes/detonation.tsx`, migration adding the three `stage_20b_*`
+columns.
+
