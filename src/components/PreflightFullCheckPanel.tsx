@@ -12,10 +12,35 @@ import { toast } from "sonner";
 import {
   runTierTwoFullCheck,
   getLatestTierTwoCheck,
+  recordPreflightCheck8Result,
+  runTierTwoChecksFrom9,
+  PREFLIGHT_TESTBRAND_BRAND_INTELLIGENCE,
   type FullCheckId,
   type FullCheckResult,
   type TierTwoEvent,
 } from "@/lib/preflight-tier-two.functions";
+import { saveBrandIntelligence, runStage13 } from "@/lib/stage13.functions";
+import { runStage13b } from "@/lib/stage13b.functions";
+import { runStage14 } from "@/lib/stage14.functions";
+import { runStage14b } from "@/lib/stage14b.functions";
+import { runStage14c } from "@/lib/stage14c.functions";
+import { runStage15 } from "@/lib/stage15.functions";
+import { runStage16 } from "@/lib/stage16.functions";
+
+// Drain a streaming server-fn AsyncGenerator until its final `done` chunk.
+async function drainStream<C extends { delta?: string; done?: true }>(
+  generatorOrPromise: AsyncGenerator<C, void, unknown> | Promise<AsyncGenerator<C, void, unknown>>,
+): Promise<C & { done: true }> {
+  const gen = (await generatorOrPromise) as AsyncGenerator<C, void, unknown>;
+  let final: (C & { done: true }) | null = null;
+  for await (const chunk of gen) {
+    if (chunk && (chunk as { done?: true }).done) {
+      final = chunk as C & { done: true };
+    }
+  }
+  if (!final) throw new Error("Stream ended without a final payload");
+  return final;
+}
 
 type RunState = "idle" | "running" | "complete" | "lock_failed" | "error";
 
@@ -136,6 +161,16 @@ Speak shortly,
 export function PreflightFullCheckPanel() {
   const runTierTwoFn = useServerFn(runTierTwoFullCheck);
   const getLatestFn = useServerFn(getLatestTierTwoCheck);
+  const runResumeFn = useServerFn(runTierTwoChecksFrom9);
+  const recordCheck8Fn = useServerFn(recordPreflightCheck8Result);
+  const seedBrandIntelFn = useServerFn(saveBrandIntelligence);
+  const stage13Fn = useServerFn(runStage13);
+  const stage13bFn = useServerFn(runStage13b);
+  const stage14Fn = useServerFn(runStage14);
+  const stage14bFn = useServerFn(runStage14b);
+  const stage14cFn = useServerFn(runStage14c);
+  const stage15Fn = useServerFn(runStage15);
+  const stage16Fn = useServerFn(runStage16);
 
   const [state, setState] = useState<RunState>("idle");
   const [results, setResults] = useState<FullCheckResult[]>([]);
@@ -186,6 +221,142 @@ export function PreflightFullCheckPanel() {
     tickRef.current = null;
   };
 
+  // Process events from one streaming server-fn generator. Returns the
+  // handoff payload if the stream ended with `check_8_handoff`, otherwise
+  // null. Returns "lock_failed" / "error" sentinels for terminal states.
+  type ProcessOutcome =
+    | { kind: "handoff"; payload: Extract<TierTwoEvent, { type: "check_8_handoff" }> }
+    | { kind: "done" }
+    | { kind: "lock_failed" }
+    | { kind: "error" };
+  const processStream = async (
+    gen: AsyncGenerator<TierTwoEvent, void, unknown>,
+  ): Promise<ProcessOutcome> => {
+    for await (const ev of gen) {
+      if (ev.type === "lock_failed") {
+        setState("lock_failed");
+        setLockMessage(ev.reason);
+        stopElapsed();
+        return { kind: "lock_failed" };
+      }
+      if (ev.type === "start") {
+        setResults(ev.checks);
+        continue;
+      }
+      if (ev.type === "check_start") {
+        setCurrentMessage(`▶ ${ev.name}`);
+        setResults((prev) =>
+          prev.map((r) => (r.index === ev.index ? { ...r, status: "running" } : r)),
+        );
+        continue;
+      }
+      if (ev.type === "check_progress") {
+        setCurrentMessage(`  · ${ev.message}`);
+        continue;
+      }
+      if (ev.type === "check_done") {
+        setResults((prev) => prev.map((r) => (r.index === ev.result.index ? ev.result : r)));
+        continue;
+      }
+      if (ev.type === "check_8_handoff") {
+        setResults(ev.results);
+        return { kind: "handoff", payload: ev };
+      }
+      if (ev.type === "done") {
+        setOverall(ev.overall);
+        setState("complete");
+        setCurrentMessage(
+          `Completed in ${(ev.totalDurationMs / 1000).toFixed(1)}s. Cleaned up ${ev.sessionIdsCleaned.length} TestBrand session(s).`,
+        );
+        stopElapsed();
+        if (ev.overall === "ready") toast.success("Tier Two: all 12 checks passed");
+        else
+          toast.error(
+            `Tier Two: ${ev.results.filter((r) => r.status === "fail").length} check(s) failed`,
+          );
+        return { kind: "done" };
+      }
+      if (ev.type === "error") {
+        setErrorMessage(ev.message);
+        setState("error");
+        stopElapsed();
+        return { kind: "error" };
+      }
+    }
+    return { kind: "done" };
+  };
+
+  // Drive Check 8 by invoking each of Stages 13, 13B, 14, 14B, 14C, 15, 16
+  // as a SEPARATE server-fn RPC. Each RPC is a fresh Cloudflare Worker
+  // invocation with its own wall-clock budget — this is the structural fix
+  // for the Stage 14 hang that occurred when all seven ran inside one
+  // chained server-fn invocation.
+  const driveCheck8 = async (
+    handoff: Extract<TierTwoEvent, { type: "check_8_handoff" }>,
+  ): Promise<FullCheckResult> => {
+    const idx = 7; // Check 8 → index 7
+    const def = handoff.results[idx];
+    setCurrentMessage(`▶ ${def.name}`);
+    setResults((prev) => prev.map((r) => (r.index === 8 ? { ...r, status: "running" } : r)));
+    const started = Date.now();
+    const sessionId = handoff.sessionId;
+    const timings: string[] = [];
+    const stages: Array<{ label: string; run: () => Promise<unknown> }> = [
+      {
+        label: "Seed Brand Intelligence",
+        run: () =>
+          seedBrandIntelFn({
+            data: {
+              sessionId,
+              brandIntelligence: { ...PREFLIGHT_TESTBRAND_BRAND_INTELLIGENCE },
+            },
+          }),
+      },
+      { label: "Stage 13", run: () => drainStream(stage13Fn({ data: { sessionId } })) },
+      { label: "Stage 13B", run: () => drainStream(stage13bFn({ data: { sessionId } })) },
+      { label: "Stage 14", run: () => drainStream(stage14Fn({ data: { sessionId } })) },
+      { label: "Stage 14B", run: () => drainStream(stage14bFn({ data: { sessionId } })) },
+      { label: "Stage 14C", run: () => drainStream(stage14cFn({ data: { sessionId } })) },
+      { label: "Stage 15", run: () => drainStream(stage15Fn({ data: { sessionId } })) },
+      {
+        label: "Stage 16 (agency)",
+        run: () =>
+          drainStream(
+            stage16Fn({ data: { sessionId, format: "agency" } }) as unknown as AsyncGenerator<
+              { delta?: string; done?: true },
+              void,
+              unknown
+            >,
+          ),
+      },
+    ];
+    try {
+      for (const { label, run } of stages) {
+        setCurrentMessage(`  · Running ${label} (separate Worker invocation)...`);
+        const t0 = Date.now();
+        await run();
+        timings.push(`${label}: ${((Date.now() - t0) / 1000).toFixed(1)}s`);
+      }
+      return {
+        ...def,
+        status: "pass",
+        durationMs: Date.now() - started,
+        detail: `Phase 1 complete (Stages 13–16) — each stage ran as its own server-fn RPC. ${timings.join(", ")}.`,
+        remediation: null,
+      };
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      return {
+        ...def,
+        status: "fail",
+        durationMs: Date.now() - started,
+        detail: `Check 8 failed: ${msg}. Completed: ${timings.join(", ") || "none"}.`,
+        remediation:
+          "Open Stages 13–16 function files. Verify saveBrandIntelligence completes and each stage reads the correct upstream columns. Inspect the named stage's logs.",
+      };
+    }
+  };
+
   const runCheck = async (forceOverride: boolean) => {
     setState("running");
     setLockMessage(null);
@@ -202,52 +373,31 @@ export function PreflightFullCheckPanel() {
           : {},
       })) as AsyncGenerator<TierTwoEvent, void, unknown>;
 
-      for await (const ev of gen) {
-        if (ev.type === "lock_failed") {
-          setState("lock_failed");
-          setLockMessage(ev.reason);
-          stopElapsed();
-          return;
-        }
-        if (ev.type === "start") {
-          setResults(ev.checks);
-          continue;
-        }
-        if (ev.type === "check_start") {
-          setCurrentMessage(`▶ ${ev.name}`);
-          setResults((prev) =>
-            prev.map((r) => (r.index === ev.index ? { ...r, status: "running" } : r)),
-          );
-          continue;
-        }
-        if (ev.type === "check_progress") {
-          setCurrentMessage(`  · ${ev.message}`);
-          continue;
-        }
-        if (ev.type === "check_done") {
-          setResults((prev) =>
-            prev.map((r) => (r.index === ev.result.index ? ev.result : r)),
-          );
-          continue;
-        }
-        if (ev.type === "done") {
-          setOverall(ev.overall);
-          setState("complete");
-          setCurrentMessage(
-            `Completed in ${(ev.totalDurationMs / 1000).toFixed(1)}s. Cleaned up ${ev.sessionIdsCleaned.length} TestBrand session(s).`,
-          );
-          stopElapsed();
-          if (ev.overall === "ready") toast.success("Tier Two: all 12 checks passed");
-          else toast.error(`Tier Two: ${ev.results.filter((r) => r.status === "fail").length} check(s) failed`);
-          continue;
-        }
-        if (ev.type === "error") {
-          setErrorMessage(ev.message);
-          setState("error");
-          stopElapsed();
-          continue;
-        }
-      }
+      const outcome = await processStream(gen);
+      if (outcome.kind !== "handoff") return;
+
+      // ---- Client-driven Check 8 ----
+      const check8Result = await driveCheck8(outcome.payload);
+      const updatedResults = outcome.payload.results.map((r) =>
+        r.index === 8 ? check8Result : r,
+      );
+      setResults(updatedResults);
+      setCurrentMessage(`✓ ${check8Result.name} — ${check8Result.status.toUpperCase()}`);
+      await recordCheck8Fn({
+        data: { recordId: outcome.payload.recordId, allResults: updatedResults },
+      });
+
+      // ---- Resume: checks 9–12 + finalisation ----
+      const resumeGen = (await runResumeFn({
+        data: {
+          recordId: outcome.payload.recordId,
+          sessionId: outcome.payload.sessionId,
+          sessionIds: outcome.payload.sessionIds,
+          priorResults: updatedResults,
+          startedAtMs: outcome.payload.startedAtMs,
+        },
+      })) as AsyncGenerator<TierTwoEvent, void, unknown>;
+      await processStream(resumeGen);
     } catch (e) {
       setErrorMessage(e instanceof Error ? e.message : String(e));
       setState("error");
