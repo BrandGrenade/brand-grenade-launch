@@ -221,6 +221,9 @@ export type Database = {
           stage_20_approved: boolean
           stage_20_error: string | null
           stage_20_output: string | null
+          stage_20b_audience_input: Json | null
+          stage_20b_error: string | null
+          stage_20b_output: string | null
           stage_21_error: string | null
           stage_21_outputs: Json | null
           stage_22_brand_architecture: string | null
@@ -372,6 +375,9 @@ export type Database = {
           stage_20_approved?: boolean
           stage_20_error?: string | null
           stage_20_output?: string | null
+          stage_20b_audience_input?: Json | null
+          stage_20b_error?: string | null
+          stage_20b_output?: string | null
           stage_21_error?: string | null
           stage_21_outputs?: Json | null
           stage_22_brand_architecture?: string | null
@@ -523,6 +529,9 @@ export type Database = {
           stage_20_approved?: boolean
           stage_20_error?: string | null
           stage_20_output?: string | null
+          stage_20b_audience_input?: Json | null
+          stage_20b_error?: string | null
+          stage_20b_output?: string | null
           stage_21_error?: string | null
           stage_21_outputs?: Json | null
           stage_22_brand_architecture?: string | null
