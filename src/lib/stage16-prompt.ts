@@ -1628,6 +1628,23 @@ Begin immediately with the title page. No preamble.`;
 // Public helpers
 // ───────────────────────────────────────────────────────────────────────────
 
+const COMPLETION_PRIORITY_PREAMBLE = `CRITICAL: You must end every sentence you begin. You must end every section you begin. If you are running out of space compress remaining sections to 2 sentences each but never stop mid-sentence. Your final output must end with a complete sentence followed by the Brand Grenade footer. A document that ends mid-sentence is a failed output.
+
+CRITICAL OUTPUT INSTRUCTION:
+You are operating within a token limit. Prioritise completing every section over expanding any individual section.
+If you are approaching your output limit:
+- Compress body paragraphs to 2 sentences minimum rather than stopping
+- Never stop mid-sentence
+- Never stop mid-section
+- The document footer 'Brand Grenade Strategy Intelligence System' MUST appear as the final line
+- If you cannot complete a section fully write [SECTION CONTINUES] and move to the next section
+- A complete document with compressed sections is always better than a truncated document with expanded sections
+
+The minimum viable complete document includes all section headings even if body content is compressed.
+
+`;
+
+
 export function getStage16SystemPrompt(format: Stage16Format): string {
   switch (format) {
     case "consulting":
