@@ -1103,7 +1103,10 @@ export const runTierTwoChecksFrom9 = createServerFn({ method: "POST" })
   .handler(async function* ({ data, context }): AsyncGenerator<TierTwoEvent, void, unknown> {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { recordId, sessionId, startedAtMs } = data;
-    const results: FullCheckResult[] = data.priorResults.map((r) => ({ ...r }));
+    const results: FullCheckResult[] = data.priorResults.map((r) => ({
+      ...r,
+      id: r.id as FullCheckId,
+    }));
     const createdSessionIds = new Set<string>(data.sessionIds);
     const primarySessionId = sessionId;
 
