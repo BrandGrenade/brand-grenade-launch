@@ -291,7 +291,9 @@ Write the complete STRATEGY AND CREATIVE VISION document now. Begin immediately.
         ? { stage_16_agency_output: output }
         : data.format === "consulting"
           ? { stage_16_consulting_output: output }
-          : { stage_16_workshop_output: output };
+          : data.format === "vision"
+            ? { stage_16_vision_output: output }
+            : { stage_16_workshop_output: output };
 
     const { error: ue } = await supabaseAdmin
       .from("sessions")
@@ -299,7 +301,7 @@ Write the complete STRATEGY AND CREATIVE VISION document now. Begin immediately.
         ...outputUpdate,
         stage_16_error: null,
         status: "complete",
-      })
+      } as never)
       .eq("id", data.sessionId);
     if (ue)
       throw new Error(
