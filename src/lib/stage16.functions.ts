@@ -139,58 +139,142 @@ export const runStage16 = createServerFn({ method: "POST" })
     yield { delta: header };
 
     try {
-      for (let i = 0; i < sections.length; i++) {
-        const section = sections[i];
-        // Emit section-start event so the UI can show "Writing: X (Section i+1 of N)".
+      if (data.format === "vision") {
+        // Vision is generated as a single unified narrative.
         yield {
           section: {
-            index: i,
-            total: sections.length,
-            name: section.name,
-            title: section.title,
+            index: 0,
+            total: 1,
+            name: "vision_document",
+            title: "STRATEGY AND CREATIVE VISION",
           },
         };
 
-        const userMessage = buildSectionUserMessage(section, brand, category);
-        let body: string;
+        const { STAGE_16_VISION_PROMPT, getStage16SystemPrompt } = await import(
+          "./stage16-prompt"
+        );
+        void STAGE_16_VISION_PROMPT;
+        const systemPrompt = getStage16SystemPrompt("vision");
+
+        const visionUserMessage = `BRAND: ${brand}
+CATEGORY: ${category}
+SELECTED PROPOSITION: "${selectedSmp}"
+
+COMPLETE PIPELINE INTELLIGENCE — use exclusively as your evidential foundation. Do not invent.
+
+STRATEGIC BRIEF:
+${session.stage_1_output ?? ""}
+
+COMPETITIVE INTELLIGENCE:
+${session.stage_2_output ?? ""}
+
+STRATEGIC TERRITORIES:
+${session.stage_7_output ?? ""}
+
+ALL PROPOSITIONS GENERATED:
+${session.stage_8_output ?? ""}
+
+PROPOSITION PRESSURE TESTS:
+${session.stage_11_output ?? ""}
+
+SELECTION RATIONALE:
+${session.stage_12_output ?? ""}
+
+BRAND FIT ASSESSMENT:
+${session.stage_13_output ?? ""}
+
+CREATIVE TERRITORY MAPPING:
+${session.stage_14_output ?? ""}
+
+CHANNEL EXPRESSION MAPPING:
+${session.stage_14b_output ?? ""}
+
+BRAND WORLD DEFINITION:
+${session.stage_14c_output ?? ""}
+
+CONSISTENCY AUDIT:
+${session.stage_15_output ?? ""}
+
+MASTER DETONATION IDEA AND SPRINGBOARDS (Stage 18):
+${(session as Record<string, unknown>).stage_18_output ?? "[Stage 18 not yet available — write Part Five from the Brand World Definition and Creative Territory Mapping above. Treat the strategic core as the organising thought.]"}
+
+Write the complete STRATEGY AND CREATIVE VISION document now. Begin immediately. Your first character must be #.`;
+
+        let visionBody: string;
         try {
-          body = await callClaude({
-            systemPrompt: section.systemPrompt,
-            userMessage,
-            maxTokens: section.maxTokens,
+          visionBody = await callClaude({
+            systemPrompt,
+            userMessage: visionUserMessage,
+            maxTokens: 16000,
             sessionId: data.sessionId,
-            stageLabel: `Stage 16 — ${section.name}`,
+            stageLabel: "Stage 16 — Strategy and Creative Vision",
             stageNumber: "16",
             stageName: "Document Assembly",
           });
         } catch (e) {
-          const msg = e instanceof Error ? e.message : "section call failed";
-          // Don't fail the entire document for one section — note the gap and move on.
-          body = `*[Section "${section.title}" could not be generated: ${msg}]*`;
+          const msg = e instanceof Error ? e.message : "vision call failed";
+          visionBody = `*[Strategy and Creative Vision could not be generated: ${msg}]*`;
         }
 
-        let sectionBlock = `\n# ${section.title}\n\n${body.trim()}\n`;
+        const visionBlock = `\n${visionBody.trim()}\n`;
+        parts.push(visionBlock);
+        yield { delta: visionBlock };
+        parts.push(DOCUMENT_FOOTER);
+        yield { delta: DOCUMENT_FOOTER };
+      } else {
+        for (let i = 0; i < sections.length; i++) {
+          const section = sections[i];
+          // Emit section-start event so the UI can show "Writing: X (Section i+1 of N)".
+          yield {
+            section: {
+              index: i,
+              total: sections.length,
+              name: section.name,
+              title: section.title,
+            },
+          };
 
-        if (section.includesPropositionReveal && selectedSmp) {
-          // Replace the "PROPOSITION REVEAL:" placeholder if the model produced it,
-          // otherwise append the reveal at the end of the section body.
-          const revealBlock = `\n\n> # "${selectedSmp}"\n\n`;
-          if (/PROPOSITION REVEAL:\s*/i.test(sectionBlock)) {
-            sectionBlock = sectionBlock.replace(
-              /PROPOSITION REVEAL:\s*/i,
-              revealBlock,
-            );
-          } else {
-            sectionBlock += revealBlock;
+          const userMessage = buildSectionUserMessage(section, brand, category);
+          let body: string;
+          try {
+            body = await callClaude({
+              systemPrompt: section.systemPrompt,
+              userMessage,
+              maxTokens: section.maxTokens,
+              sessionId: data.sessionId,
+              stageLabel: `Stage 16 — ${section.name}`,
+              stageNumber: "16",
+              stageName: "Document Assembly",
+            });
+          } catch (e) {
+            const msg = e instanceof Error ? e.message : "section call failed";
+            // Don't fail the entire document for one section — note the gap and move on.
+            body = `*[Section "${section.title}" could not be generated: ${msg}]*`;
           }
+
+          let sectionBlock = `\n# ${section.title}\n\n${body.trim()}\n`;
+
+          if (section.includesPropositionReveal && selectedSmp) {
+            // Replace the "PROPOSITION REVEAL:" placeholder if the model produced it,
+            // otherwise append the reveal at the end of the section body.
+            const revealBlock = `\n\n> # "${selectedSmp}"\n\n`;
+            if (/PROPOSITION REVEAL:\s*/i.test(sectionBlock)) {
+              sectionBlock = sectionBlock.replace(
+                /PROPOSITION REVEAL:\s*/i,
+                revealBlock,
+              );
+            } else {
+              sectionBlock += revealBlock;
+            }
+          }
+
+          parts.push(sectionBlock);
+          yield { delta: sectionBlock };
         }
 
-        parts.push(sectionBlock);
-        yield { delta: sectionBlock };
+        parts.push(DOCUMENT_FOOTER);
+        yield { delta: DOCUMENT_FOOTER };
       }
-
-      parts.push(DOCUMENT_FOOTER);
-      yield { delta: DOCUMENT_FOOTER };
     } catch (e) {
       const msg = e instanceof Error ? e.message : `Stage 16 (${data.format}) failed`;
       await supabaseAdmin
