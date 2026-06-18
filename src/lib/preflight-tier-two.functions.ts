@@ -994,35 +994,37 @@ export const runTierTwoFullCheck = createServerFn({ method: "POST" })
       const msg = fatal instanceof Error ? fatal.message : String(fatal);
       yield { type: "error", message: `Fatal error during Tier Two: ${msg}` };
     } finally {
-      // -------------------------------------------------------------------
-      // Cleanup — delete every TestBrand session we created
-      // -------------------------------------------------------------------
-      const ids = Array.from(createdSessionIds);
-      if (ids.length > 0) {
-        await supabaseAdmin.from("sessions").delete().in("id", ids);
+      // When the run has been handed off to the client driver for Check 8,
+      // cleanup and finalisation are deferred — runTierTwoChecksFrom9 owns
+      // both. Skipping here avoids deleting the in-progress TestBrand session
+      // and avoids prematurely finalising the preflight_checks row.
+      if (!handedOff) {
+        const ids = Array.from(createdSessionIds);
+        if (ids.length > 0) {
+          await supabaseAdmin.from("sessions").delete().in("id", ids);
+        }
+
+        const failedCount = results.filter((r) => r.status === "fail").length;
+        const overall: "ready" | "issue_detected" = failedCount === 0 ? "ready" : "issue_detected";
+        await supabaseAdmin
+          .from("preflight_checks")
+          .update({
+            status: "complete",
+            completed_at: nowIso(),
+            tier_two_results: results as unknown as never,
+            overall_result: overall,
+          })
+          .eq("id", recordId);
+
+        yield {
+          type: "done",
+          recordId,
+          overall,
+          results,
+          sessionIdsCleaned: ids,
+          totalDurationMs: Date.now() - startedAtMs,
+        };
       }
-
-      // Finalise preflight_checks row
-      const failedCount = results.filter((r) => r.status === "fail").length;
-      const overall: "ready" | "issue_detected" = failedCount === 0 ? "ready" : "issue_detected";
-      await supabaseAdmin
-        .from("preflight_checks")
-        .update({
-          status: "complete",
-          completed_at: nowIso(),
-          tier_two_results: results as unknown as never,
-          overall_result: overall,
-        })
-        .eq("id", recordId);
-
-      yield {
-        type: "done",
-        recordId,
-        overall,
-        results,
-        sessionIdsCleaned: ids,
-        totalDurationMs: Date.now() - startedAtMs,
-      };
     }
   });
 
