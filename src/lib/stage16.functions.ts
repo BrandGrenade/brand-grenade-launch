@@ -89,10 +89,12 @@ export const runStage16 = createServerFn({ method: "POST" })
           ? { stage_16_agency_output: null, stage_16_error: null }
           : column === "stage_16_consulting_output"
             ? { stage_16_consulting_output: null, stage_16_error: null }
-            : { stage_16_workshop_output: null, stage_16_error: null };
+            : column === "stage_16_vision_output"
+              ? { stage_16_vision_output: null, stage_16_error: null }
+              : { stage_16_workshop_output: null, stage_16_error: null };
       await supabaseAdmin
         .from("sessions")
-        .update(clearUpdate)
+        .update(clearUpdate as never)
         .eq("id", data.sessionId);
     }
 
