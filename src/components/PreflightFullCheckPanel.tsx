@@ -12,10 +12,35 @@ import { toast } from "sonner";
 import {
   runTierTwoFullCheck,
   getLatestTierTwoCheck,
+  recordPreflightCheck8Result,
+  runTierTwoChecksFrom9,
+  PREFLIGHT_TESTBRAND_BRAND_INTELLIGENCE,
   type FullCheckId,
   type FullCheckResult,
   type TierTwoEvent,
 } from "@/lib/preflight-tier-two.functions";
+import { saveBrandIntelligence, runStage13 } from "@/lib/stage13.functions";
+import { runStage13b } from "@/lib/stage13b.functions";
+import { runStage14 } from "@/lib/stage14.functions";
+import { runStage14b } from "@/lib/stage14b.functions";
+import { runStage14c } from "@/lib/stage14c.functions";
+import { runStage15 } from "@/lib/stage15.functions";
+import { runStage16 } from "@/lib/stage16.functions";
+
+// Drain a streaming server-fn AsyncGenerator until its final `done` chunk.
+async function drainStream<C extends { delta?: string; done?: true }>(
+  generatorOrPromise: AsyncGenerator<C, void, unknown> | Promise<AsyncGenerator<C, void, unknown>>,
+): Promise<C & { done: true }> {
+  const gen = (await generatorOrPromise) as AsyncGenerator<C, void, unknown>;
+  let final: (C & { done: true }) | null = null;
+  for await (const chunk of gen) {
+    if (chunk && (chunk as { done?: true }).done) {
+      final = chunk as C & { done: true };
+    }
+  }
+  if (!final) throw new Error("Stream ended without a final payload");
+  return final;
+}
 
 type RunState = "idle" | "running" | "complete" | "lock_failed" | "error";
 
