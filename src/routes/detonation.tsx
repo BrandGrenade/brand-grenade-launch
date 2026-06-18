@@ -1757,8 +1757,8 @@ function Stage21({ session, onChange, goNext }: { session: SessionRow; onChange:
       <SectionTitle kicker="STAGE 21" title="Channel Briefs" subtitle="One detonation brief per active channel. Click a card to expand." />
       {err && <ErrorBanner message={err} />}
       {!outputs || outputEntries.length === 0 ? (
-        <AmberButton onClick={handleRun} disabled={busy || !session.stage_20_approved}>
-          {busy && <Spinner />} {busy ? "Generating channel briefs…" : "Run Stage 21"}
+        <AmberButton onClick={handleRun} disabled={busy || !session.stage_20_approved || !session.stage_20b_output}>
+          {busy && <Spinner />} {busy ? "Generating channel briefs…" : !session.stage_20b_output ? "Complete Stage 20B first" : "Run Stage 21"}
         </AmberButton>
       ) : (
         <>
