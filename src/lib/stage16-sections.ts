@@ -6,7 +6,7 @@
 // impossible. Sections are stitched together by `assembleDocument` with the
 // proposition reveal inserted at the correct location.
 
-export type Stage16Format = "consulting" | "agency" | "workshop";
+export type Stage16Format = "consulting" | "agency" | "workshop" | "vision";
 
 export interface SessionForStage16 {
   brand_name: string | null;
