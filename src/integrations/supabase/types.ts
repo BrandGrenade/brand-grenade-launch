@@ -201,6 +201,7 @@ export type Database = {
           stage_16_consulting_output: string | null
           stage_16_error: string | null
           stage_16_format: string | null
+          stage_16_vision_output: string | null
           stage_16_workshop_output: string | null
           stage_17_error: string | null
           stage_17_output: string | null
@@ -351,6 +352,7 @@ export type Database = {
           stage_16_consulting_output?: string | null
           stage_16_error?: string | null
           stage_16_format?: string | null
+          stage_16_vision_output?: string | null
           stage_16_workshop_output?: string | null
           stage_17_error?: string | null
           stage_17_output?: string | null
@@ -501,6 +503,7 @@ export type Database = {
           stage_16_consulting_output?: string | null
           stage_16_error?: string | null
           stage_16_format?: string | null
+          stage_16_vision_output?: string | null
           stage_16_workshop_output?: string | null
           stage_17_error?: string | null
           stage_17_output?: string | null
