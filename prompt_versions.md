@@ -607,3 +607,18 @@ creative invitation, and a named distinctive asset. Closes with the
 "window not a map" standard — a direction is acceptable only when a
 senior creative director feels the pull to make something. Existing
 prompt content is unchanged. File: `src/lib/stage18-the-detonation-prompt.ts`.
+
+---
+
+## v3.9 — Stage 8 Out of Box Proposition mandate
+**Date:** June 2026
+**Stage:** Stage 8
+**Change:** Added the OUT OF BOX PROPOSITION — MANDATORY section to the
+Stage 8 system prompt. Inserted after the Product Truth Mandate and before
+the final output format instruction. The new mandate requires every
+proposition set to include one radically unexpected proposition that is
+still traceable to a genuine Stage 4B product truth, passes the Automatic
+Disqualification checklist and all six Universal Quality Benchmark
+criteria, satisfies the Emotional Direction Test, and is clearly labelled
+OUT OF BOX in the output. Existing prompt content is unchanged. File:
+`src/lib/stage8-prompt.ts`.
