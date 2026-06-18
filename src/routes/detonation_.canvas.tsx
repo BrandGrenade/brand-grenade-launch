@@ -276,8 +276,39 @@ function ThreeTruthCanvas() {
   // before commercial deployment
   const canBegin = confirmedCount >= 1 && intelComplete;
 
+  // Explain exactly why the button is disabled so a populated-looking form
+  // doesn't silently block the user (the previous behaviour: click = no-op).
+  const beginBlockers = useMemo(() => {
+    const reasons: string[] = [];
+    if (confirmedCount < 1) {
+      reasons.push(
+        "Confirm at least one of the three truths above (Product, Consumer, or Cultural).",
+      );
+    }
+    if (intelType === "") {
+      reasons.push(
+        "Select Brand Intelligence type — 'Existing brand' or 'New brand'.",
+      );
+    } else if (intelType === "existing" && valuesField.trim().length === 0) {
+      reasons.push("Enter Brand Values (at minimum) to continue.");
+    } else if (intelType === "new" && !newBrandAck) {
+      reasons.push(
+        "Tick the acknowledgement that this brand has no existing guidelines.",
+      );
+    }
+    return reasons;
+  }, [confirmedCount, intelType, valuesField, newBrandAck]);
+
   const handleBeginStage17 = async () => {
-    if (!sessionId || !canBegin) return;
+    if (!sessionId) {
+      setError("No session — reload from Sessions and try again.");
+      return;
+    }
+    if (!canBegin) {
+      // Surface blockers as a visible error so a misclick is never a silent no-op.
+      setError(beginBlockers.join(" "));
+      return;
+    }
     setAdvancing(true);
     setError(null);
     try {
@@ -665,8 +696,9 @@ function ThreeTruthCanvas() {
               <div style={{ marginTop: 48, textAlign: "center" }}>
                 <button
                   type="button"
-                  disabled={!canBegin || advancing}
+                  disabled={advancing}
                   onClick={handleBeginStage17}
+                  aria-disabled={!canBegin || advancing}
                   style={{
                     display: "inline-flex",
                     height: 56,
@@ -679,11 +711,29 @@ function ThreeTruthCanvas() {
                     color: canBegin ? "var(--color-background)" : "var(--color-text-tertiary)",
                     fontWeight: 600,
                     fontSize: 16,
-                    cursor: canBegin ? "pointer" : "not-allowed",
+                    cursor: advancing ? "wait" : canBegin ? "pointer" : "pointer",
                   }}
                 >
                   {advancing ? "Saving…" : "Confirm and Begin Stage 17 →"}
                 </button>
+                {!canBegin && beginBlockers.length > 0 && (
+                  <ul
+                    className="text-body-sm"
+                    style={{
+                      color: "var(--color-text-tertiary)",
+                      marginTop: 12,
+                      listStyle: "disc",
+                      paddingLeft: 20,
+                      textAlign: "left",
+                      maxWidth: 520,
+                      marginInline: "auto",
+                    }}
+                  >
+                    {beginBlockers.map((r) => (
+                      <li key={r}>{r}</li>
+                    ))}
+                  </ul>
+                )}
                 {/* TODO: reinstate owner check */}
                 {/* before commercial deployment */}
                 {false && !isOwner && (
