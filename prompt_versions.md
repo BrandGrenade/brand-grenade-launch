@@ -586,3 +586,24 @@ very end of the prompt after all other instructions. It reframes the goal as
 writing a line that makes the room go quiet, that a senior creative director
 would fight for, and that changes the category conversation. Existing prompt
 content is unchanged. File: `src/lib/stage9-prompt.ts`.
+
+---
+
+## v3.8 — Stage 18 Headline Craft Library and Creative Springboard addition
+**Date:** June 2026
+**Stage:** Stage 18
+**Change:** Added the CREATIVE SPRINGBOARD — HEADLINE CRAFT LIBRARY section
+to the Stage 18 detonation prompt. Inserted after the eight dimension
+stress test / compounding assessment scoring sections and before the
+OUTPUT STRUCTURE — STRICT final output and ranking instruction. The
+addition introduces a four-step process: (1) Mechanic Selection with
+justification, (2) Springboard Generation of 5–8 directions using a
+library of eight mechanic categories (Relatability, Vernacular,
+Structural, Point Strengthening, Emotional Trigger, Rhythm and Sound,
+Subversion, Product and Brand Truth), (3) Distinctive Asset Requirement,
+and (4) Springboard Ranking with a single recommended primary
+springboard. Each direction must include the mechanic, strategic root,
+creative invitation, and a named distinctive asset. Closes with the
+"window not a map" standard — a direction is acceptable only when a
+senior creative director feels the pull to make something. Existing
+prompt content is unchanged. File: `src/lib/stage18-the-detonation-prompt.ts`.
