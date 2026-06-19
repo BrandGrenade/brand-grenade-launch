@@ -16,6 +16,7 @@ import {
   recordPreflightCheck3Result,
   recordPreflightCheck8Result,
   finalizePreflightRun,
+  confirmPreflightCheckpointA,
   runTierTwoChecksFrom4,
   runTierTwoChecksFrom7,
   runTierTwoChecksFrom9,
@@ -189,6 +190,7 @@ export function PreflightFullCheckPanel() {
   const recordCheck3Fn = useServerFn(recordPreflightCheck3Result);
   const recordCheck8Fn = useServerFn(recordPreflightCheck8Result);
   const finalizeRunFn = useServerFn(finalizePreflightRun);
+  const confirmCheckpointAFn = useServerFn(confirmPreflightCheckpointA);
   const stage2Fn = useServerFn(runStage2);
   const stage3Fn = useServerFn(runStage3);
   const stage4Fn = useServerFn(runStage4);
@@ -267,6 +269,7 @@ export function PreflightFullCheckPanel() {
   // handoff payload if the stream ended with `check_3_handoff` or
   // `check_8_handoff`, otherwise terminal sentinel.
   type ProcessOutcome =
+    | { kind: "handoff1"; payload: Extract<TierTwoEvent, { type: "check_1_handoff" }> }
     | { kind: "handoff2"; payload: Extract<TierTwoEvent, { type: "check_2_handoff" }> }
     | { kind: "handoff3"; payload: Extract<TierTwoEvent, { type: "check_3_handoff" }> }
     | { kind: "handoff6"; payload: Extract<TierTwoEvent, { type: "check_6_handoff" }> }
@@ -304,6 +307,10 @@ export function PreflightFullCheckPanel() {
       if (ev.type === "check_done") {
         setResults((prev) => prev.map((r) => (r.index === ev.result.index ? ev.result : r)));
         continue;
+      }
+      if (ev.type === "check_1_handoff") {
+        setResults(ev.results);
+        return { kind: "handoff1", payload: ev };
       }
       if (ev.type === "check_2_handoff") {
         setResults(ev.results);
@@ -351,6 +358,52 @@ export function PreflightFullCheckPanel() {
       }
     }
     return { kind: "done" };
+  };
+
+  // Drive Check 1 (Stage 1 — Brief Analysis) by invoking runStage1 as a
+  // SEPARATE server-fn RPC. The previous in-runner direct invocation left
+  // Check 1 stuck in "pending" — which cascaded every dependent check into
+  // "Skipped: Stage 1 failed". Running it as its own Worker invocation
+  // matches how Check 12's parallel Stage 1 runs succeed.
+  const driveCheck1 = async (
+    handoff: Extract<TierTwoEvent, { type: "check_1_handoff" }>,
+  ): Promise<FullCheckResult> => {
+    const def = handoff.results[0];
+    setCurrentMessage(`▶ ${def.name}`);
+    setResults((prev) => prev.map((r) => (r.index === 1 ? { ...r, status: "running" } : r)));
+    const started = Date.now();
+    const sessionId = handoff.sessionId;
+    try {
+      if (!sessionId) throw new Error("No TestBrand sessionId provided");
+      setCurrentMessage("  · Running Stage 1 (Brief Analysis) — separate Worker invocation...");
+      const final = await drainStream(
+        stage1Fn({ data: { sessionId } }) as unknown as AsyncGenerator<
+          { delta?: string; done?: true; output?: string; tensionScore?: number | null },
+          void,
+          unknown
+        >,
+      );
+      const output = (final as { output?: string }).output ?? "";
+      if (output.length < 200) throw new Error(`Stage 1 output too short (${output.length} chars)`);
+      const tension = (final as { tensionScore?: number | null }).tensionScore;
+      return {
+        ...def,
+        status: "pass",
+        durationMs: Date.now() - started,
+        detail: `Stage 1 completed in ${output.length} chars. Tension score: ${tension ?? "n/a"}.`,
+        remediation: null,
+      };
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      return {
+        ...def,
+        status: "fail",
+        durationMs: Date.now() - started,
+        detail: `Check 1 failed: ${msg}.`,
+        remediation:
+          "Open Stage 1 prompt and Claude invocation logs. Verify stage1.functions.ts streamClaude call succeeds against TestBrand brief.",
+      };
+    }
   };
 
   const driveCheck2 = async (
@@ -619,12 +672,78 @@ export function PreflightFullCheckPanel() {
           : {},
       })) as AsyncGenerator<TierTwoEvent, void, unknown>;
 
-      const outcome1 = await processStream(gen);
-      if (outcome1.kind !== "handoff2") return;
+      const initialOutcome = await processStream(gen);
+      if (initialOutcome.kind !== "handoff1") return;
+
+      // ---- Client-driven Check 1 (Stage 1 as its own server-fn RPC) ----
+      const check1Result = await driveCheck1(initialOutcome.payload);
+      let workingResults = initialOutcome.payload.results.map((r) =>
+        r.index === 1 ? check1Result : r,
+      );
+      setResults(workingResults);
+      setCurrentMessage(`✓ ${check1Result.name} — ${check1Result.status.toUpperCase()}`);
+      await recordResultsFn({
+        data: { recordId: initialOutcome.payload.recordId, allResults: workingResults },
+      });
+
+      // If Stage 1 failed, mark every downstream check as failed and finalise.
+      if (check1Result.status !== "pass") {
+        workingResults = workingResults.map((r) =>
+          r.index === 1
+            ? r
+            : {
+                ...r,
+                status: "fail" as const,
+                durationMs: 0,
+                detail: r.detail ?? "Skipped: Stage 1 failed",
+                remediation: r.remediation ?? "Fix Check 1 before re-running the suite.",
+              },
+        );
+        setResults(workingResults);
+        const final = await finalizeRunFn({
+          data: {
+            recordId: initialOutcome.payload.recordId,
+            allResults: workingResults,
+            sessionIds: initialOutcome.payload.sessionIds,
+            startedAtMs: initialOutcome.payload.startedAtMs,
+          },
+        });
+        setOverall(final.overall);
+        setState("complete");
+        setCurrentMessage(
+          `Completed in ${(final.totalDurationMs / 1000).toFixed(1)}s. Cleaned up ${final.sessionIdsCleaned.length} TestBrand session(s).`,
+        );
+        stopElapsed();
+        toast.error(
+          `Tier Two: ${workingResults.filter((r) => r.status === "fail").length} check(s) failed`,
+        );
+        return;
+      }
+
+      // Auto-confirm Checkpoint A on the preflight session so the Phase 1A
+      // chain can proceed. Same effect the previous in-runner step had.
+      setCurrentMessage("  · Auto-confirming Checkpoint A on TestBrand session…");
+      await confirmCheckpointAFn({
+        data: { sessionId: initialOutcome.payload.sessionId },
+      });
+
+      // Construct the check_2_handoff payload locally — server no longer
+      // emits it; the client owns the Check 1 → Check 2 handoff now.
+      const outcome1 = {
+        kind: "handoff2" as const,
+        payload: {
+          type: "check_2_handoff" as const,
+          recordId: initialOutcome.payload.recordId,
+          sessionId: initialOutcome.payload.sessionId,
+          sessionIds: initialOutcome.payload.sessionIds,
+          results: workingResults,
+          startedAtMs: initialOutcome.payload.startedAtMs,
+        },
+      };
 
       // ---- Client-driven Check 2 (Stages 2–7 as separate RPCs) ----
       const check2Result = await driveCheck2(outcome1.payload);
-      let workingResults = outcome1.payload.results.map((r) =>
+      workingResults = outcome1.payload.results.map((r) =>
         r.index === 2 ? check2Result : r,
       );
       setResults(workingResults);
