@@ -414,9 +414,9 @@ function BriefIntake() {
             >
               <div className="flex items-center gap-3">
                 <h3 className="text-h3 text-text-primary">
-                  9. Supporting Materials
+                  Supporting Materials
                 </h3>
-                {completion.done["9"] && <CompletedDot />}
+                {completion.done["files"] && <CompletedDot />}
               </div>
               <p className="mt-2" style={INSTRUCTION_STYLE}>
                 Upload any existing materials. The Strategy Engine reads and
