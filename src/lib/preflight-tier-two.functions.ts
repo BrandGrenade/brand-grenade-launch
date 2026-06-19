@@ -405,69 +405,39 @@ export const runTierTwoFullCheck = createServerFn({ method: "POST" })
       const stage1Ok = results[0].status === "pass";
 
       // ---------------------------------------------------------------------
-      // CHECK 2 — Stages 2–7 Phase 1A chain
+      // CHECK 2 — Hand off to client.
+      // Stages 2–7 are seven long Claude calls. Each must run as its own
+      // server-fn RPC so every stage receives a fresh wall-clock budget.
       // ---------------------------------------------------------------------
       yield { type: "check_start", index: 2, id: CHECK_DEFS[1].id, name: CHECK_DEFS[1].name };
-      {
-        const gen = runCheck(
-          2,
-          async (emit) => {
-            if (!stage1Ok || !primarySessionId) throw new Error("Skipped: Stage 1 failed");
-            // Auto-confirm Checkpoint A so Stage 2 can run.
-            emit("Auto-confirming Checkpoint A");
-            await supabaseAdmin
-              .from("sessions")
-              .update({ checkpoint_a_confirmed: true })
-              .eq("id", primarySessionId);
-
-            const stages: Array<[string, () => Promise<unknown>]> = [
-              ["Stage 2", () => drainGenerator(runStage2({ data: { sessionId: primarySessionId! } }))],
-              ["Stage 3", () => drainGenerator(runStage3({ data: { sessionId: primarySessionId! } }))],
-              ["Stage 4", () => drainGenerator(runStage4({ data: { sessionId: primarySessionId! } }))],
-              ["Stage 4B", () => drainGenerator(runStage4b({ data: { sessionId: primarySessionId! } }))],
-              ["Stage 5", () => drainGenerator(runStage5({ data: { sessionId: primarySessionId! } }))],
-              ["Stage 6", () => drainGenerator(runStage6({ data: { sessionId: primarySessionId! } }))],
-              ["Stage 7", () => drainGenerator(runStage7({ data: { sessionId: primarySessionId! } }))],
-            ];
-            const timings: string[] = [];
-            for (const [label, run] of stages) {
-              emit(`Running ${label}...`);
-              const t0 = Date.now();
-              await run();
-              timings.push(`${label}: ${((Date.now() - t0) / 1000).toFixed(1)}s`);
-            }
-            return { detail: `Phase 1A chain completed. ${timings.join(", ")}.` };
-          },
-          "Inspect logs for the first failed stage in the 2–7 chain; check Checkpoint A confirmation and prior-stage output columns are populated.",
-        );
-        let result!: FullCheckResult;
-        for (;;) {
-          const r = await gen.next();
-          if (r.done) {
-            result = r.value;
-            break;
-          }
-          yield r.value;
-        }
-        yield { type: "check_done", result };
+      if (!stage1Ok || !primarySessionId) {
+        results[1] = {
+          ...results[1],
+          status: "fail",
+          durationMs: 0,
+          detail: "Skipped: Stage 1 failed",
+          remediation: "Fix Stage 1 before re-running Check 2.",
+        };
+        await persistResults(supabaseAdmin, recordId, results);
+        yield { type: "check_done", result: results[1] };
+      } else {
+        yield { type: "check_progress", index: 2, message: "Auto-confirming Checkpoint A" };
+        await supabaseAdmin
+          .from("sessions")
+          .update({ checkpoint_a_confirmed: true })
+          .eq("id", primarySessionId);
+        results[1] = { ...results[1], status: "running" };
+        await persistResults(supabaseAdmin, recordId, results);
       }
 
       // ---------------------------------------------------------------------
-      // CHECK 3 — Hand off to client.
-      //
-      // STRUCTURAL: Stage 8 is a long Claude call (Strategic Propositions)
-      // followed by a separate confirmCheckpointB write. Run inline inside
-      // this single server-fn invocation, the combined wall-clock exceeded
-      // the Cloudflare Worker budget and the worker was killed silently,
-      // leaving preflight_checks rows stuck in `running` with no error
-      // recorded. Each step now runs as its own server-fn RPC from the
-      // client (fresh Worker invocation = fresh wall-clock budget). After
-      // Check 3 the client opens runTierTwoChecksFrom4 to continue checks
-      // 4–7 and the existing Check 8 handoff.
+      // CHECK 2 handoff. The client will run Stage 2, 3, 4, 4B, 5, 6, and 7
+      // as seven separate server-fn RPCs, then drive Check 3 in the same
+      // already-split way as before.
       // ---------------------------------------------------------------------
       handedOff = true;
       yield {
-        type: "check_3_handoff",
+        type: "check_2_handoff",
         recordId,
         sessionId: primarySessionId ?? "",
         sessionIds: Array.from(createdSessionIds),
