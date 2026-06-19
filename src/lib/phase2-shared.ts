@@ -598,7 +598,7 @@ const STAGE_20B_STOPWORDS = new Set([
 ]);
 
 function titleCaseChannelName(raw: string): string {
-  return raw
+  const cased = raw
     .split(/\s+/)
     .map((wRaw, i) => {
       const m = wRaw.match(/^([A-Za-z'’]+)([.,;:!?)\]]*)$/);
@@ -611,6 +611,14 @@ function titleCaseChannelName(raw: string): string {
       return lower.charAt(0).toUpperCase() + lower.slice(1) + tail;
     })
     .join(" ");
+  // Proper-noun fixups for mixed-case brand names that pure title-casing breaks.
+  return cased
+    .replace(/\bLinkedin\b/g, "LinkedIn")
+    .replace(/\bYoutube\b/g, "YouTube")
+    .replace(/\bTiktok\b/g, "TikTok")
+    .replace(/\bIdeacast\b/g, "IdeaCast")
+    .replace(/\bIphone\b/g, "iPhone")
+    .replace(/\bMacbook\b/g, "MacBook");
 }
 
 export function extractStage20BChannelEntries(
