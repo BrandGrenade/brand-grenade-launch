@@ -175,9 +175,15 @@ export const runStage21 = createServerFn({ method: "POST" })
       return { outputs: s.stage_21_outputs };
     }
 
-    const entries = extractStage19ChannelEntries(s.stage_19_output);
+    // Stage 20B is the canonical source of the channel list. Parse Section
+    // Three for ALL-CAPS named channel headers. Fall back to the Stage 19
+    // extractor only when Stage 20B parsing yields nothing (legacy sessions).
+    const stage20bEntries = extractStage20BChannelEntries(s.stage_20b_output);
+    const entries = stage20bEntries.length > 0
+      ? stage20bEntries
+      : extractStage19ChannelEntries(s.stage_19_output);
     if (entries.length === 0)
-      throw new Error("No active channels found in Stage 19 hierarchy");
+      throw new Error("No named channels found in Stage 20B Section Three or Stage 19 hierarchy");
 
     const redirectText = buildAudienceChannelRedirect(data.audienceChannelDirection ?? "");
 
