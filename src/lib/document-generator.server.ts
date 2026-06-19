@@ -104,7 +104,7 @@ Write the validation section. Five pressure tests the proposition passed. Two pa
     return [
       {
         name: "situation",
-        maxTokens: 800,
+        maxTokens: 64000,
         systemPrompt:
           WRITING_STANDARD +
           `\nWrite the opening argument of a board strategy recommendation for ${brand} in ${category}.\nThree paragraphs. 350 words maximum.\nWhat has changed commercially or culturally. Why it demands a strategic response now. The specific stakes if the brand does not move.\nSpecific to this brand. Not generic category observations.`,
@@ -112,7 +112,7 @@ Write the validation section. Five pressure tests the proposition passed. Two pa
       },
       {
         name: "category",
-        maxTokens: 900,
+        maxTokens: 64000,
         systemPrompt:
           WRITING_STANDARD +
           `\nWrite the competitive analysis section of a board strategy recommendation for ${brand}.\nOne paragraph per major competitor — what they genuinely own in the audience's mind and the precise structural reason they cannot enter the recommended territory.\nEnd with two paragraphs naming what the category has collectively agreed not to say and why that silence created the opportunity.\nClose with a pull quote:\n> [The single most important insight — one precise sentence]`,
@@ -120,7 +120,7 @@ Write the validation section. Five pressure tests the proposition passed. Two pa
       },
       {
         name: "human_truth",
-        maxTokens: 800,
+        maxTokens: 64000,
         systemPrompt:
           WRITING_STANDARD +
           `\nWrite the human insight section of a board strategy recommendation for ${brand}.\nThree paragraphs building to the core insight.\nThe specific behaviour — the gap between what this audience tells institutions and what they actually do.\nWrite as revelation not description.\nEnd with the Human Contradiction Statement as a pull quote:\n> [The specific contradiction — one precise sentence]\nThen one paragraph on what this insight makes strategically possible.`,
@@ -128,7 +128,7 @@ Write the validation section. Five pressure tests the proposition passed. Two pa
       },
       {
         name: "why_brand",
-        maxTokens: 1200,
+        maxTokens: 64000,
         systemPrompt:
           WRITING_STANDARD +
           `\nWrite the brand credibility section of a board strategy recommendation for ${brand}.\nThree paragraphs on the specific advantages that make this territory available to this brand and unavailable to competitors.\nTwo paragraphs honestly assessing what the brand cannot yet do and what must change.\nDo not soften the honest gap. Boards respect directness.`,
@@ -136,7 +136,7 @@ Write the validation section. Five pressure tests the proposition passed. Two pa
       },
       {
         name: "alternatives",
-        maxTokens: 1500,
+        maxTokens: 64000,
         systemPrompt:
           WRITING_STANDARD +
           `\nWrite the alternatives evaluation section of a board strategy recommendation for ${brand}.\nFor each alternative proposition — two paragraphs: what it was and its genuine strengths, then the precise strategic reason it was not selected.\nThe rejection must be so specific that a sceptical board member cannot respond with "but couldn't you just."`,
@@ -144,7 +144,7 @@ Write the validation section. Five pressure tests the proposition passed. Two pa
       },
       {
         name: "evidence",
-        maxTokens: 900,
+        maxTokens: 64000,
         systemPrompt:
           WRITING_STANDARD +
           `\nWrite the validation section of a board strategy recommendation for ${brand}.\nPresent each pressure test as a strategic argument — not a checklist or score table.\nFor each test: what was tested, what it confirmed, what it exposed, what the exposure means for implementation.\nTwo paragraphs per test.`,
@@ -152,7 +152,7 @@ Write the validation section. Five pressure tests the proposition passed. Two pa
       },
       {
         name: "recommendation_pre",
-        maxTokens: 700,
+        maxTokens: 64000,
         systemPrompt:
           WRITING_STANDARD +
           `\nWrite three paragraphs that synthesise the entire strategic argument for ${brand} — the category truth, the human insight, the brand's right to this territory, the evidence of its availability — into a single logical sequence that makes the selected proposition feel inevitable.\nDo not name the proposition.\nBuild the complete case first.\nEnd your final paragraph with a sentence that creates the conditions for the proposition to land as a conclusion.`,
@@ -160,7 +160,7 @@ Write the validation section. Five pressure tests the proposition passed. Two pa
       },
       {
         name: "recommendation_post",
-        maxTokens: 700,
+        maxTokens: 64000,
         systemPrompt:
           WRITING_STANDARD +
           `\nWrite the post-reveal section of a board strategy recommendation for ${brand}.\nThe selected proposition is: "${smp}"\nThis has just been revealed on its own page.\nNow write what it means:\nThree paragraphs covering:\n1. What it claims commercially — the specific market position\n2. What it requires of the business — product, operations, culture\n3. What success looks like — specific measurable outcomes`,
@@ -168,7 +168,7 @@ Write the validation section. Five pressure tests the proposition passed. Two pa
       },
       {
         name: "creative_world",
-        maxTokens: 800,
+        maxTokens: 64000,
         systemPrompt:
           WRITING_STANDARD +
           `\nWrite the creative world section of a board strategy recommendation for ${brand}.\nFour paragraphs describing the strategic universe the proposition opens — written for a board member who needs to understand what kind of work this strategy produces.\nNo bullet lists. Pure narrative.\nMake the creative world feel real, specific, and worth the commercial investment.`,
@@ -176,7 +176,7 @@ Write the validation section. Five pressure tests the proposition passed. Two pa
       },
       {
         name: "what_must_change",
-        maxTokens: 700,
+        maxTokens: 64000,
         systemPrompt:
           WRITING_STANDARD +
           `\nWrite the operational commitments section of a board strategy recommendation for ${brand}.\nThree paragraphs. Direct. Honest.\nName specifically what must change in product, service, operations, and internal culture for the positioning to be credible.\nThis is where partners earn their fee — by saying the uncomfortable thing clearly.\nDo not soften. Do not hedge.`,
@@ -184,7 +184,7 @@ Write the validation section. Five pressure tests the proposition passed. Two pa
       },
       {
         name: "next_steps",
-        maxTokens: 500,
+        maxTokens: 64000,
         systemPrompt:
           WRITING_STANDARD +
           `\nWrite the next steps section of a board strategy recommendation for ${brand}.\nExactly three paragraphs.\nOne decision per paragraph.\nSpecific action. Named ownership. Specific timing.\nNo "consider" or "explore."\nWhat must happen. Who does it. By when.`,
@@ -197,67 +197,67 @@ Write the validation section. Five pressure tests the proposition passed. Two pa
     return [
       {
         name: "before_you_read",
-        maxTokens: 600,
+        maxTokens: 64000,
         systemPrompt: `\nYou are a senior global planning director at a world-class creative agency writing a strategic platform document.\nWrite directly to the creative teams who will use this document.\nSecond person. Direct. Alive.\nTell them what this document requires of them.\nExplain that the proposition arrives in the middle — not at the start — and why.\nTell them what kind of work this strategy demands.\n300 words maximum.\nStart immediately. No heading.`,
         userMessage: `Brand: ${brand}\nCategory: ${category}\nSelected proposition: "${smp}"`,
       },
       {
         name: "strategic_context",
-        maxTokens: 700,
+        maxTokens: 64000,
         systemPrompt: `\nYou are a senior global planning director writing a strategic platform document for ${brand}.\nWrite the strategic context section.\nThree paragraphs on the specific commercial and cultural moment this brand is navigating.\nThe structural shift that created the opportunity. The window that will not stay open.\nWritten for creative directors who need urgency and precision.\n350 words maximum.\nStart immediately. No heading.`,
         userMessage: `Brand: ${brand}\nCategory: ${category}\nBrief context: ${s1}\nCompetitive intelligence: ${slice(session.stage_2_output, 1000)}`,
       },
       {
         name: "category",
-        maxTokens: 900,
+        maxTokens: 64000,
         systemPrompt: `\nYou are a senior global planning director writing a strategic platform document for ${brand}.\nWrite the category section.\nOne paragraph per major competitor — what they own and why they cannot enter the recommended territory.\nTwo paragraphs on what the category has agreed not to say.\nClose with a pull quote:\n> [The category silence — one precise sentence]\n400 words maximum.\nStart immediately. No heading.`,
         userMessage: `Brand: ${brand}\nCategory: ${category}\nCompetitive intelligence: ${s2}`,
       },
       {
         name: "human_truth",
-        maxTokens: 800,
+        maxTokens: 64000,
         systemPrompt: `\nYou are a senior global planning director writing a strategic platform document for ${brand}.\nWrite the human truth section.\nFour paragraphs. The specific behaviour. The contradiction. The gap between what this audience tells institutions and what they actually do.\nWrite as revelation — something creative teams will immediately recognise.\nEnd with:\n> [Human Contradiction Statement]\nThen two paragraphs on what this opens creatively.\n400 words maximum.\nStart immediately. No heading.`,
         userMessage: `Brand: ${brand}\nStrategic territories: ${s7}\nInsights: ${s5}`,
       },
       {
         name: "why_brand",
-        maxTokens: 700,
+        maxTokens: 64000,
         systemPrompt: `\nYou are a senior global planning director writing a strategic platform document for ${brand}.\nWrite the brand section.\nThree paragraphs on what this brand has that no competitor possesses in the same combination.\nTwo paragraphs on the specific constraint every execution must respect — the credibility gap and the rule it creates.\n350 words maximum.\nStart immediately. No heading.`,
         userMessage: `Brand: ${brand}\nBrand fit assessment: ${s13}`,
       },
       {
         name: "alternatives",
-        maxTokens: 800,
+        maxTokens: 64000,
         systemPrompt: `\nYou are a senior global planning director writing a strategic platform document for ${brand}.\nWrite the alternatives section.\nFor each alternative proposition — two paragraphs: what it was and what a creative team could have built inside it, then the precise reason it was rejected.\nShow rigour. The recommendation survived real alternatives.\n400 words maximum.\nStart immediately. No heading.`,
         userMessage: `Brand: ${brand}\nAll propositions: ${s8}\nSelection rationale: ${s12}\nSelected: "${smp}"`,
       },
       {
         name: "proposition_pre",
-        maxTokens: 600,
+        maxTokens: 64000,
         systemPrompt: `\nYou are a senior global planning director writing a strategic platform document for ${brand}.\nWrite three paragraphs that synthesise the entire argument and make the proposition feel inevitable.\nDo not name the proposition.\nComplete the argument. Create the conditions for the proposition to land as the only possible conclusion.\n300 words maximum.\nStart immediately. No heading.`,
         userMessage: `Brand: ${brand}\nCategory: ${category}\nSelected proposition: "${smp}"\nTerritory synthesis: ${s7}`,
       },
       {
         name: "proposition_post",
-        maxTokens: 700,
+        maxTokens: 64000,
         systemPrompt: `\nYou are a senior global planning director writing a strategic platform document for ${brand}.\nThe proposition "${smp}" has just been revealed.\nWrite what it means for the work:\nWhat it claims — the specific territory being established.\nWhat it challenges — the category convention it contradicts.\nWhat it makes possible — the creative world it opens.\nWhat it requires — the specific demands on every execution.\nFour paragraphs. 350 words.\nStart immediately. No heading.`,
         userMessage: `Brand: ${brand}\nCategory: ${category}\nSelected proposition: "${smp}"\nBrand fit: ${slice(session.stage_13_output, 1000)}`,
       },
       {
         name: "creative_world",
-        maxTokens: 1200,
+        maxTokens: 64000,
         systemPrompt: `\nYou are a senior global planning director writing a strategic platform document for ${brand}.\nWrite the creative world section.\nThis is the most important section for creative teams.\nThe world — its character and governing tension. 2 paragraphs.\nThe rules of this world — each rule as a bold statement followed by one paragraph of explanation.\nWho inhabits this world — each archetype as a vivid behavioural portrait. 2 paragraphs each.\nWhat the brand does here. 2 paragraphs.\nNo bullet lists. Pure narrative.\n600 words maximum.\nStart immediately. No heading.`,
         userMessage: `Brand: ${brand}\nBrand world definition: ${s14c}\nTerritory mapping: ${s14}`,
       },
       {
         name: "channels",
-        maxTokens: 800,
+        maxTokens: 64000,
         systemPrompt: `\nYou are a senior global planning director writing a strategic platform document for ${brand}.\nWrite the channel behaviour section.\nFor each channel — Film, Social, Influencer, Activation, Partnership:\nTwo paragraphs: the specific capability this channel has in this territory, and the specific risk to protect against.\nNot campaign ideas. How the proposition's truth manifests in each environment.\n400 words maximum.\nStart immediately. No heading.`,
         userMessage: `Brand: ${brand}\nSelected proposition: "${smp}"\nChannel mapping: ${s14b}`,
       },
       {
         name: "brief_to_teams",
-        maxTokens: 500,
+        maxTokens: 64000,
         systemPrompt: `\nYou are a senior global planning director writing a strategic platform document for ${brand}.\nWrite the brief to creative teams.\nDirect address. Second person.\nWhat they are making and why.\nThe single most important thing the work must do.\nWhat the work must never do — specifically.\nThe test every execution must pass.\nThe one sentence that should be on the wall of every room where this work is being made.\n250 words maximum.\nStart immediately. No heading.`,
         userMessage: `Brand: ${brand}\nSelected proposition: "${smp}"\nCategory: ${category}`,
       },
@@ -268,55 +268,55 @@ Write the validation section. Five pressure tests the proposition passed. Two pa
   return [
     {
       name: "facilitator_intro",
-      maxTokens: 600,
+      maxTokens: 64000,
       systemPrompt: `\nYou are a senior strategy facilitator writing a workshop guide for ${brand}.\nWrite the facilitator introduction.\nWhat this guide is for.\nThe design principle — why you construct rather than present.\nWhat the workshop produces.\nThe most important thing to get right.\nThe most common failure mode.\n300 words maximum.\nStart immediately. No heading.`,
       userMessage: `Brand: ${brand}\nCategory: ${category}\nSelected proposition: "${smp}"`,
     },
     {
       name: "preparation",
-      maxTokens: 400,
+      maxTokens: 64000,
       systemPrompt: `\nYou are a senior strategy facilitator writing a workshop guide for ${brand}.\nWrite the preparation section.\nTwo weeks before, one week before, day before, day of.\nSpecific enough that a first-time facilitator can execute without additional briefing.\n200 words maximum.\nStart immediately. No heading.`,
       userMessage: `Brand: ${brand}\nCategory: ${category}`,
     },
     {
       name: "session_one",
-      maxTokens: 800,
+      maxTokens: 64000,
       systemPrompt: `\nYou are a senior strategy facilitator writing a workshop guide for ${brand}.\nWrite Session One — The World We Operate In — 45 minutes.\nFour parts:\nFACILITATOR GUIDE — how to open, what energy to create, what to watch for. 2 paragraphs.\nPARTICIPANT CONTENT — the category reality from competitive intelligence. 3 paragraphs accessible to a mixed audience.\nDISCUSSION QUESTIONS — 3 specific questions that surface honest observations.\nSYNTHESIS ACTIVITY — specific activity with timing and output.\n400 words maximum.\nStart immediately. No heading.`,
       userMessage: `Brand: ${brand}\nCategory: ${category}\nCompetitive intelligence: ${slice(session.stage_2_output, 2000)}`,
     },
     {
       name: "session_two",
-      maxTokens: 800,
+      maxTokens: 64000,
       systemPrompt: `\nYou are a senior strategy facilitator writing a workshop guide for ${brand}.\nWrite Session Two — The People We Are Failing to Serve — 45 minutes.\nSame four-part structure as Session One.\nContent from the human insight.\nThe synthesis activity produces the Human Contradiction Statement in the room's own words before they see the one from the process.\n400 words maximum.\nStart immediately. No heading.`,
       userMessage: `Brand: ${brand}\nCategory: ${category}\nHuman insight: ${slice(session.stage_7_output, 2000)}`,
     },
     {
       name: "session_three",
-      maxTokens: 800,
+      maxTokens: 64000,
       systemPrompt: `\nYou are a senior strategy facilitator writing a workshop guide for ${brand}.\nWrite Session Three — What Is Available to Own — 45 minutes.\nSame four-part structure.\nPresent all alternative propositions without advocating for any.\nSynthesis: evaluate against recognition, exclusivity, deliverability.\nAddress how to handle groups that reach consensus too quickly.\n400 words maximum.\nStart immediately. No heading.`,
       userMessage: `Brand: ${brand}\nAll propositions: ${slice(session.stage_8_output, 2000)}\nSelected: "${smp}"`,
     },
     {
       name: "session_four",
-      maxTokens: 700,
+      maxTokens: 64000,
       systemPrompt: `\nYou are a senior strategy facilitator writing a workshop guide for ${brand}.\nWrite Session Four — The Proposition Reveal — 30 minutes.\nThe specific physical setup.\nThe exact words to say.\nThe silence to hold and how long.\nHow to collect reactions without moderating them.\nFour tests to run with the room.\nHow to handle defensive, excited, and confused responses specifically.\n350 words maximum.\nStart immediately. No heading.`,
       userMessage: `Brand: ${brand}\nSelected proposition: "${smp}"\nCategory: ${category}`,
     },
     {
       name: "session_five",
-      maxTokens: 700,
+      maxTokens: 64000,
       systemPrompt: `\nYou are a senior strategy facilitator writing a workshop guide for ${brand}.\nWrite Session Five — Making It Real — 45 minutes.\nChannel application activity — groups take specific channels and translate the strategy into specific changes in how they work.\nIndividual commitment activity — specific enough to be observable.\nFacilitator closing — significance not summary.\n350 words maximum.\nStart immediately. No heading.`,
       userMessage: `Brand: ${brand}\nSelected proposition: "${smp}"\nBrand world: ${slice(session.stage_14c_output, 1000)}`,
     },
     {
       name: "appendix_cards",
-      maxTokens: 500,
+      maxTokens: 64000,
       systemPrompt: `\nYou are a senior strategy facilitator writing a workshop guide for ${brand}.\nWrite five participant reference cards.\n150 words maximum each.\nCard 1: The Situation\nCard 2: The Human Truth\nCard 3: The Proposition — with 2-3 sentences on what it means\nCard 4: What This Requires\nCard 5: My Commitment — leave blank for participant\nStart immediately. No heading.`,
       userMessage: `Brand: ${brand}\nCategory: ${category}\nSelected proposition: "${smp}"`,
     },
     {
       name: "difficult_moments",
-      maxTokens: 600,
+      maxTokens: 64000,
       systemPrompt: `\nYou are a senior strategy facilitator writing a workshop guide for ${brand}.\nWrite the six difficult moments guide.\nFor each: name it precisely, the specific facilitator response, what to do if it does not work.\nAll six must be specific to this strategy and brand — not generic facilitation advice.\n300 words maximum.\nStart immediately. No heading.`,
       userMessage: `Brand: ${brand}\nCategory: ${category}\nSelected proposition: "${smp}"`,
     },

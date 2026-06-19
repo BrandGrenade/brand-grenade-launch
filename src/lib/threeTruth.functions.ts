@@ -75,7 +75,7 @@ Return JSON:
       systemPrompt: system,
       userMessage: user,
       model: MODEL,
-      maxTokens: 1000,
+      maxTokens: 64000,
       sessionId: data.sessionId,
       stageLabel: "Three Truths",
     });

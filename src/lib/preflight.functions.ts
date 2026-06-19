@@ -150,7 +150,7 @@ export const runTierOneFastCheck = createServerFn({ method: "POST" })
           systemPrompt:
             "You are a health-check probe. Reply with exactly the single word READY and nothing else.",
           userMessage: "ping",
-          maxTokens: 16,
+          maxTokens: 64000,
           skipUniversalWrapper: true,
           model: "claude-haiku-4-5",
         }),

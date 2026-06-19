@@ -133,7 +133,7 @@ Output format — exactly:
   return await callClaude({
     systemPrompt: STAGE_8_SYSTEM_PROMPT,
     userMessage,
-    maxTokens: 2000,
+    maxTokens: 64000,
     sessionId: args.sessionId,
     stageLabel: `Stage 8 (gate enforcement: ${args.territoryName})`,
     stageNumber: "8",
@@ -243,7 +243,7 @@ async function rerunStage7WithEnforcement(sessionId: string): Promise<string> {
   const output = await callClaude({
     systemPrompt: STAGE_7_SYSTEM_PROMPT,
     userMessage,
-    maxTokens: 12000,
+    maxTokens: 64000,
     sessionId,
     stageLabel: "Stage 7 (re-run for minimum territories)",
     stageNumber: "7",
@@ -352,7 +352,7 @@ export const runStage8 = createServerFn({ method: "POST" })
       for await (const delta of streamClaude({
         systemPrompt: STAGE_8_SYSTEM_PROMPT,
         userMessage,
-        maxTokens: 12000,
+        maxTokens: 64000,
         sessionId: data.sessionId,
         stageLabel: "Stage 8",
         stageNumber: "8",
@@ -391,7 +391,7 @@ export const runStage8 = createServerFn({ method: "POST" })
         for await (const delta of streamClaude({
           systemPrompt: STAGE_8_SYSTEM_PROMPT,
           userMessage: continuationMessage,
-          maxTokens: 12000,
+          maxTokens: 64000,
           sessionId: data.sessionId,
           stageLabel: `Stage 8 (continuation ${attempts})`,
           stageNumber: "8",
@@ -538,7 +538,7 @@ export const regenerateStage8Selective = createServerFn({ method: "POST" })
       for await (const delta of streamClaude({
         systemPrompt: STAGE_8_SYSTEM_PROMPT,
         userMessage: `${baseUserMessage}\n\n---\n\n${continuationMessage}\n\nGenerate fresh propositions for the listed remaining territories only. Do not repeat the kept ones.`,
-        maxTokens: 12000,
+        maxTokens: 64000,
         sessionId: data.sessionId,
         stageLabel: "Stage 8 (selective regenerate)",
         stageNumber: "8",

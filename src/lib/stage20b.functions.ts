@@ -180,7 +180,7 @@ export const runStage20b = createServerFn({ method: "POST" })
       output = await callClaude({
         systemPrompt: withPhase2Formatting(system),
         userMessage: buildStage20bUserMessage(s, data.audienceInput),
-        maxTokens: 16000,
+        maxTokens: 64000,
         sessionId: data.sessionId,
         stageLabel: "Stage 20B",
         stageNumber: "20B",

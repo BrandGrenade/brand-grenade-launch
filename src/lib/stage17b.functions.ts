@@ -75,7 +75,7 @@ export const runStage17b = createServerFn({ method: "POST" })
       output = await callClaude({
         systemPrompt: withPhase2Formatting(STAGE_17B_DETONATION_INTELLIGENCE_PROMPT),
         userMessage: buildStage17bUserMessage(session as never),
-        maxTokens: 12000,
+        maxTokens: 64000,
         sessionId: data.sessionId,
         stageLabel: "Stage 17B",
         stageNumber: "17B",
@@ -157,7 +157,7 @@ export const retryStage17b = createServerFn({ method: "POST" })
     let output = await callClaude({
       systemPrompt: withPhase2Formatting(system),
       userMessage: buildStage17bUserMessage(session as never),
-      maxTokens: 12000,
+      maxTokens: 64000,
       sessionId: data.sessionId,
       stageLabel: "Stage 17B (retry)",
       stageNumber: "17B",
