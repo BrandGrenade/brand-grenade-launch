@@ -12,13 +12,16 @@ import { toast } from "sonner";
 import {
   runTierTwoFullCheck,
   getLatestTierTwoCheck,
+  recordPreflightCheck3Result,
   recordPreflightCheck8Result,
+  runTierTwoChecksFrom4,
   runTierTwoChecksFrom9,
   PREFLIGHT_TESTBRAND_BRAND_INTELLIGENCE,
   type FullCheckId,
   type FullCheckResult,
   type TierTwoEvent,
 } from "@/lib/preflight-tier-two.functions";
+import { runStage8, confirmCheckpointB } from "@/lib/stage8.functions";
 import { saveBrandIntelligence, runStage13 } from "@/lib/stage13.functions";
 import { runStage13b } from "@/lib/stage13b.functions";
 import { runStage14 } from "@/lib/stage14.functions";
@@ -161,8 +164,12 @@ Speak shortly,
 export function PreflightFullCheckPanel() {
   const runTierTwoFn = useServerFn(runTierTwoFullCheck);
   const getLatestFn = useServerFn(getLatestTierTwoCheck);
+  const runFrom4Fn = useServerFn(runTierTwoChecksFrom4);
   const runResumeFn = useServerFn(runTierTwoChecksFrom9);
+  const recordCheck3Fn = useServerFn(recordPreflightCheck3Result);
   const recordCheck8Fn = useServerFn(recordPreflightCheck8Result);
+  const stage8Fn = useServerFn(runStage8);
+  const confirmCheckpointBFn = useServerFn(confirmCheckpointB);
   const seedBrandIntelFn = useServerFn(saveBrandIntelligence);
   const stage13Fn = useServerFn(runStage13);
   const stage13bFn = useServerFn(runStage13b);
@@ -221,11 +228,12 @@ export function PreflightFullCheckPanel() {
     tickRef.current = null;
   };
 
-  // Process events from one streaming server-fn generator. Returns the
-  // handoff payload if the stream ended with `check_8_handoff`, otherwise
-  // null. Returns "lock_failed" / "error" sentinels for terminal states.
+  // Process events from one streaming server-fn generator. Returns a
+  // handoff payload if the stream ended with `check_3_handoff` or
+  // `check_8_handoff`, otherwise terminal sentinel.
   type ProcessOutcome =
-    | { kind: "handoff"; payload: Extract<TierTwoEvent, { type: "check_8_handoff" }> }
+    | { kind: "handoff3"; payload: Extract<TierTwoEvent, { type: "check_3_handoff" }> }
+    | { kind: "handoff8"; payload: Extract<TierTwoEvent, { type: "check_8_handoff" }> }
     | { kind: "done" }
     | { kind: "lock_failed" }
     | { kind: "error" };
@@ -258,9 +266,13 @@ export function PreflightFullCheckPanel() {
         setResults((prev) => prev.map((r) => (r.index === ev.result.index ? ev.result : r)));
         continue;
       }
+      if (ev.type === "check_3_handoff") {
+        setResults(ev.results);
+        return { kind: "handoff3", payload: ev };
+      }
       if (ev.type === "check_8_handoff") {
         setResults(ev.results);
-        return { kind: "handoff", payload: ev };
+        return { kind: "handoff8", payload: ev };
       }
       if (ev.type === "done") {
         setOverall(ev.overall);
@@ -284,6 +296,58 @@ export function PreflightFullCheckPanel() {
       }
     }
     return { kind: "done" };
+  };
+
+  // Drive Check 3 (Stage 8 + Checkpoint B) by invoking each as a SEPARATE
+  // server-fn RPC. Each is a fresh Cloudflare Worker invocation with its
+  // own wall-clock budget — structural fix for the silent worker death
+  // that occurred when both ran inside one chained server-fn invocation.
+  const driveCheck3 = async (
+    handoff: Extract<TierTwoEvent, { type: "check_3_handoff" }>,
+  ): Promise<FullCheckResult> => {
+    const idx = 2; // Check 3 → index 2
+    const def = handoff.results[idx];
+    setCurrentMessage(`▶ ${def.name}`);
+    setResults((prev) => prev.map((r) => (r.index === 3 ? { ...r, status: "running" } : r)));
+    const started = Date.now();
+    const sessionId = handoff.sessionId;
+    const timings: string[] = [];
+    try {
+      if (!sessionId || handoff.results[1].status !== "pass") {
+        throw new Error("Skipped: Phase 1A chain did not complete");
+      }
+      setCurrentMessage("  · Running Stage 8 (Strategic Propositions) — separate Worker invocation...");
+      let t0 = Date.now();
+      await drainStream(stage8Fn({ data: { sessionId } }) as unknown as AsyncGenerator<
+        { delta?: string; done?: true },
+        void,
+        unknown
+      >);
+      timings.push(`Stage 8: ${((Date.now() - t0) / 1000).toFixed(1)}s`);
+
+      setCurrentMessage("  · Confirming Checkpoint B — separate Worker invocation...");
+      t0 = Date.now();
+      await confirmCheckpointBFn({ data: { sessionId } });
+      timings.push(`Checkpoint B: ${((Date.now() - t0) / 1000).toFixed(1)}s`);
+
+      return {
+        ...def,
+        status: "pass",
+        durationMs: Date.now() - started,
+        detail: `Stage 8 produced propositions and Checkpoint B persisted as confirmed — each ran as its own server-fn RPC. ${timings.join(", ")}.`,
+        remediation: null,
+      };
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      return {
+        ...def,
+        status: "fail",
+        durationMs: Date.now() - started,
+        detail: `Check 3 failed: ${msg}. Completed: ${timings.join(", ") || "none"}.`,
+        remediation:
+          "Open src/lib/stage8.functions.ts. Verify the Strategic Propositions prompt is intact and confirmCheckpointB writes checkpoint_b_confirmed = true.",
+      };
+    }
   };
 
   // Drive Check 8 by invoking each of Stages 13, 13B, 14, 14B, 14C, 15, 16
@@ -373,28 +437,59 @@ export function PreflightFullCheckPanel() {
           : {},
       })) as AsyncGenerator<TierTwoEvent, void, unknown>;
 
-      const outcome = await processStream(gen);
-      if (outcome.kind !== "handoff") return;
+      const outcome1 = await processStream(gen);
+      if (outcome1.kind !== "handoff3") return;
 
-      // ---- Client-driven Check 8 ----
-      const check8Result = await driveCheck8(outcome.payload);
-      const updatedResults = outcome.payload.results.map((r) =>
+      // ---- Client-driven Check 3 (Stage 8 + Checkpoint B as separate RPCs) ----
+      const check3Result = await driveCheck3(outcome1.payload);
+      let workingResults = outcome1.payload.results.map((r) =>
+        r.index === 3 ? check3Result : r,
+      );
+      setResults(workingResults);
+      setCurrentMessage(`✓ ${check3Result.name} — ${check3Result.status.toUpperCase()}`);
+      await recordCheck3Fn({
+        data: { recordId: outcome1.payload.recordId, allResults: workingResults },
+      });
+
+      // ---- Resume server-side: checks 4–7 → check_8_handoff ----
+      const from4Gen = (await runFrom4Fn({
+        data: {
+          recordId: outcome1.payload.recordId,
+          sessionId: outcome1.payload.sessionId,
+          sessionIds: outcome1.payload.sessionIds,
+          priorResults: workingResults,
+          startedAtMs: outcome1.payload.startedAtMs,
+        },
+      })) as AsyncGenerator<TierTwoEvent, void, unknown>;
+      const outcome2 = await processStream(from4Gen);
+      if (outcome2.kind !== "handoff8") return;
+
+      // ---- Client-driven Check 8 (skip if check 7 didn't pass) ----
+      const check7Passed = outcome2.payload.results[6]?.status === "pass";
+      let check8Result: FullCheckResult;
+      if (!check7Passed) {
+        // Server already marked it failed inline; reuse that.
+        check8Result = outcome2.payload.results[7];
+      } else {
+        check8Result = await driveCheck8(outcome2.payload);
+      }
+      workingResults = outcome2.payload.results.map((r) =>
         r.index === 8 ? check8Result : r,
       );
-      setResults(updatedResults);
+      setResults(workingResults);
       setCurrentMessage(`✓ ${check8Result.name} — ${check8Result.status.toUpperCase()}`);
       await recordCheck8Fn({
-        data: { recordId: outcome.payload.recordId, allResults: updatedResults },
+        data: { recordId: outcome2.payload.recordId, allResults: workingResults },
       });
 
       // ---- Resume: checks 9–12 + finalisation ----
       const resumeGen = (await runResumeFn({
         data: {
-          recordId: outcome.payload.recordId,
-          sessionId: outcome.payload.sessionId,
-          sessionIds: outcome.payload.sessionIds,
-          priorResults: updatedResults,
-          startedAtMs: outcome.payload.startedAtMs,
+          recordId: outcome2.payload.recordId,
+          sessionId: outcome2.payload.sessionId,
+          sessionIds: outcome2.payload.sessionIds,
+          priorResults: workingResults,
+          startedAtMs: outcome2.payload.startedAtMs,
         },
       })) as AsyncGenerator<TierTwoEvent, void, unknown>;
       await processStream(resumeGen);
