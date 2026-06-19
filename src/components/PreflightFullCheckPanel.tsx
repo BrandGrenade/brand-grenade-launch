@@ -190,6 +190,7 @@ export function PreflightFullCheckPanel() {
   const recordCheck3Fn = useServerFn(recordPreflightCheck3Result);
   const recordCheck8Fn = useServerFn(recordPreflightCheck8Result);
   const finalizeRunFn = useServerFn(finalizePreflightRun);
+  const confirmCheckpointAFn = useServerFn(confirmPreflightCheckpointA);
   const stage2Fn = useServerFn(runStage2);
   const stage3Fn = useServerFn(runStage3);
   const stage4Fn = useServerFn(runStage4);
