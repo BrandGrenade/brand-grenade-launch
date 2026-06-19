@@ -297,7 +297,7 @@ function BriefIntake() {
         category: category.trim() || "Unspecified",
         date,
         submittedBy: submittedBy.trim(),
-        sections: { s1_core: `Uploaded document: ${altFile.name}` },
+        sections: { f1_brand: `Uploaded document: ${altFile.name}` },
         supportingMaterials: [altFile.name],
       };
       const { sessionId } = await createSessionFn({
