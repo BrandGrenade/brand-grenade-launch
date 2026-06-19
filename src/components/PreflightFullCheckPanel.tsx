@@ -12,16 +12,29 @@ import { toast } from "sonner";
 import {
   runTierTwoFullCheck,
   getLatestTierTwoCheck,
+  recordPreflightResults,
   recordPreflightCheck3Result,
   recordPreflightCheck8Result,
+  finalizePreflightRun,
   runTierTwoChecksFrom4,
+  runTierTwoChecksFrom7,
   runTierTwoChecksFrom9,
+  runTierTwoChecksFrom11,
   PREFLIGHT_TESTBRAND_BRAND_INTELLIGENCE,
   type FullCheckId,
   type FullCheckResult,
   type TierTwoEvent,
 } from "@/lib/preflight-tier-two.functions";
+import { runStage2 } from "@/lib/stage2.functions";
+import { runStage3 } from "@/lib/stage3.functions";
+import { runStage4 } from "@/lib/stage4.functions";
+import { runStage4b } from "@/lib/stage4b.functions";
+import { runStage5 } from "@/lib/stage5.functions";
+import { runStage6 } from "@/lib/stage6.functions";
+import { runStage7 } from "@/lib/stage7.functions";
 import { runStage8, confirmCheckpointB } from "@/lib/stage8.functions";
+import { runStage10 } from "@/lib/stage10.functions";
+import { runStage11 } from "@/lib/stage11.functions";
 import { saveBrandIntelligence, runStage13 } from "@/lib/stage13.functions";
 import { runStage13b } from "@/lib/stage13b.functions";
 import { runStage14 } from "@/lib/stage14.functions";
@@ -29,6 +42,9 @@ import { runStage14b } from "@/lib/stage14b.functions";
 import { runStage14c } from "@/lib/stage14c.functions";
 import { runStage15 } from "@/lib/stage15.functions";
 import { runStage16 } from "@/lib/stage16.functions";
+import { runStage17, selectStage17Territory } from "@/lib/stage17.functions";
+import { runStage17b } from "@/lib/stage17b.functions";
+import { runStage18 } from "@/lib/stage18.functions";
 
 // Drain a streaming server-fn AsyncGenerator until its final `done` chunk.
 async function drainStream<C extends { delta?: string; done?: true }>(
