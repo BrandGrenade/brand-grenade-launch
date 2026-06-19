@@ -523,6 +523,64 @@ const FullCheckResultSchema = z.object({
   remediation: z.string().nullable(),
 });
 
+export const recordPreflightResults = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) =>
+    z
+      .object({
+        recordId: z.string().uuid(),
+        allResults: z.array(FullCheckResultSchema),
+      })
+      .parse(i),
+  )
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin
+      .from("preflight_checks")
+      .update({ tier_two_results: data.allResults as unknown as never })
+      .eq("id", data.recordId);
+    if (error) throw new Error(error.message);
+    return { ok: true as const };
+  });
+
+export const finalizePreflightRun = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) =>
+    z
+      .object({
+        recordId: z.string().uuid(),
+        allResults: z.array(FullCheckResultSchema),
+        sessionIds: z.array(z.string().uuid()),
+        startedAtMs: z.number(),
+      })
+      .parse(i),
+  )
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const failedCount = data.allResults.filter((r) => r.status === "fail").length;
+    const overall: "ready" | "issue_detected" = failedCount === 0 ? "ready" : "issue_detected";
+    if (data.sessionIds.length > 0) {
+      await supabaseAdmin.from("sessions").delete().in("id", data.sessionIds);
+    }
+    const { error } = await supabaseAdmin
+      .from("preflight_checks")
+      .update({
+        status: "complete",
+        completed_at: nowIso(),
+        tier_two_results: data.allResults as unknown as never,
+        overall_result: overall,
+      })
+      .eq("id", data.recordId);
+    if (error) throw new Error(error.message);
+    return {
+      recordId: data.recordId,
+      overall,
+      results: data.allResults,
+      sessionIdsCleaned: data.sessionIds,
+      totalDurationMs: Date.now() - data.startedAtMs,
+    };
+  });
+
 export const recordPreflightCheck8Result = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i) =>
