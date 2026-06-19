@@ -105,9 +105,11 @@ The journey must be mapped against the audience's actual daily and weekly rhythm
 
 SECTION THREE — CHANNEL ROLE ASSIGNMENT
 
-For every channel in the recommended set state the following in this exact order.
+This is the canonical channel list. Stage 21 parses this section to build one channel brief per channel. Format every channel exactly as follows or downstream parsing will fail.
 
-Channel name and specific platform or format — not a generic category but the specific named channel.
+Each channel begins with a header line written in ALL CAPS, on its own line, ending with a colon. The header names the specific channel and platform — not a generic category. Preserve brand and acronym casing inside the header by writing the entire header in CAPS (for example "AFR PRINT AND DIGITAL, PLUS THE AUSTRALIAN:" or "LINKEDIN AT CMO AND C-SUITE LEVEL WITH NAMED ACCOUNT TARGETING:").
+
+Directly under each header, in plain prose paragraphs, state the following in this exact order:
 
 Long or Short classification — Long for brand building mental availability over time, Short for sales activation converting existing intent into immediate action.
 
@@ -118,6 +120,8 @@ Primary job — one sentence stating the specific job this audience is hiring th
 Strategic role in this plan — one sentence stating what this channel contributes to the overall system that no other channel in the set contributes.
 
 Behavioural economics mechanism — the single most powerful cognitive trigger operating at this channel for this audience and why it is dominant here.
+
+Do not number the channels. Do not use bullet points. Do not use markdown. The ALL-CAPS colon-terminated header is the only channel boundary marker.
 
 SECTION FOUR — THE MINDSTATE MAP
 
