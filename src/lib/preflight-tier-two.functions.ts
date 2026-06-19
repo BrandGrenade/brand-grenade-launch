@@ -363,94 +363,46 @@ export const runTierTwoFullCheck = createServerFn({ method: "POST" })
 
     try {
       // ---------------------------------------------------------------------
-      // CHECK 1 — Stage 1 Brief Analysis
-      // Creates the primary TestBrand session and runs Stage 1.
+      // CHECK 1 — Hand off to client.
+      // Create the primary TestBrand session, then yield check_1_handoff.
+      // The client invokes runStage1 as its OWN server-fn RPC so Stage 1
+      // gets a fresh Cloudflare Worker wall-clock budget — same pattern as
+      // every other long Claude call in the runner. Running Stage 1 inline
+      // here previously left Check 1 stuck in "pending" and cascaded every
+      // downstream check into a skip.
       // ---------------------------------------------------------------------
       yield { type: "check_start", index: 1, id: CHECK_DEFS[0].id, name: CHECK_DEFS[0].name };
+      yield { type: "check_progress", index: 1, message: "Creating TestBrand session (is_preflight_test=true)" };
       {
-        const gen = runCheck(
-          1,
-          async (emit) => {
-            emit("Creating TestBrand session (is_preflight_test=true)");
-            const { data: s, error: sErr } = await supabaseAdmin
-              .from("sessions")
-              .insert({
-                brand_name: TESTBRAND_BRAND_NAME,
-                category: TESTBRAND_CATEGORY,
-                strategic_mode: TESTBRAND_STRATEGIC_MODE,
-                brief_text: TESTBRAND_BRIEF,
-                status: "running",
-                current_stage: 1,
-                dev_mode: false,
-                user_id: context.userId,
-                is_preflight_test: true,
-              })
-              .select("id")
-              .single();
-            if (sErr || !s) throw new Error(`Session insert failed: ${sErr?.message ?? "no row"}`);
-            primarySessionId = s.id as string;
-            createdSessionIds.add(primarySessionId);
-            emit(`TestBrand session created: ${primarySessionId.slice(0, 8)}`);
-            emit("Running Stage 1 (Brief Analysis)...");
-            const final = await drainGenerator(runStage1({ data: { sessionId: primarySessionId } }));
-            const output = (final as { output?: string }).output ?? "";
-            if (output.length < 200) throw new Error(`Stage 1 output too short (${output.length} chars)`);
-            const tension = (final as { tensionScore?: number | null }).tensionScore;
-            return {
-              detail: `Stage 1 completed in ${(((final as { output: string }).output ?? "").length)} chars. Tension score: ${tension ?? "n/a"}.`,
-            };
-          },
-          "Open Stage 1 prompt and Claude invocation logs. Verify stage1.functions.ts streamClaude call succeeds against TestBrand brief.",
-        );
-        let result!: FullCheckResult;
-        for (;;) {
-          const r = await gen.next();
-          if (r.done) {
-            result = r.value as FullCheckResult;
-            break;
-          }
-          yield r.value as TierTwoEvent;
-        }
-        yield { type: "check_done", result };
-      }
-
-      // Guard: if Stage 1 failed, the pipeline-dependent checks (2,3,5,6,7,8) cannot run.
-      const stage1Ok = results[0].status === "pass";
-
-      // ---------------------------------------------------------------------
-      // CHECK 2 — Hand off to client.
-      // Stages 2–7 are seven long Claude calls. Each must run as its own
-      // server-fn RPC so every stage receives a fresh wall-clock budget.
-      // ---------------------------------------------------------------------
-      yield { type: "check_start", index: 2, id: CHECK_DEFS[1].id, name: CHECK_DEFS[1].name };
-      if (!stage1Ok || !primarySessionId) {
-        results[1] = {
-          ...results[1],
-          status: "fail",
-          durationMs: 0,
-          detail: "Skipped: Stage 1 failed",
-          remediation: "Fix Stage 1 before re-running Check 2.",
-        };
-        await persistResults(supabaseAdmin, recordId, results);
-        yield { type: "check_done", result: results[1] };
-      } else {
-        yield { type: "check_progress", index: 2, message: "Auto-confirming Checkpoint A" };
-        await supabaseAdmin
+        const { data: s, error: sErr } = await supabaseAdmin
           .from("sessions")
-          .update({ checkpoint_a_confirmed: true })
-          .eq("id", primarySessionId);
-        results[1] = { ...results[1], status: "running" };
-        await persistResults(supabaseAdmin, recordId, results);
+          .insert({
+            brand_name: TESTBRAND_BRAND_NAME,
+            category: TESTBRAND_CATEGORY,
+            strategic_mode: TESTBRAND_STRATEGIC_MODE,
+            brief_text: TESTBRAND_BRIEF,
+            status: "running",
+            current_stage: 1,
+            dev_mode: false,
+            user_id: context.userId,
+            is_preflight_test: true,
+          })
+          .select("id")
+          .single();
+        if (sErr || !s) throw new Error(`Session insert failed: ${sErr?.message ?? "no row"}`);
+        primarySessionId = s.id as string;
+        createdSessionIds.add(primarySessionId);
+        yield { type: "check_progress", index: 1, message: `TestBrand session created: ${primarySessionId.slice(0, 8)}` };
       }
 
-      // ---------------------------------------------------------------------
-      // CHECK 2 handoff. The client will run Stage 2, 3, 4, 4B, 5, 6, and 7
-      // as seven separate server-fn RPCs, then drive Check 3 in the same
-      // already-split way as before.
-      // ---------------------------------------------------------------------
+      // Mark Check 1 as running so the dashboard reflects in-flight state
+      // while the client invokes Stage 1 in its own Worker invocation.
+      results[0] = { ...results[0], status: "running" };
+      await persistResults(supabaseAdmin, recordId, results);
+
       handedOff = true;
       yield {
-        type: "check_2_handoff",
+        type: "check_1_handoff",
         recordId,
         sessionId: primarySessionId ?? "",
         sessionIds: Array.from(createdSessionIds),
@@ -458,6 +410,7 @@ export const runTierTwoFullCheck = createServerFn({ method: "POST" })
         startedAtMs,
       };
       return;
+
 
     } catch (fatal) {
       const msg = fatal instanceof Error ? fatal.message : String(fatal);
