@@ -11,6 +11,7 @@ import { STAGE_21_CHANNEL_DETONATION_BRIEFS_PROMPT } from "./stage21-channel-det
 import {
   appendRedirect,
   extractStage19ChannelEntries,
+  extractStage20BChannelEntries,
   formatThreeTruths,
   smpGoverningBlock,
   withPhase2Formatting,
