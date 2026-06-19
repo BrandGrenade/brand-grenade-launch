@@ -800,6 +800,128 @@ export const runTierTwoChecksFrom9 = createServerFn({ method: "POST" })
     }
   });
 
+export const runTierTwoChecksFrom11 = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) =>
+    z
+      .object({
+        recordId: z.string().uuid(),
+        sessionIds: z.array(z.string().uuid()),
+        priorResults: z.array(FullCheckResultSchema),
+        startedAtMs: z.number(),
+      })
+      .parse(i),
+  )
+  .handler(async function* ({ data, context }): AsyncGenerator<TierTwoEvent, void, unknown> {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { recordId, startedAtMs } = data;
+    const results: FullCheckResult[] = data.priorResults.map((r) => ({
+      ...r,
+      id: r.id as FullCheckId,
+    }));
+    const createdSessionIds = new Set<string>(data.sessionIds);
+    let handedOff = false;
+
+    const runCheck = async function* (
+      index1: number,
+      fn: (emit: (msg: string) => void) => Promise<{ detail: string }>,
+      remediationOnFail: string,
+    ): AsyncGenerator<TierTwoEvent, FullCheckResult, unknown> {
+      const idx = index1 - 1;
+      const events: TierTwoEvent[] = [];
+      const emit = (message: string) => events.push({ type: "check_progress", index: index1, message });
+      results[idx] = { ...results[idx], status: "running" };
+      await persistResults(supabaseAdmin, recordId, results);
+      const started = Date.now();
+      let res: FullCheckResult;
+      try {
+        const { detail } = await fn(emit);
+        res = { ...results[idx], status: "pass", durationMs: Date.now() - started, detail, remediation: null };
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        res = { ...results[idx], status: "fail", durationMs: Date.now() - started, detail: msg, remediation: remediationOnFail };
+      }
+      for (const ev of events) yield ev;
+      results[idx] = res;
+      await persistResults(supabaseAdmin, recordId, results);
+      return res;
+    };
+
+    try {
+      yield { type: "check_start", index: 11, id: CHECK_DEFS[10].id, name: CHECK_DEFS[10].name };
+      {
+        const gen = runCheck(11, async () => {
+          const checks: Array<{ ok: boolean; msg: string }> = [];
+          checks.push({ ok: /createFileRoute\(['"]\/detonation['"]\)/.test(detonationSource), msg: "detonation route registered" });
+          checks.push({
+            ok:
+              /export\s+function\s+DetonationRoute|export\s+const\s+DetonationRoute|component:\s*DetonationRoute/.test(detonationSource) ||
+              /component:\s*\w+/.test(detonationSource),
+            msg: "detonation route has component",
+          });
+          checks.push({ ok: /await\s+navigate\s*\(\s*\{\s*to:\s*['"]\/detonation['"]/.test(detonationCanvasSource), msg: "canvas → detonation navigation call present" });
+          checks.push({ ok: /saveBrandIntelligence/.test(detonationCanvasSource), msg: "saveBrandIntelligence wired in canvas" });
+          checks.push({ ok: /STAGE_9_SYSTEM_PROMPT/.test(STAGE_9_SYSTEM_PROMPT) || STAGE_9_SYSTEM_PROMPT.length > 200, msg: "Stage 9 prompt resolvable" });
+          const failed = checks.filter((c) => !c.ok);
+          if (failed.length) throw new Error(`Structural checks failed: ${failed.map((f) => f.msg).join("; ")}`);
+          return { detail: `All ${checks.length} structural route/navigation invariants present.` };
+        }, "Open src/routes/detonation_.canvas.tsx and verify the explicit `await navigate({ to: '/detonation' })` after saveBrandIntelligence completes.");
+        let result!: FullCheckResult;
+        for (;;) {
+          const r = await gen.next();
+          if (r.done) { result = r.value as FullCheckResult; break; }
+          yield r.value as TierTwoEvent;
+        }
+        yield { type: "check_done", result };
+      }
+
+      yield { type: "check_start", index: 12, id: CHECK_DEFS[11].id, name: CHECK_DEFS[11].name };
+      yield { type: "check_progress", index: 12, message: "Creating two parallel TestBrand sessions" };
+      const mkSession = async (suffix: string): Promise<string> => {
+        const { data: s, error } = await supabaseAdmin
+          .from("sessions")
+          .insert({
+            brand_name: `${TESTBRAND_BRAND_NAME} ${suffix}`,
+            category: TESTBRAND_CATEGORY,
+            strategic_mode: TESTBRAND_STRATEGIC_MODE,
+            brief_text: TESTBRAND_BRIEF + `\n\nConcurrency variant: ${suffix}.`,
+            status: "running",
+            current_stage: 1,
+            dev_mode: false,
+            user_id: context.userId,
+            is_preflight_test: true,
+          })
+          .select("id")
+          .single();
+        if (error || !s) throw new Error(`Concurrent session insert failed (${suffix}): ${error?.message ?? "no row"}`);
+        return s.id as string;
+      };
+      const [idA, idB] = await Promise.all([mkSession("A"), mkSession("B")]);
+      createdSessionIds.add(idA);
+      createdSessionIds.add(idB);
+      results[11] = { ...results[11], status: "running" };
+      await persistResults(supabaseAdmin, recordId, results);
+      handedOff = true;
+      yield {
+        type: "check_12_handoff",
+        recordId,
+        sessionIds: Array.from(createdSessionIds),
+        concurrentSessionIds: [idA, idB],
+        results,
+        startedAtMs,
+      };
+    } catch (fatal) {
+      const msg = fatal instanceof Error ? fatal.message : String(fatal);
+      yield { type: "error", message: `Fatal error during Tier Two (checks 11–12): ${msg}` };
+    } finally {
+      if (!handedOff) {
+        await finalizePreflightRun({
+          data: { recordId, allResults: results, sessionIds: Array.from(createdSessionIds), startedAtMs },
+        });
+      }
+    }
+  });
+
 // ---------------------------------------------------------------------------
 // Check 3 result recorder + resume stream (checks 4–7 → check 8 handoff)
 //
