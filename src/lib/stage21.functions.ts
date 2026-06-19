@@ -71,6 +71,13 @@ function buildStage21UserMessage(
   const audienceMindstate = extractSection(context, "AUDIENCE MINDSTATE");
 
   return [
+    "PRIMARY INPUT — CHANNEL STRATEGY AND AUDIENCE INTELLIGENCE (Stage 20B)",
+    "This is the mandatory primary input for this brief. Every recommendation, audience definition, mindstate, message priority, and creative instruction below MUST be derived from and consistent with this Stage 20B output. Do not generate generic channel advice. If this section is empty, stop and report missing Stage 20B.",
+    "",
+    s.stage_20b_output?.trim() || "—",
+    "",
+    "—",
+    "",
     smpGoverningBlock(s.selected_smp),
     "",
     `CHANNEL: ${channel}`,
@@ -103,12 +110,10 @@ function buildStage21UserMessage(
       cultural: s.truth_cultural,
     }),
     "",
-    "MASTER DETONATION BRIEF (Stage 20)",
+    "MASTER DETONATION BRIEF (Stage 20 — supporting context, subordinate to Stage 20B above)",
     s.stage_20_output?.trim() || "—",
-    "",
-    "CHANNEL STRATEGY AND AUDIENCE INTELLIGENCE (Stage 20B — PRIMARY INPUT)",
-    s.stage_20b_output?.trim() || "—",
   ].join("\n");
+
 }
 
 async function generateOne(
