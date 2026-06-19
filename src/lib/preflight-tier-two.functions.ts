@@ -22,7 +22,9 @@ import detonationSource from "@/routes/detonation.tsx?raw";
 import claudeServerSource from "@/lib/claude.server.ts?raw";
 import sanitiseSource from "@/lib/sanitise-output.ts?raw";
 
-import { runStage1 } from "@/lib/stage1.functions";
+// runStage1 is no longer invoked server-side from this module. The client
+// driver runs Stage 1 as its own server-fn RPC after check_1_handoff.
+
 import { runStage9 } from "@/lib/stage9.functions";
 import { runStage12, saveSelectedSMP, saveSelectionRationale } from "@/lib/stage12.functions";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
