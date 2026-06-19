@@ -1050,38 +1050,32 @@ export const runTierTwoChecksFrom4 = createServerFn({ method: "POST" })
       }
 
       // -------------------------------------------------------------------
-      // CHECK 6 — Stages 10–11 evaluation chain
+      // CHECK 6 — Hand off to client. Stage 10 and Stage 11 are separate
+      // long Claude calls and must not share one server invocation.
       // -------------------------------------------------------------------
       yield { type: "check_start", index: 6, id: CHECK_DEFS[5].id, name: CHECK_DEFS[5].name };
-      {
-        const gen = runCheck(
-          6,
-          async (emit) => {
-            if (!primarySessionId || results[4].status !== "pass")
-              throw new Error("Skipped: Stage 9 did not complete");
-            emit("Running Stage 10 (Scoring)...");
-            await drainGenerator(runStage10({ data: { sessionId: primarySessionId } }));
-            emit("Running Stage 11 (Validation)...");
-            await drainGenerator(runStage11({ data: { sessionId: primarySessionId } }));
-            const { data: row } = await supabaseAdmin
-              .from("sessions")
-              .select("stage_10_output, stage_11_output")
-              .eq("id", primarySessionId)
-              .single();
-            if (!row?.stage_10_output || !row?.stage_11_output)
-              throw new Error("Stage 10 or 11 output missing after run");
-            return { detail: "Stages 10 & 11 completed; outputs persisted." };
-          },
-          "Inspect stage10.functions.ts / stage11.functions.ts; verify Stage 8 propositions were available as input.",
-        );
-        let result!: FullCheckResult;
-        for (;;) {
-          const r = await gen.next();
-          if (r.done) { result = r.value; break; }
-          yield r.value;
-        }
-        yield { type: "check_done", result };
+      if (!primarySessionId || results[4].status !== "pass") {
+        results[5] = {
+          ...results[5],
+          status: "fail",
+          durationMs: 0,
+          detail: "Skipped: Stage 9 did not complete",
+          remediation: "Fix Check 5 before running Stage 10/11 evaluation.",
+        };
+        await persistResults(supabaseAdmin, recordId, results);
+        yield { type: "check_done", result: results[5] };
       }
+
+      handedOff = true;
+      yield {
+        type: "check_6_handoff",
+        recordId,
+        sessionId: primarySessionId ?? "",
+        sessionIds: Array.from(createdSessionIds),
+        results,
+        startedAtMs,
+      };
+      return;
 
       // -------------------------------------------------------------------
       // CHECK 7 — Stage 12 SMP selection + rationale persistence
