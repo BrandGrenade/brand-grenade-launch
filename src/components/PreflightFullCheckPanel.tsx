@@ -16,6 +16,7 @@ import {
   recordPreflightCheck3Result,
   recordPreflightCheck8Result,
   finalizePreflightRun,
+  confirmPreflightCheckpointA,
   runTierTwoChecksFrom4,
   runTierTwoChecksFrom7,
   runTierTwoChecksFrom9,
