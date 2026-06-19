@@ -288,3 +288,65 @@ export function openPhase1Document(session: Phase1Session, format: Phase1Format)
   win.document.write(html);
   win.document.close();
 }
+
+// ─── Stage 16 Vision document ───────────────────────────────────────
+// Renders the AI-generated `stage_16_vision_output` markdown as a styled
+// standalone HTML doc using the same Phase 1 visual treatment. Used for
+// the "Strategy and Creative Vision" format card on the deliverables
+// page — distinct from the raw stage-1..15 stitched Phase 1 documents.
+export function buildStage16VisionDocument(
+  brand: string,
+  smp: string | null | undefined,
+  visionOutput: string,
+): string {
+  const label = "STRATEGY AND CREATIVE VISION";
+  const title = "Strategy and Creative Vision";
+  // stage_16_vision_output already begins with its own `# ...` heading
+  // (documentHeader in stage16.functions.ts). Strip that leading H1/H2 so we
+  // don't double up the cover title.
+  const cleaned = sanitise(visionOutput).replace(
+    /^\s*#\s+[^\n]*\n+(?:##\s+[^\n]*\n+)?(?:\*[^*]+\*\s*\n+)?(?:---\s*\n+)?/,
+    "",
+  );
+  const body =
+    cover(label, title, brand) +
+    proposition(smp) +
+    `<div class="section"><div class="part-label">${escapeHtml(label)}</div>${md(cleaned)}</div>` +
+    footer();
+  return `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>${escapeHtml(title)} — ${escapeHtml(brand)}</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>${baseStyles()}</style>
+</head>
+<body>
+<div id="toolbar">
+  <span>${escapeHtml(title)} — ${escapeHtml(brand)}</span>
+  <div class="actions">
+    <button onclick="window.print()">Save as PDF</button>
+    <button class="close" onclick="window.close()">Close</button>
+  </div>
+</div>
+<div class="page">${body}</div>
+<script>setTimeout(function(){try{window.print();}catch(e){}}, 500);</script>
+</body>
+</html>`;
+}
+
+export function openStage16VisionDocument(
+  brand: string,
+  smp: string | null | undefined,
+  visionOutput: string,
+): void {
+  const html = buildStage16VisionDocument(brand, smp, visionOutput);
+  const win = window.open("", "_blank");
+  if (!win) {
+    alert("Please allow popups to download your document.");
+    return;
+  }
+  win.document.open("text/html");
+  win.document.write(html);
+  win.document.close();
+}
