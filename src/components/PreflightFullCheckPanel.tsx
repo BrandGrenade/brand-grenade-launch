@@ -12,16 +12,30 @@ import { toast } from "sonner";
 import {
   runTierTwoFullCheck,
   getLatestTierTwoCheck,
+  recordPreflightResults,
   recordPreflightCheck3Result,
   recordPreflightCheck8Result,
+  finalizePreflightRun,
   runTierTwoChecksFrom4,
+  runTierTwoChecksFrom7,
   runTierTwoChecksFrom9,
+  runTierTwoChecksFrom11,
   PREFLIGHT_TESTBRAND_BRAND_INTELLIGENCE,
   type FullCheckId,
   type FullCheckResult,
   type TierTwoEvent,
 } from "@/lib/preflight-tier-two.functions";
+import { runStage1 } from "@/lib/stage1.functions";
+import { runStage2 } from "@/lib/stage2.functions";
+import { runStage3 } from "@/lib/stage3.functions";
+import { runStage4 } from "@/lib/stage4.functions";
+import { runStage4b } from "@/lib/stage4b.functions";
+import { runStage5 } from "@/lib/stage5.functions";
+import { runStage6 } from "@/lib/stage6.functions";
+import { runStage7 } from "@/lib/stage7.functions";
 import { runStage8, confirmCheckpointB } from "@/lib/stage8.functions";
+import { runStage10 } from "@/lib/stage10.functions";
+import { runStage11 } from "@/lib/stage11.functions";
 import { saveBrandIntelligence, runStage13 } from "@/lib/stage13.functions";
 import { runStage13b } from "@/lib/stage13b.functions";
 import { runStage14 } from "@/lib/stage14.functions";
@@ -29,6 +43,9 @@ import { runStage14b } from "@/lib/stage14b.functions";
 import { runStage14c } from "@/lib/stage14c.functions";
 import { runStage15 } from "@/lib/stage15.functions";
 import { runStage16 } from "@/lib/stage16.functions";
+import { runStage17, selectStage17Territory } from "@/lib/stage17.functions";
+import { runStage17b } from "@/lib/stage17b.functions";
+import { runStage18 } from "@/lib/stage18.functions";
 
 // Drain a streaming server-fn AsyncGenerator until its final `done` chunk.
 async function drainStream<C extends { delta?: string; done?: true }>(
@@ -164,12 +181,26 @@ Speak shortly,
 export function PreflightFullCheckPanel() {
   const runTierTwoFn = useServerFn(runTierTwoFullCheck);
   const getLatestFn = useServerFn(getLatestTierTwoCheck);
+  const recordResultsFn = useServerFn(recordPreflightResults);
   const runFrom4Fn = useServerFn(runTierTwoChecksFrom4);
+  const runFrom7Fn = useServerFn(runTierTwoChecksFrom7);
   const runResumeFn = useServerFn(runTierTwoChecksFrom9);
+  const runFrom11Fn = useServerFn(runTierTwoChecksFrom11);
   const recordCheck3Fn = useServerFn(recordPreflightCheck3Result);
   const recordCheck8Fn = useServerFn(recordPreflightCheck8Result);
+  const finalizeRunFn = useServerFn(finalizePreflightRun);
+  const stage2Fn = useServerFn(runStage2);
+  const stage3Fn = useServerFn(runStage3);
+  const stage4Fn = useServerFn(runStage4);
+  const stage4bFn = useServerFn(runStage4b);
+  const stage5Fn = useServerFn(runStage5);
+  const stage6Fn = useServerFn(runStage6);
+  const stage7Fn = useServerFn(runStage7);
   const stage8Fn = useServerFn(runStage8);
+  const stage1Fn = useServerFn(runStage1);
   const confirmCheckpointBFn = useServerFn(confirmCheckpointB);
+  const stage10Fn = useServerFn(runStage10);
+  const stage11Fn = useServerFn(runStage11);
   const seedBrandIntelFn = useServerFn(saveBrandIntelligence);
   const stage13Fn = useServerFn(runStage13);
   const stage13bFn = useServerFn(runStage13b);
@@ -178,6 +209,10 @@ export function PreflightFullCheckPanel() {
   const stage14cFn = useServerFn(runStage14c);
   const stage15Fn = useServerFn(runStage15);
   const stage16Fn = useServerFn(runStage16);
+  const stage17Fn = useServerFn(runStage17);
+  const selectStage17Fn = useServerFn(selectStage17Territory);
+  const stage17bFn = useServerFn(runStage17b);
+  const stage18Fn = useServerFn(runStage18);
 
   const [state, setState] = useState<RunState>("idle");
   const [results, setResults] = useState<FullCheckResult[]>([]);
@@ -232,8 +267,12 @@ export function PreflightFullCheckPanel() {
   // handoff payload if the stream ended with `check_3_handoff` or
   // `check_8_handoff`, otherwise terminal sentinel.
   type ProcessOutcome =
+    | { kind: "handoff2"; payload: Extract<TierTwoEvent, { type: "check_2_handoff" }> }
     | { kind: "handoff3"; payload: Extract<TierTwoEvent, { type: "check_3_handoff" }> }
+    | { kind: "handoff6"; payload: Extract<TierTwoEvent, { type: "check_6_handoff" }> }
     | { kind: "handoff8"; payload: Extract<TierTwoEvent, { type: "check_8_handoff" }> }
+    | { kind: "handoff10"; payload: Extract<TierTwoEvent, { type: "check_10_handoff" }> }
+    | { kind: "handoff12"; payload: Extract<TierTwoEvent, { type: "check_12_handoff" }> }
     | { kind: "done" }
     | { kind: "lock_failed" }
     | { kind: "error" };
@@ -266,13 +305,29 @@ export function PreflightFullCheckPanel() {
         setResults((prev) => prev.map((r) => (r.index === ev.result.index ? ev.result : r)));
         continue;
       }
+      if (ev.type === "check_2_handoff") {
+        setResults(ev.results);
+        return { kind: "handoff2", payload: ev };
+      }
       if (ev.type === "check_3_handoff") {
         setResults(ev.results);
         return { kind: "handoff3", payload: ev };
       }
+      if (ev.type === "check_6_handoff") {
+        setResults(ev.results);
+        return { kind: "handoff6", payload: ev };
+      }
       if (ev.type === "check_8_handoff") {
         setResults(ev.results);
         return { kind: "handoff8", payload: ev };
+      }
+      if (ev.type === "check_10_handoff") {
+        setResults(ev.results);
+        return { kind: "handoff10", payload: ev };
+      }
+      if (ev.type === "check_12_handoff") {
+        setResults(ev.results);
+        return { kind: "handoff12", payload: ev };
       }
       if (ev.type === "done") {
         setOverall(ev.overall);
@@ -296,6 +351,66 @@ export function PreflightFullCheckPanel() {
       }
     }
     return { kind: "done" };
+  };
+
+  const driveCheck2 = async (
+    handoff: Extract<TierTwoEvent, { type: "check_2_handoff" }>,
+  ): Promise<FullCheckResult> => {
+    const def = handoff.results[1];
+    setCurrentMessage(`▶ ${def.name}`);
+    setResults((prev) => prev.map((r) => (r.index === 2 ? { ...r, status: "running" } : r)));
+    const started = Date.now();
+    const sessionId = handoff.sessionId;
+    const timings: string[] = [];
+    const stages: Array<{ label: string; run: () => Promise<unknown> }> = [
+      { label: "Stage 2", run: () => drainStream(stage2Fn({ data: { sessionId } })) },
+      { label: "Stage 3", run: () => drainStream(stage3Fn({ data: { sessionId } })) },
+      { label: "Stage 4", run: () => drainStream(stage4Fn({ data: { sessionId } })) },
+      { label: "Stage 4B", run: () => drainStream(stage4bFn({ data: { sessionId } })) },
+      { label: "Stage 5", run: () => drainStream(stage5Fn({ data: { sessionId } })) },
+      { label: "Stage 6", run: () => drainStream(stage6Fn({ data: { sessionId } })) },
+      { label: "Stage 7", run: () => drainStream(stage7Fn({ data: { sessionId } })) },
+    ];
+    try {
+      if (!sessionId || handoff.results[0].status !== "pass") throw new Error("Skipped: Stage 1 failed");
+      for (const { label, run } of stages) {
+        setCurrentMessage(`  · Running ${label} (separate Worker invocation)...`);
+        const t0 = Date.now();
+        await run();
+        timings.push(`${label}: ${((Date.now() - t0) / 1000).toFixed(1)}s`);
+      }
+      return { ...def, status: "pass", durationMs: Date.now() - started, detail: `Phase 1A chain completed — each stage ran as its own server-fn RPC. ${timings.join(", ")}.`, remediation: null };
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      return { ...def, status: "fail", durationMs: Date.now() - started, detail: `Check 2 failed: ${msg}. Completed: ${timings.join(", ") || "none"}.`, remediation: "Inspect logs for the first failed stage in the 2–7 chain; check Checkpoint A confirmation and prior-stage output columns are populated." };
+    }
+  };
+
+  const driveCheck6 = async (
+    handoff: Extract<TierTwoEvent, { type: "check_6_handoff" }>,
+  ): Promise<FullCheckResult> => {
+    const def = handoff.results[5];
+    setCurrentMessage(`▶ ${def.name}`);
+    setResults((prev) => prev.map((r) => (r.index === 6 ? { ...r, status: "running" } : r)));
+    const started = Date.now();
+    const sessionId = handoff.sessionId;
+    const timings: string[] = [];
+    try {
+      if (!sessionId || handoff.results[4].status !== "pass") throw new Error("Skipped: Stage 9 did not complete");
+      for (const { label, run } of [
+        { label: "Stage 10", run: () => drainStream(stage10Fn({ data: { sessionId } })) },
+        { label: "Stage 11", run: () => drainStream(stage11Fn({ data: { sessionId } })) },
+      ]) {
+        setCurrentMessage(`  · Running ${label} (separate Worker invocation)...`);
+        const t0 = Date.now();
+        await run();
+        timings.push(`${label}: ${((Date.now() - t0) / 1000).toFixed(1)}s`);
+      }
+      return { ...def, status: "pass", durationMs: Date.now() - started, detail: `Stages 10 & 11 completed — each ran as its own server-fn RPC. ${timings.join(", ")}.`, remediation: null };
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      return { ...def, status: "fail", durationMs: Date.now() - started, detail: `Check 6 failed: ${msg}. Completed: ${timings.join(", ") || "none"}.`, remediation: "Inspect stage10.functions.ts / stage11.functions.ts; verify Stage 8 propositions were available as input." };
+    }
   };
 
   // Drive Check 3 (Stage 8 + Checkpoint B) by invoking each as a SEPARATE
@@ -421,6 +536,73 @@ export function PreflightFullCheckPanel() {
     }
   };
 
+  const driveCheck10 = async (
+    handoff: Extract<TierTwoEvent, { type: "check_10_handoff" }>,
+  ): Promise<FullCheckResult> => {
+    const def = handoff.results[9];
+    setCurrentMessage(`▶ ${def.name}`);
+    setResults((prev) => prev.map((r) => (r.index === 10 ? { ...r, status: "running" } : r)));
+    const started = Date.now();
+    const sessionId = handoff.sessionId;
+    const timings: string[] = [];
+    try {
+      if (!sessionId || handoff.results[7].status !== "pass") throw new Error("Skipped: Phase 1 completion did not pass");
+      setCurrentMessage("  · Running Stage 17 (separate Worker invocation)...");
+      let t0 = Date.now();
+      const s17 = await stage17Fn({ data: { sessionId } });
+      timings.push(`Stage 17: ${((Date.now() - t0) / 1000).toFixed(1)}s`);
+      const territoryMarkdown = (s17 as { output?: string }).output ?? "";
+      if (territoryMarkdown.length < 200) throw new Error("Stage 17 output too short");
+      const blocks = territoryMarkdown.split(/\n(?=##\s)/).filter((b) => /##\s/.test(b));
+      const first = blocks[0] ?? territoryMarkdown;
+      setCurrentMessage("  · Selecting top-ranked territory (separate Worker invocation)...");
+      t0 = Date.now();
+      await selectStage17Fn({ data: { sessionId, territoryMarkdown: first } });
+      timings.push(`Select territory: ${((Date.now() - t0) / 1000).toFixed(1)}s`);
+      for (const { label, run } of [
+        { label: "Stage 17B", run: () => stage17bFn({ data: { sessionId } }) },
+        { label: "Stage 18", run: () => stage18Fn({ data: { sessionId } }) },
+      ]) {
+        setCurrentMessage(`  · Running ${label} (separate Worker invocation)...`);
+        t0 = Date.now();
+        await run();
+        timings.push(`${label}: ${((Date.now() - t0) / 1000).toFixed(1)}s`);
+      }
+      return { ...def, status: "pass", durationMs: Date.now() - started, detail: `Phase 2 chain executed end-to-end — each step ran as its own server-fn RPC. ${timings.join(", ")}.`, remediation: null };
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      return { ...def, status: "fail", durationMs: Date.now() - started, detail: `Check 10 failed: ${msg}. Completed: ${timings.join(", ") || "none"}.`, remediation: "Inspect Phase 2 checkpoint gate (D), selectStage17Territory writeback, and stage_17b_output column write." };
+    }
+  };
+
+  const driveCheck12 = async (
+    handoff: Extract<TierTwoEvent, { type: "check_12_handoff" }>,
+  ): Promise<FullCheckResult> => {
+    const def = handoff.results[11];
+    setCurrentMessage(`▶ ${def.name}`);
+    setResults((prev) => prev.map((r) => (r.index === 12 ? { ...r, status: "running" } : r)));
+    const started = Date.now();
+    const [idA, idB] = handoff.concurrentSessionIds;
+    const timings: string[] = [];
+    try {
+      setCurrentMessage("  · Running parallel Stage 1 session A/B (each its own Worker invocation)...");
+      const t0 = Date.now();
+      const [resA, resB] = await Promise.all([
+        drainStream(stage1Fn({ data: { sessionId: idA } })),
+        drainStream(stage1Fn({ data: { sessionId: idB } })),
+      ]);
+      timings.push(`Parallel Stage 1: ${((Date.now() - t0) / 1000).toFixed(1)}s`);
+      const outA = String((resA as { output?: string }).output ?? "");
+      const outB = String((resB as { output?: string }).output ?? "");
+      if (outA.length < 200 || outB.length < 200) throw new Error("One or both parallel Stage 1 outputs too short");
+      if (outA === outB) throw new Error("Parallel sessions produced identical stage_1_output — cross-contamination suspected");
+      return { ...def, status: "pass", durationMs: Date.now() - started, detail: `Two parallel Stage 1 runs completed independently with distinct outputs (${outA.length} / ${outB.length} chars). ${timings.join(", ")}.`, remediation: null };
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      return { ...def, status: "fail", durationMs: Date.now() - started, detail: `Check 12 failed: ${msg}. Completed: ${timings.join(", ") || "none"}.`, remediation: "Inspect runStage1 for any cross-session state. All session reads/writes must scope by sessionId." };
+    }
+  };
+
   const runCheck = async (forceOverride: boolean) => {
     setState("running");
     setLockMessage(null);
@@ -438,11 +620,31 @@ export function PreflightFullCheckPanel() {
       })) as AsyncGenerator<TierTwoEvent, void, unknown>;
 
       const outcome1 = await processStream(gen);
-      if (outcome1.kind !== "handoff3") return;
+      if (outcome1.kind !== "handoff2") return;
+
+      // ---- Client-driven Check 2 (Stages 2–7 as separate RPCs) ----
+      const check2Result = await driveCheck2(outcome1.payload);
+      let workingResults = outcome1.payload.results.map((r) =>
+        r.index === 2 ? check2Result : r,
+      );
+      setResults(workingResults);
+      setCurrentMessage(`✓ ${check2Result.name} — ${check2Result.status.toUpperCase()}`);
+      await recordResultsFn({
+        data: { recordId: outcome1.payload.recordId, allResults: workingResults },
+      });
+
+      const check3Handoff: Extract<TierTwoEvent, { type: "check_3_handoff" }> = {
+        type: "check_3_handoff",
+        recordId: outcome1.payload.recordId,
+        sessionId: outcome1.payload.sessionId,
+        sessionIds: outcome1.payload.sessionIds,
+        results: workingResults,
+        startedAtMs: outcome1.payload.startedAtMs,
+      };
 
       // ---- Client-driven Check 3 (Stage 8 + Checkpoint B as separate RPCs) ----
-      const check3Result = await driveCheck3(outcome1.payload);
-      let workingResults = outcome1.payload.results.map((r) =>
+      const check3Result = await driveCheck3(check3Handoff);
+      workingResults = check3Handoff.results.map((r) =>
         r.index === 3 ? check3Result : r,
       );
       setResults(workingResults);
@@ -454,36 +656,29 @@ export function PreflightFullCheckPanel() {
       // ---- Resume server-side: checks 4–7 → check_8_handoff ----
       const from4Gen = (await runFrom4Fn({
         data: {
-          recordId: outcome1.payload.recordId,
-          sessionId: outcome1.payload.sessionId,
-          sessionIds: outcome1.payload.sessionIds,
+          recordId: check3Handoff.recordId,
+          sessionId: check3Handoff.sessionId,
+          sessionIds: check3Handoff.sessionIds,
           priorResults: workingResults,
-          startedAtMs: outcome1.payload.startedAtMs,
+          startedAtMs: check3Handoff.startedAtMs,
         },
       })) as AsyncGenerator<TierTwoEvent, void, unknown>;
       const outcome2 = await processStream(from4Gen);
-      if (outcome2.kind !== "handoff8") return;
+      if (outcome2.kind !== "handoff6") return;
 
-      // ---- Client-driven Check 8 (skip if check 7 didn't pass) ----
-      const check7Passed = outcome2.payload.results[6]?.status === "pass";
-      let check8Result: FullCheckResult;
-      if (!check7Passed) {
-        // Server already marked it failed inline; reuse that.
-        check8Result = outcome2.payload.results[7];
-      } else {
-        check8Result = await driveCheck8(outcome2.payload);
-      }
+      // ---- Client-driven Check 6 (Stages 10–11 as separate RPCs) ----
+      const check6Result = await driveCheck6(outcome2.payload);
       workingResults = outcome2.payload.results.map((r) =>
-        r.index === 8 ? check8Result : r,
+        r.index === 6 ? check6Result : r,
       );
       setResults(workingResults);
-      setCurrentMessage(`✓ ${check8Result.name} — ${check8Result.status.toUpperCase()}`);
-      await recordCheck8Fn({
+      setCurrentMessage(`✓ ${check6Result.name} — ${check6Result.status.toUpperCase()}`);
+      await recordResultsFn({
         data: { recordId: outcome2.payload.recordId, allResults: workingResults },
       });
 
-      // ---- Resume: checks 9–12 + finalisation ----
-      const resumeGen = (await runResumeFn({
+      // ---- Resume server-side: check 7 → check_8_handoff ----
+      const from7Gen = (await runFrom7Fn({
         data: {
           recordId: outcome2.payload.recordId,
           sessionId: outcome2.payload.sessionId,
@@ -492,7 +687,87 @@ export function PreflightFullCheckPanel() {
           startedAtMs: outcome2.payload.startedAtMs,
         },
       })) as AsyncGenerator<TierTwoEvent, void, unknown>;
-      await processStream(resumeGen);
+      const outcome3 = await processStream(from7Gen);
+      if (outcome3.kind !== "handoff8") return;
+
+      // ---- Client-driven Check 8 (skip if check 7 didn't pass) ----
+      const check7Passed = outcome3.payload.results[6]?.status === "pass";
+      let check8Result: FullCheckResult;
+      if (!check7Passed) {
+        // Server already marked it failed inline; reuse that.
+        check8Result = outcome3.payload.results[7];
+      } else {
+        check8Result = await driveCheck8(outcome3.payload);
+      }
+      workingResults = outcome3.payload.results.map((r) =>
+        r.index === 8 ? check8Result : r,
+      );
+      setResults(workingResults);
+      setCurrentMessage(`✓ ${check8Result.name} — ${check8Result.status.toUpperCase()}`);
+      await recordCheck8Fn({
+        data: { recordId: outcome3.payload.recordId, allResults: workingResults },
+      });
+
+      // ---- Resume: Check 9 → Check 10 handoff ----
+      const resumeGen = (await runResumeFn({
+        data: {
+          recordId: outcome3.payload.recordId,
+          sessionId: outcome3.payload.sessionId,
+          sessionIds: outcome3.payload.sessionIds,
+          priorResults: workingResults,
+          startedAtMs: outcome3.payload.startedAtMs,
+        },
+      })) as AsyncGenerator<TierTwoEvent, void, unknown>;
+      const outcome4 = await processStream(resumeGen);
+      if (outcome4.kind !== "handoff10") return;
+
+      // ---- Client-driven Check 10 (Phase 2 chain as separate RPCs) ----
+      const check10Result = await driveCheck10(outcome4.payload);
+      workingResults = outcome4.payload.results.map((r) =>
+        r.index === 10 ? check10Result : r,
+      );
+      setResults(workingResults);
+      setCurrentMessage(`✓ ${check10Result.name} — ${check10Result.status.toUpperCase()}`);
+      await recordResultsFn({
+        data: { recordId: outcome4.payload.recordId, allResults: workingResults },
+      });
+
+      // ---- Resume: Check 11 → Check 12 handoff ----
+      const from11Gen = (await runFrom11Fn({
+        data: {
+          recordId: outcome4.payload.recordId,
+          sessionIds: outcome4.payload.sessionIds,
+          priorResults: workingResults,
+          startedAtMs: outcome4.payload.startedAtMs,
+        },
+      })) as AsyncGenerator<TierTwoEvent, void, unknown>;
+      const outcome5 = await processStream(from11Gen);
+      if (outcome5.kind !== "handoff12") return;
+
+      // ---- Client-driven Check 12 + finalisation ----
+      const check12Result = await driveCheck12(outcome5.payload);
+      workingResults = outcome5.payload.results.map((r) =>
+        r.index === 12 ? check12Result : r,
+      );
+      setResults(workingResults);
+      setCurrentMessage(`✓ ${check12Result.name} — ${check12Result.status.toUpperCase()}`);
+      await recordResultsFn({
+        data: { recordId: outcome5.payload.recordId, allResults: workingResults },
+      });
+      const final = await finalizeRunFn({
+        data: {
+          recordId: outcome5.payload.recordId,
+          allResults: workingResults,
+          sessionIds: outcome5.payload.sessionIds,
+          startedAtMs: outcome5.payload.startedAtMs,
+        },
+      });
+      setOverall(final.overall);
+      setState("complete");
+      setCurrentMessage(`Completed in ${(final.totalDurationMs / 1000).toFixed(1)}s. Cleaned up ${final.sessionIdsCleaned.length} TestBrand session(s).`);
+      stopElapsed();
+      if (final.overall === "ready") toast.success("Tier Two: all 12 checks passed");
+      else toast.error(`Tier Two: ${workingResults.filter((r) => r.status === "fail").length} check(s) failed`);
     } catch (e) {
       setErrorMessage(e instanceof Error ? e.message : String(e));
       setState("error");
