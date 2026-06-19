@@ -265,8 +265,12 @@ export function PreflightFullCheckPanel() {
   // handoff payload if the stream ended with `check_3_handoff` or
   // `check_8_handoff`, otherwise terminal sentinel.
   type ProcessOutcome =
+    | { kind: "handoff2"; payload: Extract<TierTwoEvent, { type: "check_2_handoff" }> }
     | { kind: "handoff3"; payload: Extract<TierTwoEvent, { type: "check_3_handoff" }> }
+    | { kind: "handoff6"; payload: Extract<TierTwoEvent, { type: "check_6_handoff" }> }
     | { kind: "handoff8"; payload: Extract<TierTwoEvent, { type: "check_8_handoff" }> }
+    | { kind: "handoff10"; payload: Extract<TierTwoEvent, { type: "check_10_handoff" }> }
+    | { kind: "handoff12"; payload: Extract<TierTwoEvent, { type: "check_12_handoff" }> }
     | { kind: "done" }
     | { kind: "lock_failed" }
     | { kind: "error" };
@@ -299,13 +303,29 @@ export function PreflightFullCheckPanel() {
         setResults((prev) => prev.map((r) => (r.index === ev.result.index ? ev.result : r)));
         continue;
       }
+      if (ev.type === "check_2_handoff") {
+        setResults(ev.results);
+        return { kind: "handoff2", payload: ev };
+      }
       if (ev.type === "check_3_handoff") {
         setResults(ev.results);
         return { kind: "handoff3", payload: ev };
       }
+      if (ev.type === "check_6_handoff") {
+        setResults(ev.results);
+        return { kind: "handoff6", payload: ev };
+      }
       if (ev.type === "check_8_handoff") {
         setResults(ev.results);
         return { kind: "handoff8", payload: ev };
+      }
+      if (ev.type === "check_10_handoff") {
+        setResults(ev.results);
+        return { kind: "handoff10", payload: ev };
+      }
+      if (ev.type === "check_12_handoff") {
+        setResults(ev.results);
+        return { kind: "handoff12", payload: ev };
       }
       if (ev.type === "done") {
         setOverall(ev.overall);
