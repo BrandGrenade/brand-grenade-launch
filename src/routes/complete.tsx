@@ -13,7 +13,7 @@ import {
   buildAllPhase2,
   type Phase2DocType,
 } from "@/lib/phase2-document-generator";
-import { buildPhase1Document, openPhase1Document, PHASE_1_SESSION_COLUMNS, type Phase1Format } from "@/lib/phase1-document-builder";
+import { buildPhase1Document, openPhase1Document, openStage16VisionDocument, PHASE_1_SESSION_COLUMNS, type Phase1Format } from "@/lib/phase1-document-builder";
 
 
 
