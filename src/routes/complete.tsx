@@ -473,7 +473,7 @@ function CompletePage() {
               <>
                 <button
                   type="button"
-                  onClick={runGenerate}
+                  onClick={() => runGenerate(false)}
                   disabled={!hasSmp || generating}
                   style={{
                     width: "100%",
