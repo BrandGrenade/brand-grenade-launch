@@ -2,11 +2,21 @@
 // Client-safe (pure data). Used by the brief form, saved briefs, the pipeline
 // brief viewer, and the server functions that persist briefs to the database.
 
+export type BriefFieldKind = "textarea" | "select";
+
+export type BriefFieldOption = {
+  value: string;
+  label: string;
+  description: string;
+};
+
 export type BriefField = {
   key: string;
   label: string;
   instruction: string;
   minHeight: number;
+  kind?: BriefFieldKind;
+  options?: BriefFieldOption[];
 };
 
 export type BriefSection = {
@@ -17,77 +27,102 @@ export type BriefSection = {
   fields: BriefField[];
 };
 
+export const STRATEGIC_OBJECTIVE_OPTIONS: BriefFieldOption[] = [
+  { value: "Launch", label: "Launch", description: "Introducing a new brand, product or service to a market that does not yet know it exists." },
+  { value: "Refresh", label: "Refresh", description: "Updating an existing brand that has lost relevance, clarity or distinctiveness without changing what it fundamentally stands for." },
+  { value: "Repositioning", label: "Repositioning", description: "Moving an established brand from one strategic territory to another it has not previously owned." },
+  { value: "Defence", label: "Defence", description: "Protecting an established brand's territory against competitive encroachment or category disruption." },
+  { value: "Challenger", label: "Challenger", description: "Taking market share from a dominant incumbent by naming what the category leader cannot say about itself." },
+  { value: "Crisis Recovery", label: "Crisis Recovery", description: "Rebuilding trust and relevance after a reputational event, commercial failure or category scandal." },
+  { value: "Category Creation", label: "Category Creation", description: "Establishing a new category that did not previously exist and positioning the brand as its defining expression." },
+];
+
 export const BRIEF_SECTIONS: BriefSection[] = [
   {
     num: "1",
-    title: "The Core Challenge",
-    instruction:
-      "What is the real problem or opportunity beneath the stated brief? 1–3 sentences. Be brutal. The most useful briefs name the uncomfortable truth the organisation is not saying out loud.",
+    title: "Brand and Product or Service",
+    instruction: "What are we working on. Name the brand and describe exactly what product or service is being briefed. Be specific about what is being sold, not what the company does. Two to three sentences maximum.",
     tag: "essential",
-    fields: [{ key: "s1_core", label: "", instruction: "", minHeight: 120 }],
+    fields: [{ key: "f1_brand", label: "", instruction: "", minHeight: 100 }],
   },
   {
     num: "2",
-    title: "What Success Requires",
+    title: "Strategic Objective",
+    instruction: "What is the primary strategic objective. This is the single most important field — it tells the pipeline what commercial job it is solving. The pipeline cannot run without a strategic objective selected.",
     tag: "essential",
     fields: [
-      { key: "s2_business", label: "Business objective", instruction: "What commercial outcome must this strategy produce? Be specific.", minHeight: 80 },
-      { key: "s2_comms", label: "Communication objective", instruction: "What must shift in how the audience thinks, feels, or behaves?", minHeight: 80 },
-      { key: "s2_strategic", label: "Strategic objective", instruction: "What position must the brand own that it does not currently own?", minHeight: 80 },
+      {
+        key: "f2_objective",
+        label: "",
+        instruction: "",
+        minHeight: 0,
+        kind: "select",
+        options: STRATEGIC_OBJECTIVE_OPTIONS,
+      },
     ],
   },
   {
     num: "3",
-    title: "Who We Are Talking To",
+    title: "The Commercial Outcome",
+    instruction: "What specific business result does this brief need to produce in the next twelve months. Name the specific commercial outcome, not a brand metric. Revenue from a new segment. Trial rate among a new audience. Retention of customers being targeted by a competitor. Reappraisal among a lapsed segment. Be specific. A vague outcome produces a vague strategy.",
     tag: "essential",
-    fields: [
-      { key: "s3_behaviour", label: "Behavioural description", instruction: "How do these people actually behave in this category — including contradictions between what they say and what they do. Avoid age ranges. Describe behaviour.", minHeight: 100 },
-      { key: "s3_tension", label: "The tension", instruction: "What is the specific gap between what this audience wants to believe about themselves and how they actually behave in this category?", minHeight: 100 },
-      { key: "s3_relationship", label: "Current relationship with the brand", instruction: "How does this audience currently see, use, or ignore the brand?", minHeight: 80 },
-    ],
+    fields: [{ key: "f3_outcome", label: "", instruction: "", minHeight: 100 }],
   },
   {
     num: "4",
-    title: "What Is Genuinely True About This Brand",
+    title: "The Primary Barrier",
+    instruction: "What is the single biggest thing stopping this brand from achieving that outcome right now. Name one specific obstacle, not a list. The pipeline will find the strategic solution. Your job is to name the problem honestly including the uncomfortable version.",
     tag: "essential",
-    fields: [
-      { key: "s4_provable", label: "Provable truths", instruction: "What does this brand or product do that no competitor can honestly claim? Hard facts, performance data, structural advantages.", minHeight: 100 },
-      { key: "s4_believed", label: "Believed but unproven truths", instruction: "What do you believe is true about the brand that you cannot yet demonstrate with evidence?", minHeight: 80 },
-    ],
+    fields: [{ key: "f4_barrier", label: "", instruction: "", minHeight: 100 }],
   },
   {
     num: "5",
-    title: "The Category This Brand Operates In",
-    fields: [
-      { key: "s5_believes", label: "What does the category currently believe?", instruction: "The dominant assumption every competitor is making — the thing every brand in this space says or implies.", minHeight: 80 },
-      { key: "s5_changing", label: "What is changing?", instruction: "The behavioural, cultural, or structural shift that makes now a different moment. What has the category not yet caught up with?", minHeight: 80 },
-      { key: "s5_unsaid", label: "What has the category never been willing to say?", instruction: "The uncomfortable truth no established player has named — possibly because naming it would implicate their own model.", minHeight: 100 },
-    ],
+    title: "What Has Already Been Tried",
+    instruction: "What approaches have already been attempted and why did they not work. Two to three sentences maximum. If nothing has been tried, say so. If something has been tried and failed, name it specifically. The pipeline needs to know what the brand has already ruled out.",
+    tag: "essential",
+    fields: [{ key: "f5_tried", label: "", instruction: "", minHeight: 100 }],
   },
   {
     num: "6",
-    title: "The Competitive Landscape",
-    fields: [
-      { key: "s6_competitors", label: "Primary competitors and what they own", instruction: "For each main competitor — what is the one thing they stand for in the audience's mind? Not their tagline. What they actually mean.", minHeight: 120 },
-      { key: "s6_territory", label: "Territory no competitor credibly occupies", instruction: "Where is the gap? What is available that no one has claimed or been willing to claim?", minHeight: 80 },
-    ],
+    title: "The Audience",
+    instruction: "Who specifically are we talking to. Not a demographic description. The specific person, their behaviour in this category and what they currently believe about this brand. Name their private fear or private desire in this category if you know it.",
+    tag: "essential",
+    fields: [{ key: "f6_audience", label: "", instruction: "", minHeight: 120 }],
   },
   {
     num: "7",
-    title: "Constraints and Commitments",
-    fields: [
-      { key: "s7_never", label: "What the brand must never say or imply", instruction: "Specific language, claims, associations, or tonal territories that are off-limits and why.", minHeight: 80 },
-      { key: "s7_commit", label: "What the brand must commit to beyond communications", instruction: "If this strategy works, what will the brand need to actually do in its product, pricing, or behaviour to make the positioning credible?", minHeight: 80 },
-      { key: "s7_equities", label: "Existing equities to protect", instruction: "What has the brand built that any new strategy must not contradict or abandon?", minHeight: 80 },
-    ],
+    title: "Current Belief",
+    instruction: "What does the audience currently think about this brand or category. Be honest including the uncomfortable version. The gap between current belief and desired belief is the strategic task. If the current belief is unflattering, name it anyway.",
+    tag: "essential",
+    fields: [{ key: "f7_current_belief", label: "", instruction: "", minHeight: 100 }],
   },
   {
     num: "8",
-    title: "How We Will Know It Worked",
+    title: "Desired Belief",
+    instruction: "What does the brand need the audience to think after this strategy works. Not a campaign outcome. The specific belief shift that would mean the strategy has worked. One sentence if possible.",
+    tag: "essential",
+    fields: [{ key: "f8_desired_belief", label: "", instruction: "", minHeight: 80 }],
+  },
+  {
+    num: "9",
+    title: "Reason to Believe",
+    instruction: "What does the brand have that makes the desired belief credible. Product truth, heritage, proof point or structural advantage. Two to three sentences maximum. The pipeline will develop this further but give it the best material you have.",
+    tag: "essential",
+    fields: [{ key: "f9_rtb", label: "", instruction: "", minHeight: 100 }],
+  },
+  {
+    num: "10",
+    title: "The Competitive Provocation",
+    instruction: "Which competitor is doing something that, if left unanswered, will damage this brand. Name the competitor and name what they are doing. If no single competitor is the primary threat, describe the category dynamic that is most threatening.",
+    tag: "essential",
+    fields: [{ key: "f10_competitive", label: "", instruction: "", minHeight: 100 }],
+  },
+  {
+    num: "11",
+    title: "Mandatories and Never-Says",
+    instruction: "What must always be present and what must never appear. Optional but important. List any non-negotiable inclusions and any absolute exclusions. Legal requirements. Brand guardrails. Things a previous agency did that must never be repeated.",
     tag: "optional",
-    fields: [
-      { key: "s8_measure", label: "", instruction: "Specific measurable outcomes that would confirm the strategy has succeeded. Commercial, perceptual, or behavioural.", minHeight: 80 },
-    ],
+    fields: [{ key: "f11_mandatories", label: "", instruction: "", minHeight: 100 }],
   },
 ];
 
@@ -125,8 +160,7 @@ export function emptyBriefFields(): BriefFields {
 
 /**
  * Render a structured brief as the canonical markdown text consumed by
- * Stage 1 prompts. This must match the historical format produced by
- * brief.index.tsx so existing prompts continue to work.
+ * Stage 1 prompts.
  */
 export function composeBriefText(b: BriefFields): string {
   const parts: string[] = [];
@@ -148,17 +182,15 @@ export function composeBriefText(b: BriefFields): string {
     parts.push(...lines);
   }
   if (b.supportingMaterials.length > 0) {
-    parts.push(`## 9. Supporting Materials`);
+    parts.push(`## Supporting Materials`);
     parts.push(b.supportingMaterials.map((n) => `- ${n}`).join("\n"));
   }
   return parts.join("\n");
 }
 
 /**
- * Best-effort parse for legacy plain-text briefs (sessions created before
- * structured briefs existed, or document-upload briefs). Returns a
- * BriefFields with the entire text dropped into s1_core so the editor at
- * least pre-populates with the original content.
+ * Best-effort parse for legacy plain-text briefs. Drops the full text into
+ * the first field (f1_brand) so the editor at least pre-populates.
  */
 export function briefFieldsFromLegacyText(opts: {
   brandName: string;
@@ -169,6 +201,6 @@ export function briefFieldsFromLegacyText(opts: {
   b.brandName = opts.brandName ?? "";
   b.category = opts.category ?? "";
   b.briefTitle = opts.brandName ?? "";
-  b.sections.s1_core = (opts.briefText ?? "").trim();
+  b.sections.f1_brand = (opts.briefText ?? "").trim();
   return b;
 }
