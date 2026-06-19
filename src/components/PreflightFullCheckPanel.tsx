@@ -269,6 +269,7 @@ export function PreflightFullCheckPanel() {
   // handoff payload if the stream ended with `check_3_handoff` or
   // `check_8_handoff`, otherwise terminal sentinel.
   type ProcessOutcome =
+    | { kind: "handoff1"; payload: Extract<TierTwoEvent, { type: "check_1_handoff" }> }
     | { kind: "handoff2"; payload: Extract<TierTwoEvent, { type: "check_2_handoff" }> }
     | { kind: "handoff3"; payload: Extract<TierTwoEvent, { type: "check_3_handoff" }> }
     | { kind: "handoff6"; payload: Extract<TierTwoEvent, { type: "check_6_handoff" }> }
