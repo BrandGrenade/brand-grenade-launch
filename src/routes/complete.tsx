@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { TopNav } from "@/components/TopNav";
@@ -135,6 +135,7 @@ function CompletePage() {
   const [loading, setLoading] = useState(true);
   const [lastError, setLastError] = useState<string | null>(null);
   const [lastOutput, setLastOutput] = useState<string>("");
+  const regenerateRef = useRef<((id: Format) => void) | null>(null);
 
   useEffect(() => {
     if (!sessionId) {
@@ -348,52 +349,62 @@ function CompletePage() {
             id="vision"
             selected={format === "vision"}
             onSelect={setFormat}
+            onRegenerate={(id) => regenerateRef.current?.(id)}
             icon={<DocsIcon />}
             title="Strategy and Creative Vision"
             description="CMO socialisation document. Strategy and creative direction unified for the room that signs off the work."
             tag="primary"
+            disabled={!hasSmp || generating}
           />
           <FormatCard
             id="agency"
             selected={format === "agency"}
             onSelect={setFormat}
+            onRegenerate={(id) => regenerateRef.current?.(id)}
             icon={<DeckIcon />}
             title="Agency Pitch"
             description="Proposition-led. Creative territory first. Built for the teams who will make the work."
             tag="25+ pages"
+            disabled={!hasSmp || generating}
           />
           <FormatCard
             id="consulting"
             selected={format === "consulting"}
             onSelect={setFormat}
+            onRegenerate={(id) => regenerateRef.current?.(id)}
             icon={<DocsIcon />}
             title="Consulting Delivery"
             description="Evidence-led. Methodology visible. Built for the room where decisions are made."
             tag="~25 pages"
+            disabled={!hasSmp || generating}
           />
           <FormatCard
             id="workshop"
             selected={format === "workshop"}
             onSelect={setFormat}
+            onRegenerate={(id) => regenerateRef.current?.(id)}
             icon={<PeopleIcon />}
             title="Brand Workshop"
             description="Session-ready. Built for the internal conversation that turns strategy into action."
             tag="~20 pages + session guide"
+            disabled={!hasSmp || generating}
           />
         </div>
 
         {/* Download section */}
         <div style={{ marginTop: 32 }}>
           {(() => {
-            const runGenerate = async () => {
+            const runGenerate = async (force = false) => {
               if (!hasSmp || !session) return;
               setLastError(null);
               if (format === "vision") {
                 // Stage 16 vision is generated on demand via the server fn.
                 // Returns cached output if already populated (no extra Claude
                 // call); otherwise streams generation and persists.
+                // When `force` is true, the server bypasses the cache and the
+                // client clears the local copy so a fresh stream is consumed.
                 const existing = session.stage_16_vision_output;
-                if (existing && existing.trim().length > 1000) {
+                if (!force && existing && existing.trim().length > 1000) {
                   try {
                     openStage16VisionDocument(brand, smp, existing);
                   } catch (e) {
@@ -405,10 +416,14 @@ function CompletePage() {
                 setGenerating(true);
                 setDone(false);
                 setProgress(10);
-                setProgressLabel("Generating Strategy and Creative Vision…");
+                setProgressLabel(
+                  force
+                    ? "Regenerating Strategy and Creative Vision…"
+                    : "Generating Strategy and Creative Vision…",
+                );
                 try {
                   const stream = await runStage16Fn({
-                    data: { sessionId: session.id, format: "vision" },
+                    data: { sessionId: session.id, format: "vision", force },
                   });
                   let finalOutput = "";
                   for await (const chunk of stream as AsyncIterable<{
@@ -439,6 +454,11 @@ function CompletePage() {
                 return;
               }
               try {
+                // Phase 1 documents (agency/consulting/workshop) are built
+                // deterministically from the live session payload on every
+                // open, so "Regenerate" is functionally the same as Download
+                // — a fresh build every click using the current prompts and
+                // pipeline outputs.
                 openPhase1Document(session, format as Phase1Format);
               } catch (e) {
                 console.error("Document open failed", e);
@@ -447,6 +467,13 @@ function CompletePage() {
                 );
               }
             };
+            const handleRegenerate = (id: Format) => {
+              setFormat(id);
+              // Defer one tick so the format state update lands before run.
+              setTimeout(() => runGenerate(true), 0);
+            };
+            // Expose handler to the cards rendered above via a ref.
+            regenerateRef.current = handleRegenerate;
             const buttonLabel =
               format === "vision"
                 ? `Download ${brand} Strategy and Creative Vision ↓`
@@ -455,7 +482,7 @@ function CompletePage() {
               <>
                 <button
                   type="button"
-                  onClick={runGenerate}
+                  onClick={() => runGenerate(false)}
                   disabled={!hasSmp || generating}
                   style={{
                     width: "100%",
@@ -814,22 +841,25 @@ function FormatCard({
   id,
   selected,
   onSelect,
+  onRegenerate,
   icon,
   title,
   description,
   tag,
+  disabled,
 }: {
   id: Format;
   selected: boolean;
   onSelect: (id: Format) => void;
+  onRegenerate?: (id: Format) => void;
   icon: React.ReactNode;
   title: string;
   description: string;
   tag: string;
+  disabled?: boolean;
 }) {
   return (
-    <button
-      type="button"
+    <div
       onClick={() => onSelect(id)}
       style={{
         textAlign: "left",
@@ -864,13 +894,51 @@ function FormatCard({
       >
         {description}
       </p>
-      <p
-        className="text-label"
-        style={{ color: "var(--color-text-tertiary)", marginTop: 12 }}
+      <div
+        style={{
+          marginTop: 12,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 12,
+        }}
       >
-        {tag}
-      </p>
-    </button>
+        <p
+          className="text-label"
+          style={{ color: "var(--color-text-tertiary)", margin: 0 }}
+        >
+          {tag}
+        </p>
+        {onRegenerate && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              if (disabled) return;
+              onRegenerate(id);
+            }}
+            disabled={disabled}
+            title="Clear the cached output for this document and run a fresh generation using the current prompt."
+            style={{
+              border: "1px solid var(--color-border)",
+              background: "transparent",
+              color: "var(--color-text-secondary)",
+              borderRadius: 6,
+              padding: "6px 10px",
+              fontSize: 12,
+              fontWeight: 500,
+              cursor: disabled ? "not-allowed" : "pointer",
+              opacity: disabled ? 0.5 : 1,
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+            }}
+          >
+            ↻ Regenerate
+          </button>
+        )}
+      </div>
+    </div>
   );
 }
 
