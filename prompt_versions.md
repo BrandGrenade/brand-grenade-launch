@@ -714,3 +714,28 @@ emits in the vision document, establishing authority and context before the
 strategic narrative begins.
 
 
+
+---
+
+## v4.4 — Stage 16 Strategic Logic connective argument addition (2026-06-19)
+
+**Stage:** Stage 16 (vision and consulting formats)
+**Change:** Added "THE STRATEGIC LOGIC — FROM PROPOSITION TO DETONATION" section
+to both `STAGE_16_VISION_PROMPT` and `STAGE_16_CONSULTING_PROMPT`
+(`src/lib/stage16-prompt.ts`). In the Vision prompt, the new section is inserted
+between "PART FOUR — THE WORLD THIS STRATEGY OPENS" and "PART FIVE — THE CREATIVE
+DETONATION". In the Consulting prompt, it is inserted as a new Part Eight after
+"PART SEVEN — THE RECOMMENDATION", with subsequent parts renumbered
+(PART EIGHT → PART NINE → PART TEN → PART ELEVEN). The section contains four
+movements: (1) THE PROPOSITION AND ITS DEMAND — what the SMP obligates and
+forecloses; (2) WHY THIS TERRITORY AND NO OTHER — why the territory was revealed
+rather than selected; (3) THE DETONATION AND ITS INEVITABILITY — what the
+detonation is, why no alternative survived, what it makes impossible for
+competitors, and what it makes inevitable for the brand; (4) THE CREATIVE
+SPRINGBOARD — presenting each recommended springboard direction with headline
+mechanic and creative territory, followed by a primary springboard recommendation
+and a single closing sentence connecting SMP to detonation to springboard.
+Register instructions differ by format: Vision writes as a senior strategist to
+intelligent non-specialists; Consulting writes as a senior partner to a board,
+evidence-led and airtight, with every claim traceable to pipeline-validated
+outputs.
