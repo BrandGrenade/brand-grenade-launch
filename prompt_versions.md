@@ -696,3 +696,21 @@ edit-and-regenerate / proceed flow, and Stage 21 entry gating. Files:
 `src/routes/detonation.tsx`, migration adding the three `stage_20b_*`
 columns.
 
+## v4.3 — Stage 16 Vision opening context addition (2026-06-19)
+
+**Stage:** Stage 16 (vision format)
+**Change:** Added an "OPENING PAGES — CONTEXT AND INSTRUMENT" section to
+`STAGE_16_VISION_PROMPT` (`src/lib/stage16-prompt.ts`), inserted before
+"THE OPENING — THE STRATEGIC MOMENT". The new section contains three
+mandatory sub-sections: (1) WHY THIS DOCUMENT EXISTS — three paragraphs
+establishing the document as a verified strategic finding to act on,
+addressed directly to the senior stakeholder; (2) THE INSTRUMENT THAT
+PRODUCED THIS STRATEGY — two paragraphs describing the 22-stage Brand
+Grenade intelligence system and what makes its output different; (3) WHAT
+THIS STRATEGY IS PREPARED TO BE HELD TO — one paragraph establishing that
+the strategy is signed for, not asserted, and is designed to be defensible
+under the hardest market scrutiny. This content is the first thing the model
+emits in the vision document, establishing authority and context before the
+strategic narrative begins.
+
+
