@@ -385,9 +385,59 @@ function CompletePage() {
         {/* Download section */}
         <div style={{ marginTop: 32 }}>
           {(() => {
-            const runGenerate = () => {
+            const runGenerate = async () => {
               if (!hasSmp || !session) return;
               setLastError(null);
+              if (format === "vision") {
+                // Stage 16 vision is generated on demand via the server fn.
+                // Returns cached output if already populated (no extra Claude
+                // call); otherwise streams generation and persists.
+                const existing = session.stage_16_vision_output;
+                if (existing && existing.trim().length > 1000) {
+                  try {
+                    openStage16VisionDocument(brand, smp, existing);
+                  } catch (e) {
+                    console.error("Vision doc open failed", e);
+                    setLastError(e instanceof Error ? e.message : "Document open failed");
+                  }
+                  return;
+                }
+                setGenerating(true);
+                setDone(false);
+                setProgress(10);
+                setProgressLabel("Generating Strategy and Creative Vision…");
+                try {
+                  const stream = await runStage16Fn({
+                    data: { sessionId: session.id, format: "vision" },
+                  });
+                  let finalOutput = "";
+                  for await (const chunk of stream as AsyncIterable<{
+                    delta?: string;
+                    done?: boolean;
+                    output?: string;
+                  }>) {
+                    if (chunk.delta) {
+                      finalOutput += chunk.delta;
+                      setProgress((p) => Math.min(90, p + 2));
+                    }
+                    if (chunk.done && chunk.output) {
+                      finalOutput = chunk.output;
+                    }
+                  }
+                  setProgress(100);
+                  setDone(true);
+                  setProgressLabel("Strategy and Creative Vision ready");
+                  setSession({ ...session, stage_16_vision_output: finalOutput });
+                  setLastOutput(finalOutput);
+                  openStage16VisionDocument(brand, smp, finalOutput);
+                } catch (e) {
+                  console.error("Vision generation failed", e);
+                  setLastError(e instanceof Error ? e.message : "Vision generation failed");
+                } finally {
+                  setGenerating(false);
+                }
+                return;
+              }
               try {
                 openPhase1Document(session, format as Phase1Format);
               } catch (e) {
@@ -397,12 +447,16 @@ function CompletePage() {
                 );
               }
             };
+            const buttonLabel =
+              format === "vision"
+                ? `Download ${brand} Strategy and Creative Vision ↓`
+                : `Download ${brand} Strategic Platform ↓`;
             return (
               <>
                 <button
                   type="button"
                   onClick={runGenerate}
-                  disabled={!hasSmp}
+                  disabled={!hasSmp || generating}
                   style={{
                     width: "100%",
                     height: 56,
@@ -412,11 +466,11 @@ function CompletePage() {
                     color: "var(--color-background)",
                     fontWeight: 600,
                     fontSize: 16,
-                    cursor: hasSmp ? "pointer" : "not-allowed",
-                    opacity: hasSmp ? 1 : 0.5,
+                    cursor: hasSmp && !generating ? "pointer" : "not-allowed",
+                    opacity: hasSmp && !generating ? 1 : 0.5,
                   }}
                 >
-                  {`Download ${brand} Strategic Platform ↓`}
+                  {generating ? "Generating…" : buttonLabel}
                 </button>
                 <p
                   className="text-body-sm"
