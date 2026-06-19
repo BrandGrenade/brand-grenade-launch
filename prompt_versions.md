@@ -758,3 +758,54 @@ inputs, apply the strategic objective as the primary lens for every
 downstream stage, and flag clearly labelled assumptions when fields are thin
 rather than halting. Stage 1B gate now keys off the ten mandatory new field
 keys (`f1_brand` … `f10_competitive`).
+
+---
+
+## v4.6 — Universal maxTokens Cap Raise to 64 000
+**Date:** 2026-06-19
+**Stages:** All Claude calls platform-wide
+**Change:** Raised `maxTokens` to 64 000 (the maximum supported output cap
+for the Sonnet 4.x family) on every Claude API call in the codebase. No call
+is capped below the model maximum; any stage that produces less output than
+the cap costs nothing, while any stage that previously hit its cap will now
+generate to completion. Files changed and before → after caps:
+
+- `src/lib/stage1.functions.ts` — 12000 → 64000
+- `src/lib/stage1b.functions.ts` — 12000 → 64000
+- `src/lib/stage2.functions.ts` — 12000 → 64000
+- `src/lib/stage3.functions.ts` — 12000 → 64000
+- `src/lib/stage4.functions.ts` — 12000, 12000 → 64000
+- `src/lib/stage4b.functions.ts` — 12000 → 64000
+- `src/lib/stage5.functions.ts` — 12000 → 64000
+- `src/lib/stage6.functions.ts` — 12000 → 64000
+- `src/lib/stage7.functions.ts` — 16000, 16000 → 64000
+- `src/lib/stage8.functions.ts` — 2000, 12000, 12000, 12000, 12000 → 64000
+- `src/lib/stage9.functions.ts` — 12000, 12000 → 64000
+- `src/lib/stage10.functions.ts` — 16000 → 64000
+- `src/lib/stage11.functions.ts` — 16000 → 64000
+- `src/lib/stage12.functions.ts` — 32000 → 64000
+- `src/lib/stage13.functions.ts` — 12000 → 64000
+- `src/lib/stage13b.functions.ts` — 12000 → 64000
+- `src/lib/stage14.functions.ts` — 16000 → 64000
+- `src/lib/stage14b.functions.ts` — 14000 → 64000
+- `src/lib/stage14c.functions.ts` — 16000 → 64000
+- `src/lib/stage15.functions.ts` — 14000 → 64000
+- `src/lib/stage16.functions.ts` — 24000 → 64000 (top-level vision/full-document call)
+- `src/lib/stage16-sections.ts` — every per-section cap (500–1200) → 64000
+- `src/lib/stage17.functions.ts` — 16000, 16000, 6000 → 64000
+- `src/lib/stage17b.functions.ts` — 12000, 12000 → 64000
+- `src/lib/stage18.functions.ts` — 20000, 20000 → 64000
+- `src/lib/stage19.functions.ts` — 20000, 20000 → 64000
+- `src/lib/stage20.functions.ts` — 16000, 16000, 2000 → 64000
+- `src/lib/stage20b.functions.ts` — 16000 → 64000
+- `src/lib/stage21.functions.ts` — 20000 → 64000
+- `src/lib/stage22.functions.ts` — 16000, 8000, 16000, 8000 → 64000
+- `src/lib/threeTruth.functions.ts` — 1000 → 64000
+- `src/lib/preflight.functions.ts` — 16 → 64000
+- `src/lib/document-generator.server.ts` — every per-section cap (400–1500) → 64000
+
+`src/lib/claude.server.ts` default fallback (8192, used only when a caller
+omits the cap) and `src/lib/preflight-tier-two.functions.ts` regex strings
+were left untouched. The Tier-Two preflight check still validates that every
+stage declares an explicit cap — all stages continue to satisfy that rule
+with the new universal value.
