@@ -124,7 +124,7 @@ function CompletePage() {
   const runStage16Fn = useServerFn(runStage16);
   const { user } = useAuth();
   // edge fn invoked directly via supabase.functions.invoke
-  const [format, setFormat] = useState<Format>("consulting");
+  const [format, setFormat] = useState<Format>("vision");
   const [generating, setGenerating] = useState(false);
   const [progress, setProgress] = useState(0);
   const [progressLabel, setProgressLabel] = useState("");
