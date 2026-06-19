@@ -205,7 +205,7 @@ Write the complete STRATEGY AND CREATIVE VISION document now. Begin immediately.
           visionBody = await callClaude({
             systemPrompt,
             userMessage: visionUserMessage,
-            maxTokens: 16000,
+            maxTokens: 24000,
             sessionId: data.sessionId,
             stageLabel: "Stage 16 — Strategy and Creative Vision",
             stageNumber: "16",
