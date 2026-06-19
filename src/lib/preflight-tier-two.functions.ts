@@ -915,9 +915,19 @@ export const runTierTwoChecksFrom11 = createServerFn({ method: "POST" })
       yield { type: "error", message: `Fatal error during Tier Two (checks 11–12): ${msg}` };
     } finally {
       if (!handedOff) {
-        await finalizePreflightRun({
-          data: { recordId, allResults: results, sessionIds: Array.from(createdSessionIds), startedAtMs },
-        });
+        const ids = Array.from(createdSessionIds);
+        if (ids.length > 0) await supabaseAdmin.from("sessions").delete().in("id", ids);
+        const failedCount = results.filter((r) => r.status === "fail").length;
+        const overall: "ready" | "issue_detected" = failedCount === 0 ? "ready" : "issue_detected";
+        await supabaseAdmin
+          .from("preflight_checks")
+          .update({
+            status: "complete",
+            completed_at: nowIso(),
+            tier_two_results: results as unknown as never,
+            overall_result: overall,
+          })
+          .eq("id", recordId);
       }
     }
   });
