@@ -25,6 +25,7 @@ import {
   type FullCheckResult,
   type TierTwoEvent,
 } from "@/lib/preflight-tier-two.functions";
+import { runStage1 } from "@/lib/stage1.functions";
 import { runStage2 } from "@/lib/stage2.functions";
 import { runStage3 } from "@/lib/stage3.functions";
 import { runStage4 } from "@/lib/stage4.functions";
@@ -196,6 +197,7 @@ export function PreflightFullCheckPanel() {
   const stage6Fn = useServerFn(runStage6);
   const stage7Fn = useServerFn(runStage7);
   const stage8Fn = useServerFn(runStage8);
+  const stage1Fn = useServerFn(runStage1);
   const confirmCheckpointBFn = useServerFn(confirmCheckpointB);
   const stage10Fn = useServerFn(runStage10);
   const stage11Fn = useServerFn(runStage11);
