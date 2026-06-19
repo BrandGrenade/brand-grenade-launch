@@ -487,6 +487,7 @@ function CompletePage() {
                   const safe = brand.replace(/[^a-zA-Z0-9]/g, "_");
                   const date = new Date().toISOString().split("T")[0];
                   const suffix = {
+                    vision: "StrategyAndCreativeVision",
                     consulting: "BoardStrategyRecommendation",
                     agency: "AgencyStrategyPlatform",
                     workshop: "BrandStrategyWorkshopGuide",
