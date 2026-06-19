@@ -393,10 +393,10 @@ export const runTierTwoFullCheck = createServerFn({ method: "POST" })
         for (;;) {
           const r = await gen.next();
           if (r.done) {
-            result = r.value;
+            result = r.value as FullCheckResult;
             break;
           }
-          yield r.value;
+          yield r.value as TierTwoEvent;
         }
         yield { type: "check_done", result };
       }
@@ -662,10 +662,10 @@ export const runTierTwoChecksFrom9 = createServerFn({ method: "POST" })
         for (;;) {
           const r = await gen.next();
           if (r.done) {
-            result = r.value;
+            result = r.value as FullCheckResult;
             break;
           }
-          yield r.value;
+          yield r.value as TierTwoEvent;
         }
         yield { type: "check_done", result };
       }
