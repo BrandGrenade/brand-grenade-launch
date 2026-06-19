@@ -213,18 +213,23 @@ function BriefIntake() {
 
 
 
-  // Section completion (any field has 10+ chars)
+  // Section completion (any field has 10+ chars, or for select fields, has a value)
   const completion = useMemo(() => {
     const done: Record<string, boolean> = {};
     for (const s of SECTIONS) {
-      done[s.num] = s.fields.some((f) => (values[f.key] ?? "").trim().length >= 10);
+      done[s.num] = s.fields.some((f) => {
+        const v = (values[f.key] ?? "").trim();
+        if (f.kind === "select") return v.length > 0;
+        return v.length >= 10;
+      });
     }
-    done["9"] = files.length > 0 || existingFileNames.length > 0;
+    done["files"] = files.length > 0 || existingFileNames.length > 0;
     const count = Object.values(done).filter(Boolean).length;
-    return { done, count, total: 9 };
+    return { done, count, total: SECTIONS.length };
   }, [values, files, existingFileNames]);
 
-  const canSubmitSections = brand.trim().length >= 2;
+  const objectiveSelected = (values["f2_objective"] ?? "").trim().length > 0;
+  const canSubmitSections = brand.trim().length >= 2 && objectiveSelected;
 
   const canSubmitAlt = !!altFile && brand.trim().length >= 2;
 
