@@ -511,6 +511,25 @@ export const recordPreflightResults = createServerFn({ method: "POST" })
     return { ok: true as const };
   });
 
+// Flip checkpoint_a_confirmed=true on the preflight TestBrand session so the
+// client-driven Check 2 chain (Stages 2–7) can proceed. Invoked after the
+// client has run Check 1 (Stage 1) in its own Worker invocation.
+export const confirmPreflightCheckpointA = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) =>
+    z.object({ sessionId: z.string().uuid() }).parse(i),
+  )
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin
+      .from("sessions")
+      .update({ checkpoint_a_confirmed: true })
+      .eq("id", data.sessionId);
+    if (error) throw new Error(error.message);
+    return { ok: true as const };
+  });
+
+
 export const finalizePreflightRun = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i) =>
