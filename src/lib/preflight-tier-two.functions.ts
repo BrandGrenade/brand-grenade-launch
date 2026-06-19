@@ -62,6 +62,19 @@ export type TierTwoEvent =
   | { type: "check_progress"; index: number; message: string }
   | { type: "check_done"; result: FullCheckResult }
   | {
+      // Emitted by runTierTwoFullCheck after acquiring the lock and inserting
+      // the TestBrand session. The client drives Check 1 (Stage 1 — Brief
+      // Analysis) by invoking runStage1 as its OWN server-fn RPC so it gets
+      // a fresh Cloudflare Worker wall-clock budget — same pattern as every
+      // other long Claude call in the runner.
+      type: "check_1_handoff";
+      recordId: string;
+      sessionId: string;
+      sessionIds: string[];
+      results: FullCheckResult[];
+      startedAtMs: number;
+    }
+  | {
       // Emitted after Check 1. The client drives Check 2 by invoking each of
       // Stages 2, 3, 4, 4B, 5, 6, and 7 as separate server-fn RPCs so every
       // long Claude call receives a fresh wall-clock budget.
