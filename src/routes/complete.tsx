@@ -64,7 +64,7 @@ const STAGES = [
   "Document Assembly",
 ];
 
-type Format = "agency" | "consulting" | "workshop";
+type Format = "vision" | "agency" | "consulting" | "workshop";
 
 type SessionRow = {
   id: string;
