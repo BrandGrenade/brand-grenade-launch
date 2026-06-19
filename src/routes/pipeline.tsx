@@ -1513,11 +1513,12 @@ function PipelineView() {
     let cancelled = false;
     setStage16Loading(true);
     setStage16Error(null);
-    // Stage 16 auto-trio — all three document variants generate simultaneously
-    // on every pipeline run: Board Strategy Recommendation (consulting), Agency
-    // Strategy Platform (agency), and Brand Workshop Guide (workshop). The UI
-    // streams the consulting variant for the live render; the other two
-    // generate in the background and are persisted to their own DB columns.
+    // Stage 16 auto-quartet — four document variants generate simultaneously
+    // on every pipeline run: Strategy and Creative Vision (vision, primary
+    // CMO socialisation doc), Board Strategy Recommendation (consulting),
+    // Agency Strategy Platform (agency), and Brand Workshop Guide (workshop).
+    // The UI streams the consulting variant for the live render; the other
+    // three generate in the background and are persisted to their own DB columns.
     (async () => {
       // Background generators — fire-and-forget. Failures are logged but do
       // not block completion of the consulting variant. Re-runs are no-ops
@@ -1545,6 +1546,17 @@ function PipelineView() {
           console.error("[Stage 16] workshop variant failed:", e);
         }
       })();
+      const bgVision = (async () => {
+        try {
+          for await (const _chunk of await runStage16Fn({
+            data: { sessionId, format: "vision" },
+          })) {
+            void _chunk;
+          }
+        } catch (e) {
+          console.error("[Stage 16] vision variant failed:", e);
+        }
+      })();
 
       const consultingResult = await consumeStream(
         await runStage16Fn({ data: { sessionId, format: "consulting" } }),
@@ -1552,8 +1564,8 @@ function PipelineView() {
       );
 
       // Wait for background variants to finish so the realtime hook surfaces
-      // all three columns before we mark the stage complete.
-      await Promise.allSettled([bgAgency, bgWorkshop]);
+      // all four columns before we mark the stage complete.
+      await Promise.allSettled([bgAgency, bgWorkshop, bgVision]);
       return consultingResult;
     })()
       .then((result) => {
