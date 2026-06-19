@@ -171,35 +171,31 @@ export const runStage1 = createServerFn({ method: "POST" })
     yield { done: true as const, output, tensionScore, stage1bRequired };
   });
 
-// Returns true iff one or more of the nine mandatory brief sections is empty.
-// The nine sections are the 8 structured sections in BRIEF_SECTIONS plus
-// the supporting-materials list. A section counts as "present" when at least
-// one of its fields contains non-whitespace text. Supporting materials count
-// as "present" when the array contains at least one entry.
+// Returns true iff one or more of the ten MANDATORY brief fields is empty.
+// The eleven structured fields map 1:1 to BRIEF_SECTIONS; field 11
+// (Mandatories and Never-Says) is optional and never gates Stage 1B.
 // If the session has no structured brief_versions (legacy plain-text brief),
 // the gate is OFF — Stage 1 always advances.
 function computeStage1bRequiredFromBrief(briefVersions: unknown): boolean {
   if (!Array.isArray(briefVersions) || briefVersions.length === 0) return false;
-  const latest = briefVersions[briefVersions.length - 1] as { fields?: { sections?: Record<string, string>; supportingMaterials?: string[] } } | undefined;
+  const latest = briefVersions[briefVersions.length - 1] as { fields?: { sections?: Record<string, string> } } | undefined;
   const fields = latest?.fields;
   if (!fields) return false;
   const sections = fields.sections ?? {};
-  // 8 structured sections — each has a known set of field keys.
-  const sectionKeyGroups: string[][] = [
-    ["s1_core"],
-    ["s2_business", "s2_comms", "s2_strategic"],
-    ["s3_behaviour", "s3_tension", "s3_relationship"],
-    ["s4_provable", "s4_believed"],
-    ["s5_believes", "s5_changing", "s5_unsaid"],
-    ["s6_competitors", "s6_territory"],
-    ["s7_never", "s7_commit", "s7_equities"],
-    ["s8_measure"],
+  const mandatoryKeys = [
+    "f1_brand",
+    "f2_objective",
+    "f3_outcome",
+    "f4_barrier",
+    "f5_tried",
+    "f6_audience",
+    "f7_current_belief",
+    "f8_desired_belief",
+    "f9_rtb",
+    "f10_competitive",
   ];
-  for (const keys of sectionKeyGroups) {
-    const anyFilled = keys.some((k) => (sections[k] ?? "").trim().length > 0);
-    if (!anyFilled) return true;
+  for (const k of mandatoryKeys) {
+    if ((sections[k] ?? "").trim().length === 0) return true;
   }
-  // 9th section: supporting materials.
-  if (!Array.isArray(fields.supportingMaterials) || fields.supportingMaterials.length === 0) return true;
   return false;
 }
