@@ -83,7 +83,7 @@ function buildStage21UserMessage(
     "",
     `CHANNEL: ${channel}`,
     `ROLE IN HIERARCHY: ${role}`,
-    "CHANNEL CONTEXT FROM STAGE 19:",
+    "CHANNEL CONTEXT FOR THIS CHANNEL (this channel's Section Three paragraph from Stage 20B, or Stage 19 fallback):",
     context?.trim() || "—",
     "",
     "SMP TRANSLATION FOR THIS CHANNEL:",
