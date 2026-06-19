@@ -551,7 +551,55 @@ with realistic timelines.
 
 ---
 
-# PART EIGHT — THE CREATIVE WORLD
+# PART EIGHT — THE STRATEGIC LOGIC
+
+## From Proposition to Detonation
+
+THE STRATEGIC LOGIC — FROM PROPOSITION TO DETONATION
+
+This section is the most important connective argument in the document. It must show the reader not what the detonation is but why it could not have been anything else. The sequence from SMP to territory to detonation must feel as inevitable as a mathematical proof — each step the only honest consequence of the one before it.
+
+Write this section in four movements.
+
+MOVEMENT ONE — THE PROPOSITION AND ITS DEMAND
+
+Begin with the SMP stated exactly as selected. Then write two to three paragraphs that extract the specific demand the proposition makes on everything that follows. A proposition is not a slogan. It is a strategic commitment that forecloses certain creative expressions and makes others not just possible but obligatory. Name precisely what this SMP demands of the brand's creative behaviour. What must be true of every execution if the proposition is to be believed rather than merely heard. What would make a piece of creative work dishonest to this proposition. The reader must finish this movement understanding that the proposition is not a starting point for creativity but a constraint that makes only one kind of creativity credible.
+
+MOVEMENT TWO — WHY THIS TERRITORY AND NO OTHER
+
+Name the selected creative territory. Then write two to three paragraphs making the case that this territory is the only honest home for this proposition — not the best option from a range of reasonable choices but the single territory where the proposition becomes something people can feel rather than just understand. Name specifically what the other territories would have produced and why each would have been a lesser expression of the proposition's truth. The reader must finish this movement understanding that the territory was not selected but revealed — that the proposition pointed to it inevitably once the strategic logic was followed honestly.
+
+MOVEMENT THREE — THE DETONATION AND ITS INEVITABILITY
+
+State the selected detonation idea prominently. Give it space on the page. Then write three to four paragraphs that make the case for this specific detonation idea with the rigour of a closing argument. Cover four things in order.
+
+First — what the detonation is. Not a description of its surface but a precise statement of the single organising thought and what makes it structurally different from a campaign idea. A detonation is not an execution. It is the idea that makes every execution possible and makes every competitor's attempt to follow feel hollow.
+
+Second — why this detonation and no other. Name the alternatives that were considered and rejected. State the specific reason each was set aside — not a preference but a structural reason rooted in the proposition. The reader must see that the alternatives were genuinely strong and that the rejection of each was a reasoned act not a taste decision.
+
+Third — what this detonation makes impossible for competitors. A detonation that competitors could adopt without self-implication is not a detonation. Name specifically why this idea traps every named rival — what in their commercial model or brand history makes adopting this idea an act of self-indictment rather than competition.
+
+Fourth — what this detonation makes inevitable for the brand. The execution territory it opens. The channels it naturally inhabits. The cultural conversations it can enter. The system it generates rather than the campaign it produces. Write this as a creative director briefing a room of the best writers and art directors in the world — specific enough that they know exactly what to make, open enough that they feel the pull to make something extraordinary.
+
+MOVEMENT FOUR — THE CREATIVE SPRINGBOARD
+
+Present the recommended springboard directions from the pipeline. For each direction write the line with the precision and economy it deserves — maximum twelve words, every word inevitable. Follow each line with two sentences. The first names the primary headline mechanic at work and why that specific mechanic serves this specific proposition at this specific moment. The second states what kind of work this direction makes possible — not what the work should look like but what emotional and strategic territory it opens and why a creative director would feel the pull to make something from it.
+
+Then name the single recommended primary springboard and write one paragraph on why this direction over all others — what it makes possible that the alternatives cannot, what the creative team must never do when working from it, and what the work must always make the audience feel before they understand it.
+
+Close this section with one sentence that connects the entire argument from SMP to detonation to springboard in plain human language. Not a summary. The single thought that makes the entire sequence feel inevitable in retrospect.
+
+REGISTER INSTRUCTION FOR VISION DOCUMENT
+
+Write this section as a senior strategist addressing a room of intelligent non-specialists. The argument must be rigorous but the language must be felt. Every paragraph should leave the reader with a sense that the logic was always there and only needed to be named. Avoid academic vocabulary. Avoid strategy jargon. Write as if you are explaining to a brilliant CEO why the only honest answer to their brand challenge was always this one.
+
+REGISTER INSTRUCTION FOR CONSULTING DOCUMENT
+
+Write this section as a senior partner presenting a closing argument to a board that has asked the hardest questions and deserves the most precise answers. The argument must be airtight and evidence-led. Every claim must be traceable to the pipeline's validated outputs. The detonation must arrive as the inevitable creative consequence of the strategic work rather than as a separate creative recommendation appended to the strategy. The reader must finish this section understanding that the strategy and the creative expression are not two separate deliverables but one coherent argument expressed at two levels of abstraction.
+
+---
+
+# PART NINE — THE CREATIVE WORLD
 
 ## The Strategic Universe This
 ## Proposition Opens
@@ -590,7 +638,7 @@ can be. What it cannot be.
 
 ---
 
-# PART NINE — WHAT MUST CHANGE
+# PART TEN — WHAT MUST CHANGE
 # BEYOND THE CAMPAIGN
 
 Write 3-4 paragraphs with the
@@ -612,7 +660,7 @@ launch and operational readiness.
 
 ---
 
-# PART TEN — NEXT STEPS AND
+# PART ELEVEN — NEXT STEPS AND
 # DECISION REQUIRED
 
 Write exactly three next steps.
@@ -1611,6 +1659,48 @@ First movement — the world itself. Its character. Its governing tension. The e
 Second movement — who inhabits this world and what they experience. The audience archetype. What they feel when they encounter this brand in this world. The specific emotional shift from before to after. Two to three paragraphs.
 
 Third movement — what the brand does in this world. Its precise function. What it gives. What it refuses to do. Why that refusal is its greatest strength. Two paragraphs.
+
+THE STRATEGIC LOGIC — FROM PROPOSITION TO DETONATION
+
+This section is the most important connective argument in the document. It must show the reader not what the detonation is but why it could not have been anything else. The sequence from SMP to territory to detonation must feel as inevitable as a mathematical proof — each step the only honest consequence of the one before it.
+
+Write this section in four movements.
+
+MOVEMENT ONE — THE PROPOSITION AND ITS DEMAND
+
+Begin with the SMP stated exactly as selected. Then write two to three paragraphs that extract the specific demand the proposition makes on everything that follows. A proposition is not a slogan. It is a strategic commitment that forecloses certain creative expressions and makes others not just possible but obligatory. Name precisely what this SMP demands of the brand's creative behaviour. What must be true of every execution if the proposition is to be believed rather than merely heard. What would make a piece of creative work dishonest to this proposition. The reader must finish this movement understanding that the proposition is not a starting point for creativity but a constraint that makes only one kind of creativity credible.
+
+MOVEMENT TWO — WHY THIS TERRITORY AND NO OTHER
+
+Name the selected creative territory. Then write two to three paragraphs making the case that this territory is the only honest home for this proposition — not the best option from a range of reasonable choices but the single territory where the proposition becomes something people can feel rather than just understand. Name specifically what the other territories would have produced and why each would have been a lesser expression of the proposition's truth. The reader must finish this movement understanding that the territory was not selected but revealed — that the proposition pointed to it inevitably once the strategic logic was followed honestly.
+
+MOVEMENT THREE — THE DETONATION AND ITS INEVITABILITY
+
+State the selected detonation idea prominently. Give it space on the page. Then write three to four paragraphs that make the case for this specific detonation idea with the rigour of a closing argument. Cover four things in order.
+
+First — what the detonation is. Not a description of its surface but a precise statement of the single organising thought and what makes it structurally different from a campaign idea. A detonation is not an execution. It is the idea that makes every execution possible and makes every competitor's attempt to follow feel hollow.
+
+Second — why this detonation and no other. Name the alternatives that were considered and rejected. State the specific reason each was set aside — not a preference but a structural reason rooted in the proposition. The reader must see that the alternatives were genuinely strong and that the rejection of each was a reasoned act not a taste decision.
+
+Third — what this detonation makes impossible for competitors. A detonation that competitors could adopt without self-implication is not a detonation. Name specifically why this idea traps every named rival — what in their commercial model or brand history makes adopting this idea an act of self-indictment rather than competition.
+
+Fourth — what this detonation makes inevitable for the brand. The execution territory it opens. The channels it naturally inhabits. The cultural conversations it can enter. The system it generates rather than the campaign it produces. Write this as a creative director briefing a room of the best writers and art directors in the world — specific enough that they know exactly what to make, open enough that they feel the pull to make something extraordinary.
+
+MOVEMENT FOUR — THE CREATIVE SPRINGBOARD
+
+Present the recommended springboard directions from the pipeline. For each direction write the line with the precision and economy it deserves — maximum twelve words, every word inevitable. Follow each line with two sentences. The first names the primary headline mechanic at work and why that specific mechanic serves this specific proposition at this specific moment. The second states what kind of work this direction makes possible — not what the work should look like but what emotional and strategic territory it opens and why a creative director would feel the pull to make something from it.
+
+Then name the single recommended primary springboard and write one paragraph on why this direction over all others — what it makes possible that the alternatives cannot, what the creative team must never do when working from it, and what the work must always make the audience feel before they understand it.
+
+Close this section with one sentence that connects the entire argument from SMP to detonation to springboard in plain human language. Not a summary. The single thought that makes the entire sequence feel inevitable in retrospect.
+
+REGISTER INSTRUCTION FOR VISION DOCUMENT
+
+Write this section as a senior strategist addressing a room of intelligent non-specialists. The argument must be rigorous but the language must be felt. Every paragraph should leave the reader with a sense that the logic was always there and only needed to be named. Avoid academic vocabulary. Avoid strategy jargon. Write as if you are explaining to a brilliant CEO why the only honest answer to their brand challenge was always this one.
+
+REGISTER INSTRUCTION FOR CONSULTING DOCUMENT
+
+Write this section as a senior partner presenting a closing argument to a board that has asked the hardest questions and deserves the most precise answers. The argument must be airtight and evidence-led. Every claim must be traceable to the pipeline's validated outputs. The detonation must arrive as the inevitable creative consequence of the strategic work rather than as a separate creative recommendation appended to the strategy. The reader must finish this section understanding that the strategy and the creative expression are not two separate deliverables but one coherent argument expressed at two levels of abstraction.
 
 PART FIVE — THE CREATIVE DETONATION
 
