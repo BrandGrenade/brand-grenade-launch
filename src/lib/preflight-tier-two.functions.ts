@@ -922,6 +922,112 @@ export const runTierTwoChecksFrom11 = createServerFn({ method: "POST" })
     }
   });
 
+export const runTierTwoChecksFrom7 = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) =>
+    z
+      .object({
+        recordId: z.string().uuid(),
+        sessionId: z.string(),
+        sessionIds: z.array(z.string().uuid()),
+        priorResults: z.array(FullCheckResultSchema),
+        startedAtMs: z.number(),
+      })
+      .parse(i),
+  )
+  .handler(async function* ({ data }): AsyncGenerator<TierTwoEvent, void, unknown> {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { recordId, sessionId, startedAtMs } = data;
+    const results: FullCheckResult[] = data.priorResults.map((r) => ({ ...r, id: r.id as FullCheckId }));
+    const primarySessionId = sessionId || null;
+    const createdSessionIds = new Set<string>(data.sessionIds);
+    let handedOff = false;
+
+    const runCheck = async function* (
+      index1: number,
+      fn: (emit: (msg: string) => void) => Promise<{ detail: string }>,
+      remediationOnFail: string,
+    ): AsyncGenerator<TierTwoEvent, FullCheckResult, unknown> {
+      const idx = index1 - 1;
+      const events: TierTwoEvent[] = [];
+      const emit = (message: string) => events.push({ type: "check_progress", index: index1, message });
+      results[idx] = { ...results[idx], status: "running" };
+      await persistResults(supabaseAdmin, recordId, results);
+      const started = Date.now();
+      let res: FullCheckResult;
+      try {
+        const { detail } = await fn(emit);
+        res = { ...results[idx], status: "pass", durationMs: Date.now() - started, detail, remediation: null };
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        res = { ...results[idx], status: "fail", durationMs: Date.now() - started, detail: msg, remediation: remediationOnFail };
+      }
+      for (const ev of events) yield ev;
+      results[idx] = res;
+      await persistResults(supabaseAdmin, recordId, results);
+      return res;
+    };
+
+    try {
+      yield { type: "check_start", index: 7, id: CHECK_DEFS[6].id, name: CHECK_DEFS[6].name };
+      {
+        const gen = runCheck(7, async (emit) => {
+          if (!primarySessionId || results[5].status !== "pass") throw new Error("Skipped: Stage 10/11 chain did not complete");
+          emit("Verifying Stage 11 output is persisted to stage_11_output...");
+          const { assertStageOutput } = await import("./pipeline-integrity");
+          await assertStageOutput(primarySessionId, 11, "Stage 12 (preflight check 7)");
+          const { data: pre } = await supabaseAdmin.from("sessions").select("stage_11_output").eq("id", primarySessionId).single();
+          const { filterValidatedFromStage11, countStage12PropositionCards } = await import("./stage12-filter");
+          const validatedCount = filterValidatedFromStage11(pre?.stage_11_output ?? "").validated.length;
+          if (validatedCount === 0) throw new Error("Stage 11 produced no VALIDATED SMPs to feed Stage 12");
+          emit(`Running Stage 12 (SMP synthesis, expecting >= ${validatedCount} cards)...`);
+          await drainGenerator(runStage12({ data: { sessionId: primarySessionId } }));
+          const { data: row } = await supabaseAdmin.from("sessions").select("stage_12_output").eq("id", primarySessionId).single();
+          const stage12 = row?.stage_12_output ?? "";
+          if (!stage12) throw new Error("Stage 12 output missing after run");
+          const cardCount = countStage12PropositionCards(stage12);
+          if (cardCount < validatedCount) throw new Error(`Stage 12 card-integrity failure: only ${cardCount} card(s) rendered for ${validatedCount} validated SMP(s)`);
+          const firstSmpLine = stage12.split("\n").map((l: string) => l.trim()).find((l: string) => l.length > 30 && /[A-Za-z]/.test(l)) ?? "Auto-selected first proposition (preflight TestBrand)";
+          await saveSelectedSMP({ data: { sessionId: primarySessionId, smpLine: firstSmpLine.slice(0, 2000), fieldName: "Preflight Auto-Selection" } });
+          await saveSelectionRationale({ data: { sessionId: primarySessionId, rationale: { auto: "Preflight TestBrand auto-selected top-ranked SMP for integrity validation." } } });
+          const { data: verify } = await supabaseAdmin.from("sessions").select("selected_smp, checkpoint_c_confirmed").eq("id", primarySessionId).single();
+          if (!verify?.selected_smp) throw new Error("selected_smp did not persist");
+          if (!verify?.checkpoint_c_confirmed) throw new Error("Checkpoint C did not flip to true");
+          return { detail: `Stage 12 SMP synthesis (${cardCount}/${validatedCount} cards) + selection + rationale persisted; Checkpoint C confirmed.` };
+        }, "Inspect stage12.functions.ts saveSelectedSMP / saveSelectionRationale and the Stage 11 → Stage 12 column wiring in pipeline-integrity.ts.");
+        let result!: FullCheckResult;
+        for (;;) {
+          const r = await gen.next();
+          if (r.done) { result = r.value as FullCheckResult; break; }
+          yield r.value as TierTwoEvent;
+        }
+        yield { type: "check_done", result };
+      }
+
+      if (!primarySessionId || results[6].status !== "pass") {
+        yield { type: "check_start", index: 8, id: CHECK_DEFS[7].id, name: CHECK_DEFS[7].name };
+        results[7] = { ...results[7], status: "fail", durationMs: 0, detail: "Skipped: Stage 12 selection did not complete", remediation: "Fix the upstream Check 7 failure before re-running." };
+        await persistResults(supabaseAdmin, recordId, results);
+        yield { type: "check_done", result: results[7] };
+      }
+
+      handedOff = true;
+      yield { type: "check_8_handoff", recordId, sessionId: primarySessionId ?? "", sessionIds: Array.from(createdSessionIds), results, startedAtMs };
+    } catch (fatal) {
+      const msg = fatal instanceof Error ? fatal.message : String(fatal);
+      yield { type: "error", message: `Fatal error during Tier Two (checks 7–8): ${msg}` };
+    } finally {
+      if (!handedOff) {
+        const ids = Array.from(createdSessionIds);
+        if (ids.length > 0) await supabaseAdmin.from("sessions").delete().in("id", ids);
+        const failedCount = results.filter((r) => r.status === "fail").length;
+        const overall: "ready" | "issue_detected" = failedCount === 0 ? "ready" : "issue_detected";
+        await supabaseAdmin.from("preflight_checks").update({ status: "complete", completed_at: nowIso(), tier_two_results: results as unknown as never, overall_result: overall }).eq("id", recordId);
+        yield { type: "done", recordId, overall, results, sessionIdsCleaned: ids, totalDurationMs: Date.now() - startedAtMs };
+      }
+    }
+  });
+
 // ---------------------------------------------------------------------------
 // Check 3 result recorder + resume stream (checks 4–7 → check 8 handoff)
 //
