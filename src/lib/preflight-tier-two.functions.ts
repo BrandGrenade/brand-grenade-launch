@@ -1043,8 +1043,8 @@ export const runTierTwoChecksFrom4 = createServerFn({ method: "POST" })
         let result!: FullCheckResult;
         for (;;) {
           const r = await gen.next();
-          if (r.done) { result = r.value; break; }
-          yield r.value;
+          if (r.done) { result = r.value as FullCheckResult; break; }
+          yield r.value as TierTwoEvent;
         }
         yield { type: "check_done", result };
       }
