@@ -77,6 +77,7 @@ type SessionRow = {
   doc_agency_url: string | null;
   doc_workshop_url: string | null;
   phase_2_status: string | null;
+  stage_16_vision_output: string | null;
   stage_1_output: string | null;
   stage_2_output: string | null;
   stage_3_output: string | null;
