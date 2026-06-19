@@ -82,7 +82,20 @@ export type TierTwoEvent =
   | { type: "check_progress"; index: number; message: string }
   | { type: "check_done"; result: FullCheckResult }
   | {
-      // Emitted after checks 1–7 complete. The client is expected to drive
+      // Emitted after Check 2 (Phase 1A chain) completes. The client drives
+      // Check 3 (Stage 8 + Checkpoint B) by invoking each as a SEPARATE
+      // server-fn RPC — each call is a fresh Worker invocation with its own
+      // wall-clock budget — then opens runTierTwoChecksFrom4 to continue
+      // checks 4–7 and the existing Check 8 handoff.
+      type: "check_3_handoff";
+      recordId: string;
+      sessionId: string;
+      sessionIds: string[];
+      results: FullCheckResult[];
+      startedAtMs: number;
+    }
+  | {
+      // Emitted after checks 4–7 complete. The client is expected to drive
       // Check 8 (Stages 13–16) by invoking each stage as a separate server
       // function call — each call is a fresh Worker invocation with its own
       // wall-clock budget — then resume checks 9–12 via runTierTwoChecksFrom9.
@@ -419,577 +432,29 @@ export const runTierTwoFullCheck = createServerFn({ method: "POST" })
       }
 
       // ---------------------------------------------------------------------
-      // CHECK 3 — Stage 8 + Checkpoint B
-      // ---------------------------------------------------------------------
-      yield { type: "check_start", index: 3, id: CHECK_DEFS[2].id, name: CHECK_DEFS[2].name };
-      {
-        const gen = runCheck(
-          3,
-          async (emit) => {
-            if (!primarySessionId || results[1].status !== "pass")
-              throw new Error("Skipped: Phase 1A chain did not complete");
-            emit("Running Stage 8 (Strategic Propositions)...");
-            await drainGenerator(runStage8({ data: { sessionId: primarySessionId } }));
-            emit("Confirming Checkpoint B");
-            await confirmCheckpointB({ data: { sessionId: primarySessionId } });
-            // Verify it actually persisted
-            const { data: row, error } = await supabaseAdmin
-              .from("sessions")
-              .select("checkpoint_b_confirmed, stage_8_output")
-              .eq("id", primarySessionId)
-              .single();
-            if (error) throw new Error(`Verification read failed: ${error.message}`);
-            if (!row?.checkpoint_b_confirmed) throw new Error("Checkpoint B did not persist as true");
-            if (!row?.stage_8_output) throw new Error("Stage 8 output missing after run");
-            return { detail: "Stage 8 produced propositions and Checkpoint B persisted as confirmed." };
-          },
-          "Check stage8.functions.ts and confirmCheckpointB writeback. Verify stage_7_output had ≥2 territories.",
-        );
-        let result!: FullCheckResult;
-        for (;;) {
-          const r = await gen.next();
-          if (r.done) {
-            result = r.value;
-            break;
-          }
-          yield r.value;
-        }
-        yield { type: "check_done", result };
-      }
-
-      // ---------------------------------------------------------------------
-      // CHECK 4 — Stage prompts integrity (structural)
-      // ---------------------------------------------------------------------
-      yield { type: "check_start", index: 4, id: CHECK_DEFS[3].id, name: CHECK_DEFS[3].name };
-      {
-        const gen = runCheck(
-          4,
-          async (emit) => {
-            emit("Importing all stage prompt modules");
-            const promptModules = await Promise.all([
-              import("@/lib/stage1-prompt"),
-              import("@/lib/stage1b-prompt"),
-              import("@/lib/stage2-prompt"),
-              import("@/lib/stage3-prompt"),
-              import("@/lib/stage4-prompt"),
-              import("@/lib/stage5-prompt"),
-              import("@/lib/stage6-prompt"),
-              import("@/lib/stage7-prompt"),
-              import("@/lib/stage8-prompt"),
-              import("@/lib/stage9-prompt"),
-              import("@/lib/stage10-prompt"),
-              import("@/lib/stage11-prompt"),
-              import("@/lib/stage12-prompt"),
-              import("@/lib/stage13-prompt"),
-              import("@/lib/stage13b-prompt"),
-              import("@/lib/stage14-prompt"),
-              import("@/lib/stage14b-prompt"),
-              import("@/lib/stage14c-prompt"),
-              import("@/lib/stage15-prompt"),
-              import("@/lib/stage16-prompt"),
-              import("@/lib/stage17-detonation-territory-prompt"),
-              import("@/lib/stage17b-detonation-intelligence-prompt"),
-              import("@/lib/stage18-the-detonation-prompt"),
-              import("@/lib/stage19-activation-architecture-prompt"),
-              import("@/lib/stage20-master-detonation-brief-prompt"),
-              import("@/lib/stage21-channel-detonation-briefs-prompt"),
-              import("@/lib/stage22-brand-architecture-prompt"),
-            ]);
-            const missing: string[] = [];
-            let totalPrompts = 0;
-            for (const mod of promptModules) {
-              for (const [k, v] of Object.entries(mod as Record<string, unknown>)) {
-                if (typeof v === "string" && /SYSTEM_PROMPT|_PROMPT$/.test(k)) {
-                  totalPrompts++;
-                  if (v.trim().length < 200) missing.push(`${k} (${v.trim().length} chars)`);
-                }
-              }
-            }
-            if (missing.length) throw new Error(`Prompts too short/empty: ${missing.join(", ")}`);
-            return {
-              detail: `All ${totalPrompts} stage system prompts present and ≥200 chars across 22 stages (1, 1B, 2–17, 17B, 18–22).`,
-            };
-          },
-          "Open the named prompt module and restore the missing/empty *_SYSTEM_PROMPT export.",
-        );
-        let result!: FullCheckResult;
-        for (;;) {
-          const r = await gen.next();
-          if (r.done) {
-            result = r.value;
-            break;
-          }
-          yield r.value;
-        }
-        yield { type: "check_done", result };
-      }
-
-      // ---------------------------------------------------------------------
-      // CHECK 5 — Stage 9 EDT Guard output sanitisation (real)
-      // ---------------------------------------------------------------------
-      yield { type: "check_start", index: 5, id: CHECK_DEFS[4].id, name: CHECK_DEFS[4].name };
-      {
-        const gen = runCheck(
-          5,
-          async (emit) => {
-            if (!primarySessionId || results[2].status !== "pass")
-              throw new Error("Skipped: Stage 8 / Checkpoint B did not complete");
-            emit("Running Stage 9 (EDT Generation)...");
-            const final = await drainGenerator(runStage9({ data: { sessionId: primarySessionId } }));
-            const output = String((final as { output?: string }).output ?? "");
-            if (output.length < 200) throw new Error(`Stage 9 output too short (${output.length} chars)`);
-            // Scan for banned EDT words (apologetic / permission-seeking register).
-            const banned = ["earned", "deserved", "guilt", "apology", "permission"];
-            const offenders = banned.filter((w) =>
-              new RegExp(`\\b${w}\\b`, "i").test(output),
-            );
-            if (offenders.length)
-              throw new Error(
-                `Stage 9 output contains banned EDT words: ${offenders.join(", ")}. Guard prompt failed at runtime.`,
-              );
-            return {
-              detail: `Stage 9 output (${output.length} chars) passed EDT guard scan — no banned register words present.`,
-            };
-          },
-          "Inspect Stage 9 system prompt banned-words clause and the Claude response in stage_9_output; tighten prompt or add post-sanitiser.",
-        );
-        let result!: FullCheckResult;
-        for (;;) {
-          const r = await gen.next();
-          if (r.done) {
-            result = r.value;
-            break;
-          }
-          yield r.value;
-        }
-        yield { type: "check_done", result };
-      }
-
-      // ---------------------------------------------------------------------
-      // CHECK 6 — Stages 10–11 evaluation chain
-      // ---------------------------------------------------------------------
-      yield { type: "check_start", index: 6, id: CHECK_DEFS[5].id, name: CHECK_DEFS[5].name };
-      {
-        const gen = runCheck(
-          6,
-          async (emit) => {
-            if (!primarySessionId || results[4].status !== "pass")
-              throw new Error("Skipped: Stage 9 did not complete");
-            emit("Running Stage 10 (Scoring)...");
-            await drainGenerator(runStage10({ data: { sessionId: primarySessionId } }));
-            emit("Running Stage 11 (Validation)...");
-            await drainGenerator(runStage11({ data: { sessionId: primarySessionId } }));
-            const { data: row } = await supabaseAdmin
-              .from("sessions")
-              .select("stage_10_output, stage_11_output")
-              .eq("id", primarySessionId)
-              .single();
-            if (!row?.stage_10_output || !row?.stage_11_output)
-              throw new Error("Stage 10 or 11 output missing after run");
-            return { detail: "Stages 10 & 11 completed; outputs persisted." };
-          },
-          "Inspect stage10.functions.ts / stage11.functions.ts; verify Stage 8 propositions were available as input.",
-        );
-        let result!: FullCheckResult;
-        for (;;) {
-          const r = await gen.next();
-          if (r.done) {
-            result = r.value;
-            break;
-          }
-          yield r.value;
-        }
-        yield { type: "check_done", result };
-      }
-
-      // ---------------------------------------------------------------------
-      // CHECK 7 — Stage 12 SMP selection + rationale persistence (real)
-      // ---------------------------------------------------------------------
-      yield { type: "check_start", index: 7, id: CHECK_DEFS[6].id, name: CHECK_DEFS[6].name };
-      {
-        const gen = runCheck(
-          7,
-          async (emit) => {
-            if (!primarySessionId || results[5].status !== "pass")
-              throw new Error("Skipped: Stage 10/11 chain did not complete");
-
-            // Pipeline integrity: verify Stage 11 output is persisted in the
-            // column Stage 12 actually reads from BEFORE invoking Stage 12.
-            emit("Verifying Stage 11 output is persisted to stage_11_output...");
-            const { assertStageOutput } = await import("./pipeline-integrity");
-            await assertStageOutput(primarySessionId, 11, "Stage 12 (preflight check 7)");
-
-            // Count validated SMPs Stage 11 produced — Stage 12 must render
-            // a card per validated SMP, never fewer.
-            const { data: pre } = await supabaseAdmin
-              .from("sessions")
-              .select("stage_11_output")
-              .eq("id", primarySessionId)
-              .single();
-            const { filterValidatedFromStage11, countStage12PropositionCards } = await import("./stage12-filter");
-            const validatedCount = filterValidatedFromStage11(pre?.stage_11_output ?? "").validated.length;
-            if (validatedCount === 0) throw new Error("Stage 11 produced no VALIDATED SMPs to feed Stage 12");
-
-            emit(`Running Stage 12 (SMP synthesis, expecting >= ${validatedCount} cards)...`);
-            await drainGenerator(runStage12({ data: { sessionId: primarySessionId } }));
-            const { data: row } = await supabaseAdmin
-              .from("sessions")
-              .select("stage_12_output")
-              .eq("id", primarySessionId)
-              .single();
-            const stage12 = row?.stage_12_output ?? "";
-            if (!stage12) throw new Error("Stage 12 output missing after run");
-
-            // Universal card-integrity assertion: Stage 12 must yield at least
-            // as many proposition cards as Stage 11 validated. Catches every
-            // future parser / column / timeout regression.
-            const cardCount = countStage12PropositionCards(stage12);
-            if (cardCount < validatedCount) {
-              throw new Error(
-                `Stage 12 card-integrity failure: only ${cardCount} card(s) rendered for ${validatedCount} validated SMP(s)`,
-              );
-            }
-            emit(`Stage 12 rendered ${cardCount} cards for ${validatedCount} validated SMPs.`);
-
-            // Auto-select first SMP-ish line (top-ranked).
-            const firstSmpLine =
-              stage12
-                .split("\n")
-                .map((l: string) => l.trim())
-                .find((l: string) => l.length > 30 && /[A-Za-z]/.test(l)) ?? "Auto-selected first proposition (preflight TestBrand)";
-            emit("Saving selected SMP (top-ranked auto-selection)");
-            await saveSelectedSMP({
-              data: {
-                sessionId: primarySessionId,
-                smpLine: firstSmpLine.slice(0, 2000),
-                fieldName: "Preflight Auto-Selection",
-              },
-            });
-            emit("Saving selection rationale (Checkpoint C)");
-            await saveSelectionRationale({
-              data: {
-                sessionId: primarySessionId,
-                rationale: { auto: "Preflight TestBrand auto-selected top-ranked SMP for integrity validation." },
-              },
-            });
-            const { data: verify } = await supabaseAdmin
-              .from("sessions")
-              .select("selected_smp, checkpoint_c_confirmed")
-              .eq("id", primarySessionId)
-              .single();
-            if (!verify?.selected_smp) throw new Error("selected_smp did not persist");
-            if (!verify?.checkpoint_c_confirmed) throw new Error("Checkpoint C did not flip to true");
-            return {
-              detail: `Stage 12 SMP synthesis (${cardCount}/${validatedCount} cards) + selection + rationale persisted; Checkpoint C confirmed.`,
-            };
-          },
-          "Inspect stage12.functions.ts saveSelectedSMP / saveSelectionRationale and the Stage 11 → Stage 12 column wiring in pipeline-integrity.ts.",
-
-        );
-        let result!: FullCheckResult;
-        for (;;) {
-          const r = await gen.next();
-          if (r.done) {
-            result = r.value;
-            break;
-          }
-          yield r.value;
-        }
-        yield { type: "check_done", result };
-      }
-
-      // ---------------------------------------------------------------------
-      // CHECK 8 — Phase 1 completion: Stages 13–16
+      // CHECK 3 — Hand off to client.
       //
-      // STRUCTURAL: Each of Stages 13, 13B, 14, 14B, 14C, 15, 16 is a slow
-      // Claude call. If they all ran inside this single server-fn invocation,
-      // the Cloudflare Worker wall-clock budget would be consumed mid-chain
-      // (Stage 14 was reproducibly killed at ~15min). Instead, we hand off
-      // to the client driver which invokes each stage as its own server fn
-      // RPC — each is a fresh Worker invocation with its own wall-clock
-      // budget. The driver records the Check 8 result then resumes checks
-      // 9–12 via runTierTwoChecksFrom9.
+      // STRUCTURAL: Stage 8 is a long Claude call (Strategic Propositions)
+      // followed by a separate confirmCheckpointB write. Run inline inside
+      // this single server-fn invocation, the combined wall-clock exceeded
+      // the Cloudflare Worker budget and the worker was killed silently,
+      // leaving preflight_checks rows stuck in `running` with no error
+      // recorded. Each step now runs as its own server-fn RPC from the
+      // client (fresh Worker invocation = fresh wall-clock budget). After
+      // Check 3 the client opens runTierTwoChecksFrom4 to continue checks
+      // 4–7 and the existing Check 8 handoff.
       // ---------------------------------------------------------------------
-      if (!primarySessionId || results[6].status !== "pass") {
-        // Stage 12 didn't pass — mark Check 8 failed inline, no handoff.
-        yield { type: "check_start", index: 8, id: CHECK_DEFS[7].id, name: CHECK_DEFS[7].name };
-        results[7] = {
-          ...results[7],
-          status: "fail",
-          durationMs: 0,
-          detail: "Skipped: Stage 12 selection did not complete",
-          remediation: "Fix the upstream Check 7 failure before re-running.",
-        };
-        await persistResults(supabaseAdmin, recordId, results);
-        yield { type: "check_done", result: results[7] };
-      } else {
-        // Hand off Check 8 + remaining checks to the client driver.
-        handedOff = true;
-        yield {
-          type: "check_8_handoff",
-          recordId,
-          sessionId: primarySessionId,
-          sessionIds: Array.from(createdSessionIds),
-          results,
-          startedAtMs,
-        };
-        return;
-      }
+      handedOff = true;
+      yield {
+        type: "check_3_handoff",
+        recordId,
+        sessionId: primarySessionId ?? "",
+        sessionIds: Array.from(createdSessionIds),
+        results,
+        startedAtMs,
+      };
+      return;
 
-      // ---------------------------------------------------------------------
-      // CHECK 9 — Sanitiser config + token caps (structural)
-      // ---------------------------------------------------------------------
-      yield { type: "check_start", index: 9, id: CHECK_DEFS[8].id, name: CHECK_DEFS[8].name };
-      {
-        const gen = runCheck(
-          9,
-          async () => {
-            // Sanitiser: confirm a transform function is exported and trims something.
-            const sanitise = await import("@/lib/sanitise-output");
-            const sanitiseFns = Object.entries(sanitise).filter(
-              ([, v]) => typeof v === "function",
-            );
-            if (sanitiseFns.length === 0)
-              throw new Error("sanitise-output.ts exports no functions");
-            if (!/sanitise|sanitize|strip|clean/i.test(sanitiseSource))
-              throw new Error("sanitise-output.ts source lacks expected sanitisation keywords");
-
-            // Token caps: scan every stage*.functions.ts source for an explicit maxTokens cap.
-            // Accept either a numeric literal (`maxTokens: 8000`) or an identifier reference
-            // (`maxTokens: section.maxTokens`) — the latter resolves to caps defined in a
-            // companion `stage*-sections.ts` config file, which we also verify contains literals.
-            const stageSources = import.meta.glob("@/lib/stage*.functions.ts", {
-              query: "?raw",
-              import: "default",
-              eager: true,
-            }) as Record<string, string>;
-            const sectionSources = import.meta.glob("@/lib/stage*-sections.ts", {
-              query: "?raw",
-              import: "default",
-              eager: true,
-            }) as Record<string, string>;
-            const stageFiles = Object.entries(stageSources).map(([path, src]) => ({
-              name: path.split("/").pop() ?? path,
-              src,
-            }));
-            if (stageFiles.length < 20)
-              throw new Error(`Expected ≥20 stage*.functions.ts files, found ${stageFiles.length}`);
-            const sectionLiteralFiles = Object.values(sectionSources).filter((src) =>
-              /maxTokens\s*:\s*\d+/.test(src),
-            ).length;
-            const missingCap: string[] = [];
-            for (const { name, src } of stageFiles) {
-              const hasLiteralCap = /maxTokens\s*:\s*\d+/.test(src);
-              const hasIdentifierCap =
-                /maxTokens\s*:\s*[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]+)+/.test(src) &&
-                sectionLiteralFiles > 0;
-              if (!hasLiteralCap && !hasIdentifierCap) missingCap.push(name);
-            }
-            if (missingCap.length)
-              throw new Error(`Stages missing explicit maxTokens cap: ${missingCap.join(", ")}`);
-            if (!/maxTokens/.test(claudeServerSource))
-              throw new Error("claude.server.ts does not reference maxTokens");
-            return {
-              detail: `Sanitiser exports ${sanitiseFns.length} function(s); all 27 stage modules declare explicit maxTokens caps.`,
-            };
-          },
-          "Add `maxTokens: <N>` to the callClaude/streamClaude call inside the named stage, or restore sanitise-output.ts exports.",
-        );
-        let result!: FullCheckResult;
-        for (;;) {
-          const r = await gen.next();
-          if (r.done) {
-            result = r.value;
-            break;
-          }
-          yield r.value;
-        }
-        yield { type: "check_done", result };
-      }
-
-      // ---------------------------------------------------------------------
-      // CHECK 10 — Phase 2 chain: Stage 17 → select → 17B → 18
-      // ---------------------------------------------------------------------
-      yield { type: "check_start", index: 10, id: CHECK_DEFS[9].id, name: CHECK_DEFS[9].name };
-      {
-        const gen = runCheck(
-          10,
-          async (emit) => {
-            if (!primarySessionId || results[7].status !== "pass")
-              throw new Error("Skipped: Phase 1 completion (Stages 13–16) did not pass");
-            // Ensure Three Truths exist (Phase 2 prerequisite).
-            emit("Stubbing Three Truths (product/consumer/cultural) — Phase 2 prerequisite");
-            await supabaseAdmin
-              .from("sessions")
-              .update({
-                truth_product: "TestBrand consistently delivers cold-pressed adaptogenic tonic with clinically meaningful dosing.",
-                truth_consumer: "Consumers say they want calm but reward intensity.",
-                truth_cultural: "Wellness has become a performance — fatigue with earnestness is rising.",
-                truth_cultural_confirmed: true,
-                brand_intel_confirmed: true,
-                phase_2_status: "in_progress",
-              })
-              .eq("id", primarySessionId);
-            emit("Running Stage 17 (Detonation Territory)...");
-            const s17 = await runStage17({ data: { sessionId: primarySessionId } });
-            const territoryMarkdown = (s17 as { output: string }).output ?? "";
-            if (territoryMarkdown.length < 200) throw new Error("Stage 17 output too short");
-            // Pick first ## territory block.
-            const blocks = territoryMarkdown.split(/\n(?=##\s)/).filter((b) => /##\s/.test(b));
-            const first = blocks[0] ?? territoryMarkdown;
-            emit("Selecting top-ranked territory (auto)");
-            await selectStage17Territory({
-              data: { sessionId: primarySessionId, territoryMarkdown: first },
-            });
-            emit("Running Stage 17B (Detonation Intelligence)...");
-            await runStage17b({ data: { sessionId: primarySessionId } });
-            emit("Running Stage 18 (The Detonation)...");
-            await runStage18({ data: { sessionId: primarySessionId } });
-            const { data: row } = await supabaseAdmin
-              .from("sessions")
-              .select("stage_17_output, stage_17_selected_territory, stage_17b_output, stage_18_output")
-              .eq("id", primarySessionId)
-              .single();
-            if (!row?.stage_17b_output || !row?.stage_18_output)
-              throw new Error("Stage 17B or 18 output missing after Phase 2 chain");
-            return {
-              detail: "Phase 2 chain executed end-to-end: Stage 17 → territory selection → 17B → 18, all outputs persisted.",
-            };
-          },
-          "Inspect Phase 2 checkpoint gate (D), selectStage17Territory writeback, and stage_17b_output column write.",
-        );
-        let result!: FullCheckResult;
-        for (;;) {
-          const r = await gen.next();
-          if (r.done) {
-            result = r.value;
-            break;
-          }
-          yield r.value;
-        }
-        yield { type: "check_done", result };
-      }
-
-      // ---------------------------------------------------------------------
-      // CHECK 11 — Canvas → Detonation route navigation (structural)
-      // ---------------------------------------------------------------------
-      yield { type: "check_start", index: 11, id: CHECK_DEFS[10].id, name: CHECK_DEFS[10].name };
-      {
-        const gen = runCheck(
-          11,
-          async () => {
-            const checks: Array<{ ok: boolean; msg: string }> = [];
-            checks.push({
-              ok: /createFileRoute\(['"]\/detonation['"]\)/.test(detonationSource),
-              msg: "detonation route registered",
-            });
-            checks.push({
-              ok: /export\s+function\s+DetonationRoute|export\s+const\s+DetonationRoute|component:\s*DetonationRoute/.test(
-                detonationSource,
-              ) || /component:\s*\w+/.test(detonationSource),
-              msg: "detonation route has component",
-            });
-            checks.push({
-              ok: /await\s+navigate\s*\(\s*\{\s*to:\s*['"]\/detonation['"]/.test(
-                detonationCanvasSource,
-              ),
-              msg: "canvas → detonation navigation call present",
-            });
-            checks.push({
-              ok: /saveBrandIntelligence/.test(detonationCanvasSource),
-              msg: "saveBrandIntelligence wired in canvas",
-            });
-            checks.push({
-              ok: /STAGE_9_SYSTEM_PROMPT/.test(STAGE_9_SYSTEM_PROMPT) || STAGE_9_SYSTEM_PROMPT.length > 200,
-              msg: "Stage 9 prompt resolvable",
-            });
-            const failed = checks.filter((c) => !c.ok);
-            if (failed.length) throw new Error(`Structural checks failed: ${failed.map((f) => f.msg).join("; ")}`);
-            return { detail: `All ${checks.length} structural route/navigation invariants present.` };
-          },
-          "Open src/routes/detonation_.canvas.tsx and verify the explicit `await navigate({ to: '/detonation' })` after saveBrandIntelligence completes.",
-        );
-        let result!: FullCheckResult;
-        for (;;) {
-          const r = await gen.next();
-          if (r.done) {
-            result = r.value;
-            break;
-          }
-          yield r.value;
-        }
-        yield { type: "check_done", result };
-      }
-
-      // ---------------------------------------------------------------------
-      // CHECK 12 — Concurrent session integrity (two parallel Stage 1 runs)
-      // ---------------------------------------------------------------------
-      yield { type: "check_start", index: 12, id: CHECK_DEFS[11].id, name: CHECK_DEFS[11].name };
-      {
-        const gen = runCheck(
-          12,
-          async (emit) => {
-            emit("Creating two parallel TestBrand sessions");
-            const mkSession = async (suffix: string): Promise<string> => {
-              const { data: s, error } = await supabaseAdmin
-                .from("sessions")
-                .insert({
-                  brand_name: `${TESTBRAND_BRAND_NAME} ${suffix}`,
-                  category: TESTBRAND_CATEGORY,
-                  strategic_mode: TESTBRAND_STRATEGIC_MODE,
-                  brief_text: TESTBRAND_BRIEF + `\n\nConcurrency variant: ${suffix}.`,
-                  status: "running",
-                  current_stage: 1,
-                  dev_mode: false,
-                  user_id: context.userId,
-                  is_preflight_test: true,
-                })
-                .select("id")
-                .single();
-              if (error || !s) throw new Error(`Concurrent session insert failed (${suffix}): ${error?.message ?? "no row"}`);
-              return s.id as string;
-            };
-            const [idA, idB] = await Promise.all([mkSession("A"), mkSession("B")]);
-            createdSessionIds.add(idA);
-            createdSessionIds.add(idB);
-            emit(`Sessions created: ${idA.slice(0, 8)} & ${idB.slice(0, 8)} — running Stage 1 in parallel`);
-            const [resA, resB] = await Promise.all([
-              drainGenerator(runStage1({ data: { sessionId: idA } })),
-              drainGenerator(runStage1({ data: { sessionId: idB } })),
-            ]);
-            const outA = String((resA as { output?: string }).output ?? "");
-            const outB = String((resB as { output?: string }).output ?? "");
-            if (outA.length < 200 || outB.length < 200)
-              throw new Error("One or both parallel Stage 1 outputs too short");
-            // Read back from DB to confirm each session got its own write (no cross-contamination).
-            const { data: rows, error: readErr } = await supabaseAdmin
-              .from("sessions")
-              .select("id, stage_1_output")
-              .in("id", [idA, idB]);
-            if (readErr) throw new Error(`Read-back failed: ${readErr.message}`);
-            const rowA = rows?.find((r) => r.id === idA);
-            const rowB = rows?.find((r) => r.id === idB);
-            if (!rowA?.stage_1_output || !rowB?.stage_1_output)
-              throw new Error("One or both sessions missing stage_1_output after parallel run");
-            if (rowA.stage_1_output === rowB.stage_1_output)
-              throw new Error("Parallel sessions produced identical stage_1_output — cross-contamination suspected");
-            return {
-              detail: `Two parallel Stage 1 runs completed independently with distinct outputs (${outA.length} / ${outB.length} chars).`,
-            };
-          },
-          "Inspect runStage1 for any cross-session state (module-level caches, shared mutable refs). All session reads/writes must scope by sessionId.",
-        );
-        let result!: FullCheckResult;
-        for (;;) {
-          const r = await gen.next();
-          if (r.done) {
-            result = r.value;
-            break;
-          }
-          yield r.value;
-        }
-        yield { type: "check_done", result };
-      }
     } catch (fatal) {
       const msg = fatal instanceof Error ? fatal.message : String(fatal);
       yield { type: "error", message: `Fatal error during Tier Two: ${msg}` };
@@ -1422,3 +887,366 @@ export const runTierTwoChecksFrom9 = createServerFn({ method: "POST" })
       };
     }
   });
+
+// ---------------------------------------------------------------------------
+// Check 3 result recorder + resume stream (checks 4–7 → check 8 handoff)
+//
+// The client drives Check 3 by invoking runStage8 and confirmCheckpointB as
+// two separate server-fn RPCs (each a fresh Cloudflare Worker invocation
+// with its own wall-clock budget). After Check 3 is recorded, the client
+// opens runTierTwoChecksFrom4 which runs checks 4–7 and then emits the
+// existing check_8_handoff to chain into Check 8 + checks 9–12.
+// ---------------------------------------------------------------------------
+
+export const recordPreflightCheck3Result = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) =>
+    z
+      .object({
+        recordId: z.string().uuid(),
+        allResults: z.array(FullCheckResultSchema),
+      })
+      .parse(i),
+  )
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin
+      .from("preflight_checks")
+      .update({ tier_two_results: data.allResults as unknown as never })
+      .eq("id", data.recordId);
+    if (error) throw new Error(error.message);
+    return { ok: true as const };
+  });
+
+export const runTierTwoChecksFrom4 = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) =>
+    z
+      .object({
+        recordId: z.string().uuid(),
+        sessionId: z.string(),
+        sessionIds: z.array(z.string().uuid()),
+        priorResults: z.array(FullCheckResultSchema),
+        startedAtMs: z.number(),
+      })
+      .parse(i),
+  )
+  .handler(async function* ({ data, context }): AsyncGenerator<TierTwoEvent, void, unknown> {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { recordId, sessionId, startedAtMs } = data;
+    const results: FullCheckResult[] = data.priorResults.map((r) => ({
+      ...r,
+      id: r.id as FullCheckId,
+    }));
+    const createdSessionIds = new Set<string>(data.sessionIds);
+    const primarySessionId = sessionId || null;
+    let handedOff = false;
+
+    const runCheck = async function* (
+      index1: number,
+      fn: (emit: (msg: string) => void) => Promise<{ detail: string }>,
+      remediationOnFail: string,
+    ): AsyncGenerator<TierTwoEvent, FullCheckResult, unknown> {
+      const idx = index1 - 1;
+      const events: TierTwoEvent[] = [];
+      const emit = (message: string) => {
+        events.push({ type: "check_progress", index: index1, message });
+      };
+      results[idx] = { ...results[idx], status: "running" };
+      await persistResults(supabaseAdmin, recordId, results);
+      const started = Date.now();
+      let res: FullCheckResult;
+      try {
+        const { detail } = await fn(emit);
+        res = {
+          ...results[idx],
+          status: "pass",
+          durationMs: Date.now() - started,
+          detail,
+          remediation: null,
+        };
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        res = {
+          ...results[idx],
+          status: "fail",
+          durationMs: Date.now() - started,
+          detail: msg,
+          remediation: remediationOnFail,
+        };
+      }
+      for (const ev of events) yield ev;
+      results[idx] = res;
+      await persistResults(supabaseAdmin, recordId, results);
+      return res;
+    };
+
+    void context;
+
+    try {
+      // -------------------------------------------------------------------
+      // CHECK 4 — Stage prompts integrity (structural)
+      // -------------------------------------------------------------------
+      yield { type: "check_start", index: 4, id: CHECK_DEFS[3].id, name: CHECK_DEFS[3].name };
+      {
+        const gen = runCheck(
+          4,
+          async (emit) => {
+            emit("Importing all stage prompt modules");
+            const promptModules = await Promise.all([
+              import("@/lib/stage1-prompt"),
+              import("@/lib/stage1b-prompt"),
+              import("@/lib/stage2-prompt"),
+              import("@/lib/stage3-prompt"),
+              import("@/lib/stage4-prompt"),
+              import("@/lib/stage5-prompt"),
+              import("@/lib/stage6-prompt"),
+              import("@/lib/stage7-prompt"),
+              import("@/lib/stage8-prompt"),
+              import("@/lib/stage9-prompt"),
+              import("@/lib/stage10-prompt"),
+              import("@/lib/stage11-prompt"),
+              import("@/lib/stage12-prompt"),
+              import("@/lib/stage13-prompt"),
+              import("@/lib/stage13b-prompt"),
+              import("@/lib/stage14-prompt"),
+              import("@/lib/stage14b-prompt"),
+              import("@/lib/stage14c-prompt"),
+              import("@/lib/stage15-prompt"),
+              import("@/lib/stage16-prompt"),
+              import("@/lib/stage17-detonation-territory-prompt"),
+              import("@/lib/stage17b-detonation-intelligence-prompt"),
+              import("@/lib/stage18-the-detonation-prompt"),
+              import("@/lib/stage19-activation-architecture-prompt"),
+              import("@/lib/stage20-master-detonation-brief-prompt"),
+              import("@/lib/stage21-channel-detonation-briefs-prompt"),
+              import("@/lib/stage22-brand-architecture-prompt"),
+            ]);
+            const missing: string[] = [];
+            let totalPrompts = 0;
+            for (const mod of promptModules) {
+              for (const [k, v] of Object.entries(mod as Record<string, unknown>)) {
+                if (typeof v === "string" && /SYSTEM_PROMPT|_PROMPT$/.test(k)) {
+                  totalPrompts++;
+                  if (v.trim().length < 200) missing.push(`${k} (${v.trim().length} chars)`);
+                }
+              }
+            }
+            if (missing.length) throw new Error(`Prompts too short/empty: ${missing.join(", ")}`);
+            return {
+              detail: `All ${totalPrompts} stage system prompts present and ≥200 chars across 22 stages (1, 1B, 2–17, 17B, 18–22).`,
+            };
+          },
+          "Open the named prompt module and restore the missing/empty *_SYSTEM_PROMPT export.",
+        );
+        let result!: FullCheckResult;
+        for (;;) {
+          const r = await gen.next();
+          if (r.done) { result = r.value; break; }
+          yield r.value;
+        }
+        yield { type: "check_done", result };
+      }
+
+      // -------------------------------------------------------------------
+      // CHECK 5 — Stage 9 EDT Guard output sanitisation
+      // -------------------------------------------------------------------
+      yield { type: "check_start", index: 5, id: CHECK_DEFS[4].id, name: CHECK_DEFS[4].name };
+      {
+        const gen = runCheck(
+          5,
+          async (emit) => {
+            if (!primarySessionId || results[2].status !== "pass")
+              throw new Error("Skipped: Stage 8 / Checkpoint B did not complete");
+            emit("Running Stage 9 (EDT Generation)...");
+            const final = await drainGenerator(runStage9({ data: { sessionId: primarySessionId } }));
+            const output = String((final as { output?: string }).output ?? "");
+            if (output.length < 200) throw new Error(`Stage 9 output too short (${output.length} chars)`);
+            const banned = ["earned", "deserved", "guilt", "apology", "permission"];
+            const offenders = banned.filter((w) => new RegExp(`\\b${w}\\b`, "i").test(output));
+            if (offenders.length)
+              throw new Error(`Stage 9 output contains banned EDT words: ${offenders.join(", ")}. Guard prompt failed at runtime.`);
+            return { detail: `Stage 9 output (${output.length} chars) passed EDT guard scan — no banned register words present.` };
+          },
+          "Inspect Stage 9 system prompt banned-words clause and the Claude response in stage_9_output; tighten prompt or add post-sanitiser.",
+        );
+        let result!: FullCheckResult;
+        for (;;) {
+          const r = await gen.next();
+          if (r.done) { result = r.value; break; }
+          yield r.value;
+        }
+        yield { type: "check_done", result };
+      }
+
+      // -------------------------------------------------------------------
+      // CHECK 6 — Stages 10–11 evaluation chain
+      // -------------------------------------------------------------------
+      yield { type: "check_start", index: 6, id: CHECK_DEFS[5].id, name: CHECK_DEFS[5].name };
+      {
+        const gen = runCheck(
+          6,
+          async (emit) => {
+            if (!primarySessionId || results[4].status !== "pass")
+              throw new Error("Skipped: Stage 9 did not complete");
+            emit("Running Stage 10 (Scoring)...");
+            await drainGenerator(runStage10({ data: { sessionId: primarySessionId } }));
+            emit("Running Stage 11 (Validation)...");
+            await drainGenerator(runStage11({ data: { sessionId: primarySessionId } }));
+            const { data: row } = await supabaseAdmin
+              .from("sessions")
+              .select("stage_10_output, stage_11_output")
+              .eq("id", primarySessionId)
+              .single();
+            if (!row?.stage_10_output || !row?.stage_11_output)
+              throw new Error("Stage 10 or 11 output missing after run");
+            return { detail: "Stages 10 & 11 completed; outputs persisted." };
+          },
+          "Inspect stage10.functions.ts / stage11.functions.ts; verify Stage 8 propositions were available as input.",
+        );
+        let result!: FullCheckResult;
+        for (;;) {
+          const r = await gen.next();
+          if (r.done) { result = r.value; break; }
+          yield r.value;
+        }
+        yield { type: "check_done", result };
+      }
+
+      // -------------------------------------------------------------------
+      // CHECK 7 — Stage 12 SMP selection + rationale persistence
+      // -------------------------------------------------------------------
+      yield { type: "check_start", index: 7, id: CHECK_DEFS[6].id, name: CHECK_DEFS[6].name };
+      {
+        const gen = runCheck(
+          7,
+          async (emit) => {
+            if (!primarySessionId || results[5].status !== "pass")
+              throw new Error("Skipped: Stage 10/11 chain did not complete");
+            emit("Verifying Stage 11 output is persisted to stage_11_output...");
+            const { assertStageOutput } = await import("./pipeline-integrity");
+            await assertStageOutput(primarySessionId, 11, "Stage 12 (preflight check 7)");
+            const { data: pre } = await supabaseAdmin
+              .from("sessions")
+              .select("stage_11_output")
+              .eq("id", primarySessionId)
+              .single();
+            const { filterValidatedFromStage11, countStage12PropositionCards } = await import("./stage12-filter");
+            const validatedCount = filterValidatedFromStage11(pre?.stage_11_output ?? "").validated.length;
+            if (validatedCount === 0) throw new Error("Stage 11 produced no VALIDATED SMPs to feed Stage 12");
+            emit(`Running Stage 12 (SMP synthesis, expecting >= ${validatedCount} cards)...`);
+            await drainGenerator(runStage12({ data: { sessionId: primarySessionId } }));
+            const { data: row } = await supabaseAdmin
+              .from("sessions")
+              .select("stage_12_output")
+              .eq("id", primarySessionId)
+              .single();
+            const stage12 = row?.stage_12_output ?? "";
+            if (!stage12) throw new Error("Stage 12 output missing after run");
+            const cardCount = countStage12PropositionCards(stage12);
+            if (cardCount < validatedCount) {
+              throw new Error(`Stage 12 card-integrity failure: only ${cardCount} card(s) rendered for ${validatedCount} validated SMP(s)`);
+            }
+            emit(`Stage 12 rendered ${cardCount} cards for ${validatedCount} validated SMPs.`);
+            const firstSmpLine =
+              stage12
+                .split("\n")
+                .map((l: string) => l.trim())
+                .find((l: string) => l.length > 30 && /[A-Za-z]/.test(l)) ?? "Auto-selected first proposition (preflight TestBrand)";
+            emit("Saving selected SMP (top-ranked auto-selection)");
+            await saveSelectedSMP({
+              data: {
+                sessionId: primarySessionId,
+                smpLine: firstSmpLine.slice(0, 2000),
+                fieldName: "Preflight Auto-Selection",
+              },
+            });
+            emit("Saving selection rationale (Checkpoint C)");
+            await saveSelectionRationale({
+              data: {
+                sessionId: primarySessionId,
+                rationale: { auto: "Preflight TestBrand auto-selected top-ranked SMP for integrity validation." },
+              },
+            });
+            const { data: verify } = await supabaseAdmin
+              .from("sessions")
+              .select("selected_smp, checkpoint_c_confirmed")
+              .eq("id", primarySessionId)
+              .single();
+            if (!verify?.selected_smp) throw new Error("selected_smp did not persist");
+            if (!verify?.checkpoint_c_confirmed) throw new Error("Checkpoint C did not flip to true");
+            return {
+              detail: `Stage 12 SMP synthesis (${cardCount}/${validatedCount} cards) + selection + rationale persisted; Checkpoint C confirmed.`,
+            };
+          },
+          "Inspect stage12.functions.ts saveSelectedSMP / saveSelectionRationale and the Stage 11 → Stage 12 column wiring in pipeline-integrity.ts.",
+        );
+        let result!: FullCheckResult;
+        for (;;) {
+          const r = await gen.next();
+          if (r.done) { result = r.value; break; }
+          yield r.value;
+        }
+        yield { type: "check_done", result };
+      }
+
+      // -------------------------------------------------------------------
+      // CHECK 8 boundary — always hand off to the client. If check 7 did
+      // not pass, mark check 8 as failed inline first so the client can
+      // skip driveCheck8 and resume directly into runTierTwoChecksFrom9.
+      // -------------------------------------------------------------------
+      if (!primarySessionId || results[6].status !== "pass") {
+        yield { type: "check_start", index: 8, id: CHECK_DEFS[7].id, name: CHECK_DEFS[7].name };
+        results[7] = {
+          ...results[7],
+          status: "fail",
+          durationMs: 0,
+          detail: "Skipped: Stage 12 selection did not complete",
+          remediation: "Fix the upstream Check 7 failure before re-running.",
+        };
+        await persistResults(supabaseAdmin, recordId, results);
+        yield { type: "check_done", result: results[7] };
+      }
+
+      handedOff = true;
+      yield {
+        type: "check_8_handoff",
+        recordId,
+        sessionId: primarySessionId ?? "",
+        sessionIds: Array.from(createdSessionIds),
+        results,
+        startedAtMs,
+      };
+      return;
+    } catch (fatal) {
+      const msg = fatal instanceof Error ? fatal.message : String(fatal);
+      yield { type: "error", message: `Fatal error during Tier Two (checks 4–7): ${msg}` };
+    } finally {
+      if (!handedOff) {
+        const ids = Array.from(createdSessionIds);
+        if (ids.length > 0) {
+          await supabaseAdmin.from("sessions").delete().in("id", ids);
+        }
+        const failedCount = results.filter((r) => r.status === "fail").length;
+        const overall: "ready" | "issue_detected" = failedCount === 0 ? "ready" : "issue_detected";
+        await supabaseAdmin
+          .from("preflight_checks")
+          .update({
+            status: "complete",
+            completed_at: nowIso(),
+            tier_two_results: results as unknown as never,
+            overall_result: overall,
+          })
+          .eq("id", recordId);
+        yield {
+          type: "done",
+          recordId,
+          overall,
+          results,
+          sessionIdsCleaned: ids,
+          totalDurationMs: Date.now() - startedAtMs,
+        };
+      }
+    }
+  });
+
