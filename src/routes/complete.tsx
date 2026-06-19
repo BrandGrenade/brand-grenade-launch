@@ -13,7 +13,7 @@ import {
   buildAllPhase2,
   type Phase2DocType,
 } from "@/lib/phase2-document-generator";
-import { buildPhase1Document, openPhase1Document, PHASE_1_SESSION_COLUMNS, type Phase1Format } from "@/lib/phase1-document-builder";
+import { buildPhase1Document, openPhase1Document, openStage16VisionDocument, PHASE_1_SESSION_COLUMNS, type Phase1Format } from "@/lib/phase1-document-builder";
 
 
 
@@ -64,7 +64,7 @@ const STAGES = [
   "Document Assembly",
 ];
 
-type Format = "agency" | "consulting" | "workshop";
+type Format = "vision" | "agency" | "consulting" | "workshop";
 
 type SessionRow = {
   id: string;
@@ -77,6 +77,7 @@ type SessionRow = {
   doc_agency_url: string | null;
   doc_workshop_url: string | null;
   phase_2_status: string | null;
+  stage_16_vision_output: string | null;
   stage_1_output: string | null;
   stage_2_output: string | null;
   stage_3_output: string | null;
@@ -123,7 +124,7 @@ function CompletePage() {
   const runStage16Fn = useServerFn(runStage16);
   const { user } = useAuth();
   // edge fn invoked directly via supabase.functions.invoke
-  const [format, setFormat] = useState<Format>("consulting");
+  const [format, setFormat] = useState<Format>("vision");
   const [generating, setGenerating] = useState(false);
   const [progress, setProgress] = useState(0);
   const [progressLabel, setProgressLabel] = useState("");
@@ -145,7 +146,7 @@ function CompletePage() {
     supabase
       .from("sessions")
       .select(
-        `id, brand_name, category, selected_smp, selected_smp_field_name, user_id, doc_consulting_url, doc_agency_url, doc_workshop_url, phase_2_status, ${PHASE_1_SESSION_COLUMNS}, stage_17_selected_territory, stage_17b_output, stage_18_selected_detonation, stage_19_output, stage_20_output, stage_21_outputs, stage_22_output, stage_22_brand_architecture, stage_22_distinctive_assets`,
+        `id, brand_name, category, selected_smp, selected_smp_field_name, user_id, doc_consulting_url, doc_agency_url, doc_workshop_url, phase_2_status, stage_16_vision_output, ${PHASE_1_SESSION_COLUMNS}, stage_17_selected_territory, stage_17b_output, stage_18_selected_detonation, stage_19_output, stage_20_output, stage_21_outputs, stage_22_output, stage_22_brand_architecture, stage_22_distinctive_assets`,
       )
       .eq("id", sessionId)
       .maybeSingle()
@@ -339,10 +340,19 @@ function CompletePage() {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(3, 1fr)",
+            gridTemplateColumns: "repeat(2, 1fr)",
             gap: 16,
           }}
         >
+          <FormatCard
+            id="vision"
+            selected={format === "vision"}
+            onSelect={setFormat}
+            icon={<DocsIcon />}
+            title="Strategy and Creative Vision"
+            description="CMO socialisation document. Strategy and creative direction unified for the room that signs off the work."
+            tag="primary"
+          />
           <FormatCard
             id="agency"
             selected={format === "agency"}
@@ -375,9 +385,59 @@ function CompletePage() {
         {/* Download section */}
         <div style={{ marginTop: 32 }}>
           {(() => {
-            const runGenerate = () => {
+            const runGenerate = async () => {
               if (!hasSmp || !session) return;
               setLastError(null);
+              if (format === "vision") {
+                // Stage 16 vision is generated on demand via the server fn.
+                // Returns cached output if already populated (no extra Claude
+                // call); otherwise streams generation and persists.
+                const existing = session.stage_16_vision_output;
+                if (existing && existing.trim().length > 1000) {
+                  try {
+                    openStage16VisionDocument(brand, smp, existing);
+                  } catch (e) {
+                    console.error("Vision doc open failed", e);
+                    setLastError(e instanceof Error ? e.message : "Document open failed");
+                  }
+                  return;
+                }
+                setGenerating(true);
+                setDone(false);
+                setProgress(10);
+                setProgressLabel("Generating Strategy and Creative Vision…");
+                try {
+                  const stream = await runStage16Fn({
+                    data: { sessionId: session.id, format: "vision" },
+                  });
+                  let finalOutput = "";
+                  for await (const chunk of stream as AsyncIterable<{
+                    delta?: string;
+                    done?: boolean;
+                    output?: string;
+                  }>) {
+                    if (chunk.delta) {
+                      finalOutput += chunk.delta;
+                      setProgress((p) => Math.min(90, p + 2));
+                    }
+                    if (chunk.done && chunk.output) {
+                      finalOutput = chunk.output;
+                    }
+                  }
+                  setProgress(100);
+                  setDone(true);
+                  setProgressLabel("Strategy and Creative Vision ready");
+                  setSession({ ...session, stage_16_vision_output: finalOutput });
+                  setLastOutput(finalOutput);
+                  openStage16VisionDocument(brand, smp, finalOutput);
+                } catch (e) {
+                  console.error("Vision generation failed", e);
+                  setLastError(e instanceof Error ? e.message : "Vision generation failed");
+                } finally {
+                  setGenerating(false);
+                }
+                return;
+              }
               try {
                 openPhase1Document(session, format as Phase1Format);
               } catch (e) {
@@ -387,12 +447,16 @@ function CompletePage() {
                 );
               }
             };
+            const buttonLabel =
+              format === "vision"
+                ? `Download ${brand} Strategy and Creative Vision ↓`
+                : `Download ${brand} Strategic Platform ↓`;
             return (
               <>
                 <button
                   type="button"
                   onClick={runGenerate}
-                  disabled={!hasSmp}
+                  disabled={!hasSmp || generating}
                   style={{
                     width: "100%",
                     height: 56,
@@ -402,11 +466,11 @@ function CompletePage() {
                     color: "var(--color-background)",
                     fontWeight: 600,
                     fontSize: 16,
-                    cursor: hasSmp ? "pointer" : "not-allowed",
-                    opacity: hasSmp ? 1 : 0.5,
+                    cursor: hasSmp && !generating ? "pointer" : "not-allowed",
+                    opacity: hasSmp && !generating ? 1 : 0.5,
                   }}
                 >
-                  {`Download ${brand} Strategic Platform ↓`}
+                  {generating ? "Generating…" : buttonLabel}
                 </button>
                 <p
                   className="text-body-sm"
@@ -477,6 +541,7 @@ function CompletePage() {
                   const safe = brand.replace(/[^a-zA-Z0-9]/g, "_");
                   const date = new Date().toISOString().split("T")[0];
                   const suffix = {
+                    vision: "StrategyAndCreativeVision",
                     consulting: "BoardStrategyRecommendation",
                     agency: "AgencyStrategyPlatform",
                     workshop: "BrandStrategyWorkshopGuide",
