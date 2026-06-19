@@ -351,6 +351,66 @@ export function PreflightFullCheckPanel() {
     return { kind: "done" };
   };
 
+  const driveCheck2 = async (
+    handoff: Extract<TierTwoEvent, { type: "check_2_handoff" }>,
+  ): Promise<FullCheckResult> => {
+    const def = handoff.results[1];
+    setCurrentMessage(`▶ ${def.name}`);
+    setResults((prev) => prev.map((r) => (r.index === 2 ? { ...r, status: "running" } : r)));
+    const started = Date.now();
+    const sessionId = handoff.sessionId;
+    const timings: string[] = [];
+    const stages: Array<{ label: string; run: () => Promise<unknown> }> = [
+      { label: "Stage 2", run: () => drainStream(stage2Fn({ data: { sessionId } })) },
+      { label: "Stage 3", run: () => drainStream(stage3Fn({ data: { sessionId } })) },
+      { label: "Stage 4", run: () => drainStream(stage4Fn({ data: { sessionId } })) },
+      { label: "Stage 4B", run: () => drainStream(stage4bFn({ data: { sessionId } })) },
+      { label: "Stage 5", run: () => drainStream(stage5Fn({ data: { sessionId } })) },
+      { label: "Stage 6", run: () => drainStream(stage6Fn({ data: { sessionId } })) },
+      { label: "Stage 7", run: () => drainStream(stage7Fn({ data: { sessionId } })) },
+    ];
+    try {
+      if (!sessionId || handoff.results[0].status !== "pass") throw new Error("Skipped: Stage 1 failed");
+      for (const { label, run } of stages) {
+        setCurrentMessage(`  · Running ${label} (separate Worker invocation)...`);
+        const t0 = Date.now();
+        await run();
+        timings.push(`${label}: ${((Date.now() - t0) / 1000).toFixed(1)}s`);
+      }
+      return { ...def, status: "pass", durationMs: Date.now() - started, detail: `Phase 1A chain completed — each stage ran as its own server-fn RPC. ${timings.join(", ")}.`, remediation: null };
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      return { ...def, status: "fail", durationMs: Date.now() - started, detail: `Check 2 failed: ${msg}. Completed: ${timings.join(", ") || "none"}.`, remediation: "Inspect logs for the first failed stage in the 2–7 chain; check Checkpoint A confirmation and prior-stage output columns are populated." };
+    }
+  };
+
+  const driveCheck6 = async (
+    handoff: Extract<TierTwoEvent, { type: "check_6_handoff" }>,
+  ): Promise<FullCheckResult> => {
+    const def = handoff.results[5];
+    setCurrentMessage(`▶ ${def.name}`);
+    setResults((prev) => prev.map((r) => (r.index === 6 ? { ...r, status: "running" } : r)));
+    const started = Date.now();
+    const sessionId = handoff.sessionId;
+    const timings: string[] = [];
+    try {
+      if (!sessionId || handoff.results[4].status !== "pass") throw new Error("Skipped: Stage 9 did not complete");
+      for (const { label, run } of [
+        { label: "Stage 10", run: () => drainStream(stage10Fn({ data: { sessionId } })) },
+        { label: "Stage 11", run: () => drainStream(stage11Fn({ data: { sessionId } })) },
+      ]) {
+        setCurrentMessage(`  · Running ${label} (separate Worker invocation)...`);
+        const t0 = Date.now();
+        await run();
+        timings.push(`${label}: ${((Date.now() - t0) / 1000).toFixed(1)}s`);
+      }
+      return { ...def, status: "pass", durationMs: Date.now() - started, detail: `Stages 10 & 11 completed — each ran as its own server-fn RPC. ${timings.join(", ")}.`, remediation: null };
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      return { ...def, status: "fail", durationMs: Date.now() - started, detail: `Check 6 failed: ${msg}. Completed: ${timings.join(", ") || "none"}.`, remediation: "Inspect stage10.functions.ts / stage11.functions.ts; verify Stage 8 propositions were available as input." };
+    }
+  };
+
   // Drive Check 3 (Stage 8 + Checkpoint B) by invoking each as a SEPARATE
   // server-fn RPC. Each is a fresh Cloudflare Worker invocation with its
   // own wall-clock budget — structural fix for the silent worker death
