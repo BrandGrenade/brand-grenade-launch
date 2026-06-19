@@ -340,10 +340,19 @@ function CompletePage() {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(3, 1fr)",
+            gridTemplateColumns: "repeat(2, 1fr)",
             gap: 16,
           }}
         >
+          <FormatCard
+            id="vision"
+            selected={format === "vision"}
+            onSelect={setFormat}
+            icon={<DocsIcon />}
+            title="Strategy and Creative Vision"
+            description="CMO socialisation document. Strategy and creative direction unified for the room that signs off the work."
+            tag="primary"
+          />
           <FormatCard
             id="agency"
             selected={format === "agency"}
