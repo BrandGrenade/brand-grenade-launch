@@ -135,6 +135,7 @@ function CompletePage() {
   const [loading, setLoading] = useState(true);
   const [lastError, setLastError] = useState<string | null>(null);
   const [lastOutput, setLastOutput] = useState<string>("");
+  const regenerateRef = useRef<((id: Format) => void) | null>(null);
 
   useEffect(() => {
     if (!sessionId) {
