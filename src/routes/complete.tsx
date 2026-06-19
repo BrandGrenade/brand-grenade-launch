@@ -349,37 +349,45 @@ function CompletePage() {
             id="vision"
             selected={format === "vision"}
             onSelect={setFormat}
+            onRegenerate={(id) => regenerateRef.current?.(id)}
             icon={<DocsIcon />}
             title="Strategy and Creative Vision"
             description="CMO socialisation document. Strategy and creative direction unified for the room that signs off the work."
             tag="primary"
+            disabled={!hasSmp || generating}
           />
           <FormatCard
             id="agency"
             selected={format === "agency"}
             onSelect={setFormat}
+            onRegenerate={(id) => regenerateRef.current?.(id)}
             icon={<DeckIcon />}
             title="Agency Pitch"
             description="Proposition-led. Creative territory first. Built for the teams who will make the work."
             tag="25+ pages"
+            disabled={!hasSmp || generating}
           />
           <FormatCard
             id="consulting"
             selected={format === "consulting"}
             onSelect={setFormat}
+            onRegenerate={(id) => regenerateRef.current?.(id)}
             icon={<DocsIcon />}
             title="Consulting Delivery"
             description="Evidence-led. Methodology visible. Built for the room where decisions are made."
             tag="~25 pages"
+            disabled={!hasSmp || generating}
           />
           <FormatCard
             id="workshop"
             selected={format === "workshop"}
             onSelect={setFormat}
+            onRegenerate={(id) => regenerateRef.current?.(id)}
             icon={<PeopleIcon />}
             title="Brand Workshop"
             description="Session-ready. Built for the internal conversation that turns strategy into action."
             tag="~20 pages + session guide"
+            disabled={!hasSmp || generating}
           />
         </div>
 
