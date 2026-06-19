@@ -534,6 +534,73 @@ export function PreflightFullCheckPanel() {
     }
   };
 
+  const driveCheck10 = async (
+    handoff: Extract<TierTwoEvent, { type: "check_10_handoff" }>,
+  ): Promise<FullCheckResult> => {
+    const def = handoff.results[9];
+    setCurrentMessage(`▶ ${def.name}`);
+    setResults((prev) => prev.map((r) => (r.index === 10 ? { ...r, status: "running" } : r)));
+    const started = Date.now();
+    const sessionId = handoff.sessionId;
+    const timings: string[] = [];
+    try {
+      if (!sessionId || handoff.results[7].status !== "pass") throw new Error("Skipped: Phase 1 completion did not pass");
+      setCurrentMessage("  · Running Stage 17 (separate Worker invocation)...");
+      let t0 = Date.now();
+      const s17 = await stage17Fn({ data: { sessionId } });
+      timings.push(`Stage 17: ${((Date.now() - t0) / 1000).toFixed(1)}s`);
+      const territoryMarkdown = (s17 as { output?: string }).output ?? "";
+      if (territoryMarkdown.length < 200) throw new Error("Stage 17 output too short");
+      const blocks = territoryMarkdown.split(/\n(?=##\s)/).filter((b) => /##\s/.test(b));
+      const first = blocks[0] ?? territoryMarkdown;
+      setCurrentMessage("  · Selecting top-ranked territory (separate Worker invocation)...");
+      t0 = Date.now();
+      await selectStage17Fn({ data: { sessionId, territoryMarkdown: first } });
+      timings.push(`Select territory: ${((Date.now() - t0) / 1000).toFixed(1)}s`);
+      for (const { label, run } of [
+        { label: "Stage 17B", run: () => stage17bFn({ data: { sessionId } }) },
+        { label: "Stage 18", run: () => stage18Fn({ data: { sessionId } }) },
+      ]) {
+        setCurrentMessage(`  · Running ${label} (separate Worker invocation)...`);
+        t0 = Date.now();
+        await run();
+        timings.push(`${label}: ${((Date.now() - t0) / 1000).toFixed(1)}s`);
+      }
+      return { ...def, status: "pass", durationMs: Date.now() - started, detail: `Phase 2 chain executed end-to-end — each step ran as its own server-fn RPC. ${timings.join(", ")}.`, remediation: null };
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      return { ...def, status: "fail", durationMs: Date.now() - started, detail: `Check 10 failed: ${msg}. Completed: ${timings.join(", ") || "none"}.`, remediation: "Inspect Phase 2 checkpoint gate (D), selectStage17Territory writeback, and stage_17b_output column write." };
+    }
+  };
+
+  const driveCheck12 = async (
+    handoff: Extract<TierTwoEvent, { type: "check_12_handoff" }>,
+  ): Promise<FullCheckResult> => {
+    const def = handoff.results[11];
+    setCurrentMessage(`▶ ${def.name}`);
+    setResults((prev) => prev.map((r) => (r.index === 12 ? { ...r, status: "running" } : r)));
+    const started = Date.now();
+    const [idA, idB] = handoff.concurrentSessionIds;
+    const timings: string[] = [];
+    try {
+      setCurrentMessage("  · Running parallel Stage 1 session A/B (each its own Worker invocation)...");
+      const t0 = Date.now();
+      const [resA, resB] = await Promise.all([
+        drainStream(stage2Fn ? stage1Safe(idA) : stage1Safe(idA)),
+        drainStream(stage2Fn ? stage1Safe(idB) : stage1Safe(idB)),
+      ]);
+      timings.push(`Parallel Stage 1: ${((Date.now() - t0) / 1000).toFixed(1)}s`);
+      const outA = String((resA as { output?: string }).output ?? "");
+      const outB = String((resB as { output?: string }).output ?? "");
+      if (outA.length < 200 || outB.length < 200) throw new Error("One or both parallel Stage 1 outputs too short");
+      if (outA === outB) throw new Error("Parallel sessions produced identical stage_1_output — cross-contamination suspected");
+      return { ...def, status: "pass", durationMs: Date.now() - started, detail: `Two parallel Stage 1 runs completed independently with distinct outputs (${outA.length} / ${outB.length} chars). ${timings.join(", ")}.`, remediation: null };
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      return { ...def, status: "fail", durationMs: Date.now() - started, detail: `Check 12 failed: ${msg}. Completed: ${timings.join(", ") || "none"}.`, remediation: "Inspect runStage1 for any cross-session state. All session reads/writes must scope by sessionId." };
+    }
+  };
+
   const runCheck = async (forceOverride: boolean) => {
     setState("running");
     setLockMessage(null);
