@@ -620,11 +620,31 @@ export function PreflightFullCheckPanel() {
       })) as AsyncGenerator<TierTwoEvent, void, unknown>;
 
       const outcome1 = await processStream(gen);
-      if (outcome1.kind !== "handoff3") return;
+      if (outcome1.kind !== "handoff2") return;
+
+      // ---- Client-driven Check 2 (Stages 2–7 as separate RPCs) ----
+      const check2Result = await driveCheck2(outcome1.payload);
+      let workingResults = outcome1.payload.results.map((r) =>
+        r.index === 2 ? check2Result : r,
+      );
+      setResults(workingResults);
+      setCurrentMessage(`✓ ${check2Result.name} — ${check2Result.status.toUpperCase()}`);
+      await recordResultsFn({
+        data: { recordId: outcome1.payload.recordId, allResults: workingResults },
+      });
+
+      const check3Handoff: Extract<TierTwoEvent, { type: "check_3_handoff" }> = {
+        type: "check_3_handoff",
+        recordId: outcome1.payload.recordId,
+        sessionId: outcome1.payload.sessionId,
+        sessionIds: outcome1.payload.sessionIds,
+        results: workingResults,
+        startedAtMs: outcome1.payload.startedAtMs,
+      };
 
       // ---- Client-driven Check 3 (Stage 8 + Checkpoint B as separate RPCs) ----
-      const check3Result = await driveCheck3(outcome1.payload);
-      let workingResults = outcome1.payload.results.map((r) =>
+      const check3Result = await driveCheck3(check3Handoff);
+      workingResults = check3Handoff.results.map((r) =>
         r.index === 3 ? check3Result : r,
       );
       setResults(workingResults);
@@ -636,36 +656,29 @@ export function PreflightFullCheckPanel() {
       // ---- Resume server-side: checks 4–7 → check_8_handoff ----
       const from4Gen = (await runFrom4Fn({
         data: {
-          recordId: outcome1.payload.recordId,
-          sessionId: outcome1.payload.sessionId,
-          sessionIds: outcome1.payload.sessionIds,
+          recordId: check3Handoff.recordId,
+          sessionId: check3Handoff.sessionId,
+          sessionIds: check3Handoff.sessionIds,
           priorResults: workingResults,
-          startedAtMs: outcome1.payload.startedAtMs,
+          startedAtMs: check3Handoff.startedAtMs,
         },
       })) as AsyncGenerator<TierTwoEvent, void, unknown>;
       const outcome2 = await processStream(from4Gen);
-      if (outcome2.kind !== "handoff8") return;
+      if (outcome2.kind !== "handoff6") return;
 
-      // ---- Client-driven Check 8 (skip if check 7 didn't pass) ----
-      const check7Passed = outcome2.payload.results[6]?.status === "pass";
-      let check8Result: FullCheckResult;
-      if (!check7Passed) {
-        // Server already marked it failed inline; reuse that.
-        check8Result = outcome2.payload.results[7];
-      } else {
-        check8Result = await driveCheck8(outcome2.payload);
-      }
+      // ---- Client-driven Check 6 (Stages 10–11 as separate RPCs) ----
+      const check6Result = await driveCheck6(outcome2.payload);
       workingResults = outcome2.payload.results.map((r) =>
-        r.index === 8 ? check8Result : r,
+        r.index === 6 ? check6Result : r,
       );
       setResults(workingResults);
-      setCurrentMessage(`✓ ${check8Result.name} — ${check8Result.status.toUpperCase()}`);
-      await recordCheck8Fn({
+      setCurrentMessage(`✓ ${check6Result.name} — ${check6Result.status.toUpperCase()}`);
+      await recordResultsFn({
         data: { recordId: outcome2.payload.recordId, allResults: workingResults },
       });
 
-      // ---- Resume: checks 9–12 + finalisation ----
-      const resumeGen = (await runResumeFn({
+      // ---- Resume server-side: check 7 → check_8_handoff ----
+      const from7Gen = (await runFrom7Fn({
         data: {
           recordId: outcome2.payload.recordId,
           sessionId: outcome2.payload.sessionId,
@@ -674,7 +687,87 @@ export function PreflightFullCheckPanel() {
           startedAtMs: outcome2.payload.startedAtMs,
         },
       })) as AsyncGenerator<TierTwoEvent, void, unknown>;
-      await processStream(resumeGen);
+      const outcome3 = await processStream(from7Gen);
+      if (outcome3.kind !== "handoff8") return;
+
+      // ---- Client-driven Check 8 (skip if check 7 didn't pass) ----
+      const check7Passed = outcome3.payload.results[6]?.status === "pass";
+      let check8Result: FullCheckResult;
+      if (!check7Passed) {
+        // Server already marked it failed inline; reuse that.
+        check8Result = outcome3.payload.results[7];
+      } else {
+        check8Result = await driveCheck8(outcome3.payload);
+      }
+      workingResults = outcome3.payload.results.map((r) =>
+        r.index === 8 ? check8Result : r,
+      );
+      setResults(workingResults);
+      setCurrentMessage(`✓ ${check8Result.name} — ${check8Result.status.toUpperCase()}`);
+      await recordCheck8Fn({
+        data: { recordId: outcome3.payload.recordId, allResults: workingResults },
+      });
+
+      // ---- Resume: Check 9 → Check 10 handoff ----
+      const resumeGen = (await runResumeFn({
+        data: {
+          recordId: outcome3.payload.recordId,
+          sessionId: outcome3.payload.sessionId,
+          sessionIds: outcome3.payload.sessionIds,
+          priorResults: workingResults,
+          startedAtMs: outcome3.payload.startedAtMs,
+        },
+      })) as AsyncGenerator<TierTwoEvent, void, unknown>;
+      const outcome4 = await processStream(resumeGen);
+      if (outcome4.kind !== "handoff10") return;
+
+      // ---- Client-driven Check 10 (Phase 2 chain as separate RPCs) ----
+      const check10Result = await driveCheck10(outcome4.payload);
+      workingResults = outcome4.payload.results.map((r) =>
+        r.index === 10 ? check10Result : r,
+      );
+      setResults(workingResults);
+      setCurrentMessage(`✓ ${check10Result.name} — ${check10Result.status.toUpperCase()}`);
+      await recordResultsFn({
+        data: { recordId: outcome4.payload.recordId, allResults: workingResults },
+      });
+
+      // ---- Resume: Check 11 → Check 12 handoff ----
+      const from11Gen = (await runFrom11Fn({
+        data: {
+          recordId: outcome4.payload.recordId,
+          sessionIds: outcome4.payload.sessionIds,
+          priorResults: workingResults,
+          startedAtMs: outcome4.payload.startedAtMs,
+        },
+      })) as AsyncGenerator<TierTwoEvent, void, unknown>;
+      const outcome5 = await processStream(from11Gen);
+      if (outcome5.kind !== "handoff12") return;
+
+      // ---- Client-driven Check 12 + finalisation ----
+      const check12Result = await driveCheck12(outcome5.payload);
+      workingResults = outcome5.payload.results.map((r) =>
+        r.index === 12 ? check12Result : r,
+      );
+      setResults(workingResults);
+      setCurrentMessage(`✓ ${check12Result.name} — ${check12Result.status.toUpperCase()}`);
+      await recordResultsFn({
+        data: { recordId: outcome5.payload.recordId, allResults: workingResults },
+      });
+      const final = await finalizeRunFn({
+        data: {
+          recordId: outcome5.payload.recordId,
+          allResults: workingResults,
+          sessionIds: outcome5.payload.sessionIds,
+          startedAtMs: outcome5.payload.startedAtMs,
+        },
+      });
+      setOverall(final.overall);
+      setState("complete");
+      setCurrentMessage(`Completed in ${(final.totalDurationMs / 1000).toFixed(1)}s. Cleaned up ${final.sessionIdsCleaned.length} TestBrand session(s).`);
+      stopElapsed();
+      if (final.overall === "ready") toast.success("Tier Two: all 12 checks passed");
+      else toast.error(`Tier Two: ${workingResults.filter((r) => r.status === "fail").length} check(s) failed`);
     } catch (e) {
       setErrorMessage(e instanceof Error ? e.message : String(e));
       setState("error");
