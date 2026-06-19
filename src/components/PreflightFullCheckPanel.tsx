@@ -308,6 +308,10 @@ export function PreflightFullCheckPanel() {
         setResults((prev) => prev.map((r) => (r.index === ev.result.index ? ev.result : r)));
         continue;
       }
+      if (ev.type === "check_1_handoff") {
+        setResults(ev.results);
+        return { kind: "handoff1", payload: ev };
+      }
       if (ev.type === "check_2_handoff") {
         setResults(ev.results);
         return { kind: "handoff2", payload: ev };
