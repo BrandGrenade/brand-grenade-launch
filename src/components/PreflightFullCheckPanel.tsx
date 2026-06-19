@@ -180,12 +180,25 @@ Speak shortly,
 export function PreflightFullCheckPanel() {
   const runTierTwoFn = useServerFn(runTierTwoFullCheck);
   const getLatestFn = useServerFn(getLatestTierTwoCheck);
+  const recordResultsFn = useServerFn(recordPreflightResults);
   const runFrom4Fn = useServerFn(runTierTwoChecksFrom4);
+  const runFrom7Fn = useServerFn(runTierTwoChecksFrom7);
   const runResumeFn = useServerFn(runTierTwoChecksFrom9);
+  const runFrom11Fn = useServerFn(runTierTwoChecksFrom11);
   const recordCheck3Fn = useServerFn(recordPreflightCheck3Result);
   const recordCheck8Fn = useServerFn(recordPreflightCheck8Result);
+  const finalizeRunFn = useServerFn(finalizePreflightRun);
+  const stage2Fn = useServerFn(runStage2);
+  const stage3Fn = useServerFn(runStage3);
+  const stage4Fn = useServerFn(runStage4);
+  const stage4bFn = useServerFn(runStage4b);
+  const stage5Fn = useServerFn(runStage5);
+  const stage6Fn = useServerFn(runStage6);
+  const stage7Fn = useServerFn(runStage7);
   const stage8Fn = useServerFn(runStage8);
   const confirmCheckpointBFn = useServerFn(confirmCheckpointB);
+  const stage10Fn = useServerFn(runStage10);
+  const stage11Fn = useServerFn(runStage11);
   const seedBrandIntelFn = useServerFn(saveBrandIntelligence);
   const stage13Fn = useServerFn(runStage13);
   const stage13bFn = useServerFn(runStage13b);
@@ -194,6 +207,10 @@ export function PreflightFullCheckPanel() {
   const stage14cFn = useServerFn(runStage14c);
   const stage15Fn = useServerFn(runStage15);
   const stage16Fn = useServerFn(runStage16);
+  const stage17Fn = useServerFn(runStage17);
+  const selectStage17Fn = useServerFn(selectStage17Territory);
+  const stage17bFn = useServerFn(runStage17b);
+  const stage18Fn = useServerFn(runStage18);
 
   const [state, setState] = useState<RunState>("idle");
   const [results, setResults] = useState<FullCheckResult[]>([]);
