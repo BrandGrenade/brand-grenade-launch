@@ -670,66 +670,45 @@ export const runTierTwoChecksFrom9 = createServerFn({ method: "POST" })
         yield { type: "check_done", result };
       }
 
-      // CHECK 10 — Phase 2 chain
+      // CHECK 10 — Phase 2 chain handoff
       yield { type: "check_start", index: 10, id: CHECK_DEFS[9].id, name: CHECK_DEFS[9].name };
-      {
-        const gen = runCheck(
-          10,
-          async (emit) => {
-            if (results[7].status !== "pass")
-              throw new Error("Skipped: Phase 1 completion (Stages 13–16) did not pass");
-            emit("Stubbing Three Truths — Phase 2 prerequisite");
-            await supabaseAdmin
-              .from("sessions")
-              .update({
-                truth_product:
-                  "TestBrand consistently delivers cold-pressed adaptogenic tonic with clinically meaningful dosing.",
-                truth_consumer: "Consumers say they want calm but reward intensity.",
-                truth_cultural: "Wellness has become a performance — fatigue with earnestness is rising.",
-                truth_cultural_confirmed: true,
-                brand_intel_confirmed: true,
-                phase_2_status: "in_progress",
-              })
-              .eq("id", primarySessionId);
-            emit("Running Stage 17 (Detonation Territory)...");
-            const s17 = await runStage17({ data: { sessionId: primarySessionId } });
-            const territoryMarkdown = (s17 as { output: string }).output ?? "";
-            if (territoryMarkdown.length < 200) throw new Error("Stage 17 output too short");
-            const blocks = territoryMarkdown.split(/\n(?=##\s)/).filter((b) => /##\s/.test(b));
-            const first = blocks[0] ?? territoryMarkdown;
-            emit("Selecting top-ranked territory (auto)");
-            await selectStage17Territory({
-              data: { sessionId: primarySessionId, territoryMarkdown: first },
-            });
-            emit("Running Stage 17B (Detonation Intelligence)...");
-            await runStage17b({ data: { sessionId: primarySessionId } });
-            emit("Running Stage 18 (The Detonation)...");
-            await runStage18({ data: { sessionId: primarySessionId } });
-            const { data: row } = await supabaseAdmin
-              .from("sessions")
-              .select("stage_17_output, stage_17_selected_territory, stage_17b_output, stage_18_output")
-              .eq("id", primarySessionId)
-              .single();
-            if (!row?.stage_17b_output || !row?.stage_18_output)
-              throw new Error("Stage 17B or 18 output missing after Phase 2 chain");
-            return {
-              detail:
-                "Phase 2 chain executed end-to-end: Stage 17 → territory selection → 17B → 18, all outputs persisted.",
-            };
-          },
-          "Inspect Phase 2 checkpoint gate (D), selectStage17Territory writeback, and stage_17b_output column write.",
-        );
-        let result!: FullCheckResult;
-        for (;;) {
-          const r = await gen.next();
-          if (r.done) {
-            result = r.value;
-            break;
-          }
-          yield r.value;
-        }
-        yield { type: "check_done", result };
+      if (results[7].status !== "pass") {
+        results[9] = {
+          ...results[9],
+          status: "fail",
+          durationMs: 0,
+          detail: "Skipped: Phase 1 completion (Stages 13–16) did not pass",
+          remediation: "Fix Check 8 before re-running Phase 2 pre-flight.",
+        };
+        await persistResults(supabaseAdmin, recordId, results);
+        yield { type: "check_done", result: results[9] };
+      } else {
+        yield { type: "check_progress", index: 10, message: "Stubbing Three Truths — Phase 2 prerequisite" };
+        await supabaseAdmin
+          .from("sessions")
+          .update({
+            truth_product:
+              "TestBrand consistently delivers cold-pressed adaptogenic tonic with clinically meaningful dosing.",
+            truth_consumer: "Consumers say they want calm but reward intensity.",
+            truth_cultural: "Wellness has become a performance — fatigue with earnestness is rising.",
+            truth_cultural_confirmed: true,
+            brand_intel_confirmed: true,
+            phase_2_status: "in_progress",
+          })
+          .eq("id", primarySessionId);
+        results[9] = { ...results[9], status: "running" };
+        await persistResults(supabaseAdmin, recordId, results);
       }
+
+      yield {
+        type: "check_10_handoff",
+        recordId,
+        sessionId: primarySessionId,
+        sessionIds: Array.from(createdSessionIds),
+        results,
+        startedAtMs,
+      };
+      return;
 
       // CHECK 11 — Canvas → Detonation navigation (structural)
       yield { type: "check_start", index: 11, id: CHECK_DEFS[10].id, name: CHECK_DEFS[10].name };
