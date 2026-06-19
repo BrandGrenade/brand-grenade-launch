@@ -50,7 +50,7 @@ export const runStage14b = createServerFn({ method: "POST" })
         }),
         sessionId: data.sessionId,
         stageLabel: "Stage 14B",
-        maxTokens: 14000,
+        maxTokens: 64000,
         stageNumber: "14B",
         stageName: "Channel Expression",
       })) {

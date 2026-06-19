@@ -137,7 +137,7 @@ export const runStage20 = createServerFn({ method: "POST" })
       output = await callClaude({
         systemPrompt: withPhase2Formatting(STAGE_20_MASTER_DETONATION_BRIEF_PROMPT),
         userMessage: buildStage20UserMessage(session as never),
-        maxTokens: 16000,
+        maxTokens: 64000,
         sessionId: data.sessionId,
         stageLabel: "Stage 20",
         stageNumber: "20",
@@ -214,7 +214,7 @@ export const retryStage20 = createServerFn({ method: "POST" })
     let output = await callClaude({
       systemPrompt: withPhase2Formatting(system),
       userMessage: buildStage20UserMessage(session as never),
-      maxTokens: 16000,
+      maxTokens: 64000,
       sessionId: data.sessionId,
       stageLabel: "Stage 20 (retry)",
       stageNumber: "20",
@@ -265,7 +265,7 @@ export const regenerateStage20Section = createServerFn({ method: "POST" })
     const newContent = await callClaude({
       systemPrompt: withPhase2Formatting(system),
       userMessage: `Rewrite the ${label} section now. Output only the new section content.`,
-      maxTokens: 2000,
+      maxTokens: 64000,
       sessionId: data.sessionId,
       stageLabel: `Stage 20 (section ${data.sectionId})`,
       stageNumber: "20",

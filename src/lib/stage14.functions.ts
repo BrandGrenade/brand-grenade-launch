@@ -51,7 +51,7 @@ export const runStage14 = createServerFn({ method: "POST" })
         }),
         sessionId: data.sessionId,
         stageLabel: "Stage 14",
-        maxTokens: 16000,
+        maxTokens: 64000,
         stageNumber: "14",
         stageName: "Territory Mapping",
       })) {

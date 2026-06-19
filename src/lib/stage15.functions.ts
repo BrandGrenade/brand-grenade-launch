@@ -42,7 +42,7 @@ export const runStage15 = createServerFn({ method: "POST" })
     try {
       for await (const delta of streamClaude({
         systemPrompt: STAGE_15_SYSTEM_PROMPT,
-        maxTokens: 14000,
+        maxTokens: 64000,
         userMessage: buildStage15UserMessage({
           brandName: session.brand_name,
           selectedSMP: session.selected_smp ?? "",

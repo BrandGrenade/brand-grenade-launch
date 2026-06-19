@@ -370,7 +370,7 @@ export function getConsultingSections(s: SessionForStage16): SectionDef[] {
       systemPrompt: STAGE_16_UNIVERSAL_RULES + SECTION_SITUATION_PROMPT,
       pipelineInputs: [cut(s.stage_1_output, 2000), cut(s.stage_2_output, 1500)],
       targetWords: 350,
-      maxTokens: 800,
+      maxTokens: 64000,
     },
     {
       name: "category",
@@ -378,7 +378,7 @@ export function getConsultingSections(s: SessionForStage16): SectionDef[] {
       systemPrompt: STAGE_16_UNIVERSAL_RULES + SECTION_CATEGORY_PROMPT,
       pipelineInputs: [cut(s.stage_2_output, 3000)],
       targetWords: 400,
-      maxTokens: 900,
+      maxTokens: 64000,
     },
     {
       name: "human_truth",
@@ -386,7 +386,7 @@ export function getConsultingSections(s: SessionForStage16): SectionDef[] {
       systemPrompt: STAGE_16_UNIVERSAL_RULES + SECTION_HUMAN_TRUTH_PROMPT,
       pipelineInputs: [cut(s.stage_7_output, 2000), cut(s.stage_5_output, 1500)],
       targetWords: 350,
-      maxTokens: 800,
+      maxTokens: 64000,
     },
     {
       name: "why_brand",
@@ -394,7 +394,7 @@ export function getConsultingSections(s: SessionForStage16): SectionDef[] {
       systemPrompt: STAGE_16_UNIVERSAL_RULES + SECTION_WHY_BRAND_PROMPT,
       pipelineInputs: [cut(s.stage_13_output, 2500)],
       targetWords: 300,
-      maxTokens: 700,
+      maxTokens: 64000,
     },
     {
       name: "alternatives",
@@ -406,7 +406,7 @@ export function getConsultingSections(s: SessionForStage16): SectionDef[] {
         cut(s.stage_12_output, 1000),
       ],
       targetWords: 400,
-      maxTokens: 900,
+      maxTokens: 64000,
     },
     {
       name: "evidence",
@@ -414,7 +414,7 @@ export function getConsultingSections(s: SessionForStage16): SectionDef[] {
       systemPrompt: STAGE_16_UNIVERSAL_RULES + SECTION_EVIDENCE_PROMPT,
       pipelineInputs: [cut(s.stage_11_output, 3000)],
       targetWords: 400,
-      maxTokens: 900,
+      maxTokens: 64000,
     },
     {
       name: "recommendation",
@@ -426,7 +426,7 @@ export function getConsultingSections(s: SessionForStage16): SectionDef[] {
         `SELECTED PROPOSITION: "${smp}"`,
       ],
       targetWords: 450,
-      maxTokens: 1000,
+      maxTokens: 64000,
       includesPropositionReveal: true,
     },
     {
@@ -435,7 +435,7 @@ export function getConsultingSections(s: SessionForStage16): SectionDef[] {
       systemPrompt: STAGE_16_UNIVERSAL_RULES + SECTION_CREATIVE_WORLD_PROMPT,
       pipelineInputs: [cut(s.stage_14c_output, 2500), cut(s.stage_14_output, 1500)],
       targetWords: 350,
-      maxTokens: 800,
+      maxTokens: 64000,
     },
     {
       name: "what_must_change",
@@ -443,7 +443,7 @@ export function getConsultingSections(s: SessionForStage16): SectionDef[] {
       systemPrompt: STAGE_16_UNIVERSAL_RULES + SECTION_WHAT_MUST_CHANGE_PROMPT,
       pipelineInputs: [cut(s.stage_13_output, 1500), cut(s.stage_15_output, 1000)],
       targetWords: 300,
-      maxTokens: 700,
+      maxTokens: 64000,
     },
     {
       name: "next_steps",
@@ -451,7 +451,7 @@ export function getConsultingSections(s: SessionForStage16): SectionDef[] {
       systemPrompt: STAGE_16_UNIVERSAL_RULES + SECTION_NEXT_STEPS_PROMPT,
       pipelineInputs: [cut(s.selection_rationale_1, 500)],
       targetWords: 200,
-      maxTokens: 500,
+      maxTokens: 64000,
     },
   ];
 }
@@ -465,7 +465,7 @@ export function getAgencySections(s: SessionForStage16): SectionDef[] {
       systemPrompt: STAGE_16_UNIVERSAL_RULES + AGENCY_BEFORE_YOU_READ_PROMPT,
       pipelineInputs: [cut(s.stage_1_output, 1500)],
       targetWords: 300,
-      maxTokens: 700,
+      maxTokens: 64000,
     },
     {
       name: "strategic_context",
@@ -473,7 +473,7 @@ export function getAgencySections(s: SessionForStage16): SectionDef[] {
       systemPrompt: STAGE_16_UNIVERSAL_RULES + AGENCY_STRATEGIC_CONTEXT_PROMPT,
       pipelineInputs: [cut(s.stage_1_output, 2000), cut(s.stage_2_output, 1500)],
       targetWords: 350,
-      maxTokens: 800,
+      maxTokens: 64000,
     },
     {
       name: "category",
@@ -481,7 +481,7 @@ export function getAgencySections(s: SessionForStage16): SectionDef[] {
       systemPrompt: STAGE_16_UNIVERSAL_RULES + AGENCY_CATEGORY_PROMPT,
       pipelineInputs: [cut(s.stage_2_output, 3000)],
       targetWords: 400,
-      maxTokens: 900,
+      maxTokens: 64000,
     },
     {
       name: "human_truth",
@@ -489,7 +489,7 @@ export function getAgencySections(s: SessionForStage16): SectionDef[] {
       systemPrompt: STAGE_16_UNIVERSAL_RULES + AGENCY_HUMAN_TRUTH_PROMPT,
       pipelineInputs: [cut(s.stage_7_output, 2000), cut(s.stage_5_output, 1500)],
       targetWords: 350,
-      maxTokens: 800,
+      maxTokens: 64000,
     },
     {
       name: "why_brand",
@@ -497,7 +497,7 @@ export function getAgencySections(s: SessionForStage16): SectionDef[] {
       systemPrompt: STAGE_16_UNIVERSAL_RULES + AGENCY_WHY_BRAND_PROMPT,
       pipelineInputs: [cut(s.stage_13_output, 2500)],
       targetWords: 300,
-      maxTokens: 700,
+      maxTokens: 64000,
     },
     {
       name: "what_was_set_aside",
@@ -508,7 +508,7 @@ export function getAgencySections(s: SessionForStage16): SectionDef[] {
         cut(s.stage_12_output, 1000),
       ],
       targetWords: 400,
-      maxTokens: 900,
+      maxTokens: 64000,
     },
     {
       name: "proposition",
@@ -520,7 +520,7 @@ export function getAgencySections(s: SessionForStage16): SectionDef[] {
         `SELECTED PROPOSITION: "${smp}"`,
       ],
       targetWords: 450,
-      maxTokens: 1000,
+      maxTokens: 64000,
       includesPropositionReveal: true,
     },
     {
@@ -533,7 +533,7 @@ export function getAgencySections(s: SessionForStage16): SectionDef[] {
         cut(s.stage_14b_output, 1500),
       ],
       targetWords: 600,
-      maxTokens: 1200,
+      maxTokens: 64000,
     },
     {
       name: "across_channels",
@@ -541,7 +541,7 @@ export function getAgencySections(s: SessionForStage16): SectionDef[] {
       systemPrompt: STAGE_16_UNIVERSAL_RULES + AGENCY_ACROSS_CHANNELS_PROMPT,
       pipelineInputs: [cut(s.stage_14b_output, 2500)],
       targetWords: 400,
-      maxTokens: 900,
+      maxTokens: 64000,
     },
     {
       name: "brief_to_creative",
@@ -552,7 +552,7 @@ export function getAgencySections(s: SessionForStage16): SectionDef[] {
         cut(s.stage_14c_output, 1000),
       ],
       targetWords: 250,
-      maxTokens: 600,
+      maxTokens: 64000,
     },
   ];
 }
@@ -566,7 +566,7 @@ export function getWorkshopSections(s: SessionForStage16): SectionDef[] {
       systemPrompt: STAGE_16_UNIVERSAL_RULES + WORKSHOP_FOR_FACILITATOR_PROMPT,
       pipelineInputs: [cut(s.stage_1_output, 1500)],
       targetWords: 300,
-      maxTokens: 700,
+      maxTokens: 64000,
     },
     {
       name: "preparation",
@@ -574,7 +574,7 @@ export function getWorkshopSections(s: SessionForStage16): SectionDef[] {
       systemPrompt: STAGE_16_UNIVERSAL_RULES + WORKSHOP_PREPARATION_PROMPT,
       pipelineInputs: [cut(s.stage_1_output, 1000)],
       targetWords: 200,
-      maxTokens: 500,
+      maxTokens: 64000,
     },
     {
       name: "session_one",
@@ -582,7 +582,7 @@ export function getWorkshopSections(s: SessionForStage16): SectionDef[] {
       systemPrompt: STAGE_16_UNIVERSAL_RULES + WORKSHOP_SESSION_ONE_PROMPT,
       pipelineInputs: [cut(s.stage_1_output, 2000)],
       targetWords: 400,
-      maxTokens: 900,
+      maxTokens: 64000,
     },
     {
       name: "session_two",
@@ -590,7 +590,7 @@ export function getWorkshopSections(s: SessionForStage16): SectionDef[] {
       systemPrompt: STAGE_16_UNIVERSAL_RULES + WORKSHOP_SESSION_TWO_PROMPT,
       pipelineInputs: [cut(s.stage_2_output, 2500)],
       targetWords: 400,
-      maxTokens: 900,
+      maxTokens: 64000,
     },
     {
       name: "session_three",
@@ -598,7 +598,7 @@ export function getWorkshopSections(s: SessionForStage16): SectionDef[] {
       systemPrompt: STAGE_16_UNIVERSAL_RULES + WORKSHOP_SESSION_THREE_PROMPT,
       pipelineInputs: [cut(s.stage_7_output, 2500)],
       targetWords: 400,
-      maxTokens: 900,
+      maxTokens: 64000,
     },
     {
       name: "session_four",
@@ -609,7 +609,7 @@ export function getWorkshopSections(s: SessionForStage16): SectionDef[] {
         `SELECTED PROPOSITION: "${smp}"`,
       ],
       targetWords: 350,
-      maxTokens: 800,
+      maxTokens: 64000,
       includesPropositionReveal: true,
     },
     {
@@ -618,7 +618,7 @@ export function getWorkshopSections(s: SessionForStage16): SectionDef[] {
       systemPrompt: STAGE_16_UNIVERSAL_RULES + WORKSHOP_SESSION_FIVE_PROMPT,
       pipelineInputs: [cut(s.stage_13_output, 1500), cut(s.stage_15_output, 1000)],
       targetWords: 350,
-      maxTokens: 800,
+      maxTokens: 64000,
     },
     {
       name: "appendix_a",
@@ -626,7 +626,7 @@ export function getWorkshopSections(s: SessionForStage16): SectionDef[] {
       systemPrompt: STAGE_16_UNIVERSAL_RULES + WORKSHOP_APPENDIX_A_PROMPT,
       pipelineInputs: [cut(s.stage_7_output, 1500)],
       targetWords: 250,
-      maxTokens: 600,
+      maxTokens: 64000,
     },
     {
       name: "appendix_b",
@@ -634,7 +634,7 @@ export function getWorkshopSections(s: SessionForStage16): SectionDef[] {
       systemPrompt: STAGE_16_UNIVERSAL_RULES + WORKSHOP_APPENDIX_B_PROMPT,
       pipelineInputs: [cut(s.stage_13_output, 1500)],
       targetWords: 300,
-      maxTokens: 700,
+      maxTokens: 64000,
     },
   ];
 }

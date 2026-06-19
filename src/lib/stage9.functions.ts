@@ -149,7 +149,7 @@ export const runStage9 = createServerFn({ method: "POST" })
       for await (const delta of streamClaude({
         systemPrompt: STAGE_9_SYSTEM_PROMPT,
         userMessage,
-        maxTokens: 12000,
+        maxTokens: 64000,
         sessionId: data.sessionId,
         stageLabel: "Stage 9",
         stageNumber: "9",
@@ -192,7 +192,7 @@ export const runStage9 = createServerFn({ method: "POST" })
         const rewritten = await callClaude({
           systemPrompt: STAGE_9_SYSTEM_PROMPT,
           userMessage: rewriteMessage,
-          maxTokens: 12000,
+          maxTokens: 64000,
           sessionId: data.sessionId,
           stageLabel: `Stage 9 (EDT rewrite ${rewriteAttempts}/${MAX_REWRITES})`,
           stageNumber: "9",
