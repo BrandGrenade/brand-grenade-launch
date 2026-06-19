@@ -575,6 +575,89 @@ export function extractChannelRoles(stage19: string): Record<string, ChannelRole
   return roles;
 }
 
+// ============================================================================
+// Stage 20B channel extraction — the canonical channel list source for Stage 21
+// ============================================================================
+//
+// Parses Section Three of the Stage 20B "Channel Strategy and Audience
+// Intelligence" document for named channel headers. A channel header is an
+// ALL-CAPS line ending with ":" inside SECTION THREE. The paragraph(s)
+// between two headers form that channel's context block.
+//
+// This drives the Stage 21 loop. The Stage 19 extractor is fallback only.
+
+const STAGE_20B_ACRONYMS = new Set([
+  "AFR", "HBR", "WARC", "CMO", "CRM", "AICD", "EY", "CEO", "CFO", "COO",
+  "PR", "TV", "OOH", "UK", "US", "USA", "SEO", "SEM", "AI", "B2B", "B2C",
+  "ASX", "TVC", "DR", "DM", "PPC", "OTT", "CTV", "FAST", "NYT", "WSJ",
+  "BBC", "ABC", "CNN", "FT", "CBS", "NBC", "API",
+]);
+const STAGE_20B_STOPWORDS = new Set([
+  "and", "or", "the", "of", "in", "on", "at", "to", "for", "with",
+  "plus", "via", "by", "a", "an", "as", "from",
+]);
+
+function titleCaseChannelName(raw: string): string {
+  return raw
+    .split(/\s+/)
+    .map((wRaw, i) => {
+      const m = wRaw.match(/^([A-Za-z'’]+)([.,;:!?)\]]*)$/);
+      const w = m ? m[1] : wRaw;
+      const tail = m ? m[2] : "";
+      const upper = w.toUpperCase();
+      const lower = w.toLowerCase();
+      if (STAGE_20B_ACRONYMS.has(upper)) return upper + tail;
+      if (i > 0 && STAGE_20B_STOPWORDS.has(lower)) return lower + tail;
+      return lower.charAt(0).toUpperCase() + lower.slice(1) + tail;
+    })
+    .join(" ");
+}
+
+export function extractStage20BChannelEntries(
+  stage20b: string | null | undefined,
+): ChannelEntry[] {
+  if (!stage20b || !stage20b.trim()) return [];
+  // Normalise literal "\n" escapes that occasionally survive a copy/paste.
+  const text = stage20b.replace(/\\n/g, "\n");
+
+  const startM = text.match(/SECTION\s+THREE[^\n]*\n/i);
+  if (!startM) return [];
+  const startIdx = (startM.index ?? 0) + startM[0].length;
+  const tail = text.slice(startIdx);
+  const endM = tail.match(/SECTION\s+FOUR/i);
+  const section = endM && typeof endM.index === "number"
+    ? tail.slice(0, endM.index)
+    : tail;
+
+  // ALL-CAPS header line ending with ":". Allows commas, ampersands, hyphens,
+  // slashes, periods, parentheses, apostrophes, and digits inside the name.
+  const headerRe = /^([A-Z][A-Z0-9 ,'’\-&/.()]{6,180}):\s*$/gm;
+  const hits: Array<{ name: string; start: number; end: number }> = [];
+  let m: RegExpExecArray | null;
+  while ((m = headerRe.exec(section)) !== null) {
+    const raw = m[1].trim();
+    if (/^SECTION\b/i.test(raw)) continue;
+    hits.push({ name: raw, start: m.index, end: m.index + m[0].length });
+  }
+  if (hits.length === 0) return [];
+
+  const entries: ChannelEntry[] = [];
+  const seen = new Set<string>();
+  for (let i = 0; i < hits.length; i += 1) {
+    const h = hits[i];
+    const contentEnd = i + 1 < hits.length ? hits[i + 1].start : section.length;
+    const content = section.slice(h.end, contentEnd).trim();
+    if (content.length < 40) continue;
+    const name = titleCaseChannelName(h.name);
+    const key = name.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    const role: ChannelRole = i === 0 ? "PRIMARY" : "AMPLIFICATION";
+    entries.push({ name, role, content });
+  }
+  return entries;
+}
+
 /** SMP-first governing block. Prepended to every Phase 2 stage user message
  *  so the model is anchored to the validated SMP before any other context. */
 export function smpGoverningBlock(selectedSmp: string | null | undefined): string {
