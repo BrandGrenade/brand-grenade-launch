@@ -841,22 +841,25 @@ function FormatCard({
   id,
   selected,
   onSelect,
+  onRegenerate,
   icon,
   title,
   description,
   tag,
+  disabled,
 }: {
   id: Format;
   selected: boolean;
   onSelect: (id: Format) => void;
+  onRegenerate?: (id: Format) => void;
   icon: React.ReactNode;
   title: string;
   description: string;
   tag: string;
+  disabled?: boolean;
 }) {
   return (
-    <button
-      type="button"
+    <div
       onClick={() => onSelect(id)}
       style={{
         textAlign: "left",
@@ -891,13 +894,51 @@ function FormatCard({
       >
         {description}
       </p>
-      <p
-        className="text-label"
-        style={{ color: "var(--color-text-tertiary)", marginTop: 12 }}
+      <div
+        style={{
+          marginTop: 12,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 12,
+        }}
       >
-        {tag}
-      </p>
-    </button>
+        <p
+          className="text-label"
+          style={{ color: "var(--color-text-tertiary)", margin: 0 }}
+        >
+          {tag}
+        </p>
+        {onRegenerate && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              if (disabled) return;
+              onRegenerate(id);
+            }}
+            disabled={disabled}
+            title="Clear the cached output for this document and run a fresh generation using the current prompt."
+            style={{
+              border: "1px solid var(--color-border)",
+              background: "transparent",
+              color: "var(--color-text-secondary)",
+              borderRadius: 6,
+              padding: "6px 10px",
+              fontSize: 12,
+              fontWeight: 500,
+              cursor: disabled ? "not-allowed" : "pointer",
+              opacity: disabled ? 0.5 : 1,
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+            }}
+          >
+            ↻ Regenerate
+          </button>
+        )}
+      </div>
+    </div>
   );
 }
 
