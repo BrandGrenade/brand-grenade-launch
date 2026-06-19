@@ -360,6 +360,52 @@ export function PreflightFullCheckPanel() {
     return { kind: "done" };
   };
 
+  // Drive Check 1 (Stage 1 — Brief Analysis) by invoking runStage1 as a
+  // SEPARATE server-fn RPC. The previous in-runner direct invocation left
+  // Check 1 stuck in "pending" — which cascaded every dependent check into
+  // "Skipped: Stage 1 failed". Running it as its own Worker invocation
+  // matches how Check 12's parallel Stage 1 runs succeed.
+  const driveCheck1 = async (
+    handoff: Extract<TierTwoEvent, { type: "check_1_handoff" }>,
+  ): Promise<FullCheckResult> => {
+    const def = handoff.results[0];
+    setCurrentMessage(`▶ ${def.name}`);
+    setResults((prev) => prev.map((r) => (r.index === 1 ? { ...r, status: "running" } : r)));
+    const started = Date.now();
+    const sessionId = handoff.sessionId;
+    try {
+      if (!sessionId) throw new Error("No TestBrand sessionId provided");
+      setCurrentMessage("  · Running Stage 1 (Brief Analysis) — separate Worker invocation...");
+      const final = await drainStream(
+        stage1Fn({ data: { sessionId } }) as unknown as AsyncGenerator<
+          { delta?: string; done?: true; output?: string; tensionScore?: number | null },
+          void,
+          unknown
+        >,
+      );
+      const output = (final as { output?: string }).output ?? "";
+      if (output.length < 200) throw new Error(`Stage 1 output too short (${output.length} chars)`);
+      const tension = (final as { tensionScore?: number | null }).tensionScore;
+      return {
+        ...def,
+        status: "pass",
+        durationMs: Date.now() - started,
+        detail: `Stage 1 completed in ${output.length} chars. Tension score: ${tension ?? "n/a"}.`,
+        remediation: null,
+      };
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      return {
+        ...def,
+        status: "fail",
+        durationMs: Date.now() - started,
+        detail: `Check 1 failed: ${msg}.`,
+        remediation:
+          "Open Stage 1 prompt and Claude invocation logs. Verify stage1.functions.ts streamClaude call succeeds against TestBrand brief.",
+      };
+    }
+  };
+
   const driveCheck2 = async (
     handoff: Extract<TierTwoEvent, { type: "check_2_handoff" }>,
   ): Promise<FullCheckResult> => {
