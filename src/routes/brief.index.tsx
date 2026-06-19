@@ -801,12 +801,49 @@ function SectionCard({
                   {f.instruction || section.instruction}
                 </p>
               )}
-              <textarea
-                value={values[f.key] ?? ""}
-                onChange={(e) => onChange(f.key, e.target.value)}
-                className="input-base w-full resize-y"
-                style={{ minHeight: f.minHeight }}
-              />
+              {f.kind === "select" && f.options ? (
+                <div className="flex flex-col gap-2">
+                  {f.options.map((opt) => {
+                    const checked = values[f.key] === opt.value;
+                    return (
+                      <label
+                        key={opt.value}
+                        className="flex cursor-pointer items-start gap-3 rounded-md p-3 transition-colors"
+                        style={{
+                          border: "1px solid var(--color-border)",
+                          backgroundColor: checked
+                            ? "var(--color-primary-subtle, var(--color-surface-2))"
+                            : "transparent",
+                        }}
+                      >
+                        <input
+                          type="radio"
+                          name={f.key}
+                          value={opt.value}
+                          checked={checked}
+                          onChange={() => onChange(f.key, opt.value)}
+                          className="mt-1"
+                        />
+                        <div>
+                          <div className="text-body-sm font-medium text-text-primary">
+                            {opt.label}
+                          </div>
+                          <div className="text-body-sm" style={{ color: "var(--color-text-secondary)" }}>
+                            {opt.description}
+                          </div>
+                        </div>
+                      </label>
+                    );
+                  })}
+                </div>
+              ) : (
+                <textarea
+                  value={values[f.key] ?? ""}
+                  onChange={(e) => onChange(f.key, e.target.value)}
+                  className="input-base w-full resize-y"
+                  style={{ minHeight: f.minHeight }}
+                />
+              )}
             </div>
           ))}
         </div>
