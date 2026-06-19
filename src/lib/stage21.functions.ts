@@ -11,6 +11,7 @@ import { STAGE_21_CHANNEL_DETONATION_BRIEFS_PROMPT } from "./stage21-channel-det
 import {
   appendRedirect,
   extractStage19ChannelEntries,
+  extractStage20BChannelEntries,
   formatThreeTruths,
   smpGoverningBlock,
   withPhase2Formatting,
@@ -82,7 +83,7 @@ function buildStage21UserMessage(
     "",
     `CHANNEL: ${channel}`,
     `ROLE IN HIERARCHY: ${role}`,
-    "CHANNEL CONTEXT FROM STAGE 19:",
+    "CHANNEL CONTEXT FOR THIS CHANNEL (this channel's Section Three paragraph from Stage 20B, or Stage 19 fallback):",
     context?.trim() || "—",
     "",
     "SMP TRANSLATION FOR THIS CHANNEL:",
@@ -174,9 +175,15 @@ export const runStage21 = createServerFn({ method: "POST" })
       return { outputs: s.stage_21_outputs };
     }
 
-    const entries = extractStage19ChannelEntries(s.stage_19_output);
+    // Stage 20B is the canonical source of the channel list. Parse Section
+    // Three for ALL-CAPS named channel headers. Fall back to the Stage 19
+    // extractor only when Stage 20B parsing yields nothing (legacy sessions).
+    const stage20bEntries = extractStage20BChannelEntries(s.stage_20b_output);
+    const entries = stage20bEntries.length > 0
+      ? stage20bEntries
+      : extractStage19ChannelEntries(s.stage_19_output);
     if (entries.length === 0)
-      throw new Error("No active channels found in Stage 19 hierarchy");
+      throw new Error("No named channels found in Stage 20B Section Three or Stage 19 hierarchy");
 
     const redirectText = buildAudienceChannelRedirect(data.audienceChannelDirection ?? "");
 
@@ -276,7 +283,10 @@ export const retryStage21 = createServerFn({ method: "POST" })
     if (!s.stage_19_output) throw new Error("Stage 19 missing");
     if (!s.stage_20b_output) throw new Error("Stage 20B (Channel Strategy and Audience Intelligence) must complete before Stage 21");
 
-    const allEntries = extractStage19ChannelEntries(s.stage_19_output);
+    const stage20bEntries = extractStage20BChannelEntries(s.stage_20b_output);
+    const allEntries = stage20bEntries.length > 0
+      ? stage20bEntries
+      : extractStage19ChannelEntries(s.stage_19_output);
     const existing = s.stage_21_outputs ?? {};
     const regenerate =
       data.cardIds.length === 0
