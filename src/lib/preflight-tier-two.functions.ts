@@ -565,6 +565,7 @@ export const runTierTwoChecksFrom9 = createServerFn({ method: "POST" })
     }));
     const createdSessionIds = new Set<string>(data.sessionIds);
     const primarySessionId = sessionId;
+    let handedOff = false;
 
     const runCheck = async function* (
       index1: number,
@@ -708,6 +709,7 @@ export const runTierTwoChecksFrom9 = createServerFn({ method: "POST" })
         results,
         startedAtMs,
       };
+      handedOff = true;
       return;
 
       // CHECK 11 — Canvas → Detonation navigation (structural)
@@ -832,6 +834,7 @@ export const runTierTwoChecksFrom9 = createServerFn({ method: "POST" })
       const msg = fatal instanceof Error ? fatal.message : String(fatal);
       yield { type: "error", message: `Fatal error during Tier Two (resume): ${msg}` };
     } finally {
+      if (handedOff) return;
       const ids = Array.from(createdSessionIds);
       if (ids.length > 0) {
         await supabaseAdmin.from("sessions").delete().in("id", ids);
