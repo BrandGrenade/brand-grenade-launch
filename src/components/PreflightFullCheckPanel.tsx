@@ -588,8 +588,8 @@ export function PreflightFullCheckPanel() {
       setCurrentMessage("  · Running parallel Stage 1 session A/B (each its own Worker invocation)...");
       const t0 = Date.now();
       const [resA, resB] = await Promise.all([
-        drainStream(stage2Fn ? stage1Safe(idA) : stage1Safe(idA)),
-        drainStream(stage2Fn ? stage1Safe(idB) : stage1Safe(idB)),
+        drainStream(stage1Fn({ data: { sessionId: idA } })),
+        drainStream(stage1Fn({ data: { sessionId: idB } })),
       ]);
       timings.push(`Parallel Stage 1: ${((Date.now() - t0) / 1000).toFixed(1)}s`);
       const outA = String((resA as { output?: string }).output ?? "");
