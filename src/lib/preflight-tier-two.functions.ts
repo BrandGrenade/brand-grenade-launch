@@ -23,28 +23,8 @@ import claudeServerSource from "@/lib/claude.server.ts?raw";
 import sanitiseSource from "@/lib/sanitise-output.ts?raw";
 
 import { runStage1 } from "@/lib/stage1.functions";
-import { runStage2 } from "@/lib/stage2.functions";
-import { runStage3 } from "@/lib/stage3.functions";
-import { runStage4 } from "@/lib/stage4.functions";
-import { runStage4b } from "@/lib/stage4b.functions";
-import { runStage5 } from "@/lib/stage5.functions";
-import { runStage6 } from "@/lib/stage6.functions";
-import { runStage7 } from "@/lib/stage7.functions";
-import { runStage8, confirmCheckpointB } from "@/lib/stage8.functions";
 import { runStage9 } from "@/lib/stage9.functions";
-import { runStage10 } from "@/lib/stage10.functions";
-import { runStage11 } from "@/lib/stage11.functions";
 import { runStage12, saveSelectedSMP, saveSelectionRationale } from "@/lib/stage12.functions";
-import { runStage13, saveBrandIntelligence } from "@/lib/stage13.functions";
-import { runStage13b } from "@/lib/stage13b.functions";
-import { runStage14 } from "@/lib/stage14.functions";
-import { runStage14b } from "@/lib/stage14b.functions";
-import { runStage14c } from "@/lib/stage14c.functions";
-import { runStage15 } from "@/lib/stage15.functions";
-import { runStage16 } from "@/lib/stage16.functions";
-import { runStage17, selectStage17Territory } from "@/lib/stage17.functions";
-import { runStage17b } from "@/lib/stage17b.functions";
-import { runStage18 } from "@/lib/stage18.functions";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 // ---------------------------------------------------------------------------
@@ -82,12 +62,33 @@ export type TierTwoEvent =
   | { type: "check_progress"; index: number; message: string }
   | { type: "check_done"; result: FullCheckResult }
   | {
+      // Emitted after Check 1. The client drives Check 2 by invoking each of
+      // Stages 2, 3, 4, 4B, 5, 6, and 7 as separate server-fn RPCs so every
+      // long Claude call receives a fresh wall-clock budget.
+      type: "check_2_handoff";
+      recordId: string;
+      sessionId: string;
+      sessionIds: string[];
+      results: FullCheckResult[];
+      startedAtMs: number;
+    }
+  | {
       // Emitted after Check 2 (Phase 1A chain) completes. The client drives
       // Check 3 (Stage 8 + Checkpoint B) by invoking each as a SEPARATE
       // server-fn RPC — each call is a fresh Worker invocation with its own
       // wall-clock budget — then opens runTierTwoChecksFrom4 to continue
       // checks 4–7 and the existing Check 8 handoff.
       type: "check_3_handoff";
+      recordId: string;
+      sessionId: string;
+      sessionIds: string[];
+      results: FullCheckResult[];
+      startedAtMs: number;
+    }
+  | {
+      // Emitted after Check 5. The client drives Check 6 by invoking Stage 10
+      // and Stage 11 as separate server-fn RPCs.
+      type: "check_6_handoff";
       recordId: string;
       sessionId: string;
       sessionIds: string[];
@@ -103,6 +104,26 @@ export type TierTwoEvent =
       recordId: string;
       sessionId: string;
       sessionIds: string[];
+      results: FullCheckResult[];
+      startedAtMs: number;
+    }
+  | {
+      // Emitted after Check 9. The client drives Check 10 by invoking Stage 17,
+      // territory selection, Stage 17B, and Stage 18 as separate RPCs.
+      type: "check_10_handoff";
+      recordId: string;
+      sessionId: string;
+      sessionIds: string[];
+      results: FullCheckResult[];
+      startedAtMs: number;
+    }
+  | {
+      // Emitted after Check 11. The client drives Check 12 by running the two
+      // Stage 1 concurrency calls as separate RPCs, then finalises the run.
+      type: "check_12_handoff";
+      recordId: string;
+      sessionIds: string[];
+      concurrentSessionIds: [string, string];
       results: FullCheckResult[];
       startedAtMs: number;
     }
