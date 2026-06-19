@@ -739,3 +739,22 @@ Register instructions differ by format: Vision writes as a senior strategist to
 intelligent non-specialists; Consulting writes as a senior partner to a board,
 evidence-led and airtight, with every claim traceable to pipeline-validated
 outputs.
+
+---
+
+## v4.5 — Stage 1 Eleven-Field Briefing Form
+**Date:** 2026-06-19
+**Stages:** Briefing form + Stage 1
+**Change:** Replaced the previous eight-section structured brief with an
+eleven-field briefing form (Brand and Product or Service, Strategic Objective,
+The Commercial Outcome, The Primary Barrier, What Has Already Been Tried,
+The Audience, Current Belief, Desired Belief, Reason to Believe, The
+Competitive Provocation, Mandatories and Never-Says). Strategic Objective is
+a mandatory single-select with seven options (Launch, Refresh, Repositioning,
+Defence, Challenger, Crisis Recovery, Category Creation). Fields 1–10 are
+mandatory; field 11 is optional. Updated `STAGE_1_SYSTEM_PROMPT` with a new
+INPUTS section that instructs Stage 1 to read all eleven fields as primary
+inputs, apply the strategic objective as the primary lens for every
+downstream stage, and flag clearly labelled assumptions when fields are thin
+rather than halting. Stage 1B gate now keys off the ten mandatory new field
+keys (`f1_brand` … `f10_competitive`).
