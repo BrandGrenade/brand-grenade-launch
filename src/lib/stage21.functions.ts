@@ -283,7 +283,10 @@ export const retryStage21 = createServerFn({ method: "POST" })
     if (!s.stage_19_output) throw new Error("Stage 19 missing");
     if (!s.stage_20b_output) throw new Error("Stage 20B (Channel Strategy and Audience Intelligence) must complete before Stage 21");
 
-    const allEntries = extractStage19ChannelEntries(s.stage_19_output);
+    const stage20bEntries = extractStage20BChannelEntries(s.stage_20b_output);
+    const allEntries = stage20bEntries.length > 0
+      ? stage20bEntries
+      : extractStage19ChannelEntries(s.stage_19_output);
     const existing = s.stage_21_outputs ?? {};
     const regenerate =
       data.cardIds.length === 0
