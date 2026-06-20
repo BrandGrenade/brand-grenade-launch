@@ -809,3 +809,37 @@ omits the cap) and `src/lib/preflight-tier-two.functions.ts` regex strings
 were left untouched. The Tier-Two preflight check still validates that every
 stage declares an explicit cap — all stages continue to satisfy that rule
 with the new universal value.
+
+---
+
+## v4.7 — Stage 16 Master Detonation correction + visual prominence (2026-06-20)
+**Date:** 2026-06-20
+**Stages:** 16 (Vision + Consulting — Strategic Logic section)
+**Change:** Three coordinated fixes to the Stage 16 Strategy and Creative
+Vision and Board Strategy Recommendation documents.
+
+(1) The Strategic Logic section was conflating the *master detonation*
+(the Stage 18 selected detonation line — the statement the human approved
+at the Stage 18 gate, stored in `stage_18_selected_detonation`) with the
+*primary recommended springboard direction* (a downstream creative
+territory generated inside Stage 18 that expresses the detonation). The
+Stage 16 Vision user message now passes two clearly distinct inputs:
+`MASTER DETONATION — THE SELECTED DETONATION FROM STAGE 18` (sourced from
+`stage_18_selected_detonation`, falling back to `stage_18_detonation_line`)
+and `CREATIVE SPRINGBOARD DIRECTIONS — DOWNSTREAM TERRITORIES FROM STAGE
+18` (sourced from `stage_18_output`). The prompt now explicitly forbids
+substituting any springboard — including the "primary recommended" one —
+for the master detonation.
+
+(2) The master detonation is now rendered with the same visual prominence
+used on the Stage 18 selection screen. The prompt mandates exactly one
+revelation block per document of the form: a `THE DETONATION` heading on
+its own line followed immediately by the detonation line itself as a
+large, bold, standout statement (H1 + bold). This appears once in the
+Strategic Logic section at the point of revelation.
+
+(3) The standalone `PART FIVE — THE CREATIVE DETONATION` section in the
+Vision prompt has been removed; it duplicated content that the Strategic
+Logic section already covers as the inevitable climax of the argument.
+
+**Files:** `src/lib/stage16.functions.ts`, `src/lib/stage16-prompt.ts`.
