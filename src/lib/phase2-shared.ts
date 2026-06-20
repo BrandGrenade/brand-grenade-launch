@@ -121,9 +121,19 @@ export function splitCards(text: string): Card[] {
       }
       return ls.join("\n").trimEnd();
     };
+    const stripHead = (s: string): string => {
+      const ls = s.split("\n");
+      while (ls.length > 0) {
+        const first = ls[0].trim();
+        if (first === "" || /^-{3,}$/.test(first) || /^#{1,6}(\s|$)/.test(first)) {
+          ls.shift();
+        } else break;
+      }
+      return ls.join("\n").trimStart();
+    };
     return starts.map((start, i) => {
       const end = i + 1 < starts.length ? starts[i + 1] : t.length;
-      const seg = stripTail(t.slice(start, end).trim());
+      const seg = stripTail(stripHead(t.slice(start, end).trim()));
       const titleMatch = seg.match(new RegExp(`^\\s*(${NAME})\\s*\\n`, "m"));
       const name = titleMatch ? cleanName(titleMatch[1]) : `Detonation ${i + 1}`;
       return { id: `card-${i + 1}`, name: name || `Detonation ${i + 1}`, markdown: seg };
