@@ -277,20 +277,25 @@ async function openWithRetry(
   sessionId: string | undefined,
   stageLabel: string | undefined,
   stream: boolean,
-  timeoutMs = REQUEST_TIMEOUT_MS,
-): Promise<Response> {
+  idleTimeoutMs = IDLE_TIMEOUT_MS,
+): Promise<{ resp: Response; idle: IdleAbort }> {
   let attempt = 0;
   const maxAttempts = 2;
   let lastError = "";
   const bodyWithFlag = stream ? body.replace(/}$/, ',"stream":true}') : body;
   while (attempt < maxAttempts) {
     attempt++;
+    const idle = createIdleAbort(idleTimeoutMs);
     try {
-      const resp = await doFetch(apiKey, bodyWithFlag, timeoutMs);
+      const resp = await doFetch(apiKey, bodyWithFlag, idle);
       if (resp.ok) {
         await setRetryStatus(sessionId, null);
-        return resp;
+        // Caller takes ownership of `idle` and must call idle.cancel() when
+        // it's done consuming the response. For streamed responses the caller
+        // also calls idle.reset() on every successful chunk read.
+        return { resp, idle };
       }
+      idle.cancel();
       const text = await resp.text();
       lastError = `Claude API ${resp.status}: ${text.slice(0, 500)}`;
       if (isRetryableStatus(resp.status) && attempt < maxAttempts) {
@@ -301,12 +306,13 @@ async function openWithRetry(
       await setRetryStatus(sessionId, null);
       throw new Error(lastError);
     } catch (e) {
+      idle.cancel();
       const isAbort =
         e instanceof Error &&
         (e.name === "AbortError" || /aborted|timeout/i.test(e.message));
       const msg = e instanceof Error ? e.message : "network error";
       lastError = isAbort
-        ? `Claude API request timed out after ${timeoutMs / 1000}s`
+        ? `Claude API request idle for >${idleTimeoutMs / 1000}s (no chunk received)`
         : `Claude API request failed: ${msg}`;
       if ((isAbort || /network|fetch failed/i.test(msg)) && attempt < maxAttempts) {
         await setRetryStatus(sessionId, `Connection timeout — retrying ${stageLabel ?? "request"}...`);
@@ -320,6 +326,7 @@ async function openWithRetry(
   await setRetryStatus(sessionId, null);
   throw new Error(lastError || "Claude API call failed");
 }
+
 
 /**
  * Stage-facing entry point. Internally streams from Anthropic (SSE) and
