@@ -313,9 +313,21 @@ function splitCardsLocal(text: string): LocalCard[] {
   const anchorCount = anchorPositions.length;
 
   const byAnchors = (): LocalCard[] => {
-    return anchorPositions.map((idx, i) => {
-      const start = i === 0 ? 0 : anchorPositions[i - 1];
-      const end = i + 1 < anchorPositions.length ? anchorPositions[i + 1] : t.length;
+    // Non-overlapping card boundaries: walk back from each anchor to the
+    // blank line ABOVE its title block. Earlier version sliced from the
+    // PREVIOUS anchor to the NEXT anchor, producing 2-wide overlapping
+    // windows that duplicated bodies and put titles above the wrong card.
+    const cardStartFor = (anchorIdx: number): number => {
+      const before = t.slice(0, anchorIdx);
+      const blankAboveAnchor = before.lastIndexOf("\n\n");
+      if (blankAboveAnchor < 0) return 0;
+      const beforeTitle = before.slice(0, blankAboveAnchor);
+      const blankAboveTitle = beforeTitle.lastIndexOf("\n\n");
+      return blankAboveTitle < 0 ? 0 : blankAboveTitle + 2;
+    };
+    const starts = anchorPositions.map((idx, i) => (i === 0 ? 0 : cardStartFor(idx)));
+    return starts.map((start, i) => {
+      const end = i + 1 < starts.length ? starts[i + 1] : t.length;
       const seg = t.slice(start, end).trim();
       const isDet = /WHY THIS DETONATION/i.test(seg);
       const titleLine = seg.split("\n").map((l) => l.trim()).filter(Boolean)

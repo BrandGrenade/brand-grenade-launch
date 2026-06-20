@@ -55,12 +55,22 @@ export function splitCards(text: string): Card[] {
   }
 
   // SAFETY NET: if titled-pattern matches undercount the authoritative anchor
-  // count, segment by anchors directly. Prevents candidates from being
-  // collapsed into a single card (which hides their Select button).
+  // count, segment by anchors directly. Card boundaries are non-overlapping:
+  // for each anchor, walk back to the blank line ABOVE the title block, so
+  // every card spans exactly one title + one body (no duplication, no
+  // title-mismatched-to-wrong-body).
   if (matches.length < anchorPositions.length && anchorPositions.length >= 2) {
-    return anchorPositions.map((idx, i) => {
-      const start = i === 0 ? 0 : anchorPositions[i - 1];
-      const end = i + 1 < anchorPositions.length ? anchorPositions[i + 1] : t.length;
+    const cardStartFor = (anchorIdx: number): number => {
+      const before = t.slice(0, anchorIdx);
+      const blankAboveAnchor = before.lastIndexOf("\n\n");
+      if (blankAboveAnchor < 0) return 0;
+      const beforeTitle = before.slice(0, blankAboveAnchor);
+      const blankAboveTitle = beforeTitle.lastIndexOf("\n\n");
+      return blankAboveTitle < 0 ? 0 : blankAboveTitle + 2;
+    };
+    const starts = anchorPositions.map((idx, i) => (i === 0 ? 0 : cardStartFor(idx)));
+    return starts.map((start, i) => {
+      const end = i + 1 < starts.length ? starts[i + 1] : t.length;
       const seg = t.slice(start, end).trim();
       const titleMatch = seg.match(new RegExp(`^\\s*(${NAME})\\s*\\n`, "m"));
       const name = titleMatch ? cleanName(titleMatch[1]) : `Detonation ${i + 1}`;
