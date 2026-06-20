@@ -195,8 +195,11 @@ ${session.stage_14c_output ?? ""}
 CONSISTENCY AUDIT:
 ${session.stage_15_output ?? ""}
 
-MASTER DETONATION IDEA AND SPRINGBOARDS (Stage 18):
-${(session as Record<string, unknown>).stage_18_output ?? "[Stage 18 not yet available — write Part Five from the Brand World Definition and Creative Territory Mapping above. Treat the strategic core as the organising thought.]"}
+MASTER DETONATION — THE SELECTED DETONATION FROM STAGE 18 (this is THE detonation — not a springboard, not a creative direction, not a recommendation. This is the single line and statement the human selected at the Stage 18 gate. Whenever the document names "the detonation" it must name THIS value verbatim, never a springboard direction):
+${(session as Record<string, unknown>).stage_18_selected_detonation ?? (session as Record<string, unknown>).stage_18_detonation_line ?? "[No master detonation selected yet — derive the organising thought from the Brand World Definition and Creative Territory Mapping above. Do not substitute a springboard direction as the detonation.]"}
+
+CREATIVE SPRINGBOARD DIRECTIONS — DOWNSTREAM TERRITORIES FROM STAGE 18 (these are creative territories that EXPRESS the master detonation above. They are NOT the detonation itself. The "primary recommended" springboard inside this block is a creative direction, not the master detonation. Never present any springboard line — including the primary recommendation — as the master detonation):
+${(session as Record<string, unknown>).stage_18_output ?? "[Stage 18 springboards not yet available — describe the creative territory the master detonation opens using the Brand World Definition and Creative Territory Mapping above.]"}
 
 Write the complete STRATEGY AND CREATIVE VISION document now. Begin immediately. Your first character must be #.`;
 
