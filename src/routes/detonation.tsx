@@ -1115,6 +1115,9 @@ function Stage18({ session, onChange, goNext }: { session: SessionRow; onChange:
   };
 
   const selectedStatement = session.stage_18_selected_detonation ?? null;
+  const selectedLine = session.stage_18_detonation_line ?? null;
+
+  const normaliseLine = (s: string) => s.trim().replace(/[.,;:!?\s]+$/g, "").toLowerCase();
 
 
   return (
@@ -1147,11 +1150,32 @@ function Stage18({ session, onChange, goNext }: { session: SessionRow; onChange:
               </div>
             </div>
           )}
+          {selectedLine && (
+            <div style={{
+              backgroundColor: "#1A1208", borderLeft: `4px solid ${AMBER}`,
+              border: "1px solid #2A2A2A", borderRadius: 8, padding: 16, marginBottom: 16,
+            }}>
+              <div style={{ color: AMBER, textTransform: "uppercase", fontSize: "7pt",
+                letterSpacing: "0.18em", marginBottom: 6, fontFamily: "'DM Mono', monospace", fontWeight: 500 }}>
+                CURRENTLY SELECTED DETONATION
+              </div>
+              <div className="text-body" style={{ color: "#FFFFFF", lineHeight: 1.5 }}>
+                {selectedLine}
+              </div>
+              <div className="text-body-sm" style={{ color: "#A0A0A0", marginTop: 6 }}>
+                Click "Select This Detonation" on any card below to change. Downstream stages will regenerate.
+              </div>
+            </div>
+          )}
           {cards.map((c) => {
+            const cardLine = extractLine(c.markdown, c.name);
             const cardStatement = extractStatement(c.markdown);
+            // Primary match: canonical detonation line (short, stable, persisted).
+            // Fallback: extracted statement match (older selections without line).
             const isSelected =
-              selectedStatement !== null &&
-              selectedStatement.trim() === cardStatement.trim();
+              (selectedLine !== null && normaliseLine(selectedLine) === normaliseLine(cardLine)) ||
+              (selectedLine === null && selectedStatement !== null &&
+                selectedStatement.trim() === cardStatement.trim());
             return (
               <DetonationOutputCard
                 key={c.id}
@@ -1167,7 +1191,7 @@ function Stage18({ session, onChange, goNext }: { session: SessionRow; onChange:
                 selected={isSelected}
               >
                 <AmberButton variant="ghost" onClick={() => handleSelect(c.markdown, c.name)} disabled={busy}>
-                  {busy && <Spinner />} {isSelected ? "Selected ✓" : (busy ? "Loading..." : "Select This Detonation")}
+                  {busy && <Spinner />} {busy ? "Loading..." : (isSelected ? "Selected ✓ — Re-confirm" : "Select This Detonation")}
                 </AmberButton>
               </DetonationOutputCard>
             );
