@@ -260,7 +260,7 @@ export const selectStage18Detonation = createServerFn({ method: "POST" })
       ? {
           stage_19_output: null,
           stage_20_output: null,
-          stage_20_approved: null,
+          stage_20_approved: false,
           stage_20b_output: null,
           stage_21_outputs: null,
           stage_22_output: null,
