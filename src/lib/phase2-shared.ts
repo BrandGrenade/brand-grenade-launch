@@ -60,18 +60,69 @@ export function splitCards(text: string): Card[] {
   // every card spans exactly one title + one body (no duplication, no
   // title-mismatched-to-wrong-body).
   if (matches.length < anchorPositions.length && anchorPositions.length >= 2) {
+    // Walk back from each anchor through ALL preamble lines that belong to
+    // this card (candidate header like "DETONATION CANDIDATE TWO", a
+    // "THE DETONATION LINE:" block, stray markdown like "##" or "---",
+    // short ALL-CAPS title lines, blank lines). Stop at the first line
+    // that is clearly previous-card body content.
     const cardStartFor = (anchorIdx: number): number => {
       const before = t.slice(0, anchorIdx);
-      const blankAboveAnchor = before.lastIndexOf("\n\n");
-      if (blankAboveAnchor < 0) return 0;
-      const beforeTitle = before.slice(0, blankAboveAnchor);
-      const blankAboveTitle = beforeTitle.lastIndexOf("\n\n");
-      return blankAboveTitle < 0 ? 0 : blankAboveTitle + 2;
+      const lines = before.split("\n");
+      let lastLineEnd = before.length;
+      let boundary = before.length;
+      const isPreamble = (raw: string): boolean => {
+        const l = raw.trim();
+        if (l === "") return true;
+        if (/^-{3,}$/.test(l)) return true;
+        if (/^#{1,6}\s*/.test(l) && l.length < 80) return true;
+        if (/^DETONATION\s+(CANDIDATE\s+)?[A-Z0-9]+\s*:?/i.test(l)) return true;
+        if (/^THE\s+DETONATION\s+LINE\s*:?\s*$/i.test(l)) return true;
+        // Bare value line right after "THE DETONATION LINE:" (short prose).
+        if (l.length < 120 && !/[.!?]$/.test(l) && /^[A-Za-z]/.test(l)) {
+          // only treat as preamble if the line ABOVE it is THE DETONATION LINE label
+          return false; // handled by lookback below
+        }
+        // Short ALL-CAPS line — a candidate title.
+        if (/^[A-Z][A-Z0-9 '\-&/.,]{2,79}$/.test(l) && !l.endsWith(":")) return true;
+        return false;
+      };
+      // Iterate lines from bottom up.
+      for (let i = lines.length - 1; i >= 0; i--) {
+        const line = lines[i];
+        const lineStart = lastLineEnd - line.length - (i === lines.length - 1 ? 0 : 1);
+        // Handle "THE DETONATION LINE:" + value line pair.
+        if (/^THE\s+DETONATION\s+LINE\s*:?\s*$/i.test(line.trim())) {
+          boundary = lineStart;
+          lastLineEnd = lineStart - 1;
+          continue;
+        }
+        // A short prose line directly below a DETONATION LINE label belongs
+        // to the next card (it's the line's value). Look ahead one line.
+        const prev = i > 0 ? lines[i - 1].trim() : "";
+        if (
+          line.trim().length > 0 &&
+          line.trim().length < 120 &&
+          /^THE\s+DETONATION\s+LINE\s*:?\s*$/i.test(prev)
+        ) {
+          boundary = lineStart;
+          lastLineEnd = lineStart - 1;
+          continue;
+        }
+        if (isPreamble(line)) {
+          boundary = lineStart;
+          lastLineEnd = lineStart - 1;
+          continue;
+        }
+        break;
+      }
+      return Math.max(0, boundary);
     };
     const starts = anchorPositions.map((idx, i) => (i === 0 ? 0 : cardStartFor(idx)));
+    const stripTail = (s: string): string =>
+      s.replace(/(?:\s*(?:^|\n)\s*(?:-{3,}|#{1,6}.*|))+\s*$/g, "").trimEnd();
     return starts.map((start, i) => {
       const end = i + 1 < starts.length ? starts[i + 1] : t.length;
-      const seg = t.slice(start, end).trim();
+      const seg = stripTail(t.slice(start, end).trim());
       const titleMatch = seg.match(new RegExp(`^\\s*(${NAME})\\s*\\n`, "m"));
       const name = titleMatch ? cleanName(titleMatch[1]) : `Detonation ${i + 1}`;
       return { id: `card-${i + 1}`, name: name || `Detonation ${i + 1}`, markdown: seg };
