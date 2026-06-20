@@ -919,3 +919,43 @@ This matches the visual treatment shown on the Stage 18 selection card.
 
 **Files changed:** `src/lib/stage16.functions.ts`,
 `src/lib/stage16-prompt.ts`, `prompt_versions.md`
+
+---
+
+## v5.1 — Mandatory web-search fact verification on Stage 4B and Stage 2 (2026-06-20)
+**Stages:** 4B (Asset Mining & Product Fact Inventory), 2 (Category Intelligence)
+**Change:** Added a structural — not prompt-only — fact-verification step that
+runs after the stage's Claude stream completes and before the output is saved.
+
+A precedent session contained a factually wrong "Real Fact" (claiming rugby
+union prohibits the forward pass — both codes share that rule) that was
+treated as verified and built into the strongest strategic territory before
+human catch. Prompt instructions to "only state true facts" cannot self-police.
+
+Implementation:
+1. New `src/lib/fact-verify.server.ts`. Calls the Anthropic Messages API with
+   the server-side `web_search_20250305` tool enabled (`max_uses: 8`). The
+   auditor model identifies every independently verifiable real-world claim
+   in the stage output, runs live web searches, and returns strict JSON
+   `{claim, verdict, note}` per item with verdict in
+   `verified | unverified | contradicted`.
+2. Stage 4B (`src/lib/stage4b.functions.ts`) and Stage 2
+   (`src/lib/stage2.functions.ts`) now invoke `verifyRealFacts(...)` after
+   their Claude stream finishes. Unverified / contradicted claims are
+   visually flagged inline with `⚠️ **[UNVERIFIED — REQUIRES HUMAN
+   CONFIRMATION]**` and a "Fact Verification Review" footer is appended
+   listing every flagged claim with the search note.
+3. If the verification call itself fails, the stage does not block — a banner
+   is appended telling the reviewer that verification did not run and all
+   real-fact claims must be confirmed manually.
+4. The verified/rewritten text is what is saved to `stage_4b_output` and
+   `stage_2_output`, so downstream stages and the human reviewer see the
+   same flagged document.
+
+This is universal — it applies to every brand, every category, every future
+session. A genuine HTTPS call to Anthropic's web_search tool is made; this is
+not a prompt-only safeguard.
+
+**Files changed:** `src/lib/fact-verify.server.ts` (new),
+`src/lib/stage4b.functions.ts`, `src/lib/stage2.functions.ts`,
+`prompt_versions.md`
