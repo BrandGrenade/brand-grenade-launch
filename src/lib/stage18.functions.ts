@@ -235,18 +235,45 @@ export const selectStage18Detonation = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await assertSessionOwner(data.sessionId, context.userId);
+
+    // Detect re-selection — if the user previously selected a different
+    // Detonation, downstream stages were generated against it. Clear them
+    // so they regenerate against the new selection rather than silently
+    // propagating the old one.
+    const { data: prior } = await supabaseAdmin
+      .from("sessions")
+      .select("stage_18_selected_detonation")
+      .eq("id", data.sessionId)
+      .single();
+    const isChange =
+      !!prior?.stage_18_selected_detonation &&
+      prior.stage_18_selected_detonation.trim() !== data.detonationMarkdown.trim();
+
+    const baseUpdate = {
+      stage_18_selected_detonation: data.detonationMarkdown,
+      stage_18_detonation_line: data.detonationLine ?? null,
+      phase_2_current_stage: '19' as const,
+      checkpoint_e_confirmed: true,
+      checkpoint_e_confirmed_at: new Date().toISOString(),
+    };
+    const clearUpdate = isChange
+      ? {
+          stage_19_output: null,
+          stage_20_output: null,
+          stage_20_approved: false,
+          stage_20b_output: null,
+          stage_21_outputs: null,
+          stage_22_output: null,
+          stage_22_brand_architecture: null,
+          stage_22_distinctive_assets: null,
+        }
+      : {};
+    const update = { ...baseUpdate, ...clearUpdate };
+
     const { error } = await supabaseAdmin
       .from("sessions")
-      .update({
-        stage_18_selected_detonation: data.detonationMarkdown,
-        stage_18_detonation_line: data.detonationLine ?? null,
-        phase_2_current_stage: '19',
-        // Checkpoint E — explicit human confirmation that a Detonation has
-        // been selected. Mirrors checkpoint_a/b/c_confirmed structure.
-        checkpoint_e_confirmed: true,
-        checkpoint_e_confirmed_at: new Date().toISOString(),
-      })
+      .update(update)
       .eq("id", data.sessionId);
     if (error) throw new Error(error.message);
-    return { ok: true };
+    return { ok: true, downstreamCleared: isChange };
   });

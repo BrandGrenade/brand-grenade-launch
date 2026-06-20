@@ -30,6 +30,13 @@ export function splitCards(text: string): Card[] {
     return hits;
   };
 
+  // AUTHORITATIVE BOUNDARY: count "WHY THIS (DETONATION|TERRITORY)" anchors.
+  // Stage 17/18 emit exactly one per candidate. Treat that count as truth.
+  const anchorRe = /WHY THIS (?:TERRITORY|DETONATION)/g;
+  const anchorPositions: number[] = [];
+  let am: RegExpExecArray | null;
+  while ((am = anchorRe.exec(t)) !== null) anchorPositions.push(am.index);
+
   // Try ALL boundary patterns universally; use whichever finds matches.
   let matches: Array<{ name: string; start: number }> = [];
   matches = collect(new RegExp(`(?:^|\\n)\\s*(${NAME})\\s*\\n\\s*\\n\\s*WHY THIS TERRITORY`, "gm"));
@@ -46,6 +53,21 @@ export function splitCards(text: string): Card[] {
   if (matches.length === 0) {
     matches = collect(new RegExp(`(?:^|\\n\\s*\\n)\\s*(${NAME})(?!:)\\s*\\n`, "g"));
   }
+
+  // SAFETY NET: if titled-pattern matches undercount the authoritative anchor
+  // count, segment by anchors directly. Prevents candidates from being
+  // collapsed into a single card (which hides their Select button).
+  if (matches.length < anchorPositions.length && anchorPositions.length >= 2) {
+    return anchorPositions.map((idx, i) => {
+      const start = i === 0 ? 0 : anchorPositions[i - 1];
+      const end = i + 1 < anchorPositions.length ? anchorPositions[i + 1] : t.length;
+      const seg = t.slice(start, end).trim();
+      const titleMatch = seg.match(new RegExp(`^\\s*(${NAME})\\s*\\n`, "m"));
+      const name = titleMatch ? cleanName(titleMatch[1]) : `Detonation ${i + 1}`;
+      return { id: `card-${i + 1}`, name: name || `Detonation ${i + 1}`, markdown: seg };
+    });
+  }
+
   if (matches.length === 0) {
     return [{ id: "card-1", name: "Territory", markdown: t }];
   }
@@ -60,7 +82,10 @@ export function splitCards(text: string): Card[] {
 }
 
 export function joinCards(cards: Card[]): string {
-  return cards.map((c) => c.markdown).join("\n\n");
+  // Explicit `---` divider so downstream splitters (including the UI's
+  // local splitter) can reliably re-segment. Without it, partial-retry
+  // merges glued cards together and hid candidates from the UI.
+  return cards.map((c) => c.markdown.trim()).join("\n\n---\n\n");
 }
 
 /** Absolute formatting rules appended to every Phase 2 system prompt.
