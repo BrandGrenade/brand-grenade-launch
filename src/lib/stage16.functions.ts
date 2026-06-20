@@ -62,6 +62,30 @@ export const runStage16 = createServerFn({ method: "POST" })
     if (!session.stage_15_output)
       throw new Error("Stage 15 audit missing — Stage 16 cannot proceed");
 
+    // Document Assembly may ONLY run after the full pipeline has finished:
+    // Phase 2 stages 17–22 must have output and the two Phase 2 human
+    // checkpoints (D — territory selection, E — detonation selection) must
+    // be confirmed. Without these the vision document fabricates a
+    // Detonation section. The vision format is the strictest because it
+    // mixes Phase 1 + Phase 2 content; the other three formats also wait so
+    // a single click on the deliverables page produces a coherent set.
+    const s = session as Record<string, unknown>;
+    const phase2Ready =
+      typeof s.stage_22_output === "string" && (s.stage_22_output as string).trim().length > 0 &&
+      typeof s.stage_17_selected_territory === "string" && (s.stage_17_selected_territory as string).trim().length > 0 &&
+      typeof s.stage_18_selected_detonation === "string" && (s.stage_18_selected_detonation as string).trim().length > 0;
+    const cachedColumn = COLUMN_BY_FORMAT[data.format];
+    const cachedExisting = s[cachedColumn] as string | null | undefined;
+    const hasCachedOutput =
+      !data.force && typeof cachedExisting === "string" && cachedExisting.trim().length > 1000;
+    if (!phase2Ready && !hasCachedOutput) {
+      throw new Error(
+        "Document Assembly is locked until the full pipeline is complete. " +
+          "Finish Phase 2 (Stages 17–22), select a Creative Territory (Checkpoint D), " +
+          "and select the Detonation (Checkpoint E) before generating any document format.",
+      );
+    }
+
     const column = COLUMN_BY_FORMAT[data.format];
     const existing = (session as Record<string, unknown>)[column] as string | null | undefined;
 
