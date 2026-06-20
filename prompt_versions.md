@@ -865,3 +865,27 @@ output budget supported by the Sonnet 4.x family.
 **File changed:** `src/lib/claude.server.ts`
 **Before:** `args.maxTokens ?? 8192`
 **After:**  `args.maxTokens ?? 64000`
+
+---
+
+## v4.9 — Stage 16 master detonation rendered as true H1 hero line (2026-06-20)
+**Date:** 2026-06-20
+**Stages:** Stage 16 — Vision and Consulting prompts
+**Change:** The master detonation reveal in both `STAGE_16_VISION_PROMPT`
+and `STAGE_16_CONSULTING_PROMPT` was producing visually flat output —
+rendered as ordinary paragraph text rather than as a hero line matching
+the SMP proposition's visual treatment. Root cause: the previous template
+`# **{line}**` wraps the heading text in bold markers, which several
+markdown renderers (including the PDF/document generators in this
+project) collapse to inline-bold paragraph text or print the asterisks
+literally. The instruction has been rewritten to require a pure markdown
+H1 — `#` + single space + the detonation line, on its own line, with no
+bold-marker wrapping, no surrounding quotes, no trailing punctuation,
+and no inline embedding — preceded by a separate bold label line
+`**THE DETONATION**`. Explicit prohibitions added against wrapping the
+heading text in `**...**` and against placing the line inside a paragraph.
+This guarantees the detonation renders as a large, bold, standalone
+heading-level line matching the SMP proposition treatment used elsewhere
+in the document.
+
+**File changed:** `src/lib/stage16-prompt.ts`
