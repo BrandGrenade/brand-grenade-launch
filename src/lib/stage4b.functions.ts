@@ -62,11 +62,38 @@ export const runStage4b = createServerFn({ method: "POST" })
       throw e instanceof Error ? e : new Error(msg);
     }
 
+    // Mandatory fact-verification pass. Stage 4B explicitly labels claims as
+    // "Real Fact" vs "Perceived Fact". Real-fact claims must be checked
+    // against a live web search before being passed downstream to Stage 5.
+    // This is a structural step, not a prompt instruction — a real search
+    // call is made via src/lib/fact-verify.server.ts.
+    yield { delta: "\n\n_[Running live fact-verification web search against real-fact claims…]_\n\n" };
+    let finalOutput = output;
+    try {
+      const { verifyRealFacts } = await import("./fact-verify.server");
+      const verification = await verifyRealFacts({
+        output,
+        brandName: session.brand_name,
+        category: session.category,
+        stageLabel: "Stage 4B",
+      });
+      finalOutput = verification.rewrittenOutput;
+      const flagged = verification.results.filter((r) => r.verdict !== "verified").length;
+      yield {
+        delta: `_[Fact verification complete: ${verification.results.length} claim(s) checked, ${flagged} flagged for human confirmation.]_\n\n`,
+      };
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "fact verification failed";
+      finalOutput = `${output}\n\n---\n\n## ⚠️ Fact Verification Review — VERIFICATION CALL FAILED\n\nThe automated web-search fact-check did not complete (${msg.slice(0, 200)}). Every claim in this stage's output presented as a real-world verifiable fact must be confirmed manually before being treated as established fact.\n`;
+      yield { delta: "_[Fact verification could not run — output flagged for full manual review.]_\n\n" };
+    }
+
     const { error: updateErr } = await supabaseAdmin
       .from("sessions")
-      .update({ stage_4b_output: output, stage_4b_error: null })
+      .update({ stage_4b_output: finalOutput, stage_4b_error: null })
       .eq("id", data.sessionId);
     if (updateErr) throw new Error(`Failed to save Stage 4B output: ${updateErr.message}`);
 
-    yield { done: true as const, output };
+    yield { done: true as const, output: finalOutput };
   });
+
