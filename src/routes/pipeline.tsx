@@ -2272,6 +2272,13 @@ function PipelineView() {
                 const allNames = allBlocks.map((b) => b.name);
                 const allChecked = allNames.every((n) => stage8KeepNames.has(n));
                 if (!allChecked) {
+                  // Pull amendment notes + checkpoint field notes the same way
+                  // handleRetryStage does, so feedback typed into the bottom
+                  // bar is actually injected into the regeneration prompt.
+                  const amendment = amendmentNotes[id]?.trim() ?? "";
+                  const fieldNotes = checkpointFieldNotes[id] ?? [];
+                  const note = buildRevisionInstruction(fieldNotes, amendment).trim();
+                  const previousOutput = getRawStageOutput(id)?.trim();
                   setStage8Error(null);
                   setStage8Loading(true);
                   setStatuses((p) => ({ ...p, "08": "running" }));
@@ -2281,6 +2288,8 @@ function PipelineView() {
                         data: {
                           sessionId,
                           keepTerritories: allNames.filter((n) => stage8KeepNames.has(n)),
+                          feedback: note || undefined,
+                          previousOutput: previousOutput || undefined,
                         },
                       }),
                       setStage8Output,
