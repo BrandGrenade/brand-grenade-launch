@@ -338,58 +338,103 @@ function CompletePage() {
           Select how you want to present this strategy. Same intelligence, three different formats.
         </p>
 
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(2, 1fr)",
-            gap: 16,
-          }}
-        >
-          <FormatCard
-            id="vision"
-            selected={format === "vision"}
-            onSelect={setFormat}
-            onRegenerate={(id) => regenerateRef.current?.(id)}
-            icon={<DocsIcon />}
-            title="Strategy and Creative Vision"
-            description="CMO socialisation document. Strategy and creative direction unified for the room that signs off the work."
-            tag="primary"
-            disabled={!hasSmp || generating}
-          />
-          <FormatCard
-            id="agency"
-            selected={format === "agency"}
-            onSelect={setFormat}
-            onRegenerate={(id) => regenerateRef.current?.(id)}
-            icon={<DeckIcon />}
-            title="Agency Pitch"
-            description="Proposition-led. Creative territory first. Built for the teams who will make the work."
-            tag="25+ pages"
-            disabled={!hasSmp || generating}
-          />
-          <FormatCard
-            id="consulting"
-            selected={format === "consulting"}
-            onSelect={setFormat}
-            onRegenerate={(id) => regenerateRef.current?.(id)}
-            icon={<DocsIcon />}
-            title="Consulting Delivery"
-            description="Evidence-led. Methodology visible. Built for the room where decisions are made."
-            tag="~25 pages"
-            disabled={!hasSmp || generating}
-          />
-          <FormatCard
-            id="workshop"
-            selected={format === "workshop"}
-            onSelect={setFormat}
-            onRegenerate={(id) => regenerateRef.current?.(id)}
-            icon={<PeopleIcon />}
-            title="Brand Workshop"
-            description="Session-ready. Built for the internal conversation that turns strategy into action."
-            tag="~20 pages + session guide"
-            disabled={!hasSmp || generating}
-          />
-        </div>
+        {(() => {
+          const phase2Ready = Boolean(
+            session.stage_22_output &&
+              session.stage_17_selected_territory &&
+              session.stage_18_selected_detonation,
+          );
+          return !phase2Ready ? (
+            <div
+              role="alert"
+              style={{
+                marginBottom: 24,
+                padding: 16,
+                borderRadius: 8,
+                border: "1px solid var(--color-border)",
+                background: "var(--color-surface-2)",
+                color: "var(--color-text-secondary)",
+                fontSize: 14,
+                lineHeight: 1.55,
+              }}
+            >
+              <strong style={{ color: "var(--color-text-primary)" }}>
+                Documents are locked until the full pipeline is complete.
+              </strong>{" "}
+              Finish Brand Detonation (Stages 17–22), confirm Checkpoint D
+              (Creative Territory) and Checkpoint E (Detonation) on the{" "}
+              <Link to="/detonation" search={{ session: session.id }} style={{ color: "var(--color-primary)" }}>
+                Detonation page
+              </Link>
+              , then return here. This prevents any document — and the Strategy
+              and Creative Vision in particular — from fabricating a Detonation
+              section before the real one exists.
+            </div>
+          ) : null;
+        })()}
+
+        {(() => {
+          const phase2Ready = Boolean(
+            session.stage_22_output &&
+              session.stage_17_selected_territory &&
+              session.stage_18_selected_detonation,
+          );
+          const lockDownload = !hasSmp || generating || !phase2Ready;
+          return (
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(2, 1fr)",
+                gap: 16,
+              }}
+            >
+              <FormatCard
+                id="vision"
+                selected={format === "vision"}
+                onSelect={setFormat}
+                onRegenerate={(id) => regenerateRef.current?.(id)}
+                icon={<DocsIcon />}
+                title="Strategy and Creative Vision"
+                description="CMO socialisation document. Strategy and creative direction unified for the room that signs off the work."
+                tag="primary"
+                disabled={lockDownload}
+              />
+              <FormatCard
+                id="agency"
+                selected={format === "agency"}
+                onSelect={setFormat}
+                onRegenerate={(id) => regenerateRef.current?.(id)}
+                icon={<DeckIcon />}
+                title="Agency Pitch"
+                description="Proposition-led. Creative territory first. Built for the teams who will make the work."
+                tag="25+ pages"
+                disabled={lockDownload}
+              />
+              <FormatCard
+                id="consulting"
+                selected={format === "consulting"}
+                onSelect={setFormat}
+                onRegenerate={(id) => regenerateRef.current?.(id)}
+                icon={<DocsIcon />}
+                title="Consulting Delivery"
+                description="Evidence-led. Methodology visible. Built for the room where decisions are made."
+                tag="~25 pages"
+                disabled={lockDownload}
+              />
+              <FormatCard
+                id="workshop"
+                selected={format === "workshop"}
+                onSelect={setFormat}
+                onRegenerate={(id) => regenerateRef.current?.(id)}
+                icon={<PeopleIcon />}
+                title="Brand Workshop"
+                description="Session-ready. Built for the internal conversation that turns strategy into action."
+                tag="~20 pages + session guide"
+                disabled={lockDownload}
+              />
+            </div>
+          );
+        })()}
 
         {/* Download section */}
         <div style={{ marginTop: 32 }}>

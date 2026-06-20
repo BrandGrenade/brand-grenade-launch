@@ -959,3 +959,26 @@ not a prompt-only safeguard.
 **Files changed:** `src/lib/fact-verify.server.ts` (new),
 `src/lib/stage4b.functions.ts`, `src/lib/stage2.functions.ts`,
 `prompt_versions.md`
+
+## v5.2 — Document Assembly gated on full-pipeline completion
+
+Stage 16 (Document Assembly) no longer runs at the end of Phase 1.
+The auto-trigger in `src/routes/pipeline.tsx` was removed and Stage 16
+is now generated on demand from the `/complete` deliverables page only
+after Phase 2 (Stages 17–22), Checkpoint D (Creative Territory) and
+Checkpoint E (Detonation) are all confirmed.
+
+Server-side gate in `src/lib/stage16.functions.ts` rejects any
+generation request whose session is missing `stage_22_output`,
+`stage_17_selected_territory`, or `stage_18_selected_detonation`
+(cached output may still be re-opened).
+
+The Strategy and Creative Vision prompt no longer carries the
+"derive…" fallbacks that previously instructed Claude to invent a
+Detonation when Phase 2 was absent. Stage 17/17B/18/19/20/20B/21/22
+outputs are now passed verbatim; every absent field shows a literal
+`[PENDING — …]` marker and an absolute rule forbids fabrication.
+
+**Files changed:** `src/lib/stage16.functions.ts`,
+`src/routes/pipeline.tsx`, `src/routes/complete.tsx`,
+`prompt_versions.md`

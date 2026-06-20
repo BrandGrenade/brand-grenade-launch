@@ -174,7 +174,12 @@ const STAGES: Stage[] = [
   { id: "14B", number: "14B", name: "Channel Expression", conditional: true },
   { id: "14C", number: "14C", name: "Brand World Definition", conditional: true },
   { id: "15", number: "15", name: "Coherence Audit" },
-  { id: "16", number: "16", name: "Document Assembly" },
+  // Document Assembly (Stage 16) intentionally runs ONLY after Phase 2 is complete
+  // (Stages 17–22 + Checkpoint D territory selection + Checkpoint E detonation
+  // selection). It is generated on demand from the deliverables page (`/complete`),
+  // never from the Phase 1 strategy pipeline. Adding it back here would
+  // re-introduce the fabrication bug where the vision document invented a
+  // Detonation section before Phase 2 had run.
 ];
 
 const CHECKPOINT_LETTERS: Record<string, "A" | "B" | "C"> = {
@@ -1518,83 +1523,12 @@ function PipelineView() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId, session?.id, statuses["15"]]);
 
-  useEffect(() => {
-    if (!sessionId || !session || statuses["16"] !== "running" || stage16Output) return;
-    let cancelled = false;
-    setStage16Loading(true);
-    setStage16Error(null);
-    // Stage 16 auto-quartet — four document variants generate simultaneously
-    // on every pipeline run: Strategy and Creative Vision (vision, primary
-    // CMO socialisation doc), Board Strategy Recommendation (consulting),
-    // Agency Strategy Platform (agency), and Brand Workshop Guide (workshop).
-    // The UI streams the consulting variant for the live render; the other
-    // three generate in the background and are persisted to their own DB columns.
-    (async () => {
-      // Background generators — fire-and-forget. Failures are logged but do
-      // not block completion of the consulting variant. Re-runs are no-ops
-      // because runStage16 returns cached output unless `force: true`.
-      const bgAgency = (async () => {
-        try {
-          for await (const _chunk of await runStage16Fn({
-            data: { sessionId, format: "agency" },
-          })) {
-            // consume stream; output is persisted server-side
-            void _chunk;
-          }
-        } catch (e) {
-          console.error("[Stage 16] agency variant failed:", e);
-        }
-      })();
-      const bgWorkshop = (async () => {
-        try {
-          for await (const _chunk of await runStage16Fn({
-            data: { sessionId, format: "workshop" },
-          })) {
-            void _chunk;
-          }
-        } catch (e) {
-          console.error("[Stage 16] workshop variant failed:", e);
-        }
-      })();
-      const bgVision = (async () => {
-        try {
-          for await (const _chunk of await runStage16Fn({
-            data: { sessionId, format: "vision" },
-          })) {
-            void _chunk;
-          }
-        } catch (e) {
-          console.error("[Stage 16] vision variant failed:", e);
-        }
-      })();
-
-      const consultingResult = await consumeStream(
-        await runStage16Fn({ data: { sessionId, format: "consulting" } }),
-        setStage16Output,
-      );
-
-      // Wait for background variants to finish so the realtime hook surfaces
-      // all four columns before we mark the stage complete.
-      await Promise.allSettled([bgAgency, bgWorkshop, bgVision]);
-      return consultingResult;
-    })()
-      .then((result) => {
-        if (cancelled) return;
-        setStage16Output(result.output);
-        setStage16Loading(false);
-        setStatuses((p) => ({ ...p, "16": "complete" }));
-      })
-      .catch((err: unknown) => {
-        if (cancelled) return;
-        setStage16Loading(false);
-        setStage16Error(err instanceof Error ? err.message : "Stage 16 failed");
-        setStatuses((p) => ({ ...p, "16": "error" }));
-      });
-    return () => {
-      cancelled = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionId, session?.id, statuses["16"]]);
+  // Stage 16 (Document Assembly) is NOT auto-triggered from the Phase 1
+  // pipeline. It must run only after Phase 2 (Stages 17–22) plus the
+  // Checkpoint D (territory) and Checkpoint E (detonation) selections are
+  // complete, otherwise the vision document fabricates a Detonation section
+  // from data that does not yet exist. Generation happens on demand from
+  // the `/complete` deliverables page once the full pipeline has finished.
 
   const selectedError =
     selected.id === "01" || selected.id === "01B"
