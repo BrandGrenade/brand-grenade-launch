@@ -571,7 +571,15 @@ Name the selected creative territory. Then write two to three paragraphs making 
 
 MOVEMENT THREE — THE DETONATION AND ITS INEVITABILITY
 
-State the selected detonation idea prominently. Give it space on the page. Then write three to four paragraphs that make the case for this specific detonation idea with the rigour of a closing argument. Cover four things in order.
+The master detonation is the value supplied in the input labelled MASTER DETONATION — THE SELECTED DETONATION FROM STAGE 18. That value — and only that value — is "the detonation." Do not substitute a springboard direction, a creative territory, a headline mechanic, or the "primary recommended" springboard for the master detonation. The springboard directions listed in the CREATIVE SPRINGBOARD DIRECTIONS input are downstream creative territories that express the detonation; they are never the detonation itself.
+
+Reveal the master detonation prominently on the page. Use this exact format, verbatim, once, at the point of revelation in this section:
+
+THE DETONATION
+
+# **{master detonation line stated exactly as supplied in the MASTER DETONATION input — no paraphrase, no rewording, no shortening}**
+
+Then write three to four paragraphs that make the case for this specific detonation idea with the rigour of a closing argument. Cover four things in order.
 
 First — what the detonation is. Not a description of its surface but a precise statement of the single organising thought and what makes it structurally different from a campaign idea. A detonation is not an execution. It is the idea that makes every execution possible and makes every competitor's attempt to follow feel hollow.
 
@@ -583,9 +591,9 @@ Fourth — what this detonation makes inevitable for the brand. The execution te
 
 MOVEMENT FOUR — THE CREATIVE SPRINGBOARD
 
-Present the recommended springboard directions from the pipeline. For each direction write the line with the precision and economy it deserves — maximum twelve words, every word inevitable. Follow each line with two sentences. The first names the primary headline mechanic at work and why that specific mechanic serves this specific proposition at this specific moment. The second states what kind of work this direction makes possible — not what the work should look like but what emotional and strategic territory it opens and why a creative director would feel the pull to make something from it.
+Present the recommended springboard directions from the CREATIVE SPRINGBOARD DIRECTIONS input. Introduce them explicitly as creative territories that express the master detonation revealed above — not as alternative detonations. For each direction write the line with the precision and economy it deserves — maximum twelve words, every word inevitable. Follow each line with two sentences. The first names the primary headline mechanic at work and why that specific mechanic serves this specific proposition at this specific moment. The second states what kind of work this direction makes possible — not what the work should look like but what emotional and strategic territory it opens and why a creative director would feel the pull to make something from it.
 
-Then name the single recommended primary springboard and write one paragraph on why this direction over all others — what it makes possible that the alternatives cannot, what the creative team must never do when working from it, and what the work must always make the audience feel before they understand it.
+Then name the single recommended primary springboard and write one paragraph on why this direction over all others — what it makes possible that the alternatives cannot, what the creative team must never do when working from it, and what the work must always make the audience feel before they understand it. Make explicit that this primary springboard is a creative direction in service of the master detonation, not a replacement for it.
 
 Close this section with one sentence that connects the entire argument from SMP to detonation to springboard in plain human language. Not a summary. The single thought that makes the entire sequence feel inevitable in retrospect.
 
@@ -1676,7 +1684,15 @@ Name the selected creative territory. Then write two to three paragraphs making 
 
 MOVEMENT THREE — THE DETONATION AND ITS INEVITABILITY
 
-State the selected detonation idea prominently. Give it space on the page. Then write three to four paragraphs that make the case for this specific detonation idea with the rigour of a closing argument. Cover four things in order.
+The master detonation is the value supplied in the input labelled MASTER DETONATION — THE SELECTED DETONATION FROM STAGE 18. That value — and only that value — is "the detonation." Do not substitute a springboard direction, a creative territory, a headline mechanic, or the "primary recommended" springboard for the master detonation. The springboard directions listed in the CREATIVE SPRINGBOARD DIRECTIONS input are downstream creative territories that express the detonation; they are never the detonation itself.
+
+Reveal the master detonation prominently on the page. Use this exact format, verbatim, once, at the point of revelation in this section:
+
+THE DETONATION
+
+# **{master detonation line stated exactly as supplied in the MASTER DETONATION input — no paraphrase, no rewording, no shortening}**
+
+Then write three to four paragraphs that make the case for this specific detonation idea with the rigour of a closing argument. Cover four things in order.
 
 First — what the detonation is. Not a description of its surface but a precise statement of the single organising thought and what makes it structurally different from a campaign idea. A detonation is not an execution. It is the idea that makes every execution possible and makes every competitor's attempt to follow feel hollow.
 
@@ -1688,35 +1704,11 @@ Fourth — what this detonation makes inevitable for the brand. The execution te
 
 MOVEMENT FOUR — THE CREATIVE SPRINGBOARD
 
-Present the recommended springboard directions from the pipeline. For each direction write the line with the precision and economy it deserves — maximum twelve words, every word inevitable. Follow each line with two sentences. The first names the primary headline mechanic at work and why that specific mechanic serves this specific proposition at this specific moment. The second states what kind of work this direction makes possible — not what the work should look like but what emotional and strategic territory it opens and why a creative director would feel the pull to make something from it.
+Present the recommended springboard directions from the CREATIVE SPRINGBOARD DIRECTIONS input. Introduce them explicitly as creative territories that express the master detonation revealed above — not as alternative detonations. For each direction write the line with the precision and economy it deserves — maximum twelve words, every word inevitable. Follow each line with two sentences. The first names the primary headline mechanic at work and why that specific mechanic serves this specific proposition at this specific moment. The second states what kind of work this direction makes possible — not what the work should look like but what emotional and strategic territory it opens and why a creative director would feel the pull to make something from it.
 
-Then name the single recommended primary springboard and write one paragraph on why this direction over all others — what it makes possible that the alternatives cannot, what the creative team must never do when working from it, and what the work must always make the audience feel before they understand it.
+Then name the single recommended primary springboard and write one paragraph on why this direction over all others — what it makes possible that the alternatives cannot, what the creative team must never do when working from it, and what the work must always make the audience feel before they understand it. Make explicit that this primary springboard is a creative direction in service of the master detonation, not a replacement for it.
 
 Close this section with one sentence that connects the entire argument from SMP to detonation to springboard in plain human language. Not a summary. The single thought that makes the entire sequence feel inevitable in retrospect.
-
-REGISTER INSTRUCTION FOR VISION DOCUMENT
-
-Write this section as a senior strategist addressing a room of intelligent non-specialists. The argument must be rigorous but the language must be felt. Every paragraph should leave the reader with a sense that the logic was always there and only needed to be named. Avoid academic vocabulary. Avoid strategy jargon. Write as if you are explaining to a brilliant CEO why the only honest answer to their brand challenge was always this one.
-
-REGISTER INSTRUCTION FOR CONSULTING DOCUMENT
-
-Write this section as a senior partner presenting a closing argument to a board that has asked the hardest questions and deserves the most precise answers. The argument must be airtight and evidence-led. Every claim must be traceable to the pipeline's validated outputs. The detonation must arrive as the inevitable creative consequence of the strategic work rather than as a separate creative recommendation appended to the strategy. The reader must finish this section understanding that the strategy and the creative expression are not two separate deliverables but one coherent argument expressed at two levels of abstraction.
-
-PART FIVE — THE CREATIVE DETONATION
-
-Two to three pages.
-
-Present the master detonation idea from Stage 18. Write it as the single thought that makes the strategy explosive in the world.
-
-Cover four things in this order.
-
-The detonation idea stated plainly. What it is. Not as a tagline. As the organising thought that everything creative will be built from.
-
-Why this specific idea and not any other. What makes it structurally connected to the proposition in a way that cannot be separated. What would be lost if a different idea were chosen.
-
-What it makes possible. The range of creative work this idea can generate. The channels it naturally inhabits. The cultural conversations it can enter. Two to three paragraphs of specific creative territory.
-
-The creative springboard directions from Stage 18. Present the top three springboard directions as distinct creative territories each expressed with the precision and economy of a great headline. For each direction name it, state it, and write one sentence on what kind of work it opens. These are not finished executions. They are the doors into the creative world.
 
 CLOSING — WHAT THIS REQUIRES AND WHAT IT MAKES POSSIBLE
 
