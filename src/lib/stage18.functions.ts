@@ -249,25 +249,26 @@ export const selectStage18Detonation = createServerFn({ method: "POST" })
       !!prior?.stage_18_selected_detonation &&
       prior.stage_18_selected_detonation.trim() !== data.detonationMarkdown.trim();
 
-    const update: Record<string, unknown> = {
+    const baseUpdate = {
       stage_18_selected_detonation: data.detonationMarkdown,
       stage_18_detonation_line: data.detonationLine ?? null,
-      phase_2_current_stage: '19',
+      phase_2_current_stage: '19' as const,
       checkpoint_e_confirmed: true,
       checkpoint_e_confirmed_at: new Date().toISOString(),
     };
-    if (isChange) {
-      Object.assign(update, {
-        stage_19_output: null,
-        stage_20_output: null,
-        stage_20_approved: null,
-        stage_20b_output: null,
-        stage_21_outputs: null,
-        stage_22_output: null,
-        stage_22_brand_architecture: null,
-        stage_22_distinctive_assets: null,
-      });
-    }
+    const clearUpdate = isChange
+      ? {
+          stage_19_output: null,
+          stage_20_output: null,
+          stage_20_approved: null,
+          stage_20b_output: null,
+          stage_21_outputs: null,
+          stage_22_output: null,
+          stage_22_brand_architecture: null,
+          stage_22_distinctive_assets: null,
+        }
+      : {};
+    const update = { ...baseUpdate, ...clearUpdate };
 
     const { error } = await supabaseAdmin
       .from("sessions")
