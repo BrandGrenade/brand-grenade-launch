@@ -535,11 +535,24 @@ export const regenerateStage8Selective = createServerFn({ method: "POST" })
       remaining: toRegenerate,
     });
 
+    const feedback = data.feedback?.trim();
+    const previousOutput = data.previousOutput?.trim() || session.stage_8_output || null;
+    let userMessage = `${baseUserMessage}\n\n---\n\n${continuationMessage}\n\nGenerate fresh propositions for the listed remaining territories only. Do not repeat the kept ones.`;
+    if (feedback) {
+      const { buildFeedbackInjection } = await import("./feedback-injection");
+      const { prefix, suffix } = buildFeedbackInjection({
+        feedback,
+        previousOutput,
+        stageLabel: "Stage 8 — Strategic Propositions (selective regenerate)",
+      });
+      userMessage = `${prefix}${userMessage}${suffix}`;
+    }
+
     let newOutput = "";
     try {
       for await (const delta of streamClaude({
         systemPrompt: STAGE_8_SYSTEM_PROMPT,
-        userMessage: `${baseUserMessage}\n\n---\n\n${continuationMessage}\n\nGenerate fresh propositions for the listed remaining territories only. Do not repeat the kept ones.`,
+        userMessage,
         maxTokens: 64000,
         sessionId: data.sessionId,
         stageLabel: "Stage 8 (selective regenerate)",
