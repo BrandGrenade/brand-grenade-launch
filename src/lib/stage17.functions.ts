@@ -275,17 +275,61 @@ export const selectStage17Territory = createServerFn({ method: "POST" })
     // Normalise to the canonical inter-stage contract before persisting.
     // The UI may render the card however it likes; the DB write is fixed.
     const canonical = canonicaliseStage17Territory(data.territoryMarkdown);
+
+    // Detect re-selection — if the user previously selected a different
+    // Territory, every downstream stage (17B → 22) was generated against
+    // the old one. The run* functions early-return on cached output, so
+    // without clearing here they would silently serve stale content.
+    // Mirrors the clear-on-change pattern in selectStage18Detonation.
+    const { data: prior } = await supabaseAdmin
+      .from("sessions")
+      .select("stage_17_selected_territory")
+      .eq("id", data.sessionId)
+      .single();
+    const isChange =
+      !!prior?.stage_17_selected_territory &&
+      prior.stage_17_selected_territory.trim() !== canonical.trim();
+
+    const baseUpdate = {
+      stage_17_selected_territory: canonical,
+      phase_2_current_stage: '17b' as const,
+      // Checkpoint D — explicit human confirmation that Detonation Territory
+      // has been selected. Mirrors checkpoint_a/b/c_confirmed structure.
+      checkpoint_d_confirmed: true,
+      checkpoint_d_confirmed_at: new Date().toISOString(),
+    };
+    const clearUpdate = isChange
+      ? {
+          stage_17b_output: null,
+          stage_17b_error: null,
+          stage_18_output: null,
+          stage_18_error: null,
+          stage_18_selected_detonation: null,
+          stage_18_detonation_line: null,
+          checkpoint_e_confirmed: false,
+          checkpoint_e_confirmed_at: null,
+          stage_19_output: null,
+          stage_19_error: null,
+          stage_20_output: null,
+          stage_20_error: null,
+          stage_20_approved: false,
+          stage_20b_output: null,
+          stage_20b_error: null,
+          stage_21_outputs: null,
+          stage_21_error: null,
+          stage_22_output: null,
+          stage_22_brand_architecture: null,
+          stage_22_distinctive_assets: null,
+          stage_22_error: null,
+        }
+      : {};
+    const update = { ...baseUpdate, ...clearUpdate };
+
     const { error } = await supabaseAdmin
       .from("sessions")
-      .update({
-        stage_17_selected_territory: canonical,
-        phase_2_current_stage: '17b',
-        // Checkpoint D — explicit human confirmation that Detonation Territory
-        // has been selected. Mirrors checkpoint_a/b/c_confirmed structure.
-        checkpoint_d_confirmed: true,
-        checkpoint_d_confirmed_at: new Date().toISOString(),
-      })
+      .update(update)
       .eq("id", data.sessionId);
     if (error) throw new Error(error.message);
-    return { ok: true };
+    return { ok: true, downstreamCleared: isChange };
   });
+
