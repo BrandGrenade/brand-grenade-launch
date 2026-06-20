@@ -378,8 +378,11 @@ export async function* streamClaude(args: CallClaudeArgs): AsyncGenerator<string
   // failure (handled by openWithRetry). Mid-stream drops surface as
   // sawMessageStop === false so the outer loop can retry.
   async function attempt(): Promise<{ total: string; stopReason: string | null; sawMessageStop: boolean }> {
-    const resp = await openWithRetry(apiKey, body, args.sessionId, args.stageLabel, true, args.timeoutMs);
-    if (!resp.body) throw new Error("Claude streaming response had no body");
+    const { resp, idle } = await openWithRetry(apiKey, body, args.sessionId, args.stageLabel, true, args.timeoutMs);
+    if (!resp.body) {
+      idle.cancel();
+      throw new Error("Claude streaming response had no body");
+    }
     const reader = resp.body.getReader();
     const decoder = new TextDecoder();
     let buffer = "";
@@ -389,6 +392,10 @@ export async function* streamClaude(args: CallClaudeArgs): AsyncGenerator<string
     try {
       while (true) {
         const { done, value } = await reader.read();
+        // A successful read (chunk or clean EOF) means the upstream is alive.
+        // Reset the inactivity timer so long-but-progressing streams (Stage 20B,
+        // ~5+ min) are not killed by a flat wall-clock abort.
+        idle.reset();
         if (done) {
           await new Promise((r) => setTimeout(r, 500));
           const rest = decoder.decode();
@@ -425,12 +432,15 @@ export async function* streamClaude(args: CallClaudeArgs): AsyncGenerator<string
         if (done) break;
       }
     } catch {
-      // Network drop mid-stream — return what we have so the outer loop decides.
+      // Network drop or idle-abort mid-stream — return what we have so the
+      // outer loop decides whether to retry.
     } finally {
+      idle.cancel();
       try { reader.releaseLock(); } catch { /* noop */ }
     }
     return { total, stopReason, sawMessageStop };
   }
+
 
   // Up to 2 attempts. If attempt 1 drops mid-stream (no message_stop and not
   // max_tokens), surface a "retrying automatically" status, wait 5s, and try
