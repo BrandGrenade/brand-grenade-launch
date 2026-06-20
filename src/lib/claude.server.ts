@@ -7,8 +7,36 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 const ANTHROPIC_URL = "https://api.anthropic.com/v1/messages";
 const DEFAULT_MODEL = "claude-opus-4-8";
-const REQUEST_TIMEOUT_MS = 180_000;
+// Per-chunk inactivity budget. The previous flat 180s wall-clock abort would
+// kill long-but-progressing streams (notably Stage 20B, which can stream for
+// 5+ minutes). We now abort only when no SSE chunk has arrived within this
+// window — the read loop resets the timer on every successful read.
+const IDLE_TIMEOUT_MS = 180_000;
 const RETRY_DELAY_MS = 3_000;
+
+type IdleAbort = {
+  controller: AbortController;
+  reset: () => void;
+  cancel: () => void;
+};
+
+function createIdleAbort(timeoutMs: number): IdleAbort {
+  const controller = new AbortController();
+  let timer: ReturnType<typeof setTimeout> | null = null;
+  const reset = () => {
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(() => controller.abort(), timeoutMs);
+  };
+  const cancel = () => {
+    if (timer) {
+      clearTimeout(timer);
+      timer = null;
+    }
+  };
+  reset();
+  return { controller, reset, cancel };
+}
+
 
 export interface CallClaudeArgs {
   systemPrompt: string;
