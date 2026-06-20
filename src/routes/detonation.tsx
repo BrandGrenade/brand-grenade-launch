@@ -80,6 +80,7 @@ type SessionRow = {
   stage_17b_output: string | null;
   stage_18_output: string | null;
   stage_18_selected_detonation: string | null;
+  stage_18_detonation_line: string | null;
   stage_19_output: string | null;
   stage_20_output: string | null;
   stage_20_approved: boolean | null;
