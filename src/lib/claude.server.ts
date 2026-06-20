@@ -199,7 +199,7 @@ async function prepareCall(
   if (!apiKey) throw new Error("ANTHROPIC_API_KEY is not configured");
   const devMode = await readDevMode(args.sessionId);
   let effectiveSystem = args.systemPrompt;
-  let effectiveMaxTokens = args.maxTokens ?? 8192;
+  let effectiveMaxTokens = args.maxTokens ?? 64000;
   if (devMode && args.stageNumber && args.stageName) {
     effectiveSystem = buildDevModePrompt(args.stageNumber, args.stageName);
     effectiveMaxTokens = 500;
