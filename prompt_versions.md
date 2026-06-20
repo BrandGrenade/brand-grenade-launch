@@ -843,3 +843,25 @@ Vision prompt has been removed; it duplicated content that the Strategic
 Logic section already covers as the inevitable climax of the argument.
 
 **Files:** `src/lib/stage16.functions.ts`, `src/lib/stage16-prompt.ts`.
+
+---
+
+## v4.8 — Audit confirmation + raise Claude default fallback to 64 000 (2026-06-20)
+**Date:** 2026-06-20
+**Stages:** All (audit) + `src/lib/claude.server.ts` default fallback
+**Change:** Full re-audit of every `maxTokens` value in the Claude call graph.
+Confirmed every explicit call site across Stages 1, 1B, 2, 3, 4, 4B, 5, 6, 7,
+8, 9, 10, 11, 12, 13, 13B, 14, 14B, 14C, 15, 16 (all four document variants
+including per-section caps in `stage16-sections.ts` and `document-generator.server.ts`),
+17, 17B, 18, 19, 20, 20B, 21, 22, `threeTruth.functions.ts`, and
+`preflight.functions.ts` is already pinned at the v4.6 universal cap of
+**64 000** — no stage was found at a lower cap. The only remaining sub-cap
+value was the default fallback inside `callClaude` in
+`src/lib/claude.server.ts` (`args.maxTokens ?? 8192`), used only when a
+caller omits the parameter. Raised from **8192 → 64000** so that any future
+Claude call which forgets to pass `maxTokens` still receives the maximum
+output budget supported by the Sonnet 4.x family.
+
+**File changed:** `src/lib/claude.server.ts`
+**Before:** `args.maxTokens ?? 8192`
+**After:**  `args.maxTokens ?? 64000`
