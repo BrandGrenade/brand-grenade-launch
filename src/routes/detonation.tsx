@@ -1851,15 +1851,23 @@ function Stage21({ session, onChange, goNext }: { session: SessionRow; onChange:
   };
   const outputEntries = outputs ? getStage21OutputEntries(outputs) : [];
 
+  const stage21BlockedReason = !session.stage_20_approved
+    ? "Stage 20 must be approved before Stage 21 can run."
+    : !session.stage_20b_output
+      ? "Stage 20B must complete before Stage 21 can run."
+      : null;
+
   return (
     <section>
       <SectionTitle kicker="STAGE 21" title="Channel Briefs" subtitle="One detonation brief per active channel. Click a card to expand." />
       {err && <ErrorBanner message={err} />}
+      {stage21BlockedReason && <ErrorBanner message={stage21BlockedReason} />}
       {!outputs || outputEntries.length === 0 ? (
-        <AmberButton onClick={handleRun} disabled={busy || !session.stage_20_approved || !session.stage_20b_output}>
-          {busy && <Spinner />} {busy ? "Generating channel briefs…" : !session.stage_20b_output ? "Complete Stage 20B first" : "Run Stage 21"}
+        <AmberButton onClick={handleRun} disabled={busy || !!stage21BlockedReason}>
+          {busy && !stage21BlockedReason && <Spinner />} {busy && !stage21BlockedReason ? "Generating channel briefs…" : stage21BlockedReason ? "Blocked — see above" : "Run Stage 21"}
         </AmberButton>
       ) : (
+
         <>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 16 }}>
             {outputEntries.map(({ key, channel, body }) => {
@@ -1999,14 +2007,22 @@ function Stage22({ session, onChange }: { session: SessionRow; onChange: () => v
   const peripherals = (["DOMAIN", "HERITAGE", "VALUES", "ASSETS", "PERSONALITY"] as const)
     .map((label) => ({ label, content: architecture ? extractArchSection(architecture, label) : "" }));
 
+  const stage22BlockedReason = !session.stage_20_approved
+    ? "Stage 20 must be approved before Stage 22 can run."
+    : !session.stage_21_outputs || Object.keys(session.stage_21_outputs).length === 0
+      ? "Stage 21 must complete before Stage 22 can run."
+      : null;
+
   return (
     <section>
       <SectionTitle kicker="STAGE 22" title="Brand Architecture" subtitle="The completed brand architecture and distinctive asset architecture." />
       {err && <ErrorBanner message={err} />}
+      {stage22BlockedReason && <ErrorBanner message={stage22BlockedReason} />}
       {!architecture ? (
-        <AmberButton onClick={handleRun} disabled={busy || !session.stage_20_approved}>
-          {busy && <Spinner />} {busy ? "Generating…" : "Run Stage 22"}
+        <AmberButton onClick={handleRun} disabled={busy || !!stage22BlockedReason}>
+          {busy && !stage22BlockedReason && <Spinner />} {busy && !stage22BlockedReason ? "Generating…" : stage22BlockedReason ? "Blocked — see above" : "Run Stage 22"}
         </AmberButton>
+
       ) : (
         <div id="phase2-print-region">
           {/* Visual layout: 5 peripherals around central reflection */}
