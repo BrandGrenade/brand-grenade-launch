@@ -62,11 +62,37 @@ export const runStage2 = createServerFn({ method: "POST" })
       throw e instanceof Error ? e : new Error(msg);
     }
 
+    // Mandatory fact-verification pass. Stage 2 makes claims about competitor
+    // ownership, category regulation, market structure, and category history
+    // that read as established fact. Run a real web-search verification pass
+    // before saving, so unverifiable claims are flagged for human review.
+    yield { delta: "\n\n_[Running live fact-verification web search against category-fact claims…]_\n\n" };
+    let finalOutput = output;
+    try {
+      const { verifyRealFacts } = await import("./fact-verify.server");
+      const verification = await verifyRealFacts({
+        output,
+        brandName: session.brand_name,
+        category: session.category,
+        stageLabel: "Stage 2",
+      });
+      finalOutput = verification.rewrittenOutput;
+      const flagged = verification.results.filter((r) => r.verdict !== "verified").length;
+      yield {
+        delta: `_[Fact verification complete: ${verification.results.length} claim(s) checked, ${flagged} flagged for human confirmation.]_\n\n`,
+      };
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "fact verification failed";
+      finalOutput = `${output}\n\n---\n\n## ⚠️ Fact Verification Review — VERIFICATION CALL FAILED\n\nThe automated web-search fact-check did not complete (${msg.slice(0, 200)}). Every claim in this stage's output presented as a real-world verifiable fact must be confirmed manually before being treated as established fact.\n`;
+      yield { delta: "_[Fact verification could not run — output flagged for full manual review.]_\n\n" };
+    }
+
     const { error: updateErr } = await supabaseAdmin
       .from("sessions")
-      .update({ stage_2_output: output, stage_2_error: null })
+      .update({ stage_2_output: finalOutput, stage_2_error: null })
       .eq("id", data.sessionId);
     if (updateErr) throw new Error(`Failed to save Stage 2 output: ${updateErr.message}`);
 
-    yield { done: true as const, output };
+    yield { done: true as const, output: finalOutput };
   });
+
