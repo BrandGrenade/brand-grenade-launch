@@ -802,37 +802,62 @@ function SectionCard({
                 </p>
               )}
               {f.kind === "select" && f.options ? (
-                <div className="flex flex-col gap-2">
+                <div
+                  className="flex flex-col gap-2"
+                  role="radiogroup"
+                  aria-label={section.title}
+                >
                   {f.options.map((opt) => {
                     const checked = values[f.key] === opt.value;
                     return (
-                      <label
+                      <button
                         key={opt.value}
-                        className="flex cursor-pointer items-start gap-3 rounded-md p-3 transition-colors"
+                        type="button"
+                        role="radio"
+                        aria-checked={checked}
+                        onClick={() => onChange(f.key, opt.value)}
+                        className="flex w-full cursor-pointer items-start gap-3 rounded-md p-3 text-left transition-colors"
                         style={{
-                          border: "1px solid var(--color-border)",
+                          border: checked
+                            ? "1px solid var(--color-primary)"
+                            : "1px solid var(--color-border)",
                           backgroundColor: checked
-                            ? "var(--color-primary-subtle, var(--color-surface-2))"
+                            ? "var(--color-primary-subtle)"
                             : "transparent",
+                          boxShadow: checked
+                            ? "0 0 0 1px var(--color-primary)"
+                            : "none",
                         }}
                       >
-                        <input
-                          type="radio"
-                          name={f.key}
-                          value={opt.value}
-                          checked={checked}
-                          onChange={() => onChange(f.key, opt.value)}
-                          className="mt-1"
-                        />
-                        <div>
-                          <div className="text-body-sm font-medium text-text-primary">
+                        <span
+                          aria-hidden="true"
+                          className="mt-1 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full"
+                          style={{
+                            border: checked
+                              ? "2px solid var(--color-primary)"
+                              : "2px solid var(--color-border-strong)",
+                            backgroundColor: "transparent",
+                          }}
+                        >
+                          {checked && (
+                            <span
+                              className="block h-2 w-2 rounded-full"
+                              style={{ backgroundColor: "var(--color-primary)" }}
+                            />
+                          )}
+                        </span>
+                        <span className="flex-1">
+                          <span className="text-body-sm block font-medium text-text-primary">
                             {opt.label}
-                          </div>
-                          <div className="text-body-sm" style={{ color: "var(--color-text-secondary)" }}>
+                          </span>
+                          <span
+                            className="text-body-sm block"
+                            style={{ color: "var(--color-text-secondary)" }}
+                          >
                             {opt.description}
-                          </div>
-                        </div>
-                      </label>
+                          </span>
+                        </span>
+                      </button>
                     );
                   })}
                 </div>
