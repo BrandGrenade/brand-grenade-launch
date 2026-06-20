@@ -571,15 +571,23 @@ Name the selected creative territory. Then write two to three paragraphs making 
 
 MOVEMENT THREE — THE DETONATION AND ITS INEVITABILITY
 
-The master detonation is the value supplied in the input labelled MASTER DETONATION — THE SELECTED DETONATION FROM STAGE 18. That value — and only that value — is "the detonation." Do not substitute a springboard direction, a creative territory, a headline mechanic, or the "primary recommended" springboard for the master detonation. The springboard directions listed in the CREATIVE SPRINGBOARD DIRECTIONS input are downstream creative territories that express the detonation; they are never the detonation itself.
+The master detonation has TWO distinct components supplied as separate inputs:
 
-Reveal the master detonation prominently on the page using the exact markdown structure shown below. This must match the visual prominence of the SMP proposition reveal elsewhere in the document — a large, bold, standalone heading-level line on its own line, not embedded in a paragraph and not wrapped in quotation marks or inline bold inside running prose. Output these three lines verbatim with one blank line between each, and nothing else on those lines:
+(a) MASTER DETONATION LINE — the short punchy headline (for example "BRING YOUR HARDEST BRIEF"). This is supplied in the input labelled MASTER DETONATION LINE. This — and ONLY this — is the value that may appear in the hero H1 below.
+
+(b) MASTER DETONATION STATEMENT — the longer explanatory sentence or paragraph that explains what the detonation means. This is supplied in the input labelled MASTER DETONATION STATEMENT. This belongs in body text AFTER the hero line, never inside the hero H1.
+
+Do not substitute a springboard direction, a creative territory, a headline mechanic, or the "primary recommended" springboard for the master detonation. The springboard directions listed in the CREATIVE SPRINGBOARD DIRECTIONS input are downstream creative territories that express the detonation; they are never the detonation itself.
+
+Reveal the master detonation prominently on the page using the exact markdown structure shown below. The hero H1 must contain ONLY the short MASTER DETONATION LINE — never the long MASTER DETONATION STATEMENT, never a paraphrase, never a combination of the two. Output these three lines verbatim with one blank line between each, and nothing else on those lines:
 
 **THE DETONATION**
 
-# {master detonation line stated exactly as supplied in the MASTER DETONATION input — no paraphrase, no rewording, no shortening, no surrounding quotes, no trailing punctuation added, no asterisks or other formatting characters wrapped around the line}
+# {MASTER DETONATION LINE — the short headline value supplied in the MASTER DETONATION LINE input only, stated exactly as supplied — no paraphrase, no rewording, no shortening, no surrounding quotes, no trailing punctuation added, no asterisks wrapped around the line, and absolutely NOT the longer MASTER DETONATION STATEMENT}
 
-The line beginning with the hash character must be a real markdown H1 — a single hash followed by one space followed by the detonation text on a single line, with a blank line before and after. Do not place the detonation inside a paragraph. Do not prefix or suffix it with any other words on the same line. Do not wrap the text in double asterisks (the hash already produces heading weight; adding bold markers around the text will cause renderers to display the asterisks as literal characters or collapse the heading into inline text).
+Immediately after the hero H1 (with one blank line of separation), write the MASTER DETONATION STATEMENT as a normal body paragraph — not as a heading, not in bold, not in a blockquote. State it verbatim from the MASTER DETONATION STATEMENT input as the opening of the explanatory paragraph. This is the longer sentence that explains what the detonation line means and why it lands. It must read as flowing body prose, clearly distinct from the hero line above it.
+
+The line beginning with the hash character must be a real markdown H1 — a single hash followed by one space followed by the SHORT detonation line on a single line, with a blank line before and after. Do not place the detonation line inside a paragraph. Do not prefix or suffix it with any other words on the same line. Do not wrap the text in double asterisks (the hash already produces heading weight; adding bold markers around the text will cause renderers to display the asterisks as literal characters or collapse the heading into inline text). If the value you are about to place in the H1 is longer than roughly twelve words or reads as a full explanatory sentence, you have pulled the wrong field — stop and use the MASTER DETONATION LINE input, not the MASTER DETONATION STATEMENT input.
 
 Then write three to four paragraphs that make the case for this specific detonation idea with the rigour of a closing argument. Cover four things in order.
 
@@ -1686,15 +1694,23 @@ Name the selected creative territory. Then write two to three paragraphs making 
 
 MOVEMENT THREE — THE DETONATION AND ITS INEVITABILITY
 
-The master detonation is the value supplied in the input labelled MASTER DETONATION — THE SELECTED DETONATION FROM STAGE 18. That value — and only that value — is "the detonation." Do not substitute a springboard direction, a creative territory, a headline mechanic, or the "primary recommended" springboard for the master detonation. The springboard directions listed in the CREATIVE SPRINGBOARD DIRECTIONS input are downstream creative territories that express the detonation; they are never the detonation itself.
+The master detonation has TWO distinct components supplied as separate inputs:
 
-Reveal the master detonation prominently on the page using the exact markdown structure shown below. This must match the visual prominence of the SMP proposition reveal elsewhere in the document — a large, bold, standalone heading-level line on its own line, not embedded in a paragraph and not wrapped in quotation marks or inline bold inside running prose. Output these three lines verbatim with one blank line between each, and nothing else on those lines:
+(a) MASTER DETONATION LINE — the short punchy headline (for example "BRING YOUR HARDEST BRIEF"). This is supplied in the input labelled MASTER DETONATION LINE. This — and ONLY this — is the value that may appear in the hero H1 below.
+
+(b) MASTER DETONATION STATEMENT — the longer explanatory sentence or paragraph that explains what the detonation means. This is supplied in the input labelled MASTER DETONATION STATEMENT. This belongs in body text AFTER the hero line, never inside the hero H1.
+
+Do not substitute a springboard direction, a creative territory, a headline mechanic, or the "primary recommended" springboard for the master detonation. The springboard directions listed in the CREATIVE SPRINGBOARD DIRECTIONS input are downstream creative territories that express the detonation; they are never the detonation itself.
+
+Reveal the master detonation prominently on the page using the exact markdown structure shown below. The hero H1 must contain ONLY the short MASTER DETONATION LINE — never the long MASTER DETONATION STATEMENT, never a paraphrase, never a combination of the two. Output these three lines verbatim with one blank line between each, and nothing else on those lines:
 
 **THE DETONATION**
 
-# {master detonation line stated exactly as supplied in the MASTER DETONATION input — no paraphrase, no rewording, no shortening, no surrounding quotes, no trailing punctuation added, no asterisks or other formatting characters wrapped around the line}
+# {MASTER DETONATION LINE — the short headline value supplied in the MASTER DETONATION LINE input only, stated exactly as supplied — no paraphrase, no rewording, no shortening, no surrounding quotes, no trailing punctuation added, no asterisks wrapped around the line, and absolutely NOT the longer MASTER DETONATION STATEMENT}
 
-The line beginning with the hash character must be a real markdown H1 — a single hash followed by one space followed by the detonation text on a single line, with a blank line before and after. Do not place the detonation inside a paragraph. Do not prefix or suffix it with any other words on the same line. Do not wrap the text in double asterisks (the hash already produces heading weight; adding bold markers around the text will cause renderers to display the asterisks as literal characters or collapse the heading into inline text).
+Immediately after the hero H1 (with one blank line of separation), write the MASTER DETONATION STATEMENT as a normal body paragraph — not as a heading, not in bold, not in a blockquote. State it verbatim from the MASTER DETONATION STATEMENT input as the opening of the explanatory paragraph. This is the longer sentence that explains what the detonation line means and why it lands. It must read as flowing body prose, clearly distinct from the hero line above it.
+
+The line beginning with the hash character must be a real markdown H1 — a single hash followed by one space followed by the SHORT detonation line on a single line, with a blank line before and after. Do not place the detonation line inside a paragraph. Do not prefix or suffix it with any other words on the same line. Do not wrap the text in double asterisks (the hash already produces heading weight; adding bold markers around the text will cause renderers to display the asterisks as literal characters or collapse the heading into inline text). If the value you are about to place in the H1 is longer than roughly twelve words or reads as a full explanatory sentence, you have pulled the wrong field — stop and use the MASTER DETONATION LINE input, not the MASTER DETONATION STATEMENT input.
 
 Then write three to four paragraphs that make the case for this specific detonation idea with the rigour of a closing argument. Cover four things in order.
 

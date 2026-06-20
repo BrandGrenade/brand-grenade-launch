@@ -889,3 +889,33 @@ heading-level line matching the SMP proposition treatment used elsewhere
 in the document.
 
 **File changed:** `src/lib/stage16-prompt.ts`
+
+---
+
+## v5.0 — Stage 16 detonation hero uses short LINE, not long STATEMENT (2026-06-20)
+**Stages:** 16 (Vision + Consulting prompts; Stage 16 user-message builder)
+**Change:** Stage 18 produces two distinct values — `stage_18_detonation_line`
+(the short headline, e.g. "BRING YOUR HARDEST BRIEF") and
+`stage_18_selected_detonation` (the longer explanatory statement). The
+Stage 16 Vision user message previously passed only the long statement
+as the "MASTER DETONATION" input, and the prompt instructed the model
+to place that whole value inside the hero H1 — so the long sentence was
+rendered as the hero line instead of the short headline.
+
+Fix:
+1. `src/lib/stage16.functions.ts` — the Vision user message now passes
+   two explicitly labelled inputs: `MASTER DETONATION LINE` (sourced from
+   `stage_18_detonation_line`) and `MASTER DETONATION STATEMENT`
+   (sourced from `stage_18_selected_detonation`).
+2. `src/lib/stage16-prompt.ts` — both detonation prompt blocks (Vision
+   MOVEMENT THREE and Consulting MOVEMENT THREE) updated so the hero H1
+   under **THE DETONATION** contains ONLY the short MASTER DETONATION
+   LINE. The MASTER DETONATION STATEMENT now follows as normal body
+   prose. Added an explicit guard: if the value the model is about to
+   place in the H1 reads as a full explanatory sentence or is longer
+   than ~12 words, the model has pulled the wrong field.
+
+This matches the visual treatment shown on the Stage 18 selection card.
+
+**Files changed:** `src/lib/stage16.functions.ts`,
+`src/lib/stage16-prompt.ts`, `prompt_versions.md`
