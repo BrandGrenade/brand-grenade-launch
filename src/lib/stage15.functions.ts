@@ -46,10 +46,9 @@ export const runStage15 = createServerFn({ method: "POST" })
             "SELECTED SMP": session.selected_smp ?? "",
             "STAGE 12 — SELECTION RATIONALE (PRIMARY)": session.selection_rationale_1 ?? "",
             "STAGE 13 — BRAND FIT VERDICT": trimBrandFitForDownstream(session.stage_13_output ?? ""),
-            "STAGE 14 — TERRITORY SUMMARY": firstParagraph(session.stage_14_output ?? ""),
-            "STAGE 14C — STRATEGIC CONTINUITY STATEMENT": extractStrategicContinuityStatement(
-              session.stage_14c_output ?? ""
-            ),
+            "STAGE 14 — CREATIVE TERRITORY (FULL)": session.stage_14_output ?? "",
+            "STAGE 14B — TERRITORY DEVELOPMENT (FULL)": session.stage_14b_output ?? "",
+            "STAGE 14C — BRAND WORLD DEFINITION (FULL)": session.stage_14c_output ?? "",
           },
         }),
         sessionId: data.sessionId,
