@@ -53,3 +53,20 @@ The existing table is `sessions` and is referenced from ~20 server-fn files. Ren
 - Edit: `src/routes/pipeline.tsx`, `src/routes/dashboard.tsx`, each `stageN.functions.ts` (one-line heartbeat call at start)
 
 Approve and I'll execute the migration first, then the code changes in one pass.
+
+## Priority backlog — Fact verification safeguard (build before next client session)
+
+**Problem:** Stage 4B distinguishes "real facts" from "perceived facts" in prompt, but no verification step exists before real-fact claims flow downstream. A factually incorrect "real fact" (rugby union prohibits the forward pass — false; both codes share the rule) was generated, treated as verified, and built into the strongest territory of a session before manual human catch. Undetected factual errors in "verified fact" output are a platform-level credibility risk.
+
+**Universal fix — applies to every brand, every category, every future session:**
+
+1. **Stage 4B fact-verification pass.** After Stage 4B streams its initial output, extract every claim explicitly labelled `Real Fact` (vs `Perceived Fact`). For each, run a web search (Firecrawl `search` or `websearch`) to confirm. If the search cannot corroborate the claim:
+   - Downgrade the label from `Real Fact` → `⚠️ UNVERIFIED — REQUIRES HUMAN CONFIRMATION`
+   - Prepend a visual flag (emoji + bold) so the reviewer sees it without re-reading the whole block
+   - Append a one-line note: `Search ran; no corroborating source found. Do not promote to insight until confirmed.`
+2. **Apply same rule to Stage 2 Category Intelligence** — any claim presented as established category fact (market size, regulation, behavioural statistic) gets the same verification pass.
+3. **Audit any other stage** that emits claims framed as verifiable real-world facts; add to the verification dispatcher.
+4. **Shared utility:** `src/lib/fact-verify.functions.ts` — takes `(claims: string[]) => Promise<{claim, verified, sources}[]>`. Stage 4B / Stage 2 post-processors call it before saving final `stage_*_output`.
+5. **Surface in UI:** the right-panel renderer already shows markdown; flagged claims will render with the ⚠️ visual treatment automatically. No new component needed.
+
+**Not urgent for tonight's session.** Build before any further client-facing sessions run.
