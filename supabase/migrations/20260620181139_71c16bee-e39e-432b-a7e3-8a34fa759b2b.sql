@@ -1,0 +1,1 @@
+UPDATE public.sessions SET stage_20_approved = true, updated_at = now() WHERE id = '05063a31-887b-4c0e-9f5c-c6edf00c2783';

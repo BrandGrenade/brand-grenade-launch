@@ -7,8 +7,36 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 const ANTHROPIC_URL = "https://api.anthropic.com/v1/messages";
 const DEFAULT_MODEL = "claude-opus-4-8";
-const REQUEST_TIMEOUT_MS = 180_000;
+// Per-chunk inactivity budget. The previous flat 180s wall-clock abort would
+// kill long-but-progressing streams (notably Stage 20B, which can stream for
+// 5+ minutes). We now abort only when no SSE chunk has arrived within this
+// window — the read loop resets the timer on every successful read.
+const IDLE_TIMEOUT_MS = 180_000;
 const RETRY_DELAY_MS = 3_000;
+
+type IdleAbort = {
+  controller: AbortController;
+  reset: () => void;
+  cancel: () => void;
+};
+
+function createIdleAbort(timeoutMs: number): IdleAbort {
+  const controller = new AbortController();
+  let timer: ReturnType<typeof setTimeout> | null = null;
+  const reset = () => {
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(() => controller.abort(), timeoutMs);
+  };
+  const cancel = () => {
+    if (timer) {
+      clearTimeout(timer);
+      timer = null;
+    }
+  };
+  reset();
+  return { controller, reset, cancel };
+}
+
 
 export interface CallClaudeArgs {
   systemPrompt: string;
@@ -172,25 +200,20 @@ function isRetryableStatus(status: number) {
   return status === 524 || status === 503 || status === 502 || status === 504;
 }
 
-async function doFetch(apiKey: string, body: string, timeoutMs = REQUEST_TIMEOUT_MS): Promise<Response> {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    return await fetch(ANTHROPIC_URL, {
-      method: "POST",
-      headers: {
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-        "anthropic-beta": "prompt-caching-2024-07-31",
-        "content-type": "application/json",
-      },
-      body,
-      signal: controller.signal,
-    });
-  } finally {
-    clearTimeout(timeout);
-  }
+async function doFetch(apiKey: string, body: string, idle: IdleAbort): Promise<Response> {
+  return await fetch(ANTHROPIC_URL, {
+    method: "POST",
+    headers: {
+      "x-api-key": apiKey,
+      "anthropic-version": "2023-06-01",
+      "anthropic-beta": "prompt-caching-2024-07-31",
+      "content-type": "application/json",
+    },
+    body,
+    signal: idle.controller.signal,
+  });
 }
+
 
 async function prepareCall(
   args: CallClaudeArgs,
@@ -254,20 +277,25 @@ async function openWithRetry(
   sessionId: string | undefined,
   stageLabel: string | undefined,
   stream: boolean,
-  timeoutMs = REQUEST_TIMEOUT_MS,
-): Promise<Response> {
+  idleTimeoutMs = IDLE_TIMEOUT_MS,
+): Promise<{ resp: Response; idle: IdleAbort }> {
   let attempt = 0;
   const maxAttempts = 2;
   let lastError = "";
   const bodyWithFlag = stream ? body.replace(/}$/, ',"stream":true}') : body;
   while (attempt < maxAttempts) {
     attempt++;
+    const idle = createIdleAbort(idleTimeoutMs);
     try {
-      const resp = await doFetch(apiKey, bodyWithFlag, timeoutMs);
+      const resp = await doFetch(apiKey, bodyWithFlag, idle);
       if (resp.ok) {
         await setRetryStatus(sessionId, null);
-        return resp;
+        // Caller takes ownership of `idle` and must call idle.cancel() when
+        // it's done consuming the response. For streamed responses the caller
+        // also calls idle.reset() on every successful chunk read.
+        return { resp, idle };
       }
+      idle.cancel();
       const text = await resp.text();
       lastError = `Claude API ${resp.status}: ${text.slice(0, 500)}`;
       if (isRetryableStatus(resp.status) && attempt < maxAttempts) {
@@ -278,12 +306,13 @@ async function openWithRetry(
       await setRetryStatus(sessionId, null);
       throw new Error(lastError);
     } catch (e) {
+      idle.cancel();
       const isAbort =
         e instanceof Error &&
         (e.name === "AbortError" || /aborted|timeout/i.test(e.message));
       const msg = e instanceof Error ? e.message : "network error";
       lastError = isAbort
-        ? `Claude API request timed out after ${timeoutMs / 1000}s`
+        ? `Claude API request idle for >${idleTimeoutMs / 1000}s (no chunk received)`
         : `Claude API request failed: ${msg}`;
       if ((isAbort || /network|fetch failed/i.test(msg)) && attempt < maxAttempts) {
         await setRetryStatus(sessionId, `Connection timeout — retrying ${stageLabel ?? "request"}...`);
@@ -297,6 +326,7 @@ async function openWithRetry(
   await setRetryStatus(sessionId, null);
   throw new Error(lastError || "Claude API call failed");
 }
+
 
 /**
  * Stage-facing entry point. Internally streams from Anthropic (SSE) and
@@ -348,8 +378,11 @@ export async function* streamClaude(args: CallClaudeArgs): AsyncGenerator<string
   // failure (handled by openWithRetry). Mid-stream drops surface as
   // sawMessageStop === false so the outer loop can retry.
   async function attempt(): Promise<{ total: string; stopReason: string | null; sawMessageStop: boolean }> {
-    const resp = await openWithRetry(apiKey, body, args.sessionId, args.stageLabel, true, args.timeoutMs);
-    if (!resp.body) throw new Error("Claude streaming response had no body");
+    const { resp, idle } = await openWithRetry(apiKey, body, args.sessionId, args.stageLabel, true, args.timeoutMs);
+    if (!resp.body) {
+      idle.cancel();
+      throw new Error("Claude streaming response had no body");
+    }
     const reader = resp.body.getReader();
     const decoder = new TextDecoder();
     let buffer = "";
@@ -359,6 +392,10 @@ export async function* streamClaude(args: CallClaudeArgs): AsyncGenerator<string
     try {
       while (true) {
         const { done, value } = await reader.read();
+        // A successful read (chunk or clean EOF) means the upstream is alive.
+        // Reset the inactivity timer so long-but-progressing streams (Stage 20B,
+        // ~5+ min) are not killed by a flat wall-clock abort.
+        idle.reset();
         if (done) {
           await new Promise((r) => setTimeout(r, 500));
           const rest = decoder.decode();
@@ -395,12 +432,15 @@ export async function* streamClaude(args: CallClaudeArgs): AsyncGenerator<string
         if (done) break;
       }
     } catch {
-      // Network drop mid-stream — return what we have so the outer loop decides.
+      // Network drop or idle-abort mid-stream — return what we have so the
+      // outer loop decides whether to retry.
     } finally {
+      idle.cancel();
       try { reader.releaseLock(); } catch { /* noop */ }
     }
     return { total, stopReason, sawMessageStop };
   }
+
 
   // Up to 2 attempts. If attempt 1 drops mid-stream (no message_stop and not
   // max_tokens), surface a "retrying automatically" status, wait 5s, and try
