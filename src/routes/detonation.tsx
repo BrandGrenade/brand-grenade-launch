@@ -313,22 +313,74 @@ function splitCardsLocal(text: string): LocalCard[] {
   const anchorCount = anchorPositions.length;
 
   const byAnchors = (): LocalCard[] => {
-    // Non-overlapping card boundaries: walk back from each anchor to the
-    // blank line ABOVE its title block. Earlier version sliced from the
-    // PREVIOUS anchor to the NEXT anchor, producing 2-wide overlapping
-    // windows that duplicated bodies and put titles above the wrong card.
+    // Walk back from each anchor through ALL preamble lines that belong to
+    // the next card: candidate header ("DETONATION CANDIDATE TWO"), a
+    // "THE DETONATION LINE: <value>" pair, stray "---" or "##" markdown,
+    // short ALL-CAPS title lines, and blanks. Tested against real broken
+    // session output where the model inserts THE DETONATION LINE between
+    // the candidate header and the WHY THIS DETONATION anchor.
     const cardStartFor = (anchorIdx: number): number => {
       const before = t.slice(0, anchorIdx);
-      const blankAboveAnchor = before.lastIndexOf("\n\n");
-      if (blankAboveAnchor < 0) return 0;
-      const beforeTitle = before.slice(0, blankAboveAnchor);
-      const blankAboveTitle = beforeTitle.lastIndexOf("\n\n");
-      return blankAboveTitle < 0 ? 0 : blankAboveTitle + 2;
+      const lines = before.split("\n");
+      const lineStarts: number[] = [];
+      let pos = 0;
+      for (const ln of lines) {
+        lineStarts.push(pos);
+        pos += ln.length + 1;
+      }
+      const isPreambleLine = (raw: string): boolean => {
+        const l = raw.trim();
+        if (l === "") return true;
+        if (/^-{3,}$/.test(l)) return true;
+        if (/^#{1,6}(\s|$)/.test(l)) return true;
+        if (/^DETONATION\s+(CANDIDATE\s+)?[A-Z0-9]+\s*:?\s*$/i.test(l)) return true;
+        if (/^THE\s+DETONATION\s+LINE\s*:\s*$/i.test(l)) return true;
+        if (/^[A-Z][A-Z0-9 '\-&/.,]{2,79}$/.test(l) && !l.endsWith(":")) return true;
+        return false;
+      };
+      let boundary = lineStarts[lines.length - 1] ?? 0;
+      for (let i = lines.length - 1; i >= 0; i--) {
+        const line = lines[i];
+        const trimmed = line.trim();
+        const above = i > 0 ? lines[i - 1].trim() : "";
+        if (
+          trimmed.length > 0 &&
+          trimmed.length < 200 &&
+          /^THE\s+DETONATION\s+LINE\s*:\s*$/i.test(above)
+        ) {
+          boundary = lineStarts[i];
+          continue;
+        }
+        if (isPreambleLine(line)) {
+          boundary = lineStarts[i];
+          continue;
+        }
+        break;
+      }
+      return boundary;
+    };
+    const stripHead = (s: string): string => {
+      const ls = s.split("\n");
+      while (ls.length > 0) {
+        const first = ls[0].trim();
+        if (first === "" || /^-{3,}$/.test(first) || /^#{1,6}(\s|$)/.test(first)) ls.shift();
+        else break;
+      }
+      return ls.join("\n").trimStart();
+    };
+    const stripTail = (s: string): string => {
+      const ls = s.split("\n");
+      while (ls.length > 0) {
+        const last = ls[ls.length - 1].trim();
+        if (last === "" || /^-{3,}$/.test(last) || /^#{1,6}(\s|$)/.test(last)) ls.pop();
+        else break;
+      }
+      return ls.join("\n").trimEnd();
     };
     const starts = anchorPositions.map((idx, i) => (i === 0 ? 0 : cardStartFor(idx)));
     return starts.map((start, i) => {
       const end = i + 1 < starts.length ? starts[i + 1] : t.length;
-      const seg = t.slice(start, end).trim();
+      const seg = stripTail(stripHead(t.slice(start, end).trim()));
       const isDet = /WHY THIS DETONATION/i.test(seg);
       const titleLine = seg.split("\n").map((l) => l.trim()).filter(Boolean)
         .find((l) => /^[A-Z][A-Z0-9 '\-&/.,]{2,79}$/.test(l) && !l.endsWith(":"));
