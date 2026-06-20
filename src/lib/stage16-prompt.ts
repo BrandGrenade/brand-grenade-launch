@@ -579,7 +579,7 @@ Reveal the master detonation prominently on the page using the exact markdown st
 
 # {master detonation line stated exactly as supplied in the MASTER DETONATION input — no paraphrase, no rewording, no shortening, no surrounding quotes, no trailing punctuation added, no asterisks or other formatting characters wrapped around the line}
 
-The line beginning with `# ` must be a real markdown H1 — the `#` character followed by a single space followed by the detonation text on a single line, with a blank line before and after. Do not place the detonation inside a paragraph. Do not prefix or suffix it with any other words on the same line. Do not wrap it in `**...**` (the `#` already produces the heading weight; adding bold markers around the text will cause renderers to display the asterisks as literal characters or collapse the heading into inline text).
+The line beginning with the hash character must be a real markdown H1 — a single hash followed by one space followed by the detonation text on a single line, with a blank line before and after. Do not place the detonation inside a paragraph. Do not prefix or suffix it with any other words on the same line. Do not wrap the text in double asterisks (the hash already produces heading weight; adding bold markers around the text will cause renderers to display the asterisks as literal characters or collapse the heading into inline text).
 
 Then write three to four paragraphs that make the case for this specific detonation idea with the rigour of a closing argument. Cover four things in order.
 
