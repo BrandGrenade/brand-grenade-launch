@@ -474,6 +474,8 @@ function splitPropositionBlocks(text: string): Array<{ name: string; markdown: s
 const SelectiveInput = z.object({
   sessionId: z.string().uuid(),
   keepTerritories: z.array(z.string()).default([]),
+  feedback: z.string().max(10000).optional(),
+  previousOutput: z.string().max(100000).optional(),
 });
 
 /**
