@@ -656,7 +656,17 @@ function PipelineView() {
   }, [selectedId]);
   const [rationaleForId, setRationaleForId] = useState<string | null>(null);
   const [intelSubmitted, setIntelSubmitted] = useState(false);
-  const selected = STAGES.find((s) => s.id === selectedId)!;
+  // Defensive: selectedId may be a sentinel like "BRIEF" (View Brief panel) or
+  // any value not present in STAGES. STAGES.find then returns undefined, and
+  // downstream code (e.g. `selected.id === "01"`) would crash the entire
+  // pipeline page. Fall back to the first stage so the page keeps rendering;
+  // the BRIEF-specific branch is handled separately below.
+  const selectedStageMatch = STAGES.find((s) => s.id === selectedId);
+  if (!selectedStageMatch && selectedId !== "BRIEF") {
+    // eslint-disable-next-line no-console
+    console.warn("[pipeline] selectedId not in STAGES, falling back to first stage", { selectedId });
+  }
+  const selected = selectedStageMatch ?? STAGES[0];
   const selectedStatus = statuses[selectedId];
 
   // Load session metadata from DB.
