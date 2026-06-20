@@ -573,11 +573,13 @@ MOVEMENT THREE — THE DETONATION AND ITS INEVITABILITY
 
 The master detonation is the value supplied in the input labelled MASTER DETONATION — THE SELECTED DETONATION FROM STAGE 18. That value — and only that value — is "the detonation." Do not substitute a springboard direction, a creative territory, a headline mechanic, or the "primary recommended" springboard for the master detonation. The springboard directions listed in the CREATIVE SPRINGBOARD DIRECTIONS input are downstream creative territories that express the detonation; they are never the detonation itself.
 
-Reveal the master detonation prominently on the page. Use this exact format, verbatim, once, at the point of revelation in this section:
+Reveal the master detonation prominently on the page using the exact markdown structure shown below. This must match the visual prominence of the SMP proposition reveal elsewhere in the document — a large, bold, standalone heading-level line on its own line, not embedded in a paragraph and not wrapped in quotation marks or inline bold inside running prose. Output these three lines verbatim with one blank line between each, and nothing else on those lines:
 
-THE DETONATION
+**THE DETONATION**
 
-# **{master detonation line stated exactly as supplied in the MASTER DETONATION input — no paraphrase, no rewording, no shortening}**
+# {master detonation line stated exactly as supplied in the MASTER DETONATION input — no paraphrase, no rewording, no shortening, no surrounding quotes, no trailing punctuation added, no asterisks or other formatting characters wrapped around the line}
+
+The line beginning with `# ` must be a real markdown H1 — the `#` character followed by a single space followed by the detonation text on a single line, with a blank line before and after. Do not place the detonation inside a paragraph. Do not prefix or suffix it with any other words on the same line. Do not wrap it in `**...**` (the `#` already produces the heading weight; adding bold markers around the text will cause renderers to display the asterisks as literal characters or collapse the heading into inline text).
 
 Then write three to four paragraphs that make the case for this specific detonation idea with the rigour of a closing argument. Cover four things in order.
 
