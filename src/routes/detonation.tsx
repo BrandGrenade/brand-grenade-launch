@@ -302,11 +302,37 @@ function splitCardsLocal(text: string): LocalCard[] {
   const cleanName = (s: string) =>
     s.replace(/^#+\s*/, "").replace(/^\*+|\*+$/g, "").replace(/[.,;:\s]+$/g, "").trim();
 
-  // Primary strategy — top-level `---` separator lines. Both Stage 17 and
-  // Stage 18 emit exactly two between three candidate cards. Most reliable
-  // boundary; works whether the candidate has a name line or not.
+  // AUTHORITATIVE BOUNDARY: count "WHY THIS (DETONATION|TERRITORY)" anchors.
+  // Stage 17/18 emit exactly one per candidate. Use this count as ground
+  // truth and prefer it over any other structural cue.
+  const anchorRe = /WHY THIS (?:TERRITORY|DETONATION)/g;
+  const anchorPositions: number[] = [];
+  let am: RegExpExecArray | null;
+  while ((am = anchorRe.exec(t)) !== null) anchorPositions.push(am.index);
+  const anchorCount = anchorPositions.length;
+
+  const byAnchors = (): LocalCard[] => {
+    return anchorPositions.map((idx, i) => {
+      const start = i === 0 ? 0 : anchorPositions[i - 1];
+      const end = i + 1 < anchorPositions.length ? anchorPositions[i + 1] : t.length;
+      const seg = t.slice(start, end).trim();
+      const isDet = /WHY THIS DETONATION/i.test(seg);
+      const titleLine = seg.split("\n").map((l) => l.trim()).filter(Boolean)
+        .find((l) => /^[A-Z][A-Z0-9 '\-&/.,]{2,79}$/.test(l) && !l.endsWith(":"));
+      const fallback = isDet ? `Detonation ${i + 1}` : `Territory ${i + 1}`;
+      return {
+        id: `card-${i + 1}`,
+        name: cleanName(titleLine ?? fallback) || fallback,
+        markdown: seg,
+      };
+    });
+  };
+
+  // Strategy 1 — top-level `---` separator lines. Only trust this when the
+  // segment count matches the authoritative anchor count; otherwise the
+  // model has dropped a divider and we'd collapse candidates.
   const dashSegments = t.split(/\n\s*---+\s*\n/g).map((s) => s.trim()).filter(Boolean);
-  if (dashSegments.length >= 2) {
+  if (dashSegments.length >= 2 && (anchorCount === 0 || dashSegments.length === anchorCount)) {
     return dashSegments.map((seg, i) => {
       const lines = seg.split("\n").map((l) => l.trim()).filter(Boolean);
       const titleLine = lines.find(
@@ -324,6 +350,9 @@ function splitCardsLocal(text: string): LocalCard[] {
       };
     });
   }
+
+  // Strategy 2 — segment by WHY THIS anchors when count is reliable.
+  if (anchorCount >= 2) return byAnchors();
 
   const collect = (re: RegExp): Array<{ name: string; start: number }> => {
     const hits: Array<{ name: string; start: number }> = [];
@@ -351,27 +380,8 @@ function splitCardsLocal(text: string): LocalCard[] {
     matches = collect(new RegExp(`(?:^|\\n\\s*\\n)\\s*(${NAME})(?!:)\\s*\\n`, "g"));
   }
 
-  // Last resort: anchor on each "WHY THIS (TERRITORY|DETONATION)" occurrence
-  // and synthesise a generic name. Better to render 3 distinct cards with
-  // generic titles than collapse 3 candidates into a single wall of text.
+  if (matches.length === 0 && anchorCount >= 1) return byAnchors();
   if (matches.length === 0) {
-    const anchorRe = /WHY THIS (?:TERRITORY|DETONATION)/g;
-    const anchors: number[] = [];
-    let am: RegExpExecArray | null;
-    while ((am = anchorRe.exec(t)) !== null) anchors.push(am.index);
-    if (anchors.length >= 2) {
-      return anchors.map((idx, i) => {
-        const start = i === 0 ? 0 : anchors[i - 1];
-        const end = i + 1 < anchors.length ? anchors[i + 1] : t.length;
-        const seg = t.slice(start, end).trim();
-        const isDet = /WHY THIS DETONATION/i.test(seg);
-        return {
-          id: `card-${i + 1}`,
-          name: isDet ? `Detonation ${i + 1}` : `Territory ${i + 1}`,
-          markdown: seg,
-        };
-      });
-    }
     return [{ id: "card-1", name: "Territory", markdown: t }];
   }
 
