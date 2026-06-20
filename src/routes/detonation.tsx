@@ -566,20 +566,30 @@ type LocalScore = {
   composite: number | null;
   status: "PASS" | "REVIEW" | null;
 };
+// Separator between label and value: ASCII colon/hyphen, en-dash, em-dash.
+// Stage 20 prompt template renders dimensions as "Label — n/10" (em-dash),
+// so the parser must accept all three or every score reads as null.
+const SCORE_SEP = "[:\\-\\u2013\\u2014]?";
 function pickScore(block: string, label: string): number | null {
-  const re = new RegExp(`${label}\\s*[:\\-]?\\s*(\\d{1,2})\\s*/\\s*10`, "i");
+  const re = new RegExp(`${label}\\s*${SCORE_SEP}\\s*(\\d{1,2})\\s*/\\s*10`, "i");
   const m = block.match(re);
   return m ? parseInt(m[1], 10) : null;
 }
 function parseScoreLocal(output: string): { scoreBlock: string; score: LocalScore } {
   const idx = output.search(/BRIEF\s+QUALITY\s+SCORE/i);
   const scoreBlock = idx >= 0 ? output.slice(idx) : "";
-  const compositeMatch = scoreBlock.match(/COMPOSITE\s*[:\-]?\s*(\d{1,2})\s*\/\s*50/i);
-  const statusMatch = scoreBlock.match(/STATUS\s*[:\-]?\s*(PASS|REVIEW)/i);
+  const compositeMatch = scoreBlock.match(
+    new RegExp(`COMPOSITE\\s*${SCORE_SEP}\\s*(\\d{1,2})\\s*/\\s*50`, "i"),
+  );
+  const statusMatch = scoreBlock.match(
+    new RegExp(`STATUS\\s*${SCORE_SEP}\\s*(PASS|REVIEW)`, "i"),
+  );
   const parts = [
     pickScore(scoreBlock, "Emotional Clarity"),
     pickScore(scoreBlock, "Fame Invitation"),
-    pickScore(scoreBlock, "Distinctive Asset Integration"),
+    // Prompt uses "Distinctive Assets"; older variants use the longer
+    // "Distinctive Asset Integration". Accept both.
+    pickScore(scoreBlock, "Distinctive Assets?(?:\\s+Integration)?"),
     pickScore(scoreBlock, "Psychological Leverage"),
     pickScore(scoreBlock, "Creative SoV Ambition"),
   ];
