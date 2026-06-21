@@ -154,9 +154,20 @@ export const retryStage17b = createServerFn({ method: "POST" })
 
     const redirect = data.redirectInstructions["card-1"] ?? "";
     const system = appendRedirect(STAGE_17B_DETONATION_INTELLIGENCE_PROMPT, redirect);
+    const baseUser = buildStage17bUserMessage(session as never);
+    let userMessage = baseUser;
+    if (redirect.trim()) {
+      const { buildFeedbackInjection } = await import("./feedback-injection");
+      const { prefix, suffix } = buildFeedbackInjection({
+        feedback: redirect,
+        previousOutput: (session.stage_17b_output as string | null) ?? null,
+        stageLabel: "Stage 17B",
+      });
+      userMessage = `${prefix}${baseUser}${suffix}`;
+    }
     let output = await callClaude({
       systemPrompt: withPhase2Formatting(system),
-      userMessage: buildStage17bUserMessage(session as never),
+      userMessage,
       maxTokens: 64000,
       sessionId: data.sessionId,
       stageLabel: "Stage 17B (retry)",
