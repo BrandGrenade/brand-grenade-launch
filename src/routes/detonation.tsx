@@ -980,50 +980,6 @@ function Stage17({ session, onChange, goNext }: { session: SessionRow; onChange:
     finally { setBusy(false); }
   };
 
-  if (!stage16Complete) {
-    return (
-      <section>
-        <SectionTitle kicker="STAGE 17" title="Detonation Territory" subtitle="Three candidate territories to explore. Uncheck any to regenerate; add a redirect to steer the rewrite." />
-        <div
-          style={{
-            border: `1px solid ${AMBER}`,
-            borderRadius: 8,
-            padding: 20,
-            marginTop: 16,
-            backgroundColor: "rgba(255, 176, 0, 0.06)",
-          }}
-        >
-          <div style={{ color: AMBER, fontWeight: 600, marginBottom: 8, textTransform: "uppercase", fontSize: 11, letterSpacing: "0.12em" }}>
-            Stage 16 not complete
-          </div>
-          <p style={{ color: "var(--color-text-secondary)", margin: "0 0 16px", lineHeight: 1.55 }}>
-            Complete Stage 16 first — no Strategic Document has been generated for this session yet.
-          </p>
-          <Link
-            to="/pipeline"
-            search={{ session: session.id }}
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 8,
-              backgroundColor: AMBER,
-              color: "#0A0A0A",
-              border: `1px solid ${AMBER}`,
-              borderRadius: 6,
-              padding: "10px 16px",
-              textTransform: "uppercase",
-              fontSize: 11,
-              letterSpacing: "0.12em",
-              fontWeight: 600,
-              textDecoration: "none",
-            }}
-          >
-            Go to Stage 16
-          </Link>
-        </div>
-      </section>
-    );
-  }
 
   return (
     <section>
