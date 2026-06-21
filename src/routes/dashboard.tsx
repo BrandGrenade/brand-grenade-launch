@@ -464,30 +464,32 @@ function buildActions(s: DbSession, status: UIStatus, onDelete: () => void): Act
     icon: <Trash2 size={14} />,
     onClick: onDelete,
   };
-  const detonationAction: ActionConfig | null =
-    s.stage_16_consulting_output != null
-      ? {
-          key: "detonation",
-          label: "Detonation Room",
-          color: "#D4924A",
-          hoverBg: "#D4924A15",
-          icon: <Zap size={14} />,
-          to: s.stage_17_output != null ? "/detonation" : "/detonation/canvas",
-          search: { session: s.id },
-        }
-      : null;
+  // Strategy Room (Phase 1 pipeline) — always available for any session row.
+  const strategyAction: ActionConfig = {
+    key: "engine",
+    label: "Strategy Room",
+    color: "#8A8680",
+    hoverBg: "#1C1C1C",
+    icon: <Grid2x2 size={14} />,
+    to: "/pipeline",
+    search: { session: s.id },
+  };
+  // Detonation Room (Phase 2) — always available; destination depends on
+  // whether Stage 17 has produced output yet. NOT gated on stage_16, which
+  // is the post-Phase-2 document assembly step.
+  const detonationAction: ActionConfig = {
+    key: "detonation",
+    label: "Detonation Room",
+    color: "#D4924A",
+    hoverBg: "#D4924A15",
+    icon: <Zap size={14} />,
+    to: s.stage_17_output != null ? "/detonation" : "/detonation/canvas",
+    search: { session: s.id },
+  };
   if (status === "complete") {
     return [
-      {
-        key: "engine",
-        label: "Strategy Room",
-        color: "#8A8680",
-        hoverBg: "#1C1C1C",
-        icon: <Grid2x2 size={14} />,
-        to: "/pipeline",
-        search: { session: s.id },
-      },
-      ...(detonationAction ? [detonationAction] : []),
+      strategyAction,
+      detonationAction,
       {
         key: "deliverables",
         label: "Deliverables",
@@ -500,19 +502,7 @@ function buildActions(s: DbSession, status: UIStatus, onDelete: () => void): Act
       deleteAction,
     ];
   }
-  return [
-    {
-      key: "continue",
-      label: "Continue",
-      color: "#D4924A",
-      hoverBg: "#D4924A15",
-      icon: <Grid2x2 size={14} />,
-      to: "/pipeline",
-      search: { session: s.id },
-    },
-    ...(detonationAction ? [detonationAction] : []),
-    deleteAction,
-  ];
+  return [strategyAction, detonationAction, deleteAction];
 }
 
 function SessionsTable({
