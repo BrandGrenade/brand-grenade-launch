@@ -59,5 +59,8 @@ export async function assertUpstreamStageOutput(
   stageNumber: number,
 ): Promise<void> {
   if (stageNumber < 2) return;
-  await assertStageOutput(sessionId, stageNumber - 1, `Stage ${stageNumber}`);
+  // Stage 16 (document assembly) intentionally runs AFTER Phase 2 completes,
+  // not between Stage 15 and Stage 17. So Stage 17's upstream is Stage 15.
+  const upstream = stageNumber === 17 ? 15 : stageNumber - 1;
+  await assertStageOutput(sessionId, upstream, `Stage ${stageNumber}`);
 }
