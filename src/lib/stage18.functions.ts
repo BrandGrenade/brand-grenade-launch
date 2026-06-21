@@ -194,11 +194,22 @@ export const retryStage18 = createServerFn({ method: "POST" })
     const regenerated: Record<string, Card> = {};
     for (const id of regenerateIds) {
       const redirect = data.redirectInstructions[id] ?? "";
+      const rejectedCard = existing.find((c) => c.id === id) ?? null;
+      const keptCards = existing.filter(
+        (c) => c.id !== id && !regenerateIds.includes(c.id),
+      );
       let system = appendRedirect(STAGE_18_THE_DETONATION_PROMPT, redirect);
       if (data.courageRedirect) {
         system = appendFinalInstruction(system, COURAGE_REDIRECT_INSTRUCTION);
       }
-      const userMessage = `${baseUser}\n\nProduce ONE Detonation candidate (a single card with one ## heading). This will replace candidate ${id}.`;
+      const userMessage = await wrapPhase2SelectiveRetry({
+        baseUser,
+        redirect,
+        rejectedCard,
+        keptCards,
+        stageLabel: `Stage 18 (retry ${id}${data.courageRedirect ? " courage" : ""})`,
+        cardLabel: "Detonation",
+      });
       const text = await callClaude({
         systemPrompt: withPhase2Formatting(system),
         userMessage,
