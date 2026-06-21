@@ -934,23 +934,11 @@ function Stage17({ session, onChange, goNext }: { session: SessionRow; onChange:
     finally { setBusy(false); }
   };
 
-  // Stage 16 gate — Stage 17 cannot run until this session has its own
-  // Strategic Document generated (at least one format output + format set).
-  // Must work for resurrected sessions: we check THIS session's row, not
-  // any prior session that may have completed Stage 16.
-  const stage16Complete = Boolean(
-    session.stage_16_format &&
-      (session.stage_16_consulting_output ||
-        session.stage_16_agency_output ||
-        session.stage_16_workshop_output ||
-        session.stage_16_vision_output),
-  );
-
-  // Auto-run Stage 17 on first arrival if SMP exists, Stage 16 is complete,
-  // and no output yet.
+  // Auto-run Stage 17 on first arrival if SMP exists and no output yet.
+  // NOTE: Stage 16 (document assembly) intentionally runs AFTER Phase 2,
+  // not before — Stage 17 depends on Stage 15, not Stage 16.
   useEffect(() => {
     if (
-      stage16Complete &&
       session.selected_smp &&
       !session.stage_17_output &&
       !output &&
@@ -961,7 +949,7 @@ function Stage17({ session, onChange, goNext }: { session: SessionRow; onChange:
       void handleRun();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stage16Complete, session.selected_smp, session.stage_17_output, output]);
+  }, [session.selected_smp, session.stage_17_output, output]);
 
 
   const handleRetry = async () => {
