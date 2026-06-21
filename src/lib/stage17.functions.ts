@@ -18,6 +18,7 @@ import {
   formatBrandIntelligence,
   type Card,
   withPhase2Formatting,
+  wrapPhase2SelectiveRetry,
 } from "./phase2-shared";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertSessionOwner } from "@/lib/auth-helpers.server";
@@ -233,11 +234,25 @@ export const retryStage17 = createServerFn({ method: "POST" })
     }
 
     // Selective path: regenerate one card per id (1:1 with redirects).
+    // Each call sees (a) the rejected card verbatim, (b) the kept cards as
+    // forbidden territory, (c) the redirect at top AND bottom of the user
+    // message, AND (d) the redirect appended to the system prompt.
     const regenerated: Record<string, Card> = {};
     for (const id of regenerateIds) {
       const redirect = data.redirectInstructions[id] ?? "";
+      const rejectedCard = existing.find((c) => c.id === id) ?? null;
+      const keptCards = existing.filter(
+        (c) => c.id !== id && !regenerateIds.includes(c.id),
+      );
       const system = appendRedirect(STAGE_17_DETONATION_TERRITORY_PROMPT, redirect);
-      const userMessage = `${baseUser}\n\nProduce ONE Detonation Territory candidate (a single card with one ## heading). This will replace candidate ${id}.`;
+      const userMessage = await wrapPhase2SelectiveRetry({
+        baseUser,
+        redirect,
+        rejectedCard,
+        keptCards,
+        stageLabel: `Stage 17 (retry ${id})`,
+        cardLabel: "Detonation Territory",
+      });
       const text = await callClaude({
         systemPrompt: withPhase2Formatting(system),
         userMessage,

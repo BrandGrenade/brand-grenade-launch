@@ -231,6 +231,60 @@ export function appendFinalInstruction(systemPrompt: string, instruction: string
   return `${systemPrompt}\n\n---\n\n${t}`;
 }
 
+/** Wrap a Phase 2 selective-retry user message with the same mandatory
+ *  redirect sandwich the Phase 1 amendment path uses, plus an
+ *  "already-taken territory" block built from the cards the human kept.
+ *  Brings Phase 2 selective retries to parity with Stage 1/8/10/12:
+ *    - rejected card shown verbatim under DO NOT REPRODUCE
+ *    - kept cards shown by name + first lines as forbidden territory
+ *    - redirect appears at top AND bottom of the user message
+ *  Caller should still pass the redirect to `appendRedirect` on the system
+ *  prompt as belt-and-braces. */
+export async function wrapPhase2SelectiveRetry(args: {
+  baseUser: string;
+  redirect: string;
+  rejectedCard: Card | null;
+  keptCards: Card[];
+  stageLabel: string;
+  cardLabel?: string;
+}): Promise<string> {
+  const redirect = args.redirect.trim();
+  const rejected = args.rejectedCard?.markdown.trim() ?? "";
+  const label = args.cardLabel ?? "candidate";
+
+  const keptBlock = args.keptCards.length
+    ? `\n\n==== ${label.toUpperCase()}S ALREADY SELECTED — YOURS MUST BE CATEGORICALLY DIFFERENT ====
+The human reviewer is keeping the following candidate${args.keptCards.length === 1 ? "" : "s"}.
+Your new candidate MUST occupy a categorically different creative space — different
+mechanism, different metaphor, different cultural register. Do not echo, paraphrase,
+or adjacently restate any of them.
+
+${args.keptCards
+  .map(
+    (c, i) =>
+      `${i + 1}. ${c.name}\n${c.markdown.split("\n").slice(0, 6).join("\n").trim()}`,
+  )
+  .join("\n\n---\n\n")}
+==== END ALREADY SELECTED ====`
+    : "";
+
+  if (!redirect) {
+    const instruction = `\n\nProduce ONE ${label} (a single card with one heading).`;
+    return `${args.baseUser}${keptBlock}${instruction}`;
+  }
+
+  const { buildFeedbackInjection } = await import("./feedback-injection");
+  const { prefix, suffix } = buildFeedbackInjection({
+    feedback: redirect,
+    previousOutput: rejected || null,
+    stageLabel: args.stageLabel,
+  });
+
+  const instruction = `\n\nProduce ONE ${label} (a single card with one heading). It must visibly satisfy every item in the HUMAN DIRECTION above and must not reproduce the rejected previous output.`;
+
+  return `${prefix}${args.baseUser}${keptBlock}${instruction}${suffix}`;
+}
+
 export type SessionTruths = {
   product: string | null;
   consumer: string | null;

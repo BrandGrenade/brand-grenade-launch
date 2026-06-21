@@ -241,6 +241,11 @@ async function prepareCall(
     if (amendment) {
       amendmentKey = amendment.key;
       const alreadyWrapped = args.userMessage.includes(AMENDMENT_MARKER);
+      const fbLen = (amendment.entry.feedback ?? "").length;
+      const prevLen = (amendment.entry.previousOutput ?? "").length;
+      console.log(
+        `[AMENDMENT] stage=${args.stageNumber ?? "?"} session=${args.sessionId ?? "?"} event=apply fb_chars=${fbLen} prev_chars=${prevLen} wrapped_by_caller=${alreadyWrapped}`,
+      );
       if (!alreadyWrapped) {
         const { buildFeedbackInjection } = await import("./feedback-injection");
         const { prefix, suffix } = buildFeedbackInjection({
@@ -250,6 +255,10 @@ async function prepareCall(
         });
         effectiveUserMessage = `${prefix}${args.userMessage}${suffix}`;
       }
+    } else {
+      console.log(
+        `[AMENDMENT] stage=${args.stageNumber ?? "?"} session=${args.sessionId ?? "?"} event=none`,
+      );
     }
   }
 
