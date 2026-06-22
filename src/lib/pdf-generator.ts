@@ -550,13 +550,27 @@ async function drawContent(doc: jsPDF, input: PdfInput) {
   const ensureSpace = (need: number) => {
     if (y + need > PAGE_H - M_BOTTOM) newContentPage();
   };
+  /** Reserve `need` pts on the current page (start a new page if it won't fit
+   * AND would fit on a fresh page). Call BEFORE drawing decoration so
+   * bullets / bars / backgrounds never get orphaned from their text. */
+  const keepTogether = (need: number) => {
+    const avail = PAGE_H - M_BOTTOM - y;
+    const fullPage = PAGE_H - M_TOP - M_BOTTOM;
+    if (need > avail && need <= fullPage) newContentPage();
+  };
+
+  const wrapLines = (text: string, sizePt: number, weight: "normal" | "bold" | "italic", maxW: number) => {
+    setFont(doc, weight);
+    doc.setFontSize(sizePt);
+    return cachedSplitText(doc, stripMd(text), maxW);
+  };
 
   const writeWrapped = (
     text: string,
     sizePt: number,
     color: string,
     weight: "normal" | "bold" | "italic" = "normal",
-    lineFactor = 1.85,
+    lineFactor = 1.5,
     leftPad = 0,
     maxW = COL_CONTENT_W,
   ) => {
@@ -567,6 +581,27 @@ async function drawContent(doc: jsPDF, input: PdfInput) {
     const lh = sizePt * lineFactor;
     for (const ln of lines) {
       ensureSpace(lh);
+      doc.text(ln, M_SIDE + leftPad, y + sizePt);
+      y += lh;
+    }
+  };
+  /** Same as writeWrapped, but never inserts a page break. Caller must have
+   * already reserved enough vertical space via keepTogether(). */
+  const writeWrappedNoBreak = (
+    text: string,
+    sizePt: number,
+    color: string,
+    weight: "normal" | "bold" | "italic" = "normal",
+    lineFactor = 1.5,
+    leftPad = 0,
+    maxW = COL_CONTENT_W,
+  ) => {
+    doc.setTextColor(color);
+    setFont(doc, weight);
+    doc.setFontSize(sizePt);
+    const lines = cachedSplitText(doc, stripMd(text), maxW - leftPad);
+    const lh = sizePt * lineFactor;
+    for (const ln of lines) {
       doc.text(ln, M_SIDE + leftPad, y + sizePt);
       y += lh;
     }
