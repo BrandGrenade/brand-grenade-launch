@@ -627,24 +627,23 @@ async function drawContent(doc: jsPDF, input: PdfInput) {
       }
       case "h2": {
         if (!opts.appendix) currentSection = stripMd(b.text);
-        if (PAGE_H - M_BOTTOM - y < 80) newContentPage();
-        else {
-          doc.setFillColor(C_PAGE);
-          doc.rect(0, 0, PAGE_W, M_TOP - 8, "F");
-          drawChrome();
-        }
         const size = 18;
         const lh = size * 1.25;
-        ensureSpace(lh + 24);
+        const titleLines = wrapLines(b.text, size, "bold", COL_CONTENT_W - 14);
+        const blockH = 12 + titleLines.length * lh + 12;
+        keepTogether(blockH + 24);
+        // Repaint header band if we stayed on the same page (clears any prior
+        // chrome residue around the new heading).
+        doc.setFillColor(C_PAGE);
+        doc.rect(0, 0, PAGE_W, M_TOP - 8, "F");
+        drawChrome();
         y += 12;
         doc.setFillColor(C_ACCENT);
-        doc.rect(M_SIDE, y + 2, 3, size + 4, "F");
+        doc.rect(M_SIDE, y + 2, 3, titleLines.length * lh + 4, "F");
         doc.setTextColor(C_TEXT);
         setFont(doc, "bold");
         doc.setFontSize(size);
-        const titleLines = cachedSplitText(doc, stripMd(b.text), COL_CONTENT_W - 14);
         for (const ln of titleLines) {
-          ensureSpace(lh);
           doc.text(ln, M_SIDE + 12, y + size);
           y += lh;
         }
@@ -652,17 +651,22 @@ async function drawContent(doc: jsPDF, input: PdfInput) {
         break;
       }
       case "h3": {
+        const size = 14;
+        const lh = size * 1.3;
+        const lines = wrapLines(b.text, size, "bold", COL_CONTENT_W);
+        // Reserve heading + ~2 lines of following body to prevent widow headings.
+        keepTogether(16 + lines.length * lh + 4 + 11.5 * 1.5 * 2);
         y += 16;
-        writeWrapped(b.text, 14, C_TEXT, "bold", 1.3);
+        writeWrappedNoBreak(b.text, size, C_TEXT, "bold", 1.3);
         y += 4;
         break;
       }
       case "label": {
+        keepTogether(8 + 16 + 11.5 * 1.5);
         y += 8;
         doc.setTextColor(C_ACCENT);
         setFont(doc, "bold");
         doc.setFontSize(9);
-        ensureSpace(14);
         setTracking(doc, 0.12);
         doc.text(stripMd(b.text).toUpperCase(), M_SIDE, y + 9);
         clearTracking(doc);
@@ -670,23 +674,31 @@ async function drawContent(doc: jsPDF, input: PdfInput) {
         break;
       }
       case "callout": {
-        y += 12;
         const text = stripMd(b.text);
         const calloutMaxW = CONTENT_W * 0.85 - 28;
-        setFont(doc, "italic");
-        doc.setFontSize(15);
-        const lines = cachedSplitText(doc, text, calloutMaxW);
-        const lh = 15 * 1.65;
+        const lines = wrapLines(text, 14, "italic", calloutMaxW);
+        const lh = 14 * 1.55;
         const blockH = lines.length * lh + 24;
-        ensureSpace(blockH);
+        const fullPage = PAGE_H - M_TOP - M_BOTTOM;
+        y += 12;
+        if (blockH > fullPage - 40) {
+          // Too tall to box — render as a plain italic pull-quote instead so
+          // it can flow across pages without overflowing the page bottom.
+          writeWrapped(text, 13, C_TEXT, "italic", 1.55);
+          y += 12;
+          break;
+        }
+        keepTogether(blockH + 12);
         doc.setFillColor(C_SURFACE_2);
         doc.rect(M_SIDE, y, CONTENT_W * 0.85, blockH, "F");
         doc.setFillColor(C_ACCENT);
         doc.rect(M_SIDE, y, 3, blockH, "F");
         doc.setTextColor(C_TEXT);
+        setFont(doc, "italic");
+        doc.setFontSize(14);
         let cy = y + 12;
         for (const ln of lines) {
-          doc.text(ln, M_SIDE + 16, cy + 15);
+          doc.text(ln, M_SIDE + 16, cy + 14);
           cy += lh;
         }
         y += blockH + 12;
@@ -694,10 +706,15 @@ async function drawContent(doc: jsPDF, input: PdfInput) {
       }
       case "li": {
         const text = stripMd(b.text);
-        ensureSpace(16);
+        const size = 11.5;
+        const lh = size * 1.5;
+        const lines = wrapLines(text, size, "normal", COL_CONTENT_W - 20);
+        // Reserve bullet + at least the first line on the same page.
+        keepTogether(lh);
         doc.setFillColor(C_ACCENT);
         doc.circle(M_SIDE + 6, y + 7, 2, "F");
-        writeWrapped(text, 11.5, C_TEXT, "normal", 1.6, 20);
+        writeWrapped(text, size, C_TEXT, "normal", 1.5, 20);
+        void lines;
         y += 2;
         break;
       }
@@ -725,10 +742,11 @@ async function drawContent(doc: jsPDF, input: PdfInput) {
           newContentPage();
           break;
         }
-        writeWrapped(text, 11.5, C_TEXT, "normal", 1.85);
+        writeWrapped(text, 11.5, C_TEXT, "normal", 1.5);
         y += 6;
         break;
       }
+
     }
   };
 
