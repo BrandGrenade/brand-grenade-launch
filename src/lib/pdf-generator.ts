@@ -386,20 +386,30 @@ function drawPropositionReveal(doc: jsPDF, smp: string) {
 
   doc.setTextColor(C_WHITE);
   setFont(doc, "bold");
-  doc.setFontSize(36); // 48px screen ≈ 36pt
-  const maxW = 420; // ~560px screen
-  const lines = cachedSplitText(doc, stripMd(smp), maxW);
-  const lh = 36 * 1.25;
-  const totalH = lines.length * lh;
+  const maxW = 440;
+  const maxBlockH = PAGE_H - M_TOP - M_BOTTOM - 80;
+  // Auto-shrink the proposition until it fits inside the safe area.
+  let size = 36;
+  let lines: string[] = [];
+  let lh = 0;
+  let totalH = 0;
+  for (; size >= 18; size -= 2) {
+    doc.setFontSize(size);
+    lines = doc.splitTextToSize(stripMd(smp), maxW) as string[];
+    lh = size * 1.25;
+    totalH = lines.length * lh;
+    if (totalH <= maxBlockH) break;
+  }
+  doc.setFontSize(size);
   const startY = (PAGE_H - totalH) / 2;
   lines.forEach((ln, i) => {
     doc.text(ln, PAGE_W / 2, startY + i * lh, { align: "center" });
   });
 
-  // 40px gap then amber rule 60x2 centred
   doc.setFillColor(C_ACCENT);
   doc.rect(PAGE_W / 2 - 30, startY + totalH + 30, 60, 2, "F");
 }
+
 
 // ─── Content blocks ─────────────────────────────────────────────────────
 type Block =
