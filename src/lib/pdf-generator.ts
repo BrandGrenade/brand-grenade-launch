@@ -962,7 +962,7 @@ async function drawContent(doc: jsPDF, input: PdfInput) {
       "The methodology is designed to prevent the most common failure in brand strategy — the gravitational pull toward safe, familiar territories that produces category sameness. Every stage is constructed to enforce divergence, validate distinctiveness, and reject outputs that drift toward what competitors already own.",
     ];
     for (const para of methodology) {
-      writeWrapped(para, 11.5, C_TEXT, "normal", 1.85);
+      writeWrapped(para, 11.5, C_TEXT, "normal", 1.5);
       y += 8;
     }
 
