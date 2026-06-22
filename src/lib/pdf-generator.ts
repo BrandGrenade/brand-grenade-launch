@@ -854,23 +854,35 @@ async function drawContent(doc: jsPDF, input: PdfInput) {
       const isSelected =
         selectedNorm.length > 0 && normaliseForMatch(p.line) === selectedNorm;
 
+      // Estimate full card height so the whole card stays on one page.
+      const titleLines = wrapLines(p.line, 14, "bold", COL_CONTENT_W);
+      const rationale = firstSentence(p.owns, 50);
+      const rationaleLines = rationale
+        ? wrapLines(rationale, 11, "normal", COL_CONTENT_W)
+        : [];
+      const cardH =
+        14 + 16 // label
+        + titleLines.length * (14 * 1.35) + 4
+        + 22 // score+badge row
+        + rationaleLines.length * (11 * 1.55)
+        + 12;
+      keepTogether(cardH);
+
       // PROPOSITION N label
       y += 14;
       doc.setTextColor(C_ACCENT);
       setFont(doc, "bold");
       doc.setFontSize(9);
-      ensureSpace(14);
       setTracking(doc, 0.12);
       doc.text(`PROPOSITION ${idx + 1}`, M_SIDE, y + 9);
       clearTracking(doc);
       y += 16;
 
       // Proposition line — sub-heading
-      writeWrapped(p.line, 14, C_TEXT, "bold", 1.35);
+      writeWrappedNoBreak(p.line, 14, C_TEXT, "bold", 1.35);
       y += 4;
 
       // Composite score + status badge row
-      ensureSpace(22);
       doc.setTextColor(C_ACCENT);
       setFont(doc, "bold");
       doc.setFontSize(9);
@@ -895,8 +907,7 @@ async function drawContent(doc: jsPDF, input: PdfInput) {
       const badgeX = M_SIDE + scoreW + 18;
       const badgeY = y - 2;
       if (isSelected) {
-        // green tint background + border
-        doc.setFillColor(234, 240, 233); // #4A7C59 @ ~15%
+        doc.setFillColor(234, 240, 233);
         doc.rect(badgeX, badgeY, badgeW, badgeH, "F");
         doc.setDrawColor("#4A7C59");
         doc.setLineWidth(0.6);
@@ -911,11 +922,10 @@ async function drawContent(doc: jsPDF, input: PdfInput) {
       clearTracking(doc);
       y += 18;
 
-      // One-sentence strategic rationale from "what it owns"
-      const rationale = firstSentence(p.owns, 50);
       if (rationale) {
-        writeWrapped(rationale, 11, C_TEXT_2, "normal", 1.6);
+        writeWrappedNoBreak(rationale, 11, C_TEXT_2, "normal", 1.55);
       }
+
 
       // Divider rule between propositions (not after last)
       if (idx < props.length - 1) {
