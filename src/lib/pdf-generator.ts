@@ -386,20 +386,30 @@ function drawPropositionReveal(doc: jsPDF, smp: string) {
 
   doc.setTextColor(C_WHITE);
   setFont(doc, "bold");
-  doc.setFontSize(36); // 48px screen ≈ 36pt
-  const maxW = 420; // ~560px screen
-  const lines = cachedSplitText(doc, stripMd(smp), maxW);
-  const lh = 36 * 1.25;
-  const totalH = lines.length * lh;
+  const maxW = 440;
+  const maxBlockH = PAGE_H - M_TOP - M_BOTTOM - 80;
+  // Auto-shrink the proposition until it fits inside the safe area.
+  let size = 36;
+  let lines: string[] = [];
+  let lh = 0;
+  let totalH = 0;
+  for (; size >= 18; size -= 2) {
+    doc.setFontSize(size);
+    lines = doc.splitTextToSize(stripMd(smp), maxW) as string[];
+    lh = size * 1.25;
+    totalH = lines.length * lh;
+    if (totalH <= maxBlockH) break;
+  }
+  doc.setFontSize(size);
   const startY = (PAGE_H - totalH) / 2;
   lines.forEach((ln, i) => {
     doc.text(ln, PAGE_W / 2, startY + i * lh, { align: "center" });
   });
 
-  // 40px gap then amber rule 60x2 centred
   doc.setFillColor(C_ACCENT);
   doc.rect(PAGE_W / 2 - 30, startY + totalH + 30, 60, 2, "F");
 }
+
 
 // ─── Content blocks ─────────────────────────────────────────────────────
 type Block =
@@ -550,13 +560,27 @@ async function drawContent(doc: jsPDF, input: PdfInput) {
   const ensureSpace = (need: number) => {
     if (y + need > PAGE_H - M_BOTTOM) newContentPage();
   };
+  /** Reserve `need` pts on the current page (start a new page if it won't fit
+   * AND would fit on a fresh page). Call BEFORE drawing decoration so
+   * bullets / bars / backgrounds never get orphaned from their text. */
+  const keepTogether = (need: number) => {
+    const avail = PAGE_H - M_BOTTOM - y;
+    const fullPage = PAGE_H - M_TOP - M_BOTTOM;
+    if (need > avail && need <= fullPage) newContentPage();
+  };
+
+  const wrapLines = (text: string, sizePt: number, weight: "normal" | "bold" | "italic", maxW: number) => {
+    setFont(doc, weight);
+    doc.setFontSize(sizePt);
+    return cachedSplitText(doc, stripMd(text), maxW);
+  };
 
   const writeWrapped = (
     text: string,
     sizePt: number,
     color: string,
     weight: "normal" | "bold" | "italic" = "normal",
-    lineFactor = 1.85,
+    lineFactor = 1.5,
     leftPad = 0,
     maxW = COL_CONTENT_W,
   ) => {
@@ -567,6 +591,27 @@ async function drawContent(doc: jsPDF, input: PdfInput) {
     const lh = sizePt * lineFactor;
     for (const ln of lines) {
       ensureSpace(lh);
+      doc.text(ln, M_SIDE + leftPad, y + sizePt);
+      y += lh;
+    }
+  };
+  /** Same as writeWrapped, but never inserts a page break. Caller must have
+   * already reserved enough vertical space via keepTogether(). */
+  const writeWrappedNoBreak = (
+    text: string,
+    sizePt: number,
+    color: string,
+    weight: "normal" | "bold" | "italic" = "normal",
+    lineFactor = 1.5,
+    leftPad = 0,
+    maxW = COL_CONTENT_W,
+  ) => {
+    doc.setTextColor(color);
+    setFont(doc, weight);
+    doc.setFontSize(sizePt);
+    const lines = cachedSplitText(doc, stripMd(text), maxW - leftPad);
+    const lh = sizePt * lineFactor;
+    for (const ln of lines) {
       doc.text(ln, M_SIDE + leftPad, y + sizePt);
       y += lh;
     }
@@ -592,24 +637,23 @@ async function drawContent(doc: jsPDF, input: PdfInput) {
       }
       case "h2": {
         if (!opts.appendix) currentSection = stripMd(b.text);
-        if (PAGE_H - M_BOTTOM - y < 80) newContentPage();
-        else {
-          doc.setFillColor(C_PAGE);
-          doc.rect(0, 0, PAGE_W, M_TOP - 8, "F");
-          drawChrome();
-        }
         const size = 18;
         const lh = size * 1.25;
-        ensureSpace(lh + 24);
+        const titleLines = wrapLines(b.text, size, "bold", COL_CONTENT_W - 14);
+        const blockH = 12 + titleLines.length * lh + 12;
+        keepTogether(blockH + 24);
+        // Repaint header band if we stayed on the same page (clears any prior
+        // chrome residue around the new heading).
+        doc.setFillColor(C_PAGE);
+        doc.rect(0, 0, PAGE_W, M_TOP - 8, "F");
+        drawChrome();
         y += 12;
         doc.setFillColor(C_ACCENT);
-        doc.rect(M_SIDE, y + 2, 3, size + 4, "F");
+        doc.rect(M_SIDE, y + 2, 3, titleLines.length * lh + 4, "F");
         doc.setTextColor(C_TEXT);
         setFont(doc, "bold");
         doc.setFontSize(size);
-        const titleLines = cachedSplitText(doc, stripMd(b.text), COL_CONTENT_W - 14);
         for (const ln of titleLines) {
-          ensureSpace(lh);
           doc.text(ln, M_SIDE + 12, y + size);
           y += lh;
         }
@@ -617,17 +661,22 @@ async function drawContent(doc: jsPDF, input: PdfInput) {
         break;
       }
       case "h3": {
+        const size = 14;
+        const lh = size * 1.3;
+        const lines = wrapLines(b.text, size, "bold", COL_CONTENT_W);
+        // Reserve heading + ~2 lines of following body to prevent widow headings.
+        keepTogether(16 + lines.length * lh + 4 + 11.5 * 1.5 * 2);
         y += 16;
-        writeWrapped(b.text, 14, C_TEXT, "bold", 1.3);
+        writeWrappedNoBreak(b.text, size, C_TEXT, "bold", 1.3);
         y += 4;
         break;
       }
       case "label": {
+        keepTogether(8 + 16 + 11.5 * 1.5);
         y += 8;
         doc.setTextColor(C_ACCENT);
         setFont(doc, "bold");
         doc.setFontSize(9);
-        ensureSpace(14);
         setTracking(doc, 0.12);
         doc.text(stripMd(b.text).toUpperCase(), M_SIDE, y + 9);
         clearTracking(doc);
@@ -635,23 +684,31 @@ async function drawContent(doc: jsPDF, input: PdfInput) {
         break;
       }
       case "callout": {
-        y += 12;
         const text = stripMd(b.text);
         const calloutMaxW = CONTENT_W * 0.85 - 28;
-        setFont(doc, "italic");
-        doc.setFontSize(15);
-        const lines = cachedSplitText(doc, text, calloutMaxW);
-        const lh = 15 * 1.65;
+        const lines = wrapLines(text, 14, "italic", calloutMaxW);
+        const lh = 14 * 1.55;
         const blockH = lines.length * lh + 24;
-        ensureSpace(blockH);
+        const fullPage = PAGE_H - M_TOP - M_BOTTOM;
+        y += 12;
+        if (blockH > fullPage - 40) {
+          // Too tall to box — render as a plain italic pull-quote instead so
+          // it can flow across pages without overflowing the page bottom.
+          writeWrapped(text, 13, C_TEXT, "italic", 1.55);
+          y += 12;
+          break;
+        }
+        keepTogether(blockH + 12);
         doc.setFillColor(C_SURFACE_2);
         doc.rect(M_SIDE, y, CONTENT_W * 0.85, blockH, "F");
         doc.setFillColor(C_ACCENT);
         doc.rect(M_SIDE, y, 3, blockH, "F");
         doc.setTextColor(C_TEXT);
+        setFont(doc, "italic");
+        doc.setFontSize(14);
         let cy = y + 12;
         for (const ln of lines) {
-          doc.text(ln, M_SIDE + 16, cy + 15);
+          doc.text(ln, M_SIDE + 16, cy + 14);
           cy += lh;
         }
         y += blockH + 12;
@@ -659,10 +716,15 @@ async function drawContent(doc: jsPDF, input: PdfInput) {
       }
       case "li": {
         const text = stripMd(b.text);
-        ensureSpace(16);
+        const size = 11.5;
+        const lh = size * 1.5;
+        const lines = wrapLines(text, size, "normal", COL_CONTENT_W - 20);
+        // Reserve bullet + at least the first line on the same page.
+        keepTogether(lh);
         doc.setFillColor(C_ACCENT);
         doc.circle(M_SIDE + 6, y + 7, 2, "F");
-        writeWrapped(text, 11.5, C_TEXT, "normal", 1.6, 20);
+        writeWrapped(text, size, C_TEXT, "normal", 1.5, 20);
+        void lines;
         y += 2;
         break;
       }
@@ -690,10 +752,11 @@ async function drawContent(doc: jsPDF, input: PdfInput) {
           newContentPage();
           break;
         }
-        writeWrapped(text, 11.5, C_TEXT, "normal", 1.85);
+        writeWrapped(text, 11.5, C_TEXT, "normal", 1.5);
         y += 6;
         break;
       }
+
     }
   };
 
@@ -791,23 +854,35 @@ async function drawContent(doc: jsPDF, input: PdfInput) {
       const isSelected =
         selectedNorm.length > 0 && normaliseForMatch(p.line) === selectedNorm;
 
+      // Estimate full card height so the whole card stays on one page.
+      const titleLines = wrapLines(p.line, 14, "bold", COL_CONTENT_W);
+      const rationale = firstSentence(p.owns, 50);
+      const rationaleLines = rationale
+        ? wrapLines(rationale, 11, "normal", COL_CONTENT_W)
+        : [];
+      const cardH =
+        14 + 16 // label
+        + titleLines.length * (14 * 1.35) + 4
+        + 22 // score+badge row
+        + rationaleLines.length * (11 * 1.55)
+        + 12;
+      keepTogether(cardH);
+
       // PROPOSITION N label
       y += 14;
       doc.setTextColor(C_ACCENT);
       setFont(doc, "bold");
       doc.setFontSize(9);
-      ensureSpace(14);
       setTracking(doc, 0.12);
       doc.text(`PROPOSITION ${idx + 1}`, M_SIDE, y + 9);
       clearTracking(doc);
       y += 16;
 
       // Proposition line — sub-heading
-      writeWrapped(p.line, 14, C_TEXT, "bold", 1.35);
+      writeWrappedNoBreak(p.line, 14, C_TEXT, "bold", 1.35);
       y += 4;
 
       // Composite score + status badge row
-      ensureSpace(22);
       doc.setTextColor(C_ACCENT);
       setFont(doc, "bold");
       doc.setFontSize(9);
@@ -832,8 +907,7 @@ async function drawContent(doc: jsPDF, input: PdfInput) {
       const badgeX = M_SIDE + scoreW + 18;
       const badgeY = y - 2;
       if (isSelected) {
-        // green tint background + border
-        doc.setFillColor(234, 240, 233); // #4A7C59 @ ~15%
+        doc.setFillColor(234, 240, 233);
         doc.rect(badgeX, badgeY, badgeW, badgeH, "F");
         doc.setDrawColor("#4A7C59");
         doc.setLineWidth(0.6);
@@ -848,11 +922,10 @@ async function drawContent(doc: jsPDF, input: PdfInput) {
       clearTracking(doc);
       y += 18;
 
-      // One-sentence strategic rationale from "what it owns"
-      const rationale = firstSentence(p.owns, 50);
       if (rationale) {
-        writeWrapped(rationale, 11, C_TEXT_2, "normal", 1.6);
+        writeWrappedNoBreak(rationale, 11, C_TEXT_2, "normal", 1.55);
       }
+
 
       // Divider rule between propositions (not after last)
       if (idx < props.length - 1) {
@@ -889,7 +962,7 @@ async function drawContent(doc: jsPDF, input: PdfInput) {
       "The methodology is designed to prevent the most common failure in brand strategy — the gravitational pull toward safe, familiar territories that produces category sameness. Every stage is constructed to enforce divergence, validate distinctiveness, and reject outputs that drift toward what competitors already own.",
     ];
     for (const para of methodology) {
-      writeWrapped(para, 11.5, C_TEXT, "normal", 1.85);
+      writeWrapped(para, 11.5, C_TEXT, "normal", 1.5);
       y += 8;
     }
 
@@ -935,7 +1008,7 @@ async function drawContent(doc: jsPDF, input: PdfInput) {
 export async function generateStrategicPlatformPdf(input: PdfInput) {
   console.log("PDF: start", Date.now());
   // Hard cap on stage 16 length to prevent runaway page counts.
-  const MAX_CHARS = 32000;
+  const MAX_CHARS = 60000;
   if (input.stage16Output && input.stage16Output.length > MAX_CHARS) {
     input = { ...input, stage16Output: input.stage16Output.substring(0, MAX_CHARS) };
   }
