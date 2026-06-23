@@ -1,5 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { MoreHorizontal, Grid2x2, FileText, Trash2, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { TopNav } from "@/components/TopNav";
@@ -12,6 +13,7 @@ import {
   type SavedBrief,
 } from "@/components/SavedBriefsLibrary";
 import { supabase } from "@/integrations/supabase/client";
+import { createSession } from "@/lib/stage1.functions";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -80,16 +82,50 @@ function derivePhase2ButtonState(s: DbSession): Phase2ButtonState {
 
 function Dashboard() {
   const navigate = useNavigate();
+  const createSessionFn = useServerFn(createSession);
   const [sessions, setSessions] = useState<DbSession[]>([]);
   const [loading, setLoading] = useState(true);
   const [pendingDelete, setPendingDelete] = useState<DbSession | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [pendingLegacy, setPendingLegacy] = useState<SavedBrief | null>(null);
+  const [legacyRunning, setLegacyRunning] = useState(false);
 
   const handleLoadSavedBrief = (b: SavedBrief) => {
+    // Legacy briefs (pre-structured-editor) have no brief_fields — there is
+    // nothing to pre-populate the 11-field form with. Route straight to the
+    // raw-text pipeline path (the journey these briefs originally ran under),
+    // gated by a confirm so a click doesn't silently launch a run.
+    if (!b.brief_fields) {
+      setPendingLegacy(b);
+      return;
+    }
     if (typeof window !== "undefined") {
       sessionStorage.setItem(PENDING_BRIEF_STORAGE_KEY, JSON.stringify(b));
     }
     navigate({ to: "/brief" });
+  };
+
+  const handleLegacyRun = async () => {
+    if (!pendingLegacy || legacyRunning) return;
+    setLegacyRunning(true);
+    try {
+      const { sessionId } = await createSessionFn({
+        data: {
+          brandName: pendingLegacy.brand_name,
+          category: pendingLegacy.category || "Unspecified",
+          strategicMode: "Auto",
+          briefText: pendingLegacy.brief_text,
+          // briefFields intentionally omitted — brief_versions stays [] so the
+          // Stage 1B completeness gate is OFF (legacy raw-text path).
+        },
+      });
+      setPendingLegacy(null);
+      navigate({ to: "/pipeline", search: { session: sessionId } });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Failed to start run";
+      toast.error(msg);
+      setLegacyRunning(false);
+    }
   };
 
   const handleDelete = async () => {
