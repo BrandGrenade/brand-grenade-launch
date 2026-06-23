@@ -1,5 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { MoreHorizontal, Grid2x2, FileText, Trash2, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { TopNav } from "@/components/TopNav";
@@ -12,6 +13,7 @@ import {
   type SavedBrief,
 } from "@/components/SavedBriefsLibrary";
 import { supabase } from "@/integrations/supabase/client";
+import { createSession } from "@/lib/stage1.functions";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -80,16 +82,50 @@ function derivePhase2ButtonState(s: DbSession): Phase2ButtonState {
 
 function Dashboard() {
   const navigate = useNavigate();
+  const createSessionFn = useServerFn(createSession);
   const [sessions, setSessions] = useState<DbSession[]>([]);
   const [loading, setLoading] = useState(true);
   const [pendingDelete, setPendingDelete] = useState<DbSession | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [pendingLegacy, setPendingLegacy] = useState<SavedBrief | null>(null);
+  const [legacyRunning, setLegacyRunning] = useState(false);
 
   const handleLoadSavedBrief = (b: SavedBrief) => {
+    // Legacy briefs (pre-structured-editor) have no brief_fields — there is
+    // nothing to pre-populate the 11-field form with. Route straight to the
+    // raw-text pipeline path (the journey these briefs originally ran under),
+    // gated by a confirm so a click doesn't silently launch a run.
+    if (!b.brief_fields) {
+      setPendingLegacy(b);
+      return;
+    }
     if (typeof window !== "undefined") {
       sessionStorage.setItem(PENDING_BRIEF_STORAGE_KEY, JSON.stringify(b));
     }
     navigate({ to: "/brief" });
+  };
+
+  const handleLegacyRun = async () => {
+    if (!pendingLegacy || legacyRunning) return;
+    setLegacyRunning(true);
+    try {
+      const { sessionId } = await createSessionFn({
+        data: {
+          brandName: pendingLegacy.brand_name,
+          category: pendingLegacy.category || "Unspecified",
+          strategicMode: "Auto",
+          briefText: pendingLegacy.brief_text,
+          // briefFields intentionally omitted — brief_versions stays [] so the
+          // Stage 1B completeness gate is OFF (legacy raw-text path).
+        },
+      });
+      setPendingLegacy(null);
+      navigate({ to: "/pipeline", search: { session: sessionId } });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Failed to start run";
+      toast.error(msg);
+      setLegacyRunning(false);
+    }
   };
 
   const handleDelete = async () => {
@@ -257,6 +293,62 @@ function Dashboard() {
               style={{ backgroundColor: "#7C3A3A", color: "#F0EDE8", fontWeight: 600 }}
             >
               {deleting ? "Deleting…" : "Delete permanently"}
+            </button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={pendingLegacy !== null}
+        onOpenChange={(open) => {
+          if (!open && !legacyRunning) setPendingLegacy(null);
+        }}
+      >
+        <AlertDialogContent
+          className="border-0 p-0 sm:max-w-[440px]"
+          style={{
+            backgroundColor: "#1C1C1C",
+            border: "1px solid var(--color-border)",
+            borderRadius: 12,
+            padding: 32,
+          }}
+        >
+          <AlertDialogHeader>
+            <AlertDialogTitle asChild>
+              <h3 className="text-h3" style={{ color: "#F0EDE8" }}>
+                Start a new run from this brief?
+              </h3>
+            </AlertDialogTitle>
+            <AlertDialogDescription
+              className="text-body"
+              style={{ color: "#8A8680", marginTop: 8 }}
+            >
+              This will launch a fresh pipeline run for{" "}
+              <strong style={{ color: "#F0EDE8" }}>{pendingLegacy?.brand_name ?? ""}</strong>{" "}
+              using the full saved brief text. It consumes a run.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter
+            className="flex flex-row justify-end gap-3 sm:space-x-0"
+            style={{ marginTop: 24 }}
+          >
+            <button
+              type="button"
+              disabled={legacyRunning}
+              onClick={() => setPendingLegacy(null)}
+              className="inline-flex h-9 items-center justify-center rounded-lg px-4 text-[13px] font-medium transition-colors hover:bg-[var(--color-surface-2)] disabled:opacity-50"
+              style={{ border: "1px solid var(--color-border)", color: "var(--color-text-primary)" }}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              disabled={legacyRunning}
+              onClick={handleLegacyRun}
+              className="inline-flex h-9 items-center justify-center rounded-lg px-4 text-[13px] transition-opacity hover:opacity-90 disabled:opacity-50"
+              style={{ backgroundColor: "#D4924A", color: "#0A0A0A", fontWeight: 600 }}
+            >
+              {legacyRunning ? "Starting…" : "Run"}
             </button>
           </AlertDialogFooter>
         </AlertDialogContent>
