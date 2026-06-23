@@ -297,6 +297,62 @@ function Dashboard() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <AlertDialog
+        open={pendingLegacy !== null}
+        onOpenChange={(open) => {
+          if (!open && !legacyRunning) setPendingLegacy(null);
+        }}
+      >
+        <AlertDialogContent
+          className="border-0 p-0 sm:max-w-[440px]"
+          style={{
+            backgroundColor: "#1C1C1C",
+            border: "1px solid var(--color-border)",
+            borderRadius: 12,
+            padding: 32,
+          }}
+        >
+          <AlertDialogHeader>
+            <AlertDialogTitle asChild>
+              <h3 className="text-h3" style={{ color: "#F0EDE8" }}>
+                Start a new run from this brief?
+              </h3>
+            </AlertDialogTitle>
+            <AlertDialogDescription
+              className="text-body"
+              style={{ color: "#8A8680", marginTop: 8 }}
+            >
+              This will launch a fresh pipeline run for{" "}
+              <strong style={{ color: "#F0EDE8" }}>{pendingLegacy?.brand_name ?? ""}</strong>{" "}
+              using the full saved brief text. It consumes a run.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter
+            className="flex flex-row justify-end gap-3 sm:space-x-0"
+            style={{ marginTop: 24 }}
+          >
+            <button
+              type="button"
+              disabled={legacyRunning}
+              onClick={() => setPendingLegacy(null)}
+              className="inline-flex h-9 items-center justify-center rounded-lg px-4 text-[13px] font-medium transition-colors hover:bg-[var(--color-surface-2)] disabled:opacity-50"
+              style={{ border: "1px solid var(--color-border)", color: "var(--color-text-primary)" }}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              disabled={legacyRunning}
+              onClick={handleLegacyRun}
+              className="inline-flex h-9 items-center justify-center rounded-lg px-4 text-[13px] transition-opacity hover:opacity-90 disabled:opacity-50"
+              style={{ backgroundColor: "#D4924A", color: "#0A0A0A", fontWeight: 600 }}
+            >
+              {legacyRunning ? "Starting…" : "Run"}
+            </button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
