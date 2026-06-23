@@ -41,7 +41,7 @@ export type TierOneResult = {
 const FAST_CHECK_NAMES: Record<FastCheckId, string> = {
   db_connectivity: "Database Connectivity",
   claude_api_health: "Claude API Health",
-  stage9_edt_guard_prompt: "Stage 9 EDT Guard Prompt Presence",
+  stage9_edt_guard_prompt: "Stage 9 EDT Guard Removed (v5.3)",
   stage12_query_speed: "Stage 12 Database Query Speed",
   stage17_route_registration: "Stage 17 Route Registration",
 };
@@ -164,27 +164,33 @@ export const runTierOneFastCheck = createServerFn({ method: "POST" })
       return { status: "pass", detail: "READY received" };
     });
 
-    // -------- Fast Check 3: Stage 9 EDT Guard Prompt Presence --------
+    // -------- Fast Check 3: Stage 9 EDT Guard Removed (v5.3) --------
+    // In v5.3 the EDT banned-words enforcement clause was intentionally deleted
+    // from the Stage 9 prompt (it was banning legitimate words like "permission"
+    // — the exact word in Dan Murphy's benchmark proposition). This check now
+    // PASSES when that clause is absent and FAILS only if it has been
+    // reintroduced as an enforcement banned-list.
     const c3 = await runCheck("stage9_edt_guard_prompt", async () => {
       const prompt = STAGE_9_SYSTEM_PROMPT;
-      // Match stems so either form (e.g. "deserve" or "deserved") satisfies the check.
-      const requiredTokens: Array<{ label: string; pattern: RegExp }> = [
-        { label: "earned", pattern: /\bearn(s|ed|ing)?\b/i },
-        { label: "deserved", pattern: /\bdeserv(e|es|ed|ing)\b/i },
-        { label: "guilt", pattern: /\bguilt(y|less)?\b/i },
-        { label: "apology", pattern: /\bapolog(y|ies|ise|ize|ised|ized)\b/i },
-        { label: "permission", pattern: /\bpermission\b/i },
+      // Detect the removed enforcement clause: a banned-list block that names
+      // these tokens together as forbidden. Casual mentions of any single word
+      // (e.g. "permission" appearing in example copy) do not count.
+      const enforcementSignals: RegExp[] = [
+        /banned[^.\n]{0,80}(earn|deserv|guilt|apolog|permission)/i,
+        /forbidden[^.\n]{0,80}(earn|deserv|guilt|apolog|permission)/i,
+        /must\s+not\s+(use|contain)[^.\n]{0,80}(earn|deserv|guilt|apolog|permission)/i,
+        /EDT[\s\-_]*guard/i,
       ];
-      const missing = requiredTokens.filter((t) => !t.pattern.test(prompt)).map((t) => t.label);
-      if (missing.length > 0) {
+      const reintroduced = enforcementSignals.filter((r) => r.test(prompt));
+      if (reintroduced.length > 0) {
         return {
           status: "fail",
-          detail: `EDT guard banned-words clause missing tokens: ${missing.join(", ")}`,
+          detail: `EDT enforcement clause has been reintroduced into Stage 9 prompt (v5.3 removed it). Matched ${reintroduced.length} enforcement signal(s).`,
         };
       }
       return {
         status: "pass",
-        detail: "EDT guard banned-words clause present in Stage 9 prompt",
+        detail: "Stage 9 prompt is free of the v5.3-removed EDT banned-words enforcement clause.",
       };
     });
 
