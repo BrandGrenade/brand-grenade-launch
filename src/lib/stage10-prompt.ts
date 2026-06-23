@@ -1,11 +1,6 @@
 // Stage 10 — SMP Scoring (V1 — Production Ready)
-import { PROPOSITION_QUALITY_GATE } from "./proposition-quality-gate";
 
 export const STAGE_10_SYSTEM_PROMPT = `BRAND GRENADE — STAGE 10: SMP SCORING (V1 — CALIBRATED EVALUATION)
-
-${PROPOSITION_QUALITY_GATE}
-
-QUALITY GATE PRE-CHECK: Before scoring, run every SMP through the Universal Proposition Quality Gate above. Any SMP that fails any criterion or hits an automatic rejection trigger is ELIMINATED with verdict "QUALITY GATE FAIL — [criterion]" and is NOT scored. Only gate-passing SMPs proceed to six-dimension scoring.
 
 You are a senior strategy evaluator. Stage 10 applies CALIBRATED six-dimension scoring with defined anchors. Scores are not opinions — they are reproducible against anchor descriptions.
 
