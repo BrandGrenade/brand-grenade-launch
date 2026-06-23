@@ -610,20 +610,21 @@ export function SMPSelection({
                 className="my-4 h-px border-0"
                 style={{ backgroundColor: "var(--color-border)" }}
               />
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-4 gap-2">
                 <ScorePill label="Diff" value={card.scores.differentiation} />
                 <ScorePill label="Truth" value={card.scores.truthStrength} />
                 <ScorePill label="Cult" value={card.scores.culturalRelevance} />
+                <ScorePill label="Fame" value={(card.scores as { famePotential?: number }).famePotential} />
+                <ScorePill label="Writer" value={card.scores.writerQuality} />
                 <ScorePill label="Comm" value={card.scores.commercialPlausibility} />
                 <ScorePill label="Creat" value={card.scores.creativeExpandability} />
-                <ScorePill label="Writer" value={card.scores.writerQuality} />
               </div>
               {card.scores.composite !== undefined && (
                 <p
                   className="text-body-sm mt-3"
                   style={{ color: "var(--color-text-tertiary)" }}
                 >
-                  Composite {card.scores.composite}/60
+                  Composite {card.scores.composite}/70
                   {card.fieldName ? ` · ${card.fieldName}` : ""}
                 </p>
               )}

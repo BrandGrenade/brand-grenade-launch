@@ -175,7 +175,8 @@ interface ParsedProposition {
 }
 
 function extractCompositeScore(block: string): number | undefined {
-  const m = block.match(/Composite[:\s]+(\d+(?:\.\d+)?)\s*\/\s*60/i);
+  // v5.5: composite is /70 (7 dims). Accept legacy /60 for back-compat on pre-v5.5 outputs.
+  const m = block.match(/Composite[:\s]+(\d+(?:\.\d+)?)\s*\/\s*(?:70|60)/i);
   return m ? parseFloat(m[1]) : undefined;
 }
 
@@ -889,7 +890,7 @@ async function drawContent(doc: jsPDF, input: PdfInput) {
       setTracking(doc, 0.12);
       const scoreLabel =
         p.composite !== undefined
-          ? `COMPOSITE ${p.composite}/60`
+          ? `COMPOSITE ${p.composite}/70`
           : "COMPOSITE —";
       doc.text(scoreLabel, M_SIDE, y + 9);
       const scoreW = doc.getTextWidth(scoreLabel);

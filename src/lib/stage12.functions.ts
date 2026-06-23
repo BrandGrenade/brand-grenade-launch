@@ -59,7 +59,7 @@ function buildDeterministicStage12Output(args: {
       /Test\s+2\s*[—\-–]\s*Time-Decay[^—\-–\n]*[—\-–]\s*([^\n]{40,320})/i,
     ]);
     const scoresBlock = score
-      ? `Differentiation: ${score.differentiation}/10 | Truth Strength: ${score.truthStrength}/10 | Cultural Relevance: ${score.culturalRelevance}/10\nCommercial Plausibility: ${score.commercialPlausibility}/10 | Creative Expandability: ${score.creativeExpandability}/10 | Writer Quality: ${score.writerQuality}/10\nComposite: ${score.composite}/60`
+      ? `Differentiation: ${score.differentiation}/10 | Truth Strength: ${score.truthStrength}/10 | Cultural Relevance: ${score.culturalRelevance}/10 | Fame Potential: ${score.famePotential}/10\nWriter Quality: ${score.writerQuality}/10 | Commercial Plausibility: ${score.commercialPlausibility}/10 | Creative Expandability: ${score.creativeExpandability}/10\nComposite: ${score.composite}/70`
       : `Scores: not available`;
     return `═══════════════════════════════════════════════════
 PROPOSITION ${index + 1}
@@ -91,7 +91,7 @@ It requires ${args.brandName} to commit to the truth behind this line consistent
 STRATEGIC QUALITY SCORES (from independent evaluation)
 ${scoresBlock}
 
-Note: These scores reflect independent strategic evaluation across six dimensions — not a preference ranking. A higher composite score does not mean this is the right proposition for this brand. That decision involves strategic considerations only the team can weigh.
+Note: These scores reflect independent strategic evaluation across seven dimensions — not a preference ranking. A higher composite score does not mean this is the right proposition for this brand. That decision involves strategic considerations only the team can weigh.
 
 ═══════════════════════════════════════════════════
 
