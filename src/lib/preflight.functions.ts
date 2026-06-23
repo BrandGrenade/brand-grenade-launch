@@ -180,7 +180,6 @@ export const runTierOneFastCheck = createServerFn({ method: "POST" })
         /forbidden[^.\n]{0,80}(earn|deserv|guilt|apolog|permission)/i,
         /must\s+not\s+(use|contain)[^.\n]{0,80}(earn|deserv|guilt|apolog|permission)/i,
         /EDT[\s\-_]*guard/i,
-        /emotional\s+direction\s+test/i,
       ];
       const reintroduced = enforcementSignals.filter((r) => r.test(prompt));
       if (reintroduced.length > 0) {
