@@ -53,11 +53,11 @@ WHAT IT REQUIRES OF THE BRAND
 
 ───────────────────────────────────────────────────
 STRATEGIC QUALITY SCORES (from independent evaluation)
-Differentiation: [n]/10 | Truth Strength: [n]/10 | Cultural Relevance: [n]/10
-Commercial Plausibility: [n]/10 | Creative Expandability: [n]/10 | Writer Quality: [n]/10
-Composite: [n]/60
+Differentiation: [n]/10 | Truth Strength: [n]/10 | Cultural Relevance: [n]/10 | Fame Potential: [n]/10
+Writer Quality: [n]/10 | Commercial Plausibility: [n]/10 | Creative Expandability: [n]/10
+Composite: [n]/70
 
-Note: These scores reflect independent strategic evaluation across six dimensions — not a preference ranking. A higher composite score does not mean this is the right proposition for this brand. That decision involves strategic considerations only the team can weigh.
+Note: These scores reflect independent strategic evaluation across seven dimensions — not a preference ranking. A higher composite score does not mean this is the right proposition for this brand. That decision involves strategic considerations only the team can weigh.
 
 ═══════════════════════════════════════════════════
 

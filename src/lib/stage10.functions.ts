@@ -3,6 +3,7 @@ import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { streamClaude } from "./claude.server";
 import { STAGE_10_SYSTEM_PROMPT, buildStage10UserMessage } from "./stage10-prompt";
+import { applyStage10CodeGate } from "./stage12-filter";
 
 import { countPropositions } from "./count-helpers";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
@@ -71,11 +72,19 @@ export const runStage10 = createServerFn({ method: "POST" })
       throw e instanceof Error ? e : new Error(msg);
     }
 
+    // v5.5: enforce the Stage 10 selection gate in code BEFORE saving so
+    // Stage 11 / Stage 12 see CODE VERDICT, recomputed unweighted /70 and the
+    // weighted ranking /110 as authoritative. Preflight mode bypasses floors.
+    const gated = applyStage10CodeGate(output, {
+      isPreflight: session.is_preflight_test === true,
+    });
+    const finalOutput = gated.output;
+
     const { error: updateErr } = await supabaseAdmin
       .from("sessions")
-      .update({ stage_10_output: output, stage_10_error: null })
+      .update({ stage_10_output: finalOutput, stage_10_error: null })
       .eq("id", data.sessionId);
     if (updateErr) throw new Error(`Failed to save Stage 10 output: ${updateErr.message}`);
 
-    yield { done: true as const, output };
+    yield { done: true as const, output: finalOutput };
   });
