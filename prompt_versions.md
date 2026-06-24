@@ -982,3 +982,28 @@ outputs are now passed verbatim; every absent field shows a literal
 **Files changed:** `src/lib/stage16.functions.ts`,
 `src/routes/pipeline.tsx`, `src/routes/complete.tsx`,
 `prompt_versions.md`
+
+---
+
+## v5.5 — Stage 10 Resonance-Weighted Selection
+**Date:** 2026
+**Stages:** Stage 10 (selection gate); knock-on display in Stage 11, Stage 12, SMP Selection UI, PDF generator
+**Change:** Rebuilt the Stage 10 rubric to select for "famous AND right" rather than balanced capability. The previous rubric was eliminating culturally resonant lines (e.g. the seeded "Friday night begins in Aisle 6") in favour of evenly-scored capability lines, because Cultural Relevance only measured timeliness, Creative Expandability rewarded range over commitment, and memorability was a tail clause on Writer Quality.
+
+Changes:
+- Added **Fame Potential** as a 7th dimension measuring repeatability, sayability, and a line's chance of escaping the brand into consumer vocabulary.
+- Rewrote **Cultural Relevance** anchors to be explicitly about timeliness (repeatability belongs to Fame Potential / Writer Quality, not here).
+- Rewrote **Creative Expandability** anchors so a single committed territory is no longer a low score; commitment is no longer punished. Marked informational-only.
+- Marked **Commercial Plausibility** informational-only.
+- Rewrote **Writer Quality** so memorability leads the anchors, not trails them.
+- Hard floors kept on **Truth Strength** and **Differentiation** (< 6 eliminates). Nothing else can eliminate.
+- Selection gate moved OUT of the LLM prompt and INTO code (`applyStage10CodeGate` in `src/lib/stage12-filter.ts`). The LLM no longer emits a VERDICT line; any text it writes is overwritten by `CODE VERDICT` and `CODE COMPOSITE` lines injected per SMP, plus an authoritative `CODE-COMPUTED STAGE 10 SUMMARY` block.
+- COMPOSITE is now the unweighted sum out of 70 (was /60). A separate **weighted ranking composite out of 110** is computed in code (Diff, Truth, Fame, Writer ×2; CR, CP, Expand ×1) for ordering only — never a cutoff.
+- Display surfaces (`SMPSelection.tsx`, `pdf-generator.ts`, Stage 11 / Stage 12 prompts) updated from /60 to /70; legacy /60 still parses for back-compat.
+- **Step 4 of v5.5 (first-class human-seed mechanism) deliberately deferred to its own ticket** so the rubric fix could land cleanly. The rubric rebuild alone restores the seeded line without needing seed-flag plumbing.
+
+**Validation:** dry-run re-score confirmed the seeded "Friday night begins in Aisle 6" passes the new gate and ranks #1 by weighted composite (89/110); a balanced 7-across comparator passes but ranks below it (72/110); false-but-famous and un-ownable-but-famous lines are still eliminated on the Truth floor.
+
+**Files changed:** `src/lib/stage10-prompt.ts`, `src/lib/stage10.functions.ts`, `src/lib/stage12-filter.ts`, `src/lib/stage12-prompt.ts`, `src/lib/stage12.functions.ts`, `src/lib/stage11-prompt.ts`, `src/lib/pdf-generator.ts`, `src/components/SMPSelection.tsx`, `prompt_versions.md`
+
+**Follow-up ticket:** "Add first-class human-seed mechanism for propositions (DB column + Stage 8 UI control + filter exemption) so an operator can force a line through Stage 10 → 11 → 12 untouched."
