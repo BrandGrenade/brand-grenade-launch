@@ -439,8 +439,8 @@ export function PreflightFullCheckPanel() {
   };
 
   // Process events from one streaming server-fn generator. Returns a
-  // handoff payload if the stream ended with `check_3_handoff` or
-  // `check_8_handoff`, otherwise terminal sentinel.
+  // handoff payload if the stream ended with one of the staged client-driver
+  // handoffs, otherwise terminal sentinel.
   type ProcessOutcome =
     | { kind: "handoff1"; payload: Extract<TierTwoEvent, { type: "check_1_handoff" }> }
     | { kind: "handoff2"; payload: Extract<TierTwoEvent, { type: "check_2_handoff" }> }
@@ -1240,7 +1240,7 @@ export function PreflightFullCheckPanel() {
         data: { recordId: outcome1.payload.recordId, allResults: workingResults },
       });
 
-      // ---- Resume server-side: checks 4–7 → check_8_handoff ----
+      // ---- Resume server-side: checks 4–5 → check_6_handoff ----
       const from4Gen = (await runFrom4Fn({
         data: {
           recordId: check3Handoff.recordId,
