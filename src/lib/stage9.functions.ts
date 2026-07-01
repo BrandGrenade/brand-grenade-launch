@@ -3,6 +3,11 @@ import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { streamClaude } from "./claude.server";
 import { STAGE_9_SYSTEM_PROMPT, buildStage9UserMessage } from "./stage9-prompt";
+import {
+  STAGE_9_LEFT_OF_CENTRE_SYSTEM_PROMPT,
+  buildStage9LeftOfCentreUserMessage,
+  STAGE_9_LEFT_OF_CENTRE_DIVIDER,
+} from "./stage9-leftofcentre-prompt";
 
 import { countPropositions } from "./count-helpers";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
