@@ -73,9 +73,9 @@ const CHECK_NAMES: Record<FullCheckId, string> = {
   stage_9_edt_guard_output: "5. Stage 9 — EDT guard output sanitisation",
   stage_10_11_evaluation_chain: "6. Stages 10–11 — Evaluation chain",
   stage_12_smp_selection: "7. Stage 12 — SMP selection + rationale persistence",
-  phase1_completion_13_to_16: "8. Stages 13–16 — Phase 1 completion",
+  phase1_completion_13_to_16: "8. Stages 13–15 — Phase 1 completion + Stage 16 gate correctly locked pre-Phase 2",
   sanitiser_and_token_caps: "9. Sanitiser configuration + token caps on all stages",
-  phase2_detonation_chain: "10. Phase 2 — Stage 17 → Select → 17B → 18 chain",
+  phase2_detonation_chain: "10. Phase 2 chain (17 → 22) + Stage 16 Document Assembly end-to-end",
   canvas_to_detonation_navigation: "11. Three Truth Canvas → Detonation route navigation",
   concurrent_session_integrity: "12. Concurrent session integrity (two parallel Stage 1 runs)",
 };
