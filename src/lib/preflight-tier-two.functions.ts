@@ -7,7 +7,8 @@
 //   - Structural checks (prompt presence, token caps, sanitiser config, route)
 //
 // All sessions are tagged `is_preflight_test = true` and deleted in a finally
-// block on completion or failure. A unique partial index on preflight_checks
+// block only after a fully green run. Failed runs preserve their TestBrand
+// sessions for forensic debugging. A unique partial index on preflight_checks
 // (status='running', check_type='full') enforces a single global runner;
 // rows older than 25 minutes can be force-overridden.
 //
@@ -998,7 +999,7 @@ export const runTierTwoChecksFrom7 = createServerFn({ method: "POST" })
       yield { type: "check_7_handoff", recordId, sessionId: primarySessionId ?? "", sessionIds: Array.from(createdSessionIds), results, startedAtMs };
     } catch (fatal) {
       const msg = fatal instanceof Error ? fatal.message : String(fatal);
-      yield { type: "error", message: `Fatal error during Tier Two (checks 7–8): ${msg}` };
+      yield { type: "error", message: `Fatal error during Tier Two (check 7 handoff): ${msg}` };
     } finally {
       if (!handedOff) {
         const ids = Array.from(createdSessionIds);
