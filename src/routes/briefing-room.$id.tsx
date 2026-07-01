@@ -875,3 +875,69 @@ function TagBadge({
     </span>
   );
 }
+
+function HandoffPreviewView({ preview }: { preview: HandoffPayload }) {
+  const [showBrief, setShowBrief] = useState(false);
+  const f = preview.briefFields;
+  return (
+    <div className="flex flex-col gap-3">
+      <div
+        className="rounded-md p-3"
+        style={{ backgroundColor: "#141414", border: "1px solid #2A2A2A" }}
+      >
+        <div className="text-label" style={{ color: "#D4924A" }}>
+          ANCHORED TENSION (rides into Stage 1 verbatim)
+        </div>
+        <p className="text-body mt-2 text-text-primary whitespace-pre-wrap">
+          {extractAnchoredTension(preview.briefText) ?? "(none — no-tension flag preserved)"}
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        <MiniField label="f3 · Commercial Outcome" value={f.sections.f3_outcome} />
+        <MiniField label="f4 · Primary Barrier (+ tension)" value={f.sections.f4_barrier} />
+        <MiniField label="f6 · Audience" value={f.sections.f6_audience} />
+        <MiniField label="f7 · Current Belief" value={f.sections.f7_current_belief} />
+        <MiniField label="f8 · Desired Belief" value={f.sections.f8_desired_belief} />
+        <MiniField label="f9 · Reason to Believe" value={f.sections.f9_rtb} />
+      </div>
+
+      <button
+        type="button"
+        onClick={() => setShowBrief((v) => !v)}
+        className="mt-2 self-start text-body-sm text-primary hover:opacity-80"
+      >
+        {showBrief ? "Hide" : "Show"} full brief_text that ships to Stage 1
+      </button>
+      {showBrief && (
+        <pre
+          className="mt-1 max-h-[420px] overflow-auto rounded-md p-3 text-[12px] leading-[1.55] whitespace-pre-wrap"
+          style={{ backgroundColor: "#0A0A0A", border: "1px solid #2A2A2A", color: "#D8D3CC" }}
+        >
+          {preview.briefText}
+        </pre>
+      )}
+    </div>
+  );
+}
+
+function MiniField({ label, value }: { label: string; value: string }) {
+  return (
+    <div
+      className="rounded-md p-3"
+      style={{ backgroundColor: "#141414", border: "1px solid #2A2A2A" }}
+    >
+      <div className="text-label" style={{ color: "#8A8580" }}>{label}</div>
+      <p className="text-body-sm mt-1.5 text-text-primary whitespace-pre-wrap">
+        {value || "(empty)"}
+      </p>
+    </div>
+  );
+}
+
+function extractAnchoredTension(briefText: string): string | null {
+  const m = briefText.match(
+    /ANCHORED TENSION[^:\n]*:[^\n]*\n\s{2,}(.+?)(?:\n\s{2,}Frame:|\n\s*\n|\n===)/s,
+  );
+  return m ? m[1].trim() : null;
+}
