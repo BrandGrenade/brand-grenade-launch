@@ -12,7 +12,9 @@ import {
   CONDITIONALLY_BANNED_STAGE9,
   UNIVERSAL_BANNED_STAGE9,
   conditionalStage9HitAllowedInLeftOfCentre,
+  competitorOwnedConditionalStage9Words,
 } from "./stage9-banned-words";
+
 import {
   findBannedWordHits,
   generateWithBannedWordGate,
