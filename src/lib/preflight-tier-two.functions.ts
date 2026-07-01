@@ -173,9 +173,9 @@ const CHECK_DEFS: ReadonlyArray<{ id: FullCheckId; name: string }> = [
   { id: "stage_9_edt_guard_output", name: "Stage 9 — EDT guard output sanitisation" },
   { id: "stage_10_11_evaluation_chain", name: "Stages 10–11 — Evaluation chain" },
   { id: "stage_12_smp_selection", name: "Stage 12 — SMP selection + rationale persistence" },
-  { id: "phase1_completion_13_to_16", name: "Stages 13–16 — Phase 1 completion" },
+  { id: "phase1_completion_13_to_16", name: "Stages 13–15 — Phase 1 completion + Stage 16 gate correctly locked pre-Phase 2" },
   { id: "sanitiser_and_token_caps", name: "Sanitiser configuration + token caps on all stages" },
-  { id: "phase2_detonation_chain", name: "Phase 2 — Stage 17 → Select → 17B → 18 chain" },
+  { id: "phase2_detonation_chain", name: "Phase 2 chain (17 → 22) + Stage 16 Document Assembly end-to-end" },
   { id: "canvas_to_detonation_navigation", name: "Three Truth Canvas → Detonation route navigation" },
   { id: "concurrent_session_integrity", name: "Concurrent session integrity (two parallel Stage 1 runs)" },
 ];
