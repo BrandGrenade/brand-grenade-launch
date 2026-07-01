@@ -681,6 +681,62 @@ function CompletePage() {
           </div>
         </div>
 
+        {/* ─── Complete Pipeline Run (deliverable) ───────────────────── */}
+        {session && (() => {
+          const amber = "#D4924A";
+          const stages = resolveFullRunStages(session as unknown as Record<string, unknown>);
+          const count = stages.length;
+          return (
+            <section style={{ marginTop: 48 }}>
+              <div
+                style={{
+                  border: `1px solid ${amber}`,
+                  borderRadius: 8,
+                  padding: 24,
+                  background: "rgba(212, 146, 74, 0.04)",
+                }}
+              >
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 24, flexWrap: "wrap" }}>
+                  <div style={{ flex: "1 1 320px" }}>
+                    <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", color: amber, textTransform: "uppercase", marginBottom: 6 }}>
+                      Complete Pipeline Run
+                    </div>
+                    <h3 style={{ fontSize: 18, fontWeight: 700, margin: 0, marginBottom: 8, color: "var(--color-text-primary)" }}>
+                      {brand} — Full Run
+                    </h3>
+                    <p style={{ margin: 0, fontSize: 13, color: "var(--color-text-secondary)", lineHeight: 1.6 }}>
+                      Every stage of the run, cover page to Brand Architecture — the full canonical record.
+                      {count > 0 && ` ${count} stage${count === 1 ? "" : "s"} available.`}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    disabled={count === 0}
+                    onClick={() => {
+                      if (!session) return;
+                      openFullRunDocument(session as unknown as Record<string, unknown>);
+                    }}
+                    style={{
+                      background: count === 0 ? "#555" : amber,
+                      color: "#000",
+                      border: "none",
+                      padding: "12px 24px",
+                      borderRadius: 6,
+                      fontWeight: 700,
+                      fontSize: 14,
+                      cursor: count === 0 ? "not-allowed" : "pointer",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    Download Full Run ↓
+                  </button>
+                </div>
+              </div>
+            </section>
+          );
+        })()}
+
+
         {/* ─── Phase 2: Brand Detonation ───────────────────────────────── */}
         {(() => {
           // Phase 1 documents are now generated client-side on demand
