@@ -162,6 +162,12 @@ export const runStage7 = createServerFn({ method: "POST" })
       );
     }
 
+    // HARD CAP: downstream (Stage 8+) assumes ≤5 strategic territories.
+    // Trim to the first 5 `##` heading blocks before saving so Stage 8 is
+    // never handed more than it can process in a single Worker budget.
+    const MAX_TERRITORIES = 5;
+    output = capStage7Territories(output, MAX_TERRITORIES, data.sessionId);
+
     const { error: updateErr } = await supabaseAdmin
       .from("sessions")
       .update({ stage_7_output: output, stage_7_error: null })
