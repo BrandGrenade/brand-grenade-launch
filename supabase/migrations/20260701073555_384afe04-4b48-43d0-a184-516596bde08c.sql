@@ -1,0 +1,1 @@
+UPDATE public.sessions SET status='interrupted', stage_8_error=COALESCE(stage_8_error,'')||' [operator-release '||now()::text||': Worker died silently mid-run — no partial write. Released.]', retry_status=NULL WHERE status='running' AND updated_at < now() - interval '10 minutes';

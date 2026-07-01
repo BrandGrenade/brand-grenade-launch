@@ -280,6 +280,29 @@ Write the complete STRATEGY AND CREATIVE VISION document now. Begin immediately.
         parts.push(DOCUMENT_FOOTER);
         yield { delta: DOCUMENT_FOOTER };
       } else {
+        // Compute the target output column once so we can persist per-section.
+        const outputColumnName: "stage_16_agency_output" | "stage_16_consulting_output" | "stage_16_workshop_output" =
+          data.format === "agency"
+            ? "stage_16_agency_output"
+            : data.format === "consulting"
+              ? "stage_16_consulting_output"
+              : "stage_16_workshop_output";
+
+        const persistPartial16 = async (errorMsg: string | null) => {
+          try {
+            const snapshot = parts.join("\n");
+            await supabaseAdmin
+              .from("sessions")
+              .update({
+                [outputColumnName]: snapshot.length > 0 ? snapshot : null,
+                stage_16_error: errorMsg,
+              } as never)
+              .eq("id", data.sessionId);
+          } catch {
+            // best-effort
+          }
+        };
+
         for (let i = 0; i < sections.length; i++) {
           const section = sections[i];
           // Emit section-start event so the UI can show "Writing: X (Section i+1 of N)".
@@ -313,8 +336,6 @@ Write the complete STRATEGY AND CREATIVE VISION document now. Begin immediately.
           let sectionBlock = `\n# ${section.title}\n\n${body.trim()}\n`;
 
           if (section.includesPropositionReveal && selectedSmp) {
-            // Replace the "PROPOSITION REVEAL:" placeholder if the model produced it,
-            // otherwise append the reveal at the end of the section body.
             const revealBlock = `\n\n> # "${selectedSmp}"\n\n`;
             if (/PROPOSITION REVEAL:\s*/i.test(sectionBlock)) {
               sectionBlock = sectionBlock.replace(
@@ -328,6 +349,10 @@ Write the complete STRATEGY AND CREATIVE VISION document now. Begin immediately.
 
           parts.push(sectionBlock);
           yield { delta: sectionBlock };
+
+          // Persist after EVERY section so a Worker death leaves the last
+          // completed section recoverable instead of blanking the run.
+          await persistPartial16(null);
         }
 
         parts.push(DOCUMENT_FOOTER);
@@ -335,10 +360,28 @@ Write the complete STRATEGY AND CREATIVE VISION document now. Begin immediately.
       }
     } catch (e) {
       const msg = e instanceof Error ? e.message : `Stage 16 (${data.format}) failed`;
-      await supabaseAdmin
-        .from("sessions")
-        .update({ stage_16_error: msg })
-        .eq("id", data.sessionId);
+      // Persist whatever we have alongside the error so partial progress is not lost.
+      try {
+        const snapshot = parts.join("\n");
+        const outputColumnName =
+          data.format === "agency"
+            ? "stage_16_agency_output"
+            : data.format === "consulting"
+              ? "stage_16_consulting_output"
+              : data.format === "vision"
+                ? "stage_16_vision_output"
+                : "stage_16_workshop_output";
+        await supabaseAdmin
+          .from("sessions")
+          .update({
+            [outputColumnName]: snapshot.length > 0 ? snapshot : null,
+            stage_16_error: msg,
+            status: "interrupted",
+          } as never)
+          .eq("id", data.sessionId);
+      } catch {
+        // best-effort
+      }
       throw new Error(msg);
     }
 

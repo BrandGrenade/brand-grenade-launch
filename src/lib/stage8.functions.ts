@@ -139,13 +139,23 @@ export const runStage8 = createServerFn({ method: "POST" })
       await setStatus(data.sessionId, null);
 
       if (territoryNames.length < 3) {
-        const msg = `Stage 7 still produced only ${territoryNames.length} strategic territories after re-run. Flagged for human review.`;
+        const msg = `Stage 7 still produced only ${territoryNames.length} strategic territories after re-run. Flagged for review.`;
         await supabaseAdmin
           .from("sessions")
-          .update({ stage_8_error: msg, status: "needs_review" })
+          .update({ stage_8_error: msg, status: "interrupted" })
           .eq("id", data.sessionId);
         throw new Error(msg);
       }
+    }
+
+    // HARD CAP: never let Stage 8 consume more than 5 territories in one run.
+    // Stage 7 also enforces this; this is a defensive belt-and-braces guard.
+    const MAX_TERRITORIES = 5;
+    if (territoryNames.length > MAX_TERRITORIES) {
+      console.warn(
+        `[stage8] session=${data.sessionId} received ${territoryNames.length} territories — capping to first ${MAX_TERRITORIES}`,
+      );
+      territoryNames = territoryNames.slice(0, MAX_TERRITORIES);
     }
 
     const territoryCount = territoryNames.length;
@@ -180,6 +190,32 @@ export const runStage8 = createServerFn({ method: "POST" })
       userMessage = `${prefix}${userMessage}${suffix}`;
     }
 
+    // ---------------------------------------------------------------
+    // Wall-clock budget (guards against silent Worker death).
+    // Cloudflare Workers have a finite request budget; if we blow past
+    // ~4 min the invocation will be killed with no partial write. Track
+    // start time so continuation attempts hard-fail loudly instead of
+    // looping into a silent kill.
+    // ---------------------------------------------------------------
+    const wallClockStart = Date.now();
+    const WALL_CLOCK_BUDGET_MS = 240_000; // 4 minutes total
+    const budgetExceeded = () => Date.now() - wallClockStart > WALL_CLOCK_BUDGET_MS;
+
+    // Persist whatever we have so far. Called after each streaming pass
+    // AND from the catch handler so a Worker death leaves recoverable state.
+    const persistPartial = async (partial: string, errorMsg: string | null) => {
+      try {
+        await supabaseAdmin
+          .from("sessions")
+          .update({
+            stage_8_output: partial.length > 0 ? partial : null,
+            stage_8_error: errorMsg,
+          })
+          .eq("id", data.sessionId);
+      } catch {
+        // best-effort — do not mask the real error
+      }
+    };
 
     let output = "";
     try {
@@ -195,19 +231,37 @@ export const runStage8 = createServerFn({ method: "POST" })
         output += delta;
         yield { delta };
       }
+      await persistPartial(output, null);
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Stage 8 failed";
+      await persistPartial(output, `Stage 8 (initial pass) failed: ${msg}`);
       await supabaseAdmin
         .from("sessions")
-        .update({ stage_8_error: msg })
+        .update({ status: "interrupted" })
         .eq("id", data.sessionId);
       throw e instanceof Error ? e : new Error(msg);
     }
 
     let propositionCount = countPropositions(output);
     let attempts = 0;
-    while (propositionCount < territoryCount && attempts < 3) {
+    const MAX_CONTINUATION_ATTEMPTS = 3;
+    while (propositionCount < territoryCount && attempts < MAX_CONTINUATION_ATTEMPTS) {
       attempts++;
+
+      if (budgetExceeded()) {
+        const msg =
+          `Stage 8 wall-clock budget exceeded (${Math.round((Date.now() - wallClockStart) / 1000)}s) ` +
+          `with ${propositionCount}/${territoryCount} propositions written. Partial output saved; retry to continue.`;
+        console.error(`[stage8] session=${data.sessionId} ${msg}`);
+        await persistPartial(output, msg);
+        await supabaseAdmin
+          .from("sessions")
+          .update({ status: "interrupted" })
+          .eq("id", data.sessionId);
+        await setStatus(data.sessionId, null);
+        throw new Error(msg);
+      }
+
       const done = territoryNames.slice(0, propositionCount);
       const remaining = territoryNames.slice(propositionCount);
       if (remaining.length === 0) break;
@@ -234,14 +288,33 @@ export const runStage8 = createServerFn({ method: "POST" })
           output += delta;
           yield { delta };
         }
+        // Persist after EVERY continuation iteration so a silent Worker
+        // death mid-loop leaves the last completed pass recoverable.
+        await persistPartial(output, null);
         propositionCount = countPropositions(output);
-      } catch {
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : "Stage 8 continuation failed";
+        console.error(`[stage8] session=${data.sessionId} continuation ${attempts} failed: ${msg}`);
+        await persistPartial(output, `Stage 8 continuation ${attempts} failed: ${msg}`);
         break;
       }
     }
+
+    if (propositionCount < territoryCount) {
+      const msg =
+        `Stage 8 exhausted ${MAX_CONTINUATION_ATTEMPTS} continuation attempts with ` +
+        `${propositionCount}/${territoryCount} propositions generated. Partial output saved.`;
+      console.error(`[stage8] session=${data.sessionId} ${msg}`);
+      await persistPartial(output, msg);
+      await supabaseAdmin
+        .from("sessions")
+        .update({ status: "interrupted" })
+        .eq("id", data.sessionId);
+      await setStatus(data.sessionId, null);
+      throw new Error(msg);
+    }
+
     await setStatus(data.sessionId, null);
-
-
 
     const { error: updateErr } = await supabaseAdmin
       .from("sessions")
