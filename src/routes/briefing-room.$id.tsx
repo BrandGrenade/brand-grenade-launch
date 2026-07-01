@@ -402,17 +402,96 @@ function WorkspacePage() {
           )}
         </StepCard>
 
-        <div
-          className="mt-10 rounded-md p-4"
-          style={{ backgroundColor: "#1A1611", border: "1px solid #3A2E1E", color: "#D4924A" }}
+        {/* ─── STEP 5 — STRUCTURE + PREVIEW ─── */}
+        <StepCard
+          n={5}
+          title="Structure into Stage 1 format"
+          subtitle="Compose the eleven-field brief plus the load-bearing Briefing Room Anchor block. Stage 1 has been amended to preserve the anchored tension verbatim in its Section 2 — no substitution, no dilution."
+          onRun={loadPreview}
+          busy={previewLoading}
+          hasOutput={!!preview}
+          runLabel={preview ? "Re-preview" : "Preview handoff"}
+          disabled={!ws.tensions}
+          disabledReason="Run Steps 1–4 first."
         >
-          <div className="text-label mb-1">HANDOFF ON HOLD</div>
-          <div className="text-body-sm" style={{ color: "#E8DFD1" }}>
-            Steps 5 (Structure into Stage 1 format) and 6 (Approve → land in Saved Briefs)
-            are gated on Stage 1 schema confirmation and a clean pipeline test. Once
-            green-lit, an "Approve and hand off" button appears here.
-          </div>
-        </div>
+          {preview && <HandoffPreviewView preview={preview} />}
+        </StepCard>
+
+        {/* ─── STEP 6 — APPROVE + HAND OFF ─── */}
+        <section
+          className="mt-6 rounded-md p-5"
+          style={{ backgroundColor: "#101010", border: "1px solid #2A2A2A" }}
+        >
+          <div className="text-label text-primary">STEP 6</div>
+          <h2 className="text-h3 mt-1 text-text-primary">Approve → hand off to Saved Briefs</h2>
+          <p className="text-body-sm mt-1 text-text-tertiary">
+            Lands the structured brief in your Saved Briefs library and opens it in the
+            structured editor. Review, then use the existing Save-and-Run to fire Stage 1.
+            The load-bearing tension rides in as an anchor block AND inside the barrier
+            field — Stage 1 is instructed to preserve it verbatim in Section 2.
+          </p>
+
+          {!preview && (
+            <p className="text-body-sm mt-4 text-text-tertiary">
+              Run Step 5 (Preview handoff) first.
+            </p>
+          )}
+
+          {preview && (
+            <div className="mt-4">
+              {preview.blockers.length > 0 && (
+                <div
+                  className="rounded-md p-3"
+                  style={{ backgroundColor: "#2A1414", border: "1px solid #5C2A2A", color: "#F0A0A0" }}
+                >
+                  <div className="text-label mb-1">BLOCKERS</div>
+                  <ul className="text-body-sm list-disc pl-5">
+                    {preview.blockers.map((b, i) => <li key={i}>{b}</li>)}
+                  </ul>
+                </div>
+              )}
+              {preview.warnings.length > 0 && (
+                <div
+                  className="mt-3 rounded-md p-3"
+                  style={{ backgroundColor: "#1A1611", border: "1px solid #3A2E1E", color: "#D4924A" }}
+                >
+                  <div className="text-label mb-1">WARNINGS</div>
+                  <ul className="text-body-sm list-disc pl-5">
+                    {preview.warnings.map((w, i) => <li key={i}>{w}</li>)}
+                  </ul>
+                </div>
+              )}
+              {preview.gaps.length > 0 && (
+                <label className="mt-3 flex items-start gap-2 text-body-sm text-text-secondary">
+                  <input
+                    type="checkbox"
+                    checked={ackGaps}
+                    onChange={(e) => setAckGaps(e.target.checked)}
+                    className="mt-1"
+                  />
+                  <span>
+                    I acknowledge {preview.gaps.length} open gap{preview.gaps.length === 1 ? "" : "s"}{" "}
+                    will be preserved in the brief and surfaced to Stage 1 as flags. The Briefing
+                    Room does not paper over what it flagged.
+                  </span>
+                </label>
+              )}
+              <button
+                type="button"
+                onClick={approveAndHandOff}
+                disabled={
+                  approving ||
+                  !preview.ready ||
+                  (preview.gaps.length > 0 && !ackGaps)
+                }
+                className="mt-4 inline-flex h-10 items-center rounded-md px-5 text-[13px] font-semibold disabled:opacity-50"
+                style={{ backgroundColor: "#D4924A", color: "#0A0A0A" }}
+              >
+                {approving ? "Handing off…" : "Approve and hand off to Saved Briefs"}
+              </button>
+            </div>
+          )}
+        </section>
       </main>
     </div>
   );
