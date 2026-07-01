@@ -43,3 +43,89 @@ export const CONDITIONALLY_BANNED_STAGE9 = [
 export const UNIVERSAL_BANNED_STAGE9_LIST = UNIVERSAL_BANNED_STAGE9.join(", ");
 export const CONDITIONALLY_BANNED_STAGE9_LIST =
   CONDITIONALLY_BANNED_STAGE9.join(", ");
+
+const CONDITIONAL_STEMS: Record<string, readonly string[]> = {
+  reward: ["reward", "rewards", "rewarded", "rewarding"],
+  earn: ["earn", "earned", "earning", "earns"],
+  earned: ["earn", "earned", "earning", "earns"],
+  deserve: ["deserve", "deserved", "deserves", "deserving"],
+  deserved: ["deserve", "deserved", "deserves", "deserving"],
+};
+
+function sentenceSplit(text: string): string[] {
+  return text
+    .split(/(?<=[.!?])\s+|\n+/g)
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+function competitorNames(briefText: string, brandName: string): string[] {
+  const names = new Set<string>();
+  const competitorBlock = briefText.match(/competitors?\s*[:\-]\s*([^\n.]+(?:\.[^\n.]+){0,2})/i)?.[1] ?? briefText;
+  for (const m of competitorBlock.matchAll(/\b[A-Z][A-Za-z0-9&'’\-]*(?:\s+[A-Z][A-Za-z0-9&'’\-]*){0,2}\b/g)) {
+    const name = m[0].trim();
+    if (name.length < 2) continue;
+    if (/^(Brand|Category|Challenge|Product|Target|Business|Objective|Competitors?|None|No)$/i.test(name)) continue;
+    if (brandName && name.toLowerCase() === brandName.toLowerCase()) continue;
+    names.add(name);
+  }
+  return Array.from(names);
+}
+
+function wordInSentence(sentence: string, word: string): boolean {
+  const variants = CONDITIONAL_STEMS[word.toLowerCase()] ?? [word];
+  return variants.some((variant) => new RegExp(`\\b${variant}\\b`, "i").test(sentence));
+}
+
+export function conditionalStage9WordAllowedInLeftOfCentre(args: {
+  word: string;
+  brandName: string;
+  briefText: string;
+  stage2Output: string;
+}): boolean {
+  const context = `${args.briefText}\n\n${args.stage2Output}`;
+  const names = competitorNames(args.briefText, args.brandName);
+  const sentences = sentenceSplit(context);
+
+  for (const sentence of sentences) {
+    if (!wordInSentence(sentence, args.word)) continue;
+    if (/\b(never[-\s]?say|must not say|exclusion|excluded|banned|forbidden)\b/i.test(sentence)) return false;
+    if (/\b(no|none|not|never)\b[^.?!\n]{0,50}\bown(?:s|ed|ing)?\b/i.test(sentence)) continue;
+    if (!/\bown(?:s|ed|ing)?\b/i.test(sentence)) continue;
+    if (names.some((name) => sentence.toLowerCase().includes(name.toLowerCase()))) return false;
+  }
+
+  return true;
+}
+
+function activeLeftOfCentreEngine(output: string, index: number): "BREACH" | "FUSE" | "FLASHPOINT" | null {
+  const before = output.slice(0, Math.max(0, index));
+  const engines: Array<"BREACH" | "FUSE" | "FLASHPOINT"> = ["BREACH", "FUSE", "FLASHPOINT"];
+  let active: "BREACH" | "FUSE" | "FLASHPOINT" | null = null;
+  let activeAt = -1;
+  for (const engine of engines) {
+    const rx = new RegExp(`(^|\\n)\\s*${engine}\\b`, "gi");
+    let m: RegExpExecArray | null;
+    while ((m = rx.exec(before)) !== null) {
+      if (m.index > activeAt) {
+        active = engine;
+        activeAt = m.index;
+      }
+    }
+  }
+  return active;
+}
+
+export function conditionalStage9HitAllowedInLeftOfCentre(args: {
+  word: string;
+  index: number;
+  output: string;
+  brandName: string;
+  briefText: string;
+  stage2Output: string;
+}): boolean {
+  // The relaxation was introduced for the Fuse engine only. Breach and
+  // Flashpoint stay strict even inside the separate left-of-centre column.
+  if (activeLeftOfCentreEngine(args.output, args.index) !== "FUSE") return false;
+  return conditionalStage9WordAllowedInLeftOfCentre(args);
+}

@@ -17,6 +17,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { STAGE_9_SYSTEM_PROMPT } from "@/lib/stage9-prompt";
+import { CONDITIONALLY_BANNED_STAGE9, UNIVERSAL_BANNED_STAGE9, conditionalStage9HitAllowedInLeftOfCentre } from "@/lib/stage9-banned-words";
+import { findBannedWordHits } from "@/lib/output-banned-word-gate";
 import detonationCanvasSource from "@/routes/detonation_.canvas.tsx?raw";
 import detonationSource from "@/routes/detonation.tsx?raw";
 import claudeServerSource from "@/lib/claude.server.ts?raw";
@@ -1196,16 +1198,46 @@ export const runTierTwoChecksFrom4 = createServerFn({ method: "POST" })
             if (!primarySessionId || results[2].status !== "pass")
               throw new Error("Skipped: Stage 8 / Checkpoint B did not complete");
             emit("Running Stage 9 (EDT Generation)...");
-            const final = await drainGenerator(runStage9({ data: { sessionId: primarySessionId } }));
-            const output = String((final as { output?: string }).output ?? "");
-            if (output.length < 200) throw new Error(`Stage 9 output too short (${output.length} chars)`);
-            const banned = ["earned", "deserved", "guilt", "apology", "permission"];
-            const offenders = banned.filter((w) => new RegExp(`\\b${w}\\b`, "i").test(output));
-            if (offenders.length)
-              throw new Error(`Stage 9 output contains banned EDT words: ${offenders.join(", ")}. Guard prompt failed at runtime.`);
-            return { detail: `Stage 9 output (${output.length} chars) passed EDT guard scan — no banned register words present.` };
+            await drainGenerator(runStage9({ data: { sessionId: primarySessionId } }));
+            const { data: row, error: rowErr } = await supabaseAdmin
+              .from("sessions")
+              .select("brand_name, brief_text, stage_2_output, stage_9_output, stage_9_leftofcentre_output")
+              .eq("id", primarySessionId)
+              .single();
+            if (rowErr || !row) throw new Error(`Could not reload Stage 9 columns: ${rowErr?.message ?? "no row"}`);
+            const core = String(row.stage_9_output ?? "");
+            const loc = String((row as unknown as { stage_9_leftofcentre_output?: string | null }).stage_9_leftofcentre_output ?? "");
+            if (core.length < 200) throw new Error(`Stage 9 core output too short (${core.length} chars)`);
+            if (loc.length < 120) throw new Error(`Stage 9 left-of-centre output too short (${loc.length} chars)`);
+
+            const universalHits = [
+              ...findBannedWordHits({ text: core, terms: UNIVERSAL_BANNED_STAGE9, rule: "stage9-universal", stageLabel: "Stage 9", columnLabel: "stage_9_output" }),
+              ...findBannedWordHits({ text: loc, terms: UNIVERSAL_BANNED_STAGE9, rule: "stage9-universal", stageLabel: "Stage 9", columnLabel: "stage_9_leftofcentre_output" }),
+            ];
+            if (universalHits.length) {
+              throw new Error(`Stage 9 output contains universal banned words: ${Array.from(new Set(universalHits.map((h) => `${h.match} in ${h.columnLabel}`))).join(", ")}. Runtime gate failed.`);
+            }
+
+            const coreConditional = findBannedWordHits({ text: core, terms: CONDITIONALLY_BANNED_STAGE9, rule: "stage9-core-conditional", stageLabel: "Stage 9", columnLabel: "stage_9_output" });
+            if (coreConditional.length) {
+              throw new Error(`Stage 9 core output contains conditional words that are banned in the core column: ${Array.from(new Set(coreConditional.map((h) => h.match))).join(", ")}.`);
+            }
+
+            const locConditional = findBannedWordHits({ text: loc, terms: CONDITIONALLY_BANNED_STAGE9, rule: "stage9-leftofcentre-conditional", stageLabel: "Stage 9", columnLabel: "stage_9_leftofcentre_output" });
+            const disallowedLoc = locConditional.filter((hit) => !conditionalStage9HitAllowedInLeftOfCentre({
+              word: hit.word,
+              index: hit.index,
+              output: loc,
+              brandName: String(row.brand_name ?? ""),
+              briefText: String(row.brief_text ?? ""),
+              stage2Output: String(row.stage_2_output ?? ""),
+            }));
+            if (disallowedLoc.length) {
+              throw new Error(`Stage 9 left-of-centre output contains competitor-owned conditional words: ${Array.from(new Set(disallowedLoc.map((h) => h.match))).join(", ")}.`);
+            }
+            return { detail: `Stage 9 core (${core.length} chars) and left-of-centre (${loc.length} chars) passed runtime scans: universal list clear in both columns; conditional list blocked in core and competitor-owned terms blocked in left-of-centre.` };
           },
-          "Inspect Stage 9 system prompt banned-words clause and the Claude response in stage_9_output; tighten prompt or add post-sanitiser.",
+          "Inspect Stage 9 runtime banned-word gate across stage_9_output and stage_9_leftofcentre_output; universal words must regenerate/fail in Tier Two and competitor-owned conditional terms must be blocked.",
         );
         let result!: FullCheckResult;
         for (;;) {

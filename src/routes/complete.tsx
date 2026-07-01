@@ -88,6 +88,7 @@ type SessionRow = {
   stage_7_output: string | null;
   stage_8_output: string | null;
   stage_9_output: string | null;
+  stage_9_leftofcentre_output: string | null;
   stage_10_output: string | null;
   stage_11_output: string | null;
   stage_12_output: string | null;

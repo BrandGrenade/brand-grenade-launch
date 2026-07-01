@@ -37,7 +37,7 @@ export const STAGE_MANIFEST: readonly StageManifestEntry[] = [
   { id: "6",   numericStage: 6,  phase: 1, label: "Insight Validation",                      columns: ["stage_6_output"] },
   { id: "7",   numericStage: 7,  phase: 1, label: "Territory Synthesis",                     columns: ["stage_7_output"] },
   { id: "8",   numericStage: 8,  phase: 1, label: "Proposition Generation",                  columns: ["stage_8_output"] },
-  { id: "9",   numericStage: 9,  phase: 1, label: "Distinctiveness Check",                   columns: ["stage_9_output"] },
+  { id: "9",   numericStage: 9,  phase: 1, label: "Distinctiveness Check",                   columns: ["stage_9_output", "stage_9_leftofcentre_output"] },
   { id: "10",  numericStage: 10, phase: 1, label: "Proposition Scoring",                     columns: ["stage_10_output"] },
   { id: "11",  numericStage: 11, phase: 1, label: "Integrity Testing",                       columns: ["stage_11_output"] },
   { id: "12",  numericStage: 12, phase: 1, label: "Proposition Selection",                   columns: ["stage_12_output"] },

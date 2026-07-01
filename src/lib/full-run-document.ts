@@ -24,6 +24,11 @@ const STAGE_16_FORMAT_LABELS: Record<string, string> = {
   stage_16_vision_output: "Strategy and Creative Vision",
 };
 
+const MULTI_COLUMN_LABELS: Record<string, string> = {
+  stage_9_output: "Core Stage 9 Output",
+  stage_9_leftofcentre_output: "Left-of-Centre Alternatives",
+};
+
 export type FullRunSession = {
   brand_name?: string | null;
   category?: string | null;
@@ -169,6 +174,19 @@ function resolveStage(entry: StageManifestEntry, session: FullRunSession): Resol
     const parts = keys.map((k) =>
       `<div class="channel"><h3>${escapeHtml(k.charAt(0).toUpperCase() + k.slice(1))}</h3>${md(sanitise(String(map[k])))}</div>`,
     );
+    return { entry, body: parts.join("\n") };
+  }
+
+  // Default — single string column
+  if (entry.columns.length > 1) {
+    const parts: string[] = [];
+    for (const col of entry.columns) {
+      const raw = session[col];
+      if (typeof raw === "string" && raw.trim()) {
+        parts.push(`<div class="channel"><h3>${escapeHtml(MULTI_COLUMN_LABELS[col] ?? col)}</h3>${md(sanitise(raw))}</div>`);
+      }
+    }
+    if (!parts.length) return null;
     return { entry, body: parts.join("\n") };
   }
 

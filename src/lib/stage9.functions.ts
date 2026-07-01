@@ -8,6 +8,17 @@ import {
   buildStage9LeftOfCentreUserMessage,
   STAGE_9_LEFT_OF_CENTRE_DIVIDER,
 } from "./stage9-leftofcentre-prompt";
+import {
+  CONDITIONALLY_BANNED_STAGE9,
+  UNIVERSAL_BANNED_STAGE9,
+  conditionalStage9HitAllowedInLeftOfCentre,
+} from "./stage9-banned-words";
+import {
+  findBannedWordHits,
+  generateWithBannedWordGate,
+  type BannedWordHit,
+  type OutputGateMode,
+} from "./output-banned-word-gate";
 
 import { countPropositions } from "./count-helpers";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
@@ -15,6 +26,12 @@ import { assertSessionOwner } from "@/lib/auth-helpers.server";
 import { assertUpstreamStageOutput } from "./pipeline-integrity";
 
 const Input = z.object({ sessionId: z.string().uuid() });
+
+async function collectClaudeText(args: Parameters<typeof streamClaude>[0]): Promise<string> {
+  let text = "";
+  for await (const delta of streamClaude(args)) text += delta;
+  return text;
+}
 
 
 async function setRetryStatus(sessionId: string, message: string | null) {
@@ -39,14 +56,15 @@ export const runStage9 = createServerFn({ method: "POST" })
     await assertUpstreamStageOutput(data.sessionId, 9);
     const { data: session, error } = await supabaseAdmin
       .from("sessions")
-      .select("brand_name, category, brief_text, stage_2_output, stage_4b_output, stage_6_output, stage_7_output, stage_8_output, stage_9_output, checkpoint_b_confirmed")
+      .select("brand_name, category, brief_text, stage_2_output, stage_4b_output, stage_6_output, stage_7_output, stage_8_output, stage_9_output, stage_9_leftofcentre_output, checkpoint_b_confirmed, is_preflight_test")
       .eq("id", data.sessionId)
       .single();
     if (error || !session) throw new Error(`Session not found: ${error?.message ?? "no row"}`);
     if (!session.stage_8_output) throw new Error("Stage 8 output missing — cannot run Stage 9");
     if (session.stage_9_output) {
-      yield { delta: session.stage_9_output };
-      yield { done: true as const, output: session.stage_9_output };
+      const cached = `${session.stage_9_output}${session.stage_9_leftofcentre_output ?? ""}`;
+      yield { delta: cached };
+      yield { done: true as const, output: cached, coreOutput: session.stage_9_output, leftOfCentreOutput: session.stage_9_leftofcentre_output ?? "" };
       return;
     }
 
@@ -66,20 +84,45 @@ export const runStage9 = createServerFn({ method: "POST" })
       propositionCount,
     });
 
+    const mode: OutputGateMode = session.is_preflight_test === true ? "test" : "live";
+    const validateCore = (text: string): BannedWordHit[] => [
+      ...findBannedWordHits({
+        text,
+        terms: UNIVERSAL_BANNED_STAGE9,
+        rule: "stage9-universal",
+        stageLabel: "Stage 9",
+        columnLabel: "stage_9_output",
+      }),
+      ...findBannedWordHits({
+        text,
+        terms: CONDITIONALLY_BANNED_STAGE9,
+        rule: "stage9-core-conditional",
+        stageLabel: "Stage 9",
+        columnLabel: "stage_9_output",
+      }),
+    ];
+
     let output = "";
     try {
-      for await (const delta of streamClaude({
-        systemPrompt: STAGE_9_SYSTEM_PROMPT,
-        userMessage,
-        maxTokens: 64000,
-        sessionId: data.sessionId,
+      const gated = await generateWithBannedWordGate({
         stageLabel: "Stage 9",
-        stageNumber: "9",
-        stageName: "Distinctiveness Check",
-      })) {
-        output += delta;
-        yield { delta };
-      }
+        columnLabel: "stage_9_output",
+        mode,
+        maxAttempts: 3,
+        validate: validateCore,
+        generate: (attempt, retryNote) =>
+          collectClaudeText({
+            systemPrompt: STAGE_9_SYSTEM_PROMPT,
+            userMessage: `${userMessage}${retryNote ?? ""}`,
+            maxTokens: 64000,
+            sessionId: data.sessionId,
+            stageLabel: attempt === 1 ? "Stage 9" : `Stage 9 (sanitiser retry ${attempt})`,
+            stageNumber: "9",
+            stageName: "Distinctiveness Check",
+          }),
+      });
+      output = gated.output;
+      yield { delta: output };
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Stage 9 failed";
       await supabaseAdmin
@@ -93,13 +136,11 @@ export const runStage9 = createServerFn({ method: "POST" })
 
     // ===== TIER 3 — LEFT-OF-CENTRE ALTERNATIVES (Breach / Fuse / Flashpoint) =====
     // Additive layer: runs AFTER the core Stage 9 generator on the same session
-    // inputs. Appended to stage_9_output with a clear divider. Failure here does
-    // NOT fail Stage 9 — core output is preserved either way.
+    // inputs. Stored separately in stage_9_leftofcentre_output so core Stage 9
+    // and the conditional-word exemption can be checked independently.
     let leftOfCentre = "";
     try {
       const locDivider = STAGE_9_LEFT_OF_CENTRE_DIVIDER;
-      yield { delta: locDivider };
-      leftOfCentre += locDivider;
 
       const locUserMessage = buildStage9LeftOfCentreUserMessage({
         brandName: session.brand_name,
@@ -112,19 +153,62 @@ export const runStage9 = createServerFn({ method: "POST" })
         briefText: session.brief_text ?? undefined,
       });
 
-      for await (const delta of streamClaude({
-        systemPrompt: STAGE_9_LEFT_OF_CENTRE_SYSTEM_PROMPT,
-        userMessage: locUserMessage,
-        maxTokens: 16000,
-        sessionId: data.sessionId,
-        stageLabel: "Stage 9 (Left-of-Centre)",
-        stageNumber: "9",
-        stageName: "Left-of-Centre Alternatives",
-      })) {
-        leftOfCentre += delta;
-        yield { delta };
-      }
+      const validateLeftOfCentre = (text: string): BannedWordHit[] => {
+        const universalHits = findBannedWordHits({
+          text,
+          terms: UNIVERSAL_BANNED_STAGE9,
+          rule: "stage9-universal",
+          stageLabel: "Stage 9",
+          columnLabel: "stage_9_leftofcentre_output",
+        });
+        const conditionalHits = findBannedWordHits({
+          text,
+          terms: CONDITIONALLY_BANNED_STAGE9,
+          rule: "stage9-leftofcentre-competitor-owned-conditional",
+          stageLabel: "Stage 9",
+          columnLabel: "stage_9_leftofcentre_output",
+        }).filter(
+          (hit) =>
+            !conditionalStage9HitAllowedInLeftOfCentre({
+              word: hit.word,
+              index: hit.index,
+              output: text,
+              brandName: session.brand_name,
+              briefText: session.brief_text ?? "",
+              stage2Output: session.stage_2_output ?? "",
+            }),
+        );
+        return [...universalHits, ...conditionalHits];
+      };
+
+      const gatedLoc = await generateWithBannedWordGate({
+        stageLabel: "Stage 9",
+        columnLabel: "stage_9_leftofcentre_output",
+        mode,
+        maxAttempts: 3,
+        validate: validateLeftOfCentre,
+        generate: (attempt, retryNote) =>
+          collectClaudeText({
+            systemPrompt: STAGE_9_LEFT_OF_CENTRE_SYSTEM_PROMPT,
+            userMessage: `${locUserMessage}${retryNote ?? ""}`,
+            maxTokens: 16000,
+            sessionId: data.sessionId,
+            stageLabel: attempt === 1 ? "Stage 9 (Left-of-Centre)" : `Stage 9 (Left-of-Centre sanitiser retry ${attempt})`,
+            stageNumber: "9",
+            stageName: "Left-of-Centre Alternatives",
+          }),
+      });
+      leftOfCentre = `${locDivider}${gatedLoc.output}`;
+      yield { delta: leftOfCentre };
     } catch (e) {
+      if (mode === "test") {
+        const msg = e instanceof Error ? e.message : "Stage 9 left-of-centre failed";
+        await supabaseAdmin
+          .from("sessions")
+          .update({ stage_9_error: msg })
+          .eq("id", data.sessionId);
+        throw e instanceof Error ? e : new Error(msg);
+      }
       const note = `\n\n[LEFT-OF-CENTRE ALTERNATIVES layer failed: ${e instanceof Error ? e.message : "unknown error"} — core Stage 9 output above is unaffected.]\n`;
       leftOfCentre += note;
       yield { delta: note };
@@ -134,9 +218,9 @@ export const runStage9 = createServerFn({ method: "POST" })
 
     const { error: updateErr } = await supabaseAdmin
       .from("sessions")
-      .update({ stage_9_output: combined, stage_9_error: null })
+      .update({ stage_9_output: output, stage_9_leftofcentre_output: leftOfCentre, stage_9_error: null } as never)
       .eq("id", data.sessionId);
     if (updateErr) throw new Error(`Failed to save Stage 9 output: ${updateErr.message}`);
 
-    yield { done: true as const, output: combined };
+    yield { done: true as const, output: combined, coreOutput: output, leftOfCentreOutput: leftOfCentre };
   });
