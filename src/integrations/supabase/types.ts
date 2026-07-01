@@ -14,6 +14,60 @@ export type Database = {
   }
   public: {
     Tables: {
+      briefing_room_workspaces: {
+        Row: {
+          brand_name: string
+          category: string
+          created_at: string
+          diagnosis: Json | null
+          id: string
+          raw_brief: string
+          relevance: Json | null
+          selected_frame: string | null
+          selected_tension_index: number | null
+          status: string
+          supporting_evidence: Json
+          tensions: Json | null
+          truths: Json | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          brand_name?: string
+          category?: string
+          created_at?: string
+          diagnosis?: Json | null
+          id?: string
+          raw_brief?: string
+          relevance?: Json | null
+          selected_frame?: string | null
+          selected_tension_index?: number | null
+          status?: string
+          supporting_evidence?: Json
+          tensions?: Json | null
+          truths?: Json | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          brand_name?: string
+          category?: string
+          created_at?: string
+          diagnosis?: Json | null
+          id?: string
+          raw_brief?: string
+          relevance?: Json | null
+          selected_frame?: string | null
+          selected_tension_index?: number | null
+          status?: string
+          supporting_evidence?: Json
+          tensions?: Json | null
+          truths?: Json | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       preflight_checks: {
         Row: {
           check_type: string
