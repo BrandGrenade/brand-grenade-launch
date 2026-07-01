@@ -117,8 +117,6 @@ async function runWithWatchdog<T>(
     return await Promise.race([work(), watchdog]);
   } finally {
     stopped = true;
-    watchdogReject = null;
-    void watchdogReject;
   }
 }
 
