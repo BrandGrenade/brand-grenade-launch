@@ -1,7 +1,7 @@
-// Briefing Room server functions — Steps 1–4.
-// Steps 5–6 (Structure into Stage 1 format, Approve → hand off to Saved Briefs)
-// are intentionally NOT implemented in this pass. They are gated on the Stage 1
-// input schema confirmation and the enhanced-pipeline test being clean.
+// Briefing Room server functions — Steps 1–4 (diagnostic) and Step 5 (handoff
+// preview). Step 6 (approve → land in Saved Briefs → run Stage 1) is performed
+// client-side by calling saveBrief() with the preview payload, then routing
+// into the existing Save-and-Run path via PENDING_BRIEF_STORAGE_KEY.
 
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
