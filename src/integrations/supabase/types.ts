@@ -302,6 +302,7 @@ export type Database = {
           stage_8_feedback: string | null
           stage_8_output: string | null
           stage_9_error: string | null
+          stage_9_leftofcentre_output: string | null
           stage_9_output: string | null
           stage_amendments: Json
           stage_status: string | null
@@ -456,6 +457,7 @@ export type Database = {
           stage_8_feedback?: string | null
           stage_8_output?: string | null
           stage_9_error?: string | null
+          stage_9_leftofcentre_output?: string | null
           stage_9_output?: string | null
           stage_amendments?: Json
           stage_status?: string | null
@@ -610,6 +612,7 @@ export type Database = {
           stage_8_feedback?: string | null
           stage_8_output?: string | null
           stage_9_error?: string | null
+          stage_9_leftofcentre_output?: string | null
           stage_9_output?: string | null
           stage_amendments?: Json
           stage_status?: string | null
