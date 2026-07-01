@@ -394,7 +394,14 @@ export function PreflightFullCheckPanel() {
   ): Promise<FullCheckResult> => {
     const def = handoff.results[0];
     setCurrentMessage(`▶ ${def.name}`);
-    setResults((prev) => prev.map((r) => (r.index === 1 ? { ...r, status: "running" } : r)));
+    const runningResults = handoff.results.map((r) =>
+      r.index === 1 ? { ...r, status: "running" as const } : r,
+    );
+    handoff.results = runningResults;
+    setResults(runningResults);
+    await recordResultsFn({
+      data: { recordId: handoff.recordId, allResults: runningResults },
+    });
     const started = Date.now();
     const sessionId = handoff.sessionId;
     try {
@@ -435,7 +442,14 @@ export function PreflightFullCheckPanel() {
   ): Promise<FullCheckResult> => {
     const def = handoff.results[1];
     setCurrentMessage(`▶ ${def.name}`);
-    setResults((prev) => prev.map((r) => (r.index === 2 ? { ...r, status: "running" } : r)));
+    const runningResults = handoff.results.map((r) =>
+      r.index === 2 ? { ...r, status: "running" as const } : r,
+    );
+    handoff.results = runningResults;
+    setResults(runningResults);
+    await recordResultsFn({
+      data: { recordId: handoff.recordId, allResults: runningResults },
+    });
     const started = Date.now();
     const sessionId = handoff.sessionId;
     const timings: string[] = [];
@@ -468,7 +482,14 @@ export function PreflightFullCheckPanel() {
   ): Promise<FullCheckResult> => {
     const def = handoff.results[5];
     setCurrentMessage(`▶ ${def.name}`);
-    setResults((prev) => prev.map((r) => (r.index === 6 ? { ...r, status: "running" } : r)));
+    const runningResults = handoff.results.map((r) =>
+      r.index === 6 ? { ...r, status: "running" as const } : r,
+    );
+    handoff.results = runningResults;
+    setResults(runningResults);
+    await recordResultsFn({
+      data: { recordId: handoff.recordId, allResults: runningResults },
+    });
     const started = Date.now();
     const sessionId = handoff.sessionId;
     const timings: string[] = [];
@@ -500,7 +521,14 @@ export function PreflightFullCheckPanel() {
     const idx = 2; // Check 3 → index 2
     const def = handoff.results[idx];
     setCurrentMessage(`▶ ${def.name}`);
-    setResults((prev) => prev.map((r) => (r.index === 3 ? { ...r, status: "running" } : r)));
+    const runningResults = handoff.results.map((r) =>
+      r.index === 3 ? { ...r, status: "running" as const } : r,
+    );
+    handoff.results = runningResults;
+    setResults(runningResults);
+    await recordResultsFn({
+      data: { recordId: handoff.recordId, allResults: runningResults },
+    });
     const started = Date.now();
     const sessionId = handoff.sessionId;
     const timings: string[] = [];
@@ -553,7 +581,14 @@ export function PreflightFullCheckPanel() {
     const idx = 7; // Check 8 → index 7
     const def = handoff.results[idx];
     setCurrentMessage(`▶ ${def.name}`);
-    setResults((prev) => prev.map((r) => (r.index === 8 ? { ...r, status: "running" } : r)));
+    const runningResults = handoff.results.map((r) =>
+      r.index === 8 ? { ...r, status: "running" as const } : r,
+    );
+    handoff.results = runningResults;
+    setResults(runningResults);
+    await recordResultsFn({
+      data: { recordId: handoff.recordId, allResults: runningResults },
+    });
     const started = Date.now();
     const sessionId = handoff.sessionId;
     const timings: string[] = [];
@@ -618,7 +653,14 @@ export function PreflightFullCheckPanel() {
   ): Promise<FullCheckResult> => {
     const def = handoff.results[9];
     setCurrentMessage(`▶ ${def.name}`);
-    setResults((prev) => prev.map((r) => (r.index === 10 ? { ...r, status: "running" } : r)));
+    const runningResults = handoff.results.map((r) =>
+      r.index === 10 ? { ...r, status: "running" as const } : r,
+    );
+    handoff.results = runningResults;
+    setResults(runningResults);
+    await recordResultsFn({
+      data: { recordId: handoff.recordId, allResults: runningResults },
+    });
     const started = Date.now();
     const sessionId = handoff.sessionId;
     const timings: string[] = [];
@@ -657,7 +699,14 @@ export function PreflightFullCheckPanel() {
   ): Promise<FullCheckResult> => {
     const def = handoff.results[11];
     setCurrentMessage(`▶ ${def.name}`);
-    setResults((prev) => prev.map((r) => (r.index === 12 ? { ...r, status: "running" } : r)));
+    const runningResults = handoff.results.map((r) =>
+      r.index === 12 ? { ...r, status: "running" as const } : r,
+    );
+    handoff.results = runningResults;
+    setResults(runningResults);
+    await recordResultsFn({
+      data: { recordId: handoff.recordId, allResults: runningResults },
+    });
     const started = Date.now();
     const [idA, idB] = handoff.concurrentSessionIds;
     const timings: string[] = [];
