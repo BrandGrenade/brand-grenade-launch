@@ -71,7 +71,7 @@ const REPLACEMENTS: Record<string, string> = {
 };
 
 function escapeRegex(term: string): string {
-  return term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/\\\s\+/g, "\\s+");
+  return term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 function termRegex(term: string): RegExp {
