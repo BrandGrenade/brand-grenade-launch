@@ -199,8 +199,8 @@ function WorkspacePage() {
             {ws.brand_name || "(untitled)"}
           </h1>
           <p className="text-body-sm mt-1 text-text-tertiary">
-            Steps 5–6 (structure into Stage 1 format and hand off to Saved Briefs) are on hold
-            pending schema confirmation and a clean pipeline test.
+            Diagnose → capture truths → judge relevance → surface tension → structure
+            into an eleven-field brief that Stage 1 accepts as fixed priority input.
           </p>
         </header>
 
