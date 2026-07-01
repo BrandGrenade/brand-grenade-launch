@@ -74,10 +74,10 @@ async function drainStream<C extends { delta?: string; done?: true }>(
 // on `sessions.updated_at`. If no write occurs for `maxIdleMs`, we assume the
 // server-side Worker died silently, forcibly mark the row `interrupted`, and
 // reject — so the harness can never hang for tens of minutes on a dead RPC.
-async function runWithWatchdog<T>(
+async function runWithWatchdog(
   opts: { sessionId: string; label: string; maxIdleMs?: number; pollMs?: number },
-  work: () => Promise<T>,
-): Promise<T> {
+  work: () => Promise<unknown>,
+): Promise<unknown> {
   const maxIdleMs = opts.maxIdleMs ?? 5 * 60_000; // 5 minutes default
   const pollMs = opts.pollMs ?? 15_000;
   let stopped = false;
