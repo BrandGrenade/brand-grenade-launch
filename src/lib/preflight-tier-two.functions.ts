@@ -1295,11 +1295,13 @@ export const runTierTwoChecksFrom4 = createServerFn({ method: "POST" })
     } finally {
       if (!handedOff) {
         const ids = Array.from(createdSessionIds);
-        if (ids.length > 0) {
-          await supabaseAdmin.from("sessions").delete().in("id", ids);
-        }
         const failedCount = results.filter((r) => r.status === "fail").length;
         const overall: "ready" | "issue_detected" = failedCount === 0 ? "ready" : "issue_detected";
+        // Preserve TestBrand sessions on failure so their outputs remain
+        // queryable for post-mortem. Only clean up on a fully green run.
+        if (ids.length > 0 && failedCount === 0) {
+          await supabaseAdmin.from("sessions").delete().in("id", ids);
+        }
         await supabaseAdmin
           .from("preflight_checks")
           .update({
