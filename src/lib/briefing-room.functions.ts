@@ -352,3 +352,27 @@ Produce the Step 4 candidate tensions JSON now. Cite indices from the array abov
     if (error) throw new Error(error.message);
     return parsed;
   });
+
+// ─── STEP 5 — HANDOFF PREVIEW ────────────────────────────────────────
+// Composes the eleven-field BriefFields + brief_text (with load-bearing
+// anchor block) that will be handed off. Pure preview — no DB writes.
+// Step 6 (approve) runs on the client: saveBrief({fields, briefText}) →
+// sessionStorage(PENDING_BRIEF_STORAGE_KEY) → navigate('/brief') → the
+// existing structured editor takes over with one-click Save-and-Run.
+
+export const getBriefingHandoffPreview = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => z.object({ id: z.string().uuid() }).parse(i))
+  .handler(async ({ data, context }): Promise<HandoffPayload> => {
+    const ws = await loadWorkspace(data.id, context.userId!);
+    return buildHandoffPayload({
+      brand_name: ws.brand_name,
+      category: ws.category,
+      diagnosis: ws.diagnosis,
+      truths: ws.truths,
+      relevance: ws.relevance,
+      tensions: ws.tensions,
+      selected_frame: ws.selected_frame,
+      selected_tension_index: ws.selected_tension_index,
+    });
+  });
