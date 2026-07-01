@@ -91,12 +91,52 @@ export const runStage9 = createServerFn({ method: "POST" })
 
     await setRetryStatus(data.sessionId, null);
 
+    // ===== TIER 3 — LEFT-OF-CENTRE ALTERNATIVES (Breach / Fuse / Flashpoint) =====
+    // Additive layer: runs AFTER the core Stage 9 generator on the same session
+    // inputs. Appended to stage_9_output with a clear divider. Failure here does
+    // NOT fail Stage 9 — core output is preserved either way.
+    let leftOfCentre = "";
+    try {
+      const locDivider = STAGE_9_LEFT_OF_CENTRE_DIVIDER;
+      yield { delta: locDivider };
+      leftOfCentre += locDivider;
+
+      const locUserMessage = buildStage9LeftOfCentreUserMessage({
+        brandName: session.brand_name,
+        category: session.category,
+        stage2Output: session.stage_2_output ?? "",
+        stage4bOutput: session.stage_4b_output ?? undefined,
+        stage6Output: session.stage_6_output ?? undefined,
+        stage7Output: session.stage_7_output ?? undefined,
+        stage8Output: session.stage_8_output ?? undefined,
+        briefText: session.brief_text ?? undefined,
+      });
+
+      for await (const delta of streamClaude({
+        systemPrompt: STAGE_9_LEFT_OF_CENTRE_SYSTEM_PROMPT,
+        userMessage: locUserMessage,
+        maxTokens: 16000,
+        sessionId: data.sessionId,
+        stageLabel: "Stage 9 (Left-of-Centre)",
+        stageNumber: "9",
+        stageName: "Left-of-Centre Alternatives",
+      })) {
+        leftOfCentre += delta;
+        yield { delta };
+      }
+    } catch (e) {
+      const note = `\n\n[LEFT-OF-CENTRE ALTERNATIVES layer failed: ${e instanceof Error ? e.message : "unknown error"} — core Stage 9 output above is unaffected.]\n`;
+      leftOfCentre += note;
+      yield { delta: note };
+    }
+
+    const combined = output + leftOfCentre;
 
     const { error: updateErr } = await supabaseAdmin
       .from("sessions")
-      .update({ stage_9_output: output, stage_9_error: null })
+      .update({ stage_9_output: combined, stage_9_error: null })
       .eq("id", data.sessionId);
     if (updateErr) throw new Error(`Failed to save Stage 9 output: ${updateErr.message}`);
 
-    yield { done: true as const, output };
+    yield { done: true as const, output: combined };
   });
