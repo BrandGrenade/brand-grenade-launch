@@ -129,6 +129,48 @@ function WorkspacePage() {
     }
   }
 
+  async function loadPreview() {
+    setPreviewLoading(true);
+    try {
+      const p = await previewHandoff({ data: { id } });
+      setPreview(p);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Preview failed");
+    } finally {
+      setPreviewLoading(false);
+    }
+  }
+
+  async function approveAndHandOff() {
+    if (!preview || !preview.ready) return;
+    if (preview.gaps.length > 0 && !ackGaps) {
+      toast.error("Acknowledge the open gaps before handing off.");
+      return;
+    }
+    setApproving(true);
+    try {
+      const saved = await saveBrief({
+        brandName: preview.briefFields.brandName || brand,
+        category: preview.briefFields.category || category,
+        briefText: preview.briefText,
+        briefFields: preview.briefFields,
+      });
+      if (!saved) {
+        setApproving(false);
+        return;
+      }
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem(PENDING_BRIEF_STORAGE_KEY, JSON.stringify(saved));
+      }
+      toast.success("Handed off to Saved Briefs — review and run Stage 1.");
+      navigate({ to: "/brief" });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Handoff failed");
+      setApproving(false);
+    }
+  }
+
+
   if (!ws) {
     return (
       <div className="min-h-screen bg-background">
