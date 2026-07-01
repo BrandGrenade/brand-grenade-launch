@@ -281,14 +281,12 @@ Write the complete STRATEGY AND CREATIVE VISION document now. Begin immediately.
         yield { delta: DOCUMENT_FOOTER };
       } else {
         // Compute the target output column once so we can persist per-section.
-        const outputColumnName =
+        const outputColumnName: "stage_16_agency_output" | "stage_16_consulting_output" | "stage_16_workshop_output" =
           data.format === "agency"
             ? "stage_16_agency_output"
             : data.format === "consulting"
               ? "stage_16_consulting_output"
-              : data.format === "vision"
-                ? "stage_16_vision_output"
-                : "stage_16_workshop_output";
+              : "stage_16_workshop_output";
 
         const persistPartial16 = async (errorMsg: string | null) => {
           try {
