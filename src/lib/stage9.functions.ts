@@ -78,6 +78,16 @@ export const runStage9 = createServerFn({ method: "POST" })
 
     const propositionCount = countPropositions(session.stage_8_output);
 
+    // Pre-compute which conditional words a named competitor already owns.
+    // Only these get injected as banned targets into the core prompt; the
+    // rest of the conditional list is allowed in core so category-native
+    // verb-space (train/perform/discipline briefs) isn't starved.
+    const coreCompetitorOwnedConditional = competitorOwnedConditionalStage9Words({
+      brandName: session.brand_name,
+      briefText: session.brief_text ?? "",
+      stage2Output: session.stage_2_output ?? "",
+    });
+
     const userMessage = buildStage9UserMessage({
       brandName: session.brand_name,
       category: session.category,
@@ -85,6 +95,7 @@ export const runStage9 = createServerFn({ method: "POST" })
       cmm: session.stage_2_output ?? "",
       stage7DominantSignal: session.stage_7_output ?? undefined,
       propositionCount,
+      competitorOwnedConditionalWords: coreCompetitorOwnedConditional,
     });
 
     const mode: OutputGateMode = session.is_preflight_test === true ? "test" : "live";
@@ -99,10 +110,18 @@ export const runStage9 = createServerFn({ method: "POST" })
       ...findBannedWordHits({
         text,
         terms: CONDITIONALLY_BANNED_STAGE9,
-        rule: "stage9-core-conditional",
+        rule: "stage9-core-competitor-owned-conditional",
         stageLabel: "Stage 9",
         columnLabel: "stage_9_output",
-      }),
+      }).filter(
+        (hit) =>
+          !conditionalStage9WordAllowedInLeftOfCentre({
+            word: hit.word,
+            brandName: session.brand_name,
+            briefText: session.brief_text ?? "",
+            stage2Output: session.stage_2_output ?? "",
+          }),
+      ),
     ];
 
     let output = "";
