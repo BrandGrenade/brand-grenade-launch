@@ -70,6 +70,61 @@ async function drainStream<C extends { delta?: string; done?: true }>(
   return final;
 }
 
+// Client-side backstop watchdog. Races a stage RPC against a DB-heartbeat check
+// on `sessions.updated_at`. If no write occurs for `maxIdleMs`, we assume the
+// server-side Worker died silently, forcibly mark the row `interrupted`, and
+// reject — so the harness can never hang for tens of minutes on a dead RPC.
+async function runWithWatchdog<T>(
+  opts: { sessionId: string; label: string; maxIdleMs?: number; pollMs?: number },
+  work: () => Promise<T>,
+): Promise<T> {
+  const maxIdleMs = opts.maxIdleMs ?? 5 * 60_000; // 5 minutes default
+  const pollMs = opts.pollMs ?? 15_000;
+  let stopped = false;
+  let watchdogReject: ((e: Error) => void) | null = null;
+
+  const watchdog = new Promise<never>((_, reject) => {
+    watchdogReject = reject;
+    const tick = async () => {
+      if (stopped) return;
+      try {
+        const { data } = await supabase
+          .from("sessions")
+          .select("updated_at")
+          .eq("id", opts.sessionId)
+          .maybeSingle();
+        const updatedAt = data?.updated_at ? new Date(data.updated_at).getTime() : 0;
+        const idleFor = Date.now() - updatedAt;
+        if (updatedAt > 0 && idleFor > maxIdleMs) {
+          stopped = true;
+          try {
+            await supabase
+              .from("sessions")
+              .update({ status: "interrupted" })
+              .eq("id", opts.sessionId);
+          } catch { /* best-effort */ }
+          reject(new Error(
+            `Watchdog: ${opts.label} produced no DB write for ${Math.round(idleFor / 1000)}s ` +
+            `(threshold ${Math.round(maxIdleMs / 1000)}s). Server Worker presumed dead; row released.`,
+          ));
+          return;
+        }
+      } catch { /* transient poll error — try again */ }
+      if (!stopped) setTimeout(() => { void tick(); }, pollMs);
+    };
+    setTimeout(() => { void tick(); }, pollMs);
+  });
+
+  try {
+    return await Promise.race([work(), watchdog]);
+  } finally {
+    stopped = true;
+    watchdogReject = null;
+    void watchdogReject;
+  }
+}
+
+
 type RunState = "idle" | "running" | "complete" | "lock_failed" | "error";
 
 const CHECK_NAMES: Record<FullCheckId, string> = {
@@ -481,7 +536,7 @@ export function PreflightFullCheckPanel() {
       for (const { label, run } of stages) {
         setCurrentMessage(`  · Running ${label} (separate Worker invocation)...`);
         const t0 = Date.now();
-        await run();
+        await runWithWatchdog({ sessionId, label }, run);
         timings.push(`${label}: ${((Date.now() - t0) / 1000).toFixed(1)}s`);
       }
       return { ...def, status: "pass", durationMs: Date.now() - started, detail: `Phase 1A chain completed — each stage ran as its own server-fn RPC. ${timings.join(", ")}.`, remediation: null };
@@ -630,7 +685,7 @@ export function PreflightFullCheckPanel() {
       for (const { label, run } of stages) {
         setCurrentMessage(`  · Running ${label} (separate Worker invocation)...`);
         const t0 = Date.now();
-        await run();
+        await runWithWatchdog({ sessionId, label }, run);
         timings.push(`${label}: ${((Date.now() - t0) / 1000).toFixed(1)}s`);
       }
       // Now verify Stage 16's Phase-2-completion gate correctly refuses to

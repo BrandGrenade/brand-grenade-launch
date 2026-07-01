@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { streamClaude } from "./claude.server";
+import { withStreamSafety } from "./stream-stage-safety";
 import { STAGE_4B_SYSTEM_PROMPT, buildStage4bUserMessage } from "./stage4b-prompt";
 import { trimStage1ForDownstream } from "./context-trim";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
@@ -43,8 +44,9 @@ export const runStage4b = createServerFn({ method: "POST" })
     });
 
     let output = "";
-    try {
-      for await (const delta of streamClaude({
+    for await (const delta of withStreamSafety(
+      { sessionId: data.sessionId, stageLabel: "Stage 4B", outputColumn: "stage_4b_output", errorColumn: "stage_4b_error" },
+      streamClaude({
         systemPrompt: STAGE_4B_SYSTEM_PROMPT,
         userMessage,
         maxTokens: 64000,
@@ -52,15 +54,12 @@ export const runStage4b = createServerFn({ method: "POST" })
         stageLabel: "Stage 4B",
         stageNumber: "4b",
         stageName: "Asset Mining & Product Facts",
-      })) {
+      }),
+    )) {
         output += delta;
         yield { delta };
       }
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : "Stage 4B failed";
-      await supabaseAdmin.from("sessions").update({ stage_4b_error: msg }).eq("id", data.sessionId);
-      throw e instanceof Error ? e : new Error(msg);
-    }
+
 
     // Mandatory fact-verification pass. Stage 4B explicitly labels claims as
     // "Real Fact" vs "Perceived Fact". Real-fact claims must be checked

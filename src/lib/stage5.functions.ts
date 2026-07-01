@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { streamClaude } from "./claude.server";
+import { withStreamSafety } from "./stream-stage-safety";
 import { STAGE_5_SYSTEM_PROMPT, buildStage5UserMessage } from "./stage5-prompt";
 import { trimCMMForDownstream, trimSISForDownstream } from "./context-trim";
 import { countSections } from "./count-helpers";
@@ -52,8 +53,9 @@ export const runStage5 = createServerFn({ method: "POST" })
 
 
     let output = "";
-    try {
-      for await (const delta of streamClaude({
+    for await (const delta of withStreamSafety(
+      { sessionId: data.sessionId, stageLabel: "Stage 5", outputColumn: "stage_5_output", errorColumn: "stage_5_error" },
+      streamClaude({
         systemPrompt: STAGE_5_SYSTEM_PROMPT,
         userMessage,
         maxTokens: 64000,
@@ -61,15 +63,12 @@ export const runStage5 = createServerFn({ method: "POST" })
         stageLabel: "Stage 5",
         stageNumber: "5",
         stageName: "Insight Generation",
-      })) {
+      }),
+    )) {
         output += delta;
         yield { delta };
       }
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : "Stage 5 failed";
-      await supabaseAdmin.from("sessions").update({ stage_5_error: msg }).eq("id", data.sessionId);
-      throw e instanceof Error ? e : new Error(msg);
-    }
+
 
     const { error: updateErr } = await supabaseAdmin
       .from("sessions")

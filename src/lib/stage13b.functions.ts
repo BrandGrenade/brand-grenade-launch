@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { streamClaude } from "./claude.server";
+import { withStreamSafety } from "./stream-stage-safety";
 import { STAGE_13B_SYSTEM_PROMPT, buildStage13bUserMessage } from "./stage13b-prompt";
 import { trimBrandFitForDownstream } from "./context-trim";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
@@ -37,8 +38,9 @@ export const runStage13b = createServerFn({ method: "POST" })
       .eq("id", data.sessionId);
 
     let output = "";
-    try {
-      for await (const delta of streamClaude({
+    for await (const delta of withStreamSafety(
+      { sessionId: data.sessionId, stageLabel: "Stage 13B", outputColumn: "stage_13b_output", errorColumn: "stage_13b_error" },
+      streamClaude({
         systemPrompt: STAGE_13B_SYSTEM_PROMPT,
         userMessage: buildStage13bUserMessage({
           brandName: session.brand_name,
@@ -53,15 +55,12 @@ export const runStage13b = createServerFn({ method: "POST" })
         maxTokens: 64000,
         stageNumber: "13B",
         stageName: "Historical Validation",
-      })) {
+      }),
+    )) {
         output += delta;
         yield { delta };
       }
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : "Stage 13B failed";
-      await supabaseAdmin.from("sessions").update({ stage_13b_error: msg }).eq("id", data.sessionId);
-      throw new Error(msg);
-    }
+
 
     const { error: ue } = await supabaseAdmin
       .from("sessions")
