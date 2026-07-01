@@ -431,12 +431,13 @@ export const runTierTwoFullCheck = createServerFn({ method: "POST" })
       // and avoids prematurely finalising the preflight_checks row.
       if (!handedOff) {
         const ids = Array.from(createdSessionIds);
-        if (ids.length > 0) {
+        const failedCount = results.filter((r) => r.status === "fail").length;
+        const overall: "ready" | "issue_detected" = failedCount === 0 ? "ready" : "issue_detected";
+        // Preserve TestBrand sessions on failure for post-mortem.
+        if (ids.length > 0 && failedCount === 0) {
           await supabaseAdmin.from("sessions").delete().in("id", ids);
         }
 
-        const failedCount = results.filter((r) => r.status === "fail").length;
-        const overall: "ready" | "issue_detected" = failedCount === 0 ? "ready" : "issue_detected";
         await supabaseAdmin
           .from("preflight_checks")
           .update({
