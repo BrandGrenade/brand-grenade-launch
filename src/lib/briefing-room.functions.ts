@@ -182,7 +182,10 @@ export const setBriefingSelections = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await loadWorkspace(data.id, context.userId!);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const patch: Record<string, unknown> = {};
+    const patch: {
+      selected_frame?: string | null;
+      selected_tension_index?: number | null;
+    } = {};
     if (data.selectedFrame !== undefined) patch.selected_frame = data.selectedFrame;
     if (data.selectedTensionIndex !== undefined)
       patch.selected_tension_index = data.selectedTensionIndex;
