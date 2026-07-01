@@ -19,6 +19,7 @@ import {
   type Step4Output,
   type Truth,
 } from "./briefing-room-prompts";
+import { buildHandoffPayload, type HandoffPayload } from "./briefing-room-handoff";
 
 const EvidenceSchema = z.object({
   label: z.string().max(200).default(""),
