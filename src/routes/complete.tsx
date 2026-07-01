@@ -95,6 +95,19 @@ type SessionRow = {
   stage_14_output: string | null;
   stage_15_output: string | null;
 
+  // Sub-stage outputs (for Complete Pipeline Run deliverable)
+  stage_1b_output: string | null;
+  stage_4b_output: string | null;
+  stage_13b_output: string | null;
+  stage_14b_output: string | null;
+  stage_14c_output: string | null;
+  stage_16_consulting_output: string | null;
+  stage_16_agency_output: string | null;
+  stage_16_workshop_output: string | null;
+  stage_17_output: string | null;
+  stage_18_output: string | null;
+  stage_20b_output: string | null;
+
   // Phase 2 deliverables source
   stage_17_selected_territory: string | null;
   stage_17b_output: string | null;
