@@ -80,7 +80,18 @@ export function buildStage9UserMessage(args: {
   cmm: string;
   stage7DominantSignal?: string;
   propositionCount: number;
+  /**
+   * Conditional-list words a named competitor in the brief already owns
+   * (or the brief's exclusion list forbids). These are the ONLY conditional
+   * words banned in the core layer for this brief. Empty array = no
+   * conditional words are banned in core for this brief.
+   */
+  competitorOwnedConditionalWords?: readonly string[];
 }): string {
+  const owned = args.competitorOwnedConditionalWords ?? [];
+  const conditionalClause = owned.length
+    ? `CONDITIONAL — banned in this core generator for THIS brief because a named competitor already owns them (or the brief's exclusion list forbids them): ${owned.join(", ")}. Do NOT use these or any inflected form. The rest of the conditional list is allowed in core for this brief.`
+    : `CONDITIONAL — no words from the conditional list (${CONDITIONALLY_BANNED_STAGE9_LIST}) are banned in core for this brief, because no named competitor in this category owns them and the brief does not exclude them. They are allowed in core if the line genuinely needs them; still prefer a fresher verb where one exists.`;
   return `Brand: ${args.brandName}
 Category: ${args.category}
 
@@ -89,9 +100,11 @@ The following words are BANNED in every proposition, foundation line, proof-of-o
 
 UNIVERSAL — never allowed under any circumstance: ${UNIVERSAL_BANNED_STAGE9_LIST}.
 
-CONDITIONAL — banned in this core generator regardless of category or competitor situation: ${CONDITIONALLY_BANNED_STAGE9_LIST}. In particular the words earn / earned / earning / earns / reward / rewards / rewarded / deserve / deserved / deserving are OFF-LIMITS here — this brief's category (performance, training, discipline) will pull you toward "earned" language; resist it and pick a different verb (e.g. built, held, kept, matched, met, made, done).
+${conditionalClause}
 
-Reaching for any of these words after being told not to is a failure of craft. Regenerate the line from a different verb before presenting it.
+Reaching for any UNIVERSAL word, or any CONDITIONAL word listed as banned above for this brief, after being told not to is a failure of craft. Regenerate the line from a different verb before presenting it.
+
+
 
 ==== STAGE 8 — CANDIDATE PROPOSITIONS (raw material to interrogate and reinterpret, NOT to repeat verbatim) ====
 ${args.stage8Output}
