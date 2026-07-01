@@ -46,6 +46,28 @@ Every category makes a set of fundamental promises to its audience — the human
 
 After mapping every promise, identify the single most prominent promise that is either available or weakly occupied and where the brand has access to proof that can make occupation genuine. This is the priority strategic territory.
 
+## Category Competitive Territory Map
+
+Every category is contested along a finite set of COMPETITIVE DIMENSIONS — the axes on which brands actually compete and by which buyers actually choose. These are not the human needs the category serves (those are mapped above). These are the strategic GROUNDS a brand can plant itself on. In car rental the dimensions include network and availability, price, service, vehicle range, and ease of pickup and return. In beer they include taste and quality, heritage, price and value, and occasion. The strategic value of a dimension is not whether it exists but whether it is OVER-CONTESTED, UNDER-COMMITTED, or VACANT — because a brand wins by committing hardest to a dimension the category has left thinly held, the way one rental brand chose service in a category fighting over network size.
+
+Identify every significant competitive dimension in this category. For each dimension document four things.
+
+First — the dimension. Name it in the plainest possible term a buyer would recognise (service, range, price, speed, trust, ease), not in strategy language.
+
+Second — occupancy and intensity. Which brand or brands compete on this dimension, and how hard. Distinguish OVER-CONTESTED (multiple brands fight here; entering means a war of attrition), COMMITTED (one brand owns it credibly), UNDER-COMMITTED (brands claim it weakly or intermittently but no one owns it), and VACANT (the category barely competes here at all).
+
+Third — the dominant basis of competition. Across all dimensions, name the ONE the category treats as the default game — the dimension every brand, including this one, reflexively competes on. This is the single most important output of the map. It is the convention a disruptive brand would REFUSE. (Dog food's dominant basis was nutrition and science; the disruptive move abandoned it entirely and relocated to a human truth. Beer's was taste and quality; the disruptive move relocated to what the drink is for.)
+
+Fourth — the under-committed opening. Name the dimension that is genuinely under-committed or vacant AND that this brand has some credible right to occupy. This is the dimension a challenger could commit to harder than anyone and own — the Avis-service move: not an empty space, a thinly-held one seized with total commitment.
+
+After mapping every dimension, state two things in one line each.
+
+THE DOMINANT BASIS OF COMPETITION: [the single dimension the category defaults to — the one a disruptive brand would refuse].
+
+THE MOST OWNABLE UNDER-COMMITTED DIMENSION: [the thinly-held dimension this brand could credibly seize and commit to hardest].
+
+These two lines are carried forward as explicit inputs to later proposition generation.
+
 ## Category Silence Map
 
 Every category has a set of things it has collectively agreed never to say. Not things competitors have said and lost. Things no brand in the category has been willing to say at all. These silences are not accidental. They are structural. Every player in the category avoids them because saying them would threaten the commercial arrangements, the pricing structures, the moral positioning, or the comfortable fictions the category depends on for its margins.
