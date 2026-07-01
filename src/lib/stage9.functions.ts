@@ -12,7 +12,9 @@ import {
   CONDITIONALLY_BANNED_STAGE9,
   UNIVERSAL_BANNED_STAGE9,
   conditionalStage9HitAllowedInLeftOfCentre,
+  competitorOwnedConditionalStage9Words,
 } from "./stage9-banned-words";
+
 import {
   findBannedWordHits,
   generateWithBannedWordGate,
@@ -142,6 +144,17 @@ export const runStage9 = createServerFn({ method: "POST" })
     try {
       const locDivider = STAGE_9_LEFT_OF_CENTRE_DIVIDER;
 
+      const competitorOwnedConditionalWords = competitorOwnedConditionalStage9Words({
+        brandName: session.brand_name,
+        briefText: session.brief_text ?? "",
+        stage2Output: session.stage_2_output ?? "",
+      });
+      if (competitorOwnedConditionalWords.length) {
+        console.info(
+          `[STAGE9-LOC] pre-computed banned conditional targets for session=${data.sessionId}: ${competitorOwnedConditionalWords.join(", ")}`,
+        );
+      }
+
       const locUserMessage = buildStage9LeftOfCentreUserMessage({
         brandName: session.brand_name,
         category: session.category,
@@ -151,7 +164,9 @@ export const runStage9 = createServerFn({ method: "POST" })
         stage7Output: session.stage_7_output ?? undefined,
         stage8Output: session.stage_8_output ?? undefined,
         briefText: session.brief_text ?? undefined,
+        competitorOwnedConditionalWords,
       });
+
 
       const validateLeftOfCentre = (text: string): BannedWordHit[] => {
         const universalHits = findBannedWordHits({
