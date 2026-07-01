@@ -139,10 +139,10 @@ export const runStage8 = createServerFn({ method: "POST" })
       await setStatus(data.sessionId, null);
 
       if (territoryNames.length < 3) {
-        const msg = `Stage 7 still produced only ${territoryNames.length} strategic territories after re-run. Flagged for human review.`;
+        const msg = `Stage 7 still produced only ${territoryNames.length} strategic territories after re-run. Flagged for review.`;
         await supabaseAdmin
           .from("sessions")
-          .update({ stage_8_error: msg, status: "needs_review" })
+          .update({ stage_8_error: msg, status: "interrupted" })
           .eq("id", data.sessionId);
         throw new Error(msg);
       }
