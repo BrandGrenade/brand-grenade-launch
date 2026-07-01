@@ -779,11 +779,12 @@ export const runTierTwoChecksFrom9 = createServerFn({ method: "POST" })
     } finally {
       if (handedOff) return;
       const ids = Array.from(createdSessionIds);
-      if (ids.length > 0) {
-        await supabaseAdmin.from("sessions").delete().in("id", ids);
-      }
       const failedCount = results.filter((r) => r.status === "fail").length;
       const overall: "ready" | "issue_detected" = failedCount === 0 ? "ready" : "issue_detected";
+      // Preserve TestBrand sessions on failure for post-mortem.
+      if (ids.length > 0 && failedCount === 0) {
+        await supabaseAdmin.from("sessions").delete().in("id", ids);
+      }
       await supabaseAdmin
         .from("preflight_checks")
         .update({
