@@ -128,7 +128,7 @@ const REMEDIATION_BY_ID: Record<FullCheckId, { instruction: string; etaMinutes: 
   },
   phase1_completion_13_to_16: {
     instruction:
-      "Open Stages 13–16 function files. Verify saveBrandIntelligence completes and Stages 14, 14b, 14c, 15, 16 read the correct upstream columns. Inspect the detail above for the first failing stage.",
+      "Stages 13–15 must complete cleanly AND Stage 16's Phase-2-completion gate must fire pre-Phase 2. If a Stage 13–15 step failed, inspect that stage's function file. If the Stage 16 gate did NOT fire, restore the Phase 2 readiness check in src/lib/stage16.functions.ts — Stage 16 must refuse to assemble before Checkpoints D and E are confirmed.",
     etaMinutes: 20,
   },
   sanitiser_and_token_caps: {
@@ -138,8 +138,8 @@ const REMEDIATION_BY_ID: Record<FullCheckId, { instruction: string; etaMinutes: 
   },
   phase2_detonation_chain: {
     instruction:
-      "Open src/lib/stage17.functions.ts, stage17b.functions.ts, stage18.functions.ts. Verify Stage 17 produces territories, selectStage17Territory persists the selection, 17B reads it, and 18 runs only after 17B completes. Inspect detail above.",
-    etaMinutes: 15,
+      "Open src/lib/stage17–22 function files and src/lib/stage16.functions.ts. Phase 2 order: Stage 17 → selectStage17Territory (Checkpoint D) → 17B → 18 → selectStage18Detonation (E) → 19 → 20 → approveStage20 (F, composite ≥ 40) → 20B → 21 → 22 → Stage 16 Document Assembly. Inspect the first failing step above.",
+    etaMinutes: 25,
   },
   canvas_to_detonation_navigation: {
     instruction:
