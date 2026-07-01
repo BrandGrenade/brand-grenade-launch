@@ -46,7 +46,13 @@ import { runStage15 } from "@/lib/stage15.functions";
 import { runStage16 } from "@/lib/stage16.functions";
 import { runStage17, selectStage17Territory } from "@/lib/stage17.functions";
 import { runStage17b } from "@/lib/stage17b.functions";
-import { runStage18 } from "@/lib/stage18.functions";
+import { runStage18, selectStage18Detonation } from "@/lib/stage18.functions";
+import { runStage19 } from "@/lib/stage19.functions";
+import { runStage20, approveStage20 } from "@/lib/stage20.functions";
+import { runStage20b } from "@/lib/stage20b.functions";
+import { runStage21 } from "@/lib/stage21.functions";
+import { runStage22 } from "@/lib/stage22.functions";
+import { splitCards } from "@/lib/phase2-shared";
 
 // Drain a streaming server-fn AsyncGenerator until its final `done` chunk.
 async function drainStream<C extends { delta?: string; done?: true }>(
