@@ -158,3 +158,26 @@ export function conditionalStage9HitAllowedInLeftOfCentre(args: {
   if (activeLeftOfCentreEngine(args.output, args.index) !== "FUSE") return false;
   return conditionalStage9WordAllowedInLeftOfCentre(args);
 }
+
+/**
+ * Core Stage 9 conditional-word policy.
+ *
+ * Design intent: conditional words (reward / earn / deserve) are the natural
+ * verb-space for training / performance / discipline briefs. Blanket-banning
+ * them in core starves category-relevant briefs of their native territory,
+ * which is why Stage 11 then eliminates the resulting weak SMPs.
+ *
+ * Rule: a conditional word is BLOCKED in core Stage 9 output ONLY IF a
+ * named competitor in the brief already owns it (avoids mimicking a
+ * competitor's proposition), OR the brief's exclusion list forbids it.
+ * Otherwise it is ALLOWED. This mirrors the left-of-centre rule but with
+ * no per-engine gate — the whole core generator gets the same treatment.
+ */
+export function conditionalStage9HitAllowedInCore(args: {
+  word: string;
+  brandName: string;
+  briefText: string;
+  stage2Output: string;
+}): boolean {
+  return conditionalStage9WordAllowedInLeftOfCentre(args);
+}
