@@ -1,0 +1,1 @@
+UPDATE public.preflight_checks SET status='abandoned', completed_at=now(), override_used=true, override_reason='SSE drop on Stage 16 in Check 10 (Cloudflare edge closed connection); harness patched to poll DB for stage_16_agency_output' WHERE status='running';
