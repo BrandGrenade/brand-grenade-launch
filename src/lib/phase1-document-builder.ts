@@ -21,6 +21,7 @@ export interface Phase1Session {
   stage_7_output?: string | null;
   stage_8_output?: string | null;
   stage_9_output?: string | null;
+  stage_9_leftofcentre_output?: string | null;
   stage_10_output?: string | null;
   stage_11_output?: string | null;
   stage_12_output?: string | null;
@@ -32,7 +33,7 @@ export interface Phase1Session {
 const ACCENT = "#D4924A";
 
 export const PHASE_1_SESSION_COLUMNS =
-  "stage_1_output, stage_2_output, stage_3_output, stage_4_output, stage_5_output, stage_6_output, stage_7_output, stage_8_output, stage_9_output, stage_10_output, stage_11_output, stage_12_output, stage_13_output, stage_14_output, stage_15_output";
+  "stage_1_output, stage_2_output, stage_3_output, stage_4_output, stage_5_output, stage_6_output, stage_7_output, stage_8_output, stage_9_output, stage_9_leftofcentre_output, stage_10_output, stage_11_output, stage_12_output, stage_13_output, stage_14_output, stage_15_output";
 
 function escapeHtml(s: string): string {
   return (s ?? "")
@@ -201,6 +202,13 @@ function sectionsFor(format: Phase1Format): SectionDef[] {
   return SECTIONS_CONSULTING;
 }
 
+function sectionOutput(session: Phase1Session, key: keyof Phase1Session): string {
+  const primary = (session[key] ?? "").toString();
+  if (key !== "stage_9_output") return primary;
+  const loc = (session.stage_9_leftofcentre_output ?? "").toString();
+  return `${primary}${loc}`;
+}
+
 function cover(label: string, title: string, brand: string): string {
   const date = new Date().toLocaleDateString("en-AU", { month: "long", year: "numeric" });
   return `<div class="cover">
@@ -224,7 +232,7 @@ function proposition(smp: string | null | undefined): string {
 
 function toc(sections: SectionDef[], session: Phase1Session): string {
   const items = sections
-    .filter((s) => (session[s.key] ?? "").toString().trim())
+    .filter((s) => sectionOutput(session, s.key).trim())
     .map((s) => `<li>${escapeHtml(s.title)}</li>`)
     .join("");
   if (!items) return "";
@@ -246,7 +254,7 @@ export function buildPhase1Document(session: Phase1Session, format: Phase1Format
     toc(sections, session) +
     sections
       .map((s) => {
-        let raw = (session[s.key] ?? "").toString();
+        let raw = sectionOutput(session, s.key);
         if (s.key === "stage_1_output") raw = stripStage1Internals(raw);
         if (!raw.trim()) return "";
         return `<div class="section"><div class="part-label">${escapeHtml(s.label)}</div><h2>${escapeHtml(s.title)}</h2>${md(sanitise(raw))}</div>`;

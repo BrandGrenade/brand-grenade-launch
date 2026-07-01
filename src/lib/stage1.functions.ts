@@ -5,6 +5,7 @@ import { streamClaude } from "./claude.server";
 import { STAGE_1_SYSTEM_PROMPT, buildStage1UserMessage } from "./stage1-prompt";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertSessionOwner } from "@/lib/auth-helpers.server";
+import { findBannedWordHits, generateWithBannedWordGate, type OutputGateMode } from "./output-banned-word-gate";
 
 const BriefFieldsSchema = z
   .object({
@@ -67,6 +68,19 @@ const RunStage1Input = z.object({
   previousOutput: z.string().max(50000).optional(),
 });
 
+const STAGE_1_POISON_WORDS = [
+  "transformation", "transform", "journey", "authentic", "authenticity", "empower", "empowerment",
+  "innovative", "innovation", "seamless", "ecosystem", "synergy", "holistic", "purpose-driven",
+  "storytelling", "engage", "engagement", "disrupt", "disruption", "community", "passion", "passionate",
+  "best-in-class", "world-class", "cutting-edge", "next-level", "reimagine", "reimagining",
+] as const;
+
+async function collectClaudeText(args: Parameters<typeof streamClaude>[0]): Promise<string> {
+  let text = "";
+  for await (const delta of streamClaude(args)) text += delta;
+  return text;
+}
+
 function extractTensionScore(text: string): number | null {
   const m = text.match(/Strategic\s+Tension\s+Score\s*[:\-]?\s*\**\s*(\d{1,2})\s*\/\s*10/i);
   if (!m) return null;
@@ -81,7 +95,7 @@ export const runStage1 = createServerFn({ method: "POST" })
     await assertSessionOwner(data.sessionId, context.userId);
     const { data: session, error: loadErr } = await supabaseAdmin
       .from("sessions")
-      .select("brand_name, category, strategic_mode, brief_text, stage_1_output, brief_versions")
+      .select("brand_name, category, strategic_mode, brief_text, stage_1_output, brief_versions, is_preflight_test")
       .eq("id", data.sessionId)
       .single();
     if (loadErr || !session) throw new Error(`Session not found: ${loadErr?.message ?? "no row"}`);
@@ -133,18 +147,33 @@ export const runStage1 = createServerFn({ method: "POST" })
 
     let output = "";
     try {
-      for await (const delta of streamClaude({
-        systemPrompt: STAGE_1_SYSTEM_PROMPT,
-        userMessage,
-        maxTokens: 64000,
-        sessionId: data.sessionId,
+      const mode: OutputGateMode = session.is_preflight_test === true ? "test" : "live";
+      const gated = await generateWithBannedWordGate({
         stageLabel: "Stage 1",
-        stageNumber: "1",
-        stageName: "Brief Analysis",
-      })) {
-        output += delta;
-        yield { delta };
-      }
+        columnLabel: "stage_1_output",
+        mode,
+        maxAttempts: 3,
+        validate: (text) =>
+          findBannedWordHits({
+            text,
+            terms: STAGE_1_POISON_WORDS,
+            rule: "stage1-poison-words",
+            stageLabel: "Stage 1",
+            columnLabel: "stage_1_output",
+          }),
+        generate: (attempt, retryNote) =>
+          collectClaudeText({
+            systemPrompt: STAGE_1_SYSTEM_PROMPT,
+            userMessage: `${userMessage}${retryNote ?? ""}`,
+            maxTokens: 64000,
+            sessionId: data.sessionId,
+            stageLabel: attempt === 1 ? "Stage 1" : `Stage 1 (sanitiser retry ${attempt})`,
+            stageNumber: "1",
+            stageName: "Brief Analysis",
+          }),
+      });
+      output = gated.output;
+      yield { delta: output };
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Stage 1 failed";
       await supabaseAdmin.from("sessions").update({ stage_1_error: msg }).eq("id", data.sessionId);

@@ -6,6 +6,7 @@ import { STAGE_13_SYSTEM_PROMPT, buildStage13UserMessage } from "./stage13-promp
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertSessionOwner } from "@/lib/auth-helpers.server";
 import { assertUpstreamStageOutput } from "./pipeline-integrity";
+import { findBannedWordHits, generateWithBannedWordGate, type OutputGateMode } from "./output-banned-word-gate";
 
 const BrandIntelInput = z.object({
   sessionId: z.string().uuid(),
@@ -27,6 +28,17 @@ export const saveBrandIntelligence = createServerFn({ method: "POST" })
 
 const Input = z.object({ sessionId: z.string().uuid() });
 
+const STAGE_13_POISON_WORDS = [
+  "transformation", "journey", "authentic", "authenticity", "empowerment", "innovation", "seamless",
+  "ecosystem", "unleash", "elevate", "redefine",
+] as const;
+
+async function collectClaudeText(args: Parameters<typeof streamClaude>[0]): Promise<string> {
+  let text = "";
+  for await (const delta of streamClaude(args)) text += delta;
+  return text;
+}
+
 function intelToText(intel: unknown): string {
   if (!intel || typeof intel !== "object") return "";
   const entries = Object.entries(intel as Record<string, unknown>);
@@ -47,7 +59,7 @@ export const runStage13 = createServerFn({ method: "POST" })
     const { data: session, error } = await supabaseAdmin
       .from("sessions")
       .select(
-        "brand_name, category, selected_smp, selected_smp_field_name, stage_2_output, stage_10_output, stage_11_output, stage_12_output, stage_13_output, brand_intelligence"
+        "brand_name, category, selected_smp, selected_smp_field_name, stage_2_output, stage_10_output, stage_11_output, stage_12_output, stage_13_output, brand_intelligence, is_preflight_test"
       )
       .eq("id", data.sessionId)
       .single();
@@ -67,9 +79,7 @@ export const runStage13 = createServerFn({ method: "POST" })
 
     let output = "";
     try {
-      for await (const delta of streamClaude({
-        systemPrompt: STAGE_13_SYSTEM_PROMPT,
-        userMessage: buildStage13UserMessage({
+      const userMessage = buildStage13UserMessage({
           brandName: session.brand_name,
           category: session.category,
           selectedSMP: session.selected_smp,
@@ -79,16 +89,34 @@ export const runStage13 = createServerFn({ method: "POST" })
           stage11Output: "",
           cmm: "",
           brandIntelligence: intelToText(session.brand_intelligence),
-        }),
-        sessionId: data.sessionId,
+        });
+      const mode: OutputGateMode = session.is_preflight_test === true ? "test" : "live";
+      const gated = await generateWithBannedWordGate({
         stageLabel: "Stage 13",
-        maxTokens: 64000,
-        stageNumber: "13",
-        stageName: "Brand Fit Validation",
-      })) {
-        output += delta;
-        yield { delta };
-      }
+        columnLabel: "stage_13_output",
+        mode,
+        maxAttempts: 3,
+        validate: (text) =>
+          findBannedWordHits({
+            text,
+            terms: STAGE_13_POISON_WORDS,
+            rule: "stage13-poison-words",
+            stageLabel: "Stage 13",
+            columnLabel: "stage_13_output",
+          }),
+        generate: (attempt, retryNote) =>
+          collectClaudeText({
+            systemPrompt: STAGE_13_SYSTEM_PROMPT,
+            userMessage: `${userMessage}${retryNote ?? ""}`,
+            sessionId: data.sessionId,
+            stageLabel: attempt === 1 ? "Stage 13" : `Stage 13 (sanitiser retry ${attempt})`,
+            maxTokens: 64000,
+            stageNumber: "13",
+            stageName: "Brand Fit Validation",
+          }),
+      });
+      output = gated.output;
+      yield { delta: output };
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Stage 13 failed";
       await supabaseAdmin.from("sessions").update({ stage_13_error: msg }).eq("id", data.sessionId);
