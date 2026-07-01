@@ -583,11 +583,13 @@ export function PreflightFullCheckPanel() {
     }
   };
 
-  // Drive Check 8 by invoking each of Stages 13, 13B, 14, 14B, 14C, 15, 16
-  // as a SEPARATE server-fn RPC. Each RPC is a fresh Cloudflare Worker
-  // invocation with its own wall-clock budget — this is the structural fix
-  // for the Stage 14 hang that occurred when all seven ran inside one
-  // chained server-fn invocation.
+  // Drive Check 8: run Stages 13, 13B, 14, 14B, 14C, 15 as separate server-fn
+  // RPCs (each a fresh Cloudflare Worker invocation with its own wall-clock
+  // budget). Stage 16 (Document Assembly) is INTENTIONALLY not run here — its
+  // own gate correctly refuses to assemble a document until Phase 2 has
+  // completed (Checkpoints D and E confirmed). We verify that gate FIRES as
+  // designed by attempting Stage 16 and expecting the specific lock error.
+  // Actual document-assembly verification runs inside Check 10 after Phase 2.
   const driveCheck8 = async (
     handoff: Extract<TierTwoEvent, { type: "check_8_handoff" }>,
   ): Promise<FullCheckResult> => {
@@ -622,17 +624,6 @@ export function PreflightFullCheckPanel() {
       { label: "Stage 14B", run: () => drainStream(stage14bFn({ data: { sessionId } })) },
       { label: "Stage 14C", run: () => drainStream(stage14cFn({ data: { sessionId } })) },
       { label: "Stage 15", run: () => drainStream(stage15Fn({ data: { sessionId } })) },
-      {
-        label: "Stage 16 (agency)",
-        run: () =>
-          drainStream(
-            stage16Fn({ data: { sessionId, format: "agency" } }) as unknown as AsyncGenerator<
-              { delta?: string; done?: true },
-              void,
-              unknown
-            >,
-          ),
-      },
     ];
     try {
       for (const { label, run } of stages) {
@@ -641,11 +632,38 @@ export function PreflightFullCheckPanel() {
         await run();
         timings.push(`${label}: ${((Date.now() - t0) / 1000).toFixed(1)}s`);
       }
+      // Now verify Stage 16's Phase-2-completion gate correctly refuses to
+      // run before Phase 2 has produced Stage 22 output + Checkpoints D/E.
+      setCurrentMessage("  · Verifying Stage 16 gate is locked pre-Phase 2 (expected)...");
+      const t0 = Date.now();
+      let gateFired = false;
+      let gateMessage = "";
+      try {
+        await drainStream(
+          stage16Fn({ data: { sessionId, format: "agency" } }) as unknown as AsyncGenerator<
+            { delta?: string; done?: true },
+            void,
+            unknown
+          >,
+        );
+      } catch (gateErr) {
+        gateMessage = gateErr instanceof Error ? gateErr.message : String(gateErr);
+        if (/Document Assembly is locked/i.test(gateMessage)) gateFired = true;
+      }
+      timings.push(`Stage 16 gate probe: ${((Date.now() - t0) / 1000).toFixed(1)}s`);
+      if (!gateFired) {
+        throw new Error(
+          `Stage 16 gate did NOT fire pre-Phase 2 — this is a platform bug (documents must not assemble from a half-finished run). ` +
+            `Received: ${gateMessage || "no error (Stage 16 unexpectedly succeeded)"}`,
+        );
+      }
       return {
         ...def,
         status: "pass",
         durationMs: Date.now() - started,
-        detail: `Phase 1 complete (Stages 13–16) — each stage ran as its own server-fn RPC. ${timings.join(", ")}.`,
+        detail:
+          `Stages 13–15 completed cleanly and Stage 16 gate correctly refused to assemble pre-Phase 2 (expected). ` +
+          `${timings.join(", ")}. Document assembly is verified end-to-end in Check 10 after Phase 2.`,
         remediation: null,
       };
     } catch (e) {
@@ -656,7 +674,7 @@ export function PreflightFullCheckPanel() {
         durationMs: Date.now() - started,
         detail: `Check 8 failed: ${msg}. Completed: ${timings.join(", ") || "none"}.`,
         remediation:
-          "Open Stages 13–16 function files. Verify saveBrandIntelligence completes and each stage reads the correct upstream columns. Inspect the named stage's logs.",
+          "Inspect the first failing stage's logs. If Stages 13–15 completed but the Stage 16 gate probe reports the gate did NOT fire, the fix is in src/lib/stage16.functions.ts (Phase 2 readiness gate) — not in the test.",
       };
     }
   };
@@ -678,19 +696,25 @@ export function PreflightFullCheckPanel() {
     const sessionId = handoff.sessionId;
     const timings: string[] = [];
     try {
-      if (!sessionId || handoff.results[7].status !== "pass") throw new Error("Skipped: Phase 1 completion did not pass");
+      if (!sessionId || handoff.results[7].status !== "pass") {
+        throw new Error("Skipped: Phase 1 completion (Check 8) did not pass");
+      }
+
+      // Stage 17 → select first territory (Checkpoint D)
       setCurrentMessage("  · Running Stage 17 (separate Worker invocation)...");
       let t0 = Date.now();
       const s17 = await stage17Fn({ data: { sessionId } });
       timings.push(`Stage 17: ${((Date.now() - t0) / 1000).toFixed(1)}s`);
       const territoryMarkdown = (s17 as { output?: string }).output ?? "";
       if (territoryMarkdown.length < 200) throw new Error("Stage 17 output too short");
-      const blocks = territoryMarkdown.split(/\n(?=##\s)/).filter((b) => /##\s/.test(b));
-      const first = blocks[0] ?? territoryMarkdown;
-      setCurrentMessage("  · Selecting top-ranked territory (separate Worker invocation)...");
+      const territoryCards = splitCards(territoryMarkdown);
+      const firstTerritory = territoryCards[0]?.markdown ?? territoryMarkdown.split(/\n(?=##\s)/)[0] ?? territoryMarkdown;
+      setCurrentMessage("  · Selecting top-ranked territory (Checkpoint D)...");
       t0 = Date.now();
-      await selectStage17Fn({ data: { sessionId, territoryMarkdown: first } });
-      timings.push(`Select territory: ${((Date.now() - t0) / 1000).toFixed(1)}s`);
+      await selectStage17Fn({ data: { sessionId, territoryMarkdown: firstTerritory } });
+      timings.push(`Select territory (D): ${((Date.now() - t0) / 1000).toFixed(1)}s`);
+
+      // Stage 17B → Stage 18
       for (const { label, run } of [
         { label: "Stage 17B", run: () => stage17bFn({ data: { sessionId } }) },
         { label: "Stage 18", run: () => stage18Fn({ data: { sessionId } }) },
@@ -700,10 +724,95 @@ export function PreflightFullCheckPanel() {
         await run();
         timings.push(`${label}: ${((Date.now() - t0) / 1000).toFixed(1)}s`);
       }
-      return { ...def, status: "pass", durationMs: Date.now() - started, detail: `Phase 2 chain executed end-to-end — each step ran as its own server-fn RPC. ${timings.join(", ")}.`, remediation: null };
+
+      // Select first detonation (Checkpoint E). Read stage_18_output back from
+      // DB and pick the first card. The full markdown is a safe fallback.
+      setCurrentMessage("  · Selecting first detonation candidate (Checkpoint E)...");
+      t0 = Date.now();
+      const { data: s18row } = await supabase
+        .from("sessions")
+        .select("stage_18_output")
+        .eq("id", sessionId)
+        .single();
+      const s18md = (s18row?.stage_18_output as string | null) ?? "";
+      if (!s18md || s18md.length < 100) throw new Error("Stage 18 output missing before selection");
+      const detCards = splitCards(s18md);
+      const firstDet = detCards[0]?.markdown ?? s18md;
+      const firstLine = (detCards[0]?.name ?? firstDet.split("\n").find((l) => l.trim())?.trim() ?? "TestBrand Detonation").slice(0, 200);
+      await selectStage18Fn({
+        data: { sessionId, detonationMarkdown: firstDet, detonationLine: firstLine },
+      });
+      timings.push(`Select detonation (E): ${((Date.now() - t0) / 1000).toFixed(1)}s`);
+
+      // Stage 19 → Stage 20
+      for (const { label, run } of [
+        { label: "Stage 19", run: () => stage19Fn({ data: { sessionId } }) },
+        { label: "Stage 20", run: () => stage20Fn({ data: { sessionId } }) },
+      ]) {
+        setCurrentMessage(`  · Running ${label} (separate Worker invocation)...`);
+        t0 = Date.now();
+        await run();
+        timings.push(`${label}: ${((Date.now() - t0) / 1000).toFixed(1)}s`);
+      }
+
+      // Approve Stage 20 (Checkpoint F) so Stage 20B/21 can run.
+      setCurrentMessage("  · Approving Stage 20 brief (Checkpoint F)...");
+      t0 = Date.now();
+      try {
+        await approveStage20Fn({ data: { sessionId } });
+        timings.push(`Approve Stage 20 (F): ${((Date.now() - t0) / 1000).toFixed(1)}s`);
+      } catch (approveErr) {
+        const m = approveErr instanceof Error ? approveErr.message : String(approveErr);
+        throw new Error(`Stage 20 approval failed (${m}). Stage 20 must produce a Brief Quality Score ≥ 40 to approve — inspect the Stage 20 output on session ${sessionId.slice(0, 8)}.`);
+      }
+
+      // Stage 20B → Stage 21 → Stage 22
+      for (const { label, run } of [
+        { label: "Stage 20B", run: () => stage20bFn({ data: { sessionId } }) },
+        { label: "Stage 21", run: () => stage21Fn({ data: { sessionId } }) },
+        { label: "Stage 22", run: () => stage22Fn({ data: { sessionId } }) },
+      ]) {
+        setCurrentMessage(`  · Running ${label} (separate Worker invocation)...`);
+        t0 = Date.now();
+        await run();
+        timings.push(`${label}: ${((Date.now() - t0) / 1000).toFixed(1)}s`);
+      }
+
+      // Phase 2 is complete — now assemble the Stage 16 document (agency).
+      // This exercises the legitimate Stage 16 path its own gate requires.
+      setCurrentMessage("  · Running Stage 16 Document Assembly (agency) — Phase 2 now complete...");
+      t0 = Date.now();
+      const s16 = await drainStream(
+        stage16Fn({ data: { sessionId, format: "agency" } }) as unknown as AsyncGenerator<
+          { delta?: string; done?: true; output?: string },
+          void,
+          unknown
+        >,
+      );
+      timings.push(`Stage 16 (agency): ${((Date.now() - t0) / 1000).toFixed(1)}s`);
+      const s16out = String((s16 as { output?: string }).output ?? "");
+      if (s16out.length < 1000) {
+        throw new Error(`Stage 16 assembly output too short (${s16out.length} chars) — expected a full document.`);
+      }
+
+      return {
+        ...def,
+        status: "pass",
+        durationMs: Date.now() - started,
+        detail:
+          `Phase 2 chain executed end-to-end (17 → 22) and Stage 16 Document Assembly then produced ${s16out.length} chars in the legitimate post-Phase-2 order. ${timings.join(", ")}.`,
+        remediation: null,
+      };
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
-      return { ...def, status: "fail", durationMs: Date.now() - started, detail: `Check 10 failed: ${msg}. Completed: ${timings.join(", ") || "none"}.`, remediation: "Inspect Phase 2 checkpoint gate (D), selectStage17Territory writeback, and stage_17b_output column write." };
+      return {
+        ...def,
+        status: "fail",
+        durationMs: Date.now() - started,
+        detail: `Check 10 failed: ${msg}. Completed: ${timings.join(", ") || "none"}.`,
+        remediation:
+          "Inspect the first failing step above. Phase 2 order: Stage 17 → selectStage17Territory (D) → 17B → 18 → selectStage18Detonation (E) → 19 → 20 → approveStage20 (F, score ≥ 40) → 20B → 21 → 22 → Stage 16 Document Assembly.",
+      };
     }
   };
 
