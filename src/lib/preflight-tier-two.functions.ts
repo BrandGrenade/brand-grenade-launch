@@ -1034,11 +1034,12 @@ export const runTierTwoChecksFrom7 = createServerFn({ method: "POST" })
     } finally {
       if (!handedOff) {
         const ids = Array.from(createdSessionIds);
-        if (ids.length > 0) await supabaseAdmin.from("sessions").delete().in("id", ids);
         const failedCount = results.filter((r) => r.status === "fail").length;
         const overall: "ready" | "issue_detected" = failedCount === 0 ? "ready" : "issue_detected";
+        const cleaned = ids.length > 0 && failedCount === 0 ? ids : [];
+        if (cleaned.length > 0) await supabaseAdmin.from("sessions").delete().in("id", ids);
         await supabaseAdmin.from("preflight_checks").update({ status: "complete", completed_at: nowIso(), tier_two_results: results as unknown as never, overall_result: overall }).eq("id", recordId);
-        yield { type: "done", recordId, overall, results, sessionIdsCleaned: ids, totalDurationMs: Date.now() - startedAtMs };
+        yield { type: "done", recordId, overall, results, sessionIdsCleaned: cleaned, totalDurationMs: Date.now() - startedAtMs };
       }
     }
   });
