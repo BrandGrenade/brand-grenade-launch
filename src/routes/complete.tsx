@@ -168,7 +168,7 @@ function CompletePage() {
       .then(({ data, error }) => {
         if (cancelled) return;
         if (error) console.error("Failed to load session", error);
-        setSession((data as SessionRow) ?? null);
+        setSession((data as unknown as SessionRow) ?? null);
         setLoading(false);
         const urlParams =
           typeof window !== "undefined"
