@@ -81,10 +81,8 @@ async function runWithWatchdog<T>(
   const maxIdleMs = opts.maxIdleMs ?? 5 * 60_000; // 5 minutes default
   const pollMs = opts.pollMs ?? 15_000;
   let stopped = false;
-  let watchdogReject: ((e: Error) => void) | null = null;
 
   const watchdog = new Promise<never>((_, reject) => {
-    watchdogReject = reject;
     const tick = async () => {
       if (stopped) return;
       try {
