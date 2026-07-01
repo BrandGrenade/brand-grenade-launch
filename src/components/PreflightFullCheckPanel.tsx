@@ -818,9 +818,28 @@ export function PreflightFullCheckPanel() {
         throw new Error(`Stage 20 approval failed (${m}). Stage 20 must produce a Brief Quality Score ≥ 40 to approve — inspect the Stage 20 output on session ${sessionId.slice(0, 8)}.`);
       }
 
-      // Stage 20B → Stage 21 → Stage 22
+      // Stage 20B → Stage 21 → Stage 22.
+      // Stage 20B requires a full six-field audienceInput object (Zod-validated).
+      // In Tier Two we synthesize a plausible TestBrand audience so the schema
+      // is satisfied without a human at the input screen. This is a fixture,
+      // not real audience intelligence — it exists purely to exercise the
+      // Stage 20B → 21 → 22 wiring end-to-end.
+      const testbrandAudienceInput = {
+        audienceAsHumans:
+          "Disciplined Australian men 25–40 who train early, work hard, and read labels. They see themselves as builders of their own standards, not as consumers of hype. They resent being sold to and respect brands that talk to them like adults.",
+        dayInTheirLife:
+          "5:30 alarm, gym or run before work, protein and coffee, focused work block, second training session or family time in the evening, in bed by 10. Energy drinks slot in pre-training and mid-afternoon; the pre-workout can is the ritual.",
+        influenceMap:
+          "Training partners, a small circle of coaches or PT friends, one or two performance podcasts, Instagram accounts of athletes they actually rate. Advertising is treated as noise; peer recommendation and ingredient literacy are the real signal.",
+        decisionJourney:
+          "Notice a can in a mate's gym bag or a servo fridge → check the ingredient panel on the spot → try one can → judge on how it feels in the session → repeat purchase becomes habit at the same servo/supermarket run. Price matters less than trust in the formulation.",
+        psychologicalProfile:
+          "Values control, competence, and honesty. Suspicious of marketing theatre. Motivated by self-respect more than status. Buys things that quietly signal discipline to himself, not loudly to others.",
+        channelUniverseAndBudget:
+          "Lean challenger budget. Owned: product, pack, and one sharp social channel. Earned: gym-community seeding and long-form podcast placements. Paid: tightly targeted OOH near gyms and servos in launch cities, plus performance social. No mass TV. Retail activation at point of purchase is non-negotiable.",
+      };
       for (const { label, run } of [
-        { label: "Stage 20B", run: () => stage20bFn({ data: { sessionId } }) },
+        { label: "Stage 20B", run: () => stage20bFn({ data: { sessionId, audienceInput: testbrandAudienceInput } }) },
         { label: "Stage 21", run: () => stage21Fn({ data: { sessionId } }) },
         { label: "Stage 22", run: () => stage22Fn({ data: { sessionId } }) },
       ]) {
@@ -829,6 +848,7 @@ export function PreflightFullCheckPanel() {
         await runWithWatchdog({ sessionId, label }, run);
         timings.push(`${label}: ${((Date.now() - t0) / 1000).toFixed(1)}s`);
       }
+
 
       // Phase 2 is complete — now assemble the Stage 16 document (agency).
       // This exercises the legitimate Stage 16 path its own gate requires.
