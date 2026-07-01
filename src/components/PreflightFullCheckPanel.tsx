@@ -221,6 +221,13 @@ export function PreflightFullCheckPanel() {
   const selectStage17Fn = useServerFn(selectStage17Territory);
   const stage17bFn = useServerFn(runStage17b);
   const stage18Fn = useServerFn(runStage18);
+  const selectStage18Fn = useServerFn(selectStage18Detonation);
+  const stage19Fn = useServerFn(runStage19);
+  const stage20Fn = useServerFn(runStage20);
+  const approveStage20Fn = useServerFn(approveStage20);
+  const stage20bFn = useServerFn(runStage20b);
+  const stage21Fn = useServerFn(runStage21);
+  const stage22Fn = useServerFn(runStage22);
 
   const [state, setState] = useState<RunState>("idle");
   const [results, setResults] = useState<FullCheckResult[]>([]);
