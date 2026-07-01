@@ -14,6 +14,7 @@ import { Route as PipelineRouteImport } from './routes/pipeline'
 import { Route as DetonationRouteImport } from './routes/detonation'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as CompleteRouteImport } from './routes/complete'
+import { Route as BriefingRoomRouteImport } from './routes/briefing-room'
 import { Route as BriefRouteImport } from './routes/brief'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as BriefingRoomIndexRouteImport } from './routes/briefing-room.index'
@@ -47,6 +48,11 @@ const CompleteRoute = CompleteRouteImport.update({
   path: '/complete',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BriefingRoomRoute = BriefingRoomRouteImport.update({
+  id: '/briefing-room',
+  path: '/briefing-room',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BriefRoute = BriefRouteImport.update({
   id: '/brief',
   path: '/brief',
@@ -58,9 +64,9 @@ const IndexRoute = IndexRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const BriefingRoomIndexRoute = BriefingRoomIndexRouteImport.update({
-  id: '/briefing-room/',
-  path: '/briefing-room/',
-  getParentRoute: () => rootRouteImport,
+  id: '/',
+  path: '/',
+  getParentRoute: () => BriefingRoomRoute,
 } as any)
 const BriefIndexRoute = BriefIndexRouteImport.update({
   id: '/',
@@ -73,9 +79,9 @@ const DetonationCanvasRoute = DetonationCanvasRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const BriefingRoomIdRoute = BriefingRoomIdRouteImport.update({
-  id: '/briefing-room/$id',
-  path: '/briefing-room/$id',
-  getParentRoute: () => rootRouteImport,
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => BriefingRoomRoute,
 } as any)
 const BriefNewRoute = BriefNewRouteImport.update({
   id: '/new',
@@ -86,6 +92,7 @@ const BriefNewRoute = BriefNewRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/brief': typeof BriefRouteWithChildren
+  '/briefing-room': typeof BriefingRoomRouteWithChildren
   '/complete': typeof CompleteRoute
   '/dashboard': typeof DashboardRoute
   '/detonation': typeof DetonationRoute
@@ -114,6 +121,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/brief': typeof BriefRouteWithChildren
+  '/briefing-room': typeof BriefingRoomRouteWithChildren
   '/complete': typeof CompleteRoute
   '/dashboard': typeof DashboardRoute
   '/detonation': typeof DetonationRoute
@@ -130,6 +138,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/brief'
+    | '/briefing-room'
     | '/complete'
     | '/dashboard'
     | '/detonation'
@@ -157,6 +166,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/brief'
+    | '/briefing-room'
     | '/complete'
     | '/dashboard'
     | '/detonation'
@@ -172,14 +182,13 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   BriefRoute: typeof BriefRouteWithChildren
+  BriefingRoomRoute: typeof BriefingRoomRouteWithChildren
   CompleteRoute: typeof CompleteRoute
   DashboardRoute: typeof DashboardRoute
   DetonationRoute: typeof DetonationRoute
   PipelineRoute: typeof PipelineRoute
   SettingsRoute: typeof SettingsRoute
-  BriefingRoomIdRoute: typeof BriefingRoomIdRoute
   DetonationCanvasRoute: typeof DetonationCanvasRoute
-  BriefingRoomIndexRoute: typeof BriefingRoomIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -219,6 +228,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CompleteRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/briefing-room': {
+      id: '/briefing-room'
+      path: '/briefing-room'
+      fullPath: '/briefing-room'
+      preLoaderRoute: typeof BriefingRoomRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/brief': {
       id: '/brief'
       path: '/brief'
@@ -235,10 +251,10 @@ declare module '@tanstack/react-router' {
     }
     '/briefing-room/': {
       id: '/briefing-room/'
-      path: '/briefing-room'
+      path: '/'
       fullPath: '/briefing-room/'
       preLoaderRoute: typeof BriefingRoomIndexRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof BriefingRoomRoute
     }
     '/brief/': {
       id: '/brief/'
@@ -256,10 +272,10 @@ declare module '@tanstack/react-router' {
     }
     '/briefing-room/$id': {
       id: '/briefing-room/$id'
-      path: '/briefing-room/$id'
+      path: '/$id'
       fullPath: '/briefing-room/$id'
       preLoaderRoute: typeof BriefingRoomIdRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof BriefingRoomRoute
     }
     '/brief/new': {
       id: '/brief/new'
@@ -283,17 +299,30 @@ const BriefRouteChildren: BriefRouteChildren = {
 
 const BriefRouteWithChildren = BriefRoute._addFileChildren(BriefRouteChildren)
 
+interface BriefingRoomRouteChildren {
+  BriefingRoomIdRoute: typeof BriefingRoomIdRoute
+  BriefingRoomIndexRoute: typeof BriefingRoomIndexRoute
+}
+
+const BriefingRoomRouteChildren: BriefingRoomRouteChildren = {
+  BriefingRoomIdRoute: BriefingRoomIdRoute,
+  BriefingRoomIndexRoute: BriefingRoomIndexRoute,
+}
+
+const BriefingRoomRouteWithChildren = BriefingRoomRoute._addFileChildren(
+  BriefingRoomRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BriefRoute: BriefRouteWithChildren,
+  BriefingRoomRoute: BriefingRoomRouteWithChildren,
   CompleteRoute: CompleteRoute,
   DashboardRoute: DashboardRoute,
   DetonationRoute: DetonationRoute,
   PipelineRoute: PipelineRoute,
   SettingsRoute: SettingsRoute,
-  BriefingRoomIdRoute: BriefingRoomIdRoute,
   DetonationCanvasRoute: DetonationCanvasRoute,
-  BriefingRoomIndexRoute: BriefingRoomIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
