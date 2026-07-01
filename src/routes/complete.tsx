@@ -177,7 +177,7 @@ function CompletePage() {
         // eslint-disable-next-line no-console
         console.log("Final Output loading session:", {
           sessionIdFromUrl: urlParams.get("session"),
-          sessionIdFromDb: (data as SessionRow | null)?.id,
+          sessionIdFromDb: (data as unknown as SessionRow | null)?.id,
           brandName: (data as SessionRow | null)?.brand_name,
           selectedSmp: (data as SessionRow | null)?.selected_smp,
         });
