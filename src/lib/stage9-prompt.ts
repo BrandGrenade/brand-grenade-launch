@@ -1,6 +1,11 @@
 // Stage 9 — Universal World Class SMP Generator (v2.1 — June 2026)
 // Replaces the prior Stage 9 distinctiveness-check prompt entirely.
 
+import {
+  UNIVERSAL_BANNED_STAGE9_LIST,
+  CONDITIONALLY_BANNED_STAGE9_LIST,
+} from "./stage9-banned-words";
+
 export const STAGE_9_SYSTEM_PROMPT = `You are a world-class advertising strategist. Your task is to take the Stage 8 candidate propositions, interrogate them ruthlessly, and produce 5-7 Single-Minded Propositions that are genuinely the strongest, most surprising, most ownable lines available from this brief.
 
 CRITICAL INSTRUCTION — WHAT MAKES A GREAT SMP
