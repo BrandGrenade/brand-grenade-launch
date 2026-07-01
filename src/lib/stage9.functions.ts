@@ -11,7 +11,7 @@ import {
 import {
   CONDITIONALLY_BANNED_STAGE9,
   UNIVERSAL_BANNED_STAGE9,
-  conditionalStage9WordAllowedInLeftOfCentre,
+  conditionalStage9HitAllowedInLeftOfCentre,
 } from "./stage9-banned-words";
 import {
   findBannedWordHits,
@@ -169,8 +169,10 @@ export const runStage9 = createServerFn({ method: "POST" })
           columnLabel: "stage_9_leftofcentre_output",
         }).filter(
           (hit) =>
-            !conditionalStage9WordAllowedInLeftOfCentre({
+            !conditionalStage9HitAllowedInLeftOfCentre({
               word: hit.word,
+              index: hit.index,
+              output: text,
               brandName: session.brand_name,
               briefText: session.brief_text ?? "",
               stage2Output: session.stage_2_output ?? "",

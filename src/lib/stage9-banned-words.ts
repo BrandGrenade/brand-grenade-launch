@@ -97,3 +97,35 @@ export function conditionalStage9WordAllowedInLeftOfCentre(args: {
 
   return true;
 }
+
+function activeLeftOfCentreEngine(output: string, index: number): "BREACH" | "FUSE" | "FLASHPOINT" | null {
+  const before = output.slice(0, Math.max(0, index));
+  const engines: Array<"BREACH" | "FUSE" | "FLASHPOINT"> = ["BREACH", "FUSE", "FLASHPOINT"];
+  let active: "BREACH" | "FUSE" | "FLASHPOINT" | null = null;
+  let activeAt = -1;
+  for (const engine of engines) {
+    const rx = new RegExp(`(^|\\n)\\s*${engine}\\b`, "gi");
+    let m: RegExpExecArray | null;
+    while ((m = rx.exec(before)) !== null) {
+      if (m.index > activeAt) {
+        active = engine;
+        activeAt = m.index;
+      }
+    }
+  }
+  return active;
+}
+
+export function conditionalStage9HitAllowedInLeftOfCentre(args: {
+  word: string;
+  index: number;
+  output: string;
+  brandName: string;
+  briefText: string;
+  stage2Output: string;
+}): boolean {
+  // The relaxation was introduced for the Fuse engine only. Breach and
+  // Flashpoint stay strict even inside the separate left-of-centre column.
+  if (activeLeftOfCentreEngine(args.output, args.index) !== "FUSE") return false;
+  return conditionalStage9WordAllowedInLeftOfCentre(args);
+}

@@ -17,7 +17,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { STAGE_9_SYSTEM_PROMPT } from "@/lib/stage9-prompt";
-import { CONDITIONALLY_BANNED_STAGE9, UNIVERSAL_BANNED_STAGE9, conditionalStage9WordAllowedInLeftOfCentre } from "@/lib/stage9-banned-words";
+import { CONDITIONALLY_BANNED_STAGE9, UNIVERSAL_BANNED_STAGE9, conditionalStage9HitAllowedInLeftOfCentre } from "@/lib/stage9-banned-words";
 import { findBannedWordHits } from "@/lib/output-banned-word-gate";
 import detonationCanvasSource from "@/routes/detonation_.canvas.tsx?raw";
 import detonationSource from "@/routes/detonation.tsx?raw";
@@ -1224,8 +1224,10 @@ export const runTierTwoChecksFrom4 = createServerFn({ method: "POST" })
             }
 
             const locConditional = findBannedWordHits({ text: loc, terms: CONDITIONALLY_BANNED_STAGE9, rule: "stage9-leftofcentre-conditional", stageLabel: "Stage 9", columnLabel: "stage_9_leftofcentre_output" });
-            const disallowedLoc = locConditional.filter((hit) => !conditionalStage9WordAllowedInLeftOfCentre({
+            const disallowedLoc = locConditional.filter((hit) => !conditionalStage9HitAllowedInLeftOfCentre({
               word: hit.word,
+              index: hit.index,
+              output: loc,
               brandName: String(row.brand_name ?? ""),
               briefText: String(row.brief_text ?? ""),
               stage2Output: String(row.stage_2_output ?? ""),
