@@ -43,6 +43,8 @@ function WorkspacePage() {
   const step3 = useServerFn(runBriefingStep3);
   const step4 = useServerFn(runBriefingStep4);
   const setSel = useServerFn(setBriefingSelections);
+  const previewHandoff = useServerFn(getBriefingHandoffPreview);
+  const navigate = useNavigate();
 
   const [ws, setWs] = useState<Ws | null>(null);
   const [brand, setBrand] = useState("");
@@ -51,6 +53,10 @@ function WorkspacePage() {
   const [evidence, setEvidence] = useState<EvidenceItem[]>([]);
   const [busyStep, setBusyStep] = useState<null | 1 | 2 | 3 | 4>(null);
   const [savingIntake, setSavingIntake] = useState(false);
+  const [preview, setPreview] = useState<HandoffPayload | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [approving, setApproving] = useState(false);
+  const [ackGaps, setAckGaps] = useState(false);
 
   const refresh = useCallback(async () => {
     const w = await load({ data: { id } });
