@@ -14,6 +14,7 @@ import {
   type Phase2DocType,
 } from "@/lib/phase2-document-generator";
 import { buildPhase1Document, openPhase1Document, openStage16VisionDocument, PHASE_1_SESSION_COLUMNS, type Phase1Format } from "@/lib/phase1-document-builder";
+import { openFullRunDocument, FULL_RUN_SESSION_COLUMNS, resolveFullRunStages } from "@/lib/full-run-document";
 
 
 
@@ -94,6 +95,19 @@ type SessionRow = {
   stage_14_output: string | null;
   stage_15_output: string | null;
 
+  // Sub-stage outputs (for Complete Pipeline Run deliverable)
+  stage_1b_output: string | null;
+  stage_4b_output: string | null;
+  stage_13b_output: string | null;
+  stage_14b_output: string | null;
+  stage_14c_output: string | null;
+  stage_16_consulting_output: string | null;
+  stage_16_agency_output: string | null;
+  stage_16_workshop_output: string | null;
+  stage_17_output: string | null;
+  stage_18_output: string | null;
+  stage_20b_output: string | null;
+
   // Phase 2 deliverables source
   stage_17_selected_territory: string | null;
   stage_17b_output: string | null;
@@ -147,14 +161,14 @@ function CompletePage() {
     supabase
       .from("sessions")
       .select(
-        `id, brand_name, category, selected_smp, selected_smp_field_name, user_id, doc_consulting_url, doc_agency_url, doc_workshop_url, phase_2_status, stage_16_vision_output, ${PHASE_1_SESSION_COLUMNS}, stage_17_selected_territory, stage_17b_output, stage_18_selected_detonation, stage_19_output, stage_20_output, stage_21_outputs, stage_22_output, stage_22_brand_architecture, stage_22_distinctive_assets`,
+        `id, brand_name, category, selected_smp, selected_smp_field_name, user_id, doc_consulting_url, doc_agency_url, doc_workshop_url, phase_2_status, stage_17_selected_territory, stage_18_selected_detonation, stage_22_brand_architecture, stage_22_distinctive_assets, ${FULL_RUN_SESSION_COLUMNS}`,
       )
       .eq("id", sessionId)
       .maybeSingle()
       .then(({ data, error }) => {
         if (cancelled) return;
         if (error) console.error("Failed to load session", error);
-        setSession((data as SessionRow) ?? null);
+        setSession((data as unknown as SessionRow) ?? null);
         setLoading(false);
         const urlParams =
           typeof window !== "undefined"
@@ -163,9 +177,9 @@ function CompletePage() {
         // eslint-disable-next-line no-console
         console.log("Final Output loading session:", {
           sessionIdFromUrl: urlParams.get("session"),
-          sessionIdFromDb: (data as SessionRow | null)?.id,
-          brandName: (data as SessionRow | null)?.brand_name,
-          selectedSmp: (data as SessionRow | null)?.selected_smp,
+          sessionIdFromDb: (data as unknown as SessionRow | null)?.id,
+          brandName: (data as unknown as SessionRow | null)?.brand_name,
+          selectedSmp: (data as unknown as SessionRow | null)?.selected_smp,
         });
       });
     return () => {
@@ -666,6 +680,62 @@ function CompletePage() {
             </Link>
           </div>
         </div>
+
+        {/* ─── Complete Pipeline Run (deliverable) ───────────────────── */}
+        {session && (() => {
+          const amber = "#D4924A";
+          const stages = resolveFullRunStages(session as unknown as Record<string, unknown>);
+          const count = stages.length;
+          return (
+            <section style={{ marginTop: 48 }}>
+              <div
+                style={{
+                  border: `1px solid ${amber}`,
+                  borderRadius: 8,
+                  padding: 24,
+                  background: "rgba(212, 146, 74, 0.04)",
+                }}
+              >
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 24, flexWrap: "wrap" }}>
+                  <div style={{ flex: "1 1 320px" }}>
+                    <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", color: amber, textTransform: "uppercase", marginBottom: 6 }}>
+                      Complete Pipeline Run
+                    </div>
+                    <h3 style={{ fontSize: 18, fontWeight: 700, margin: 0, marginBottom: 8, color: "var(--color-text-primary)" }}>
+                      {brand} — Full Run
+                    </h3>
+                    <p style={{ margin: 0, fontSize: 13, color: "var(--color-text-secondary)", lineHeight: 1.6 }}>
+                      Every stage of the run, cover page to Brand Architecture — the full canonical record.
+                      {count > 0 && ` ${count} stage${count === 1 ? "" : "s"} available.`}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    disabled={count === 0}
+                    onClick={() => {
+                      if (!session) return;
+                      openFullRunDocument(session as unknown as Record<string, unknown>);
+                    }}
+                    style={{
+                      background: count === 0 ? "#555" : amber,
+                      color: "#000",
+                      border: "none",
+                      padding: "12px 24px",
+                      borderRadius: 6,
+                      fontWeight: 700,
+                      fontSize: 14,
+                      cursor: count === 0 ? "not-allowed" : "pointer",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    Download Full Run ↓
+                  </button>
+                </div>
+              </div>
+            </section>
+          );
+        })()}
+
 
         {/* ─── Phase 2: Brand Detonation ───────────────────────────────── */}
         {(() => {

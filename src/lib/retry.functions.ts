@@ -245,29 +245,13 @@ const stageClearFields: Record<StageId, Record<string, null>> = {
   },
 };
 
-const stageOrder: StageId[] = [
-  "1",
-  "1b",
-  "2",
-  "3",
-  "4",
-  "4b",
-  "5",
-  "6",
-  "7",
-  "8",
-  "9",
-  "10",
-  "11",
-  "12",
-  "13",
-  "13b",
-  "14",
-  "14b",
-  "14c",
-  "15",
-  "16",
-];
+// Derived from the canonical STAGE_MANIFEST — Phase 1 only (retry+cascade
+// applies to stages 1–16). Verified byte-for-byte identical to the previous
+// hand-maintained stageOrder; the sub-stage positions are preserved.
+import { STAGE_MANIFEST } from "./pipeline-integrity";
+const stageOrder: StageId[] = STAGE_MANIFEST
+  .filter((e) => e.phase === 1)
+  .map((e) => e.id as StageId);
 
 export const resetStageCascade = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
