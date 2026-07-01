@@ -39,7 +39,7 @@ export const runStage9 = createServerFn({ method: "POST" })
     await assertUpstreamStageOutput(data.sessionId, 9);
     const { data: session, error } = await supabaseAdmin
       .from("sessions")
-      .select("brand_name, category, stage_2_output, stage_7_output, stage_8_output, stage_9_output, checkpoint_b_confirmed")
+      .select("brand_name, category, brief_text, stage_2_output, stage_4b_output, stage_6_output, stage_7_output, stage_8_output, stage_9_output, checkpoint_b_confirmed")
       .eq("id", data.sessionId)
       .single();
     if (error || !session) throw new Error(`Session not found: ${error?.message ?? "no row"}`);
