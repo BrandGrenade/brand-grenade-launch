@@ -187,7 +187,12 @@ const CHECK_DEFS: ReadonlyArray<{ id: FullCheckId; name: string }> = [
 const TESTBRAND_BRAND_NAME = "Preflight TestBrand";
 const TESTBRAND_CATEGORY = "Australian premium energy drink";
 const TESTBRAND_STRATEGIC_MODE = "Brand Detonation";
-const TESTBRAND_BRIEF = `Brand: TestBrand. Category: Australian premium energy drink. Challenge: the entire energy drink category sells urgency, crash, and artificial stimulation to men who have moved on. The disciplined man who trains, tracks his macros, and demands performance from everything he consumes has no energy drink that matches his standard. TestBrand is the first energy drink built for deliberate performance, not emergency rescue. Product: natural caffeine from green tea plus adaptogens plus electrolytes. Full strength. No apology. Target: males 28 to 42 who train seriously, track their intake, and read the category's crash-and-recover narrative as an insult to their discipline. Competitors: Monster and Red Bull own urgency and youth. V owns the casual drinker. None own the disciplined performance male. Business objective: own the deliberate performance territory the category has never addressed.`;
+// Narrow-but-representative brief: one competitor, one target, one product claim.
+// Rich enough to exercise the real multi-universe path (Stage 5/6 typically
+// yields ~3–4 universes on this input), but not so category-rich that it
+// only survives via the Stage 6 top-5 cap. This is the health-check baseline,
+// NOT a worst-case stress test.
+const TESTBRAND_BRIEF = `Brand: TestBrand. Category: Australian premium energy drink. Challenge: Red Bull owns the youth-and-urgency story in energy drinks, but the disciplined Australian man who trains seriously and reads ingredient labels has no drink built for his standard. Product: natural green-tea caffeine plus electrolytes — clean energy for people who track what they consume. Target: Australian men 30 to 40 who train four times a week and treat their intake as part of their training. Competitor: Red Bull owns urgency and youth and cannot credibly claim clean performance. Business objective: own the clean-performance territory in Australian energy drinks.`;
 
 // ---------------------------------------------------------------------------
 // Helpers
