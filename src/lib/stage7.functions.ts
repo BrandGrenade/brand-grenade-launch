@@ -28,6 +28,25 @@ function headingsIn(text: string): string[] {
   return names;
 }
 
+/**
+ * Trim a Stage 7 markdown output to at most `max` territory blocks.
+ * A "block" starts at each top-level "## " heading and runs until the next.
+ * Content before the first heading (preamble) is preserved.
+ */
+function capStage7Territories(text: string, max: number, sessionId: string): string {
+  const lines = text.split("\n");
+  const blockStarts: number[] = [];
+  for (let i = 0; i < lines.length; i++) {
+    if (/^##\s+\S/.test(lines[i])) blockStarts.push(i);
+  }
+  if (blockStarts.length <= max) return text;
+  console.warn(
+    `[stage7] session=${sessionId} produced ${blockStarts.length} territories — trimming to first ${max}`,
+  );
+  const cutAt = blockStarts[max]; // start of the (max+1)th block
+  return lines.slice(0, cutAt).join("\n").trimEnd() + "\n";
+}
+
 /** Universes from Stage 6 that have no matching "## …" heading in Stage 7 output. */
 function findMissingUniverses(stage6Universes: string[], stage7Output: string): string[] {
   const produced = headingsIn(stage7Output).map((s) => s.toLowerCase());
