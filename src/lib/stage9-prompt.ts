@@ -84,6 +84,15 @@ export function buildStage9UserMessage(args: {
   return `Brand: ${args.brandName}
 Category: ${args.category}
 
+==== PRE-COMPUTED BANNED TARGETS (avoid at generation time, not after) ====
+The following words are BANNED in every proposition, foundation line, proof-of-ownership line, and creative-territory line in this core Stage 9 output. Do NOT use them, and do NOT use any inflected form (plural, past tense, participle, gerund). If a candidate proposition reaches for one of these words, choose a different word or a different emotional direction BEFORE writing the line — this is a generation-time constraint, not a post-hoc filter.
+
+UNIVERSAL — never allowed under any circumstance: ${UNIVERSAL_BANNED_STAGE9_LIST}.
+
+CONDITIONAL — banned in this core generator regardless of category or competitor situation: ${CONDITIONALLY_BANNED_STAGE9_LIST}. In particular the words earn / earned / earning / earns / reward / rewards / rewarded / deserve / deserved / deserving are OFF-LIMITS here — this brief's category (performance, training, discipline) will pull you toward "earned" language; resist it and pick a different verb (e.g. built, held, kept, matched, met, made, done).
+
+Reaching for any of these words after being told not to is a failure of craft. Regenerate the line from a different verb before presenting it.
+
 ==== STAGE 8 — CANDIDATE PROPOSITIONS (raw material to interrogate and reinterpret, NOT to repeat verbatim) ====
 ${args.stage8Output}
 
@@ -93,5 +102,5 @@ ${args.stage7DominantSignal ?? "(not provided)"}
 ==== STAGE 2 — COMPETITIVE LANDSCAPE (CMM) ====
 ${args.cmm}
 
-Generate 5–7 Single-Minded Propositions per the Stage 9 specification. Apply every disqualification filter, the Emotional Direction Test, the Reinterpretation Requirement, the Cliché Detection scan, all six quality criteria, the four craft standards, and the creative function classification silently before presenting. Cover the Six Territories where material allows. For each proposition present: (1) The SMP, (2) The foundation, (3) The proof of ownership, (4) The creative territory, (5) The creative function classification with Phase 2 Detonation instruction. Then provide the ranking with one-sentence rationales and the top 1–2 recommendation with full strategic rationale.`;
+Generate 5–7 Single-Minded Propositions per the Stage 9 specification. Apply every disqualification filter, the Emotional Direction Test, the Reinterpretation Requirement, the Cliché Detection scan, all six quality criteria, the four craft standards, and the creative function classification silently before presenting. Respect the PRE-COMPUTED BANNED TARGETS block above at generation time. Cover the Six Territories where material allows. For each proposition present: (1) The SMP, (2) The foundation, (3) The proof of ownership, (4) The creative territory, (5) The creative function classification with Phase 2 Detonation instruction. Then provide the ranking with one-sentence rationales and the top 1–2 recommendation with full strategic rationale.`;
 }
