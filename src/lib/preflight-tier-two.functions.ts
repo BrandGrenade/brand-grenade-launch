@@ -553,8 +553,16 @@ export const finalizePreflightRun = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const failedCount = data.allResults.filter((r) => r.status === "fail").length;
     const overall: "ready" | "issue_detected" = failedCount === 0 ? "ready" : "issue_detected";
-    if (data.sessionIds.length > 0) {
+    // Only clean up TestBrand sessions on a fully green run. If ANY check
+    // failed, preserve the session(s) so their stage outputs (Stage 9
+    // propositions, Stage 11 verdicts, etc.) remain queryable for
+    // post-mortem — a test that wipes its own evidence on failure can't be
+    // debugged. Preserved rows keep is_preflight_test=true so they can be
+    // filtered out of live views and swept later manually.
+    let sessionsCleaned: string[] = [];
+    if (data.sessionIds.length > 0 && failedCount === 0) {
       await supabaseAdmin.from("sessions").delete().in("id", data.sessionIds);
+      sessionsCleaned = data.sessionIds;
     }
     const { error } = await supabaseAdmin
       .from("preflight_checks")
@@ -570,7 +578,8 @@ export const finalizePreflightRun = createServerFn({ method: "POST" })
       recordId: data.recordId,
       overall,
       results: data.allResults,
-      sessionIdsCleaned: data.sessionIds,
+      sessionIdsCleaned: sessionsCleaned,
+      sessionIdsPreserved: failedCount === 0 ? [] : data.sessionIds,
       totalDurationMs: Date.now() - data.startedAtMs,
     };
   });
