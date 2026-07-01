@@ -80,9 +80,12 @@ Anchor: [one line — evidence the dimension is genuinely under-committed]
 OWNS THE WORD: [word]  (or: "resists single-word compression")
 
 ═══════════════════════════════════
-POISON-WORD POLICY (CONDITIONAL — this layer only)
 ═══════════════════════════════════
-For this left-of-centre layer only, a word is banned only if (a) it appears on the brief's own exclusion list, or (b) a NAMED COMPETITOR in this category already owns it. The words "reward", "earn", and "deserve" are legitimate strategic destinations OUTSIDE categories where a rival owns them, and are NOT to be auto-rejected here. Universally banned clichés (transformation, journey, authentic, unleash, elevate, redefine, etc.) remain banned.
+POISON-WORD POLICY (TWO INDEPENDENT LISTS)
+═══════════════════════════════════
+LIST A — UNIVERSAL BANNED (nothing relaxes these, ever): ${UNIVERSAL_BANNED_STAGE9_LIST}. These are banned in every proposition, anchor line, and OWNS THE WORD line in this layer, exactly as they are in the core Stage 9 output. The competitor-ownership exemption in LIST B DOES NOT REACH LIST A. If a Breach / Fuse / Flashpoint proposition contains any LIST A word in any inflected form, the engine's output is REJECTED — regenerate or return the honest "no credible [move]" line.
+
+LIST B — CONDITIONALLY BANNED (relaxable only in this left-of-centre layer): ${CONDITIONALLY_BANNED_STAGE9_LIST}. A LIST B word is permitted in this layer ONLY IF (a) it does not appear on the brief's exclusion list, AND (b) no NAMED COMPETITOR in this category already owns it. If either condition fails, the word is banned in this layer too. This exemption exists solely for LIST B; it never extends to LIST A under any circumstances.
 
 CRAFT BAR
 Alternatives must still pass ≤8 words, immediately understood, no clichés. They are strategically bolder, not sloppier.
