@@ -570,7 +570,7 @@ export function PreflightFullCheckPanel() {
       ]) {
         setCurrentMessage(`  · Running ${label} (separate Worker invocation)...`);
         const t0 = Date.now();
-        await run();
+        await runWithWatchdog({ sessionId, label }, run);
         timings.push(`${label}: ${((Date.now() - t0) / 1000).toFixed(1)}s`);
       }
       return { ...def, status: "pass", durationMs: Date.now() - started, detail: `Stages 10 & 11 completed — each ran as its own server-fn RPC. ${timings.join(", ")}.`, remediation: null };
@@ -777,7 +777,7 @@ export function PreflightFullCheckPanel() {
       ]) {
         setCurrentMessage(`  · Running ${label} (separate Worker invocation)...`);
         t0 = Date.now();
-        await run();
+        await runWithWatchdog({ sessionId, label }, run);
         timings.push(`${label}: ${((Date.now() - t0) / 1000).toFixed(1)}s`);
       }
 
@@ -807,7 +807,7 @@ export function PreflightFullCheckPanel() {
       ]) {
         setCurrentMessage(`  · Running ${label} (separate Worker invocation)...`);
         t0 = Date.now();
-        await run();
+        await runWithWatchdog({ sessionId, label }, run);
         timings.push(`${label}: ${((Date.now() - t0) / 1000).toFixed(1)}s`);
       }
 
@@ -830,7 +830,7 @@ export function PreflightFullCheckPanel() {
       ]) {
         setCurrentMessage(`  · Running ${label} (separate Worker invocation)...`);
         t0 = Date.now();
-        await run();
+        await runWithWatchdog({ sessionId, label }, run);
         timings.push(`${label}: ${((Date.now() - t0) / 1000).toFixed(1)}s`);
       }
 
