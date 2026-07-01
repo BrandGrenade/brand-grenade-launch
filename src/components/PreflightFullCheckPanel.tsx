@@ -38,6 +38,8 @@ import { runStage7 } from "@/lib/stage7.functions";
 import { runStage8, confirmCheckpointB } from "@/lib/stage8.functions";
 import { runStage10 } from "@/lib/stage10.functions";
 import { runStage11 } from "@/lib/stage11.functions";
+import { runStage12, saveSelectedSMP, saveSelectionRationale } from "@/lib/stage12.functions";
+import { countStage12PropositionCards, filterValidatedFromStage11 } from "@/lib/stage12-filter";
 import { saveBrandIntelligence, runStage13 } from "@/lib/stage13.functions";
 import { runStage13b } from "@/lib/stage13b.functions";
 import { runStage14 } from "@/lib/stage14.functions";
@@ -119,7 +121,11 @@ async function drainStreamOrPollDb<C extends { delta?: string; done?: true; outp
   });
   return await new Promise<{ output: string; source: "stream" | "db-poll" }>((resolve, reject) => {
     let settled = false;
+    let streamResolved = false;
+    let streamValue = "";
     streamP.then((v) => {
+      streamResolved = true;
+      streamValue = v;
       if (settled) return;
       if (v && v.length >= minChars) {
         settled = true;
@@ -135,13 +141,12 @@ async function drainStreamOrPollDb<C extends { delta?: string; done?: true; outp
       })
       .catch((err) => {
         if (settled) return;
-        // Give the stream one last chance to have resolved with something short.
-        streamP.then((v) => {
-          if (settled) return;
-          settled = true;
-          if (v && v.length > 0) resolve({ output: v, source: "stream" });
-          else reject(err);
-        });
+        // If the DB source of truth timed out and the stream has not already
+        // completed, fail immediately. Waiting for a never-resolving stream is
+        // the exact dropped-SSE hang this helper exists to avoid.
+        settled = true;
+        if (streamResolved && streamValue.length > 0) resolve({ output: streamValue, source: "stream" });
+        else reject(err);
       });
   });
 }
@@ -337,6 +342,9 @@ export function PreflightFullCheckPanel() {
   const confirmCheckpointBFn = useServerFn(confirmCheckpointB);
   const stage10Fn = useServerFn(runStage10);
   const stage11Fn = useServerFn(runStage11);
+  const stage12Fn = useServerFn(runStage12);
+  const saveSelectedSMPFn = useServerFn(saveSelectedSMP);
+  const saveSelectionRationaleFn = useServerFn(saveSelectionRationale);
   const seedBrandIntelFn = useServerFn(saveBrandIntelligence);
   const stage13Fn = useServerFn(runStage13);
   const stage13bFn = useServerFn(runStage13b);
@@ -431,13 +439,14 @@ export function PreflightFullCheckPanel() {
   };
 
   // Process events from one streaming server-fn generator. Returns a
-  // handoff payload if the stream ended with `check_3_handoff` or
-  // `check_8_handoff`, otherwise terminal sentinel.
+  // handoff payload if the stream ended with one of the staged client-driver
+  // handoffs, otherwise terminal sentinel.
   type ProcessOutcome =
     | { kind: "handoff1"; payload: Extract<TierTwoEvent, { type: "check_1_handoff" }> }
     | { kind: "handoff2"; payload: Extract<TierTwoEvent, { type: "check_2_handoff" }> }
     | { kind: "handoff3"; payload: Extract<TierTwoEvent, { type: "check_3_handoff" }> }
     | { kind: "handoff6"; payload: Extract<TierTwoEvent, { type: "check_6_handoff" }> }
+    | { kind: "handoff7"; payload: Extract<TierTwoEvent, { type: "check_7_handoff" }> }
     | { kind: "handoff8"; payload: Extract<TierTwoEvent, { type: "check_8_handoff" }> }
     | { kind: "handoff10"; payload: Extract<TierTwoEvent, { type: "check_10_handoff" }> }
     | { kind: "handoff12"; payload: Extract<TierTwoEvent, { type: "check_12_handoff" }> }
@@ -488,6 +497,10 @@ export function PreflightFullCheckPanel() {
       if (ev.type === "check_6_handoff") {
         setResults(ev.results);
         return { kind: "handoff6", payload: ev };
+      }
+      if (ev.type === "check_7_handoff") {
+        setResults(ev.results);
+        return { kind: "handoff7", payload: ev };
       }
       if (ev.type === "check_8_handoff") {
         setResults(ev.results);
@@ -649,6 +662,112 @@ export function PreflightFullCheckPanel() {
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       return { ...def, status: "fail", durationMs: Date.now() - started, detail: `Check 6 failed: ${msg}. Completed: ${timings.join(", ") || "none"}.`, remediation: "Inspect stage10.functions.ts / stage11.functions.ts; verify Stage 8 propositions were available as input." };
+    }
+  };
+
+  const driveCheck7 = async (
+    handoff: Extract<TierTwoEvent, { type: "check_7_handoff" }>,
+  ): Promise<FullCheckResult> => {
+    const def = handoff.results[6];
+    setCurrentMessage(`▶ ${def.name}`);
+    const runningResults = handoff.results.map((r) =>
+      r.index === 7 ? { ...r, status: "running" as const } : r,
+    );
+    handoff.results = runningResults;
+    setResults(runningResults);
+    await recordResultsFn({
+      data: { recordId: handoff.recordId, allResults: runningResults },
+    });
+    const started = Date.now();
+    const sessionId = handoff.sessionId;
+    const timings: string[] = [];
+    try {
+      if (!sessionId || handoff.results[5].status !== "pass") {
+        throw new Error("Skipped: Stage 10/11 chain did not complete");
+      }
+
+      setCurrentMessage("  · Verifying Stage 11 output before Stage 12...");
+      let t0 = Date.now();
+      const { data: pre } = await supabase
+        .from("sessions")
+        .select("stage_11_output")
+        .eq("id", sessionId)
+        .single();
+      const stage11Output = String(pre?.stage_11_output ?? "");
+      if (stage11Output.length < 200) throw new Error("Stage 11 output missing or too short before Stage 12");
+      const validated = filterValidatedFromStage11(stage11Output).validated;
+      if (validated.length === 0) throw new Error("Stage 11 produced no VALIDATED SMPs to feed Stage 12");
+      timings.push(`Stage 11 validation: ${((Date.now() - t0) / 1000).toFixed(1)}s`);
+
+      setCurrentMessage(
+        `  · Running Stage 12 (SMP synthesis, expecting >= ${validated.length} card(s); DB-poll fallback armed)...`,
+      );
+      t0 = Date.now();
+      const s12 = (await runWithWatchdog(
+        { sessionId, label: "Stage 12", maxIdleMs: 4 * 60_000, pollMs: 15_000 },
+        () =>
+          drainStreamOrPollDb(
+            stage12Fn({ data: { sessionId } }) as unknown as AsyncGenerator<
+              { delta?: string; done?: true; output?: string },
+              void,
+              unknown
+            >,
+            { sessionId, column: "stage_12_output", minChars: 1000, maxMs: 3 * 60_000, intervalMs: 5_000 },
+          ),
+      )) as { output: string; source: "stream" | "db-poll" };
+      timings.push(`Stage 12 (via ${s12.source}): ${((Date.now() - t0) / 1000).toFixed(1)}s`);
+
+      const stage12 = s12.output;
+      if (!stage12) throw new Error("Stage 12 output missing after run");
+      const cardCount = countStage12PropositionCards(stage12);
+      if (cardCount < validated.length) {
+        throw new Error(
+          `Stage 12 card-integrity failure: only ${cardCount} card(s) rendered for ${validated.length} validated SMP(s)`,
+        );
+      }
+
+      const selected = validated[0];
+      setCurrentMessage("  · Persisting preflight auto-selection and Checkpoint C rationale...");
+      t0 = Date.now();
+      await saveSelectedSMPFn({
+        data: {
+          sessionId,
+          smpLine: selected.smpLine.slice(0, 1000),
+          fieldName: selected.fieldName.slice(0, 500) || "Preflight Auto-Selection",
+        },
+      });
+      await saveSelectionRationaleFn({
+        data: {
+          sessionId,
+          rationale: { auto: "Preflight TestBrand auto-selected top-ranked SMP for integrity validation." },
+        },
+      });
+      const { data: verify } = await supabase
+        .from("sessions")
+        .select("selected_smp, checkpoint_c_confirmed")
+        .eq("id", sessionId)
+        .single();
+      if (!verify?.selected_smp) throw new Error("selected_smp did not persist");
+      if (!verify?.checkpoint_c_confirmed) throw new Error("Checkpoint C did not flip to true");
+      timings.push(`Selection + rationale: ${((Date.now() - t0) / 1000).toFixed(1)}s`);
+
+      return {
+        ...def,
+        status: "pass",
+        durationMs: Date.now() - started,
+        detail: `Stage 12 SMP synthesis (${cardCount}/${validated.length} cards) + selection + rationale persisted; Checkpoint C confirmed. ${timings.join(", ")}.`,
+        remediation: null,
+      };
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      return {
+        ...def,
+        status: "fail",
+        durationMs: Date.now() - started,
+        detail: `Check 7 failed: ${msg}. Completed: ${timings.join(", ") || "none"}.`,
+        remediation:
+          "Inspect stage12.functions.ts saveSelectedSMP / saveSelectionRationale and the Stage 11 → Stage 12 column wiring in pipeline-integrity.ts.",
+      };
     }
   };
 
@@ -1121,7 +1240,7 @@ export function PreflightFullCheckPanel() {
         data: { recordId: outcome1.payload.recordId, allResults: workingResults },
       });
 
-      // ---- Resume server-side: checks 4–7 → check_8_handoff ----
+      // ---- Resume server-side: checks 4–5 → check_6_handoff ----
       const from4Gen = (await runFrom4Fn({
         data: {
           recordId: check3Handoff.recordId,
@@ -1145,7 +1264,7 @@ export function PreflightFullCheckPanel() {
         data: { recordId: outcome2.payload.recordId, allResults: workingResults },
       });
 
-      // ---- Resume server-side: check 7 → check_8_handoff ----
+      // ---- Resume server-side: check 7 handoff ----
       const from7Gen = (await runFrom7Fn({
         data: {
           recordId: outcome2.payload.recordId,
@@ -1156,34 +1275,58 @@ export function PreflightFullCheckPanel() {
         },
       })) as AsyncGenerator<TierTwoEvent, void, unknown>;
       const outcome3 = await processStream(from7Gen);
-      if (outcome3.kind !== "handoff8") return;
+      if (outcome3.kind !== "handoff7") return;
+
+      // ---- Client-driven Check 7 (Stage 12 + selection/rationale) ----
+      const check7Result = await driveCheck7(outcome3.payload);
+      workingResults = outcome3.payload.results.map((r) =>
+        r.index === 7 ? check7Result : r,
+      );
+      setResults(workingResults);
+      setCurrentMessage(`✓ ${check7Result.name} — ${check7Result.status.toUpperCase()}`);
+      await recordResultsFn({
+        data: { recordId: outcome3.payload.recordId, allResults: workingResults },
+      });
+
+      const check8Handoff: Extract<TierTwoEvent, { type: "check_8_handoff" }> = {
+        type: "check_8_handoff",
+        recordId: outcome3.payload.recordId,
+        sessionId: outcome3.payload.sessionId,
+        sessionIds: outcome3.payload.sessionIds,
+        results: workingResults,
+        startedAtMs: outcome3.payload.startedAtMs,
+      };
 
       // ---- Client-driven Check 8 (skip if check 7 didn't pass) ----
-      const check7Passed = outcome3.payload.results[6]?.status === "pass";
       let check8Result: FullCheckResult;
-      if (!check7Passed) {
-        // Server already marked it failed inline; reuse that.
-        check8Result = outcome3.payload.results[7];
+      if (check7Result.status !== "pass") {
+        check8Result = {
+          ...check8Handoff.results[7],
+          status: "fail",
+          durationMs: 0,
+          detail: "Skipped: Stage 12 selection did not complete",
+          remediation: "Fix the upstream Check 7 failure before re-running.",
+        };
       } else {
-        check8Result = await driveCheck8(outcome3.payload);
+        check8Result = await driveCheck8(check8Handoff);
       }
-      workingResults = outcome3.payload.results.map((r) =>
+      workingResults = check8Handoff.results.map((r) =>
         r.index === 8 ? check8Result : r,
       );
       setResults(workingResults);
       setCurrentMessage(`✓ ${check8Result.name} — ${check8Result.status.toUpperCase()}`);
       await recordCheck8Fn({
-        data: { recordId: outcome3.payload.recordId, allResults: workingResults },
+        data: { recordId: check8Handoff.recordId, allResults: workingResults },
       });
 
       // ---- Resume: Check 9 → Check 10 handoff ----
       const resumeGen = (await runResumeFn({
         data: {
-          recordId: outcome3.payload.recordId,
-          sessionId: outcome3.payload.sessionId,
-          sessionIds: outcome3.payload.sessionIds,
+          recordId: check8Handoff.recordId,
+          sessionId: check8Handoff.sessionId,
+          sessionIds: check8Handoff.sessionIds,
           priorResults: workingResults,
-          startedAtMs: outcome3.payload.startedAtMs,
+          startedAtMs: check8Handoff.startedAtMs,
         },
       })) as AsyncGenerator<TierTwoEvent, void, unknown>;
       const outcome4 = await processStream(resumeGen);
