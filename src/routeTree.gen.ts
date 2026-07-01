@@ -19,6 +19,8 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as BriefIndexRouteImport } from './routes/brief.index'
 import { Route as DetonationCanvasRouteImport } from './routes/detonation_.canvas'
 import { Route as BriefNewRouteImport } from './routes/brief.new'
+import { Route as AuthenticatedBriefingRoomIndexRouteImport } from './routes/_authenticated/briefing-room.index'
+import { Route as AuthenticatedBriefingRoomIdRouteImport } from './routes/_authenticated/briefing-room.$id'
 
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
@@ -70,6 +72,18 @@ const BriefNewRoute = BriefNewRouteImport.update({
   path: '/new',
   getParentRoute: () => BriefRoute,
 } as any)
+const AuthenticatedBriefingRoomIndexRoute =
+  AuthenticatedBriefingRoomIndexRouteImport.update({
+    id: '/_authenticated/briefing-room/',
+    path: '/briefing-room/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const AuthenticatedBriefingRoomIdRoute =
+  AuthenticatedBriefingRoomIdRouteImport.update({
+    id: '/_authenticated/briefing-room/$id',
+    path: '/briefing-room/$id',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -82,6 +96,8 @@ export interface FileRoutesByFullPath {
   '/brief/new': typeof BriefNewRoute
   '/detonation/canvas': typeof DetonationCanvasRoute
   '/brief/': typeof BriefIndexRoute
+  '/briefing-room/$id': typeof AuthenticatedBriefingRoomIdRoute
+  '/briefing-room/': typeof AuthenticatedBriefingRoomIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -93,6 +109,8 @@ export interface FileRoutesByTo {
   '/brief/new': typeof BriefNewRoute
   '/detonation/canvas': typeof DetonationCanvasRoute
   '/brief': typeof BriefIndexRoute
+  '/briefing-room/$id': typeof AuthenticatedBriefingRoomIdRoute
+  '/briefing-room': typeof AuthenticatedBriefingRoomIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -106,6 +124,8 @@ export interface FileRoutesById {
   '/brief/new': typeof BriefNewRoute
   '/detonation_/canvas': typeof DetonationCanvasRoute
   '/brief/': typeof BriefIndexRoute
+  '/_authenticated/briefing-room/$id': typeof AuthenticatedBriefingRoomIdRoute
+  '/_authenticated/briefing-room/': typeof AuthenticatedBriefingRoomIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -120,6 +140,8 @@ export interface FileRouteTypes {
     | '/brief/new'
     | '/detonation/canvas'
     | '/brief/'
+    | '/briefing-room/$id'
+    | '/briefing-room/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -131,6 +153,8 @@ export interface FileRouteTypes {
     | '/brief/new'
     | '/detonation/canvas'
     | '/brief'
+    | '/briefing-room/$id'
+    | '/briefing-room'
   id:
     | '__root__'
     | '/'
@@ -143,6 +167,8 @@ export interface FileRouteTypes {
     | '/brief/new'
     | '/detonation_/canvas'
     | '/brief/'
+    | '/_authenticated/briefing-room/$id'
+    | '/_authenticated/briefing-room/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -154,6 +180,8 @@ export interface RootRouteChildren {
   PipelineRoute: typeof PipelineRoute
   SettingsRoute: typeof SettingsRoute
   DetonationCanvasRoute: typeof DetonationCanvasRoute
+  AuthenticatedBriefingRoomIdRoute: typeof AuthenticatedBriefingRoomIdRoute
+  AuthenticatedBriefingRoomIndexRoute: typeof AuthenticatedBriefingRoomIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -228,6 +256,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BriefNewRouteImport
       parentRoute: typeof BriefRoute
     }
+    '/_authenticated/briefing-room/': {
+      id: '/_authenticated/briefing-room/'
+      path: '/briefing-room'
+      fullPath: '/briefing-room/'
+      preLoaderRoute: typeof AuthenticatedBriefingRoomIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/briefing-room/$id': {
+      id: '/_authenticated/briefing-room/$id'
+      path: '/briefing-room/$id'
+      fullPath: '/briefing-room/$id'
+      preLoaderRoute: typeof AuthenticatedBriefingRoomIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -252,6 +294,8 @@ const rootRouteChildren: RootRouteChildren = {
   PipelineRoute: PipelineRoute,
   SettingsRoute: SettingsRoute,
   DetonationCanvasRoute: DetonationCanvasRoute,
+  AuthenticatedBriefingRoomIdRoute: AuthenticatedBriefingRoomIdRoute,
+  AuthenticatedBriefingRoomIndexRoute: AuthenticatedBriefingRoomIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
