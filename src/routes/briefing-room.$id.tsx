@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState, useCallback } from "react";
 import { ArrowLeft, Plus, X } from "lucide-react";
@@ -12,6 +12,7 @@ import {
   runBriefingStep3,
   runBriefingStep4,
   setBriefingSelections,
+  getBriefingHandoffPreview,
 } from "@/lib/briefing-room.functions";
 import type {
   Step1Output,
@@ -20,6 +21,11 @@ import type {
   Step4Output,
   EvidenceItem,
 } from "@/lib/briefing-room-prompts";
+import type { HandoffPayload } from "@/lib/briefing-room-handoff";
+import {
+  PENDING_BRIEF_STORAGE_KEY,
+  saveBrief,
+} from "@/components/SavedBriefsLibrary";
 
 export const Route = createFileRoute("/briefing-room/$id")({
   component: WorkspacePage,
