@@ -70,6 +70,82 @@ async function drainStream<C extends { delta?: string; done?: true }>(
   return final;
 }
 
+// Poll `sessions.<column>` every `intervalMs` up to `maxMs`. Resolves with the
+// first non-null value, rejects on timeout. Used to survive dropped SSE
+// connections on long-generation streaming stages: even when the browser
+// never receives the terminal `done` chunk (Cloudflare edge closes the
+// connection mid-flight), the server-side handler has still written its
+// output to the DB, and the DB is the source of truth.
+async function pollForSessionColumn(
+  sessionId: string,
+  column: string,
+  opts: { intervalMs?: number; maxMs?: number } = {},
+): Promise<string> {
+  const intervalMs = opts.intervalMs ?? 5_000;
+  const maxMs = opts.maxMs ?? 3 * 60_000;
+  const deadline = Date.now() + maxMs;
+  while (Date.now() < deadline) {
+    await new Promise((r) => setTimeout(r, intervalMs));
+    try {
+      const { data } = await supabase
+        .from("sessions")
+        .select(column)
+        .eq("id", sessionId)
+        .maybeSingle();
+      const value = (data as Record<string, unknown> | null)?.[column];
+      if (typeof value === "string" && value.length > 0) return value;
+    } catch {
+      /* transient — try again */
+    }
+  }
+  throw new Error(`DB poll timed out after ${Math.round(maxMs / 1000)}s waiting for sessions.${column}`);
+}
+
+// Run a streaming stage but fall back to DB polling if the SSE connection is
+// dropped mid-flight. Whichever source produces the final output first wins.
+// This closes the "browser never gets the `done` chunk because Cloudflare
+// closed the stream" failure mode for long-generation stages.
+async function drainStreamOrPollDb<C extends { delta?: string; done?: true; output?: string }>(
+  generator: AsyncGenerator<C, void, unknown> | Promise<AsyncGenerator<C, void, unknown>>,
+  fallback: { sessionId: string; column: string; minChars?: number; maxMs?: number; intervalMs?: number },
+): Promise<{ output: string; source: "stream" | "db-poll" }> {
+  const minChars = fallback.minChars ?? 1000;
+  const streamP = drainStream(generator)
+    .then((r) => String((r as { output?: string }).output ?? ""))
+    .catch(() => "");
+  const dbP = pollForSessionColumn(fallback.sessionId, fallback.column, {
+    intervalMs: fallback.intervalMs,
+    maxMs: fallback.maxMs,
+  });
+  return await new Promise<{ output: string; source: "stream" | "db-poll" }>((resolve, reject) => {
+    let settled = false;
+    streamP.then((v) => {
+      if (settled) return;
+      if (v && v.length >= minChars) {
+        settled = true;
+        resolve({ output: v, source: "stream" });
+      }
+      // If stream returned nothing/short, keep waiting on dbP.
+    });
+    dbP
+      .then((v) => {
+        if (settled) return;
+        settled = true;
+        resolve({ output: v, source: "db-poll" });
+      })
+      .catch((err) => {
+        if (settled) return;
+        // Give the stream one last chance to have resolved with something short.
+        streamP.then((v) => {
+          if (settled) return;
+          settled = true;
+          if (v && v.length > 0) resolve({ output: v, source: "stream" });
+          else reject(err);
+        });
+      });
+  });
+}
+
 // Client-side backstop watchdog. Races a stage RPC against a DB-heartbeat check
 // on `sessions.updated_at`. If no write occurs for `maxIdleMs`, we assume the
 // server-side Worker died silently, forcibly mark the row `interrupted`, and
@@ -852,17 +928,23 @@ export function PreflightFullCheckPanel() {
 
       // Phase 2 is complete — now assemble the Stage 16 document (agency).
       // This exercises the legitimate Stage 16 path its own gate requires.
-      setCurrentMessage("  · Running Stage 16 Document Assembly (agency) — Phase 2 now complete...");
+      // Uses drainStreamOrPollDb: Stage 16 is a long-generation streamed
+      // stage and Cloudflare's edge has been observed closing the SSE
+      // connection before the terminal `done` chunk reaches the browser,
+      // hanging the harness even though the server wrote the output. The
+      // DB column is the source of truth.
+      setCurrentMessage("  · Running Stage 16 Document Assembly (agency) — Phase 2 now complete (DB-poll fallback armed)...");
       t0 = Date.now();
-      const s16 = await drainStream(
+      const s16 = await drainStreamOrPollDb(
         stage16Fn({ data: { sessionId, format: "agency" } }) as unknown as AsyncGenerator<
           { delta?: string; done?: true; output?: string },
           void,
           unknown
         >,
+        { sessionId, column: "stage_16_agency_output", minChars: 1000, maxMs: 3 * 60_000, intervalMs: 5_000 },
       );
-      timings.push(`Stage 16 (agency): ${((Date.now() - t0) / 1000).toFixed(1)}s`);
-      const s16out = String((s16 as { output?: string }).output ?? "");
+      timings.push(`Stage 16 (agency, via ${s16.source}): ${((Date.now() - t0) / 1000).toFixed(1)}s`);
+      const s16out = s16.output;
       if (s16out.length < 1000) {
         throw new Error(`Stage 16 assembly output too short (${s16out.length} chars) — expected a full document.`);
       }
