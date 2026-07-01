@@ -178,8 +178,8 @@ function CompletePage() {
         console.log("Final Output loading session:", {
           sessionIdFromUrl: urlParams.get("session"),
           sessionIdFromDb: (data as unknown as SessionRow | null)?.id,
-          brandName: (data as SessionRow | null)?.brand_name,
-          selectedSmp: (data as SessionRow | null)?.selected_smp,
+          brandName: (data as unknown as SessionRow | null)?.brand_name,
+          selectedSmp: (data as unknown as SessionRow | null)?.selected_smp,
         });
       });
     return () => {
