@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState, useCallback } from "react";
 import { ArrowLeft, Plus, X } from "lucide-react";
@@ -12,6 +12,7 @@ import {
   runBriefingStep3,
   runBriefingStep4,
   setBriefingSelections,
+  getBriefingHandoffPreview,
 } from "@/lib/briefing-room.functions";
 import type {
   Step1Output,
@@ -20,6 +21,11 @@ import type {
   Step4Output,
   EvidenceItem,
 } from "@/lib/briefing-room-prompts";
+import type { HandoffPayload } from "@/lib/briefing-room-handoff";
+import {
+  PENDING_BRIEF_STORAGE_KEY,
+  saveBrief,
+} from "@/components/SavedBriefsLibrary";
 
 export const Route = createFileRoute("/briefing-room/$id")({
   component: WorkspacePage,
@@ -37,6 +43,8 @@ function WorkspacePage() {
   const step3 = useServerFn(runBriefingStep3);
   const step4 = useServerFn(runBriefingStep4);
   const setSel = useServerFn(setBriefingSelections);
+  const previewHandoff = useServerFn(getBriefingHandoffPreview);
+  const navigate = useNavigate();
 
   const [ws, setWs] = useState<Ws | null>(null);
   const [brand, setBrand] = useState("");
@@ -45,6 +53,10 @@ function WorkspacePage() {
   const [evidence, setEvidence] = useState<EvidenceItem[]>([]);
   const [busyStep, setBusyStep] = useState<null | 1 | 2 | 3 | 4>(null);
   const [savingIntake, setSavingIntake] = useState(false);
+  const [preview, setPreview] = useState<HandoffPayload | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [approving, setApproving] = useState(false);
+  const [ackGaps, setAckGaps] = useState(false);
 
   const refresh = useCallback(async () => {
     const w = await load({ data: { id } });
@@ -117,6 +129,48 @@ function WorkspacePage() {
     }
   }
 
+  async function loadPreview() {
+    setPreviewLoading(true);
+    try {
+      const p = await previewHandoff({ data: { id } });
+      setPreview(p);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Preview failed");
+    } finally {
+      setPreviewLoading(false);
+    }
+  }
+
+  async function approveAndHandOff() {
+    if (!preview || !preview.ready) return;
+    if (preview.gaps.length > 0 && !ackGaps) {
+      toast.error("Acknowledge the open gaps before handing off.");
+      return;
+    }
+    setApproving(true);
+    try {
+      const saved = await saveBrief({
+        brandName: preview.briefFields.brandName || brand,
+        category: preview.briefFields.category || category,
+        briefText: preview.briefText,
+        briefFields: preview.briefFields,
+      });
+      if (!saved) {
+        setApproving(false);
+        return;
+      }
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem(PENDING_BRIEF_STORAGE_KEY, JSON.stringify(saved));
+      }
+      toast.success("Handed off to Saved Briefs — review and run Stage 1.");
+      navigate({ to: "/brief" });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Handoff failed");
+      setApproving(false);
+    }
+  }
+
+
   if (!ws) {
     return (
       <div className="min-h-screen bg-background">
@@ -145,8 +199,8 @@ function WorkspacePage() {
             {ws.brand_name || "(untitled)"}
           </h1>
           <p className="text-body-sm mt-1 text-text-tertiary">
-            Steps 5–6 (structure into Stage 1 format and hand off to Saved Briefs) are on hold
-            pending schema confirmation and a clean pipeline test.
+            Diagnose → capture truths → judge relevance → surface tension → structure
+            into an eleven-field brief that Stage 1 accepts as fixed priority input.
           </p>
         </header>
 
@@ -348,17 +402,96 @@ function WorkspacePage() {
           )}
         </StepCard>
 
-        <div
-          className="mt-10 rounded-md p-4"
-          style={{ backgroundColor: "#1A1611", border: "1px solid #3A2E1E", color: "#D4924A" }}
+        {/* ─── STEP 5 — STRUCTURE + PREVIEW ─── */}
+        <StepCard
+          n={5}
+          title="Structure into Stage 1 format"
+          subtitle="Compose the eleven-field brief plus the load-bearing Briefing Room Anchor block. Stage 1 has been amended to preserve the anchored tension verbatim in its Section 2 — no substitution, no dilution."
+          onRun={loadPreview}
+          busy={previewLoading}
+          hasOutput={!!preview}
+          runLabel={preview ? "Re-preview" : "Preview handoff"}
+          disabled={!ws.tensions}
+          disabledReason="Run Steps 1–4 first."
         >
-          <div className="text-label mb-1">HANDOFF ON HOLD</div>
-          <div className="text-body-sm" style={{ color: "#E8DFD1" }}>
-            Steps 5 (Structure into Stage 1 format) and 6 (Approve → land in Saved Briefs)
-            are gated on Stage 1 schema confirmation and a clean pipeline test. Once
-            green-lit, an "Approve and hand off" button appears here.
-          </div>
-        </div>
+          {preview && <HandoffPreviewView preview={preview} />}
+        </StepCard>
+
+        {/* ─── STEP 6 — APPROVE + HAND OFF ─── */}
+        <section
+          className="mt-6 rounded-md p-5"
+          style={{ backgroundColor: "#101010", border: "1px solid #2A2A2A" }}
+        >
+          <div className="text-label text-primary">STEP 6</div>
+          <h2 className="text-h3 mt-1 text-text-primary">Approve → hand off to Saved Briefs</h2>
+          <p className="text-body-sm mt-1 text-text-tertiary">
+            Lands the structured brief in your Saved Briefs library and opens it in the
+            structured editor. Review, then use the existing Save-and-Run to fire Stage 1.
+            The load-bearing tension rides in as an anchor block AND inside the barrier
+            field — Stage 1 is instructed to preserve it verbatim in Section 2.
+          </p>
+
+          {!preview && (
+            <p className="text-body-sm mt-4 text-text-tertiary">
+              Run Step 5 (Preview handoff) first.
+            </p>
+          )}
+
+          {preview && (
+            <div className="mt-4">
+              {preview.blockers.length > 0 && (
+                <div
+                  className="rounded-md p-3"
+                  style={{ backgroundColor: "#2A1414", border: "1px solid #5C2A2A", color: "#F0A0A0" }}
+                >
+                  <div className="text-label mb-1">BLOCKERS</div>
+                  <ul className="text-body-sm list-disc pl-5">
+                    {preview.blockers.map((b, i) => <li key={i}>{b}</li>)}
+                  </ul>
+                </div>
+              )}
+              {preview.warnings.length > 0 && (
+                <div
+                  className="mt-3 rounded-md p-3"
+                  style={{ backgroundColor: "#1A1611", border: "1px solid #3A2E1E", color: "#D4924A" }}
+                >
+                  <div className="text-label mb-1">WARNINGS</div>
+                  <ul className="text-body-sm list-disc pl-5">
+                    {preview.warnings.map((w, i) => <li key={i}>{w}</li>)}
+                  </ul>
+                </div>
+              )}
+              {preview.gaps.length > 0 && (
+                <label className="mt-3 flex items-start gap-2 text-body-sm text-text-secondary">
+                  <input
+                    type="checkbox"
+                    checked={ackGaps}
+                    onChange={(e) => setAckGaps(e.target.checked)}
+                    className="mt-1"
+                  />
+                  <span>
+                    I acknowledge {preview.gaps.length} open gap{preview.gaps.length === 1 ? "" : "s"}{" "}
+                    will be preserved in the brief and surfaced to Stage 1 as flags. The Briefing
+                    Room does not paper over what it flagged.
+                  </span>
+                </label>
+              )}
+              <button
+                type="button"
+                onClick={approveAndHandOff}
+                disabled={
+                  approving ||
+                  !preview.ready ||
+                  (preview.gaps.length > 0 && !ackGaps)
+                }
+                className="mt-4 inline-flex h-10 items-center rounded-md px-5 text-[13px] font-semibold disabled:opacity-50"
+                style={{ backgroundColor: "#D4924A", color: "#0A0A0A" }}
+              >
+                {approving ? "Handing off…" : "Approve and hand off to Saved Briefs"}
+              </button>
+            </div>
+          )}
+        </section>
       </main>
     </div>
   );
@@ -741,4 +874,70 @@ function TagBadge({
       {label}
     </span>
   );
+}
+
+function HandoffPreviewView({ preview }: { preview: HandoffPayload }) {
+  const [showBrief, setShowBrief] = useState(false);
+  const f = preview.briefFields;
+  return (
+    <div className="flex flex-col gap-3">
+      <div
+        className="rounded-md p-3"
+        style={{ backgroundColor: "#141414", border: "1px solid #2A2A2A" }}
+      >
+        <div className="text-label" style={{ color: "#D4924A" }}>
+          ANCHORED TENSION (rides into Stage 1 verbatim)
+        </div>
+        <p className="text-body mt-2 text-text-primary whitespace-pre-wrap">
+          {extractAnchoredTension(preview.briefText) ?? "(none — no-tension flag preserved)"}
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        <MiniField label="f3 · Commercial Outcome" value={f.sections.f3_outcome} />
+        <MiniField label="f4 · Primary Barrier (+ tension)" value={f.sections.f4_barrier} />
+        <MiniField label="f6 · Audience" value={f.sections.f6_audience} />
+        <MiniField label="f7 · Current Belief" value={f.sections.f7_current_belief} />
+        <MiniField label="f8 · Desired Belief" value={f.sections.f8_desired_belief} />
+        <MiniField label="f9 · Reason to Believe" value={f.sections.f9_rtb} />
+      </div>
+
+      <button
+        type="button"
+        onClick={() => setShowBrief((v) => !v)}
+        className="mt-2 self-start text-body-sm text-primary hover:opacity-80"
+      >
+        {showBrief ? "Hide" : "Show"} full brief_text that ships to Stage 1
+      </button>
+      {showBrief && (
+        <pre
+          className="mt-1 max-h-[420px] overflow-auto rounded-md p-3 text-[12px] leading-[1.55] whitespace-pre-wrap"
+          style={{ backgroundColor: "#0A0A0A", border: "1px solid #2A2A2A", color: "#D8D3CC" }}
+        >
+          {preview.briefText}
+        </pre>
+      )}
+    </div>
+  );
+}
+
+function MiniField({ label, value }: { label: string; value: string }) {
+  return (
+    <div
+      className="rounded-md p-3"
+      style={{ backgroundColor: "#141414", border: "1px solid #2A2A2A" }}
+    >
+      <div className="text-label" style={{ color: "#8A8580" }}>{label}</div>
+      <p className="text-body-sm mt-1.5 text-text-primary whitespace-pre-wrap">
+        {value || "(empty)"}
+      </p>
+    </div>
+  );
+}
+
+function extractAnchoredTension(briefText: string): string | null {
+  const m = briefText.match(
+    /ANCHORED TENSION[^:\n]*:[^\n]*\n\s{2,}(.+?)(?:\n\s{2,}Frame:|\n\s*\n|\n===)/s,
+  );
+  return m ? m[1].trim() : null;
 }
