@@ -199,6 +199,14 @@ export const runStage9 = createServerFn({ method: "POST" })
       leftOfCentre = `${locDivider}${gatedLoc.output}`;
       yield { delta: leftOfCentre };
     } catch (e) {
+      if (mode === "test") {
+        const msg = e instanceof Error ? e.message : "Stage 9 left-of-centre failed";
+        await supabaseAdmin
+          .from("sessions")
+          .update({ stage_9_error: msg })
+          .eq("id", data.sessionId);
+        throw e instanceof Error ? e : new Error(msg);
+      }
       const note = `\n\n[LEFT-OF-CENTRE ALTERNATIVES layer failed: ${e instanceof Error ? e.message : "unknown error"} — core Stage 9 output above is unaffected.]\n`;
       leftOfCentre += note;
       yield { delta: note };

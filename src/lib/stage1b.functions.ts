@@ -194,7 +194,7 @@ const DOWNSTREAM_RESET: Record<string, null | false | string> = {
   stage_6_output: null, stage_6_error: null, stage_6_status: null,
   stage_7_output: null, stage_7_error: null, stage_7_territory_count: null,
   stage_8_output: null, stage_8_error: null, stage_8_feedback: null,
-  stage_9_output: null, stage_9_error: null,
+  stage_9_output: null, stage_9_leftofcentre_output: null, stage_9_error: null,
   stage_10_output: null, stage_10_error: null,
   stage_11_output: null, stage_11_error: null,
   stage_12_output: null, stage_12_error: null, stage_12_smps: null,
