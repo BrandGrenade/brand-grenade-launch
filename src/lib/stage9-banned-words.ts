@@ -98,6 +98,35 @@ export function conditionalStage9WordAllowedInLeftOfCentre(args: {
   return true;
 }
 
+/**
+ * Returns the conditionally-banned words that are NOT permitted in the
+ * left-of-centre layer for this brief — i.e. either the brief's exclusion
+ * list forbids them, or a named competitor already owns them. Injected
+ * into the Fuse/Breach/Flashpoint prompt so the generator avoids them
+ * at generation time rather than being rejected post-hoc.
+ */
+export function competitorOwnedConditionalStage9Words(args: {
+  brandName: string;
+  briefText: string;
+  stage2Output: string;
+}): string[] {
+  const banned: string[] = [];
+  const canonical = ["reward", "earn", "deserve"];
+  for (const word of canonical) {
+    const allowed = conditionalStage9WordAllowedInLeftOfCentre({
+      word,
+      brandName: args.brandName,
+      briefText: args.briefText,
+      stage2Output: args.stage2Output,
+    });
+    if (!allowed) {
+      for (const stem of CONDITIONAL_STEMS[word] ?? [word]) banned.push(stem);
+    }
+  }
+  return Array.from(new Set(banned));
+}
+
+
 function activeLeftOfCentreEngine(output: string, index: number): "BREACH" | "FUSE" | "FLASHPOINT" | null {
   const before = output.slice(0, Math.max(0, index));
   const engines: Array<"BREACH" | "FUSE" | "FLASHPOINT"> = ["BREACH", "FUSE", "FLASHPOINT"];
