@@ -228,22 +228,46 @@ export function PreflightFullCheckPanel() {
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const startedAtRef = useRef<number | null>(null);
 
-  // Hydrate from latest persisted run on mount.
+  // Hydrate from latest persisted run on mount, and poll while a run is in
+  // progress server-side (e.g. the user closed the tab and reopened it) so
+  // per-check progress becomes visible instead of a static "already running"
+  // banner.
   useEffect(() => {
-    (async () => {
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+
+    const tick = async () => {
       try {
         const latest = await getLatestFn();
+        if (cancelled) return;
         if (latest && Array.isArray(latest.tier_two_results)) {
           setResults(latest.tier_two_results as unknown as FullCheckResult[]);
-          if (latest.status === "complete") {
-            setState("complete");
-            setOverall((latest.overall_result as "ready" | "issue_detected" | null) ?? null);
+        }
+        if (latest?.status === "running") {
+          if (latest.started_at) {
+            const startedMs = new Date(latest.started_at).getTime();
+            startedAtRef.current = startedMs;
+            setElapsedMs(Date.now() - startedMs);
           }
+          setState((prev) => (prev === "idle" || prev === "lock_failed" ? "lock_failed" : prev));
+          setLockMessage(
+            `A Tier Two check is running server-side. Live per-check progress below refreshes every 5s. You can override to start a new run, or wait for this one to finish.`,
+          );
+          timer = setTimeout(tick, 5000);
+        } else if (latest?.status === "complete") {
+          setState("complete");
+          setOverall((latest.overall_result as "ready" | "issue_detected" | null) ?? null);
         }
       } catch {
-        /* silent */
+        if (!cancelled) timer = setTimeout(tick, 10000);
       }
-    })();
+    };
+
+    tick();
+    return () => {
+      cancelled = true;
+      if (timer) clearTimeout(timer);
+    };
   }, [getLatestFn]);
 
   useEffect(() => {
