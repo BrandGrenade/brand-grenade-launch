@@ -104,10 +104,22 @@ export function buildStage9LeftOfCentreUserMessage(args: {
   stage7Output?: string;
   stage8Output?: string;
   briefText?: string;
+  competitorOwnedConditionalWords?: readonly string[];
 }): string {
+  const preComputedBans = (args.competitorOwnedConditionalWords ?? []).filter(Boolean);
+  const bannedBlock = preComputedBans.length
+    ? `==== PRE-COMPUTED BANNED TARGETS (competitor-owned or excluded in this brief) ====
+The following LIST B (conditional) words have been resolved against this brief's Stage 2 intelligence and exclusion list. In this run they are BANNED in every proposition, anchor line, and OWNS THE WORD line across all three engines (Breach / Fuse / Flashpoint). Do NOT use these words or any inflected form; pick a different word:
+${preComputedBans.join(", ")}
+`
+    : `==== PRE-COMPUTED BANNED TARGETS ====
+No LIST B (conditional) words are competitor-owned or excluded in this brief. LIST B remains available under the standard rules.
+`;
+
   return `Brand: ${args.brandName}
 Category: ${args.category}
 
+${bannedBlock}
 ==== BRIEF (for exclusion list / competitors) ====
 ${args.briefText ?? "(not provided)"}
 
@@ -126,8 +138,9 @@ ${args.stage7Output ?? "(not provided)"}
 ==== STAGE 8 — CANDIDATE PROPOSITIONS (context only — do NOT restate) ====
 ${args.stage8Output ?? "(not provided)"}
 
-Produce the LEFT-OF-CENTRE ALTERNATIVES per the specification. First characters must be "BRAND POSITION:". Run all three engines. Honest "no credible [move] — reason" is a valid output; fabrication is a failure.`;
+Produce the LEFT-OF-CENTRE ALTERNATIVES per the specification. Respect the PRE-COMPUTED BANNED TARGETS block above at generation time — do not select a proposition that requires those words. First characters must be "BRAND POSITION:". Run all three engines. Honest "no credible [move] — reason" is a valid output; fabrication is a failure.`;
 }
+
 
 export const STAGE_9_LEFT_OF_CENTRE_DIVIDER =
   "\n\n═══════════════════════════════════════════════════════════════\nLEFT-OF-CENTRE ALTERNATIVES (Breach / Fuse / Flashpoint)\nStrategic alternatives — NOT ranked against the core set above.\n═══════════════════════════════════════════════════════════════\n\n";
