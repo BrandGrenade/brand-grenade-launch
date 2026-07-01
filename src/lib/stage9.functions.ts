@@ -12,6 +12,7 @@ import {
   CONDITIONALLY_BANNED_STAGE9,
   UNIVERSAL_BANNED_STAGE9,
   conditionalStage9HitAllowedInLeftOfCentre,
+  conditionalStage9WordAllowedInLeftOfCentre,
   competitorOwnedConditionalStage9Words,
 } from "./stage9-banned-words";
 
