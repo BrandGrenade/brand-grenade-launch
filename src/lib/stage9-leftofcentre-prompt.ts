@@ -80,7 +80,6 @@ Anchor: [one line — evidence the dimension is genuinely under-committed]
 OWNS THE WORD: [word]  (or: "resists single-word compression")
 
 ═══════════════════════════════════
-═══════════════════════════════════
 POISON-WORD POLICY (TWO INDEPENDENT LISTS)
 ═══════════════════════════════════
 LIST A — UNIVERSAL BANNED (nothing relaxes these, ever): ${UNIVERSAL_BANNED_STAGE9_LIST}. These are banned in every proposition, anchor line, and OWNS THE WORD line in this layer, exactly as they are in the core Stage 9 output. The competitor-ownership exemption in LIST B DOES NOT REACH LIST A. If a Breach / Fuse / Flashpoint proposition contains any LIST A word in any inflected form, the engine's output is REJECTED — regenerate or return the honest "no credible [move]" line.
