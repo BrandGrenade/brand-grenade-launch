@@ -21,7 +21,7 @@ import type {
   EvidenceItem,
 } from "@/lib/briefing-room-prompts";
 
-export const Route = createFileRoute("/_authenticated/briefing-room/$id")({
+export const Route = createFileRoute("/briefing-room/$id")({
   component: WorkspacePage,
   head: () => ({ meta: [{ title: "Briefing Workspace — Brand Grenade" }] }),
 });

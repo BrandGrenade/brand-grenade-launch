@@ -10,7 +10,7 @@ import {
   deleteBriefingWorkspace,
 } from "@/lib/briefing-room.functions";
 
-export const Route = createFileRoute("/_authenticated/briefing-room/")({
+export const Route = createFileRoute("/briefing-room/")({
   component: BriefingRoomIndex,
   head: () => ({
     meta: [
