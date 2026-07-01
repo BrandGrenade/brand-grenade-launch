@@ -28,7 +28,6 @@ import sanitiseSource from "@/lib/sanitise-output.ts?raw";
 // driver runs Stage 1 as its own server-fn RPC after check_1_handoff.
 
 import { runStage9 } from "@/lib/stage9.functions";
-import { runStage12, saveSelectedSMP, saveSelectionRationale } from "@/lib/stage12.functions";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 // ---------------------------------------------------------------------------
@@ -113,7 +112,18 @@ export type TierTwoEvent =
       startedAtMs: number;
     }
   | {
-      // Emitted after checks 4–7 complete. The client is expected to drive
+      // Emitted after Check 6. The client drives Check 7 (Stage 12 +
+      // selection/rationale persistence) as separate server-fn RPCs with the
+      // same watchdog protection as the other long generation checks.
+      type: "check_7_handoff";
+      recordId: string;
+      sessionId: string;
+      sessionIds: string[];
+      results: FullCheckResult[];
+      startedAtMs: number;
+    }
+  | {
+      // Emitted after Check 7 completes. The client is expected to drive
       // Check 8 (Stages 13–16) by invoking each stage as a separate server
       // function call — each call is a fresh Worker invocation with its own
       // wall-clock budget — then resume checks 9–12 via runTierTwoChecksFrom9.
@@ -984,50 +994,8 @@ export const runTierTwoChecksFrom7 = createServerFn({ method: "POST" })
     };
 
     try {
-      yield { type: "check_start", index: 7, id: CHECK_DEFS[6].id, name: CHECK_DEFS[6].name };
-      {
-        const gen = runCheck(7, async (emit) => {
-          if (!primarySessionId || results[5].status !== "pass") throw new Error("Skipped: Stage 10/11 chain did not complete");
-          emit("Verifying Stage 11 output is persisted to stage_11_output...");
-          const { assertStageOutput } = await import("./pipeline-integrity");
-          await assertStageOutput(primarySessionId, 11, "Stage 12 (preflight check 7)");
-          const { data: pre } = await supabaseAdmin.from("sessions").select("stage_11_output").eq("id", primarySessionId).single();
-          const { filterValidatedFromStage11, countStage12PropositionCards } = await import("./stage12-filter");
-          const validatedCount = filterValidatedFromStage11(pre?.stage_11_output ?? "").validated.length;
-          if (validatedCount === 0) throw new Error("Stage 11 produced no VALIDATED SMPs to feed Stage 12");
-          emit(`Running Stage 12 (SMP synthesis, expecting >= ${validatedCount} cards)...`);
-          await drainGenerator(runStage12({ data: { sessionId: primarySessionId } }));
-          const { data: row } = await supabaseAdmin.from("sessions").select("stage_12_output").eq("id", primarySessionId).single();
-          const stage12 = row?.stage_12_output ?? "";
-          if (!stage12) throw new Error("Stage 12 output missing after run");
-          const cardCount = countStage12PropositionCards(stage12);
-          if (cardCount < validatedCount) throw new Error(`Stage 12 card-integrity failure: only ${cardCount} card(s) rendered for ${validatedCount} validated SMP(s)`);
-          const firstSmpLine = stage12.split("\n").map((l: string) => l.trim()).find((l: string) => l.length > 30 && /[A-Za-z]/.test(l)) ?? "Auto-selected first proposition (preflight TestBrand)";
-          await saveSelectedSMP({ data: { sessionId: primarySessionId, smpLine: firstSmpLine.slice(0, 2000), fieldName: "Preflight Auto-Selection" } });
-          await saveSelectionRationale({ data: { sessionId: primarySessionId, rationale: { auto: "Preflight TestBrand auto-selected top-ranked SMP for integrity validation." } } });
-          const { data: verify } = await supabaseAdmin.from("sessions").select("selected_smp, checkpoint_c_confirmed").eq("id", primarySessionId).single();
-          if (!verify?.selected_smp) throw new Error("selected_smp did not persist");
-          if (!verify?.checkpoint_c_confirmed) throw new Error("Checkpoint C did not flip to true");
-          return { detail: `Stage 12 SMP synthesis (${cardCount}/${validatedCount} cards) + selection + rationale persisted; Checkpoint C confirmed.` };
-        }, "Inspect stage12.functions.ts saveSelectedSMP / saveSelectionRationale and the Stage 11 → Stage 12 column wiring in pipeline-integrity.ts.");
-        let result!: FullCheckResult;
-        for (;;) {
-          const r = await gen.next();
-          if (r.done) { result = r.value as FullCheckResult; break; }
-          yield r.value as TierTwoEvent;
-        }
-        yield { type: "check_done", result };
-      }
-
-      if (!primarySessionId || results[6].status !== "pass") {
-        yield { type: "check_start", index: 8, id: CHECK_DEFS[7].id, name: CHECK_DEFS[7].name };
-        results[7] = { ...results[7], status: "fail", durationMs: 0, detail: "Skipped: Stage 12 selection did not complete", remediation: "Fix the upstream Check 7 failure before re-running." };
-        await persistResults(supabaseAdmin, recordId, results);
-        yield { type: "check_done", result: results[7] };
-      }
-
       handedOff = true;
-      yield { type: "check_8_handoff", recordId, sessionId: primarySessionId ?? "", sessionIds: Array.from(createdSessionIds), results, startedAtMs };
+      yield { type: "check_7_handoff", recordId, sessionId: primarySessionId ?? "", sessionIds: Array.from(createdSessionIds), results, startedAtMs };
     } catch (fatal) {
       const msg = fatal instanceof Error ? fatal.message : String(fatal);
       yield { type: "error", message: `Fatal error during Tier Two (checks 7–8): ${msg}` };
