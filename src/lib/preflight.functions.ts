@@ -164,33 +164,31 @@ export const runTierOneFastCheck = createServerFn({ method: "POST" })
       return { status: "pass", detail: "READY received" };
     });
 
-    // -------- Fast Check 3: Stage 9 EDT Guard Removed (v5.3) --------
-    // In v5.3 the EDT banned-words enforcement clause was intentionally deleted
-    // from the Stage 9 prompt (it was banning legitimate words like "permission"
-    // — the exact word in Dan Murphy's benchmark proposition). This check now
-    // PASSES when that clause is absent and FAILS only if it has been
-    // reintroduced as an enforcement banned-list.
+    // -------- Fast Check 3: Stage 9 EDT Guard Present (v2.1 restored) --------
+    // The v5.3 removal over-relaxed and let "apology" / "guilt" / "permission"
+    // leak into Stage 9 output (Tier 2 Check 5 caught it). The universal
+    // guard has been restored. This check PASSES when the universal EDT
+    // banned-words clause is present in the Stage 9 system prompt, and FAILS
+    // if it has been removed again.
     const c3 = await runCheck("stage9_edt_guard_prompt", async () => {
       const prompt = STAGE_9_SYSTEM_PROMPT;
-      // Detect the removed enforcement clause: a banned-list block that names
-      // these tokens together as forbidden. Casual mentions of any single word
-      // (e.g. "permission" appearing in example copy) do not count.
-      const enforcementSignals: RegExp[] = [
-        /banned[^.\n]{0,80}(earn|deserv|guilt|apolog|permission)/i,
-        /forbidden[^.\n]{0,80}(earn|deserv|guilt|apolog|permission)/i,
-        /must\s+not\s+(use|contain)[^.\n]{0,80}(earn|deserv|guilt|apolog|permission)/i,
-        /EDT[\s\-_]*guard/i,
+      const requiredSignals: RegExp[] = [
+        /EDT\s+GUARD/i,
+        /UNIVERSALLY\s+BANNED/i,
+        /apology/i,
+        /guilt/i,
+        /permission/i,
       ];
-      const reintroduced = enforcementSignals.filter((r) => r.test(prompt));
-      if (reintroduced.length > 0) {
+      const missing = requiredSignals.filter((r) => !r.test(prompt));
+      if (missing.length > 0) {
         return {
           status: "fail",
-          detail: `EDT enforcement clause has been reintroduced into Stage 9 prompt (v5.3 removed it). Matched ${reintroduced.length} enforcement signal(s).`,
+          detail: `Stage 9 universal EDT guard is missing ${missing.length} required signal(s). Restore the v2.1 EDT banned-words clause (apology / guilt / permission universally banned).`,
         };
       }
       return {
         status: "pass",
-        detail: "Stage 9 prompt is free of the v5.3-removed EDT banned-words enforcement clause.",
+        detail: "Stage 9 universal EDT guard present (apology / guilt / permission universally banned; reward / earn / deserve on the separate conditional list).",
       };
     });
 
