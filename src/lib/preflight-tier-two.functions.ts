@@ -431,12 +431,13 @@ export const runTierTwoFullCheck = createServerFn({ method: "POST" })
       // and avoids prematurely finalising the preflight_checks row.
       if (!handedOff) {
         const ids = Array.from(createdSessionIds);
-        if (ids.length > 0) {
+        const failedCount = results.filter((r) => r.status === "fail").length;
+        const overall: "ready" | "issue_detected" = failedCount === 0 ? "ready" : "issue_detected";
+        // Preserve TestBrand sessions on failure for post-mortem.
+        if (ids.length > 0 && failedCount === 0) {
           await supabaseAdmin.from("sessions").delete().in("id", ids);
         }
 
-        const failedCount = results.filter((r) => r.status === "fail").length;
-        const overall: "ready" | "issue_detected" = failedCount === 0 ? "ready" : "issue_detected";
         await supabaseAdmin
           .from("preflight_checks")
           .update({
@@ -553,8 +554,16 @@ export const finalizePreflightRun = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const failedCount = data.allResults.filter((r) => r.status === "fail").length;
     const overall: "ready" | "issue_detected" = failedCount === 0 ? "ready" : "issue_detected";
-    if (data.sessionIds.length > 0) {
+    // Only clean up TestBrand sessions on a fully green run. If ANY check
+    // failed, preserve the session(s) so their stage outputs (Stage 9
+    // propositions, Stage 11 verdicts, etc.) remain queryable for
+    // post-mortem — a test that wipes its own evidence on failure can't be
+    // debugged. Preserved rows keep is_preflight_test=true so they can be
+    // filtered out of live views and swept later manually.
+    let sessionsCleaned: string[] = [];
+    if (data.sessionIds.length > 0 && failedCount === 0) {
       await supabaseAdmin.from("sessions").delete().in("id", data.sessionIds);
+      sessionsCleaned = data.sessionIds;
     }
     const { error } = await supabaseAdmin
       .from("preflight_checks")
@@ -570,7 +579,8 @@ export const finalizePreflightRun = createServerFn({ method: "POST" })
       recordId: data.recordId,
       overall,
       results: data.allResults,
-      sessionIdsCleaned: data.sessionIds,
+      sessionIdsCleaned: sessionsCleaned,
+      sessionIdsPreserved: failedCount === 0 ? [] : data.sessionIds,
       totalDurationMs: Date.now() - data.startedAtMs,
     };
   });
@@ -769,11 +779,12 @@ export const runTierTwoChecksFrom9 = createServerFn({ method: "POST" })
     } finally {
       if (handedOff) return;
       const ids = Array.from(createdSessionIds);
-      if (ids.length > 0) {
-        await supabaseAdmin.from("sessions").delete().in("id", ids);
-      }
       const failedCount = results.filter((r) => r.status === "fail").length;
       const overall: "ready" | "issue_detected" = failedCount === 0 ? "ready" : "issue_detected";
+      // Preserve TestBrand sessions on failure for post-mortem.
+      if (ids.length > 0 && failedCount === 0) {
+        await supabaseAdmin.from("sessions").delete().in("id", ids);
+      }
       await supabaseAdmin
         .from("preflight_checks")
         .update({
@@ -910,9 +921,9 @@ export const runTierTwoChecksFrom11 = createServerFn({ method: "POST" })
     } finally {
       if (!handedOff) {
         const ids = Array.from(createdSessionIds);
-        if (ids.length > 0) await supabaseAdmin.from("sessions").delete().in("id", ids);
         const failedCount = results.filter((r) => r.status === "fail").length;
         const overall: "ready" | "issue_detected" = failedCount === 0 ? "ready" : "issue_detected";
+        if (ids.length > 0 && failedCount === 0) await supabaseAdmin.from("sessions").delete().in("id", ids);
         await supabaseAdmin
           .from("preflight_checks")
           .update({
@@ -1023,11 +1034,12 @@ export const runTierTwoChecksFrom7 = createServerFn({ method: "POST" })
     } finally {
       if (!handedOff) {
         const ids = Array.from(createdSessionIds);
-        if (ids.length > 0) await supabaseAdmin.from("sessions").delete().in("id", ids);
         const failedCount = results.filter((r) => r.status === "fail").length;
         const overall: "ready" | "issue_detected" = failedCount === 0 ? "ready" : "issue_detected";
+        const cleaned = ids.length > 0 && failedCount === 0 ? ids : [];
+        if (cleaned.length > 0) await supabaseAdmin.from("sessions").delete().in("id", ids);
         await supabaseAdmin.from("preflight_checks").update({ status: "complete", completed_at: nowIso(), tier_two_results: results as unknown as never, overall_result: overall }).eq("id", recordId);
-        yield { type: "done", recordId, overall, results, sessionIdsCleaned: ids, totalDurationMs: Date.now() - startedAtMs };
+        yield { type: "done", recordId, overall, results, sessionIdsCleaned: cleaned, totalDurationMs: Date.now() - startedAtMs };
       }
     }
   });
@@ -1286,11 +1298,13 @@ export const runTierTwoChecksFrom4 = createServerFn({ method: "POST" })
     } finally {
       if (!handedOff) {
         const ids = Array.from(createdSessionIds);
-        if (ids.length > 0) {
-          await supabaseAdmin.from("sessions").delete().in("id", ids);
-        }
         const failedCount = results.filter((r) => r.status === "fail").length;
         const overall: "ready" | "issue_detected" = failedCount === 0 ? "ready" : "issue_detected";
+        // Preserve TestBrand sessions on failure so their outputs remain
+        // queryable for post-mortem. Only clean up on a fully green run.
+        if (ids.length > 0 && failedCount === 0) {
+          await supabaseAdmin.from("sessions").delete().in("id", ids);
+        }
         await supabaseAdmin
           .from("preflight_checks")
           .update({
