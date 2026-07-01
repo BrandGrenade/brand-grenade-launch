@@ -26,6 +26,7 @@ import {
   type FullCheckResult,
   type TierTwoEvent,
 } from "@/lib/preflight-tier-two.functions";
+import { supabase } from "@/integrations/supabase/client";
 import { runStage1 } from "@/lib/stage1.functions";
 import { runStage2 } from "@/lib/stage2.functions";
 import { runStage3 } from "@/lib/stage3.functions";
