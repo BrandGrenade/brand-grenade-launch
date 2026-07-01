@@ -134,6 +134,13 @@ export const runStage6 = createServerFn({ method: "POST" })
       }
 
 
+    // HARD CAP: keep only the STRONGEST 5 universes so Stage 7 (and every
+    // downstream stage) never receives more than its wall-clock budget can
+    // process. Matches the Stage 7 top-5 cap. See capStage6Universes above
+    // for the ranking rubric.
+    const MAX_UNIVERSES = 5;
+    output = capStage6Universes(output, MAX_UNIVERSES, data.sessionId);
+
     const { error: updateErr } = await supabaseAdmin
       .from("sessions")
       .update({ stage_6_output: output, stage_6_error: null })
