@@ -1,4 +1,4 @@
-import { supabaseAdmin } from "@/integrities/../integrations/supabase/client.server";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 /**
  * ─── CANONICAL STAGE MANIFEST ─────────────────────────────────────────
