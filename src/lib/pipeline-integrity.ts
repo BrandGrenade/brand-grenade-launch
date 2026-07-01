@@ -1,29 +1,78 @@
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { supabaseAdmin } from "@/integrities/../integrations/supabase/client.server";
 
-export const STAGE_OUTPUT_COLUMNS: Record<number, readonly string[]> = {
-  1: ["stage_1_output"],
-  2: ["stage_2_output"],
-  3: ["stage_3_output"],
-  4: ["stage_4_output"],
-  5: ["stage_5_output"],
-  6: ["stage_6_output"],
-  7: ["stage_7_output"],
-  8: ["stage_8_output"],
-  9: ["stage_9_output"],
-  10: ["stage_10_output"],
-  11: ["stage_11_output"],
-  12: ["stage_12_output"],
-  13: ["stage_13_output"],
-  14: ["stage_14_output"],
-  15: ["stage_15_output"],
-  16: ["stage_16_consulting_output", "stage_16_agency_output", "stage_16_workshop_output", "stage_16_vision_output"],
-  17: ["stage_17_output"],
-  18: ["stage_18_output"],
-  19: ["stage_19_output"],
-  20: ["stage_20_output"],
-  21: ["stage_21_outputs"],
-  22: ["stage_22_output"],
-};
+/**
+ * ─── CANONICAL STAGE MANIFEST ─────────────────────────────────────────
+ * Single source of truth for the pipeline's ordered stage list, including
+ * every sub-stage (1b, 4b, 13b, 14b/14c, 17b, 20b) placed at its correct
+ * position in execution order.
+ *
+ * Consumed by:
+ *   - assertStageOutput / assertUpstreamStageOutput (upstream gate checks)
+ *   - retry.functions.ts (reset-and-cascade order for Phase 1)
+ *   - full-run-document.ts (Complete Pipeline Run deliverable)
+ *
+ * Adding or renaming a stage? Edit this array only.
+ */
+export interface StageManifestEntry {
+  /** Stable stage id including sub-stages: "1", "1b", "2", … "22". */
+  id: string;
+  /** The primary numeric stage this entry belongs to (1-22). Multiple entries share the same numericStage when sub-stages exist. */
+  numericStage: number;
+  /** Which phase this stage runs in. */
+  phase: 1 | 2;
+  /** Human-readable label used in deliverables and diagnostics. */
+  label: string;
+  /** DB column(s) that hold this stage's persisted output. */
+  columns: readonly string[];
+}
+
+export const STAGE_MANIFEST: readonly StageManifestEntry[] = [
+  { id: "1",   numericStage: 1,  phase: 1, label: "Brief Analysis",                          columns: ["stage_1_output"] },
+  { id: "1b",  numericStage: 1,  phase: 1, label: "Brief Enhancement",                       columns: ["stage_1b_output"] },
+  { id: "2",   numericStage: 2,  phase: 1, label: "Category Intelligence",                   columns: ["stage_2_output"] },
+  { id: "3",   numericStage: 3,  phase: 1, label: "Strategic Frameworks",                    columns: ["stage_3_output"] },
+  { id: "4",   numericStage: 4,  phase: 1, label: "Strategic Universes",                     columns: ["stage_4_output"] },
+  { id: "4b",  numericStage: 4,  phase: 1, label: "Asset Mining & Product Facts",            columns: ["stage_4b_output"] },
+  { id: "5",   numericStage: 5,  phase: 1, label: "Insight Generation",                      columns: ["stage_5_output"] },
+  { id: "6",   numericStage: 6,  phase: 1, label: "Insight Validation",                      columns: ["stage_6_output"] },
+  { id: "7",   numericStage: 7,  phase: 1, label: "Territory Synthesis",                     columns: ["stage_7_output"] },
+  { id: "8",   numericStage: 8,  phase: 1, label: "Proposition Generation",                  columns: ["stage_8_output"] },
+  { id: "9",   numericStage: 9,  phase: 1, label: "Distinctiveness Check",                   columns: ["stage_9_output"] },
+  { id: "10",  numericStage: 10, phase: 1, label: "Proposition Scoring",                     columns: ["stage_10_output"] },
+  { id: "11",  numericStage: 11, phase: 1, label: "Integrity Testing",                       columns: ["stage_11_output"] },
+  { id: "12",  numericStage: 12, phase: 1, label: "Proposition Selection",                   columns: ["stage_12_output"] },
+  { id: "13",  numericStage: 13, phase: 1, label: "Brand Fit Validation",                    columns: ["stage_13_output"] },
+  { id: "13b", numericStage: 13, phase: 1, label: "Historical Validation",                   columns: ["stage_13b_output"] },
+  { id: "14",  numericStage: 14, phase: 1, label: "Territory Mapping",                       columns: ["stage_14_output"] },
+  { id: "14b", numericStage: 14, phase: 1, label: "Channel Expression",                      columns: ["stage_14b_output"] },
+  { id: "14c", numericStage: 14, phase: 1, label: "Brand World Definition",                  columns: ["stage_14c_output"] },
+  { id: "15",  numericStage: 15, phase: 1, label: "Coherence Audit",                         columns: ["stage_15_output"] },
+  { id: "16",  numericStage: 16, phase: 1, label: "Document Assembly",                       columns: ["stage_16_consulting_output", "stage_16_agency_output", "stage_16_workshop_output", "stage_16_vision_output"] },
+  { id: "17",  numericStage: 17, phase: 2, label: "Detonation Territory",                    columns: ["stage_17_output"] },
+  { id: "17b", numericStage: 17, phase: 2, label: "Detonation Intelligence",                 columns: ["stage_17b_output"] },
+  { id: "18",  numericStage: 18, phase: 2, label: "The Detonation",                          columns: ["stage_18_output"] },
+  { id: "19",  numericStage: 19, phase: 2, label: "Activation Architecture",                 columns: ["stage_19_output"] },
+  { id: "20",  numericStage: 20, phase: 2, label: "Master Detonation Brief",                 columns: ["stage_20_output"] },
+  { id: "20b", numericStage: 20, phase: 2, label: "Channel Strategy and Audience Intelligence", columns: ["stage_20b_output"] },
+  { id: "21",  numericStage: 21, phase: 2, label: "Channel Detonation Briefs",               columns: ["stage_21_outputs"] },
+  { id: "22",  numericStage: 22, phase: 2, label: "Brand Architecture",                      columns: ["stage_22_output"] },
+];
+
+/**
+ * Legacy numeric-keyed map preserved for `assertStageOutput` / upstream gate
+ * checks. Derived from STAGE_MANIFEST — only the primary entry for each
+ * numeric stage contributes columns, matching pre-manifest behaviour.
+ */
+export const STAGE_OUTPUT_COLUMNS: Record<number, readonly string[]> = (() => {
+  const out: Record<number, string[]> = {};
+  for (const entry of STAGE_MANIFEST) {
+    // Primary entry = the one whose id equals its numericStage (no sub-stage suffix).
+    if (entry.id === String(entry.numericStage)) {
+      out[entry.numericStage] = [...entry.columns];
+    }
+  }
+  return out;
+})();
 
 function hasPersistedOutput(value: unknown): boolean {
   if (typeof value === "string") return value.trim().length > 0;
