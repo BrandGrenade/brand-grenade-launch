@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { streamClaude } from "./claude.server";
+import { withStreamSafety } from "./stream-stage-safety";
 import { STAGE_14_SYSTEM_PROMPT, buildStage14UserMessage } from "./stage14-prompt";
 import { trimBrandFitForDownstream } from "./context-trim";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
@@ -37,8 +38,9 @@ export const runStage14 = createServerFn({ method: "POST" })
       .eq("id", data.sessionId);
 
     let output = "";
-    try {
-      for await (const delta of streamClaude({
+    for await (const delta of withStreamSafety(
+      { sessionId: data.sessionId, stageLabel: "Stage 14", outputColumn: "stage_14_output", errorColumn: "stage_14_error" },
+      streamClaude({
         systemPrompt: STAGE_14_SYSTEM_PROMPT,
         userMessage: buildStage14UserMessage({
           brandName: session.brand_name,
@@ -54,15 +56,12 @@ export const runStage14 = createServerFn({ method: "POST" })
         maxTokens: 64000,
         stageNumber: "14",
         stageName: "Territory Mapping",
-      })) {
+      }),
+    )) {
         output += delta;
         yield { delta };
       }
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : "Stage 14 failed";
-      await supabaseAdmin.from("sessions").update({ stage_14_error: msg }).eq("id", data.sessionId);
-      throw new Error(msg);
-    }
+
 
     const { error: ue } = await supabaseAdmin
       .from("sessions")

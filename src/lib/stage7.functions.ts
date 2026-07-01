@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { streamClaude } from "./claude.server";
+import { withStreamSafety } from "./stream-stage-safety";
 import {
   STAGE_7_SYSTEM_PROMPT,
   buildStage7UserMessage,
@@ -109,8 +110,9 @@ export const runStage7 = createServerFn({ method: "POST" })
     });
 
     let output = "";
-    try {
-      for await (const delta of streamClaude({
+    for await (const delta of withStreamSafety(
+      { sessionId: data.sessionId, stageLabel: "Stage 7", outputColumn: "stage_7_output", errorColumn: "stage_7_error" },
+      streamClaude({
         systemPrompt: STAGE_7_SYSTEM_PROMPT,
         userMessage,
         maxTokens: 64000,
@@ -118,15 +120,12 @@ export const runStage7 = createServerFn({ method: "POST" })
         stageLabel: "Stage 7",
         stageNumber: "7",
         stageName: "Territory Synthesis",
-      })) {
+      }),
+    )) {
         output += delta;
         yield { delta };
       }
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : "Stage 7 failed";
-      await supabaseAdmin.from("sessions").update({ stage_7_error: msg }).eq("id", data.sessionId);
-      throw e instanceof Error ? e : new Error(msg);
-    }
+
 
     // Completeness check + automatic continuation for missing universes.
     // The model occasionally stops after the first territory because the
@@ -152,8 +151,9 @@ export const runStage7 = createServerFn({ method: "POST" })
         missingUniverses: missing,
       });
       let continuation = "";
-      try {
-        for await (const delta of streamClaude({
+      for await (const delta of withStreamSafety(
+        { sessionId: data.sessionId, stageLabel: `Stage 7 (continuation ${continuationAttempts})`, outputColumn: "stage_7_output", errorColumn: "stage_7_error" },
+        streamClaude({
           systemPrompt: STAGE_7_SYSTEM_PROMPT,
           userMessage: continuationMessage,
           maxTokens: 64000,
@@ -161,14 +161,10 @@ export const runStage7 = createServerFn({ method: "POST" })
           stageLabel: "Stage 7",
           stageNumber: "7",
           stageName: "Territory Synthesis",
-        })) {
-          continuation += delta;
-          yield { delta };
-        }
-      } catch (e) {
-        const msg = e instanceof Error ? e.message : "Stage 7 continuation failed";
-        await supabaseAdmin.from("sessions").update({ stage_7_error: msg }).eq("id", data.sessionId);
-        throw e instanceof Error ? e : new Error(msg);
+        }),
+      )) {
+        continuation += delta;
+        yield { delta };
       }
       // Stitch with a clean separator.
       output = `${output.trimEnd()}\n\n---\n\n${continuation.trimStart()}`;

@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { streamClaude } from "./claude.server";
+import { withStreamSafety } from "./stream-stage-safety";
 import { STAGE_2_SYSTEM_PROMPT, buildStage2UserMessage } from "./stage2-prompt";
 import { trimStage1ForDownstream } from "./context-trim";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
@@ -43,8 +44,9 @@ export const runStage2 = createServerFn({ method: "POST" })
     });
 
     let output = "";
-    try {
-      for await (const delta of streamClaude({
+    for await (const delta of withStreamSafety(
+      { sessionId: data.sessionId, stageLabel: "Stage 2", outputColumn: "stage_2_output", errorColumn: "stage_2_error" },
+      streamClaude({
         systemPrompt: STAGE_2_SYSTEM_PROMPT,
         userMessage,
         maxTokens: 64000,
@@ -52,15 +54,12 @@ export const runStage2 = createServerFn({ method: "POST" })
         stageLabel: "Stage 2",
         stageNumber: "2",
         stageName: "Category Intelligence",
-      })) {
+      }),
+    )) {
         output += delta;
         yield { delta };
       }
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : "Stage 2 failed";
-      await supabaseAdmin.from("sessions").update({ stage_2_error: msg }).eq("id", data.sessionId);
-      throw e instanceof Error ? e : new Error(msg);
-    }
+
 
     // Mandatory fact-verification pass. Stage 2 makes claims about competitor
     // ownership, category regulation, market structure, and category history

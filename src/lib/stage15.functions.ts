@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { streamClaude } from "./claude.server";
+import { withStreamSafety } from "./stream-stage-safety";
 import { STAGE_15_SYSTEM_PROMPT, buildStage15UserMessage } from "./stage15-prompt";
 import { trimBrandFitForDownstream } from "./context-trim";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
@@ -35,8 +36,9 @@ export const runStage15 = createServerFn({ method: "POST" })
       .eq("id", data.sessionId);
 
     let output = "";
-    try {
-      for await (const delta of streamClaude({
+    for await (const delta of withStreamSafety(
+      { sessionId: data.sessionId, stageLabel: "Stage 15", outputColumn: "stage_15_output", errorColumn: "stage_15_error" },
+      streamClaude({
         systemPrompt: STAGE_15_SYSTEM_PROMPT,
         maxTokens: 64000,
         userMessage: buildStage15UserMessage({
@@ -55,15 +57,12 @@ export const runStage15 = createServerFn({ method: "POST" })
         stageLabel: "Stage 15",
         stageNumber: "15",
         stageName: "Coherence Audit",
-      })) {
+      }),
+    )) {
         output += delta;
         yield { delta };
       }
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : "Stage 15 failed";
-      await supabaseAdmin.from("sessions").update({ stage_15_error: msg }).eq("id", data.sessionId);
-      throw new Error(msg);
-    }
+
 
     const { error: ue } = await supabaseAdmin
       .from("sessions")

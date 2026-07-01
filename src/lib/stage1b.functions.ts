@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { streamClaude } from "./claude.server";
+import { withStreamSafety } from "./stream-stage-safety";
 import { STAGE_1B_SYSTEM_PROMPT, buildStage1bUserMessage } from "./stage1b-prompt";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertSessionOwner } from "@/lib/auth-helpers.server";
@@ -34,8 +35,9 @@ export const runStage1b = createServerFn({ method: "POST" })
     });
 
     let output = "";
-    try {
-      for await (const delta of streamClaude({
+    for await (const delta of withStreamSafety(
+      { sessionId: data.sessionId, stageLabel: "Stage 1B", outputColumn: "stage_1b_output", errorColumn: "stage_1b_error" },
+      streamClaude({
         systemPrompt: STAGE_1B_SYSTEM_PROMPT,
         userMessage,
         maxTokens: 64000,
@@ -43,13 +45,10 @@ export const runStage1b = createServerFn({ method: "POST" })
         stageLabel: "Stage 1B",
         stageNumber: "1B",
         stageName: "Brief Enhancement",
-      })) {
-        output += delta;
-        yield { delta };
-      }
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : "Stage 1B failed";
-      throw e instanceof Error ? e : new Error(msg);
+      }),
+    )) {
+      output += delta;
+      yield { delta };
     }
 
     const cleaned = sanitizeStage1bOutput(output);
