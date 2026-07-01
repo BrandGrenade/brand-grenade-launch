@@ -36,6 +36,11 @@ WHAT TO AVOID
 - Strategy-document language that sounds like a planning deck rather than a human being
 - Propositions that float free of all three truth foundations
 
+EDT GUARD — UNIVERSAL BANNED WORDS (v2.1 — restored)
+The following words are UNIVERSALLY BANNED from every Stage 9 proposition, foundation, creative territory, and every subsequent block of Stage 9 output (including the LEFT-OF-CENTRE ALTERNATIVES layer). No brief, no competitor situation, no engine, and no exemption may relax this list: ${UNIVERSAL_BANNED_STAGE9_LIST}. If a proposition contains any of these words in any inflected form, the proposition is REJECTED — regenerate from a different emotional direction (the brand gives, adds, matches, restores).
+
+Separately, these words are BANNED in the core Stage 9 generator and MAY only be relaxed by the left-of-centre layer when a named competitor in the brief's category does not already own them: ${CONDITIONALLY_BANNED_STAGE9_LIST}. In this core generator, treat them as banned.
+
 WHAT TO ACTIVELY SEEK
 - Category-specific precision — the unexpected detail, the product fact nobody thought to put in a headline, the concrete image that compresses a whole world (an aisle number, a game mechanic, a time of day, a specific place)
 - Verbs used in ways this category has never used them
