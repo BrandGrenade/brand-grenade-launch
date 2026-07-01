@@ -217,7 +217,16 @@ function Dashboard() {
                 Each session is a complete 27-stage pipeline run for one brief — Brand Strategy and Brand Detonation.
               </p>
             </div>
-            <NewRunGateButton variant="topnav" label="New Run" />
+            <div className="flex items-center gap-3">
+              <Link
+                to="/briefing-room"
+                className="inline-flex h-9 items-center rounded-md px-4 text-[13px] font-semibold"
+                style={{ border: "1px solid #2A2A2A", color: "#F0EDE8", backgroundColor: "#141414" }}
+              >
+                Briefing Room
+              </Link>
+              <NewRunGateButton variant="topnav" label="New Run" />
+            </div>
           </header>
 
           <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
