@@ -18,7 +18,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { STAGE_9_SYSTEM_PROMPT } from "@/lib/stage9-prompt";
-import { CONDITIONALLY_BANNED_STAGE9, UNIVERSAL_BANNED_STAGE9, conditionalStage9HitAllowedInLeftOfCentre } from "@/lib/stage9-banned-words";
+import { CONDITIONALLY_BANNED_STAGE9, UNIVERSAL_BANNED_STAGE9, conditionalStage9HitAllowedInLeftOfCentre, conditionalStage9HitAllowedInCore } from "@/lib/stage9-banned-words";
 import { findBannedWordHits } from "@/lib/output-banned-word-gate";
 import detonationCanvasSource from "@/routes/detonation_.canvas.tsx?raw";
 import detonationSource from "@/routes/detonation.tsx?raw";
@@ -1204,9 +1204,15 @@ export const runTierTwoChecksFrom4 = createServerFn({ method: "POST" })
               throw new Error(`Stage 9 output contains universal banned words: ${Array.from(new Set(universalHits.map((h) => `${h.match} in ${h.columnLabel}`))).join(", ")}. Runtime gate failed.`);
             }
 
-            const coreConditional = findBannedWordHits({ text: core, terms: CONDITIONALLY_BANNED_STAGE9, rule: "stage9-core-conditional", stageLabel: "Stage 9", columnLabel: "stage_9_output" });
+            const coreConditionalRaw = findBannedWordHits({ text: core, terms: CONDITIONALLY_BANNED_STAGE9, rule: "stage9-core-conditional", stageLabel: "Stage 9", columnLabel: "stage_9_output" });
+            const coreConditional = coreConditionalRaw.filter((hit) => !conditionalStage9HitAllowedInCore({
+              word: hit.word,
+              brandName: String(row.brand_name ?? ""),
+              briefText: String(row.brief_text ?? ""),
+              stage2Output: String(row.stage_2_output ?? ""),
+            }));
             if (coreConditional.length) {
-              throw new Error(`Stage 9 core output contains conditional words that are banned in the core column: ${Array.from(new Set(coreConditional.map((h) => h.match))).join(", ")}.`);
+              throw new Error(`Stage 9 core output contains competitor-owned (or brief-excluded) conditional words: ${Array.from(new Set(coreConditional.map((h) => h.match))).join(", ")}.`);
             }
 
             const locConditional = findBannedWordHits({ text: loc, terms: CONDITIONALLY_BANNED_STAGE9, rule: "stage9-leftofcentre-conditional", stageLabel: "Stage 9", columnLabel: "stage_9_leftofcentre_output" });
