@@ -151,20 +151,47 @@ export const runStage7 = createServerFn({ method: "POST" })
         missingUniverses: missing,
       });
       let continuation = "";
-      for await (const delta of withStreamSafety(
-        { sessionId: data.sessionId, stageLabel: `Stage 7 (continuation ${continuationAttempts})`, outputColumn: "stage_7_output", errorColumn: "stage_7_error" },
-        streamClaude({
-          systemPrompt: STAGE_7_SYSTEM_PROMPT,
-          userMessage: continuationMessage,
-          maxTokens: 64000,
-          sessionId: data.sessionId,
-          stageLabel: "Stage 7",
-          stageNumber: "7",
-          stageName: "Territory Synthesis",
-        }),
-      )) {
-        continuation += delta;
-        yield { delta };
+      try {
+        for await (const delta of withStreamSafety(
+          { sessionId: data.sessionId, stageLabel: `Stage 7 (continuation ${continuationAttempts})`, outputColumn: "stage_7_output", errorColumn: "stage_7_error" },
+          streamClaude({
+            systemPrompt: STAGE_7_SYSTEM_PROMPT,
+            userMessage: continuationMessage,
+            maxTokens: 64000,
+            sessionId: data.sessionId,
+            stageLabel: "Stage 7",
+            stageNumber: "7",
+            stageName: "Territory Synthesis",
+          }),
+        )) {
+          continuation += delta;
+          yield { delta };
+        }
+      } catch (contErr) {
+        const msg = contErr instanceof Error ? contErr.message : String(contErr);
+        // Break-and-proceed ONLY when we already have content from the first
+        // pass. First-pass empty responses are thrown by the outer stream
+        // above and never reach this catch, so output.length > 0 here — but
+        // assert defensively. An empty continuation = "nothing more to add".
+        const isEmpty = /empty response/i.test(msg);
+        if (isEmpty && output.trim().length > 0) {
+          console.warn(
+            `[stage7] session=${data.sessionId} continuation ${continuationAttempts} returned empty — treating as "no more universes to add", proceeding with ${headingsIn(output).length} territories in hand`,
+          );
+          // Clear the error the safety wrapper persisted; this is not a fault.
+          await supabaseAdmin
+            .from("sessions")
+            .update({ stage_7_error: null })
+            .eq("id", data.sessionId);
+          break;
+        }
+        throw contErr;
+      }
+      if (continuation.trim().length === 0) {
+        console.warn(
+          `[stage7] session=${data.sessionId} continuation ${continuationAttempts} yielded zero chars — stopping continuation loop`,
+        );
+        break;
       }
       // Stitch with a clean separator.
       output = `${output.trimEnd()}\n\n---\n\n${continuation.trimStart()}`;
