@@ -1472,7 +1472,12 @@ export function PreflightFullCheckPanel() {
       setCurrentMessage(`Completed in ${(final.totalDurationMs / 1000).toFixed(1)}s. Cleaned up ${final.sessionIdsCleaned.length} TestBrand session(s).`);
       stopElapsed();
       if (final.overall === "ready") toast.success("Tier Two: all 12 checks passed");
-      else toast.error(`Tier Two: ${workingResults.filter((r) => r.status === "fail").length} check(s) failed`);
+      else {
+        const { summary: s } = summariseSeverities(workingResults, priorRuns);
+        if (s.blocker > 0) toast.error(`Tier Two: ${s.blocker} BLOCKER(s) — do not present live`);
+        else if (s.degraded > 0) toast.warning(`Tier Two: ${s.degraded} degraded — usable`);
+        else toast.info(`Tier Two: ${s.harness} harness / ${s.transient} transient — platform OK`);
+      }
     } catch (e) {
       setErrorMessage(e instanceof Error ? e.message : String(e));
       setState("error");
