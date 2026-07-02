@@ -1,0 +1,2 @@
+UPDATE preflight_checks SET status='abandoned', completed_at=now() WHERE status='running';
+UPDATE sessions SET status='interrupted' WHERE brand_name LIKE 'Preflight TestBrand%' AND status IN ('running','pending');
