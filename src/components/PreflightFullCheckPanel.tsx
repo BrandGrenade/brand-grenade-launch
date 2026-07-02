@@ -168,33 +168,39 @@ async function drainStreamOrPollDb<C extends { delta?: string; done?: true; outp
 //    8–10 min so a slow API window doesn't false-kill a live stream
 //  - Phase-2 detonation stages tend to be moderate: 5–6 min
 const STAGE_WATCHDOG_MS: Record<string, number> = {
-  "Stage 2": 4 * 60_000,
+  // Fast single-pass CMM / constraint stages — 4 min is plenty.
+  "Stage 1": 4 * 60_000,
+  "Stage 1B": 4 * 60_000,
   "Stage 3": 4 * 60_000,
   "Stage 4": 4 * 60_000,
-  "Stage 4B": 4 * 60_000,
-  "Stage 5": 4 * 60_000,
-  "Stage 6": 5 * 60_000,
-  "Stage 7": 10 * 60_000, // continuation loop can legitimately run long
-  "Stage 8": 5 * 60_000,
-  "Stage 9": 6 * 60_000,
-  "Stage 10": 5 * 60_000,
-  "Stage 11": 5 * 60_000,
-  "Stage 12": 8 * 60_000, // long synthesis pass
-  "Stage 13": 5 * 60_000,
   "Stage 13B": 4 * 60_000,
-  "Stage 14": 5 * 60_000,
   "Stage 14B": 4 * 60_000,
   "Stage 14C": 4 * 60_000,
-  "Stage 15": 5 * 60_000,
-  "Stage 16": 8 * 60_000, // long document assembly
-  "Stage 17": 5 * 60_000,
-  "Stage 17B": 5 * 60_000,
-  "Stage 18": 6 * 60_000,
-  "Stage 19": 5 * 60_000,
-  "Stage 20": 6 * 60_000,
-  "Stage 20B": 5 * 60_000,
-  "Stage 21": 6 * 60_000,
-  "Stage 22": 6 * 60_000,
+  // Long-generation Phase 1 stages — heavy content generation, can hit slow
+  // Anthropic windows. Set from observed p95 + headroom, not p50.
+  "Stage 2": 8 * 60_000,   // CMM narrative + rival mapping
+  "Stage 4B": 8 * 60_000,  // extended constraint synthesis
+  "Stage 5": 8 * 60_000,   // Three Truth long generation
+  "Stage 6": 6 * 60_000,
+  "Stage 7": 10 * 60_000,  // continuation loop, up to 3× 64k passes
+  "Stage 8": 5 * 60_000,
+  "Stage 9": 8 * 60_000,   // core + LOC generation with banned-word retries
+  "Stage 10": 6 * 60_000,
+  "Stage 11": 10 * 60_000, // per-SMP pressure test — was 300s, false-killed at 523s
+  "Stage 12": 10 * 60_000, // multi-SMP synthesis + rationale
+  "Stage 13": 6 * 60_000,
+  "Stage 14": 6 * 60_000,
+  "Stage 15": 6 * 60_000,
+  "Stage 16": 10 * 60_000, // long document assembly
+  // Phase 2 detonation chain — heavy generation across the tail.
+  "Stage 17": 6 * 60_000,
+  "Stage 17B": 6 * 60_000,
+  "Stage 18": 10 * 60_000, // The Detonation — flagship long generation
+  "Stage 19": 6 * 60_000,
+  "Stage 20": 8 * 60_000,  // Master Detonation Brief
+  "Stage 20B": 6 * 60_000,
+  "Stage 21": 8 * 60_000,  // Channel Detonation Briefs — multi-channel
+  "Stage 22": 8 * 60_000,  // Brand Architecture
 };
 const DEFAULT_WATCHDOG_MS = 5 * 60_000;
 
