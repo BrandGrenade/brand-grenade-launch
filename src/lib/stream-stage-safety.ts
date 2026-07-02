@@ -70,6 +70,11 @@ export async function* withStreamSafety(
         .update({
           [opts.outputColumn]: accumulated.length > 0 ? accumulated : null,
           [opts.errorColumn]: err,
+          // Liveness heartbeat: every persisted delta batch stamps this column.
+          // The client watchdog reads it as proof that tokens are still flowing
+          // (as opposed to `updated_at`, which can move for unrelated reasons
+          // or fail to move if writes batch behind another update).
+          stream_last_delta_at: new Date().toISOString(),
         } as never)
         .eq("id", opts.sessionId);
       dirty = false;

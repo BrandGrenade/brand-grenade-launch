@@ -151,17 +151,68 @@ async function drainStreamOrPollDb<C extends { delta?: string; done?: true; outp
   });
 }
 
-// Client-side backstop watchdog. Races a stage RPC against a DB-heartbeat check
-// on `sessions.updated_at`. If no write occurs for `maxIdleMs`, we assume the
-// server-side Worker died silently, forcibly mark the row `interrupted`, and
-// reject — so the harness can never hang for tens of minutes on a dead RPC.
+// Per-stage watchdog thresholds. Keyed by exact label; a single global 300s
+// budget is wrong for a pipeline whose stages have wildly different realistic
+// runtimes. Values chosen from observed p95 with headroom, not p50:
+//  - fast single-pass CMM/constraint stages: 4 min
+//  - stages with a continuation loop (Stage 7 does up to 3× 64k-token passes,
+//    Stage 12 synthesises many SMPs, Stage 16 assembles a long document):
+//    8–10 min so a slow API window doesn't false-kill a live stream
+//  - Phase-2 detonation stages tend to be moderate: 5–6 min
+const STAGE_WATCHDOG_MS: Record<string, number> = {
+  "Stage 2": 4 * 60_000,
+  "Stage 3": 4 * 60_000,
+  "Stage 4": 4 * 60_000,
+  "Stage 4B": 4 * 60_000,
+  "Stage 5": 4 * 60_000,
+  "Stage 6": 5 * 60_000,
+  "Stage 7": 10 * 60_000, // continuation loop can legitimately run long
+  "Stage 8": 5 * 60_000,
+  "Stage 9": 6 * 60_000,
+  "Stage 10": 5 * 60_000,
+  "Stage 11": 5 * 60_000,
+  "Stage 12": 8 * 60_000, // long synthesis pass
+  "Stage 13": 5 * 60_000,
+  "Stage 13B": 4 * 60_000,
+  "Stage 14": 5 * 60_000,
+  "Stage 14B": 4 * 60_000,
+  "Stage 14C": 4 * 60_000,
+  "Stage 15": 5 * 60_000,
+  "Stage 16": 8 * 60_000, // long document assembly
+  "Stage 17": 5 * 60_000,
+  "Stage 17B": 5 * 60_000,
+  "Stage 18": 6 * 60_000,
+  "Stage 19": 5 * 60_000,
+  "Stage 20": 6 * 60_000,
+  "Stage 20B": 5 * 60_000,
+  "Stage 21": 6 * 60_000,
+  "Stage 22": 6 * 60_000,
+};
+const DEFAULT_WATCHDOG_MS = 5 * 60_000;
+
+function thresholdForLabel(label: string): number {
+  if (STAGE_WATCHDOG_MS[label] !== undefined) return STAGE_WATCHDOG_MS[label];
+  // Match "Stage 7 (continuation 2)" etc. by the leading "Stage N" prefix.
+  const m = /^(Stage\s+\d+[A-Z]?)/i.exec(label);
+  if (m && STAGE_WATCHDOG_MS[m[1]] !== undefined) return STAGE_WATCHDOG_MS[m[1]];
+  return DEFAULT_WATCHDOG_MS;
+}
+
+// Client-side backstop watchdog. Races a stage RPC against a stream-liveness
+// check on `sessions.stream_last_delta_at` (falling back to `updated_at` for
+// non-streaming stages that don't touch the delta column). Keying off the
+// stream-safety wrapper's heartbeat means a stage that is still receiving
+// tokens — even if writes are batching or the row hasn't been touched for
+// unrelated reasons — is NOT killed. A genuinely dead Worker (no tokens at
+// all) still trips the watchdog because the heartbeat stops moving.
 async function runWithWatchdog(
   opts: { sessionId: string; label: string; maxIdleMs?: number; pollMs?: number },
   work: () => Promise<unknown>,
 ): Promise<unknown> {
-  const maxIdleMs = opts.maxIdleMs ?? 5 * 60_000; // 5 minutes default
+  const maxIdleMs = opts.maxIdleMs ?? thresholdForLabel(opts.label);
   const pollMs = opts.pollMs ?? 15_000;
   let stopped = false;
+  const startedAt = Date.now();
 
   const watchdog = new Promise<never>((_, reject) => {
     const tick = async () => {
@@ -169,12 +220,21 @@ async function runWithWatchdog(
       try {
         const { data } = await supabase
           .from("sessions")
-          .select("updated_at")
+          .select("updated_at, stream_last_delta_at")
           .eq("id", opts.sessionId)
           .maybeSingle();
-        const updatedAt = data?.updated_at ? new Date(data.updated_at).getTime() : 0;
-        const idleFor = Date.now() - updatedAt;
-        if (updatedAt > 0 && idleFor > maxIdleMs) {
+        const rowUpdatedAt = data?.updated_at ? new Date(data.updated_at).getTime() : 0;
+        const streamDeltaAt = (data as { stream_last_delta_at?: string | null } | null)
+          ?.stream_last_delta_at
+          ? new Date((data as { stream_last_delta_at: string }).stream_last_delta_at).getTime()
+          : 0;
+        // Prefer the stream-liveness heartbeat when present; fall back to the
+        // generic row-update timestamp for non-streaming stages / older rows.
+        const liveness = Math.max(streamDeltaAt, rowUpdatedAt);
+        // Reference point: never treat the pre-start row as instantly stale.
+        const reference = Math.max(liveness, startedAt);
+        const idleFor = Date.now() - reference;
+        if (idleFor > maxIdleMs) {
           stopped = true;
           try {
             await supabase
@@ -182,8 +242,9 @@ async function runWithWatchdog(
               .update({ status: "interrupted" })
               .eq("id", opts.sessionId);
           } catch { /* best-effort */ }
+          const heartbeatSrc = streamDeltaAt > 0 ? "stream_last_delta_at" : "updated_at";
           reject(new Error(
-            `Watchdog: ${opts.label} produced no DB write for ${Math.round(idleFor / 1000)}s ` +
+            `Watchdog: ${opts.label} no stream heartbeat (${heartbeatSrc}) for ${Math.round(idleFor / 1000)}s ` +
             `(threshold ${Math.round(maxIdleMs / 1000)}s). Server Worker presumed dead; row released.`,
           ));
           return;
