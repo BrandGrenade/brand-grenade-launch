@@ -153,11 +153,20 @@ export function conditionalStage9HitAllowedInLeftOfCentre(args: {
   briefText: string;
   stage2Output: string;
 }): boolean {
-  // The relaxation was introduced for the Fuse engine only. Breach and
-  // Flashpoint stay strict even inside the separate left-of-centre column.
-  if (activeLeftOfCentreEngine(args.output, args.index) !== "FUSE") return false;
+  // Gate must match the LOC prompt's stated policy: LIST B is relaxable
+  // across the entire left-of-centre layer (Breach / Fuse / Flashpoint) so
+  // long as no named competitor owns the word and the brief's exclusion
+  // list does not forbid it. The prior Fuse-only restriction was stricter
+  // than the prompt, so category-native verbs (earn / reward / deserve on
+  // performance-discipline briefs) hit the gate in Breach/Flashpoint even
+  // when the content rule permitted them, exhausting retries. Alignment
+  // here removes that prompt/gate mismatch. The `index`/`output` args are
+  // retained for signature stability with callers.
+  void args.index;
+  void args.output;
   return conditionalStage9WordAllowedInLeftOfCentre(args);
 }
+
 
 /**
  * Core Stage 9 conditional-word policy.
