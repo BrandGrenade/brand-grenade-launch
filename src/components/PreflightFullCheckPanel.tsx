@@ -1572,9 +1572,13 @@ export function PreflightFullCheckPanel() {
             <div className="text-xs">
               {overall === "ready" ? (
                 <span className="text-emerald-400">✓ Platform Ready — 12/12 passed</span>
-              ) : (
+              ) : escalationVisible ? (
                 <span className="text-red-400">
-                  ✗ {failedCount} failed / {passedCount} passed
+                  ✗ {severitySummary.blocker} blocker{severitySummary.blocker === 1 ? "" : "s"} — do not present live
+                </span>
+              ) : (
+                <span className="text-amber-300">
+                  ⚠ Platform OK — {severitySummary.degraded}D / {severitySummary.harness}H / {severitySummary.transient}T ({passedCount} passed)
                 </span>
               )}
             </div>
