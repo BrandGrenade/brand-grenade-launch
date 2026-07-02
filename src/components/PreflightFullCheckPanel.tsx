@@ -1485,23 +1485,47 @@ export function PreflightFullCheckPanel() {
     }
   };
 
-  const failedResults = useMemo(() => results.filter((r) => r.status === "fail"), [results]);
-  const failedCount = failedResults.length;
-  const passedCount = useMemo(() => results.filter((r) => r.status === "pass").length, [results]);
+  // -------------------------------------------------------------------------
+  // Severity classification. Failures are NOT counted uniformly — blockers
+  // trigger "do not present live"; degraded/harness/transient never do. See
+  // src/lib/preflight-severity.ts for the hardcoded per-check rules.
+  // -------------------------------------------------------------------------
+  const { summary: severitySummary, classified: classifiedResults } = useMemo(
+    () => summariseSeverities(results, priorRuns),
+    [results, priorRuns],
+  );
+  const blockerResults = useMemo(
+    () =>
+      classifiedResults
+        .filter(({ classified }) => classified.kind === "fail" && classified.severity === "blocker")
+        .map(({ result }) => result),
+    [classifiedResults],
+  );
+  const passedCount = severitySummary.passed;
+  // "Failed check names" for the postponement draft = blockers only. Degraded
+  // / harness / transient are usable-live and should not be named in a
+  // postponement note.
   const failedNames = useMemo(
-    () => failedResults.map((r) => CHECK_NAMES[r.id as FullCheckId] ?? r.name),
-    [failedResults],
+    () => blockerResults.map((r) => CHECK_NAMES[r.id as FullCheckId] ?? r.name),
+    [blockerResults],
   );
   const totalEtaMinutes = useMemo(
     () =>
-      failedResults.reduce(
+      blockerResults.reduce(
         (sum, r) => sum + (REMEDIATION_BY_ID[r.id as FullCheckId]?.etaMinutes ?? 10),
         0,
       ),
-    [failedResults],
+    [blockerResults],
   );
 
-  const escalationVisible = state === "complete" && overall === "issue_detected" && failedCount > 0;
+  // Only blockers gate presentation. This is the whole point of severity:
+  // a harness drift or a transient blip does NOT justify pulling the demo.
+  const escalationVisible =
+    state === "complete" && shouldBlockPresentation(severitySummary);
+  const nonBlockingIssuesVisible =
+    state === "complete" &&
+    !escalationVisible &&
+    (severitySummary.degraded + severitySummary.harness + severitySummary.transient) > 0;
 
   const goToCompletedSessions = () => {
     const el = document.getElementById("completed-sessions");
