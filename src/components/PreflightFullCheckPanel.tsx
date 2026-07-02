@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import {
   runTierTwoFullCheck,
   getLatestTierTwoCheck,
+  getRecentTierTwoResults,
   recordPreflightResults,
   recordPreflightCheck3Result,
   recordPreflightCheck8Result,
@@ -26,6 +27,13 @@ import {
   type FullCheckResult,
   type TierTwoEvent,
 } from "@/lib/preflight-tier-two.functions";
+import {
+  summariseSeverities,
+  shouldBlockPresentation,
+  SEVERITY_LABEL,
+  SEVERITY_COLOR,
+  type Severity,
+} from "@/lib/preflight-severity";
 import { supabase } from "@/integrations/supabase/client";
 import { runStage1 } from "@/lib/stage1.functions";
 import { runStage2 } from "@/lib/stage2.functions";
