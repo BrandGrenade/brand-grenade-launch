@@ -443,8 +443,33 @@ export function PreflightFullCheckPanel() {
   const [expanded, setExpanded] = useState(false);
   const [elapsedMs, setElapsedMs] = useState(0);
   const [draftOpen, setDraftOpen] = useState(false);
+  // Prior completed runs' results, used only for recurrence escalation in the
+  // severity classifier (a transient that fails the same way N runs in a row
+  // becomes a blocker). Excludes the current run.
+  const [priorRuns, setPriorRuns] = useState<FullCheckResult[][]>([]);
+  const getRecentFn = useServerFn(getRecentTierTwoResults);
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const startedAtRef = useRef<number | null>(null);
+
+  // Load the last 5 completed runs once on mount so severity classification
+  // has recurrence data. Excludes running rows and the current in-flight run.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const rows = await getRecentFn({ data: { limit: 5 } });
+        if (cancelled) return;
+        const priors = (rows ?? [])
+          .filter((r) => Array.isArray(r.tier_two_results))
+          .map((r) => r.tier_two_results as unknown as FullCheckResult[]);
+        // Drop the most recent one if it matches what we're currently displaying
+        // (avoid double-counting the current row as its own prior).
+        setPriorRuns(priors.slice(1));
+      } catch { /* best-effort */ }
+    })();
+    return () => { cancelled = true; };
+  }, [getRecentFn]);
+
 
   // Hydrate from latest persisted run on mount, and poll while a run is in
   // progress server-side (e.g. the user closed the tab and reopened it) so
