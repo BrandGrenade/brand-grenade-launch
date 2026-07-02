@@ -18,7 +18,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { STAGE_9_SYSTEM_PROMPT } from "@/lib/stage9-prompt";
-import { CONDITIONALLY_BANNED_STAGE9, UNIVERSAL_BANNED_STAGE9, conditionalStage9HitAllowedInLeftOfCentre } from "@/lib/stage9-banned-words";
+import { CONDITIONALLY_BANNED_STAGE9, UNIVERSAL_BANNED_STAGE9, conditionalStage9HitAllowedInLeftOfCentre, conditionalStage9HitAllowedInCore } from "@/lib/stage9-banned-words";
 import { findBannedWordHits } from "@/lib/output-banned-word-gate";
 import detonationCanvasSource from "@/routes/detonation_.canvas.tsx?raw";
 import detonationSource from "@/routes/detonation.tsx?raw";
