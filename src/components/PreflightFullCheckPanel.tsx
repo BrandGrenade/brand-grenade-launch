@@ -1608,10 +1608,17 @@ export function PreflightFullCheckPanel() {
 
       {escalationVisible && (
         <div className="mt-4 border border-red-700/60 bg-red-950/30 p-4">
-          <div className="text-label text-red-300">Escalation Protocol</div>
+          <div className="text-label text-red-300">Escalation Protocol · Blockers only</div>
           <h3 className="text-h3 mt-1 text-text-primary">
-            {failedCount} check{failedCount === 1 ? "" : "s"} failed — do not present live
+            {severitySummary.blocker} blocker{severitySummary.blocker === 1 ? "" : "s"} — do not present live
           </h3>
+          <p className="text-body mt-1 text-text-secondary">
+            Only BLOCKER-severity failures trigger this banner. Non-blocking issues this run:{" "}
+            <span className="font-semibold text-amber-300">{severitySummary.degraded} degraded</span>,{" "}
+            <span className="font-semibold text-sky-300">{severitySummary.harness} harness</span>,{" "}
+            <span className="font-semibold text-neutral-300">{severitySummary.transient} transient</span>,{" "}
+            <span className="font-semibold text-neutral-400">{severitySummary.skipped} skipped (dependency failed)</span>.
+          </p>
           <p className="text-body mt-1 text-text-secondary">
             Estimated platform fix time: <span className="font-semibold text-text-primary">~{totalEtaMinutes} minutes</span>. Choose one of the two protocols below before notifying the client.
           </p>
