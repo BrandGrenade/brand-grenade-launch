@@ -1671,6 +1671,19 @@ export function PreflightFullCheckPanel() {
         </div>
       )}
 
+      {nonBlockingIssuesVisible && (
+        <div className="mt-4 border border-amber-700/40 bg-amber-950/20 p-3 text-sm">
+          <div className="text-label text-amber-300">Non-blocking issues · Platform usable live</div>
+          <div className="mt-1 text-amber-200/80">
+            No BLOCKER-severity failures. Detected:{" "}
+            <span className="font-semibold text-amber-300">{severitySummary.degraded} degraded</span>,{" "}
+            <span className="font-semibold text-sky-300">{severitySummary.harness} harness</span> (check itself out of date),{" "}
+            <span className="font-semibold text-neutral-300">{severitySummary.transient} transient</span> (external blip — re-run if it repeats),{" "}
+            <span className="font-semibold text-neutral-400">{severitySummary.skipped} skipped</span>. See per-check detail below.
+          </div>
+        </div>
+      )}
+
       {(state === "running" || state === "complete") && (
         <>
           {state === "running" && currentMessage && (
@@ -1686,38 +1699,71 @@ export function PreflightFullCheckPanel() {
 
           {expanded && results.length > 0 && (
             <ul className="mt-3 space-y-2">
-              {results.map((r) => {
+              {classifiedResults.map(({ result: r, classified }) => {
                 const rem = REMEDIATION_BY_ID[r.id as FullCheckId];
+                const sevKey: Severity | "skipped" | null =
+                  classified.kind === "fail" ? classified.severity :
+                  classified.kind === "skipped" ? "skipped" : null;
+                const sevColor = sevKey ? SEVERITY_COLOR[sevKey] : null;
                 return (
                   <li
                     key={r.id}
-                    className="border border-neutral-800 bg-neutral-900/60 p-3 text-sm"
+                    className={`border p-3 text-sm ${sevColor ? `${sevColor.border} ${sevColor.bg}` : "border-neutral-800 bg-neutral-900/60"}`}
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          {statusBadge(r.status)}
+                        <div className="flex flex-wrap items-center gap-2">
+                          {classified.kind === "skipped" ? (
+                            <span className="rounded-sm bg-neutral-800 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-neutral-400">
+                              Skipped
+                            </span>
+                          ) : (
+                            statusBadge(r.status)
+                          )}
+                          {sevKey && (
+                            <span className={`rounded-sm px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${sevColor!.text} ${sevColor!.bg} border ${sevColor!.border}`}>
+                              {SEVERITY_LABEL[sevKey]}
+                            </span>
+                          )}
                           <span className="font-medium text-text-primary">
                             {CHECK_NAMES[r.id as FullCheckId] ?? r.name}
                           </span>
-                          {r.durationMs !== null && (
+                          {r.durationMs !== null && classified.kind !== "skipped" && (
                             <span className="text-xs text-text-tertiary">
                               ({(r.durationMs / 1000).toFixed(1)}s)
                             </span>
                           )}
                         </div>
-                        {r.detail && (
-                          <div className="mt-1.5 text-xs text-text-secondary">{r.detail}</div>
-                        )}
-                        {r.status === "fail" && rem && (
-                          <div className="mt-2 border-l-2 border-red-700 pl-2 text-xs text-red-300">
-                            <div>
-                              <span className="font-semibold">Remediation:</span> {rem.instruction}
-                            </div>
-                            <div className="mt-1 text-red-200/80">
-                              <span className="font-semibold">Estimated fix time:</span> ~{rem.etaMinutes} minutes
-                            </div>
+                        {classified.kind === "skipped" ? (
+                          <div className="mt-1.5 text-xs text-neutral-400">
+                            Skipped — dependency failed: {classified.dependencyDetail}
                           </div>
+                        ) : (
+                          <>
+                            {r.detail && (
+                              <div className="mt-1.5 text-xs text-text-secondary">{r.detail}</div>
+                            )}
+                            {classified.kind === "fail" && (
+                              <div className={`mt-2 border-l-2 pl-2 text-xs ${sevColor!.border} ${sevColor!.text}`}>
+                                <div>
+                                  <span className="font-semibold">Why {SEVERITY_LABEL[classified.severity]}:</span> {classified.reason}
+                                </div>
+                                {classified.note && (
+                                  <div className="mt-1 opacity-80">{classified.note}</div>
+                                )}
+                              </div>
+                            )}
+                            {classified.kind === "fail" && classified.severity === "blocker" && rem && (
+                              <div className="mt-2 border-l-2 border-red-700 pl-2 text-xs text-red-300">
+                                <div>
+                                  <span className="font-semibold">Remediation:</span> {rem.instruction}
+                                </div>
+                                <div className="mt-1 text-red-200/80">
+                                  <span className="font-semibold">Estimated fix time:</span> ~{rem.etaMinutes} minutes
+                                </div>
+                              </div>
+                            )}
+                          </>
                         )}
                       </div>
                     </div>
