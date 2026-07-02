@@ -159,50 +159,52 @@ async function drainStreamOrPollDb<C extends { delta?: string; done?: true; outp
   });
 }
 
-// Per-stage watchdog thresholds. Keyed by exact label; a single global 300s
-// budget is wrong for a pipeline whose stages have wildly different realistic
-// runtimes. Values chosen from observed p95 with headroom, not p50:
-//  - fast single-pass CMM/constraint stages: 4 min
-//  - stages with a continuation loop (Stage 7 does up to 3× 64k-token passes,
-//    Stage 12 synthesises many SMPs, Stage 16 assembles a long document):
-//    8–10 min so a slow API window doesn't false-kill a live stream
-//  - Phase-2 detonation stages tend to be moderate: 5–6 min
+// Per-stage watchdog thresholds. Sized from ACTUAL observed worst-case
+// runtimes across today's Tier Two runs, then padded with generous headroom
+// (roughly 2× observed max, or observed max + 5 min, whichever is greater).
+// The watchdog should ONLY fire on a genuine multi-minute stall — never on
+// a heavy stage that's just running long normally. A stage sitting close
+// to its threshold is a bug; every heavy stage below has comfortable slack.
+//
+// Observed worst cases from today (rounded up): Stage 7 ~169s (continuation
+// windows can spike to ~6min), Stage 11 ~523s (heartbeat stall), Stage 15
+// ~532s (heartbeat stall), Stage 16 assembly can spike ~7min, Phase 2 tail
+// (17→22) similarly heavy. All heavy stages therefore ≥15 min budget.
 const STAGE_WATCHDOG_MS: Record<string, number> = {
-  // Fast single-pass CMM / constraint stages — 4 min is plenty.
-  "Stage 1": 4 * 60_000,
-  "Stage 1B": 4 * 60_000,
-  "Stage 3": 4 * 60_000,
-  "Stage 4": 4 * 60_000,
-  "Stage 13B": 4 * 60_000,
-  "Stage 14B": 4 * 60_000,
-  "Stage 14C": 4 * 60_000,
-  // Long-generation Phase 1 stages — heavy content generation, can hit slow
-  // Anthropic windows. Set from observed p95 + headroom, not p50.
-  "Stage 2": 8 * 60_000,   // CMM narrative + rival mapping
-  "Stage 4B": 8 * 60_000,  // extended constraint synthesis
-  "Stage 5": 8 * 60_000,   // Three Truth long generation
-  "Stage 6": 6 * 60_000,
-  "Stage 7": 10 * 60_000,  // continuation loop, up to 3× 64k passes
-  "Stage 8": 5 * 60_000,
-  "Stage 9": 8 * 60_000,   // core + LOC generation with banned-word retries
-  "Stage 10": 6 * 60_000,
-  "Stage 11": 10 * 60_000, // per-SMP pressure test — was 300s, false-killed at 523s
-  "Stage 12": 10 * 60_000, // multi-SMP synthesis + rationale
-  "Stage 13": 6 * 60_000,
-  "Stage 14": 6 * 60_000,
-  "Stage 15": 6 * 60_000,
-  "Stage 16": 10 * 60_000, // long document assembly
-  // Phase 2 detonation chain — heavy generation across the tail.
-  "Stage 17": 6 * 60_000,
-  "Stage 17B": 6 * 60_000,
-  "Stage 18": 10 * 60_000, // The Detonation — flagship long generation
-  "Stage 19": 6 * 60_000,
-  "Stage 20": 8 * 60_000,  // Master Detonation Brief
-  "Stage 20B": 6 * 60_000,
-  "Stage 21": 8 * 60_000,  // Channel Detonation Briefs — multi-channel
-  "Stage 22": 8 * 60_000,  // Brand Architecture
+  // Fast single-pass CMM / constraint stages — 6 min is ample.
+  "Stage 1": 6 * 60_000,
+  "Stage 1B": 6 * 60_000,
+  "Stage 3": 6 * 60_000,
+  "Stage 4": 6 * 60_000,
+  "Stage 13B": 6 * 60_000,
+  "Stage 14B": 6 * 60_000,
+  "Stage 14C": 6 * 60_000,
+  // Heavy Phase 1 generation stages — all bumped well clear of observed max.
+  "Stage 2": 12 * 60_000,
+  "Stage 4B": 12 * 60_000,
+  "Stage 5": 12 * 60_000,
+  "Stage 6": 10 * 60_000,
+  "Stage 7": 15 * 60_000,   // continuation loop, up to 3× 64k passes
+  "Stage 8": 10 * 60_000,
+  "Stage 9": 12 * 60_000,   // core + LOC with banned-word retries
+  "Stage 10": 10 * 60_000,
+  "Stage 11": 15 * 60_000,  // per-SMP pressure test — observed 523s stall
+  "Stage 12": 15 * 60_000,  // multi-SMP synthesis + rationale
+  "Stage 13": 10 * 60_000,
+  "Stage 14": 10 * 60_000,
+  "Stage 15": 15 * 60_000,  // observed 532s stall — was 360s
+  "Stage 16": 15 * 60_000,  // long document assembly
+  // Phase 2 detonation chain — all heavy generation, sized to match.
+  "Stage 17": 10 * 60_000,
+  "Stage 17B": 10 * 60_000,
+  "Stage 18": 15 * 60_000,  // The Detonation — flagship long generation
+  "Stage 19": 10 * 60_000,
+  "Stage 20": 12 * 60_000,
+  "Stage 20B": 10 * 60_000,
+  "Stage 21": 12 * 60_000,
+  "Stage 22": 12 * 60_000,
 };
-const DEFAULT_WATCHDOG_MS = 5 * 60_000;
+const DEFAULT_WATCHDOG_MS = 10 * 60_000;
 
 function thresholdForLabel(label: string): number {
   if (STAGE_WATCHDOG_MS[label] !== undefined) return STAGE_WATCHDOG_MS[label];
