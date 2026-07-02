@@ -1,0 +1,1 @@
+ALTER TABLE public.sessions ADD COLUMN IF NOT EXISTS stream_last_delta_at timestamptz;

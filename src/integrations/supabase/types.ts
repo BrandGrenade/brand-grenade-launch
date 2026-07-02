@@ -308,6 +308,7 @@ export type Database = {
           stage_status: string | null
           status: string
           strategic_mode: string
+          stream_last_delta_at: string | null
           truth_consumer: string | null
           truth_cultural: string | null
           truth_cultural_confidence: string | null
@@ -463,6 +464,7 @@ export type Database = {
           stage_status?: string | null
           status?: string
           strategic_mode: string
+          stream_last_delta_at?: string | null
           truth_consumer?: string | null
           truth_cultural?: string | null
           truth_cultural_confidence?: string | null
@@ -618,6 +620,7 @@ export type Database = {
           stage_status?: string | null
           status?: string
           strategic_mode?: string
+          stream_last_delta_at?: string | null
           truth_consumer?: string | null
           truth_cultural?: string | null
           truth_cultural_confidence?: string | null
