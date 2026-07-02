@@ -490,6 +490,27 @@ export const getLatestTierTwoCheck = createServerFn({ method: "POST" })
     return data ?? null;
   });
 
+/**
+ * Fetch the last N completed Tier Two runs' results. Used by the severity
+ * classifier to detect a recurring transient — a "transient" that fails the
+ * same way across multiple consecutive runs is escalated to BLOCKER.
+ */
+export const getRecentTierTwoResults = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => z.object({ limit: z.number().int().min(1).max(20).optional() }).parse(i))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: rows, error } = await supabaseAdmin
+      .from("preflight_checks")
+      .select("id, started_at, completed_at, tier_two_results, overall_result")
+      .eq("check_type", "full")
+      .eq("status", "complete")
+      .order("started_at", { ascending: false })
+      .limit(data.limit ?? 5);
+    if (error) throw new Error(error.message);
+    return rows ?? [];
+  });
+
 // ---------------------------------------------------------------------------
 // Check 8 result recorder + resume stream (checks 9–12)
 //

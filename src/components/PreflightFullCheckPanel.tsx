@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import {
   runTierTwoFullCheck,
   getLatestTierTwoCheck,
+  getRecentTierTwoResults,
   recordPreflightResults,
   recordPreflightCheck3Result,
   recordPreflightCheck8Result,
@@ -26,6 +27,13 @@ import {
   type FullCheckResult,
   type TierTwoEvent,
 } from "@/lib/preflight-tier-two.functions";
+import {
+  summariseSeverities,
+  shouldBlockPresentation,
+  SEVERITY_LABEL,
+  SEVERITY_COLOR,
+  type Severity,
+} from "@/lib/preflight-severity";
 import { supabase } from "@/integrations/supabase/client";
 import { runStage1 } from "@/lib/stage1.functions";
 import { runStage2 } from "@/lib/stage2.functions";
@@ -435,8 +443,33 @@ export function PreflightFullCheckPanel() {
   const [expanded, setExpanded] = useState(false);
   const [elapsedMs, setElapsedMs] = useState(0);
   const [draftOpen, setDraftOpen] = useState(false);
+  // Prior completed runs' results, used only for recurrence escalation in the
+  // severity classifier (a transient that fails the same way N runs in a row
+  // becomes a blocker). Excludes the current run.
+  const [priorRuns, setPriorRuns] = useState<FullCheckResult[][]>([]);
+  const getRecentFn = useServerFn(getRecentTierTwoResults);
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const startedAtRef = useRef<number | null>(null);
+
+  // Load the last 5 completed runs once on mount so severity classification
+  // has recurrence data. Excludes running rows and the current in-flight run.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const rows = await getRecentFn({ data: { limit: 5 } });
+        if (cancelled) return;
+        const priors = (rows ?? [])
+          .filter((r) => Array.isArray(r.tier_two_results))
+          .map((r) => r.tier_two_results as unknown as FullCheckResult[]);
+        // Drop the most recent one if it matches what we're currently displaying
+        // (avoid double-counting the current row as its own prior).
+        setPriorRuns(priors.slice(1));
+      } catch { /* best-effort */ }
+    })();
+    return () => { cancelled = true; };
+  }, [getRecentFn]);
+
 
   // Hydrate from latest persisted run on mount, and poll while a run is in
   // progress server-side (e.g. the user closed the tab and reopened it) so
@@ -1439,7 +1472,12 @@ export function PreflightFullCheckPanel() {
       setCurrentMessage(`Completed in ${(final.totalDurationMs / 1000).toFixed(1)}s. Cleaned up ${final.sessionIdsCleaned.length} TestBrand session(s).`);
       stopElapsed();
       if (final.overall === "ready") toast.success("Tier Two: all 12 checks passed");
-      else toast.error(`Tier Two: ${workingResults.filter((r) => r.status === "fail").length} check(s) failed`);
+      else {
+        const { summary: s } = summariseSeverities(workingResults, priorRuns);
+        if (s.blocker > 0) toast.error(`Tier Two: ${s.blocker} BLOCKER(s) — do not present live`);
+        else if (s.degraded > 0) toast.warning(`Tier Two: ${s.degraded} degraded — usable`);
+        else toast.info(`Tier Two: ${s.harness} harness / ${s.transient} transient — platform OK`);
+      }
     } catch (e) {
       setErrorMessage(e instanceof Error ? e.message : String(e));
       setState("error");
@@ -1447,23 +1485,47 @@ export function PreflightFullCheckPanel() {
     }
   };
 
-  const failedResults = useMemo(() => results.filter((r) => r.status === "fail"), [results]);
-  const failedCount = failedResults.length;
-  const passedCount = useMemo(() => results.filter((r) => r.status === "pass").length, [results]);
+  // -------------------------------------------------------------------------
+  // Severity classification. Failures are NOT counted uniformly — blockers
+  // trigger "do not present live"; degraded/harness/transient never do. See
+  // src/lib/preflight-severity.ts for the hardcoded per-check rules.
+  // -------------------------------------------------------------------------
+  const { summary: severitySummary, classified: classifiedResults } = useMemo(
+    () => summariseSeverities(results, priorRuns),
+    [results, priorRuns],
+  );
+  const blockerResults = useMemo(
+    () =>
+      classifiedResults
+        .filter(({ classified }) => classified.kind === "fail" && classified.severity === "blocker")
+        .map(({ result }) => result),
+    [classifiedResults],
+  );
+  const passedCount = severitySummary.passed;
+  // "Failed check names" for the postponement draft = blockers only. Degraded
+  // / harness / transient are usable-live and should not be named in a
+  // postponement note.
   const failedNames = useMemo(
-    () => failedResults.map((r) => CHECK_NAMES[r.id as FullCheckId] ?? r.name),
-    [failedResults],
+    () => blockerResults.map((r) => CHECK_NAMES[r.id as FullCheckId] ?? r.name),
+    [blockerResults],
   );
   const totalEtaMinutes = useMemo(
     () =>
-      failedResults.reduce(
+      blockerResults.reduce(
         (sum, r) => sum + (REMEDIATION_BY_ID[r.id as FullCheckId]?.etaMinutes ?? 10),
         0,
       ),
-    [failedResults],
+    [blockerResults],
   );
 
-  const escalationVisible = state === "complete" && overall === "issue_detected" && failedCount > 0;
+  // Only blockers gate presentation. This is the whole point of severity:
+  // a harness drift or a transient blip does NOT justify pulling the demo.
+  const escalationVisible =
+    state === "complete" && shouldBlockPresentation(severitySummary);
+  const nonBlockingIssuesVisible =
+    state === "complete" &&
+    !escalationVisible &&
+    (severitySummary.degraded + severitySummary.harness + severitySummary.transient) > 0;
 
   const goToCompletedSessions = () => {
     const el = document.getElementById("completed-sessions");
@@ -1510,9 +1572,13 @@ export function PreflightFullCheckPanel() {
             <div className="text-xs">
               {overall === "ready" ? (
                 <span className="text-emerald-400">✓ Platform Ready — 12/12 passed</span>
-              ) : (
+              ) : escalationVisible ? (
                 <span className="text-red-400">
-                  ✗ {failedCount} failed / {passedCount} passed
+                  ✗ {severitySummary.blocker} blocker{severitySummary.blocker === 1 ? "" : "s"} — do not present live
+                </span>
+              ) : (
+                <span className="text-amber-300">
+                  ⚠ Platform OK — {severitySummary.degraded}D / {severitySummary.harness}H / {severitySummary.transient}T ({passedCount} passed)
                 </span>
               )}
             </div>
@@ -1542,10 +1608,17 @@ export function PreflightFullCheckPanel() {
 
       {escalationVisible && (
         <div className="mt-4 border border-red-700/60 bg-red-950/30 p-4">
-          <div className="text-label text-red-300">Escalation Protocol</div>
+          <div className="text-label text-red-300">Escalation Protocol · Blockers only</div>
           <h3 className="text-h3 mt-1 text-text-primary">
-            {failedCount} check{failedCount === 1 ? "" : "s"} failed — do not present live
+            {severitySummary.blocker} blocker{severitySummary.blocker === 1 ? "" : "s"} — do not present live
           </h3>
+          <p className="text-body mt-1 text-text-secondary">
+            Only BLOCKER-severity failures trigger this banner. Non-blocking issues this run:{" "}
+            <span className="font-semibold text-amber-300">{severitySummary.degraded} degraded</span>,{" "}
+            <span className="font-semibold text-sky-300">{severitySummary.harness} harness</span>,{" "}
+            <span className="font-semibold text-neutral-300">{severitySummary.transient} transient</span>,{" "}
+            <span className="font-semibold text-neutral-400">{severitySummary.skipped} skipped (dependency failed)</span>.
+          </p>
           <p className="text-body mt-1 text-text-secondary">
             Estimated platform fix time: <span className="font-semibold text-text-primary">~{totalEtaMinutes} minutes</span>. Choose one of the two protocols below before notifying the client.
           </p>
@@ -1598,6 +1671,19 @@ export function PreflightFullCheckPanel() {
         </div>
       )}
 
+      {nonBlockingIssuesVisible && (
+        <div className="mt-4 border border-amber-700/40 bg-amber-950/20 p-3 text-sm">
+          <div className="text-label text-amber-300">Non-blocking issues · Platform usable live</div>
+          <div className="mt-1 text-amber-200/80">
+            No BLOCKER-severity failures. Detected:{" "}
+            <span className="font-semibold text-amber-300">{severitySummary.degraded} degraded</span>,{" "}
+            <span className="font-semibold text-sky-300">{severitySummary.harness} harness</span> (check itself out of date),{" "}
+            <span className="font-semibold text-neutral-300">{severitySummary.transient} transient</span> (external blip — re-run if it repeats),{" "}
+            <span className="font-semibold text-neutral-400">{severitySummary.skipped} skipped</span>. See per-check detail below.
+          </div>
+        </div>
+      )}
+
       {(state === "running" || state === "complete") && (
         <>
           {state === "running" && currentMessage && (
@@ -1613,38 +1699,71 @@ export function PreflightFullCheckPanel() {
 
           {expanded && results.length > 0 && (
             <ul className="mt-3 space-y-2">
-              {results.map((r) => {
+              {classifiedResults.map(({ result: r, classified }) => {
                 const rem = REMEDIATION_BY_ID[r.id as FullCheckId];
+                const sevKey: Severity | "skipped" | null =
+                  classified.kind === "fail" ? classified.severity :
+                  classified.kind === "skipped" ? "skipped" : null;
+                const sevColor = sevKey ? SEVERITY_COLOR[sevKey] : null;
                 return (
                   <li
                     key={r.id}
-                    className="border border-neutral-800 bg-neutral-900/60 p-3 text-sm"
+                    className={`border p-3 text-sm ${sevColor ? `${sevColor.border} ${sevColor.bg}` : "border-neutral-800 bg-neutral-900/60"}`}
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          {statusBadge(r.status)}
+                        <div className="flex flex-wrap items-center gap-2">
+                          {classified.kind === "skipped" ? (
+                            <span className="rounded-sm bg-neutral-800 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-neutral-400">
+                              Skipped
+                            </span>
+                          ) : (
+                            statusBadge(r.status)
+                          )}
+                          {sevKey && (
+                            <span className={`rounded-sm px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${sevColor!.text} ${sevColor!.bg} border ${sevColor!.border}`}>
+                              {SEVERITY_LABEL[sevKey]}
+                            </span>
+                          )}
                           <span className="font-medium text-text-primary">
                             {CHECK_NAMES[r.id as FullCheckId] ?? r.name}
                           </span>
-                          {r.durationMs !== null && (
+                          {r.durationMs !== null && classified.kind !== "skipped" && (
                             <span className="text-xs text-text-tertiary">
                               ({(r.durationMs / 1000).toFixed(1)}s)
                             </span>
                           )}
                         </div>
-                        {r.detail && (
-                          <div className="mt-1.5 text-xs text-text-secondary">{r.detail}</div>
-                        )}
-                        {r.status === "fail" && rem && (
-                          <div className="mt-2 border-l-2 border-red-700 pl-2 text-xs text-red-300">
-                            <div>
-                              <span className="font-semibold">Remediation:</span> {rem.instruction}
-                            </div>
-                            <div className="mt-1 text-red-200/80">
-                              <span className="font-semibold">Estimated fix time:</span> ~{rem.etaMinutes} minutes
-                            </div>
+                        {classified.kind === "skipped" ? (
+                          <div className="mt-1.5 text-xs text-neutral-400">
+                            Skipped — dependency failed: {classified.dependencyDetail}
                           </div>
+                        ) : (
+                          <>
+                            {r.detail && (
+                              <div className="mt-1.5 text-xs text-text-secondary">{r.detail}</div>
+                            )}
+                            {classified.kind === "fail" && (
+                              <div className={`mt-2 border-l-2 pl-2 text-xs ${sevColor!.border} ${sevColor!.text}`}>
+                                <div>
+                                  <span className="font-semibold">Why {SEVERITY_LABEL[classified.severity]}:</span> {classified.reason}
+                                </div>
+                                {classified.note && (
+                                  <div className="mt-1 opacity-80">{classified.note}</div>
+                                )}
+                              </div>
+                            )}
+                            {classified.kind === "fail" && classified.severity === "blocker" && rem && (
+                              <div className="mt-2 border-l-2 border-red-700 pl-2 text-xs text-red-300">
+                                <div>
+                                  <span className="font-semibold">Remediation:</span> {rem.instruction}
+                                </div>
+                                <div className="mt-1 text-red-200/80">
+                                  <span className="font-semibold">Estimated fix time:</span> ~{rem.etaMinutes} minutes
+                                </div>
+                              </div>
+                            )}
+                          </>
                         )}
                       </div>
                     </div>
