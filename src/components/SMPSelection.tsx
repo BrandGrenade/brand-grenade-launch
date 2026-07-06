@@ -162,6 +162,14 @@ function parsePropositions(rawOutput: string): RawProp[] {
       "WHAT IT REQUIRES OF THE BRAND",
       "STRATEGIC QUALITY SCORES",
     ]);
+    const makesPossible = grabSection("WHAT IT MAKES POSSIBLE", [
+      "WHAT IT REQUIRES OF THE BRAND",
+      "STRATEGIC QUALITY SCORES",
+    ]);
+    const requires = grabSection("WHAT IT REQUIRES OF THE BRAND", [
+      "STRATEGIC QUALITY SCORES",
+      "\\[METADATA\\]",
+    ]);
 
     const scores: SMPCard["scores"] = {
       differentiation: extractScore(block, "Differentiation"),
@@ -173,7 +181,26 @@ function parsePropositions(rawOutput: string): RawProp[] {
       composite: extractScore(block, "Composite"),
     };
 
-    propositions.push({ line: propositionLine, owns, truth, challenge, scores });
+    const grabMeta = (label: string): string => {
+      const m = block.match(new RegExp(`${label}\\s*:\\s*([^\\n]+)`, "i"));
+      return m ? m[1].trim() : "";
+    };
+    const fieldName = grabMeta("FIELD_NAME");
+    const iconicTierStatus = grabMeta("ICONIC_TIER_STATUS");
+    const pressureTestNote = grabMeta("PRESSURE_TEST_NOTE");
+
+    propositions.push({
+      line: propositionLine,
+      owns,
+      truth,
+      challenge,
+      makesPossible,
+      requires,
+      scores,
+      fieldName,
+      iconicTierStatus,
+      pressureTestNote,
+    });
   }
 
   return propositions;
