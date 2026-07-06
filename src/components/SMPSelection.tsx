@@ -42,7 +42,12 @@ interface RawProp {
   owns: string;
   truth: string;
   challenge: string;
+  makesPossible: string;
+  requires: string;
   scores: SMPCard["scores"];
+  fieldName: string;
+  iconicTierStatus: string;
+  pressureTestNote: string;
 }
 
 function parsePropositions(rawOutput: string): RawProp[] {
