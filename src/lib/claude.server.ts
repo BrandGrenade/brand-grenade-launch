@@ -473,7 +473,7 @@ export async function* streamClaude(args: CallClaudeArgs): AsyncGenerator<string
       totalChars += next.value.length;
       yield next.value;
     }
-    if (result.sawMessageStop || result.stopReason === "max_tokens" || attemptChars > 0 || attemptNo === 2) break;
+    if (result && (result.sawMessageStop || result.stopReason === "max_tokens" || attemptChars > 0 || attemptNo === 2)) break;
     await setRetryStatus(args.sessionId, "Connection interrupted before output — retrying automatically...");
     await new Promise((r) => setTimeout(r, 5000));
     await setRetryStatus(args.sessionId, null);

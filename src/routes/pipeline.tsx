@@ -1351,7 +1351,7 @@ function PipelineView() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionId, session?.id, statuses["08"]]);
+  }, [sessionId, session?.id, statuses["08"], stageRunNonce["08"]]);
 
   // Stage 9 — Divergence Validation.
   useEffect(() => {
@@ -1378,7 +1378,7 @@ function PipelineView() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionId, session?.id, statuses["09"]]);
+  }, [sessionId, session?.id, statuses["09"], stageRunNonce["09"]]);
 
   // Stage 10 — Scoring.
   useEffect(() => {
@@ -1405,7 +1405,7 @@ function PipelineView() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionId, session?.id, statuses["10"]]);
+  }, [sessionId, session?.id, statuses["10"], stageRunNonce["10"]]);
 
   // Stage 11 — Pressure Test.
   useEffect(() => {
@@ -1432,7 +1432,7 @@ function PipelineView() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionId, session?.id, statuses["11"]]);
+  }, [sessionId, session?.id, statuses["11"], stageRunNonce["11"]]);
 
   // Stage 12 — TYPE 1 (Display & Select).
   // Stage 12 must actually execute before the human selection UI appears.
@@ -1493,7 +1493,7 @@ function PipelineView() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionId, session?.id, statuses["12"]]);
+  }, [sessionId, session?.id, statuses["12"], stageRunNonce["12"]]);
 
   // Stages 13–16 — post-selection validation, territory mapping, audit, and assembly.
   useEffect(() => {
@@ -1519,7 +1519,7 @@ function PipelineView() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionId, session?.id, statuses["13"], intelSubmitted]);
+  }, [sessionId, session?.id, statuses["13"], intelSubmitted, stageRunNonce["13"]]);
 
   useEffect(() => {
     if (!sessionId || !session || statuses["13B"] !== "running" || stage13bOutput) return;
@@ -1543,7 +1543,7 @@ function PipelineView() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionId, session?.id, statuses["13B"]]);
+  }, [sessionId, session?.id, statuses["13B"], stageRunNonce["13B"]]);
 
   useEffect(() => {
     if (!sessionId || !session || statuses["14"] !== "running" || stage14Output) return;
@@ -1567,7 +1567,7 @@ function PipelineView() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionId, session?.id, statuses["14"]]);
+  }, [sessionId, session?.id, statuses["14"], stageRunNonce["14"]]);
 
   useEffect(() => {
     if (!sessionId || !session || statuses["14B"] !== "running" || stage14bOutput) return;
@@ -1591,7 +1591,7 @@ function PipelineView() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionId, session?.id, statuses["14B"]]);
+  }, [sessionId, session?.id, statuses["14B"], stageRunNonce["14B"]]);
 
   useEffect(() => {
     if (!sessionId || !session || statuses["14C"] !== "running" || stage14cOutput) return;
@@ -1615,7 +1615,7 @@ function PipelineView() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionId, session?.id, statuses["14C"]]);
+  }, [sessionId, session?.id, statuses["14C"], stageRunNonce["14C"]]);
 
   useEffect(() => {
     if (!sessionId || !session || statuses["15"] !== "running" || stage15Output) return;
@@ -1639,7 +1639,7 @@ function PipelineView() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionId, session?.id, statuses["15"]]);
+  }, [sessionId, session?.id, statuses["15"], stageRunNonce["15"]]);
 
   // Stage 16 (Document Assembly) is NOT auto-triggered from the Phase 1
   // pipeline. It must run only after Phase 2 (Stages 17–22) plus the
