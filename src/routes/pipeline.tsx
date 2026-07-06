@@ -197,6 +197,7 @@ async function drainStreamOrPollDb<C extends { delta?: string; done?: true; outp
       pollForCompletedStageOutput(fallback)
         .then(({ output, row }) => {
           if (settled) return;
+          console.info(`[pipeline] Stage ${fallback.stageStatusId} advanced via DB-poll completion fallback`);
           void generatorRef?.return?.(undefined as void).catch(() => undefined);
           const dbResult = {
             done: true as const,
