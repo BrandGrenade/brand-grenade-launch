@@ -535,7 +535,7 @@ function isPersistedStageComplete(
   if (!output || output.trim().length === 0) return false;
   return (
     row.stage_status === `complete:${stageStatusId}` ||
-    row.status !== "running" ||
+    row.status === "complete" ||
     row.current_stage > numericStage
   );
 }
