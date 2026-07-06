@@ -827,6 +827,90 @@ function PipelineView() {
           setStage16Output(data.stage_16_consulting_output);
           setStatuses((p) => ({ ...p, "16": "complete" }));
         }
+        const errorStatuses: Record<string, StageStatus> = {};
+        if (data.stage_1_error) {
+          setStage1Error(data.stage_1_error);
+          errorStatuses["01"] = "error";
+        }
+        if (data.stage_2_error) {
+          setStage2Error(data.stage_2_error);
+          errorStatuses["02"] = "error";
+        }
+        if (data.stage_3_error) {
+          setStage3Error(data.stage_3_error);
+          errorStatuses["03"] = "error";
+        }
+        if (data.stage_4_error) {
+          setStage4Error(data.stage_4_error);
+          errorStatuses["04"] = "error";
+        }
+        if (data.stage_4b_error) {
+          setStage4bError(data.stage_4b_error);
+          errorStatuses["04B"] = "error";
+        }
+        if (data.stage_5_error) {
+          setStage5Error(data.stage_5_error);
+          errorStatuses["05"] = "error";
+        }
+        if (data.stage_6_error) {
+          setStage6Error(data.stage_6_error);
+          errorStatuses["06"] = "error";
+        }
+        if (data.stage_7_error) {
+          setStage7Error(data.stage_7_error);
+          errorStatuses["07"] = "error";
+        }
+        if (data.stage_8_error) {
+          setStage8Error(data.stage_8_error);
+          errorStatuses["08"] = "error";
+        }
+        if (data.stage_9_error) {
+          setStage9Error(data.stage_9_error);
+          errorStatuses["09"] = "error";
+        }
+        if (data.stage_10_error) {
+          setStage10Error(data.stage_10_error);
+          errorStatuses["10"] = "error";
+        }
+        if (data.stage_11_error) {
+          setStage11Error(data.stage_11_error);
+          errorStatuses["11"] = "error";
+        }
+        if (data.stage_12_error) {
+          setStage12Error(data.stage_12_error);
+          errorStatuses["12"] = "error";
+        }
+        if (data.stage_13_error) {
+          setStage13Error(data.stage_13_error);
+          errorStatuses["13"] = "error";
+        }
+        if (data.stage_13b_error) {
+          setStage13bError(data.stage_13b_error);
+          errorStatuses["13B"] = "error";
+        }
+        if (data.stage_14_error) {
+          setStage14Error(data.stage_14_error);
+          errorStatuses["14"] = "error";
+        }
+        if (data.stage_14b_error) {
+          setStage14bError(data.stage_14b_error);
+          errorStatuses["14B"] = "error";
+        }
+        if (data.stage_14c_error) {
+          setStage14cError(data.stage_14c_error);
+          errorStatuses["14C"] = "error";
+        }
+        if (data.stage_15_error) {
+          setStage15Error(data.stage_15_error);
+          errorStatuses["15"] = "error";
+        }
+        if (data.stage_16_error) {
+          setStage16Error(data.stage_16_error);
+          errorStatuses["16"] = "error";
+        }
+        if (Object.keys(errorStatuses).length > 0) {
+          setStatuses((p) => ({ ...p, ...errorStatuses }));
+        }
       });
 
     return () => {
@@ -865,6 +949,12 @@ function PipelineView() {
   useEffect(() => {
     if (session?.stage_6_output) setStage6Output(session.stage_6_output);
   }, [session?.stage_6_output]);
+  useEffect(() => {
+    if (session?.stage_6_error) {
+      setStage6Error(session.stage_6_error);
+      setStatuses((p) => ({ ...p, "06": "error" }));
+    }
+  }, [session?.stage_6_error]);
   useEffect(() => {
     if (session?.stage_7_output) setStage7Output(session.stage_7_output);
   }, [session?.stage_7_output]);
