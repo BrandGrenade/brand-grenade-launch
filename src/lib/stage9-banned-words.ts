@@ -113,7 +113,7 @@ export function competitorOwnedConditionalStage9Words(args: {
   stage2Output: string;
 }): string[] {
   const banned: string[] = [];
-  const canonical = ["reward", "earn", "deserve"];
+  const canonical = ["reward", "earn", "deserve", "permission"];
   for (const word of canonical) {
     const allowed = conditionalStage9WordAllowedInLeftOfCentre({
       word,
