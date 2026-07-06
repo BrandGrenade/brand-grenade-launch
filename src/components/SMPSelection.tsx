@@ -227,16 +227,16 @@ export function parseSMPCards(
   if (raw.length > 0) {
     return raw.map((p, idx) => ({
       cardNumber: idx + 1,
-      smpLine: p.line,
+      smpLine: p.line.replace(/^["""]|["""]$/g, "").trim(),
       whatItOwns: p.owns,
       truth: p.truth,
       whatItChallenges: p.challenge,
-      whatItMakesPossible: "",
-      whatItRequires: "",
+      whatItMakesPossible: p.makesPossible,
+      whatItRequires: p.requires,
       scores: p.scores,
-      fieldName: "",
-      iconicTierStatus: "",
-      pressureTestNote: "",
+      fieldName: p.fieldName,
+      iconicTierStatus: p.iconicTierStatus,
+      pressureTestNote: p.pressureTestNote,
     }));
   }
 
