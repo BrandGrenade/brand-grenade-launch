@@ -43,6 +43,10 @@ import { PENDING_BRIEF_EDIT_STORAGE_KEY } from "@/routes/brief.index";
 import { FileText, PencilLine } from "lucide-react";
 
 const CLIENT_STREAM_IDLE_MS = 8 * 60_000;
+const DB_COMPLETION_POLL_MS = 5_000;
+
+type StreamDonePayload = { done: true; output?: string };
+type StreamCompletionSource = "stream" | "db-poll";
 
 // Consume an async-generator server function stream: forward delta chunks to a
 // setter for live rendering, return the final `done` payload.
@@ -83,6 +87,140 @@ async function consumeStream<C extends { delta?: string; done?: true }>(
   }
   if (!final) throw new Error("Stream ended without a final payload");
   return final;
+}
+
+async function pollForCompletedStageOutput(args: {
+  sessionId: string;
+  outputColumns: string[];
+  stageStatusId: string;
+  minChars?: number;
+  intervalMs?: number;
+  maxMs?: number;
+  getOutput?: (row: Record<string, unknown>) => string;
+}): Promise<{ output: string; row: Record<string, unknown> }> {
+  const intervalMs = args.intervalMs ?? DB_COMPLETION_POLL_MS;
+  const maxMs = args.maxMs ?? CLIENT_STREAM_IDLE_MS + 15_000;
+  const minChars = args.minChars ?? 1;
+  const selectColumns = Array.from(
+    new Set([...args.outputColumns, "stage_status", "stage_1_tension_score", "stage_1b_required"]),
+  ).join(", ");
+  const deadline = Date.now() + maxMs;
+
+  while (Date.now() < deadline) {
+    await new Promise((resolve) => window.setTimeout(resolve, intervalMs));
+    try {
+      const { data } = await supabase
+        .from("sessions")
+        .select(selectColumns)
+        .eq("id", args.sessionId)
+        .maybeSingle();
+      const row = (data as Record<string, unknown> | null) ?? null;
+      if (!row) continue;
+      if (row.stage_status !== `complete:${args.stageStatusId}`) continue;
+      const output = args.getOutput
+        ? args.getOutput(row)
+        : args.outputColumns
+            .map((column) => (typeof row[column] === "string" ? (row[column] as string) : ""))
+            .join("");
+      if (output.trim().length >= minChars) return { output, row };
+    } catch {
+      /* transient read failure — keep polling */
+    }
+  }
+
+  throw new Error(
+    `DB poll timed out after ${Math.round(maxMs / 1000)}s waiting for Stage ${args.stageStatusId} completion`,
+  );
+}
+
+async function drainStreamOrPollDb<C extends { delta?: string; done?: true; output?: string }>(
+  generator: AsyncGenerator<C, void, unknown> | Promise<AsyncGenerator<C, void, unknown>>,
+  onDelta: ((text: string) => void) | undefined,
+  fallback: {
+    sessionId: string;
+    outputColumns: string[];
+    stageStatusId: string;
+    minChars?: number;
+    intervalMs?: number;
+    maxMs?: number;
+    getOutput?: (row: Record<string, unknown>) => string;
+  },
+): Promise<Extract<C, { done: true }> & { output: string; completionSource: StreamCompletionSource }> {
+  let settled = false;
+  let streamDone = false;
+  let streamResult: Extract<C, { done: true }> | null = null;
+  let streamError: unknown = null;
+  let pollDone = false;
+  let pollError: unknown = null;
+  let generatorRef: AsyncGenerator<C, void, unknown> | null = null;
+
+  const settle = (
+    resolve: (value: Extract<C, { done: true }> & { output: string; completionSource: StreamCompletionSource }) => void,
+    value: Extract<C, { done: true }> & { output: string; completionSource: StreamCompletionSource },
+  ) => {
+    if (settled) return;
+    settled = true;
+    resolve(value);
+  };
+
+  return await new Promise<Extract<C, { done: true }> & { output: string; completionSource: StreamCompletionSource }>(
+    (resolve, reject) => {
+      const maybeReject = () => {
+        if (settled) return;
+        if (!streamDone || !pollDone) return;
+        settled = true;
+        reject(streamError ?? pollError ?? new Error("Stage stream ended before a completed DB output was available"));
+      };
+
+      (async () => {
+        generatorRef = await generator;
+        return consumeStream(generatorRef, (text) => {
+          if (!settled) onDelta?.(text);
+        });
+      })()
+        .then((result) => {
+          streamDone = true;
+          streamResult = result;
+          const output = String((result as StreamDonePayload).output ?? "");
+          if (output.trim().length >= (fallback.minChars ?? 1)) {
+            settle(resolve, { ...result, output, completionSource: "stream" });
+            return;
+          }
+          maybeReject();
+        })
+        .catch((error: unknown) => {
+          streamDone = true;
+          streamError = error;
+          maybeReject();
+        });
+
+      pollForCompletedStageOutput(fallback)
+        .then(({ output, row }) => {
+          if (settled) return;
+          void generatorRef?.return?.(undefined as void).catch(() => undefined);
+          const dbResult = {
+            done: true as const,
+            output,
+            completionSource: "db-poll" as const,
+            tensionScore: row.stage_1_tension_score,
+            stage1bRequired: row.stage_1b_required,
+          } as Extract<C, { done: true }> & { output: string; completionSource: StreamCompletionSource };
+          settle(resolve, dbResult);
+        })
+        .catch((error: unknown) => {
+          pollDone = true;
+          pollError = error;
+          if (!settled && streamResult) {
+            const output = String((streamResult as StreamDonePayload).output ?? "");
+            if (output.trim().length >= (fallback.minChars ?? 1)) {
+              settle(resolve, { ...streamResult, output, completionSource: "stream" });
+              return;
+            }
+          }
+          maybeReject();
+        });
+    },
+  );
 }
 
 // Map UI stage id (e.g. "01", "13B") to the DB stage id literal used by resetStage.
