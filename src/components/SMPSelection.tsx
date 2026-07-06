@@ -59,7 +59,7 @@ function parsePropositions(rawOutput: string): RawProp[] {
   // bold text that can be mis-detected as additional propositions.
   let scope = rawOutput;
   const endMarker = scope.search(
-    /={2,}\s*DELIVERABLE\s+2|={2,}\s*DELIVERABLE\s+3|={2,}\s*PRESENTATION\s+ORDER|={2,}\s*SELF[-\s]AUDIT/i,
+    /={2,}\s*DELIVERABLE\s+2|={2,}\s*DELIVERABLE\s+3|={2,}\s*PRESENTATION\s+ORDER|={2,}\s*SELF[-\s]AUDIT|\n\s*(?:\*{0,2})?SECTION\s+3\b|STRATEGIC\s+LANDSCAPE\s+SUMMARY/i,
   );
   if (endMarker > 0) scope = scope.slice(0, endMarker);
 
