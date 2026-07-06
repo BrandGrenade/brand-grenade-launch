@@ -65,7 +65,7 @@ export const runStage14 = createServerFn({ method: "POST" })
 
     const { error: ue } = await supabaseAdmin
       .from("sessions")
-      .update({ stage_14_output: output, stage_14_error: null })
+      .update({ stage_14_output: output, stage_14_error: null, stage_status: "complete:14" })
       .eq("id", data.sessionId);
     if (ue) throw new Error(`Failed to save Stage 14 output: ${ue.message}`);
 

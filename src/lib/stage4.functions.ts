@@ -114,6 +114,7 @@ export const runStage4 = createServerFn({ method: "POST" })
         stage_4_error: stillInsufficient
           ? `Stage 4 produced only ${universeCount} universe(s) after ${attempts} continuation attempt(s). Manual retry recommended.`
           : null,
+        stage_status: stillInsufficient ? "interrupted:4" : "complete:4",
       })
       .eq("id", data.sessionId);
     if (updateErr) throw new Error(`Failed to save Stage 4 output: ${updateErr.message}`);

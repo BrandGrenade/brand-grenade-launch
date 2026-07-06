@@ -204,7 +204,7 @@ async function drainStreamOrPollDb<C extends { delta?: string; done?: true; outp
             completionSource: "db-poll" as const,
             tensionScore: row.stage_1_tension_score,
             stage1bRequired: row.stage_1b_required,
-          } as Extract<C, { done: true }> & { output: string; completionSource: StreamCompletionSource };
+          } as unknown as Extract<C, { done: true }> & { output: string; completionSource: StreamCompletionSource };
           settle(resolve, dbResult);
         })
         .catch((error: unknown) => {
