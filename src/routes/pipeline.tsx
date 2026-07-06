@@ -44,6 +44,8 @@ import { FileText, PencilLine } from "lucide-react";
 
 const CLIENT_STREAM_IDLE_MS = 8 * 60_000;
 const DB_COMPLETION_POLL_MS = 5_000;
+const DB_COMPLETION_POLL_MAX_MS = 60 * 60_000;
+const DB_COMPLETION_GRACE_AFTER_STREAM_FAILURE_MS = 15_000;
 
 type StreamDonePayload = { done: true; output?: string };
 type StreamCompletionSource = "stream" | "db-poll";
@@ -99,7 +101,7 @@ async function pollForCompletedStageOutput(args: {
   getOutput?: (row: Record<string, unknown>) => string;
 }): Promise<{ output: string; row: Record<string, unknown> }> {
   const intervalMs = args.intervalMs ?? DB_COMPLETION_POLL_MS;
-  const maxMs = args.maxMs ?? CLIENT_STREAM_IDLE_MS + 15_000;
+  const maxMs = args.maxMs ?? DB_COMPLETION_POLL_MAX_MS;
   const minChars = args.minChars ?? 1;
   const selectColumns = Array.from(
     new Set([...args.outputColumns, "stage_status", "stage_1_tension_score", "stage_1b_required"]),
@@ -153,6 +155,7 @@ async function drainStreamOrPollDb<C extends { delta?: string; done?: true; outp
   let pollDone = false;
   let pollError: unknown = null;
   let generatorRef: AsyncGenerator<C, void, unknown> | null = null;
+  let streamFailureTimer: ReturnType<typeof window.setTimeout> | null = null;
 
   const settle = (
     resolve: (value: Extract<C, { done: true }> & { output: string; completionSource: StreamCompletionSource }) => void,
@@ -160,6 +163,7 @@ async function drainStreamOrPollDb<C extends { delta?: string; done?: true; outp
   ) => {
     if (settled) return;
     settled = true;
+    if (streamFailureTimer) window.clearTimeout(streamFailureTimer);
     resolve(value);
   };
 
@@ -191,6 +195,13 @@ async function drainStreamOrPollDb<C extends { delta?: string; done?: true; outp
         .catch((error: unknown) => {
           streamDone = true;
           streamError = error;
+          if (!settled) {
+            streamFailureTimer = window.setTimeout(() => {
+              if (settled) return;
+              settled = true;
+              reject(streamError ?? new Error("Stage stream failed before DB completion was detected"));
+            }, DB_COMPLETION_GRACE_AFTER_STREAM_FAILURE_MS);
+          }
           maybeReject();
         });
 
