@@ -51,6 +51,7 @@ const CONDITIONAL_STEMS: Record<string, readonly string[]> = {
   earned: ["earn", "earned", "earning", "earns"],
   deserve: ["deserve", "deserved", "deserves", "deserving"],
   deserved: ["deserve", "deserved", "deserves", "deserving"],
+  permission: ["permission", "permissions", "permit", "permits", "permitted", "permitting"],
 };
 
 function sentenceSplit(text: string): string[] {
