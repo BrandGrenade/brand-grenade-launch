@@ -165,6 +165,7 @@ export const runStage8 = createServerFn({ method: "POST" })
       .update({
         current_stage: 8,
         status: "running",
+        stage_status: "running:8",
         stage_8_error: null,
         stage_7_territory_count: territoryCount,
       })
@@ -210,6 +211,7 @@ export const runStage8 = createServerFn({ method: "POST" })
           .update({
             stage_8_output: partial.length > 0 ? partial : null,
             stage_8_error: errorMsg,
+            stage_status: errorMsg ? "interrupted:8" : "running:8",
           })
           .eq("id", data.sessionId);
       } catch {

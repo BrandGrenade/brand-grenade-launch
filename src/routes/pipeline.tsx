@@ -33,7 +33,7 @@ import { runStage16 } from "@/lib/stage16.functions";
 import { runStage8, confirmCheckpointB, regenerateStage8Selective } from "@/lib/stage8.functions";
 import { resetStage, resetStageCascade } from "@/lib/retry.functions";
 import { sanitizeStageOutput } from "@/lib/sanitize-output";
-import { isStageOutputComplete } from "@/lib/stage-completion";
+import { hasStageOutput, isStageOutputComplete } from "@/lib/stage-completion";
 import {
   BRIEF_SECTIONS,
   briefFieldsFromLegacyText,
@@ -597,8 +597,54 @@ function isPersistedStageComplete(
   numericStage: number,
   output: string | null | undefined,
 ): boolean {
+  if (!hasStageOutput(output)) return false;
+  const marker = parsePersistedStageStatus(row.stage_status);
+  if (
+    marker &&
+    marker.id === stageStatusId.toLowerCase() &&
+    (marker.state === "running" || marker.state === "interrupted") &&
+    row.status !== "complete" &&
+    !(typeof row.current_stage === "number" && row.current_stage > numericStage)
+  ) {
+    return false;
+  }
   return isStageOutputComplete(row, stageStatusId, numericStage, output);
 }
+
+function parsePersistedStageStatus(
+  value: string | null | undefined,
+): { state: "complete" | "running" | "interrupted"; id: string } | null {
+  const match = /^(complete|running|interrupted):([0-9]+[a-z]?)$/i.exec(value ?? "");
+  if (!match) return null;
+  return {
+    state: match[1].toLowerCase() as "complete" | "running" | "interrupted",
+    id: match[2].toLowerCase(),
+  };
+}
+
+const DB_STAGE_ID_TO_UI: Record<string, string> = {
+  "1": "01",
+  "1b": "01B",
+  "2": "02",
+  "3": "03",
+  "4": "04",
+  "4b": "04B",
+  "5": "05",
+  "6": "06",
+  "7": "07",
+  "8": "08",
+  "9": "09",
+  "10": "10",
+  "11": "11",
+  "12": "12",
+  "13": "13",
+  "13b": "13B",
+  "14": "14",
+  "14b": "14B",
+  "14c": "14C",
+  "15": "15",
+  "16": "16",
+};
 
 function PipelineView() {
   const { session: sessionId } = Route.useSearch();
@@ -903,6 +949,8 @@ function PipelineView() {
 
   const [statuses, setStatuses] = useState(initialStatuses);
   const [selectedId, setSelectedId] = useState("01");
+  const hydratedSessionRef = useRef<string | null>(null);
+  const selectedIdRef = useRef("01");
   const contentScrollRef = useRef<HTMLDivElement | null>(null);
 
   function scrollToTop() {
@@ -911,6 +959,7 @@ function PipelineView() {
   }
 
   useEffect(() => {
+    selectedIdRef.current = selectedId;
     scrollToTop();
   }, [selectedId]);
   const [rationaleForId, setRationaleForId] = useState<string | null>(null);
@@ -1258,6 +1307,198 @@ function PipelineView() {
       void supabase.removeChannel(channel);
     };
   }, [sessionId]);
+
+  // Rebuild the visible pipeline state from the persisted session row.
+  // This is the reload recovery path: saved outputs are authoritative, so a
+  // stage must not appear blank/pending just because this React mount has no
+  // in-memory stream buffer yet, or because a legacy row has a stale marker.
+  useEffect(() => {
+    if (!session) return;
+
+    const nextStatuses: Record<string, StageStatus> = { ...initialStatuses };
+    const complete = (stageStatusId: string, numericStage: number, output: string | null | undefined) =>
+      isPersistedStageComplete(session, stageStatusId, numericStage, output);
+
+    const setActiveFromMarker = () => {
+      const marker = parsePersistedStageStatus(session.stage_status);
+      if (!marker) return;
+      const uiId = DB_STAGE_ID_TO_UI[marker.id];
+      if (!uiId) return;
+      if (nextStatuses[uiId] === "complete" || nextStatuses[uiId] === "checkpoint") return;
+      if (marker.state === "running") nextStatuses[uiId] = "running";
+      if (marker.state === "interrupted") nextStatuses[uiId] = "error";
+    };
+
+    if (complete("1", 1, session.stage_1_output)) {
+      setStage1Output(session.stage_1_output);
+      setStage1Error(null);
+      nextStatuses["01"] = session.checkpoint_a_confirmed ? "complete" : "checkpoint";
+    }
+    if (session.stage_1b_required) nextStatuses["01B"] = "pending";
+    if (complete("1b", 1, session.stage_1b_output)) {
+      setStage1bOutput(session.stage_1b_output);
+      nextStatuses["01B"] = "complete";
+    }
+    if (complete("2", 2, session.stage_2_output)) {
+      setStage2Output(session.stage_2_output);
+      setStage2Error(null);
+      nextStatuses["02"] = "complete";
+    }
+    if (complete("3", 3, session.stage_3_output)) {
+      setStage3Output(session.stage_3_output);
+      setStage3Error(null);
+      nextStatuses["03"] = "complete";
+    }
+    if (complete("4", 4, session.stage_4_output)) {
+      setStage4Output(session.stage_4_output);
+      setStage4Error(null);
+      nextStatuses["04"] = "complete";
+    }
+    if (complete("4b", 4, session.stage_4b_output)) {
+      setStage4bOutput(session.stage_4b_output);
+      setStage4bError(null);
+      nextStatuses["04B"] = "complete";
+    }
+    if (complete("5", 5, session.stage_5_output)) {
+      setStage5Output(session.stage_5_output);
+      setStage5Error(null);
+      nextStatuses["05"] = "complete";
+    }
+    if (complete("6", 6, session.stage_6_output)) {
+      setStage6Output(session.stage_6_output);
+      setStage6Error(null);
+      nextStatuses["06"] = "complete";
+    }
+    if (complete("7", 7, session.stage_7_output)) {
+      setStage7Output(session.stage_7_output);
+      setStage7Error(null);
+      nextStatuses["07"] = "complete";
+    }
+    if (complete("8", 8, session.stage_8_output)) {
+      setStage8Output(session.stage_8_output);
+      setStage8Error(null);
+      nextStatuses["08"] = session.checkpoint_b_confirmed ? "complete" : "checkpoint";
+    }
+    if (complete("9", 9, session.stage_9_output)) {
+      setStage9Output(`${session.stage_9_output}${session.stage_9_leftofcentre_output ?? ""}`);
+      setStage9Error(null);
+      nextStatuses["09"] = "complete";
+    }
+    if (complete("10", 10, session.stage_10_output)) {
+      setStage10Output(session.stage_10_output);
+      setStage10Error(null);
+      nextStatuses["10"] = "complete";
+    }
+    if (complete("11", 11, session.stage_11_output)) {
+      setStage11Output(session.stage_11_output);
+      setStage11Error(null);
+      nextStatuses["11"] = "complete";
+    }
+    if (complete("12", 12, session.stage_12_output)) {
+      setStage12Output(session.stage_12_output);
+      setStage12Error(null);
+      nextStatuses["12"] = session.checkpoint_c_confirmed ? "complete" : "checkpoint";
+    }
+    if (complete("13", 13, session.stage_13_output)) {
+      setStage13Output(session.stage_13_output);
+      setStage13Error(null);
+      setIntelSubmitted(true);
+      nextStatuses["13"] = "complete";
+    }
+    if (complete("13b", 13, session.stage_13b_output)) {
+      setStage13bOutput(session.stage_13b_output);
+      setStage13bError(null);
+      nextStatuses["13B"] = "complete";
+    }
+    if (complete("14", 14, session.stage_14_output)) {
+      setStage14Output(session.stage_14_output);
+      setStage14Error(null);
+      setStage14Loading(false);
+      nextStatuses["14"] = "complete";
+    }
+    if (complete("14b", 14, session.stage_14b_output)) {
+      setStage14bOutput(session.stage_14b_output);
+      setStage14bError(null);
+      setStage14bLoading(false);
+      nextStatuses["14B"] = "complete";
+    }
+    if (complete("14c", 14, session.stage_14c_output)) {
+      setStage14cOutput(session.stage_14c_output);
+      setStage14cError(null);
+      setStage14cLoading(false);
+      nextStatuses["14C"] = "complete";
+    }
+    if (complete("15", 15, session.stage_15_output)) {
+      setStage15Output(session.stage_15_output);
+      setStage15Error(null);
+      setStage15Loading(false);
+      nextStatuses["15"] = "complete";
+    }
+    if (complete("16", 16, session.stage_16_consulting_output)) {
+      setStage16Output(session.stage_16_consulting_output);
+      setStage16Error(null);
+      nextStatuses["16"] = "complete";
+    }
+
+    setActiveFromMarker();
+
+    const errorIfNoComplete = (
+      uiId: string,
+      error: string | null,
+      setError: (message: string) => void,
+    ) => {
+      if (!error || nextStatuses[uiId] === "complete" || nextStatuses[uiId] === "checkpoint") return;
+      setError(error);
+      nextStatuses[uiId] = "error";
+    };
+    errorIfNoComplete("01", session.stage_1_error, setStage1Error);
+    errorIfNoComplete("02", session.stage_2_error, setStage2Error);
+    errorIfNoComplete("03", session.stage_3_error, setStage3Error);
+    errorIfNoComplete("04", session.stage_4_error, setStage4Error);
+    errorIfNoComplete("04B", session.stage_4b_error, setStage4bError);
+    errorIfNoComplete("05", session.stage_5_error, setStage5Error);
+    errorIfNoComplete("06", session.stage_6_error, setStage6Error);
+    errorIfNoComplete("07", session.stage_7_error, setStage7Error);
+    errorIfNoComplete("08", session.stage_8_error, setStage8Error);
+    errorIfNoComplete("09", session.stage_9_error, setStage9Error);
+    errorIfNoComplete("10", session.stage_10_error, setStage10Error);
+    errorIfNoComplete("11", session.stage_11_error, setStage11Error);
+    errorIfNoComplete("12", session.stage_12_error, setStage12Error);
+    errorIfNoComplete("13", session.stage_13_error, setStage13Error);
+    errorIfNoComplete("13B", session.stage_13b_error, setStage13bError);
+    errorIfNoComplete("14", session.stage_14_error, setStage14Error);
+    errorIfNoComplete("14B", session.stage_14b_error, setStage14bError);
+    errorIfNoComplete("14C", session.stage_14c_error, setStage14cError);
+    errorIfNoComplete("15", session.stage_15_error, setStage15Error);
+    errorIfNoComplete("16", session.stage_16_error, setStage16Error);
+
+    if (
+      session.current_stage === 12 &&
+      session.status === "running" &&
+      session.stage_11_output &&
+      !session.stage_12_output &&
+      !session.checkpoint_c_confirmed
+    ) {
+      nextStatuses["12"] = "running";
+    }
+
+    setStatuses(nextStatuses);
+
+    if (hydratedSessionRef.current !== session.id && selectedIdRef.current !== "BRIEF") {
+      hydratedSessionRef.current = session.id;
+      const activeStage = (() => {
+        for (let i = STAGES.length - 1; i >= 0; i--) {
+          const state = nextStatuses[STAGES[i].id];
+          if (state === "running" || state === "checkpoint" || state === "error") return STAGES[i].id;
+        }
+        for (let i = STAGES.length - 1; i >= 0; i--) {
+          if (nextStatuses[STAGES[i].id] === "complete") return STAGES[i].id;
+        }
+        return "01";
+      })();
+      setSelectedId(activeStage);
+    }
+  }, [initialStatuses, session]);
 
   // Trigger Stage 1 when session loads (or on retry).
   useEffect(() => {
