@@ -28,8 +28,9 @@ export const runStage15 = createServerFn({ method: "POST" })
       throw new Error("Stage 14C output missing or incomplete — cannot run Stage 15");
     }
     if (isStageOutputComplete(session, "15", 15, session.stage_15_output)) {
-      yield { delta: session.stage_15_output };
-      yield { done: true as const, output: session.stage_15_output };
+      const cached = session.stage_15_output ?? "";
+      yield { delta: cached };
+      yield { done: true as const, output: cached };
       return;
     }
 

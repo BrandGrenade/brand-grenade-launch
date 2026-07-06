@@ -28,8 +28,9 @@ export const runStage14 = createServerFn({ method: "POST" })
     if (error || !session) throw new Error(`Session not found: ${error?.message ?? "no row"}`);
     if (!session.stage_13b_output) throw new Error("Stage 13B output missing — cannot run Stage 14");
     if (isStageOutputComplete(session, "14", 14, session.stage_14_output)) {
-      yield { delta: session.stage_14_output };
-      yield { done: true as const, output: session.stage_14_output };
+      const cached = session.stage_14_output ?? "";
+      yield { delta: cached };
+      yield { done: true as const, output: cached };
       return;
     }
 
