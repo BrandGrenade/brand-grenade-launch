@@ -8,6 +8,7 @@ import { trimBrandFitForDownstream } from "./context-trim";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertSessionOwner } from "@/lib/auth-helpers.server";
 import { assertUpstreamStageOutput } from "./pipeline-integrity";
+import { isStageOutputComplete } from "./stage-completion";
 
 const Input = z.object({ sessionId: z.string().uuid() });
 
@@ -23,21 +24,24 @@ export const runStage15 = createServerFn({ method: "POST" })
       .eq("id", data.sessionId)
       .single();
     if (error || !session) throw new Error(`Session not found: ${error?.message ?? "no row"}`);
-    if (!session.stage_14c_output) throw new Error("Stage 14C output missing — cannot run Stage 15");
-    if (session.stage_15_output) {
-      yield { delta: session.stage_15_output };
-      yield { done: true as const, output: session.stage_15_output };
+    if (!isStageOutputComplete(session, "14c", 14, session.stage_14c_output)) {
+      throw new Error("Stage 14C output missing or incomplete — cannot run Stage 15");
+    }
+    if (isStageOutputComplete(session, "15", 15, session.stage_15_output)) {
+      const cached = session.stage_15_output ?? "";
+      yield { delta: cached };
+      yield { done: true as const, output: cached };
       return;
     }
 
     await supabaseAdmin
       .from("sessions")
-      .update({ current_stage: 15, status: "running", stage_15_error: null })
+      .update({ current_stage: 15, status: "running", stage_status: "running:15", stage_15_output: null, stage_15_error: null })
       .eq("id", data.sessionId);
 
     let output = "";
     for await (const delta of withStreamSafety(
-      { sessionId: data.sessionId, stageLabel: "Stage 15", outputColumn: "stage_15_output", errorColumn: "stage_15_error" },
+      { sessionId: data.sessionId, stageLabel: "Stage 15", stageStatusId: "15", outputColumn: "stage_15_output", errorColumn: "stage_15_error" },
       streamClaude({
         systemPrompt: STAGE_15_SYSTEM_PROMPT,
         maxTokens: 64000,

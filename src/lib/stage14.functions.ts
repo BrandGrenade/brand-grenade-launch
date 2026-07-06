@@ -8,6 +8,7 @@ import { trimBrandFitForDownstream } from "./context-trim";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertSessionOwner } from "@/lib/auth-helpers.server";
 import { assertUpstreamStageOutput } from "./pipeline-integrity";
+import { isStageOutputComplete } from "./stage-completion";
 
 const Input = z.object({ sessionId: z.string().uuid() });
 
@@ -20,26 +21,27 @@ export const runStage14 = createServerFn({ method: "POST" })
     const { data: session, error } = await supabaseAdmin
       .from("sessions")
       .select(
-        "brand_name, category, selected_smp, stage_2_output, stage_12_output, stage_13_output, stage_13b_output, stage_14_output"
+        "brand_name, category, selected_smp, current_stage, status, stage_status, stage_2_output, stage_12_output, stage_13_output, stage_13b_output, stage_14_output"
       )
       .eq("id", data.sessionId)
       .single();
     if (error || !session) throw new Error(`Session not found: ${error?.message ?? "no row"}`);
     if (!session.stage_13b_output) throw new Error("Stage 13B output missing — cannot run Stage 14");
-    if (session.stage_14_output) {
-      yield { delta: session.stage_14_output };
-      yield { done: true as const, output: session.stage_14_output };
+    if (isStageOutputComplete(session, "14", 14, session.stage_14_output)) {
+      const cached = session.stage_14_output ?? "";
+      yield { delta: cached };
+      yield { done: true as const, output: cached };
       return;
     }
 
     await supabaseAdmin
       .from("sessions")
-      .update({ current_stage: 14, status: "running", stage_14_error: null })
+      .update({ current_stage: 14, status: "running", stage_status: "running:14", stage_14_output: null, stage_14_error: null })
       .eq("id", data.sessionId);
 
     let output = "";
     for await (const delta of withStreamSafety(
-      { sessionId: data.sessionId, stageLabel: "Stage 14", outputColumn: "stage_14_output", errorColumn: "stage_14_error" },
+      { sessionId: data.sessionId, stageLabel: "Stage 14", stageStatusId: "14", outputColumn: "stage_14_output", errorColumn: "stage_14_error" },
       streamClaude({
         systemPrompt: STAGE_14_SYSTEM_PROMPT,
         userMessage: buildStage14UserMessage({
