@@ -52,7 +52,7 @@ export const runStage14b = createServerFn({ method: "POST" })
           stage12Output: "",
           stage13Output: trimBrandFitForDownstream(session.stage_13_output ?? ""),
           stage13bOutput: session.stage_13b_output ?? "",
-          stage14Output: session.stage_14_output,
+          stage14Output: session.stage_14_output ?? "",
         }),
         sessionId: data.sessionId,
         stageLabel: "Stage 14B",

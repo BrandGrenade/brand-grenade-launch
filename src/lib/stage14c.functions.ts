@@ -49,7 +49,7 @@ export const runStage14c = createServerFn({ method: "POST" })
         userMessage: buildStage14cUserMessage({
           brandName: session.brand_name,
           selectedSMP: session.selected_smp ?? "",
-          stage14bOutput: session.stage_14b_output,
+          stage14bOutput: session.stage_14b_output ?? "",
           stage14Output: session.stage_14_output ?? "",
           stage7Output: session.stage_7_output ?? "",
           stage6Output: session.stage_6_output ?? "",
