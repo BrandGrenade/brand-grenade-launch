@@ -159,7 +159,7 @@ async function markStageInterrupted(args: {
   };
   if (args.errorColumn) update[args.errorColumn] = args.message;
   try {
-    await supabase.from("sessions").update(update).eq("id", args.sessionId);
+    await supabase.from("sessions").update(update as never).eq("id", args.sessionId);
   } catch {
     /* best-effort: UI still surfaces the local error */
   }
