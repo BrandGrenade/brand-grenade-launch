@@ -147,6 +147,24 @@ async function pollForCompletedStageOutput(args: {
   );
 }
 
+async function markStageInterrupted(args: {
+  sessionId: string;
+  stageStatusId: string;
+  errorColumn?: string;
+  message: string;
+}) {
+  const update: Record<string, string> = {
+    status: "interrupted",
+    stage_status: `interrupted:${args.stageStatusId}`,
+  };
+  if (args.errorColumn) update[args.errorColumn] = args.message;
+  try {
+    await supabase.from("sessions").update(update).eq("id", args.sessionId);
+  } catch {
+    /* best-effort: UI still surfaces the local error */
+  }
+}
+
 async function drainStreamOrPollDb<C extends { delta?: string; done?: true; output?: string }>(
   generator:
     | AsyncIterable<C>
@@ -157,6 +175,7 @@ async function drainStreamOrPollDb<C extends { delta?: string; done?: true; outp
     sessionId: string;
     outputColumns: string[];
     stageStatusId: string;
+    errorColumn?: string;
     minChars?: number;
     intervalMs?: number;
     maxMs?: number;
@@ -223,7 +242,15 @@ async function drainStreamOrPollDb<C extends { delta?: string; done?: true; outp
             streamFailureTimer = window.setTimeout(() => {
               if (settled) return;
               settled = true;
-              reject(streamError ?? new Error("Stage stream failed before DB completion was detected"));
+              const error = streamError ?? new Error("Stage stream failed before DB completion was detected");
+              const message = error instanceof Error ? error.message : String(error);
+              void markStageInterrupted({
+                sessionId: fallback.sessionId,
+                stageStatusId: fallback.stageStatusId,
+                errorColumn: fallback.errorColumn,
+                message,
+              });
+              reject(error);
             }, DB_COMPLETION_GRACE_AFTER_STREAM_FAILURE_MS);
           }
           maybeReject();
@@ -257,6 +284,16 @@ async function drainStreamOrPollDb<C extends { delta?: string; done?: true; outp
               settle(resolve, { ...streamResult, output, completionSource: "stream" });
               return;
             }
+          }
+          if (!settled && streamDone) {
+            const finalError = streamError ?? pollError ?? new Error("Stage failed before DB completion was detected");
+            const message = finalError instanceof Error ? finalError.message : String(finalError);
+            void markStageInterrupted({
+              sessionId: fallback.sessionId,
+              stageStatusId: fallback.stageStatusId,
+              errorColumn: fallback.errorColumn,
+              message,
+            });
           }
           maybeReject();
         });
@@ -1820,6 +1857,7 @@ function PipelineView() {
         sessionId,
         outputColumns: ["stage_14_output"],
         stageStatusId: "14",
+        errorColumn: "stage_14_error",
       }))()
       .then((result) => {
         if (cancelled) return;
@@ -1849,6 +1887,7 @@ function PipelineView() {
         sessionId,
         outputColumns: ["stage_14b_output"],
         stageStatusId: "14b",
+        errorColumn: "stage_14b_error",
       }))()
       .then((result) => {
         if (cancelled) return;
@@ -1878,6 +1917,7 @@ function PipelineView() {
         sessionId,
         outputColumns: ["stage_14c_output"],
         stageStatusId: "14c",
+        errorColumn: "stage_14c_error",
       }))()
       .then((result) => {
         if (cancelled) return;
@@ -1907,6 +1947,7 @@ function PipelineView() {
         sessionId,
         outputColumns: ["stage_15_output"],
         stageStatusId: "15",
+        errorColumn: "stage_15_error",
       }))()
       .then((result) => {
         if (cancelled) return;
