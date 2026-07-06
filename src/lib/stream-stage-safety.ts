@@ -31,6 +31,8 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 export interface StreamStageSafetyOpts {
   sessionId: string;
   stageLabel: string;
+  /** Stable stage id used in sessions.stage_status, e.g. "14c". Inferred from outputColumn when omitted. */
+  stageStatusId?: string;
   /** Column name to persist partial + final output into, e.g. "stage_7_output". */
   outputColumn: string;
   /** Column name to write error strings into, e.g. "stage_7_error". */
@@ -43,6 +45,10 @@ export interface StreamStageSafetyOpts {
 
 const DEFAULT_BUDGET_MS = 30 * 60_000;
 const DEFAULT_THROTTLE_MS = 3_000;
+
+function inferStageStatusId(outputColumn: string): string | null {
+  return /^stage_([0-9]+[a-z]?)_/i.exec(outputColumn)?.[1]?.toLowerCase() ?? null;
+}
 
 /**
  * Wrap an async iterable of string deltas (typically `streamClaude(...)`) with
@@ -58,6 +64,7 @@ export async function* withStreamSafety(
 ): AsyncGenerator<string, string> {
   const budgetMs = opts.budgetMs ?? DEFAULT_BUDGET_MS;
   const throttleMs = opts.throttleMs ?? DEFAULT_THROTTLE_MS;
+  const stageStatusId = opts.stageStatusId ?? inferStageStatusId(opts.outputColumn);
   const start = Date.now();
   let accumulated = "";
   let lastPersist = 0;
@@ -91,7 +98,10 @@ export async function* withStreamSafety(
     try {
       await supabaseAdmin
         .from("sessions")
-        .update({ stream_last_delta_at: null } as never)
+        .update({
+          stream_last_delta_at: null,
+          ...(stageStatusId ? { stage_status: `running:${stageStatusId}` } : {}),
+        } as never)
         .eq("id", opts.sessionId);
     } catch {
       /* best-effort */
@@ -102,7 +112,10 @@ export async function* withStreamSafety(
     try {
       await supabaseAdmin
         .from("sessions")
-        .update({ status: "interrupted" })
+        .update({
+          status: "interrupted",
+          ...(stageStatusId ? { stage_status: `interrupted:${stageStatusId}` } : {}),
+        } as never)
         .eq("id", opts.sessionId);
     } catch {
       /* best-effort */

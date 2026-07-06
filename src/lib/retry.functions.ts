@@ -71,6 +71,7 @@ export const resetStage = createServerFn({ method: "POST" })
       status: "running" as const,
       stage_status: `running:${id}`,
       retry_status: null as string | null,
+      stream_last_delta_at: null as string | null,
     };
     switch (id) {
       case "1":

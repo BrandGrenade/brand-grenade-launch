@@ -33,6 +33,7 @@ import { runStage16 } from "@/lib/stage16.functions";
 import { runStage8, confirmCheckpointB, regenerateStage8Selective } from "@/lib/stage8.functions";
 import { resetStage, resetStageCascade } from "@/lib/retry.functions";
 import { sanitizeStageOutput } from "@/lib/sanitize-output";
+import { isStageOutputComplete } from "@/lib/stage-completion";
 import {
   BRIEF_SECTIONS,
   briefFieldsFromLegacyText,
@@ -559,12 +560,7 @@ function isPersistedStageComplete(
   numericStage: number,
   output: string | null | undefined,
 ): boolean {
-  if (!output || output.trim().length === 0) return false;
-  return (
-    row.stage_status === `complete:${stageStatusId}` ||
-    row.status === "complete" ||
-    row.current_stage > numericStage
-  );
+  return isStageOutputComplete(row, stageStatusId, numericStage, output);
 }
 
 function PipelineView() {
@@ -1173,17 +1169,25 @@ function PipelineView() {
     if (session?.stage_13b_output) setStage13bOutput(session.stage_13b_output);
   }, [session?.stage_13b_output]);
   useEffect(() => {
-    if (session?.stage_14_output) setStage14Output(session.stage_14_output);
-  }, [session?.stage_14_output]);
+    if (session && isPersistedStageComplete(session, "14", 14, session.stage_14_output)) {
+      setStage14Output(session.stage_14_output);
+    }
+  }, [session]);
   useEffect(() => {
-    if (session?.stage_14b_output) setStage14bOutput(session.stage_14b_output);
-  }, [session?.stage_14b_output]);
+    if (session && isPersistedStageComplete(session, "14b", 14, session.stage_14b_output)) {
+      setStage14bOutput(session.stage_14b_output);
+    }
+  }, [session]);
   useEffect(() => {
-    if (session?.stage_14c_output) setStage14cOutput(session.stage_14c_output);
-  }, [session?.stage_14c_output]);
+    if (session && isPersistedStageComplete(session, "14c", 14, session.stage_14c_output)) {
+      setStage14cOutput(session.stage_14c_output);
+    }
+  }, [session]);
   useEffect(() => {
-    if (session?.stage_15_output) setStage15Output(session.stage_15_output);
-  }, [session?.stage_15_output]);
+    if (session && isPersistedStageComplete(session, "15", 15, session.stage_15_output)) {
+      setStage15Output(session.stage_15_output);
+    }
+  }, [session]);
   useEffect(() => {
     if (session?.stage_16_consulting_output) setStage16Output(session.stage_16_consulting_output);
   }, [session?.stage_16_consulting_output]);
