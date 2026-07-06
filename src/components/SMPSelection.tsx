@@ -80,8 +80,9 @@ function parsePropositions(rawOutput: string): RawProp[] {
     ) {
       continue;
     }
+    // Note: [METADATA]…[/METADATA] is a per-card footer inside each PROPOSITION
+    // block — do NOT treat it as a skip signal or every card is discarded.
     if (
-      block.includes("[METADATA]") ||
       block.includes("SELF-AUDIT") ||
       block.includes("PRESENTATION ORDER") ||
       block.includes("SELECTION FRAMEWORK") ||
