@@ -155,7 +155,7 @@ async function drainStreamOrPollDb<C extends { delta?: string; done?: true; outp
   let pollDone = false;
   let pollError: unknown = null;
   let generatorRef: AsyncGenerator<C, void, unknown> | null = null;
-  let streamFailureTimer: ReturnType<typeof window.setTimeout> | null = null;
+  let streamFailureTimer: number | null = null;
 
   const settle = (
     resolve: (value: Extract<C, { done: true }> & { output: string; completionSource: StreamCompletionSource }) => void,
