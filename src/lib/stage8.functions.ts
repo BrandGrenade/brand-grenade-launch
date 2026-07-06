@@ -165,6 +165,7 @@ export const runStage8 = createServerFn({ method: "POST" })
       .update({
         current_stage: 8,
         status: "running",
+        stage_status: "running:8",
         stage_8_error: null,
         stage_7_territory_count: territoryCount,
       })
@@ -210,6 +211,7 @@ export const runStage8 = createServerFn({ method: "POST" })
           .update({
             stage_8_output: partial.length > 0 ? partial : null,
             stage_8_error: errorMsg,
+            stage_status: errorMsg ? "interrupted:8" : "running:8",
           })
           .eq("id", data.sessionId);
       } catch {
@@ -237,7 +239,7 @@ export const runStage8 = createServerFn({ method: "POST" })
       await persistPartial(output, `Stage 8 (initial pass) failed: ${msg}`);
       await supabaseAdmin
         .from("sessions")
-        .update({ status: "interrupted" })
+        .update({ status: "interrupted", stage_status: "interrupted:8" })
         .eq("id", data.sessionId);
       throw e instanceof Error ? e : new Error(msg);
     }
@@ -256,7 +258,7 @@ export const runStage8 = createServerFn({ method: "POST" })
         await persistPartial(output, msg);
         await supabaseAdmin
           .from("sessions")
-          .update({ status: "interrupted" })
+          .update({ status: "interrupted", stage_status: "interrupted:8" })
           .eq("id", data.sessionId);
         await setStatus(data.sessionId, null);
         throw new Error(msg);
@@ -308,7 +310,7 @@ export const runStage8 = createServerFn({ method: "POST" })
       await persistPartial(output, msg);
       await supabaseAdmin
         .from("sessions")
-        .update({ status: "interrupted" })
+        .update({ status: "interrupted", stage_status: "interrupted:8" })
         .eq("id", data.sessionId);
       await setStatus(data.sessionId, null);
       throw new Error(msg);
@@ -409,7 +411,7 @@ export const regenerateStage8Selective = createServerFn({ method: "POST" })
 
     await supabaseAdmin
       .from("sessions")
-      .update({ current_stage: 8, status: "running", stage_8_error: null })
+      .update({ current_stage: 8, status: "running", stage_status: "running:8", stage_8_error: null })
       .eq("id", data.sessionId);
 
     const baseUserMessage = buildStage8UserMessage({
@@ -459,7 +461,7 @@ export const regenerateStage8Selective = createServerFn({ method: "POST" })
       const msg = e instanceof Error ? e.message : "Stage 8 selective regenerate failed";
       await supabaseAdmin
         .from("sessions")
-        .update({ stage_8_error: msg })
+        .update({ stage_8_error: msg, status: "interrupted", stage_status: "interrupted:8" })
         .eq("id", data.sessionId);
       throw e instanceof Error ? e : new Error(msg);
     }

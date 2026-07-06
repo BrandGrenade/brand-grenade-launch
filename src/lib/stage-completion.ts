@@ -78,8 +78,20 @@ export function isStageOutputComplete(
     if ((marker.state === "running" || marker.state === "interrupted") && markerRank > wantedRank) {
       return true;
     }
+    if (
+      (marker.state === "running" || marker.state === "interrupted") &&
+      markerRank === wantedRank &&
+      typeof row.current_stage === "number" &&
+      row.current_stage > numericStage
+    ) {
+      return true;
+    }
     return false;
   }
 
-  return typeof row.current_stage === "number" && row.current_stage > numericStage;
+  // Legacy rows pre-date `stage_status` and only have the numeric
+  // `current_stage` marker. In that shape, a persisted output whose numeric
+  // stage is current-or-earlier is the source of truth; otherwise reloads can
+  // show stored stages as blank/pending and block advancement.
+  return typeof row.current_stage === "number" && row.current_stage >= numericStage;
 }
