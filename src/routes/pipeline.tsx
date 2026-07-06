@@ -1188,11 +1188,12 @@ function PipelineView() {
 
     const fb1 = pendingFeedback["01"];
     (async () =>
-      consumeStream(
+      drainStreamOrPollDb(
         await runStage1Fn({
           data: { sessionId, feedback: fb1, previousOutput: pendingPreviousOutput["01"] },
         }),
         setStage1Output,
+        { sessionId, outputColumns: ["stage_1_output"], stageStatusId: "1" },
       ))()
       .then((result) => {
         if (cancelled) return;
@@ -1236,7 +1237,12 @@ function PipelineView() {
     if (statuses["01B"] !== "running") return;
     let cancelled = false;
     setStage1bLoading(true);
-    (async () => consumeStream(await runStage1bFn({ data: { sessionId } }), setStage1bOutput))()
+    (async () =>
+      drainStreamOrPollDb(await runStage1bFn({ data: { sessionId } }), setStage1bOutput, {
+        sessionId,
+        outputColumns: ["stage_1b_output"],
+        stageStatusId: "1b",
+      }))()
       .then((result) => {
         if (cancelled) return;
         setStage1bOutput(result.output);
@@ -1263,7 +1269,12 @@ function PipelineView() {
     let cancelled = false;
     setStage2Loading(true);
     setStage2Error(null);
-    (async () => consumeStream(await runStage2Fn({ data: { sessionId } }), setStage2Output))()
+    (async () =>
+      drainStreamOrPollDb(await runStage2Fn({ data: { sessionId } }), setStage2Output, {
+        sessionId,
+        outputColumns: ["stage_2_output"],
+        stageStatusId: "2",
+      }))()
       .then((result) => {
         if (cancelled) return;
         setStage2Output(result.output);
@@ -1290,7 +1301,12 @@ function PipelineView() {
     let cancelled = false;
     setStage3Loading(true);
     setStage3Error(null);
-    (async () => consumeStream(await runStage3Fn({ data: { sessionId } }), setStage3Output))()
+    (async () =>
+      drainStreamOrPollDb(await runStage3Fn({ data: { sessionId } }), setStage3Output, {
+        sessionId,
+        outputColumns: ["stage_3_output"],
+        stageStatusId: "3",
+      }))()
       .then((result) => {
         if (cancelled) return;
         setStage3Output(result.output);
@@ -1317,7 +1333,12 @@ function PipelineView() {
     let cancelled = false;
     setStage4Loading(true);
     setStage4Error(null);
-    (async () => consumeStream(await runStage4Fn({ data: { sessionId } }), setStage4Output))()
+    (async () =>
+      drainStreamOrPollDb(await runStage4Fn({ data: { sessionId } }), setStage4Output, {
+        sessionId,
+        outputColumns: ["stage_4_output"],
+        stageStatusId: "4",
+      }))()
       .then((result) => {
         if (cancelled) return;
         setStage4Output(result.output);
@@ -1344,7 +1365,12 @@ function PipelineView() {
     let cancelled = false;
     setStage4bLoading(true);
     setStage4bError(null);
-    (async () => consumeStream(await runStage4bFn({ data: { sessionId } }), setStage4bOutput))()
+    (async () =>
+      drainStreamOrPollDb(await runStage4bFn({ data: { sessionId } }), setStage4bOutput, {
+        sessionId,
+        outputColumns: ["stage_4b_output"],
+        stageStatusId: "4b",
+      }))()
       .then((result) => {
         if (cancelled) return;
         setStage4bOutput(result.output);
@@ -1372,7 +1398,12 @@ function PipelineView() {
     let cancelled = false;
     setStage5Loading(true);
     setStage5Error(null);
-    (async () => consumeStream(await runStage5Fn({ data: { sessionId } }), setStage5Output))()
+    (async () =>
+      drainStreamOrPollDb(await runStage5Fn({ data: { sessionId } }), setStage5Output, {
+        sessionId,
+        outputColumns: ["stage_5_output"],
+        stageStatusId: "5",
+      }))()
       .then((result) => {
         if (cancelled) return;
         setStage5Output(result.output);
@@ -1399,7 +1430,12 @@ function PipelineView() {
     let cancelled = false;
     setStage6Loading(true);
     setStage6Error(null);
-    (async () => consumeStream(await runStage6Fn({ data: { sessionId } }), setStage6Output))()
+    (async () =>
+      drainStreamOrPollDb(await runStage6Fn({ data: { sessionId } }), setStage6Output, {
+        sessionId,
+        outputColumns: ["stage_6_output"],
+        stageStatusId: "6",
+      }))()
       .then((result) => {
         if (cancelled) return;
         setStage6Output(result.output);
@@ -1426,7 +1462,12 @@ function PipelineView() {
     let cancelled = false;
     setStage7Loading(true);
     setStage7Error(null);
-    (async () => consumeStream(await runStage7Fn({ data: { sessionId } }), setStage7Output))()
+    (async () =>
+      drainStreamOrPollDb(await runStage7Fn({ data: { sessionId } }), setStage7Output, {
+        sessionId,
+        outputColumns: ["stage_7_output"],
+        stageStatusId: "7",
+      }))()
       .then((result) => {
         if (cancelled) return;
         setStage7Output(result.output);
@@ -1455,11 +1496,12 @@ function PipelineView() {
     setStage8Loading(true);
     setStage8Error(null);
     (async () =>
-      consumeStream(
+      drainStreamOrPollDb(
         await runStage8Fn({
           data: { sessionId, feedback: fb8, previousOutput: pendingPreviousOutput["08"] },
         }),
         setStage8Output,
+        { sessionId, outputColumns: ["stage_8_output"], stageStatusId: "8" },
       ))()
       .then((result) => {
         if (cancelled) return;
@@ -1499,7 +1541,12 @@ function PipelineView() {
     let cancelled = false;
     setStage9Loading(true);
     setStage9Error(null);
-    (async () => consumeStream(await runStage9Fn({ data: { sessionId } }), setStage9Output))()
+    (async () =>
+      drainStreamOrPollDb(await runStage9Fn({ data: { sessionId } }), setStage9Output, {
+        sessionId,
+        outputColumns: ["stage_9_output", "stage_9_leftofcentre_output"],
+        stageStatusId: "9",
+      }))()
       .then((result) => {
         if (cancelled) return;
         setStage9Output(result.output);
@@ -1526,7 +1573,12 @@ function PipelineView() {
     let cancelled = false;
     setStage10Loading(true);
     setStage10Error(null);
-    (async () => consumeStream(await runStage10Fn({ data: { sessionId } }), setStage10Output))()
+    (async () =>
+      drainStreamOrPollDb(await runStage10Fn({ data: { sessionId } }), setStage10Output, {
+        sessionId,
+        outputColumns: ["stage_10_output"],
+        stageStatusId: "10",
+      }))()
       .then((result) => {
         if (cancelled) return;
         setStage10Output(result.output);
@@ -1553,7 +1605,12 @@ function PipelineView() {
     let cancelled = false;
     setStage11Loading(true);
     setStage11Error(null);
-    (async () => consumeStream(await runStage11Fn({ data: { sessionId } }), setStage11Output))()
+    (async () =>
+      drainStreamOrPollDb(await runStage11Fn({ data: { sessionId } }), setStage11Output, {
+        sessionId,
+        outputColumns: ["stage_11_output"],
+        stageStatusId: "11",
+      }))()
       .then((result) => {
         if (cancelled) return;
         setStage11Output(result.output);
@@ -1594,11 +1651,12 @@ function PipelineView() {
     setStage12Loading(true);
     setStage12Error(null);
     (async () =>
-      consumeStream(
+      drainStreamOrPollDb(
         await runStage12Fn({
           data: { sessionId, feedback: fb12, previousOutput: pendingPreviousOutput["12"] },
         }),
         setStage12Output,
+        { sessionId, outputColumns: ["stage_12_output"], stageStatusId: "12" },
       ))()
       .then((result) => {
         if (cancelled) return;
@@ -1640,7 +1698,12 @@ function PipelineView() {
     let cancelled = false;
     setStage13Loading(true);
     setStage13Error(null);
-    (async () => consumeStream(await runStage13Fn({ data: { sessionId } }), setStage13Output))()
+    (async () =>
+      drainStreamOrPollDb(await runStage13Fn({ data: { sessionId } }), setStage13Output, {
+        sessionId,
+        outputColumns: ["stage_13_output"],
+        stageStatusId: "13",
+      }))()
       .then((result) => {
         if (cancelled) return;
         setStage13Output(result.output);
@@ -1664,7 +1727,12 @@ function PipelineView() {
     let cancelled = false;
     setStage13bLoading(true);
     setStage13bError(null);
-    (async () => consumeStream(await runStage13bFn({ data: { sessionId } }), setStage13bOutput))()
+    (async () =>
+      drainStreamOrPollDb(await runStage13bFn({ data: { sessionId } }), setStage13bOutput, {
+        sessionId,
+        outputColumns: ["stage_13b_output"],
+        stageStatusId: "13b",
+      }))()
       .then((result) => {
         if (cancelled) return;
         setStage13bOutput(result.output);
@@ -1688,7 +1756,12 @@ function PipelineView() {
     let cancelled = false;
     setStage14Loading(true);
     setStage14Error(null);
-    (async () => consumeStream(await runStage14Fn({ data: { sessionId } }), setStage14Output))()
+    (async () =>
+      drainStreamOrPollDb(await runStage14Fn({ data: { sessionId } }), setStage14Output, {
+        sessionId,
+        outputColumns: ["stage_14_output"],
+        stageStatusId: "14",
+      }))()
       .then((result) => {
         if (cancelled) return;
         setStage14Output(result.output);
@@ -1712,7 +1785,12 @@ function PipelineView() {
     let cancelled = false;
     setStage14bLoading(true);
     setStage14bError(null);
-    (async () => consumeStream(await runStage14bFn({ data: { sessionId } }), setStage14bOutput))()
+    (async () =>
+      drainStreamOrPollDb(await runStage14bFn({ data: { sessionId } }), setStage14bOutput, {
+        sessionId,
+        outputColumns: ["stage_14b_output"],
+        stageStatusId: "14b",
+      }))()
       .then((result) => {
         if (cancelled) return;
         setStage14bOutput(result.output);
@@ -1736,7 +1814,12 @@ function PipelineView() {
     let cancelled = false;
     setStage14cLoading(true);
     setStage14cError(null);
-    (async () => consumeStream(await runStage14cFn({ data: { sessionId } }), setStage14cOutput))()
+    (async () =>
+      drainStreamOrPollDb(await runStage14cFn({ data: { sessionId } }), setStage14cOutput, {
+        sessionId,
+        outputColumns: ["stage_14c_output"],
+        stageStatusId: "14c",
+      }))()
       .then((result) => {
         if (cancelled) return;
         setStage14cOutput(result.output);
@@ -1760,7 +1843,12 @@ function PipelineView() {
     let cancelled = false;
     setStage15Loading(true);
     setStage15Error(null);
-    (async () => consumeStream(await runStage15Fn({ data: { sessionId } }), setStage15Output))()
+    (async () =>
+      drainStreamOrPollDb(await runStage15Fn({ data: { sessionId } }), setStage15Output, {
+        sessionId,
+        outputColumns: ["stage_15_output"],
+        stageStatusId: "15",
+      }))()
       .then((result) => {
         if (cancelled) return;
         setStage15Output(result.output);
