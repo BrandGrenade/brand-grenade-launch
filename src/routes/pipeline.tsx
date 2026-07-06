@@ -53,15 +53,26 @@ type StreamCompletionSource = "stream" | "db-poll";
 // Consume an async-generator server function stream: forward delta chunks to a
 // setter for live rendering, return the final `done` payload.
 async function consumeStream<C extends { delta?: string; done?: true }>(
-  gen: AsyncGenerator<C, void, unknown>,
+  gen: AsyncIterable<C> | AsyncIterator<C>,
   onDelta?: (text: string) => void,
 ): Promise<Extract<C, { done: true }>> {
+  // Normalise to a real AsyncIterator. Server-fn generator results are
+  // reconstructed by seroval on the client as an AsyncIterable — they expose
+  // Symbol.asyncIterator but NOT a top-level .next(). Calling .next()
+  // directly on that value throws "t.next is not a function". Grabbing the
+  // iterator explicitly makes both shapes (native generator + seroval
+  // async-iterable) work through this loop.
+  const iter: AsyncIterator<C> =
+    typeof (gen as AsyncIterable<C>)[Symbol.asyncIterator] === "function"
+      ? (gen as AsyncIterable<C>)[Symbol.asyncIterator]()
+      : (gen as AsyncIterator<C>);
+
   let acc = "";
   let final: Extract<C, { done: true }> | null = null;
   while (true) {
     let timeoutId: ReturnType<typeof setTimeout> | null = null;
     const next = await Promise.race([
-      gen.next(),
+      iter.next(),
       new Promise<never>((_, reject) => {
         timeoutId = setTimeout(
           () => reject(new Error("No stream heartbeat for 8 minutes; the stage worker appears stalled. Retry this stage.")),
@@ -72,7 +83,7 @@ async function consumeStream<C extends { delta?: string; done?: true }>(
       if (timeoutId) clearTimeout(timeoutId);
     }).catch(async (error) => {
       try {
-        await gen.return?.(undefined as void);
+        await iter.return?.(undefined as never);
       } catch {
         /* ignore cleanup failure */
       }
