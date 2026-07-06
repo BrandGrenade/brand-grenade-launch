@@ -30,7 +30,7 @@ function extractScore(text: string, label: string): number | undefined {
   // Allow markdown bold/italic markers and stray punctuation between the
   // label and the number, e.g. "**Differentiation:**  9/10" or "Differentiation — 9/10".
   const pattern = new RegExp(
-    label.replace(/\s+/g, "\\s+") + "[\\s*_:\\-—–]+(\\d+(?:\\.\\d+)?)\\s*\\/\\s*(?:10|60)",
+    label.replace(/\s+/g, "\\s+") + "[\\s*_:\\-—–]+(\\d+(?:\\.\\d+)?)\\s*\\/\\s*(?:10|60|70)",
     "i",
   );
   const m = text.match(pattern);
@@ -42,7 +42,12 @@ interface RawProp {
   owns: string;
   truth: string;
   challenge: string;
+  makesPossible: string;
+  requires: string;
   scores: SMPCard["scores"];
+  fieldName: string;
+  iconicTierStatus: string;
+  pressureTestNote: string;
 }
 
 function parsePropositions(rawOutput: string): RawProp[] {
@@ -54,7 +59,7 @@ function parsePropositions(rawOutput: string): RawProp[] {
   // bold text that can be mis-detected as additional propositions.
   let scope = rawOutput;
   const endMarker = scope.search(
-    /={2,}\s*DELIVERABLE\s+2|={2,}\s*DELIVERABLE\s+3|={2,}\s*PRESENTATION\s+ORDER|={2,}\s*SELF[-\s]AUDIT/i,
+    /={2,}\s*DELIVERABLE\s+2|={2,}\s*DELIVERABLE\s+3|={2,}\s*PRESENTATION\s+ORDER|={2,}\s*SELF[-\s]AUDIT|\n\s*(?:\*{0,2})?SECTION\s+3\b|STRATEGIC\s+LANDSCAPE\s+SUMMARY/i,
   );
   if (endMarker > 0) scope = scope.slice(0, endMarker);
 
@@ -80,8 +85,9 @@ function parsePropositions(rawOutput: string): RawProp[] {
     ) {
       continue;
     }
+    // Note: [METADATA]…[/METADATA] is a per-card footer inside each PROPOSITION
+    // block — do NOT treat it as a skip signal or every card is discarded.
     if (
-      block.includes("[METADATA]") ||
       block.includes("SELF-AUDIT") ||
       block.includes("PRESENTATION ORDER") ||
       block.includes("SELECTION FRAMEWORK") ||
@@ -156,6 +162,14 @@ function parsePropositions(rawOutput: string): RawProp[] {
       "WHAT IT REQUIRES OF THE BRAND",
       "STRATEGIC QUALITY SCORES",
     ]);
+    const makesPossible = grabSection("WHAT IT MAKES POSSIBLE", [
+      "WHAT IT REQUIRES OF THE BRAND",
+      "STRATEGIC QUALITY SCORES",
+    ]);
+    const requires = grabSection("WHAT IT REQUIRES OF THE BRAND", [
+      "STRATEGIC QUALITY SCORES",
+      "\\[METADATA\\]",
+    ]);
 
     const scores: SMPCard["scores"] = {
       differentiation: extractScore(block, "Differentiation"),
@@ -167,7 +181,26 @@ function parsePropositions(rawOutput: string): RawProp[] {
       composite: extractScore(block, "Composite"),
     };
 
-    propositions.push({ line: propositionLine, owns, truth, challenge, scores });
+    const grabMeta = (label: string): string => {
+      const m = block.match(new RegExp(`${label}\\s*:\\s*([^\\n]+)`, "i"));
+      return m ? m[1].trim() : "";
+    };
+    const fieldName = grabMeta("FIELD_NAME");
+    const iconicTierStatus = grabMeta("ICONIC_TIER_STATUS");
+    const pressureTestNote = grabMeta("PRESSURE_TEST_NOTE");
+
+    propositions.push({
+      line: propositionLine,
+      owns,
+      truth,
+      challenge,
+      makesPossible,
+      requires,
+      scores,
+      fieldName,
+      iconicTierStatus,
+      pressureTestNote,
+    });
   }
 
   return propositions;
@@ -194,16 +227,16 @@ export function parseSMPCards(
   if (raw.length > 0) {
     return raw.map((p, idx) => ({
       cardNumber: idx + 1,
-      smpLine: p.line,
+      smpLine: p.line.replace(/^["""]|["""]$/g, "").trim(),
       whatItOwns: p.owns,
       truth: p.truth,
       whatItChallenges: p.challenge,
-      whatItMakesPossible: "",
-      whatItRequires: "",
+      whatItMakesPossible: p.makesPossible,
+      whatItRequires: p.requires,
       scores: p.scores,
-      fieldName: "",
-      iconicTierStatus: "",
-      pressureTestNote: "",
+      fieldName: p.fieldName,
+      iconicTierStatus: p.iconicTierStatus,
+      pressureTestNote: p.pressureTestNote,
     }));
   }
 
