@@ -13,10 +13,13 @@
 // UNIVERSAL — nothing relaxes these. Apply to the ENTIRE Stage 9 output,
 // including the left-of-centre Breach / Fuse / Flashpoint block.
 export const UNIVERSAL_BANNED_STAGE9 = [
-  // v2.1 EDT core — grievance/permission-seeking language
+  // v2.1 EDT core — grievance language.
+  // "permission" moved to CONDITIONAL (July 2026): the word is legitimate
+  // strategic territory for challenger, autonomy, and unlock briefs and
+  // must not be blanket-banned; competitor-owned / brief-excluded cases
+  // are still blocked by the conditional path.
   "apology",
   "guilt",
-  "permission",
   // Universal advertising clichés — banned in all Stage 9 output regardless
   // of category, competitor, or engine.
   "transformation",
@@ -27,17 +30,15 @@ export const UNIVERSAL_BANNED_STAGE9 = [
   "redefine",
 ] as const;
 
-// CONDITIONAL — banned by default, but may be relaxed by the left-of-centre
-// engines IF (a) the word does not appear on the brief's exclusion list AND
-// (b) no named competitor in the brief's category already owns the word.
-// The core Stage 9 generator treats these as banned. The exemption is
-// scoped to the left-of-centre layer only.
+// CONDITIONAL — allowed by default, blocked only when a named competitor
+// in the brief owns the word or the brief's exclusion list forbids it.
 export const CONDITIONALLY_BANNED_STAGE9 = [
   "reward",
   "earn",
   "earned",
   "deserve",
   "deserved",
+  "permission",
 ] as const;
 
 export const UNIVERSAL_BANNED_STAGE9_LIST = UNIVERSAL_BANNED_STAGE9.join(", ");
