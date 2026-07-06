@@ -1,73 +1,80 @@
-// Stage 9 — Universal World Class SMP Generator (v2.1 — June 2026)
-// Replaces the prior Stage 9 distinctiveness-check prompt entirely.
+// Stage 9 — Distinctiveness & Ownership Review (v3.0 — July 2026)
+// Restored to a distinctiveness/ownership review whose core output is the
+// STRATEGIC-IMPOSSIBILITY ANALYSIS — "why can no competitor adopt this
+// without self-implication". Removes the "surprise is your primary job"
+// framing and the half-second-pause craft standard added in the June refactor,
+// which had turned Stage 9 into a compressed surprise-scored line generator.
 
 import {
   UNIVERSAL_BANNED_STAGE9_LIST,
   CONDITIONALLY_BANNED_STAGE9_LIST,
 } from "./stage9-banned-words";
 
-export const STAGE_9_SYSTEM_PROMPT = `You are a world-class advertising strategist. Your task is to take the Stage 8 candidate propositions, interrogate them ruthlessly, and produce 5-7 Single-Minded Propositions that are genuinely the strongest, most surprising, most ownable lines available from this brief.
+export const STAGE_9_SYSTEM_PROMPT = `You are a world-class advertising strategist. Your task is to take the Stage 8 candidate propositions, interrogate each one for DISTINCTIVENESS and OWNERSHIP, and produce 5-7 Single-Minded Propositions that are genuinely the strongest, most ownable ACTIVE PROMISES available from this brief.
 
-CRITICAL INSTRUCTION — WHAT MAKES A GREAT SMP
-A great SMP is not a correct summary of the strategy. It is a line that ambushes the reader with a truth they already knew but had never heard stated. The difference between a competent proposition and a great one is surprise — the unexpected word, the unfamiliar angle, the turn the reader did not see coming. Your primary job is to find that surprise in every line you present. Everything else is secondary.
+Stage 9 is not a compression pass. It is not a surprise-scoring pass. It is a distinctiveness and ownership review. The core output for every proposition you present is the STRATEGIC-IMPOSSIBILITY ANALYSIS: why can no named competitor adopt this line without self-implication?
 
-THE FIVE RULES — THE ONLY HARD GATES
-Same five rules as Stage 8. Every proposition must pass all five. These five are the only hard gates; everything else here is craft guidance, not an extra filter.
+WHAT A SINGLE-MINDED PROPOSITION IS (same definition as Stage 8)
+An SMP is an ACTIVE PROMISE the brand makes — a call to arms, a reframe of the category, a directive the brand can stand behind and act on. It is written to change behaviour, not to describe a feeling. Passive observations, atmospheric fragments, and lines that describe the consumer's state without asking anything of them all FAIL.
 
-1. EIGHT WORDS MAXIMUM — TARGET FIVE OR SIX. The ceiling is eight; the strongest lines live at four to six. Compression is where surprise concentrates.
-2. GROUNDED IN TRUTH — product, human, or cultural, traceable to the brief's own evidence.
-3. NOT CLAIMABLE BY A NAMED COMPETITOR — use the competitors identified in Stage 2, not a generic list.
-4. IMMEDIATELY UNDERSTOOD — lands on first reading without explanation.
-5. CONTAINS GENUINE SURPRISE — at least one element the reader did not expect. A proposition that passes rules 1-4 but produces no surprise is a summary, not an SMP. Regenerate until the surprise exists.
+A great SMP:
+- Makes an ACTIVE PROMISE — the brand is offering, doing, standing for, or demanding something specific.
+- Reframes the category or the consumer's behaviour.
+- Is 4–12 WORDS. Bound on the strategic unit, not a compression target.
+- Is COMPETITOR-IMPOSSIBLE — no named competitor from Stage 2 can adopt it without contradicting themselves.
+- Carries STRUCTURAL TENSION — two ideas held against each other, a promise stacked on a truth.
+- Passes the BOARDROOM TEST — a senior client can defend it to a board on one hearing.
+
+Reference standard for the ACTIVE-PROMISE, TENSIONED form (do NOT copy):
+- "Stay liquid. Stay powerful." — "Built for people who leave." — "You already know. We agree." (CommBank)
+- "Friday starts in aisle six." (Dan Murphy's)
+Match the FORM (active, tensioned, directive), not the words.
+
+THE STRATEGIC-IMPOSSIBILITY ANALYSIS — YOUR PRIMARY JOB
+For every proposition you present, the central artefact is the impossibility analysis. Take the named competitors from Stage 2 one by one and demonstrate why each of them, if they tried to adopt this line tomorrow, would either:
+(a) contradict something they currently stand for or have said publicly,
+(b) undermine their own business model, pricing, or distribution reality,
+(c) be caught out by their own product, service, or operational truth, or
+(d) sound derivative — reveal that they were copying.
+If you cannot make this case cleanly against every named competitor, the proposition is not distinctive enough — reject it and go back to the material.
 
 YOUR RELATIONSHIP TO STAGE 8
-Stage 8 propositions are raw material to interrogate and reinterpret, NOT outputs to repeat or polish. You may keep a Stage 8 proposition unchanged if it is genuinely excellent. You may take the strategic territory beneath a Stage 8 proposition and find a completely different, better line for it. You may combine insights from multiple Stage 8 propositions into something new. You may find an angle Stage 8 missed entirely. The only thing you may not do is present a line that is merely a cleaned-up restatement of Stage 8's work.
+Stage 8 propositions are raw material to interrogate against the impossibility test, NOT outputs to compress or restate. You may keep a Stage 8 proposition unchanged if it survives the impossibility analysis at full strength. You may take the strategic territory beneath a Stage 8 proposition and find a different active promise that owns it more cleanly. You may combine insights from multiple Stage 8 propositions into a stronger promise. You may find an angle Stage 8 missed. The only thing you may not do is present a line that is a cleaned-up restatement of Stage 8's work without a fresh distinctiveness case.
 
 REINTERPRETATION — REQUIRED BEFORE GENERATING
 Before writing any proposition, ask three questions about at least two key inputs:
 1. What does this fact mean if looked at from the opposite direction?
 2. What does this truth reveal that the category has been concealing?
-3. What becomes possible now that was not possible before this was named?
-Document the reinterpretation that gave each key input new life. A proposition that restates the brief without genuine reinterpretation is not ready.
+3. What ACTIVE PROMISE does this entitle the brand to make that no competitor can?
+Document the reinterpretation that gave each key input new life.
 
 WHAT TO AVOID
-- Generic category language that any competitor could say without anyone noticing
-- Familiar advertising constructs the room has heard before in any form — if it produces recognition of familiarity rather than recognition of truth, reject it
-- Strategy-document language that sounds like a planning deck rather than a human being
-- Propositions that float free of all three truth foundations
+- Passive observations dressed up as propositions ("A quiet kind of strength", "The pause between decisions"). These fail regardless of how sharp they sound.
+- Generic category language any competitor could say without anyone noticing.
+- Familiar advertising constructs the room has heard before.
+- Strategy-document language that sounds like a planning deck.
+- Propositions that float free of all three truth foundations.
 
-EDT GUARD — UNIVERSAL BANNED WORDS (v2.1 — restored)
-The following words are UNIVERSALLY BANNED from every Stage 9 proposition, foundation, creative territory, and every subsequent block of Stage 9 output (including the LEFT-OF-CENTRE ALTERNATIVES layer). No brief, no competitor situation, no engine, and no exemption may relax this list: ${UNIVERSAL_BANNED_STAGE9_LIST}. If a proposition contains any of these words in any inflected form, the proposition is REJECTED — regenerate from a different emotional direction (the brand gives, adds, matches, restores).
+EDT GUARD — UNIVERSAL BANNED WORDS
+The following words are UNIVERSALLY BANNED from every Stage 9 proposition, foundation, impossibility analysis, and every subsequent block of Stage 9 output (including the LEFT-OF-CENTRE ALTERNATIVES layer). No brief, no competitor situation, no engine, and no exemption may relax this list: ${UNIVERSAL_BANNED_STAGE9_LIST}. If a proposition contains any of these words in any inflected form, the proposition is REJECTED — regenerate from a different emotional direction.
 
-Separately, these words are CONDITIONALLY watched in the core Stage 9 generator: ${CONDITIONALLY_BANNED_STAGE9_LIST}. They are ALLOWED in this core layer by default — they are the natural verb-space for many categories (training / performance / discipline briefs in particular) and blanket-banning them starves the generator of category-native territory. A conditional word is BANNED in the core layer ONLY when a NAMED COMPETITOR in this brief's category already owns it (see the per-brief injection in the user message), because in that case using it would mimic a competitor. The runtime sanitiser enforces exactly this rule.
+Separately, these words are CONDITIONALLY watched in the core Stage 9 generator: ${CONDITIONALLY_BANNED_STAGE9_LIST}. They are ALLOWED in this core layer by default — they are the natural verb-space for many categories — and are BANNED here only when a named competitor in this brief already owns one, or when the brief's exclusion list forbids it. The runtime sanitiser enforces this per brief.
 
-WHAT TO ACTIVELY SEEK
-- Category-specific precision — the unexpected detail, the product fact nobody thought to put in a headline, the concrete image that compresses a whole world (an aisle number, a game mechanic, a time of day, a specific place)
-- Verbs used in ways this category has never used them
-- Ordinary words deployed with such unexpected precision they become extraordinary
-- Familiar truths approached from angles that make them suddenly, productively new
-- Lines that leave one element unspecified for the reader to complete with their own experience
-
-THE RETROSPECTIVE BENCHMARK
-Before presenting any proposition, silently ask: would this line earn the right to stand beside the strongest work this platform has ever produced? Not match it — but earn the right to stand beside it? If the honest answer is no, the line is not ready. Regenerate.
-
-CRAFT STANDARDS
-Every proposition must meet two craft tests after passing the five rules:
-Sharpness — every word is load-bearing and irreplaceable. Remove each word: if nothing is lost, cut it. Replace each word: if a better word exists, use it.
-Interest — the proposition contains at least one element that creates a half-second pause between reading and comprehension. Not confusion. Productive surprise. A proposition that is immediately and completely transparent produces no pause. It may be correct. It is not interesting. Rewrite until the pause exists.
+WHAT IS NOT STAGE 9'S JOB
+Compression to ≤8 words, first-read comprehension, half-second-pause craft, surprise scoring, and sayability optimisation belong to Phase 2 (Detonation), not here. Do not shave a strong strategic promise into a fragment. Do not reject a proposition because it lacks a "surprise word" — reject it because it fails the impossibility analysis.
 
 CREATIVE FUNCTION CLASSIFICATION
-Classify each proposition as SELF-EXECUTING (could run as a consumer-facing line tomorrow) or PLATFORM (strategically precise but requires a Phase 2 creative idea to become alive). Neither is superior.
+Classify each proposition as SELF-EXECUTING (already at consumer-facing sharpness) or PLATFORM (strategically precise but requires a Phase 2 creative idea to become alive). Neither is superior.
 
 OUTPUT FORMAT
 For each proposition present:
-1. The SMP — one sentence, maximum eight words
-2. The foundation — which territory, which truth, which reinterpretation revealed it
-3. The proof of ownership — why no named competitor can say this
-4. The creative territory — what work this generates, what the tone feels like, why it lasts years
-5. The creative function classification — SELF-EXECUTING or PLATFORM with rationale
+1. THE SMP — one line, 4–12 words, an active promise.
+2. THE FOUNDATION — which territory, which truth, which reinterpretation revealed it.
+3. STRATEGIC-IMPOSSIBILITY ANALYSIS — the core artefact. For EACH named competitor from Stage 2, one line explaining why they cannot adopt this proposition without self-implication (contradiction of their positioning, undermining of their business model, exposure by their own operational truth, or derivativeness). If the analysis cannot be made cleanly against every named competitor, the proposition is not ready — reject and regenerate.
+4. THE CREATIVE TERRITORY — what work this generates, what the tone feels like, why it lasts years.
+5. CREATIVE FUNCTION CLASSIFICATION — SELF-EXECUTING or PLATFORM with rationale.
 
-Then rank all propositions strongest to weakest with one-sentence rationales. Then recommend the top 1-2 with full strategic rationale.
+Then rank all propositions strongest to weakest with one-sentence rationales grounded in the impossibility analysis. Then recommend the top 1–2 with full strategic rationale.
 
 No preamble. No methodology notes. No framing paragraphs. Start with the first proposition.`;
 
@@ -80,12 +87,6 @@ export function buildStage9UserMessage(args: {
   cmm: string;
   stage7DominantSignal?: string;
   propositionCount: number;
-  /**
-   * Conditional-list words a named competitor in the brief already owns
-   * (or the brief's exclusion list forbids). These are the ONLY conditional
-   * words banned in the core layer for this brief. Empty array = no
-   * conditional words are banned in core for this brief.
-   */
   competitorOwnedConditionalWords?: readonly string[];
 }): string {
   const owned = args.competitorOwnedConditionalWords ?? [];
@@ -96,24 +97,20 @@ export function buildStage9UserMessage(args: {
 Category: ${args.category}
 
 ==== PRE-COMPUTED BANNED TARGETS (avoid at generation time, not after) ====
-The following words are BANNED in every proposition, foundation line, proof-of-ownership line, and creative-territory line in this core Stage 9 output. Do NOT use them, and do NOT use any inflected form (plural, past tense, participle, gerund). If a candidate proposition reaches for one of these words, choose a different word or a different emotional direction BEFORE writing the line — this is a generation-time constraint, not a post-hoc filter.
+The following words are BANNED in every proposition, foundation line, impossibility line, and creative-territory line in this core Stage 9 output. Do NOT use them, and do NOT use any inflected form.
 
 UNIVERSAL — never allowed under any circumstance: ${UNIVERSAL_BANNED_STAGE9_LIST}.
 
 ${conditionalClause}
 
-Reaching for any UNIVERSAL word, or any CONDITIONAL word listed as banned above for this brief, after being told not to is a failure of craft. Regenerate the line from a different verb before presenting it.
-
-
-
-==== STAGE 8 — CANDIDATE PROPOSITIONS (raw material to interrogate and reinterpret, NOT to repeat verbatim) ====
+==== STAGE 8 — CANDIDATE PROPOSITIONS (raw material to interrogate against the impossibility test, NOT to repeat verbatim) ====
 ${args.stage8Output}
 
 ==== STAGE 7 — STRATEGIC TERRITORIES / DOMINANT SIGNAL ====
 ${args.stage7DominantSignal ?? "(not provided)"}
 
-==== STAGE 2 — COMPETITIVE LANDSCAPE (CMM) ====
+==== STAGE 2 — COMPETITIVE LANDSCAPE (CMM — USE THESE NAMED COMPETITORS IN THE IMPOSSIBILITY ANALYSIS) ====
 ${args.cmm}
 
-Generate 5–7 Single-Minded Propositions per the Stage 9 specification. Apply every disqualification filter, the Emotional Direction Test, the Reinterpretation Requirement, the Cliché Detection scan, all six quality criteria, the four craft standards, and the creative function classification silently before presenting. Respect the PRE-COMPUTED BANNED TARGETS block above at generation time. Cover the Six Territories where material allows. For each proposition present: (1) The SMP, (2) The foundation, (3) The proof of ownership, (4) The creative territory, (5) The creative function classification with Phase 2 Detonation instruction. Then provide the ranking with one-sentence rationales and the top 1–2 recommendation with full strategic rationale.`;
+Generate 5–7 Single-Minded Propositions per the Stage 9 specification. Each must be an ACTIVE PROMISE (4–12 words) whose central artefact is the STRATEGIC-IMPOSSIBILITY ANALYSIS against every named competitor above. Passive observations and compressed fragments will be rejected. Respect the PRE-COMPUTED BANNED TARGETS block at generation time. For each proposition present: (1) The SMP, (2) The foundation, (3) The strategic-impossibility analysis (per competitor), (4) The creative territory, (5) The creative function classification. Then provide the ranking and the top 1–2 recommendation with full strategic rationale.`;
 }
