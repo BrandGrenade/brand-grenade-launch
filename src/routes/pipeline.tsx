@@ -53,15 +53,26 @@ type StreamCompletionSource = "stream" | "db-poll";
 // Consume an async-generator server function stream: forward delta chunks to a
 // setter for live rendering, return the final `done` payload.
 async function consumeStream<C extends { delta?: string; done?: true }>(
-  gen: AsyncGenerator<C, void, unknown>,
+  gen: AsyncIterable<C> | AsyncIterator<C>,
   onDelta?: (text: string) => void,
 ): Promise<Extract<C, { done: true }>> {
+  // Normalise to a real AsyncIterator. Server-fn generator results are
+  // reconstructed by seroval on the client as an AsyncIterable — they expose
+  // Symbol.asyncIterator but NOT a top-level .next(). Calling .next()
+  // directly on that value throws "t.next is not a function". Grabbing the
+  // iterator explicitly makes both shapes (native generator + seroval
+  // async-iterable) work through this loop.
+  const iter: AsyncIterator<C> =
+    typeof (gen as AsyncIterable<C>)[Symbol.asyncIterator] === "function"
+      ? (gen as AsyncIterable<C>)[Symbol.asyncIterator]()
+      : (gen as AsyncIterator<C>);
+
   let acc = "";
   let final: Extract<C, { done: true }> | null = null;
   while (true) {
     let timeoutId: ReturnType<typeof setTimeout> | null = null;
     const next = await Promise.race([
-      gen.next(),
+      iter.next(),
       new Promise<never>((_, reject) => {
         timeoutId = setTimeout(
           () => reject(new Error("No stream heartbeat for 8 minutes; the stage worker appears stalled. Retry this stage.")),
@@ -72,7 +83,7 @@ async function consumeStream<C extends { delta?: string; done?: true }>(
       if (timeoutId) clearTimeout(timeoutId);
     }).catch(async (error) => {
       try {
-        await gen.return?.(undefined as void);
+        await iter.return?.(undefined as never);
       } catch {
         /* ignore cleanup failure */
       }
@@ -136,7 +147,10 @@ async function pollForCompletedStageOutput(args: {
 }
 
 async function drainStreamOrPollDb<C extends { delta?: string; done?: true; output?: string }>(
-  generator: AsyncGenerator<C, void, unknown> | Promise<AsyncGenerator<C, void, unknown>>,
+  generator:
+    | AsyncIterable<C>
+    | AsyncIterator<C>
+    | Promise<AsyncIterable<C> | AsyncIterator<C>>,
   onDelta: ((text: string) => void) | undefined,
   fallback: {
     sessionId: string;
@@ -154,7 +168,11 @@ async function drainStreamOrPollDb<C extends { delta?: string; done?: true; outp
   let streamError: unknown = null;
   let pollDone = false;
   let pollError: unknown = null;
-  let generatorRef: AsyncGenerator<C, void, unknown> | null = null;
+  // We hold the concrete iterator (with .next/.return) rather than the
+  // possibly iterable-only value seroval hands back from a server-fn
+  // generator. This is what lets us cancel the stream cleanly when the
+  // DB-poll branch wins the race.
+  let iteratorRef: AsyncIterator<C> | null = null;
   let streamFailureTimer: number | null = null;
 
   const settle = (
@@ -177,8 +195,13 @@ async function drainStreamOrPollDb<C extends { delta?: string; done?: true; outp
       };
 
       (async () => {
-        generatorRef = await generator;
-        return consumeStream(generatorRef, (text) => {
+        const resolved = await generator;
+        const iter: AsyncIterator<C> =
+          typeof (resolved as AsyncIterable<C>)[Symbol.asyncIterator] === "function"
+            ? (resolved as AsyncIterable<C>)[Symbol.asyncIterator]()
+            : (resolved as AsyncIterator<C>);
+        iteratorRef = iter;
+        return consumeStream(iter, (text) => {
           if (!settled) onDelta?.(text);
         });
       })()
@@ -209,8 +232,12 @@ async function drainStreamOrPollDb<C extends { delta?: string; done?: true; outp
         .then(({ output, row }) => {
           if (settled) return;
           console.info(`[pipeline] Stage ${fallback.stageStatusId} advanced via DB-poll completion fallback`);
-          const returnPromise = generatorRef?.return?.(undefined as void);
-          void returnPromise?.catch(() => undefined);
+          try {
+            const returnPromise = iteratorRef?.return?.(undefined as never);
+            void (returnPromise as Promise<unknown> | undefined)?.catch?.(() => undefined);
+          } catch {
+            /* iterator may not implement return() — ignore */
+          }
           const dbResult = {
             done: true as const,
             output,
