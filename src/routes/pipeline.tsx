@@ -42,6 +42,8 @@ import {
 import { PENDING_BRIEF_EDIT_STORAGE_KEY } from "@/routes/brief.index";
 import { FileText, PencilLine } from "lucide-react";
 
+const CLIENT_STREAM_IDLE_MS = 8 * 60_000;
+
 // Consume an async-generator server function stream: forward delta chunks to a
 // setter for live rendering, return the final `done` payload.
 async function consumeStream<C extends { delta?: string; done?: true }>(
@@ -50,7 +52,28 @@ async function consumeStream<C extends { delta?: string; done?: true }>(
 ): Promise<Extract<C, { done: true }>> {
   let acc = "";
   let final: Extract<C, { done: true }> | null = null;
-  for await (const chunk of gen) {
+  while (true) {
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+    const next = await Promise.race([
+      gen.next(),
+      new Promise<never>((_, reject) => {
+        timeoutId = setTimeout(
+          () => reject(new Error("No stream heartbeat for 8 minutes; the stage worker appears stalled. Retry this stage.")),
+          CLIENT_STREAM_IDLE_MS,
+        );
+      }),
+    ]).finally(() => {
+      if (timeoutId) clearTimeout(timeoutId);
+    }).catch(async (error) => {
+      try {
+        await gen.return?.(undefined as void);
+      } catch {
+        /* ignore cleanup failure */
+      }
+      throw error;
+    });
+    if (next.done) break;
+    const chunk = next.value;
     if (typeof chunk.delta === "string") {
       acc += chunk.delta;
       onDelta?.(acc);
@@ -451,6 +474,10 @@ function PipelineView() {
   const [resubmitting, setResubmitting] = useState(false);
   const [savingRationale, setSavingRationale] = useState(false);
   const [retryNonce, setRetryNonce] = useState(0);
+  const [stageRunNonce, setStageRunNonce] = useState<Record<string, number>>({});
+  const bumpStageRunNonce = (stageId: string) => {
+    setStageRunNonce((prev) => ({ ...prev, [stageId]: (prev[stageId] ?? 0) + 1 }));
+  };
   const [pendingFeedback, setPendingFeedback] = useState<Record<string, string>>({});
   const [pendingPreviousOutput, setPendingPreviousOutput] = useState<Record<string, string>>({});
   const [amendmentNotes, setAmendmentNotes] = useState<Record<string, string>>({});
@@ -800,6 +827,90 @@ function PipelineView() {
           setStage16Output(data.stage_16_consulting_output);
           setStatuses((p) => ({ ...p, "16": "complete" }));
         }
+        const errorStatuses: Record<string, StageStatus> = {};
+        if (data.stage_1_error) {
+          setStage1Error(data.stage_1_error);
+          errorStatuses["01"] = "error";
+        }
+        if (data.stage_2_error) {
+          setStage2Error(data.stage_2_error);
+          errorStatuses["02"] = "error";
+        }
+        if (data.stage_3_error) {
+          setStage3Error(data.stage_3_error);
+          errorStatuses["03"] = "error";
+        }
+        if (data.stage_4_error) {
+          setStage4Error(data.stage_4_error);
+          errorStatuses["04"] = "error";
+        }
+        if (data.stage_4b_error) {
+          setStage4bError(data.stage_4b_error);
+          errorStatuses["04B"] = "error";
+        }
+        if (data.stage_5_error) {
+          setStage5Error(data.stage_5_error);
+          errorStatuses["05"] = "error";
+        }
+        if (data.stage_6_error) {
+          setStage6Error(data.stage_6_error);
+          errorStatuses["06"] = "error";
+        }
+        if (data.stage_7_error) {
+          setStage7Error(data.stage_7_error);
+          errorStatuses["07"] = "error";
+        }
+        if (data.stage_8_error) {
+          setStage8Error(data.stage_8_error);
+          errorStatuses["08"] = "error";
+        }
+        if (data.stage_9_error) {
+          setStage9Error(data.stage_9_error);
+          errorStatuses["09"] = "error";
+        }
+        if (data.stage_10_error) {
+          setStage10Error(data.stage_10_error);
+          errorStatuses["10"] = "error";
+        }
+        if (data.stage_11_error) {
+          setStage11Error(data.stage_11_error);
+          errorStatuses["11"] = "error";
+        }
+        if (data.stage_12_error) {
+          setStage12Error(data.stage_12_error);
+          errorStatuses["12"] = "error";
+        }
+        if (data.stage_13_error) {
+          setStage13Error(data.stage_13_error);
+          errorStatuses["13"] = "error";
+        }
+        if (data.stage_13b_error) {
+          setStage13bError(data.stage_13b_error);
+          errorStatuses["13B"] = "error";
+        }
+        if (data.stage_14_error) {
+          setStage14Error(data.stage_14_error);
+          errorStatuses["14"] = "error";
+        }
+        if (data.stage_14b_error) {
+          setStage14bError(data.stage_14b_error);
+          errorStatuses["14B"] = "error";
+        }
+        if (data.stage_14c_error) {
+          setStage14cError(data.stage_14c_error);
+          errorStatuses["14C"] = "error";
+        }
+        if (data.stage_15_error) {
+          setStage15Error(data.stage_15_error);
+          errorStatuses["15"] = "error";
+        }
+        if (data.stage_16_error) {
+          setStage16Error(data.stage_16_error);
+          errorStatuses["16"] = "error";
+        }
+        if (Object.keys(errorStatuses).length > 0) {
+          setStatuses((p) => ({ ...p, ...errorStatuses }));
+        }
       });
 
     return () => {
@@ -838,6 +949,12 @@ function PipelineView() {
   useEffect(() => {
     if (session?.stage_6_output) setStage6Output(session.stage_6_output);
   }, [session?.stage_6_output]);
+  useEffect(() => {
+    if (session?.stage_6_error) {
+      setStage6Error(session.stage_6_error);
+      setStatuses((p) => ({ ...p, "06": "error" }));
+    }
+  }, [session?.stage_6_error]);
   useEffect(() => {
     if (session?.stage_7_output) setStage7Output(session.stage_7_output);
   }, [session?.stage_7_output]);
@@ -1025,7 +1142,7 @@ function PipelineView() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionId, session?.id, statuses["02"]]);
+  }, [sessionId, session?.id, statuses["02"], stageRunNonce["02"]]);
 
   // Trigger Stage 3 when its status flips to "running".
   useEffect(() => {
@@ -1052,7 +1169,7 @@ function PipelineView() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionId, session?.id, statuses["03"]]);
+  }, [sessionId, session?.id, statuses["03"], stageRunNonce["03"]]);
 
   // Trigger Stage 4 when its status flips to "running".
   useEffect(() => {
@@ -1079,7 +1196,7 @@ function PipelineView() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionId, session?.id, statuses["04"]]);
+  }, [sessionId, session?.id, statuses["04"], stageRunNonce["04"]]);
 
   // Trigger Stage 4B when its status flips to "running".
   useEffect(() => {
@@ -1106,7 +1223,7 @@ function PipelineView() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionId, session?.id, statuses["04B"]]);
+  }, [sessionId, session?.id, statuses["04B"], stageRunNonce["04B"]]);
 
 
   // Trigger Stage 5 when its status flips to "running".
@@ -1134,7 +1251,7 @@ function PipelineView() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionId, session?.id, statuses["05"]]);
+  }, [sessionId, session?.id, statuses["05"], stageRunNonce["05"]]);
 
   // Trigger Stage 6 when its status flips to "running".
   useEffect(() => {
@@ -1161,7 +1278,7 @@ function PipelineView() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionId, session?.id, statuses["06"]]);
+  }, [sessionId, session?.id, statuses["06"], stageRunNonce["06"]]);
 
   // Trigger Stage 7 when its status flips to "running".
   useEffect(() => {
@@ -1188,7 +1305,7 @@ function PipelineView() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionId, session?.id, statuses["07"]]);
+  }, [sessionId, session?.id, statuses["07"], stageRunNonce["07"]]);
 
   // Stage 8 — SMP Generation, ends at Checkpoint B.
   useEffect(() => {
@@ -1234,7 +1351,7 @@ function PipelineView() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionId, session?.id, statuses["08"]]);
+  }, [sessionId, session?.id, statuses["08"], stageRunNonce["08"]]);
 
   // Stage 9 — Divergence Validation.
   useEffect(() => {
@@ -1261,7 +1378,7 @@ function PipelineView() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionId, session?.id, statuses["09"]]);
+  }, [sessionId, session?.id, statuses["09"], stageRunNonce["09"]]);
 
   // Stage 10 — Scoring.
   useEffect(() => {
@@ -1288,7 +1405,7 @@ function PipelineView() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionId, session?.id, statuses["10"]]);
+  }, [sessionId, session?.id, statuses["10"], stageRunNonce["10"]]);
 
   // Stage 11 — Pressure Test.
   useEffect(() => {
@@ -1315,7 +1432,7 @@ function PipelineView() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionId, session?.id, statuses["11"]]);
+  }, [sessionId, session?.id, statuses["11"], stageRunNonce["11"]]);
 
   // Stage 12 — TYPE 1 (Display & Select).
   // Stage 12 must actually execute before the human selection UI appears.
@@ -1376,7 +1493,7 @@ function PipelineView() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionId, session?.id, statuses["12"]]);
+  }, [sessionId, session?.id, statuses["12"], stageRunNonce["12"]]);
 
   // Stages 13–16 — post-selection validation, territory mapping, audit, and assembly.
   useEffect(() => {
@@ -1402,7 +1519,7 @@ function PipelineView() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionId, session?.id, statuses["13"], intelSubmitted]);
+  }, [sessionId, session?.id, statuses["13"], intelSubmitted, stageRunNonce["13"]]);
 
   useEffect(() => {
     if (!sessionId || !session || statuses["13B"] !== "running" || stage13bOutput) return;
@@ -1426,7 +1543,7 @@ function PipelineView() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionId, session?.id, statuses["13B"]]);
+  }, [sessionId, session?.id, statuses["13B"], stageRunNonce["13B"]]);
 
   useEffect(() => {
     if (!sessionId || !session || statuses["14"] !== "running" || stage14Output) return;
@@ -1450,7 +1567,7 @@ function PipelineView() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionId, session?.id, statuses["14"]]);
+  }, [sessionId, session?.id, statuses["14"], stageRunNonce["14"]]);
 
   useEffect(() => {
     if (!sessionId || !session || statuses["14B"] !== "running" || stage14bOutput) return;
@@ -1474,7 +1591,7 @@ function PipelineView() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionId, session?.id, statuses["14B"]]);
+  }, [sessionId, session?.id, statuses["14B"], stageRunNonce["14B"]]);
 
   useEffect(() => {
     if (!sessionId || !session || statuses["14C"] !== "running" || stage14cOutput) return;
@@ -1498,7 +1615,7 @@ function PipelineView() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionId, session?.id, statuses["14C"]]);
+  }, [sessionId, session?.id, statuses["14C"], stageRunNonce["14C"]]);
 
   useEffect(() => {
     if (!sessionId || !session || statuses["15"] !== "running" || stage15Output) return;
@@ -1522,7 +1639,7 @@ function PipelineView() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionId, session?.id, statuses["15"]]);
+  }, [sessionId, session?.id, statuses["15"], stageRunNonce["15"]]);
 
   // Stage 16 (Document Assembly) is NOT auto-triggered from the Phase 1
   // pipeline. It must run only after Phase 2 (Stages 17–22) plus the
@@ -1981,6 +2098,7 @@ function PipelineView() {
       });
       resetLocalFromStage(stageId);
       markFollowingPending(stageId, "running");
+      bumpStageRunNonce(stageId);
       setSelectedId(stageId);
       if (stageId === "01") setRetryNonce((n) => n + 1);
     } catch (e) {
@@ -2019,6 +2137,10 @@ function PipelineView() {
     if (stageId === "12" && selectedStatus === "checkpoint") return;
     if (stageId === "13" && !intelSubmitted) return;
     if (!nextStage) return;
+    if (statuses[nextStage.id] === "running") {
+      await handleRetryStage(nextStage.id);
+      return;
+    }
     setStatuses((p) => ({ ...p, [stageId]: "complete", [nextStage.id]: "running" }));
     setSelectedId(nextStage.id);
   };

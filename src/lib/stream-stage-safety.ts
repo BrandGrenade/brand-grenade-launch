@@ -41,7 +41,7 @@ export interface StreamStageSafetyOpts {
   throttleMs?: number;
 }
 
-const DEFAULT_BUDGET_MS = 240_000;
+const DEFAULT_BUDGET_MS = 30 * 60_000;
 const DEFAULT_THROTTLE_MS = 3_000;
 
 /**
@@ -87,6 +87,17 @@ export async function* withStreamSafety(
     }
   };
 
+  const markStarted = async (): Promise<void> => {
+    try {
+      await supabaseAdmin
+        .from("sessions")
+        .update({ stream_last_delta_at: null } as never)
+        .eq("id", opts.sessionId);
+    } catch {
+      /* best-effort */
+    }
+  };
+
   const markInterrupted = async (): Promise<void> => {
     try {
       await supabaseAdmin
@@ -99,6 +110,7 @@ export async function* withStreamSafety(
   };
 
   try {
+    await markStarted();
     for await (const delta of source) {
       accumulated += delta;
       dirty = true;
