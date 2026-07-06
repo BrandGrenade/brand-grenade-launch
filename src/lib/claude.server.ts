@@ -382,11 +382,14 @@ export async function* streamClaude(args: CallClaudeArgs): AsyncGenerator<string
   let __telemetryError = "";
   try {
 
-  // Single attempt: opens an SSE stream, accumulates text, returns
-  // { total, stopReason, sawMessageStop }. Throws only on initial connection
-  // failure (handled by openWithRetry). Mid-stream drops surface as
-  // sawMessageStop === false so the outer loop can retry.
-  async function attempt(): Promise<{ total: string; stopReason: string | null; sawMessageStop: boolean }> {
+  type StreamAttemptResult = { chars: number; stopReason: string | null; sawMessageStop: boolean };
+
+  // Single attempt: opens an SSE stream and yields deltas as they arrive.
+  // This is deliberately live, not buffered, so withStreamSafety can persist
+  // real heartbeat writes during long stages. If the stream drops after text
+  // has already been yielded, the caller receives the partial output and the
+  // missing message_stop path below turns it into a retryable stage error.
+  async function* attempt(): AsyncGenerator<string, StreamAttemptResult, unknown> {
     const { resp, idle } = await openWithRetry(apiKey, body, args.sessionId, args.stageLabel, true, args.timeoutMs);
     if (!resp.body) {
       idle.cancel();
@@ -395,7 +398,7 @@ export async function* streamClaude(args: CallClaudeArgs): AsyncGenerator<string
     const reader = resp.body.getReader();
     const decoder = new TextDecoder();
     let buffer = "";
-    let total = "";
+    let chars = 0;
     let stopReason: string | null = null;
     let sawMessageStop = false;
     try {
@@ -428,7 +431,8 @@ export async function* streamClaude(args: CallClaudeArgs): AsyncGenerator<string
               delta?: { type?: string; text?: string; stop_reason?: string };
             };
             if (evt.type === "content_block_delta" && evt.delta?.type === "text_delta" && evt.delta.text) {
-              total += evt.delta.text;
+              chars += evt.delta.text.length;
+              yield evt.delta.text;
             } else if (evt.type === "message_delta" && evt.delta?.stop_reason) {
               stopReason = evt.delta.stop_reason;
             } else if (evt.type === "message_stop") {
@@ -447,39 +451,48 @@ export async function* streamClaude(args: CallClaudeArgs): AsyncGenerator<string
       idle.cancel();
       try { reader.releaseLock(); } catch { /* noop */ }
     }
-    return { total, stopReason, sawMessageStop };
+    return { chars, stopReason, sawMessageStop };
   }
 
 
-  // Up to 2 attempts. If attempt 1 drops mid-stream (no message_stop and not
-  // max_tokens), surface a "retrying automatically" status, wait 5s, and try
-  // once more. Only yield deltas from the successful attempt so callers never
-  // see duplicated text.
-  let result = await attempt();
-  if (!result.sawMessageStop && result.stopReason !== "max_tokens") {
-    await setRetryStatus(args.sessionId, "Connection interrupted — retrying automatically...");
-    await new Promise((r) => setTimeout(r, 5000));
-    try {
-      result = await attempt();
-    } finally {
-      await setRetryStatus(args.sessionId, null);
+  // Up to 2 attempts, but only retry automatically if the first attempt yielded
+  // zero text. Once text has been yielded it may already be persisted as a
+  // partial heartbeat, so retrying would duplicate output.
+  let result: StreamAttemptResult | null = null;
+  let totalChars = 0;
+  for (let attemptNo = 1; attemptNo <= 2; attemptNo++) {
+    const stream = attempt();
+    let attemptChars = 0;
+    while (true) {
+      const next = await stream.next();
+      if (next.done) {
+        result = next.value;
+        break;
+      }
+      attemptChars += next.value.length;
+      totalChars += next.value.length;
+      yield next.value;
     }
+    if (result.sawMessageStop || result.stopReason === "max_tokens" || attemptChars > 0 || attemptNo === 2) break;
+    await setRetryStatus(args.sessionId, "Connection interrupted before output — retrying automatically...");
+    await new Promise((r) => setTimeout(r, 5000));
+    await setRetryStatus(args.sessionId, null);
   }
 
-  const { total, stopReason, sawMessageStop } = result;
-  __telemetryChars = total.length;
-  if (total) yield total;
-  if (!total.trim()) { __telemetryFailed = true; __telemetryError = "empty"; throw new Error("Claude returned an empty response"); }
+  const stopReason = result?.stopReason ?? null;
+  const sawMessageStop = Boolean(result?.sawMessageStop);
+  __telemetryChars = totalChars;
+  if (totalChars === 0) { __telemetryFailed = true; __telemetryError = "empty"; throw new Error("Claude returned an empty response"); }
   if (stopReason === "max_tokens") {
     __telemetryFailed = true; __telemetryError = "max_tokens_truncation";
     throw new Error(
-      `Claude response truncated: hit max_tokens cap (${total.length} chars produced). Raise maxTokens for this stage.`,
+      `Claude response truncated: hit max_tokens cap (${totalChars} chars produced). Raise maxTokens for this stage.`,
     );
   }
   if (!sawMessageStop) {
     __telemetryFailed = true; __telemetryError = "no_message_stop";
     throw new Error(
-      `Claude stream ended without message_stop (${total.length} chars produced). Upstream connection likely dropped — retry the stage.`,
+      `Claude stream ended without message_stop (${totalChars} chars produced). Upstream connection likely dropped — retry the stage.`,
     );
   }
   // Successful completion — consume the amendment so it does not re-apply

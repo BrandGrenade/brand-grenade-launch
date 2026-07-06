@@ -42,6 +42,8 @@ import {
 import { PENDING_BRIEF_EDIT_STORAGE_KEY } from "@/routes/brief.index";
 import { FileText, PencilLine } from "lucide-react";
 
+const CLIENT_STREAM_IDLE_MS = 8 * 60_000;
+
 // Consume an async-generator server function stream: forward delta chunks to a
 // setter for live rendering, return the final `done` payload.
 async function consumeStream<C extends { delta?: string; done?: true }>(
@@ -50,7 +52,28 @@ async function consumeStream<C extends { delta?: string; done?: true }>(
 ): Promise<Extract<C, { done: true }>> {
   let acc = "";
   let final: Extract<C, { done: true }> | null = null;
-  for await (const chunk of gen) {
+  while (true) {
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+    const next = await Promise.race([
+      gen.next(),
+      new Promise<never>((_, reject) => {
+        timeoutId = setTimeout(
+          () => reject(new Error("No stream heartbeat for 8 minutes; the stage worker appears stalled. Retry this stage.")),
+          CLIENT_STREAM_IDLE_MS,
+        );
+      }),
+    ]).finally(() => {
+      if (timeoutId) clearTimeout(timeoutId);
+    }).catch(async (error) => {
+      try {
+        await gen.return?.();
+      } catch {
+        /* ignore cleanup failure */
+      }
+      throw error;
+    });
+    if (next.done) break;
+    const chunk = next.value;
     if (typeof chunk.delta === "string") {
       acc += chunk.delta;
       onDelta?.(acc);
@@ -451,6 +474,10 @@ function PipelineView() {
   const [resubmitting, setResubmitting] = useState(false);
   const [savingRationale, setSavingRationale] = useState(false);
   const [retryNonce, setRetryNonce] = useState(0);
+  const [stageRunNonce, setStageRunNonce] = useState<Record<string, number>>({});
+  const bumpStageRunNonce = (stageId: string) => {
+    setStageRunNonce((prev) => ({ ...prev, [stageId]: (prev[stageId] ?? 0) + 1 }));
+  };
   const [pendingFeedback, setPendingFeedback] = useState<Record<string, string>>({});
   const [pendingPreviousOutput, setPendingPreviousOutput] = useState<Record<string, string>>({});
   const [amendmentNotes, setAmendmentNotes] = useState<Record<string, string>>({});
@@ -1025,7 +1052,7 @@ function PipelineView() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionId, session?.id, statuses["02"]]);
+  }, [sessionId, session?.id, statuses["02"], stageRunNonce["02"]]);
 
   // Trigger Stage 3 when its status flips to "running".
   useEffect(() => {
@@ -1052,7 +1079,7 @@ function PipelineView() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionId, session?.id, statuses["03"]]);
+  }, [sessionId, session?.id, statuses["03"], stageRunNonce["03"]]);
 
   // Trigger Stage 4 when its status flips to "running".
   useEffect(() => {
@@ -1079,7 +1106,7 @@ function PipelineView() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionId, session?.id, statuses["04"]]);
+  }, [sessionId, session?.id, statuses["04"], stageRunNonce["04"]]);
 
   // Trigger Stage 4B when its status flips to "running".
   useEffect(() => {
@@ -1106,7 +1133,7 @@ function PipelineView() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionId, session?.id, statuses["04B"]]);
+  }, [sessionId, session?.id, statuses["04B"], stageRunNonce["04B"]]);
 
 
   // Trigger Stage 5 when its status flips to "running".
@@ -1134,7 +1161,7 @@ function PipelineView() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionId, session?.id, statuses["05"]]);
+  }, [sessionId, session?.id, statuses["05"], stageRunNonce["05"]]);
 
   // Trigger Stage 6 when its status flips to "running".
   useEffect(() => {
@@ -1161,7 +1188,7 @@ function PipelineView() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionId, session?.id, statuses["06"]]);
+  }, [sessionId, session?.id, statuses["06"], stageRunNonce["06"]]);
 
   // Trigger Stage 7 when its status flips to "running".
   useEffect(() => {
@@ -1188,7 +1215,7 @@ function PipelineView() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionId, session?.id, statuses["07"]]);
+  }, [sessionId, session?.id, statuses["07"], stageRunNonce["07"]]);
 
   // Stage 8 — SMP Generation, ends at Checkpoint B.
   useEffect(() => {
@@ -1981,6 +2008,7 @@ function PipelineView() {
       });
       resetLocalFromStage(stageId);
       markFollowingPending(stageId, "running");
+      bumpStageRunNonce(stageId);
       setSelectedId(stageId);
       if (stageId === "01") setRetryNonce((n) => n + 1);
     } catch (e) {
@@ -2019,6 +2047,10 @@ function PipelineView() {
     if (stageId === "12" && selectedStatus === "checkpoint") return;
     if (stageId === "13" && !intelSubmitted) return;
     if (!nextStage) return;
+    if (statuses[nextStage.id] === "running") {
+      await handleRetryStage(nextStage.id);
+      return;
+    }
     setStatuses((p) => ({ ...p, [stageId]: "complete", [nextStage.id]: "running" }));
     setSelectedId(nextStage.id);
   };
