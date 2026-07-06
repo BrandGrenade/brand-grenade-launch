@@ -43,6 +43,12 @@ import { PENDING_BRIEF_EDIT_STORAGE_KEY } from "@/routes/brief.index";
 import { FileText, PencilLine } from "lucide-react";
 
 const CLIENT_STREAM_IDLE_MS = 8 * 60_000;
+const DB_COMPLETION_POLL_MS = 5_000;
+const DB_COMPLETION_POLL_MAX_MS = 60 * 60_000;
+const DB_COMPLETION_GRACE_AFTER_STREAM_FAILURE_MS = 15_000;
+
+type StreamDonePayload = { done: true; output?: string };
+type StreamCompletionSource = "stream" | "db-poll";
 
 // Consume an async-generator server function stream: forward delta chunks to a
 // setter for live rendering, return the final `done` payload.
@@ -83,6 +89,151 @@ async function consumeStream<C extends { delta?: string; done?: true }>(
   }
   if (!final) throw new Error("Stream ended without a final payload");
   return final;
+}
+
+async function pollForCompletedStageOutput(args: {
+  sessionId: string;
+  outputColumns: string[];
+  stageStatusId: string;
+  minChars?: number;
+  intervalMs?: number;
+  maxMs?: number;
+  getOutput?: (row: Record<string, unknown>) => string;
+}): Promise<{ output: string; row: Record<string, unknown> }> {
+  const intervalMs = args.intervalMs ?? DB_COMPLETION_POLL_MS;
+  const maxMs = args.maxMs ?? DB_COMPLETION_POLL_MAX_MS;
+  const minChars = args.minChars ?? 1;
+  const selectColumns = Array.from(
+    new Set([...args.outputColumns, "stage_status", "stage_1_tension_score", "stage_1b_required"]),
+  ).join(", ");
+  const deadline = Date.now() + maxMs;
+
+  while (Date.now() < deadline) {
+    await new Promise((resolve) => window.setTimeout(resolve, intervalMs));
+    try {
+      const { data } = await supabase
+        .from("sessions")
+        .select(selectColumns)
+        .eq("id", args.sessionId)
+        .maybeSingle();
+      const row = (data as Record<string, unknown> | null) ?? null;
+      if (!row) continue;
+      if (row.stage_status !== `complete:${args.stageStatusId}`) continue;
+      const output = args.getOutput
+        ? args.getOutput(row)
+        : args.outputColumns
+            .map((column) => (typeof row[column] === "string" ? (row[column] as string) : ""))
+            .join("");
+      if (output.trim().length >= minChars) return { output, row };
+    } catch {
+      /* transient read failure — keep polling */
+    }
+  }
+
+  throw new Error(
+    `DB poll timed out after ${Math.round(maxMs / 1000)}s waiting for Stage ${args.stageStatusId} completion`,
+  );
+}
+
+async function drainStreamOrPollDb<C extends { delta?: string; done?: true; output?: string }>(
+  generator: AsyncGenerator<C, void, unknown> | Promise<AsyncGenerator<C, void, unknown>>,
+  onDelta: ((text: string) => void) | undefined,
+  fallback: {
+    sessionId: string;
+    outputColumns: string[];
+    stageStatusId: string;
+    minChars?: number;
+    intervalMs?: number;
+    maxMs?: number;
+    getOutput?: (row: Record<string, unknown>) => string;
+  },
+): Promise<Extract<C, { done: true }> & { output: string; completionSource: StreamCompletionSource }> {
+  let settled = false;
+  let streamDone = false;
+  let streamResult: Extract<C, { done: true }> | null = null;
+  let streamError: unknown = null;
+  let pollDone = false;
+  let pollError: unknown = null;
+  let generatorRef: AsyncGenerator<C, void, unknown> | null = null;
+  let streamFailureTimer: number | null = null;
+
+  const settle = (
+    resolve: (value: Extract<C, { done: true }> & { output: string; completionSource: StreamCompletionSource }) => void,
+    value: Extract<C, { done: true }> & { output: string; completionSource: StreamCompletionSource },
+  ) => {
+    if (settled) return;
+    settled = true;
+    if (streamFailureTimer) window.clearTimeout(streamFailureTimer);
+    resolve(value);
+  };
+
+  return await new Promise<Extract<C, { done: true }> & { output: string; completionSource: StreamCompletionSource }>(
+    (resolve, reject) => {
+      const maybeReject = () => {
+        if (settled) return;
+        if (!streamDone || !pollDone) return;
+        settled = true;
+        reject(streamError ?? pollError ?? new Error("Stage stream ended before a completed DB output was available"));
+      };
+
+      (async () => {
+        generatorRef = await generator;
+        return consumeStream(generatorRef, (text) => {
+          if (!settled) onDelta?.(text);
+        });
+      })()
+        .then((result) => {
+          streamDone = true;
+          streamResult = result;
+          const output = String((result as StreamDonePayload).output ?? "");
+          if (output.trim().length >= (fallback.minChars ?? 1)) {
+            settle(resolve, { ...result, output, completionSource: "stream" });
+            return;
+          }
+          maybeReject();
+        })
+        .catch((error: unknown) => {
+          streamDone = true;
+          streamError = error;
+          if (!settled) {
+            streamFailureTimer = window.setTimeout(() => {
+              if (settled) return;
+              settled = true;
+              reject(streamError ?? new Error("Stage stream failed before DB completion was detected"));
+            }, DB_COMPLETION_GRACE_AFTER_STREAM_FAILURE_MS);
+          }
+          maybeReject();
+        });
+
+      pollForCompletedStageOutput(fallback)
+        .then(({ output, row }) => {
+          if (settled) return;
+          console.info(`[pipeline] Stage ${fallback.stageStatusId} advanced via DB-poll completion fallback`);
+          const returnPromise = generatorRef?.return?.(undefined as void);
+          void returnPromise?.catch(() => undefined);
+          const dbResult = {
+            done: true as const,
+            output,
+            completionSource: "db-poll" as const,
+            tensionScore: row.stage_1_tension_score,
+            stage1bRequired: row.stage_1b_required,
+          } as unknown as Extract<C, { done: true }> & { output: string; completionSource: StreamCompletionSource };
+          settle(resolve, dbResult);
+        })
+        .catch((error: unknown) => {
+          pollDone = true;
+          pollError = error;
+          if (!settled && streamResult) {
+            const output = String((streamResult as StreamDonePayload).output ?? "");
+            if (output.trim().length >= (fallback.minChars ?? 1)) {
+              settle(resolve, { ...streamResult, output, completionSource: "stream" });
+              return;
+            }
+          }
+          maybeReject();
+        });
+    },
+  );
 }
 
 // Map UI stage id (e.g. "01", "13B") to the DB stage id literal used by resetStage.
@@ -368,10 +519,25 @@ interface SessionData {
   selected_smp_field_name: string | null;
   current_stage: number;
   status: string;
+  stage_status: string | null;
   checkpoint_a_confirmed: boolean;
   checkpoint_b_confirmed: boolean;
   checkpoint_c_confirmed: boolean;
   retry_status: string | null;
+}
+
+function isPersistedStageComplete(
+  row: Pick<SessionData, "current_stage" | "status" | "stage_status">,
+  stageStatusId: string,
+  numericStage: number,
+  output: string | null | undefined,
+): boolean {
+  if (!output || output.trim().length === 0) return false;
+  return (
+    row.stage_status === `complete:${stageStatusId}` ||
+    row.status === "complete" ||
+    row.current_stage > numericStage
+  );
 }
 
 function PipelineView() {
@@ -709,7 +875,7 @@ function PipelineView() {
     supabase
       .from("sessions")
       .select(
-        "id, brand_name, category, strategic_mode, brief_text, brief_versions, current_stage, status, stage_1_output, stage_1_tension_score, stage_1b_required, stage_1b_output, stage_1_error, stage_2_output, stage_2_error, stage_3_output, stage_3_error, stage_4_output, stage_4_error, stage_4b_output, stage_4b_error, stage_5_output, stage_5_error, stage_6_output, stage_6_error, stage_7_output, stage_7_error, stage_8_output, stage_8_error, stage_9_output, stage_9_leftofcentre_output, stage_9_error, stage_10_output, stage_10_error, stage_11_output, stage_11_error, stage_12_output, stage_12_error, stage_13_output, stage_13_error, stage_13b_output, stage_13b_error, stage_14_output, stage_14_error, stage_14b_output, stage_14b_error, stage_14c_output, stage_14c_error, stage_15_output, stage_15_error, stage_16_consulting_output, stage_16_error, brand_intelligence, selected_smp, selected_smp_field_name, checkpoint_a_confirmed, checkpoint_b_confirmed, checkpoint_c_confirmed, retry_status",
+        "id, brand_name, category, strategic_mode, brief_text, brief_versions, current_stage, status, stage_status, stage_1_output, stage_1_tension_score, stage_1b_required, stage_1b_output, stage_1_error, stage_2_output, stage_2_error, stage_3_output, stage_3_error, stage_4_output, stage_4_error, stage_4b_output, stage_4b_error, stage_5_output, stage_5_error, stage_6_output, stage_6_error, stage_7_output, stage_7_error, stage_8_output, stage_8_error, stage_9_output, stage_9_leftofcentre_output, stage_9_error, stage_10_output, stage_10_error, stage_11_output, stage_11_error, stage_12_output, stage_12_error, stage_13_output, stage_13_error, stage_13b_output, stage_13b_error, stage_14_output, stage_14_error, stage_14b_output, stage_14b_error, stage_14c_output, stage_14c_error, stage_15_output, stage_15_error, stage_16_consulting_output, stage_16_error, brand_intelligence, selected_smp, selected_smp_field_name, checkpoint_a_confirmed, checkpoint_b_confirmed, checkpoint_c_confirmed, retry_status",
       )
 
       .eq("id", sessionId)
@@ -723,65 +889,65 @@ function PipelineView() {
         }
         setSession(data as unknown as SessionData);
         if (data.brand_intelligence) setIntelSubmitted(true);
-        if (data.stage_1_output) {
+        if (isPersistedStageComplete(data as unknown as SessionData, "1", 1, data.stage_1_output)) {
           setStage1Output(data.stage_1_output);
           setStatuses((p) => ({
             ...p,
             "01": data.checkpoint_a_confirmed ? "complete" : "checkpoint",
           }));
         }
-        if (data.stage_1b_output) {
+        if (isPersistedStageComplete(data as unknown as SessionData, "1b", 1, data.stage_1b_output)) {
           setStage1bOutput(data.stage_1b_output);
           setStatuses((p) => ({ ...p, "01B": "complete" }));
         }
-        if (data.stage_2_output) {
+        if (isPersistedStageComplete(data as unknown as SessionData, "2", 2, data.stage_2_output)) {
           setStage2Output(data.stage_2_output);
           setStatuses((p) => ({ ...p, "02": "complete" }));
         }
-        if (data.stage_3_output) {
+        if (isPersistedStageComplete(data as unknown as SessionData, "3", 3, data.stage_3_output)) {
           setStage3Output(data.stage_3_output);
           setStatuses((p) => ({ ...p, "03": "complete" }));
         }
-        if (data.stage_4_output) {
+        if (isPersistedStageComplete(data as unknown as SessionData, "4", 4, data.stage_4_output)) {
           setStage4Output(data.stage_4_output);
           setStatuses((p) => ({ ...p, "04": "complete" }));
         }
-        if (data.stage_4b_output) {
+        if (isPersistedStageComplete(data as unknown as SessionData, "4b", 4, data.stage_4b_output)) {
           setStage4bOutput(data.stage_4b_output);
           setStatuses((p) => ({ ...p, "04B": "complete" }));
         }
-        if (data.stage_5_output) {
+        if (isPersistedStageComplete(data as unknown as SessionData, "5", 5, data.stage_5_output)) {
           setStage5Output(data.stage_5_output);
           setStatuses((p) => ({ ...p, "05": "complete" }));
         }
-        if (data.stage_6_output) {
+        if (isPersistedStageComplete(data as unknown as SessionData, "6", 6, data.stage_6_output)) {
           setStage6Output(data.stage_6_output);
           setStatuses((p) => ({ ...p, "06": "complete" }));
         }
-        if (data.stage_7_output) {
+        if (isPersistedStageComplete(data as unknown as SessionData, "7", 7, data.stage_7_output)) {
           setStage7Output(data.stage_7_output);
           setStatuses((p) => ({ ...p, "07": "complete" }));
         }
-        if (data.stage_8_output) {
+        if (isPersistedStageComplete(data as unknown as SessionData, "8", 8, data.stage_8_output)) {
           setStage8Output(data.stage_8_output);
           setStatuses((p) => ({
             ...p,
             "08": data.checkpoint_b_confirmed ? "complete" : "checkpoint",
           }));
         }
-        if (data.stage_9_output) {
+        if (isPersistedStageComplete(data as unknown as SessionData, "9", 9, data.stage_9_output)) {
           setStage9Output(`${data.stage_9_output}${(data as unknown as SessionData).stage_9_leftofcentre_output ?? ""}`);
           setStatuses((p) => ({ ...p, "09": "complete" }));
         }
-        if (data.stage_10_output) {
+        if (isPersistedStageComplete(data as unknown as SessionData, "10", 10, data.stage_10_output)) {
           setStage10Output(data.stage_10_output);
           setStatuses((p) => ({ ...p, "10": "complete" }));
         }
-        if (data.stage_11_output) {
+        if (isPersistedStageComplete(data as unknown as SessionData, "11", 11, data.stage_11_output)) {
           setStage11Output(data.stage_11_output);
           setStatuses((p) => ({ ...p, "11": "complete" }));
         }
-        if (data.stage_12_output) {
+        if (isPersistedStageComplete(data as unknown as SessionData, "12", 12, data.stage_12_output)) {
           setStage12Output(data.stage_12_output);
           setStatuses((p) => ({
             ...p,
@@ -798,32 +964,32 @@ function PipelineView() {
           setStatuses((p) => ({ ...p, "12": "running" }));
           setSelectedId("12");
         }
-        if (data.stage_13_output) {
+        if (isPersistedStageComplete(data as unknown as SessionData, "13", 13, data.stage_13_output)) {
           setStage13Output(data.stage_13_output);
           setStatuses((p) => ({ ...p, "13": "complete" }));
           setIntelSubmitted(true);
         }
-        if (data.stage_13b_output) {
+        if (isPersistedStageComplete(data as unknown as SessionData, "13b", 13, data.stage_13b_output)) {
           setStage13bOutput(data.stage_13b_output);
           setStatuses((p) => ({ ...p, "13B": "complete" }));
         }
-        if (data.stage_14_output) {
+        if (isPersistedStageComplete(data as unknown as SessionData, "14", 14, data.stage_14_output)) {
           setStage14Output(data.stage_14_output);
           setStatuses((p) => ({ ...p, "14": "complete" }));
         }
-        if (data.stage_14b_output) {
+        if (isPersistedStageComplete(data as unknown as SessionData, "14b", 14, data.stage_14b_output)) {
           setStage14bOutput(data.stage_14b_output);
           setStatuses((p) => ({ ...p, "14B": "complete" }));
         }
-        if (data.stage_14c_output) {
+        if (isPersistedStageComplete(data as unknown as SessionData, "14c", 14, data.stage_14c_output)) {
           setStage14cOutput(data.stage_14c_output);
           setStatuses((p) => ({ ...p, "14C": "complete" }));
         }
-        if (data.stage_15_output) {
+        if (isPersistedStageComplete(data as unknown as SessionData, "15", 15, data.stage_15_output)) {
           setStage15Output(data.stage_15_output);
           setStatuses((p) => ({ ...p, "15": "complete" }));
         }
-        if (data.stage_16_consulting_output) {
+        if (isPersistedStageComplete(data as unknown as SessionData, "16", 16, data.stage_16_consulting_output)) {
           setStage16Output(data.stage_16_consulting_output);
           setStatuses((p) => ({ ...p, "16": "complete" }));
         }
@@ -1004,7 +1170,7 @@ function PipelineView() {
       const { data } = await supabase
         .from("sessions")
         .select(
-          "id, brand_name, category, strategic_mode, brief_text, brief_versions, current_stage, status, stage_1_output, stage_1_tension_score, stage_1b_required, stage_1b_output, stage_1_error, stage_2_output, stage_2_error, stage_3_output, stage_3_error, stage_4_output, stage_4_error, stage_4b_output, stage_4b_error, stage_5_output, stage_5_error, stage_6_output, stage_6_error, stage_7_output, stage_7_error, stage_8_output, stage_8_error, stage_9_output, stage_9_leftofcentre_output, stage_9_error, stage_10_output, stage_10_error, stage_11_output, stage_11_error, stage_12_output, stage_12_error, stage_13_output, stage_13_error, stage_13b_output, stage_13b_error, stage_14_output, stage_14_error, stage_14b_output, stage_14b_error, stage_14c_output, stage_14c_error, stage_15_output, stage_15_error, stage_16_consulting_output, stage_16_error, brand_intelligence, selected_smp, selected_smp_field_name, checkpoint_a_confirmed, checkpoint_b_confirmed, checkpoint_c_confirmed, retry_status",
+          "id, brand_name, category, strategic_mode, brief_text, brief_versions, current_stage, status, stage_status, stage_1_output, stage_1_tension_score, stage_1b_required, stage_1b_output, stage_1_error, stage_2_output, stage_2_error, stage_3_output, stage_3_error, stage_4_output, stage_4_error, stage_4b_output, stage_4b_error, stage_5_output, stage_5_error, stage_6_output, stage_6_error, stage_7_output, stage_7_error, stage_8_output, stage_8_error, stage_9_output, stage_9_leftofcentre_output, stage_9_error, stage_10_output, stage_10_error, stage_11_output, stage_11_error, stage_12_output, stage_12_error, stage_13_output, stage_13_error, stage_13b_output, stage_13b_error, stage_14_output, stage_14_error, stage_14b_output, stage_14b_error, stage_14c_output, stage_14c_error, stage_15_output, stage_15_error, stage_16_consulting_output, stage_16_error, brand_intelligence, selected_smp, selected_smp_field_name, checkpoint_a_confirmed, checkpoint_b_confirmed, checkpoint_c_confirmed, retry_status",
         )
         .eq("id", sessionId)
         .single();
@@ -1050,11 +1216,12 @@ function PipelineView() {
 
     const fb1 = pendingFeedback["01"];
     (async () =>
-      consumeStream(
+      drainStreamOrPollDb(
         await runStage1Fn({
           data: { sessionId, feedback: fb1, previousOutput: pendingPreviousOutput["01"] },
         }),
         setStage1Output,
+        { sessionId, outputColumns: ["stage_1_output"], stageStatusId: "1" },
       ))()
       .then((result) => {
         if (cancelled) return;
@@ -1098,7 +1265,12 @@ function PipelineView() {
     if (statuses["01B"] !== "running") return;
     let cancelled = false;
     setStage1bLoading(true);
-    (async () => consumeStream(await runStage1bFn({ data: { sessionId } }), setStage1bOutput))()
+    (async () =>
+      drainStreamOrPollDb(await runStage1bFn({ data: { sessionId } }), setStage1bOutput, {
+        sessionId,
+        outputColumns: ["stage_1b_output"],
+        stageStatusId: "1b",
+      }))()
       .then((result) => {
         if (cancelled) return;
         setStage1bOutput(result.output);
@@ -1125,7 +1297,12 @@ function PipelineView() {
     let cancelled = false;
     setStage2Loading(true);
     setStage2Error(null);
-    (async () => consumeStream(await runStage2Fn({ data: { sessionId } }), setStage2Output))()
+    (async () =>
+      drainStreamOrPollDb(await runStage2Fn({ data: { sessionId } }), setStage2Output, {
+        sessionId,
+        outputColumns: ["stage_2_output"],
+        stageStatusId: "2",
+      }))()
       .then((result) => {
         if (cancelled) return;
         setStage2Output(result.output);
@@ -1152,7 +1329,12 @@ function PipelineView() {
     let cancelled = false;
     setStage3Loading(true);
     setStage3Error(null);
-    (async () => consumeStream(await runStage3Fn({ data: { sessionId } }), setStage3Output))()
+    (async () =>
+      drainStreamOrPollDb(await runStage3Fn({ data: { sessionId } }), setStage3Output, {
+        sessionId,
+        outputColumns: ["stage_3_output"],
+        stageStatusId: "3",
+      }))()
       .then((result) => {
         if (cancelled) return;
         setStage3Output(result.output);
@@ -1179,7 +1361,12 @@ function PipelineView() {
     let cancelled = false;
     setStage4Loading(true);
     setStage4Error(null);
-    (async () => consumeStream(await runStage4Fn({ data: { sessionId } }), setStage4Output))()
+    (async () =>
+      drainStreamOrPollDb(await runStage4Fn({ data: { sessionId } }), setStage4Output, {
+        sessionId,
+        outputColumns: ["stage_4_output"],
+        stageStatusId: "4",
+      }))()
       .then((result) => {
         if (cancelled) return;
         setStage4Output(result.output);
@@ -1206,7 +1393,12 @@ function PipelineView() {
     let cancelled = false;
     setStage4bLoading(true);
     setStage4bError(null);
-    (async () => consumeStream(await runStage4bFn({ data: { sessionId } }), setStage4bOutput))()
+    (async () =>
+      drainStreamOrPollDb(await runStage4bFn({ data: { sessionId } }), setStage4bOutput, {
+        sessionId,
+        outputColumns: ["stage_4b_output"],
+        stageStatusId: "4b",
+      }))()
       .then((result) => {
         if (cancelled) return;
         setStage4bOutput(result.output);
@@ -1234,7 +1426,12 @@ function PipelineView() {
     let cancelled = false;
     setStage5Loading(true);
     setStage5Error(null);
-    (async () => consumeStream(await runStage5Fn({ data: { sessionId } }), setStage5Output))()
+    (async () =>
+      drainStreamOrPollDb(await runStage5Fn({ data: { sessionId } }), setStage5Output, {
+        sessionId,
+        outputColumns: ["stage_5_output"],
+        stageStatusId: "5",
+      }))()
       .then((result) => {
         if (cancelled) return;
         setStage5Output(result.output);
@@ -1261,7 +1458,12 @@ function PipelineView() {
     let cancelled = false;
     setStage6Loading(true);
     setStage6Error(null);
-    (async () => consumeStream(await runStage6Fn({ data: { sessionId } }), setStage6Output))()
+    (async () =>
+      drainStreamOrPollDb(await runStage6Fn({ data: { sessionId } }), setStage6Output, {
+        sessionId,
+        outputColumns: ["stage_6_output"],
+        stageStatusId: "6",
+      }))()
       .then((result) => {
         if (cancelled) return;
         setStage6Output(result.output);
@@ -1288,7 +1490,12 @@ function PipelineView() {
     let cancelled = false;
     setStage7Loading(true);
     setStage7Error(null);
-    (async () => consumeStream(await runStage7Fn({ data: { sessionId } }), setStage7Output))()
+    (async () =>
+      drainStreamOrPollDb(await runStage7Fn({ data: { sessionId } }), setStage7Output, {
+        sessionId,
+        outputColumns: ["stage_7_output"],
+        stageStatusId: "7",
+      }))()
       .then((result) => {
         if (cancelled) return;
         setStage7Output(result.output);
@@ -1317,11 +1524,12 @@ function PipelineView() {
     setStage8Loading(true);
     setStage8Error(null);
     (async () =>
-      consumeStream(
+      drainStreamOrPollDb(
         await runStage8Fn({
           data: { sessionId, feedback: fb8, previousOutput: pendingPreviousOutput["08"] },
         }),
         setStage8Output,
+        { sessionId, outputColumns: ["stage_8_output"], stageStatusId: "8" },
       ))()
       .then((result) => {
         if (cancelled) return;
@@ -1361,7 +1569,12 @@ function PipelineView() {
     let cancelled = false;
     setStage9Loading(true);
     setStage9Error(null);
-    (async () => consumeStream(await runStage9Fn({ data: { sessionId } }), setStage9Output))()
+    (async () =>
+      drainStreamOrPollDb(await runStage9Fn({ data: { sessionId } }), setStage9Output, {
+        sessionId,
+        outputColumns: ["stage_9_output", "stage_9_leftofcentre_output"],
+        stageStatusId: "9",
+      }))()
       .then((result) => {
         if (cancelled) return;
         setStage9Output(result.output);
@@ -1388,7 +1601,12 @@ function PipelineView() {
     let cancelled = false;
     setStage10Loading(true);
     setStage10Error(null);
-    (async () => consumeStream(await runStage10Fn({ data: { sessionId } }), setStage10Output))()
+    (async () =>
+      drainStreamOrPollDb(await runStage10Fn({ data: { sessionId } }), setStage10Output, {
+        sessionId,
+        outputColumns: ["stage_10_output"],
+        stageStatusId: "10",
+      }))()
       .then((result) => {
         if (cancelled) return;
         setStage10Output(result.output);
@@ -1415,7 +1633,12 @@ function PipelineView() {
     let cancelled = false;
     setStage11Loading(true);
     setStage11Error(null);
-    (async () => consumeStream(await runStage11Fn({ data: { sessionId } }), setStage11Output))()
+    (async () =>
+      drainStreamOrPollDb(await runStage11Fn({ data: { sessionId } }), setStage11Output, {
+        sessionId,
+        outputColumns: ["stage_11_output"],
+        stageStatusId: "11",
+      }))()
       .then((result) => {
         if (cancelled) return;
         setStage11Output(result.output);
@@ -1456,11 +1679,12 @@ function PipelineView() {
     setStage12Loading(true);
     setStage12Error(null);
     (async () =>
-      consumeStream(
+      drainStreamOrPollDb(
         await runStage12Fn({
           data: { sessionId, feedback: fb12, previousOutput: pendingPreviousOutput["12"] },
         }),
         setStage12Output,
+        { sessionId, outputColumns: ["stage_12_output"], stageStatusId: "12" },
       ))()
       .then((result) => {
         if (cancelled) return;
@@ -1502,7 +1726,12 @@ function PipelineView() {
     let cancelled = false;
     setStage13Loading(true);
     setStage13Error(null);
-    (async () => consumeStream(await runStage13Fn({ data: { sessionId } }), setStage13Output))()
+    (async () =>
+      drainStreamOrPollDb(await runStage13Fn({ data: { sessionId } }), setStage13Output, {
+        sessionId,
+        outputColumns: ["stage_13_output"],
+        stageStatusId: "13",
+      }))()
       .then((result) => {
         if (cancelled) return;
         setStage13Output(result.output);
@@ -1526,7 +1755,12 @@ function PipelineView() {
     let cancelled = false;
     setStage13bLoading(true);
     setStage13bError(null);
-    (async () => consumeStream(await runStage13bFn({ data: { sessionId } }), setStage13bOutput))()
+    (async () =>
+      drainStreamOrPollDb(await runStage13bFn({ data: { sessionId } }), setStage13bOutput, {
+        sessionId,
+        outputColumns: ["stage_13b_output"],
+        stageStatusId: "13b",
+      }))()
       .then((result) => {
         if (cancelled) return;
         setStage13bOutput(result.output);
@@ -1550,7 +1784,12 @@ function PipelineView() {
     let cancelled = false;
     setStage14Loading(true);
     setStage14Error(null);
-    (async () => consumeStream(await runStage14Fn({ data: { sessionId } }), setStage14Output))()
+    (async () =>
+      drainStreamOrPollDb(await runStage14Fn({ data: { sessionId } }), setStage14Output, {
+        sessionId,
+        outputColumns: ["stage_14_output"],
+        stageStatusId: "14",
+      }))()
       .then((result) => {
         if (cancelled) return;
         setStage14Output(result.output);
@@ -1574,7 +1813,12 @@ function PipelineView() {
     let cancelled = false;
     setStage14bLoading(true);
     setStage14bError(null);
-    (async () => consumeStream(await runStage14bFn({ data: { sessionId } }), setStage14bOutput))()
+    (async () =>
+      drainStreamOrPollDb(await runStage14bFn({ data: { sessionId } }), setStage14bOutput, {
+        sessionId,
+        outputColumns: ["stage_14b_output"],
+        stageStatusId: "14b",
+      }))()
       .then((result) => {
         if (cancelled) return;
         setStage14bOutput(result.output);
@@ -1598,7 +1842,12 @@ function PipelineView() {
     let cancelled = false;
     setStage14cLoading(true);
     setStage14cError(null);
-    (async () => consumeStream(await runStage14cFn({ data: { sessionId } }), setStage14cOutput))()
+    (async () =>
+      drainStreamOrPollDb(await runStage14cFn({ data: { sessionId } }), setStage14cOutput, {
+        sessionId,
+        outputColumns: ["stage_14c_output"],
+        stageStatusId: "14c",
+      }))()
       .then((result) => {
         if (cancelled) return;
         setStage14cOutput(result.output);
@@ -1622,7 +1871,12 @@ function PipelineView() {
     let cancelled = false;
     setStage15Loading(true);
     setStage15Error(null);
-    (async () => consumeStream(await runStage15Fn({ data: { sessionId } }), setStage15Output))()
+    (async () =>
+      drainStreamOrPollDb(await runStage15Fn({ data: { sessionId } }), setStage15Output, {
+        sessionId,
+        outputColumns: ["stage_15_output"],
+        stageStatusId: "15",
+      }))()
       .then((result) => {
         if (cancelled) return;
         setStage15Output(result.output);
@@ -2342,7 +2596,7 @@ function PipelineView() {
                   setStage8Loading(true);
                   setStatuses((p) => ({ ...p, "08": "running" }));
                   try {
-                    const result = await consumeStream(
+                    const result = await drainStreamOrPollDb(
                       await regenerateStage8SelectiveFn({
                         data: {
                           sessionId,
@@ -2352,6 +2606,7 @@ function PipelineView() {
                         },
                       }),
                       setStage8Output,
+                      { sessionId, outputColumns: ["stage_8_output"], stageStatusId: "8" },
                     );
                     setStage8Output(result.output);
                     setStage8Loading(false);

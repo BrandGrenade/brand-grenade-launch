@@ -272,7 +272,12 @@ export const runStage12 = createServerFn({ method: "POST" })
       () =>
         supabaseAdmin
           .from("sessions")
-          .update({ stage_12_output: output, stage_12_error: null, status: "awaiting_checkpoint" })
+          .update({
+            stage_12_output: output,
+            stage_12_error: null,
+            status: "awaiting_checkpoint",
+            stage_status: "complete:12",
+          })
           .eq("id", data.sessionId),
       "Stage 12 output save",
     );

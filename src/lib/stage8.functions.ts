@@ -318,7 +318,7 @@ export const runStage8 = createServerFn({ method: "POST" })
 
     const { error: updateErr } = await supabaseAdmin
       .from("sessions")
-      .update({ stage_8_output: output, stage_8_error: null })
+      .update({ stage_8_output: output, stage_8_error: null, stage_status: "complete:8" })
       .eq("id", data.sessionId);
     if (updateErr) throw new Error(`Failed to save Stage 8 output: ${updateErr.message}`);
 
@@ -493,7 +493,7 @@ export const regenerateStage8Selective = createServerFn({ method: "POST" })
 
     const { error: updateErr } = await supabaseAdmin
       .from("sessions")
-      .update({ stage_8_output: merged, stage_8_error: null })
+      .update({ stage_8_output: merged, stage_8_error: null, stage_status: "complete:8" })
       .eq("id", data.sessionId);
     if (updateErr) throw new Error(`Failed to save Stage 8 output: ${updateErr.message}`);
 

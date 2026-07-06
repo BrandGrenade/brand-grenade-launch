@@ -188,7 +188,13 @@ export const runStage1 = createServerFn({ method: "POST" })
     for (let attempt = 0; attempt < 3; attempt++) {
       const { error } = await supabaseAdmin
         .from("sessions")
-        .update({ stage_1_output: output, stage_1_tension_score: tensionScore, stage_1b_required: stage1bRequired, stage_1_error: null })
+        .update({
+          stage_1_output: output,
+          stage_1_tension_score: tensionScore,
+          stage_1b_required: stage1bRequired,
+          stage_1_error: null,
+          stage_status: "complete:1",
+        })
         .eq("id", data.sessionId);
       if (!error) { lastSaveErr = null; break; }
       lastSaveErr = error;

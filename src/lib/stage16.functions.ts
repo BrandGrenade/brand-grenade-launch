@@ -99,6 +99,7 @@ export const runStage16 = createServerFn({ method: "POST" })
             current_stage: 16,
             stage_16_error: null,
             stage_16_format: data.format,
+              stage_status: "complete:16",
           })
           .eq("id", data.sessionId);
       }
@@ -402,6 +403,7 @@ Write the complete STRATEGY AND CREATIVE VISION document now. Begin immediately.
         ...outputUpdate,
         stage_16_error: null,
         status: "complete",
+        stage_status: "complete:16",
       } as never)
       .eq("id", data.sessionId);
     if (ue)
