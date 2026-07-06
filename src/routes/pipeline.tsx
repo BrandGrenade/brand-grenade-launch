@@ -2568,7 +2568,7 @@ function PipelineView() {
                   setStage8Loading(true);
                   setStatuses((p) => ({ ...p, "08": "running" }));
                   try {
-                    const result = await consumeStream(
+                    const result = await drainStreamOrPollDb(
                       await regenerateStage8SelectiveFn({
                         data: {
                           sessionId,
@@ -2578,6 +2578,7 @@ function PipelineView() {
                         },
                       }),
                       setStage8Output,
+                      { sessionId, outputColumns: ["stage_8_output"], stageStatusId: "8" },
                     );
                     setStage8Output(result.output);
                     setStage8Loading(false);
