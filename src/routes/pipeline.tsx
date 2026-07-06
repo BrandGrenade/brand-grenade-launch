@@ -66,7 +66,7 @@ async function consumeStream<C extends { delta?: string; done?: true }>(
       if (timeoutId) clearTimeout(timeoutId);
     }).catch(async (error) => {
       try {
-        await gen.return?.();
+        await gen.return?.(undefined as void);
       } catch {
         /* ignore cleanup failure */
       }
