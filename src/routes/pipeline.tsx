@@ -519,10 +519,25 @@ interface SessionData {
   selected_smp_field_name: string | null;
   current_stage: number;
   status: string;
+  stage_status: string | null;
   checkpoint_a_confirmed: boolean;
   checkpoint_b_confirmed: boolean;
   checkpoint_c_confirmed: boolean;
   retry_status: string | null;
+}
+
+function isPersistedStageComplete(
+  row: Pick<SessionData, "current_stage" | "status" | "stage_status">,
+  stageStatusId: string,
+  numericStage: number,
+  output: string | null | undefined,
+): boolean {
+  if (!output || output.trim().length === 0) return false;
+  return (
+    row.stage_status === `complete:${stageStatusId}` ||
+    row.status !== "running" ||
+    row.current_stage > numericStage
+  );
 }
 
 function PipelineView() {
@@ -860,7 +875,7 @@ function PipelineView() {
     supabase
       .from("sessions")
       .select(
-        "id, brand_name, category, strategic_mode, brief_text, brief_versions, current_stage, status, stage_1_output, stage_1_tension_score, stage_1b_required, stage_1b_output, stage_1_error, stage_2_output, stage_2_error, stage_3_output, stage_3_error, stage_4_output, stage_4_error, stage_4b_output, stage_4b_error, stage_5_output, stage_5_error, stage_6_output, stage_6_error, stage_7_output, stage_7_error, stage_8_output, stage_8_error, stage_9_output, stage_9_leftofcentre_output, stage_9_error, stage_10_output, stage_10_error, stage_11_output, stage_11_error, stage_12_output, stage_12_error, stage_13_output, stage_13_error, stage_13b_output, stage_13b_error, stage_14_output, stage_14_error, stage_14b_output, stage_14b_error, stage_14c_output, stage_14c_error, stage_15_output, stage_15_error, stage_16_consulting_output, stage_16_error, brand_intelligence, selected_smp, selected_smp_field_name, checkpoint_a_confirmed, checkpoint_b_confirmed, checkpoint_c_confirmed, retry_status",
+        "id, brand_name, category, strategic_mode, brief_text, brief_versions, current_stage, status, stage_status, stage_1_output, stage_1_tension_score, stage_1b_required, stage_1b_output, stage_1_error, stage_2_output, stage_2_error, stage_3_output, stage_3_error, stage_4_output, stage_4_error, stage_4b_output, stage_4b_error, stage_5_output, stage_5_error, stage_6_output, stage_6_error, stage_7_output, stage_7_error, stage_8_output, stage_8_error, stage_9_output, stage_9_leftofcentre_output, stage_9_error, stage_10_output, stage_10_error, stage_11_output, stage_11_error, stage_12_output, stage_12_error, stage_13_output, stage_13_error, stage_13b_output, stage_13b_error, stage_14_output, stage_14_error, stage_14b_output, stage_14b_error, stage_14c_output, stage_14c_error, stage_15_output, stage_15_error, stage_16_consulting_output, stage_16_error, brand_intelligence, selected_smp, selected_smp_field_name, checkpoint_a_confirmed, checkpoint_b_confirmed, checkpoint_c_confirmed, retry_status",
       )
 
       .eq("id", sessionId)
@@ -874,65 +889,65 @@ function PipelineView() {
         }
         setSession(data as unknown as SessionData);
         if (data.brand_intelligence) setIntelSubmitted(true);
-        if (data.stage_1_output) {
+        if (isPersistedStageComplete(data as unknown as SessionData, "1", 1, data.stage_1_output)) {
           setStage1Output(data.stage_1_output);
           setStatuses((p) => ({
             ...p,
             "01": data.checkpoint_a_confirmed ? "complete" : "checkpoint",
           }));
         }
-        if (data.stage_1b_output) {
+        if (isPersistedStageComplete(data as unknown as SessionData, "1b", 1, data.stage_1b_output)) {
           setStage1bOutput(data.stage_1b_output);
           setStatuses((p) => ({ ...p, "01B": "complete" }));
         }
-        if (data.stage_2_output) {
+        if (isPersistedStageComplete(data as unknown as SessionData, "2", 2, data.stage_2_output)) {
           setStage2Output(data.stage_2_output);
           setStatuses((p) => ({ ...p, "02": "complete" }));
         }
-        if (data.stage_3_output) {
+        if (isPersistedStageComplete(data as unknown as SessionData, "3", 3, data.stage_3_output)) {
           setStage3Output(data.stage_3_output);
           setStatuses((p) => ({ ...p, "03": "complete" }));
         }
-        if (data.stage_4_output) {
+        if (isPersistedStageComplete(data as unknown as SessionData, "4", 4, data.stage_4_output)) {
           setStage4Output(data.stage_4_output);
           setStatuses((p) => ({ ...p, "04": "complete" }));
         }
-        if (data.stage_4b_output) {
+        if (isPersistedStageComplete(data as unknown as SessionData, "4b", 4, data.stage_4b_output)) {
           setStage4bOutput(data.stage_4b_output);
           setStatuses((p) => ({ ...p, "04B": "complete" }));
         }
-        if (data.stage_5_output) {
+        if (isPersistedStageComplete(data as unknown as SessionData, "5", 5, data.stage_5_output)) {
           setStage5Output(data.stage_5_output);
           setStatuses((p) => ({ ...p, "05": "complete" }));
         }
-        if (data.stage_6_output) {
+        if (isPersistedStageComplete(data as unknown as SessionData, "6", 6, data.stage_6_output)) {
           setStage6Output(data.stage_6_output);
           setStatuses((p) => ({ ...p, "06": "complete" }));
         }
-        if (data.stage_7_output) {
+        if (isPersistedStageComplete(data as unknown as SessionData, "7", 7, data.stage_7_output)) {
           setStage7Output(data.stage_7_output);
           setStatuses((p) => ({ ...p, "07": "complete" }));
         }
-        if (data.stage_8_output) {
+        if (isPersistedStageComplete(data as unknown as SessionData, "8", 8, data.stage_8_output)) {
           setStage8Output(data.stage_8_output);
           setStatuses((p) => ({
             ...p,
             "08": data.checkpoint_b_confirmed ? "complete" : "checkpoint",
           }));
         }
-        if (data.stage_9_output) {
+        if (isPersistedStageComplete(data as unknown as SessionData, "9", 9, data.stage_9_output)) {
           setStage9Output(`${data.stage_9_output}${(data as unknown as SessionData).stage_9_leftofcentre_output ?? ""}`);
           setStatuses((p) => ({ ...p, "09": "complete" }));
         }
-        if (data.stage_10_output) {
+        if (isPersistedStageComplete(data as unknown as SessionData, "10", 10, data.stage_10_output)) {
           setStage10Output(data.stage_10_output);
           setStatuses((p) => ({ ...p, "10": "complete" }));
         }
-        if (data.stage_11_output) {
+        if (isPersistedStageComplete(data as unknown as SessionData, "11", 11, data.stage_11_output)) {
           setStage11Output(data.stage_11_output);
           setStatuses((p) => ({ ...p, "11": "complete" }));
         }
-        if (data.stage_12_output) {
+        if (isPersistedStageComplete(data as unknown as SessionData, "12", 12, data.stage_12_output)) {
           setStage12Output(data.stage_12_output);
           setStatuses((p) => ({
             ...p,
@@ -949,32 +964,32 @@ function PipelineView() {
           setStatuses((p) => ({ ...p, "12": "running" }));
           setSelectedId("12");
         }
-        if (data.stage_13_output) {
+        if (isPersistedStageComplete(data as unknown as SessionData, "13", 13, data.stage_13_output)) {
           setStage13Output(data.stage_13_output);
           setStatuses((p) => ({ ...p, "13": "complete" }));
           setIntelSubmitted(true);
         }
-        if (data.stage_13b_output) {
+        if (isPersistedStageComplete(data as unknown as SessionData, "13b", 13, data.stage_13b_output)) {
           setStage13bOutput(data.stage_13b_output);
           setStatuses((p) => ({ ...p, "13B": "complete" }));
         }
-        if (data.stage_14_output) {
+        if (isPersistedStageComplete(data as unknown as SessionData, "14", 14, data.stage_14_output)) {
           setStage14Output(data.stage_14_output);
           setStatuses((p) => ({ ...p, "14": "complete" }));
         }
-        if (data.stage_14b_output) {
+        if (isPersistedStageComplete(data as unknown as SessionData, "14b", 14, data.stage_14b_output)) {
           setStage14bOutput(data.stage_14b_output);
           setStatuses((p) => ({ ...p, "14B": "complete" }));
         }
-        if (data.stage_14c_output) {
+        if (isPersistedStageComplete(data as unknown as SessionData, "14c", 14, data.stage_14c_output)) {
           setStage14cOutput(data.stage_14c_output);
           setStatuses((p) => ({ ...p, "14C": "complete" }));
         }
-        if (data.stage_15_output) {
+        if (isPersistedStageComplete(data as unknown as SessionData, "15", 15, data.stage_15_output)) {
           setStage15Output(data.stage_15_output);
           setStatuses((p) => ({ ...p, "15": "complete" }));
         }
-        if (data.stage_16_consulting_output) {
+        if (isPersistedStageComplete(data as unknown as SessionData, "16", 16, data.stage_16_consulting_output)) {
           setStage16Output(data.stage_16_consulting_output);
           setStatuses((p) => ({ ...p, "16": "complete" }));
         }
