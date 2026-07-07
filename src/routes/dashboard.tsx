@@ -587,21 +587,21 @@ function buildActions(s: DbSession, status: UIStatus, onDelete: () => void): Act
     to: s.stage_17_output != null ? "/detonation" : "/detonation/canvas",
     search: { session: s.id },
   };
-  if (status === "complete") {
-    return [
-      strategyAction,
-      detonationAction,
-      {
-        key: "deliverables",
-        label: "Deliverables",
-        color: "#D4924A",
-        hoverBg: "#D4924A15",
-        icon: <FileText size={14} />,
-        to: "/complete",
-        search: { session: s.id },
-      },
-      deleteAction,
-    ];
+  const deliverablesAction: ActionConfig = {
+    key: "deliverables",
+    label: "Deliverables",
+    color: "#D4924A",
+    hoverBg: "#D4924A15",
+    icon: <FileText size={14} />,
+    to: "/complete",
+    search: { session: s.id },
+  };
+  // Deliverables are available whenever Phase 2 has produced its final output
+  // (stage_22_output), independent of the Phase 1 "complete" derivation which
+  // requires stage_16_consulting_output. Sessions that finished Phase 2 without
+  // that specific Phase 1 artefact would otherwise have no way to reach /complete.
+  if (status === "complete" || s.stage_22_output != null) {
+    return [strategyAction, detonationAction, deliverablesAction, deleteAction];
   }
   return [strategyAction, detonationAction, deleteAction];
 }
