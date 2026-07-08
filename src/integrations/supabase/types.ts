@@ -214,6 +214,16 @@ export type Database = {
           id: string
           interrupted_stage: number | null
           is_preflight_test: boolean
+          loc_classifier_rationale: string | null
+          loc_decision_packages: Json | null
+          loc_engine_outputs: Json | null
+          loc_error: string | null
+          loc_generated_at: string | null
+          loc_retry_count: number
+          loc_status: string | null
+          loc_task_runner_up: string | null
+          loc_task_type: string | null
+          loc_validation: Json | null
           phase_2_current_stage: string
           phase_2_status: string
           retry_status: string | null
@@ -370,6 +380,16 @@ export type Database = {
           id?: string
           interrupted_stage?: number | null
           is_preflight_test?: boolean
+          loc_classifier_rationale?: string | null
+          loc_decision_packages?: Json | null
+          loc_engine_outputs?: Json | null
+          loc_error?: string | null
+          loc_generated_at?: string | null
+          loc_retry_count?: number
+          loc_status?: string | null
+          loc_task_runner_up?: string | null
+          loc_task_type?: string | null
+          loc_validation?: Json | null
           phase_2_current_stage?: string
           phase_2_status?: string
           retry_status?: string | null
@@ -526,6 +546,16 @@ export type Database = {
           id?: string
           interrupted_stage?: number | null
           is_preflight_test?: boolean
+          loc_classifier_rationale?: string | null
+          loc_decision_packages?: Json | null
+          loc_engine_outputs?: Json | null
+          loc_error?: string | null
+          loc_generated_at?: string | null
+          loc_retry_count?: number
+          loc_status?: string | null
+          loc_task_runner_up?: string | null
+          loc_task_type?: string | null
+          loc_validation?: Json | null
           phase_2_current_stage?: string
           phase_2_status?: string
           retry_status?: string | null

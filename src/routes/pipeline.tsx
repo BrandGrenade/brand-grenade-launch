@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
 import { z } from "zod";
 import { TopNav } from "@/components/TopNav";
+import { LocControls } from "@/components/LocControls";
 import { Checkpoint, buildRevisionInstruction } from "@/components/Checkpoint";
 import { SelectionRationale } from "@/components/SelectionRationale";
 import { BrandIntelligence } from "@/components/BrandIntelligence";
@@ -2752,6 +2753,12 @@ function PipelineView() {
           navigate({ to: "/brief", search: { edit: sessionId } });
         }}
       />
+
+      {sessionId && (
+        <div className="border-b px-6 py-2 sm:px-12" style={{ borderColor: "var(--color-border-subtle)" }}>
+          <LocControls sessionId={sessionId} />
+        </div>
+      )}
 
       <div className="flex flex-1 overflow-hidden">
         <LeftPanel

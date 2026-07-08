@@ -5,6 +5,7 @@ import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { TopNav } from "@/components/TopNav";
 import { createSession } from "@/lib/stage1.functions";
+import { runLeftOfCentre } from "@/lib/loc.functions";
 import { getDevModeFromStorage } from "@/lib/dev-mode";
 import {
   saveBrief,
@@ -28,6 +29,7 @@ export const Route = createFileRoute("/brief/new")({
 function NewBriefPage() {
   const navigate = useNavigate();
   const createSessionFn = useServerFn(createSession);
+  const runLocFn = useServerFn(runLeftOfCentre);
 
   const [brand, setBrand] = useState("");
   const [category, setCategory] = useState("");
@@ -87,6 +89,12 @@ function NewBriefPage() {
           briefText: saved.brief_text,
           devMode: getDevModeFromStorage(),
         },
+      });
+      // Fire the Left-of-Centre engine track in parallel with Stage 1.
+      // Do not await — Stage 1 must not wait on LOC, and LOC writes its
+      // output to stage_9_leftofcentre_output when it finishes.
+      void runLocFn({ data: { sessionId } }).catch((err: unknown) => {
+        console.warn("[LOC] parallel run failed at handoff:", err);
       });
       navigate({ to: "/pipeline", search: { session: sessionId } });
     } catch (err) {

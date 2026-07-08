@@ -4,14 +4,8 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { streamClaude } from "./claude.server";
 import { STAGE_9_SYSTEM_PROMPT, buildStage9UserMessage } from "./stage9-prompt";
 import {
-  STAGE_9_LEFT_OF_CENTRE_SYSTEM_PROMPT,
-  buildStage9LeftOfCentreUserMessage,
-  STAGE_9_LEFT_OF_CENTRE_DIVIDER,
-} from "./stage9-leftofcentre-prompt";
-import {
   CONDITIONALLY_BANNED_STAGE9,
   UNIVERSAL_BANNED_STAGE9,
-  conditionalStage9HitAllowedInLeftOfCentre,
   conditionalStage9WordAllowedInLeftOfCentre,
   competitorOwnedConditionalStage9Words,
 } from "./stage9-banned-words";
@@ -36,7 +30,6 @@ async function collectClaudeText(args: Parameters<typeof streamClaude>[0]): Prom
   return text;
 }
 
-
 async function setRetryStatus(sessionId: string, message: string | null) {
   try {
     await supabaseAdmin
@@ -48,7 +41,10 @@ async function setRetryStatus(sessionId: string, message: string | null) {
   }
 }
 
-
+// Stage 9 core generator ONLY. The Left-of-Centre engines have moved to
+// their own parallel track (src/lib/loc.functions.ts) triggered at Briefing
+// Room handoff time. Stage 9 no longer generates LOC inline; it only reads
+// stage_9_leftofcentre_output from the DB if the LOC track has finished.
 export const runStage9 = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i) => Input.parse(i))
@@ -59,7 +55,9 @@ export const runStage9 = createServerFn({ method: "POST" })
     await assertUpstreamStageOutput(data.sessionId, 9);
     const { data: session, error } = await supabaseAdmin
       .from("sessions")
-      .select("brand_name, category, brief_text, stage_2_output, stage_4b_output, stage_6_output, stage_7_output, stage_8_output, stage_9_output, stage_9_leftofcentre_output, checkpoint_b_confirmed, is_preflight_test")
+      .select(
+        "brand_name, category, brief_text, stage_2_output, stage_7_output, stage_8_output, stage_9_output, stage_9_leftofcentre_output, checkpoint_b_confirmed, is_preflight_test",
+      )
       .eq("id", data.sessionId)
       .single();
     if (error || !session) throw new Error(`Session not found: ${error?.message ?? "no row"}`);
@@ -67,7 +65,12 @@ export const runStage9 = createServerFn({ method: "POST" })
     if (session.stage_9_output) {
       const cached = `${session.stage_9_output}${session.stage_9_leftofcentre_output ?? ""}`;
       yield { delta: cached };
-      yield { done: true as const, output: cached, coreOutput: session.stage_9_output, leftOfCentreOutput: session.stage_9_leftofcentre_output ?? "" };
+      yield {
+        done: true as const,
+        output: cached,
+        coreOutput: session.stage_9_output,
+        leftOfCentreOutput: session.stage_9_leftofcentre_output ?? "",
+      };
       return;
     }
 
@@ -78,10 +81,6 @@ export const runStage9 = createServerFn({ method: "POST" })
 
     const propositionCount = countPropositions(session.stage_8_output);
 
-    // Pre-compute which conditional words a named competitor already owns.
-    // Only these get injected as banned targets into the core prompt; the
-    // rest of the conditional list is allowed in core so category-native
-    // verb-space (train/perform/discipline briefs) isn't starved.
     const coreCompetitorOwnedConditional = competitorOwnedConditionalStage9Words({
       brandName: session.brand_name,
       briefText: session.brief_text ?? "",
@@ -147,115 +146,40 @@ export const runStage9 = createServerFn({ method: "POST" })
       yield { delta: output };
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Stage 9 failed";
-      await supabaseAdmin
-        .from("sessions")
-        .update({ stage_9_error: msg })
-        .eq("id", data.sessionId);
+      await supabaseAdmin.from("sessions").update({ stage_9_error: msg }).eq("id", data.sessionId);
       throw e instanceof Error ? e : new Error(msg);
     }
 
     await setRetryStatus(data.sessionId, null);
 
-    // ===== TIER 3 — LEFT-OF-CENTRE ALTERNATIVES (Breach / Fuse / Flashpoint) =====
-    // Additive layer: runs AFTER the core Stage 9 generator on the same session
-    // inputs. Stored separately in stage_9_leftofcentre_output so core Stage 9
-    // and the conditional-word exemption can be checked independently.
-    let leftOfCentre = "";
-    try {
-      const locDivider = STAGE_9_LEFT_OF_CENTRE_DIVIDER;
-
-      const competitorOwnedConditionalWords = competitorOwnedConditionalStage9Words({
-        brandName: session.brand_name,
-        briefText: session.brief_text ?? "",
-        stage2Output: session.stage_2_output ?? "",
-      });
-      if (competitorOwnedConditionalWords.length) {
-        console.info(
-          `[STAGE9-LOC] pre-computed banned conditional targets for session=${data.sessionId}: ${competitorOwnedConditionalWords.join(", ")}`,
-        );
-      }
-
-      const locUserMessage = buildStage9LeftOfCentreUserMessage({
-        brandName: session.brand_name,
-        category: session.category,
-        stage2Output: session.stage_2_output ?? "",
-        stage4bOutput: session.stage_4b_output ?? undefined,
-        stage6Output: session.stage_6_output ?? undefined,
-        stage7Output: session.stage_7_output ?? undefined,
-        stage8Output: session.stage_8_output ?? undefined,
-        briefText: session.brief_text ?? undefined,
-        competitorOwnedConditionalWords,
-      });
-
-
-      const validateLeftOfCentre = (text: string): BannedWordHit[] => {
-        const universalHits = findBannedWordHits({
-          text,
-          terms: UNIVERSAL_BANNED_STAGE9,
-          rule: "stage9-universal",
-          stageLabel: "Stage 9",
-          columnLabel: "stage_9_leftofcentre_output",
-        });
-        const conditionalHits = findBannedWordHits({
-          text,
-          terms: CONDITIONALLY_BANNED_STAGE9,
-          rule: "stage9-leftofcentre-competitor-owned-conditional",
-          stageLabel: "Stage 9",
-          columnLabel: "stage_9_leftofcentre_output",
-        }).filter(
-          (hit) =>
-            !conditionalStage9HitAllowedInLeftOfCentre({
-              word: hit.word,
-              index: hit.index,
-              output: text,
-              brandName: session.brand_name,
-              briefText: session.brief_text ?? "",
-              stage2Output: session.stage_2_output ?? "",
-            }),
-        );
-        return [...universalHits, ...conditionalHits];
-      };
-
-      const gatedLoc = await generateWithBannedWordGate({
-        stageLabel: "Stage 9",
-        columnLabel: "stage_9_leftofcentre_output",
-        mode,
-        maxAttempts: 3,
-        validate: validateLeftOfCentre,
-        generate: (attempt, retryNote) =>
-          collectClaudeText({
-            systemPrompt: STAGE_9_LEFT_OF_CENTRE_SYSTEM_PROMPT,
-            userMessage: `${locUserMessage}${retryNote ?? ""}`,
-            maxTokens: 16000,
-            sessionId: data.sessionId,
-            stageLabel: attempt === 1 ? "Stage 9 (Left-of-Centre)" : `Stage 9 (Left-of-Centre sanitiser retry ${attempt})`,
-            stageNumber: "9",
-            stageName: "Left-of-Centre Alternatives",
-          }),
-      });
-      leftOfCentre = `${locDivider}${gatedLoc.output}`;
-      yield { delta: leftOfCentre };
-    } catch (e) {
-      if (mode === "test") {
-        const msg = e instanceof Error ? e.message : "Stage 9 left-of-centre failed";
-        await supabaseAdmin
-          .from("sessions")
-          .update({ stage_9_error: msg })
-          .eq("id", data.sessionId);
-        throw e instanceof Error ? e : new Error(msg);
-      }
-      const note = `\n\n[LEFT-OF-CENTRE ALTERNATIVES layer failed: ${e instanceof Error ? e.message : "unknown error"} — core Stage 9 output above is unaffected.]\n`;
-      leftOfCentre += note;
-      yield { delta: note };
-    }
+    // Read pre-generated LOC output from DB (parallel track). Do NOT
+    // regenerate here — LOC is authoritative from its own runner. If it
+    // hasn't finished yet the Stage 9 UI shows a "LOC still generating"
+    // affordance separately.
+    const { data: locRow } = await supabaseAdmin
+      .from("sessions")
+      .select("stage_9_leftofcentre_output")
+      .eq("id", data.sessionId)
+      .single<{ stage_9_leftofcentre_output: string | null }>();
+    const leftOfCentre = locRow?.stage_9_leftofcentre_output ?? "";
+    if (leftOfCentre) yield { delta: leftOfCentre };
 
     const combined = output + leftOfCentre;
 
     const { error: updateErr } = await supabaseAdmin
       .from("sessions")
-      .update({ stage_9_output: output, stage_9_leftofcentre_output: leftOfCentre, stage_9_error: null, stage_status: "complete:9" } as never)
+      .update({
+        stage_9_output: output,
+        stage_9_error: null,
+        stage_status: "complete:9",
+      } as never)
       .eq("id", data.sessionId);
     if (updateErr) throw new Error(`Failed to save Stage 9 output: ${updateErr.message}`);
 
-    yield { done: true as const, output: combined, coreOutput: output, leftOfCentreOutput: leftOfCentre };
+    yield {
+      done: true as const,
+      output: combined,
+      coreOutput: output,
+      leftOfCentreOutput: leftOfCentre,
+    };
   });
