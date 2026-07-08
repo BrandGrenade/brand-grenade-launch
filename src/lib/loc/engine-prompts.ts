@@ -7,6 +7,7 @@ import { formatCasesForPrompt, LOC_CASE_LIBRARY } from "./case-library";
 import { LOC_ENGINE_QUESTIONS, LOC_TASK_CONSTRAINT, type EngineName, type LocTaskType } from "./task-types";
 import type { LocInputs } from "./brief-extract";
 import { renderLocInputsBlock } from "./brief-extract";
+import { parseJsonLenient } from "./json-sanitize";
 
 const DISPLACE_DOMAINS = [
   "architecture",
@@ -248,6 +249,6 @@ export function parseEngineOutput(raw: string, engine: EngineName): EngineOutput
   if (jsonStart === -1 || jsonEnd === -1) {
     throw new Error(`${engine} engine did not return JSON. Raw: ${trimmed.slice(0, 200)}`);
   }
-  const parsed = JSON.parse(trimmed.slice(jsonStart, jsonEnd + 1));
-  return parsed as EngineOutput;
+  const slice = trimmed.slice(jsonStart, jsonEnd + 1);
+  return parseJsonLenient<EngineOutput>(slice);
 }
