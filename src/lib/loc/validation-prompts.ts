@@ -6,6 +6,7 @@ import type { EngineOutput } from "./engine-prompts";
 import type { LocInputs } from "./brief-extract";
 import { renderLocInputsBlock } from "./brief-extract";
 import type { EngineName } from "./task-types";
+import { parseJsonLenient } from "./json-sanitize";
 
 export const LOC_VALIDATION_SYSTEM_PROMPT = `You are the Left-of-Centre validation track. You do NOT apply the standard Stage 10/11/13 validation — that was designed for propositions grounded in current brand reality, and applying it to LOC propositions systematically eliminates the most valuable outputs.
 
