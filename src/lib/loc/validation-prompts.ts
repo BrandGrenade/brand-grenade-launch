@@ -115,5 +115,5 @@ export function parseLocValidation(raw: string): LocValidationResult {
   if (jsonStart === -1 || jsonEnd === -1) {
     throw new Error(`LOC validation did not return JSON. Raw: ${trimmed.slice(0, 200)}`);
   }
-  return JSON.parse(trimmed.slice(jsonStart, jsonEnd + 1)) as LocValidationResult;
+  return parseJsonLenient<LocValidationResult>(trimmed.slice(jsonStart, jsonEnd + 1));
 }
