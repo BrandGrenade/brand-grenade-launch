@@ -7,6 +7,7 @@ import { formatCasesForPrompt, LOC_CASE_LIBRARY } from "./case-library";
 import { LOC_ENGINE_QUESTIONS, LOC_TASK_CONSTRAINT, type EngineName, type LocTaskType } from "./task-types";
 import type { LocInputs } from "./brief-extract";
 import { renderLocInputsBlock } from "./brief-extract";
+import { parseJsonLenient } from "./json-sanitize";
 
 const DISPLACE_DOMAINS = [
   "architecture",
