@@ -5,6 +5,7 @@ import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { TopNav } from "@/components/TopNav";
 import { createSession } from "@/lib/stage1.functions";
+import { runLeftOfCentre } from "@/lib/loc.functions";
 import { getDevModeFromStorage } from "@/lib/dev-mode";
 import {
   saveBrief,
