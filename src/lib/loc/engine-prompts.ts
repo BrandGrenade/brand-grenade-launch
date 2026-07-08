@@ -248,6 +248,7 @@ export function parseEngineOutput(raw: string, engine: EngineName): EngineOutput
   if (jsonStart === -1 || jsonEnd === -1) {
     throw new Error(`${engine} engine did not return JSON. Raw: ${trimmed.slice(0, 200)}`);
   }
-  const parsed = JSON.parse(trimmed.slice(jsonStart, jsonEnd + 1));
-  return parsed as EngineOutput;
+  const slice = trimmed.slice(jsonStart, jsonEnd + 1);
+  const { parseJsonLenient } = require("./json-sanitize") as typeof import("./json-sanitize");
+  return parseJsonLenient<EngineOutput>(slice);
 }
