@@ -29,6 +29,7 @@ export const Route = createFileRoute("/brief/new")({
 function NewBriefPage() {
   const navigate = useNavigate();
   const createSessionFn = useServerFn(createSession);
+  const runLocFn = useServerFn(runLeftOfCentre);
 
   const [brand, setBrand] = useState("");
   const [category, setCategory] = useState("");
