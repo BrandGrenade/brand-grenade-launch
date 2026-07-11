@@ -234,6 +234,7 @@ export function NewRunGateButton({ variant = "topnav", label = "New Run", prefix
         style={baseDisabledStyle}
         title={gate?.message ?? "Platform Not Verified"}
       >
+        {prefixNode}
         {label}
       </button>
       <AlertDialog
