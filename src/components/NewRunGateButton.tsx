@@ -30,11 +30,12 @@ import {
 } from "@/lib/pipeline-gate.functions";
 
 export type NewRunGateButtonProps = {
-  variant?: "topnav" | "empty";
+  variant?: "topnav" | "empty" | "launch";
   label?: string;
+  prefix?: string;
 };
 
-export function NewRunGateButton({ variant = "topnav", label = "New Run" }: NewRunGateButtonProps) {
+export function NewRunGateButton({ variant = "topnav", label = "New Run", prefix }: NewRunGateButtonProps) {
   const getGate = useServerFn(getPipelineGate);
   const logOverride = useServerFn(logPipelineRunOverride);
   const navigate = useNavigate();
@@ -126,7 +127,28 @@ export function NewRunGateButton({ variant = "topnav", label = "New Run" }: NewR
   };
 
   const isTopNav = variant === "topnav";
-  const baseEnabledStyle: React.CSSProperties = isTopNav
+  const isLaunch = variant === "launch";
+
+  const launchEnabledStyle: React.CSSProperties = {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 10,
+    height: 44,
+    padding: "0 22px",
+    borderRadius: 10,
+    backgroundColor: "#D4924A",
+    color: "#0A0A0A",
+    fontWeight: 700,
+    fontSize: 14,
+    letterSpacing: "0.02em",
+    boxShadow: "0 2px 12px rgba(212,146,74,0.25)",
+    cursor: "pointer",
+    border: "none",
+  };
+
+  const baseEnabledStyle: React.CSSProperties = isLaunch
+    ? launchEnabledStyle
+    : isTopNav
     ? {
         display: "inline-flex",
         alignItems: "center",
@@ -157,7 +179,23 @@ export function NewRunGateButton({ variant = "topnav", label = "New Run" }: NewR
     border: "1px solid #FF3B3B",
     color: "#FF3B3B",
     cursor: "pointer",
+    boxShadow: "none",
   };
+
+  const prefixNode = prefix ? (
+    <span
+      aria-hidden
+      style={{
+        fontFamily:
+          'ui-monospace, "JetBrains Mono", SFMono-Regular, Menlo, monospace',
+        fontSize: 11,
+        opacity: 0.65,
+        letterSpacing: "0.08em",
+      }}
+    >
+      {prefix}
+    </span>
+  ) : null;
 
   if (loading) {
     return (
@@ -166,12 +204,14 @@ export function NewRunGateButton({ variant = "topnav", label = "New Run" }: NewR
           ...baseEnabledStyle,
           opacity: 0.5,
           pointerEvents: "none",
-          backgroundColor: isTopNav ? "#2A2A2A" : "transparent",
+          backgroundColor: isTopNav || isLaunch ? "#2A2A2A" : "transparent",
           color: "#8A8680",
-          border: isTopNav ? "none" : "1px solid #2A2A2A",
+          border: isTopNav || isLaunch ? "none" : "1px solid #2A2A2A",
+          boxShadow: "none",
         }}
       >
-        Checking platform…
+        {prefixNode}
+        {isLaunch ? "Checking…" : "Checking platform…"}
       </span>
     );
   }
@@ -179,6 +219,7 @@ export function NewRunGateButton({ variant = "topnav", label = "New Run" }: NewR
   if (gate?.allowed) {
     return (
       <Link to="/brief" style={baseEnabledStyle}>
+        {prefixNode}
         {label}
       </Link>
     );
@@ -193,6 +234,7 @@ export function NewRunGateButton({ variant = "topnav", label = "New Run" }: NewR
         style={baseDisabledStyle}
         title={gate?.message ?? "Platform Not Verified"}
       >
+        {prefixNode}
         {label}
       </button>
       <AlertDialog

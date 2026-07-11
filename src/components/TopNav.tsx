@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { useDevMode, useIsAdmin } from "@/lib/dev-mode";
 import { useAuth } from "@/context/AuthContext";
 import { BrandGrenadeIcon } from "@/components/BrandGrenadeIcon";
-import { NewRunGateButton } from "@/components/NewRunGateButton";
+
 
 export interface SessionContext {
   brand: string;
@@ -146,7 +146,7 @@ export function TopNav({ session }: { session?: SessionContext }) {
             </div>
           )}
 
-          <NewRunGateButton variant="topnav" label="New Run" />
+          
 
           <div ref={rootRef} className="relative">
 
