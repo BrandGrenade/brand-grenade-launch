@@ -878,20 +878,9 @@ function CompleteCell({
   system: SystemKey;
   status: SystemStatus;
 }) {
-  const ts = status.timestamp
-    ? formatRelative(status.timestamp)
-    : "Complete";
-  const abs = status.timestamp ? formatAbsolute(status.timestamp) : "";
   return (
     <div className="flex items-center gap-2">
-      <span
-        className="text-body"
-        style={{ color: "var(--color-text-secondary)", fontSize: 12 }}
-        title={abs}
-      >
-        {ts}
-      </span>
-      {system === "intelligence" && (
+      {system === "intelligence" ? (
         <a
           href={status.href ?? "#"}
           aria-label="Download Document 00A"
@@ -903,16 +892,22 @@ function CompleteCell({
               );
             }
           }}
-          style={{ color: "#D4924A", display: "inline-flex" }}
+          style={{ color: "#D4924A", fontSize: 12, fontWeight: 500 }}
         >
-          <Download size={14} />
+          Download
         </a>
-      )}
-      {(system === "pipeline" || system === "phase_2") &&
+      ) : (system === "pipeline" || system === "phase_2") &&
         status.href &&
-        status.hrefSearch && (
-          <ViewLink href={status.href} search={status.hrefSearch} />
-        )}
+        status.hrefSearch ? (
+        <ViewLink href={status.href} search={status.hrefSearch} />
+      ) : (
+        <span
+          className="text-body"
+          style={{ color: "var(--color-text-secondary)", fontSize: 12 }}
+        >
+          Complete
+        </span>
+      )}
     </div>
   );
 }
