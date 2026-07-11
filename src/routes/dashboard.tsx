@@ -76,7 +76,7 @@ function rowMatchesFilter(row: BrandRow, filter: FilterKey): boolean {
   ];
   if (filter === "all") return true;
   if (filter === "active") return states.some((s) => s === "in_progress");
-  if (filter === "complete") return states.some((s) => s === "complete");
+  if (filter === "complete") return row.pipeline.state === "complete";
   if (filter === "not_started")
     return states.every((s) => s === "not_started");
   return true;
