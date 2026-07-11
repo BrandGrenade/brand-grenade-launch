@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { MoreHorizontal, Grid2x2, FileText, Trash2, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { TopNav } from "@/components/TopNav";
-import { NewRunGateButton } from "@/components/NewRunGateButton";
+
 import {
   SavedBriefsSection,
   PENDING_BRIEF_STORAGE_KEY,
@@ -215,15 +215,8 @@ function Dashboard() {
               </p>
             </div>
             <div className="flex items-center gap-3">
-              <Link
-                to="/briefing-room"
-                className="inline-flex h-9 items-center rounded-md px-4 text-[13px] font-semibold"
-                style={{ border: "1px solid #2A2A2A", color: "#F0EDE8", backgroundColor: "#141414" }}
-              >
-                Briefing Room
-              </Link>
-              <NewRunGateButton variant="topnav" label="New Run" />
             </div>
+
           </header>
 
           <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -386,14 +379,13 @@ function EmptyState() {
         No sessions yet
       </h3>
       <p className="text-body mt-2" style={{ color: "var(--color-text-tertiary)" }}>
-        Start a new pipeline run to begin.
+        Use the launch strip above to start an Intelligence Engine run, a
+        Briefing Room session, or a new pipeline run.
       </p>
-      <div className="mt-6">
-        <NewRunGateButton variant="empty" label="Start New Run" />
-      </div>
     </div>
   );
 }
+
 
 const STATUS_META: Record<UIStatus, { label: string; bg: string; border: string; fg: string }> = {
   complete: { label: "Complete", bg: "#4A7C5915", border: "#4A7C59", fg: "#4A7C59" },
