@@ -4,8 +4,6 @@ import { useServerFn } from "@tanstack/react-start";
 import { MoreHorizontal, Grid2x2, FileText, Trash2, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { TopNav } from "@/components/TopNav";
-import { PreflightStatusBanner } from "@/components/PreflightStatusBanner";
-import { PreflightFullCheckPanel } from "@/components/PreflightFullCheckPanel";
 import { NewRunGateButton } from "@/components/NewRunGateButton";
 import {
   SavedBriefsSection,
@@ -206,8 +204,7 @@ function Dashboard() {
         style={{ paddingLeft: "max(20px, min(32px, 5vw))", paddingRight: "max(20px, min(32px, 5vw))" }}
       >
         <div className="mx-auto max-w-[1280px]">
-          <PreflightFullCheckPanel />
-          <PreflightStatusBanner />
+
 
           <header className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
             <div>

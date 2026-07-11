@@ -22,6 +22,7 @@ import { Route as BriefIndexRouteImport } from './routes/brief.index'
 import { Route as DetonationCanvasRouteImport } from './routes/detonation_.canvas'
 import { Route as BriefingRoomIdRouteImport } from './routes/briefing-room.$id'
 import { Route as BriefNewRouteImport } from './routes/brief.new'
+import { Route as AdminTestsRouteImport } from './routes/admin.tests'
 
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
@@ -88,6 +89,11 @@ const BriefNewRoute = BriefNewRouteImport.update({
   path: '/new',
   getParentRoute: () => BriefRoute,
 } as any)
+const AdminTestsRoute = AdminTestsRouteImport.update({
+  id: '/admin/tests',
+  path: '/admin/tests',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -98,6 +104,7 @@ export interface FileRoutesByFullPath {
   '/detonation': typeof DetonationRoute
   '/pipeline': typeof PipelineRoute
   '/settings': typeof SettingsRoute
+  '/admin/tests': typeof AdminTestsRoute
   '/brief/new': typeof BriefNewRoute
   '/briefing-room/$id': typeof BriefingRoomIdRoute
   '/detonation/canvas': typeof DetonationCanvasRoute
@@ -111,6 +118,7 @@ export interface FileRoutesByTo {
   '/detonation': typeof DetonationRoute
   '/pipeline': typeof PipelineRoute
   '/settings': typeof SettingsRoute
+  '/admin/tests': typeof AdminTestsRoute
   '/brief/new': typeof BriefNewRoute
   '/briefing-room/$id': typeof BriefingRoomIdRoute
   '/detonation/canvas': typeof DetonationCanvasRoute
@@ -127,6 +135,7 @@ export interface FileRoutesById {
   '/detonation': typeof DetonationRoute
   '/pipeline': typeof PipelineRoute
   '/settings': typeof SettingsRoute
+  '/admin/tests': typeof AdminTestsRoute
   '/brief/new': typeof BriefNewRoute
   '/briefing-room/$id': typeof BriefingRoomIdRoute
   '/detonation_/canvas': typeof DetonationCanvasRoute
@@ -144,6 +153,7 @@ export interface FileRouteTypes {
     | '/detonation'
     | '/pipeline'
     | '/settings'
+    | '/admin/tests'
     | '/brief/new'
     | '/briefing-room/$id'
     | '/detonation/canvas'
@@ -157,6 +167,7 @@ export interface FileRouteTypes {
     | '/detonation'
     | '/pipeline'
     | '/settings'
+    | '/admin/tests'
     | '/brief/new'
     | '/briefing-room/$id'
     | '/detonation/canvas'
@@ -172,6 +183,7 @@ export interface FileRouteTypes {
     | '/detonation'
     | '/pipeline'
     | '/settings'
+    | '/admin/tests'
     | '/brief/new'
     | '/briefing-room/$id'
     | '/detonation_/canvas'
@@ -188,6 +200,7 @@ export interface RootRouteChildren {
   DetonationRoute: typeof DetonationRoute
   PipelineRoute: typeof PipelineRoute
   SettingsRoute: typeof SettingsRoute
+  AdminTestsRoute: typeof AdminTestsRoute
   DetonationCanvasRoute: typeof DetonationCanvasRoute
 }
 
@@ -284,6 +297,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BriefNewRouteImport
       parentRoute: typeof BriefRoute
     }
+    '/admin/tests': {
+      id: '/admin/tests'
+      path: '/admin/tests'
+      fullPath: '/admin/tests'
+      preLoaderRoute: typeof AdminTestsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -322,18 +342,9 @@ const rootRouteChildren: RootRouteChildren = {
   DetonationRoute: DetonationRoute,
   PipelineRoute: PipelineRoute,
   SettingsRoute: SettingsRoute,
+  AdminTestsRoute: AdminTestsRoute,
   DetonationCanvasRoute: DetonationCanvasRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
