@@ -11,6 +11,7 @@ import {
 import appCss from "../styles.css?url";
 import { MobileGate } from "@/components/MobileGate";
 import { DevModeBanner } from "@/components/DevModeBanner";
+import { AppFooter } from "@/components/AppFooter";
 import { AuthProvider } from "@/context/AuthContext";
 
 
@@ -129,6 +130,7 @@ function RootComponent() {
       <AuthProvider>
         <DevModeBanner />
         <Outlet />
+        <AppFooter />
         <MobileGate />
       </AuthProvider>
     </QueryClientProvider>
