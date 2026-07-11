@@ -149,7 +149,7 @@ function derivePipeline(sessions: SessionRow[]): SystemStatus {
       state: "complete",
       label: null,
       timestamp: latest.updated_at,
-      href: "/pipeline",
+      href: "/complete",
       hrefSearch: { session: latest.id },
       runCount: sessions.length,
     };
