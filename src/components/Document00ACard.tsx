@@ -30,7 +30,7 @@ async function fetchLatestIntelligence(
       .order("updated_at", { ascending: false })
       .limit(500);
     if (res.error) return null;
-    const rows = (res.data ?? []) as Array<{
+    const rows = ((res.data ?? []) as unknown) as Array<{
       brand_name: string | null;
       status: string | null;
       updated_at: string | null;
