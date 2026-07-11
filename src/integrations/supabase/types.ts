@@ -68,6 +68,102 @@ export type Database = {
         }
         Relationships: []
       }
+      intelligence_sessions: {
+        Row: {
+          additional_context: string | null
+          brand_name: string
+          category: string | null
+          completed_at: string | null
+          created_at: string
+          current_layer: number
+          final_report: string | null
+          handoff_payload: Json | null
+          handoff_written_at: string | null
+          id: string
+          last_error: string | null
+          layer_1_output: string | null
+          layer_10_output: string | null
+          layer_2_output: string | null
+          layer_3_output: string | null
+          layer_4_output: string | null
+          layer_5_output: string | null
+          layer_6_output: string | null
+          layer_7_output: string | null
+          layer_8_output: string | null
+          layer_9_output: string | null
+          report_metadata: Json | null
+          retry_count: number
+          stage_status: string | null
+          started_at: string | null
+          status: string
+          territory_input: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          additional_context?: string | null
+          brand_name: string
+          category?: string | null
+          completed_at?: string | null
+          created_at?: string
+          current_layer?: number
+          final_report?: string | null
+          handoff_payload?: Json | null
+          handoff_written_at?: string | null
+          id?: string
+          last_error?: string | null
+          layer_1_output?: string | null
+          layer_10_output?: string | null
+          layer_2_output?: string | null
+          layer_3_output?: string | null
+          layer_4_output?: string | null
+          layer_5_output?: string | null
+          layer_6_output?: string | null
+          layer_7_output?: string | null
+          layer_8_output?: string | null
+          layer_9_output?: string | null
+          report_metadata?: Json | null
+          retry_count?: number
+          stage_status?: string | null
+          started_at?: string | null
+          status?: string
+          territory_input?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          additional_context?: string | null
+          brand_name?: string
+          category?: string | null
+          completed_at?: string | null
+          created_at?: string
+          current_layer?: number
+          final_report?: string | null
+          handoff_payload?: Json | null
+          handoff_written_at?: string | null
+          id?: string
+          last_error?: string | null
+          layer_1_output?: string | null
+          layer_10_output?: string | null
+          layer_2_output?: string | null
+          layer_3_output?: string | null
+          layer_4_output?: string | null
+          layer_5_output?: string | null
+          layer_6_output?: string | null
+          layer_7_output?: string | null
+          layer_8_output?: string | null
+          layer_9_output?: string | null
+          report_metadata?: Json | null
+          retry_count?: number
+          stage_status?: string | null
+          started_at?: string | null
+          status?: string
+          territory_input?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       preflight_checks: {
         Row: {
           check_type: string
