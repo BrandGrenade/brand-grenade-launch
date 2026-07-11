@@ -289,7 +289,7 @@ function Dashboard() {
                       key={f.key}
                       type="button"
                       onClick={() => {
-                        setFilter(f.key);
+                        setFilter((prev) => (prev === f.key ? "all" : f.key));
                         setPage(0);
                       }}
                       className="inline-flex items-center justify-center font-semibold uppercase"
