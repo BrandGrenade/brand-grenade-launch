@@ -776,7 +776,7 @@ const STATE_COLOR: Record<SystemStatus["state"], string> = {
 const SYSTEM_LAUNCH_LABEL: Record<SystemKey, string> = {
   intelligence: "Launch",
   briefing_room: "Launch",
-  pipeline: "Launch",
+  pipeline: "Run",
   phase_2: "Start",
 };
 
