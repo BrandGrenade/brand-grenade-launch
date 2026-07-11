@@ -15,6 +15,7 @@ import {
 } from "@/lib/phase2-document-generator";
 import { buildPhase1Document, openPhase1Document, openStage16VisionDocument, PHASE_1_SESSION_COLUMNS, type Phase1Format } from "@/lib/phase1-document-builder";
 import { openFullRunDocument, FULL_RUN_SESSION_COLUMNS, resolveFullRunStages } from "@/lib/full-run-document";
+import { Document00ACard } from "@/components/Document00ACard";
 
 
 
