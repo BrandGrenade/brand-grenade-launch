@@ -45,34 +45,40 @@ export function LaunchStrip() {
   if (HIDDEN_PATHS.has(pathname)) return null;
 
   return (
-    <div
-      role="navigation"
-      aria-label="Platform launch"
-      style={{
-        position: "fixed",
-        top: 56,
-        left: 0,
-        right: 0,
-        zIndex: 90,
-        height: LAUNCH_STRIP_HEIGHT,
-        display: "flex",
-        alignItems: "center",
-        gap: 12,
-        padding: "0 24px",
-        backgroundColor: "#0F0F0F",
-        borderBottom: "1px solid #2A2A2A",
-        boxShadow: "0 4px 12px rgba(0,0,0,0.4)",
-      }}
-    >
-      <Link to="/intelligence/new" style={buttonStyle}>
-        <span aria-hidden style={numberStyle}>01</span>
-        Intelligence Engine
-      </Link>
-      <Link to="/brief/new" style={buttonStyle}>
-        <span aria-hidden style={numberStyle}>02</span>
-        Briefing Room
-      </Link>
-      <NewRunGateButton variant="launch" label="New Pipeline Run" prefix="03" />
-    </div>
+    <>
+      <div
+        role="navigation"
+        aria-label="Platform launch"
+        style={{
+          position: "fixed",
+          top: 56,
+          left: 0,
+          right: 0,
+          zIndex: 90,
+          height: LAUNCH_STRIP_HEIGHT,
+          display: "flex",
+          alignItems: "center",
+          gap: 12,
+          padding: "0 24px",
+          backgroundColor: "#0F0F0F",
+          borderBottom: "1px solid #2A2A2A",
+          boxShadow: "0 4px 12px rgba(0,0,0,0.4)",
+        }}
+      >
+        <Link to="/intelligence/new" style={buttonStyle}>
+          <span aria-hidden style={numberStyle}>01</span>
+          Intelligence Engine
+        </Link>
+        <Link to="/brief/new" style={buttonStyle}>
+          <span aria-hidden style={numberStyle}>02</span>
+          Briefing Room
+        </Link>
+        <NewRunGateButton variant="launch" label="New Pipeline Run" prefix="03" />
+      </div>
+      {/* Spacer to push page content below the fixed strip. TopNav already
+          reserves its own 56px, so this only adds the strip's height. */}
+      <div aria-hidden style={{ height: LAUNCH_STRIP_HEIGHT }} />
+    </>
   );
 }
+
