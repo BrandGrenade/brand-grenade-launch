@@ -1,7 +1,13 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { MoreHorizontal, Grid2x2, FileText, Trash2, Zap } from "lucide-react";
+import {
+  ChevronRight,
+  MoreHorizontal,
+  Search,
+  Download,
+  Trash2,
+} from "lucide-react";
 import { toast } from "sonner";
 import { TopNav } from "@/components/TopNav";
 
@@ -26,73 +32,114 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
 } from "@/components/ui/alert-dialog";
-import { useIsMobile } from "@/hooks/use-mobile";
-
+import {
+  useBrandRegister,
+  formatRelative,
+  formatAbsolute,
+  type BrandRow,
+  type BrandRun,
+  type SystemStatus,
+  type SystemKey,
+} from "@/lib/brand-register";
 
 export const Route = createFileRoute("/dashboard")({
   component: Dashboard,
   head: () => ({
     meta: [
-      { title: "Sessions — Brand Grenade" },
+      { title: "Brand Register — Brand Grenade" },
       {
         name: "description",
         content:
-          "Your strategy pipeline runs. Each session is a complete 27-stage pipeline run for one brief — Brand Strategy and Brand Detonation.",
+          "One row per brand. Every Intelligence Engine run, Briefing Room session, pipeline run, and Phase 2 detonation for that brand, in one register.",
       },
     ],
   }),
 });
 
-type DbSession = {
-  id: string;
-  brand_name: string;
-  category: string | null;
-  status: string;
-  current_stage: number;
-  created_at: string;
-  updated_at: string;
-  stage_1_output: string | null;
-  stage_16_consulting_output: string | null;
-  phase_2_status: string | null;
-  stage_17_output: string | null;
-  stage_22_output: string | null;
-};
+// ─── Filters ───────────────────────────────────────────────────────
 
-type UIStatus = "complete" | "in_progress" | "incomplete";
-type Phase2ButtonState = "commence" | "in_progress" | "complete";
+type FilterKey = "all" | "active" | "complete" | "not_started";
 
-function deriveStatus(s: DbSession): UIStatus {
-  if (
-    (s.current_stage === 20 && s.status === "complete") ||
-    s.stage_16_consulting_output != null
-  ) {
-    return "complete";
-  }
-  if (s.status === "running" || s.status === "pending") return "in_progress";
-  return "incomplete";
+const FILTERS: Array<{ key: FilterKey; label: string }> = [
+  { key: "all", label: "All" },
+  { key: "active", label: "In progress" },
+  { key: "complete", label: "Complete" },
+  { key: "not_started", label: "Not started" },
+];
+
+function rowMatchesFilter(row: BrandRow, filter: FilterKey): boolean {
+  const states = [
+    row.intelligence.state,
+    row.briefingRoom.state,
+    row.pipeline.state,
+    row.phase2.state,
+  ];
+  if (filter === "all") return true;
+  if (filter === "active") return states.some((s) => s === "in_progress");
+  if (filter === "complete") return states.some((s) => s === "complete");
+  if (filter === "not_started")
+    return states.every((s) => s === "not_started");
+  return true;
 }
 
-function derivePhase2ButtonState(s: DbSession): Phase2ButtonState {
-  if (s.stage_22_output) return "complete";
-  if (s.stage_17_output) return "in_progress";
-  return "commence";
-}
+const PAGE_SIZE = 20;
+const PAGINATION_THRESHOLD = 50;
+
+// ─── Dashboard ─────────────────────────────────────────────────────
 
 function Dashboard() {
   const navigate = useNavigate();
   const createSessionFn = useServerFn(createSession);
-  const [sessions, setSessions] = useState<DbSession[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [pendingDelete, setPendingDelete] = useState<DbSession | null>(null);
+  const { rows, loading, error, refresh } = useBrandRegister();
+
+  const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState<FilterKey>("all");
+  const [page, setPage] = useState(0);
+  const [pendingDelete, setPendingDelete] = useState<BrandRow | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [pendingLegacy, setPendingLegacy] = useState<SavedBrief | null>(null);
   const [legacyRunning, setLegacyRunning] = useState(false);
 
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return rows.filter((r) => {
+      if (!rowMatchesFilter(r, filter)) return false;
+      if (!q) return true;
+      return (
+        r.displayName.toLowerCase().includes(q) ||
+        (r.category ?? "").toLowerCase().includes(q)
+      );
+    });
+  }, [rows, search, filter]);
+
+  const paginated = useMemo(() => {
+    if (rows.length < PAGINATION_THRESHOLD) return filtered;
+    const start = page * PAGE_SIZE;
+    return filtered.slice(start, start + PAGE_SIZE);
+  }, [rows.length, filtered, page]);
+
+  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+
+  const toggleExpanded = (key: string) => {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
+
+  const openExpanded = (key: string) => {
+    setExpanded((prev) => {
+      if (prev.has(key)) return prev;
+      const next = new Set(prev);
+      next.add(key);
+      return next;
+    });
+  };
+
   const handleLoadSavedBrief = (b: SavedBrief) => {
-    // Legacy briefs (pre-structured-editor) have no brief_fields — there is
-    // nothing to pre-populate the 11-field form with. Route straight to the
-    // raw-text pipeline path (the journey these briefs originally ran under),
-    // gated by a confirm so a click doesn't silently launch a run.
     if (!b.brief_fields) {
       setPendingLegacy(b);
       return;
@@ -113,110 +160,89 @@ function Dashboard() {
           category: pendingLegacy.category || "Unspecified",
           strategicMode: "Auto",
           briefText: pendingLegacy.brief_text,
-          // briefFields intentionally omitted — brief_versions stays [] so the
-          // Stage 1B completeness gate is OFF (legacy raw-text path).
         },
       });
       setPendingLegacy(null);
       navigate({ to: "/pipeline", search: { session: sessionId } });
     } catch (e) {
-      const msg = e instanceof Error ? e.message : "Failed to start run";
-      toast.error(msg);
+      toast.error(e instanceof Error ? e.message : "Failed to start run");
       setLegacyRunning(false);
     }
   };
 
-  const handleDelete = async () => {
+  const handleDeleteBrand = async () => {
     if (!pendingDelete) return;
     setDeleting(true);
-    const id = pendingDelete.id;
-    const { error } = await supabase.from("sessions").delete().eq("id", id);
-    setDeleting(false);
-    if (error) {
-      toast.error("Failed to delete session");
-      return;
+    const ids = pendingDelete.sessionIds;
+    let failed = 0;
+    for (const id of ids) {
+      const { error: delErr } = await supabase
+        .from("sessions")
+        .delete()
+        .eq("id", id);
+      if (delErr) failed++;
     }
-    setSessions((prev) => prev.filter((s) => s.id !== id));
+    setDeleting(false);
     setPendingDelete(null);
-    toast.success("Session deleted", {
-      duration: 3000,
-      style: { color: "#4A7C59" },
-    });
+    if (failed > 0) {
+      toast.error(
+        `Deleted ${ids.length - failed} of ${ids.length} sessions; ${failed} failed.`,
+      );
+    } else if (ids.length > 0) {
+      toast.success(
+        `Deleted ${ids.length} pipeline session${ids.length === 1 ? "" : "s"} for ${pendingDelete.displayName}.`,
+        { duration: 3000, style: { color: "#4A7C59" } },
+      );
+    } else {
+      toast.success(`Removed ${pendingDelete.displayName} from the register.`);
+    }
+    void refresh();
   };
 
-
-  useEffect(() => {
-    let active = true;
-    (async () => {
-      const { data } = await supabase
-        .from("sessions")
-        .select("id,brand_name,category,status,current_stage,created_at,updated_at,stage_1_output,stage_16_consulting_output,phase_2_status,stage_17_output,stage_22_output")
-        .eq("is_preflight_test", false)
-        .order("updated_at", { ascending: false })
-        .limit(100);
-      if (!active) return;
-      setSessions((data ?? []) as DbSession[]);
-      setLoading(false);
-    })();
-
-    const channel = supabase
-      .channel("sessions:dashboard")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "sessions" },
-        async () => {
-          const { data } = await supabase
-            .from("sessions")
-            .select("id,brand_name,category,status,current_stage,created_at,updated_at,stage_1_output,stage_16_consulting_output,phase_2_status,stage_17_output,stage_22_output")
-            .eq("is_preflight_test", false)
-            .order("updated_at", { ascending: false })
-            .limit(100);
-          if (active) setSessions((data ?? []) as DbSession[]);
-        },
-      )
-      .subscribe();
-
-    return () => {
-      active = false;
-      supabase.removeChannel(channel);
-    };
-  }, []);
-
-  const stats = [
-    { value: sessions.length, label: "Total Runs" },
-    {
-      value: sessions.filter((s) => s.stage_22_output != null).length,
-      label: "Completed",
-    },
-    {
-      value: sessions.filter(
-        (s) => s.stage_1_output != null && s.stage_22_output == null,
-      ).length,
-      label: "In Progress",
-    },
-  ];
+  const stats = useMemo(
+    () => [
+      { value: rows.length, label: "Total Brands" },
+      {
+        value: rows.filter(
+          (r) =>
+            r.pipeline.state === "complete" || r.phase2.state === "complete",
+        ).length,
+        label: "With Completed Runs",
+      },
+      {
+        value: rows.filter(
+          (r) =>
+            r.intelligence.state === "in_progress" ||
+            r.briefingRoom.state === "in_progress" ||
+            r.pipeline.state === "in_progress" ||
+            r.phase2.state === "in_progress",
+        ).length,
+        label: "In Progress",
+      },
+    ],
+    [rows],
+  );
 
   return (
     <div className="min-h-screen bg-background">
       <TopNav />
       <main
         className="px-5 py-10 sm:px-8 lg:px-8 lg:py-12"
-        style={{ paddingLeft: "max(20px, min(32px, 5vw))", paddingRight: "max(20px, min(32px, 5vw))" }}
+        style={{
+          paddingLeft: "max(20px, min(32px, 5vw))",
+          paddingRight: "max(20px, min(32px, 5vw))",
+        }}
       >
         <div className="mx-auto max-w-[1280px]">
-
-
           <header className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <span className="text-label text-primary">Your Pipeline Runs</span>
-              <h1 className="text-h2 mt-3 text-text-primary">Strategy Sessions</h1>
+              <span className="text-label text-primary">Brand Register</span>
+              <h1 className="text-h2 mt-3 text-text-primary">Your Brands</h1>
               <p className="text-body mt-2 text-text-secondary">
-                Each session is a complete 27-stage pipeline run for one brief — Brand Strategy and Brand Detonation.
+                One row per brand. Every Intelligence Engine analysis, Briefing
+                Room session, pipeline run, and Phase 2 detonation lives here.
               </p>
             </div>
-            <div className="flex items-center gap-3">
-            </div>
-
           </header>
 
           <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -228,13 +254,93 @@ function Dashboard() {
             ))}
           </div>
 
-          <div id="completed-sessions" className="mt-8 scroll-mt-24">
+          {rows.length > 0 && (
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div
+                className="flex items-center gap-2"
+                style={{
+                  border: "1px solid var(--color-border)",
+                  borderRadius: 8,
+                  padding: "0 12px",
+                  height: 36,
+                  minWidth: 240,
+                  maxWidth: 360,
+                  flex: 1,
+                }}
+              >
+                <Search size={14} style={{ color: "var(--color-text-tertiary)" }} />
+                <input
+                  type="text"
+                  placeholder="Search brand or category"
+                  value={search}
+                  onChange={(e) => {
+                    setSearch(e.target.value);
+                    setPage(0);
+                  }}
+                  className="w-full bg-transparent text-body outline-none"
+                  style={{ color: "var(--color-text-primary)" }}
+                />
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                {FILTERS.map((f) => {
+                  const active = filter === f.key;
+                  return (
+                    <button
+                      key={f.key}
+                      type="button"
+                      onClick={() => {
+                        setFilter(f.key);
+                        setPage(0);
+                      }}
+                      className="inline-flex items-center justify-center font-semibold uppercase"
+                      style={{
+                        height: 28,
+                        padding: "0 12px",
+                        borderRadius: 6,
+                        fontSize: 11,
+                        letterSpacing: "0.1em",
+                        border: `1px solid ${active ? "#D4924A" : "var(--color-border)"}`,
+                        backgroundColor: active ? "#D4924A15" : "transparent",
+                        color: active ? "#D4924A" : "var(--color-text-secondary)",
+                      }}
+                    >
+                      {f.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          <div id="brand-register" className="mt-6 scroll-mt-24">
+            {error && (
+              <p className="text-body" style={{ color: "#7C3A3A" }}>
+                Failed to load register: {error}
+              </p>
+            )}
             {loading ? (
-              <p className="text-body text-text-tertiary">Loading sessions…</p>
-            ) : sessions.length === 0 ? (
+              <p className="text-body text-text-tertiary">Loading brands…</p>
+            ) : rows.length === 0 ? (
               <EmptyState />
+            ) : filtered.length === 0 ? (
+              <NoMatchesState onClear={() => { setSearch(""); setFilter("all"); }} />
             ) : (
-              <SessionsTable sessions={sessions} onRequestDelete={setPendingDelete} />
+              <>
+                <BrandRegisterTable
+                  rows={paginated}
+                  expanded={expanded}
+                  onToggle={toggleExpanded}
+                  onOpenExpanded={openExpanded}
+                  onRequestDelete={setPendingDelete}
+                />
+                {rows.length >= PAGINATION_THRESHOLD && (
+                  <PaginationBar
+                    page={page}
+                    pageCount={pageCount}
+                    onPage={setPage}
+                  />
+                )}
+              </>
             )}
           </div>
 
@@ -249,7 +355,7 @@ function Dashboard() {
         }}
       >
         <AlertDialogContent
-          className="border-0 p-0 sm:max-w-[400px]"
+          className="border-0 p-0 sm:max-w-[420px]"
           style={{
             backgroundColor: "#1C1C1C",
             border: "1px solid #7C3A3A",
@@ -260,15 +366,19 @@ function Dashboard() {
           <AlertDialogHeader>
             <AlertDialogTitle asChild>
               <h3 className="text-h3" style={{ color: "#F0EDE8" }}>
-                Delete this session?
+                Delete {pendingDelete?.displayName ?? "this brand"}?
               </h3>
             </AlertDialogTitle>
             <AlertDialogDescription
               className="text-body"
               style={{ color: "#8A8680", marginTop: 8 }}
             >
-              This will permanently delete the {pendingDelete?.brand_name ?? ""} session and all
-              its pipeline outputs. This cannot be undone.
+              This will permanently delete{" "}
+              {pendingDelete?.sessionIds.length ?? 0} pipeline session
+              {(pendingDelete?.sessionIds.length ?? 0) === 1 ? "" : "s"} for{" "}
+              {pendingDelete?.displayName ?? "this brand"} and all their
+              downstream outputs. Briefing Room and Intelligence records are
+              not deleted. This cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter
@@ -280,16 +390,23 @@ function Dashboard() {
               disabled={deleting}
               onClick={() => setPendingDelete(null)}
               className="inline-flex h-9 items-center justify-center rounded-lg px-4 text-[13px] font-medium transition-colors hover:bg-[var(--color-surface-2)] disabled:opacity-50"
-              style={{ border: "1px solid var(--color-border)", color: "var(--color-text-primary)" }}
+              style={{
+                border: "1px solid var(--color-border)",
+                color: "var(--color-text-primary)",
+              }}
             >
               Cancel
             </button>
             <button
               type="button"
               disabled={deleting}
-              onClick={handleDelete}
+              onClick={handleDeleteBrand}
               className="inline-flex h-9 items-center justify-center rounded-lg px-4 text-[13px] transition-opacity hover:opacity-90 disabled:opacity-50"
-              style={{ backgroundColor: "#7C3A3A", color: "#F0EDE8", fontWeight: 600 }}
+              style={{
+                backgroundColor: "#7C3A3A",
+                color: "#F0EDE8",
+                fontWeight: 600,
+              }}
             >
               {deleting ? "Deleting…" : "Delete permanently"}
             </button>
@@ -323,7 +440,9 @@ function Dashboard() {
               style={{ color: "#8A8680", marginTop: 8 }}
             >
               This will launch a fresh pipeline run for{" "}
-              <strong style={{ color: "#F0EDE8" }}>{pendingLegacy?.brand_name ?? ""}</strong>{" "}
+              <strong style={{ color: "#F0EDE8" }}>
+                {pendingLegacy?.brand_name ?? ""}
+              </strong>{" "}
               using the full saved brief text. It consumes a run.
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -336,7 +455,10 @@ function Dashboard() {
               disabled={legacyRunning}
               onClick={() => setPendingLegacy(null)}
               className="inline-flex h-9 items-center justify-center rounded-lg px-4 text-[13px] font-medium transition-colors hover:bg-[var(--color-surface-2)] disabled:opacity-50"
-              style={{ border: "1px solid var(--color-border)", color: "var(--color-text-primary)" }}
+              style={{
+                border: "1px solid var(--color-border)",
+                color: "var(--color-text-primary)",
+              }}
             >
               Cancel
             </button>
@@ -345,7 +467,11 @@ function Dashboard() {
               disabled={legacyRunning}
               onClick={handleLegacyRun}
               className="inline-flex h-9 items-center justify-center rounded-lg px-4 text-[13px] transition-opacity hover:opacity-90 disabled:opacity-50"
-              style={{ backgroundColor: "#D4924A", color: "#0A0A0A", fontWeight: 600 }}
+              style={{
+                backgroundColor: "#D4924A",
+                color: "#0A0A0A",
+                fontWeight: 600,
+              }}
             >
               {legacyRunning ? "Starting…" : "Run"}
             </button>
@@ -356,17 +482,7 @@ function Dashboard() {
   );
 }
 
-
-function GridIcon() {
-  return (
-    <svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none">
-      <rect x="2" y="2" width="9" height="9" rx="1.5" fill="var(--color-border-strong)" />
-      <rect x="13" y="2" width="9" height="9" rx="1.5" fill="var(--color-border-strong)" />
-      <rect x="2" y="13" width="9" height="9" rx="1.5" fill="var(--color-border-strong)" />
-      <rect x="13" y="13" width="9" height="9" rx="1.5" fill="var(--color-border-strong)" />
-    </svg>
-  );
-}
+// ─── Empty / no-match states ───────────────────────────────────────
 
 function EmptyState() {
   return (
@@ -374,246 +490,120 @@ function EmptyState() {
       className="flex flex-col items-center justify-center rounded-lg px-6 py-20 text-center"
       style={{ border: "1px dashed var(--color-border)" }}
     >
-      <GridIcon />
-      <h3 className="text-h3 mt-5" style={{ color: "var(--color-text-tertiary)" }}>
-        No sessions yet
+      <h3 className="text-h3" style={{ color: "var(--color-text-tertiary)" }}>
+        No brands yet
       </h3>
-      <p className="text-body mt-2" style={{ color: "var(--color-text-tertiary)" }}>
-        Use the launch strip above to start an Intelligence Engine run, a
-        Briefing Room session, or a new pipeline run.
+      <p
+        className="text-body mt-2"
+        style={{ color: "var(--color-text-tertiary)", maxWidth: 480 }}
+      >
+        Use the launch strip above to start your first Intelligence Engine run,
+        Briefing Room session, or Pipeline run.
       </p>
     </div>
   );
 }
 
-
-const STATUS_META: Record<UIStatus, { label: string; bg: string; border: string; fg: string }> = {
-  complete: { label: "Complete", bg: "#4A7C5915", border: "#4A7C59", fg: "#4A7C59" },
-  in_progress: { label: "In Progress", bg: "#D4924A15", border: "#D4924A", fg: "#D4924A" },
-  incomplete: { label: "Incomplete", bg: "#3A3A3A", border: "#5A5652", fg: "#5A5652" },
-};
-
-function StatusBadge({ status }: { status: UIStatus }) {
-  const meta = STATUS_META[status];
+function NoMatchesState({ onClear }: { onClear: () => void }) {
   return (
-    <span
-      className="inline-flex items-center justify-center font-semibold uppercase"
-      style={{
-        backgroundColor: meta.bg,
-        border: `1px solid ${meta.border}`,
-        color: meta.fg,
-        height: 28,
-        padding: "0 14px",
-        borderRadius: 6,
-        fontSize: 11,
-        letterSpacing: "0.1em",
-        whiteSpace: "nowrap",
-      }}
+    <div
+      className="flex flex-col items-center justify-center rounded-lg px-6 py-16 text-center"
+      style={{ border: "1px dashed var(--color-border)" }}
     >
-      {meta.label}
-    </span>
-  );
-}
-
-const PHASE_2_BUTTON_META: Record<Phase2ButtonState, { label: string; variant: "solid" | "outline" }> = {
-  commence: { label: "Commence", variant: "solid" },
-  in_progress: { label: "In Progress", variant: "solid" },
-  complete: { label: "Complete", variant: "outline" },
-};
-
-function Phase2Button({ state, sessionId }: { state: Phase2ButtonState; sessionId: string }) {
-  const meta = PHASE_2_BUTTON_META[state];
-  const [hover, setHover] = useState(false);
-  const solid = meta.variant === "solid";
-  const linkStyle = {
-    display: "inline-flex" as const,
-    alignItems: "center" as const,
-    justifyContent: "center" as const,
-    height: 28,
-    padding: "0 14px",
-    borderRadius: 6,
-    fontSize: 11,
-    fontWeight: 600,
-    letterSpacing: "0.1em",
-    textTransform: "uppercase" as const,
-    border: "1px solid #D4924A",
-    backgroundColor: solid ? "#D4924A" : hover ? "#D4924A15" : "transparent",
-    color: solid ? "#0A0A0A" : "#D4924A",
-    transition: "background-color 150ms",
-    whiteSpace: "nowrap" as const,
-  };
-  const handlers = {
-    onMouseEnter: () => setHover(true),
-    onMouseLeave: () => setHover(false),
-  };
-  if (state === "complete") {
-    return (
-      <Link
-        to="/detonation"
-        search={{ session: sessionId }}
-        {...handlers}
-        style={{
-          ...linkStyle,
-          backgroundColor: "#4A7C5915",
-          border: "1px solid #4A7C59",
-          color: "#4A7C59",
-        }}
+      <p className="text-body" style={{ color: "var(--color-text-tertiary)" }}>
+        No brands match your search or filter.
+      </p>
+      <button
+        type="button"
+        onClick={onClear}
+        className="mt-4 text-label"
+        style={{ color: "#D4924A" }}
       >
-        Complete
-      </Link>
-    );
-  }
-  if (state === "commence") {
-    return (
-      <Link to="/detonation/canvas" search={{ session: sessionId }} {...handlers} style={linkStyle}>
-        {meta.label}
-      </Link>
-    );
-  }
+        Clear filters
+      </button>
+    </div>
+  );
+}
+
+function PaginationBar({
+  page,
+  pageCount,
+  onPage,
+}: {
+  page: number;
+  pageCount: number;
+  onPage: (p: number) => void;
+}) {
   return (
-    <Link to="/detonation" search={{ session: sessionId }} {...handlers} style={linkStyle}>
-      {meta.label}
-    </Link>
+    <div className="mt-4 flex items-center justify-between">
+      <span className="text-body" style={{ color: "var(--color-text-tertiary)" }}>
+        Page {page + 1} of {pageCount}
+      </span>
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          disabled={page === 0}
+          onClick={() => onPage(Math.max(0, page - 1))}
+          className="inline-flex h-8 items-center justify-center rounded-md px-3 text-[13px] transition-colors disabled:opacity-40"
+          style={{
+            border: "1px solid var(--color-border)",
+            color: "var(--color-text-primary)",
+          }}
+        >
+          Prev
+        </button>
+        <button
+          type="button"
+          disabled={page >= pageCount - 1}
+          onClick={() => onPage(Math.min(pageCount - 1, page + 1))}
+          className="inline-flex h-8 items-center justify-center rounded-md px-3 text-[13px] transition-colors disabled:opacity-40"
+          style={{
+            border: "1px solid var(--color-border)",
+            color: "var(--color-text-primary)",
+          }}
+        >
+          Next
+        </button>
+      </div>
+    </div>
   );
 }
 
+// ─── Register table ────────────────────────────────────────────────
 
+const COLUMN_HEADERS = [
+  "Brand",
+  "Category",
+  "Intelligence",
+  "Briefing Room",
+  "Pipeline",
+  "Phase 2",
+  "Last Updated",
+  "",
+];
 
-
-
-function fmtDate(iso: string) {
-  return new Date(iso).toLocaleString();
-}
-
-type ActionConfig = {
-  key: "engine" | "detonation" | "deliverables" | "continue" | "delete";
-  label: string;
-  color: string;
-  hoverBg: string;
-  icon: React.ReactNode;
-  onClick?: () => void;
-  to?: string;
-  search?: Record<string, string>;
-};
-
-function ActionButton({ action }: { action: ActionConfig }) {
-  const [hover, setHover] = useState(false);
-  const baseStyle: React.CSSProperties = {
-    height: 28,
-    padding: "0 12px",
-    borderRadius: 6,
-    fontSize: 13,
-    fontWeight: 500,
-    border: `1px solid ${action.color}66`,
-    color: action.color,
-    backgroundColor: hover ? action.hoverBg : "transparent",
-    display: "inline-flex",
-    alignItems: "center",
-    gap: 6,
-    transition: "background-color 150ms",
-    whiteSpace: "nowrap",
-  };
-  const inner = (
-    <>
-      {action.icon}
-      <span>{action.label}</span>
-    </>
-  );
-  if (action.to) {
-    return (
-      <Link
-        to={action.to}
-        search={action.search as never}
-        style={baseStyle}
-        onMouseEnter={() => setHover(true)}
-        onMouseLeave={() => setHover(false)}
-      >
-        {inner}
-      </Link>
-    );
-  }
-  return (
-    <button
-      type="button"
-      onClick={action.onClick}
-      style={baseStyle}
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
-    >
-      {inner}
-    </button>
-  );
-}
-
-function buildActions(s: DbSession, status: UIStatus, onDelete: () => void): ActionConfig[] {
-  const deleteAction: ActionConfig = {
-    key: "delete",
-    label: "Delete",
-    color: "#7C3A3A",
-    hoverBg: "#7C3A3A15",
-    icon: <Trash2 size={14} />,
-    onClick: onDelete,
-  };
-  // Strategy Room (Phase 1 pipeline) — always available for any session row.
-  const strategyAction: ActionConfig = {
-    key: "engine",
-    label: "Strategy Room",
-    color: "#8A8680",
-    hoverBg: "#1C1C1C",
-    icon: <Grid2x2 size={14} />,
-    to: "/pipeline",
-    search: { session: s.id },
-  };
-  // Detonation Room (Phase 2) — always available; destination depends on
-  // whether Stage 17 has produced output yet. NOT gated on stage_16, which
-  // is the post-Phase-2 document assembly step.
-  const detonationAction: ActionConfig = {
-    key: "detonation",
-    label: "Detonation Room",
-    color: "#D4924A",
-    hoverBg: "#D4924A15",
-    icon: <Zap size={14} />,
-    to: s.stage_17_output != null ? "/detonation" : "/detonation/canvas",
-    search: { session: s.id },
-  };
-  const deliverablesAction: ActionConfig = {
-    key: "deliverables",
-    label: "Deliverables",
-    color: "#D4924A",
-    hoverBg: "#D4924A15",
-    icon: <FileText size={14} />,
-    to: "/complete",
-    search: { session: s.id },
-  };
-  // Deliverables are available whenever Phase 2 has produced its final output
-  // (stage_22_output), independent of the Phase 1 "complete" derivation which
-  // requires stage_16_consulting_output. Sessions that finished Phase 2 without
-  // that specific Phase 1 artefact would otherwise have no way to reach /complete.
-  if (status === "complete" || s.stage_22_output != null) {
-    return [strategyAction, detonationAction, deliverablesAction, deleteAction];
-  }
-  return [strategyAction, detonationAction, deleteAction];
-}
-
-function SessionsTable({
-  sessions,
+function BrandRegisterTable({
+  rows,
+  expanded,
+  onToggle,
+  onOpenExpanded,
   onRequestDelete,
 }: {
-  sessions: DbSession[];
-  onRequestDelete: (s: DbSession) => void;
+  rows: BrandRow[];
+  expanded: Set<string>;
+  onToggle: (key: string) => void;
+  onOpenExpanded: (key: string) => void;
+  onRequestDelete: (row: BrandRow) => void;
 }) {
-  const isMobile = useIsMobile();
-  const headers = ["Brand", "Category", "Stage", "Updated", "Brand Strategy", "Detonation", "Actions"];
-
   return (
     <div className="overflow-x-auto">
       <table className="w-full border-collapse">
         <thead>
           <tr style={{ borderBottom: "1px solid var(--color-border)" }}>
-            {headers.map((h) => (
+            {COLUMN_HEADERS.map((h, i) => (
               <th
-                key={h}
-                className="text-label px-4 py-3 text-left"
+                key={i}
+                className="text-label px-3 py-3 text-left"
                 style={{ color: "var(--color-text-tertiary)" }}
               >
                 {h}
@@ -622,67 +612,22 @@ function SessionsTable({
           </tr>
         </thead>
         <tbody>
-          {sessions.map((s, i) => {
-            const status = deriveStatus(s);
-            const actions = buildActions(s, status, () => onRequestDelete(s));
+          {rows.map((r, idx) => {
+            const isOpen = expanded.has(r.key);
+            const rowBg =
+              idx % 2 === 0
+                ? "var(--color-surface-2)"
+                : "var(--color-card)";
             return (
-              <tr
-                key={s.id}
-                style={{
-                  backgroundColor: i % 2 === 0 ? "var(--color-surface-2)" : "var(--color-card)",
-                }}
-              >
-                <td className="text-body px-4 py-4 text-text-primary">{s.brand_name}</td>
-                <td className="text-body px-4 py-4 text-text-secondary">{s.category ?? "—"}</td>
-                <td className="text-body px-4 py-4 text-text-secondary">
-                  Stage {s.current_stage} of 23
-                </td>
-                <td className="text-body px-4 py-4 text-text-secondary">{fmtDate(s.updated_at)}</td>
-                <td className="px-4 py-4">
-                  <StatusBadge status={status} />
-                </td>
-                <td className="px-4 py-4">
-                  <Phase2Button state={derivePhase2ButtonState(s)} sessionId={s.id} />
-                </td>
-                <td className="px-4 py-4" style={{ minWidth: 280, whiteSpace: "nowrap" }}>
-                  <div className="flex items-center justify-end gap-2">
-                    {isMobile ? (
-                      <DropdownMenu>
-                        <DropdownMenuTrigger
-                          aria-label="Session actions"
-                          className="inline-flex h-8 w-8 items-center justify-center rounded-md text-text-secondary transition-colors hover:bg-[var(--color-surface-2)] hover:text-text-primary focus:outline-none"
-                        >
-                          <MoreHorizontal className="h-4 w-4" />
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-48">
-                          {actions.map((a) =>
-                            a.to ? (
-                              <DropdownMenuItem key={a.key} asChild>
-                                <Link to={a.to} search={a.search as never} style={{ color: a.color }}>
-                                  {a.label}
-                                </Link>
-                              </DropdownMenuItem>
-                            ) : (
-                              <DropdownMenuItem
-                                key={a.key}
-                                onSelect={(e) => {
-                                  e.preventDefault();
-                                  a.onClick?.();
-                                }}
-                                style={{ color: a.color }}
-                              >
-                                {a.label}
-                              </DropdownMenuItem>
-                            ),
-                          )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    ) : (
-                      actions.map((a) => <ActionButton key={a.key} action={a} />)
-                    )}
-                  </div>
-                </td>
-              </tr>
+              <BrandRegisterRow
+                key={r.key}
+                row={r}
+                open={isOpen}
+                rowBg={rowBg}
+                onToggle={onToggle}
+                onOpenExpanded={onOpenExpanded}
+                onRequestDelete={onRequestDelete}
+              />
             );
           })}
         </tbody>
@@ -691,3 +636,467 @@ function SessionsTable({
   );
 }
 
+function BrandRegisterRow({
+  row,
+  open,
+  rowBg,
+  onToggle,
+  onOpenExpanded,
+  onRequestDelete,
+}: {
+  row: BrandRow;
+  open: boolean;
+  rowBg: string;
+  onToggle: (key: string) => void;
+  onOpenExpanded: (key: string) => void;
+  onRequestDelete: (row: BrandRow) => void;
+}) {
+  return (
+    <>
+      <tr style={{ backgroundColor: rowBg }}>
+        <td className="px-3 py-4">
+          <button
+            type="button"
+            onClick={() => onToggle(row.key)}
+            aria-label={open ? "Collapse row" : "Expand row"}
+            className="inline-flex items-center gap-2 text-left"
+            style={{ color: "var(--color-text-primary)" }}
+          >
+            <ChevronRight
+              size={14}
+              style={{
+                transition: "transform 150ms",
+                transform: open ? "rotate(90deg)" : "rotate(0deg)",
+                color: "var(--color-text-tertiary)",
+              }}
+            />
+            <span className="text-body font-medium">{row.displayName}</span>
+          </button>
+        </td>
+        <td className="text-body px-3 py-4 text-text-secondary">
+          {row.category ?? "—"}
+        </td>
+        <td className="px-3 py-4">
+          <SystemStatusCell
+            system="intelligence"
+            status={row.intelligence}
+            brand={row.displayName}
+          />
+        </td>
+        <td className="px-3 py-4">
+          <SystemStatusCell
+            system="briefing_room"
+            status={row.briefingRoom}
+            brand={row.displayName}
+          />
+        </td>
+        <td className="px-3 py-4">
+          <SystemStatusCell
+            system="pipeline"
+            status={row.pipeline}
+            brand={row.displayName}
+          />
+        </td>
+        <td className="px-3 py-4">
+          <SystemStatusCell
+            system="phase_2"
+            status={row.phase2}
+            brand={row.displayName}
+          />
+        </td>
+        <td
+          className="text-body px-3 py-4 text-text-secondary"
+          title={formatAbsolute(row.lastUpdated)}
+        >
+          {formatRelative(row.lastUpdated)}
+        </td>
+        <td className="px-3 py-4" style={{ whiteSpace: "nowrap" }}>
+          <div className="flex items-center justify-end">
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                aria-label="Brand actions"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-md text-text-secondary transition-colors hover:bg-[var(--color-surface-2)] hover:text-text-primary focus:outline-none"
+              >
+                <MoreHorizontal className="h-4 w-4" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-52">
+                <DropdownMenuItem
+                  onSelect={(e) => {
+                    e.preventDefault();
+                    onOpenExpanded(row.key);
+                  }}
+                >
+                  View all runs
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onSelect={(e) => {
+                    e.preventDefault();
+                    toast.info(
+                      "Bulk download will connect once the deliverables system is wired.",
+                    );
+                  }}
+                >
+                  Download all documents
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onSelect={(e) => {
+                    e.preventDefault();
+                    onRequestDelete(row);
+                  }}
+                  style={{ color: "#7C3A3A" }}
+                >
+                  Delete brand
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </td>
+      </tr>
+      {open && (
+        <tr style={{ backgroundColor: rowBg }}>
+          <td colSpan={COLUMN_HEADERS.length} style={{ padding: 0 }}>
+            <BrandRegisterExpanded row={row} />
+          </td>
+        </tr>
+      )}
+    </>
+  );
+}
+
+// ─── System cell ───────────────────────────────────────────────────
+
+const CIRCLE_SIZE = 10;
+
+const STATE_COLOR: Record<SystemStatus["state"], string> = {
+  not_started: "var(--color-border-strong)",
+  in_progress: "#D4924A",
+  complete: "#4A7C59",
+};
+
+const SYSTEM_LAUNCH_LABEL: Record<SystemKey, string> = {
+  intelligence: "Launch",
+  briefing_room: "Launch",
+  pipeline: "Launch",
+  phase_2: "Start",
+};
+
+function SystemCircle({ state }: { state: SystemStatus["state"] }) {
+  const color = STATE_COLOR[state];
+  const filled = state !== "not_started";
+  return (
+    <span
+      aria-hidden="true"
+      style={{
+        display: "inline-block",
+        width: CIRCLE_SIZE,
+        height: CIRCLE_SIZE,
+        borderRadius: CIRCLE_SIZE,
+        border: `1.5px solid ${color}`,
+        backgroundColor: filled ? color : "transparent",
+        flex: "none",
+      }}
+    />
+  );
+}
+
+function SystemStatusCell({
+  system,
+  status,
+  brand,
+}: {
+  system: SystemKey;
+  status: SystemStatus;
+  brand: string;
+}) {
+  return (
+    <div className="flex items-center gap-2" style={{ minWidth: 132 }}>
+      <SystemCircle state={status.state} />
+      <div className="flex min-w-0 flex-col">
+        {status.state === "not_started" ? (
+          <NotStartedLink system={system} brand={brand} />
+        ) : status.state === "in_progress" ? (
+          <span
+            className="text-body"
+            style={{ color: "var(--color-text-primary)" }}
+          >
+            {status.label ?? "In progress"}
+          </span>
+        ) : (
+          <CompleteCell system={system} status={status} />
+        )}
+      </div>
+    </div>
+  );
+}
+
+function NotStartedLink({
+  system,
+  brand,
+}: {
+  system: SystemKey;
+  brand: string;
+}) {
+  const brandParam = brand ? { brand } : {};
+  const label = SYSTEM_LAUNCH_LABEL[system];
+  const style = { color: "#D4924A", fontSize: 12, fontWeight: 500 };
+  if (system === "intelligence") {
+    return (
+      <Link to="/intelligence/new" search={brandParam} style={style}>
+        {label}
+      </Link>
+    );
+  }
+  if (system === "briefing_room") {
+    return (
+      <Link to="/brief/new" search={brandParam} style={style}>
+        {label}
+      </Link>
+    );
+  }
+  if (system === "pipeline") {
+    return (
+      <Link to="/brief/new" search={brandParam} style={style}>
+        {label}
+      </Link>
+    );
+  }
+  // Phase 2 has no standalone entry point without a session.
+  return (
+    <span
+      className="text-body"
+      style={{ color: "var(--color-text-tertiary)", fontSize: 12 }}
+    >
+      Run pipeline first
+    </span>
+  );
+}
+
+function CompleteCell({
+  system,
+  status,
+}: {
+  system: SystemKey;
+  status: SystemStatus;
+}) {
+  const ts = status.timestamp
+    ? formatRelative(status.timestamp)
+    : "Complete";
+  const abs = status.timestamp ? formatAbsolute(status.timestamp) : "";
+  return (
+    <div className="flex items-center gap-2">
+      <span
+        className="text-body"
+        style={{ color: "var(--color-text-secondary)", fontSize: 12 }}
+        title={abs}
+      >
+        {ts}
+      </span>
+      {system === "intelligence" && (
+        <a
+          href={status.href ?? "#"}
+          aria-label="Download Document 00A"
+          onClick={(e) => {
+            if (!status.href) {
+              e.preventDefault();
+              toast.info(
+                "Document 00A will ship with the Intelligence Engine.",
+              );
+            }
+          }}
+          style={{ color: "#D4924A", display: "inline-flex" }}
+        >
+          <Download size={14} />
+        </a>
+      )}
+      {(system === "pipeline" || system === "phase_2") &&
+        status.href &&
+        status.hrefSearch && (
+          <ViewLink href={status.href} search={status.hrefSearch} />
+        )}
+    </div>
+  );
+}
+
+function ViewLink({
+  href,
+  search,
+}: {
+  href: string;
+  search: Record<string, string>;
+}) {
+  const qs = new URLSearchParams(search).toString();
+  return (
+    <a
+      href={qs ? `${href}?${qs}` : href}
+      style={{ color: "#D4924A", fontSize: 12, fontWeight: 500 }}
+    >
+      View
+    </a>
+  );
+}
+
+// ─── Expanded — historical runs ────────────────────────────────────
+
+const SYSTEM_SECTION_TITLE: Record<SystemKey, string> = {
+  intelligence: "Intelligence Engine",
+  briefing_room: "Briefing Room",
+  pipeline: "Pipeline",
+  phase_2: "Phase 2 — Detonation",
+};
+
+function BrandRegisterExpanded({ row }: { row: BrandRow }) {
+  const bySystem: Record<SystemKey, BrandRun[]> = {
+    intelligence: [],
+    briefing_room: [],
+    pipeline: [],
+    phase_2: [],
+  };
+  for (const r of row.runs) bySystem[r.system].push(r);
+  return (
+    <div
+      style={{
+        margin: "0 12px 12px 12px",
+        padding: 16,
+        borderRadius: 8,
+        border: "1px solid var(--color-border)",
+        backgroundColor: "var(--color-background)",
+      }}
+    >
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        {(Object.keys(bySystem) as SystemKey[]).map((sys) => (
+          <ExpandedSection
+            key={sys}
+            system={sys}
+            runs={bySystem[sys]}
+            brand={row.displayName}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ExpandedSection({
+  system,
+  runs,
+  brand,
+}: {
+  system: SystemKey;
+  runs: BrandRun[];
+  brand: string;
+}) {
+  return (
+    <section>
+      <div
+        className="text-label"
+        style={{
+          color: "var(--color-text-tertiary)",
+          marginBottom: 8,
+        }}
+      >
+        {SYSTEM_SECTION_TITLE[system]}
+      </div>
+      {runs.length === 0 ? (
+        <div
+          className="text-body"
+          style={{ color: "var(--color-text-tertiary)", fontSize: 13 }}
+        >
+          No runs yet.{" "}
+          <NotStartedLink system={system} brand={brand} />
+        </div>
+      ) : (
+        <ul style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          {runs.map((r) => (
+            <li
+              key={r.id}
+              className="flex items-center justify-between"
+              style={{
+                padding: "8px 10px",
+                borderRadius: 6,
+                border: "1px solid var(--color-border)",
+                backgroundColor: "var(--color-card)",
+              }}
+            >
+              <div className="flex min-w-0 items-center gap-3">
+                <SystemCircle
+                  state={
+                    r.status === "complete"
+                      ? "complete"
+                      : r.status === "error"
+                        ? "not_started"
+                        : "in_progress"
+                  }
+                />
+                <div className="flex min-w-0 flex-col">
+                  <span
+                    className="text-body"
+                    style={{
+                      color: "var(--color-text-primary)",
+                      fontSize: 13,
+                    }}
+                  >
+                    {r.label}
+                  </span>
+                  <span
+                    className="text-body"
+                    style={{
+                      color: "var(--color-text-tertiary)",
+                      fontSize: 11,
+                    }}
+                    title={formatAbsolute(r.date)}
+                  >
+                    {formatRelative(r.date)}
+                  </span>
+                </div>
+              </div>
+              <RunActions run={r} />
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
+
+function RunActions({ run }: { run: BrandRun }) {
+  const items: React.ReactNode[] = [];
+  if (run.href && run.hrefSearch) {
+    items.push(
+      <ViewLink key="view" href={run.href} search={run.hrefSearch} />,
+    );
+  }
+  if (run.downloadHref) {
+    items.push(
+      <a
+        key="dl"
+        href={run.downloadHref}
+        style={{
+          color: "#D4924A",
+          fontSize: 12,
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 4,
+        }}
+      >
+        <Download size={12} /> Download
+      </a>,
+    );
+  }
+  if (run.system === "briefing_room" && run.status === "complete") {
+    items.push(
+      <span
+        key="use"
+        className="text-body"
+        style={{ color: "var(--color-text-tertiary)", fontSize: 11 }}
+      >
+        Handoff written
+      </span>,
+    );
+  }
+  if (items.length === 0) return null;
+  return <div className="flex items-center gap-3">{items}</div>;
+}
+
+// Suppress unused import warning if lint runs — Trash2 is intentionally kept
+// available for future row-level destructive UI.
+void Trash2;
