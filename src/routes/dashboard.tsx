@@ -76,7 +76,7 @@ function rowMatchesFilter(row: BrandRow, filter: FilterKey): boolean {
   ];
   if (filter === "all") return true;
   if (filter === "active") return states.some((s) => s === "in_progress");
-  if (filter === "complete") return states.some((s) => s === "complete");
+  if (filter === "complete") return row.pipeline.state === "complete";
   if (filter === "not_started")
     return states.every((s) => s === "not_started");
   return true;
@@ -289,7 +289,7 @@ function Dashboard() {
                       key={f.key}
                       type="button"
                       onClick={() => {
-                        setFilter(f.key);
+                        setFilter((prev) => (prev === f.key ? "all" : f.key));
                         setPage(0);
                       }}
                       className="inline-flex items-center justify-center font-semibold uppercase"
@@ -776,7 +776,7 @@ const STATE_COLOR: Record<SystemStatus["state"], string> = {
 const SYSTEM_LAUNCH_LABEL: Record<SystemKey, string> = {
   intelligence: "Launch",
   briefing_room: "Launch",
-  pipeline: "Launch",
+  pipeline: "Run",
   phase_2: "Start",
 };
 
