@@ -141,9 +141,11 @@ function derivePipeline(sessions: SessionRow[]): SystemStatus {
   // Not started: no sessions row exists for this brand.
   if (sessions.length === 0) return { ...EMPTY_STATUS };
   const latest = sessions[0]!;
-  // Complete: current_stage at 22+ AND stage_22_output present and non-null.
+  // Complete: session marked complete OR final stage output present.
+  // Real data: max current_stage observed is 16-18 with status='complete'
+  // and stage_22_output populated — treat either signal as complete.
   const complete =
-    (latest.current_stage ?? 0) >= 22 && latest.stage_22_output != null;
+    latest.status === "complete" || latest.stage_22_output != null;
   if (complete) {
     return {
       state: "complete",
@@ -158,7 +160,7 @@ function derivePipeline(sessions: SessionRow[]): SystemStatus {
   const stage = latest.current_stage ?? 1;
   return {
     state: "in_progress",
-    label: `Stage ${stage} of 27`,
+    label: `Stage ${stage} of 22`,
     timestamp: null,
     href: "/pipeline",
     hrefSearch: { session: latest.id },
