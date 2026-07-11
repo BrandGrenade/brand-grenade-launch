@@ -138,39 +138,27 @@ type IntelligenceRow = {
 // ─── Per-system derivation ─────────────────────────────────────────
 
 function derivePipeline(sessions: SessionRow[]): SystemStatus {
+  // Not started: no sessions row exists for this brand.
   if (sessions.length === 0) return { ...EMPTY_STATUS };
   const latest = sessions[0]!;
+  // Complete: current_stage at 22+ AND stage_22_output present and non-null.
   const complete =
-    latest.stage_22_output != null ||
-    latest.stage_16_consulting_output != null;
+    (latest.current_stage ?? 0) >= 22 && latest.stage_22_output != null;
   if (complete) {
     return {
       state: "complete",
       label: null,
       timestamp: latest.updated_at,
-      href: "/complete",
-      hrefSearch: { session: latest.id },
-      runCount: sessions.length,
-    };
-  }
-  const running =
-    latest.status === "running" ||
-    latest.status === "pending" ||
-    latest.stage_1_output != null;
-  if (running) {
-    const stage = latest.current_stage ?? 1;
-    return {
-      state: "in_progress",
-      label: `Stage ${stage} of 27`,
-      timestamp: null,
       href: "/pipeline",
       hrefSearch: { session: latest.id },
       runCount: sessions.length,
     };
   }
+  // In progress: sessions row exists, not yet complete.
+  const stage = latest.current_stage ?? 1;
   return {
     state: "in_progress",
-    label: "Pending",
+    label: `Stage ${stage} of 27`,
     timestamp: null,
     href: "/pipeline",
     hrefSearch: { session: latest.id },
