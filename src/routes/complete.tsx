@@ -343,6 +343,9 @@ function CompletePage() {
           )}
         </div>
 
+        {/* Document 00A — Strategic Territory Intelligence Report */}
+        <Document00ACard brand={brand} />
+
         {/* Format selection */}
         <div style={{ marginBottom: 16 }}>
           <span className="text-label text-primary">SELECT OUTPUT FORMAT</span>
