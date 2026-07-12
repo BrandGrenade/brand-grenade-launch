@@ -175,14 +175,17 @@ export function NewRunGateButton({ variant = "topnav", label = "New Run", prefix
         background: "transparent",
       };
 
-  const baseDisabledStyle: React.CSSProperties = {
-    ...baseEnabledStyle,
-    backgroundColor: "transparent",
-    border: "1px solid #FF3B3B",
-    color: "#FF3B3B",
-    cursor: "pointer",
-    boxShadow: "none",
-  };
+  const finalEnabledStyle: React.CSSProperties = style ?? baseEnabledStyle;
+  const finalDisabledStyle: React.CSSProperties = style
+    ? { ...style, cursor: "pointer" }
+    : {
+        ...baseEnabledStyle,
+        backgroundColor: "transparent",
+        border: "1px solid #FF3B3B",
+        color: "#FF3B3B",
+        cursor: "pointer",
+        boxShadow: "none",
+      };
 
   const prefixNode = prefix ? (
     <span
