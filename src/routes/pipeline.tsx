@@ -3687,6 +3687,7 @@ function RightPanel({
   onToggleStage8Keep: (name: string, keep: boolean) => void;
   onManualStage8Submit?: (line: string, label: string) => void | Promise<void>;
   onCheckpointNotesChange?: (notes: string[]) => void;
+  sessionId?: string;
 }) {
   const isRunning = status === "running";
   const isCheckpoint = status === "checkpoint";
