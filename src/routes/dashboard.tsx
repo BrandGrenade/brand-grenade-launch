@@ -891,7 +891,7 @@ function CompleteCell({
       ) : (system === "pipeline" || system === "phase_2") &&
         status.href &&
         status.hrefSearch ? (
-        <ViewLink href={status.href} search={status.hrefSearch} />
+        <TextLink href={status.href} search={status.hrefSearch} label="Complete" />
       ) : (
         <span
           className="text-body"
