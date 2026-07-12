@@ -107,8 +107,9 @@ export function LaunchStrip() {
         <span aria-hidden style={arrowStyle}>→</span>
         <button
           type="button"
-          style={buttonStyle}
+          style={{ ...buttonStyle, opacity: 0.6, cursor: "not-allowed" }}
           className={buttonClass}
+          title="Coming Soon"
           onClick={() =>
             toast.info(
               "Creative Engine — Coming Soon. The Brand Grenade Creative Engine is currently in development."
