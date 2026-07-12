@@ -915,7 +915,7 @@ function CompleteCell({
   );
 }
 
-function IntelligenceDownloadButton({ sessionId }: { sessionId: string }) {
+function IntelligenceDownloadLink({ sessionId }: { sessionId: string }) {
   const [busy, setBusy] = useState(false);
   const handle = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -966,26 +966,22 @@ function IntelligenceDownloadButton({ sessionId }: { sessionId: string }) {
     }
   };
   return (
-    <button
-      type="button"
+    <span
       onClick={handle}
-      disabled={busy}
-      title="Download Document 00A"
+      role="button"
+      aria-label="Download Document 00A"
+      className="text-body"
       style={{
-        color: "#D4924A",
+        color: "var(--color-text-primary)",
         fontSize: 12,
-        display: "inline-flex",
-        alignItems: "center",
-        gap: 4,
-        background: "transparent",
-        border: "none",
+        fontWeight: 500,
+        textDecoration: "underline",
         cursor: busy ? "wait" : "pointer",
-        padding: 0,
         opacity: busy ? 0.6 : 1,
       }}
     >
-      <Download size={12} />
-    </button>
+      Download
+    </span>
   );
 }
 
