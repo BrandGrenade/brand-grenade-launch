@@ -21,7 +21,7 @@ const RunInput = z.object({
 const MAX_RETRIES = 3;
 const MAX_TOKENS = 16000;
 const MODEL = "claude-sonnet-4-6";
-const TEMPERATURE = 0.4; // NB: not currently forwarded by streamClaude (see notes below)
+export const INTELLIGENCE_TEMPERATURE = 0.4;
 
 type BriefType = "commercial" | "government";
 
