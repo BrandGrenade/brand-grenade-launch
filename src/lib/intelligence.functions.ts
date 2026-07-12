@@ -18,6 +18,61 @@ const RunInput = z.object({
   intelligenceSessionId: z.string().uuid(),
 });
 
+const CreateInput = z.object({
+  brand_name: z.string().trim().min(1).max(200),
+  category: z.string().trim().min(1).max(200),
+  brief_type: z.enum(["commercial", "government"]),
+  markets: z.string().trim().max(500).nullish(),
+  audience_context_notes: z.string().trim().max(2000).nullish(),
+  input_primary_consumer: z.string().max(200_000).nullish(),
+  input_brand_health: z.string().max(200_000).nullish(),
+  input_competitive_audit: z.string().max(200_000).nullish(),
+  input_cultural_trends: z.string().max(200_000).nullish(),
+  input_audience_segmentation: z.string().max(200_000).nullish(),
+  input_bg_intel_pack: z.string().max(200_000).nullish(),
+});
+
+export const createIntelligenceSession = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => CreateInput.parse(input))
+  .handler(async ({ data, context }): Promise<{ sessionId: string }> => {
+    const { supabase, userId } = context;
+    const { data: row, error } = await supabase
+      .from("intelligence_sessions")
+      .insert({
+        user_id: userId,
+        brand_name: data.brand_name,
+        category: data.category,
+        // brief_type / markets / audience are not first-class columns.
+        // Store brief_type in additional_context prefix and markets in
+        // territory_input so the run fn can read them back.
+        territory_input: data.markets ?? null,
+        additional_context: data.audience_context_notes ?? null,
+        input_primary_consumer: data.input_primary_consumer ?? null,
+        input_brand_health: data.input_brand_health ?? null,
+        input_competitive_audit: data.input_competitive_audit ?? null,
+        input_cultural_trends: data.input_cultural_trends ?? null,
+        input_audience_segmentation: data.input_audience_segmentation ?? null,
+        input_bg_intel_pack: data.input_bg_intel_pack ?? null,
+        status: "draft",
+      })
+      .select("id")
+      .single();
+    if (error || !row) {
+      throw new Error(error?.message ?? "Failed to create intelligence session");
+    }
+    // Persist brief_type onto the row so run fn can normalise it later.
+    // (No dedicated column; store via a JSON stash on report_metadata.)
+    await supabase
+      .from("intelligence_sessions")
+      .update({
+        report_metadata: { brief_type: data.brief_type } as unknown as import("@/integrations/supabase/types").Json,
+      })
+      .eq("id", row.id);
+    return { sessionId: row.id };
+  });
+
+
 const MAX_RETRIES = 3;
 const MAX_TOKENS = 16000;
 const MODEL = "claude-sonnet-4-6";
