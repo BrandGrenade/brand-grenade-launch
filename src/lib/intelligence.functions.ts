@@ -97,7 +97,10 @@ export const runIntelligenceAnalysis = createServerFn({ method: "POST" })
     // long streams and after the request context tears down.
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    const writeStatus = async (patch: Record<string, unknown>): Promise<void> => {
+    type IntelligenceUpdate = Parameters<
+      ReturnType<typeof supabaseAdmin.from<"intelligence_sessions">>["update"]
+    >[0];
+    const writeStatus = async (patch: IntelligenceUpdate): Promise<void> => {
       try {
         await supabaseAdmin.from("intelligence_sessions").update(patch).eq("id", sessionId);
       } catch {
