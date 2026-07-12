@@ -225,7 +225,7 @@ export function NewRunGateButton({ variant = "topnav", label = "New Run", prefix
 
   if (gate?.allowed) {
     return (
-      <Link to="/brief" style={baseEnabledStyle}>
+      <Link to="/brief" style={finalEnabledStyle} className={className}>
         {prefixNode}
         {label}
       </Link>
@@ -238,7 +238,8 @@ export function NewRunGateButton({ variant = "topnav", label = "New Run", prefix
         type="button"
         aria-label={`${label} — ${gate?.message ?? "Platform Not Verified"}`}
         onClick={() => setDialogOpen(true)}
-        style={baseDisabledStyle}
+        style={finalDisabledStyle}
+        className={className}
         title={gate?.message ?? "Platform Not Verified"}
       >
         {prefixNode}
