@@ -833,7 +833,12 @@ function NotStartedLink({
 }) {
   const brandParam = brand ? { brand } : {};
   const label = SYSTEM_LAUNCH_LABEL[system];
-  const style = { color: "#D4924A", fontSize: 12, fontWeight: 500 };
+  const style = {
+    color: "var(--color-text-primary)",
+    fontSize: 12,
+    fontWeight: 500,
+    textDecoration: "underline",
+  };
   if (system === "intelligence") {
     return (
       <Link to="/intelligence/new" search={brandParam} style={style}>
