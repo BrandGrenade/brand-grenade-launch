@@ -578,7 +578,7 @@ const COLUMN_HEADERS = [
   "Briefing Room",
   "Strategy Pipeline",
   "Phase 2",
-  "Last Updated",
+  "Deliverables",
   "",
 ];
 
