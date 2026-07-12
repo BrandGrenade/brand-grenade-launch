@@ -396,7 +396,7 @@ function assemble({
         label: pipelineComplete
           ? "Pipeline complete"
           : `Stage ${s.current_stage ?? 1} of 27`,
-        href: pipelineComplete ? "/complete" : "/pipeline",
+        href: "/pipeline",
         hrefSearch: { session: s.id },
         downloadHref: null,
       });
@@ -414,7 +414,7 @@ function assemble({
           date: s.updated_at,
           status: p2Complete ? "complete" : "in_progress",
           label: p2Complete ? "Phase 2 complete" : "Phase 2 running",
-          href: p2Complete ? "/complete" : "/detonation",
+          href: "/detonation",
           hrefSearch: { session: s.id },
           downloadHref: null,
         });
