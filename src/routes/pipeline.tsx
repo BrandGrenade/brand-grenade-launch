@@ -2775,12 +2775,6 @@ function PipelineView() {
         }}
       />
 
-      {sessionId && (
-        <div className="border-b px-6 py-2 sm:px-12" style={{ borderColor: "var(--color-border-subtle)" }}>
-          <LocControls sessionId={sessionId} />
-        </div>
-      )}
-
       <div className="flex flex-1 overflow-hidden">
         <LeftPanel
           stages={STAGES}
@@ -2905,6 +2899,7 @@ function PipelineView() {
             }}
             fullOutput={stageOutputs[selected.id] ?? "Output pending."}
             contentScrollRef={contentScrollRef}
+            sessionId={sessionId ?? undefined}
             isViewingHistorical={isViewingHistorical}
             onBackToCurrent={() => setSelectedId(currentActiveId)}
             stage1Error={selectedError}
@@ -3656,6 +3651,7 @@ function RightPanel({
   onManualStage8Submit,
   onCheckpointNotesChange,
   contentScrollRef,
+  sessionId,
 }: {
   stage: Stage;
   status: StageStatus;
@@ -3692,6 +3688,7 @@ function RightPanel({
   onToggleStage8Keep: (name: string, keep: boolean) => void;
   onManualStage8Submit?: (line: string, label: string) => void | Promise<void>;
   onCheckpointNotesChange?: (notes: string[]) => void;
+  sessionId?: string;
 }) {
   const isRunning = status === "running";
   const isCheckpoint = status === "checkpoint";
@@ -3850,6 +3847,11 @@ function RightPanel({
                 <StreamedOutput text={text} streaming={isRunning} />
               )}
               {isRunning ? <StallWatcher stageKey={stage.id} onRetry={onRetry} /> : null}
+              {stage.id === "09" && sessionId ? (
+                <div className="mt-8">
+                  <LocControls sessionId={sessionId} />
+                </div>
+              ) : null}
             </article>
           </>
         )}
