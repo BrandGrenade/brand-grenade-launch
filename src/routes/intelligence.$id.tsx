@@ -321,6 +321,26 @@ function IntelligenceRunPage() {
   }, [row, runFn]);
 
   const [downloading, setDownloading] = useState(false);
+  const [handingOff, setHandingOff] = useState(false);
+  const handoffFn = useServerFn(createBriefingRoomFromIntelligence);
+  const handleSendToBriefingRoom = useCallback(async () => {
+    if (!row || !selectedTerritoryId) return;
+    setHandingOff(true);
+    try {
+      const res = await handoffFn({
+        data: {
+          intelligenceSessionId: row.id,
+          selectedTerritoryId,
+        },
+      });
+      toast.success("Territory sent to Briefing Room");
+      navigate({ to: "/briefing-room/$id", params: { id: res.workspaceId } });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Handoff failed");
+    } finally {
+      setHandingOff(false);
+    }
+  }, [row, selectedTerritoryId, handoffFn, navigate]);
   const handleDownloadPdf = useCallback(async () => {
     if (!row || !report) return;
     setDownloading(true);
