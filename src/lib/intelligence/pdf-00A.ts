@@ -583,14 +583,15 @@ function renderTerritory(
   doc.text(`TERRITORY ${String(rank).padStart(2, "0")}`, M_SIDE, f.y + 8);
   if (isPrimary) {
     const label = "RECOMMENDED PRIMARY";
-    doc.setFontSize(8);
     clearTracking(doc);
+    doc.setFontSize(8);
     const w = doc.getTextWidth(label) + 14;
     doc.setFillColor(C_ACCENT);
     doc.roundedRect(PAGE_W - M_SIDE - w, f.y - 2, w, 14, 3, 3, "F");
     doc.setTextColor(C_WHITE);
-    setTracking(doc, 0.1);
     doc.text(label, PAGE_W - M_SIDE - w + 7, f.y + 8);
+    doc.setFontSize(9);
+    setTracking(doc, 0.1);
   }
   clearTracking(doc);
   f.y += 16;
