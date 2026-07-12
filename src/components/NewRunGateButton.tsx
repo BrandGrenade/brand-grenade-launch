@@ -203,9 +203,9 @@ export function NewRunGateButton({ variant = "topnav", label = "New Run", prefix
   ) : null;
 
   if (loading) {
-    return (
-      <span
-        style={{
+    const loadingStyle: React.CSSProperties = style
+      ? { ...style, opacity: 0.5, pointerEvents: "none" }
+      : {
           ...baseEnabledStyle,
           opacity: 0.5,
           pointerEvents: "none",
@@ -213,8 +213,10 @@ export function NewRunGateButton({ variant = "topnav", label = "New Run", prefix
           color: "#8A8680",
           border: isTopNav || isLaunch ? "none" : "1px solid #2A2A2A",
           boxShadow: "none",
-        }}
-      >
+        };
+
+    return (
+      <span style={loadingStyle} className={className}>
         {prefixNode}
         {isLaunch ? "Checking…" : "Checking platform…"}
       </span>
