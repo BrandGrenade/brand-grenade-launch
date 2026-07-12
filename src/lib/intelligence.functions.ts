@@ -18,18 +18,27 @@ const RunInput = z.object({
   intelligenceSessionId: z.string().uuid(),
 });
 
+const FileMetaSchema = z.object({
+  field: z.string(),
+  filename: z.string(),
+  extracted_text_preview: z.string(),
+  file_type: z.string(),
+  upload_status: z.enum(["complete", "error"]),
+});
+
 const CreateInput = z.object({
   brand_name: z.string().trim().min(1).max(200),
   category: z.string().trim().min(1).max(200),
   brief_type: z.enum(["commercial", "government"]),
   markets: z.string().trim().max(500).nullish(),
   audience_context_notes: z.string().trim().max(2000).nullish(),
-  input_primary_consumer: z.string().max(200_000).nullish(),
-  input_brand_health: z.string().max(200_000).nullish(),
-  input_competitive_audit: z.string().max(200_000).nullish(),
-  input_cultural_trends: z.string().max(200_000).nullish(),
-  input_audience_segmentation: z.string().max(200_000).nullish(),
-  input_bg_intel_pack: z.string().max(200_000).nullish(),
+  input_primary_consumer: z.string().max(400_000).nullish(),
+  input_brand_health: z.string().max(400_000).nullish(),
+  input_competitive_audit: z.string().max(400_000).nullish(),
+  input_cultural_trends: z.string().max(400_000).nullish(),
+  input_audience_segmentation: z.string().max(400_000).nullish(),
+  input_bg_intel_pack: z.string().max(400_000).nullish(),
+  input_files: z.array(FileMetaSchema).max(100).optional(),
 });
 
 export const createIntelligenceSession = createServerFn({ method: "POST" })
@@ -54,6 +63,7 @@ export const createIntelligenceSession = createServerFn({ method: "POST" })
         input_cultural_trends: data.input_cultural_trends ?? null,
         input_audience_segmentation: data.input_audience_segmentation ?? null,
         input_bg_intel_pack: data.input_bg_intel_pack ?? null,
+        input_files: (data.input_files ?? []) as unknown as import("@/integrations/supabase/types").Json,
         status: "draft",
       })
       .select("id")
