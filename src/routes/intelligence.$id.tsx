@@ -576,9 +576,15 @@ function IntelligenceRunPage() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => toast.info("PDF download coming soon")}
+                onClick={handleDownloadPdf}
+                disabled={downloading}
               >
-                <Download className="mr-2 h-3.5 w-3.5" /> Download PDF
+                {downloading ? (
+                  <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Download className="mr-2 h-3.5 w-3.5" />
+                )}
+                Download PDF
               </Button>
             </div>
           </div>
