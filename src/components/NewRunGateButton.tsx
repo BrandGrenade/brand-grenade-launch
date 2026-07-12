@@ -33,9 +33,11 @@ export type NewRunGateButtonProps = {
   variant?: "topnav" | "empty" | "launch";
   label?: string;
   prefix?: string;
+  style?: React.CSSProperties;
+  className?: string;
 };
 
-export function NewRunGateButton({ variant = "topnav", label = "New Run", prefix }: NewRunGateButtonProps) {
+export function NewRunGateButton({ variant = "topnav", label = "New Run", prefix, style, className }: NewRunGateButtonProps) {
   const getGate = useServerFn(getPipelineGate);
   const logOverride = useServerFn(logPipelineRunOverride);
   const navigate = useNavigate();
@@ -173,14 +175,17 @@ export function NewRunGateButton({ variant = "topnav", label = "New Run", prefix
         background: "transparent",
       };
 
-  const baseDisabledStyle: React.CSSProperties = {
-    ...baseEnabledStyle,
-    backgroundColor: "transparent",
-    border: "1px solid #FF3B3B",
-    color: "#FF3B3B",
-    cursor: "pointer",
-    boxShadow: "none",
-  };
+  const finalEnabledStyle: React.CSSProperties = style ?? baseEnabledStyle;
+  const finalDisabledStyle: React.CSSProperties = style
+    ? { ...style, cursor: "pointer" }
+    : {
+        ...baseEnabledStyle,
+        backgroundColor: "transparent",
+        border: "1px solid #FF3B3B",
+        color: "#FF3B3B",
+        cursor: "pointer",
+        boxShadow: "none",
+      };
 
   const prefixNode = prefix ? (
     <span
@@ -198,9 +203,9 @@ export function NewRunGateButton({ variant = "topnav", label = "New Run", prefix
   ) : null;
 
   if (loading) {
-    return (
-      <span
-        style={{
+    const loadingStyle: React.CSSProperties = style
+      ? { ...style, opacity: 0.5, pointerEvents: "none" }
+      : {
           ...baseEnabledStyle,
           opacity: 0.5,
           pointerEvents: "none",
@@ -208,8 +213,10 @@ export function NewRunGateButton({ variant = "topnav", label = "New Run", prefix
           color: "#8A8680",
           border: isTopNav || isLaunch ? "none" : "1px solid #2A2A2A",
           boxShadow: "none",
-        }}
-      >
+        };
+
+    return (
+      <span style={loadingStyle} className={className}>
         {prefixNode}
         {isLaunch ? "Checking…" : "Checking platform…"}
       </span>
@@ -218,7 +225,7 @@ export function NewRunGateButton({ variant = "topnav", label = "New Run", prefix
 
   if (gate?.allowed) {
     return (
-      <Link to="/brief" style={baseEnabledStyle}>
+      <Link to="/brief" style={finalEnabledStyle} className={className}>
         {prefixNode}
         {label}
       </Link>
@@ -231,7 +238,8 @@ export function NewRunGateButton({ variant = "topnav", label = "New Run", prefix
         type="button"
         aria-label={`${label} — ${gate?.message ?? "Platform Not Verified"}`}
         onClick={() => setDialogOpen(true)}
-        style={baseDisabledStyle}
+        style={finalDisabledStyle}
+        className={className}
         title={gate?.message ?? "Platform Not Verified"}
       >
         {prefixNode}
