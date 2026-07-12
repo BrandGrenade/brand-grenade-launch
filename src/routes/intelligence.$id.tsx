@@ -317,6 +317,25 @@ function IntelligenceRunPage() {
     }
   }, [row, runFn]);
 
+  const [downloading, setDownloading] = useState(false);
+  const handleDownloadPdf = useCallback(async () => {
+    if (!row || !report) return;
+    setDownloading(true);
+    try {
+      await downloadDocument00APdf({
+        brandName: row.brand_name || "Brand",
+        category: row.category || "",
+        briefType,
+        completedAt: row.completed_at,
+        report,
+      });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "PDF generation failed");
+    } finally {
+      setDownloading(false);
+    }
+  }, [row, report, briefType]);
+
   if (!loaded) {
     return (
       <div className="min-h-screen bg-background">
