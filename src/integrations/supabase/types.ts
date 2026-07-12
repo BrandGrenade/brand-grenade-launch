@@ -80,6 +80,13 @@ export type Database = {
           handoff_payload: Json | null
           handoff_written_at: string | null
           id: string
+          input_audience_segmentation: string | null
+          input_bg_intel_pack: string | null
+          input_brand_health: string | null
+          input_competitive_audit: string | null
+          input_cultural_trends: string | null
+          input_files: Json | null
+          input_primary_consumer: string | null
           last_error: string | null
           layer_1_output: string | null
           layer_10_output: string | null
@@ -111,6 +118,13 @@ export type Database = {
           handoff_payload?: Json | null
           handoff_written_at?: string | null
           id?: string
+          input_audience_segmentation?: string | null
+          input_bg_intel_pack?: string | null
+          input_brand_health?: string | null
+          input_competitive_audit?: string | null
+          input_cultural_trends?: string | null
+          input_files?: Json | null
+          input_primary_consumer?: string | null
           last_error?: string | null
           layer_1_output?: string | null
           layer_10_output?: string | null
@@ -142,6 +156,13 @@ export type Database = {
           handoff_payload?: Json | null
           handoff_written_at?: string | null
           id?: string
+          input_audience_segmentation?: string | null
+          input_bg_intel_pack?: string | null
+          input_brand_health?: string | null
+          input_competitive_audit?: string | null
+          input_cultural_trends?: string | null
+          input_files?: Json | null
+          input_primary_consumer?: string | null
           last_error?: string | null
           layer_1_output?: string | null
           layer_10_output?: string | null
