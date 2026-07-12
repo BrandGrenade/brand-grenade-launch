@@ -887,11 +887,17 @@ function CompleteCell({
         <>
           <a
             href={status.href ?? "#"}
-            style={{ color: "#D4924A", fontSize: 12, fontWeight: 500 }}
+            className="text-body"
+            style={{
+              color: "var(--color-text-primary)",
+              fontSize: 12,
+              fontWeight: 500,
+              textDecoration: "underline",
+            }}
           >
             View
           </a>
-          {intelId ? <IntelligenceDownloadButton sessionId={intelId} /> : null}
+          {intelId ? <IntelligenceDownloadLink sessionId={intelId} /> : null}
         </>
       ) : (system === "pipeline" || system === "phase_2") &&
         status.href &&
