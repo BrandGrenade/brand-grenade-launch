@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useMemo, useState } from "react";
-import { ArrowLeft, Check, Circle, Loader2 } from "lucide-react";
+import { useMemo, useRef, useState } from "react";
+import { ArrowLeft, Check, Circle, Loader2, Upload, X, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
 import { TopNav } from "@/components/TopNav";
@@ -21,6 +21,14 @@ import {
   createIntelligenceSession,
   runIntelligenceAnalysis,
 } from "@/lib/intelligence.functions";
+import {
+  ACCEPT_ATTR,
+  MAX_FILE_BYTES,
+  MAX_TOTAL_BYTES,
+  detectKind,
+  extractFileText,
+  type FileKind,
+} from "@/lib/intelligence/file-extract";
 
 const searchSchema = z.object({
   brand: z.string().optional(),
@@ -30,11 +38,11 @@ export const Route = createFileRoute("/intelligence/new")({
   validateSearch: (s) => searchSchema.parse(s),
   head: () => ({
     meta: [
-      { title: "Strategic Territory Intelligence Engine — Brand Grenade" },
+      { title: "Strategic Territory Intelligence Lab — Brand Grenade" },
       {
         name: "description",
         content:
-          "Provide research inputs. The engine produces a ranked strategic territory intelligence report.",
+          "Provide research inputs. The Intelligence Lab produces a ranked strategic territory intelligence report.",
       },
       { name: "robots", content: "noindex" },
     ],
@@ -44,14 +52,16 @@ export const Route = createFileRoute("/intelligence/new")({
 
 type BriefType = "commercial" | "government";
 
+type SectionKey =
+  | "input_primary_consumer"
+  | "input_brand_health"
+  | "input_competitive_audit"
+  | "input_cultural_trends"
+  | "input_audience_segmentation"
+  | "input_bg_intel_pack";
+
 interface SectionSpec {
-  key:
-    | "input_primary_consumer"
-    | "input_brand_health"
-    | "input_competitive_audit"
-    | "input_cultural_trends"
-    | "input_audience_segmentation"
-    | "input_bg_intel_pack";
+  key: SectionKey;
   number: string;
   title: string;
   description: string;
@@ -108,7 +118,18 @@ const SECTIONS: SectionSpec[] = [
   },
 ];
 
-type InputMap = Record<SectionSpec["key"], string>;
+interface UploadedFile {
+  id: string;
+  name: string;
+  size: number;
+  kind: FileKind;
+  text: string;
+  status: "processing" | "complete" | "error";
+  error?: string;
+}
+
+type InputMap = Record<SectionKey, string>;
+type FileMap = Record<SectionKey, UploadedFile[]>;
 
 const EMPTY_INPUTS: InputMap = {
   input_primary_consumer: "",
@@ -118,6 +139,21 @@ const EMPTY_INPUTS: InputMap = {
   input_audience_segmentation: "",
   input_bg_intel_pack: "",
 };
+
+const EMPTY_FILES: FileMap = {
+  input_primary_consumer: [],
+  input_brand_health: [],
+  input_competitive_audit: [],
+  input_cultural_trends: [],
+  input_audience_segmentation: [],
+  input_bg_intel_pack: [],
+};
+
+function fmtBytes(n: number): string {
+  if (n < 1024) return `${n} B`;
+  if (n < 1024 * 1024) return `${(n / 1024).toFixed(0)} KB`;
+  return `${(n / (1024 * 1024)).toFixed(1)} MB`;
+}
 
 function IntelligenceNewPage() {
   const navigate = useNavigate();
@@ -131,6 +167,7 @@ function IntelligenceNewPage() {
   const [markets, setMarkets] = useState("");
   const [audienceNotes, setAudienceNotes] = useState("");
   const [inputs, setInputs] = useState<InputMap>(EMPTY_INPUTS);
+  const [files, setFiles] = useState<FileMap>(EMPTY_FILES);
   const [busy, setBusy] = useState(false);
   const [errors, setErrors] = useState<{
     brand?: string;
@@ -138,9 +175,23 @@ function IntelligenceNewPage() {
     inputs?: string;
   }>({});
 
+  const totalBytes = useMemo(
+    () =>
+      Object.values(files).reduce(
+        (sum, list) => sum + list.reduce((s, f) => s + f.size, 0),
+        0,
+      ),
+    [files],
+  );
+
+  const sectionHasContent = (key: SectionKey) =>
+    inputs[key].trim().length > 0 ||
+    files[key].some((f) => f.status === "complete");
+
   const presentCount = useMemo(
-    () => SECTIONS.filter((s) => inputs[s.key].trim().length > 0).length,
-    [inputs],
+    () => SECTIONS.filter((s) => sectionHasContent(s.key)).length,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [inputs, files],
   );
 
   const confidence: "High" | "Moderate" | "Low" =
@@ -153,9 +204,110 @@ function IntelligenceNewPage() {
         ? "#D4924A"
         : "#94A3B8";
 
+  async function handleFilesAdded(key: SectionKey, list: FileList | File[]) {
+    const arr = Array.from(list);
+    if (arr.length === 0) return;
+
+    // Preflight: reject unknown extensions and oversized individual files.
+    const rejected: string[] = [];
+    const valid: File[] = [];
+    for (const f of arr) {
+      const kind = detectKind(f);
+      if (!kind) {
+        rejected.push(`${f.name} — unsupported type`);
+        continue;
+      }
+      if (f.size > MAX_FILE_BYTES) {
+        rejected.push(`${f.name} — exceeds 10MB per-file limit`);
+        continue;
+      }
+      valid.push(f);
+    }
+    if (rejected.length > 0) {
+      toast.error(rejected.join(" · "));
+    }
+    if (valid.length === 0) return;
+
+    // Session total check.
+    const incoming = valid.reduce((s, f) => s + f.size, 0);
+    if (totalBytes + incoming > MAX_TOTAL_BYTES) {
+      toast.error(
+        `Total upload exceeds 50MB session limit (current ${fmtBytes(
+          totalBytes,
+        )}, adding ${fmtBytes(incoming)}).`,
+      );
+      return;
+    }
+
+    // Register placeholder rows immediately.
+    const placeholders: UploadedFile[] = valid.map((f) => ({
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      name: f.name,
+      size: f.size,
+      kind: detectKind(f)!,
+      text: "",
+      status: "processing",
+    }));
+    setFiles((prev) => ({ ...prev, [key]: [...prev[key], ...placeholders] }));
+
+    // Extract sequentially so we don't blow the main thread.
+    for (let i = 0; i < valid.length; i++) {
+      const file = valid[i];
+      const placeholder = placeholders[i];
+      try {
+        const text = await extractFileText(file);
+        setFiles((prev) => ({
+          ...prev,
+          [key]: prev[key].map((it) =>
+            it.id === placeholder.id
+              ? { ...it, text, status: "complete" as const }
+              : it,
+          ),
+        }));
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "Extraction failed";
+        setFiles((prev) => ({
+          ...prev,
+          [key]: prev[key].map((it) =>
+            it.id === placeholder.id
+              ? { ...it, status: "error" as const, error: msg }
+              : it,
+          ),
+        }));
+        toast.error(`${file.name}: ${msg}`);
+      }
+    }
+  }
+
+  function removeFile(key: SectionKey, id: string) {
+    setFiles((prev) => ({
+      ...prev,
+      [key]: prev[key].filter((f) => f.id !== id),
+    }));
+  }
+
+  function combinedText(key: SectionKey): string | null {
+    const pasted = inputs[key].trim();
+    const extracted = files[key]
+      .filter((f) => f.status === "complete" && f.text.trim().length > 0)
+      .map((f) => `[FILE: ${f.name}]\n${f.text.trim()}`)
+      .join("\n\n");
+    const combined = [pasted, extracted].filter(Boolean).join("\n\n");
+    return combined.length > 0 ? combined : null;
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (busy) return;
+
+    // Block if any files are still processing.
+    const stillProcessing = Object.values(files).some((list) =>
+      list.some((f) => f.status === "processing"),
+    );
+    if (stillProcessing) {
+      toast.error("Please wait for all file uploads to finish processing.");
+      return;
+    }
 
     const nextErrors: typeof errors = {};
     if (brand.trim().length < 1) nextErrors.brand = "Brand name is required";
@@ -168,6 +320,17 @@ function IntelligenceNewPage() {
       return;
     }
 
+    // Build file metadata array for the DB.
+    const inputFilesMeta = SECTIONS.flatMap((s) =>
+      files[s.key].map((f) => ({
+        field: s.key,
+        filename: f.name,
+        extracted_text_preview: (f.text ?? "").slice(0, 200),
+        file_type: f.kind,
+        upload_status: f.status === "complete" ? ("complete" as const) : ("error" as const),
+      })),
+    );
+
     setBusy(true);
     try {
       const { sessionId } = await createFn({
@@ -177,16 +340,15 @@ function IntelligenceNewPage() {
           brief_type: briefType,
           markets: markets.trim() || null,
           audience_context_notes: audienceNotes.trim() || null,
-          input_primary_consumer: inputs.input_primary_consumer.trim() || null,
-          input_brand_health: inputs.input_brand_health.trim() || null,
-          input_competitive_audit: inputs.input_competitive_audit.trim() || null,
-          input_cultural_trends: inputs.input_cultural_trends.trim() || null,
-          input_audience_segmentation:
-            inputs.input_audience_segmentation.trim() || null,
-          input_bg_intel_pack: inputs.input_bg_intel_pack.trim() || null,
+          input_primary_consumer: combinedText("input_primary_consumer"),
+          input_brand_health: combinedText("input_brand_health"),
+          input_competitive_audit: combinedText("input_competitive_audit"),
+          input_cultural_trends: combinedText("input_cultural_trends"),
+          input_audience_segmentation: combinedText("input_audience_segmentation"),
+          input_bg_intel_pack: combinedText("input_bg_intel_pack"),
+          input_files: inputFilesMeta,
         },
       });
-      // Fire and forget — the /intelligence/$id page polls the row.
       void runFn({ data: { intelligenceSessionId: sessionId } }).catch(
         (err: unknown) => {
           console.warn("[Intelligence] run failed:", err);
@@ -219,20 +381,20 @@ function IntelligenceNewPage() {
           </Link>
 
           <div className="mt-6">
-            <span className="text-label text-primary">Intelligence Engine</span>
+            <span className="text-label text-primary">Intelligence Lab</span>
             <h1 className="text-h2 mt-2 text-text-primary">
-              Strategic Territory Intelligence Engine
+              Strategic Territory Intelligence Lab
             </h1>
             <p className="text-body mt-3 max-w-[720px] text-text-secondary">
-              Provide your research inputs below. The engine analyses all inputs
-              simultaneously and produces a ranked strategic territory
-              intelligence report.
+              Provide your research inputs below. The Intelligence Lab analyses
+              all inputs simultaneously and produces a ranked strategic
+              territory intelligence report. Paste text, upload files
+              (PDF, DOCX, PPTX, XLSX, CSV, TXT), or both.
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="mt-10 grid gap-8 lg:grid-cols-[1fr_320px]">
             <div className="space-y-8">
-              {/* Framing fields */}
               <Card className="p-6">
                 <h2 className="text-h4 text-text-primary">Brief framing</h2>
                 <div className="mt-5 grid gap-5 md:grid-cols-2">
@@ -302,38 +464,20 @@ function IntelligenceNewPage() {
                 </div>
               </Card>
 
-              {/* Six research input sections */}
-              {SECTIONS.map((s) => {
-                const present = inputs[s.key].trim().length > 0;
-                return (
-                  <Card key={s.key} className="p-6">
-                    <div className="flex items-baseline gap-3">
-                      <span
-                        className="text-label"
-                        style={{ color: present ? "#22C55E" : "#94A3B8" }}
-                      >
-                        {s.number}
-                      </span>
-                      <div className="flex-1">
-                        <h3 className="text-h4 text-text-primary">{s.title}</h3>
-                        <p className="text-sm mt-1 text-text-secondary">{s.description}</p>
-                        <p className="text-xs mt-1 italic text-text-secondary/80">
-                          {s.helper}
-                        </p>
-                      </div>
-                    </div>
-                    <Textarea
-                      value={inputs[s.key]}
-                      onChange={(e) =>
-                        setInputs((prev) => ({ ...prev, [s.key]: e.target.value }))
-                      }
-                      placeholder="Paste content here…"
-                      className="mt-4 min-h-[160px] font-mono text-xs"
-                      maxLength={200_000}
-                    />
-                  </Card>
-                );
-              })}
+              {SECTIONS.map((s) => (
+                <ResearchSection
+                  key={s.key}
+                  spec={s}
+                  value={inputs[s.key]}
+                  files={files[s.key]}
+                  present={sectionHasContent(s.key)}
+                  onChange={(v) =>
+                    setInputs((prev) => ({ ...prev, [s.key]: v }))
+                  }
+                  onFilesAdded={(list) => handleFilesAdded(s.key, list)}
+                  onRemoveFile={(id) => removeFile(s.key, id)}
+                />
+              ))}
 
               {errors.inputs ? (
                 <p className="text-sm text-destructive">{errors.inputs}</p>
@@ -353,13 +497,12 @@ function IntelligenceNewPage() {
                       Starting analysis…
                     </>
                   ) : (
-                    "Run Intelligence Engine"
+                    "Start Intelligence Lab"
                   )}
                 </Button>
               </div>
             </div>
 
-            {/* Completeness preview */}
             <aside className="lg:sticky lg:top-24 lg:self-start">
               <Card className="p-5">
                 <h2 className="text-h5 text-text-primary">Completeness preview</h2>
@@ -369,7 +512,7 @@ function IntelligenceNewPage() {
 
                 <div className="mt-4 space-y-2">
                   {SECTIONS.map((s) => {
-                    const present = inputs[s.key].trim().length > 0;
+                    const present = sectionHasContent(s.key);
                     return (
                       <div key={s.key} className="flex items-start gap-2.5 text-xs">
                         {present ? (
@@ -411,6 +554,9 @@ function IntelligenceNewPage() {
                   <p className="text-xs text-text-secondary mt-1.5">
                     {presentCount} of 6 inputs present
                   </p>
+                  <p className="text-xs text-text-secondary mt-1">
+                    {fmtBytes(totalBytes)} / 50 MB uploaded
+                  </p>
                 </div>
               </Card>
             </aside>
@@ -418,5 +564,143 @@ function IntelligenceNewPage() {
         </div>
       </main>
     </div>
+  );
+}
+
+interface ResearchSectionProps {
+  spec: SectionSpec;
+  value: string;
+  files: UploadedFile[];
+  present: boolean;
+  onChange: (v: string) => void;
+  onFilesAdded: (list: FileList | File[]) => void;
+  onRemoveFile: (id: string) => void;
+}
+
+function ResearchSection({
+  spec,
+  value,
+  files,
+  present,
+  onChange,
+  onFilesAdded,
+  onRemoveFile,
+}: ResearchSectionProps) {
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const [dragOver, setDragOver] = useState(false);
+
+  return (
+    <Card className="p-6">
+      <div className="flex items-baseline gap-3">
+        <span
+          className="text-label"
+          style={{ color: present ? "#22C55E" : "#94A3B8" }}
+        >
+          {spec.number}
+        </span>
+        <div className="flex-1">
+          <h3 className="text-h4 text-text-primary">{spec.title}</h3>
+          <p className="text-sm mt-1 text-text-secondary">{spec.description}</p>
+          <p className="text-xs mt-1 italic text-text-secondary/80">
+            {spec.helper}
+          </p>
+        </div>
+      </div>
+      <Textarea
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="Paste content here…"
+        className="mt-4 min-h-[160px] font-mono text-xs"
+        maxLength={400_000}
+      />
+
+      <input
+        ref={inputRef}
+        type="file"
+        multiple
+        accept={ACCEPT_ATTR}
+        style={{ display: "none" }}
+        onChange={(e) => {
+          if (e.target.files) onFilesAdded(e.target.files);
+          e.target.value = "";
+        }}
+      />
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={() => inputRef.current?.click()}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            inputRef.current?.click();
+          }
+        }}
+        onDragOver={(e) => {
+          e.preventDefault();
+          setDragOver(true);
+        }}
+        onDragLeave={() => setDragOver(false)}
+        onDrop={(e) => {
+          e.preventDefault();
+          setDragOver(false);
+          if (e.dataTransfer.files) onFilesAdded(e.dataTransfer.files);
+        }}
+        className="mt-3 flex flex-col items-center justify-center rounded-md px-4 py-6 text-center transition-colors cursor-pointer"
+        style={{
+          border: `1px dashed ${dragOver ? "#D4924A" : "rgba(148,163,184,0.35)"}`,
+          backgroundColor: dragOver ? "rgba(212,146,74,0.06)" : "transparent",
+        }}
+      >
+        <Upload className="h-4 w-4 text-text-secondary" />
+        <p className="text-xs mt-2 text-text-secondary">
+          Drop files here or click to upload
+        </p>
+        <p className="text-[11px] mt-1 text-text-secondary/70">
+          PDF, DOCX, PPTX, XLSX, CSV, TXT · up to 10 MB per file
+        </p>
+      </div>
+
+      {files.length > 0 ? (
+        <ul className="mt-3 space-y-1.5">
+          {files.map((f) => (
+            <li
+              key={f.id}
+              className="flex items-center gap-2 rounded-md px-3 py-2 text-xs"
+              style={{
+                border: "1px solid rgba(148,163,184,0.2)",
+                backgroundColor: "rgba(148,163,184,0.05)",
+              }}
+            >
+              {f.status === "processing" ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
+              ) : f.status === "error" ? (
+                <X className="h-3.5 w-3.5 text-destructive" />
+              ) : (
+                <FileText className="h-3.5 w-3.5 text-text-secondary" />
+              )}
+              <span className="flex-1 truncate text-text-primary">{f.name}</span>
+              <span className="text-text-secondary">{fmtBytes(f.size)}</span>
+              {f.status === "processing" ? (
+                <span className="text-text-secondary">extracting…</span>
+              ) : f.status === "error" ? (
+                <span className="text-destructive">{f.error ?? "error"}</span>
+              ) : (
+                <span className="text-text-secondary">
+                  {f.text.length.toLocaleString()} chars
+                </span>
+              )}
+              <button
+                type="button"
+                onClick={() => onRemoveFile(f.id)}
+                className="ml-1 text-text-secondary hover:text-text-primary"
+                aria-label={`Remove ${f.name}`}
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </Card>
   );
 }
