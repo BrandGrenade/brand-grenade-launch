@@ -1,11 +1,12 @@
 import { Link, useRouterState } from "@tanstack/react-router";
+import { toast } from "sonner";
 import { NewRunGateButton } from "@/components/NewRunGateButton";
 
 /**
- * Persistent launch strip fixed below the top navigation. The three
- * buttons are the platform's ignition keys — Intelligence Engine,
- * Briefing Room, New Pipeline Run — with identical visual weight and
- * a small sequential number prefix.
+ * Persistent launch strip fixed below the top navigation. The four
+ * buttons are the platform's ignition keys — Intelligence Lab,
+ * Briefing Room, Strategy Pipeline, Creative Engine — with identical
+ * visual weight and a small sequential number prefix.
  *
  * Hidden on unauthenticated / public pages: /, /auth, /complete.
  */
@@ -38,6 +39,14 @@ const buttonStyle: React.CSSProperties = {
   cursor: "pointer",
 };
 
+const arrowStyle: React.CSSProperties = {
+  color: "var(--color-primary)",
+  fontSize: 12,
+  lineHeight: 1,
+  fontWeight: 400,
+  userSelect: "none",
+};
+
 export const LAUNCH_STRIP_HEIGHT = 68;
 
 export function LaunchStrip() {
@@ -67,13 +76,28 @@ export function LaunchStrip() {
       >
         <Link to="/intelligence/new" style={buttonStyle}>
           <span aria-hidden style={numberStyle}>01</span>
-          Intelligence Engine
+          Intelligence Lab
         </Link>
+        <span aria-hidden style={arrowStyle}>→</span>
         <Link to="/brief/new" style={buttonStyle}>
           <span aria-hidden style={numberStyle}>02</span>
           Briefing Room
         </Link>
-        <NewRunGateButton variant="launch" label="New Pipeline Run" prefix="03" />
+        <span aria-hidden style={arrowStyle}>→</span>
+        <NewRunGateButton variant="launch" label="Strategy Pipeline" prefix="03" />
+        <span aria-hidden style={arrowStyle}>→</span>
+        <button
+          type="button"
+          style={buttonStyle}
+          onClick={() =>
+            toast.info(
+              "Creative Engine — Coming Soon. The Brand Grenade Creative Engine is currently in development."
+            )
+          }
+        >
+          <span aria-hidden style={numberStyle}>04</span>
+          Creative Engine
+        </button>
       </div>
       {/* Spacer to push page content below the fixed strip. TopNav already
           reserves its own 56px, so this only adds the strip's height. */}
@@ -81,4 +105,3 @@ export function LaunchStrip() {
     </>
   );
 }
-
