@@ -62,6 +62,14 @@ export function LaunchStrip() {
           opacity: 0.85;
           transform: translateY(1px);
         }
+        .launch-strip-button-disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+        .launch-strip-button-disabled:hover {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
       `}</style>
       <div
         role="navigation"
