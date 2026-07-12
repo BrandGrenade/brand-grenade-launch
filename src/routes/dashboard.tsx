@@ -815,12 +815,7 @@ function SystemStatusCell({
         {status.state === "not_started" ? (
           <NotStartedLink system={system} brand={brand} />
         ) : status.state === "in_progress" ? (
-          <span
-            className="text-body"
-            style={{ color: "var(--color-text-primary)" }}
-          >
-            {status.label ?? "In progress"}
-          </span>
+          <InProgressLink system={system} status={status} />
         ) : (
           <CompleteCell system={system} status={status} />
         )}
