@@ -313,3 +313,158 @@ export const runIntelligenceAnalysis = createServerFn({ method: "POST" })
     return { success: true, sessionId };
   });
 
+// ─── Briefing Room handoff ───────────────────────────────────────────────
+
+export const INTELLIGENCE_SENTINEL = "[FROM_INTELLIGENCE_ENGINE";
+
+function formatList(items: string[] | undefined): string {
+  if (!items || items.length === 0) return "(none)";
+  return items.map((s) => `- ${s}`).join("\n");
+}
+
+function buildPreBriefText(args: {
+  intelligenceSessionId: string;
+  brandName: string;
+  category: string;
+  territoryName: string;
+  territoryDescription: string;
+  prebrief: PrebriefForBriefingRoom;
+  executiveSummary: string | null;
+}): string {
+  const p = args.prebrief;
+  return `${INTELLIGENCE_SENTINEL} session=${args.intelligenceSessionId}]
+This brief has been pre-diagnosed by the Strategic Territory Intelligence Engine.
+The strategic anchor, tension, audience, cultural context, and creative territory
+direction below are AUTHORITATIVE inputs — not claims to interrogate away. Use them
+as fixed priority inputs; do NOT re-frame or discard them. You may still surface
+gaps in supporting evidence.
+
+BRAND: ${args.brandName}
+CATEGORY: ${args.category}
+
+RECOMMENDED PRIMARY TERRITORY:
+${args.territoryName}
+
+TERRITORY DESCRIPTION:
+${args.territoryDescription || "(not provided)"}
+
+${args.executiveSummary ? `EXECUTIVE SUMMARY:\n${args.executiveSummary}\n` : ""}
+STRATEGIC ANCHOR:
+${p.strategic_anchor || "(not provided)"}
+
+TENSION:
+${p.tension || "(not provided)"}
+
+AUDIENCE:
+${p.audience || "(not provided)"}
+
+CULTURAL CONTEXT:
+${p.cultural_context || "(not provided)"}
+
+CREATIVE TERRITORY DIRECTION:
+${p.creative_territory_direction || "(not provided)"}
+
+MUST INCLUDE:
+${formatList(p.must_include)}
+
+MUST AVOID:
+${formatList(p.must_avoid)}
+`;
+}
+
+const HandoffInput = z.object({
+  intelligenceSessionId: z.string().uuid(),
+  selectedTerritoryId: z.string().min(1),
+});
+
+export const createBriefingRoomFromIntelligence = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => HandoffInput.parse(input))
+  .handler(async ({ data, context }): Promise<{ workspaceId: string }> => {
+    const { supabase, userId } = context;
+
+    const { data: row, error: readErr } = await supabase
+      .from("intelligence_sessions")
+      .select("*")
+      .eq("id", data.intelligenceSessionId)
+      .maybeSingle();
+    if (readErr || !row) throw new Error("Intelligence session not found");
+    if (row.user_id !== userId) throw new Error("Unauthorised");
+    if (row.status !== "complete" || !row.final_report) {
+      throw new Error("Intelligence session is not complete");
+    }
+
+    let report: IntelligenceReport;
+    try {
+      report = JSON.parse(row.final_report) as IntelligenceReport;
+    } catch {
+      throw new Error("Intelligence report is not valid JSON");
+    }
+    const territories = Array.isArray(report.territories) ? report.territories : [];
+    const selected = territories.find((t) => t.id === data.selectedTerritoryId);
+    if (!selected) throw new Error("Selected territory not found in report");
+    const prebrief = selected.prebrief_for_briefing_room ?? {};
+
+    const brandName = row.brand_name ?? "(unspecified)";
+    const category = row.category ?? "(unspecified)";
+    const territoryName =
+      typeof selected.name === "string" && selected.name.trim()
+        ? selected.name
+        : `Territory ${selected.id}`;
+    const territoryDescription =
+      typeof (selected as { description?: unknown }).description === "string"
+        ? ((selected as { description?: string }).description ?? "")
+        : "";
+
+    const rawBrief = buildPreBriefText({
+      intelligenceSessionId: row.id,
+      brandName,
+      category,
+      territoryName,
+      territoryDescription,
+      prebrief,
+      executiveSummary: typeof report.executive_summary === "string" ? report.executive_summary : null,
+    });
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: ws, error: insertErr } = await supabaseAdmin
+      .from("briefing_room_workspaces")
+      .insert({
+        user_id: userId!,
+        brand_name: brandName,
+        category,
+        raw_brief: rawBrief,
+        supporting_evidence: [
+          {
+            label: `Intelligence Engine — Territory: ${territoryName}`,
+            type: "intelligence_prebrief",
+            content: JSON.stringify(
+              { intelligence_session_id: row.id, territory: selected },
+              null,
+              2,
+            ),
+          },
+        ],
+      })
+      .select("id")
+      .single();
+    if (insertErr || !ws) {
+      throw new Error(insertErr?.message ?? "Failed to create briefing workspace");
+    }
+
+    // Record handoff on the intelligence session.
+    await supabaseAdmin
+      .from("intelligence_sessions")
+      .update({
+        handoff_payload: {
+          workspace_id: (ws as { id: string }).id,
+          selected_territory_id: selected.id,
+          prebrief,
+        } as unknown as import("@/integrations/supabase/types").Json,
+        handoff_written_at: new Date().toISOString(),
+      })
+      .eq("id", row.id);
+
+    return { workspaceId: (ws as { id: string }).id };
+  });
+
