@@ -3846,6 +3846,11 @@ function RightPanel({
                 <StreamedOutput text={text} streaming={isRunning} />
               )}
               {isRunning ? <StallWatcher stageKey={stage.id} onRetry={onRetry} /> : null}
+              {stage.id === "09" && sessionId ? (
+                <div className="mt-8">
+                  <LocControls sessionId={sessionId} />
+                </div>
+              ) : null}
             </article>
           </>
         )}
