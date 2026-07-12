@@ -834,7 +834,7 @@ function NotStartedLink({
   const brandParam = brand ? { brand } : {};
   const label = SYSTEM_LAUNCH_LABEL[system];
   const style = {
-    color: "var(--color-text-primary)",
+    color: "var(--color-text-secondary)",
     fontSize: 12,
     fontWeight: 500,
     textDecoration: "underline",
@@ -889,7 +889,7 @@ function CompleteCell({
             href={status.href ?? "#"}
             className="text-body"
             style={{
-              color: "var(--color-text-primary)",
+              color: "var(--color-text-secondary)",
               fontSize: 12,
               fontWeight: 500,
               textDecoration: "underline",
@@ -972,7 +972,7 @@ function IntelligenceDownloadLink({ sessionId }: { sessionId: string }) {
       aria-label="Download Document 00A"
       className="text-body"
       style={{
-        color: "var(--color-text-primary)",
+        color: "var(--color-text-secondary)",
         fontSize: 12,
         fontWeight: 500,
         textDecoration: "underline",
@@ -1000,7 +1000,7 @@ function TextLink({
       href={qs ? `${href}?${qs}` : href}
       className="text-body"
       style={{
-        color: "var(--color-text-primary)",
+        color: "var(--color-text-secondary)",
         fontSize: 12,
         fontWeight: 500,
         textDecoration: "underline",
@@ -1030,7 +1030,7 @@ function InProgressLink({
         to="/briefing-room"
         className="text-body"
         style={{
-          color: "var(--color-text-primary)",
+          color: "var(--color-text-secondary)",
           fontSize: 12,
           fontWeight: 500,
           textDecoration: "underline",
@@ -1043,7 +1043,7 @@ function InProgressLink({
   return (
     <span
       className="text-body"
-      style={{ color: "var(--color-text-primary)", fontSize: 12, fontWeight: 500 }}
+      style={{ color: "var(--color-text-secondary)", fontSize: 12, fontWeight: 500 }}
     >
       {label}
     </span>
@@ -1072,7 +1072,7 @@ function DeliverablesCell({
       href={`/complete?session=${encodeURIComponent(sessionId)}`}
       className="text-body"
       style={{
-        color: "var(--color-text-primary)",
+        color: "var(--color-text-secondary)",
         fontSize: 12,
         fontWeight: 500,
         textDecoration: "underline",
@@ -1220,7 +1220,7 @@ function RunActions({ run }: { run: BrandRun }) {
         href={run.downloadHref}
         className="text-body"
         style={{
-          color: "var(--color-text-primary)",
+          color: "var(--color-text-secondary)",
           fontSize: 12,
           fontWeight: 500,
           textDecoration: "underline",
