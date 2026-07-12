@@ -1188,7 +1188,7 @@ function RunActions({ run }: { run: BrandRun }) {
   const items: React.ReactNode[] = [];
   if (run.href && run.hrefSearch) {
     items.push(
-      <ViewLink key="view" href={run.href} search={run.hrefSearch} />,
+      <TextLink key="view" href={run.href} search={run.hrefSearch} label="View" />,
     );
   }
   if (run.downloadHref) {
