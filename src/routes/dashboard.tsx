@@ -704,11 +704,11 @@ function BrandRegisterRow({
             brand={row.displayName}
           />
         </td>
-        <td
-          className="text-body px-3 py-4 text-text-secondary"
-          title={formatAbsolute(row.lastUpdated)}
-        >
-          {formatRelative(row.lastUpdated)}
+        <td className="px-3 py-4">
+          <DeliverablesCell
+            pipelineComplete={row.pipeline.state === "complete"}
+            sessionId={row.pipeline.hrefSearch?.session ?? null}
+          />
         </td>
         <td className="px-3 py-4" style={{ whiteSpace: "nowrap" }}>
           <div className="flex items-center justify-end">
