@@ -3650,6 +3650,7 @@ function RightPanel({
   onManualStage8Submit,
   onCheckpointNotesChange,
   contentScrollRef,
+  sessionId,
 }: {
   stage: Stage;
   status: StageStatus;
