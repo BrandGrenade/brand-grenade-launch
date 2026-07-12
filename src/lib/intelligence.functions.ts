@@ -247,8 +247,8 @@ export const runIntelligenceAnalysis = createServerFn({ method: "POST" })
       stage_status: "complete:10",
       current_layer: 10,
       final_report: JSON.stringify(parsed),
-      report_metadata: reportMetadata,
-      handoff_payload: handoffPayload,
+      report_metadata: reportMetadata as unknown as import("@/integrations/supabase/types").Json,
+      handoff_payload: handoffPayload as unknown as import("@/integrations/supabase/types").Json | null,
       handoff_written_at: handoffPayload ? new Date().toISOString() : null,
       last_error: null,
     });
