@@ -270,6 +270,7 @@ async function prepareCall(
     body: JSON.stringify({
       model: args.model ?? DEFAULT_MODEL,
       max_tokens: effectiveMaxTokens,
+      ...(typeof args.temperature === "number" ? { temperature: args.temperature } : {}),
       system: [
         {
           type: "text",
