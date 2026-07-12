@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/accordion";
 import { supabase } from "@/integrations/supabase/client";
 import { runIntelligenceAnalysis } from "@/lib/intelligence.functions";
+import { downloadDocument00APdf } from "@/lib/intelligence/pdf-00A";
 
 export const Route = createFileRoute("/intelligence/$id")({
   head: () => ({
@@ -316,6 +317,25 @@ function IntelligenceRunPage() {
     }
   }, [row, runFn]);
 
+  const [downloading, setDownloading] = useState(false);
+  const handleDownloadPdf = useCallback(async () => {
+    if (!row || !report) return;
+    setDownloading(true);
+    try {
+      await downloadDocument00APdf({
+        brandName: row.brand_name || "Brand",
+        category: row.category || "",
+        briefType,
+        completedAt: row.completed_at,
+        report,
+      });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "PDF generation failed");
+    } finally {
+      setDownloading(false);
+    }
+  }, [row, report, briefType]);
+
   if (!loaded) {
     return (
       <div className="min-h-screen bg-background">
@@ -556,9 +576,15 @@ function IntelligenceRunPage() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => toast.info("PDF download coming soon")}
+                onClick={handleDownloadPdf}
+                disabled={downloading}
               >
-                <Download className="mr-2 h-3.5 w-3.5" /> Download PDF
+                {downloading ? (
+                  <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Download className="mr-2 h-3.5 w-3.5" />
+                )}
+                Download PDF
               </Button>
             </div>
           </div>
@@ -680,9 +706,15 @@ function IntelligenceRunPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => toast.info("PDF download coming soon")}
+              onClick={handleDownloadPdf}
+              disabled={downloading}
             >
-              <Download className="mr-2 h-3.5 w-3.5" /> Download PDF — Document 00A
+              {downloading ? (
+                <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Download className="mr-2 h-3.5 w-3.5" />
+              )}
+              Download PDF — Document 00A
             </Button>
             <Button
               size="sm"
