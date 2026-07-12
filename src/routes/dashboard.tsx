@@ -972,7 +972,7 @@ function IntelligenceDownloadLink({ sessionId }: { sessionId: string }) {
       aria-label="Download Document 00A"
       className="text-body"
       style={{
-        color: "var(--color-text-primary)",
+        color: "var(--color-text-secondary)",
         fontSize: 12,
         fontWeight: 500,
         textDecoration: "underline",
