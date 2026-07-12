@@ -62,13 +62,12 @@ export function LaunchStrip() {
           opacity: 0.85;
           transform: translateY(1px);
         }
-        .launch-strip-button-disabled {
+        .launch-strip-button-disabled,
+        .launch-strip-button-disabled:hover,
+        .launch-strip-button-disabled:active {
           opacity: 0.6;
           cursor: not-allowed;
-        }
-        .launch-strip-button-disabled:hover {
-          opacity: 0.6;
-          cursor: not-allowed;
+          transform: none;
         }
       `}</style>
       <div
@@ -83,41 +82,59 @@ export function LaunchStrip() {
           height: LAUNCH_STRIP_HEIGHT,
           display: "flex",
           alignItems: "center",
-          gap: 12,
+          justifyContent: "center",
           padding: "0 24px",
           backgroundColor: "#0F0F0F",
           borderBottom: "1px solid #2A2A2A",
           boxShadow: "0 4px 12px rgba(0,0,0,0.4)",
         }}
       >
-        <Link to="/intelligence/new" style={buttonStyle} className={buttonClass}>
-          Intelligence Lab
-        </Link>
-        <span aria-hidden style={arrowStyle}>→</span>
-        <Link to="/brief/new" style={buttonStyle} className={buttonClass}>
-          Briefing Room
-        </Link>
-        <span aria-hidden style={arrowStyle}>→</span>
-        <NewRunGateButton
-          variant="launch"
-          label="Strategy Pipeline"
-          style={buttonStyle}
-          className={buttonClass}
-        />
-        <span aria-hidden style={arrowStyle}>→</span>
-        <button
-          type="button"
-          style={{ ...buttonStyle, opacity: 0.6, cursor: "not-allowed" }}
-          className={buttonClass}
-          title="Coming Soon"
-          onClick={() =>
-            toast.info(
-              "Creative Engine — Coming Soon. The Brand Grenade Creative Engine is currently in development."
-            )
-          }
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 12,
+            width: "100%",
+            maxWidth: 1280,
+          }}
         >
-          Creative Engine
-        </button>
+          <Link to="/intelligence/new" style={buttonStyle} className={buttonClass}>
+            Intelligence Lab
+          </Link>
+          <span aria-hidden style={arrowStyle}>→</span>
+          <Link to="/brief/new" style={buttonStyle} className={buttonClass}>
+            Briefing Room
+          </Link>
+          <span aria-hidden style={arrowStyle}>→</span>
+          <NewRunGateButton
+            variant="launch"
+            label="Strategy Pipeline"
+            style={buttonStyle}
+            className={buttonClass}
+          />
+          <span aria-hidden style={arrowStyle}>→</span>
+          <button
+            type="button"
+            style={{
+              ...buttonStyle,
+              backgroundColor: "#3A3A38",
+              color: "#8A8680",
+              boxShadow: "none",
+              opacity: 0.6,
+              cursor: "not-allowed",
+            }}
+            className={`${buttonClass} launch-strip-button-disabled`}
+            title="Coming Soon"
+            onClick={() =>
+              toast.info(
+                "Creative Engine — Coming Soon. The Brand Grenade Creative Engine is currently in development."
+              )
+            }
+          >
+            Creative Engine
+          </button>
+        </div>
       </div>
       {/* Spacer to push page content below the fixed strip. TopNav already
           reserves its own 56px, so this only adds the strip's height. */}

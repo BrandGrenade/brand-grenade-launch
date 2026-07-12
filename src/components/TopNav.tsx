@@ -40,7 +40,7 @@ export function TopNav({ session }: { session?: SessionContext }) {
     <>
       <div style={{ height: 56 }} />
       <nav
-        className="fixed left-0 right-0 top-0 flex items-center justify-between px-5 sm:px-8"
+        className="fixed left-0 right-0 top-0 flex items-center justify-center px-5 sm:px-8"
         style={{
           height: 56,
           backgroundColor: "#0A0A0A",
@@ -48,6 +48,10 @@ export function TopNav({ session }: { session?: SessionContext }) {
           zIndex: 100,
         }}
       >
+        <div
+          className="flex w-full items-center justify-between"
+          style={{ maxWidth: 1280 }}
+        >
         <Link
           to="/dashboard"
           className="font-bold"
@@ -206,6 +210,7 @@ export function TopNav({ session }: { session?: SessionContext }) {
               </div>
             )}
           </div>
+        </div>
         </div>
       </nav>
     </>
