@@ -1218,9 +1218,12 @@ function RunActions({ run }: { run: BrandRun }) {
       <a
         key="dl"
         href={run.downloadHref}
+        className="text-body"
         style={{
-          color: "#D4924A",
+          color: "var(--color-text-primary)",
           fontSize: 12,
+          fontWeight: 500,
+          textDecoration: "underline",
           display: "inline-flex",
           alignItems: "center",
           gap: 4,
