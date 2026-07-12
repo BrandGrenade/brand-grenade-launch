@@ -1,17 +1,24 @@
 // Document 00A — Strategic Territory Intelligence Report card.
 // Displayed at the top of the Deliverables panel. Two states based on
 // whether the Intelligence Engine has been run for this brand.
-// UI-only: no server functions, no schema changes.
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { normalizeBrand } from "@/lib/brand-register";
+import {
+  downloadDocument00APdf,
+  type IntelligenceReport,
+} from "@/lib/intelligence/pdf-00A";
 
 type IntelSummary = {
-  status: string | null;
-  updatedAt: string | null;
+  id: string;
+  brandName: string;
+  category: string;
+  briefType: "commercial" | "government";
+  completedAt: string | null;
+  report: IntelligenceReport;
 };
 
 async function fetchLatestIntelligence(
@@ -20,26 +27,49 @@ async function fetchLatestIntelligence(
   const key = normalizeBrand(brand);
   if (!key) return null;
   try {
-    // Best-effort — the intelligence_sessions table ships with the
-    // Intelligence Engine. If it doesn't exist yet, this returns an
-    // error and we treat the brand as having no completed run.
     const res = await supabase
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .from("intelligence_sessions" as any)
-      .select("brand_name,status,updated_at")
+      .select(
+        "id,brand_name,category,status,updated_at,completed_at,final_report,report_metadata",
+      )
       .order("updated_at", { ascending: false })
       .limit(500);
     if (res.error) return null;
     const rows = ((res.data ?? []) as unknown) as Array<{
+      id: string;
       brand_name: string | null;
+      category: string | null;
       status: string | null;
       updated_at: string | null;
+      completed_at: string | null;
+      final_report: string | null;
+      report_metadata: unknown;
     }>;
     const match = rows.find(
       (r) => normalizeBrand(r.brand_name) === key && r.status === "complete",
     );
-    if (!match) return null;
-    return { status: match.status, updatedAt: match.updated_at };
+    if (!match || !match.final_report) return null;
+    let report: IntelligenceReport | null = null;
+    try {
+      report = JSON.parse(match.final_report) as IntelligenceReport;
+    } catch {
+      return null;
+    }
+    const meta = match.report_metadata;
+    const briefType =
+      meta && typeof meta === "object" && !Array.isArray(meta) &&
+      (meta as Record<string, unknown>).brief_type === "government"
+        ? "government"
+        : "commercial";
+    return {
+      id: match.id,
+      brandName: match.brand_name || brand,
+      category: match.category ?? "",
+      briefType,
+      completedAt: match.completed_at ?? match.updated_at,
+      report,
+    };
   } catch {
     return null;
   }
@@ -48,6 +78,7 @@ async function fetchLatestIntelligence(
 export function Document00ACard({ brand }: { brand: string }) {
   const [intel, setIntel] = useState<IntelSummary | null>(null);
   const [loaded, setLoaded] = useState(false);
+  const [downloading, setDownloading] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -60,6 +91,24 @@ export function Document00ACard({ brand }: { brand: string }) {
       cancelled = true;
     };
   }, [brand]);
+
+  const handleDownload = useCallback(async () => {
+    if (!intel) return;
+    setDownloading(true);
+    try {
+      await downloadDocument00APdf({
+        brandName: intel.brandName,
+        category: intel.category,
+        briefType: intel.briefType,
+        completedAt: intel.completedAt,
+        report: intel.report,
+      });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "PDF generation failed");
+    } finally {
+      setDownloading(false);
+    }
+  }, [intel]);
 
   const amber = "#D4924A";
   const complete = intel !== null;
@@ -111,11 +160,8 @@ export function Document00ACard({ brand }: { brand: string }) {
         </div>
         <button
           type="button"
-          onClick={() =>
-            toast.info(
-              "PDF download available when Intelligence Engine ships.",
-            )
-          }
+          onClick={handleDownload}
+          disabled={downloading}
           style={{
             height: 32,
             padding: "0 14px",
@@ -127,11 +173,12 @@ export function Document00ACard({ brand }: { brand: string }) {
             fontWeight: 600,
             letterSpacing: "0.08em",
             textTransform: "uppercase",
-            cursor: "pointer",
+            cursor: downloading ? "wait" : "pointer",
             whiteSpace: "nowrap",
+            opacity: downloading ? 0.6 : 1,
           }}
         >
-          Download ↓
+          {downloading ? "Building…" : "Download ↓"}
         </button>
       </div>
     );
