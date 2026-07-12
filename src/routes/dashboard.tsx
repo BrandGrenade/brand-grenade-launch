@@ -978,20 +978,85 @@ function IntelligenceDownloadButton({ sessionId }: { sessionId: string }) {
   );
 }
 
-function ViewLink({
+function TextLink({
   href,
   search,
+  label,
 }: {
   href: string;
   search: Record<string, string>;
+  label: string;
 }) {
   const qs = new URLSearchParams(search).toString();
   return (
     <a
       href={qs ? `${href}?${qs}` : href}
+      className="text-body"
       style={{ color: "#D4924A", fontSize: 12, fontWeight: 500 }}
     >
-      View
+      {label}
+    </a>
+  );
+}
+
+function InProgressLink({
+  system,
+  status,
+}: {
+  system: SystemKey;
+  status: SystemStatus;
+}) {
+  const label = status.label ?? "In progress";
+  if ((system === "pipeline" || system === "phase_2") && status.href && status.hrefSearch) {
+    return (
+      <TextLink href={status.href} search={status.hrefSearch} label={label} />
+    );
+  }
+  if (system === "briefing_room") {
+    return (
+      <Link
+        to="/briefing-room"
+        className="text-body"
+        style={{ color: "var(--color-text-primary)", fontSize: 12, fontWeight: 500 }}
+      >
+        {label}
+      </Link>
+    );
+  }
+  return (
+    <span
+      className="text-body"
+      style={{ color: "var(--color-text-primary)", fontSize: 12, fontWeight: 500 }}
+    >
+      {label}
+    </span>
+  );
+}
+
+function DeliverablesCell({
+  pipelineComplete,
+  sessionId,
+}: {
+  pipelineComplete: boolean;
+  sessionId: string | null;
+}) {
+  if (!pipelineComplete || !sessionId) {
+    return (
+      <span
+        className="text-body"
+        style={{ color: "var(--color-text-tertiary)", fontSize: 12 }}
+      >
+        —
+      </span>
+    );
+  }
+  return (
+    <a
+      href={`/complete?session=${encodeURIComponent(sessionId)}`}
+      className="text-body"
+      style={{ color: "#D4924A", fontSize: 12, fontWeight: 500 }}
+    >
+      Documents
     </a>
   );
 }
