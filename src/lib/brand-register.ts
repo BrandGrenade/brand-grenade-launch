@@ -132,8 +132,8 @@ type IntelligenceRow = {
   status: string | null;
   created_at: string;
   updated_at: string;
-  document_00a_url: string | null;
 };
+
 
 // ─── Per-system derivation ─────────────────────────────────────────
 
@@ -250,20 +250,21 @@ function deriveIntelligence(rows: IntelligenceRow[]): SystemStatus {
       state: "complete",
       label: null,
       timestamp: latest.updated_at,
-      href: latest.document_00a_url,
+      href: `/intelligence/${latest.id}`,
       hrefSearch: null,
       runCount: rows.length,
     };
   }
   return {
-    state: "in_progress",
-    label: "Analysing",
+    state: latest.status === "failed" ? "not_started" : "in_progress",
+    label: latest.status === "failed" ? null : "Analysing",
     timestamp: null,
     href: null,
     hrefSearch: null,
     runCount: rows.length,
   };
 }
+
 
 // ─── Assemble ──────────────────────────────────────────────────────
 
@@ -361,11 +362,12 @@ function assemble({
         date: i.updated_at,
         status: i.status === "complete" ? "complete" : "in_progress",
         label: i.status === "complete" ? "Analysis complete" : "Analysing",
-        href: null,
+        href: `/intelligence/${i.id}`,
         hrefSearch: null,
-        downloadHref: i.document_00a_url,
+        downloadHref: null,
       });
     }
+
     for (const w of g.workspaces) {
       const step = briefingStep(w);
       const isComplete =
@@ -494,8 +496,9 @@ export function useBrandRegister(): UseBrandRegisterResult {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             .from("intelligence_sessions" as any)
             .select(
-              "id,brand_name,category,status,created_at,updated_at,document_00a_url",
+              "id,brand_name,category,status,created_at,updated_at",
             )
+
             .order("updated_at", { ascending: false })
             .limit(500);
           return res as { data: IntelligenceRow[] | null; error: unknown };
@@ -550,7 +553,15 @@ export function useBrandRegister(): UseBrandRegisterResult {
           if (active) void load();
         },
       )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "intelligence_sessions" },
+        () => {
+          if (active) void load();
+        },
+      )
       .subscribe();
+
 
     return () => {
       active = false;

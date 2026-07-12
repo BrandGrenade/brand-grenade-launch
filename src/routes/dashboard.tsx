@@ -883,20 +883,12 @@ function CompleteCell({
       {system === "intelligence" ? (
         <a
           href={status.href ?? "#"}
-          aria-label="Download Document 00A"
-          onClick={(e) => {
-            if (!status.href) {
-              e.preventDefault();
-              toast.info(
-                "Document 00A will ship with the Intelligence Engine.",
-              );
-            }
-          }}
           style={{ color: "#D4924A", fontSize: 12, fontWeight: 500 }}
         >
-          Download
+          View
         </a>
       ) : (system === "pipeline" || system === "phase_2") &&
+
         status.href &&
         status.hrefSearch ? (
         <ViewLink href={status.href} search={status.hrefSearch} />
