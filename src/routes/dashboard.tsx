@@ -992,7 +992,12 @@ function TextLink({
     <a
       href={qs ? `${href}?${qs}` : href}
       className="text-body"
-      style={{ color: "#D4924A", fontSize: 12, fontWeight: 500 }}
+      style={{
+        color: "var(--color-text-primary)",
+        fontSize: 12,
+        fontWeight: 500,
+        textDecoration: "underline",
+      }}
     >
       {label}
     </a>
