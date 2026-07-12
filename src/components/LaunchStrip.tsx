@@ -95,7 +95,7 @@ export function LaunchStrip() {
             Intelligence Lab
           </Link>
           <span aria-hidden style={arrowStyle}>→</span>
-          <Link to="/brief/new" style={buttonStyle} className={buttonClass}>
+          <Link to="/briefing-room" style={buttonStyle} className={buttonClass}>
             Briefing Room
           </Link>
           <span aria-hidden style={arrowStyle}>→</span>
