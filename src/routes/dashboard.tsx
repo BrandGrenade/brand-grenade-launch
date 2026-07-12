@@ -878,17 +878,22 @@ function CompleteCell({
   system: SystemKey;
   status: SystemStatus;
 }) {
+  const intelId = system === "intelligence" && status.href
+    ? status.href.split("/").pop() ?? null
+    : null;
   return (
     <div className="flex items-center gap-2">
       {system === "intelligence" ? (
-        <a
-          href={status.href ?? "#"}
-          style={{ color: "#D4924A", fontSize: 12, fontWeight: 500 }}
-        >
-          View
-        </a>
+        <>
+          <a
+            href={status.href ?? "#"}
+            style={{ color: "#D4924A", fontSize: 12, fontWeight: 500 }}
+          >
+            View
+          </a>
+          {intelId ? <IntelligenceDownloadButton sessionId={intelId} /> : null}
+        </>
       ) : (system === "pipeline" || system === "phase_2") &&
-
         status.href &&
         status.hrefSearch ? (
         <ViewLink href={status.href} search={status.hrefSearch} />
@@ -901,6 +906,80 @@ function CompleteCell({
         </span>
       )}
     </div>
+  );
+}
+
+function IntelligenceDownloadButton({ sessionId }: { sessionId: string }) {
+  const [busy, setBusy] = useState(false);
+  const handle = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setBusy(true);
+    try {
+      const { data, error } = await supabase
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .from("intelligence_sessions" as any)
+        .select(
+          "brand_name,category,completed_at,final_report,report_metadata",
+        )
+        .eq("id", sessionId)
+        .maybeSingle();
+      if (error || !data) throw new Error(error?.message ?? "Session not found");
+      const row = data as unknown as {
+        brand_name: string | null;
+        category: string | null;
+        completed_at: string | null;
+        final_report: string | null;
+        report_metadata: unknown;
+      };
+      if (!row.final_report) throw new Error("Report not ready");
+      const report = JSON.parse(row.final_report);
+      const meta = row.report_metadata;
+      const briefType =
+        meta && typeof meta === "object" && !Array.isArray(meta) &&
+        (meta as Record<string, unknown>).brief_type === "government"
+          ? "government"
+          : "commercial";
+      const { downloadDocument00APdf } = await import(
+        "@/lib/intelligence/pdf-00A"
+      );
+      await downloadDocument00APdf({
+        brandName: row.brand_name || "Brand",
+        category: row.category || "",
+        briefType,
+        completedAt: row.completed_at,
+        report,
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Download failed";
+      // eslint-disable-next-line no-console
+      console.error("Doc 00A download", err);
+      void import("sonner").then(({ toast }) => toast.error(msg));
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <button
+      type="button"
+      onClick={handle}
+      disabled={busy}
+      title="Download Document 00A"
+      style={{
+        color: "#D4924A",
+        fontSize: 12,
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 4,
+        background: "transparent",
+        border: "none",
+        cursor: busy ? "wait" : "pointer",
+        padding: 0,
+        opacity: busy ? 0.6 : 1,
+      }}
+    >
+      <Download size={12} />
+    </button>
   );
 }
 
