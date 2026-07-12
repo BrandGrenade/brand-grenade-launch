@@ -721,12 +721,15 @@ function IntelligenceRunPage() {
             </Button>
             <Button
               size="sm"
-              disabled={!selectedTerritoryId}
-              onClick={() =>
-                toast.info("Briefing Room handoff wires up in a later step")
-              }
+              disabled={!selectedTerritoryId || handingOff}
+              onClick={handleSendToBriefingRoom}
             >
-              <Send className="mr-2 h-3.5 w-3.5" /> Send Selected Territory to Briefing Room
+              {handingOff ? (
+                <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Send className="mr-2 h-3.5 w-3.5" />
+              )}
+              Send Selected Territory to Briefing Room
             </Button>
           </div>
         </div>
