@@ -179,7 +179,7 @@ function derivePhase2(sessions: SessionRow[]): SystemStatus {
       state: "complete",
       label: null,
       timestamp: latest.updated_at,
-      href: "/complete",
+      href: "/detonation",
       hrefSearch: { session: latest.id },
       runCount: Math.max(runCount, 1),
     };
