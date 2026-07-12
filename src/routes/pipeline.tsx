@@ -2775,12 +2775,6 @@ function PipelineView() {
         }}
       />
 
-      {sessionId && (
-        <div className="border-b px-6 py-2 sm:px-12" style={{ borderColor: "var(--color-border-subtle)" }}>
-          <LocControls sessionId={sessionId} />
-        </div>
-      )}
-
       <div className="flex flex-1 overflow-hidden">
         <LeftPanel
           stages={STAGES}
