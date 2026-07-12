@@ -161,6 +161,7 @@ export const runIntelligenceAnalysis = createServerFn({ method: "POST" })
         userMessage,
         maxTokens: MAX_TOKENS,
         model: MODEL,
+        temperature: INTELLIGENCE_TEMPERATURE,
         skipUniversalWrapper: true, // Intelligence Engine owns its own system prompt
         stageLabel: "Intelligence Engine",
         stageNumber: "IE",
