@@ -250,20 +250,21 @@ function deriveIntelligence(rows: IntelligenceRow[]): SystemStatus {
       state: "complete",
       label: null,
       timestamp: latest.updated_at,
-      href: latest.document_00a_url,
+      href: `/intelligence/${latest.id}`,
       hrefSearch: null,
       runCount: rows.length,
     };
   }
   return {
-    state: "in_progress",
-    label: "Analysing",
+    state: latest.status === "failed" ? "not_started" : "in_progress",
+    label: latest.status === "failed" ? null : "Analysing",
     timestamp: null,
     href: null,
     hrefSearch: null,
     runCount: rows.length,
   };
 }
+
 
 // ─── Assemble ──────────────────────────────────────────────────────
 
