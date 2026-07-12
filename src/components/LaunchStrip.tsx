@@ -1,5 +1,4 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { toast } from "sonner";
 import { NewRunGateButton } from "@/components/NewRunGateButton";
 
 /**
@@ -62,13 +61,6 @@ export function LaunchStrip() {
           opacity: 0.85;
           transform: translateY(1px);
         }
-        .launch-strip-button-disabled,
-        .launch-strip-button-disabled:hover,
-        .launch-strip-button-disabled:active {
-          opacity: 0.6;
-          cursor: not-allowed;
-          transform: none;
-        }
       `}</style>
       <div
         role="navigation"
@@ -116,21 +108,9 @@ export function LaunchStrip() {
           <span aria-hidden style={arrowStyle}>→</span>
           <button
             type="button"
-            style={{
-              ...buttonStyle,
-              backgroundColor: "#3A3A38",
-              color: "#8A8680",
-              boxShadow: "none",
-              opacity: 0.6,
-              cursor: "not-allowed",
-            }}
-            className={`${buttonClass} launch-strip-button-disabled`}
+            style={{ ...buttonStyle, cursor: "not-allowed" }}
+            className={buttonClass}
             title="Coming Soon"
-            onClick={() =>
-              toast.info(
-                "Creative Engine — Coming Soon. The Brand Grenade Creative Engine is currently in development."
-              )
-            }
           >
             Creative Engine
           </button>
