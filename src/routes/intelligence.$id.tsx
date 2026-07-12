@@ -24,7 +24,10 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { supabase } from "@/integrations/supabase/client";
-import { runIntelligenceAnalysis } from "@/lib/intelligence.functions";
+import {
+  runIntelligenceAnalysis,
+  createBriefingRoomFromIntelligence,
+} from "@/lib/intelligence.functions";
 import { downloadDocument00APdf } from "@/lib/intelligence/pdf-00A";
 
 export const Route = createFileRoute("/intelligence/$id")({
@@ -318,6 +321,26 @@ function IntelligenceRunPage() {
   }, [row, runFn]);
 
   const [downloading, setDownloading] = useState(false);
+  const [handingOff, setHandingOff] = useState(false);
+  const handoffFn = useServerFn(createBriefingRoomFromIntelligence);
+  const handleSendToBriefingRoom = useCallback(async () => {
+    if (!row || !selectedTerritoryId) return;
+    setHandingOff(true);
+    try {
+      const res = await handoffFn({
+        data: {
+          intelligenceSessionId: row.id,
+          selectedTerritoryId,
+        },
+      });
+      toast.success("Territory sent to Briefing Room");
+      navigate({ to: "/briefing-room/$id", params: { id: res.workspaceId } });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Handoff failed");
+    } finally {
+      setHandingOff(false);
+    }
+  }, [row, selectedTerritoryId, handoffFn, navigate]);
   const handleDownloadPdf = useCallback(async () => {
     if (!row || !report) return;
     setDownloading(true);
@@ -718,12 +741,15 @@ function IntelligenceRunPage() {
             </Button>
             <Button
               size="sm"
-              disabled={!selectedTerritoryId}
-              onClick={() =>
-                toast.info("Briefing Room handoff wires up in a later step")
-              }
+              disabled={!selectedTerritoryId || handingOff}
+              onClick={handleSendToBriefingRoom}
             >
-              <Send className="mr-2 h-3.5 w-3.5" /> Send Selected Territory to Briefing Room
+              {handingOff ? (
+                <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Send className="mr-2 h-3.5 w-3.5" />
+              )}
+              Send Selected Territory to Briefing Room
             </Button>
           </div>
         </div>

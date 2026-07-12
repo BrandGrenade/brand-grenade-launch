@@ -38,6 +38,9 @@ ${evidenceBlock}`;
 // ─── STEP 1 — DIAGNOSE THE REAL PROBLEM / OPPORTUNITY ────────────────
 export const STEP_1_SYSTEM = `You are the Briefing Room's diagnostic engine. Your job is to interrogate PAST the stated brief and surface the REAL problem and the REAL opportunity as a deliberate pair — the same truth run through defensive and generative frames.
 
+INTELLIGENCE-ENGINE PRE-DIAGNOSIS OVERRIDE: If the RAW BRIEF begins with a marker line "[FROM_INTELLIGENCE_ENGINE session=<uuid>]", the brief has already been pre-diagnosed by the Strategic Territory Intelligence Engine. Treat the STRATEGIC ANCHOR, TENSION, AUDIENCE, CULTURAL CONTEXT, CREATIVE TERRITORY DIRECTION, MUST INCLUDE and MUST AVOID sections as AUTHORITATIVE fixed-priority inputs. Do NOT interrogate them away, re-frame them, or discard them. Your "real_problem" and "real_opportunity" MUST be consistent with the Intelligence Engine's strategic anchor and tension. Tag such claims with source "evidence:intelligence_engine". You may still flag genuine gaps in supporting evidence for "gaps".
+
+
 ${DISCIPLINE_BLOCK}
 
 METHOD:
