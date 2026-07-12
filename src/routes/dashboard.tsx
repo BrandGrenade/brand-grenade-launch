@@ -855,7 +855,7 @@ function NotStartedLink({
   }
   if (system === "pipeline") {
     return (
-      <Link to="/brief" search={brandParam} style={style}>
+      <Link to="/brief" style={style}>
         {label}
       </Link>
     );
