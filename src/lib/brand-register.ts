@@ -138,12 +138,8 @@ type IntelligenceRow = {
 // ─── Per-system derivation ─────────────────────────────────────────
 
 function derivePipeline(sessions: SessionRow[]): SystemStatus {
-  // Not started: no sessions row exists for this brand.
   if (sessions.length === 0) return { ...EMPTY_STATUS };
   const latest = sessions[0]!;
-  // Complete: session marked complete OR final stage output present.
-  // Real data: max current_stage observed is 16-18 with status='complete'
-  // and stage_22_output populated — treat either signal as complete.
   const complete =
     latest.status === "complete" || latest.stage_22_output != null;
   if (complete) {
@@ -151,16 +147,15 @@ function derivePipeline(sessions: SessionRow[]): SystemStatus {
       state: "complete",
       label: null,
       timestamp: latest.updated_at,
-      href: "/complete",
+      href: "/pipeline",
       hrefSearch: { session: latest.id },
       runCount: sessions.length,
     };
   }
-  // In progress: sessions row exists, not yet complete.
   const stage = latest.current_stage ?? 1;
   return {
     state: "in_progress",
-    label: `Stage ${stage} of 22`,
+    label: `Stage ${stage} of 27`,
     timestamp: null,
     href: "/pipeline",
     hrefSearch: { session: latest.id },
