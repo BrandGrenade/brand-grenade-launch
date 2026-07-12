@@ -1069,7 +1069,12 @@ function DeliverablesCell({
     <a
       href={`/complete?session=${encodeURIComponent(sessionId)}`}
       className="text-body"
-      style={{ color: "#D4924A", fontSize: 12, fontWeight: 500 }}
+      style={{
+        color: "var(--color-text-primary)",
+        fontSize: 12,
+        fontWeight: 500,
+        textDecoration: "underline",
+      }}
     >
       Documents
     </a>
