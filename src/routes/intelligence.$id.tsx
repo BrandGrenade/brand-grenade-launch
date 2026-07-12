@@ -24,7 +24,10 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { supabase } from "@/integrations/supabase/client";
-import { runIntelligenceAnalysis } from "@/lib/intelligence.functions";
+import {
+  runIntelligenceAnalysis,
+  createBriefingRoomFromIntelligence,
+} from "@/lib/intelligence.functions";
 import { downloadDocument00APdf } from "@/lib/intelligence/pdf-00A";
 
 export const Route = createFileRoute("/intelligence/$id")({
