@@ -855,13 +855,13 @@ function NotStartedLink({
       </Link>
     );
   }
-  // Phase 2 has no standalone entry point without a session.
+  // Phase 2 not started / pipeline incomplete: render a non-clickable dash.
   return (
     <span
       className="text-body"
       style={{ color: "var(--color-text-tertiary)", fontSize: 12 }}
     >
-      Run pipeline first
+      —
     </span>
   );
 }
