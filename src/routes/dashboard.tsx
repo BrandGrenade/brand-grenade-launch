@@ -578,7 +578,7 @@ const COLUMN_HEADERS = [
   "Briefing Room",
   "Strategy Pipeline",
   "Phase 2",
-  "Last Updated",
+  "Deliverables",
   "",
 ];
 
@@ -695,6 +695,7 @@ function BrandRegisterRow({
             system="pipeline"
             status={row.pipeline}
             brand={row.displayName}
+            pipelineComplete={row.pipeline.state === "complete"}
           />
         </td>
         <td className="px-3 py-4">
@@ -702,13 +703,14 @@ function BrandRegisterRow({
             system="phase_2"
             status={row.phase2}
             brand={row.displayName}
+            pipelineComplete={row.pipeline.state === "complete"}
           />
         </td>
-        <td
-          className="text-body px-3 py-4 text-text-secondary"
-          title={formatAbsolute(row.lastUpdated)}
-        >
-          {formatRelative(row.lastUpdated)}
+        <td className="px-3 py-4">
+          <DeliverablesCell
+            pipelineComplete={row.pipeline.state === "complete"}
+            sessionId={row.pipeline.hrefSearch?.session ?? null}
+          />
         </td>
         <td className="px-3 py-4" style={{ whiteSpace: "nowrap" }}>
           <div className="flex items-center justify-end">
@@ -803,24 +805,25 @@ function SystemStatusCell({
   system,
   status,
   brand,
+  pipelineComplete = false,
 }: {
   system: SystemKey;
   status: SystemStatus;
   brand: string;
+  pipelineComplete?: boolean;
 }) {
   return (
     <div className="flex items-center gap-2" style={{ minWidth: 132 }}>
       <SystemCircle state={status.state} />
       <div className="flex min-w-0 flex-col">
         {status.state === "not_started" ? (
-          <NotStartedLink system={system} brand={brand} />
+          <NotStartedLink
+            system={system}
+            brand={brand}
+            pipelineComplete={pipelineComplete}
+          />
         ) : status.state === "in_progress" ? (
-          <span
-            className="text-body"
-            style={{ color: "var(--color-text-primary)" }}
-          >
-            {status.label ?? "In progress"}
-          </span>
+          <InProgressLink system={system} status={status} />
         ) : (
           <CompleteCell system={system} status={status} />
         )}
@@ -829,16 +832,56 @@ function SystemStatusCell({
   );
 }
 
+function InProgressLink({
+  system,
+  status,
+}: {
+  system: SystemKey;
+  status: SystemStatus;
+}) {
+  const label = status.label ?? "In progress";
+  const style: React.CSSProperties = {
+    color: "var(--color-text-primary)",
+    fontSize: 13,
+    fontWeight: 500,
+  };
+  if ((system === "pipeline" || system === "phase_2") && status.href && status.hrefSearch) {
+    const qs = new URLSearchParams(status.hrefSearch).toString();
+    return (
+      <a href={qs ? `${status.href}?${qs}` : status.href} style={style}>
+        {label}
+      </a>
+    );
+  }
+  if (system === "briefing_room") {
+    return (
+      <Link to="/briefing-room" style={style}>
+        {label}
+      </Link>
+    );
+  }
+  return <span className="text-body" style={style}>{label}</span>;
+}
+
 function NotStartedLink({
   system,
   brand,
+  pipelineComplete = false,
 }: {
   system: SystemKey;
   brand: string;
+  pipelineComplete?: boolean;
 }) {
   const brandParam = brand ? { brand } : {};
   const label = SYSTEM_LAUNCH_LABEL[system];
   const style = { color: "#D4924A", fontSize: 12, fontWeight: 500 };
+  const disabledStyle: React.CSSProperties = {
+    color: "var(--color-text-tertiary)",
+    fontSize: 12,
+    fontWeight: 500,
+    cursor: "not-allowed",
+    opacity: 0.55,
+  };
   if (system === "intelligence") {
     return (
       <Link to="/intelligence/new" search={brandParam} style={style}>
@@ -860,14 +903,18 @@ function NotStartedLink({
       </Link>
     );
   }
-  // Phase 2 has no standalone entry point without a session.
+  // Phase 2
+  if (!pipelineComplete) {
+    return (
+      <span style={disabledStyle} aria-disabled="true">
+        Start
+      </span>
+    );
+  }
   return (
-    <span
-      className="text-body"
-      style={{ color: "var(--color-text-tertiary)", fontSize: 12 }}
-    >
-      Run pipeline first
-    </span>
+    <a href="/detonation" style={style}>
+      Start
+    </a>
   );
 }
 
@@ -896,7 +943,7 @@ function CompleteCell({
       ) : (system === "pipeline" || system === "phase_2") &&
         status.href &&
         status.hrefSearch ? (
-        <ViewLink href={status.href} search={status.hrefSearch} />
+        <OpenButton href={status.href} search={status.hrefSearch} />
       ) : (
         <span
           className="text-body"
@@ -983,7 +1030,7 @@ function IntelligenceDownloadButton({ sessionId }: { sessionId: string }) {
   );
 }
 
-function ViewLink({
+function OpenButton({
   href,
   search,
 }: {
@@ -994,9 +1041,63 @@ function ViewLink({
   return (
     <a
       href={qs ? `${href}?${qs}` : href}
-      style={{ color: "#D4924A", fontSize: 12, fontWeight: 500 }}
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        height: 26,
+        padding: "0 12px",
+        borderRadius: 6,
+        backgroundColor: "#D4924A",
+        color: "#0A0A0A",
+        fontSize: 12,
+        fontWeight: 600,
+        textDecoration: "none",
+      }}
     >
-      View
+      Open
+    </a>
+  );
+}
+
+function DeliverablesCell({
+  pipelineComplete,
+  sessionId,
+}: {
+  pipelineComplete: boolean;
+  sessionId: string | null;
+}) {
+  const activeStyle: React.CSSProperties = {
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    height: 26,
+    padding: "0 12px",
+    borderRadius: 6,
+    backgroundColor: "#D4924A",
+    color: "#0A0A0A",
+    fontSize: 12,
+    fontWeight: 600,
+    textDecoration: "none",
+  };
+  const disabledStyle: React.CSSProperties = {
+    ...activeStyle,
+    backgroundColor: "transparent",
+    border: "1px solid var(--color-border)",
+    color: "var(--color-text-tertiary)",
+    cursor: "not-allowed",
+    opacity: 0.55,
+  };
+  if (!pipelineComplete || !sessionId) {
+    return (
+      <span style={disabledStyle} aria-disabled="true">
+        Documents
+      </span>
+    );
+  }
+  return (
+    <a href={`/complete?session=${encodeURIComponent(sessionId)}`} style={activeStyle}>
+      Documents
     </a>
   );
 }
@@ -1128,7 +1229,7 @@ function RunActions({ run }: { run: BrandRun }) {
   const items: React.ReactNode[] = [];
   if (run.href && run.hrefSearch) {
     items.push(
-      <ViewLink key="view" href={run.href} search={run.hrefSearch} />,
+      <OpenButton key="open" href={run.href} search={run.hrefSearch} />,
     );
   }
   if (run.downloadHref) {
