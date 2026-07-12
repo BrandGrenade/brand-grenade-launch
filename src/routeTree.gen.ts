@@ -17,6 +17,7 @@ import { Route as CompleteRouteImport } from './routes/complete'
 import { Route as BriefingRoomRouteImport } from './routes/briefing-room'
 import { Route as BriefRouteImport } from './routes/brief'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as IntelligenceIndexRouteImport } from './routes/intelligence.index'
 import { Route as BriefingRoomIndexRouteImport } from './routes/briefing-room.index'
 import { Route as BriefIndexRouteImport } from './routes/brief.index'
 import { Route as IntelligenceNewRouteImport } from './routes/intelligence.new'
@@ -64,6 +65,11 @@ const BriefRoute = BriefRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IntelligenceIndexRoute = IntelligenceIndexRouteImport.update({
+  id: '/intelligence/',
+  path: '/intelligence/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BriefingRoomIndexRoute = BriefingRoomIndexRouteImport.update({
@@ -124,6 +130,7 @@ export interface FileRoutesByFullPath {
   '/intelligence/new': typeof IntelligenceNewRoute
   '/brief/': typeof BriefIndexRoute
   '/briefing-room/': typeof BriefingRoomIndexRoute
+  '/intelligence/': typeof IntelligenceIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -140,6 +147,7 @@ export interface FileRoutesByTo {
   '/intelligence/new': typeof IntelligenceNewRoute
   '/brief': typeof BriefIndexRoute
   '/briefing-room': typeof BriefingRoomIndexRoute
+  '/intelligence': typeof IntelligenceIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -159,6 +167,7 @@ export interface FileRoutesById {
   '/intelligence/new': typeof IntelligenceNewRoute
   '/brief/': typeof BriefIndexRoute
   '/briefing-room/': typeof BriefingRoomIndexRoute
+  '/intelligence/': typeof IntelligenceIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -179,6 +188,7 @@ export interface FileRouteTypes {
     | '/intelligence/new'
     | '/brief/'
     | '/briefing-room/'
+    | '/intelligence/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -195,6 +205,7 @@ export interface FileRouteTypes {
     | '/intelligence/new'
     | '/brief'
     | '/briefing-room'
+    | '/intelligence'
   id:
     | '__root__'
     | '/'
@@ -213,6 +224,7 @@ export interface FileRouteTypes {
     | '/intelligence/new'
     | '/brief/'
     | '/briefing-room/'
+    | '/intelligence/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -228,6 +240,7 @@ export interface RootRouteChildren {
   DetonationCanvasRoute: typeof DetonationCanvasRoute
   IntelligenceIdRoute: typeof IntelligenceIdRoute
   IntelligenceNewRoute: typeof IntelligenceNewRoute
+  IntelligenceIndexRoute: typeof IntelligenceIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -286,6 +299,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/intelligence/': {
+      id: '/intelligence/'
+      path: '/intelligence'
+      fullPath: '/intelligence/'
+      preLoaderRoute: typeof IntelligenceIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/briefing-room/': {
@@ -386,6 +406,7 @@ const rootRouteChildren: RootRouteChildren = {
   DetonationCanvasRoute: DetonationCanvasRoute,
   IntelligenceIdRoute: IntelligenceIdRoute,
   IntelligenceNewRoute: IntelligenceNewRoute,
+  IntelligenceIndexRoute: IntelligenceIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
