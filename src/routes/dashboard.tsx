@@ -848,14 +848,14 @@ function NotStartedLink({
   }
   if (system === "briefing_room") {
     return (
-      <Link to="/brief/new" search={brandParam} style={style}>
+      <Link to="/briefing-room" style={style}>
         {label}
       </Link>
     );
   }
   if (system === "pipeline") {
     return (
-      <Link to="/brief/new" search={brandParam} style={style}>
+      <Link to="/brief" style={style}>
         {label}
       </Link>
     );

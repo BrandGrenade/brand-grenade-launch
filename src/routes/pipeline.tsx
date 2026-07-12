@@ -1483,17 +1483,38 @@ function PipelineView() {
       nextStatuses["12"] = "running";
     }
 
-    setStatuses(nextStatuses);
+    // Merge with prior in-memory statuses so an actively-running stage isn't
+    // flipped back to "pending" by a realtime refetch that arrives before the
+    // Worker has written its `running:<id>` / `complete:<id>` marker. DB-derived
+    // "complete" / "checkpoint" / "error" always win; otherwise we keep prev.
+    let mergedForSelection: Record<string, StageStatus> = nextStatuses;
+    setStatuses((prev) => {
+      const merged: Record<string, StageStatus> = { ...prev };
+      for (const key of Object.keys(nextStatuses)) {
+        const nextVal = nextStatuses[key];
+        const prevVal = merged[key];
+        if (nextVal === "complete" || nextVal === "checkpoint" || nextVal === "error" || nextVal === "running") {
+          merged[key] = nextVal;
+        } else if (prevVal === "running" || prevVal === "checkpoint" || prevVal === "error" || prevVal === "complete") {
+          // Preserve richer prior state instead of reverting to "pending".
+          merged[key] = prevVal;
+        } else {
+          merged[key] = nextVal;
+        }
+      }
+      mergedForSelection = merged;
+      return merged;
+    });
 
     if (hydratedSessionRef.current !== session.id && selectedIdRef.current !== "BRIEF") {
       hydratedSessionRef.current = session.id;
       const activeStage = (() => {
         for (let i = STAGES.length - 1; i >= 0; i--) {
-          const state = nextStatuses[STAGES[i].id];
+          const state = mergedForSelection[STAGES[i].id];
           if (state === "running" || state === "checkpoint" || state === "error") return STAGES[i].id;
         }
         for (let i = STAGES.length - 1; i >= 0; i--) {
-          if (nextStatuses[STAGES[i].id] === "complete") return STAGES[i].id;
+          if (mergedForSelection[STAGES[i].id] === "complete") return STAGES[i].id;
         }
         return "01";
       })();
