@@ -583,11 +583,13 @@ function renderTerritory(
   doc.text(`TERRITORY ${String(rank).padStart(2, "0")}`, M_SIDE, f.y + 8);
   if (isPrimary) {
     const label = "RECOMMENDED PRIMARY";
-    // Account for letter-spacing tracking (0.1pt per character except last)
-    const w = doc.getTextWidth(label) + 0.1 * (label.length - 1) + 14;
+    doc.setFontSize(8);
+    clearTracking(doc);
+    const w = doc.getTextWidth(label) + 14;
     doc.setFillColor(C_ACCENT);
     doc.roundedRect(PAGE_W - M_SIDE - w, f.y - 2, w, 14, 3, 3, "F");
     doc.setTextColor(C_WHITE);
+    setTracking(doc, 0.1);
     doc.text(label, PAGE_W - M_SIDE - w + 7, f.y + 8);
   }
   clearTracking(doc);
