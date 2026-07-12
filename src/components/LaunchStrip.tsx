@@ -6,24 +6,19 @@ import { NewRunGateButton } from "@/components/NewRunGateButton";
  * Persistent launch strip fixed below the top navigation. The four
  * buttons are the platform's ignition keys — Intelligence Lab,
  * Briefing Room, Strategy Pipeline, Creative Engine — with identical
- * visual weight and a small sequential number prefix.
+ * visual weight.
  *
  * Hidden on unauthenticated / public pages: /, /auth, /complete.
  */
 
 const HIDDEN_PATHS = new Set(["/", "/auth", "/complete"]);
 
-const numberStyle: React.CSSProperties = {
-  fontFamily:
-    'ui-monospace, "JetBrains Mono", SFMono-Regular, Menlo, monospace',
-  fontSize: 11,
-  opacity: 0.65,
-  letterSpacing: "0.08em",
-};
+const buttonClass = "launch-strip-button";
 
 const buttonStyle: React.CSSProperties = {
   display: "inline-flex",
   alignItems: "center",
+  justifyContent: "center",
   gap: 10,
   height: 44,
   padding: "0 22px",
@@ -37,6 +32,7 @@ const buttonStyle: React.CSSProperties = {
   textDecoration: "none",
   border: "none",
   cursor: "pointer",
+  whiteSpace: "nowrap",
 };
 
 const arrowStyle: React.CSSProperties = {
@@ -55,6 +51,18 @@ export function LaunchStrip() {
 
   return (
     <>
+      <style>{`
+        .launch-strip-button {
+          transition: opacity 0.15s ease, transform 0.1s ease;
+        }
+        .launch-strip-button:hover {
+          opacity: 0.9;
+        }
+        .launch-strip-button:active {
+          opacity: 0.85;
+          transform: translateY(1px);
+        }
+      `}</style>
       <div
         role="navigation"
         aria-label="Platform launch"
@@ -74,28 +82,31 @@ export function LaunchStrip() {
           boxShadow: "0 4px 12px rgba(0,0,0,0.4)",
         }}
       >
-        <Link to="/intelligence/new" style={buttonStyle}>
-          <span aria-hidden style={numberStyle}>01</span>
+        <Link to="/intelligence/new" style={buttonStyle} className={buttonClass}>
           Intelligence Lab
         </Link>
         <span aria-hidden style={arrowStyle}>→</span>
-        <Link to="/brief/new" style={buttonStyle}>
-          <span aria-hidden style={numberStyle}>02</span>
+        <Link to="/brief/new" style={buttonStyle} className={buttonClass}>
           Briefing Room
         </Link>
         <span aria-hidden style={arrowStyle}>→</span>
-        <NewRunGateButton variant="launch" label="Strategy Pipeline" prefix="03" />
+        <NewRunGateButton
+          variant="launch"
+          label="Strategy Pipeline"
+          style={buttonStyle}
+          className={buttonClass}
+        />
         <span aria-hidden style={arrowStyle}>→</span>
         <button
           type="button"
           style={buttonStyle}
+          className={buttonClass}
           onClick={() =>
             toast.info(
               "Creative Engine — Coming Soon. The Brand Grenade Creative Engine is currently in development."
             )
           }
         >
-          <span aria-hidden style={numberStyle}>04</span>
           Creative Engine
         </button>
       </div>
