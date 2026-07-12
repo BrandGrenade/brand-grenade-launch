@@ -258,10 +258,3 @@ export const runIntelligenceAnalysis = createServerFn({ method: "POST" })
     return { success: true, sessionId };
   });
 
-// NOTE ON `TEMPERATURE`:
-// The shared `streamClaude` helper does not currently accept a `temperature`
-// arg. This module documents 0.4 as the intended value; wiring it through
-// `CallClaudeArgs` is a one-line change in `src/lib/claude.server.ts` and
-// will be addressed alongside Step 4 (UI) or as a separate follow-up so this
-// step remains scoped to the server function only.
-export const INTELLIGENCE_TEMPERATURE = TEMPERATURE;
