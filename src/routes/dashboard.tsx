@@ -695,6 +695,7 @@ function BrandRegisterRow({
             system="pipeline"
             status={row.pipeline}
             brand={row.displayName}
+            pipelineComplete={row.pipeline.state === "complete"}
           />
         </td>
         <td className="px-3 py-4">
@@ -702,13 +703,14 @@ function BrandRegisterRow({
             system="phase_2"
             status={row.phase2}
             brand={row.displayName}
+            pipelineComplete={row.pipeline.state === "complete"}
           />
         </td>
-        <td
-          className="text-body px-3 py-4 text-text-secondary"
-          title={formatAbsolute(row.lastUpdated)}
-        >
-          {formatRelative(row.lastUpdated)}
+        <td className="px-3 py-4">
+          <DeliverablesCell
+            pipelineComplete={row.pipeline.state === "complete"}
+            sessionId={row.pipeline.hrefSearch?.session ?? null}
+          />
         </td>
         <td className="px-3 py-4" style={{ whiteSpace: "nowrap" }}>
           <div className="flex items-center justify-end">
