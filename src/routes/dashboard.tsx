@@ -578,7 +578,7 @@ const COLUMN_HEADERS = [
   "Briefing Room",
   "Strategy Pipeline",
   "Phase 2",
-  "Last Updated",
+  "Deliverables",
   "",
 ];
 
@@ -704,11 +704,11 @@ function BrandRegisterRow({
             brand={row.displayName}
           />
         </td>
-        <td
-          className="text-body px-3 py-4 text-text-secondary"
-          title={formatAbsolute(row.lastUpdated)}
-        >
-          {formatRelative(row.lastUpdated)}
+        <td className="px-3 py-4">
+          <DeliverablesCell
+            pipelineComplete={row.pipeline.state === "complete"}
+            sessionId={row.pipeline.hrefSearch?.session ?? null}
+          />
         </td>
         <td className="px-3 py-4" style={{ whiteSpace: "nowrap" }}>
           <div className="flex items-center justify-end">
@@ -776,7 +776,7 @@ const STATE_COLOR: Record<SystemStatus["state"], string> = {
 const SYSTEM_LAUNCH_LABEL: Record<SystemKey, string> = {
   intelligence: "Launch",
   briefing_room: "Launch",
-  pipeline: "Run",
+  pipeline: "Start",
   phase_2: "Start",
 };
 
@@ -815,12 +815,7 @@ function SystemStatusCell({
         {status.state === "not_started" ? (
           <NotStartedLink system={system} brand={brand} />
         ) : status.state === "in_progress" ? (
-          <span
-            className="text-body"
-            style={{ color: "var(--color-text-primary)" }}
-          >
-            {status.label ?? "In progress"}
-          </span>
+          <InProgressLink system={system} status={status} />
         ) : (
           <CompleteCell system={system} status={status} />
         )}
@@ -838,7 +833,12 @@ function NotStartedLink({
 }) {
   const brandParam = brand ? { brand } : {};
   const label = SYSTEM_LAUNCH_LABEL[system];
-  const style = { color: "#D4924A", fontSize: 12, fontWeight: 500 };
+  const style = {
+    color: "var(--color-text-primary)",
+    fontSize: 12,
+    fontWeight: 500,
+    textDecoration: "underline",
+  };
   if (system === "intelligence") {
     return (
       <Link to="/intelligence/new" search={brandParam} style={style}>
@@ -860,13 +860,13 @@ function NotStartedLink({
       </Link>
     );
   }
-  // Phase 2 has no standalone entry point without a session.
+  // Phase 2 not started / pipeline incomplete: render a non-clickable dash.
   return (
     <span
       className="text-body"
       style={{ color: "var(--color-text-tertiary)", fontSize: 12 }}
     >
-      Run pipeline first
+      —
     </span>
   );
 }
@@ -887,16 +887,22 @@ function CompleteCell({
         <>
           <a
             href={status.href ?? "#"}
-            style={{ color: "#D4924A", fontSize: 12, fontWeight: 500 }}
+            className="text-body"
+            style={{
+              color: "var(--color-text-primary)",
+              fontSize: 12,
+              fontWeight: 500,
+              textDecoration: "underline",
+            }}
           >
             View
           </a>
-          {intelId ? <IntelligenceDownloadButton sessionId={intelId} /> : null}
+          {intelId ? <IntelligenceDownloadLink sessionId={intelId} /> : null}
         </>
       ) : (system === "pipeline" || system === "phase_2") &&
         status.href &&
         status.hrefSearch ? (
-        <ViewLink href={status.href} search={status.hrefSearch} />
+        <TextLink href={status.href} search={status.hrefSearch} label="Complete" />
       ) : (
         <span
           className="text-body"
@@ -909,7 +915,7 @@ function CompleteCell({
   );
 }
 
-function IntelligenceDownloadButton({ sessionId }: { sessionId: string }) {
+function IntelligenceDownloadLink({ sessionId }: { sessionId: string }) {
   const [busy, setBusy] = useState(false);
   const handle = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -960,43 +966,119 @@ function IntelligenceDownloadButton({ sessionId }: { sessionId: string }) {
     }
   };
   return (
-    <button
-      type="button"
+    <span
       onClick={handle}
-      disabled={busy}
-      title="Download Document 00A"
+      role="button"
+      aria-label="Download Document 00A"
+      className="text-body"
       style={{
-        color: "#D4924A",
+        color: "var(--color-text-primary)",
         fontSize: 12,
-        display: "inline-flex",
-        alignItems: "center",
-        gap: 4,
-        background: "transparent",
-        border: "none",
+        fontWeight: 500,
+        textDecoration: "underline",
         cursor: busy ? "wait" : "pointer",
-        padding: 0,
         opacity: busy ? 0.6 : 1,
       }}
     >
-      <Download size={12} />
-    </button>
+      Download
+    </span>
   );
 }
 
-function ViewLink({
+function TextLink({
   href,
   search,
+  label,
 }: {
   href: string;
   search: Record<string, string>;
+  label: string;
 }) {
   const qs = new URLSearchParams(search).toString();
   return (
     <a
       href={qs ? `${href}?${qs}` : href}
-      style={{ color: "#D4924A", fontSize: 12, fontWeight: 500 }}
+      className="text-body"
+      style={{
+        color: "var(--color-text-primary)",
+        fontSize: 12,
+        fontWeight: 500,
+        textDecoration: "underline",
+      }}
     >
-      View
+      {label}
+    </a>
+  );
+}
+
+function InProgressLink({
+  system,
+  status,
+}: {
+  system: SystemKey;
+  status: SystemStatus;
+}) {
+  const label = status.label ?? "In progress";
+  if ((system === "pipeline" || system === "phase_2") && status.href && status.hrefSearch) {
+    return (
+      <TextLink href={status.href} search={status.hrefSearch} label={label} />
+    );
+  }
+  if (system === "briefing_room") {
+    return (
+      <Link
+        to="/briefing-room"
+        className="text-body"
+        style={{
+          color: "var(--color-text-primary)",
+          fontSize: 12,
+          fontWeight: 500,
+          textDecoration: "underline",
+        }}
+      >
+        {label}
+      </Link>
+    );
+  }
+  return (
+    <span
+      className="text-body"
+      style={{ color: "var(--color-text-primary)", fontSize: 12, fontWeight: 500 }}
+    >
+      {label}
+    </span>
+  );
+}
+
+function DeliverablesCell({
+  pipelineComplete,
+  sessionId,
+}: {
+  pipelineComplete: boolean;
+  sessionId: string | null;
+}) {
+  if (!pipelineComplete || !sessionId) {
+    return (
+      <span
+        className="text-body"
+        style={{ color: "var(--color-text-tertiary)", fontSize: 12 }}
+      >
+        —
+      </span>
+    );
+  }
+  return (
+    <a
+      href={`/complete?session=${encodeURIComponent(sessionId)}`}
+      className="text-body"
+      style={{
+        color: "var(--color-text-primary)",
+        fontSize: 12,
+        fontWeight: 500,
+        textDecoration: "underline",
+      }}
+    >
+      Documents
     </a>
   );
 }
@@ -1128,7 +1210,7 @@ function RunActions({ run }: { run: BrandRun }) {
   const items: React.ReactNode[] = [];
   if (run.href && run.hrefSearch) {
     items.push(
-      <ViewLink key="view" href={run.href} search={run.hrefSearch} />,
+      <TextLink key="view" href={run.href} search={run.hrefSearch} label="View" />,
     );
   }
   if (run.downloadHref) {
@@ -1136,9 +1218,12 @@ function RunActions({ run }: { run: BrandRun }) {
       <a
         key="dl"
         href={run.downloadHref}
+        className="text-body"
         style={{
-          color: "#D4924A",
+          color: "var(--color-text-primary)",
           fontSize: 12,
+          fontWeight: 500,
+          textDecoration: "underline",
           display: "inline-flex",
           alignItems: "center",
           gap: 4,
