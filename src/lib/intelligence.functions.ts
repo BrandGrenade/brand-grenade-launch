@@ -171,11 +171,11 @@ export const runIntelligenceAnalysis = createServerFn({ method: "POST" })
       last_error: null,
     });
 
-    const briefType = normaliseBriefType(
-      typeof (row as { brief_type?: string | null }).brief_type === "string"
-        ? (row as { brief_type?: string | null }).brief_type ?? null
-        : null,
-    );
+    const metaBriefType =
+      row.report_metadata && typeof row.report_metadata === "object" && !Array.isArray(row.report_metadata)
+        ? (row.report_metadata as Record<string, unknown>).brief_type
+        : null;
+    const briefType = normaliseBriefType(typeof metaBriefType === "string" ? metaBriefType : null);
 
     // 03 — System prompt.
     const systemPrompt = buildSystemPrompt(briefType);
