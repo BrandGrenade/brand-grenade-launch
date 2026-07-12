@@ -553,7 +553,15 @@ export function useBrandRegister(): UseBrandRegisterResult {
           if (active) void load();
         },
       )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "intelligence_sessions" },
+        () => {
+          if (active) void load();
+        },
+      )
       .subscribe();
+
 
     return () => {
       active = false;
