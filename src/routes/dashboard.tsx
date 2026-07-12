@@ -834,7 +834,7 @@ function NotStartedLink({
   const brandParam = brand ? { brand } : {};
   const label = SYSTEM_LAUNCH_LABEL[system];
   const style = {
-    color: "var(--color-text-primary)",
+    color: "var(--color-text-secondary)",
     fontSize: 12,
     fontWeight: 500,
     textDecoration: "underline",
