@@ -496,8 +496,9 @@ export function useBrandRegister(): UseBrandRegisterResult {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             .from("intelligence_sessions" as any)
             .select(
-              "id,brand_name,category,status,created_at,updated_at,document_00a_url",
+              "id,brand_name,category,status,created_at,updated_at",
             )
+
             .order("updated_at", { ascending: false })
             .limit(500);
           return res as { data: IntelligenceRow[] | null; error: unknown };
