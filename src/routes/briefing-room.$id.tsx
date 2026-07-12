@@ -204,6 +204,26 @@ function WorkspacePage() {
           </p>
         </header>
 
+        {rawBrief.trimStart().startsWith("[FROM_INTELLIGENCE_ENGINE") ? (
+          <div
+            className="mt-6 rounded-md border p-4"
+            style={{
+              borderColor: "rgba(59,130,246,0.35)",
+              backgroundColor: "rgba(59,130,246,0.08)",
+            }}
+          >
+            <div className="text-label text-primary">Pre-diagnosed by the Intelligence Engine</div>
+            <p className="text-body-sm mt-1 text-text-secondary">
+              This workspace was created from a selected Strategic Territory
+              Intelligence report. The strategic anchor, tension, audience, cultural
+              context, and creative territory direction are authoritative inputs —
+              Step 1 will treat them as fixed priority, not claims to interrogate away.
+            </p>
+          </div>
+        ) : null}
+
+
+
         {/* ─── INTAKE ─── */}
         <SectionCard title="Intake" subtitle="Paste or type the raw brief. Add any supporting evidence as separately-labelled blocks — do not merge them.">
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
