@@ -211,6 +211,7 @@ export function TopNav({ session }: { session?: SessionContext }) {
             )}
           </div>
         </div>
+        </div>
       </nav>
     </>
   );
