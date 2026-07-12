@@ -1027,7 +1027,12 @@ function InProgressLink({
       <Link
         to="/briefing-room"
         className="text-body"
-        style={{ color: "var(--color-text-primary)", fontSize: 12, fontWeight: 500 }}
+        style={{
+          color: "var(--color-text-primary)",
+          fontSize: 12,
+          fontWeight: 500,
+          textDecoration: "underline",
+        }}
       >
         {label}
       </Link>
