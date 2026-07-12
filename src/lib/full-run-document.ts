@@ -230,7 +230,7 @@ function stageIdDisplay(id: string): string {
 }
 
 function footer(): string {
-  return `<div class="footer">Brand Grenade Strategy Intelligence System — Confidential. Complete Pipeline Run — every stage's final output as recorded in the session data.</div>`;
+  return `<div class="footer">Brand Grenade Strategy Intelligence System — Confidential. Complete Strategy Pipeline — every stage's final output as recorded in the session data.</div>`;
 }
 
 export function buildFullRunDocument(session: FullRunSession): string {
@@ -256,13 +256,13 @@ export function buildFullRunDocument(session: FullRunSession): string {
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>${escapeHtml(brand)} — Complete Pipeline Run</title>
+<title>${escapeHtml(brand)} — Complete Strategy Pipeline</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>${baseStyles()}</style>
 </head>
 <body>
 <div id="toolbar">
-  <span>Complete Pipeline Run — ${escapeHtml(brand)}</span>
+  <span>Complete Strategy Pipeline — ${escapeHtml(brand)}</span>
   <div class="actions">
     <button onclick="window.print()">Save as PDF</button>
     <button class="close" onclick="window.close()">Close</button>

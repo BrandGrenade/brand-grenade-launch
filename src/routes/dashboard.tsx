@@ -50,7 +50,7 @@ export const Route = createFileRoute("/dashboard")({
       {
         name: "description",
         content:
-          "One row per brand. Every Intelligence Engine run, Briefing Room session, pipeline run, and Phase 2 detonation for that brand, in one register.",
+          "One row per brand. Every Intelligence Lab analysis, Briefing Room session, Strategy Pipeline, and Phase 2 detonation for that brand, in one register.",
       },
     ],
   }),
@@ -239,8 +239,8 @@ function Dashboard() {
               <span className="text-label text-primary">Brand Register</span>
               <h1 className="text-h2 mt-3 text-text-primary">Your Brands</h1>
               <p className="text-body mt-2 text-text-secondary">
-                One row per brand. Every Intelligence Engine analysis, Briefing
-                Room session, pipeline run, and Phase 2 detonation lives here.
+                One row per brand. Every Intelligence Lab analysis, Briefing
+                Room session, Strategy Pipeline, and Phase 2 detonation lives here.
               </p>
             </div>
           </header>
@@ -497,8 +497,8 @@ function EmptyState() {
         className="text-body mt-2"
         style={{ color: "var(--color-text-tertiary)", maxWidth: 480 }}
       >
-        Use the launch strip above to start your first Intelligence Engine run,
-        Briefing Room session, or Pipeline run.
+        Use the launch strip above to start your first Intelligence Lab analysis,
+        Briefing Room session, or Strategy Pipeline.
       </p>
     </div>
   );
@@ -576,7 +576,7 @@ const COLUMN_HEADERS = [
   "Category",
   "Intelligence",
   "Briefing Room",
-  "Pipeline",
+  "Strategy Pipeline",
   "Phase 2",
   "Last Updated",
   "",
@@ -1004,9 +1004,9 @@ function ViewLink({
 // ─── Expanded — historical runs ────────────────────────────────────
 
 const SYSTEM_SECTION_TITLE: Record<SystemKey, string> = {
-  intelligence: "Intelligence Engine",
+  intelligence: "Intelligence Lab",
   briefing_room: "Briefing Room",
-  pipeline: "Pipeline",
+  pipeline: "Strategy Pipeline",
   phase_2: "Phase 2 — Detonation",
 };
 

@@ -26,11 +26,11 @@ import { useAuth } from "@/context/AuthContext";
 export const Route = createFileRoute("/intelligence/")({
   head: () => ({
     meta: [
-      { title: "Intelligence Engine — Brand Grenade" },
+      { title: "Intelligence Lab — Brand Grenade" },
       {
         name: "description",
         content:
-          "All Strategic Territory Intelligence Engine analyses for your account.",
+          "All Strategic Territory Intelligence Lab analyses for your account.",
       },
       { name: "robots", content: "noindex" },
     ],
@@ -193,9 +193,9 @@ function IntelligenceListPage() {
         <div className="mx-auto max-w-[1200px]">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
-              <span className="text-label text-primary">Intelligence Engine</span>
+              <span className="text-label text-primary">Intelligence Lab</span>
               <h1 className="text-h2 mt-2 text-text-primary">
-                Strategic Territory Intelligence Engine
+                Strategic Territory Intelligence Lab
               </h1>
               <p className="text-body mt-2 max-w-[720px] text-text-secondary">
                 All analyses run against research inputs to identify available
@@ -207,7 +207,7 @@ function IntelligenceListPage() {
               size="lg"
             >
               <Plus className="mr-2 h-4 w-4" />
-              New Analysis
+              Start Intelligence Lab
             </Button>
           </div>
 
@@ -284,7 +284,7 @@ function IntelligenceListPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete this analysis?</AlertDialogTitle>
             <AlertDialogDescription>
-              This permanently deletes the Intelligence Engine session for{" "}
+              This permanently deletes the Intelligence Lab session for{" "}
               <strong>{pendingDelete?.brand_name ?? "this brand"}</strong>{" "}
               including its report and research inputs. This cannot be undone.
             </AlertDialogDescription>
@@ -498,7 +498,7 @@ function EmptyState({ hasAny }: { hasAny: boolean }) {
       <p className="text-body mt-2 text-text-secondary max-w-[520px] mx-auto">
         {hasAny
           ? "Try a different brand or category."
-          : "Run your first Intelligence Engine analysis to identify available strategic territory for a brand."}
+          : "Run your first Intelligence Lab analysis to identify available strategic territory for a brand."}
       </p>
       {!hasAny ? (
         <div className="mt-6 flex justify-center">

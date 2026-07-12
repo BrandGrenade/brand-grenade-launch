@@ -154,7 +154,7 @@ export function Document00ACard({ brand }: { brand: string }) {
               className="text-body-sm"
               style={{ color: "#8A8680", fontSize: 12 }}
             >
-              Intelligence Engine run complete for {brand}.
+              Intelligence Lab analysis complete for {brand}.
             </span>
           </div>
         </div>
@@ -209,7 +209,7 @@ export function Document00ACard({ brand }: { brand: string }) {
             className="text-body-sm"
             style={{ color: "#5A5652", fontSize: 12 }}
           >
-            Intelligence Engine not run for this brand.
+            Intelligence Lab not run for this brand.
           </span>
         </div>
       </div>
@@ -224,7 +224,7 @@ export function Document00ACard({ brand }: { brand: string }) {
           whiteSpace: "nowrap",
         }}
       >
-        Run Intelligence Engine →
+        Start Intelligence Lab →
       </Link>
     </div>
   );

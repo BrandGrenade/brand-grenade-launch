@@ -212,9 +212,9 @@ function WorkspacePage() {
               backgroundColor: "rgba(59,130,246,0.08)",
             }}
           >
-            <div className="text-label text-primary">Pre-diagnosed by the Intelligence Engine</div>
+            <div className="text-label text-primary">Pre-diagnosed by the Intelligence Lab</div>
             <p className="text-body-sm mt-1 text-text-secondary">
-              This workspace was created from a selected Strategic Territory
+              This session was created from a selected Strategic Territory
               Intelligence report. The strategic anchor, tension, audience, cultural
               context, and creative territory direction are authoritative inputs —
               Step 1 will treat them as fixed priority, not claims to interrogate away.
