@@ -362,11 +362,12 @@ function assemble({
         date: i.updated_at,
         status: i.status === "complete" ? "complete" : "in_progress",
         label: i.status === "complete" ? "Analysis complete" : "Analysing",
-        href: null,
+        href: `/intelligence/${i.id}`,
         hrefSearch: null,
-        downloadHref: i.document_00a_url,
+        downloadHref: null,
       });
     }
+
     for (const w of g.workspaces) {
       const step = briefingStep(w);
       const isComplete =
