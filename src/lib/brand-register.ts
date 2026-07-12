@@ -132,8 +132,8 @@ type IntelligenceRow = {
   status: string | null;
   created_at: string;
   updated_at: string;
-  document_00a_url: string | null;
 };
+
 
 // ─── Per-system derivation ─────────────────────────────────────────
 
