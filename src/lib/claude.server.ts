@@ -54,6 +54,8 @@ export interface CallClaudeArgs {
   stageNumber?: string;
   /** Stage name (e.g. "Category Intelligence") — used to build the Dev Mode prompt. */
   stageName?: string;
+  /** Optional sampling temperature (0..1). Forwarded to Anthropic when set. */
+  temperature?: number;
 }
 
 function buildDevModePrompt(stageNumber: string, stageName: string): string {
@@ -268,6 +270,7 @@ async function prepareCall(
     body: JSON.stringify({
       model: args.model ?? DEFAULT_MODEL,
       max_tokens: effectiveMaxTokens,
+      ...(typeof args.temperature === "number" ? { temperature: args.temperature } : {}),
       system: [
         {
           type: "text",
