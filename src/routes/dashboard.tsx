@@ -1030,7 +1030,7 @@ function InProgressLink({
         to="/briefing-room"
         className="text-body"
         style={{
-          color: "var(--color-text-primary)",
+          color: "var(--color-text-secondary)",
           fontSize: 12,
           fontWeight: 500,
           textDecoration: "underline",
@@ -1043,7 +1043,7 @@ function InProgressLink({
   return (
     <span
       className="text-body"
-      style={{ color: "var(--color-text-primary)", fontSize: 12, fontWeight: 500 }}
+      style={{ color: "var(--color-text-secondary)", fontSize: 12, fontWeight: 500 }}
     >
       {label}
     </span>
