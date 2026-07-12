@@ -33,9 +33,11 @@ export type NewRunGateButtonProps = {
   variant?: "topnav" | "empty" | "launch";
   label?: string;
   prefix?: string;
+  style?: React.CSSProperties;
+  className?: string;
 };
 
-export function NewRunGateButton({ variant = "topnav", label = "New Run", prefix }: NewRunGateButtonProps) {
+export function NewRunGateButton({ variant = "topnav", label = "New Run", prefix, style, className }: NewRunGateButtonProps) {
   const getGate = useServerFn(getPipelineGate);
   const logOverride = useServerFn(logPipelineRunOverride);
   const navigate = useNavigate();
