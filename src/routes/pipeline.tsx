@@ -2899,6 +2899,7 @@ function PipelineView() {
             }}
             fullOutput={stageOutputs[selected.id] ?? "Output pending."}
             contentScrollRef={contentScrollRef}
+            sessionId={sessionId ?? undefined}
             isViewingHistorical={isViewingHistorical}
             onBackToCurrent={() => setSelectedId(currentActiveId)}
             stage1Error={selectedError}
