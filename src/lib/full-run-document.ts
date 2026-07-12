@@ -230,7 +230,7 @@ function stageIdDisplay(id: string): string {
 }
 
 function footer(): string {
-  return `<div class="footer">Brand Grenade Strategy Intelligence System — Confidential. Complete Pipeline Run — every stage's final output as recorded in the session data.</div>`;
+  return `<div class="footer">Brand Grenade Strategy Intelligence System — Confidential. Complete Strategy Pipeline — every stage's final output as recorded in the session data.</div>`;
 }
 
 export function buildFullRunDocument(session: FullRunSession): string {

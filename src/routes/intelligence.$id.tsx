@@ -394,7 +394,7 @@ function IntelligenceRunPage() {
         <main className="mx-auto max-w-[720px] px-6 py-16">
           <BackLink />
           <div className="mt-6">
-            <span className="text-label text-primary">Intelligence Engine</span>
+            <span className="text-label text-primary">Intelligence Lab</span>
             <h1 className="text-h2 mt-2 text-text-primary">
               {row.brand_name || "Analysis failed"}
             </h1>
@@ -481,7 +481,7 @@ function IntelligenceRunPage() {
         <main className="mx-auto max-w-[720px] px-6 py-16">
           <BackLink />
           <div className="mt-6">
-            <span className="text-label text-primary">Intelligence Engine</span>
+            <span className="text-label text-primary">Intelligence Lab</span>
             <h1 className="text-h2 mt-2 text-text-primary">
               {row.brand_name || "Analysis in progress"}
             </h1>

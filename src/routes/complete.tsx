@@ -97,7 +97,7 @@ type SessionRow = {
   stage_14_output: string | null;
   stage_15_output: string | null;
 
-  // Sub-stage outputs (for Complete Pipeline Run deliverable)
+  // Sub-stage outputs (for Complete Strategy Pipeline deliverable)
   stage_1b_output: string | null;
   stage_4b_output: string | null;
   stage_13b_output: string | null;
@@ -686,7 +686,7 @@ function CompletePage() {
           </div>
         </div>
 
-        {/* ─── Complete Pipeline Run (deliverable) ───────────────────── */}
+        {/* ─── Complete Strategy Pipeline (deliverable) ───────────────── */}
         {session && (() => {
           const amber = "#D4924A";
           const stages = resolveFullRunStages(session as unknown as Record<string, unknown>);
@@ -704,7 +704,7 @@ function CompletePage() {
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 24, flexWrap: "wrap" }}>
                   <div style={{ flex: "1 1 320px" }}>
                     <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", color: amber, textTransform: "uppercase", marginBottom: 6 }}>
-                      Complete Pipeline Run
+                      Complete Strategy Pipeline
                     </div>
                     <h3 style={{ fontSize: 18, fontWeight: 700, margin: 0, marginBottom: 8, color: "var(--color-text-primary)" }}>
                       {brand} — Full Run

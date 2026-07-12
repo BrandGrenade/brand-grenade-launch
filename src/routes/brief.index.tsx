@@ -39,7 +39,7 @@ export const Route = createFileRoute("/brief/")({
   validateSearch: (search) => BriefSearchSchema.parse(search),
   head: () => ({
     meta: [
-      { title: "New Run — Brand Grenade" },
+      { title: "Strategy Pipeline — Brand Grenade" },
       {
         name: "description",
         content:
