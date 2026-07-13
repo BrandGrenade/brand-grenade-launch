@@ -118,7 +118,7 @@ export const updateAndRerunIntelligenceSession = createServerFn({ method: "POST"
         // Reset run state (handoff_workspace_id / handoff_payload preserved).
         status: "draft",
         stage_status: null,
-        current_layer: null,
+        current_layer: 0,
         final_report: null,
         report_metadata: { brief_type: data.brief_type } as unknown as import("@/integrations/supabase/types").Json,
         retry_count: 0,
