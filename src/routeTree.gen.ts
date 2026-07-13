@@ -26,7 +26,7 @@ import { Route as DetonationCanvasRouteImport } from './routes/detonation_.canva
 import { Route as BriefingRoomIdRouteImport } from './routes/briefing-room.$id'
 import { Route as BriefNewRouteImport } from './routes/brief.new'
 import { Route as AdminTestsRouteImport } from './routes/admin.tests'
-import { Route as IntelligenceIdEditRouteImport } from './routes/intelligence.$id.edit'
+import { Route as IntelligenceIdEditRouteImport } from './routes/intelligence.$id_.edit'
 
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
@@ -114,9 +114,9 @@ const AdminTestsRoute = AdminTestsRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const IntelligenceIdEditRoute = IntelligenceIdEditRouteImport.update({
-  id: '/edit',
-  path: '/edit',
-  getParentRoute: () => IntelligenceIdRoute,
+  id: '/intelligence/$id_/edit',
+  path: '/intelligence/$id/edit',
+  getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -132,7 +132,7 @@ export interface FileRoutesByFullPath {
   '/brief/new': typeof BriefNewRoute
   '/briefing-room/$id': typeof BriefingRoomIdRoute
   '/detonation/canvas': typeof DetonationCanvasRoute
-  '/intelligence/$id': typeof IntelligenceIdRouteWithChildren
+  '/intelligence/$id': typeof IntelligenceIdRoute
   '/intelligence/new': typeof IntelligenceNewRoute
   '/brief/': typeof BriefIndexRoute
   '/briefing-room/': typeof BriefingRoomIndexRoute
@@ -150,7 +150,7 @@ export interface FileRoutesByTo {
   '/brief/new': typeof BriefNewRoute
   '/briefing-room/$id': typeof BriefingRoomIdRoute
   '/detonation/canvas': typeof DetonationCanvasRoute
-  '/intelligence/$id': typeof IntelligenceIdRouteWithChildren
+  '/intelligence/$id': typeof IntelligenceIdRoute
   '/intelligence/new': typeof IntelligenceNewRoute
   '/brief': typeof BriefIndexRoute
   '/briefing-room': typeof BriefingRoomIndexRoute
@@ -171,12 +171,12 @@ export interface FileRoutesById {
   '/brief/new': typeof BriefNewRoute
   '/briefing-room/$id': typeof BriefingRoomIdRoute
   '/detonation_/canvas': typeof DetonationCanvasRoute
-  '/intelligence/$id': typeof IntelligenceIdRouteWithChildren
+  '/intelligence/$id': typeof IntelligenceIdRoute
   '/intelligence/new': typeof IntelligenceNewRoute
   '/brief/': typeof BriefIndexRoute
   '/briefing-room/': typeof BriefingRoomIndexRoute
   '/intelligence/': typeof IntelligenceIndexRoute
-  '/intelligence/$id/edit': typeof IntelligenceIdEditRoute
+  '/intelligence/$id_/edit': typeof IntelligenceIdEditRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -236,7 +236,7 @@ export interface FileRouteTypes {
     | '/brief/'
     | '/briefing-room/'
     | '/intelligence/'
-    | '/intelligence/$id/edit'
+    | '/intelligence/$id_/edit'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -250,9 +250,10 @@ export interface RootRouteChildren {
   SettingsRoute: typeof SettingsRoute
   AdminTestsRoute: typeof AdminTestsRoute
   DetonationCanvasRoute: typeof DetonationCanvasRoute
-  IntelligenceIdRoute: typeof IntelligenceIdRouteWithChildren
+  IntelligenceIdRoute: typeof IntelligenceIdRoute
   IntelligenceNewRoute: typeof IntelligenceNewRoute
   IntelligenceIndexRoute: typeof IntelligenceIndexRoute
+  IntelligenceIdEditRoute: typeof IntelligenceIdEditRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -376,12 +377,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminTestsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/intelligence/$id/edit': {
-      id: '/intelligence/$id/edit'
-      path: '/edit'
+    '/intelligence/$id_/edit': {
+      id: '/intelligence/$id_/edit'
+      path: '/intelligence/$id/edit'
       fullPath: '/intelligence/$id/edit'
       preLoaderRoute: typeof IntelligenceIdEditRouteImport
-      parentRoute: typeof IntelligenceIdRoute
+      parentRoute: typeof rootRouteImport
     }
   }
 }
@@ -412,18 +413,6 @@ const BriefingRoomRouteWithChildren = BriefingRoomRoute._addFileChildren(
   BriefingRoomRouteChildren,
 )
 
-interface IntelligenceIdRouteChildren {
-  IntelligenceIdEditRoute: typeof IntelligenceIdEditRoute
-}
-
-const IntelligenceIdRouteChildren: IntelligenceIdRouteChildren = {
-  IntelligenceIdEditRoute: IntelligenceIdEditRoute,
-}
-
-const IntelligenceIdRouteWithChildren = IntelligenceIdRoute._addFileChildren(
-  IntelligenceIdRouteChildren,
-)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BriefRoute: BriefRouteWithChildren,
@@ -435,9 +424,10 @@ const rootRouteChildren: RootRouteChildren = {
   SettingsRoute: SettingsRoute,
   AdminTestsRoute: AdminTestsRoute,
   DetonationCanvasRoute: DetonationCanvasRoute,
-  IntelligenceIdRoute: IntelligenceIdRouteWithChildren,
+  IntelligenceIdRoute: IntelligenceIdRoute,
   IntelligenceNewRoute: IntelligenceNewRoute,
   IntelligenceIndexRoute: IntelligenceIndexRoute,
+  IntelligenceIdEditRoute: IntelligenceIdEditRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
