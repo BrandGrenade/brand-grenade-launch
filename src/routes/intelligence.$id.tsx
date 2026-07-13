@@ -404,7 +404,7 @@ function IntelligenceRunPage() {
       <div className="min-h-screen bg-background">
         <TopNav />
         <main className="mx-auto max-w-[720px] px-6 py-16">
-          <BackLink />
+          <BackLink id={id} />
           <Card className="mt-6 p-6">
             <p className="text-body text-text-primary">Session not found.</p>
           </Card>
@@ -419,7 +419,7 @@ function IntelligenceRunPage() {
       <div className="min-h-screen bg-background">
         <TopNav />
         <main className="mx-auto max-w-[720px] px-6 py-16">
-          <BackLink />
+          <BackLink id={id} />
           <div className="mt-6">
             <span className="text-label text-primary">Intelligence Lab</span>
             <h1 className="text-h2 mt-2 text-text-primary">
@@ -472,7 +472,7 @@ function IntelligenceRunPage() {
         <div className="min-h-screen bg-background">
           <TopNav />
           <main className="mx-auto max-w-[720px] px-6 py-16">
-            <BackLink />
+            <BackLink id={id} />
             <Card className="mt-6 p-6 border-destructive/40">
               <div className="flex items-start gap-3">
                 <AlertCircle className="h-5 w-5 flex-shrink-0 text-destructive mt-0.5" />
@@ -506,7 +506,7 @@ function IntelligenceRunPage() {
       <div className="min-h-screen bg-background">
         <TopNav />
         <main className="mx-auto max-w-[720px] px-6 py-16">
-          <BackLink />
+          <BackLink id={id} />
           <div className="mt-6">
             <span className="text-label text-primary">Intelligence Lab</span>
             <h1 className="text-h2 mt-2 text-text-primary">
@@ -587,7 +587,7 @@ function IntelligenceRunPage() {
         }}
       >
         <div className="mx-auto max-w-[1080px]">
-          <BackLink />
+          <BackLink id={id} />
 
           {/* Header */}
           <div className="mt-6 flex flex-wrap items-start justify-between gap-4">
