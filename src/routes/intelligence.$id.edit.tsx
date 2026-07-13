@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { TopNav } from "@/components/TopNav";
 import { supabase } from "@/integrations/supabase/client";
 import {
+  runIntelligenceAnalysis,
   updateAndRerunIntelligenceSession,
 } from "@/lib/intelligence.functions";
 import {

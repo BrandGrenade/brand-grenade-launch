@@ -129,13 +129,7 @@ export const updateAndRerunIntelligenceSession = createServerFn({ method: "POST"
       .eq("id", sessionId);
     if (updateErr) throw new Error(updateErr.message);
 
-    // Fire-and-forget re-run.
-    void runIntelligenceAnalysis({
-      data: { intelligenceSessionId: sessionId },
-    }).catch((err: unknown) => {
-      console.warn("[Intelligence] re-run failed:", err);
-    });
-
+    // Client kicks off runIntelligenceAnalysis after this returns.
     return { sessionId };
   });
 
