@@ -82,6 +82,63 @@ export const createIntelligenceSession = createServerFn({ method: "POST" })
     return { sessionId: row.id };
   });
 
+const UpdateInput = CreateInput.extend({
+  intelligenceSessionId: z.string().uuid(),
+});
+
+export const updateAndRerunIntelligenceSession = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => UpdateInput.parse(input))
+  .handler(async ({ data, context }): Promise<{ sessionId: string }> => {
+    const { supabase, userId } = context;
+    const sessionId = data.intelligenceSessionId;
+
+    const { data: existing, error: readErr } = await supabase
+      .from("intelligence_sessions")
+      .select("id, user_id")
+      .eq("id", sessionId)
+      .maybeSingle();
+    if (readErr || !existing) throw new Error("Intelligence session not found");
+    if (existing.user_id !== userId) throw new Error("Unauthorised");
+
+    const { error: updateErr } = await supabase
+      .from("intelligence_sessions")
+      .update({
+        brand_name: data.brand_name,
+        category: data.category,
+        territory_input: data.markets ?? null,
+        additional_context: data.audience_context_notes ?? null,
+        input_primary_consumer: data.input_primary_consumer ?? null,
+        input_brand_health: data.input_brand_health ?? null,
+        input_competitive_audit: data.input_competitive_audit ?? null,
+        input_cultural_trends: data.input_cultural_trends ?? null,
+        input_audience_segmentation: data.input_audience_segmentation ?? null,
+        input_bg_intel_pack: data.input_bg_intel_pack ?? null,
+        input_files: (data.input_files ?? []) as unknown as import("@/integrations/supabase/types").Json,
+        // Reset run state (handoff_workspace_id / handoff_payload preserved).
+        status: "draft",
+        stage_status: null,
+        current_layer: null,
+        final_report: null,
+        report_metadata: { brief_type: data.brief_type } as unknown as import("@/integrations/supabase/types").Json,
+        retry_count: 0,
+        last_error: null,
+        started_at: null,
+        completed_at: null,
+      })
+      .eq("id", sessionId);
+    if (updateErr) throw new Error(updateErr.message);
+
+    // Fire-and-forget re-run.
+    void runIntelligenceAnalysis({
+      data: { intelligenceSessionId: sessionId },
+    }).catch((err: unknown) => {
+      console.warn("[Intelligence] re-run failed:", err);
+    });
+
+    return { sessionId };
+  });
+
 
 const MAX_RETRIES = 3;
 const MAX_TOKENS = 16000;
