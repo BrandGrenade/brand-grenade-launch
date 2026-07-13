@@ -298,6 +298,25 @@ function IntelligenceRunPage() {
   }, [row, navigate]);
 
   const report = useMemo(() => parseReport(row?.final_report ?? null), [row?.final_report]);
+  const availableTerritories = report?.territories ?? [];
+  const primaryTerritoryId = report?.recommended_primary_territory_id ?? null;
+
+  useEffect(() => {
+    if (!availableTerritories.length) {
+      setSelectedTerritoryId(null);
+      return;
+    }
+
+    const currentStillExists = availableTerritories.some((t) => t.id === selectedTerritoryId);
+    if (currentStillExists) return;
+
+    const defaultId =
+      primaryTerritoryId && availableTerritories.some((t) => t.id === primaryTerritoryId)
+        ? primaryTerritoryId
+        : availableTerritories[0]?.id;
+    setSelectedTerritoryId(defaultId ?? null);
+  }, [availableTerritories, primaryTerritoryId, selectedTerritoryId]);
+
   const briefType: BriefType = useMemo(() => {
     const meta = row?.report_metadata;
     if (meta && typeof meta === "object" && !Array.isArray(meta)) {
@@ -530,11 +549,12 @@ function IntelligenceRunPage() {
   }
 
   // Complete state — full report display.
-  const territories = report.territories ?? [];
-  const primaryId = report.recommended_primary_territory_id ?? null;
+  const territories = availableTerritories;
+  const primaryId = primaryTerritoryId;
   const ordered = primaryId
     ? [...territories].sort((a, b) => (a.id === primaryId ? -1 : b.id === primaryId ? 1 : 0))
     : territories;
+  const selectedTerritory = ordered.find((t) => t.id === selectedTerritoryId) ?? null;
 
   const completeness = report.completeness_assessment ?? null;
   const govAddendum =
@@ -690,9 +710,7 @@ function IntelligenceRunPage() {
                   territory={t}
                   isPrimary={t.id === primaryId}
                   selected={t.id === selectedTerritoryId}
-                  onSelect={() =>
-                    setSelectedTerritoryId((prev) => (prev === t.id ? null : t.id))
-                  }
+                  onSelect={() => setSelectedTerritoryId(t.id)}
                 />
               ))}
               {ordered.length === 0 ? (
@@ -722,7 +740,7 @@ function IntelligenceRunPage() {
         <div className="mx-auto max-w-[1080px] flex items-center justify-between gap-3 px-6 py-4">
           <div className="text-xs text-text-secondary">
             {selectedTerritoryId
-              ? "Territory selected — ready to hand off."
+              ? `Selected: ${selectedTerritory?.name ?? "territory"}`
               : "Select a territory to enable handoff."}
           </div>
           <div className="flex items-center gap-2">
@@ -831,6 +849,18 @@ function TerritoryCard({
             <p className="text-body text-text-secondary mt-1.5">{territory.description}</p>
           ) : null}
         </div>
+        <Button
+          type="button"
+          size="sm"
+          variant={selected ? "default" : "outline"}
+          aria-pressed={selected}
+          onClick={(e) => {
+            e.stopPropagation();
+            onSelect();
+          }}
+        >
+          {selected ? "Selected" : "Select"}
+        </Button>
       </div>
 
       <div className="mt-4 flex flex-wrap items-center gap-3 text-xs">
