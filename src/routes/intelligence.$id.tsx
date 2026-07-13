@@ -454,6 +454,56 @@ function IntelligenceRunPage() {
     );
   }
 
+  // Draft state — inputs are saved, analysis has not been started.
+  if (row.status === "draft") {
+    return (
+      <div className="min-h-screen bg-background">
+        <TopNav />
+        <main className="mx-auto max-w-[720px] px-6 py-16">
+          <BackLink id={id} />
+          <div className="mt-6">
+            <span className="text-label text-primary">Intelligence Lab</span>
+            <h1 className="text-h2 mt-2 text-text-primary">
+              {row.brand_name || "Research inputs saved"}
+            </h1>
+            {row.category ? (
+              <p className="text-body text-text-secondary mt-1">{row.category}</p>
+            ) : null}
+          </div>
+          <Card className="mt-8 p-6">
+            <p className="text-body text-text-primary font-medium">Inputs saved</p>
+            <p className="text-sm text-text-secondary mt-2">
+              Analysis is not running. You can keep editing inputs, or start the
+              analysis manually when ready.
+            </p>
+            <div className="mt-5 flex flex-wrap items-center gap-3">
+              <Link
+                to="/intelligence/$id/edit"
+                params={{ id }}
+                className="inline-flex items-center justify-center gap-2 h-9 px-4 rounded-md text-sm font-semibold"
+                style={{
+                  backgroundColor: "#D4924A",
+                  color: "#0A0A0A",
+                  boxShadow: "0 2px 12px rgba(212,146,74,0.25)",
+                }}
+              >
+                Edit Inputs
+              </Link>
+              <Button variant="outline" onClick={handleRetry} disabled={retrying}>
+                {retrying ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <RotateCw className="mr-2 h-4 w-4" />
+                )}
+                Run analysis
+              </Button>
+            </div>
+          </Card>
+        </main>
+      </div>
+    );
+  }
+
   // Running state
   if (row.status !== "complete" || !report) {
     const layer = stageLayer(row.stage_status, row.current_layer);
@@ -551,6 +601,20 @@ function IntelligenceRunPage() {
               This page updates every few seconds. The engine runs a single streaming
               call across ten analytical layers.
             </p>
+            <div className="mt-5">
+              <Link
+                to="/intelligence/$id/edit"
+                params={{ id }}
+                className="inline-flex items-center justify-center gap-2 h-9 px-4 rounded-md text-sm font-semibold"
+                style={{
+                  backgroundColor: "#D4924A",
+                  color: "#0A0A0A",
+                  boxShadow: "0 2px 12px rgba(212,146,74,0.25)",
+                }}
+              >
+                Edit Inputs
+              </Link>
+            </div>
           </Card>
         </main>
       </div>
@@ -638,6 +702,19 @@ function IntelligenceRunPage() {
                 )}
                 Download PDF
               </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleRetry}
+                disabled={retrying}
+              >
+                {retrying ? (
+                  <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <RotateCw className="mr-2 h-3.5 w-3.5" />
+                )}
+                Run analysis
+              </Button>
               <Link
                 to="/intelligence/$id/edit"
                 params={{ id }}
@@ -648,7 +725,7 @@ function IntelligenceRunPage() {
                   boxShadow: "0 2px 12px rgba(212,146,74,0.25)",
                 }}
               >
-                Edit Inputs &amp; Re-run
+                Edit Inputs
               </Link>
             </div>
           </div>
