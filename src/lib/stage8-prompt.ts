@@ -25,12 +25,35 @@ A great proposition:
 - Carries STRUCTURAL TENSION — two ideas held against each other, a promise stacked on a truth, a contradiction the brand resolves. "Stay liquid. Stay powerful." holds two opposing states in one line. That tension is what makes a proposition earn the room.
 - Passes the BOARDROOM TEST — a senior client, hearing it once, understands the strategic bet and can defend it to a board without further explanation.
 
-Reference standard for the ACTIVE-PROMISE, TENSIONED form (do NOT copy):
-- "Stay liquid. Stay powerful." (CommBank)
-- "Built for people who leave." (CommBank)
-- "You already know. We agree." (CommBank)
-- "Friday starts in aisle six." (Dan Murphy's)
-These are directives, promises, and reframes — not observations. Match the FORM, not the words.
+THE WRITER STANDARD
+
+What a planner writes: "A brand that acknowledges the tension between personal ambition and social belonging in modern working culture." Structurally correct. Strategically coherent. Dead on arrival in a creative department.
+
+What a writer produces from the same insight: "The lonelier you get, the harder you work." Same tension. Compressed to its bone. Emotionally immediate. Impossible to ignore.
+
+Every proposition must be the second version not the first.
+
+Writing rules — mandatory: — Maximum 10 words. Fewer is almost always stronger. — Every word must earn its place. Remove anything that exists for comfort or qualification. — No subordinate clauses. No conjunctions that soften. — Declarative statements only — present tense, active voice, zero hedging. — The tension must be FELT in the sentence structure itself — not explained by it. — Read it aloud. If it needs a pause to process — simplify. If it sounds like a PowerPoint header — rewrite.
+
+Forbidden sentence structures — automatically rejected: — "A brand that [does / believes / stands for]..." — planner construction not proposition — "For people who [want / need / believe]..." — audience description not strategic truth — "We help [audience] to [outcome]..." — mission statement not SMP — "The [adjective] way to [verb]..." — product descriptor not tension — Any sentence requiring a second sentence to be understood
+
+Strong structural patterns — reference not template: — Contradiction held in tension: "The harder you push, the less you feel." — Category inversion: "Fitness that stops when you do." — Behavioural truth compressed: "Everyone performs. Nobody admits it." — Belief system challenged: "Winning was never the point." — Cultural shift named: "Rest is the new ambition."
+
+Five mandatory stress tests — all five must pass before any proposition is presented:
+
+Test 1 — Tension Test. Does the SMP contain a genuine felt contradiction — not a stated one? If the tension has to be explained it has failed.
+
+Test 2 — Exclusion Test. Could a direct competitor plausibly own this SMP without modification? If yes — it is not ownable. Rewrite.
+
+Test 3 — Standalone Test. Does it survive without context, explanation, or a second sentence? If it needs support — compress further.
+
+Test 4 — Spoken Language Test. Read it aloud. Does it land with force in a single breath? Does it sound like something a human being would say? If it sounds like a deck header — rewrite.
+
+Test 5 — Category Convention Test. Does this SMP contradict the dominant category convention? If it confirms the convention rather than challenging it — it is category-average thinking. Rewrite.
+
+Anti-Convergence Rule — mandatory: No two propositions in the set may share the same root tension, emotional register, or strategic frame. If two propositions feel like variations on the same idea — eliminate the weaker one and generate a genuinely different territory.
+
+The quality benchmark: "I didn't know we could say that — but now I can't imagine saying anything else." Every proposition presented must clear this bar.
 
 GROUNDING IN TRUTH
 Every proposition must be traceable to at least one of:
