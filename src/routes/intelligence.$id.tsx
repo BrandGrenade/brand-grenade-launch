@@ -650,6 +650,10 @@ function IntelligenceRunPage() {
             </Card>
           ) : null}
 
+          {/* Research inputs used */}
+          <ResearchInputsPanel row={row} briefType={briefType} />
+
+
           {/* Completeness assessment */}
           {completeness ? (
             <Accordion type="single" collapsible className="mt-6">
