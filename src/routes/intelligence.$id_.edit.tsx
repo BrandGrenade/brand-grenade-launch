@@ -16,7 +16,7 @@ import {
   type InputMap,
 } from "@/components/intelligence/IntelligenceForm";
 
-export const Route = createFileRoute("/intelligence/$id/edit")({
+export const Route = createFileRoute("/intelligence/$id_/edit")({
   head: () => ({
     meta: [
       { title: "Edit Intelligence Inputs — Brand Grenade" },
