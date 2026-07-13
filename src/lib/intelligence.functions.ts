@@ -145,7 +145,7 @@ export const updateAndRerunIntelligenceSession = createServerFn({ method: "POST"
 
 
 const MAX_RETRIES = 3;
-const MAX_TOKENS = 16000;
+const MAX_TOKENS = 32000;
 const MODEL = "claude-sonnet-4-6";
 export const INTELLIGENCE_TEMPERATURE = 0.4;
 

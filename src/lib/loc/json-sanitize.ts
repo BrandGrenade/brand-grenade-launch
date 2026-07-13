@@ -43,10 +43,61 @@ export function sanitizeJsonControlChars(input: string): string {
   return out;
 }
 
+// Repair a JSON string that was truncated mid-stream by closing any open
+// string literals, arrays, and objects, and trimming trailing commas or
+// dangling keys. Best-effort — only used as a last-resort fallback after
+// strict and sanitized parses both fail.
+export function repairTruncatedJson(input: string): string {
+  const sanitized = sanitizeJsonControlChars(input);
+  const stack: string[] = [];
+  let inString = false;
+  let escaped = false;
+  let lastNonWsOutsideString = "";
+  for (let i = 0; i < sanitized.length; i++) {
+    const ch = sanitized[i];
+    if (inString) {
+      if (escaped) {
+        escaped = false;
+      } else if (ch === "\\") {
+        escaped = true;
+      } else if (ch === '"') {
+        inString = false;
+      }
+      continue;
+    }
+    if (ch === '"') {
+      inString = true;
+      continue;
+    }
+    if (ch === "{" || ch === "[") stack.push(ch);
+    else if (ch === "}" && stack[stack.length - 1] === "{") stack.pop();
+    else if (ch === "]" && stack[stack.length - 1] === "[") stack.pop();
+    if (ch.trim()) lastNonWsOutsideString = ch;
+  }
+  let out = sanitized;
+  if (inString) out += '"';
+  // Strip a trailing dangling key like `,"foo":` or `"foo":` with no value.
+  out = out.replace(/,\s*"[^"]*"\s*:\s*$/, "");
+  out = out.replace(/"[^"]*"\s*:\s*$/, "");
+  // Strip a trailing comma before we close containers.
+  out = out.replace(/,\s*$/, "");
+  // If the last meaningful char was an opener, that container is empty — fine.
+  void lastNonWsOutsideString;
+  while (stack.length > 0) {
+    const opener = stack.pop();
+    out += opener === "{" ? "}" : "]";
+  }
+  return out;
+}
+
 export function parseJsonLenient<T>(raw: string): T {
   try {
     return JSON.parse(raw) as T;
   } catch {
-    return JSON.parse(sanitizeJsonControlChars(raw)) as T;
+    try {
+      return JSON.parse(sanitizeJsonControlChars(raw)) as T;
+    } catch {
+      return JSON.parse(repairTruncatedJson(raw)) as T;
+    }
   }
 }
