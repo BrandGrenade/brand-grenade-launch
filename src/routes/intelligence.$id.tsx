@@ -29,7 +29,7 @@ import {
   createBriefingRoomFromIntelligence,
 } from "@/lib/intelligence.functions";
 import { downloadDocument00APdf } from "@/lib/intelligence/pdf-00A";
-import { SECTIONS, type SectionKey } from "@/components/intelligence/IntelligenceForm";
+
 
 export const Route = createFileRoute("/intelligence/$id")({
   head: () => ({
