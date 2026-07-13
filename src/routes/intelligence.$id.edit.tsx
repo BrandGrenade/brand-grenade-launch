@@ -39,6 +39,7 @@ function IntelligenceEditPage() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
   const updateFn = useServerFn(updateAndRerunIntelligenceSession);
+  const runFn = useServerFn(runIntelligenceAnalysis);
 
   const [loaded, setLoaded] = useState<Loaded | null>(null);
   const [notFound, setNotFound] = useState(false);
@@ -93,6 +94,11 @@ function IntelligenceEditPage() {
           ...values,
         },
       });
+      void runFn({ data: { intelligenceSessionId: id } }).catch(
+        (err: unknown) => {
+          console.warn("[Intelligence] re-run failed:", err);
+        },
+      );
       toast.success("Re-running intelligence analysis…");
       navigate({ to: "/intelligence/$id", params: { id } });
     } catch (err) {
