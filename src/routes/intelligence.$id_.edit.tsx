@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { TopNav } from "@/components/TopNav";
 import { supabase } from "@/integrations/supabase/client";
 import {
+  runIntelligenceAnalysis,
   updateAndRerunIntelligenceSession,
 } from "@/lib/intelligence.functions";
 import {
@@ -38,6 +39,7 @@ function IntelligenceEditPage() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
   const updateFn = useServerFn(updateAndRerunIntelligenceSession);
+  const runFn = useServerFn(runIntelligenceAnalysis);
 
   const [loaded, setLoaded] = useState<Loaded | null>(null);
   const [notFound, setNotFound] = useState(false);
@@ -92,7 +94,8 @@ function IntelligenceEditPage() {
           ...values,
         },
       });
-      toast.success("Inputs saved");
+      await runFn({ data: { intelligenceSessionId: id } });
+      toast.success("Analysis started");
       navigate({ to: "/intelligence/$id", params: { id } });
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Failed to update session";
@@ -151,8 +154,8 @@ function IntelligenceEditPage() {
             </h1>
             <p className="text-body mt-3 max-w-[720px] text-text-secondary">
               Update any field below. The existing session will be updated in
-              place — the URL and session ID stay the same. Run analysis only
-              when you choose to start it from the report page.
+              place — the URL and session ID stay the same. Click the button
+              below to save the updated inputs and start a new intelligence run.
             </p>
           </div>
 
@@ -163,8 +166,8 @@ function IntelligenceEditPage() {
             initialMarkets={loaded.markets}
             initialAudienceNotes={loaded.audienceNotes}
             initialInputs={loaded.inputs}
-            submitLabel="Save Inputs"
-            submittingLabel="Saving…"
+            submitLabel="Re-run Intelligence Analysis"
+            submittingLabel="Running intelligence analysis…"
             cancelHref="/intelligence/$id"
             cancelLabel="Back to report"
             onSubmit={handleSubmit}
