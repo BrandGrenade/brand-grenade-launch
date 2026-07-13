@@ -787,14 +787,31 @@ function IntelligenceRunPage() {
 
 // ── Sub-components ───────────────────────────────────────────────────────
 
-function BackLink() {
+function BackLink({ id }: { id?: string }) {
   return (
-    <Link
-      to="/dashboard"
-      className="inline-flex items-center gap-2 text-label text-text-secondary hover:text-text-primary"
-    >
-      <ArrowLeft className="h-3.5 w-3.5" /> Back to dashboard
-    </Link>
+    <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+      <Link
+        to="/dashboard"
+        className="inline-flex items-center gap-2 text-label text-text-secondary hover:text-text-primary"
+      >
+        <ArrowLeft className="h-3.5 w-3.5" /> Back to dashboard
+      </Link>
+      <Link
+        to="/intelligence"
+        className="inline-flex items-center gap-2 text-label text-text-secondary hover:text-text-primary"
+      >
+        <ArrowLeft className="h-3.5 w-3.5" /> All Intelligence Lab sessions
+      </Link>
+      {id ? (
+        <Link
+          to="/intelligence/$id/edit"
+          params={{ id }}
+          className="inline-flex items-center gap-2 text-label text-text-secondary hover:text-text-primary"
+        >
+          Edit Inputs &amp; Re-run
+        </Link>
+      ) : null}
+    </div>
   );
 }
 
