@@ -791,7 +791,7 @@ function IntelligenceRunPage() {
 
 // ── Sub-components ───────────────────────────────────────────────────────
 
-function BackLink({ id }: { id?: string }) {
+function BackLink(_props: { id?: string } = {}) {
   return (
     <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
       <Link
@@ -806,15 +806,6 @@ function BackLink({ id }: { id?: string }) {
       >
         <ArrowLeft className="h-3.5 w-3.5" /> All Intelligence Lab sessions
       </Link>
-      {id ? (
-        <Link
-          to="/intelligence/$id/edit"
-          params={{ id }}
-          className="inline-flex items-center gap-2 text-label text-text-secondary hover:text-text-primary"
-        >
-          Edit Inputs &amp; Re-run
-        </Link>
-      ) : null}
     </div>
   );
 }
