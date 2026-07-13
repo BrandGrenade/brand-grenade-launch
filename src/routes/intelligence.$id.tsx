@@ -177,6 +177,14 @@ interface SessionRow {
   report_metadata: unknown;
   last_error: string | null;
   completed_at: string | null;
+  territory_input: string | null;
+  additional_context: string | null;
+  input_primary_consumer: string | null;
+  input_brand_health: string | null;
+  input_competitive_audit: string | null;
+  input_cultural_trends: string | null;
+  input_audience_segmentation: string | null;
+  input_bg_intel_pack: string | null;
 }
 
 // ── Constants ────────────────────────────────────────────────────────────
@@ -262,7 +270,7 @@ function IntelligenceRunPage() {
       const { data } = await supabase
         .from("intelligence_sessions")
         .select(
-          "id, user_id, brand_name, category, status, stage_status, current_layer, final_report, report_metadata, last_error, completed_at",
+          "id, user_id, brand_name, category, status, stage_status, current_layer, final_report, report_metadata, last_error, completed_at, territory_input, additional_context, input_primary_consumer, input_brand_health, input_competitive_audit, input_cultural_trends, input_audience_segmentation, input_bg_intel_pack",
         )
         .eq("id", id)
         .maybeSingle();
