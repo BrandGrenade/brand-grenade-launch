@@ -761,6 +761,7 @@ function IntelligenceRunPage() {
               size="sm"
               disabled={!selectedTerritoryId || handingOff}
               onClick={handleSendToBriefingRoom}
+              className="bg-amber-500 text-black hover:bg-amber-400 disabled:opacity-60"
             >
               {handingOff ? (
                 <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
