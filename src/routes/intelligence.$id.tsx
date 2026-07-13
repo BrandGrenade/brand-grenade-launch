@@ -479,6 +479,43 @@ function IntelligenceRunPage() {
     );
   }
 
+  // Running state — show live progress instead of the "not active" fallback.
+  if (row.status === "running") {
+    const layer = row.current_layer ?? 0;
+    const pct = Math.min(100, Math.max(5, Math.round((layer / 10) * 100)));
+    return (
+      <div className="min-h-screen bg-background">
+        <TopNav />
+        <main className="mx-auto max-w-[720px] px-6 py-16">
+          <BackLink id={id} />
+          <div className="mt-6">
+            <span className="text-label text-primary">Intelligence Lab</span>
+            <h1 className="text-h2 mt-2 text-text-primary">
+              {row.brand_name || "Analysis in progress"}
+            </h1>
+            {row.category ? (
+              <p className="text-body text-text-secondary mt-1">{row.category}</p>
+            ) : null}
+          </div>
+          <Card className="mt-8 p-6">
+            <p className="text-body text-text-primary font-medium">
+              Analysing… layer {Math.max(1, layer)} of 10
+            </p>
+            <p className="mt-2 text-sm text-text-secondary">
+              The intelligence engine is streaming. This page updates automatically.
+            </p>
+            <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-white/5">
+              <div
+                className="h-full rounded-full transition-all"
+                style={{ width: `${pct}%`, backgroundColor: "#D4924A" }}
+              />
+            </div>
+          </Card>
+        </main>
+      </div>
+    );
+  }
+
   // Interrupted / unavailable report state — do not block access behind a spinner.
   if (row.status !== "complete" || !report) {
     // If status is complete but report failed to parse — show a graceful error.
