@@ -643,12 +643,7 @@ function IntelligenceRunPage() {
               <Link
                 to="/intelligence/$id/edit"
                 params={{ id }}
-                className="inline-flex items-center justify-center gap-2 h-9 px-4 rounded-md text-sm font-semibold"
-                style={{
-                  backgroundColor: "#D4924A",
-                  color: "#0A0A0A",
-                  boxShadow: "0 2px 12px rgba(212,146,74,0.25)",
-                }}
+                className="text-sm text-text-secondary underline underline-offset-4 hover:text-text-primary"
               >
                 Edit Inputs
               </Link>
