@@ -1394,3 +1394,128 @@ function PrecedentList({
     </div>
   );
 }
+
+function ResearchInputsPanel({
+  row,
+  briefType,
+}: {
+  row: SessionRow;
+  briefType: BriefType;
+}) {
+  const inputValues: Record<SectionKey, string | null> = {
+    input_primary_consumer: row.input_primary_consumer,
+    input_brand_health: row.input_brand_health,
+    input_competitive_audit: row.input_competitive_audit,
+    input_cultural_trends: row.input_cultural_trends,
+    input_audience_segmentation: row.input_audience_segmentation,
+    input_bg_intel_pack: row.input_bg_intel_pack,
+  };
+  const has = (k: SectionKey) => (inputValues[k] ?? "").trim().length > 0;
+
+  const framing: { label: string; value: string | null }[] = [
+    { label: "Brand", value: row.brand_name },
+    { label: "Category", value: row.category },
+    { label: "Brief type", value: briefType === "government" ? "Government" : "Commercial" },
+    { label: "Markets", value: row.territory_input },
+    { label: "Audience context", value: row.additional_context },
+  ];
+
+  return (
+    <Accordion type="single" collapsible className="mt-6">
+      <AccordionItem value="research-inputs" className="border rounded-lg px-4">
+        <AccordionTrigger className="text-label">
+          Research Inputs Used For This Analysis
+        </AccordionTrigger>
+        <AccordionContent>
+          <div className="pb-2 space-y-6">
+            {/* Framing */}
+            <div>
+              <p className="text-label text-text-secondary mb-2">Brief framing</p>
+              <dl className="grid gap-2 sm:grid-cols-2">
+                {framing.map((f) => (
+                  <div key={f.label} className="text-sm">
+                    <dt className="text-text-secondary">{f.label}</dt>
+                    <dd className="text-text-primary">
+                      {f.value && f.value.trim().length > 0 ? f.value : (
+                        <span className="text-text-secondary italic">Not provided</span>
+                      )}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
+
+            {/* Section presence overview */}
+            <div>
+              <p className="text-label text-text-secondary mb-2">Sections provided</p>
+              <div className="grid gap-2 sm:grid-cols-2">
+                {SECTIONS.map((s) => {
+                  const present = has(s.key);
+                  return (
+                    <div key={s.key} className="flex items-start gap-2 text-xs">
+                      {present ? (
+                        <CheckCircle2
+                          className="h-4 w-4 flex-shrink-0 mt-0.5"
+                          style={{ color: "#22C55E" }}
+                        />
+                      ) : (
+                        <Circle
+                          className="h-4 w-4 flex-shrink-0 mt-0.5"
+                          style={{ color: "#475569" }}
+                        />
+                      )}
+                      <span className={present ? "text-text-primary" : "text-text-secondary"}>
+                        {s.number} · {s.title}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Full content per section */}
+            <div className="space-y-4">
+              {SECTIONS.map((s) => {
+                const val = inputValues[s.key];
+                const present = has(s.key);
+                return (
+                  <div
+                    key={s.key}
+                    className="rounded-md border p-4"
+                    style={{ borderColor: "rgba(148,163,184,0.2)" }}
+                  >
+                    <div className="flex items-start gap-2">
+                      {present ? (
+                        <CheckCircle2
+                          className="h-4 w-4 flex-shrink-0 mt-0.5"
+                          style={{ color: "#22C55E" }}
+                        />
+                      ) : (
+                        <Circle
+                          className="h-4 w-4 flex-shrink-0 mt-0.5"
+                          style={{ color: "#475569" }}
+                        />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-text-primary">
+                          {s.number} · {s.title}
+                        </p>
+                        {present ? (
+                          <pre className="mt-2 max-h-[280px] overflow-auto whitespace-pre-wrap font-mono text-xs text-text-primary/90 rounded bg-black/20 p-3">
+                            {val}
+                          </pre>
+                        ) : (
+                          <p className="mt-1 text-xs italic text-text-secondary">Not provided</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </AccordionContent>
+      </AccordionItem>
+    </Accordion>
+  );
+}
