@@ -598,17 +598,13 @@ function isPersistedStageComplete(
   numericStage: number,
   output: string | null | undefined,
 ): boolean {
-  if (!hasStageOutput(output)) return false;
-  const marker = parsePersistedStageStatus(row.stage_status);
-  if (
-    marker &&
-    marker.id === stageStatusId.toLowerCase() &&
-    (marker.state === "running" || marker.state === "interrupted") &&
-    row.status !== "complete" &&
-    !(typeof row.current_stage === "number" && row.current_stage > numericStage)
-  ) {
-    return false;
-  }
+  // Client-side hydration: the DB output column is authoritative. Delegate to
+  // the shared helper, which only rejects a truly-actively-streaming partial
+  // (status="running" AND marker="running:{sameStage}"). On page reload we
+  // want persisted output to render even when a prior stream left a stale
+  // `running:{stage}` or `interrupted:{stage}` marker without a terminal
+  // `complete:{stage}` write — otherwise the stage appears blank and
+  // downstream stages refuse to advance.
   return isStageOutputComplete(row, stageStatusId, numericStage, output);
 }
 
