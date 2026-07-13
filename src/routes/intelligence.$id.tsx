@@ -29,6 +29,7 @@ import {
   createBriefingRoomFromIntelligence,
 } from "@/lib/intelligence.functions";
 import { downloadDocument00APdf } from "@/lib/intelligence/pdf-00A";
+import { SECTIONS, type SectionKey } from "@/components/intelligence/IntelligenceForm";
 
 export const Route = createFileRoute("/intelligence/$id")({
   head: () => ({
@@ -177,6 +178,14 @@ interface SessionRow {
   report_metadata: unknown;
   last_error: string | null;
   completed_at: string | null;
+  territory_input: string | null;
+  additional_context: string | null;
+  input_primary_consumer: string | null;
+  input_brand_health: string | null;
+  input_competitive_audit: string | null;
+  input_cultural_trends: string | null;
+  input_audience_segmentation: string | null;
+  input_bg_intel_pack: string | null;
 }
 
 // ── Constants ────────────────────────────────────────────────────────────
@@ -262,7 +271,7 @@ function IntelligenceRunPage() {
       const { data } = await supabase
         .from("intelligence_sessions")
         .select(
-          "id, user_id, brand_name, category, status, stage_status, current_layer, final_report, report_metadata, last_error, completed_at",
+          "id, user_id, brand_name, category, status, stage_status, current_layer, final_report, report_metadata, last_error, completed_at, territory_input, additional_context, input_primary_consumer, input_brand_health, input_competitive_audit, input_cultural_trends, input_audience_segmentation, input_bg_intel_pack",
         )
         .eq("id", id)
         .maybeSingle();
@@ -396,7 +405,7 @@ function IntelligenceRunPage() {
       <div className="min-h-screen bg-background">
         <TopNav />
         <main className="mx-auto max-w-[720px] px-6 py-16">
-          <BackLink />
+          <BackLink id={id} />
           <Card className="mt-6 p-6">
             <p className="text-body text-text-primary">Session not found.</p>
           </Card>
@@ -411,7 +420,7 @@ function IntelligenceRunPage() {
       <div className="min-h-screen bg-background">
         <TopNav />
         <main className="mx-auto max-w-[720px] px-6 py-16">
-          <BackLink />
+          <BackLink id={id} />
           <div className="mt-6">
             <span className="text-label text-primary">Intelligence Lab</span>
             <h1 className="text-h2 mt-2 text-text-primary">
@@ -464,7 +473,7 @@ function IntelligenceRunPage() {
         <div className="min-h-screen bg-background">
           <TopNav />
           <main className="mx-auto max-w-[720px] px-6 py-16">
-            <BackLink />
+            <BackLink id={id} />
             <Card className="mt-6 p-6 border-destructive/40">
               <div className="flex items-start gap-3">
                 <AlertCircle className="h-5 w-5 flex-shrink-0 text-destructive mt-0.5" />
@@ -498,7 +507,7 @@ function IntelligenceRunPage() {
       <div className="min-h-screen bg-background">
         <TopNav />
         <main className="mx-auto max-w-[720px] px-6 py-16">
-          <BackLink />
+          <BackLink id={id} />
           <div className="mt-6">
             <span className="text-label text-primary">Intelligence Lab</span>
             <h1 className="text-h2 mt-2 text-text-primary">
@@ -579,7 +588,7 @@ function IntelligenceRunPage() {
         }}
       >
         <div className="mx-auto max-w-[1080px]">
-          <BackLink />
+          <BackLink id={id} />
 
           {/* Header */}
           <div className="mt-6 flex flex-wrap items-start justify-between gap-4">
@@ -615,7 +624,7 @@ function IntelligenceRunPage() {
                 ) : null}
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               <Button
                 variant="outline"
                 size="sm"
@@ -629,8 +638,16 @@ function IntelligenceRunPage() {
                 )}
                 Download PDF
               </Button>
+              <Link
+                to="/intelligence/$id/edit"
+                params={{ id }}
+                className="text-label text-text-secondary hover:text-text-primary underline underline-offset-4"
+              >
+                Edit Inputs &amp; Re-run
+              </Link>
             </div>
           </div>
+
 
           {/* Executive summary */}
           {report.executive_summary ? (
@@ -641,6 +658,10 @@ function IntelligenceRunPage() {
               </p>
             </Card>
           ) : null}
+
+          {/* Research inputs used */}
+          <ResearchInputsPanel row={row} briefType={briefType} />
+
 
           {/* Completeness assessment */}
           {completeness ? (
@@ -779,14 +800,22 @@ function IntelligenceRunPage() {
 
 // ── Sub-components ───────────────────────────────────────────────────────
 
-function BackLink() {
+function BackLink(_props: { id?: string } = {}) {
   return (
-    <Link
-      to="/dashboard"
-      className="inline-flex items-center gap-2 text-label text-text-secondary hover:text-text-primary"
-    >
-      <ArrowLeft className="h-3.5 w-3.5" /> Back to dashboard
-    </Link>
+    <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+      <Link
+        to="/dashboard"
+        className="inline-flex items-center gap-2 text-label text-text-secondary hover:text-text-primary"
+      >
+        <ArrowLeft className="h-3.5 w-3.5" /> Back to dashboard
+      </Link>
+      <Link
+        to="/intelligence"
+        className="inline-flex items-center gap-2 text-label text-text-secondary hover:text-text-primary"
+      >
+        <ArrowLeft className="h-3.5 w-3.5" /> All Intelligence Lab sessions
+      </Link>
+    </div>
   );
 }
 
@@ -1363,5 +1392,130 @@ function PrecedentList({
         ))}
       </ul>
     </div>
+  );
+}
+
+function ResearchInputsPanel({
+  row,
+  briefType,
+}: {
+  row: SessionRow;
+  briefType: BriefType;
+}) {
+  const inputValues: Record<SectionKey, string | null> = {
+    input_primary_consumer: row.input_primary_consumer,
+    input_brand_health: row.input_brand_health,
+    input_competitive_audit: row.input_competitive_audit,
+    input_cultural_trends: row.input_cultural_trends,
+    input_audience_segmentation: row.input_audience_segmentation,
+    input_bg_intel_pack: row.input_bg_intel_pack,
+  };
+  const has = (k: SectionKey) => (inputValues[k] ?? "").trim().length > 0;
+
+  const framing: { label: string; value: string | null }[] = [
+    { label: "Brand", value: row.brand_name },
+    { label: "Category", value: row.category },
+    { label: "Brief type", value: briefType === "government" ? "Government" : "Commercial" },
+    { label: "Markets", value: row.territory_input },
+    { label: "Audience context", value: row.additional_context },
+  ];
+
+  return (
+    <Accordion type="single" collapsible className="mt-6">
+      <AccordionItem value="research-inputs" className="border rounded-lg px-4">
+        <AccordionTrigger className="text-label">
+          Research Inputs Used For This Analysis
+        </AccordionTrigger>
+        <AccordionContent>
+          <div className="pb-2 space-y-6">
+            {/* Framing */}
+            <div>
+              <p className="text-label text-text-secondary mb-2">Brief framing</p>
+              <dl className="grid gap-2 sm:grid-cols-2">
+                {framing.map((f) => (
+                  <div key={f.label} className="text-sm">
+                    <dt className="text-text-secondary">{f.label}</dt>
+                    <dd className="text-text-primary">
+                      {f.value && f.value.trim().length > 0 ? f.value : (
+                        <span className="text-text-secondary italic">Not provided</span>
+                      )}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
+
+            {/* Section presence overview */}
+            <div>
+              <p className="text-label text-text-secondary mb-2">Sections provided</p>
+              <div className="grid gap-2 sm:grid-cols-2">
+                {SECTIONS.map((s) => {
+                  const present = has(s.key);
+                  return (
+                    <div key={s.key} className="flex items-start gap-2 text-xs">
+                      {present ? (
+                        <CheckCircle2
+                          className="h-4 w-4 flex-shrink-0 mt-0.5"
+                          style={{ color: "#22C55E" }}
+                        />
+                      ) : (
+                        <Circle
+                          className="h-4 w-4 flex-shrink-0 mt-0.5"
+                          style={{ color: "#475569" }}
+                        />
+                      )}
+                      <span className={present ? "text-text-primary" : "text-text-secondary"}>
+                        {s.number} · {s.title}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Full content per section */}
+            <div className="space-y-4">
+              {SECTIONS.map((s) => {
+                const val = inputValues[s.key];
+                const present = has(s.key);
+                return (
+                  <div
+                    key={s.key}
+                    className="rounded-md border p-4"
+                    style={{ borderColor: "rgba(148,163,184,0.2)" }}
+                  >
+                    <div className="flex items-start gap-2">
+                      {present ? (
+                        <CheckCircle2
+                          className="h-4 w-4 flex-shrink-0 mt-0.5"
+                          style={{ color: "#22C55E" }}
+                        />
+                      ) : (
+                        <Circle
+                          className="h-4 w-4 flex-shrink-0 mt-0.5"
+                          style={{ color: "#475569" }}
+                        />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-text-primary">
+                          {s.number} · {s.title}
+                        </p>
+                        {present ? (
+                          <pre className="mt-2 max-h-[280px] overflow-auto whitespace-pre-wrap font-mono text-xs text-text-primary/90 rounded bg-black/20 p-3">
+                            {val}
+                          </pre>
+                        ) : (
+                          <p className="mt-1 text-xs italic text-text-secondary">Not provided</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </AccordionContent>
+      </AccordionItem>
+    </Accordion>
   );
 }
