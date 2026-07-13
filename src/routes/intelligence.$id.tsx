@@ -638,6 +638,19 @@ function IntelligenceRunPage() {
                 )}
                 Download PDF
               </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleRetry}
+                disabled={retrying}
+              >
+                {retrying ? (
+                  <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <RotateCw className="mr-2 h-3.5 w-3.5" />
+                )}
+                Run analysis
+              </Button>
               <Link
                 to="/intelligence/$id/edit"
                 params={{ id }}
@@ -648,7 +661,7 @@ function IntelligenceRunPage() {
                   boxShadow: "0 2px 12px rgba(212,146,74,0.25)",
                 }}
               >
-                Edit Inputs &amp; Re-run
+                Edit Inputs
               </Link>
             </div>
           </div>

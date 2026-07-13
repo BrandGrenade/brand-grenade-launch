@@ -95,11 +95,19 @@ export const updateAndRerunIntelligenceSession = createServerFn({ method: "POST"
 
     const { data: existing, error: readErr } = await supabase
       .from("intelligence_sessions")
-      .select("id, user_id")
+      .select("id, user_id, status, stage_status, current_layer, final_report, report_metadata, retry_count, last_error, started_at, completed_at")
       .eq("id", sessionId)
       .maybeSingle();
     if (readErr || !existing) throw new Error("Intelligence session not found");
     if (existing.user_id !== userId) throw new Error("Unauthorised");
+
+    const existingMeta =
+      existing.report_metadata &&
+      typeof existing.report_metadata === "object" &&
+      !Array.isArray(existing.report_metadata)
+        ? (existing.report_metadata as Record<string, unknown>)
+        : {};
+    const hasReport = Boolean(existing.final_report);
 
     const { error: updateErr } = await supabase
       .from("intelligence_sessions")
@@ -115,21 +123,23 @@ export const updateAndRerunIntelligenceSession = createServerFn({ method: "POST"
         input_audience_segmentation: data.input_audience_segmentation ?? null,
         input_bg_intel_pack: data.input_bg_intel_pack ?? null,
         input_files: (data.input_files ?? []) as unknown as import("@/integrations/supabase/types").Json,
-        // Reset run state (handoff_workspace_id / handoff_payload preserved).
-        status: "draft",
-        stage_status: null,
-        current_layer: 0,
-        final_report: null,
-        report_metadata: { brief_type: data.brief_type } as unknown as import("@/integrations/supabase/types").Json,
-        retry_count: 0,
-        last_error: null,
-        started_at: null,
-        completed_at: null,
+        // Save inputs only. Do not start analysis or clear an existing report.
+        status: hasReport ? "complete" : "draft",
+        stage_status: hasReport ? existing.stage_status : null,
+        current_layer: hasReport ? existing.current_layer : 0,
+        report_metadata: {
+          ...existingMeta,
+          brief_type: data.brief_type,
+        } as unknown as import("@/integrations/supabase/types").Json,
+        retry_count: hasReport ? existing.retry_count : 0,
+        last_error: hasReport ? existing.last_error : null,
+        started_at: hasReport ? existing.started_at : null,
+        completed_at: hasReport ? existing.completed_at : null,
       })
       .eq("id", sessionId);
     if (updateErr) throw new Error(updateErr.message);
 
-    // Client kicks off runIntelligenceAnalysis after this returns.
+    // Manual run is triggered separately by the user from the report page.
     return { sessionId };
   });
 

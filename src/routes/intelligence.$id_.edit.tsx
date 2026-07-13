@@ -6,7 +6,6 @@ import { toast } from "sonner";
 import { TopNav } from "@/components/TopNav";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  runIntelligenceAnalysis,
   updateAndRerunIntelligenceSession,
 } from "@/lib/intelligence.functions";
 import {
@@ -39,7 +38,6 @@ function IntelligenceEditPage() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
   const updateFn = useServerFn(updateAndRerunIntelligenceSession);
-  const runFn = useServerFn(runIntelligenceAnalysis);
 
   const [loaded, setLoaded] = useState<Loaded | null>(null);
   const [notFound, setNotFound] = useState(false);
@@ -94,12 +92,7 @@ function IntelligenceEditPage() {
           ...values,
         },
       });
-      void runFn({ data: { intelligenceSessionId: id } }).catch(
-        (err: unknown) => {
-          console.warn("[Intelligence] re-run failed:", err);
-        },
-      );
-      toast.success("Re-running intelligence analysis…");
+      toast.success("Inputs saved");
       navigate({ to: "/intelligence/$id", params: { id } });
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Failed to update session";
@@ -157,9 +150,9 @@ function IntelligenceEditPage() {
               Edit Research Inputs — {loaded.brand || "Untitled"}
             </h1>
             <p className="text-body mt-3 max-w-[720px] text-text-secondary">
-              Update any field below and re-run the analysis. The existing
-              session will be updated in place — the URL and session ID stay
-              the same. A previous Briefing Room handoff is preserved.
+              Update any field below. The existing session will be updated in
+              place — the URL and session ID stay the same. Run analysis only
+              when you choose to start it from the report page.
             </p>
           </div>
 
@@ -170,8 +163,8 @@ function IntelligenceEditPage() {
             initialMarkets={loaded.markets}
             initialAudienceNotes={loaded.audienceNotes}
             initialInputs={loaded.inputs}
-            submitLabel="Re-run Intelligence Analysis"
-            submittingLabel="Re-running…"
+            submitLabel="Save Inputs"
+            submittingLabel="Saving…"
             cancelHref="/intelligence/$id"
             cancelLabel="Back to report"
             onSubmit={handleSubmit}
