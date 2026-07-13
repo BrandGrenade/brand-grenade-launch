@@ -641,7 +641,12 @@ function IntelligenceRunPage() {
               <Link
                 to="/intelligence/$id/edit"
                 params={{ id }}
-                className="text-label text-text-secondary hover:text-text-primary underline underline-offset-4"
+                className="inline-flex items-center justify-center gap-2 h-9 px-4 rounded-md text-sm font-semibold"
+                style={{
+                  backgroundColor: "#D4924A",
+                  color: "#0A0A0A",
+                  boxShadow: "0 2px 12px rgba(212,146,74,0.25)",
+                }}
               >
                 Edit Inputs &amp; Re-run
               </Link>
@@ -659,8 +664,6 @@ function IntelligenceRunPage() {
             </Card>
           ) : null}
 
-          {/* Research inputs used */}
-          <ResearchInputsPanel row={row} briefType={briefType} />
 
 
           {/* Completeness assessment */}
