@@ -8,7 +8,6 @@ import {
   Circle,
   Download,
   Loader2,
-  RotateCw,
   Send,
   Star,
 } from "lucide-react";
@@ -25,7 +24,6 @@ import {
 } from "@/components/ui/accordion";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  runIntelligenceAnalysis,
   createBriefingRoomFromIntelligence,
 } from "@/lib/intelligence.functions";
 import { downloadDocument00APdf } from "@/lib/intelligence/pdf-00A";
@@ -257,11 +255,9 @@ function stageLayer(stageStatus: string | null, currentLayer: number | null): nu
 function IntelligenceRunPage() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
-  const runFn = useServerFn(runIntelligenceAnalysis);
   const [row, setRow] = useState<SessionRow | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [selectedTerritoryId, setSelectedTerritoryId] = useState<string | null>(null);
-  const [retrying, setRetrying] = useState(false);
 
   // Poll session row until complete/failed.
   useEffect(() => {
@@ -334,19 +330,6 @@ function IntelligenceRunPage() {
     }
     return "commercial";
   }, [row?.report_metadata]);
-
-  const handleRetry = useCallback(async () => {
-    if (!row) return;
-    setRetrying(true);
-    try {
-      await runFn({ data: { intelligenceSessionId: row.id } });
-      toast.success("Retry started");
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Retry failed");
-    } finally {
-      setRetrying(false);
-    }
-  }, [row, runFn]);
 
   const [downloading, setDownloading] = useState(false);
   const [handingOff, setHandingOff] = useState(false);
@@ -435,17 +418,18 @@ function IntelligenceRunPage() {
                 <p className="text-sm text-text-secondary mt-1">
                   {row.last_error ?? "Unknown error"}
                 </p>
-                <Button className="mt-4" onClick={handleRetry} disabled={retrying}>
-                  {retrying ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Retrying…
-                    </>
-                  ) : (
-                    <>
-                      <RotateCw className="mr-2 h-4 w-4" /> Retry analysis
-                    </>
-                  )}
-                </Button>
+                <Link
+                  to="/intelligence/$id/edit"
+                  params={{ id }}
+                  className="mt-4 inline-flex h-9 items-center justify-center gap-2 rounded-md px-4 text-sm font-semibold"
+                  style={{
+                    backgroundColor: "#D4924A",
+                    color: "#0A0A0A",
+                    boxShadow: "0 2px 12px rgba(212,146,74,0.25)",
+                  }}
+                >
+                  Edit Inputs
+                </Link>
               </div>
             </div>
           </Card>
@@ -473,8 +457,7 @@ function IntelligenceRunPage() {
           <Card className="mt-8 p-6">
             <p className="text-body text-text-primary font-medium">Inputs saved</p>
             <p className="text-sm text-text-secondary mt-2">
-              Analysis is not running. You can keep editing inputs, or start the
-              analysis manually when ready.
+              Analysis is not running. Edit the inputs to re-run the intelligence analysis.
             </p>
             <div className="mt-5 flex flex-wrap items-center gap-3">
               <Link
@@ -489,14 +472,6 @@ function IntelligenceRunPage() {
               >
                 Edit Inputs
               </Link>
-              <Button variant="outline" onClick={handleRetry} disabled={retrying}>
-                {retrying ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <RotateCw className="mr-2 h-4 w-4" />
-                )}
-                Run analysis
-              </Button>
             </div>
           </Card>
         </main>
@@ -504,19 +479,8 @@ function IntelligenceRunPage() {
     );
   }
 
-  // Running state
+  // Interrupted / unavailable report state — do not block access behind a spinner.
   if (row.status !== "complete" || !report) {
-    const layer = stageLayer(row.stage_status, row.current_layer);
-    const label = LAYER_LABELS[layer] ?? "Working…";
-    const pct = Math.max(4, Math.round((layer / 10) * 100));
-    const meta = row.report_metadata;
-    const confidenceRaw =
-      meta && typeof meta === "object" && !Array.isArray(meta)
-        ? ((meta as Record<string, unknown>).completeness_assessment as
-            | { confidence?: string }
-            | undefined)?.confidence ?? null
-        : null;
-
     // If status is complete but report failed to parse — show a graceful error.
     if (row.status === "complete" && !report) {
       return (
@@ -534,17 +498,18 @@ function IntelligenceRunPage() {
                   <p className="text-sm text-text-secondary mt-1">
                     The engine returned data that could not be read as a valid report.
                   </p>
-                  <Button className="mt-4" onClick={handleRetry} disabled={retrying}>
-                    {retrying ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Retrying…
-                      </>
-                    ) : (
-                      <>
-                        <RotateCw className="mr-2 h-4 w-4" /> Regenerate report
-                      </>
-                    )}
-                  </Button>
+                  <Link
+                    to="/intelligence/$id/edit"
+                    params={{ id }}
+                    className="mt-4 inline-flex h-9 items-center justify-center gap-2 rounded-md px-4 text-sm font-semibold"
+                    style={{
+                      backgroundColor: "#D4924A",
+                      color: "#0A0A0A",
+                      boxShadow: "0 2px 12px rgba(212,146,74,0.25)",
+                    }}
+                  >
+                    Edit Inputs
+                  </Link>
                 </div>
               </div>
             </Card>
@@ -561,45 +526,18 @@ function IntelligenceRunPage() {
           <div className="mt-6">
             <span className="text-label text-primary">Intelligence Lab</span>
             <h1 className="text-h2 mt-2 text-text-primary">
-              {row.brand_name || "Analysis in progress"}
+              {row.brand_name || "Intelligence inputs"}
             </h1>
             {row.category ? (
               <p className="text-body text-text-secondary mt-1">{row.category}</p>
             ) : null}
           </div>
           <Card className="mt-8 p-6">
-            <div className="flex items-center gap-3">
-              <Loader2 className="h-4 w-4 animate-spin text-primary" />
-              <span className="text-body text-text-primary">
-                Layer {layer} / 10 — {label}
-              </span>
-            </div>
-            <div
-              className="mt-4 h-1.5 w-full overflow-hidden rounded-full"
-              style={{ backgroundColor: "rgba(148,163,184,0.15)" }}
-            >
-              <div
-                className="h-full transition-all duration-500"
-                style={{
-                  width: `${pct}%`,
-                  backgroundColor: "hsl(var(--primary))",
-                }}
-              />
-            </div>
-            {confidenceRaw ? (
-              <p className="text-xs text-text-secondary mt-4">
-                Predicted confidence:{" "}
-                <span
-                  style={{ color: CONFIDENCE_COLOR[confidenceRaw.toLowerCase()] ?? "#94A3B8" }}
-                  className="font-medium"
-                >
-                  {confidenceRaw.charAt(0).toUpperCase() + confidenceRaw.slice(1)}
-                </span>
-              </p>
-            ) : null}
-            <p className="text-xs text-text-secondary mt-3">
-              This page updates every few seconds. The engine runs a single streaming
-              call across ten analytical layers.
+            <p className="text-body font-medium text-text-primary">
+              Analysis is not currently active.
+            </p>
+            <p className="mt-2 text-sm text-text-secondary">
+              Open the saved inputs below, add or change the research, then re-run the intelligence analysis from the edit form.
             </p>
             <div className="mt-5">
               <Link
