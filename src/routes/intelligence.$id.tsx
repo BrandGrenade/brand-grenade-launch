@@ -623,7 +623,7 @@ function IntelligenceRunPage() {
                 ) : null}
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               <Button
                 variant="outline"
                 size="sm"
@@ -637,8 +637,16 @@ function IntelligenceRunPage() {
                 )}
                 Download PDF
               </Button>
+              <Link
+                to="/intelligence/$id/edit"
+                params={{ id }}
+                className="text-label text-text-secondary hover:text-text-primary underline underline-offset-4"
+              >
+                Edit Inputs &amp; Re-run
+              </Link>
             </div>
           </div>
+
 
           {/* Executive summary */}
           {report.executive_summary ? (
