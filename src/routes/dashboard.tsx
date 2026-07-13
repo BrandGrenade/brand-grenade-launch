@@ -1040,6 +1040,22 @@ function InProgressLink({
       </Link>
     );
   }
+  if (system === "intelligence" && status.href) {
+    return (
+      <a
+        href={status.href}
+        className="text-body"
+        style={{
+          color: "var(--color-text-secondary)",
+          fontSize: 12,
+          fontWeight: 500,
+          textDecoration: "underline",
+        }}
+      >
+        {label}
+      </a>
+    );
+  }
   return (
     <span
       className="text-body"

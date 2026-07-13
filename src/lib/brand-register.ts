@@ -251,10 +251,10 @@ function deriveIntelligence(rows: IntelligenceRow[]): SystemStatus {
     };
   }
   return {
-    state: latest.status === "failed" ? "not_started" : "in_progress",
-    label: latest.status === "failed" ? null : "Analysing",
+    state: "in_progress",
+    label: "Open",
     timestamp: null,
-    href: null,
+    href: `/intelligence/${latest.id}`,
     hrefSearch: null,
     runCount: rows.length,
   };
