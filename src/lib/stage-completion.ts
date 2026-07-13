@@ -74,19 +74,27 @@ export function isStageOutputComplete(
   const marker = parseStageStatus(row.stage_status);
   if (marker && wantedRank >= 0) {
     const markerRank = stageRank(marker.id);
+
+    // A later stage started or finished — this stage is definitely done.
+    if (markerRank > wantedRank) return true;
+    // Explicit complete marker at or past this stage.
     if (marker.state === "complete" && markerRank >= wantedRank) return true;
-    if ((marker.state === "running" || marker.state === "interrupted") && markerRank > wantedRank) {
+
+    // Marker is running/interrupted at exactly this stage. The only case we
+    // must reject as a partial mid-stream snapshot is when the session row
+    // is ACTIVELY streaming: status still "running" AND marker still "running"
+    // on this same stage. Everything else — an interrupted run, or a stale
+    // marker whose terminal `complete:` write was lost after the output was
+    // saved — should trust the persisted output rather than hide it and
+    // block downstream stages that already have their inputs.
+    if (markerRank === wantedRank) {
+      if (marker.state === "running" && row.status === "running") return false;
       return true;
     }
-    if (
-      (marker.state === "running" || marker.state === "interrupted") &&
-      markerRank === wantedRank &&
-      typeof row.current_stage === "number" &&
-      row.current_stage > numericStage
-    ) {
-      return true;
-    }
-    return false;
+
+    // Marker is for an earlier stage but this stage's column has content —
+    // a downstream write landed without an updated marker. Trust the output.
+    return true;
   }
 
   // Legacy rows pre-date `stage_status` and only have the numeric
