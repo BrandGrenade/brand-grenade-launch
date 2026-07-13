@@ -1,0 +1,1 @@
+UPDATE public.sessions SET stage_6_output = NULL, status = 'running', updated_at = now() WHERE id = '08fbc851-9b4d-4511-b5bc-b274228a13f9';
