@@ -162,6 +162,7 @@ export interface IntelligenceFormProps {
   submitLabel: string;
   submittingLabel: string;
   cancelHref: string;
+  cancelParams?: Record<string, string>;
   cancelLabel?: string;
   onSubmit: (values: IntelligenceFormValues) => Promise<void>;
 }
@@ -176,6 +177,7 @@ export function IntelligenceForm({
   submitLabel,
   submittingLabel,
   cancelHref,
+  cancelParams,
   cancelLabel = "Cancel",
   onSubmit,
 }: IntelligenceFormProps) {
@@ -463,6 +465,7 @@ export function IntelligenceForm({
         <div className="flex items-center justify-end gap-3">
           <Link
             to={cancelHref}
+            params={cancelParams as never}
             className="text-label text-text-secondary hover:text-text-primary"
           >
             {cancelLabel}

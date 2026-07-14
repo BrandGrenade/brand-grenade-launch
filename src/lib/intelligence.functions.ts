@@ -362,6 +362,9 @@ export const runIntelligenceAnalysis = createServerFn({ method: "POST" })
     const handoffPayload = primary?.prebrief_for_briefing_room ?? null;
 
     const reportMetadata = {
+      // Preserve brief_type so downstream hydration (report page, PDF export,
+      // Government Addendum rendering) reflects the user's original choice.
+      brief_type: briefType,
       completeness_assessment: parsed.completeness_assessment ?? null,
       executive_summary: parsed.executive_summary ?? null,
       recommended_primary_territory_id: recommendedId,
