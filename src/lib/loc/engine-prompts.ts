@@ -81,6 +81,13 @@ Write a villain statement: what specifically does this brand exist to destroy, i
   subtract: `ENGINE 09 — SUBTRACT.
 Strip every verbal identifier — the brand name, the category name, the product description. Ask what behaviour, belief, or emotional register would still be recognisably this brand. Build from only what remains. Generate the line that comes from what cannot be stripped away.`,
 
+  the_unsayable: `ENGINE 10 — THE UNSAYABLE.
+Find the one true thing about this category, this brand, or this customer that no brand in this space is allowed to say out loud. The taboo. The open secret. The thing everyone in the category tacitly agrees to pretend isn't true. Build the proposition that says it — plainly, without apology, without softening. Generate the line that breaks the silence.`,
+
+  the_moment: `ENGINE 11 — THE MOMENT.
+Ignore the brand, the category, and the strategy. Find the single specific human moment — three seconds long, a real place, a real feeling, a real trigger — where this brand would actually matter to someone who has never thought about it. Build the proposition entirely from inside that moment. Generate the line that could only be true in that moment.`,
+
+
   one_word_ownership: `ENGINE 12 — ONE WORD OWNERSHIP.
 
 STEP ONE — mandatory before anything else: State "THE WORD IS: [word]" and commit to it. If you cannot identify a single ownable word stop here and output "No ownable word found for this brand in this category." Do not proceed to the line until the word is named.
