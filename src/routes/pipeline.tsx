@@ -10,6 +10,8 @@ import { SelectionRationale } from "@/components/SelectionRationale";
 import { BrandIntelligence } from "@/components/BrandIntelligence";
 import { SMPSelection, type SMPCard } from "@/components/SMPSelection";
 import { supabase } from "@/integrations/supabase/client";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { runStage1 } from "@/lib/stage1.functions";
 import { runStage1b, resubmitBrief } from "@/lib/stage1b.functions";
 import { runStage2 } from "@/lib/stage2.functions";
