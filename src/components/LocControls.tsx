@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { runLeftOfCentre, getLocStatus } from "@/lib/loc.functions";
+import { runLeftOfCentre, getLocStatus, finalizeLeftOfCentre } from "@/lib/loc.functions";
 
 type LocStatusRow = {
   loc_status: string | null;
@@ -24,6 +24,7 @@ type LocStatusRow = {
 export function LocControls({ sessionId }: { sessionId: string }) {
   const runLoc = useServerFn(runLeftOfCentre);
   const getStatus = useServerFn(getLocStatus);
+  const finalizeLoc = useServerFn(finalizeLeftOfCentre);
   const [status, setStatus] = useState<LocStatusRow | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -57,6 +58,20 @@ export function LocControls({ sessionId }: { sessionId: string }) {
       toast.success(force ? "Left-of-Centre retry started" : "Left-of-Centre generation started");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "LOC run failed to start");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function recover() {
+    if (busy || locked) return;
+    setBusy(true);
+    try {
+      const r = (await finalizeLoc({ data: { sessionId } })) as { ok?: boolean; alreadyComplete?: boolean };
+      if (r.alreadyComplete) toast.info("LOC already complete");
+      else toast.success("LOC recovered from persisted data");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "LOC recovery failed");
     } finally {
       setBusy(false);
     }
@@ -117,6 +132,16 @@ export function LocControls({ sessionId }: { sessionId: string }) {
               {busy ? "Starting…" : "Generate LOC"}
             </button>
           )}
+          <button
+            type="button"
+            className="rounded border px-3 py-1"
+            style={{ borderColor: "var(--color-border-strong, #999)" }}
+            disabled={busy || locked || state === "running" || state === "complete"}
+            onClick={recover}
+            title="Rebuild the LOC output from the engine + validation data already saved (no re-run)"
+          >
+            {busy ? "Recovering…" : "Recover LOC"}
+          </button>
           <button
             type="button"
             className="rounded border px-3 py-1"
