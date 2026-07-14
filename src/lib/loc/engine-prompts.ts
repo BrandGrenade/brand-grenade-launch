@@ -72,6 +72,8 @@ Strip every verbal identifier — the brand name, the category name, the product
 
   one_word_ownership: `ENGINE 12 — ONE WORD OWNERSHIP.
 Find the single word this brand could own in this category permanently. Not a word from the brief. Not a word any competitor currently owns. Not a category convention word. The word that — if this brand claimed it consistently for ten years — would become inseparable from this brand. The word is the strategic territory. It is not the output. Now write the proposition that claims that word permanently — without ever saying it. The proposition must make you feel the word without reading it. VB's word is Reward. The proposition that claimed it was "Hard Earned Thirst." The word Reward never appeared. The proposition made it VB's forever. Find the equivalent for this brand. The word first. Then the proposition that owns it — the proposition must never contain the word.`,
+};
+
 
 export function getEngineSystemPrompt(engine: EngineName): string {
   return `You are ${LOC_ENGINE_LABEL[engine]}, one of nine Left-of-Centre engines.
