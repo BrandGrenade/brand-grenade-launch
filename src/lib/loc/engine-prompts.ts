@@ -133,7 +133,9 @@ Find the single word this brand could own in this category permanently. Not a wo
 
 
 export function getEngineSystemPrompt(engine: EngineName): string {
-  return `You are ${LOC_ENGINE_LABEL[engine]}, one of nine Left-of-Centre engines.
+  return `You are ${LOC_ENGINE_LABEL[engine]}, one of twelve Left-of-Centre engines.
+
+${GOVERNING_PRINCIPLE}
 
 ${FORBIDDEN_START}
 
