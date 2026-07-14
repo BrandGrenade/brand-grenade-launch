@@ -130,9 +130,9 @@ export const runLeftOfCentre = createServerFn({ method: "POST" })
     // the generated types.ts).
     const { data: locRow } = await supabaseAdmin
       .from("sessions")
-      .select("loc_status, loc_retry_count")
+      .select("loc_status, loc_retry_count, updated_at")
       .eq("id", data.sessionId)
-      .single<{ loc_status: string | null; loc_retry_count: number | null }>();
+      .single<{ loc_status: string | null; loc_retry_count: number | null; updated_at: string | null }>();
 
     if (session.checkpoint_c_confirmed) {
       throw new Error("LOC is locked: Checkpoint C already confirmed for this session.");
@@ -140,8 +140,14 @@ export const runLeftOfCentre = createServerFn({ method: "POST" })
     if (!data.force && locRow?.loc_status === "complete") {
       return { alreadyComplete: true, sessionId: data.sessionId };
     }
-    if (!data.force && locRow?.loc_status === "running") {
-      return { alreadyRunning: true, sessionId: data.sessionId };
+    if (locRow?.loc_status === "running") {
+      // Block concurrent runs: even with force, if the current run touched
+      // the row within the last 5 minutes, treat it as still in flight.
+      const lastTouch = locRow.updated_at ? Date.parse(locRow.updated_at) : 0;
+      const staleMs = Date.now() - lastTouch;
+      if (!data.force || staleMs < 5 * 60 * 1000) {
+        return { alreadyRunning: true, sessionId: data.sessionId, staleMs };
+      }
     }
 
     const retryCount = data.force ? (locRow?.loc_retry_count ?? 0) + 1 : locRow?.loc_retry_count ?? 0;
