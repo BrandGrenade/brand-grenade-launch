@@ -1,11 +1,11 @@
-// Left-of-Centre orchestrator.
+// Left-of-Centre orchestrator — nine-engine rebuild.
 //
-// Runs classifier -> 4 engines in parallel -> LOC validation per engine
-// in parallel -> assembles decision packages -> writes to sessions.
+// Fires nine engines in parallel. Each engine returns exactly one
+// proposition line + one-sentence descriptor. No classifier. No
+// validation. No courage assessment. No credible path.
 //
-// LOC fires at Briefing Room handoff time (same moment as Stage 1) in
-// the background. Retries and manual "Generate LOC" for legacy sessions
-// call the same server fn with force:true.
+// All existing LOC database columns, status handling, and retry logic
+// are preserved. Validation-related columns are written as null.
 
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
@@ -14,27 +14,16 @@ import { assertSessionOwner } from "@/lib/auth-helpers.server";
 import { callClaude } from "./claude.server";
 import { buildLocInputs, type WorkspaceInputSnapshot } from "./loc/brief-extract";
 import {
-  LOC_CLASSIFIER_SYSTEM_PROMPT,
-  buildLocClassifierUserMessage,
-  parseClassifierOutput,
-} from "./loc/classifier-prompt";
-import {
   buildEngineUserMessage,
   getEngineSystemPrompt,
   parseEngineOutput,
   type EngineOutput,
 } from "./loc/engine-prompts";
 import {
-  LOC_VALIDATION_SYSTEM_PROMPT,
-  buildLocValidationUserMessage,
-  parseLocValidation,
-  type LocValidationResult,
-} from "./loc/validation-prompts";
-import {
   renderLocFullMarkdown,
   type LocEnginePackage,
 } from "./loc/decision-package";
-import type { EngineName } from "./loc/task-types";
+import { LOC_ENGINES, type EngineName } from "./loc/task-types";
 
 const RunInput = z.object({
   sessionId: z.string().uuid(),
@@ -43,26 +32,21 @@ const RunInput = z.object({
 
 const StatusInput = z.object({ sessionId: z.string().uuid() });
 
-const ENGINES: EngineName[] = ["breach", "synect", "displace", "naive"];
-
 async function runOneEngine(args: {
   engine: EngineName;
   sessionId: string;
-  retryCount: number;
   inputs: ReturnType<typeof buildLocInputs>;
-  taskType: import("./loc/task-types").LocTaskType;
 }): Promise<{ engine: EngineName; output: EngineOutput | null; error?: string }> {
   try {
-    const systemPrompt = getEngineSystemPrompt(args.engine, args.sessionId, args.retryCount);
+    const systemPrompt = getEngineSystemPrompt(args.engine);
     const userMessage = buildEngineUserMessage({
       engine: args.engine,
-      taskType: args.taskType,
       inputs: args.inputs,
     });
     const raw = await callClaude({
       systemPrompt,
       userMessage,
-      maxTokens: 8000,
+      maxTokens: 4000,
       sessionId: args.sessionId,
       stageLabel: `LOC ${args.engine}`,
       stageNumber: "9-loc",
@@ -76,32 +60,6 @@ async function runOneEngine(args: {
       output: null,
       error: e instanceof Error ? e.message : String(e),
     };
-  }
-}
-
-async function validateOneEngine(args: {
-  sessionId: string;
-  engine: EngineName;
-  inputs: ReturnType<typeof buildLocInputs>;
-  engineOutput: EngineOutput;
-}): Promise<{ validation: LocValidationResult | null; error?: string }> {
-  try {
-    const raw = await callClaude({
-      systemPrompt: LOC_VALIDATION_SYSTEM_PROMPT,
-      userMessage: buildLocValidationUserMessage({
-        inputs: args.inputs,
-        engine: args.engine,
-        engineOutput: args.engineOutput,
-      }),
-      maxTokens: 16000,
-      sessionId: args.sessionId,
-      stageLabel: `LOC validate ${args.engine}`,
-      stageNumber: "9-loc-val",
-      stageName: `LOC validation ${args.engine}`,
-    });
-    return { validation: parseLocValidation(raw) };
-  } catch (e) {
-    return { validation: null, error: e instanceof Error ? e.message : String(e) };
   }
 }
 
@@ -126,8 +84,6 @@ export const runLeftOfCentre = createServerFn({ method: "POST" })
       throw new Error(`LOC: session not found: ${error?.message ?? "no row"}`);
     }
 
-    // Read current LOC state via raw fetch (new columns may not yet be in
-    // the generated types.ts).
     const { data: locRow } = await supabaseAdmin
       .from("sessions")
       .select("loc_status, loc_retry_count, loc_generated_at")
@@ -141,23 +97,15 @@ export const runLeftOfCentre = createServerFn({ method: "POST" })
       return { alreadyComplete: true, sessionId: data.sessionId };
     }
     if (locRow?.loc_status === "running") {
-      // Guard against concurrent runs using the LOC-specific timestamp
-      // (loc_generated_at is bumped at each LOC persistence step). Session
-      // updated_at is bumped by unrelated writes and would block retries
-      // indefinitely.
       const lastTouch = locRow.loc_generated_at ? Date.parse(locRow.loc_generated_at) : 0;
       const staleMs = Date.now() - lastTouch;
       if (!data.force && staleMs < 5 * 60 * 1000) {
         return { alreadyRunning: true, sessionId: data.sessionId, staleMs };
       }
-      // With force:true, always allow retry regardless of staleness.
     }
-
 
     const retryCount = data.force ? (locRow?.loc_retry_count ?? 0) + 1 : locRow?.loc_retry_count ?? 0;
 
-    // Look up the Briefing Room workspace (best-effort) to get UNFILTERED
-    // Step 2 truths and the raw Step 4 tension. Falls back to brief_text.
     let workspace: WorkspaceInputSnapshot | null = null;
     try {
       const { data: wsRow } = await supabaseAdmin
@@ -183,7 +131,6 @@ export const runLeftOfCentre = createServerFn({ method: "POST" })
     // Mark running (and wipe stale outputs if forcing).
     await supabaseAdmin
       .from("sessions")
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .update({
         loc_status: "running",
         loc_error: null,
@@ -203,36 +150,13 @@ export const runLeftOfCentre = createServerFn({ method: "POST" })
       .eq("id", data.sessionId);
 
     try {
-      // 1. Classifier.
-      const classifierRaw = await callClaude({
-        systemPrompt: LOC_CLASSIFIER_SYSTEM_PROMPT,
-        userMessage: buildLocClassifierUserMessage(inputs),
-        maxTokens: 2000,
-        sessionId: data.sessionId,
-        stageLabel: "LOC classifier",
-        stageNumber: "9-loc-classify",
-        stageName: "LOC classifier",
-      });
-      const classifier = parseClassifierOutput(classifierRaw);
-
-      await supabaseAdmin
-        .from("sessions")
-        .update({
-          loc_task_type: classifier.task_type,
-          loc_task_runner_up: classifier.runner_up,
-          loc_classifier_rationale: classifier.rationale,
-        } as never)
-        .eq("id", data.sessionId);
-
-      // 2. All four engines in parallel.
+      // Fire all nine engines in parallel.
       const engineResults = await Promise.all(
-        ENGINES.map((engine) =>
+        LOC_ENGINES.map((engine) =>
           runOneEngine({
             engine,
             sessionId: data.sessionId,
-            retryCount,
             inputs,
-            taskType: classifier.task_type,
           }),
         ),
       );
@@ -249,52 +173,20 @@ export const runLeftOfCentre = createServerFn({ method: "POST" })
         .update({ loc_engine_outputs: engineOutputsRecord } as never)
         .eq("id", data.sessionId);
 
-      // 3. Validation per engine (parallel), skip engines that failed or
-      //    produced no proposition and no working.
-      const validationResults = await Promise.all(
-        engineResults.map(async (r) => {
-          if (!r.output) return { engine: r.engine, validation: null, error: r.error };
-          const v = await validateOneEngine({
-            sessionId: data.sessionId,
-            engine: r.engine,
-            inputs,
-            engineOutput: r.output,
-          });
-          return { engine: r.engine, validation: v.validation, error: v.error };
-        }),
-      );
-
-      const validationRecord: Record<string, unknown> = {};
-      for (const v of validationResults) {
-        validationRecord[v.engine] = v.validation
-          ? { ok: true, validation: v.validation }
-          : { ok: false, error: v.error };
-      }
-
-      // Persist validation immediately so a later timeout during assembly
-      // does not lose the expensive Claude calls above.
-      await supabaseAdmin
-        .from("sessions")
-        .update({ loc_validation: validationRecord } as never)
-        .eq("id", data.sessionId);
-
-      // 4. Assemble decision packages.
       const packages: LocEnginePackage[] = engineResults
         .filter((r) => r.output !== null)
-        .map((r) => {
-          const val = validationResults.find((v) => v.engine === r.engine);
-          return {
-            engine: r.engine,
-            taskType: classifier.task_type,
-            engineOutput: r.output as EngineOutput,
-            validation: val?.validation ?? null,
-            validationError: val?.error,
-          };
-        });
+        .map((r) => ({
+          engine: r.engine,
+          engineOutput: r.output as EngineOutput,
+          validation: null,
+        }));
+
+      if (packages.length === 0) {
+        throw new Error("All nine LOC engines failed to return output.");
+      }
 
       const generatedAt = new Date().toISOString();
       const markdown = renderLocFullMarkdown({
-        classifier,
         packages,
         retryCount,
         generatedAt,
@@ -303,16 +195,15 @@ export const runLeftOfCentre = createServerFn({ method: "POST" })
 
       const packagesJson = packages.map((p) => ({
         engine: p.engine,
-        taskType: p.taskType,
         engineOutput: p.engineOutput,
-        validation: p.validation,
-        validationError: p.validationError ?? null,
+        validation: null,
+        validationError: null,
       }));
 
       await supabaseAdmin
         .from("sessions")
         .update({
-          loc_validation: validationRecord,
+          loc_validation: null,
           loc_decision_packages: packagesJson,
           stage_9_leftofcentre_output: markdown,
           loc_status: "complete",
@@ -325,7 +216,6 @@ export const runLeftOfCentre = createServerFn({ method: "POST" })
       return {
         ok: true,
         sessionId: data.sessionId,
-        taskType: classifier.task_type,
         engineCount: packages.length,
       };
     } catch (e) {
@@ -353,10 +243,9 @@ export const getLocStatus = createServerFn({ method: "POST" })
     return row;
   });
 
-// Recovers a run whose expensive Claude work landed in the DB but whose
-// final assembly write was lost (Worker CPU/wall timeout after step 3).
-// Re-derives markdown + decision packages purely from persisted state —
-// no Claude calls, so it always fits in a single request.
+// Recovers a run whose engine outputs landed in the DB but whose final
+// assembly write was lost. Re-derives markdown + decision packages from
+// persisted engine outputs — no Claude calls.
 export const finalizeLeftOfCentre = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i) => StatusInput.parse(i))
@@ -365,65 +254,46 @@ export const finalizeLeftOfCentre = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: row, error } = await supabaseAdmin
       .from("sessions")
-      .select("loc_status, loc_engine_outputs, loc_validation, loc_task_type, loc_task_runner_up, loc_classifier_rationale, loc_retry_count, checkpoint_c_confirmed")
+      .select("loc_status, loc_engine_outputs, loc_retry_count, checkpoint_c_confirmed")
       .eq("id", data.sessionId)
       .single<{
         loc_status: string | null;
         loc_engine_outputs: Record<string, { ok: boolean; output?: EngineOutput; error?: string }> | null;
-        loc_validation: Record<string, { ok: boolean; validation?: LocValidationResult; error?: string }> | null;
-        loc_task_type: string | null;
-        loc_task_runner_up: string | null;
-        loc_classifier_rationale: string | null;
         loc_retry_count: number | null;
         checkpoint_c_confirmed: boolean | null;
       }>();
     if (error || !row) throw new Error(`finalizeLoc: session not found: ${error?.message ?? "no row"}`);
     if (row.checkpoint_c_confirmed) throw new Error("LOC locked: Checkpoint C confirmed.");
     if (row.loc_status === "complete") return { alreadyComplete: true };
-    if (!row.loc_engine_outputs || !row.loc_validation) {
-      throw new Error("finalizeLoc: no persisted engine or validation data — run LOC first.");
+    if (!row.loc_engine_outputs) {
+      throw new Error("finalizeLoc: no persisted engine data — run LOC first.");
     }
 
     const engineOutputs = row.loc_engine_outputs;
-    const validation = row.loc_validation;
-    const taskType = (row.loc_task_type ?? "sales-decline") as import("./loc/task-types").LocTaskType;
 
-    const packages: LocEnginePackage[] = ENGINES
+    const packages: LocEnginePackage[] = LOC_ENGINES
       .filter((e) => engineOutputs[e]?.ok && engineOutputs[e]?.output)
       .map((e) => ({
         engine: e,
-        taskType,
         engineOutput: engineOutputs[e]!.output as EngineOutput,
-        validation: validation[e]?.ok ? (validation[e]!.validation as LocValidationResult) : null,
-        validationError: validation[e]?.ok ? undefined : validation[e]?.error,
+        validation: null,
       }));
 
     if (packages.length === 0) throw new Error("finalizeLoc: no successful engine outputs to assemble.");
 
     const generatedAt = new Date().toISOString();
-    const { LOC_TASK_TYPE_LABEL } = await import("./loc/task-types");
-    const runnerUp = (row.loc_task_runner_up ?? taskType) as import("./loc/task-types").LocTaskType;
     const markdown = renderLocFullMarkdown({
-      classifier: {
-        task_type: taskType,
-        task_type_label: LOC_TASK_TYPE_LABEL[taskType],
-        rationale: row.loc_classifier_rationale ?? "",
-        runner_up: runnerUp,
-        runner_up_label: LOC_TASK_TYPE_LABEL[runnerUp],
-        runner_up_rationale: "",
-      },
       packages,
       retryCount: row.loc_retry_count ?? 0,
       generatedAt,
-      sourceNote: "recovered from persisted engine + validation state",
+      sourceNote: "recovered from persisted engine outputs",
     });
 
     const packagesJson = packages.map((p) => ({
       engine: p.engine,
-      taskType: p.taskType,
       engineOutput: p.engineOutput,
-      validation: p.validation,
-      validationError: p.validationError ?? null,
+      validation: null,
+      validationError: null,
     }));
 
     await supabaseAdmin

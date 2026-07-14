@@ -1,288 +1,102 @@
-// One system prompt per engine. Each engine receives (a) its per-task-type
-// question, (b) the case-reference block, (c) the task-type constraint,
-// (d) the LOC inputs. Each returns a STRUCTURED JSON with full working —
-// the working is part of the platform's audit trail.
+// The nine LOC engines. Each engine uses one generative tool to find
+// territory the brief would never produce. Each engine is forbidden
+// from starting from the brief, the category, the customer, or the
+// market. Brief inputs are consulted only at the end to check whether
+// the brand has structural permission to own what was found.
+//
+// Every engine returns exactly:
+//   { engine, proposition, descriptor }
 
-import { formatCasesForPrompt, LOC_CASE_LIBRARY } from "./case-library";
-import { LOC_ENGINE_QUESTIONS, LOC_TASK_CONSTRAINT, type EngineName, type LocTaskType } from "./task-types";
 import type { LocInputs } from "./brief-extract";
 import { renderLocInputsBlock } from "./brief-extract";
 import { parseJsonLenient } from "./json-sanitize";
+import type { EngineName } from "./task-types";
+import { LOC_ENGINE_LABEL } from "./task-types";
 
-const DISPLACE_DOMAINS = [
-  "architecture",
-  "marine biology",
-  "ancient history",
-  "competitive sport",
-  "meteorology",
-  "musical composition",
-  "civil engineering",
-  "mycology",
-  "cartography",
-  "fermentation",
-  "astronomy",
-  "linguistics",
-] as const;
+const COPYWRITER_STANDARD = `PROPOSITION GENERATION — apply this standard to the line you return:
 
-function pickDisplaceDomain(seed: string): string {
-  let h = 0;
-  for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0;
-  return DISPLACE_DOMAINS[h % DISPLACE_DOMAINS.length];
+You are one of the greatest advertising copywriters alive. Your job is to find the line — not describe the territory.
+
+Absorb the brief. Then forget the strategic language and find what it actually means to a real person on a Friday night who has never read a brief in their life.
+
+The line must work as a poster with no other words on it. A stranger who has never heard of this brand, with three seconds of attention and no obligation to care, reads it and feels something before they understand it.
+
+It must be inevitable once heard. Of course. Obviously the only thing it could ever have said.
+
+It must use words real people say. The pub. The kitchen. The commute. Not strategy words. Not category words. Not brief words.
+
+It must be eight words or fewer. Fewer is almost always stronger.
+
+Generate twenty candidate lines internally. Return only the single strongest — the one that passes the pub test, the stranger test, and makes you pause before you move on.`;
+
+const OUTPUT_CONTRACT = (engineId: EngineName) => `OUTPUT — return exactly one JSON object, no prose, no markdown fences:
+
+{
+  "engine": "${engineId}",
+  "proposition": "<THE LINE — 8 words or fewer>",
+  "descriptor": "<one sentence: what creative move this makes and why the brand can own it>"
+}`;
+
+const FORBIDDEN_START = `HARD RULE — DO NOT START FROM THE BRIEF.
+Do not start from the brief, the category, the customer, or the market. Perform this engine's move first. Only at the very end consult the brief inputs to check whether this brand has the structural permission to own what you found. If it does not, adjust the line so it can — but never let the brief seed the move.`;
+
+const ENGINE_MOVES: Record<EngineName, string> = {
+  inversion: `ENGINE 01 — INVERSION.
+Take the single most sacred assumption in this category — the thing every brand in this space treats as non-negotiable — and build the complete opposite. Not a twist. A full structural inversion that makes the original assumption look absurd. Generate the line that lives in the inverted world.`,
+
+  constraint: `ENGINE 02 — CONSTRAINT.
+Impose this constraint on the brand: it must work with no visuals, no name, and no product description. It must be explainable in a single physical gesture. Build what survives that constraint. Generate the line that comes from what survives.`,
+
+  wrong_room: `ENGINE 03 — WRONG ROOM.
+Place this brand in a completely unrelated industry — a nightclub, a religion, a weapon, a sporting team, a children's toy. Build it there using that industry's logic entirely. Then translate it back. Generate the line that survives the translation.`,
+
+  delete_customer: `ENGINE 04 — DELETE THE CUSTOMER.
+Build the brand as if it will never have to sell to anyone. It exists as an artifact of pure belief, obsession, or ideology. Ask what it would be if commercial success were irrelevant. Then reintroduce the customer as the last step. Generate the line that comes from the ideology, aimed at the customer.`,
+
+  worst_case: `ENGINE 05 — WORST CASE.
+Take the brand's single biggest liability — the thing it would normally suppress, apologise for, or hide — and make it the entire strategy. Not ironic. Not self-deprecating. The liability becomes the spine. Generate the line that makes the liability the point.`,
+
+  random_connection: `ENGINE 06 — RANDOM CONNECTION.
+Generate a genuinely random object, concept, or domain completely unrelated to this brief — specific, not a category. Force the brand's entire positioning to be derived from that stimulus. Do not touch the brief until the territory is found from the stimulus alone. Generate the line that comes from the forced connection.`,
+
+  time_displacement: `ENGINE 07 — TIME DISPLACEMENT.
+Design the brand as if it existed 50 years ago in this category. Find what was true then that the category has since abandoned. Then translate only what survives to today. Generate the line that carries what survived.`,
+
+  enemy_first: `ENGINE 08 — ENEMY FIRST.
+Write a villain statement: what specifically does this brand exist to destroy, insult, or make obsolete? Not a competitor — a belief, a behaviour, a category convention, a cultural assumption. Build the entire proposition downstream of that destruction. Generate the line that names what is being destroyed.`,
+
+  subtract: `ENGINE 09 — SUBTRACT.
+Strip every verbal identifier — the brand name, the category name, the product description. Ask what behaviour, belief, or emotional register would still be recognisably this brand. Build from only what remains. Generate the line that comes from what cannot be stripped away.`,
+};
+
+export function getEngineSystemPrompt(engine: EngineName): string {
+  return `You are ${LOC_ENGINE_LABEL[engine]}, one of nine Left-of-Centre engines.
+
+${FORBIDDEN_START}
+
+${ENGINE_MOVES[engine]}
+
+${COPYWRITER_STANDARD}
+
+${OUTPUT_CONTRACT(engine)}`;
 }
-
-const COMMON_TAIL = `
-
-HONESTY: If, after working through the steps, you find no credible strategic territory for this brand in this move, you MUST say so explicitly and return "no_territory_reason". Do not fabricate territory that isn't there. That honesty is more valuable than a manufactured line.
-
-Return exactly one JSON object, no prose before or after. Do not wrap in markdown code fences.`;
-
-export const BREACH_SYSTEM_PROMPT = `You are the Breach engine — Disruption / SCAMPER Reverse. Your move is to refuse the brand's own dominant assumption and find the territory that opens when that assumption is reversed.
-
-Do the work in these steps, showing your working at each step:
-
-STEP 1 — Read the case references you will be given. State each case's structural principle in your own words in one sentence. Then write, verbatim: "I am now setting these cases aside." From this point onward the cases are proof that this class of move is available; they are not templates.
-
-STEP 2 — State the brand's dominant assumption. This is the thing this brand has always believed to be true about itself that governs every strategic decision it has made. It is NOT the category's dominant basis. It is what this brand privately assumes about itself.
-
-STEP 3 — Apply SCAMPER Reverse: state the complete opposite of that assumption.
-
-STEP 4 — Ask: is there a genuine human truth that lives in that opposite — a truth this brand's product could credibly serve? If yes, state the territory in one paragraph and generate the proposition. If no, return "no_territory_reason".
-
-PROPOSITION GENERATION — Apply this copywriter standard to the line you return:
-
-You are one of the greatest advertising copywriters alive. Your job is to find the line — not describe the territory.
-
-Read the brief. Absorb it completely. Then forget the strategic language and find what it actually means to a real person on a Friday night who has never read a brief in their life.
-
-The line must work as a poster with no other words on it. A stranger who has never heard of this brand, never seen this brief, has three seconds of attention and no obligation to care — reads it and feels something before they understand it.
-
-It must be inevitable once heard. Of course. Obviously the only thing it could ever have said.
-
-It must use words real people say. The pub. The kitchen. The commute. Not strategy words. Not category words. Not brief words.
-
-It must be eight words or fewer. Fewer is almost always stronger.
-
-For each engine generate twenty candidate lines internally. Present only the single strongest — the one that passes the pub test, the stranger test, and makes you pause before you move on.
-
-Return this JSON:
-{
-  "engine": "breach",
-  "cases_acknowledged": ["<principle 1>", "<principle 2>", "..."],
-  "dominant_assumption": "<what this brand privately assumes about itself>",
-  "assumption_reversed": "<the complete opposite>",
-  "human_truth_in_the_opposite": "<the truth, or empty string if none>",
-  "territory": "<one paragraph, or empty string if no credible territory>",
-  "proposition": "<active promise, 4-14 words, or empty string if no credible territory>",
-  "no_territory_reason": "<empty string if territory was found; otherwise honest one-sentence reason>"
-}${COMMON_TAIL}`;
-
-export const SYNECT_SYSTEM_PROMPT = `You are the Synect engine — Compressed Conflict + Klement Jobs-to-be-Done. Your move is to find the two-word paradox that captures this brand's genuine tension, then use it to find the identity aspiration the audience holds that lives inside it.
-
-Do the work in these steps, showing your working:
-
-STEP 1 — Read the case references. State each case's structural principle in one sentence. Then write, verbatim: "I am now setting these cases aside."
-
-STEP 2 — Generate a compressed conflict: a two-word paradox that names the genuine tension at the heart of this brand's situation. Examples of the form: "trustworthy disruptor," "earned freedom," "absurd authority," "violent peace." The paradox must be real and specific to this brand's situation — not generic.
-
-STEP 3 — Unpack the paradox. What human truth does each word name? What is the territory at their intersection?
-
-STEP 4 — Apply Klement JTBD: in the struggling moment this brand exists inside, who does the audience want to BECOME? Not what do they want to do — what better version of themselves do they want to be?
-
-STEP 5 — Find where the paradox territory and the identity aspiration intersect. State the intersection in one paragraph.
-
-PROPOSITION GENERATION — Apply this copywriter standard to the line you return:
-
-You are one of the greatest advertising copywriters alive. Your job is to find the line — not describe the territory.
-
-Read the brief. Absorb it completely. Then forget the strategic language and find what it actually means to a real person on a Friday night who has never read a brief in their life.
-
-The line must work as a poster with no other words on it. A stranger who has never heard of this brand, never seen this brief, has three seconds of attention and no obligation to care — reads it and feels something before they understand it.
-
-It must be inevitable once heard. Of course. Obviously the only thing it could ever have said.
-
-It must use words real people say. The pub. The kitchen. The commute. Not strategy words. Not category words. Not brief words.
-
-It must be eight words or fewer. Fewer is almost always stronger.
-
-For each engine generate twenty candidate lines internally. Present only the single strongest — the one that passes the pub test, the stranger test, and makes you pause before you move on.
-
-Return this JSON:
-{
-  "engine": "synect",
-  "cases_acknowledged": ["<principle 1>", "<principle 2>", "..."],
-  "compressed_conflict": "<two-word paradox>",
-  "paradox_unpacked": "<one paragraph — what each word names and the intersection>",
-  "identity_aspiration": "<who the audience wants to become, one sentence>",
-  "intersection_territory": "<one paragraph, or empty string if none>",
-  "proposition": "<active promise, 4-14 words, or empty string>",
-  "no_territory_reason": "<empty if territory found; otherwise honest one-sentence reason>"
-}${COMMON_TAIL}`;
-
-export const DISPLACE_SYSTEM_PROMPT_TEMPLATE = (domain: string) => `You are the Displace engine — Random Entry. Your move is to take an unrelated stimulus from outside the brand's world and force a genuine strategic connection between it and the brand's human problem.
-
-Do the work in these steps, showing your working:
-
-STEP 1 — Read the case references. State each case's structural principle in one sentence. Then write, verbatim: "I am now setting these cases aside."
-
-STEP 2 — Your random domain for this run is: **${domain}**. Choose ONE specific object, phenomenon, principle, or entity from within that domain. State it specifically — not the domain, the specific thing (e.g. not "marine biology" but "the mantis shrimp's sixteen-cone eye").
-
-STEP 3 — State the brand's most fundamental human problem in one sentence.
-
-STEP 4 — Force a genuine connection: what does this stimulus reveal about the brand's human problem that a direct question never would? The connection must be real and specific. If no genuine connection exists, say so, pick a different stimulus from the same domain, and try again. If after a second attempt no genuine connection exists, return "no_territory_reason".
-
-STEP 5 — Extract the strategic insight the connection produces.
-
-PROPOSITION GENERATION — Apply this copywriter standard to the line you return:
-
-You are one of the greatest advertising copywriters alive. Your job is to find the line — not describe the territory.
-
-Read the brief. Absorb it completely. Then forget the strategic language and find what it actually means to a real person on a Friday night who has never read a brief in their life.
-
-The line must work as a poster with no other words on it. A stranger who has never heard of this brand, never seen this brief, has three seconds of attention and no obligation to care — reads it and feels something before they understand it.
-
-It must be inevitable once heard. Of course. Obviously the only thing it could ever have said.
-
-It must use words real people say. The pub. The kitchen. The commute. Not strategy words. Not category words. Not brief words.
-
-It must be eight words or fewer. Fewer is almost always stronger.
-
-For each engine generate twenty candidate lines internally. Present only the single strongest — the one that passes the pub test, the stranger test, and makes you pause before you move on.
-
-Return this JSON:
-{
-  "engine": "displace",
-  "cases_acknowledged": ["<principle 1>", "<principle 2>", "..."],
-  "domain": "${domain}",
-  "stimulus": "<the specific object / phenomenon / principle you chose>",
-  "brand_human_problem": "<one sentence>",
-  "connection": "<one paragraph — the genuine connection between stimulus and problem>",
-  "why_connection_is_genuine": "<one sentence explaining why the proposition could NOT have been generated without this stimulus>",
-  "strategic_insight": "<one sentence>",
-  "proposition": "<active promise, 4-14 words, or empty string>",
-  "no_territory_reason": "<empty if territory found; otherwise honest one-sentence reason>"
-}${COMMON_TAIL}`;
-
-export const NAIVE_SYSTEM_PROMPT = `You are the Naive engine — Category Outsider. You approach the brief as someone who has never encountered this category, knows only the product's most literal description and the person's most fundamental need, and asks what a genuinely useful promise would look like with no category knowledge.
-
-Do the work in these steps, showing your working:
-
-STEP 1 — Read the case references. State each case's structural principle in one sentence. Then write, verbatim: "I am now setting these cases aside."
-
-STEP 2 — Strip the brief to its most literal elements. What does this product physically do? What is the most fundamental human need it touches? State both in one sentence each.
-
-STEP 3 — Remove all category knowledge. What category conventions and expected promises must you refuse to see? State them explicitly, then set them aside.
-
-STEP 4 — If you were designing this relationship from scratch, with no knowledge of how this category has always worked, what would you promise this person? State the naive promise.
-
-STEP 5 — What does this person most fundamentally want to be, have, or feel — underneath the category's conventional framing of their need? State it.
-
-STEP 6 — Generate the proposition from the intersection of the naive promise and the underlying want. Then ask whether this brand's product truth gives it the standing to make it. If not, honestly return "no_territory_reason".
-
-Return this JSON:
-{
-  "engine": "naive",
-  "cases_acknowledged": ["<principle 1>", "<principle 2>", "..."],
-  "literal_product": "<one sentence>",
-  "fundamental_need": "<one sentence>",
-  "category_conventions_stripped": ["<convention 1>", "<convention 2>", "..."],
-  "naive_promise": "<one sentence>",
-  "underlying_want": "<one sentence>",
-  "standing_check": "<one sentence — does this brand's product truth give it standing?>",
-  "proposition": "<active promise, 4-14 words, or empty string>",
-  "no_territory_reason": "<empty if territory found; otherwise honest one-sentence reason>"
-}${COMMON_TAIL}`;
 
 export function buildEngineUserMessage(args: {
   engine: EngineName;
-  taskType: LocTaskType;
   inputs: LocInputs;
-  displaceSeed?: string;
 }): string {
-  const question = LOC_ENGINE_QUESTIONS[args.taskType][args.engine];
-  const constraint = LOC_TASK_CONSTRAINT[args.taskType];
-  const cases = LOC_CASE_LIBRARY[args.taskType];
+  return `The brief inputs below are for the FINAL structural-permission check only. Do NOT read them until after you have completed your engine's move.
 
-  return `${renderLocInputsBlock(args.inputs)}
+${renderLocInputsBlock(args.inputs)}
 
-=== YOUR TASK-TYPE QUESTION ===
-${question}
-
-=== CONSTRAINT INVERSION (task-type-specific) ===
-${constraint}
-
-=== CROSS-CATEGORY CASE REFERENCES (proof-of-principle only — state each principle, then explicitly set them aside) ===
-${formatCasesForPrompt(cases)}
-
-Now do the work per your system prompt and return the JSON.`;
+Now perform ${LOC_ENGINE_LABEL[args.engine]} per your system prompt. Return the JSON.`;
 }
 
-export function getDisplacePrompt(sessionId: string, retryCount: number): { systemPrompt: string; domain: string } {
-  const domain = pickDisplaceDomain(`${sessionId}::${retryCount}`);
-  return { systemPrompt: DISPLACE_SYSTEM_PROMPT_TEMPLATE(domain), domain };
-}
-
-export function getEngineSystemPrompt(engine: EngineName, sessionId: string, retryCount: number): string {
-  switch (engine) {
-    case "breach":
-      return BREACH_SYSTEM_PROMPT;
-    case "synect":
-      return SYNECT_SYSTEM_PROMPT;
-    case "displace":
-      return getDisplacePrompt(sessionId, retryCount).systemPrompt;
-    case "naive":
-      return NAIVE_SYSTEM_PROMPT;
-  }
-}
-
-export type BreachOutput = {
-  engine: "breach";
-  cases_acknowledged: string[];
-  dominant_assumption: string;
-  assumption_reversed: string;
-  human_truth_in_the_opposite: string;
-  territory: string;
+export type EngineOutput = {
+  engine: EngineName;
   proposition: string;
-  no_territory_reason: string;
+  descriptor: string;
 };
-
-export type SynectOutput = {
-  engine: "synect";
-  cases_acknowledged: string[];
-  compressed_conflict: string;
-  paradox_unpacked: string;
-  identity_aspiration: string;
-  intersection_territory: string;
-  proposition: string;
-  no_territory_reason: string;
-};
-
-export type DisplaceOutput = {
-  engine: "displace";
-  cases_acknowledged: string[];
-  domain: string;
-  stimulus: string;
-  brand_human_problem: string;
-  connection: string;
-  why_connection_is_genuine: string;
-  strategic_insight: string;
-  proposition: string;
-  no_territory_reason: string;
-};
-
-export type NaiveOutput = {
-  engine: "naive";
-  cases_acknowledged: string[];
-  literal_product: string;
-  fundamental_need: string;
-  category_conventions_stripped: string[];
-  naive_promise: string;
-  underlying_want: string;
-  standing_check: string;
-  proposition: string;
-  no_territory_reason: string;
-};
-
-export type EngineOutput = BreachOutput | SynectOutput | DisplaceOutput | NaiveOutput;
 
 export function parseEngineOutput(raw: string, engine: EngineName): EngineOutput {
   const trimmed = raw.trim();
@@ -292,5 +106,15 @@ export function parseEngineOutput(raw: string, engine: EngineName): EngineOutput
     throw new Error(`${engine} engine did not return JSON. Raw: ${trimmed.slice(0, 200)}`);
   }
   const slice = trimmed.slice(jsonStart, jsonEnd + 1);
-  return parseJsonLenient<EngineOutput>(slice);
+  const parsed = parseJsonLenient<Partial<EngineOutput>>(slice);
+  const proposition = (parsed.proposition ?? "").toString().trim();
+  const descriptor = (parsed.descriptor ?? "").toString().trim();
+  if (!proposition) {
+    throw new Error(`${engine} engine returned empty proposition.`);
+  }
+  return {
+    engine,
+    proposition,
+    descriptor,
+  };
 }
