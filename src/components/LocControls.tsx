@@ -24,6 +24,7 @@ type LocStatusRow = {
 export function LocControls({ sessionId }: { sessionId: string }) {
   const runLoc = useServerFn(runLeftOfCentre);
   const getStatus = useServerFn(getLocStatus);
+  const finalizeLoc = useServerFn(finalizeLeftOfCentre);
   const [status, setStatus] = useState<LocStatusRow | null>(null);
   const [busy, setBusy] = useState(false);
 
