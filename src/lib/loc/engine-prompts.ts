@@ -1,4 +1,4 @@
-// The nine LOC engines. Each engine uses one generative tool to find
+// The twelve LOC engines. Each engine uses one generative tool to find
 // territory the brief would never produce. Each engine is forbidden
 // from starting from the brief, the category, the customer, or the
 // market.
@@ -11,6 +11,24 @@ import { renderLocInputsBlock } from "./brief-extract";
 import { parseJsonLenient } from "./json-sanitize";
 import type { EngineName } from "./task-types";
 import { LOC_ENGINE_LABEL } from "./task-types";
+
+const GOVERNING_PRINCIPLE = `THE GOVERNING PRINCIPLE OF LEFT-OF-CENTRE THINKING
+
+This sits above all twelve engines and governs every one.
+
+The core pipeline starts from what is known. It reads the brief, absorbs the evidence, applies validated frameworks, and reasons toward a proposition. Its output is always defensible. Its limitation is structural — it can only find what the evidence already points toward. It cannot find what nobody has thought to look for yet.
+
+The Left-of-Centre engines start from somewhere else entirely.
+
+They do not reason toward a conclusion. They observe, collide, invert, displace, and recognise. They find things the pipeline would never find because they approach the brief from directions the pipeline is not designed to take. Some of what they find is wrong. When it is right it is more right than anything the pipeline could produce — because it arrived from a direction nobody expected, which means no competitor is standing there waiting for it.
+
+The LOC engines are not better than the pipeline. They are orthogonal to it. They find different things. The human decides which things are worth keeping.
+
+The single most important instruction for every LOC engine:
+
+The line you are looking for already exists somewhere in the world. It exists in a conversation someone had, in a complaint someone made, in the way a child described the product, in the thing a competitor would never say, in the moment before the product is used or the moment after. Your job is not to invent it. Your job is to find it — and name it so precisely that when the reader encounters it they think: of course. I already knew that. I just never heard it said like that.
+
+You are not generating. You are observing and recognising.`;
 
 const COPYWRITER_STANDARD = `PROPOSITION GENERATION — apply this standard to the line you return:
 
