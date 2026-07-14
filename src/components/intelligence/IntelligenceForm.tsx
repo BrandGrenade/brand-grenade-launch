@@ -177,6 +177,7 @@ export function IntelligenceForm({
   submitLabel,
   submittingLabel,
   cancelHref,
+  cancelParams,
   cancelLabel = "Cancel",
   onSubmit,
 }: IntelligenceFormProps) {
