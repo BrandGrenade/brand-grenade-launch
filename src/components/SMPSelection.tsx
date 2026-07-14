@@ -343,7 +343,89 @@ function cleanForDisplay(text: string): string {
     .join("\n");
 }
 
-// ----------------------------- COMPONENT -----------------------------
+// ----------------------------- LOC CARDS -----------------------------
+
+const LOC_ENGINE_LABEL: Record<string, SMPCardSource> = {
+  breach: "LOC — BREACH",
+  synect: "LOC — SYNECT",
+  displace: "LOC — DISPLACE",
+};
+
+function buildLocCards(packages: LocEnginePackage[] | null, offset: number): SMPCard[] {
+  if (!packages || packages.length === 0) return [];
+  const cards: SMPCard[] = [];
+  let i = 0;
+  for (const pkg of packages) {
+    const label = LOC_ENGINE_LABEL[pkg.engine];
+    if (!label) continue; // skip 'naive' per selection-pool spec (BREACH/SYNECT/DISPLACE only)
+    const smpLine = (pkg.engineOutput?.proposition ?? "").trim();
+    if (!smpLine) continue;
+
+    const eo = pkg.engineOutput;
+    const territory =
+      eo.engine === "breach"
+        ? eo.territory
+        : eo.engine === "synect"
+          ? eo.intersection_territory
+          : eo.engine === "displace"
+            ? eo.strategic_insight
+            : "";
+
+    const v = pkg.validation ?? null;
+    const requires = v
+      ? [
+          v.what_the_brand_must_become && `Become: ${v.what_the_brand_must_become}`,
+          v.what_the_brand_must_abandon && `Abandon: ${v.what_the_brand_must_abandon}`,
+        ]
+          .filter(Boolean)
+          .join(" · ")
+      : "";
+    const makesPossible = v?.courage_assessment ?? "";
+    const truth =
+      eo.engine === "breach"
+        ? eo.human_truth_in_the_opposite ?? ""
+        : eo.engine === "synect"
+          ? eo.paradox_unpacked ?? ""
+          : eo.engine === "displace"
+            ? eo.why_connection_is_genuine ?? ""
+            : "";
+    const challenges =
+      eo.engine === "breach"
+        ? `Assumption reversed: ${eo.assumption_reversed ?? ""}`
+        : eo.engine === "synect"
+          ? `Compressed conflict: ${eo.compressed_conflict ?? ""}`
+          : eo.engine === "displace"
+            ? `Random domain: ${eo.domain ?? ""} → ${eo.connection ?? ""}`
+            : "";
+
+    cards.push({
+      cardNumber: offset + i + 1,
+      smpLine,
+      whatItOwns: (territory ?? "").toString().slice(0, 400),
+      truth: truth.slice(0, 400),
+      whatItChallenges: challenges.slice(0, 400),
+      whatItMakesPossible: makesPossible.slice(0, 400),
+      whatItRequires: requires.slice(0, 400),
+      scores: {},
+      fieldName: label,
+      iconicTierStatus: "",
+      pressureTestNote: pkg.validationError ?? "",
+      source: label,
+      loc10: v
+        ? {
+            genuine_surprise: v.loc10?.genuine_surprise?.score,
+            credible_path: v.loc10?.credible_path?.score,
+            territory_richness: v.loc10?.territory_richness?.score,
+            competitive_permanence: v.loc10?.competitive_permanence?.score,
+            category_escape: v.loc10?.category_escape?.score,
+          }
+        : undefined,
+    });
+    i += 1;
+  }
+  return cards;
+}
+
 
 export function SMPSelection({
   stage12Output,
