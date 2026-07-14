@@ -355,6 +355,8 @@ const LOC_ENGINE_DISPLAY: Record<string, string> = {
   time_displacement: "TIME DISPLACEMENT",
   enemy_first: "ENEMY FIRST",
   subtract: "SUBTRACT",
+  the_unsayable: "THE UNSAYABLE",
+  the_moment: "THE MOMENT",
   one_word_ownership: "ONE WORD OWNERSHIP",
   // Legacy — pre-nine-engine rebuild. Rendered for backward-compat if
   // a historic session still has them persisted.
