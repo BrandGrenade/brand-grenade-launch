@@ -114,6 +114,7 @@ export type EngineOutput = {
   engine: EngineName;
   proposition: string;
   descriptor: string;
+  word?: string;
 };
 
 export function parseEngineOutput(raw: string, engine: EngineName): EngineOutput {
@@ -127,6 +128,7 @@ export function parseEngineOutput(raw: string, engine: EngineName): EngineOutput
   const parsed = parseJsonLenient<Partial<EngineOutput>>(slice);
   const proposition = (parsed.proposition ?? "").toString().trim();
   const descriptor = (parsed.descriptor ?? "").toString().trim();
+  const word = (parsed.word ?? "").toString().trim();
   if (!proposition) {
     throw new Error(`${engine} engine returned empty proposition.`);
   }
@@ -134,5 +136,6 @@ export function parseEngineOutput(raw: string, engine: EngineName): EngineOutput
     engine,
     proposition,
     descriptor,
+    ...(word ? { word } : {}),
   };
 }
