@@ -3237,6 +3237,76 @@ function PipelineView() {
           />
         )}
       </div>
+      <Dialog open={strategySignoffOpen} onOpenChange={setStrategySignoffOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Checkpoint D — Master Brand Strategy Sign-Off</DialogTitle>
+            <DialogDescription>
+              Confirm the validated brand strategy before advancing into creative territory
+              (Stage 14) — or stop here with a complete strategy deliverable.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="max-h-[55vh] space-y-4 overflow-y-auto pr-1 text-sm">
+            <section>
+              <h4 className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Selected proposition
+              </h4>
+              <p className="text-foreground">
+                {strategySignoffPreview.selectedProp || <em className="text-muted-foreground">Not detected</em>}
+              </p>
+            </section>
+            <section>
+              <h4 className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Brand Fit verdict
+              </h4>
+              <p className="text-foreground">{strategySignoffPreview.verdict}</p>
+            </section>
+            <section>
+              <h4 className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Five strategic commitments
+              </h4>
+              {strategySignoffPreview.commitments.length ? (
+                <ol className="list-decimal space-y-1 pl-5 text-foreground">
+                  {strategySignoffPreview.commitments.map((c, i) => (
+                    <li key={i}>{c}</li>
+                  ))}
+                </ol>
+              ) : (
+                <p className="text-muted-foreground">Not detected in Stage 13 output.</p>
+              )}
+            </section>
+            <section>
+              <h4 className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Three critical communication guardrails
+              </h4>
+              {strategySignoffPreview.guardrails.length ? (
+                <ul className="list-disc space-y-1 pl-5 text-foreground">
+                  {strategySignoffPreview.guardrails.map((g, i) => (
+                    <li key={i}>{g}</li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-muted-foreground">Not detected in Stage 13 output.</p>
+              )}
+            </section>
+          </div>
+          <DialogFooter className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+            <Button
+              variant="outline"
+              disabled={strategySignoffSaving}
+              onClick={() => void confirmStrategySignoff(true)}
+            >
+              Stop here — strategy complete
+            </Button>
+            <Button
+              disabled={strategySignoffSaving}
+              onClick={() => void confirmStrategySignoff(false)}
+            >
+              Proceed to Creative Territory
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
