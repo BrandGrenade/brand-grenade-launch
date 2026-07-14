@@ -397,11 +397,16 @@ export const finalizeLeftOfCentre = createServerFn({ method: "POST" })
     if (packages.length === 0) throw new Error("finalizeLoc: no successful engine outputs to assemble.");
 
     const generatedAt = new Date().toISOString();
+    const { LOC_TASK_TYPE_LABEL } = await import("./loc/task-types");
+    const runnerUp = (row.loc_task_runner_up ?? taskType) as import("./loc/task-types").LocTaskType;
     const markdown = renderLocFullMarkdown({
       classifier: {
         task_type: taskType,
-        runner_up: (row.loc_task_runner_up ?? null) as import("./loc/task-types").LocTaskType | null,
+        task_type_label: LOC_TASK_TYPE_LABEL[taskType],
         rationale: row.loc_classifier_rationale ?? "",
+        runner_up: runnerUp,
+        runner_up_label: LOC_TASK_TYPE_LABEL[runnerUp],
+        runner_up_rationale: "",
       },
       packages,
       retryCount: row.loc_retry_count ?? 0,
