@@ -589,6 +589,8 @@ interface SessionData {
   checkpoint_a_confirmed: boolean;
   checkpoint_b_confirmed: boolean;
   checkpoint_c_confirmed: boolean;
+  strategy_signoff_confirmed?: boolean | null;
+  strategy_signoff_stop?: boolean | null;
   retry_status: string | null;
 }
 
