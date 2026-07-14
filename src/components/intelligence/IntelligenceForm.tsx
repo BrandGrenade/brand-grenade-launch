@@ -162,6 +162,7 @@ export interface IntelligenceFormProps {
   submitLabel: string;
   submittingLabel: string;
   cancelHref: string;
+  cancelParams?: Record<string, string>;
   cancelLabel?: string;
   onSubmit: (values: IntelligenceFormValues) => Promise<void>;
 }
