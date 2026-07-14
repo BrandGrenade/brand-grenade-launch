@@ -723,18 +723,27 @@ export function SMPSelection({
             >
               <div className="flex items-center justify-between">
                 <span className="text-label text-primary">PROPOSITION {card.cardNumber}</span>
+                <span
+                  className="text-label"
+                  style={{
+                    color: card.source && card.source !== "CORE" ? "var(--color-warning)" : "var(--color-text-tertiary)",
+                    letterSpacing: "0.06em",
+                  }}
+                >
+                  {card.source ?? "CORE"}
+                </span>
               </div>
               <p className="text-h3 mt-3 text-text-primary" style={{ lineHeight: 1.35 }}>
                 {card.smpLine || "(line missing)"}
               </p>
 
-              {card.whatItOwns && <Section title="What it owns" body={card.whatItOwns} />}
+              {card.whatItOwns && <Section title={card.source && card.source !== "CORE" ? "Territory" : "What it owns"} body={card.whatItOwns} />}
               {card.truth && <Section title="The truth it is built on" body={card.truth} />}
               {card.whatItChallenges && (
                 <Section title="What it challenges" body={card.whatItChallenges} />
               )}
               {card.whatItMakesPossible && (
-                <Section title="What it makes possible" body={card.whatItMakesPossible} />
+                <Section title={card.source && card.source !== "CORE" ? "Courage assessment" : "What it makes possible"} body={card.whatItMakesPossible} />
               )}
               {card.whatItRequires && (
                 <Section title="What it requires of the brand" body={card.whatItRequires} />
@@ -744,23 +753,40 @@ export function SMPSelection({
                 className="my-4 h-px border-0"
                 style={{ backgroundColor: "var(--color-border)" }}
               />
-              <div className="grid grid-cols-4 gap-2">
-                <ScorePill label="Diff" value={card.scores.differentiation} />
-                <ScorePill label="Truth" value={card.scores.truthStrength} />
-                <ScorePill label="Cult" value={card.scores.culturalRelevance} />
-                <ScorePill label="Fame" value={(card.scores as { famePotential?: number }).famePotential} />
-                <ScorePill label="Writer" value={card.scores.writerQuality} />
-                <ScorePill label="Comm" value={card.scores.commercialPlausibility} />
-                <ScorePill label="Creat" value={card.scores.creativeExpandability} />
-              </div>
-              {card.scores.composite !== undefined && (
-                <p
-                  className="text-body-sm mt-3"
-                  style={{ color: "var(--color-text-tertiary)" }}
-                >
-                  Composite {card.scores.composite}/70
-                  {card.fieldName ? ` · ${card.fieldName}` : ""}
-                </p>
+              {card.source && card.source !== "CORE" ? (
+                <>
+                  <div className="grid grid-cols-5 gap-2">
+                    <ScorePill label="Surprise" value={card.loc10?.genuine_surprise} />
+                    <ScorePill label="Path" value={card.loc10?.credible_path} />
+                    <ScorePill label="Rich" value={card.loc10?.territory_richness} />
+                    <ScorePill label="Perm" value={card.loc10?.competitive_permanence} />
+                    <ScorePill label="Escape" value={card.loc10?.category_escape} />
+                  </div>
+                  <p className="text-body-sm mt-3" style={{ color: "var(--color-text-tertiary)" }}>
+                    LOC-10 provocation scores · scored on future potential, not current brand reality
+                  </p>
+                </>
+              ) : (
+                <>
+                  <div className="grid grid-cols-4 gap-2">
+                    <ScorePill label="Diff" value={card.scores.differentiation} />
+                    <ScorePill label="Truth" value={card.scores.truthStrength} />
+                    <ScorePill label="Cult" value={card.scores.culturalRelevance} />
+                    <ScorePill label="Fame" value={(card.scores as { famePotential?: number }).famePotential} />
+                    <ScorePill label="Writer" value={card.scores.writerQuality} />
+                    <ScorePill label="Comm" value={card.scores.commercialPlausibility} />
+                    <ScorePill label="Creat" value={card.scores.creativeExpandability} />
+                  </div>
+                  {card.scores.composite !== undefined && (
+                    <p
+                      className="text-body-sm mt-3"
+                      style={{ color: "var(--color-text-tertiary)" }}
+                    >
+                      Composite {card.scores.composite}/70
+                      {card.fieldName ? ` · ${card.fieldName}` : ""}
+                    </p>
+                  )}
+                </>
               )}
             </button>
           );
