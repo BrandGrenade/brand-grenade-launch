@@ -51,7 +51,7 @@ const OUTPUT_CONTRACT = (engineId: EngineName) => {
 };
 
 const FORBIDDEN_START = `HARD RULE — DO NOT START FROM THE BRIEF.
-Do not start from the brief, the category, the customer, or the market. Perform this engine's move first. Only at the very end consult the brief inputs to check whether this brand has the structural permission to own what you found. If it does not, adjust the line so it can — but never let the brief seed the move.`;
+Do not start from the brief, the category, the customer, or the market. Perform this engine's move. Never let the brief seed the move.`;
 
 const ENGINE_MOVES: Record<EngineName, string> = {
   inversion: `ENGINE 01 — INVERSION.
