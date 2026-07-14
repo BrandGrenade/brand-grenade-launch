@@ -136,6 +136,16 @@ export function LocControls({ sessionId }: { sessionId: string }) {
             type="button"
             className="rounded border px-3 py-1"
             style={{ borderColor: "var(--color-border-strong, #999)" }}
+            disabled={busy || locked || state === "running" || state === "complete"}
+            onClick={recover}
+            title="Rebuild the LOC output from the engine + validation data already saved (no re-run)"
+          >
+            {busy ? "Recovering…" : "Recover LOC"}
+          </button>
+          <button
+            type="button"
+            className="rounded border px-3 py-1"
+            style={{ borderColor: "var(--color-border-strong, #999)" }}
             disabled={busy || locked || state === "running"}
             onClick={() => trigger(true)}
             title={
