@@ -348,3 +348,85 @@ export const getLocStatus = createServerFn({ method: "POST" })
     if (error) throw new Error(`getLocStatus: ${error.message}`);
     return row;
   });
+
+// Recovers a run whose expensive Claude work landed in the DB but whose
+// final assembly write was lost (Worker CPU/wall timeout after step 3).
+// Re-derives markdown + decision packages purely from persisted state —
+// no Claude calls, so it always fits in a single request.
+export const finalizeLeftOfCentre = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => StatusInput.parse(i))
+  .handler(async ({ data, context }) => {
+    await assertSessionOwner(data.sessionId, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: row, error } = await supabaseAdmin
+      .from("sessions")
+      .select("loc_status, loc_engine_outputs, loc_validation, loc_task_type, loc_task_runner_up, loc_classifier_rationale, loc_retry_count, checkpoint_c_confirmed")
+      .eq("id", data.sessionId)
+      .single<{
+        loc_status: string | null;
+        loc_engine_outputs: Record<string, { ok: boolean; output?: EngineOutput; error?: string }> | null;
+        loc_validation: Record<string, { ok: boolean; validation?: LocValidationResult; error?: string }> | null;
+        loc_task_type: string | null;
+        loc_task_runner_up: string | null;
+        loc_classifier_rationale: string | null;
+        loc_retry_count: number | null;
+        checkpoint_c_confirmed: boolean | null;
+      }>();
+    if (error || !row) throw new Error(`finalizeLoc: session not found: ${error?.message ?? "no row"}`);
+    if (row.checkpoint_c_confirmed) throw new Error("LOC locked: Checkpoint C confirmed.");
+    if (row.loc_status === "complete") return { alreadyComplete: true };
+    if (!row.loc_engine_outputs || !row.loc_validation) {
+      throw new Error("finalizeLoc: no persisted engine or validation data — run LOC first.");
+    }
+
+    const engineOutputs = row.loc_engine_outputs;
+    const validation = row.loc_validation;
+    const taskType = (row.loc_task_type ?? "sales-decline") as import("./loc/task-types").LocTaskType;
+
+    const packages: LocEnginePackage[] = ENGINES
+      .filter((e) => engineOutputs[e]?.ok && engineOutputs[e]?.output)
+      .map((e) => ({
+        engine: e,
+        taskType,
+        engineOutput: engineOutputs[e]!.output as EngineOutput,
+        validation: validation[e]?.ok ? (validation[e]!.validation as LocValidationResult) : null,
+        validationError: validation[e]?.ok ? undefined : validation[e]?.error,
+      }));
+
+    if (packages.length === 0) throw new Error("finalizeLoc: no successful engine outputs to assemble.");
+
+    const generatedAt = new Date().toISOString();
+    const markdown = renderLocFullMarkdown({
+      classifier: {
+        task_type: taskType,
+        runner_up: (row.loc_task_runner_up ?? null) as import("./loc/task-types").LocTaskType | null,
+        rationale: row.loc_classifier_rationale ?? "",
+      },
+      packages,
+      retryCount: row.loc_retry_count ?? 0,
+      generatedAt,
+      sourceNote: "recovered from persisted engine + validation state",
+    });
+
+    const packagesJson = packages.map((p) => ({
+      engine: p.engine,
+      taskType: p.taskType,
+      engineOutput: p.engineOutput,
+      validation: p.validation,
+      validationError: p.validationError ?? null,
+    }));
+
+    await supabaseAdmin
+      .from("sessions")
+      .update({
+        loc_decision_packages: packagesJson,
+        stage_9_leftofcentre_output: markdown,
+        loc_status: "complete",
+        loc_generated_at: generatedAt,
+        loc_error: null,
+      } as never)
+      .eq("id", data.sessionId);
+
+    return { ok: true, recovered: true, engineCount: packages.length };
+  });
