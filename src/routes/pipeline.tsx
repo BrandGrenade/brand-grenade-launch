@@ -2788,7 +2788,7 @@ function PipelineView() {
         patch.strategy_signoff_stop = true;
         patch.strategy_signoff_stop_at = now;
       }
-      const { error } = await supabase.from("sessions").update(patch).eq("id", sessionId);
+      const { error } = await supabase.from("sessions").update(patch as never).eq("id", sessionId);
       if (error) {
         console.error("[Checkpoint D] persist failed", error);
         return;
