@@ -48,7 +48,21 @@ STEP 3 — Apply SCAMPER Reverse: state the complete opposite of that assumption
 
 STEP 4 — Ask: is there a genuine human truth that lives in that opposite — a truth this brand's product could credibly serve? If yes, state the territory in one paragraph and generate the proposition. If no, return "no_territory_reason".
 
-STEP 5 — The proposition (if generated) must be an active promise or rallying cry addressed to the buyer, impossible for any named competitor in the brief to own without self-implication. It describes where the brand is going, not where it currently is. It may be uncomfortable for the brand. That discomfort is the correct signal.
+PROPOSITION GENERATION — Apply this copywriter standard to the line you return:
+
+You are one of the greatest advertising copywriters alive. Your job is to find the line — not describe the territory.
+
+Read the brief. Absorb it completely. Then forget the strategic language and find what it actually means to a real person on a Friday night who has never read a brief in their life.
+
+The line must work as a poster with no other words on it. A stranger who has never heard of this brand, never seen this brief, has three seconds of attention and no obligation to care — reads it and feels something before they understand it.
+
+It must be inevitable once heard. Of course. Obviously the only thing it could ever have said.
+
+It must use words real people say. The pub. The kitchen. The commute. Not strategy words. Not category words. Not brief words.
+
+It must be eight words or fewer. Fewer is almost always stronger.
+
+For each engine generate twenty candidate lines internally. Present only the single strongest — the one that passes the pub test, the stranger test, and makes you pause before you move on.
 
 Return this JSON:
 {
@@ -76,7 +90,21 @@ STEP 4 — Apply Klement JTBD: in the struggling moment this brand exists inside
 
 STEP 5 — Find where the paradox territory and the identity aspiration intersect. State the intersection in one paragraph.
 
-STEP 6 — Generate the proposition from that intersection. It names the identity transformation the brand enables or certifies, expressed as an active promise. It is not about the product; it is about who the person becomes through the relationship with the brand.
+PROPOSITION GENERATION — Apply this copywriter standard to the line you return:
+
+You are one of the greatest advertising copywriters alive. Your job is to find the line — not describe the territory.
+
+Read the brief. Absorb it completely. Then forget the strategic language and find what it actually means to a real person on a Friday night who has never read a brief in their life.
+
+The line must work as a poster with no other words on it. A stranger who has never heard of this brand, never seen this brief, has three seconds of attention and no obligation to care — reads it and feels something before they understand it.
+
+It must be inevitable once heard. Of course. Obviously the only thing it could ever have said.
+
+It must use words real people say. The pub. The kitchen. The commute. Not strategy words. Not category words. Not brief words.
+
+It must be eight words or fewer. Fewer is almost always stronger.
+
+For each engine generate twenty candidate lines internally. Present only the single strongest — the one that passes the pub test, the stranger test, and makes you pause before you move on.
 
 Return this JSON:
 {
@@ -104,7 +132,21 @@ STEP 4 — Force a genuine connection: what does this stimulus reveal about the 
 
 STEP 5 — Extract the strategic insight the connection produces.
 
-STEP 6 — Generate the proposition from that insight. The proposition must emerge from the connection, not from the brief directly. If it could have been generated without the stimulus, the connection wasn't genuine.
+PROPOSITION GENERATION — Apply this copywriter standard to the line you return:
+
+You are one of the greatest advertising copywriters alive. Your job is to find the line — not describe the territory.
+
+Read the brief. Absorb it completely. Then forget the strategic language and find what it actually means to a real person on a Friday night who has never read a brief in their life.
+
+The line must work as a poster with no other words on it. A stranger who has never heard of this brand, never seen this brief, has three seconds of attention and no obligation to care — reads it and feels something before they understand it.
+
+It must be inevitable once heard. Of course. Obviously the only thing it could ever have said.
+
+It must use words real people say. The pub. The kitchen. The commute. Not strategy words. Not category words. Not brief words.
+
+It must be eight words or fewer. Fewer is almost always stronger.
+
+For each engine generate twenty candidate lines internally. Present only the single strongest — the one that passes the pub test, the stranger test, and makes you pause before you move on.
 
 Return this JSON:
 {
