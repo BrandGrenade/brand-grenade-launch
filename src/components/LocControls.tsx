@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { runLeftOfCentre, getLocStatus } from "@/lib/loc.functions";
+import { runLeftOfCentre, getLocStatus, finalizeLeftOfCentre } from "@/lib/loc.functions";
 
 type LocStatusRow = {
   loc_status: string | null;
