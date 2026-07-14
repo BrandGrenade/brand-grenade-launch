@@ -267,6 +267,13 @@ export const runLeftOfCentre = createServerFn({ method: "POST" })
           : { ok: false, error: v.error };
       }
 
+      // Persist validation immediately so a later timeout during assembly
+      // does not lose the expensive Claude calls above.
+      await supabaseAdmin
+        .from("sessions")
+        .update({ loc_validation: validationRecord } as never)
+        .eq("id", data.sessionId);
+
       // 4. Assemble decision packages.
       const packages: LocEnginePackage[] = engineResults
         .filter((r) => r.output !== null)
