@@ -1,6 +1,9 @@
 import { useMemo, useState } from "react";
 import { parseStage11Verdicts, parseStage10Scores, type Stage11Verdict } from "@/lib/stage12-filter";
+import type { LocEnginePackage } from "@/lib/loc/decision-package";
 
+
+export type SMPCardSource = "CORE" | "LOC — BREACH" | "LOC — SYNECT" | "LOC — DISPLACE";
 
 export interface SMPCard {
   cardNumber: number;
@@ -22,7 +25,16 @@ export interface SMPCard {
   fieldName: string;
   iconicTierStatus: string;
   pressureTestNote: string;
+  source?: SMPCardSource;
+  loc10?: {
+    genuine_surprise?: number;
+    credible_path?: number;
+    territory_richness?: number;
+    competitive_permanence?: number;
+    category_escape?: number;
+  };
 }
+
 
 // ----------------------------- PARSER -----------------------------
 
