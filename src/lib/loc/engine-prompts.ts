@@ -109,15 +109,29 @@ Find it. Say it. Eight words or fewer. Plain language. The pub, the kitchen, the
 Generate twenty candidate lines internally. Present only the one that makes a category insider feel exposed when they read it.`,
 
   the_moment: `ENGINE 11 — THE MOMENT.
-Find the single most specific human moment the strategy belongs to. Not the emotional territory. Not the strategic truth. The actual scene. The specific time of day. The specific place. The specific thing someone does with their hands or thinks in a particular kind of silence.
 
-Name that moment so precisely that the reader is already inside it before they have understood what the brand is saying.
+The most powerful brand communication does not describe a feeling. It does not explain what the brand means. It names the specific moment where the brand becomes real in a person's life — and leaves the occasion deliberately open so every reader walks into it with their own version.
 
-"Friday night begins in aisle six" is not a strategic proposition. It is a moment named so specifically that a creative director can see the entire campaign from one sentence. Find that moment for this brief.
+"Friday night begins in aisle six" does not tell you what Friday night is. It does not show a dinner party or a footy crowd or a date night at home. It names an occasion — Friday night, universally understood, personally different for every reader — and then names the specific moment where that occasion first becomes real. Not at the party. Not at home with the first glass open. In aisle six. The moment of preparation. The ritual of choosing. The physical act that transforms anticipation into something you are holding in your hands. The occasion is universal. The moment is specific. The reader supplies the rest.
 
-The line must locate the reader somewhere specific. A time. A place. A sensation. A private thought they have never heard named out loud.
+THE SPECIFIC MOVE.
+Step one — find the occasion. The human occasion that exists independently of the brand — the thing people are anticipating, preparing for, moving toward. It must be universal enough that every reader has their own version of it.
+Step two — find the moment. The specific point where the brand intercepts that occasion and makes it real. Not during the occasion. Before it. The preparation, the ritual, the act of choosing or buying or opening or beginning that transforms the occasion from anticipation into something tangible.
+Step three — name the occasion without defining it. Leave it open. The reader must be able to bring their own version. The moment you define the occasion you exclude everyone whose occasion looks different.
+Step four — name the moment with maximum specificity. This is where the brand lives. The more specific the moment the more completely the brand owns it.
+Step five — compress both into one line. The occasion stated. The moment located. Nothing else.
 
-Generate twenty candidate lines internally. Present only the one that puts the reader inside the moment before they understand why.`,
+ANTI-EXAMPLES.
+"The perfect drink for your Friday night." Fails — defines the occasion and places the brand during it rather than at the moment it begins.
+"Where Friday night starts." Fails — too abstract, no specific physical location, the reader is not anywhere.
+
+QUALITY TEST — apply both to every candidate.
+One — does the line name a universal occasion without defining what that occasion looks like? If the occasion is specific enough to exclude some readers — rewrite.
+Two — does the line locate the brand at the specific moment the occasion becomes real, before the occasion itself? If the brand is present during the occasion rather than at its beginning — rewrite.
+Success signal: the reader immediately knows which occasion this is for them personally — and immediately knows the brand is where that occasion begins. Both arrive simultaneously. Neither requires explanation.
+
+GENERATION.
+Generate thirty candidate lines internally. Apply both quality tests to every one. Eliminate any line that defines the occasion or places the brand during rather than before it. If fewer than three lines pass both tests, generate thirty more before presenting. Present only the single strongest — the line that names the occasion universally and locates the moment so specifically that the brand owns it completely. Eight words or fewer where possible.`,
 
 
   one_word_ownership: `ENGINE 12 — ONE WORD OWNERSHIP.
