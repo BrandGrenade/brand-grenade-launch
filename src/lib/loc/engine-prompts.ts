@@ -31,13 +31,25 @@ It must be eight words or fewer. Fewer is almost always stronger.
 
 Generate twenty candidate lines internally. Return only the single strongest — the one that passes the pub test, the stranger test, and makes you pause before you move on.`;
 
-const OUTPUT_CONTRACT = (engineId: EngineName) => `OUTPUT — return exactly one JSON object, no prose, no markdown fences:
+const OUTPUT_CONTRACT = (engineId: EngineName) => {
+  if (engineId === "one_word_ownership") {
+    return `OUTPUT — return exactly one JSON object, no prose, no markdown fences:
+
+{
+  "engine": "${engineId}",
+  "word": "<THE single word this brand could own permanently>",
+  "proposition": "<THE PROPOSITION — 8 words or fewer, must NEVER contain the word above>",
+  "descriptor": "<one sentence: how this proposition claims the word without saying it and why no competitor can follow>"
+}`;
+  }
+  return `OUTPUT — return exactly one JSON object, no prose, no markdown fences:
 
 {
   "engine": "${engineId}",
   "proposition": "<THE LINE — 8 words or fewer>",
   "descriptor": "<one sentence: what creative move this makes and why the brand can own it>"
 }`;
+};
 
 const FORBIDDEN_START = `HARD RULE — DO NOT START FROM THE BRIEF.
 Do not start from the brief, the category, the customer, or the market. Perform this engine's move first. Only at the very end consult the brief inputs to check whether this brand has the structural permission to own what you found. If it does not, adjust the line so it can — but never let the brief seed the move.`;
@@ -69,7 +81,11 @@ Write a villain statement: what specifically does this brand exist to destroy, i
 
   subtract: `ENGINE 09 — SUBTRACT.
 Strip every verbal identifier — the brand name, the category name, the product description. Ask what behaviour, belief, or emotional register would still be recognisably this brand. Build from only what remains. Generate the line that comes from what cannot be stripped away.`,
+
+  one_word_ownership: `ENGINE 12 — ONE WORD OWNERSHIP.
+Find the single word this brand could own in this category permanently. Not a word from the brief. Not a word any competitor currently owns. Not a category convention word. The word that — if this brand claimed it consistently for ten years — would become inseparable from this brand. The word is the strategic territory. It is not the output. Now write the proposition that claims that word permanently — without ever saying it. The proposition must make you feel the word without reading it. VB's word is Reward. The proposition that claimed it was "Hard Earned Thirst." The word Reward never appeared. The proposition made it VB's forever. Find the equivalent for this brand. The word first. Then the proposition that owns it — the proposition must never contain the word.`,
 };
+
 
 export function getEngineSystemPrompt(engine: EngineName): string {
   return `You are ${LOC_ENGINE_LABEL[engine]}, one of nine Left-of-Centre engines.
@@ -98,6 +114,7 @@ export type EngineOutput = {
   engine: EngineName;
   proposition: string;
   descriptor: string;
+  word?: string;
 };
 
 export function parseEngineOutput(raw: string, engine: EngineName): EngineOutput {
@@ -111,6 +128,7 @@ export function parseEngineOutput(raw: string, engine: EngineName): EngineOutput
   const parsed = parseJsonLenient<Partial<EngineOutput>>(slice);
   const proposition = (parsed.proposition ?? "").toString().trim();
   const descriptor = (parsed.descriptor ?? "").toString().trim();
+  const word = (parsed.word ?? "").toString().trim();
   if (!proposition) {
     throw new Error(`${engine} engine returned empty proposition.`);
   }
@@ -118,5 +136,6 @@ export function parseEngineOutput(raw: string, engine: EngineName): EngineOutput
     engine,
     proposition,
     descriptor,
+    ...(word ? { word } : {}),
   };
 }
