@@ -63,6 +63,20 @@ export function LocControls({ sessionId }: { sessionId: string }) {
     }
   }
 
+  async function recover() {
+    if (busy || locked) return;
+    setBusy(true);
+    try {
+      const r = (await finalizeLoc({ data: { sessionId } })) as { ok?: boolean; alreadyComplete?: boolean };
+      if (r.alreadyComplete) toast.info("LOC already complete");
+      else toast.success("LOC recovered from persisted data");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "LOC recovery failed");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   const badgeColor =
     state === "complete"
       ? "var(--color-success)"
