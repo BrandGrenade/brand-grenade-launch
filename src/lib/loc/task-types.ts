@@ -26,7 +26,7 @@ export const LOC_TASK_TYPE_LABEL: Record<LocTaskType, string> = {
   cultural_moment_capitalisation: "Cultural Moment Capitalisation",
 };
 
-// The nine current LOC engines.
+// The current LOC engines.
 export const LOC_ENGINES = [
   "inversion",
   "constraint",
@@ -37,6 +37,7 @@ export const LOC_ENGINES = [
   "time_displacement",
   "enemy_first",
   "subtract",
+  "one_word_ownership",
 ] as const;
 
 export type EngineName = (typeof LOC_ENGINES)[number];
@@ -51,4 +52,5 @@ export const LOC_ENGINE_LABEL: Record<EngineName, string> = {
   time_displacement: "ENGINE 07 — TIME DISPLACEMENT",
   enemy_first: "ENGINE 08 — ENEMY FIRST",
   subtract: "ENGINE 09 — SUBTRACT",
+  one_word_ownership: "ENGINE 12 — ONE WORD OWNERSHIP",
 };
