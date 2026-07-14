@@ -1,6 +1,9 @@
 import { useMemo, useState } from "react";
 import { parseStage11Verdicts, parseStage10Scores, type Stage11Verdict } from "@/lib/stage12-filter";
+import type { LocEnginePackage } from "@/lib/loc/decision-package";
 
+
+export type SMPCardSource = "CORE" | "LOC — BREACH" | "LOC — SYNECT" | "LOC — DISPLACE";
 
 export interface SMPCard {
   cardNumber: number;
@@ -22,7 +25,16 @@ export interface SMPCard {
   fieldName: string;
   iconicTierStatus: string;
   pressureTestNote: string;
+  source?: SMPCardSource;
+  loc10?: {
+    genuine_surprise?: number;
+    credible_path?: number;
+    territory_richness?: number;
+    competitive_permanence?: number;
+    category_escape?: number;
+  };
 }
+
 
 // ----------------------------- PARSER -----------------------------
 
@@ -331,12 +343,95 @@ function cleanForDisplay(text: string): string {
     .join("\n");
 }
 
-// ----------------------------- COMPONENT -----------------------------
+// ----------------------------- LOC CARDS -----------------------------
+
+const LOC_ENGINE_LABEL: Record<string, SMPCardSource> = {
+  breach: "LOC — BREACH",
+  synect: "LOC — SYNECT",
+  displace: "LOC — DISPLACE",
+};
+
+function buildLocCards(packages: LocEnginePackage[] | null, offset: number): SMPCard[] {
+  if (!packages || packages.length === 0) return [];
+  const cards: SMPCard[] = [];
+  let i = 0;
+  for (const pkg of packages) {
+    const label = LOC_ENGINE_LABEL[pkg.engine];
+    if (!label) continue; // skip 'naive' per selection-pool spec (BREACH/SYNECT/DISPLACE only)
+    const smpLine = (pkg.engineOutput?.proposition ?? "").trim();
+    if (!smpLine) continue;
+
+    const eo = pkg.engineOutput;
+    const territory =
+      eo.engine === "breach"
+        ? eo.territory
+        : eo.engine === "synect"
+          ? eo.intersection_territory
+          : eo.engine === "displace"
+            ? eo.strategic_insight
+            : "";
+
+    const v = pkg.validation ?? null;
+    const requires = v
+      ? [
+          v.what_the_brand_must_become && `Become: ${v.what_the_brand_must_become}`,
+          v.what_the_brand_must_abandon && `Abandon: ${v.what_the_brand_must_abandon}`,
+        ]
+          .filter(Boolean)
+          .join(" · ")
+      : "";
+    const makesPossible = v?.courage_assessment ?? "";
+    const truth =
+      eo.engine === "breach"
+        ? eo.human_truth_in_the_opposite ?? ""
+        : eo.engine === "synect"
+          ? eo.paradox_unpacked ?? ""
+          : eo.engine === "displace"
+            ? eo.why_connection_is_genuine ?? ""
+            : "";
+    const challenges =
+      eo.engine === "breach"
+        ? `Assumption reversed: ${eo.assumption_reversed ?? ""}`
+        : eo.engine === "synect"
+          ? `Compressed conflict: ${eo.compressed_conflict ?? ""}`
+          : eo.engine === "displace"
+            ? `Random domain: ${eo.domain ?? ""} → ${eo.connection ?? ""}`
+            : "";
+
+    cards.push({
+      cardNumber: offset + i + 1,
+      smpLine,
+      whatItOwns: (territory ?? "").toString().slice(0, 400),
+      truth: truth.slice(0, 400),
+      whatItChallenges: challenges.slice(0, 400),
+      whatItMakesPossible: makesPossible.slice(0, 400),
+      whatItRequires: requires.slice(0, 400),
+      scores: {},
+      fieldName: label,
+      iconicTierStatus: "",
+      pressureTestNote: pkg.validationError ?? "",
+      source: label,
+      loc10: v
+        ? {
+            genuine_surprise: v.loc10?.genuine_surprise?.score,
+            credible_path: v.loc10?.credible_path?.score,
+            territory_richness: v.loc10?.territory_richness?.score,
+            competitive_permanence: v.loc10?.competitive_permanence?.score,
+            category_escape: v.loc10?.category_escape?.score,
+          }
+        : undefined,
+    });
+    i += 1;
+  }
+  return cards;
+}
+
 
 export function SMPSelection({
   stage12Output,
   stage11Output,
   stage10Output,
+  locPackages,
   onSelect,
   onResubmit,
   resubmitting = false,
@@ -345,19 +440,25 @@ export function SMPSelection({
   stage12Output: string;
   stage11Output?: string;
   stage10Output?: string;
+  /** Optional LOC engine decision packages (from session.loc_decision_packages).
+   *  When provided, BREACH / SYNECT / DISPLACE propositions are appended to the
+   *  selection pool alongside CORE propositions. */
+  locPackages?: LocEnginePackage[] | null;
   onSelect: (card: SMPCard) => void;
   onResubmit?: (feedback: string) => void | Promise<void>;
   resubmitting?: boolean;
   /** True while Stage 12 Claude card formatting is still streaming in the background. */
   enhancing?: boolean;
 }) {
-  const cards = useMemo(
-    () => parseSMPCards(stage12Output ?? "", stage11Output, stage10Output),
+  const coreCards = useMemo(
+    () => parseSMPCards(stage12Output ?? "", stage11Output, stage10Output).map((c) => ({ ...c, source: "CORE" as SMPCardSource })),
     [stage12Output, stage11Output, stage10Output],
   );
+  const locCards = useMemo(() => buildLocCards(locPackages ?? null, coreCards.length), [locPackages, coreCards.length]);
+  const cards = useMemo(() => [...coreCards, ...locCards], [coreCards, locCards]);
   const usingStage11Fallback = useMemo(
-    () => (stage12Output ? parsePropositions(stage12Output).length === 0 : true) && cards.length > 0,
-    [stage12Output, cards.length],
+    () => (stage12Output ? parsePropositions(stage12Output).length === 0 : true) && coreCards.length > 0,
+    [stage12Output, coreCards.length],
   );
 
 
@@ -622,18 +723,27 @@ export function SMPSelection({
             >
               <div className="flex items-center justify-between">
                 <span className="text-label text-primary">PROPOSITION {card.cardNumber}</span>
+                <span
+                  className="text-label"
+                  style={{
+                    color: card.source && card.source !== "CORE" ? "var(--color-warning)" : "var(--color-text-tertiary)",
+                    letterSpacing: "0.06em",
+                  }}
+                >
+                  {card.source ?? "CORE"}
+                </span>
               </div>
               <p className="text-h3 mt-3 text-text-primary" style={{ lineHeight: 1.35 }}>
                 {card.smpLine || "(line missing)"}
               </p>
 
-              {card.whatItOwns && <Section title="What it owns" body={card.whatItOwns} />}
+              {card.whatItOwns && <Section title={card.source && card.source !== "CORE" ? "Territory" : "What it owns"} body={card.whatItOwns} />}
               {card.truth && <Section title="The truth it is built on" body={card.truth} />}
               {card.whatItChallenges && (
                 <Section title="What it challenges" body={card.whatItChallenges} />
               )}
               {card.whatItMakesPossible && (
-                <Section title="What it makes possible" body={card.whatItMakesPossible} />
+                <Section title={card.source && card.source !== "CORE" ? "Courage assessment" : "What it makes possible"} body={card.whatItMakesPossible} />
               )}
               {card.whatItRequires && (
                 <Section title="What it requires of the brand" body={card.whatItRequires} />
@@ -643,23 +753,40 @@ export function SMPSelection({
                 className="my-4 h-px border-0"
                 style={{ backgroundColor: "var(--color-border)" }}
               />
-              <div className="grid grid-cols-4 gap-2">
-                <ScorePill label="Diff" value={card.scores.differentiation} />
-                <ScorePill label="Truth" value={card.scores.truthStrength} />
-                <ScorePill label="Cult" value={card.scores.culturalRelevance} />
-                <ScorePill label="Fame" value={(card.scores as { famePotential?: number }).famePotential} />
-                <ScorePill label="Writer" value={card.scores.writerQuality} />
-                <ScorePill label="Comm" value={card.scores.commercialPlausibility} />
-                <ScorePill label="Creat" value={card.scores.creativeExpandability} />
-              </div>
-              {card.scores.composite !== undefined && (
-                <p
-                  className="text-body-sm mt-3"
-                  style={{ color: "var(--color-text-tertiary)" }}
-                >
-                  Composite {card.scores.composite}/70
-                  {card.fieldName ? ` · ${card.fieldName}` : ""}
-                </p>
+              {card.source && card.source !== "CORE" ? (
+                <>
+                  <div className="grid grid-cols-5 gap-2">
+                    <ScorePill label="Surprise" value={card.loc10?.genuine_surprise} />
+                    <ScorePill label="Path" value={card.loc10?.credible_path} />
+                    <ScorePill label="Rich" value={card.loc10?.territory_richness} />
+                    <ScorePill label="Perm" value={card.loc10?.competitive_permanence} />
+                    <ScorePill label="Escape" value={card.loc10?.category_escape} />
+                  </div>
+                  <p className="text-body-sm mt-3" style={{ color: "var(--color-text-tertiary)" }}>
+                    LOC-10 provocation scores · scored on future potential, not current brand reality
+                  </p>
+                </>
+              ) : (
+                <>
+                  <div className="grid grid-cols-4 gap-2">
+                    <ScorePill label="Diff" value={card.scores.differentiation} />
+                    <ScorePill label="Truth" value={card.scores.truthStrength} />
+                    <ScorePill label="Cult" value={card.scores.culturalRelevance} />
+                    <ScorePill label="Fame" value={(card.scores as { famePotential?: number }).famePotential} />
+                    <ScorePill label="Writer" value={card.scores.writerQuality} />
+                    <ScorePill label="Comm" value={card.scores.commercialPlausibility} />
+                    <ScorePill label="Creat" value={card.scores.creativeExpandability} />
+                  </div>
+                  {card.scores.composite !== undefined && (
+                    <p
+                      className="text-body-sm mt-3"
+                      style={{ color: "var(--color-text-tertiary)" }}
+                    >
+                      Composite {card.scores.composite}/70
+                      {card.fieldName ? ` · ${card.fieldName}` : ""}
+                    </p>
+                  )}
+                </>
               )}
             </button>
           );

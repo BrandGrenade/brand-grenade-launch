@@ -3097,6 +3097,7 @@ function PipelineView() {
                   stage12Output={stage12Output ?? ""}
                   stage11Output={stage11Output ?? undefined}
                   stage10Output={stage10Output ?? undefined}
+                  locPackages={((session as unknown as { loc_decision_packages?: unknown } | null)?.loc_decision_packages as never) ?? null}
                   onResubmit={(feedback) => handleResubmitCheckpoint("12", feedback)}
                   resubmitting={resubmitting}
                   enhancing={stage12Loading}
