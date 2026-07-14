@@ -1,0 +1,1 @@
+update public.sessions set loc_status = 'failed', loc_error = 'Isolate torn down after validations completed but before final assembly write. Retry.' where id = 'b476397f-1cd6-4135-b302-76b755e124ba' and loc_status = 'running';
