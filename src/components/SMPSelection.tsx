@@ -3,7 +3,7 @@ import { parseStage11Verdicts, parseStage10Scores, type Stage11Verdict } from "@
 import type { LocEnginePackage } from "@/lib/loc/decision-package";
 
 
-export type SMPCardSource = "CORE" | "LOC — BREACH" | "LOC — SYNECT" | "LOC — DISPLACE";
+export type SMPCardSource = "CORE" | `LOC — ${string}`;
 
 export interface SMPCard {
   cardNumber: number;
@@ -345,10 +345,22 @@ function cleanForDisplay(text: string): string {
 
 // ----------------------------- LOC CARDS -----------------------------
 
-const LOC_ENGINE_LABEL: Record<string, SMPCardSource> = {
-  breach: "LOC — BREACH",
-  synect: "LOC — SYNECT",
-  displace: "LOC — DISPLACE",
+const LOC_ENGINE_DISPLAY: Record<string, string> = {
+  inversion: "INVERSION",
+  constraint: "CONSTRAINT",
+  wrong_room: "WRONG ROOM",
+  delete_customer: "DELETE THE CUSTOMER",
+  worst_case: "WORST CASE",
+  random_connection: "RANDOM CONNECTION",
+  time_displacement: "TIME DISPLACEMENT",
+  enemy_first: "ENEMY FIRST",
+  subtract: "SUBTRACT",
+  // Legacy — pre-nine-engine rebuild. Rendered for backward-compat if
+  // a historic session still has them persisted.
+  breach: "BREACH",
+  synect: "SYNECT",
+  displace: "DISPLACE",
+  naive: "NAIVE",
 };
 
 function buildLocCards(packages: LocEnginePackage[] | null, offset: number): SMPCard[] {
@@ -356,70 +368,28 @@ function buildLocCards(packages: LocEnginePackage[] | null, offset: number): SMP
   const cards: SMPCard[] = [];
   let i = 0;
   for (const pkg of packages) {
-    const label = LOC_ENGINE_LABEL[pkg.engine];
-    if (!label) continue; // skip 'naive' per selection-pool spec (BREACH/SYNECT/DISPLACE only)
-    const smpLine = (pkg.engineOutput?.proposition ?? "").trim();
+    const eo = pkg.engineOutput as { proposition?: string; descriptor?: string } | null;
+    if (!eo) continue;
+    const smpLine = (eo.proposition ?? "").trim();
     if (!smpLine) continue;
-
-    const eo = pkg.engineOutput;
-    const territory =
-      eo.engine === "breach"
-        ? eo.territory
-        : eo.engine === "synect"
-          ? eo.intersection_territory
-          : eo.engine === "displace"
-            ? eo.strategic_insight
-            : "";
-
-    const v = pkg.validation ?? null;
-    const requires = v
-      ? [
-          v.what_the_brand_must_become && `Become: ${v.what_the_brand_must_become}`,
-          v.what_the_brand_must_abandon && `Abandon: ${v.what_the_brand_must_abandon}`,
-        ]
-          .filter(Boolean)
-          .join(" · ")
-      : "";
-    const makesPossible = v?.courage_assessment ?? "";
-    const truth =
-      eo.engine === "breach"
-        ? eo.human_truth_in_the_opposite ?? ""
-        : eo.engine === "synect"
-          ? eo.paradox_unpacked ?? ""
-          : eo.engine === "displace"
-            ? eo.why_connection_is_genuine ?? ""
-            : "";
-    const challenges =
-      eo.engine === "breach"
-        ? `Assumption reversed: ${eo.assumption_reversed ?? ""}`
-        : eo.engine === "synect"
-          ? `Compressed conflict: ${eo.compressed_conflict ?? ""}`
-          : eo.engine === "displace"
-            ? `Random domain: ${eo.domain ?? ""} → ${eo.connection ?? ""}`
-            : "";
+    const engineKey = String(pkg.engine ?? "");
+    const display = LOC_ENGINE_DISPLAY[engineKey] ?? engineKey.toUpperCase();
+    const label: SMPCardSource = `LOC — ${display}`;
+    const descriptor = (eo.descriptor ?? "").toString().trim();
 
     cards.push({
       cardNumber: offset + i + 1,
       smpLine,
-      whatItOwns: (territory ?? "").toString().slice(0, 400),
-      truth: truth.slice(0, 400),
-      whatItChallenges: challenges.slice(0, 400),
-      whatItMakesPossible: makesPossible.slice(0, 400),
-      whatItRequires: requires.slice(0, 400),
+      whatItOwns: descriptor.slice(0, 400),
+      truth: "",
+      whatItChallenges: "",
+      whatItMakesPossible: "",
+      whatItRequires: "",
       scores: {},
       fieldName: label,
       iconicTierStatus: "",
       pressureTestNote: pkg.validationError ?? "",
       source: label,
-      loc10: v
-        ? {
-            genuine_surprise: v.loc10?.genuine_surprise?.score,
-            credible_path: v.loc10?.credible_path?.score,
-            territory_richness: v.loc10?.territory_richness?.score,
-            competitive_permanence: v.loc10?.competitive_permanence?.score,
-            category_escape: v.loc10?.category_escape?.score,
-          }
-        : undefined,
     });
     i += 1;
   }
