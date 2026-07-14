@@ -2726,12 +2726,94 @@ function PipelineView() {
     if (stageId === "12" && selectedStatus === "checkpoint") return;
     if (stageId === "13" && !intelSubmitted) return;
     if (!nextStage) return;
+    // Checkpoint D — Master Brand Strategy Sign-Off gate between Stage 13/13B and Stage 14.
+    if (
+      (stageId === "13" || stageId === "13B") &&
+      nextStage.id === "14" &&
+      !session?.strategy_signoff_confirmed
+    ) {
+      setStrategySignoffOpen(true);
+      return;
+    }
     if (statuses[nextStage.id] === "running") {
       await handleRetryStage(nextStage.id);
       return;
     }
     setStatuses((p) => ({ ...p, [stageId]: "complete", [nextStage.id]: "running" }));
     setSelectedId(nextStage.id);
+  };
+
+  // ─────────────────── Checkpoint D — Strategy Sign-Off ───────────────────
+  const [strategySignoffOpen, setStrategySignoffOpen] = useState(false);
+  const [strategySignoffSaving, setStrategySignoffSaving] = useState(false);
+
+  const strategySignoffPreview = useMemo(() => {
+    const selectedProp = (session?.selected_smp ?? "").trim();
+    const s13 = (stage13Output ?? "").trim();
+    const verdictMatch = s13.match(
+      /(Confirmed with Adjustments|Confirmed|Not Recommended)/i,
+    );
+    const verdict = verdictMatch ? verdictMatch[0] : "Verdict not detected";
+    const commitmentsBlock =
+      s13
+        .split(/\n#{1,6}\s+/)
+        .find((sec) => /strategic commitments?/i.test(sec)) ?? "";
+    const commitments = Array.from(
+      commitmentsBlock.matchAll(/^\s*(?:[-*]|\d+\.)\s+(.+)$/gm),
+    )
+      .slice(0, 5)
+      .map((m) => m[1].trim());
+    const guardrailsBlock =
+      s13
+        .split(/\n#{1,6}\s+/)
+        .find((sec) => /communication guardrails?/i.test(sec)) ?? "";
+    const guardrails = Array.from(
+      guardrailsBlock.matchAll(/^\s*(?:[-*]|\d+\.)\s+(.+)$/gm),
+    )
+      .slice(0, 3)
+      .map((m) => m[1].trim());
+    return { selectedProp, verdict, commitments, guardrails };
+  }, [session?.selected_smp, stage13Output]);
+
+  const confirmStrategySignoff = async (stop: boolean) => {
+    if (!sessionId) return;
+    setStrategySignoffSaving(true);
+    try {
+      const now = new Date().toISOString();
+      const patch: Record<string, unknown> = {
+        strategy_signoff_confirmed: true,
+        strategy_signoff_confirmed_at: now,
+      };
+      if (stop) {
+        patch.strategy_signoff_stop = true;
+        patch.strategy_signoff_stop_at = now;
+      }
+      const { error } = await supabase.from("sessions").update(patch).eq("id", sessionId);
+      if (error) {
+        console.error("[Checkpoint D] persist failed", error);
+        return;
+      }
+      setSession((prev) =>
+        prev
+          ? ({
+              ...prev,
+              strategy_signoff_confirmed: true,
+              strategy_signoff_stop: stop || Boolean(prev.strategy_signoff_stop),
+            } as SessionData)
+          : prev,
+      );
+      setStrategySignoffOpen(false);
+      if (stop) {
+        // Option B — hold at Stage 13. Do not advance to Stage 14.
+        return;
+      }
+      // Option A — proceed to Stage 14.
+      const fromId = selected.id === "13B" ? "13B" : "13";
+      setStatuses((p) => ({ ...p, [fromId]: "complete", "14": "running" }));
+      setSelectedId("14");
+    } finally {
+      setStrategySignoffSaving(false);
+    }
   };
 
   return (
