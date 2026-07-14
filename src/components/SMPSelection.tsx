@@ -349,6 +349,7 @@ export function SMPSelection({
   stage12Output,
   stage11Output,
   stage10Output,
+  locPackages,
   onSelect,
   onResubmit,
   resubmitting = false,
@@ -357,19 +358,25 @@ export function SMPSelection({
   stage12Output: string;
   stage11Output?: string;
   stage10Output?: string;
+  /** Optional LOC engine decision packages (from session.loc_decision_packages).
+   *  When provided, BREACH / SYNECT / DISPLACE propositions are appended to the
+   *  selection pool alongside CORE propositions. */
+  locPackages?: LocEnginePackage[] | null;
   onSelect: (card: SMPCard) => void;
   onResubmit?: (feedback: string) => void | Promise<void>;
   resubmitting?: boolean;
   /** True while Stage 12 Claude card formatting is still streaming in the background. */
   enhancing?: boolean;
 }) {
-  const cards = useMemo(
-    () => parseSMPCards(stage12Output ?? "", stage11Output, stage10Output),
+  const coreCards = useMemo(
+    () => parseSMPCards(stage12Output ?? "", stage11Output, stage10Output).map((c) => ({ ...c, source: "CORE" as SMPCardSource })),
     [stage12Output, stage11Output, stage10Output],
   );
+  const locCards = useMemo(() => buildLocCards(locPackages ?? null, coreCards.length), [locPackages, coreCards.length]);
+  const cards = useMemo(() => [...coreCards, ...locCards], [coreCards, locCards]);
   const usingStage11Fallback = useMemo(
-    () => (stage12Output ? parsePropositions(stage12Output).length === 0 : true) && cards.length > 0,
-    [stage12Output, cards.length],
+    () => (stage12Output ? parsePropositions(stage12Output).length === 0 : true) && coreCards.length > 0,
+    [stage12Output, coreCards.length],
   );
 
 
