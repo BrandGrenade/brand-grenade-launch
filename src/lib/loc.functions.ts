@@ -130,9 +130,9 @@ export const runLeftOfCentre = createServerFn({ method: "POST" })
     // the generated types.ts).
     const { data: locRow } = await supabaseAdmin
       .from("sessions")
-      .select("loc_status, loc_retry_count, updated_at")
+      .select("loc_status, loc_retry_count, loc_generated_at")
       .eq("id", data.sessionId)
-      .single<{ loc_status: string | null; loc_retry_count: number | null; updated_at: string | null }>();
+      .single<{ loc_status: string | null; loc_retry_count: number | null; loc_generated_at: string | null }>();
 
     if (session.checkpoint_c_confirmed) {
       throw new Error("LOC is locked: Checkpoint C already confirmed for this session.");
@@ -141,14 +141,18 @@ export const runLeftOfCentre = createServerFn({ method: "POST" })
       return { alreadyComplete: true, sessionId: data.sessionId };
     }
     if (locRow?.loc_status === "running") {
-      // Block concurrent runs: even with force, if the current run touched
-      // the row within the last 5 minutes, treat it as still in flight.
-      const lastTouch = locRow.updated_at ? Date.parse(locRow.updated_at) : 0;
+      // Guard against concurrent runs using the LOC-specific timestamp
+      // (loc_generated_at is bumped at each LOC persistence step). Session
+      // updated_at is bumped by unrelated writes and would block retries
+      // indefinitely.
+      const lastTouch = locRow.loc_generated_at ? Date.parse(locRow.loc_generated_at) : 0;
       const staleMs = Date.now() - lastTouch;
-      if (!data.force || staleMs < 5 * 60 * 1000) {
+      if (!data.force && staleMs < 5 * 60 * 1000) {
         return { alreadyRunning: true, sessionId: data.sessionId, staleMs };
       }
+      // With force:true, always allow retry regardless of staleness.
     }
+
 
     const retryCount = data.force ? (locRow?.loc_retry_count ?? 0) + 1 : locRow?.loc_retry_count ?? 0;
 
