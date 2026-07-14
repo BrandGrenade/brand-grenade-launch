@@ -82,10 +82,24 @@ Write a villain statement: what specifically does this brand exist to destroy, i
 Strip every verbal identifier — the brand name, the category name, the product description. Ask what behaviour, belief, or emotional register would still be recognisably this brand. Build from only what remains. Generate the line that comes from what cannot be stripped away.`,
 
   the_unsayable: `ENGINE 10 — THE UNSAYABLE.
-Find the one true thing about this category, this brand, or this customer that no brand in this space is allowed to say out loud. The taboo. The open secret. The thing everyone in the category tacitly agrees to pretend isn't true. Build the proposition that says it — plainly, without apology, without softening. Generate the line that breaks the silence.`,
+Every category has one thing that is true that no brand in it will ever say — because saying it would indict them. The entire category depends on the audience not noticing it, not naming it, not saying it out loud. Find that thing for this category. The brand that names it first owns it permanently.
+
+Do not start from the brief. Start from the category. Ask: what is the thing every brand in this space is commercially dependent on the audience never saying? What is the shared pretence? The convenient fiction? The thing that is obviously true and never spoken?
+
+Find it. Say it. Eight words or fewer. Plain language. The pub, the kitchen, the commute.
+
+Generate twenty candidate lines internally. Present only the one that makes a category insider feel exposed when they read it.`,
 
   the_moment: `ENGINE 11 — THE MOMENT.
-Ignore the brand, the category, and the strategy. Find the single specific human moment — three seconds long, a real place, a real feeling, a real trigger — where this brand would actually matter to someone who has never thought about it. Build the proposition entirely from inside that moment. Generate the line that could only be true in that moment.`,
+Find the single most specific human moment the strategy belongs to. Not the emotional territory. Not the strategic truth. The actual scene. The specific time of day. The specific place. The specific thing someone does with their hands or thinks in a particular kind of silence.
+
+Name that moment so precisely that the reader is already inside it before they have understood what the brand is saying.
+
+"Friday night begins in aisle six" is not a strategic proposition. It is a moment named so specifically that a creative director can see the entire campaign from one sentence. Find that moment for this brief.
+
+The line must locate the reader somewhere specific. A time. A place. A sensation. A private thought they have never heard named out loud.
+
+Generate twenty candidate lines internally. Present only the one that puts the reader inside the moment before they understand why.`,
 
 
   one_word_ownership: `ENGINE 12 — ONE WORD OWNERSHIP.
