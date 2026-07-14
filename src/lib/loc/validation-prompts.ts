@@ -15,13 +15,15 @@ You produce FINDINGS not verdicts. Nothing you output eliminates a proposition. 
 You will be given one LOC proposition (with its engine's full working) plus the LOC inputs. Run three assessments:
 
 LOC-10 — PROVOCATION SCORING
-Score on five dimensions, each 1-10, with a one-line rationale per score:
+Score on five dimensions, each 1-10, with a one-line rationale per score. In addition, flag Audience Permission as UNPROVEN (not scored).
 
 1. Genuine Surprise — would a senior person in this category feel the specific discomfort of an idea they hadn't considered and now can't un-hear? Not "is it different" but "does it produce productive discomfort of a genuinely new possibility?"
-2. Credible Path — is there a specific, describable sequence of actions that would take this brand from where it is now to where this proposition puts it, within a defined timeframe? Not "does the brand own this now" but "could it earn the right to own this?"
+2. Credible Path — assess whether a credible path exists to what the brand could become if it commits to this direction. Do NOT score whether the brand can deliver from its current position. A proposition that requires new capability is scored on the viability of building that capability within a defined timeframe (investment realism, time-to-capability, organisational feasibility, partnership options), not on whether the capability exists today.
 3. Territory Richness — is this ground rich enough to sustain a decade of communications and compound in value over time, or is it a single execution idea dressed as a strategy?
 4. Competitive Permanence — once this brand claims this territory and builds on it with discipline for three years, how hard is it for a competitor to displace it?
 5. Category Escape — does this proposition take the brand outside the category's current frame of competition? Higher for genuine escape.
+
+Audience Permission — FLAG AS UNPROVEN. Do not score this as pass or fail. On greenfield territory, audience permission is unknowable until the move is made. Name it as the key risk to monitor and describe the early market signals (behavioural, not attitudinal) that would validate or invalidate permission once the brand begins moving.
 
 No composite threshold, no word-count gate, no copy-craft dimension, no immediate-understanding requirement.
 
@@ -29,7 +31,7 @@ LOC-11 — COURAGE AND PATH TEST
 Four findings, each a paragraph (NOT pass/fail):
 
 1. Commitment Test — does this proposition require the brand to make specific, observable, irreversible commitments to own it? State what those commitments are.
-2. Earn Test — can this brand earn the right to own this territory through a specific sequence of actions, even if it cannot claim it today? State the sequence. If no earn path exists, flag as aspirational without foundation.
+2. Earn Test — assess whether a brand genuinely committed to this direction could earn the right to own this territory over a defined horizon. The question is about committed future state, not current state. Assume real commitment (investment, leadership focus, organisational change) and state the sequence of actions and the horizon over which the right is earned. If no earn path exists even under full commitment, flag as aspirational without foundation.
 3. First-Mover Test — if this brand commits to this territory now and executes with discipline for three years, will it be structurally difficult for a competitor to displace it? State why.
 4. Courage Test — does this proposition require the brand to give something up — not just add something? State what must be abandoned. A proposition that requires no abandonment is probably an adjacency.
 
@@ -45,14 +47,15 @@ Return this JSON, no prose before or after, no markdown fences:
 {
   "loc10": {
     "genuine_surprise": {"score": <1-10>, "rationale": "<one line>"},
-    "credible_path": {"score": <1-10>, "rationale": "<one line>"},
+    "credible_path": {"score": <1-10>, "rationale": "<one line — scored on committed future viability, not current position>"},
     "territory_richness": {"score": <1-10>, "rationale": "<one line>"},
     "competitive_permanence": {"score": <1-10>, "rationale": "<one line>"},
-    "category_escape": {"score": <1-10>, "rationale": "<one line>"}
+    "category_escape": {"score": <1-10>, "rationale": "<one line>"},
+    "audience_permission": {"status": "UNPROVEN", "key_risk": "<one line — the specific permission risk to monitor>", "early_signals_to_watch": ["<behavioural signal 1>", "<behavioural signal 2>", "<behavioural signal 3>"]}
   },
   "loc11": {
     "commitment_test": "<one paragraph — the specific commitments required>",
-    "earn_test": "<one paragraph — the sequence, or aspirational-without-foundation flag>",
+    "earn_test": "<one paragraph — assuming full commitment, the sequence and horizon over which the right is earned, or aspirational-without-foundation flag>",
     "first_mover_test": "<one paragraph — why or why not>",
     "courage_test": "<one paragraph — what must be abandoned>"
   },
@@ -90,6 +93,11 @@ export type LocValidationResult = {
     territory_richness: { score: number; rationale: string };
     competitive_permanence: { score: number; rationale: string };
     category_escape: { score: number; rationale: string };
+    audience_permission?: {
+      status: "UNPROVEN";
+      key_risk: string;
+      early_signals_to_watch: string[];
+    };
   };
   loc11: {
     commitment_test: string;
