@@ -86,25 +86,28 @@ ${(out.category_conventions_stripped ?? []).map((c) => `  - ${c}`).join("\n") ||
 }
 
 function renderValidation(v: LocValidationResult): string {
-  const score = (label: string, s: { score: number; rationale: string }) =>
-    `- **${label}: ${s.score}/10** — ${s.rationale}`;
+  const score = (label: string, s?: { score?: number; rationale?: string } | null) =>
+    `- **${label}: ${s?.score ?? "—"}/10** — ${s?.rationale ?? "(not provided)"}`;
+  const loc10 = v.loc10 ?? ({} as LocValidationResult["loc10"]);
+  const loc11 = v.loc11 ?? ({} as LocValidationResult["loc11"]);
+  const loc13 = v.loc13 ?? ({} as LocValidationResult["loc13"]);
   return `**PROVOCATION SCORES (LOC-10)**
-${score("Genuine Surprise", v.loc10.genuine_surprise)}
-${score("Credible Path", v.loc10.credible_path)}
-${score("Territory Richness", v.loc10.territory_richness)}
-${score("Competitive Permanence", v.loc10.competitive_permanence)}
-${score("Category Escape", v.loc10.category_escape)}
+${score("Genuine Surprise", loc10.genuine_surprise)}
+${score("Credible Path", loc10.credible_path)}
+${score("Territory Richness", loc10.territory_richness)}
+${score("Competitive Permanence", loc10.competitive_permanence)}
+${score("Category Escape", loc10.category_escape)}
 
 **LOC VALIDATION FINDINGS (LOC-11)**
-- **Commitment Test:** ${v.loc11.commitment_test}
-- **Earn Test:** ${v.loc11.earn_test}
-- **First-Mover Test:** ${v.loc11.first_mover_test}
-- **Courage Test:** ${v.loc11.courage_test}
+- **Commitment Test:** ${loc11.commitment_test ?? "(not provided)"}
+- **Earn Test:** ${loc11.earn_test ?? "(not provided)"}
+- **First-Mover Test:** ${loc11.first_mover_test ?? "(not provided)"}
+- **Courage Test:** ${loc11.courage_test ?? "(not provided)"}
 
 **FUTURE FIT ASSESSMENT (LOC-13)**
-- **Product Deliverability:** ${v.loc13.product_deliverability}
-- **Structural Permission:** ${v.loc13.structural_permission}
-- **Abandonment Capacity:** ${v.loc13.abandonment_capacity}`;
+- **Product Deliverability:** ${loc13.product_deliverability ?? "(not provided)"}
+- **Structural Permission:** ${loc13.structural_permission ?? "(not provided)"}
+- **Abandonment Capacity:** ${loc13.abandonment_capacity ?? "(not provided)"}`;
 }
 
 export function renderLocDecisionPackage(pkg: LocEnginePackage): string {
