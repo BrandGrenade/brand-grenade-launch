@@ -37,6 +37,8 @@ export const LOC_ENGINES = [
   "time_displacement",
   "enemy_first",
   "subtract",
+  "the_unsayable",
+  "the_moment",
   "one_word_ownership",
 ] as const;
 
@@ -52,5 +54,8 @@ export const LOC_ENGINE_LABEL: Record<EngineName, string> = {
   time_displacement: "ENGINE 07 — TIME DISPLACEMENT",
   enemy_first: "ENGINE 08 — ENEMY FIRST",
   subtract: "ENGINE 09 — SUBTRACT",
+  the_unsayable: "ENGINE 10 — THE UNSAYABLE",
+  the_moment: "ENGINE 11 — THE MOMENT",
   one_word_ownership: "ENGINE 12 — ONE WORD OWNERSHIP",
 };
+
