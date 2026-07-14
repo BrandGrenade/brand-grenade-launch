@@ -10,6 +10,8 @@ import { SelectionRationale } from "@/components/SelectionRationale";
 import { BrandIntelligence } from "@/components/BrandIntelligence";
 import { SMPSelection, type SMPCard } from "@/components/SMPSelection";
 import { supabase } from "@/integrations/supabase/client";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { runStage1 } from "@/lib/stage1.functions";
 import { runStage1b, resubmitBrief } from "@/lib/stage1b.functions";
 import { runStage2 } from "@/lib/stage2.functions";
@@ -589,6 +591,8 @@ interface SessionData {
   checkpoint_a_confirmed: boolean;
   checkpoint_b_confirmed: boolean;
   checkpoint_c_confirmed: boolean;
+  strategy_signoff_confirmed?: boolean | null;
+  strategy_signoff_stop?: boolean | null;
   retry_status: string | null;
 }
 
@@ -981,7 +985,7 @@ function PipelineView() {
     supabase
       .from("sessions")
       .select(
-        "id, brand_name, category, strategic_mode, brief_text, brief_versions, current_stage, status, stage_status, stage_1_output, stage_1_tension_score, stage_1b_required, stage_1b_output, stage_1_error, stage_2_output, stage_2_error, stage_3_output, stage_3_error, stage_4_output, stage_4_error, stage_4b_output, stage_4b_error, stage_5_output, stage_5_error, stage_6_output, stage_6_error, stage_7_output, stage_7_error, stage_8_output, stage_8_error, stage_9_output, stage_9_leftofcentre_output, stage_9_error, stage_10_output, stage_10_error, stage_11_output, stage_11_error, stage_12_output, stage_12_error, stage_13_output, stage_13_error, stage_13b_output, stage_13b_error, stage_14_output, stage_14_error, stage_14b_output, stage_14b_error, stage_14c_output, stage_14c_error, stage_15_output, stage_15_error, stage_16_consulting_output, stage_16_error, brand_intelligence, selected_smp, selected_smp_field_name, checkpoint_a_confirmed, checkpoint_b_confirmed, checkpoint_c_confirmed, retry_status",
+        "id, brand_name, category, strategic_mode, brief_text, brief_versions, current_stage, status, stage_status, stage_1_output, stage_1_tension_score, stage_1b_required, stage_1b_output, stage_1_error, stage_2_output, stage_2_error, stage_3_output, stage_3_error, stage_4_output, stage_4_error, stage_4b_output, stage_4b_error, stage_5_output, stage_5_error, stage_6_output, stage_6_error, stage_7_output, stage_7_error, stage_8_output, stage_8_error, stage_9_output, stage_9_leftofcentre_output, stage_9_error, stage_10_output, stage_10_error, stage_11_output, stage_11_error, stage_12_output, stage_12_error, stage_13_output, stage_13_error, stage_13b_output, stage_13b_error, stage_14_output, stage_14_error, stage_14b_output, stage_14b_error, stage_14c_output, stage_14c_error, stage_15_output, stage_15_error, stage_16_consulting_output, stage_16_error, brand_intelligence, selected_smp, selected_smp_field_name, checkpoint_a_confirmed, checkpoint_b_confirmed, checkpoint_c_confirmed, strategy_signoff_confirmed, strategy_signoff_stop, retry_status",
       )
 
       .eq("id", sessionId)
@@ -2722,12 +2726,94 @@ function PipelineView() {
     if (stageId === "12" && selectedStatus === "checkpoint") return;
     if (stageId === "13" && !intelSubmitted) return;
     if (!nextStage) return;
+    // Checkpoint D — Master Brand Strategy Sign-Off gate between Stage 13/13B and Stage 14.
+    if (
+      (stageId === "13" || stageId === "13B") &&
+      nextStage.id === "14" &&
+      !session?.strategy_signoff_confirmed
+    ) {
+      setStrategySignoffOpen(true);
+      return;
+    }
     if (statuses[nextStage.id] === "running") {
       await handleRetryStage(nextStage.id);
       return;
     }
     setStatuses((p) => ({ ...p, [stageId]: "complete", [nextStage.id]: "running" }));
     setSelectedId(nextStage.id);
+  };
+
+  // ─────────────────── Checkpoint D — Strategy Sign-Off ───────────────────
+  const [strategySignoffOpen, setStrategySignoffOpen] = useState(false);
+  const [strategySignoffSaving, setStrategySignoffSaving] = useState(false);
+
+  const strategySignoffPreview = useMemo(() => {
+    const selectedProp = (session?.selected_smp ?? "").trim();
+    const s13 = (stage13Output ?? "").trim();
+    const verdictMatch = s13.match(
+      /(Confirmed with Adjustments|Confirmed|Not Recommended)/i,
+    );
+    const verdict = verdictMatch ? verdictMatch[0] : "Verdict not detected";
+    const commitmentsBlock =
+      s13
+        .split(/\n#{1,6}\s+/)
+        .find((sec) => /strategic commitments?/i.test(sec)) ?? "";
+    const commitments = Array.from(
+      commitmentsBlock.matchAll(/^\s*(?:[-*]|\d+\.)\s+(.+)$/gm),
+    )
+      .slice(0, 5)
+      .map((m) => m[1].trim());
+    const guardrailsBlock =
+      s13
+        .split(/\n#{1,6}\s+/)
+        .find((sec) => /communication guardrails?/i.test(sec)) ?? "";
+    const guardrails = Array.from(
+      guardrailsBlock.matchAll(/^\s*(?:[-*]|\d+\.)\s+(.+)$/gm),
+    )
+      .slice(0, 3)
+      .map((m) => m[1].trim());
+    return { selectedProp, verdict, commitments, guardrails };
+  }, [session?.selected_smp, stage13Output]);
+
+  const confirmStrategySignoff = async (stop: boolean) => {
+    if (!sessionId) return;
+    setStrategySignoffSaving(true);
+    try {
+      const now = new Date().toISOString();
+      const patch: Record<string, unknown> = {
+        strategy_signoff_confirmed: true,
+        strategy_signoff_confirmed_at: now,
+      };
+      if (stop) {
+        patch.strategy_signoff_stop = true;
+        patch.strategy_signoff_stop_at = now;
+      }
+      const { error } = await supabase.from("sessions").update(patch as never).eq("id", sessionId);
+      if (error) {
+        console.error("[Checkpoint D] persist failed", error);
+        return;
+      }
+      setSession((prev) =>
+        prev
+          ? ({
+              ...prev,
+              strategy_signoff_confirmed: true,
+              strategy_signoff_stop: stop || Boolean(prev.strategy_signoff_stop),
+            } as SessionData)
+          : prev,
+      );
+      setStrategySignoffOpen(false);
+      if (stop) {
+        // Option B — hold at Stage 13. Do not advance to Stage 14.
+        return;
+      }
+      // Option A — proceed to Stage 14.
+      const fromId = selected.id === "13B" ? "13B" : "13";
+      setStatuses((p) => ({ ...p, [fromId]: "complete", "14": "running" }));
+      setSelectedId("14");
+    } finally {
+      setStrategySignoffSaving(false);
+    }
   };
 
   return (
@@ -3151,6 +3237,76 @@ function PipelineView() {
           />
         )}
       </div>
+      <Dialog open={strategySignoffOpen} onOpenChange={setStrategySignoffOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Checkpoint D — Master Brand Strategy Sign-Off</DialogTitle>
+            <DialogDescription>
+              Confirm the validated brand strategy before advancing into creative territory
+              (Stage 14) — or stop here with a complete strategy deliverable.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="max-h-[55vh] space-y-4 overflow-y-auto pr-1 text-sm">
+            <section>
+              <h4 className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Selected proposition
+              </h4>
+              <p className="text-foreground">
+                {strategySignoffPreview.selectedProp || <em className="text-muted-foreground">Not detected</em>}
+              </p>
+            </section>
+            <section>
+              <h4 className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Brand Fit verdict
+              </h4>
+              <p className="text-foreground">{strategySignoffPreview.verdict}</p>
+            </section>
+            <section>
+              <h4 className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Five strategic commitments
+              </h4>
+              {strategySignoffPreview.commitments.length ? (
+                <ol className="list-decimal space-y-1 pl-5 text-foreground">
+                  {strategySignoffPreview.commitments.map((c, i) => (
+                    <li key={i}>{c}</li>
+                  ))}
+                </ol>
+              ) : (
+                <p className="text-muted-foreground">Not detected in Stage 13 output.</p>
+              )}
+            </section>
+            <section>
+              <h4 className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Three critical communication guardrails
+              </h4>
+              {strategySignoffPreview.guardrails.length ? (
+                <ul className="list-disc space-y-1 pl-5 text-foreground">
+                  {strategySignoffPreview.guardrails.map((g, i) => (
+                    <li key={i}>{g}</li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-muted-foreground">Not detected in Stage 13 output.</p>
+              )}
+            </section>
+          </div>
+          <DialogFooter className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+            <Button
+              variant="outline"
+              disabled={strategySignoffSaving}
+              onClick={() => void confirmStrategySignoff(true)}
+            >
+              Stop here — strategy complete
+            </Button>
+            <Button
+              disabled={strategySignoffSaving}
+              onClick={() => void confirmStrategySignoff(false)}
+            >
+              Proceed to Creative Territory
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

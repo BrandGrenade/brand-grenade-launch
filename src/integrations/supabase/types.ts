@@ -435,6 +435,10 @@ export type Database = {
           stage_status: string | null
           status: string
           strategic_mode: string
+          strategy_signoff_confirmed: boolean
+          strategy_signoff_confirmed_at: string | null
+          strategy_signoff_stop: boolean
+          strategy_signoff_stop_at: string | null
           stream_last_delta_at: string | null
           truth_consumer: string | null
           truth_cultural: string | null
@@ -601,6 +605,10 @@ export type Database = {
           stage_status?: string | null
           status?: string
           strategic_mode: string
+          strategy_signoff_confirmed?: boolean
+          strategy_signoff_confirmed_at?: string | null
+          strategy_signoff_stop?: boolean
+          strategy_signoff_stop_at?: string | null
           stream_last_delta_at?: string | null
           truth_consumer?: string | null
           truth_cultural?: string | null
@@ -767,6 +775,10 @@ export type Database = {
           stage_status?: string | null
           status?: string
           strategic_mode?: string
+          strategy_signoff_confirmed?: boolean
+          strategy_signoff_confirmed_at?: string | null
+          strategy_signoff_stop?: boolean
+          strategy_signoff_stop_at?: string | null
           stream_last_delta_at?: string | null
           truth_consumer?: string | null
           truth_cultural?: string | null
