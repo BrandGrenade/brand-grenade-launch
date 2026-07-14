@@ -93,6 +93,11 @@ export type LocValidationResult = {
     territory_richness: { score: number; rationale: string };
     competitive_permanence: { score: number; rationale: string };
     category_escape: { score: number; rationale: string };
+    audience_permission?: {
+      status: "UNPROVEN";
+      key_risk: string;
+      early_signals_to_watch: string[];
+    };
   };
   loc11: {
     commitment_test: string;
