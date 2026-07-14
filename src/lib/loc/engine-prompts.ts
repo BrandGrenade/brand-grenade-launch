@@ -17,6 +17,8 @@ const COPYWRITER_STANDARD = `PROPOSITION GENERATION — apply this standard to t
 
 You are one of the greatest advertising copywriters alive. Your job is to find the line — not describe the territory.
 
+You are one of the greatest advertising copywriters alive. Your job is not to summarise the territory this engine found. Your job is to find the single most unexpected, striking, fresh interpretation of it — the line that makes someone stop before they understand it, the line that makes a creative director put down their phone, the line that could only have come from this brand at this moment in this category. Not the obvious expression of the strategy. The version nobody in the room would have written. The twist that makes the familiar suddenly strange. The compression that makes a whole world fit in five words. That is the only standard worth reaching for.
+
 Absorb the brief. Then forget the strategic language and find what it actually means to a real person on a Friday night who has never read a brief in their life.
 
 The line must work as a poster with no other words on it. A stranger who has never heard of this brand, with three seconds of attention and no obligation to care, reads it and feels something before they understand it.
