@@ -38,7 +38,7 @@ const OUTPUT_CONTRACT = (engineId: EngineName) => {
   "engine": "${engineId}",
   "word": "<THE single word this brand could own permanently>",
   "proposition": "<THE PROPOSITION — 8 words or fewer, must NEVER contain the word above>",
-  "descriptor": "<one sentence: how this proposition claims the word without saying it and why no competitor can follow>"
+  "descriptor": "<After the line — one sentence only on what the line does to the reader. Not why the brand owns it. Not how it connects to the brief. What it makes the reader feel or think before they understand it.>"
 }`;
   }
   return `OUTPUT — return exactly one JSON object, no prose, no markdown fences:
