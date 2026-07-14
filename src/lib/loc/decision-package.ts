@@ -24,9 +24,11 @@ export const LOC_MARKDOWN_DIVIDER =
 export function renderLocDecisionPackage(pkg: LocEnginePackage): string {
   const line = pkg.engineOutput.proposition?.trim() || "(no line generated)";
   const desc = pkg.engineOutput.descriptor?.trim() || "";
+  const word = pkg.engineOutput.word?.trim();
+  const wordBlock = word ? `**THE WORD:** ${word}\n\n` : "";
   return `## ${LOC_ENGINE_LABEL[pkg.engine]}
 
-**${line}**
+${wordBlock}**${line}**
 
 ${desc}`;
 }
