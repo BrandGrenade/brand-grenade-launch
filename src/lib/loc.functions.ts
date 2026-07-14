@@ -93,7 +93,7 @@ async function validateOneEngine(args: {
         engine: args.engine,
         engineOutput: args.engineOutput,
       }),
-      maxTokens: 6000,
+      maxTokens: 16000,
       sessionId: args.sessionId,
       stageLabel: `LOC validate ${args.engine}`,
       stageNumber: "9-loc-val",
