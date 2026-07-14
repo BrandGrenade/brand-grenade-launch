@@ -176,6 +176,7 @@ function IntelligenceEditPage() {
             submitLabel="Re-run Intelligence Analysis"
             submittingLabel="Running intelligence analysis…"
             cancelHref="/intelligence/$id"
+            cancelParams={{ id }}
             cancelLabel="Back to report"
             onSubmit={handleSubmit}
           />
