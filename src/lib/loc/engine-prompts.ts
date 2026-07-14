@@ -46,7 +46,7 @@ const OUTPUT_CONTRACT = (engineId: EngineName) => {
 {
   "engine": "${engineId}",
   "proposition": "<THE LINE — 8 words or fewer>",
-  "descriptor": "<one sentence: what creative move this makes and why the brand can own it>"
+  "descriptor": "<After the line — one sentence only on what the line does to the reader. Not why the brand owns it. Not how it connects to the brief. What it makes the reader feel or think before they understand it.>"
 }`;
 };
 
