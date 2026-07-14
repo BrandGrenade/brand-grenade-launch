@@ -117,11 +117,27 @@ export type LocValidationResult = {
 };
 
 export function parseLocValidation(raw: string): LocValidationResult {
-  const trimmed = raw.trim();
+  const trimmed = (raw ?? "").trim();
   const jsonStart = trimmed.indexOf("{");
   const jsonEnd = trimmed.lastIndexOf("}");
   if (jsonStart === -1 || jsonEnd === -1) {
     throw new Error(`LOC validation did not return JSON. Raw: ${trimmed.slice(0, 200)}`);
   }
-  return parseJsonLenient<LocValidationResult>(trimmed.slice(jsonStart, jsonEnd + 1));
+  let parsed: Partial<LocValidationResult>;
+  try {
+    parsed = parseJsonLenient<Partial<LocValidationResult>>(trimmed.slice(jsonStart, jsonEnd + 1));
+  } catch (e) {
+    throw new Error(
+      `LOC validation JSON parse failed (likely truncated). ${e instanceof Error ? e.message : String(e)}`,
+    );
+  }
+  if (!parsed || typeof parsed !== "object") {
+    throw new Error("LOC validation JSON was not an object.");
+  }
+  if (!parsed.loc10 || !parsed.loc11 || !parsed.loc13) {
+    throw new Error(
+      `LOC validation JSON missing required sections (loc10/loc11/loc13). Got keys: ${Object.keys(parsed).join(", ") || "(none)"}`,
+    );
+  }
+  return parsed as LocValidationResult;
 }
