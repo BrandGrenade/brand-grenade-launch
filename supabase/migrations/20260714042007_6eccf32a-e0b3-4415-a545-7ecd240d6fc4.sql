@@ -1,0 +1,1 @@
+UPDATE public.sessions SET loc_status = 'failed', loc_error = 'Reset: assembly step did not persist; retry unblocked.' WHERE id = 'b476397f-1cd6-4135-b302-76b755e124ba';
