@@ -465,6 +465,7 @@ export function IntelligenceForm({
         <div className="flex items-center justify-end gap-3">
           <Link
             to={cancelHref}
+            params={cancelParams as never}
             className="text-label text-text-secondary hover:text-text-primary"
           >
             {cancelLabel}
