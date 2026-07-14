@@ -1,8 +1,7 @@
 // The nine LOC engines. Each engine uses one generative tool to find
 // territory the brief would never produce. Each engine is forbidden
 // from starting from the brief, the category, the customer, or the
-// market. Brief inputs are consulted only at the end to check whether
-// the brand has structural permission to own what was found.
+// market.
 //
 // Every engine returns exactly:
 //   { engine, proposition, descriptor }
