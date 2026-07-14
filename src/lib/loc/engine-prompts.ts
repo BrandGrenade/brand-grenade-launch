@@ -1,8 +1,7 @@
 // The nine LOC engines. Each engine uses one generative tool to find
 // territory the brief would never produce. Each engine is forbidden
 // from starting from the brief, the category, the customer, or the
-// market. Brief inputs are consulted only at the end to check whether
-// the brand has structural permission to own what was found.
+// market.
 //
 // Every engine returns exactly:
 //   { engine, proposition, descriptor }
@@ -39,7 +38,7 @@ const OUTPUT_CONTRACT = (engineId: EngineName) => {
   "engine": "${engineId}",
   "word": "<THE single word this brand could own permanently>",
   "proposition": "<THE PROPOSITION — 8 words or fewer, must NEVER contain the word above>",
-  "descriptor": "<one sentence: how this proposition claims the word without saying it and why no competitor can follow>"
+  "descriptor": "<After the line — one sentence only on what the line does to the reader. Not why the brand owns it. Not how it connects to the brief. What it makes the reader feel or think before they understand it.>"
 }`;
   }
   return `OUTPUT — return exactly one JSON object, no prose, no markdown fences:
@@ -47,12 +46,12 @@ const OUTPUT_CONTRACT = (engineId: EngineName) => {
 {
   "engine": "${engineId}",
   "proposition": "<THE LINE — 8 words or fewer>",
-  "descriptor": "<one sentence: what creative move this makes and why the brand can own it>"
+  "descriptor": "<After the line — one sentence only on what the line does to the reader. Not why the brand owns it. Not how it connects to the brief. What it makes the reader feel or think before they understand it.>"
 }`;
 };
 
 const FORBIDDEN_START = `HARD RULE — DO NOT START FROM THE BRIEF.
-Do not start from the brief, the category, the customer, or the market. Perform this engine's move first. Only at the very end consult the brief inputs to check whether this brand has the structural permission to own what you found. If it does not, adjust the line so it can — but never let the brief seed the move.`;
+Do not start from the brief, the category, the customer, or the market. Perform this engine's move. Never let the brief seed the move.`;
 
 const ENGINE_MOVES: Record<EngineName, string> = {
   inversion: `ENGINE 01 — INVERSION.
@@ -103,7 +102,7 @@ export function buildEngineUserMessage(args: {
   engine: EngineName;
   inputs: LocInputs;
 }): string {
-  return `The brief inputs below are for the FINAL structural-permission check only. Do NOT read them until after you have completed your engine's move.
+  return `The brief inputs below are context only. Do NOT let them seed your move.
 
 ${renderLocInputsBlock(args.inputs)}
 
