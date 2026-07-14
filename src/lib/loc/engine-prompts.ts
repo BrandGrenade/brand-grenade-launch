@@ -31,13 +31,25 @@ It must be eight words or fewer. Fewer is almost always stronger.
 
 Generate twenty candidate lines internally. Return only the single strongest — the one that passes the pub test, the stranger test, and makes you pause before you move on.`;
 
-const OUTPUT_CONTRACT = (engineId: EngineName) => `OUTPUT — return exactly one JSON object, no prose, no markdown fences:
+const OUTPUT_CONTRACT = (engineId: EngineName) => {
+  if (engineId === "one_word_ownership") {
+    return `OUTPUT — return exactly one JSON object, no prose, no markdown fences:
+
+{
+  "engine": "${engineId}",
+  "word": "<THE single word this brand could own permanently>",
+  "proposition": "<THE PROPOSITION — 8 words or fewer, must NEVER contain the word above>",
+  "descriptor": "<one sentence: how this proposition claims the word without saying it and why no competitor can follow>"
+}`;
+  }
+  return `OUTPUT — return exactly one JSON object, no prose, no markdown fences:
 
 {
   "engine": "${engineId}",
   "proposition": "<THE LINE — 8 words or fewer>",
   "descriptor": "<one sentence: what creative move this makes and why the brand can own it>"
 }`;
+};
 
 const FORBIDDEN_START = `HARD RULE — DO NOT START FROM THE BRIEF.
 Do not start from the brief, the category, the customer, or the market. Perform this engine's move first. Only at the very end consult the brief inputs to check whether this brand has the structural permission to own what you found. If it does not, adjust the line so it can — but never let the brief seed the move.`;
