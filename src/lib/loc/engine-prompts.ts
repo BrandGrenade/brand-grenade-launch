@@ -102,7 +102,7 @@ export function buildEngineUserMessage(args: {
   engine: EngineName;
   inputs: LocInputs;
 }): string {
-  return `The brief inputs below are for the FINAL structural-permission check only. Do NOT read them until after you have completed your engine's move.
+  return `The brief inputs below are context only. Do NOT let them seed your move.
 
 ${renderLocInputsBlock(args.inputs)}
 
