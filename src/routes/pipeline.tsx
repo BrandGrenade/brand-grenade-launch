@@ -4050,11 +4050,8 @@ function RightPanel({
                     Competitive Impossibility. Must complete before Checkpoint B.
                   </p>
                   <LocControls sessionId={sessionId} />
-                  {session?.stage_9_leftofcentre_output ? (
-                    <StreamedOutput
-                      text={session.stage_9_leftofcentre_output}
-                      streaming={false}
-                    />
+                  {text ? (
+                    <StreamedOutput text={text} streaming={false} />
                   ) : null}
                 </div>
               ) : (
