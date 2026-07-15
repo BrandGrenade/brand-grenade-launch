@@ -404,6 +404,21 @@ function buildLocCards(packages: LocEnginePackage[] | null, offset: number): SMP
     const label: SMPCardSource = `LOC — ${display}`;
     const descriptor = (eo.descriptor ?? "").toString().trim();
 
+    // Six-dimension validation gate — spec: Truth Strength >= 5,
+    // Competitive Impossibility >= 6. Skip LOC propositions that fail either.
+    const v = pkg.validation ?? null;
+    if (!v) continue;
+    if ((v.truth_strength ?? 0) < 5) continue;
+    if ((v.competitive_impossibility ?? 0) < 6) continue;
+
+    // Derive human flags (mirror STAGE_10_FLAG_THRESHOLDS in stage12-filter).
+    const flags: string[] = [];
+    if ((v.fame ?? 0) < 6) flags.push("⚠ FAME: below 6 — low unpaid-conversation potential");
+    if ((v.brand_permission ?? 0) < 5) flags.push("⚠ BRAND PERMISSION: below 5 — credibility gap");
+    if ((v.clean_air ?? 0) < 5) flags.push("⚠ CLEAN AIR: below 5 — territory partly claimed");
+    if ((v.commercial_precedent ?? 0) < 4) flags.push("⚠ COMMERCIAL PRECEDENT: below 4 — no clear precedent");
+    if (v.rationale) flags.push(`Rationale: ${v.rationale}`);
+
     cards.push({
       cardNumber: offset + i + 1,
       smpLine,
@@ -412,11 +427,21 @@ function buildLocCards(packages: LocEnginePackage[] | null, offset: number): SMP
       whatItChallenges: "",
       whatItMakesPossible: "",
       whatItRequires: "",
-      scores: {},
+      scores: {
+        fame: v.fame,
+        truthStrength: v.truth_strength,
+        competitiveImpossibility: v.competitive_impossibility,
+        brandPermission: v.brand_permission,
+        cleanAir: v.clean_air,
+        commercialPrecedent: v.commercial_precedent,
+        weightedComposite: v.weightedScore,
+        flags: flags.length ? flags : undefined,
+      },
       fieldName: label,
       iconicTierStatus: "",
       pressureTestNote: pkg.validationError ?? "",
       source: label,
+      engineKey,
     });
     i += 1;
   }
@@ -438,10 +463,12 @@ export function SMPSelection({
   stage11Output?: string;
   stage10Output?: string;
   /** Optional LOC engine decision packages (from session.loc_decision_packages).
-   *  When provided, BREACH / SYNECT / DISPLACE propositions are appended to the
-   *  selection pool alongside CORE propositions. */
+   *  When provided, validated LOC propositions are appended to the unified
+   *  selection pool alongside CORE propositions. Only LOC propositions that
+   *  pass the six-dimension floors (Truth Strength >= 5, Competitive
+   *  Impossibility >= 6) are shown. */
   locPackages?: LocEnginePackage[] | null;
-  onSelect: (card: SMPCard) => void;
+  onSelect: (payload: SMPSelectionPayload) => void;
   onResubmit?: (feedback: string) => void | Promise<void>;
   resubmitting?: boolean;
   /** True while Stage 12 Claude card formatting is still streaming in the background. */
