@@ -34,6 +34,7 @@ import { runStage14c } from "@/lib/stage14c.functions";
 import { runStage15 } from "@/lib/stage15.functions";
 import { runStage16 } from "@/lib/stage16.functions";
 import { runStage8, confirmCheckpointB, regenerateStage8Selective } from "@/lib/stage8.functions";
+import { runLeftOfCentre } from "@/lib/loc.functions";
 import { resetStage, resetStageCascade } from "@/lib/retry.functions";
 import { sanitizeStageOutput } from "@/lib/sanitize-output";
 import { hasStageOutput, isStageOutputComplete } from "@/lib/stage-completion";
@@ -664,6 +665,7 @@ function PipelineView() {
   const runStage8Fn = useServerFn(runStage8);
   const confirmCheckpointBFn = useServerFn(confirmCheckpointB);
   const regenerateStage8SelectiveFn = useServerFn(regenerateStage8Selective);
+  const runLocFn = useServerFn(runLeftOfCentre);
   const runStage9Fn = useServerFn(runStage9);
   const runStage10Fn = useServerFn(runStage10);
   const runStage11Fn = useServerFn(runStage11);
@@ -2768,10 +2770,45 @@ function PipelineView() {
       }
     }
     if (stageId === "08") {
+      // Stage 08 → 08B: persist the kept propositions, kick off the thirteen
+      // LOC engines in parallel, and navigate to Stage 08B. LOC completion is
+      // enforced later at 08B → 09 via advanceFromStage8.
+      if (!sessionId) return;
+      const currentStage8 = stage8Output ?? session?.stage_8_output ?? "";
+      const blocks = splitStage8Propositions(currentStage8);
+      const kept = blocks.filter((b) => stage8KeepNames.has(b.name));
+      if (kept.length === 0) {
+        alert("At least one proposition must be checked before continuing to Stage 08B.");
+        return;
+      }
+      const filtered = kept.map((b) => b.markdown).join("\n\n");
+      if (filtered !== currentStage8) {
+        const { error: filterErr } = await supabase
+          .from("sessions")
+          .update({ stage_8_output: filtered })
+          .eq("id", sessionId);
+        if (filterErr) {
+          console.error("[Stage 08 → 08B] failed to persist filtered propositions", filterErr);
+          alert("Failed to save proposition selection. Please try again.");
+          return;
+        }
+        setStage8Output(filtered);
+        setSession((prev) => (prev ? ({ ...prev, stage_8_output: filtered } as SessionData) : prev));
+      }
+      // Fire LOC engines (idempotent: server-side skips if already complete
+      // or running). Do not await — LocControls polls status and streams UI.
+      void runLocFn({ data: { sessionId, force: false } }).catch((e) => {
+        console.error("[Stage 08 → 08B] runLoc failed to start", e);
+      });
+      setStatuses((p) => ({ ...p, "08": "complete", "08B": "running" }));
+      setSelectedId("08B");
+      return;
+    }
+    if (stageId === "08B") {
       const ok = await advanceFromStage8();
       if (!ok) return;
       markFollowingPending("09", "running");
-      setStatuses((p) => ({ ...p, "08": "complete", "09": "running" }));
+      setStatuses((p) => ({ ...p, "08B": "complete", "09": "running" }));
       setSelectedId("09");
       return;
     }
@@ -3154,13 +3191,14 @@ function PipelineView() {
               }
             }}
             onConfirmCheckpoint={async (stageId, notes) => {
-              if (stageId === "08") {
+              if (stageId === "08" || stageId === "08B") {
                 const ok = await advanceFromStage8();
                 if (!ok) return;
                 setStatuses((prev) => {
                   const next: Record<string, StageStatus> = {
                     ...prev,
                     "08": "complete",
+                    "08B": "complete",
                     "09": "running",
                   };
                   const idx = STAGES.findIndex((s) => s.id === "09");
