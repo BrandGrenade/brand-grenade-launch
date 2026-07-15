@@ -64,6 +64,12 @@ export type BrandRow = {
   runs: BrandRun[];
   /** Sessions belonging to this brand (used by "Delete brand"). */
   sessionIds: string[];
+  /** Briefing Room workspace IDs for this brand. */
+  workspaceIds: string[];
+  /** Saved brief IDs for this brand. */
+  savedBriefIds: string[];
+  /** Intelligence session IDs for this brand. */
+  intelligenceIds: string[];
 };
 
 // ─── Normalisation ─────────────────────────────────────────────────
@@ -439,6 +445,9 @@ function assemble({
       lastUpdated,
       runs,
       sessionIds: g.sessions.map((s) => s.id),
+      workspaceIds: g.workspaces.map((w) => w.id),
+      savedBriefIds: g.savedBriefs.map((b) => b.brief_id),
+      intelligenceIds: g.intelligence.map((i) => i.id),
     });
   }
 
