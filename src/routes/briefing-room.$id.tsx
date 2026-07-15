@@ -163,6 +163,10 @@ function WorkspacePage() {
     try {
       const p = await previewHandoff({ data: { id } });
       setPreview(p);
+      // Seed the editable copy from the server-composed fields. All eleven
+      // fields become user-editable at Step 5 — this is a human checkpoint;
+      // the edited copy (not the system-generated draft) ships to Stage 1.
+      setEditedFields(JSON.parse(JSON.stringify(p.briefFields)) as BriefFields);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Preview failed");
     } finally {
@@ -171,18 +175,21 @@ function WorkspacePage() {
   }
 
   async function approveAndHandOff() {
-    if (!preview || !preview.ready) return;
+    if (!preview || !preview.ready || !editedFields) return;
     if (preview.gaps.length > 0 && !ackGaps) {
       toast.error("Acknowledge the open gaps before handing off.");
       return;
     }
     setApproving(true);
     try {
+      const anchor = extractAnchorBlock(preview.briefText);
+      const composed = composeBriefText(editedFields);
+      const briefText = anchor ? `${anchor}\n\n${composed}` : composed;
       const saved = await saveBrief({
-        brandName: preview.briefFields.brandName || brand,
-        category: preview.briefFields.category || category,
-        briefText: preview.briefText,
-        briefFields: preview.briefFields,
+        brandName: editedFields.brandName || brand,
+        category: editedFields.category || category,
+        briefText,
+        briefFields: editedFields,
       });
       if (!saved) {
         setApproving(false);
