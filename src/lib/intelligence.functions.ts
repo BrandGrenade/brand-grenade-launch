@@ -53,8 +53,8 @@ export const createIntelligenceSession = createServerFn({ method: "POST" })
         brand_name: data.brand_name,
         category: data.category,
         // brief_type / markets / audience are not first-class columns.
-        // Store brief_type in additional_context prefix and markets in
-        // territory_input so the run fn can read them back.
+        // Store brief_type in report_metadata atomically with the insert so
+        // it can NEVER be lost between insert and a follow-up update.
         territory_input: data.markets ?? null,
         additional_context: data.audience_context_notes ?? null,
         input_primary_consumer: data.input_primary_consumer ?? null,
@@ -65,22 +65,16 @@ export const createIntelligenceSession = createServerFn({ method: "POST" })
         input_bg_intel_pack: data.input_bg_intel_pack ?? null,
         input_files: (data.input_files ?? []) as unknown as import("@/integrations/supabase/types").Json,
         status: "draft",
+        report_metadata: { brief_type: data.brief_type } as unknown as import("@/integrations/supabase/types").Json,
       })
       .select("id")
       .single();
     if (error || !row) {
       throw new Error(error?.message ?? "Failed to create intelligence session");
     }
-    // Persist brief_type onto the row so run fn can normalise it later.
-    // (No dedicated column; store via a JSON stash on report_metadata.)
-    await supabase
-      .from("intelligence_sessions")
-      .update({
-        report_metadata: { brief_type: data.brief_type } as unknown as import("@/integrations/supabase/types").Json,
-      })
-      .eq("id", row.id);
     return { sessionId: row.id };
   });
+
 
 const UpdateInput = CreateInput.extend({
   intelligenceSessionId: z.string().uuid(),
