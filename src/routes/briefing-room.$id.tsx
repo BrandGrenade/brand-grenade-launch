@@ -133,6 +133,7 @@ function WorkspacePage() {
     // computed against the old (null) frame. Drop it so the user doesn't see
     // "A frame must be selected in Step 1" after they've selected one.
     setPreview(null);
+    setEditedFields(null);
     setAckGaps(false);
     try {
       await setSel({ data: { id, selectedFrame: frame } });
