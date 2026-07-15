@@ -564,6 +564,8 @@ interface SessionData {
   stage_9_output: string | null;
   stage_9_leftofcentre_output: string | null;
   stage_9_error: string | null;
+  loc_status?: string | null;
+  loc_error?: string | null;
   stage_10_output: string | null;
   stage_10_error: string | null;
   stage_11_output: string | null;
@@ -991,7 +993,7 @@ function PipelineView() {
     supabase
       .from("sessions")
       .select(
-        "id, brand_name, category, strategic_mode, brief_text, brief_versions, current_stage, status, stage_status, stage_1_output, stage_1_tension_score, stage_1b_required, stage_1b_output, stage_1_error, stage_2_output, stage_2_error, stage_3_output, stage_3_error, stage_4_output, stage_4_error, stage_4b_output, stage_4b_error, stage_5_output, stage_5_error, stage_6_output, stage_6_error, stage_7_output, stage_7_error, stage_8_output, stage_8_error, stage_9_output, stage_9_leftofcentre_output, stage_9_error, stage_10_output, stage_10_error, stage_11_output, stage_11_error, stage_12_output, stage_12_error, stage_13_output, stage_13_error, stage_13b_output, stage_13b_error, stage_14_output, stage_14_error, stage_14b_output, stage_14b_error, stage_14c_output, stage_14c_error, stage_15_output, stage_15_error, stage_16_consulting_output, stage_16_error, brand_intelligence, selected_smp, selected_smp_field_name, checkpoint_a_confirmed, checkpoint_b_confirmed, checkpoint_c_confirmed, strategy_signoff_confirmed, strategy_signoff_stop, retry_status",
+        "id, brand_name, category, strategic_mode, brief_text, brief_versions, current_stage, status, stage_status, stage_1_output, stage_1_tension_score, stage_1b_required, stage_1b_output, stage_1_error, stage_2_output, stage_2_error, stage_3_output, stage_3_error, stage_4_output, stage_4_error, stage_4b_output, stage_4b_error, stage_5_output, stage_5_error, stage_6_output, stage_6_error, stage_7_output, stage_7_error, stage_8_output, stage_8_error, stage_9_output, stage_9_leftofcentre_output, stage_9_error, loc_status, loc_error, stage_10_output, stage_10_error, stage_11_output, stage_11_error, stage_12_output, stage_12_error, stage_13_output, stage_13_error, stage_13b_output, stage_13b_error, stage_14_output, stage_14_error, stage_14b_output, stage_14b_error, stage_14c_output, stage_14c_error, stage_15_output, stage_15_error, stage_16_consulting_output, stage_16_error, brand_intelligence, selected_smp, selected_smp_field_name, checkpoint_a_confirmed, checkpoint_b_confirmed, checkpoint_c_confirmed, strategy_signoff_confirmed, strategy_signoff_stop, retry_status",
       )
 
       .eq("id", sessionId)
@@ -1326,7 +1328,7 @@ function PipelineView() {
       const { data } = await supabase
         .from("sessions")
         .select(
-          "id, brand_name, category, strategic_mode, brief_text, brief_versions, current_stage, status, stage_status, stage_1_output, stage_1_tension_score, stage_1b_required, stage_1b_output, stage_1_error, stage_2_output, stage_2_error, stage_3_output, stage_3_error, stage_4_output, stage_4_error, stage_4b_output, stage_4b_error, stage_5_output, stage_5_error, stage_6_output, stage_6_error, stage_7_output, stage_7_error, stage_8_output, stage_8_error, stage_9_output, stage_9_leftofcentre_output, stage_9_error, stage_10_output, stage_10_error, stage_11_output, stage_11_error, stage_12_output, stage_12_error, stage_13_output, stage_13_error, stage_13b_output, stage_13b_error, stage_14_output, stage_14_error, stage_14b_output, stage_14b_error, stage_14c_output, stage_14c_error, stage_15_output, stage_15_error, stage_16_consulting_output, stage_16_error, brand_intelligence, selected_smp, selected_smp_field_name, checkpoint_a_confirmed, checkpoint_b_confirmed, checkpoint_c_confirmed, retry_status",
+          "id, brand_name, category, strategic_mode, brief_text, brief_versions, current_stage, status, stage_status, stage_1_output, stage_1_tension_score, stage_1b_required, stage_1b_output, stage_1_error, stage_2_output, stage_2_error, stage_3_output, stage_3_error, stage_4_output, stage_4_error, stage_4b_output, stage_4b_error, stage_5_output, stage_5_error, stage_6_output, stage_6_error, stage_7_output, stage_7_error, stage_8_output, stage_8_error, stage_9_output, stage_9_leftofcentre_output, stage_9_error, loc_status, loc_error, stage_10_output, stage_10_error, stage_11_output, stage_11_error, stage_12_output, stage_12_error, stage_13_output, stage_13_error, stage_13b_output, stage_13b_error, stage_14_output, stage_14_error, stage_14b_output, stage_14b_error, stage_14c_output, stage_14c_error, stage_15_output, stage_15_error, stage_16_consulting_output, stage_16_error, brand_intelligence, selected_smp, selected_smp_field_name, checkpoint_a_confirmed, checkpoint_b_confirmed, checkpoint_c_confirmed, retry_status",
         )
         .eq("id", sessionId)
         .single();
@@ -2372,6 +2374,14 @@ function PipelineView() {
         (stage8Loading
           ? "Generating Strategic Propositions — this can take 60–120 seconds…"
           : "Awaiting output."),
+      "08B":
+        (session?.stage_9_leftofcentre_output &&
+          sanitize(session.stage_9_leftofcentre_output)) ||
+        (session?.loc_status === "running"
+          ? "Firing thirteen Left-of-Centre engines in parallel — this can take 60–180 seconds…"
+          : session?.loc_status === "failed"
+            ? `Left-of-Centre engines failed${session?.loc_error ? `: ${session.loc_error}` : "."} Use Retry above.`
+            : "Awaiting Left-of-Centre engine output."),
       "09":
         (stage9Output && sanitize(stage9Output)) ??
         (stage9Loading
@@ -2472,6 +2482,9 @@ function PipelineView() {
     stage15Loading,
     stage16Output,
     stage16Loading,
+    session?.stage_9_leftofcentre_output,
+    session?.loc_status,
+    session?.loc_error,
   ]);
 
   // Progress — count main (non-conditional) stages.
@@ -4088,14 +4101,6 @@ function RightPanel({
             <article style={{ paddingBottom: 80 }}>
               {stage.id === "08B" && sessionId ? (
                 <div className="space-y-6">
-                  <p className="text-body-sm" style={{ color: "#8A8680" }}>
-                    Left-of-Centre Engines fire thirteen parallel generative
-                    engines against the brief and then run a six-dimension
-                    validation pass (Fame · Truth Strength · Competitive
-                    Impossibility · Brand Permission · Clean Air · Commercial
-                    Precedent). Hard floors apply to Truth Strength and
-                    Competitive Impossibility. Must complete before Checkpoint B.
-                  </p>
                   <LocControls sessionId={sessionId} />
                   {text ? (
                     <StreamedOutput text={text} streaming={false} />
