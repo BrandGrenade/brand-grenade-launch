@@ -1,13 +1,14 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 
 interface SelectionRationaleProps {
   selectedSMP?: string;
+  selectionSource?: "CORE" | "LOC" | "COMBINED";
   onConfirm: (values: Record<string, string>) => void;
   submitting?: boolean;
 }
 
 
-const FIELDS: {
+const BASE_FIELDS: {
   key: string;
   label: string;
   helper: string;
@@ -63,17 +64,36 @@ const FIELDS: {
   },
 ];
 
+const LOC_LEGACY_FIELD = {
+  key: "f_loc_legacy",
+  label:
+    "Does this LOC proposition sit alongside or extend the brand's existing legacy — or does it represent a deliberate break with it?",
+  helper:
+    "Name the legacy relationship explicitly. A deliberate break requires a stronger commitment story downstream.",
+  height: 100,
+  required: true,
+};
+
 export function SelectionRationale({
   selectedSMP = "",
+  selectionSource = "CORE",
   onConfirm,
   submitting = false,
 }: SelectionRationaleProps) {
   const [values, setValues] = useState<Record<string, string>>({});
 
+  const FIELDS = useMemo(
+    () =>
+      selectionSource === "LOC" || selectionSource === "COMBINED"
+        ? [...BASE_FIELDS, LOC_LEGACY_FIELD]
+        : BASE_FIELDS,
+    [selectionSource],
+  );
 
   const canSubmit = FIELDS.filter((f) => f.required).every(
     (f) => (values[f.key] ?? "").trim().length > 0
   );
+
 
   return (
     <div>

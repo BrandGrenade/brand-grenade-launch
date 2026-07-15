@@ -27,6 +27,11 @@ export interface SMPCard {
   iconicTierStatus: string;
   pressureTestNote: string;
   source?: SMPCardSource;
+  /** Machine engine key for LOC cards (e.g. "the_moment"). CORE = undefined. */
+  engineKey?: string;
+  /** Stage 11 verdict + binding conditions for CORE cards. */
+  stage11Verdict?: string;
+  stage11Conditions?: string;
   loc10?: {
     genuine_surprise?: number;
     credible_path?: number;
@@ -34,6 +39,16 @@ export interface SMPCard {
     competitive_permanence?: number;
     category_escape?: number;
   };
+}
+
+/** Payload returned to the caller when the human confirms a selection.
+ *  - Option A (single): { core } or { loc }
+ *  - Option B (combined): { core, loc } — both travel downstream. */
+export interface SMPSelectionPayload {
+  core?: SMPCard;
+  loc?: SMPCard;
+  source: "CORE" | "LOC" | "COMBINED";
+  engineKey?: string;
 }
 
 
@@ -389,6 +404,21 @@ function buildLocCards(packages: LocEnginePackage[] | null, offset: number): SMP
     const label: SMPCardSource = `LOC — ${display}`;
     const descriptor = (eo.descriptor ?? "").toString().trim();
 
+    // Six-dimension validation gate — spec: Truth Strength >= 5,
+    // Competitive Impossibility >= 6. Skip LOC propositions that fail either.
+    const v = pkg.validation ?? null;
+    if (!v) continue;
+    if ((v.truth_strength ?? 0) < 5) continue;
+    if ((v.competitive_impossibility ?? 0) < 6) continue;
+
+    // Derive human flags (mirror STAGE_10_FLAG_THRESHOLDS in stage12-filter).
+    const flags: string[] = [];
+    if ((v.fame ?? 0) < 6) flags.push("⚠ FAME: below 6 — low unpaid-conversation potential");
+    if ((v.brand_permission ?? 0) < 5) flags.push("⚠ BRAND PERMISSION: below 5 — credibility gap");
+    if ((v.clean_air ?? 0) < 5) flags.push("⚠ CLEAN AIR: below 5 — territory partly claimed");
+    if ((v.commercial_precedent ?? 0) < 4) flags.push("⚠ COMMERCIAL PRECEDENT: below 4 — no clear precedent");
+    if (v.rationale) flags.push(`Rationale: ${v.rationale}`);
+
     cards.push({
       cardNumber: offset + i + 1,
       smpLine,
@@ -397,11 +427,21 @@ function buildLocCards(packages: LocEnginePackage[] | null, offset: number): SMP
       whatItChallenges: "",
       whatItMakesPossible: "",
       whatItRequires: "",
-      scores: {},
+      scores: {
+        fame: v.fame,
+        truthStrength: v.truth_strength,
+        competitiveImpossibility: v.competitive_impossibility,
+        brandPermission: v.brand_permission,
+        cleanAir: v.clean_air,
+        commercialPrecedent: v.commercial_precedent,
+        weightedComposite: v.weightedScore,
+        flags: flags.length ? flags : undefined,
+      },
       fieldName: label,
       iconicTierStatus: "",
       pressureTestNote: pkg.validationError ?? "",
       source: label,
+      engineKey,
     });
     i += 1;
   }
@@ -423,19 +463,47 @@ export function SMPSelection({
   stage11Output?: string;
   stage10Output?: string;
   /** Optional LOC engine decision packages (from session.loc_decision_packages).
-   *  When provided, BREACH / SYNECT / DISPLACE propositions are appended to the
-   *  selection pool alongside CORE propositions. */
+   *  When provided, validated LOC propositions are appended to the unified
+   *  selection pool alongside CORE propositions. Only LOC propositions that
+   *  pass the six-dimension floors (Truth Strength >= 5, Competitive
+   *  Impossibility >= 6) are shown. */
   locPackages?: LocEnginePackage[] | null;
-  onSelect: (card: SMPCard) => void;
+  onSelect: (payload: SMPSelectionPayload) => void;
   onResubmit?: (feedback: string) => void | Promise<void>;
   resubmitting?: boolean;
   /** True while Stage 12 Claude card formatting is still streaming in the background. */
   enhancing?: boolean;
 }) {
-  const coreCards = useMemo(
-    () => parseSMPCards(stage12Output ?? "", stage11Output, stage10Output).map((c) => ({ ...c, source: "CORE" as SMPCardSource })),
-    [stage12Output, stage11Output, stage10Output],
-  );
+  const stage11ByLine = useMemo(() => {
+    if (!stage11Output) return new Map<string, Stage11Verdict>();
+    const map = new Map<string, Stage11Verdict>();
+    for (const v of parseStage11Verdicts(stage11Output)) {
+      map.set(v.smpLine.trim().toLowerCase(), v);
+    }
+    return map;
+  }, [stage11Output]);
+
+  const coreCards = useMemo(() => {
+    const parsed = parseSMPCards(stage12Output ?? "", stage11Output, stage10Output);
+    return parsed.map((c) => {
+      const v = stage11ByLine.get(c.smpLine.trim().toLowerCase());
+      let stage11Verdict: string | undefined;
+      let stage11Conditions: string | undefined;
+      if (v) {
+        stage11Verdict = v.verdict;
+        const cond = v.block.match(
+          /(?:BINDING\s+CONDITIONS?|CONDITIONS?)\s*:?\s*([\s\S]*?)(?=\n\s*(?:[A-Z][A-Z ]{3,}:|SMP\s+VERDICT|ICONIC|$))/i,
+        );
+        if (cond) stage11Conditions = cond[1].trim().slice(0, 500);
+      }
+      return {
+        ...c,
+        source: "CORE" as SMPCardSource,
+        stage11Verdict,
+        stage11Conditions,
+      };
+    });
+  }, [stage12Output, stage11Output, stage10Output, stage11ByLine]);
   const locCards = useMemo(() => buildLocCards(locPackages ?? null, coreCards.length), [locPackages, coreCards.length]);
   const cards = useMemo(() => [...coreCards, ...locCards], [coreCards, locCards]);
   const usingStage11Fallback = useMemo(
@@ -444,7 +512,8 @@ export function SMPSelection({
   );
 
 
-  const [selected, setSelected] = useState<number | null>(null);
+  const [selectedCoreIdx, setSelectedCoreIdx] = useState<number | null>(null);
+  const [selectedLocIdx, setSelectedLocIdx] = useState<number | null>(null);
   const [showRaw, setShowRaw] = useState(false);
   const [manualLine, setManualLine] = useState("");
   const [manualField, setManualField] = useState("");
@@ -466,26 +535,60 @@ export function SMPSelection({
       .trim();
   }, [cleanedOutput]);
 
+  const toggleSelect = (idx: number) => {
+    const card = cards[idx];
+    if (!card) return;
+    const isLoc = card.source && card.source !== "CORE";
+    if (isLoc) {
+      setSelectedLocIdx((prev) => (prev === idx ? null : idx));
+    } else {
+      setSelectedCoreIdx((prev) => (prev === idx ? null : idx));
+    }
+  };
+
+  const selectedCore = selectedCoreIdx !== null ? cards[selectedCoreIdx] : undefined;
+  const selectedLoc = selectedLocIdx !== null ? cards[selectedLocIdx] : undefined;
+  const hasCore = !!selectedCore;
+  const hasLoc = !!selectedLoc;
+  const combined = hasCore && hasLoc;
+
   const handleConfirm = () => {
-    if (selected === null) return;
-    onSelect(cards[selected]);
+    if (!hasCore && !hasLoc) return;
+    if (combined && !window.confirm(
+      "You have selected a CORE proposition and a LOC proposition.\n\n" +
+      "The CORE proposition will be the strategic platform. The LOC proposition " +
+      "will be the creative expression. Both will travel downstream together.\n\n" +
+      "Confirm combined selection?",
+    )) {
+      return;
+    }
+    onSelect({
+      core: selectedCore,
+      loc: selectedLoc,
+      source: combined ? "COMBINED" : hasLoc ? "LOC" : "CORE",
+      engineKey: selectedLoc?.engineKey,
+    });
   };
 
   const handleManualConfirm = () => {
     const line = manualLine.trim();
     if (!line) return;
     onSelect({
-      cardNumber: 1,
-      smpLine: line,
-      whatItOwns: "",
-      truth: "",
-      whatItChallenges: "",
-      whatItMakesPossible: "",
-      whatItRequires: "",
-      scores: {},
-      fieldName: manualField.trim() || line.slice(0, 60),
-      iconicTierStatus: "",
-      pressureTestNote: "",
+      core: {
+        cardNumber: 1,
+        smpLine: line,
+        whatItOwns: "",
+        truth: "",
+        whatItChallenges: "",
+        whatItMakesPossible: "",
+        whatItRequires: "",
+        scores: {},
+        fieldName: manualField.trim() || line.slice(0, 60),
+        iconicTierStatus: "",
+        pressureTestNote: "",
+        source: "CORE",
+      },
+      source: "CORE",
     });
   };
 
@@ -684,12 +787,13 @@ export function SMPSelection({
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
         {cards.map((card, idx) => {
-          const isSelected = selected === idx;
+          const isLoc = !!(card.source && card.source !== "CORE");
+          const isSelected = isLoc ? selectedLocIdx === idx : selectedCoreIdx === idx;
           return (
             <button
               key={card.cardNumber}
               type="button"
-              onClick={() => setSelected(idx)}
+              onClick={() => toggleSelect(idx)}
               className="text-left transition-all animate-fade-in"
               style={{
                 borderRadius: 12,
@@ -708,7 +812,7 @@ export function SMPSelection({
                 <span
                   className="text-label"
                   style={{
-                    color: card.source && card.source !== "CORE" ? "var(--color-warning)" : "var(--color-text-tertiary)",
+                    color: isLoc ? "var(--color-warning)" : "var(--color-text-tertiary)",
                     letterSpacing: "0.06em",
                   }}
                 >
@@ -719,13 +823,13 @@ export function SMPSelection({
                 {card.smpLine || "(line missing)"}
               </p>
 
-              {card.whatItOwns && <Section title={card.source && card.source !== "CORE" ? "Territory" : "What it owns"} body={card.whatItOwns} />}
+              {card.whatItOwns && <Section title={isLoc ? "Territory" : "What it owns"} body={card.whatItOwns} />}
               {card.truth && <Section title="The truth it is built on" body={card.truth} />}
               {card.whatItChallenges && (
                 <Section title="What it challenges" body={card.whatItChallenges} />
               )}
               {card.whatItMakesPossible && (
-                <Section title={card.source && card.source !== "CORE" ? "Courage assessment" : "What it makes possible"} body={card.whatItMakesPossible} />
+                <Section title={isLoc ? "Courage assessment" : "What it makes possible"} body={card.whatItMakesPossible} />
               )}
               {card.whatItRequires && (
                 <Section title="What it requires of the brand" body={card.whatItRequires} />
@@ -735,46 +839,44 @@ export function SMPSelection({
                 className="my-4 h-px border-0"
                 style={{ backgroundColor: "var(--color-border)" }}
               />
-              {card.source && card.source !== "CORE" ? (
-                <>
-                  <div className="grid grid-cols-5 gap-2">
-                    <ScorePill label="Surprise" value={card.loc10?.genuine_surprise} />
-                    <ScorePill label="Path" value={card.loc10?.credible_path} />
-                    <ScorePill label="Rich" value={card.loc10?.territory_richness} />
-                    <ScorePill label="Perm" value={card.loc10?.competitive_permanence} />
-                    <ScorePill label="Escape" value={card.loc10?.category_escape} />
-                  </div>
-                  <p className="text-body-sm mt-3" style={{ color: "var(--color-text-tertiary)" }}>
-                    LOC-10 provocation scores · scored on future potential, not current brand reality
-                  </p>
-                </>
-              ) : (
-                <>
-                  <div className="grid grid-cols-3 gap-2">
-                    <ScorePill label="Fame" value={card.scores.fame} />
-                    <ScorePill label="Truth" value={card.scores.truthStrength} />
-                    <ScorePill label="CompImp" value={card.scores.competitiveImpossibility} />
-                    <ScorePill label="Perm" value={card.scores.brandPermission} />
-                    <ScorePill label="Clean" value={card.scores.cleanAir} />
-                    <ScorePill label="Prec" value={card.scores.commercialPrecedent} />
-                  </div>
-                  {card.scores.weightedComposite !== undefined && (
-                    <p
-                      className="text-body-sm mt-3"
-                      style={{ color: "var(--color-text-tertiary)" }}
-                    >
-                      Weighted {card.scores.weightedComposite}/100
-                      {card.fieldName ? ` · ${card.fieldName}` : ""}
-                    </p>
-                  )}
-                  {card.scores.flags && card.scores.flags.length > 0 && (
-                    <ul className="mt-3 space-y-1" style={{ color: "var(--color-warning)", fontSize: 12, lineHeight: 1.5 }}>
-                      {card.scores.flags.map((f, i) => (
-                        <li key={i}>{f}</li>
-                      ))}
-                    </ul>
-                  )}
-                </>
+              <div className="grid grid-cols-3 gap-2">
+                <ScorePill label="Fame" value={card.scores.fame} />
+                <ScorePill label="Truth" value={card.scores.truthStrength} />
+                <ScorePill label="CompImp" value={card.scores.competitiveImpossibility} />
+                <ScorePill label="Perm" value={card.scores.brandPermission} />
+                <ScorePill label="Clean" value={card.scores.cleanAir} />
+                <ScorePill label="Prec" value={card.scores.commercialPrecedent} />
+              </div>
+              {card.scores.weightedComposite !== undefined && (
+                <p
+                  className="text-body-sm mt-3"
+                  style={{ color: "var(--color-text-tertiary)" }}
+                >
+                  Weighted {card.scores.weightedComposite}/100
+                  {!isLoc && card.fieldName ? ` · ${card.fieldName}` : ""}
+                </p>
+              )}
+              {isLoc && (
+                <p className="text-body-sm mt-2" style={{ color: "var(--color-text-tertiary)", fontStyle: "italic" }}>
+                  Scored on future brand potential — not current brand reality
+                </p>
+              )}
+              {!isLoc && card.stage11Verdict && (
+                <p className="text-body-sm mt-2" style={{ color: "var(--color-text-secondary)" }}>
+                  <strong>Stage 11 verdict:</strong> {card.stage11Verdict}
+                </p>
+              )}
+              {!isLoc && card.stage11Conditions && (
+                <p className="text-body-sm mt-1" style={{ color: "var(--color-text-tertiary)", whiteSpace: "pre-wrap" }}>
+                  <strong>Binding conditions:</strong> {card.stage11Conditions}
+                </p>
+              )}
+              {card.scores.flags && card.scores.flags.length > 0 && (
+                <ul className="mt-3 space-y-1" style={{ color: "var(--color-warning)", fontSize: 12, lineHeight: 1.5 }}>
+                  {card.scores.flags.map((f, i) => (
+                    <li key={i}>{f}</li>
+                  ))}
+                </ul>
               )}
             </button>
           );
@@ -789,14 +891,22 @@ export function SMPSelection({
         }}
       >
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <p className="text-body-sm" style={{ color: "var(--color-text-tertiary)" }}>
-            {selected !== null
-              ? `Selected: Proposition ${cards[selected].cardNumber}`
-              : "Select a proposition above to continue."}
-          </p>
+          <div className="text-body-sm" style={{ color: "var(--color-text-tertiary)" }}>
+            {!hasCore && !hasLoc && "Select one proposition — or one CORE and one LOC to combine."}
+            {hasCore && !hasLoc && `Selected: CORE Proposition ${selectedCore!.cardNumber}`}
+            {!hasCore && hasLoc && `Selected: ${selectedLoc!.source} · Proposition ${selectedLoc!.cardNumber}`}
+            {combined && (
+              <div>
+                Combined: CORE Proposition {selectedCore!.cardNumber} + {selectedLoc!.source} · Proposition {selectedLoc!.cardNumber}
+                <div style={{ marginTop: 6, color: "var(--color-warning)" }}>
+                  CORE = strategic platform. LOC = creative expression. Both travel downstream.
+                </div>
+              </div>
+            )}
+          </div>
           <button
             type="button"
-            disabled={selected === null}
+            disabled={!hasCore && !hasLoc}
             onClick={handleConfirm}
             className="inline-flex h-11 items-center justify-center rounded-md px-6 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50"
             style={{
@@ -804,7 +914,7 @@ export function SMPSelection({
               color: "var(--color-primary-foreground)",
             }}
           >
-            Confirm selection → Capture rationale
+            {combined ? "Confirm combined selection → Capture rationale" : "Confirm selection → Capture rationale"}
           </button>
         </div>
       </div>

@@ -10,10 +10,10 @@ import type { EngineOutput } from "./engine-prompts";
 export type LocEnginePackage = {
   engine: EngineName;
   engineOutput: EngineOutput;
-  // Retained for backward compatibility with any residual consumer.
-  // Always null for the nine-engine rebuild.
-  validation?: null;
-  validationError?: string;
+  // Six-dimension validation score (from runValidationPass). Retained as
+  // optional/null-friendly for backward compatibility with pre-validation packages.
+  validation?: import("./validation").ValidationScore | null;
+  validationError?: string | null;
   // Retained purely for schema stability with legacy decision packages.
   taskType?: string;
 };

@@ -345,8 +345,10 @@ export type Database = {
           phase_2_status: string
           retry_status: string | null
           selected_format: string | null
+          selected_loc_expression: string | null
           selected_smp: string | null
           selected_smp_field_name: string | null
+          selection_engine: string | null
           selection_rationale: Json | null
           selection_rationale_1: string | null
           selection_rationale_2: string | null
@@ -354,6 +356,7 @@ export type Database = {
           selection_rationale_4: string | null
           selection_rationale_5: string | null
           selection_rationale_6: string | null
+          selection_source: string | null
           stage_1_error: string | null
           stage_1_output: string | null
           stage_1_tension_score: number | null
@@ -515,8 +518,10 @@ export type Database = {
           phase_2_status?: string
           retry_status?: string | null
           selected_format?: string | null
+          selected_loc_expression?: string | null
           selected_smp?: string | null
           selected_smp_field_name?: string | null
+          selection_engine?: string | null
           selection_rationale?: Json | null
           selection_rationale_1?: string | null
           selection_rationale_2?: string | null
@@ -524,6 +529,7 @@ export type Database = {
           selection_rationale_4?: string | null
           selection_rationale_5?: string | null
           selection_rationale_6?: string | null
+          selection_source?: string | null
           stage_1_error?: string | null
           stage_1_output?: string | null
           stage_1_tension_score?: number | null
@@ -685,8 +691,10 @@ export type Database = {
           phase_2_status?: string
           retry_status?: string | null
           selected_format?: string | null
+          selected_loc_expression?: string | null
           selected_smp?: string | null
           selected_smp_field_name?: string | null
+          selection_engine?: string | null
           selection_rationale?: Json | null
           selection_rationale_1?: string | null
           selection_rationale_2?: string | null
@@ -694,6 +702,7 @@ export type Database = {
           selection_rationale_4?: string | null
           selection_rationale_5?: string | null
           selection_rationale_6?: string | null
+          selection_source?: string | null
           stage_1_error?: string | null
           stage_1_output?: string | null
           stage_1_tension_score?: number | null
