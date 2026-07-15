@@ -750,23 +750,29 @@ export function SMPSelection({
                 </>
               ) : (
                 <>
-                  <div className="grid grid-cols-4 gap-2">
-                    <ScorePill label="Diff" value={card.scores.differentiation} />
+                  <div className="grid grid-cols-3 gap-2">
+                    <ScorePill label="Fame" value={card.scores.fame} />
                     <ScorePill label="Truth" value={card.scores.truthStrength} />
-                    <ScorePill label="Cult" value={card.scores.culturalRelevance} />
-                    <ScorePill label="Fame" value={(card.scores as { famePotential?: number }).famePotential} />
-                    <ScorePill label="Writer" value={card.scores.writerQuality} />
-                    <ScorePill label="Comm" value={card.scores.commercialPlausibility} />
-                    <ScorePill label="Creat" value={card.scores.creativeExpandability} />
+                    <ScorePill label="CompImp" value={card.scores.competitiveImpossibility} />
+                    <ScorePill label="Perm" value={card.scores.brandPermission} />
+                    <ScorePill label="Clean" value={card.scores.cleanAir} />
+                    <ScorePill label="Prec" value={card.scores.commercialPrecedent} />
                   </div>
-                  {card.scores.composite !== undefined && (
+                  {card.scores.weightedComposite !== undefined && (
                     <p
                       className="text-body-sm mt-3"
                       style={{ color: "var(--color-text-tertiary)" }}
                     >
-                      Composite {card.scores.composite}/70
+                      Weighted {card.scores.weightedComposite}/100
                       {card.fieldName ? ` · ${card.fieldName}` : ""}
                     </p>
+                  )}
+                  {card.scores.flags && card.scores.flags.length > 0 && (
+                    <ul className="mt-3 space-y-1" style={{ color: "var(--color-warning)", fontSize: 12, lineHeight: 1.5 }}>
+                      {card.scores.flags.map((f, i) => (
+                        <li key={i}>{f}</li>
+                      ))}
+                    </ul>
                   )}
                 </>
               )}
