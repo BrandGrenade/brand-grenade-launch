@@ -112,20 +112,33 @@ function WorkspacePage() {
   }
 
   async function pickFrame(frame: "problem" | "opportunity" | "both") {
+    // Optimistic local update so the "✓ Selected" state and any downstream
+    // validation clears immediately, without waiting on the round-trip.
+    setWs((prev) => (prev ? { ...prev, selected_frame: frame } : prev));
+    // Any previously-loaded Step 5 preview is now stale — its blockers were
+    // computed against the old (null) frame. Drop it so the user doesn't see
+    // "A frame must be selected in Step 1" after they've selected one.
+    setPreview(null);
+    setAckGaps(false);
     try {
       await setSel({ data: { id, selectedFrame: frame } });
       await refresh();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Selection failed");
+      await refresh();
     }
   }
 
   async function pickTension(idx: number) {
+    setWs((prev) => (prev ? { ...prev, selected_tension_index: idx } : prev));
+    setPreview(null);
+    setAckGaps(false);
     try {
       await setSel({ data: { id, selectedTensionIndex: idx } });
       await refresh();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Selection failed");
+      await refresh();
     }
   }
 
