@@ -18,6 +18,7 @@ import {
 } from "@/components/SavedBriefsLibrary";
 import { supabase } from "@/integrations/supabase/client";
 import { createSession } from "@/lib/stage1.functions";
+import { deleteBrandPermanently } from "@/lib/brand-register.functions";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -90,6 +91,7 @@ const PAGINATION_THRESHOLD = 50;
 function Dashboard() {
   const navigate = useNavigate();
   const createSessionFn = useServerFn(createSession);
+  const deleteBrandPermanentlyFn = useServerFn(deleteBrandPermanently);
   const { rows, loading, error, refresh } = useBrandRegister();
 
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
@@ -173,50 +175,29 @@ function Dashboard() {
   const handleDeleteBrand = async () => {
     if (!pendingDelete) return;
     setDeleting(true);
-    const sessionIds = pendingDelete.sessionIds;
-    const workspaceIds = pendingDelete.workspaceIds;
-    const savedBriefIds = pendingDelete.savedBriefIds;
-    const intelligenceIds = pendingDelete.intelligenceIds;
-    const total =
-      sessionIds.length +
-      workspaceIds.length +
-      savedBriefIds.length +
-      intelligenceIds.length;
-    let failed = 0;
-
-    const runDelete = async (
-      table: "sessions" | "briefing_room_workspaces" | "saved_briefs" | "intelligence_sessions",
-      column: string,
-      ids: string[],
-    ) => {
-      if (ids.length === 0) return;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error: delErr } = await (supabase.from(table as any) as any)
-        .delete()
-        .in(column, ids);
-      if (delErr) failed += ids.length;
-    };
-
-    await runDelete("sessions", "id", sessionIds);
-    await runDelete("briefing_room_workspaces", "id", workspaceIds);
-    await runDelete("saved_briefs", "brief_id", savedBriefIds);
-    await runDelete("intelligence_sessions", "id", intelligenceIds);
-
-    setDeleting(false);
-    setPendingDelete(null);
-    if (failed > 0) {
-      toast.error(
-        `Deleted ${total - failed} of ${total} records; ${failed} failed.`,
-      );
-    } else if (total > 0) {
+    const brand = pendingDelete;
+    try {
+      const result = await deleteBrandPermanentlyFn({
+        data: {
+          brandKey: brand.key,
+          brandName: brand.displayName,
+          sessionIds: brand.sessionIds,
+          workspaceIds: brand.workspaceIds,
+          savedBriefIds: brand.savedBriefIds,
+          intelligenceIds: brand.intelligenceIds,
+        },
+      });
+      setPendingDelete(null);
       toast.success(
-        `Deleted ${pendingDelete.displayName} (${total} record${total === 1 ? "" : "s"}).`,
+        `Deleted ${brand.displayName} (${result.totalDeleted} record${result.totalDeleted === 1 ? "" : "s"}).`,
         { duration: 3000, style: { color: "#4A7C59" } },
       );
-    } else {
-      toast.success(`Removed ${pendingDelete.displayName} from the register.`);
+      void refresh();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Delete failed");
+    } finally {
+      setDeleting(false);
     }
-    void refresh();
   };
 
   const stats = useMemo(
@@ -393,12 +374,10 @@ function Dashboard() {
               className="text-body"
               style={{ color: "#8A8680", marginTop: 8 }}
             >
-              This will permanently delete{" "}
-              {pendingDelete?.sessionIds.length ?? 0} pipeline session
-              {(pendingDelete?.sessionIds.length ?? 0) === 1 ? "" : "s"} for{" "}
-              {pendingDelete?.displayName ?? "this brand"} and all their
-              downstream outputs. Briefing Room and Intelligence records are
-              not deleted. This cannot be undone.
+              This will permanently delete all records for{" "}
+              {pendingDelete?.displayName ?? "this brand"} across the Strategy
+              Pipeline, Briefing Room, Saved Briefs, and Intelligence Lab. This
+              cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter
