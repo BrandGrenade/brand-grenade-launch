@@ -16,6 +16,7 @@ import {
   PENDING_BRIEF_STORAGE_KEY,
   type SavedBrief,
 } from "@/components/SavedBriefsLibrary";
+import { supabase } from "@/integrations/supabase/client";
 import { createSession } from "@/lib/stage1.functions";
 import { deleteBrandPermanently } from "@/lib/brand-register.functions";
 import {
