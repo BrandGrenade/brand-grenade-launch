@@ -1,4 +1,4 @@
-// LOC engine identifiers for the 9-engine rebuild.
+// LOC engine identifiers for the 13-engine rebuild.
 //
 // Historical LocTaskType constants are retained (unused by the new
 // engines) so any residual imports elsewhere in the codebase continue
@@ -40,6 +40,7 @@ export const LOC_ENGINES = [
   "the_unsayable",
   "the_moment",
   "one_word_ownership",
+  "invented_authority",
 ] as const;
 
 export type EngineName = (typeof LOC_ENGINES)[number];
@@ -57,5 +58,5 @@ export const LOC_ENGINE_LABEL: Record<EngineName, string> = {
   the_unsayable: "ENGINE 10 — THE UNSAYABLE",
   the_moment: "ENGINE 11 — THE MOMENT",
   one_word_ownership: "ENGINE 12 — ONE WORD OWNERSHIP",
+  invented_authority: "ENGINE 13 — INVENTED AUTHORITY",
 };
-
