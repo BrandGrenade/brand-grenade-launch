@@ -3191,13 +3191,14 @@ function PipelineView() {
               }
             }}
             onConfirmCheckpoint={async (stageId, notes) => {
-              if (stageId === "08") {
+              if (stageId === "08" || stageId === "08B") {
                 const ok = await advanceFromStage8();
                 if (!ok) return;
                 setStatuses((prev) => {
                   const next: Record<string, StageStatus> = {
                     ...prev,
                     "08": "complete",
+                    "08B": "complete",
                     "09": "running",
                   };
                   const idx = STAGES.findIndex((s) => s.id === "09");
