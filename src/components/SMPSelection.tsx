@@ -27,6 +27,11 @@ export interface SMPCard {
   iconicTierStatus: string;
   pressureTestNote: string;
   source?: SMPCardSource;
+  /** Machine engine key for LOC cards (e.g. "the_moment"). CORE = undefined. */
+  engineKey?: string;
+  /** Stage 11 verdict + binding conditions for CORE cards. */
+  stage11Verdict?: string;
+  stage11Conditions?: string;
   loc10?: {
     genuine_surprise?: number;
     credible_path?: number;
@@ -34,6 +39,16 @@ export interface SMPCard {
     competitive_permanence?: number;
     category_escape?: number;
   };
+}
+
+/** Payload returned to the caller when the human confirms a selection.
+ *  - Option A (single): { core } or { loc }
+ *  - Option B (combined): { core, loc } — both travel downstream. */
+export interface SMPSelectionPayload {
+  core?: SMPCard;
+  loc?: SMPCard;
+  source: "CORE" | "LOC" | "COMBINED";
+  engineKey?: string;
 }
 
 
