@@ -326,10 +326,13 @@ function IntelligenceRunPage() {
     const meta = row?.report_metadata;
     if (meta && typeof meta === "object" && !Array.isArray(meta)) {
       const bt = (meta as Record<string, unknown>).brief_type;
-      if (bt === "government") return "government";
+      if (typeof bt === "string" && bt.trim().toLowerCase() === "government") {
+        return "government";
+      }
     }
     return "commercial";
   }, [row?.report_metadata]);
+
 
   const [downloading, setDownloading] = useState(false);
   const [handingOff, setHandingOff] = useState(false);
