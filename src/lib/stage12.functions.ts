@@ -59,7 +59,7 @@ function buildDeterministicStage12Output(args: {
       /Test\s+2\s*[—\-–]\s*Time-Decay[^—\-–\n]*[—\-–]\s*([^\n]{40,320})/i,
     ]);
     const scoresBlock = score
-      ? `Differentiation: ${score.differentiation}/10 | Truth Strength: ${score.truthStrength}/10 | Cultural Relevance: ${score.culturalRelevance}/10 | Fame Potential: ${score.famePotential}/10\nWriter Quality: ${score.writerQuality}/10 | Commercial Plausibility: ${score.commercialPlausibility}/10 | Creative Expandability: ${score.creativeExpandability}/10\nComposite: ${score.composite}/70`
+      ? `Fame: ${score.fame}/10 (30%) | Truth Strength: ${score.truthStrength}/10 (20%) | Competitive Impossibility: ${score.competitiveImpossibility}/10 (15%)\nBrand Permission: ${score.brandPermission}/10 (10%) | Clean Air: ${score.cleanAir}/10 (10%) | Commercial Precedent: ${score.commercialPrecedent}/10 (5%)\nWeighted Composite: ${score.weightedComposite}/100${score.flags.length ? "\n" + score.flags.join("\n") : ""}`
       : `Scores: not available`;
     return `═══════════════════════════════════════════════════
 PROPOSITION ${index + 1}
