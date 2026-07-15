@@ -4101,14 +4101,6 @@ function RightPanel({
             <article style={{ paddingBottom: 80 }}>
               {stage.id === "08B" && sessionId ? (
                 <div className="space-y-6">
-                  <p className="text-body-sm" style={{ color: "#8A8680" }}>
-                    Left-of-Centre Engines fire thirteen parallel generative
-                    engines against the brief and then run a six-dimension
-                    validation pass (Fame · Truth Strength · Competitive
-                    Impossibility · Brand Permission · Clean Air · Commercial
-                    Precedent). Hard floors apply to Truth Strength and
-                    Competitive Impossibility. Must complete before Checkpoint B.
-                  </p>
                   <LocControls sessionId={sessionId} />
                   {text ? (
                     <StreamedOutput text={text} streaming={false} />
