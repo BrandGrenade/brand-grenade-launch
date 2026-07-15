@@ -2620,6 +2620,22 @@ function PipelineView() {
       return false;
     }
 
+    // Gate Checkpoint B on LOC-complete: LOC must be generated and validated
+    // before propositions advance, so Stage 12 sees the full ranked pool.
+    const { data: locRow } = await supabase
+      .from("sessions")
+      .select("loc_status")
+      .eq("id", sessionId)
+      .maybeSingle();
+    const locStatus = (locRow as { loc_status?: string | null } | null)?.loc_status ?? null;
+    if (locStatus !== "complete") {
+      alert(
+        "Left-of-Centre Engines (Stage 08B) must complete before Checkpoint B. Open Stage 08B and click Generate LOC.",
+      );
+      return false;
+    }
+
+
     const filtered = kept.map((b) => b.markdown).join("\n\n");
     const { error: filterErr } = await supabase
       .from("sessions")
