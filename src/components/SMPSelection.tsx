@@ -787,12 +787,13 @@ export function SMPSelection({
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
         {cards.map((card, idx) => {
-          const isSelected = selected === idx;
+          const isLoc = !!(card.source && card.source !== "CORE");
+          const isSelected = isLoc ? selectedLocIdx === idx : selectedCoreIdx === idx;
           return (
             <button
               key={card.cardNumber}
               type="button"
-              onClick={() => setSelected(idx)}
+              onClick={() => toggleSelect(idx)}
               className="text-left transition-all animate-fade-in"
               style={{
                 borderRadius: 12,
@@ -811,7 +812,7 @@ export function SMPSelection({
                 <span
                   className="text-label"
                   style={{
-                    color: card.source && card.source !== "CORE" ? "var(--color-warning)" : "var(--color-text-tertiary)",
+                    color: isLoc ? "var(--color-warning)" : "var(--color-text-tertiary)",
                     letterSpacing: "0.06em",
                   }}
                 >
@@ -822,13 +823,13 @@ export function SMPSelection({
                 {card.smpLine || "(line missing)"}
               </p>
 
-              {card.whatItOwns && <Section title={card.source && card.source !== "CORE" ? "Territory" : "What it owns"} body={card.whatItOwns} />}
+              {card.whatItOwns && <Section title={isLoc ? "Territory" : "What it owns"} body={card.whatItOwns} />}
               {card.truth && <Section title="The truth it is built on" body={card.truth} />}
               {card.whatItChallenges && (
                 <Section title="What it challenges" body={card.whatItChallenges} />
               )}
               {card.whatItMakesPossible && (
-                <Section title={card.source && card.source !== "CORE" ? "Courage assessment" : "What it makes possible"} body={card.whatItMakesPossible} />
+                <Section title={isLoc ? "Courage assessment" : "What it makes possible"} body={card.whatItMakesPossible} />
               )}
               {card.whatItRequires && (
                 <Section title="What it requires of the brand" body={card.whatItRequires} />
@@ -838,46 +839,44 @@ export function SMPSelection({
                 className="my-4 h-px border-0"
                 style={{ backgroundColor: "var(--color-border)" }}
               />
-              {card.source && card.source !== "CORE" ? (
-                <>
-                  <div className="grid grid-cols-5 gap-2">
-                    <ScorePill label="Surprise" value={card.loc10?.genuine_surprise} />
-                    <ScorePill label="Path" value={card.loc10?.credible_path} />
-                    <ScorePill label="Rich" value={card.loc10?.territory_richness} />
-                    <ScorePill label="Perm" value={card.loc10?.competitive_permanence} />
-                    <ScorePill label="Escape" value={card.loc10?.category_escape} />
-                  </div>
-                  <p className="text-body-sm mt-3" style={{ color: "var(--color-text-tertiary)" }}>
-                    LOC-10 provocation scores · scored on future potential, not current brand reality
-                  </p>
-                </>
-              ) : (
-                <>
-                  <div className="grid grid-cols-3 gap-2">
-                    <ScorePill label="Fame" value={card.scores.fame} />
-                    <ScorePill label="Truth" value={card.scores.truthStrength} />
-                    <ScorePill label="CompImp" value={card.scores.competitiveImpossibility} />
-                    <ScorePill label="Perm" value={card.scores.brandPermission} />
-                    <ScorePill label="Clean" value={card.scores.cleanAir} />
-                    <ScorePill label="Prec" value={card.scores.commercialPrecedent} />
-                  </div>
-                  {card.scores.weightedComposite !== undefined && (
-                    <p
-                      className="text-body-sm mt-3"
-                      style={{ color: "var(--color-text-tertiary)" }}
-                    >
-                      Weighted {card.scores.weightedComposite}/100
-                      {card.fieldName ? ` · ${card.fieldName}` : ""}
-                    </p>
-                  )}
-                  {card.scores.flags && card.scores.flags.length > 0 && (
-                    <ul className="mt-3 space-y-1" style={{ color: "var(--color-warning)", fontSize: 12, lineHeight: 1.5 }}>
-                      {card.scores.flags.map((f, i) => (
-                        <li key={i}>{f}</li>
-                      ))}
-                    </ul>
-                  )}
-                </>
+              <div className="grid grid-cols-3 gap-2">
+                <ScorePill label="Fame" value={card.scores.fame} />
+                <ScorePill label="Truth" value={card.scores.truthStrength} />
+                <ScorePill label="CompImp" value={card.scores.competitiveImpossibility} />
+                <ScorePill label="Perm" value={card.scores.brandPermission} />
+                <ScorePill label="Clean" value={card.scores.cleanAir} />
+                <ScorePill label="Prec" value={card.scores.commercialPrecedent} />
+              </div>
+              {card.scores.weightedComposite !== undefined && (
+                <p
+                  className="text-body-sm mt-3"
+                  style={{ color: "var(--color-text-tertiary)" }}
+                >
+                  Weighted {card.scores.weightedComposite}/100
+                  {!isLoc && card.fieldName ? ` · ${card.fieldName}` : ""}
+                </p>
+              )}
+              {isLoc && (
+                <p className="text-body-sm mt-2" style={{ color: "var(--color-text-tertiary)", fontStyle: "italic" }}>
+                  Scored on future brand potential — not current brand reality
+                </p>
+              )}
+              {!isLoc && card.stage11Verdict && (
+                <p className="text-body-sm mt-2" style={{ color: "var(--color-text-secondary)" }}>
+                  <strong>Stage 11 verdict:</strong> {card.stage11Verdict}
+                </p>
+              )}
+              {!isLoc && card.stage11Conditions && (
+                <p className="text-body-sm mt-1" style={{ color: "var(--color-text-tertiary)", whiteSpace: "pre-wrap" }}>
+                  <strong>Binding conditions:</strong> {card.stage11Conditions}
+                </p>
+              )}
+              {card.scores.flags && card.scores.flags.length > 0 && (
+                <ul className="mt-3 space-y-1" style={{ color: "var(--color-warning)", fontSize: 12, lineHeight: 1.5 }}>
+                  {card.scores.flags.map((f, i) => (
+                    <li key={i}>{f}</li>
+                  ))}
+                </ul>
               )}
             </button>
           );
@@ -892,14 +891,22 @@ export function SMPSelection({
         }}
       >
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <p className="text-body-sm" style={{ color: "var(--color-text-tertiary)" }}>
-            {selected !== null
-              ? `Selected: Proposition ${cards[selected].cardNumber}`
-              : "Select a proposition above to continue."}
-          </p>
+          <div className="text-body-sm" style={{ color: "var(--color-text-tertiary)" }}>
+            {!hasCore && !hasLoc && "Select one proposition — or one CORE and one LOC to combine."}
+            {hasCore && !hasLoc && `Selected: CORE Proposition ${selectedCore!.cardNumber}`}
+            {!hasCore && hasLoc && `Selected: ${selectedLoc!.source} · Proposition ${selectedLoc!.cardNumber}`}
+            {combined && (
+              <div>
+                Combined: CORE Proposition {selectedCore!.cardNumber} + {selectedLoc!.source} · Proposition {selectedLoc!.cardNumber}
+                <div style={{ marginTop: 6, color: "var(--color-warning)" }}>
+                  CORE = strategic platform. LOC = creative expression. Both travel downstream.
+                </div>
+              </div>
+            )}
+          </div>
           <button
             type="button"
-            disabled={selected === null}
+            disabled={!hasCore && !hasLoc}
             onClick={handleConfirm}
             className="inline-flex h-11 items-center justify-center rounded-md px-6 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50"
             style={{
@@ -907,7 +914,7 @@ export function SMPSelection({
               color: "var(--color-primary-foreground)",
             }}
           >
-            Confirm selection → Capture rationale
+            {combined ? "Confirm combined selection → Capture rationale" : "Confirm selection → Capture rationale"}
           </button>
         </div>
       </div>
