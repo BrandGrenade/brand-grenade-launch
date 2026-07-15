@@ -64,6 +64,12 @@ export type BrandRow = {
   runs: BrandRun[];
   /** Sessions belonging to this brand (used by "Delete brand"). */
   sessionIds: string[];
+  /** Briefing Room workspace IDs for this brand. */
+  workspaceIds: string[];
+  /** Saved brief IDs for this brand. */
+  savedBriefIds: string[];
+  /** Intelligence session IDs for this brand. */
+  intelligenceIds: string[];
 };
 
 // ─── Normalisation ─────────────────────────────────────────────────
