@@ -23,9 +23,22 @@ import type {
 } from "@/lib/briefing-room-prompts";
 import type { HandoffPayload } from "@/lib/briefing-room-handoff";
 import {
+  BRIEF_SECTIONS,
+  composeBriefText,
+  type BriefFields,
+} from "@/lib/brief-schema";
+import {
   PENDING_BRIEF_STORAGE_KEY,
   saveBrief,
 } from "@/components/SavedBriefsLibrary";
+
+const ANCHOR_END_MARKER = "=== END BRIEFING ROOM STRATEGIC ANCHOR ===";
+
+function extractAnchorBlock(briefText: string): string {
+  const idx = briefText.indexOf(ANCHOR_END_MARKER);
+  if (idx < 0) return "";
+  return briefText.slice(0, idx + ANCHOR_END_MARKER.length);
+}
 
 export const Route = createFileRoute("/briefing-room/$id")({
   component: WorkspacePage,
@@ -54,6 +67,7 @@ function WorkspacePage() {
   const [busyStep, setBusyStep] = useState<null | 1 | 2 | 3 | 4>(null);
   const [savingIntake, setSavingIntake] = useState(false);
   const [preview, setPreview] = useState<HandoffPayload | null>(null);
+  const [editedFields, setEditedFields] = useState<BriefFields | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [approving, setApproving] = useState(false);
   const [ackGaps, setAckGaps] = useState(false);
@@ -119,6 +133,7 @@ function WorkspacePage() {
     // computed against the old (null) frame. Drop it so the user doesn't see
     // "A frame must be selected in Step 1" after they've selected one.
     setPreview(null);
+    setEditedFields(null);
     setAckGaps(false);
     try {
       await setSel({ data: { id, selectedFrame: frame } });
@@ -132,6 +147,7 @@ function WorkspacePage() {
   async function pickTension(idx: number) {
     setWs((prev) => (prev ? { ...prev, selected_tension_index: idx } : prev));
     setPreview(null);
+    setEditedFields(null);
     setAckGaps(false);
     try {
       await setSel({ data: { id, selectedTensionIndex: idx } });
@@ -147,6 +163,10 @@ function WorkspacePage() {
     try {
       const p = await previewHandoff({ data: { id } });
       setPreview(p);
+      // Seed the editable copy from the server-composed fields. All eleven
+      // fields become user-editable at Step 5 — this is a human checkpoint;
+      // the edited copy (not the system-generated draft) ships to Stage 1.
+      setEditedFields(JSON.parse(JSON.stringify(p.briefFields)) as BriefFields);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Preview failed");
     } finally {
@@ -155,18 +175,21 @@ function WorkspacePage() {
   }
 
   async function approveAndHandOff() {
-    if (!preview || !preview.ready) return;
+    if (!preview || !preview.ready || !editedFields) return;
     if (preview.gaps.length > 0 && !ackGaps) {
       toast.error("Acknowledge the open gaps before handing off.");
       return;
     }
     setApproving(true);
     try {
+      const anchor = extractAnchorBlock(preview.briefText);
+      const composed = composeBriefText(editedFields);
+      const briefText = anchor ? `${anchor}\n\n${composed}` : composed;
       const saved = await saveBrief({
-        brandName: preview.briefFields.brandName || brand,
-        category: preview.briefFields.category || category,
-        briefText: preview.briefText,
-        briefFields: preview.briefFields,
+        brandName: editedFields.brandName || brand,
+        category: editedFields.category || category,
+        briefText,
+        briefFields: editedFields,
       });
       if (!saved) {
         setApproving(false);
@@ -447,7 +470,22 @@ function WorkspacePage() {
           disabled={!ws.tensions}
           disabledReason="Run Steps 1–4 first."
         >
-          {preview && <HandoffPreviewView preview={preview} />}
+          {preview && editedFields && (
+            <HandoffPreviewView
+              preview={preview}
+              fields={editedFields}
+              onFieldChange={(key, value) =>
+                setEditedFields((prev) =>
+                  prev
+                    ? {
+                        ...prev,
+                        sections: { ...prev.sections, [key]: value },
+                      }
+                    : prev,
+                )
+              }
+            />
+          )}
         </StepCard>
 
         {/* ─── STEP 6 — APPROVE + HAND OFF ─── */}
@@ -909,9 +947,16 @@ function TagBadge({
   );
 }
 
-function HandoffPreviewView({ preview }: { preview: HandoffPayload }) {
+function HandoffPreviewView({
+  preview,
+  fields,
+  onFieldChange,
+}: {
+  preview: HandoffPayload;
+  fields: BriefFields;
+  onFieldChange: (key: string, value: string) => void;
+}) {
   const [showBrief, setShowBrief] = useState(false);
-  const f = preview.briefFields;
   return (
     <div className="flex flex-col gap-3">
       <div
@@ -926,13 +971,23 @@ function HandoffPreviewView({ preview }: { preview: HandoffPayload }) {
         </p>
       </div>
 
+      <p className="text-body-sm text-text-tertiary">
+        Human checkpoint — every field below is editable. Edit or replace the
+        system-generated draft before approving. Your edited copy is what ships
+        to Stage 1.
+      </p>
+
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-        <MiniField label="f3 · Commercial Outcome" value={f.sections.f3_outcome} />
-        <MiniField label="f4 · Primary Barrier (+ tension)" value={f.sections.f4_barrier} />
-        <MiniField label="f6 · Audience" value={f.sections.f6_audience} />
-        <MiniField label="f7 · Current Belief" value={f.sections.f7_current_belief} />
-        <MiniField label="f8 · Desired Belief" value={f.sections.f8_desired_belief} />
-        <MiniField label="f9 · Reason to Believe" value={f.sections.f9_rtb} />
+        {BRIEF_SECTIONS.flatMap((section) =>
+          section.fields.map((field) => (
+            <EditableMiniField
+              key={field.key}
+              label={`${section.num} · ${section.title}`}
+              value={fields.sections[field.key] ?? ""}
+              onChange={(v) => onFieldChange(field.key, v)}
+            />
+          )),
+        )}
       </div>
 
       <button
@@ -947,23 +1002,39 @@ function HandoffPreviewView({ preview }: { preview: HandoffPayload }) {
           className="mt-1 max-h-[420px] overflow-auto rounded-md p-3 text-[12px] leading-[1.55] whitespace-pre-wrap"
           style={{ backgroundColor: "#0A0A0A", border: "1px solid #2A2A2A", color: "#D8D3CC" }}
         >
-          {preview.briefText}
+          {(() => {
+            const anchor = extractAnchorBlock(preview.briefText);
+            const composed = composeBriefText(fields);
+            return anchor ? `${anchor}\n\n${composed}` : composed;
+          })()}
         </pre>
       )}
     </div>
   );
 }
 
-function MiniField({ label, value }: { label: string; value: string }) {
+function EditableMiniField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+}) {
   return (
     <div
       className="rounded-md p-3"
       style={{ backgroundColor: "#141414", border: "1px solid #2A2A2A" }}
     >
       <div className="text-label" style={{ color: "#8A8580" }}>{label}</div>
-      <p className="text-body-sm mt-1.5 text-text-primary whitespace-pre-wrap">
-        {value || "(empty)"}
-      </p>
+      <textarea
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="input-base mt-1.5 w-full p-2 text-body-sm text-text-primary"
+        style={{ minHeight: 120, lineHeight: 1.55 }}
+        maxLength={50000}
+      />
     </div>
   );
 }
