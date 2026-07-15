@@ -1,36 +1,34 @@
-// Stage 12 input hardening + Stage 10 in-code selection gate (v5.5).
+// Stage 12 input hardening + Stage 10 in-code selection gate (V6).
+//
+// V6 unifies core SMP scoring with the LOC validation framework:
+//   Six dimensions, weighted composite /100, hard floors on Truth Strength
+//   (≥5) and Competitive Impossibility (≥6). Fame / Brand Permission /
+//   Clean Air / Commercial Precedent surface human flags only.
 //
 // Permanent guarantees enforced HERE, not in the prompt alone:
-//   1. Stage 10 PASS/ELIMINATED is computed IN CODE from parsed scores using
-//      the v5.5 selection rules — hard floors on Truth and Differentiation,
-//      everything else informational. Expandability and Commercial Plausibility
-//      can NEVER eliminate.
-//   2. A weighted ranking composite is computed IN CODE for ordering only
-//      (never a cutoff). It overrides any composite the LLM emits.
-//   3. ELIMINATED SMPs from Stage 11 are stripped from the Stage 12 input.
-//      VALIDATED, VALIDATED WITH STRATEGIC NOTE, and accepted REWRITTEN SMPs
-//      are forwarded.
-//   4. Stage 10 scores are parsed and re-emitted as a FROZEN SCORES block
-//      so Stage 12 cannot invent or recalculate scores per SMP.
+//   1. Stage 10 PASS/ELIMINATED is computed IN CODE from parsed scores.
+//   2. Weighted composite /100 is computed IN CODE (ordering + display).
+//   3. Human flags are computed IN CODE and rendered per SMP.
+//   4. ELIMINATED SMPs from Stage 11 are stripped from the Stage 12 input.
+//   5. Stage 10 scores are re-emitted as a FROZEN SCORES block for Stage 12.
 
 export interface Stage10Score {
   smpLine: string;
   fieldName: string;
-  differentiation: number;
+  fame: number;
   truthStrength: number;
-  culturalRelevance: number;
-  famePotential: number;
-  writerQuality: number;
-  commercialPlausibility: number;
-  creativeExpandability: number;
-  /** Unweighted sum of all seven dimensions, out of 70 (LLM-emitted; may be overwritten by code-recompute). */
-  composite: number;
-  /** Code-computed weighted ranking score, out of 110. Used for ordering only — never a cutoff. */
+  competitiveImpossibility: number;
+  brandPermission: number;
+  cleanAir: number;
+  commercialPrecedent: number;
+  /** Weighted composite score out of 100 (code-computed; authoritative). */
   weightedComposite: number;
-  /** Code-computed verdict per v5.5 rules. */
+  /** Code-computed verdict per V6 floors. */
   codeVerdict: "PASS" | "ELIMINATED";
   /** Reason the code verdict was assigned (empty for PASS). */
   codeReason: string;
+  /** Human flags surfaced by V6 thresholds. */
+  flags: string[];
 }
 
 export interface Stage11Verdict {
@@ -41,26 +39,27 @@ export interface Stage11Verdict {
   block: string;            // raw stage 11 per-SMP block
 }
 
-// ─── v5.5 weighting ──────────────────────────────────────────────────────
-// Truth and Differentiation are doubled because they are the "right" floor.
-// Fame Potential and Writer Quality are doubled because they are the "famous"
-// engine. Cultural Relevance, Commercial Plausibility, Creative Expandability
-// carry single weight — they describe the line but do not select it.
-// Max possible weighted composite = (4 dims × 2 × 10) + (3 dims × 1 × 10) = 110.
+// ─── V6 weighting (percent, sums to 100) ─────────────────────────────────
 export const STAGE_10_WEIGHTS = {
-  differentiation: 2,
-  truthStrength: 2,
-  famePotential: 2,
-  writerQuality: 2,
-  culturalRelevance: 1,
-  commercialPlausibility: 1,
-  creativeExpandability: 1,
+  fame: 30,
+  truthStrength: 20,
+  competitiveImpossibility: 15,
+  brandPermission: 10,
+  cleanAir: 10,
+  commercialPrecedent: 5,
 } as const;
-export const STAGE_10_WEIGHTED_MAX = 110;
+export const STAGE_10_WEIGHTED_MAX = 100;
 
 export const STAGE_10_FLOORS = {
-  truthStrength: 6,
-  differentiation: 6,
+  truthStrength: 5,
+  competitiveImpossibility: 6,
+} as const;
+
+export const STAGE_10_FLAG_THRESHOLDS = {
+  fame: 6,
+  brandPermission: 5,
+  cleanAir: 5,
+  commercialPrecedent: 4,
 } as const;
 
 function norm(s: string): string {
@@ -113,43 +112,58 @@ function pickNumber(block: string, label: string): number {
   return m ? Number(m[1]) : NaN;
 }
 
-export function computeWeightedComposite(s: {
-  differentiation: number;
+interface V6Dims {
+  fame: number;
   truthStrength: number;
-  culturalRelevance: number;
-  famePotential: number;
-  writerQuality: number;
-  commercialPlausibility: number;
-  creativeExpandability: number;
-}): number {
-  return (
-    (s.differentiation || 0) * STAGE_10_WEIGHTS.differentiation +
-    (s.truthStrength || 0) * STAGE_10_WEIGHTS.truthStrength +
-    (s.famePotential || 0) * STAGE_10_WEIGHTS.famePotential +
-    (s.writerQuality || 0) * STAGE_10_WEIGHTS.writerQuality +
-    (s.culturalRelevance || 0) * STAGE_10_WEIGHTS.culturalRelevance +
-    (s.commercialPlausibility || 0) * STAGE_10_WEIGHTS.commercialPlausibility +
-    (s.creativeExpandability || 0) * STAGE_10_WEIGHTS.creativeExpandability
-  );
+  competitiveImpossibility: number;
+  brandPermission: number;
+  cleanAir: number;
+  commercialPrecedent: number;
 }
 
-export function evaluateStage10Verdict(s: {
-  differentiation: number;
-  truthStrength: number;
-}): { verdict: "PASS" | "ELIMINATED"; reason: string } {
+export function computeWeightedComposite(s: V6Dims): number {
+  // weights are percent and sum to 100; each score is 0–10, so weighted = Σ(score × weight) / 10.
+  const raw =
+    (s.fame || 0) * STAGE_10_WEIGHTS.fame +
+    (s.truthStrength || 0) * STAGE_10_WEIGHTS.truthStrength +
+    (s.competitiveImpossibility || 0) * STAGE_10_WEIGHTS.competitiveImpossibility +
+    (s.brandPermission || 0) * STAGE_10_WEIGHTS.brandPermission +
+    (s.cleanAir || 0) * STAGE_10_WEIGHTS.cleanAir +
+    (s.commercialPrecedent || 0) * STAGE_10_WEIGHTS.commercialPrecedent;
+  return Math.round((raw / 10) * 10) / 10;
+}
+
+export function evaluateStage10Verdict(s: V6Dims): { verdict: "PASS" | "ELIMINATED"; reason: string } {
   if ((s.truthStrength || 0) < STAGE_10_FLOORS.truthStrength) {
     return {
       verdict: "ELIMINATED",
-      reason: `Truth Strength ${s.truthStrength}/10 below floor of ${STAGE_10_FLOORS.truthStrength} (Stage 7 reconstruction)`,
+      reason: `Truth Strength ${s.truthStrength}/10 below hard floor of ${STAGE_10_FLOORS.truthStrength}`,
     };
   }
-  if ((s.differentiation || 0) < STAGE_10_FLOORS.differentiation) {
+  if ((s.competitiveImpossibility || 0) < STAGE_10_FLOORS.competitiveImpossibility) {
     return {
       verdict: "ELIMINATED",
-      reason: `Differentiation ${s.differentiation}/10 below floor of ${STAGE_10_FLOORS.differentiation} (Stage 8 regen from same CS)`,
+      reason: `Competitive Impossibility ${s.competitiveImpossibility}/10 below hard floor of ${STAGE_10_FLOORS.competitiveImpossibility}`,
     };
   }
   return { verdict: "PASS", reason: "" };
+}
+
+export function computeStage10Flags(s: V6Dims): string[] {
+  const flags: string[] = [];
+  if ((s.fame || 0) < STAGE_10_FLAG_THRESHOLDS.fame) {
+    flags.push("⚠ FAME: this proposition may not cut through in market");
+  }
+  if ((s.brandPermission || 0) < STAGE_10_FLAG_THRESHOLDS.brandPermission) {
+    flags.push("⚠ BRAND PERMISSION: significant gap between this claim and demonstrated brand behaviour");
+  }
+  if ((s.cleanAir || 0) < STAGE_10_FLAG_THRESHOLDS.cleanAir) {
+    flags.push("⚠ CLEAN AIR: this territory has competitive presence — occupancy risk");
+  }
+  if ((s.commercialPrecedent || 0) < STAGE_10_FLAG_THRESHOLDS.commercialPrecedent) {
+    flags.push("⚠ COMMERCIAL PRECEDENT: first-mover move — no commercial validation exists — human judgment required");
+  }
+  return flags;
 }
 
 export function parseStage10Scores(text: string): Stage10Score[] {
@@ -157,30 +171,27 @@ export function parseStage10Scores(text: string): Stage10Score[] {
   for (const block of splitSmpBlocks(text)) {
     const head = parseSmpHeading(block);
     if (!head) continue;
-    // Composite is now /70 (sum of 7 dims). Accept legacy /60 for back-compat
-    // on any historical Stage 10 output that pre-dates v5.5.
-    const compositeMatch = block.match(/COMPOSITE\s*:\s*(\d+(?:\.\d+)?)\s*\/\s*(?:70|60)/i);
-    const dims = {
-      differentiation: pickNumber(block, "Differentiation"),
+    const dims: V6Dims = {
+      fame: pickNumber(block, "Fame"),
       truthStrength: pickNumber(block, "Truth Strength"),
-      culturalRelevance: pickNumber(block, "Cultural Relevance"),
-      famePotential: pickNumber(block, "Fame Potential"),
-      writerQuality: pickNumber(block, "Writer Quality"),
-      commercialPlausibility: pickNumber(block, "Commercial Plausibility"),
-      creativeExpandability: pickNumber(block, "Creative Expandability"),
+      competitiveImpossibility: pickNumber(block, "Competitive Impossibility"),
+      brandPermission: pickNumber(block, "Brand Permission"),
+      cleanAir: pickNumber(block, "Clean Air"),
+      commercialPrecedent: pickNumber(block, "Commercial Precedent"),
     };
     const weightedComposite = computeWeightedComposite(dims);
     const { verdict, reason } = evaluateStage10Verdict(dims);
+    const flags = computeStage10Flags(dims);
     const score: Stage10Score = {
       smpLine: head.smpLine,
       fieldName: head.fieldName,
       ...dims,
-      composite: compositeMatch ? Number(compositeMatch[1]) : NaN,
       weightedComposite,
       codeVerdict: verdict,
       codeReason: reason,
+      flags,
     };
-    if (!Number.isNaN(score.differentiation)) out.push(score);
+    if (!Number.isNaN(score.fame) || !Number.isNaN(score.truthStrength)) out.push(score);
   }
   return out;
 }
@@ -275,7 +286,7 @@ export function buildFrozenScoresBlock(
 
   const lines: string[] = [];
   lines.push(
-    "==== FROZEN STAGE 10 SCORES — USE VERBATIM IN STAGE 12 CARDS. DO NOT RECALCULATE OR ADJUST. ====",
+    "==== FROZEN STAGE 10 SCORES (V6 SIX-DIMENSION FRAMEWORK) — USE VERBATIM IN STAGE 12 CARDS. DO NOT RECALCULATE OR ADJUST. ====",
   );
   for (const v of validated) {
     const s = byField.get(norm(v.fieldName)) ?? byLine.get(norm(v.smpLine));
@@ -288,35 +299,27 @@ export function buildFrozenScoresBlock(
       continue;
     }
     lines.push(
-      `Differentiation: ${s.differentiation}/10 | Truth Strength: ${s.truthStrength}/10 | Cultural Relevance: ${s.culturalRelevance}/10 | Fame Potential: ${s.famePotential}/10`,
+      `Fame: ${s.fame}/10 (30%) | Truth Strength: ${s.truthStrength}/10 (20%) | Competitive Impossibility: ${s.competitiveImpossibility}/10 (15%)`,
     );
     lines.push(
-      `Writer Quality: ${s.writerQuality}/10 | Commercial Plausibility: ${s.commercialPlausibility}/10 | Creative Expandability: ${s.creativeExpandability}/10`,
+      `Brand Permission: ${s.brandPermission}/10 (10%) | Clean Air: ${s.cleanAir}/10 (10%) | Commercial Precedent: ${s.commercialPrecedent}/10 (5%)`,
     );
-    const composite = Number.isFinite(s.composite)
-      ? s.composite
-      : (s.differentiation || 0) +
-        (s.truthStrength || 0) +
-        (s.culturalRelevance || 0) +
-        (s.famePotential || 0) +
-        (s.writerQuality || 0) +
-        (s.commercialPlausibility || 0) +
-        (s.creativeExpandability || 0);
-    lines.push(`Composite: ${composite}/70`);
+    lines.push(`Weighted Composite: ${s.weightedComposite}/100`);
+    if (s.flags.length) {
+      for (const f of s.flags) lines.push(f);
+    }
   }
   return lines.join("\n");
 }
 
 /**
- * Post-process raw Stage 10 LLM output:
- *  - Append a CODE VERDICT line to every Per-SMP block based on the v5.5 floors.
- *  - Append a CODE COMPOSITE line restating the unweighted /70 (recomputed from
- *    the seven dimensions) and the weighted ranking composite /110.
- *  - Emit a CODE-COMPUTED STAGE 10 SUMMARY block at the end of the output that
- *    Stage 11 / Stage 12 consume as authoritative.
- * isPreflight=true bypasses elimination (everything PASSes) but still computes
- * composites. Original LLM verdict lines (if any) are kept; the appended CODE
- * VERDICT is the binding one.
+ * Post-process raw Stage 10 LLM output under V6:
+ *  - Append CODE VERDICT, CODE COMPOSITE (weighted /100), and CODE FLAGS
+ *    lines to every Per-SMP block.
+ *  - Emit a CODE-COMPUTED STAGE 10 SUMMARY block at the end that Stage 11
+ *    and Stage 12 consume as authoritative.
+ * isPreflight=true bypasses elimination (everything PASSes); composites and
+ * flags are still computed.
  */
 export function applyStage10CodeGate(
   stage10Output: string,
@@ -331,65 +334,58 @@ export function applyStage10CodeGate(
     const effective = opts.isPreflight
       ? { verdict: "PASS" as const, reason: s.codeReason }
       : { verdict: s.codeVerdict, reason: s.codeReason };
-    const recomputedUnweighted =
-      (s.differentiation || 0) +
-      (s.truthStrength || 0) +
-      (s.culturalRelevance || 0) +
-      (s.famePotential || 0) +
-      (s.writerQuality || 0) +
-      (s.commercialPlausibility || 0) +
-      (s.creativeExpandability || 0);
     const verdictLine =
       effective.verdict === "PASS"
-        ? `CODE VERDICT: PASS — clears Stage 10 floors (Truth ≥ 6, Differentiation ≥ 6).`
+        ? `CODE VERDICT: PASS — clears Stage 10 hard floors (Truth Strength ≥ ${STAGE_10_FLOORS.truthStrength}, Competitive Impossibility ≥ ${STAGE_10_FLOORS.competitiveImpossibility}).`
         : `CODE VERDICT: ELIMINATED — ${effective.reason}.`;
-    const compositeLine = `CODE COMPOSITE: ${recomputedUnweighted}/70 unweighted · ${s.weightedComposite}/${STAGE_10_WEIGHTED_MAX} weighted (ranking only).`;
-    // Inject the two lines immediately after the per-SMP block's
-    // PROXIMITY WARNING line, if present; otherwise after the COMPOSITE line.
+    const compositeLine = `CODE COMPOSITE: ${s.weightedComposite}/${STAGE_10_WEIGHTED_MAX} weighted (Fame 30% · Truth 20% · Competitive Impossibility 15% · Brand Permission 10% · Clean Air 10% · Commercial Precedent 5%).`;
+    const flagsLine = s.flags.length
+      ? `CODE FLAGS:\n${s.flags.map((f) => `  ${f}`).join("\n")}`
+      : `CODE FLAGS: none`;
+
+    // Inject after the Commercial Precedent line for this SMP block.
     const escLine = s.smpLine.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     const smpBlockHeadRe = new RegExp(
-      `(SMP:\\s*"${escLine}"[\\s\\S]*?)(\\n[\\t ]*PROXIMITY\\s+WARNING[^\\n]*\\n|\\n[\\t ]*COMPOSITE\\s*:[^\\n]*\\n)`,
+      `(SMP:\\s*"${escLine}"[\\s\\S]*?\\n[\\t ]*Commercial\\s+Precedent\\s*:[^\\n]*\\n)`,
       "i",
     );
     if (smpBlockHeadRe.test(patched)) {
       patched = patched.replace(
         smpBlockHeadRe,
-        (_m, head: string, marker: string) => `${head}${marker}${verdictLine}\n${compositeLine}\n`,
+        (_m, head: string) => `${head}${verdictLine}\n${compositeLine}\n${flagsLine}\n`,
       );
-    } else {
-      // Block not found verbatim — fall back to appending at end-of-output summary only.
     }
   }
 
   const summaryLines: string[] = [];
   summaryLines.push("");
   summaryLines.push(
-    "==== CODE-COMPUTED STAGE 10 SUMMARY (v5.5 — AUTHORITATIVE; OVERRIDES ANY LLM VERDICT) ====",
+    "==== CODE-COMPUTED STAGE 10 SUMMARY (V6 UNIFIED SIX-DIMENSION FRAMEWORK — AUTHORITATIVE; OVERRIDES ANY LLM VERDICT) ====",
   );
   if (opts.isPreflight) {
     summaryLines.push(
-      "PRE-FLIGHT MODE: Truth / Differentiation floors bypassed — every SMP is forced PASS for end-to-end pipeline integrity testing. Composites are real.",
+      "PRE-FLIGHT MODE: Truth Strength and Competitive Impossibility floors bypassed — every SMP is forced PASS for end-to-end pipeline integrity testing. Composites and flags are real.",
     );
   } else {
     summaryLines.push(
-      "Selection rule: ELIMINATED if Truth Strength < 6 OR Differentiation < 6. Expandability and Commercial Plausibility never eliminate. Weighted composite is for ranking only (never a cutoff).",
+      `Selection rule: ELIMINATED if Truth Strength < ${STAGE_10_FLOORS.truthStrength} OR Competitive Impossibility < ${STAGE_10_FLOORS.competitiveImpossibility}. Fame, Brand Permission, Clean Air and Commercial Precedent surface human flags but do not eliminate. Weighted composite /100 is for ranking and display.`,
     );
   }
   const sorted = [...scores].sort((a, b) => b.weightedComposite - a.weightedComposite);
   for (const s of sorted) {
     const v = opts.isPreflight ? "PASS" : s.codeVerdict;
-    const reason = opts.isPreflight && s.codeVerdict === "ELIMINATED" ? ` (would-eliminate: ${s.codeReason})` : v === "ELIMINATED" ? ` — ${s.codeReason}` : "";
+    const reason =
+      opts.isPreflight && s.codeVerdict === "ELIMINATED"
+        ? ` (would-eliminate: ${s.codeReason})`
+        : v === "ELIMINATED"
+        ? ` — ${s.codeReason}`
+        : "";
     summaryLines.push(
-      `- ${v} · weighted ${s.weightedComposite}/${STAGE_10_WEIGHTED_MAX} · unweighted ${
-        (s.differentiation || 0) +
-        (s.truthStrength || 0) +
-        (s.culturalRelevance || 0) +
-        (s.famePotential || 0) +
-        (s.writerQuality || 0) +
-        (s.commercialPlausibility || 0) +
-        (s.creativeExpandability || 0)
-      }/70 · "${s.smpLine}" — FIELD: ${s.fieldName}${reason}`,
+      `- ${v} · weighted ${s.weightedComposite}/${STAGE_10_WEIGHTED_MAX} · "${s.smpLine}" — FIELD: ${s.fieldName}${reason}`,
     );
+    if (s.flags.length) {
+      for (const f of s.flags) summaryLines.push(`    ${f}`);
+    }
   }
   patched = `${patched.trimEnd()}\n\n${summaryLines.join("\n")}\n`;
   return { output: patched, scores };

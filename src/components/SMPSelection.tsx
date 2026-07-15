@@ -14,13 +14,14 @@ export interface SMPCard {
   whatItMakesPossible: string;
   whatItRequires: string;
   scores: {
-    differentiation?: number;
+    fame?: number;
     truthStrength?: number;
-    culturalRelevance?: number;
-    commercialPlausibility?: number;
-    creativeExpandability?: number;
-    writerQuality?: number;
-    composite?: number;
+    competitiveImpossibility?: number;
+    brandPermission?: number;
+    cleanAir?: number;
+    commercialPrecedent?: number;
+    weightedComposite?: number;
+    flags?: string[];
   };
   fieldName: string;
   iconicTierStatus: string;
@@ -93,7 +94,8 @@ function parsePropositions(rawOutput: string): RawProp[] {
     if (
       !block.includes("**") &&
       !block.includes("Composite") &&
-      !block.includes("Differentiation")
+      !block.includes("Fame") &&
+      !block.includes("Truth Strength")
     ) {
       continue;
     }
@@ -183,14 +185,19 @@ function parsePropositions(rawOutput: string): RawProp[] {
       "\\[METADATA\\]",
     ]);
 
+    const compositeRe = /(?:Weighted\s+)?Composite\s*:\s*(\d+(?:\.\d+)?)\s*\/\s*100/i;
+    const compMatch = block.match(compositeRe);
+    const flagRe = /⚠\s+[A-Z][A-Z\s]+:[^\n]+/g;
+    const flags = Array.from(block.matchAll(flagRe), (m) => m[0].trim());
     const scores: SMPCard["scores"] = {
-      differentiation: extractScore(block, "Differentiation"),
+      fame: extractScore(block, "Fame"),
       truthStrength: extractScore(block, "Truth Strength"),
-      culturalRelevance: extractScore(block, "Cultural Relevance"),
-      commercialPlausibility: extractScore(block, "Commercial Plausibility"),
-      creativeExpandability: extractScore(block, "Creative Expandability"),
-      writerQuality: extractScore(block, "Writer Quality"),
-      composite: extractScore(block, "Composite"),
+      competitiveImpossibility: extractScore(block, "Competitive Impossibility"),
+      brandPermission: extractScore(block, "Brand Permission"),
+      cleanAir: extractScore(block, "Clean Air"),
+      commercialPrecedent: extractScore(block, "Commercial Precedent"),
+      weightedComposite: compMatch ? parseFloat(compMatch[1]) : undefined,
+      flags: flags.length ? flags : undefined,
     };
 
     const grabMeta = (label: string): string => {
@@ -308,13 +315,14 @@ export function parseSMPCards(
       whatItRequires: strategicNote,
       scores: s
         ? {
-            differentiation: s.differentiation,
+            fame: s.fame,
             truthStrength: s.truthStrength,
-            culturalRelevance: s.culturalRelevance,
-            commercialPlausibility: s.commercialPlausibility,
-            creativeExpandability: s.creativeExpandability,
-            writerQuality: s.writerQuality,
-            composite: s.composite,
+            competitiveImpossibility: s.competitiveImpossibility,
+            brandPermission: s.brandPermission,
+            cleanAir: s.cleanAir,
+            commercialPrecedent: s.commercialPrecedent,
+            weightedComposite: s.weightedComposite,
+            flags: s.flags,
           }
         : {},
       fieldName: v.fieldName,
@@ -742,23 +750,29 @@ export function SMPSelection({
                 </>
               ) : (
                 <>
-                  <div className="grid grid-cols-4 gap-2">
-                    <ScorePill label="Diff" value={card.scores.differentiation} />
+                  <div className="grid grid-cols-3 gap-2">
+                    <ScorePill label="Fame" value={card.scores.fame} />
                     <ScorePill label="Truth" value={card.scores.truthStrength} />
-                    <ScorePill label="Cult" value={card.scores.culturalRelevance} />
-                    <ScorePill label="Fame" value={(card.scores as { famePotential?: number }).famePotential} />
-                    <ScorePill label="Writer" value={card.scores.writerQuality} />
-                    <ScorePill label="Comm" value={card.scores.commercialPlausibility} />
-                    <ScorePill label="Creat" value={card.scores.creativeExpandability} />
+                    <ScorePill label="CompImp" value={card.scores.competitiveImpossibility} />
+                    <ScorePill label="Perm" value={card.scores.brandPermission} />
+                    <ScorePill label="Clean" value={card.scores.cleanAir} />
+                    <ScorePill label="Prec" value={card.scores.commercialPrecedent} />
                   </div>
-                  {card.scores.composite !== undefined && (
+                  {card.scores.weightedComposite !== undefined && (
                     <p
                       className="text-body-sm mt-3"
                       style={{ color: "var(--color-text-tertiary)" }}
                     >
-                      Composite {card.scores.composite}/70
+                      Weighted {card.scores.weightedComposite}/100
                       {card.fieldName ? ` · ${card.fieldName}` : ""}
                     </p>
+                  )}
+                  {card.scores.flags && card.scores.flags.length > 0 && (
+                    <ul className="mt-3 space-y-1" style={{ color: "var(--color-warning)", fontSize: 12, lineHeight: 1.5 }}>
+                      {card.scores.flags.map((f, i) => (
+                        <li key={i}>{f}</li>
+                      ))}
+                    </ul>
                   )}
                 </>
               )}
