@@ -174,17 +174,37 @@ export const runLeftOfCentre = createServerFn({ method: "POST" })
         .update({ loc_engine_outputs: engineOutputsRecord } as never)
         .eq("id", data.sessionId);
 
-      const packages: LocEnginePackage[] = engineResults
-        .filter((r) => r.output !== null)
-        .map((r) => ({
-          engine: r.engine,
-          engineOutput: r.output as EngineOutput,
-          validation: null,
-        }));
+      const successful = engineResults.filter(
+        (r): r is { engine: EngineName; output: EngineOutput } =>
+          r.output !== null,
+      );
 
-      if (packages.length === 0) {
-        throw new Error("All nine LOC engines failed to return output.");
+      if (successful.length === 0) {
+        throw new Error("All LOC engines failed to return output.");
       }
+
+      // Six-dimension validation pass across all successful engines.
+      let validationEntries: EngineValidationEntry[] = [];
+      let validationError: string | null = null;
+      try {
+        validationEntries = await runValidationPass({
+          sessionId: data.sessionId,
+          brandName: session.brand_name,
+          category: session.category,
+          engineOutputs: successful,
+        });
+      } catch (ve) {
+        validationError = ve instanceof Error ? ve.message : String(ve);
+      }
+      const validationByEngine = new Map(
+        validationEntries.map((v) => [v.engine, v]),
+      );
+
+      const packages: LocEnginePackage[] = successful.map((r) => ({
+        engine: r.engine,
+        engineOutput: r.output,
+        validation: null,
+      }));
 
       const generatedAt = new Date().toISOString();
       const markdown = renderLocFullMarkdown({
@@ -194,17 +214,24 @@ export const runLeftOfCentre = createServerFn({ method: "POST" })
         sourceNote: inputs.sourceNote,
       });
 
-      const packagesJson = packages.map((p) => ({
-        engine: p.engine,
-        engineOutput: p.engineOutput,
-        validation: null,
-        validationError: null,
-      }));
+      const packagesJson = packages.map((p) => {
+        const v = validationByEngine.get(p.engine);
+        return {
+          engine: p.engine,
+          engineOutput: p.engineOutput,
+          validation: v?.score ?? null,
+          validationError: v?.error ?? null,
+        };
+      });
 
       await supabaseAdmin
         .from("sessions")
         .update({
-          loc_validation: null,
+          loc_validation: {
+            generatedAt,
+            error: validationError,
+            entries: validationEntries,
+          },
           loc_decision_packages: packagesJson,
           stage_9_leftofcentre_output: markdown,
           loc_status: "complete",
