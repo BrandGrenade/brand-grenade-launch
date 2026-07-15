@@ -564,6 +564,8 @@ interface SessionData {
   stage_9_output: string | null;
   stage_9_leftofcentre_output: string | null;
   stage_9_error: string | null;
+  loc_status?: string | null;
+  loc_error?: string | null;
   stage_10_output: string | null;
   stage_10_error: string | null;
   stage_11_output: string | null;
