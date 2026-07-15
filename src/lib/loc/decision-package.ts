@@ -19,7 +19,7 @@ export type LocEnginePackage = {
 };
 
 export const LOC_MARKDOWN_DIVIDER =
-  "\n\n---\n\n# LEFT-OF-CENTRE ENGINES — Nine Propositions\n\n";
+  "\n\n---\n\n# LEFT-OF-CENTRE ENGINES — Thirteen Propositions\n\n";
 
 export function renderLocDecisionPackage(pkg: LocEnginePackage): string {
   const line = pkg.engineOutput.proposition?.trim() || "(no line generated)";
