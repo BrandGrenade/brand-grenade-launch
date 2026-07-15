@@ -2378,14 +2378,30 @@ function PipelineView() {
         (stage8Loading
           ? "Generating Strategic Propositions — this can take 60–120 seconds…"
           : "Awaiting output."),
-      "08B":
-        (session?.stage_9_leftofcentre_output &&
-          sanitize(session.stage_9_leftofcentre_output)) ||
-        (session?.loc_status === "running"
-          ? "Firing thirteen Left-of-Centre engines in parallel — this can take 60–180 seconds…"
-          : session?.loc_status === "failed"
-            ? `Left-of-Centre engines failed${session?.loc_error ? `: ${session.loc_error}` : "."} Use Retry above.`
-            : "Awaiting Left-of-Centre engine output."),
+      "08B": (() => {
+        const md = session?.stage_9_leftofcentre_output;
+        if (md && md.trim()) return sanitize(md);
+        const pkgs = session?.loc_decision_packages;
+        if (session?.loc_status === "complete" && Array.isArray(pkgs) && pkgs.length > 0) {
+          try {
+            return sanitize(
+              renderLocFullMarkdown({
+                packages: pkgs as LocEnginePackage[],
+                retryCount: session?.loc_retry_count ?? 0,
+                generatedAt: session?.loc_generated_at ?? new Date().toISOString(),
+                sourceNote: "rendered from persisted decision packages",
+              }),
+            );
+          } catch {
+            /* fall through */
+          }
+        }
+        if (session?.loc_status === "running")
+          return "Firing thirteen Left-of-Centre engines in parallel — this can take 60–180 seconds…";
+        if (session?.loc_status === "failed")
+          return `Left-of-Centre engines failed${session?.loc_error ? `: ${session.loc_error}` : "."} Use Retry above.`;
+        return "Awaiting Left-of-Centre engine output.";
+      })(),
       "09":
         (stage9Output && sanitize(stage9Output)) ??
         (stage9Loading
