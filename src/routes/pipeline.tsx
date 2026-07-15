@@ -2372,6 +2372,14 @@ function PipelineView() {
         (stage8Loading
           ? "Generating Strategic Propositions — this can take 60–120 seconds…"
           : "Awaiting output."),
+      "08B":
+        (session?.stage_9_leftofcentre_output &&
+          sanitize(session.stage_9_leftofcentre_output)) ||
+        (session?.loc_status === "running"
+          ? "Firing thirteen Left-of-Centre engines in parallel — this can take 60–180 seconds…"
+          : session?.loc_status === "failed"
+            ? `Left-of-Centre engines failed${session?.loc_error ? `: ${session.loc_error}` : "."} Use Retry above.`
+            : "Awaiting Left-of-Centre engine output."),
       "09":
         (stage9Output && sanitize(stage9Output)) ??
         (stage9Loading
