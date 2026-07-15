@@ -290,6 +290,9 @@ const SaveSelection = z.object({
   sessionId: z.string().uuid(),
   smpLine: z.string().min(1).max(1000),
   fieldName: z.string().min(1).max(500),
+  selectedLocExpression: z.string().max(1000).nullable().optional(),
+  selectionSource: z.enum(["CORE", "LOC", "COMBINED"]).optional(),
+  selectionEngine: z.string().max(100).nullable().optional(),
 });
 
 // Instant write — fires the moment the human picks a card. Unblocks Stage 13.
@@ -307,6 +310,9 @@ export const saveSelectedSMP = createServerFn({ method: "POST" })
           .update({
             selected_smp: data.smpLine,
             selected_smp_field_name: data.fieldName,
+            selected_loc_expression: data.selectedLocExpression ?? null,
+            selection_source: data.selectionSource ?? "CORE",
+            selection_engine: data.selectionEngine ?? null,
           })
           .eq("id", data.sessionId),
       "SMP selection save",
@@ -314,6 +320,7 @@ export const saveSelectedSMP = createServerFn({ method: "POST" })
     if (!res.ok) throw new Error(res.error);
     return { ok: true };
   });
+
 
 const SaveRationale = z.object({
   sessionId: z.string().uuid(),
