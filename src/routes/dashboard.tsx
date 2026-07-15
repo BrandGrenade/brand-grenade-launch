@@ -173,24 +173,44 @@ function Dashboard() {
   const handleDeleteBrand = async () => {
     if (!pendingDelete) return;
     setDeleting(true);
-    const ids = pendingDelete.sessionIds;
+    const sessionIds = pendingDelete.sessionIds;
+    const workspaceIds = pendingDelete.workspaceIds;
+    const savedBriefIds = pendingDelete.savedBriefIds;
+    const intelligenceIds = pendingDelete.intelligenceIds;
+    const total =
+      sessionIds.length +
+      workspaceIds.length +
+      savedBriefIds.length +
+      intelligenceIds.length;
     let failed = 0;
-    for (const id of ids) {
-      const { error: delErr } = await supabase
-        .from("sessions")
+
+    const runDelete = async (
+      table: "sessions" | "briefing_room_workspaces" | "saved_briefs" | "intelligence_sessions",
+      column: string,
+      ids: string[],
+    ) => {
+      if (ids.length === 0) return;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error: delErr } = await (supabase.from(table as any) as any)
         .delete()
-        .eq("id", id);
-      if (delErr) failed++;
-    }
+        .in(column, ids);
+      if (delErr) failed += ids.length;
+    };
+
+    await runDelete("sessions", "id", sessionIds);
+    await runDelete("briefing_room_workspaces", "id", workspaceIds);
+    await runDelete("saved_briefs", "brief_id", savedBriefIds);
+    await runDelete("intelligence_sessions", "id", intelligenceIds);
+
     setDeleting(false);
     setPendingDelete(null);
     if (failed > 0) {
       toast.error(
-        `Deleted ${ids.length - failed} of ${ids.length} sessions; ${failed} failed.`,
+        `Deleted ${total - failed} of ${total} records; ${failed} failed.`,
       );
-    } else if (ids.length > 0) {
+    } else if (total > 0) {
       toast.success(
-        `Deleted ${ids.length} pipeline session${ids.length === 1 ? "" : "s"} for ${pendingDelete.displayName}.`,
+        `Deleted ${pendingDelete.displayName} (${total} record${total === 1 ? "" : "s"}).`,
         { duration: 3000, style: { color: "#4A7C59" } },
       );
     } else {
