@@ -34,6 +34,7 @@ import { runStage14c } from "@/lib/stage14c.functions";
 import { runStage15 } from "@/lib/stage15.functions";
 import { runStage16 } from "@/lib/stage16.functions";
 import { runStage8, confirmCheckpointB, regenerateStage8Selective } from "@/lib/stage8.functions";
+import { runLeftOfCentre } from "@/lib/loc.functions";
 import { resetStage, resetStageCascade } from "@/lib/retry.functions";
 import { sanitizeStageOutput } from "@/lib/sanitize-output";
 import { hasStageOutput, isStageOutputComplete } from "@/lib/stage-completion";
