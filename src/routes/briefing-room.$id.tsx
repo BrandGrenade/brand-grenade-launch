@@ -67,6 +67,7 @@ function WorkspacePage() {
   const [busyStep, setBusyStep] = useState<null | 1 | 2 | 3 | 4>(null);
   const [savingIntake, setSavingIntake] = useState(false);
   const [preview, setPreview] = useState<HandoffPayload | null>(null);
+  const [editedFields, setEditedFields] = useState<BriefFields | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [approving, setApproving] = useState(false);
   const [ackGaps, setAckGaps] = useState(false);
