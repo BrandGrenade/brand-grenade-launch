@@ -406,6 +406,7 @@ const STAGES: Stage[] = [
   { id: "06", number: "06", name: "Insight Validation" },
   { id: "07", number: "07", name: "Territory Synthesis" },
   { id: "08", number: "08", name: "Proposition Generation", checkpoint: true },
+  { id: "08B", number: "08B", name: "Left-of-Centre Engines" },
   { id: "09", number: "09", name: "Distinctiveness Check" },
   { id: "10", number: "10", name: "Proposition Scoring" },
   { id: "11", number: "11", name: "Integrity Testing" },
