@@ -406,6 +406,7 @@ const STAGES: Stage[] = [
   { id: "06", number: "06", name: "Insight Validation" },
   { id: "07", number: "07", name: "Territory Synthesis" },
   { id: "08", number: "08", name: "Proposition Generation", checkpoint: true },
+  { id: "08B", number: "08B", name: "Left-of-Centre Engines" },
   { id: "09", number: "09", name: "Distinctiveness Check" },
   { id: "10", number: "10", name: "Proposition Scoring" },
   { id: "11", number: "11", name: "Integrity Testing" },
@@ -762,6 +763,9 @@ function PipelineView() {
   // (checkbox = checked). Defaults to all-checked whenever the underlying
   // proposition set changes.
   const [stage8KeepNames, setStage8KeepNames] = useState<Set<string>>(new Set());
+  // Stage 08B — Left-of-Centre engines. Status is derived from the sessions
+  // row's loc_status column and polled below so the sidebar stays live.
+  const [loc08bStatus, setLoc08bStatus] = useState<string | null>(null);
 
   // Whenever Stage 8's set of proposition names changes (new generation,
   // selective regenerate finished, etc.), default every proposition to
@@ -1237,6 +1241,38 @@ function PipelineView() {
   useEffect(() => {
     if (session?.stage_8_output) setStage8Output(session.stage_8_output);
   }, [session?.stage_8_output]);
+  // Poll loc_status every 5s to drive the 08B sidebar chip and gate Checkpoint B.
+  useEffect(() => {
+    if (!sessionId) return;
+    let cancelled = false;
+    const tick = async () => {
+      const { data } = await supabase
+        .from("sessions")
+        .select("loc_status")
+        .eq("id", sessionId)
+        .maybeSingle();
+      if (cancelled) return;
+      const s = (data as { loc_status?: string | null } | null)?.loc_status ?? null;
+      setLoc08bStatus(s);
+    };
+    void tick();
+    const timer = setInterval(tick, 5000);
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+    };
+  }, [sessionId]);
+  useEffect(() => {
+    const mapped: StageStatus =
+      loc08bStatus === "complete"
+        ? "complete"
+        : loc08bStatus === "running"
+          ? "running"
+          : loc08bStatus === "failed"
+            ? "error"
+            : "pending";
+    setStatuses((p) => (p["08B"] === mapped ? p : { ...p, "08B": mapped }));
+  }, [loc08bStatus]);
   useEffect(() => {
     if (session?.stage_9_output) setStage9Output(`${session.stage_9_output}${session.stage_9_leftofcentre_output ?? ""}`);
   }, [session?.stage_9_output, session?.stage_9_leftofcentre_output]);
@@ -2619,6 +2655,22 @@ function PipelineView() {
       return false;
     }
 
+    // Gate Checkpoint B on LOC-complete: LOC must be generated and validated
+    // before propositions advance, so Stage 12 sees the full ranked pool.
+    const { data: locRow } = await supabase
+      .from("sessions")
+      .select("loc_status")
+      .eq("id", sessionId)
+      .maybeSingle();
+    const locStatus = (locRow as { loc_status?: string | null } | null)?.loc_status ?? null;
+    if (locStatus !== "complete") {
+      alert(
+        "Left-of-Centre Engines (Stage 08B) must complete before Checkpoint B. Open Stage 08B and click Generate LOC.",
+      );
+      return false;
+    }
+
+
     const filtered = kept.map((b) => b.markdown).join("\n\n");
     const { error: filterErr } = await supabase
       .from("sessions")
@@ -3987,24 +4039,38 @@ function RightPanel({
             </header>
 
             <article style={{ paddingBottom: 80 }}>
-              {isRunning && !text ? <ProgressMessages stageName={stage.name} /> : null}
-              {stage.id === "08" && !isRunning && text ? (
-                <Stage8PropositionsView
-                  text={text}
-                  streaming={isRunning}
-                  keepNames={stage8KeepNames}
-                  onToggle={onToggleStage8Keep}
-                  onManualSubmit={onManualStage8Submit}
-                />
-              ) : (
-                <StreamedOutput text={text} streaming={isRunning} />
-              )}
-              {isRunning ? <StallWatcher stageKey={stage.id} onRetry={onRetry} /> : null}
-              {stage.id === "09" && sessionId ? (
-                <div className="mt-8">
+              {stage.id === "08B" && sessionId ? (
+                <div className="space-y-6">
+                  <p className="text-body-sm" style={{ color: "#8A8680" }}>
+                    Left-of-Centre Engines fire thirteen parallel generative
+                    engines against the brief and then run a six-dimension
+                    validation pass (Fame · Truth Strength · Competitive
+                    Impossibility · Brand Permission · Clean Air · Commercial
+                    Precedent). Hard floors apply to Truth Strength and
+                    Competitive Impossibility. Must complete before Checkpoint B.
+                  </p>
                   <LocControls sessionId={sessionId} />
+                  {text ? (
+                    <StreamedOutput text={text} streaming={false} />
+                  ) : null}
                 </div>
-              ) : null}
+              ) : (
+                <>
+                  {isRunning && !text ? <ProgressMessages stageName={stage.name} /> : null}
+                  {stage.id === "08" && !isRunning && text ? (
+                    <Stage8PropositionsView
+                      text={text}
+                      streaming={isRunning}
+                      keepNames={stage8KeepNames}
+                      onToggle={onToggleStage8Keep}
+                      onManualSubmit={onManualStage8Submit}
+                    />
+                  ) : (
+                    <StreamedOutput text={text} streaming={isRunning} />
+                  )}
+                  {isRunning ? <StallWatcher stageKey={stage.id} onRetry={onRetry} /> : null}
+                </>
+              )}
             </article>
           </>
         )}
