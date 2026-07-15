@@ -2505,6 +2505,9 @@ function PipelineView() {
     session?.stage_9_leftofcentre_output,
     session?.loc_status,
     session?.loc_error,
+    session?.loc_decision_packages,
+    session?.loc_retry_count,
+    session?.loc_generated_at,
   ]);
 
   // Progress — count main (non-conditional) stages.
