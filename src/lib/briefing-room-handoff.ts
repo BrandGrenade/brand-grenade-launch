@@ -178,8 +178,12 @@ export function buildHandoffPayload(ws: WorkspaceForHandoff): HandoffPayload {
     ? `${ws.brand_name} — see anchored context below. Category: ${ws.category || "(unspecified)"}.`
     : "(unspecified — Briefing Room intake missing brand statement)";
 
-  // f2 — Strategic Objective (leave blank; the human picks in the structured editor)
-  b.sections.f2_objective = "";
+  // f2 — Strategic Objective — derived from the Step 1 frame selection.
+  // Opportunity frame → new-territory objectives (Category Creation / Repositioning).
+  // Problem frame → protective objectives (Crisis Recovery / Defence).
+  // Both → Repositioning (moves brand across territories). Problem-shape
+  // keywords nudge between the two options within each frame.
+  b.sections.f2_objective = deriveStrategicObjective(ws);
 
   // f3 — Commercial Outcome (frame-anchored)
   if (ws.diagnosis) {
