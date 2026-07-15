@@ -147,6 +147,7 @@ function WorkspacePage() {
   async function pickTension(idx: number) {
     setWs((prev) => (prev ? { ...prev, selected_tension_index: idx } : prev));
     setPreview(null);
+    setEditedFields(null);
     setAckGaps(false);
     try {
       await setSel({ data: { id, selectedTensionIndex: idx } });
