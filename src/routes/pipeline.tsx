@@ -3241,15 +3241,21 @@ function PipelineView() {
                   enhancing={stage12Loading}
 
 
-                  onSelect={async (card) => {
+                  onSelect={async (payload) => {
                     if (!sessionId) return;
-                    setSelectedSMP(card);
+                    // Primary card for downstream display: CORE if present, else LOC.
+                    const primary = payload.core ?? payload.loc;
+                    if (!primary) return;
+                    setSelectedSMP(primary);
                     try {
                       await saveSelectedSMPFn({
                         data: {
                           sessionId,
-                          smpLine: card.smpLine || `Proposition ${card.cardNumber}`,
-                          fieldName: card.fieldName || `Field ${card.cardNumber}`,
+                          smpLine: primary.smpLine || `Proposition ${primary.cardNumber}`,
+                          fieldName: primary.fieldName || `Field ${primary.cardNumber}`,
+                          selectedLocExpression: payload.loc?.smpLine ?? null,
+                          selectionSource: payload.source,
+                          selectionEngine: payload.engineKey ?? null,
                         },
                       });
                     } catch (err) {
@@ -3260,6 +3266,7 @@ function PipelineView() {
                     }
                     setRationaleForId("12");
                   }}
+
                 />
               ) : selectedId === "12" && rationaleForId === "12" ? (
                 <SelectionRationale
