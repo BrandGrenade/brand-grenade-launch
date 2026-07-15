@@ -947,9 +947,16 @@ function TagBadge({
   );
 }
 
-function HandoffPreviewView({ preview }: { preview: HandoffPayload }) {
+function HandoffPreviewView({
+  preview,
+  fields,
+  onFieldChange,
+}: {
+  preview: HandoffPayload;
+  fields: BriefFields;
+  onFieldChange: (key: string, value: string) => void;
+}) {
   const [showBrief, setShowBrief] = useState(false);
-  const f = preview.briefFields;
   return (
     <div className="flex flex-col gap-3">
       <div
@@ -964,13 +971,23 @@ function HandoffPreviewView({ preview }: { preview: HandoffPayload }) {
         </p>
       </div>
 
+      <p className="text-body-sm text-text-tertiary">
+        Human checkpoint — every field below is editable. Edit or replace the
+        system-generated draft before approving. Your edited copy is what ships
+        to Stage 1.
+      </p>
+
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-        <MiniField label="f3 · Commercial Outcome" value={f.sections.f3_outcome} />
-        <MiniField label="f4 · Primary Barrier (+ tension)" value={f.sections.f4_barrier} />
-        <MiniField label="f6 · Audience" value={f.sections.f6_audience} />
-        <MiniField label="f7 · Current Belief" value={f.sections.f7_current_belief} />
-        <MiniField label="f8 · Desired Belief" value={f.sections.f8_desired_belief} />
-        <MiniField label="f9 · Reason to Believe" value={f.sections.f9_rtb} />
+        {BRIEF_SECTIONS.flatMap((section) =>
+          section.fields.map((field) => (
+            <EditableMiniField
+              key={field.key}
+              label={`${section.num} · ${section.title}`}
+              value={fields.sections[field.key] ?? ""}
+              onChange={(v) => onFieldChange(field.key, v)}
+            />
+          )),
+        )}
       </div>
 
       <button
@@ -985,23 +1002,39 @@ function HandoffPreviewView({ preview }: { preview: HandoffPayload }) {
           className="mt-1 max-h-[420px] overflow-auto rounded-md p-3 text-[12px] leading-[1.55] whitespace-pre-wrap"
           style={{ backgroundColor: "#0A0A0A", border: "1px solid #2A2A2A", color: "#D8D3CC" }}
         >
-          {preview.briefText}
+          {(() => {
+            const anchor = extractAnchorBlock(preview.briefText);
+            const composed = composeBriefText(fields);
+            return anchor ? `${anchor}\n\n${composed}` : composed;
+          })()}
         </pre>
       )}
     </div>
   );
 }
 
-function MiniField({ label, value }: { label: string; value: string }) {
+function EditableMiniField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+}) {
   return (
     <div
       className="rounded-md p-3"
       style={{ backgroundColor: "#141414", border: "1px solid #2A2A2A" }}
     >
       <div className="text-label" style={{ color: "#8A8580" }}>{label}</div>
-      <p className="text-body-sm mt-1.5 text-text-primary whitespace-pre-wrap">
-        {value || "(empty)"}
-      </p>
+      <textarea
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="input-base mt-1.5 w-full p-2 text-body-sm text-text-primary"
+        style={{ minHeight: 120, lineHeight: 1.55 }}
+        maxLength={50000}
+      />
     </div>
   );
 }
