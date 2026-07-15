@@ -74,7 +74,11 @@ export const deleteBrandPermanently = createServerFn({ method: "POST" })
     }
 
     const matchingIntelIds = new Set(data.intelligenceIds);
-    for (const row of ((intelRes.data ?? []) as Array<{ id: string; brand_name: string | null }>)) {
+    const intelligenceRows = (intelRes.data ?? []) as unknown as Array<{
+      id: string;
+      brand_name: string | null;
+    }>;
+    for (const row of intelligenceRows) {
       if (normalizeBrand(row.brand_name) === targetKey) matchingIntelIds.add(row.id);
     }
 
