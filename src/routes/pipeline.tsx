@@ -35,6 +35,7 @@ import { runStage15 } from "@/lib/stage15.functions";
 import { runStage16 } from "@/lib/stage16.functions";
 import { runStage8, confirmCheckpointB, regenerateStage8Selective } from "@/lib/stage8.functions";
 import { runLeftOfCentre } from "@/lib/loc.functions";
+import { renderLocFullMarkdown, type LocEnginePackage } from "@/lib/loc/decision-package";
 import { resetStage, resetStageCascade } from "@/lib/retry.functions";
 import { sanitizeStageOutput } from "@/lib/sanitize-output";
 import { hasStageOutput, isStageOutputComplete } from "@/lib/stage-completion";
@@ -566,6 +567,9 @@ interface SessionData {
   stage_9_error: string | null;
   loc_status?: string | null;
   loc_error?: string | null;
+  loc_decision_packages?: LocEnginePackage[] | null;
+  loc_retry_count?: number | null;
+  loc_generated_at?: string | null;
   stage_10_output: string | null;
   stage_10_error: string | null;
   stage_11_output: string | null;
@@ -993,7 +997,7 @@ function PipelineView() {
     supabase
       .from("sessions")
       .select(
-        "id, brand_name, category, strategic_mode, brief_text, brief_versions, current_stage, status, stage_status, stage_1_output, stage_1_tension_score, stage_1b_required, stage_1b_output, stage_1_error, stage_2_output, stage_2_error, stage_3_output, stage_3_error, stage_4_output, stage_4_error, stage_4b_output, stage_4b_error, stage_5_output, stage_5_error, stage_6_output, stage_6_error, stage_7_output, stage_7_error, stage_8_output, stage_8_error, stage_9_output, stage_9_leftofcentre_output, stage_9_error, loc_status, loc_error, stage_10_output, stage_10_error, stage_11_output, stage_11_error, stage_12_output, stage_12_error, stage_13_output, stage_13_error, stage_13b_output, stage_13b_error, stage_14_output, stage_14_error, stage_14b_output, stage_14b_error, stage_14c_output, stage_14c_error, stage_15_output, stage_15_error, stage_16_consulting_output, stage_16_error, brand_intelligence, selected_smp, selected_smp_field_name, checkpoint_a_confirmed, checkpoint_b_confirmed, checkpoint_c_confirmed, strategy_signoff_confirmed, strategy_signoff_stop, retry_status",
+        "id, brand_name, category, strategic_mode, brief_text, brief_versions, current_stage, status, stage_status, stage_1_output, stage_1_tension_score, stage_1b_required, stage_1b_output, stage_1_error, stage_2_output, stage_2_error, stage_3_output, stage_3_error, stage_4_output, stage_4_error, stage_4b_output, stage_4b_error, stage_5_output, stage_5_error, stage_6_output, stage_6_error, stage_7_output, stage_7_error, stage_8_output, stage_8_error, stage_9_output, stage_9_leftofcentre_output, stage_9_error, loc_status, loc_error, loc_decision_packages, loc_retry_count, loc_generated_at, stage_10_output, stage_10_error, stage_11_output, stage_11_error, stage_12_output, stage_12_error, stage_13_output, stage_13_error, stage_13b_output, stage_13b_error, stage_14_output, stage_14_error, stage_14b_output, stage_14b_error, stage_14c_output, stage_14c_error, stage_15_output, stage_15_error, stage_16_consulting_output, stage_16_error, brand_intelligence, selected_smp, selected_smp_field_name, checkpoint_a_confirmed, checkpoint_b_confirmed, checkpoint_c_confirmed, strategy_signoff_confirmed, strategy_signoff_stop, retry_status",
       )
 
       .eq("id", sessionId)
@@ -1328,7 +1332,7 @@ function PipelineView() {
       const { data } = await supabase
         .from("sessions")
         .select(
-          "id, brand_name, category, strategic_mode, brief_text, brief_versions, current_stage, status, stage_status, stage_1_output, stage_1_tension_score, stage_1b_required, stage_1b_output, stage_1_error, stage_2_output, stage_2_error, stage_3_output, stage_3_error, stage_4_output, stage_4_error, stage_4b_output, stage_4b_error, stage_5_output, stage_5_error, stage_6_output, stage_6_error, stage_7_output, stage_7_error, stage_8_output, stage_8_error, stage_9_output, stage_9_leftofcentre_output, stage_9_error, loc_status, loc_error, stage_10_output, stage_10_error, stage_11_output, stage_11_error, stage_12_output, stage_12_error, stage_13_output, stage_13_error, stage_13b_output, stage_13b_error, stage_14_output, stage_14_error, stage_14b_output, stage_14b_error, stage_14c_output, stage_14c_error, stage_15_output, stage_15_error, stage_16_consulting_output, stage_16_error, brand_intelligence, selected_smp, selected_smp_field_name, checkpoint_a_confirmed, checkpoint_b_confirmed, checkpoint_c_confirmed, retry_status",
+          "id, brand_name, category, strategic_mode, brief_text, brief_versions, current_stage, status, stage_status, stage_1_output, stage_1_tension_score, stage_1b_required, stage_1b_output, stage_1_error, stage_2_output, stage_2_error, stage_3_output, stage_3_error, stage_4_output, stage_4_error, stage_4b_output, stage_4b_error, stage_5_output, stage_5_error, stage_6_output, stage_6_error, stage_7_output, stage_7_error, stage_8_output, stage_8_error, stage_9_output, stage_9_leftofcentre_output, stage_9_error, loc_status, loc_error, loc_decision_packages, loc_retry_count, loc_generated_at, stage_10_output, stage_10_error, stage_11_output, stage_11_error, stage_12_output, stage_12_error, stage_13_output, stage_13_error, stage_13b_output, stage_13b_error, stage_14_output, stage_14_error, stage_14b_output, stage_14b_error, stage_14c_output, stage_14c_error, stage_15_output, stage_15_error, stage_16_consulting_output, stage_16_error, brand_intelligence, selected_smp, selected_smp_field_name, checkpoint_a_confirmed, checkpoint_b_confirmed, checkpoint_c_confirmed, retry_status",
         )
         .eq("id", sessionId)
         .single();
@@ -2374,14 +2378,30 @@ function PipelineView() {
         (stage8Loading
           ? "Generating Strategic Propositions — this can take 60–120 seconds…"
           : "Awaiting output."),
-      "08B":
-        (session?.stage_9_leftofcentre_output &&
-          sanitize(session.stage_9_leftofcentre_output)) ||
-        (session?.loc_status === "running"
-          ? "Firing thirteen Left-of-Centre engines in parallel — this can take 60–180 seconds…"
-          : session?.loc_status === "failed"
-            ? `Left-of-Centre engines failed${session?.loc_error ? `: ${session.loc_error}` : "."} Use Retry above.`
-            : "Awaiting Left-of-Centre engine output."),
+      "08B": (() => {
+        const md = session?.stage_9_leftofcentre_output;
+        if (md && md.trim()) return sanitize(md);
+        const pkgs = session?.loc_decision_packages;
+        if (session?.loc_status === "complete" && Array.isArray(pkgs) && pkgs.length > 0) {
+          try {
+            return sanitize(
+              renderLocFullMarkdown({
+                packages: pkgs as LocEnginePackage[],
+                retryCount: session?.loc_retry_count ?? 0,
+                generatedAt: session?.loc_generated_at ?? new Date().toISOString(),
+                sourceNote: "rendered from persisted decision packages",
+              }),
+            );
+          } catch {
+            /* fall through */
+          }
+        }
+        if (session?.loc_status === "running")
+          return "Firing thirteen Left-of-Centre engines in parallel — this can take 60–180 seconds…";
+        if (session?.loc_status === "failed")
+          return `Left-of-Centre engines failed${session?.loc_error ? `: ${session.loc_error}` : "."} Use Retry above.`;
+        return "Awaiting Left-of-Centre engine output.";
+      })(),
       "09":
         (stage9Output && sanitize(stage9Output)) ??
         (stage9Loading
@@ -2485,6 +2505,9 @@ function PipelineView() {
     session?.stage_9_leftofcentre_output,
     session?.loc_status,
     session?.loc_error,
+    session?.loc_decision_packages,
+    session?.loc_retry_count,
+    session?.loc_generated_at,
   ]);
 
   // Progress — count main (non-conditional) stages.
