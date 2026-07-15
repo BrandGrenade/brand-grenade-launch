@@ -665,6 +665,7 @@ function PipelineView() {
   const runStage8Fn = useServerFn(runStage8);
   const confirmCheckpointBFn = useServerFn(confirmCheckpointB);
   const regenerateStage8SelectiveFn = useServerFn(regenerateStage8Selective);
+  const runLocFn = useServerFn(runLeftOfCentre);
   const runStage9Fn = useServerFn(runStage9);
   const runStage10Fn = useServerFn(runStage10);
   const runStage11Fn = useServerFn(runStage11);
