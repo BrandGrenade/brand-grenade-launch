@@ -24,6 +24,7 @@ import {
   type LocEnginePackage,
 } from "./loc/decision-package";
 import { LOC_ENGINES, type EngineName } from "./loc/task-types";
+import { runValidationPass, type EngineValidationEntry } from "./loc/validation";
 
 const RunInput = z.object({
   sessionId: z.string().uuid(),
