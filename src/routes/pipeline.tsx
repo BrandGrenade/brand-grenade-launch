@@ -2482,6 +2482,9 @@ function PipelineView() {
     stage15Loading,
     stage16Output,
     stage16Loading,
+    session?.stage_9_leftofcentre_output,
+    session?.loc_status,
+    session?.loc_error,
   ]);
 
   // Progress — count main (non-conditional) stages.
