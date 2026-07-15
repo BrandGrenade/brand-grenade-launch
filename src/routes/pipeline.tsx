@@ -763,6 +763,9 @@ function PipelineView() {
   // (checkbox = checked). Defaults to all-checked whenever the underlying
   // proposition set changes.
   const [stage8KeepNames, setStage8KeepNames] = useState<Set<string>>(new Set());
+  // Stage 08B — Left-of-Centre engines. Status is derived from the sessions
+  // row's loc_status column and polled below so the sidebar stays live.
+  const [loc08bStatus, setLoc08bStatus] = useState<string | null>(null);
 
   // Whenever Stage 8's set of proposition names changes (new generation,
   // selective regenerate finished, etc.), default every proposition to
