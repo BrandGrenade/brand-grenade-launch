@@ -445,6 +445,9 @@ function assemble({
       lastUpdated,
       runs,
       sessionIds: g.sessions.map((s) => s.id),
+      workspaceIds: g.workspaces.map((w) => w.id),
+      savedBriefIds: g.savedBriefs.map((b) => b.brief_id),
+      intelligenceIds: g.intelligence.map((i) => i.id),
     });
   }
 
