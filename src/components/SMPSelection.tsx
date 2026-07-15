@@ -358,6 +358,7 @@ const LOC_ENGINE_DISPLAY: Record<string, string> = {
   the_unsayable: "THE UNSAYABLE",
   the_moment: "THE MOMENT",
   one_word_ownership: "ONE WORD OWNERSHIP",
+  invented_authority: "INVENTED AUTHORITY",
   // Legacy — pre-nine-engine rebuild. Rendered for backward-compat if
   // a historic session still has them persisted.
   breach: "BREACH",
