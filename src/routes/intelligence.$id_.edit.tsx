@@ -60,11 +60,15 @@ function IntelligenceEditPage() {
         return;
       }
       const meta = data.report_metadata;
+      const rawBt =
+        meta && typeof meta === "object" && !Array.isArray(meta)
+          ? (meta as Record<string, unknown>).brief_type
+          : null;
       const briefType: BriefType =
-        meta && typeof meta === "object" && !Array.isArray(meta) &&
-        (meta as Record<string, unknown>).brief_type === "government"
+        typeof rawBt === "string" && rawBt.trim().toLowerCase() === "government"
           ? "government"
           : "commercial";
+
       setLoaded({
         brand: data.brand_name ?? "",
         category: data.category ?? "",

@@ -18,8 +18,19 @@ export type LocEnginePackage = {
   taskType?: string;
 };
 
-export const LOC_MARKDOWN_DIVIDER =
-  "\n\n---\n\n# LEFT-OF-CENTRE ENGINES — Thirteen Propositions\n\n";
+const NUMBER_WORD: Record<number, string> = {
+  1: "One", 2: "Two", 3: "Three", 4: "Four", 5: "Five", 6: "Six",
+  7: "Seven", 8: "Eight", 9: "Nine", 10: "Ten", 11: "Eleven",
+  12: "Twelve", 13: "Thirteen", 14: "Fourteen", 15: "Fifteen",
+};
+
+function locHeadingForCount(count: number): string {
+  const word = NUMBER_WORD[count] ?? String(count);
+  return `\n\n---\n\n# LEFT-OF-CENTRE ENGINES — ${word} Propositions\n\n`;
+}
+
+/** Retained for callers that reference a static divider (e.g. Stage 12 split). */
+export const LOC_MARKDOWN_DIVIDER = "\n\n---\n\n# LEFT-OF-CENTRE ENGINES —";
 
 export function renderLocDecisionPackage(pkg: LocEnginePackage): string {
   const line = pkg.engineOutput.proposition?.trim() || "(no line generated)";
@@ -39,7 +50,12 @@ export function renderLocFullMarkdown(args: {
   generatedAt: string;
   sourceNote: string;
 }): string {
-  const header = `${LOC_MARKDOWN_DIVIDER}_Generated: ${args.generatedAt} (retry ${args.retryCount}) — ${args.sourceNote}_\n\n`;
+  // Count only engines that actually produced a proposition line.
+  const withOutput = args.packages.filter(
+    (p) => !!p.engineOutput?.proposition?.trim(),
+  ).length;
+  const header = `${locHeadingForCount(withOutput)}_Generated: ${args.generatedAt} (retry ${args.retryCount}) — ${args.sourceNote}_\n\n`;
+
 
   // Preserve engine order regardless of Promise.all completion order.
   const byEngine = new Map<EngineName, LocEnginePackage>();
