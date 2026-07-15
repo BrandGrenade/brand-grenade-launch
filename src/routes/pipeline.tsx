@@ -1241,6 +1241,38 @@ function PipelineView() {
   useEffect(() => {
     if (session?.stage_8_output) setStage8Output(session.stage_8_output);
   }, [session?.stage_8_output]);
+  // Poll loc_status every 5s to drive the 08B sidebar chip and gate Checkpoint B.
+  useEffect(() => {
+    if (!sessionId) return;
+    let cancelled = false;
+    const tick = async () => {
+      const { data } = await supabase
+        .from("sessions")
+        .select("loc_status")
+        .eq("id", sessionId)
+        .maybeSingle();
+      if (cancelled) return;
+      const s = (data as { loc_status?: string | null } | null)?.loc_status ?? null;
+      setLoc08bStatus(s);
+    };
+    void tick();
+    const timer = setInterval(tick, 5000);
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+    };
+  }, [sessionId]);
+  useEffect(() => {
+    const mapped: StageStatus =
+      loc08bStatus === "complete"
+        ? "complete"
+        : loc08bStatus === "running"
+          ? "running"
+          : loc08bStatus === "failed"
+            ? "error"
+            : "pending";
+    setStatuses((p) => (p["08B"] === mapped ? p : { ...p, "08B": mapped }));
+  }, [loc08bStatus]);
   useEffect(() => {
     if (session?.stage_9_output) setStage9Output(`${session.stage_9_output}${session.stage_9_leftofcentre_output ?? ""}`);
   }, [session?.stage_9_output, session?.stage_9_leftofcentre_output]);
