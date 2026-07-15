@@ -4039,24 +4039,41 @@ function RightPanel({
             </header>
 
             <article style={{ paddingBottom: 80 }}>
-              {isRunning && !text ? <ProgressMessages stageName={stage.name} /> : null}
-              {stage.id === "08" && !isRunning && text ? (
-                <Stage8PropositionsView
-                  text={text}
-                  streaming={isRunning}
-                  keepNames={stage8KeepNames}
-                  onToggle={onToggleStage8Keep}
-                  onManualSubmit={onManualStage8Submit}
-                />
-              ) : (
-                <StreamedOutput text={text} streaming={isRunning} />
-              )}
-              {isRunning ? <StallWatcher stageKey={stage.id} onRetry={onRetry} /> : null}
-              {stage.id === "09" && sessionId ? (
-                <div className="mt-8">
+              {stage.id === "08B" && sessionId ? (
+                <div className="space-y-6">
+                  <p className="text-body-sm" style={{ color: "#8A8680" }}>
+                    Left-of-Centre Engines fire thirteen parallel generative
+                    engines against the brief and then run a six-dimension
+                    validation pass (Fame · Truth Strength · Competitive
+                    Impossibility · Brand Permission · Clean Air · Commercial
+                    Precedent). Hard floors apply to Truth Strength and
+                    Competitive Impossibility. Must complete before Checkpoint B.
+                  </p>
                   <LocControls sessionId={sessionId} />
+                  {session?.stage_9_leftofcentre_output ? (
+                    <StreamedOutput
+                      text={session.stage_9_leftofcentre_output}
+                      streaming={false}
+                    />
+                  ) : null}
                 </div>
-              ) : null}
+              ) : (
+                <>
+                  {isRunning && !text ? <ProgressMessages stageName={stage.name} /> : null}
+                  {stage.id === "08" && !isRunning && text ? (
+                    <Stage8PropositionsView
+                      text={text}
+                      streaming={isRunning}
+                      keepNames={stage8KeepNames}
+                      onToggle={onToggleStage8Keep}
+                      onManualSubmit={onManualStage8Submit}
+                    />
+                  ) : (
+                    <StreamedOutput text={text} streaming={isRunning} />
+                  )}
+                  {isRunning ? <StallWatcher stageKey={stage.id} onRetry={onRetry} /> : null}
+                </>
+              )}
             </article>
           </>
         )}
