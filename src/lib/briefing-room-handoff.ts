@@ -64,6 +64,43 @@ function pickRelevantTruths(ws: WorkspaceForHandoff): Truth[] {
   return ws.truths.truths.filter((_, i) => keep.has(i));
 }
 
+/**
+ * Derive the Strategic Objective (f2) from the human-selected frame in
+ * Step 1 plus, when available, problem-shape hints from the diagnosis.
+ * The value MUST match one of STRATEGIC_OBJECTIVE_OPTIONS so the select
+ * in the Step 5 editor renders it as a pre-selected option (not empty).
+ *
+ * Mapping:
+ *  - opportunity → Category Creation (default) | Repositioning (when the
+ *    diagnosis reads as an established brand moving territory)
+ *  - problem     → Defence (default) | Crisis Recovery (when the
+ *    diagnosis reads as post-event / trust rebuild)
+ *  - both        → Repositioning
+ */
+function deriveStrategicObjective(ws: WorkspaceForHandoff): string {
+  const frame = (ws.selected_frame ?? "").toLowerCase();
+  const shapes = (ws.diagnosis?.problem_shapes ?? []).join(" ").toLowerCase();
+  const problemText = (ws.diagnosis?.real_problem.statement ?? "").toLowerCase();
+  const oppText = (ws.diagnosis?.real_opportunity.statement ?? "").toLowerCase();
+  const blob = `${shapes} ${problemText} ${oppText}`;
+
+  const looksLikeRecovery = /crisis|scandal|trust|reputation|recover|backlash|fail(ed|ure)/.test(
+    blob,
+  );
+  const looksLikeRepositioning = /reposition|shift|move|relevance|dated|established|legacy|lost/.test(
+    blob,
+  );
+
+  if (frame === "both") return "Repositioning";
+  if (frame === "opportunity") {
+    return looksLikeRepositioning ? "Repositioning" : "Category Creation";
+  }
+  if (frame === "problem") {
+    return looksLikeRecovery ? "Crisis Recovery" : "Defence";
+  }
+  return "";
+}
+
 function truthsByCategory(
   truths: Truth[],
   cat: Truth["category"],
