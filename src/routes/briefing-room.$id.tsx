@@ -23,9 +23,22 @@ import type {
 } from "@/lib/briefing-room-prompts";
 import type { HandoffPayload } from "@/lib/briefing-room-handoff";
 import {
+  BRIEF_SECTIONS,
+  composeBriefText,
+  type BriefFields,
+} from "@/lib/brief-schema";
+import {
   PENDING_BRIEF_STORAGE_KEY,
   saveBrief,
 } from "@/components/SavedBriefsLibrary";
+
+const ANCHOR_END_MARKER = "=== END BRIEFING ROOM STRATEGIC ANCHOR ===";
+
+function extractAnchorBlock(briefText: string): string {
+  const idx = briefText.indexOf(ANCHOR_END_MARKER);
+  if (idx < 0) return "";
+  return briefText.slice(0, idx + ANCHOR_END_MARKER.length);
+}
 
 export const Route = createFileRoute("/briefing-room/$id")({
   component: WorkspacePage,
