@@ -470,7 +470,22 @@ function WorkspacePage() {
           disabled={!ws.tensions}
           disabledReason="Run Steps 1–4 first."
         >
-          {preview && <HandoffPreviewView preview={preview} />}
+          {preview && editedFields && (
+            <HandoffPreviewView
+              preview={preview}
+              fields={editedFields}
+              onFieldChange={(key, value) =>
+                setEditedFields((prev) =>
+                  prev
+                    ? {
+                        ...prev,
+                        sections: { ...prev.sections, [key]: value },
+                      }
+                    : prev,
+                )
+              }
+            />
+          )}
         </StepCard>
 
         {/* ─── STEP 6 — APPROVE + HAND OFF ─── */}
