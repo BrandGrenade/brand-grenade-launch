@@ -474,10 +474,36 @@ export function SMPSelection({
   /** True while Stage 12 Claude card formatting is still streaming in the background. */
   enhancing?: boolean;
 }) {
-  const coreCards = useMemo(
-    () => parseSMPCards(stage12Output ?? "", stage11Output, stage10Output).map((c) => ({ ...c, source: "CORE" as SMPCardSource })),
-    [stage12Output, stage11Output, stage10Output],
-  );
+  const stage11ByLine = useMemo(() => {
+    if (!stage11Output) return new Map<string, Stage11Verdict>();
+    const map = new Map<string, Stage11Verdict>();
+    for (const v of parseStage11Verdicts(stage11Output)) {
+      map.set(v.smpLine.trim().toLowerCase(), v);
+    }
+    return map;
+  }, [stage11Output]);
+
+  const coreCards = useMemo(() => {
+    const parsed = parseSMPCards(stage12Output ?? "", stage11Output, stage10Output);
+    return parsed.map((c) => {
+      const v = stage11ByLine.get(c.smpLine.trim().toLowerCase());
+      let stage11Verdict: string | undefined;
+      let stage11Conditions: string | undefined;
+      if (v) {
+        stage11Verdict = v.verdict;
+        const cond = v.block.match(
+          /(?:BINDING\s+CONDITIONS?|CONDITIONS?)\s*:?\s*([\s\S]*?)(?=\n\s*(?:[A-Z][A-Z ]{3,}:|SMP\s+VERDICT|ICONIC|$))/i,
+        );
+        if (cond) stage11Conditions = cond[1].trim().slice(0, 500);
+      }
+      return {
+        ...c,
+        source: "CORE" as SMPCardSource,
+        stage11Verdict,
+        stage11Conditions,
+      };
+    });
+  }, [stage12Output, stage11Output, stage10Output, stage11ByLine]);
   const locCards = useMemo(() => buildLocCards(locPackages ?? null, coreCards.length), [locPackages, coreCards.length]);
   const cards = useMemo(() => [...coreCards, ...locCards], [coreCards, locCards]);
   const usingStage11Fallback = useMemo(
@@ -486,7 +512,8 @@ export function SMPSelection({
   );
 
 
-  const [selected, setSelected] = useState<number | null>(null);
+  const [selectedCoreIdx, setSelectedCoreIdx] = useState<number | null>(null);
+  const [selectedLocIdx, setSelectedLocIdx] = useState<number | null>(null);
   const [showRaw, setShowRaw] = useState(false);
   const [manualLine, setManualLine] = useState("");
   const [manualField, setManualField] = useState("");
@@ -508,26 +535,60 @@ export function SMPSelection({
       .trim();
   }, [cleanedOutput]);
 
+  const toggleSelect = (idx: number) => {
+    const card = cards[idx];
+    if (!card) return;
+    const isLoc = card.source && card.source !== "CORE";
+    if (isLoc) {
+      setSelectedLocIdx((prev) => (prev === idx ? null : idx));
+    } else {
+      setSelectedCoreIdx((prev) => (prev === idx ? null : idx));
+    }
+  };
+
+  const selectedCore = selectedCoreIdx !== null ? cards[selectedCoreIdx] : undefined;
+  const selectedLoc = selectedLocIdx !== null ? cards[selectedLocIdx] : undefined;
+  const hasCore = !!selectedCore;
+  const hasLoc = !!selectedLoc;
+  const combined = hasCore && hasLoc;
+
   const handleConfirm = () => {
-    if (selected === null) return;
-    onSelect(cards[selected]);
+    if (!hasCore && !hasLoc) return;
+    if (combined && !window.confirm(
+      "You have selected a CORE proposition and a LOC proposition.\n\n" +
+      "The CORE proposition will be the strategic platform. The LOC proposition " +
+      "will be the creative expression. Both will travel downstream together.\n\n" +
+      "Confirm combined selection?",
+    )) {
+      return;
+    }
+    onSelect({
+      core: selectedCore,
+      loc: selectedLoc,
+      source: combined ? "COMBINED" : hasLoc ? "LOC" : "CORE",
+      engineKey: selectedLoc?.engineKey,
+    });
   };
 
   const handleManualConfirm = () => {
     const line = manualLine.trim();
     if (!line) return;
     onSelect({
-      cardNumber: 1,
-      smpLine: line,
-      whatItOwns: "",
-      truth: "",
-      whatItChallenges: "",
-      whatItMakesPossible: "",
-      whatItRequires: "",
-      scores: {},
-      fieldName: manualField.trim() || line.slice(0, 60),
-      iconicTierStatus: "",
-      pressureTestNote: "",
+      core: {
+        cardNumber: 1,
+        smpLine: line,
+        whatItOwns: "",
+        truth: "",
+        whatItChallenges: "",
+        whatItMakesPossible: "",
+        whatItRequires: "",
+        scores: {},
+        fieldName: manualField.trim() || line.slice(0, 60),
+        iconicTierStatus: "",
+        pressureTestNote: "",
+        source: "CORE",
+      },
+      source: "CORE",
     });
   };
 
