@@ -799,6 +799,26 @@ export function SMPSelection({
         </div>
       )}
 
+      {locValidationWarning && (
+        <div
+          className="mb-6 rounded-md p-4"
+          style={{
+            border: "1px solid var(--color-warning)",
+            backgroundColor: "color-mix(in oklab, var(--color-warning) 10%, transparent)",
+            color: "var(--color-text-primary)",
+          }}
+        >
+          <p className="text-label" style={{ color: "var(--color-warning)", marginBottom: 6 }}>
+            LOC VALIDATION INCOMPLETE
+          </p>
+          <p className="text-body-sm" style={{ color: "var(--color-text-secondary)" }}>
+            {locValidationWarning}
+          </p>
+        </div>
+      )}
+
+
+
 
 
 
