@@ -52,12 +52,14 @@ WHAT IT REQUIRES OF THE BRAND
 [1–2 sentences — clarity statement, not risk warning]
 
 ───────────────────────────────────────────────────
-STRATEGIC QUALITY SCORES (from independent evaluation)
-Differentiation: [n]/10 | Truth Strength: [n]/10 | Cultural Relevance: [n]/10 | Fame Potential: [n]/10
-Writer Quality: [n]/10 | Commercial Plausibility: [n]/10 | Creative Expandability: [n]/10
-Composite: [n]/70
+STRATEGIC QUALITY SCORES (from independent evaluation — V6 six-dimension framework)
+Fame: [n]/10 (30%) | Truth Strength: [n]/10 (20%) | Competitive Impossibility: [n]/10 (15%)
+Brand Permission: [n]/10 (10%) | Clean Air: [n]/10 (10%) | Commercial Precedent: [n]/10 (5%)
+Weighted Composite: [n]/100
 
-Note: These scores reflect independent strategic evaluation across seven dimensions — not a preference ranking. A higher composite score does not mean this is the right proposition for this brand. That decision involves strategic considerations only the team can weigh.
+Copy every number VERBATIM from the FROZEN STAGE 10 SCORES block in the user message — same six labels, same weights, same weighted composite out of 100. Do NOT use the legacy seven-dimension labels (Differentiation, Cultural Relevance, Fame Potential, Writer Quality, Commercial Plausibility, Creative Expandability) and do NOT emit a /70 composite. If the frozen block marks a proposition "SCORES UNAVAILABLE", render "Scores: not available" verbatim in place of the score rows.
+
+Note: These scores reflect independent strategic evaluation across six weighted dimensions — not a preference ranking. A higher weighted composite does not mean this is the right proposition for this brand. That decision involves strategic considerations only the team can weigh.
 
 ═══════════════════════════════════════════════════
 
