@@ -9,6 +9,7 @@ import {
   createVisitor,
   deleteVisitor,
   resetVisitorPassword,
+  setVisitorActive,
   listDocuments,
   uploadDocument,
   deleteDocument,
@@ -19,10 +20,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Lock, Trash2, Upload, Download, LogOut, RotateCcw } from "lucide-react";
+import { Lock, Trash2, Download, LogOut, RotateCcw, Copy, Check, Power } from "lucide-react";
 
 const SLUGS = ["ey", "kpmg", "deck"] as const;
 type Slug = (typeof SLUGS)[number];
+const SLUG_LABEL: Record<Slug, string> = { ey: "EY", kpmg: "KPMG", deck: "Deck" };
 
 export const Route = createFileRoute("/admin/repositories")({
   head: () => ({
@@ -111,8 +113,8 @@ function AdminRepositoriesPage() {
         <Tabs defaultValue="ey">
           <TabsList>
             {SLUGS.map((s) => (
-              <TabsTrigger key={s} value={s} className="uppercase">
-                {s}
+              <TabsTrigger key={s} value={s}>
+                {SLUG_LABEL[s]}
               </TabsTrigger>
             ))}
           </TabsList>
@@ -132,6 +134,7 @@ interface Visitor {
   name: string;
   organisation: string | null;
   email: string | null;
+  is_active: boolean;
 }
 
 interface Doc {
@@ -157,6 +160,7 @@ interface Stats {
   }>;
   recentLog: Array<{
     id: string;
+    visitor_id: string | null;
     visitor_name: string | null;
     event_type: string;
     document_title: string | null;
@@ -170,6 +174,7 @@ function RepositoryAdminPanel({ slug }: { slug: Slug }) {
   const fCreateVisitor = useServerFn(createVisitor);
   const fDeleteVisitor = useServerFn(deleteVisitor);
   const fResetPw = useServerFn(resetVisitorPassword);
+  const fSetActive = useServerFn(setVisitorActive);
   const fListDocs = useServerFn(listDocuments);
   const fUpload = useServerFn(uploadDocument);
   const fDeleteDoc = useServerFn(deleteDocument);
@@ -179,6 +184,7 @@ function RepositoryAdminPanel({ slug }: { slug: Slug }) {
   const [visitors, setVisitors] = useState<Visitor[]>([]);
   const [docs, setDocs] = useState<Doc[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
+  const [revealedPasswords, setRevealedPasswords] = useState<Record<string, string>>({});
 
   const refresh = useCallback(async () => {
     const [v, d, s] = await Promise.all([
@@ -195,6 +201,10 @@ function RepositoryAdminPanel({ slug }: { slug: Slug }) {
     refresh();
   }, [refresh]);
 
+  // Map visitor id -> visit count from stats
+  const visitCountById = new Map<string, number>();
+  stats?.visitors.forEach((v) => visitCountById.set(v.id, v.visits));
+
   return (
     <div className="space-y-10">
       {stats && (
@@ -206,67 +216,103 @@ function RepositoryAdminPanel({ slug }: { slug: Slug }) {
       )}
 
       <section>
-        <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-neutral-500">
-            Visitors
-          </h2>
-        </div>
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-neutral-500">
+          Visitors — {SLUG_LABEL[slug]}
+        </h2>
         <NewVisitorForm
-          slug={slug}
           onCreate={async (input) => {
-            await fCreateVisitor({ data: { slug, ...input } });
+            const r = await fCreateVisitor({ data: { slug, ...input } });
             await refresh();
+            return r.password;
           }}
         />
         <div className="mt-4 border border-neutral-200 rounded-lg divide-y divide-neutral-200">
-          {stats?.visitors.length === 0 && (
+          {visitors.length === 0 && (
             <div className="p-4 text-sm text-neutral-500">No visitors yet.</div>
           )}
-          {stats?.visitors.map((v) => (
-            <div key={v.id} className="p-4 flex items-center justify-between gap-4">
-              <div className="min-w-0">
-                <div className="flex items-center gap-2">
-                  <p className="text-sm font-medium">{v.name}</p>
-                  {v.visits > 1 && (
-                    <span className="text-[10px] uppercase font-semibold text-green-700 bg-green-50 px-1.5 py-0.5 rounded">
-                      Returning
-                    </span>
-                  )}
+          {visitors.map((v) => {
+            const visits = visitCountById.get(v.id) ?? 0;
+            const revealed = revealedPasswords[v.id];
+            return (
+              <div key={v.id} className="p-4 flex flex-col gap-2">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-medium">{v.name}</p>
+                      {!v.is_active && (
+                        <span className="text-[10px] uppercase font-semibold text-neutral-600 bg-neutral-100 px-1.5 py-0.5 rounded">
+                          Inactive
+                        </span>
+                      )}
+                      {visits > 1 && (
+                        <span className="text-[10px] uppercase font-semibold text-green-700 bg-green-50 px-1.5 py-0.5 rounded">
+                          Returning
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-neutral-500">
+                      {v.organisation ?? ""} {v.email ? `· ${v.email}` : ""}
+                    </p>
+                  </div>
+                  <div className="flex gap-2 shrink-0">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      title="Reset password (auto-generate)"
+                      onClick={async () => {
+                        if (!confirm(`Reset password for ${v.name}? The new password will be shown once.`)) return;
+                        const r = await fResetPw({ data: { id: v.id } });
+                        setRevealedPasswords((prev) => ({ ...prev, [v.id]: r.password }));
+                      }}
+                    >
+                      <RotateCcw className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      title={v.is_active ? "Deactivate" : "Reactivate"}
+                      onClick={async () => {
+                        await fSetActive({ data: { id: v.id, active: !v.is_active } });
+                        await refresh();
+                      }}
+                    >
+                      <Power className={`h-4 w-4 ${v.is_active ? "" : "text-neutral-400"}`} />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      title="Delete permanently"
+                      onClick={async () => {
+                        if (!confirm(`Delete ${v.name} permanently? Prefer Deactivate to preserve history.`)) return;
+                        await fDeleteVisitor({ data: { id: v.id } });
+                        await refresh();
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
-                <p className="text-xs text-neutral-500">
-                  {v.organisation ?? ""} {v.email ? `· ${v.email}` : ""}
-                </p>
-                <p className="mt-1 text-xs text-neutral-500">
-                  {v.visits} visit{v.visits === 1 ? "" : "s"} · {v.opens} open · {v.downloads} download ·{" "}
-                  {v.lastAt ? `last ${new Date(v.lastAt).toLocaleString()}` : "never visited"}
-                </p>
+                {revealed && (
+                  <PasswordReveal
+                    password={revealed}
+                    onDismiss={() =>
+                      setRevealedPasswords((prev) => {
+                        const n = { ...prev };
+                        delete n[v.id];
+                        return n;
+                      })
+                    }
+                  />
+                )}
               </div>
-              <div className="flex gap-2 shrink-0">
-                <ResetPwButton
-                  onReset={async (pw) => {
-                    await fResetPw({ data: { id: v.id, password: pw } });
-                  }}
-                />
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={async () => {
-                    if (!confirm(`Delete ${v.name}?`)) return;
-                    await fDeleteVisitor({ data: { id: v.id } });
-                    await refresh();
-                  }}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </section>
 
       <section>
         <h2 className="text-sm font-semibold uppercase tracking-wider text-neutral-500">
-          Documents
+          Documents — {SLUG_LABEL[slug]}
         </h2>
         <UploadDocForm
           onUpload={async (input) => {
@@ -281,7 +327,10 @@ function RepositoryAdminPanel({ slug }: { slug: Slug }) {
           {docs.map((d) => (
             <div key={d.id} className="p-4 flex items-center justify-between gap-4">
               <div className="min-w-0">
-                <p className="text-sm font-medium">{d.title}</p>
+                <p className="text-sm font-medium">
+                  <span className="text-xs text-neutral-400 mr-2">#{d.display_order}</span>
+                  {d.title}
+                </p>
                 {d.description && <p className="text-xs text-neutral-500">{d.description}</p>}
                 <p className="text-xs text-neutral-400 uppercase">{d.file_type}</p>
               </div>
@@ -304,7 +353,7 @@ function RepositoryAdminPanel({ slug }: { slug: Slug }) {
       <section>
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold uppercase tracking-wider text-neutral-500">
-            Recent activity
+            Access log — {SLUG_LABEL[slug]}
           </h2>
           <Button
             size="sm"
@@ -323,18 +372,51 @@ function RepositoryAdminPanel({ slug }: { slug: Slug }) {
             <Download className="h-4 w-4 mr-1.5" /> Export CSV
           </Button>
         </div>
-        <div className="mt-4 border border-neutral-200 rounded-lg divide-y divide-neutral-200 max-h-96 overflow-auto">
-          {stats?.recentLog.map((l) => (
-            <div key={l.id} className="p-3 text-xs text-neutral-700 flex gap-3">
-              <span className="text-neutral-400 w-40 shrink-0">
-                {new Date(l.created_at).toLocaleString()}
-              </span>
-              <span className="w-28 shrink-0 uppercase text-neutral-500">{l.event_type}</span>
-              <span className="w-40 shrink-0 truncate">{l.visitor_name ?? "—"}</span>
-              <span className="flex-1 truncate">{l.document_title ?? ""}</span>
-              <span className="text-neutral-400 truncate">{l.ip_address ?? ""}</span>
-            </div>
-          ))}
+        <div className="mt-4 border border-neutral-200 rounded-lg overflow-hidden">
+          <table className="w-full text-xs">
+            <thead className="bg-neutral-50 text-neutral-500 uppercase">
+              <tr>
+                <th className="text-left px-3 py-2 font-medium">When</th>
+                <th className="text-left px-3 py-2 font-medium">Visitor</th>
+                <th className="text-left px-3 py-2 font-medium">Event</th>
+                <th className="text-left px-3 py-2 font-medium">Document</th>
+                <th className="text-left px-3 py-2 font-medium">Status</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-neutral-200">
+              {(!stats || stats.recentLog.length === 0) && (
+                <tr>
+                  <td colSpan={5} className="px-3 py-4 text-neutral-500">
+                    No activity yet.
+                  </td>
+                </tr>
+              )}
+              {stats?.recentLog.map((l) => {
+                const returning = l.visitor_id && (visitCountById.get(l.visitor_id) ?? 0) > 1;
+                return (
+                  <tr key={l.id} className="text-neutral-700">
+                    <td className="px-3 py-2 text-neutral-500 whitespace-nowrap">
+                      {new Date(l.created_at).toLocaleString()}
+                    </td>
+                    <td className="px-3 py-2">{l.visitor_name ?? "—"}</td>
+                    <td className="px-3 py-2 uppercase text-neutral-500">{l.event_type}</td>
+                    <td className="px-3 py-2 truncate max-w-xs">{l.document_title ?? ""}</td>
+                    <td className="px-3 py-2">
+                      {returning ? (
+                        <span className="text-[10px] uppercase font-semibold text-green-700 bg-green-50 px-1.5 py-0.5 rounded">
+                          Returning
+                        </span>
+                      ) : (
+                        <span className="text-[10px] uppercase font-semibold text-neutral-500 bg-neutral-100 px-1.5 py-0.5 rounded">
+                          First visit
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       </section>
     </div>
@@ -350,100 +432,97 @@ function StatCard({ label, value }: { label: string; value: number }) {
   );
 }
 
+function PasswordReveal({ password, onDismiss }: { password: string; onDismiss: () => void }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <div className="mt-1 flex items-center gap-2 bg-amber-50 border border-amber-200 rounded px-3 py-2">
+      <span className="text-xs text-amber-900 shrink-0">New password (shown once):</span>
+      <code className="text-xs font-mono bg-white border border-amber-200 rounded px-2 py-1 flex-1 truncate">
+        {password}
+      </code>
+      <Button
+        size="sm"
+        variant="outline"
+        onClick={async () => {
+          try {
+            await navigator.clipboard.writeText(password);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 1500);
+          } catch {
+            // ignore
+          }
+        }}
+      >
+        {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+      </Button>
+      <Button size="sm" variant="ghost" onClick={onDismiss}>
+        Dismiss
+      </Button>
+    </div>
+  );
+}
+
 function NewVisitorForm({
-  slug: _slug,
   onCreate,
 }: {
-  slug: Slug;
   onCreate: (v: {
     name: string;
     organisation?: string;
     email?: string;
-    password: string;
-  }) => Promise<void>;
+  }) => Promise<string>;
 }) {
-  const [f, setF] = useState({ name: "", organisation: "", email: "", password: "" });
+  const [f, setF] = useState({ name: "", organisation: "", email: "" });
   const [busy, setBusy] = useState(false);
-  return (
-    <form
-      className="mt-3 grid grid-cols-1 md:grid-cols-5 gap-2"
-      onSubmit={async (e) => {
-        e.preventDefault();
-        setBusy(true);
-        try {
-          await onCreate({
-            name: f.name,
-            organisation: f.organisation || undefined,
-            email: f.email || undefined,
-            password: f.password,
-          });
-          setF({ name: "", organisation: "", email: "", password: "" });
-        } finally {
-          setBusy(false);
-        }
-      }}
-    >
-      <Input placeholder="Name" value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} required />
-      <Input
-        placeholder="Organisation"
-        value={f.organisation}
-        onChange={(e) => setF({ ...f, organisation: e.target.value })}
-      />
-      <Input
-        placeholder="Email"
-        type="email"
-        value={f.email}
-        onChange={(e) => setF({ ...f, email: e.target.value })}
-      />
-      <Input
-        placeholder="Password (min 6)"
-        value={f.password}
-        onChange={(e) => setF({ ...f, password: e.target.value })}
-        required
-      />
-      <Button
-        type="submit"
-        disabled={busy || !f.name || f.password.length < 6}
-        className="bg-neutral-900 text-white hover:bg-neutral-800"
-      >
-        Add visitor
-      </Button>
-    </form>
-  );
-}
+  const [issuedPassword, setIssuedPassword] = useState<string | null>(null);
 
-function ResetPwButton({ onReset }: { onReset: (pw: string) => Promise<void> }) {
-  const [pw, setPw] = useState("");
-  const [open, setOpen] = useState(false);
-  if (!open) {
-    return (
-      <Button size="sm" variant="outline" onClick={() => setOpen(true)}>
-        <RotateCcw className="h-4 w-4" />
-      </Button>
-    );
-  }
   return (
-    <div className="flex gap-1">
-      <Input
-        value={pw}
-        onChange={(e) => setPw(e.target.value)}
-        placeholder="New password"
-        className="h-8 w-40"
-      />
-      <Button
-        size="sm"
-        onClick={async () => {
-          if (pw.length < 6) return;
-          await onReset(pw);
-          setPw("");
-          setOpen(false);
+    <div className="mt-3 space-y-2">
+      <form
+        className="grid grid-cols-1 md:grid-cols-4 gap-2"
+        onSubmit={async (e) => {
+          e.preventDefault();
+          setBusy(true);
+          try {
+            const pw = await onCreate({
+              name: f.name,
+              organisation: f.organisation || undefined,
+              email: f.email || undefined,
+            });
+            setF({ name: "", organisation: "", email: "" });
+            setIssuedPassword(pw);
+          } finally {
+            setBusy(false);
+          }
         }}
       >
-        Save
-      </Button>
-      <Button size="sm" variant="ghost" onClick={() => setOpen(false)}>
-        ×
-      </Button>
+        <Input
+          placeholder="Name"
+          value={f.name}
+          onChange={(e) => setF({ ...f, name: e.target.value })}
+          required
+        />
+        <Input
+          placeholder="Organisation"
+          value={f.organisation}
+          onChange={(e) => setF({ ...f, organisation: e.target.value })}
+        />
+        <Input
+          placeholder="Email"
+          type="email"
+          value={f.email}
+          onChange={(e) => setF({ ...f, email: e.target.value })}
+        />
+        <Button
+          type="submit"
+          disabled={busy || !f.name}
+          className="bg-neutral-900 text-white hover:bg-neutral-800"
+        >
+          {busy ? "Adding…" : "Add visitor"}
+        </Button>
+      </form>
+      {issuedPassword && (
+        <PasswordReveal password={issuedPassword} onDismiss={() => setIssuedPassword(null)} />
+      )}
     </div>
   );
 }
@@ -498,33 +577,41 @@ function UploadDocForm({
         }
       }}
     >
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-        <Input placeholder="Title" value={title} onChange={(e) => setTitle(e.target.value)} required />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+        <Input
+          placeholder="Document title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          required
+        />
         <Input
           type="number"
           placeholder="Display order"
           value={order}
-          onChange={(e) => setOrder(parseInt(e.target.value, 10) || 0)}
+          onChange={(e) => setOrder(Number(e.target.value) || 0)}
+        />
+        <Input
+          type="file"
+          accept=".pdf,.html,.htm,application/pdf,text/html"
+          onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+          required
         />
       </div>
       <Textarea
-        placeholder="Description"
+        placeholder="Short description (optional)"
         value={description}
         onChange={(e) => setDescription(e.target.value)}
+        rows={2}
       />
-      <Input
-        type="file"
-        accept=".pdf,.html,.htm"
-        onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-        required
-      />
-      <Button
-        type="submit"
-        disabled={busy || !title || !file}
-        className="bg-neutral-900 text-white hover:bg-neutral-800"
-      >
-        <Upload className="h-4 w-4 mr-1.5" /> {busy ? "Uploading…" : "Upload document"}
-      </Button>
+      <div className="flex justify-end">
+        <Button
+          type="submit"
+          disabled={busy || !title || !file}
+          className="bg-neutral-900 text-white hover:bg-neutral-800"
+        >
+          {busy ? "Uploading…" : "Upload document"}
+        </Button>
+      </div>
     </form>
   );
 }
