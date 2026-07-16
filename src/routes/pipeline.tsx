@@ -2880,24 +2880,61 @@ function PipelineView() {
       /(Confirmed with Adjustments|Confirmed|Not Recommended)/i,
     );
     const verdict = verdictMatch ? verdictMatch[0] : "Verdict not detected";
-    const commitmentsBlock =
-      s13
-        .split(/\n#{1,6}\s+/)
-        .find((sec) => /strategic commitments?/i.test(sec)) ?? "";
-    const commitments = Array.from(
-      commitmentsBlock.matchAll(/^\s*(?:[-*]|\d+\.)\s+(.+)$/gm),
-    )
-      .slice(0, 5)
-      .map((m) => m[1].trim());
-    const guardrailsBlock =
-      s13
-        .split(/\n#{1,6}\s+/)
-        .find((sec) => /communication guardrails?/i.test(sec)) ?? "";
-    const guardrails = Array.from(
-      guardrailsBlock.matchAll(/^\s*(?:[-*]|\d+\.)\s+(.+)$/gm),
-    )
-      .slice(0, 3)
-      .map((m) => m[1].trim());
+
+    // Robust section extractor — Stage 13 output uses varied heading formats
+    // (`#` markdown, `SECTION 6 — STRATEGIC COMMITMENTS`, `**Strategic
+    // Commitments**`, or a bare all-caps line). Locate a heading line matching
+    // `pattern` and collect subsequent items until the next heading-like line.
+    const extractSection = (text: string, pattern: RegExp): string[] => {
+      const lines = text.split(/\r?\n/);
+      const isHeadingLine = (l: string) => {
+        const t = l.trim();
+        if (!t) return false;
+        if (/^#{1,6}\s+/.test(t)) return true;
+        if (/^SECTION\s+\d+/i.test(t)) return true;
+        if (/^\*\*[^*]+\*\*\s*:?\s*$/.test(t)) return true;
+        if (/^[A-Z0-9][A-Z0-9 \-—:'"()&/]{6,}$/.test(t) && !/[.?!]$/.test(t)) return true;
+        return false;
+      };
+      let start = -1;
+      for (let i = 0; i < lines.length; i += 1) {
+        if (isHeadingLine(lines[i]) && pattern.test(lines[i])) {
+          start = i + 1;
+          break;
+        }
+      }
+      if (start === -1) return [];
+      const items: string[] = [];
+      let current = "";
+      const push = () => {
+        const v = current
+          .replace(/^\s*(?:[-*•]|\d+[.)])\s+/, "")
+          .replace(/^\*\*(.+?)\*\*\s*[:—-]?\s*/, "$1: ")
+          .trim();
+        if (v) items.push(v);
+        current = "";
+      };
+      for (let i = start; i < lines.length; i += 1) {
+        const l = lines[i];
+        if (isHeadingLine(l)) { push(); break; }
+        const bullet = /^\s*(?:[-*•]|\d+[.)])\s+/.test(l);
+        if (bullet) {
+          push();
+          current = l;
+        } else if (l.trim() === "") {
+          push();
+        } else if (current) {
+          current += " " + l.trim();
+        } else if (items.length === 0) {
+          current = l;
+        }
+      }
+      push();
+      return items.filter((x) => x.length > 2);
+    };
+
+    const commitments = extractSection(s13, /strategic\s+commitments?/i).slice(0, 5);
+    const guardrails = extractSection(s13, /communication\s+guardrails?/i).slice(0, 10);
     return { selectedProp, verdict, commitments, guardrails };
   }, [session?.selected_smp, stage13Output]);
 
@@ -3427,7 +3464,7 @@ function PipelineView() {
               )}
             </section>
           </div>
-          <DialogFooter className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+          <DialogFooter className="flex flex-col gap-2 sm:flex-row sm:justify-between">
             <Button
               variant="outline"
               disabled={strategySignoffSaving}
@@ -3438,8 +3475,9 @@ function PipelineView() {
             <Button
               disabled={strategySignoffSaving}
               onClick={() => void confirmStrategySignoff(false)}
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
             >
-              Proceed to Creative Territory
+              Continue to Stage 14 — Creative Territory Mapping →
             </Button>
           </DialogFooter>
         </DialogContent>
