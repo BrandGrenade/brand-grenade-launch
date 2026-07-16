@@ -3322,6 +3322,7 @@ function PipelineView() {
                     const primary = payload.core ?? payload.loc;
                     if (!primary) return;
                     setSelectedSMP(primary);
+                    setSelectedSource(payload.source);
                     try {
                       await saveSelectedSMPFn({
                         data: {
