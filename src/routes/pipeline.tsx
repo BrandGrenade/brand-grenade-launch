@@ -3347,7 +3347,7 @@ function PipelineView() {
               ) : selectedId === "12" && rationaleForId === "12" ? (
                 <SelectionRationale
                   selectedSMP={selectedSMP?.smpLine ?? session?.selected_smp ?? ""}
-                  selectionSource={((session as unknown as { selection_source?: "CORE" | "LOC" | "COMBINED" } | null)?.selection_source) ?? "CORE"}
+                  selectionSource={selectedSource ?? ((session as unknown as { selection_source?: "CORE" | "LOC" | "COMBINED" } | null)?.selection_source) ?? "CORE"}
                   submitting={savingRationale}
 
                   onConfirm={async (values) => {
