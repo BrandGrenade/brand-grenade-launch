@@ -342,6 +342,7 @@ export type Database = {
           created_at: string
           email: string | null
           id: string
+          is_active: boolean
           name: string
           organisation: string | null
           password_hash: string
@@ -352,6 +353,7 @@ export type Database = {
           created_at?: string
           email?: string | null
           id?: string
+          is_active?: boolean
           name: string
           organisation?: string | null
           password_hash: string
@@ -362,6 +364,7 @@ export type Database = {
           created_at?: string
           email?: string | null
           id?: string
+          is_active?: boolean
           name?: string
           organisation?: string | null
           password_hash?: string

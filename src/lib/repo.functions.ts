@@ -47,8 +47,9 @@ export const unlockRepo = createServerFn({ method: "POST" })
 
     const { data: rows, error } = await supabaseAdmin
       .from("repository_visitors")
-      .select("id, name, password_hash")
-      .eq("repository_slug", data.slug);
+      .select("id, name, password_hash, is_active")
+      .eq("repository_slug", data.slug)
+      .eq("is_active", true);
     if (error) throw new Error(error.message);
 
     const match = (rows ?? []).find((r) => verifyPassword(data.password, r.password_hash));
