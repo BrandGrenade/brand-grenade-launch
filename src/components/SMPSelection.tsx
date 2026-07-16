@@ -535,7 +535,9 @@ export function SMPSelection({
       };
     });
   }, [stage12Output, stage11Output, stage10Output, stage11ByLine]);
-  const locCards = useMemo(() => buildLocCards(locPackages ?? null, coreCards.length), [locPackages, coreCards.length]);
+  const locResult = useMemo(() => buildLocCards(locPackages ?? null, coreCards.length), [locPackages, coreCards.length]);
+  const locCards = locResult.cards;
+  const locValidationWarning = locResult.validationWarning;
   const cards = useMemo(() => [...coreCards, ...locCards], [coreCards, locCards]);
   const usingStage11Fallback = useMemo(
     () => (stage12Output ? parsePropositions(stage12Output).length === 0 : true) && coreCards.length > 0,
