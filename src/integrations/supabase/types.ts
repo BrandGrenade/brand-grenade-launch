@@ -247,6 +247,129 @@ export type Database = {
           },
         ]
       }
+      repository_access_log: {
+        Row: {
+          created_at: string
+          document_id: string | null
+          document_title: string | null
+          event_type: string
+          id: string
+          ip_address: string | null
+          repository_slug: string
+          user_agent: string | null
+          visitor_id: string | null
+          visitor_name: string | null
+        }
+        Insert: {
+          created_at?: string
+          document_id?: string | null
+          document_title?: string | null
+          event_type: string
+          id?: string
+          ip_address?: string | null
+          repository_slug: string
+          user_agent?: string | null
+          visitor_id?: string | null
+          visitor_name?: string | null
+        }
+        Update: {
+          created_at?: string
+          document_id?: string | null
+          document_title?: string | null
+          event_type?: string
+          id?: string
+          ip_address?: string | null
+          repository_slug?: string
+          user_agent?: string | null
+          visitor_id?: string | null
+          visitor_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "repository_access_log_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "repository_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "repository_access_log_visitor_id_fkey"
+            columns: ["visitor_id"]
+            isOneToOne: false
+            referencedRelation: "repository_visitors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      repository_documents: {
+        Row: {
+          created_at: string
+          description: string | null
+          display_order: number
+          file_type: string
+          id: string
+          repository_slug: string
+          storage_path: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          file_type: string
+          id?: string
+          repository_slug: string
+          storage_path: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          file_type?: string
+          id?: string
+          repository_slug?: string
+          storage_path?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      repository_visitors: {
+        Row: {
+          created_at: string
+          email: string | null
+          id: string
+          name: string
+          organisation: string | null
+          password_hash: string
+          repository_slug: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          name: string
+          organisation?: string | null
+          password_hash: string
+          repository_slug: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string
+          organisation?: string | null
+          password_hash?: string
+          repository_slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       saved_briefs: {
         Row: {
           brand_name: string
