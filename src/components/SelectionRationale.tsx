@@ -112,7 +112,7 @@ export function SelectionRationale({
         <hr className="my-6 h-px border-0 bg-border" />
       </header>
 
-      {/* Selected proposition reminder — sticky so it stays visible while typing */}
+      {/* Selected proposition reminder — scrolls with the page (no overlay). */}
       <div
         style={{
           backgroundColor: "var(--color-surface-2)",
@@ -120,10 +120,6 @@ export function SelectionRationale({
           borderRadius: 12,
           padding: 24,
           marginBottom: 32,
-          position: "sticky",
-          top: 72,
-          zIndex: 20,
-          boxShadow: "0 8px 24px rgba(0,0,0,0.35)",
         }}
       >
         <span className="text-label text-primary">SELECTED PROPOSITION</span>
