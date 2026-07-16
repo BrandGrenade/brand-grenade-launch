@@ -129,19 +129,13 @@ export function LocControls({ sessionId }: { sessionId: string }) {
               disabled={busy || locked}
               onClick={() => trigger(false)}
             >
-              {busy ? "Starting…" : "Generate LOC"}
+              {busy
+                ? "Retrying…"
+                : state === "failed"
+                  ? "Error — click to retry"
+                  : "Generate LOC"}
             </button>
           )}
-          <button
-            type="button"
-            className="rounded border px-3 py-1"
-            style={{ borderColor: "var(--color-border-strong, #999)" }}
-            disabled={busy || locked || state === "running" || state === "complete"}
-            onClick={recover}
-            title="Rebuild the LOC output from the engine + validation data already saved (no re-run)"
-          >
-            {busy ? "Recovering…" : "Recover LOC"}
-          </button>
           <button
             type="button"
             className="rounded border px-3 py-1"
