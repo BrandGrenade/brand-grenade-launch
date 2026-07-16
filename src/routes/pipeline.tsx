@@ -732,6 +732,7 @@ function PipelineView() {
   const [stage16Output, setStage16Output] = useState<string | null>(null);
   const [stage16Error, setStage16Error] = useState<string | null>(null);
   const [selectedSMP, setSelectedSMP] = useState<SMPCard | null>(null);
+  const [selectedSource, setSelectedSource] = useState<"CORE" | "LOC" | "COMBINED" | null>(null);
   const [stage1Loading, setStage1Loading] = useState(false);
   const [stage1bLoading, setStage1bLoading] = useState(false);
   const [stage2Loading, setStage2Loading] = useState(false);
