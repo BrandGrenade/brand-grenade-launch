@@ -2918,14 +2918,18 @@ function PipelineView() {
         const l = lines[i];
         if (isHeadingLine(l)) { push(); break; }
         const bullet = /^\s*(?:[-*•]|\d+[.)])\s+/.test(l);
-        if (bullet) {
+        // Treat `**Bold lead-in.**` paragraphs as new items — Stage 13
+        // frequently emits commitments/adjustments as bold-headed paragraphs
+        // separated by blank lines, with no bullet or numeric marker.
+        const boldStart = /^\s*\*\*[^*]+\*\*/.test(l);
+        if (bullet || boldStart) {
           push();
           current = l;
         } else if (l.trim() === "") {
           push();
         } else if (current) {
           current += " " + l.trim();
-        } else if (items.length === 0) {
+        } else {
           current = l;
         }
       }
