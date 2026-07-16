@@ -29,6 +29,7 @@ import { Route as DetonationCanvasRouteImport } from './routes/detonation_.canva
 import { Route as BriefingRoomIdRouteImport } from './routes/briefing-room.$id'
 import { Route as BriefNewRouteImport } from './routes/brief.new'
 import { Route as AdminTestsRouteImport } from './routes/admin.tests'
+import { Route as AdminRepositoriesRouteImport } from './routes/admin.repositories'
 import { Route as IntelligenceIdEditRouteImport } from './routes/intelligence.$id_.edit'
 
 const SettingsRoute = SettingsRouteImport.update({
@@ -131,6 +132,11 @@ const AdminTestsRoute = AdminTestsRouteImport.update({
   path: '/admin/tests',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminRepositoriesRoute = AdminRepositoriesRouteImport.update({
+  id: '/admin/repositories',
+  path: '/admin/repositories',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IntelligenceIdEditRoute = IntelligenceIdEditRouteImport.update({
   id: '/intelligence/$id_/edit',
   path: '/intelligence/$id/edit',
@@ -149,6 +155,7 @@ export interface FileRoutesByFullPath {
   '/kpmg': typeof KpmgRoute
   '/pipeline': typeof PipelineRoute
   '/settings': typeof SettingsRoute
+  '/admin/repositories': typeof AdminRepositoriesRoute
   '/admin/tests': typeof AdminTestsRoute
   '/brief/new': typeof BriefNewRoute
   '/briefing-room/$id': typeof BriefingRoomIdRoute
@@ -170,6 +177,7 @@ export interface FileRoutesByTo {
   '/kpmg': typeof KpmgRoute
   '/pipeline': typeof PipelineRoute
   '/settings': typeof SettingsRoute
+  '/admin/repositories': typeof AdminRepositoriesRoute
   '/admin/tests': typeof AdminTestsRoute
   '/brief/new': typeof BriefNewRoute
   '/briefing-room/$id': typeof BriefingRoomIdRoute
@@ -194,6 +202,7 @@ export interface FileRoutesById {
   '/kpmg': typeof KpmgRoute
   '/pipeline': typeof PipelineRoute
   '/settings': typeof SettingsRoute
+  '/admin/repositories': typeof AdminRepositoriesRoute
   '/admin/tests': typeof AdminTestsRoute
   '/brief/new': typeof BriefNewRoute
   '/briefing-room/$id': typeof BriefingRoomIdRoute
@@ -219,6 +228,7 @@ export interface FileRouteTypes {
     | '/kpmg'
     | '/pipeline'
     | '/settings'
+    | '/admin/repositories'
     | '/admin/tests'
     | '/brief/new'
     | '/briefing-room/$id'
@@ -240,6 +250,7 @@ export interface FileRouteTypes {
     | '/kpmg'
     | '/pipeline'
     | '/settings'
+    | '/admin/repositories'
     | '/admin/tests'
     | '/brief/new'
     | '/briefing-room/$id'
@@ -263,6 +274,7 @@ export interface FileRouteTypes {
     | '/kpmg'
     | '/pipeline'
     | '/settings'
+    | '/admin/repositories'
     | '/admin/tests'
     | '/brief/new'
     | '/briefing-room/$id'
@@ -287,6 +299,7 @@ export interface RootRouteChildren {
   KpmgRoute: typeof KpmgRoute
   PipelineRoute: typeof PipelineRoute
   SettingsRoute: typeof SettingsRoute
+  AdminRepositoriesRoute: typeof AdminRepositoriesRoute
   AdminTestsRoute: typeof AdminTestsRoute
   DetonationCanvasRoute: typeof DetonationCanvasRoute
   IntelligenceIdRoute: typeof IntelligenceIdRoute
@@ -437,6 +450,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminTestsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/repositories': {
+      id: '/admin/repositories'
+      path: '/admin/repositories'
+      fullPath: '/admin/repositories'
+      preLoaderRoute: typeof AdminRepositoriesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/intelligence/$id_/edit': {
       id: '/intelligence/$id_/edit'
       path: '/intelligence/$id/edit'
@@ -485,6 +505,7 @@ const rootRouteChildren: RootRouteChildren = {
   KpmgRoute: KpmgRoute,
   PipelineRoute: PipelineRoute,
   SettingsRoute: SettingsRoute,
+  AdminRepositoriesRoute: AdminRepositoriesRoute,
   AdminTestsRoute: AdminTestsRoute,
   DetonationCanvasRoute: DetonationCanvasRoute,
   IntelligenceIdRoute: IntelligenceIdRoute,
