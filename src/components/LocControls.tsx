@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { runLeftOfCentre, getLocStatus, finalizeLeftOfCentre } from "@/lib/loc.functions";
+import { runLeftOfCentre, getLocStatus } from "@/lib/loc.functions";
 
 type LocStatusRow = {
   loc_status: string | null;
@@ -24,9 +24,9 @@ type LocStatusRow = {
 export function LocControls({ sessionId }: { sessionId: string }) {
   const runLoc = useServerFn(runLeftOfCentre);
   const getStatus = useServerFn(getLocStatus);
-  const finalizeLoc = useServerFn(finalizeLeftOfCentre);
   const [status, setStatus] = useState<LocStatusRow | null>(null);
   const [busy, setBusy] = useState(false);
+  const autoFiredRef = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -63,19 +63,17 @@ export function LocControls({ sessionId }: { sessionId: string }) {
     }
   }
 
-  async function recover() {
-    if (busy || locked) return;
-    setBusy(true);
-    try {
-      const r = (await finalizeLoc({ data: { sessionId } })) as { ok?: boolean; alreadyComplete?: boolean };
-      if (r.alreadyComplete) toast.info("LOC already complete");
-      else toast.success("LOC recovered from persisted data");
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "LOC recovery failed");
-    } finally {
-      setBusy(false);
+  // Fix 05 — auto-fire LOC engines on arrival at Stage 8B when pending.
+  useEffect(() => {
+    if (!status || autoFiredRef.current || locked) return;
+    const s = status.loc_status;
+    const needsAutoFire = s == null || s === "pending";
+    if (needsAutoFire) {
+      autoFiredRef.current = true;
+      void trigger(false);
     }
-  }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status, locked]);
 
   const badgeColor =
     state === "complete"
