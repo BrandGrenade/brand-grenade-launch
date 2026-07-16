@@ -390,10 +390,13 @@ const LOC_ENGINE_DISPLAY: Record<string, string> = {
   naive: "NAIVE",
 };
 
-function buildLocCards(packages: LocEnginePackage[] | null, offset: number): SMPCard[] {
-  if (!packages || packages.length === 0) return [];
+function buildLocCards(packages: LocEnginePackage[] | null, offset: number): { cards: SMPCard[]; validationWarning: string | null } {
+  if (!packages || packages.length === 0) return { cards: [], validationWarning: null };
   const cards: SMPCard[] = [];
   let i = 0;
+  let pendingCount = 0;
+  let failedFloorCount = 0;
+  let hadValidationError = false;
   for (const pkg of packages) {
     const eo = pkg.engineOutput as { proposition?: string; descriptor?: string } | null;
     if (!eo) continue;
@@ -403,21 +406,49 @@ function buildLocCards(packages: LocEnginePackage[] | null, offset: number): SMP
     const display = LOC_ENGINE_DISPLAY[engineKey] ?? engineKey.toUpperCase();
     const label: SMPCardSource = `LOC — ${display}`;
     const descriptor = (eo.descriptor ?? "").toString().trim();
-
-    // Six-dimension validation gate — spec: Truth Strength >= 5,
-    // Competitive Impossibility >= 6. Skip LOC propositions that fail either.
     const v = pkg.validation ?? null;
-    if (!v) continue;
-    if ((v.truth_strength ?? 0) < 5) continue;
-    if ((v.competitive_impossibility ?? 0) < 6) continue;
+    const validationError = pkg.validationError ?? null;
+    if (validationError) hadValidationError = true;
 
-    // Derive human flags (mirror STAGE_10_FLAG_THRESHOLDS in stage12-filter).
-    const flags: string[] = [];
-    if ((v.fame ?? 0) < 6) flags.push("⚠ FAME: below 6 — low unpaid-conversation potential");
-    if ((v.brand_permission ?? 0) < 5) flags.push("⚠ BRAND PERMISSION: below 5 — credibility gap");
-    if ((v.clean_air ?? 0) < 5) flags.push("⚠ CLEAN AIR: below 5 — territory partly claimed");
-    if ((v.commercial_precedent ?? 0) < 4) flags.push("⚠ COMMERCIAL PRECEDENT: below 4 — no clear precedent");
-    if (v.rationale) flags.push(`Rationale: ${v.rationale}`);
+    // Fix 02: LOC propositions must NEVER silently vanish. If validation is
+    // missing (pending) or below the floors, still surface the card with a
+    // clear status label — the user must see that the engines ran.
+    let statusNote = "";
+    let flags: string[] = [];
+    let scores: SMPCard["scores"] = {};
+    if (!v) {
+      if (validationError) {
+        statusNote = `Validation failed — scores unavailable (${validationError})`;
+      } else {
+        statusNote = "Validation pending — scores unavailable";
+      }
+      pendingCount += 1;
+    } else {
+      const failsTruth = (v.truth_strength ?? 0) < 5;
+      const failsComp = (v.competitive_impossibility ?? 0) < 6;
+      if (failsTruth || failsComp) {
+        const parts: string[] = [];
+        if (failsTruth) parts.push(`Truth Strength ${v.truth_strength ?? 0}/10 below floor of 5`);
+        if (failsComp) parts.push(`Competitive Impossibility ${v.competitive_impossibility ?? 0}/10 below floor of 6`);
+        statusNote = `Below six-dimension floor — ${parts.join(" · ")}`;
+        failedFloorCount += 1;
+      }
+      if ((v.fame ?? 0) < 6) flags.push("⚠ FAME: below 6 — low unpaid-conversation potential");
+      if ((v.brand_permission ?? 0) < 5) flags.push("⚠ BRAND PERMISSION: below 5 — credibility gap");
+      if ((v.clean_air ?? 0) < 5) flags.push("⚠ CLEAN AIR: below 5 — territory partly claimed");
+      if ((v.commercial_precedent ?? 0) < 4) flags.push("⚠ COMMERCIAL PRECEDENT: below 4 — no clear precedent");
+      if (v.rationale) flags.push(`Rationale: ${v.rationale}`);
+      scores = {
+        fame: v.fame,
+        truthStrength: v.truth_strength,
+        competitiveImpossibility: v.competitive_impossibility,
+        brandPermission: v.brand_permission,
+        cleanAir: v.clean_air,
+        commercialPrecedent: v.commercial_precedent,
+        weightedComposite: v.weightedScore,
+        flags: flags.length ? flags : undefined,
+      };
+    }
 
     cards.push({
       cardNumber: offset + i + 1,
@@ -427,26 +458,26 @@ function buildLocCards(packages: LocEnginePackage[] | null, offset: number): SMP
       whatItChallenges: "",
       whatItMakesPossible: "",
       whatItRequires: "",
-      scores: {
-        fame: v.fame,
-        truthStrength: v.truth_strength,
-        competitiveImpossibility: v.competitive_impossibility,
-        brandPermission: v.brand_permission,
-        cleanAir: v.clean_air,
-        commercialPrecedent: v.commercial_precedent,
-        weightedComposite: v.weightedScore,
-        flags: flags.length ? flags : undefined,
-      },
+      scores,
       fieldName: label,
       iconicTierStatus: "",
-      pressureTestNote: pkg.validationError ?? "",
+      pressureTestNote: statusNote || (validationError ?? ""),
       source: label,
       engineKey,
     });
     i += 1;
   }
-  return cards;
+  let validationWarning: string | null = null;
+  if (pendingCount > 0 || failedFloorCount > 0 || hadValidationError) {
+    const parts: string[] = [];
+    if (pendingCount > 0) parts.push(`${pendingCount} awaiting validation`);
+    if (failedFloorCount > 0) parts.push(`${failedFloorCount} below six-dimension floors`);
+    if (hadValidationError && pendingCount === 0) parts.push("validation errors present");
+    validationWarning = `LOC six-dimension validation did not complete cleanly — ${parts.join(", ")}. Propositions are shown unscored or with partial scores so nothing is silently hidden.`;
+  }
+  return { cards, validationWarning };
 }
+
 
 
 export function SMPSelection({
