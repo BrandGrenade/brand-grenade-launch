@@ -44,11 +44,27 @@ export const listVisitors = createServerFn({ method: "GET" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: visitors, error } = await supabaseAdmin
       .from("repository_visitors")
-      .select("id, name, organisation, email, created_at")
+      .select("id, name, organisation, email, is_active, created_at")
       .eq("repository_slug", data.slug)
       .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
     return { visitors: visitors ?? [] };
+  });
+
+export const setVisitorActive = createServerFn({ method: "POST" })
+  .inputValidator((d: { id: string; active: boolean }) => ({
+    id: z.string().uuid().parse(d.id),
+    active: z.boolean().parse(d.active),
+  }))
+  .handler(async ({ data }) => {
+    await requireAdmin();
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin
+      .from("repository_visitors")
+      .update({ is_active: data.active })
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true as const };
   });
 
 export const createVisitor = createServerFn({ method: "POST" })
