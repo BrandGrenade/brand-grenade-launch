@@ -11,7 +11,10 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as PipelineRouteImport } from './routes/pipeline'
+import { Route as KpmgRouteImport } from './routes/kpmg'
+import { Route as EyRouteImport } from './routes/ey'
 import { Route as DetonationRouteImport } from './routes/detonation'
+import { Route as DeckRouteImport } from './routes/deck'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as CompleteRouteImport } from './routes/complete'
 import { Route as BriefingRoomRouteImport } from './routes/briefing-room'
@@ -38,9 +41,24 @@ const PipelineRoute = PipelineRouteImport.update({
   path: '/pipeline',
   getParentRoute: () => rootRouteImport,
 } as any)
+const KpmgRoute = KpmgRouteImport.update({
+  id: '/kpmg',
+  path: '/kpmg',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EyRoute = EyRouteImport.update({
+  id: '/ey',
+  path: '/ey',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DetonationRoute = DetonationRouteImport.update({
   id: '/detonation',
   path: '/detonation',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DeckRoute = DeckRouteImport.update({
+  id: '/deck',
+  path: '/deck',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardRoute = DashboardRouteImport.update({
@@ -125,7 +143,10 @@ export interface FileRoutesByFullPath {
   '/briefing-room': typeof BriefingRoomRouteWithChildren
   '/complete': typeof CompleteRoute
   '/dashboard': typeof DashboardRoute
+  '/deck': typeof DeckRoute
   '/detonation': typeof DetonationRoute
+  '/ey': typeof EyRoute
+  '/kpmg': typeof KpmgRoute
   '/pipeline': typeof PipelineRoute
   '/settings': typeof SettingsRoute
   '/admin/tests': typeof AdminTestsRoute
@@ -143,7 +164,10 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/complete': typeof CompleteRoute
   '/dashboard': typeof DashboardRoute
+  '/deck': typeof DeckRoute
   '/detonation': typeof DetonationRoute
+  '/ey': typeof EyRoute
+  '/kpmg': typeof KpmgRoute
   '/pipeline': typeof PipelineRoute
   '/settings': typeof SettingsRoute
   '/admin/tests': typeof AdminTestsRoute
@@ -164,7 +188,10 @@ export interface FileRoutesById {
   '/briefing-room': typeof BriefingRoomRouteWithChildren
   '/complete': typeof CompleteRoute
   '/dashboard': typeof DashboardRoute
+  '/deck': typeof DeckRoute
   '/detonation': typeof DetonationRoute
+  '/ey': typeof EyRoute
+  '/kpmg': typeof KpmgRoute
   '/pipeline': typeof PipelineRoute
   '/settings': typeof SettingsRoute
   '/admin/tests': typeof AdminTestsRoute
@@ -186,7 +213,10 @@ export interface FileRouteTypes {
     | '/briefing-room'
     | '/complete'
     | '/dashboard'
+    | '/deck'
     | '/detonation'
+    | '/ey'
+    | '/kpmg'
     | '/pipeline'
     | '/settings'
     | '/admin/tests'
@@ -204,7 +234,10 @@ export interface FileRouteTypes {
     | '/'
     | '/complete'
     | '/dashboard'
+    | '/deck'
     | '/detonation'
+    | '/ey'
+    | '/kpmg'
     | '/pipeline'
     | '/settings'
     | '/admin/tests'
@@ -224,7 +257,10 @@ export interface FileRouteTypes {
     | '/briefing-room'
     | '/complete'
     | '/dashboard'
+    | '/deck'
     | '/detonation'
+    | '/ey'
+    | '/kpmg'
     | '/pipeline'
     | '/settings'
     | '/admin/tests'
@@ -245,7 +281,10 @@ export interface RootRouteChildren {
   BriefingRoomRoute: typeof BriefingRoomRouteWithChildren
   CompleteRoute: typeof CompleteRoute
   DashboardRoute: typeof DashboardRoute
+  DeckRoute: typeof DeckRoute
   DetonationRoute: typeof DetonationRoute
+  EyRoute: typeof EyRoute
+  KpmgRoute: typeof KpmgRoute
   PipelineRoute: typeof PipelineRoute
   SettingsRoute: typeof SettingsRoute
   AdminTestsRoute: typeof AdminTestsRoute
@@ -272,11 +311,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PipelineRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/kpmg': {
+      id: '/kpmg'
+      path: '/kpmg'
+      fullPath: '/kpmg'
+      preLoaderRoute: typeof KpmgRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ey': {
+      id: '/ey'
+      path: '/ey'
+      fullPath: '/ey'
+      preLoaderRoute: typeof EyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/detonation': {
       id: '/detonation'
       path: '/detonation'
       fullPath: '/detonation'
       preLoaderRoute: typeof DetonationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/deck': {
+      id: '/deck'
+      path: '/deck'
+      fullPath: '/deck'
+      preLoaderRoute: typeof DeckRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboard': {
@@ -419,7 +479,10 @@ const rootRouteChildren: RootRouteChildren = {
   BriefingRoomRoute: BriefingRoomRouteWithChildren,
   CompleteRoute: CompleteRoute,
   DashboardRoute: DashboardRoute,
+  DeckRoute: DeckRoute,
   DetonationRoute: DetonationRoute,
+  EyRoute: EyRoute,
+  KpmgRoute: KpmgRoute,
   PipelineRoute: PipelineRoute,
   SettingsRoute: SettingsRoute,
   AdminTestsRoute: AdminTestsRoute,
