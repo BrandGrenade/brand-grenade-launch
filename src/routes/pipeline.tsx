@@ -2340,7 +2340,8 @@ function PipelineView() {
           ? "Generating brief enhancement questions — this can take 20–60 seconds…"
           : "Awaiting output."),
       "02":
-        (stage2Output && sanitize(stage2Output)) ??
+        (stage2Output &&
+          sanitize(stage2Output).replace(/^\s*#{1,6}\s*Category Intelligence\s*\n+/i, "")) ??
         (stage2Loading
           ? "Building Category Intelligence — this can take 30–90 seconds…"
           : "Awaiting output."),
@@ -2586,8 +2587,8 @@ function PipelineView() {
 
   // Dynamic document title: "[Brand] — Stage X — Brand Grenade"
   useEffect(() => {
-    document.title = `${brandLabel} Strategy Room — Stage ${Math.max(1, currentMainNumber)} — Brand Grenade`;
-  }, [brandLabel, currentMainNumber]);
+    document.title = `${brandLabel} Strategy Room — Stage ${Math.max(1, session?.current_stage ?? currentMainNumber)} — Brand Grenade`;
+  }, [brandLabel, currentMainNumber, session?.current_stage]);
 
   // Keyboard shortcut: Cmd/Ctrl+Enter confirms standard checkpoints.
   useEffect(() => {
@@ -3042,7 +3043,7 @@ function PipelineView() {
             }
           }}
           progressPct={progressPct}
-          currentMainNumber={Math.max(1, currentMainNumber)}
+          currentMainNumber={Math.max(1, session?.current_stage ?? currentMainNumber)}
           totalMain={mainStages.length}
           hasBrief={Boolean(session?.brief_text || (session?.brief_versions?.length ?? 0) > 0)}
         />
