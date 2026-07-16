@@ -1,0 +1,1 @@
+UPDATE public.sessions SET status='interrupted', stage_11_output=NULL, stage_11_error='Stream dropped mid-generation — retry', stage_status='interrupted:11' WHERE id='df8a6e1d-4fa2-4a4c-a1c6-d6a35486b925';
