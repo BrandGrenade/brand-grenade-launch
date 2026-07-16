@@ -3464,7 +3464,7 @@ function PipelineView() {
               )}
             </section>
           </div>
-          <DialogFooter className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+          <DialogFooter className="flex flex-col gap-2 sm:flex-row sm:justify-between">
             <Button
               variant="outline"
               disabled={strategySignoffSaving}
@@ -3475,8 +3475,9 @@ function PipelineView() {
             <Button
               disabled={strategySignoffSaving}
               onClick={() => void confirmStrategySignoff(false)}
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
             >
-              Proceed to Creative Territory
+              Continue to Stage 14 — Creative Territory Mapping →
             </Button>
           </DialogFooter>
         </DialogContent>
