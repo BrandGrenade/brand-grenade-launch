@@ -1,0 +1,1 @@
+INSERT INTO public.users (id, email, is_admin) VALUES ('92e24d49-2fa7-4b25-be6e-22dda817df9d', 'adrian@brandgrenade.com.au', true) ON CONFLICT (id) DO UPDATE SET is_admin = true, email = EXCLUDED.email;
