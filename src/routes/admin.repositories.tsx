@@ -5,6 +5,7 @@ import {
   adminLogin,
   adminLogout,
   adminStatus,
+  unlockRepositoryAdminFromPlatform,
   listVisitors,
   createVisitor,
   deleteVisitor,
@@ -40,6 +41,7 @@ function AdminRepositoriesPage() {
   const status = useServerFn(adminStatus);
   const login = useServerFn(adminLogin);
   const logout = useServerFn(adminLogout);
+  const unlockFromPlatform = useServerFn(unlockRepositoryAdminFromPlatform);
   const [state, setState] = useState<"loading" | "locked" | "unlocked">("loading");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -47,9 +49,18 @@ function AdminRepositoriesPage() {
   useEffect(() => {
     (async () => {
       const s = await status({});
-      setState(s.unlocked ? "unlocked" : "locked");
+      if (s.unlocked) {
+        setState("unlocked");
+        return;
+      }
+      try {
+        const platform = await unlockFromPlatform({});
+        setState(platform.ok ? "unlocked" : "locked");
+      } catch {
+        setState("locked");
+      }
     })();
-  }, [status]);
+  }, [status, unlockFromPlatform]);
 
   async function onLogin(e: React.FormEvent) {
     e.preventDefault();
