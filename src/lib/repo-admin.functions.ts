@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const SLUGS = ["ey", "kpmg", "deck"] as const;
 const slugSchema = z.enum(SLUGS);
@@ -9,6 +10,38 @@ async function requireAdmin() {
   const s = await adminSession();
   if (!s.data.unlocked) throw new Error("Unauthorized");
 }
+
+async function requirePlatformAdminByEmail(email: string | undefined, supabase: unknown) {
+  if (!email) throw new Error("Unauthorized");
+  const client = supabase as {
+    from: (table: string) => {
+      select: (columns: string) => {
+        eq: (column: string, value: string) => {
+          eq: (column: string, value: boolean) => { maybeSingle: () => Promise<{ data: unknown; error: { message: string } | null }> };
+        };
+      };
+    };
+  };
+  const { data, error } = await client
+    .from("users")
+    .select("id")
+    .eq("email", email)
+    .eq("is_admin", true)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) throw new Error("Unauthorized");
+}
+
+export const unlockRepositoryAdminFromPlatform = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const email = typeof context.claims.email === "string" ? context.claims.email : undefined;
+    await requirePlatformAdminByEmail(email, context.supabase);
+    const { adminSession } = await import("./repo/session.server");
+    const s = await adminSession();
+    await s.update({ unlocked: true });
+    return { ok: true as const };
+  });
 
 export const adminLogin = createServerFn({ method: "POST" })
   .inputValidator((d: { password: string }) => ({
