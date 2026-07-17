@@ -34,6 +34,10 @@ function AdminTestsPage() {
               <Link to="/dashboard" style={{ color: "#D4924A" }}>
                 Back to dashboard
               </Link>
+              {" · "}
+              <Link to="/admin/repositories" style={{ color: "#D4924A" }}>
+                Repositories admin
+              </Link>
               .
             </p>
           </header>
