@@ -1,8 +1,10 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { useDevMode, useIsAdmin } from "@/lib/dev-mode";
 import { useAuth } from "@/context/AuthContext";
 import { BrandGrenadeIcon } from "@/components/BrandGrenadeIcon";
+import { unlockRepositoryAdminFromPlatform } from "@/lib/repo-admin.functions";
 
 
 export interface SessionContext {
@@ -17,6 +19,7 @@ export function TopNav({ session }: { session?: SessionContext }) {
   const rootRef = useRef<HTMLDivElement | null>(null);
   const navigate = useNavigate();
   const isAdmin = useIsAdmin();
+  const unlockRepoAdmin = useServerFn(unlockRepositoryAdminFromPlatform);
   const { signOut } = useAuth();
   const { enabled: devModeOn, setEnabled: setDevMode } = useDevMode();
 
@@ -199,6 +202,16 @@ export function TopNav({ session }: { session?: SessionContext }) {
                     navigate({ to: "/settings" });
                   }}
                 />
+                {isAdmin && (
+                  <MenuItem
+                    label="Repositories Admin"
+                    onClick={async () => {
+                      setOpen(false);
+                      await unlockRepoAdmin({});
+                      navigate({ to: "/admin/repositories" });
+                    }}
+                  />
+                )}
                 <MenuItem
                   label="Sign Out"
                   onClick={async () => {
