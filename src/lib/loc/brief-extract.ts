@@ -23,6 +23,7 @@ export type LocInputs = {
   culturalMoment: string; // if present in truths
   briefingRoomDiagnosisSummary: string; // one paragraph for classifier
   sourceNote: string; // where each field came from
+  rawBrief: string; // the full brief_text as pasted, verbatim
 };
 
 type WorkspaceTruths = {
