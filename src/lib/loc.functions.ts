@@ -29,6 +29,8 @@ import { runValidationPass, type EngineValidationEntry } from "./loc/validation"
 const RunInput = z.object({
   sessionId: z.string().uuid(),
   force: z.boolean().optional(),
+  retryInstructions: z.string().max(8000).optional(),
+  keepEngines: z.array(z.enum(LOC_ENGINES)).optional(),
 });
 
 const StatusInput = z.object({ sessionId: z.string().uuid() });
@@ -37,12 +39,14 @@ async function runOneEngine(args: {
   engine: EngineName;
   sessionId: string;
   inputs: ReturnType<typeof buildLocInputs>;
+  retryInstructions?: string;
 }): Promise<{ engine: EngineName; output: EngineOutput | null; error?: string }> {
   try {
     const systemPrompt = getEngineSystemPrompt(args.engine);
     const userMessage = buildEngineUserMessage({
       engine: args.engine,
       inputs: args.inputs,
+      retryInstructions: args.retryInstructions,
     });
     const raw = await callClaude({
       systemPrompt,
