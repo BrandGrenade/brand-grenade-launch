@@ -51,7 +51,7 @@ export function LocControls({ sessionId }: { sessionId: string }) {
   const state = status?.loc_status ?? "pending";
 
   async function trigger(force: boolean) {
-    if (busy || locked) return;
+    if ((busy && !force) || locked) return;
     setBusy(true);
     try {
       await runLoc({ data: { sessionId, force } });
@@ -138,17 +138,17 @@ export function LocControls({ sessionId }: { sessionId: string }) {
             type="button"
             className="rounded border px-3 py-1"
             style={{ borderColor: "var(--color-border-strong, #999)" }}
-            disabled={busy || locked}
+            disabled={locked}
             onClick={() => trigger(true)}
             title={
               locked
                 ? "Locked: Checkpoint C confirmed"
-                : state === "running"
+                : state === "running" || busy
                   ? "A run is in progress — clicking will force a fresh overwrite"
                   : "Overwrites the current LOC set with a fresh independent generation"
             }
           >
-            {busy ? "Retrying…" : state === "running" ? "Force Retry (run in progress)" : "Retry Left-of-Centre Engines"}
+            {state === "running" || busy ? "Force Retry (run in progress)" : "Retry Left-of-Centre Engines"}
           </button>
         </div>
       </div>
