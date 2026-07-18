@@ -25,6 +25,7 @@ import type {
   Step4Output,
   Truth,
 } from "./briefing-room-prompts";
+import type { PrebriefForBriefingRoom } from "./intelligence/prebrief-text";
 
 export type WorkspaceForHandoff = {
   brand_name: string;
@@ -35,6 +36,23 @@ export type WorkspaceForHandoff = {
   tensions: Step4Output | null;
   selected_frame: string | null;
   selected_tension_index: number | null;
+  /** Structured prebrief signals from the Intelligence Engine handoff, when
+   *  the workspace was seeded from the Intelligence Lab. Used to map
+   *  must_include/must_avoid/competitive_context/cultural_context into the
+   *  correct Step-5 fields instead of leaving them stranded in raw_brief. */
+  prebrief?: PrebriefForBriefingRoom | null;
+  /** Optional LLM-generated content for fields that Steps 1–4 do not
+   *  diagnose (f5 what has been tried, f10 competitive, f11 mandatories).
+   *  Drawn from raw research documents. When absent, a specific reason is
+   *  emitted instead of a generic placeholder. */
+  llm_fields?: {
+    f5_tried?: string;
+    f5_tried_reason?: string;
+    f10_competitive?: string;
+    f10_competitive_reason?: string;
+    f11_mandatories?: string;
+    f11_mandatories_reason?: string;
+  } | null;
 };
 
 export type HandoffPayload = {
