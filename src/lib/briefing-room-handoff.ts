@@ -232,6 +232,14 @@ export function buildHandoffPayload(ws: WorkspaceForHandoff): HandoffPayload {
   const anchorBlock = anchorLines.join("\n");
 
   // ─── Field composition ───────────────────────────────────────────
+  // AUTHORITY MODEL: llm_fields is the canonical source for every one of
+  // the eleven fields. Step 5 synthesises them from the unified context
+  // (raw brief + all research documents + Intelligence Engine prebrief +
+  // Steps 1–4 outputs + selected frame + selected tension). When a value
+  // is present in llm_fields it wins outright. The derivation logic
+  // below runs ONLY as a fallback so no field can go blank if the LLM
+  // pass failed for any reason.
+  const llm = ws.llm_fields ?? {};
   const b = emptyBriefFields();
   b.brandName = ws.brand_name;
   b.category = ws.category;
@@ -239,19 +247,23 @@ export function buildHandoffPayload(ws: WorkspaceForHandoff): HandoffPayload {
   b.date = new Date().toISOString().slice(0, 10);
   b.submittedBy = "Briefing Room";
 
+  const pick = (llmVal: string | undefined, fallback: string): string => {
+    const v = llmVal?.trim();
+    return v ? v : fallback;
+  };
+
   // f1 — Brand and Product/Service
-  b.sections.f1_brand = ws.brand_name
+  const f1Fallback = ws.brand_name
     ? `${ws.brand_name} — see anchored context below. Category: ${ws.category || "(unspecified)"}.`
     : "(unspecified — Briefing Room intake missing brand statement)";
+  b.sections.f1_brand = pick(llm.f1_brand, f1Fallback);
 
-  // f2 — Strategic Objective — derived from the Step 1 frame selection.
-  // Opportunity frame → new-territory objectives (Category Creation / Repositioning).
-  // Problem frame → protective objectives (Crisis Recovery / Defence).
-  // Both → Repositioning (moves brand across territories). Problem-shape
-  // keywords nudge between the two options within each frame.
-  b.sections.f2_objective = deriveStrategicObjective(ws);
+  // f2 — Strategic Objective — LLM must return a value that matches the
+  // STRATEGIC_OBJECTIVE_OPTIONS select. Fallback derives from Step 1 frame.
+  b.sections.f2_objective = pick(llm.f2_objective, deriveStrategicObjective(ws));
 
-  // f3 — Commercial Outcome (frame-anchored)
+  // f3 — Commercial Outcome
+  let f3Fallback = "";
   if (ws.diagnosis) {
     const frame = ws.selected_frame ?? "unspecified";
     const framedStatement =
@@ -260,10 +272,11 @@ export function buildHandoffPayload(ws: WorkspaceForHandoff): HandoffPayload {
         : frame === "both"
           ? `${ws.diagnosis.real_opportunity.statement} (opportunity) / ${ws.diagnosis.real_problem.statement} (problem)`
           : ws.diagnosis.real_problem.statement;
-    b.sections.f3_outcome = `Frame: ${frame.toUpperCase()}. ${framedStatement} ${TAG("briefing_room")}\n\nEDIT BEFORE RUN: convert this into a specific twelve-month commercial outcome (revenue, trial rate, retention, reappraisal, share). The Briefing Room diagnoses the real problem/opportunity; you name the commercial test.`;
+    f3Fallback = `Frame: ${frame.toUpperCase()}. ${framedStatement} ${TAG("briefing_room")}`;
   }
+  b.sections.f3_outcome = pick(llm.f3_outcome, f3Fallback);
 
-  // f4 — Primary Barrier (real problem + ANCHORED TENSION preserved inline)
+  // f4 — Primary Barrier
   const barrierParts: string[] = [];
   if (ws.diagnosis) {
     barrierParts.push(
@@ -289,36 +302,36 @@ export function buildHandoffPayload(ws: WorkspaceForHandoff): HandoffPayload {
       `NO-TENSION FLAG (from Briefing Room Step 4): ${ws.tensions.no_tension_reason}`,
     );
   }
-  b.sections.f4_barrier =
+  const f4Fallback =
     barrierParts.join("\n") ||
     "(Briefing Room did not diagnose a barrier — Steps 1 and 4 must run before handoff)";
-
-  // f5 — What Has Already Been Tried
-  //   Briefing Room Steps 1–4 do not diagnose prior activity. Prefer LLM
-  //   content synthesised from raw research documents; otherwise emit a
-  //   specific "cannot populate" reason naming which sources were absent.
-  {
-    const llm = ws.llm_fields?.f5_tried?.trim();
-    const reason = ws.llm_fields?.f5_tried_reason?.trim();
-    b.sections.f5_tried = llm
-      ? llm
-      : reason ||
-        "Not captured: no prior-activity signal found in the raw research documents (Primary Consumer, Brand Health, Competitive Audit, Cultural Trends, Audience Segmentation, BG Intel Pack). Add manually if relevant, or state 'nothing tried' honestly.";
+  // For f4 we ALWAYS append the load-bearing tension block after any LLM
+  // draft, because Stage 1 relies on that exact anchor being present verbatim.
+  if (llm.f4_barrier?.trim()) {
+    const anchorTail = barrierParts.length ? `\n\n${barrierParts.join("\n")}` : "";
+    b.sections.f4_barrier = `${llm.f4_barrier.trim()}${anchorTail}`;
+  } else {
+    b.sections.f4_barrier = f4Fallback;
   }
 
-  // f6 — Audience (from human truths)
-  b.sections.f6_audience = joinTruths(
-    humanTruths,
-    "No human/behavioural truth captured — flag: audience section thin.",
+  // f5 — What Has Already Been Tried
+  {
+    const reason = llm.f5_tried_reason?.trim();
+    b.sections.f5_tried = pick(
+      llm.f5_tried,
+      reason || "No prior brand activity was found in the supplied research documents.",
+    );
+  }
+
+  // f6 — Audience
+  b.sections.f6_audience = pick(
+    llm.f6_audience,
+    joinTruths(humanTruths, "No human/behavioural truth captured — flag: audience section thin."),
   );
 
-  // f7 — Current Belief (cultural + human, defensive read)
-  //   Supplement with prebrief.cultural_context when the Intelligence Engine
-  //   seeded the workspace — the cultural read from research would otherwise
-  //   be stranded in raw_brief.
+  // f7 — Current Belief
   const currentBeliefLines: string[] = [];
-  if (culturalTruths.length)
-    currentBeliefLines.push(...culturalTruths.map(truthLine));
+  if (culturalTruths.length) currentBeliefLines.push(...culturalTruths.map(truthLine));
   if (humanTruths.length && !culturalTruths.length)
     currentBeliefLines.push(...humanTruths.map(truthLine));
   const culturalContext = ws.prebrief?.cultural_context?.trim();
@@ -327,73 +340,71 @@ export function buildHandoffPayload(ws: WorkspaceForHandoff): HandoffPayload {
       `- ${culturalContext} ${TAG("intelligence_engine", "cultural_context")}`,
     );
   }
-  if (currentBeliefLines.length === 0)
-    currentBeliefLines.push(
-      "No cultural or human truth captured to read as current belief — flag.",
-    );
-  b.sections.f7_current_belief = currentBeliefLines.join("\n");
+  const f7Fallback =
+    currentBeliefLines.length > 0
+      ? currentBeliefLines.join("\n")
+      : "No cultural or human truth captured to read as current belief — flag.";
+  b.sections.f7_current_belief = pick(llm.f7_current_belief, f7Fallback);
 
-  // f8 — Desired Belief (opportunity-anchored)
-  if (ws.diagnosis) {
-    b.sections.f8_desired_belief = `Anchored by Briefing Room opportunity frame: ${ws.diagnosis.real_opportunity.statement} ${TAG(ws.diagnosis.real_opportunity.sources.join(", ") || "unspecified")}\n\nEDIT BEFORE RUN: express as the belief the audience must hold after the strategy lands.`;
-  }
+  // f8 — Desired Belief
+  const f8Fallback = ws.diagnosis
+    ? `Anchored by Briefing Room opportunity frame: ${ws.diagnosis.real_opportunity.statement} ${TAG(ws.diagnosis.real_opportunity.sources.join(", ") || "unspecified")}`
+    : "";
+  b.sections.f8_desired_belief = pick(llm.f8_desired_belief, f8Fallback);
 
-  // f9 — Reason to Believe (product + brand truths)
+  // f9 — Reason to Believe
   const rtb = [...productTruths, ...brandTruths];
-  b.sections.f9_rtb = joinTruths(
-    rtb,
-    "No product or brand truth captured — flag: RTB section thin.",
+  b.sections.f9_rtb = pick(
+    llm.f9_rtb,
+    joinTruths(rtb, "No product or brand truth captured — flag: RTB section thin."),
   );
 
   // f10 — Competitive Provocation
-  //   Prefer prebrief.competitive_context when the Intelligence Engine
-  //   surfaced it, then LLM synthesis from the Competitive Audit research,
-  //   otherwise a specific "cannot populate" reason.
   {
-    const parts: string[] = [];
+    const reason = llm.f10_competitive_reason?.trim();
     const competitiveContext = ws.prebrief?.competitive_context?.trim();
-    if (competitiveContext) {
-      parts.push(
-        `${competitiveContext} ${TAG("intelligence_engine", "competitive_context")}`,
-      );
-    }
-    const llm = ws.llm_fields?.f10_competitive?.trim();
-    if (llm) parts.push(llm);
-    const reason = ws.llm_fields?.f10_competitive_reason?.trim();
-    b.sections.f10_competitive = parts.length
-      ? parts.join("\n\n")
-      : reason ||
-        "Not captured: no Competitive Communications Audit was supplied to the Intelligence Lab, and no competitive signal was flagged in the Intelligence Engine prebrief. Add competitor or category dynamic manually before run.";
+    const contextTail = competitiveContext
+      ? `\n\n${competitiveContext} ${TAG("intelligence_engine", "competitive_context")}`
+      : "";
+    const fallback = reason
+      ? `${reason}${contextTail}`
+      : competitiveContext
+        ? `${competitiveContext} ${TAG("intelligence_engine", "competitive_context")}`
+        : "No competitive audit or category dynamic was found in the supplied research documents.";
+    b.sections.f10_competitive = llm.f10_competitive?.trim()
+      ? `${llm.f10_competitive.trim()}${contextTail}`
+      : fallback;
   }
 
   // f11 — Mandatories and Never-Says
-  //   Route Intelligence Engine must_include → Mandatories and must_avoid →
-  //   Never-Says; supplement with LLM synthesis; otherwise emit a specific
-  //   reason instead of "None captured".
   {
     const mustInclude = ws.prebrief?.must_include ?? [];
     const mustAvoid = ws.prebrief?.must_avoid ?? [];
-    const parts: string[] = [];
+    const anchorParts: string[] = [];
     if (mustInclude.length) {
-      parts.push(
+      anchorParts.push(
         `MANDATORIES ${TAG("intelligence_engine", "must_include")}:\n` +
           mustInclude.map((s) => `- ${s}`).join("\n"),
       );
     }
     if (mustAvoid.length) {
-      parts.push(
+      anchorParts.push(
         `NEVER-SAYS ${TAG("intelligence_engine", "must_avoid")}:\n` +
           mustAvoid.map((s) => `- ${s}`).join("\n"),
       );
     }
-    const llm = ws.llm_fields?.f11_mandatories?.trim();
-    if (llm) parts.push(llm);
-    const reason = ws.llm_fields?.f11_mandatories_reason?.trim();
-    b.sections.f11_mandatories = parts.length
-      ? parts.join("\n\n")
-      : reason ||
-        "Not captured: no Intelligence Engine must-include / must-avoid signals present, and no mandatories or restrictions found in the raw research documents. Add legal, brand, or channel mandatories manually before run.";
+    const reason = llm.f11_mandatories_reason?.trim();
+    if (llm.f11_mandatories?.trim()) {
+      b.sections.f11_mandatories = [llm.f11_mandatories.trim(), ...anchorParts].join("\n\n");
+    } else if (anchorParts.length) {
+      b.sections.f11_mandatories = anchorParts.join("\n\n");
+    } else {
+      b.sections.f11_mandatories =
+        reason ||
+        "No legal, brand, channel, or regulatory mandatories were found in the supplied research documents or Intelligence Engine prebrief.";
+    }
   }
+
 
   // ─── brief_text: anchor block THEN composed sections ─────────────
   const composed = composeBriefText(b);
