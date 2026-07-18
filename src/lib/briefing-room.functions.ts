@@ -390,39 +390,37 @@ export const getBriefingHandoffPreview = createServerFn({ method: "POST" })
       }
     }
 
-    // Synthesise f5 (what has been tried), f10 (competitive provocation), and
-    // f11 (mandatories / never-says) from the raw research documents when they
-    // exist. Steps 1–4 do not diagnose these fields, so without this pass they
-    // fall back to hardcoded placeholders.
+    // Unified-context synthesis: the LLM generates ALL eleven brief fields
+    // from the complete available context (raw brief + all research docs +
+    // Intelligence Engine prebrief + Steps 1–4 outputs + selected frame +
+    // selected tension). Every field is LLM-authored — no hardcoded
+    // placeholders. On failure we fall through to derived fallbacks in
+    // buildHandoffPayload so the payload is still non-blank.
     let llm_fields: NonNullable<WorkspaceForHandoff["llm_fields"]> | null = null;
-    if (researchDocs.length > 0) {
-      try {
-        llm_fields = await synthesiseStep5Fields({
-          brandName: ws.brand_name,
-          category: ws.category,
-          researchDocs,
-          diagnosis: ws.diagnosis,
-          tensions: ws.tensions,
-          prebrief,
-        });
-      } catch (e) {
-        // Non-fatal: fall through to per-field "cannot populate" reasons.
-        llm_fields = {
-          f5_tried_reason: `Field 5 synthesis failed: ${(e as Error).message}. Raw research documents were supplied but could not be summarised — edit manually.`,
-          f10_competitive_reason: `Field 10 synthesis failed: ${(e as Error).message}. Raw research documents were supplied but could not be summarised — edit manually.`,
-          f11_mandatories_reason: `Field 11 synthesis failed: ${(e as Error).message}. Raw research documents were supplied but could not be summarised — edit manually.`,
-        };
-      }
-    } else {
+    try {
+      llm_fields = await synthesiseAllFields({
+        brandName: ws.brand_name,
+        category: ws.category,
+        rawBrief: ws.raw_brief,
+        researchDocs,
+        diagnosis: ws.diagnosis,
+        truths: ws.truths,
+        relevance: ws.relevance,
+        tensions: ws.tensions,
+        selectedFrame: ws.selected_frame,
+        selectedTensionIndex: ws.selected_tension_index,
+        prebrief,
+      });
+    } catch (e) {
+      // Non-fatal: derived fallbacks fire in buildHandoffPayload.
+      const msg = (e as Error).message;
       llm_fields = {
-        f5_tried_reason:
-          "Not captured: no raw research documents were supplied to the Intelligence Lab, so no prior-activity signal is available.",
-        f10_competitive_reason:
-          "Not captured: no Competitive Communications Audit was uploaded to the Intelligence Lab, and the Intelligence Engine prebrief did not surface a competitive_context signal.",
-        f11_mandatories_reason:
-          "Not captured: no raw research documents were supplied to the Intelligence Lab and the Intelligence Engine prebrief did not surface must_include / must_avoid signals.",
+        f5_tried_reason: `Unified-context synthesis failed: ${msg}`,
+        f10_competitive_reason: `Unified-context synthesis failed: ${msg}`,
+        f11_mandatories_reason: `Unified-context synthesis failed: ${msg}`,
       };
     }
+
 
     return buildHandoffPayload({
       brand_name: ws.brand_name,
