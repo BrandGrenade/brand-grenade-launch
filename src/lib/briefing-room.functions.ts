@@ -390,39 +390,37 @@ export const getBriefingHandoffPreview = createServerFn({ method: "POST" })
       }
     }
 
-    // Synthesise f5 (what has been tried), f10 (competitive provocation), and
-    // f11 (mandatories / never-says) from the raw research documents when they
-    // exist. Steps 1–4 do not diagnose these fields, so without this pass they
-    // fall back to hardcoded placeholders.
+    // Unified-context synthesis: the LLM generates ALL eleven brief fields
+    // from the complete available context (raw brief + all research docs +
+    // Intelligence Engine prebrief + Steps 1–4 outputs + selected frame +
+    // selected tension). Every field is LLM-authored — no hardcoded
+    // placeholders. On failure we fall through to derived fallbacks in
+    // buildHandoffPayload so the payload is still non-blank.
     let llm_fields: NonNullable<WorkspaceForHandoff["llm_fields"]> | null = null;
-    if (researchDocs.length > 0) {
-      try {
-        llm_fields = await synthesiseStep5Fields({
-          brandName: ws.brand_name,
-          category: ws.category,
-          researchDocs,
-          diagnosis: ws.diagnosis,
-          tensions: ws.tensions,
-          prebrief,
-        });
-      } catch (e) {
-        // Non-fatal: fall through to per-field "cannot populate" reasons.
-        llm_fields = {
-          f5_tried_reason: `Field 5 synthesis failed: ${(e as Error).message}. Raw research documents were supplied but could not be summarised — edit manually.`,
-          f10_competitive_reason: `Field 10 synthesis failed: ${(e as Error).message}. Raw research documents were supplied but could not be summarised — edit manually.`,
-          f11_mandatories_reason: `Field 11 synthesis failed: ${(e as Error).message}. Raw research documents were supplied but could not be summarised — edit manually.`,
-        };
-      }
-    } else {
+    try {
+      llm_fields = await synthesiseAllFields({
+        brandName: ws.brand_name,
+        category: ws.category,
+        rawBrief: ws.raw_brief,
+        researchDocs,
+        diagnosis: ws.diagnosis,
+        truths: ws.truths,
+        relevance: ws.relevance,
+        tensions: ws.tensions,
+        selectedFrame: ws.selected_frame,
+        selectedTensionIndex: ws.selected_tension_index,
+        prebrief,
+      });
+    } catch (e) {
+      // Non-fatal: derived fallbacks fire in buildHandoffPayload.
+      const msg = (e as Error).message;
       llm_fields = {
-        f5_tried_reason:
-          "Not captured: no raw research documents were supplied to the Intelligence Lab, so no prior-activity signal is available.",
-        f10_competitive_reason:
-          "Not captured: no Competitive Communications Audit was uploaded to the Intelligence Lab, and the Intelligence Engine prebrief did not surface a competitive_context signal.",
-        f11_mandatories_reason:
-          "Not captured: no raw research documents were supplied to the Intelligence Lab and the Intelligence Engine prebrief did not surface must_include / must_avoid signals.",
+        f5_tried_reason: `Unified-context synthesis failed: ${msg}`,
+        f10_competitive_reason: `Unified-context synthesis failed: ${msg}`,
+        f11_mandatories_reason: `Unified-context synthesis failed: ${msg}`,
       };
     }
+
 
     return buildHandoffPayload({
       brand_name: ws.brand_name,
@@ -438,75 +436,133 @@ export const getBriefingHandoffPreview = createServerFn({ method: "POST" })
     });
   });
 
-// ─── Step 5 LLM synthesis for f5 / f10 / f11 ─────────────────────────
-// One Claude call, strict JSON out, drawing on the raw research documents
-// (Primary Consumer, Brand Health, Competitive Audit, Cultural Trends,
-// Audience Segmentation, BG Intel Pack) uploaded to the Intelligence Lab.
-// Discipline: AGGREGATOR — never fabricate; if a field cannot be grounded
-// in the supplied documents, emit a specific "reason" naming what was
-// missing, not a generic placeholder.
+// ─── Step 5 unified-context field synthesis ─────────────────────────
+// One Claude call, strict JSON out, generating ALL eleven brief fields
+// from the complete available context: raw brief + all six research
+// documents (Primary Consumer, Brand Health, Competitive Audit, Cultural
+// Trends, Audience Segmentation, BG Intel Pack) + Intelligence Engine
+// prebrief (must_include, must_avoid, competitive_context,
+// cultural_context, audience_context, creative_direction) + Step 1
+// diagnosis (both frames + selected frame) + Step 2 truth set + Step 3
+// relevance judgments + Step 4 selected tension verbatim.
+//
+// Discipline: AGGREGATOR + THINKER — never fabricate; ground every claim
+// in the supplied context; when a field genuinely cannot be grounded,
+// emit an empty string and a specific reason naming what was missing.
 
-const STEP_5_SYNTH_SYSTEM = `You are the Briefing Room's Step 5 field-synthesis engine. Your job is to populate three brief fields — "what has already been tried" (f5), "competitive provocation" (f10), and "mandatories and never-says" (f11) — using ONLY the raw research documents supplied.
+const STRATEGIC_OBJECTIVE_LIST = [
+  "Launch",
+  "Refresh",
+  "Repositioning",
+  "Defence",
+  "Challenger",
+  "Crisis Recovery",
+  "Category Creation",
+];
+
+const STEP_5_UNIFIED_SYSTEM = `You are the Briefing Room's Step 5 field-population engine. Your job is to produce ALL ELEVEN brief fields (f1..f11) as complete, specific, human-ready drafts from the unified context supplied.
 
 CORE DISCIPLINE — NON-NEGOTIABLE:
-1. AGGREGATOR ONLY. Do not invent facts, competitors, campaigns, mandatories, or restrictions.
-2. Every claim must be grounded in one of the supplied research documents. Tag inline with "[source: <document label>]".
-3. If a field cannot be grounded, emit an EMPTY string for that field AND populate the matching "*_reason" with a SPECIFIC reason naming which document(s) were absent or silent. Never emit a generic "Not captured" placeholder.
-4. Output STRICT JSON only. No markdown fences. First character must be '{'.
+1. AGGREGATOR + THINKER. Ground every claim in the supplied context — raw brief, research documents, Intelligence Engine prebrief, or Steps 1–4 outputs. Do NOT invent competitors, statistics, campaigns, mandatories, restrictions, or facts that are absent from the context.
+2. Every field must be a complete, human-ready draft in plain prose. No placeholders. No "edit before run" instructions. No "TBD". No empty strings unless truly ungroundable, in which case set the matching "*_reason" naming what document(s) were missing.
+3. Where useful, tag inline citations "[source: <document label>]" or "[source: briefing_room_step_N]".
+4. f2 (Strategic Objective) MUST be exactly one of these values: ${STRATEGIC_OBJECTIVE_LIST.join(", ")}. Choose the one that best matches the Step 1 selected frame and the diagnosed problem/opportunity shape.
+5. f3 (Commercial Outcome) MUST be specific twelve-month targets — revenue indicator, trial rate, retention, consideration movement, share, or a proof-case milestone. Not a brand metric.
+6. f4 (Primary Barrier) must name the barrier plainly. Do NOT restate the load-bearing tension here — a separate stage prepends it verbatim; write only the barrier itself.
+7. f11 (Mandatories) — draw legal, brand, channel, regulatory mandatories from the research docs. Do NOT restate must_include / must_avoid here — a separate stage appends them verbatim; write only mandatories NOT already covered by the prebrief must_include/must_avoid lists.
+8. Output STRICT JSON only. No markdown fences. First character must be '{'.
 
 OUTPUT JSON SCHEMA (strict):
 {
-  "f5_tried": string,               // prior activity / campaigns / attempts; may be ""
-  "f5_tried_reason": string,        // required when f5_tried is ""; else ""
-  "f10_competitive": string,        // competitor moves / category dynamics / white space
-  "f10_competitive_reason": string, // required when f10_competitive is ""; else ""
-  "f11_mandatories": string,        // legal, brand, channel, regulatory mandatories AND never-says
-  "f11_mandatories_reason": string  // required when f11_mandatories is ""; else ""
+  "f1_brand": string,               // brand + product/service, 2–3 sentences
+  "f2_objective": string,           // MUST be one of the STRATEGIC_OBJECTIVE_LIST values above
+  "f3_outcome": string,             // specific 12-month commercial outcome
+  "f4_barrier": string,             // single primary barrier prose
+  "f5_tried": string,               // prior brand/marketing activity, or "" if not in docs
+  "f5_tried_reason": string,        // required when f5_tried is ""
+  "f6_audience": string,            // specific audience + belief/behaviour
+  "f7_current_belief": string,      // what the audience currently believes
+  "f8_desired_belief": string,      // the belief shift the strategy must achieve
+  "f9_rtb": string,                 // reason to believe from product/brand/heritage truths
+  "f10_competitive": string,        // competitor moves / category dynamic, or "" if not in docs
+  "f10_competitive_reason": string, // required when f10_competitive is ""
+  "f11_mandatories": string,        // legal/brand/channel mandatories NOT already in prebrief, or ""
+  "f11_mandatories_reason": string  // required when f11_mandatories is ""
 }`;
 
-async function synthesiseStep5Fields(args: {
+async function synthesiseAllFields(args: {
   brandName: string;
   category: string;
+  rawBrief: string;
   researchDocs: Array<{ label: string; content: string }>;
-  diagnosis: unknown;
-  tensions: unknown;
+  diagnosis: Step1Output | null;
+  truths: Step2Output | null;
+  relevance: Step3Output | null;
+  tensions: Step4Output | null;
+  selectedFrame: string | null;
+  selectedTensionIndex: number | null;
   prebrief: PrebriefForBriefingRoom | null;
 }): Promise<NonNullable<WorkspaceForHandoff["llm_fields"]>> {
-  // Cap each research doc to keep the prompt within a sane budget for a
-  // preview call. Research inputs can be up to 400k chars each; trim to 20k
-  // per doc for this synthesis pass.
-  const PER_DOC_LIMIT = 20_000;
-  const docsBlock = args.researchDocs
-    .map((d, i) => {
-      const trimmed = d.content.length > PER_DOC_LIMIT
-        ? d.content.slice(0, PER_DOC_LIMIT) + "\n[…truncated for synthesis pass…]"
-        : d.content;
-      return `--- RESEARCH DOC #${i + 1} | label: ${d.label} ---\n${trimmed}\n--- END DOC #${i + 1} ---`;
-    })
-    .join("\n\n");
+  // Per-doc budget to keep the unified prompt within a sane window while
+  // preserving the six-document context.
+  const PER_DOC_LIMIT = 18_000;
+  const docsBlock = args.researchDocs.length
+    ? args.researchDocs
+        .map((d, i) => {
+          const trimmed = d.content.length > PER_DOC_LIMIT
+            ? d.content.slice(0, PER_DOC_LIMIT) + "\n[…truncated for synthesis pass…]"
+            : d.content;
+          return `--- RESEARCH DOC #${i + 1} | label: ${d.label} ---\n${trimmed}\n--- END DOC #${i + 1} ---`;
+        })
+        .join("\n\n")
+    : "(no raw research documents supplied)";
+
+  const selectedTension =
+    args.tensions &&
+    !args.tensions.no_tension_flag &&
+    typeof args.selectedTensionIndex === "number"
+      ? args.tensions.candidate_tensions[args.selectedTensionIndex] ?? null
+      : null;
+
+  const rawBriefTrimmed = args.rawBrief.length > 30_000
+    ? args.rawBrief.slice(0, 30_000) + "\n[…truncated…]"
+    : args.rawBrief;
 
   const user = `BRAND: ${args.brandName || "(unspecified)"}
 CATEGORY: ${args.category || "(unspecified)"}
 
-STEP 1 DIAGNOSIS (context only — do not rewrite):
-${JSON.stringify(args.diagnosis ?? null, null, 2)}
+RAW BRIEF (as supplied to the Briefing Room):
+"""
+${rawBriefTrimmed || "(empty)"}
+"""
 
-STEP 4 TENSIONS (context only — do not rewrite):
-${JSON.stringify(args.tensions ?? null, null, 2)}
-
-INTELLIGENCE ENGINE PREBRIEF (context only — must_include/must_avoid/competitive_context are already routed elsewhere; you may cite them if a document corroborates):
+INTELLIGENCE ENGINE PREBRIEF (authoritative — must_include/must_avoid/competitive_context/cultural_context/audience/creative_territory_direction/strategic_anchor/tension):
 ${JSON.stringify(args.prebrief ?? null, null, 2)}
 
-RAW RESEARCH DOCUMENTS:
+STEP 1 DIAGNOSIS (both frames + selected frame):
+selected_frame: ${args.selectedFrame ?? "(none)"}
+${JSON.stringify(args.diagnosis ?? null, null, 2)}
+
+STEP 2 TRUTH SET (with source tags and discriminator/motivator/thorpe flags):
+${JSON.stringify(args.truths ?? null, null, 2)}
+
+STEP 3 RELEVANCE JUDGMENTS:
+${JSON.stringify(args.relevance ?? null, null, 2)}
+
+STEP 4 SELECTED TENSION (verbatim, load-bearing — cite in f4 context but do not restate the tension itself):
+${JSON.stringify(selectedTension, null, 2)}
+
+RAW RESEARCH DOCUMENTS (all six Intelligence Lab inputs when supplied):
 ${docsBlock}
 
-Produce the Step 5 field-synthesis JSON now.`;
+Produce the unified Step 5 field JSON now. Every one of the eleven fields must be a complete human-ready draft grounded in the context above.`;
 
   const raw = await callClaude({
-    systemPrompt: STEP_5_SYNTH_SYSTEM,
+    systemPrompt: STEP_5_UNIFIED_SYSTEM,
     userMessage: user,
-    maxTokens: 4000,
+    maxTokens: 8000,
     skipUniversalWrapper: true,
   });
-  return parseJson<NonNullable<WorkspaceForHandoff["llm_fields"]>>(raw, "Step 5 synthesis");
+  return parseJson<NonNullable<WorkspaceForHandoff["llm_fields"]>>(raw, "Step 5 unified synthesis");
 }
+
