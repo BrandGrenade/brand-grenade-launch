@@ -30,7 +30,7 @@ const RunInput = z.object({
   sessionId: z.string().uuid(),
   force: z.boolean().optional(),
   retryInstructions: z.string().max(8000).optional(),
-  keepEngines: z.array(z.enum(LOC_ENGINES)).optional(),
+  keepEngines: z.array(z.enum(LOC_ENGINES as unknown as [EngineName, ...EngineName[]])).optional(),
 });
 
 const StatusInput = z.object({ sessionId: z.string().uuid() });
