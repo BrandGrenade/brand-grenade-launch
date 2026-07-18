@@ -41,13 +41,24 @@ export type WorkspaceForHandoff = {
    *  must_include/must_avoid/competitive_context/cultural_context into the
    *  correct Step-5 fields instead of leaving them stranded in raw_brief. */
   prebrief?: PrebriefForBriefingRoom | null;
-  /** Optional LLM-generated content for fields that Steps 1–4 do not
-   *  diagnose (f5 what has been tried, f10 competitive, f11 mandatories).
-   *  Drawn from raw research documents. When absent, a specific reason is
-   *  emitted instead of a generic placeholder. */
+  /** LLM-generated content for ALL eleven brief fields, produced from the
+   *  unified context (raw brief + research documents + Intelligence Engine
+   *  prebrief + Steps 1–4 outputs + selected frame + selected tension).
+   *  When a field is non-empty here it OVERRIDES any derived content — the
+   *  LLM is the authority on every field. When absent or empty, the
+   *  derivation logic in this file is used as a fallback so the field is
+   *  never blank. */
   llm_fields?: {
+    f1_brand?: string;
+    f2_objective?: string;
+    f3_outcome?: string;
+    f4_barrier?: string;
     f5_tried?: string;
     f5_tried_reason?: string;
+    f6_audience?: string;
+    f7_current_belief?: string;
+    f8_desired_belief?: string;
+    f9_rtb?: string;
     f10_competitive?: string;
     f10_competitive_reason?: string;
     f11_mandatories?: string;
