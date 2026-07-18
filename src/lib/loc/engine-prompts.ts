@@ -381,6 +381,19 @@ export type EngineOutput = {
   proposition: string;
   descriptor: string;
   word?: string;
+  // Auditable intermediates (engine-specific — see INTERMEDIATES map)
+  sacred_assumption?: string;
+  wrong_room_chosen?: string;
+  lines_from_inside?: string[];
+  ideology?: string;
+  stimulus?: string;
+  stimulus_properties?: string[];
+  abandoned_truth?: string;
+  enemy_named?: string;
+  polite_fiction?: string;
+  word_owned?: string;
+  word_available?: string;
+  authority_figure?: string;
 };
 
 export function parseEngineOutput(raw: string, engine: EngineName): EngineOutput {
@@ -391,11 +404,10 @@ export function parseEngineOutput(raw: string, engine: EngineName): EngineOutput
     throw new Error(`${engine} engine did not return JSON. Raw: ${trimmed.slice(0, 200)}`);
   }
   const slice = trimmed.slice(jsonStart, jsonEnd + 1);
-  const parsed = parseJsonLenient<Partial<EngineOutput>>(slice);
-  const proposition = (parsed.proposition ?? "").toString().trim();
-  const descriptor = (parsed.descriptor ?? "").toString().trim();
-  const process = (parsed.process ?? "").toString().trim();
-  const word = (parsed.word ?? "").toString().trim();
+  const parsed = parseJsonLenient<Record<string, unknown>>(slice);
+  const proposition = String(parsed.proposition ?? "").trim();
+  const descriptor = String(parsed.descriptor ?? "").trim();
+  const process = String(parsed.process ?? "").trim();
   if (!proposition) {
     throw new Error(`${engine} engine returned empty proposition.`);
   }
@@ -404,12 +416,49 @@ export function parseEngineOutput(raw: string, engine: EngineName): EngineOutput
       `${engine} engine returned no auditable process — the move was not executed. Retry required.`,
     );
   }
+
+  // Validate engine-specific intermediates and collect them onto the output.
+  const required = INTERMEDIATES[engine] ?? [];
+  const extras: Record<string, string | string[]> = {};
+  for (const field of required) {
+    const value = parsed[field.key];
+    if (field.array) {
+      const arr = Array.isArray(value)
+        ? value.map((v) => String(v ?? "").trim()).filter((v) => v.length > 0)
+        : [];
+      const min = field.minItems ?? 1;
+      if (arr.length < min) {
+        throw new Error(
+          `${engine} engine missing required intermediate "${field.key}" (need ${min} non-empty item${min > 1 ? "s" : ""}). The move was not executed. Retry required.`,
+        );
+      }
+      extras[field.key] = arr;
+    } else {
+      const str = String(value ?? "").trim();
+      if (!str || str.length < 8) {
+        throw new Error(
+          `${engine} engine missing required intermediate "${field.key}". The move was not executed. Retry required.`,
+        );
+      }
+      extras[field.key] = str;
+    }
+  }
+
+  // Backwards compat: one_word_ownership consumers read `.word`. Map from
+  // word_owned so decision-package and validation keep working unchanged.
+  const legacyWord = String(parsed.word ?? "").trim();
+  const derivedWord =
+    engine === "one_word_ownership"
+      ? (typeof extras.word_owned === "string" ? extras.word_owned : legacyWord)
+      : legacyWord;
+
   return {
     engine,
     process,
     proposition,
     descriptor,
-    ...(word ? { word } : {}),
+    ...(derivedWord ? { word: derivedWord } : {}),
+    ...extras,
   };
 }
 
