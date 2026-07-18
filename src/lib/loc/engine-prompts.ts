@@ -295,14 +295,21 @@ export function buildEngineUserMessage(args: {
 Category: ${inputs.category}
 Strategic opportunity (one sentence — context only, NOT a seed): ${opportunity}`;
 
-  const retryBlock = retryInstructions && retryInstructions.trim()
-    ? `\n\n=== MANDATORY USER RETRY DIRECTIVE (highest priority — overrides any conflicting instruction) ===\nThe previous attempt failed to execute this engine's move correctly. The human operator has supplied the following corrective instructions. You MUST follow them literally. If your output does not visibly satisfy these instructions in the "process" field, it will be rejected.\n\n${retryInstructions.trim()}\n=== END RETRY DIRECTIVE ===`
+  const hasRetry = !!(retryInstructions && retryInstructions.trim());
+  const retryBlock = hasRetry
+    ? `\n\n=== MANDATORY USER RETRY DIRECTIVE (highest priority — overrides any conflicting instruction) ===\nThe previous attempt failed to execute this engine's move correctly. The human operator has supplied the following corrective instructions. You MUST follow them literally. If your output does not visibly satisfy these instructions in the "process" field, it will be rejected.\n\n${retryInstructions!.trim()}\n=== END RETRY DIRECTIVE ===`
     : "";
 
-  if (BRIEF_ISOLATED_ENGINES.has(engine)) {
+  // On retry with a user directive, strip Step 2 truths and Step 4 tension
+  // from EVERY engine's input. The directive replaces them entirely. Model
+  // receives only brand, category, strategic opportunity, and the directive.
+  if (hasRetry || BRIEF_ISOLATED_ENGINES.has(engine)) {
+    const note = hasRetry
+      ? "The user retry directive below fully replaces any prior supporting evidence. Do not ask for or infer Step 2 truths or Step 4 tension — they have been intentionally withheld. Fire the move using only the directive plus your engine's own worldview."
+      : "Your move must fire from its own worldview, not from the brief. You have been given no brief context deliberately — this is the whole point of this engine.";
     return `${header}
 
-Perform ${LOC_ENGINE_LABEL[engine]} per your system prompt. Your move must fire from its own worldview, not from the brief. You have been given no brief context deliberately — this is the whole point of this engine. Return the JSON.${retryBlock}`;
+Perform ${LOC_ENGINE_LABEL[engine]} per your system prompt. ${note} Return the JSON.${retryBlock}`;
   }
 
   const tensionBlock = inputs.anchoredTension
@@ -317,8 +324,9 @@ Perform ${LOC_ENGINE_LABEL[engine]} per your system prompt. Your move must fire 
 
 Perform ${LOC_ENGINE_LABEL[engine]} per your system prompt. Fire the move first. Only after you have a candidate line, check it against the supporting evidence below — never let this evidence seed the move. Return the JSON.
 
-${evidence}${retryBlock}`;
+${evidence}`;
 }
+
 
 
 export type EngineOutput = {
