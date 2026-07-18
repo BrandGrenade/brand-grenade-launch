@@ -150,6 +150,7 @@ interface PrebriefForBriefingRoom {
   tension?: string;
   audience?: string;
   cultural_context?: string;
+  competitive_context?: string;
   creative_territory_direction?: string;
   must_include?: string[];
   must_avoid?: string[];
