@@ -2760,6 +2760,27 @@ function PipelineView() {
 
   const handleRetryStage = async (stageId: string) => {
     if (!sessionId) return;
+    if (stageId === "08B") {
+      try {
+        setStatuses((p) => ({ ...p, "08B": "running" }));
+        setSelectedId("08B");
+        setSession((prev) =>
+          prev
+            ? ({
+                ...prev,
+                loc_status: "running",
+                loc_error: null,
+                stage_9_leftofcentre_output: null,
+              } as SessionData)
+            : prev,
+        );
+        await runLocFn({ data: { sessionId, force: true } });
+      } catch (e) {
+        console.error("LOC retry failed", e);
+        setStatuses((p) => ({ ...p, "08B": "error" }));
+      }
+      return;
+    }
     const dbId = STAGE_ID_TO_DB[stageId];
     if (!dbId) return;
     const amendment = amendmentNotes[stageId]?.trim() ?? "";
