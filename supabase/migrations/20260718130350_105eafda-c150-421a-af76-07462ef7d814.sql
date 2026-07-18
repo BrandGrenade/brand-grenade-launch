@@ -1,0 +1,1 @@
+update sessions set current_stage = 8, status = 'interrupted', stage_9_output = null where id = '24fd1d29-b45a-4cb0-97ad-754c2be248ea';
