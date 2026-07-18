@@ -1,0 +1,1 @@
+UPDATE intelligence_sessions SET status='failed', last_error='Released: stalled at running:2 for >1h', completed_at=now() WHERE id='40ba392b-6d72-49f7-ba05-1039c0d293e4';
