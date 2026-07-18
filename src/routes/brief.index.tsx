@@ -145,6 +145,33 @@ function BriefIntake() {
     toast.message(`Loaded legacy brief "${b.brand_name}" — content placed in Section 1 for review.`);
   }
 
+  async function runFromBriefingRoom(b: SavedBrief) {
+    if (!b.brief_fields) {
+      loadSavedBrief(b);
+      return;
+    }
+    setSubmitting(true);
+    setSubmitError(null);
+    try {
+      const { sessionId } = await createSessionFn({
+        data: {
+          brandName: b.brief_fields.brandName || b.brand_name,
+          category: b.brief_fields.category || b.category,
+          strategicMode: "Auto",
+          briefText: b.brief_text,
+          devMode: getDevModeFromStorage(),
+          briefFields: b.brief_fields,
+        },
+      });
+      navigate({ to: "/pipeline", search: { session: sessionId } });
+    } catch (err) {
+      setSubmitting(false);
+      setSubmitError(err instanceof Error ? err.message : "Failed to start");
+      applyBriefFields(b.brief_fields);
+      toast.error("Briefing Room handoff failed — the brief is pre-loaded for manual review.");
+    }
+  }
+
   function currentBriefFields(): BriefFields {
     return {
       briefTitle: briefTitle.trim(),
@@ -198,13 +225,19 @@ function BriefIntake() {
         }
       } catch {/* ignore */}
     }
-    // 2) Saved-brief load queue.
+    // 2) Saved-brief / Briefing Room handoff queue — auto-fire Stage 1 when a
+    //    structured Briefing Room brief is present.
     const raw = sessionStorage.getItem(PENDING_BRIEF_STORAGE_KEY);
     if (!raw) return;
     sessionStorage.removeItem(PENDING_BRIEF_STORAGE_KEY);
     try {
       const b = JSON.parse(raw) as SavedBrief;
-      if (b && b.brand_name) loadSavedBrief(b);
+      if (!b || !b.brand_name) return;
+      if (b.brief_fields) {
+        void runFromBriefingRoom(b);
+      } else {
+        loadSavedBrief(b);
+      }
     } catch {
       /* ignore */
     }
