@@ -281,8 +281,9 @@ ${OUTPUT_CONTRACT(engine)}`;
 export function buildEngineUserMessage(args: {
   engine: EngineName;
   inputs: LocInputs;
+  retryInstructions?: string;
 }): string {
-  const { engine, inputs } = args;
+  const { engine, inputs, retryInstructions } = args;
   const opportunity =
     inputs.realOpportunity && inputs.realOpportunity !== "(not diagnosed)"
       ? inputs.realOpportunity
@@ -294,18 +295,16 @@ export function buildEngineUserMessage(args: {
 Category: ${inputs.category}
 Strategic opportunity (one sentence — context only, NOT a seed): ${opportunity}`;
 
+  const retryBlock = retryInstructions && retryInstructions.trim()
+    ? `\n\n=== MANDATORY USER RETRY DIRECTIVE (highest priority — overrides any conflicting instruction) ===\nThe previous attempt failed to execute this engine's move correctly. The human operator has supplied the following corrective instructions. You MUST follow them literally. If your output does not visibly satisfy these instructions in the "process" field, it will be rejected.\n\n${retryInstructions.trim()}\n=== END RETRY DIRECTIVE ===`
+    : "";
+
   if (BRIEF_ISOLATED_ENGINES.has(engine)) {
-    // Isolated engines: NO diagnosis, NO tension, NO raw brief, NO truths.
-    // The move fires first. The brief never enters.
     return `${header}
 
-Perform ${LOC_ENGINE_LABEL[engine]} per your system prompt. Your move must fire from its own worldview, not from the brief. You have been given no brief context deliberately — this is the whole point of this engine. Return the JSON.`;
+Perform ${LOC_ENGINE_LABEL[engine]} per your system prompt. Your move must fire from its own worldview, not from the brief. You have been given no brief context deliberately — this is the whole point of this engine. Return the JSON.${retryBlock}`;
   }
 
-  // Non-isolated engines: fire the move first, then append the minimal
-  // supporting evidence (Step 2 raw truths and Step 4 anchored tension only)
-  // AFTER the move instruction. No Briefing Room diagnosis. No raw brief
-  // dump. No audience/barrier restatement.
   const tensionBlock = inputs.anchoredTension
     ? `=== ANCHORED TENSION (Briefing Room Step 4, verbatim) ===\n${inputs.anchoredTension}\n${inputs.anchoredTensionMeta}`
     : "";
@@ -318,7 +317,7 @@ Perform ${LOC_ENGINE_LABEL[engine]} per your system prompt. Your move must fire 
 
 Perform ${LOC_ENGINE_LABEL[engine]} per your system prompt. Fire the move first. Only after you have a candidate line, check it against the supporting evidence below — never let this evidence seed the move. Return the JSON.
 
-${evidence}`;
+${evidence}${retryBlock}`;
 }
 
 
