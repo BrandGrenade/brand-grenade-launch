@@ -48,25 +48,30 @@ It must be eight words or fewer. Fewer is almost always stronger.
 
 Generate twenty candidate lines internally. Return only the single strongest — the one that passes the pub test, the stranger test, and makes you pause before you move on.`;
 
+const PROCESS_FIELD_SPEC = `"process": "<MANDATORY — 3-5 sentences showing this engine's move being executed step by step. Not a summary of the line. Not a rationale. The actual intermediate work: the sacred assumption you named and inverted, the wrong room you chose and inhabited, the customer you removed and the ideology you found, the random stimulus you named and connected, the moment you located, the word you claimed, and so on. If the process field does not visibly show THIS engine's move being performed, the output is invalid and will be rejected.>"`;
+
 const OUTPUT_CONTRACT = (engineId: EngineName) => {
   if (engineId === "one_word_ownership") {
-    return `OUTPUT — return exactly one JSON object, no prose, no markdown fences:
+    return `OUTPUT — return exactly one JSON object, no prose, no markdown fences. The "process" field is MANDATORY and must show the move being executed — outputs without a valid process field are rejected:
 
 {
   "engine": "${engineId}",
+  ${PROCESS_FIELD_SPEC},
   "word": "<THE single word this brand could own permanently>",
   "proposition": "<THE PROPOSITION — 8 words or fewer, must NEVER contain the word above>",
   "descriptor": "<After the line — one sentence only on what the line does to the reader. Not why the brand owns it. Not how it connects to the brief. What it makes the reader feel or think before they understand it.>"
 }`;
   }
-  return `OUTPUT — return exactly one JSON object, no prose, no markdown fences:
+  return `OUTPUT — return exactly one JSON object, no prose, no markdown fences. The "process" field is MANDATORY and must show the move being executed — outputs without a valid process field are rejected:
 
 {
   "engine": "${engineId}",
+  ${PROCESS_FIELD_SPEC},
   "proposition": "<THE LINE — 8 words or fewer>",
   "descriptor": "<After the line — one sentence only on what the line does to the reader. Not why the brand owns it. Not how it connects to the brief. What it makes the reader feel or think before they understand it.>"
 }`;
 };
+
 
 const FORBIDDEN_START = `HARD RULE — DO NOT START FROM THE BRIEF.
 Do not start from the brief, the category, the customer, or the market. Perform this engine's move. Never let the brief seed the move.`;
