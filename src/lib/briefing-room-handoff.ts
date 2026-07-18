@@ -25,6 +25,7 @@ import type {
   Step4Output,
   Truth,
 } from "./briefing-room-prompts";
+import type { PrebriefForBriefingRoom } from "./intelligence/prebrief-text";
 
 export type WorkspaceForHandoff = {
   brand_name: string;
@@ -35,6 +36,23 @@ export type WorkspaceForHandoff = {
   tensions: Step4Output | null;
   selected_frame: string | null;
   selected_tension_index: number | null;
+  /** Structured prebrief signals from the Intelligence Engine handoff, when
+   *  the workspace was seeded from the Intelligence Lab. Used to map
+   *  must_include/must_avoid/competitive_context/cultural_context into the
+   *  correct Step-5 fields instead of leaving them stranded in raw_brief. */
+  prebrief?: PrebriefForBriefingRoom | null;
+  /** Optional LLM-generated content for fields that Steps 1–4 do not
+   *  diagnose (f5 what has been tried, f10 competitive, f11 mandatories).
+   *  Drawn from raw research documents. When absent, a specific reason is
+   *  emitted instead of a generic placeholder. */
+  llm_fields?: {
+    f5_tried?: string;
+    f5_tried_reason?: string;
+    f10_competitive?: string;
+    f10_competitive_reason?: string;
+    f11_mandatories?: string;
+    f11_mandatories_reason?: string;
+  } | null;
 };
 
 export type HandoffPayload = {
@@ -264,9 +282,18 @@ export function buildHandoffPayload(ws: WorkspaceForHandoff): HandoffPayload {
     barrierParts.join("\n") ||
     "(Briefing Room did not diagnose a barrier — Steps 1 and 4 must run before handoff)";
 
-  // f5 — What Has Already Been Tried (Briefing Room does not diagnose this)
-  b.sections.f5_tried =
-    "Not captured by Briefing Room. Add manually if relevant, or state 'nothing tried' honestly.";
+  // f5 — What Has Already Been Tried
+  //   Briefing Room Steps 1–4 do not diagnose prior activity. Prefer LLM
+  //   content synthesised from raw research documents; otherwise emit a
+  //   specific "cannot populate" reason naming which sources were absent.
+  {
+    const llm = ws.llm_fields?.f5_tried?.trim();
+    const reason = ws.llm_fields?.f5_tried_reason?.trim();
+    b.sections.f5_tried = llm
+      ? llm
+      : reason ||
+        "Not captured: no prior-activity signal found in the raw research documents (Primary Consumer, Brand Health, Competitive Audit, Cultural Trends, Audience Segmentation, BG Intel Pack). Add manually if relevant, or state 'nothing tried' honestly.";
+  }
 
   // f6 — Audience (from human truths)
   b.sections.f6_audience = joinTruths(
@@ -275,11 +302,20 @@ export function buildHandoffPayload(ws: WorkspaceForHandoff): HandoffPayload {
   );
 
   // f7 — Current Belief (cultural + human, defensive read)
+  //   Supplement with prebrief.cultural_context when the Intelligence Engine
+  //   seeded the workspace — the cultural read from research would otherwise
+  //   be stranded in raw_brief.
   const currentBeliefLines: string[] = [];
   if (culturalTruths.length)
     currentBeliefLines.push(...culturalTruths.map(truthLine));
   if (humanTruths.length && !culturalTruths.length)
     currentBeliefLines.push(...humanTruths.map(truthLine));
+  const culturalContext = ws.prebrief?.cultural_context?.trim();
+  if (culturalContext) {
+    currentBeliefLines.push(
+      `- ${culturalContext} ${TAG("intelligence_engine", "cultural_context")}`,
+    );
+  }
   if (currentBeliefLines.length === 0)
     currentBeliefLines.push(
       "No cultural or human truth captured to read as current belief — flag.",
@@ -299,11 +335,54 @@ export function buildHandoffPayload(ws: WorkspaceForHandoff): HandoffPayload {
   );
 
   // f10 — Competitive Provocation
-  b.sections.f10_competitive =
-    "Not captured by Briefing Room (Steps 1–4 do not produce competitive intelligence). Add competitor or category dynamic manually before run.";
+  //   Prefer prebrief.competitive_context when the Intelligence Engine
+  //   surfaced it, then LLM synthesis from the Competitive Audit research,
+  //   otherwise a specific "cannot populate" reason.
+  {
+    const parts: string[] = [];
+    const competitiveContext = ws.prebrief?.competitive_context?.trim();
+    if (competitiveContext) {
+      parts.push(
+        `${competitiveContext} ${TAG("intelligence_engine", "competitive_context")}`,
+      );
+    }
+    const llm = ws.llm_fields?.f10_competitive?.trim();
+    if (llm) parts.push(llm);
+    const reason = ws.llm_fields?.f10_competitive_reason?.trim();
+    b.sections.f10_competitive = parts.length
+      ? parts.join("\n\n")
+      : reason ||
+        "Not captured: no Competitive Communications Audit was supplied to the Intelligence Lab, and no competitive signal was flagged in the Intelligence Engine prebrief. Add competitor or category dynamic manually before run.";
+  }
 
   // f11 — Mandatories and Never-Says
-  b.sections.f11_mandatories = "None captured by Briefing Room.";
+  //   Route Intelligence Engine must_include → Mandatories and must_avoid →
+  //   Never-Says; supplement with LLM synthesis; otherwise emit a specific
+  //   reason instead of "None captured".
+  {
+    const mustInclude = ws.prebrief?.must_include ?? [];
+    const mustAvoid = ws.prebrief?.must_avoid ?? [];
+    const parts: string[] = [];
+    if (mustInclude.length) {
+      parts.push(
+        `MANDATORIES ${TAG("intelligence_engine", "must_include")}:\n` +
+          mustInclude.map((s) => `- ${s}`).join("\n"),
+      );
+    }
+    if (mustAvoid.length) {
+      parts.push(
+        `NEVER-SAYS ${TAG("intelligence_engine", "must_avoid")}:\n` +
+          mustAvoid.map((s) => `- ${s}`).join("\n"),
+      );
+    }
+    const llm = ws.llm_fields?.f11_mandatories?.trim();
+    if (llm) parts.push(llm);
+    const reason = ws.llm_fields?.f11_mandatories_reason?.trim();
+    b.sections.f11_mandatories = parts.length
+      ? parts.join("\n\n")
+      : reason ||
+        "Not captured: no Intelligence Engine must-include / must-avoid signals present, and no mandatories or restrictions found in the raw research documents. Add legal, brand, or channel mandatories manually before run.";
+  }
 
   // ─── brief_text: anchor block THEN composed sections ─────────────
   const composed = composeBriefText(b);
