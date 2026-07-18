@@ -91,9 +91,14 @@ export const runLeftOfCentre = createServerFn({ method: "POST" })
 
     const { data: locRow } = await supabaseAdmin
       .from("sessions")
-      .select("loc_status, loc_retry_count, loc_generated_at")
+      .select("loc_status, loc_retry_count, loc_generated_at, loc_engine_outputs")
       .eq("id", data.sessionId)
-      .single<{ loc_status: string | null; loc_retry_count: number | null; loc_generated_at: string | null }>();
+      .single<{
+        loc_status: string | null;
+        loc_retry_count: number | null;
+        loc_generated_at: string | null;
+        loc_engine_outputs: Record<string, { ok: boolean; output?: EngineOutput; error?: string }> | null;
+      }>();
 
     if (session.checkpoint_c_confirmed) {
       throw new Error("LOC is locked: Checkpoint C already confirmed for this session.");
@@ -110,6 +115,8 @@ export const runLeftOfCentre = createServerFn({ method: "POST" })
     }
 
     const retryCount = data.force ? (locRow?.loc_retry_count ?? 0) + 1 : locRow?.loc_retry_count ?? 0;
+    const keepSet = new Set<EngineName>(data.keepEngines ?? []);
+    const priorOutputs = locRow?.loc_engine_outputs ?? {};
 
     let workspace: WorkspaceInputSnapshot | null = null;
     try {
@@ -133,7 +140,13 @@ export const runLeftOfCentre = createServerFn({ method: "POST" })
       workspace,
     });
 
-    // Mark running (and wipe stale outputs if forcing).
+    // Mark running (and wipe stale outputs if forcing, unless engine is in keep set).
+    const preservedOutputs: Record<string, unknown> = {};
+    if (data.force && keepSet.size > 0) {
+      for (const e of keepSet) {
+        if (priorOutputs[e]?.ok) preservedOutputs[e] = priorOutputs[e];
+      }
+    }
     await supabaseAdmin
       .from("sessions")
       .update({
@@ -141,7 +154,7 @@ export const runLeftOfCentre = createServerFn({ method: "POST" })
         loc_error: null,
         ...(data.force
           ? {
-              loc_engine_outputs: null,
+              loc_engine_outputs: keepSet.size > 0 ? preservedOutputs : null,
               loc_validation: null,
               loc_decision_packages: null,
               loc_task_type: null,
@@ -155,18 +168,20 @@ export const runLeftOfCentre = createServerFn({ method: "POST" })
       .eq("id", data.sessionId);
 
     try {
-      // Fire all nine engines in parallel.
+      // Fire engines in parallel — skip any engine the user asked to keep.
+      const enginesToRun = LOC_ENGINES.filter((e) => !keepSet.has(e));
       const engineResults = await Promise.all(
-        LOC_ENGINES.map((engine) =>
+        enginesToRun.map((engine) =>
           runOneEngine({
             engine,
             sessionId: data.sessionId,
             inputs,
+            retryInstructions: data.retryInstructions,
           }),
         ),
       );
 
-      const engineOutputsRecord: Record<string, unknown> = {};
+      const engineOutputsRecord: Record<string, unknown> = { ...preservedOutputs };
       for (const r of engineResults) {
         engineOutputsRecord[r.engine] = r.output
           ? { ok: true, output: r.output }
@@ -178,10 +193,22 @@ export const runLeftOfCentre = createServerFn({ method: "POST" })
         .update({ loc_engine_outputs: engineOutputsRecord } as never)
         .eq("id", data.sessionId);
 
-      const successful = engineResults.filter(
-        (r): r is { engine: EngineName; output: EngineOutput } =>
-          r.output !== null,
-      );
+      // Include kept engines' prior outputs in the successful set.
+      const keptSuccessful = Array.from(keepSet)
+        .map((e) => {
+          const prior = priorOutputs[e];
+          return prior?.ok && prior.output
+            ? { engine: e, output: prior.output as EngineOutput }
+            : null;
+        })
+        .filter((x): x is { engine: EngineName; output: EngineOutput } => x !== null);
+
+      const successful = [
+        ...keptSuccessful,
+        ...engineResults.filter(
+          (r): r is { engine: EngineName; output: EngineOutput } => r.output !== null,
+        ),
+      ];
 
       if (successful.length === 0) {
         throw new Error("All LOC engines failed to return output.");
