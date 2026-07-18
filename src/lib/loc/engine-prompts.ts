@@ -50,24 +50,70 @@ Generate twenty candidate lines internally. Return only the single strongest —
 
 const PROCESS_FIELD_SPEC = `"process": "<MANDATORY — 3-5 sentences showing this engine's move being executed step by step. Not a summary of the line. Not a rationale. The actual intermediate work: the sacred assumption you named and inverted, the wrong room you chose and inhabited, the customer you removed and the ideology you found, the random stimulus you named and connected, the moment you located, the word you claimed, and so on. If the process field does not visibly show THIS engine's move being performed, the output is invalid and will be rejected.>"`;
 
+// Per-engine mandatory intermediate outputs. These fields make the move
+// auditable and unfakeable — they must exist BEFORE the proposition is
+// generated. The model cannot skip the move because the intermediate
+// output is required by contract and validated on parse.
+type IntermediateField = { key: string; array?: boolean; minItems?: number; spec: string };
+const INTERMEDIATES: Partial<Record<EngineName, IntermediateField[]>> = {
+  inversion: [
+    { key: "sacred_assumption", spec: `"sacred_assumption": "<MANDATORY — state the single category assumption every brand competes on, in the form: 'Every brand in this category competes on [X].' Written BEFORE the proposition.>"` },
+  ],
+  wrong_room: [
+    { key: "wrong_room_chosen", spec: `"wrong_room_chosen": "<MANDATORY — name the specific unrelated industry entered (e.g. 'competitive powerlifting', 'monastic order', 'submarine warfare'). Not a category — a specific world.>"` },
+    { key: "lines_from_inside", array: true, minItems: 2, spec: `"lines_from_inside": ["<MANDATORY — line one, produced entirely inside the wrong room's logic, before any translation>", "<line two, same rule>"]` },
+  ],
+  delete_customer: [
+    { key: "ideology", spec: `"ideology": "<MANDATORY — state the conviction this brand would hold even if nobody bought anything. Not a customer description. Not 'for people who'. A belief. Written BEFORE the proposition.>"` },
+  ],
+  random_connection: [
+    { key: "stimulus", spec: `"stimulus": "<MANDATORY — name one specific random object or phenomenon (not a category). E.g. 'a lighthouse', 'the migration pattern of monarch butterflies', 'the sound of ice cracking on a frozen lake'.>"` },
+    { key: "stimulus_properties", array: true, minItems: 3, spec: `"stimulus_properties": ["<MANDATORY — true property one of the stimulus>", "<true property two>", "<true property three>"]` },
+  ],
+  time_displacement: [
+    { key: "abandoned_truth", spec: `"abandoned_truth": "<MANDATORY — name what this category left behind fifty years ago and why. Written BEFORE the contemporary translation.>"` },
+  ],
+  enemy_first: [
+    { key: "enemy_named", spec: `"enemy_named": "<MANDATORY — state the specific belief, behaviour, or convention being destroyed. Not a competitor. Specific enough that someone on the wrong side would feel accused. Written BEFORE the proposition.>"` },
+  ],
+  the_unsayable: [
+    { key: "polite_fiction", spec: `"polite_fiction": "<MANDATORY — state the specific thing the entire category depends on nobody saying, in plain language. Written BEFORE the line.>"` },
+  ],
+  one_word_ownership: [
+    { key: "word_owned", spec: `"word_owned": "<MANDATORY — the single core category word this brand will own. One word only. Written BEFORE any expression is attempted.>"` },
+    { key: "word_available", spec: `"word_available": "<MANDATORY — one sentence confirming no competitor currently owns this word, naming any brand you considered and ruled out.>"` },
+  ],
+  invented_authority: [
+    { key: "authority_figure", spec: `"authority_figure": "<MANDATORY — name the specific figure, moment, or standard of authority being invoked (fictional, historical, or moral register). Written BEFORE the implied endorsement.>"` },
+  ],
+};
+
+function renderIntermediates(engineId: EngineName): string {
+  const fields = INTERMEDIATES[engineId];
+  if (!fields || fields.length === 0) return "";
+  return fields.map((f) => `  ${f.spec},`).join("\n") + "\n";
+}
+
 const OUTPUT_CONTRACT = (engineId: EngineName) => {
+  const intermediates = renderIntermediates(engineId);
+  const hasIntermediates = intermediates.length > 0;
+  const contractPreamble = `OUTPUT — return exactly one JSON object, no prose, no markdown fences. The "process" field${hasIntermediates ? " AND every intermediate field below are" : " is"} MANDATORY${hasIntermediates ? ". Intermediate fields must be produced BEFORE the proposition — they make the move auditable and unfakeable" : " and must show the move being executed"}. Outputs missing any required field are rejected:`;
   if (engineId === "one_word_ownership") {
-    return `OUTPUT — return exactly one JSON object, no prose, no markdown fences. The "process" field is MANDATORY and must show the move being executed — outputs without a valid process field are rejected:
+    return `${contractPreamble}
 
 {
   "engine": "${engineId}",
   ${PROCESS_FIELD_SPEC},
-  "word": "<THE single word this brand could own permanently>",
-  "proposition": "<THE PROPOSITION — 8 words or fewer, must NEVER contain the word above>",
+${intermediates}  "proposition": "<THE PROPOSITION — 8 words or fewer, must NEVER contain the owned word>",
   "descriptor": "<After the line — one sentence only on what the line does to the reader. Not why the brand owns it. Not how it connects to the brief. What it makes the reader feel or think before they understand it.>"
 }`;
   }
-  return `OUTPUT — return exactly one JSON object, no prose, no markdown fences. The "process" field is MANDATORY and must show the move being executed — outputs without a valid process field are rejected:
+  return `${contractPreamble}
 
 {
   "engine": "${engineId}",
   ${PROCESS_FIELD_SPEC},
-  "proposition": "<THE LINE — 8 words or fewer>",
+${intermediates}  "proposition": "<THE LINE — 8 words or fewer>",
   "descriptor": "<After the line — one sentence only on what the line does to the reader. Not why the brand owns it. Not how it connects to the brief. What it makes the reader feel or think before they understand it.>"
 }`;
 };
