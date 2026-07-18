@@ -138,15 +138,17 @@ export function LocControls({ sessionId }: { sessionId: string }) {
             type="button"
             className="rounded border px-3 py-1"
             style={{ borderColor: "var(--color-border-strong, #999)" }}
-            disabled={busy || locked || state === "running"}
+            disabled={busy || locked}
             onClick={() => trigger(true)}
             title={
               locked
                 ? "Locked: Checkpoint C confirmed"
-                : "Overwrites the current LOC set with a fresh independent generation"
+                : state === "running"
+                  ? "A run is in progress — clicking will force a fresh overwrite"
+                  : "Overwrites the current LOC set with a fresh independent generation"
             }
           >
-            {busy ? "Retrying…" : "Retry Left-of-Centre Engines"}
+            {busy ? "Retrying…" : state === "running" ? "Force Retry (run in progress)" : "Retry Left-of-Centre Engines"}
           </button>
         </div>
       </div>
