@@ -244,14 +244,29 @@ QUALITY TEST: Does this invoke an authority specific enough to be felt rather th
 
 
 
+// Engines that must NOT see brief context (diagnosis / tension / truths / raw
+// brief) before they generate. Their move is designed to start from somewhere
+// other than the brief. They receive only brand, category, and a single-
+// sentence strategic opportunity.
+const BRIEF_ISOLATED_ENGINES: ReadonlySet<EngineName> = new Set<EngineName>([
+  "inversion",
+  "wrong_room",
+  "delete_customer",
+  "random_connection",
+  "time_displacement",
+]);
+
 export function getEngineSystemPrompt(engine: EngineName): string {
+  // Reordered: ENGINE_MOVES first (dominant), then GOVERNING_PRINCIPLE,
+  // then COPYWRITER_STANDARD last. The move is the instruction — the two
+  // shared blocks are filters applied to what the move produces.
   return `You are ${LOC_ENGINE_LABEL[engine]}, one of twelve Left-of-Centre engines.
 
-${GOVERNING_PRINCIPLE}
+${ENGINE_MOVES[engine]}
 
 ${FORBIDDEN_START}
 
-${ENGINE_MOVES[engine]}
+${GOVERNING_PRINCIPLE}
 
 ${COPYWRITER_STANDARD}
 
@@ -262,12 +277,45 @@ export function buildEngineUserMessage(args: {
   engine: EngineName;
   inputs: LocInputs;
 }): string {
-  return `The brief inputs below are context only. Do NOT let them seed your move.
+  const { engine, inputs } = args;
+  const opportunity =
+    inputs.realOpportunity && inputs.realOpportunity !== "(not diagnosed)"
+      ? inputs.realOpportunity
+      : inputs.realProblem && inputs.realProblem !== "(not diagnosed)"
+        ? inputs.realProblem
+        : "(no single-sentence strategic opportunity captured)";
 
-${renderLocInputsBlock(args.inputs)}
+  const header = `Brand: ${inputs.brandName}
+Category: ${inputs.category}
+Strategic opportunity (one sentence — context only, NOT a seed): ${opportunity}`;
 
-Now perform ${LOC_ENGINE_LABEL[args.engine]} per your system prompt. Return the JSON.`;
+  if (BRIEF_ISOLATED_ENGINES.has(engine)) {
+    // Isolated engines: NO diagnosis, NO tension, NO raw brief, NO truths.
+    // The move fires first. The brief never enters.
+    return `${header}
+
+Perform ${LOC_ENGINE_LABEL[engine]} per your system prompt. Your move must fire from its own worldview, not from the brief. You have been given no brief context deliberately — this is the whole point of this engine. Return the JSON.`;
+  }
+
+  // Non-isolated engines: fire the move first, then append the minimal
+  // supporting evidence (Step 2 raw truths and Step 4 anchored tension only)
+  // AFTER the move instruction. No Briefing Room diagnosis. No raw brief
+  // dump. No audience/barrier restatement.
+  const tensionBlock = inputs.anchoredTension
+    ? `=== ANCHORED TENSION (Briefing Room Step 4, verbatim) ===\n${inputs.anchoredTension}\n${inputs.anchoredTensionMeta}`
+    : "";
+  const truthsBlock = inputs.rawHumanTruths
+    ? `=== RAW HUMAN TRUTHS (Briefing Room Step 2, unfiltered) ===\n${inputs.rawHumanTruths}`
+    : "";
+  const evidence = [tensionBlock, truthsBlock].filter(Boolean).join("\n\n");
+
+  return `${header}
+
+Perform ${LOC_ENGINE_LABEL[engine]} per your system prompt. Fire the move first. Only after you have a candidate line, check it against the supporting evidence below — never let this evidence seed the move. Return the JSON.
+
+${evidence}`;
 }
+
 
 export type EngineOutput = {
   engine: EngineName;
