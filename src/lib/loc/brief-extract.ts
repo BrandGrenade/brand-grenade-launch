@@ -201,6 +201,7 @@ export function buildLocInputs(args: {
     culturalMoment,
     briefingRoomDiagnosisSummary,
     sourceNote,
+    rawBrief: args.briefText ?? "",
   };
 }
 
