@@ -446,6 +446,43 @@ export const createBriefingRoomFromIntelligence = createServerFn({ method: "POST
       executiveSummary: typeof report.executive_summary === "string" ? report.executive_summary : null,
     });
 
+    // Ship BOTH the structured prebrief JSON (so downstream buildHandoffPayload
+    // can map must_include/must_avoid/competitive_context/cultural_context into
+    // their correct Step-5 fields) AND every raw research document uploaded to
+    // the Intelligence Lab (so Steps 1–4 and Step 5 field-generation see source
+    // material, not just the synthesised summary).
+    const evidenceBlocks: Array<{ label: string; type: string; content: string }> = [
+      {
+        label: `Intelligence Engine — Territory: ${territoryName}`,
+        type: "intelligence_prebrief",
+        content: JSON.stringify(
+          { intelligence_session_id: row.id, territory: selected },
+          null,
+          2,
+        ),
+      },
+      {
+        label: "Intelligence Engine — Prebrief JSON (structured signals)",
+        type: "intelligence_prebrief_json",
+        content: JSON.stringify(prebrief, null, 2),
+      },
+    ];
+    const RESEARCH_FIELDS: Array<{ key: keyof typeof row; label: string }> = [
+      { key: "input_primary_consumer", label: "01 — Primary Consumer Research" },
+      { key: "input_brand_health", label: "02 — Brand Health Tracking Data" },
+      { key: "input_competitive_audit", label: "03 — Competitive Communications Audit" },
+      { key: "input_cultural_trends", label: "04 — Cultural Trend Analysis" },
+      { key: "input_audience_segmentation", label: "05 — Audience Segmentation Research" },
+      { key: "input_bg_intel_pack", label: "06 — Brand Grenade Intelligence Pack" },
+    ];
+    for (const { key, label } of RESEARCH_FIELDS) {
+      const raw = row[key];
+      const content = typeof raw === "string" ? raw.trim() : "";
+      if (content) {
+        evidenceBlocks.push({ label, type: "intelligence_research_input", content });
+      }
+    }
+
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: ws, error: insertErr } = await supabaseAdmin
       .from("briefing_room_workspaces")
@@ -454,17 +491,7 @@ export const createBriefingRoomFromIntelligence = createServerFn({ method: "POST
         brand_name: brandName,
         category,
         raw_brief: rawBrief,
-        supporting_evidence: [
-          {
-            label: `Intelligence Engine — Territory: ${territoryName}`,
-            type: "intelligence_prebrief",
-            content: JSON.stringify(
-              { intelligence_session_id: row.id, territory: selected },
-              null,
-              2,
-            ),
-          },
-        ],
+        supporting_evidence: evidenceBlocks,
       })
       .select("id")
       .single();
