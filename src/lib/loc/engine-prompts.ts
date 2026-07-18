@@ -324,6 +324,7 @@ ${evidence}`;
 
 export type EngineOutput = {
   engine: EngineName;
+  process: string;
   proposition: string;
   descriptor: string;
   word?: string;
@@ -340,14 +341,22 @@ export function parseEngineOutput(raw: string, engine: EngineName): EngineOutput
   const parsed = parseJsonLenient<Partial<EngineOutput>>(slice);
   const proposition = (parsed.proposition ?? "").toString().trim();
   const descriptor = (parsed.descriptor ?? "").toString().trim();
+  const process = (parsed.process ?? "").toString().trim();
   const word = (parsed.word ?? "").toString().trim();
   if (!proposition) {
     throw new Error(`${engine} engine returned empty proposition.`);
   }
+  if (!process || process.length < 40) {
+    throw new Error(
+      `${engine} engine returned no auditable process — the move was not executed. Retry required.`,
+    );
+  }
   return {
     engine,
+    process,
     proposition,
     descriptor,
     ...(word ? { word } : {}),
   };
 }
+
