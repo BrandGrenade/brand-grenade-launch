@@ -208,6 +208,9 @@ export function buildLocInputs(args: {
 // A compact block engines can drop into their user message. Deliberately
 // omits Stage 2/3/4/etc — that is the whole point of the LOC track.
 export function renderLocInputsBlock(inputs: LocInputs): string {
+  const rawBriefBlock = inputs.rawBrief?.trim()
+    ? `\n=== RAW BRIEF (verbatim — everything the user pasted, including any additional instructions) ===\n${inputs.rawBrief.trim()}\n`
+    : "";
   return `Brand: ${inputs.brandName}
 Category: ${inputs.category}
 
@@ -231,6 +234,6 @@ ${inputs.audienceStatement || "(not captured)"}
 
 === PRIMARY BARRIER (as stated) ===
 ${inputs.primaryBarrier || "(not captured)"}
-
-You have NOT been shown, and MUST NOT infer or reconstruct: the Stage 2 category intelligence map, Stage 3 strategic frameworks, Stage 4 territory universes, Stage 4B distinctive asset mining, Stage 5 audience insights, Stage 6 validated insights, Stage 7 territory synthesis, or Stage 8 core SMPs. Your value is structural independence from the pipeline's frame.`;
+${rawBriefBlock}
+You have NOT been shown, and MUST NOT infer or reconstruct: the Stage 2 category intelligence map, Stage 3 strategic frameworks, Stage 4 territory universes, Stage 4B distinctive asset mining, Stage 5 audience insights, Stage 6 validated insights, Stage 7 territory synthesis, or Stage 8 core SMPs. Your value is structural independence from the pipeline's frame. Any explicit user instructions in the RAW BRIEF above must be honoured.`;
 }
