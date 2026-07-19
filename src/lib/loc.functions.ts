@@ -314,11 +314,36 @@ export const getLocStatus = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: row, error } = await supabaseAdmin
       .from("sessions")
-      .select("loc_status, loc_error, loc_task_type, loc_task_runner_up, loc_retry_count, loc_generated_at, checkpoint_c_confirmed")
+      .select("loc_status, loc_error, loc_task_type, loc_task_runner_up, loc_retry_count, loc_generated_at, checkpoint_c_confirmed, loc_engine_outputs")
       .eq("id", data.sessionId)
       .single();
     if (error) throw new Error(`getLocStatus: ${error.message}`);
     return row;
+  });
+
+// Fix 05 — Force-clears a stuck "running" LOC session so the client can retry.
+// Preserves engine_outputs so partial progress remains recoverable.
+export const resetStuckLoc = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => StatusInput.parse(i))
+  .handler(async ({ data, context }) => {
+    await assertSessionOwner(data.sessionId, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: row, error } = await supabaseAdmin
+      .from("sessions")
+      .select("loc_status, checkpoint_c_confirmed")
+      .eq("id", data.sessionId)
+      .single<{ loc_status: string | null; checkpoint_c_confirmed: boolean | null }>();
+    if (error || !row) throw new Error("resetStuckLoc: session not found");
+    if (row.checkpoint_c_confirmed) throw new Error("LOC locked: Checkpoint C confirmed.");
+    if (row.loc_status !== "running") {
+      return { ok: true, noop: true, status: row.loc_status };
+    }
+    await supabaseAdmin
+      .from("sessions")
+      .update({ loc_status: "failed", loc_error: "Run reset — previous attempt did not complete. Retry to continue." } as never)
+      .eq("id", data.sessionId);
+    return { ok: true, reset: true };
   });
 
 // Recovers a run whose engine outputs landed in the DB but whose final
