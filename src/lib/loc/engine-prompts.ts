@@ -897,6 +897,8 @@ QUALITY TEST: Two tests. One — does the line name a universal occasion without
 
 THE MOVE: Name the word first — THE WORD IS: [word]. Commit to it before writing anything else. The word must be a core category word that is genuinely available — no competitor currently owns it. Find the expression that makes the word felt without saying it. Confirm the expression owns the word — read the line without brand context and ask: does the word arrive?
 
+FALLBACK — MANDATORY: If after TWO internal attempts you cannot find a fully unowned core category word, DO NOT stop and DO NOT return empty. Select the MOST-AVAILABLE core category word — the one with the weakest existing ownership by any competitor — and proceed. In the "process" field explicitly note the contested ownership: name the competing brand(s), explain why the word is still worth pursuing, and complete the move. In "word_available" state 'CONTESTED — most-available word chosen' and name the competitor(s). Always return a proposition. Silence is never acceptable. A contested-but-committed word beats no output every time.
+
 WORKED EXAMPLES OF THIS MOVE:
 
 Toyota HiLux "Bugger" Australia 1999 — THE WORD: Unbreakable
