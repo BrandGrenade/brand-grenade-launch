@@ -1,8 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { runLeftOfCentre, getLocStatus } from "@/lib/loc.functions";
+import { runLeftOfCentre, getLocStatus, resetStuckLoc } from "@/lib/loc.functions";
 import { LOC_ENGINES, LOC_ENGINE_LABEL, type EngineName } from "@/lib/loc/task-types";
+
+type EngineOutputEntry = { ok: boolean; error?: string; output?: unknown };
 
 type LocStatusRow = {
   loc_status: string | null;
@@ -12,17 +14,27 @@ type LocStatusRow = {
   loc_retry_count: number | null;
   loc_generated_at: string | null;
   checkpoint_c_confirmed: boolean | null;
+  loc_engine_outputs: Record<string, EngineOutputEntry> | null;
 };
+
+// Fix 05 — client considers a running LOC stuck after this many ms without
+// transitioning to complete/failed. Server-side stale guard is 5 min; client
+// offers recovery a little sooner so the user isn't left staring at a spinner.
+const STUCK_RUNNING_MS = 4 * 60 * 1000;
 
 export function LocControls({ sessionId }: { sessionId: string }) {
   const runLoc = useServerFn(runLeftOfCentre);
   const getStatus = useServerFn(getLocStatus);
+  const resetLoc = useServerFn(resetStuckLoc);
   const [status, setStatus] = useState<LocStatusRow | null>(null);
   const [busy, setBusy] = useState(false);
   const [showRetryPanel, setShowRetryPanel] = useState(false);
   const [retryInstructions, setRetryInstructions] = useState("");
   const [keepEngines, setKeepEngines] = useState<Set<EngineName>>(new Set());
+  const [now, setNow] = useState(() => Date.now());
   const autoFiredRef = useRef(false);
+  const runningSinceRef = useRef<number | null>(null);
+  const autoRecoveredRef = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -30,7 +42,10 @@ export function LocControls({ sessionId }: { sessionId: string }) {
     async function tick() {
       try {
         const s = (await getStatus({ data: { sessionId } })) as LocStatusRow;
-        if (!cancelled) setStatus(s);
+        if (!cancelled) {
+          setStatus(s);
+          setNow(Date.now());
+        }
       } catch {
         // ignore
       }
@@ -45,6 +60,20 @@ export function LocControls({ sessionId }: { sessionId: string }) {
 
   const locked = status?.checkpoint_c_confirmed === true;
   const state = status?.loc_status ?? "pending";
+
+  // Fix 04 — split engine outputs into successful vs failed.
+  const { failedEngines, successfulEngines } = useMemo(() => {
+    const failed: { engine: EngineName; error: string }[] = [];
+    const success: EngineName[] = [];
+    const outs = status?.loc_engine_outputs ?? {};
+    for (const e of LOC_ENGINES) {
+      const entry = outs[e];
+      if (!entry) continue;
+      if (entry.ok) success.push(e);
+      else failed.push({ engine: e, error: entry.error ?? "Engine returned no output" });
+    }
+    return { failedEngines: failed, successfulEngines: success };
+  }, [status?.loc_engine_outputs]);
 
   async function trigger(force: boolean, opts?: { retryInstructions?: string; keepEngines?: EngineName[] }) {
     if ((busy && !force) || locked) return;
@@ -77,6 +106,34 @@ export function LocControls({ sessionId }: { sessionId: string }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status, locked]);
 
+  // Fix 05 — track how long we've observed "running". Auto-recover once the
+  // server-side stale threshold has clearly passed.
+  useEffect(() => {
+    if (state !== "running") {
+      runningSinceRef.current = null;
+      autoRecoveredRef.current = false;
+      return;
+    }
+    if (runningSinceRef.current == null) runningSinceRef.current = Date.now();
+  }, [state]);
+
+  const runningForMs =
+    state === "running" && runningSinceRef.current != null ? now - runningSinceRef.current : 0;
+  const stuck = state === "running" && runningForMs > STUCK_RUNNING_MS;
+
+  useEffect(() => {
+    if (!stuck || autoRecoveredRef.current || locked) return;
+    autoRecoveredRef.current = true;
+    (async () => {
+      try {
+        await resetLoc({ data: { sessionId } });
+        toast.message("LOC run appeared stuck — reset. Click retry to continue.");
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : "Reset failed");
+      }
+    })();
+  }, [stuck, locked, resetLoc, sessionId]);
+
   const badgeColor =
     state === "complete" ? "var(--color-success)"
     : state === "running" ? "var(--color-warning)"
@@ -92,6 +149,8 @@ export function LocControls({ sessionId }: { sessionId: string }) {
     });
   }
 
+  const hasFailures = failedEngines.length > 0;
+
   return (
     <div
       className="rounded-md border p-3 text-body-sm"
@@ -105,6 +164,7 @@ export function LocControls({ sessionId }: { sessionId: string }) {
           <span style={{ color: "var(--color-text-tertiary)" }}>
             {state}
             {status?.loc_retry_count != null && status.loc_retry_count > 0 ? ` · retry ${status.loc_retry_count}` : ""}
+            {stuck ? " · stuck — recovering" : ""}
           </span>
         </div>
 
@@ -120,6 +180,38 @@ export function LocControls({ sessionId }: { sessionId: string }) {
               {busy ? "Retrying…" : state === "failed" ? "Error — click to retry" : "Generate LOC"}
             </button>
           )}
+          {stuck && (
+            <button
+              type="button"
+              className="rounded border px-3 py-1"
+              style={{ borderColor: "var(--color-border-strong, #999)" }}
+              disabled={busy || locked}
+              onClick={async () => {
+                try {
+                  await resetLoc({ data: { sessionId } });
+                } catch { /* ignore — auto-recover already ran */ }
+                await trigger(true);
+              }}
+            >
+              Recover stuck run
+            </button>
+          )}
+          {hasFailures && state !== "running" && (
+            <button
+              type="button"
+              className="rounded border px-3 py-1"
+              style={{ borderColor: "var(--color-border-strong, #999)", background: "var(--color-warning, #f4c542)", color: "#000" }}
+              disabled={busy || locked}
+              onClick={() =>
+                trigger(true, {
+                  keepEngines: successfulEngines,
+                })
+              }
+              title={`Re-fire only the ${failedEngines.length} failed engine${failedEngines.length === 1 ? "" : "s"}; keep successful outputs`}
+            >
+              Retry {failedEngines.length} failed engine{failedEngines.length === 1 ? "" : "s"}
+            </button>
+          )}
           <button
             type="button"
             className="rounded border px-3 py-1"
@@ -131,6 +223,29 @@ export function LocControls({ sessionId }: { sessionId: string }) {
           </button>
         </div>
       </div>
+
+      {/* Fix 04 — per-engine failure surface */}
+      {hasFailures && (
+        <div
+          className="mt-3 rounded border p-3"
+          style={{ borderColor: "var(--color-error, #d33)", background: "color-mix(in oklab, var(--color-error, #d33) 6%, transparent)" }}
+        >
+          <div className="mb-2 font-semibold" style={{ color: "var(--color-error, #d33)" }}>
+            {failedEngines.length} engine{failedEngines.length === 1 ? "" : "s"} failed validation
+          </div>
+          <ul className="space-y-1">
+            {failedEngines.map(({ engine, error }) => (
+              <li key={engine} className="text-body-sm">
+                <span className="font-mono font-semibold">{LOC_ENGINE_LABEL[engine]}</span>
+                <span style={{ color: "var(--color-text-tertiary)" }}> — {error}</span>
+              </li>
+            ))}
+          </ul>
+          <div className="mt-2 text-body-sm" style={{ color: "var(--color-text-tertiary)" }}>
+            Use "Retry failed engines" above to re-fire only these; the {successfulEngines.length} successful engine{successfulEngines.length === 1 ? "" : "s"} will be preserved.
+          </div>
+        </div>
+      )}
 
       {showRetryPanel && !locked && (
         <div className="mt-3 space-y-3 rounded border p-3" style={{ borderColor: "var(--color-border-subtle)" }}>
