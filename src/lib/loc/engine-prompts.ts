@@ -80,8 +80,8 @@ const INTERMEDIATES: Partial<Record<EngineName, IntermediateField[]>> = {
     { key: "polite_fiction", spec: `"polite_fiction": "<MANDATORY — state the specific thing the entire category depends on nobody saying, in plain language. Written BEFORE the line.>"` },
   ],
   one_word_ownership: [
-    { key: "word_owned", spec: `"word_owned": "<MANDATORY — the single core category word this brand will own. One word only. Written BEFORE any expression is attempted.>"` },
-    { key: "word_available", spec: `"word_available": "<MANDATORY — one sentence confirming no competitor currently owns this word, naming any brand you considered and ruled out.>"` },
+    { key: "word_owned", spec: `"word_owned": "<MANDATORY — the single core category word this brand will own. One word only. Written BEFORE any expression is attempted. If after two internal attempts no fully unowned word can be found, select the MOST-AVAILABLE core category word and still return it here. Silence is never acceptable.>"` },
+    { key: "word_available", spec: `"word_available": "<MANDATORY — one sentence. Either (a) confirm no competitor currently owns this word, naming any brand you considered and ruled out, OR (b) if no fully unowned core category word could be found after two internal attempts, state 'CONTESTED — most-available word chosen' and name the competing brand(s) that partially occupy it. Both forms are valid — never return empty.>"` },
   ],
   invented_authority: [
     { key: "authority_figure", spec: `"authority_figure": "<MANDATORY — name the specific figure, moment, or standard of authority being invoked (fictional, historical, or moral register). Written BEFORE the implied endorsement.>"` },
