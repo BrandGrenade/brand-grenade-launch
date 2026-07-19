@@ -14,6 +14,7 @@ import { assertSessionOwner } from "@/lib/auth-helpers.server";
 import { callClaude } from "./claude.server";
 import { buildLocInputs, type WorkspaceInputSnapshot } from "./loc/brief-extract";
 import {
+  abstractStrategicOpportunity,
   buildEngineUserMessage,
   getEngineSystemPrompt,
   parseEngineOutput,
