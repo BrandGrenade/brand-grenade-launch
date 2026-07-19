@@ -80,8 +80,8 @@ const INTERMEDIATES: Partial<Record<EngineName, IntermediateField[]>> = {
     { key: "polite_fiction", spec: `"polite_fiction": "<MANDATORY — state the specific thing the entire category depends on nobody saying, in plain language. Written BEFORE the line.>"` },
   ],
   one_word_ownership: [
-    { key: "word_owned", spec: `"word_owned": "<MANDATORY — the single core category word this brand will own. One word only. Written BEFORE any expression is attempted.>"` },
-    { key: "word_available", spec: `"word_available": "<MANDATORY — one sentence confirming no competitor currently owns this word, naming any brand you considered and ruled out.>"` },
+    { key: "word_owned", spec: `"word_owned": "<MANDATORY — the single core category word this brand will own. One word only. Written BEFORE any expression is attempted. If after two internal attempts no fully unowned word can be found, select the MOST-AVAILABLE core category word and still return it here. Silence is never acceptable.>"` },
+    { key: "word_available", spec: `"word_available": "<MANDATORY — one sentence. Either (a) confirm no competitor currently owns this word, naming any brand you considered and ruled out, OR (b) if no fully unowned core category word could be found after two internal attempts, state 'CONTESTED — most-available word chosen' and name the competing brand(s) that partially occupy it. Both forms are valid — never return empty.>"` },
   ],
   invented_authority: [
     { key: "authority_figure", spec: `"authority_figure": "<MANDATORY — name the specific figure, moment, or standard of authority being invoked (fictional, historical, or moral register). Written BEFORE the implied endorsement.>"` },
@@ -897,6 +897,8 @@ QUALITY TEST: Two tests. One — does the line name a universal occasion without
 
 THE MOVE: Name the word first — THE WORD IS: [word]. Commit to it before writing anything else. The word must be a core category word that is genuinely available — no competitor currently owns it. Find the expression that makes the word felt without saying it. Confirm the expression owns the word — read the line without brand context and ask: does the word arrive?
 
+FALLBACK — MANDATORY: If after TWO internal attempts you cannot find a fully unowned core category word, DO NOT stop and DO NOT return empty. Select the MOST-AVAILABLE core category word — the one with the weakest existing ownership by any competitor — and proceed. In the "process" field explicitly note the contested ownership: name the competing brand(s), explain why the word is still worth pursuing, and complete the move. In "word_available" state 'CONTESTED — most-available word chosen' and name the competitor(s). Always return a proposition. Silence is never acceptable. A contested-but-committed word beats no output every time.
+
 WORKED EXAMPLES OF THIS MOVE:
 
 Toyota HiLux "Bugger" Australia 1999 — THE WORD: Unbreakable
@@ -1073,8 +1075,9 @@ export function buildEngineUserMessage(args: {
   engine: EngineName;
   inputs: LocInputs;
   retryInstructions?: string;
+  abstractOpportunity?: string;
 }): string {
-  const { engine, inputs, retryInstructions } = args;
+  const { engine, inputs, retryInstructions, abstractOpportunity } = args;
   const opportunity =
     inputs.realOpportunity && inputs.realOpportunity !== "(not diagnosed)"
       ? inputs.realOpportunity
@@ -1082,25 +1085,36 @@ export function buildEngineUserMessage(args: {
         ? inputs.realProblem
         : "(no single-sentence strategic opportunity captured)";
 
-  const header = `Brand: ${inputs.brandName}
-Category: ${inputs.category}
-Strategic opportunity (one sentence — context only, NOT a seed): ${opportunity}`;
-
   const hasRetry = !!(retryInstructions && retryInstructions.trim());
   const retryBlock = hasRetry
     ? `\n\n=== MANDATORY USER RETRY DIRECTIVE (highest priority — overrides any conflicting instruction) ===\nThe previous attempt failed to execute this engine's move correctly. The human operator has supplied the following corrective instructions. You MUST follow them literally. If your output does not visibly satisfy these instructions in the "process" field, it will be rejected.\n\n${retryInstructions!.trim()}\n=== END RETRY DIRECTIVE ===`
     : "";
 
+  // BRIEF-ISOLATED ENGINES: receive ZERO identifying information — no brand
+  // name, no category, no industry descriptor. Only an abstract single
+  // sentence of the strategic opportunity with all identifiers stripped,
+  // their own ENGINE_MOVES block (in the system prompt), and their own
+  // rejection test. The move is designed to fire without the brief.
+  if (BRIEF_ISOLATED_ENGINES.has(engine)) {
+    const abstract =
+      (abstractOpportunity && abstractOpportunity.trim()) ||
+      "(no abstract strategic opportunity available — fire your move from your own worldview)";
+    return `Strategic opportunity (abstract — all brand, category, industry, product, and competitor identifiers removed): ${abstract}
+
+Perform ${LOC_ENGINE_LABEL[engine]} per your system prompt. You have deliberately been given no brand name, no category, and no industry descriptor. This engine's move is designed to fire without that information — using only the abstract opportunity above, your ENGINE_MOVES block, and your rejection test. Return the JSON.${retryBlock}`;
+  }
+
+  const header = `Brand: ${inputs.brandName}
+Category: ${inputs.category}
+Strategic opportunity (one sentence — context only, NOT a seed): ${opportunity}`;
+
   // On retry with a user directive, strip Step 2 truths and Step 4 tension
-  // from EVERY engine's input. The directive replaces them entirely. Model
-  // receives only brand, category, strategic opportunity, and the directive.
-  if (hasRetry || BRIEF_ISOLATED_ENGINES.has(engine)) {
-    const note = hasRetry
-      ? "The user retry directive below fully replaces any prior supporting evidence. Do not ask for or infer Step 2 truths or Step 4 tension — they have been intentionally withheld. Fire the move using only the directive plus your engine's own worldview."
-      : "Your move must fire from its own worldview, not from the brief. You have been given no brief context deliberately — this is the whole point of this engine.";
+  // from every non-isolated engine's input. The directive replaces them
+  // entirely. Model receives only brand, category, opportunity, and directive.
+  if (hasRetry) {
     return `${header}
 
-Perform ${LOC_ENGINE_LABEL[engine]} per your system prompt. ${note} Return the JSON.${retryBlock}`;
+Perform ${LOC_ENGINE_LABEL[engine]} per your system prompt. The user retry directive below fully replaces any prior supporting evidence. Do not ask for or infer Step 2 truths or Step 4 tension — they have been intentionally withheld. Fire the move using only the directive plus your engine's own worldview. Return the JSON.${retryBlock}`;
   }
 
   const tensionBlock = inputs.anchoredTension
@@ -1116,6 +1130,47 @@ Perform ${LOC_ENGINE_LABEL[engine]} per your system prompt. ${note} Return the J
 Perform ${LOC_ENGINE_LABEL[engine]} per your system prompt. Fire the move first. Only after you have a candidate line, check it against the supporting evidence below — never let this evidence seed the move. Return the JSON.
 
 ${evidence}`;
+}
+
+// Strips brand name, category, industry, product, and competitor identifiers
+// from the Stage 1 strategic opportunity statement, returning a single
+// abstract sentence. Used to feed brief-isolated engines a sanitised seed.
+// Runs once per LOC invocation.
+export async function abstractStrategicOpportunity(args: {
+  brandName: string;
+  category: string;
+  opportunityStatement: string;
+  sessionId: string;
+  callClaude: (a: {
+    systemPrompt: string;
+    userMessage: string;
+    maxTokens: number;
+    sessionId: string;
+    stageLabel: string;
+    stageNumber: string;
+    stageName: string;
+  }) => Promise<string>;
+}): Promise<string> {
+  const source = args.opportunityStatement?.trim();
+  if (!source || source === "(not diagnosed)") return "";
+  const systemPrompt = `You strip identifying information from a strategic opportunity statement. Return exactly ONE sentence describing the opportunity in the abstract, with EVERY brand name, category descriptor, industry label, product name, and competitor name removed and replaced with generic references such as "the brand", "the offering", "the audience", "the space", "the moment". No JSON. No markdown. No preamble. No quotation marks. Just the single abstract sentence.`;
+  const userMessage = `BRAND (to be stripped): ${args.brandName}
+CATEGORY (to be stripped): ${args.category}
+
+STRATEGIC OPPORTUNITY (as written):
+${source}
+
+Rewrite as ONE abstract sentence with every brand name, category descriptor, industry label, product name, and competitor name removed. Return only the sentence.`;
+  const raw = await args.callClaude({
+    systemPrompt,
+    userMessage,
+    maxTokens: 300,
+    sessionId: args.sessionId,
+    stageLabel: "LOC abstract-opportunity",
+    stageNumber: "9-loc",
+    stageName: "LOC abstract-opportunity",
+  });
+  return raw.trim().split(/\n+/)[0].trim().replace(/^["'“”]+|["'“”]+$/g, "");
 }
 
 

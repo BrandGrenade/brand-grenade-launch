@@ -14,6 +14,7 @@ import { assertSessionOwner } from "@/lib/auth-helpers.server";
 import { callClaude } from "./claude.server";
 import { buildLocInputs, type WorkspaceInputSnapshot } from "./loc/brief-extract";
 import {
+  abstractStrategicOpportunity,
   buildEngineUserMessage,
   getEngineSystemPrompt,
   parseEngineOutput,
@@ -40,6 +41,7 @@ async function runOneEngine(args: {
   sessionId: string;
   inputs: ReturnType<typeof buildLocInputs>;
   retryInstructions?: string;
+  abstractOpportunity?: string;
 }): Promise<{ engine: EngineName; output: EngineOutput | null; error?: string }> {
   try {
     const systemPrompt = getEngineSystemPrompt(args.engine);
@@ -47,6 +49,7 @@ async function runOneEngine(args: {
       engine: args.engine,
       inputs: args.inputs,
       retryInstructions: args.retryInstructions,
+      abstractOpportunity: args.abstractOpportunity,
     });
     const raw = await callClaude({
       systemPrompt,
@@ -168,6 +171,21 @@ export const runLeftOfCentre = createServerFn({ method: "POST" })
       .eq("id", data.sessionId);
 
     try {
+      // Generate an abstract, identifier-stripped version of the strategic
+      // opportunity ONCE per run. Fed only to brief-isolated engines.
+      let abstractOpportunity = "";
+      try {
+        abstractOpportunity = await abstractStrategicOpportunity({
+          brandName: session.brand_name,
+          category: session.category,
+          opportunityStatement: inputs.realOpportunity,
+          sessionId: data.sessionId,
+          callClaude,
+        });
+      } catch {
+        abstractOpportunity = "";
+      }
+
       // Fire engines in parallel — skip any engine the user asked to keep.
       const enginesToRun = LOC_ENGINES.filter((e) => !keepSet.has(e));
       const engineResults = await Promise.all(
@@ -177,6 +195,7 @@ export const runLeftOfCentre = createServerFn({ method: "POST" })
             sessionId: data.sessionId,
             inputs,
             retryInstructions: data.retryInstructions,
+            abstractOpportunity,
           }),
         ),
       );
