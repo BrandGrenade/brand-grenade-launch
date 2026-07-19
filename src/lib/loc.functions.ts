@@ -41,6 +41,7 @@ async function runOneEngine(args: {
   sessionId: string;
   inputs: ReturnType<typeof buildLocInputs>;
   retryInstructions?: string;
+  abstractOpportunity?: string;
 }): Promise<{ engine: EngineName; output: EngineOutput | null; error?: string }> {
   try {
     const systemPrompt = getEngineSystemPrompt(args.engine);
@@ -48,6 +49,7 @@ async function runOneEngine(args: {
       engine: args.engine,
       inputs: args.inputs,
       retryInstructions: args.retryInstructions,
+      abstractOpportunity: args.abstractOpportunity,
     });
     const raw = await callClaude({
       systemPrompt,
