@@ -208,19 +208,24 @@ export const runLeftOfCentre = createServerFn({ method: "POST" })
       } catch {
         abstractOpportunity = "";
       }
+      await bumpHeartbeat();
 
       // Fire engines in parallel — skip any engine the user asked to keep.
+      // Each engine bumps the heartbeat on completion so the client's
+      // no-activity watchdog only trips when work has genuinely stalled.
       const enginesToRun = LOC_ENGINES.filter((e) => !keepSet.has(e));
       const engineResults = await Promise.all(
-        enginesToRun.map((engine) =>
-          runOneEngine({
+        enginesToRun.map(async (engine) => {
+          const r = await runOneEngine({
             engine,
             sessionId: data.sessionId,
             inputs,
             retryInstructions: data.retryInstructions,
             abstractOpportunity,
-          }),
-        ),
+          });
+          await bumpHeartbeat();
+          return r;
+        }),
       );
 
       const engineOutputsRecord: Record<string, unknown> = { ...preservedOutputs };
