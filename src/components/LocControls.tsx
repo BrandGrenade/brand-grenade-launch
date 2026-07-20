@@ -17,10 +17,12 @@ type LocStatusRow = {
   loc_engine_outputs: Record<string, EngineOutputEntry> | null;
 };
 
-// Fix 05 — client considers a running LOC stuck after this many ms without
-// transitioning to complete/failed. Server-side stale guard is 5 min; client
-// offers recovery a little sooner so the user isn't left staring at a spinner.
-const STUCK_RUNNING_MS = 4 * 60 * 1000;
+// Fix 05 — client considers a running LOC stuck when no output activity has
+// been observed for this many ms. "Activity" = the server heartbeat
+// (loc_generated_at, refreshed by the runner at start, after each engine
+// completes, and after the outputs write) OR a new engine appearing in
+// loc_engine_outputs. Elapsed wall time alone does NOT trigger recovery.
+const STUCK_NO_ACTIVITY_MS = 4 * 60 * 1000;
 
 export function LocControls({ sessionId }: { sessionId: string }) {
   const runLoc = useServerFn(runLeftOfCentre);
@@ -33,7 +35,7 @@ export function LocControls({ sessionId }: { sessionId: string }) {
   const [keepEngines, setKeepEngines] = useState<Set<EngineName>>(new Set());
   const [now, setNow] = useState(() => Date.now());
   const autoFiredRef = useRef(false);
-  const runningSinceRef = useRef<number | null>(null);
+  const lastActivityRef = useRef<{ heartbeat: string | null; engineCount: number; observedAt: number } | null>(null);
   const autoRecoveredRef = useRef(false);
 
   useEffect(() => {
