@@ -11,6 +11,7 @@ import { NewRunGateButton } from "@/components/NewRunGateButton";
  */
 
 const HIDDEN_PATHS = new Set(["/", "/auth", "/complete"]);
+const HIDDEN_PREFIXES = ["/ey", "/kpmg", "/deck", "/admin/preview"];
 
 const buttonClass = "launch-strip-button";
 
