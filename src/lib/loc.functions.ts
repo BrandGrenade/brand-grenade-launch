@@ -237,7 +237,10 @@ export const runLeftOfCentre = createServerFn({ method: "POST" })
 
       await supabaseAdmin
         .from("sessions")
-        .update({ loc_engine_outputs: engineOutputsRecord } as never)
+        .update({
+          loc_engine_outputs: engineOutputsRecord,
+          loc_generated_at: new Date().toISOString(),
+        } as never)
         .eq("id", data.sessionId);
 
       // Include kept engines' prior outputs in the successful set.
