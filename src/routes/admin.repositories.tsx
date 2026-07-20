@@ -639,7 +639,19 @@ function UploadDocForm({
         setBusy(true);
         try {
           const buf = await file.arrayBuffer();
-          const b64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
+          // Chunked base64 encode — spreading a large Uint8Array into
+          // String.fromCharCode overflows the call stack for files
+          // bigger than ~100KB, which silently failed every upload.
+          const bytes = new Uint8Array(buf);
+          let binary = "";
+          const CHUNK = 0x8000;
+          for (let i = 0; i < bytes.length; i += CHUNK) {
+            binary += String.fromCharCode.apply(
+              null,
+              Array.from(bytes.subarray(i, i + CHUNK)),
+            );
+          }
+          const b64 = btoa(binary);
           const ext = file.name.toLowerCase().split(".").pop() ?? "";
           const fileType: "pdf" | "html" | "other" =
             ext === "pdf" ? "pdf" : ext === "html" || ext === "htm" ? "html" : "other";
@@ -657,9 +669,13 @@ function UploadDocForm({
           setFile(null);
           setOrder(0);
           (e.target as HTMLFormElement).reset();
+        } catch (err) {
+          console.error("[repo upload] failed:", err);
+          alert(`Upload failed: ${err instanceof Error ? err.message : String(err)}`);
         } finally {
           setBusy(false);
         }
+
       }}
     >
       <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
