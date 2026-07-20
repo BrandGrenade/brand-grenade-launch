@@ -211,7 +211,7 @@ export function LocControls({ sessionId }: { sessionId: string }) {
               disabled={busy || locked}
               onClick={async () => {
                 try {
-                  await resetLoc({ data: { sessionId } });
+                  await resetLoc({ data: { sessionId, force: true } });
                 } catch { /* ignore — auto-recover already ran */ }
                 await trigger(true);
               }}
