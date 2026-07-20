@@ -48,6 +48,7 @@ export const LAUNCH_STRIP_HEIGHT = 68;
 export function LaunchStrip() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   if (HIDDEN_PATHS.has(pathname)) return null;
+  if (HIDDEN_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + "/"))) return null;
 
   return (
     <>
