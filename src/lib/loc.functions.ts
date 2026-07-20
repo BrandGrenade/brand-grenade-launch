@@ -354,27 +354,47 @@ export const getLocStatus = createServerFn({ method: "POST" })
 
 // Fix 05 — Force-clears a stuck "running" LOC session so the client can retry.
 // Preserves engine_outputs so partial progress remains recoverable.
+// Fix 12 — staleness guard on the manual reset path. Mirrors the 4-min
+// no-activity threshold the client watchdog uses (STUCK_NO_ACTIVITY_MS).
+// Without this, a manual "Recover" click could kill a healthy slow run
+// that's still bumping loc_generated_at between engine completions.
+// Pass { force: true } to override after the caller has independently
+// confirmed staleness (e.g. the client watchdog already fired).
+const STUCK_HEARTBEAT_MS = 4 * 60 * 1000;
+const ResetInput = z.object({
+  sessionId: z.string().uuid(),
+  force: z.boolean().optional(),
+});
+
 export const resetStuckLoc = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((i) => StatusInput.parse(i))
+  .inputValidator((i) => ResetInput.parse(i))
   .handler(async ({ data, context }) => {
     await assertSessionOwner(data.sessionId, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: row, error } = await supabaseAdmin
       .from("sessions")
-      .select("loc_status, checkpoint_c_confirmed")
+      .select("loc_status, checkpoint_c_confirmed, loc_generated_at")
       .eq("id", data.sessionId)
-      .single<{ loc_status: string | null; checkpoint_c_confirmed: boolean | null }>();
+      .single<{ loc_status: string | null; checkpoint_c_confirmed: boolean | null; loc_generated_at: string | null }>();
     if (error || !row) throw new Error("resetStuckLoc: session not found");
     if (row.checkpoint_c_confirmed) throw new Error("LOC locked: Checkpoint C confirmed.");
     if (row.loc_status !== "running") {
       return { ok: true, noop: true, status: row.loc_status };
     }
+    const lastTouch = row.loc_generated_at ? Date.parse(row.loc_generated_at) : 0;
+    const msSinceHeartbeat = lastTouch ? Date.now() - lastTouch : Number.POSITIVE_INFINITY;
+    if (!data.force && msSinceHeartbeat < STUCK_HEARTBEAT_MS) {
+      const secs = Math.max(0, Math.round(msSinceHeartbeat / 1000));
+      throw new Error(
+        `LOC run is still active — last heartbeat ${secs}s ago (threshold ${Math.round(STUCK_HEARTBEAT_MS / 1000)}s). Wait, or pass force to override.`,
+      );
+    }
     await supabaseAdmin
       .from("sessions")
       .update({ loc_status: "failed", loc_error: "Run reset — previous attempt did not complete. Retry to continue." } as never)
       .eq("id", data.sessionId);
-    return { ok: true, reset: true };
+    return { ok: true, reset: true, msSinceHeartbeat };
   });
 
 // Recovers a run whose engine outputs landed in the DB but whose final
