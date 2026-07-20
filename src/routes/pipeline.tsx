@@ -371,7 +371,11 @@ function PipelineRoute() {
 
 export const Route = createFileRoute("/pipeline")({
   validateSearch: pipelineSearchSchema,
-  component: PipelineRoute,
+  component: () => (
+    <RequireAuth>
+      <PipelineRoute />
+    </RequireAuth>
+  ),
   head: () => ({
     meta: [
       { title: "Strategy Room — Brand Grenade" },
