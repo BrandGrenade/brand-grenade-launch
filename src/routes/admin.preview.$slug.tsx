@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { adminPreviewRepo, adminPreviewOpenDocument } from "@/lib/repo-admin.functions";
+import { adminPreviewRepo } from "@/lib/repo-admin.functions";
 import { Button } from "@/components/ui/button";
 import { Download, ExternalLink, Eye, ArrowLeft } from "lucide-react";
 
