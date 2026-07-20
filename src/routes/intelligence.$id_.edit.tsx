@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { TopNav } from "@/components/TopNav";
+import { RequireAuth } from "@/components/RequireAuth";
 import { supabase } from "@/integrations/supabase/client";
 import {
   runIntelligenceAnalysis,
@@ -23,7 +24,11 @@ export const Route = createFileRoute("/intelligence/$id_/edit")({
       { name: "robots", content: "noindex" },
     ],
   }),
-  component: IntelligenceEditPage,
+  component: () => (
+    <RequireAuth>
+      <IntelligenceEditPage />
+    </RequireAuth>
+  ),
 });
 
 interface Loaded {
