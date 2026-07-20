@@ -98,11 +98,22 @@ export const Route = createFileRoute("/api/repo/view/$documentId")({
             "text/plain; charset=utf-8": "txt",
             "application/json; charset=utf-8": "json",
           };
-          const desiredExt = ext || extMap[contentType] || "";
-          const rawTitle = doc.title.replace(/[\r\n"]/g, "").trim();
-          const hasExt = desiredExt && rawTitle.toLowerCase().endsWith("." + desiredExt);
-          const filename = hasExt || !desiredExt ? rawTitle : `${rawTitle}.${desiredExt}`;
-          headers["content-disposition"] = `attachment; filename="${filename}"`;
+          // Prefer mimetype-derived extension (authoritative), then storage path,
+          // then file_type field. Never trust the title to carry the extension.
+          const fileTypeExt =
+            doc.file_type === "html" ? "html" : doc.file_type === "pdf" ? "pdf" : "";
+          const desiredExt = extMap[contentType] || ext || fileTypeExt || "";
+          const rawTitle = doc.title.replace(/[\r\n"\\]/g, "").trim() || "download";
+          const base = desiredExt
+            ? rawTitle.toLowerCase().endsWith("." + desiredExt)
+              ? rawTitle
+              : `${rawTitle}.${desiredExt}`
+            : rawTitle;
+          // ASCII fallback for legacy user agents + RFC 5987 UTF-8 filename*
+          const asciiFallback = base.replace(/[^\x20-\x7E]/g, "_");
+          const encoded = encodeURIComponent(base);
+          headers["content-disposition"] =
+            `attachment; filename="${asciiFallback}"; filename*=UTF-8''${encoded}`;
         } else {
           headers["content-disposition"] = "inline";
         }
