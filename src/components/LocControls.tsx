@@ -147,7 +147,9 @@ export function LocControls({ sessionId }: { sessionId: string }) {
     autoRecoveredRef.current = true;
     (async () => {
       try {
-        await resetLoc({ data: { sessionId } });
+        // Client watchdog has already confirmed 4 min of no activity —
+        // force past the server-side staleness guard.
+        await resetLoc({ data: { sessionId, force: true } });
         toast.message("LOC run appeared stuck — reset. Click retry to continue.");
       } catch (e) {
         toast.error(e instanceof Error ? e.message : "Reset failed");
@@ -209,7 +211,7 @@ export function LocControls({ sessionId }: { sessionId: string }) {
               disabled={busy || locked}
               onClick={async () => {
                 try {
-                  await resetLoc({ data: { sessionId } });
+                  await resetLoc({ data: { sessionId, force: true } });
                 } catch { /* ignore — auto-recover already ran */ }
                 await trigger(true);
               }}
