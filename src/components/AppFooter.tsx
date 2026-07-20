@@ -7,7 +7,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
  * Hidden on client-facing repository routes and admin preview so no
  * internal navigation leaks to visitors.
  */
-const HIDDEN_PREFIXES = ["/ey", "/kpmg", "/deck", "/admin/preview"];
+const HIDDEN_PREFIXES = ["/ey", "/kpmg", "/deck", "/admin"];
 
 export function AppFooter() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
