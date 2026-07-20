@@ -32,6 +32,7 @@ import { Route as AdminTestsRouteImport } from './routes/admin.tests'
 import { Route as AdminRepositoriesRouteImport } from './routes/admin.repositories'
 import { Route as IntelligenceIdEditRouteImport } from './routes/intelligence.$id_.edit'
 import { Route as AdminPreviewSlugRouteImport } from './routes/admin.preview.$slug'
+import { Route as ApiRepoViewDocumentIdRouteImport } from './routes/api/repo/view.$documentId'
 
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
@@ -148,6 +149,11 @@ const AdminPreviewSlugRoute = AdminPreviewSlugRouteImport.update({
   path: '/admin/preview/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiRepoViewDocumentIdRoute = ApiRepoViewDocumentIdRouteImport.update({
+  id: '/api/repo/view/$documentId',
+  path: '/api/repo/view/$documentId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -173,6 +179,7 @@ export interface FileRoutesByFullPath {
   '/intelligence/': typeof IntelligenceIndexRoute
   '/admin/preview/$slug': typeof AdminPreviewSlugRoute
   '/intelligence/$id/edit': typeof IntelligenceIdEditRoute
+  '/api/repo/view/$documentId': typeof ApiRepoViewDocumentIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -196,6 +203,7 @@ export interface FileRoutesByTo {
   '/intelligence': typeof IntelligenceIndexRoute
   '/admin/preview/$slug': typeof AdminPreviewSlugRoute
   '/intelligence/$id/edit': typeof IntelligenceIdEditRoute
+  '/api/repo/view/$documentId': typeof ApiRepoViewDocumentIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -222,6 +230,7 @@ export interface FileRoutesById {
   '/intelligence/': typeof IntelligenceIndexRoute
   '/admin/preview/$slug': typeof AdminPreviewSlugRoute
   '/intelligence/$id_/edit': typeof IntelligenceIdEditRoute
+  '/api/repo/view/$documentId': typeof ApiRepoViewDocumentIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -249,6 +258,7 @@ export interface FileRouteTypes {
     | '/intelligence/'
     | '/admin/preview/$slug'
     | '/intelligence/$id/edit'
+    | '/api/repo/view/$documentId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -272,6 +282,7 @@ export interface FileRouteTypes {
     | '/intelligence'
     | '/admin/preview/$slug'
     | '/intelligence/$id/edit'
+    | '/api/repo/view/$documentId'
   id:
     | '__root__'
     | '/'
@@ -297,6 +308,7 @@ export interface FileRouteTypes {
     | '/intelligence/'
     | '/admin/preview/$slug'
     | '/intelligence/$id_/edit'
+    | '/api/repo/view/$documentId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -319,6 +331,7 @@ export interface RootRouteChildren {
   IntelligenceIndexRoute: typeof IntelligenceIndexRoute
   AdminPreviewSlugRoute: typeof AdminPreviewSlugRoute
   IntelligenceIdEditRoute: typeof IntelligenceIdEditRoute
+  ApiRepoViewDocumentIdRoute: typeof ApiRepoViewDocumentIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -484,6 +497,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminPreviewSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/repo/view/$documentId': {
+      id: '/api/repo/view/$documentId'
+      path: '/api/repo/view/$documentId'
+      fullPath: '/api/repo/view/$documentId'
+      preLoaderRoute: typeof ApiRepoViewDocumentIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -533,6 +553,7 @@ const rootRouteChildren: RootRouteChildren = {
   IntelligenceIndexRoute: IntelligenceIndexRoute,
   AdminPreviewSlugRoute: AdminPreviewSlugRoute,
   IntelligenceIdEditRoute: IntelligenceIdEditRoute,
+  ApiRepoViewDocumentIdRoute: ApiRepoViewDocumentIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

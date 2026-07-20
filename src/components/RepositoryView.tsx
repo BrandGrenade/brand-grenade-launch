@@ -88,12 +88,13 @@ export function RepositoryView({ slug, title, intro }: Props) {
   }
 
   async function handleOpen(doc: Doc, action: "open" | "download") {
-    try {
-      const { url } = await openDoc({ data: { slug, documentId: doc.id, action } });
-      window.open(url, action === "download" ? "_self" : "_blank");
-    } catch (e) {
-      console.error(e);
-    }
+    // Proxy route re-serves with correct Content-Type (Supabase Storage
+    // force-serves private HTML as text/plain, blocking inline render).
+    const proxyUrl = `/api/repo/view/${doc.id}?action=${action}`;
+    window.open(proxyUrl, action === "download" ? "_self" : "_blank");
+    // openRepoDocument is still called to preserve any server-side
+    // side-effects for non-html flows we haven't migrated; ignore errors.
+    void openDoc({ data: { slug, documentId: doc.id, action } }).catch(() => {});
   }
 
   if (state === "loading") {
