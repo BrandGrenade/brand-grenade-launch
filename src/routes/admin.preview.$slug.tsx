@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { adminPreviewRepo, adminPreviewOpenDocument } from "@/lib/repo-admin.functions";
+import { adminPreviewRepo } from "@/lib/repo-admin.functions";
 import { Button } from "@/components/ui/button";
 import { Download, ExternalLink, Eye, ArrowLeft } from "lucide-react";
 
@@ -36,7 +36,6 @@ function AdminPreviewPage() {
   const { slug } = Route.useParams() as { slug: Slug };
   const { visitor: visitorId } = Route.useSearch();
   const load = useServerFn(adminPreviewRepo);
-  const open = useServerFn(adminPreviewOpenDocument);
   const [docs, setDocs] = useState<Doc[]>([]);
   const [visitorName, setVisitorName] = useState<string | null>(null);
   const [error, setError] = useState<string>("");
@@ -56,13 +55,11 @@ function AdminPreviewPage() {
     })();
   }, [slug, visitorId, load]);
 
-  async function handleOpen(doc: Doc, action: "open" | "download") {
-    try {
-      const { url } = await open({ data: { slug, documentId: doc.id, action } });
-      window.open(url, action === "download" ? "_self" : "_blank");
-    } catch (e) {
-      console.error(e);
-    }
+  function handleOpen(doc: Doc, action: "open" | "download") {
+    // Use the proxy route with admin=1 so HTML renders correctly and
+    // no visitor access_log row is written.
+    const proxyUrl = `/api/repo/view/${doc.id}?action=${action}&admin=1`;
+    window.open(proxyUrl, action === "download" ? "_self" : "_blank");
   }
 
   if (loading) return <div className="min-h-screen bg-white" />;

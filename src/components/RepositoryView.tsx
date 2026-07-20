@@ -5,7 +5,6 @@ import {
   unlockRepo,
   logRepoVisit,
   listRepoDocuments,
-  openRepoDocument,
 } from "@/lib/repo.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,7 +33,6 @@ export function RepositoryView({ slug, title, intro }: Props) {
   const unlock = useServerFn(unlockRepo);
   const logVisit = useServerFn(logRepoVisit);
   const listDocs = useServerFn(listRepoDocuments);
-  const openDoc = useServerFn(openRepoDocument);
 
   const [state, setState] = useState<"loading" | "locked" | "unlocked">("loading");
   const [visitorName, setVisitorName] = useState("");
@@ -87,13 +85,12 @@ export function RepositoryView({ slug, title, intro }: Props) {
     }
   }
 
-  async function handleOpen(doc: Doc, action: "open" | "download") {
-    try {
-      const { url } = await openDoc({ data: { slug, documentId: doc.id, action } });
-      window.open(url, action === "download" ? "_self" : "_blank");
-    } catch (e) {
-      console.error(e);
-    }
+  function handleOpen(doc: Doc, action: "open" | "download") {
+    // Proxy route re-serves with correct Content-Type (Supabase Storage
+    // force-serves private HTML as text/plain, blocking inline render).
+    // The proxy itself writes the access_log entry.
+    const proxyUrl = `/api/repo/view/${doc.id}?action=${action}`;
+    window.open(proxyUrl, action === "download" ? "_self" : "_blank");
   }
 
   if (state === "loading") {
