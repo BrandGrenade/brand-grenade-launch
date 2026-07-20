@@ -364,3 +364,62 @@ export const exportRepoLogCsv = createServerFn({ method: "GET" })
       .join("\n");
     return { csv: `${header}\n${body}` };
   });
+
+// ---- Admin preview (view as visitor, no audit trail pollution) ----
+
+export const adminPreviewRepo = createServerFn({ method: "GET" })
+  .inputValidator((d: { slug: (typeof SLUGS)[number]; visitorId?: string }) => ({
+    slug: slugSchema.parse(d.slug),
+    visitorId: d.visitorId ? z.string().uuid().parse(d.visitorId) : null,
+  }))
+  .handler(async ({ data }) => {
+    await requireAdmin();
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const [docsRes, visitorRes] = await Promise.all([
+      supabaseAdmin
+        .from("repository_documents")
+        .select("id, title, description, file_type, storage_path, display_order, created_at")
+        .eq("repository_slug", data.slug)
+        .order("display_order", { ascending: true })
+        .order("created_at", { ascending: true }),
+      data.visitorId
+        ? supabaseAdmin
+            .from("repository_visitors")
+            .select("id, name, organisation, is_active")
+            .eq("id", data.visitorId)
+            .eq("repository_slug", data.slug)
+            .maybeSingle()
+        : Promise.resolve({ data: null, error: null }),
+    ]);
+    if (docsRes.error) throw new Error(docsRes.error.message);
+    if (visitorRes.error) throw new Error(visitorRes.error.message);
+    return { documents: docsRes.data ?? [], visitor: visitorRes.data ?? null };
+  });
+
+export const adminPreviewOpenDocument = createServerFn({ method: "POST" })
+  .inputValidator((d: { slug: (typeof SLUGS)[number]; documentId: string; action: "open" | "download" }) => ({
+    slug: slugSchema.parse(d.slug),
+    documentId: z.string().uuid().parse(d.documentId),
+    action: z.enum(["open", "download"]).parse(d.action),
+  }))
+  .handler(async ({ data }) => {
+    await requireAdmin();
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: doc, error: dErr } = await supabaseAdmin
+      .from("repository_documents")
+      .select("id, title, storage_path")
+      .eq("id", data.documentId)
+      .eq("repository_slug", data.slug)
+      .maybeSingle();
+    if (dErr) throw new Error(dErr.message);
+    if (!doc) throw new Error("Document not found");
+    const { data: signed, error: sErr } = await supabaseAdmin.storage
+      .from("repository-documents")
+      .createSignedUrl(doc.storage_path, 60 * 10, {
+        download: data.action === "download" ? doc.title : undefined,
+      });
+    if (sErr || !signed) throw new Error(sErr?.message ?? "Signed URL failed");
+    // Deliberately no access_log write — admin preview must not pollute visitor audit trail.
+    return { url: signed.signedUrl };
+  });
+
