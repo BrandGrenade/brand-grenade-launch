@@ -108,20 +108,39 @@ export function LocControls({ sessionId }: { sessionId: string }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status, locked]);
 
-  // Fix 05 — track how long we've observed "running". Auto-recover once the
-  // server-side stale threshold has clearly passed.
+  // Fix 05 — track output activity while "running". Recovery fires only
+  // after STUCK_NO_ACTIVITY_MS with no heartbeat AND no new engine output.
+  const currentHeartbeat = status?.loc_generated_at ?? null;
+  const currentEngineCount = useMemo(() => {
+    const outs = status?.loc_engine_outputs ?? {};
+    return Object.keys(outs).length;
+  }, [status?.loc_engine_outputs]);
+
   useEffect(() => {
     if (state !== "running") {
-      runningSinceRef.current = null;
+      lastActivityRef.current = null;
       autoRecoveredRef.current = false;
       return;
     }
-    if (runningSinceRef.current == null) runningSinceRef.current = Date.now();
-  }, [state]);
+    const prev = lastActivityRef.current;
+    if (
+      prev == null ||
+      prev.heartbeat !== currentHeartbeat ||
+      prev.engineCount !== currentEngineCount
+    ) {
+      lastActivityRef.current = {
+        heartbeat: currentHeartbeat,
+        engineCount: currentEngineCount,
+        observedAt: Date.now(),
+      };
+    }
+  }, [state, currentHeartbeat, currentEngineCount]);
 
-  const runningForMs =
-    state === "running" && runningSinceRef.current != null ? now - runningSinceRef.current : 0;
-  const stuck = state === "running" && runningForMs > STUCK_RUNNING_MS;
+  const msSinceActivity =
+    state === "running" && lastActivityRef.current != null
+      ? now - lastActivityRef.current.observedAt
+      : 0;
+  const stuck = state === "running" && msSinceActivity > STUCK_NO_ACTIVITY_MS;
 
   useEffect(() => {
     if (!stuck || autoRecoveredRef.current || locked) return;
