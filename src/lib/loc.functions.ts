@@ -109,11 +109,19 @@ export const runLeftOfCentre = createServerFn({ method: "POST" })
     if (!data.force && locRow?.loc_status === "complete") {
       return { alreadyComplete: true, sessionId: data.sessionId };
     }
+    // Concurrency guard — a running generation cannot be superseded, even with
+    // force. The caller must explicitly resetStuckLoc first. We still fall
+    // through if the heartbeat (loc_generated_at, refreshed per engine while
+    // running) is older than the server-side stale threshold, which means the
+    // previous worker died without marking the row failed.
+    const HEARTBEAT_STALE_MS = 5 * 60 * 1000;
     if (locRow?.loc_status === "running") {
       const lastTouch = locRow.loc_generated_at ? Date.parse(locRow.loc_generated_at) : 0;
       const staleMs = Date.now() - lastTouch;
-      if (!data.force && staleMs < 5 * 60 * 1000) {
-        return { alreadyRunning: true, sessionId: data.sessionId, staleMs };
+      if (staleMs < HEARTBEAT_STALE_MS) {
+        throw new Error(
+          `LOC generation already running (last heartbeat ${Math.round(staleMs / 1000)}s ago). Reset the stuck run before starting a new one.`,
+        );
       }
     }
 
@@ -144,6 +152,7 @@ export const runLeftOfCentre = createServerFn({ method: "POST" })
     });
 
     // Mark running (and wipe stale outputs if forcing, unless engine is in keep set).
+    // loc_generated_at doubles as the run heartbeat while status='running'.
     const preservedOutputs: Record<string, unknown> = {};
     if (data.force && keepSet.size > 0) {
       for (const e of keepSet) {
@@ -155,6 +164,7 @@ export const runLeftOfCentre = createServerFn({ method: "POST" })
       .update({
         loc_status: "running",
         loc_error: null,
+        loc_generated_at: new Date().toISOString(),
         ...(data.force
           ? {
               loc_engine_outputs: keepSet.size > 0 ? preservedOutputs : null,
@@ -169,6 +179,19 @@ export const runLeftOfCentre = createServerFn({ method: "POST" })
           : {}),
       } as never)
       .eq("id", data.sessionId);
+
+    // Heartbeat helper — bumps loc_generated_at so the client's activity
+    // watchdog knows the run is still doing work.
+    const bumpHeartbeat = async () => {
+      try {
+        await supabaseAdmin
+          .from("sessions")
+          .update({ loc_generated_at: new Date().toISOString() } as never)
+          .eq("id", data.sessionId)
+          .eq("loc_status", "running");
+      } catch { /* best-effort */ }
+    };
+
 
     try {
       // Generate an abstract, identifier-stripped version of the strategic
