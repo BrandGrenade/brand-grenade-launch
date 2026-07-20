@@ -36,7 +36,6 @@ function AdminPreviewPage() {
   const { slug } = Route.useParams() as { slug: Slug };
   const { visitor: visitorId } = Route.useSearch();
   const load = useServerFn(adminPreviewRepo);
-  const open = useServerFn(adminPreviewOpenDocument);
   const [docs, setDocs] = useState<Doc[]>([]);
   const [visitorName, setVisitorName] = useState<string | null>(null);
   const [error, setError] = useState<string>("");
