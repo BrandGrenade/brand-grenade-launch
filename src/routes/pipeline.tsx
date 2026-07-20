@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
 import { z } from "zod";
 import { TopNav } from "@/components/TopNav";
+import { RequireAuth } from "@/components/RequireAuth";
 import { LocControls } from "@/components/LocControls";
 import { Checkpoint, buildRevisionInstruction } from "@/components/Checkpoint";
 import { SelectionRationale } from "@/components/SelectionRationale";

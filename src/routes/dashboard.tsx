@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { TopNav } from "@/components/TopNav";
+import { RequireAuth } from "@/components/RequireAuth";
 
 import {
   SavedBriefsSection,
@@ -46,7 +47,11 @@ import {
 } from "@/lib/brand-register";
 
 export const Route = createFileRoute("/dashboard")({
-  component: Dashboard,
+  component: () => (
+    <RequireAuth>
+      <Dashboard />
+    </RequireAuth>
+  ),
   head: () => ({
     meta: [
       { title: "Brand Register — Brand Grenade" },
