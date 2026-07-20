@@ -56,13 +56,11 @@ function AdminPreviewPage() {
     })();
   }, [slug, visitorId, load]);
 
-  async function handleOpen(doc: Doc, action: "open" | "download") {
-    try {
-      const { url } = await open({ data: { slug, documentId: doc.id, action } });
-      window.open(url, action === "download" ? "_self" : "_blank");
-    } catch (e) {
-      console.error(e);
-    }
+  function handleOpen(doc: Doc, action: "open" | "download") {
+    // Use the proxy route with admin=1 so HTML renders correctly and
+    // no visitor access_log row is written.
+    const proxyUrl = `/api/repo/view/${doc.id}?action=${action}&admin=1`;
+    window.open(proxyUrl, action === "download" ? "_self" : "_blank");
   }
 
   if (loading) return <div className="min-h-screen bg-white" />;
