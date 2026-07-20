@@ -88,11 +88,25 @@ export const Route = createFileRoute("/api/repo/view/$documentId")({
           "x-content-type-options": "nosniff",
         };
         if (action === "download") {
-          const safe = doc.title.replace(/"/g, "");
-          headers["content-disposition"] = `attachment; filename="${safe}"`;
+          const extMap: Record<string, string> = {
+            "text/html; charset=utf-8": "html",
+            "application/pdf": "pdf",
+            "image/png": "png",
+            "image/jpeg": "jpg",
+            "image/gif": "gif",
+            "image/svg+xml": "svg",
+            "text/plain; charset=utf-8": "txt",
+            "application/json; charset=utf-8": "json",
+          };
+          const desiredExt = ext || extMap[contentType] || "";
+          const rawTitle = doc.title.replace(/[\r\n"]/g, "").trim();
+          const hasExt = desiredExt && rawTitle.toLowerCase().endsWith("." + desiredExt);
+          const filename = hasExt || !desiredExt ? rawTitle : `${rawTitle}.${desiredExt}`;
+          headers["content-disposition"] = `attachment; filename="${filename}"`;
         } else {
           headers["content-disposition"] = "inline";
         }
+
 
         const buf = await blob.arrayBuffer();
         return new Response(buf, { status: 200, headers });
