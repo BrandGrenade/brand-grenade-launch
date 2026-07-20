@@ -215,9 +215,19 @@ export const uploadDocument = createServerFn({ method: "POST" })
     if (buf.byteLength > 25 * 1024 * 1024) throw new Error("File exceeds 25MB");
     const safeName = data.fileName.replace(/[^a-zA-Z0-9._-]+/g, "_");
     const path = `${data.slug}/${crypto.randomUUID()}-${safeName}`;
+    // Normalise content-type so browsers render/decode correctly.
+    // HTML in particular must carry an explicit UTF-8 charset or non-ASCII
+    // (em dashes, curly quotes, ×) is misdecoded as Latin-1/Windows-1252.
+    const ext = safeName.toLowerCase().split(".").pop() ?? "";
+    let contentType = data.contentType;
+    if (data.fileType === "html" || ext === "html" || ext === "htm") {
+      contentType = "text/html; charset=utf-8";
+    } else if (data.fileType === "pdf" || ext === "pdf") {
+      contentType = "application/pdf";
+    }
     const { error: upErr } = await supabaseAdmin.storage
       .from("repository-documents")
-      .upload(path, buf, { contentType: data.contentType, upsert: false });
+      .upload(path, buf, { contentType, upsert: false });
     if (upErr) throw new Error(upErr.message);
     const { error } = await supabaseAdmin.from("repository_documents").insert({
       repository_slug: data.slug,
