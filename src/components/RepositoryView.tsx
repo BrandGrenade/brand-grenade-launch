@@ -33,7 +33,6 @@ export function RepositoryView({ slug, title, intro }: Props) {
   const unlock = useServerFn(unlockRepo);
   const logVisit = useServerFn(logRepoVisit);
   const listDocs = useServerFn(listRepoDocuments);
-  const openDoc = useServerFn(openRepoDocument);
 
   const [state, setState] = useState<"loading" | "locked" | "unlocked">("loading");
   const [visitorName, setVisitorName] = useState("");
