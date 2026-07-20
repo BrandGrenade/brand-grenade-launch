@@ -693,10 +693,10 @@ function UploadDocForm({
         />
         <Input
           type="file"
-          accept=".pdf,.html,.htm,application/pdf,text/html"
           onChange={(e) => setFile(e.target.files?.[0] ?? null)}
           required
         />
+
       </div>
       <Textarea
         placeholder="Short description (optional)"
