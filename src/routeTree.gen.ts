@@ -31,6 +31,7 @@ import { Route as BriefNewRouteImport } from './routes/brief.new'
 import { Route as AdminTestsRouteImport } from './routes/admin.tests'
 import { Route as AdminRepositoriesRouteImport } from './routes/admin.repositories'
 import { Route as IntelligenceIdEditRouteImport } from './routes/intelligence.$id_.edit'
+import { Route as AdminPreviewSlugRouteImport } from './routes/admin.preview.$slug'
 
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
@@ -142,6 +143,11 @@ const IntelligenceIdEditRoute = IntelligenceIdEditRouteImport.update({
   path: '/intelligence/$id/edit',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminPreviewSlugRoute = AdminPreviewSlugRouteImport.update({
+  id: '/admin/preview/$slug',
+  path: '/admin/preview/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -165,6 +171,7 @@ export interface FileRoutesByFullPath {
   '/brief/': typeof BriefIndexRoute
   '/briefing-room/': typeof BriefingRoomIndexRoute
   '/intelligence/': typeof IntelligenceIndexRoute
+  '/admin/preview/$slug': typeof AdminPreviewSlugRoute
   '/intelligence/$id/edit': typeof IntelligenceIdEditRoute
 }
 export interface FileRoutesByTo {
@@ -187,6 +194,7 @@ export interface FileRoutesByTo {
   '/brief': typeof BriefIndexRoute
   '/briefing-room': typeof BriefingRoomIndexRoute
   '/intelligence': typeof IntelligenceIndexRoute
+  '/admin/preview/$slug': typeof AdminPreviewSlugRoute
   '/intelligence/$id/edit': typeof IntelligenceIdEditRoute
 }
 export interface FileRoutesById {
@@ -212,6 +220,7 @@ export interface FileRoutesById {
   '/brief/': typeof BriefIndexRoute
   '/briefing-room/': typeof BriefingRoomIndexRoute
   '/intelligence/': typeof IntelligenceIndexRoute
+  '/admin/preview/$slug': typeof AdminPreviewSlugRoute
   '/intelligence/$id_/edit': typeof IntelligenceIdEditRoute
 }
 export interface FileRouteTypes {
@@ -238,6 +247,7 @@ export interface FileRouteTypes {
     | '/brief/'
     | '/briefing-room/'
     | '/intelligence/'
+    | '/admin/preview/$slug'
     | '/intelligence/$id/edit'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -260,6 +270,7 @@ export interface FileRouteTypes {
     | '/brief'
     | '/briefing-room'
     | '/intelligence'
+    | '/admin/preview/$slug'
     | '/intelligence/$id/edit'
   id:
     | '__root__'
@@ -284,6 +295,7 @@ export interface FileRouteTypes {
     | '/brief/'
     | '/briefing-room/'
     | '/intelligence/'
+    | '/admin/preview/$slug'
     | '/intelligence/$id_/edit'
   fileRoutesById: FileRoutesById
 }
@@ -305,6 +317,7 @@ export interface RootRouteChildren {
   IntelligenceIdRoute: typeof IntelligenceIdRoute
   IntelligenceNewRoute: typeof IntelligenceNewRoute
   IntelligenceIndexRoute: typeof IntelligenceIndexRoute
+  AdminPreviewSlugRoute: typeof AdminPreviewSlugRoute
   IntelligenceIdEditRoute: typeof IntelligenceIdEditRoute
 }
 
@@ -464,6 +477,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IntelligenceIdEditRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/preview/$slug': {
+      id: '/admin/preview/$slug'
+      path: '/admin/preview/$slug'
+      fullPath: '/admin/preview/$slug'
+      preLoaderRoute: typeof AdminPreviewSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -511,6 +531,7 @@ const rootRouteChildren: RootRouteChildren = {
   IntelligenceIdRoute: IntelligenceIdRoute,
   IntelligenceNewRoute: IntelligenceNewRoute,
   IntelligenceIndexRoute: IntelligenceIndexRoute,
+  AdminPreviewSlugRoute: AdminPreviewSlugRoute,
   IntelligenceIdEditRoute: IntelligenceIdEditRoute,
 }
 export const routeTree = rootRouteImport

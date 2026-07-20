@@ -21,7 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Lock, Trash2, Download, LogOut, RotateCcw, Copy, Check, Power } from "lucide-react";
+import { Lock, Trash2, Download, LogOut, KeyRound, Copy, Check, Power, Eye } from "lucide-react";
 
 const SLUGS = ["ey", "kpmg", "deck"] as const;
 type Slug = (typeof SLUGS)[number];
@@ -237,6 +237,11 @@ function RepositoryAdminPanel({ slug }: { slug: Slug }) {
             return r.password;
           }}
         />
+        <p className="mt-2 text-xs text-neutral-500">
+          Shareable link for this repository: <code className="font-mono">https://brandgrenade.app/{slug}</code>
+          {" "}— same URL for every visitor of this repo; each visitor uses their own password.
+        </p>
+
         <div className="mt-4 border border-neutral-200 rounded-lg divide-y divide-neutral-200">
           {visitors.length === 0 && (
             <div className="p-4 text-sm text-neutral-500">No visitors yet.</div>
@@ -266,18 +271,22 @@ function RepositoryAdminPanel({ slug }: { slug: Slug }) {
                     </p>
                   </div>
                   <div className="flex gap-2 shrink-0">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      title="Reset password (auto-generate)"
-                      onClick={async () => {
-                        if (!confirm(`Reset password for ${v.name}? The new password will be shown once.`)) return;
-                        const r = await fResetPw({ data: { id: v.id } });
+                    <a
+                      href={`/admin/preview/${slug}?visitor=${v.id}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      title={`View repository as ${v.name} (no audit log entry)`}
+                      className="inline-flex items-center justify-center h-9 px-3 rounded-md border border-neutral-300 text-sm hover:bg-neutral-50"
+                    >
+                      <Eye className="h-4 w-4 mr-1.5" /> View as
+                    </a>
+                    <SetPasswordButton
+                      visitorName={v.name}
+                      onSet={async (password) => {
+                        const r = await fResetPw({ data: { id: v.id, password } });
                         setRevealedPasswords((prev) => ({ ...prev, [v.id]: r.password }));
                       }}
-                    >
-                      <RotateCcw className="h-4 w-4" />
-                    </Button>
+                    />
                     <Button
                       size="sm"
                       variant="outline"
@@ -302,6 +311,7 @@ function RepositoryAdminPanel({ slug }: { slug: Slug }) {
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
+
                 </div>
                 {revealed && (
                   <PasswordReveal
@@ -473,6 +483,62 @@ function PasswordReveal({ password, onDismiss }: { password: string; onDismiss: 
   );
 }
 
+function SetPasswordButton({
+  visitorName,
+  onSet,
+}: {
+  visitorName: string;
+  onSet: (password: string | undefined) => Promise<void>;
+}) {
+  const [open, setOpen] = useState(false);
+  const [pw, setPw] = useState("");
+  const [busy, setBusy] = useState(false);
+  return (
+    <>
+      <Button
+        size="sm"
+        variant="outline"
+        title="Set or reset password"
+        onClick={() => setOpen((v) => !v)}
+      >
+        <KeyRound className="h-4 w-4" />
+      </Button>
+      {open && (
+        <div className="absolute z-10 mt-10 bg-white border border-neutral-200 rounded-lg shadow-lg p-3 w-72 space-y-2">
+          <p className="text-xs text-neutral-600">Set password for {visitorName}</p>
+          <Input
+            type="text"
+            placeholder="Leave blank to auto-generate"
+            value={pw}
+            onChange={(e) => setPw(e.target.value)}
+            autoFocus
+          />
+          <div className="flex justify-end gap-2">
+            <Button size="sm" variant="ghost" onClick={() => { setOpen(false); setPw(""); }}>Cancel</Button>
+            <Button
+              size="sm"
+              disabled={busy || (pw.length > 0 && pw.length < 6)}
+              className="bg-neutral-900 text-white hover:bg-neutral-800"
+              onClick={async () => {
+                setBusy(true);
+                try {
+                  await onSet(pw.length > 0 ? pw : undefined);
+                  setOpen(false);
+                  setPw("");
+                } finally {
+                  setBusy(false);
+                }
+              }}
+            >
+              Save
+            </Button>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
 function NewVisitorForm({
   onCreate,
 }: {
@@ -480,16 +546,17 @@ function NewVisitorForm({
     name: string;
     organisation?: string;
     email?: string;
+    password?: string;
   }) => Promise<string>;
 }) {
-  const [f, setF] = useState({ name: "", organisation: "", email: "" });
+  const [f, setF] = useState({ name: "", organisation: "", email: "", password: "" });
   const [busy, setBusy] = useState(false);
   const [issuedPassword, setIssuedPassword] = useState<string | null>(null);
 
   return (
     <div className="mt-3 space-y-2">
       <form
-        className="grid grid-cols-1 md:grid-cols-4 gap-2"
+        className="grid grid-cols-1 md:grid-cols-5 gap-2"
         onSubmit={async (e) => {
           e.preventDefault();
           setBusy(true);
@@ -498,8 +565,9 @@ function NewVisitorForm({
               name: f.name,
               organisation: f.organisation || undefined,
               email: f.email || undefined,
+              password: f.password || undefined,
             });
-            setF({ name: "", organisation: "", email: "" });
+            setF({ name: "", organisation: "", email: "", password: "" });
             setIssuedPassword(pw);
           } finally {
             setBusy(false);
@@ -523,9 +591,14 @@ function NewVisitorForm({
           value={f.email}
           onChange={(e) => setF({ ...f, email: e.target.value })}
         />
+        <Input
+          placeholder="Password (blank = auto)"
+          value={f.password}
+          onChange={(e) => setF({ ...f, password: e.target.value })}
+        />
         <Button
           type="submit"
-          disabled={busy || !f.name}
+          disabled={busy || !f.name || (f.password.length > 0 && f.password.length < 6)}
           className="bg-neutral-900 text-white hover:bg-neutral-800"
         >
           {busy ? "Adding…" : "Add visitor"}
@@ -537,6 +610,7 @@ function NewVisitorForm({
     </div>
   );
 }
+
 
 function UploadDocForm({
   onUpload,
