@@ -348,13 +348,16 @@ function CompletePage() {
 
         {/* Format selection */}
         <div style={{ marginBottom: 16 }}>
-          <span className="text-label text-primary">SELECT OUTPUT FORMAT</span>
+          <span className="text-label text-primary">
+            SELECT HOW YOU WANT TO PRESENT THIS STRATEGY
+          </span>
         </div>
         <p
           className="text-body"
           style={{ color: "var(--color-text-secondary)", marginBottom: 24 }}
         >
-          Select how you want to present this strategy. Same intelligence, three different formats.
+          Same intelligence, tailored for different audiences and uses.
+          All outputs open as HTML and save as PDF.
         </p>
 
         {(() => {
