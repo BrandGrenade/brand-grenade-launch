@@ -923,8 +923,20 @@ function CompleteCell({
         >
           View
         </a>
+      ) : system === "briefing_room" && status.href ? (
+        <a
+          href={status.href}
+          className="text-body"
+          style={{
+            color: "var(--color-text-secondary)",
+            fontSize: 12,
+            fontWeight: 500,
+            textDecoration: "underline",
+          }}
+        >
+          Complete
+        </a>
       ) : (system === "pipeline" || system === "phase_2") &&
-
         status.href &&
         status.hrefSearch ? (
         <TextLink href={status.href} search={status.hrefSearch} label="Complete" />
