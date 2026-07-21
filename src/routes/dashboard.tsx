@@ -908,28 +908,23 @@ function CompleteCell({
   system: SystemKey;
   status: SystemStatus;
 }) {
-  const intelId = system === "intelligence" && status.href
-    ? status.href.split("/").pop() ?? null
-    : null;
   return (
     <div className="flex items-center gap-2">
       {system === "intelligence" ? (
-        <>
-          <a
-            href={status.href ?? "#"}
-            className="text-body"
-            style={{
-              color: "var(--color-text-secondary)",
-              fontSize: 12,
-              fontWeight: 500,
-              textDecoration: "underline",
-            }}
-          >
-            View
-          </a>
-          {intelId ? <IntelligenceDownloadLink sessionId={intelId} /> : null}
-        </>
+        <a
+          href={status.href ?? "#"}
+          className="text-body"
+          style={{
+            color: "var(--color-text-secondary)",
+            fontSize: 12,
+            fontWeight: 500,
+            textDecoration: "underline",
+          }}
+        >
+          View
+        </a>
       ) : (system === "pipeline" || system === "phase_2") &&
+
         status.href &&
         status.hrefSearch ? (
         <TextLink href={status.href} search={status.hrefSearch} label="Complete" />
@@ -945,75 +940,6 @@ function CompleteCell({
   );
 }
 
-function IntelligenceDownloadLink({ sessionId }: { sessionId: string }) {
-  const [busy, setBusy] = useState(false);
-  const handle = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setBusy(true);
-    try {
-      const { data, error } = await supabase
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .from("intelligence_sessions" as any)
-        .select(
-          "brand_name,category,completed_at,final_report,report_metadata",
-        )
-        .eq("id", sessionId)
-        .maybeSingle();
-      if (error || !data) throw new Error(error?.message ?? "Session not found");
-      const row = data as unknown as {
-        brand_name: string | null;
-        category: string | null;
-        completed_at: string | null;
-        final_report: string | null;
-        report_metadata: unknown;
-      };
-      if (!row.final_report) throw new Error("Report not ready");
-      const report = JSON.parse(row.final_report);
-      const meta = row.report_metadata;
-      const briefType =
-        meta && typeof meta === "object" && !Array.isArray(meta) &&
-        (meta as Record<string, unknown>).brief_type === "government"
-          ? "government"
-          : "commercial";
-      const { downloadDocument00APdf } = await import(
-        "@/lib/intelligence/pdf-00A"
-      );
-      await downloadDocument00APdf({
-        brandName: row.brand_name || "Brand",
-        category: row.category || "",
-        briefType,
-        completedAt: row.completed_at,
-        report,
-      });
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "Download failed";
-      // eslint-disable-next-line no-console
-      console.error("Doc 00A download", err);
-      void import("sonner").then(({ toast }) => toast.error(msg));
-    } finally {
-      setBusy(false);
-    }
-  };
-  return (
-    <span
-      onClick={handle}
-      role="button"
-      aria-label="Download Document 00A"
-      className="text-body"
-      style={{
-        color: "var(--color-text-secondary)",
-        fontSize: 12,
-        fontWeight: 500,
-        textDecoration: "underline",
-        cursor: busy ? "wait" : "pointer",
-        opacity: busy ? 0.6 : 1,
-      }}
-    >
-      Download
-    </span>
-  );
-}
 
 function TextLink({
   href,
