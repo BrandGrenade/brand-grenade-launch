@@ -994,8 +994,8 @@ function InProgressLink({
   }
   if (system === "briefing_room") {
     return (
-      <Link
-        to="/briefing-room"
+      <a
+        href={status.href ?? "/briefing-room"}
         className="text-body"
         style={{
           color: "var(--color-text-secondary)",
@@ -1005,7 +1005,7 @@ function InProgressLink({
         }}
       >
         {label}
-      </Link>
+      </a>
     );
   }
   if (system === "intelligence" && status.href) {
