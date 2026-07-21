@@ -223,11 +223,14 @@ function deriveBriefing(
   // one workspace has selected_tension_index set.
   const anyApproved = workspaces.some((w) => w.selected_tension_index != null);
   if (anyApproved && brandSavedBriefCount > 0) {
+    // Prefer the most recent approved workspace for the deep link.
+    const approved =
+      workspaces.find((w) => w.selected_tension_index != null) ?? latest;
     return {
       state: "complete",
       label: null,
       timestamp: latest.updated_at,
-      href: "/briefing-room/$id",
+      href: `/briefing-room/${approved.id}`,
       hrefSearch: null,
       runCount: workspaces.length,
     };
@@ -237,7 +240,7 @@ function deriveBriefing(
     state: "in_progress",
     label: `Step ${Math.max(step, 1)} of 4`,
     timestamp: null,
-    href: "/briefing-room/$id",
+    href: `/briefing-room/${latest.id}`,
     hrefSearch: null,
     runCount: workspaces.length,
   };
