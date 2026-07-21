@@ -179,7 +179,7 @@ export function RepositoryView({ slug, title, intro }: Props) {
                       variant="outline"
                       size="sm"
                       onClick={() => handleOpen(doc, "open")}
-                      className="border-neutral-300"
+                      className="border-neutral-300 bg-white text-neutral-900 hover:bg-neutral-100 hover:text-neutral-900"
                     >
                       <ExternalLink className="h-4 w-4 mr-1.5" /> View
                     </Button>
@@ -187,7 +187,7 @@ export function RepositoryView({ slug, title, intro }: Props) {
                       variant="outline"
                       size="sm"
                       onClick={() => handleOpen(doc, "download")}
-                      className="border-neutral-300"
+                      className="border-neutral-300 bg-white text-neutral-900 hover:bg-neutral-100 hover:text-neutral-900"
                     >
                       <Download className="h-4 w-4 mr-1.5" /> Download
                     </Button>
