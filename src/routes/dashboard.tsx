@@ -908,28 +908,23 @@ function CompleteCell({
   system: SystemKey;
   status: SystemStatus;
 }) {
-  const intelId = system === "intelligence" && status.href
-    ? status.href.split("/").pop() ?? null
-    : null;
   return (
     <div className="flex items-center gap-2">
       {system === "intelligence" ? (
-        <>
-          <a
-            href={status.href ?? "#"}
-            className="text-body"
-            style={{
-              color: "var(--color-text-secondary)",
-              fontSize: 12,
-              fontWeight: 500,
-              textDecoration: "underline",
-            }}
-          >
-            View
-          </a>
-          {intelId ? <IntelligenceDownloadLink sessionId={intelId} /> : null}
-        </>
+        <a
+          href={status.href ?? "#"}
+          className="text-body"
+          style={{
+            color: "var(--color-text-secondary)",
+            fontSize: 12,
+            fontWeight: 500,
+            textDecoration: "underline",
+          }}
+        >
+          View
+        </a>
       ) : (system === "pipeline" || system === "phase_2") &&
+
         status.href &&
         status.hrefSearch ? (
         <TextLink href={status.href} search={status.hrefSearch} label="Complete" />
