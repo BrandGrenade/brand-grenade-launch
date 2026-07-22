@@ -822,7 +822,7 @@ function NewVisitorForm({
     name: string;
     organisation?: string;
     email?: string;
-    password?: string;
+    password: string;
   }) => Promise<string>;
 }) {
   const [f, setF] = useState({ name: "", organisation: "", email: "", password: "" });
@@ -841,7 +841,7 @@ function NewVisitorForm({
               name: f.name,
               organisation: f.organisation || undefined,
               email: f.email || undefined,
-              password: f.password || undefined,
+              password: f.password,
             });
             setF({ name: "", organisation: "", email: "", password: "" });
             setIssuedPassword(pw);
@@ -868,13 +868,15 @@ function NewVisitorForm({
           onChange={(e) => setF({ ...f, email: e.target.value })}
         />
         <Input
-          placeholder="Password (blank = auto)"
+          placeholder="Password (min 6 chars)"
           value={f.password}
           onChange={(e) => setF({ ...f, password: e.target.value })}
+          required
+          minLength={6}
         />
         <Button
           type="submit"
-          disabled={busy || !f.name || (f.password.length > 0 && f.password.length < 6)}
+          disabled={busy || !f.name || f.password.length < 6}
           className="bg-neutral-900 text-white hover:bg-neutral-800"
         >
           {busy ? "Adding…" : "Add visitor"}
