@@ -729,7 +729,7 @@ function SetPasswordButton({
         title="Set or reset password"
         onClick={() => setOpen((v) => !v)}
       >
-        <KeyRound className="h-4 w-4" />
+        <KeyRound className="h-4 w-4 mr-1.5" /> Set password
       </Button>
       {open && (
         <div className="absolute z-10 mt-10 bg-white border border-neutral-200 rounded-lg shadow-lg p-3 w-72 space-y-2">
