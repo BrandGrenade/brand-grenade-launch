@@ -5,10 +5,11 @@ import {
   unlockRepo,
   logRepoVisit,
   listRepoDocuments,
+  logoutRepo,
 } from "@/lib/repo.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Download, ExternalLink, Lock } from "lucide-react";
+import { Download, ExternalLink, Lock, LogOut } from "lucide-react";
 
 type Slug = "ey" | "kpmg" | "deck";
 
