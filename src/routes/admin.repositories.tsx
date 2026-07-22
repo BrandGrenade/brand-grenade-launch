@@ -195,6 +195,7 @@ interface AllAccessRow {
   created_at: string;
   repository_slug: Slug;
   last_active_at: string | null;
+  plaintext_password: string | null;
 }
 
 function AllAccessPanel() {
