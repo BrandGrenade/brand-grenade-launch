@@ -2,8 +2,12 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-const SLUGS = ["ey", "kpmg", "deck"] as const;
-const slugSchema = z.enum(SLUGS);
+const slugSchema = z
+  .string()
+  .min(1)
+  .max(40)
+  .regex(/^[a-z0-9]([a-z0-9-]{0,38}[a-z0-9])?$/, "Invalid repository slug");
+type SlugT = string;
 
 async function requireAdmin() {
   const { adminSession } = await import("./repo/session.server");
