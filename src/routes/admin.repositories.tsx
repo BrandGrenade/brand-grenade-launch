@@ -369,13 +369,15 @@ function AllAccessPanel() {
                         size="sm"
                         variant="outline"
                         onClick={async () => {
-                          if (!confirm(`Reset password for ${r.name} (${SLUG_LABEL[r.repository_slug]})? A new one-time password will be generated.`)) return;
-                          const res = await fResetPw({ data: { id: r.id } });
+                          const pw = window.prompt(`New password for ${r.name} (${SLUG_LABEL[r.repository_slug]}) — min 6 characters:`);
+                          if (!pw) return;
+                          if (pw.length < 6) { alert("Password must be at least 6 characters."); return; }
+                          const res = await fResetPw({ data: { id: r.id, password: pw } });
                           setRevealed((prev) => ({ ...prev, [r.id]: res.password }));
                           await refresh();
                         }}
                       >
-                        <KeyRound className="h-4 w-4 mr-1.5" /> Reset password
+                        <KeyRound className="h-4 w-4 mr-1.5" /> Set password
                       </Button>
                       <Button
                         size="sm"
