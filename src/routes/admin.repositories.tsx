@@ -22,7 +22,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Lock, Trash2, Download, LogOut, KeyRound, Copy, Check, Power, Eye } from "lucide-react";
+import { Lock, Trash2, Download, LogOut, KeyRound, Copy, Check, Power, Eye, EyeOff } from "lucide-react";
 
 const SLUGS = ["ey", "kpmg", "deck"] as const;
 type Slug = (typeof SLUGS)[number];
@@ -151,6 +151,7 @@ interface Visitor {
   organisation: string | null;
   email: string | null;
   is_active: boolean;
+  plaintext_password: string | null;
 }
 
 interface Doc {
@@ -194,6 +195,7 @@ interface AllAccessRow {
   created_at: string;
   repository_slug: Slug;
   last_active_at: string | null;
+  plaintext_password: string | null;
 }
 
 function AllAccessPanel() {
@@ -205,6 +207,7 @@ function AllAccessPanel() {
   const [filterSlug, setFilterSlug] = useState<"all" | Slug>("all");
   const [query, setQuery] = useState("");
   const [revealed, setRevealed] = useState<Record<string, string>>({});
+  const [showPw, setShowPw] = useState<Record<string, boolean>>({});
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -272,6 +275,7 @@ function AllAccessPanel() {
             <tr>
               <th className="text-left px-3 py-2 font-medium">Visitor</th>
               <th className="text-left px-3 py-2 font-medium">Repository</th>
+              <th className="text-left px-3 py-2 font-medium">Password</th>
               <th className="text-left px-3 py-2 font-medium">Created</th>
               <th className="text-left px-3 py-2 font-medium">Last active</th>
               <th className="text-left px-3 py-2 font-medium">Status</th>
@@ -280,10 +284,10 @@ function AllAccessPanel() {
           </thead>
           <tbody className="divide-y divide-neutral-200">
             {loading && (
-              <tr><td colSpan={6} className="px-3 py-6 text-neutral-500">Loading…</td></tr>
+              <tr><td colSpan={7} className="px-3 py-6 text-neutral-500">Loading…</td></tr>
             )}
             {!loading && filtered.length === 0 && (
-              <tr><td colSpan={6} className="px-3 py-6 text-neutral-500">No visitors match.</td></tr>
+              <tr><td colSpan={7} className="px-3 py-6 text-neutral-500">No visitors match.</td></tr>
             )}
             {filtered.map((r) => {
               const lastMs = r.last_active_at ? new Date(r.last_active_at).getTime() : null;
@@ -311,6 +315,39 @@ function AllAccessPanel() {
                     )}
                   </td>
                   <td className="px-3 py-3 text-neutral-700">{SLUG_LABEL[r.repository_slug]}</td>
+                  <td className="px-3 py-3">
+                    {r.plaintext_password ? (
+                      <div className="flex items-center gap-1.5">
+                        <code className="text-xs font-mono bg-neutral-100 border border-neutral-200 rounded px-2 py-1">
+                          {showPw[r.id] ? r.plaintext_password : "••••••••"}
+                        </code>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 px-2"
+                          title={showPw[r.id] ? "Hide password" : "Show password"}
+                          onClick={() => setShowPw((p) => ({ ...p, [r.id]: !p[r.id] }))}
+                        >
+                          {showPw[r.id] ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                        </Button>
+                        {showPw[r.id] && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 px-2"
+                            title="Copy password"
+                            onClick={async () => {
+                              try { await navigator.clipboard.writeText(r.plaintext_password!); } catch { /* ignore */ }
+                            }}
+                          >
+                            <Copy className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-xs text-neutral-400 italic">Not stored — reset to view</span>
+                    )}
+                  </td>
                   <td className="px-3 py-3 text-neutral-500 text-xs whitespace-nowrap">
                     {new Date(r.created_at).toLocaleDateString()}
                   </td>
@@ -335,6 +372,7 @@ function AllAccessPanel() {
                           if (!confirm(`Reset password for ${r.name} (${SLUG_LABEL[r.repository_slug]})? A new one-time password will be generated.`)) return;
                           const res = await fResetPw({ data: { id: r.id } });
                           setRevealed((prev) => ({ ...prev, [r.id]: res.password }));
+                          await refresh();
                         }}
                       >
                         <KeyRound className="h-4 w-4 mr-1.5" /> Reset password
@@ -342,16 +380,18 @@ function AllAccessPanel() {
                       <Button
                         size="sm"
                         variant="outline"
-                        title={r.is_active ? "Deactivate" : "Reactivate"}
+                        title={r.is_active ? "Deactivate visitor" : "Reactivate visitor"}
                         onClick={async () => {
                           await fSetActive({ data: { id: r.id, active: !r.is_active } });
                           await refresh();
                         }}
                       >
-                        <Power className={`h-4 w-4 ${r.is_active ? "" : "text-neutral-400"}`} />
+                        <Power className={`h-4 w-4 mr-1.5 ${r.is_active ? "" : "text-neutral-400"}`} />
+                        {r.is_active ? "Deactivate" : "Reactivate"}
                       </Button>
                     </div>
                   </td>
+
                 </tr>
               );
             })}
@@ -451,6 +491,9 @@ function RepositoryAdminPanel({ slug }: { slug: Slug }) {
                     <p className="text-xs text-neutral-500">
                       {v.organisation ?? ""} {v.email ? `· ${v.email}` : ""}
                     </p>
+                    <div className="mt-2">
+                      <VisitorPasswordInline password={v.plaintext_password} />
+                    </div>
                   </div>
                   <div className="flex gap-2 shrink-0">
                     <a
@@ -467,18 +510,20 @@ function RepositoryAdminPanel({ slug }: { slug: Slug }) {
                       onSet={async (password) => {
                         const r = await fResetPw({ data: { id: v.id, password } });
                         setRevealedPasswords((prev) => ({ ...prev, [v.id]: r.password }));
+                        await refresh();
                       }}
                     />
                     <Button
                       size="sm"
                       variant="outline"
-                      title={v.is_active ? "Deactivate" : "Reactivate"}
+                      title={v.is_active ? "Deactivate visitor" : "Reactivate visitor"}
                       onClick={async () => {
                         await fSetActive({ data: { id: v.id, active: !v.is_active } });
                         await refresh();
                       }}
                     >
-                      <Power className={`h-4 w-4 ${v.is_active ? "" : "text-neutral-400"}`} />
+                      <Power className={`h-4 w-4 mr-1.5 ${v.is_active ? "" : "text-neutral-400"}`} />
+                      {v.is_active ? "Deactivate" : "Reactivate"}
                     </Button>
                     <Button
                       size="sm"
@@ -490,9 +535,10 @@ function RepositoryAdminPanel({ slug }: { slug: Slug }) {
                         await refresh();
                       }}
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 className="h-4 w-4 mr-1.5" /> Delete
                     </Button>
                   </div>
+
 
                 </div>
                 {revealed && (
@@ -635,6 +681,54 @@ function StatCard({ label, value }: { label: string; value: number }) {
   );
 }
 
+function VisitorPasswordInline({ password }: { password: string | null }) {
+  const [show, setShow] = useState(false);
+  const [copied, setCopied] = useState(false);
+  if (!password) {
+    return (
+      <span className="text-xs text-neutral-400 italic">
+        Password not stored — click Set password to issue a new one you can view.
+      </span>
+    );
+  }
+  return (
+    <div className="flex items-center gap-1.5">
+      <span className="text-[10px] uppercase tracking-wide text-neutral-500 mr-1">Password</span>
+      <code className="text-xs font-mono bg-neutral-100 border border-neutral-200 rounded px-2 py-1">
+        {show ? password : "••••••••"}
+      </code>
+      <Button
+        size="sm"
+        variant="ghost"
+        className="h-7 px-2"
+        title={show ? "Hide password" : "Show password"}
+        onClick={() => setShow((s) => !s)}
+      >
+        {show ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+      </Button>
+      {show && (
+        <Button
+          size="sm"
+          variant="ghost"
+          className="h-7 px-2"
+          title="Copy password"
+          onClick={async () => {
+            try {
+              await navigator.clipboard.writeText(password);
+              setCopied(true);
+              setTimeout(() => setCopied(false), 1500);
+            } catch {
+              /* ignore */
+            }
+          }}
+        >
+          {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+        </Button>
+      )}
+    </div>
+  );
+}
+
 function PasswordReveal({ password, onDismiss }: { password: string; onDismiss: () => void }) {
   const [copied, setCopied] = useState(false);
   return (
@@ -683,7 +777,7 @@ function SetPasswordButton({
         title="Set or reset password"
         onClick={() => setOpen((v) => !v)}
       >
-        <KeyRound className="h-4 w-4" />
+        <KeyRound className="h-4 w-4 mr-1.5" /> Set password
       </Button>
       {open && (
         <div className="absolute z-10 mt-10 bg-white border border-neutral-200 rounded-lg shadow-lg p-3 w-72 space-y-2">

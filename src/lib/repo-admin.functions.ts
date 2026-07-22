@@ -77,7 +77,7 @@ export const listVisitors = createServerFn({ method: "GET" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: visitors, error } = await supabaseAdmin
       .from("repository_visitors")
-      .select("id, name, organisation, email, is_active, created_at")
+      .select("id, name, organisation, email, is_active, created_at, plaintext_password")
       .eq("repository_slug", data.slug)
       .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
@@ -90,7 +90,7 @@ export const listAllVisitorsAccess = createServerFn({ method: "GET" }).handler(a
   const [vRes, lRes] = await Promise.all([
     supabaseAdmin
       .from("repository_visitors")
-      .select("id, name, organisation, email, is_active, created_at, repository_slug")
+      .select("id, name, organisation, email, is_active, created_at, repository_slug, plaintext_password")
       .order("created_at", { ascending: false }),
     supabaseAdmin
       .from("repository_access_log")
@@ -116,6 +116,7 @@ export const listAllVisitorsAccess = createServerFn({ method: "GET" }).handler(a
     is_active: v.is_active,
     created_at: v.created_at,
     repository_slug: v.repository_slug,
+    plaintext_password: v.plaintext_password ?? null,
     last_active_at: lastByVisitor.get(v.id) ?? null,
   }));
   return { rows };
@@ -173,6 +174,7 @@ export const createVisitor = createServerFn({ method: "POST" })
       organisation: data.organisation,
       email: data.email,
       password_hash: hashPassword(password),
+      plaintext_password: password,
     });
     if (error) throw new Error(error.message);
     return { ok: true as const, password };
@@ -200,7 +202,7 @@ export const resetVisitorPassword = createServerFn({ method: "POST" })
     const password = data.password ?? generatePassword();
     const { error } = await supabaseAdmin
       .from("repository_visitors")
-      .update({ password_hash: hashPassword(password) })
+      .update({ password_hash: hashPassword(password), plaintext_password: password })
       .eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true as const, password };

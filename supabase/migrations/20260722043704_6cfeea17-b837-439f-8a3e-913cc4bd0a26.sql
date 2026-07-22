@@ -1,0 +1,1 @@
+ALTER TABLE public.repository_visitors ADD COLUMN IF NOT EXISTS plaintext_password TEXT;

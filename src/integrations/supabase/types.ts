@@ -346,6 +346,7 @@ export type Database = {
           name: string
           organisation: string | null
           password_hash: string
+          plaintext_password: string | null
           repository_slug: string
           updated_at: string
         }
@@ -357,6 +358,7 @@ export type Database = {
           name: string
           organisation?: string | null
           password_hash: string
+          plaintext_password?: string | null
           repository_slug: string
           updated_at?: string
         }
@@ -368,6 +370,7 @@ export type Database = {
           name?: string
           organisation?: string | null
           password_hash?: string
+          plaintext_password?: string | null
           repository_slug?: string
           updated_at?: string
         }
