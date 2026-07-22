@@ -766,7 +766,7 @@ function SetPasswordButton({
   onSet,
 }: {
   visitorName: string;
-  onSet: (password: string | undefined) => Promise<void>;
+  onSet: (password: string) => Promise<void>;
 }) {
   const [open, setOpen] = useState(false);
   const [pw, setPw] = useState("");
@@ -783,10 +783,10 @@ function SetPasswordButton({
       </Button>
       {open && (
         <div className="absolute z-10 mt-10 bg-white border border-neutral-200 rounded-lg shadow-lg p-3 w-72 space-y-2">
-          <p className="text-xs text-neutral-600">Set password for {visitorName}</p>
+          <p className="text-xs text-neutral-600">Set password for {visitorName} (min 6 chars)</p>
           <Input
             type="text"
-            placeholder="Leave blank to auto-generate"
+            placeholder="Enter password"
             value={pw}
             onChange={(e) => setPw(e.target.value)}
             autoFocus
@@ -795,12 +795,12 @@ function SetPasswordButton({
             <Button size="sm" variant="ghost" onClick={() => { setOpen(false); setPw(""); }}>Cancel</Button>
             <Button
               size="sm"
-              disabled={busy || (pw.length > 0 && pw.length < 6)}
+              disabled={busy || pw.length < 6}
               className="bg-neutral-900 text-white hover:bg-neutral-800"
               onClick={async () => {
                 setBusy(true);
                 try {
-                  await onSet(pw.length > 0 ? pw : undefined);
+                  await onSet(pw);
                   setOpen(false);
                   setPw("");
                 } finally {
