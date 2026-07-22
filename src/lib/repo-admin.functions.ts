@@ -116,6 +116,7 @@ export const listAllVisitorsAccess = createServerFn({ method: "GET" }).handler(a
     is_active: v.is_active,
     created_at: v.created_at,
     repository_slug: v.repository_slug,
+    plaintext_password: v.plaintext_password ?? null,
     last_active_at: lastByVisitor.get(v.id) ?? null,
   }));
   return { rows };
