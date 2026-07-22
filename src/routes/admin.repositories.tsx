@@ -17,16 +17,22 @@ import {
   getRepoStats,
   exportRepoLogCsv,
   listAllVisitorsAccess,
+  listRepositories,
+  createRepository,
 } from "@/lib/repo-admin.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Lock, Trash2, Download, LogOut, KeyRound, Copy, Check, Power, Eye, EyeOff } from "lucide-react";
+import { Lock, Trash2, Download, LogOut, KeyRound, Copy, Check, Power, Eye, EyeOff, Plus } from "lucide-react";
 
-const SLUGS = ["ey", "kpmg", "deck"] as const;
-type Slug = (typeof SLUGS)[number];
-const SLUG_LABEL: Record<Slug, string> = { ey: "EY", kpmg: "KPMG", deck: "Deck" };
+type Slug = string;
+interface Repo { slug: string; title: string; intro: string; created_at: string; }
+function labelFor(slug: string, repos: Repo[]): string {
+  const r = repos.find((x) => x.slug === slug);
+  if (r) return r.title.replace(/^Brand Grenade\s*—\s*/, "") || r.slug;
+  return slug.toUpperCase();
+}
 
 export const Route = createFileRoute("/admin/repositories")({
   head: () => ({
