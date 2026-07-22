@@ -138,15 +138,6 @@ export const setVisitorActive = createServerFn({ method: "POST" })
     return { ok: true as const };
   });
 
-function generatePassword(): string {
-  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
-  const bytes = new Uint8Array(16);
-  crypto.getRandomValues(bytes);
-  let out = "";
-  for (const b of bytes) out += alphabet[b % alphabet.length];
-  return out;
-}
-
 export const createVisitor = createServerFn({ method: "POST" })
   .inputValidator(
     (d: {
@@ -154,30 +145,29 @@ export const createVisitor = createServerFn({ method: "POST" })
       name: string;
       organisation?: string;
       email?: string;
-      password?: string;
+      password: string;
     }) => ({
       slug: slugSchema.parse(d.slug),
       name: z.string().min(1).max(200).parse(d.name),
       organisation: d.organisation ? z.string().max(200).parse(d.organisation) : null,
       email: d.email ? z.string().email().max(200).parse(d.email) : null,
-      password: d.password ? z.string().min(6).max(200).parse(d.password) : null,
+      password: z.string().min(6).max(200).parse(d.password),
     }),
   )
   .handler(async ({ data }) => {
     await requireAdmin();
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { hashPassword } = await import("./repo/session.server");
-    const password = data.password ?? generatePassword();
     const { error } = await supabaseAdmin.from("repository_visitors").insert({
       repository_slug: data.slug,
       name: data.name,
       organisation: data.organisation,
       email: data.email,
-      password_hash: hashPassword(password),
-      plaintext_password: password,
+      password_hash: hashPassword(data.password),
+      plaintext_password: data.password,
     });
     if (error) throw new Error(error.message);
-    return { ok: true as const, password };
+    return { ok: true as const, password: data.password };
   });
 
 export const deleteVisitor = createServerFn({ method: "POST" })
@@ -191,21 +181,20 @@ export const deleteVisitor = createServerFn({ method: "POST" })
   });
 
 export const resetVisitorPassword = createServerFn({ method: "POST" })
-  .inputValidator((d: { id: string; password?: string }) => ({
+  .inputValidator((d: { id: string; password: string }) => ({
     id: z.string().uuid().parse(d.id),
-    password: d.password ? z.string().min(6).max(200).parse(d.password) : null,
+    password: z.string().min(6).max(200).parse(d.password),
   }))
   .handler(async ({ data }) => {
     await requireAdmin();
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { hashPassword } = await import("./repo/session.server");
-    const password = data.password ?? generatePassword();
     const { error } = await supabaseAdmin
       .from("repository_visitors")
-      .update({ password_hash: hashPassword(password), plaintext_password: password })
+      .update({ password_hash: hashPassword(data.password), plaintext_password: data.password })
       .eq("id", data.id);
     if (error) throw new Error(error.message);
-    return { ok: true as const, password };
+    return { ok: true as const, password: data.password };
   });
 
 // ---- Document management ----
