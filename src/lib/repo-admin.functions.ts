@@ -77,7 +77,7 @@ export const listVisitors = createServerFn({ method: "GET" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: visitors, error } = await supabaseAdmin
       .from("repository_visitors")
-      .select("id, name, organisation, email, is_active, created_at")
+      .select("id, name, organisation, email, is_active, created_at, plaintext_password")
       .eq("repository_slug", data.slug)
       .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
