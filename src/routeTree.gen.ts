@@ -20,6 +20,7 @@ import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as CompleteRouteImport } from './routes/complete'
 import { Route as BriefingRoomRouteImport } from './routes/briefing-room'
 import { Route as BriefRouteImport } from './routes/brief'
+import { Route as RepoSlugRouteImport } from './routes/$repoSlug'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as IntelligenceIndexRouteImport } from './routes/intelligence.index'
 import { Route as BriefingRoomIndexRouteImport } from './routes/briefing-room.index'
@@ -88,6 +89,11 @@ const BriefingRoomRoute = BriefingRoomRouteImport.update({
 const BriefRoute = BriefRouteImport.update({
   id: '/brief',
   path: '/brief',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RepoSlugRoute = RepoSlugRouteImport.update({
+  id: '/$repoSlug',
+  path: '/$repoSlug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -163,6 +169,7 @@ const ApiRepoViewDocumentIdRoute = ApiRepoViewDocumentIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/$repoSlug': typeof RepoSlugRoute
   '/brief': typeof BriefRouteWithChildren
   '/briefing-room': typeof BriefingRoomRouteWithChildren
   '/complete': typeof CompleteRoute
@@ -190,6 +197,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/$repoSlug': typeof RepoSlugRoute
   '/complete': typeof CompleteRoute
   '/dashboard': typeof DashboardRoute
   '/deck': typeof DeckRoute
@@ -215,6 +223,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/$repoSlug': typeof RepoSlugRoute
   '/brief': typeof BriefRouteWithChildren
   '/briefing-room': typeof BriefingRoomRouteWithChildren
   '/complete': typeof CompleteRoute
@@ -244,6 +253,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/$repoSlug'
     | '/brief'
     | '/briefing-room'
     | '/complete'
@@ -271,6 +281,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/$repoSlug'
     | '/complete'
     | '/dashboard'
     | '/deck'
@@ -295,6 +306,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/$repoSlug'
     | '/brief'
     | '/briefing-room'
     | '/complete'
@@ -323,6 +335,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  RepoSlugRoute: typeof RepoSlugRoute
   BriefRoute: typeof BriefRouteWithChildren
   BriefingRoomRoute: typeof BriefingRoomRouteWithChildren
   CompleteRoute: typeof CompleteRoute
@@ -418,6 +431,13 @@ declare module '@tanstack/react-router' {
       path: '/brief'
       fullPath: '/brief'
       preLoaderRoute: typeof BriefRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/$repoSlug': {
+      id: '/$repoSlug'
+      path: '/$repoSlug'
+      fullPath: '/$repoSlug'
+      preLoaderRoute: typeof RepoSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -567,6 +587,7 @@ const IntelligenceRouteWithChildren = IntelligenceRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  RepoSlugRoute: RepoSlugRoute,
   BriefRoute: BriefRouteWithChildren,
   BriefingRoomRoute: BriefingRoomRouteWithChildren,
   CompleteRoute: CompleteRoute,
