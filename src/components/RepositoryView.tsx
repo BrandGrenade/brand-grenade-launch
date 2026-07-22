@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Download, ExternalLink, Lock, LogOut } from "lucide-react";
 
-type Slug = "ey" | "kpmg" | "deck";
+type Slug = string;
 
 interface Props {
   slug: Slug;
