@@ -465,3 +465,40 @@ export const adminPreviewOpenDocument = createServerFn({ method: "POST" })
     return { url: signed.signedUrl };
   });
 
+
+// ---- Repository management ----
+
+export const listRepositories = createServerFn({ method: "GET" }).handler(async () => {
+  await requireAdmin();
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data, error } = await supabaseAdmin
+    .from("repositories")
+    .select("slug, title, intro, created_at")
+    .order("created_at", { ascending: true });
+  if (error) throw new Error(error.message);
+  return { repositories: data ?? [] };
+});
+
+export const createRepository = createServerFn({ method: "POST" })
+  .inputValidator((d: { slug: string; title: string; intro?: string }) => ({
+    slug: slugSchema.parse(d.slug),
+    title: z.string().min(1).max(300).parse(d.title),
+    intro: z.string().max(4000).parse(d.intro ?? ""),
+  }))
+  .handler(async ({ data }) => {
+    await requireAdmin();
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: existing } = await supabaseAdmin
+      .from("repositories")
+      .select("slug")
+      .eq("slug", data.slug)
+      .maybeSingle();
+    if (existing) return { ok: false as const, error: "A repository with that slug already exists." };
+    const { error } = await supabaseAdmin.from("repositories").insert({
+      slug: data.slug,
+      title: data.title,
+      intro: data.intro,
+    });
+    if (error) throw new Error(error.message);
+    return { ok: true as const, slug: data.slug };
+  });
