@@ -202,7 +202,7 @@ export const resetVisitorPassword = createServerFn({ method: "POST" })
     const password = data.password ?? generatePassword();
     const { error } = await supabaseAdmin
       .from("repository_visitors")
-      .update({ password_hash: hashPassword(password) })
+      .update({ password_hash: hashPassword(password), plaintext_password: password })
       .eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true as const, password };
