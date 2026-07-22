@@ -1028,3 +1028,87 @@ function UploadDocForm({
     </form>
   );
 }
+
+function CreateRepositoryPanel({ onCreated }: { onCreated: () => void | Promise<void> }) {
+  const fCreate = useServerFn(createRepository);
+  const [slug, setSlug] = useState("");
+  const [title, setTitle] = useState("");
+  const [intro, setIntro] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [ok, setOk] = useState<string | null>(null);
+
+  function normaliseSlug(v: string): string {
+    return v.toLowerCase().replace(/[^a-z0-9-]/g, "").replace(/^-+|-+$/g, "").slice(0, 40);
+  }
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    setError("");
+    setOk(null);
+    const s = normaliseSlug(slug);
+    if (!s) { setError("Slug required (lowercase letters, digits, hyphens)."); return; }
+    if (!title.trim()) { setError("Title required."); return; }
+    setBusy(true);
+    try {
+      const res = await fCreate({ data: { slug: s, title: title.trim(), intro: intro.trim() } });
+      if (!res.ok) { setError(res.error ?? "Failed to create repository."); return; }
+      setOk(`Repository "${s}" created. It's now live at /${s} and ready for visitors and documents.`);
+      setSlug(""); setTitle(""); setIntro("");
+      await onCreated();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to create repository.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="max-w-2xl space-y-4">
+      <div>
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-neutral-500">Create a new repository</h2>
+        <p className="mt-1 text-xs text-neutral-500">
+          Creates a password-gated client repository at <code>/[slug]</code>. Visitors and
+          documents are added after creation from that repository's tab.
+        </p>
+      </div>
+      <form onSubmit={submit} className="space-y-4 border border-neutral-200 rounded-lg p-5 bg-white">
+        <div>
+          <label className="block text-xs font-medium text-neutral-600 mb-1">Slug (URL identifier)</label>
+          <Input
+            value={slug}
+            onChange={(e) => setSlug(normaliseSlug(e.target.value))}
+            placeholder="e.g. deloitte"
+            required
+          />
+          <p className="mt-1 text-[11px] text-neutral-500">
+            Lowercase letters, digits, hyphens only. Public URL will be <code>/{slug || "your-slug"}</code>.
+          </p>
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-neutral-600 mb-1">Title</label>
+          <Input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="e.g. Brand Grenade — Deloitte"
+            required
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-neutral-600 mb-1">Intro (optional)</label>
+          <Textarea
+            value={intro}
+            onChange={(e) => setIntro(e.target.value)}
+            placeholder="Short paragraph shown to visitors after they unlock the repository."
+            rows={5}
+          />
+        </div>
+        {error && <p className="text-sm text-red-600">{error}</p>}
+        {ok && <p className="text-sm text-green-700">{ok}</p>}
+        <Button type="submit" disabled={busy} className="bg-neutral-900 text-white hover:bg-neutral-800">
+          {busy ? "Creating…" : "Create repository"}
+        </Button>
+      </form>
+    </div>
+  );
+}
