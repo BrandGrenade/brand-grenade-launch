@@ -176,8 +176,6 @@ function RepositoriesTabs() {
     </Tabs>
   );
 }
-  );
-}
 
 interface Visitor {
   id: string;
