@@ -16,6 +16,7 @@ import {
   deleteDocument,
   getRepoStats,
   exportRepoLogCsv,
+  listAllVisitorsAccess,
 } from "@/lib/repo-admin.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -121,14 +122,18 @@ function AdminRepositoriesPage() {
         </div>
       </header>
       <main className="mx-auto max-w-6xl px-6 py-8">
-        <Tabs defaultValue="ey">
+        <Tabs defaultValue="all">
           <TabsList>
+            <TabsTrigger value="all">All Access</TabsTrigger>
             {SLUGS.map((s) => (
               <TabsTrigger key={s} value={s}>
                 {SLUG_LABEL[s]}
               </TabsTrigger>
             ))}
           </TabsList>
+          <TabsContent value="all" className="mt-6">
+            <AllAccessPanel />
+          </TabsContent>
           {SLUGS.map((s) => (
             <TabsContent key={s} value={s} className="mt-6">
               <RepositoryAdminPanel slug={s} />
@@ -178,6 +183,183 @@ interface Stats {
     ip_address: string | null;
     created_at: string;
   }>;
+}
+
+interface AllAccessRow {
+  id: string;
+  name: string;
+  organisation: string | null;
+  email: string | null;
+  is_active: boolean;
+  created_at: string;
+  repository_slug: Slug;
+  last_active_at: string | null;
+}
+
+function AllAccessPanel() {
+  const fList = useServerFn(listAllVisitorsAccess);
+  const fResetPw = useServerFn(resetVisitorPassword);
+  const fSetActive = useServerFn(setVisitorActive);
+  const [rows, setRows] = useState<AllAccessRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [filterSlug, setFilterSlug] = useState<"all" | Slug>("all");
+  const [query, setQuery] = useState("");
+  const [revealed, setRevealed] = useState<Record<string, string>>({});
+
+  const refresh = useCallback(async () => {
+    setLoading(true);
+    try {
+      const r = await fList({});
+      setRows(r.rows as AllAccessRow[]);
+    } finally {
+      setLoading(false);
+    }
+  }, [fList]);
+
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+
+  const now = Date.now();
+  const ACTIVE_WINDOW_MS = 30 * 24 * 60 * 60 * 1000; // last 30 days = "active"
+
+  const filtered = rows.filter((r) => {
+    if (filterSlug !== "all" && r.repository_slug !== filterSlug) return false;
+    if (!query) return true;
+    const q = query.toLowerCase();
+    return (
+      r.name.toLowerCase().includes(q) ||
+      (r.organisation ?? "").toLowerCase().includes(q) ||
+      (r.email ?? "").toLowerCase().includes(q)
+    );
+  });
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-neutral-500">
+            All visitors — across every repository
+          </h2>
+          <p className="mt-1 text-xs text-neutral-500">
+            One register of who has access, where, and when they last used it.
+            Passwords are one-way hashed — use Reset password to issue a new one.
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <select
+            value={filterSlug}
+            onChange={(e) => setFilterSlug(e.target.value as "all" | Slug)}
+            className="h-9 rounded-md border border-neutral-300 bg-white px-2 text-sm"
+          >
+            <option value="all">All repositories</option>
+            {SLUGS.map((s) => (
+              <option key={s} value={s}>{SLUG_LABEL[s]}</option>
+            ))}
+          </select>
+          <Input
+            placeholder="Search name, org, email"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            className="h-9 w-64"
+          />
+        </div>
+      </div>
+
+      <div className="border border-neutral-200 rounded-lg overflow-hidden">
+        <table className="w-full text-sm">
+          <thead className="bg-neutral-50 text-neutral-500 uppercase text-xs">
+            <tr>
+              <th className="text-left px-3 py-2 font-medium">Visitor</th>
+              <th className="text-left px-3 py-2 font-medium">Repository</th>
+              <th className="text-left px-3 py-2 font-medium">Created</th>
+              <th className="text-left px-3 py-2 font-medium">Last active</th>
+              <th className="text-left px-3 py-2 font-medium">Status</th>
+              <th className="text-right px-3 py-2 font-medium">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-neutral-200">
+            {loading && (
+              <tr><td colSpan={6} className="px-3 py-6 text-neutral-500">Loading…</td></tr>
+            )}
+            {!loading && filtered.length === 0 && (
+              <tr><td colSpan={6} className="px-3 py-6 text-neutral-500">No visitors match.</td></tr>
+            )}
+            {filtered.map((r) => {
+              const lastMs = r.last_active_at ? new Date(r.last_active_at).getTime() : null;
+              const isActive = r.is_active && lastMs !== null && now - lastMs < ACTIVE_WINDOW_MS;
+              return (
+                <tr key={r.id} className="align-top">
+                  <td className="px-3 py-3">
+                    <div className="font-medium text-neutral-900">{r.name}</div>
+                    <div className="text-xs text-neutral-500">
+                      {r.organisation ?? ""}{r.email ? ` · ${r.email}` : ""}
+                    </div>
+                    {revealed[r.id] && (
+                      <div className="mt-2">
+                        <PasswordReveal
+                          password={revealed[r.id]}
+                          onDismiss={() =>
+                            setRevealed((prev) => {
+                              const n = { ...prev };
+                              delete n[r.id];
+                              return n;
+                            })
+                          }
+                        />
+                      </div>
+                    )}
+                  </td>
+                  <td className="px-3 py-3 text-neutral-700">{SLUG_LABEL[r.repository_slug]}</td>
+                  <td className="px-3 py-3 text-neutral-500 text-xs whitespace-nowrap">
+                    {new Date(r.created_at).toLocaleDateString()}
+                  </td>
+                  <td className="px-3 py-3 text-neutral-500 text-xs whitespace-nowrap">
+                    {r.last_active_at ? new Date(r.last_active_at).toLocaleString() : "—"}
+                  </td>
+                  <td className="px-3 py-3">
+                    {!r.is_active ? (
+                      <span className="text-[10px] uppercase font-semibold text-neutral-600 bg-neutral-100 px-1.5 py-0.5 rounded">Disabled</span>
+                    ) : isActive ? (
+                      <span className="text-[10px] uppercase font-semibold text-green-700 bg-green-50 px-1.5 py-0.5 rounded">Active</span>
+                    ) : (
+                      <span className="text-[10px] uppercase font-semibold text-neutral-500 bg-neutral-100 px-1.5 py-0.5 rounded">Inactive</span>
+                    )}
+                  </td>
+                  <td className="px-3 py-3">
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={async () => {
+                          if (!confirm(`Reset password for ${r.name} (${SLUG_LABEL[r.repository_slug]})? A new one-time password will be generated.`)) return;
+                          const res = await fResetPw({ data: { id: r.id } });
+                          setRevealed((prev) => ({ ...prev, [r.id]: res.password }));
+                        }}
+                      >
+                        <KeyRound className="h-4 w-4 mr-1.5" /> Reset password
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        title={r.is_active ? "Deactivate" : "Reactivate"}
+                        onClick={async () => {
+                          await fSetActive({ data: { id: r.id, active: !r.is_active } });
+                          await refresh();
+                        }}
+                      >
+                        <Power className={`h-4 w-4 ${r.is_active ? "" : "text-neutral-400"}`} />
+                      </Button>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
 }
 
 function RepositoryAdminPanel({ slug }: { slug: Slug }) {

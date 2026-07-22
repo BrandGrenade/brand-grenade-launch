@@ -75,6 +75,15 @@ export const unlockRepo = createServerFn({ method: "POST" })
     return { ok: true as const, visitorName: match.name };
   });
 
+export const logoutRepo = createServerFn({ method: "POST" })
+  .inputValidator((d: { slug: Slug }) => ({ slug: slugSchema.parse(d.slug) }))
+  .handler(async ({ data }) => {
+    const { visitorSession } = await import("./repo/session.server");
+    const s = await visitorSession(data.slug);
+    await s.clear();
+    return { ok: true as const };
+  });
+
 export const logRepoVisit = createServerFn({ method: "POST" })
   .inputValidator((d: { slug: Slug }) => ({ slug: slugSchema.parse(d.slug) }))
   .handler(async ({ data }) => {
