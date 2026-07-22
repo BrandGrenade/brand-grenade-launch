@@ -174,6 +174,7 @@ export const createVisitor = createServerFn({ method: "POST" })
       organisation: data.organisation,
       email: data.email,
       password_hash: hashPassword(password),
+      plaintext_password: password,
     });
     if (error) throw new Error(error.message);
     return { ok: true as const, password };
