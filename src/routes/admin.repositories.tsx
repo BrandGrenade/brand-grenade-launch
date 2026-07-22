@@ -151,6 +151,7 @@ interface Visitor {
   organisation: string | null;
   email: string | null;
   is_active: boolean;
+  plaintext_password: string | null;
 }
 
 interface Doc {
