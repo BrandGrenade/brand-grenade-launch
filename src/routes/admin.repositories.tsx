@@ -230,7 +230,7 @@ interface AllAccessRow {
   plaintext_password: string | null;
 }
 
-function AllAccessPanel() {
+function AllAccessPanel({ repos }: { repos: Repo[] }) {
   const fList = useServerFn(listAllVisitorsAccess);
   const fResetPw = useServerFn(resetVisitorPassword);
   const fSetActive = useServerFn(setVisitorActive);
@@ -436,7 +436,7 @@ function AllAccessPanel() {
   );
 }
 
-function RepositoryAdminPanel({ slug }: { slug: Slug }) {
+function RepositoryAdminPanel({ slug, repos }: { slug: Slug; repos: Repo[] }) {
   const fListVisitors = useServerFn(listVisitors);
   const fCreateVisitor = useServerFn(createVisitor);
   const fDeleteVisitor = useServerFn(deleteVisitor);
