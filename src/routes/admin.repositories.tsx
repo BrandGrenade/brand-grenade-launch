@@ -275,6 +275,7 @@ function AllAccessPanel() {
             <tr>
               <th className="text-left px-3 py-2 font-medium">Visitor</th>
               <th className="text-left px-3 py-2 font-medium">Repository</th>
+              <th className="text-left px-3 py-2 font-medium">Password</th>
               <th className="text-left px-3 py-2 font-medium">Created</th>
               <th className="text-left px-3 py-2 font-medium">Last active</th>
               <th className="text-left px-3 py-2 font-medium">Status</th>
@@ -283,10 +284,10 @@ function AllAccessPanel() {
           </thead>
           <tbody className="divide-y divide-neutral-200">
             {loading && (
-              <tr><td colSpan={6} className="px-3 py-6 text-neutral-500">Loading…</td></tr>
+              <tr><td colSpan={7} className="px-3 py-6 text-neutral-500">Loading…</td></tr>
             )}
             {!loading && filtered.length === 0 && (
-              <tr><td colSpan={6} className="px-3 py-6 text-neutral-500">No visitors match.</td></tr>
+              <tr><td colSpan={7} className="px-3 py-6 text-neutral-500">No visitors match.</td></tr>
             )}
             {filtered.map((r) => {
               const lastMs = r.last_active_at ? new Date(r.last_active_at).getTime() : null;
