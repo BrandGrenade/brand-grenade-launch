@@ -315,6 +315,39 @@ function AllAccessPanel() {
                     )}
                   </td>
                   <td className="px-3 py-3 text-neutral-700">{SLUG_LABEL[r.repository_slug]}</td>
+                  <td className="px-3 py-3">
+                    {r.plaintext_password ? (
+                      <div className="flex items-center gap-1.5">
+                        <code className="text-xs font-mono bg-neutral-100 border border-neutral-200 rounded px-2 py-1">
+                          {showPw[r.id] ? r.plaintext_password : "••••••••"}
+                        </code>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 px-2"
+                          title={showPw[r.id] ? "Hide password" : "Show password"}
+                          onClick={() => setShowPw((p) => ({ ...p, [r.id]: !p[r.id] }))}
+                        >
+                          {showPw[r.id] ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                        </Button>
+                        {showPw[r.id] && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 px-2"
+                            title="Copy password"
+                            onClick={async () => {
+                              try { await navigator.clipboard.writeText(r.plaintext_password!); } catch { /* ignore */ }
+                            }}
+                          >
+                            <Copy className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-xs text-neutral-400 italic">Not stored — reset to view</span>
+                    )}
+                  </td>
                   <td className="px-3 py-3 text-neutral-500 text-xs whitespace-nowrap">
                     {new Date(r.created_at).toLocaleDateString()}
                   </td>
@@ -339,6 +372,7 @@ function AllAccessPanel() {
                           if (!confirm(`Reset password for ${r.name} (${SLUG_LABEL[r.repository_slug]})? A new one-time password will be generated.`)) return;
                           const res = await fResetPw({ data: { id: r.id } });
                           setRevealed((prev) => ({ ...prev, [r.id]: res.password }));
+                          await refresh();
                         }}
                       >
                         <KeyRound className="h-4 w-4 mr-1.5" /> Reset password
@@ -346,16 +380,18 @@ function AllAccessPanel() {
                       <Button
                         size="sm"
                         variant="outline"
-                        title={r.is_active ? "Deactivate" : "Reactivate"}
+                        title={r.is_active ? "Deactivate visitor" : "Reactivate visitor"}
                         onClick={async () => {
                           await fSetActive({ data: { id: r.id, active: !r.is_active } });
                           await refresh();
                         }}
                       >
-                        <Power className={`h-4 w-4 ${r.is_active ? "" : "text-neutral-400"}`} />
+                        <Power className={`h-4 w-4 mr-1.5 ${r.is_active ? "" : "text-neutral-400"}`} />
+                        {r.is_active ? "Deactivate" : "Reactivate"}
                       </Button>
                     </div>
                   </td>
+
                 </tr>
               );
             })}
