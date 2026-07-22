@@ -22,7 +22,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Lock, Trash2, Download, LogOut, KeyRound, Copy, Check, Power, Eye } from "lucide-react";
+import { Lock, Trash2, Download, LogOut, KeyRound, Copy, Check, Power, Eye, EyeOff } from "lucide-react";
 
 const SLUGS = ["ey", "kpmg", "deck"] as const;
 type Slug = (typeof SLUGS)[number];
