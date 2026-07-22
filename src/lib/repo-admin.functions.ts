@@ -90,7 +90,7 @@ export const listAllVisitorsAccess = createServerFn({ method: "GET" }).handler(a
   const [vRes, lRes] = await Promise.all([
     supabaseAdmin
       .from("repository_visitors")
-      .select("id, name, organisation, email, is_active, created_at, repository_slug")
+      .select("id, name, organisation, email, is_active, created_at, repository_slug, plaintext_password")
       .order("created_at", { ascending: false }),
     supabaseAdmin
       .from("repository_access_log")
