@@ -289,7 +289,7 @@ function AllAccessPanel() {
           >
             <option value="all">All repositories</option>
             {SLUGS.map((s) => (
-              <option key={s} value={s}>{SLUG_LABEL[s]}</option>
+              <option key={s} value={s}>{labelFor(s, repos)}</option>
             ))}
           </select>
           <Input
@@ -346,7 +346,7 @@ function AllAccessPanel() {
                       </div>
                     )}
                   </td>
-                  <td className="px-3 py-3 text-neutral-700">{SLUG_LABEL[r.repository_slug]}</td>
+                  <td className="px-3 py-3 text-neutral-700">{labelFor(r.repository_slug, repos)}</td>
                   <td className="px-3 py-3">
                     {r.plaintext_password ? (
                       <div className="flex items-center gap-1.5">
@@ -401,7 +401,7 @@ function AllAccessPanel() {
                         size="sm"
                         variant="outline"
                         onClick={async () => {
-                          const pw = window.prompt(`New password for ${r.name} (${SLUG_LABEL[r.repository_slug]}) — min 6 characters:`);
+                          const pw = window.prompt(`New password for ${r.name} (${labelFor(r.repository_slug, repos)}) — min 6 characters:`);
                           if (!pw) return;
                           if (pw.length < 6) { alert("Password must be at least 6 characters."); return; }
                           const res = await fResetPw({ data: { id: r.id, password: pw } });
@@ -484,7 +484,7 @@ function RepositoryAdminPanel({ slug }: { slug: Slug }) {
 
       <section>
         <h2 className="text-sm font-semibold uppercase tracking-wider text-neutral-500">
-          Visitors — {SLUG_LABEL[slug]}
+          Visitors — {labelFor(slug, repos)}
         </h2>
         <NewVisitorForm
           onCreate={async (input) => {
@@ -595,7 +595,7 @@ function RepositoryAdminPanel({ slug }: { slug: Slug }) {
 
       <section>
         <h2 className="text-sm font-semibold uppercase tracking-wider text-neutral-500">
-          Documents — {SLUG_LABEL[slug]}
+          Documents — {labelFor(slug, repos)}
         </h2>
         <UploadDocForm
           onUpload={async (input) => {
@@ -636,7 +636,7 @@ function RepositoryAdminPanel({ slug }: { slug: Slug }) {
       <section>
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold uppercase tracking-wider text-neutral-500">
-            Access log — {SLUG_LABEL[slug]}
+            Access log — {labelFor(slug, repos)}
           </h2>
           <Button
             size="sm"
