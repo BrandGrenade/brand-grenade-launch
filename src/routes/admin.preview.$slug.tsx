@@ -100,7 +100,7 @@ function AdminPreviewPage() {
         </div>
       </header>
       <main className="mx-auto max-w-3xl px-6 py-12">
-        <h1 className="text-3xl font-semibold text-neutral-900">Brand Grenade — {SLUG_LABEL[slug]}</h1>
+        <h1 className="text-3xl font-semibold text-neutral-900">Brand Grenade — {slug.toUpperCase()}</h1>
         <section className="mt-12">
           <h2 className="text-xs font-semibold uppercase tracking-wider text-neutral-500">Documents</h2>
           {docs.length === 0 ? (
