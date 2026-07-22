@@ -84,6 +84,43 @@ export const listVisitors = createServerFn({ method: "GET" })
     return { visitors: visitors ?? [] };
   });
 
+export const listAllVisitorsAccess = createServerFn({ method: "GET" }).handler(async () => {
+  await requireAdmin();
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const [vRes, lRes] = await Promise.all([
+    supabaseAdmin
+      .from("repository_visitors")
+      .select("id, name, organisation, email, is_active, created_at, repository_slug")
+      .order("created_at", { ascending: false }),
+    supabaseAdmin
+      .from("repository_access_log")
+      .select("visitor_id, event_type, created_at")
+      .in("event_type", ["unlock", "visit", "open", "download"]),
+  ]);
+  if (vRes.error) throw new Error(vRes.error.message);
+  if (lRes.error) throw new Error(lRes.error.message);
+
+  const lastByVisitor = new Map<string, string>();
+  for (const l of lRes.data ?? []) {
+    if (!l.visitor_id) continue;
+    const prev = lastByVisitor.get(l.visitor_id);
+    if (!prev || (l.created_at && l.created_at > prev)) {
+      lastByVisitor.set(l.visitor_id, l.created_at);
+    }
+  }
+  const rows = (vRes.data ?? []).map((v) => ({
+    id: v.id,
+    name: v.name,
+    organisation: v.organisation,
+    email: v.email,
+    is_active: v.is_active,
+    created_at: v.created_at,
+    repository_slug: v.repository_slug,
+    last_active_at: lastByVisitor.get(v.id) ?? null,
+  }));
+  return { rows };
+});
+
 export const setVisitorActive = createServerFn({ method: "POST" })
   .inputValidator((d: { id: string; active: boolean }) => ({
     id: z.string().uuid().parse(d.id),
