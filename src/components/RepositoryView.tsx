@@ -34,6 +34,7 @@ export function RepositoryView({ slug, title, intro }: Props) {
   const unlock = useServerFn(unlockRepo);
   const logVisit = useServerFn(logRepoVisit);
   const listDocs = useServerFn(listRepoDocuments);
+  const logout = useServerFn(logoutRepo);
 
   const [state, setState] = useState<"loading" | "locked" | "unlocked">("loading");
   const [visitorName, setVisitorName] = useState("");
@@ -142,9 +143,25 @@ export function RepositoryView({ slug, title, intro }: Props) {
             <img src="/brand-grenade-icon.png" alt="Brand Grenade" className="h-6 w-6" />
             <span className="text-sm font-semibold tracking-wide">Brand Grenade</span>
           </div>
-          {visitorName && (
-            <span className="text-xs text-neutral-500">Signed in as {visitorName}</span>
-          )}
+          <div className="flex items-center gap-4">
+            {visitorName && (
+              <span className="text-xs text-neutral-500">Signed in as {visitorName}</span>
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={async () => {
+                await logout({ data: { slug } });
+                setPassword("");
+                setDocs([]);
+                setVisitorName("");
+                setState("locked");
+              }}
+              className="text-neutral-600 hover:text-neutral-900"
+            >
+              <LogOut className="h-4 w-4 mr-1.5" /> Log out
+            </Button>
+          </div>
         </div>
       </header>
       <main className="mx-auto max-w-3xl px-6 py-12">
