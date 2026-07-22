@@ -75,7 +75,7 @@ export const adminStatus = createServerFn({ method: "GET" }).handler(async () =>
 // ---- Visitor management ----
 
 export const listVisitors = createServerFn({ method: "GET" })
-  .inputValidator((d: { slug: (typeof SLUGS)[number] }) => ({ slug: slugSchema.parse(d.slug) }))
+  .inputValidator((d: { slug: SlugT }) => ({ slug: slugSchema.parse(d.slug) }))
   .handler(async ({ data }) => {
     await requireAdmin();
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -145,7 +145,7 @@ export const setVisitorActive = createServerFn({ method: "POST" })
 export const createVisitor = createServerFn({ method: "POST" })
   .inputValidator(
     (d: {
-      slug: (typeof SLUGS)[number];
+      slug: SlugT;
       name: string;
       organisation?: string;
       email?: string;
@@ -204,7 +204,7 @@ export const resetVisitorPassword = createServerFn({ method: "POST" })
 // ---- Document management ----
 
 export const listDocuments = createServerFn({ method: "GET" })
-  .inputValidator((d: { slug: (typeof SLUGS)[number] }) => ({ slug: slugSchema.parse(d.slug) }))
+  .inputValidator((d: { slug: SlugT }) => ({ slug: slugSchema.parse(d.slug) }))
   .handler(async ({ data }) => {
     await requireAdmin();
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -220,7 +220,7 @@ export const listDocuments = createServerFn({ method: "GET" })
 export const uploadDocument = createServerFn({ method: "POST" })
   .inputValidator(
     (d: {
-      slug: (typeof SLUGS)[number];
+      slug: SlugT;
       title: string;
       description?: string;
       fileName: string;
@@ -294,7 +294,7 @@ export const deleteDocument = createServerFn({ method: "POST" })
 // ---- Access log / stats ----
 
 export const getRepoStats = createServerFn({ method: "GET" })
-  .inputValidator((d: { slug: (typeof SLUGS)[number] }) => ({ slug: slugSchema.parse(d.slug) }))
+  .inputValidator((d: { slug: SlugT }) => ({ slug: slugSchema.parse(d.slug) }))
   .handler(async ({ data }) => {
     await requireAdmin();
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -381,7 +381,7 @@ export const getRepoStats = createServerFn({ method: "GET" })
   });
 
 export const exportRepoLogCsv = createServerFn({ method: "GET" })
-  .inputValidator((d: { slug: (typeof SLUGS)[number] }) => ({ slug: slugSchema.parse(d.slug) }))
+  .inputValidator((d: { slug: SlugT }) => ({ slug: slugSchema.parse(d.slug) }))
   .handler(async ({ data }) => {
     await requireAdmin();
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -410,7 +410,7 @@ export const exportRepoLogCsv = createServerFn({ method: "GET" })
 // ---- Admin preview (view as visitor, no audit trail pollution) ----
 
 export const adminPreviewRepo = createServerFn({ method: "GET" })
-  .inputValidator((d: { slug: (typeof SLUGS)[number]; visitorId?: string }) => ({
+  .inputValidator((d: { slug: SlugT; visitorId?: string }) => ({
     slug: slugSchema.parse(d.slug),
     visitorId: d.visitorId ? z.string().uuid().parse(d.visitorId) : null,
   }))
@@ -439,7 +439,7 @@ export const adminPreviewRepo = createServerFn({ method: "GET" })
   });
 
 export const adminPreviewOpenDocument = createServerFn({ method: "POST" })
-  .inputValidator((d: { slug: (typeof SLUGS)[number]; documentId: string; action: "open" | "download" }) => ({
+  .inputValidator((d: { slug: SlugT; documentId: string; action: "open" | "download" }) => ({
     slug: slugSchema.parse(d.slug),
     documentId: z.string().uuid().parse(d.documentId),
     action: z.enum(["open", "download"]).parse(d.action),
