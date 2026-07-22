@@ -491,6 +491,9 @@ function RepositoryAdminPanel({ slug }: { slug: Slug }) {
                     <p className="text-xs text-neutral-500">
                       {v.organisation ?? ""} {v.email ? `· ${v.email}` : ""}
                     </p>
+                    <div className="mt-2">
+                      <VisitorPasswordInline password={v.plaintext_password} />
+                    </div>
                   </div>
                   <div className="flex gap-2 shrink-0">
                     <a
@@ -507,18 +510,20 @@ function RepositoryAdminPanel({ slug }: { slug: Slug }) {
                       onSet={async (password) => {
                         const r = await fResetPw({ data: { id: v.id, password } });
                         setRevealedPasswords((prev) => ({ ...prev, [v.id]: r.password }));
+                        await refresh();
                       }}
                     />
                     <Button
                       size="sm"
                       variant="outline"
-                      title={v.is_active ? "Deactivate" : "Reactivate"}
+                      title={v.is_active ? "Deactivate visitor" : "Reactivate visitor"}
                       onClick={async () => {
                         await fSetActive({ data: { id: v.id, active: !v.is_active } });
                         await refresh();
                       }}
                     >
-                      <Power className={`h-4 w-4 ${v.is_active ? "" : "text-neutral-400"}`} />
+                      <Power className={`h-4 w-4 mr-1.5 ${v.is_active ? "" : "text-neutral-400"}`} />
+                      {v.is_active ? "Deactivate" : "Reactivate"}
                     </Button>
                     <Button
                       size="sm"
@@ -530,9 +535,10 @@ function RepositoryAdminPanel({ slug }: { slug: Slug }) {
                         await refresh();
                       }}
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 className="h-4 w-4 mr-1.5" /> Delete
                     </Button>
                   </div>
+
 
                 </div>
                 {revealed && (
