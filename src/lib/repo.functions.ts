@@ -170,3 +170,17 @@ export const openRepoDocument = createServerFn({ method: "POST" })
 
     return { url: signed.signedUrl };
   });
+
+export const getRepositoryPublic = createServerFn({ method: "GET" })
+  .inputValidator((d: { slug: string }) => ({ slug: slugSchema.parse(d.slug) }))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: repo, error } = await supabaseAdmin
+      .from("repositories")
+      .select("slug, title, intro")
+      .eq("slug", data.slug)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!repo) return { found: false as const };
+    return { found: true as const, repository: repo };
+  });
