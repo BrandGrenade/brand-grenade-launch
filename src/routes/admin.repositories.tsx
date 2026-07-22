@@ -681,6 +681,54 @@ function StatCard({ label, value }: { label: string; value: number }) {
   );
 }
 
+function VisitorPasswordInline({ password }: { password: string | null }) {
+  const [show, setShow] = useState(false);
+  const [copied, setCopied] = useState(false);
+  if (!password) {
+    return (
+      <span className="text-xs text-neutral-400 italic">
+        Password not stored — click Set password to issue a new one you can view.
+      </span>
+    );
+  }
+  return (
+    <div className="flex items-center gap-1.5">
+      <span className="text-[10px] uppercase tracking-wide text-neutral-500 mr-1">Password</span>
+      <code className="text-xs font-mono bg-neutral-100 border border-neutral-200 rounded px-2 py-1">
+        {show ? password : "••••••••"}
+      </code>
+      <Button
+        size="sm"
+        variant="ghost"
+        className="h-7 px-2"
+        title={show ? "Hide password" : "Show password"}
+        onClick={() => setShow((s) => !s)}
+      >
+        {show ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+      </Button>
+      {show && (
+        <Button
+          size="sm"
+          variant="ghost"
+          className="h-7 px-2"
+          title="Copy password"
+          onClick={async () => {
+            try {
+              await navigator.clipboard.writeText(password);
+              setCopied(true);
+              setTimeout(() => setCopied(false), 1500);
+            } catch {
+              /* ignore */
+            }
+          }}
+        >
+          {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+        </Button>
+      )}
+    </div>
+  );
+}
+
 function PasswordReveal({ password, onDismiss }: { password: string; onDismiss: () => void }) {
   const [copied, setCopied] = useState(false);
   return (
