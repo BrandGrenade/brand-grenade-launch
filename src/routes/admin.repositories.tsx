@@ -207,6 +207,7 @@ function AllAccessPanel() {
   const [filterSlug, setFilterSlug] = useState<"all" | Slug>("all");
   const [query, setQuery] = useState("");
   const [revealed, setRevealed] = useState<Record<string, string>>({});
+  const [showPw, setShowPw] = useState<Record<string, boolean>>({});
 
   const refresh = useCallback(async () => {
     setLoading(true);
