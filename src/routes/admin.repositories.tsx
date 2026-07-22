@@ -288,8 +288,8 @@ function AllAccessPanel() {
             className="h-9 rounded-md border border-neutral-300 bg-white px-2 text-sm"
           >
             <option value="all">All repositories</option>
-            {SLUGS.map((s) => (
-              <option key={s} value={s}>{labelFor(s, repos)}</option>
+            {repos.map((r) => (
+              <option key={r.slug} value={r.slug}>{labelFor(r.slug, repos)}</option>
             ))}
           </select>
           <Input
