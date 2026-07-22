@@ -128,26 +128,54 @@ function AdminRepositoriesPage() {
         </div>
       </header>
       <main className="mx-auto max-w-6xl px-6 py-8">
-        <Tabs defaultValue="all">
-          <TabsList>
-            <TabsTrigger value="all">All Access</TabsTrigger>
-            {SLUGS.map((s) => (
-              <TabsTrigger key={s} value={s}>
-                {SLUG_LABEL[s]}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-          <TabsContent value="all" className="mt-6">
-            <AllAccessPanel />
-          </TabsContent>
-          {SLUGS.map((s) => (
-            <TabsContent key={s} value={s} className="mt-6">
-              <RepositoryAdminPanel slug={s} />
-            </TabsContent>
-          ))}
-        </Tabs>
+        <RepositoriesTabs />
       </main>
     </div>
+  );
+}
+
+function RepositoriesTabs() {
+  const fList = useServerFn(listRepositories);
+  const [repos, setRepos] = useState<Repo[]>([]);
+  const [loaded, setLoaded] = useState(false);
+
+  const refresh = useCallback(async () => {
+    const r = await fList({});
+    setRepos(r.repositories as Repo[]);
+    setLoaded(true);
+  }, [fList]);
+
+  useEffect(() => { refresh(); }, [refresh]);
+
+  if (!loaded) return <div className="text-sm text-neutral-500">Loading repositories…</div>;
+
+  return (
+    <Tabs defaultValue="all">
+      <TabsList className="flex-wrap h-auto">
+        <TabsTrigger value="all">All Access</TabsTrigger>
+        {repos.map((r) => (
+          <TabsTrigger key={r.slug} value={r.slug}>
+            {labelFor(r.slug, repos)}
+          </TabsTrigger>
+        ))}
+        <TabsTrigger value="__new__">
+          <Plus className="h-3.5 w-3.5 mr-1" /> New
+        </TabsTrigger>
+      </TabsList>
+      <TabsContent value="all" className="mt-6">
+        <AllAccessPanel repos={repos} />
+      </TabsContent>
+      {repos.map((r) => (
+        <TabsContent key={r.slug} value={r.slug} className="mt-6">
+          <RepositoryAdminPanel slug={r.slug} repos={repos} />
+        </TabsContent>
+      ))}
+      <TabsContent value="__new__" className="mt-6">
+        <CreateRepositoryPanel onCreated={refresh} />
+      </TabsContent>
+    </Tabs>
+  );
+}
   );
 }
 
