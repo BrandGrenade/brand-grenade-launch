@@ -16,6 +16,7 @@ import {
   deleteDocument,
   getRepoStats,
   exportRepoLogCsv,
+  listAllVisitorsAccess,
 } from "@/lib/repo-admin.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -121,14 +122,18 @@ function AdminRepositoriesPage() {
         </div>
       </header>
       <main className="mx-auto max-w-6xl px-6 py-8">
-        <Tabs defaultValue="ey">
+        <Tabs defaultValue="all">
           <TabsList>
+            <TabsTrigger value="all">All Access</TabsTrigger>
             {SLUGS.map((s) => (
               <TabsTrigger key={s} value={s}>
                 {SLUG_LABEL[s]}
               </TabsTrigger>
             ))}
           </TabsList>
+          <TabsContent value="all" className="mt-6">
+            <AllAccessPanel />
+          </TabsContent>
           {SLUGS.map((s) => (
             <TabsContent key={s} value={s} className="mt-6">
               <RepositoryAdminPanel slug={s} />
