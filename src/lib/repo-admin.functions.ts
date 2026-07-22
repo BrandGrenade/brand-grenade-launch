@@ -2,8 +2,12 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-const SLUGS = ["ey", "kpmg", "deck"] as const;
-const slugSchema = z.enum(SLUGS);
+const slugSchema = z
+  .string()
+  .min(1)
+  .max(40)
+  .regex(/^[a-z0-9]([a-z0-9-]{0,38}[a-z0-9])?$/, "Invalid repository slug");
+type SlugT = string;
 
 async function requireAdmin() {
   const { adminSession } = await import("./repo/session.server");
@@ -71,7 +75,7 @@ export const adminStatus = createServerFn({ method: "GET" }).handler(async () =>
 // ---- Visitor management ----
 
 export const listVisitors = createServerFn({ method: "GET" })
-  .inputValidator((d: { slug: (typeof SLUGS)[number] }) => ({ slug: slugSchema.parse(d.slug) }))
+  .inputValidator((d: { slug: SlugT }) => ({ slug: slugSchema.parse(d.slug) }))
   .handler(async ({ data }) => {
     await requireAdmin();
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -141,7 +145,7 @@ export const setVisitorActive = createServerFn({ method: "POST" })
 export const createVisitor = createServerFn({ method: "POST" })
   .inputValidator(
     (d: {
-      slug: (typeof SLUGS)[number];
+      slug: SlugT;
       name: string;
       organisation?: string;
       email?: string;
@@ -200,7 +204,7 @@ export const resetVisitorPassword = createServerFn({ method: "POST" })
 // ---- Document management ----
 
 export const listDocuments = createServerFn({ method: "GET" })
-  .inputValidator((d: { slug: (typeof SLUGS)[number] }) => ({ slug: slugSchema.parse(d.slug) }))
+  .inputValidator((d: { slug: SlugT }) => ({ slug: slugSchema.parse(d.slug) }))
   .handler(async ({ data }) => {
     await requireAdmin();
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -216,7 +220,7 @@ export const listDocuments = createServerFn({ method: "GET" })
 export const uploadDocument = createServerFn({ method: "POST" })
   .inputValidator(
     (d: {
-      slug: (typeof SLUGS)[number];
+      slug: SlugT;
       title: string;
       description?: string;
       fileName: string;
@@ -290,7 +294,7 @@ export const deleteDocument = createServerFn({ method: "POST" })
 // ---- Access log / stats ----
 
 export const getRepoStats = createServerFn({ method: "GET" })
-  .inputValidator((d: { slug: (typeof SLUGS)[number] }) => ({ slug: slugSchema.parse(d.slug) }))
+  .inputValidator((d: { slug: SlugT }) => ({ slug: slugSchema.parse(d.slug) }))
   .handler(async ({ data }) => {
     await requireAdmin();
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -377,7 +381,7 @@ export const getRepoStats = createServerFn({ method: "GET" })
   });
 
 export const exportRepoLogCsv = createServerFn({ method: "GET" })
-  .inputValidator((d: { slug: (typeof SLUGS)[number] }) => ({ slug: slugSchema.parse(d.slug) }))
+  .inputValidator((d: { slug: SlugT }) => ({ slug: slugSchema.parse(d.slug) }))
   .handler(async ({ data }) => {
     await requireAdmin();
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -406,7 +410,7 @@ export const exportRepoLogCsv = createServerFn({ method: "GET" })
 // ---- Admin preview (view as visitor, no audit trail pollution) ----
 
 export const adminPreviewRepo = createServerFn({ method: "GET" })
-  .inputValidator((d: { slug: (typeof SLUGS)[number]; visitorId?: string }) => ({
+  .inputValidator((d: { slug: SlugT; visitorId?: string }) => ({
     slug: slugSchema.parse(d.slug),
     visitorId: d.visitorId ? z.string().uuid().parse(d.visitorId) : null,
   }))
@@ -435,7 +439,7 @@ export const adminPreviewRepo = createServerFn({ method: "GET" })
   });
 
 export const adminPreviewOpenDocument = createServerFn({ method: "POST" })
-  .inputValidator((d: { slug: (typeof SLUGS)[number]; documentId: string; action: "open" | "download" }) => ({
+  .inputValidator((d: { slug: SlugT; documentId: string; action: "open" | "download" }) => ({
     slug: slugSchema.parse(d.slug),
     documentId: z.string().uuid().parse(d.documentId),
     action: z.enum(["open", "download"]).parse(d.action),
@@ -461,3 +465,40 @@ export const adminPreviewOpenDocument = createServerFn({ method: "POST" })
     return { url: signed.signedUrl };
   });
 
+
+// ---- Repository management ----
+
+export const listRepositories = createServerFn({ method: "GET" }).handler(async () => {
+  await requireAdmin();
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data, error } = await supabaseAdmin
+    .from("repositories")
+    .select("slug, title, intro, created_at")
+    .order("created_at", { ascending: true });
+  if (error) throw new Error(error.message);
+  return { repositories: data ?? [] };
+});
+
+export const createRepository = createServerFn({ method: "POST" })
+  .inputValidator((d: { slug: string; title: string; intro?: string }) => ({
+    slug: slugSchema.parse(d.slug),
+    title: z.string().min(1).max(300).parse(d.title),
+    intro: z.string().max(4000).parse(d.intro ?? ""),
+  }))
+  .handler(async ({ data }) => {
+    await requireAdmin();
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: existing } = await supabaseAdmin
+      .from("repositories")
+      .select("slug")
+      .eq("slug", data.slug)
+      .maybeSingle();
+    if (existing) return { ok: false as const, error: "A repository with that slug already exists." };
+    const { error } = await supabaseAdmin.from("repositories").insert({
+      slug: data.slug,
+      title: data.title,
+      intro: data.intro,
+    });
+    if (error) throw new Error(error.message);
+    return { ok: true as const, slug: data.slug };
+  });

@@ -17,16 +17,22 @@ import {
   getRepoStats,
   exportRepoLogCsv,
   listAllVisitorsAccess,
+  listRepositories,
+  createRepository,
 } from "@/lib/repo-admin.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Lock, Trash2, Download, LogOut, KeyRound, Copy, Check, Power, Eye, EyeOff } from "lucide-react";
+import { Lock, Trash2, Download, LogOut, KeyRound, Copy, Check, Power, Eye, EyeOff, Plus } from "lucide-react";
 
-const SLUGS = ["ey", "kpmg", "deck"] as const;
-type Slug = (typeof SLUGS)[number];
-const SLUG_LABEL: Record<Slug, string> = { ey: "EY", kpmg: "KPMG", deck: "Deck" };
+type Slug = string;
+interface Repo { slug: string; title: string; intro: string; created_at: string; }
+function labelFor(slug: string, repos: Repo[]): string {
+  const r = repos.find((x) => x.slug === slug);
+  if (r) return r.title.replace(/^Brand Grenade\s*—\s*/, "") || r.slug;
+  return slug.toUpperCase();
+}
 
 export const Route = createFileRoute("/admin/repositories")({
   head: () => ({
@@ -122,26 +128,52 @@ function AdminRepositoriesPage() {
         </div>
       </header>
       <main className="mx-auto max-w-6xl px-6 py-8">
-        <Tabs defaultValue="all">
-          <TabsList>
-            <TabsTrigger value="all">All Access</TabsTrigger>
-            {SLUGS.map((s) => (
-              <TabsTrigger key={s} value={s}>
-                {SLUG_LABEL[s]}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-          <TabsContent value="all" className="mt-6">
-            <AllAccessPanel />
-          </TabsContent>
-          {SLUGS.map((s) => (
-            <TabsContent key={s} value={s} className="mt-6">
-              <RepositoryAdminPanel slug={s} />
-            </TabsContent>
-          ))}
-        </Tabs>
+        <RepositoriesTabs />
       </main>
     </div>
+  );
+}
+
+function RepositoriesTabs() {
+  const fList = useServerFn(listRepositories);
+  const [repos, setRepos] = useState<Repo[]>([]);
+  const [loaded, setLoaded] = useState(false);
+
+  const refresh = useCallback(async () => {
+    const r = await fList({});
+    setRepos(r.repositories as Repo[]);
+    setLoaded(true);
+  }, [fList]);
+
+  useEffect(() => { refresh(); }, [refresh]);
+
+  if (!loaded) return <div className="text-sm text-neutral-500">Loading repositories…</div>;
+
+  return (
+    <Tabs defaultValue="all">
+      <TabsList className="flex-wrap h-auto">
+        <TabsTrigger value="all">All Access</TabsTrigger>
+        {repos.map((r) => (
+          <TabsTrigger key={r.slug} value={r.slug}>
+            {labelFor(r.slug, repos)}
+          </TabsTrigger>
+        ))}
+        <TabsTrigger value="__new__">
+          <Plus className="h-3.5 w-3.5 mr-1" /> New
+        </TabsTrigger>
+      </TabsList>
+      <TabsContent value="all" className="mt-6">
+        <AllAccessPanel repos={repos} />
+      </TabsContent>
+      {repos.map((r) => (
+        <TabsContent key={r.slug} value={r.slug} className="mt-6">
+          <RepositoryAdminPanel slug={r.slug} repos={repos} />
+        </TabsContent>
+      ))}
+      <TabsContent value="__new__" className="mt-6">
+        <CreateRepositoryPanel onCreated={refresh} />
+      </TabsContent>
+    </Tabs>
   );
 }
 
@@ -198,7 +230,7 @@ interface AllAccessRow {
   plaintext_password: string | null;
 }
 
-function AllAccessPanel() {
+function AllAccessPanel({ repos }: { repos: Repo[] }) {
   const fList = useServerFn(listAllVisitorsAccess);
   const fResetPw = useServerFn(resetVisitorPassword);
   const fSetActive = useServerFn(setVisitorActive);
@@ -256,8 +288,8 @@ function AllAccessPanel() {
             className="h-9 rounded-md border border-neutral-300 bg-white px-2 text-sm"
           >
             <option value="all">All repositories</option>
-            {SLUGS.map((s) => (
-              <option key={s} value={s}>{SLUG_LABEL[s]}</option>
+            {repos.map((r) => (
+              <option key={r.slug} value={r.slug}>{labelFor(r.slug, repos)}</option>
             ))}
           </select>
           <Input
@@ -314,7 +346,7 @@ function AllAccessPanel() {
                       </div>
                     )}
                   </td>
-                  <td className="px-3 py-3 text-neutral-700">{SLUG_LABEL[r.repository_slug]}</td>
+                  <td className="px-3 py-3 text-neutral-700">{labelFor(r.repository_slug, repos)}</td>
                   <td className="px-3 py-3">
                     {r.plaintext_password ? (
                       <div className="flex items-center gap-1.5">
@@ -369,7 +401,7 @@ function AllAccessPanel() {
                         size="sm"
                         variant="outline"
                         onClick={async () => {
-                          const pw = window.prompt(`New password for ${r.name} (${SLUG_LABEL[r.repository_slug]}) — min 6 characters:`);
+                          const pw = window.prompt(`New password for ${r.name} (${labelFor(r.repository_slug, repos)}) — min 6 characters:`);
                           if (!pw) return;
                           if (pw.length < 6) { alert("Password must be at least 6 characters."); return; }
                           const res = await fResetPw({ data: { id: r.id, password: pw } });
@@ -404,7 +436,7 @@ function AllAccessPanel() {
   );
 }
 
-function RepositoryAdminPanel({ slug }: { slug: Slug }) {
+function RepositoryAdminPanel({ slug, repos }: { slug: Slug; repos: Repo[] }) {
   const fListVisitors = useServerFn(listVisitors);
   const fCreateVisitor = useServerFn(createVisitor);
   const fDeleteVisitor = useServerFn(deleteVisitor);
@@ -452,7 +484,7 @@ function RepositoryAdminPanel({ slug }: { slug: Slug }) {
 
       <section>
         <h2 className="text-sm font-semibold uppercase tracking-wider text-neutral-500">
-          Visitors — {SLUG_LABEL[slug]}
+          Visitors — {labelFor(slug, repos)}
         </h2>
         <NewVisitorForm
           onCreate={async (input) => {
@@ -563,7 +595,7 @@ function RepositoryAdminPanel({ slug }: { slug: Slug }) {
 
       <section>
         <h2 className="text-sm font-semibold uppercase tracking-wider text-neutral-500">
-          Documents — {SLUG_LABEL[slug]}
+          Documents — {labelFor(slug, repos)}
         </h2>
         <UploadDocForm
           onUpload={async (input) => {
@@ -604,7 +636,7 @@ function RepositoryAdminPanel({ slug }: { slug: Slug }) {
       <section>
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold uppercase tracking-wider text-neutral-500">
-            Access log — {SLUG_LABEL[slug]}
+            Access log — {labelFor(slug, repos)}
           </h2>
           <Button
             size="sm"
@@ -994,5 +1026,89 @@ function UploadDocForm({
         </Button>
       </div>
     </form>
+  );
+}
+
+function CreateRepositoryPanel({ onCreated }: { onCreated: () => void | Promise<void> }) {
+  const fCreate = useServerFn(createRepository);
+  const [slug, setSlug] = useState("");
+  const [title, setTitle] = useState("");
+  const [intro, setIntro] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [ok, setOk] = useState<string | null>(null);
+
+  function normaliseSlug(v: string): string {
+    return v.toLowerCase().replace(/[^a-z0-9-]/g, "").replace(/^-+|-+$/g, "").slice(0, 40);
+  }
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    setError("");
+    setOk(null);
+    const s = normaliseSlug(slug);
+    if (!s) { setError("Slug required (lowercase letters, digits, hyphens)."); return; }
+    if (!title.trim()) { setError("Title required."); return; }
+    setBusy(true);
+    try {
+      const res = await fCreate({ data: { slug: s, title: title.trim(), intro: intro.trim() } });
+      if (!res.ok) { setError(res.error ?? "Failed to create repository."); return; }
+      setOk(`Repository "${s}" created. It's now live at /${s} and ready for visitors and documents.`);
+      setSlug(""); setTitle(""); setIntro("");
+      await onCreated();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to create repository.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="max-w-2xl space-y-4">
+      <div>
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-neutral-500">Create a new repository</h2>
+        <p className="mt-1 text-xs text-neutral-500">
+          Creates a password-gated client repository at <code>/[slug]</code>. Visitors and
+          documents are added after creation from that repository's tab.
+        </p>
+      </div>
+      <form onSubmit={submit} className="space-y-4 border border-neutral-200 rounded-lg p-5 bg-white">
+        <div>
+          <label className="block text-xs font-medium text-neutral-600 mb-1">Slug (URL identifier)</label>
+          <Input
+            value={slug}
+            onChange={(e) => setSlug(normaliseSlug(e.target.value))}
+            placeholder="e.g. deloitte"
+            required
+          />
+          <p className="mt-1 text-[11px] text-neutral-500">
+            Lowercase letters, digits, hyphens only. Public URL will be <code>/{slug || "your-slug"}</code>.
+          </p>
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-neutral-600 mb-1">Title</label>
+          <Input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="e.g. Brand Grenade — Deloitte"
+            required
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-neutral-600 mb-1">Intro (optional)</label>
+          <Textarea
+            value={intro}
+            onChange={(e) => setIntro(e.target.value)}
+            placeholder="Short paragraph shown to visitors after they unlock the repository."
+            rows={5}
+          />
+        </div>
+        {error && <p className="text-sm text-red-600">{error}</p>}
+        {ok && <p className="text-sm text-green-700">{ok}</p>}
+        <Button type="submit" disabled={busy} className="bg-neutral-900 text-white hover:bg-neutral-800">
+          {busy ? "Creating…" : "Create repository"}
+        </Button>
+      </form>
+    </div>
   );
 }

@@ -247,6 +247,30 @@ export type Database = {
           },
         ]
       }
+      repositories: {
+        Row: {
+          created_at: string
+          intro: string
+          slug: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          intro?: string
+          slug: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          intro?: string
+          slug?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       repository_access_log: {
         Row: {
           created_at: string

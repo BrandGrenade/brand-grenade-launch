@@ -2,10 +2,12 @@ import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
 import { z } from "zod";
 
-const SLUGS = ["ey", "kpmg", "deck"] as const;
-type Slug = (typeof SLUGS)[number];
-
-const slugSchema = z.enum(SLUGS);
+const slugSchema = z
+  .string()
+  .min(1)
+  .max(40)
+  .regex(/^[a-z0-9]([a-z0-9-]{0,38}[a-z0-9])?$/, "Invalid repository slug");
+type Slug = string;
 
 function clientIpAndUa(): { ip: string | null; ua: string | null } {
   try {
@@ -167,4 +169,18 @@ export const openRepoDocument = createServerFn({ method: "POST" })
     });
 
     return { url: signed.signedUrl };
+  });
+
+export const getRepositoryPublic = createServerFn({ method: "GET" })
+  .inputValidator((d: { slug: string }) => ({ slug: slugSchema.parse(d.slug) }))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: repo, error } = await supabaseAdmin
+      .from("repositories")
+      .select("slug, title, intro")
+      .eq("slug", data.slug)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!repo) return { found: false as const };
+    return { found: true as const, repository: repo };
   });
