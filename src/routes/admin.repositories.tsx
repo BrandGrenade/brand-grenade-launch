@@ -369,13 +369,15 @@ function AllAccessPanel() {
                         size="sm"
                         variant="outline"
                         onClick={async () => {
-                          if (!confirm(`Reset password for ${r.name} (${SLUG_LABEL[r.repository_slug]})? A new one-time password will be generated.`)) return;
-                          const res = await fResetPw({ data: { id: r.id } });
+                          const pw = window.prompt(`New password for ${r.name} (${SLUG_LABEL[r.repository_slug]}) — min 6 characters:`);
+                          if (!pw) return;
+                          if (pw.length < 6) { alert("Password must be at least 6 characters."); return; }
+                          const res = await fResetPw({ data: { id: r.id, password: pw } });
                           setRevealed((prev) => ({ ...prev, [r.id]: res.password }));
                           await refresh();
                         }}
                       >
-                        <KeyRound className="h-4 w-4 mr-1.5" /> Reset password
+                        <KeyRound className="h-4 w-4 mr-1.5" /> Set password
                       </Button>
                       <Button
                         size="sm"
@@ -764,7 +766,7 @@ function SetPasswordButton({
   onSet,
 }: {
   visitorName: string;
-  onSet: (password: string | undefined) => Promise<void>;
+  onSet: (password: string) => Promise<void>;
 }) {
   const [open, setOpen] = useState(false);
   const [pw, setPw] = useState("");
@@ -781,10 +783,10 @@ function SetPasswordButton({
       </Button>
       {open && (
         <div className="absolute z-10 mt-10 bg-white border border-neutral-200 rounded-lg shadow-lg p-3 w-72 space-y-2">
-          <p className="text-xs text-neutral-600">Set password for {visitorName}</p>
+          <p className="text-xs text-neutral-600">Set password for {visitorName} (min 6 chars)</p>
           <Input
             type="text"
-            placeholder="Leave blank to auto-generate"
+            placeholder="Enter password"
             value={pw}
             onChange={(e) => setPw(e.target.value)}
             autoFocus
@@ -793,12 +795,12 @@ function SetPasswordButton({
             <Button size="sm" variant="ghost" onClick={() => { setOpen(false); setPw(""); }}>Cancel</Button>
             <Button
               size="sm"
-              disabled={busy || (pw.length > 0 && pw.length < 6)}
+              disabled={busy || pw.length < 6}
               className="bg-neutral-900 text-white hover:bg-neutral-800"
               onClick={async () => {
                 setBusy(true);
                 try {
-                  await onSet(pw.length > 0 ? pw : undefined);
+                  await onSet(pw);
                   setOpen(false);
                   setPw("");
                 } finally {
@@ -822,7 +824,7 @@ function NewVisitorForm({
     name: string;
     organisation?: string;
     email?: string;
-    password?: string;
+    password: string;
   }) => Promise<string>;
 }) {
   const [f, setF] = useState({ name: "", organisation: "", email: "", password: "" });
@@ -841,7 +843,7 @@ function NewVisitorForm({
               name: f.name,
               organisation: f.organisation || undefined,
               email: f.email || undefined,
-              password: f.password || undefined,
+              password: f.password,
             });
             setF({ name: "", organisation: "", email: "", password: "" });
             setIssuedPassword(pw);
@@ -868,13 +870,15 @@ function NewVisitorForm({
           onChange={(e) => setF({ ...f, email: e.target.value })}
         />
         <Input
-          placeholder="Password (blank = auto)"
+          placeholder="Password (min 6 chars)"
           value={f.password}
           onChange={(e) => setF({ ...f, password: e.target.value })}
+          required
+          minLength={6}
         />
         <Button
           type="submit"
-          disabled={busy || !f.name || (f.password.length > 0 && f.password.length < 6)}
+          disabled={busy || !f.name || f.password.length < 6}
           className="bg-neutral-900 text-white hover:bg-neutral-800"
         >
           {busy ? "Adding…" : "Add visitor"}
