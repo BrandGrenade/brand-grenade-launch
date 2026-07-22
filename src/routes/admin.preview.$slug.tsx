@@ -5,9 +5,7 @@ import { adminPreviewRepo } from "@/lib/repo-admin.functions";
 import { Button } from "@/components/ui/button";
 import { Download, ExternalLink, Eye, ArrowLeft } from "lucide-react";
 
-const SLUGS = ["ey", "kpmg", "deck"] as const;
-type Slug = (typeof SLUGS)[number];
-const SLUG_LABEL: Record<Slug, string> = { ey: "EY", kpmg: "KPMG", deck: "Deck" };
+type Slug = string;
 
 export const Route = createFileRoute("/admin/preview/$slug")({
   head: () => ({
