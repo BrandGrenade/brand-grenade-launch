@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 import { BrandGrenadeIcon } from "@/components/BrandGrenadeIcon";
+import { submitDemoRequest } from "@/lib/demo-request.functions";
 
 export const Route = createFileRoute("/")({
   component: Index,

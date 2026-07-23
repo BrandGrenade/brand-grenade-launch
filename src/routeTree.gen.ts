@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as UnsubscribeRouteImport } from './routes/unsubscribe'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as PipelineRouteImport } from './routes/pipeline'
 import { Route as KpmgRouteImport } from './routes/kpmg'
@@ -41,6 +42,11 @@ import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/l
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 import { Route as ApiRepoViewDocumentIdRouteImport } from './routes/api/repo/view.$documentId'
 
+const UnsubscribeRoute = UnsubscribeRouteImport.update({
+  id: '/unsubscribe',
+  path: '/unsubscribe',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -214,6 +220,7 @@ export interface FileRoutesByFullPath {
   '/kpmg': typeof KpmgRoute
   '/pipeline': typeof PipelineRoute
   '/settings': typeof SettingsRoute
+  '/unsubscribe': typeof UnsubscribeRoute
   '/admin/repositories': typeof AdminRepositoriesRoute
   '/admin/tests': typeof AdminTestsRoute
   '/brief/new': typeof BriefNewRoute
@@ -244,6 +251,7 @@ export interface FileRoutesByTo {
   '/kpmg': typeof KpmgRoute
   '/pipeline': typeof PipelineRoute
   '/settings': typeof SettingsRoute
+  '/unsubscribe': typeof UnsubscribeRoute
   '/admin/repositories': typeof AdminRepositoriesRoute
   '/admin/tests': typeof AdminTestsRoute
   '/brief/new': typeof BriefNewRoute
@@ -278,6 +286,7 @@ export interface FileRoutesById {
   '/kpmg': typeof KpmgRoute
   '/pipeline': typeof PipelineRoute
   '/settings': typeof SettingsRoute
+  '/unsubscribe': typeof UnsubscribeRoute
   '/admin/repositories': typeof AdminRepositoriesRoute
   '/admin/tests': typeof AdminTestsRoute
   '/brief/new': typeof BriefNewRoute
@@ -313,6 +322,7 @@ export interface FileRouteTypes {
     | '/kpmg'
     | '/pipeline'
     | '/settings'
+    | '/unsubscribe'
     | '/admin/repositories'
     | '/admin/tests'
     | '/brief/new'
@@ -343,6 +353,7 @@ export interface FileRouteTypes {
     | '/kpmg'
     | '/pipeline'
     | '/settings'
+    | '/unsubscribe'
     | '/admin/repositories'
     | '/admin/tests'
     | '/brief/new'
@@ -376,6 +387,7 @@ export interface FileRouteTypes {
     | '/kpmg'
     | '/pipeline'
     | '/settings'
+    | '/unsubscribe'
     | '/admin/repositories'
     | '/admin/tests'
     | '/brief/new'
@@ -410,6 +422,7 @@ export interface RootRouteChildren {
   KpmgRoute: typeof KpmgRoute
   PipelineRoute: typeof PipelineRoute
   SettingsRoute: typeof SettingsRoute
+  UnsubscribeRoute: typeof UnsubscribeRoute
   AdminRepositoriesRoute: typeof AdminRepositoriesRoute
   AdminTestsRoute: typeof AdminTestsRoute
   DetonationCanvasRoute: typeof DetonationCanvasRoute
@@ -424,6 +437,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/unsubscribe': {
+      id: '/unsubscribe'
+      path: '/unsubscribe'
+      fullPath: '/unsubscribe'
+      preLoaderRoute: typeof UnsubscribeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/settings': {
       id: '/settings'
       path: '/settings'
@@ -702,6 +722,7 @@ const rootRouteChildren: RootRouteChildren = {
   KpmgRoute: KpmgRoute,
   PipelineRoute: PipelineRoute,
   SettingsRoute: SettingsRoute,
+  UnsubscribeRoute: UnsubscribeRoute,
   AdminRepositoriesRoute: AdminRepositoriesRoute,
   AdminTestsRoute: AdminTestsRoute,
   DetonationCanvasRoute: DetonationCanvasRoute,
