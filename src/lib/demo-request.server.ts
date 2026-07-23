@@ -25,6 +25,33 @@ export interface DemoRequestNotificationInput {
 export async function sendDemoRequestNotification(input: DemoRequestNotificationInput) {
   const messageId = crypto.randomUUID()
   const idempotencyKey = `demo-request-${input.id}`
+  const normalizedRecipient = RECIPIENT.toLowerCase()
+
+  // Get-or-create a persistent unsubscribe token for the recipient.
+  // Lovable's transactional email API requires one on every send.
+  let unsubscribeToken: string
+  const { data: existing } = await supabaseAdmin
+    .from('email_unsubscribe_tokens')
+    .select('token, used_at')
+    .eq('email', normalizedRecipient)
+    .maybeSingle()
+
+  if (existing && !existing.used_at) {
+    unsubscribeToken = existing.token
+  } else {
+    const bytes = new Uint8Array(32)
+    crypto.getRandomValues(bytes)
+    unsubscribeToken = Array.from(bytes).map((b) => b.toString(16).padStart(2, '0')).join('')
+    await supabaseAdmin
+      .from('email_unsubscribe_tokens')
+      .upsert({ token: unsubscribeToken, email: normalizedRecipient }, { onConflict: 'email', ignoreDuplicates: true })
+    const { data: stored } = await supabaseAdmin
+      .from('email_unsubscribe_tokens')
+      .select('token')
+      .eq('email', normalizedRecipient)
+      .maybeSingle()
+    if (stored?.token) unsubscribeToken = stored.token
+  }
 
   const element = React.createElement(demoRequestTemplate.component, {
     name: input.name,
