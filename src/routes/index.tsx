@@ -115,7 +115,7 @@ function Index() {
                 href="#request-access"
                 className="text-body-sm text-primary transition-colors hover:text-primary-hover"
               >
-                Request access
+                Request Demo
               </a>
             </div>
           </form>
