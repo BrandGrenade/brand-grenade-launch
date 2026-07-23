@@ -34,6 +34,7 @@ import { Route as AdminTestsRouteImport } from './routes/admin.tests'
 import { Route as AdminRepositoriesRouteImport } from './routes/admin.repositories'
 import { Route as IntelligenceIdEditRouteImport } from './routes/intelligence.$id_.edit'
 import { Route as AdminPreviewSlugRouteImport } from './routes/admin.preview.$slug'
+import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 import { Route as ApiRepoViewDocumentIdRouteImport } from './routes/api/repo/view.$documentId'
 
 const SettingsRoute = SettingsRouteImport.update({
@@ -161,6 +162,12 @@ const AdminPreviewSlugRoute = AdminPreviewSlugRouteImport.update({
   path: '/admin/preview/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LovableEmailQueueProcessRoute =
+  LovableEmailQueueProcessRouteImport.update({
+    id: '/lovable/email/queue/process',
+    path: '/lovable/email/queue/process',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiRepoViewDocumentIdRoute = ApiRepoViewDocumentIdRouteImport.update({
   id: '/api/repo/view/$documentId',
   path: '/api/repo/view/$documentId',
@@ -194,6 +201,7 @@ export interface FileRoutesByFullPath {
   '/admin/preview/$slug': typeof AdminPreviewSlugRoute
   '/intelligence/$id/edit': typeof IntelligenceIdEditRoute
   '/api/repo/view/$documentId': typeof ApiRepoViewDocumentIdRoute
+  '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -219,6 +227,7 @@ export interface FileRoutesByTo {
   '/admin/preview/$slug': typeof AdminPreviewSlugRoute
   '/intelligence/$id/edit': typeof IntelligenceIdEditRoute
   '/api/repo/view/$documentId': typeof ApiRepoViewDocumentIdRoute
+  '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -248,6 +257,7 @@ export interface FileRoutesById {
   '/admin/preview/$slug': typeof AdminPreviewSlugRoute
   '/intelligence/$id_/edit': typeof IntelligenceIdEditRoute
   '/api/repo/view/$documentId': typeof ApiRepoViewDocumentIdRoute
+  '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -278,6 +288,7 @@ export interface FileRouteTypes {
     | '/admin/preview/$slug'
     | '/intelligence/$id/edit'
     | '/api/repo/view/$documentId'
+    | '/lovable/email/queue/process'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -303,6 +314,7 @@ export interface FileRouteTypes {
     | '/admin/preview/$slug'
     | '/intelligence/$id/edit'
     | '/api/repo/view/$documentId'
+    | '/lovable/email/queue/process'
   id:
     | '__root__'
     | '/'
@@ -331,6 +343,7 @@ export interface FileRouteTypes {
     | '/admin/preview/$slug'
     | '/intelligence/$id_/edit'
     | '/api/repo/view/$documentId'
+    | '/lovable/email/queue/process'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -352,6 +365,7 @@ export interface RootRouteChildren {
   DetonationCanvasRoute: typeof DetonationCanvasRoute
   AdminPreviewSlugRoute: typeof AdminPreviewSlugRoute
   ApiRepoViewDocumentIdRoute: typeof ApiRepoViewDocumentIdRoute
+  LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -531,6 +545,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminPreviewSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/lovable/email/queue/process': {
+      id: '/lovable/email/queue/process'
+      path: '/lovable/email/queue/process'
+      fullPath: '/lovable/email/queue/process'
+      preLoaderRoute: typeof LovableEmailQueueProcessRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/repo/view/$documentId': {
       id: '/api/repo/view/$documentId'
       path: '/api/repo/view/$documentId'
@@ -604,6 +625,7 @@ const rootRouteChildren: RootRouteChildren = {
   DetonationCanvasRoute: DetonationCanvasRoute,
   AdminPreviewSlugRoute: AdminPreviewSlugRoute,
   ApiRepoViewDocumentIdRoute: ApiRepoViewDocumentIdRoute,
+  LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
