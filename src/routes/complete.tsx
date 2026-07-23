@@ -1407,14 +1407,27 @@ function Phase2Deliverables({ session }: { session: SessionRow }) {
           }}>
           {busy === "all" ? "Opening…" : "Download All Brand Detonation"}
         </button>
-        <button type="button" onClick={downloadBundle} disabled={busy !== null}
+        <button type="button" onClick={downloadAllZip} disabled={busy !== null}
           style={{
             height: 52, borderRadius: 8, border: `1px solid ${amber}`, background: "transparent",
             color: amber, fontWeight: 700, fontSize: 14, cursor: busy ? "wait" : "pointer",
             letterSpacing: "0.04em",
           }}>
-          {busy === "complete" ? "Opening…" : "Download Complete Brand Grenade"}
+          {busy === "bundle" ? (bundleProgress ?? "Building zip…") : "Download All Strategy (.zip)"}
         </button>
+        {bundleResult && (
+          <div style={{ fontSize: 12, color: "#9CA3AF", lineHeight: 1.6 }}>
+            <div style={{ color: "#D4D4D4", fontWeight: 600 }}>Bundle ready: {bundleResult.filename}</div>
+            <div>Included {bundleResult.included.length} file{bundleResult.included.length === 1 ? "" : "s"}.
+              {bundleResult.skipped.length > 0 && ` Skipped ${bundleResult.skipped.length} (missing source): ${bundleResult.skipped.join(", ")}.`}
+            </div>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
       </div>
     </section>
   );
