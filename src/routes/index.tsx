@@ -112,15 +112,6 @@ function Index() {
               </p>
             )}
 
-            <div className="mt-4 text-center">
-              <button
-                type="button"
-                onClick={() => setShowDemo(true)}
-                className="text-body-sm text-primary transition-colors hover:text-primary-hover"
-              >
-                Request Demo
-              </button>
-            </div>
           </form>
         </div>
       </section>
