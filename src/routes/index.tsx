@@ -27,6 +27,7 @@ function Index() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [showDemo, setShowDemo] = useState(false);
 
   useEffect(() => {
     if (isAuthReady && user) {
