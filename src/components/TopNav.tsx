@@ -160,7 +160,7 @@ export function TopNav({ session }: { session?: SessionContext }) {
               await signOut();
               navigate({ to: "/" });
             }}
-            className="hidden items-center justify-center transition-opacity hover:opacity-90 sm:inline-flex"
+            className="inline-flex items-center justify-center transition-opacity hover:opacity-90"
             style={{
               height: 32,
               padding: "0 12px",
