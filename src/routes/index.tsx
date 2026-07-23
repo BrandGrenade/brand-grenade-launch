@@ -128,7 +128,7 @@ function Index() {
       {showDemo && <RequestDemoModal onClose={() => setShowDemo(false)} />}
 
       {/* LEFT COLUMN */}
-      <section className="order-2 flex w-full flex-col bg-background px-6 py-16 sm:px-10 lg:order-1 lg:w-[55%] lg:p-20">
+      <section className="order-2 flex w-full flex-col bg-background px-6 py-10 sm:px-10 lg:order-1 lg:w-[55%] lg:p-12">
         {/* Top — brand mark */}
         <div>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -140,80 +140,101 @@ function Index() {
               BRAND GRENADE
             </h1>
           </div>
-          <hr className="mt-6 h-px w-full border-0 bg-border" />
+          <hr className="mt-5 h-px w-full border-0 bg-border" />
         </div>
 
-        {/* Middle — vertically centred */}
-        <div className="flex flex-1 flex-col justify-center py-16">
+        {/* Middle */}
+        <div className="flex flex-1 flex-col justify-start pt-8 lg:pt-10">
           <span className="text-label text-primary">
             Brand Strategy Intelligence System
           </span>
 
-          <h2
-            className="text-h1 mt-4 text-text-primary"
-            style={{ maxWidth: "480px" }}
-          >
+          <h2 className="text-h1 mt-3 text-text-primary" style={{ maxWidth: "480px" }}>
             Explosive Strategy.
           </h2>
 
-          <p
-            className="text-body-lg mt-6 text-text-secondary"
-            style={{ maxWidth: "480px" }}
-          >
-            Over 20 divergent strategic directions. Only the strongest survives.
+          <p className="text-body-lg mt-5 text-text-secondary" style={{ maxWidth: "520px" }}>
+            Over <Stat>20+</Stat> divergent strategic directions. Only the strongest survives.
           </p>
 
-          <p
-            className="text-body-lg mt-4 text-text-secondary"
-            style={{ maxWidth: "480px" }}
+          {/* Stats row */}
+          <div
+            className="mt-8 grid grid-cols-2 gap-px overflow-hidden rounded-md border border-border bg-border sm:grid-cols-4"
+            style={{ maxWidth: "560px" }}
           >
-            Four rooms. Twenty-eight stages. Six human checkpoints. One brief in — twenty-three professional documents out. Two to four hours.
+            <StatCard number="4" label="Rooms" />
+            <StatCard number="28" label="Stages" />
+            <StatCard number="6" label="Checkpoints" />
+            <StatCard number="2–4h" label="End to end" />
+          </div>
+
+          <p className="text-body-lg mt-6 text-text-secondary" style={{ maxWidth: "520px" }}>
+            One brief in — <Stat>23</Stat> professional documents out.
           </p>
 
-          <p
-            className="text-body mt-4 text-text-secondary"
-            style={{ maxWidth: "480px" }}
-          >
-            Brand Strategy searches every direction that's ever worked, and sixteen more that haven't, before one validated proposition survives.
+          <p className="text-body-lg mt-5 text-text-secondary" style={{ maxWidth: "520px" }}>
+            <span className="font-semibold text-primary">Brand Strategy</span> searches every direction that's ever worked, and <Stat>16</Stat> more that haven't, before one validated proposition survives.
           </p>
 
-          <p
-            className="text-body mt-4 text-text-secondary"
-            style={{ maxWidth: "480px" }}
-          >
-            Brand Detonation turns it into a complete creative platform — territory, idea, channel architecture, agency-ready briefs.
+          <p className="text-body-lg mt-4 text-text-secondary" style={{ maxWidth: "520px" }}>
+            <span className="font-semibold text-primary">Brand Detonation</span> turns it into a complete creative platform — territory, idea, channel architecture, agency-ready briefs.
           </p>
 
-          <ul className="mt-10 flex flex-col gap-3">
-            <li className="flex items-start gap-3">
-              <span
-                aria-hidden="true"
-                className="mt-[9px] inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-primary"
-              />
-              <span className="text-body text-text-secondary">
-                Fifty-plus proven methodologies, reasoned toward the strongest defensible answer
+          <ul className="mt-10 flex flex-col gap-3" style={{ maxWidth: "560px" }}>
+            <li className="rounded-md border border-border bg-surface-2 px-5 py-4">
+              <span className="text-body-lg text-text-primary">
+                <Stat>50+</Stat> proven methodologies, reasoned toward the strongest defensible answer.
               </span>
             </li>
-            <li className="flex items-start gap-3">
-              <span
-                aria-hidden="true"
-                className="mt-[9px] inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-primary"
-              />
-              <span className="text-body text-text-secondary">
-                Sixteen independent lateral engines, forbidden from starting where the brief starts
+            <li className="rounded-md border border-border bg-surface-2 px-5 py-4">
+              <span className="text-body-lg text-text-primary">
+                <Stat>16</Stat> independent lateral engines, forbidden from starting where the brief starts.
               </span>
             </li>
           </ul>
+
+          {/* CTA */}
+          <div className="mt-8" style={{ maxWidth: "560px" }}>
+            <button
+              type="button"
+              onClick={() => setShowDemo(true)}
+              className="inline-flex h-12 items-center justify-center rounded-md bg-primary px-8 text-[14px] font-semibold text-primary-foreground transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            >
+              Request Demo
+            </button>
+          </div>
         </div>
 
         {/* Bottom — copyright */}
-        <div>
+        <div className="mt-12">
           <p className="text-body-sm" style={{ color: "var(--color-text-tertiary)" }}>
             Brand Grenade Strategy Intelligence System
           </p>
         </div>
       </section>
     </main>
+  );
+}
+
+function Stat({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="font-bold text-primary" style={{ fontSize: "1.08em" }}>
+      {children}
+    </span>
+  );
+}
+
+function StatCard({ number, label }: { number: string; label: string }) {
+  return (
+    <div className="flex flex-col items-start bg-background px-4 py-4">
+      <span
+        className="font-bold text-primary"
+        style={{ fontSize: "28px", lineHeight: 1.1, letterSpacing: "-0.02em" }}
+      >
+        {number}
+      </span>
+      <span className="text-label mt-2 text-text-tertiary">{label}</span>
+    </div>
   );
 }
 
