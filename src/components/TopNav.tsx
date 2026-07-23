@@ -154,7 +154,29 @@ export function TopNav({ session }: { session?: SessionContext }) {
             </div>
           )}
 
-          
+          <button
+            type="button"
+            onClick={async () => {
+              await signOut();
+              navigate({ to: "/" });
+            }}
+            className="hidden items-center justify-center transition-opacity hover:opacity-90 sm:inline-flex"
+            style={{
+              height: 32,
+              padding: "0 12px",
+              borderRadius: 8,
+              border: "1px solid #D4924A",
+              backgroundColor: "#D4924A",
+              color: "#0A0A0A",
+              fontSize: 11,
+              fontWeight: 800,
+              letterSpacing: "0.08em",
+              textTransform: "uppercase",
+              whiteSpace: "nowrap",
+            }}
+          >
+            Sign Out
+          </button>
 
           <div ref={rootRef} className="relative">
 
