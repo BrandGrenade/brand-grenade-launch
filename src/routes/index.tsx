@@ -18,11 +18,6 @@ export const Route = createFileRoute("/")({
   }),
 });
 
-const proofPoints = [
-  "Constraint-locked proposition generation",
-  "Calibrated six-dimension scoring",
-  "Historical territory validation — no competitor system has this",
-];
 
 function Index() {
   const navigate = useNavigate();
@@ -120,7 +115,7 @@ function Index() {
                 href="#request-access"
                 className="text-body-sm text-primary transition-colors hover:text-primary-hover"
               >
-                Request access
+                Request Demo
               </a>
             </div>
           </form>
@@ -146,7 +141,7 @@ function Index() {
         {/* Middle — vertically centred */}
         <div className="flex flex-1 flex-col justify-center py-16">
           <span className="text-label text-primary">
-            Strategy Intelligence System
+            Brand Strategy Intelligence System
           </span>
 
           <h2
@@ -160,40 +155,83 @@ function Index() {
             className="text-body-lg mt-6 text-text-secondary"
             style={{ maxWidth: "480px" }}
           >
-            Two pipelines. Twenty-seven stages. Six human checkpoints.
+            Over 20 divergent strategic directions explored on every brief. Only the strongest survives.
+          </p>
+
+          <p
+            className="text-body-lg mt-4 text-text-secondary"
+            style={{ maxWidth: "480px" }}
+          >
+            Four rooms. Twenty-eight stages. Six human checkpoints.
           </p>
 
           <p
             className="text-body mt-4 text-text-secondary"
             style={{ maxWidth: "480px" }}
           >
-            Brand Strategy takes your brief and produces a validated strategic proposition — evidenced, pressure-tested, and ready to present at board level.
+            Brand Strategy takes your brief and searches it from every direction that's ever worked — and sixteen more that have never been tried — before a single validated proposition survives. Evidenced, pressure-tested, ready to present at board level.
           </p>
 
           <p
             className="text-body mt-4 text-text-secondary"
             style={{ maxWidth: "480px" }}
           >
-            Brand Detonation takes that proposition and develops the complete creative strategy — the territories, the idea, the channel architecture, and the briefs your agency needs to activate it.
+            Brand Detonation takes that proposition and builds the complete creative strategy — the territory, the idea, the channel architecture, and the briefs your agency needs to bring it to life.
           </p>
 
           <p
             className="text-body mt-4 text-text-secondary"
             style={{ maxWidth: "480px" }}
           >
-            One brief in. Thirteen professional documents out. Two to four hours.
+            One brief in. Twenty-three professional documents out. Two to four hours.
           </p>
 
           <ul className="mt-10 flex flex-col gap-3">
-            {proofPoints.map((point) => (
-              <li key={point} className="flex items-start gap-3">
-                <span
-                  aria-hidden="true"
-                  className="mt-[9px] inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-primary"
-                />
-                <span className="text-body text-text-secondary">{point}</span>
-              </li>
-            ))}
+            <li className="flex items-start gap-3">
+              <span
+                aria-hidden="true"
+                className="mt-[9px] inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-primary"
+              />
+              <span className="text-body text-text-secondary">
+                Over 20 genuinely divergent strategic propositions generated on every brief, before one is chosen
+              </span>
+            </li>
+            <li className="flex items-start gap-3">
+              <span
+                aria-hidden="true"
+                className="mt-[9px] inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-primary"
+              />
+              <span className="text-body text-text-secondary">
+                Fifty-plus proven methodologies, reasoned sequentially toward the strongest defensible answer
+              </span>
+            </li>
+            <li className="flex items-start gap-3">
+              <span
+                aria-hidden="true"
+                className="mt-[9px] inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-primary"
+              />
+              <span className="text-body text-text-secondary">
+                Sixteen independent lateral engines, each forbidden from starting where the brief starts — searching for what the evidence alone would never reach
+              </span>
+            </li>
+            <li className="flex items-start gap-3">
+              <span
+                aria-hidden="true"
+                className="mt-[9px] inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-primary"
+              />
+              <span className="text-body text-text-secondary">
+                Calibrated six-dimension scoring, two hard elimination floors — nothing weak survives to reach a human
+              </span>
+            </li>
+            <li className="flex items-start gap-3">
+              <span
+                aria-hidden="true"
+                className="mt-[9px] inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-primary"
+              />
+              <span className="text-body text-text-secondary">
+                Historical territory validation — a capability we haven't seen matched anywhere else
+              </span>
+            </li>
           </ul>
         </div>
 
