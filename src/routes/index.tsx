@@ -250,3 +250,114 @@ function Index() {
     </main>
   );
 }
+
+function RequestDemoModal({ onClose }: { onClose: () => void }) {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [company, setCompany] = useState("");
+  const [message, setMessage] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
+  const [done, setDone] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (submitting) return;
+    setError("");
+    if (!name.trim() || !email.trim() || !company.trim()) {
+      setError("Name, email and company are required.");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await submitDemoRequest({
+        data: {
+          name: name.trim(),
+          email: email.trim(),
+          company: company.trim(),
+          message: message.trim() || null,
+        },
+      });
+      setDone(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 py-8"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="demo-heading"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-md rounded-lg border border-border bg-surface-2 p-8 shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="mb-6 flex items-start justify-between">
+          <h2 id="demo-heading" className="text-h2 text-text-primary">
+            {done ? "Request received" : "Request a demo"}
+          </h2>
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-text-tertiary hover:text-text-primary"
+            aria-label="Close"
+          >
+            ✕
+          </button>
+        </div>
+
+        {done ? (
+          <>
+            <p className="text-body-sm text-text-secondary">
+              Thanks — we'll be in touch.
+            </p>
+            <button
+              type="button"
+              onClick={onClose}
+              className="mt-6 w-full rounded bg-primary px-4 py-2 text-white hover:bg-primary-hover"
+            >
+              Close
+            </button>
+          </>
+        ) : (
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+            <div>
+              <label htmlFor="demo-name" className="text-body-sm mb-2 block text-text-secondary">Name</label>
+              <input id="demo-name" required value={name} onChange={(e) => setName(e.target.value)} className="input-base h-11 w-full" maxLength={120} />
+            </div>
+            <div>
+              <label htmlFor="demo-email" className="text-body-sm mb-2 block text-text-secondary">Email</label>
+              <input id="demo-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="input-base h-11 w-full" maxLength={255} />
+            </div>
+            <div>
+              <label htmlFor="demo-company" className="text-body-sm mb-2 block text-text-secondary">Company</label>
+              <input id="demo-company" required value={company} onChange={(e) => setCompany(e.target.value)} className="input-base h-11 w-full" maxLength={160} />
+            </div>
+            <div>
+              <label htmlFor="demo-message" className="text-body-sm mb-2 block text-text-secondary">
+                Message <span className="text-text-tertiary">(optional)</span>
+              </label>
+              <textarea id="demo-message" value={message} onChange={(e) => setMessage(e.target.value)} className="input-base w-full py-2" rows={4} maxLength={2000} />
+            </div>
+
+            {error && <p className="text-body-sm text-red-400">{error}</p>}
+
+            <button
+              type="submit"
+              disabled={submitting}
+              className="mt-2 rounded bg-primary px-4 py-2 text-white hover:bg-primary-hover disabled:opacity-60"
+            >
+              {submitting ? "Sending…" : "Send request"}
+            </button>
+          </form>
+        )}
+      </div>
+    </div>
+  );
+}
