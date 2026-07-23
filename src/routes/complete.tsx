@@ -1427,8 +1427,3 @@ function Phase2Deliverables({ session }: { session: SessionRow }) {
     </section>
   );
 }
-
-      </div>
-    </section>
-  );
-}
