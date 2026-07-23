@@ -18,11 +18,6 @@ export const Route = createFileRoute("/")({
   }),
 });
 
-const proofPoints = [
-  "Constraint-locked proposition generation",
-  "Calibrated six-dimension scoring",
-  "Historical territory validation — no competitor system has this",
-];
 
 function Index() {
   const navigate = useNavigate();
