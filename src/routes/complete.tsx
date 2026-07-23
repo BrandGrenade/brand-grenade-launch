@@ -79,6 +79,8 @@ type SessionRow = {
   doc_agency_url: string | null;
   doc_workshop_url: string | null;
   phase_2_status: string | null;
+  updated_at: string | null;
+  created_at: string | null;
   stage_16_vision_output: string | null;
   stage_1_output: string | null;
   stage_2_output: string | null;
@@ -121,6 +123,7 @@ type SessionRow = {
   stage_22_brand_architecture: string | null;
   stage_22_distinctive_assets: string | null;
 };
+
 
 async function openDocument(url: string) {
   const response = await fetch(url);
