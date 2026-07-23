@@ -160,35 +160,28 @@ function Index() {
             className="text-body-lg mt-6 text-text-secondary"
             style={{ maxWidth: "480px" }}
           >
-            Over 20 divergent strategic directions explored on every brief. Only the strongest survives.
+            Over 20 divergent strategic directions. Only the strongest survives.
           </p>
 
           <p
             className="text-body-lg mt-4 text-text-secondary"
             style={{ maxWidth: "480px" }}
           >
-            Four rooms. Twenty-eight stages. Six human checkpoints.
+            Four rooms. Twenty-eight stages. Six human checkpoints. One brief in — twenty-three professional documents out. Two to four hours.
           </p>
 
           <p
             className="text-body mt-4 text-text-secondary"
             style={{ maxWidth: "480px" }}
           >
-            Brand Strategy takes your brief and searches it from every direction that's ever worked — and sixteen more that have never been tried — before a single validated proposition survives. Evidenced, pressure-tested, ready to present at board level.
+            Brand Strategy searches every direction that's ever worked, and sixteen more that haven't, before one validated proposition survives.
           </p>
 
           <p
             className="text-body mt-4 text-text-secondary"
             style={{ maxWidth: "480px" }}
           >
-            Brand Detonation takes that proposition and builds the complete creative strategy — the territory, the idea, the channel architecture, and the briefs your agency needs to bring it to life.
-          </p>
-
-          <p
-            className="text-body mt-4 text-text-secondary"
-            style={{ maxWidth: "480px" }}
-          >
-            One brief in. Twenty-three professional documents out. Two to four hours.
+            Brand Detonation turns it into a complete creative platform — territory, idea, channel architecture, agency-ready briefs.
           </p>
 
           <ul className="mt-10 flex flex-col gap-3">
@@ -198,7 +191,7 @@ function Index() {
                 className="mt-[9px] inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-primary"
               />
               <span className="text-body text-text-secondary">
-                Over 20 genuinely divergent strategic propositions generated on every brief, before one is chosen
+                Fifty-plus proven methodologies, reasoned toward the strongest defensible answer
               </span>
             </li>
             <li className="flex items-start gap-3">
@@ -207,34 +200,7 @@ function Index() {
                 className="mt-[9px] inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-primary"
               />
               <span className="text-body text-text-secondary">
-                Fifty-plus proven methodologies, reasoned sequentially toward the strongest defensible answer
-              </span>
-            </li>
-            <li className="flex items-start gap-3">
-              <span
-                aria-hidden="true"
-                className="mt-[9px] inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-primary"
-              />
-              <span className="text-body text-text-secondary">
-                Sixteen independent lateral engines, each forbidden from starting where the brief starts — searching for what the evidence alone would never reach
-              </span>
-            </li>
-            <li className="flex items-start gap-3">
-              <span
-                aria-hidden="true"
-                className="mt-[9px] inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-primary"
-              />
-              <span className="text-body text-text-secondary">
-                Calibrated six-dimension scoring, two hard elimination floors — nothing weak survives to reach a human
-              </span>
-            </li>
-            <li className="flex items-start gap-3">
-              <span
-                aria-hidden="true"
-                className="mt-[9px] inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-primary"
-              />
-              <span className="text-body text-text-secondary">
-                Historical territory validation — a capability we haven't seen matched anywhere else
+                Sixteen independent lateral engines, forbidden from starting where the brief starts
               </span>
             </li>
           </ul>
