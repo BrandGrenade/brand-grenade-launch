@@ -39,19 +39,17 @@ export function TopNav({ session }: { session?: SessionContext }) {
     };
   }, [open]);
 
-  const bannerOffset = devModeOn ? 33 : 0;
-
   return (
     <>
-      <div style={{ height: 56 + bannerOffset }} />
+      <div style={{ height: "calc(56px + var(--dev-mode-banner-height, 0px))" }} />
       <nav
         className="fixed left-0 right-0 flex items-center justify-center px-5 sm:px-8"
         style={{
-          top: bannerOffset,
+          top: "var(--dev-mode-banner-height, 0px)",
           height: 56,
           backgroundColor: "#0A0A0A",
           borderBottom: "1px solid #2A2A2A",
-          zIndex: 100,
+          zIndex: 250,
         }}
       >
         <div
