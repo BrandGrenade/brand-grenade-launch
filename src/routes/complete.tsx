@@ -79,6 +79,8 @@ type SessionRow = {
   doc_agency_url: string | null;
   doc_workshop_url: string | null;
   phase_2_status: string | null;
+  updated_at: string | null;
+  created_at: string | null;
   stage_16_vision_output: string | null;
   stage_1_output: string | null;
   stage_2_output: string | null;
@@ -122,6 +124,7 @@ type SessionRow = {
   stage_22_distinctive_assets: string | null;
 };
 
+
 async function openDocument(url: string) {
   const response = await fetch(url);
   const html = await response.text();
@@ -163,7 +166,7 @@ function CompletePage() {
     supabase
       .from("sessions")
       .select(
-        `id, brand_name, category, selected_smp, selected_smp_field_name, user_id, doc_consulting_url, doc_agency_url, doc_workshop_url, phase_2_status, stage_17_selected_territory, stage_18_selected_detonation, stage_22_brand_architecture, stage_22_distinctive_assets, ${FULL_RUN_SESSION_COLUMNS}`,
+        `id, brand_name, category, selected_smp, selected_smp_field_name, user_id, doc_consulting_url, doc_agency_url, doc_workshop_url, phase_2_status, updated_at, created_at, stage_17_selected_territory, stage_18_selected_detonation, stage_22_brand_architecture, stage_22_distinctive_assets, ${FULL_RUN_SESSION_COLUMNS}`,
       )
       .eq("id", sessionId)
       .maybeSingle()
@@ -1243,6 +1246,8 @@ function openHtmlInNewTab(html: string) {
 
 function Phase2Deliverables({ session }: { session: SessionRow }) {
   const [busy, setBusy] = useState<string | null>(null);
+  const [bundleProgress, setBundleProgress] = useState<string | null>(null);
+  const [bundleResult, setBundleResult] = useState<{ filename: string; included: string[]; skipped: string[] } | null>(null);
   const channels = session.stage_21_outputs ?? {};
   const channelKeys = Object.keys(channels);
   const amber = PHASE_2_AMBER_DELIV;
@@ -1266,28 +1271,21 @@ function Phase2Deliverables({ session }: { session: SessionRow }) {
     } finally { setBusy(null); }
   };
 
-  const downloadBundle = () => {
-    setBusy("complete");
+  const downloadAllZip = async () => {
+    setBusy("bundle");
+    setBundleResult(null);
+    setBundleProgress("Preparing…");
     try {
-      // Build phase 1 (consulting) + phase 2 client-side and merge into one tab.
-      const phase1Html = buildPhase1Document(session, "consulting");
-      const phase2Html = buildAllPhase2(session);
-      const extract = (html: string): string => {
-        const m = html.match(/<div class="page">([\s\S]*?)<\/div>\s*<script>/);
-        return m ? m[1] : html;
-      };
-      const brand = session.brand_name ?? "Untitled Brand";
-      const merged = phase1Html.replace(
-        /<div class="page">[\s\S]*?<\/div>\s*<script>/,
-        `<div class="page"><div class="part-label">PHASE 1</div>${extract(phase1Html)}<div class="doc-break"></div><div class="part-label">PHASE 2</div>${extract(phase2Html)}</div><script>`,
-      );
-      // Update the document title for the merged bundle.
-      const titled = merged.replace(/<title>[^<]*<\/title>/, `<title>Complete Brand Grenade — ${brand.replace(/</g, "&lt;")}</title>`);
-      openHtmlInNewTab(titled);
+      const { buildAndDownloadBundle } = await import("@/lib/download-all-bundle");
+      const result = await buildAndDownloadBundle(session, (label) => setBundleProgress(label));
+      setBundleResult(result);
+      setBundleProgress(null);
     } catch (e) {
-      alert(e instanceof Error ? e.message : "Failed to generate bundle");
+      alert(e instanceof Error ? e.message : "Failed to build zip");
+      setBundleProgress(null);
     } finally { setBusy(null); }
   };
+
 
 
 
@@ -1409,14 +1407,22 @@ function Phase2Deliverables({ session }: { session: SessionRow }) {
           }}>
           {busy === "all" ? "Opening…" : "Download All Brand Detonation"}
         </button>
-        <button type="button" onClick={downloadBundle} disabled={busy !== null}
+        <button type="button" onClick={downloadAllZip} disabled={busy !== null}
           style={{
             height: 52, borderRadius: 8, border: `1px solid ${amber}`, background: "transparent",
             color: amber, fontWeight: 700, fontSize: 14, cursor: busy ? "wait" : "pointer",
             letterSpacing: "0.04em",
           }}>
-          {busy === "complete" ? "Opening…" : "Download Complete Brand Grenade"}
+          {busy === "bundle" ? (bundleProgress ?? "Building zip…") : "Download All Strategy (.zip)"}
         </button>
+        {bundleResult && (
+          <div style={{ fontSize: 12, color: "#9CA3AF", lineHeight: 1.6 }}>
+            <div style={{ color: "#D4D4D4", fontWeight: 600 }}>Bundle ready: {bundleResult.filename}</div>
+            <div>Included {bundleResult.included.length} file{bundleResult.included.length === 1 ? "" : "s"}.
+              {bundleResult.skipped.length > 0 && ` Skipped ${bundleResult.skipped.length} (missing source): ${bundleResult.skipped.join(", ")}.`}
+            </div>
+          </div>
+        )}
       </div>
     </section>
   );
