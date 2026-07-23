@@ -90,6 +90,7 @@ export async function sendDemoRequestNotification(input: DemoRequestNotification
       purpose: 'transactional',
       label: 'demo-request',
       idempotency_key: idempotencyKey,
+      unsubscribe_token: unsubscribeToken,
       queued_at: new Date().toISOString(),
     },
   })
