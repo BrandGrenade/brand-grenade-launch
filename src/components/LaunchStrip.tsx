@@ -69,7 +69,7 @@ export function LaunchStrip() {
         aria-label="Platform launch"
         style={{
           position: "fixed",
-          top: 56,
+          top: "calc(56px + var(--dev-mode-banner-height, 0px))",
           left: 0,
           right: 0,
           zIndex: 90,

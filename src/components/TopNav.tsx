@@ -39,19 +39,17 @@ export function TopNav({ session }: { session?: SessionContext }) {
     };
   }, [open]);
 
-  const bannerOffset = devModeOn ? 33 : 0;
-
   return (
     <>
-      <div style={{ height: 56 + bannerOffset }} />
+      <div style={{ height: "calc(56px + var(--dev-mode-banner-height, 0px))" }} />
       <nav
         className="fixed left-0 right-0 flex items-center justify-center px-5 sm:px-8"
         style={{
-          top: bannerOffset,
+          top: "var(--dev-mode-banner-height, 0px)",
           height: 56,
           backgroundColor: "#0A0A0A",
           borderBottom: "1px solid #2A2A2A",
-          zIndex: 100,
+          zIndex: 250,
         }}
       >
         <div
@@ -156,7 +154,29 @@ export function TopNav({ session }: { session?: SessionContext }) {
             </div>
           )}
 
-          
+          <button
+            type="button"
+            onClick={async () => {
+              await signOut();
+              navigate({ to: "/" });
+            }}
+            className="inline-flex items-center justify-center transition-opacity hover:opacity-90"
+            style={{
+              height: 32,
+              padding: "0 12px",
+              borderRadius: 8,
+              border: "1px solid #D4924A",
+              backgroundColor: "#D4924A",
+              color: "#0A0A0A",
+              fontSize: 11,
+              fontWeight: 800,
+              letterSpacing: "0.08em",
+              textTransform: "uppercase",
+              whiteSpace: "nowrap",
+            }}
+          >
+            Sign Out
+          </button>
 
           <div ref={rootRef} className="relative">
 
