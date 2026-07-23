@@ -112,16 +112,19 @@ function Index() {
             )}
 
             <div className="mt-4 text-center">
-              <a
-                href="#request-access"
+              <button
+                type="button"
+                onClick={() => setShowDemo(true)}
                 className="text-body-sm text-primary transition-colors hover:text-primary-hover"
               >
                 Request Demo
-              </a>
+              </button>
             </div>
           </form>
         </div>
       </section>
+
+      {showDemo && <RequestDemoModal onClose={() => setShowDemo(false)} />}
 
       {/* LEFT COLUMN */}
       <section className="order-2 flex w-full flex-col bg-background px-6 py-16 sm:px-10 lg:order-1 lg:w-[55%] lg:p-20">
