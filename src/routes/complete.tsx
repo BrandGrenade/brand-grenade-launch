@@ -1246,6 +1246,8 @@ function openHtmlInNewTab(html: string) {
 
 function Phase2Deliverables({ session }: { session: SessionRow }) {
   const [busy, setBusy] = useState<string | null>(null);
+  const [bundleProgress, setBundleProgress] = useState<string | null>(null);
+  const [bundleResult, setBundleResult] = useState<{ filename: string; included: string[]; skipped: string[] } | null>(null);
   const channels = session.stage_21_outputs ?? {};
   const channelKeys = Object.keys(channels);
   const amber = PHASE_2_AMBER_DELIV;
@@ -1269,28 +1271,21 @@ function Phase2Deliverables({ session }: { session: SessionRow }) {
     } finally { setBusy(null); }
   };
 
-  const downloadBundle = () => {
-    setBusy("complete");
+  const downloadAllZip = async () => {
+    setBusy("bundle");
+    setBundleResult(null);
+    setBundleProgress("Preparing…");
     try {
-      // Build phase 1 (consulting) + phase 2 client-side and merge into one tab.
-      const phase1Html = buildPhase1Document(session, "consulting");
-      const phase2Html = buildAllPhase2(session);
-      const extract = (html: string): string => {
-        const m = html.match(/<div class="page">([\s\S]*?)<\/div>\s*<script>/);
-        return m ? m[1] : html;
-      };
-      const brand = session.brand_name ?? "Untitled Brand";
-      const merged = phase1Html.replace(
-        /<div class="page">[\s\S]*?<\/div>\s*<script>/,
-        `<div class="page"><div class="part-label">PHASE 1</div>${extract(phase1Html)}<div class="doc-break"></div><div class="part-label">PHASE 2</div>${extract(phase2Html)}</div><script>`,
-      );
-      // Update the document title for the merged bundle.
-      const titled = merged.replace(/<title>[^<]*<\/title>/, `<title>Complete Brand Grenade — ${brand.replace(/</g, "&lt;")}</title>`);
-      openHtmlInNewTab(titled);
+      const { buildAndDownloadBundle } = await import("@/lib/download-all-bundle");
+      const result = await buildAndDownloadBundle(session, (label) => setBundleProgress(label));
+      setBundleResult(result);
+      setBundleProgress(null);
     } catch (e) {
-      alert(e instanceof Error ? e.message : "Failed to generate bundle");
+      alert(e instanceof Error ? e.message : "Failed to build zip");
+      setBundleProgress(null);
     } finally { setBusy(null); }
   };
+
 
 
 
