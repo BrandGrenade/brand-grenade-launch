@@ -27,13 +27,17 @@ import { Route as BriefingRoomIndexRouteImport } from './routes/briefing-room.in
 import { Route as BriefIndexRouteImport } from './routes/brief.index'
 import { Route as IntelligenceNewRouteImport } from './routes/intelligence.new'
 import { Route as IntelligenceIdRouteImport } from './routes/intelligence.$id'
+import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
 import { Route as DetonationCanvasRouteImport } from './routes/detonation_.canvas'
 import { Route as BriefingRoomIdRouteImport } from './routes/briefing-room.$id'
 import { Route as BriefNewRouteImport } from './routes/brief.new'
 import { Route as AdminTestsRouteImport } from './routes/admin.tests'
 import { Route as AdminRepositoriesRouteImport } from './routes/admin.repositories'
+import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
 import { Route as IntelligenceIdEditRouteImport } from './routes/intelligence.$id_.edit'
 import { Route as AdminPreviewSlugRouteImport } from './routes/admin.preview.$slug'
+import { Route as LovableEmailTransactionalSendRouteImport } from './routes/lovable/email/transactional/send'
+import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 import { Route as ApiRepoViewDocumentIdRouteImport } from './routes/api/repo/view.$documentId'
 
@@ -127,6 +131,11 @@ const IntelligenceIdRoute = IntelligenceIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => IntelligenceRoute,
 } as any)
+const EmailUnsubscribeRoute = EmailUnsubscribeRouteImport.update({
+  id: '/email/unsubscribe',
+  path: '/email/unsubscribe',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DetonationCanvasRoute = DetonationCanvasRouteImport.update({
   id: '/detonation_/canvas',
   path: '/detonation/canvas',
@@ -152,6 +161,11 @@ const AdminRepositoriesRoute = AdminRepositoriesRouteImport.update({
   path: '/admin/repositories',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LovableEmailSuppressionRoute = LovableEmailSuppressionRouteImport.update({
+  id: '/lovable/email/suppression',
+  path: '/lovable/email/suppression',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IntelligenceIdEditRoute = IntelligenceIdEditRouteImport.update({
   id: '/$id_/edit',
   path: '/$id/edit',
@@ -162,6 +176,18 @@ const AdminPreviewSlugRoute = AdminPreviewSlugRouteImport.update({
   path: '/admin/preview/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LovableEmailTransactionalSendRoute =
+  LovableEmailTransactionalSendRouteImport.update({
+    id: '/lovable/email/transactional/send',
+    path: '/lovable/email/transactional/send',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const LovableEmailTransactionalPreviewRoute =
+  LovableEmailTransactionalPreviewRouteImport.update({
+    id: '/lovable/email/transactional/preview',
+    path: '/lovable/email/transactional/preview',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const LovableEmailQueueProcessRoute =
   LovableEmailQueueProcessRouteImport.update({
     id: '/lovable/email/queue/process',
@@ -193,6 +219,7 @@ export interface FileRoutesByFullPath {
   '/brief/new': typeof BriefNewRoute
   '/briefing-room/$id': typeof BriefingRoomIdRoute
   '/detonation/canvas': typeof DetonationCanvasRoute
+  '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/intelligence/$id': typeof IntelligenceIdRoute
   '/intelligence/new': typeof IntelligenceNewRoute
   '/brief/': typeof BriefIndexRoute
@@ -200,8 +227,11 @@ export interface FileRoutesByFullPath {
   '/intelligence/': typeof IntelligenceIndexRoute
   '/admin/preview/$slug': typeof AdminPreviewSlugRoute
   '/intelligence/$id/edit': typeof IntelligenceIdEditRoute
+  '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/api/repo/view/$documentId': typeof ApiRepoViewDocumentIdRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
+  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
+  '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -219,6 +249,7 @@ export interface FileRoutesByTo {
   '/brief/new': typeof BriefNewRoute
   '/briefing-room/$id': typeof BriefingRoomIdRoute
   '/detonation/canvas': typeof DetonationCanvasRoute
+  '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/intelligence/$id': typeof IntelligenceIdRoute
   '/intelligence/new': typeof IntelligenceNewRoute
   '/brief': typeof BriefIndexRoute
@@ -226,8 +257,11 @@ export interface FileRoutesByTo {
   '/intelligence': typeof IntelligenceIndexRoute
   '/admin/preview/$slug': typeof AdminPreviewSlugRoute
   '/intelligence/$id/edit': typeof IntelligenceIdEditRoute
+  '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/api/repo/view/$documentId': typeof ApiRepoViewDocumentIdRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
+  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
+  '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -249,6 +283,7 @@ export interface FileRoutesById {
   '/brief/new': typeof BriefNewRoute
   '/briefing-room/$id': typeof BriefingRoomIdRoute
   '/detonation_/canvas': typeof DetonationCanvasRoute
+  '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/intelligence/$id': typeof IntelligenceIdRoute
   '/intelligence/new': typeof IntelligenceNewRoute
   '/brief/': typeof BriefIndexRoute
@@ -256,8 +291,11 @@ export interface FileRoutesById {
   '/intelligence/': typeof IntelligenceIndexRoute
   '/admin/preview/$slug': typeof AdminPreviewSlugRoute
   '/intelligence/$id_/edit': typeof IntelligenceIdEditRoute
+  '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/api/repo/view/$documentId': typeof ApiRepoViewDocumentIdRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
+  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
+  '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -280,6 +318,7 @@ export interface FileRouteTypes {
     | '/brief/new'
     | '/briefing-room/$id'
     | '/detonation/canvas'
+    | '/email/unsubscribe'
     | '/intelligence/$id'
     | '/intelligence/new'
     | '/brief/'
@@ -287,8 +326,11 @@ export interface FileRouteTypes {
     | '/intelligence/'
     | '/admin/preview/$slug'
     | '/intelligence/$id/edit'
+    | '/lovable/email/suppression'
     | '/api/repo/view/$documentId'
     | '/lovable/email/queue/process'
+    | '/lovable/email/transactional/preview'
+    | '/lovable/email/transactional/send'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -306,6 +348,7 @@ export interface FileRouteTypes {
     | '/brief/new'
     | '/briefing-room/$id'
     | '/detonation/canvas'
+    | '/email/unsubscribe'
     | '/intelligence/$id'
     | '/intelligence/new'
     | '/brief'
@@ -313,8 +356,11 @@ export interface FileRouteTypes {
     | '/intelligence'
     | '/admin/preview/$slug'
     | '/intelligence/$id/edit'
+    | '/lovable/email/suppression'
     | '/api/repo/view/$documentId'
     | '/lovable/email/queue/process'
+    | '/lovable/email/transactional/preview'
+    | '/lovable/email/transactional/send'
   id:
     | '__root__'
     | '/'
@@ -335,6 +381,7 @@ export interface FileRouteTypes {
     | '/brief/new'
     | '/briefing-room/$id'
     | '/detonation_/canvas'
+    | '/email/unsubscribe'
     | '/intelligence/$id'
     | '/intelligence/new'
     | '/brief/'
@@ -342,8 +389,11 @@ export interface FileRouteTypes {
     | '/intelligence/'
     | '/admin/preview/$slug'
     | '/intelligence/$id_/edit'
+    | '/lovable/email/suppression'
     | '/api/repo/view/$documentId'
     | '/lovable/email/queue/process'
+    | '/lovable/email/transactional/preview'
+    | '/lovable/email/transactional/send'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -363,9 +413,13 @@ export interface RootRouteChildren {
   AdminRepositoriesRoute: typeof AdminRepositoriesRoute
   AdminTestsRoute: typeof AdminTestsRoute
   DetonationCanvasRoute: typeof DetonationCanvasRoute
+  EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
   AdminPreviewSlugRoute: typeof AdminPreviewSlugRoute
+  LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
   ApiRepoViewDocumentIdRoute: typeof ApiRepoViewDocumentIdRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
+  LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
+  LovableEmailTransactionalSendRoute: typeof LovableEmailTransactionalSendRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -496,6 +550,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IntelligenceIdRouteImport
       parentRoute: typeof IntelligenceRoute
     }
+    '/email/unsubscribe': {
+      id: '/email/unsubscribe'
+      path: '/email/unsubscribe'
+      fullPath: '/email/unsubscribe'
+      preLoaderRoute: typeof EmailUnsubscribeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/detonation_/canvas': {
       id: '/detonation_/canvas'
       path: '/detonation/canvas'
@@ -531,6 +592,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminRepositoriesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/lovable/email/suppression': {
+      id: '/lovable/email/suppression'
+      path: '/lovable/email/suppression'
+      fullPath: '/lovable/email/suppression'
+      preLoaderRoute: typeof LovableEmailSuppressionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/intelligence/$id_/edit': {
       id: '/intelligence/$id_/edit'
       path: '/$id/edit'
@@ -543,6 +611,20 @@ declare module '@tanstack/react-router' {
       path: '/admin/preview/$slug'
       fullPath: '/admin/preview/$slug'
       preLoaderRoute: typeof AdminPreviewSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lovable/email/transactional/send': {
+      id: '/lovable/email/transactional/send'
+      path: '/lovable/email/transactional/send'
+      fullPath: '/lovable/email/transactional/send'
+      preLoaderRoute: typeof LovableEmailTransactionalSendRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lovable/email/transactional/preview': {
+      id: '/lovable/email/transactional/preview'
+      path: '/lovable/email/transactional/preview'
+      fullPath: '/lovable/email/transactional/preview'
+      preLoaderRoute: typeof LovableEmailTransactionalPreviewRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/lovable/email/queue/process': {
@@ -623,9 +705,13 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRepositoriesRoute: AdminRepositoriesRoute,
   AdminTestsRoute: AdminTestsRoute,
   DetonationCanvasRoute: DetonationCanvasRoute,
+  EmailUnsubscribeRoute: EmailUnsubscribeRoute,
   AdminPreviewSlugRoute: AdminPreviewSlugRoute,
+  LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
   ApiRepoViewDocumentIdRoute: ApiRepoViewDocumentIdRoute,
   LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
+  LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
+  LovableEmailTransactionalSendRoute: LovableEmailTransactionalSendRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
