@@ -45,6 +45,7 @@ function AdminTestsPage() {
 
           <PreflightFullCheckPanel />
           <PreflightStatusBanner />
+          <Stage20RescorePanel />
         </div>
       </main>
     </div>
