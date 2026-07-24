@@ -147,17 +147,14 @@ function Index() {
       </header>
 
       {/* Hero */}
-      <section className="relative z-10 mx-auto w-full max-w-4xl px-6 pt-20 sm:px-10 sm:pt-28">
-        <div
-          className="animate-fade-in"
-          style={{ animationDuration: "600ms" }}
-        >
+      <section className="relative z-10 mx-auto w-full max-w-4xl px-6 pt-12 sm:px-10 sm:pt-16">
+        <div className="animate-fade-in" style={{ animationDuration: "600ms" }}>
           <span className="text-label text-primary">
             Brand Strategy Intelligence System
           </span>
 
           <h1
-            className="mt-6 font-bold text-text-primary"
+            className="mt-5 font-bold text-text-primary"
             style={{
               fontSize: "clamp(56px, 10vw, 128px)",
               lineHeight: 0.94,
@@ -179,7 +176,7 @@ function Index() {
           </h1>
 
           <p
-            className="mt-10 text-text-secondary"
+            className="mt-7 text-text-secondary"
             style={{ maxWidth: 640, fontSize: 20, lineHeight: 1.55 }}
           >
             Over{" "}
@@ -190,8 +187,8 @@ function Index() {
           </p>
 
           <p
-            className="mt-5 text-text-secondary"
-            style={{ maxWidth: 640, fontSize: 20, lineHeight: 1.55 }}
+            className="mt-4 text-text-secondary"
+            style={{ maxWidth: 640, fontSize: 18, lineHeight: 1.55 }}
           >
             Four rooms. Twenty-eight stages. Six human checkpoints. One brief in — twenty-three professional documents out. Two to four hours.
           </p>
@@ -199,7 +196,7 @@ function Index() {
       </section>
 
       {/* Flow */}
-      <section className="relative z-10 mx-auto w-full max-w-4xl px-6 pt-20 sm:px-10 sm:pt-28">
+      <section className="relative z-10 mx-auto w-full max-w-4xl px-6 pt-10 sm:px-10 sm:pt-14">
         <FlowDiagram />
       </section>
 
@@ -209,20 +206,20 @@ function Index() {
           className="text-text-secondary"
           style={{ maxWidth: 640, fontSize: 20, lineHeight: 1.55 }}
         >
-          <span className="font-semibold text-primary">Brand Strategy</span> searches every direction that's ever worked, and sixteen more that haven't, before one validated proposition survives.
+          <span className="font-semibold text-text-primary">Brand Strategy</span> searches every direction that's ever worked, and sixteen more that haven't, before one validated proposition survives.
         </p>
 
         <p
           className="mt-5 text-text-secondary"
           style={{ maxWidth: 640, fontSize: 20, lineHeight: 1.55 }}
         >
-          <span className="font-semibold text-primary">Brand Detonation</span> turns it into a complete creative platform — territory, idea, channel architecture, agency-ready briefs.
+          <span className="font-semibold text-text-primary">Brand Detonation</span> turns it into a complete creative platform — territory, idea, channel architecture, agency-ready briefs.
         </p>
       </section>
 
       {/* Differentiators */}
-      <section className="relative z-10 mx-auto w-full max-w-4xl px-6 pt-24 sm:px-10 sm:pt-32">
-        <ul className="flex flex-col gap-5">
+      <section className="relative z-10 mx-auto w-full max-w-4xl px-6 pt-20 sm:px-10 sm:pt-24">
+        <ul className="flex flex-col gap-4">
           <DiffCard delay={0}>
             <Stat>
               <CountUp to={50} suffix="+" />
@@ -250,6 +247,7 @@ function Index() {
           </DiffCard>
         </ul>
       </section>
+
 
       {/* CTA */}
       <section className="relative z-10 mx-auto w-full max-w-4xl px-6 pb-32 pt-24 sm:px-10 sm:pt-32">
