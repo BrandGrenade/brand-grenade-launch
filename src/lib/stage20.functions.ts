@@ -254,17 +254,26 @@ export const retryStage20 = createServerFn({ method: "POST" })
     if (error || !session) throw new Error(`Session not found: ${error?.message ?? "no row"}`);
 
     const redirect = data.redirectInstructions["card-1"] ?? "";
-    const system = appendRedirect(STAGE_20_MASTER_DETONATION_BRIEF_PROMPT, redirect);
-    let output = await callClaude({
-      systemPrompt: withPhase2Formatting(system),
-      userMessage: buildStage20UserMessage(session as never),
+    const system = withPhase2Formatting(appendRedirect(STAGE_20_MASTER_DETONATION_BRIEF_PROMPT, redirect));
+    const userMessage = buildStage20UserMessage(session as never);
+    const raw = await callClaude({
+      systemPrompt: system,
+      userMessage,
       maxTokens: 64000,
       sessionId: data.sessionId,
       stageLabel: "Stage 20 (retry)",
       stageNumber: "20",
       stageName: "Master Detonation Brief",
     });
-    output = ensureQualityScoreBlock(output);
+    const scored = await scoreAndMaybeRewrite({
+      briefBody: raw,
+      sessionId: data.sessionId,
+      systemPrompt: system,
+      userMessage,
+      maxTokens: 64000,
+      stageLabel: "Stage 20 (retry)",
+    });
+    const output = scored.output;
     const { error: saveErr } = await supabaseAdmin
       .from("sessions")
       .update({
