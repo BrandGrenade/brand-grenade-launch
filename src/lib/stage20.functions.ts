@@ -384,3 +384,52 @@ export const approveStage20 = createServerFn({ method: "POST" })
     if (upErr) throw new Error(upErr.message);
     return { ok: true };
   });
+
+/** Admin-only: re-score an existing Stage 20 brief with the independent
+ *  scorer against the SAVED stage_20_output, WITHOUT regenerating the brief.
+ *  Strips any prior BRIEF QUALITY SCORE block, runs the scorer once, and
+ *  writes the new block back. No rewrite loop — the brief body is preserved
+ *  verbatim. Requires platform admin (users.is_admin = true). */
+const RescoreInput = z.object({ sessionId: z.string().uuid() });
+
+export const rescoreStage20FromExisting = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => RescoreInput.parse(i))
+  .handler(async ({ data, context }) => {
+    // Platform-admin gate (mirrors repo-admin.functions.ts pattern).
+    const email = typeof context.claims.email === "string" ? context.claims.email : undefined;
+    if (!email) throw new Error("Unauthorized");
+    const { data: adminRow, error: adminErr } = await context.supabase
+      .from("users")
+      .select("id")
+      .eq("email", email)
+      .eq("is_admin", true)
+      .maybeSingle();
+    if (adminErr) throw new Error(adminErr.message);
+    if (!adminRow) throw new Error("Unauthorized");
+
+    const { data: row, error } = await supabaseAdmin
+      .from("sessions")
+      .select("stage_20_output, brand_name")
+      .eq("id", data.sessionId)
+      .single();
+    if (error || !row?.stage_20_output) throw new Error("Stage 20 output not found on this session");
+
+    const briefBody = row.stage_20_output as string;
+    const result = await scoreStage20Brief({ briefBody, sessionId: data.sessionId });
+    const merged = attachScorerBlock(briefBody, result);
+
+    const { error: saveErr } = await supabaseAdmin
+      .from("sessions")
+      .update({ stage_20_output: merged })
+      .eq("id", data.sessionId);
+    if (saveErr) throw new Error(saveErr.message);
+
+    return {
+      sessionId: data.sessionId,
+      brandName: row.brand_name as string | null,
+      score: result.score,
+      justifications: result.justifications,
+      failing: result.failing,
+    };
+  });
