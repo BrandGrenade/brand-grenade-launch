@@ -250,7 +250,7 @@ function Index() {
 
 
       {/* CTA */}
-      <section className="relative z-10 mx-auto w-full max-w-4xl px-6 pb-32 pt-24 sm:px-10 sm:pt-32">
+      <section className="relative z-10 mx-auto w-full max-w-4xl px-6 pb-32 pt-20 sm:px-10 sm:pt-24">
         <button
           type="button"
           onClick={() => setShowDemo(true)}
