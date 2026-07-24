@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { TopNav } from "@/components/TopNav";
 import { PreflightFullCheckPanel } from "@/components/PreflightFullCheckPanel";
 import { PreflightStatusBanner } from "@/components/PreflightStatusBanner";
+import { Stage20RescorePanel } from "@/components/Stage20RescorePanel";
 
 export const Route = createFileRoute("/admin/tests")({
   head: () => ({
