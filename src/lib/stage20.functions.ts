@@ -166,18 +166,28 @@ export const runStage20 = createServerFn({ method: "POST" })
     if (!session.stage_19_output) throw new Error("Stage 19 must complete before Stage 20");
     if (session.stage_20_output) return { output: session.stage_20_output as string };
 
+    const systemPrompt = withPhase2Formatting(STAGE_20_MASTER_DETONATION_BRIEF_PROMPT);
+    const userMessage = buildStage20UserMessage(session as never);
     let output: string;
     try {
-      output = await callClaude({
-        systemPrompt: withPhase2Formatting(STAGE_20_MASTER_DETONATION_BRIEF_PROMPT),
-        userMessage: buildStage20UserMessage(session as never),
+      const raw = await callClaude({
+        systemPrompt,
+        userMessage,
         maxTokens: 64000,
         sessionId: data.sessionId,
         stageLabel: "Stage 20",
         stageNumber: "20",
         stageName: "Master Detonation Brief",
       });
-      output = ensureQualityScoreBlock(output);
+      const scored = await scoreAndMaybeRewrite({
+        briefBody: raw,
+        sessionId: data.sessionId,
+        systemPrompt,
+        userMessage,
+        maxTokens: 64000,
+        stageLabel: "Stage 20",
+      });
+      output = scored.output;
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Stage 20 failed";
       await supabaseAdmin
