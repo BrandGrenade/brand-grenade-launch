@@ -12,13 +12,13 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Explosive strategy. Over 20+ divergent strategic directions — only the strongest survives. Four rooms. Twenty-eight stages. Six human checkpoints.",
+          "Explosive strategy. Over 20 divergent directions — only the strongest survives. One brief in, 23 professional documents out, in 2–4 hours.",
       },
       { property: "og:title", content: "Brand Grenade — Brand Strategy Intelligence System" },
       {
         property: "og:description",
         content:
-          "Explosive strategy. Over 20+ divergent strategic directions — only the strongest survives.",
+          "Explosive strategy. Over 20 divergent directions — only the strongest survives.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -49,40 +49,44 @@ function useInView<T extends Element>(options?: IntersectionObserverInit) {
   return { ref, inView };
 }
 
-function CountUp({
-  to,
-  suffix = "",
-  duration = 1400,
-}: {
-  to: number;
-  suffix?: string;
-  duration?: number;
-}) {
-  const { ref, inView } = useInView<HTMLSpanElement>();
-  const [val, setVal] = useState(0);
-  useEffect(() => {
-    if (!inView) return;
-    let raf = 0;
-    const start = performance.now();
-    const tick = (now: number) => {
-      const t = Math.min(1, (now - start) / duration);
-      // easeOutQuint
-      const eased = 1 - Math.pow(1 - t, 5);
-      setVal(Math.round(to * eased));
-      if (t < 1) raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, [inView, to, duration]);
-  return (
-    <span ref={ref} className="tabular-nums">
-      {val}
-      {suffix}
-    </span>
-  );
-}
-
 /* -------------------- Page -------------------- */
+
+const NODES: Array<{ name: string; caption: string }> = [
+  {
+    name: "Intelligence Lab",
+    caption: "Synthesises every signal into the opportunity nobody's mapped yet.",
+  },
+  {
+    name: "Briefing Room",
+    caption: "Injects the tension the brief was hiding. Forces a real answer, not a comfortable one.",
+  },
+  {
+    name: "Strategy Pipeline",
+    caption: "Builds sixteen divergent strategies. Stress-tests every one until only the strongest survives.",
+  },
+  {
+    name: "Brand Detonation",
+    caption: "Brings the strategy to life — execution-ready, across every channel.",
+  },
+];
+
+const POWERS: React.ReactNode[] = [
+  <>
+    <span className="font-semibold text-text-primary">50+ proven methodologies</span> — strategic frameworks, behavioural science, brand science, cultural and semiotic analysis — reasoned toward the strongest defensible answer.
+  </>,
+  <>
+    <span className="font-semibold text-text-primary">16 independent lateral engines</span>, forbidden from starting where the brief starts.
+  </>,
+  <>
+    <span className="font-semibold text-text-primary">Six-dimension scoring</span> with two hard elimination floors — nothing weak survives.
+  </>,
+  <>
+    <span className="font-semibold text-text-primary">Historical territory validation.</span>
+  </>,
+  <>
+    <span className="font-semibold text-text-primary">28 stages, 6 human checkpoints</span> — every decision traceable.
+  </>,
+];
 
 function Index() {
   const navigate = useNavigate();
@@ -128,7 +132,7 @@ function Index() {
       />
 
       {/* Top bar */}
-      <header className="relative z-10 mx-auto flex w-full max-w-6xl items-center justify-between px-6 pt-8 sm:px-10">
+      <header className="relative z-10 mx-auto flex w-full max-w-6xl items-center justify-between px-6 pt-6 sm:px-10">
         <div className="flex items-center gap-3">
           <BrandGrenadeIcon size={28} />
           <span
@@ -146,18 +150,18 @@ function Index() {
         </Link>
       </header>
 
-      {/* Hero */}
-      <section className="relative z-10 mx-auto w-full max-w-4xl px-6 pt-12 sm:px-10 sm:pt-16">
+      {/* Hero — tight vertical rhythm so the flow appears above the fold */}
+      <section className="relative z-10 mx-auto w-full max-w-6xl px-6 pt-8 sm:px-10 sm:pt-10">
         <div className="animate-fade-in" style={{ animationDuration: "600ms" }}>
           <span className="text-label text-primary">
             Brand Strategy Intelligence System
           </span>
 
           <h1
-            className="mt-5 font-bold text-text-primary"
+            className="mt-3 font-bold text-text-primary"
             style={{
-              fontSize: "clamp(56px, 10vw, 128px)",
-              lineHeight: 0.94,
+              fontSize: "clamp(44px, 7.5vw, 96px)",
+              lineHeight: 0.96,
               letterSpacing: "-0.035em",
             }}
           >
@@ -176,81 +180,55 @@ function Index() {
           </h1>
 
           <p
-            className="mt-7 text-text-secondary"
-            style={{ maxWidth: 640, fontSize: 20, lineHeight: 1.55 }}
+            className="mt-5 text-text-secondary"
+            style={{ maxWidth: 720, fontSize: 20, lineHeight: 1.5 }}
           >
-            Over{" "}
-            <Stat>
-              <CountUp to={20} suffix="+" />
-            </Stat>{" "}
-            divergent strategic directions. Only the strongest survives.
-          </p>
-
-          <p
-            className="mt-4 text-text-secondary"
-            style={{ maxWidth: 640, fontSize: 18, lineHeight: 1.55 }}
-          >
-            Four rooms. Twenty-eight stages. Six human checkpoints. One brief in — twenty-three professional documents out. Two to four hours.
+            Over <span className="font-bold text-primary">20</span> divergent directions. Only the strongest survives.
           </p>
         </div>
       </section>
 
-      {/* Flow */}
-      <section className="relative z-10 mx-auto w-full max-w-4xl px-6 pt-10 sm:px-10 sm:pt-14">
+      {/* Flow — each node owns its caption as one visual unit */}
+      <section className="relative z-10 mx-auto w-full max-w-6xl px-6 pt-8 sm:px-10 sm:pt-10">
         <FlowDiagram />
       </section>
 
-      {/* Products */}
-      <section className="relative z-10 mx-auto w-full max-w-4xl px-6 pt-24 sm:px-10 sm:pt-32">
+      {/* Narrative */}
+      <section className="relative z-10 mx-auto w-full max-w-3xl px-6 pt-20 sm:px-10 sm:pt-24">
         <p
           className="text-text-secondary"
-          style={{ maxWidth: 640, fontSize: 20, lineHeight: 1.55 }}
+          style={{ fontSize: 19, lineHeight: 1.6 }}
         >
-          <span className="font-semibold text-text-primary">Brand Strategy</span> searches every direction that's ever worked, and sixteen more that haven't, before one validated proposition survives.
+          Whatever a brief calls itself, it has already picked an answer. The truth is rarely in the brief — which is why the <span className="font-semibold text-text-primary">Briefing Room</span> exists to find the real one before anything else runs.
         </p>
 
         <p
-          className="mt-5 text-text-secondary"
-          style={{ maxWidth: 640, fontSize: 20, lineHeight: 1.55 }}
+          className="mt-6 text-text-primary"
+          style={{ fontSize: 20, lineHeight: 1.5, fontWeight: 600 }}
         >
-          <span className="font-semibold text-text-primary">Brand Detonation</span> turns it into a complete creative platform — territory, idea, channel architecture, agency-ready briefs.
+          One brief in. <span className="text-primary">23</span> professional documents out. <span className="text-primary">2–4 hours</span>, start to finish.
         </p>
       </section>
 
-      {/* Differentiators */}
-      <section className="relative z-10 mx-auto w-full max-w-4xl px-6 pt-20 sm:px-10 sm:pt-24">
-        <ul className="flex flex-col gap-4">
-          <DiffCard delay={0}>
-            <Stat>
-              <CountUp to={50} suffix="+" />
-            </Stat>{" "}
-            proven methodologies, reasoned toward the strongest defensible answer.
-          </DiffCard>
-          <DiffCard delay={100}>
-            <Stat>
-              <CountUp to={16} />
-            </Stat>{" "}
-            independent lateral engines, forbidden from starting where the brief starts.
-          </DiffCard>
-          <DiffCard delay={200}>
-            Six-dimension scoring, two hard elimination floors — nothing weak survives.
-          </DiffCard>
-          <DiffCard delay={300}>
-            <Stat>
-              <CountUp to={28} />
-            </Stat>{" "}
-            stages,{" "}
-            <Stat>
-              <CountUp to={6} />
-            </Stat>{" "}
-            human checkpoints — every decision traceable.
-          </DiffCard>
+      {/* What powers it */}
+      <section className="relative z-10 mx-auto w-full max-w-3xl px-6 pt-20 sm:px-10 sm:pt-24">
+        <h2
+          className="text-text-primary"
+          style={{ fontSize: 14, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--color-primary)" }}
+        >
+          What powers it
+        </h2>
+        <ul className="mt-6 flex flex-col gap-4">
+          {POWERS.map((content, i) => (
+            <PowerCard key={i} delay={i * 90}>
+              {content}
+            </PowerCard>
+          ))}
         </ul>
       </section>
 
-
       {/* CTA */}
-      <section className="relative z-10 mx-auto w-full max-w-4xl px-6 pb-32 pt-20 sm:px-10 sm:pt-24">
+      <section className="relative z-10 mx-auto w-full max-w-3xl px-6 pb-32 pt-16 sm:px-10 sm:pt-20">
         <button
           type="button"
           onClick={() => setShowDemo(true)}
@@ -263,7 +241,7 @@ function Index() {
           <span className="relative">Request Demo</span>
         </button>
 
-        <p className="mt-20 text-body-sm" style={{ color: "var(--color-text-tertiary)" }}>
+        <p className="mt-16 text-body-sm" style={{ color: "var(--color-text-tertiary)" }}>
           Brand Grenade Strategy Intelligence System
         </p>
       </section>
@@ -275,15 +253,7 @@ function Index() {
 
 /* -------------------- Components -------------------- */
 
-function Stat({ children }: { children: React.ReactNode }) {
-  return (
-    <span className="font-bold text-primary" style={{ fontSize: "1.08em" }}>
-      {children}
-    </span>
-  );
-}
-
-function DiffCard({
+function PowerCard({
   children,
   delay,
 }: {
@@ -298,10 +268,10 @@ function DiffCard({
       style={{
         opacity: inView ? 1 : 0,
         transform: inView ? "translateY(0)" : "translateY(16px)",
-        transition: `opacity 600ms ease-out ${delay}ms, transform 600ms ease-out ${delay}ms, border-color 200ms, background-color 200ms`,
+        transition: `opacity 500ms ease-out ${delay}ms, transform 500ms ease-out ${delay}ms, border-color 200ms, background-color 200ms`,
       }}
     >
-      <span className="text-text-primary" style={{ fontSize: 17, lineHeight: 1.5 }}>
+      <span className="text-text-secondary" style={{ fontSize: 17, lineHeight: 1.5 }}>
         {children}
       </span>
     </li>
@@ -309,19 +279,24 @@ function DiffCard({
 }
 
 function FlowDiagram() {
-  const { ref, inView } = useInView<HTMLDivElement>({ threshold: 0.2 });
-  const nodes = ["Intelligence Lab", "Briefing Room", "Strategy Pipeline", "Creative Engine"];
+  const { ref, inView } = useInView<HTMLDivElement>({ threshold: 0.15 });
   return (
     <div
       ref={ref}
-      className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-stretch sm:gap-0"
-      aria-label="Process flow: Intelligence Lab to Briefing Room to Strategy Pipeline to Creative Engine"
+      className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-stretch sm:gap-0"
+      aria-label="Four-room process flow"
     >
-      {nodes.map((label, i) => (
-        <div key={label} className="contents">
-          <FlowNode label={label} index={i + 1} shown={inView} delay={i * 220} />
-          {i < nodes.length - 1 && (
-            <FlowArrow shown={inView} delay={i * 220 + 110} />
+      {NODES.map((node, i) => (
+        <div key={node.name} className="contents">
+          <FlowNode
+            name={node.name}
+            caption={node.caption}
+            index={i + 1}
+            shown={inView}
+            delay={i * 180}
+          />
+          {i < NODES.length - 1 && (
+            <FlowArrow shown={inView} delay={i * 180 + 90} />
           )}
         </div>
       ))}
@@ -330,36 +305,46 @@ function FlowDiagram() {
 }
 
 function FlowNode({
-  label,
+  name,
+  caption,
   index,
   shown,
   delay,
 }: {
-  label: string;
+  name: string;
+  caption: string;
   index: number;
   shown: boolean;
   delay: number;
 }) {
   return (
     <div
-      className="group relative flex flex-1 cursor-default flex-col justify-between overflow-hidden rounded-lg border border-primary/25 bg-gradient-to-b from-surface-2/80 to-surface-2/40 px-5 py-5 backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/70 hover:from-surface-2 hover:to-surface-2/70 hover:shadow-[0_0_28px_rgba(212,146,74,0.28)]"
+      className="group relative flex flex-1 cursor-default flex-col overflow-hidden rounded-lg border border-primary/25 bg-gradient-to-b from-surface-2/80 to-surface-2/40 px-5 py-5 backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/70 hover:from-surface-2 hover:to-surface-2/70 hover:shadow-[0_0_28px_rgba(212,146,74,0.28)]"
       style={{
-        minHeight: 96,
+        minHeight: 168,
         opacity: shown ? 1 : 0,
         transform: shown ? "translateY(0) scale(1)" : "translateY(8px) scale(0.96)",
         transition: `opacity 500ms ease-out ${delay}ms, transform 500ms cubic-bezier(0.2,0.8,0.2,1) ${delay}ms, border-color 200ms, box-shadow 200ms, background-color 200ms`,
       }}
     >
-      <span
-        aria-hidden
-        className="font-mono text-primary/70 transition-colors group-hover:text-primary"
-        style={{ fontSize: 11, letterSpacing: "0.14em" }}
+      <div className="flex items-center gap-2">
+        <span
+          aria-hidden
+          className="inline-flex h-6 w-6 items-center justify-center rounded border border-primary/40 font-mono text-primary/80 transition-colors group-hover:border-primary group-hover:text-primary"
+          style={{ fontSize: 10, letterSpacing: "0.08em" }}
+        >
+          {String(index).padStart(2, "0")}
+        </span>
+        <span className="text-body-sm font-semibold text-text-primary transition-colors group-hover:text-primary">
+          {name}
+        </span>
+      </div>
+      <p
+        className="mt-3 text-text-secondary"
+        style={{ fontSize: 13.5, lineHeight: 1.5 }}
       >
-        {String(index).padStart(2, "0")}
-      </span>
-      <span className="mt-3 text-body-sm font-semibold text-text-primary transition-colors group-hover:text-primary">
-        {label}
-      </span>
+        {caption}
+      </p>
       <span
         aria-hidden
         className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"
@@ -417,7 +402,7 @@ function FlowArrow({ shown, delay }: { shown: boolean; delay: number }) {
   );
 }
 
-/* -------------------- Modal (unchanged) -------------------- */
+/* -------------------- Modal -------------------- */
 
 function RequestDemoModal({ onClose }: { onClose: () => void }) {
   const [name, setName] = useState("");
