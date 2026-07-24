@@ -1,6 +1,5 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 import { BrandGrenadeIcon } from "@/components/BrandGrenadeIcon";
 import { submitDemoRequest } from "@/lib/demo-request.functions";
@@ -9,24 +8,27 @@ export const Route = createFileRoute("/")({
   component: Index,
   head: () => ({
     meta: [
-      { title: "Brand Grenade" },
+      { title: "Brand Grenade — Brand Strategy Intelligence System" },
       {
         name: "description",
         content:
-          "The first AI strategy methodology that runs as a system. 20 stages. Three human checkpoints. One complete brand strategy platform.",
+          "Explosive strategy. Over 20+ divergent strategic directions — only the strongest survives. Four rooms. Twenty-eight stages. Six human checkpoints.",
       },
+      { property: "og:title", content: "Brand Grenade — Brand Strategy Intelligence System" },
+      {
+        property: "og:description",
+        content:
+          "Explosive strategy. Over 20+ divergent strategic directions — only the strongest survives.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
 });
 
-
 function Index() {
   const navigate = useNavigate();
   const { user, isAuthReady } = useAuth();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [submitting, setSubmitting] = useState(false);
   const [showDemo, setShowDemo] = useState(false);
 
   useEffect(() => {
@@ -35,127 +37,52 @@ function Index() {
     }
   }, [isAuthReady, user, navigate]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (submitting) return;
-    setError("");
-    setSubmitting(true);
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email: email.trim(),
-      password,
-    });
-    setSubmitting(false);
-    if (signInError) {
-      setError("Incorrect email or password");
-      return;
-    }
-    navigate({ to: "/dashboard" });
-  };
-
   return (
-    <main className="flex min-h-screen flex-col lg:flex-row">
-      {/* RIGHT COLUMN — order first so it appears on top on mobile */}
-      <section
-        className="order-1 flex w-full items-center justify-center border-b border-border bg-surface-2 px-6 py-16 sm:px-10 lg:order-2 lg:w-[45%] lg:border-b-0 lg:border-l lg:p-20"
-        aria-labelledby="auth-heading"
-      >
-        <div className="w-full max-w-sm">
-          <span className="text-label text-primary">Access</span>
-          <h2 id="auth-heading" className="text-h2 mt-3 mb-8 text-text-primary">
-            Sign in to continue
-          </h2>
-
-          <form onSubmit={handleSubmit} className="flex flex-col">
-            <label htmlFor="email" className="text-body-sm mb-2 text-text-secondary">
-              Email address
-            </label>
-            <input
-              id="email"
-              type="email"
-              autoComplete="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="input-base h-11"
-              placeholder="you@studio.com"
-            />
-
-            <label htmlFor="password" className="text-body-sm mb-2 mt-4 text-text-secondary">
-              Password
-            </label>
-            <input
-              id="password"
-              type="password"
-              autoComplete="current-password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="input-base h-11"
-              placeholder="••••••••"
-            />
-
-            <button
-              type="submit"
-              disabled={submitting}
-              className="mt-6 inline-flex h-12 items-center justify-center rounded-md bg-primary px-5 text-[14px] font-semibold text-primary-foreground transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface-2 disabled:opacity-60"
-            >
-              {submitting ? "Signing in…" : "Sign In"}
-            </button>
-
-            {error && (
-              <p
-                role="alert"
-                className="text-body-sm mt-3"
-                style={{ color: "var(--color-destructive, #C0392B)" }}
-              >
-                {error}
-              </p>
-            )}
-
-          </form>
+    <main className="min-h-screen bg-background">
+      {/* Top bar */}
+      <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 pt-8 sm:px-10">
+        <div className="flex items-center gap-3">
+          <BrandGrenadeIcon size={28} />
+          <span
+            className="text-text-primary"
+            style={{ fontSize: 18, fontWeight: 700, letterSpacing: "-0.01em" }}
+          >
+            BRAND GRENADE
+          </span>
         </div>
-      </section>
+        <Link
+          to="/login"
+          className="text-body-sm font-semibold text-text-secondary transition-colors hover:text-primary"
+        >
+          Sign in →
+        </Link>
+      </header>
 
-      {showDemo && <RequestDemoModal onClose={() => setShowDemo(false)} />}
-
-      {/* LEFT COLUMN */}
-      <section className="order-2 flex w-full flex-col bg-background px-6 py-10 sm:px-10 lg:order-1 lg:w-[55%] lg:p-12">
-        {/* Top — brand mark */}
-        <div>
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <BrandGrenadeIcon size={32} />
-            <h1
-              className="text-display text-text-primary"
-              style={{ fontSize: "clamp(32px, 5vw, 48px)", lineHeight: 1, margin: 0 }}
-            >
-              BRAND GRENADE
-            </h1>
-          </div>
-          <hr className="mt-5 h-px w-full border-0 bg-border" />
-        </div>
-
-        {/* Middle */}
-        <div className="flex flex-1 flex-col justify-start pt-8 lg:pt-10">
+      <section className="mx-auto w-full max-w-4xl px-6 py-14 sm:px-10 sm:py-20">
+        <div className="mt-4">
+          <hr className="mb-10 h-px w-full border-0 bg-border" />
           <span className="text-label text-primary">
             Brand Strategy Intelligence System
           </span>
 
-          <h2 className="text-h1 mt-3 text-text-primary" style={{ maxWidth: "480px" }}>
+          <h1
+            className="text-display mt-3 text-text-primary"
+            style={{ fontSize: "clamp(40px, 6vw, 64px)", lineHeight: 1.02, letterSpacing: "-0.02em" }}
+          >
             Explosive Strategy.
-          </h2>
+          </h1>
 
-          <p className="text-body-lg mt-5 text-text-secondary" style={{ maxWidth: "560px" }}>
+          <p className="text-body-lg mt-6 text-text-secondary" style={{ maxWidth: 640 }}>
             Over <Stat>20+</Stat> divergent strategic directions. Only the strongest survives.
           </p>
 
-          <p className="text-body-lg mt-4 text-text-secondary" style={{ maxWidth: "560px" }}>
+          <p className="text-body-lg mt-4 text-text-secondary" style={{ maxWidth: 640 }}>
             Four rooms. Twenty-eight stages. Six human checkpoints. One brief in — twenty-three professional documents out. Two to four hours.
           </p>
 
-          {/* Four-node flow visual */}
+          {/* Flow */}
           <div
-            className="mt-8 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:gap-0"
-            style={{ maxWidth: "640px" }}
+            className="mt-10 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:gap-0"
             aria-label="Process flow: Intelligence Lab to Briefing Room to Strategy Pipeline to Creative Engine"
           >
             <FlowNode label="Intelligence Lab" />
@@ -167,15 +94,15 @@ function Index() {
             <FlowNode label="Creative Engine" />
           </div>
 
-          <p className="text-body-lg mt-8 text-text-secondary" style={{ maxWidth: "560px" }}>
+          <p className="text-body-lg mt-10 text-text-secondary" style={{ maxWidth: 640 }}>
             <span className="font-semibold text-primary">Brand Strategy</span> searches every direction that's ever worked, and sixteen more that haven't, before one validated proposition survives.
           </p>
 
-          <p className="text-body-lg mt-4 text-text-secondary" style={{ maxWidth: "560px" }}>
+          <p className="text-body-lg mt-4 text-text-secondary" style={{ maxWidth: 640 }}>
             <span className="font-semibold text-primary">Brand Detonation</span> turns it into a complete creative platform — territory, idea, channel architecture, agency-ready briefs.
           </p>
 
-          <ul className="mt-8 flex flex-col gap-3" style={{ maxWidth: "640px" }}>
+          <ul className="mt-10 flex flex-col gap-3">
             <li className="rounded-md border border-border bg-surface-2 px-5 py-4">
               <span className="text-body-lg text-text-primary">
                 <Stat>50+</Stat> proven methodologies, reasoned toward the strongest defensible answer.
@@ -198,8 +125,7 @@ function Index() {
             </li>
           </ul>
 
-          {/* CTA */}
-          <div className="mt-8" style={{ maxWidth: "640px" }}>
+          <div className="mt-10">
             <button
               type="button"
               onClick={() => setShowDemo(true)}
@@ -208,15 +134,16 @@ function Index() {
               Request Demo
             </button>
           </div>
-        </div>
 
-        {/* Bottom — copyright */}
-        <div className="mt-12">
-          <p className="text-body-sm" style={{ color: "var(--color-text-tertiary)" }}>
-            Brand Grenade Strategy Intelligence System
-          </p>
+          <div className="mt-16">
+            <p className="text-body-sm" style={{ color: "var(--color-text-tertiary)" }}>
+              Brand Grenade Strategy Intelligence System
+            </p>
+          </div>
         </div>
       </section>
+
+      {showDemo && <RequestDemoModal onClose={() => setShowDemo(false)} />}
     </main>
   );
 }
@@ -226,20 +153,6 @@ function Stat({ children }: { children: React.ReactNode }) {
     <span className="font-bold text-primary" style={{ fontSize: "1.08em" }}>
       {children}
     </span>
-  );
-}
-
-function StatCard({ number, label }: { number: string; label: string }) {
-  return (
-    <div className="flex flex-col items-start bg-background px-4 py-4">
-      <span
-        className="font-bold text-primary"
-        style={{ fontSize: "28px", lineHeight: 1.1, letterSpacing: "-0.02em" }}
-      >
-        {number}
-      </span>
-      <span className="text-label mt-2 text-text-tertiary">{label}</span>
-    </div>
   );
 }
 
@@ -253,17 +166,12 @@ function FlowNode({ label }: { label: string }) {
 
 function FlowArrow() {
   return (
-    <div
-      aria-hidden="true"
-      className="flex items-center justify-center text-primary sm:px-2"
-    >
-      {/* Down arrow on mobile, right arrow on desktop */}
+    <div aria-hidden="true" className="flex items-center justify-center text-primary sm:px-2">
       <span className="sm:hidden text-lg leading-none">↓</span>
       <span className="hidden sm:inline text-lg leading-none">→</span>
     </div>
   );
 }
-
 
 function RequestDemoModal({ onClose }: { onClose: () => void }) {
   const [name, setName] = useState("");
@@ -328,9 +236,7 @@ function RequestDemoModal({ onClose }: { onClose: () => void }) {
 
         {done ? (
           <>
-            <p className="text-body-sm text-text-secondary">
-              Thanks — we'll be in touch.
-            </p>
+            <p className="text-body-sm text-text-secondary">Thanks — we'll be in touch.</p>
             <button
               type="button"
               onClick={onClose}

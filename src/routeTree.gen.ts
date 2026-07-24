@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as UnsubscribeRouteImport } from './routes/unsubscribe'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as PipelineRouteImport } from './routes/pipeline'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as KpmgRouteImport } from './routes/kpmg'
 import { Route as IntelligenceRouteImport } from './routes/intelligence'
 import { Route as EyRouteImport } from './routes/ey'
@@ -55,6 +56,11 @@ const SettingsRoute = SettingsRouteImport.update({
 const PipelineRoute = PipelineRouteImport.update({
   id: '/pipeline',
   path: '/pipeline',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const KpmgRoute = KpmgRouteImport.update({
@@ -218,6 +224,7 @@ export interface FileRoutesByFullPath {
   '/ey': typeof EyRoute
   '/intelligence': typeof IntelligenceRouteWithChildren
   '/kpmg': typeof KpmgRoute
+  '/login': typeof LoginRoute
   '/pipeline': typeof PipelineRoute
   '/settings': typeof SettingsRoute
   '/unsubscribe': typeof UnsubscribeRoute
@@ -249,6 +256,7 @@ export interface FileRoutesByTo {
   '/detonation': typeof DetonationRoute
   '/ey': typeof EyRoute
   '/kpmg': typeof KpmgRoute
+  '/login': typeof LoginRoute
   '/pipeline': typeof PipelineRoute
   '/settings': typeof SettingsRoute
   '/unsubscribe': typeof UnsubscribeRoute
@@ -284,6 +292,7 @@ export interface FileRoutesById {
   '/ey': typeof EyRoute
   '/intelligence': typeof IntelligenceRouteWithChildren
   '/kpmg': typeof KpmgRoute
+  '/login': typeof LoginRoute
   '/pipeline': typeof PipelineRoute
   '/settings': typeof SettingsRoute
   '/unsubscribe': typeof UnsubscribeRoute
@@ -320,6 +329,7 @@ export interface FileRouteTypes {
     | '/ey'
     | '/intelligence'
     | '/kpmg'
+    | '/login'
     | '/pipeline'
     | '/settings'
     | '/unsubscribe'
@@ -351,6 +361,7 @@ export interface FileRouteTypes {
     | '/detonation'
     | '/ey'
     | '/kpmg'
+    | '/login'
     | '/pipeline'
     | '/settings'
     | '/unsubscribe'
@@ -385,6 +396,7 @@ export interface FileRouteTypes {
     | '/ey'
     | '/intelligence'
     | '/kpmg'
+    | '/login'
     | '/pipeline'
     | '/settings'
     | '/unsubscribe'
@@ -420,6 +432,7 @@ export interface RootRouteChildren {
   EyRoute: typeof EyRoute
   IntelligenceRoute: typeof IntelligenceRouteWithChildren
   KpmgRoute: typeof KpmgRoute
+  LoginRoute: typeof LoginRoute
   PipelineRoute: typeof PipelineRoute
   SettingsRoute: typeof SettingsRoute
   UnsubscribeRoute: typeof UnsubscribeRoute
@@ -456,6 +469,13 @@ declare module '@tanstack/react-router' {
       path: '/pipeline'
       fullPath: '/pipeline'
       preLoaderRoute: typeof PipelineRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/kpmg': {
@@ -720,6 +740,7 @@ const rootRouteChildren: RootRouteChildren = {
   EyRoute: EyRoute,
   IntelligenceRoute: IntelligenceRouteWithChildren,
   KpmgRoute: KpmgRoute,
+  LoginRoute: LoginRoute,
   PipelineRoute: PipelineRoute,
   SettingsRoute: SettingsRoute,
   UnsubscribeRoute: UnsubscribeRoute,
