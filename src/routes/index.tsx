@@ -54,11 +54,11 @@ function useInView<T extends Element>(options?: IntersectionObserverInit) {
 const NODES: Array<{ name: string; caption: string }> = [
   {
     name: "Intelligence Lab",
-    caption: "Synthesises every signal into the opportunity nobody's mapped yet.",
+    caption: "Synthesises research into strategic brand opportunities.",
   },
   {
     name: "Briefing Room",
-    caption: "Injects the tension the brief was hiding. Forces a real answer, not a comfortable one.",
+    caption: "Injects tension into the brief to force real answers.",
   },
   {
     name: "Strategy Pipeline",
@@ -75,7 +75,7 @@ const POWERS: React.ReactNode[] = [
     <span className="font-semibold text-text-primary">50+ proven methodologies</span> — strategic frameworks, behavioural science, brand science, cultural and semiotic analysis — reasoned toward the strongest defensible answer.
   </>,
   <>
-    <span className="font-semibold text-text-primary">16 independent lateral engines</span>, forbidden from starting where the brief starts.
+    <span className="font-semibold text-text-primary">16 independent thought engines</span>, each hunting a completely different direction.
   </>,
   <>
     <span className="font-semibold text-text-primary">Six-dimension scoring</span> with two hard elimination floors — nothing weak survives.
@@ -196,17 +196,10 @@ function Index() {
       {/* Narrative */}
       <section className="relative z-10 mx-auto w-full max-w-3xl px-6 pt-20 sm:px-10 sm:pt-24">
         <p
-          className="text-text-secondary"
-          style={{ fontSize: 19, lineHeight: 1.6 }}
-        >
-          Whatever a brief calls itself, it has already picked an answer. The truth is rarely in the brief — which is why the <span className="font-semibold text-text-primary">Briefing Room</span> exists to find the real one before anything else runs.
-        </p>
-
-        <p
-          className="mt-6 text-text-primary"
+          className="text-text-primary"
           style={{ fontSize: 20, lineHeight: 1.5, fontWeight: 600 }}
         >
-          One brief in. <span className="text-primary">23</span> professional documents out. <span className="text-primary">2–4 hours</span>, start to finish.
+          Raw research in. <span className="text-primary">23</span> professional documents out. <span className="text-primary">2–4 hours</span>, start to finish.
         </p>
       </section>
 
