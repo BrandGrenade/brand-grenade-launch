@@ -81,7 +81,7 @@ const POWERS: React.ReactNode[] = [
     <span className="font-semibold text-text-primary">Six-dimension scoring</span> with two hard elimination floors — nothing weak survives.
   </>,
   <>
-    <span className="font-semibold text-text-primary">Historical territory validation.</span>
+    <span className="font-semibold text-text-primary">Historical territory validation.</span> Every proposition tested for aligned strategic precedent.
   </>,
   <>
     <span className="font-semibold text-text-primary">28 stages, 6 human checkpoints</span> — every decision traceable.
@@ -183,7 +183,7 @@ function Index() {
             className="mt-5 text-text-secondary"
             style={{ maxWidth: 720, fontSize: 20, lineHeight: 1.5 }}
           >
-            Over <span className="font-bold text-primary">20</span> divergent directions. Only the strongest survives.
+            Four connected rooms. Over <span className="font-bold text-primary">20</span> divergent directions. Only the strongest survives.
           </p>
         </div>
       </section>
