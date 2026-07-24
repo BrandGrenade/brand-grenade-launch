@@ -2,6 +2,12 @@
 // Single one-page brief output with parseable sections and a Brief Quality
 // Score block. Supports section-level regeneration (regenerateStage20Section)
 // in addition to whole-brief retry.
+//
+// SCORING: the BRIEF QUALITY SCORE block is produced by an independent scorer
+// (src/lib/stage20-scorer.ts) that runs AFTER generation. Any model-self-
+// reported score in the generation output is stripped and replaced. The old
+// placeholder that hard-coded 45/50 has been removed — no silent fallback
+// path remains.
 
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
@@ -10,6 +16,7 @@ import { callClaude } from "./claude.server";
 import { STAGE_20_MASTER_DETONATION_BRIEF_PROMPT } from "./stage20-master-detonation-brief-prompt";
 import {
   appendRedirect,
+  appendFinalInstruction,
   formatThreeTruths,
   parseStage20Output,
   joinStage20,
@@ -20,6 +27,13 @@ import {
   smpGoverningBlock,
   withPhase2Formatting,
 } from "./phase2-shared";
+import {
+  scoreStage20Brief,
+  attachScorerBlock,
+  buildRewriteInstruction,
+  stripQualityScoreBlock,
+  type ScorerResult,
+} from "./stage20-scorer";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertSessionOwner } from "@/lib/auth-helpers.server";
 import { assertUpstreamStageOutput } from "./pipeline-integrity";
@@ -94,29 +108,47 @@ function buildStage20UserMessage(s: {
 
 const RunInput = z.object({ sessionId: z.string().uuid() });
 
-// PLACEHOLDER QUALITY SCORE — emitted when the model output does not include
-// a BRIEF QUALITY SCORE block. Composite is set to 45/50 (PASS) so the
-// Checkpoint F approval gate (>= 40) is reachable. Once the real rubric is
-// specified in a follow-up prompt, replace this with a real scoring call.
-function placeholderQualityScore(): string {
-  return [
-    "",
-    "",
-    "BRIEF QUALITY SCORE",
-    "Emotional Clarity: 9/10",
-    "Fame Invitation: 9/10",
-    "Distinctive Asset Integration: 9/10",
-    "Psychological Leverage: 9/10",
-    "Creative SoV Ambition: 9/10",
-    "COMPOSITE: 45/50",
-    "STATUS: PASS",
-    "(Placeholder score — replace when scoring rubric specified.)",
-  ].join("\n");
-}
+/** Score a fresh brief with the independent scorer. If the composite is
+ *  below 40, regenerate the brief once with the failing dimensions as a
+ *  mandatory rewrite instruction, then re-score. Returns the final body
+ *  (with the real BRIEF QUALITY SCORE block appended) and the score. */
+async function scoreAndMaybeRewrite(args: {
+  briefBody: string;
+  sessionId: string;
+  systemPrompt: string;
+  userMessage: string;
+  maxTokens: number;
+  stageLabel: string;
+}): Promise<{ output: string; score: ScorerResult }> {
+  const cleanFirst = stripQualityScoreBlock(args.briefBody);
+  let result = await scoreStage20Brief({
+    briefBody: cleanFirst,
+    sessionId: args.sessionId,
+  });
 
-function ensureQualityScoreBlock(output: string): string {
-  if (/BRIEF\s+QUALITY\s+SCORE/i.test(output)) return output;
-  return `${output.trimEnd()}\n${placeholderQualityScore()}\n`;
+  if (result.score.status === "REVIEW" && result.failing.length > 0) {
+    const rewriteInstruction = buildRewriteInstruction(result);
+    const rewrittenRaw = await callClaude({
+      systemPrompt: appendFinalInstruction(args.systemPrompt, rewriteInstruction),
+      userMessage: args.userMessage,
+      maxTokens: args.maxTokens,
+      sessionId: args.sessionId,
+      stageLabel: `${args.stageLabel} (rewrite)`,
+      stageNumber: "20",
+      stageName: "Master Detonation Brief",
+    });
+    const cleanRewrite = stripQualityScoreBlock(rewrittenRaw);
+    const rescored = await scoreStage20Brief({
+      briefBody: cleanRewrite,
+      sessionId: args.sessionId,
+    });
+    // Keep the higher-composite draft — the rewrite is discarded if it made
+    // things worse. This never returns to the caller with a placeholder.
+    if ((rescored.score.composite ?? 0) >= (result.score.composite ?? 0)) {
+      return { output: attachScorerBlock(cleanRewrite, rescored), score: rescored };
+    }
+  }
+  return { output: attachScorerBlock(cleanFirst, result), score: result };
 }
 
 export const runStage20 = createServerFn({ method: "POST" })
@@ -134,18 +166,28 @@ export const runStage20 = createServerFn({ method: "POST" })
     if (!session.stage_19_output) throw new Error("Stage 19 must complete before Stage 20");
     if (session.stage_20_output) return { output: session.stage_20_output as string };
 
+    const systemPrompt = withPhase2Formatting(STAGE_20_MASTER_DETONATION_BRIEF_PROMPT);
+    const userMessage = buildStage20UserMessage(session as never);
     let output: string;
     try {
-      output = await callClaude({
-        systemPrompt: withPhase2Formatting(STAGE_20_MASTER_DETONATION_BRIEF_PROMPT),
-        userMessage: buildStage20UserMessage(session as never),
+      const raw = await callClaude({
+        systemPrompt,
+        userMessage,
         maxTokens: 64000,
         sessionId: data.sessionId,
         stageLabel: "Stage 20",
         stageNumber: "20",
         stageName: "Master Detonation Brief",
       });
-      output = ensureQualityScoreBlock(output);
+      const scored = await scoreAndMaybeRewrite({
+        briefBody: raw,
+        sessionId: data.sessionId,
+        systemPrompt,
+        userMessage,
+        maxTokens: 64000,
+        stageLabel: "Stage 20",
+      });
+      output = scored.output;
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Stage 20 failed";
       await supabaseAdmin
@@ -212,17 +254,26 @@ export const retryStage20 = createServerFn({ method: "POST" })
     if (error || !session) throw new Error(`Session not found: ${error?.message ?? "no row"}`);
 
     const redirect = data.redirectInstructions["card-1"] ?? "";
-    const system = appendRedirect(STAGE_20_MASTER_DETONATION_BRIEF_PROMPT, redirect);
-    let output = await callClaude({
-      systemPrompt: withPhase2Formatting(system),
-      userMessage: buildStage20UserMessage(session as never),
+    const system = withPhase2Formatting(appendRedirect(STAGE_20_MASTER_DETONATION_BRIEF_PROMPT, redirect));
+    const userMessage = buildStage20UserMessage(session as never);
+    const raw = await callClaude({
+      systemPrompt: system,
+      userMessage,
       maxTokens: 64000,
       sessionId: data.sessionId,
       stageLabel: "Stage 20 (retry)",
       stageNumber: "20",
       stageName: "Master Detonation Brief",
     });
-    output = ensureQualityScoreBlock(output);
+    const scored = await scoreAndMaybeRewrite({
+      briefBody: raw,
+      sessionId: data.sessionId,
+      systemPrompt: system,
+      userMessage,
+      maxTokens: 64000,
+      stageLabel: "Stage 20 (retry)",
+    });
+    const output = scored.output;
     const { error: saveErr } = await supabaseAdmin
       .from("sessions")
       .update({
