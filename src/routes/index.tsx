@@ -243,6 +243,28 @@ function StatCard({ number, label }: { number: string; label: string }) {
   );
 }
 
+function FlowNode({ label }: { label: string }) {
+  return (
+    <div className="flex-1 rounded-md border border-primary/40 bg-surface-2 px-4 py-3 text-center">
+      <span className="text-body-sm font-semibold text-primary">{label}</span>
+    </div>
+  );
+}
+
+function FlowArrow() {
+  return (
+    <div
+      aria-hidden="true"
+      className="flex items-center justify-center text-primary sm:px-2"
+    >
+      {/* Down arrow on mobile, right arrow on desktop */}
+      <span className="sm:hidden text-lg leading-none">↓</span>
+      <span className="hidden sm:inline text-lg leading-none">→</span>
+    </div>
+  );
+}
+
+
 function RequestDemoModal({ onClose }: { onClose: () => void }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
