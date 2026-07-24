@@ -138,7 +138,6 @@ export async function scoreStage20Brief(args: {
     stageNumber: "20",
     stageName: "Master Detonation Brief Scorer",
     skipUniversalWrapper: true,
-    temperature: 0.2,
   });
 
   let parsed: Record<string, unknown>;
