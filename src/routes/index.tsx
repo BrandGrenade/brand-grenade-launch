@@ -294,14 +294,14 @@ function DiffCard({
   return (
     <li
       ref={ref}
-      className="rounded-lg border border-border bg-surface-2/60 px-7 py-6 backdrop-blur-sm transition-all duration-300 hover:border-primary/40 hover:bg-surface-2"
+      className="rounded-lg border border-border bg-surface-2/60 px-6 py-5 backdrop-blur-sm transition-all duration-300 hover:border-primary/40 hover:bg-surface-2"
       style={{
         opacity: inView ? 1 : 0,
         transform: inView ? "translateY(0)" : "translateY(16px)",
         transition: `opacity 600ms ease-out ${delay}ms, transform 600ms ease-out ${delay}ms, border-color 200ms, background-color 200ms`,
       }}
     >
-      <span className="text-text-primary" style={{ fontSize: 18, lineHeight: 1.5 }}>
+      <span className="text-text-primary" style={{ fontSize: 17, lineHeight: 1.5 }}>
         {children}
       </span>
     </li>
@@ -309,20 +309,17 @@ function DiffCard({
 }
 
 function FlowDiagram() {
-  const { ref, inView } = useInView<HTMLDivElement>({ threshold: 0.35 });
+  const { ref, inView } = useInView<HTMLDivElement>({ threshold: 0.2 });
   const nodes = ["Intelligence Lab", "Briefing Room", "Strategy Pipeline", "Creative Engine"];
   return (
     <div
       ref={ref}
-      className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:gap-0"
+      className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-stretch sm:gap-0"
       aria-label="Process flow: Intelligence Lab to Briefing Room to Strategy Pipeline to Creative Engine"
     >
       {nodes.map((label, i) => (
-        <div
-          key={label}
-          className="contents"
-        >
-          <FlowNode label={label} shown={inView} delay={i * 220} />
+        <div key={label} className="contents">
+          <FlowNode label={label} index={i + 1} shown={inView} delay={i * 220} />
           {i < nodes.length - 1 && (
             <FlowArrow shown={inView} delay={i * 220 + 110} />
           )}
@@ -334,25 +331,39 @@ function FlowDiagram() {
 
 function FlowNode({
   label,
+  index,
   shown,
   delay,
 }: {
   label: string;
+  index: number;
   shown: boolean;
   delay: number;
 }) {
   return (
     <div
-      className="group flex-1 cursor-default rounded-md border border-primary/40 bg-surface-2/70 px-4 py-4 text-center backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-primary hover:bg-surface-2 hover:shadow-[0_0_24px_rgba(212,146,74,0.35)]"
+      className="group relative flex flex-1 cursor-default flex-col justify-between overflow-hidden rounded-lg border border-primary/25 bg-gradient-to-b from-surface-2/80 to-surface-2/40 px-5 py-5 backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/70 hover:from-surface-2 hover:to-surface-2/70 hover:shadow-[0_0_28px_rgba(212,146,74,0.28)]"
       style={{
+        minHeight: 96,
         opacity: shown ? 1 : 0,
         transform: shown ? "translateY(0) scale(1)" : "translateY(8px) scale(0.96)",
         transition: `opacity 500ms ease-out ${delay}ms, transform 500ms cubic-bezier(0.2,0.8,0.2,1) ${delay}ms, border-color 200ms, box-shadow 200ms, background-color 200ms`,
       }}
     >
-      <span className="text-body-sm font-semibold text-primary transition-colors group-hover:text-primary-hover">
+      <span
+        aria-hidden
+        className="font-mono text-primary/70 transition-colors group-hover:text-primary"
+        style={{ fontSize: 11, letterSpacing: "0.14em" }}
+      >
+        {String(index).padStart(2, "0")}
+      </span>
+      <span className="mt-3 text-body-sm font-semibold text-text-primary transition-colors group-hover:text-primary">
         {label}
       </span>
+      <span
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+      />
     </div>
   );
 }
@@ -361,15 +372,47 @@ function FlowArrow({ shown, delay }: { shown: boolean; delay: number }) {
   return (
     <div
       aria-hidden="true"
-      className="flex items-center justify-center text-primary sm:px-3"
+      className="flex items-center justify-center sm:px-2"
       style={{
         opacity: shown ? 1 : 0,
         transform: shown ? "scale(1)" : "scale(0.6)",
         transition: `opacity 400ms ease-out ${delay}ms, transform 400ms ease-out ${delay}ms`,
       }}
     >
-      <span className="sm:hidden text-lg leading-none">↓</span>
-      <span className="hidden sm:inline text-lg leading-none">→</span>
+      {/* Horizontal (desktop) */}
+      <svg
+        className="hidden sm:block"
+        width="32"
+        height="10"
+        viewBox="0 0 32 10"
+        fill="none"
+      >
+        <defs>
+          <linearGradient id="flowArrowH" x1="0" x2="1" y1="0" y2="0">
+            <stop offset="0%" stopColor="var(--color-primary)" stopOpacity="0.15" />
+            <stop offset="100%" stopColor="var(--color-primary)" stopOpacity="1" />
+          </linearGradient>
+        </defs>
+        <line x1="0" y1="5" x2="26" y2="5" stroke="url(#flowArrowH)" strokeWidth="1.5" />
+        <path d="M22 1 L30 5 L22 9" stroke="var(--color-primary)" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+      {/* Vertical (mobile) */}
+      <svg
+        className="sm:hidden"
+        width="10"
+        height="24"
+        viewBox="0 0 10 24"
+        fill="none"
+      >
+        <defs>
+          <linearGradient id="flowArrowV" x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0%" stopColor="var(--color-primary)" stopOpacity="0.15" />
+            <stop offset="100%" stopColor="var(--color-primary)" stopOpacity="1" />
+          </linearGradient>
+        </defs>
+        <line x1="5" y1="0" x2="5" y2="18" stroke="url(#flowArrowV)" strokeWidth="1.5" />
+        <path d="M1 14 L5 22 L9 14" stroke="var(--color-primary)" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
     </div>
   );
 }
