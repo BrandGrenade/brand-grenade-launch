@@ -196,17 +196,10 @@ function Index() {
       {/* Narrative */}
       <section className="relative z-10 mx-auto w-full max-w-3xl px-6 pt-20 sm:px-10 sm:pt-24">
         <p
-          className="text-text-secondary"
-          style={{ fontSize: 19, lineHeight: 1.6 }}
-        >
-          Whatever a brief calls itself, it has already picked an answer. The truth is rarely in the brief — which is why the <span className="font-semibold text-text-primary">Briefing Room</span> exists to find the real one before anything else runs.
-        </p>
-
-        <p
-          className="mt-6 text-text-primary"
+          className="text-text-primary"
           style={{ fontSize: 20, lineHeight: 1.5, fontWeight: 600 }}
         >
-          One brief in. <span className="text-primary">23</span> professional documents out. <span className="text-primary">2–4 hours</span>, start to finish.
+          Raw research in. <span className="text-primary">23</span> professional documents out. <span className="text-primary">2–4 hours</span>, start to finish.
         </p>
       </section>
 
