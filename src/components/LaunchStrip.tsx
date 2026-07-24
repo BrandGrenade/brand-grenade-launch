@@ -46,6 +46,9 @@ export const LAUNCH_STRIP_HEIGHT = 68;
 
 export function LaunchStrip() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const { user, isAuthReady } = useAuth();
+  // Hard gate: never render for unauthenticated visitors.
+  if (!isAuthReady || !user) return null;
   if (HIDDEN_PATHS.has(pathname)) return null;
   if (HIDDEN_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + "/"))) return null;
 
