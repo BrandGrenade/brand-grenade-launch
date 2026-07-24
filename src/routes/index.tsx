@@ -144,34 +144,38 @@ function Index() {
             Explosive Strategy.
           </h2>
 
-          <p className="text-body-lg mt-5 text-text-secondary" style={{ maxWidth: "520px" }}>
+          <p className="text-body-lg mt-5 text-text-secondary" style={{ maxWidth: "560px" }}>
             Over <Stat>20+</Stat> divergent strategic directions. Only the strongest survives.
           </p>
 
-          {/* Stats row */}
+          <p className="text-body-lg mt-4 text-text-secondary" style={{ maxWidth: "560px" }}>
+            Four rooms. Twenty-eight stages. Six human checkpoints. One brief in — twenty-three professional documents out. Two to four hours.
+          </p>
+
+          {/* Four-node flow visual */}
           <div
-            className="mt-8 grid grid-cols-2 gap-px overflow-hidden rounded-md border border-border bg-border sm:grid-cols-4"
-            style={{ maxWidth: "560px" }}
+            className="mt-8 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:gap-0"
+            style={{ maxWidth: "640px" }}
+            aria-label="Process flow: Intelligence Lab to Briefing Room to Strategy Pipeline to Creative Engine"
           >
-            <StatCard number="4" label="Rooms" />
-            <StatCard number="28" label="Stages" />
-            <StatCard number="6" label="Checkpoints" />
-            <StatCard number="2–4h" label="End to end" />
+            <FlowNode label="Intelligence Lab" />
+            <FlowArrow />
+            <FlowNode label="Briefing Room" />
+            <FlowArrow />
+            <FlowNode label="Strategy Pipeline" />
+            <FlowArrow />
+            <FlowNode label="Creative Engine" />
           </div>
 
-          <p className="text-body-lg mt-6 text-text-secondary" style={{ maxWidth: "520px" }}>
-            One brief in — <Stat>23</Stat> professional documents out.
+          <p className="text-body-lg mt-8 text-text-secondary" style={{ maxWidth: "560px" }}>
+            <span className="font-semibold text-primary">Brand Strategy</span> searches every direction that's ever worked, and sixteen more that haven't, before one validated proposition survives.
           </p>
 
-          <p className="text-body-lg mt-5 text-text-secondary" style={{ maxWidth: "520px" }}>
-            <span className="font-semibold text-primary">Brand Strategy</span> searches every direction that's ever worked, and <Stat>16</Stat> more that haven't, before one validated proposition survives.
-          </p>
-
-          <p className="text-body-lg mt-4 text-text-secondary" style={{ maxWidth: "520px" }}>
+          <p className="text-body-lg mt-4 text-text-secondary" style={{ maxWidth: "560px" }}>
             <span className="font-semibold text-primary">Brand Detonation</span> turns it into a complete creative platform — territory, idea, channel architecture, agency-ready briefs.
           </p>
 
-          <ul className="mt-10 flex flex-col gap-3" style={{ maxWidth: "560px" }}>
+          <ul className="mt-8 flex flex-col gap-3" style={{ maxWidth: "640px" }}>
             <li className="rounded-md border border-border bg-surface-2 px-5 py-4">
               <span className="text-body-lg text-text-primary">
                 <Stat>50+</Stat> proven methodologies, reasoned toward the strongest defensible answer.
@@ -182,10 +186,20 @@ function Index() {
                 <Stat>16</Stat> independent lateral engines, forbidden from starting where the brief starts.
               </span>
             </li>
+            <li className="rounded-md border border-border bg-surface-2 px-5 py-4">
+              <span className="text-body-lg text-text-primary">
+                Six-dimension scoring, two hard elimination floors — nothing weak survives.
+              </span>
+            </li>
+            <li className="rounded-md border border-border bg-surface-2 px-5 py-4">
+              <span className="text-body-lg text-text-primary">
+                <Stat>28</Stat> stages, <Stat>6</Stat> human checkpoints — every decision traceable.
+              </span>
+            </li>
           </ul>
 
           {/* CTA */}
-          <div className="mt-8" style={{ maxWidth: "560px" }}>
+          <div className="mt-8" style={{ maxWidth: "640px" }}>
             <button
               type="button"
               onClick={() => setShowDemo(true)}
@@ -228,6 +242,28 @@ function StatCard({ number, label }: { number: string; label: string }) {
     </div>
   );
 }
+
+function FlowNode({ label }: { label: string }) {
+  return (
+    <div className="flex-1 rounded-md border border-primary/40 bg-surface-2 px-4 py-3 text-center">
+      <span className="text-body-sm font-semibold text-primary">{label}</span>
+    </div>
+  );
+}
+
+function FlowArrow() {
+  return (
+    <div
+      aria-hidden="true"
+      className="flex items-center justify-center text-primary sm:px-2"
+    >
+      {/* Down arrow on mobile, right arrow on desktop */}
+      <span className="sm:hidden text-lg leading-none">↓</span>
+      <span className="hidden sm:inline text-lg leading-none">→</span>
+    </div>
+  );
+}
+
 
 function RequestDemoModal({ onClose }: { onClose: () => void }) {
   const [name, setName] = useState("");
