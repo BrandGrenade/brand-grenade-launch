@@ -144,7 +144,7 @@ async function scoreAndMaybeRewrite(args: {
     });
     // Keep the higher-composite draft — the rewrite is discarded if it made
     // things worse. This never returns to the caller with a placeholder.
-    if (rescored.score.composite >= result.score.composite) {
+    if ((rescored.score.composite ?? 0) >= (result.score.composite ?? 0)) {
       return { output: attachScorerBlock(cleanRewrite, rescored), score: rescored };
     }
   }
