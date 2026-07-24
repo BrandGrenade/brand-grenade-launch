@@ -1,16 +1,15 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { NewRunGateButton } from "@/components/NewRunGateButton";
+import { useAuth } from "@/context/AuthContext";
 
 /**
- * Persistent launch strip fixed below the top navigation. The four
- * buttons are the platform's ignition keys — Intelligence Lab,
- * Briefing Room, Strategy Pipeline, Creative Engine — with identical
- * visual weight.
- *
- * Hidden on unauthenticated / public pages: /, /auth, /complete.
+ * Persistent launch strip fixed below the top navigation. Structurally
+ * scoped to authenticated sessions — if there is no signed-in user, the
+ * component returns null before any nav markup is emitted, so it cannot
+ * leak onto public views (homepage, /login, /auth, repositories).
  */
 
-const HIDDEN_PATHS = new Set(["/", "/auth", "/complete"]);
+const HIDDEN_PATHS = new Set(["/", "/login", "/auth", "/complete"]);
 const HIDDEN_PREFIXES = ["/ey", "/kpmg", "/deck", "/admin"];
 
 const buttonClass = "launch-strip-button";
@@ -47,6 +46,9 @@ export const LAUNCH_STRIP_HEIGHT = 68;
 
 export function LaunchStrip() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const { user, isAuthReady } = useAuth();
+  // Hard gate: never render for unauthenticated visitors.
+  if (!isAuthReady || !user) return null;
   if (HIDDEN_PATHS.has(pathname)) return null;
   if (HIDDEN_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + "/"))) return null;
 
