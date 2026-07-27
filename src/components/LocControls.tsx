@@ -210,11 +210,17 @@ export function LocControls({ sessionId }: { sessionId: string }) {
               style={{ borderColor: "var(--color-border-strong, #999)" }}
               disabled={busy || locked}
               onClick={async () => {
+                // No force: the server re-checks loc_generated_at staleness and
+                // refuses if the run is still heartbeating. Surface that to the user.
                 try {
-                  await resetLoc({ data: { sessionId, force: true } });
-                } catch { /* ignore — auto-recover already ran */ }
+                  await resetLoc({ data: { sessionId } });
+                } catch (e) {
+                  toast.error(e instanceof Error ? e.message : "Reset refused — run may still be active");
+                  return;
+                }
                 await trigger(true);
               }}
+
             >
               Recover stuck run
             </button>
