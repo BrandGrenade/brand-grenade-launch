@@ -56,10 +56,11 @@ export const runStage9 = createServerFn({ method: "POST" })
     const { data: session, error } = await supabaseAdmin
       .from("sessions")
       .select(
-        "brand_name, category, brief_text, stage_2_output, stage_7_output, stage_8_output, stage_9_output, stage_9_leftofcentre_output, checkpoint_b_confirmed, is_preflight_test",
+        "brand_name, category, brief_text, stage_2_output, stage_7_output, stage_8_output, stage_9_output, stage_9_leftofcentre_output, loc_decision_packages, checkpoint_b_confirmed, is_preflight_test",
       )
       .eq("id", data.sessionId)
       .single();
+
     if (error || !session) throw new Error(`Session not found: ${error?.message ?? "no row"}`);
     if (!session.stage_8_output) throw new Error("Stage 8 output missing — cannot run Stage 9");
     if (session.stage_9_output) {
