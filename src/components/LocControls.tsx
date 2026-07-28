@@ -202,39 +202,45 @@ export function LocControls({ sessionId }: { sessionId: string }) {
         </div>
 
         <div className="ml-auto flex items-center gap-2">
-          {(!status || status.loc_status == null || state === "failed") && (
+          {(!status || status.loc_status == null || state === "failed" || stuck) && (
             <button
               type="button"
               className="rounded border px-3 py-1"
               style={{ borderColor: "var(--color-border-strong, #999)" }}
               disabled={busy || locked}
-              onClick={() => trigger(false)}
+              onClick={() => trigger(state === "failed" || stuck)}
             >
-              {busy ? "Retrying…" : state === "failed" ? "Error — click to retry" : "Generate LOC"}
+              {busy
+                ? "Retrying…"
+                : stuck
+                  ? "Restart LOC"
+                  : state === "failed"
+                    ? "Error — click to retry"
+                    : "Generate LOC"}
             </button>
           )}
-          {stuck && (
+          {state === "running" && (
             <button
               type="button"
               className="rounded border px-3 py-1"
               style={{ borderColor: "var(--color-border-strong, #999)" }}
               disabled={busy || locked}
               onClick={async () => {
-                // No force: the server re-checks loc_generated_at staleness and
-                // refuses if the run is still heartbeating. Surface that to the user.
+                // Force only when the server heartbeat says the run is dead;
+                // otherwise let the server refuse and tell the user why.
                 try {
-                  await resetLoc({ data: { sessionId } });
+                  await resetLoc({ data: { sessionId, force: serverStale } });
                 } catch (e) {
                   toast.error(e instanceof Error ? e.message : "Reset refused — run may still be active");
                   return;
                 }
                 await trigger(true);
               }}
-
             >
-              Recover stuck run
+              {stuck ? "Recover stuck run" : "Force restart"}
             </button>
           )}
+
           {hasFailures && state !== "running" && (
             <button
               type="button"
