@@ -259,20 +259,63 @@ export function parseSMPCards(
   const raw = parsePropositions(primary);
   console.log("Propositions found (stage 12): " + raw.length);
   if (raw.length > 0) {
-    return raw.map((p, idx) => ({
-      cardNumber: idx + 1,
-      smpLine: p.line.replace(/^["""]|["""]$/g, "").trim(),
-      whatItOwns: p.owns,
-      truth: p.truth,
-      whatItChallenges: p.challenge,
-      whatItMakesPossible: p.makesPossible,
-      whatItRequires: p.requires,
-      scores: p.scores,
-      fieldName: p.fieldName,
-      iconicTierStatus: p.iconicTierStatus,
-      pressureTestNote: p.pressureTestNote,
-    }));
+    // Stage 10 is the authoritative source of scores. Stage 12 cards are a
+    // presentation layer and the model sometimes omits or relabels the score
+    // block — backfill from Stage 10 so badges are never blank.
+    const s10 = stage10ForScores ? parseStage10Scores(stage10ForScores) : [];
+    const byField = new Map(s10.map((s) => [s.fieldName.trim().toLowerCase(), s]));
+    const byLine = new Map(s10.map((s) => [s.smpLine.trim().toLowerCase(), s]));
+    const norm = (v: string) =>
+      v
+        .replace(/^["""]|["""]$/g, "")
+        .trim()
+        .toLowerCase();
+
+    return raw.map((p, idx) => {
+      const line = p.line.replace(/^["""]|["""]$/g, "").trim();
+      const match = byLine.get(norm(line)) ?? byField.get(norm(p.fieldName ?? ""));
+      const hasAny =
+        p.scores &&
+        Object.entries(p.scores).some(
+          ([k, v]) => k !== "flags" && typeof v === "number" && Number.isFinite(v),
+        );
+      const scores = hasAny
+        ? p.scores
+        : match
+          ? {
+              fame: Number.isFinite(match.fame) ? match.fame : undefined,
+              truthStrength: Number.isFinite(match.truthStrength) ? match.truthStrength : undefined,
+              competitiveImpossibility: Number.isFinite(match.competitiveImpossibility)
+                ? match.competitiveImpossibility
+                : undefined,
+              brandPermission: Number.isFinite(match.brandPermission) ? match.brandPermission : undefined,
+              cleanAir: Number.isFinite(match.cleanAir) ? match.cleanAir : undefined,
+              commercialPrecedent: Number.isFinite(match.commercialPrecedent)
+                ? match.commercialPrecedent
+                : undefined,
+              weightedComposite: Number.isFinite(match.weightedComposite)
+                ? match.weightedComposite
+                : undefined,
+              flags: match.flags,
+            }
+          : p.scores;
+
+      return {
+        cardNumber: idx + 1,
+        smpLine: line,
+        whatItOwns: p.owns,
+        truth: p.truth,
+        whatItChallenges: p.challenge,
+        whatItMakesPossible: p.makesPossible,
+        whatItRequires: p.requires,
+        scores,
+        fieldName: p.fieldName,
+        iconicTierStatus: p.iconicTierStatus,
+        pressureTestNote: p.pressureTestNote,
+      };
+    });
   }
+
 
   // Fallback: render the VALIDATED propositions from Stage 11 directly so the
   // human always sees the propositions, even when Stage 12 parsing fails or
