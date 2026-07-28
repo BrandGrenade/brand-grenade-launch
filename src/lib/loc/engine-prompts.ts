@@ -11,6 +11,7 @@ import { renderLocInputsBlock } from "./brief-extract";
 import { parseJsonLenient } from "./json-sanitize";
 import type { EngineName } from "./task-types";
 import { LOC_ENGINE_LABEL } from "./task-types";
+import { ANCHOR_JSON_FIELD_SPEC, ANCHOR_PROMPT_RULE } from "../proposition-anchor";
 
 const GOVERNING_PRINCIPLE = `THE GOVERNING PRINCIPLE OF LEFT-OF-CENTRE THINKING
 
@@ -54,7 +55,7 @@ const PROCESS_FIELD_SPEC = `"process": "<MANDATORY — 3-5 sentences showing thi
 // auditable and unfakeable — they must exist BEFORE the proposition is
 // generated. The model cannot skip the move because the intermediate
 // output is required by contract and validated on parse.
-type IntermediateField = { key: string; array?: boolean; minItems?: number; spec: string };
+type IntermediateField = { key: string; array?: boolean; minItems?: number; minChars?: number; spec: string };
 const INTERMEDIATES: Partial<Record<EngineName, IntermediateField[]>> = {
   inversion: [
     { key: "sacred_assumption", spec: `"sacred_assumption": "<MANDATORY — state the single category assumption every brand competes on, in the form: 'Every brand in this category competes on [X].' Written BEFORE the proposition.>"` },
@@ -80,7 +81,8 @@ const INTERMEDIATES: Partial<Record<EngineName, IntermediateField[]>> = {
     { key: "polite_fiction", spec: `"polite_fiction": "<MANDATORY — state the specific thing the entire category depends on nobody saying, in plain language. Written BEFORE the line.>"` },
   ],
   one_word_ownership: [
-    { key: "word_owned", spec: `"word_owned": "<MANDATORY — the single core category word this brand will own. One word only. Written BEFORE any expression is attempted. If after two internal attempts no fully unowned word can be found, select the MOST-AVAILABLE core category word and still return it here. Silence is never acceptable.>"` },
+    { key: "word_owned", minChars: 2, spec: `"word_owned": "<MANDATORY — the single core category word this brand will own. One word only. Written BEFORE any expression is attempted. If after two internal attempts no fully unowned word can be found, select the MOST-AVAILABLE core category word and still return it here. Silence is never acceptable.>"` },
+    { key: "expression_line", spec: `"expression_line": "<MANDATORY — the expression that makes the word felt without ever saying it (8 words or fewer). This is craft evidence, NOT the proposition. The proposition field remains the single owned word.>"` },
     { key: "word_available", spec: `"word_available": "<MANDATORY — one sentence. Either (a) confirm no competitor currently owns this word, naming any brand you considered and ruled out, OR (b) if no fully unowned core category word could be found after two internal attempts, state 'CONTESTED — most-available word chosen' and name the competing brand(s) that partially occupy it. Both forms are valid — never return empty.>"` },
   ],
   invented_authority: [
@@ -96,6 +98,12 @@ function renderIntermediates(engineId: EngineName): string {
 
 const OUTPUT_CONTRACT = (engineId: EngineName) => {
   const intermediates = renderIntermediates(engineId);
+  // Brief-isolated engines see no brand or capability information, so they
+  // cannot anchor while writing. Their anchor is attached post-generation by
+  // the shared gate (see proposition-anchor.server.ts).
+  const anchorField = BRIEF_ISOLATED_ENGINES.has(engineId)
+    ? ""
+    : `  ${ANCHOR_JSON_FIELD_SPEC},\n`;
   const hasIntermediates = intermediates.length > 0;
   const contractPreamble = `OUTPUT — return exactly one JSON object, no prose, no markdown fences. The "process" field${hasIntermediates ? " AND every intermediate field below are" : " is"} MANDATORY${hasIntermediates ? ". Intermediate fields must be produced BEFORE the proposition — they make the move auditable and unfakeable" : " and must show the move being executed"}. Outputs missing any required field are rejected:`;
   if (engineId === "one_word_ownership") {
@@ -104,7 +112,7 @@ const OUTPUT_CONTRACT = (engineId: EngineName) => {
 {
   "engine": "${engineId}",
   ${PROCESS_FIELD_SPEC},
-${intermediates}  "proposition": "<THE PROPOSITION — 8 words or fewer, must NEVER contain the owned word>",
+${intermediates}${anchorField}  "proposition": "<THE OWNED WORD — EXACTLY ONE WORD. No spaces, no hyphens, no punctuation, no article, no phrase. This single word IS the proposition and is what the human sees. It must be identical to \"word_owned\" above. A two-word answer is a FAIL and will be rejected.>",
   "descriptor": "<After the line — one sentence only on what the line does to the reader. Not why the brand owns it. Not how it connects to the brief. What it makes the reader feel or think before they understand it.>"
 }`;
   }
@@ -113,7 +121,7 @@ ${intermediates}  "proposition": "<THE PROPOSITION — 8 words or fewer, must NE
 {
   "engine": "${engineId}",
   ${PROCESS_FIELD_SPEC},
-${intermediates}  "proposition": "<THE LINE — 8 words or fewer>",
+${intermediates}${anchorField}  "proposition": "<THE LINE — 8 words or fewer>",
   "descriptor": "<After the line — one sentence only on what the line does to the reader. Not why the brand owns it. Not how it connects to the brief. What it makes the reader feel or think before they understand it.>"
 }`;
 };
@@ -1044,7 +1052,7 @@ QUALITY TEST: Does this invoke an authority specific enough to be felt rather th
 // brief) before they generate. Their move is designed to start from somewhere
 // other than the brief. They receive only brand, category, and a single-
 // sentence strategic opportunity.
-const BRIEF_ISOLATED_ENGINES: ReadonlySet<EngineName> = new Set<EngineName>([
+export const BRIEF_ISOLATED_ENGINES: ReadonlySet<EngineName> = new Set<EngineName>([
   "inversion",
   "wrong_room",
   "delete_customer",
@@ -1066,7 +1074,9 @@ ${GOVERNING_PRINCIPLE}
 
 ${COPYWRITER_STANDARD}
 
-${OUTPUT_CONTRACT(engine)}`;
+${BRIEF_ISOLATED_ENGINES.has(engine) ? "" : `${ANCHOR_PROMPT_RULE}
+
+`}${OUTPUT_CONTRACT(engine)}`;
 }
 
 export function buildEngineUserMessage(args: {
@@ -1177,6 +1187,12 @@ export type EngineOutput = {
   engine: EngineName;
   process: string;
   proposition: string;
+  /** Universal anchor requirement — set by the shared gate (see proposition-anchor.ts). */
+  anchor?: string;
+  anchorCapability?: string;
+  anchorSource?: "engine" | "post" | "none";
+  anchored?: boolean;
+  anchorReason?: string;
   descriptor: string;
   word?: string;
   // Auditable intermediates (engine-specific — see INTERMEDIATES map)
@@ -1203,8 +1219,9 @@ export function parseEngineOutput(raw: string, engine: EngineName): EngineOutput
   }
   const slice = trimmed.slice(jsonStart, jsonEnd + 1);
   const parsed = parseJsonLenient<Record<string, unknown>>(slice);
-  const proposition = String(parsed.proposition ?? "").trim();
+  let proposition = String(parsed.proposition ?? "").trim();
   const descriptor = String(parsed.descriptor ?? "").trim();
+  const anchor = String(parsed.anchor ?? "").trim();
   const process = String(parsed.process ?? "").trim();
   if (!proposition) {
     throw new Error(`${engine} engine returned empty proposition.`);
@@ -1233,7 +1250,7 @@ export function parseEngineOutput(raw: string, engine: EngineName): EngineOutput
       extras[field.key] = arr;
     } else {
       const str = String(value ?? "").trim();
-      if (!str || str.length < 8) {
+      if (!str || str.length < (field.minChars ?? 8)) {
         throw new Error(
           `${engine} engine missing required intermediate "${field.key}". The move was not executed. Retry required.`,
         );
@@ -1245,6 +1262,15 @@ export function parseEngineOutput(raw: string, engine: EngineName): EngineOutput
   // Backwards compat: one_word_ownership consumers read `.word`. Map from
   // word_owned so decision-package and validation keep working unchanged.
   const legacyWord = String(parsed.word ?? "").trim();
+  if (engine === "one_word_ownership") {
+    const single = proposition.replace(/^["“”'‘’]+|["“”'‘’.!?,]+$/g, "").trim();
+    if (/[\s\-—–_/]/.test(single) || !/^[\p{L}\p{N}]+$/u.test(single)) {
+      throw new Error(
+        `one_word_ownership engine returned "${proposition}" — the proposition must be EXACTLY ONE WORD. Retry required.`,
+      );
+    }
+    proposition = single;
+  }
   const derivedWord =
     engine === "one_word_ownership"
       ? (typeof extras.word_owned === "string" ? extras.word_owned : legacyWord)
@@ -1255,6 +1281,7 @@ export function parseEngineOutput(raw: string, engine: EngineName): EngineOutput
     process,
     proposition,
     descriptor,
+    ...(anchor ? { anchor } : {}),
     ...(derivedWord ? { word: derivedWord } : {}),
     ...extras,
   };

@@ -101,7 +101,7 @@ export const runStage8 = createServerFn({ method: "POST" })
     const { data: session, error } = await supabaseAdmin
       .from("sessions")
       .select(
-        "brand_name, category, stage_2_output, stage_3_output, stage_4b_output, stage_7_output, stage_8_output"
+        "brand_name, category, brief_text, stage_2_output, stage_3_output, stage_4b_output, stage_6_output, stage_7_output, stage_8_output"
       )
       .eq("id", data.sessionId)
       .single();
@@ -318,6 +318,61 @@ export const runStage8 = createServerFn({ method: "POST" })
 
     await setStatus(data.sessionId, null);
 
+    // ---------------------------------------------------------------
+    // DISRUPTION ENGINES — Breach / Fuse / Flashpoint.
+    // Fired PER TERRITORY and merged back into that territory's block as
+    // sibling candidates (base + 3 engines, no pre-selected winner).
+    // Failure here never fails Stage 8.
+    // ---------------------------------------------------------------
+    try {
+      await setStatus(data.sessionId, "Enforcing proposition length gate and running Disruption engines per territory...");
+      const {
+        runStage8DisruptionEngines,
+        mergeCandidatesIntoStage8,
+        splitStage8Blocks,
+        enforceBaseLengthGate,
+        enforceBaseAnchorGate,
+      } = await import("./stage8-disruption.server");
+      let gated = await enforceBaseLengthGate(output, data.sessionId);
+      gated = await enforceBaseAnchorGate(gated, {
+        sessionId: data.sessionId,
+        brandName: session.brand_name,
+        category: session.category,
+        stage4bOutput: session.stage_4b_output,
+        briefText: session.brief_text,
+      });
+      if (gated && gated !== output) {
+        output = gated;
+        yield { replace: output };
+      }
+      const territories = splitStage8Blocks(output);
+
+      if (territories.length > 0) {
+        const byTerritory = await runStage8DisruptionEngines({
+          sessionId: data.sessionId,
+          brandName: session.brand_name,
+          category: session.category,
+          territories,
+          stage2Output: session.stage_2_output,
+          stage4bOutput: session.stage_4b_output,
+          stage6Output: session.stage_6_output,
+          briefText: session.brief_text,
+        });
+        const merged = mergeCandidatesIntoStage8(output, byTerritory);
+        if (merged && merged !== output) {
+          output = merged;
+          yield { replace: output };
+        }
+      }
+      await setStatus(data.sessionId, null);
+    } catch (e) {
+      console.error(
+        `[stage8] session=${data.sessionId} disruption engines failed: ${e instanceof Error ? e.message : String(e)}`,
+      );
+      await setStatus(data.sessionId, null);
+    }
+
+
     const { error: updateErr } = await supabaseAdmin
       .from("sessions")
       .update({ stage_8_output: output, stage_8_error: null, stage_status: "complete:8" })
@@ -388,7 +443,7 @@ export const regenerateStage8Selective = createServerFn({ method: "POST" })
     const { data: session, error } = await supabaseAdmin
       .from("sessions")
       .select(
-        "brand_name, category, stage_2_output, stage_3_output, stage_7_output, stage_8_output",
+        "brand_name, category, brief_text, stage_2_output, stage_3_output, stage_4b_output, stage_6_output, stage_7_output, stage_8_output",
       )
       .eq("id", data.sessionId)
       .single();
@@ -396,8 +451,20 @@ export const regenerateStage8Selective = createServerFn({ method: "POST" })
     if (!session.stage_7_output) throw new Error("Stage 7 output missing");
     if (!session.stage_8_output) throw new Error("Stage 8 output missing");
 
+    // Legacy runs appended a separate bottom-of-document "Disruption Engines"
+    // block. Candidates now live inside each territory, so strip any old tail.
+    const DISRUPTION_MARKER = "DISRUPTION ENGINES (Breach / Fuse / Flashpoint)";
+    const markerIdx = session.stage_8_output.indexOf(DISRUPTION_MARKER);
+    const dividerStart =
+      markerIdx >= 0 ? session.stage_8_output.lastIndexOf("═══", markerIdx) : -1;
+    const coreStage8 =
+      dividerStart >= 0
+        ? session.stage_8_output.slice(0, dividerStart).replace(/\s+$/, "")
+        : session.stage_8_output;
+
+
     const allTerritories = extractTerritoryNames(session.stage_7_output);
-    const existingBlocks = splitPropositionBlocks(session.stage_8_output);
+    const existingBlocks = splitPropositionBlocks(coreStage8);
     const existingByName = new Map(existingBlocks.map((b) => [b.name, b]));
 
     const keepSet = new Set(data.keepTerritories);
@@ -490,6 +557,47 @@ export const regenerateStage8Selective = createServerFn({ method: "POST" })
     }
 
     let merged = mergedBlocks.map((b) => b.markdown).join("\n\n");
+
+    // Re-run the Disruption engines for the regenerated territories only, so
+    // every territory keeps a full four-candidate set (base + 3 engines).
+    try {
+      const {
+        runStage8DisruptionEngines,
+        mergeCandidatesIntoStage8,
+        splitStage8Blocks,
+        enforceBaseLengthGate,
+        enforceBaseAnchorGate,
+      } = await import("./stage8-disruption.server");
+      merged = await enforceBaseLengthGate(merged, data.sessionId);
+      merged = await enforceBaseAnchorGate(merged, {
+        sessionId: data.sessionId,
+        brandName: session.brand_name,
+        category: session.category,
+        stage4bOutput: session.stage_4b_output,
+        briefText: session.brief_text,
+      });
+      const regenBlocks = splitStage8Blocks(merged).filter((b) => !keepSet.has(b.name));
+
+      if (regenBlocks.length > 0) {
+        const byTerritory = await runStage8DisruptionEngines({
+          sessionId: data.sessionId,
+          brandName: session.brand_name,
+          category: session.category,
+          territories: regenBlocks,
+          stage2Output: session.stage_2_output ?? "",
+          stage4bOutput: session.stage_4b_output,
+          stage6Output: session.stage_6_output,
+          briefText: session.brief_text,
+        });
+        merged = mergeCandidatesIntoStage8(merged, byTerritory);
+      }
+    } catch (e) {
+      console.error(
+        `[stage8] session=${data.sessionId} selective disruption re-run failed: ${e instanceof Error ? e.message : String(e)}`,
+      );
+    }
+
+
 
 
 
