@@ -214,7 +214,12 @@ function parsePropositions(rawOutput: string): RawProp[] {
       brandPermission: extractScore(block, "Brand Permission"),
       cleanAir: extractScore(block, "Clean Air"),
       commercialPrecedent: extractScore(block, "Commercial Precedent"),
-      weightedComposite: compMatch ? parseFloat(compMatch[1]) : undefined,
+      weightedComposite: compMatch
+        ? compMatch[2] === "70"
+          ? Math.round((parseFloat(compMatch[1]) / 70) * 1000) / 10
+          : parseFloat(compMatch[1])
+        : undefined,
+
       flags: flags.length ? flags : undefined,
     };
 
