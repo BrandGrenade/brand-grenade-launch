@@ -36,7 +36,13 @@ type StageCompletionRow = {
   current_stage?: number | null;
   status?: string | null;
   stage_status?: string | null;
+  /** Last write to the session row — used to detect a dead "running" marker. */
+  updated_at?: string | null;
 };
+
+/** A "running" marker older than this is treated as abandoned, not live. */
+const RUNNING_MARKER_STALE_MS = 3 * 60 * 1000;
+
 
 function stageRank(stageId: string): number {
   const idx = STAGE_SEQUENCE.indexOf(stageId.toLowerCase() as (typeof STAGE_SEQUENCE)[number]);
