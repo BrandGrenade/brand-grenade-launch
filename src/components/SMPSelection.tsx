@@ -595,7 +595,16 @@ export function SMPSelection({
   }, [stage12Output, stage11Output, stage10Output, stage11ByLine]);
   const locResult = useMemo(() => buildLocCards(locPackages ?? null, coreCards.length), [locPackages, coreCards.length]);
   const locCards = locResult.cards;
-  const locValidationWarning = locResult.validationWarning;
+  const locValidationWarning =
+    locResult.validationWarning ??
+    (locResult.cards.length === 0 && locStatus && locStatus !== "complete"
+      ? locStatus === "failed"
+        ? `Left-of-Centre propositions are missing — LOC generation/validation failed${locError ? `: ${locError}` : "."} Only CORE propositions are shown. Recover LOC at Stage 09 before selecting if you need the LOC pool.`
+        : locStatus === "running"
+          ? "Left-of-Centre propositions are still generating — only CORE propositions are shown right now."
+          : null
+      : null);
+
   const cards = useMemo(() => [...coreCards, ...locCards], [coreCards, locCards]);
   const usingStage11Fallback = useMemo(
     () => (stage12Output ? parsePropositions(stage12Output).length === 0 : true) && coreCards.length > 0,
