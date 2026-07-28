@@ -18,8 +18,10 @@ import {
   buildEngineUserMessage,
   getEngineSystemPrompt,
   parseEngineOutput,
+  BRIEF_ISOLATED_ENGINES,
   type EngineOutput,
 } from "./loc/engine-prompts";
+import { enforcePropositionAnchor } from "./proposition-anchor.server";
 import {
   renderLocFullMarkdown,
   type LocEnginePackage,
@@ -80,12 +82,13 @@ export const runLeftOfCentre = createServerFn({ method: "POST" })
 
     const { data: session, error } = await supabaseAdmin
       .from("sessions")
-      .select("brand_name, category, brief_text, checkpoint_c_confirmed")
+      .select("brand_name, category, brief_text, stage_4b_output, checkpoint_c_confirmed")
       .eq("id", data.sessionId)
       .single<{
         brand_name: string;
         category: string;
         brief_text: string;
+        stage_4b_output: string | null;
         checkpoint_c_confirmed: boolean | null;
       }>();
     if (error || !session) {
