@@ -91,7 +91,7 @@ It requires ${args.brandName} to commit to the truth behind this line consistent
 STRATEGIC QUALITY SCORES (from independent evaluation)
 ${scoresBlock}
 
-Note: These scores reflect independent strategic evaluation across seven dimensions — not a preference ranking. A higher composite score does not mean this is the right proposition for this brand. That decision involves strategic considerations only the team can weigh.
+Note: These scores reflect independent strategic evaluation across six weighted dimensions, expressed as a composite out of 100 — not a preference ranking. A higher composite score does not mean this is the right proposition for this brand. That decision involves strategic considerations only the team can weigh.
 
 ═══════════════════════════════════════════════════
 
