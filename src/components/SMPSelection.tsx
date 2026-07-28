@@ -200,8 +200,11 @@ function parsePropositions(rawOutput: string): RawProp[] {
       "\\[METADATA\\]",
     ]);
 
-    const compositeRe = /(?:Weighted\s+)?Composite\s*:\s*(\d+(?:\.\d+)?)\s*\/\s*100/i;
+    // Accept markdown wrappers and legacy /70 composites (rescaled to /100).
+    const compositeRe =
+      /(?:Weighted\s+)?Composite(?:\s+Score)?[\s*_:\-—–]+(\d+(?:\.\d+)?)\s*\/\s*(100|70)/i;
     const compMatch = block.match(compositeRe);
+
     const flagRe = /⚠\s+[A-Z][A-Z\s]+:[^\n]+/g;
     const flags = Array.from(block.matchAll(flagRe), (m) => m[0].trim());
     const scores: SMPCard["scores"] = {
