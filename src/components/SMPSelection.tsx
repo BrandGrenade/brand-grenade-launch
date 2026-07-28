@@ -536,6 +536,8 @@ export function SMPSelection({
   stage11Output,
   stage10Output,
   locPackages,
+  locStatus,
+  locError,
   onSelect,
   onResubmit,
   resubmitting = false,
@@ -550,11 +552,16 @@ export function SMPSelection({
    *  pass the six-dimension floors (Truth Strength >= 5, Competitive
    *  Impossibility >= 6) are shown. */
   locPackages?: LocEnginePackage[] | null;
+  /** session.loc_status — used to explain an empty LOC pool instead of
+   *  silently showing CORE only. */
+  locStatus?: string | null;
+  locError?: string | null;
   onSelect: (payload: SMPSelectionPayload) => void;
   onResubmit?: (feedback: string) => void | Promise<void>;
   resubmitting?: boolean;
   /** True while Stage 12 Claude card formatting is still streaming in the background. */
   enhancing?: boolean;
+
 }) {
   const stage11ByLine = useMemo(() => {
     if (!stage11Output) return new Map<string, Stage11Verdict>();
