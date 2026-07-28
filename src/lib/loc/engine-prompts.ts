@@ -55,7 +55,7 @@ const PROCESS_FIELD_SPEC = `"process": "<MANDATORY — 3-5 sentences showing thi
 // auditable and unfakeable — they must exist BEFORE the proposition is
 // generated. The model cannot skip the move because the intermediate
 // output is required by contract and validated on parse.
-type IntermediateField = { key: string; array?: boolean; minItems?: number; spec: string };
+type IntermediateField = { key: string; array?: boolean; minItems?: number; minChars?: number; spec: string };
 const INTERMEDIATES: Partial<Record<EngineName, IntermediateField[]>> = {
   inversion: [
     { key: "sacred_assumption", spec: `"sacred_assumption": "<MANDATORY — state the single category assumption every brand competes on, in the form: 'Every brand in this category competes on [X].' Written BEFORE the proposition.>"` },
@@ -81,7 +81,7 @@ const INTERMEDIATES: Partial<Record<EngineName, IntermediateField[]>> = {
     { key: "polite_fiction", spec: `"polite_fiction": "<MANDATORY — state the specific thing the entire category depends on nobody saying, in plain language. Written BEFORE the line.>"` },
   ],
   one_word_ownership: [
-    { key: "word_owned", spec: `"word_owned": "<MANDATORY — the single core category word this brand will own. One word only. Written BEFORE any expression is attempted. If after two internal attempts no fully unowned word can be found, select the MOST-AVAILABLE core category word and still return it here. Silence is never acceptable.>"` },
+    { key: "word_owned", minChars: 2, spec: `"word_owned": "<MANDATORY — the single core category word this brand will own. One word only. Written BEFORE any expression is attempted. If after two internal attempts no fully unowned word can be found, select the MOST-AVAILABLE core category word and still return it here. Silence is never acceptable.>"` },
     { key: "word_available", spec: `"word_available": "<MANDATORY — one sentence. Either (a) confirm no competitor currently owns this word, naming any brand you considered and ruled out, OR (b) if no fully unowned core category word could be found after two internal attempts, state 'CONTESTED — most-available word chosen' and name the competing brand(s) that partially occupy it. Both forms are valid — never return empty.>"` },
   ],
   invented_authority: [
@@ -111,7 +111,7 @@ const OUTPUT_CONTRACT = (engineId: EngineName) => {
 {
   "engine": "${engineId}",
   ${PROCESS_FIELD_SPEC},
-${intermediates}${anchorField}  "proposition": "<THE PROPOSITION — 8 words or fewer, must NEVER contain the owned word>",
+${intermediates}${anchorField}  "proposition": "<THE OWNED WORD — EXACTLY ONE WORD. No spaces, no hyphens, no punctuation, no article, no phrase. This single word IS the proposition and is what the human sees. It must be identical to \"word_owned\" above. A two-word answer is a FAIL and will be rejected.>",
   "descriptor": "<After the line — one sentence only on what the line does to the reader. Not why the brand owns it. Not how it connects to the brief. What it makes the reader feel or think before they understand it.>"
 }`;
   }
@@ -1218,7 +1218,7 @@ export function parseEngineOutput(raw: string, engine: EngineName): EngineOutput
   }
   const slice = trimmed.slice(jsonStart, jsonEnd + 1);
   const parsed = parseJsonLenient<Record<string, unknown>>(slice);
-  const proposition = String(parsed.proposition ?? "").trim();
+  let proposition = String(parsed.proposition ?? "").trim();
   const descriptor = String(parsed.descriptor ?? "").trim();
   const anchor = String(parsed.anchor ?? "").trim();
   const process = String(parsed.process ?? "").trim();
@@ -1249,7 +1249,7 @@ export function parseEngineOutput(raw: string, engine: EngineName): EngineOutput
       extras[field.key] = arr;
     } else {
       const str = String(value ?? "").trim();
-      if (!str || str.length < 8) {
+      if (!str || str.length < (field.minChars ?? 8)) {
         throw new Error(
           `${engine} engine missing required intermediate "${field.key}". The move was not executed. Retry required.`,
         );
@@ -1261,6 +1261,15 @@ export function parseEngineOutput(raw: string, engine: EngineName): EngineOutput
   // Backwards compat: one_word_ownership consumers read `.word`. Map from
   // word_owned so decision-package and validation keep working unchanged.
   const legacyWord = String(parsed.word ?? "").trim();
+  if (engine === "one_word_ownership") {
+    const single = proposition.replace(/^["“”'‘’]+|["“”'‘’.!?,]+$/g, "").trim();
+    if (/[\s\-—–_/]/.test(single) || !/^[\p{L}\p{N}]+$/u.test(single)) {
+      throw new Error(
+        `one_word_ownership engine returned "${proposition}" — the proposition must be EXACTLY ONE WORD. Retry required.`,
+      );
+    }
+    proposition = single;
+  }
   const derivedWord =
     engine === "one_word_ownership"
       ? (typeof extras.word_owned === "string" ? extras.word_owned : legacyWord)
