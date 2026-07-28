@@ -56,10 +56,11 @@ export const runStage9 = createServerFn({ method: "POST" })
     const { data: session, error } = await supabaseAdmin
       .from("sessions")
       .select(
-        "brand_name, category, brief_text, stage_2_output, stage_7_output, stage_8_output, stage_9_output, stage_9_leftofcentre_output, checkpoint_b_confirmed, is_preflight_test",
+        "brand_name, category, brief_text, stage_2_output, stage_7_output, stage_8_output, stage_9_output, stage_9_leftofcentre_output, loc_decision_packages, checkpoint_b_confirmed, is_preflight_test",
       )
       .eq("id", data.sessionId)
       .single();
+
     if (error || !session) throw new Error(`Session not found: ${error?.message ?? "no row"}`);
     if (!session.stage_8_output) throw new Error("Stage 8 output missing — cannot run Stage 9");
     if (session.stage_9_output) {
@@ -158,11 +159,52 @@ export const runStage9 = createServerFn({ method: "POST" })
     // affordance separately.
     const { data: locRow } = await supabaseAdmin
       .from("sessions")
-      .select("stage_9_leftofcentre_output")
+      .select("stage_9_leftofcentre_output, loc_decision_packages")
       .eq("id", data.sessionId)
-      .single<{ stage_9_leftofcentre_output: string | null }>();
+      .single<{
+        stage_9_leftofcentre_output: string | null;
+        loc_decision_packages: unknown;
+      }>();
     const leftOfCentre = locRow?.stage_9_leftofcentre_output ?? "";
     if (leftOfCentre) yield { delta: leftOfCentre };
+
+    // ── ITEM 6 — LOC candidates routed through the SAME Stage 9 logic ──
+    // Batched (chunks of 5, fired in parallel) rather than one enlarged call,
+    // so token budget and wall clock stay safe. Merged into stage_9_output so
+    // Stage 10 scores Funnel and LOC propositions on equal footing.
+    let locDistinctiveness = "";
+    try {
+      const { runStage9LocBatches, extractLocCandidates } = await import(
+        "./stage9-loc-batch.server"
+      );
+      const candidates = extractLocCandidates(locRow?.loc_decision_packages);
+      if (candidates.length > 0) {
+        await setRetryStatus(
+          data.sessionId,
+          `Running Stage 9 distinctiveness pass over ${candidates.length} Left-of-Centre candidates...`,
+        );
+        locDistinctiveness = await runStage9LocBatches({
+          sessionId: data.sessionId,
+          brandName: session.brand_name,
+          category: session.category,
+          cmm: session.stage_2_output ?? "",
+          stage7DominantSignal: session.stage_7_output ?? undefined,
+          candidates,
+          competitorOwnedConditionalWords: coreCompetitorOwnedConditional,
+        });
+        if (locDistinctiveness) {
+          output = `${output}${locDistinctiveness}`;
+          yield { delta: locDistinctiveness };
+        }
+      }
+    } catch (e) {
+      console.error(
+        `[stage9] session=${data.sessionId} LOC distinctiveness batch failed: ${
+          e instanceof Error ? e.message : String(e)
+        }`,
+      );
+    }
+    await setRetryStatus(data.sessionId, null);
 
     const combined = output + leftOfCentre;
 
@@ -175,6 +217,7 @@ export const runStage9 = createServerFn({ method: "POST" })
       } as never)
       .eq("id", data.sessionId);
     if (updateErr) throw new Error(`Failed to save Stage 9 output: ${updateErr.message}`);
+
 
     yield {
       done: true as const,
