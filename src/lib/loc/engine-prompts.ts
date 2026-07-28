@@ -1,4 +1,4 @@
-// The thirteen LOC engines. Each engine uses one generative tool to find
+// The twelve LOC engines. Each engine uses one generative tool to find
 // territory the brief would never produce. Each engine is forbidden
 // from starting from the brief, the category, the customer, or the
 // market.
@@ -11,10 +11,11 @@ import { renderLocInputsBlock } from "./brief-extract";
 import { parseJsonLenient } from "./json-sanitize";
 import type { EngineName } from "./task-types";
 import { LOC_ENGINE_LABEL } from "./task-types";
+import { ANCHOR_JSON_FIELD_SPEC, ANCHOR_PROMPT_RULE } from "../proposition-anchor";
 
 const GOVERNING_PRINCIPLE = `THE GOVERNING PRINCIPLE OF LEFT-OF-CENTRE THINKING
 
-This sits above all thirteen engines and governs every one.
+This sits above all twelve engines and governs every one.
 
 The core pipeline starts from what is known. It reads the brief, absorbs the evidence, applies validated frameworks, and reasons toward a proposition. Its output is always defensible. Its limitation is structural — it can only find what the evidence already points toward. It cannot find what nobody has thought to look for yet.
 
@@ -96,6 +97,12 @@ function renderIntermediates(engineId: EngineName): string {
 
 const OUTPUT_CONTRACT = (engineId: EngineName) => {
   const intermediates = renderIntermediates(engineId);
+  // Brief-isolated engines see no brand or capability information, so they
+  // cannot anchor while writing. Their anchor is attached post-generation by
+  // the shared gate (see proposition-anchor.server.ts).
+  const anchorField = BRIEF_ISOLATED_ENGINES.has(engineId)
+    ? ""
+    : `  ${ANCHOR_JSON_FIELD_SPEC},\n`;
   const hasIntermediates = intermediates.length > 0;
   const contractPreamble = `OUTPUT — return exactly one JSON object, no prose, no markdown fences. The "process" field${hasIntermediates ? " AND every intermediate field below are" : " is"} MANDATORY${hasIntermediates ? ". Intermediate fields must be produced BEFORE the proposition — they make the move auditable and unfakeable" : " and must show the move being executed"}. Outputs missing any required field are rejected:`;
   if (engineId === "one_word_ownership") {
@@ -104,7 +111,7 @@ const OUTPUT_CONTRACT = (engineId: EngineName) => {
 {
   "engine": "${engineId}",
   ${PROCESS_FIELD_SPEC},
-${intermediates}  "proposition": "<THE PROPOSITION — 8 words or fewer, must NEVER contain the owned word>",
+${intermediates}${anchorField}  "proposition": "<THE PROPOSITION — 8 words or fewer, must NEVER contain the owned word>",
   "descriptor": "<After the line — one sentence only on what the line does to the reader. Not why the brand owns it. Not how it connects to the brief. What it makes the reader feel or think before they understand it.>"
 }`;
   }
@@ -113,7 +120,7 @@ ${intermediates}  "proposition": "<THE PROPOSITION — 8 words or fewer, must NE
 {
   "engine": "${engineId}",
   ${PROCESS_FIELD_SPEC},
-${intermediates}  "proposition": "<THE LINE — 8 words or fewer>",
+${intermediates}${anchorField}  "proposition": "<THE LINE — 8 words or fewer>",
   "descriptor": "<After the line — one sentence only on what the line does to the reader. Not why the brand owns it. Not how it connects to the brief. What it makes the reader feel or think before they understand it.>"
 }`;
 };
@@ -1033,6 +1040,8 @@ Authority invented: the Singapore Girl — a figure of composed, unhurried, atte
 
 ---
 
+Typecheck clean. Deploy to production now. Confirm when done with confirmation that all thirteen ENGINE_MOVES blocks have been updated and the expanded worked examples are being passed to the model in each engine's system prompt.
+
 WHAT FAILURE LOOKS LIKE: "As recommended by leading experts." This claims authority without inventing it. "Leading experts" is vague enough to be meaningless. A true INVENTED AUTHORITY line names or invokes a specific figure, moment, or standard with enough specificity that the authority feels real regardless of whether it is.
 
 QUALITY TEST: Does this invoke an authority specific enough to be felt rather than understood? If the authority could apply to any brand in this category — it is not specific enough. If the authority is so specifically matched to this brand that the implied endorsement feels inevitable — the move has worked. Does this output demonstrate the same move type as the worked examples — or does it merely resemble them superficially? If the move was not executed — reject and start again.`,
@@ -1044,7 +1053,7 @@ QUALITY TEST: Does this invoke an authority specific enough to be felt rather th
 // brief) before they generate. Their move is designed to start from somewhere
 // other than the brief. They receive only brand, category, and a single-
 // sentence strategic opportunity.
-const BRIEF_ISOLATED_ENGINES: ReadonlySet<EngineName> = new Set<EngineName>([
+export const BRIEF_ISOLATED_ENGINES: ReadonlySet<EngineName> = new Set<EngineName>([
   "inversion",
   "wrong_room",
   "delete_customer",
@@ -1056,7 +1065,7 @@ export function getEngineSystemPrompt(engine: EngineName): string {
   // Reordered: ENGINE_MOVES first (dominant), then GOVERNING_PRINCIPLE,
   // then COPYWRITER_STANDARD last. The move is the instruction — the two
   // shared blocks are filters applied to what the move produces.
-  return `You are ${LOC_ENGINE_LABEL[engine]}, one of thirteen Left-of-Centre engines.
+  return `You are ${LOC_ENGINE_LABEL[engine]}, one of twelve Left-of-Centre engines.
 
 ${ENGINE_MOVES[engine]}
 
@@ -1066,7 +1075,9 @@ ${GOVERNING_PRINCIPLE}
 
 ${COPYWRITER_STANDARD}
 
-${OUTPUT_CONTRACT(engine)}`;
+${BRIEF_ISOLATED_ENGINES.has(engine) ? "" : `${ANCHOR_PROMPT_RULE}
+
+`}${OUTPUT_CONTRACT(engine)}`;
 }
 
 export function buildEngineUserMessage(args: {
@@ -1177,6 +1188,12 @@ export type EngineOutput = {
   engine: EngineName;
   process: string;
   proposition: string;
+  /** Universal anchor requirement — set by the shared gate (see proposition-anchor.ts). */
+  anchor?: string;
+  anchorCapability?: string;
+  anchorSource?: "engine" | "post" | "none";
+  anchored?: boolean;
+  anchorReason?: string;
   descriptor: string;
   word?: string;
   // Auditable intermediates (engine-specific — see INTERMEDIATES map)
@@ -1205,6 +1222,7 @@ export function parseEngineOutput(raw: string, engine: EngineName): EngineOutput
   const parsed = parseJsonLenient<Record<string, unknown>>(slice);
   const proposition = String(parsed.proposition ?? "").trim();
   const descriptor = String(parsed.descriptor ?? "").trim();
+  const anchor = String(parsed.anchor ?? "").trim();
   const process = String(parsed.process ?? "").trim();
   if (!proposition) {
     throw new Error(`${engine} engine returned empty proposition.`);
@@ -1255,6 +1273,7 @@ export function parseEngineOutput(raw: string, engine: EngineName): EngineOutput
     process,
     proposition,
     descriptor,
+    ...(anchor ? { anchor } : {}),
     ...(derivedWord ? { word: derivedWord } : {}),
     ...extras,
   };
