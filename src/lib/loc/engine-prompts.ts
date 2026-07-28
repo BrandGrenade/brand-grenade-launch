@@ -82,6 +82,7 @@ const INTERMEDIATES: Partial<Record<EngineName, IntermediateField[]>> = {
   ],
   one_word_ownership: [
     { key: "word_owned", minChars: 2, spec: `"word_owned": "<MANDATORY — the single core category word this brand will own. One word only. Written BEFORE any expression is attempted. If after two internal attempts no fully unowned word can be found, select the MOST-AVAILABLE core category word and still return it here. Silence is never acceptable.>"` },
+    { key: "expression_line", spec: `"expression_line": "<MANDATORY — the expression that makes the word felt without ever saying it (8 words or fewer). This is craft evidence, NOT the proposition. The proposition field remains the single owned word.>"` },
     { key: "word_available", spec: `"word_available": "<MANDATORY — one sentence. Either (a) confirm no competitor currently owns this word, naming any brand you considered and ruled out, OR (b) if no fully unowned core category word could be found after two internal attempts, state 'CONTESTED — most-available word chosen' and name the competing brand(s) that partially occupy it. Both forms are valid — never return empty.>"` },
   ],
   invented_authority: [
