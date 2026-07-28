@@ -267,6 +267,39 @@ export const runLeftOfCentre = createServerFn({ method: "POST" })
         throw new Error("All LOC engines failed to return output.");
       }
 
+      // UNIVERSAL ANCHOR GATE — every proposition passes through the single
+      // shared gate (src/lib/proposition-anchor.server.ts). The five
+      // brief-isolated engines generate with zero brand or capability
+      // information, so they are anchored POST-generation.
+      const capabilityEvidence = [session.stage_4b_output, session.brief_text]
+        .filter(Boolean)
+        .join("\n\n")
+        .slice(0, 12000);
+      await Promise.all(
+        successful.map(async (r) => {
+          const verdict = await enforcePropositionAnchor({
+            sessionId: data.sessionId,
+            proposition: r.output.proposition,
+            suppliedAnchor: r.output.anchor ?? null,
+            descriptor: r.output.descriptor,
+            brandName: session.brand_name,
+            category: session.category,
+            capabilityEvidence,
+            label: `LOC ${r.engine}`,
+            postGenerationOnly: BRIEF_ISOLATED_ENGINES.has(r.engine),
+          });
+          r.output.anchored = verdict.anchored;
+          r.output.anchor = verdict.anchor || r.output.anchor;
+          r.output.anchorCapability = verdict.capability;
+          r.output.anchorReason = verdict.reason;
+          r.output.anchorSource = verdict.source;
+        }),
+      );
+      await bumpHeartbeat();
+
+      const anchored = successful.filter((r) => r.output.anchored);
+      const forSelection = anchored.length > 0 ? anchored : successful;
+
       // Six-dimension validation pass across all successful engines.
       let validationEntries: EngineValidationEntry[] = [];
       let validationError: string | null = null;
@@ -284,7 +317,7 @@ export const runLeftOfCentre = createServerFn({ method: "POST" })
         validationEntries.map((v) => [v.engine, v]),
       );
 
-      const packages: LocEnginePackage[] = successful.map((r) => ({
+      const packages: LocEnginePackage[] = forSelection.map((r) => ({
         engine: r.engine,
         engineOutput: r.output,
         validation: null,
