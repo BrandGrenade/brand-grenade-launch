@@ -41,10 +41,13 @@ export const Route = createFileRoute("/email/unsubscribe")({
         }
 
         if (tokenRecord.used_at) {
-          return Response.json({ valid: false, reason: 'already_unsubscribed' })
+          return Response.json({ valid: false, already_unsubscribed: true, reason: 'already_unsubscribed' })
         }
 
-        return Response.json({ valid: true })
+        // The page needs an address to display; return it redacted so a leaked
+        // link never exposes the full address.
+        return Response.json({ valid: true, email: redactEmail(tokenRecord.email) })
+
       },
 
       POST: async ({ request }) => {

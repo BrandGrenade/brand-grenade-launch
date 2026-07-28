@@ -36,13 +36,14 @@ function UnsubscribePage() {
       try {
         const res = await fetch(`/email/unsubscribe?token=${encodeURIComponent(token)}`)
         const data = await res.json().catch(() => ({}))
-        if (res.ok && data.email) {
-          setState({ kind: 'ready', email: data.email })
-        } else if (data.already_unsubscribed) {
+        if (res.ok && data.already_unsubscribed) {
           setState({ kind: 'already' })
+        } else if (res.ok && data.valid) {
+          setState({ kind: 'ready', email: data.email || 'your address' })
         } else {
           setState({ kind: 'invalid', reason: data.error || 'Invalid or expired link.' })
         }
+
       } catch {
         setState({ kind: 'invalid', reason: 'Could not validate this link.' })
       }

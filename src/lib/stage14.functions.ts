@@ -21,7 +21,7 @@ export const runStage14 = createServerFn({ method: "POST" })
     const { data: session, error } = await supabaseAdmin
       .from("sessions")
       .select(
-        "brand_name, category, selected_smp, current_stage, status, stage_status, stage_2_output, stage_12_output, stage_13_output, stage_13b_output, stage_14_output"
+        "brand_name, category, selected_smp, current_stage, status, stage_status, updated_at, stage_2_output, stage_12_output, stage_13_output, stage_13b_output, stage_14_output"
       )
       .eq("id", data.sessionId)
       .single();

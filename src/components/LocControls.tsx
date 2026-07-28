@@ -140,22 +140,32 @@ export function LocControls({ sessionId }: { sessionId: string }) {
     state === "running" && lastActivityRef.current != null
       ? now - lastActivityRef.current.observedAt
       : 0;
-  const stuck = state === "running" && msSinceActivity > STUCK_NO_ACTIVITY_MS;
+  // Server heartbeat staleness is authoritative and survives reloads — a run
+  // stuck for hours is recoverable the moment the panel mounts, instead of
+  // waiting another 4 minutes for the client-side timer to age.
+  const serverMsSinceActivity =
+    state === "running"
+      ? currentHeartbeat
+        ? now - Date.parse(currentHeartbeat)
+        : Number.POSITIVE_INFINITY
+      : 0;
+  const serverStale = serverMsSinceActivity > STUCK_NO_ACTIVITY_MS;
+  const stuck = state === "running" && (msSinceActivity > STUCK_NO_ACTIVITY_MS || serverStale);
 
   useEffect(() => {
-    if (!stuck || autoRecoveredRef.current || locked) return;
+    // Only auto-recover when the server heartbeat confirms the run is dead.
+    if (!stuck || !serverStale || autoRecoveredRef.current || locked) return;
     autoRecoveredRef.current = true;
     (async () => {
       try {
-        // Client watchdog has already confirmed 4 min of no activity —
-        // force past the server-side staleness guard.
         await resetLoc({ data: { sessionId, force: true } });
         toast.message("LOC run appeared stuck — reset. Click retry to continue.");
       } catch (e) {
         toast.error(e instanceof Error ? e.message : "Reset failed");
       }
     })();
-  }, [stuck, locked, resetLoc, sessionId]);
+  }, [stuck, serverStale, locked, resetLoc, sessionId]);
+
 
   const badgeColor =
     state === "complete" ? "var(--color-success)"
@@ -192,39 +202,45 @@ export function LocControls({ sessionId }: { sessionId: string }) {
         </div>
 
         <div className="ml-auto flex items-center gap-2">
-          {(!status || status.loc_status == null || state === "failed") && (
+          {(!status || status.loc_status == null || state === "failed" || stuck) && (
             <button
               type="button"
               className="rounded border px-3 py-1"
               style={{ borderColor: "var(--color-border-strong, #999)" }}
               disabled={busy || locked}
-              onClick={() => trigger(false)}
+              onClick={() => trigger(state === "failed" || stuck)}
             >
-              {busy ? "Retrying…" : state === "failed" ? "Error — click to retry" : "Generate LOC"}
+              {busy
+                ? "Retrying…"
+                : stuck
+                  ? "Restart LOC"
+                  : state === "failed"
+                    ? "Error — click to retry"
+                    : "Generate LOC"}
             </button>
           )}
-          {stuck && (
+          {state === "running" && (
             <button
               type="button"
               className="rounded border px-3 py-1"
               style={{ borderColor: "var(--color-border-strong, #999)" }}
               disabled={busy || locked}
               onClick={async () => {
-                // No force: the server re-checks loc_generated_at staleness and
-                // refuses if the run is still heartbeating. Surface that to the user.
+                // Force only when the server heartbeat says the run is dead;
+                // otherwise let the server refuse and tell the user why.
                 try {
-                  await resetLoc({ data: { sessionId } });
+                  await resetLoc({ data: { sessionId, force: serverStale } });
                 } catch (e) {
                   toast.error(e instanceof Error ? e.message : "Reset refused — run may still be active");
                   return;
                 }
                 await trigger(true);
               }}
-
             >
-              Recover stuck run
+              {stuck ? "Recover stuck run" : "Force restart"}
             </button>
           )}
+
           {hasFailures && state !== "running" && (
             <button
               type="button"

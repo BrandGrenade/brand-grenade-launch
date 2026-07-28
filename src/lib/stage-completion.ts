@@ -36,7 +36,13 @@ type StageCompletionRow = {
   current_stage?: number | null;
   status?: string | null;
   stage_status?: string | null;
+  /** Last write to the session row — used to detect a dead "running" marker. */
+  updated_at?: string | null;
 };
+
+/** A "running" marker older than this is treated as abandoned, not live. */
+const RUNNING_MARKER_STALE_MS = 3 * 60 * 1000;
+
 
 function stageRank(stageId: string): number {
   const idx = STAGE_SEQUENCE.indexOf(stageId.toLowerCase() as (typeof STAGE_SEQUENCE)[number]);
@@ -88,9 +94,17 @@ export function isStageOutputComplete(
     // saved — should trust the persisted output rather than hide it and
     // block downstream stages that already have their inputs.
     if (markerRank === wantedRank) {
-      if (marker.state === "running" && row.status === "running") return false;
+      if (marker.state === "running" && row.status === "running") {
+        // ...unless the row has not been written to for minutes. A dead stream
+        // leaves `running:<stage>` behind forever; on reload the stored output
+        // is then hidden and advancing fails with "output missing or incomplete".
+        const ts = row.updated_at ? Date.parse(row.updated_at) : NaN;
+        if (Number.isFinite(ts) && Date.now() - ts > RUNNING_MARKER_STALE_MS) return true;
+        return false;
+      }
       return true;
     }
+
 
     // Marker is for an earlier stage but this stage's column has content —
     // a downstream write landed without an updated marker. Trust the output.

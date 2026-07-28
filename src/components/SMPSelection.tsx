@@ -200,8 +200,11 @@ function parsePropositions(rawOutput: string): RawProp[] {
       "\\[METADATA\\]",
     ]);
 
-    const compositeRe = /(?:Weighted\s+)?Composite\s*:\s*(\d+(?:\.\d+)?)\s*\/\s*100/i;
+    // Accept markdown wrappers and legacy /70 composites (rescaled to /100).
+    const compositeRe =
+      /(?:Weighted\s+)?Composite(?:\s+Score)?[\s*_:\-—–]+(\d+(?:\.\d+)?)\s*\/\s*(100|70)/i;
     const compMatch = block.match(compositeRe);
+
     const flagRe = /⚠\s+[A-Z][A-Z\s]+:[^\n]+/g;
     const flags = Array.from(block.matchAll(flagRe), (m) => m[0].trim());
     const scores: SMPCard["scores"] = {
@@ -211,7 +214,12 @@ function parsePropositions(rawOutput: string): RawProp[] {
       brandPermission: extractScore(block, "Brand Permission"),
       cleanAir: extractScore(block, "Clean Air"),
       commercialPrecedent: extractScore(block, "Commercial Precedent"),
-      weightedComposite: compMatch ? parseFloat(compMatch[1]) : undefined,
+      weightedComposite: compMatch
+        ? compMatch[2] === "70"
+          ? Math.round((parseFloat(compMatch[1]) / 70) * 1000) / 10
+          : parseFloat(compMatch[1])
+        : undefined,
+
       flags: flags.length ? flags : undefined,
     };
 
@@ -259,20 +267,63 @@ export function parseSMPCards(
   const raw = parsePropositions(primary);
   console.log("Propositions found (stage 12): " + raw.length);
   if (raw.length > 0) {
-    return raw.map((p, idx) => ({
-      cardNumber: idx + 1,
-      smpLine: p.line.replace(/^["""]|["""]$/g, "").trim(),
-      whatItOwns: p.owns,
-      truth: p.truth,
-      whatItChallenges: p.challenge,
-      whatItMakesPossible: p.makesPossible,
-      whatItRequires: p.requires,
-      scores: p.scores,
-      fieldName: p.fieldName,
-      iconicTierStatus: p.iconicTierStatus,
-      pressureTestNote: p.pressureTestNote,
-    }));
+    // Stage 10 is the authoritative source of scores. Stage 12 cards are a
+    // presentation layer and the model sometimes omits or relabels the score
+    // block — backfill from Stage 10 so badges are never blank.
+    const s10 = stage10ForScores ? parseStage10Scores(stage10ForScores) : [];
+    const byField = new Map(s10.map((s) => [s.fieldName.trim().toLowerCase(), s]));
+    const byLine = new Map(s10.map((s) => [s.smpLine.trim().toLowerCase(), s]));
+    const norm = (v: string) =>
+      v
+        .replace(/^["""]|["""]$/g, "")
+        .trim()
+        .toLowerCase();
+
+    return raw.map((p, idx) => {
+      const line = p.line.replace(/^["""]|["""]$/g, "").trim();
+      const match = byLine.get(norm(line)) ?? byField.get(norm(p.fieldName ?? ""));
+      const hasAny =
+        p.scores &&
+        Object.entries(p.scores).some(
+          ([k, v]) => k !== "flags" && typeof v === "number" && Number.isFinite(v),
+        );
+      const scores = hasAny
+        ? p.scores
+        : match
+          ? {
+              fame: Number.isFinite(match.fame) ? match.fame : undefined,
+              truthStrength: Number.isFinite(match.truthStrength) ? match.truthStrength : undefined,
+              competitiveImpossibility: Number.isFinite(match.competitiveImpossibility)
+                ? match.competitiveImpossibility
+                : undefined,
+              brandPermission: Number.isFinite(match.brandPermission) ? match.brandPermission : undefined,
+              cleanAir: Number.isFinite(match.cleanAir) ? match.cleanAir : undefined,
+              commercialPrecedent: Number.isFinite(match.commercialPrecedent)
+                ? match.commercialPrecedent
+                : undefined,
+              weightedComposite: Number.isFinite(match.weightedComposite)
+                ? match.weightedComposite
+                : undefined,
+              flags: match.flags,
+            }
+          : p.scores;
+
+      return {
+        cardNumber: idx + 1,
+        smpLine: line,
+        whatItOwns: p.owns,
+        truth: p.truth,
+        whatItChallenges: p.challenge,
+        whatItMakesPossible: p.makesPossible,
+        whatItRequires: p.requires,
+        scores,
+        fieldName: p.fieldName,
+        iconicTierStatus: p.iconicTierStatus,
+        pressureTestNote: p.pressureTestNote,
+      };
+    });
   }
+
 
   // Fallback: render the VALIDATED propositions from Stage 11 directly so the
   // human always sees the propositions, even when Stage 12 parsing fails or
@@ -485,6 +536,8 @@ export function SMPSelection({
   stage11Output,
   stage10Output,
   locPackages,
+  locStatus,
+  locError,
   onSelect,
   onResubmit,
   resubmitting = false,
@@ -499,11 +552,16 @@ export function SMPSelection({
    *  pass the six-dimension floors (Truth Strength >= 5, Competitive
    *  Impossibility >= 6) are shown. */
   locPackages?: LocEnginePackage[] | null;
+  /** session.loc_status — used to explain an empty LOC pool instead of
+   *  silently showing CORE only. */
+  locStatus?: string | null;
+  locError?: string | null;
   onSelect: (payload: SMPSelectionPayload) => void;
   onResubmit?: (feedback: string) => void | Promise<void>;
   resubmitting?: boolean;
   /** True while Stage 12 Claude card formatting is still streaming in the background. */
   enhancing?: boolean;
+
 }) {
   const stage11ByLine = useMemo(() => {
     if (!stage11Output) return new Map<string, Stage11Verdict>();
@@ -537,7 +595,16 @@ export function SMPSelection({
   }, [stage12Output, stage11Output, stage10Output, stage11ByLine]);
   const locResult = useMemo(() => buildLocCards(locPackages ?? null, coreCards.length), [locPackages, coreCards.length]);
   const locCards = locResult.cards;
-  const locValidationWarning = locResult.validationWarning;
+  const locValidationWarning =
+    locResult.validationWarning ??
+    (locResult.cards.length === 0 && locStatus && locStatus !== "complete"
+      ? locStatus === "failed"
+        ? `Left-of-Centre propositions are missing — LOC generation/validation failed${locError ? `: ${locError}` : "."} Only CORE propositions are shown. Recover LOC at Stage 09 before selecting if you need the LOC pool.`
+        : locStatus === "running"
+          ? "Left-of-Centre propositions are still generating — only CORE propositions are shown right now."
+          : null
+      : null);
+
   const cards = useMemo(() => [...coreCards, ...locCards], [coreCards, locCards]);
   const usingStage11Fallback = useMemo(
     () => (stage12Output ? parsePropositions(stage12Output).length === 0 : true) && coreCards.length > 0,
