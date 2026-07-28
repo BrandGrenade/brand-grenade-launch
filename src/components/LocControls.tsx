@@ -140,22 +140,32 @@ export function LocControls({ sessionId }: { sessionId: string }) {
     state === "running" && lastActivityRef.current != null
       ? now - lastActivityRef.current.observedAt
       : 0;
-  const stuck = state === "running" && msSinceActivity > STUCK_NO_ACTIVITY_MS;
+  // Server heartbeat staleness is authoritative and survives reloads — a run
+  // stuck for hours is recoverable the moment the panel mounts, instead of
+  // waiting another 4 minutes for the client-side timer to age.
+  const serverMsSinceActivity =
+    state === "running"
+      ? currentHeartbeat
+        ? now - Date.parse(currentHeartbeat)
+        : Number.POSITIVE_INFINITY
+      : 0;
+  const serverStale = serverMsSinceActivity > STUCK_NO_ACTIVITY_MS;
+  const stuck = state === "running" && (msSinceActivity > STUCK_NO_ACTIVITY_MS || serverStale);
 
   useEffect(() => {
-    if (!stuck || autoRecoveredRef.current || locked) return;
+    // Only auto-recover when the server heartbeat confirms the run is dead.
+    if (!stuck || !serverStale || autoRecoveredRef.current || locked) return;
     autoRecoveredRef.current = true;
     (async () => {
       try {
-        // Client watchdog has already confirmed 4 min of no activity —
-        // force past the server-side staleness guard.
         await resetLoc({ data: { sessionId, force: true } });
         toast.message("LOC run appeared stuck — reset. Click retry to continue.");
       } catch (e) {
         toast.error(e instanceof Error ? e.message : "Reset failed");
       }
     })();
-  }, [stuck, locked, resetLoc, sessionId]);
+  }, [stuck, serverStale, locked, resetLoc, sessionId]);
+
 
   const badgeColor =
     state === "complete" ? "var(--color-success)"
