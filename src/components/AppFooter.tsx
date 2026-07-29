@@ -7,13 +7,25 @@ import { Link, useRouterState } from "@tanstack/react-router";
  * Hidden on client-facing repository routes and admin preview so no
  * internal navigation leaks to visitors.
  */
-const HIDDEN_PREFIXES = ["/ey", "/kpmg", "/deck", "/admin"];
+// Allowlist: internal app surfaces only. Anything else (homepage, login and
+// every current or future client repository slug) never renders internal nav.
+const INTERNAL_PREFIXES = [
+  "/dashboard",
+  "/pipeline",
+  "/intelligence",
+  "/briefing-room",
+  "/brief",
+  "/detonation",
+  "/complete",
+  "/settings",
+];
 
 export function AppFooter() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  if (HIDDEN_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + "/"))) {
-    return null;
-  }
+  const isInternal =
+    pathname === "/" ||
+    INTERNAL_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + "/"));
+  if (!isInternal) return null;
   return (
     <footer
       style={{
