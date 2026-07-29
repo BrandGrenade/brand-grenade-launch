@@ -861,6 +861,7 @@ function NewVisitorForm({
 }) {
   const [f, setF] = useState({ name: "", organisation: "", email: "", password: "" });
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [issuedPassword, setIssuedPassword] = useState<string | null>(null);
 
   return (
@@ -870,6 +871,7 @@ function NewVisitorForm({
         onSubmit={async (e) => {
           e.preventDefault();
           setBusy(true);
+          setError(null);
           try {
             const pw = await onCreate({
               name: f.name,
@@ -879,11 +881,16 @@ function NewVisitorForm({
             });
             setF({ name: "", organisation: "", email: "", password: "" });
             setIssuedPassword(pw);
+          } catch (err) {
+            setError(
+              err instanceof Error ? err.message : "Could not add visitor. Please try again.",
+            );
           } finally {
             setBusy(false);
           }
         }}
       >
+
         <Input
           placeholder="Name"
           value={f.name}
@@ -916,9 +923,15 @@ function NewVisitorForm({
           {busy ? "Adding…" : "Add visitor"}
         </Button>
       </form>
+      {error && (
+        <p className="text-sm font-medium text-red-600" role="alert">
+          {error}
+        </p>
+      )}
       {issuedPassword && (
         <PasswordReveal password={issuedPassword} onDismiss={() => setIssuedPassword(null)} />
       )}
+
     </div>
   );
 }
