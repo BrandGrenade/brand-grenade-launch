@@ -9,8 +9,17 @@ import { useAuth } from "@/context/AuthContext";
  * leak onto public views (homepage, /login, /auth, repositories).
  */
 
-const HIDDEN_PATHS = new Set(["/", "/login", "/auth", "/complete"]);
-const HIDDEN_PREFIXES = ["/ey", "/kpmg", "/deck", "/admin"];
+// Allowlist: the strip renders ONLY on internal app surfaces. Any other path —
+// including every current and future client repository slug — gets nothing.
+const INTERNAL_PREFIXES = [
+  "/dashboard",
+  "/pipeline",
+  "/intelligence",
+  "/briefing-room",
+  "/brief",
+  "/detonation",
+  "/settings",
+];
 
 const buttonClass = "launch-strip-button";
 
@@ -49,8 +58,10 @@ export function LaunchStrip() {
   const { user, isAuthReady } = useAuth();
   // Hard gate: never render for unauthenticated visitors.
   if (!isAuthReady || !user) return null;
-  if (HIDDEN_PATHS.has(pathname)) return null;
-  if (HIDDEN_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + "/"))) return null;
+  const isInternal = INTERNAL_PREFIXES.some(
+    (p) => pathname === p || pathname.startsWith(p + "/"),
+  );
+  if (!isInternal) return null;
 
   return (
     <>
