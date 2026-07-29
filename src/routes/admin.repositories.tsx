@@ -870,13 +870,21 @@ function NewVisitorForm({
         className="grid grid-cols-1 md:grid-cols-5 gap-2"
         onSubmit={async (e) => {
           e.preventDefault();
-          setBusy(true);
           setError(null);
+          if (!f.name.trim()) {
+            setError("Enter a visitor name.");
+            return;
+          }
+          if (f.password.length < 6) {
+            setError("Password must be at least 6 characters.");
+            return;
+          }
+          setBusy(true);
           try {
             const pw = await onCreate({
-              name: f.name,
-              organisation: f.organisation || undefined,
-              email: f.email || undefined,
+              name: f.name.trim(),
+              organisation: f.organisation.trim() || undefined,
+              email: f.email.trim() || undefined,
               password: f.password,
             });
             setF({ name: "", organisation: "", email: "", password: "" });
@@ -895,7 +903,6 @@ function NewVisitorForm({
           placeholder="Name"
           value={f.name}
           onChange={(e) => setF({ ...f, name: e.target.value })}
-          required
         />
         <Input
           placeholder="Organisation"
@@ -903,8 +910,7 @@ function NewVisitorForm({
           onChange={(e) => setF({ ...f, organisation: e.target.value })}
         />
         <Input
-          placeholder="Email"
-          type="email"
+          placeholder="Email (optional)"
           value={f.email}
           onChange={(e) => setF({ ...f, email: e.target.value })}
         />
@@ -912,16 +918,15 @@ function NewVisitorForm({
           placeholder="Password (min 6 chars)"
           value={f.password}
           onChange={(e) => setF({ ...f, password: e.target.value })}
-          required
-          minLength={6}
         />
         <Button
           type="submit"
-          disabled={busy || !f.name || f.password.length < 6}
+          disabled={busy}
           className="bg-neutral-900 text-white hover:bg-neutral-800"
         >
           {busy ? "Adding…" : "Add visitor"}
         </Button>
+
       </form>
       {error && (
         <p className="text-sm font-medium text-red-600" role="alert">
