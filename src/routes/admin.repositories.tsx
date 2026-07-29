@@ -923,9 +923,15 @@ function NewVisitorForm({
           {busy ? "Adding…" : "Add visitor"}
         </Button>
       </form>
+      {error && (
+        <p className="text-sm font-medium text-red-600" role="alert">
+          {error}
+        </p>
+      )}
       {issuedPassword && (
         <PasswordReveal password={issuedPassword} onDismiss={() => setIssuedPassword(null)} />
       )}
+
     </div>
   );
 }
