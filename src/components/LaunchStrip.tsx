@@ -58,8 +58,10 @@ export function LaunchStrip() {
   const { user, isAuthReady } = useAuth();
   // Hard gate: never render for unauthenticated visitors.
   if (!isAuthReady || !user) return null;
-  if (HIDDEN_PATHS.has(pathname)) return null;
-  if (HIDDEN_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + "/"))) return null;
+  const isInternal = INTERNAL_PREFIXES.some(
+    (p) => pathname === p || pathname.startsWith(p + "/"),
+  );
+  if (!isInternal) return null;
 
   return (
     <>
