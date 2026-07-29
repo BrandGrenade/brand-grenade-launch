@@ -479,7 +479,15 @@ export type Database = {
           title?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "repository_documents_repository_slug_fkey"
+            columns: ["repository_slug"]
+            isOneToOne: false
+            referencedRelation: "repositories"
+            referencedColumns: ["slug"]
+          },
+        ]
       }
       repository_visitors: {
         Row: {
@@ -518,7 +526,15 @@ export type Database = {
           repository_slug?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "repository_visitors_repository_slug_fkey"
+            columns: ["repository_slug"]
+            isOneToOne: false
+            referencedRelation: "repositories"
+            referencedColumns: ["slug"]
+          },
+        ]
       }
       saved_briefs: {
         Row: {
