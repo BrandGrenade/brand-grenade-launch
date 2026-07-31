@@ -892,8 +892,11 @@ function NewVisitorForm({
             return;
           }
           setBusy(true);
+          try {
+            const pw = await onCreate({
+              name: f.name.trim(),
               organisation: f.organisation.trim() || undefined,
-              email: cleanEmail(f.email) || undefined,
+              email: email || undefined,
               password: f.password,
             });
             setF({ name: "", organisation: "", email: "", password: "" });
