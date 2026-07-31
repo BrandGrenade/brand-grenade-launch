@@ -886,10 +886,12 @@ function NewVisitorForm({
             setError("Password must be at least 6 characters.");
             return;
           }
+          const email = cleanEmail(f.email);
+          if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+            setError(`"${email}" isn't a valid email address. Leave it blank if you don't have one.`);
+            return;
+          }
           setBusy(true);
-          try {
-            const pw = await onCreate({
-              name: f.name.trim(),
               organisation: f.organisation.trim() || undefined,
               email: cleanEmail(f.email) || undefined,
               password: f.password,
