@@ -154,7 +154,13 @@ export const createVisitor = createServerFn({ method: "POST" })
       slug: slugSchema.parse(d.slug),
       name: z.string().min(1).max(200).parse(d.name),
       organisation: d.organisation ? z.string().max(200).parse(d.organisation) : null,
-      email: d.email ? z.string().email().max(200).parse(d.email) : null,
+      email: d.email
+        ? z
+            .string()
+            .max(200)
+            .regex(/^[^@\s]+@[^@\s]+\.[^@\s]+$/, "Invalid email address")
+            .parse(d.email.trim().toLowerCase())
+        : null,
       password: z.string().min(6).max(200).parse(d.password),
     }),
   )

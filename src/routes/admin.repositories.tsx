@@ -860,6 +860,13 @@ function NewVisitorForm({
   }) => Promise<string>;
 }) {
   const [f, setF] = useState({ name: "", organisation: "", email: "", password: "" });
+  // Strip invisible/smart characters pasted from Mail, Slack, Word, etc.
+  const cleanEmail = (raw: string) =>
+    raw
+      .replace(/[\u200B-\u200D\uFEFF\u00A0]/g, "")
+      .replace(/[<>"'(),;\s]/g, "")
+      .trim()
+      .toLowerCase();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [issuedPassword, setIssuedPassword] = useState<string | null>(null);
@@ -879,12 +886,17 @@ function NewVisitorForm({
             setError("Password must be at least 6 characters.");
             return;
           }
+          const email = cleanEmail(f.email);
+          if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+            setError(`"${email}" isn't a valid email address. Leave it blank if you don't have one.`);
+            return;
+          }
           setBusy(true);
           try {
             const pw = await onCreate({
               name: f.name.trim(),
               organisation: f.organisation.trim() || undefined,
-              email: f.email.trim() || undefined,
+              email: email || undefined,
               password: f.password,
             });
             setF({ name: "", organisation: "", email: "", password: "" });
