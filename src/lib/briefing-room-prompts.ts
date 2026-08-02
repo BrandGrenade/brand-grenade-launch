@@ -9,6 +9,28 @@ const DISCIPLINE_BLOCK = `CORE DISCIPLINE — NON-NEGOTIABLE:
 3. Every fact you surface MUST carry a source tag drawn only from what was supplied: "brief" (stated in the raw brief), "evidence:<label>" (from a pasted supporting document with that label), or "human_input" (an explicit human note the user typed in the workspace). If none of these apply, the fact does not belong in the output — flag the gap instead.
 4. Output STRICT JSON only. No prose preamble. No markdown fences. No commentary before or after the JSON. The very first character must be '{'.`;
 
+// Evidence-type handling. Three real paths, all resolved by CONDITIONAL PROMPT
+// CONSTRUCTION inside the existing Step 1–4 calls — no extra AI call is made
+// per evidence item.
+//   - "tracking"   → quantitative data-summary extraction before the evidence
+//                    enters the fact inventory.
+//   - "competitor" → competitive-positioning extraction, flagging what bears on
+//                    competitive vulnerability mapping.
+//   - everything else (research / qualitative / human_input / other) → the
+//                    existing generic handling, unchanged.
+const TRACKING_DIRECTIVE = `EXTRACTION DIRECTIVE — QUANTITATIVE DATA SUMMARY (type: tracking):
+Before this evidence enters the fact inventory, first summarise it as data: name the metric(s), the measured value(s), the time period, the sample or base where stated, and the direction of movement. Only figures literally present may be used — never interpolate, annualise, or estimate. Where a metric lacks a base, period, or comparison point, record that omission as a gap rather than treating the number as sound. Facts derived from this block must carry the numeric value and its period inline.`;
+
+const COMPETITOR_DIRECTIVE = `EXTRACTION DIRECTIVE — COMPETITIVE POSITIONING (type: competitor):
+Before this evidence enters the fact inventory, first extract it as competitive positioning: name each competitor mentioned, the position or claim they occupy, the proof they offer for it, and the ground they have left unoccupied. Then flag explicitly what in this block bears on COMPETITIVE VULNERABILITY MAPPING — where the competitor is structurally exposed, over-claiming relative to its proof, or dependent on a position it cannot defend. Competitors, claims and figures not present in the block may not be invented.`;
+
+function directiveFor(type: string): string | null {
+  const t = (type || "").trim().toLowerCase();
+  if (t === "tracking") return TRACKING_DIRECTIVE;
+  if (t === "competitor") return COMPETITOR_DIRECTIVE;
+  return null;
+}
+
 export function buildIntakeBlock(input: {
   brandName: string;
   category: string;
@@ -17,10 +39,10 @@ export function buildIntakeBlock(input: {
 }): string {
   const evidenceBlock = input.evidence.length
     ? input.evidence
-        .map(
-          (e, i) =>
-            `--- EVIDENCE #${i + 1} | label: ${e.label || "(unlabelled)"} | type: ${e.type || "unspecified"} ---\n${e.content.trim()}\n--- END EVIDENCE #${i + 1} ---`,
-        )
+        .map((e, i) => {
+          const directive = directiveFor(e.type);
+          return `--- EVIDENCE #${i + 1} | label: ${e.label || "(unlabelled)"} | type: ${e.type || "unspecified"} ---${directive ? `\n${directive}\n` : ""}\n${e.content.trim()}\n--- END EVIDENCE #${i + 1} ---`;
+        })
         .join("\n\n")
     : "(no supporting evidence supplied)";
   return `BRAND: ${input.brandName || "(unspecified)"}
@@ -34,6 +56,7 @@ ${input.rawBrief.trim() || "(empty)"}
 SUPPORTING EVIDENCE:
 ${evidenceBlock}`;
 }
+
 
 // ─── STEP 1 — DIAGNOSE THE REAL PROBLEM / OPPORTUNITY ────────────────
 export const STEP_1_SYSTEM = `You are the Briefing Room's diagnostic engine. Your job is to interrogate PAST the stated brief and surface the REAL problem and the REAL opportunity as a deliberate pair — the same truth run through defensive and generative frames.

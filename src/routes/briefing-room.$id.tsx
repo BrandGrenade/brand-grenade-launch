@@ -71,6 +71,45 @@ function WorkspacePage() {
   const [previewLoading, setPreviewLoading] = useState(false);
   const [approving, setApproving] = useState(false);
   const [ackGaps, setAckGaps] = useState(false);
+  // Item 2 — source-pill traceability. Clicking a "brief" / "evidence:<label>"
+  // pill scrolls the matching intake block into view and flashes it.
+  const [flashKey, setFlashKey] = useState<string | null>(null);
+
+  const focusSource = useCallback(
+    (tag: string) => {
+      const t = (tag || "").trim();
+      const lower = t.toLowerCase();
+      let elId: string | null = null;
+      if (lower === "brief") {
+        elId = "intake-raw-brief";
+      } else if (lower.startsWith("evidence:")) {
+        const label = t.slice(t.indexOf(":") + 1).trim().toLowerCase();
+        let idx = evidence.findIndex(
+          (e) => (e.label || "").trim().toLowerCase() === label,
+        );
+        if (idx < 0 && label) {
+          idx = evidence.findIndex((e) => {
+            const l = (e.label || "").trim().toLowerCase();
+            return !!l && (l.includes(label) || label.includes(l));
+          });
+        }
+        if (idx >= 0) elId = `intake-evidence-${idx}`;
+      }
+      if (!elId) {
+        toast.info(
+          `No intake block matches source "${t}" — it is a human note or an Intelligence Lab input.`,
+        );
+        return;
+      }
+      const el = typeof document !== "undefined" ? document.getElementById(elId) : null;
+      if (!el) return;
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      setFlashKey(elId);
+      window.setTimeout(() => setFlashKey((k) => (k === elId ? null : k)), 2400);
+    },
+    [evidence],
+  );
+
 
   const refresh = useCallback(async () => {
     const w = await load({ data: { id } });
@@ -278,19 +317,34 @@ function WorkspacePage() {
               />
             </Field>
           </div>
-          <Field label="Raw brief">
-            <textarea
-              value={rawBrief}
-              onChange={(e) => setRawBrief(e.target.value)}
-              className="input-base w-full p-3"
-              style={{ minHeight: 260, lineHeight: 1.6 }}
-              maxLength={50000}
-              placeholder="Paste the client brief exactly as received. At least 20 characters."
-            />
-            <p className="text-body-sm mt-1.5 text-text-tertiary">
-              {rawBrief.trim().length} characters
-            </p>
-          </Field>
+          <div
+            id="intake-raw-brief"
+            className="rounded-md"
+            style={{
+              padding: 8,
+              margin: "0 -8px",
+              transition: "box-shadow 200ms ease",
+              boxShadow:
+                flashKey === "intake-raw-brief"
+                  ? "0 0 0 2px #D4924A"
+                  : "0 0 0 0 transparent",
+            }}
+          >
+            <Field label="Raw brief">
+              <textarea
+                value={rawBrief}
+                onChange={(e) => setRawBrief(e.target.value)}
+                className="input-base w-full p-3"
+                style={{ minHeight: 260, lineHeight: 1.6 }}
+                maxLength={50000}
+                placeholder="Paste the client brief exactly as received. At least 20 characters."
+              />
+              <p className="text-body-sm mt-1.5 text-text-tertiary">
+                {rawBrief.trim().length} characters
+              </p>
+            </Field>
+          </div>
+
 
           <div className="mt-4">
             <div className="flex items-center justify-between">
@@ -313,9 +367,19 @@ function WorkspacePage() {
               {evidence.map((e, i) => (
                 <div
                   key={i}
+                  id={`intake-evidence-${i}`}
                   className="rounded-md p-3"
-                  style={{ backgroundColor: "#141414", border: "1px solid #2A2A2A" }}
+                  style={{
+                    backgroundColor: "#141414",
+                    border: `1px solid ${flashKey === `intake-evidence-${i}` ? "#D4924A" : "#2A2A2A"}`,
+                    transition: "box-shadow 200ms ease, border-color 200ms ease",
+                    boxShadow:
+                      flashKey === `intake-evidence-${i}`
+                        ? "0 0 0 2px rgba(212,146,74,0.45)"
+                        : "0 0 0 0 transparent",
+                  }}
                 >
+
                   <div className="flex items-center gap-2">
                     <input
                       value={e.label}
@@ -401,7 +465,9 @@ function WorkspacePage() {
               data={ws.diagnosis}
               selectedFrame={ws.selected_frame}
               onPick={pickFrame}
+              onSourceClick={focusSource}
             />
+
           )}
         </StepCard>
 
@@ -642,25 +708,41 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-function SourcePills({ sources }: { sources: string[] }) {
+function SourcePills({
+  sources,
+  onSelect,
+}: {
+  sources: string[];
+  onSelect?: (tag: string) => void;
+}) {
   if (!sources?.length) return null;
+  const base: React.CSSProperties = {
+    padding: "2px 6px",
+    borderRadius: 4,
+    backgroundColor: "#1A1611",
+    color: "#D4924A",
+    border: "1px solid #3A2E1E",
+  };
   return (
     <div className="mt-1 flex flex-wrap gap-1">
-      {sources.map((s, i) => (
-        <span
-          key={i}
-          className="text-[10px] uppercase tracking-wider"
-          style={{
-            padding: "2px 6px",
-            borderRadius: 4,
-            backgroundColor: "#1A1611",
-            color: "#D4924A",
-            border: "1px solid #3A2E1E",
-          }}
-        >
-          {s}
-        </span>
-      ))}
+      {sources.map((s, i) =>
+        onSelect ? (
+          <button
+            key={i}
+            type="button"
+            onClick={() => onSelect(s)}
+            title={`Jump to source: ${s}`}
+            className="text-[10px] uppercase tracking-wider transition-colors"
+            style={{ ...base, cursor: "pointer", textDecoration: "underline dotted" }}
+          >
+            {s}
+          </button>
+        ) : (
+          <span key={i} className="text-[10px] uppercase tracking-wider" style={base}>
+            {s}
+          </span>
+        ),
+      )}
     </div>
   );
 }
@@ -669,7 +751,9 @@ function Step1View(props: {
   data: Step1Output;
   selectedFrame: string | null;
   onPick: (frame: "problem" | "opportunity" | "both") => void;
+  onSourceClick?: (tag: string) => void;
 }) {
+
   const { data } = props;
   const bothSelected = props.selectedFrame === "both";
   const FrameCard = (which: "problem" | "opportunity") => {
@@ -687,7 +771,7 @@ function Step1View(props: {
           {which === "problem" ? "REAL PROBLEM (defensive)" : "REAL OPPORTUNITY (generative)"}
         </div>
         <p className="text-body mt-2 text-text-primary">{item.statement}</p>
-        <SourcePills sources={item.sources} />
+        <SourcePills sources={item.sources} onSelect={props.onSourceClick} />
         <button
           type="button"
           onClick={() => props.onPick(which)}
@@ -714,7 +798,7 @@ function Step1View(props: {
       >
         <div className="text-label text-text-secondary">WHY ARE WE HERE (causal read)</div>
         <p className="text-body mt-2 text-text-primary">{data.why_are_we_here.statement}</p>
-        <SourcePills sources={data.why_are_we_here.sources} />
+        <SourcePills sources={data.why_are_we_here.sources} onSelect={props.onSourceClick} />
       </div>
       <div
         className="rounded-md p-4"
@@ -742,6 +826,20 @@ function Step1View(props: {
   );
 }
 
+type TruthFilters = {
+  source: string | null;
+  tag_type: string | null;
+  role: string | null;
+  thorpe: boolean;
+};
+
+const EMPTY_FILTERS: TruthFilters = {
+  source: null,
+  tag_type: null,
+  role: null,
+  thorpe: false,
+};
+
 function Step2View({ data }: { data: Step2Output }) {
   const groups: Array<[Step2Output["truths"][number]["category"], string]> = [
     ["product", "Product truths"],
@@ -749,16 +847,61 @@ function Step2View({ data }: { data: Step2Output }) {
     ["cultural", "Cultural truths"],
     ["brand", "Brand / personal truths"],
   ];
+  // Item 1 — client-side AND-combined filtering over the tag data already
+  // loaded. No new data, no AI call.
+  const [filters, setFilters] = useState<TruthFilters>(EMPTY_FILTERS);
+  const active: string[] = [
+    ...(filters.source ? [`source: ${filters.source}`] : []),
+    ...(filters.tag_type ? [filters.tag_type] : []),
+    ...(filters.role ? [filters.role] : []),
+    ...(filters.thorpe ? ["Thorpe candidate"] : []),
+  ];
+  const matches = (t: Step2Output["truths"][number]) =>
+    (!filters.source || t.source === filters.source) &&
+    (!filters.tag_type || t.tag_type === filters.tag_type) &&
+    (!filters.role || t.role === filters.role) &&
+    (!filters.thorpe || t.thorpe_candidate);
+  const totalShown = data.truths.filter(matches).length;
+  const toggle = <K extends keyof TruthFilters>(key: K, value: TruthFilters[K]) =>
+    setFilters((f) => ({
+      ...f,
+      [key]: f[key] === value ? (key === "thorpe" ? false : null) : value,
+    }));
+
   return (
     <div className="flex flex-col gap-4">
+      <div
+        className="flex flex-wrap items-center gap-2 rounded-md p-3"
+        style={{ backgroundColor: "#141414", border: "1px solid #2A2A2A" }}
+      >
+        <span className="text-label text-text-secondary">
+          {active.length === 0
+            ? `Filter — click any tag below (${data.truths.length} truths)`
+            : `Filtering by ${active.join(" + ")} — ${totalShown} of ${data.truths.length} truths`}
+        </span>
+        {active.length > 0 && (
+          <button
+            type="button"
+            onClick={() => setFilters(EMPTY_FILTERS)}
+            className="text-body-sm text-primary hover:opacity-80"
+          >
+            Clear all filters
+          </button>
+        )}
+      </div>
       {groups.map(([key, label]) => {
-        const items = data.truths.filter((t) => t.category === key);
+        const all = data.truths.filter((t) => t.category === key);
+        const items = all.filter(matches);
         return (
           <div key={key}>
             <div className="text-label text-text-secondary">{label}</div>
-            {items.length === 0 ? (
+            {all.length === 0 ? (
               <p className="text-body-sm mt-1 text-text-tertiary italic">
                 None captured — {data.missing_types.includes(key) ? "flagged as missing." : "not present in the supplied material."}
+              </p>
+            ) : items.length === 0 ? (
+              <p className="text-body-sm mt-1 text-text-tertiary italic">
+                {all.length} hidden by the active filter.
               </p>
             ) : (
               <ul className="mt-2 flex flex-col gap-2">
@@ -770,10 +913,32 @@ function Step2View({ data }: { data: Step2Output }) {
                   >
                     <p className="text-body text-text-primary">{t.text}</p>
                     <div className="mt-2 flex flex-wrap gap-2">
-                      <TagBadge label={t.source} tone="source" />
-                      <TagBadge label={t.tag_type} tone={t.tag_type === "qualitative" ? "qual" : "quant"} />
-                      <TagBadge label={t.role} tone={t.role === "discriminator" ? "good" : "warn"} />
-                      {t.thorpe_candidate && <TagBadge label="Thorpe candidate" tone="thorpe" />}
+                      <TagBadge
+                        label={t.source}
+                        tone="source"
+                        active={filters.source === t.source}
+                        onClick={() => toggle("source", t.source)}
+                      />
+                      <TagBadge
+                        label={t.tag_type}
+                        tone={t.tag_type === "qualitative" ? "qual" : "quant"}
+                        active={filters.tag_type === t.tag_type}
+                        onClick={() => toggle("tag_type", t.tag_type)}
+                      />
+                      <TagBadge
+                        label={t.role}
+                        tone={t.role === "discriminator" ? "good" : "warn"}
+                        active={filters.role === t.role}
+                        onClick={() => toggle("role", t.role)}
+                      />
+                      {t.thorpe_candidate && (
+                        <TagBadge
+                          label="Thorpe candidate"
+                          tone="thorpe"
+                          active={filters.thorpe}
+                          onClick={() => toggle("thorpe", !filters.thorpe)}
+                        />
+                      )}
                     </div>
                   </li>
                 ))}
@@ -782,6 +947,7 @@ function Step2View({ data }: { data: Step2Output }) {
           </div>
         );
       })}
+
       {data.missing_generative_qualitative_fact && (
         <div
           className="rounded-md p-3"
@@ -885,9 +1051,17 @@ function Step4View(props: {
               border: `1px solid ${selected ? "#D4924A" : "#2A2A2A"}`,
             }}
           >
-            <div className="text-label text-text-secondary">
-              CANDIDATE #{i + 1} · frame: {c.frame}
-            </div>
+            <div className="text-label text-text-secondary">CANDIDATE #{i + 1}</div>
+            {/* Informational only — descends from the Step 1 frame. Deliberately
+                carries no hover, border, or button affordance. */}
+            <p
+              className="text-body-sm mt-1 text-text-tertiary"
+              style={{ cursor: "default" }}
+            >
+              Descended from Step 1 frame:{" "}
+              {c.frame === "both" ? "both frames" : `real ${c.frame}`}
+            </p>
+
             <p className="text-body mt-2 text-text-primary">{c.statement}</p>
             <p className="text-body-sm mt-2 italic text-text-secondary">{c.why_it_matters}</p>
             <p className="text-body-sm mt-2 text-text-tertiary">
@@ -928,9 +1102,13 @@ function GapsBlock({ title, gaps }: { title: string; gaps: string[] }) {
 function TagBadge({
   label,
   tone,
+  active,
+  onClick,
 }: {
   label: string;
   tone: "source" | "qual" | "quant" | "good" | "warn" | "thorpe";
+  active?: boolean;
+  onClick?: () => void;
 }) {
   const palette: Record<string, { bg: string; fg: string; bd: string }> = {
     source: { bg: "#141414", fg: "#8A8680", bd: "#2A2A2A" },
@@ -941,21 +1119,35 @@ function TagBadge({
     thorpe: { bg: "#2A1A0A", fg: "#F0C88A", bd: "#6B3A10" },
   };
   const p = palette[tone];
+  const style: React.CSSProperties = {
+    padding: "2px 6px",
+    borderRadius: 4,
+    backgroundColor: p.bg,
+    color: p.fg,
+    border: `1px solid ${active ? "#D4924A" : p.bd}`,
+    boxShadow: active ? "0 0 0 1px #D4924A" : undefined,
+  };
+  if (!onClick) {
+    return (
+      <span className="text-[10px] uppercase tracking-wider" style={style}>
+        {label}
+      </span>
+    );
+  }
   return (
-    <span
-      className="text-[10px] uppercase tracking-wider"
-      style={{
-        padding: "2px 6px",
-        borderRadius: 4,
-        backgroundColor: p.bg,
-        color: p.fg,
-        border: `1px solid ${p.bd}`,
-      }}
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={!!active}
+      title={active ? `Clear filter: ${label}` : `Filter by ${label}`}
+      className="text-[10px] uppercase tracking-wider transition-colors hover:brightness-125"
+      style={{ ...style, cursor: "pointer" }}
     >
       {label}
-    </span>
+    </button>
   );
 }
+
 
 function HandoffPreviewView({
   preview,
