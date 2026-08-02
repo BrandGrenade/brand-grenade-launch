@@ -29,7 +29,8 @@ export type BriefSection = {
 
 export const STRATEGIC_OBJECTIVE_OPTIONS: BriefFieldOption[] = [
   { value: "Launch", label: "Launch", description: "Introducing a new brand, product or service to a market that does not yet know it exists." },
-  { value: "Refresh", label: "Refresh", description: "Updating an existing brand that has lost relevance, clarity or distinctiveness without changing what it fundamentally stands for." },
+  { value: "Refresh (Packaging)", label: "Refresh (Packaging)", description: "Renewing the physical or visual expression — pack, identity, design system — without changing what the brand stands for. A bounded change with a reveal moment and a finite lifecycle." },
+  { value: "Refresh (Campaign)", label: "Refresh (Campaign)", description: "A new campaign inside an existing, fixed brand platform. Distinctive assets and brand architecture are constraints, not variables." },
   { value: "Repositioning", label: "Repositioning", description: "Moving an established brand from one strategic territory to another it has not previously owned." },
   { value: "Defence", label: "Defence", description: "Protecting an established brand's territory against competitive encroachment or category disruption." },
   { value: "Challenger", label: "Challenger", description: "Taking market share from a dominant incumbent by naming what the category leader cannot say about itself." },
