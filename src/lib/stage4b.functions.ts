@@ -8,6 +8,7 @@ import { trimStage1ForDownstream } from "./context-trim";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertSessionOwner } from "@/lib/auth-helpers.server";
 import { assertStageOutput } from "./pipeline-integrity";
+import { getObjectiveDirective } from "./strategic-objective.server";
 
 const RunStage4bInput = z.object({ sessionId: z.string().uuid() });
 
@@ -19,7 +20,7 @@ export const runStage4b = createServerFn({ method: "POST" })
     await assertStageOutput(data.sessionId, 4, "Stage 4B");
     const { data: session, error: loadErr } = await supabaseAdmin
       .from("sessions")
-      .select("brand_name, category, strategic_mode, stage_1_output, stage_4_output, stage_4b_output")
+      .select("brand_name, category, stage_1_output, stage_4_output, stage_4b_output")
       .eq("id", data.sessionId)
       .single();
     if (loadErr || !session) throw new Error(`Session not found: ${loadErr?.message ?? "no row"}`);
@@ -39,7 +40,6 @@ export const runStage4b = createServerFn({ method: "POST" })
     const userMessage = buildStage4bUserMessage({
       brandName: session.brand_name,
       category: session.category,
-      strategicMode: session.strategic_mode,
       sanitisedBrief: trimStage1ForDownstream(session.stage_1_output),
     });
 
@@ -47,7 +47,7 @@ export const runStage4b = createServerFn({ method: "POST" })
     for await (const delta of withStreamSafety(
       { sessionId: data.sessionId, stageLabel: "Stage 4B", outputColumn: "stage_4b_output", errorColumn: "stage_4b_error" },
       streamClaude({
-        systemPrompt: STAGE_4B_SYSTEM_PROMPT,
+        systemPrompt: STAGE_4B_SYSTEM_PROMPT + (await getObjectiveDirective(data.sessionId, "stage4b")),
         userMessage,
         maxTokens: 64000,
         sessionId: data.sessionId,

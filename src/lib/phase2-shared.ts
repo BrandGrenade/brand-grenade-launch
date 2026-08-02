@@ -189,9 +189,11 @@ Markdown will break the UI. Do not use it under any circumstances.`;
 
 /** Wrap any Phase 2 system prompt with the absolute formatting rules.
  *  Always call this at the system-prompt call site (after any redirect /
- *  final-instruction wrapping) so the rules are the LAST thing the model sees. */
-export function withPhase2Formatting(systemPrompt: string): string {
-  return `${systemPrompt}\n\n---\n\n${PHASE_2_FORMATTING_RULES}`;
+ *  final-instruction wrapping) so the rules are the LAST thing the model sees.
+ *  `objectiveDirective` is the Strategic Objective branching block (may be "");
+ *  it sits after the prompt but before the formatting rules. */
+export function withPhase2Formatting(systemPrompt: string, objectiveDirective = ""): string {
+  return `${systemPrompt}${objectiveDirective}\n\n---\n\n${PHASE_2_FORMATTING_RULES}`;
 }
 
 /** Append a per-card redirect instruction to a system prompt. The redirect

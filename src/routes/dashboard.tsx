@@ -169,7 +169,6 @@ function Dashboard() {
         data: {
           brandName: pendingLegacy.brand_name,
           category: pendingLegacy.category || "Unspecified",
-          strategicMode: "Auto",
           briefText: pendingLegacy.brief_text,
         },
       });

@@ -22,7 +22,6 @@ const BriefFieldsSchema = z
 const CreateSessionInput = z.object({
   brandName: z.string().min(1).max(200),
   category: z.string().min(1).max(200),
-  strategicMode: z.string().min(1).max(200),
   briefText: z.string().min(20).max(50000),
   devMode: z.boolean().optional(),
   briefFields: BriefFieldsSchema,
@@ -46,7 +45,6 @@ export const createSession = createServerFn({ method: "POST" })
       .insert({
         brand_name: data.brandName,
         category: data.category,
-        strategic_mode: data.strategicMode,
         brief_text: data.briefText,
         brief_versions: briefVersions,
         status: "running",
@@ -95,7 +93,7 @@ export const runStage1 = createServerFn({ method: "POST" })
     await assertSessionOwner(data.sessionId, context.userId);
     const { data: session, error: loadErr } = await supabaseAdmin
       .from("sessions")
-      .select("brand_name, category, strategic_mode, brief_text, stage_1_output, brief_versions, is_preflight_test")
+      .select("brand_name, category, brief_text, stage_1_output, brief_versions, is_preflight_test")
       .eq("id", data.sessionId)
       .single();
     if (loadErr || !session) throw new Error(`Session not found: ${loadErr?.message ?? "no row"}`);
@@ -131,7 +129,6 @@ export const runStage1 = createServerFn({ method: "POST" })
     let userMessage = buildStage1UserMessage({
       brandName: session.brand_name,
       category: session.category,
-      strategicMode: session.strategic_mode,
       briefText: session.brief_text,
     });
     if (feedback) {

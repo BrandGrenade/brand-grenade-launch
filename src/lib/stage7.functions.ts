@@ -68,7 +68,7 @@ export const runStage7 = createServerFn({ method: "POST" })
     const { data: session, error: loadErr } = await supabaseAdmin
       .from("sessions")
       .select(
-        "brand_name, category, strategic_mode, stage_2_output, stage_3_output, stage_4_output, stage_6_output, stage_7_output"
+        "brand_name, category, stage_2_output, stage_3_output, stage_4_output, stage_6_output, stage_7_output"
       )
       .eq("id", data.sessionId)
       .single();
@@ -101,7 +101,6 @@ export const runStage7 = createServerFn({ method: "POST" })
     const userMessage = buildStage7UserMessage({
       brandName: session.brand_name,
       category: session.category,
-      strategicMode: session.strategic_mode,
       stage6Output: stage6Full,
       sis: session.stage_4_output,
       cmm: session.stage_2_output,
@@ -142,7 +141,6 @@ export const runStage7 = createServerFn({ method: "POST" })
       const continuationMessage = buildStage7UserMessage({
         brandName: session.brand_name,
         category: session.category,
-        strategicMode: session.strategic_mode,
         stage6Output: stage6Full,
         sis: session.stage_4_output,
         cmm: session.stage_2_output,

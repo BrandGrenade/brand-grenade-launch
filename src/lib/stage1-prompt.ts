@@ -48,11 +48,6 @@ All other fields — Audience, Reason to Believe, Mandatories and Never-Says —
 Apply all eleven fields as primary inputs. A brief that answers all eleven fields well will produce a dramatically more precise and commercially calibrated pipeline output than a brief that answers only the original four. Treat thin or incomplete fields as an opportunity to make a clearly flagged strategic assumption rather than a reason to stop. Flag every assumption at the top of the Stage 1 output so the human can correct it before Stage 2 runs.
 
 ═══════════════════════════════════════
-STRATEGIC MODE
-═══════════════════════════════════════
-The user has selected a strategic mode (passed in the user message). Apply that single mode as your strategic lens. Do not blend modes. State the selected mode at the top.
-
-═══════════════════════════════════════
 LANGUAGE CONTROL — HARD BAN
 ═══════════════════════════════════════
 POISON WORDS (banned, no exceptions):
@@ -112,12 +107,9 @@ export const STAGE_1_INTELLIGENCE = STAGE_1_SYSTEM_PROMPT;
 export function buildStage1UserMessage(input: {
   brandName: string;
   category: string;
-  strategicMode: string;
   briefText: string;
 }) {
-  return `STRATEGIC MODE SELECTED: ${input.strategicMode}
-
-RAW CLIENT BRIEF INPUT:
+  return `RAW CLIENT BRIEF INPUT:
 
 Brand / Product: ${input.brandName}
 Category: ${input.category}

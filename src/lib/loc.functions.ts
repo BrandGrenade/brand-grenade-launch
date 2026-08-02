@@ -213,6 +213,13 @@ export const runLeftOfCentre = createServerFn({ method: "POST" })
       }
       await bumpHeartbeat();
 
+      // CHALLENGER OBJECTIVE — Engine 08 (Enemy First) is guaranteed to fire.
+      // It is never skipped by a selective retry, and a failed run is retried
+      // once before the pool is assembled.
+      const { sessionRequiresEnemyFirstPriority } = await import("./strategic-objective.server");
+      const enemyFirstPriority = await sessionRequiresEnemyFirstPriority(data.sessionId);
+      if (enemyFirstPriority) keepSet.delete("enemy_first" as EngineName);
+
       // Fire engines in parallel — skip any engine the user asked to keep.
       // Each engine bumps the heartbeat on completion so the client's
       // no-activity watchdog only trips when work has genuinely stalled.
@@ -230,6 +237,21 @@ export const runLeftOfCentre = createServerFn({ method: "POST" })
           return r;
         }),
       );
+
+      if (enemyFirstPriority) {
+        const idx = engineResults.findIndex((r) => r.engine === "enemy_first");
+        if (idx >= 0 && !engineResults[idx]!.output) {
+          const retry = await runOneEngine({
+            engine: "enemy_first" as EngineName,
+            sessionId: data.sessionId,
+            inputs,
+            retryInstructions: data.retryInstructions,
+            abstractOpportunity,
+          });
+          engineResults[idx] = retry;
+          await bumpHeartbeat();
+        }
+      }
 
       const engineOutputsRecord: Record<string, unknown> = { ...preservedOutputs };
       for (const r of engineResults) {
@@ -298,7 +320,13 @@ export const runLeftOfCentre = createServerFn({ method: "POST" })
       await bumpHeartbeat();
 
       const anchored = successful.filter((r) => r.output.anchored);
-      const forSelection = anchored.length > 0 ? anchored : successful;
+      let forSelection = anchored.length > 0 ? anchored : successful;
+      // Challenger: Engine 08 is never dropped from the selection pool, even
+      // if the anchor gate rejected it — it is surfaced flagged instead.
+      if (enemyFirstPriority && !forSelection.some((r) => r.engine === "enemy_first")) {
+        const ef = successful.find((r) => r.engine === "enemy_first");
+        if (ef) forSelection = [ef, ...forSelection];
+      }
 
       // Six-dimension validation pass across all successful engines.
       let validationEntries: EngineValidationEntry[] = [];
@@ -338,6 +366,13 @@ export const runLeftOfCentre = createServerFn({ method: "POST" })
           engineOutput: p.engineOutput,
           validation: v?.score ?? null,
           validationError: v?.error ?? null,
+          // Challenger objective: flag Engine 08 for serious consideration at
+          // Checkpoint C rather than equal weight among the thirteen.
+          priority: enemyFirstPriority && p.engine === "enemy_first",
+          priorityReason:
+            enemyFirstPriority && p.engine === "enemy_first"
+              ? "Strategic Objective: Challenger — Enemy First is the primary lens for this brief"
+              : null,
         };
       });
 

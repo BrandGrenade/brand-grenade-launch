@@ -57,7 +57,7 @@ async function rerunStage7WithEnforcement(sessionId: string): Promise<string> {
   const { data: session, error } = await supabaseAdmin
     .from("sessions")
     .select(
-      "brand_name, category, strategic_mode, stage_2_output, stage_3_output, stage_4_output, stage_6_output"
+      "brand_name, category, stage_2_output, stage_3_output, stage_4_output, stage_6_output"
     )
     .eq("id", sessionId)
     .single();
@@ -66,7 +66,6 @@ async function rerunStage7WithEnforcement(sessionId: string): Promise<string> {
   const userMessage = buildStage7UserMessage({
     brandName: session.brand_name,
     category: session.category,
-    strategicMode: session.strategic_mode,
     stage6Output: trimValidatedInsightsForDownstream(session.stage_6_output ?? ""),
     sis: session.stage_4_output ?? "",
     cmm: session.stage_2_output ?? "",

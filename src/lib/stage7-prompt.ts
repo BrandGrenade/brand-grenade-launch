@@ -52,7 +52,6 @@ export function extractStage6UniverseNames(stage6Output: string): string[] {
 export function buildStage7UserMessage(args: {
   brandName: string;
   category: string;
-  strategicMode: string;
   stage6Output: string;
   sis: string;
   cmm: string;

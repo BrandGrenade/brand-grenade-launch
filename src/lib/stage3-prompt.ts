@@ -27,7 +27,6 @@ export const STAGE_3_INTELLIGENCE = STAGE_3_SYSTEM_PROMPT;
 export function buildStage3UserMessage(args: {
   brandName: string;
   category: string;
-  strategicMode: string;
   sanitisedBrief: string;
   cmm: string;
 }): string {

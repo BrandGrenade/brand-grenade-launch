@@ -899,7 +899,7 @@ export type Database = {
           stage_amendments?: Json
           stage_status?: string | null
           status?: string
-          strategic_mode: string
+          strategic_mode?: string
           strategy_signoff_confirmed?: boolean
           strategy_signoff_confirmed_at?: string | null
           strategy_signoff_stop?: boolean

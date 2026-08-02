@@ -9,6 +9,7 @@ import { countSections } from "./count-helpers";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertSessionOwner } from "@/lib/auth-helpers.server";
 import { assertUpstreamStageOutput } from "./pipeline-integrity";
+import { getObjectiveDirective } from "./strategic-objective.server";
 
 const RunStage5Input = z.object({ sessionId: z.string().uuid() });
 
@@ -20,7 +21,7 @@ export const runStage5 = createServerFn({ method: "POST" })
     await assertUpstreamStageOutput(data.sessionId, 5);
     const { data: session, error: loadErr } = await supabaseAdmin
       .from("sessions")
-      .select("brand_name, category, strategic_mode, stage_1_output, stage_2_output, stage_4_output, stage_4b_output, stage_5_output")
+      .select("brand_name, category, stage_1_output, stage_2_output, stage_4_output, stage_4b_output, stage_5_output")
       .eq("id", data.sessionId)
       .single();
     if (loadErr || !session) throw new Error(`Session not found: ${loadErr?.message ?? "no row"}`);
@@ -43,7 +44,6 @@ export const runStage5 = createServerFn({ method: "POST" })
     const userMessage = buildStage5UserMessage({
       brandName: session.brand_name,
       category: session.category,
-      strategicMode: session.strategic_mode,
       sanitisedBrief: session.stage_1_output,
       cmm: trimCMMForDownstream(session.stage_2_output),
       sis: trimSISForDownstream(session.stage_4_output),
@@ -56,7 +56,7 @@ export const runStage5 = createServerFn({ method: "POST" })
     for await (const delta of withStreamSafety(
       { sessionId: data.sessionId, stageLabel: "Stage 5", outputColumn: "stage_5_output", errorColumn: "stage_5_error" },
       streamClaude({
-        systemPrompt: STAGE_5_SYSTEM_PROMPT,
+        systemPrompt: STAGE_5_SYSTEM_PROMPT + (await getObjectiveDirective(data.sessionId, "stage5")),
         userMessage,
         maxTokens: 64000,
         sessionId: data.sessionId,

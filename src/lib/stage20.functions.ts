@@ -37,6 +37,7 @@ import {
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertSessionOwner } from "@/lib/auth-helpers.server";
 import { assertUpstreamStageOutput } from "./pipeline-integrity";
+import { getObjectiveDirective } from "./strategic-objective.server";
 
 const STAGE20_SELECT = [
   "brand_name",
@@ -166,7 +167,7 @@ export const runStage20 = createServerFn({ method: "POST" })
     if (!session.stage_19_output) throw new Error("Stage 19 must complete before Stage 20");
     if (session.stage_20_output) return { output: session.stage_20_output as string };
 
-    const systemPrompt = withPhase2Formatting(STAGE_20_MASTER_DETONATION_BRIEF_PROMPT);
+    const systemPrompt = withPhase2Formatting(STAGE_20_MASTER_DETONATION_BRIEF_PROMPT, await getObjectiveDirective(data.sessionId, "phase2"));
     const userMessage = buildStage20UserMessage(session as never);
     let output: string;
     try {
@@ -254,7 +255,7 @@ export const retryStage20 = createServerFn({ method: "POST" })
     if (error || !session) throw new Error(`Session not found: ${error?.message ?? "no row"}`);
 
     const redirect = data.redirectInstructions["card-1"] ?? "";
-    const system = withPhase2Formatting(appendRedirect(STAGE_20_MASTER_DETONATION_BRIEF_PROMPT, redirect));
+    const system = withPhase2Formatting(appendRedirect(STAGE_20_MASTER_DETONATION_BRIEF_PROMPT, redirect), await getObjectiveDirective(data.sessionId, "phase2"));
     const userMessage = buildStage20UserMessage(session as never);
     const raw = await callClaude({
       systemPrompt: system,
@@ -316,7 +317,7 @@ export const regenerateStage20Section = createServerFn({ method: "POST" })
     const system = `You are rewriting one specific section of the Master Detonation Brief. Section: ${label}. Current content: ${section.content}. Human feedback: ${data.feedback}. Rewrite this section only. Match the length and voice of the original. Output only the rewritten section content. No labels. No preamble. No metadata.`;
 
     const newContent = await callClaude({
-      systemPrompt: withPhase2Formatting(system),
+      systemPrompt: withPhase2Formatting(system, await getObjectiveDirective(data.sessionId, "phase2")),
       userMessage: `Rewrite the ${label} section now. Output only the new section content.`,
       maxTokens: 64000,
       sessionId: data.sessionId,

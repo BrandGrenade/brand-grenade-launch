@@ -452,7 +452,8 @@ export const getBriefingHandoffPreview = createServerFn({ method: "POST" })
 
 const STRATEGIC_OBJECTIVE_LIST = [
   "Launch",
-  "Refresh",
+  "Refresh (Packaging)",
+  "Refresh (Campaign)",
   "Repositioning",
   "Defence",
   "Challenger",

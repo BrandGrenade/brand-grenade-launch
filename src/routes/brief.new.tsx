@@ -85,7 +85,6 @@ function NewBriefPage() {
         data: {
           brandName: saved.brand_name,
           category: saved.category,
-          strategicMode: "Auto",
           briefText: saved.brief_text,
           devMode: getDevModeFromStorage(),
         },

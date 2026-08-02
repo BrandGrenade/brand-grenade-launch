@@ -55,12 +55,10 @@ Begin immediately with the heading. No preamble. No metadata. No data fields. Yo
 export function buildStage4bUserMessage(args: {
   brandName: string;
   category: string;
-  strategicMode: string;
   sanitisedBrief: string;
 }): string {
   return `Brand: ${args.brandName}
 Category: ${args.category}
-Strategic mode: ${args.strategicMode}
 
 Sanitised brief:
 ${args.sanitisedBrief}
