@@ -501,6 +501,13 @@ function buildLocCards(packages: LocEnginePackage[] | null, offset: number): { c
       };
     }
 
+    // Challenger objective: Engine 08 is flagged for serious consideration at
+    // Checkpoint C and hoisted to the top of the LOC pool.
+    const isPriority = Boolean((pkg as { priority?: boolean }).priority);
+    const priorityReason =
+      (pkg as { priorityReason?: string | null }).priorityReason ??
+      "Strategic Objective: Challenger — Enemy First is the primary lens for this brief";
+
     cards.push({
       cardNumber: offset + i + 1,
       smpLine,
@@ -512,11 +519,22 @@ function buildLocCards(packages: LocEnginePackage[] | null, offset: number): { c
       scores,
       fieldName: label,
       iconicTierStatus: "",
-      pressureTestNote: statusNote || (validationError ?? ""),
+      pressureTestNote: isPriority
+        ? `★ PRIORITY — ${priorityReason}${statusNote ? ` · ${statusNote}` : ""}`
+        : statusNote || (validationError ?? ""),
       source: label,
       engineKey,
     });
     i += 1;
+  }
+  // Hoist any priority-flagged card to the front and renumber.
+  if (cards.some((c) => c.pressureTestNote?.startsWith("★ PRIORITY"))) {
+    cards.sort((a, b) => {
+      const ap = a.pressureTestNote?.startsWith("★ PRIORITY") ? 0 : 1;
+      const bp = b.pressureTestNote?.startsWith("★ PRIORITY") ? 0 : 1;
+      return ap - bp;
+    });
+    cards.forEach((c, idx) => { c.cardNumber = offset + idx + 1; });
   }
   let validationWarning: string | null = null;
   if (pendingCount > 0 || failedFloorCount > 0 || hadValidationError) {
