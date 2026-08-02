@@ -19,7 +19,7 @@ export const runStage3 = createServerFn({ method: "POST" })
     await assertUpstreamStageOutput(data.sessionId, 3);
     const { data: session, error: loadErr } = await supabaseAdmin
       .from("sessions")
-      .select("brand_name, category, strategic_mode, stage_1_output, stage_2_output, stage_3_output")
+      .select("brand_name, category, stage_1_output, stage_2_output, stage_3_output")
       .eq("id", data.sessionId)
       .single();
     if (loadErr || !session) throw new Error(`Session not found: ${loadErr?.message ?? "no row"}`);
@@ -39,7 +39,6 @@ export const runStage3 = createServerFn({ method: "POST" })
     const userMessage = buildStage3UserMessage({
       brandName: session.brand_name,
       category: session.category,
-      strategicMode: session.strategic_mode,
       sanitisedBrief: trimStage1ForDownstream(session.stage_1_output),
       cmm: session.stage_2_output,
     });

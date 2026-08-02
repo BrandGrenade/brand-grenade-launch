@@ -50,7 +50,6 @@ export const STAGE_6_INTELLIGENCE = STAGE_6_SYSTEM_PROMPT;
 export function buildStage6UserMessage(args: {
   brandName: string;
   category: string;
-  strategicMode: string;
   stage5Output: string;
   cmm: string;
   constraintMatrix: string;

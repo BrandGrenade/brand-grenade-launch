@@ -197,7 +197,6 @@ const CHECK_DEFS: ReadonlyArray<{ id: FullCheckId; name: string }> = [
 
 const TESTBRAND_BRAND_NAME = "Preflight TestBrand";
 const TESTBRAND_CATEGORY = "Australian premium energy drink";
-const TESTBRAND_STRATEGIC_MODE = "Brand Detonation";
 // Narrow-but-representative brief: one competitor, one target, one product claim.
 // Rich enough to exercise the real multi-universe path (Stage 5/6 typically
 // yields ~3–4 universes on this input), but not so category-rich that it
@@ -399,7 +398,6 @@ export const runTierTwoFullCheck = createServerFn({ method: "POST" })
           .insert({
             brand_name: TESTBRAND_BRAND_NAME,
             category: TESTBRAND_CATEGORY,
-            strategic_mode: TESTBRAND_STRATEGIC_MODE,
             brief_text: TESTBRAND_BRIEF,
             status: "running",
             current_stage: 1,
@@ -920,7 +918,6 @@ export const runTierTwoChecksFrom11 = createServerFn({ method: "POST" })
           .insert({
             brand_name: `${TESTBRAND_BRAND_NAME} ${suffix}`,
             category: TESTBRAND_CATEGORY,
-            strategic_mode: TESTBRAND_STRATEGIC_MODE,
             brief_text: TESTBRAND_BRIEF + `\n\nConcurrency variant: ${suffix}.`,
             status: "running",
             current_stage: 1,

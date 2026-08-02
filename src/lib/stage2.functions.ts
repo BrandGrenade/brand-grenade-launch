@@ -21,7 +21,7 @@ export const runStage2 = createServerFn({ method: "POST" })
     await assertUpstreamStageOutput(data.sessionId, 2);
     const { data: session, error: loadErr } = await supabaseAdmin
       .from("sessions")
-      .select("brand_name, category, strategic_mode, stage_1_output, stage_1b_output, stage_2_output")
+      .select("brand_name, category, stage_1_output, stage_1b_output, stage_2_output")
       .eq("id", data.sessionId)
       .single();
     if (loadErr || !session) throw new Error(`Session not found: ${loadErr?.message ?? "no row"}`);

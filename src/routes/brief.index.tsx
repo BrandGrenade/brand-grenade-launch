@@ -157,7 +157,6 @@ function BriefIntake() {
         data: {
           brandName: b.brief_fields.brandName || b.brand_name,
           category: b.brief_fields.category || b.category,
-          strategicMode: "Auto",
           briefText: b.brief_text,
           devMode: getDevModeFromStorage(),
           briefFields: b.brief_fields,
@@ -305,7 +304,6 @@ function BriefIntake() {
         data: {
           brandName: brand.trim(),
           category: category.trim() || "Unspecified",
-          strategicMode: "Auto",
           briefText,
           devMode: getDevModeFromStorage(),
           briefFields,
@@ -337,7 +335,6 @@ function BriefIntake() {
         data: {
           brandName: brand.trim(),
           category: category.trim() || "Unspecified",
-          strategicMode: "Auto",
           briefText,
           devMode: getDevModeFromStorage(),
           briefFields,

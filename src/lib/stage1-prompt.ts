@@ -112,7 +112,6 @@ export const STAGE_1_INTELLIGENCE = STAGE_1_SYSTEM_PROMPT;
 export function buildStage1UserMessage(input: {
   brandName: string;
   category: string;
-  strategicMode: string;
   briefText: string;
 }) {
   return `STRATEGIC MODE SELECTED: ${input.strategicMode}
