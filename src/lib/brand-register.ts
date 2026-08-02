@@ -16,7 +16,7 @@ export type SystemKey =
   | "pipeline"
   | "phase_2";
 
-export type SystemState = "not_started" | "in_progress" | "complete";
+export type SystemState = "not_started" | "in_progress" | "complete" | "interrupted";
 
 export type SystemStatus = {
   state: SystemState;
@@ -109,6 +109,9 @@ type SessionRow = {
   phase_2_status: string | null;
   stage_17_output: string | null;
   stage_22_output: string | null;
+  stage_status: string | null;
+  interrupted_stage: number | null;
+  last_heartbeat_at: string | null;
 };
 
 type WorkspaceRow = {
@@ -143,6 +146,10 @@ type IntelligenceRow = {
 
 // ─── Per-system derivation ─────────────────────────────────────────
 
+/** Matches STALE_MS in session-heartbeat.functions.ts. */
+const STALE_HEARTBEAT_MS = 2 * 60 * 1000;
+
+
 function derivePipeline(sessions: SessionRow[]): SystemStatus {
   if (sessions.length === 0) return { ...EMPTY_STATUS };
   const latest = sessions[0]!;
@@ -159,6 +166,26 @@ function derivePipeline(sessions: SessionRow[]): SystemStatus {
     };
   }
   const stage = latest.current_stage ?? 1;
+
+  // Interrupted = the session says so, or a stage claims to be running but
+  // its heartbeat has gone quiet. Either way the user needs a resume, not a
+  // "still working" label that never resolves.
+  const stalled =
+    (latest.stage_status ?? "").startsWith("running:") &&
+    Date.now() - new Date(latest.last_heartbeat_at ?? latest.updated_at).getTime() >
+      STALE_HEARTBEAT_MS;
+  if (latest.status === "interrupted" || stalled) {
+    const at = latest.interrupted_stage ?? stage;
+    return {
+      state: "interrupted",
+      label: `Interrupted at Stage ${at} — resume`,
+      timestamp: latest.updated_at,
+      href: "/pipeline",
+      hrefSearch: { session: latest.id },
+      runCount: sessions.length,
+    };
+  }
+
   return {
     state: "in_progress",
     label: `Stage ${stage} of 27`,
@@ -168,6 +195,7 @@ function derivePipeline(sessions: SessionRow[]): SystemStatus {
     runCount: sessions.length,
   };
 }
+
 
 function derivePhase2(sessions: SessionRow[]): SystemStatus {
   if (sessions.length === 0) return { ...EMPTY_STATUS };
@@ -478,7 +506,7 @@ export function useBrandRegister(): UseBrandRegisterResult {
       supabase
         .from("sessions")
         .select(
-          "id,brand_name,category,status,current_stage,created_at,updated_at,stage_1_output,stage_16_consulting_output,phase_2_status,stage_17_output,stage_22_output",
+          "id,brand_name,category,status,current_stage,created_at,updated_at,stage_1_output,stage_16_consulting_output,phase_2_status,stage_17_output,stage_22_output,stage_status,interrupted_stage,last_heartbeat_at",
         )
         .eq("is_preflight_test", false)
         .order("updated_at", { ascending: false })

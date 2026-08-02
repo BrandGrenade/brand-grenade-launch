@@ -618,8 +618,10 @@ export type Database = {
           doc_workshop_status_at: string | null
           doc_workshop_url: string | null
           id: string
+          interrupted_at: string | null
           interrupted_stage: number | null
           is_preflight_test: boolean
+          last_heartbeat_at: string | null
           loc_classifier_rationale: string | null
           loc_decision_packages: Json | null
           loc_engine_outputs: Json | null
@@ -632,6 +634,7 @@ export type Database = {
           loc_validation: Json | null
           phase_2_current_stage: string
           phase_2_status: string
+          retry_count: number
           retry_status: string | null
           selected_format: string | null
           selected_loc_expression: string | null
@@ -724,6 +727,7 @@ export type Database = {
           stage_9_leftofcentre_output: string | null
           stage_9_output: string | null
           stage_amendments: Json
+          stage_started_at: string | null
           stage_status: string | null
           status: string
           strategic_mode: string
@@ -791,8 +795,10 @@ export type Database = {
           doc_workshop_status_at?: string | null
           doc_workshop_url?: string | null
           id?: string
+          interrupted_at?: string | null
           interrupted_stage?: number | null
           is_preflight_test?: boolean
+          last_heartbeat_at?: string | null
           loc_classifier_rationale?: string | null
           loc_decision_packages?: Json | null
           loc_engine_outputs?: Json | null
@@ -805,6 +811,7 @@ export type Database = {
           loc_validation?: Json | null
           phase_2_current_stage?: string
           phase_2_status?: string
+          retry_count?: number
           retry_status?: string | null
           selected_format?: string | null
           selected_loc_expression?: string | null
@@ -897,6 +904,7 @@ export type Database = {
           stage_9_leftofcentre_output?: string | null
           stage_9_output?: string | null
           stage_amendments?: Json
+          stage_started_at?: string | null
           stage_status?: string | null
           status?: string
           strategic_mode?: string
@@ -964,8 +972,10 @@ export type Database = {
           doc_workshop_status_at?: string | null
           doc_workshop_url?: string | null
           id?: string
+          interrupted_at?: string | null
           interrupted_stage?: number | null
           is_preflight_test?: boolean
+          last_heartbeat_at?: string | null
           loc_classifier_rationale?: string | null
           loc_decision_packages?: Json | null
           loc_engine_outputs?: Json | null
@@ -978,6 +988,7 @@ export type Database = {
           loc_validation?: Json | null
           phase_2_current_stage?: string
           phase_2_status?: string
+          retry_count?: number
           retry_status?: string | null
           selected_format?: string | null
           selected_loc_expression?: string | null
@@ -1070,6 +1081,7 @@ export type Database = {
           stage_9_leftofcentre_output?: string | null
           stage_9_output?: string | null
           stage_amendments?: Json
+          stage_started_at?: string | null
           stage_status?: string | null
           status?: string
           strategic_mode?: string

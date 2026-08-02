@@ -800,6 +800,7 @@ const STATE_COLOR: Record<SystemStatus["state"], string> = {
   not_started: "var(--color-border-strong)",
   in_progress: "#D4924A",
   complete: "#4A7C59",
+  interrupted: "#B4453C",
 };
 
 const SYSTEM_LAUNCH_LABEL: Record<SystemKey, string> = {
@@ -843,11 +844,16 @@ function SystemStatusCell({
       <div className="flex min-w-0 flex-col">
         {status.state === "not_started" ? (
           <NotStartedLink system={system} brand={brand} />
+        ) : status.state === "interrupted" ? (
+          // Interrupted runs get a resume link, not a "complete" cell —
+          // the label carries the stage the run stalled on.
+          <InProgressLink system={system} status={status} />
         ) : status.state === "in_progress" ? (
           <InProgressLink system={system} status={status} />
         ) : (
           <CompleteCell system={system} status={status} />
         )}
+
       </div>
     </div>
   );

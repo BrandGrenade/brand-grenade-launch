@@ -61,31 +61,28 @@ export const runStage4b = createServerFn({ method: "POST" })
       }
 
 
-    // Mandatory fact-verification pass. Stage 4B explicitly labels claims as
-    // "Real Fact" vs "Perceived Fact". Real-fact claims must be checked
-    // against a live web search before being passed downstream to Stage 5.
-    // This is a structural step, not a prompt instruction — a real search
-    // call is made via src/lib/fact-verify.server.ts.
+    // Mandatory fact-verification pass, via the shared dispatcher in
+    // fact-verify.server.ts (FACT_VERIFIED_STAGES.stage4b). Every claim the
+    // stage labels "Real Fact" is extracted and web-searched; anything that
+    // cannot be corroborated is downgraded and flagged before Stage 5 sees it.
     yield { delta: "\n\n_[Running live fact-verification web search against real-fact claims…]_\n\n" };
     let finalOutput = output;
-    try {
-      const { verifyRealFacts } = await import("./fact-verify.server");
-      const verification = await verifyRealFacts({
+    {
+      const { runStageFactVerification } = await import("./fact-verify.server");
+      const v = await runStageFactVerification({
+        stageKey: "stage4b",
         output,
         brandName: session.brand_name,
         category: session.category,
-        stageLabel: "Stage 4B",
       });
-      finalOutput = verification.rewrittenOutput;
-      const flagged = verification.results.filter((r) => r.verdict !== "verified").length;
+      finalOutput = v.output;
       yield {
-        delta: `_[Fact verification complete: ${verification.results.length} claim(s) checked, ${flagged} flagged for human confirmation.]_\n\n`,
+        delta: v.ranSearch
+          ? `_[Fact verification complete: ${v.checked} claim(s) checked, ${v.flagged} flagged for human confirmation.]_\n\n`
+          : "_[Fact verification could not run — output flagged for full manual review.]_\n\n",
       };
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : "fact verification failed";
-      finalOutput = `${output}\n\n---\n\n## ⚠️ Fact Verification Review — VERIFICATION CALL FAILED\n\nThe automated web-search fact-check did not complete (${msg.slice(0, 200)}). Every claim in this stage's output presented as a real-world verifiable fact must be confirmed manually before being treated as established fact.\n`;
-      yield { delta: "_[Fact verification could not run — output flagged for full manual review.]_\n\n" };
     }
+
 
     const { error: updateErr } = await supabaseAdmin
       .from("sessions")

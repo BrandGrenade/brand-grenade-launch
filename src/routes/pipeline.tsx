@@ -51,6 +51,8 @@ import { FileText, PencilLine } from "lucide-react";
 
 const CLIENT_STREAM_IDLE_MS = 8 * 60_000;
 const DB_COMPLETION_POLL_MS = 5_000;
+/** Safety-net reconciliation read; realtime is the primary completion signal. */
+const DB_COMPLETION_RECONCILE_MS = 30_000;
 const DB_COMPLETION_POLL_MAX_MS = 60 * 60_000;
 const DB_COMPLETION_GRACE_AFTER_STREAM_FAILURE_MS = 15_000;
 
@@ -109,6 +111,15 @@ async function consumeStream<C extends { delta?: string; done?: true }>(
   return final;
 }
 
+/**
+ * Waits for a stage to be marked complete in the database.
+ *
+ * Realtime-first: subscribes to postgres_changes on this session row, so a
+ * completed-but-unsignalled stage advances the instant the DB row flips
+ * rather than up to one poll interval later. A slow reconciliation read
+ * (RECONCILE_MS) remains as a safety net for a dropped socket or a row that
+ * completed before the subscription attached — it is not the primary path.
+ */
 async function pollForCompletedStageOutput(args: {
   sessionId: string;
   outputColumns: string[];
@@ -118,40 +129,82 @@ async function pollForCompletedStageOutput(args: {
   maxMs?: number;
   getOutput?: (row: Record<string, unknown>) => string;
 }): Promise<{ output: string; row: Record<string, unknown> }> {
-  const intervalMs = args.intervalMs ?? DB_COMPLETION_POLL_MS;
   const maxMs = args.maxMs ?? DB_COMPLETION_POLL_MAX_MS;
   const minChars = args.minChars ?? 1;
   const selectColumns = Array.from(
     new Set([...args.outputColumns, "stage_status", "stage_1_tension_score", "stage_1b_required"]),
   ).join(", ");
-  const deadline = Date.now() + maxMs;
 
-  while (Date.now() < deadline) {
-    await new Promise((resolve) => window.setTimeout(resolve, intervalMs));
+  const extract = (row: Record<string, unknown> | null) => {
+    if (!row) return null;
+    if (row.stage_status !== `complete:${args.stageStatusId}`) return null;
+    const output = args.getOutput
+      ? args.getOutput(row)
+      : args.outputColumns
+          .map((column) => (typeof row[column] === "string" ? (row[column] as string) : ""))
+          .join("");
+    return output.trim().length >= minChars ? { output, row } : null;
+  };
+
+  const readRow = async () => {
     try {
       const { data } = await supabase
         .from("sessions")
         .select(selectColumns)
         .eq("id", args.sessionId)
         .maybeSingle();
-      const row = (data as Record<string, unknown> | null) ?? null;
-      if (!row) continue;
-      if (row.stage_status !== `complete:${args.stageStatusId}`) continue;
-      const output = args.getOutput
-        ? args.getOutput(row)
-        : args.outputColumns
-            .map((column) => (typeof row[column] === "string" ? (row[column] as string) : ""))
-            .join("");
-      if (output.trim().length >= minChars) return { output, row };
+      return (data as Record<string, unknown> | null) ?? null;
     } catch {
-      /* transient read failure — keep polling */
+      return null; // transient read failure — realtime or the next read covers it
     }
-  }
+  };
 
-  throw new Error(
-    `DB poll timed out after ${Math.round(maxMs / 1000)}s waiting for Stage ${args.stageStatusId} completion`,
-  );
+  return await new Promise<{ output: string; row: Record<string, unknown> }>((resolve, reject) => {
+    let settled = false;
+    const finish = (
+      fn: () => void,
+    ) => {
+      if (settled) return;
+      settled = true;
+      window.clearInterval(reconcileTimer);
+      window.clearTimeout(deadlineTimer);
+      void supabase.removeChannel(channel);
+      fn();
+    };
+
+    const consider = (row: Record<string, unknown> | null) => {
+      const hit = extract(row);
+      if (hit) finish(() => resolve(hit));
+    };
+
+    const channel = supabase
+      .channel(`stage-complete:${args.sessionId}:${args.stageStatusId}`)
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "sessions", filter: `id=eq.${args.sessionId}` },
+        (payload) => consider(payload.new as Record<string, unknown>),
+      )
+      .subscribe();
+
+    // Catch a row that already completed before the socket attached.
+    void readRow().then(consider);
+
+    const reconcileTimer = window.setInterval(() => {
+      void readRow().then(consider);
+    }, DB_COMPLETION_RECONCILE_MS);
+
+    const deadlineTimer = window.setTimeout(() => {
+      finish(() =>
+        reject(
+          new Error(
+            `Timed out after ${Math.round(maxMs / 1000)}s waiting for Stage ${args.stageStatusId} completion`,
+          ),
+        ),
+      );
+    }, maxMs);
+  });
 }
+
 
 async function markStageInterrupted(args: {
   sessionId: string;
