@@ -729,9 +729,14 @@ function Step1View(props: {
       <button
         type="button"
         onClick={() => props.onPick("both")}
-        className="self-start text-body-sm text-text-tertiary hover:text-text-primary"
+        className="self-start rounded-md px-3 py-1.5 text-body-sm transition-colors"
+        style={{
+          backgroundColor: bothSelected ? "#1A1611" : "transparent",
+          border: `1px solid ${bothSelected ? "#D4924A" : "#2A2A2A"}`,
+          color: bothSelected ? "#D4924A" : undefined,
+        }}
       >
-        Keep both frames open
+        {bothSelected ? "✓ Both frames kept open" : "Keep both frames open"}
       </button>
     </div>
   );
