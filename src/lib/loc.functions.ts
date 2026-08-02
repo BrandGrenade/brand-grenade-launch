@@ -320,7 +320,13 @@ export const runLeftOfCentre = createServerFn({ method: "POST" })
       await bumpHeartbeat();
 
       const anchored = successful.filter((r) => r.output.anchored);
-      const forSelection = anchored.length > 0 ? anchored : successful;
+      let forSelection = anchored.length > 0 ? anchored : successful;
+      // Challenger: Engine 08 is never dropped from the selection pool, even
+      // if the anchor gate rejected it — it is surfaced flagged instead.
+      if (enemyFirstPriority && !forSelection.some((r) => r.engine === "enemy_first")) {
+        const ef = successful.find((r) => r.engine === "enemy_first");
+        if (ef) forSelection = [ef, ...forSelection];
+      }
 
       // Six-dimension validation pass across all successful engines.
       let validationEntries: EngineValidationEntry[] = [];
@@ -360,6 +366,13 @@ export const runLeftOfCentre = createServerFn({ method: "POST" })
           engineOutput: p.engineOutput,
           validation: v?.score ?? null,
           validationError: v?.error ?? null,
+          // Challenger objective: flag Engine 08 for serious consideration at
+          // Checkpoint C rather than equal weight among the thirteen.
+          priority: enemyFirstPriority && p.engine === "enemy_first",
+          priorityReason:
+            enemyFirstPriority && p.engine === "enemy_first"
+              ? "Strategic Objective: Challenger — Enemy First is the primary lens for this brief"
+              : null,
         };
       });
 
