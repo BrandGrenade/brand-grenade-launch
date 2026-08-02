@@ -693,7 +693,11 @@ function Step1View(props: {
           onClick={() => props.onPick(which)}
           className="mt-3 text-body-sm text-primary hover:opacity-80"
         >
-          {selected ? "✓ Selected" : "Choose this frame"}
+          {bothSelected
+            ? "✓ Kept open (both frames)"
+            : selected
+              ? "✓ Selected"
+              : "Choose this frame"}
         </button>
       </div>
     );
