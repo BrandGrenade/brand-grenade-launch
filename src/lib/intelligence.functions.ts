@@ -244,7 +244,17 @@ export const runIntelligenceAnalysis = createServerFn({ method: "POST" })
     const briefType = normaliseBriefType(typeof metaBriefType === "string" ? metaBriefType : null);
 
     // 03 — System prompt.
-    const systemPrompt = buildSystemPrompt(briefType);
+    // Strategic Objective branching: when the objective was carried across the
+    // handoff into report_metadata, Category Creation forces Type 03 as the
+    // primary territory lens. Absent an objective this is a no-op.
+    const metaObjective =
+      row.report_metadata && typeof row.report_metadata === "object" && !Array.isArray(row.report_metadata)
+        ? (row.report_metadata as Record<string, unknown>)["strategic_objective"]
+        : null;
+    const { normaliseObjective, objectiveDirective } = await import("./strategic-objective");
+    const systemPrompt =
+      buildSystemPrompt(briefType) +
+      objectiveDirective(normaliseObjective(metaObjective), "intelligence");
 
     // 04 — User message from the six research inputs + framing fields.
     // brief_type / markets / audience_context_notes are not first-class
