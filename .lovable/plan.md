@@ -1,72 +1,92 @@
-## Scope
+# Strategic Objective — Real Branching
 
-Much of this already exists in the `sessions` table (stage outputs, errors, checkpoints B/C, auto-save on each stage). This plan covers the additions and the missing infrastructure (users, real-time, interrupted-stage recovery).
+Scope confirmation before building. This is targeted prompt-injection plus a small
+number of conditional branches. No new stages, no new architecture.
 
-## 1. Database migration
+## 1. Split "Refresh" into two objectives
 
-Rename `sessions` → `pipeline_sessions` (or keep `sessions` and add columns — see "Decision" below). Add columns:
+`STRATEGIC_OBJECTIVE_OPTIONS` in `src/lib/brief-schema.ts` goes from 7 to 8 entries:
 
-- `user_id uuid` (nullable for now — no auth yet in the app)
-- `status` widened via CHECK to: `pending | running | awaiting_checkpoint | complete | held | error | interrupted`
-- Checkpoint A: `checkpoint_a_confirmed bool`, `checkpoint_a_notes text`, `checkpoint_a_confirmed_at timestamptz`
-- Checkpoint B/C: add `_notes` and `_confirmed_at` (B/C exist; only flags today)
-- `selected_format text` CHECK (`agency|consulting|workshop`) — replaces/parallels `stage_16_format`
-- `selection_rationale_1..6 text` — alongside existing `selection_rationale jsonb`
-- `stage_12_smps jsonb`
-- `stage_13_verdict text`
-- `stage_15_clearance_status text`
-- Flat brand fields: `brand_positioning`, `brand_product_truth`, `brand_audience_relationship`, `brand_tone_of_voice`, `brand_constraints`, `brand_organisational_context` (kept alongside existing `brand_intelligence jsonb`)
-- `stage_status text` — tracks the in-flight stage so we can mark it `interrupted`
-- `interrupted_stage int` — set on resume detection
+- `Refresh (Packaging)` — pack/identity/design-system refresh, bounded lifecycle.
+- `Refresh (Campaign)` — new campaign inside a fixed brand platform.
 
-New `users` table:
-- `id uuid PK`, `email text unique`, `plan text CHECK (demo|professional|enterprise) default 'demo'`, `created_at`
+The radio group in the brief intake form renders from this array, so it updates
+automatically. Existing sessions holding the literal value `Refresh` are treated as
+`Refresh (Campaign)` by the resolver (no data migration, no rewriting of history).
 
-RLS: keep public read/write on `pipeline_sessions` for now (no auth wired); add policies on `users`.
+## 2. Remove `strategic_mode`
 
-Enable Supabase realtime: `ALTER PUBLICATION supabase_realtime ADD TABLE pipeline_sessions;` and `REPLICA IDENTITY FULL`.
+Hardcoded to `"Auto"`, no UI control, injected into five stage prompts for no effect.
+Clean removal:
 
-### Decision needed
-The existing table is `sessions` and is referenced from ~20 server-fn files. Renaming to `pipeline_sessions` is a wide blast radius. I recommend **keeping the table name `sessions`** and only adding the new columns + realtime. This delivers everything the spec calls for without rewriting all stage handlers.
+- Drop the `strategicMode` argument from the Stage 1, 3, 4, 4B, 5, 6, 7 prompt builders
+  and from the corresponding `*.functions.ts` callers.
+- Drop `strategic_mode` from every `.select(...)` list and from the session insert.
+- Drop it from `brief.index.tsx`, `brief.new.tsx`, `pipeline.tsx`, `dashboard.tsx`,
+  `preflight-tier-two.functions.ts`.
+- One migration: give `sessions.strategic_mode` a default so inserts stop supplying it.
+  The column itself stays (historical rows keep their value); nothing reads it.
 
-## 2. Server-side wiring
+## 3. Conditional logic — the eight objectives
 
-- `src/lib/session-heartbeat.functions.ts`: on stage start set `stage_status='running'`, on success set `'complete'`. On session resume, if `stage_status='running'` and `updated_at` is stale (>2 min), flip to `'interrupted'` and expose a retry that re-runs only that stage.
-- Per-stage retry: each `runStageN` already writes `stage_N_error` — expose them as `retryStageN` (same call). Add a thin `retryStage(stageId)` dispatcher in `src/lib/retry.functions.ts`.
-- New `getOrCreateUser` server fn (email-based, demo plan default) — placeholder until auth lands.
+New client-safe module `src/lib/strategic-objective.ts`:
 
-## 3. Client wiring
+- `StrategicObjective` union of the eight values.
+- `resolveObjective(briefVersions)` — reads `sections.f2_objective` from the latest
+  brief version, normalises legacy `Refresh`, returns `null` when unset.
+- `objectiveDirective(objective, stageKey)` — returns the injection text for a given
+  stage, or `""` when that objective has no rule at that stage.
 
-- `pipeline.tsx`: subscribe to `supabase.channel('pipeline_sessions').on('postgres_changes', { table: 'sessions', filter: 'id=eq.<id>' })` and merge updates into local state — stage tracker updates without polling.
-- Right-panel error state: when `stage_N_error` is set, show error card + "Retry stage N" button calling the dispatcher.
-- `dashboard.tsx`: list sessions DESC by `updated_at`, badge `status`, "Resume" link to `/pipeline?session=<id>`; resumes detect `interrupted` and re-run only that stage.
+Server helper `src/lib/strategic-objective.server.ts` exposes
+`getObjectiveDirective(sessionId, stageKey)`, which loads `brief_versions` once and
+returns the block to append to that stage's user message. When there is no rule the
+call returns `""` and the stage's behaviour is byte-identical to today.
 
-## 4. Out of scope (call out)
+Injection points, and nothing else:
 
-- No real auth (email/password, Google) — `users` table is created but not enforced. Want me to wire Lovable Cloud auth too? Say the word.
-- Stage 1B already conditional via `stage_1b_required` — no change.
+| Objective | Stage | Injected rule |
+|---|---|---|
+| Launch | 5 | Mandatory "genuine first claim" interrogation; if true it must appear as a candidate territory |
+| Launch | 17–21 | Channel mix weighted to earned/PR and category education |
+| Refresh (Packaging) | 17–21 | Mandatory "reveal moment" beat; bounded lifecycle. No Stage 2/5 rule |
+| Refresh (Campaign) | 17–21 | Existing distinctive assets and brand architecture are fixed constraints; territory-fatigue check against prior campaign history when present |
+| Repositioning | 5 | "What we were vs what we're becoming" contrast required as a structural component of the tension |
+| Repositioning | 13B | Weighting elevated on repositioning-specific historical precedent |
+| Defence | 2 | Named competitive threat gets explicit priority weighting in the competitive set |
+| Defence | 9 | Competitive Impossibility stress-tested against that named competitor |
+| Challenger | 5 | Explicit interrogation of what the named incumbent is structurally blocked from claiming |
+| Challenger | LOC | Engine 08 Enemy First guaranteed to fire and flagged for serious consideration at Checkpoint C |
+| Crisis Recovery | 4B | Elevated fact-verification rigor |
+| Crisis Recovery | 17–21 | Mandatory tonal constraints: no bravado, no minimising, direct acknowledgment required |
+| Category Creation | 5 | Category definition itself as a mandatory output field, distinct from a product benefit |
+| Category Creation | Intelligence Engine | Type 03 Category Creation required as primary lens |
 
-## Files touched
+Stages 2, 4B, 5, 9, 13B, 17, 17B, 18, 19, 20, 21 each gain one line appending the
+directive to the existing user message. No other stage is touched.
 
-- New migration `supabase/migrations/*_session_arch.sql`
-- New: `src/lib/session-heartbeat.functions.ts`, `src/lib/retry.functions.ts`, `src/lib/realtime-session.ts`
-- Edit: `src/routes/pipeline.tsx`, `src/routes/dashboard.tsx`, each `stageN.functions.ts` (one-line heartbeat call at start)
+### Challenger / LOC — the one non-prompt branch
 
-Approve and I'll execute the migration first, then the code changes in one pass.
+`src/lib/loc.functions.ts` currently fires all thirteen engines equally. For Challenger:
 
-## Priority backlog — Fact verification safeguard (build before next client session)
+- `enemy_first` is excluded from any engine-subset retry pruning, so it always fires.
+- Its parsed output is tagged `priority: true` in `loc_engine_outputs`.
+- `SMPSelection.tsx` renders an amber "Enemy First — priority for Challenger" badge on
+  that candidate at Checkpoint C.
 
-**Problem:** Stage 4B distinguishes "real facts" from "perceived facts" in prompt, but no verification step exists before real-fact claims flow downstream. A factually incorrect "real fact" (rugby union prohibits the forward pass — false; both codes share the rule) was generated, treated as verified, and built into the strongest territory of a session before manual human catch. Undetected factual errors in "verified fact" output are a platform-level credibility risk.
+### Crisis Recovery — Release Gate
 
-**Universal fix — applies to every brand, every category, every future session:**
+Entry #39 Release Gate is not built in this codebase. The tonal constraints are enforced
+via the Stage 17–21 injection. If the Release Gate is built later, Crisis Recovery flips
+it to mandatory; that is a one-line hook, noted but not built here.
 
-1. **Stage 4B fact-verification pass.** After Stage 4B streams its initial output, extract every claim explicitly labelled `Real Fact` (vs `Perceived Fact`). For each, run a web search (Firecrawl `search` or `websearch`) to confirm. If the search cannot corroborate the claim:
-   - Downgrade the label from `Real Fact` → `⚠️ UNVERIFIED — REQUIRES HUMAN CONFIRMATION`
-   - Prepend a visual flag (emoji + bold) so the reviewer sees it without re-reading the whole block
-   - Append a one-line note: `Search ran; no corroborating source found. Do not promote to insight until confirmed.`
-2. **Apply same rule to Stage 2 Category Intelligence** — any claim presented as established category fact (market size, regulation, behavioural statistic) gets the same verification pass.
-3. **Audit any other stage** that emits claims framed as verifiable real-world facts; add to the verification dispatcher.
-4. **Shared utility:** `src/lib/fact-verify.functions.ts` — takes `(claims: string[]) => Promise<{claim, verified, sources}[]>`. Stage 4B / Stage 2 post-processors call it before saving final `stage_*_output`.
-5. **Surface in UI:** the right-panel renderer already shows markdown; flagged claims will render with the ⚠️ visual treatment automatically. No new component needed.
+## 4. Verification
 
-**Not urgent for tonight's session.** Build before any further client-facing sessions run.
+Two runs on the same underlying brief, one `Launch`, one `Crisis Recovery`, diffing
+Stage 5 and Stage 19 output to prove genuinely different behaviour. Reported stage by
+stage with the actual output excerpts.
+
+## Technical notes
+
+- All directive text lives in one module so the rules are auditable in one place.
+- Injection is additive to the user message; system prompts are unchanged, so an unset
+  objective produces exactly today's output.
