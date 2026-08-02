@@ -59,7 +59,6 @@ export function buildStage4bUserMessage(args: {
 }): string {
   return `Brand: ${args.brandName}
 Category: ${args.category}
-Strategic mode: ${args.strategicMode}
 
 Sanitised brief:
 ${args.sanitisedBrief}
