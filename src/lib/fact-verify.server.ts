@@ -45,7 +45,10 @@ interface VerifyArgs {
   stageLabel: string;
   /** Optional cap on claims sent for verification (cost / latency control). */
   maxClaims?: number;
+  /** Stage-specific guidance on which claim shapes matter most for this stage. */
+  claimFocus?: string;
 }
+
 
 const SYSTEM_PROMPT = `You are a fact-verification auditor. You receive a strategic analysis document and you must identify every claim in it that is presented as an INDEPENDENTLY VERIFIABLE real-world fact about a brand, a product, a category, a competitor, a regulation, a market statistic, or any other concrete claim about reality that could be checked by a journalist.
 
@@ -86,13 +89,15 @@ function buildUserMessage(args: VerifyArgs): string {
   return `Brand: ${args.brandName}
 Category: ${args.category}
 Source stage: ${args.stageLabel}
-
+${args.claimFocus ? `\nSTAGE-SPECIFIC PRIORITY — claims of this shape must not be skipped:\n${args.claimFocus}\n` : ""}
 Document to audit:
 
 ${args.output}
 
 Identify every independently verifiable real-world claim, web_search each one, and return the JSON object specified by the system prompt. Begin your response with { and end it with }.`;
 }
+
+
 
 interface ClaudeContentBlock {
   type?: string;
@@ -181,23 +186,56 @@ function escapeRegex(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+/** Quote- and whitespace-tolerant matcher: the auditor paraphrases quotes
+ *  freely (straight for smart, single for double), which broke naive
+ *  matching and left flagged claims unmarked inline. */
+function claimPattern(needle: string): RegExp {
+  const body = escapeRegex(needle)
+    .replace(/["“”'‘’]/g, "[\"“”'‘’]")
+    .replace(/\s+/g, "\\s+");
+  return new RegExp(body, "i");
+}
+
+const UNVERIFIED_SUFFIX =
+  "Search ran; no corroborating source found. Do not promote to insight until confirmed.";
+const CONTRADICTED_SUFFIX =
+  "Search ran; a credible source contradicts this claim. Do not promote to insight until confirmed.";
+
 function annotateOutput(output: string, results: FactCheckResult[]): string {
   const flagged = results.filter((r) => r.verdict !== "verified");
   if (flagged.length === 0) {
     return `${output}\n\n---\n\n## ✅ Fact Verification Review\n\nA live web search was run against every independently verifiable claim in this stage's output. All ${results.length} checked claim${results.length === 1 ? "" : "s"} returned corroborating evidence. No human fact-check required.\n`;
   }
 
-  // Best-effort inline flagging: where the verbatim claim string appears in
-  // the document, prepend a ⚠️ marker so the reviewer's eye lands on it.
-  let annotated = output;
+  // Inline flagging is line-based: the label is prepended at the point the
+  // claim starts and the standing instruction is appended at the end of that
+  // line, so a truncated 120-char match can never split a word mid-sentence.
+  const lines = output.split("\n");
   for (const r of flagged) {
     const needle = r.claim.slice(0, 120).trim();
     if (!needle) continue;
-    const re = new RegExp(escapeRegex(needle), "i");
-    if (re.test(annotated)) {
-      annotated = annotated.replace(re, `⚠️ **[UNVERIFIED — REQUIRES HUMAN CONFIRMATION]** ${needle}`);
-    }
+    const re = claimPattern(needle);
+    const idx = lines.findIndex((l) => re.test(l));
+    if (idx === -1) continue;
+    const label =
+      r.verdict === "contradicted"
+        ? "❌ **[CONTRADICTED — REQUIRES HUMAN CONFIRMATION]**"
+        : "⚠️ **[UNVERIFIED — REQUIRES HUMAN CONFIRMATION]**";
+    const suffix = r.verdict === "contradicted" ? CONTRADICTED_SUFFIX : UNVERIFIED_SUFFIX;
+    const at = lines[idx].search(re);
+    const line = lines[idx];
+    lines[idx] =
+      `${line.slice(0, at)}${label} ${line.slice(at)}`.trimEnd() + ` _${suffix}_`;
   }
+  let annotated = lines.join("\n");
+
+  // A flagged claim must lose its "Real Fact" badge — the label itself is
+  // downgraded, not merely annotated.
+  annotated = annotated.replace(/\*\*\s*Real Fact\s*:?\s*\*\*:?\s*(?=[⚠❌])/gi, "");
+
+
+
+
 
   const reviewLines = flagged.map((r, i) => {
     const tag = r.verdict === "contradicted" ? "❌ CONTRADICTED" : "⚠️ UNVERIFIED";
@@ -236,4 +274,75 @@ export async function verifyRealFacts(args: VerifyArgs): Promise<FactVerificatio
       error: msg,
     };
   }
+}
+
+// ─── SHARED STAGE DISPATCHER ─────────────────────────────────────────
+// Single entry point every stage that emits real-world factual claims calls.
+// To add a future stage: add one entry to FACT_VERIFIED_STAGES and call
+// runStageFactVerification({ stageKey, ... }) after that stage streams.
+// Nothing else changes — the search call, the flagging, the ⚠️ downgrade,
+// the review footer and the failure banner are all shared here.
+
+export interface FactVerifiedStageConfig {
+  /** Human label shown in the review footer. */
+  label: string;
+  /** sessions table column the verified output is written back to. */
+  outputColumn: string;
+  /** Stage-specific claim shapes the auditor must not skip. */
+  claimFocus: string;
+  maxClaims?: number;
+}
+
+export const FACT_VERIFIED_STAGES = {
+  stage2: {
+    label: "Stage 2 — Category Intelligence",
+    outputColumn: "stage_2_output",
+    claimFocus:
+      "- Market size, value, volume, growth rate or share figures\n- Regulation, legislation, labelling law, advertising code or compliance requirement\n- Behavioural or penetration statistics attributed to the category or its buyers\n- Named competitor ownership, launch dates, portfolio composition, pricing or claims\n- Category history: when something started, who was first, what changed and when",
+    maxClaims: 25,
+  },
+  stage4b: {
+    label: "Stage 4B — Asset Mining & Product Facts",
+    outputColumn: "stage_4b_output",
+    claimFocus:
+      "- EVERY claim the document labels \"Real Fact\" — these are the load-bearing assertions and all of them must be searched\n- Product composition, ingredients, sourcing, manufacturing process, certification\n- Provenance, founding dates, heritage claims, ownership history\n- Records, quantities, rankings, awards, firsts\n- Anything a journalist could fact-check about the brand or its assets",
+    maxClaims: 25,
+  },
+} as const satisfies Record<string, FactVerifiedStageConfig>;
+
+export type FactVerifiedStageKey = keyof typeof FACT_VERIFIED_STAGES;
+
+export interface StageVerificationOutcome {
+  /** The output to persist — annotated when verification ran, banner-flagged when it did not. */
+  output: string;
+  checked: number;
+  flagged: number;
+  ranSearch: boolean;
+  error?: string;
+  results: FactCheckResult[];
+}
+
+export async function runStageFactVerification(args: {
+  stageKey: FactVerifiedStageKey;
+  output: string;
+  brandName: string;
+  category: string;
+}): Promise<StageVerificationOutcome> {
+  const config = FACT_VERIFIED_STAGES[args.stageKey];
+  const outcome = await verifyRealFacts({
+    output: args.output,
+    brandName: args.brandName,
+    category: args.category,
+    stageLabel: config.label,
+    claimFocus: config.claimFocus,
+    maxClaims: config.maxClaims,
+  });
+  return {
+    output: outcome.rewrittenOutput,
+    checked: outcome.results.length,
+    flagged: outcome.results.filter((r) => r.verdict !== "verified").length,
+    ranSearch: outcome.ranSearch,
+    error: outcome.error,
+    results: outcome.results,
+  };
 }
