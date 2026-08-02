@@ -9,6 +9,7 @@ import { countSections } from "./count-helpers";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertSessionOwner } from "@/lib/auth-helpers.server";
 import { assertUpstreamStageOutput } from "./pipeline-integrity";
+import { getObjectiveDirective } from "./strategic-objective.server";
 
 const RunStage5Input = z.object({ sessionId: z.string().uuid() });
 
@@ -55,7 +56,7 @@ export const runStage5 = createServerFn({ method: "POST" })
     for await (const delta of withStreamSafety(
       { sessionId: data.sessionId, stageLabel: "Stage 5", outputColumn: "stage_5_output", errorColumn: "stage_5_error" },
       streamClaude({
-        systemPrompt: STAGE_5_SYSTEM_PROMPT,
+        systemPrompt: STAGE_5_SYSTEM_PROMPT + (await getObjectiveDirective(data.sessionId, "stage5")),
         userMessage,
         maxTokens: 64000,
         sessionId: data.sessionId,

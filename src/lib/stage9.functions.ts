@@ -21,6 +21,7 @@ import { countPropositions } from "./count-helpers";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertSessionOwner } from "@/lib/auth-helpers.server";
 import { assertUpstreamStageOutput } from "./pipeline-integrity";
+import { getObjectiveDirective } from "./strategic-objective.server";
 
 const Input = z.object({ sessionId: z.string().uuid() });
 
@@ -134,7 +135,7 @@ export const runStage9 = createServerFn({ method: "POST" })
         validate: validateCore,
         generate: (attempt, retryNote) =>
           collectClaudeText({
-            systemPrompt: STAGE_9_SYSTEM_PROMPT,
+            systemPrompt: STAGE_9_SYSTEM_PROMPT + (await getObjectiveDirective(data.sessionId, "stage9")),
             userMessage: `${userMessage}${retryNote ?? ""}`,
             maxTokens: 64000,
             sessionId: data.sessionId,

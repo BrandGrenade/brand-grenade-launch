@@ -8,6 +8,7 @@ import { trimStage1ForDownstream } from "./context-trim";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertSessionOwner } from "@/lib/auth-helpers.server";
 import { assertUpstreamStageOutput } from "./pipeline-integrity";
+import { getObjectiveDirective } from "./strategic-objective.server";
 
 const RunStage2Input = z.object({ sessionId: z.string().uuid() });
 
@@ -47,7 +48,7 @@ export const runStage2 = createServerFn({ method: "POST" })
     for await (const delta of withStreamSafety(
       { sessionId: data.sessionId, stageLabel: "Stage 2", outputColumn: "stage_2_output", errorColumn: "stage_2_error" },
       streamClaude({
-        systemPrompt: STAGE_2_SYSTEM_PROMPT,
+        systemPrompt: STAGE_2_SYSTEM_PROMPT + (await getObjectiveDirective(data.sessionId, "stage2")),
         userMessage,
         maxTokens: 64000,
         sessionId: data.sessionId,

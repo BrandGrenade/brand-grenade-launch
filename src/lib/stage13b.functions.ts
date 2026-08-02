@@ -8,6 +8,7 @@ import { trimBrandFitForDownstream } from "./context-trim";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertSessionOwner } from "@/lib/auth-helpers.server";
 import { assertStageOutput } from "./pipeline-integrity";
+import { getObjectiveDirective } from "./strategic-objective.server";
 
 const Input = z.object({ sessionId: z.string().uuid() });
 
@@ -41,7 +42,7 @@ export const runStage13b = createServerFn({ method: "POST" })
     for await (const delta of withStreamSafety(
       { sessionId: data.sessionId, stageLabel: "Stage 13B", outputColumn: "stage_13b_output", errorColumn: "stage_13b_error" },
       streamClaude({
-        systemPrompt: STAGE_13B_SYSTEM_PROMPT,
+        systemPrompt: STAGE_13B_SYSTEM_PROMPT + (await getObjectiveDirective(data.sessionId, "stage13b")),
         userMessage: buildStage13bUserMessage({
           brandName: session.brand_name,
           category: session.category,
