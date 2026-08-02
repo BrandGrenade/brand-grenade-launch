@@ -213,6 +213,13 @@ export const runLeftOfCentre = createServerFn({ method: "POST" })
       }
       await bumpHeartbeat();
 
+      // CHALLENGER OBJECTIVE — Engine 08 (Enemy First) is guaranteed to fire.
+      // It is never skipped by a selective retry, and a failed run is retried
+      // once before the pool is assembled.
+      const { sessionRequiresEnemyFirstPriority } = await import("./strategic-objective.server");
+      const enemyFirstPriority = await sessionRequiresEnemyFirstPriority(data.sessionId);
+      if (enemyFirstPriority) keepSet.delete("enemy_first" as EngineName);
+
       // Fire engines in parallel — skip any engine the user asked to keep.
       // Each engine bumps the heartbeat on completion so the client's
       // no-activity watchdog only trips when work has genuinely stalled.
@@ -230,6 +237,21 @@ export const runLeftOfCentre = createServerFn({ method: "POST" })
           return r;
         }),
       );
+
+      if (enemyFirstPriority) {
+        const idx = engineResults.findIndex((r) => r.engine === "enemy_first");
+        if (idx >= 0 && !engineResults[idx]!.output) {
+          const retry = await runOneEngine({
+            engine: "enemy_first" as EngineName,
+            sessionId: data.sessionId,
+            inputs,
+            retryInstructions: data.retryInstructions,
+            abstractOpportunity,
+          });
+          engineResults[idx] = retry;
+          await bumpHeartbeat();
+        }
+      }
 
       const engineOutputsRecord: Record<string, unknown> = { ...preservedOutputs };
       for (const r of engineResults) {
