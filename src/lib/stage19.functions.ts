@@ -11,6 +11,7 @@ import { appendRedirect, formatThreeTruths, smpGoverningBlock, withPhase2Formatt
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertSessionOwner } from "@/lib/auth-helpers.server";
 import { assertUpstreamStageOutput } from "./pipeline-integrity";
+import { getObjectiveDirective } from "./strategic-objective.server";
 
 const STAGE19_SELECT = [
   "brand_name",
@@ -83,7 +84,7 @@ export const runStage19 = createServerFn({ method: "POST" })
     let output: string;
     try {
       output = await callClaude({
-        systemPrompt: withPhase2Formatting(STAGE_19_ACTIVATION_ARCHITECTURE_PROMPT),
+        systemPrompt: withPhase2Formatting(STAGE_19_ACTIVATION_ARCHITECTURE_PROMPT, await getObjectiveDirective(data.sessionId, "phase2")),
         userMessage: buildStage19UserMessage(session as never),
         maxTokens: 64000,
         sessionId: data.sessionId,
@@ -160,7 +161,7 @@ export const retryStage19 = createServerFn({ method: "POST" })
     const redirect = data.redirectInstructions["card-1"] ?? "";
     const system = appendRedirect(STAGE_19_ACTIVATION_ARCHITECTURE_PROMPT, redirect);
     const output = await callClaude({
-      systemPrompt: withPhase2Formatting(system),
+      systemPrompt: withPhase2Formatting(system, await getObjectiveDirective(data.sessionId, "phase2")),
       userMessage: buildStage19UserMessage(session as never),
       maxTokens: 64000,
       sessionId: data.sessionId,

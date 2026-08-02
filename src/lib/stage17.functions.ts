@@ -23,6 +23,7 @@ import {
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertSessionOwner } from "@/lib/auth-helpers.server";
 import { assertUpstreamStageOutput } from "./pipeline-integrity";
+import { getObjectiveDirective } from "./strategic-objective.server";
 
 const STAGE17_SELECT = "brand_name, category, selected_smp, stage_2_output, stage_5_output, stage_13_output, stage_14c_output, truth_product, truth_consumer, truth_cultural, brand_intel_type, brand_intel_values, brand_intel_tone, brand_intel_assets, stage_17_output" as const;
 
@@ -126,7 +127,7 @@ export const runStage17 = createServerFn({ method: "POST" })
     let output: string;
     try {
       output = await callClaude({
-        systemPrompt: withPhase2Formatting(STAGE_17_DETONATION_TERRITORY_PROMPT),
+        systemPrompt: withPhase2Formatting(STAGE_17_DETONATION_TERRITORY_PROMPT, await getObjectiveDirective(data.sessionId, "phase2")),
         userMessage: buildStage17UserMessage(session as never),
         maxTokens: 64000,
         sessionId: data.sessionId,
@@ -216,7 +217,7 @@ export const retryStage17 = createServerFn({ method: "POST" })
     if (regenAll) {
       const system = appendRedirect(STAGE_17_DETONATION_TERRITORY_PROMPT, combinedRedirect);
       const text = await callClaude({
-        systemPrompt: withPhase2Formatting(system),
+        systemPrompt: withPhase2Formatting(system, await getObjectiveDirective(data.sessionId, "phase2")),
         userMessage: `${baseUser}\n\nRegenerate all three Detonation Territory candidates.`,
         maxTokens: 64000,
         sessionId: data.sessionId,
@@ -254,7 +255,7 @@ export const retryStage17 = createServerFn({ method: "POST" })
         cardLabel: "Detonation Territory",
       });
       const text = await callClaude({
-        systemPrompt: withPhase2Formatting(system),
+        systemPrompt: withPhase2Formatting(system, await getObjectiveDirective(data.sessionId, "phase2")),
         userMessage,
         maxTokens: 64000,
         sessionId: data.sessionId,

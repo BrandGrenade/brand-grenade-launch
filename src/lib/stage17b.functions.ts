@@ -11,6 +11,7 @@ import { appendRedirect, formatThreeTruths, smpGoverningBlock, withPhase2Formatt
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertSessionOwner } from "@/lib/auth-helpers.server";
 import { assertStageOutput } from "./pipeline-integrity";
+import { getObjectiveDirective } from "./strategic-objective.server";
 
 const STAGE17B_SELECT = [
   "brand_name",
@@ -73,7 +74,7 @@ export const runStage17b = createServerFn({ method: "POST" })
     let output: string;
     try {
       output = await callClaude({
-        systemPrompt: withPhase2Formatting(STAGE_17B_DETONATION_INTELLIGENCE_PROMPT),
+        systemPrompt: withPhase2Formatting(STAGE_17B_DETONATION_INTELLIGENCE_PROMPT, await getObjectiveDirective(data.sessionId, "phase2")),
         userMessage: buildStage17bUserMessage(session as never),
         maxTokens: 64000,
         sessionId: data.sessionId,
@@ -166,7 +167,7 @@ export const retryStage17b = createServerFn({ method: "POST" })
       userMessage = `${prefix}${baseUser}${suffix}`;
     }
     let output = await callClaude({
-      systemPrompt: withPhase2Formatting(system),
+      systemPrompt: withPhase2Formatting(system, await getObjectiveDirective(data.sessionId, "phase2")),
       userMessage,
       maxTokens: 64000,
       sessionId: data.sessionId,

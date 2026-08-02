@@ -22,6 +22,7 @@ import {
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertSessionOwner } from "@/lib/auth-helpers.server";
 import { assertUpstreamStageOutput } from "./pipeline-integrity";
+import { getObjectiveDirective } from "./strategic-objective.server";
 
 const STAGE18_SELECT = [
   "brand_name",
@@ -104,7 +105,7 @@ export const runStage18 = createServerFn({ method: "POST" })
     let output: string;
     try {
       output = await callClaude({
-        systemPrompt: withPhase2Formatting(STAGE_18_THE_DETONATION_PROMPT),
+        systemPrompt: withPhase2Formatting(STAGE_18_THE_DETONATION_PROMPT, await getObjectiveDirective(data.sessionId, "phase2")),
         userMessage: buildStage18UserMessage(session as never),
         maxTokens: 64000,
         sessionId: data.sessionId,
@@ -211,7 +212,7 @@ export const retryStage18 = createServerFn({ method: "POST" })
         cardLabel: "Detonation",
       });
       const text = await callClaude({
-        systemPrompt: withPhase2Formatting(system),
+        systemPrompt: withPhase2Formatting(system, await getObjectiveDirective(data.sessionId, "phase2")),
         userMessage,
         maxTokens: 64000,
         sessionId: data.sessionId,

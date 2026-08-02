@@ -19,6 +19,7 @@ import {
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertSessionOwner } from "@/lib/auth-helpers.server";
 import { assertUpstreamStageOutput } from "./pipeline-integrity";
+import { getObjectiveDirective } from "./strategic-objective.server";
 
 const STAGE21_SELECT = [
   "brand_name",
@@ -127,7 +128,7 @@ async function generateOne(
 ): Promise<string> {
   const system = appendRedirect(STAGE_21_CHANNEL_DETONATION_BRIEFS_PROMPT, redirectText);
   return callClaude({
-    systemPrompt: withPhase2Formatting(system),
+    systemPrompt: withPhase2Formatting(system, await getObjectiveDirective(sessionId, "phase2")),
     userMessage: buildStage21UserMessage(channel, role, context, s),
     maxTokens: 64000,
     sessionId,
