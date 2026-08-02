@@ -671,9 +671,10 @@ function Step1View(props: {
   onPick: (frame: "problem" | "opportunity" | "both") => void;
 }) {
   const { data } = props;
+  const bothSelected = props.selectedFrame === "both";
   const FrameCard = (which: "problem" | "opportunity") => {
     const item = which === "problem" ? data.real_problem : data.real_opportunity;
-    const selected = props.selectedFrame === which;
+    const selected = props.selectedFrame === which || bothSelected;
     return (
       <div
         className="flex-1 rounded-md p-4"
