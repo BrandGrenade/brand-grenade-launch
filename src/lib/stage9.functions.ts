@@ -125,6 +125,8 @@ export const runStage9 = createServerFn({ method: "POST" })
       ),
     ];
 
+    const stage9Directive = await getObjectiveDirective(data.sessionId, "stage9");
+
     let output = "";
     try {
       const gated = await generateWithBannedWordGate({
@@ -135,7 +137,7 @@ export const runStage9 = createServerFn({ method: "POST" })
         validate: validateCore,
         generate: (attempt, retryNote) =>
           collectClaudeText({
-            systemPrompt: STAGE_9_SYSTEM_PROMPT + (await getObjectiveDirective(data.sessionId, "stage9")),
+            systemPrompt: STAGE_9_SYSTEM_PROMPT + stage9Directive,
             userMessage: `${userMessage}${retryNote ?? ""}`,
             maxTokens: 64000,
             sessionId: data.sessionId,
