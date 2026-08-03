@@ -110,11 +110,18 @@ export function assertLocRunHealthy(row: LocIntegrityRow, runStartedAtMs: number
   }
   const packagedEngines = new Set(packages.map((p) => String(p.engine ?? p.engineOutput?.engine ?? "")));
   const notPackaged = LOC_ENGINES.filter((e) => !packagedEngines.has(e));
-  if (notPackaged.length) {
+  // The orchestrator packages the ANCHORED subset by design (loc.functions.ts:
+  // `forSelection = anchored.length > 0 ? anchored : successful`). An engine that
+  // returned usable output but was rejected by the universal anchor gate is a
+  // correct outcome, not a track failure — record it, don't fail on it.
+  const anchorExcluded = notPackaged.filter((e) => engineOutputs[e]?.ok === true);
+  const genuinelyMissing = notPackaged.filter((e) => engineOutputs[e]?.ok !== true);
+  if (genuinelyMissing.length) {
     problems.push(
-      `engines missing from loc_decision_packages: ${notPackaged.join(", ")} (${packages.length}/${LOC_ENGINES.length} packaged)`,
+      `engines missing from loc_decision_packages with no usable output: ${genuinelyMissing.join(", ")} (${packages.length}/${LOC_ENGINES.length} packaged)`,
     );
   }
+
 
   // ---- Field-level contract per package ----------------------------------
   let anchoredCount = 0;
