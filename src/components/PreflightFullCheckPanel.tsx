@@ -410,6 +410,7 @@ export function PreflightFullCheckPanel() {
   const runFrom7Fn = useServerFn(runTierTwoChecksFrom7);
   const runResumeFn = useServerFn(runTierTwoChecksFrom9);
   const runFrom11Fn = useServerFn(runTierTwoChecksFrom11);
+  const runCheck13Fn = useServerFn(runTierTwoCheck13);
   const recordCheck3Fn = useServerFn(recordPreflightCheck3Result);
   const recordCheck8Fn = useServerFn(recordPreflightCheck8Result);
   const finalizeRunFn = useServerFn(finalizePreflightRun);
