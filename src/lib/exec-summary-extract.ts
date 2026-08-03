@@ -242,11 +242,11 @@ export interface WhyThisWins {
  * Deterministic mapping only; no generation.
  */
 const VERDICT_REFRAME: Array<[RegExp, string]> = [
-  [/^CONFIRMED WITH ADJUSTMENTS/i, "Recommended, subject to the adjustments noted below."],
+  [/^CONFIRMED WITH ADJUSTMENTS/i, "Recommended, subject to adjustments."],
   [/^CONFIRMED WITHOUT RESERVATION/i, "Recommended without reservation."],
   [/^CONFIRMED/i, "Recommended."],
   [/^VALIDATED WITH STRATEGIC NOTE/i, "Validated, with conditions attached."],
-  [/^VALIDATED WITH ADJUSTMENTS/i, "Validated, subject to the adjustments noted below."],
+  [/^VALIDATED WITH ADJUSTMENTS/i, "Validated, subject to adjustments."],
   [/^VALIDATED/i, "Validated."],
   [/^PROCEED WITH CAUTION/i, "Proceed, with the cautions noted below."],
   [/^PROCEED/i, "Recommended to proceed."],
