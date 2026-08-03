@@ -190,6 +190,7 @@ const CHECK_DEFS: ReadonlyArray<{ id: FullCheckId; name: string }> = [
   { id: "phase2_detonation_chain", name: "Phase 2 chain (17 → 22) + Stage 16 Document Assembly end-to-end" },
   { id: "canvas_to_detonation_navigation", name: "Three Truth Canvas → Detonation route navigation" },
   { id: "concurrent_session_integrity", name: "Concurrent session integrity (two parallel Stage 1 runs)" },
+  { id: "loc_track_integrity", name: "Left-of-Centre track — 13 engines, anchors, validation, persistence" },
 ];
 
 // ---------------------------------------------------------------------------
