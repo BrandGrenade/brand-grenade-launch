@@ -97,17 +97,25 @@ function confidentProposition(raw: string | null | undefined): string | null {
   return s;
 }
 
+/** Board-facing status labels. Non-winners were never "rejected" — the stored
+ *  reasoning is about role and limitation, not elimination. */
+export const STATUS_LEAD = "Lead recommendation";
+export const STATUS_CONSIDERED = "Considered, but not the lead";
+
 export interface ShortlistItem {
   index: number;
   proposition: string | null;
   owns: string | null;
   /** True when this proposition matches sessions.selected_smp. */
   selected: boolean;
+  /** Rendered status label: STATUS_LEAD or STATUS_CONSIDERED. */
+  status: string;
   /**
-   * Genuine "why this one did not lead" reasoning, verbatim.
+   * Genuine "why this one is not the lead" reasoning, verbatim.
    * Sourced from the Stage 12 PRESSURE_TEST_NOTE, or the Stage 11 per-SMP
-   * closing clause. Never the "what it owns" line — that is positioning,
-   * not a reason it was set aside. null when no such text is stored.
+   * closing clause. This is role/limitation reasoning, not elimination
+   * reasoning. Never the "what it owns" line — that is positioning.
+   * null when no such text is stored.
    */
   setAsideReason: string | null;
 }
