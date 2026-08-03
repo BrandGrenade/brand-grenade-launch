@@ -294,6 +294,7 @@ const CHECK_NAMES: Record<FullCheckId, string> = {
   phase2_detonation_chain: "10. Phase 2 chain (17 → 22) + Stage 16 Document Assembly end-to-end",
   canvas_to_detonation_navigation: "11. Three Truth Canvas → Detonation route navigation",
   concurrent_session_integrity: "12. Concurrent session integrity (two parallel Stage 1 runs)",
+  loc_track_integrity: "13. Left-of-Centre track — 13 engines, anchors, validation, persistence",
 };
 
 // Central remediation registry — explicit instruction + estimated fix time per
