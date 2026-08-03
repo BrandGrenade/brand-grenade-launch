@@ -203,7 +203,7 @@ export function assertLocRunHealthy(row: LocIntegrityRow, runStartedAtMs: number
     ? ((row.loc_validation as { entries: unknown[] }).entries.length as number)
     : 0;
 
-  return `All ${LOC_ENGINES.length} LOC engines returned usable output and reached loc_decision_packages. Proposition / descriptor / process present on every package; one_word_ownership returned a genuine single word; anchor gate resolved on all ${packages.length} packages (${anchoredCount} passed the gate). Validation pass scored ${validationEntries} engines with no null-out. loc_status=complete with fresh loc_generated_at; markdown ${markdown.length} chars. Classifier intentionally absent (loc_task_type null) — current orchestrator has no classifier stage.`;
+  return `All ${LOC_ENGINES.length} LOC engines returned usable output. ${packages.length}/${LOC_ENGINES.length} reached loc_decision_packages${anchorExcluded.length ? `; ${anchorExcluded.join(", ")} produced valid output but was held back by the anchor gate (expected behaviour, not a failure)` : ""}. Proposition / descriptor / process present on every package; one_word_ownership returned a genuine single word; anchor gate resolved on all ${packages.length} packages (${anchoredCount} passed the gate). Validation pass scored ${validationEntries} engines with no null-out. loc_status=complete with fresh loc_generated_at; markdown ${markdown.length} chars. Classifier intentionally absent (loc_task_type null) — current orchestrator has no classifier stage.`;
 }
 
 /** Synthetic Briefing Room workspace payload used to exercise the real LOC input path. */
