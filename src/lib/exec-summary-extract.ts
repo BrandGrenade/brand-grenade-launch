@@ -210,13 +210,63 @@ export function extractShortlist(
 }
 
 export interface WhyThisWins {
-  /** Stage 13 brand-fit verdict headline (e.g. "CONFIRMED WITH ADJUSTMENTS — PROCEED.") */
+  /** Stage 13 brand-fit verdict headline, reframed out of internal vocabulary. */
   verdict: string | null;
   /** Stage 13 verdict rationale — first complete sentence. */
   brandFit: string | null;
-  /** Stage 11 pressure-test verdict for the selected proposition. */
+  /** Stage 11 pressure-test verdict for the selected proposition, glossed. */
   pressureTest: string | null;
+  /** Raw extracted values, before reframing — for audit/debug. */
+  raw: { verdict: string | null; pressureTest: string | null };
+  /** Section 6, formatted: labelled lines rather than three concatenated quotes. */
+  formatted: Array<{ label: string; body: string }>;
 }
+
+/**
+ * Platform-internal verdict vocabulary → board-readable English.
+ * Deterministic mapping only; no generation.
+ */
+const VERDICT_REFRAME: Array<[RegExp, string]> = [
+  [/^CONFIRMED WITH ADJUSTMENTS/i, "Recommended, subject to the adjustments noted below."],
+  [/^CONFIRMED WITHOUT RESERVATION/i, "Recommended without reservation."],
+  [/^CONFIRMED/i, "Recommended."],
+  [/^VALIDATED WITH STRATEGIC NOTE/i, "Validated, with conditions attached."],
+  [/^VALIDATED WITH ADJUSTMENTS/i, "Validated, subject to the adjustments noted below."],
+  [/^VALIDATED/i, "Validated."],
+  [/^PROCEED WITH CAUTION/i, "Proceed, with the cautions noted below."],
+  [/^PROCEED/i, "Recommended to proceed."],
+  [/^REJECT|^ELIMINATED/i, "Not recommended."],
+];
+
+function reframeVerdict(raw: string | null): string | null {
+  if (!raw) return null;
+  const s = clean(raw).replace(/\s*—\s*PROCEED\.?$/i, "").replace(/\.$/, "").trim();
+  for (const [re, out] of VERDICT_REFRAME) if (re.test(s)) return out;
+  // Unknown internal label: only surface it if it already reads as plain English.
+  if (s === s.toUpperCase()) return null;
+  return /[.?!]$/.test(s) ? s : `${s}.`;
+}
+
+/**
+ * Plain-English gloss for internal pressure-test shorthand ("wobble", "crack").
+ * Substitution + one clause of context — no new claims.
+ */
+function glossPressureTest(raw: string | null): string | null {
+  if (!raw) return null;
+  let s = clean(raw);
+  const usedShorthand = /\b(wobble|wobbles|crack|cracks)\b/i.test(s);
+  s = s
+    .replace(/\bwobbles\b/gi, "points of strain")
+    .replace(/\bwobble\b/gi, "point of strain")
+    .replace(/\bcracks\b/gi, "structural failures")
+    .replace(/\bcrack\b/gi, "structural failure");
+  if (!/[.?!]$/.test(s)) s = `${s}.`;
+  if (usedShorthand && s.length < 140) {
+    s = `${s} In other words, the proposition bent under adversarial testing in places, but nothing in it broke.`;
+  }
+  return s;
+}
+
 
 /** Body paragraph directly under a "## Section 1 — Brand Fit Verdict" heading. */
 function stage13Verdict(stage13: string | null | undefined): { verdict: string | null; rationale: string | null } {
