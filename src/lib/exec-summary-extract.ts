@@ -101,14 +101,56 @@ export interface ShortlistItem {
   index: number;
   proposition: string | null;
   owns: string | null;
+  /** True when this proposition matches sessions.selected_smp. */
+  selected: boolean;
+  /**
+   * Genuine "why this one did not lead" reasoning, verbatim.
+   * Sourced from the Stage 12 PRESSURE_TEST_NOTE, or the Stage 11 per-SMP
+   * closing clause. Never the "what it owns" line — that is positioning,
+   * not a reason it was set aside. null when no such text is stored.
+   */
+  setAsideReason: string | null;
+}
+
+/** Stage 11 closing-summary clause for a proposition ("… — travels bound to …"). */
+function stage11SummaryClause(stage11: string | null | undefined, proposition: string): string | null {
+  if (!stage11) return null;
+  const key = matchKey(proposition);
+  if (key.length < 8) return null;
+  for (const raw of stage11.split("\n")) {
+    if (!/^\s*[-*]\s+/.test(raw)) continue;
+    const c = clean(raw).replace(/^[-*]\s+/, "");
+    if (!matchKey(c).includes(key)) continue;
+    const parts = c.split("—").map((p) => p.trim()).filter(Boolean);
+    const tail = parts[parts.length - 1];
+    if (!tail || tail.length < 20 || tail.length > 320) continue;
+    if (/^(iconic tier|field|verdict)/i.test(tail)) continue;
+    return tail.charAt(0).toUpperCase() + tail.slice(1).replace(/\.?$/, ".");
+  }
+  return null;
+}
+
+/** Trim a stored pressure-test note down to its first one or two sentences. */
+function firstClause(text: string): string | null {
+  const c = clean(text);
+  if (!c || /^none\b/i.test(c)) return null;
+  const sentences = c.match(/[^.?!]+[.?!]["'”’)]?/g) ?? [c];
+  let out = sentences[0].trim();
+  if (out.length < 60 && sentences[1]) out = `${out} ${sentences[1].trim()}`;
+  if (out.length < 20 || out.length > 320) return null;
+  return out;
 }
 
 /**
  * Section 4 — Shortlist.
  * Stage 12 emits "PROPOSITION n" cards inside box-drawing rules, followed by
- * the proposition line and a "WHAT THIS PROPOSITION OWNS" paragraph.
+ * the proposition line, a "WHAT THIS PROPOSITION OWNS" paragraph, and a
+ * [METADATA] block carrying PRESSURE_TEST_NOTE.
  */
-export function extractShortlist(stage12: string | null | undefined): ShortlistItem[] {
+export function extractShortlist(
+  stage12: string | null | undefined,
+  opts: { selectedSmp?: string | null; stage11?: string | null } = {},
+): ShortlistItem[] {
   if (!stage12) return [];
   const lines = stage12.split("\n");
   const starts: number[] = [];
@@ -116,6 +158,8 @@ export function extractShortlist(stage12: string | null | undefined): ShortlistI
     if (/^\s*\**PROPOSITION\s+(\d+)\**\s*$/i.test(l)) starts.push(i);
   });
   if (!starts.length) return [];
+
+  const selectedKey = opts.selectedSmp ? matchKey(opts.selectedSmp) : "";
 
   const items: ShortlistItem[] = [];
   starts.forEach((start, n) => {
@@ -145,7 +189,22 @@ export function extractShortlist(stage12: string | null | undefined): ShortlistI
       }
     }
 
-    items.push({ index: n + 1, proposition, owns });
+    const selected =
+      !!selectedKey && !!proposition && matchKey(proposition).includes(selectedKey);
+
+    // Set-aside reasoning — only for non-winning propositions.
+    let setAsideReason: string | null = null;
+    if (!selected) {
+      const noteLine = block.find((l) => /PRESSURE_TEST_NOTE\s*:/i.test(l));
+      if (noteLine) {
+        setAsideReason = firstClause(noteLine.replace(/^.*?PRESSURE_TEST_NOTE\s*:/i, ""));
+      }
+      if (!setAsideReason && proposition) {
+        setAsideReason = stage11SummaryClause(opts.stage11, proposition);
+      }
+    }
+
+    items.push({ index: n + 1, proposition, owns, selected, setAsideReason });
   });
   return items;
 }
