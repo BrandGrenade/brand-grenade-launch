@@ -209,6 +209,25 @@ const PER_CHECK_RULES: Record<FullCheckId, Rule[]> = {
     },
     { match: /.*/, severity: "blocker", reason: "Concurrent Stage 1 integrity check failed." },
   ],
+  loc_track_integrity: [
+    {
+      match: /rate.?limit|overloaded|529|timed? ?out/i,
+      severity: "transient",
+      reason: "LOC engines hit an upstream model rate limit / overload — re-run.",
+      note: "If this recurs across consecutive runs it will auto-escalate to BLOCKER.",
+    },
+    {
+      match: /engines returned no usable output|engines never reported|missing from loc_decision_packages|not a single word/i,
+      severity: "blocker",
+      reason: "One or more of the 13 LOC engines silently produced nothing — the Engine 12 failure class.",
+    },
+    {
+      match: /anchor|validation|nulled/i,
+      severity: "blocker",
+      reason: "LOC anchor gate or validation pass degraded — candidates would reach Checkpoint C unvalidated.",
+    },
+    { match: /.*/, severity: "blocker", reason: "Left-of-Centre track integrity check failed." },
+  ],
 };
 
 // -----------------------------------------------------------------------------
