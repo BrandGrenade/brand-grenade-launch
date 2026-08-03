@@ -22,6 +22,7 @@ import {
   runTierTwoChecksFrom7,
   runTierTwoChecksFrom9,
   runTierTwoChecksFrom11,
+  runTierTwoCheck13,
   PREFLIGHT_TESTBRAND_BRAND_INTELLIGENCE,
   type FullCheckId,
   type FullCheckResult,
@@ -294,6 +295,7 @@ const CHECK_NAMES: Record<FullCheckId, string> = {
   phase2_detonation_chain: "10. Phase 2 chain (17 → 22) + Stage 16 Document Assembly end-to-end",
   canvas_to_detonation_navigation: "11. Three Truth Canvas → Detonation route navigation",
   concurrent_session_integrity: "12. Concurrent session integrity (two parallel Stage 1 runs)",
+  loc_track_integrity: "13. Left-of-Centre track — 13 engines, anchors, validation, persistence",
 };
 
 // Central remediation registry — explicit instruction + estimated fix time per
@@ -360,6 +362,11 @@ const REMEDIATION_BY_ID: Record<FullCheckId, { instruction: string; etaMinutes: 
       "Two parallel TestBrand sessions did not both complete Stage 1 cleanly. Inspect Supabase RLS, the sessions unique constraints, and the Claude rate-limit error. If the failure is a rate-limit, retry; if RLS, fix the policy. Do not serialise stage execution to mask a real concurrency bug.",
     etaMinutes: 15,
   },
+  loc_track_integrity: {
+    instruction:
+      "The Left-of-Centre track failed its contract. The failing engine is named in loc_engine_outputs on the preserved TestBrand LOC session — read that column first rather than re-running. Common causes: an engine prompt whose parser contract drifted (parseEngineOutput in src/lib/loc/engine-prompts.ts), the anchor gate rejecting every proposition, or the validation pass nulling scores. Do not relax the assertions in src/lib/loc-integrity.server.ts to make this pass.",
+    etaMinutes: 20,
+  },
 };
 
 function statusBadge(status: FullCheckResult["status"]) {
@@ -403,6 +410,7 @@ export function PreflightFullCheckPanel() {
   const runFrom7Fn = useServerFn(runTierTwoChecksFrom7);
   const runResumeFn = useServerFn(runTierTwoChecksFrom9);
   const runFrom11Fn = useServerFn(runTierTwoChecksFrom11);
+  const runCheck13Fn = useServerFn(runTierTwoCheck13);
   const recordCheck3Fn = useServerFn(recordPreflightCheck3Result);
   const recordCheck8Fn = useServerFn(recordPreflightCheck8Result);
   const finalizeRunFn = useServerFn(finalizePreflightRun);
@@ -1467,6 +1475,28 @@ export function PreflightFullCheckPanel() {
       await recordResultsFn({
         data: { recordId: outcome5.payload.recordId, allResults: workingResults },
       });
+
+      // ---- Client-driven Check 13 (Left-of-Centre track, own RPC) ----
+      const def13 = workingResults.find((r) => r.index === 13);
+      if (def13) {
+        setCurrentMessage(`▶ ${def13.name} — firing 13 LOC engines…`);
+        workingResults = workingResults.map((r) =>
+          r.index === 13 ? { ...r, status: "running" as const } : r,
+        );
+        setResults(workingResults);
+        await recordResultsFn({
+          data: { recordId: outcome5.payload.recordId, allResults: workingResults },
+        });
+        const c13 = await runCheck13Fn({ data: { recordId: outcome5.payload.recordId } });
+        const check13Result: FullCheckResult = { ...def13, ...c13 };
+        workingResults = workingResults.map((r) => (r.index === 13 ? check13Result : r));
+        setResults(workingResults);
+        setCurrentMessage(`✓ ${check13Result.name} — ${check13Result.status.toUpperCase()}`);
+        await recordResultsFn({
+          data: { recordId: outcome5.payload.recordId, allResults: workingResults },
+        });
+      }
+
       const final = await finalizeRunFn({
         data: {
           recordId: outcome5.payload.recordId,
@@ -1479,7 +1509,7 @@ export function PreflightFullCheckPanel() {
       setState("complete");
       setCurrentMessage(`Completed in ${(final.totalDurationMs / 1000).toFixed(1)}s. Cleaned up ${final.sessionIdsCleaned.length} TestBrand session(s).`);
       stopElapsed();
-      if (final.overall === "ready") toast.success("Tier Two: all 12 checks passed");
+      if (final.overall === "ready") toast.success("Tier Two: all 13 checks passed");
       else {
         const { summary: s } = summariseSeverities(workingResults, priorRuns);
         if (s.blocker > 0) toast.error(`Tier Two: ${s.blocker} BLOCKER(s) — do not present live`);
