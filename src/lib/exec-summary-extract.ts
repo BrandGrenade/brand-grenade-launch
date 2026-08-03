@@ -248,7 +248,7 @@ const VERDICT_REFRAME: Array<[RegExp, string]> = [
   [/^VALIDATED WITH STRATEGIC NOTE/i, "Validated, with conditions attached."],
   [/^VALIDATED WITH ADJUSTMENTS/i, "Validated, subject to adjustments."],
   [/^VALIDATED/i, "Validated."],
-  [/^PROCEED WITH CAUTION/i, "Proceed, with the cautions noted below."],
+  [/^PROCEED WITH CAUTION/i, "Proceed, with caution."],
   [/^PROCEED/i, "Recommended to proceed."],
   [/^REJECT|^ELIMINATED/i, "Not recommended."],
 ];
