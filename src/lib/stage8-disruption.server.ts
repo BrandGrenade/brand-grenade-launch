@@ -68,6 +68,13 @@ export function extractBaseProposition(markdown: string): string | null {
       return line.replace(/^>\s*/, "").replace(/^\*+|\*+$/g, "").trim();
     }
   }
+  // Fallback — proposition written bold without the blockquote marker.
+  for (const raw of markdown.split("\n")) {
+    const line = raw.trim();
+    if (/^\*\*[^*].{2,158}\*\*$/.test(line)) {
+      return line.replace(/^\*+|\*+$/g, "").trim();
+    }
+  }
   return null;
 }
 

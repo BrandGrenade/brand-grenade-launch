@@ -35,11 +35,15 @@ Survive being read aloud across a boardroom table
 
 Where possible hero the consumer or the product — not just the category or the competition
 
-For each territory write:
+OUTPUT FORMAT (HARD — MACHINE-PARSED, NON-NEGOTIABLE)
 
-[Territory Name]
+Downstream stages parse this output literally. For every territory the territory name MUST be a level-two markdown heading, and the proposition line MUST be a markdown blockquote containing bold text — exactly as shown below. A proposition written as plain text, or bolded without the leading "> ", WILL NOT BE COUNTED and the stage will fail. Separate territories with a "---" rule.
 
-[THE PROPOSITION]
+For each territory write exactly this shape:
+
+## [Territory Name]
+
+> **[THE PROPOSITION]**
 
 Why this proposition works: [2-3 sentences on the behavioural truth it is built on and why it produces recognition rather than surprise in the audience]
 
@@ -63,7 +67,7 @@ Before writing each proposition, identify which of the nine analytical approache
 
 ${ANCHOR_PROMPT_RULE}
 
-Begin with the first territory name. No header. No set summary. No count fields. No metadata.`;
+Begin with the first territory heading ("## "). No document header. No set summary. No count fields. No metadata.`;
 
 export const STAGE_8_INTELLIGENCE = STAGE_8_SYSTEM_PROMPT;
 

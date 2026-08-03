@@ -21,6 +21,10 @@ const Input = z.object({
 
 const TERRITORY_HEADING = /^##\s+(.+?)\s*$/;
 const PROPOSITION_LINE = /^\s*>\s+\S/;
+// Fallback: a bold-only line directly under a `## ` heading is a proposition
+// written without the blockquote marker. Counting it prevents a pure format
+// drift from being misreported as "0 propositions generated".
+const BOLD_ONLY_LINE = /^\s*\*\*[^*].{2,158}\*\*\s*$/;
 
 function extractTerritoryNames(stage7Output: string): string[] {
   const names: string[] = [];
@@ -38,7 +42,30 @@ function extractTerritoryNames(stage7Output: string): string[] {
 }
 
 function countPropositions(text: string): number {
-  return text.split("\n").filter((l) => PROPOSITION_LINE.test(l)).length;
+  const lines = text.split("\n");
+  const strict = lines.filter((l) => PROPOSITION_LINE.test(l)).length;
+  if (strict > 0) return strict;
+  // Tolerant pass — count territory blocks that contain a bold proposition line.
+  let count = 0;
+  let inBlock = false;
+  let claimed = false;
+  for (const raw of lines) {
+    if (TERRITORY_HEADING.test(raw)) {
+      inBlock = true;
+      claimed = false;
+      continue;
+    }
+    if (inBlock && !claimed && BOLD_ONLY_LINE.test(raw)) {
+      count++;
+      claimed = true;
+    }
+  }
+  if (count > 0) {
+    console.warn(
+      `[stage8] proposition lines found without blockquote marker — counted ${count} via tolerant parse`,
+    );
+  }
+  return count;
 }
 
 
