@@ -67,7 +67,7 @@ Before writing each proposition, identify which of the nine analytical approache
 
 ${ANCHOR_PROMPT_RULE}
 
-Begin with the first territory name. No header. No set summary. No count fields. No metadata.`;
+Begin with the first territory heading ("## "). No document header. No set summary. No count fields. No metadata.`;
 
 export const STAGE_8_INTELLIGENCE = STAGE_8_SYSTEM_PROMPT;
 
