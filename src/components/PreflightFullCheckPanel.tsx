@@ -1473,6 +1473,28 @@ export function PreflightFullCheckPanel() {
       await recordResultsFn({
         data: { recordId: outcome5.payload.recordId, allResults: workingResults },
       });
+
+      // ---- Client-driven Check 13 (Left-of-Centre track, own RPC) ----
+      const def13 = workingResults.find((r) => r.index === 13);
+      if (def13) {
+        setCurrentMessage(`▶ ${def13.name} — firing 13 LOC engines…`);
+        workingResults = workingResults.map((r) =>
+          r.index === 13 ? { ...r, status: "running" as const } : r,
+        );
+        setResults(workingResults);
+        await recordResultsFn({
+          data: { recordId: outcome5.payload.recordId, allResults: workingResults },
+        });
+        const c13 = await runCheck13Fn({ data: { recordId: outcome5.payload.recordId } });
+        const check13Result: FullCheckResult = { ...def13, ...c13 };
+        workingResults = workingResults.map((r) => (r.index === 13 ? check13Result : r));
+        setResults(workingResults);
+        setCurrentMessage(`✓ ${check13Result.name} — ${check13Result.status.toUpperCase()}`);
+        await recordResultsFn({
+          data: { recordId: outcome5.payload.recordId, allResults: workingResults },
+        });
+      }
+
       const final = await finalizeRunFn({
         data: {
           recordId: outcome5.payload.recordId,
@@ -1485,7 +1507,7 @@ export function PreflightFullCheckPanel() {
       setState("complete");
       setCurrentMessage(`Completed in ${(final.totalDurationMs / 1000).toFixed(1)}s. Cleaned up ${final.sessionIdsCleaned.length} TestBrand session(s).`);
       stopElapsed();
-      if (final.overall === "ready") toast.success("Tier Two: all 12 checks passed");
+      if (final.overall === "ready") toast.success("Tier Two: all 13 checks passed");
       else {
         const { summary: s } = summariseSeverities(workingResults, priorRuns);
         if (s.blocker > 0) toast.error(`Tier Two: ${s.blocker} BLOCKER(s) — do not present live`);
