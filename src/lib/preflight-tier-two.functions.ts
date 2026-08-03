@@ -1249,7 +1249,7 @@ export const runTierTwoChecksFrom4 = createServerFn({ method: "POST" })
             if (disallowedLoc.length) {
               throw new Error(`Stage 9 left-of-centre output contains competitor-owned conditional words: ${Array.from(new Set(disallowedLoc.map((h) => h.match))).join(", ")}.`);
             }
-            return { detail: `Stage 9 core (${core.length} chars) and left-of-centre (${loc.length} chars) passed runtime scans: universal list clear in both columns; conditional list blocked in core and competitor-owned terms blocked in left-of-centre.` };
+            return { detail: `Stage 9 core (${core.length} chars) passed runtime scans: universal list clear; conditional list blocked where competitor-owned. Left-of-centre: ${locPresent ? `${loc.length} chars scanned and clear` : "not present (LOC runs on its own track from Briefing Room handoff; synthetic preflight sessions have none) — skipped, not failed"}.` };
           },
           "Inspect Stage 9 runtime banned-word gate across stage_9_output and stage_9_leftofcentre_output; universal words must regenerate/fail in Tier Two and competitor-owned conditional terms must be blocked.",
         );
