@@ -20,11 +20,23 @@ const TRUNCATION = /(\.\.\.|…|\u2026)\s*$|\b(etc|cont|TBC|TODO)\b\.?$/i;
 function clean(line: string): string {
   return line
     .replace(/\*\*/g, "")
+    .replace(/(^|\s)\*(\S[^*]*?)\*(?=\s|$|[.,;:)])/g, "$1$2")
+    .replace(/`/g, "")
     .replace(/^[>\s]+/, "")
     .replace(/[═─━]{3,}/g, "")
     .replace(/\s+/g, " ")
     .trim();
 }
+
+/** Loose comparison key for matching a proposition against selected_smp. */
+function matchKey(s: string): string {
+  return clean(s)
+    .toLowerCase()
+    .replace(/[^a-z0-9 ]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 
 /**
  * Confidence gate: accepts only a complete, self-contained sentence.
