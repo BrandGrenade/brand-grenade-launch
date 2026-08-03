@@ -124,9 +124,18 @@ export function assertLocRunHealthy(row: LocIntegrityRow, runStartedAtMs: number
     const proposition = String(eo.proposition ?? "").trim();
     const descriptor = String(eo.descriptor ?? "").trim();
     const process = String(eo.process ?? "").trim();
+    const isSingleWordEngine = SINGLE_WORD_ENGINES.includes(engine as EngineName);
 
-    if (proposition.length < MIN_PROPOSITION_CHARS)
+    // Single-word engines have a DIFFERENT contract by design: their proposition
+    // IS the owned word (see engine-prompts.ts — "EXACTLY ONE WORD"). Applying the
+    // prose floor here would reject valid output like "Clean".
+    if (isSingleWordEngine) {
+      if (!proposition) problems.push(`${engine}: proposition (the owned word) is empty`);
+      else if (/\s/.test(proposition) || !/^[A-Za-z][A-Za-z'’-]*$/.test(proposition))
+        problems.push(`${engine}: proposition must be exactly one word — got "${proposition}"`);
+    } else if (proposition.length < MIN_PROPOSITION_CHARS) {
       problems.push(`${engine}: proposition missing or too short ("${proposition}")`);
+    }
     if (descriptor.length < MIN_DESCRIPTOR_CHARS)
       problems.push(`${engine}: descriptor missing or too short (${descriptor.length} chars)`);
     if (process.length < MIN_PROCESS_CHARS)
@@ -134,7 +143,7 @@ export function assertLocRunHealthy(row: LocIntegrityRow, runStartedAtMs: number
         `${engine}: process chain-of-thought missing or too short (${process.length} chars, floor ${MIN_PROCESS_CHARS})`,
       );
 
-    if (SINGLE_WORD_ENGINES.includes(engine as EngineName)) {
+    if (isSingleWordEngine) {
       const word = String(eo.word ?? "").trim();
       if (!word) {
         problems.push(`${engine}: required single-word "word" field is empty`);
@@ -142,6 +151,7 @@ export function assertLocRunHealthy(row: LocIntegrityRow, runStartedAtMs: number
         problems.push(`${engine}: "word" is not a single word — got "${word}"`);
       }
     }
+
 
     const anchor = String(eo.anchor ?? "").trim();
     if (!anchor) problems.push(`${engine}: anchor is empty — the anchor gate did not resolve one`);
