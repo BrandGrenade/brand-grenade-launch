@@ -361,6 +361,11 @@ const REMEDIATION_BY_ID: Record<FullCheckId, { instruction: string; etaMinutes: 
       "Two parallel TestBrand sessions did not both complete Stage 1 cleanly. Inspect Supabase RLS, the sessions unique constraints, and the Claude rate-limit error. If the failure is a rate-limit, retry; if RLS, fix the policy. Do not serialise stage execution to mask a real concurrency bug.",
     etaMinutes: 15,
   },
+  loc_track_integrity: {
+    instruction:
+      "The Left-of-Centre track failed its contract. The failing engine is named in loc_engine_outputs on the preserved TestBrand LOC session — read that column first rather than re-running. Common causes: an engine prompt whose parser contract drifted (parseEngineOutput in src/lib/loc/engine-prompts.ts), the anchor gate rejecting every proposition, or the validation pass nulling scores. Do not relax the assertions in src/lib/loc-integrity.server.ts to make this pass.",
+    etaMinutes: 20,
+  },
 };
 
 function statusBadge(status: FullCheckResult["status"]) {
