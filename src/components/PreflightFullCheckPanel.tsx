@@ -22,6 +22,7 @@ import {
   runTierTwoChecksFrom7,
   runTierTwoChecksFrom9,
   runTierTwoChecksFrom11,
+  runTierTwoCheck13,
   PREFLIGHT_TESTBRAND_BRAND_INTELLIGENCE,
   type FullCheckId,
   type FullCheckResult,
