@@ -11,6 +11,11 @@ export const NOT_AVAILABLE = "not available for this session";
 const MIN_SENTENCE_CHARS = 25;
 const MAX_SENTENCE_CHARS = 420;
 
+/** Characters that must never survive into a rendered board-facing line. */
+const MARKDOWN_ARTEFACT = /[|#`*_~<>\[\]{}]|\\n|&nbsp;|https?:\/\//;
+/** Truncation / continuation markers. */
+const TRUNCATION = /(\.\.\.|…|\u2026)\s*$|\b(etc|cont|TBC|TODO)\b\.?$/i;
+
 /** Strip markdown emphasis / separators from a single line. */
 function clean(line: string): string {
   return line
