@@ -28,7 +28,18 @@ function clean(line: string): string {
 
 /**
  * Confidence gate: accepts only a complete, self-contained sentence.
- * Rejects truncated fragments, headings, bullets, and over-long run-ons.
+ *
+ * This is a real quality check, not a non-empty check. A candidate must pass
+ * ALL of the following or it is rejected (and the document renders the
+ * "not available" line instead):
+ *   1. length within [MIN_SENTENCE_CHARS, MAX_SENTENCE_CHARS]
+ *   2. at least 5 words (rejects labels and stubs)
+ *   3. starts with a capital letter, digit or opening quote
+ *   4. ends in terminal punctuation (. ? !), optionally inside a closing quote
+ *   5. is not an all-caps heading/label, and carries no "LABEL:" / snake_case key prefix
+ *   6. contains no markdown, table, list, HTML or URL artefacts
+ *   7. contains no truncation/continuation markers (…, "etc", "TBC")
+ *   8. has balanced quotes and brackets
  */
 export function confidentSentence(raw: string | null | undefined): string | null {
   if (!raw) return null;
@@ -37,10 +48,22 @@ export function confidentSentence(raw: string | null | undefined): string | null
   if (s.length < MIN_SENTENCE_CHARS || s.length > MAX_SENTENCE_CHARS) return null;
   // Headings / all-caps labels are not sentences.
   if (s === s.toUpperCase()) return null;
-  // Must terminate cleanly.
-  if (!/[.?!]["'”’]?$/.test(s)) return null;
-  // Reject obvious markdown/table/list artefacts.
-  if (/^[-•*|#]/.test(s) || s.includes("|")) return null;
+  // Machine key or label prefix ("PRESSURE_TEST_NOTE:", "SMP VERDICT:").
+  if (/^[A-Z0-9_ ]{3,40}:/.test(s)) return null;
+  if (/\b[a-z]+_[a-z_]+\b/.test(s)) return null;
+  // Must read as a sentence, not a stub.
+  if (s.split(/\s+/).length < 5) return null;
+  if (!/^["'“‘(]?[A-Z0-9]/.test(s)) return null;
+  // Must terminate cleanly, and not mid-thought.
+  if (!/[.?!]["'”’)]?$/.test(s)) return null;
+  if (TRUNCATION.test(s)) return null;
+  // Reject markdown/table/list/HTML artefacts.
+  if (/^[-•*|#>]/.test(s) || MARKDOWN_ARTEFACT.test(s)) return null;
+  // Balanced quotes and brackets.
+  const dq = (s.match(/"/g) ?? []).length;
+  if (dq % 2 !== 0) return null;
+  if ((s.match(/“/g) ?? []).length !== (s.match(/”/g) ?? []).length) return null;
+  if ((s.match(/\(/g) ?? []).length !== (s.match(/\)/g) ?? []).length) return null;
   return s;
 }
 
