@@ -146,26 +146,35 @@ function stage11Verdict(stage11: string | null | undefined, selectedSmp: string 
   const needle = clean(selectedSmp).replace(/[.]$/, "").toLowerCase();
   if (needle.length < 8) return null;
   const lines = stage11.split("\n");
+  // Stage 11 blocks are headed either "### SMP: ..." or "**SMP: ...**".
+  const isSmpHeader = (l: string) => /^\s*(#{2,4}\s*)?\*{0,2}SMP:/i.test(l);
   const start = lines.findIndex(
-    (l) => /^#{2,4}\s*SMP:/i.test(l) && clean(l).toLowerCase().includes(needle),
+    (l) => isSmpHeader(l) && clean(l).toLowerCase().includes(needle),
   );
   if (start < 0) return null;
   let end = lines.length;
   for (let i = start + 1; i < lines.length; i++) {
-    if (/^#{2,4}\s*SMP:/i.test(lines[i])) { end = i; break; }
+    if (isSmpHeader(lines[i])) { end = i; break; }
   }
   const block = lines.slice(start, end);
   // Preferred: the summary blockquote line inside the block.
   const quote = block.find((l) => /^\s*>\s*\*{0,2}/.test(l) && clean(l).length > MIN_SENTENCE_CHARS);
   const fromQuote = firstSentence(quote ?? null);
   if (fromQuote) return fromQuote;
+  // Fallback: the verdict line's rationale sentence (after the em dash).
   const verdict = block.find((l) => /SMP VERDICT:/i.test(l));
   if (verdict) {
     const c = clean(verdict);
-    return c.length >= 12 && c.length <= 160 ? c : null;
+    const dash = c.indexOf("—");
+    const tail = dash > 0 ? c.slice(dash + 1).trim() : "";
+    const sentence = firstSentence(tail);
+    if (sentence) return sentence;
+    const label = dash > 0 ? c.slice(0, dash).trim() : c;
+    return label.length >= 12 && label.length <= 160 ? label : null;
   }
   return null;
 }
+
 
 export function extractWhyThisWins(args: {
   stage11?: string | null;
