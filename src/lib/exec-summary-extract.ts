@@ -212,7 +212,14 @@ export function extractShortlist(
       }
     }
 
-    items.push({ index: n + 1, proposition, owns, selected, setAsideReason });
+    items.push({
+      index: n + 1,
+      proposition,
+      owns,
+      selected,
+      status: selected ? STATUS_LEAD : STATUS_CONSIDERED,
+      setAsideReason,
+    });
   });
   return items;
 }
