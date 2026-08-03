@@ -330,10 +330,21 @@ export function extractWhyThisWins(args: {
   stage13?: string | null;
   selectedSmp?: string | null;
 }): WhyThisWins {
-  const { verdict, rationale } = stage13Verdict(args.stage13);
+  const { verdict: rawVerdict, rationale } = stage13Verdict(args.stage13);
+  const rawPressure = stage11Verdict(args.stage11, args.selectedSmp);
+  const verdict = reframeVerdict(rawVerdict);
+  const pressureTest = glossPressureTest(rawPressure);
+
+  const formatted: Array<{ label: string; body: string }> = [];
+  if (verdict) formatted.push({ label: "Verdict", body: verdict });
+  if (rationale) formatted.push({ label: "Brand fit", body: rationale });
+  if (pressureTest) formatted.push({ label: "Pressure test", body: pressureTest });
+
   return {
     verdict,
     brandFit: rationale,
-    pressureTest: stage11Verdict(args.stage11, args.selectedSmp),
+    pressureTest,
+    raw: { verdict: rawVerdict, pressureTest: rawPressure },
+    formatted,
   };
 }
