@@ -310,16 +310,17 @@ function stage11Verdict(stage11: string | null | undefined, selectedSmp: string 
   const quote = block.find((l) => /^\s*>\s*\*{0,2}/.test(l) && clean(l).length > MIN_SENTENCE_CHARS);
   const fromQuote = firstSentence(quote ?? null);
   if (fromQuote) return fromQuote;
-  // Fallback: the verdict line's rationale sentence (after the em dash).
+  // Fallback: the verdict line's rationale (after the em dash), taken as one
+  // or two sentences so a terse opener like "Three wobbles, zero cracks."
+  // never stands alone. The internal verdict label itself is never surfaced.
   const verdict = block.find((l) => /SMP VERDICT:/i.test(l));
   if (verdict) {
     const c = clean(verdict);
     const dash = c.indexOf("—");
     const tail = dash > 0 ? c.slice(dash + 1).trim() : "";
-    const sentence = firstSentence(tail);
-    if (sentence) return sentence;
-    const label = dash > 0 ? c.slice(0, dash).trim() : c;
-    return label.length >= 12 && label.length <= 160 ? label : null;
+    const clause = tail ? firstClause(tail) : null;
+    if (clause && confidentSentence(clause)) return clause;
+    return firstSentence(tail);
   }
   return null;
 }
