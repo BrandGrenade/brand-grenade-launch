@@ -364,3 +364,110 @@ export function extractWhyThisWins(args: {
     formatted,
   };
 }
+
+// ─── Section 7 — The Proof, At A Glance ─────────────────────────────
+// Four discrete values, all lifted verbatim from stored stage text. If any
+// one of them cannot be retrieved cleanly, the caller renders the single
+// fallback line instead of a partial table (locked decision).
+
+export interface ProofAtAGlance {
+  composite: string;
+  distinctiveAsset: string;
+  impossibility: string;
+  cleanAir: string;
+}
+
+export const PROOF_UNAVAILABLE =
+  "Detailed validation scoring not available for this session — see the Complete Pipeline Record for full scoring detail.";
+
+/** Stage 10 block for the selected SMP. */
+function stage10Block(stage10: string, selectedSmp: string): string[] | null {
+  const needle = matchKey(selectedSmp);
+  if (needle.length < 8) return null;
+  const lines = stage10.split("\n");
+  const isHeader = (l: string) => /^\s*\**SMP:/i.test(l);
+  const start = lines.findIndex((l) => isHeader(l) && matchKey(l).includes(needle));
+  if (start < 0) return null;
+  let end = lines.length;
+  for (let i = start + 1; i < lines.length; i++) {
+    if (isHeader(lines[i])) { end = i; break; }
+  }
+  return lines.slice(start, end);
+}
+
+/** "Dimension: 9/10 — rationale." → trimmed rationale with score prefix. */
+function dimensionLine(block: string[], dimension: string): string | null {
+  const re = new RegExp(`^\\s*\\**${dimension}\\**\\s*:\\s*(\\d{1,2})\\s*/\\s*10\\s*[—-]?\\s*(.*)$`, "i");
+  for (const raw of block) {
+    const m = clean(raw).match(re);
+    if (!m) continue;
+    const score = `${m[1]}/10`;
+    const body = firstClause(m[2] ?? "");
+    return body ? `${score} — ${body}` : score;
+  }
+  return null;
+}
+
+export function extractProofAtAGlance(args: {
+  stage10?: string | null;
+  stage22?: string | null;
+  distinctiveAssets?: string | null;
+  selectedSmp?: string | null;
+}): ProofAtAGlance | null {
+  if (!args.stage10 || !args.selectedSmp) return null;
+  const block = stage10Block(args.stage10, args.selectedSmp);
+  if (!block) return null;
+
+  let composite: string | null = null;
+  for (const raw of block) {
+    const m = clean(raw).match(/CODE COMPOSITE\s*:\s*([\d.]+)\s*\/\s*100/i);
+    if (m) { composite = `${m[1]}/100`; break; }
+  }
+
+  const impossibility = dimensionLine(block, "Competitive Impossibility");
+  const cleanAir = dimensionLine(block, "Clean Air");
+
+  // Named distinctive asset — Stage 22 ASSETS line, first named asset.
+  let distinctiveAsset: string | null = null;
+  const assetSource = `${args.distinctiveAssets ?? ""}\n${args.stage22 ?? ""}`;
+  for (const raw of assetSource.split("\n")) {
+    const c = clean(raw);
+    const m = c.match(/^\**ASSETS\**\s*:\s*(.+)$/i);
+    if (!m) continue;
+    const first = m[1].split(/\s*[/|·•]\s*|\s*,\s*/)[0]?.trim();
+    if (first && first.length >= 3 && first.length <= 80) distinctiveAsset = first;
+    break;
+  }
+
+  if (!composite || !impossibility || !cleanAir || !distinctiveAsset) return null;
+  return { composite, distinctiveAsset, impossibility, cleanAir };
+}
+
+// ─── Section 8 — The Brand World It Builds ──────────────────────────
+/** Stage 22 REFLECTION line only, six words or fewer. */
+export function extractBrandWorld(stage22: string | null | undefined): string | null {
+  if (!stage22) return null;
+  for (const raw of stage22.split("\n")) {
+    const c = clean(raw);
+    const m = c.match(/^\**REFLECTION\**\s*:\s*(.+)$/i);
+    if (!m) continue;
+    const line = m[1].replace(/\.$/, "").trim();
+    if (!line || line.split(/\s+/).length > 6) return null;
+    return line;
+  }
+  return null;
+}
+
+// ─── Sections 1 & 2 — trim source prose to 2–3 sentences ────────────
+export function firstSentences(
+  text: string | null | undefined,
+  max = 3,
+): string | null {
+  if (!text) return null;
+  const c = clean(text);
+  if (!c) return null;
+  const sentences = c.match(/[^.?!]+[.?!]["'”’)]?/g) ?? [c];
+  const out = sentences.slice(0, max).join(" ").trim();
+  if (out.length < 20) return null;
+  return out;
+}
