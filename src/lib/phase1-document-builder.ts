@@ -35,7 +35,7 @@ const ACCENT = "#D4924A";
 export const PHASE_1_SESSION_COLUMNS =
   "stage_1_output, stage_2_output, stage_3_output, stage_4_output, stage_5_output, stage_6_output, stage_7_output, stage_8_output, stage_9_output, stage_9_leftofcentre_output, stage_10_output, stage_11_output, stage_12_output, stage_13_output, stage_14_output, stage_15_output";
 
-function escapeHtml(s: string): string {
+export function escapeHtml(s: string): string {
   return (s ?? "")
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
@@ -51,7 +51,7 @@ function fmt(line: string): string {
   return s;
 }
 
-function md(text: string): string {
+export function md(text: string): string {
   if (!text) return "";
   const lines = text.split("\n");
   const out: string[] = [];
@@ -80,7 +80,7 @@ function md(text: string): string {
 
 import { stripDocumentMetadata } from "./strip-document-metadata";
 
-function sanitise(t: string | null | undefined): string {
+export function sanitise(t: string | null | undefined): string {
   return stripDocumentMetadata(t ?? "", "phase1-doc")
     .replace(/\u2014/g, "—").replace(/\u2013/g, "–")
     .replace(/\u201C/g, '"').replace(/\u201D/g, '"')
@@ -94,7 +94,7 @@ function stripStage1Internals(text: string): string {
   return text.split("\n").filter((l) => !STAGE1_INTERNAL_LINE.test(l)).join("\n");
 }
 
-function baseStyles(): string {
+export function baseStyles(): string {
   return `@page { size: A4; margin: 20mm 22mm 20mm 22mm; }
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html, body { background: #f4f1ec; }

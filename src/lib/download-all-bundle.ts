@@ -10,6 +10,8 @@ import {
   type Phase2Session,
 } from "./phase2-document-generator";
 import { buildFullRunDocument, type FullRunSession } from "./full-run-document";
+import { buildExecSummaryDocument } from "./exec-summary-document";
+import { fetchExecSummaryIntel } from "./exec-summary-intel";
 import { supabase } from "@/integrations/supabase/client";
 import { normalizeBrand } from "./brand-register";
 import {
@@ -161,6 +163,15 @@ export async function buildAndDownloadBundle(
     "Board_Strategy_Recommendation.html",
     () => buildBoardStrategyBundle(session),
     "Building Board Strategy Recommendation…",
+  );
+
+  // Root — Strategy Executive Summary (synthesis of stored data only)
+  onProgress?.("Building Strategy Executive Summary…");
+  const execIntel = await fetchExecSummaryIntel(brand);
+  tryAdd(
+    "Strategy_Executive_Summary.html",
+    () => buildExecSummaryDocument(session, execIntel),
+    "Building Strategy Executive Summary…",
   );
 
   // Root — Document 00A (real PDF from Intelligence Lab)
