@@ -47,7 +47,8 @@ export type FullCheckId =
   | "sanitiser_and_token_caps"
   | "phase2_detonation_chain"
   | "canvas_to_detonation_navigation"
-  | "concurrent_session_integrity";
+  | "concurrent_session_integrity"
+  | "loc_track_integrity";
 
 export type FullCheckResult = {
   id: FullCheckId;
