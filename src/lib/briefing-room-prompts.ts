@@ -101,7 +101,10 @@ FOR EACH TRUTH:
 - "source": "brief" | "evidence:<label>" | "human_input".
 - "tag_type": "qualitative" (generative) or "quantitative" (validating).
 - "role": "motivator" (drives category purchase — table stakes, not ownable) or "discriminator" (makes THIS brand chosen — ownable). Flag motivators masquerading as strategy.
-- "thorpe_candidate": boolean — true only if this looks like a reframing qualitative fact (weakness-that-becomes-strength, insider knowledge outsiders would find surprising, or a counterintuitive behaviour).
+- "thorpe_candidate": boolean — true only if this qualifies as a Thorpe candidate. A Thorpe candidate is an unexpected truth, from wherever it originates, that can SHAPE, FLIP, or ALIGN with a brand:
+  - Shape — contributes raw material to a strategy not yet formed.
+  - Flip — inverts a perceived weakness into the real source of strength.
+  - Align — connects the brand to a platform, position, or truth that already exists, letting the brand earn it rather than invent it.
 
 FINALLY:
 - "missing_types": array listing any of the four truth types that have ZERO entries. Flag them honestly.
