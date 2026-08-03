@@ -1325,3 +1325,108 @@ export const runTierTwoChecksFrom4 = createServerFn({ method: "POST" })
     }
   });
 
+
+// ---------------------------------------------------------------------------
+// CHECK 13 — Left-of-Centre track integrity
+//
+// The LOC track does not run inside the Stage 1–22 pipeline: it fires from a
+// Briefing Room handoff on its own orchestrator. Before this check it had ZERO
+// automated coverage (scripts/loc-verify.ts covered 4 of 13 engines and was
+// never invoked by anything), which is how Engine 12's silent failure reached
+// production. This check seeds a synthetic briefing_room_workspaces row, runs
+// the real orchestrator via runLeftOfCentre, and asserts the persisted result
+// against the contract in src/lib/loc-integrity.server.ts.
+//
+// Runs as its own RPC — 13 parallel Claude calls plus abstraction, anchor and
+// validation passes will not fit inside another check's invocation budget.
+// ---------------------------------------------------------------------------
+export const runTierTwoCheck13 = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => z.object({ recordId: z.string().uuid() }).parse(i))
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { assertLocRunHealthy, buildPreflightLocWorkspace } = await import(
+      "@/lib/loc-integrity.server"
+    );
+    const { runLeftOfCentre } = await import("@/lib/loc.functions");
+
+    const started = Date.now();
+    const brandName = `${TESTBRAND_BRAND_NAME} LOC`;
+    let sessionId: string | null = null;
+    let workspaceId: string | null = null;
+
+    const cleanup = async (preserve: boolean) => {
+      if (workspaceId) {
+        await supabaseAdmin.from("briefing_room_workspaces").delete().eq("id", workspaceId);
+      }
+      if (sessionId && !preserve) {
+        await supabaseAdmin.from("sessions").delete().eq("id", sessionId);
+      }
+    };
+
+    try {
+      const { data: s, error: sErr } = await supabaseAdmin
+        .from("sessions")
+        .insert({
+          brand_name: brandName,
+          category: TESTBRAND_CATEGORY,
+          brief_text: TESTBRAND_BRIEF,
+          status: "running",
+          current_stage: 1,
+          dev_mode: false,
+          user_id: context.userId,
+          is_preflight_test: true,
+        })
+        .select("id")
+        .single();
+      if (sErr || !s) throw new Error(`LOC test session insert failed: ${sErr?.message ?? "no row"}`);
+      sessionId = s.id as string;
+
+      // Synthetic Briefing Room handoff — buildLocInputs reads this by
+      // (user_id, brand_name), which is exactly the real handoff path.
+      const { data: ws, error: wsErr } = await supabaseAdmin
+        .from("briefing_room_workspaces")
+        .insert({
+          user_id: context.userId,
+          ...buildPreflightLocWorkspace(brandName),
+        } as never)
+        .select("id")
+        .single();
+      if (wsErr || !ws) throw new Error(`LOC test workspace insert failed: ${wsErr?.message ?? "no row"}`);
+      workspaceId = ws.id as string;
+
+      await runLeftOfCentre({ data: { sessionId, force: true } });
+
+      const { data: row, error: rowErr } = await supabaseAdmin
+        .from("sessions")
+        .select(
+          "loc_status, loc_error, loc_task_type, loc_generated_at, loc_engine_outputs, loc_decision_packages, loc_validation, stage_9_leftofcentre_output",
+        )
+        .eq("id", sessionId)
+        .single();
+      if (rowErr || !row) throw new Error(`Could not reload LOC columns: ${rowErr?.message ?? "no row"}`);
+
+      const detail = assertLocRunHealthy(
+        row as unknown as Parameters<typeof assertLocRunHealthy>[0],
+        started,
+      );
+      await cleanup(false);
+      return {
+        status: "pass" as const,
+        durationMs: Date.now() - started,
+        detail: `${detail} (${((Date.now() - started) / 1000).toFixed(1)}s)`,
+        remediation: null,
+      };
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      // Preserve the session on failure so loc_engine_outputs stays queryable.
+      await cleanup(true).catch(() => undefined);
+      return {
+        status: "fail" as const,
+        durationMs: Date.now() - started,
+        detail: `LOC track integrity failed: ${msg}${sessionId ? ` (session ${sessionId} preserved for post-mortem)` : ""}`,
+        remediation:
+          "Inspect src/lib/loc.functions.ts and src/lib/loc/engine-prompts.ts. Read loc_engine_outputs on the preserved session — each engine records ok/error individually, so the failing engine is named there. Do not relax the assertions in src/lib/loc-integrity.server.ts to make this pass.",
+      };
+    }
+  });
