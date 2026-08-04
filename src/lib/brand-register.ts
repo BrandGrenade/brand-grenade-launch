@@ -651,7 +651,8 @@ export function useBrandRegister(): UseBrandRegisterResult {
 
   const load = useCallback(async () => {
     setError(null);
-    const [sessionsRes, workspacesRes, briefsRes, intelRes] = await Promise.all([
+    const [sessionsRes, workspacesRes, briefsRes, intelRes, stimRunsRes, stimOrchsRes] =
+      await Promise.all([
       supabase
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .from("brand_register_sessions" as any)
@@ -692,6 +693,17 @@ export function useBrandRegister(): UseBrandRegisterResult {
           return { data: [] as IntelligenceRow[], error: null };
         }
       })(),
+      // Creative Stimulus Engine — status flags only, no prompt/direction text.
+      supabase
+        .from("stimulus_runs")
+        .select("id,session_id,status,gate_one_confirmed,updated_at")
+        .order("updated_at", { ascending: false })
+        .limit(1000),
+      supabase
+        .from("stimulus_orchestrations")
+        .select("id,session_id,status,gate_two_confirmed,updated_at")
+        .order("updated_at", { ascending: false })
+        .limit(1000),
     ]);
 
     if (sessionsRes.error) {
@@ -703,8 +715,19 @@ export function useBrandRegister(): UseBrandRegisterResult {
     const savedBriefs = (briefsRes.data ?? []) as SavedBriefRow[];
     const intelligence = ((intelRes as { data: IntelligenceRow[] | null }).data ??
       []) as IntelligenceRow[];
+    const stimulusRuns = (stimRunsRes.data ?? []) as unknown as StimulusRunRow[];
+    const stimulusOrchs = (stimOrchsRes.data ?? []) as unknown as StimulusOrchRow[];
 
-    setRows(assemble({ sessions, workspaces, savedBriefs, intelligence }));
+    setRows(
+      assemble({
+        sessions,
+        workspaces,
+        savedBriefs,
+        intelligence,
+        stimulusRuns,
+        stimulusOrchs,
+      }),
+    );
     setLoading(false);
   }, []);
 
