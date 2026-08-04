@@ -17,6 +17,7 @@ import { buildPhase1Document, openPhase1Document, openStage16VisionDocument, PHA
 import { openFullRunDocument, FULL_RUN_SESSION_COLUMNS, resolveFullRunStages } from "@/lib/full-run-document";
 import { Document00ACard } from "@/components/Document00ACard";
 import { ExecSummaryCard } from "@/components/ExecSummaryCard";
+import { CreativeShowcaseCard } from "@/components/CreativeShowcaseCard";
 
 
 
@@ -1387,6 +1388,9 @@ function Phase2Deliverables({ session }: { session: SessionRow }) {
           </div>
         </>
       )}
+
+      {/* Creative Stimulus Engine — only after Gate Two is confirmed. */}
+      <CreativeShowcaseCard sessionId={session.id} subhead={subhead} />
 
       {showBrandIdentity && (
         <>
