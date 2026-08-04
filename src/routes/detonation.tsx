@@ -30,6 +30,7 @@ import {
 } from "@/lib/stage20.functions";
 import { runStage20b, loadStage20b } from "@/lib/stage20b.functions";
 import { runStage21, loadStage21, clearStage21 } from "@/lib/stage21.functions";
+import { CreativeStimulus } from "@/components/CreativeStimulus";
 import { runStage22, loadStage22, regenerateStage22 } from "@/lib/stage22.functions";
 
 const AMBER = PHASE_2_AMBER;
@@ -1942,6 +1943,7 @@ function Stage21({ session, onChange, goNext }: { session: SessionRow; onChange:
               }}
             />
           </div>
+          <CreativeStimulus sessionId={session.id} channels={Object.keys(outputs ?? {})} />
           <div style={{ marginTop: 16, display: "flex", gap: 12, justifyContent: "flex-end", flexWrap: "wrap" }}>
             <AmberButton variant="ghost" onClick={handleForceRegenerate} disabled={busy}>
               {busy ? <><Spinner /> Regenerating…</> : "Retry"}

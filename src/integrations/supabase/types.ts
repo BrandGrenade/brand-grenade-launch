@@ -1138,6 +1138,109 @@ export type Database = {
         }
         Relationships: []
       }
+      stimulus_directions: {
+        Row: {
+          created_at: string
+          direction: string
+          error: string | null
+          id: string
+          instinct_brief: string | null
+          lens_id: string
+          lens_name: string
+          revise_count: number
+          revise_notes: string | null
+          run_id: string
+          sort_order: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          direction?: string
+          error?: string | null
+          id?: string
+          instinct_brief?: string | null
+          lens_id: string
+          lens_name: string
+          revise_count?: number
+          revise_notes?: string | null
+          run_id: string
+          sort_order?: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          direction?: string
+          error?: string | null
+          id?: string
+          instinct_brief?: string | null
+          lens_id?: string
+          lens_name?: string
+          revise_count?: number
+          revise_notes?: string | null
+          run_id?: string
+          sort_order?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stimulus_directions_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "stimulus_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stimulus_runs: {
+        Row: {
+          channel_brief: string
+          channel_name: string
+          created_at: string
+          created_by: string | null
+          error: string | null
+          id: string
+          session_id: string
+          smp: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          channel_brief: string
+          channel_name: string
+          created_at?: string
+          created_by?: string | null
+          error?: string | null
+          id?: string
+          session_id: string
+          smp?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          channel_brief?: string
+          channel_name?: string
+          created_at?: string
+          created_by?: string | null
+          error?: string | null
+          id?: string
+          session_id?: string
+          smp?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stimulus_runs_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       suppressed_emails: {
         Row: {
           created_at: string
