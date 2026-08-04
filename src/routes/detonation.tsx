@@ -1819,6 +1819,7 @@ function getStage21OutputEntries(outputs: Record<string, string>) {
 }
 
 function Stage21({ session, onChange, goNext }: { session: SessionRow; onChange: () => void | Promise<void>; goNext: () => void }) {
+  const openCreative = Route.useSearch().panel === "creative";
   const run = useServerFn(runStage21);
   const load = useServerFn(loadStage21);
   const clear = useServerFn(clearStage21);
