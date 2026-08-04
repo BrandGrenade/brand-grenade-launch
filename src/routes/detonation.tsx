@@ -1598,7 +1598,7 @@ function Stage20({ session, onChange, goNext }: { session: SessionRow; onChange:
             <AmberButton variant="ghost" onClick={handleRetry} disabled={busy}>{busy && <Spinner />} Retry</AmberButton>
             {approved ? (
               <AmberButton onClick={handleProceed} disabled={proceeding}>
-                {proceeding ? <><Spinner /> Loading...</> : "Proceed to Stage 21"}
+                {proceeding ? <><Spinner /> Loading...</> : "Proceed to Stage 20L"}
               </AmberButton>
             ) : (
               <AmberButton onClick={handleApprove} disabled={!canApprove || busy}>
@@ -1991,7 +1991,7 @@ function Stage20b({ session, onChange, goNext }: { session: SessionRow; onChange
               Edit Inputs and Regenerate
             </AmberButton>
             <AmberButton onClick={handleProceed} disabled={proceeding}>
-              {proceeding ? <><Spinner /> Loading...</> : "Proceed to Stage 21"}
+              {proceeding ? <><Spinner /> Loading...</> : "Proceed to Stage 20L"}
             </AmberButton>
           </div>
         </>
