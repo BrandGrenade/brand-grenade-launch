@@ -1332,12 +1332,17 @@ export type Database = {
       }
       stimulus_orchestrations: {
         Row: {
+          amendment_log: Json
           cd_output: string | null
           cd_revision_count: number
           cd_status: string
           created_at: string
           created_by: string | null
           error: string | null
+          gate_two_confirmed: boolean
+          gate_two_confirmed_at: string | null
+          gate_two_notes: string | null
+          gate_two_snapshot: Json | null
           id: string
           phase_note: string | null
           registry_version: number
@@ -1346,12 +1351,17 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          amendment_log?: Json
           cd_output?: string | null
           cd_revision_count?: number
           cd_status?: string
           created_at?: string
           created_by?: string | null
           error?: string | null
+          gate_two_confirmed?: boolean
+          gate_two_confirmed_at?: string | null
+          gate_two_notes?: string | null
+          gate_two_snapshot?: Json | null
           id?: string
           phase_note?: string | null
           registry_version?: number
@@ -1360,12 +1370,17 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          amendment_log?: Json
           cd_output?: string | null
           cd_revision_count?: number
           cd_status?: string
           created_at?: string
           created_by?: string | null
           error?: string | null
+          gate_two_confirmed?: boolean
+          gate_two_confirmed_at?: string | null
+          gate_two_notes?: string | null
+          gate_two_snapshot?: Json | null
           id?: string
           phase_note?: string | null
           registry_version?: number
@@ -1391,6 +1406,10 @@ export type Database = {
           direction_id: string
           error: string | null
           final_prompt: string | null
+          gate_two_approved: boolean
+          gate_two_approved_at: string | null
+          gate_two_notes: string | null
+          gate_two_snapshot: Json | null
           id: string
           initial_prompt: string | null
           lens_name: string
@@ -1398,6 +1417,7 @@ export type Database = {
           propagated: boolean
           rejected_at: string | null
           rejected_reason: string | null
+          revision_log: Json
           run_id: string
           signatures_extracted: boolean
           sort_order: number
@@ -1417,6 +1437,10 @@ export type Database = {
           direction_id: string
           error?: string | null
           final_prompt?: string | null
+          gate_two_approved?: boolean
+          gate_two_approved_at?: string | null
+          gate_two_notes?: string | null
+          gate_two_snapshot?: Json | null
           id?: string
           initial_prompt?: string | null
           lens_name?: string
@@ -1424,6 +1448,7 @@ export type Database = {
           propagated?: boolean
           rejected_at?: string | null
           rejected_reason?: string | null
+          revision_log?: Json
           run_id: string
           signatures_extracted?: boolean
           sort_order?: number
@@ -1443,6 +1468,10 @@ export type Database = {
           direction_id?: string
           error?: string | null
           final_prompt?: string | null
+          gate_two_approved?: boolean
+          gate_two_approved_at?: string | null
+          gate_two_notes?: string | null
+          gate_two_snapshot?: Json | null
           id?: string
           initial_prompt?: string | null
           lens_name?: string
@@ -1450,6 +1479,7 @@ export type Database = {
           propagated?: boolean
           rejected_at?: string | null
           rejected_reason?: string | null
+          revision_log?: Json
           run_id?: string
           signatures_extracted?: boolean
           sort_order?: number
