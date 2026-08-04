@@ -717,17 +717,21 @@ function DetonationPage() {
   useEffect(() => {
     if (panel !== "creative" || activeStage !== "21") return;
     let tries = 0;
+    let found = 0;
     const timer = window.setInterval(() => {
       const el = document.getElementById("creative-stimulus");
       if (el) {
+        // Keep re-aligning for a couple of seconds: the panel expands and the
+        // briefs above it finish loading, both of which shift the offset.
         el.scrollIntoView({ behavior: "smooth", block: "start" });
-        window.clearInterval(timer);
+        if (++found > 8) window.clearInterval(timer);
       } else if (++tries > 40) {
         window.clearInterval(timer);
       }
     }, 250);
     return () => window.clearInterval(timer);
   }, [panel, activeStage, session]);
+
 
 
   const refresh = useCallback(async () => {
