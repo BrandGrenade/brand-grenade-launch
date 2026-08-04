@@ -322,7 +322,23 @@ function deriveCreative(
     }
   }
 
-  if (!latestSessionId) return { ...EMPTY_STATUS };
+  if (!latestSessionId) {
+    // No creative run yet. If a Phase 2 session exists, hand back its id so the
+    // dashboard can offer a "Start" link straight into Stage 21.
+    const p2 = sessions.find(
+      (s) =>
+        s.has_stage_22 === true ||
+        s.has_stage_17 === true ||
+        s.phase_2_status === "in_progress" ||
+        s.phase_2_status === "complete",
+    );
+    if (!p2) return { ...EMPTY_STATUS };
+    return {
+      ...EMPTY_STATUS,
+      href: "/detonation",
+      hrefSearch: { session: p2.id },
+    };
+  }
   return {
     state: bestState,
     label: bestLabel,
