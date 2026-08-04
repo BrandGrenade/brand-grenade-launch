@@ -202,6 +202,11 @@ export function StimulusOrchestration({ sessionId, brandName }: { sessionId: str
   const list = useServerFn(listOrchestrations);
   const decide = useServerFn(setCrossRefDecision);
   const reject = useServerFn(rejectPromptAtCd);
+  const approveTwo = useServerFn(setGateTwoApproval);
+  const sendBack = useServerFn(sendPromptBackWithNotes);
+  const retrySet = useServerFn(retrySetWithAmendment);
+  const confirmTwo = useServerFn(confirmGateTwo);
+  const fullExport = useServerFn(getFullFinishedExport);
 
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -218,6 +223,12 @@ export function StimulusOrchestration({ sessionId, brandName }: { sessionId: str
   const [expanded, setExpanded] = useState<string | null>(null);
   const [rejectFor, setRejectFor] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState("");
+  const [sendBackFor, setSendBackFor] = useState<string | null>(null);
+  const [sendBackNotes, setSendBackNotes] = useState("");
+  const [gateTwoNote, setGateTwoNote] = useState("");
+  const [amendNotes, setAmendNotes] = useState("");
+  const [showAmend, setShowAmend] = useState(false);
+
 
   const refreshList = useCallback(async () => {
     const r = await list({ data: { sessionId } });
