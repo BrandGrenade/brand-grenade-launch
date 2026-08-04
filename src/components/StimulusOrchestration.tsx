@@ -422,7 +422,90 @@ export function StimulusOrchestration({ sessionId, brandName }: { sessionId: str
                         <Btn tone={RED} onClick={() => setRejectFor(rejectFor === p.id ? null : p.id)}>
                           Reject at CD
                         </Btn>
+                        {orch.status === "complete" && (
+                          <>
+                            <Label tone={p.gate_two_approved ? GREEN : MUTED}>
+                              {p.gate_two_approved ? "gate two: signed off" : "gate two: pending"}
+                            </Label>
+                            <Btn
+                              tone={GREEN}
+                              active={Boolean(p.gate_two_approved)}
+                              disabled={busy || Boolean(orch.gate_two_confirmed)}
+                              onClick={async () => {
+                                setBusy(true);
+                                setErr(null);
+                                try {
+                                  await approveTwo({
+                                    data: { promptId: p.id, approved: !p.gate_two_approved },
+                                  });
+                                  if (orchId) await refreshState(orchId);
+                                } catch (e) {
+                                  setErr(e instanceof Error ? e.message : "Gate Two sign-off failed");
+                                } finally {
+                                  setBusy(false);
+                                }
+                              }}
+                            >
+                              {p.gate_two_approved ? "Signed off — undo" : "Sign off (on-brief)"}
+                            </Btn>
+                            <Btn
+                              disabled={busy || Boolean(orch.gate_two_confirmed)}
+                              onClick={() => setSendBackFor(sendBackFor === p.id ? null : p.id)}
+                            >
+                              Send back with notes
+                            </Btn>
+                          </>
+                        )}
                       </div>
+
+                      {sendBackFor === p.id && (
+                        <div style={{ marginTop: 10 }}>
+                          <textarea
+                            value={sendBackNotes}
+                            onChange={(e) => setSendBackNotes(e.target.value)}
+                            rows={2}
+                            placeholder="On-brief / on-strategy notes for this prompt. Craft pass re-runs on it, then a full CD re-check."
+                            style={{
+                              width: "100%",
+                              background: "#000",
+                              color: "#E8E4DE",
+                              border: `1px solid ${AMBER}55`,
+                              borderRadius: 6,
+                              padding: 8,
+                              fontFamily: "inherit",
+                              fontSize: 13,
+                            }}
+                          />
+                          <div style={{ marginTop: 8, display: "flex", gap: 8 }}>
+                            <Btn
+                              active
+                              disabled={busy || !sendBackNotes.trim()}
+                              onClick={async () => {
+                                if (!orchId) return;
+                                setBusy(true);
+                                setErr(null);
+                                try {
+                                  await sendBack({
+                                    data: { promptId: p.id, notes: sendBackNotes.trim() },
+                                  });
+                                  setSendBackFor(null);
+                                  setSendBackNotes("");
+                                } catch (e) {
+                                  setErr(e instanceof Error ? e.message : "Send back failed");
+                                  setBusy(false);
+                                  return;
+                                }
+                                setBusy(false);
+                                await drive(orchId);
+                              }}
+                            >
+                              Send back and rework
+                            </Btn>
+                            <Btn onClick={() => setSendBackFor(null)}>Cancel</Btn>
+                          </div>
+                        </div>
+                      )}
+
 
                       {rejectFor === p.id && (
                         <div style={{ marginTop: 10 }}>
