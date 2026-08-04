@@ -523,7 +523,10 @@ export function CreativeStimulus({
                 ))}
               </div>
 
+              {runId && <StimulusPromptAudit runId={runId} />}
+
               {runId && (
+
                 <StimulusGateOne
                   runId={runId}
                   run={runMeta}
