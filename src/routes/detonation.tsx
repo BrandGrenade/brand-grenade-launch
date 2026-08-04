@@ -37,6 +37,9 @@ const AMBER = PHASE_2_AMBER;
 
 const detonationSearchSchema = z.object({
   session: z.string().uuid().optional(),
+  // Deep-link target inside the page. "creative" opens Stage 21 and scrolls
+  // straight to the Creative Stimulus panel.
+  panel: z.enum(["creative"]).optional(),
 });
 
 export const Route = createFileRoute("/detonation")({
@@ -693,16 +696,43 @@ function stageStatus(num: string, s: SessionRow | null): StageStatus {
 
 // ── Main page ────────────────────────────────────────────────────────────
 function DetonationPage() {
-  const { session: sessionId } = Route.useSearch();
+  const { session: sessionId, panel } = Route.useSearch();
   const { user, isAuthReady } = useAuth();
   const [session, setSession] = useState<SessionRow | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeStage, setActiveStage] = useState<string>("17");
+  // ?panel=creative deep-links straight into Stage 21, where the Creative
+  // Stimulus Engine lives.
+  const [activeStage, setActiveStage] = useState<string>(
+    panel === "creative" ? "21" : "17",
+  );
 
   useEffect(() => {
+    if (panel === "creative" && activeStage === "21") return;
     window.scrollTo({ top: 0, behavior: "smooth" });
-  }, [activeStage]);
+  }, [activeStage, panel]);
+
+  // Once Stage 21 has rendered its content, bring the Creative Stimulus panel
+  // into view. Stage 21 loads asynchronously, so poll briefly for the anchor.
+  useEffect(() => {
+    if (panel !== "creative" || activeStage !== "21") return;
+    let tries = 0;
+    let found = 0;
+    const timer = window.setInterval(() => {
+      const el = document.getElementById("creative-stimulus");
+      if (el) {
+        // Keep re-aligning for a couple of seconds: the panel expands and the
+        // briefs above it finish loading, both of which shift the offset.
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+        if (++found > 8) window.clearInterval(timer);
+      } else if (++tries > 40) {
+        window.clearInterval(timer);
+      }
+    }, 250);
+    return () => window.clearInterval(timer);
+  }, [panel, activeStage, session]);
+
+
 
   const refresh = useCallback(async () => {
     if (!sessionId) return;
@@ -1793,6 +1823,7 @@ function getStage21OutputEntries(outputs: Record<string, string>) {
 }
 
 function Stage21({ session, onChange, goNext }: { session: SessionRow; onChange: () => void | Promise<void>; goNext: () => void }) {
+  const openCreative = Route.useSearch().panel === "creative";
   const run = useServerFn(runStage21);
   const load = useServerFn(loadStage21);
   const clear = useServerFn(clearStage21);
@@ -1943,7 +1974,10 @@ function Stage21({ session, onChange, goNext }: { session: SessionRow; onChange:
               }}
             />
           </div>
-          <CreativeStimulus sessionId={session.id} channels={Object.keys(outputs ?? {})} brandName={session.brand_name ?? ""} />
+          <div id="creative-stimulus" style={{ scrollMarginTop: 140 }}>
+            <CreativeStimulus sessionId={session.id} channels={Object.keys(outputs ?? {})} brandName={session.brand_name ?? ""} defaultOpen={openCreative} />
+          </div>
+
           <div style={{ marginTop: 16, display: "flex", gap: 12, justifyContent: "flex-end", flexWrap: "wrap" }}>
             <AmberButton variant="ghost" onClick={handleForceRegenerate} disabled={busy}>
               {busy ? <><Spinner /> Regenerating…</> : "Retry"}

@@ -336,7 +336,7 @@ function deriveCreative(
     return {
       ...EMPTY_STATUS,
       href: "/detonation",
-      hrefSearch: { session: p2.id },
+      hrefSearch: { session: p2.id, panel: "creative" },
     };
   }
   return {
@@ -344,7 +344,7 @@ function deriveCreative(
     label: bestLabel,
     timestamp: bestTimestamp,
     href: "/detonation",
-    hrefSearch: { session: latestSessionId },
+    hrefSearch: { session: latestSessionId, panel: "creative" },
     runCount: Math.max(runCount, 1),
   };
 }
@@ -616,7 +616,7 @@ function assemble({
                 ? "Gate One passed"
                 : "Tissue check",
           href: "/detonation",
-          hrefSearch: { session: s.id },
+          hrefSearch: { session: s.id, panel: "creative" },
           downloadHref: null,
         });
       }

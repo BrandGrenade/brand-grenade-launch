@@ -268,10 +268,13 @@ export function CreativeStimulus({
   sessionId,
   channels,
   brandName,
+  defaultOpen = false,
 }: {
   sessionId: string;
   channels: string[];
   brandName: string;
+  /** Deep links (?panel=creative) expand the panel on mount. */
+  defaultOpen?: boolean;
 }) {
   const start = useServerFn(startStimulusRun);
   const batch = useServerFn(generateStimulusBatch);
@@ -280,7 +283,7 @@ export function CreativeStimulus({
   const triage = useServerFn(triageStimulusDirection);
   const revise = useServerFn(reviseStimulusDirection);
 
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(defaultOpen);
   const [channel, setChannel] = useState(channels[0] ?? "");
   const [runId, setRunId] = useState<string | null>(null);
   const [runs, setRuns] = useState<

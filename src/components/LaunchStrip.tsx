@@ -170,7 +170,7 @@ export function LaunchStrip() {
           {creativeSessionId ? (
             <Link
               to="/detonation"
-              search={{ session: creativeSessionId }}
+              search={{ session: creativeSessionId, panel: "creative" as const }}
               style={buttonStyle}
               className={buttonClass}
               title="Open your most recent creative work"
