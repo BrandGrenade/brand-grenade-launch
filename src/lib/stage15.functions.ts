@@ -6,7 +6,7 @@ import { withStreamSafety } from "./stream-stage-safety";
 import { STAGE_15_SYSTEM_PROMPT, buildStage15UserMessage } from "./stage15-prompt";
 import { trimBrandFitForDownstream } from "./context-trim";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { assertSessionOwner } from "@/lib/auth-helpers.server";
+import { assertSessionAccess } from "@/lib/auth-helpers.server";
 import { assertUpstreamStageOutput } from "./pipeline-integrity";
 import { isStageOutputComplete } from "./stage-completion";
 
@@ -16,7 +16,7 @@ export const runStage15 = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i) => Input.parse(i))
   .handler(async function* ({ data, context }) {
-    await assertSessionOwner(data.sessionId, context.userId);
+    await assertSessionAccess(data.sessionId, context.userId);
     await assertUpstreamStageOutput(data.sessionId, 15);
     const { data: session, error } = await supabaseAdmin
       .from("sessions")

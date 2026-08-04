@@ -8,7 +8,7 @@ import { applyStage10CodeGate } from "./stage12-filter";
 
 import { countPropositions } from "./count-helpers";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { assertSessionOwner } from "@/lib/auth-helpers.server";
+import { assertSessionAccess } from "@/lib/auth-helpers.server";
 import { assertUpstreamStageOutput } from "./pipeline-integrity";
 
 const Input = z.object({ sessionId: z.string().uuid() });
@@ -17,7 +17,7 @@ export const runStage10 = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i) => Input.parse(i))
   .handler(async function* ({ data, context }) {
-    await assertSessionOwner(data.sessionId, context.userId);
+    await assertSessionAccess(data.sessionId, context.userId);
     await assertUpstreamStageOutput(data.sessionId, 10);
     const { data: session, error } = await supabaseAdmin
       .from("sessions")

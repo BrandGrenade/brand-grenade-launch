@@ -12,7 +12,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { assertSessionOwner } from "@/lib/auth-helpers.server";
+import { assertSessionAccess } from "@/lib/auth-helpers.server";
 import {
   buildHtmlDocument,
   getSectionDefs,
@@ -207,7 +207,7 @@ export const generateDocument = createServerFn({ method: "POST" })
   .inputValidator((i) => Input.parse(i))
   .handler(async ({ data, context }) => {
     const { sessionId, format, force } = data;
-    await assertSessionOwner(sessionId, context.userId);
+    await assertSessionAccess(sessionId, context.userId);
     const urlCol = URL_COLS[format];
     const statusCol = STATUS_COLS[format];
 

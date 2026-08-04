@@ -4,7 +4,7 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { streamClaude } from "./claude.server";
 import { STAGE_1_SYSTEM_PROMPT, buildStage1UserMessage } from "./stage1-prompt";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { assertSessionOwner } from "@/lib/auth-helpers.server";
+import { assertSessionAccess } from "@/lib/auth-helpers.server";
 import { findBannedWordHits, generateWithBannedWordGate, type OutputGateMode } from "./output-banned-word-gate";
 
 const BriefFieldsSchema = z
@@ -90,7 +90,7 @@ export const runStage1 = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => RunStage1Input.parse(input))
   .handler(async function* ({ data, context }) {
-    await assertSessionOwner(data.sessionId, context.userId);
+    await assertSessionAccess(data.sessionId, context.userId);
     const { data: session, error: loadErr } = await supabaseAdmin
       .from("sessions")
       .select("brand_name, category, brief_text, stage_1_output, brief_versions, is_preflight_test")

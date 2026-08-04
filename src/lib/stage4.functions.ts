@@ -11,7 +11,7 @@ import {
 import { trimStage1ForDownstream } from "./context-trim";
 import { countSections } from "./count-helpers";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { assertSessionOwner } from "@/lib/auth-helpers.server";
+import { assertSessionAccess } from "@/lib/auth-helpers.server";
 import { assertUpstreamStageOutput } from "./pipeline-integrity";
 
 const RunStage4Input = z.object({ sessionId: z.string().uuid() });
@@ -29,7 +29,7 @@ export const runStage4 = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => RunStage4Input.parse(input))
   .handler(async function* ({ data, context }) {
-    await assertSessionOwner(data.sessionId, context.userId);
+    await assertSessionAccess(data.sessionId, context.userId);
     await assertUpstreamStageOutput(data.sessionId, 4);
     const { data: session, error: loadErr } = await supabaseAdmin
       .from("sessions")
