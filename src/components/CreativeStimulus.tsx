@@ -276,7 +276,9 @@ export function CreativeStimulus({
   const [open, setOpen] = useState(false);
   const [channel, setChannel] = useState(channels[0] ?? "");
   const [runId, setRunId] = useState<string | null>(null);
-  const [runs, setRuns] = useState<{ id: string; channel_name: string; status: string }[]>([]);
+  const [runs, setRuns] = useState<
+    { id: string; channel_name: string; status: string; created_at?: string }[]
+  >([]);
   const [directions, setDirections] = useState<Direction[]>([]);
   const [runMeta, setRunMeta] = useState<RunMeta>({});
   const [progress, setProgress] = useState(0);
