@@ -578,6 +578,32 @@ function assemble({
           downloadHref: null,
         });
       }
+      for (const r of runsBySession.get(s.id) ?? []) {
+        const orch = (orchBySession.get(s.id) ?? [])[0];
+        const done = orch?.gate_two_confirmed === true;
+        runs.push({
+          id: `creative:${r.id}`,
+          system: "creative",
+          date: orch?.updated_at ?? r.updated_at,
+          status: done
+            ? "complete"
+            : r.status === "error" || orch?.status === "error"
+              ? "error"
+              : "in_progress",
+          label: done
+            ? "Gate Two confirmed"
+            : orch
+              ? orch.status === "complete"
+                ? "Gate Two pending"
+                : "Orchestration running"
+              : r.gate_one_confirmed === true
+                ? "Gate One passed"
+                : "Tissue check",
+          href: "/detonation",
+          hrefSearch: { session: s.id },
+          downloadHref: null,
+        });
+      }
     }
     runs.sort((a, b) => b.date.localeCompare(a.date));
 
@@ -595,6 +621,7 @@ function assemble({
       briefingRoom,
       pipeline,
       phase2,
+      creative,
       lastUpdated,
       runs,
       sessionIds: g.sessions.map((s) => s.id),
