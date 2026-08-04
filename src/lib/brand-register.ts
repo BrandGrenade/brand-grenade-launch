@@ -253,6 +253,88 @@ function derivePhase2(sessions: SessionRow[]): SystemStatus {
   return { ...EMPTY_STATUS, runCount };
 }
 
+/**
+ * Creative Stimulus Engine status for a brand. Progress reads across the four
+ * phases the engine actually persists:
+ *   run exists                 → "Tissue check"
+ *   run.gate_one_confirmed     → "Gate One passed"
+ *   orchestration in flight    → "Orchestration"
+ *   orchestration complete     → "Gate Two pending"
+ *   gate_two_confirmed         → complete
+ * The engine lives inside Stage 21, so every link lands on /detonation for
+ * the owning session.
+ */
+function deriveCreative(
+  sessions: SessionRow[],
+  runsBySession: Map<string, StimulusRunRow[]>,
+  orchBySession: Map<string, StimulusOrchRow[]>,
+): SystemStatus {
+  let latestSessionId: string | null = null;
+  let latestAt = "";
+  let runCount = 0;
+  let bestRank = -1;
+  let bestLabel: string | null = null;
+  let bestState: SystemState = "not_started";
+  let bestTimestamp: string | null = null;
+
+  for (const s of sessions) {
+    const runs = runsBySession.get(s.id) ?? [];
+    const orchs = orchBySession.get(s.id) ?? [];
+    if (runs.length === 0 && orchs.length === 0) continue;
+    runCount += runs.length;
+
+    const orch = orchs[0];
+    const run = runs[0];
+    const at = orch?.updated_at ?? run?.updated_at ?? s.updated_at;
+
+    let rank = 0;
+    let label: string | null = "Tissue check";
+    let state: SystemState = "in_progress";
+    if (run?.gate_one_confirmed === true) {
+      rank = 1;
+      label = "Gate One passed";
+    }
+    if (orch) {
+      if (orch.gate_two_confirmed === true) {
+        rank = 4;
+        label = null;
+        state = "complete";
+      } else if (orch.status === "complete") {
+        rank = 3;
+        label = "Gate Two pending";
+      } else if (orch.status === "error") {
+        rank = 2;
+        label = "Orchestration failed";
+        state = "interrupted";
+      } else {
+        rank = 2;
+        label = "Orchestration running";
+      }
+    }
+
+    if (rank > bestRank || (rank === bestRank && at > latestAt)) {
+      bestRank = rank;
+      bestLabel = label;
+      bestState = state;
+      bestTimestamp = state === "complete" ? at : null;
+      latestSessionId = s.id;
+      latestAt = at;
+    }
+  }
+
+  if (!latestSessionId) return { ...EMPTY_STATUS };
+  return {
+    state: bestState,
+    label: bestLabel,
+    timestamp: bestTimestamp,
+    href: "/detonation",
+    hrefSearch: { session: latestSessionId },
+    runCount: Math.max(runCount, 1),
+  };
+}
+
+
+
 function briefingStep(w: WorkspaceRow): number {
   if (w.selected_tension_index != null) return 4;
   if (w.has_tensions === true) return 4;
