@@ -57,9 +57,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // redirect to login
       }
 
+      if (event === "SIGNED_IN" && newSession) {
+        // Bind any session invites addressed to this email to the account.
+        void import("@/lib/session-share.functions")
+          .then((m) => m.claimSessionInvites())
+          .catch(() => {});
+      }
+
       setSession(newSession);
       setIsAuthReady(true);
     });
+
 
     return () => {
       isMounted = false;
