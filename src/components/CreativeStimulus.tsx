@@ -14,6 +14,7 @@ import {
 } from "@/lib/stimulus.functions";
 import { getLens, LENS_COUNT } from "@/lib/stimulus/lenses";
 import { StimulusGateOne, type RatedDirection } from "@/components/StimulusGateOne";
+import { StimulusOrchestration } from "@/components/StimulusOrchestration";
 import type { DirectionRatings } from "@/lib/stimulus/rating-prompts";
 
 const AMBER = "#E8A33D";
@@ -262,9 +263,11 @@ function DirectionCard({
 export function CreativeStimulus({
   sessionId,
   channels,
+  brandName,
 }: {
   sessionId: string;
   channels: string[];
+  brandName: string;
 }) {
   const start = useServerFn(startStimulusRun);
   const batch = useServerFn(generateStimulusBatch);
@@ -482,6 +485,8 @@ export function CreativeStimulus({
               )}
             </>
           )}
+
+          <StimulusOrchestration sessionId={sessionId} brandName={brandName} />
         </div>
       )}
     </div>
