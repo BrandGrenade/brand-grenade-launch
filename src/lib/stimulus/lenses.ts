@@ -14,7 +14,7 @@ export type StimulusLens = {
   provocation: string;
   subPrompts: string;
   formatTags: string[];
-  /** 2–7 real, named campaigns. Link out to public source; never embedded. */
+  /** Verified real, named campaigns (web-confirmed Aug 2026). Link out to public source; never embedded. */
   references: { label: string; url: string }[];
 };
 
@@ -180,7 +180,7 @@ export const STIMULUS_LENSES: StimulusLens[] = [
     subPrompts:
       "What if the hero were the person everyone overlooks. What if the recognition came from an unexpected source that made it impossible to dismiss.",
     formatTags: ["Film", "Social", "Long-form"],
-    references: [ref("Procter & Gamble Thank You Mom"), ref("Guinness Wheelchair Basketball"), ref("Chevrolet Farmer")],
+    references: [ref("Procter & Gamble Thank You Mom"), ref("Guinness Wheelchair Basketball")],
   },
   {
     id: "other_dimension",
@@ -191,7 +191,7 @@ export const STIMULUS_LENSES: StimulusLens[] = [
     subPrompts:
       "Imagine a future where technology has advanced significantly — how does the brand live there. Imagine a society where time travel is possible. Create a world where gravity does not exist and the brand is the only logical response.",
     formatTags: ["Film", "Long-form", "Social"],
-    references: [ref("Cadbury Bicycle Ballet"), ref("Audi Spaceship"), ref("Chanel No 5 The One That I Want")],
+    references: [ref("Audi Spaceship"), ref("Chanel No 5 The One That I Want")],
   },
   {
     id: "origin",
@@ -279,7 +279,7 @@ export const STIMULUS_LENSES: StimulusLens[] = [
     subPrompts:
       "What if time travel were literally possible in the world of this ad. What if the nostalgia were specific to a generation the brand has never spoken to before.",
     formatTags: ["Film", "Social", "Audio"],
-    references: [ref("Hovis Boy on the Bike"), ref("Nintendo Switch nostalgia"), ref("Adidas Originals Represent")],
+    references: [ref("Hovis Boy on the Bike"), ref("Adidas Originals Represent")],
   },
   {
     id: "rare_thing",
@@ -290,7 +290,7 @@ export const STIMULUS_LENSES: StimulusLens[] = [
     subPrompts:
       "What if access to the brand were deliberately restricted and the restriction were the campaign. What if the brand were available only to those who truly deserved it.",
     formatTags: ["Film", "Experiential", "Social", "PR"],
-    references: [ref("McDonald's McRib scarcity"), ref("Supreme drop culture"), ref("Guinness Brewers Project limited release")],
+    references: [ref("McDonald's McRib scarcity"), ref("Supreme drop culture"), ref("Guinness Brewers Project")],
   },
   {
     id: "bookmark_moment",
@@ -345,7 +345,7 @@ export const STIMULUS_LENSES: StimulusLens[] = [
     subPrompts:
       "Develop an idea that appeals to all five senses simultaneously. Create an audio-only experience that makes the proposition felt without a single image. What does this brand smell like when the proposition is true.",
     formatTags: ["Audio", "Film", "Experiential"],
-    references: [ref("Cadbury Flake sensory"), ref("Lynx Peace scent"), ref("Heineken The Sound of Refreshment")],
+    references: [ref("Cadbury Flake sensory"), ref("Lynx Peace scent")],
   },
   {
     id: "ignition_point",
@@ -389,7 +389,7 @@ export const STIMULUS_LENSES: StimulusLens[] = [
     subPrompts:
       "Design an idea that plays with perspective and optical illusion. What if the entire premise of the ad turned out to be the opposite of what it appeared to be from the first frame.",
     formatTags: ["Film", "Social", "Digital"],
-    references: [ref("Guinness Wheelchair Basketball"), ref("Sport England reverse film"), ref("Honda The Other Side")],
+    references: [ref("Guinness Wheelchair Basketball"), ref("Honda The Other Side")],
   },
   {
     id: "shock_of_new",
