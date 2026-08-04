@@ -261,7 +261,7 @@ function derivePhase2(sessions: SessionRow[]): SystemStatus {
  *   orchestration in flight    → "Orchestration"
  *   orchestration complete     → "Gate Two pending"
  *   gate_two_confirmed         → complete
- * The engine lives inside Stage 21, so every link lands on /detonation for
+ * The engine has its own room, so every link lands on /creative/<sessionId> for
  * the owning session.
  */
 function deriveCreative(
@@ -335,16 +335,16 @@ function deriveCreative(
     if (!p2) return { ...EMPTY_STATUS };
     return {
       ...EMPTY_STATUS,
-      href: "/detonation",
-      hrefSearch: { session: p2.id, panel: "creative" },
+      href: `/creative/${p2.id}`,
+      hrefSearch: {},
     };
   }
   return {
     state: bestState,
     label: bestLabel,
     timestamp: bestTimestamp,
-    href: "/detonation",
-    hrefSearch: { session: latestSessionId, panel: "creative" },
+    href: `/creative/${latestSessionId}`,
+    hrefSearch: {},
     runCount: Math.max(runCount, 1),
   };
 }
@@ -615,8 +615,8 @@ function assemble({
               : r.gate_one_confirmed === true
                 ? "Gate One passed"
                 : "Tissue check",
-          href: "/detonation",
-          hrefSearch: { session: s.id, panel: "creative" },
+          href: `/creative/${s.id}`,
+          hrefSearch: {},
           downloadHref: null,
         });
       }

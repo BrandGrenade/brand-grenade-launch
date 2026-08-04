@@ -749,9 +749,10 @@ function BrandRegisterRow({
             sessionId={row.pipeline.hrefSearch?.session ?? null}
             showcaseSessionId={
               row.creative.state === "complete"
-                ? (row.creative.hrefSearch?.session ?? null)
+                ? (row.creative.href?.split("/creative/")[1] ?? null)
                 : null
             }
+
           />
         </td>
         <td className="px-3 py-4" style={{ whiteSpace: "nowrap" }}>

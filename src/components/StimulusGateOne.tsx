@@ -11,6 +11,8 @@ import {
 } from "@/lib/stimulus-rating.functions";
 import type { DirectionRatings } from "@/lib/stimulus/rating-prompts";
 import { RawIdeaExportButton } from "@/components/RawIdeaExportButton";
+import { ideaCardStyle, ideaListStyle } from "@/components/stimulus/idea-layout";
+
 
 
 const AMBER = "#E8A33D";
@@ -359,20 +361,20 @@ export function StimulusGateOne({
         </div>
       )}
 
-      <div style={{ marginTop: 18, display: "grid", gap: 16 }}>
+      <div style={{ ...ideaListStyle, marginTop: 28 }}>
         {survivors.map((d) => (
           <div
             key={d.id}
-            style={{
-              backgroundColor: "#111",
-              border: `1px solid ${d.gate_one_approved ? AMBER : "#2A2A2A"}`,
-              borderRadius: 8,
-              padding: 18,
-            }}
+            style={ideaCardStyle({ accent: d.gate_one_approved ? AMBER : null })}
           >
-            <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-              <div className="text-mono" style={{ color: AMBER, fontSize: 13, letterSpacing: "0.06em", textTransform: "uppercase" }}>
-                {String(d.sort_order + 1).padStart(2, "0")} · {d.lens_name}
+            <div style={{ display: "flex", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
+              <div style={{ display: "flex", alignItems: "baseline", gap: 14, minWidth: 0 }}>
+                <span className="text-mono" style={{ color: `${AMBER}88`, fontSize: 22, lineHeight: 1 }}>
+                  {String(d.sort_order + 1).padStart(2, "0")}
+                </span>
+                <span className="text-mono" style={{ color: AMBER, fontSize: 16, letterSpacing: "0.06em", textTransform: "uppercase" }}>
+                  {d.lens_name}
+                </span>
               </div>
               {d.gate_one_approved_at && (
                 <span className="text-mono" style={{ color: AMBER, fontSize: 10 }}>
@@ -380,9 +382,10 @@ export function StimulusGateOne({
                 </span>
               )}
             </div>
-            <div className="text-body-sm" style={{ color: "#E8E4DE", marginTop: 10, whiteSpace: "pre-wrap", lineHeight: 1.6 }}>
+            <div className="text-body-sm" style={{ color: "#E8E4DE", marginTop: 20, whiteSpace: "pre-wrap", lineHeight: 1.75, fontSize: 15 }}>
               {d.direction}
             </div>
+
 
             {d.rating_status === "failed" && (
               <div className="text-body-sm" style={{ color: RED, marginTop: 10 }}>

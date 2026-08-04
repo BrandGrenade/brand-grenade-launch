@@ -16,6 +16,8 @@ import { getLens, LENS_COUNT } from "@/lib/stimulus/lenses";
 import { StimulusGateOne, type RatedDirection } from "@/components/StimulusGateOne";
 import { StimulusOrchestration } from "@/components/StimulusOrchestration";
 import { RawIdeaExportButton } from "@/components/RawIdeaExportButton";
+import { ideaCardStyle, ideaListStyle, IDEA_COLUMN_WIDTH } from "@/components/stimulus/idea-layout";
+
 
 import type { DirectionRatings } from "@/lib/stimulus/rating-prompts";
 
@@ -114,25 +116,31 @@ function DirectionCard({
 
   return (
     <div
-      style={{
-        backgroundColor: "#111111",
-        border: `1px solid ${d.status === "keep" ? AMBER + "66" : "#2A2A2A"}`,
-        borderRadius: 8,
-        padding: 20,
-        opacity: killed ? 0.45 : 1,
-      }}
+      style={ideaCardStyle({
+        accent: d.status === "keep" ? AMBER + "77" : null,
+        dimmed: killed,
+      })}
     >
-      <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "baseline" }}>
-        <div
-          style={{
-            color: AMBER,
-            fontFamily: "'DM Mono', monospace",
-            fontSize: 14,
-            letterSpacing: "0.06em",
-            textTransform: "uppercase",
-          }}
-        >
-          {String(d.sort_order + 1).padStart(2, "0")} · {d.lens_name}
+      <div style={{ display: "flex", justifyContent: "space-between", gap: 16, alignItems: "baseline" }}>
+        <div style={{ display: "flex", alignItems: "baseline", gap: 14, minWidth: 0 }}>
+          <span
+            className="text-mono"
+            style={{ color: `${AMBER}88`, fontSize: 22, letterSpacing: "0.04em", lineHeight: 1 }}
+          >
+            {String(d.sort_order + 1).padStart(2, "0")}
+          </span>
+          <span
+            style={{
+              color: AMBER,
+              fontFamily: "'DM Mono', monospace",
+              fontSize: 16,
+              letterSpacing: "0.06em",
+              textTransform: "uppercase",
+              lineHeight: 1.3,
+            }}
+          >
+            {d.lens_name}
+          </span>
         </div>
         {d.revise_count > 0 && (
           <span className="text-mono" style={{ color: MUTED, fontSize: 10 }}>
@@ -141,17 +149,25 @@ function DirectionCard({
         )}
       </div>
       {lens && (
-        <div className="text-body-sm" style={{ color: MUTED, marginTop: 4 }}>
+        <div className="text-body-sm" style={{ color: MUTED, marginTop: 8 }}>
           {lens.approach}
         </div>
       )}
 
+
       <div
         className="text-body-sm"
-        style={{ color: "#E8E4DE", marginTop: 14, whiteSpace: "pre-wrap", lineHeight: 1.6 }}
+        style={{
+          color: "#E8E4DE",
+          marginTop: 20,
+          whiteSpace: "pre-wrap",
+          lineHeight: 1.75,
+          fontSize: 15,
+        }}
       >
         {d.direction || d.error || "Not generated."}
       </div>
+
 
       {lens && lens.references.length > 0 && (
         <div style={{ marginTop: 14, display: "flex", flexWrap: "wrap", gap: 8 }}>
@@ -269,13 +285,17 @@ export function CreativeStimulus({
   channels,
   brandName,
   defaultOpen = false,
+  variant = "panel",
 }: {
   sessionId: string;
   channels: string[];
   brandName: string;
   /** Deep links (?panel=creative) expand the panel on mount. */
   defaultOpen?: boolean;
+  /** "page" removes the collapsible chrome — the engine owns the whole room. */
+  variant?: "panel" | "page";
 }) {
+
   const start = useServerFn(startStimulusRun);
   const batch = useServerFn(generateStimulusBatch);
   const load = useServerFn(loadStimulusRun);
@@ -283,7 +303,9 @@ export function CreativeStimulus({
   const triage = useServerFn(triageStimulusDirection);
   const revise = useServerFn(reviseStimulusDirection);
 
-  const [open, setOpen] = useState(defaultOpen);
+  const isPage = variant === "page";
+  const [open, setOpen] = useState(defaultOpen || variant === "page");
+
   const [channel, setChannel] = useState(channels[0] ?? "");
   const [runId, setRunId] = useState<string | null>(null);
   const [runs, setRuns] = useState<
@@ -370,23 +392,32 @@ export function CreativeStimulus({
   if (channels.length === 0) return null;
 
   return (
-    <div style={{ marginTop: 28, border: `1px solid ${AMBER}33`, borderRadius: 8, padding: 20, backgroundColor: "#0E0E0E" }}>
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        style={{ width: "100%", textAlign: "left", background: "none", border: "none", padding: 0, cursor: "pointer" }}
-      >
-        <div
-          className="text-mono"
-          style={{ color: AMBER, fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase" }}
+    <div
+      style={
+        isPage
+          ? { width: "100%" }
+          : { marginTop: 28, border: `1px solid ${AMBER}33`, borderRadius: 8, padding: 20, backgroundColor: "#0E0E0E" }
+      }
+    >
+      {!isPage && (
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          style={{ width: "100%", textAlign: "left", background: "none", border: "none", padding: 0, cursor: "pointer" }}
         >
-          Creative Stimulus Engine
-        </div>
-        <div className="text-body-sm" style={{ color: MUTED, marginTop: 6 }}>
-          Sweeps one channel brief through all {LENS_COUNT} creative lenses, then hands the output to a human
-          Tissue Check. Raw stimulus, not finished work. {open ? "Hide" : "Open"}.
-        </div>
-      </button>
+          <div
+            className="text-mono"
+            style={{ color: AMBER, fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase" }}
+          >
+            Creative Stimulus Engine
+          </div>
+          <div className="text-body-sm" style={{ color: MUTED, marginTop: 6 }}>
+            Sweeps one channel brief through all {LENS_COUNT} creative lenses, then hands the output to a human
+            Tissue Check. Raw stimulus, not finished work. {open ? "Hide" : "Open"}.
+          </div>
+        </button>
+      )}
+
 
       {open && (
         <div style={{ marginTop: 18 }}>
@@ -435,7 +466,29 @@ export function CreativeStimulus({
 
           {directions.length > 0 && (
             <>
-              <div style={{ marginTop: 20, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+              <div
+                style={{
+                  marginTop: 28,
+                  display: "flex",
+                  gap: 10,
+                  flexWrap: "wrap",
+                  alignItems: "center",
+                  ...(isPage
+                    ? {
+                        position: "sticky" as const,
+                        top: 128,
+                        zIndex: 20,
+                        backgroundColor: "#0B0B0Bf2",
+                        backdropFilter: "blur(6px)",
+                        border: "1px solid #232323",
+                        borderRadius: 10,
+                        padding: "12px 16px",
+                        maxWidth: IDEA_COLUMN_WIDTH,
+                        margin: "28px auto 0",
+                      }
+                    : {}),
+                }}
+              >
                 <span className="text-mono" style={{ color: MUTED, fontSize: 10, letterSpacing: "0.12em" }}>
                   TISSUE CHECK — {counts.keep} keep · {counts.play} in play · {counts.kill} killed
                 </span>
@@ -446,14 +499,9 @@ export function CreativeStimulus({
                 ))}
               </div>
 
-              <div
-                style={{
-                  marginTop: 16,
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))",
-                  gap: 16,
-                }}
-              >
+
+              <div style={{ ...ideaListStyle, marginTop: 24 }}>
+
                 {visible.map((d) => (
                   <DirectionCard
                     key={d.id}
