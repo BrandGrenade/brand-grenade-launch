@@ -81,6 +81,7 @@ function rowMatchesFilter(row: BrandRow, filter: FilterKey): boolean {
     row.briefingRoom.state,
     row.pipeline.state,
     row.phase2.state,
+    row.creative.state,
   ];
   if (filter === "all") return true;
   if (filter === "active") return states.some((s) => s === "in_progress");
@@ -233,7 +234,8 @@ function Dashboard() {
             r.intelligence.state === "in_progress" ||
             r.briefingRoom.state === "in_progress" ||
             r.pipeline.state === "in_progress" ||
-            r.phase2.state === "in_progress",
+            r.phase2.state === "in_progress" ||
+            r.creative.state === "in_progress",
         ).length,
         label: "In Progress",
       },
@@ -852,7 +854,7 @@ function SystemStatusCell({
       <SystemCircle state={status.state} />
       <div className="flex min-w-0 flex-col">
         {status.state === "not_started" ? (
-          <NotStartedLink system={system} brand={brand} />
+          <NotStartedLink system={system} brand={brand} status={status} />
         ) : status.state === "interrupted" ? (
           // Interrupted runs get a resume link, not a "complete" cell —
           // the label carries the stage the run stalled on.
@@ -871,9 +873,11 @@ function SystemStatusCell({
 function NotStartedLink({
   system,
   brand,
+  status,
 }: {
   system: SystemKey;
   brand: string;
+  status: SystemStatus;
 }) {
   const brandParam = brand ? { brand } : {};
   const label = SYSTEM_LAUNCH_LABEL[system];
@@ -902,6 +906,13 @@ function NotStartedLink({
       <Link to="/brief" style={style}>
         {label}
       </Link>
+    );
+  }
+  // Creative Stimulus lives inside Stage 21: when the session exists but no
+  // creative run has been started, offer the way in rather than a dead dash.
+  if (system === "creative" && status.href && status.hrefSearch) {
+    return (
+      <TextLink href={status.href} search={status.hrefSearch} label="Start" />
     );
   }
   // Phase 2 not started / pipeline incomplete: render a non-clickable dash.
@@ -1154,7 +1165,7 @@ function ExpandedSection({
           style={{ color: "var(--color-text-tertiary)", fontSize: 13 }}
         >
           No runs yet.{" "}
-          <NotStartedLink system={system} brand={brand} />
+          <NotStartedLink system={system} brand={brand} status={status} />
         </div>
       ) : (
         <ul style={{ display: "flex", flexDirection: "column", gap: 6 }}>
