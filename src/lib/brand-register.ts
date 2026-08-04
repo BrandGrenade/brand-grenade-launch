@@ -505,17 +505,19 @@ export function useBrandRegister(): UseBrandRegisterResult {
     setError(null);
     const [sessionsRes, workspacesRes, briefsRes, intelRes] = await Promise.all([
       supabase
-        .from("sessions")
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .from("brand_register_sessions" as any)
         .select(
-          "id,brand_name,category,status,current_stage,created_at,updated_at,stage_1_output,stage_16_consulting_output,phase_2_status,stage_17_output,stage_22_output,stage_status,interrupted_stage,last_heartbeat_at",
+          "id,brand_name,category,status,current_stage,created_at,updated_at,has_stage_16_consulting,phase_2_status,has_stage_17,has_stage_22,stage_status,interrupted_stage,last_heartbeat_at",
         )
         .eq("is_preflight_test", false)
         .order("updated_at", { ascending: false })
         .limit(500),
       supabase
-        .from("briefing_room_workspaces")
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .from("brand_register_briefings" as any)
         .select(
-          "id,brand_name,category,status,updated_at,created_at,diagnosis,truths,relevance,tensions,selected_tension_index",
+          "id,brand_name,category,status,updated_at,created_at,has_diagnosis,has_truths,has_relevance,has_tensions,selected_tension_index",
         )
         .order("updated_at", { ascending: false })
         .limit(500),
