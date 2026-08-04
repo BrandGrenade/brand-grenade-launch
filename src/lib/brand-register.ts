@@ -59,6 +59,8 @@ export type BrandRow = {
   briefingRoom: SystemStatus;
   pipeline: SystemStatus;
   phase2: SystemStatus;
+  /** Creative Stimulus Engine (Tissue → Gate One → Orchestration → Gate Two). */
+  creative: SystemStatus;
   /** ISO — most recent activity across all systems. */
   lastUpdated: string;
   /** All historical runs, newest first. */
