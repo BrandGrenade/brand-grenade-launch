@@ -15,7 +15,8 @@ import type { BrandAssetRules } from "./stimulus/orchestration-prompts";
 
 const PROMPT_BATCH = 2;
 
-type AnyRow = Record<string, unknown>;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnyRow = Record<string, any>;
 const db = supabaseAdmin as unknown as {
   from: (t: string) => any;
 };
