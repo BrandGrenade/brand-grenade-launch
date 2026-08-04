@@ -1,6 +1,8 @@
+import { useEffect, useState } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { NewRunGateButton } from "@/components/NewRunGateButton";
 import { useAuth } from "@/context/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 /**
  * Persistent launch strip fixed below the top navigation. Structurally
@@ -53,14 +55,58 @@ const arrowStyle: React.CSSProperties = {
 
 export const LAUNCH_STRIP_HEIGHT = 68;
 
+/**
+ * Most recent session with Creative Stimulus work, in progress or complete.
+ * Orchestrations (Phase 3–4) rank ahead of runs (Phase 1–2) at equal
+ * recency, so the link lands on the furthest-along work when both exist.
+ * RLS scopes both tables to sessions the signed-in user can reach, so no
+ * client-side ownership filter is needed.
+ */
+function useLatestCreativeSession(enabled: boolean): string | null {
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  useEffect(() => {
+    if (!enabled) return;
+    let cancelled = false;
+    void (async () => {
+      const [orch, run] = await Promise.all([
+        supabase
+          .from("stimulus_orchestrations")
+          .select("session_id, updated_at")
+          .order("updated_at", { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+        supabase
+          .from("stimulus_runs")
+          .select("session_id, updated_at")
+          .order("updated_at", { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+      ]);
+      if (cancelled) return;
+      const o = orch.data;
+      const r = run.data;
+      const winner =
+        o && r ? (o.updated_at >= r.updated_at ? o : r) : (o ?? r ?? null);
+      setSessionId(winner?.session_id ?? null);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [enabled]);
+  return sessionId;
+}
+
 export function LaunchStrip() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { user, isAuthReady } = useAuth();
-  // Hard gate: never render for unauthenticated visitors.
-  if (!isAuthReady || !user) return null;
   const isInternal = INTERNAL_PREFIXES.some(
     (p) => pathname === p || pathname.startsWith(p + "/"),
   );
+  const creativeSessionId = useLatestCreativeSession(
+    Boolean(isAuthReady && user && isInternal),
+  );
+  // Hard gate: never render for unauthenticated visitors.
+  if (!isAuthReady || !user) return null;
   if (!isInternal) return null;
 
   return (
@@ -121,14 +167,27 @@ export function LaunchStrip() {
             className={buttonClass}
           />
           <span aria-hidden style={arrowStyle}>→</span>
-          <button
-            type="button"
-            style={{ ...buttonStyle, cursor: "not-allowed" }}
-            className={buttonClass}
-            title="Coming Soon"
-          >
-            Creative Engine
-          </button>
+          {creativeSessionId ? (
+            <Link
+              to="/detonation"
+              search={{ session: creativeSessionId }}
+              style={buttonStyle}
+              className={buttonClass}
+              title="Open your most recent creative work"
+            >
+              Creative Engine
+            </Link>
+          ) : (
+            <button
+              type="button"
+              style={{ ...buttonStyle, cursor: "not-allowed", opacity: 0.55 }}
+              className={buttonClass}
+              disabled
+              title="No creative work started yet — launch it from Stage 21 of a completed run"
+            >
+              Creative Engine
+            </button>
+          )}
         </div>
       </div>
       {/* Spacer to push page content below the fixed strip. TopNav already
