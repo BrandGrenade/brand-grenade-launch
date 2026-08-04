@@ -1088,19 +1088,38 @@ function DeliverablesCell({
       </span>
     );
   }
+  const linkStyle: React.CSSProperties = {
+    color: "var(--color-text-secondary)",
+    fontSize: 12,
+    fontWeight: 500,
+    textDecoration: "underline",
+  };
   return (
-    <a
-      href={`/complete?session=${encodeURIComponent(sessionId)}`}
-      className="text-body"
-      style={{
-        color: "var(--color-text-secondary)",
-        fontSize: 12,
-        fontWeight: 500,
-        textDecoration: "underline",
-      }}
-    >
-      Documents
-    </a>
+    <span className="text-body" style={{ whiteSpace: "nowrap" }}>
+      <a
+        href={`/complete?session=${encodeURIComponent(sessionId)}`}
+        className="text-body"
+        style={linkStyle}
+      >
+        Documents
+      </a>
+      {showcaseSessionId && (
+        <>
+          <span
+            style={{ color: "var(--color-text-tertiary)", padding: "0 6px" }}
+          >
+            ·
+          </span>
+          <a
+            href={`/complete?session=${encodeURIComponent(showcaseSessionId)}#creative-showcase`}
+            className="text-body"
+            style={linkStyle}
+          >
+            Showcase
+          </a>
+        </>
+      )}
+    </span>
   );
 }
 
