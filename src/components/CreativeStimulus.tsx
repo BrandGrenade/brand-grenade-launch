@@ -2,7 +2,7 @@
 // Manual trigger inside Stage 21. One channel per run. 37 lenses generated in
 // resumable batches, then the human Tissue Check pass.
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import {
   startStimulusRun,
