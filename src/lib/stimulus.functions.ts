@@ -240,7 +240,7 @@ export const triageStimulusDirection = createServerFn({ method: "POST" })
     if (error || !row) throw new Error("Direction not found");
     await loadRun(row.run_id, context.userId);
 
-    const patch: Record<string, unknown> = { status: data.status };
+    const patch: { status: string; instinct_brief?: string } = { status: data.status };
     if (data.instinctBrief !== undefined) patch.instinct_brief = data.instinctBrief;
     const { error: uErr } = await supabaseAdmin
       .from("stimulus_directions")
