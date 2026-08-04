@@ -10,6 +10,8 @@ import {
   confirmGateOne,
 } from "@/lib/stimulus-rating.functions";
 import type { DirectionRatings } from "@/lib/stimulus/rating-prompts";
+import { RawIdeaExportButton } from "@/components/RawIdeaExportButton";
+
 
 const AMBER = "#E8A33D";
 const MUTED = "#8A8680";
