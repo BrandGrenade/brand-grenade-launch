@@ -114,25 +114,31 @@ function DirectionCard({
 
   return (
     <div
-      style={{
-        backgroundColor: "#111111",
-        border: `1px solid ${d.status === "keep" ? AMBER + "66" : "#2A2A2A"}`,
-        borderRadius: 8,
-        padding: 20,
-        opacity: killed ? 0.45 : 1,
-      }}
+      style={ideaCardStyle({
+        accent: d.status === "keep" ? AMBER + "77" : null,
+        dimmed: killed,
+      })}
     >
-      <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "baseline" }}>
-        <div
-          style={{
-            color: AMBER,
-            fontFamily: "'DM Mono', monospace",
-            fontSize: 14,
-            letterSpacing: "0.06em",
-            textTransform: "uppercase",
-          }}
-        >
-          {String(d.sort_order + 1).padStart(2, "0")} · {d.lens_name}
+      <div style={{ display: "flex", justifyContent: "space-between", gap: 16, alignItems: "baseline" }}>
+        <div style={{ display: "flex", alignItems: "baseline", gap: 14, minWidth: 0 }}>
+          <span
+            className="text-mono"
+            style={{ color: `${AMBER}88`, fontSize: 22, letterSpacing: "0.04em", lineHeight: 1 }}
+          >
+            {String(d.sort_order + 1).padStart(2, "0")}
+          </span>
+          <span
+            style={{
+              color: AMBER,
+              fontFamily: "'DM Mono', monospace",
+              fontSize: 16,
+              letterSpacing: "0.06em",
+              textTransform: "uppercase",
+              lineHeight: 1.3,
+            }}
+          >
+            {d.lens_name}
+          </span>
         </div>
         {d.revise_count > 0 && (
           <span className="text-mono" style={{ color: MUTED, fontSize: 10 }}>
@@ -141,10 +147,11 @@ function DirectionCard({
         )}
       </div>
       {lens && (
-        <div className="text-body-sm" style={{ color: MUTED, marginTop: 4 }}>
+        <div className="text-body-sm" style={{ color: MUTED, marginTop: 8 }}>
           {lens.approach}
         </div>
       )}
+
 
       <div
         className="text-body-sm"
