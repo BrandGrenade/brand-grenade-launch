@@ -14,7 +14,8 @@ export type SystemKey =
   | "intelligence"
   | "briefing_room"
   | "pipeline"
-  | "phase_2";
+  | "phase_2"
+  | "creative";
 
 export type SystemState = "not_started" | "in_progress" | "complete" | "interrupted";
 
