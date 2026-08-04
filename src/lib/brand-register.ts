@@ -409,6 +409,8 @@ type Aggregated = {
   workspaces: WorkspaceRow[];
   savedBriefs: SavedBriefRow[];
   intelligence: IntelligenceRow[];
+  stimulusRuns: StimulusRunRow[];
+  stimulusOrchs: StimulusOrchRow[];
 };
 
 function assemble({
@@ -416,7 +418,22 @@ function assemble({
   workspaces,
   savedBriefs,
   intelligence,
+  stimulusRuns,
+  stimulusOrchs,
 }: Aggregated): BrandRow[] {
+  const runsBySession = new Map<string, StimulusRunRow[]>();
+  for (const r of stimulusRuns) {
+    const list = runsBySession.get(r.session_id) ?? [];
+    list.push(r);
+    runsBySession.set(r.session_id, list);
+  }
+  const orchBySession = new Map<string, StimulusOrchRow[]>();
+  for (const o of stimulusOrchs) {
+    const list = orchBySession.get(o.session_id) ?? [];
+    list.push(o);
+    orchBySession.set(o.session_id, list);
+  }
+
   const groups = new Map<
     string,
     {
