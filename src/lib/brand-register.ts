@@ -155,7 +155,7 @@ function derivePipeline(sessions: SessionRow[]): SystemStatus {
   if (sessions.length === 0) return { ...EMPTY_STATUS };
   const latest = sessions[0]!;
   const complete =
-    latest.status === "complete" || latest.stage_22_output != null;
+    latest.status === "complete" || latest.has_stage_22 === true;
   if (complete) {
     return {
       state: "complete",
@@ -202,14 +202,14 @@ function derivePhase2(sessions: SessionRow[]): SystemStatus {
   if (sessions.length === 0) return { ...EMPTY_STATUS };
   const withPhase2 = sessions.filter(
     (s) =>
-      s.stage_22_output != null ||
-      s.stage_17_output != null ||
+      s.has_stage_22 === true ||
+      s.has_stage_17 === true ||
       s.phase_2_status === "in_progress" ||
       s.phase_2_status === "complete",
   );
   const runCount = withPhase2.length;
   const latest = sessions[0]!;
-  if (latest.stage_22_output != null || latest.phase_2_status === "complete") {
+  if (latest.has_stage_22 === true || latest.phase_2_status === "complete") {
     return {
       state: "complete",
       label: null,
@@ -219,7 +219,7 @@ function derivePhase2(sessions: SessionRow[]): SystemStatus {
       runCount: Math.max(runCount, 1),
     };
   }
-  if (latest.stage_17_output != null || latest.phase_2_status === "in_progress") {
+  if (latest.has_stage_17 === true || latest.phase_2_status === "in_progress") {
     return {
       state: "in_progress",
       label: "Running",
@@ -234,10 +234,10 @@ function derivePhase2(sessions: SessionRow[]): SystemStatus {
 
 function briefingStep(w: WorkspaceRow): number {
   if (w.selected_tension_index != null) return 4;
-  if (w.tensions != null) return 4;
-  if (w.relevance != null) return 3;
-  if (w.truths != null) return 2;
-  if (w.diagnosis != null) return 1;
+  if (w.has_tensions === true) return 4;
+  if (w.has_relevance === true) return 3;
+  if (w.has_truths === true) return 2;
+  if (w.has_diagnosis === true) return 1;
   return 0;
 }
 
@@ -421,7 +421,7 @@ function assemble({
     }
     for (const s of g.sessions) {
       const pipelineComplete =
-        s.stage_22_output != null || s.stage_16_consulting_output != null;
+        s.has_stage_22 === true || s.has_stage_16_consulting === true;
       runs.push({
         id: `pipe:${s.id}`,
         system: "pipeline",
@@ -439,13 +439,13 @@ function assemble({
         downloadHref: null,
       });
       if (
-        s.stage_22_output != null ||
-        s.stage_17_output != null ||
+        s.has_stage_22 === true ||
+        s.has_stage_17 === true ||
         s.phase_2_status === "in_progress" ||
         s.phase_2_status === "complete"
       ) {
         const p2Complete =
-          s.stage_22_output != null || s.phase_2_status === "complete";
+          s.has_stage_22 === true || s.phase_2_status === "complete";
         runs.push({
           id: `phase2:${s.id}`,
           system: "phase_2",
