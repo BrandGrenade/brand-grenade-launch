@@ -51,7 +51,7 @@ export const setGateTwoApproval = createServerFn({ method: "POST" })
       .parse(i),
   )
   .handler(async ({ data, context }) => {
-    const { prompt } = await promptForUser(data.promptId, context.userId);
+    const { prompt, orch } = await promptForUser(data.promptId, context.userId);
     if (prompt.status !== "active") throw new Error("This prompt is rejected — it cannot be signed off.");
 
     const dir = await directionRow(prompt.direction_id as string);
@@ -66,7 +66,7 @@ export const setGateTwoApproval = createServerFn({ method: "POST" })
           wad_status: prompt.wad_status,
           wad_reasoning: prompt.wad_reasoning ?? null,
           cd_note: prompt.cd_note ?? null,
-          registry_version: prompt.registry_version ?? null,
+          registry_version: orch.registry_version ?? null,
           gate_one: dir
             ? {
                 approved_at: dir.gate_one_approved_at,
