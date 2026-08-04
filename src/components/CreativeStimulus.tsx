@@ -466,7 +466,29 @@ export function CreativeStimulus({
 
           {directions.length > 0 && (
             <>
-              <div style={{ marginTop: 20, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+              <div
+                style={{
+                  marginTop: 28,
+                  display: "flex",
+                  gap: 10,
+                  flexWrap: "wrap",
+                  alignItems: "center",
+                  ...(isPage
+                    ? {
+                        position: "sticky" as const,
+                        top: 128,
+                        zIndex: 20,
+                        backgroundColor: "#0B0B0Bf2",
+                        backdropFilter: "blur(6px)",
+                        border: "1px solid #232323",
+                        borderRadius: 10,
+                        padding: "12px 16px",
+                        maxWidth: IDEA_COLUMN_WIDTH,
+                        margin: "28px auto 0",
+                      }
+                    : {}),
+                }}
+              >
                 <span className="text-mono" style={{ color: MUTED, fontSize: 10, letterSpacing: "0.12em" }}>
                   TISSUE CHECK — {counts.keep} keep · {counts.play} in play · {counts.kill} killed
                 </span>
@@ -476,6 +498,7 @@ export function CreativeStimulus({
                   </Btn>
                 ))}
               </div>
+
 
               <div style={{ ...ideaListStyle, marginTop: 24 }}>
 
