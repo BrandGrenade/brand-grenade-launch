@@ -1,0 +1,1 @@
+DELETE FROM public.session_collaborators WHERE lower(email) IN ('collab.test@brandgrenade.app','outsider.test@brandgrenade.app');
