@@ -1969,7 +1969,10 @@ function Stage21({ session, onChange, goNext }: { session: SessionRow; onChange:
               }}
             />
           </div>
-          <CreativeStimulus sessionId={session.id} channels={Object.keys(outputs ?? {})} brandName={session.brand_name ?? ""} />
+          <div id="creative-stimulus" style={{ scrollMarginTop: 140 }}>
+            <CreativeStimulus sessionId={session.id} channels={Object.keys(outputs ?? {})} brandName={session.brand_name ?? ""} />
+          </div>
+
           <div style={{ marginTop: 16, display: "flex", gap: 12, justifyContent: "flex-end", flexWrap: "wrap" }}>
             <AmberButton variant="ghost" onClick={handleForceRegenerate} disabled={busy}>
               {busy ? <><Spinner /> Regenerating…</> : "Retry"}
