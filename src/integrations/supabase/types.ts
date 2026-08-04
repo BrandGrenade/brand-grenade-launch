@@ -797,7 +797,12 @@ export type Database = {
           stage_20b_audience_input: Json | null
           stage_20b_error: string | null
           stage_20b_output: string | null
+          stage_20l_approved: boolean
+          stage_20l_error: string | null
+          stage_20l_medium: string | null
+          stage_20l_output: string | null
           stage_21_error: string | null
+          stage_21_fidelity: Json | null
           stage_21_outputs: Json | null
           stage_22_brand_architecture: string | null
           stage_22_distinctive_assets: string | null
@@ -974,7 +979,12 @@ export type Database = {
           stage_20b_audience_input?: Json | null
           stage_20b_error?: string | null
           stage_20b_output?: string | null
+          stage_20l_approved?: boolean
+          stage_20l_error?: string | null
+          stage_20l_medium?: string | null
+          stage_20l_output?: string | null
           stage_21_error?: string | null
+          stage_21_fidelity?: Json | null
           stage_21_outputs?: Json | null
           stage_22_brand_architecture?: string | null
           stage_22_distinctive_assets?: string | null
@@ -1151,7 +1161,12 @@ export type Database = {
           stage_20b_audience_input?: Json | null
           stage_20b_error?: string | null
           stage_20b_output?: string | null
+          stage_20l_approved?: boolean
+          stage_20l_error?: string | null
+          stage_20l_medium?: string | null
+          stage_20l_output?: string | null
           stage_21_error?: string | null
+          stage_21_fidelity?: Json | null
           stage_21_outputs?: Json | null
           stage_22_brand_architecture?: string | null
           stage_22_distinctive_assets?: string | null
