@@ -37,6 +37,9 @@ const AMBER = PHASE_2_AMBER;
 
 const detonationSearchSchema = z.object({
   session: z.string().uuid().optional(),
+  // Deep-link target inside the page. "creative" opens Stage 21 and scrolls
+  // straight to the Creative Stimulus panel.
+  panel: z.enum(["creative"]).optional(),
 });
 
 export const Route = createFileRoute("/detonation")({
