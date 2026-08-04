@@ -1613,6 +1613,202 @@ function Stage20({ session, onChange, goNext }: { session: SessionRow; onChange:
 }
 
 // ═════════════════════════════════════════════════════════════════════════
+// STAGE 20L — The Lead Creative Expression
+// One creative idea, decided once, in one primary medium. Everything
+// downstream adapts this. Nothing downstream reinterprets the proposition.
+// ═════════════════════════════════════════════════════════════════════════
+
+function Stage20l({
+  session,
+  onChange,
+  goNext,
+}: {
+  session: SessionRow;
+  onChange: () => void | Promise<void>;
+  goNext: () => void;
+}) {
+  const run = useServerFn(runStage20l);
+  const load = useServerFn(loadStage20l);
+  const approve = useServerFn(approveStage20l);
+
+  const [output, setOutput] = useState<string | null>(session.stage_20l_output);
+  const [medium, setMedium] = useState<string>(session.stage_20l_medium ?? "");
+  const [approved, setApproved] = useState<boolean>(Boolean(session.stage_20l_approved));
+  const [redirect, setRedirect] = useState("");
+  const [redirectOpen, setRedirectOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [proceeding, setProceeding] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  useEffect(() => {
+    setOutput(session.stage_20l_output);
+    setApproved(Boolean(session.stage_20l_approved));
+    if (session.stage_20l_medium) setMedium(session.stage_20l_medium);
+  }, [session.stage_20l_output, session.stage_20l_approved, session.stage_20l_medium]);
+
+  useEffect(() => {
+    if (output !== null || session.stage_20l_output) return;
+    void load({ data: { sessionId: session.id } })
+      .then((r) => {
+        if (!r.output) return;
+        setOutput(r.output);
+        setApproved(r.approved);
+        if (r.medium) setMedium(r.medium);
+      })
+      .catch(() => undefined);
+  }, [output, load, session.id, session.stage_20l_output]);
+
+  const gated = !session.stage_20_approved;
+
+  async function handleRun() {
+    setBusy(true);
+    setErr(null);
+    try {
+      const r = await run({
+        data: { sessionId: session.id, medium: medium.trim(), redirect: redirect.trim() },
+      });
+      setOutput(r.output);
+      setApproved(false);
+      setRedirect("");
+      setRedirectOpen(false);
+      await onChange();
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Lead Creative Expression failed");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleApprove() {
+    setBusy(true);
+    setErr(null);
+    try {
+      await approve({ data: { sessionId: session.id, approved: true } });
+      setApproved(true);
+      await onChange();
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Could not approve");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleProceed() {
+    setProceeding(true);
+    try {
+      await onChange();
+      goNext();
+    } finally {
+      setProceeding(false);
+    }
+  }
+
+  return (
+    <section>
+      <SectionTitle
+        kicker="STAGE 20L"
+        title="The Lead Creative Expression"
+        subtitle="One idea, decided once, in one primary medium. Every channel brief adapts this — none of them reinterpret the proposition."
+      />
+      {err && <ErrorBanner message={err} />}
+      {gated && <ErrorBanner message="Stage 20 must be approved before the Lead Creative Expression can be decided." />}
+
+      <div style={{ marginTop: 20 }}>
+        <label
+          htmlFor="stage20l-medium"
+          className="text-mono"
+          style={{ color: "#8A8680", fontSize: 9, textTransform: "uppercase", letterSpacing: "0.12em" }}
+        >
+          Primary medium (optional — leave blank and the system decides)
+        </label>
+        <input
+          id="stage20l-medium"
+          value={medium}
+          onChange={(e) => setMedium(e.target.value)}
+          placeholder="e.g. 60-second hero film"
+          style={{
+            display: "block",
+            width: "100%",
+            marginTop: 8,
+            backgroundColor: "#0F0F0F",
+            border: "1px solid #2A2A2A",
+            borderRadius: 6,
+            color: "#F2EFE9",
+            padding: "10px 12px",
+            fontSize: 14,
+          }}
+        />
+      </div>
+
+      {!output ? (
+        <div style={{ marginTop: 20 }}>
+          <AmberButton onClick={handleRun} disabled={busy || gated}>
+            {busy && <Spinner />} {busy ? "Deciding…" : "Decide the Lead Creative Expression"}
+          </AmberButton>
+        </div>
+      ) : (
+        <>
+          <div
+            style={{
+              marginTop: 24,
+              backgroundColor: "#111111",
+              border: `1px solid ${approved ? AMBER : "#2A2A2A"}`,
+              borderRadius: 8,
+              padding: 28,
+            }}
+          >
+            <RichOutput text={output} />
+          </div>
+
+          {redirectOpen && (
+            <textarea
+              value={redirect}
+              onChange={(e) => setRedirect(e.target.value)}
+              placeholder="What should change about the idea? Be specific."
+              rows={4}
+              style={{
+                width: "100%",
+                marginTop: 16,
+                backgroundColor: "#0F0F0F",
+                border: "1px solid #2A2A2A",
+                borderRadius: 6,
+                color: "#F2EFE9",
+                padding: 12,
+                fontSize: 14,
+              }}
+            />
+          )}
+
+          <div style={{ marginTop: 24, display: "flex", gap: 12, justifyContent: "flex-end" }}>
+            <AmberButton variant="ghost" onClick={() => setRedirectOpen((v) => !v)} disabled={busy}>
+              {redirectOpen ? "Cancel redirect" : "Redirect…"}
+            </AmberButton>
+            <AmberButton variant="ghost" onClick={handleRun} disabled={busy}>
+              {busy && <Spinner />} Regenerate
+            </AmberButton>
+            {approved ? (
+              <AmberButton onClick={handleProceed} disabled={proceeding}>
+                {proceeding ? <><Spinner /> Loading…</> : "Proceed to Stage 20B"}
+              </AmberButton>
+            ) : (
+              <AmberButton onClick={handleApprove} disabled={busy}>
+                {busy && <Spinner />} Approve the idea
+              </AmberButton>
+            )}
+          </div>
+          {!approved && (
+            <p className="text-body-sm" style={{ color: "#8A8680", marginTop: 12, textAlign: "right" }}>
+              Channel briefs cannot run until this idea is approved.
+            </p>
+          )}
+        </>
+      )}
+    </section>
+  );
+}
+
+
+// ═════════════════════════════════════════════════════════════════════════
 // STAGE 20B — Channel Strategy and Audience Intelligence
 // ═════════════════════════════════════════════════════════════════════════
 type Stage20bInputs = {
