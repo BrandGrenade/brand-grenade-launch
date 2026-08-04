@@ -14,7 +14,8 @@ export type SystemKey =
   | "intelligence"
   | "briefing_room"
   | "pipeline"
-  | "phase_2";
+  | "phase_2"
+  | "creative";
 
 export type SystemState = "not_started" | "in_progress" | "complete" | "interrupted";
 
@@ -58,6 +59,8 @@ export type BrandRow = {
   briefingRoom: SystemStatus;
   pipeline: SystemStatus;
   phase2: SystemStatus;
+  /** Creative Stimulus Engine (Tissue → Gate One → Orchestration → Gate Two). */
+  creative: SystemStatus;
   /** ISO — most recent activity across all systems. */
   lastUpdated: string;
   /** All historical runs, newest first. */
@@ -141,6 +144,24 @@ type IntelligenceRow = {
   category: string | null;
   status: string | null;
   created_at: string;
+  updated_at: string;
+};
+
+/** Creative Stimulus Engine run (Phase 1–2: generation, tissue, Gate One). */
+type StimulusRunRow = {
+  id: string;
+  session_id: string;
+  status: string | null;
+  gate_one_confirmed: boolean | null;
+  updated_at: string;
+};
+
+/** Creative Stimulus Engine orchestration (Phase 3–4: W/AD/CD, Gate Two). */
+type StimulusOrchRow = {
+  id: string;
+  session_id: string;
+  status: string | null;
+  gate_two_confirmed: boolean | null;
   updated_at: string;
 };
 
@@ -232,6 +253,104 @@ function derivePhase2(sessions: SessionRow[]): SystemStatus {
   return { ...EMPTY_STATUS, runCount };
 }
 
+/**
+ * Creative Stimulus Engine status for a brand. Progress reads across the four
+ * phases the engine actually persists:
+ *   run exists                 → "Tissue check"
+ *   run.gate_one_confirmed     → "Gate One passed"
+ *   orchestration in flight    → "Orchestration"
+ *   orchestration complete     → "Gate Two pending"
+ *   gate_two_confirmed         → complete
+ * The engine lives inside Stage 21, so every link lands on /detonation for
+ * the owning session.
+ */
+function deriveCreative(
+  sessions: SessionRow[],
+  runsBySession: Map<string, StimulusRunRow[]>,
+  orchBySession: Map<string, StimulusOrchRow[]>,
+): SystemStatus {
+  let latestSessionId: string | null = null;
+  let latestAt = "";
+  let runCount = 0;
+  let bestRank = -1;
+  let bestLabel: string | null = null;
+  let bestState: SystemState = "not_started";
+  let bestTimestamp: string | null = null;
+
+  for (const s of sessions) {
+    const runs = runsBySession.get(s.id) ?? [];
+    const orchs = orchBySession.get(s.id) ?? [];
+    if (runs.length === 0 && orchs.length === 0) continue;
+    runCount += runs.length;
+
+    const orch = orchs[0];
+    const run = runs[0];
+    const at = orch?.updated_at ?? run?.updated_at ?? s.updated_at;
+
+    let rank = 0;
+    let label: string | null = "Tissue check";
+    let state: SystemState = "in_progress";
+    if (run?.gate_one_confirmed === true) {
+      rank = 1;
+      label = "Gate One passed";
+    }
+    if (orch) {
+      if (orch.gate_two_confirmed === true) {
+        rank = 4;
+        label = null;
+        state = "complete";
+      } else if (orch.status === "complete") {
+        rank = 3;
+        label = "Gate Two pending";
+      } else if (orch.status === "error") {
+        rank = 2;
+        label = "Orchestration failed";
+        state = "interrupted";
+      } else {
+        rank = 2;
+        label = "Orchestration running";
+      }
+    }
+
+    if (rank > bestRank || (rank === bestRank && at > latestAt)) {
+      bestRank = rank;
+      bestLabel = label;
+      bestState = state;
+      bestTimestamp = state === "complete" ? at : null;
+      latestSessionId = s.id;
+      latestAt = at;
+    }
+  }
+
+  if (!latestSessionId) {
+    // No creative run yet. If a Phase 2 session exists, hand back its id so the
+    // dashboard can offer a "Start" link straight into Stage 21.
+    const p2 = sessions.find(
+      (s) =>
+        s.has_stage_22 === true ||
+        s.has_stage_17 === true ||
+        s.phase_2_status === "in_progress" ||
+        s.phase_2_status === "complete",
+    );
+    if (!p2) return { ...EMPTY_STATUS };
+    return {
+      ...EMPTY_STATUS,
+      href: "/detonation",
+      hrefSearch: { session: p2.id },
+    };
+  }
+  return {
+    state: bestState,
+    label: bestLabel,
+    timestamp: bestTimestamp,
+    href: "/detonation",
+    hrefSearch: { session: latestSessionId },
+    runCount: Math.max(runCount, 1),
+  };
+}
+
+
+
 function briefingStep(w: WorkspaceRow): number {
   if (w.selected_tension_index != null) return 4;
   if (w.has_tensions === true) return 4;
@@ -306,6 +425,8 @@ type Aggregated = {
   workspaces: WorkspaceRow[];
   savedBriefs: SavedBriefRow[];
   intelligence: IntelligenceRow[];
+  stimulusRuns: StimulusRunRow[];
+  stimulusOrchs: StimulusOrchRow[];
 };
 
 function assemble({
@@ -313,7 +434,22 @@ function assemble({
   workspaces,
   savedBriefs,
   intelligence,
+  stimulusRuns,
+  stimulusOrchs,
 }: Aggregated): BrandRow[] {
+  const runsBySession = new Map<string, StimulusRunRow[]>();
+  for (const r of stimulusRuns) {
+    const list = runsBySession.get(r.session_id) ?? [];
+    list.push(r);
+    runsBySession.set(r.session_id, list);
+  }
+  const orchBySession = new Map<string, StimulusOrchRow[]>();
+  for (const o of stimulusOrchs) {
+    const list = orchBySession.get(o.session_id) ?? [];
+    list.push(o);
+    orchBySession.set(o.session_id, list);
+  }
+
   const groups = new Map<
     string,
     {
@@ -386,6 +522,7 @@ function assemble({
     const briefingRoom = deriveBriefing(g.workspaces, g.savedBriefs.length);
     const pipeline = derivePipeline(g.sessions);
     const phase2 = derivePhase2(g.sessions);
+    const creative = deriveCreative(g.sessions, runsBySession, orchBySession);
 
     const runs: BrandRun[] = [];
     for (const i of g.intelligence) {
@@ -457,6 +594,32 @@ function assemble({
           downloadHref: null,
         });
       }
+      for (const r of runsBySession.get(s.id) ?? []) {
+        const orch = (orchBySession.get(s.id) ?? [])[0];
+        const done = orch?.gate_two_confirmed === true;
+        runs.push({
+          id: `creative:${r.id}`,
+          system: "creative",
+          date: orch?.updated_at ?? r.updated_at,
+          status: done
+            ? "complete"
+            : r.status === "error" || orch?.status === "error"
+              ? "error"
+              : "in_progress",
+          label: done
+            ? "Gate Two confirmed"
+            : orch
+              ? orch.status === "complete"
+                ? "Gate Two pending"
+                : "Orchestration running"
+              : r.gate_one_confirmed === true
+                ? "Gate One passed"
+                : "Tissue check",
+          href: "/detonation",
+          hrefSearch: { session: s.id },
+          downloadHref: null,
+        });
+      }
     }
     runs.sort((a, b) => b.date.localeCompare(a.date));
 
@@ -474,6 +637,7 @@ function assemble({
       briefingRoom,
       pipeline,
       phase2,
+      creative,
       lastUpdated,
       runs,
       sessionIds: g.sessions.map((s) => s.id),
@@ -503,7 +667,8 @@ export function useBrandRegister(): UseBrandRegisterResult {
 
   const load = useCallback(async () => {
     setError(null);
-    const [sessionsRes, workspacesRes, briefsRes, intelRes] = await Promise.all([
+    const [sessionsRes, workspacesRes, briefsRes, intelRes, stimRunsRes, stimOrchsRes] =
+      await Promise.all([
       supabase
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .from("brand_register_sessions" as any)
@@ -544,6 +709,17 @@ export function useBrandRegister(): UseBrandRegisterResult {
           return { data: [] as IntelligenceRow[], error: null };
         }
       })(),
+      // Creative Stimulus Engine — status flags only, no prompt/direction text.
+      supabase
+        .from("stimulus_runs")
+        .select("id,session_id,status,gate_one_confirmed,updated_at")
+        .order("updated_at", { ascending: false })
+        .limit(1000),
+      supabase
+        .from("stimulus_orchestrations")
+        .select("id,session_id,status,gate_two_confirmed,updated_at")
+        .order("updated_at", { ascending: false })
+        .limit(1000),
     ]);
 
     if (sessionsRes.error) {
@@ -555,8 +731,19 @@ export function useBrandRegister(): UseBrandRegisterResult {
     const savedBriefs = (briefsRes.data ?? []) as SavedBriefRow[];
     const intelligence = ((intelRes as { data: IntelligenceRow[] | null }).data ??
       []) as IntelligenceRow[];
+    const stimulusRuns = (stimRunsRes.data ?? []) as unknown as StimulusRunRow[];
+    const stimulusOrchs = (stimOrchsRes.data ?? []) as unknown as StimulusOrchRow[];
 
-    setRows(assemble({ sessions, workspaces, savedBriefs, intelligence }));
+    setRows(
+      assemble({
+        sessions,
+        workspaces,
+        savedBriefs,
+        intelligence,
+        stimulusRuns,
+        stimulusOrchs,
+      }),
+    );
     setLoading(false);
   }, []);
 
@@ -594,6 +781,20 @@ export function useBrandRegister(): UseBrandRegisterResult {
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "intelligence_sessions" },
+        () => {
+          if (active) void load();
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "stimulus_runs" },
+        () => {
+          if (active) void load();
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "stimulus_orchestrations" },
         () => {
           if (active) void load();
         },

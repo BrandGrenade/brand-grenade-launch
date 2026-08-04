@@ -81,6 +81,7 @@ function rowMatchesFilter(row: BrandRow, filter: FilterKey): boolean {
     row.briefingRoom.state,
     row.pipeline.state,
     row.phase2.state,
+    row.creative.state,
   ];
   if (filter === "all") return true;
   if (filter === "active") return states.some((s) => s === "in_progress");
@@ -233,7 +234,8 @@ function Dashboard() {
             r.intelligence.state === "in_progress" ||
             r.briefingRoom.state === "in_progress" ||
             r.pipeline.state === "in_progress" ||
-            r.phase2.state === "in_progress",
+            r.phase2.state === "in_progress" ||
+            r.creative.state === "in_progress",
         ).length,
         label: "In Progress",
       },
@@ -607,6 +609,7 @@ const COLUMN_HEADERS = [
   "Briefing Room",
   "Strategy Pipeline",
   "Phase 2",
+  "Creative Engine",
   "Deliverables",
   "",
 ];
@@ -734,6 +737,13 @@ function BrandRegisterRow({
           />
         </td>
         <td className="px-3 py-4">
+          <SystemStatusCell
+            system="creative"
+            status={row.creative}
+            brand={row.displayName}
+          />
+        </td>
+        <td className="px-3 py-4">
           <DeliverablesCell
             pipelineComplete={row.pipeline.state === "complete"}
             sessionId={row.pipeline.hrefSearch?.session ?? null}
@@ -808,6 +818,7 @@ const SYSTEM_LAUNCH_LABEL: Record<SystemKey, string> = {
   briefing_room: "Launch",
   pipeline: "Start",
   phase_2: "Start",
+  creative: "Start",
 };
 
 function SystemCircle({ state }: { state: SystemStatus["state"] }) {
@@ -843,7 +854,7 @@ function SystemStatusCell({
       <SystemCircle state={status.state} />
       <div className="flex min-w-0 flex-col">
         {status.state === "not_started" ? (
-          <NotStartedLink system={system} brand={brand} />
+          <NotStartedLink system={system} brand={brand} status={status} />
         ) : status.state === "interrupted" ? (
           // Interrupted runs get a resume link, not a "complete" cell —
           // the label carries the stage the run stalled on.
@@ -862,9 +873,11 @@ function SystemStatusCell({
 function NotStartedLink({
   system,
   brand,
+  status,
 }: {
   system: SystemKey;
   brand: string;
+  status?: SystemStatus;
 }) {
   const brandParam = brand ? { brand } : {};
   const label = SYSTEM_LAUNCH_LABEL[system];
@@ -893,6 +906,13 @@ function NotStartedLink({
       <Link to="/brief" style={style}>
         {label}
       </Link>
+    );
+  }
+  // Creative Stimulus lives inside Stage 21: when the session exists but no
+  // creative run has been started, offer the way in rather than a dead dash.
+  if (system === "creative" && status?.href && status.hrefSearch) {
+    return (
+      <TextLink href={status.href} search={status.hrefSearch} label="Start" />
     );
   }
   // Phase 2 not started / pipeline incomplete: render a non-clickable dash.
@@ -941,7 +961,7 @@ function CompleteCell({
         >
           Complete
         </a>
-      ) : (system === "pipeline" || system === "phase_2") &&
+      ) : (system === "pipeline" || system === "phase_2" || system === "creative") &&
         status.href &&
         status.hrefSearch ? (
         <TextLink href={status.href} search={status.hrefSearch} label="Complete" />
@@ -992,7 +1012,11 @@ function InProgressLink({
   status: SystemStatus;
 }) {
   const label = status.label ?? "In progress";
-  if ((system === "pipeline" || system === "phase_2") && status.href && status.hrefSearch) {
+  if (
+    (system === "pipeline" || system === "phase_2" || system === "creative") &&
+    status.href &&
+    status.hrefSearch
+  ) {
     return (
       <TextLink href={status.href} search={status.hrefSearch} label={label} />
     );
@@ -1079,6 +1103,7 @@ const SYSTEM_SECTION_TITLE: Record<SystemKey, string> = {
   briefing_room: "Briefing Room",
   pipeline: "Strategy Pipeline",
   phase_2: "Phase 2 — Detonation",
+  creative: "Creative Stimulus Engine",
 };
 
 function BrandRegisterExpanded({ row }: { row: BrandRow }) {
@@ -1087,6 +1112,7 @@ function BrandRegisterExpanded({ row }: { row: BrandRow }) {
     briefing_room: [],
     pipeline: [],
     phase_2: [],
+    creative: [],
   };
   for (const r of row.runs) bySystem[r.system].push(r);
   return (
