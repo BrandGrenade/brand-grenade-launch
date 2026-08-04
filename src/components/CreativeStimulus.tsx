@@ -15,6 +15,8 @@ import {
 import { getLens, LENS_COUNT } from "@/lib/stimulus/lenses";
 import { StimulusGateOne, type RatedDirection } from "@/components/StimulusGateOne";
 import { StimulusOrchestration } from "@/components/StimulusOrchestration";
+import { StimulusPromptAudit } from "@/components/StimulusPromptAudit";
+
 import { RawIdeaExportButton } from "@/components/RawIdeaExportButton";
 import { ideaCardStyle, ideaListStyle, IDEA_COLUMN_WIDTH } from "@/components/stimulus/idea-layout";
 
@@ -523,7 +525,10 @@ export function CreativeStimulus({
                 ))}
               </div>
 
+              {runId && <StimulusPromptAudit runId={runId} />}
+
               {runId && (
+
                 <StimulusGateOne
                   runId={runId}
                   run={runMeta}
