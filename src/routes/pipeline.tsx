@@ -3072,6 +3072,10 @@ function PipelineView() {
           isRunning: pipelineIsRunning,
         }}
       />
+      <div className="flex justify-end px-5 pt-3">
+        <SessionSharePopover sessionId={sessionId} />
+      </div>
+
       <Breadcrumb
         brand={brandLabel}
         elapsed={elapsed}
