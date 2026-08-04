@@ -747,6 +747,11 @@ function BrandRegisterRow({
           <DeliverablesCell
             pipelineComplete={row.pipeline.state === "complete"}
             sessionId={row.pipeline.hrefSearch?.session ?? null}
+            showcaseSessionId={
+              row.creative.state === "complete"
+                ? (row.creative.hrefSearch?.session ?? null)
+                : null
+            }
           />
         </td>
         <td className="px-3 py-4" style={{ whiteSpace: "nowrap" }}>
@@ -1066,9 +1071,12 @@ function InProgressLink({
 function DeliverablesCell({
   pipelineComplete,
   sessionId,
+  showcaseSessionId,
 }: {
   pipelineComplete: boolean;
   sessionId: string | null;
+  /** Set only when Gate Two is confirmed, i.e. the showcase is signed off. */
+  showcaseSessionId?: string | null;
 }) {
   if (!pipelineComplete || !sessionId) {
     return (
@@ -1080,19 +1088,38 @@ function DeliverablesCell({
       </span>
     );
   }
+  const linkStyle: React.CSSProperties = {
+    color: "var(--color-text-secondary)",
+    fontSize: 12,
+    fontWeight: 500,
+    textDecoration: "underline",
+  };
   return (
-    <a
-      href={`/complete?session=${encodeURIComponent(sessionId)}`}
-      className="text-body"
-      style={{
-        color: "var(--color-text-secondary)",
-        fontSize: 12,
-        fontWeight: 500,
-        textDecoration: "underline",
-      }}
-    >
-      Documents
-    </a>
+    <span className="text-body" style={{ whiteSpace: "nowrap" }}>
+      <a
+        href={`/complete?session=${encodeURIComponent(sessionId)}`}
+        className="text-body"
+        style={linkStyle}
+      >
+        Documents
+      </a>
+      {showcaseSessionId && (
+        <>
+          <span
+            style={{ color: "var(--color-text-tertiary)", padding: "0 6px" }}
+          >
+            ·
+          </span>
+          <a
+            href={`/complete?session=${encodeURIComponent(showcaseSessionId)}#creative-showcase`}
+            className="text-body"
+            style={linkStyle}
+          >
+            Showcase
+          </a>
+        </>
+      )}
+    </span>
   );
 }
 
