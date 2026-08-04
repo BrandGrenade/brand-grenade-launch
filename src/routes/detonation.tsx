@@ -2304,6 +2304,8 @@ function Stage21({ session, onChange, goNext }: { session: SessionRow; onChange:
               );
             })}
           </div>
+          <FidelityPanel report={fidelity} onRecheck={handleRecheck} busy={fidelityBusy} />
+
           <div style={{ marginTop: 24, padding: 16, border: `1px solid ${AMBER}33`, borderRadius: 8, backgroundColor: "#0E0E0E" }}>
             <label htmlFor="stage21-audience-channel" className="text-mono" style={{ display: "block", color: AMBER, fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 8 }}>
               Audience and Channel Direction
