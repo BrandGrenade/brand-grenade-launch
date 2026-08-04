@@ -1143,10 +1143,18 @@ export type Database = {
           created_at: string
           direction: string
           error: string | null
+          gate_one_approved: boolean
+          gate_one_approved_at: string | null
+          gate_one_notes: string | null
+          gate_one_snapshot: Json | null
           id: string
           instinct_brief: string | null
           lens_id: string
           lens_name: string
+          rated_at: string | null
+          rating_error: string | null
+          rating_status: string
+          ratings: Json | null
           revise_count: number
           revise_notes: string | null
           run_id: string
@@ -1158,10 +1166,18 @@ export type Database = {
           created_at?: string
           direction?: string
           error?: string | null
+          gate_one_approved?: boolean
+          gate_one_approved_at?: string | null
+          gate_one_notes?: string | null
+          gate_one_snapshot?: Json | null
           id?: string
           instinct_brief?: string | null
           lens_id: string
           lens_name: string
+          rated_at?: string | null
+          rating_error?: string | null
+          rating_status?: string
+          ratings?: Json | null
           revise_count?: number
           revise_notes?: string | null
           run_id: string
@@ -1173,10 +1189,18 @@ export type Database = {
           created_at?: string
           direction?: string
           error?: string | null
+          gate_one_approved?: boolean
+          gate_one_approved_at?: string | null
+          gate_one_notes?: string | null
+          gate_one_snapshot?: Json | null
           id?: string
           instinct_brief?: string | null
           lens_id?: string
           lens_name?: string
+          rated_at?: string | null
+          rating_error?: string | null
+          rating_status?: string
+          ratings?: Json | null
           revise_count?: number
           revise_notes?: string | null
           run_id?: string
@@ -1201,10 +1225,16 @@ export type Database = {
           created_at: string
           created_by: string | null
           error: string | null
+          gate_one_confirmed: boolean
+          gate_one_confirmed_at: string | null
           id: string
           session_id: string
           smp: string
           status: string
+          tiebreaker_at: string | null
+          tiebreaker_fired: boolean
+          tiebreaker_output: string | null
+          tiebreaker_reason: string | null
           updated_at: string
         }
         Insert: {
@@ -1213,10 +1243,16 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           error?: string | null
+          gate_one_confirmed?: boolean
+          gate_one_confirmed_at?: string | null
           id?: string
           session_id: string
           smp?: string
           status?: string
+          tiebreaker_at?: string | null
+          tiebreaker_fired?: boolean
+          tiebreaker_output?: string | null
+          tiebreaker_reason?: string | null
           updated_at?: string
         }
         Update: {
@@ -1225,10 +1261,16 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           error?: string | null
+          gate_one_confirmed?: boolean
+          gate_one_confirmed_at?: string | null
           id?: string
           session_id?: string
           smp?: string
           status?: string
+          tiebreaker_at?: string | null
+          tiebreaker_fired?: boolean
+          tiebreaker_output?: string | null
+          tiebreaker_reason?: string | null
           updated_at?: string
         }
         Relationships: [
