@@ -550,8 +550,8 @@ export function useBrandRegister(): UseBrandRegisterResult {
       setError(sessionsRes.error.message);
     }
 
-    const sessions = (sessionsRes.data ?? []) as SessionRow[];
-    const workspaces = (workspacesRes.data ?? []) as WorkspaceRow[];
+    const sessions = (sessionsRes.data ?? []) as unknown as SessionRow[];
+    const workspaces = (workspacesRes.data ?? []) as unknown as WorkspaceRow[];
     const savedBriefs = (briefsRes.data ?? []) as SavedBriefRow[];
     const intelligence = ((intelRes as { data: IntelligenceRow[] | null }).data ??
       []) as IntelligenceRow[];
