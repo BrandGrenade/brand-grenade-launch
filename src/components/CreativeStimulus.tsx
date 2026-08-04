@@ -289,7 +289,9 @@ export function CreativeStimulus({
   const refreshRuns = useCallback(async () => {
     try {
       const r = await listRuns({ data: { sessionId } });
-      setRuns(r.runs as { id: string; channel_name: string; status: string }[]);
+      setRuns(
+        r.runs as { id: string; channel_name: string; status: string; created_at?: string }[],
+      );
     } catch {
       /* non-fatal */
     }
