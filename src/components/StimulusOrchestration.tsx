@@ -692,6 +692,161 @@ export function StimulusOrchestration({ sessionId, brandName }: { sessionId: str
                   </div>
                 </div>
               )}
+
+              {/* ---------------- Gate Two ---------------- */}
+              {orch.status === "complete" && (
+                <div
+                  style={{
+                    marginTop: 20,
+                    border: `1px solid ${orch.gate_two_confirmed ? GREEN : AMBER}55`,
+                    borderRadius: 8,
+                    padding: 14,
+                  }}
+                >
+                  <div
+                    className="text-mono"
+                    style={{
+                      color: orch.gate_two_confirmed ? GREEN : AMBER,
+                      fontSize: 10,
+                      letterSpacing: "0.12em",
+                    }}
+                  >
+                    GATE TWO — CD-LEVEL SIGN-OFF
+                    {orch.gate_two_confirmed
+                      ? ` · CONFIRMED ${new Date(orch.gate_two_confirmed_at).toLocaleString()}`
+                      : ` · ${activePrompts.filter((p) => p.gate_two_approved).length}/${activePrompts.length} SIGNED OFF`}
+                  </div>
+                  <div className="text-body-sm" style={{ color: MUTED, marginTop: 6 }}>
+                    Narrow by design: confirm the finished work is still on-brief and on-strategy. Execution
+                    choices — music, casting, photography, editing — sit with the creative team and CD, not
+                    reopened here.
+                  </div>
+
+                  {!orch.gate_two_confirmed && (
+                    <>
+                      <textarea
+                        value={gateTwoNote}
+                        onChange={(e) => setGateTwoNote(e.target.value)}
+                        rows={2}
+                        placeholder="Sign-off note for the decision record (optional)."
+                        style={{
+                          width: "100%",
+                          marginTop: 10,
+                          background: "#000",
+                          color: "#E8E4DE",
+                          border: "1px solid #2A2A2A",
+                          borderRadius: 6,
+                          padding: 8,
+                          fontFamily: "inherit",
+                          fontSize: 13,
+                        }}
+                      />
+                      <div style={{ marginTop: 8, display: "flex", gap: 8, flexWrap: "wrap" }}>
+                        <Btn
+                          active
+                          tone={GREEN}
+                          disabled={busy}
+                          onClick={async () => {
+                            if (!orchId) return;
+                            setBusy(true);
+                            setErr(null);
+                            try {
+                              const r = await confirmTwo({
+                                data: { orchestrationId: orchId, notes: gateTwoNote.trim() || undefined },
+                              });
+                              setNote(`Gate Two confirmed — ${r.approved} finished prompt(s) signed off.`);
+                              await refreshState(orchId);
+                            } catch (e) {
+                              setErr(e instanceof Error ? e.message : "Gate Two confirmation failed");
+                            } finally {
+                              setBusy(false);
+                            }
+                          }}
+                        >
+                          Confirm Gate Two
+                        </Btn>
+                        <Btn disabled={busy} onClick={() => setShowAmend((v) => !v)}>
+                          Send whole set back with amendments
+                        </Btn>
+                      </div>
+                    </>
+                  )}
+
+                  {showAmend && !orch.gate_two_confirmed && (
+                    <div style={{ marginTop: 10 }}>
+                      <textarea
+                        value={amendNotes}
+                        onChange={(e) => setAmendNotes(e.target.value)}
+                        rows={2}
+                        placeholder="What is wrong with the whole set. Every active prompt is regenerated against these notes."
+                        style={{
+                          width: "100%",
+                          background: "#000",
+                          color: "#E8E4DE",
+                          border: `1px solid ${RED}55`,
+                          borderRadius: 6,
+                          padding: 8,
+                          fontFamily: "inherit",
+                          fontSize: 13,
+                        }}
+                      />
+                      <div style={{ marginTop: 8, display: "flex", gap: 8 }}>
+                        <Btn
+                          tone={RED}
+                          active
+                          disabled={busy || !amendNotes.trim()}
+                          onClick={async () => {
+                            if (!orchId) return;
+                            setBusy(true);
+                            setErr(null);
+                            try {
+                              const r = await retrySet({
+                                data: { orchestrationId: orchId, notes: amendNotes.trim() },
+                              });
+                              setNote(`Whole set sent back — ${r.resent} prompt(s) regenerating.`);
+                              setShowAmend(false);
+                              setAmendNotes("");
+                            } catch (e) {
+                              setErr(e instanceof Error ? e.message : "Retry failed");
+                              setBusy(false);
+                              return;
+                            }
+                            setBusy(false);
+                            await drive(orchId);
+                          }}
+                        >
+                          Regenerate set
+                        </Btn>
+                        <Btn onClick={() => setShowAmend(false)}>Cancel</Btn>
+                      </div>
+                    </div>
+                  )}
+
+                  <div style={{ marginTop: 12, display: "flex", gap: 8, flexWrap: "wrap" }}>
+                    <Btn
+                      active
+                      disabled={busy}
+                      onClick={async () => {
+                        if (!orchId) return;
+                        setBusy(true);
+                        setErr(null);
+                        try {
+                          const data = await fullExport({ data: { orchestrationId: orchId } });
+                          const { filename, html } = buildFullFinishedExport(data);
+                          download(filename, html);
+                        } catch (e) {
+                          setErr(e instanceof Error ? e.message : "Export failed");
+                        } finally {
+                          setBusy(false);
+                        }
+                      }}
+                    >
+                      Full finished export
+                    </Btn>
+                  </div>
+                </div>
+              )}
+
             </>
           )}
         </div>
