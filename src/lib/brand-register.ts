@@ -506,6 +506,7 @@ function assemble({
     const briefingRoom = deriveBriefing(g.workspaces, g.savedBriefs.length);
     const pipeline = derivePipeline(g.sessions);
     const phase2 = derivePhase2(g.sessions);
+    const creative = deriveCreative(g.sessions, runsBySession, orchBySession);
 
     const runs: BrandRun[] = [];
     for (const i of g.intelligence) {
