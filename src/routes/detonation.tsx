@@ -696,16 +696,39 @@ function stageStatus(num: string, s: SessionRow | null): StageStatus {
 
 // ── Main page ────────────────────────────────────────────────────────────
 function DetonationPage() {
-  const { session: sessionId } = Route.useSearch();
+  const { session: sessionId, panel } = Route.useSearch();
   const { user, isAuthReady } = useAuth();
   const [session, setSession] = useState<SessionRow | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeStage, setActiveStage] = useState<string>("17");
+  // ?panel=creative deep-links straight into Stage 21, where the Creative
+  // Stimulus Engine lives.
+  const [activeStage, setActiveStage] = useState<string>(
+    panel === "creative" ? "21" : "17",
+  );
 
   useEffect(() => {
+    if (panel === "creative" && activeStage === "21") return;
     window.scrollTo({ top: 0, behavior: "smooth" });
-  }, [activeStage]);
+  }, [activeStage, panel]);
+
+  // Once Stage 21 has rendered its content, bring the Creative Stimulus panel
+  // into view. Stage 21 loads asynchronously, so poll briefly for the anchor.
+  useEffect(() => {
+    if (panel !== "creative" || activeStage !== "21") return;
+    let tries = 0;
+    const timer = window.setInterval(() => {
+      const el = document.getElementById("creative-stimulus");
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+        window.clearInterval(timer);
+      } else if (++tries > 40) {
+        window.clearInterval(timer);
+      }
+    }, 250);
+    return () => window.clearInterval(timer);
+  }, [panel, activeStage, session]);
+
 
   const refresh = useCallback(async () => {
     if (!sessionId) return;
