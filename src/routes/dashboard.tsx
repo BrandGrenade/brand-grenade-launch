@@ -877,7 +877,7 @@ function NotStartedLink({
 }: {
   system: SystemKey;
   brand: string;
-  status: SystemStatus;
+  status?: SystemStatus;
 }) {
   const brandParam = brand ? { brand } : {};
   const label = SYSTEM_LAUNCH_LABEL[system];
@@ -910,7 +910,7 @@ function NotStartedLink({
   }
   // Creative Stimulus lives inside Stage 21: when the session exists but no
   // creative run has been started, offer the way in rather than a dead dash.
-  if (system === "creative" && status.href && status.hrefSearch) {
+  if (system === "creative" && status?.href && status.hrefSearch) {
     return (
       <TextLink href={status.href} search={status.hrefSearch} label="Start" />
     );
@@ -1165,7 +1165,7 @@ function ExpandedSection({
           style={{ color: "var(--color-text-tertiary)", fontSize: 13 }}
         >
           No runs yet.{" "}
-          <NotStartedLink system={system} brand={brand} status={status} />
+          <NotStartedLink system={system} brand={brand} />
         </div>
       ) : (
         <ul style={{ display: "flex", flexDirection: "column", gap: 6 }}>
