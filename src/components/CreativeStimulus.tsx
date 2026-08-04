@@ -216,6 +216,8 @@ function DirectionCard({
         <Btn onClick={() => setShowRevise((v) => !v)} disabled={busy}>
           Revise
         </Btn>
+        <RawIdeaExportButton directionId={d.id} />
+
       </div>
 
       {showRevise && (
