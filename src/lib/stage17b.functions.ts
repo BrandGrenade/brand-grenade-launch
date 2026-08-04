@@ -9,7 +9,7 @@ import { callClaude } from "./claude.server";
 import { STAGE_17B_DETONATION_INTELLIGENCE_PROMPT } from "./stage17b-detonation-intelligence-prompt";
 import { appendRedirect, formatThreeTruths, smpGoverningBlock, withPhase2Formatting } from "./phase2-shared";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { assertSessionOwner } from "@/lib/auth-helpers.server";
+import { assertSessionAccess } from "@/lib/auth-helpers.server";
 import { assertStageOutput } from "./pipeline-integrity";
 import { getObjectiveDirective } from "./strategic-objective.server";
 
@@ -57,7 +57,7 @@ export const runStage17b = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i) => RunInput.parse(i))
   .handler(async ({ data, context }) => {
-    await assertSessionOwner(data.sessionId, context.userId);
+    await assertSessionAccess(data.sessionId, context.userId);
     await assertStageOutput(data.sessionId, 17, "Stage 17B");
     const { requireConfirmedSelection } = await import("./checkpoint-gate");
     await requireConfirmedSelection(data.sessionId, "stage17_selection");
@@ -106,7 +106,7 @@ export const saveStage17b = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i) => z.object({ sessionId: z.string().uuid(), output: z.string() }).parse(i))
   .handler(async ({ data, context }) => {
-    await assertSessionOwner(data.sessionId, context.userId);
+    await assertSessionAccess(data.sessionId, context.userId);
     const { error } = await supabaseAdmin
       .from("sessions")
       .update({ stage_17b_output: data.output, stage_17b_error: null })
@@ -119,7 +119,7 @@ export const loadStage17b = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i) => z.object({ sessionId: z.string().uuid() }).parse(i))
   .handler(async ({ data, context }) => {
-    await assertSessionOwner(data.sessionId, context.userId);
+    await assertSessionAccess(data.sessionId, context.userId);
     const { data: row, error } = await supabaseAdmin
       .from("sessions")
       .select("stage_17b_output")
@@ -141,7 +141,7 @@ export const retryStage17b = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i) => RetryInput.parse(i))
   .handler(async ({ data, context }) => {
-    await assertSessionOwner(data.sessionId, context.userId);
+    await assertSessionAccess(data.sessionId, context.userId);
     const { requireConfirmedSelection } = await import("./checkpoint-gate");
     await requireConfirmedSelection(data.sessionId, "stage17_selection");
     const { data: session, error } = await supabaseAdmin

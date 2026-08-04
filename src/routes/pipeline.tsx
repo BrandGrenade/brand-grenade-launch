@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
 import { z } from "zod";
 import { TopNav } from "@/components/TopNav";
+import { SessionSharePopover } from "@/components/SessionSharePopover";
 import { RequireAuth } from "@/components/RequireAuth";
 import { LocControls } from "@/components/LocControls";
 import { Checkpoint, buildRevisionInstruction } from "@/components/Checkpoint";
@@ -3072,6 +3073,10 @@ function PipelineView() {
           isRunning: pipelineIsRunning,
         }}
       />
+      <div className="flex justify-end px-5 pt-3">
+        <SessionSharePopover sessionId={sessionId} />
+      </div>
+
       <Breadcrumb
         brand={brandLabel}
         elapsed={elapsed}

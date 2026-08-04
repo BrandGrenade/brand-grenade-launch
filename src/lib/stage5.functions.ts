@@ -7,7 +7,7 @@ import { STAGE_5_SYSTEM_PROMPT, buildStage5UserMessage } from "./stage5-prompt";
 import { trimCMMForDownstream, trimSISForDownstream } from "./context-trim";
 import { countSections } from "./count-helpers";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { assertSessionOwner } from "@/lib/auth-helpers.server";
+import { assertSessionAccess } from "@/lib/auth-helpers.server";
 import { assertUpstreamStageOutput } from "./pipeline-integrity";
 import { getObjectiveDirective } from "./strategic-objective.server";
 
@@ -17,7 +17,7 @@ export const runStage5 = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => RunStage5Input.parse(input))
   .handler(async function* ({ data, context }) {
-    await assertSessionOwner(data.sessionId, context.userId);
+    await assertSessionAccess(data.sessionId, context.userId);
     await assertUpstreamStageOutput(data.sessionId, 5);
     const { data: session, error: loadErr } = await supabaseAdmin
       .from("sessions")

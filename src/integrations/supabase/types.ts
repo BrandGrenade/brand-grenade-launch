@@ -566,6 +566,44 @@ export type Database = {
         }
         Relationships: []
       }
+      session_collaborators: {
+        Row: {
+          claimed_at: string | null
+          created_at: string
+          email: string
+          id: string
+          invited_by: string
+          session_id: string
+          user_id: string | null
+        }
+        Insert: {
+          claimed_at?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          invited_by: string
+          session_id: string
+          user_id?: string | null
+        }
+        Update: {
+          claimed_at?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          invited_by?: string
+          session_id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "session_collaborators_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sessions: {
         Row: {
           brand_audience_relationship: string | null
@@ -1153,6 +1191,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_access_session: {
+        Args: { _session_id: string; _user_id: string }
+        Returns: boolean
+      }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
@@ -1161,6 +1203,10 @@ export type Database = {
       enqueue_email: {
         Args: { payload: Json; queue_name: string }
         Returns: number
+      }
+      is_session_owner: {
+        Args: { _session_id: string; _user_id: string }
+        Returns: boolean
       }
       move_to_dlq: {
         Args: {

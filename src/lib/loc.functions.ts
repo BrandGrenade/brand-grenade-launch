@@ -10,7 +10,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { assertSessionOwner } from "@/lib/auth-helpers.server";
+import { assertSessionAccess } from "@/lib/auth-helpers.server";
 import { callClaude } from "./claude.server";
 import { buildLocInputs, type WorkspaceInputSnapshot } from "./loc/brief-extract";
 import {
@@ -77,7 +77,7 @@ export const runLeftOfCentre = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i) => RunInput.parse(i))
   .handler(async ({ data, context }) => {
-    await assertSessionOwner(data.sessionId, context.userId);
+    await assertSessionAccess(data.sessionId, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     const { data: session, error } = await supabaseAdmin
@@ -412,7 +412,7 @@ export const getLocStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i) => StatusInput.parse(i))
   .handler(async ({ data, context }) => {
-    await assertSessionOwner(data.sessionId, context.userId);
+    await assertSessionAccess(data.sessionId, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: row, error } = await supabaseAdmin
       .from("sessions")
@@ -441,7 +441,7 @@ export const resetStuckLoc = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i) => ResetInput.parse(i))
   .handler(async ({ data, context }) => {
-    await assertSessionOwner(data.sessionId, context.userId);
+    await assertSessionAccess(data.sessionId, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: row, error } = await supabaseAdmin
       .from("sessions")
@@ -475,7 +475,7 @@ export const finalizeLeftOfCentre = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i) => StatusInput.parse(i))
   .handler(async ({ data, context }) => {
-    await assertSessionOwner(data.sessionId, context.userId);
+    await assertSessionAccess(data.sessionId, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: row, error } = await supabaseAdmin
       .from("sessions")

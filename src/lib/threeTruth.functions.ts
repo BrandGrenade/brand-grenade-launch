@@ -9,7 +9,7 @@ import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { callClaude } from "@/lib/claude.server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { assertSessionOwner } from "@/lib/auth-helpers.server";
+import { assertSessionAccess } from "@/lib/auth-helpers.server";
 
 const MODEL = "claude-sonnet-4-5";
 
@@ -21,7 +21,7 @@ export const prepareThreeTruths = createServerFn({ method: "POST" })
     z.object({ sessionId: z.string().uuid() }).parse(input),
   )
   .handler(async ({ data, context }) => {
-    await assertSessionOwner(data.sessionId, context.userId);
+    await assertSessionAccess(data.sessionId, context.userId);
     const { data: row, error } = await supabaseAdmin
       .from("sessions")
       .select(
@@ -120,7 +120,7 @@ export const saveCulturalTruth = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    await assertSessionOwner(data.sessionId, context.userId);
+    await assertSessionAccess(data.sessionId, context.userId);
     const { error } = await supabaseAdmin
       .from("sessions")
       .update({
@@ -162,7 +162,7 @@ export const saveBrandIntelligence = createServerFn({ method: "POST" })
         .parse(input),
   )
   .handler(async ({ data, context }) => {
-    await assertSessionOwner(data.sessionId, context.userId);
+    await assertSessionAccess(data.sessionId, context.userId);
     const baseUpdate = {
       brand_intel_type: data.type,
       brand_intel_confirmed: data.confirmed ?? false,

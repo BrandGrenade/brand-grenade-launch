@@ -20,7 +20,7 @@ import {
   withPhase2Formatting,
 } from "./phase2-shared";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { assertSessionOwner } from "@/lib/auth-helpers.server";
+import { assertSessionAccess } from "@/lib/auth-helpers.server";
 
 const AudienceInput = z.object({
   audienceAsHumans: z.string().trim().min(1).max(8000),
@@ -160,7 +160,7 @@ export const runStage20b = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i) => RunInput.parse(i))
   .handler(async ({ data, context }) => {
-    await assertSessionOwner(data.sessionId, context.userId);
+    await assertSessionAccess(data.sessionId, context.userId);
     const { requireConfirmedSelection } = await import("./checkpoint-gate");
     await requireConfirmedSelection(data.sessionId, "F");
 
@@ -213,7 +213,7 @@ export const loadStage20b = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i) => z.object({ sessionId: z.string().uuid() }).parse(i))
   .handler(async ({ data, context }) => {
-    await assertSessionOwner(data.sessionId, context.userId);
+    await assertSessionAccess(data.sessionId, context.userId);
     const { data: row, error } = await supabaseAdmin
       .from("sessions")
       .select("stage_20b_output, stage_20b_audience_input")
@@ -238,7 +238,7 @@ export const saveStage20bInput = createServerFn({ method: "POST" })
       .parse(i),
   )
   .handler(async ({ data, context }) => {
-    await assertSessionOwner(data.sessionId, context.userId);
+    await assertSessionAccess(data.sessionId, context.userId);
     const { error } = await supabaseAdmin
       .from("sessions")
       .update({ stage_20b_audience_input: data.audienceInput as never })
@@ -251,7 +251,7 @@ export const clearStage20b = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i) => z.object({ sessionId: z.string().uuid() }).parse(i))
   .handler(async ({ data, context }) => {
-    await assertSessionOwner(data.sessionId, context.userId);
+    await assertSessionAccess(data.sessionId, context.userId);
     const { error } = await supabaseAdmin
       .from("sessions")
       .update({ stage_20b_output: null, stage_20b_error: null })

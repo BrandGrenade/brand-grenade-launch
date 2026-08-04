@@ -21,7 +21,7 @@ import {
   wrapPhase2SelectiveRetry,
 } from "./phase2-shared";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { assertSessionOwner } from "@/lib/auth-helpers.server";
+import { assertSessionAccess } from "@/lib/auth-helpers.server";
 import { assertUpstreamStageOutput } from "./pipeline-integrity";
 import { getObjectiveDirective } from "./strategic-objective.server";
 
@@ -114,7 +114,7 @@ export const runStage17 = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i) => RunInput.parse(i))
   .handler(async ({ data, context }) => {
-    await assertSessionOwner(data.sessionId, context.userId);
+    await assertSessionAccess(data.sessionId, context.userId);
     await assertUpstreamStageOutput(data.sessionId, 17);
     const { data: session, error } = await supabaseAdmin
       .from("sessions")
@@ -154,7 +154,7 @@ export const saveStage17 = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i) => z.object({ sessionId: z.string().uuid(), output: z.string() }).parse(i))
   .handler(async ({ data, context }) => {
-    await assertSessionOwner(data.sessionId, context.userId);
+    await assertSessionAccess(data.sessionId, context.userId);
     const { error } = await supabaseAdmin
       .from("sessions")
       .update({ stage_17_output: data.output, stage_17_error: null })
@@ -167,7 +167,7 @@ export const loadStage17 = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i) => z.object({ sessionId: z.string().uuid() }).parse(i))
   .handler(async ({ data, context }) => {
-    await assertSessionOwner(data.sessionId, context.userId);
+    await assertSessionAccess(data.sessionId, context.userId);
     const { data: row, error } = await supabaseAdmin
       .from("sessions")
       .select("stage_17_output")
@@ -191,7 +191,7 @@ export const retryStage17 = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i) => RetryInput.parse(i))
   .handler(async ({ data, context }) => {
-    await assertSessionOwner(data.sessionId, context.userId);
+    await assertSessionAccess(data.sessionId, context.userId);
     const { data: session, error } = await supabaseAdmin
       .from("sessions")
       .select(STAGE17_SELECT)
@@ -286,7 +286,7 @@ export const selectStage17Territory = createServerFn({ method: "POST" })
     z.object({ sessionId: z.string().uuid(), territoryMarkdown: z.string().min(1) }).parse(i),
   )
   .handler(async ({ data, context }) => {
-    await assertSessionOwner(data.sessionId, context.userId);
+    await assertSessionAccess(data.sessionId, context.userId);
     const { canonicaliseStage17Territory } = await import("./canonical-format");
     // Normalise to the canonical inter-stage contract before persisting.
     // The UI may render the card however it likes; the DB write is fixed.

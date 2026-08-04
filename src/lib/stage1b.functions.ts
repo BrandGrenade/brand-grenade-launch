@@ -5,7 +5,7 @@ import { streamClaude } from "./claude.server";
 import { withStreamSafety } from "./stream-stage-safety";
 import { STAGE_1B_SYSTEM_PROMPT, buildStage1bUserMessage } from "./stage1b-prompt";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { assertSessionOwner } from "@/lib/auth-helpers.server";
+import { assertSessionAccess } from "@/lib/auth-helpers.server";
 import { assertStageOutput } from "./pipeline-integrity";
 
 const RunStage1bInput = z.object({ sessionId: z.string().uuid() });
@@ -14,7 +14,7 @@ export const runStage1b = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => RunStage1bInput.parse(input))
   .handler(async function* ({ data, context }) {
-    await assertSessionOwner(data.sessionId, context.userId);
+    await assertSessionAccess(data.sessionId, context.userId);
     await assertStageOutput(data.sessionId, 1, "Stage 1B");
     const { data: session, error: loadErr } = await supabaseAdmin
       .from("sessions")
@@ -124,7 +124,7 @@ export const resubmitBrief = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => ResubmitBriefInput.parse(input))
   .handler(async ({ data, context }): Promise<{ ok: true }> => {
-    await assertSessionOwner(data.sessionId, context.userId);
+    await assertSessionAccess(data.sessionId, context.userId);
     const { data: session, error: loadErr } = await supabaseAdmin
       .from("sessions")
       .select("brief_text")
@@ -228,7 +228,7 @@ export const resubmitBriefStructured = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => ResubmitStructuredInput.parse(input))
   .handler(async ({ data, context }): Promise<{ ok: true; version: number }> => {
-    await assertSessionOwner(data.sessionId, context.userId);
+    await assertSessionAccess(data.sessionId, context.userId);
     const { data: session, error: loadErr } = await supabaseAdmin
       .from("sessions")
       .select("brief_versions, brand_name, category")

@@ -6,7 +6,7 @@ import { withStreamSafety } from "./stream-stage-safety";
 import { STAGE_3_SYSTEM_PROMPT, buildStage3UserMessage } from "./stage3-prompt";
 import { trimStage1ForDownstream } from "./context-trim";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { assertSessionOwner } from "@/lib/auth-helpers.server";
+import { assertSessionAccess } from "@/lib/auth-helpers.server";
 import { assertUpstreamStageOutput } from "./pipeline-integrity";
 
 const RunStage3Input = z.object({ sessionId: z.string().uuid() });
@@ -15,7 +15,7 @@ export const runStage3 = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => RunStage3Input.parse(input))
   .handler(async function* ({ data, context }) {
-    await assertSessionOwner(data.sessionId, context.userId);
+    await assertSessionAccess(data.sessionId, context.userId);
     await assertUpstreamStageOutput(data.sessionId, 3);
     const { data: session, error: loadErr } = await supabaseAdmin
       .from("sessions")

@@ -9,7 +9,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { assertSessionOwner } from "@/lib/auth-helpers.server";
+import { assertSessionAccess } from "@/lib/auth-helpers.server";
 
 const StageKey = z.enum(["stage2", "stage4b"]);
 
@@ -19,7 +19,7 @@ export const reverifyStageFacts = createServerFn({ method: "POST" })
     z.object({ sessionId: z.string().uuid(), stageKey: StageKey }).parse(d),
   )
   .handler(async ({ data, context }) => {
-    await assertSessionOwner(data.sessionId, context.userId);
+    await assertSessionAccess(data.sessionId, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { FACT_VERIFIED_STAGES, runStageFactVerification } = await import(
       "./fact-verify.server"
