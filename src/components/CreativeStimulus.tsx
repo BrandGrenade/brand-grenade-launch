@@ -462,14 +462,8 @@ export function CreativeStimulus({
                 ))}
               </div>
 
-              <div
-                style={{
-                  marginTop: 16,
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))",
-                  gap: 16,
-                }}
-              >
+              <div style={{ ...ideaListStyle, marginTop: 24 }}>
+
                 {visible.map((d) => (
                   <DirectionCard
                     key={d.id}
