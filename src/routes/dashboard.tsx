@@ -747,6 +747,11 @@ function BrandRegisterRow({
           <DeliverablesCell
             pipelineComplete={row.pipeline.state === "complete"}
             sessionId={row.pipeline.hrefSearch?.session ?? null}
+            showcaseSessionId={
+              row.creative.state === "complete"
+                ? (row.creative.hrefSearch?.session ?? null)
+                : null
+            }
           />
         </td>
         <td className="px-3 py-4" style={{ whiteSpace: "nowrap" }}>
@@ -1066,9 +1071,12 @@ function InProgressLink({
 function DeliverablesCell({
   pipelineComplete,
   sessionId,
+  showcaseSessionId,
 }: {
   pipelineComplete: boolean;
   sessionId: string | null;
+  /** Set only when Gate Two is confirmed, i.e. the showcase is signed off. */
+  showcaseSessionId?: string | null;
 }) {
   if (!pipelineComplete || !sessionId) {
     return (
