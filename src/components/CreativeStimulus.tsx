@@ -392,23 +392,32 @@ export function CreativeStimulus({
   if (channels.length === 0) return null;
 
   return (
-    <div style={{ marginTop: 28, border: `1px solid ${AMBER}33`, borderRadius: 8, padding: 20, backgroundColor: "#0E0E0E" }}>
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        style={{ width: "100%", textAlign: "left", background: "none", border: "none", padding: 0, cursor: "pointer" }}
-      >
-        <div
-          className="text-mono"
-          style={{ color: AMBER, fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase" }}
+    <div
+      style={
+        isPage
+          ? { width: "100%" }
+          : { marginTop: 28, border: `1px solid ${AMBER}33`, borderRadius: 8, padding: 20, backgroundColor: "#0E0E0E" }
+      }
+    >
+      {!isPage && (
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          style={{ width: "100%", textAlign: "left", background: "none", border: "none", padding: 0, cursor: "pointer" }}
         >
-          Creative Stimulus Engine
-        </div>
-        <div className="text-body-sm" style={{ color: MUTED, marginTop: 6 }}>
-          Sweeps one channel brief through all {LENS_COUNT} creative lenses, then hands the output to a human
-          Tissue Check. Raw stimulus, not finished work. {open ? "Hide" : "Open"}.
-        </div>
-      </button>
+          <div
+            className="text-mono"
+            style={{ color: AMBER, fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase" }}
+          >
+            Creative Stimulus Engine
+          </div>
+          <div className="text-body-sm" style={{ color: MUTED, marginTop: 6 }}>
+            Sweeps one channel brief through all {LENS_COUNT} creative lenses, then hands the output to a human
+            Tissue Check. Raw stimulus, not finished work. {open ? "Hide" : "Open"}.
+          </div>
+        </button>
+      )}
+
 
       {open && (
         <div style={{ marginTop: 18 }}>
