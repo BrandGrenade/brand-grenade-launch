@@ -921,8 +921,10 @@ function DetonationPage() {
                   {activeStage === "17B" && <Stage17b session={session} onChange={refresh} goNext={() => setActiveStage("18")} />}
                   {activeStage === "18" && <Stage18 session={session} onChange={refresh} goNext={() => setActiveStage("19")} />}
                   {activeStage === "19" && <Stage19 session={session} onChange={refresh} goNext={() => setActiveStage("20")} />}
-                  {activeStage === "20" && <Stage20 session={session} onChange={refresh} goNext={() => setActiveStage("20B")} />}
+                  {activeStage === "20" && <Stage20 session={session} onChange={refresh} goNext={() => setActiveStage("20L")} />}
+                  {activeStage === "20L" && <Stage20l session={session} onChange={refresh} goNext={() => setActiveStage("20B")} />}
                   {activeStage === "20B" && <Stage20b session={session} onChange={refresh} goNext={() => setActiveStage("21")} />}
+
                   {activeStage === "21" && <Stage21 session={session} onChange={refresh} goNext={() => setActiveStage("22")} />}
                   {activeStage === "22" && <Stage22 session={session} onChange={refresh} />}
                 </div>
