@@ -303,7 +303,9 @@ export function CreativeStimulus({
   const triage = useServerFn(triageStimulusDirection);
   const revise = useServerFn(reviseStimulusDirection);
 
-  const [open, setOpen] = useState(defaultOpen);
+  const isPage = variant === "page";
+  const [open, setOpen] = useState(defaultOpen || variant === "page");
+
   const [channel, setChannel] = useState(channels[0] ?? "");
   const [runId, setRunId] = useState<string | null>(null);
   const [runs, setRuns] = useState<
