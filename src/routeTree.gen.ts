@@ -33,6 +33,7 @@ import { Route as IntelligenceNewRouteImport } from './routes/intelligence.new'
 import { Route as IntelligenceIdRouteImport } from './routes/intelligence.$id'
 import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
 import { Route as DetonationCanvasRouteImport } from './routes/detonation_.canvas'
+import { Route as CreativeSessionIdRouteImport } from './routes/creative.$sessionId'
 import { Route as BriefingRoomIdRouteImport } from './routes/briefing-room.$id'
 import { Route as BriefNewRouteImport } from './routes/brief.new'
 import { Route as AdminTestsRouteImport } from './routes/admin.tests'
@@ -165,6 +166,11 @@ const DetonationCanvasRoute = DetonationCanvasRouteImport.update({
   path: '/detonation/canvas',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CreativeSessionIdRoute = CreativeSessionIdRouteImport.update({
+  id: '/$sessionId',
+  path: '/$sessionId',
+  getParentRoute: () => CreativeRoute,
+} as any)
 const BriefingRoomIdRoute = BriefingRoomIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -245,6 +251,7 @@ export interface FileRoutesByFullPath {
   '/admin/tests': typeof AdminTestsRoute
   '/brief/new': typeof BriefNewRoute
   '/briefing-room/$id': typeof BriefingRoomIdRoute
+  '/creative/$sessionId': typeof CreativeSessionIdRoute
   '/detonation/canvas': typeof DetonationCanvasRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/intelligence/$id': typeof IntelligenceIdRoute
@@ -278,6 +285,7 @@ export interface FileRoutesByTo {
   '/admin/tests': typeof AdminTestsRoute
   '/brief/new': typeof BriefNewRoute
   '/briefing-room/$id': typeof BriefingRoomIdRoute
+  '/creative/$sessionId': typeof CreativeSessionIdRoute
   '/detonation/canvas': typeof DetonationCanvasRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/intelligence/$id': typeof IntelligenceIdRoute
@@ -316,6 +324,7 @@ export interface FileRoutesById {
   '/admin/tests': typeof AdminTestsRoute
   '/brief/new': typeof BriefNewRoute
   '/briefing-room/$id': typeof BriefingRoomIdRoute
+  '/creative/$sessionId': typeof CreativeSessionIdRoute
   '/detonation_/canvas': typeof DetonationCanvasRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/intelligence/$id': typeof IntelligenceIdRoute
@@ -355,6 +364,7 @@ export interface FileRouteTypes {
     | '/admin/tests'
     | '/brief/new'
     | '/briefing-room/$id'
+    | '/creative/$sessionId'
     | '/detonation/canvas'
     | '/email/unsubscribe'
     | '/intelligence/$id'
@@ -388,6 +398,7 @@ export interface FileRouteTypes {
     | '/admin/tests'
     | '/brief/new'
     | '/briefing-room/$id'
+    | '/creative/$sessionId'
     | '/detonation/canvas'
     | '/email/unsubscribe'
     | '/intelligence/$id'
@@ -425,6 +436,7 @@ export interface FileRouteTypes {
     | '/admin/tests'
     | '/brief/new'
     | '/briefing-room/$id'
+    | '/creative/$sessionId'
     | '/detonation_/canvas'
     | '/email/unsubscribe'
     | '/intelligence/$id'
@@ -641,6 +653,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DetonationCanvasRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/creative/$sessionId': {
+      id: '/creative/$sessionId'
+      path: '/$sessionId'
+      fullPath: '/creative/$sessionId'
+      preLoaderRoute: typeof CreativeSessionIdRouteImport
+      parentRoute: typeof CreativeRoute
+    }
     '/briefing-room/$id': {
       id: '/briefing-room/$id'
       path: '/$id'
@@ -748,10 +767,12 @@ const BriefingRoomRouteWithChildren = BriefingRoomRoute._addFileChildren(
 )
 
 interface CreativeRouteChildren {
+  CreativeSessionIdRoute: typeof CreativeSessionIdRoute
   CreativeIndexRoute: typeof CreativeIndexRoute
 }
 
 const CreativeRouteChildren: CreativeRouteChildren = {
+  CreativeSessionIdRoute: CreativeSessionIdRoute,
   CreativeIndexRoute: CreativeIndexRoute,
 }
 
