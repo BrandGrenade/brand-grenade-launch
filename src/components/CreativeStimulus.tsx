@@ -157,10 +157,17 @@ function DirectionCard({
 
       <div
         className="text-body-sm"
-        style={{ color: "#E8E4DE", marginTop: 14, whiteSpace: "pre-wrap", lineHeight: 1.6 }}
+        style={{
+          color: "#E8E4DE",
+          marginTop: 20,
+          whiteSpace: "pre-wrap",
+          lineHeight: 1.75,
+          fontSize: 15,
+        }}
       >
         {d.direction || d.error || "Not generated."}
       </div>
+
 
       {lens && lens.references.length > 0 && (
         <div style={{ marginTop: 14, display: "flex", flexWrap: "wrap", gap: 8 }}>
