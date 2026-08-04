@@ -15,6 +15,8 @@ import {
 import { getLens, LENS_COUNT } from "@/lib/stimulus/lenses";
 import { StimulusGateOne, type RatedDirection } from "@/components/StimulusGateOne";
 import { StimulusOrchestration } from "@/components/StimulusOrchestration";
+import { RawIdeaExportButton } from "@/components/RawIdeaExportButton";
+
 import type { DirectionRatings } from "@/lib/stimulus/rating-prompts";
 
 const AMBER = "#E8A33D";
@@ -216,6 +218,8 @@ function DirectionCard({
         <Btn onClick={() => setShowRevise((v) => !v)} disabled={busy}>
           Revise
         </Btn>
+        <RawIdeaExportButton directionId={d.id} />
+
       </div>
 
       {showRevise && (
