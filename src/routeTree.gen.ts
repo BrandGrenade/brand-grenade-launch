@@ -19,6 +19,7 @@ import { Route as EyRouteImport } from './routes/ey'
 import { Route as DetonationRouteImport } from './routes/detonation'
 import { Route as DeckRouteImport } from './routes/deck'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as CreativeRouteImport } from './routes/creative'
 import { Route as CompleteRouteImport } from './routes/complete'
 import { Route as BriefingRoomRouteImport } from './routes/briefing-room'
 import { Route as BriefRouteImport } from './routes/brief'
@@ -91,6 +92,11 @@ const DeckRoute = DeckRouteImport.update({
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CreativeRoute = CreativeRouteImport.update({
+  id: '/creative',
+  path: '/creative',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CompleteRoute = CompleteRouteImport.update({
@@ -218,6 +224,7 @@ export interface FileRoutesByFullPath {
   '/brief': typeof BriefRouteWithChildren
   '/briefing-room': typeof BriefingRoomRouteWithChildren
   '/complete': typeof CompleteRoute
+  '/creative': typeof CreativeRoute
   '/dashboard': typeof DashboardRoute
   '/deck': typeof DeckRoute
   '/detonation': typeof DetonationRoute
@@ -251,6 +258,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/$repoSlug': typeof RepoSlugRoute
   '/complete': typeof CompleteRoute
+  '/creative': typeof CreativeRoute
   '/dashboard': typeof DashboardRoute
   '/deck': typeof DeckRoute
   '/detonation': typeof DetonationRoute
@@ -286,6 +294,7 @@ export interface FileRoutesById {
   '/brief': typeof BriefRouteWithChildren
   '/briefing-room': typeof BriefingRoomRouteWithChildren
   '/complete': typeof CompleteRoute
+  '/creative': typeof CreativeRoute
   '/dashboard': typeof DashboardRoute
   '/deck': typeof DeckRoute
   '/detonation': typeof DetonationRoute
@@ -323,6 +332,7 @@ export interface FileRouteTypes {
     | '/brief'
     | '/briefing-room'
     | '/complete'
+    | '/creative'
     | '/dashboard'
     | '/deck'
     | '/detonation'
@@ -356,6 +366,7 @@ export interface FileRouteTypes {
     | '/'
     | '/$repoSlug'
     | '/complete'
+    | '/creative'
     | '/dashboard'
     | '/deck'
     | '/detonation'
@@ -390,6 +401,7 @@ export interface FileRouteTypes {
     | '/brief'
     | '/briefing-room'
     | '/complete'
+    | '/creative'
     | '/dashboard'
     | '/deck'
     | '/detonation'
@@ -426,6 +438,7 @@ export interface RootRouteChildren {
   BriefRoute: typeof BriefRouteWithChildren
   BriefingRoomRoute: typeof BriefingRoomRouteWithChildren
   CompleteRoute: typeof CompleteRoute
+  CreativeRoute: typeof CreativeRoute
   DashboardRoute: typeof DashboardRoute
   DeckRoute: typeof DeckRoute
   DetonationRoute: typeof DetonationRoute
@@ -518,6 +531,13 @@ declare module '@tanstack/react-router' {
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/creative': {
+      id: '/creative'
+      path: '/creative'
+      fullPath: '/creative'
+      preLoaderRoute: typeof CreativeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/complete': {
@@ -734,6 +754,7 @@ const rootRouteChildren: RootRouteChildren = {
   BriefRoute: BriefRouteWithChildren,
   BriefingRoomRoute: BriefingRoomRouteWithChildren,
   CompleteRoute: CompleteRoute,
+  CreativeRoute: CreativeRoute,
   DashboardRoute: DashboardRoute,
   DeckRoute: DeckRoute,
   DetonationRoute: DetonationRoute,
