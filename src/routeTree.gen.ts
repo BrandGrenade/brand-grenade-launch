@@ -26,6 +26,7 @@ import { Route as BriefRouteImport } from './routes/brief'
 import { Route as RepoSlugRouteImport } from './routes/$repoSlug'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as IntelligenceIndexRouteImport } from './routes/intelligence.index'
+import { Route as CreativeIndexRouteImport } from './routes/creative.index'
 import { Route as BriefingRoomIndexRouteImport } from './routes/briefing-room.index'
 import { Route as BriefIndexRouteImport } from './routes/brief.index'
 import { Route as IntelligenceNewRouteImport } from './routes/intelligence.new'
@@ -129,6 +130,11 @@ const IntelligenceIndexRoute = IntelligenceIndexRouteImport.update({
   path: '/',
   getParentRoute: () => IntelligenceRoute,
 } as any)
+const CreativeIndexRoute = CreativeIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => CreativeRoute,
+} as any)
 const BriefingRoomIndexRoute = BriefingRoomIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -224,7 +230,7 @@ export interface FileRoutesByFullPath {
   '/brief': typeof BriefRouteWithChildren
   '/briefing-room': typeof BriefingRoomRouteWithChildren
   '/complete': typeof CompleteRoute
-  '/creative': typeof CreativeRoute
+  '/creative': typeof CreativeRouteWithChildren
   '/dashboard': typeof DashboardRoute
   '/deck': typeof DeckRoute
   '/detonation': typeof DetonationRoute
@@ -245,6 +251,7 @@ export interface FileRoutesByFullPath {
   '/intelligence/new': typeof IntelligenceNewRoute
   '/brief/': typeof BriefIndexRoute
   '/briefing-room/': typeof BriefingRoomIndexRoute
+  '/creative/': typeof CreativeIndexRoute
   '/intelligence/': typeof IntelligenceIndexRoute
   '/admin/preview/$slug': typeof AdminPreviewSlugRoute
   '/intelligence/$id/edit': typeof IntelligenceIdEditRoute
@@ -258,7 +265,6 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/$repoSlug': typeof RepoSlugRoute
   '/complete': typeof CompleteRoute
-  '/creative': typeof CreativeRoute
   '/dashboard': typeof DashboardRoute
   '/deck': typeof DeckRoute
   '/detonation': typeof DetonationRoute
@@ -278,6 +284,7 @@ export interface FileRoutesByTo {
   '/intelligence/new': typeof IntelligenceNewRoute
   '/brief': typeof BriefIndexRoute
   '/briefing-room': typeof BriefingRoomIndexRoute
+  '/creative': typeof CreativeIndexRoute
   '/intelligence': typeof IntelligenceIndexRoute
   '/admin/preview/$slug': typeof AdminPreviewSlugRoute
   '/intelligence/$id/edit': typeof IntelligenceIdEditRoute
@@ -294,7 +301,7 @@ export interface FileRoutesById {
   '/brief': typeof BriefRouteWithChildren
   '/briefing-room': typeof BriefingRoomRouteWithChildren
   '/complete': typeof CompleteRoute
-  '/creative': typeof CreativeRoute
+  '/creative': typeof CreativeRouteWithChildren
   '/dashboard': typeof DashboardRoute
   '/deck': typeof DeckRoute
   '/detonation': typeof DetonationRoute
@@ -315,6 +322,7 @@ export interface FileRoutesById {
   '/intelligence/new': typeof IntelligenceNewRoute
   '/brief/': typeof BriefIndexRoute
   '/briefing-room/': typeof BriefingRoomIndexRoute
+  '/creative/': typeof CreativeIndexRoute
   '/intelligence/': typeof IntelligenceIndexRoute
   '/admin/preview/$slug': typeof AdminPreviewSlugRoute
   '/intelligence/$id_/edit': typeof IntelligenceIdEditRoute
@@ -353,6 +361,7 @@ export interface FileRouteTypes {
     | '/intelligence/new'
     | '/brief/'
     | '/briefing-room/'
+    | '/creative/'
     | '/intelligence/'
     | '/admin/preview/$slug'
     | '/intelligence/$id/edit'
@@ -366,7 +375,6 @@ export interface FileRouteTypes {
     | '/'
     | '/$repoSlug'
     | '/complete'
-    | '/creative'
     | '/dashboard'
     | '/deck'
     | '/detonation'
@@ -386,6 +394,7 @@ export interface FileRouteTypes {
     | '/intelligence/new'
     | '/brief'
     | '/briefing-room'
+    | '/creative'
     | '/intelligence'
     | '/admin/preview/$slug'
     | '/intelligence/$id/edit'
@@ -422,6 +431,7 @@ export interface FileRouteTypes {
     | '/intelligence/new'
     | '/brief/'
     | '/briefing-room/'
+    | '/creative/'
     | '/intelligence/'
     | '/admin/preview/$slug'
     | '/intelligence/$id_/edit'
@@ -438,7 +448,7 @@ export interface RootRouteChildren {
   BriefRoute: typeof BriefRouteWithChildren
   BriefingRoomRoute: typeof BriefingRoomRouteWithChildren
   CompleteRoute: typeof CompleteRoute
-  CreativeRoute: typeof CreativeRoute
+  CreativeRoute: typeof CreativeRouteWithChildren
   DashboardRoute: typeof DashboardRoute
   DeckRoute: typeof DeckRoute
   DetonationRoute: typeof DetonationRoute
@@ -581,6 +591,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/intelligence/'
       preLoaderRoute: typeof IntelligenceIndexRouteImport
       parentRoute: typeof IntelligenceRoute
+    }
+    '/creative/': {
+      id: '/creative/'
+      path: '/'
+      fullPath: '/creative/'
+      preLoaderRoute: typeof CreativeIndexRouteImport
+      parentRoute: typeof CreativeRoute
     }
     '/briefing-room/': {
       id: '/briefing-room/'
@@ -730,6 +747,18 @@ const BriefingRoomRouteWithChildren = BriefingRoomRoute._addFileChildren(
   BriefingRoomRouteChildren,
 )
 
+interface CreativeRouteChildren {
+  CreativeIndexRoute: typeof CreativeIndexRoute
+}
+
+const CreativeRouteChildren: CreativeRouteChildren = {
+  CreativeIndexRoute: CreativeIndexRoute,
+}
+
+const CreativeRouteWithChildren = CreativeRoute._addFileChildren(
+  CreativeRouteChildren,
+)
+
 interface IntelligenceRouteChildren {
   IntelligenceIdRoute: typeof IntelligenceIdRoute
   IntelligenceNewRoute: typeof IntelligenceNewRoute
@@ -754,7 +783,7 @@ const rootRouteChildren: RootRouteChildren = {
   BriefRoute: BriefRouteWithChildren,
   BriefingRoomRoute: BriefingRoomRouteWithChildren,
   CompleteRoute: CompleteRoute,
-  CreativeRoute: CreativeRoute,
+  CreativeRoute: CreativeRouteWithChildren,
   DashboardRoute: DashboardRoute,
   DeckRoute: DeckRoute,
   DetonationRoute: DetonationRoute,
