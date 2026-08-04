@@ -458,6 +458,22 @@ export function CreativeStimulus({
                   />
                 ))}
               </div>
+
+              {runId && (
+                <StimulusGateOne
+                  runId={runId}
+                  run={runMeta}
+                  directions={directions as unknown as RatedDirection[]}
+                  onRefresh={async () => {
+                    const cur = await load({ data: { runId } });
+                    setDirections(cur.directions as Direction[]);
+                    setRunMeta(cur.run as RunMeta);
+                  }}
+                  onRevise={async (directionId, notes) => {
+                    await revise({ data: { directionId, notes } });
+                  }}
+                />
+              )}
             </>
           )}
         </div>
