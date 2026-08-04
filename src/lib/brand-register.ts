@@ -769,6 +769,20 @@ export function useBrandRegister(): UseBrandRegisterResult {
           if (active) void load();
         },
       )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "stimulus_runs" },
+        () => {
+          if (active) void load();
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "stimulus_orchestrations" },
+        () => {
+          if (active) void load();
+        },
+      )
       .subscribe();
 
 
