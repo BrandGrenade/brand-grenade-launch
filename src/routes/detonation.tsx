@@ -2181,7 +2181,12 @@ function Stage21({ session, onChange, goNext }: { session: SessionRow; onChange:
 
   const handleRun = async () => {
     setBusy(true); setErr(null);
-    try { const r = await run({ data: { sessionId: session.id } }); setOutputs(r.outputs); await onChange(); }
+    try {
+      const r = await run({ data: { sessionId: session.id } });
+      setOutputs(r.outputs);
+      setFidelity((r.fidelity as Stage21FidelityReport | null) ?? null);
+      await onChange();
+    }
     catch (e) {
       console.error("Stage 21 run failed:", e);
       setErr(e instanceof Error ? e.message : "Stage 21 failed");
@@ -2189,6 +2194,7 @@ function Stage21({ session, onChange, goNext }: { session: SessionRow; onChange:
     }
     finally { setBusy(false); }
   };
+
 
   const handleForceRegenerate = async () => {
     if (busy) return;
