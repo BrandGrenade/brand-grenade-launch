@@ -1970,7 +1970,7 @@ function Stage21({ session, onChange, goNext }: { session: SessionRow; onChange:
             />
           </div>
           <div id="creative-stimulus" style={{ scrollMarginTop: 140 }}>
-            <CreativeStimulus sessionId={session.id} channels={Object.keys(outputs ?? {})} brandName={session.brand_name ?? ""} />
+            <CreativeStimulus sessionId={session.id} channels={Object.keys(outputs ?? {})} brandName={session.brand_name ?? ""} defaultOpen={openCreative} />
           </div>
 
           <div style={{ marginTop: 16, display: "flex", gap: 12, justifyContent: "flex-end", flexWrap: "wrap" }}>
