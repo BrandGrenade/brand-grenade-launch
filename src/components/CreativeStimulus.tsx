@@ -414,7 +414,9 @@ export function CreativeStimulus({
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                 {runs.map((r) => (
                   <Btn key={r.id} active={r.id === runId} disabled={busy} onClick={() => void openRun(r.id)}>
-                    {r.channel_name}
+                    {`${r.channel_name.slice(0, 28)}${r.channel_name.length > 28 ? "…" : ""} · ${
+                      r.created_at ? new Date(r.created_at).toLocaleDateString() : ""
+                    } · ${r.id.slice(0, 6)}`}
                   </Btn>
                 ))}
               </div>
