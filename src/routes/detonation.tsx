@@ -699,7 +699,9 @@ function stageStatus(num: string, s: SessionRow | null): StageStatus {
     case "18": return s.stage_18_output ? "complete" : "pending";
     case "19": return s.stage_19_output ? "complete" : "pending";
     case "20": return s.stage_20_approved ? "approved" : s.stage_20_output ? "complete" : "pending";
+    case "20L": return s.stage_20l_approved ? "approved" : s.stage_20l_output ? "complete" : "pending";
     case "20B": return s.stage_20b_output ? "complete" : "pending";
+
     case "21": return s.stage_21_outputs && Object.keys(s.stage_21_outputs).length > 0 ? "complete" : "pending";
     case "22": return s.stage_22_output ? "complete" : "pending";
   }
