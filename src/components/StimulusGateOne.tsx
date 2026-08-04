@@ -449,6 +449,8 @@ export function StimulusGateOne({
               >
                 Send back with notes
               </Btn>
+              <RawIdeaExportButton directionId={d.id} />
+
             </div>
           </div>
         ))}
