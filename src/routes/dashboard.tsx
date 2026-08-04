@@ -607,6 +607,7 @@ const COLUMN_HEADERS = [
   "Briefing Room",
   "Strategy Pipeline",
   "Phase 2",
+  "Creative Engine",
   "Deliverables",
   "",
 ];
@@ -734,6 +735,13 @@ function BrandRegisterRow({
           />
         </td>
         <td className="px-3 py-4">
+          <SystemStatusCell
+            system="creative"
+            status={row.creative}
+            brand={row.displayName}
+          />
+        </td>
+        <td className="px-3 py-4">
           <DeliverablesCell
             pipelineComplete={row.pipeline.state === "complete"}
             sessionId={row.pipeline.hrefSearch?.session ?? null}
@@ -808,6 +816,7 @@ const SYSTEM_LAUNCH_LABEL: Record<SystemKey, string> = {
   briefing_room: "Launch",
   pipeline: "Start",
   phase_2: "Start",
+  creative: "Start",
 };
 
 function SystemCircle({ state }: { state: SystemStatus["state"] }) {
@@ -941,7 +950,7 @@ function CompleteCell({
         >
           Complete
         </a>
-      ) : (system === "pipeline" || system === "phase_2") &&
+      ) : (system === "pipeline" || system === "phase_2" || system === "creative") &&
         status.href &&
         status.hrefSearch ? (
         <TextLink href={status.href} search={status.hrefSearch} label="Complete" />
@@ -992,7 +1001,11 @@ function InProgressLink({
   status: SystemStatus;
 }) {
   const label = status.label ?? "In progress";
-  if ((system === "pipeline" || system === "phase_2") && status.href && status.hrefSearch) {
+  if (
+    (system === "pipeline" || system === "phase_2" || system === "creative") &&
+    status.href &&
+    status.hrefSearch
+  ) {
     return (
       <TextLink href={status.href} search={status.hrefSearch} label={label} />
     );
@@ -1079,6 +1092,7 @@ const SYSTEM_SECTION_TITLE: Record<SystemKey, string> = {
   briefing_room: "Briefing Room",
   pipeline: "Strategy Pipeline",
   phase_2: "Phase 2 — Detonation",
+  creative: "Creative Stimulus Engine",
 };
 
 function BrandRegisterExpanded({ row }: { row: BrandRow }) {
@@ -1087,6 +1101,7 @@ function BrandRegisterExpanded({ row }: { row: BrandRow }) {
     briefing_room: [],
     pipeline: [],
     phase_2: [],
+    creative: [],
   };
   for (const r of row.runs) bySystem[r.system].push(r);
   return (
