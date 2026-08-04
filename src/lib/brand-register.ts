@@ -147,6 +147,24 @@ type IntelligenceRow = {
   updated_at: string;
 };
 
+/** Creative Stimulus Engine run (Phase 1–2: generation, tissue, Gate One). */
+type StimulusRunRow = {
+  id: string;
+  session_id: string;
+  status: string | null;
+  gate_one_confirmed: boolean | null;
+  updated_at: string;
+};
+
+/** Creative Stimulus Engine orchestration (Phase 3–4: W/AD/CD, Gate Two). */
+type StimulusOrchRow = {
+  id: string;
+  session_id: string;
+  status: string | null;
+  gate_two_confirmed: boolean | null;
+  updated_at: string;
+};
+
 
 // ─── Per-system derivation ─────────────────────────────────────────
 
