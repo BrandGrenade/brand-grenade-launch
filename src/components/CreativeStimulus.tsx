@@ -285,13 +285,17 @@ export function CreativeStimulus({
   channels,
   brandName,
   defaultOpen = false,
+  variant = "panel",
 }: {
   sessionId: string;
   channels: string[];
   brandName: string;
   /** Deep links (?panel=creative) expand the panel on mount. */
   defaultOpen?: boolean;
+  /** "page" removes the collapsible chrome — the engine owns the whole room. */
+  variant?: "panel" | "page";
 }) {
+
   const start = useServerFn(startStimulusRun);
   const batch = useServerFn(generateStimulusBatch);
   const load = useServerFn(loadStimulusRun);
