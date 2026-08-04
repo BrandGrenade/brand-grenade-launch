@@ -324,6 +324,14 @@ export const reviseStimulusDirection = createServerFn({ method: "POST" })
         revise_notes: data.notes.trim(),
         revise_count: (row.revise_count ?? 0) + 1,
         error: null,
+        // A rewritten direction invalidates its Gate One rating and approval.
+        ratings: null,
+        rating_status: "unrated",
+        rating_error: null,
+        rated_at: null,
+        gate_one_approved: false,
+        gate_one_approved_at: null,
+        gate_one_snapshot: null,
       })
       .eq("id", data.directionId);
     if (uErr) throw new Error(uErr.message);

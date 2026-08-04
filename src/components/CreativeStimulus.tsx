@@ -13,6 +13,8 @@ import {
   reviseStimulusDirection,
 } from "@/lib/stimulus.functions";
 import { getLens, LENS_COUNT } from "@/lib/stimulus/lenses";
+import { StimulusGateOne, type RatedDirection } from "@/components/StimulusGateOne";
+import type { DirectionRatings } from "@/lib/stimulus/rating-prompts";
 
 const AMBER = "#E8A33D";
 const MUTED = "#8A8680";
@@ -28,6 +30,21 @@ type Direction = {
   revise_notes: string | null;
   revise_count: number;
   error: string | null;
+  ratings: DirectionRatings | null;
+  rating_status: string;
+  rating_error: string | null;
+  rated_at: string | null;
+  gate_one_approved: boolean;
+  gate_one_approved_at: string | null;
+  gate_one_notes: string | null;
+};
+
+type RunMeta = {
+  tiebreaker_output?: string | null;
+  tiebreaker_fired?: boolean;
+  tiebreaker_reason?: string | null;
+  gate_one_confirmed?: boolean;
+  gate_one_confirmed_at?: string | null;
 };
 
 const TRIAGE: { value: "keep" | "keep_in_play" | "kill"; label: string }[] = [
@@ -261,6 +278,7 @@ export function CreativeStimulus({
   const [runId, setRunId] = useState<string | null>(null);
   const [runs, setRuns] = useState<{ id: string; channel_name: string; status: string }[]>([]);
   const [directions, setDirections] = useState<Direction[]>([]);
+  const [runMeta, setRunMeta] = useState<RunMeta>({});
   const [progress, setProgress] = useState(0);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -284,6 +302,7 @@ export function CreativeStimulus({
       setRunId(id);
       const r = await load({ data: { runId: id } });
       setDirections(r.directions as Direction[]);
+      setRunMeta(r.run as RunMeta);
       setProgress((r.directions as Direction[]).filter((d) => d.status !== "pending").length);
     },
     [load],
@@ -305,6 +324,7 @@ export function CreativeStimulus({
         setProgress(LENS_COUNT - r.remaining);
         const cur = await load({ data: { runId: id } });
         setDirections(cur.directions as Direction[]);
+        setRunMeta(cur.run as RunMeta);
       }
       await refreshRuns();
     } catch (e) {
