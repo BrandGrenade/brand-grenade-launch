@@ -2117,9 +2117,14 @@ function Stage21({ session, onChange, goNext }: { session: SessionRow; onChange:
 
   const stage21BlockedReason = !session.stage_20_approved
     ? "Stage 20 must be approved before Stage 21 can run."
-    : !session.stage_20b_output
-      ? "Stage 20B must complete before Stage 21 can run."
-      : null;
+    : !session.stage_20l_output
+      ? "The Lead Creative Expression (Stage 20L) must be decided before Stage 21 can run."
+      : !session.stage_20l_approved
+        ? "The Lead Creative Expression must be approved before Stage 21 can run."
+        : !session.stage_20b_output
+          ? "Stage 20B must complete before Stage 21 can run."
+          : null;
+
 
   return (
     <section>
