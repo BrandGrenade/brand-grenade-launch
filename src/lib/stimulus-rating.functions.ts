@@ -90,7 +90,7 @@ export const rateStimulusBatch = createServerFn({ method: "POST" })
         await supabaseAdmin
           .from("stimulus_directions")
           .update({
-            ratings: result.ratings as unknown as Record<string, unknown>,
+            ratings: JSON.parse(JSON.stringify(result.ratings)),
             rating_status: "rated",
             rating_error: null,
             rated_at: new Date().toISOString(),
@@ -213,7 +213,7 @@ export const setGateOneApproval = createServerFn({ method: "POST" })
         gate_one_approved_at: data.approved ? now : null,
         gate_one_notes: data.notes ?? null,
         gate_one_snapshot: data.approved
-          ? { approved_at: now, ratings: row.ratings, notes: data.notes ?? null }
+          ? JSON.parse(JSON.stringify({ approved_at: now, ratings: row.ratings, notes: data.notes ?? null }))
           : null,
       })
       .eq("id", data.directionId);
