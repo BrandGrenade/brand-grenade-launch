@@ -407,6 +407,13 @@ export type Database = {
             foreignKeyName: "preflight_checks_override_session_id_fkey"
             columns: ["override_session_id"]
             isOneToOne: false
+            referencedRelation: "brand_register_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "preflight_checks_override_session_id_fkey"
+            columns: ["override_session_id"]
+            isOneToOne: false
             referencedRelation: "sessions"
             referencedColumns: ["id"]
           },
@@ -640,6 +647,13 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "session_collaborators_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "brand_register_sessions"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "session_collaborators_session_id_fkey"
             columns: ["session_id"]
@@ -1393,6 +1407,13 @@ export type Database = {
             foreignKeyName: "stimulus_orchestrations_session_id_fkey"
             columns: ["session_id"]
             isOneToOne: false
+            referencedRelation: "brand_register_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stimulus_orchestrations_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
             referencedRelation: "sessions"
             referencedColumns: ["id"]
           },
@@ -1576,6 +1597,13 @@ export type Database = {
             foreignKeyName: "stimulus_runs_session_id_fkey"
             columns: ["session_id"]
             isOneToOne: false
+            referencedRelation: "brand_register_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stimulus_runs_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
             referencedRelation: "sessions"
             referencedColumns: ["id"]
           },
@@ -1697,7 +1725,102 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      brand_register_briefings: {
+        Row: {
+          brand_name: string | null
+          category: string | null
+          created_at: string | null
+          has_diagnosis: boolean | null
+          has_relevance: boolean | null
+          has_tensions: boolean | null
+          has_truths: boolean | null
+          id: string | null
+          selected_tension_index: number | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          brand_name?: string | null
+          category?: string | null
+          created_at?: string | null
+          has_diagnosis?: never
+          has_relevance?: never
+          has_tensions?: never
+          has_truths?: never
+          id?: string | null
+          selected_tension_index?: number | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          brand_name?: string | null
+          category?: string | null
+          created_at?: string | null
+          has_diagnosis?: never
+          has_relevance?: never
+          has_tensions?: never
+          has_truths?: never
+          id?: string | null
+          selected_tension_index?: number | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      brand_register_sessions: {
+        Row: {
+          brand_name: string | null
+          category: string | null
+          created_at: string | null
+          current_stage: number | null
+          has_stage_16_consulting: boolean | null
+          has_stage_17: boolean | null
+          has_stage_22: boolean | null
+          id: string | null
+          interrupted_stage: number | null
+          is_preflight_test: boolean | null
+          last_heartbeat_at: string | null
+          phase_2_status: string | null
+          stage_status: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          brand_name?: string | null
+          category?: string | null
+          created_at?: string | null
+          current_stage?: number | null
+          has_stage_16_consulting?: never
+          has_stage_17?: never
+          has_stage_22?: never
+          id?: string | null
+          interrupted_stage?: number | null
+          is_preflight_test?: boolean | null
+          last_heartbeat_at?: string | null
+          phase_2_status?: string | null
+          stage_status?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          brand_name?: string | null
+          category?: string | null
+          created_at?: string | null
+          current_stage?: number | null
+          has_stage_16_consulting?: never
+          has_stage_17?: never
+          has_stage_22?: never
+          id?: string | null
+          interrupted_stage?: number | null
+          is_preflight_test?: boolean | null
+          last_heartbeat_at?: string | null
+          phase_2_status?: string | null
+          stage_status?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       can_access_session: {

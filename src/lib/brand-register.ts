@@ -96,6 +96,8 @@ const EMPTY_STATUS: SystemStatus = {
 
 // ─── Raw row types (subset of columns we query) ────────────────────
 
+// Sourced from the brand_register_* summary views: presence flags instead of
+// full report text, so the register loads without pulling megabytes of output.
 type SessionRow = {
   id: string;
   brand_name: string | null;
@@ -104,11 +106,10 @@ type SessionRow = {
   current_stage: number | null;
   created_at: string;
   updated_at: string;
-  stage_1_output: string | null;
-  stage_16_consulting_output: string | null;
+  has_stage_16_consulting: boolean | null;
   phase_2_status: string | null;
-  stage_17_output: string | null;
-  stage_22_output: string | null;
+  has_stage_17: boolean | null;
+  has_stage_22: boolean | null;
   stage_status: string | null;
   interrupted_stage: number | null;
   last_heartbeat_at: string | null;
@@ -121,10 +122,10 @@ type WorkspaceRow = {
   status: string | null;
   updated_at: string;
   created_at: string;
-  diagnosis: unknown | null;
-  truths: unknown | null;
-  relevance: unknown | null;
-  tensions: unknown | null;
+  has_diagnosis: boolean | null;
+  has_truths: boolean | null;
+  has_relevance: boolean | null;
+  has_tensions: boolean | null;
   selected_tension_index: number | null;
 };
 
@@ -154,7 +155,7 @@ function derivePipeline(sessions: SessionRow[]): SystemStatus {
   if (sessions.length === 0) return { ...EMPTY_STATUS };
   const latest = sessions[0]!;
   const complete =
-    latest.status === "complete" || latest.stage_22_output != null;
+    latest.status === "complete" || latest.has_stage_22 === true;
   if (complete) {
     return {
       state: "complete",
@@ -201,14 +202,14 @@ function derivePhase2(sessions: SessionRow[]): SystemStatus {
   if (sessions.length === 0) return { ...EMPTY_STATUS };
   const withPhase2 = sessions.filter(
     (s) =>
-      s.stage_22_output != null ||
-      s.stage_17_output != null ||
+      s.has_stage_22 === true ||
+      s.has_stage_17 === true ||
       s.phase_2_status === "in_progress" ||
       s.phase_2_status === "complete",
   );
   const runCount = withPhase2.length;
   const latest = sessions[0]!;
-  if (latest.stage_22_output != null || latest.phase_2_status === "complete") {
+  if (latest.has_stage_22 === true || latest.phase_2_status === "complete") {
     return {
       state: "complete",
       label: null,
@@ -218,7 +219,7 @@ function derivePhase2(sessions: SessionRow[]): SystemStatus {
       runCount: Math.max(runCount, 1),
     };
   }
-  if (latest.stage_17_output != null || latest.phase_2_status === "in_progress") {
+  if (latest.has_stage_17 === true || latest.phase_2_status === "in_progress") {
     return {
       state: "in_progress",
       label: "Running",
@@ -233,10 +234,10 @@ function derivePhase2(sessions: SessionRow[]): SystemStatus {
 
 function briefingStep(w: WorkspaceRow): number {
   if (w.selected_tension_index != null) return 4;
-  if (w.tensions != null) return 4;
-  if (w.relevance != null) return 3;
-  if (w.truths != null) return 2;
-  if (w.diagnosis != null) return 1;
+  if (w.has_tensions === true) return 4;
+  if (w.has_relevance === true) return 3;
+  if (w.has_truths === true) return 2;
+  if (w.has_diagnosis === true) return 1;
   return 0;
 }
 
@@ -420,7 +421,7 @@ function assemble({
     }
     for (const s of g.sessions) {
       const pipelineComplete =
-        s.stage_22_output != null || s.stage_16_consulting_output != null;
+        s.has_stage_22 === true || s.has_stage_16_consulting === true;
       runs.push({
         id: `pipe:${s.id}`,
         system: "pipeline",
@@ -438,13 +439,13 @@ function assemble({
         downloadHref: null,
       });
       if (
-        s.stage_22_output != null ||
-        s.stage_17_output != null ||
+        s.has_stage_22 === true ||
+        s.has_stage_17 === true ||
         s.phase_2_status === "in_progress" ||
         s.phase_2_status === "complete"
       ) {
         const p2Complete =
-          s.stage_22_output != null || s.phase_2_status === "complete";
+          s.has_stage_22 === true || s.phase_2_status === "complete";
         runs.push({
           id: `phase2:${s.id}`,
           system: "phase_2",
@@ -504,17 +505,19 @@ export function useBrandRegister(): UseBrandRegisterResult {
     setError(null);
     const [sessionsRes, workspacesRes, briefsRes, intelRes] = await Promise.all([
       supabase
-        .from("sessions")
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .from("brand_register_sessions" as any)
         .select(
-          "id,brand_name,category,status,current_stage,created_at,updated_at,stage_1_output,stage_16_consulting_output,phase_2_status,stage_17_output,stage_22_output,stage_status,interrupted_stage,last_heartbeat_at",
+          "id,brand_name,category,status,current_stage,created_at,updated_at,has_stage_16_consulting,phase_2_status,has_stage_17,has_stage_22,stage_status,interrupted_stage,last_heartbeat_at",
         )
         .eq("is_preflight_test", false)
         .order("updated_at", { ascending: false })
         .limit(500),
       supabase
-        .from("briefing_room_workspaces")
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .from("brand_register_briefings" as any)
         .select(
-          "id,brand_name,category,status,updated_at,created_at,diagnosis,truths,relevance,tensions,selected_tension_index",
+          "id,brand_name,category,status,updated_at,created_at,has_diagnosis,has_truths,has_relevance,has_tensions,selected_tension_index",
         )
         .order("updated_at", { ascending: false })
         .limit(500),
@@ -547,8 +550,8 @@ export function useBrandRegister(): UseBrandRegisterResult {
       setError(sessionsRes.error.message);
     }
 
-    const sessions = (sessionsRes.data ?? []) as SessionRow[];
-    const workspaces = (workspacesRes.data ?? []) as WorkspaceRow[];
+    const sessions = (sessionsRes.data ?? []) as unknown as SessionRow[];
+    const workspaces = (workspacesRes.data ?? []) as unknown as WorkspaceRow[];
     const savedBriefs = (briefsRes.data ?? []) as SavedBriefRow[];
     const intelligence = ((intelRes as { data: IntelligenceRow[] | null }).data ??
       []) as IntelligenceRow[];
