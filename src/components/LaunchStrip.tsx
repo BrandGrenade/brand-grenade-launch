@@ -20,6 +20,7 @@ const INTERNAL_PREFIXES = [
   "/briefing-room",
   "/brief",
   "/detonation",
+  "/creative",
   "/settings",
 ];
 
@@ -169,8 +170,8 @@ export function LaunchStrip() {
           <span aria-hidden style={arrowStyle}>→</span>
           {creativeSessionId ? (
             <Link
-              to="/detonation"
-              search={{ session: creativeSessionId, panel: "creative" as const }}
+              to="/creative/$sessionId"
+              params={{ sessionId: creativeSessionId }}
               style={buttonStyle}
               className={buttonClass}
               title="Open your most recent creative work"
@@ -183,7 +184,7 @@ export function LaunchStrip() {
               style={{ ...buttonStyle, cursor: "not-allowed", opacity: 0.55 }}
               className={buttonClass}
               disabled
-              title="No creative work started yet — launch it from Stage 21 of a completed run"
+              title="No creative work started yet — open the Creative Engine room from the dashboard"
             >
               Creative Engine
             </button>

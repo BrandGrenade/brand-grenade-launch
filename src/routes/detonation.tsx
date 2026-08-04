@@ -30,7 +30,6 @@ import {
 } from "@/lib/stage20.functions";
 import { runStage20b, loadStage20b } from "@/lib/stage20b.functions";
 import { runStage21, loadStage21, clearStage21 } from "@/lib/stage21.functions";
-import { CreativeStimulus } from "@/components/CreativeStimulus";
 import { runStage22, loadStage22, regenerateStage22 } from "@/lib/stage22.functions";
 
 const AMBER = PHASE_2_AMBER;
@@ -1823,7 +1822,6 @@ function getStage21OutputEntries(outputs: Record<string, string>) {
 }
 
 function Stage21({ session, onChange, goNext }: { session: SessionRow; onChange: () => void | Promise<void>; goNext: () => void }) {
-  const openCreative = Route.useSearch().panel === "creative";
   const run = useServerFn(runStage21);
   const load = useServerFn(loadStage21);
   const clear = useServerFn(clearStage21);
@@ -1974,8 +1972,28 @@ function Stage21({ session, onChange, goNext }: { session: SessionRow; onChange:
               }}
             />
           </div>
-          <div id="creative-stimulus" style={{ scrollMarginTop: 140 }}>
-            <CreativeStimulus sessionId={session.id} channels={Object.keys(outputs ?? {})} brandName={session.brand_name ?? ""} defaultOpen={openCreative} />
+          <div id="creative-stimulus" style={{ scrollMarginTop: 140, marginTop: 28 }}>
+            <Link
+              to="/creative/$sessionId"
+              params={{ sessionId: session.id }}
+              style={{
+                display: "block",
+                textDecoration: "none",
+                border: `1px solid ${AMBER}44`,
+                borderRadius: 10,
+                padding: "20px 24px",
+                backgroundColor: "#0E0E0E",
+              }}
+            >
+              <div className="text-mono" style={{ color: AMBER, fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase" }}>
+                Creative Engine →
+              </div>
+              <div className="text-body-sm" style={{ color: "#8A8680", marginTop: 6 }}>
+                The Creative Stimulus Engine now has its own room. It reads these channel briefs as
+                background input — open it to run the 37-lens sweep, Tissue Check, Gate One,
+                orchestration and Gate Two.
+              </div>
+            </Link>
           </div>
 
           <div style={{ marginTop: 16, display: "flex", gap: 12, justifyContent: "flex-end", flexWrap: "wrap" }}>
