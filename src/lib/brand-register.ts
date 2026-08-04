@@ -96,6 +96,8 @@ const EMPTY_STATUS: SystemStatus = {
 
 // ─── Raw row types (subset of columns we query) ────────────────────
 
+// Sourced from the brand_register_* summary views: presence flags instead of
+// full report text, so the register loads without pulling megabytes of output.
 type SessionRow = {
   id: string;
   brand_name: string | null;
@@ -104,11 +106,10 @@ type SessionRow = {
   current_stage: number | null;
   created_at: string;
   updated_at: string;
-  stage_1_output: string | null;
-  stage_16_consulting_output: string | null;
+  has_stage_16_consulting: boolean | null;
   phase_2_status: string | null;
-  stage_17_output: string | null;
-  stage_22_output: string | null;
+  has_stage_17: boolean | null;
+  has_stage_22: boolean | null;
   stage_status: string | null;
   interrupted_stage: number | null;
   last_heartbeat_at: string | null;
@@ -121,10 +122,10 @@ type WorkspaceRow = {
   status: string | null;
   updated_at: string;
   created_at: string;
-  diagnosis: unknown | null;
-  truths: unknown | null;
-  relevance: unknown | null;
-  tensions: unknown | null;
+  has_diagnosis: boolean | null;
+  has_truths: boolean | null;
+  has_relevance: boolean | null;
+  has_tensions: boolean | null;
   selected_tension_index: number | null;
 };
 
