@@ -44,6 +44,8 @@ const STAGE20B_SELECT = [
   "stage_19_output",
   "stage_20_output",
   "stage_20_approved",
+  "stage_20l_output",
+
   "stage_20b_output",
   "stage_20b_audience_input",
   "truth_product",
@@ -63,6 +65,8 @@ type Stage20bSession = {
   stage_19_output: string | null;
   stage_20_output: string | null;
   stage_20_approved: boolean | null;
+  stage_20l_output: string | null;
+
   stage_20b_output: string | null;
   stage_20b_audience_input: Stage20bAudienceInput | null;
   truth_product: string | null;
@@ -135,7 +139,12 @@ function buildStage20bUserMessage(
     "MASTER DETONATION BRIEF (Stage 20 — APPROVED)",
     s.stage_20_output?.trim() || "—",
     "",
+    "THE LEAD CREATIVE EXPRESSION (Stage 20L — DECIDED AND BINDING)",
+    "This is the single creative idea the whole campaign executes. Your channel strategy must describe how each channel carries THIS idea. Do not re-interpret the proposition into a different meaning, and do not let any channel's mechanics narrow the idea. If a channel cannot carry this idea, say so plainly rather than substituting a different idea for it.",
+    s.stage_20l_output?.trim() || "—",
+    "",
     formatAudienceInput(a),
+
   ].join("\n");
 }
 

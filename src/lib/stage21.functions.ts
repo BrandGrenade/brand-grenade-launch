@@ -29,6 +29,8 @@ const STAGE21_SELECT = [
   "stage_18_detonation_line",
   "stage_19_output",
   "stage_20_output",
+  "stage_20l_output",
+  "stage_20l_approved",
   "stage_20b_output",
   "truth_product",
   "truth_consumer",
@@ -44,12 +46,15 @@ type Stage21Session = {
   stage_18_detonation_line: string | null;
   stage_19_output: string | null;
   stage_20_output: string | null;
+  stage_20l_output: string | null;
+  stage_20l_approved: boolean | null;
   stage_20b_output: string | null;
   truth_product: string | null;
   truth_consumer: string | null;
   truth_cultural: string | null;
   stage_21_outputs: Record<string, string> | null;
 };
+
 
 function extractSection(context: string, label: string): string {
   if (!context) return "";
@@ -73,8 +78,15 @@ function buildStage21UserMessage(
   const audienceMindstate = extractSection(context, "AUDIENCE MINDSTATE");
 
   return [
-    "PRIMARY INPUT — CHANNEL STRATEGY AND AUDIENCE INTELLIGENCE (Stage 20B)",
-    "This is the mandatory primary input for this brief. Every recommendation, audience definition, mindstate, message priority, and creative instruction below MUST be derived from and consistent with this Stage 20B output. Do not generate generic channel advice. If this section is empty, stop and report missing Stage 20B.",
+    "BINDING INPUT — THE LEAD CREATIVE EXPRESSION",
+    "This is the decided creative idea for this campaign. It outranks every other input in this message, including the channel strategy below. Your job for this channel is to ADAPT this already-decided idea to this channel's moment and medium. You are NOT permitted to independently interpret the proposition, invent a different idea, or narrow the idea to whatever this channel finds convenient. Every one of the five non-negotiables must be carried in your brief. The misreading named in this document must never appear in your brief — if the channel context below pulls you toward it, ignore the pull and stay with the decided idea. A brief that reads as a different campaign sharing the same proposition is a failure of this stage.",
+    "",
+    s.stage_20l_output?.trim() || "— (none decided; do not invent one, and stay strictly within the Master Detonation Brief's stated meaning)",
+    "",
+    "————",
+    "",
+    "SUPPORTING INPUT — CHANNEL STRATEGY AND AUDIENCE INTELLIGENCE (Stage 20B)",
+    "Use this for channel selection rationale, audience definition, mindstate, occasion, behavioural triggers and message priority — the mechanics of the moment. Do NOT use it as a source of creative meaning. Where this document's framing of the proposition differs in meaning from the Lead Creative Expression above, the Lead Creative Expression wins.",
     "",
     s.stage_20b_output?.trim() || "—",
     "",
@@ -87,8 +99,9 @@ function buildStage21UserMessage(
     "CHANNEL CONTEXT FOR THIS CHANNEL (this channel's Section Three paragraph from Stage 20B, or Stage 19 fallback):",
     context?.trim() || "—",
     "",
-    "SMP TRANSLATION FOR THIS CHANNEL:",
+    "HOW THIS CHANNEL SHOULD CARRY THE IDEA (Stage 20B's channel translation — mechanics only, subordinate to the Lead Creative Expression):",
     smpTranslation,
+
     "",
     "AUDIENCE MINDSTATE IN THIS CHANNEL:",
     audienceMindstate,
@@ -112,7 +125,7 @@ function buildStage21UserMessage(
       cultural: s.truth_cultural,
     }),
     "",
-    "MASTER DETONATION BRIEF (Stage 20 — supporting context, subordinate to Stage 20B above)",
+    "MASTER DETONATION BRIEF (Stage 20 — strategic context, subordinate to the Lead Creative Expression above)",
     s.stage_20_output?.trim() || "—",
   ].join("\n");
 
@@ -137,6 +150,31 @@ async function generateOne(
     stageName: "Channel Briefs",
   });
 }
+
+/**
+ * Holds every channel brief against the decided Lead Creative Expression and
+ * persists the report. A failure here must never block the briefs from being
+ * saved — it only means the set is unverified.
+ */
+async function checkAndSaveFidelity(
+  sessionId: string,
+  leadExpression: string | null,
+  outputs: Record<string, string>,
+) {
+  try {
+    const { runChannelFidelityCheck } = await import("./stage21-fidelity.server");
+    const report = await runChannelFidelityCheck({ sessionId, leadExpression, outputs });
+    await supabaseAdmin
+      .from("sessions")
+      .update({ stage_21_fidelity: report as never })
+      .eq("id", sessionId);
+    return report;
+  } catch (e) {
+    console.error("Channel fidelity check failed:", e);
+    return null;
+  }
+}
+
 
 const RunInput = z.object({
   sessionId: z.string().uuid(),
@@ -167,6 +205,13 @@ export const runStage21 = createServerFn({ method: "POST" })
     if (!s.stage_19_output) throw new Error("Stage 19 missing");
     if (!s.stage_20_output) throw new Error("Stage 20 missing");
     if (!s.stage_20b_output) throw new Error("Stage 20B (Channel Strategy and Audience Intelligence) must complete before Stage 21");
+    if (!s.stage_20l_output?.trim())
+      throw new Error(
+        "The Lead Creative Expression (Stage 20L) must be generated before Stage 21. Without it, each channel brief independently reinterprets the proposition.",
+      );
+    if (!s.stage_20l_approved)
+      throw new Error("The Lead Creative Expression must be approved before Stage 21 can run.");
+
 
     if (
       s.stage_21_outputs &&
@@ -208,11 +253,14 @@ export const runStage21 = createServerFn({ method: "POST" })
 
     const { error: saveErr } = await supabaseAdmin
       .from("sessions")
-      .update({ stage_21_outputs: outputs, stage_21_error: null, phase_2_current_stage: '22' })
+      .update({ stage_21_outputs: outputs, stage_21_error: null, stage_21_fidelity: null, phase_2_current_stage: '22' })
       .eq("id", data.sessionId);
     if (saveErr) throw new Error(`Failed to save Stage 21 outputs: ${saveErr.message}`);
-    return { outputs };
+
+    const fidelity = await checkAndSaveFidelity(data.sessionId, s.stage_20l_output, outputs);
+    return { outputs, fidelity };
   });
+
 
 
 export const saveStage21 = createServerFn({ method: "POST" })
@@ -254,11 +302,56 @@ export const clearStage21 = createServerFn({ method: "POST" })
     await assertSessionAccess(data.sessionId, context.userId);
     const { error } = await supabaseAdmin
       .from("sessions")
-      .update({ stage_21_outputs: null, stage_21_error: null })
+      .update({ stage_21_outputs: null, stage_21_error: null, stage_21_fidelity: null })
       .eq("id", data.sessionId);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+/** Reads the stored fidelity report without re-running the check. */
+export const loadStage21Fidelity = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => z.object({ sessionId: z.string().uuid() }).parse(i))
+  .handler(async ({ data, context }) => {
+    await assertSessionAccess(data.sessionId, context.userId);
+    const { data: row, error } = await supabaseAdmin
+      .from("sessions")
+      .select("stage_21_fidelity")
+      .eq("id", data.sessionId)
+      .single();
+    if (error) throw new Error(error.message);
+    return { fidelity: (row?.stage_21_fidelity as unknown) ?? null };
+  });
+
+/** Re-runs the fidelity check against the briefs already on the session. */
+export const recheckStage21Fidelity = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => z.object({ sessionId: z.string().uuid() }).parse(i))
+  .handler(async ({ data, context }) => {
+    await assertSessionAccess(data.sessionId, context.userId);
+    const { data: row, error } = await supabaseAdmin
+      .from("sessions")
+      .select("stage_20l_output, stage_21_outputs")
+      .eq("id", data.sessionId)
+      .single();
+    if (error || !row) throw new Error(error?.message ?? "Session not found");
+    const outputs = (row.stage_21_outputs as Record<string, string> | null) ?? {};
+    if (Object.keys(outputs).length === 0)
+      throw new Error("There are no channel briefs to check yet.");
+    const { runChannelFidelityCheck } = await import("./stage21-fidelity.server");
+    const report = await runChannelFidelityCheck({
+      sessionId: data.sessionId,
+      leadExpression: (row.stage_20l_output as string | null) ?? null,
+      outputs,
+    });
+    const { error: saveErr } = await supabaseAdmin
+      .from("sessions")
+      .update({ stage_21_fidelity: report as never })
+      .eq("id", data.sessionId);
+    if (saveErr) throw new Error(saveErr.message);
+    return { fidelity: report };
+  });
+
 
 const RetryInput = z.object({
   sessionId: z.string().uuid(),
@@ -314,8 +407,11 @@ export const retryStage21 = createServerFn({ method: "POST" })
 
     const { error: saveErr } = await supabaseAdmin
       .from("sessions")
-      .update({ stage_21_outputs: merged, stage_21_error: null })
+      .update({ stage_21_outputs: merged, stage_21_error: null, stage_21_fidelity: null })
       .eq("id", data.sessionId);
     if (saveErr) throw new Error(saveErr.message);
-    return { outputs: merged };
+
+    const fidelity = await checkAndSaveFidelity(data.sessionId, s.stage_20l_output, merged);
+    return { outputs: merged, fidelity };
+
   });

@@ -28,9 +28,17 @@ import {
   runStage20, loadStage20, retryStage20,
   regenerateStage20Section, approveStage20,
 } from "@/lib/stage20.functions";
+import { runStage20l, loadStage20l, approveStage20l } from "@/lib/stage20l.functions";
 import { runStage20b, loadStage20b } from "@/lib/stage20b.functions";
-import { runStage21, loadStage21, clearStage21 } from "@/lib/stage21.functions";
+import {
+  runStage21,
+  loadStage21,
+  clearStage21,
+  recheckStage21Fidelity,
+} from "@/lib/stage21.functions";
+import type { FidelityReport as Stage21FidelityReport } from "@/lib/stage21-fidelity-types";
 import { runStage22, loadStage22, regenerateStage22 } from "@/lib/stage22.functions";
+
 
 const AMBER = PHASE_2_AMBER;
 
@@ -92,16 +100,21 @@ type SessionRow = {
   stage_19_output: string | null;
   stage_20_output: string | null;
   stage_20_approved: boolean | null;
+  stage_20l_output: string | null;
+  stage_20l_medium: string | null;
+  stage_20l_approved: boolean | null;
   stage_20b_output: string | null;
   stage_20b_audience_input: Record<string, string> | null;
   stage_21_outputs: Record<string, string> | null;
+  stage_21_fidelity: Stage21FidelityReport | null;
   stage_22_output: string | null;
   stage_22_brand_architecture: string | null;
   stage_22_distinctive_assets: string | null;
 };
 
 const SESSION_COLS =
-  "id, brand_name, selected_smp, user_id, phase_2_status, phase_2_current_stage, doc_consulting_url, doc_agency_url, doc_workshop_url, checkpoint_a_confirmed, checkpoint_b_confirmed, checkpoint_c_confirmed, stage_16_format, stage_16_consulting_output, stage_16_agency_output, stage_16_workshop_output, stage_16_vision_output, stage_17_output, stage_17_selected_territory, stage_17b_output, stage_18_output, stage_18_selected_detonation, stage_18_detonation_line, stage_19_output, stage_20_output, stage_20_approved, stage_20b_output, stage_20b_audience_input, stage_21_outputs, stage_22_output, stage_22_brand_architecture, stage_22_distinctive_assets";
+  "id, brand_name, selected_smp, user_id, phase_2_status, phase_2_current_stage, doc_consulting_url, doc_agency_url, doc_workshop_url, checkpoint_a_confirmed, checkpoint_b_confirmed, checkpoint_c_confirmed, stage_16_format, stage_16_consulting_output, stage_16_agency_output, stage_16_workshop_output, stage_16_vision_output, stage_17_output, stage_17_selected_territory, stage_17b_output, stage_18_output, stage_18_selected_detonation, stage_18_detonation_line, stage_19_output, stage_20_output, stage_20_approved, stage_20l_output, stage_20l_medium, stage_20l_approved, stage_20b_output, stage_20b_audience_input, stage_21_outputs, stage_21_fidelity, stage_22_output, stage_22_brand_architecture, stage_22_distinctive_assets";
+
 
 
 // ── Tiny shared UI primitives ─────────────────────────────────────────────
@@ -686,7 +699,9 @@ function stageStatus(num: string, s: SessionRow | null): StageStatus {
     case "18": return s.stage_18_output ? "complete" : "pending";
     case "19": return s.stage_19_output ? "complete" : "pending";
     case "20": return s.stage_20_approved ? "approved" : s.stage_20_output ? "complete" : "pending";
+    case "20L": return s.stage_20l_approved ? "approved" : s.stage_20l_output ? "complete" : "pending";
     case "20B": return s.stage_20b_output ? "complete" : "pending";
+
     case "21": return s.stage_21_outputs && Object.keys(s.stage_21_outputs).length > 0 ? "complete" : "pending";
     case "22": return s.stage_22_output ? "complete" : "pending";
   }
@@ -906,8 +921,10 @@ function DetonationPage() {
                   {activeStage === "17B" && <Stage17b session={session} onChange={refresh} goNext={() => setActiveStage("18")} />}
                   {activeStage === "18" && <Stage18 session={session} onChange={refresh} goNext={() => setActiveStage("19")} />}
                   {activeStage === "19" && <Stage19 session={session} onChange={refresh} goNext={() => setActiveStage("20")} />}
-                  {activeStage === "20" && <Stage20 session={session} onChange={refresh} goNext={() => setActiveStage("20B")} />}
+                  {activeStage === "20" && <Stage20 session={session} onChange={refresh} goNext={() => setActiveStage("20L")} />}
+                  {activeStage === "20L" && <Stage20l session={session} onChange={refresh} goNext={() => setActiveStage("20B")} />}
                   {activeStage === "20B" && <Stage20b session={session} onChange={refresh} goNext={() => setActiveStage("21")} />}
+
                   {activeStage === "21" && <Stage21 session={session} onChange={refresh} goNext={() => setActiveStage("22")} />}
                   {activeStage === "22" && <Stage22 session={session} onChange={refresh} />}
                 </div>
@@ -1581,7 +1598,7 @@ function Stage20({ session, onChange, goNext }: { session: SessionRow; onChange:
             <AmberButton variant="ghost" onClick={handleRetry} disabled={busy}>{busy && <Spinner />} Retry</AmberButton>
             {approved ? (
               <AmberButton onClick={handleProceed} disabled={proceeding}>
-                {proceeding ? <><Spinner /> Loading...</> : "Proceed to Stage 21"}
+                {proceeding ? <><Spinner /> Loading...</> : "Proceed to Stage 20L"}
               </AmberButton>
             ) : (
               <AmberButton onClick={handleApprove} disabled={!canApprove || busy}>
@@ -1594,6 +1611,202 @@ function Stage20({ session, onChange, goNext }: { session: SessionRow; onChange:
     </section>
   );
 }
+
+// ═════════════════════════════════════════════════════════════════════════
+// STAGE 20L — The Lead Creative Expression
+// One creative idea, decided once, in one primary medium. Everything
+// downstream adapts this. Nothing downstream reinterprets the proposition.
+// ═════════════════════════════════════════════════════════════════════════
+
+function Stage20l({
+  session,
+  onChange,
+  goNext,
+}: {
+  session: SessionRow;
+  onChange: () => void | Promise<void>;
+  goNext: () => void;
+}) {
+  const run = useServerFn(runStage20l);
+  const load = useServerFn(loadStage20l);
+  const approve = useServerFn(approveStage20l);
+
+  const [output, setOutput] = useState<string | null>(session.stage_20l_output);
+  const [medium, setMedium] = useState<string>(session.stage_20l_medium ?? "");
+  const [approved, setApproved] = useState<boolean>(Boolean(session.stage_20l_approved));
+  const [redirect, setRedirect] = useState("");
+  const [redirectOpen, setRedirectOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [proceeding, setProceeding] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  useEffect(() => {
+    setOutput(session.stage_20l_output);
+    setApproved(Boolean(session.stage_20l_approved));
+    if (session.stage_20l_medium) setMedium(session.stage_20l_medium);
+  }, [session.stage_20l_output, session.stage_20l_approved, session.stage_20l_medium]);
+
+  useEffect(() => {
+    if (output !== null || session.stage_20l_output) return;
+    void load({ data: { sessionId: session.id } })
+      .then((r) => {
+        if (!r.output) return;
+        setOutput(r.output);
+        setApproved(r.approved);
+        if (r.medium) setMedium(r.medium);
+      })
+      .catch(() => undefined);
+  }, [output, load, session.id, session.stage_20l_output]);
+
+  const gated = !session.stage_20_approved;
+
+  async function handleRun() {
+    setBusy(true);
+    setErr(null);
+    try {
+      const r = await run({
+        data: { sessionId: session.id, medium: medium.trim(), redirect: redirect.trim() },
+      });
+      setOutput(r.output);
+      setApproved(false);
+      setRedirect("");
+      setRedirectOpen(false);
+      await onChange();
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Lead Creative Expression failed");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleApprove() {
+    setBusy(true);
+    setErr(null);
+    try {
+      await approve({ data: { sessionId: session.id, approved: true } });
+      setApproved(true);
+      await onChange();
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Could not approve");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleProceed() {
+    setProceeding(true);
+    try {
+      await onChange();
+      goNext();
+    } finally {
+      setProceeding(false);
+    }
+  }
+
+  return (
+    <section>
+      <SectionTitle
+        kicker="STAGE 20L"
+        title="The Lead Creative Expression"
+        subtitle="One idea, decided once, in one primary medium. Every channel brief adapts this — none of them reinterpret the proposition."
+      />
+      {err && <ErrorBanner message={err} />}
+      {gated && <ErrorBanner message="Stage 20 must be approved before the Lead Creative Expression can be decided." />}
+
+      <div style={{ marginTop: 20 }}>
+        <label
+          htmlFor="stage20l-medium"
+          className="text-mono"
+          style={{ color: "#8A8680", fontSize: 9, textTransform: "uppercase", letterSpacing: "0.12em" }}
+        >
+          Primary medium (optional — leave blank and the system decides)
+        </label>
+        <input
+          id="stage20l-medium"
+          value={medium}
+          onChange={(e) => setMedium(e.target.value)}
+          placeholder="e.g. 60-second hero film"
+          style={{
+            display: "block",
+            width: "100%",
+            marginTop: 8,
+            backgroundColor: "#0F0F0F",
+            border: "1px solid #2A2A2A",
+            borderRadius: 6,
+            color: "#F2EFE9",
+            padding: "10px 12px",
+            fontSize: 14,
+          }}
+        />
+      </div>
+
+      {!output ? (
+        <div style={{ marginTop: 20 }}>
+          <AmberButton onClick={handleRun} disabled={busy || gated}>
+            {busy && <Spinner />} {busy ? "Deciding…" : "Decide the Lead Creative Expression"}
+          </AmberButton>
+        </div>
+      ) : (
+        <>
+          <div
+            style={{
+              marginTop: 24,
+              backgroundColor: "#111111",
+              border: `1px solid ${approved ? AMBER : "#2A2A2A"}`,
+              borderRadius: 8,
+              padding: 28,
+            }}
+          >
+            <RichOutput text={output} />
+          </div>
+
+          {redirectOpen && (
+            <textarea
+              value={redirect}
+              onChange={(e) => setRedirect(e.target.value)}
+              placeholder="What should change about the idea? Be specific."
+              rows={4}
+              style={{
+                width: "100%",
+                marginTop: 16,
+                backgroundColor: "#0F0F0F",
+                border: "1px solid #2A2A2A",
+                borderRadius: 6,
+                color: "#F2EFE9",
+                padding: 12,
+                fontSize: 14,
+              }}
+            />
+          )}
+
+          <div style={{ marginTop: 24, display: "flex", gap: 12, justifyContent: "flex-end" }}>
+            <AmberButton variant="ghost" onClick={() => setRedirectOpen((v) => !v)} disabled={busy}>
+              {redirectOpen ? "Cancel redirect" : "Redirect…"}
+            </AmberButton>
+            <AmberButton variant="ghost" onClick={handleRun} disabled={busy}>
+              {busy && <Spinner />} Regenerate
+            </AmberButton>
+            {approved ? (
+              <AmberButton onClick={handleProceed} disabled={proceeding}>
+                {proceeding ? <><Spinner /> Loading…</> : "Proceed to Stage 20B"}
+              </AmberButton>
+            ) : (
+              <AmberButton onClick={handleApprove} disabled={busy}>
+                {busy && <Spinner />} Approve the idea
+              </AmberButton>
+            )}
+          </div>
+          {!approved && (
+            <p className="text-body-sm" style={{ color: "#8A8680", marginTop: 12, textAlign: "right" }}>
+              Channel briefs cannot run until this idea is approved.
+            </p>
+          )}
+        </>
+      )}
+    </section>
+  );
+}
+
 
 // ═════════════════════════════════════════════════════════════════════════
 // STAGE 20B — Channel Strategy and Audience Intelligence
@@ -1778,7 +1991,7 @@ function Stage20b({ session, onChange, goNext }: { session: SessionRow; onChange
               Edit Inputs and Regenerate
             </AmberButton>
             <AmberButton onClick={handleProceed} disabled={proceeding}>
-              {proceeding ? <><Spinner /> Loading...</> : "Proceed to Stage 21"}
+              {proceeding ? <><Spinner /> Loading...</> : "Proceed to Stage 20L"}
             </AmberButton>
           </div>
         </>
@@ -1821,17 +2034,143 @@ function getStage21OutputEntries(outputs: Record<string, string>) {
     });
 }
 
+// Shows how faithfully each channel brief adapts the decided Lead Creative
+// Expression. Judging only — it never rewrites a brief.
+function FidelityPanel({
+  report,
+  onRecheck,
+  busy,
+}: {
+  report: Stage21FidelityReport | null;
+  onRecheck: () => void;
+  busy: boolean;
+}) {
+  const colour = (v: string) => (v === "pass" ? AMBER : v === "drift" ? "#E8A33D" : "#E86A3D");
+  const breaks = report?.results.filter((r) => r.verdict === "break").length ?? 0;
+  const drifts = report?.results.filter((r) => r.verdict === "drift").length ?? 0;
+
+  return (
+    <div
+      style={{
+        marginTop: 24,
+        padding: 20,
+        border: `1px solid ${breaks > 0 ? "#E86A3D" : `${AMBER}33`}`,
+        borderRadius: 8,
+        backgroundColor: "#0E0E0E",
+      }}
+    >
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16 }}>
+        <div
+          className="text-mono"
+          style={{ color: AMBER, fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase" }}
+        >
+          Fidelity to the Lead Creative Expression
+        </div>
+        <button
+          type="button"
+          onClick={onRecheck}
+          disabled={busy}
+          className="text-mono"
+          style={{
+            background: "none",
+            border: `1px solid ${AMBER}40`,
+            color: AMBER,
+            padding: "6px 12px",
+            borderRadius: 6,
+            fontSize: 10,
+            letterSpacing: "0.12em",
+            textTransform: "uppercase",
+            cursor: busy ? "default" : "pointer",
+            opacity: busy ? 0.5 : 1,
+          }}
+        >
+          {busy ? "Checking…" : report ? "Re-check" : "Run check"}
+        </button>
+      </div>
+
+      {!report ? (
+        <div className="text-body-sm" style={{ color: "#8A8680", marginTop: 12 }}>
+          These briefs have not been held against the decided idea yet.
+        </div>
+      ) : (
+        <>
+          <div className="text-body-sm" style={{ color: breaks > 0 ? "#E86A3D" : "#8A8680", marginTop: 10 }}>
+            {breaks > 0
+              ? `${breaks} brief${breaks === 1 ? "" : "s"} broke away from the decided idea — regenerate ${breaks === 1 ? "it" : "them"} before anything downstream uses ${breaks === 1 ? "it" : "them"}.`
+              : drifts > 0
+                ? `${drifts} brief${drifts === 1 ? "" : "s"} drifted. Recognisably the same idea, but weakened.`
+                : "Every brief is a faithful adaptation of the decided idea."}
+          </div>
+          <div style={{ marginTop: 14, display: "grid", gap: 12 }}>
+            {report.results.map((r) => (
+              <div key={r.channel} style={{ borderTop: "1px solid #232323", paddingTop: 10 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
+                  <div className="text-body-sm" style={{ color: "#E8E4DE" }}>{r.channel}</div>
+                  <div
+                    className="text-mono"
+                    style={{
+                      color: colour(r.verdict),
+                      fontSize: 10,
+                      letterSpacing: "0.14em",
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    {r.verdict} · {r.score}/10
+                  </div>
+                </div>
+                <div className="text-body-sm" style={{ color: "#8A8680", marginTop: 6, lineHeight: 1.6 }}>
+                  {r.reasoning}
+                </div>
+                {r.missing.length > 0 && (
+                  <div className="text-body-sm" style={{ color: "#8A8680", marginTop: 6 }}>
+                    <span style={{ color: colour(r.verdict) }}>Missing:</span> {r.missing.join(" · ")}
+                  </div>
+                )}
+                {r.misreadingEvidence && (
+                  <div className="text-body-sm" style={{ color: "#E86A3D", marginTop: 6 }}>
+                    Misreading: {r.misreadingEvidence}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 function Stage21({ session, onChange, goNext }: { session: SessionRow; onChange: () => void | Promise<void>; goNext: () => void }) {
   const run = useServerFn(runStage21);
   const load = useServerFn(loadStage21);
   const clear = useServerFn(clearStage21);
+  const recheck = useServerFn(recheckStage21Fidelity);
   const [outputs, setOutputs] = useState<Record<string, string> | null>(session.stage_21_outputs);
+  const [fidelity, setFidelity] = useState<Stage21FidelityReport | null>(session.stage_21_fidelity);
+  const [fidelityBusy, setFidelityBusy] = useState(false);
   const [busy, setBusy] = useState(false);
   const [proceeding, setProceeding] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [audienceChannelDirection, setAudienceChannelDirection] = useState("");
   const autoTriggeredRef = useRef(false);
+
+  useEffect(() => { setFidelity(session.stage_21_fidelity); }, [session.stage_21_fidelity]);
+
+  const handleRecheck = async () => {
+    setFidelityBusy(true);
+    setErr(null);
+    try {
+      const r = await recheck({ data: { sessionId: session.id } });
+      setFidelity(r.fidelity as Stage21FidelityReport);
+      await onChange();
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Fidelity check failed");
+    } finally {
+      setFidelityBusy(false);
+    }
+  };
+
 
 
   useEffect(() => { setOutputs(session.stage_21_outputs); }, [session.stage_21_outputs]);
@@ -1842,7 +2181,12 @@ function Stage21({ session, onChange, goNext }: { session: SessionRow; onChange:
 
   const handleRun = async () => {
     setBusy(true); setErr(null);
-    try { const r = await run({ data: { sessionId: session.id } }); setOutputs(r.outputs); await onChange(); }
+    try {
+      const r = await run({ data: { sessionId: session.id } });
+      setOutputs(r.outputs);
+      setFidelity((r.fidelity as Stage21FidelityReport | null) ?? null);
+      await onChange();
+    }
     catch (e) {
       console.error("Stage 21 run failed:", e);
       setErr(e instanceof Error ? e.message : "Stage 21 failed");
@@ -1850,6 +2194,7 @@ function Stage21({ session, onChange, goNext }: { session: SessionRow; onChange:
     }
     finally { setBusy(false); }
   };
+
 
   const handleForceRegenerate = async () => {
     if (busy) return;
@@ -1871,6 +2216,7 @@ function Stage21({ session, onChange, goNext }: { session: SessionRow; onChange:
   useEffect(() => {
     if (autoTriggeredRef.current) return;
     if (!session.stage_20_approved) return;
+    if (!session.stage_20l_approved) return;
     if (!session.stage_20b_output) return;
     if (session.stage_21_outputs && Object.keys(session.stage_21_outputs).length > 0) return;
     if (outputs !== null && Object.keys(outputs).length > 0) return;
@@ -1878,7 +2224,8 @@ function Stage21({ session, onChange, goNext }: { session: SessionRow; onChange:
     autoTriggeredRef.current = true;
     void handleRun();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session.stage_20_approved, session.stage_20b_output, session.stage_21_outputs, outputs]);
+  }, [session.stage_20_approved, session.stage_20l_approved, session.stage_20b_output, session.stage_21_outputs, outputs]);
+
 
   const handleProceed = async () => {
     setProceeding(true);
@@ -1904,9 +2251,14 @@ function Stage21({ session, onChange, goNext }: { session: SessionRow; onChange:
 
   const stage21BlockedReason = !session.stage_20_approved
     ? "Stage 20 must be approved before Stage 21 can run."
-    : !session.stage_20b_output
-      ? "Stage 20B must complete before Stage 21 can run."
-      : null;
+    : !session.stage_20l_output
+      ? "The Lead Creative Expression (Stage 20L) must be decided before Stage 21 can run."
+      : !session.stage_20l_approved
+        ? "The Lead Creative Expression must be approved before Stage 21 can run."
+        : !session.stage_20b_output
+          ? "Stage 20B must complete before Stage 21 can run."
+          : null;
+
 
   return (
     <section>
@@ -1952,6 +2304,8 @@ function Stage21({ session, onChange, goNext }: { session: SessionRow; onChange:
               );
             })}
           </div>
+          <FidelityPanel report={fidelity} onRecheck={handleRecheck} busy={fidelityBusy} />
+
           <div style={{ marginTop: 24, padding: 16, border: `1px solid ${AMBER}33`, borderRadius: 8, backgroundColor: "#0E0E0E" }}>
             <label htmlFor="stage21-audience-channel" className="text-mono" style={{ display: "block", color: AMBER, fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 8 }}>
               Audience and Channel Direction
