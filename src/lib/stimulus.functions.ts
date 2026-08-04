@@ -26,12 +26,18 @@ type RunRow = {
   smp: string;
   status: string;
   error: string | null;
+  tiebreaker_output?: string | null;
+  tiebreaker_fired?: boolean;
+  tiebreaker_reason?: string | null;
+  tiebreaker_at?: string | null;
+  gate_one_confirmed?: boolean;
+  gate_one_confirmed_at?: string | null;
 };
 
 async function loadRun(runId: string, userId: string): Promise<RunRow> {
   const { data, error } = await supabaseAdmin
     .from("stimulus_runs")
-    .select("id, session_id, channel_name, channel_brief, smp, status, error")
+    .select("id, session_id, channel_name, channel_brief, smp, status, error, tiebreaker_output, tiebreaker_fired, tiebreaker_reason, tiebreaker_at, gate_one_confirmed, gate_one_confirmed_at")
     .eq("id", runId)
     .single();
   if (error || !data) throw new Error(`Stimulus run not found: ${error?.message ?? "no row"}`);
@@ -211,7 +217,7 @@ export const loadStimulusRun = createServerFn({ method: "POST" })
     const { data: directions, error } = await supabaseAdmin
       .from("stimulus_directions")
       .select(
-        "id, lens_id, lens_name, sort_order, direction, status, instinct_brief, revise_notes, revise_count, error",
+        "id, lens_id, lens_name, sort_order, direction, status, instinct_brief, revise_notes, revise_count, error, ratings, rating_status, rating_error, rated_at, gate_one_approved, gate_one_approved_at, gate_one_notes",
       )
       .eq("run_id", run.id)
       .order("sort_order", { ascending: true });
