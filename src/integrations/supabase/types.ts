@@ -1385,6 +1385,7 @@ export type Database = {
       }
       stimulus_prompts: {
         Row: {
+          cd_note: string | null
           channel_name: string
           created_at: string
           direction_id: string
@@ -1394,9 +1395,11 @@ export type Database = {
           initial_prompt: string | null
           lens_name: string
           orchestration_id: string
+          propagated: boolean
           rejected_at: string | null
           rejected_reason: string | null
           run_id: string
+          signatures_extracted: boolean
           sort_order: number
           status: string
           tool_target: string
@@ -1408,6 +1411,7 @@ export type Database = {
           working_prompt: string | null
         }
         Insert: {
+          cd_note?: string | null
           channel_name: string
           created_at?: string
           direction_id: string
@@ -1417,9 +1421,11 @@ export type Database = {
           initial_prompt?: string | null
           lens_name?: string
           orchestration_id: string
+          propagated?: boolean
           rejected_at?: string | null
           rejected_reason?: string | null
           run_id: string
+          signatures_extracted?: boolean
           sort_order?: number
           status?: string
           tool_target?: string
@@ -1431,6 +1437,7 @@ export type Database = {
           working_prompt?: string | null
         }
         Update: {
+          cd_note?: string | null
           channel_name?: string
           created_at?: string
           direction_id?: string
@@ -1440,9 +1447,11 @@ export type Database = {
           initial_prompt?: string | null
           lens_name?: string
           orchestration_id?: string
+          propagated?: boolean
           rejected_at?: string | null
           rejected_reason?: string | null
           run_id?: string
+          signatures_extracted?: boolean
           sort_order?: number
           status?: string
           tool_target?: string
