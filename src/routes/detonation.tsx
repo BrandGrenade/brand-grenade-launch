@@ -1942,6 +1942,7 @@ function Stage21({ session, onChange, goNext }: { session: SessionRow; onChange:
               }}
             />
           </div>
+          <CreativeStimulus sessionId={session.id} channels={Object.keys(outputs ?? {})} />
           <div style={{ marginTop: 16, display: "flex", gap: 12, justifyContent: "flex-end", flexWrap: "wrap" }}>
             <AmberButton variant="ghost" onClick={handleForceRegenerate} disabled={busy}>
               {busy ? <><Spinner /> Regenerating…</> : "Retry"}
