@@ -2034,17 +2034,143 @@ function getStage21OutputEntries(outputs: Record<string, string>) {
     });
 }
 
+// Shows how faithfully each channel brief adapts the decided Lead Creative
+// Expression. Judging only — it never rewrites a brief.
+function FidelityPanel({
+  report,
+  onRecheck,
+  busy,
+}: {
+  report: Stage21FidelityReport | null;
+  onRecheck: () => void;
+  busy: boolean;
+}) {
+  const colour = (v: string) => (v === "pass" ? AMBER : v === "drift" ? "#E8A33D" : "#E86A3D");
+  const breaks = report?.results.filter((r) => r.verdict === "break").length ?? 0;
+  const drifts = report?.results.filter((r) => r.verdict === "drift").length ?? 0;
+
+  return (
+    <div
+      style={{
+        marginTop: 24,
+        padding: 20,
+        border: `1px solid ${breaks > 0 ? "#E86A3D" : `${AMBER}33`}`,
+        borderRadius: 8,
+        backgroundColor: "#0E0E0E",
+      }}
+    >
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16 }}>
+        <div
+          className="text-mono"
+          style={{ color: AMBER, fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase" }}
+        >
+          Fidelity to the Lead Creative Expression
+        </div>
+        <button
+          type="button"
+          onClick={onRecheck}
+          disabled={busy}
+          className="text-mono"
+          style={{
+            background: "none",
+            border: `1px solid ${AMBER}40`,
+            color: AMBER,
+            padding: "6px 12px",
+            borderRadius: 6,
+            fontSize: 10,
+            letterSpacing: "0.12em",
+            textTransform: "uppercase",
+            cursor: busy ? "default" : "pointer",
+            opacity: busy ? 0.5 : 1,
+          }}
+        >
+          {busy ? "Checking…" : report ? "Re-check" : "Run check"}
+        </button>
+      </div>
+
+      {!report ? (
+        <div className="text-body-sm" style={{ color: "#8A8680", marginTop: 12 }}>
+          These briefs have not been held against the decided idea yet.
+        </div>
+      ) : (
+        <>
+          <div className="text-body-sm" style={{ color: breaks > 0 ? "#E86A3D" : "#8A8680", marginTop: 10 }}>
+            {breaks > 0
+              ? `${breaks} brief${breaks === 1 ? "" : "s"} broke away from the decided idea — regenerate ${breaks === 1 ? "it" : "them"} before anything downstream uses ${breaks === 1 ? "it" : "them"}.`
+              : drifts > 0
+                ? `${drifts} brief${drifts === 1 ? "" : "s"} drifted. Recognisably the same idea, but weakened.`
+                : "Every brief is a faithful adaptation of the decided idea."}
+          </div>
+          <div style={{ marginTop: 14, display: "grid", gap: 12 }}>
+            {report.results.map((r) => (
+              <div key={r.channel} style={{ borderTop: "1px solid #232323", paddingTop: 10 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
+                  <div className="text-body-sm" style={{ color: "#E8E4DE" }}>{r.channel}</div>
+                  <div
+                    className="text-mono"
+                    style={{
+                      color: colour(r.verdict),
+                      fontSize: 10,
+                      letterSpacing: "0.14em",
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    {r.verdict} · {r.score}/10
+                  </div>
+                </div>
+                <div className="text-body-sm" style={{ color: "#8A8680", marginTop: 6, lineHeight: 1.6 }}>
+                  {r.reasoning}
+                </div>
+                {r.missing.length > 0 && (
+                  <div className="text-body-sm" style={{ color: "#8A8680", marginTop: 6 }}>
+                    <span style={{ color: colour(r.verdict) }}>Missing:</span> {r.missing.join(" · ")}
+                  </div>
+                )}
+                {r.misreadingEvidence && (
+                  <div className="text-body-sm" style={{ color: "#E86A3D", marginTop: 6 }}>
+                    Misreading: {r.misreadingEvidence}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 function Stage21({ session, onChange, goNext }: { session: SessionRow; onChange: () => void | Promise<void>; goNext: () => void }) {
   const run = useServerFn(runStage21);
   const load = useServerFn(loadStage21);
   const clear = useServerFn(clearStage21);
+  const recheck = useServerFn(recheckStage21Fidelity);
   const [outputs, setOutputs] = useState<Record<string, string> | null>(session.stage_21_outputs);
+  const [fidelity, setFidelity] = useState<Stage21FidelityReport | null>(session.stage_21_fidelity);
+  const [fidelityBusy, setFidelityBusy] = useState(false);
   const [busy, setBusy] = useState(false);
   const [proceeding, setProceeding] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [audienceChannelDirection, setAudienceChannelDirection] = useState("");
   const autoTriggeredRef = useRef(false);
+
+  useEffect(() => { setFidelity(session.stage_21_fidelity); }, [session.stage_21_fidelity]);
+
+  const handleRecheck = async () => {
+    setFidelityBusy(true);
+    setErr(null);
+    try {
+      const r = await recheck({ data: { sessionId: session.id } });
+      setFidelity(r.fidelity as Stage21FidelityReport);
+      await onChange();
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Fidelity check failed");
+    } finally {
+      setFidelityBusy(false);
+    }
+  };
+
 
 
   useEffect(() => { setOutputs(session.stage_21_outputs); }, [session.stage_21_outputs]);
