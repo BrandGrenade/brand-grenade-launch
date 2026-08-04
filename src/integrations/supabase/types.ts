@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      brand_asset_rules: {
+        Row: {
+          brand_key: string
+          brand_name: string
+          colours: string | null
+          created_at: string
+          id: string
+          legal_lines: string | null
+          logo_references: string | null
+          notes: string | null
+          packaging_rules: string | null
+          typography: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          brand_key: string
+          brand_name: string
+          colours?: string | null
+          created_at?: string
+          id?: string
+          legal_lines?: string | null
+          logo_references?: string | null
+          notes?: string | null
+          packaging_rules?: string | null
+          typography?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          brand_key?: string
+          brand_name?: string
+          colours?: string | null
+          created_at?: string
+          id?: string
+          legal_lines?: string | null
+          logo_references?: string | null
+          notes?: string | null
+          packaging_rules?: string | null
+          typography?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       briefing_room_workspaces: {
         Row: {
           brand_name: string
@@ -1138,6 +1183,73 @@ export type Database = {
         }
         Relationships: []
       }
+      stimulus_cross_refs: {
+        Row: {
+          created_at: string
+          decided_at: string | null
+          decision_reason: string | null
+          id: string
+          orchestration_id: string
+          prompt_id: string
+          rationale: string
+          registry_version: number
+          signature_id: string | null
+          source_direction_id: string | null
+          status: string
+          suggestion: string
+        }
+        Insert: {
+          created_at?: string
+          decided_at?: string | null
+          decision_reason?: string | null
+          id?: string
+          orchestration_id: string
+          prompt_id: string
+          rationale?: string
+          registry_version?: number
+          signature_id?: string | null
+          source_direction_id?: string | null
+          status?: string
+          suggestion: string
+        }
+        Update: {
+          created_at?: string
+          decided_at?: string | null
+          decision_reason?: string | null
+          id?: string
+          orchestration_id?: string
+          prompt_id?: string
+          rationale?: string
+          registry_version?: number
+          signature_id?: string | null
+          source_direction_id?: string | null
+          status?: string
+          suggestion?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stimulus_cross_refs_orchestration_id_fkey"
+            columns: ["orchestration_id"]
+            isOneToOne: false
+            referencedRelation: "stimulus_orchestrations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stimulus_cross_refs_prompt_id_fkey"
+            columns: ["prompt_id"]
+            isOneToOne: false
+            referencedRelation: "stimulus_prompts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stimulus_cross_refs_signature_id_fkey"
+            columns: ["signature_id"]
+            isOneToOne: false
+            referencedRelation: "stimulus_signatures"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stimulus_directions: {
         Row: {
           created_at: string
@@ -1218,6 +1330,153 @@ export type Database = {
           },
         ]
       }
+      stimulus_orchestrations: {
+        Row: {
+          cd_output: string | null
+          cd_revision_count: number
+          cd_status: string
+          created_at: string
+          created_by: string | null
+          error: string | null
+          id: string
+          phase_note: string | null
+          registry_version: number
+          session_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          cd_output?: string | null
+          cd_revision_count?: number
+          cd_status?: string
+          created_at?: string
+          created_by?: string | null
+          error?: string | null
+          id?: string
+          phase_note?: string | null
+          registry_version?: number
+          session_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          cd_output?: string | null
+          cd_revision_count?: number
+          cd_status?: string
+          created_at?: string
+          created_by?: string | null
+          error?: string | null
+          id?: string
+          phase_note?: string | null
+          registry_version?: number
+          session_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stimulus_orchestrations_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stimulus_prompts: {
+        Row: {
+          channel_name: string
+          created_at: string
+          direction_id: string
+          error: string | null
+          final_prompt: string | null
+          id: string
+          initial_prompt: string | null
+          lens_name: string
+          orchestration_id: string
+          rejected_at: string | null
+          rejected_reason: string | null
+          run_id: string
+          sort_order: number
+          status: string
+          tool_target: string
+          updated_at: string
+          wad_notes: string | null
+          wad_reasoning: string | null
+          wad_revision_count: number
+          wad_status: string
+          working_prompt: string | null
+        }
+        Insert: {
+          channel_name: string
+          created_at?: string
+          direction_id: string
+          error?: string | null
+          final_prompt?: string | null
+          id?: string
+          initial_prompt?: string | null
+          lens_name?: string
+          orchestration_id: string
+          rejected_at?: string | null
+          rejected_reason?: string | null
+          run_id: string
+          sort_order?: number
+          status?: string
+          tool_target?: string
+          updated_at?: string
+          wad_notes?: string | null
+          wad_reasoning?: string | null
+          wad_revision_count?: number
+          wad_status?: string
+          working_prompt?: string | null
+        }
+        Update: {
+          channel_name?: string
+          created_at?: string
+          direction_id?: string
+          error?: string | null
+          final_prompt?: string | null
+          id?: string
+          initial_prompt?: string | null
+          lens_name?: string
+          orchestration_id?: string
+          rejected_at?: string | null
+          rejected_reason?: string | null
+          run_id?: string
+          sort_order?: number
+          status?: string
+          tool_target?: string
+          updated_at?: string
+          wad_notes?: string | null
+          wad_reasoning?: string | null
+          wad_revision_count?: number
+          wad_status?: string
+          working_prompt?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stimulus_prompts_direction_id_fkey"
+            columns: ["direction_id"]
+            isOneToOne: false
+            referencedRelation: "stimulus_directions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stimulus_prompts_orchestration_id_fkey"
+            columns: ["orchestration_id"]
+            isOneToOne: false
+            referencedRelation: "stimulus_orchestrations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stimulus_prompts_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "stimulus_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stimulus_runs: {
         Row: {
           channel_brief: string
@@ -1279,6 +1538,72 @@ export type Database = {
             columns: ["session_id"]
             isOneToOne: false
             referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stimulus_signatures: {
+        Row: {
+          category: string
+          created_at: string
+          description: string
+          id: string
+          name: string
+          orchestration_id: string
+          origin: string
+          registry_version: number
+          retired_at: string | null
+          retired_reason: string | null
+          source_channel: string | null
+          source_direction_id: string | null
+          source_prompt_id: string | null
+          status: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          description?: string
+          id?: string
+          name: string
+          orchestration_id: string
+          origin?: string
+          registry_version?: number
+          retired_at?: string | null
+          retired_reason?: string | null
+          source_channel?: string | null
+          source_direction_id?: string | null
+          source_prompt_id?: string | null
+          status?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string
+          id?: string
+          name?: string
+          orchestration_id?: string
+          origin?: string
+          registry_version?: number
+          retired_at?: string | null
+          retired_reason?: string | null
+          source_channel?: string | null
+          source_direction_id?: string | null
+          source_prompt_id?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stimulus_signatures_orchestration_id_fkey"
+            columns: ["orchestration_id"]
+            isOneToOne: false
+            referencedRelation: "stimulus_orchestrations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stimulus_signatures_source_prompt_id_fkey"
+            columns: ["source_prompt_id"]
+            isOneToOne: false
+            referencedRelation: "stimulus_prompts"
             referencedColumns: ["id"]
           },
         ]
