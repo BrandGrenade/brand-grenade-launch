@@ -276,7 +276,9 @@ export function CreativeStimulus({
   const [open, setOpen] = useState(false);
   const [channel, setChannel] = useState(channels[0] ?? "");
   const [runId, setRunId] = useState<string | null>(null);
-  const [runs, setRuns] = useState<{ id: string; channel_name: string; status: string }[]>([]);
+  const [runs, setRuns] = useState<
+    { id: string; channel_name: string; status: string; created_at?: string }[]
+  >([]);
   const [directions, setDirections] = useState<Direction[]>([]);
   const [runMeta, setRunMeta] = useState<RunMeta>({});
   const [progress, setProgress] = useState(0);
@@ -287,7 +289,9 @@ export function CreativeStimulus({
   const refreshRuns = useCallback(async () => {
     try {
       const r = await listRuns({ data: { sessionId } });
-      setRuns(r.runs as { id: string; channel_name: string; status: string }[]);
+      setRuns(
+        r.runs as { id: string; channel_name: string; status: string; created_at?: string }[],
+      );
     } catch {
       /* non-fatal */
     }
@@ -410,7 +414,9 @@ export function CreativeStimulus({
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                 {runs.map((r) => (
                   <Btn key={r.id} active={r.id === runId} disabled={busy} onClick={() => void openRun(r.id)}>
-                    {r.channel_name}
+                    {`${r.channel_name.slice(0, 28)}${r.channel_name.length > 28 ? "…" : ""} · ${
+                      r.created_at ? new Date(r.created_at).toLocaleDateString() : ""
+                    } · ${r.id.slice(0, 6)}`}
                   </Btn>
                 ))}
               </div>
