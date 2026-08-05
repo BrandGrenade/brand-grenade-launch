@@ -25,6 +25,7 @@ import {
   extractFileText,
   type FileKind,
 } from "@/lib/intelligence/file-extract";
+import { ResearchAggregatorPanel } from "@/components/intelligence/ResearchAggregatorPanel";
 
 export type BriefType = "commercial" | "government";
 
@@ -443,7 +444,25 @@ export function IntelligenceForm({
           </div>
         </Card>
 
+        <ResearchAggregatorPanel
+          brand={brand}
+          category={category}
+          onApply={(fields) => {
+            setInputs((prev) => {
+              const next = { ...prev };
+              for (const s of SECTIONS) {
+                const incoming = (fields[s.key] ?? "").trim();
+                if (!incoming) continue;
+                const existing = next[s.key].trim();
+                next[s.key] = existing ? `${existing}\n\n${incoming}` : incoming;
+              }
+              return next;
+            });
+          }}
+        />
+
         {SECTIONS.map((s) => (
+
           <ResearchSection
             key={s.key}
             spec={s}

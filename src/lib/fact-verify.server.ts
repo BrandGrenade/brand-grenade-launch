@@ -308,7 +308,15 @@ export const FACT_VERIFIED_STAGES = {
       "- EVERY claim the document labels \"Real Fact\" — these are the load-bearing assertions and all of them must be searched\n- Product composition, ingredients, sourcing, manufacturing process, certification\n- Provenance, founding dates, heritage claims, ownership history\n- Records, quantities, rankings, awards, firsts\n- Anything a journalist could fact-check about the brand or its assets",
     maxClaims: 25,
   },
+  aggregator: {
+    label: "Research Aggregator — Externally-Verifiable Claims",
+    outputColumn: "",
+    claimFocus:
+      "- Market size, share, growth, penetration or spend statistics\n- Named competitor activity, campaigns, positioning, ownership, launches\n- Publicly reported cultural, media or social trends and the data behind them\n- Regulation, legislation, industry code or compliance requirement\n- Any dated, numbered or attributed public claim a journalist could check\n\nDo NOT attempt to verify claims that are explicitly marked as client-supplied proprietary data — they are excluded from this batch by design.",
+    maxClaims: 20,
+  },
 } as const satisfies Record<string, FactVerifiedStageConfig>;
+
 
 export type FactVerifiedStageKey = keyof typeof FACT_VERIFIED_STAGES;
 
