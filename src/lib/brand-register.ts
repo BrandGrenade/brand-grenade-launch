@@ -168,6 +168,35 @@ type StimulusOrchRow = {
   updated_at: string;
 };
 
+/** Room 00 — Research Synthesiser run. */
+type SynthesiserRunRow = {
+  id: string;
+  brand_name: string | null;
+  category: string | null;
+  status: string | null;
+  claim_count: number | null;
+  created_at: string;
+  updated_at: string;
+};
+
+function deriveSynthesiser(runs: SynthesiserRunRow[]): SystemStatus {
+  if (runs.length === 0) return EMPTY_STATUS;
+  const latest = runs[0];
+  const applied = runs.some((r) => r.status === "applied");
+  return {
+    state: applied ? "complete" : "in_progress",
+    label: applied
+      ? `Applied${latest.claim_count ? ` · ${latest.claim_count} claims` : ""}`
+      : "In progress",
+    timestamp: latest.updated_at,
+    href: "/synthesiser",
+    hrefSearch: { brand: latest.brand_name ?? "" },
+    runCount: runs.length,
+  };
+}
+
+
+
 
 // ─── Per-system derivation ─────────────────────────────────────────
 
