@@ -91,8 +91,9 @@ function buildStage21UserMessage(
         `WINNING IDEA (lens: ${s.locked_big_idea_lens ?? "—"})`,
         s.locked_big_idea.trim(),
         "",
-        "WINNING CAMPAIGN LINE — carry this line, do not rewrite it",
+        "WINNING CAMPAIGN LINE — this is the campaign's line. Reproduce it verbatim, character for character, wherever the brief states the line. Never substitute the proposition text for the line, never write a channel-specific variant of it, and never present any other sentence as the campaign line.",
         s.locked_campaign_line?.trim() || "—",
+
         "",
         "————",
         "",
