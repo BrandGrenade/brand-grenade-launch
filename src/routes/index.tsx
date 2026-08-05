@@ -1,24 +1,26 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { BrandGrenadeIcon } from "@/components/BrandGrenadeIcon";
 import { submitDemoRequest } from "@/lib/demo-request.functions";
 
 export const Route = createFileRoute("/")({
   component: Index,
   head: () => ({
     meta: [
-      { title: "Brand Grenade — Brand Strategy Intelligence System" },
+      { title: "Brand Grenade — Brand Strategy & Creative Intelligence System" },
       {
         name: "description",
         content:
-          "Explosive strategy. Over 20 divergent directions — only the strongest survives. One brief in, 23 professional documents out, in 2–4 hours.",
+          "Brand Grenade takes a brand from raw intelligence to validated strategy to orchestrated creative — in hours, not weeks. Four connected rooms, 50+ methodologies, 37 creative lenses.",
       },
-      { property: "og:title", content: "Brand Grenade — Brand Strategy Intelligence System" },
+      {
+        property: "og:title",
+        content: "Brand Grenade — Brand Strategy & Creative Intelligence System",
+      },
       {
         property: "og:description",
         content:
-          "Explosive strategy. Over 20 divergent directions — only the strongest survives.",
+          "From raw intelligence to validated strategy to orchestrated creative — in hours, not weeks. Human judgement stays in the room.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -26,376 +28,582 @@ export const Route = createFileRoute("/")({
   }),
 });
 
-/* -------------------- Motion primitives -------------------- */
+/* -------------------- Design system (scoped) -------------------- */
 
-function useInView<T extends Element>(options?: IntersectionObserverInit) {
-  const ref = useRef<T | null>(null);
-  const [inView, setInView] = useState(false);
-  useEffect(() => {
-    const node = ref.current;
-    if (!node || inView) return;
-    const io = new IntersectionObserver((entries) => {
-      for (const e of entries) {
-        if (e.isIntersecting) {
-          setInView(true);
-          io.disconnect();
-          break;
-        }
-      }
-    }, { threshold: 0.25, ...options });
-    io.observe(node);
-    return () => io.disconnect();
-  }, [inView, options]);
-  return { ref, inView };
-}
+const CSS = `
+.bg-home{--void:#0A0908;--ash:#1C1A18;--ash2:#252220;--paper:#EDE8E0;--smoke:#8B8680;
+  --detonation:#C81E1E;--detonation-dim:rgba(200,30,30,0.1);--detonation-line:rgba(200,30,30,0.35);
+  background:var(--void);color:var(--paper);font-family:'Inter',sans-serif;-webkit-font-smoothing:antialiased;min-height:100vh}
+.bg-home *,.bg-home *::before,.bg-home *::after{box-sizing:border-box}
+.bg-home .display{font-family:'Bebas Neue',sans-serif;letter-spacing:.01em}
+.bg-home .wrap{max-width:1080px;margin:0 auto;padding:0 48px}
+@media (max-width:720px){.bg-home .wrap{padding:0 22px}}
+
+.bg-home nav{position:sticky;top:0;z-index:50;background:rgba(10,9,8,0.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--ash)}
+.bg-home .nav-inner{max-width:1080px;margin:0 auto;padding:16px 48px;display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap}
+@media (max-width:720px){.bg-home .nav-inner{padding:14px 22px}}
+.bg-home .nav-logo{display:flex;align-items:center;gap:10px;flex-shrink:0}
+.bg-home .nav-mark{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:.04em}
+.bg-home .nav-signin{color:var(--smoke);font-size:13px;font-weight:500;text-decoration:none;flex-shrink:0;transition:color .2s}
+.bg-home .nav-signin:hover{color:var(--paper)}
+.bg-home .nav-cta{background:var(--detonation);color:var(--paper);font-size:13px;font-weight:600;padding:9px 18px;border-radius:3px;text-decoration:none;border:none;cursor:pointer;font-family:inherit}
+.bg-home .nav-rooms{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.bg-home .nav-rooms a{color:var(--smoke);text-decoration:none;font-size:11px;font-weight:600;letter-spacing:.02em;white-space:nowrap;transition:color .2s}
+.bg-home .nav-rooms a:hover{color:var(--paper)}
+.bg-home .nav-arrow{color:var(--ash2);font-size:11px}
+
+.bg-home .hero{padding:100px 0 80px}
+@media (max-width:720px){.bg-home .hero{padding:56px 0 48px}}
+.bg-home .pin-row{display:flex;align-items:center;gap:24px;margin-bottom:48px}
+.bg-home .pin{width:12px;height:12px;border-radius:50%;background:var(--paper);opacity:.2;flex-shrink:0;transition:background .4s,opacity .4s,box-shadow .4s}
+.bg-home .pin.armed{background:var(--detonation);opacity:1;box-shadow:0 0 0 5px var(--detonation-dim)}
+.bg-home .pin-line{flex:1;height:1px;background:var(--ash2)}
+.bg-home .pin-label{font-size:10px;color:var(--smoke);letter-spacing:.08em;text-transform:uppercase;white-space:nowrap}
+@media (max-width:720px){.bg-home .pin-label{display:none}}
+.bg-home h1.hero-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(48px,6.5vw,80px);line-height:.96;margin-bottom:24px;max-width:20ch;font-weight:400}
+.bg-home h1.hero-title em{font-style:normal;color:var(--detonation)}
+.bg-home .hero-sub{font-size:17px;color:var(--smoke);max-width:56ch;line-height:1.65;margin-bottom:28px}
+.bg-home .hero-weight{font-size:17px;font-weight:600;color:var(--paper);margin-bottom:36px}
+.bg-home .hero-weight span{color:var(--detonation)}
+.bg-home .hero-ctas{display:flex;gap:16px;flex-wrap:wrap}
+.bg-home .btn-primary{background:var(--detonation);color:var(--paper);font-size:14px;font-weight:600;padding:14px 26px;border-radius:3px;text-decoration:none;border:none;cursor:pointer;font-family:inherit}
+.bg-home .btn-ghost{border:1px solid var(--ash2);color:var(--paper);font-size:14px;font-weight:500;padding:13px 26px;border-radius:3px;text-decoration:none}
+.bg-home .hero-stats{margin-top:64px}
+.bg-home .stat-row-label{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--smoke);margin-bottom:8px}
+.bg-home .stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--ash);border:1px solid var(--ash);margin-bottom:24px}
+@media (max-width:720px){.bg-home .stat-row{grid-template-columns:1fr}}
+.bg-home .hstat{background:var(--void);padding:24px 20px}
+.bg-home .hstat .n{font-family:'Bebas Neue',sans-serif;font-size:34px;color:var(--paper)}
+.bg-home .hstat .n span{color:var(--detonation)}
+.bg-home .hstat .l{font-size:13px;color:var(--smoke);margin-top:6px;line-height:1.5}
+
+.bg-home .section{padding:80px 0;border-top:1px solid var(--ash)}
+@media (max-width:720px){.bg-home .section{padding:56px 0}}
+.bg-home .section-eyebrow{font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--smoke);margin-bottom:16px}
+.bg-home .section h2{font-size:34px;max-width:26ch;margin-bottom:28px;font-weight:600;font-family:'Inter',sans-serif;line-height:1.2}
+.bg-home .section p.body{font-size:15px;color:var(--smoke);line-height:1.75;max-width:64ch;margin-bottom:18px}
+.bg-home .callout{background:var(--ash);border:1px solid var(--detonation-line);border-radius:6px;padding:26px;max-width:70ch;margin-top:34px}
+.bg-home .callout .c-title{font-size:16px;font-weight:600;color:var(--paper);margin-bottom:10px}
+.bg-home .callout .c-body{font-size:15px;color:var(--smoke);line-height:1.7}
+
+.bg-home .quicknav{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--ash);border:1px solid var(--ash)}
+@media (max-width:900px){.bg-home .quicknav{grid-template-columns:1fr 1fr}}
+@media (max-width:560px){.bg-home .quicknav{grid-template-columns:1fr}}
+.bg-home .qcard{background:var(--void);padding:24px 20px;text-decoration:none;color:inherit;display:block;transition:background .2s}
+.bg-home .qcard:hover{background:var(--ash)}
+.bg-home .qcard .q-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.bg-home .qcard .q-num{font-family:'Bebas Neue',sans-serif;font-size:13px;color:var(--detonation);letter-spacing:.1em}
+.bg-home .qcard .q-arrow{color:var(--ash2);font-size:14px}
+.bg-home .qcard .q-desc{font-size:13px;color:var(--smoke);line-height:1.55}
+
+.bg-home .room{padding:56px 0;border-top:1px solid var(--ash);display:grid;grid-template-columns:64px 1fr 1fr;gap:32px}
+@media (max-width:820px){.bg-home .room{grid-template-columns:28px 1fr;gap:20px}.bg-home .room-proof{grid-column:2}}
+.bg-home .room-pin-col{display:flex;flex-direction:column;align-items:center;padding-top:4px}
+.bg-home .room-pin{width:16px;height:16px;border-radius:50%;background:var(--detonation);box-shadow:0 0 0 5px var(--detonation-dim);flex-shrink:0}
+.bg-home .room-pin-line{width:1px;flex:1;background:var(--ash2);margin-top:12px}
+.bg-home .room-num{font-family:'Bebas Neue',sans-serif;font-size:13px;color:var(--detonation);letter-spacing:.1em;margin-bottom:8px}
+.bg-home .room-name{font-size:26px;font-weight:600;margin-bottom:14px;font-family:'Inter',sans-serif}
+.bg-home .room-desc{font-size:14px;color:var(--smoke);line-height:1.65;margin-bottom:16px}
+.bg-home .room-facts{display:flex;flex-wrap:wrap;gap:8px}
+.bg-home .room-fact{font-size:11px;color:var(--paper);background:var(--ash);border:1px solid var(--ash2);padding:5px 10px;border-radius:3px}
+.bg-home .room-proof{background:var(--ash);border:1px solid var(--ash2);border-radius:6px;padding:22px 24px;align-self:start}
+.bg-home .room-proof-label{font-size:10px;color:var(--smoke);letter-spacing:.08em;text-transform:uppercase;margin-bottom:12px}
+.bg-home .room-proof-body{font-size:13px;color:var(--paper);line-height:1.7;font-family:monospace}
+.bg-home .redacted{background:var(--smoke);color:var(--smoke);border-radius:2px;padding:0 2px}
+
+.bg-home .rhythm{display:flex;flex-direction:column;gap:1px;background:var(--ash);border:1px solid var(--ash);margin:36px 0;max-width:52ch}
+.bg-home .rhythm-row{background:var(--void);padding:16px 22px;display:flex;align-items:center;gap:16px}
+.bg-home .rhythm-row .who{font-size:12px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;width:88px;flex-shrink:0}
+.bg-home .rhythm-row .who.machine{color:var(--detonation)}
+.bg-home .rhythm-row .who.human{color:var(--smoke)}
+.bg-home .rhythm-row .what{font-size:14px;color:var(--paper)}
+
+.bg-home .closing{padding:88px 0;border-top:1px solid var(--ash)}
+.bg-home .closing h2{font-family:'Bebas Neue',sans-serif;font-size:clamp(34px,4.6vw,52px);font-weight:400;margin-bottom:24px}
+.bg-home .seq{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:28px}
+.bg-home .seq b{font-size:13px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--paper)}
+.bg-home .seq i{font-style:normal;color:var(--detonation);font-size:13px}
+.bg-home .closing p{font-size:16px;color:var(--smoke);line-height:1.75;max-width:64ch}
+
+.bg-home .finalcta{padding:100px 0;border-top:1px solid var(--ash);text-align:center}
+.bg-home .finalcta h2{font-size:clamp(36px,5vw,56px);margin-bottom:20px;font-family:'Bebas Neue',sans-serif;font-weight:400}
+.bg-home .finalcta p{color:var(--smoke);font-size:15px;margin-bottom:32px;max-width:56ch;margin-left:auto;margin-right:auto;line-height:1.7}
+.bg-home footer{border-top:1px solid var(--ash);padding:32px 0;text-align:center;font-size:12px;color:var(--smoke)}
+`;
+
+/* -------------------- Data -------------------- */
+
+const QUICK = [
+  {
+    id: "room-01",
+    num: "01 · INTELLIGENCE LAB",
+    desc: "Turn research, culture, category and competitive signals into ranked strategic territory — before a brief is even written.",
+  },
+  {
+    id: "room-02",
+    num: "02 · BRIEFING ROOM",
+    desc: "Interrogate the brief until it names the real tension, and answers it rather than avoiding it.",
+  },
+  {
+    id: "room-03",
+    num: "03 · STRATEGY PIPELINE",
+    desc: "Explore every serious strategic route in parallel, then validate the one that survives against real precedent.",
+  },
+  {
+    id: "room-04",
+    num: "04 · CREATIVE ENGINE",
+    desc: "Generate 37 divergent creative territories, score them, and orchestrate the strongest approved ideas into one campaign.",
+  },
+];
+
+type Room = {
+  id: string;
+  num: string;
+  name: string;
+  desc: string;
+  facts: string[];
+  proof: React.ReactNode;
+  last?: boolean;
+};
+
+const R = ({ n }: { n: number }) => (
+  <span className="redacted">{"█".repeat(n)}</span>
+);
+
+const ROOMS: Room[] = [
+  {
+    id: "room-01",
+    num: "ROOM 01",
+    name: "Intelligence Lab",
+    desc: "Finds the real opportunity before a single word of brief gets written — so the team never spends weeks solving a problem that was wrong from the start.",
+    facts: ["8 analytical layers", "Confidence-calibrated"],
+    proof: (
+      <>
+        Territory 04 — Confidence: High
+        <br />"<R n={16} /> ownership,
+        <br />
+        not <R n={8} />, is the open lane."
+      </>
+    ),
+  },
+  {
+    id: "room-02",
+    num: "ROOM 02",
+    name: "Briefing Room",
+    desc: "Forces the brief to answer the hard question instead of avoiding it — because a brief vague enough for everyone to agree on is too weak for anyone to actually answer well.",
+    facts: ["6-step diagnostic", "Truths, not assumptions"],
+    proof: (
+      <>
+        Tension: <R n={8} /> demands trust,
+        <br />
+        the audience has already
+        <br />
+        been burned by <R n={8} />.
+      </>
+    ),
+  },
+  {
+    id: "room-03",
+    num: "ROOM 03",
+    name: "Strategy Pipeline",
+    desc: "Searches every serious direction at once, then proves the one that survives — so the strategy in the room already beat the twenty that didn't, not one team's best guess under deadline.",
+    facts: [
+      "50+ methodologies",
+      "16 lateral engines",
+      "Six-dimension strategic validation",
+      "Historical territory validation",
+    ],
+    proof: (
+      <>
+        Selected · Strategic Compliance: Direct
+        <br />
+        Fame 8 · Uniqueness: search-verified
+      </>
+    ),
+  },
+  {
+    id: "room-04",
+    num: "ROOM 04",
+    name: "Creative Engine",
+    desc: "Generates 37 divergent creative territories at once. Human judgement selects the field. The system then scores, develops and orchestrates the strongest ideas into one coherent campaign — built to the standard of the best creative teams, without fracturing into five different ideas under one client name.",
+    facts: [
+      "37 creative lenses",
+      "Eight-dimension creative scoring",
+      "Perfect Imperfection standard",
+      "Signature Registry & cross-channel cohesion",
+      "Live-verified against every real competing campaign",
+    ],
+    proof: (
+      <>
+        Approved territory → 6 channels
+        <br />
+        Cohesion: passed · CD note attached
+      </>
+    ),
+    last: true,
+  },
+];
+
+const RHYTHM: Array<[string, string]> = [
+  ["Machine", "Generates"],
+  ["Humans", "Judge"],
+  ["Machine", "Validates"],
+  ["Humans", "Approve"],
+  ["Machine", "Orchestrates"],
+  ["Humans", "Sign off"],
+];
 
 /* -------------------- Page -------------------- */
-
-const NODES: Array<{ name: string; caption: string }> = [
-  {
-    name: "Intelligence Lab",
-    caption: "Synthesises research into strategic brand opportunities.",
-  },
-  {
-    name: "Briefing Room",
-    caption: "Injects tension into the brief to force real answers.",
-  },
-  {
-    name: "Strategy Pipeline",
-    caption: "Builds sixteen divergent strategies. Stress-tests every one until only the strongest survives.",
-  },
-  {
-    name: "Brand Detonation",
-    caption: "Brings the strategy to life — execution-ready, across every channel.",
-  },
-];
-
-const POWERS: React.ReactNode[] = [
-  <>
-    <span className="font-semibold text-text-primary">50+ proven methodologies</span> — strategic frameworks, behavioural science, brand science, cultural and semiotic analysis — reasoned toward the strongest defensible answer.
-  </>,
-  <>
-    <span className="font-semibold text-text-primary">16 independent thought engines</span>, each hunting a completely different direction.
-  </>,
-  <>
-    <span className="font-semibold text-text-primary">Six-dimension scoring</span> with two hard elimination floors — nothing weak survives.
-  </>,
-  <>
-    <span className="font-semibold text-text-primary">Historical territory validation.</span> Every proposition tested for aligned strategic precedent.
-  </>,
-  <>
-    <span className="font-semibold text-text-primary">28 stages, 6 human checkpoints</span> — every decision traceable.
-  </>,
-];
 
 function Index() {
   const navigate = useNavigate();
   const { user, isAuthReady } = useAuth();
   const [showDemo, setShowDemo] = useState(false);
+  const [armed, setArmed] = useState(0);
 
   useEffect(() => {
     if (isAuthReady && user) navigate({ to: "/dashboard" });
   }, [isAuthReady, user, navigate]);
 
+  useEffect(() => {
+    const t = window.setInterval(
+      () => setArmed((a) => (a >= 4 ? 4 : a + 1)),
+      420,
+    );
+    return () => window.clearInterval(t);
+  }, []);
+
   return (
-    <main className="relative min-h-screen overflow-hidden bg-background">
-      {/* Ambient hero glow */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 -z-0 h-[900px]"
-        style={{
-          background:
-            "radial-gradient(60% 55% at 30% 20%, rgba(212,146,74,0.22) 0%, rgba(212,146,74,0.08) 35%, rgba(212,146,74,0) 70%)",
-        }}
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -z-0 h-[600px] w-[600px] rounded-full"
-        style={{
-          top: "-120px",
-          left: "-160px",
-          background:
-            "radial-gradient(closest-side, rgba(212,146,74,0.18), rgba(212,146,74,0) 70%)",
-          filter: "blur(20px)",
-        }}
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 -z-0"
-        style={{
-          backgroundImage:
-            "linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px)",
-          backgroundSize: "56px 56px",
-          maskImage:
-            "radial-gradient(ellipse at 40% 20%, black 0%, black 40%, transparent 75%)",
-        }}
-      />
+    <div className="bg-home">
+      <style dangerouslySetInnerHTML={{ __html: CSS }} />
 
-      {/* Top bar */}
-      <header className="relative z-10 mx-auto flex w-full max-w-6xl items-center justify-between px-6 pt-6 sm:px-10">
-        <div className="flex items-center gap-3">
-          <BrandGrenadeIcon size={28} />
-          <span
-            className="text-text-primary"
-            style={{ fontSize: 18, fontWeight: 700, letterSpacing: "-0.01em" }}
-          >
-            BRAND GRENADE
-          </span>
-        </div>
-        <Link
-          to="/login"
-          className="text-body-sm font-semibold text-text-secondary transition-colors hover:text-primary"
-        >
-          Sign in →
-        </Link>
-      </header>
-
-      {/* Hero — tight vertical rhythm so the flow appears above the fold */}
-      <section className="relative z-10 mx-auto w-full max-w-6xl px-6 pt-8 sm:px-10 sm:pt-10">
-        <div className="animate-fade-in" style={{ animationDuration: "600ms" }}>
-          <span className="text-label text-primary">
-            Brand Strategy Intelligence System
-          </span>
-
-          <h1
-            className="mt-3 font-bold text-text-primary"
-            style={{
-              fontSize: "clamp(44px, 7.5vw, 96px)",
-              lineHeight: 0.96,
-              letterSpacing: "-0.035em",
-            }}
-          >
-            Explosive{" "}
-            <span
-              style={{
-                background:
-                  "linear-gradient(180deg, var(--color-primary) 0%, #b8792e 100%)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                backgroundClip: "text",
-              }}
+      <nav>
+        <div className="nav-inner">
+          <div className="nav-logo">
+            <img
+              src="/brand-grenade-icon.png"
+              alt="Brand Grenade"
+              width={22}
+              height={22}
+              style={{ display: "block" }}
+            />
+            <div className="nav-mark">BRAND GRENADE</div>
+          </div>
+          <div className="nav-rooms">
+            <a href="#room-01">Intelligence Lab</a>
+            <span className="nav-arrow">→</span>
+            <a href="#room-02">Briefing Room</a>
+            <span className="nav-arrow">→</span>
+            <a href="#room-03">Strategy Pipeline</a>
+            <span className="nav-arrow">→</span>
+            <a href="#room-04">Creative Engine</a>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
+            <Link to="/login" className="nav-signin">
+              Sign in
+            </Link>
+            <button
+              type="button"
+              className="nav-cta"
+              onClick={() => setShowDemo(true)}
             >
-              Strategy.
+              Request a demo
+            </button>
+          </div>
+        </div>
+      </nav>
+
+      <div className="wrap">
+        {/* HERO */}
+        <section className="hero" id="hero">
+          <div className="pin-row">
+            {[0, 1, 2, 3].map((i) => (
+              <div key={i} className="contents">
+                <div className={`pin${i < armed ? " armed" : ""}`} />
+                {i < 3 && <div className="pin-line" />}
+              </div>
+            ))}
+            <span className="pin-label">
+              Enterprise Brand Strategy and Creative Intelligence System
             </span>
+          </div>
+
+          <h1 className="hero-title">
+            The intelligence system for brand strategy <em>and creative.</em>
           </h1>
 
-          <p
-            className="mt-5 text-text-secondary"
-            style={{ maxWidth: 720, fontSize: 20, lineHeight: 1.5 }}
-          >
-            Four connected rooms. Over <span className="font-bold text-primary">20</span> divergent directions. Only the strongest survives.
+          <p className="hero-sub">
+            Brand Grenade takes a brand from raw intelligence to validated
+            strategy to orchestrated creative — in hours, not weeks. Proven
+            methodologies, lateral engines and creative intelligence run in
+            parallel so the strongest opportunity is identified,
+            pressure-tested, and turned into distinctive work that stays
+            coherent from first idea to final channel.
           </p>
-        </div>
-      </section>
 
-      {/* Flow — each node owns its caption as one visual unit */}
-      <section className="relative z-10 mx-auto w-full max-w-6xl px-6 pt-8 sm:px-10 sm:pt-10">
-        <FlowDiagram />
-      </section>
+          <p className="hero-weight">
+            Human judgement stays in the room.{" "}
+            <span>The heavy lifting doesn't.</span>
+          </p>
 
-      {/* Narrative */}
-      <section className="relative z-10 mx-auto w-full max-w-3xl px-6 pt-20 sm:px-10 sm:pt-24">
-        <p
-          className="text-text-primary"
-          style={{ fontSize: 20, lineHeight: 1.5, fontWeight: 600 }}
+          <div className="hero-ctas">
+            <a href="#walkthrough" className="btn-primary">
+              Follow a real brief through it ↓
+            </a>
+            <a href="#rooms-nav" className="btn-ghost">
+              See the four rooms
+            </a>
+          </div>
+
+          <div className="hero-stats">
+            <div className="stat-row-label">The Method</div>
+            <div className="stat-row">
+              <div className="hstat">
+                <div className="n">
+                  50<span>+</span>
+                </div>
+                <div className="l">
+                  Proven strategic methodologies, applied simultaneously
+                </div>
+              </div>
+              <div className="hstat">
+                <div className="n">
+                  20<span>+</span>
+                </div>
+                <div className="l">
+                  Divergent strategic propositions, explored in parallel
+                </div>
+              </div>
+              <div className="hstat">
+                <div className="n">37</div>
+                <div className="l">
+                  Creative lenses, orchestrated into one coherent campaign
+                </div>
+              </div>
+            </div>
+            <div className="stat-row-label">The Outcome</div>
+            <div className="stat-row" style={{ marginBottom: 0 }}>
+              <div className="hstat">
+                <div className="n">
+                  2–4<span>hrs</span>
+                </div>
+                <div className="l">
+                  Raw intelligence to finished creative direction
+                </div>
+              </div>
+              <div className="hstat">
+                <div className="n">14</div>
+                <div className="l">
+                  Scoring dimensions applied across strategy and creative,
+                  before anything reaches a human for sign-off
+                </div>
+              </div>
+              <div className="hstat">
+                <div className="n">23</div>
+                <div className="l">
+                  Structured outputs, every run — strategy, creative platform,
+                  and channel execution
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* FOUR ROOMS QUICK NAV */}
+        <section
+          id="rooms-nav"
+          style={{ padding: "64px 0", borderTop: "1px solid var(--ash)" }}
         >
-          Raw research in. <span className="text-primary">23</span> professional documents out. <span className="text-primary">2–4 hours</span>, start to finish.
-        </p>
-      </section>
+          <div className="section-eyebrow">
+            The Four Rooms — One Connected System
+          </div>
+          <div className="quicknav">
+            {QUICK.map((q) => (
+              <a key={q.id} href={`#${q.id}`} className="qcard">
+                <div className="q-top">
+                  <span className="q-num">{q.num}</span>
+                  <span className="q-arrow">→</span>
+                </div>
+                <div className="q-desc">{q.desc}</div>
+              </a>
+            ))}
+          </div>
+        </section>
 
-      {/* What powers it */}
-      <section className="relative z-10 mx-auto w-full max-w-3xl px-6 pt-20 sm:px-10 sm:pt-24">
-        <h2
-          className="text-text-primary"
-          style={{ fontSize: 14, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--color-primary)" }}
+        {/* THE BOTTLENECK */}
+        <section className="section">
+          <div className="section-eyebrow">The Bottleneck</div>
+          <h2>
+            The problem isn't intelligence. It's the work required to turn
+            intelligence into a decision.
+          </h2>
+          <p className="body">
+            Research arrives fragmented — category, culture, competitor and
+            customer evidence sitting in separate documents, owned by separate
+            people, never fully reconciled. Strategic routes get explored
+            sequentially rather than in parallel, so the team commits to one
+            direction long before it knows what the alternatives would have
+            produced. Validation arrives late, after senior hours have already
+            been spent developing a route nobody has yet pressure-tested.
+            Creative develops in a single direction because there was never
+            time to develop more than one properly. And the most experienced
+            people in the building spend the majority of their week
+            coordinating the process instead of exercising the judgement they
+            were hired for.
+          </p>
+          <div className="callout">
+            <div className="c-title">
+              Brand Grenade doesn't compress that process. It changes its
+              geometry.
+            </div>
+            <div className="c-body">
+              Instead of one route explored slowly, many routes are explored at
+              once — challenged, scored, and stress-tested before a single
+              senior hour is spent developing the wrong one. The planner, the
+              strategist and the CD arrive at the decision with the field
+              already in front of them, not with one option and a deadline.
+            </div>
+          </div>
+        </section>
+
+        {/* WALKTHROUGH INTRO */}
+        <section
+          className="section"
+          id="walkthrough"
+          style={{ paddingBottom: 24 }}
         >
-          What powers it
-        </h2>
-        <ul className="mt-6 flex flex-col gap-4">
-          {POWERS.map((content, i) => (
-            <PowerCard key={i} delay={i * 90}>
-              {content}
-            </PowerCard>
-          ))}
-        </ul>
-      </section>
+          <div className="section-eyebrow">Not A Claim — A Walkthrough</div>
+          <h2 style={{ marginBottom: 16 }}>
+            Follow one real brief through all four rooms.
+          </h2>
+          <p className="body">
+            Every excerpt below is a real, redacted extract from an actual
+            session — not a mockup. Identifying details removed; the mechanism
+            is exactly what runs today.
+          </p>
+        </section>
 
-      {/* CTA */}
-      <section className="relative z-10 mx-auto w-full max-w-3xl px-6 pb-32 pt-16 sm:px-10 sm:pt-20">
-        <button
-          type="button"
-          onClick={() => setShowDemo(true)}
-          className="group relative inline-flex h-14 items-center justify-center overflow-hidden rounded-md bg-primary px-10 text-[14px] font-semibold uppercase tracking-wider text-primary-foreground transition-all duration-300 hover:scale-[1.03] hover:shadow-[0_0_40px_rgba(212,146,74,0.55)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.99]"
-        >
-          <span
-            aria-hidden
-            className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-700 group-hover:translate-x-full"
-          />
-          <span className="relative">Request Demo</span>
-        </button>
+        {/* ROOMS */}
+        {ROOMS.map((room) => (
+          <div className="room" id={room.id} key={room.id}>
+            <div className="room-pin-col">
+              <div className="room-pin" />
+              {!room.last && <div className="room-pin-line" />}
+            </div>
+            <div className="room-content">
+              <div className="room-num">{room.num}</div>
+              <div className="room-name">{room.name}</div>
+              <div className="room-desc">{room.desc}</div>
+              <div className="room-facts">
+                {room.facts.map((f) => (
+                  <div className="room-fact" key={f}>
+                    {f}
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="room-proof">
+              <div className="room-proof-label">Live Session Excerpt</div>
+              <div className="room-proof-body">{room.proof}</div>
+            </div>
+          </div>
+        ))}
 
-        <p className="mt-16 text-body-sm" style={{ color: "var(--color-text-tertiary)" }}>
-          Brand Grenade Strategy Intelligence System
-        </p>
-      </section>
+        {/* HUMAN GOVERNANCE */}
+        <section className="section">
+          <div className="section-eyebrow">What Doesn't Change</div>
+          <h2>
+            The planner still decides what matters. The strategist still
+            determines the opportunity. The CD still decides what lives.
+          </h2>
+          <div className="rhythm">
+            {RHYTHM.map(([who, what]) => (
+              <div className="rhythm-row" key={what}>
+                <span
+                  className={`who ${who === "Machine" ? "machine" : "human"}`}
+                >
+                  {who}
+                </span>
+                <span className="what">{what}</span>
+              </div>
+            ))}
+          </div>
+          <p className="body">
+            Brand Grenade does not automate judgement. It automates the
+            enormous amount of work that surrounds judgement — the research,
+            the divergence, the testing, the scoring, the documentation — so
+            the people making the real decisions are making them on a stronger
+            foundation, faster.
+          </p>
+        </section>
+
+        {/* CLOSING STATEMENT */}
+        <section className="closing">
+          <h2>From possibility to decision.</h2>
+          <div className="seq">
+            <b>Intelligence</b>
+            <i>→</i>
+            <b>Briefing</b>
+            <i>→</i>
+            <b>Strategy</b>
+            <i>→</i>
+            <b>Creative</b>
+          </div>
+          <p>
+            Research goes in. Every room builds on the one before it — nothing
+            skipped, nothing reinterpreted. Nothing gets lost between the
+            strategy deck and the work.
+          </p>
+        </section>
+
+        {/* FINAL CTA */}
+        <section className="finalcta" id="contact">
+          <h2>See it on your brief.</h2>
+          <p>
+            Send a real brief. See exactly what the system produces — not a
+            pitch, the capability itself.
+          </p>
+          <button
+            type="button"
+            className="btn-primary"
+            onClick={() => setShowDemo(true)}
+          >
+            Request a demo
+          </button>
+        </section>
+      </div>
+
+      <footer>
+        Brand Grenade — Enterprise Brand Strategy and Creative Intelligence
+        System
+      </footer>
 
       {showDemo && <RequestDemoModal onClose={() => setShowDemo(false)} />}
-    </main>
-  );
-}
-
-/* -------------------- Components -------------------- */
-
-function PowerCard({
-  children,
-  delay,
-}: {
-  children: React.ReactNode;
-  delay: number;
-}) {
-  const { ref, inView } = useInView<HTMLLIElement>();
-  return (
-    <li
-      ref={ref}
-      className="rounded-lg border border-border bg-surface-2/60 px-6 py-5 backdrop-blur-sm transition-all duration-300 hover:border-primary/40 hover:bg-surface-2"
-      style={{
-        opacity: inView ? 1 : 0,
-        transform: inView ? "translateY(0)" : "translateY(16px)",
-        transition: `opacity 500ms ease-out ${delay}ms, transform 500ms ease-out ${delay}ms, border-color 200ms, background-color 200ms`,
-      }}
-    >
-      <span className="text-text-secondary" style={{ fontSize: 17, lineHeight: 1.5 }}>
-        {children}
-      </span>
-    </li>
-  );
-}
-
-function FlowDiagram() {
-  const { ref, inView } = useInView<HTMLDivElement>({ threshold: 0.15 });
-  return (
-    <div
-      ref={ref}
-      className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-stretch sm:gap-0"
-      aria-label="Four-room process flow"
-    >
-      {NODES.map((node, i) => (
-        <div key={node.name} className="contents">
-          <FlowNode
-            name={node.name}
-            caption={node.caption}
-            index={i + 1}
-            shown={inView}
-            delay={i * 180}
-          />
-          {i < NODES.length - 1 && (
-            <FlowArrow shown={inView} delay={i * 180 + 90} />
-          )}
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function FlowNode({
-  name,
-  caption,
-  index,
-  shown,
-  delay,
-}: {
-  name: string;
-  caption: string;
-  index: number;
-  shown: boolean;
-  delay: number;
-}) {
-  return (
-    <div
-      className="group relative flex flex-1 cursor-default flex-col overflow-hidden rounded-lg border border-primary/25 bg-gradient-to-b from-surface-2/80 to-surface-2/40 px-5 py-5 backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/70 hover:from-surface-2 hover:to-surface-2/70 hover:shadow-[0_0_28px_rgba(212,146,74,0.28)]"
-      style={{
-        minHeight: 168,
-        opacity: shown ? 1 : 0,
-        transform: shown ? "translateY(0) scale(1)" : "translateY(8px) scale(0.96)",
-        transition: `opacity 500ms ease-out ${delay}ms, transform 500ms cubic-bezier(0.2,0.8,0.2,1) ${delay}ms, border-color 200ms, box-shadow 200ms, background-color 200ms`,
-      }}
-    >
-      <div className="flex items-center gap-2">
-        <span
-          aria-hidden
-          className="inline-flex h-6 w-6 items-center justify-center rounded border border-primary/40 font-mono text-primary/80 transition-colors group-hover:border-primary group-hover:text-primary"
-          style={{ fontSize: 10, letterSpacing: "0.08em" }}
-        >
-          {String(index).padStart(2, "0")}
-        </span>
-        <span className="text-body-sm font-semibold text-text-primary transition-colors group-hover:text-primary">
-          {name}
-        </span>
-      </div>
-      <p
-        className="mt-3 text-text-secondary"
-        style={{ fontSize: 13.5, lineHeight: 1.5 }}
-      >
-        {caption}
-      </p>
-      <span
-        aria-hidden
-        className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-      />
-    </div>
-  );
-}
-
-function FlowArrow({ shown, delay }: { shown: boolean; delay: number }) {
-  return (
-    <div
-      aria-hidden="true"
-      className="flex items-center justify-center sm:px-2"
-      style={{
-        opacity: shown ? 1 : 0,
-        transform: shown ? "scale(1)" : "scale(0.6)",
-        transition: `opacity 400ms ease-out ${delay}ms, transform 400ms ease-out ${delay}ms`,
-      }}
-    >
-      {/* Horizontal (desktop) */}
-      <svg
-        className="hidden sm:block"
-        width="32"
-        height="10"
-        viewBox="0 0 32 10"
-        fill="none"
-      >
-        <defs>
-          <linearGradient id="flowArrowH" x1="0" x2="1" y1="0" y2="0">
-            <stop offset="0%" stopColor="var(--color-primary)" stopOpacity="0.15" />
-            <stop offset="100%" stopColor="var(--color-primary)" stopOpacity="1" />
-          </linearGradient>
-        </defs>
-        <line x1="0" y1="5" x2="26" y2="5" stroke="url(#flowArrowH)" strokeWidth="1.5" />
-        <path d="M22 1 L30 5 L22 9" stroke="var(--color-primary)" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-      {/* Vertical (mobile) */}
-      <svg
-        className="sm:hidden"
-        width="10"
-        height="24"
-        viewBox="0 0 10 24"
-        fill="none"
-      >
-        <defs>
-          <linearGradient id="flowArrowV" x1="0" x2="0" y1="0" y2="1">
-            <stop offset="0%" stopColor="var(--color-primary)" stopOpacity="0.15" />
-            <stop offset="100%" stopColor="var(--color-primary)" stopOpacity="1" />
-          </linearGradient>
-        </defs>
-        <line x1="5" y1="0" x2="5" y2="18" stroke="url(#flowArrowV)" strokeWidth="1.5" />
-        <path d="M1 14 L5 22 L9 14" stroke="var(--color-primary)" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
     </div>
   );
 }
 
 /* -------------------- Modal -------------------- */
+
+const fieldStyle: React.CSSProperties = {
+  width: "100%",
+  background: "var(--void)",
+  border: "1px solid var(--ash2)",
+  borderRadius: 3,
+  color: "var(--paper)",
+  padding: "10px 12px",
+  fontSize: 14,
+  fontFamily: "inherit",
+};
+
+const labelStyle: React.CSSProperties = {
+  display: "block",
+  fontSize: 12,
+  color: "var(--smoke)",
+  marginBottom: 6,
+  letterSpacing: ".04em",
+  textTransform: "uppercase",
+};
 
 function RequestDemoModal({ onClose }: { onClose: () => void }) {
   const [name, setName] = useState("");
@@ -426,7 +634,11 @@ function RequestDemoModal({ onClose }: { onClose: () => void }) {
       });
       setDone(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Something went wrong. Please try again.",
+      );
     } finally {
       setSubmitting(false);
     }
@@ -434,25 +646,58 @@ function RequestDemoModal({ onClose }: { onClose: () => void }) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 py-8 animate-fade-in"
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 100,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "rgba(10,9,8,0.86)",
+        padding: 24,
+      }}
       role="dialog"
       aria-modal="true"
       aria-labelledby="demo-heading"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-md rounded-lg border border-border bg-surface-2 p-8 shadow-2xl animate-scale-in"
+        style={{
+          width: "100%",
+          maxWidth: 460,
+          background: "var(--ash)",
+          border: "1px solid var(--ash2)",
+          borderRadius: 6,
+          padding: 32,
+        }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="mb-6 flex items-start justify-between">
-          <h2 id="demo-heading" className="text-h2 text-text-primary">
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "flex-start",
+            marginBottom: 22,
+          }}
+        >
+          <h2
+            id="demo-heading"
+            className="display"
+            style={{ fontSize: 28, fontWeight: 400, color: "var(--paper)" }}
+          >
             {done ? "Request received" : "Request a demo"}
           </h2>
           <button
             type="button"
             onClick={onClose}
-            className="text-text-tertiary hover:text-text-primary"
             aria-label="Close"
+            style={{
+              background: "none",
+              border: "none",
+              color: "var(--smoke)",
+              cursor: "pointer",
+              fontSize: 16,
+            }}
           >
             ✕
           </button>
@@ -460,42 +705,88 @@ function RequestDemoModal({ onClose }: { onClose: () => void }) {
 
         {done ? (
           <>
-            <p className="text-body-sm text-text-secondary">Thanks — we'll be in touch.</p>
+            <p style={{ fontSize: 14, color: "var(--smoke)", lineHeight: 1.7 }}>
+              Thanks — we'll be in touch.
+            </p>
             <button
               type="button"
               onClick={onClose}
-              className="mt-6 w-full rounded bg-primary px-4 py-2 text-white hover:bg-primary-hover"
+              className="btn-primary"
+              style={{ marginTop: 24, width: "100%" }}
             >
               Close
             </button>
           </>
         ) : (
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <form
+            onSubmit={handleSubmit}
+            style={{ display: "flex", flexDirection: "column", gap: 16 }}
+          >
             <div>
-              <label htmlFor="demo-name" className="text-body-sm mb-2 block text-text-secondary">Name</label>
-              <input id="demo-name" required value={name} onChange={(e) => setName(e.target.value)} className="input-base h-11 w-full" maxLength={120} />
-            </div>
-            <div>
-              <label htmlFor="demo-email" className="text-body-sm mb-2 block text-text-secondary">Email</label>
-              <input id="demo-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="input-base h-11 w-full" maxLength={255} />
-            </div>
-            <div>
-              <label htmlFor="demo-company" className="text-body-sm mb-2 block text-text-secondary">Company</label>
-              <input id="demo-company" required value={company} onChange={(e) => setCompany(e.target.value)} className="input-base h-11 w-full" maxLength={160} />
-            </div>
-            <div>
-              <label htmlFor="demo-message" className="text-body-sm mb-2 block text-text-secondary">
-                Message <span className="text-text-tertiary">(optional)</span>
+              <label htmlFor="demo-name" style={labelStyle}>
+                Name
               </label>
-              <textarea id="demo-message" value={message} onChange={(e) => setMessage(e.target.value)} className="input-base w-full py-2" rows={4} maxLength={2000} />
+              <input
+                id="demo-name"
+                required
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                style={fieldStyle}
+                maxLength={120}
+              />
+            </div>
+            <div>
+              <label htmlFor="demo-email" style={labelStyle}>
+                Email
+              </label>
+              <input
+                id="demo-email"
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                style={fieldStyle}
+                maxLength={255}
+              />
+            </div>
+            <div>
+              <label htmlFor="demo-company" style={labelStyle}>
+                Company
+              </label>
+              <input
+                id="demo-company"
+                required
+                value={company}
+                onChange={(e) => setCompany(e.target.value)}
+                style={fieldStyle}
+                maxLength={160}
+              />
+            </div>
+            <div>
+              <label htmlFor="demo-message" style={labelStyle}>
+                Message (optional)
+              </label>
+              <textarea
+                id="demo-message"
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                style={{ ...fieldStyle, resize: "vertical" }}
+                rows={4}
+                maxLength={2000}
+              />
             </div>
 
-            {error && <p className="text-body-sm text-red-400">{error}</p>}
+            {error && (
+              <p style={{ fontSize: 13, color: "var(--detonation)" }}>
+                {error}
+              </p>
+            )}
 
             <button
               type="submit"
               disabled={submitting}
-              className="mt-2 rounded bg-primary px-4 py-2 text-white hover:bg-primary-hover disabled:opacity-60"
+              className="btn-primary"
+              style={{ opacity: submitting ? 0.6 : 1 }}
             >
               {submitting ? "Sending…" : "Send request"}
             </button>
