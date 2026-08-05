@@ -1767,6 +1767,42 @@ export type Database = {
         }
         Relationships: []
       }
+      synthesiser_runs: {
+        Row: {
+          applied_at: string | null
+          brand_name: string
+          category: string | null
+          claim_count: number
+          created_at: string
+          id: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          applied_at?: string | null
+          brand_name: string
+          category?: string | null
+          claim_count?: number
+          created_at?: string
+          id?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          applied_at?: string | null
+          brand_name?: string
+          category?: string | null
+          claim_count?: number
+          created_at?: string
+          id?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       users: {
         Row: {
           created_at: string
