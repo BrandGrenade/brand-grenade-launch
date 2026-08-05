@@ -137,8 +137,11 @@ function buildStage21UserMessage(
     "VALIDATED SMP",
     s.selected_smp?.trim() || "—",
     "",
-    "SELECTED DETONATION LINE (Stage 18 — short campaign line, must appear first under THE DETONATION)",
+    s.locked_campaign_line?.trim()
+      ? "SELECTED DETONATION LINE (Stage 18 — SUPERSEDED. A campaign line has been locked above; this text is historical context only. Do not reproduce it as the campaign line and do not open the brief with it.)"
+      : "SELECTED DETONATION LINE (Stage 18 — short campaign line, must appear first under THE DETONATION)",
     s.stage_18_detonation_line?.trim() || "—",
+
     "",
     "SELECTED DETONATION STATEMENT (Stage 18 — full statement, must appear directly below the line under THE DETONATION)",
     s.stage_18_selected_detonation?.trim() || "—",
