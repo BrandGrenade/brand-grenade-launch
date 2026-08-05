@@ -212,7 +212,7 @@ type Room = {
   id: string;
   num: string;
   name: string;
-  desc: string;
+  desc: React.ReactNode;
   facts: string[];
   proof: React.ReactNode;
   last?: boolean;
@@ -227,7 +227,13 @@ const ROOMS: Room[] = [
     id: "room-00",
     num: "ROOM 00 — OPTIONAL",
     name: "Research Synthesiser",
-    desc: "Reads across everything the team already has — scan data, sales data, qualitative and quantitative research, desktop research, industry reports — identifies what actually matters to brand strategy, and turns it into a structured evidence base. Public claims are verified against live search. Proprietary data is never checked against the internet, only clearly attributed. Skippable: teams who prefer to enter research manually go straight to the Intelligence Lab.",
+    desc: (
+      <>
+        Reads across scan data, sales data, qual and quant research, desktop research, and industry reports — identifies what matters to brand strategy, verifies public claims, and automatically structures the evidence in Intelligence Lab. Your proprietary data is never checked against the internet, only clearly attributed. Skippable — go straight to Intelligence Lab if your research is already sorted.
+        <br />
+        Extract → Classify → Verify → Structure
+      </>
+    ),
     facts: [
       "PDF, DOCX, PPTX, XLSX, CSV, TXT",
       "Claim-level extraction",
