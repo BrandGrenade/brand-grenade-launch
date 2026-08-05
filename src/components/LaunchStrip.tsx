@@ -16,6 +16,7 @@ import { supabase } from "@/integrations/supabase/client";
 const INTERNAL_PREFIXES = [
   "/dashboard",
   "/pipeline",
+  "/synthesiser",
   "/intelligence",
   "/briefing-room",
   "/brief",
@@ -23,6 +24,7 @@ const INTERNAL_PREFIXES = [
   "/creative",
   "/settings",
 ];
+
 
 const buttonClass = "launch-strip-button";
 
