@@ -97,18 +97,34 @@ function useLatestCreativeSession(enabled: boolean): string | null {
   return sessionId;
 }
 
+/**
+ * Session the user is currently working in, read from the URL. Keeps the
+ * Creative Engine button anchored to the brand on screen instead of jumping
+ * to whichever session happened to be touched last.
+ */
+function useSessionInContext(pathname: string, search: string): string | null {
+  const creative = /^\/creative\/([0-9a-f-]{8,})/i.exec(pathname);
+  if (creative) return creative[1];
+  const qs = new URLSearchParams(search);
+  return qs.get("session") ?? qs.get("sessionId") ?? null;
+}
+
 export function LaunchStrip() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const searchStr = useRouterState({ select: (s) => s.location.searchStr });
   const { user, isAuthReady } = useAuth();
   const isInternal = INTERNAL_PREFIXES.some(
     (p) => pathname === p || pathname.startsWith(p + "/"),
   );
-  const creativeSessionId = useLatestCreativeSession(
+  const contextSessionId = useSessionInContext(pathname, searchStr ?? "");
+  const latestCreativeSessionId = useLatestCreativeSession(
     Boolean(isAuthReady && user && isInternal),
   );
+  const creativeSessionId = contextSessionId ?? latestCreativeSessionId;
   // Hard gate: never render for unauthenticated visitors.
   if (!isAuthReady || !user) return null;
   if (!isInternal) return null;
+
 
   return (
     <>
