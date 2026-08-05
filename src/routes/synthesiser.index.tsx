@@ -37,16 +37,6 @@ export const Route = createFileRoute("/synthesiser/")({
   component: SynthesiserRoom,
 });
 
-const IN_TAGS = [
-  "Scan data",
-  "Sales data",
-  "Qualitative research",
-  "Quantitative research",
-  "Desktop research",
-  "Industry reports",
-];
-
-const FORMATS = ["PDF", "DOCX", "PPTX", "XLSX", "CSV", "TXT"];
 
 function SynthesiserRoom() {
   const navigate = useNavigate();
