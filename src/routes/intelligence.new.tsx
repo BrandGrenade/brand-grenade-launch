@@ -39,7 +39,11 @@ function IntelligenceNewPage() {
   const search = Route.useSearch();
   const createFn = useServerFn(createIntelligenceSession);
   const runFn = useServerFn(runIntelligenceAnalysis);
-  const [initialBrand] = useState(search.brand ?? "");
+  // Room 00 is optional. When it was skipped there is no handoff and the form
+  // renders exactly as it always has.
+  const [handoff] = useState(() => consumeSynthesiserHandoff());
+  const [initialBrand] = useState(handoff?.brand || (search.brand ?? ""));
+
 
   async function handleSubmit(values: IntelligenceFormValues): Promise<void> {
     try {
