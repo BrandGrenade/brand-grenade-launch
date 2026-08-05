@@ -306,6 +306,7 @@ export const FACT_VERIFIED_STAGES = {
     outputColumn: "stage_4b_output",
     claimFocus:
       "- EVERY claim the document labels \"Real Fact\" — these are the load-bearing assertions and all of them must be searched\n- Product composition, ingredients, sourcing, manufacturing process, certification\n- Provenance, founding dates, heritage claims, ownership history\n- Records, quantities, rankings, awards, firsts\n- Anything a journalist could fact-check about the brand or its assets",
+    maxClaims: 25,
   },
   aggregator: {
     label: "Research Aggregator — Externally-Verifiable Claims",
