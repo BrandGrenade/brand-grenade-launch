@@ -42,20 +42,20 @@ const ACCENT = "#C81E1E";
 
 function extraStyles(): string {
   return `
-.es-process { margin: 6pt 0 0; padding: 12pt 14pt; border: 1pt solid #EDE8E0; border-radius: 6pt; background: #EDE8E0; font-size: 10pt; font-weight: bold; letter-spacing: 0.01em; color: #1C1A18; }
+.es-process { margin: 6pt 0 0; padding: 12pt 14pt; border: 1pt solid var(--rule); border-radius: 4pt; background: var(--surface); font-size: 10pt; font-weight: 600; letter-spacing: 0.01em; color: var(--ash); }
 .es-list { margin: 0; padding: 0; list-style: none; }
-.es-item { padding: 10pt 0; border-bottom: 0.5pt solid #EDE8E0; }
+.es-item { padding: 10pt 0; border-bottom: 0.5pt solid var(--rule); }
 .es-item:last-child { border-bottom: none; }
-.es-item .es-status { display: inline-block; font-size: 8pt; font-weight: bold; letter-spacing: 0.1em; text-transform: uppercase; color: ${ACCENT}; margin-bottom: 4pt; }
-.es-item .es-status.muted { color: #8B8680; }
-.es-item .es-prop { font-size: 11pt; font-weight: bold; color: #1C1A18; }
-.es-item .es-note { font-size: 9.5pt; color: #8B868024e; margin-top: 3pt; }
+.es-item .es-status { display: inline-block; font-size: 9pt; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: ${ACCENT}; margin-bottom: 4pt; }
+.es-item .es-status.muted { color: var(--smoke); }
+.es-item .es-prop { font-size: 11pt; font-weight: 600; color: var(--ash); }
+.es-item .es-note { font-size: 9.5pt; color: var(--smoke); margin-top: 3pt; }
 .es-kv { font-size: 10pt; margin-bottom: 8pt; }
-.es-kv .es-label { font-weight: bold; color: #1C1A18; }
+.es-kv .es-label { font-weight: 600; color: var(--ash); }
 table.es-table { width: 100%; border-collapse: collapse; font-size: 10pt; }
-table.es-table th, table.es-table td { text-align: left; vertical-align: top; padding: 8pt 10pt; border-bottom: 0.5pt solid #EDE8E0; }
-table.es-table th { width: 34%; font-weight: bold; color: #1C1A18; background: #EDE8E0; }
-.es-missing { font-size: 9.5pt; color: #8B868036e; font-style: italic; }
+table.es-table th, table.es-table td { text-align: left; vertical-align: top; padding: 8pt 10pt; border-bottom: 0.5pt solid var(--rule); }
+table.es-table th { width: 34%; font-weight: 600; color: var(--ash); background: var(--surface); }
+.es-missing { font-size: 9.5pt; color: var(--smoke); font-style: italic; }
 `;
 }
 

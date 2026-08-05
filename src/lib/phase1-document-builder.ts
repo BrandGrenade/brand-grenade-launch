@@ -95,52 +95,58 @@ function stripStage1Internals(text: string): string {
 }
 
 export function baseStyles(): string {
-  return `@page { size: A4; margin: 20mm 22mm 20mm 22mm; }
+  // Brand Grenade design system — void #0A0908 · ash #1C1A18 · paper #EDE8E0
+  // · smoke #8B8680 · detonation #C81E1E. Two paper tints (--surface, --rule)
+  // are derived from those values so surfaces and rules stay visible on paper.
+  return `@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&display=swap');
+:root { --void: #0A0908; --ash: #1C1A18; --paper: #EDE8E0; --smoke: #8B8680; --detonation: ${ACCENT}; --surface: #E1DCD4; --rule: #C2BCB5; }
+@page { size: A4; margin: 20mm 22mm 20mm 22mm; }
 * { margin: 0; padding: 0; box-sizing: border-box; }
-html, body { background: #EDE8E0; }
-body { font-family: Arial, Helvetica, sans-serif; font-size: 10.5pt; line-height: 1.8; color: #1C1A18; padding: 64px 0 64px; }
-.page { max-width: 760px; margin: 0 auto; background: white; padding: 56pt 56pt 56pt; box-shadow: 0 6px 24px rgba(0,0,0,0.08); }
-#toolbar { position: fixed; top: 0; left: 0; right: 0; background: #1C1A18; padding: 10px 24px; display: flex; justify-content: space-between; align-items: center; z-index: 999; }
-#toolbar span { color: #8B8680; font-size: 12px; }
-#toolbar .actions button { background: ${ACCENT}; color: #0A0908; border: none; padding: 8px 20px; border-radius: 4px; font-size: 13px; font-weight: bold; cursor: pointer; margin-left: 8px; }
-#toolbar .actions button.close { background: transparent; color: #8B8680; border: 1px solid #1C1A18; }
+html, body { background: var(--void); }
+body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; font-size: 10.5pt; line-height: 1.8; color: var(--ash); padding: 64px 0 64px; -webkit-font-smoothing: antialiased; }
+.page { max-width: 760px; margin: 0 auto; background: var(--paper); padding: 56pt 56pt 56pt; box-shadow: 0 6px 24px rgba(0,0,0,0.45); }
+#toolbar { position: fixed; top: 0; left: 0; right: 0; background: var(--ash); border-bottom: 1px solid #2A2724; padding: 10px 24px; display: flex; justify-content: space-between; align-items: center; z-index: 999; }
+#toolbar span { color: var(--smoke); font-size: 13px; }
+#toolbar .actions button { background: var(--detonation); color: var(--paper); border: none; padding: 8px 20px; border-radius: 3px; font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; margin-left: 8px; }
+#toolbar .actions button.close { background: transparent; color: var(--smoke); border: 1px solid #2A2724; }
 @media print {
   #toolbar { display: none; }
-  body { padding: 0; background: white; }
-  .page { box-shadow: none; max-width: none; padding: 0; }
+  @page { margin: 0; }
+  html, body { padding: 0; background: var(--paper); }
+  .page { box-shadow: none; max-width: none; padding: 20mm 22mm; background: var(--paper); }
   .section { page-break-inside: avoid; }
   .doc-break { page-break-before: always; }
   h2 { page-break-after: avoid; }
   .cover { page-break-after: always; }
 }
-.cover { min-height: 80vh; display: flex; flex-direction: column; justify-content: center; padding: 40pt 0; border-bottom: 2pt solid ${ACCENT}; margin-bottom: 32pt; }
-.cover-brand { font-size: 11pt; font-weight: bold; letter-spacing: 0.1em; color: #1C1A18; margin-bottom: 8pt; }
-.cover-label { font-size: 9pt; font-weight: bold; letter-spacing: 0.12em; color: ${ACCENT}; text-transform: uppercase; margin-bottom: 24pt; }
-.cover-title { font-size: 22pt; font-weight: 700; color: #1C1A18; line-height: 1.2; margin-bottom: 24pt; }
-.cover-rule { width: 40pt; height: 2pt; background: ${ACCENT}; margin-bottom: 20pt; }
-.cover-date { font-size: 9pt; color: #8B8680; }
-.cover-confidential { font-size: 8pt; color: #8B8680; margin-top: 8pt; letter-spacing: 0.06em; }
+.cover { min-height: 80vh; display: flex; flex-direction: column; justify-content: center; padding: 40pt 0; border-bottom: 2pt solid var(--detonation); margin-bottom: 32pt; }
+.cover-brand { font-family: 'Bebas Neue', Impact, sans-serif; font-size: 15pt; letter-spacing: 0.06em; color: var(--ash); margin-bottom: 10pt; }
+.cover-label { font-size: 9pt; font-weight: 600; letter-spacing: 0.12em; color: var(--detonation); text-transform: uppercase; margin-bottom: 24pt; }
+.cover-title { font-family: 'Bebas Neue', Impact, sans-serif; font-size: 40pt; font-weight: 400; color: var(--ash); line-height: 1.02; letter-spacing: 0.01em; margin-bottom: 24pt; }
+.cover-rule { width: 40pt; height: 2pt; background: var(--detonation); margin-bottom: 20pt; }
+.cover-date { font-size: 9.5pt; color: var(--smoke); }
+.cover-confidential { font-size: 9pt; color: var(--smoke); margin-top: 8pt; letter-spacing: 0.06em; }
 .section { margin-bottom: 32pt; padding-top: 8pt; }
-.part-label { font-size: 8pt; font-weight: bold; letter-spacing: 0.12em; color: ${ACCENT}; text-transform: uppercase; margin-bottom: 6pt; }
-h2 { font-size: 14pt; font-weight: bold; color: #1C1A18; margin-bottom: 12pt; padding-left: 10pt; border-left: 3pt solid ${ACCENT}; line-height: 1.3; }
-h3 { font-size: 11pt; font-weight: bold; color: #1C1A18; margin-top: 16pt; margin-bottom: 8pt; }
-h4 { font-size: 10pt; font-weight: bold; color: #1C1A18; margin-top: 12pt; margin-bottom: 6pt; }
+.part-label { font-size: 9pt; font-weight: 600; letter-spacing: 0.12em; color: var(--detonation); text-transform: uppercase; margin-bottom: 6pt; }
+h2 { font-size: 15pt; font-weight: 600; letter-spacing: -0.01em; color: var(--ash); margin-bottom: 12pt; padding-left: 10pt; border-left: 3pt solid var(--detonation); line-height: 1.25; }
+h3 { font-size: 11pt; font-weight: 600; color: var(--ash); margin-top: 16pt; margin-bottom: 8pt; }
+h4 { font-size: 10pt; font-weight: 600; color: var(--ash); margin-top: 12pt; margin-bottom: 6pt; }
 p { margin-bottom: 10pt; orphans: 3; widows: 3; }
-blockquote { border-left: 3pt solid ${ACCENT}; padding: 8pt 12pt; margin: 14pt 0; background: #EDE8E0; font-style: italic; font-size: 11pt; line-height: 1.65; }
+blockquote { border-left: 3pt solid var(--detonation); padding: 10pt 14pt; margin: 14pt 0; background: var(--surface); font-style: italic; font-size: 11pt; line-height: 1.65; }
 ul { margin: 10pt 0; padding: 0; list-style: none; }
 li { padding-left: 14pt; position: relative; margin-bottom: 5pt; }
-li::before { content: '—'; position: absolute; left: 0; color: ${ACCENT}; }
-hr { border: none; border-top: 0.5pt solid #EDE8E0; margin: 16pt 0; }
-strong { font-weight: bold; } em { font-style: italic; }
-.proposition { text-align: center; padding: 36pt 20pt; border-top: 2pt solid ${ACCENT}; border-bottom: 2pt solid ${ACCENT}; margin: 0 0 32pt; }
-.proposition .label { font-size: 9pt; font-weight: bold; letter-spacing: 0.18em; color: ${ACCENT}; text-transform: uppercase; margin-bottom: 14pt; }
-.proposition .stmt { font-size: 18pt; line-height: 1.35; color: #1C1A18; font-weight: 700; max-width: 480pt; margin: 0 auto; }
-.toc { margin: 24pt 0 32pt; padding: 16pt; border: 1pt solid #EDE8E0; border-radius: 6pt; background: #EDE8E0; }
-.toc h3 { margin-top: 0; color: ${ACCENT}; letter-spacing: 0.12em; text-transform: uppercase; font-size: 10pt; }
+li::before { content: '—'; position: absolute; left: 0; color: var(--detonation); }
+hr { border: none; border-top: 0.5pt solid var(--rule); margin: 16pt 0; }
+strong { font-weight: 600; } em { font-style: italic; }
+.proposition { text-align: center; padding: 36pt 20pt; border-top: 2pt solid var(--detonation); border-bottom: 2pt solid var(--detonation); margin: 0 0 32pt; }
+.proposition .label { font-size: 9pt; font-weight: 600; letter-spacing: 0.18em; color: var(--detonation); text-transform: uppercase; margin-bottom: 14pt; }
+.proposition .stmt { font-family: 'Bebas Neue', Impact, sans-serif; font-size: 30pt; line-height: 1.06; letter-spacing: 0.01em; color: var(--ash); font-weight: 400; max-width: 480pt; margin: 0 auto; }
+.toc { margin: 24pt 0 32pt; padding: 16pt; border: 1pt solid var(--rule); border-radius: 4pt; background: var(--surface); }
+.toc h3 { margin-top: 0; color: var(--detonation); letter-spacing: 0.12em; text-transform: uppercase; font-size: 10pt; }
 .toc ol { margin: 8pt 0 0 20pt; padding: 0; }
 .toc li { margin: 4pt 0; font-size: 10pt; padding-left: 0; }
 .toc li::before { content: ''; }
-.footer { margin-top: 40pt; padding-top: 16pt; border-top: 0.5pt solid #EDE8E0; font-size: 7.5pt; color: #8B8680; text-align: center; line-height: 1.55; }
+.footer { margin-top: 40pt; padding-top: 16pt; border-top: 0.5pt solid var(--rule); font-size: 9pt; color: var(--smoke); text-align: center; line-height: 1.55; }
 `;
 }
 

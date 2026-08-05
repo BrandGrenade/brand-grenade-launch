@@ -54,17 +54,21 @@ function cachedSplitText(doc: jsPDF, text: string, maxWidth: number): string[] {
 }
 
 
-// ─── Palette ────────────────────────────────────────────────────────────
-const C_PAGE = "#EDE8E0";
-const C_SURFACE_2 = "#EDE8E0";
-const C_DARK = "#1C1A18";
-const C_TEXT = "#1C1A18";
-const C_TEXT_2 = "#8B8680";
-const C_TEXT_3 = "#8B8680";
-const C_ACCENT = "#C81E1E";
-const C_RULE = "#EDE8E0";
-const C_DARK_FOOT = "#1C1A18";
-const C_WHITE = "#EDE8E0";
+// ─── Palette (Brand Grenade 5-value system) ─────────────────────────────
+// void #0A0908 · ash #1C1A18 · paper #EDE8E0 · smoke #8B8680 · detonation #C81E1E
+// Two derived tints (paper mixed with ash / smoke) exist only so surfaces and
+// rules remain visible on a paper page — no colours outside the system.
+const C_PAGE = "#EDE8E0"; // paper
+const C_SURFACE_2 = "#E1DCD4"; // paper + 6% ash
+const C_DARK = "#0A0908"; // void
+const C_TEXT = "#1C1A18"; // ash
+const C_TEXT_2 = "#8B8680"; // smoke
+const C_TEXT_3 = "#8B8680"; // smoke
+const C_ACCENT = "#C81E1E"; // detonation
+const C_RULE = "#C2BCB5"; // paper + 45% smoke
+const C_DARK_FOOT = "#0A0908"; // void
+const C_WHITE = "#EDE8E0"; // paper
+
 
 // ─── A4 geometry (pt) ───────────────────────────────────────────────────
 const PAGE_W = 595.28;

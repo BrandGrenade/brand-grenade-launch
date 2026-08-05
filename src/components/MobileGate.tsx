@@ -1,7 +1,14 @@
 import { useEffect, useState } from "react";
+import { useRouterState } from "@tanstack/react-router";
+
+// Public marketing surfaces are fully responsive and must never be gated.
+const MOBILE_ALLOWED = ["/", "/login", "/unsubscribe"];
 
 export function MobileGate() {
   const [tooNarrow, setTooNarrow] = useState(false);
+  const pathname = useRouterState({
+    select: (s) => s.location.pathname,
+  });
 
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 559.98px)");
@@ -11,7 +18,9 @@ export function MobileGate() {
     return () => mq.removeEventListener("change", update);
   }, []);
 
-  if (!tooNarrow) return null;
+  const allowed = MOBILE_ALLOWED.includes(pathname.replace(/\/+$/, "") || "/");
+
+  if (!tooNarrow || allowed) return null;
 
   return (
     <div
