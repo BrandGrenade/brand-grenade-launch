@@ -105,7 +105,7 @@ Section three — Audience Mindstate at This Touchpoint Describe specifically ho
 
 Section four — What We Want Them to Think Feel and Do State explicitly what shift in thinking feeling and behaviour this channel brief is designed to produce. All three must be tied directly to the SMP. This is not the message. This is the desired effect of the message.
 
-Section five — Single Most Important Thing to Communicate One sentence only. The single thought that must land above everything else at this touchpoint. Derived from the SMP and creative territory. Calibrated to what this specific audience in this specific mindstate can receive and act on at this specific moment.
+Section five — Single Most Important Thing to Communicate One sentence only. The single thought that must land above everything else at this touchpoint. Derived from the SMP and creative territory. Calibrated to what this specific audience in this specific mindstate can receive and act on at this specific moment. This sentence is a strategic instruction to the creative team, not the campaign line — never present it as the line, and never let it displace the verbatim line in Section zero.
 
 Section six — Tone and Distinctive Assets Required State the specific tonal register required at this touchpoint. Name every distinctive asset — visual verbal sonic or behavioural — that must be present in every execution at this channel. Note any deliberate tonal exception justified by the framework and explain why the exception serves the SMP rather than contradicting it.
 
