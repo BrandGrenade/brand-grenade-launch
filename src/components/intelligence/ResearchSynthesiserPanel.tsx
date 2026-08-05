@@ -348,11 +348,13 @@ export function ResearchSynthesiserPanel({
               onClick={handleApply}
               disabled={result.stats.totalClaims === 0}
             >
-              {applied ? "Apply again" : "Apply to the six fields below"}
+              {applied ? "Apply again" : applyLabel}
             </Button>
             <span className="text-[13px] text-text-secondary">
-              Human checkpoint — applied entries stay editable below.
+              Human checkpoint — applied entries stay fully editable in the
+              Intelligence Lab.
             </span>
+
           </div>
         </div>
       ) : null}
