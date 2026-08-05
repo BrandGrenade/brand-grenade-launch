@@ -45,15 +45,19 @@ function CreativeIndex() {
   useEffect(() => {
     let cancelled = false;
     void (async () => {
+      // Same rule as the dashboard's Creative Engine column: every session
+      // the user can reach has a creative room, whether or not Stage 21 has
+      // produced channel briefs yet. Filtering on stage_21_outputs here made
+      // brands linked from the dashboard disappear from "All sessions".
       const [{ data: sessions }, { data: runs }] = await Promise.all([
         supabase
           .from("sessions")
           .select("id, brand_name, updated_at, stage_21_outputs")
-          .not("stage_21_outputs", "is", null)
           .order("updated_at", { ascending: false })
           .limit(100),
         supabase.from("stimulus_runs").select("session_id"),
       ]);
+
       if (cancelled) return;
       const withRuns = new Set((runs ?? []).map((r) => r.session_id));
       setRows(
@@ -109,8 +113,9 @@ function CreativeIndex() {
           )}
           {!loading && rows.length === 0 && (
             <div className="text-body-sm" style={{ color: MUTED }}>
-              No session has completed Channel Briefs yet. Finish Stage 21 in the Strategy Pipeline
-              first.
+              No sessions yet. Start a run in the Strategy Pipeline and its creative room appears
+              here.
+
             </div>
           )}
           {rows.map((r) => (
