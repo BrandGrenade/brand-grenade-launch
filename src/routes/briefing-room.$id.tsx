@@ -269,7 +269,7 @@ function WorkspacePage() {
         </Link>
 
         <header className="mt-6">
-          <span className="text-label text-primary">Briefing Workspace</span>
+          <span className="text-label text-text-secondary">Briefing Workspace</span>
           <h1 className="text-h1 mt-3 text-text-primary">
             {ws.brand_name || "(untitled)"}
           </h1>
@@ -287,7 +287,7 @@ function WorkspacePage() {
               backgroundColor: "rgba(59,130,246,0.08)",
             }}
           >
-            <div className="text-label text-primary">Pre-diagnosed by the Intelligence Lab</div>
+            <div className="text-label text-text-secondary">Pre-diagnosed by the Intelligence Lab</div>
             <p className="text-body-sm mt-1 text-text-secondary">
               This session was created from a selected Strategic Territory
               Intelligence report. The strategic anchor, tension, audience, cultural
@@ -559,7 +559,7 @@ function WorkspacePage() {
           className="mt-6 rounded-md p-5"
           style={{ backgroundColor: "#0A0908", border: "1px solid #1C1A18" }}
         >
-          <div className="text-label text-primary">STEP 6</div>
+          <div className="text-label text-text-secondary">STEP 6</div>
           <h2 className="text-h3 mt-1 text-text-primary">Approve → hand off to Saved Briefs</h2>
           <p className="text-body-sm mt-1 text-text-tertiary">
             Lands the structured brief in your Saved Briefs library and opens it in the
@@ -674,7 +674,7 @@ function StepCard(props: {
     >
       <div className="flex items-start justify-between gap-4">
         <div>
-          <div className="text-label text-primary">STEP {props.n}</div>
+          <div className="text-label text-text-secondary">STEP {props.n}</div>
           <h2 className="text-h3 mt-1 text-text-primary">{props.title}</h2>
           <p className="text-body-sm mt-1 text-text-tertiary">{props.subtitle}</p>
         </div>

@@ -88,7 +88,7 @@ function BriefingRoomIndex() {
         </Link>
 
         <header className="mt-6">
-          <span className="text-label text-primary">Briefing Room</span>
+          <span className="text-label text-text-secondary">Briefing Room</span>
           <h1 className="text-h1 mt-3 text-text-primary">Prepare the brief</h1>
           <p className="text-body mt-2 max-w-[640px] text-text-secondary">
             Aggregate and interrogate before the pipeline runs. Diagnose the real problem, categorise

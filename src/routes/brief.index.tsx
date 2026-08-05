@@ -354,7 +354,7 @@ function BriefIntake() {
 
       <main className="mx-auto w-full max-w-[840px] px-5 pb-16 pt-12 sm:px-6">
         <header>
-          <span className="text-label text-primary">
+          <span className="text-label text-text-secondary">
             {isEditMode ? "Edit Submitted Brief" : "Strategy Brief"}
           </span>
           <h1 className="text-h1 mt-3 text-text-primary">

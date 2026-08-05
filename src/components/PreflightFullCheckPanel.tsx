@@ -1584,7 +1584,7 @@ export function PreflightFullCheckPanel() {
     <section className="mb-6 border border-border bg-card/60 p-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <div className="text-label text-primary">Pre-Flight — Tier Two</div>
+          <div className="text-label text-text-secondary">Pre-Flight — Tier Two</div>
           <h2 className="text-h3 mt-1 text-text-primary">Full Integrity Check</h2>
           <p className="text-body mt-1 text-text-secondary">
             12 deep checks. Single TestBrand session runs Stages 1–16 sequentially. Phase 2 chain (17→17B→18). Two parallel Stage 1 runs. Structural checks for prompts, token caps, sanitiser, and Canvas→Detonation route. Auto-cleans test sessions on completion. Target runtime ~20 minutes.
@@ -1646,7 +1646,7 @@ export function PreflightFullCheckPanel() {
 
       {escalationVisible && (
         <div className="mt-4 border border-primary/60 bg-primary/30 p-4">
-          <div className="text-label text-primary">Escalation Protocol · Blockers only</div>
+          <div className="text-label text-text-secondary">Escalation Protocol · Blockers only</div>
           <h3 className="text-h3 mt-1 text-text-primary">
             {severitySummary.blocker} blocker{severitySummary.blocker === 1 ? "" : "s"} — do not present live
           </h3>
@@ -1666,7 +1666,7 @@ export function PreflightFullCheckPanel() {
               onClick={() => setDraftOpen((v) => !v)}
               className="border border-primary/60 bg-primary/40 p-3 text-left hover:bg-primary/40"
             >
-              <div className="text-label text-primary">Option 1</div>
+              <div className="text-label text-text-secondary">Option 1</div>
               <div className="text-body mt-1 font-semibold text-text-primary">
                 Generate draft postponement communication
               </div>
@@ -1679,7 +1679,7 @@ export function PreflightFullCheckPanel() {
               onClick={goToCompletedSessions}
               className="border border-primary/60 bg-primary/40 p-3 text-left hover:bg-primary/40"
             >
-              <div className="text-label text-primary">Option 2</div>
+              <div className="text-label text-text-secondary">Option 2</div>
               <div className="text-body mt-1 font-semibold text-text-primary">
                 Present completed sessions instead
               </div>
@@ -1692,7 +1692,7 @@ export function PreflightFullCheckPanel() {
           {draftOpen && (
             <div className="mt-3 border border-primary/50 bg-card/60 p-3">
               <div className="flex items-center justify-between gap-2">
-                <span className="text-label text-primary">Draft — postponement communication</span>
+                <span className="text-label text-text-secondary">Draft — postponement communication</span>
                 <button
                   type="button"
                   onClick={copyDraft}
@@ -1711,7 +1711,7 @@ export function PreflightFullCheckPanel() {
 
       {nonBlockingIssuesVisible && (
         <div className="mt-4 border border-primary/40 bg-primary/20 p-3 text-sm">
-          <div className="text-label text-primary">Non-blocking issues · Platform usable live</div>
+          <div className="text-label text-text-secondary">Non-blocking issues · Platform usable live</div>
           <div className="mt-1 text-primary/80">
             No BLOCKER-severity failures. Detected:{" "}
             <span className="font-semibold text-primary">{severitySummary.degraded} degraded</span>,{" "}

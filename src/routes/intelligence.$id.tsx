@@ -408,7 +408,7 @@ function IntelligenceRunPage() {
         <main className="mx-auto max-w-[720px] px-6 py-16">
           <BackLink id={id} />
           <div className="mt-6">
-            <span className="text-label text-primary">Intelligence Lab</span>
+            <span className="text-label text-text-secondary">Intelligence Lab</span>
             <h1 className="text-h2 mt-2 text-text-primary">
               {row.brand_name || "Analysis failed"}
             </h1>
@@ -449,7 +449,7 @@ function IntelligenceRunPage() {
         <main className="mx-auto max-w-[720px] px-6 py-16">
           <BackLink id={id} />
           <div className="mt-6">
-            <span className="text-label text-primary">Intelligence Lab</span>
+            <span className="text-label text-text-secondary">Intelligence Lab</span>
             <h1 className="text-h2 mt-2 text-text-primary">
               {row.brand_name || "Research inputs saved"}
             </h1>
@@ -492,7 +492,7 @@ function IntelligenceRunPage() {
         <main className="mx-auto max-w-[720px] px-6 py-16">
           <BackLink id={id} />
           <div className="mt-6">
-            <span className="text-label text-primary">Intelligence Lab</span>
+            <span className="text-label text-text-secondary">Intelligence Lab</span>
             <h1 className="text-h2 mt-2 text-text-primary">
               {row.brand_name || "Analysis in progress"}
             </h1>
@@ -564,7 +564,7 @@ function IntelligenceRunPage() {
         <main className="mx-auto max-w-[720px] px-6 py-16">
           <BackLink id={id} />
           <div className="mt-6">
-            <span className="text-label text-primary">Intelligence Lab</span>
+            <span className="text-label text-text-secondary">Intelligence Lab</span>
             <h1 className="text-h2 mt-2 text-text-primary">
               {row.brand_name || "Intelligence inputs"}
             </h1>
@@ -635,7 +635,7 @@ function IntelligenceRunPage() {
           {/* Header */}
           <div className="mt-6 flex flex-wrap items-start justify-between gap-4">
             <div>
-              <span className="text-label text-primary">Strategic Territory Intelligence Report</span>
+              <span className="text-label text-text-secondary">Strategic Territory Intelligence Report</span>
               <h1 className="text-h2 mt-2 text-text-primary">{row.brand_name}</h1>
               <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-text-secondary">
                 {row.category ? <span>{row.category}</span> : null}

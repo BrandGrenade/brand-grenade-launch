@@ -3697,7 +3697,7 @@ function LeftPanel({
   return (
     <aside className="hidden w-[280px] shrink-0 overflow-y-auto border-r border-border bg-background py-6 md:block">
       <header className="px-5 pb-5">
-        <span className="text-label text-primary">Strategy Process</span>
+        <span className="text-label text-text-secondary">Strategy Process</span>
         <div
           className="mt-3 h-1 w-full overflow-hidden rounded-sm"
           style={{ backgroundColor: "var(--color-border)" }}
@@ -4239,7 +4239,7 @@ function RightPanel({
         ) : (
           <>
             <header>
-              <span className="text-label text-primary">
+              <span className="text-label text-text-secondary">
                 Stage {stage.number} — {stage.name}
               </span>
               <h1 className="text-h2 mt-3 text-text-primary">{stage.name}</h1>
@@ -5466,7 +5466,7 @@ function Stage1bResubmitView({
   return (
     <div style={{ paddingBottom: 80 }}>
       <header>
-        <span className="text-label text-primary">Brief Enhancement</span>
+        <span className="text-label text-text-secondary">Brief Enhancement</span>
         <h1 className="text-h2 mt-3 text-text-primary">Additional brief information required</h1>
         <p className="text-body-sm mt-3 text-text-secondary">
           The brief did not meet the threshold required to proceed. Please respond in writing to the
@@ -5597,7 +5597,7 @@ function StructuredBriefView({
     <>
       <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
-          <span className="text-label text-primary">Source Document</span>
+          <span className="text-label text-text-secondary">Source Document</span>
           <h1 className="text-h2 mt-3 text-text-primary">Submitted Brief</h1>
           <p className="text-body-sm mt-3 flex items-center gap-2 text-text-secondary">
             <span

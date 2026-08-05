@@ -256,7 +256,7 @@ function Dashboard() {
         <div className="mx-auto max-w-[1280px]">
           <header className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <span className="text-label text-primary">Brand Register</span>
+              <span className="text-label text-text-secondary">Brand Register</span>
               <h1 className="text-h2 mt-3 text-text-primary">Your Brands</h1>
               <p className="text-body mt-2 text-text-secondary">
                 One row per brand. Every Intelligence Lab analysis, Briefing
@@ -282,7 +282,7 @@ function Dashboard() {
             {stats.map((s) => (
               <div key={s.label} className="bg-card-surface px-6 py-5">
                 <div className="text-h1 text-text-primary">{s.value}</div>
-                <div className="text-label mt-1 text-primary">{s.label}</div>
+                <div className="text-label mt-1 text-text-secondary">{s.label}</div>
               </div>
             ))}
           </div>
@@ -814,8 +814,8 @@ const CIRCLE_SIZE = 10;
 
 const STATE_COLOR: Record<SystemStatus["state"], string> = {
   not_started: "var(--color-border-strong)",
-  in_progress: "#C81E1E",
-  complete: "#C81E1E",
+  in_progress: "#8B8680",
+  complete: "#EDE8E0",
   interrupted: "#C81E1E",
 };
 

@@ -115,7 +115,7 @@ function NewBriefPage() {
         </Link>
 
         <header className="mt-6">
-          <span className="text-label text-primary">New Brief</span>
+          <span className="text-label text-text-secondary">New Brief</span>
           <h1 className="text-h1 mt-3 text-text-primary">Prepare a brief</h1>
           <p className="text-body mt-2 text-text-secondary">
             Save it to your library, or save and run it through the pipeline now.

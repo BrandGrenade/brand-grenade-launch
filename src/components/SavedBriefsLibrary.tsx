@@ -110,7 +110,7 @@ export function SavedBriefsSection({
     <section className="mt-10">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <span className="text-label text-primary">Pre-Written Briefs</span>
+          <span className="text-label text-text-secondary">Pre-Written Briefs</span>
           <h2 className="text-h2 mt-2 text-text-primary">Saved Briefs</h2>
           <p className="text-body mt-2 text-text-secondary">
             Pre-written briefs ready to load into a new pipeline run with one click.

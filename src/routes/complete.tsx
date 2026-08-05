@@ -318,7 +318,7 @@ function CompletePage() {
             marginBottom: 32,
           }}
         >
-          <span className="text-label text-primary">
+          <span className="text-label text-text-secondary">
             THE PROPOSITION
           </span>
           {hasSmp ? (
@@ -356,7 +356,7 @@ function CompletePage() {
 
         {/* Format selection */}
         <div style={{ marginBottom: 16 }}>
-          <span className="text-label text-primary">
+          <span className="text-label text-text-secondary">
             SELECT HOW YOU WANT TO PRESENT THIS STRATEGY
           </span>
         </div>
@@ -1139,7 +1139,7 @@ function StageModal({
             marginBottom: 16,
           }}
         >
-          <span className="text-label text-primary">STAGE OUTPUT</span>
+          <span className="text-label text-text-secondary">STAGE OUTPUT</span>
           <button
             type="button"
             onClick={onClose}

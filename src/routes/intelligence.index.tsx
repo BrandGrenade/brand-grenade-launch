@@ -193,7 +193,7 @@ function IntelligenceListPage() {
         <div className="mx-auto max-w-[1200px]">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
-              <span className="text-label text-primary">Intelligence Lab</span>
+              <span className="text-label text-text-secondary">Intelligence Lab</span>
               <h1 className="text-h2 mt-2 text-text-primary">
                 Strategic Territory Intelligence Lab
               </h1>

@@ -122,7 +122,7 @@ export function SelectionRationale({
           marginBottom: 32,
         }}
       >
-        <span className="text-label text-primary">SELECTED PROPOSITION</span>
+        <span className="text-label text-text-secondary">SELECTED PROPOSITION</span>
         <p
           className="text-h3 text-text-primary"
           style={{ marginTop: 8 }}

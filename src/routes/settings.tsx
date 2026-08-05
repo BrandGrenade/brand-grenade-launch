@@ -89,7 +89,7 @@ function SettingsPage() {
         style={{ maxWidth: 640, paddingTop: 48, paddingBottom: 96 }}
       >
         <header className="mb-10">
-          <span className="text-label text-primary">Account & Preferences</span>
+          <span className="text-label text-text-secondary">Account & Preferences</span>
           <div className="mt-3 flex items-end justify-between gap-4">
             <h1 className="text-h2 text-text-primary">Settings</h1>
             <span

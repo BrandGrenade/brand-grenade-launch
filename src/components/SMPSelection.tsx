@@ -946,7 +946,7 @@ export function SMPSelection({
               }}
             >
               <div className="flex items-center justify-between">
-                <span className="text-label text-primary">PROPOSITION {card.cardNumber}</span>
+                <span className="text-label text-text-secondary">PROPOSITION {card.cardNumber}</span>
                 <span
                   className="text-label"
                   style={{

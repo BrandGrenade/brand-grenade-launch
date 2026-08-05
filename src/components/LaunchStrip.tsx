@@ -34,12 +34,13 @@ const buttonStyle: React.CSSProperties = {
   height: 44,
   padding: "0 22px",
   borderRadius: 10,
-  backgroundColor: "#C81E1E",
-  color: "#0A0908",
-  fontWeight: 700,
+  backgroundColor: "#1C1A18",
+  color: "#EDE8E0",
+  fontWeight: 600,
   fontSize: 14,
   letterSpacing: "0.02em",
-  boxShadow: "0 2px 12px rgba(200, 30, 30,0.25)",
+  border: "1px solid #1C1A18",
+  boxShadow: "none",
   textDecoration: "none",
   border: "none",
   cursor: "pointer",
@@ -47,7 +48,7 @@ const buttonStyle: React.CSSProperties = {
 };
 
 const arrowStyle: React.CSSProperties = {
-  color: "var(--color-primary)",
+  color: "#8B8680",
   fontSize: 13,
   lineHeight: 1,
   fontWeight: 400,

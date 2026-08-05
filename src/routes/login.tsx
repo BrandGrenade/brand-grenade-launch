@@ -56,7 +56,7 @@ function Login() {
           </span>
         </Link>
 
-        <span className="text-label text-primary">Access</span>
+        <span className="text-label text-text-secondary">Access</span>
         <h1 id="auth-heading" className="text-h2 mt-3 mb-8 text-text-primary">
           Sign in to continue
         </h1>
