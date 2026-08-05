@@ -192,22 +192,10 @@ export async function generateOne(
 ): Promise<string> {
   const system = appendRedirect(STAGE_21_CHANNEL_DETONATION_BRIEFS_PROMPT, redirectText);
   const userMessage = buildStage21UserMessage(channel, role, context, s);
-  const call = (extra: string) =>
-    callClaude({
-      systemPrompt: withPhase2Formatting(
-        extra ? `${system}\n\n${extra}` : system,
-        getObjectiveDirectiveCached,
-      ),
-      userMessage,
-      maxTokens: 64000,
-      sessionId,
-      stageLabel: `Stage 21 (${channel})`,
-      stageNumber: "21",
-      stageName: "Channel Briefs",
-    });
+  const directive = await getObjectiveDirective(sessionId, "phase2");
 
   const first = await callClaude({
-    systemPrompt: withPhase2Formatting(system, await getObjectiveDirective(sessionId, "phase2")),
+    systemPrompt: withPhase2Formatting(system, directive),
     userMessage,
     maxTokens: 64000,
     sessionId,
@@ -215,8 +203,6 @@ export async function generateOne(
     stageNumber: "21",
     stageName: "Channel Briefs",
   });
-  void call;
-  void getObjectiveDirectiveCached;
   if (carriesCampaignLine(first, s.locked_campaign_line)) return first;
 
   // One targeted repair pass. The line is a hard carriage requirement, so a
@@ -225,7 +211,7 @@ export async function generateOne(
   const repaired = await callClaude({
     systemPrompt: withPhase2Formatting(
       `${system}\n\nCARRIAGE FAILURE — REGENERATION. Your previous attempt at this brief omitted the locked campaign line. Section zero must reproduce this exact text on its own line and nothing else may be presented as the campaign line:\n\n${s.locked_campaign_line?.trim()}\n\nRegenerate the full brief with all nine sections.`,
-      await getObjectiveDirective(sessionId, "phase2"),
+      directive,
     ),
     userMessage,
     maxTokens: 64000,
@@ -237,7 +223,9 @@ export async function generateOne(
   return carriesCampaignLine(repaired, s.locked_campaign_line) ? repaired : first;
 }
 
+/**
  * Holds every channel brief against the decided Lead Creative Expression and
+
  * persists the report. A failure here must never block the briefs from being
  * saved — it only means the set is unverified.
  */
