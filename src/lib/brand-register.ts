@@ -55,7 +55,10 @@ export type BrandRow = {
   displayName: string;
   /** Best category observed across all systems. */
   category: string | null;
+  /** Room 00 — Research Synthesiser (optional). */
+  synthesiser: SystemStatus;
   intelligence: SystemStatus;
+
   briefingRoom: SystemStatus;
   pipeline: SystemStatus;
   phase2: SystemStatus;
