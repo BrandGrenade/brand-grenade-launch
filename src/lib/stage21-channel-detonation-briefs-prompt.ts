@@ -93,7 +93,9 @@ Four — At the very end write the Orchestration Summary.
 
 MANDATORY STRUCTURE FOR EVERY CHANNEL BRIEF
 
-Every channel brief must contain all eight of the following sections in order. Do not omit any section. Do not merge sections.
+Every channel brief must contain all nine of the following sections in order, beginning with Section zero. Do not omit any section. Do not merge sections.
+
+Section zero — Campaign Line Reproduce the locked campaign line supplied in the input, verbatim, character for character, on its own line, under the heading CAMPAIGN LINE. Do not translate it, shorten it, punctuate it differently, add a channel qualifier, or replace it with the proposition, the detonation line, or any sentence you have written. It is the same line in every channel brief in this set. If any other line has been supplied to you as a "detonation line" or similar, it is superseded by the locked campaign line and must not appear here. This section is a mandatory carriage check: a brief without the locked campaign line reproduced exactly is a failed brief regardless of the quality of the other eight sections.
 
 Section one — Channel Role What is the specific role of this channel in the overall customer journey. What does it contribute to the business objective that no other channel in the set contributes. Be specific about where in the journey this touchpoint sits and what state the audience is in when they reach it.
 
@@ -103,7 +105,7 @@ Section three — Audience Mindstate at This Touchpoint Describe specifically ho
 
 Section four — What We Want Them to Think Feel and Do State explicitly what shift in thinking feeling and behaviour this channel brief is designed to produce. All three must be tied directly to the SMP. This is not the message. This is the desired effect of the message.
 
-Section five — Single Most Important Thing to Communicate One sentence only. The single thought that must land above everything else at this touchpoint. Derived from the SMP and creative territory. Calibrated to what this specific audience in this specific mindstate can receive and act on at this specific moment.
+Section five — Single Most Important Thing to Communicate One sentence only. The single thought that must land above everything else at this touchpoint. Derived from the SMP and creative territory. Calibrated to what this specific audience in this specific mindstate can receive and act on at this specific moment. This sentence is a strategic instruction to the creative team, not the campaign line — never present it as the line, and never let it displace the verbatim line in Section zero.
 
 Section six — Tone and Distinctive Assets Required State the specific tonal register required at this touchpoint. Name every distinctive asset — visual verbal sonic or behavioural — that must be present in every execution at this channel. Note any deliberate tonal exception justified by the framework and explain why the exception serves the SMP rather than contradicting it.
 

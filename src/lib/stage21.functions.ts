@@ -91,8 +91,9 @@ function buildStage21UserMessage(
         `WINNING IDEA (lens: ${s.locked_big_idea_lens ?? "—"})`,
         s.locked_big_idea.trim(),
         "",
-        "WINNING CAMPAIGN LINE — this is the campaign's line. Reproduce it verbatim, character for character, wherever the brief states the line. Never substitute the proposition text for the line, never write a channel-specific variant of it, and never present any other sentence as the campaign line.",
+        "WINNING CAMPAIGN LINE — THE ONLY CAMPAIGN LINE FOR THIS CAMPAIGN. Open the brief with Section zero — Campaign Line and reproduce the text below there, verbatim, character for character, on its own line. It is not optional and it is not conditional on the brief happening to mention a line. Any other line supplied anywhere in this message — including the Stage 18 selected detonation line — is superseded and must not be presented as the campaign line. Never substitute the proposition text for the line, never write a channel-specific variant of it, and never present a sentence of your own as the campaign line.",
         s.locked_campaign_line?.trim() || "—",
+
 
         "",
         "————",
@@ -136,8 +137,11 @@ function buildStage21UserMessage(
     "VALIDATED SMP",
     s.selected_smp?.trim() || "—",
     "",
-    "SELECTED DETONATION LINE (Stage 18 — short campaign line, must appear first under THE DETONATION)",
+    s.locked_campaign_line?.trim()
+      ? "SELECTED DETONATION LINE (Stage 18 — SUPERSEDED. A campaign line has been locked above; this text is historical context only. Do not reproduce it as the campaign line and do not open the brief with it.)"
+      : "SELECTED DETONATION LINE (Stage 18 — short campaign line, must appear first under THE DETONATION)",
     s.stage_18_detonation_line?.trim() || "—",
+
     "",
     "SELECTED DETONATION STATEMENT (Stage 18 — full statement, must appear directly below the line under THE DETONATION)",
     s.stage_18_selected_detonation?.trim() || "—",
@@ -155,6 +159,29 @@ function buildStage21UserMessage(
 
 }
 
+/**
+ * Verbatim carriage test for the locked campaign line. Normalises only the
+ * things a model changes without changing the line — curly quotes, dash
+ * variants, whitespace runs, casing and trailing punctuation. Anything else
+ * (a reworded, shortened or channel-specific variant) fails.
+ */
+function normaliseForCarriage(text: string): string {
+  return text
+    .replace(/[\u2018\u2019\u201B\u02BC]/g, "'")
+    .replace(/[\u201C\u201D]/g, '"')
+    .replace(/[\u2010-\u2015]/g, "-")
+    .replace(/\s+/g, " ")
+    .replace(/[.,;:!?"'()]/g, "")
+    .trim()
+    .toLowerCase();
+}
+
+export function carriesCampaignLine(brief: string, line: string | null | undefined): boolean {
+  const l = line?.trim();
+  if (!l || l === "—") return true;
+  return normaliseForCarriage(brief).includes(normaliseForCarriage(l));
+}
+
 export async function generateOne(
   sessionId: string,
   channel: string,
@@ -164,19 +191,41 @@ export async function generateOne(
   redirectText: string,
 ): Promise<string> {
   const system = appendRedirect(STAGE_21_CHANNEL_DETONATION_BRIEFS_PROMPT, redirectText);
-  return callClaude({
-    systemPrompt: withPhase2Formatting(system, await getObjectiveDirective(sessionId, "phase2")),
-    userMessage: buildStage21UserMessage(channel, role, context, s),
+  const userMessage = buildStage21UserMessage(channel, role, context, s);
+  const directive = await getObjectiveDirective(sessionId, "phase2");
+
+  const first = await callClaude({
+    systemPrompt: withPhase2Formatting(system, directive),
+    userMessage,
     maxTokens: 64000,
     sessionId,
     stageLabel: `Stage 21 (${channel})`,
     stageNumber: "21",
     stageName: "Channel Briefs",
   });
+  if (carriesCampaignLine(first, s.locked_campaign_line)) return first;
+
+  // One targeted repair pass. The line is a hard carriage requirement, so a
+  // brief that dropped it is regenerated with the omission named explicitly
+  // rather than silently shipped.
+  const repaired = await callClaude({
+    systemPrompt: withPhase2Formatting(
+      `${system}\n\nCARRIAGE FAILURE — REGENERATION. Your previous attempt at this brief omitted the locked campaign line. Section zero must reproduce this exact text on its own line and nothing else may be presented as the campaign line:\n\n${s.locked_campaign_line?.trim()}\n\nRegenerate the full brief with all nine sections.`,
+      directive,
+    ),
+    userMessage,
+    maxTokens: 64000,
+    sessionId,
+    stageLabel: `Stage 21 (${channel}) — line carriage repair`,
+    stageNumber: "21",
+    stageName: "Channel Briefs",
+  });
+  return carriesCampaignLine(repaired, s.locked_campaign_line) ? repaired : first;
 }
 
 /**
  * Holds every channel brief against the decided Lead Creative Expression and
+
  * persists the report. A failure here must never block the briefs from being
  * saved — it only means the set is unverified.
  */
