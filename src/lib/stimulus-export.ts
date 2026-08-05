@@ -5,7 +5,6 @@
 
 import { getLens } from "@/lib/stimulus/lenses";
 
-const AMBER = "#C81E1E";
 
 function esc(v: unknown): string {
   return String(v ?? "")
@@ -45,21 +44,31 @@ function ratingsBlock(ratings: any): string {
 }
 
 const CSS = `
-  body{background:#0A0908;color:#EDE8E0;font-family:Georgia,'Times New Roman',serif;line-height:1.6;margin:0;padding:48px;}
+  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&display=swap');
+  :root{--void:#0A0908;--ash:#1C1A18;--paper:#EDE8E0;--smoke:#8B8680;--detonation:#C81E1E;
+    --surface:#151312;--rule:#2A2724;}
+  body{background:var(--void);color:var(--paper);font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;
+    line-height:1.65;margin:0;padding:48px;-webkit-font-smoothing:antialiased;}
   .wrap{max-width:880px;margin:0 auto;}
-  h1{color:${AMBER};font-size:26px;letter-spacing:.02em;margin:0 0 4px;}
-  h2{color:${AMBER};font-size:13px;letter-spacing:.14em;text-transform:uppercase;margin:36px 0 10px;font-family:ui-monospace,Menlo,monospace;}
-  h3{font-size:18px;margin:0 0 4px;}
-  .kicker,.muted,.refs,.meta{color:#8B8680;font-size:13px;}
-  .kicker{font-family:ui-monospace,Menlo,monospace;letter-spacing:.14em;text-transform:uppercase;font-size:11px;}
-  .card{border:1px solid #1C1A18;border-radius:8px;padding:20px;margin:16px 0;background:#0A0908;}
-  pre{white-space:pre-wrap;background:#0A0908;border:1px solid #1C1A18;border-radius:6px;padding:14px;font-family:ui-monospace,Menlo,monospace;font-size:13px;color:#EDE8E0;}
+  h1{font-family:'Bebas Neue',Impact,sans-serif;font-weight:400;color:var(--paper);font-size:46px;line-height:1;letter-spacing:.01em;margin:0 0 8px;}
+  h2{color:var(--detonation);font-size:13px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;margin:40px 0 12px;}
+  h3{font-size:19px;font-weight:600;letter-spacing:-.01em;margin:0 0 6px;color:var(--paper);}
+  .kicker,.muted,.refs,.meta{color:var(--smoke);font-size:13px;}
+  .kicker{letter-spacing:.14em;text-transform:uppercase;font-size:13px;font-weight:600;margin-bottom:14px;}
+  .card{border:1px solid var(--rule);border-radius:6px;padding:22px;margin:16px 0;background:var(--surface);}
+  pre{white-space:pre-wrap;background:var(--surface);border:1px solid var(--rule);border-radius:6px;padding:16px;
+    font-family:ui-monospace,Menlo,monospace;font-size:13px;color:var(--paper);line-height:1.6;}
   table.ratings{border-collapse:collapse;width:100%;font-size:13px;}
-  table.ratings th{text-align:left;color:#8B8680;font-weight:normal;padding:3px 10px 3px 0;text-transform:capitalize;width:190px;vertical-align:top;}
-  table.ratings td{padding:3px 10px 3px 0;vertical-align:top;}
-  a{color:${AMBER};}
-  hr{border:none;border-top:1px solid #1C1A18;margin:28px 0;}
-  @media print{body{background:#EDE8E0;color:#0A0908}.card{background:#EDE8E0}pre{background:#EDE8E0;color:#0A0908}}
+  table.ratings th{text-align:left;color:var(--smoke);font-weight:500;padding:5px 12px 5px 0;text-transform:capitalize;width:190px;vertical-align:top;}
+  table.ratings td{padding:5px 12px 5px 0;vertical-align:top;color:var(--paper);}
+  a{color:var(--detonation);}
+  hr{border:none;border-top:1px solid var(--rule);margin:30px 0;}
+  @media print{
+    body{background:var(--paper);color:var(--ash);padding:24px;}
+    h1,h3,table.ratings td{color:var(--ash);}
+    .card,pre{background:#E1DCD4;border-color:#C2BCB5;color:var(--ash);}
+    hr{border-top-color:#C2BCB5;}
+  }
 `;
 
 function doc(title: string, body: string): string {
