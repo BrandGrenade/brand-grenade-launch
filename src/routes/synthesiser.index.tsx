@@ -77,7 +77,7 @@ function SynthesiserRoom() {
                 00 — Research Synthesiser · Optional
               </span>
               <h1 className="text-h2 mt-2 text-text-primary">
-                Turn disparate research into strategic intelligence.
+                Research Synthesiser
               </h1>
             </div>
             <Link
