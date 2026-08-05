@@ -127,7 +127,31 @@ export async function runChannelFidelityCheck(args: {
   outputs: Record<string, string>;
 }): Promise<FidelityReport> {
   const checkedAt = new Date().toISOString();
-  const lead = args.leadExpression?.trim() ?? "";
+  let lead = args.leadExpression?.trim() ?? "";
+
+  // Fallback standard: when a session has no Stage 20L Lead Creative
+  // Expression but the Creative Stimulus sweep has locked one big idea and one
+  // campaign line, that lock IS the thing every channel must adapt. Without
+  // this the check reported "unverified" on sessions that in fact had a
+  // binding idea, and drift went ungraded.
+  if (!lead) {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: s } = await supabaseAdmin
+      .from("sessions")
+      .select("locked_big_idea, locked_campaign_line, locked_big_idea_lens")
+      .eq("id", args.sessionId)
+      .single();
+    if (s?.locked_big_idea?.trim()) {
+      lead = [
+        `LOCKED CAMPAIGN BIG IDEA (Creative Stimulus sweep, lens: ${s.locked_big_idea_lens ?? "—"})`,
+        s.locked_big_idea.trim(),
+        "",
+        "LOCKED CAMPAIGN LINE — every channel brief must carry this line verbatim:",
+        (s.locked_campaign_line ?? "").trim() || "—",
+      ].join("\n");
+    }
+  }
+
   if (!lead) {
     return {
       checkedAt,
@@ -137,7 +161,7 @@ export async function runChannelFidelityCheck(args: {
         verdict: "drift" as const,
         score: 0,
         reasoning:
-          "No Lead Creative Expression exists for this session, so these briefs each interpreted the proposition independently. Run the Lead Creative Expression and regenerate.",
+          "Neither a Lead Creative Expression (Stage 20L) nor a locked campaign big idea exists for this session, so these briefs each interpreted the proposition independently. Decide one, then regenerate.",
         missing: [],
         misreadingEvidence: "",
         checkedAt,

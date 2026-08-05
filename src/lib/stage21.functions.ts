@@ -154,7 +154,7 @@ function buildStage21UserMessage(
 
 }
 
-async function generateOne(
+export async function generateOne(
   sessionId: string,
   channel: string,
   role: string,
