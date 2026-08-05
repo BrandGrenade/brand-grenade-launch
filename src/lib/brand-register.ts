@@ -323,8 +323,9 @@ function deriveCreative(
   }
 
   if (!latestSessionId) {
-    // No creative run yet. If a Phase 2 session exists, hand back its id so the
-    // dashboard can offer a "Start" link straight into Stage 21.
+    // No creative run yet. Every brand with any session still gets a way into
+    // its own Creative Engine room — never a dead dash, never a link that
+    // lands somewhere else (the pipeline, Phase 2) instead.
     const p2 = sessions.find(
       (s) =>
         s.has_stage_22 === true ||
@@ -332,13 +333,15 @@ function deriveCreative(
         s.phase_2_status === "in_progress" ||
         s.phase_2_status === "complete",
     );
-    if (!p2) return { ...EMPTY_STATUS };
+    const target = p2 ?? sessions[0];
+    if (!target) return { ...EMPTY_STATUS };
     return {
       ...EMPTY_STATUS,
-      href: `/creative/${p2.id}`,
+      href: `/creative/${target.id}`,
       hrefSearch: {},
     };
   }
+
   return {
     state: bestState,
     label: bestLabel,
