@@ -14,7 +14,7 @@ console.log("target:", target);
 if (!target) process.exit(1);
 console.log("old carries line?", carriesCampaignLine(s.stage_21_outputs[target], s.locked_campaign_line));
 const ctx = ""; // rebuilt below
-const { extractStage20BChannelEntries } = await import("@/lib/phase2-stages");
+const { extractStage20BChannelEntries } = await import("@/lib/phase2-shared");
 const entries = extractStage20BChannelEntries(s.stage_20b_output);
 const e = entries.find((x: any) => x.name === target) ?? { name: target, role: "", content: ctx };
 const out = await generateOne(SID, e.name, e.role, e.content, s, "");
