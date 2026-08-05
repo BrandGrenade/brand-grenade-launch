@@ -212,7 +212,7 @@ type Room = {
   id: string;
   num: string;
   name: string;
-  desc: string;
+  desc: React.ReactNode;
   facts: string[];
   proof: React.ReactNode;
   last?: boolean;
