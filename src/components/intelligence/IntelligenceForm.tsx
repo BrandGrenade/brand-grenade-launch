@@ -222,10 +222,10 @@ export function IntelligenceForm({
 
   const confidenceColor =
     confidence === "High"
-      ? "#22C55E"
+      ? "#C81E1E"
       : confidence === "Moderate"
-        ? "#D4924A"
-        : "#94A3B8";
+        ? "#C81E1E"
+        : "#8B8680";
 
   async function handleFilesAdded(key: SectionKey, list: FileList | File[]) {
     const arr = Array.from(list);
@@ -387,7 +387,7 @@ export function IntelligenceForm({
                 className="mt-1.5"
               />
               {errors.brand ? (
-                <p className="mt-1.5 text-xs text-destructive">{errors.brand}</p>
+                <p className="mt-1.5 text-[13px] text-destructive">{errors.brand}</p>
               ) : null}
             </div>
             <div>
@@ -400,7 +400,7 @@ export function IntelligenceForm({
                 className="mt-1.5"
               />
               {errors.category ? (
-                <p className="mt-1.5 text-xs text-destructive">{errors.category}</p>
+                <p className="mt-1.5 text-[13px] text-destructive">{errors.category}</p>
               ) : null}
             </div>
             <div>
@@ -486,7 +486,7 @@ export function IntelligenceForm({
       <aside className="lg:sticky lg:top-24 lg:self-start">
         <Card className="p-5">
           <h2 className="text-h5 text-text-primary">Completeness preview</h2>
-          <p className="text-xs text-text-secondary mt-1">
+          <p className="text-[13px] text-text-secondary mt-1">
             Updates live as you fill in sections.
           </p>
 
@@ -494,16 +494,16 @@ export function IntelligenceForm({
             {SECTIONS.map((s) => {
               const present = sectionHasContent(s.key);
               return (
-                <div key={s.key} className="flex items-start gap-2.5 text-xs">
+                <div key={s.key} className="flex items-start gap-2.5 text-[13px]">
                   {present ? (
                     <Check
                       className="h-4 w-4 flex-shrink-0 mt-0.5"
-                      style={{ color: "#22C55E" }}
+                      style={{ color: "#C81E1E" }}
                     />
                   ) : (
                     <Circle
                       className="h-4 w-4 flex-shrink-0 mt-0.5"
-                      style={{ color: "#475569" }}
+                      style={{ color: "#1C1A18" }}
                     />
                   )}
                   <span
@@ -518,7 +518,7 @@ export function IntelligenceForm({
 
           <div
             className="mt-5 pt-4 border-t"
-            style={{ borderColor: "rgba(148,163,184,0.15)" }}
+            style={{ borderColor: "rgba(139, 134, 128,0.15)" }}
           >
             <div className="flex items-baseline justify-between">
               <span className="text-label text-text-secondary">
@@ -531,10 +531,10 @@ export function IntelligenceForm({
                 {confidence}
               </span>
             </div>
-            <p className="text-xs text-text-secondary mt-1.5">
+            <p className="text-[13px] text-text-secondary mt-1.5">
               {presentCount} of 6 inputs present
             </p>
-            <p className="text-xs text-text-secondary mt-1">
+            <p className="text-[13px] text-text-secondary mt-1">
               {fmtBytes(totalBytes)} / 50 MB uploaded
             </p>
           </div>
@@ -571,14 +571,14 @@ function ResearchSection({
       <div className="flex items-baseline gap-3">
         <span
           className="text-label"
-          style={{ color: present ? "#22C55E" : "#94A3B8" }}
+          style={{ color: present ? "#C81E1E" : "#8B8680" }}
         >
           {spec.number}
         </span>
         <div className="flex-1">
           <h3 className="text-h4 text-text-primary">{spec.title}</h3>
           <p className="text-sm mt-1 text-text-secondary">{spec.description}</p>
-          <p className="text-xs mt-1 italic text-text-secondary/80">
+          <p className="text-[13px] mt-1 italic text-text-secondary/80">
             {spec.helper}
           </p>
         </div>
@@ -587,7 +587,7 @@ function ResearchSection({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder="Paste content here…"
-        className="mt-4 min-h-[160px] font-mono text-xs"
+        className="mt-4 min-h-[160px] font-mono text-[13px]"
         maxLength={400_000}
       />
 
@@ -624,12 +624,12 @@ function ResearchSection({
         }}
         className="mt-3 flex flex-col items-center justify-center rounded-md px-4 py-6 text-center transition-colors cursor-pointer"
         style={{
-          border: `1px dashed ${dragOver ? "#D4924A" : "rgba(148,163,184,0.35)"}`,
-          backgroundColor: dragOver ? "rgba(212,146,74,0.06)" : "transparent",
+          border: `1px dashed ${dragOver ? "#C81E1E" : "rgba(139, 134, 128,0.35)"}`,
+          backgroundColor: dragOver ? "rgba(200, 30, 30,0.06)" : "transparent",
         }}
       >
         <Upload className="h-4 w-4 text-text-secondary" />
-        <p className="text-xs mt-2 text-text-secondary">
+        <p className="text-[13px] mt-2 text-text-secondary">
           Drop files here or click to upload
         </p>
         <p className="text-[11px] mt-1 text-text-secondary/70">
@@ -642,10 +642,10 @@ function ResearchSection({
           {files.map((f) => (
             <li
               key={f.id}
-              className="flex items-center gap-2 rounded-md px-3 py-2 text-xs"
+              className="flex items-center gap-2 rounded-md px-3 py-2 text-[13px]"
               style={{
-                border: "1px solid rgba(148,163,184,0.2)",
-                backgroundColor: "rgba(148,163,184,0.05)",
+                border: "1px solid rgba(139, 134, 128,0.2)",
+                backgroundColor: "rgba(139, 134, 128,0.05)",
               }}
             >
               {f.status === "processing" ? (

@@ -7,11 +7,11 @@ type SMPAnchorProps = {
   truths: [boolean, boolean, boolean];
 };
 
-const AMBER = "#D4924A";
+const AMBER = "#C81E1E";
 
 const labelStyle: React.CSSProperties = {
   color: AMBER,
-  fontFamily: '"DM Mono", ui-monospace, monospace',
+  fontFamily: 'Inter, system-ui, sans-serif',
   fontSize: 7,
   lineHeight: 1,
   letterSpacing: "0.18em",
@@ -20,8 +20,8 @@ const labelStyle: React.CSSProperties = {
 };
 
 const smpTextStyle: React.CSSProperties = {
-  color: "#FFFFFF",
-  fontFamily: '"DM Sans", system-ui, sans-serif',
+  color: "#EDE8E0",
+  fontFamily: 'Inter, system-ui, sans-serif',
   fontSize: 9,
   lineHeight: 1.5,
   marginTop: 8,

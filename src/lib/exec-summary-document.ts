@@ -38,24 +38,24 @@ export interface ExecSummaryIntel {
 const PROCESS_LINE =
   "Research → 50+ methodologies & lateral engines → propositions generated → six-dimension validation → one recommendation";
 
-const ACCENT = "#D4924A";
+const ACCENT = "#C81E1E";
 
 function extraStyles(): string {
   return `
-.es-process { margin: 6pt 0 0; padding: 12pt 14pt; border: 1pt solid #e0d8cc; border-radius: 6pt; background: #faf7f2; font-size: 10pt; font-weight: bold; letter-spacing: 0.01em; color: #1a1a18; }
+.es-process { margin: 6pt 0 0; padding: 12pt 14pt; border: 1pt solid #EDE8E0; border-radius: 6pt; background: #EDE8E0; font-size: 10pt; font-weight: bold; letter-spacing: 0.01em; color: #1C1A18; }
 .es-list { margin: 0; padding: 0; list-style: none; }
-.es-item { padding: 10pt 0; border-bottom: 0.5pt solid #e6e0d6; }
+.es-item { padding: 10pt 0; border-bottom: 0.5pt solid #EDE8E0; }
 .es-item:last-child { border-bottom: none; }
 .es-item .es-status { display: inline-block; font-size: 8pt; font-weight: bold; letter-spacing: 0.1em; text-transform: uppercase; color: ${ACCENT}; margin-bottom: 4pt; }
-.es-item .es-status.muted { color: #8a8680; }
-.es-item .es-prop { font-size: 11pt; font-weight: bold; color: #1a1a18; }
-.es-item .es-note { font-size: 9.5pt; color: #55524e; margin-top: 3pt; }
+.es-item .es-status.muted { color: #8B8680; }
+.es-item .es-prop { font-size: 11pt; font-weight: bold; color: #1C1A18; }
+.es-item .es-note { font-size: 9.5pt; color: #8B868024e; margin-top: 3pt; }
 .es-kv { font-size: 10pt; margin-bottom: 8pt; }
-.es-kv .es-label { font-weight: bold; color: #1a1a18; }
+.es-kv .es-label { font-weight: bold; color: #1C1A18; }
 table.es-table { width: 100%; border-collapse: collapse; font-size: 10pt; }
-table.es-table th, table.es-table td { text-align: left; vertical-align: top; padding: 8pt 10pt; border-bottom: 0.5pt solid #e6e0d6; }
-table.es-table th { width: 34%; font-weight: bold; color: #1a1a18; background: #faf7f2; }
-.es-missing { font-size: 9.5pt; color: #77736e; font-style: italic; }
+table.es-table th, table.es-table td { text-align: left; vertical-align: top; padding: 8pt 10pt; border-bottom: 0.5pt solid #EDE8E0; }
+table.es-table th { width: 34%; font-weight: bold; color: #1C1A18; background: #EDE8E0; }
+.es-missing { font-size: 9.5pt; color: #8B868036e; font-style: italic; }
 `;
 }
 

@@ -110,7 +110,7 @@ export function Document00ACard({ brand }: { brand: string }) {
     }
   }, [intel]);
 
-  const amber = "#D4924A";
+  const amber = "#C81E1E";
   const complete = intel !== null;
 
   const wrapperStyle: React.CSSProperties = {
@@ -139,7 +139,7 @@ export function Document00ACard({ brand }: { brand: string }) {
               width: 10,
               height: 10,
               borderRadius: 10,
-              background: "#4A7C59",
+              background: "#C81E1E",
               flex: "none",
             }}
           />
@@ -152,7 +152,7 @@ export function Document00ACard({ brand }: { brand: string }) {
             </span>
             <span
               className="text-body-sm"
-              style={{ color: "#8A8680", fontSize: 12 }}
+              style={{ color: "#8B8680", fontSize: 13 }}
             >
               Intelligence Lab analysis complete for {brand}.
             </span>
@@ -169,7 +169,7 @@ export function Document00ACard({ brand }: { brand: string }) {
             border: `1px solid ${amber}`,
             background: "transparent",
             color: amber,
-            fontSize: 12,
+            fontSize: 13,
             fontWeight: 600,
             letterSpacing: "0.08em",
             textTransform: "uppercase",
@@ -207,7 +207,7 @@ export function Document00ACard({ brand }: { brand: string }) {
           </span>
           <span
             className="text-body-sm"
-            style={{ color: "#5A5652", fontSize: 12 }}
+            style={{ color: "#8B8680", fontSize: 13 }}
           >
             Intelligence Lab not run for this brand.
           </span>
@@ -218,7 +218,7 @@ export function Document00ACard({ brand }: { brand: string }) {
         search={{ brand }}
         style={{
           color: amber,
-          fontSize: 12,
+          fontSize: 13,
           fontWeight: 600,
           letterSpacing: "0.06em",
           whiteSpace: "nowrap",

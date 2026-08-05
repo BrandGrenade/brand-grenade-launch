@@ -65,7 +65,7 @@ export function BrandIntelligence({ onSubmit, submitting = false }: Props) {
   return (
     <div>
       <header>
-        <span className="text-label text-primary">
+        <span className="text-label text-text-secondary">
           BRAND INTELLIGENCE REQUIRED
         </span>
         <h1 className="text-h2 mt-3 text-text-primary">
@@ -168,7 +168,7 @@ export function BrandIntelligence({ onSubmit, submitting = false }: Props) {
               marginBottom: 8,
             }}
           >
-            <span className="text-label text-primary">
+            <span className="text-label text-text-secondary">
               INTELLIGENCE COMPLETENESS
             </span>
             <span

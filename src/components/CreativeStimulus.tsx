@@ -23,8 +23,8 @@ import { ideaCardStyle, ideaListStyle, IDEA_COLUMN_WIDTH } from "@/components/st
 
 import type { DirectionRatings } from "@/lib/stimulus/rating-prompts";
 
-const AMBER = "#E8A33D";
-const MUTED = "#8A8680";
+const AMBER = "#C81E1E";
+const MUTED = "#8B8680";
 
 type Direction = {
   id: string;
@@ -81,7 +81,7 @@ function Btn({
       className="text-mono"
       style={{
         background: active ? `${tone}22` : "none",
-        border: `1px solid ${active ? tone : "#2A2A2A"}`,
+        border: `1px solid ${active ? tone : "#1C1A18"}`,
         color: active ? tone : MUTED,
         padding: "6px 12px",
         borderRadius: 6,
@@ -134,7 +134,7 @@ function DirectionCard({
           <span
             style={{
               color: AMBER,
-              fontFamily: "'DM Mono', monospace",
+              fontFamily: "Inter, system-ui, sans-serif",
               fontSize: 16,
               letterSpacing: "0.06em",
               textTransform: "uppercase",
@@ -160,7 +160,7 @@ function DirectionCard({
       <div
         className="text-body-sm"
         style={{
-          color: "#E8E4DE",
+          color: "#EDE8E0",
           marginTop: 20,
           whiteSpace: "pre-wrap",
           lineHeight: 1.75,
@@ -182,7 +182,7 @@ function DirectionCard({
               className="text-mono"
               style={{
                 color: MUTED,
-                border: "1px solid #2A2A2A",
+                border: "1px solid #1C1A18",
                 borderRadius: 999,
                 padding: "3px 10px",
                 fontSize: 10,
@@ -203,9 +203,9 @@ function DirectionCard({
         style={{
           width: "100%",
           marginTop: 14,
-          backgroundColor: "#000",
-          color: "#E8E4DE",
-          border: "1px solid #2A2A2A",
+          backgroundColor: "#0A0908",
+          color: "#EDE8E0",
+          border: "1px solid #1C1A18",
           borderRadius: 6,
           padding: 10,
           fontFamily: "inherit",
@@ -249,8 +249,8 @@ function DirectionCard({
             placeholder="What to change — the lens stays, the direction gets rewritten."
             style={{
               width: "100%",
-              backgroundColor: "#000",
-              color: "#E8E4DE",
+              backgroundColor: "#0A0908",
+              color: "#EDE8E0",
               border: `1px solid ${AMBER}40`,
               borderRadius: 6,
               padding: 10,
@@ -398,7 +398,7 @@ export function CreativeStimulus({
       style={
         isPage
           ? { width: "100%" }
-          : { marginTop: 28, border: `1px solid ${AMBER}33`, borderRadius: 8, padding: 20, backgroundColor: "#0E0E0E" }
+          : { marginTop: 28, border: `1px solid ${AMBER}33`, borderRadius: 8, padding: 20, backgroundColor: "#0A0908" }
       }
     >
       {!isPage && (
@@ -424,7 +424,7 @@ export function CreativeStimulus({
       {open && (
         <div style={{ marginTop: 18 }}>
           {err && (
-            <div className="text-body-sm" style={{ color: "#E86A3D", marginBottom: 12 }}>
+            <div className="text-body-sm" style={{ color: "#C81E1E", marginBottom: 12 }}>
               {err}
             </div>
           )}
@@ -435,9 +435,9 @@ export function CreativeStimulus({
               onChange={(e) => setChannel(e.target.value)}
               disabled={busy}
               style={{
-                backgroundColor: "#000",
-                color: "#E8E4DE",
-                border: "1px solid #2A2A2A",
+                backgroundColor: "#0A0908",
+                color: "#EDE8E0",
+                border: "1px solid #1C1A18",
                 borderRadius: 6,
                 padding: "8px 10px",
                 fontFamily: "inherit",
@@ -480,9 +480,9 @@ export function CreativeStimulus({
                         position: "sticky" as const,
                         top: 128,
                         zIndex: 20,
-                        backgroundColor: "#0B0B0Bf2",
+                        backgroundColor: "#0A0908f2",
                         backdropFilter: "blur(6px)",
-                        border: "1px solid #232323",
+                        border: "1px solid #1C1A18",
                         borderRadius: 10,
                         padding: "12px 16px",
                         maxWidth: IDEA_COLUMN_WIDTH,

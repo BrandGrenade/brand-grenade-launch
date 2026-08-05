@@ -89,7 +89,7 @@ function SettingsPage() {
         style={{ maxWidth: 640, paddingTop: 48, paddingBottom: 96 }}
       >
         <header className="mb-10">
-          <span className="text-label text-primary">Account & Preferences</span>
+          <span className="text-label text-text-secondary">Account & Preferences</span>
           <div className="mt-3 flex items-end justify-between gap-4">
             <h1 className="text-h2 text-text-primary">Settings</h1>
             <span
@@ -341,7 +341,7 @@ function Toggle({
           width: 14,
           height: 14,
           borderRadius: 999,
-          backgroundColor: checked ? "#0A0A0A" : "#8A8680",
+          backgroundColor: checked ? "#0A0908" : "#8B8680",
           transform: `translateX(${checked ? 18 : 2}px)`,
         }}
       />

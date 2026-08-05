@@ -55,16 +55,16 @@ function cachedSplitText(doc: jsPDF, text: string, maxWidth: number): string[] {
 
 
 // ─── Palette ────────────────────────────────────────────────────────────
-const C_PAGE = "#FAFAF8";
-const C_SURFACE_2 = "#F2F0EB";
-const C_DARK = "#1A1A18";
-const C_TEXT = "#1A1A18";
-const C_TEXT_2 = "#6A6560";
-const C_TEXT_3 = "#9A9590";
-const C_ACCENT = "#D4924A";
-const C_RULE = "#E0DDD8";
-const C_DARK_FOOT = "#5A5550";
-const C_WHITE = "#FAFAF8";
+const C_PAGE = "#EDE8E0";
+const C_SURFACE_2 = "#EDE8E0";
+const C_DARK = "#1C1A18";
+const C_TEXT = "#1C1A18";
+const C_TEXT_2 = "#8B8680";
+const C_TEXT_3 = "#8B8680";
+const C_ACCENT = "#C81E1E";
+const C_RULE = "#EDE8E0";
+const C_DARK_FOOT = "#1C1A18";
+const C_WHITE = "#EDE8E0";
 
 // ─── A4 geometry (pt) ───────────────────────────────────────────────────
 const PAGE_W = 595.28;
@@ -910,14 +910,14 @@ async function drawContent(doc: jsPDF, input: PdfInput) {
       if (isSelected) {
         doc.setFillColor(234, 240, 233);
         doc.rect(badgeX, badgeY, badgeW, badgeH, "F");
-        doc.setDrawColor("#4A7C59");
+        doc.setDrawColor("#C81E1E");
         doc.setLineWidth(0.6);
         doc.rect(badgeX, badgeY, badgeW, badgeH, "S");
-        doc.setTextColor("#4A7C59");
+        doc.setTextColor("#C81E1E");
       } else {
-        doc.setFillColor("#3A3A3A");
+        doc.setFillColor("#1C1A18");
         doc.rect(badgeX, badgeY, badgeW, badgeH, "F");
-        doc.setTextColor("#FAFAF8");
+        doc.setTextColor("#EDE8E0");
       }
       doc.text(badgeText, badgeX + padX, badgeY + 10);
       clearTracking(doc);

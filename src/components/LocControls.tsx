@@ -170,7 +170,7 @@ export function LocControls({ sessionId }: { sessionId: string }) {
   const badgeColor =
     state === "complete" ? "var(--color-success)"
     : state === "running" ? "var(--color-warning)"
-    : state === "failed" ? "var(--color-error, #d33)"
+    : state === "failed" ? "var(--color-error, #C81E1E)"
     : "var(--color-text-tertiary)";
 
   function toggleKeep(engine: EngineName) {
@@ -206,7 +206,7 @@ export function LocControls({ sessionId }: { sessionId: string }) {
             <button
               type="button"
               className="rounded border px-3 py-1"
-              style={{ borderColor: "var(--color-border-strong, #999)" }}
+              style={{ borderColor: "var(--color-border-strong, #8B8680)" }}
               disabled={busy || locked}
               onClick={() => trigger(state === "failed" || stuck)}
             >
@@ -223,7 +223,7 @@ export function LocControls({ sessionId }: { sessionId: string }) {
             <button
               type="button"
               className="rounded border px-3 py-1"
-              style={{ borderColor: "var(--color-border-strong, #999)" }}
+              style={{ borderColor: "var(--color-border-strong, #8B8680)" }}
               disabled={busy || locked}
               onClick={async () => {
                 // Force only when the server heartbeat says the run is dead;
@@ -245,7 +245,7 @@ export function LocControls({ sessionId }: { sessionId: string }) {
             <button
               type="button"
               className="rounded border px-3 py-1"
-              style={{ borderColor: "var(--color-border-strong, #999)", background: "var(--color-warning, #f4c542)", color: "#000" }}
+              style={{ borderColor: "var(--color-border-strong, #8B8680)", background: "var(--color-warning, #C81E1E)", color: "#0A0908" }}
               disabled={busy || locked}
               onClick={() =>
                 trigger(true, {
@@ -260,7 +260,7 @@ export function LocControls({ sessionId }: { sessionId: string }) {
           <button
             type="button"
             className="rounded border px-3 py-1"
-            style={{ borderColor: "var(--color-border-strong, #999)" }}
+            style={{ borderColor: "var(--color-border-strong, #8B8680)" }}
             disabled={locked}
             onClick={() => setShowRetryPanel((v) => !v)}
           >
@@ -273,9 +273,9 @@ export function LocControls({ sessionId }: { sessionId: string }) {
       {hasFailures && (
         <div
           className="mt-3 rounded border p-3"
-          style={{ borderColor: "var(--color-error, #d33)", background: "color-mix(in oklab, var(--color-error, #d33) 6%, transparent)" }}
+          style={{ borderColor: "var(--color-error, #C81E1E)", background: "color-mix(in oklab, var(--color-error, #C81E1E) 6%, transparent)" }}
         >
-          <div className="mb-2 font-semibold" style={{ color: "var(--color-error, #d33)" }}>
+          <div className="mb-2 font-semibold" style={{ color: "var(--color-error, #C81E1E)" }}>
             {failedEngines.length} engine{failedEngines.length === 1 ? "" : "s"} failed validation
           </div>
           <ul className="space-y-1">
@@ -322,7 +322,7 @@ export function LocControls({ sessionId }: { sessionId: string }) {
             <button
               type="button"
               className="rounded border px-3 py-1"
-              style={{ borderColor: "var(--color-border-strong, #999)" }}
+              style={{ borderColor: "var(--color-border-strong, #8B8680)" }}
               disabled={busy}
               onClick={() =>
                 trigger(true, {
@@ -338,7 +338,7 @@ export function LocControls({ sessionId }: { sessionId: string }) {
       )}
 
       {status?.loc_error && (
-        <div className="mt-2" style={{ color: "var(--color-error, #d33)" }}>
+        <div className="mt-2" style={{ color: "var(--color-error, #C81E1E)" }}>
           LOC error: {status.loc_error}
         </div>
       )}

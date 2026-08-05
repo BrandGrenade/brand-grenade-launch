@@ -96,20 +96,20 @@ export function RepositoryView({ slug, title, intro }: Props) {
   }
 
   if (state === "loading") {
-    return <div className="min-h-screen bg-white" />;
+    return <div className="min-h-screen bg-card" />;
   }
 
   if (state === "locked") {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center px-4">
+      <div className="min-h-screen bg-card flex items-center justify-center px-4">
         <form onSubmit={onSubmit} className="w-full max-w-sm space-y-6">
-          <div className="flex items-center gap-3 text-neutral-900">
+          <div className="flex items-center gap-3 text-text-primary">
             <Lock className="h-5 w-5" />
             <span className="text-sm font-medium tracking-wide uppercase">Restricted</span>
           </div>
           <div>
-            <h1 className="text-2xl font-semibold text-neutral-900">{title}</h1>
-            <p className="mt-2 text-sm text-neutral-600">
+            <h1 className="text-2xl font-semibold text-text-primary">{title}</h1>
+            <p className="mt-2 text-sm text-text-secondary">
               Enter your password to access this resource.
             </p>
           </div>
@@ -119,14 +119,14 @@ export function RepositoryView({ slug, title, intro }: Props) {
             autoComplete="current-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="bg-white border-neutral-300 text-neutral-900"
+            className="bg-card border-border text-text-primary"
             placeholder="Password"
           />
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          {error && <p className="text-sm text-primary">{error}</p>}
           <Button
             type="submit"
             disabled={submitting || !password}
-            className="w-full bg-neutral-900 text-white hover:bg-neutral-800"
+            className="w-full bg-card text-text-primary hover:bg-card"
           >
             {submitting ? "Checking…" : "Enter"}
           </Button>
@@ -136,8 +136,8 @@ export function RepositoryView({ slug, title, intro }: Props) {
   }
 
   return (
-    <div className="min-h-screen bg-white text-neutral-900">
-      <header className="border-b border-neutral-200">
+    <div className="min-h-screen bg-card text-text-primary">
+      <header className="border-b border-border">
         <div className="mx-auto max-w-3xl px-6 py-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <img src="/brand-grenade-icon.png" alt="Brand Grenade" className="h-6 w-6" />
@@ -145,7 +145,7 @@ export function RepositoryView({ slug, title, intro }: Props) {
           </div>
           <div className="flex items-center gap-4">
             {visitorName && (
-              <span className="text-xs text-neutral-500">Signed in as {visitorName}</span>
+              <span className="text-[13px] text-text-secondary">Signed in as {visitorName}</span>
             )}
             <Button
               variant="ghost"
@@ -157,7 +157,7 @@ export function RepositoryView({ slug, title, intro }: Props) {
                 setVisitorName("");
                 setState("locked");
               }}
-              className="text-neutral-600 hover:text-neutral-900"
+              className="text-text-secondary hover:text-text-primary"
             >
               <LogOut className="h-4 w-4 mr-1.5" /> Log out
             </Button>
@@ -165,15 +165,15 @@ export function RepositoryView({ slug, title, intro }: Props) {
         </div>
       </header>
       <main className="mx-auto max-w-3xl px-6 py-12">
-        <h1 className="text-3xl font-semibold text-neutral-900">{title}</h1>
-        <p className="mt-4 text-base leading-relaxed text-neutral-700">{intro}</p>
+        <h1 className="text-3xl font-semibold text-text-primary">{title}</h1>
+        <p className="mt-4 text-base leading-relaxed text-text-primary">{intro}</p>
 
         <section className="mt-12">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-neutral-500">
+          <h2 className="text-[13px] font-semibold uppercase tracking-wider text-text-secondary">
             Documents
           </h2>
           {docs.length === 0 ? (
-            <p className="mt-4 text-sm text-neutral-500">
+            <p className="mt-4 text-sm text-text-secondary">
               No documents have been published to this repository yet.
             </p>
           ) : (
@@ -181,14 +181,14 @@ export function RepositoryView({ slug, title, intro }: Props) {
               {docs.map((doc) => (
                 <li
                   key={doc.id}
-                  className="rounded-lg border border-neutral-200 p-5 flex items-start justify-between gap-4"
+                  className="rounded-lg border border-border p-5 flex items-start justify-between gap-4"
                 >
                   <div className="min-w-0">
-                    <h3 className="text-base font-medium text-neutral-900">{doc.title}</h3>
+                    <h3 className="text-base font-medium text-text-primary">{doc.title}</h3>
                     {doc.description && (
-                      <p className="mt-1 text-sm text-neutral-600">{doc.description}</p>
+                      <p className="mt-1 text-sm text-text-secondary">{doc.description}</p>
                     )}
-                    <p className="mt-2 text-xs uppercase tracking-wide text-neutral-400">
+                    <p className="mt-2 text-[13px] uppercase tracking-wide text-text-secondary">
                       {doc.file_type}
                     </p>
                   </div>
@@ -197,7 +197,7 @@ export function RepositoryView({ slug, title, intro }: Props) {
                       variant="outline"
                       size="sm"
                       onClick={() => handleOpen(doc, "open")}
-                      className="border-neutral-300 bg-white text-neutral-900 hover:bg-neutral-100 hover:text-neutral-900"
+                      className="border-border bg-card text-text-primary hover:bg-card hover:text-text-primary"
                     >
                       <ExternalLink className="h-4 w-4 mr-1.5" /> View
                     </Button>
@@ -205,7 +205,7 @@ export function RepositoryView({ slug, title, intro }: Props) {
                       variant="outline"
                       size="sm"
                       onClick={() => handleOpen(doc, "download")}
-                      className="border-neutral-300 bg-white text-neutral-900 hover:bg-neutral-100 hover:text-neutral-900"
+                      className="border-border bg-card text-text-primary hover:bg-card hover:text-text-primary"
                     >
                       <Download className="h-4 w-4 mr-1.5" /> Download
                     </Button>

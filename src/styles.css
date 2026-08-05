@@ -61,91 +61,99 @@
 
   /* Fonts */
   --font-sans: "Inter", system-ui, -apple-system, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --font-display: "Bebas Neue", "Inter", sans-serif;
+  --font-mono: "Inter", ui-monospace, monospace;
 
   /* Shadows */
   --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.4), 0 4px 12px rgba(0, 0, 0, 0.3);
   --shadow-elevated: 0 4px 16px rgba(0, 0, 0, 0.5), 0 12px 40px rgba(0, 0, 0, 0.4);
-  --shadow-glow: 0 0 0 1px rgba(212, 146, 74, 0.25), 0 4px 16px rgba(212, 146, 74, 0.15);
+  --shadow-glow: 0 0 0 1px rgba(200, 30, 30, 0.25), 0 4px 16px rgba(200, 30, 30, 0.15);
 }
 
 :root {
   --radius: 12px;
 
-  /* Backgrounds — #0A0A0A / #141414 / #1C1C1C */
-  --background: oklch(0.145 0 0);
-  --surface-2: oklch(0.185 0 0);
-  --surface-3: oklch(0.22 0 0);
-  --card: oklch(0.22 0 0);
-  --card-foreground: oklch(0.94 0.005 80);
-  --popover: oklch(0.22 0 0);
-  --popover-foreground: oklch(0.94 0.005 80);
+  /* BRAND GRENADE — five-value system */
+  --void: #0A0908;
+  --ash: #1C1A18;
+  --paper: #EDE8E0;
+  --smoke: #8B8680;
+  --detonation: #C81E1E;
 
-  /* Text — #F0EDE8 / #8A8680 / #5A5652 */
-  --foreground: oklch(0.94 0.005 80);
-  --text-primary: oklch(0.94 0.005 80);
-  --text-secondary: oklch(0.6 0.008 75);
-  --text-tertiary: oklch(0.43 0.008 75);
+  /* Surfaces */
+  --background: #0A0908;
+  --surface-2: #1C1A18;
+  --surface-3: #1C1A18;
+  --card: #1C1A18;
+  --card-foreground: #EDE8E0;
+  --popover: #1C1A18;
+  --popover-foreground: #EDE8E0;
 
-  /* Accent — #D4924A amber */
-  --primary: oklch(0.695 0.118 58.5);
-  --primary-foreground: oklch(0.145 0 0);
-  --primary-hover: oklch(0.745 0.125 58.5);
-  --primary-subtle: oklch(0.695 0.118 58.5 / 0.10);
+  /* Text */
+  --foreground: #EDE8E0;
+  --text-primary: #EDE8E0;
+  --text-secondary: #8B8680;
+  --text-tertiary: #8B8680;
 
-  --secondary: oklch(0.22 0 0);
-  --secondary-foreground: oklch(0.94 0.005 80);
-  --muted: oklch(0.185 0 0);
-  --muted-foreground: oklch(0.6 0.008 75);
-  --accent: oklch(0.695 0.118 58.5 / 0.10);
-  --accent-foreground: oklch(0.94 0.005 80);
+  /* Detonation red — restraint: CTAs and key confirmations only */
+  --primary: #C81E1E;
+  --primary-foreground: #EDE8E0;
+  --primary-hover: #C81E1E;
+  --primary-subtle: rgba(200, 30, 30, 0.10);
+
+  --secondary: #1C1A18;
+  --secondary-foreground: #EDE8E0;
+  --muted: #1C1A18;
+  --muted-foreground: #8B8680;
+  --accent: #1C1A18;
+  --accent-foreground: #EDE8E0;
 
   /* Status */
-  --success: oklch(0.55 0.08 150);
-  --warning: oklch(0.5 0.09 70);
-  --destructive: oklch(0.45 0.12 25);
-  --destructive-foreground: oklch(0.94 0.005 80);
+  --success: #8B8680;
+  --warning: #8B8680;
+  --destructive: #C81E1E;
+  --destructive-foreground: #EDE8E0;
 
-  /* Borders — #2A2A2A / #3A3A3A */
-  --border: oklch(0.27 0 0);
-  --border-strong: oklch(0.33 0 0);
-  --input: oklch(0.185 0 0);
-  --ring: oklch(0.695 0.118 58.5);
+  /* Borders */
+  --border: #1C1A18;
+  --border-strong: #1C1A18;
+  --input: #1C1A18;
+  --ring: #C81E1E;
 
   /* Sidebar (shadcn) */
-  --sidebar: oklch(0.185 0 0);
-  --sidebar-foreground: oklch(0.94 0.005 80);
-  --sidebar-primary: oklch(0.695 0.118 58.5);
-  --sidebar-primary-foreground: oklch(0.145 0 0);
-  --sidebar-accent: oklch(0.22 0 0);
-  --sidebar-accent-foreground: oklch(0.94 0.005 80);
-  --sidebar-border: oklch(0.27 0 0);
-  --sidebar-ring: oklch(0.695 0.118 58.5);
+  --sidebar: #1C1A18;
+  --sidebar-foreground: #EDE8E0;
+  --sidebar-primary: #C81E1E;
+  --sidebar-primary-foreground: #EDE8E0;
+  --sidebar-accent: #1C1A18;
+  --sidebar-accent-foreground: #EDE8E0;
+  --sidebar-border: #1C1A18;
+  --sidebar-ring: #C81E1E;
 }
 
 /* Single theme — dark by design. .dark mirrors :root. */
 .dark {
-  --background: oklch(0.145 0 0);
-  --surface-2: oklch(0.185 0 0);
-  --surface-3: oklch(0.22 0 0);
-  --card: oklch(0.22 0 0);
-  --card-foreground: oklch(0.94 0.005 80);
-  --popover: oklch(0.22 0 0);
-  --popover-foreground: oklch(0.94 0.005 80);
-  --foreground: oklch(0.94 0.005 80);
-  --primary: oklch(0.695 0.118 58.5);
-  --primary-foreground: oklch(0.145 0 0);
-  --secondary: oklch(0.22 0 0);
-  --secondary-foreground: oklch(0.94 0.005 80);
-  --muted: oklch(0.185 0 0);
-  --muted-foreground: oklch(0.6 0.008 75);
-  --accent: oklch(0.695 0.118 58.5 / 0.10);
-  --accent-foreground: oklch(0.94 0.005 80);
-  --destructive: oklch(0.45 0.12 25);
-  --destructive-foreground: oklch(0.94 0.005 80);
-  --border: oklch(0.27 0 0);
-  --input: oklch(0.185 0 0);
-  --ring: oklch(0.695 0.118 58.5);
+  --background: #0A0908;
+  --surface-2: #1C1A18;
+  --surface-3: #1C1A18;
+  --card: #1C1A18;
+  --card-foreground: #EDE8E0;
+  --popover: #1C1A18;
+  --popover-foreground: #EDE8E0;
+  --foreground: #EDE8E0;
+  --primary: #C81E1E;
+  --primary-foreground: #EDE8E0;
+  --secondary: #1C1A18;
+  --secondary-foreground: #EDE8E0;
+  --muted: #1C1A18;
+  --muted-foreground: #8B8680;
+  --accent: #1C1A18;
+  --accent-foreground: #EDE8E0;
+  --destructive: #C81E1E;
+  --destructive-foreground: #EDE8E0;
+  --border: #1C1A18;
+  --input: #1C1A18;
+  --ring: #C81E1E;
 }
 
 @layer base {
@@ -159,17 +167,17 @@
 
   /* Global polish — selection, scrollbars, focus, transitions */
   ::selection {
-    background-color: rgba(200, 135, 58, 0.30);
-    color: #F0EDE8;
+    background-color: rgba(200, 30, 30, 0.30);
+    color: #EDE8E0;
   }
 
   /* WebKit scrollbar */
   ::-webkit-scrollbar { width: 6px; height: 6px; }
-  ::-webkit-scrollbar-track { background: #141414; }
-  ::-webkit-scrollbar-thumb { background: #2A2A2A; border-radius: 3px; }
-  ::-webkit-scrollbar-thumb:hover { background: #3A3A3A; }
+  ::-webkit-scrollbar-track { background: #0A0908; }
+  ::-webkit-scrollbar-thumb { background: #1C1A18; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: #1C1A18; }
   /* Firefox */
-  * { scrollbar-width: thin; scrollbar-color: #2A2A2A #141414; }
+  * { scrollbar-width: thin; scrollbar-color: #1C1A18 #0A0908; }
 
   /* Amber-glow focus ring for any keyboard-focused interactive element */
   a:focus-visible,
@@ -180,7 +188,7 @@
   [role="button"]:focus-visible,
   [tabindex]:focus-visible {
     outline: none;
-    box-shadow: 0 0 0 3px rgba(200, 135, 58, 0.30);
+    box-shadow: 0 0 0 3px rgba(200, 30, 30, 0.30);
     border-radius: 4px;
   }
 
@@ -210,19 +218,22 @@
 @layer components {
   /* Typography scale — composable utility classes */
   .text-display {
-    font-size: 48px;
+    font-family: var(--font-display);
+    font-size: 52px;
     font-weight: 700;
     letter-spacing: -0.02em;
     line-height: 1.05;
   }
   .text-h1 {
-    font-size: 32px;
+    font-family: var(--font-display);
+    font-size: 36px;
     font-weight: 600;
     letter-spacing: -0.01em;
     line-height: 1.15;
   }
   .text-h2 {
-    font-size: 24px;
+    font-family: var(--font-display);
+    font-size: 28px;
     font-weight: 600;
     letter-spacing: -0.01em;
     line-height: 1.25;
@@ -246,7 +257,7 @@
     line-height: 1.5;
   }
   .text-body-sm {
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 400;
     letter-spacing: 0.02em;
     line-height: 1.5;
@@ -283,7 +294,7 @@
   .input-base:focus-visible {
     outline: none;
     border-color: var(--color-primary);
-    box-shadow: 0 0 0 3px oklch(0.695 0.118 58.5 / 0.20);
+    box-shadow: 0 0 0 3px rgba(200, 30, 30, 0.20);
   }
 
   /* Phase 2 detonation output section heading
@@ -292,11 +303,11 @@
   .section-label,
   .phase2-label {
     display: block;
-    font-family: 'DM Mono', monospace;
-    font-size: 7pt;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
     text-transform: uppercase;
     letter-spacing: 0.18em;
-    color: #D4924A;
+    color: #C81E1E;
     margin-top: 20px;
     margin-bottom: 6px;
     font-weight: 500;
@@ -305,15 +316,15 @@
      underlined to outrank standard section labels. */
   .phase2-channel-heading {
     display: block;
-    font-family: 'DM Mono', monospace;
-    font-size: 10pt;
-    color: #D4924A;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    color: #C81E1E;
     letter-spacing: 0.12em;
     text-transform: uppercase;
     margin-top: 32px;
     margin-bottom: 12px;
     font-weight: 500;
-    border-bottom: 1px solid rgba(212, 146, 74, 0.3);
+    border-bottom: 1px solid rgba(200, 30, 30, 0.3);
     padding-bottom: 8px;
   }
 }

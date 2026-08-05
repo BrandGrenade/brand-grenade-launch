@@ -84,7 +84,7 @@ function UnsubscribePage() {
             <button
               onClick={confirm}
               disabled={submitting}
-              className="w-full rounded bg-primary px-4 py-2 text-white transition-colors hover:bg-primary-hover disabled:opacity-60"
+              className="w-full rounded bg-primary px-4 py-2 text-text-primary transition-colors hover:bg-primary-hover disabled:opacity-60"
             >
               {submitting ? 'Unsubscribing…' : 'Confirm unsubscribe'}
             </button>

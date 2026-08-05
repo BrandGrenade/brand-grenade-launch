@@ -110,7 +110,7 @@ export function SavedBriefsSection({
     <section className="mt-10">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <span className="text-label text-primary">Pre-Written Briefs</span>
+          <span className="text-label text-text-secondary">Pre-Written Briefs</span>
           <h2 className="text-h2 mt-2 text-text-primary">Saved Briefs</h2>
           <p className="text-body mt-2 text-text-secondary">
             Pre-written briefs ready to load into a new pipeline run with one click.
@@ -119,7 +119,7 @@ export function SavedBriefsSection({
         <Link
           to="/brief/new"
           className="inline-flex h-10 shrink-0 items-center gap-1.5 self-start rounded-md px-4 text-[13px] font-semibold transition-opacity hover:opacity-90"
-          style={{ backgroundColor: "#D4924A", color: "#0A0A0A" }}
+          style={{ backgroundColor: "#C81E1E", color: "#0A0908" }}
         >
           <Plus size={14} />
           New Brief
@@ -161,7 +161,7 @@ export function SavedBriefsSection({
                     type="button"
                     onClick={() => onLoad(b)}
                     className="inline-flex h-9 items-center gap-1.5 rounded-md px-3 text-[13px] font-medium transition-opacity hover:opacity-90"
-                    style={{ backgroundColor: "#D4924A", color: "#0A0A0A" }}
+                    style={{ backgroundColor: "#C81E1E", color: "#0A0908" }}
                   >
                     <FolderOpen size={14} />
                     Load and Run
@@ -169,8 +169,8 @@ export function SavedBriefsSection({
                   <button
                     type="button"
                     onClick={() => confirmDelete(b.brief_id, b.brand_name)}
-                    className="inline-flex h-9 items-center gap-1.5 rounded-md px-3 text-[13px] font-medium transition-colors hover:bg-[#7C3A3A15]"
-                    style={{ border: "1px solid #7C3A3A66", color: "#7C3A3A" }}
+                    className="inline-flex h-9 items-center gap-1.5 rounded-md px-3 text-[13px] font-medium transition-colors hover:bg-[#C81E1E15]"
+                    style={{ border: "1px solid #C81E1E66", color: "#C81E1E" }}
                   >
                     <Trash2 size={14} />
                     Delete
@@ -219,7 +219,7 @@ export function SavedBriefsPicker({
         className="flex w-full items-center justify-between gap-3 p-5 text-left"
       >
         <div className="flex items-center gap-3">
-          <FolderOpen size={18} style={{ color: "#D4924A" }} />
+          <FolderOpen size={18} style={{ color: "#C81E1E" }} />
           <div>
             <h3 className="text-h3 text-text-primary">Load a Saved Brief</h3>
             <p className="text-body-sm mt-0.5 text-text-secondary">
@@ -264,8 +264,8 @@ export function SavedBriefsPicker({
                       onSelect(b);
                       setOpen(false);
                     }}
-                    className="inline-flex h-8 shrink-0 items-center rounded-md px-3 text-[12px] font-semibold transition-opacity hover:opacity-90"
-                    style={{ backgroundColor: "#D4924A", color: "#0A0A0A" }}
+                    className="inline-flex h-8 shrink-0 items-center rounded-md px-3 text-[13px] font-semibold transition-opacity hover:opacity-90"
+                    style={{ backgroundColor: "#C81E1E", color: "#0A0908" }}
                   >
                     Load
                   </button>

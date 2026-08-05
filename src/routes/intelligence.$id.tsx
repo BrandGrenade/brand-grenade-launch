@@ -203,33 +203,33 @@ const LAYER_LABELS: Record<number, string> = {
 };
 
 const TYPE_LABEL: Record<NonNullable<Territory["type"]>, { label: string; color: string }> = {
-  category_ownership: { label: "Category Ownership", color: "#D4924A" },
-  differentiated_positioning: { label: "Differentiated Positioning", color: "#3B82F6" },
-  category_creation: { label: "Category Creation", color: "#A855F7" },
-  hermit_crab: { label: "Hermit Crab", color: "#22C55E" },
-  moment_activated: { label: "Moment Activated", color: "#EF4444" },
+  category_ownership: { label: "Category Ownership", color: "#C81E1E" },
+  differentiated_positioning: { label: "Differentiated Positioning", color: "#C81E1E" },
+  category_creation: { label: "Category Creation", color: "#C81E1E" },
+  hermit_crab: { label: "Hermit Crab", color: "#C81E1E" },
+  moment_activated: { label: "Moment Activated", color: "#C81E1E" },
 };
 
 const RISK_COLOR: Record<RiskClass, string> = {
-  low: "#22C55E",
-  medium: "#D4924A",
-  high: "#EF4444",
-  very_high: "#7F1D1D",
+  low: "#C81E1E",
+  medium: "#C81E1E",
+  high: "#C81E1E",
+  very_high: "#C81E1E",
 };
 
 const RECOMMENDATION_STYLE: Record<
   NonNullable<Territory["strategic_recommendation"]>,
   { label: string; color: string }
 > = {
-  claim: { label: "Claim", color: "#22C55E" },
-  claim_with_conditions: { label: "Claim with Conditions", color: "#D4924A" },
-  do_not_claim: { label: "Do Not Claim", color: "#EF4444" },
+  claim: { label: "Claim", color: "#C81E1E" },
+  claim_with_conditions: { label: "Claim with Conditions", color: "#C81E1E" },
+  do_not_claim: { label: "Do Not Claim", color: "#C81E1E" },
 };
 
 const CONFIDENCE_COLOR: Record<string, string> = {
-  high: "#22C55E",
-  moderate: "#D4924A",
-  low: "#EF4444",
+  high: "#C81E1E",
+  moderate: "#C81E1E",
+  low: "#C81E1E",
 };
 
 // ── Utilities ────────────────────────────────────────────────────────────
@@ -408,7 +408,7 @@ function IntelligenceRunPage() {
         <main className="mx-auto max-w-[720px] px-6 py-16">
           <BackLink id={id} />
           <div className="mt-6">
-            <span className="text-label text-primary">Intelligence Lab</span>
+            <span className="text-label text-text-secondary">Intelligence Lab</span>
             <h1 className="text-h2 mt-2 text-text-primary">
               {row.brand_name || "Analysis failed"}
             </h1>
@@ -426,9 +426,9 @@ function IntelligenceRunPage() {
                   params={{ id }}
                   className="mt-4 inline-flex h-9 items-center justify-center gap-2 rounded-md px-4 text-sm font-semibold"
                   style={{
-                    backgroundColor: "#D4924A",
-                    color: "#0A0A0A",
-                    boxShadow: "0 2px 12px rgba(212,146,74,0.25)",
+                    backgroundColor: "#C81E1E",
+                    color: "#0A0908",
+                    boxShadow: "0 2px 12px rgba(200, 30, 30,0.25)",
                   }}
                 >
                   Edit Inputs
@@ -449,7 +449,7 @@ function IntelligenceRunPage() {
         <main className="mx-auto max-w-[720px] px-6 py-16">
           <BackLink id={id} />
           <div className="mt-6">
-            <span className="text-label text-primary">Intelligence Lab</span>
+            <span className="text-label text-text-secondary">Intelligence Lab</span>
             <h1 className="text-h2 mt-2 text-text-primary">
               {row.brand_name || "Research inputs saved"}
             </h1>
@@ -468,9 +468,9 @@ function IntelligenceRunPage() {
                 params={{ id }}
                 className="inline-flex items-center justify-center gap-2 h-9 px-4 rounded-md text-sm font-semibold"
                 style={{
-                  backgroundColor: "#D4924A",
-                  color: "#0A0A0A",
-                  boxShadow: "0 2px 12px rgba(212,146,74,0.25)",
+                  backgroundColor: "#C81E1E",
+                  color: "#0A0908",
+                  boxShadow: "0 2px 12px rgba(200, 30, 30,0.25)",
                 }}
               >
                 Edit Inputs
@@ -492,7 +492,7 @@ function IntelligenceRunPage() {
         <main className="mx-auto max-w-[720px] px-6 py-16">
           <BackLink id={id} />
           <div className="mt-6">
-            <span className="text-label text-primary">Intelligence Lab</span>
+            <span className="text-label text-text-secondary">Intelligence Lab</span>
             <h1 className="text-h2 mt-2 text-text-primary">
               {row.brand_name || "Analysis in progress"}
             </h1>
@@ -507,10 +507,10 @@ function IntelligenceRunPage() {
             <p className="mt-2 text-sm text-text-secondary">
               The intelligence engine is streaming. This page updates automatically.
             </p>
-            <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-white/5">
+            <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-card/5">
               <div
                 className="h-full rounded-full transition-all"
-                style={{ width: `${pct}%`, backgroundColor: "#D4924A" }}
+                style={{ width: `${pct}%`, backgroundColor: "#C81E1E" }}
               />
             </div>
           </Card>
@@ -543,9 +543,9 @@ function IntelligenceRunPage() {
                     params={{ id }}
                     className="mt-4 inline-flex h-9 items-center justify-center gap-2 rounded-md px-4 text-sm font-semibold"
                     style={{
-                      backgroundColor: "#D4924A",
-                      color: "#0A0A0A",
-                      boxShadow: "0 2px 12px rgba(212,146,74,0.25)",
+                      backgroundColor: "#C81E1E",
+                      color: "#0A0908",
+                      boxShadow: "0 2px 12px rgba(200, 30, 30,0.25)",
                     }}
                   >
                     Edit Inputs
@@ -564,7 +564,7 @@ function IntelligenceRunPage() {
         <main className="mx-auto max-w-[720px] px-6 py-16">
           <BackLink id={id} />
           <div className="mt-6">
-            <span className="text-label text-primary">Intelligence Lab</span>
+            <span className="text-label text-text-secondary">Intelligence Lab</span>
             <h1 className="text-h2 mt-2 text-text-primary">
               {row.brand_name || "Intelligence inputs"}
             </h1>
@@ -585,9 +585,9 @@ function IntelligenceRunPage() {
                 params={{ id }}
                 className="inline-flex items-center justify-center gap-2 h-9 px-4 rounded-md text-sm font-semibold"
                 style={{
-                  backgroundColor: "#D4924A",
-                  color: "#0A0A0A",
-                  boxShadow: "0 2px 12px rgba(212,146,74,0.25)",
+                  backgroundColor: "#C81E1E",
+                  color: "#0A0908",
+                  boxShadow: "0 2px 12px rgba(200, 30, 30,0.25)",
                 }}
               >
                 Edit Inputs
@@ -635,17 +635,17 @@ function IntelligenceRunPage() {
           {/* Header */}
           <div className="mt-6 flex flex-wrap items-start justify-between gap-4">
             <div>
-              <span className="text-label text-primary">Strategic Territory Intelligence Report</span>
+              <span className="text-label text-text-secondary">Strategic Territory Intelligence Report</span>
               <h1 className="text-h2 mt-2 text-text-primary">{row.brand_name}</h1>
               <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-text-secondary">
                 {row.category ? <span>{row.category}</span> : null}
                 <span className="text-text-secondary/40">·</span>
-                <Badge variant="outline" className="text-xs">
+                <Badge variant="outline" className="text-[13px]">
                   {briefType === "government" ? "Government" : "Commercial"}
                 </Badge>
                 {completeness?.confidence ? (
                   <Badge
-                    className="text-xs"
+                    className="text-[13px]"
                     style={{
                       backgroundColor: `${CONFIDENCE_COLOR[completeness.confidence]}22`,
                       color: CONFIDENCE_COLOR[completeness.confidence],
@@ -719,7 +719,7 @@ function IntelligenceRunPage() {
                           <li key={i} className="flex items-start gap-2 text-sm text-text-primary">
                             <CheckCircle2
                               className="h-4 w-4 mt-0.5 flex-shrink-0"
-                              style={{ color: "#22C55E" }}
+                              style={{ color: "#C81E1E" }}
                             />
                             <span>{x}</span>
                           </li>
@@ -739,7 +739,7 @@ function IntelligenceRunPage() {
                               <div>
                                 <div className="text-text-primary">{x}</div>
                                 {completeness.gap_impact_notes?.[i] ? (
-                                  <div className="text-xs mt-0.5 text-text-secondary italic">
+                                  <div className="text-[13px] mt-0.5 text-text-secondary italic">
                                     {completeness.gap_impact_notes[i]}
                                   </div>
                                 ) : null}
@@ -795,11 +795,11 @@ function IntelligenceRunPage() {
         style={{
           backgroundColor: "hsl(var(--background) / 0.95)",
           backdropFilter: "blur(8px)",
-          borderColor: "rgba(148,163,184,0.15)",
+          borderColor: "rgba(139, 134, 128,0.15)",
         }}
       >
         <div className="mx-auto max-w-[1080px] flex items-center justify-between gap-3 px-6 py-4">
-          <div className="text-xs text-text-secondary">
+          <div className="text-[13px] text-text-secondary">
             {selectedTerritoryId
               ? `Selected: ${selectedTerritory?.name ?? "territory"}`
               : "Select a territory to enable handoff."}
@@ -822,7 +822,7 @@ function IntelligenceRunPage() {
               size="sm"
               disabled={!selectedTerritoryId || handingOff}
               onClick={handleSendToBriefingRoom}
-              className="bg-amber-500 text-black hover:bg-amber-400 disabled:opacity-60"
+              className="bg-primary text-background hover:bg-primary disabled:opacity-60"
             >
               {handingOff ? (
                 <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
@@ -889,11 +889,11 @@ function TerritoryCard({
           <div className="flex flex-wrap items-center gap-2">
             {isPrimary ? (
               <Badge
-                className="text-xs"
+                className="text-[13px]"
                 style={{
-                  backgroundColor: "rgba(212,146,74,0.15)",
-                  color: "#D4924A",
-                  borderColor: "rgba(212,146,74,0.4)",
+                  backgroundColor: "rgba(200, 30, 30,0.15)",
+                  color: "#C81E1E",
+                  borderColor: "rgba(200, 30, 30,0.4)",
                 }}
                 variant="outline"
               >
@@ -902,7 +902,7 @@ function TerritoryCard({
             ) : null}
             {typeMeta ? (
               <Badge
-                className="text-xs"
+                className="text-[13px]"
                 variant="outline"
                 style={{
                   backgroundColor: `${typeMeta.color}18`,
@@ -933,7 +933,7 @@ function TerritoryCard({
         </Button>
       </div>
 
-      <div className="mt-4 flex flex-wrap items-center gap-3 text-xs">
+      <div className="mt-4 flex flex-wrap items-center gap-3 text-[13px]">
         {typeof fmScore === "number" ? (
           <Metric label="First mover" value={`${fmScore}/10`} />
         ) : null}
@@ -949,7 +949,7 @@ function TerritoryCard({
         ) : null}
         {rec ? (
           <Badge
-            className="text-xs"
+            className="text-[13px]"
             variant="outline"
             style={{
               backgroundColor: `${rec.color}18`,
@@ -963,7 +963,7 @@ function TerritoryCard({
       </div>
 
       {territory.conditions && territory.conditions.length > 0 ? (
-        <div className="mt-3 text-xs text-text-secondary">
+        <div className="mt-3 text-[13px] text-text-secondary">
           <span className="font-medium text-text-primary">Conditions:</span>{" "}
           {territory.conditions.join(" · ")}
         </div>
@@ -993,7 +993,7 @@ function TerritoryCard({
                           <p className="text-sm text-text-primary mt-2">{cell.assessment}</p>
                         ) : null}
                         {cell.evidence ? (
-                          <p className="text-xs text-text-secondary mt-1.5 italic">
+                          <p className="text-[13px] text-text-secondary mt-1.5 italic">
                             {cell.evidence}
                           </p>
                         ) : null}
@@ -1082,7 +1082,7 @@ function TerritoryCard({
                           <span className="font-medium">{r.context}</span>{" "}
                           <span className="text-text-secondary">— {r.rating}</span>
                           {r.notes ? (
-                            <div className="text-xs text-text-secondary mt-0.5">{r.notes}</div>
+                            <div className="text-[13px] text-text-secondary mt-0.5">{r.notes}</div>
                           ) : null}
                         </li>
                       ))}
@@ -1103,7 +1103,7 @@ function TerritoryCard({
                           <span className="text-text-primary font-medium">{c.community}</span>{" "}
                           <span className="text-text-secondary">— {c.resonance}</span>
                           {c.adaptation ? (
-                            <div className="text-xs text-text-secondary mt-0.5">
+                            <div className="text-[13px] text-text-secondary mt-0.5">
                               {c.adaptation}
                             </div>
                           ) : null}
@@ -1137,7 +1137,7 @@ function TerritoryCard({
                     v={territory.timing_sequencing.recommendation}
                   />
                   {territory.timing_sequencing.is_gateway_territory ? (
-                    <Badge variant="outline" className="mt-2 text-xs">
+                    <Badge variant="outline" className="mt-2 text-[13px]">
                       Gateway territory
                     </Badge>
                   ) : null}
@@ -1263,8 +1263,8 @@ function TerritoryCard({
 
 function GovernmentAddendumSection({ addendum }: { addendum: GovernmentAddendum }) {
   const backlashColor = addendum.backlash_risk
-    ? RISK_COLOR[addendum.backlash_risk as RiskClass] ?? "#94A3B8"
-    : "#94A3B8";
+    ? RISK_COLOR[addendum.backlash_risk as RiskClass] ?? "#8B8680"
+    : "#8B8680";
   return (
     <section className="mt-10">
       <h2 className="text-h3 text-text-primary">Government Addendum</h2>
@@ -1310,7 +1310,7 @@ function GovernmentAddendumSection({ addendum }: { addendum: GovernmentAddendum 
             <div className="overflow-hidden rounded border">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="text-left text-xs text-text-secondary border-b">
+                  <tr className="text-left text-[13px] text-text-secondary border-b">
                     <th className="px-3 py-2">Segment</th>
                     <th className="px-3 py-2">Resistance</th>
                     <th className="px-3 py-2">Rationale</th>
@@ -1394,7 +1394,7 @@ function MetricsList({ label, items }: { label: string; items?: string[] }) {
           ))}
         </ul>
       ) : (
-        <p className="text-xs text-text-secondary italic">None</p>
+        <p className="text-[13px] text-text-secondary italic">None</p>
       )}
     </div>
   );
@@ -1419,12 +1419,12 @@ function PrecedentList({
             ) : null}
             {p.outcome ? (
               <div className="text-text-secondary mt-1">
-                <span className="text-xs">Outcome: </span>
+                <span className="text-[13px]">Outcome: </span>
                 {p.outcome}
               </div>
             ) : null}
             {p.structural_conditions ? (
-              <div className="text-text-secondary text-xs mt-1 italic">
+              <div className="text-text-secondary text-[13px] mt-1 italic">
                 {p.structural_conditions}
               </div>
             ) : null}

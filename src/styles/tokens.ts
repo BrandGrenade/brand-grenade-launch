@@ -5,15 +5,15 @@
 // strings in components — reference these tokens instead.
 
 export const tokens = {
-  amber: "#D4924A",
-  amberDivider: "rgba(212,146,74,0.2)",
-  bgPrimary: "#0f0f0d",
-  bgSecondary: "#161612",
-  bgTertiary: "#1c1c17",
-  white: "#f2efe9",
-  muted: "#7a776f",
-  fontBody: "DM Sans",
-  fontMono: "DM Mono",
+  amber: "#C81E1E",
+  amberDivider: "rgba(200, 30, 30,0.2)",
+  bgPrimary: "#0A0908",
+  bgSecondary: "#1C1A18",
+  bgTertiary: "#1C1A18",
+  white: "#EDE8E0",
+  muted: "#8B8680",
+  fontBody: "Inter",
+  fontMono: "Inter",
 } as const;
 
 export type DesignTokens = typeof tokens;

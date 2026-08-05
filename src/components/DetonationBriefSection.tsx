@@ -13,7 +13,7 @@ export interface DetonationBriefSectionProps {
   onContentUpdate: (sectionId: string, newContent: string) => void;
 }
 
-const ACCENT = "#D4924A";
+const ACCENT = "#C81E1E";
 
 export function DetonationBriefSection({
   sectionId,
@@ -67,7 +67,7 @@ export function DetonationBriefSection({
             textTransform: "uppercase",
             fontSize: "7pt",
             letterSpacing: "0.18em",
-            fontFamily: "'DM Mono', monospace",
+            fontFamily: "Inter, system-ui, sans-serif",
             fontWeight: 500,
           }}
         >
@@ -76,7 +76,7 @@ export function DetonationBriefSection({
         <div
           className="text-body"
           style={{
-            color: "#FFFFFF",
+            color: "#EDE8E0",
             lineHeight: 1.6,
             marginTop: 10,
             whiteSpace: "pre-wrap",
@@ -98,7 +98,7 @@ export function DetonationBriefSection({
       >
         <div
           style={{
-            backgroundColor: "#181818",
+            backgroundColor: "#1C1A18",
             border: `1px solid ${ACCENT}33`,
             borderRadius: 6,
             padding: 12,
@@ -112,10 +112,10 @@ export function DetonationBriefSection({
             className="text-body-sm"
             style={{
               width: "100%",
-              backgroundColor: "#111111",
+              backgroundColor: "#0A0908",
               border: `1px solid ${ACCENT}40`,
               borderRadius: 6,
-              color: "#FFFFFF",
+              color: "#EDE8E0",
               padding: "10px 12px",
               outline: "none",
             }}

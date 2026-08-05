@@ -6,8 +6,8 @@ import { useEffect, useState } from "react";
 import { TopNav } from "@/components/TopNav";
 import { supabase } from "@/integrations/supabase/client";
 
-const AMBER = "#E8A33D";
-const MUTED = "#8A8680";
+const AMBER = "#C81E1E";
+const MUTED = "#8B8680";
 
 export const Route = createFileRoute("/creative/")({
   component: CreativeIndex,
@@ -86,7 +86,7 @@ function CreativeIndex() {
         </div>
         <h1
           style={{
-            color: "#F2EFE9",
+            color: "#EDE8E0",
             fontSize: 34,
             lineHeight: 1.15,
             margin: "12px 0 10px",
@@ -124,14 +124,14 @@ function CreativeIndex() {
                 alignItems: "center",
                 gap: 20,
                 textDecoration: "none",
-                backgroundColor: "#111111",
-                border: `1px solid ${r.hasCreative ? AMBER + "55" : "#242424"}`,
+                backgroundColor: "#0A0908",
+                border: `1px solid ${r.hasCreative ? AMBER + "55" : "#1C1A18"}`,
                 borderRadius: 12,
                 padding: "22px 26px",
               }}
             >
               <div style={{ minWidth: 0 }}>
-                <div style={{ color: "#F2EFE9", fontSize: 18, fontWeight: 600 }}>
+                <div style={{ color: "#EDE8E0", fontSize: 18, fontWeight: 600 }}>
                   {r.brand_name || "Untitled session"}
                 </div>
                 <div className="text-mono" style={{ color: MUTED, fontSize: 11, marginTop: 6 }}>

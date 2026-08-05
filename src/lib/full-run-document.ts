@@ -15,7 +15,7 @@
 import { STAGE_MANIFEST, type StageManifestEntry } from "./pipeline-integrity";
 import { stripDocumentMetadata } from "./strip-document-metadata";
 
-const ACCENT = "#D4924A";
+const ACCENT = "#C81E1E";
 
 const STAGE_16_FORMAT_LABELS: Record<string, string> = {
   stage_16_consulting_output: "Consulting Delivery",
@@ -96,13 +96,13 @@ function sanitise(t: string | null | undefined): string {
 function baseStyles(): string {
   return `@page { size: A4; margin: 20mm 22mm 20mm 22mm; }
 * { margin: 0; padding: 0; box-sizing: border-box; }
-html, body { background: #f4f1ec; }
-body { font-family: Arial, Helvetica, sans-serif; font-size: 10.5pt; line-height: 1.8; color: #1a1a18; padding: 64px 0 64px; }
+html, body { background: #EDE8E0; }
+body { font-family: Arial, Helvetica, sans-serif; font-size: 10.5pt; line-height: 1.8; color: #1C1A18; padding: 64px 0 64px; }
 .page { max-width: 760px; margin: 0 auto; background: white; padding: 56pt 56pt 56pt; box-shadow: 0 6px 24px rgba(0,0,0,0.08); }
-#toolbar { position: fixed; top: 0; left: 0; right: 0; background: #1a1a18; padding: 10px 24px; display: flex; justify-content: space-between; align-items: center; z-index: 999; }
-#toolbar span { color: #8a8680; font-size: 12px; }
-#toolbar .actions button { background: ${ACCENT}; color: #000; border: none; padding: 8px 20px; border-radius: 4px; font-size: 13px; font-weight: bold; cursor: pointer; margin-left: 8px; }
-#toolbar .actions button.close { background: transparent; color: #aaa; border: 1px solid #444; }
+#toolbar { position: fixed; top: 0; left: 0; right: 0; background: #1C1A18; padding: 10px 24px; display: flex; justify-content: space-between; align-items: center; z-index: 999; }
+#toolbar span { color: #8B8680; font-size: 12px; }
+#toolbar .actions button { background: ${ACCENT}; color: #0A0908; border: none; padding: 8px 20px; border-radius: 4px; font-size: 13px; font-weight: bold; cursor: pointer; margin-left: 8px; }
+#toolbar .actions button.close { background: transparent; color: #8B8680; border: 1px solid #1C1A18; }
 @media print {
   #toolbar { display: none; }
   body { padding: 0; background: white; }
@@ -113,14 +113,14 @@ body { font-family: Arial, Helvetica, sans-serif; font-size: 10.5pt; line-height
   h2, h3 { page-break-after: avoid; }
 }
 .cover { min-height: 80vh; display: flex; flex-direction: column; justify-content: center; padding: 40pt 0; border-bottom: 2pt solid ${ACCENT}; margin-bottom: 32pt; }
-.cover-brand { font-size: 11pt; font-weight: bold; letter-spacing: 0.1em; color: #1a1a18; margin-bottom: 8pt; }
+.cover-brand { font-size: 11pt; font-weight: bold; letter-spacing: 0.1em; color: #1C1A18; margin-bottom: 8pt; }
 .cover-label { font-size: 9pt; font-weight: bold; letter-spacing: 0.12em; color: ${ACCENT}; text-transform: uppercase; margin-bottom: 24pt; }
-.cover-title { font-size: 22pt; font-weight: 700; color: #1a1a18; line-height: 1.2; margin-bottom: 16pt; }
-.cover-sub { font-size: 12pt; color: #4a4a48; margin-bottom: 24pt; }
+.cover-title { font-size: 22pt; font-weight: 700; color: #1C1A18; line-height: 1.2; margin-bottom: 16pt; }
+.cover-sub { font-size: 12pt; color: #1C1A18; margin-bottom: 24pt; }
 .cover-rule { width: 40pt; height: 2pt; background: ${ACCENT}; margin-bottom: 20pt; }
-.cover-date { font-size: 9pt; color: #666; }
-.cover-confidential { font-size: 8pt; color: #999; margin-top: 8pt; letter-spacing: 0.06em; }
-.toc { margin: 24pt 0 32pt; padding: 16pt; border: 1pt solid #e0d8cc; border-radius: 6pt; background: #faf7f2; }
+.cover-date { font-size: 9pt; color: #8B8680; }
+.cover-confidential { font-size: 8pt; color: #8B8680; margin-top: 8pt; letter-spacing: 0.06em; }
+.toc { margin: 24pt 0 32pt; padding: 16pt; border: 1pt solid #EDE8E0; border-radius: 6pt; background: #EDE8E0; }
 .toc h3 { margin-top: 0; color: ${ACCENT}; letter-spacing: 0.12em; text-transform: uppercase; font-size: 10pt; margin-bottom: 10pt; }
 .toc ol { margin: 0 0 0 20pt; padding: 0; }
 .toc li { margin: 4pt 0; font-size: 10pt; padding-left: 0; }
@@ -128,18 +128,18 @@ body { font-family: Arial, Helvetica, sans-serif; font-size: 10.5pt; line-height
 .toc .stage-id { color: ${ACCENT}; font-weight: bold; margin-right: 8pt; font-family: 'Courier New', monospace; font-size: 9pt; }
 .stage-block { margin-bottom: 32pt; padding-top: 8pt; }
 .part-label { font-size: 8pt; font-weight: bold; letter-spacing: 0.12em; color: ${ACCENT}; text-transform: uppercase; margin-bottom: 6pt; }
-h2 { font-size: 16pt; font-weight: bold; color: #1a1a18; margin-bottom: 12pt; padding-left: 10pt; border-left: 3pt solid ${ACCENT}; line-height: 1.3; }
-h3 { font-size: 12pt; font-weight: bold; color: #1a1a18; margin-top: 16pt; margin-bottom: 8pt; }
-h4 { font-size: 10.5pt; font-weight: bold; color: #1a1a18; margin-top: 12pt; margin-bottom: 6pt; }
+h2 { font-size: 16pt; font-weight: bold; color: #1C1A18; margin-bottom: 12pt; padding-left: 10pt; border-left: 3pt solid ${ACCENT}; line-height: 1.3; }
+h3 { font-size: 12pt; font-weight: bold; color: #1C1A18; margin-top: 16pt; margin-bottom: 8pt; }
+h4 { font-size: 10.5pt; font-weight: bold; color: #1C1A18; margin-top: 12pt; margin-bottom: 6pt; }
 p { margin-bottom: 10pt; orphans: 3; widows: 3; }
-blockquote { border-left: 3pt solid ${ACCENT}; padding: 8pt 12pt; margin: 14pt 0; background: #f9f9f7; font-style: italic; }
+blockquote { border-left: 3pt solid ${ACCENT}; padding: 8pt 12pt; margin: 14pt 0; background: #EDE8E0; font-style: italic; }
 ul { margin: 10pt 0; padding: 0; list-style: none; }
 li { padding-left: 14pt; position: relative; margin-bottom: 5pt; }
 li::before { content: '—'; position: absolute; left: 0; color: ${ACCENT}; }
-hr { border: none; border-top: 0.5pt solid #ddd; margin: 16pt 0; }
+hr { border: none; border-top: 0.5pt solid #EDE8E0; margin: 16pt 0; }
 strong { font-weight: bold; } em { font-style: italic; }
 .channel { margin-top: 16pt; padding-top: 8pt; border-top: 0.5pt dashed ${ACCENT}; }
-.footer { margin-top: 40pt; padding-top: 16pt; border-top: 0.5pt solid #ddd; font-size: 7.5pt; color: #888; text-align: center; line-height: 1.55; }
+.footer { margin-top: 40pt; padding-top: 16pt; border-top: 0.5pt solid #EDE8E0; font-size: 7.5pt; color: #8B8680; text-align: center; line-height: 1.55; }
 `;
 }
 

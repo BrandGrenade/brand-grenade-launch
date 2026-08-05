@@ -26,8 +26,8 @@ export function ideaCardStyle(opts: {
   background?: string;
 }): CSSProperties {
   return {
-    backgroundColor: opts.background ?? "#111111",
-    border: `1px solid ${opts.accent ?? "#242424"}`,
+    backgroundColor: opts.background ?? "#0A0908",
+    border: `1px solid ${opts.accent ?? "#1C1A18"}`,
     borderRadius: 14,
     padding: "32px 34px 28px",
     boxShadow: "0 1px 0 rgba(255,255,255,0.02), 0 18px 40px -32px rgba(0,0,0,0.9)",

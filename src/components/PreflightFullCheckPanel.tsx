@@ -372,14 +372,14 @@ const REMEDIATION_BY_ID: Record<FullCheckId, { instruction: string; etaMinutes: 
 function statusBadge(status: FullCheckResult["status"]) {
   switch (status) {
     case "pass":
-      return <span className="inline-flex h-5 items-center gap-1 rounded bg-emerald-600/20 px-2 text-[11px] font-semibold uppercase tracking-wider text-emerald-400">PASS</span>;
+      return <span className="inline-flex h-5 items-center gap-1 rounded bg-primary/20 px-2 text-[11px] font-semibold uppercase tracking-wider text-primary">PASS</span>;
     case "fail":
-      return <span className="inline-flex h-5 items-center gap-1 rounded bg-red-600/25 px-2 text-[11px] font-semibold uppercase tracking-wider text-red-400">FAIL</span>;
+      return <span className="inline-flex h-5 items-center gap-1 rounded bg-primary/25 px-2 text-[11px] font-semibold uppercase tracking-wider text-primary">FAIL</span>;
     case "running":
-      return <span className="inline-flex h-5 items-center gap-1 rounded bg-amber-600/20 px-2 text-[11px] font-semibold uppercase tracking-wider text-amber-400">RUNNING…</span>;
+      return <span className="inline-flex h-5 items-center gap-1 rounded bg-primary/20 px-2 text-[11px] font-semibold uppercase tracking-wider text-primary">RUNNING…</span>;
     case "pending":
     default:
-      return <span className="inline-flex h-5 items-center gap-1 rounded bg-neutral-700/40 px-2 text-[11px] font-semibold uppercase tracking-wider text-neutral-400">PENDING</span>;
+      return <span className="inline-flex h-5 items-center gap-1 rounded bg-card/40 px-2 text-[11px] font-semibold uppercase tracking-wider text-text-secondary">PENDING</span>;
   }
 }
 
@@ -1581,10 +1581,10 @@ export function PreflightFullCheckPanel() {
   };
 
   return (
-    <section className="mb-6 border border-neutral-800 bg-neutral-950/60 p-5">
+    <section className="mb-6 border border-border bg-card/60 p-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <div className="text-label text-primary">Pre-Flight — Tier Two</div>
+          <div className="text-label text-text-secondary">Pre-Flight — Tier Two</div>
           <h2 className="text-h3 mt-1 text-text-primary">Full Integrity Check</h2>
           <p className="text-body mt-1 text-text-secondary">
             12 deep checks. Single TestBrand session runs Stages 1–16 sequentially. Phase 2 chain (17→17B→18). Two parallel Stage 1 runs. Structural checks for prompts, token caps, sanitiser, and Canvas→Detonation route. Auto-cleans test sessions on completion. Target runtime ~20 minutes.
@@ -1594,7 +1594,7 @@ export function PreflightFullCheckPanel() {
           {state === "running" ? (
             <button
               disabled
-              className="cursor-not-allowed bg-neutral-800 px-5 py-2.5 text-sm font-semibold text-neutral-400"
+              className="cursor-not-allowed bg-card px-5 py-2.5 text-sm font-semibold text-text-secondary"
             >
               Running… {(elapsedMs / 1000).toFixed(0)}s
             </button>
@@ -1607,15 +1607,15 @@ export function PreflightFullCheckPanel() {
             </button>
           )}
           {state === "complete" && overall && (
-            <div className="text-xs">
+            <div className="text-[13px]">
               {overall === "ready" ? (
-                <span className="text-emerald-400">✓ Platform Ready — 12/12 passed</span>
+                <span className="text-primary">✓ Platform Ready — 12/12 passed</span>
               ) : escalationVisible ? (
-                <span className="text-red-400">
+                <span className="text-primary">
                   ✗ {severitySummary.blocker} blocker{severitySummary.blocker === 1 ? "" : "s"} — do not present live
                 </span>
               ) : (
-                <span className="text-amber-300">
+                <span className="text-primary">
                   ⚠ Platform OK — {severitySummary.degraded}D / {severitySummary.harness}H / {severitySummary.transient}T ({passedCount} passed)
                 </span>
               )}
@@ -1625,12 +1625,12 @@ export function PreflightFullCheckPanel() {
       </div>
 
       {state === "lock_failed" && lockMessage && (
-        <div className="mt-4 border border-amber-700/50 bg-amber-900/20 p-3 text-sm">
-          <div className="font-semibold text-amber-300">A Tier Two check is already running</div>
-          <div className="mt-1 text-amber-200/80">{lockMessage}</div>
+        <div className="mt-4 border border-primary/50 bg-primary/20 p-3 text-sm">
+          <div className="font-semibold text-primary">A Tier Two check is already running</div>
+          <div className="mt-1 text-primary/80">{lockMessage}</div>
           <button
             onClick={() => runCheck(true)}
-            className="mt-3 bg-amber-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-600"
+            className="mt-3 bg-primary px-3 py-1.5 text-[13px] font-semibold text-text-primary hover:bg-primary"
           >
             Override and start a new run
           </button>
@@ -1638,24 +1638,24 @@ export function PreflightFullCheckPanel() {
       )}
 
       {state === "error" && errorMessage && (
-        <div className="mt-4 border border-red-700/50 bg-red-900/20 p-3 text-sm text-red-200">
-          <div className="font-semibold text-red-300">Fatal error</div>
+        <div className="mt-4 border border-primary/50 bg-primary/20 p-3 text-sm text-primary">
+          <div className="font-semibold text-primary">Fatal error</div>
           <div className="mt-1">{errorMessage}</div>
         </div>
       )}
 
       {escalationVisible && (
-        <div className="mt-4 border border-red-700/60 bg-red-950/30 p-4">
-          <div className="text-label text-red-300">Escalation Protocol · Blockers only</div>
+        <div className="mt-4 border border-primary/60 bg-primary/30 p-4">
+          <div className="text-label text-text-secondary">Escalation Protocol · Blockers only</div>
           <h3 className="text-h3 mt-1 text-text-primary">
             {severitySummary.blocker} blocker{severitySummary.blocker === 1 ? "" : "s"} — do not present live
           </h3>
           <p className="text-body mt-1 text-text-secondary">
             Only BLOCKER-severity failures trigger this banner. Non-blocking issues this run:{" "}
-            <span className="font-semibold text-amber-300">{severitySummary.degraded} degraded</span>,{" "}
-            <span className="font-semibold text-sky-300">{severitySummary.harness} harness</span>,{" "}
-            <span className="font-semibold text-neutral-300">{severitySummary.transient} transient</span>,{" "}
-            <span className="font-semibold text-neutral-400">{severitySummary.skipped} skipped (dependency failed)</span>.
+            <span className="font-semibold text-primary">{severitySummary.degraded} degraded</span>,{" "}
+            <span className="font-semibold text-primary">{severitySummary.harness} harness</span>,{" "}
+            <span className="font-semibold text-text-primary">{severitySummary.transient} transient</span>,{" "}
+            <span className="font-semibold text-text-secondary">{severitySummary.skipped} skipped (dependency failed)</span>.
           </p>
           <p className="text-body mt-1 text-text-secondary">
             Estimated platform fix time: <span className="font-semibold text-text-primary">~{totalEtaMinutes} minutes</span>. Choose one of the two protocols below before notifying the client.
@@ -1664,44 +1664,44 @@ export function PreflightFullCheckPanel() {
             <button
               type="button"
               onClick={() => setDraftOpen((v) => !v)}
-              className="border border-red-700/60 bg-red-950/40 p-3 text-left hover:bg-red-900/40"
+              className="border border-primary/60 bg-primary/40 p-3 text-left hover:bg-primary/40"
             >
-              <div className="text-label text-red-300">Option 1</div>
+              <div className="text-label text-text-secondary">Option 1</div>
               <div className="text-body mt-1 font-semibold text-text-primary">
                 Generate draft postponement communication
               </div>
-              <div className="text-xs text-text-tertiary mt-1">
+              <div className="text-[13px] text-text-tertiary mt-1">
                 Drafts a short, on-brand re-scheduling note naming the failed checks.
               </div>
             </button>
             <button
               type="button"
               onClick={goToCompletedSessions}
-              className="border border-red-700/60 bg-red-950/40 p-3 text-left hover:bg-red-900/40"
+              className="border border-primary/60 bg-primary/40 p-3 text-left hover:bg-primary/40"
             >
-              <div className="text-label text-red-300">Option 2</div>
+              <div className="text-label text-text-secondary">Option 2</div>
               <div className="text-body mt-1 font-semibold text-text-primary">
                 Present completed sessions instead
               </div>
-              <div className="text-xs text-text-tertiary mt-1">
+              <div className="text-[13px] text-text-tertiary mt-1">
                 Jumps to the completed sessions list, ready to present prior verified work.
               </div>
             </button>
           </div>
 
           {draftOpen && (
-            <div className="mt-3 border border-red-700/50 bg-neutral-950/60 p-3">
+            <div className="mt-3 border border-primary/50 bg-card/60 p-3">
               <div className="flex items-center justify-between gap-2">
-                <span className="text-label text-red-300">Draft — postponement communication</span>
+                <span className="text-label text-text-secondary">Draft — postponement communication</span>
                 <button
                   type="button"
                   onClick={copyDraft}
-                  className="bg-red-700 px-2 py-1 text-xs font-semibold text-white hover:bg-red-600"
+                  className="bg-primary px-2 py-1 text-[13px] font-semibold text-text-primary hover:bg-primary"
                 >
                   Copy draft
                 </button>
               </div>
-              <pre className="mt-2 whitespace-pre-wrap font-mono text-xs text-text-secondary">
+              <pre className="mt-2 whitespace-pre-wrap font-mono text-[13px] text-text-secondary">
                 {buildPostponementDraft(failedNames)}
               </pre>
             </div>
@@ -1710,14 +1710,14 @@ export function PreflightFullCheckPanel() {
       )}
 
       {nonBlockingIssuesVisible && (
-        <div className="mt-4 border border-amber-700/40 bg-amber-950/20 p-3 text-sm">
-          <div className="text-label text-amber-300">Non-blocking issues · Platform usable live</div>
-          <div className="mt-1 text-amber-200/80">
+        <div className="mt-4 border border-primary/40 bg-primary/20 p-3 text-sm">
+          <div className="text-label text-text-secondary">Non-blocking issues · Platform usable live</div>
+          <div className="mt-1 text-primary/80">
             No BLOCKER-severity failures. Detected:{" "}
-            <span className="font-semibold text-amber-300">{severitySummary.degraded} degraded</span>,{" "}
-            <span className="font-semibold text-sky-300">{severitySummary.harness} harness</span> (check itself out of date),{" "}
-            <span className="font-semibold text-neutral-300">{severitySummary.transient} transient</span> (external blip — re-run if it repeats),{" "}
-            <span className="font-semibold text-neutral-400">{severitySummary.skipped} skipped</span>. See per-check detail below.
+            <span className="font-semibold text-primary">{severitySummary.degraded} degraded</span>,{" "}
+            <span className="font-semibold text-primary">{severitySummary.harness} harness</span> (check itself out of date),{" "}
+            <span className="font-semibold text-text-primary">{severitySummary.transient} transient</span> (external blip — re-run if it repeats),{" "}
+            <span className="font-semibold text-text-secondary">{severitySummary.skipped} skipped</span>. See per-check detail below.
           </div>
         </div>
       )}
@@ -1725,12 +1725,12 @@ export function PreflightFullCheckPanel() {
       {(state === "running" || state === "complete") && (
         <>
           {state === "running" && currentMessage && (
-            <div className="mt-4 font-mono text-xs text-neutral-400">{currentMessage}</div>
+            <div className="mt-4 font-mono text-[13px] text-text-secondary">{currentMessage}</div>
           )}
 
           <button
             onClick={() => setExpanded((v) => !v)}
-            className="mt-4 text-xs text-text-secondary underline hover:text-text-primary"
+            className="mt-4 text-[13px] text-text-secondary underline hover:text-text-primary"
           >
             {expanded ? "Hide" : "Show"} per-check detail ({results.length} checks)
           </button>
@@ -1746,13 +1746,13 @@ export function PreflightFullCheckPanel() {
                 return (
                   <li
                     key={r.id}
-                    className={`border p-3 text-sm ${sevColor ? `${sevColor.border} ${sevColor.bg}` : "border-neutral-800 bg-neutral-900/60"}`}
+                    className={`border p-3 text-sm ${sevColor ? `${sevColor.border} ${sevColor.bg}` : "border-border bg-card/60"}`}
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1">
                         <div className="flex flex-wrap items-center gap-2">
                           {classified.kind === "skipped" ? (
-                            <span className="rounded-sm bg-neutral-800 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-neutral-400">
+                            <span className="rounded-sm bg-card px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-text-secondary">
                               Skipped
                             </span>
                           ) : (
@@ -1767,22 +1767,22 @@ export function PreflightFullCheckPanel() {
                             {CHECK_NAMES[r.id as FullCheckId] ?? r.name}
                           </span>
                           {r.durationMs !== null && classified.kind !== "skipped" && (
-                            <span className="text-xs text-text-tertiary">
+                            <span className="text-[13px] text-text-tertiary">
                               ({(r.durationMs / 1000).toFixed(1)}s)
                             </span>
                           )}
                         </div>
                         {classified.kind === "skipped" ? (
-                          <div className="mt-1.5 text-xs text-neutral-400">
+                          <div className="mt-1.5 text-[13px] text-text-secondary">
                             Skipped — dependency failed: {classified.dependencyDetail}
                           </div>
                         ) : (
                           <>
                             {r.detail && (
-                              <div className="mt-1.5 text-xs text-text-secondary">{r.detail}</div>
+                              <div className="mt-1.5 text-[13px] text-text-secondary">{r.detail}</div>
                             )}
                             {classified.kind === "fail" && (
-                              <div className={`mt-2 border-l-2 pl-2 text-xs ${sevColor!.border} ${sevColor!.text}`}>
+                              <div className={`mt-2 border-l-2 pl-2 text-[13px] ${sevColor!.border} ${sevColor!.text}`}>
                                 <div>
                                   <span className="font-semibold">Why {SEVERITY_LABEL[classified.severity]}:</span> {classified.reason}
                                 </div>
@@ -1792,11 +1792,11 @@ export function PreflightFullCheckPanel() {
                               </div>
                             )}
                             {classified.kind === "fail" && classified.severity === "blocker" && rem && (
-                              <div className="mt-2 border-l-2 border-red-700 pl-2 text-xs text-red-300">
+                              <div className="mt-2 border-l-2 border-primary pl-2 text-[13px] text-primary">
                                 <div>
                                   <span className="font-semibold">Remediation:</span> {rem.instruction}
                                 </div>
-                                <div className="mt-1 text-red-200/80">
+                                <div className="mt-1 text-primary/80">
                                   <span className="font-semibold">Estimated fix time:</span> ~{rem.etaMinutes} minutes
                                 </div>
                               </div>

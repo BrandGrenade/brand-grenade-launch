@@ -716,7 +716,7 @@ export function SMPSelection({
         type="button"
         onClick={() => setShowRaw((v) => !v)}
         className="inline-flex items-center gap-2 text-body-sm"
-        style={{ color: "#5A5652", background: "transparent", border: 0, cursor: "pointer", padding: 0 }}
+        style={{ color: "#8B8680", background: "transparent", border: 0, cursor: "pointer", padding: 0 }}
       >
         <span
           style={{
@@ -735,12 +735,12 @@ export function SMPSelection({
             marginTop: 12,
             maxHeight: 400,
             overflow: "auto",
-            background: "#141414",
-            color: "#8A8680",
+            background: "#1C1A18",
+            color: "#8B8680",
             padding: 20,
             borderRadius: 8,
             fontFamily: "'JetBrains Mono', ui-monospace, monospace",
-            fontSize: 12,
+            fontSize: 13,
             lineHeight: 1.5,
             whiteSpace: "pre-wrap",
           }}
@@ -946,7 +946,7 @@ export function SMPSelection({
               }}
             >
               <div className="flex items-center justify-between">
-                <span className="text-label text-primary">PROPOSITION {card.cardNumber}</span>
+                <span className="text-label text-text-secondary">PROPOSITION {card.cardNumber}</span>
                 <span
                   className="text-label"
                   style={{
@@ -1010,7 +1010,7 @@ export function SMPSelection({
                 </p>
               )}
               {card.scores.flags && card.scores.flags.length > 0 && (
-                <ul className="mt-3 space-y-1" style={{ color: "var(--color-warning)", fontSize: 12, lineHeight: 1.5 }}>
+                <ul className="mt-3 space-y-1" style={{ color: "var(--color-warning)", fontSize: 13, lineHeight: 1.5 }}>
                   {card.scores.flags.map((f, i) => (
                     <li key={i}>{f}</li>
                   ))}

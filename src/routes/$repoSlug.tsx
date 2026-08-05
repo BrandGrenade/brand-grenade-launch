@@ -20,12 +20,12 @@ export const Route = createFileRoute("/$repoSlug")({
     ],
   }),
   notFoundComponent: () => (
-    <div className="min-h-screen bg-white flex items-center justify-center text-neutral-500 text-sm">
+    <div className="min-h-screen bg-card flex items-center justify-center text-text-secondary text-sm">
       Repository not found.
     </div>
   ),
   errorComponent: ({ error }) => (
-    <div className="min-h-screen bg-white flex items-center justify-center text-neutral-500 text-sm">
+    <div className="min-h-screen bg-card flex items-center justify-center text-text-secondary text-sm">
       Unable to load repository: {error.message}
     </div>
   ),

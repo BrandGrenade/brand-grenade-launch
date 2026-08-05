@@ -2,7 +2,7 @@ import * as React from "react";
 
 // Phase 2 reusable output card. Mirrors Phase 1 card styling
 // (dark background, DM Mono uppercase title, DM Sans body, line-height 1.6)
-// but uses the Phase 2 amber accent #D4924A. Renders a checkbox top-left;
+// but uses the Phase 2 amber accent #C81E1E. Renders a checkbox top-left;
 // when unchecked, a Redirect text input slides into view beneath the
 // content so the user can steer regeneration of just this card.
 export interface DetonationOutputCardProps {
@@ -19,7 +19,7 @@ export interface DetonationOutputCardProps {
   selected?: boolean;
 }
 
-const ACCENT = "#D4924A";
+const ACCENT = "#C81E1E";
 
 export function DetonationOutputCard({
   cardId,
@@ -41,9 +41,9 @@ export function DetonationOutputCard({
     <div
       className="transition-shadow"
       style={{
-        backgroundColor: "#111111",
-        border: "1px solid #2A2A2A",
-        borderLeft: selected ? `4px solid ${ACCENT}` : "1px solid #2A2A2A",
+        backgroundColor: "#0A0908",
+        border: "1px solid #1C1A18",
+        borderLeft: selected ? `4px solid ${ACCENT}` : "1px solid #1C1A18",
         borderRadius: 8,
         padding: 24,
         marginTop: 16,
@@ -97,7 +97,7 @@ export function DetonationOutputCard({
                   textTransform: "uppercase",
                   fontSize: "7pt",
                   letterSpacing: "0.18em",
-                  fontFamily: "'DM Mono', monospace",
+                  fontFamily: "Inter, system-ui, sans-serif",
                   fontWeight: 500,
                   margin: 0,
                 }}
@@ -135,7 +135,7 @@ export function DetonationOutputCard({
               margin: 0,
               marginBottom: 16,
               display: "block",
-              fontFamily: "'DM Mono', monospace",
+              fontFamily: "Inter, system-ui, sans-serif",
             }}
           >
             {title}
@@ -144,7 +144,7 @@ export function DetonationOutputCard({
           <div
             className="text-body"
             style={{
-              color: "#FFFFFF",
+              color: "#EDE8E0",
               lineHeight: 1.6,
               marginTop: 12,
               whiteSpace: "pre-wrap",
@@ -171,10 +171,10 @@ export function DetonationOutputCard({
               className="text-body-sm"
               style={{
                 width: "100%",
-                backgroundColor: "#1A1A1A",
+                backgroundColor: "#0A0908",
                 border: `1px solid ${ACCENT}40`,
                 borderRadius: 6,
-                color: "#FFFFFF",
+                color: "#EDE8E0",
                 padding: "10px 12px",
                 outline: "none",
               }}

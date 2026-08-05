@@ -28,7 +28,7 @@ export function Stage20RescorePanel() {
   const s = result?.score;
   return (
     <section
-      className="mt-10 rounded border border-white/10 p-6"
+      className="mt-10 rounded border border-border/10 p-6"
       style={{ background: "rgba(255,255,255,0.02)" }}
     >
       <h2 className="text-h3 text-text-primary">Stage 20 — Re-score existing brief</h2>
@@ -41,18 +41,18 @@ export function Stage20RescorePanel() {
           value={sessionId}
           onChange={(e) => setSessionId(e.target.value)}
           placeholder="session UUID"
-          className="min-w-[340px] flex-1 rounded border border-white/10 bg-black/40 px-3 py-2 text-body text-text-primary"
+          className="min-w-[340px] flex-1 rounded border border-border/10 bg-background/40 px-3 py-2 text-body text-text-primary"
         />
         <button
           onClick={run}
           disabled={busy || !sessionId.trim()}
-          className="rounded px-4 py-2 text-label text-black disabled:opacity-50"
-          style={{ background: "#D4924A" }}
+          className="rounded px-4 py-2 text-label text-background disabled:opacity-50"
+          style={{ background: "#C81E1E" }}
         >
           {busy ? "Scoring…" : "Re-score"}
         </button>
       </div>
-      {err && <p className="mt-3 text-body text-red-400">{err}</p>}
+      {err && <p className="mt-3 text-body text-primary">{err}</p>}
       {s && result && (
         <div className="mt-5 space-y-2 text-body text-text-primary">
           <div className="text-label text-text-secondary">

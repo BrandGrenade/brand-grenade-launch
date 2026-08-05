@@ -131,7 +131,7 @@ export function Checkpoint({
 
       {/* Diagnostic questions */}
       <section className="mt-8">
-        <span className="text-label text-primary">Review Questions</span>
+        <span className="text-label text-text-secondary">Review Questions</span>
         <ol className="mt-5 flex flex-col gap-7">
           {copy.questions.map((q, i) => (
             <li key={i} className="flex gap-4">
@@ -170,7 +170,7 @@ export function Checkpoint({
 
       {/* Actions */}
       <section>
-        <span className="text-label text-primary">Your Decision</span>
+        <span className="text-label text-text-secondary">Your Decision</span>
         {confirmLabel ? (
           <div className="mt-4">
             <button

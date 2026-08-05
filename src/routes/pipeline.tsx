@@ -3513,7 +3513,7 @@ function PipelineView() {
           </DialogHeader>
           <div className="max-h-[55vh] space-y-4 overflow-y-auto pr-1 text-sm">
             <section>
-              <h4 className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              <h4 className="mb-1 text-[13px] font-semibold uppercase tracking-wide text-muted-foreground">
                 Selected proposition
               </h4>
               <p className="text-foreground">
@@ -3521,13 +3521,13 @@ function PipelineView() {
               </p>
             </section>
             <section>
-              <h4 className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              <h4 className="mb-1 text-[13px] font-semibold uppercase tracking-wide text-muted-foreground">
                 Brand Fit verdict
               </h4>
               <p className="text-foreground">{strategySignoffPreview.verdict}</p>
             </section>
             <section>
-              <h4 className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              <h4 className="mb-1 text-[13px] font-semibold uppercase tracking-wide text-muted-foreground">
                 Five strategic commitments
               </h4>
               {strategySignoffPreview.commitments.length ? (
@@ -3541,7 +3541,7 @@ function PipelineView() {
               )}
             </section>
             <section>
-              <h4 className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              <h4 className="mb-1 text-[13px] font-semibold uppercase tracking-wide text-muted-foreground">
                 Three critical communication guardrails
               </h4>
               {strategySignoffPreview.guardrails.length ? (
@@ -3626,8 +3626,8 @@ function Breadcrumb({
             <button
               type="button"
               onClick={onViewBrief}
-              className="inline-flex h-8 items-center gap-1.5 rounded-md px-2.5 text-[12px] font-semibold transition-colors hover:bg-[#D4924A15]"
-              style={{ border: "1px solid #D4924A66", color: "#D4924A", backgroundColor: "transparent" }}
+              className="inline-flex h-8 items-center gap-1.5 rounded-md px-2.5 text-[13px] font-semibold transition-colors hover:bg-[#C81E1E15]"
+              style={{ border: "1px solid #C81E1E66", color: "#C81E1E", backgroundColor: "transparent" }}
               title="View the submitted brief in full"
             >
               <FileText size={13} />
@@ -3635,7 +3635,7 @@ function Breadcrumb({
               {briefVersionCount > 1 ? (
                 <span
                   className="ml-1 rounded-sm px-1 text-[10px]"
-                  style={{ backgroundColor: "#D4924A33" }}
+                  style={{ backgroundColor: "#C81E1E33" }}
                 >
                   v{briefVersionCount}
                 </span>
@@ -3644,8 +3644,8 @@ function Breadcrumb({
             <button
               type="button"
               onClick={onEditBrief}
-              className="inline-flex h-8 items-center gap-1.5 rounded-md px-2.5 text-[12px] font-semibold transition-opacity hover:opacity-90"
-              style={{ backgroundColor: "#D4924A", color: "#0A0A0A" }}
+              className="inline-flex h-8 items-center gap-1.5 rounded-md px-2.5 text-[13px] font-semibold transition-opacity hover:opacity-90"
+              style={{ backgroundColor: "#C81E1E", color: "#0A0908" }}
               title="Edit the brief and rerun Stage 1 — downstream stages will reset"
             >
               <PencilLine size={13} />
@@ -3697,7 +3697,7 @@ function LeftPanel({
   return (
     <aside className="hidden w-[280px] shrink-0 overflow-y-auto border-r border-border bg-background py-6 md:block">
       <header className="px-5 pb-5">
-        <span className="text-label text-primary">Strategy Process</span>
+        <span className="text-label text-text-secondary">Strategy Process</span>
         <div
           className="mt-3 h-1 w-full overflow-hidden rounded-sm"
           style={{ backgroundColor: "var(--color-border)" }}
@@ -3760,7 +3760,7 @@ function LeftPanel({
                 fontFamily: `'${tokens.fontMono}', monospace`,
                 color: tokens.muted,
                 minWidth: 28,
-                fontSize: 12,
+                fontSize: 13,
               }}
             >
               —
@@ -3826,7 +3826,7 @@ function LeftPanel({
                     fontFamily: `'${tokens.fontMono}', monospace`,
                     color: tokens.muted,
                     minWidth: 28,
-                    fontSize: 12,
+                    fontSize: 13,
                   }}
                 >
                   {s.number}
@@ -4239,13 +4239,13 @@ function RightPanel({
         ) : (
           <>
             <header>
-              <span className="text-label text-primary">
+              <span className="text-label text-text-secondary">
                 Stage {stage.number} — {stage.name}
               </span>
               <h1 className="text-h2 mt-3 text-text-primary">{stage.name}</h1>
               <StatusLine status={status} />
               {isRunning && retryStatus ? (
-                <p className="text-body-sm mt-2" style={{ color: "#8A8680" }}>
+                <p className="text-body-sm mt-2" style={{ color: "#8B8680" }}>
                   {retryStatus}
                 </p>
               ) : null}
@@ -4415,7 +4415,7 @@ function StreamedOutput({ text, streaming }: { text: string; streaming: boolean 
   }, [text, streaming]);
 
   return (
-    <div style={{ color: "#8A8680", lineHeight: 1.8 }}>
+    <div style={{ color: "#8B8680", lineHeight: 1.8 }}>
       {blocks.map((b, i) => {
         const isLast = i === blocks.length - 1;
         const cursor = streaming && isLast ? <Caret /> : null;
@@ -4425,7 +4425,7 @@ function StreamedOutput({ text, streaming }: { text: string; streaming: boolean 
               <h2
                 key={i}
                 className="text-h2"
-                style={{ color: "#F0EDE8", fontWeight: 600, marginTop: 32, marginBottom: 12 }}
+                style={{ color: "#EDE8E0", fontWeight: 600, marginTop: 32, marginBottom: 12 }}
               >
                 <Inline text={b.text} />
                 {cursor}
@@ -4436,7 +4436,7 @@ function StreamedOutput({ text, streaming }: { text: string; streaming: boolean 
               <h2
                 key={i}
                 className="text-h2"
-                style={{ color: "#F0EDE8", fontWeight: 600, marginTop: 32, marginBottom: 12 }}
+                style={{ color: "#EDE8E0", fontWeight: 600, marginTop: 32, marginBottom: 12 }}
               >
                 <Inline text={b.text} />
                 {cursor}
@@ -4447,7 +4447,7 @@ function StreamedOutput({ text, streaming }: { text: string; streaming: boolean 
               <h3
                 key={i}
                 className="text-h3"
-                style={{ color: "#F0EDE8", fontWeight: 600, marginTop: 24, marginBottom: 8 }}
+                style={{ color: "#EDE8E0", fontWeight: 600, marginTop: 24, marginBottom: 8 }}
               >
                 <Inline text={b.text} />
                 {cursor}
@@ -4459,7 +4459,7 @@ function StreamedOutput({ text, streaming }: { text: string; streaming: boolean 
                 key={i}
                 className="text-body"
                 style={{
-                  color: "#F0EDE8",
+                  color: "#EDE8E0",
                   fontWeight: 600,
                   marginTop: 16,
                   marginBottom: 6,
@@ -4475,7 +4475,7 @@ function StreamedOutput({ text, streaming }: { text: string; streaming: boolean 
                 key={i}
                 className="text-label"
                 style={{
-                  color: "#D4924A",
+                  color: "#C81E1E",
                   letterSpacing: "0.08em",
                   textTransform: "uppercase",
                   marginTop: 24,
@@ -4492,7 +4492,7 @@ function StreamedOutput({ text, streaming }: { text: string; streaming: boolean 
                 key={i}
                 style={{
                   border: 0,
-                  borderTop: "1px solid #2A2A2A",
+                  borderTop: "1px solid #1C1A18",
                   margin: "24px 0",
                 }}
               />
@@ -4503,9 +4503,9 @@ function StreamedOutput({ text, streaming }: { text: string; streaming: boolean 
                 key={i}
                 className="text-body"
                 style={{
-                  borderLeft: "3px solid #D4924A",
+                  borderLeft: "3px solid #C81E1E",
                   paddingLeft: 16,
-                  color: "#8A8680",
+                  color: "#8B8680",
                   fontStyle: "italic",
                   margin: "12px 0",
                 }}
@@ -4524,7 +4524,7 @@ function StreamedOutput({ text, streaming }: { text: string; streaming: boolean 
                     style={{
                       position: "relative",
                       margin: "4px 0",
-                      color: "#8A8680",
+                      color: "#8B8680",
                       lineHeight: 1.8,
                     }}
                   >
@@ -4537,7 +4537,7 @@ function StreamedOutput({ text, streaming }: { text: string; streaming: boolean 
                         width: 6,
                         height: 6,
                         borderRadius: "50%",
-                        backgroundColor: "#D4924A",
+                        backgroundColor: "#C81E1E",
                       }}
                     />
                     <Inline text={item} />
@@ -4552,7 +4552,7 @@ function StreamedOutput({ text, streaming }: { text: string; streaming: boolean 
               <p
                 key={i}
                 className="text-body"
-                style={{ color: "#8A8680", lineHeight: 1.8, marginBottom: 12 }}
+                style={{ color: "#8B8680", lineHeight: 1.8, marginBottom: 12 }}
               >
                 <Inline text={b.text} />
                 {cursor}
@@ -4584,7 +4584,7 @@ function Inline({ text }: { text: string }) {
     <>
       {parts.map((p, i) =>
         p.kind === "b" ? (
-          <strong key={i} style={{ color: "#F0EDE8", fontWeight: 600 }}>
+          <strong key={i} style={{ color: "#EDE8E0", fontWeight: 600 }}>
             {p.v}
           </strong>
         ) : p.kind === "i" ? (
@@ -4777,15 +4777,15 @@ function Stage8PropositionsView({
       style={{
         marginTop: 32,
         padding: 20,
-        border: "1px solid #2A2A2A",
+        border: "1px solid #1C1A18",
         borderRadius: 8,
-        backgroundColor: "#141414",
+        backgroundColor: "#1C1A18",
       }}
     >
-      <p className="text-label" style={{ color: "#8A8680", marginBottom: 8 }}>
+      <p className="text-label" style={{ color: "#8B8680", marginBottom: 8 }}>
         MANUAL SELECTION — OVERRIDE
       </p>
-      <p className="text-body-sm" style={{ color: "#8A8680", marginBottom: 12 }}>
+      <p className="text-body-sm" style={{ color: "#8B8680", marginBottom: 12 }}>
         Type or paste any proposition line to use as the selected SMP. This bypasses card
         selection and advances directly to Stage 9.
       </p>
@@ -4799,9 +4799,9 @@ function Stage8PropositionsView({
           width: "100%",
           padding: 10,
           borderRadius: 8,
-          border: "1px solid #2A2A2A",
-          background: "#0A0A0A",
-          color: "#E8E4DE",
+          border: "1px solid #1C1A18",
+          background: "#0A0908",
+          color: "#EDE8E0",
           fontFamily: "inherit",
           fontSize: 14,
           lineHeight: 1.5,
@@ -4818,9 +4818,9 @@ function Stage8PropositionsView({
           width: "100%",
           padding: 10,
           borderRadius: 8,
-          border: "1px solid #2A2A2A",
-          background: "#0A0A0A",
-          color: "#E8E4DE",
+          border: "1px solid #1C1A18",
+          background: "#0A0908",
+          color: "#EDE8E0",
           fontSize: 14,
         }}
       />
@@ -4829,7 +4829,7 @@ function Stage8PropositionsView({
         disabled={!manualLine.trim() || streaming || manualSubmitting}
         onClick={handleManualSubmit}
         className="mt-3 inline-flex h-10 items-center justify-center rounded-md px-5 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-50"
-        style={{ backgroundColor: "#D4924A", color: "#0A0A0A" }}
+        style={{ backgroundColor: "#C81E1E", color: "#0A0908" }}
       >
         {manualSubmitting ? "Submitting…" : "Use manual proposition →"}
       </button>
@@ -4847,7 +4847,7 @@ function Stage8PropositionsView({
   }
   return (
     <div>
-      <p className="text-body-sm" style={{ color: "#8A8680", marginBottom: 16 }}>
+      <p className="text-body-sm" style={{ color: "#8B8680", marginBottom: 16 }}>
         Uncheck any proposition to exclude it from Stage 9 and all downstream stages. Only
         checked propositions advance past Checkpoint B. Use Retry this stage to regenerate
         unchecked propositions instead of excluding them.
@@ -4862,7 +4862,7 @@ function Stage8PropositionsView({
               display: "flex",
               gap: 16,
               alignItems: "flex-start",
-              borderTop: i === 0 ? "none" : "1px solid #2A2A2A",
+              borderTop: i === 0 ? "none" : "1px solid #1C1A18",
               paddingTop: i === 0 ? 0 : 24,
               marginTop: i === 0 ? 0 : 8,
             }}
@@ -4887,7 +4887,7 @@ function Stage8PropositionsView({
                 style={{
                   width: 18,
                   height: 18,
-                  accentColor: "#D4924A",
+                  accentColor: "#C81E1E",
                   cursor: streaming ? "not-allowed" : "pointer",
                 }}
                 aria-label={`Keep "${b.name}" on next retry`}
@@ -4919,8 +4919,8 @@ export function ErrorCard({
       role="alert"
       className="animate-fade-in"
       style={{
-        backgroundColor: "#7C3A3A12",
-        border: "1px solid #7C3A3A",
+        backgroundColor: "#C81E1E12",
+        border: "1px solid #C81E1E",
         borderRadius: 8,
         padding: 24,
         marginTop: 16,
@@ -4930,18 +4930,18 @@ export function ErrorCard({
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
           <path
             d="M12 3L22 20H2L12 3Z"
-            stroke="#7C3A3A"
+            stroke="#C81E1E"
             strokeWidth="1.75"
             strokeLinejoin="round"
           />
-          <path d="M12 10v5" stroke="#7C3A3A" strokeWidth="1.75" strokeLinecap="round" />
-          <circle cx="12" cy="17.5" r="0.9" fill="#7C3A3A" />
+          <path d="M12 10v5" stroke="#C81E1E" strokeWidth="1.75" strokeLinecap="round" />
+          <circle cx="12" cy="17.5" r="0.9" fill="#C81E1E" />
         </svg>
         <div style={{ flex: 1 }}>
-          <p style={{ fontWeight: 600, color: "#F0EDE8", fontSize: 14 }}>
+          <p style={{ fontWeight: 600, color: "#EDE8E0", fontSize: 14 }}>
             Stage {stageNumber} encountered an error
           </p>
-          <p className="text-body-sm" style={{ color: "#8A8680", marginTop: 6 }}>
+          <p className="text-body-sm" style={{ color: "#8B8680", marginTop: 6 }}>
             {message}
           </p>
           <div style={{ display: "flex", gap: 12, marginTop: 16 }}>
@@ -4953,7 +4953,7 @@ export function ErrorCard({
                 padding: "0 16px",
                 borderRadius: 6,
                 border: "none",
-                backgroundColor: "#D4924A",
+                backgroundColor: "#C81E1E",
                 color: "var(--color-background)",
                 fontSize: 13,
                 fontWeight: 600,
@@ -4968,8 +4968,8 @@ export function ErrorCard({
                 height: 36,
                 padding: "0 16px",
                 borderRadius: 6,
-                border: "1px solid #2A2A2A",
-                color: "#F0EDE8",
+                border: "1px solid #1C1A18",
+                color: "#EDE8E0",
                 fontSize: 13,
                 fontWeight: 500,
                 display: "inline-flex",
@@ -4992,7 +4992,7 @@ export function NextStageHint({ name }: { name: string }) {
     <p
       className="text-body-sm animate-fade-in"
       style={{
-        color: "#5A5652",
+        color: "#8B8680",
         textAlign: "center",
         padding: "16px 0 8px",
       }}
@@ -5058,8 +5058,8 @@ function BottomBar({
     <div
       className="flex h-[60px] shrink-0 items-center justify-between gap-4 border-t bg-background"
       style={{
-        borderColor: "#2A2A2A",
-        backgroundColor: "#0A0A0A",
+        borderColor: "#1C1A18",
+        backgroundColor: "#0A0908",
         padding: "0 48px",
       }}
     >
@@ -5127,13 +5127,13 @@ function StageControlBar({
   let leftEl: ReactNode;
   if (status === "running") {
     leftEl = (
-      <span style={{ display: "inline-flex", alignItems: "center", gap: 8, color: "#5A5652" }}>
+      <span style={{ display: "inline-flex", alignItems: "center", gap: 8, color: "#8B8680" }}>
         <span
           style={{
             width: 8,
             height: 8,
             borderRadius: "50%",
-            backgroundColor: "#D4924A",
+            backgroundColor: "#C81E1E",
             animation: "bg-pulse 1.2s ease-in-out infinite",
           }}
         />
@@ -5141,13 +5141,13 @@ function StageControlBar({
       </span>
     );
   } else if (status === "complete") {
-    leftEl = <span style={{ color: "#4A7C59" }}>✓ {stage.name} complete</span>;
+    leftEl = <span style={{ color: "#C81E1E" }}>✓ {stage.name} complete</span>;
   } else if (status === "error") {
-    leftEl = <span style={{ color: "#8A6A2A" }}>⚠ Stage stalled</span>;
+    leftEl = <span style={{ color: "#C81E1E" }}>⚠ Stage stalled</span>;
   } else if (status === "checkpoint") {
-    leftEl = <span style={{ color: "#5A5652" }}>● Awaiting review</span>;
+    leftEl = <span style={{ color: "#8B8680" }}>● Awaiting review</span>;
   } else {
-    leftEl = <span style={{ color: "#5A5652" }}>Stage {stage.number} — pending</span>;
+    leftEl = <span style={{ color: "#8B8680" }}>Stage {stage.number} — pending</span>;
   }
 
   return (
@@ -5156,8 +5156,8 @@ function StageControlBar({
       style={{
         minHeight: 58,
         padding: "0 48px",
-        backgroundColor: "#0A0A0A",
-        borderColor: "#1C1C1C",
+        backgroundColor: "#0A0908",
+        borderColor: "#1C1A18",
       }}
     >
       <div className="text-body-sm">{leftEl}</div>
@@ -5197,11 +5197,11 @@ function StallWatcher({ stageKey, onRetry }: { stageKey: string; onRetry: () => 
         marginTop: 16,
         padding: "12px 16px",
         borderRadius: 8,
-        border: "1px solid #8A6A2A",
+        border: "1px solid #C81E1E",
         backgroundColor: "rgba(138, 106, 42, 0.07)",
       }}
     >
-      <p className="text-body-sm" style={{ color: "#8A6A2A" }}>
+      <p className="text-body-sm" style={{ color: "#C81E1E" }}>
         Generation has paused. This sometimes happens with longer outputs.
       </p>
       <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
@@ -5213,8 +5213,8 @@ function StallWatcher({ stageKey, onRetry }: { stageKey: string; onRetry: () => 
             padding: "0 14px",
             borderRadius: 6,
             background: "transparent",
-            border: "1px solid #2A2A2A",
-            color: "#8A8680",
+            border: "1px solid #1C1A18",
+            color: "#8B8680",
             fontSize: 13,
             cursor: "pointer",
           }}
@@ -5228,7 +5228,7 @@ function StallWatcher({ stageKey, onRetry }: { stageKey: string; onRetry: () => 
             height: 32,
             padding: "0 14px",
             borderRadius: 6,
-            background: "#D4924A",
+            background: "#C81E1E",
             border: "none",
             color: "var(--color-background)",
             fontSize: 13,
@@ -5262,7 +5262,7 @@ function ProgressMessages({ stageName }: { stageName: string }) {
       : tick === 2
         ? `Building ${stageName}…`
         : "This stage takes a little longer for complex briefs…";
-  const color = tick === 3 ? "#5A5652" : "#8A8680";
+  const color = tick === 3 ? "#8B8680" : "#8B8680";
   return (
     <div style={{ padding: "32px 0", textAlign: "center" }}>
       <p className={tick === 3 ? "text-body-sm" : "text-body"} style={{ color }}>
@@ -5291,18 +5291,18 @@ function ErrorStateCard({
     <div style={{ margin: "40px 48px", paddingBottom: 80 }}>
       <div
         style={{
-          background: "#1C1C1C",
-          border: "1px solid #7C3A3A",
+          background: "#1C1A18",
+          border: "1px solid #C81E1E",
           borderRadius: 12,
           padding: 32,
           textAlign: "center",
         }}
       >
-        <div style={{ fontSize: 32, color: "#7C3A3A", lineHeight: 1 }}>⚠</div>
-        <h3 className="text-h3" style={{ color: "#F0EDE8", marginTop: 16 }}>
+        <div style={{ fontSize: 32, color: "#C81E1E", lineHeight: 1 }}>⚠</div>
+        <h3 className="text-h3" style={{ color: "#EDE8E0", marginTop: 16 }}>
           Stage {stage.number} didn't complete
         </h3>
-        <p className="text-body" style={{ color: "#8A8680", marginTop: 8 }}>
+        <p className="text-body" style={{ color: "#8B8680", marginTop: 8 }}>
           The generation was interrupted. This is usually a temporary issue.
         </p>
         {errorMessage ? (
@@ -5314,7 +5314,7 @@ function ErrorStateCard({
               style={{
                 background: "transparent",
                 border: "none",
-                color: "#5A5652",
+                color: "#8B8680",
                 cursor: "pointer",
                 textDecoration: "underline",
               }}
@@ -5327,10 +5327,10 @@ function ErrorStateCard({
                   marginTop: 8,
                   padding: 12,
                   fontFamily: "ui-monospace, SFMono-Regular, monospace",
-                  fontSize: 12,
-                  color: "#5A5652",
-                  background: "#0A0A0A",
-                  border: "1px solid #2A2A2A",
+                  fontSize: 13,
+                  color: "#8B8680",
+                  background: "#0A0908",
+                  border: "1px solid #1C1A18",
                   borderRadius: 6,
                   whiteSpace: "pre-wrap",
                   textAlign: "left",
@@ -5356,8 +5356,8 @@ function ErrorStateCard({
               height: 40,
               padding: "0 20px",
               borderRadius: 8,
-              background: "#D4924A",
-              color: "#0A0A0A",
+              background: "#C81E1E",
+              color: "#0A0908",
               border: "none",
               fontSize: 14,
               fontWeight: 600,
@@ -5375,8 +5375,8 @@ function ErrorStateCard({
                 padding: "0 20px",
                 borderRadius: 8,
                 background: "transparent",
-                color: "#8A8680",
-                border: "1px solid #2A2A2A",
+                color: "#8B8680",
+                border: "1px solid #1C1A18",
                 fontSize: 14,
                 cursor: "pointer",
               }}
@@ -5397,7 +5397,7 @@ function PrimaryActionButton({ onClick, label }: { onClick: () => void; label: s
       onClick={onClick}
       className="inline-flex h-9 items-center rounded-md px-4 text-sm font-semibold transition-colors"
       style={{
-        backgroundColor: "#D4924A",
+        backgroundColor: "#C81E1E",
         color: "var(--color-background)",
         border: "none",
         cursor: "pointer",
@@ -5466,7 +5466,7 @@ function Stage1bResubmitView({
   return (
     <div style={{ paddingBottom: 80 }}>
       <header>
-        <span className="text-label text-primary">Brief Enhancement</span>
+        <span className="text-label text-text-secondary">Brief Enhancement</span>
         <h1 className="text-h2 mt-3 text-text-primary">Additional brief information required</h1>
         <p className="text-body-sm mt-3 text-text-secondary">
           The brief did not meet the threshold required to proceed. Please respond in writing to the
@@ -5597,7 +5597,7 @@ function StructuredBriefView({
     <>
       <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
-          <span className="text-label text-primary">Source Document</span>
+          <span className="text-label text-text-secondary">Source Document</span>
           <h1 className="text-h2 mt-3 text-text-primary">Submitted Brief</h1>
           <p className="text-body-sm mt-3 flex items-center gap-2 text-text-secondary">
             <span
@@ -5629,7 +5629,7 @@ function StructuredBriefView({
             type="button"
             onClick={onEdit}
             className="inline-flex h-9 items-center gap-1.5 rounded-md px-3 text-[13px] font-semibold transition-opacity hover:opacity-90"
-            style={{ backgroundColor: "#D4924A", color: "#0A0A0A" }}
+            style={{ backgroundColor: "#C81E1E", color: "#0A0908" }}
           >
             <PencilLine size={14} />
             Edit Brief

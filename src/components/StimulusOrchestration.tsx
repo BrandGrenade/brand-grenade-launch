@@ -24,10 +24,10 @@ import { buildFullFinishedExport, download } from "@/lib/stimulus-export";
 import { SIGNATURE_CATEGORIES } from "@/lib/stimulus/orchestration-prompts";
 
 
-const AMBER = "#E8A33D";
-const MUTED = "#8A8680";
-const RED = "#E86A3D";
-const GREEN = "#7FB069";
+const AMBER = "#C81E1E";
+const MUTED = "#8B8680";
+const RED = "#C81E1E";
+const GREEN = "#C81E1E";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 type Row = Record<string, any>;
@@ -62,7 +62,7 @@ function Btn({
       disabled={disabled}
       className="text-mono"
       style={{
-        border: `1px solid ${active ? colour : "#2A2A2A"}`,
+        border: `1px solid ${active ? colour : "#1C1A18"}`,
         background: active ? `${colour}1A` : "transparent",
         color: active ? colour : MUTED,
         borderRadius: 6,
@@ -85,7 +85,7 @@ function Label({ children, tone }: { children: React.ReactNode; tone?: string })
       className="text-mono"
       style={{
         color: tone ?? MUTED,
-        border: `1px solid ${tone ?? "#2A2A2A"}`,
+        border: `1px solid ${tone ?? "#1C1A18"}`,
         borderRadius: 4,
         padding: "2px 7px",
         fontSize: 10,
@@ -144,9 +144,9 @@ function BrandAssetPanel({ brandName }: { brandName: string }) {
         style={{
           width: "100%",
           marginTop: 4,
-          background: "#000",
-          color: "#E8E4DE",
-          border: "1px solid #2A2A2A",
+          background: "#0A0908",
+          color: "#EDE8E0",
+          border: "1px solid #1C1A18",
           borderRadius: 6,
           padding: 8,
           fontFamily: "inherit",
@@ -157,7 +157,7 @@ function BrandAssetPanel({ brandName }: { brandName: string }) {
   );
 
   return (
-    <div style={{ border: "1px solid #2A2A2A", borderRadius: 8, padding: 14, marginBottom: 16 }}>
+    <div style={{ border: "1px solid #1C1A18", borderRadius: 8, padding: 14, marginBottom: 16 }}>
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -311,7 +311,7 @@ export function StimulusOrchestration({ sessionId, brandName }: { sessionId: str
     (state?.crossRefs ?? []).filter((c) => c.prompt_id === promptId);
 
   return (
-    <div style={{ marginTop: 28, border: `1px solid ${AMBER}33`, borderRadius: 8, padding: 20, backgroundColor: "#0E0E0E" }}>
+    <div style={{ marginTop: 28, border: `1px solid ${AMBER}33`, borderRadius: 8, padding: 20, backgroundColor: "#0A0908" }}>
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -381,7 +381,7 @@ export function StimulusOrchestration({ sessionId, brandName }: { sessionId: str
                 </div>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 10, marginTop: 10 }}>
                   {activeSignatures.map((s) => (
-                    <div key={s.id} style={{ border: "1px solid #2A2A2A", borderRadius: 6, padding: 10 }}>
+                    <div key={s.id} style={{ border: "1px solid #1C1A18", borderRadius: 6, padding: 10 }}>
                       <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 6 }}>
                         <Label tone={AMBER}>
                           {SIGNATURE_CATEGORIES.find((c) => c.id === s.category)?.label ?? s.category}
@@ -389,7 +389,7 @@ export function StimulusOrchestration({ sessionId, brandName }: { sessionId: str
                         {s.origin === "instinct_brief" && <Label tone={GREEN}>human instinct</Label>}
                         <Label>{s.source_channel}</Label>
                       </div>
-                      <div className="text-body-sm" style={{ color: "#E8E4DE" }}>{s.name}</div>
+                      <div className="text-body-sm" style={{ color: "#EDE8E0" }}>{s.name}</div>
                       <div className="text-body-sm" style={{ color: MUTED, marginTop: 4 }}>{s.description}</div>
                     </div>
                   ))}
@@ -412,7 +412,7 @@ export function StimulusOrchestration({ sessionId, brandName }: { sessionId: str
                   const tone =
                     p.wad_status === "flagged" ? RED : p.wad_status === "pending" ? MUTED : GREEN;
                   return (
-                    <div key={p.id} style={{ border: "1px solid #2A2A2A", borderRadius: 8, padding: 14 }}>
+                    <div key={p.id} style={{ border: "1px solid #1C1A18", borderRadius: 8, padding: 14 }}>
                       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
                         <Label tone={AMBER}>{p.channel_name}</Label>
                         <Label>{p.lens_name}</Label>
@@ -467,8 +467,8 @@ export function StimulusOrchestration({ sessionId, brandName }: { sessionId: str
                             placeholder="On-brief / on-strategy notes for this prompt. Craft pass re-runs on it, then a full CD re-check."
                             style={{
                               width: "100%",
-                              background: "#000",
-                              color: "#E8E4DE",
+                              background: "#0A0908",
+                              color: "#EDE8E0",
                               border: `1px solid ${AMBER}55`,
                               borderRadius: 6,
                               padding: 8,
@@ -516,8 +516,8 @@ export function StimulusOrchestration({ sessionId, brandName }: { sessionId: str
                             placeholder="Why is this direction out? Its signatures retire and dependent prompts re-propagate."
                             style={{
                               width: "100%",
-                              background: "#000",
-                              color: "#E8E4DE",
+                              background: "#0A0908",
+                              color: "#EDE8E0",
                               border: `1px solid ${RED}55`,
                               borderRadius: 6,
                               padding: 8,
@@ -578,7 +578,7 @@ export function StimulusOrchestration({ sessionId, brandName }: { sessionId: str
                               key={c.id}
                               style={{
                                 border: `1px solid ${
-                                  c.status === "accepted" ? GREEN : c.status === "rejected" || c.status === "voided" ? RED : "#2A2A2A"
+                                  c.status === "accepted" ? GREEN : c.status === "rejected" || c.status === "voided" ? RED : "#1C1A18"
                                 }55`,
                                 borderRadius: 6,
                                 padding: 10,
@@ -621,7 +621,7 @@ export function StimulusOrchestration({ sessionId, brandName }: { sessionId: str
                                   </>
                                 )}
                               </div>
-                              <div className="text-body-sm" style={{ color: "#E8E4DE", marginTop: 6 }}>
+                              <div className="text-body-sm" style={{ color: "#EDE8E0", marginTop: 6 }}>
                                 {c.suggestion}
                               </div>
                               {c.rationale && (
@@ -645,9 +645,9 @@ export function StimulusOrchestration({ sessionId, brandName }: { sessionId: str
                           style={{
                             marginTop: 12,
                             whiteSpace: "pre-wrap",
-                            color: "#E8E4DE",
-                            background: "#000",
-                            border: "1px solid #2A2A2A",
+                            color: "#EDE8E0",
+                            background: "#0A0908",
+                            border: "1px solid #1C1A18",
                             borderRadius: 6,
                             padding: 12,
                             fontFamily: "inherit",
@@ -687,7 +687,7 @@ export function StimulusOrchestration({ sessionId, brandName }: { sessionId: str
                     CREATIVE DIRECTOR JUDGMENT — {String(orch.cd_status).toUpperCase()}
                     {orch.cd_revision_count ? " (after one automatic revision)" : ""}
                   </div>
-                  <div className="text-body-sm" style={{ color: "#E8E4DE", marginTop: 8, whiteSpace: "pre-wrap" }}>
+                  <div className="text-body-sm" style={{ color: "#EDE8E0", marginTop: 8, whiteSpace: "pre-wrap" }}>
                     {orch.cd_output}
                   </div>
                 </div>
@@ -732,9 +732,9 @@ export function StimulusOrchestration({ sessionId, brandName }: { sessionId: str
                         style={{
                           width: "100%",
                           marginTop: 10,
-                          background: "#000",
-                          color: "#E8E4DE",
-                          border: "1px solid #2A2A2A",
+                          background: "#0A0908",
+                          color: "#EDE8E0",
+                          border: "1px solid #1C1A18",
                           borderRadius: 6,
                           padding: 8,
                           fontFamily: "inherit",
@@ -781,8 +781,8 @@ export function StimulusOrchestration({ sessionId, brandName }: { sessionId: str
                         placeholder="What is wrong with the whole set. Every active prompt is regenerated against these notes."
                         style={{
                           width: "100%",
-                          background: "#000",
-                          color: "#E8E4DE",
+                          background: "#0A0908",
+                          color: "#EDE8E0",
                           border: `1px solid ${RED}55`,
                           borderRadius: 6,
                           padding: 8,

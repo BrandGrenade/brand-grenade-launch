@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getFullFinishedExport } from "@/lib/stimulus-gate-two.functions";
 import { buildFullFinishedExport, download } from "@/lib/stimulus-export";
 
-const AMBER = "#D4924A";
+const AMBER = "#C81E1E";
 
 /**
  * Creative Showcase deliverable. Renders only when the session has an
@@ -87,7 +87,7 @@ export function CreativeShowcaseCard({
           <span className="text-body" style={{ fontWeight: 600 }}>
             Creative Showcase
           </span>
-          <span className="text-body-sm" style={{ color: "#8A8680" }}>
+          <span className="text-body-sm" style={{ color: "#8B8680" }}>
             Gate Two-approved prompt set, ratings and decision record
           </span>
           <span
@@ -105,7 +105,7 @@ export function CreativeShowcaseCard({
         </button>
       </div>
       {err && (
-        <div style={{ marginTop: 8, fontSize: 12, color: "#C97A7A" }}>{err}</div>
+        <div style={{ marginTop: 8, fontSize: 13, color: "#C81E1E" }}>{err}</div>
       )}
     </div>
   );

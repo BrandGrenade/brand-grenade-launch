@@ -46,13 +46,13 @@ export function PreflightStatusBanner() {
   const palette = (() => {
     switch (phase) {
       case "ready":
-        return { dot: "#4A7C59", border: "#4A7C59", bg: "#4A7C5915", fg: "#4A7C59" };
+        return { dot: "#C81E1E", border: "#C81E1E", bg: "#C81E1E15", fg: "#C81E1E" };
       case "issue_detected":
       case "error":
-        return { dot: "#C0524A", border: "#C0524A", bg: "#C0524A15", fg: "#C0524A" };
+        return { dot: "#C81E1E", border: "#C81E1E", bg: "#C81E1E15", fg: "#C81E1E" };
       case "running":
       default:
-        return { dot: "#8A8680", border: "#5A5652", bg: "#1C1C1C", fg: "#8A8680" };
+        return { dot: "#8B8680", border: "#8B8680", bg: "#1C1A18", fg: "#8B8680" };
     }
   })();
 
@@ -115,7 +115,7 @@ export function PreflightStatusBanner() {
           >
             {headline}
           </div>
-          <div style={{ color: "#8A8680", fontSize: 12, marginTop: 4 }}>{subline}</div>
+          <div style={{ color: "#8B8680", fontSize: 13, marginTop: 4 }}>{subline}</div>
         </div>
       </div>
 
@@ -128,8 +128,8 @@ export function PreflightStatusBanner() {
                 display: "flex",
                 alignItems: "flex-start",
                 gap: 8,
-                fontSize: 12,
-                color: c.status === "pass" ? "#8A8680" : "#C0524A",
+                fontSize: 13,
+                color: c.status === "pass" ? "#8B8680" : "#C81E1E",
                 padding: "4px 0",
               }}
             >
@@ -137,7 +137,7 @@ export function PreflightStatusBanner() {
               <span style={{ flex: 1 }}>
                 <span style={{ fontWeight: 600 }}>{c.name}</span> — {c.detail}
               </span>
-              <span style={{ color: "#5A5652" }}>{(c.durationMs / 1000).toFixed(1)}s</span>
+              <span style={{ color: "#8B8680" }}>{(c.durationMs / 1000).toFixed(1)}s</span>
             </li>
           ))}
         </ul>

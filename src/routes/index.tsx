@@ -513,7 +513,7 @@ function Index() {
         <section className="section">
           <div className="section-eyebrow">What Doesn't Change</div>
           <h2>
-            The planner still decides what matters. The strategist still
+            The researcher still decides what matters. The planner still
             determines the opportunity. The CD still decides what lives.
           </h2>
           <div className="rhythm">

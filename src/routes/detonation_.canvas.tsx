@@ -18,7 +18,7 @@ import {
   extractBrandGuidelinesFromPdf,
 } from "@/lib/threeTruth.functions";
 
-const AMBER = "#D4924A";
+const AMBER = "#C81E1E";
 
 const searchSchema = z.object({ session: z.string().uuid().optional() });
 
@@ -365,12 +365,12 @@ function ThreeTruthCanvas() {
           className="mx-auto w-full max-w-[1100px] px-5 sm:px-8"
           style={{ paddingTop: 48, paddingBottom: 96 }}
         >
-          {!sessionId && <p className="text-body" style={{ color: "#5A5652" }}>No session specified.</p>}
+          {!sessionId && <p className="text-body" style={{ color: "#8B8680" }}>No session specified.</p>}
           {sessionId && loading && (
-            <p className="text-body" style={{ color: "#5A5652" }}>Loading canvas…</p>
+            <p className="text-body" style={{ color: "#8B8680" }}>Loading canvas…</p>
           )}
           {error && (
-            <p className="text-body" style={{ color: "#7C3A3A" }}>{error}</p>
+            <p className="text-body" style={{ color: "#C81E1E" }}>{error}</p>
           )}
 
           {sessionId && !loading && session && (
@@ -379,7 +379,7 @@ function ThreeTruthCanvas() {
                 <span
                   style={{
                     color: AMBER,
-                    fontFamily: '"DM Mono", ui-monospace, monospace',
+                    fontFamily: 'Inter, system-ui, sans-serif',
                     fontSize: 7,
                     letterSpacing: "0.18em",
                     textTransform: "uppercase",
@@ -445,7 +445,7 @@ function ThreeTruthCanvas() {
                 <span
                   style={{
                     color: AMBER,
-                    fontFamily: '"DM Mono", ui-monospace, monospace',
+                    fontFamily: 'Inter, system-ui, sans-serif',
                     fontSize: 7,
                     letterSpacing: "0.18em",
                     textTransform: "uppercase",
@@ -490,7 +490,7 @@ function ThreeTruthCanvas() {
                         style={{
                           display: "block",
                           color: "var(--color-text-secondary)",
-                          fontSize: 12,
+                          fontSize: 13,
                           fontWeight: 600,
                           marginBottom: 4,
                         }}
@@ -500,7 +500,7 @@ function ThreeTruthCanvas() {
                       <p
                         style={{
                           color: "var(--color-text-tertiary)",
-                          fontSize: 12,
+                          fontSize: 13,
                           margin: "0 0 12px",
                         }}
                       >
@@ -568,7 +568,7 @@ function ThreeTruthCanvas() {
                       <p
                         style={{
                           color: "var(--color-text-tertiary)",
-                          fontSize: 12,
+                          fontSize: 13,
                           margin: "6px 0 0",
                         }}
                       >
@@ -634,7 +634,7 @@ function ThreeTruthCanvas() {
                         <p
                           style={{
                             color: AMBER,
-                            fontFamily: '"DM Mono", ui-monospace, monospace',
+                            fontFamily: 'Inter, system-ui, sans-serif',
                             fontSize: 7,
                             letterSpacing: "0.18em",
                             textTransform: "uppercase",
@@ -801,7 +801,7 @@ function TruthPanel({
         <span
           style={{
             color: AMBER,
-            fontFamily: '"DM Mono", ui-monospace, monospace',
+            fontFamily: 'Inter, system-ui, sans-serif',
             fontSize: 7,
             letterSpacing: "0.18em",
             textTransform: "uppercase",
@@ -813,7 +813,7 @@ function TruthPanel({
           <span
             style={{
               color: AMBER,
-              fontFamily: '"DM Mono", ui-monospace, monospace',
+              fontFamily: 'Inter, system-ui, sans-serif',
               fontSize: 9,
               letterSpacing: "0.12em",
               opacity: 0.8,
@@ -834,7 +834,7 @@ function TruthPanel({
       ) : (
         <p
           style={{
-            color: "#FFFFFF",
+            color: "#EDE8E0",
             fontSize: 14,
             lineHeight: 1.55,
             margin: 0,
@@ -870,7 +870,7 @@ function TruthPanel({
           <span
             style={{
               color: "var(--color-text-tertiary)",
-              fontFamily: '"DM Mono", ui-monospace, monospace',
+              fontFamily: 'Inter, system-ui, sans-serif',
               fontSize: 9,
               letterSpacing: "0.12em",
             }}
@@ -950,7 +950,7 @@ function ThreeTruthStatus({
       "All three truths are aligned — this is where the highest Creative Share of Voice multipliers live.";
   } else if (count === 2) {
     title = "STRONG BRAND TERRITORY";
-    titleColor = "#FFFFFF";
+    titleColor = "#EDE8E0";
     const missingNames: string[] = [];
     if (!confirmedSet[0]) missingNames.push("Product Truth");
     if (!confirmedSet[1]) missingNames.push("Consumer Truth");
@@ -979,7 +979,7 @@ function ThreeTruthStatus({
       <p
         style={{
           color: titleColor,
-          fontFamily: '"DM Mono", ui-monospace, monospace',
+          fontFamily: 'Inter, system-ui, sans-serif',
           fontSize: 11,
           letterSpacing: "0.18em",
           margin: 0,
@@ -1023,7 +1023,7 @@ function RadioCard({
         border: `1px solid ${selected ? AMBER : "var(--color-border)"}`,
         borderRadius: 10,
         color: selected ? AMBER : "var(--color-text-primary)",
-        fontFamily: '"DM Mono", ui-monospace, monospace',
+        fontFamily: 'Inter, system-ui, sans-serif',
         fontSize: 11,
         letterSpacing: "0.18em",
         cursor: "pointer",
@@ -1070,7 +1070,7 @@ function Field({
         style={{
           display: "block",
           color: "var(--color-text-secondary)",
-          fontSize: 12,
+          fontSize: 13,
           fontWeight: 600,
           marginBottom: 4,
         }}
@@ -1078,7 +1078,7 @@ function Field({
         {label}
       </label>
       {hint && (
-        <p style={{ color: "var(--color-text-tertiary)", fontSize: 12, margin: "0 0 8px" }}>
+        <p style={{ color: "var(--color-text-tertiary)", fontSize: 13, margin: "0 0 8px" }}>
           {hint}
         </p>
       )}
@@ -1100,7 +1100,7 @@ function Field({
         />
       )}
       {helper && (
-        <p style={{ color: "var(--color-text-tertiary)", fontSize: 12, margin: "6px 0 0" }}>
+        <p style={{ color: "var(--color-text-tertiary)", fontSize: 13, margin: "6px 0 0" }}>
           {helper}
         </p>
       )}
@@ -1116,7 +1116,7 @@ const inputStyle: React.CSSProperties = {
   borderRadius: 6,
   color: "var(--color-text-primary)",
   fontSize: 14,
-  fontFamily: '"DM Sans", system-ui, sans-serif',
+  fontFamily: 'Inter, system-ui, sans-serif',
 };
 
 const pillBtnStyle: React.CSSProperties = {
@@ -1126,7 +1126,7 @@ const pillBtnStyle: React.CSSProperties = {
   padding: "6px 14px",
   borderRadius: 999,
   cursor: "pointer",
-  fontSize: 12,
+  fontSize: 13,
   fontWeight: 600,
 };
 

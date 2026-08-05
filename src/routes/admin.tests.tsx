@@ -27,16 +27,16 @@ function AdminTestsPage() {
       >
         <div className="mx-auto max-w-[1280px]">
           <header className="mb-8">
-            <span className="text-label text-primary">Admin</span>
+            <span className="text-label text-text-secondary">Admin</span>
             <h1 className="text-h2 mt-3 text-text-primary">Platform Tests</h1>
             <p className="text-body mt-2 text-text-secondary">
               Tier One and Tier Two integrity checks. Not for client
               presentation.{" "}
-              <Link to="/dashboard" style={{ color: "#D4924A" }}>
+              <Link to="/dashboard" style={{ color: "#C81E1E" }}>
                 Back to dashboard
               </Link>
               {" · "}
-              <Link to="/admin/repositories" style={{ color: "#D4924A" }}>
+              <Link to="/admin/repositories" style={{ color: "#C81E1E" }}>
                 Repositories admin
               </Link>
               .
