@@ -640,12 +640,12 @@ function IntelligenceRunPage() {
               <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-text-secondary">
                 {row.category ? <span>{row.category}</span> : null}
                 <span className="text-text-secondary/40">·</span>
-                <Badge variant="outline" className="text-xs">
+                <Badge variant="outline" className="text-[13px]">
                   {briefType === "government" ? "Government" : "Commercial"}
                 </Badge>
                 {completeness?.confidence ? (
                   <Badge
-                    className="text-xs"
+                    className="text-[13px]"
                     style={{
                       backgroundColor: `${CONFIDENCE_COLOR[completeness.confidence]}22`,
                       color: CONFIDENCE_COLOR[completeness.confidence],
@@ -739,7 +739,7 @@ function IntelligenceRunPage() {
                               <div>
                                 <div className="text-text-primary">{x}</div>
                                 {completeness.gap_impact_notes?.[i] ? (
-                                  <div className="text-xs mt-0.5 text-text-secondary italic">
+                                  <div className="text-[13px] mt-0.5 text-text-secondary italic">
                                     {completeness.gap_impact_notes[i]}
                                   </div>
                                 ) : null}
@@ -799,7 +799,7 @@ function IntelligenceRunPage() {
         }}
       >
         <div className="mx-auto max-w-[1080px] flex items-center justify-between gap-3 px-6 py-4">
-          <div className="text-xs text-text-secondary">
+          <div className="text-[13px] text-text-secondary">
             {selectedTerritoryId
               ? `Selected: ${selectedTerritory?.name ?? "territory"}`
               : "Select a territory to enable handoff."}
@@ -889,7 +889,7 @@ function TerritoryCard({
           <div className="flex flex-wrap items-center gap-2">
             {isPrimary ? (
               <Badge
-                className="text-xs"
+                className="text-[13px]"
                 style={{
                   backgroundColor: "rgba(200, 30, 30,0.15)",
                   color: "#C81E1E",
@@ -902,7 +902,7 @@ function TerritoryCard({
             ) : null}
             {typeMeta ? (
               <Badge
-                className="text-xs"
+                className="text-[13px]"
                 variant="outline"
                 style={{
                   backgroundColor: `${typeMeta.color}18`,
@@ -933,7 +933,7 @@ function TerritoryCard({
         </Button>
       </div>
 
-      <div className="mt-4 flex flex-wrap items-center gap-3 text-xs">
+      <div className="mt-4 flex flex-wrap items-center gap-3 text-[13px]">
         {typeof fmScore === "number" ? (
           <Metric label="First mover" value={`${fmScore}/10`} />
         ) : null}
@@ -949,7 +949,7 @@ function TerritoryCard({
         ) : null}
         {rec ? (
           <Badge
-            className="text-xs"
+            className="text-[13px]"
             variant="outline"
             style={{
               backgroundColor: `${rec.color}18`,
@@ -963,7 +963,7 @@ function TerritoryCard({
       </div>
 
       {territory.conditions && territory.conditions.length > 0 ? (
-        <div className="mt-3 text-xs text-text-secondary">
+        <div className="mt-3 text-[13px] text-text-secondary">
           <span className="font-medium text-text-primary">Conditions:</span>{" "}
           {territory.conditions.join(" · ")}
         </div>
@@ -993,7 +993,7 @@ function TerritoryCard({
                           <p className="text-sm text-text-primary mt-2">{cell.assessment}</p>
                         ) : null}
                         {cell.evidence ? (
-                          <p className="text-xs text-text-secondary mt-1.5 italic">
+                          <p className="text-[13px] text-text-secondary mt-1.5 italic">
                             {cell.evidence}
                           </p>
                         ) : null}
@@ -1082,7 +1082,7 @@ function TerritoryCard({
                           <span className="font-medium">{r.context}</span>{" "}
                           <span className="text-text-secondary">— {r.rating}</span>
                           {r.notes ? (
-                            <div className="text-xs text-text-secondary mt-0.5">{r.notes}</div>
+                            <div className="text-[13px] text-text-secondary mt-0.5">{r.notes}</div>
                           ) : null}
                         </li>
                       ))}
@@ -1103,7 +1103,7 @@ function TerritoryCard({
                           <span className="text-text-primary font-medium">{c.community}</span>{" "}
                           <span className="text-text-secondary">— {c.resonance}</span>
                           {c.adaptation ? (
-                            <div className="text-xs text-text-secondary mt-0.5">
+                            <div className="text-[13px] text-text-secondary mt-0.5">
                               {c.adaptation}
                             </div>
                           ) : null}
@@ -1137,7 +1137,7 @@ function TerritoryCard({
                     v={territory.timing_sequencing.recommendation}
                   />
                   {territory.timing_sequencing.is_gateway_territory ? (
-                    <Badge variant="outline" className="mt-2 text-xs">
+                    <Badge variant="outline" className="mt-2 text-[13px]">
                       Gateway territory
                     </Badge>
                   ) : null}
@@ -1310,7 +1310,7 @@ function GovernmentAddendumSection({ addendum }: { addendum: GovernmentAddendum 
             <div className="overflow-hidden rounded border">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="text-left text-xs text-text-secondary border-b">
+                  <tr className="text-left text-[13px] text-text-secondary border-b">
                     <th className="px-3 py-2">Segment</th>
                     <th className="px-3 py-2">Resistance</th>
                     <th className="px-3 py-2">Rationale</th>
@@ -1394,7 +1394,7 @@ function MetricsList({ label, items }: { label: string; items?: string[] }) {
           ))}
         </ul>
       ) : (
-        <p className="text-xs text-text-secondary italic">None</p>
+        <p className="text-[13px] text-text-secondary italic">None</p>
       )}
     </div>
   );
@@ -1419,12 +1419,12 @@ function PrecedentList({
             ) : null}
             {p.outcome ? (
               <div className="text-text-secondary mt-1">
-                <span className="text-xs">Outcome: </span>
+                <span className="text-[13px]">Outcome: </span>
                 {p.outcome}
               </div>
             ) : null}
             {p.structural_conditions ? (
-              <div className="text-text-secondary text-xs mt-1 italic">
+              <div className="text-text-secondary text-[13px] mt-1 italic">
                 {p.structural_conditions}
               </div>
             ) : null}

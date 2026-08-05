@@ -76,7 +76,7 @@ function AdminPreviewPage() {
   return (
     <div className="min-h-screen bg-card text-text-primary">
       <div className="bg-primary border-b border-primary">
-        <div className="mx-auto max-w-3xl px-6 py-2 flex items-center justify-between text-xs text-primary">
+        <div className="mx-auto max-w-3xl px-6 py-2 flex items-center justify-between text-[13px] text-primary">
           <div className="flex items-center gap-2">
             <Eye className="h-3.5 w-3.5" />
             <span>
@@ -95,14 +95,14 @@ function AdminPreviewPage() {
             <span className="text-sm font-semibold tracking-wide">Brand Grenade</span>
           </div>
           {visitorName && (
-            <span className="text-xs text-text-secondary">Signed in as {visitorName}</span>
+            <span className="text-[13px] text-text-secondary">Signed in as {visitorName}</span>
           )}
         </div>
       </header>
       <main className="mx-auto max-w-3xl px-6 py-12">
         <h1 className="text-3xl font-semibold text-text-primary">Brand Grenade — {slug.toUpperCase()}</h1>
         <section className="mt-12">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-text-secondary">Documents</h2>
+          <h2 className="text-[13px] font-semibold uppercase tracking-wider text-text-secondary">Documents</h2>
           {docs.length === 0 ? (
             <p className="mt-4 text-sm text-text-secondary">No documents have been published to this repository yet.</p>
           ) : (
@@ -112,7 +112,7 @@ function AdminPreviewPage() {
                   <div className="min-w-0">
                     <h3 className="text-base font-medium text-text-primary">{doc.title}</h3>
                     {doc.description && <p className="mt-1 text-sm text-text-secondary">{doc.description}</p>}
-                    <p className="mt-2 text-xs uppercase tracking-wide text-text-secondary">{doc.file_type}</p>
+                    <p className="mt-2 text-[13px] uppercase tracking-wide text-text-secondary">{doc.file_type}</p>
                   </div>
                   <div className="flex gap-2 shrink-0">
                     <Button variant="outline" size="sm" onClick={() => handleOpen(doc, "open")} className="border-border">

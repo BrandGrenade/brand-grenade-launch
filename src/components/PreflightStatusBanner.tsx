@@ -115,7 +115,7 @@ export function PreflightStatusBanner() {
           >
             {headline}
           </div>
-          <div style={{ color: "#8B8680", fontSize: 12, marginTop: 4 }}>{subline}</div>
+          <div style={{ color: "#8B8680", fontSize: 13, marginTop: 4 }}>{subline}</div>
         </div>
       </div>
 
@@ -128,7 +128,7 @@ export function PreflightStatusBanner() {
                 display: "flex",
                 alignItems: "flex-start",
                 gap: 8,
-                fontSize: 12,
+                fontSize: 13,
                 color: c.status === "pass" ? "#8B8680" : "#C81E1E",
                 padding: "4px 0",
               }}

@@ -387,7 +387,7 @@ export function IntelligenceForm({
                 className="mt-1.5"
               />
               {errors.brand ? (
-                <p className="mt-1.5 text-xs text-destructive">{errors.brand}</p>
+                <p className="mt-1.5 text-[13px] text-destructive">{errors.brand}</p>
               ) : null}
             </div>
             <div>
@@ -400,7 +400,7 @@ export function IntelligenceForm({
                 className="mt-1.5"
               />
               {errors.category ? (
-                <p className="mt-1.5 text-xs text-destructive">{errors.category}</p>
+                <p className="mt-1.5 text-[13px] text-destructive">{errors.category}</p>
               ) : null}
             </div>
             <div>
@@ -486,7 +486,7 @@ export function IntelligenceForm({
       <aside className="lg:sticky lg:top-24 lg:self-start">
         <Card className="p-5">
           <h2 className="text-h5 text-text-primary">Completeness preview</h2>
-          <p className="text-xs text-text-secondary mt-1">
+          <p className="text-[13px] text-text-secondary mt-1">
             Updates live as you fill in sections.
           </p>
 
@@ -494,7 +494,7 @@ export function IntelligenceForm({
             {SECTIONS.map((s) => {
               const present = sectionHasContent(s.key);
               return (
-                <div key={s.key} className="flex items-start gap-2.5 text-xs">
+                <div key={s.key} className="flex items-start gap-2.5 text-[13px]">
                   {present ? (
                     <Check
                       className="h-4 w-4 flex-shrink-0 mt-0.5"
@@ -531,10 +531,10 @@ export function IntelligenceForm({
                 {confidence}
               </span>
             </div>
-            <p className="text-xs text-text-secondary mt-1.5">
+            <p className="text-[13px] text-text-secondary mt-1.5">
               {presentCount} of 6 inputs present
             </p>
-            <p className="text-xs text-text-secondary mt-1">
+            <p className="text-[13px] text-text-secondary mt-1">
               {fmtBytes(totalBytes)} / 50 MB uploaded
             </p>
           </div>
@@ -578,7 +578,7 @@ function ResearchSection({
         <div className="flex-1">
           <h3 className="text-h4 text-text-primary">{spec.title}</h3>
           <p className="text-sm mt-1 text-text-secondary">{spec.description}</p>
-          <p className="text-xs mt-1 italic text-text-secondary/80">
+          <p className="text-[13px] mt-1 italic text-text-secondary/80">
             {spec.helper}
           </p>
         </div>
@@ -587,7 +587,7 @@ function ResearchSection({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder="Paste content here…"
-        className="mt-4 min-h-[160px] font-mono text-xs"
+        className="mt-4 min-h-[160px] font-mono text-[13px]"
         maxLength={400_000}
       />
 
@@ -629,7 +629,7 @@ function ResearchSection({
         }}
       >
         <Upload className="h-4 w-4 text-text-secondary" />
-        <p className="text-xs mt-2 text-text-secondary">
+        <p className="text-[13px] mt-2 text-text-secondary">
           Drop files here or click to upload
         </p>
         <p className="text-[11px] mt-1 text-text-secondary/70">
@@ -642,7 +642,7 @@ function ResearchSection({
           {files.map((f) => (
             <li
               key={f.id}
-              className="flex items-center gap-2 rounded-md px-3 py-2 text-xs"
+              className="flex items-center gap-2 rounded-md px-3 py-2 text-[13px]"
               style={{
                 border: "1px solid rgba(139, 134, 128,0.2)",
                 backgroundColor: "rgba(139, 134, 128,0.05)",

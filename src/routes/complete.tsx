@@ -1056,7 +1056,7 @@ function FormatCard({
               color: "var(--color-text-secondary)",
               borderRadius: 6,
               padding: "6px 10px",
-              fontSize: 12,
+              fontSize: 13,
               fontWeight: 500,
               cursor: disabled ? "not-allowed" : "pointer",
               opacity: disabled ? 0.5 : 1,
@@ -1343,7 +1343,7 @@ function Phase2Deliverables({ session }: { session: SessionRow }) {
       <hr style={{ border: 0, borderTop: `1px solid ${amber}`, margin: "0 0 32px" }} />
       <div className="text-mono" style={{
         color: amber, letterSpacing: "0.18em", textTransform: "uppercase",
-        fontSize: 12, fontWeight: 700, marginBottom: 8,
+        fontSize: 13, fontWeight: 700, marginBottom: 8,
       }}>BRAND DETONATION</div>
       <p className="text-body-sm" style={{ color: "#8B8680", marginBottom: 16 }}>
         Phase 2 deliverables. Click any card to open and save as PDF.
@@ -1424,7 +1424,7 @@ function Phase2Deliverables({ session }: { session: SessionRow }) {
           {busy === "bundle" ? (bundleProgress ?? "Building zip…") : "Download All Strategy (.zip)"}
         </button>
         {bundleResult && (
-          <div style={{ fontSize: 12, color: "#8B8680", lineHeight: 1.6 }}>
+          <div style={{ fontSize: 13, color: "#8B8680", lineHeight: 1.6 }}>
             <div style={{ color: "#EDE8E0", fontWeight: 600 }}>Bundle ready: {bundleResult.filename}</div>
             <div>Included {bundleResult.included.length} file{bundleResult.included.length === 1 ? "" : "s"}.
               {bundleResult.skipped.length > 0 && ` Skipped ${bundleResult.skipped.length} (missing source): ${bundleResult.skipped.join(", ")}.`}

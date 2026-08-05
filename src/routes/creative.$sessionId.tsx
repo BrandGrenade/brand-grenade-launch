@@ -158,7 +158,7 @@ function CreativeRoom() {
                     <div key={c} style={{ borderTop: "1px solid #1C1A18", paddingTop: 12 }}>
                       <div
                         className="text-mono"
-                        style={{ color: AMBER, fontSize: 12, textTransform: "uppercase", letterSpacing: "0.06em" }}
+                        style={{ color: AMBER, fontSize: 13, textTransform: "uppercase", letterSpacing: "0.06em" }}
                       >
                         {c}
                       </div>

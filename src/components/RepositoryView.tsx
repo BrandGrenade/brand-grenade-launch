@@ -145,7 +145,7 @@ export function RepositoryView({ slug, title, intro }: Props) {
           </div>
           <div className="flex items-center gap-4">
             {visitorName && (
-              <span className="text-xs text-text-secondary">Signed in as {visitorName}</span>
+              <span className="text-[13px] text-text-secondary">Signed in as {visitorName}</span>
             )}
             <Button
               variant="ghost"
@@ -169,7 +169,7 @@ export function RepositoryView({ slug, title, intro }: Props) {
         <p className="mt-4 text-base leading-relaxed text-text-primary">{intro}</p>
 
         <section className="mt-12">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-text-secondary">
+          <h2 className="text-[13px] font-semibold uppercase tracking-wider text-text-secondary">
             Documents
           </h2>
           {docs.length === 0 ? (
@@ -188,7 +188,7 @@ export function RepositoryView({ slug, title, intro }: Props) {
                     {doc.description && (
                       <p className="mt-1 text-sm text-text-secondary">{doc.description}</p>
                     )}
-                    <p className="mt-2 text-xs uppercase tracking-wide text-text-secondary">
+                    <p className="mt-2 text-[13px] uppercase tracking-wide text-text-secondary">
                       {doc.file_type}
                     </p>
                   </div>

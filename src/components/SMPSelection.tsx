@@ -740,7 +740,7 @@ export function SMPSelection({
             padding: 20,
             borderRadius: 8,
             fontFamily: "'JetBrains Mono', ui-monospace, monospace",
-            fontSize: 12,
+            fontSize: 13,
             lineHeight: 1.5,
             whiteSpace: "pre-wrap",
           }}
@@ -1010,7 +1010,7 @@ export function SMPSelection({
                 </p>
               )}
               {card.scores.flags && card.scores.flags.length > 0 && (
-                <ul className="mt-3 space-y-1" style={{ color: "var(--color-warning)", fontSize: 12, lineHeight: 1.5 }}>
+                <ul className="mt-3 space-y-1" style={{ color: "var(--color-warning)", fontSize: 13, lineHeight: 1.5 }}>
                   {card.scores.flags.map((f, i) => (
                     <li key={i}>{f}</li>
                   ))}

@@ -54,7 +54,7 @@ export function ExecSummaryCard({ session }: { session: ExecSummarySession }) {
         >
           Strategy Executive Summary
         </span>
-        <span className="text-body-sm" style={{ color: "#8B8680", fontSize: 12 }}>
+        <span className="text-body-sm" style={{ color: "#8B8680", fontSize: 13 }}>
           {ready
             ? "Nine-section board summary, assembled from this session's stored data."
             : "Available once a proposition has been selected for this session."}
@@ -71,7 +71,7 @@ export function ExecSummaryCard({ session }: { session: ExecSummarySession }) {
           border: `1px solid ${ready ? amber : "var(--color-border-strong)"}`,
           background: "transparent",
           color: ready ? amber : "var(--color-text-tertiary)",
-          fontSize: 12,
+          fontSize: 13,
           fontWeight: 600,
           letterSpacing: "0.08em",
           textTransform: "uppercase",

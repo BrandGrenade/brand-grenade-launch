@@ -490,7 +490,7 @@ function ThreeTruthCanvas() {
                         style={{
                           display: "block",
                           color: "var(--color-text-secondary)",
-                          fontSize: 12,
+                          fontSize: 13,
                           fontWeight: 600,
                           marginBottom: 4,
                         }}
@@ -500,7 +500,7 @@ function ThreeTruthCanvas() {
                       <p
                         style={{
                           color: "var(--color-text-tertiary)",
-                          fontSize: 12,
+                          fontSize: 13,
                           margin: "0 0 12px",
                         }}
                       >
@@ -568,7 +568,7 @@ function ThreeTruthCanvas() {
                       <p
                         style={{
                           color: "var(--color-text-tertiary)",
-                          fontSize: 12,
+                          fontSize: 13,
                           margin: "6px 0 0",
                         }}
                       >
@@ -1070,7 +1070,7 @@ function Field({
         style={{
           display: "block",
           color: "var(--color-text-secondary)",
-          fontSize: 12,
+          fontSize: 13,
           fontWeight: 600,
           marginBottom: 4,
         }}
@@ -1078,7 +1078,7 @@ function Field({
         {label}
       </label>
       {hint && (
-        <p style={{ color: "var(--color-text-tertiary)", fontSize: 12, margin: "0 0 8px" }}>
+        <p style={{ color: "var(--color-text-tertiary)", fontSize: 13, margin: "0 0 8px" }}>
           {hint}
         </p>
       )}
@@ -1100,7 +1100,7 @@ function Field({
         />
       )}
       {helper && (
-        <p style={{ color: "var(--color-text-tertiary)", fontSize: 12, margin: "6px 0 0" }}>
+        <p style={{ color: "var(--color-text-tertiary)", fontSize: 13, margin: "6px 0 0" }}>
           {helper}
         </p>
       )}
@@ -1126,7 +1126,7 @@ const pillBtnStyle: React.CSSProperties = {
   padding: "6px 14px",
   borderRadius: 999,
   cursor: "pointer",
-  fontSize: 12,
+  fontSize: 13,
   fontWeight: 600,
 };
 

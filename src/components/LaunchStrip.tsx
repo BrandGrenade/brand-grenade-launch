@@ -48,7 +48,7 @@ const buttonStyle: React.CSSProperties = {
 
 const arrowStyle: React.CSSProperties = {
   color: "var(--color-primary)",
-  fontSize: 12,
+  fontSize: 13,
   lineHeight: 1,
   fontWeight: 400,
   userSelect: "none",

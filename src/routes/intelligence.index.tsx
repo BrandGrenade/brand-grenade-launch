@@ -435,7 +435,7 @@ function SessionRowView({
           <Link
             to="/intelligence/$id"
             params={{ id: row.id }}
-            style={{ color: "#C81E1E", fontSize: 12, fontWeight: 500 }}
+            style={{ color: "#C81E1E", fontSize: 13, fontWeight: 500 }}
           >
             View
           </Link>

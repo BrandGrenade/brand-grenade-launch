@@ -871,7 +871,7 @@ function DetonationPage() {
                       }}
                     >
                       <span style={{
-                        fontFamily: `'${tokens.fontMono}', monospace`, fontSize: 12,
+                        fontFamily: `'${tokens.fontMono}', monospace`, fontSize: 13,
                         color: tokens.muted, minWidth: 28, letterSpacing: "0.06em",
                       }}>{stage.number}</span>
                       <span style={{
@@ -2497,7 +2497,7 @@ function Stage22({ session, onChange }: { session: SessionRow; onChange: () => v
               display: "flex", alignItems: "center", gap: 12,
             }}>
               <Spinner />
-              <span className="text-mono" style={{ color: AMBER, fontSize: 12, letterSpacing: "0.12em", textTransform: "uppercase" }}>
+              <span className="text-mono" style={{ color: AMBER, fontSize: 13, letterSpacing: "0.12em", textTransform: "uppercase" }}>
                 Regenerating Brand Architecture — this may take a few minutes…
               </span>
             </div>

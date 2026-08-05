@@ -267,7 +267,7 @@ function Dashboard() {
               <button
                 type="button"
                 onClick={handleOpenRepositoriesAdmin}
-                className="inline-flex h-10 items-center justify-center self-start rounded-lg px-4 text-[12px] font-semibold uppercase tracking-[0.12em] transition-opacity hover:opacity-90"
+                className="inline-flex h-10 items-center justify-center self-start rounded-lg px-4 text-[13px] font-semibold uppercase tracking-[0.12em] transition-opacity hover:opacity-90"
                 style={{
                   backgroundColor: "#C81E1E",
                   color: "#0A0908",
@@ -889,7 +889,7 @@ function NotStartedLink({
   const label = SYSTEM_LAUNCH_LABEL[system];
   const style = {
     color: "var(--color-text-secondary)",
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: 500,
     textDecoration: "underline",
   };
@@ -925,7 +925,7 @@ function NotStartedLink({
   return (
     <span
       className="text-body"
-      style={{ color: "var(--color-text-tertiary)", fontSize: 12 }}
+      style={{ color: "var(--color-text-tertiary)", fontSize: 13 }}
     >
       —
     </span>
@@ -947,7 +947,7 @@ function CompleteCell({
           className="text-body"
           style={{
             color: "var(--color-text-secondary)",
-            fontSize: 12,
+            fontSize: 13,
             fontWeight: 500,
             textDecoration: "underline",
           }}
@@ -960,7 +960,7 @@ function CompleteCell({
           className="text-body"
           style={{
             color: "var(--color-text-secondary)",
-            fontSize: 12,
+            fontSize: 13,
             fontWeight: 500,
             textDecoration: "underline",
           }}
@@ -974,7 +974,7 @@ function CompleteCell({
       ) : (
         <span
           className="text-body"
-          style={{ color: "var(--color-text-secondary)", fontSize: 12 }}
+          style={{ color: "var(--color-text-secondary)", fontSize: 13 }}
         >
           Complete
         </span>
@@ -1000,7 +1000,7 @@ function TextLink({
       className="text-body"
       style={{
         color: "var(--color-text-secondary)",
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: 500,
         textDecoration: "underline",
       }}
@@ -1034,7 +1034,7 @@ function InProgressLink({
         className="text-body"
         style={{
           color: "var(--color-text-secondary)",
-          fontSize: 12,
+          fontSize: 13,
           fontWeight: 500,
           textDecoration: "underline",
         }}
@@ -1050,7 +1050,7 @@ function InProgressLink({
         className="text-body"
         style={{
           color: "var(--color-text-secondary)",
-          fontSize: 12,
+          fontSize: 13,
           fontWeight: 500,
           textDecoration: "underline",
         }}
@@ -1062,7 +1062,7 @@ function InProgressLink({
   return (
     <span
       className="text-body"
-      style={{ color: "var(--color-text-secondary)", fontSize: 12, fontWeight: 500 }}
+      style={{ color: "var(--color-text-secondary)", fontSize: 13, fontWeight: 500 }}
     >
       {label}
     </span>
@@ -1083,7 +1083,7 @@ function DeliverablesCell({
     return (
       <span
         className="text-body"
-        style={{ color: "var(--color-text-tertiary)", fontSize: 12 }}
+        style={{ color: "var(--color-text-tertiary)", fontSize: 13 }}
       >
         —
       </span>
@@ -1091,7 +1091,7 @@ function DeliverablesCell({
   }
   const linkStyle: React.CSSProperties = {
     color: "var(--color-text-secondary)",
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: 500,
     textDecoration: "underline",
   };
@@ -1264,7 +1264,7 @@ function RunActions({ run }: { run: BrandRun }) {
         className="text-body"
         style={{
           color: "var(--color-text-secondary)",
-          fontSize: 12,
+          fontSize: 13,
           fontWeight: 500,
           textDecoration: "underline",
           display: "inline-flex",

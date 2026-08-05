@@ -264,7 +264,7 @@ export function SavedBriefsPicker({
                       onSelect(b);
                       setOpen(false);
                     }}
-                    className="inline-flex h-8 shrink-0 items-center rounded-md px-3 text-[12px] font-semibold transition-opacity hover:opacity-90"
+                    className="inline-flex h-8 shrink-0 items-center rounded-md px-3 text-[13px] font-semibold transition-opacity hover:opacity-90"
                     style={{ backgroundColor: "#C81E1E", color: "#0A0908" }}
                   >
                     Load

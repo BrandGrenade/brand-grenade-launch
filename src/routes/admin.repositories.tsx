@@ -276,7 +276,7 @@ function AllAccessPanel({ repos }: { repos: Repo[] }) {
           <h2 className="text-sm font-semibold uppercase tracking-wider text-text-secondary">
             All visitors — across every repository
           </h2>
-          <p className="mt-1 text-xs text-text-secondary">
+          <p className="mt-1 text-[13px] text-text-secondary">
             One register of who has access, where, and when they last used it.
             Passwords are one-way hashed — use Reset password to issue a new one.
           </p>
@@ -303,7 +303,7 @@ function AllAccessPanel({ repos }: { repos: Repo[] }) {
 
       <div className="border border-border rounded-lg overflow-hidden">
         <table className="w-full text-sm">
-          <thead className="bg-card text-text-secondary uppercase text-xs">
+          <thead className="bg-card text-text-secondary uppercase text-[13px]">
             <tr>
               <th className="text-left px-3 py-2 font-medium">Visitor</th>
               <th className="text-left px-3 py-2 font-medium">Repository</th>
@@ -328,7 +328,7 @@ function AllAccessPanel({ repos }: { repos: Repo[] }) {
                 <tr key={r.id} className="align-top">
                   <td className="px-3 py-3">
                     <div className="font-medium text-text-primary">{r.name}</div>
-                    <div className="text-xs text-text-secondary">
+                    <div className="text-[13px] text-text-secondary">
                       {r.organisation ?? ""}{r.email ? ` · ${r.email}` : ""}
                     </div>
                     {revealed[r.id] && (
@@ -350,7 +350,7 @@ function AllAccessPanel({ repos }: { repos: Repo[] }) {
                   <td className="px-3 py-3">
                     {r.plaintext_password ? (
                       <div className="flex items-center gap-1.5">
-                        <code className="text-xs font-mono bg-card border border-border rounded px-2 py-1">
+                        <code className="text-[13px] font-mono bg-card border border-border rounded px-2 py-1">
                           {showPw[r.id] ? r.plaintext_password : "••••••••"}
                         </code>
                         <Button
@@ -377,13 +377,13 @@ function AllAccessPanel({ repos }: { repos: Repo[] }) {
                         )}
                       </div>
                     ) : (
-                      <span className="text-xs text-text-secondary italic">Not stored — reset to view</span>
+                      <span className="text-[13px] text-text-secondary italic">Not stored — reset to view</span>
                     )}
                   </td>
-                  <td className="px-3 py-3 text-text-secondary text-xs whitespace-nowrap">
+                  <td className="px-3 py-3 text-text-secondary text-[13px] whitespace-nowrap">
                     {new Date(r.created_at).toLocaleDateString()}
                   </td>
-                  <td className="px-3 py-3 text-text-secondary text-xs whitespace-nowrap">
+                  <td className="px-3 py-3 text-text-secondary text-[13px] whitespace-nowrap">
                     {r.last_active_at ? new Date(r.last_active_at).toLocaleString() : "—"}
                   </td>
                   <td className="px-3 py-3">
@@ -493,7 +493,7 @@ function RepositoryAdminPanel({ slug, repos }: { slug: Slug; repos: Repo[] }) {
             return r.password;
           }}
         />
-        <p className="mt-2 text-xs text-text-secondary">
+        <p className="mt-2 text-[13px] text-text-secondary">
           Shareable link for this repository: <code className="font-mono">https://brandgrenade.app/{slug}</code>
           {" "}— same URL for every visitor of this repo; each visitor uses their own password.
         </p>
@@ -522,7 +522,7 @@ function RepositoryAdminPanel({ slug, repos }: { slug: Slug; repos: Repo[] }) {
                         </span>
                       )}
                     </div>
-                    <p className="text-xs text-text-secondary">
+                    <p className="text-[13px] text-text-secondary">
                       {v.organisation ?? ""} {v.email ? `· ${v.email}` : ""}
                     </p>
                     <div className="mt-2">
@@ -611,11 +611,11 @@ function RepositoryAdminPanel({ slug, repos }: { slug: Slug; repos: Repo[] }) {
             <div key={d.id} className="p-4 flex items-center justify-between gap-4">
               <div className="min-w-0">
                 <p className="text-sm font-medium">
-                  <span className="text-xs text-text-secondary mr-2">#{d.display_order}</span>
+                  <span className="text-[13px] text-text-secondary mr-2">#{d.display_order}</span>
                   {d.title}
                 </p>
-                {d.description && <p className="text-xs text-text-secondary">{d.description}</p>}
-                <p className="text-xs text-text-secondary uppercase">{d.file_type}</p>
+                {d.description && <p className="text-[13px] text-text-secondary">{d.description}</p>}
+                <p className="text-[13px] text-text-secondary uppercase">{d.file_type}</p>
               </div>
               <Button
                 size="sm"
@@ -656,7 +656,7 @@ function RepositoryAdminPanel({ slug, repos }: { slug: Slug; repos: Repo[] }) {
           </Button>
         </div>
         <div className="mt-4 border border-border rounded-lg overflow-hidden">
-          <table className="w-full text-xs">
+          <table className="w-full text-[13px]">
             <thead className="bg-card text-text-secondary uppercase">
               <tr>
                 <th className="text-left px-3 py-2 font-medium">When</th>
@@ -709,7 +709,7 @@ function RepositoryAdminPanel({ slug, repos }: { slug: Slug; repos: Repo[] }) {
 function StatCard({ label, value }: { label: string; value: number }) {
   return (
     <div className="border border-border rounded-lg p-4">
-      <p className="text-xs uppercase tracking-wide text-text-secondary">{label}</p>
+      <p className="text-[13px] uppercase tracking-wide text-text-secondary">{label}</p>
       <p className="mt-1 text-2xl font-semibold">{value}</p>
     </div>
   );
@@ -720,7 +720,7 @@ function VisitorPasswordInline({ password }: { password: string | null }) {
   const [copied, setCopied] = useState(false);
   if (!password) {
     return (
-      <span className="text-xs text-text-secondary italic">
+      <span className="text-[13px] text-text-secondary italic">
         Password not stored — click Set password to issue a new one you can view.
       </span>
     );
@@ -728,7 +728,7 @@ function VisitorPasswordInline({ password }: { password: string | null }) {
   return (
     <div className="flex items-center gap-1.5">
       <span className="text-[10px] uppercase tracking-wide text-text-secondary mr-1">Password</span>
-      <code className="text-xs font-mono bg-card border border-border rounded px-2 py-1">
+      <code className="text-[13px] font-mono bg-card border border-border rounded px-2 py-1">
         {show ? password : "••••••••"}
       </code>
       <Button
@@ -767,8 +767,8 @@ function PasswordReveal({ password, onDismiss }: { password: string; onDismiss: 
   const [copied, setCopied] = useState(false);
   return (
     <div className="mt-1 flex items-center gap-2 bg-primary border border-primary rounded px-3 py-2">
-      <span className="text-xs text-primary shrink-0">New password (shown once):</span>
-      <code className="text-xs font-mono bg-card border border-primary rounded px-2 py-1 flex-1 truncate">
+      <span className="text-[13px] text-primary shrink-0">New password (shown once):</span>
+      <code className="text-[13px] font-mono bg-card border border-primary rounded px-2 py-1 flex-1 truncate">
         {password}
       </code>
       <Button
@@ -815,7 +815,7 @@ function SetPasswordButton({
       </Button>
       {open && (
         <div className="absolute z-10 mt-10 bg-card border border-border rounded-lg shadow-lg p-3 w-72 space-y-2">
-          <p className="text-xs text-text-secondary">Set password for {visitorName} (min 6 chars)</p>
+          <p className="text-[13px] text-text-secondary">Set password for {visitorName} (min 6 chars)</p>
           <Input
             type="text"
             placeholder="Enter password"
@@ -1097,14 +1097,14 @@ function CreateRepositoryPanel({ onCreated }: { onCreated: () => void | Promise<
     <div className="max-w-2xl space-y-4">
       <div>
         <h2 className="text-sm font-semibold uppercase tracking-wider text-text-secondary">Create a new repository</h2>
-        <p className="mt-1 text-xs text-text-secondary">
+        <p className="mt-1 text-[13px] text-text-secondary">
           Creates a password-gated client repository at <code>/[slug]</code>. Visitors and
           documents are added after creation from that repository's tab.
         </p>
       </div>
       <form onSubmit={submit} className="space-y-4 border border-border rounded-lg p-5 bg-card">
         <div>
-          <label className="block text-xs font-medium text-text-secondary mb-1">Slug (URL identifier)</label>
+          <label className="block text-[13px] font-medium text-text-secondary mb-1">Slug (URL identifier)</label>
           <Input
             value={slug}
             onChange={(e) => setSlug(normaliseSlug(e.target.value))}
@@ -1116,7 +1116,7 @@ function CreateRepositoryPanel({ onCreated }: { onCreated: () => void | Promise<
           </p>
         </div>
         <div>
-          <label className="block text-xs font-medium text-text-secondary mb-1">Title</label>
+          <label className="block text-[13px] font-medium text-text-secondary mb-1">Title</label>
           <Input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
@@ -1125,7 +1125,7 @@ function CreateRepositoryPanel({ onCreated }: { onCreated: () => void | Promise<
           />
         </div>
         <div>
-          <label className="block text-xs font-medium text-text-secondary mb-1">Intro (optional)</label>
+          <label className="block text-[13px] font-medium text-text-secondary mb-1">Intro (optional)</label>
           <Textarea
             value={intro}
             onChange={(e) => setIntro(e.target.value)}

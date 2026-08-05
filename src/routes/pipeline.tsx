@@ -3513,7 +3513,7 @@ function PipelineView() {
           </DialogHeader>
           <div className="max-h-[55vh] space-y-4 overflow-y-auto pr-1 text-sm">
             <section>
-              <h4 className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              <h4 className="mb-1 text-[13px] font-semibold uppercase tracking-wide text-muted-foreground">
                 Selected proposition
               </h4>
               <p className="text-foreground">
@@ -3521,13 +3521,13 @@ function PipelineView() {
               </p>
             </section>
             <section>
-              <h4 className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              <h4 className="mb-1 text-[13px] font-semibold uppercase tracking-wide text-muted-foreground">
                 Brand Fit verdict
               </h4>
               <p className="text-foreground">{strategySignoffPreview.verdict}</p>
             </section>
             <section>
-              <h4 className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              <h4 className="mb-1 text-[13px] font-semibold uppercase tracking-wide text-muted-foreground">
                 Five strategic commitments
               </h4>
               {strategySignoffPreview.commitments.length ? (
@@ -3541,7 +3541,7 @@ function PipelineView() {
               )}
             </section>
             <section>
-              <h4 className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              <h4 className="mb-1 text-[13px] font-semibold uppercase tracking-wide text-muted-foreground">
                 Three critical communication guardrails
               </h4>
               {strategySignoffPreview.guardrails.length ? (
@@ -3626,7 +3626,7 @@ function Breadcrumb({
             <button
               type="button"
               onClick={onViewBrief}
-              className="inline-flex h-8 items-center gap-1.5 rounded-md px-2.5 text-[12px] font-semibold transition-colors hover:bg-[#C81E1E15]"
+              className="inline-flex h-8 items-center gap-1.5 rounded-md px-2.5 text-[13px] font-semibold transition-colors hover:bg-[#C81E1E15]"
               style={{ border: "1px solid #C81E1E66", color: "#C81E1E", backgroundColor: "transparent" }}
               title="View the submitted brief in full"
             >
@@ -3644,7 +3644,7 @@ function Breadcrumb({
             <button
               type="button"
               onClick={onEditBrief}
-              className="inline-flex h-8 items-center gap-1.5 rounded-md px-2.5 text-[12px] font-semibold transition-opacity hover:opacity-90"
+              className="inline-flex h-8 items-center gap-1.5 rounded-md px-2.5 text-[13px] font-semibold transition-opacity hover:opacity-90"
               style={{ backgroundColor: "#C81E1E", color: "#0A0908" }}
               title="Edit the brief and rerun Stage 1 — downstream stages will reset"
             >
@@ -3760,7 +3760,7 @@ function LeftPanel({
                 fontFamily: `'${tokens.fontMono}', monospace`,
                 color: tokens.muted,
                 minWidth: 28,
-                fontSize: 12,
+                fontSize: 13,
               }}
             >
               —
@@ -3826,7 +3826,7 @@ function LeftPanel({
                     fontFamily: `'${tokens.fontMono}', monospace`,
                     color: tokens.muted,
                     minWidth: 28,
-                    fontSize: 12,
+                    fontSize: 13,
                   }}
                 >
                   {s.number}
@@ -5327,7 +5327,7 @@ function ErrorStateCard({
                   marginTop: 8,
                   padding: 12,
                   fontFamily: "ui-monospace, SFMono-Regular, monospace",
-                  fontSize: 12,
+                  fontSize: 13,
                   color: "#8B8680",
                   background: "#0A0908",
                   border: "1px solid #1C1A18",

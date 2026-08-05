@@ -1201,7 +1201,7 @@ function HandoffPreviewView({
       </button>
       {showBrief && (
         <pre
-          className="mt-1 max-h-[420px] overflow-auto rounded-md p-3 text-[12px] leading-[1.55] whitespace-pre-wrap"
+          className="mt-1 max-h-[420px] overflow-auto rounded-md p-3 text-[13px] leading-[1.55] whitespace-pre-wrap"
           style={{ backgroundColor: "#0A0908", border: "1px solid #1C1A18", color: "#EDE8E0" }}
         >
           {(() => {

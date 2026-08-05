@@ -1607,7 +1607,7 @@ export function PreflightFullCheckPanel() {
             </button>
           )}
           {state === "complete" && overall && (
-            <div className="text-xs">
+            <div className="text-[13px]">
               {overall === "ready" ? (
                 <span className="text-primary">✓ Platform Ready — 12/12 passed</span>
               ) : escalationVisible ? (
@@ -1630,7 +1630,7 @@ export function PreflightFullCheckPanel() {
           <div className="mt-1 text-primary/80">{lockMessage}</div>
           <button
             onClick={() => runCheck(true)}
-            className="mt-3 bg-primary px-3 py-1.5 text-xs font-semibold text-text-primary hover:bg-primary"
+            className="mt-3 bg-primary px-3 py-1.5 text-[13px] font-semibold text-text-primary hover:bg-primary"
           >
             Override and start a new run
           </button>
@@ -1670,7 +1670,7 @@ export function PreflightFullCheckPanel() {
               <div className="text-body mt-1 font-semibold text-text-primary">
                 Generate draft postponement communication
               </div>
-              <div className="text-xs text-text-tertiary mt-1">
+              <div className="text-[13px] text-text-tertiary mt-1">
                 Drafts a short, on-brand re-scheduling note naming the failed checks.
               </div>
             </button>
@@ -1683,7 +1683,7 @@ export function PreflightFullCheckPanel() {
               <div className="text-body mt-1 font-semibold text-text-primary">
                 Present completed sessions instead
               </div>
-              <div className="text-xs text-text-tertiary mt-1">
+              <div className="text-[13px] text-text-tertiary mt-1">
                 Jumps to the completed sessions list, ready to present prior verified work.
               </div>
             </button>
@@ -1696,12 +1696,12 @@ export function PreflightFullCheckPanel() {
                 <button
                   type="button"
                   onClick={copyDraft}
-                  className="bg-primary px-2 py-1 text-xs font-semibold text-text-primary hover:bg-primary"
+                  className="bg-primary px-2 py-1 text-[13px] font-semibold text-text-primary hover:bg-primary"
                 >
                   Copy draft
                 </button>
               </div>
-              <pre className="mt-2 whitespace-pre-wrap font-mono text-xs text-text-secondary">
+              <pre className="mt-2 whitespace-pre-wrap font-mono text-[13px] text-text-secondary">
                 {buildPostponementDraft(failedNames)}
               </pre>
             </div>
@@ -1725,12 +1725,12 @@ export function PreflightFullCheckPanel() {
       {(state === "running" || state === "complete") && (
         <>
           {state === "running" && currentMessage && (
-            <div className="mt-4 font-mono text-xs text-text-secondary">{currentMessage}</div>
+            <div className="mt-4 font-mono text-[13px] text-text-secondary">{currentMessage}</div>
           )}
 
           <button
             onClick={() => setExpanded((v) => !v)}
-            className="mt-4 text-xs text-text-secondary underline hover:text-text-primary"
+            className="mt-4 text-[13px] text-text-secondary underline hover:text-text-primary"
           >
             {expanded ? "Hide" : "Show"} per-check detail ({results.length} checks)
           </button>
@@ -1767,22 +1767,22 @@ export function PreflightFullCheckPanel() {
                             {CHECK_NAMES[r.id as FullCheckId] ?? r.name}
                           </span>
                           {r.durationMs !== null && classified.kind !== "skipped" && (
-                            <span className="text-xs text-text-tertiary">
+                            <span className="text-[13px] text-text-tertiary">
                               ({(r.durationMs / 1000).toFixed(1)}s)
                             </span>
                           )}
                         </div>
                         {classified.kind === "skipped" ? (
-                          <div className="mt-1.5 text-xs text-text-secondary">
+                          <div className="mt-1.5 text-[13px] text-text-secondary">
                             Skipped — dependency failed: {classified.dependencyDetail}
                           </div>
                         ) : (
                           <>
                             {r.detail && (
-                              <div className="mt-1.5 text-xs text-text-secondary">{r.detail}</div>
+                              <div className="mt-1.5 text-[13px] text-text-secondary">{r.detail}</div>
                             )}
                             {classified.kind === "fail" && (
-                              <div className={`mt-2 border-l-2 pl-2 text-xs ${sevColor!.border} ${sevColor!.text}`}>
+                              <div className={`mt-2 border-l-2 pl-2 text-[13px] ${sevColor!.border} ${sevColor!.text}`}>
                                 <div>
                                   <span className="font-semibold">Why {SEVERITY_LABEL[classified.severity]}:</span> {classified.reason}
                                 </div>
@@ -1792,7 +1792,7 @@ export function PreflightFullCheckPanel() {
                               </div>
                             )}
                             {classified.kind === "fail" && classified.severity === "blocker" && rem && (
-                              <div className="mt-2 border-l-2 border-primary pl-2 text-xs text-primary">
+                              <div className="mt-2 border-l-2 border-primary pl-2 text-[13px] text-primary">
                                 <div>
                                   <span className="font-semibold">Remediation:</span> {rem.instruction}
                                 </div>

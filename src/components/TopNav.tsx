@@ -131,7 +131,7 @@ export function TopNav({ session }: { session?: SessionContext }) {
               <span
                 style={{
                   color: "#8B8680",
-                  fontSize: 12,
+                  fontSize: 13,
                   fontFamily:
                     'ui-monospace, "JetBrains Mono", SFMono-Regular, Menlo, monospace',
                 }}
@@ -193,7 +193,7 @@ export function TopNav({ session }: { session?: SessionContext }) {
                 backgroundColor: "#1C1A18",
                 border: "1px solid #1C1A18",
                 color: "#8B8680",
-                fontSize: 12,
+                fontSize: 13,
               }}
             >
               BG
