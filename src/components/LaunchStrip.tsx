@@ -169,10 +169,15 @@ export function LaunchStrip() {
             maxWidth: 1280,
           }}
         >
+          <Link to="/synthesiser" search={{}} style={buttonStyle} className={buttonClass}>
+            Research Synthesiser
+          </Link>
+          <span aria-hidden style={arrowStyle}>→</span>
           <Link to="/intelligence/new" style={buttonStyle} className={buttonClass}>
             Intelligence Lab
           </Link>
           <span aria-hidden style={arrowStyle}>→</span>
+
           <Link to="/briefing-room" style={buttonStyle} className={buttonClass}>
             Briefing Room
           </Link>
