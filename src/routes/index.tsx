@@ -632,20 +632,11 @@ function Index() {
 
 /* -------------------- Modal -------------------- */
 
-const fieldStyle: React.CSSProperties = {
-  width: "100%",
-  background: "var(--void)",
-  border: "1px solid var(--ash2)",
-  borderRadius: 3,
-  color: "var(--paper)",
-  padding: "10px 12px",
-  fontSize: 14,
-  fontFamily: "inherit",
-};
+const fieldStyle: React.CSSProperties = { resize: "vertical" };
 
 const labelStyle: React.CSSProperties = {
   display: "block",
-  fontSize: 12,
+  fontSize: 13,
   color: "var(--smoke)",
   marginBottom: 6,
   letterSpacing: ".04em",
@@ -693,30 +684,14 @@ function RequestDemoModal({ onClose }: { onClose: () => void }) {
 
   return (
     <div
-      style={{
-        position: "fixed",
-        inset: 0,
-        zIndex: 100,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: "rgba(10,9,8,0.86)",
-        padding: 24,
-      }}
+      className="bg-demo-overlay"
       role="dialog"
       aria-modal="true"
       aria-labelledby="demo-heading"
       onClick={onClose}
     >
       <div
-        style={{
-          width: "100%",
-          maxWidth: 460,
-          background: "var(--ash)",
-          border: "1px solid var(--ash2)",
-          borderRadius: 6,
-          padding: 32,
-        }}
+        className="bg-demo-panel"
         onClick={(e) => e.stopPropagation()}
       >
         <div
@@ -778,7 +753,7 @@ function RequestDemoModal({ onClose }: { onClose: () => void }) {
                 required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                style={fieldStyle}
+                className="bg-demo-field"
                 maxLength={120}
               />
             </div>
@@ -792,7 +767,7 @@ function RequestDemoModal({ onClose }: { onClose: () => void }) {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                style={fieldStyle}
+                className="bg-demo-field"
                 maxLength={255}
               />
             </div>
@@ -805,7 +780,7 @@ function RequestDemoModal({ onClose }: { onClose: () => void }) {
                 required
                 value={company}
                 onChange={(e) => setCompany(e.target.value)}
-                style={fieldStyle}
+                className="bg-demo-field"
                 maxLength={160}
               />
             </div>
@@ -817,7 +792,8 @@ function RequestDemoModal({ onClose }: { onClose: () => void }) {
                 id="demo-message"
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
-                style={{ ...fieldStyle, resize: "vertical" }}
+                className="bg-demo-field"
+                style={fieldStyle}
                 rows={4}
                 maxLength={2000}
               />
