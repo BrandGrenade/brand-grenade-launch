@@ -604,7 +604,7 @@ function PaginationBar({
 
 const COLUMN_HEADERS = [
   "Brand",
-  "Category",
+  "Research Synthesiser",
   "Intelligence",
   "Briefing Room",
   "Strategy Pipeline",
@@ -613,6 +613,46 @@ const COLUMN_HEADERS = [
   "Deliverables",
   "",
 ];
+
+/**
+ * Room 00 is optional, so its cell reads "Not used" rather than "Not started"
+ * — a brand that skipped it is in a perfectly valid state.
+ */
+function SynthesiserStatusCell({
+  status,
+  brand,
+}: {
+  status: BrandRow["synthesiser"];
+  brand: string;
+}) {
+  const label =
+    status.state === "complete"
+      ? (status.label ?? "Applied")
+      : status.state === "in_progress"
+        ? "In progress"
+        : "Not used";
+  return (
+    <div className="flex items-center gap-2" style={{ minWidth: 132 }}>
+      <SystemCircle state={status.state} />
+      <Link
+        to="/synthesiser"
+        search={brand ? { brand } : {}}
+        style={{
+          color:
+            status.state === "not_started"
+              ? "var(--color-text-secondary)"
+              : "var(--color-text-primary)",
+          fontSize: 13,
+          fontWeight: 500,
+          textDecoration: "underline",
+        }}
+      >
+        {label}
+      </Link>
+    </div>
+  );
+}
+
 
 function BrandRegisterTable({
   rows,
