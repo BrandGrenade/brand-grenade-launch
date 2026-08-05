@@ -169,26 +169,6 @@ function SynthesiserRoom() {
             />
           </div>
 
-          {/* Handoff */}
-          <div
-            className="mt-10 border-t pt-6"
-            style={{ borderColor: "rgba(139,134,128,0.15)" }}
-          >
-            <div className="text-label text-text-secondary">
-              Then the Intelligence Lab takes over.
-            </div>
-            <p className="text-body mt-2 max-w-[760px] text-text-secondary">
-              Research Synthesiser structures the evidence. The Intelligence Lab turns
-              it into ranked strategic territory.
-            </p>
-            <Link
-              to="/intelligence/new"
-              search={brand.trim() ? { brand: brand.trim() } : {}}
-              className="mt-4 inline-flex items-center gap-2 text-[13px] text-text-secondary underline hover:text-text-primary"
-            >
-              Skip to Intelligence Lab <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
-          </div>
         </div>
       </main>
     </div>
