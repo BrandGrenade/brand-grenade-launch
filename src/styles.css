@@ -67,7 +67,7 @@
   /* Shadows */
   --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.4), 0 4px 12px rgba(0, 0, 0, 0.3);
   --shadow-elevated: 0 4px 16px rgba(0, 0, 0, 0.5), 0 12px 40px rgba(0, 0, 0, 0.4);
-  --shadow-glow: 0 0 0 1px rgba(212, 146, 74, 0.25), 0 4px 16px rgba(212, 146, 74, 0.15);
+  --shadow-glow: 0 0 0 1px rgba(200, 30, 30, 0.25), 0 4px 16px rgba(200, 30, 30, 0.15);
 }
 
 :root {
@@ -324,7 +324,7 @@
     margin-top: 32px;
     margin-bottom: 12px;
     font-weight: 500;
-    border-bottom: 1px solid rgba(212, 146, 74, 0.3);
+    border-bottom: 1px solid rgba(200, 30, 30, 0.3);
     padding-bottom: 8px;
   }
 }

@@ -518,7 +518,7 @@ export function IntelligenceForm({
 
           <div
             className="mt-5 pt-4 border-t"
-            style={{ borderColor: "rgba(148,163,184,0.15)" }}
+            style={{ borderColor: "rgba(139, 134, 128,0.15)" }}
           >
             <div className="flex items-baseline justify-between">
               <span className="text-label text-text-secondary">
@@ -624,7 +624,7 @@ function ResearchSection({
         }}
         className="mt-3 flex flex-col items-center justify-center rounded-md px-4 py-6 text-center transition-colors cursor-pointer"
         style={{
-          border: `1px dashed ${dragOver ? "#C81E1E" : "rgba(148,163,184,0.35)"}`,
+          border: `1px dashed ${dragOver ? "#C81E1E" : "rgba(139, 134, 128,0.35)"}`,
           backgroundColor: dragOver ? "rgba(200, 30, 30,0.06)" : "transparent",
         }}
       >
@@ -644,8 +644,8 @@ function ResearchSection({
               key={f.id}
               className="flex items-center gap-2 rounded-md px-3 py-2 text-xs"
               style={{
-                border: "1px solid rgba(148,163,184,0.2)",
-                backgroundColor: "rgba(148,163,184,0.05)",
+                border: "1px solid rgba(139, 134, 128,0.2)",
+                backgroundColor: "rgba(139, 134, 128,0.05)",
               }}
             >
               {f.status === "processing" ? (

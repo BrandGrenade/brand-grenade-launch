@@ -175,7 +175,7 @@ function Spinner() {
 function SectionTitle({ kicker, title, subtitle }: { kicker: string; title: string; subtitle?: string }) {
   return (
     <div style={{ marginBottom: 24 }}>
-      <span style={{ color: AMBER, fontFamily: "'DM Mono', monospace", fontSize: "7pt", textTransform: "uppercase", letterSpacing: "0.18em", fontWeight: 500, display: "block" }}>{kicker}</span>
+      <span style={{ color: AMBER, fontFamily: "Inter, system-ui, sans-serif", fontSize: "7pt", textTransform: "uppercase", letterSpacing: "0.18em", fontWeight: 500, display: "block" }}>{kicker}</span>
       <h2 className="text-h2 text-text-primary" style={{ margin: "12px 0 8px", fontWeight: 700 }}>{title}</h2>
       {subtitle && <p className="text-body" style={{ color: "var(--color-text-secondary)" }}>{subtitle}</p>}
     </div>
@@ -844,7 +844,7 @@ function DetonationPage() {
           </div>
           <div style={{ flex: 1, overflowY: "auto", padding: "16px 12px" }}>
             <div style={{
-              color: AMBER, letterSpacing: "0.18em", fontFamily: "'DM Mono', monospace",
+              color: AMBER, letterSpacing: "0.18em", fontFamily: "Inter, system-ui, sans-serif",
               fontSize: "7pt", textTransform: "uppercase", padding: "0 8px 12px", fontWeight: 500,
             }}>STAGES</div>
             <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 2 }}>
@@ -907,7 +907,7 @@ function DetonationPage() {
                 <div style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}>
                   <BrandGrenadeIcon size={32} />
                 </div>
-                <span style={{ color: AMBER, fontFamily: "'DM Mono', monospace", fontSize: "7pt", textTransform: "uppercase", letterSpacing: "0.18em", fontWeight: 500, display: "block" }}>PHASE 2 — BRAND DETONATION</span>
+                <span style={{ color: AMBER, fontFamily: "Inter, system-ui, sans-serif", fontSize: "7pt", textTransform: "uppercase", letterSpacing: "0.18em", fontWeight: 500, display: "block" }}>PHASE 2 — BRAND DETONATION</span>
                 <h1 className="text-h2 text-text-primary" style={{ margin: "12px 0 0", fontWeight: 700 }}>{brand}</h1>
               </header>
 
@@ -1270,7 +1270,7 @@ function Stage18({ session, onChange, goNext }: { session: SessionRow; onChange:
             }}>
               <div style={{
                 color: AMBER, textTransform: "uppercase", fontSize: "7pt",
-                letterSpacing: "0.18em", marginBottom: 8, fontFamily: "'DM Mono', monospace", fontWeight: 500,
+                letterSpacing: "0.18em", marginBottom: 8, fontFamily: "Inter, system-ui, sans-serif", fontWeight: 500,
               }}>COURAGE REVIEW</div>
               <p className="text-body" style={{ color: "#EDE8E0", lineHeight: 1.6, margin: 0 }}>
                 None of these ideas generated strategic discomfort. This may indicate the territory is not being pushed hard enough.
@@ -1289,7 +1289,7 @@ function Stage18({ session, onChange, goNext }: { session: SessionRow; onChange:
               border: "1px solid #1C1A18", borderRadius: 8, padding: 16, marginBottom: 16,
             }}>
               <div style={{ color: AMBER, textTransform: "uppercase", fontSize: "7pt",
-                letterSpacing: "0.18em", marginBottom: 6, fontFamily: "'DM Mono', monospace", fontWeight: 500 }}>
+                letterSpacing: "0.18em", marginBottom: 6, fontFamily: "Inter, system-ui, sans-serif", fontWeight: 500 }}>
                 CURRENTLY SELECTED DETONATION
               </div>
               <div className="text-body" style={{ color: "#EDE8E0", lineHeight: 1.5 }}>
@@ -1559,7 +1559,7 @@ function Stage20({ session, onChange, goNext }: { session: SessionRow; onChange:
           }}>
             <div style={{
               color: AMBER, textTransform: "uppercase", fontSize: "7pt",
-              letterSpacing: "0.18em", marginBottom: 16, fontFamily: "'DM Mono', monospace", fontWeight: 500,
+              letterSpacing: "0.18em", marginBottom: 16, fontFamily: "Inter, system-ui, sans-serif", fontWeight: 500,
             }}>BRIEF QUALITY SCORE</div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12 }}>
               {[
@@ -2284,7 +2284,7 @@ function Stage21({ session, onChange, goNext }: { session: SessionRow; onChange:
                 }}>
                   <button type="button" onClick={() => setExpanded(isOpen ? null : channel)}
                     style={{ width: "100%", textAlign: "left", background: "none", border: "none", cursor: "pointer", padding: 0 }}>
-                    <div style={{ color: AMBER, textTransform: "uppercase", fontSize: 16, letterSpacing: "0.06em", fontFamily: "'DM Mono', monospace", fontWeight: 500, lineHeight: 1.3 }}>{channel}</div>
+                    <div style={{ color: AMBER, textTransform: "uppercase", fontSize: 16, letterSpacing: "0.06em", fontFamily: "Inter, system-ui, sans-serif", fontWeight: 500, lineHeight: 1.3 }}>{channel}</div>
                     <div className="text-body-sm" style={{ color: "#8B8680", marginTop: 4 }}>{role}</div>
                   </button>
                   {isOpen && (
@@ -2482,7 +2482,7 @@ function Stage22({ session, onChange }: { session: SessionRow; onChange: () => v
             <div style={{ marginTop: 32 }}>
               <div style={{
                 color: AMBER, textTransform: "uppercase", fontSize: "7pt",
-                letterSpacing: "0.18em", marginBottom: 16, fontFamily: "'DM Mono', monospace", fontWeight: 500,
+                letterSpacing: "0.18em", marginBottom: 16, fontFamily: "Inter, system-ui, sans-serif", fontWeight: 500,
               }}>CONCEPTUAL ASSETS</div>
               <div style={{ backgroundColor: "#0A0908", border: "1px solid #1C1A18", borderRadius: 8, padding: 24 }}>
                 <RichOutput text={stripLeadingLabels(assets, ["CONCEPTUAL ASSETS", "DISTINCTIVE ASSETS", "DISTINCTIVE ASSET ARCHITECTURE", "ASSETS"])} />
@@ -2529,7 +2529,7 @@ function ArchBox({ label, content }: { label: string; content: string }) {
     }}>
       <div style={{
         color: AMBER, textTransform: "uppercase", fontSize: "7pt",
-        letterSpacing: "0.18em", marginBottom: 8, fontFamily: "'DM Mono', monospace", fontWeight: 500,
+        letterSpacing: "0.18em", marginBottom: 8, fontFamily: "Inter, system-ui, sans-serif", fontWeight: 500,
       }}>{label}</div>
       <div className="text-body-sm" style={{ color: "#EDE8E0", lineHeight: 1.5, whiteSpace: "pre-wrap" }}>{sanitiseOutput(content)}</div>
     </div>

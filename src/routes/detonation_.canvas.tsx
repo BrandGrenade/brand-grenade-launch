@@ -379,7 +379,7 @@ function ThreeTruthCanvas() {
                 <span
                   style={{
                     color: AMBER,
-                    fontFamily: '"DM Mono", ui-monospace, monospace',
+                    fontFamily: 'Inter, system-ui, sans-serif',
                     fontSize: 7,
                     letterSpacing: "0.18em",
                     textTransform: "uppercase",
@@ -445,7 +445,7 @@ function ThreeTruthCanvas() {
                 <span
                   style={{
                     color: AMBER,
-                    fontFamily: '"DM Mono", ui-monospace, monospace',
+                    fontFamily: 'Inter, system-ui, sans-serif',
                     fontSize: 7,
                     letterSpacing: "0.18em",
                     textTransform: "uppercase",
@@ -634,7 +634,7 @@ function ThreeTruthCanvas() {
                         <p
                           style={{
                             color: AMBER,
-                            fontFamily: '"DM Mono", ui-monospace, monospace',
+                            fontFamily: 'Inter, system-ui, sans-serif',
                             fontSize: 7,
                             letterSpacing: "0.18em",
                             textTransform: "uppercase",
@@ -801,7 +801,7 @@ function TruthPanel({
         <span
           style={{
             color: AMBER,
-            fontFamily: '"DM Mono", ui-monospace, monospace',
+            fontFamily: 'Inter, system-ui, sans-serif',
             fontSize: 7,
             letterSpacing: "0.18em",
             textTransform: "uppercase",
@@ -813,7 +813,7 @@ function TruthPanel({
           <span
             style={{
               color: AMBER,
-              fontFamily: '"DM Mono", ui-monospace, monospace',
+              fontFamily: 'Inter, system-ui, sans-serif',
               fontSize: 9,
               letterSpacing: "0.12em",
               opacity: 0.8,
@@ -870,7 +870,7 @@ function TruthPanel({
           <span
             style={{
               color: "var(--color-text-tertiary)",
-              fontFamily: '"DM Mono", ui-monospace, monospace',
+              fontFamily: 'Inter, system-ui, sans-serif',
               fontSize: 9,
               letterSpacing: "0.12em",
             }}
@@ -979,7 +979,7 @@ function ThreeTruthStatus({
       <p
         style={{
           color: titleColor,
-          fontFamily: '"DM Mono", ui-monospace, monospace',
+          fontFamily: 'Inter, system-ui, sans-serif',
           fontSize: 11,
           letterSpacing: "0.18em",
           margin: 0,
@@ -1023,7 +1023,7 @@ function RadioCard({
         border: `1px solid ${selected ? AMBER : "var(--color-border)"}`,
         borderRadius: 10,
         color: selected ? AMBER : "var(--color-text-primary)",
-        fontFamily: '"DM Mono", ui-monospace, monospace',
+        fontFamily: 'Inter, system-ui, sans-serif',
         fontSize: 11,
         letterSpacing: "0.18em",
         cursor: "pointer",
@@ -1116,7 +1116,7 @@ const inputStyle: React.CSSProperties = {
   borderRadius: 6,
   color: "var(--color-text-primary)",
   fontSize: 14,
-  fontFamily: '"DM Sans", system-ui, sans-serif',
+  fontFamily: 'Inter, system-ui, sans-serif',
 };
 
 const pillBtnStyle: React.CSSProperties = {

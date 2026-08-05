@@ -12,8 +12,8 @@ export const tokens = {
   bgTertiary: "#1C1A18",
   white: "#EDE8E0",
   muted: "#8B8680",
-  fontBody: "DM Sans",
-  fontMono: "DM Mono",
+  fontBody: "Inter",
+  fontMono: "Inter",
 } as const;
 
 export type DesignTokens = typeof tokens;

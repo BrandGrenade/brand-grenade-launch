@@ -67,7 +67,7 @@ export function DetonationBriefSection({
             textTransform: "uppercase",
             fontSize: "7pt",
             letterSpacing: "0.18em",
-            fontFamily: "'DM Mono', monospace",
+            fontFamily: "Inter, system-ui, sans-serif",
             fontWeight: 500,
           }}
         >

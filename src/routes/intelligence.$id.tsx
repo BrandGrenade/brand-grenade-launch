@@ -795,7 +795,7 @@ function IntelligenceRunPage() {
         style={{
           backgroundColor: "hsl(var(--background) / 0.95)",
           backdropFilter: "blur(8px)",
-          borderColor: "rgba(148,163,184,0.15)",
+          borderColor: "rgba(139, 134, 128,0.15)",
         }}
       >
         <div className="mx-auto max-w-[1080px] flex items-center justify-between gap-3 px-6 py-4">

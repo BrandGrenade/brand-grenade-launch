@@ -134,7 +134,7 @@ function DirectionCard({
           <span
             style={{
               color: AMBER,
-              fontFamily: "'DM Mono', monospace",
+              fontFamily: "Inter, system-ui, sans-serif",
               fontSize: 16,
               letterSpacing: "0.06em",
               textTransform: "uppercase",

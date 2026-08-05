@@ -97,7 +97,7 @@ export function DetonationOutputCard({
                   textTransform: "uppercase",
                   fontSize: "7pt",
                   letterSpacing: "0.18em",
-                  fontFamily: "'DM Mono', monospace",
+                  fontFamily: "Inter, system-ui, sans-serif",
                   fontWeight: 500,
                   margin: 0,
                 }}
@@ -135,7 +135,7 @@ export function DetonationOutputCard({
               margin: 0,
               marginBottom: 16,
               display: "block",
-              fontFamily: "'DM Mono', monospace",
+              fontFamily: "Inter, system-ui, sans-serif",
             }}
           >
             {title}
