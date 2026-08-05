@@ -25,6 +25,7 @@ import {
   extractFileText,
   type FileKind,
 } from "@/lib/intelligence/file-extract";
+import { ResearchAggregatorPanel } from "@/components/intelligence/ResearchAggregatorPanel";
 
 export type BriefType = "commercial" | "government";
 
