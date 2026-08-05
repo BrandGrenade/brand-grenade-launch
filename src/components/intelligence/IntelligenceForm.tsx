@@ -25,7 +25,7 @@ import {
   extractFileText,
   type FileKind,
 } from "@/lib/intelligence/file-extract";
-import { ResearchAggregatorPanel } from "@/components/intelligence/ResearchAggregatorPanel";
+import { ResearchSynthesiserPanel } from "@/components/intelligence/ResearchSynthesiserPanel";
 
 export type BriefType = "commercial" | "government";
 
@@ -444,7 +444,7 @@ export function IntelligenceForm({
           </div>
         </Card>
 
-        <ResearchAggregatorPanel
+        <ResearchSynthesiserPanel
           brand={brand}
           category={category}
           onApply={(fields) => {

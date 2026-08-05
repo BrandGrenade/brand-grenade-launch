@@ -1,4 +1,4 @@
-// Research Aggregator — claim-level extraction, classification, verification,
+// Research Synthesiser — claim-level extraction, classification, verification,
 // and structured field composition. Server-only.
 //
 // Step 1: read each uploaded blob, extract discrete classifiable claims.
@@ -12,11 +12,11 @@
 import { parseJsonLenient } from "@/lib/loc/json-sanitize";
 import { runStageFactVerification } from "@/lib/fact-verify.server";
 import {
-  AGGREGATOR_CATEGORIES,
-  type AggregatedClaim,
-  type AggregatorCategory,
-  type AggregatorDocument,
-  type AggregatorResult,
+  SYNTHESISER_CATEGORIES,
+  type SynthesisedClaim,
+  type SynthesiserCategory,
+  type SynthesiserDocument,
+  type SynthesiserResult,
   type SourceType,
   type VerificationStatus,
 } from "./types";
@@ -29,10 +29,10 @@ const REQUEST_TIMEOUT_MS = 180_000;
 const MAX_DOC_CHARS = 90_000;
 const MAX_CLAIMS_PER_DOC = 40;
 
-const CATEGORY_KEYS = AGGREGATOR_CATEGORIES.map((c) => c.key);
+const CATEGORY_KEYS = SYNTHESISER_CATEGORIES.map((c) => c.key);
 
 function categoryBlock(): string {
-  return AGGREGATOR_CATEGORIES.map(
+  return SYNTHESISER_CATEGORIES.map(
     (c) => `- "${c.key}" — ${c.title}: ${c.scope}`,
   ).join("\n");
 }
@@ -103,22 +103,22 @@ async function callClaude(system: string, user: string): Promise<string> {
   }
 }
 
-function normaliseCategories(value: unknown): AggregatorCategory[] {
+function normaliseCategories(value: unknown): SynthesiserCategory[] {
   const list = Array.isArray(value) ? value : [value];
-  const out: AggregatorCategory[] = [];
+  const out: SynthesiserCategory[] = [];
   for (const v of list) {
     if (typeof v !== "string") continue;
-    const key = v.trim() as AggregatorCategory;
+    const key = v.trim() as SynthesiserCategory;
     if (CATEGORY_KEYS.includes(key) && !out.includes(key)) out.push(key);
   }
   return out;
 }
 
 async function extractClaimsFromDocument(
-  doc: AggregatorDocument,
+  doc: SynthesiserDocument,
   brandName: string,
   category: string,
-): Promise<AggregatedClaim[]> {
+): Promise<SynthesisedClaim[]> {
   const text = doc.text.slice(0, MAX_DOC_CHARS);
   const truncated = doc.text.length > MAX_DOC_CHARS;
   const user = `Brand under analysis: ${brandName}
@@ -135,7 +135,7 @@ Extract every individually classifiable claim. Begin your response with { and en
   const parsed = parseJsonLenient(raw) as { claims?: RawClaim[] } | null;
   const claims = Array.isArray(parsed?.claims) ? parsed!.claims! : [];
 
-  const out: AggregatedClaim[] = [];
+  const out: SynthesisedClaim[] = [];
   for (const c of claims) {
     const claimText = typeof c.claim === "string" ? c.claim.trim() : "";
     if (claimText.length < 12) continue;
@@ -175,21 +175,21 @@ function overlapScore(a: string, b: string): number {
 
 /** Batch externally-verifiable claims per category through the existing auditor. */
 async function verifyCategoryBatch(
-  categoryKey: AggregatorCategory,
-  claims: AggregatedClaim[],
+  categoryKey: SynthesiserCategory,
+  claims: SynthesisedClaim[],
   brandName: string,
   category: string,
   warnings: string[],
 ): Promise<void> {
   if (claims.length === 0) return;
   const title =
-    AGGREGATOR_CATEGORIES.find((c) => c.key === categoryKey)?.title ?? categoryKey;
+    SYNTHESISER_CATEGORIES.find((c) => c.key === categoryKey)?.title ?? categoryKey;
   const doc = `# ${title} — externally-verifiable claims extracted from uploaded research\n\n${claims
     .map((c, i) => `${i + 1}. Real Fact: ${c.claim} (source: ${c.sourceDocument})`)
     .join("\n")}\n`;
 
   const outcome = await runStageFactVerification({
-    stageKey: "aggregator",
+    stageKey: "synthesiser",
     output: doc,
     brandName,
     category,
@@ -220,7 +220,7 @@ async function verifyCategoryBatch(
   }
 }
 
-function statusLabel(claim: AggregatedClaim): string {
+function statusLabel(claim: SynthesisedClaim): string {
   switch (claim.status) {
     case "verified":
       return "✅ Verified";
@@ -236,12 +236,12 @@ function statusLabel(claim: AggregatedClaim): string {
 }
 
 function composeField(
-  categoryKey: AggregatorCategory,
-  claims: AggregatedClaim[],
+  categoryKey: SynthesiserCategory,
+  claims: SynthesisedClaim[],
 ): string {
   if (claims.length === 0) return "";
   const title =
-    AGGREGATOR_CATEGORIES.find((c) => c.key === categoryKey)?.title ?? categoryKey;
+    SYNTHESISER_CATEGORIES.find((c) => c.key === categoryKey)?.title ?? categoryKey;
   const lines = claims.map((c, i) => {
     const attribution =
       c.sourceType === "client_proprietary"
@@ -250,14 +250,14 @@ function composeField(
     const note = c.note ? `\n   Note: ${c.note}` : "";
     return `${i + 1}. ${c.claim}\n   Source: ${attribution}\n   Status: ${statusLabel(c)}${note}`;
   });
-  return `${title} — aggregated from uploaded research (${claims.length} entr${claims.length === 1 ? "y" : "ies"})\n\n${lines.join("\n\n")}\n`;
+  return `${title} — synthesised from uploaded research (${claims.length} entr${claims.length === 1 ? "y" : "ies"})\n\n${lines.join("\n\n")}\n`;
 }
 
-export async function aggregateResearchDocuments(args: {
+export async function synthesiseResearchDocuments(args: {
   brandName: string;
   category: string;
-  documents: AggregatorDocument[];
-}): Promise<AggregatorResult> {
+  documents: SynthesiserDocument[];
+}): Promise<SynthesiserResult> {
   const warnings: string[] = [];
 
   const settled = await Promise.allSettled(
@@ -266,7 +266,7 @@ export async function aggregateResearchDocuments(args: {
     ),
   );
 
-  const claims: AggregatedClaim[] = [];
+  const claims: SynthesisedClaim[] = [];
   settled.forEach((r, i) => {
     if (r.status === "fulfilled") {
       claims.push(...r.value);
@@ -314,7 +314,7 @@ export async function aggregateResearchDocuments(args: {
         claims.filter((c) => c.categories.includes(key)),
       ),
     ]),
-  ) as Record<AggregatorCategory, string>;
+  ) as Record<SynthesiserCategory, string>;
 
   return {
     claims,

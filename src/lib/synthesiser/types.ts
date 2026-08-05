@@ -1,6 +1,6 @@
-// Research Aggregator — shared types (client-safe, no server imports).
+// Research Synthesiser — shared types (client-safe, no server imports).
 
-export type AggregatorCategory =
+export type SynthesiserCategory =
   | "input_primary_consumer"
   | "input_brand_health"
   | "input_competitive_audit"
@@ -8,8 +8,8 @@ export type AggregatorCategory =
   | "input_audience_segmentation"
   | "input_bg_intel_pack";
 
-export const AGGREGATOR_CATEGORIES: {
-  key: AggregatorCategory;
+export const SYNTHESISER_CATEGORIES: {
+  key: SynthesiserCategory;
   title: string;
   scope: string;
 }[] = [
@@ -60,19 +60,19 @@ export type VerificationStatus =
   | "client_supplied"
   | "not_checked";
 
-export interface AggregatedClaim {
+export interface SynthesisedClaim {
   claim: string;
-  categories: AggregatorCategory[];
+  categories: SynthesiserCategory[];
   sourceType: SourceType;
   sourceDocument: string;
   status: VerificationStatus;
   note?: string;
 }
 
-export interface AggregatorResult {
-  claims: AggregatedClaim[];
+export interface SynthesiserResult {
+  claims: SynthesisedClaim[];
   /** Ready-to-paste text per category field, structured and attributed. */
-  fields: Record<AggregatorCategory, string>;
+  fields: Record<SynthesiserCategory, string>;
   stats: {
     totalClaims: number;
     externallyVerifiable: number;
@@ -84,7 +84,7 @@ export interface AggregatorResult {
   warnings: string[];
 }
 
-export interface AggregatorDocument {
+export interface SynthesiserDocument {
   name: string;
   text: string;
 }

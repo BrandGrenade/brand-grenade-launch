@@ -1,4 +1,4 @@
-// Research Aggregator panel — a second, additional intake path for the
+// Research Synthesiser panel — a second, additional intake path for the
 // Intelligence Lab. Users dump messy, unsorted research here and the system
 // extracts claims, classifies them into the six real categories, splits
 // externally-verifiable from client-proprietary, verifies the former, and
@@ -14,12 +14,12 @@ import { useServerFn } from "@tanstack/react-start";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { aggregateResearch } from "@/lib/aggregator.functions";
+import { synthesiseResearch } from "@/lib/synthesiser.functions";
 import {
-  AGGREGATOR_CATEGORIES,
-  type AggregatorCategory,
-  type AggregatorResult,
-} from "@/lib/aggregator/types";
+  SYNTHESISER_CATEGORIES,
+  type SynthesiserCategory,
+  type SynthesiserResult,
+} from "@/lib/synthesiser/types";
 import {
   ACCEPT_ATTR,
   MAX_FILE_BYTES,
@@ -44,23 +44,23 @@ function fmtBytes(n: number): string {
   return `${(n / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-export interface ResearchAggregatorPanelProps {
+export interface ResearchSynthesiserPanelProps {
   brand: string;
   category: string;
-  onApply: (fields: Record<AggregatorCategory, string>) => void;
+  onApply: (fields: Record<SynthesiserCategory, string>) => void;
 }
 
-export function ResearchAggregatorPanel({
+export function ResearchSynthesiserPanel({
   brand,
   category,
   onApply,
-}: ResearchAggregatorPanelProps) {
-  const runAggregate = useServerFn(aggregateResearch);
+}: ResearchSynthesiserPanelProps) {
+  const runSynthesise = useServerFn(synthesiseResearch);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [docs, setDocs] = useState<RawDoc[]>([]);
   const [pasted, setPasted] = useState("");
   const [running, setRunning] = useState(false);
-  const [result, setResult] = useState<AggregatorResult | null>(null);
+  const [result, setResult] = useState<SynthesiserResult | null>(null);
   const [applied, setApplied] = useState(false);
 
   async function handleFiles(list: FileList | File[]) {
@@ -140,7 +140,7 @@ export function ResearchAggregatorPanel({
     setResult(null);
     setApplied(false);
     try {
-      const res = await runAggregate({
+      const res = await runSynthesise({
         data: { brandName: brand.trim(), category: category.trim(), documents },
       });
       setResult(res);
@@ -152,7 +152,7 @@ export function ResearchAggregatorPanel({
         );
       }
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Aggregation failed";
+      const msg = err instanceof Error ? err.message : "Synthesis failed";
       toast.error(msg);
     } finally {
       setRunning(false);
@@ -166,7 +166,7 @@ export function ResearchAggregatorPanel({
     toast.success("Applied to the six research fields below. Review and edit before running.");
   }
 
-  const perCategory = AGGREGATOR_CATEGORIES.map((c) => ({
+  const perCategory = SYNTHESISER_CATEGORIES.map((c) => ({
     ...c,
     count: result ? result.claims.filter((cl) => cl.categories.includes(c.key)).length : 0,
   }));
@@ -178,7 +178,7 @@ export function ResearchAggregatorPanel({
         <div className="flex-1">
           <h2 className="text-h4 text-text-primary">Upload raw, unsorted research</h2>
           <p className="text-sm mt-1 text-text-secondary">
-            Optional. Dump messy, uncategorised material here and the Aggregator
+            Optional. Dump messy, uncategorised material here and the Synthesiser
             extracts individual claims, files each one under the right heading(s),
             separates client-proprietary data from publicly checkable claims, and
             fact-checks only the latter. Nothing is written to the six fields below
