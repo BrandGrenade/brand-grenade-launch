@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as UnsubscribeRouteImport } from './routes/unsubscribe'
+import { Route as SynthesiserRouteImport } from './routes/synthesiser'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as PipelineRouteImport } from './routes/pipeline'
 import { Route as LoginRouteImport } from './routes/login'
@@ -49,6 +50,11 @@ import { Route as ApiRepoViewDocumentIdRouteImport } from './routes/api/repo/vie
 const UnsubscribeRoute = UnsubscribeRouteImport.update({
   id: '/unsubscribe',
   path: '/unsubscribe',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SynthesiserRoute = SynthesiserRouteImport.update({
+  id: '/synthesiser',
+  path: '/synthesiser',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SettingsRoute = SettingsRouteImport.update({
@@ -246,6 +252,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/pipeline': typeof PipelineRoute
   '/settings': typeof SettingsRoute
+  '/synthesiser': typeof SynthesiserRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/admin/repositories': typeof AdminRepositoriesRoute
   '/admin/tests': typeof AdminTestsRoute
@@ -280,6 +287,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/pipeline': typeof PipelineRoute
   '/settings': typeof SettingsRoute
+  '/synthesiser': typeof SynthesiserRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/admin/repositories': typeof AdminRepositoriesRoute
   '/admin/tests': typeof AdminTestsRoute
@@ -319,6 +327,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/pipeline': typeof PipelineRoute
   '/settings': typeof SettingsRoute
+  '/synthesiser': typeof SynthesiserRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/admin/repositories': typeof AdminRepositoriesRoute
   '/admin/tests': typeof AdminTestsRoute
@@ -359,6 +368,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/pipeline'
     | '/settings'
+    | '/synthesiser'
     | '/unsubscribe'
     | '/admin/repositories'
     | '/admin/tests'
@@ -393,6 +403,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/pipeline'
     | '/settings'
+    | '/synthesiser'
     | '/unsubscribe'
     | '/admin/repositories'
     | '/admin/tests'
@@ -431,6 +442,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/pipeline'
     | '/settings'
+    | '/synthesiser'
     | '/unsubscribe'
     | '/admin/repositories'
     | '/admin/tests'
@@ -470,6 +482,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   PipelineRoute: typeof PipelineRoute
   SettingsRoute: typeof SettingsRoute
+  SynthesiserRoute: typeof SynthesiserRoute
   UnsubscribeRoute: typeof UnsubscribeRoute
   AdminRepositoriesRoute: typeof AdminRepositoriesRoute
   AdminTestsRoute: typeof AdminTestsRoute
@@ -490,6 +503,13 @@ declare module '@tanstack/react-router' {
       path: '/unsubscribe'
       fullPath: '/unsubscribe'
       preLoaderRoute: typeof UnsubscribeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/synthesiser': {
+      id: '/synthesiser'
+      path: '/synthesiser'
+      fullPath: '/synthesiser'
+      preLoaderRoute: typeof SynthesiserRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/settings': {
@@ -814,6 +834,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   PipelineRoute: PipelineRoute,
   SettingsRoute: SettingsRoute,
+  SynthesiserRoute: SynthesiserRoute,
   UnsubscribeRoute: UnsubscribeRoute,
   AdminRepositoriesRoute: AdminRepositoriesRoute,
   AdminTestsRoute: AdminTestsRoute,
