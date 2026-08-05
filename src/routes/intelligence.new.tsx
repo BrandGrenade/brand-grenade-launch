@@ -9,10 +9,12 @@ import {
   createIntelligenceSession,
   runIntelligenceAnalysis,
 } from "@/lib/intelligence.functions";
+import { consumeSynthesiserHandoff } from "@/lib/synthesiser/handoff";
 import {
   IntelligenceForm,
   type IntelligenceFormValues,
 } from "@/components/intelligence/IntelligenceForm";
+
 
 const searchSchema = z.object({
   brand: z.string().optional(),
