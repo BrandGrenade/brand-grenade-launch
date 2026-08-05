@@ -729,6 +729,11 @@ export type Database = {
           loc_task_runner_up: string | null
           loc_task_type: string | null
           loc_validation: Json | null
+          locked_big_idea: string | null
+          locked_big_idea_at: string | null
+          locked_big_idea_lens: string | null
+          locked_big_idea_run_id: string | null
+          locked_campaign_line: string | null
           phase_2_current_stage: string
           phase_2_status: string
           retry_count: number
@@ -911,6 +916,11 @@ export type Database = {
           loc_task_runner_up?: string | null
           loc_task_type?: string | null
           loc_validation?: Json | null
+          locked_big_idea?: string | null
+          locked_big_idea_at?: string | null
+          locked_big_idea_lens?: string | null
+          locked_big_idea_run_id?: string | null
+          locked_campaign_line?: string | null
           phase_2_current_stage?: string
           phase_2_status?: string
           retry_count?: number
@@ -1093,6 +1103,11 @@ export type Database = {
           loc_task_runner_up?: string | null
           loc_task_type?: string | null
           loc_validation?: Json | null
+          locked_big_idea?: string | null
+          locked_big_idea_at?: string | null
+          locked_big_idea_lens?: string | null
+          locked_big_idea_run_id?: string | null
+          locked_campaign_line?: string | null
           phase_2_current_stage?: string
           phase_2_status?: string
           retry_count?: number
@@ -1281,6 +1296,7 @@ export type Database = {
       }
       stimulus_directions: {
         Row: {
+          campaign_line: string | null
           created_at: string
           direction: string
           error: string | null
@@ -1292,10 +1308,12 @@ export type Database = {
           instinct_brief: string | null
           lens_id: string
           lens_name: string
+          line_check: Json | null
           rated_at: string | null
           rating_error: string | null
           rating_status: string
           ratings: Json | null
+          rationale: string | null
           revise_count: number
           revise_notes: string | null
           run_id: string
@@ -1304,6 +1322,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          campaign_line?: string | null
           created_at?: string
           direction?: string
           error?: string | null
@@ -1315,10 +1334,12 @@ export type Database = {
           instinct_brief?: string | null
           lens_id: string
           lens_name: string
+          line_check?: Json | null
           rated_at?: string | null
           rating_error?: string | null
           rating_status?: string
           ratings?: Json | null
+          rationale?: string | null
           revise_count?: number
           revise_notes?: string | null
           run_id: string
@@ -1327,6 +1348,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          campaign_line?: string | null
           created_at?: string
           direction?: string
           error?: string | null
@@ -1338,10 +1360,12 @@ export type Database = {
           instinct_brief?: string | null
           lens_id?: string
           lens_name?: string
+          line_check?: Json | null
           rated_at?: string | null
           rating_error?: string | null
           rating_status?: string
           ratings?: Json | null
+          rationale?: string | null
           revise_count?: number
           revise_notes?: string | null
           run_id?: string
@@ -1562,6 +1586,8 @@ export type Database = {
           gate_one_confirmed: boolean
           gate_one_confirmed_at: string | null
           id: string
+          locked_at: string | null
+          run_mode: string
           session_id: string
           smp: string
           status: string
@@ -1570,9 +1596,12 @@ export type Database = {
           tiebreaker_output: string | null
           tiebreaker_reason: string | null
           updated_at: string
+          winning_direction_id: string | null
+          winning_line: string | null
+          winning_line_direction_id: string | null
         }
         Insert: {
-          channel_brief: string
+          channel_brief?: string
           channel_name: string
           created_at?: string
           created_by?: string | null
@@ -1580,6 +1609,8 @@ export type Database = {
           gate_one_confirmed?: boolean
           gate_one_confirmed_at?: string | null
           id?: string
+          locked_at?: string | null
+          run_mode?: string
           session_id: string
           smp?: string
           status?: string
@@ -1588,6 +1619,9 @@ export type Database = {
           tiebreaker_output?: string | null
           tiebreaker_reason?: string | null
           updated_at?: string
+          winning_direction_id?: string | null
+          winning_line?: string | null
+          winning_line_direction_id?: string | null
         }
         Update: {
           channel_brief?: string
@@ -1598,6 +1632,8 @@ export type Database = {
           gate_one_confirmed?: boolean
           gate_one_confirmed_at?: string | null
           id?: string
+          locked_at?: string | null
+          run_mode?: string
           session_id?: string
           smp?: string
           status?: string
@@ -1606,6 +1642,9 @@ export type Database = {
           tiebreaker_output?: string | null
           tiebreaker_reason?: string | null
           updated_at?: string
+          winning_direction_id?: string | null
+          winning_line?: string | null
+          winning_line_direction_id?: string | null
         }
         Relationships: [
           {
@@ -1620,6 +1659,20 @@ export type Database = {
             columns: ["session_id"]
             isOneToOne: false
             referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stimulus_runs_winning_direction_id_fkey"
+            columns: ["winning_direction_id"]
+            isOneToOne: false
+            referencedRelation: "stimulus_directions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stimulus_runs_winning_line_direction_id_fkey"
+            columns: ["winning_line_direction_id"]
+            isOneToOne: false
+            referencedRelation: "stimulus_directions"
             referencedColumns: ["id"]
           },
         ]

@@ -30,6 +30,9 @@ const STAGE21_SELECT = [
   "stage_19_output",
   "stage_20_output",
   "stage_20l_output",
+  "locked_big_idea",
+  "locked_campaign_line",
+  "locked_big_idea_lens",
   "stage_20l_approved",
   "stage_20b_output",
   "truth_product",
@@ -47,6 +50,9 @@ type Stage21Session = {
   stage_19_output: string | null;
   stage_20_output: string | null;
   stage_20l_output: string | null;
+  locked_big_idea: string | null;
+  locked_campaign_line: string | null;
+  locked_big_idea_lens: string | null;
   stage_20l_approved: boolean | null;
   stage_20b_output: string | null;
   truth_product: string | null;
@@ -77,7 +83,24 @@ function buildStage21UserMessage(
   const smpTranslation = smpTranslationRaw || (context?.trim() || "—");
   const audienceMindstate = extractSection(context, "AUDIENCE MINDSTATE");
 
+  const lockedBlock = s.locked_big_idea?.trim()
+    ? [
+        "BINDING INPUT — THE LOCKED CAMPAIGN BIG IDEA AND LINE",
+        "This single idea and line were selected for the whole campaign BEFORE any channel work began, from a 37-lens sweep run against the proposition alone. They outrank every other input in this message. Your only job for this channel is to ADAPT this idea and carry this line. You may not reinterpret the proposition, invent a different idea, or narrow it to what this channel finds convenient.",
+        "",
+        `WINNING IDEA (lens: ${s.locked_big_idea_lens ?? "—"})`,
+        s.locked_big_idea.trim(),
+        "",
+        "WINNING CAMPAIGN LINE — carry this line, do not rewrite it",
+        s.locked_campaign_line?.trim() || "—",
+        "",
+        "————",
+        "",
+      ]
+    : [];
+
   return [
+    ...lockedBlock,
     "BINDING INPUT — THE LEAD CREATIVE EXPRESSION",
     "This is the decided creative idea for this campaign. It outranks every other input in this message, including the channel strategy below. Your job for this channel is to ADAPT this already-decided idea to this channel's moment and medium. You are NOT permitted to independently interpret the proposition, invent a different idea, or narrow the idea to whatever this channel finds convenient. Every one of the five non-negotiables must be carried in your brief. The misreading named in this document must never appear in your brief — if the channel context below pulls you toward it, ignore the pull and stay with the decided idea. A brief that reads as a different campaign sharing the same proposition is a failure of this stage.",
     "",

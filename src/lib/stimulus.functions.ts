@@ -15,6 +15,11 @@ import {
   buildStimulusUserMessage,
   parseStimulusResponse,
 } from "./stimulus/generate-prompt";
+import {
+  BIG_IDEA_SYSTEM_PROMPT,
+  buildBigIdeaUserMessage,
+  parseBigIdeaResponse,
+} from "./stimulus/big-idea-prompt";
 
 const SessionOnly = z.object({ sessionId: z.string().uuid() });
 
@@ -26,6 +31,11 @@ type RunRow = {
   smp: string;
   status: string;
   error: string | null;
+  run_mode?: string;
+  winning_direction_id?: string | null;
+  winning_line_direction_id?: string | null;
+  winning_line?: string | null;
+  locked_at?: string | null;
   tiebreaker_output?: string | null;
   tiebreaker_fired?: boolean;
   tiebreaker_reason?: string | null;
@@ -37,13 +47,14 @@ type RunRow = {
 async function loadRun(runId: string, userId: string): Promise<RunRow> {
   const { data, error } = await supabaseAdmin
     .from("stimulus_runs")
-    .select("id, session_id, channel_name, channel_brief, smp, status, error, tiebreaker_output, tiebreaker_fired, tiebreaker_reason, tiebreaker_at, gate_one_confirmed, gate_one_confirmed_at")
+    .select("id, session_id, channel_name, channel_brief, smp, status, error, run_mode, winning_direction_id, winning_line_direction_id, winning_line, locked_at, tiebreaker_output, tiebreaker_fired, tiebreaker_reason, tiebreaker_at, gate_one_confirmed, gate_one_confirmed_at")
     .eq("id", runId)
     .single();
   if (error || !data) throw new Error(`Stimulus run not found: ${error?.message ?? "no row"}`);
   await assertSessionAccess(data.session_id, userId);
   return data as RunRow;
 }
+
 
 /** Channels available for a stimulus run — the Stage 21 channel brief keys. */
 export const listStimulusChannels = createServerFn({ method: "POST" })
@@ -68,7 +79,7 @@ export const listStimulusRuns = createServerFn({ method: "POST" })
     await assertSessionAccess(data.sessionId, context.userId);
     const { data: runs, error } = await supabaseAdmin
       .from("stimulus_runs")
-      .select("id, channel_name, status, error, created_at")
+      .select("id, channel_name, status, error, created_at, run_mode, locked_at")
       .eq("session_id", data.sessionId)
       .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
@@ -217,7 +228,7 @@ export const loadStimulusRun = createServerFn({ method: "POST" })
     const { data: directions, error } = await supabaseAdmin
       .from("stimulus_directions")
       .select(
-        "id, lens_id, lens_name, sort_order, direction, status, instinct_brief, revise_notes, revise_count, error, ratings, rating_status, rating_error, rated_at, gate_one_approved, gate_one_approved_at, gate_one_notes",
+        "id, lens_id, lens_name, sort_order, direction, campaign_line, rationale, line_check, status, instinct_brief, revise_notes, revise_count, error, ratings, rating_status, rating_error, rated_at, gate_one_approved, gate_one_approved_at, gate_one_notes",
       )
       .eq("run_id", run.id)
       .order("sort_order", { ascending: true });
@@ -275,36 +286,59 @@ export const reviseStimulusDirection = createServerFn({ method: "POST" })
     const lens = getLens(row.lens_id);
     if (!lens) throw new Error(`Unknown lens ${row.lens_id}`);
 
+    const isBigIdea = run.run_mode === "big_idea";
+
     const { data: sessionRow } = await supabaseAdmin
       .from("sessions")
-      .select("brand_name, category, stage_18_detonation_line")
+      .select(
+        "brand_name, category, stage_18_detonation_line, truth_product, truth_consumer, truth_cultural, stage_1_output, stage_2_output",
+      )
       .eq("id", run.session_id)
       .single();
 
-    const base = buildStimulusUserMessage({
-      brandName: sessionRow?.brand_name ?? "—",
-      category: sessionRow?.category ?? "—",
-      channelName: run.channel_name,
-      channelBrief: run.channel_brief,
-      smp: run.smp,
-      detonationLine: sessionRow?.stage_18_detonation_line ?? "",
-      lenses: [lens],
-    });
+    const base = isBigIdea
+      ? buildBigIdeaUserMessage({
+          brandName: sessionRow?.brand_name ?? "—",
+          category: sessionRow?.category ?? "—",
+          smp: run.smp,
+          detonationLine: sessionRow?.stage_18_detonation_line ?? "",
+          truths: [
+            sessionRow?.truth_product ? `PRODUCT TRUTH: ${sessionRow.truth_product}` : "",
+            sessionRow?.truth_consumer ? `CONSUMER TRUTH: ${sessionRow.truth_consumer}` : "",
+            sessionRow?.truth_cultural ? `CULTURAL TRUTH: ${sessionRow.truth_cultural}` : "",
+          ]
+            .filter(Boolean)
+            .join("\n"),
+          strategicEvidence: [sessionRow?.stage_1_output ?? "", sessionRow?.stage_2_output ?? ""]
+            .filter(Boolean)
+            .join("\n\n")
+            .slice(0, 14000),
+          lenses: [lens],
+        })
+      : buildStimulusUserMessage({
+          brandName: sessionRow?.brand_name ?? "—",
+          category: sessionRow?.category ?? "—",
+          channelName: run.channel_name,
+          channelBrief: run.channel_brief,
+          smp: run.smp,
+          detonationLine: sessionRow?.stage_18_detonation_line ?? "",
+          lenses: [lens],
+        });
 
     const userMessage = [
       base,
       "",
-      "═══ PREVIOUS DIRECTION FROM THIS LENS ═══",
+      "═══ PREVIOUS OUTPUT FROM THIS LENS ═══",
       row.direction || "—",
       "",
       "═══ MANDATORY REVISION INSTRUCTION FROM THE CREATIVE ═══",
       data.notes.trim(),
       "",
-      "Rewrite the direction for this lens so it obeys the revision instruction. Same output contract. Do not repeat the previous direction.",
+      "Rewrite this lens's output so it obeys the revision instruction. Same output contract. Do not repeat the previous version.",
     ].join("\n");
 
     const raw = await callClaude({
-      systemPrompt: STIMULUS_SYSTEM_PROMPT,
+      systemPrompt: isBigIdea ? BIG_IDEA_SYSTEM_PROMPT : STIMULUS_SYSTEM_PROMPT,
       userMessage,
       skipUniversalWrapper: true,
       maxTokens: 4000,
@@ -313,13 +347,23 @@ export const reviseStimulusDirection = createServerFn({ method: "POST" })
       stageLabel: `Creative Stimulus revise (${lens.name})`,
     });
 
-    const parsed = parseStimulusResponse(raw);
-    const text = parsed[lens.id]?.trim() || raw.trim();
+    const bigParsed = isBigIdea ? parseBigIdeaResponse(raw)[lens.id] : undefined;
+    const text = isBigIdea
+      ? bigParsed?.idea?.trim() || raw.trim()
+      : parseStimulusResponse(raw)[lens.id]?.trim() || raw.trim();
+
 
     const { error: uErr } = await supabaseAdmin
       .from("stimulus_directions")
       .update({
         direction: text,
+        ...(isBigIdea
+          ? {
+              campaign_line: bigParsed?.line || null,
+              rationale: bigParsed?.rationale || null,
+              line_check: null,
+            }
+          : {}),
         status: "generated",
         revise_notes: data.notes.trim(),
         revise_count: (row.revise_count ?? 0) + 1,
