@@ -47,7 +47,7 @@ export function DevModeBanner() {
         right: 0,
         zIndex: 200,
         backgroundColor: "#C81E1E",
-        color: "#1A1410",
+        color: "#0A0908",
         textAlign: "center",
         padding: "8px 16px",
         fontSize: 13,

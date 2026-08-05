@@ -105,7 +105,7 @@ export function CreativeShowcaseCard({
         </button>
       </div>
       {err && (
-        <div style={{ marginTop: 8, fontSize: 12, color: "#C97A7A" }}>{err}</div>
+        <div style={{ marginTop: 8, fontSize: 12, color: "#C81E1E" }}>{err}</div>
       )}
     </div>
   );

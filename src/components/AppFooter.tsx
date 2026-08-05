@@ -39,7 +39,7 @@ export function AppFooter() {
       <Link
         to="/admin/tests"
         style={{
-          color: "#3A3632",
+          color: "#1C1A18",
           fontSize: 11,
           letterSpacing: "0.08em",
           textTransform: "uppercase",
@@ -49,7 +49,7 @@ export function AppFooter() {
           e.currentTarget.style.color = "#8B8680";
         }}
         onMouseLeave={(e) => {
-          e.currentTarget.style.color = "#3A3632";
+          e.currentTarget.style.color = "#1C1A18";
         }}
       >
         Admin

@@ -816,7 +816,7 @@ const STATE_COLOR: Record<SystemStatus["state"], string> = {
   not_started: "var(--color-border-strong)",
   in_progress: "#C81E1E",
   complete: "#C81E1E",
-  interrupted: "#B4453C",
+  interrupted: "#C81E1E",
 };
 
 const SYSTEM_LAUNCH_LABEL: Record<SystemKey, string> = {

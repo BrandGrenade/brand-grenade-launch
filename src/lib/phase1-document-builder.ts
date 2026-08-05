@@ -103,7 +103,7 @@ body { font-family: Arial, Helvetica, sans-serif; font-size: 10.5pt; line-height
 #toolbar { position: fixed; top: 0; left: 0; right: 0; background: #1C1A18; padding: 10px 24px; display: flex; justify-content: space-between; align-items: center; z-index: 999; }
 #toolbar span { color: #8B8680; font-size: 12px; }
 #toolbar .actions button { background: ${ACCENT}; color: #0A0908; border: none; padding: 8px 20px; border-radius: 4px; font-size: 13px; font-weight: bold; cursor: pointer; margin-left: 8px; }
-#toolbar .actions button.close { background: transparent; color: #8B8680; border: 1px solid #444; }
+#toolbar .actions button.close { background: transparent; color: #8B8680; border: 1px solid #1C1A18; }
 @media print {
   #toolbar { display: none; }
   body { padding: 0; background: white; }

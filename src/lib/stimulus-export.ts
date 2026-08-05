@@ -59,7 +59,7 @@ const CSS = `
   table.ratings td{padding:3px 10px 3px 0;vertical-align:top;}
   a{color:${AMBER};}
   hr{border:none;border-top:1px solid #1C1A18;margin:28px 0;}
-  @media print{body{background:#EDE8E0;color:#0A0908}.card{background:#EDE8E0}pre{background:#f4f4f4;color:#0A0908}}
+  @media print{body{background:#EDE8E0;color:#0A0908}.card{background:#EDE8E0}pre{background:#EDE8E0;color:#0A0908}}
 `;
 
 function doc(title: string, body: string): string {

@@ -27,7 +27,7 @@ import { SIGNATURE_CATEGORIES } from "@/lib/stimulus/orchestration-prompts";
 const AMBER = "#C81E1E";
 const MUTED = "#8B8680";
 const RED = "#C81E1E";
-const GREEN = "#7FB069";
+const GREEN = "#C81E1E";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 type Row = Record<string, any>;

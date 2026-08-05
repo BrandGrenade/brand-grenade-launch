@@ -102,7 +102,7 @@ body { font-family: Arial, Helvetica, sans-serif; font-size: 10.5pt; line-height
 #toolbar { position: fixed; top: 0; left: 0; right: 0; background: #1C1A18; padding: 10px 24px; display: flex; justify-content: space-between; align-items: center; z-index: 999; }
 #toolbar span { color: #8B8680; font-size: 12px; }
 #toolbar .actions button { background: ${ACCENT}; color: #0A0908; border: none; padding: 8px 20px; border-radius: 4px; font-size: 13px; font-weight: bold; cursor: pointer; margin-left: 8px; }
-#toolbar .actions button.close { background: transparent; color: #8B8680; border: 1px solid #444; }
+#toolbar .actions button.close { background: transparent; color: #8B8680; border: 1px solid #1C1A18; }
 @media print {
   #toolbar { display: none; }
   body { padding: 0; background: white; }
@@ -116,7 +116,7 @@ body { font-family: Arial, Helvetica, sans-serif; font-size: 10.5pt; line-height
 .cover-brand { font-size: 11pt; font-weight: bold; letter-spacing: 0.1em; color: #1C1A18; margin-bottom: 8pt; }
 .cover-label { font-size: 9pt; font-weight: bold; letter-spacing: 0.12em; color: ${ACCENT}; text-transform: uppercase; margin-bottom: 24pt; }
 .cover-title { font-size: 22pt; font-weight: 700; color: #1C1A18; line-height: 1.2; margin-bottom: 16pt; }
-.cover-sub { font-size: 12pt; color: #4a4a48; margin-bottom: 24pt; }
+.cover-sub { font-size: 12pt; color: #1C1A18; margin-bottom: 24pt; }
 .cover-rule { width: 40pt; height: 2pt; background: ${ACCENT}; margin-bottom: 20pt; }
 .cover-date { font-size: 9pt; color: #8B8680; }
 .cover-confidential { font-size: 8pt; color: #8B8680; margin-top: 8pt; letter-spacing: 0.06em; }

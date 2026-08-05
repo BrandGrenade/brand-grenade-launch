@@ -188,7 +188,7 @@ function ErrorBanner({ message }: { message: string }) {
       backgroundColor: "#C81E1E12", border: "1px solid #C81E1E",
       borderRadius: 8, padding: 16, marginTop: 16,
     }}>
-      <p className="text-body" style={{ color: "#E89494", margin: 0 }}>{message}</p>
+      <p className="text-body" style={{ color: "#C81E1E", margin: 0 }}>{message}</p>
     </div>
   );
 }
@@ -882,7 +882,7 @@ function DetonationPage() {
                         fontFamily: `'${tokens.fontMono}', monospace`, fontSize: 8,
                         textTransform: "uppercase", letterSpacing: "0.1em",
                         color: status === "approved" ? tokens.amber
-                          : status === "complete" ? "#7AB179" : tokens.muted,
+                          : status === "complete" ? "#C81E1E" : tokens.muted,
                       }}>
                         {status === "approved" ? "Approved"
                           : status === "complete" ? "Complete" : "Pending"}
@@ -1265,7 +1265,7 @@ function Stage18({ session, onChange, goNext }: { session: SessionRow; onChange:
         <>
           {courageAbsent && !courageDismissed && (
             <div style={{
-              backgroundColor: "#1A1208", borderLeft: `4px solid ${AMBER}`,
+              backgroundColor: "#0A0908", borderLeft: `4px solid ${AMBER}`,
               border: "1px solid #1C1A18", borderRadius: 8, padding: 20, marginBottom: 20,
             }}>
               <div style={{
@@ -1285,7 +1285,7 @@ function Stage18({ session, onChange, goNext }: { session: SessionRow; onChange:
           )}
           {selectedLine && (
             <div style={{
-              backgroundColor: "#1A1208", borderLeft: `4px solid ${AMBER}`,
+              backgroundColor: "#0A0908", borderLeft: `4px solid ${AMBER}`,
               border: "1px solid #1C1A18", borderRadius: 8, padding: 16, marginBottom: 16,
             }}>
               <div style={{ color: AMBER, textTransform: "uppercase", fontSize: "7pt",
@@ -1295,7 +1295,7 @@ function Stage18({ session, onChange, goNext }: { session: SessionRow; onChange:
               <div className="text-body" style={{ color: "#EDE8E0", lineHeight: 1.5 }}>
                 {selectedLine}
               </div>
-              <div className="text-body-sm" style={{ color: "#A0A0A0", marginTop: 6 }}>
+              <div className="text-body-sm" style={{ color: "#8B8680", marginTop: 6 }}>
                 Click "Select This Detonation" on any card below to change. Downstream stages will regenerate.
               </div>
             </div>
@@ -1730,7 +1730,7 @@ function Stage20l({
             display: "block",
             width: "100%",
             marginTop: 8,
-            backgroundColor: "#0F0F0F",
+            backgroundColor: "#0A0908",
             border: "1px solid #1C1A18",
             borderRadius: 6,
             color: "#EDE8E0",
@@ -1769,7 +1769,7 @@ function Stage20l({
               style={{
                 width: "100%",
                 marginTop: 16,
-                backgroundColor: "#0F0F0F",
+                backgroundColor: "#0A0908",
                 border: "1px solid #1C1A18",
                 borderRadius: 6,
                 color: "#EDE8E0",
@@ -2493,7 +2493,7 @@ function Stage22({ session, onChange }: { session: SessionRow; onChange: () => v
           {busy && (
             <div style={{
               marginTop: 24, padding: 20, borderRadius: 8,
-              backgroundColor: "#1a1a1a", border: `1px solid ${AMBER}44`,
+              backgroundColor: "#0A0908", border: `1px solid ${AMBER}44`,
               display: "flex", alignItems: "center", gap: 12,
             }}>
               <Spinner />
@@ -2524,7 +2524,7 @@ function Stage22({ session, onChange }: { session: SessionRow; onChange: () => v
 function ArchBox({ label, content }: { label: string; content: string }) {
   return (
     <div style={{
-      backgroundColor: "#161616", border: `1px solid ${AMBER}33`,
+      backgroundColor: "#0A0908", border: `1px solid ${AMBER}33`,
       borderRadius: 8, padding: 16, minHeight: 140,
     }}>
       <div style={{

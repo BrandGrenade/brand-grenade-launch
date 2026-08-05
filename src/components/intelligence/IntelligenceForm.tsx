@@ -225,7 +225,7 @@ export function IntelligenceForm({
       ? "#C81E1E"
       : confidence === "Moderate"
         ? "#C81E1E"
-        : "#94A3B8";
+        : "#8B8680";
 
   async function handleFilesAdded(key: SectionKey, list: FileList | File[]) {
     const arr = Array.from(list);
@@ -503,7 +503,7 @@ export function IntelligenceForm({
                   ) : (
                     <Circle
                       className="h-4 w-4 flex-shrink-0 mt-0.5"
-                      style={{ color: "#475569" }}
+                      style={{ color: "#1C1A18" }}
                     />
                   )}
                   <span
@@ -571,7 +571,7 @@ function ResearchSection({
       <div className="flex items-baseline gap-3">
         <span
           className="text-label"
-          style={{ color: present ? "#C81E1E" : "#94A3B8" }}
+          style={{ color: present ? "#C81E1E" : "#8B8680" }}
         >
           {spec.number}
         </span>

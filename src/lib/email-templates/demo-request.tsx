@@ -81,7 +81,7 @@ const container = { padding: '32px 28px', maxWidth: '560px' }
 const h1 = { fontSize: '22px', margin: '0 0 12px', color: '#0A0908' }
 const intro = { fontSize: '14px', color: '#1C1A18', margin: '0 0 20px' }
 const card = {
-  backgroundColor: '#f7f7f7',
+  backgroundColor: '#EDE8E0',
   padding: '16px 20px',
   borderRadius: '6px',
 }

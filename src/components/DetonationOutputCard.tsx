@@ -171,7 +171,7 @@ export function DetonationOutputCard({
               className="text-body-sm"
               style={{
                 width: "100%",
-                backgroundColor: "#1A1A1A",
+                backgroundColor: "#0A0908",
                 border: `1px solid ${ACCENT}40`,
                 borderRadius: 6,
                 color: "#EDE8E0",

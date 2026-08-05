@@ -634,7 +634,7 @@ function BriefIntake() {
             border: "2px dashed #1C1A18",
             borderRadius: 12,
             padding: 48,
-            backgroundColor: altDragging ? "#1a1a1a" : "#1C1A18",
+            backgroundColor: altDragging ? "#0A0908" : "#1C1A18",
           }}
         >
           <BigUploadIcon />

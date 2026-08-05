@@ -245,7 +245,7 @@ export function LocControls({ sessionId }: { sessionId: string }) {
             <button
               type="button"
               className="rounded border px-3 py-1"
-              style={{ borderColor: "var(--color-border-strong, #8B8680)", background: "var(--color-warning, #f4c542)", color: "#0A0908" }}
+              style={{ borderColor: "var(--color-border-strong, #8B8680)", background: "var(--color-warning, #C81E1E)", color: "#0A0908" }}
               disabled={busy || locked}
               onClick={() =>
                 trigger(true, {

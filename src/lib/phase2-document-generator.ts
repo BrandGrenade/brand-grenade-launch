@@ -116,7 +116,7 @@ body {
   padding: 8px 20px; border-radius: 4px;
   font-size: 13px; font-weight: bold; cursor: pointer; margin-left: 8px;
 }
-#toolbar .actions button.close { background: transparent; color: #8B8680; border: 1px solid #444; }
+#toolbar .actions button.close { background: transparent; color: #8B8680; border: 1px solid #1C1A18; }
 @media print {
   #toolbar { display: none; }
   body { padding: 0; background: white; }

@@ -181,8 +181,8 @@ export function NewRunGateButton({ variant = "topnav", label = "Strategy Pipelin
     : {
         ...baseEnabledStyle,
         backgroundColor: "transparent",
-        border: "1px solid #FF3B3B",
-        color: "#FF3B3B",
+        border: "1px solid #C81E1E",
+        color: "#C81E1E",
         cursor: "pointer",
         boxShadow: "none",
       };

@@ -1424,8 +1424,8 @@ function Phase2Deliverables({ session }: { session: SessionRow }) {
           {busy === "bundle" ? (bundleProgress ?? "Building zip…") : "Download All Strategy (.zip)"}
         </button>
         {bundleResult && (
-          <div style={{ fontSize: 12, color: "#9CA3AF", lineHeight: 1.6 }}>
-            <div style={{ color: "#D4D4D4", fontWeight: 600 }}>Bundle ready: {bundleResult.filename}</div>
+          <div style={{ fontSize: 12, color: "#8B8680", lineHeight: 1.6 }}>
+            <div style={{ color: "#EDE8E0", fontWeight: 600 }}>Bundle ready: {bundleResult.filename}</div>
             <div>Included {bundleResult.included.length} file{bundleResult.included.length === 1 ? "" : "s"}.
               {bundleResult.skipped.length > 0 && ` Skipped ${bundleResult.skipped.length} (missing source): ${bundleResult.skipped.join(", ")}.`}
             </div>

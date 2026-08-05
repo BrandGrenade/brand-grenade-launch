@@ -138,7 +138,7 @@ export function LaunchStrip() {
           alignItems: "center",
           justifyContent: "center",
           padding: "0 24px",
-          backgroundColor: "#0F0F0F",
+          backgroundColor: "#0A0908",
           borderBottom: "1px solid #1C1A18",
           boxShadow: "0 4px 12px rgba(0,0,0,0.4)",
         }}

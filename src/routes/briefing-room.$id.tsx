@@ -579,7 +579,7 @@ function WorkspacePage() {
               {preview.blockers.length > 0 && (
                 <div
                   className="rounded-md p-3"
-                  style={{ backgroundColor: "#2A1414", border: "1px solid #5C2A2A", color: "#F0A0A0" }}
+                  style={{ backgroundColor: "#0A0908", border: "1px solid #C81E1E", color: "#C81E1E" }}
                 >
                   <div className="text-label mb-1">BLOCKERS</div>
                   <ul className="text-body-sm list-disc pl-5">
@@ -590,7 +590,7 @@ function WorkspacePage() {
               {preview.warnings.length > 0 && (
                 <div
                   className="mt-3 rounded-md p-3"
-                  style={{ backgroundColor: "#1C1A18", border: "1px solid #3A2E1E", color: "#C81E1E" }}
+                  style={{ backgroundColor: "#1C1A18", border: "1px solid #1C1A18", color: "#C81E1E" }}
                 >
                   <div className="text-label mb-1">WARNINGS</div>
                   <ul className="text-body-sm list-disc pl-5">
@@ -721,7 +721,7 @@ function SourcePills({
     borderRadius: 4,
     backgroundColor: "#1C1A18",
     color: "#C81E1E",
-    border: "1px solid #3A2E1E",
+    border: "1px solid #1C1A18",
   };
   return (
     <div className="mt-1 flex flex-wrap gap-1">
@@ -767,7 +767,7 @@ function Step1View(props: {
           border: `1px solid ${selected ? "#C81E1E" : "#1C1A18"}`,
         }}
       >
-        <div className="text-label" style={{ color: which === "problem" ? "#C97070" : "#7CB57C" }}>
+        <div className="text-label" style={{ color: which === "problem" ? "#C81E1E" : "#C81E1E" }}>
           {which === "problem" ? "REAL PROBLEM (defensive)" : "REAL OPPORTUNITY (generative)"}
         </div>
         <p className="text-body mt-2 text-text-primary">{item.statement}</p>
@@ -951,7 +951,7 @@ function Step2View({ data }: { data: Step2Output }) {
       {data.missing_generative_qualitative_fact && (
         <div
           className="rounded-md p-3"
-          style={{ backgroundColor: "#2A1A0A", border: "1px solid #6B3A10", color: "#C81E1E" }}
+          style={{ backgroundColor: "#0A0908", border: "1px solid #C81E1E", color: "#C81E1E" }}
         >
           <div className="text-label">MISSING: GENERATIVE QUALITATIVE FACT</div>
           <p className="text-body-sm mt-1">
@@ -1031,7 +1031,7 @@ function Step4View(props: {
     return (
       <div
         className="rounded-md p-4"
-        style={{ backgroundColor: "#2A1A0A", border: "1px solid #6B3A10", color: "#C81E1E" }}
+        style={{ backgroundColor: "#0A0908", border: "1px solid #C81E1E", color: "#C81E1E" }}
       >
         <div className="text-label">NO TENSION YET</div>
         <p className="text-body-sm mt-1">{props.data.no_tension_reason}</p>
@@ -1085,7 +1085,7 @@ function GapsBlock({ title, gaps }: { title: string; gaps: string[] }) {
   return (
     <div
       className="rounded-md p-3"
-      style={{ backgroundColor: "#2A1A0A", border: "1px solid #6B3A10", color: "#C81E1E" }}
+      style={{ backgroundColor: "#0A0908", border: "1px solid #C81E1E", color: "#C81E1E" }}
     >
       <div className="text-label">{title}</div>
       <ul className="mt-1 list-disc pl-5">
@@ -1112,11 +1112,11 @@ function TagBadge({
 }) {
   const palette: Record<string, { bg: string; fg: string; bd: string }> = {
     source: { bg: "#1C1A18", fg: "#8B8680", bd: "#1C1A18" },
-    qual: { bg: "#0F1A14", fg: "#7CB57C", bd: "#1E3A2E" },
-    quant: { bg: "#0F141A", fg: "#7C99B5", bd: "#1E2E3A" },
-    good: { bg: "#0F1A14", fg: "#7CB57C", bd: "#1E3A2E" },
-    warn: { bg: "#1C1A18", fg: "#C81E1E", bd: "#3A2E1E" },
-    thorpe: { bg: "#2A1A0A", fg: "#C81E1E", bd: "#6B3A10" },
+    qual: { bg: "#0A0908", fg: "#C81E1E", bd: "#1C1A18" },
+    quant: { bg: "#0A0908", fg: "#C81E1E", bd: "#1C1A18" },
+    good: { bg: "#0A0908", fg: "#C81E1E", bd: "#1C1A18" },
+    warn: { bg: "#1C1A18", fg: "#C81E1E", bd: "#1C1A18" },
+    thorpe: { bg: "#0A0908", fg: "#C81E1E", bd: "#C81E1E" },
   };
   const p = palette[tone];
   const style: React.CSSProperties = {
@@ -1202,7 +1202,7 @@ function HandoffPreviewView({
       {showBrief && (
         <pre
           className="mt-1 max-h-[420px] overflow-auto rounded-md p-3 text-[12px] leading-[1.55] whitespace-pre-wrap"
-          style={{ backgroundColor: "#0A0908", border: "1px solid #1C1A18", color: "#D8D3CC" }}
+          style={{ backgroundColor: "#0A0908", border: "1px solid #1C1A18", color: "#EDE8E0" }}
         >
           {(() => {
             const anchor = extractAnchorBlock(preview.briefText);
@@ -1229,7 +1229,7 @@ function EditableMiniField({
       className="rounded-md p-3"
       style={{ backgroundColor: "#1C1A18", border: "1px solid #1C1A18" }}
     >
-      <div className="text-label" style={{ color: "#8A8580" }}>{label}</div>
+      <div className="text-label" style={{ color: "#8B8680" }}>{label}</div>
       <textarea
         value={value}
         onChange={(e) => onChange(e.target.value)}

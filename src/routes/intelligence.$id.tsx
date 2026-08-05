@@ -205,7 +205,7 @@ const LAYER_LABELS: Record<number, string> = {
 const TYPE_LABEL: Record<NonNullable<Territory["type"]>, { label: string; color: string }> = {
   category_ownership: { label: "Category Ownership", color: "#C81E1E" },
   differentiated_positioning: { label: "Differentiated Positioning", color: "#C81E1E" },
-  category_creation: { label: "Category Creation", color: "#A855F7" },
+  category_creation: { label: "Category Creation", color: "#C81E1E" },
   hermit_crab: { label: "Hermit Crab", color: "#C81E1E" },
   moment_activated: { label: "Moment Activated", color: "#C81E1E" },
 };
@@ -214,7 +214,7 @@ const RISK_COLOR: Record<RiskClass, string> = {
   low: "#C81E1E",
   medium: "#C81E1E",
   high: "#C81E1E",
-  very_high: "#7F1D1D",
+  very_high: "#C81E1E",
 };
 
 const RECOMMENDATION_STYLE: Record<
@@ -1263,8 +1263,8 @@ function TerritoryCard({
 
 function GovernmentAddendumSection({ addendum }: { addendum: GovernmentAddendum }) {
   const backlashColor = addendum.backlash_risk
-    ? RISK_COLOR[addendum.backlash_risk as RiskClass] ?? "#94A3B8"
-    : "#94A3B8";
+    ? RISK_COLOR[addendum.backlash_risk as RiskClass] ?? "#8B8680"
+    : "#8B8680";
   return (
     <section className="mt-10">
       <h2 className="text-h3 text-text-primary">Government Addendum</h2>

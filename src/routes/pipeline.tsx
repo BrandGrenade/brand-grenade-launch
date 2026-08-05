@@ -5143,7 +5143,7 @@ function StageControlBar({
   } else if (status === "complete") {
     leftEl = <span style={{ color: "#C81E1E" }}>✓ {stage.name} complete</span>;
   } else if (status === "error") {
-    leftEl = <span style={{ color: "#8A6A2A" }}>⚠ Stage stalled</span>;
+    leftEl = <span style={{ color: "#C81E1E" }}>⚠ Stage stalled</span>;
   } else if (status === "checkpoint") {
     leftEl = <span style={{ color: "#8B8680" }}>● Awaiting review</span>;
   } else {
@@ -5197,11 +5197,11 @@ function StallWatcher({ stageKey, onRetry }: { stageKey: string; onRetry: () => 
         marginTop: 16,
         padding: "12px 16px",
         borderRadius: 8,
-        border: "1px solid #8A6A2A",
+        border: "1px solid #C81E1E",
         backgroundColor: "rgba(138, 106, 42, 0.07)",
       }}
     >
-      <p className="text-body-sm" style={{ color: "#8A6A2A" }}>
+      <p className="text-body-sm" style={{ color: "#C81E1E" }}>
         Generation has paused. This sometimes happens with longer outputs.
       </p>
       <div style={{ display: "flex", gap: 8, marginTop: 12 }}>

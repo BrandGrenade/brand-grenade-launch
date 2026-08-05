@@ -99,7 +99,7 @@ function Login() {
           </button>
 
           {error && (
-            <p role="alert" className="text-body-sm mt-3" style={{ color: "var(--color-destructive, #C0392B)" }}>
+            <p role="alert" className="text-body-sm mt-3" style={{ color: "var(--color-destructive, #C81E1E)" }}>
               {error}
             </p>
           )}
