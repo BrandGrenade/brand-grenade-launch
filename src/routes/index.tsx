@@ -128,7 +128,54 @@ const CSS = `
 .bg-home .finalcta{padding:100px 0;border-top:1px solid var(--ash);text-align:center}
 .bg-home .finalcta h2{font-size:clamp(36px,5vw,56px);margin-bottom:20px;font-family:'Bebas Neue',sans-serif;font-weight:400}
 .bg-home .finalcta p{color:var(--smoke);font-size:15px;margin-bottom:32px;max-width:56ch;margin-left:auto;margin-right:auto;line-height:1.7}
-.bg-home footer{border-top:1px solid var(--ash);padding:32px 0;text-align:center;font-size:12px;color:var(--smoke)}
+.bg-home footer{border-top:1px solid var(--ash);padding:32px 0;text-align:center;font-size:13px;color:var(--smoke)}
+
+/* ---------- Mobile ---------- */
+@media (max-width:720px){
+  .bg-home{overflow-x:hidden}
+  .bg-home .nav-inner{gap:12px;flex-wrap:nowrap}
+  .bg-home .nav-rooms{display:none}
+  .bg-home .nav-mark{font-size:16px}
+  .bg-home .nav-cta{padding:10px 14px;font-size:13px}
+  .bg-home .nav-signin{font-size:13px}
+  .bg-home .pin-row{gap:14px;margin-bottom:32px}
+  .bg-home h1.hero-title{font-size:clamp(40px,11vw,58px);max-width:none;margin-bottom:20px}
+  .bg-home .hero-sub,.bg-home .hero-weight{font-size:16px}
+  .bg-home .hero-ctas{flex-direction:column;align-items:stretch;gap:12px}
+  .bg-home .hero-ctas .btn-primary,.bg-home .hero-ctas .btn-ghost{
+    display:block;width:100%;text-align:center;padding:16px 20px;font-size:15px}
+  .bg-home .hero-stats{margin-top:44px}
+  .bg-home .section h2{font-size:26px;max-width:none}
+  .bg-home .closing{padding:64px 0}
+  .bg-home .finalcta{padding:64px 0}
+  .bg-home .room{padding:44px 0;grid-template-columns:1fr;gap:16px}
+  .bg-home .room-pin-col{flex-direction:row;align-items:center;gap:12px;padding-top:0}
+  .bg-home .room-pin-line{width:100%;height:1px;flex:1;margin-top:0}
+  .bg-home .room-proof{grid-column:auto;padding:18px}
+  .bg-home .room-proof-body{font-size:13px;word-break:break-word}
+  .bg-home .room-name{font-size:22px}
+  .bg-home .rhythm{max-width:none}
+  .bg-home .rhythm-row{padding:14px 16px;gap:12px}
+  .bg-home .rhythm-row .who{width:72px;font-size:12px}
+  .bg-home .callout{padding:20px}
+}
+
+/* ---------- Demo request sheet ---------- */
+.bg-demo-overlay{position:fixed;inset:0;z-index:100;display:flex;align-items:center;
+  justify-content:center;background:rgba(10,9,8,0.86);padding:24px;overflow-y:auto;
+  -webkit-overflow-scrolling:touch}
+.bg-demo-panel{width:100%;max-width:460px;background:var(--ash);border:1px solid var(--ash2);
+  border-radius:6px;padding:32px}
+.bg-demo-field{width:100%;background:var(--void);border:1px solid var(--ash2);border-radius:3px;
+  color:var(--paper);padding:12px 12px;font-size:16px;font-family:inherit;-webkit-appearance:none}
+.bg-demo-field:focus{outline:none;border-color:var(--detonation)}
+@media (max-width:720px){
+  .bg-demo-overlay{padding:0;align-items:stretch;justify-content:stretch}
+  .bg-demo-panel{max-width:none;border:none;border-radius:0;min-height:100dvh;
+    padding:24px 20px calc(32px + env(safe-area-inset-bottom));display:flex;flex-direction:column}
+  .bg-demo-field{padding:14px 12px}
+  .bg-demo-panel .btn-primary{width:100%;padding:16px 20px;font-size:16px}
+}
 `;
 
 /* -------------------- Data -------------------- */
