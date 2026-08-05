@@ -12,7 +12,9 @@ import { Link, useRouterState } from "@tanstack/react-router";
 const INTERNAL_PREFIXES = [
   "/dashboard",
   "/pipeline",
+  "/synthesiser",
   "/intelligence",
+
   "/briefing-room",
   "/brief",
   "/detonation",
