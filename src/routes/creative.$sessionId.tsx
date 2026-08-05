@@ -6,6 +6,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { TopNav } from "@/components/TopNav";
 import { CreativeStimulus } from "@/components/CreativeStimulus";
+import { BigIdeaSweep } from "@/components/BigIdeaSweep";
 import { supabase } from "@/integrations/supabase/client";
 import { LENS_COUNT } from "@/lib/stimulus/lenses";
 
@@ -38,6 +39,9 @@ type SessionRow = {
   brand_name: string | null;
   selected_smp: string | null;
   stage_21_outputs: Record<string, string> | null;
+  locked_big_idea: string | null;
+  locked_campaign_line: string | null;
+  locked_big_idea_lens: string | null;
 };
 
 function CreativeRoom() {
@@ -51,7 +55,7 @@ function CreativeRoom() {
     void (async () => {
       const { data } = await supabase
         .from("sessions")
-        .select("id, brand_name, selected_smp, stage_21_outputs")
+        .select("id, brand_name, selected_smp, stage_21_outputs, locked_big_idea, locked_campaign_line, locked_big_idea_lens")
         .eq("id", sessionId)
         .maybeSingle();
       if (cancelled) return;
@@ -102,9 +106,9 @@ function CreativeRoom() {
             {loading ? "Loading…" : session?.brand_name || "Untitled session"}
           </h1>
           <p className="text-body-sm" style={{ color: MUTED, maxWidth: 760, lineHeight: 1.7 }}>
-            One channel brief, swept through all {LENS_COUNT} creative lenses, then handed to a human
-            Tissue Check, Gate One rating, orchestration and Gate Two sign-off. Raw stimulus, not
-            finished work.
+            One sweep of all {LENS_COUNT} creative lenses against the proposition itself — before any
+            channel brief exists — then Tissue Check, Gate One rating, and one winning idea and line
+            locked. Channel work adapts that locked idea; it never reinterprets the proposition.
           </p>
 
           {/* Background input — the session's strategy, collapsed by default. */}
@@ -176,22 +180,44 @@ function CreativeRoom() {
               Session not found, or you don&apos;t have access to it.
             </div>
           )}
-          {!loading && session && channels.length === 0 && (
-            <div className="text-body-sm" style={{ color: "#E86A3D", marginTop: 24 }}>
-              This session has no completed Channel Briefs yet — finish Stage 21 in the Strategy
-              Pipeline before running the creative sweep.
-            </div>
-          )}
+
         </div>
 
-        {!loading && session && channels.length > 0 && (
+        {!loading && session && (
           <div style={{ maxWidth: 1180, margin: "36px auto 0" }}>
-            <CreativeStimulus
-              variant="page"
-              sessionId={session.id}
-              channels={channels}
-              brandName={session.brand_name ?? ""}
-            />
+            <BigIdeaSweep sessionId={session.id} />
+          </div>
+        )}
+
+        {!loading && session && (
+          <div style={{ maxWidth: 1180, margin: "56px auto 0" }}>
+            <div style={{ maxWidth: 980, margin: "0 auto" }}>
+              <div
+                className="text-mono"
+                style={{ color: AMBER, fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase" }}
+              >
+                Step 2 · Channel cascade
+              </div>
+              <p className="text-body-sm" style={{ color: MUTED, marginTop: 8, lineHeight: 1.7 }}>
+                {session.locked_big_idea
+                  ? `Channel briefs now adapt the locked idea (${session.locked_big_idea_lens ?? "—"}) and line "${session.locked_campaign_line ?? ""}". Regenerate Stage 21 in the Strategy Pipeline to cascade it.`
+                  : "Lock a winning idea and line above before generating channel briefs — a channel brief written first is exactly how the proposition gets reinterpreted."}
+              </p>
+              {channels.length === 0 && (
+                <div className="text-body-sm" style={{ color: "#E86A3D", marginTop: 14 }}>
+                  No Channel Briefs generated yet — run Stage 21 in the Strategy Pipeline once the idea
+                  is locked.
+                </div>
+              )}
+            </div>
+            {channels.length > 0 && (
+              <CreativeStimulus
+                variant="page"
+                sessionId={session.id}
+                channels={channels}
+                brandName={session.brand_name ?? ""}
+              />
+            )}
           </div>
         )}
       </main>
