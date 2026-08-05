@@ -25,7 +25,7 @@ import {
   extractFileText,
   type FileKind,
 } from "@/lib/intelligence/file-extract";
-import { ResearchSynthesiserPanel } from "@/components/intelligence/ResearchSynthesiserPanel";
+
 
 export type BriefType = "commercial" | "government";
 
