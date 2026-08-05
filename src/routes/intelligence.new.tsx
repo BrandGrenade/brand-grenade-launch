@@ -9,10 +9,12 @@ import {
   createIntelligenceSession,
   runIntelligenceAnalysis,
 } from "@/lib/intelligence.functions";
+import { consumeSynthesiserHandoff } from "@/lib/synthesiser/handoff";
 import {
   IntelligenceForm,
   type IntelligenceFormValues,
 } from "@/components/intelligence/IntelligenceForm";
+
 
 const searchSchema = z.object({
   brand: z.string().optional(),
@@ -39,7 +41,11 @@ function IntelligenceNewPage() {
   const search = Route.useSearch();
   const createFn = useServerFn(createIntelligenceSession);
   const runFn = useServerFn(runIntelligenceAnalysis);
-  const [initialBrand] = useState(search.brand ?? "");
+  // Room 00 is optional. When it was skipped there is no handoff and the form
+  // renders exactly as it always has.
+  const [handoff] = useState(() => consumeSynthesiserHandoff());
+  const [initialBrand] = useState(handoff?.brand || (search.brand ?? ""));
+
 
   async function handleSubmit(values: IntelligenceFormValues): Promise<void> {
     try {
@@ -86,15 +92,37 @@ function IntelligenceNewPage() {
               territory intelligence report. Paste text, upload files
               (PDF, DOCX, PPTX, XLSX, CSV, TXT), or both.
             </p>
+            {handoff ? (
+              <p className="text-[13px] mt-3 text-text-secondary">
+                Research Synthesiser findings have been filed into the fields
+                below — attributed, verified where publicly checkable, and fully
+                editable before you run.
+              </p>
+            ) : (
+              <p className="text-[13px] mt-3 text-text-secondary">
+                Have messy, unsorted research?{" "}
+                <Link
+                  to="/synthesiser"
+                  search={{}}
+                  className="underline hover:text-text-primary"
+                >
+                  Run it through the Research Synthesiser first
+                </Link>{" "}
+                — optional.
+              </p>
+            )}
           </div>
 
           <IntelligenceForm
             initialBrand={initialBrand}
+            initialCategory={handoff?.category ?? ""}
+            initialInputs={handoff?.fields}
             submitLabel="Start Intelligence Lab"
             submittingLabel="Starting analysis…"
             cancelHref="/dashboard"
             onSubmit={handleSubmit}
           />
+
         </div>
       </main>
     </div>

@@ -55,7 +55,10 @@ export type BrandRow = {
   displayName: string;
   /** Best category observed across all systems. */
   category: string | null;
+  /** Room 00 — Research Synthesiser (optional). */
+  synthesiser: SystemStatus;
   intelligence: SystemStatus;
+
   briefingRoom: SystemStatus;
   pipeline: SystemStatus;
   phase2: SystemStatus;
@@ -164,6 +167,35 @@ type StimulusOrchRow = {
   gate_two_confirmed: boolean | null;
   updated_at: string;
 };
+
+/** Room 00 — Research Synthesiser run. */
+type SynthesiserRunRow = {
+  id: string;
+  brand_name: string | null;
+  category: string | null;
+  status: string | null;
+  claim_count: number | null;
+  created_at: string;
+  updated_at: string;
+};
+
+function deriveSynthesiser(runs: SynthesiserRunRow[]): SystemStatus {
+  if (runs.length === 0) return EMPTY_STATUS;
+  const latest = runs[0];
+  const applied = runs.some((r) => r.status === "applied");
+  return {
+    state: applied ? "complete" : "in_progress",
+    label: applied
+      ? `Applied${latest.claim_count ? ` · ${latest.claim_count} claims` : ""}`
+      : "In progress",
+    timestamp: latest.updated_at,
+    href: "/synthesiser",
+    hrefSearch: { brand: latest.brand_name ?? "" },
+    runCount: runs.length,
+  };
+}
+
+
 
 
 // ─── Per-system derivation ─────────────────────────────────────────
@@ -430,6 +462,7 @@ type Aggregated = {
   intelligence: IntelligenceRow[];
   stimulusRuns: StimulusRunRow[];
   stimulusOrchs: StimulusOrchRow[];
+  synthesiserRuns: SynthesiserRunRow[];
 };
 
 function assemble({
@@ -439,6 +472,7 @@ function assemble({
   intelligence,
   stimulusRuns,
   stimulusOrchs,
+  synthesiserRuns,
 }: Aggregated): BrandRow[] {
   const runsBySession = new Map<string, StimulusRunRow[]>();
   for (const r of stimulusRuns) {
@@ -463,6 +497,7 @@ function assemble({
       workspaces: WorkspaceRow[];
       savedBriefs: SavedBriefRow[];
       intelligence: IntelligenceRow[];
+      synthesiser: SynthesiserRunRow[];
     }
   >();
 
@@ -484,6 +519,7 @@ function assemble({
         workspaces: [],
         savedBriefs: [],
         intelligence: [],
+        synthesiser: [],
       });
     } else {
       // Prefer most recent non-empty displayName.
@@ -512,6 +548,10 @@ function assemble({
     const key = touch(i.brand_name, i.category, i.updated_at);
     if (key) groups.get(key)!.intelligence.push(i);
   }
+  for (const r of synthesiserRuns) {
+    const key = touch(r.brand_name, r.category, r.updated_at);
+    if (key) groups.get(key)!.synthesiser.push(r);
+  }
 
   const rows: BrandRow[] = [];
   for (const [key, g] of groups) {
@@ -520,7 +560,9 @@ function assemble({
     g.workspaces.sort((a, b) => b.updated_at.localeCompare(a.updated_at));
     g.savedBriefs.sort((a, b) => b.created_at.localeCompare(a.created_at));
     g.intelligence.sort((a, b) => b.updated_at.localeCompare(a.updated_at));
+    g.synthesiser.sort((a, b) => b.updated_at.localeCompare(a.updated_at));
 
+    const synthesiser = deriveSynthesiser(g.synthesiser);
     const intelligence = deriveIntelligence(g.intelligence);
     const briefingRoom = deriveBriefing(g.workspaces, g.savedBriefs.length);
     const pipeline = derivePipeline(g.sessions);
@@ -636,6 +678,7 @@ function assemble({
       key,
       displayName: g.displayName,
       category: g.category,
+      synthesiser,
       intelligence,
       briefingRoom,
       pipeline,
@@ -670,8 +713,15 @@ export function useBrandRegister(): UseBrandRegisterResult {
 
   const load = useCallback(async () => {
     setError(null);
-    const [sessionsRes, workspacesRes, briefsRes, intelRes, stimRunsRes, stimOrchsRes] =
-      await Promise.all([
+    const [
+      sessionsRes,
+      workspacesRes,
+      briefsRes,
+      intelRes,
+      stimRunsRes,
+      stimOrchsRes,
+      synthRunsRes,
+    ] = await Promise.all([
       supabase
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .from("brand_register_sessions" as any)
@@ -723,6 +773,20 @@ export function useBrandRegister(): UseBrandRegisterResult {
         .select("id,session_id,status,gate_two_confirmed,updated_at")
         .order("updated_at", { ascending: false })
         .limit(1000),
+      // Room 00 is optional and recent; absence must never break the register.
+      (async () => {
+        try {
+          const res = await supabase
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            .from("synthesiser_runs" as any)
+            .select("id,brand_name,category,status,claim_count,created_at,updated_at")
+            .order("updated_at", { ascending: false })
+            .limit(500);
+          return res as { data: SynthesiserRunRow[] | null; error: unknown };
+        } catch {
+          return { data: [] as SynthesiserRunRow[], error: null };
+        }
+      })(),
     ]);
 
     if (sessionsRes.error) {
@@ -736,6 +800,8 @@ export function useBrandRegister(): UseBrandRegisterResult {
       []) as IntelligenceRow[];
     const stimulusRuns = (stimRunsRes.data ?? []) as unknown as StimulusRunRow[];
     const stimulusOrchs = (stimOrchsRes.data ?? []) as unknown as StimulusOrchRow[];
+    const synthesiserRuns = ((synthRunsRes as { data: SynthesiserRunRow[] | null })
+      .data ?? []) as SynthesiserRunRow[];
 
     setRows(
       assemble({
@@ -745,6 +811,7 @@ export function useBrandRegister(): UseBrandRegisterResult {
         intelligence,
         stimulusRuns,
         stimulusOrchs,
+        synthesiserRuns,
       }),
     );
     setLoading(false);

@@ -47,12 +47,21 @@ function fmtBytes(n: number): string {
 export interface ResearchSynthesiserPanelProps {
   brand: string;
   category: string;
-  onApply: (fields: Record<SynthesiserCategory, string>) => void;
+  /** Label for the apply button — room 00 continues into the Lab. */
+  applyLabel?: string;
+  /** Fired when a synthesis run completes (before any apply). */
+  onSynthesised?: (claimCount: number) => void;
+  onApply: (
+    fields: Record<SynthesiserCategory, string>,
+    claimCount: number,
+  ) => void;
 }
 
 export function ResearchSynthesiserPanel({
   brand,
   category,
+  applyLabel = "Apply to the six fields below",
+  onSynthesised,
   onApply,
 }: ResearchSynthesiserPanelProps) {
   const runSynthesise = useServerFn(synthesiseResearch);
@@ -62,6 +71,7 @@ export function ResearchSynthesiserPanel({
   const [running, setRunning] = useState(false);
   const [result, setResult] = useState<SynthesiserResult | null>(null);
   const [applied, setApplied] = useState(false);
+
 
   async function handleFiles(list: FileList | File[]) {
     const arr = Array.from(list);
@@ -144,6 +154,7 @@ export function ResearchSynthesiserPanel({
         data: { brandName: brand.trim(), category: category.trim(), documents },
       });
       setResult(res);
+      onSynthesised?.(res.stats.totalClaims);
       if (res.stats.totalClaims === 0) {
         toast.error("No classifiable claims were found in that material.");
       } else {
@@ -161,10 +172,11 @@ export function ResearchSynthesiserPanel({
 
   function handleApply() {
     if (!result) return;
-    onApply(result.fields);
+    onApply(result.fields, result.stats.totalClaims);
     setApplied(true);
-    toast.success("Applied to the six research fields below. Review and edit before running.");
+    toast.success("Applied. Review and edit the six research fields before running.");
   }
+
 
   const perCategory = SYNTHESISER_CATEGORIES.map((c) => ({
     ...c,
@@ -336,11 +348,13 @@ export function ResearchSynthesiserPanel({
               onClick={handleApply}
               disabled={result.stats.totalClaims === 0}
             >
-              {applied ? "Apply again" : "Apply to the six fields below"}
+              {applied ? "Apply again" : applyLabel}
             </Button>
             <span className="text-[13px] text-text-secondary">
-              Human checkpoint — applied entries stay editable below.
+              Human checkpoint — applied entries stay fully editable in the
+              Intelligence Lab.
             </span>
+
           </div>
         </div>
       ) : null}

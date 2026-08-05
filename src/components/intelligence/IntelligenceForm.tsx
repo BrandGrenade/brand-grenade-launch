@@ -25,7 +25,7 @@ import {
   extractFileText,
   type FileKind,
 } from "@/lib/intelligence/file-extract";
-import { ResearchSynthesiserPanel } from "@/components/intelligence/ResearchSynthesiserPanel";
+
 
 export type BriefType = "commercial" | "government";
 
@@ -444,22 +444,6 @@ export function IntelligenceForm({
           </div>
         </Card>
 
-        <ResearchSynthesiserPanel
-          brand={brand}
-          category={category}
-          onApply={(fields) => {
-            setInputs((prev) => {
-              const next = { ...prev };
-              for (const s of SECTIONS) {
-                const incoming = (fields[s.key] ?? "").trim();
-                if (!incoming) continue;
-                const existing = next[s.key].trim();
-                next[s.key] = existing ? `${existing}\n\n${incoming}` : incoming;
-              }
-              return next;
-            });
-          }}
-        />
 
         {SECTIONS.map((s) => (
 

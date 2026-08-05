@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as UnsubscribeRouteImport } from './routes/unsubscribe'
+import { Route as SynthesiserRouteImport } from './routes/synthesiser'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as PipelineRouteImport } from './routes/pipeline'
 import { Route as LoginRouteImport } from './routes/login'
@@ -25,6 +26,7 @@ import { Route as BriefingRoomRouteImport } from './routes/briefing-room'
 import { Route as BriefRouteImport } from './routes/brief'
 import { Route as RepoSlugRouteImport } from './routes/$repoSlug'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as SynthesiserIndexRouteImport } from './routes/synthesiser.index'
 import { Route as IntelligenceIndexRouteImport } from './routes/intelligence.index'
 import { Route as CreativeIndexRouteImport } from './routes/creative.index'
 import { Route as BriefingRoomIndexRouteImport } from './routes/briefing-room.index'
@@ -49,6 +51,11 @@ import { Route as ApiRepoViewDocumentIdRouteImport } from './routes/api/repo/vie
 const UnsubscribeRoute = UnsubscribeRouteImport.update({
   id: '/unsubscribe',
   path: '/unsubscribe',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SynthesiserRoute = SynthesiserRouteImport.update({
+  id: '/synthesiser',
+  path: '/synthesiser',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SettingsRoute = SettingsRouteImport.update({
@@ -125,6 +132,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const SynthesiserIndexRoute = SynthesiserIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => SynthesiserRoute,
 } as any)
 const IntelligenceIndexRoute = IntelligenceIndexRouteImport.update({
   id: '/',
@@ -246,6 +258,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/pipeline': typeof PipelineRoute
   '/settings': typeof SettingsRoute
+  '/synthesiser': typeof SynthesiserRouteWithChildren
   '/unsubscribe': typeof UnsubscribeRoute
   '/admin/repositories': typeof AdminRepositoriesRoute
   '/admin/tests': typeof AdminTestsRoute
@@ -260,6 +273,7 @@ export interface FileRoutesByFullPath {
   '/briefing-room/': typeof BriefingRoomIndexRoute
   '/creative/': typeof CreativeIndexRoute
   '/intelligence/': typeof IntelligenceIndexRoute
+  '/synthesiser/': typeof SynthesiserIndexRoute
   '/admin/preview/$slug': typeof AdminPreviewSlugRoute
   '/intelligence/$id/edit': typeof IntelligenceIdEditRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
@@ -294,6 +308,7 @@ export interface FileRoutesByTo {
   '/briefing-room': typeof BriefingRoomIndexRoute
   '/creative': typeof CreativeIndexRoute
   '/intelligence': typeof IntelligenceIndexRoute
+  '/synthesiser': typeof SynthesiserIndexRoute
   '/admin/preview/$slug': typeof AdminPreviewSlugRoute
   '/intelligence/$id/edit': typeof IntelligenceIdEditRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
@@ -319,6 +334,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/pipeline': typeof PipelineRoute
   '/settings': typeof SettingsRoute
+  '/synthesiser': typeof SynthesiserRouteWithChildren
   '/unsubscribe': typeof UnsubscribeRoute
   '/admin/repositories': typeof AdminRepositoriesRoute
   '/admin/tests': typeof AdminTestsRoute
@@ -333,6 +349,7 @@ export interface FileRoutesById {
   '/briefing-room/': typeof BriefingRoomIndexRoute
   '/creative/': typeof CreativeIndexRoute
   '/intelligence/': typeof IntelligenceIndexRoute
+  '/synthesiser/': typeof SynthesiserIndexRoute
   '/admin/preview/$slug': typeof AdminPreviewSlugRoute
   '/intelligence/$id_/edit': typeof IntelligenceIdEditRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
@@ -359,6 +376,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/pipeline'
     | '/settings'
+    | '/synthesiser'
     | '/unsubscribe'
     | '/admin/repositories'
     | '/admin/tests'
@@ -373,6 +391,7 @@ export interface FileRouteTypes {
     | '/briefing-room/'
     | '/creative/'
     | '/intelligence/'
+    | '/synthesiser/'
     | '/admin/preview/$slug'
     | '/intelligence/$id/edit'
     | '/lovable/email/suppression'
@@ -407,6 +426,7 @@ export interface FileRouteTypes {
     | '/briefing-room'
     | '/creative'
     | '/intelligence'
+    | '/synthesiser'
     | '/admin/preview/$slug'
     | '/intelligence/$id/edit'
     | '/lovable/email/suppression'
@@ -431,6 +451,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/pipeline'
     | '/settings'
+    | '/synthesiser'
     | '/unsubscribe'
     | '/admin/repositories'
     | '/admin/tests'
@@ -445,6 +466,7 @@ export interface FileRouteTypes {
     | '/briefing-room/'
     | '/creative/'
     | '/intelligence/'
+    | '/synthesiser/'
     | '/admin/preview/$slug'
     | '/intelligence/$id_/edit'
     | '/lovable/email/suppression'
@@ -470,6 +492,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   PipelineRoute: typeof PipelineRoute
   SettingsRoute: typeof SettingsRoute
+  SynthesiserRoute: typeof SynthesiserRouteWithChildren
   UnsubscribeRoute: typeof UnsubscribeRoute
   AdminRepositoriesRoute: typeof AdminRepositoriesRoute
   AdminTestsRoute: typeof AdminTestsRoute
@@ -490,6 +513,13 @@ declare module '@tanstack/react-router' {
       path: '/unsubscribe'
       fullPath: '/unsubscribe'
       preLoaderRoute: typeof UnsubscribeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/synthesiser': {
+      id: '/synthesiser'
+      path: '/synthesiser'
+      fullPath: '/synthesiser'
+      preLoaderRoute: typeof SynthesiserRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/settings': {
@@ -596,6 +626,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/synthesiser/': {
+      id: '/synthesiser/'
+      path: '/'
+      fullPath: '/synthesiser/'
+      preLoaderRoute: typeof SynthesiserIndexRouteImport
+      parentRoute: typeof SynthesiserRoute
     }
     '/intelligence/': {
       id: '/intelligence/'
@@ -798,6 +835,18 @@ const IntelligenceRouteWithChildren = IntelligenceRoute._addFileChildren(
   IntelligenceRouteChildren,
 )
 
+interface SynthesiserRouteChildren {
+  SynthesiserIndexRoute: typeof SynthesiserIndexRoute
+}
+
+const SynthesiserRouteChildren: SynthesiserRouteChildren = {
+  SynthesiserIndexRoute: SynthesiserIndexRoute,
+}
+
+const SynthesiserRouteWithChildren = SynthesiserRoute._addFileChildren(
+  SynthesiserRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   RepoSlugRoute: RepoSlugRoute,
@@ -814,6 +863,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   PipelineRoute: PipelineRoute,
   SettingsRoute: SettingsRoute,
+  SynthesiserRoute: SynthesiserRouteWithChildren,
   UnsubscribeRoute: UnsubscribeRoute,
   AdminRepositoriesRoute: AdminRepositoriesRoute,
   AdminTestsRoute: AdminTestsRoute,
