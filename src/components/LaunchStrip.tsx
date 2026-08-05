@@ -42,7 +42,6 @@ const buttonStyle: React.CSSProperties = {
   border: "1px solid #1C1A18",
   boxShadow: "none",
   textDecoration: "none",
-  border: "none",
   cursor: "pointer",
   whiteSpace: "nowrap",
 };
