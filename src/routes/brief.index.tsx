@@ -60,7 +60,7 @@ const ACCEPTED_TYPES = [".pdf", ".docx", ".pptx", ".txt"];
 
 
 const INSTRUCTION_STYLE: React.CSSProperties = {
-  color: "#8A8680",
+  color: "#8B8680",
   fontStyle: "italic",
   fontSize: 13,
   lineHeight: 1.5,
@@ -547,7 +547,7 @@ function BriefIntake() {
                 className="h-full transition-all"
                 style={{
                   width: `${(completion.count / completion.total) * 100}%`,
-                  backgroundColor: "#D4924A",
+                  backgroundColor: "#C81E1E",
                 }}
               />
             </div>
@@ -560,8 +560,8 @@ function BriefIntake() {
               disabled={!canSubmitSections || submitting}
               className="inline-flex h-[52px] flex-1 items-center justify-center rounded-md text-[16px] transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
               style={{
-                backgroundColor: canSubmitSections ? "#D4924A" : "var(--color-border)",
-                color: canSubmitSections ? "#0A0A0A" : "var(--color-text-tertiary)",
+                backgroundColor: canSubmitSections ? "#C81E1E" : "var(--color-border)",
+                color: canSubmitSections ? "#0A0908" : "var(--color-text-tertiary)",
                 fontWeight: 600,
                 cursor: canSubmitSections && !submitting ? "pointer" : "not-allowed",
                 opacity: submitting ? 0.7 : 1,
@@ -577,8 +577,8 @@ function BriefIntake() {
               disabled={!canSubmitSections || saving}
               className="inline-flex h-[52px] items-center justify-center rounded-md px-6 text-[15px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background sm:w-auto"
               style={{
-                border: "1px solid #D4924A",
-                color: canSubmitSections ? "#D4924A" : "var(--color-text-tertiary)",
+                border: "1px solid #C81E1E",
+                color: canSubmitSections ? "#C81E1E" : "var(--color-text-tertiary)",
                 backgroundColor: "transparent",
                 fontWeight: 600,
                 cursor: canSubmitSections && !saving ? "pointer" : "not-allowed",
@@ -592,7 +592,7 @@ function BriefIntake() {
 
           <p
             className="text-body-sm mt-3 text-center"
-            style={{ color: "#5A5652" }}
+            style={{ color: "#8B8680" }}
           >
             The Strategy Engine will assess your brief and begin processing. You
             will review the output before each major stage advances.
@@ -610,7 +610,7 @@ function BriefIntake() {
         {/* OR DIVIDER */}
         <div className="my-10 flex items-center gap-4">
           <hr className="h-px flex-1 border-0 bg-border" />
-          <span className="text-body-sm" style={{ color: "#5A5652" }}>
+          <span className="text-body-sm" style={{ color: "#8B8680" }}>
             OR
           </span>
           <hr className="h-px flex-1 border-0 bg-border" />
@@ -631,22 +631,22 @@ function BriefIntake() {
           }}
           className="flex cursor-pointer flex-col items-center text-center"
           style={{
-            border: "2px dashed #2A2A2A",
+            border: "2px dashed #1C1A18",
             borderRadius: 12,
             padding: 48,
-            backgroundColor: altDragging ? "#1a1a1a" : "#141414",
+            backgroundColor: altDragging ? "#1a1a1a" : "#1C1A18",
           }}
         >
           <BigUploadIcon />
           <h3
             className="text-h3 mt-4"
-            style={{ color: "#F0EDE8" }}
+            style={{ color: "#EDE8E0" }}
           >
             Upload an existing brief, research document, or marketing plan
           </h3>
           <p
             className="mt-2 max-w-[520px]"
-            style={{ color: "#8A8680", fontSize: 15, lineHeight: 1.55 }}
+            style={{ color: "#8B8680", fontSize: 15, lineHeight: 1.55 }}
           >
             Upload any document and the Strategy Engine will extract the
             strategic inputs it needs. PDF, DOCX, PPTX, or TXT. Up to 50MB.
@@ -659,9 +659,9 @@ function BriefIntake() {
             }}
             style={{
               marginTop: 16,
-              border: "1px solid #2A2A2A",
+              border: "1px solid #1C1A18",
               background: "transparent",
-              color: "#F0EDE8",
+              color: "#EDE8E0",
               borderRadius: 8,
               padding: "10px 20px",
               fontWeight: 500,
@@ -675,24 +675,24 @@ function BriefIntake() {
             <div className="mt-5 text-center">
               <p
                 className="text-body-sm"
-                style={{ color: "#F0EDE8", fontWeight: 500 }}
+                style={{ color: "#EDE8E0", fontWeight: 500 }}
               >
                 {altFile.name} · {(altFile.size / 1024).toFixed(0)} KB
               </p>
               {altStatus === "reading" && (
                 <p
                   className="text-body-sm mt-1 inline-flex items-center gap-2"
-                  style={{ color: "#8A8680" }}
+                  style={{ color: "#8B8680" }}
                 >
                   <span
                     className="inline-block h-2 w-2 animate-pulse rounded-full"
-                    style={{ backgroundColor: "#D4924A" }}
+                    style={{ backgroundColor: "#C81E1E" }}
                   />
                   Reading document…
                 </p>
               )}
               {altStatus === "ready" && (
-                <p className="text-body-sm mt-1" style={{ color: "#4A7C59" }}>
+                <p className="text-body-sm mt-1" style={{ color: "#C81E1E" }}>
                   Document received. The Strategy Engine will extract the
                   relevant strategic inputs.
                 </p>
@@ -717,8 +717,8 @@ function BriefIntake() {
           disabled={!canSubmitAlt || submitting}
           className="mt-6 inline-flex h-[52px] w-full items-center justify-center rounded-md text-[16px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           style={{
-            backgroundColor: canSubmitAlt ? "#D4924A" : "var(--color-border)",
-            color: canSubmitAlt ? "#0A0A0A" : "var(--color-text-tertiary)",
+            backgroundColor: canSubmitAlt ? "#C81E1E" : "var(--color-border)",
+            color: canSubmitAlt ? "#0A0908" : "var(--color-text-tertiary)",
             fontWeight: 600,
             cursor: canSubmitAlt && !submitting ? "pointer" : "not-allowed",
             opacity: submitting ? 0.7 : 1,
@@ -913,7 +913,7 @@ function EssentialDot() {
       aria-label="Essential"
       title="Essential"
       className="inline-block h-2 w-2 shrink-0 rounded-full"
-      style={{ backgroundColor: "#D4924A" }}
+      style={{ backgroundColor: "#C81E1E" }}
     />
   );
 }
@@ -923,7 +923,7 @@ function CompletedDot() {
     <span
       aria-label="Completed"
       className="inline-block h-2 w-2 shrink-0 rounded-full"
-      style={{ backgroundColor: "#4A7C59" }}
+      style={{ backgroundColor: "#C81E1E" }}
     />
   );
 }
@@ -972,7 +972,7 @@ function BigUploadIcon() {
     <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
       <path
         d="M16 21V5M16 5L9 12M16 5L23 12M5 23V26C5 26.8 5.7 27.5 6.5 27.5H25.5C26.3 27.5 27 26.8 27 26V23"
-        stroke="#D4924A"
+        stroke="#C81E1E"
         strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"

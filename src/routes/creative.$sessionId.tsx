@@ -10,8 +10,8 @@ import { BigIdeaSweep } from "@/components/BigIdeaSweep";
 import { supabase } from "@/integrations/supabase/client";
 import { LENS_COUNT } from "@/lib/stimulus/lenses";
 
-const AMBER = "#E8A33D";
-const MUTED = "#8A8680";
+const AMBER = "#C81E1E";
+const MUTED = "#8B8680";
 
 export const Route = createFileRoute("/creative/$sessionId")({
   component: CreativeRoom,
@@ -72,7 +72,7 @@ function CreativeRoom() {
   return (
     <>
       <TopNav />
-      <main style={{ padding: "36px 24px 120px", backgroundColor: "#0B0B0B", minHeight: "100vh" }}>
+      <main style={{ padding: "36px 24px 120px", backgroundColor: "#0A0908", minHeight: "100vh" }}>
         <div style={{ maxWidth: 980, margin: "0 auto" }}>
           <Link
             to="/creative"
@@ -96,7 +96,7 @@ function CreativeRoom() {
           </div>
           <h1
             style={{
-              color: "#F2EFE9",
+              color: "#EDE8E0",
               fontSize: 34,
               lineHeight: 1.15,
               margin: "10px 0 12px",
@@ -116,9 +116,9 @@ function CreativeRoom() {
             <div
               style={{
                 marginTop: 26,
-                border: "1px solid #232323",
+                border: "1px solid #1C1A18",
                 borderRadius: 12,
-                backgroundColor: "#101010",
+                backgroundColor: "#0A0908",
                 padding: "18px 22px",
               }}
             >
@@ -128,7 +128,7 @@ function CreativeRoom() {
               >
                 Background input
               </div>
-              <div className="text-body-sm" style={{ color: "#E8E4DE", marginTop: 10, lineHeight: 1.7 }}>
+              <div className="text-body-sm" style={{ color: "#EDE8E0", marginTop: 10, lineHeight: 1.7 }}>
                 <strong style={{ color: AMBER }}>SMP:</strong>{" "}
                 {session.selected_smp?.trim() || "— not selected"}
               </div>
@@ -139,7 +139,7 @@ function CreativeRoom() {
                 style={{
                   marginTop: 12,
                   background: "none",
-                  border: "1px solid #2A2A2A",
+                  border: "1px solid #1C1A18",
                   color: MUTED,
                   borderRadius: 6,
                   padding: "6px 12px",
@@ -155,7 +155,7 @@ function CreativeRoom() {
               {briefsOpen && (
                 <div style={{ marginTop: 14, display: "grid", gap: 14 }}>
                   {channels.map((c) => (
-                    <div key={c} style={{ borderTop: "1px solid #232323", paddingTop: 12 }}>
+                    <div key={c} style={{ borderTop: "1px solid #1C1A18", paddingTop: 12 }}>
                       <div
                         className="text-mono"
                         style={{ color: AMBER, fontSize: 12, textTransform: "uppercase", letterSpacing: "0.06em" }}
@@ -176,7 +176,7 @@ function CreativeRoom() {
           )}
 
           {!loading && !session && (
-            <div className="text-body-sm" style={{ color: "#E86A3D", marginTop: 24 }}>
+            <div className="text-body-sm" style={{ color: "#C81E1E", marginTop: 24 }}>
               Session not found, or you don&apos;t have access to it.
             </div>
           )}
@@ -204,7 +204,7 @@ function CreativeRoom() {
                   : "Lock a winning idea and line above before generating channel briefs — a channel brief written first is exactly how the proposition gets reinterpreted."}
               </p>
               {channels.length === 0 && (
-                <div className="text-body-sm" style={{ color: "#E86A3D", marginTop: 14 }}>
+                <div className="text-body-sm" style={{ color: "#C81E1E", marginTop: 14 }}>
                   No Channel Briefs generated yet — run Stage 21 in the Strategy Pipeline once the idea
                   is locked.
                 </div>

@@ -18,7 +18,7 @@ export function MobileGate() {
       role="dialog"
       aria-modal="true"
       className="fixed inset-0 flex items-center justify-center px-6 text-center"
-      style={{ backgroundColor: "#0A0A0A", zIndex: 9999 }}
+      style={{ backgroundColor: "#0A0908", zIndex: 9999 }}
     >
       <div style={{ maxWidth: 420 }}>
         <div
@@ -28,11 +28,11 @@ export function MobileGate() {
             height: 48,
             margin: "0 auto 24px",
             borderRadius: 10,
-            backgroundColor: "#D4924A",
+            backgroundColor: "#C81E1E",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            color: "#FFFFFF",
+            color: "#EDE8E0",
             fontWeight: 700,
             letterSpacing: "0.04em",
             fontFamily:
@@ -43,7 +43,7 @@ export function MobileGate() {
         </div>
         <h1
           style={{
-            color: "#F0EDE8",
+            color: "#EDE8E0",
             fontSize: 22,
             fontWeight: 600,
             letterSpacing: "-0.01em",
@@ -52,10 +52,10 @@ export function MobileGate() {
         >
           Designed for desktop
         </h1>
-        <p style={{ color: "#8A8680", fontSize: 14, lineHeight: 1.55 }}>
+        <p style={{ color: "#8B8680", fontSize: 14, lineHeight: 1.55 }}>
           Brand Grenade is designed for desktop use. Please access on a screen
           wider than{" "}
-          <span style={{ color: "#D4924A", fontWeight: 600 }}>560px</span>.
+          <span style={{ color: "#C81E1E", fontWeight: 600 }}>560px</span>.
         </p>
       </div>
     </div>

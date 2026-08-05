@@ -141,7 +141,7 @@ function AmberButton({
         alignItems: "center",
         gap: 8,
         backgroundColor: solid ? AMBER : "transparent",
-        color: solid ? "#0A0A0A" : AMBER,
+        color: solid ? "#0A0908" : AMBER,
         border: `1px solid ${AMBER}`,
         borderRadius: 6,
         padding: "10px 16px",
@@ -185,7 +185,7 @@ function SectionTitle({ kicker, title, subtitle }: { kicker: string; title: stri
 function ErrorBanner({ message }: { message: string }) {
   return (
     <div style={{
-      backgroundColor: "#7C3A3A12", border: "1px solid #7C3A3A",
+      backgroundColor: "#C81E1E12", border: "1px solid #C81E1E",
       borderRadius: 8, padding: 16, marginTop: 16,
     }}>
       <p className="text-body" style={{ color: "#E89494", margin: 0 }}>{message}</p>
@@ -232,9 +232,9 @@ function GlobalRetryDirection({
         placeholder="Optional. e.g. push harder on cultural tension; ground every candidate in a specific Australian ritual."
         style={{
           width: "100%",
-          backgroundColor: "#0E0E0E",
-          color: "#FFFFFF",
-          border: "1px solid #2A2A2A",
+          backgroundColor: "#0A0908",
+          color: "#EDE8E0",
+          border: "1px solid #1C1A18",
           borderRadius: 8,
           padding: "12px 14px",
           fontFamily: "inherit",
@@ -257,7 +257,7 @@ function GlobalRetryDirection({
 function RichOutput({ text }: { text: string }) {
   const lines = text.split("\n");
   return (
-    <div className="text-body" style={{ color: "#FFFFFF", lineHeight: 1.6, whiteSpace: "pre-wrap" }}>
+    <div className="text-body" style={{ color: "#EDE8E0", lineHeight: 1.6, whiteSpace: "pre-wrap" }}>
       {lines.map((line, i) => {
         // Drop markdown horizontal rules entirely.
         if (/^\s*-{3,}\s*$/.test(line) || /^\s*\*{3,}\s*$/.test(line)) {
@@ -898,8 +898,8 @@ function DetonationPage() {
 
         {/* RIGHT PANEL */}
         <main className="flex-1 min-w-0 overflow-y-auto" style={{ padding: "32px clamp(20px, 4vw, 48px) 96px" }}>
-          {!sessionId && <p className="text-body" style={{ color: "#5A5652", textAlign: "center" }}>No session specified.</p>}
-          {sessionId && loading && <p className="text-body" style={{ color: "#5A5652", textAlign: "center" }}>Loading session…</p>}
+          {!sessionId && <p className="text-body" style={{ color: "#8B8680", textAlign: "center" }}>No session specified.</p>}
+          {sessionId && loading && <p className="text-body" style={{ color: "#8B8680", textAlign: "center" }}>Loading session…</p>}
           {error && <ErrorBanner message={error} />}
           {sessionId && !loading && session && (
             <>
@@ -1135,7 +1135,7 @@ function Stage17b({ session, onChange, goNext }: { session: SessionRow; onChange
         </AmberButton>
       ) : (
         <div style={{
-          backgroundColor: "#111111", border: "1px solid #2A2A2A",
+          backgroundColor: "#0A0908", border: "1px solid #1C1A18",
           borderRadius: 8, padding: 28,
         }}>
           <RichOutput text={output} />
@@ -1266,13 +1266,13 @@ function Stage18({ session, onChange, goNext }: { session: SessionRow; onChange:
           {courageAbsent && !courageDismissed && (
             <div style={{
               backgroundColor: "#1A1208", borderLeft: `4px solid ${AMBER}`,
-              border: "1px solid #2A2A2A", borderRadius: 8, padding: 20, marginBottom: 20,
+              border: "1px solid #1C1A18", borderRadius: 8, padding: 20, marginBottom: 20,
             }}>
               <div style={{
                 color: AMBER, textTransform: "uppercase", fontSize: "7pt",
                 letterSpacing: "0.18em", marginBottom: 8, fontFamily: "'DM Mono', monospace", fontWeight: 500,
               }}>COURAGE REVIEW</div>
-              <p className="text-body" style={{ color: "#FFFFFF", lineHeight: 1.6, margin: 0 }}>
+              <p className="text-body" style={{ color: "#EDE8E0", lineHeight: 1.6, margin: 0 }}>
                 None of these ideas generated strategic discomfort. This may indicate the territory is not being pushed hard enough.
               </p>
               <div style={{ marginTop: 16, display: "flex", gap: 12 }}>
@@ -1286,13 +1286,13 @@ function Stage18({ session, onChange, goNext }: { session: SessionRow; onChange:
           {selectedLine && (
             <div style={{
               backgroundColor: "#1A1208", borderLeft: `4px solid ${AMBER}`,
-              border: "1px solid #2A2A2A", borderRadius: 8, padding: 16, marginBottom: 16,
+              border: "1px solid #1C1A18", borderRadius: 8, padding: 16, marginBottom: 16,
             }}>
               <div style={{ color: AMBER, textTransform: "uppercase", fontSize: "7pt",
                 letterSpacing: "0.18em", marginBottom: 6, fontFamily: "'DM Mono', monospace", fontWeight: 500 }}>
                 CURRENTLY SELECTED DETONATION
               </div>
-              <div className="text-body" style={{ color: "#FFFFFF", lineHeight: 1.5 }}>
+              <div className="text-body" style={{ color: "#EDE8E0", lineHeight: 1.5 }}>
                 {selectedLine}
               </div>
               <div className="text-body-sm" style={{ color: "#A0A0A0", marginTop: 6 }}>
@@ -1412,7 +1412,7 @@ function Stage19({ session, onChange, goNext }: { session: SessionRow; onChange:
           {busy && <Spinner />} {busy ? "Generating…" : "Run Stage 19"}
         </AmberButton>
       ) : (
-        <div style={{ backgroundColor: "#111111", border: "1px solid #2A2A2A", borderRadius: 8, padding: 28 }}>
+        <div style={{ backgroundColor: "#0A0908", border: "1px solid #1C1A18", borderRadius: 8, padding: 28 }}>
           {stage19Blocks.map((block, index) => (
             <div
               key={block.id}
@@ -1535,7 +1535,7 @@ function Stage20({ session, onChange, goNext }: { session: SessionRow; onChange:
         <AmberButton onClick={handleRun} disabled={busy}>{busy && <Spinner />} {busy ? "Generating…" : "Run Stage 20"}</AmberButton>
       ) : (
         <>
-          <div style={{ backgroundColor: "#111111", border: "1px solid #2A2A2A", borderRadius: 8, padding: 28 }}>
+          <div style={{ backgroundColor: "#0A0908", border: "1px solid #1C1A18", borderRadius: 8, padding: 28 }}>
             {sections.length === 0 ? (
               <RichOutput text={output.replace(/BRIEF\s+QUALITY\s+SCORE[\s\S]*$/i, "").trim()} />
             ) : (
@@ -1554,7 +1554,7 @@ function Stage20({ session, onChange, goNext }: { session: SessionRow; onChange:
 
           {/* Brief Quality Score */}
           <div style={{
-            marginTop: 24, backgroundColor: "#111111", border: "1px solid #2A2A2A",
+            marginTop: 24, backgroundColor: "#0A0908", border: "1px solid #1C1A18",
             borderRadius: 8, padding: 24,
           }}>
             <div style={{
@@ -1570,8 +1570,8 @@ function Stage20({ session, onChange, goNext }: { session: SessionRow; onChange:
                 ["Creative SoV Ambition", score.creative_sov_ambition],
               ].map(([label, val]) => (
                 <div key={label as string} style={{ borderTop: `1px solid ${AMBER}33`, paddingTop: 10 }}>
-                  <div className="text-mono" style={{ color: "#8A8680", fontSize: 9, textTransform: "uppercase", letterSpacing: "0.1em" }}>{label}</div>
-                  <div className="text-body" style={{ color: "#FFFFFF", fontSize: 18, marginTop: 4 }}>
+                  <div className="text-mono" style={{ color: "#8B8680", fontSize: 9, textTransform: "uppercase", letterSpacing: "0.1em" }}>{label}</div>
+                  <div className="text-body" style={{ color: "#EDE8E0", fontSize: 18, marginTop: 4 }}>
                     {typeof val === "number" ? `${val}/10` : "—/10"}
                   </div>
                 </div>
@@ -1582,11 +1582,11 @@ function Stage20({ session, onChange, goNext }: { session: SessionRow; onChange:
               borderTop: `1px solid ${AMBER}33`, paddingTop: 16,
             }}>
               <div>
-                <div className="text-mono" style={{ color: "#8A8680", fontSize: 9, textTransform: "uppercase", letterSpacing: "0.1em" }}>Composite</div>
+                <div className="text-mono" style={{ color: "#8B8680", fontSize: 9, textTransform: "uppercase", letterSpacing: "0.1em" }}>Composite</div>
                 <div className="text-body" style={{ color: AMBER, fontSize: 24, fontWeight: 600 }}>{composite}/50</div>
               </div>
               <div className="text-mono" style={{
-                color: score.status === "PASS" ? AMBER : "#FFFFFF",
+                color: score.status === "PASS" ? AMBER : "#EDE8E0",
                 fontSize: 16, textTransform: "uppercase", letterSpacing: "0.16em", fontWeight: 600,
               }}>
                 {score.status ?? "REVIEW"}
@@ -1717,7 +1717,7 @@ function Stage20l({
         <label
           htmlFor="stage20l-medium"
           className="text-mono"
-          style={{ color: "#8A8680", fontSize: 9, textTransform: "uppercase", letterSpacing: "0.12em" }}
+          style={{ color: "#8B8680", fontSize: 9, textTransform: "uppercase", letterSpacing: "0.12em" }}
         >
           Primary medium (optional — leave blank and the system decides)
         </label>
@@ -1731,9 +1731,9 @@ function Stage20l({
             width: "100%",
             marginTop: 8,
             backgroundColor: "#0F0F0F",
-            border: "1px solid #2A2A2A",
+            border: "1px solid #1C1A18",
             borderRadius: 6,
-            color: "#F2EFE9",
+            color: "#EDE8E0",
             padding: "10px 12px",
             fontSize: 14,
           }}
@@ -1751,8 +1751,8 @@ function Stage20l({
           <div
             style={{
               marginTop: 24,
-              backgroundColor: "#111111",
-              border: `1px solid ${approved ? AMBER : "#2A2A2A"}`,
+              backgroundColor: "#0A0908",
+              border: `1px solid ${approved ? AMBER : "#1C1A18"}`,
               borderRadius: 8,
               padding: 28,
             }}
@@ -1770,9 +1770,9 @@ function Stage20l({
                 width: "100%",
                 marginTop: 16,
                 backgroundColor: "#0F0F0F",
-                border: "1px solid #2A2A2A",
+                border: "1px solid #1C1A18",
                 borderRadius: 6,
-                color: "#F2EFE9",
+                color: "#EDE8E0",
                 padding: 12,
                 fontSize: 14,
               }}
@@ -1797,7 +1797,7 @@ function Stage20l({
             )}
           </div>
           {!approved && (
-            <p className="text-body-sm" style={{ color: "#8A8680", marginTop: 12, textAlign: "right" }}>
+            <p className="text-body-sm" style={{ color: "#8B8680", marginTop: 12, textAlign: "right" }}>
               Channel briefs cannot run until this idea is approved.
             </p>
           )}
@@ -1944,7 +1944,7 @@ function Stage20b({ session, onChange, goNext }: { session: SessionRow; onChange
       {editing ? (
         <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
           {STAGE_20B_FIELDS.map((f) => (
-            <div key={f.key} style={{ backgroundColor: "#111111", border: "1px solid #2A2A2A", borderRadius: 8, padding: 20 }}>
+            <div key={f.key} style={{ backgroundColor: "#0A0908", border: "1px solid #1C1A18", borderRadius: 8, padding: 20 }}>
               <label
                 htmlFor={`stage20b-${f.key}`}
                 className="text-mono"
@@ -1952,7 +1952,7 @@ function Stage20b({ session, onChange, goNext }: { session: SessionRow; onChange
               >
                 {f.label}
               </label>
-              <div className="text-body-sm" style={{ color: "#8A8680", marginBottom: 10, lineHeight: 1.5 }}>
+              <div className="text-body-sm" style={{ color: "#8B8680", marginBottom: 10, lineHeight: 1.5 }}>
                 {f.description}
               </div>
               <textarea
@@ -1963,8 +1963,8 @@ function Stage20b({ session, onChange, goNext }: { session: SessionRow; onChange
                 placeholder={f.placeholder}
                 disabled={busy}
                 style={{
-                  width: "100%", backgroundColor: "#000", color: "#E8E4DE",
-                  border: "1px solid #2A2A2A", borderRadius: 6, padding: 12,
+                  width: "100%", backgroundColor: "#0A0908", color: "#EDE8E0",
+                  border: "1px solid #1C1A18", borderRadius: 6, padding: 12,
                   fontFamily: "inherit", fontSize: 14, lineHeight: 1.5, resize: "vertical",
                 }}
               />
@@ -1983,7 +1983,7 @@ function Stage20b({ session, onChange, goNext }: { session: SessionRow; onChange
         </div>
       ) : output ? (
         <>
-          <div style={{ backgroundColor: "#111111", border: "1px solid #2A2A2A", borderRadius: 8, padding: 28 }}>
+          <div style={{ backgroundColor: "#0A0908", border: "1px solid #1C1A18", borderRadius: 8, padding: 28 }}>
             <RichOutput text={output} />
           </div>
           <div style={{ marginTop: 24, display: "flex", gap: 12, justifyContent: "flex-end", flexWrap: "wrap" }}>
@@ -2045,7 +2045,7 @@ function FidelityPanel({
   onRecheck: () => void;
   busy: boolean;
 }) {
-  const colour = (v: string) => (v === "pass" ? AMBER : v === "drift" ? "#E8A33D" : "#E86A3D");
+  const colour = (v: string) => (v === "pass" ? AMBER : v === "drift" ? "#C81E1E" : "#C81E1E");
   const breaks = report?.results.filter((r) => r.verdict === "break").length ?? 0;
   const drifts = report?.results.filter((r) => r.verdict === "drift").length ?? 0;
 
@@ -2054,9 +2054,9 @@ function FidelityPanel({
       style={{
         marginTop: 24,
         padding: 20,
-        border: `1px solid ${breaks > 0 ? "#E86A3D" : `${AMBER}33`}`,
+        border: `1px solid ${breaks > 0 ? "#C81E1E" : `${AMBER}33`}`,
         borderRadius: 8,
-        backgroundColor: "#0E0E0E",
+        backgroundColor: "#0A0908",
       }}
     >
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16 }}>
@@ -2089,12 +2089,12 @@ function FidelityPanel({
       </div>
 
       {!report ? (
-        <div className="text-body-sm" style={{ color: "#8A8680", marginTop: 12 }}>
+        <div className="text-body-sm" style={{ color: "#8B8680", marginTop: 12 }}>
           These briefs have not been held against the decided idea yet.
         </div>
       ) : (
         <>
-          <div className="text-body-sm" style={{ color: breaks > 0 ? "#E86A3D" : "#8A8680", marginTop: 10 }}>
+          <div className="text-body-sm" style={{ color: breaks > 0 ? "#C81E1E" : "#8B8680", marginTop: 10 }}>
             {breaks > 0
               ? `${breaks} brief${breaks === 1 ? "" : "s"} broke away from the decided idea — regenerate ${breaks === 1 ? "it" : "them"} before anything downstream uses ${breaks === 1 ? "it" : "them"}.`
               : drifts > 0
@@ -2103,9 +2103,9 @@ function FidelityPanel({
           </div>
           <div style={{ marginTop: 14, display: "grid", gap: 12 }}>
             {report.results.map((r) => (
-              <div key={r.channel} style={{ borderTop: "1px solid #232323", paddingTop: 10 }}>
+              <div key={r.channel} style={{ borderTop: "1px solid #1C1A18", paddingTop: 10 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
-                  <div className="text-body-sm" style={{ color: "#E8E4DE" }}>{r.channel}</div>
+                  <div className="text-body-sm" style={{ color: "#EDE8E0" }}>{r.channel}</div>
                   <div
                     className="text-mono"
                     style={{
@@ -2118,16 +2118,16 @@ function FidelityPanel({
                     {r.verdict} · {r.score}/10
                   </div>
                 </div>
-                <div className="text-body-sm" style={{ color: "#8A8680", marginTop: 6, lineHeight: 1.6 }}>
+                <div className="text-body-sm" style={{ color: "#8B8680", marginTop: 6, lineHeight: 1.6 }}>
                   {r.reasoning}
                 </div>
                 {r.missing.length > 0 && (
-                  <div className="text-body-sm" style={{ color: "#8A8680", marginTop: 6 }}>
+                  <div className="text-body-sm" style={{ color: "#8B8680", marginTop: 6 }}>
                     <span style={{ color: colour(r.verdict) }}>Missing:</span> {r.missing.join(" · ")}
                   </div>
                 )}
                 {r.misreadingEvidence && (
-                  <div className="text-body-sm" style={{ color: "#E86A3D", marginTop: 6 }}>
+                  <div className="text-body-sm" style={{ color: "#C81E1E", marginTop: 6 }}>
                     Misreading: {r.misreadingEvidence}
                   </div>
                 )}
@@ -2279,13 +2279,13 @@ function Stage21({ session, onChange, goNext }: { session: SessionRow; onChange:
               const role = roleMatch ? roleMatch[1].trim() : "Channel Brief";
               return (
                 <div key={key} style={{
-                  backgroundColor: "#111111", border: "1px solid #2A2A2A",
+                  backgroundColor: "#0A0908", border: "1px solid #1C1A18",
                   borderRadius: 8, padding: 20,
                 }}>
                   <button type="button" onClick={() => setExpanded(isOpen ? null : channel)}
                     style={{ width: "100%", textAlign: "left", background: "none", border: "none", cursor: "pointer", padding: 0 }}>
                     <div style={{ color: AMBER, textTransform: "uppercase", fontSize: 16, letterSpacing: "0.06em", fontFamily: "'DM Mono', monospace", fontWeight: 500, lineHeight: 1.3 }}>{channel}</div>
-                    <div className="text-body-sm" style={{ color: "#8A8680", marginTop: 4 }}>{role}</div>
+                    <div className="text-body-sm" style={{ color: "#8B8680", marginTop: 4 }}>{role}</div>
                   </button>
                   {isOpen && (
                     <div style={{ marginTop: 16, paddingTop: 16, borderTop: `1px solid ${AMBER}33` }}>
@@ -2306,11 +2306,11 @@ function Stage21({ session, onChange, goNext }: { session: SessionRow; onChange:
           </div>
           <FidelityPanel report={fidelity} onRecheck={handleRecheck} busy={fidelityBusy} />
 
-          <div style={{ marginTop: 24, padding: 16, border: `1px solid ${AMBER}33`, borderRadius: 8, backgroundColor: "#0E0E0E" }}>
+          <div style={{ marginTop: 24, padding: 16, border: `1px solid ${AMBER}33`, borderRadius: 8, backgroundColor: "#0A0908" }}>
             <label htmlFor="stage21-audience-channel" className="text-mono" style={{ display: "block", color: AMBER, fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 8 }}>
               Audience and Channel Direction
             </label>
-            <div className="text-body-sm" style={{ color: "#8A8680", marginBottom: 10 }}>
+            <div className="text-body-sm" style={{ color: "#8B8680", marginBottom: 10 }}>
               Free-text correction to the channel selection when the default recommendations are wrong for the specific audience. Injected into the regeneration prompt as a mandatory constraint. Not a creative direction field.
             </div>
             <textarea
@@ -2320,8 +2320,8 @@ function Stage21({ session, onChange, goNext }: { session: SessionRow; onChange:
               rows={4}
               placeholder="e.g. Audience is procurement leads aged 45+ in regional Australia — LinkedIn and TikTok are wrong, prioritise trade press and industry events instead."
               style={{
-                width: "100%", backgroundColor: "#000", color: "#E8E4DE",
-                border: "1px solid #2A2A2A", borderRadius: 6, padding: 12,
+                width: "100%", backgroundColor: "#0A0908", color: "#EDE8E0",
+                border: "1px solid #1C1A18", borderRadius: 6, padding: 12,
                 fontFamily: "inherit", fontSize: 14, lineHeight: 1.5, resize: "vertical",
               }}
             />
@@ -2336,13 +2336,13 @@ function Stage21({ session, onChange, goNext }: { session: SessionRow; onChange:
                 border: `1px solid ${AMBER}44`,
                 borderRadius: 10,
                 padding: "20px 24px",
-                backgroundColor: "#0E0E0E",
+                backgroundColor: "#0A0908",
               }}
             >
               <div className="text-mono" style={{ color: AMBER, fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase" }}>
                 Creative Engine →
               </div>
-              <div className="text-body-sm" style={{ color: "#8A8680", marginTop: 6 }}>
+              <div className="text-body-sm" style={{ color: "#8B8680", marginTop: 6 }}>
                 The Creative Stimulus Engine now has its own room. It reads these channel briefs as
                 background input — open it to run the 37-lens sweep, Tissue Check, Gate One,
                 orchestration and Gate Two.
@@ -2457,13 +2457,13 @@ function Stage22({ session, onChange }: { session: SessionRow; onChange: () => v
           {/* Visual layout: 5 peripherals around central reflection */}
           <div style={{
             display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16,
-            backgroundColor: "#0E0E0E", border: "1px solid #2A2A2A",
+            backgroundColor: "#0A0908", border: "1px solid #1C1A18",
             borderRadius: 12, padding: 24,
           }}>
             {peripherals.slice(0, 3).map((p) => <ArchBox key={p.label} {...p} />)}
             <ArchBox {...peripherals[3]} />
             <div style={{
-              backgroundColor: "#0A0A0A", border: `1px solid ${AMBER}`,
+              backgroundColor: "#0A0908", border: `1px solid ${AMBER}`,
               borderRadius: 8, padding: 24, display: "flex", flexDirection: "column", justifyContent: "center",
             }}>
               <div className="phase2-label" style={{ marginTop: 0 }}>REFLECTION</div>
@@ -2484,7 +2484,7 @@ function Stage22({ session, onChange }: { session: SessionRow; onChange: () => v
                 color: AMBER, textTransform: "uppercase", fontSize: "7pt",
                 letterSpacing: "0.18em", marginBottom: 16, fontFamily: "'DM Mono', monospace", fontWeight: 500,
               }}>CONCEPTUAL ASSETS</div>
-              <div style={{ backgroundColor: "#111111", border: "1px solid #2A2A2A", borderRadius: 8, padding: 24 }}>
+              <div style={{ backgroundColor: "#0A0908", border: "1px solid #1C1A18", borderRadius: 8, padding: 24 }}>
                 <RichOutput text={stripLeadingLabels(assets, ["CONCEPTUAL ASSETS", "DISTINCTIVE ASSETS", "DISTINCTIVE ASSET ARCHITECTURE", "ASSETS"])} />
               </div>
             </div>
@@ -2531,7 +2531,7 @@ function ArchBox({ label, content }: { label: string; content: string }) {
         color: AMBER, textTransform: "uppercase", fontSize: "7pt",
         letterSpacing: "0.18em", marginBottom: 8, fontFamily: "'DM Mono', monospace", fontWeight: 500,
       }}>{label}</div>
-      <div className="text-body-sm" style={{ color: "#FFFFFF", lineHeight: 1.5, whiteSpace: "pre-wrap" }}>{sanitiseOutput(content)}</div>
+      <div className="text-body-sm" style={{ color: "#EDE8E0", lineHeight: 1.5, whiteSpace: "pre-wrap" }}>{sanitiseOutput(content)}</div>
     </div>
   );
 }

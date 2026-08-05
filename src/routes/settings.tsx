@@ -341,7 +341,7 @@ function Toggle({
           width: 14,
           height: 14,
           borderRadius: 999,
-          backgroundColor: checked ? "#0A0A0A" : "#8A8680",
+          backgroundColor: checked ? "#0A0908" : "#8B8680",
           transform: `translateX(${checked ? 18 : 2}px)`,
         }}
       />

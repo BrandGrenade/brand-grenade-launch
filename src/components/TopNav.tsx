@@ -47,8 +47,8 @@ export function TopNav({ session }: { session?: SessionContext }) {
         style={{
           top: "var(--dev-mode-banner-height, 0px)",
           height: 56,
-          backgroundColor: "#0A0A0A",
-          borderBottom: "1px solid #2A2A2A",
+          backgroundColor: "#0A0908",
+          borderBottom: "1px solid #1C1A18",
           zIndex: 250,
         }}
       >
@@ -63,7 +63,7 @@ export function TopNav({ session }: { session?: SessionContext }) {
             display: "inline-flex",
             alignItems: "center",
             gap: 10,
-            color: "#F0EDE8",
+            color: "#EDE8E0",
             letterSpacing: "0.12em",
             fontSize: 13,
             fontWeight: 700,
@@ -85,9 +85,9 @@ export function TopNav({ session }: { session?: SessionContext }) {
               style={{
                 padding: "4px 8px",
                 borderRadius: 6,
-                border: "1px solid #2A2A2A",
-                backgroundColor: devModeOn ? "rgba(200,135,58,0.15)" : "transparent",
-                color: devModeOn ? "#D4924A" : "#8A8680",
+                border: "1px solid #1C1A18",
+                backgroundColor: devModeOn ? "rgba(200, 30, 30,0.15)" : "transparent",
+                color: devModeOn ? "#C81E1E" : "#8B8680",
                 fontSize: 10,
                 fontWeight: 700,
                 letterSpacing: "0.10em",
@@ -102,7 +102,7 @@ export function TopNav({ session }: { session?: SessionContext }) {
                   width: 22,
                   height: 12,
                   borderRadius: 999,
-                  backgroundColor: devModeOn ? "#D4924A" : "#2A2A2A",
+                  backgroundColor: devModeOn ? "#C81E1E" : "#1C1A18",
                   position: "relative",
                   transition: "background-color 120ms ease",
                 }}
@@ -115,7 +115,7 @@ export function TopNav({ session }: { session?: SessionContext }) {
                     width: 10,
                     height: 10,
                     borderRadius: 999,
-                    backgroundColor: "#0A0A0A",
+                    backgroundColor: "#0A0908",
                     transition: "left 120ms ease",
                   }}
                 />
@@ -125,12 +125,12 @@ export function TopNav({ session }: { session?: SessionContext }) {
           )}
           {session && (
             <div className="hidden items-center gap-3 md:flex">
-              <span style={{ color: "#5A5652", fontSize: 13 }}>
+              <span style={{ color: "#8B8680", fontSize: 13 }}>
                 {session.brand}
               </span>
               <span
                 style={{
-                  color: "#8A8680",
+                  color: "#8B8680",
                   fontSize: 12,
                   fontFamily:
                     'ui-monospace, "JetBrains Mono", SFMono-Regular, Menlo, monospace',
@@ -146,8 +146,8 @@ export function TopNav({ session }: { session?: SessionContext }) {
                     width: 8,
                     height: 8,
                     borderRadius: 999,
-                    backgroundColor: "#D4924A",
-                    boxShadow: "0 0 8px rgba(200,135,58,0.6)",
+                    backgroundColor: "#C81E1E",
+                    boxShadow: "0 0 8px rgba(200, 30, 30,0.6)",
                   }}
                 />
               )}
@@ -165,9 +165,9 @@ export function TopNav({ session }: { session?: SessionContext }) {
               height: 32,
               padding: "0 12px",
               borderRadius: 8,
-              border: "1px solid #D4924A",
-              backgroundColor: "#D4924A",
-              color: "#0A0A0A",
+              border: "1px solid #C81E1E",
+              backgroundColor: "#C81E1E",
+              color: "#0A0908",
               fontSize: 11,
               fontWeight: 800,
               letterSpacing: "0.08em",
@@ -190,9 +190,9 @@ export function TopNav({ session }: { session?: SessionContext }) {
                 width: 32,
                 height: 32,
                 borderRadius: 999,
-                backgroundColor: "#1C1C1C",
-                border: "1px solid #2A2A2A",
-                color: "#8A8680",
+                backgroundColor: "#1C1A18",
+                border: "1px solid #1C1A18",
+                color: "#8B8680",
                 fontSize: 12,
               }}
             >
@@ -204,8 +204,8 @@ export function TopNav({ session }: { session?: SessionContext }) {
                 className="absolute right-0 mt-2 overflow-hidden"
                 style={{
                   minWidth: 180,
-                  backgroundColor: "#1C1C1C",
-                  border: "1px solid #2A2A2A",
+                  backgroundColor: "#1C1A18",
+                  border: "1px solid #1C1A18",
                   borderRadius: 8,
                   boxShadow:
                     "0 16px 32px rgba(0,0,0,0.4), 0 4px 8px rgba(0,0,0,0.3)",
@@ -260,9 +260,9 @@ function MenuItem({ label, onClick }: { label: string; onClick: () => void }) {
       role="menuitem"
       onClick={onClick}
       className="block w-full px-4 py-2.5 text-left transition-colors"
-      style={{ color: "#F0EDE8", fontSize: 14 }}
+      style={{ color: "#EDE8E0", fontSize: 14 }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.backgroundColor = "#2A2A2A";
+        e.currentTarget.style.backgroundColor = "#1C1A18";
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.backgroundColor = "transparent";

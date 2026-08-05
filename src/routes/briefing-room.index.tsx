@@ -102,14 +102,14 @@ function BriefingRoomIndex() {
             type="button"
             onClick={() => setCreating(true)}
             className="mt-8 inline-flex h-10 items-center gap-2 rounded-md px-4 text-[13px] font-semibold"
-            style={{ backgroundColor: "#D4924A", color: "#0A0A0A" }}
+            style={{ backgroundColor: "#C81E1E", color: "#0A0908" }}
           >
             <Plus size={14} /> New Briefing Workspace
           </button>
         ) : (
           <div
             className="mt-8 rounded-md p-5"
-            style={{ backgroundColor: "#141414", border: "1px solid #2A2A2A" }}
+            style={{ backgroundColor: "#1C1A18", border: "1px solid #1C1A18" }}
           >
             <div className="flex flex-col gap-3">
               <label className="flex flex-col gap-1.5">
@@ -136,7 +136,7 @@ function BriefingRoomIndex() {
                   onClick={onCreate}
                   disabled={busy}
                   className="inline-flex h-10 items-center rounded-md px-4 text-[13px] font-semibold disabled:opacity-50"
-                  style={{ backgroundColor: "#D4924A", color: "#0A0A0A" }}
+                  style={{ backgroundColor: "#C81E1E", color: "#0A0908" }}
                 >
                   {busy ? "Creating…" : "Create workspace"}
                 </button>
@@ -166,7 +166,7 @@ function BriefingRoomIndex() {
                 <li
                   key={r.id}
                   className="flex items-center justify-between rounded-md p-4"
-                  style={{ backgroundColor: "#141414", border: "1px solid #2A2A2A" }}
+                  style={{ backgroundColor: "#1C1A18", border: "1px solid #1C1A18" }}
                 >
                   <Link
                     to="/briefing-room/$id"

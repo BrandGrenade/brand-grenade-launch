@@ -10,9 +10,9 @@ import {
   type StimulusRunAudit,
 } from "@/lib/stimulus-audit.functions";
 
-const AMBER = "#E8A33D";
-const MUTED = "#8A8680";
-const RED = "#E86A3D";
+const AMBER = "#C81E1E";
+const MUTED = "#8B8680";
+const RED = "#C81E1E";
 
 function Field({
   label,
@@ -26,7 +26,7 @@ function Field({
   scroll?: boolean;
 }) {
   return (
-    <div style={{ borderTop: "1px solid #232323", paddingTop: 14, marginTop: 14 }}>
+    <div style={{ borderTop: "1px solid #1C1A18", paddingTop: 14, marginTop: 14 }}>
       <div
         className="text-mono"
         style={{ color: AMBER, fontSize: 10, letterSpacing: "0.14em", textTransform: "uppercase" }}
@@ -37,7 +37,7 @@ function Field({
       <pre
         className="text-body-sm"
         style={{
-          color: value.trim() ? "#E8E4DE" : RED,
+          color: value.trim() ? "#EDE8E0" : RED,
           marginTop: 8,
           whiteSpace: "pre-wrap",
           wordBreak: "break-word",
@@ -96,9 +96,9 @@ export function StimulusPromptAudit({ runId }: { runId: string }) {
     <section
       style={{
         marginTop: 28,
-        border: "1px solid #232323",
+        border: "1px solid #1C1A18",
         borderRadius: 12,
-        backgroundColor: "#101010",
+        backgroundColor: "#0A0908",
         padding: "20px 24px",
       }}
     >
@@ -185,7 +185,7 @@ export function StimulusPromptAudit({ runId }: { runId: string }) {
                 scroll
               />
 
-              <div style={{ borderTop: "1px solid #232323", paddingTop: 14, marginTop: 14 }}>
+              <div style={{ borderTop: "1px solid #1C1A18", paddingTop: 14, marginTop: 14 }}>
                 <div
                   className="text-mono"
                   style={{
@@ -206,9 +206,9 @@ export function StimulusPromptAudit({ runId }: { runId: string }) {
                     }}
                     className="text-body-sm"
                     style={{
-                      background: "#0B0B0B",
-                      border: "1px solid #2A2A2A",
-                      color: "#E8E4DE",
+                      background: "#0A0908",
+                      border: "1px solid #1C1A18",
+                      color: "#EDE8E0",
                       borderRadius: 6,
                       padding: "8px 10px",
                       minWidth: 300,
@@ -228,7 +228,7 @@ export function StimulusPromptAudit({ runId }: { runId: string }) {
                     style={{
                       background: AMBER,
                       border: "none",
-                      color: "#0B0B0B",
+                      color: "#0A0908",
                       borderRadius: 6,
                       padding: "8px 16px",
                       fontSize: 10,
@@ -247,9 +247,9 @@ export function StimulusPromptAudit({ runId }: { runId: string }) {
                     className="text-body-sm"
                     style={{
                       marginTop: 12,
-                      color: "#E8E4DE",
-                      background: "#0B0B0B",
-                      border: "1px solid #232323",
+                      color: "#EDE8E0",
+                      background: "#0A0908",
+                      border: "1px solid #1C1A18",
                       borderRadius: 8,
                       padding: 14,
                       whiteSpace: "pre-wrap",

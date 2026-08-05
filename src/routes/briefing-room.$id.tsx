@@ -326,7 +326,7 @@ function WorkspacePage() {
               transition: "box-shadow 200ms ease",
               boxShadow:
                 flashKey === "intake-raw-brief"
-                  ? "0 0 0 2px #D4924A"
+                  ? "0 0 0 2px #C81E1E"
                   : "0 0 0 0 transparent",
             }}
           >
@@ -370,12 +370,12 @@ function WorkspacePage() {
                   id={`intake-evidence-${i}`}
                   className="rounded-md p-3"
                   style={{
-                    backgroundColor: "#141414",
-                    border: `1px solid ${flashKey === `intake-evidence-${i}` ? "#D4924A" : "#2A2A2A"}`,
+                    backgroundColor: "#1C1A18",
+                    border: `1px solid ${flashKey === `intake-evidence-${i}` ? "#C81E1E" : "#1C1A18"}`,
                     transition: "box-shadow 200ms ease, border-color 200ms ease",
                     boxShadow:
                       flashKey === `intake-evidence-${i}`
-                        ? "0 0 0 2px rgba(212,146,74,0.45)"
+                        ? "0 0 0 2px rgba(200, 30, 30,0.45)"
                         : "0 0 0 0 transparent",
                   }}
                 >
@@ -557,7 +557,7 @@ function WorkspacePage() {
         {/* ─── STEP 6 — APPROVE + HAND OFF ─── */}
         <section
           className="mt-6 rounded-md p-5"
-          style={{ backgroundColor: "#101010", border: "1px solid #2A2A2A" }}
+          style={{ backgroundColor: "#0A0908", border: "1px solid #1C1A18" }}
         >
           <div className="text-label text-primary">STEP 6</div>
           <h2 className="text-h3 mt-1 text-text-primary">Approve → hand off to Saved Briefs</h2>
@@ -590,7 +590,7 @@ function WorkspacePage() {
               {preview.warnings.length > 0 && (
                 <div
                   className="mt-3 rounded-md p-3"
-                  style={{ backgroundColor: "#1A1611", border: "1px solid #3A2E1E", color: "#D4924A" }}
+                  style={{ backgroundColor: "#1C1A18", border: "1px solid #3A2E1E", color: "#C81E1E" }}
                 >
                   <div className="text-label mb-1">WARNINGS</div>
                   <ul className="text-body-sm list-disc pl-5">
@@ -622,7 +622,7 @@ function WorkspacePage() {
                   (preview.gaps.length > 0 && !ackGaps)
                 }
                 className="mt-4 inline-flex h-10 items-center rounded-md px-5 text-[13px] font-semibold disabled:opacity-50"
-                style={{ backgroundColor: "#D4924A", color: "#0A0A0A" }}
+                style={{ backgroundColor: "#C81E1E", color: "#0A0908" }}
               >
                 {approving ? "Handing off…" : "Approve and hand off to Saved Briefs"}
               </button>
@@ -644,7 +644,7 @@ function SectionCard(props: {
   return (
     <section
       className="mt-8 rounded-md p-5"
-      style={{ backgroundColor: "#101010", border: "1px solid #2A2A2A" }}
+      style={{ backgroundColor: "#0A0908", border: "1px solid #1C1A18" }}
     >
       <h2 className="text-h3 text-text-primary">{props.title}</h2>
       {props.subtitle && (
@@ -670,7 +670,7 @@ function StepCard(props: {
   return (
     <section
       className="mt-6 rounded-md p-5"
-      style={{ backgroundColor: "#101010", border: "1px solid #2A2A2A" }}
+      style={{ backgroundColor: "#0A0908", border: "1px solid #1C1A18" }}
     >
       <div className="flex items-start justify-between gap-4">
         <div>
@@ -685,7 +685,7 @@ function StepCard(props: {
             disabled={props.busy || props.disabled}
             title={props.disabled ? props.disabledReason : undefined}
             className="inline-flex h-9 items-center rounded-md px-4 text-[13px] font-semibold disabled:opacity-50"
-            style={{ backgroundColor: "#D4924A", color: "#0A0A0A" }}
+            style={{ backgroundColor: "#C81E1E", color: "#0A0908" }}
           >
             {props.busy ? "Running…" : props.runLabel}
           </button>
@@ -719,8 +719,8 @@ function SourcePills({
   const base: React.CSSProperties = {
     padding: "2px 6px",
     borderRadius: 4,
-    backgroundColor: "#1A1611",
-    color: "#D4924A",
+    backgroundColor: "#1C1A18",
+    color: "#C81E1E",
     border: "1px solid #3A2E1E",
   };
   return (
@@ -763,8 +763,8 @@ function Step1View(props: {
       <div
         className="flex-1 rounded-md p-4"
         style={{
-          backgroundColor: selected ? "#1A1611" : "#141414",
-          border: `1px solid ${selected ? "#D4924A" : "#2A2A2A"}`,
+          backgroundColor: selected ? "#1C1A18" : "#1C1A18",
+          border: `1px solid ${selected ? "#C81E1E" : "#1C1A18"}`,
         }}
       >
         <div className="text-label" style={{ color: which === "problem" ? "#C97070" : "#7CB57C" }}>
@@ -794,7 +794,7 @@ function Step1View(props: {
       </div>
       <div
         className="rounded-md p-4"
-        style={{ backgroundColor: "#141414", border: "1px solid #2A2A2A" }}
+        style={{ backgroundColor: "#1C1A18", border: "1px solid #1C1A18" }}
       >
         <div className="text-label text-text-secondary">WHY ARE WE HERE (causal read)</div>
         <p className="text-body mt-2 text-text-primary">{data.why_are_we_here.statement}</p>
@@ -802,7 +802,7 @@ function Step1View(props: {
       </div>
       <div
         className="rounded-md p-4"
-        style={{ backgroundColor: "#141414", border: "1px solid #2A2A2A" }}
+        style={{ backgroundColor: "#1C1A18", border: "1px solid #1C1A18" }}
       >
         <div className="text-label text-text-secondary">PROBLEM SHAPE(S)</div>
         <p className="text-body mt-2 text-text-primary">
@@ -815,9 +815,9 @@ function Step1View(props: {
         onClick={() => props.onPick("both")}
         className="self-start rounded-md px-3 py-1.5 text-body-sm transition-colors"
         style={{
-          backgroundColor: bothSelected ? "#1A1611" : "transparent",
-          border: `1px solid ${bothSelected ? "#D4924A" : "#2A2A2A"}`,
-          color: bothSelected ? "#D4924A" : undefined,
+          backgroundColor: bothSelected ? "#1C1A18" : "transparent",
+          border: `1px solid ${bothSelected ? "#C81E1E" : "#1C1A18"}`,
+          color: bothSelected ? "#C81E1E" : undefined,
         }}
       >
         {bothSelected ? "✓ Both frames kept open" : "Keep both frames open"}
@@ -872,7 +872,7 @@ function Step2View({ data }: { data: Step2Output }) {
     <div className="flex flex-col gap-4">
       <div
         className="flex flex-wrap items-center gap-2 rounded-md p-3"
-        style={{ backgroundColor: "#141414", border: "1px solid #2A2A2A" }}
+        style={{ backgroundColor: "#1C1A18", border: "1px solid #1C1A18" }}
       >
         <span className="text-label text-text-secondary">
           {active.length === 0
@@ -909,7 +909,7 @@ function Step2View({ data }: { data: Step2Output }) {
                   <li
                     key={i}
                     className="rounded-md p-3"
-                    style={{ backgroundColor: "#141414", border: "1px solid #2A2A2A" }}
+                    style={{ backgroundColor: "#1C1A18", border: "1px solid #1C1A18" }}
                   >
                     <p className="text-body text-text-primary">{t.text}</p>
                     <div className="mt-2 flex flex-wrap gap-2">
@@ -951,7 +951,7 @@ function Step2View({ data }: { data: Step2Output }) {
       {data.missing_generative_qualitative_fact && (
         <div
           className="rounded-md p-3"
-          style={{ backgroundColor: "#2A1A0A", border: "1px solid #6B3A10", color: "#F0C88A" }}
+          style={{ backgroundColor: "#2A1A0A", border: "1px solid #6B3A10", color: "#C81E1E" }}
         >
           <div className="text-label">MISSING: GENERATIVE QUALITATIVE FACT</div>
           <p className="text-body-sm mt-1">
@@ -1002,7 +1002,7 @@ function Step3View({
                   <li
                     key={r.truth_index}
                     className="rounded-md p-3"
-                    style={{ backgroundColor: "#141414", border: "1px solid #2A2A2A" }}
+                    style={{ backgroundColor: "#1C1A18", border: "1px solid #1C1A18" }}
                   >
                     <div className="text-body-sm text-text-tertiary uppercase tracking-wider">
                       {t.category}
@@ -1031,7 +1031,7 @@ function Step4View(props: {
     return (
       <div
         className="rounded-md p-4"
-        style={{ backgroundColor: "#2A1A0A", border: "1px solid #6B3A10", color: "#F0C88A" }}
+        style={{ backgroundColor: "#2A1A0A", border: "1px solid #6B3A10", color: "#C81E1E" }}
       >
         <div className="text-label">NO TENSION YET</div>
         <p className="text-body-sm mt-1">{props.data.no_tension_reason}</p>
@@ -1047,8 +1047,8 @@ function Step4View(props: {
             key={i}
             className="rounded-md p-4"
             style={{
-              backgroundColor: selected ? "#1A1611" : "#141414",
-              border: `1px solid ${selected ? "#D4924A" : "#2A2A2A"}`,
+              backgroundColor: selected ? "#1C1A18" : "#1C1A18",
+              border: `1px solid ${selected ? "#C81E1E" : "#1C1A18"}`,
             }}
           >
             <div className="text-label text-text-secondary">CANDIDATE #{i + 1}</div>
@@ -1085,7 +1085,7 @@ function GapsBlock({ title, gaps }: { title: string; gaps: string[] }) {
   return (
     <div
       className="rounded-md p-3"
-      style={{ backgroundColor: "#2A1A0A", border: "1px solid #6B3A10", color: "#F0C88A" }}
+      style={{ backgroundColor: "#2A1A0A", border: "1px solid #6B3A10", color: "#C81E1E" }}
     >
       <div className="text-label">{title}</div>
       <ul className="mt-1 list-disc pl-5">
@@ -1111,12 +1111,12 @@ function TagBadge({
   onClick?: () => void;
 }) {
   const palette: Record<string, { bg: string; fg: string; bd: string }> = {
-    source: { bg: "#141414", fg: "#8A8680", bd: "#2A2A2A" },
+    source: { bg: "#1C1A18", fg: "#8B8680", bd: "#1C1A18" },
     qual: { bg: "#0F1A14", fg: "#7CB57C", bd: "#1E3A2E" },
     quant: { bg: "#0F141A", fg: "#7C99B5", bd: "#1E2E3A" },
     good: { bg: "#0F1A14", fg: "#7CB57C", bd: "#1E3A2E" },
-    warn: { bg: "#1A1611", fg: "#D4924A", bd: "#3A2E1E" },
-    thorpe: { bg: "#2A1A0A", fg: "#F0C88A", bd: "#6B3A10" },
+    warn: { bg: "#1C1A18", fg: "#C81E1E", bd: "#3A2E1E" },
+    thorpe: { bg: "#2A1A0A", fg: "#C81E1E", bd: "#6B3A10" },
   };
   const p = palette[tone];
   const style: React.CSSProperties = {
@@ -1124,8 +1124,8 @@ function TagBadge({
     borderRadius: 4,
     backgroundColor: p.bg,
     color: p.fg,
-    border: `1px solid ${active ? "#D4924A" : p.bd}`,
-    boxShadow: active ? "0 0 0 1px #D4924A" : undefined,
+    border: `1px solid ${active ? "#C81E1E" : p.bd}`,
+    boxShadow: active ? "0 0 0 1px #C81E1E" : undefined,
   };
   if (!onClick) {
     return (
@@ -1163,9 +1163,9 @@ function HandoffPreviewView({
     <div className="flex flex-col gap-3">
       <div
         className="rounded-md p-3"
-        style={{ backgroundColor: "#141414", border: "1px solid #2A2A2A" }}
+        style={{ backgroundColor: "#1C1A18", border: "1px solid #1C1A18" }}
       >
-        <div className="text-label" style={{ color: "#D4924A" }}>
+        <div className="text-label" style={{ color: "#C81E1E" }}>
           ANCHORED TENSION (rides into Stage 1 verbatim)
         </div>
         <p className="text-body mt-2 text-text-primary whitespace-pre-wrap">
@@ -1202,7 +1202,7 @@ function HandoffPreviewView({
       {showBrief && (
         <pre
           className="mt-1 max-h-[420px] overflow-auto rounded-md p-3 text-[12px] leading-[1.55] whitespace-pre-wrap"
-          style={{ backgroundColor: "#0A0A0A", border: "1px solid #2A2A2A", color: "#D8D3CC" }}
+          style={{ backgroundColor: "#0A0908", border: "1px solid #1C1A18", color: "#D8D3CC" }}
         >
           {(() => {
             const anchor = extractAnchorBlock(preview.briefText);
@@ -1227,7 +1227,7 @@ function EditableMiniField({
   return (
     <div
       className="rounded-md p-3"
-      style={{ backgroundColor: "#141414", border: "1px solid #2A2A2A" }}
+      style={{ backgroundColor: "#1C1A18", border: "1px solid #1C1A18" }}
     >
       <div className="text-label" style={{ color: "#8A8580" }}>{label}</div>
       <textarea

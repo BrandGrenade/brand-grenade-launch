@@ -5,7 +5,7 @@
 
 import { getLens } from "@/lib/stimulus/lenses";
 
-const AMBER = "#E8A33D";
+const AMBER = "#C81E1E";
 
 function esc(v: unknown): string {
   return String(v ?? "")
@@ -45,21 +45,21 @@ function ratingsBlock(ratings: any): string {
 }
 
 const CSS = `
-  body{background:#0B0B0B;color:#E8E4DE;font-family:Georgia,'Times New Roman',serif;line-height:1.6;margin:0;padding:48px;}
+  body{background:#0A0908;color:#EDE8E0;font-family:Georgia,'Times New Roman',serif;line-height:1.6;margin:0;padding:48px;}
   .wrap{max-width:880px;margin:0 auto;}
   h1{color:${AMBER};font-size:26px;letter-spacing:.02em;margin:0 0 4px;}
   h2{color:${AMBER};font-size:13px;letter-spacing:.14em;text-transform:uppercase;margin:36px 0 10px;font-family:ui-monospace,Menlo,monospace;}
   h3{font-size:18px;margin:0 0 4px;}
-  .kicker,.muted,.refs,.meta{color:#8A8680;font-size:13px;}
+  .kicker,.muted,.refs,.meta{color:#8B8680;font-size:13px;}
   .kicker{font-family:ui-monospace,Menlo,monospace;letter-spacing:.14em;text-transform:uppercase;font-size:11px;}
-  .card{border:1px solid #2A2A2A;border-radius:8px;padding:20px;margin:16px 0;background:#111;}
-  pre{white-space:pre-wrap;background:#000;border:1px solid #2A2A2A;border-radius:6px;padding:14px;font-family:ui-monospace,Menlo,monospace;font-size:13px;color:#E8E4DE;}
+  .card{border:1px solid #1C1A18;border-radius:8px;padding:20px;margin:16px 0;background:#0A0908;}
+  pre{white-space:pre-wrap;background:#0A0908;border:1px solid #1C1A18;border-radius:6px;padding:14px;font-family:ui-monospace,Menlo,monospace;font-size:13px;color:#EDE8E0;}
   table.ratings{border-collapse:collapse;width:100%;font-size:13px;}
-  table.ratings th{text-align:left;color:#8A8680;font-weight:normal;padding:3px 10px 3px 0;text-transform:capitalize;width:190px;vertical-align:top;}
+  table.ratings th{text-align:left;color:#8B8680;font-weight:normal;padding:3px 10px 3px 0;text-transform:capitalize;width:190px;vertical-align:top;}
   table.ratings td{padding:3px 10px 3px 0;vertical-align:top;}
   a{color:${AMBER};}
-  hr{border:none;border-top:1px solid #2A2A2A;margin:28px 0;}
-  @media print{body{background:#fff;color:#111}.card{background:#fff}pre{background:#f4f4f4;color:#111}}
+  hr{border:none;border-top:1px solid #1C1A18;margin:28px 0;}
+  @media print{body{background:#EDE8E0;color:#0A0908}.card{background:#EDE8E0}pre{background:#f4f4f4;color:#0A0908}}
 `;
 
 function doc(title: string, body: string): string {

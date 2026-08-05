@@ -29,7 +29,7 @@ export function AppFooter() {
   return (
     <footer
       style={{
-        borderTop: "1px solid #1C1C1C",
+        borderTop: "1px solid #1C1A18",
         padding: "16px 24px",
         marginTop: 48,
         display: "flex",
@@ -46,7 +46,7 @@ export function AppFooter() {
           textDecoration: "none",
         }}
         onMouseEnter={(e) => {
-          e.currentTarget.style.color = "#8A8680";
+          e.currentTarget.style.color = "#8B8680";
         }}
         onMouseLeave={(e) => {
           e.currentTarget.style.color = "#3A3632";

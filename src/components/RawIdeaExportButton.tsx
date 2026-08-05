@@ -6,8 +6,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { getRawIdeaExport } from "@/lib/stimulus-gate-two.functions";
 import { buildRawIdeaExport, download, type RawIdeaExport } from "@/lib/stimulus-export";
 
-const AMBER = "#E8A33D";
-const MUTED = "#8A8680";
+const AMBER = "#C81E1E";
+const MUTED = "#8B8680";
 
 export function RawIdeaExportButton({ directionId }: { directionId: string }) {
   const fetchExport = useServerFn(getRawIdeaExport);
@@ -49,7 +49,7 @@ export function RawIdeaExportButton({ directionId }: { directionId: string }) {
         {busy ? "Exporting…" : "Raw idea export"}
       </button>
       {err && (
-        <span className="text-body-sm" style={{ color: "#E86A3D", marginLeft: 8 }}>
+        <span className="text-body-sm" style={{ color: "#C81E1E", marginLeft: 8 }}>
           {err}
         </span>
       )}

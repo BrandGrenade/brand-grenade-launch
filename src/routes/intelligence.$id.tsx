@@ -203,17 +203,17 @@ const LAYER_LABELS: Record<number, string> = {
 };
 
 const TYPE_LABEL: Record<NonNullable<Territory["type"]>, { label: string; color: string }> = {
-  category_ownership: { label: "Category Ownership", color: "#D4924A" },
-  differentiated_positioning: { label: "Differentiated Positioning", color: "#3B82F6" },
+  category_ownership: { label: "Category Ownership", color: "#C81E1E" },
+  differentiated_positioning: { label: "Differentiated Positioning", color: "#C81E1E" },
   category_creation: { label: "Category Creation", color: "#A855F7" },
-  hermit_crab: { label: "Hermit Crab", color: "#22C55E" },
-  moment_activated: { label: "Moment Activated", color: "#EF4444" },
+  hermit_crab: { label: "Hermit Crab", color: "#C81E1E" },
+  moment_activated: { label: "Moment Activated", color: "#C81E1E" },
 };
 
 const RISK_COLOR: Record<RiskClass, string> = {
-  low: "#22C55E",
-  medium: "#D4924A",
-  high: "#EF4444",
+  low: "#C81E1E",
+  medium: "#C81E1E",
+  high: "#C81E1E",
   very_high: "#7F1D1D",
 };
 
@@ -221,15 +221,15 @@ const RECOMMENDATION_STYLE: Record<
   NonNullable<Territory["strategic_recommendation"]>,
   { label: string; color: string }
 > = {
-  claim: { label: "Claim", color: "#22C55E" },
-  claim_with_conditions: { label: "Claim with Conditions", color: "#D4924A" },
-  do_not_claim: { label: "Do Not Claim", color: "#EF4444" },
+  claim: { label: "Claim", color: "#C81E1E" },
+  claim_with_conditions: { label: "Claim with Conditions", color: "#C81E1E" },
+  do_not_claim: { label: "Do Not Claim", color: "#C81E1E" },
 };
 
 const CONFIDENCE_COLOR: Record<string, string> = {
-  high: "#22C55E",
-  moderate: "#D4924A",
-  low: "#EF4444",
+  high: "#C81E1E",
+  moderate: "#C81E1E",
+  low: "#C81E1E",
 };
 
 // ── Utilities ────────────────────────────────────────────────────────────
@@ -426,9 +426,9 @@ function IntelligenceRunPage() {
                   params={{ id }}
                   className="mt-4 inline-flex h-9 items-center justify-center gap-2 rounded-md px-4 text-sm font-semibold"
                   style={{
-                    backgroundColor: "#D4924A",
-                    color: "#0A0A0A",
-                    boxShadow: "0 2px 12px rgba(212,146,74,0.25)",
+                    backgroundColor: "#C81E1E",
+                    color: "#0A0908",
+                    boxShadow: "0 2px 12px rgba(200, 30, 30,0.25)",
                   }}
                 >
                   Edit Inputs
@@ -468,9 +468,9 @@ function IntelligenceRunPage() {
                 params={{ id }}
                 className="inline-flex items-center justify-center gap-2 h-9 px-4 rounded-md text-sm font-semibold"
                 style={{
-                  backgroundColor: "#D4924A",
-                  color: "#0A0A0A",
-                  boxShadow: "0 2px 12px rgba(212,146,74,0.25)",
+                  backgroundColor: "#C81E1E",
+                  color: "#0A0908",
+                  boxShadow: "0 2px 12px rgba(200, 30, 30,0.25)",
                 }}
               >
                 Edit Inputs
@@ -510,7 +510,7 @@ function IntelligenceRunPage() {
             <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-white/5">
               <div
                 className="h-full rounded-full transition-all"
-                style={{ width: `${pct}%`, backgroundColor: "#D4924A" }}
+                style={{ width: `${pct}%`, backgroundColor: "#C81E1E" }}
               />
             </div>
           </Card>
@@ -543,9 +543,9 @@ function IntelligenceRunPage() {
                     params={{ id }}
                     className="mt-4 inline-flex h-9 items-center justify-center gap-2 rounded-md px-4 text-sm font-semibold"
                     style={{
-                      backgroundColor: "#D4924A",
-                      color: "#0A0A0A",
-                      boxShadow: "0 2px 12px rgba(212,146,74,0.25)",
+                      backgroundColor: "#C81E1E",
+                      color: "#0A0908",
+                      boxShadow: "0 2px 12px rgba(200, 30, 30,0.25)",
                     }}
                   >
                     Edit Inputs
@@ -585,9 +585,9 @@ function IntelligenceRunPage() {
                 params={{ id }}
                 className="inline-flex items-center justify-center gap-2 h-9 px-4 rounded-md text-sm font-semibold"
                 style={{
-                  backgroundColor: "#D4924A",
-                  color: "#0A0A0A",
-                  boxShadow: "0 2px 12px rgba(212,146,74,0.25)",
+                  backgroundColor: "#C81E1E",
+                  color: "#0A0908",
+                  boxShadow: "0 2px 12px rgba(200, 30, 30,0.25)",
                 }}
               >
                 Edit Inputs
@@ -719,7 +719,7 @@ function IntelligenceRunPage() {
                           <li key={i} className="flex items-start gap-2 text-sm text-text-primary">
                             <CheckCircle2
                               className="h-4 w-4 mt-0.5 flex-shrink-0"
-                              style={{ color: "#22C55E" }}
+                              style={{ color: "#C81E1E" }}
                             />
                             <span>{x}</span>
                           </li>
@@ -891,9 +891,9 @@ function TerritoryCard({
               <Badge
                 className="text-xs"
                 style={{
-                  backgroundColor: "rgba(212,146,74,0.15)",
-                  color: "#D4924A",
-                  borderColor: "rgba(212,146,74,0.4)",
+                  backgroundColor: "rgba(200, 30, 30,0.15)",
+                  color: "#C81E1E",
+                  borderColor: "rgba(200, 30, 30,0.4)",
                 }}
                 variant="outline"
               >

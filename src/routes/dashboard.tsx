@@ -199,7 +199,7 @@ function Dashboard() {
       setPendingDelete(null);
       toast.success(
         `Deleted ${brand.displayName} (${result.totalDeleted} record${result.totalDeleted === 1 ? "" : "s"}).`,
-        { duration: 3000, style: { color: "#4A7C59" } },
+        { duration: 3000, style: { color: "#C81E1E" } },
       );
       void refresh();
     } catch (e) {
@@ -269,8 +269,8 @@ function Dashboard() {
                 onClick={handleOpenRepositoriesAdmin}
                 className="inline-flex h-10 items-center justify-center self-start rounded-lg px-4 text-[12px] font-semibold uppercase tracking-[0.12em] transition-opacity hover:opacity-90"
                 style={{
-                  backgroundColor: "#D4924A",
-                  color: "#0A0A0A",
+                  backgroundColor: "#C81E1E",
+                  color: "#0A0908",
                 }}
               >
                 Admin
@@ -332,9 +332,9 @@ function Dashboard() {
                         borderRadius: 6,
                         fontSize: 11,
                         letterSpacing: "0.1em",
-                        border: `1px solid ${active ? "#D4924A" : "var(--color-border)"}`,
-                        backgroundColor: active ? "#D4924A15" : "transparent",
-                        color: active ? "#D4924A" : "var(--color-text-secondary)",
+                        border: `1px solid ${active ? "#C81E1E" : "var(--color-border)"}`,
+                        backgroundColor: active ? "#C81E1E15" : "transparent",
+                        color: active ? "#C81E1E" : "var(--color-text-secondary)",
                       }}
                     >
                       {f.label}
@@ -347,7 +347,7 @@ function Dashboard() {
 
           <div id="brand-register" className="mt-6 scroll-mt-24">
             {error && (
-              <p className="text-body" style={{ color: "#7C3A3A" }}>
+              <p className="text-body" style={{ color: "#C81E1E" }}>
                 Failed to load register: {error}
               </p>
             )}
@@ -390,21 +390,21 @@ function Dashboard() {
         <AlertDialogContent
           className="border-0 p-0 sm:max-w-[420px]"
           style={{
-            backgroundColor: "#1C1C1C",
-            border: "1px solid #7C3A3A",
+            backgroundColor: "#1C1A18",
+            border: "1px solid #C81E1E",
             borderRadius: 12,
             padding: 32,
           }}
         >
           <AlertDialogHeader>
             <AlertDialogTitle asChild>
-              <h3 className="text-h3" style={{ color: "#F0EDE8" }}>
+              <h3 className="text-h3" style={{ color: "#EDE8E0" }}>
                 Delete {pendingDelete?.displayName ?? "this brand"}?
               </h3>
             </AlertDialogTitle>
             <AlertDialogDescription
               className="text-body"
-              style={{ color: "#8A8680", marginTop: 8 }}
+              style={{ color: "#8B8680", marginTop: 8 }}
             >
               This will permanently delete all records for{" "}
               {pendingDelete?.displayName ?? "this brand"} across the Strategy
@@ -434,8 +434,8 @@ function Dashboard() {
               onClick={handleDeleteBrand}
               className="inline-flex h-9 items-center justify-center rounded-lg px-4 text-[13px] transition-opacity hover:opacity-90 disabled:opacity-50"
               style={{
-                backgroundColor: "#7C3A3A",
-                color: "#F0EDE8",
+                backgroundColor: "#C81E1E",
+                color: "#EDE8E0",
                 fontWeight: 600,
               }}
             >
@@ -454,7 +454,7 @@ function Dashboard() {
         <AlertDialogContent
           className="border-0 p-0 sm:max-w-[440px]"
           style={{
-            backgroundColor: "#1C1C1C",
+            backgroundColor: "#1C1A18",
             border: "1px solid var(--color-border)",
             borderRadius: 12,
             padding: 32,
@@ -462,16 +462,16 @@ function Dashboard() {
         >
           <AlertDialogHeader>
             <AlertDialogTitle asChild>
-              <h3 className="text-h3" style={{ color: "#F0EDE8" }}>
+              <h3 className="text-h3" style={{ color: "#EDE8E0" }}>
                 Start a new run from this brief?
               </h3>
             </AlertDialogTitle>
             <AlertDialogDescription
               className="text-body"
-              style={{ color: "#8A8680", marginTop: 8 }}
+              style={{ color: "#8B8680", marginTop: 8 }}
             >
               This will launch a fresh pipeline run for{" "}
-              <strong style={{ color: "#F0EDE8" }}>
+              <strong style={{ color: "#EDE8E0" }}>
                 {pendingLegacy?.brand_name ?? ""}
               </strong>{" "}
               using the full saved brief text. It consumes a run.
@@ -499,8 +499,8 @@ function Dashboard() {
               onClick={handleLegacyRun}
               className="inline-flex h-9 items-center justify-center rounded-lg px-4 text-[13px] transition-opacity hover:opacity-90 disabled:opacity-50"
               style={{
-                backgroundColor: "#D4924A",
-                color: "#0A0A0A",
+                backgroundColor: "#C81E1E",
+                color: "#0A0908",
                 fontWeight: 600,
               }}
             >
@@ -548,7 +548,7 @@ function NoMatchesState({ onClear }: { onClear: () => void }) {
         type="button"
         onClick={onClear}
         className="mt-4 text-label"
-        style={{ color: "#D4924A" }}
+        style={{ color: "#C81E1E" }}
       >
         Clear filters
       </button>
@@ -788,7 +788,7 @@ function BrandRegisterRow({
                     e.preventDefault();
                     onRequestDelete(row);
                   }}
-                  style={{ color: "#7C3A3A" }}
+                  style={{ color: "#C81E1E" }}
                 >
                   Delete brand
                 </DropdownMenuItem>
@@ -814,8 +814,8 @@ const CIRCLE_SIZE = 10;
 
 const STATE_COLOR: Record<SystemStatus["state"], string> = {
   not_started: "var(--color-border-strong)",
-  in_progress: "#D4924A",
-  complete: "#4A7C59",
+  in_progress: "#C81E1E",
+  complete: "#C81E1E",
   interrupted: "#B4453C",
 };
 

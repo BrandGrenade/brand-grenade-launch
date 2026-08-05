@@ -25,9 +25,9 @@ import { ideaCardStyle, ideaListStyle, IDEA_COLUMN_WIDTH } from "@/components/st
 import type { LineCheck } from "@/lib/stimulus/line-check-types";
 import type { DirectionRatings } from "@/lib/stimulus/rating-prompts";
 
-const AMBER = "#E8A33D";
-const MUTED = "#8A8680";
-const RED = "#E86A3D";
+const AMBER = "#C81E1E";
+const MUTED = "#8B8680";
+const RED = "#C81E1E";
 const GREEN = "#7BAE6F";
 
 type Idea = {
@@ -87,7 +87,7 @@ function Btn({
       className="text-mono"
       style={{
         background: active ? `${tone}22` : "none",
-        border: `1px solid ${active ? tone : "#2A2A2A"}`,
+        border: `1px solid ${active ? tone : "#1C1A18"}`,
         color: active ? tone : MUTED,
         padding: "6px 12px",
         borderRadius: 6,
@@ -113,14 +113,14 @@ function verdictTone(v: LineCheck["verdict"] | undefined) {
 function LineBlock({ d }: { d: Idea }) {
   const c = d.line_check;
   return (
-    <div style={{ marginTop: 18, borderTop: "1px solid #232323", paddingTop: 16 }}>
+    <div style={{ marginTop: 18, borderTop: "1px solid #1C1A18", paddingTop: 16 }}>
       <div
         className="text-mono"
         style={{ color: MUTED, fontSize: 10, letterSpacing: "0.14em", textTransform: "uppercase" }}
       >
         Campaign line
       </div>
-      <div style={{ color: "#F2EFE9", fontSize: 20, marginTop: 8, lineHeight: 1.35 }}>
+      <div style={{ color: "#EDE8E0", fontSize: 20, marginTop: 8, lineHeight: 1.35 }}>
         {d.campaign_line?.trim() || "—"}
       </div>
       {c && (
@@ -141,11 +141,11 @@ function LineBlock({ d }: { d: Idea }) {
           </span>
           <div className="text-body-sm" style={{ color: MUTED, marginTop: 8, lineHeight: 1.6 }}>
             <div>
-              <strong style={{ color: "#E8E4DE" }}>Says:</strong> {c.says}
+              <strong style={{ color: "#EDE8E0" }}>Says:</strong> {c.says}
             </div>
             <div style={{ marginTop: 4 }}>{c.reasoning}</div>
             <div style={{ marginTop: 4 }}>
-              <strong style={{ color: "#E8E4DE" }}>Swap test:</strong> {c.swap_test}
+              <strong style={{ color: "#EDE8E0" }}>Swap test:</strong> {c.swap_test}
             </div>
           </div>
         </div>
@@ -219,7 +219,7 @@ function IdeaCard({
 
       <div
         className="text-body-sm"
-        style={{ color: "#E8E4DE", marginTop: 20, whiteSpace: "pre-wrap", lineHeight: 1.75, fontSize: 15 }}
+        style={{ color: "#EDE8E0", marginTop: 20, whiteSpace: "pre-wrap", lineHeight: 1.75, fontSize: 15 }}
       >
         {d.direction || d.error || "Not generated."}
       </div>
@@ -227,7 +227,7 @@ function IdeaCard({
       <LineBlock d={d} />
 
       {d.rationale && (
-        <div style={{ marginTop: 18, borderTop: "1px solid #232323", paddingTop: 16 }}>
+        <div style={{ marginTop: 18, borderTop: "1px solid #1C1A18", paddingTop: 16 }}>
           <div
             className="text-mono"
             style={{ color: MUTED, fontSize: 10, letterSpacing: "0.14em", textTransform: "uppercase" }}
@@ -236,7 +236,7 @@ function IdeaCard({
           </div>
           <div
             className="text-body-sm"
-            style={{ color: "#E8E4DE", marginTop: 8, whiteSpace: "pre-wrap", lineHeight: 1.7 }}
+            style={{ color: "#EDE8E0", marginTop: 8, whiteSpace: "pre-wrap", lineHeight: 1.7 }}
           >
             {d.rationale}
           </div>
@@ -251,9 +251,9 @@ function IdeaCard({
         style={{
           width: "100%",
           marginTop: 16,
-          backgroundColor: "#000",
-          color: "#E8E4DE",
-          border: "1px solid #2A2A2A",
+          backgroundColor: "#0A0908",
+          color: "#EDE8E0",
+          border: "1px solid #1C1A18",
           borderRadius: 6,
           padding: 10,
           fontFamily: "inherit",
@@ -300,8 +300,8 @@ function IdeaCard({
             placeholder="What to change — the lens stays, the idea and line get rewritten."
             style={{
               width: "100%",
-              backgroundColor: "#000",
-              color: "#E8E4DE",
+              backgroundColor: "#0A0908",
+              color: "#EDE8E0",
               border: `1px solid ${AMBER}40`,
               borderRadius: 6,
               padding: 10,
@@ -505,10 +505,10 @@ export function BigIdeaSweep({
           <div
             style={{
               marginTop: 22,
-              border: `1px solid ${locked ? AMBER : "#232323"}`,
+              border: `1px solid ${locked ? AMBER : "#1C1A18"}`,
               borderRadius: 12,
               padding: "18px 22px",
-              backgroundColor: "#101010",
+              backgroundColor: "#0A0908",
             }}
           >
             <div
@@ -517,7 +517,7 @@ export function BigIdeaSweep({
             >
               {locked ? "Locked campaign idea" : "Select one idea and one line"}
             </div>
-            <div className="text-body-sm" style={{ color: "#E8E4DE", marginTop: 10, lineHeight: 1.7 }}>
+            <div className="text-body-sm" style={{ color: "#EDE8E0", marginTop: 10, lineHeight: 1.7 }}>
               <div>
                 <strong style={{ color: AMBER }}>Idea:</strong>{" "}
                 {chosenIdea ? `${chosenIdea.lens_name} — ${chosenIdea.direction.slice(0, 160)}…` : "— none selected"}
@@ -590,7 +590,7 @@ export function BigIdeaSweep({
           {lines.map((d) => (
             <div key={d.id} style={ideaCardStyle({ accent: d.id === pickLine ? AMBER : null })}>
               <div style={{ display: "flex", justifyContent: "space-between", gap: 16, alignItems: "baseline" }}>
-                <div style={{ color: "#F2EFE9", fontSize: 20, lineHeight: 1.35 }}>{d.campaign_line}</div>
+                <div style={{ color: "#EDE8E0", fontSize: 20, lineHeight: 1.35 }}>{d.campaign_line}</div>
                 <Btn active={d.id === pickLine} disabled={locked} onClick={() => setPickLine(d.id)}>
                   Use this line
                 </Btn>

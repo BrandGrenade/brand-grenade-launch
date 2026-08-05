@@ -138,12 +138,12 @@ export function NewRunGateButton({ variant = "topnav", label = "Strategy Pipelin
     height: 44,
     padding: "0 22px",
     borderRadius: 10,
-    backgroundColor: "#D4924A",
-    color: "#0A0A0A",
+    backgroundColor: "#C81E1E",
+    color: "#0A0908",
     fontWeight: 700,
     fontSize: 14,
     letterSpacing: "0.02em",
-    boxShadow: "0 2px 12px rgba(212,146,74,0.25)",
+    boxShadow: "0 2px 12px rgba(200, 30, 30,0.25)",
     cursor: "pointer",
     border: "none",
   };
@@ -157,8 +157,8 @@ export function NewRunGateButton({ variant = "topnav", label = "Strategy Pipelin
         height: 36,
         padding: "0 16px",
         borderRadius: 8,
-        backgroundColor: "#D4924A",
-        color: "#0A0A0A",
+        backgroundColor: "#C81E1E",
+        color: "#0A0908",
         fontWeight: 600,
         fontSize: 13,
       }
@@ -168,8 +168,8 @@ export function NewRunGateButton({ variant = "topnav", label = "Strategy Pipelin
         alignItems: "center",
         padding: "10px 20px",
         borderRadius: 8,
-        border: "1px solid #D4924A",
-        color: "#D4924A",
+        border: "1px solid #C81E1E",
+        color: "#C81E1E",
         fontWeight: 500,
         fontSize: 13,
         background: "transparent",
@@ -209,9 +209,9 @@ export function NewRunGateButton({ variant = "topnav", label = "Strategy Pipelin
           ...baseEnabledStyle,
           opacity: 0.5,
           pointerEvents: "none",
-          backgroundColor: isTopNav || isLaunch ? "#2A2A2A" : "transparent",
-          color: "#8A8680",
-          border: isTopNav || isLaunch ? "none" : "1px solid #2A2A2A",
+          backgroundColor: isTopNav || isLaunch ? "#1C1A18" : "transparent",
+          color: "#8B8680",
+          border: isTopNav || isLaunch ? "none" : "1px solid #1C1A18",
           boxShadow: "none",
         };
 
@@ -257,21 +257,21 @@ export function NewRunGateButton({ variant = "topnav", label = "Strategy Pipelin
         <AlertDialogContent
           className="border-0 p-0 sm:max-w-[480px]"
           style={{
-            backgroundColor: "#1C1C1C",
-            border: "1px solid #7C3A3A",
+            backgroundColor: "#1C1A18",
+            border: "1px solid #C81E1E",
             borderRadius: 12,
             padding: 28,
           }}
         >
           <AlertDialogHeader>
             <AlertDialogTitle asChild>
-              <h3 className="text-h3" style={{ color: "#F0EDE8" }}>
+              <h3 className="text-h3" style={{ color: "#EDE8E0" }}>
                 Override Platform Not Verified?
               </h3>
             </AlertDialogTitle>
             <AlertDialogDescription
               className="text-body"
-              style={{ color: "#8A8680", marginTop: 8 }}
+              style={{ color: "#8B8680", marginTop: 8 }}
             >
               {gate?.message}
               <br />
@@ -287,7 +287,7 @@ export function NewRunGateButton({ variant = "topnav", label = "Strategy Pipelin
             <label
               htmlFor="override-reason"
               className="text-label"
-              style={{ color: "#D4924A" }}
+              style={{ color: "#C81E1E" }}
             >
               Reason for override (required)
             </label>
@@ -299,7 +299,7 @@ export function NewRunGateButton({ variant = "topnav", label = "Strategy Pipelin
               maxLength={1000}
               placeholder="e.g. Internal demo with non-production data; no live client present."
               className="mt-2 w-full bg-neutral-950/60 p-3 text-sm text-text-primary outline-none"
-              style={{ border: "1px solid #2A2A2A", borderRadius: 6 }}
+              style={{ border: "1px solid #1C1A18", borderRadius: 6 }}
             />
           </div>
 
@@ -321,7 +321,7 @@ export function NewRunGateButton({ variant = "topnav", label = "Strategy Pipelin
               disabled={submitting || reason.trim().length < 4}
               onClick={submitOverride}
               className="inline-flex h-9 items-center justify-center rounded-lg px-4 text-[13px] transition-opacity hover:opacity-90 disabled:opacity-50"
-              style={{ backgroundColor: "#7C3A3A", color: "#F0EDE8", fontWeight: 600 }}
+              style={{ backgroundColor: "#C81E1E", color: "#EDE8E0", fontWeight: 600 }}
             >
               {submitting ? "Logging override…" : "Log override & continue"}
             </button>

@@ -76,17 +76,17 @@ export const template = {
   },
 } satisfies TemplateEntry
 
-const main = { backgroundColor: '#ffffff', fontFamily: 'Arial, sans-serif' }
+const main = { backgroundColor: '#EDE8E0', fontFamily: 'Arial, sans-serif' }
 const container = { padding: '32px 28px', maxWidth: '560px' }
-const h1 = { fontSize: '22px', margin: '0 0 12px', color: '#111' }
-const intro = { fontSize: '14px', color: '#333', margin: '0 0 20px' }
+const h1 = { fontSize: '22px', margin: '0 0 12px', color: '#0A0908' }
+const intro = { fontSize: '14px', color: '#1C1A18', margin: '0 0 20px' }
 const card = {
   backgroundColor: '#f7f7f7',
   padding: '16px 20px',
   borderRadius: '6px',
 }
-const row = { fontSize: '14px', color: '#111', margin: '4px 0' }
-const label = { fontSize: '12px', color: '#666', textTransform: 'uppercase' as const, margin: '16px 0 4px', letterSpacing: '0.05em' }
-const messageStyle = { fontSize: '14px', color: '#111', whiteSpace: 'pre-wrap' as const, margin: 0 }
-const hr = { borderColor: '#e5e5e5', margin: '24px 0' }
-const foot = { fontSize: '11px', color: '#888', margin: 0 }
+const row = { fontSize: '14px', color: '#0A0908', margin: '4px 0' }
+const label = { fontSize: '12px', color: '#8B8680', textTransform: 'uppercase' as const, margin: '16px 0 4px', letterSpacing: '0.05em' }
+const messageStyle = { fontSize: '14px', color: '#0A0908', whiteSpace: 'pre-wrap' as const, margin: 0 }
+const hr = { borderColor: '#EDE8E0', margin: '24px 0' }
+const foot = { fontSize: '11px', color: '#8B8680', margin: 0 }

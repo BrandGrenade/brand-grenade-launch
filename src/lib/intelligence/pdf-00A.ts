@@ -133,16 +133,16 @@ export interface Document00AInput {
 }
 
 // ─── Palette (shared with pdf-generator.ts) ──────────────────────────────
-const C_DARK = "#1A1A18";
-const C_TEXT = "#1A1A18";
+const C_DARK = "#1C1A18";
+const C_TEXT = "#1C1A18";
 const C_TEXT_2 = "#6A6560";
 const C_TEXT_3 = "#9A9590";
-const C_ACCENT = "#D4924A";
+const C_ACCENT = "#C81E1E";
 const C_RULE = "#E0DDD8";
 const C_DARK_FOOT = "#5A5550";
-const C_WHITE = "#FAFAF8";
+const C_WHITE = "#EDE8E0";
 const C_SURFACE_2 = "#F2F0EB";
-const C_GREEN = "#4A7C59";
+const C_GREEN = "#C81E1E";
 const C_RED = "#B84A3C";
 
 // A4 geometry (pt)

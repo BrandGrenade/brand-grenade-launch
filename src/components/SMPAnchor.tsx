@@ -7,7 +7,7 @@ type SMPAnchorProps = {
   truths: [boolean, boolean, boolean];
 };
 
-const AMBER = "#D4924A";
+const AMBER = "#C81E1E";
 
 const labelStyle: React.CSSProperties = {
   color: AMBER,
@@ -20,7 +20,7 @@ const labelStyle: React.CSSProperties = {
 };
 
 const smpTextStyle: React.CSSProperties = {
-  color: "#FFFFFF",
+  color: "#EDE8E0",
   fontFamily: '"DM Sans", system-ui, sans-serif',
   fontSize: 9,
   lineHeight: 1.5,

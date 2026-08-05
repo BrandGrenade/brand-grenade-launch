@@ -232,17 +232,17 @@ function CompletePage() {
 
       <main className="mx-auto w-full max-w-[800px] px-5 sm:px-8" style={{ paddingTop: 64, paddingBottom: 96 }}>
         {!sessionId && (
-          <p className="text-body" style={{ color: "#5A5652", textAlign: "center" }}>
+          <p className="text-body" style={{ color: "#8B8680", textAlign: "center" }}>
             No session specified.
           </p>
         )}
         {sessionId && loading && (
-          <p className="text-body" style={{ color: "#5A5652", textAlign: "center" }}>
+          <p className="text-body" style={{ color: "#8B8680", textAlign: "center" }}>
             Loading session…
           </p>
         )}
         {sessionId && !loading && !session && (
-          <p className="text-body" style={{ color: "#5A5652", textAlign: "center" }}>
+          <p className="text-body" style={{ color: "#8B8680", textAlign: "center" }}>
             Session not found.
           </p>
         )}
@@ -341,7 +341,7 @@ function CompletePage() {
           ) : (
             <p
               className="text-body"
-              style={{ color: "#5A5652", margin: "16px 0 0" }}
+              style={{ color: "#8B8680", margin: "16px 0 0" }}
             >
               Proposition not yet selected
             </p>
@@ -579,7 +579,7 @@ function CompletePage() {
                   style={{
                     marginTop: 10,
                     textAlign: "center",
-                    color: "#5A5652",
+                    color: "#8B8680",
                   }}
                 >
                   Opens in a new tab — save as PDF from the print dialog.
@@ -629,12 +629,12 @@ function CompletePage() {
               style={{
                 marginTop: 16,
                 padding: "16px 20px",
-                background: "#7C3A3A15",
-                border: "1px solid #7C3A3A",
+                background: "#C81E1E15",
+                border: "1px solid #C81E1E",
                 borderRadius: 8,
               }}
             >
-              <p className="text-body-sm" style={{ color: "#8A8680", margin: 0 }}>
+              <p className="text-body-sm" style={{ color: "#8B8680", margin: 0 }}>
                 PDF generation failed. Try downloading as a text document instead.
               </p>
               <button
@@ -666,7 +666,7 @@ function CompletePage() {
                   background: "none",
                   border: "none",
                   padding: 0,
-                  color: "#8A8680",
+                  color: "#8B8680",
                   cursor: "pointer",
                   textDecoration: "underline",
                 }}
@@ -699,7 +699,7 @@ function CompletePage() {
 
         {/* ─── Complete Strategy Pipeline (deliverable) ───────────────── */}
         {session && (() => {
-          const amber = "#D4924A";
+          const amber = "#C81E1E";
           const stages = resolveFullRunStages(session as unknown as Record<string, unknown>);
           const count = stages.length;
           return (
@@ -709,7 +709,7 @@ function CompletePage() {
                   border: `1px solid ${amber}`,
                   borderRadius: 8,
                   padding: 24,
-                  background: "rgba(212, 146, 74, 0.04)",
+                  background: "rgba(200, 30, 30, 0.04)",
                 }}
               >
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 24, flexWrap: "wrap" }}>
@@ -733,8 +733,8 @@ function CompletePage() {
                       openFullRunDocument(session as unknown as Record<string, unknown>);
                     }}
                     style={{
-                      background: count === 0 ? "#555" : amber,
-                      color: "#000",
+                      background: count === 0 ? "#8B8680" : amber,
+                      color: "#0A0908",
                       border: "none",
                       padding: "12px 24px",
                       borderRadius: 6,
@@ -763,7 +763,7 @@ function CompletePage() {
           // TODO: reinstate owner check
           // before commercial deployment
           const isOwner = true;
-          const amber = "#D4924A";
+          const amber = "#C81E1E";
           return (
             <section style={{ marginTop: 64 }}>
               <hr
@@ -898,7 +898,7 @@ function CompletePage() {
           <hr
             style={{
               border: 0,
-              borderTop: "1px solid #2A2A2A",
+              borderTop: "1px solid #1C1A18",
               width: "100%",
               margin: "48px 0 32px",
             }}
@@ -906,13 +906,13 @@ function CompletePage() {
           <div style={{ textAlign: "center" }}>
             <div
               className="text-label"
-              style={{ color: "#5A5652", letterSpacing: "0.12em" }}
+              style={{ color: "#8B8680", letterSpacing: "0.12em" }}
             >
               BRAND GRENADE
             </div>
             <div
               className="text-body-sm"
-              style={{ color: "#3A3A3A", marginTop: 6 }}
+              style={{ color: "#1C1A18", marginTop: 6 }}
             >
               Strategy Intelligence System
             </div>
@@ -1239,7 +1239,7 @@ function PeopleIcon() {
 }
 
 // ─── Phase 2 Deliverables ─────────────────────────────────────────────
-const PHASE_2_AMBER_DELIV = "#D4924A";
+const PHASE_2_AMBER_DELIV = "#C81E1E";
 
 function openHtmlInNewTab(html: string) {
   const win = window.open("", "_blank");
@@ -1309,7 +1309,7 @@ function Phase2Deliverables({ session }: { session: SessionRow }) {
       }}
     >
       <span className="text-body" style={{ fontWeight: 600 }}>{title}</span>
-      {subtitle && <span className="text-body-sm" style={{ color: "#8A8680" }}>{subtitle}</span>}
+      {subtitle && <span className="text-body-sm" style={{ color: "#8B8680" }}>{subtitle}</span>}
       <span className="text-mono" style={{
         marginTop: 6, color: amber, fontSize: 9, letterSpacing: "0.14em",
         textTransform: "uppercase",
@@ -1345,7 +1345,7 @@ function Phase2Deliverables({ session }: { session: SessionRow }) {
         color: amber, letterSpacing: "0.18em", textTransform: "uppercase",
         fontSize: 12, fontWeight: 700, marginBottom: 8,
       }}>BRAND DETONATION</div>
-      <p className="text-body-sm" style={{ color: "#8A8680", marginBottom: 16 }}>
+      <p className="text-body-sm" style={{ color: "#8B8680", marginBottom: 16 }}>
         Phase 2 deliverables. Click any card to open and save as PDF.
       </p>
 
@@ -1409,7 +1409,7 @@ function Phase2Deliverables({ session }: { session: SessionRow }) {
       <div style={{ marginTop: 32, display: "flex", flexDirection: "column", gap: 12 }}>
         <button type="button" onClick={() => download("all_phase2", "all")} disabled={busy !== null}
           style={{
-            height: 52, borderRadius: 8, border: "none", background: amber, color: "#0A0A0A",
+            height: 52, borderRadius: 8, border: "none", background: amber, color: "#0A0908",
             fontWeight: 700, fontSize: 14, cursor: busy ? "wait" : "pointer",
             letterSpacing: "0.04em",
           }}>

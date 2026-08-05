@@ -1,4 +1,4 @@
-export const PHASE_2_AMBER = "#D4924A";
+export const PHASE_2_AMBER = "#C81E1E";
 
 export type Phase2Stage = {
   id: string;

@@ -47,7 +47,7 @@ export function Stage20RescorePanel() {
           onClick={run}
           disabled={busy || !sessionId.trim()}
           className="rounded px-4 py-2 text-label text-black disabled:opacity-50"
-          style={{ background: "#D4924A" }}
+          style={{ background: "#C81E1E" }}
         >
           {busy ? "Scoring…" : "Re-score"}
         </button>

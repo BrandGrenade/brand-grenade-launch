@@ -15,9 +15,9 @@ import { ideaCardStyle, ideaListStyle } from "@/components/stimulus/idea-layout"
 
 
 
-const AMBER = "#E8A33D";
-const MUTED = "#8A8680";
-const RED = "#E86A3D";
+const AMBER = "#C81E1E";
+const MUTED = "#8B8680";
+const RED = "#C81E1E";
 
 export type RatedDirection = {
   id: string;
@@ -38,7 +38,7 @@ function Chip({ label, value, tone }: { label: string; value: string; tone?: str
     <span
       className="text-mono"
       style={{
-        border: `1px solid ${tone ?? "#2A2A2A"}`,
+        border: `1px solid ${tone ?? "#1C1A18"}`,
         color: tone ?? MUTED,
         borderRadius: 4,
         padding: "3px 8px",
@@ -67,7 +67,7 @@ function Row({ title, children }: { title: string; children: React.ReactNode }) 
       >
         {title}
       </div>
-      <div className="text-body-sm" style={{ color: "#E8E4DE", marginTop: 5, lineHeight: 1.6 }}>
+      <div className="text-body-sm" style={{ color: "#EDE8E0", marginTop: 5, lineHeight: 1.6 }}>
         {children}
       </div>
     </div>
@@ -77,7 +77,7 @@ function Row({ title, children }: { title: string; children: React.ReactNode }) 
 function RatingBlock({ r }: { r: DirectionRatings }) {
   const u = r.creative_uniqueness;
   return (
-    <div style={{ marginTop: 14, borderTop: "1px solid #2A2A2A", paddingTop: 14 }}>
+    <div style={{ marginTop: 14, borderTop: "1px solid #1C1A18", paddingTop: 14 }}>
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
         <Chip label="Strategic" value={r.strategic_compliance?.rating ?? "—"} tone={toneFor(r.strategic_compliance?.rating)} />
         <Chip label="Brand Glue" value={r.brand_glue?.rating ?? "—"} tone={toneFor(r.brand_glue?.rating)} />
@@ -211,7 +211,7 @@ function Btn({
       className="text-mono"
       style={{
         background: active ? `${AMBER}22` : "none",
-        border: `1px solid ${active ? AMBER : "#2A2A2A"}`,
+        border: `1px solid ${active ? AMBER : "#1C1A18"}`,
         color: active ? AMBER : MUTED,
         padding: "6px 12px",
         borderRadius: 6,
@@ -284,7 +284,7 @@ export function StimulusGateOne({
   if (survivors.length === 0) return null;
 
   return (
-    <div style={{ marginTop: 28, border: `1px solid ${AMBER}44`, borderRadius: 8, padding: 20, backgroundColor: "#0B0B0B" }}>
+    <div style={{ marginTop: 28, border: `1px solid ${AMBER}44`, borderRadius: 8, padding: 20, backgroundColor: "#0A0908" }}>
       <div className="text-mono" style={{ color: AMBER, fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase" }}>
         Gate One — full rating system
       </div>
@@ -355,7 +355,7 @@ export function StimulusGateOne({
           <div className="text-body-sm" style={{ color: MUTED, marginTop: 4 }}>
             {run.tiebreaker_reason}
           </div>
-          <div className="text-body-sm" style={{ color: "#E8E4DE", marginTop: 10, whiteSpace: "pre-wrap", lineHeight: 1.7 }}>
+          <div className="text-body-sm" style={{ color: "#EDE8E0", marginTop: 10, whiteSpace: "pre-wrap", lineHeight: 1.7 }}>
             {run.tiebreaker_output}
           </div>
         </div>
@@ -382,7 +382,7 @@ export function StimulusGateOne({
                 </span>
               )}
             </div>
-            <div className="text-body-sm" style={{ color: "#E8E4DE", marginTop: 20, whiteSpace: "pre-wrap", lineHeight: 1.75, fontSize: 15 }}>
+            <div className="text-body-sm" style={{ color: "#EDE8E0", marginTop: 20, whiteSpace: "pre-wrap", lineHeight: 1.75, fontSize: 15 }}>
               {d.direction}
             </div>
 
@@ -401,9 +401,9 @@ export function StimulusGateOne({
                 placeholder="Approval / revision notes"
                 style={{
                   flex: "1 1 220px",
-                  backgroundColor: "#000",
-                  color: "#E8E4DE",
-                  border: "1px solid #2A2A2A",
+                  backgroundColor: "#0A0908",
+                  color: "#EDE8E0",
+                  border: "1px solid #1C1A18",
                   borderRadius: 6,
                   padding: "8px 10px",
                   fontFamily: "inherit",

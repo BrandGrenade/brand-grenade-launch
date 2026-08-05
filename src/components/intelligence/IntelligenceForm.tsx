@@ -222,9 +222,9 @@ export function IntelligenceForm({
 
   const confidenceColor =
     confidence === "High"
-      ? "#22C55E"
+      ? "#C81E1E"
       : confidence === "Moderate"
-        ? "#D4924A"
+        ? "#C81E1E"
         : "#94A3B8";
 
   async function handleFilesAdded(key: SectionKey, list: FileList | File[]) {
@@ -498,7 +498,7 @@ export function IntelligenceForm({
                   {present ? (
                     <Check
                       className="h-4 w-4 flex-shrink-0 mt-0.5"
-                      style={{ color: "#22C55E" }}
+                      style={{ color: "#C81E1E" }}
                     />
                   ) : (
                     <Circle
@@ -571,7 +571,7 @@ function ResearchSection({
       <div className="flex items-baseline gap-3">
         <span
           className="text-label"
-          style={{ color: present ? "#22C55E" : "#94A3B8" }}
+          style={{ color: present ? "#C81E1E" : "#94A3B8" }}
         >
           {spec.number}
         </span>
@@ -624,8 +624,8 @@ function ResearchSection({
         }}
         className="mt-3 flex flex-col items-center justify-center rounded-md px-4 py-6 text-center transition-colors cursor-pointer"
         style={{
-          border: `1px dashed ${dragOver ? "#D4924A" : "rgba(148,163,184,0.35)"}`,
-          backgroundColor: dragOver ? "rgba(212,146,74,0.06)" : "transparent",
+          border: `1px dashed ${dragOver ? "#C81E1E" : "rgba(148,163,184,0.35)"}`,
+          backgroundColor: dragOver ? "rgba(200, 30, 30,0.06)" : "transparent",
         }}
       >
         <Upload className="h-4 w-4 text-text-secondary" />

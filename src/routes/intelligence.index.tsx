@@ -88,13 +88,13 @@ function statusMeta(status: string | null): {
 } {
   switch (status) {
     case "complete":
-      return { label: "Complete", color: "#4A7C59", filled: true };
+      return { label: "Complete", color: "#C81E1E", filled: true };
     case "running":
-      return { label: "Running", color: "#D4924A", filled: true };
+      return { label: "Running", color: "#C81E1E", filled: true };
     case "failed":
       return { label: "Failed", color: "#B04A4A", filled: true };
     default:
-      return { label: "Draft", color: "#8A8680", filled: false };
+      return { label: "Draft", color: "#8B8680", filled: false };
   }
 }
 
@@ -390,10 +390,10 @@ function SessionRowView({
             label={conf}
             tone={
               conf === "High"
-                ? "#4A7C59"
+                ? "#C81E1E"
                 : conf === "Moderate"
-                  ? "#D4924A"
-                  : "#8A8680"
+                  ? "#C81E1E"
+                  : "#8B8680"
             }
           />
         ) : (
@@ -435,7 +435,7 @@ function SessionRowView({
           <Link
             to="/intelligence/$id"
             params={{ id: row.id }}
-            style={{ color: "#D4924A", fontSize: 12, fontWeight: 500 }}
+            style={{ color: "#C81E1E", fontSize: 12, fontWeight: 500 }}
           >
             View
           </Link>

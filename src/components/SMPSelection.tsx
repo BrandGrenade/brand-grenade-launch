@@ -716,7 +716,7 @@ export function SMPSelection({
         type="button"
         onClick={() => setShowRaw((v) => !v)}
         className="inline-flex items-center gap-2 text-body-sm"
-        style={{ color: "#5A5652", background: "transparent", border: 0, cursor: "pointer", padding: 0 }}
+        style={{ color: "#8B8680", background: "transparent", border: 0, cursor: "pointer", padding: 0 }}
       >
         <span
           style={{
@@ -735,8 +735,8 @@ export function SMPSelection({
             marginTop: 12,
             maxHeight: 400,
             overflow: "auto",
-            background: "#141414",
-            color: "#8A8680",
+            background: "#1C1A18",
+            color: "#8B8680",
             padding: 20,
             borderRadius: 8,
             fontFamily: "'JetBrains Mono', ui-monospace, monospace",

@@ -18,7 +18,7 @@ import {
   extractBrandGuidelinesFromPdf,
 } from "@/lib/threeTruth.functions";
 
-const AMBER = "#D4924A";
+const AMBER = "#C81E1E";
 
 const searchSchema = z.object({ session: z.string().uuid().optional() });
 
@@ -365,12 +365,12 @@ function ThreeTruthCanvas() {
           className="mx-auto w-full max-w-[1100px] px-5 sm:px-8"
           style={{ paddingTop: 48, paddingBottom: 96 }}
         >
-          {!sessionId && <p className="text-body" style={{ color: "#5A5652" }}>No session specified.</p>}
+          {!sessionId && <p className="text-body" style={{ color: "#8B8680" }}>No session specified.</p>}
           {sessionId && loading && (
-            <p className="text-body" style={{ color: "#5A5652" }}>Loading canvas…</p>
+            <p className="text-body" style={{ color: "#8B8680" }}>Loading canvas…</p>
           )}
           {error && (
-            <p className="text-body" style={{ color: "#7C3A3A" }}>{error}</p>
+            <p className="text-body" style={{ color: "#C81E1E" }}>{error}</p>
           )}
 
           {sessionId && !loading && session && (
@@ -834,7 +834,7 @@ function TruthPanel({
       ) : (
         <p
           style={{
-            color: "#FFFFFF",
+            color: "#EDE8E0",
             fontSize: 14,
             lineHeight: 1.55,
             margin: 0,
@@ -950,7 +950,7 @@ function ThreeTruthStatus({
       "All three truths are aligned — this is where the highest Creative Share of Voice multipliers live.";
   } else if (count === 2) {
     title = "STRONG BRAND TERRITORY";
-    titleColor = "#FFFFFF";
+    titleColor = "#EDE8E0";
     const missingNames: string[] = [];
     if (!confirmedSet[0]) missingNames.push("Product Truth");
     if (!confirmedSet[1]) missingNames.push("Consumer Truth");
