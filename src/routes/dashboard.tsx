@@ -745,9 +745,13 @@ function BrandRegisterRow({
             <span className="text-body font-medium">{row.displayName}</span>
           </button>
         </td>
-        <td className="text-body px-3 py-4 text-text-secondary">
-          {row.category ?? "—"}
+        <td className="px-3 py-4">
+          <SynthesiserStatusCell
+            status={row.synthesiser}
+            brand={row.displayName}
+          />
         </td>
+
         <td className="px-3 py-4">
           <SystemStatusCell
             system="intelligence"
