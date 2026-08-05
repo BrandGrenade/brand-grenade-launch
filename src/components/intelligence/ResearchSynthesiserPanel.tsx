@@ -154,6 +154,7 @@ export function ResearchSynthesiserPanel({
         data: { brandName: brand.trim(), category: category.trim(), documents },
       });
       setResult(res);
+      onSynthesised?.(res.stats.totalClaims);
       if (res.stats.totalClaims === 0) {
         toast.error("No classifiable claims were found in that material.");
       } else {
@@ -171,10 +172,11 @@ export function ResearchSynthesiserPanel({
 
   function handleApply() {
     if (!result) return;
-    onApply(result.fields);
+    onApply(result.fields, result.stats.totalClaims);
     setApplied(true);
-    toast.success("Applied to the six research fields below. Review and edit before running.");
+    toast.success("Applied. Review and edit the six research fields before running.");
   }
+
 
   const perCategory = SYNTHESISER_CATEGORIES.map((c) => ({
     ...c,
