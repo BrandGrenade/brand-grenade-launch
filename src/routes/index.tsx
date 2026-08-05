@@ -182,6 +182,11 @@ const CSS = `
 
 const QUICK = [
   {
+    id: "room-00",
+    num: "00 · RESEARCH SYNTHESISER — OPTIONAL",
+    desc: "Turn disparate research — scan data, sales data, qualitative, quantitative, desktop, industry reports — into one structured, attributed evidence base.",
+  },
+  {
     id: "room-01",
     num: "01 · INTELLIGENCE LAB",
     desc: "Turn research, culture, category and competitive signals into ranked strategic territory — before a brief is even written.",
@@ -218,6 +223,25 @@ const R = ({ n }: { n: number }) => (
 );
 
 const ROOMS: Room[] = [
+  {
+    id: "room-00",
+    num: "ROOM 00 — OPTIONAL",
+    name: "Research Synthesiser",
+    desc: "Reads across everything the team already has — scan data, sales data, qualitative and quantitative research, desktop research, industry reports — identifies what actually matters to brand strategy, and turns it into a structured evidence base. Public claims are verified against live search. Proprietary data is never checked against the internet, only clearly attributed. Skippable: teams who prefer to enter research manually go straight to the Intelligence Lab.",
+    facts: [
+      "PDF, DOCX, PPTX, XLSX, CSV, TXT",
+      "Claim-level extraction",
+      "Public claims live-verified",
+      "Proprietary data attributed, never exposed",
+    ],
+    proof: (
+      <>
+        14 claims · 9 externally verifiable
+        <br />
+        5 client-proprietary · filed across 4 headings
+      </>
+    ),
+  },
   {
     id: "room-01",
     num: "ROOM 01",
@@ -337,6 +361,8 @@ function Index() {
             <div className="nav-mark">BRAND GRENADE</div>
           </div>
           <div className="nav-rooms">
+            <a href="#room-00">Research Synthesiser</a>
+            <span className="nav-arrow">→</span>
             <a href="#room-01">Intelligence Lab</a>
             <span className="nav-arrow">→</span>
             <a href="#room-02">Briefing Room</a>
@@ -398,7 +424,7 @@ function Index() {
               Follow a real brief through it ↓
             </a>
             <a href="#rooms-nav" className="btn-ghost">
-              See the four rooms
+              See the five rooms
             </a>
           </div>
 
@@ -462,7 +488,7 @@ function Index() {
           style={{ padding: "64px 0", borderTop: "1px solid var(--ash)" }}
         >
           <div className="section-eyebrow">
-            The Four Rooms — One Connected System
+            The Five Rooms — One Connected System
           </div>
           <div className="quicknav">
             {QUICK.map((q) => (
@@ -521,7 +547,7 @@ function Index() {
         >
           <div className="section-eyebrow">Not A Claim — A Walkthrough</div>
           <h2 style={{ marginBottom: 16 }}>
-            Follow one real brief through all four rooms.
+            Follow one real brief through all five rooms.
           </h2>
           <p className="body">
             Every excerpt below is a real, redacted extract from an actual
@@ -588,6 +614,8 @@ function Index() {
         <section className="closing">
           <h2>From possibility to decision.</h2>
           <div className="seq">
+            <b>Research</b>
+            <i>→</i>
             <b>Intelligence</b>
             <i>→</i>
             <b>Briefing</b>
