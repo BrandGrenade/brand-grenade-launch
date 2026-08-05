@@ -60,13 +60,13 @@ function AdminPreviewPage() {
     window.open(proxyUrl, action === "download" ? "_self" : "_blank");
   }
 
-  if (loading) return <div className="min-h-screen bg-white" />;
+  if (loading) return <div className="min-h-screen bg-card" />;
 
   if (error) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center px-4">
+      <div className="min-h-screen bg-card flex items-center justify-center px-4">
         <div className="max-w-sm space-y-3 text-center">
-          <p className="text-sm text-red-600">{error}</p>
+          <p className="text-sm text-primary">{error}</p>
           <Link to="/admin/repositories" className="text-sm underline">Back to admin</Link>
         </div>
       </div>
@@ -74,9 +74,9 @@ function AdminPreviewPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white text-neutral-900">
-      <div className="bg-amber-50 border-b border-amber-200">
-        <div className="mx-auto max-w-3xl px-6 py-2 flex items-center justify-between text-xs text-amber-900">
+    <div className="min-h-screen bg-card text-text-primary">
+      <div className="bg-primary border-b border-primary">
+        <div className="mx-auto max-w-3xl px-6 py-2 flex items-center justify-between text-xs text-primary">
           <div className="flex items-center gap-2">
             <Eye className="h-3.5 w-3.5" />
             <span>
@@ -88,37 +88,37 @@ function AdminPreviewPage() {
           </Link>
         </div>
       </div>
-      <header className="border-b border-neutral-200">
+      <header className="border-b border-border">
         <div className="mx-auto max-w-3xl px-6 py-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <img src="/brand-grenade-icon.png" alt="Brand Grenade" className="h-6 w-6" />
             <span className="text-sm font-semibold tracking-wide">Brand Grenade</span>
           </div>
           {visitorName && (
-            <span className="text-xs text-neutral-500">Signed in as {visitorName}</span>
+            <span className="text-xs text-text-secondary">Signed in as {visitorName}</span>
           )}
         </div>
       </header>
       <main className="mx-auto max-w-3xl px-6 py-12">
-        <h1 className="text-3xl font-semibold text-neutral-900">Brand Grenade — {slug.toUpperCase()}</h1>
+        <h1 className="text-3xl font-semibold text-text-primary">Brand Grenade — {slug.toUpperCase()}</h1>
         <section className="mt-12">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-neutral-500">Documents</h2>
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-text-secondary">Documents</h2>
           {docs.length === 0 ? (
-            <p className="mt-4 text-sm text-neutral-500">No documents have been published to this repository yet.</p>
+            <p className="mt-4 text-sm text-text-secondary">No documents have been published to this repository yet.</p>
           ) : (
             <ul className="mt-4 space-y-3">
               {docs.map((doc) => (
-                <li key={doc.id} className="rounded-lg border border-neutral-200 p-5 flex items-start justify-between gap-4">
+                <li key={doc.id} className="rounded-lg border border-border p-5 flex items-start justify-between gap-4">
                   <div className="min-w-0">
-                    <h3 className="text-base font-medium text-neutral-900">{doc.title}</h3>
-                    {doc.description && <p className="mt-1 text-sm text-neutral-600">{doc.description}</p>}
-                    <p className="mt-2 text-xs uppercase tracking-wide text-neutral-400">{doc.file_type}</p>
+                    <h3 className="text-base font-medium text-text-primary">{doc.title}</h3>
+                    {doc.description && <p className="mt-1 text-sm text-text-secondary">{doc.description}</p>}
+                    <p className="mt-2 text-xs uppercase tracking-wide text-text-secondary">{doc.file_type}</p>
                   </div>
                   <div className="flex gap-2 shrink-0">
-                    <Button variant="outline" size="sm" onClick={() => handleOpen(doc, "open")} className="border-neutral-300">
+                    <Button variant="outline" size="sm" onClick={() => handleOpen(doc, "open")} className="border-border">
                       <ExternalLink className="h-4 w-4 mr-1.5" /> View
                     </Button>
-                    <Button variant="outline" size="sm" onClick={() => handleOpen(doc, "download")} className="border-neutral-300">
+                    <Button variant="outline" size="sm" onClick={() => handleOpen(doc, "download")} className="border-border">
                       <Download className="h-4 w-4 mr-1.5" /> Download
                     </Button>
                   </div>

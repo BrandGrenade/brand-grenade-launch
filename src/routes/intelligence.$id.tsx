@@ -507,7 +507,7 @@ function IntelligenceRunPage() {
             <p className="mt-2 text-sm text-text-secondary">
               The intelligence engine is streaming. This page updates automatically.
             </p>
-            <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-white/5">
+            <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-card/5">
               <div
                 className="h-full rounded-full transition-all"
                 style={{ width: `${pct}%`, backgroundColor: "#C81E1E" }}
@@ -822,7 +822,7 @@ function IntelligenceRunPage() {
               size="sm"
               disabled={!selectedTerritoryId || handingOff}
               onClick={handleSendToBriefingRoom}
-              className="bg-amber-500 text-black hover:bg-amber-400 disabled:opacity-60"
+              className="bg-primary text-background hover:bg-primary disabled:opacity-60"
             >
               {handingOff ? (
                 <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />

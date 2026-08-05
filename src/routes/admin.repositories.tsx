@@ -80,13 +80,13 @@ function AdminRepositoriesPage() {
     setState("unlocked");
   }
 
-  if (state === "loading") return <div className="min-h-screen bg-white" />;
+  if (state === "loading") return <div className="min-h-screen bg-card" />;
 
   if (state === "locked") {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center px-4">
+      <div className="min-h-screen bg-card flex items-center justify-center px-4">
         <form onSubmit={onLogin} className="w-full max-w-sm space-y-6">
-          <div className="flex items-center gap-3 text-neutral-900">
+          <div className="flex items-center gap-3 text-text-primary">
             <Lock className="h-5 w-5" />
             <span className="text-sm font-medium tracking-wide uppercase">Admin</span>
           </div>
@@ -98,8 +98,8 @@ function AdminRepositoriesPage() {
             placeholder="Admin password"
             autoFocus
           />
-          {error && <p className="text-sm text-red-600">{error}</p>}
-          <Button type="submit" className="w-full bg-neutral-900 text-white hover:bg-neutral-800">
+          {error && <p className="text-sm text-primary">{error}</p>}
+          <Button type="submit" className="w-full bg-card text-text-primary hover:bg-card">
             Enter
           </Button>
         </form>
@@ -108,8 +108,8 @@ function AdminRepositoriesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white text-neutral-900">
-      <header className="border-b border-neutral-200">
+    <div className="min-h-screen bg-card text-text-primary">
+      <header className="border-b border-border">
         <div className="mx-auto max-w-6xl px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <img src="/brand-grenade-icon.png" alt="Brand Grenade" className="h-6 w-6" />
@@ -147,7 +147,7 @@ function RepositoriesTabs() {
 
   useEffect(() => { refresh(); }, [refresh]);
 
-  if (!loaded) return <div className="text-sm text-neutral-500">Loading repositories…</div>;
+  if (!loaded) return <div className="text-sm text-text-secondary">Loading repositories…</div>;
 
   return (
     <Tabs defaultValue="all">
@@ -273,10 +273,10 @@ function AllAccessPanel({ repos }: { repos: Repo[] }) {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-neutral-500">
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-text-secondary">
             All visitors — across every repository
           </h2>
-          <p className="mt-1 text-xs text-neutral-500">
+          <p className="mt-1 text-xs text-text-secondary">
             One register of who has access, where, and when they last used it.
             Passwords are one-way hashed — use Reset password to issue a new one.
           </p>
@@ -285,7 +285,7 @@ function AllAccessPanel({ repos }: { repos: Repo[] }) {
           <select
             value={filterSlug}
             onChange={(e) => setFilterSlug(e.target.value as "all" | Slug)}
-            className="h-9 rounded-md border border-neutral-300 bg-white px-2 text-sm"
+            className="h-9 rounded-md border border-border bg-card px-2 text-sm"
           >
             <option value="all">All repositories</option>
             {repos.map((r) => (
@@ -301,9 +301,9 @@ function AllAccessPanel({ repos }: { repos: Repo[] }) {
         </div>
       </div>
 
-      <div className="border border-neutral-200 rounded-lg overflow-hidden">
+      <div className="border border-border rounded-lg overflow-hidden">
         <table className="w-full text-sm">
-          <thead className="bg-neutral-50 text-neutral-500 uppercase text-xs">
+          <thead className="bg-card text-text-secondary uppercase text-xs">
             <tr>
               <th className="text-left px-3 py-2 font-medium">Visitor</th>
               <th className="text-left px-3 py-2 font-medium">Repository</th>
@@ -316,10 +316,10 @@ function AllAccessPanel({ repos }: { repos: Repo[] }) {
           </thead>
           <tbody className="divide-y divide-neutral-200">
             {loading && (
-              <tr><td colSpan={7} className="px-3 py-6 text-neutral-500">Loading…</td></tr>
+              <tr><td colSpan={7} className="px-3 py-6 text-text-secondary">Loading…</td></tr>
             )}
             {!loading && filtered.length === 0 && (
-              <tr><td colSpan={7} className="px-3 py-6 text-neutral-500">No visitors match.</td></tr>
+              <tr><td colSpan={7} className="px-3 py-6 text-text-secondary">No visitors match.</td></tr>
             )}
             {filtered.map((r) => {
               const lastMs = r.last_active_at ? new Date(r.last_active_at).getTime() : null;
@@ -327,8 +327,8 @@ function AllAccessPanel({ repos }: { repos: Repo[] }) {
               return (
                 <tr key={r.id} className="align-top">
                   <td className="px-3 py-3">
-                    <div className="font-medium text-neutral-900">{r.name}</div>
-                    <div className="text-xs text-neutral-500">
+                    <div className="font-medium text-text-primary">{r.name}</div>
+                    <div className="text-xs text-text-secondary">
                       {r.organisation ?? ""}{r.email ? ` · ${r.email}` : ""}
                     </div>
                     {revealed[r.id] && (
@@ -346,11 +346,11 @@ function AllAccessPanel({ repos }: { repos: Repo[] }) {
                       </div>
                     )}
                   </td>
-                  <td className="px-3 py-3 text-neutral-700">{labelFor(r.repository_slug, repos)}</td>
+                  <td className="px-3 py-3 text-text-primary">{labelFor(r.repository_slug, repos)}</td>
                   <td className="px-3 py-3">
                     {r.plaintext_password ? (
                       <div className="flex items-center gap-1.5">
-                        <code className="text-xs font-mono bg-neutral-100 border border-neutral-200 rounded px-2 py-1">
+                        <code className="text-xs font-mono bg-card border border-border rounded px-2 py-1">
                           {showPw[r.id] ? r.plaintext_password : "••••••••"}
                         </code>
                         <Button
@@ -377,22 +377,22 @@ function AllAccessPanel({ repos }: { repos: Repo[] }) {
                         )}
                       </div>
                     ) : (
-                      <span className="text-xs text-neutral-400 italic">Not stored — reset to view</span>
+                      <span className="text-xs text-text-secondary italic">Not stored — reset to view</span>
                     )}
                   </td>
-                  <td className="px-3 py-3 text-neutral-500 text-xs whitespace-nowrap">
+                  <td className="px-3 py-3 text-text-secondary text-xs whitespace-nowrap">
                     {new Date(r.created_at).toLocaleDateString()}
                   </td>
-                  <td className="px-3 py-3 text-neutral-500 text-xs whitespace-nowrap">
+                  <td className="px-3 py-3 text-text-secondary text-xs whitespace-nowrap">
                     {r.last_active_at ? new Date(r.last_active_at).toLocaleString() : "—"}
                   </td>
                   <td className="px-3 py-3">
                     {!r.is_active ? (
-                      <span className="text-[10px] uppercase font-semibold text-neutral-600 bg-neutral-100 px-1.5 py-0.5 rounded">Disabled</span>
+                      <span className="text-[10px] uppercase font-semibold text-text-secondary bg-card px-1.5 py-0.5 rounded">Disabled</span>
                     ) : isActive ? (
-                      <span className="text-[10px] uppercase font-semibold text-green-700 bg-green-50 px-1.5 py-0.5 rounded">Active</span>
+                      <span className="text-[10px] uppercase font-semibold text-primary bg-primary px-1.5 py-0.5 rounded">Active</span>
                     ) : (
-                      <span className="text-[10px] uppercase font-semibold text-neutral-500 bg-neutral-100 px-1.5 py-0.5 rounded">Inactive</span>
+                      <span className="text-[10px] uppercase font-semibold text-text-secondary bg-card px-1.5 py-0.5 rounded">Inactive</span>
                     )}
                   </td>
                   <td className="px-3 py-3">
@@ -420,7 +420,7 @@ function AllAccessPanel({ repos }: { repos: Repo[] }) {
                           await refresh();
                         }}
                       >
-                        <Power className={`h-4 w-4 mr-1.5 ${r.is_active ? "" : "text-neutral-400"}`} />
+                        <Power className={`h-4 w-4 mr-1.5 ${r.is_active ? "" : "text-text-secondary"}`} />
                         {r.is_active ? "Deactivate" : "Reactivate"}
                       </Button>
                     </div>
@@ -483,7 +483,7 @@ function RepositoryAdminPanel({ slug, repos }: { slug: Slug; repos: Repo[] }) {
       )}
 
       <section>
-        <h2 className="text-sm font-semibold uppercase tracking-wider text-neutral-500">
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-text-secondary">
           Visitors — {labelFor(slug, repos)}
         </h2>
         <NewVisitorForm
@@ -493,14 +493,14 @@ function RepositoryAdminPanel({ slug, repos }: { slug: Slug; repos: Repo[] }) {
             return r.password;
           }}
         />
-        <p className="mt-2 text-xs text-neutral-500">
+        <p className="mt-2 text-xs text-text-secondary">
           Shareable link for this repository: <code className="font-mono">https://brandgrenade.app/{slug}</code>
           {" "}— same URL for every visitor of this repo; each visitor uses their own password.
         </p>
 
-        <div className="mt-4 border border-neutral-200 rounded-lg divide-y divide-neutral-200">
+        <div className="mt-4 border border-border rounded-lg divide-y divide-neutral-200">
           {visitors.length === 0 && (
-            <div className="p-4 text-sm text-neutral-500">No visitors yet.</div>
+            <div className="p-4 text-sm text-text-secondary">No visitors yet.</div>
           )}
           {visitors.map((v) => {
             const visits = visitCountById.get(v.id) ?? 0;
@@ -512,17 +512,17 @@ function RepositoryAdminPanel({ slug, repos }: { slug: Slug; repos: Repo[] }) {
                     <div className="flex items-center gap-2">
                       <p className="text-sm font-medium">{v.name}</p>
                       {!v.is_active && (
-                        <span className="text-[10px] uppercase font-semibold text-neutral-600 bg-neutral-100 px-1.5 py-0.5 rounded">
+                        <span className="text-[10px] uppercase font-semibold text-text-secondary bg-card px-1.5 py-0.5 rounded">
                           Inactive
                         </span>
                       )}
                       {visits > 1 && (
-                        <span className="text-[10px] uppercase font-semibold text-green-700 bg-green-50 px-1.5 py-0.5 rounded">
+                        <span className="text-[10px] uppercase font-semibold text-primary bg-primary px-1.5 py-0.5 rounded">
                           Returning
                         </span>
                       )}
                     </div>
-                    <p className="text-xs text-neutral-500">
+                    <p className="text-xs text-text-secondary">
                       {v.organisation ?? ""} {v.email ? `· ${v.email}` : ""}
                     </p>
                     <div className="mt-2">
@@ -535,7 +535,7 @@ function RepositoryAdminPanel({ slug, repos }: { slug: Slug; repos: Repo[] }) {
                       target="_blank"
                       rel="noreferrer"
                       title={`View repository as ${v.name} (no audit log entry)`}
-                      className="inline-flex items-center justify-center h-9 px-3 rounded-md border border-neutral-300 text-sm hover:bg-neutral-50"
+                      className="inline-flex items-center justify-center h-9 px-3 rounded-md border border-border text-sm hover:bg-card"
                     >
                       <Eye className="h-4 w-4 mr-1.5" /> View as
                     </a>
@@ -556,7 +556,7 @@ function RepositoryAdminPanel({ slug, repos }: { slug: Slug; repos: Repo[] }) {
                         await refresh();
                       }}
                     >
-                      <Power className={`h-4 w-4 mr-1.5 ${v.is_active ? "" : "text-neutral-400"}`} />
+                      <Power className={`h-4 w-4 mr-1.5 ${v.is_active ? "" : "text-text-secondary"}`} />
                       {v.is_active ? "Deactivate" : "Reactivate"}
                     </Button>
                     <Button
@@ -594,7 +594,7 @@ function RepositoryAdminPanel({ slug, repos }: { slug: Slug; repos: Repo[] }) {
       </section>
 
       <section>
-        <h2 className="text-sm font-semibold uppercase tracking-wider text-neutral-500">
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-text-secondary">
           Documents — {labelFor(slug, repos)}
         </h2>
         <UploadDocForm
@@ -603,19 +603,19 @@ function RepositoryAdminPanel({ slug, repos }: { slug: Slug; repos: Repo[] }) {
             await refresh();
           }}
         />
-        <div className="mt-4 border border-neutral-200 rounded-lg divide-y divide-neutral-200">
+        <div className="mt-4 border border-border rounded-lg divide-y divide-neutral-200">
           {docs.length === 0 && (
-            <div className="p-4 text-sm text-neutral-500">No documents uploaded.</div>
+            <div className="p-4 text-sm text-text-secondary">No documents uploaded.</div>
           )}
           {docs.map((d) => (
             <div key={d.id} className="p-4 flex items-center justify-between gap-4">
               <div className="min-w-0">
                 <p className="text-sm font-medium">
-                  <span className="text-xs text-neutral-400 mr-2">#{d.display_order}</span>
+                  <span className="text-xs text-text-secondary mr-2">#{d.display_order}</span>
                   {d.title}
                 </p>
-                {d.description && <p className="text-xs text-neutral-500">{d.description}</p>}
-                <p className="text-xs text-neutral-400 uppercase">{d.file_type}</p>
+                {d.description && <p className="text-xs text-text-secondary">{d.description}</p>}
+                <p className="text-xs text-text-secondary uppercase">{d.file_type}</p>
               </div>
               <Button
                 size="sm"
@@ -635,7 +635,7 @@ function RepositoryAdminPanel({ slug, repos }: { slug: Slug; repos: Repo[] }) {
 
       <section>
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-neutral-500">
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-text-secondary">
             Access log — {labelFor(slug, repos)}
           </h2>
           <Button
@@ -655,9 +655,9 @@ function RepositoryAdminPanel({ slug, repos }: { slug: Slug; repos: Repo[] }) {
             <Download className="h-4 w-4 mr-1.5" /> Export CSV
           </Button>
         </div>
-        <div className="mt-4 border border-neutral-200 rounded-lg overflow-hidden">
+        <div className="mt-4 border border-border rounded-lg overflow-hidden">
           <table className="w-full text-xs">
-            <thead className="bg-neutral-50 text-neutral-500 uppercase">
+            <thead className="bg-card text-text-secondary uppercase">
               <tr>
                 <th className="text-left px-3 py-2 font-medium">When</th>
                 <th className="text-left px-3 py-2 font-medium">Visitor</th>
@@ -669,7 +669,7 @@ function RepositoryAdminPanel({ slug, repos }: { slug: Slug; repos: Repo[] }) {
             <tbody className="divide-y divide-neutral-200">
               {(!stats || stats.recentLog.length === 0) && (
                 <tr>
-                  <td colSpan={5} className="px-3 py-4 text-neutral-500">
+                  <td colSpan={5} className="px-3 py-4 text-text-secondary">
                     No activity yet.
                   </td>
                 </tr>
@@ -677,20 +677,20 @@ function RepositoryAdminPanel({ slug, repos }: { slug: Slug; repos: Repo[] }) {
               {stats?.recentLog.map((l) => {
                 const returning = l.visitor_id && (visitCountById.get(l.visitor_id) ?? 0) > 1;
                 return (
-                  <tr key={l.id} className="text-neutral-700">
-                    <td className="px-3 py-2 text-neutral-500 whitespace-nowrap">
+                  <tr key={l.id} className="text-text-primary">
+                    <td className="px-3 py-2 text-text-secondary whitespace-nowrap">
                       {new Date(l.created_at).toLocaleString()}
                     </td>
                     <td className="px-3 py-2">{l.visitor_name ?? "—"}</td>
-                    <td className="px-3 py-2 uppercase text-neutral-500">{l.event_type}</td>
+                    <td className="px-3 py-2 uppercase text-text-secondary">{l.event_type}</td>
                     <td className="px-3 py-2 truncate max-w-xs">{l.document_title ?? ""}</td>
                     <td className="px-3 py-2">
                       {returning ? (
-                        <span className="text-[10px] uppercase font-semibold text-green-700 bg-green-50 px-1.5 py-0.5 rounded">
+                        <span className="text-[10px] uppercase font-semibold text-primary bg-primary px-1.5 py-0.5 rounded">
                           Returning
                         </span>
                       ) : (
-                        <span className="text-[10px] uppercase font-semibold text-neutral-500 bg-neutral-100 px-1.5 py-0.5 rounded">
+                        <span className="text-[10px] uppercase font-semibold text-text-secondary bg-card px-1.5 py-0.5 rounded">
                           First visit
                         </span>
                       )}
@@ -708,8 +708,8 @@ function RepositoryAdminPanel({ slug, repos }: { slug: Slug; repos: Repo[] }) {
 
 function StatCard({ label, value }: { label: string; value: number }) {
   return (
-    <div className="border border-neutral-200 rounded-lg p-4">
-      <p className="text-xs uppercase tracking-wide text-neutral-500">{label}</p>
+    <div className="border border-border rounded-lg p-4">
+      <p className="text-xs uppercase tracking-wide text-text-secondary">{label}</p>
       <p className="mt-1 text-2xl font-semibold">{value}</p>
     </div>
   );
@@ -720,15 +720,15 @@ function VisitorPasswordInline({ password }: { password: string | null }) {
   const [copied, setCopied] = useState(false);
   if (!password) {
     return (
-      <span className="text-xs text-neutral-400 italic">
+      <span className="text-xs text-text-secondary italic">
         Password not stored — click Set password to issue a new one you can view.
       </span>
     );
   }
   return (
     <div className="flex items-center gap-1.5">
-      <span className="text-[10px] uppercase tracking-wide text-neutral-500 mr-1">Password</span>
-      <code className="text-xs font-mono bg-neutral-100 border border-neutral-200 rounded px-2 py-1">
+      <span className="text-[10px] uppercase tracking-wide text-text-secondary mr-1">Password</span>
+      <code className="text-xs font-mono bg-card border border-border rounded px-2 py-1">
         {show ? password : "••••••••"}
       </code>
       <Button
@@ -766,9 +766,9 @@ function VisitorPasswordInline({ password }: { password: string | null }) {
 function PasswordReveal({ password, onDismiss }: { password: string; onDismiss: () => void }) {
   const [copied, setCopied] = useState(false);
   return (
-    <div className="mt-1 flex items-center gap-2 bg-amber-50 border border-amber-200 rounded px-3 py-2">
-      <span className="text-xs text-amber-900 shrink-0">New password (shown once):</span>
-      <code className="text-xs font-mono bg-white border border-amber-200 rounded px-2 py-1 flex-1 truncate">
+    <div className="mt-1 flex items-center gap-2 bg-primary border border-primary rounded px-3 py-2">
+      <span className="text-xs text-primary shrink-0">New password (shown once):</span>
+      <code className="text-xs font-mono bg-card border border-primary rounded px-2 py-1 flex-1 truncate">
         {password}
       </code>
       <Button
@@ -814,8 +814,8 @@ function SetPasswordButton({
         <KeyRound className="h-4 w-4 mr-1.5" /> Set password
       </Button>
       {open && (
-        <div className="absolute z-10 mt-10 bg-white border border-neutral-200 rounded-lg shadow-lg p-3 w-72 space-y-2">
-          <p className="text-xs text-neutral-600">Set password for {visitorName} (min 6 chars)</p>
+        <div className="absolute z-10 mt-10 bg-card border border-border rounded-lg shadow-lg p-3 w-72 space-y-2">
+          <p className="text-xs text-text-secondary">Set password for {visitorName} (min 6 chars)</p>
           <Input
             type="text"
             placeholder="Enter password"
@@ -828,7 +828,7 @@ function SetPasswordButton({
             <Button
               size="sm"
               disabled={busy || pw.length < 6}
-              className="bg-neutral-900 text-white hover:bg-neutral-800"
+              className="bg-card text-text-primary hover:bg-card"
               onClick={async () => {
                 setBusy(true);
                 try {
@@ -934,14 +934,14 @@ function NewVisitorForm({
         <Button
           type="submit"
           disabled={busy}
-          className="bg-neutral-900 text-white hover:bg-neutral-800"
+          className="bg-card text-text-primary hover:bg-card"
         >
           {busy ? "Adding…" : "Add visitor"}
         </Button>
 
       </form>
       {error && (
-        <p className="text-sm font-medium text-red-600" role="alert">
+        <p className="text-sm font-medium text-primary" role="alert">
           {error}
         </p>
       )}
@@ -1050,7 +1050,7 @@ function UploadDocForm({
         <Button
           type="submit"
           disabled={busy || !title || !file}
-          className="bg-neutral-900 text-white hover:bg-neutral-800"
+          className="bg-card text-text-primary hover:bg-card"
         >
           {busy ? "Uploading…" : "Upload document"}
         </Button>
@@ -1096,27 +1096,27 @@ function CreateRepositoryPanel({ onCreated }: { onCreated: () => void | Promise<
   return (
     <div className="max-w-2xl space-y-4">
       <div>
-        <h2 className="text-sm font-semibold uppercase tracking-wider text-neutral-500">Create a new repository</h2>
-        <p className="mt-1 text-xs text-neutral-500">
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-text-secondary">Create a new repository</h2>
+        <p className="mt-1 text-xs text-text-secondary">
           Creates a password-gated client repository at <code>/[slug]</code>. Visitors and
           documents are added after creation from that repository's tab.
         </p>
       </div>
-      <form onSubmit={submit} className="space-y-4 border border-neutral-200 rounded-lg p-5 bg-white">
+      <form onSubmit={submit} className="space-y-4 border border-border rounded-lg p-5 bg-card">
         <div>
-          <label className="block text-xs font-medium text-neutral-600 mb-1">Slug (URL identifier)</label>
+          <label className="block text-xs font-medium text-text-secondary mb-1">Slug (URL identifier)</label>
           <Input
             value={slug}
             onChange={(e) => setSlug(normaliseSlug(e.target.value))}
             placeholder="e.g. deloitte"
             required
           />
-          <p className="mt-1 text-[11px] text-neutral-500">
+          <p className="mt-1 text-[11px] text-text-secondary">
             Lowercase letters, digits, hyphens only. Public URL will be <code>/{slug || "your-slug"}</code>.
           </p>
         </div>
         <div>
-          <label className="block text-xs font-medium text-neutral-600 mb-1">Title</label>
+          <label className="block text-xs font-medium text-text-secondary mb-1">Title</label>
           <Input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
@@ -1125,7 +1125,7 @@ function CreateRepositoryPanel({ onCreated }: { onCreated: () => void | Promise<
           />
         </div>
         <div>
-          <label className="block text-xs font-medium text-neutral-600 mb-1">Intro (optional)</label>
+          <label className="block text-xs font-medium text-text-secondary mb-1">Intro (optional)</label>
           <Textarea
             value={intro}
             onChange={(e) => setIntro(e.target.value)}
@@ -1133,9 +1133,9 @@ function CreateRepositoryPanel({ onCreated }: { onCreated: () => void | Promise<
             rows={5}
           />
         </div>
-        {error && <p className="text-sm text-red-600">{error}</p>}
-        {ok && <p className="text-sm text-green-700">{ok}</p>}
-        <Button type="submit" disabled={busy} className="bg-neutral-900 text-white hover:bg-neutral-800">
+        {error && <p className="text-sm text-primary">{error}</p>}
+        {ok && <p className="text-sm text-primary">{ok}</p>}
+        <Button type="submit" disabled={busy} className="bg-card text-text-primary hover:bg-card">
           {busy ? "Creating…" : "Create repository"}
         </Button>
       </form>

@@ -298,7 +298,7 @@ export function NewRunGateButton({ variant = "topnav", label = "Strategy Pipelin
               rows={3}
               maxLength={1000}
               placeholder="e.g. Internal demo with non-production data; no live client present."
-              className="mt-2 w-full bg-neutral-950/60 p-3 text-sm text-text-primary outline-none"
+              className="mt-2 w-full bg-card/60 p-3 text-sm text-text-primary outline-none"
               style={{ border: "1px solid #1C1A18", borderRadius: 6 }}
             />
           </div>

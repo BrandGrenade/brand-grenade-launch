@@ -184,7 +184,7 @@ function BriefingRoomIndex() {
                   <button
                     type="button"
                     onClick={() => onDelete(r.id)}
-                    className="text-text-tertiary hover:text-red-400"
+                    className="text-text-tertiary hover:text-primary"
                     aria-label="Delete workspace"
                   >
                     <Trash2 size={16} />

@@ -412,7 +412,7 @@ function WorkspacePage() {
                       onClick={() =>
                         setEvidence((arr) => arr.filter((_, j) => j !== i))
                       }
-                      className="text-text-tertiary hover:text-red-400"
+                      className="text-text-tertiary hover:text-primary"
                       aria-label="Remove"
                     >
                       <X size={16} />
