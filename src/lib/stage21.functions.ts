@@ -91,8 +91,9 @@ function buildStage21UserMessage(
         `WINNING IDEA (lens: ${s.locked_big_idea_lens ?? "—"})`,
         s.locked_big_idea.trim(),
         "",
-        "WINNING CAMPAIGN LINE — this is the campaign's line. Reproduce it verbatim, character for character, wherever the brief states the line. Never substitute the proposition text for the line, never write a channel-specific variant of it, and never present any other sentence as the campaign line.",
+        "WINNING CAMPAIGN LINE — THE ONLY CAMPAIGN LINE FOR THIS CAMPAIGN. Open the brief with Section zero — Campaign Line and reproduce the text below there, verbatim, character for character, on its own line. It is not optional and it is not conditional on the brief happening to mention a line. Any other line supplied anywhere in this message — including the Stage 18 selected detonation line — is superseded and must not be presented as the campaign line. Never substitute the proposition text for the line, never write a channel-specific variant of it, and never present a sentence of your own as the campaign line.",
         s.locked_campaign_line?.trim() || "—",
+
 
         "",
         "————",
