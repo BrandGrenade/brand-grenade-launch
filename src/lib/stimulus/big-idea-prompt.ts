@@ -126,16 +126,27 @@ export function parseBigIdeaResponse(raw: string): Record<string, ParsedBigIdea>
     const body = part.slice(nl + 1);
     if (!id || !body.trim()) continue;
 
-    const grab = (label: string, next: string[]): string => {
-      const stop = next.length ? `(?=^\\s*(?:${next.join("|")})\\s*$)` : "(?=$)";
-      const re = new RegExp(`^\\s*${label}\\s*:?\\s*$([\\s\\S]*?)${stop}`, "im");
-      const m = body.match(re);
-      return (m?.[1] ?? "").trim();
-    };
+    // Section-split, not lookahead-terminated. The previous implementation
+    // required the NEXT label to exist ("(?=^CAMPAIGN LINE$)"), so a lens that
+    // legitimately omitted later fields (the "NO HONEST IDEA" contract) matched
+    // nothing, and the final field terminated on "(?=$)" which, under /m,
+    // matched the first end-of-line and always returned "".
+    const sections: Record<string, string> = {};
+    {
+      const re = /^[ \t]*(THE BIG IDEA|CAMPAIGN LINE|WHY IT WINS)[ \t]*:?[ \t]*$/gim;
+      const hits: Array<{ label: string; start: number; end: number }> = [];
+      for (let m = re.exec(body); m; m = re.exec(body))
+        hits.push({ label: m[1].toUpperCase(), start: m.index, end: m.index + m[0].length });
+      hits.forEach((h, i) => {
+        sections[h.label] = body.slice(h.end, hits[i + 1]?.start ?? body.length).trim();
+      });
+    }
 
-    const idea = grab("THE BIG IDEA", ["CAMPAIGN LINE", "WHY IT WINS"]);
-    const line = grab("CAMPAIGN LINE", ["WHY IT WINS"]);
-    const rationale = grab("WHY IT WINS", []);
+
+    const idea = sections["THE BIG IDEA"] ?? "";
+    const line = sections["CAMPAIGN LINE"] ?? "";
+    const rationale = sections["WHY IT WINS"] ?? "";
+
 
     out[id] = {
       idea: idea || body.trim(),

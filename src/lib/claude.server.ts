@@ -270,7 +270,12 @@ async function prepareCall(
     body: JSON.stringify({
       model: args.model ?? DEFAULT_MODEL,
       max_tokens: effectiveMaxTokens,
-      ...(typeof args.temperature === "number" ? { temperature: args.temperature } : {}),
+      // Opus 4.8 rejects `temperature` outright ("`temperature` is deprecated
+      // for this model", HTTP 400). Only forward it to models that still take it.
+      ...(typeof args.temperature === "number" && !(args.model ?? DEFAULT_MODEL).startsWith("claude-opus-4-8")
+        ? { temperature: args.temperature }
+        : {}),
+
       system: [
         {
           type: "text",
