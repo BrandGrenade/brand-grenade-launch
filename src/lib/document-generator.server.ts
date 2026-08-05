@@ -548,7 +548,7 @@ body {
 }
 @media print {
   #toolbar { display: none; }
-  body { padding: 0; background: var(--paper); }
+  html, html, body { padding: 0; background: var(--paper); }
   .page { box-shadow: none; max-width: none; padding: 0; background: var(--paper); }
   .section { page-break-inside: avoid; }
   h2 { page-break-after: avoid; }

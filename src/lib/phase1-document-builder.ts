@@ -111,7 +111,7 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helv
 #toolbar .actions button.close { background: transparent; color: var(--smoke); border: 1px solid #2A2724; }
 @media print {
   #toolbar { display: none; }
-  body { padding: 0; background: var(--paper); }
+  html, html, body { padding: 0; background: var(--paper); }
   .page { box-shadow: none; max-width: none; padding: 0; background: var(--paper); }
   .section { page-break-inside: avoid; }
   .doc-break { page-break-before: always; }
