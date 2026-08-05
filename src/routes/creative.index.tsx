@@ -113,8 +113,9 @@ function CreativeIndex() {
           )}
           {!loading && rows.length === 0 && (
             <div className="text-body-sm" style={{ color: MUTED }}>
-              No session has completed Channel Briefs yet. Finish Stage 21 in the Strategy Pipeline
-              first.
+              No sessions yet. Start a run in the Strategy Pipeline and its creative room appears
+              here.
+
             </div>
           )}
           {rows.map((r) => (
