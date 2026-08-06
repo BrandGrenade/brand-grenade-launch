@@ -369,6 +369,11 @@ const REMEDIATION_BY_ID: Record<FullCheckId, { instruction: string; etaMinutes: 
       "The Left-of-Centre track failed its contract. The failing engine is named in loc_engine_outputs on the preserved TestBrand LOC session — read that column first rather than re-running. Common causes: an engine prompt whose parser contract drifted (parseEngineOutput in src/lib/loc/engine-prompts.ts), the anchor gate rejecting every proposition, or the validation pass nulling scores. Do not relax the assertions in src/lib/loc-integrity.server.ts to make this pass.",
     etaMinutes: 20,
   },
+  smp_verbatim_carriage_20_20b_21: {
+    instruction:
+      "The validated SMP was altered somewhere between Stage 20 and Stage 21 — a channel brief paraphrased or rewrote it. Fix the carriage, not the check: smpGoverningBlock() in src/lib/phase2-shared.ts mandates the verbatim 'SMP (VERBATIM):' line for Stages 20, 20B and 21, so confirm each of those user messages still calls it and that no downstream prompt instructs a channel-specific rewording. Do not loosen src/lib/smp-carriage.ts to make this pass.",
+    etaMinutes: 15,
+  },
 };
 
 function statusBadge(status: FullCheckResult["status"]) {
