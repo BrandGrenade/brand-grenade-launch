@@ -1470,7 +1470,7 @@ export const runTierTwoCheck14 = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const started = Date.now();
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { assertSmpVerbatimCarriage } = await import("@/lib/smp-carriage");
+    const { assertSmpVerbatimCarriage, flattenStrings } = await import("@/lib/smp-carriage");
 
     try {
       // ---- Layer 1: structural ----
