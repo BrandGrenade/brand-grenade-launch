@@ -128,7 +128,7 @@ const CSS = `
 .bg-home .finalcta{padding:100px 0;border-top:1px solid var(--ash);text-align:center}
 .bg-home .finalcta h2{font-size:clamp(36px,5vw,56px);margin-bottom:20px;font-family:'Bebas Neue',sans-serif;font-weight:400}
 .bg-home .finalcta p{color:var(--smoke);font-size:15px;margin-bottom:32px;max-width:56ch;margin-left:auto;margin-right:auto;line-height:1.7}
-.bg-home .footer-byline{font-size:12px;color:var(--smoke);margin-top:6px;max-width:640px;margin-left:auto;margin-right:auto;line-height:1.55}
+.bg-home .footer-byline{font-size:12px;color:var(--smoke);margin-top:16px;line-height:1.6;text-align:left;width:100%}
 .bg-home footer{border-top:1px solid var(--ash);padding:32px 0;text-align:center;font-size:13px;color:var(--smoke)}
 
 /* ---------- Mobile ---------- */
