@@ -1504,6 +1504,32 @@ export function PreflightFullCheckPanel() {
         });
       }
 
+      // ---- Client-driven Check 14 (SMP verbatim carriage, own RPC) ----
+      const def14 = workingResults.find((r) => r.index === 14);
+      if (def14) {
+        setCurrentMessage(`▶ ${def14.name} — verifying SMP carriage through 20 → 20B → 21…`);
+        workingResults = workingResults.map((r) =>
+          r.index === 14 ? { ...r, status: "running" as const } : r,
+        );
+        setResults(workingResults);
+        await recordResultsFn({
+          data: { recordId: outcome5.payload.recordId, allResults: workingResults },
+        });
+        const c14 = await runCheck14Fn({
+          data: {
+            recordId: outcome5.payload.recordId,
+            sessionId: outcome4.payload.sessionId || null,
+          },
+        });
+        const check14Result: FullCheckResult = { ...def14, ...c14 };
+        workingResults = workingResults.map((r) => (r.index === 14 ? check14Result : r));
+        setResults(workingResults);
+        setCurrentMessage(`✓ ${check14Result.name} — ${check14Result.status.toUpperCase()}`);
+        await recordResultsFn({
+          data: { recordId: outcome5.payload.recordId, allResults: workingResults },
+        });
+      }
+
       const final = await finalizeRunFn({
         data: {
           recordId: outcome5.payload.recordId,
