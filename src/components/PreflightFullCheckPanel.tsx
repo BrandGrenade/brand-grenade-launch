@@ -23,6 +23,7 @@ import {
   runTierTwoChecksFrom9,
   runTierTwoChecksFrom11,
   runTierTwoCheck13,
+  runTierTwoCheck14,
   PREFLIGHT_TESTBRAND_BRAND_INTELLIGENCE,
   type FullCheckId,
   type FullCheckResult,
@@ -418,6 +419,7 @@ export function PreflightFullCheckPanel() {
   const runResumeFn = useServerFn(runTierTwoChecksFrom9);
   const runFrom11Fn = useServerFn(runTierTwoChecksFrom11);
   const runCheck13Fn = useServerFn(runTierTwoCheck13);
+  const runCheck14Fn = useServerFn(runTierTwoCheck14);
   const recordCheck3Fn = useServerFn(recordPreflightCheck3Result);
   const recordCheck8Fn = useServerFn(recordPreflightCheck8Result);
   const finalizeRunFn = useServerFn(finalizePreflightRun);
@@ -1542,7 +1544,7 @@ export function PreflightFullCheckPanel() {
       setState("complete");
       setCurrentMessage(`Completed in ${(final.totalDurationMs / 1000).toFixed(1)}s. Cleaned up ${final.sessionIdsCleaned.length} TestBrand session(s).`);
       stopElapsed();
-      if (final.overall === "ready") toast.success("Tier Two: all 13 checks passed");
+      if (final.overall === "ready") toast.success("Tier Two: all 14 checks passed");
       else {
         const { summary: s } = summariseSeverities(workingResults, priorRuns);
         if (s.blocker > 0) toast.error(`Tier Two: ${s.blocker} BLOCKER(s) — do not present live`);
@@ -1620,7 +1622,7 @@ export function PreflightFullCheckPanel() {
           <div className="text-label text-text-secondary">Pre-Flight — Tier Two</div>
           <h2 className="text-h3 mt-1 text-text-primary">Full Integrity Check</h2>
           <p className="text-body mt-1 text-text-secondary">
-            12 deep checks. Single TestBrand session runs Stages 1–16 sequentially. Phase 2 chain (17→17B→18). Two parallel Stage 1 runs. Structural checks for prompts, token caps, sanitiser, and Canvas→Detonation route. Auto-cleans test sessions on completion. Target runtime ~20 minutes.
+            14 deep checks. Single TestBrand session runs Stages 1–16 sequentially. Phase 2 chain (17→17B→18). Two parallel Stage 1 runs. Structural checks for prompts, token caps, sanitiser, and Canvas→Detonation route, Left-of-Centre track, and verbatim SMP carriage through Stages 20/20B/21. Auto-cleans test sessions on completion. Target runtime ~20 minutes.
           </p>
         </div>
         <div className="flex flex-col items-end gap-2">
@@ -1642,7 +1644,7 @@ export function PreflightFullCheckPanel() {
           {state === "complete" && overall && (
             <div className="text-[13px]">
               {overall === "ready" ? (
-                <span className="text-primary">✓ Platform Ready — 12/12 passed</span>
+                <span className="text-primary">✓ Platform Ready — 14/14 passed</span>
               ) : escalationVisible ? (
                 <span className="text-primary">
                   ✗ {severitySummary.blocker} blocker{severitySummary.blocker === 1 ? "" : "s"} — do not present live
