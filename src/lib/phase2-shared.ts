@@ -832,5 +832,19 @@ Not generic strategy. Not interesting territory. A specific answer to:
 What does "${smp}" look and feel like when humans experience it in the world?
 
 If your output could exist without this specific SMP — it is wrong.
-Regenerate until the SMP is unmistakably present.`;
+Regenerate until the SMP is unmistakably present.
+
+VERBATIM CARRIAGE — MANDATORY.
+The SMP text above travels through this stage unaltered. Reproduce it at least
+once in your output, character for character, on its own line, under the exact
+heading:
+SMP (VERBATIM):
+${smp}
+Do not paraphrase it, shorten it, re-punctuate it, re-case it, translate it into
+a channel-specific variant, or replace it with the campaign line, the detonation
+line, or a sentence of your own. Every channel brief, section, or document you
+produce in this stage carries the same SMP string. An output that does not
+contain that exact line is a failed output regardless of the quality of
+everything else in it.`;
 }
+
