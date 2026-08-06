@@ -1470,7 +1470,7 @@ export const runTierTwoCheck14 = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const started = Date.now();
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { assertSmpVerbatimCarriage } = await import("@/lib/smp-carriage");
+    const { assertSmpVerbatimCarriage, flattenStrings } = await import("@/lib/smp-carriage");
 
     try {
       // ---- Layer 1: structural ----
@@ -1516,7 +1516,7 @@ export const runTierTwoCheck14 = createServerFn({ method: "POST" })
       const detail = assertSmpVerbatimCarriage(row.selected_smp, [
         { label: "Stage 20", output: row.stage_20_output },
         { label: "Stage 20B", output: row.stage_20b_output },
-        { label: "Stage 21 (all channel briefs)", output: JSON.stringify(row.stage_21_outputs) },
+        { label: "Stage 21 (all channel briefs)", output: flattenStrings(row.stage_21_outputs) },
       ]);
 
       return {

@@ -22,6 +22,21 @@ export function normaliseForCarriage(input: string): string {
     .trim();
 }
 
+/** Flattens JSON/JSONB structures (e.g. Stage 21's channel-brief map) into the
+ *  raw text they contain. Using JSON.stringify here would escape real newlines
+ *  as the two-character sequence "\n", which breaks heading detection. */
+export function flattenStrings(value: unknown): string {
+  const out: string[] = [];
+  const walk = (v: unknown): void => {
+    if (typeof v === "string") out.push(v);
+    else if (Array.isArray(v)) v.forEach(walk);
+    else if (v && typeof v === "object") Object.values(v as Record<string, unknown>).forEach(walk);
+    else if (typeof v === "number" || typeof v === "boolean") out.push(String(v));
+  };
+  walk(value);
+  return out.join("\n\n");
+}
+
 export type CarriageStageInput = {
   /** Human label, e.g. "Stage 20B". */
   label: string;
