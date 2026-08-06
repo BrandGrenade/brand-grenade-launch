@@ -639,9 +639,9 @@ function Index() {
 
         {/* FINAL CTA */}
         <section className="finalcta" id="contact">
-          <h2>See it on your brief.</h2>
+          <h2>See the system at work.</h2>
           <p>
-            Send a real brief. See exactly what the system produces — not a
+            Request a demo. See exactly what the system produces — not a
             pitch, the capability itself.
           </p>
           <button
