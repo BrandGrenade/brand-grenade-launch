@@ -1435,3 +1435,99 @@ export const runTierTwoCheck13 = createServerFn({ method: "POST" })
       };
     }
   });
+
+// ---------------------------------------------------------------------------
+// CHECK 14 — SMP verbatim carry-through (Stage 20 → 20B → 21)
+//
+// The validated SMP is the one string the whole Detonation cascade is an
+// expression of. It must reach every channel brief unaltered — not
+// paraphrased, not re-punctuated, not rewritten into a channel-specific
+// variant. That contract is enforced in the prompt by smpGoverningBlock()
+// (src/lib/phase2-shared.ts), which mandates a literal "SMP (VERBATIM):"
+// line in Stage 20, 20B and 21 output.
+//
+// This check has two layers:
+//   1. STRUCTURAL — the mandate still exists and all three stages still route
+//      their user message through smpGoverningBlock. Catches a silent prompt
+//      regression even when no pipeline run is available.
+//   2. RUNTIME — the TestBrand session that ran the Phase 2 chain in Check 10
+//      is re-read and its real Stage 20 / 20B / 21 outputs are asserted
+//      against src/lib/smp-carriage.ts.
+//
+// Runs as its own RPC after Check 13; the TestBrand session is still alive at
+// that point (cleanup happens in finalise).
+// ---------------------------------------------------------------------------
+export const runTierTwoCheck14 = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) =>
+    z.object({ recordId: z.string().uuid(), sessionId: z.string().uuid().nullable() }).parse(i),
+  )
+  .handler(async ({ data }) => {
+    const started = Date.now();
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { assertSmpVerbatimCarriage } = await import("@/lib/smp-carriage");
+
+    try {
+      // ---- Layer 1: structural ----
+      const [{ default: phase2SharedSrc }, { default: s20Src }, { default: s20bSrc }, { default: s21Src }] =
+        await Promise.all([
+          import("@/lib/phase2-shared.ts?raw"),
+          import("@/lib/stage20.functions.ts?raw"),
+          import("@/lib/stage20b.functions.ts?raw"),
+          import("@/lib/stage21.functions.ts?raw"),
+        ]);
+      const structural: { ok: boolean; msg: string }[] = [
+        {
+          ok: /VERBATIM CARRIAGE — MANDATORY/.test(phase2SharedSrc) && /SMP \(VERBATIM\):/.test(phase2SharedSrc),
+          msg: "smpGoverningBlock still mandates the verbatim SMP (VERBATIM) line",
+        },
+        { ok: /smpGoverningBlock\(/.test(s20Src), msg: "Stage 20 user message calls smpGoverningBlock" },
+        { ok: /smpGoverningBlock\(/.test(s20bSrc), msg: "Stage 20B user message calls smpGoverningBlock" },
+        { ok: /smpGoverningBlock\(/.test(s21Src), msg: "Stage 21 user message calls smpGoverningBlock" },
+      ];
+      const structuralFailed = structural.filter((c) => !c.ok);
+      if (structuralFailed.length > 0) {
+        throw new Error(
+          `SMP carriage mandate regressed in the prompt layer: ${structuralFailed.map((f) => f.msg).join("; ")}`,
+        );
+      }
+
+      // ---- Layer 2: runtime, against the Phase 2 TestBrand session ----
+      if (!data.sessionId) {
+        throw new Error(
+          "outputs missing — no TestBrand session id supplied, so Stage 20/20B/21 carriage could not be sampled.",
+        );
+      }
+      const { data: row, error } = await supabaseAdmin
+        .from("sessions")
+        .select("selected_smp, stage_20_output, stage_20b_output, stage_21_outputs")
+        .eq("id", data.sessionId)
+        .single();
+      if (error || !row) throw new Error(`Could not reload TestBrand session: ${error?.message ?? "no row"}`);
+      if (!row.stage_20_output || !row.stage_21_outputs) {
+        throw new Error("no Stage 21 output on the TestBrand session — the Phase 2 chain did not reach Stage 21.");
+      }
+
+      const detail = assertSmpVerbatimCarriage(row.selected_smp, [
+        { label: "Stage 20", output: row.stage_20_output },
+        { label: "Stage 20B", output: row.stage_20b_output },
+        { label: "Stage 21 (all channel briefs)", output: JSON.stringify(row.stage_21_outputs) },
+      ]);
+
+      return {
+        status: "pass" as const,
+        durationMs: Date.now() - started,
+        detail: `${detail} Prompt mandate intact in all 4 structural invariants.`,
+        remediation: null,
+      };
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      return {
+        status: "fail" as const,
+        durationMs: Date.now() - started,
+        detail: msg,
+        remediation:
+          "Restore verbatim carriage at the source. smpGoverningBlock() in src/lib/phase2-shared.ts is the single mandate for Stages 20, 20B and 21 — confirm each stage's user message still prepends it and that no later instruction tells a channel brief to reword the SMP. Never relax src/lib/smp-carriage.ts to make this check pass.",
+      };
+    }
+  });
