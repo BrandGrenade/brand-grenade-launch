@@ -192,6 +192,10 @@ const CHECK_DEFS: ReadonlyArray<{ id: FullCheckId; name: string }> = [
   { id: "canvas_to_detonation_navigation", name: "Three Truth Canvas → Detonation route navigation" },
   { id: "concurrent_session_integrity", name: "Concurrent session integrity (two parallel Stage 1 runs)" },
   { id: "loc_track_integrity", name: "Left-of-Centre track — 13 engines, anchors, validation, persistence" },
+  {
+    id: "smp_verbatim_carriage_20_20b_21",
+    name: "SMP verbatim carry-through — Stage 20, 20B, 21 (no paraphrase, no channel rewrite)",
+  },
 ];
 
 // ---------------------------------------------------------------------------
