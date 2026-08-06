@@ -296,6 +296,8 @@ const CHECK_NAMES: Record<FullCheckId, string> = {
   canvas_to_detonation_navigation: "11. Three Truth Canvas → Detonation route navigation",
   concurrent_session_integrity: "12. Concurrent session integrity (two parallel Stage 1 runs)",
   loc_track_integrity: "13. Left-of-Centre track — 13 engines, anchors, validation, persistence",
+  smp_verbatim_carriage_20_20b_21:
+    "14. SMP verbatim carry-through — Stage 20, 20B, 21 (no paraphrase, no channel rewrite)",
 };
 
 // Central remediation registry — explicit instruction + estimated fix time per
