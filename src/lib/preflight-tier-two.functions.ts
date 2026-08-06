@@ -48,7 +48,8 @@ export type FullCheckId =
   | "phase2_detonation_chain"
   | "canvas_to_detonation_navigation"
   | "concurrent_session_integrity"
-  | "loc_track_integrity";
+  | "loc_track_integrity"
+  | "smp_verbatim_carriage_20_20b_21";
 
 export type FullCheckResult = {
   id: FullCheckId;
