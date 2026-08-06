@@ -128,7 +128,8 @@ const CSS = `
 .bg-home .finalcta{padding:100px 0;border-top:1px solid var(--ash);text-align:center}
 .bg-home .finalcta h2{font-size:clamp(36px,5vw,56px);margin-bottom:20px;font-family:'Bebas Neue',sans-serif;font-weight:400}
 .bg-home .finalcta p{color:var(--smoke);font-size:15px;margin-bottom:32px;max-width:56ch;margin-left:auto;margin-right:auto;line-height:1.7}
-.bg-home .footer-byline{font-size:12px;color:var(--smoke);margin-top:16px;line-height:1.6;text-align:center;width:100%}
+.bg-home .footer-byline{font-size:12px;color:var(--smoke);margin-top:16px;line-height:1.6;text-align:center;width:100%;max-width:640px;margin-left:auto;margin-right:auto}
+.bg-home .footer-byline + .footer-byline{margin-top:8px}
 .bg-home footer{border-top:1px solid var(--ash);padding:32px 0;text-align:center;font-size:13px;color:var(--smoke)}
 
 /* ---------- Mobile ---------- */
@@ -666,7 +667,10 @@ function Index() {
       <footer>
         <div>Brand Grenade — Enterprise Brand Strategy and Creative Intelligence System</div>
         <div className="footer-byline">
-          Brand Grenade was built by Adrian Pritchard, a brand strategist and creative director who has worked at McCann, DDB, and TBWA. His work has been recognised at Cannes, One Show, D&AD, and AWARD. It was built to systemise the strategic and creative intelligence that has traditionally lived inside senior human teams — without removing human judgement from the process.
+          Brand Grenade was built by Adrian Pritchard, a brand strategist and creative director who has worked at McCann, DDB, and TBWA. His work has been recognised at Cannes, One Show, D&AD, and AWARD.
+        </div>
+        <div className="footer-byline">
+          It was built to systemise the strategic and creative intelligence that has traditionally lived inside senior human teams — without removing human judgement from the process.
         </div>
       </footer>
 
