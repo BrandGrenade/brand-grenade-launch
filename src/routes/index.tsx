@@ -667,7 +667,10 @@ function Index() {
       <footer>
         <div>Brand Grenade — Enterprise Brand Strategy and Creative Intelligence System</div>
         <div className="footer-byline">
-          Brand Grenade was built by Adrian Pritchard, a brand strategist and creative director who has worked at McCann, DDB, and TBWA. His work has been recognised at Cannes, One Show, D&AD, and AWARD. It was built to systemise the strategic and creative intelligence that has traditionally lived inside senior human teams — without removing human judgement from the process.
+          Brand Grenade was built by Adrian Pritchard, a brand strategist and creative director who has worked at McCann, DDB, and TBWA. His work has been recognised at Cannes, One Show, D&AD, and AWARD.
+        </div>
+        <div className="footer-byline">
+          It was built to systemise the strategic and creative intelligence that has traditionally lived inside senior human teams — without removing human judgement from the process.
         </div>
       </footer>
 
