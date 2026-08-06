@@ -245,6 +245,18 @@ const PER_CHECK_RULES: Record<FullCheckId, Rule[]> = {
       reason: "The SMP did not survive Stage 20 → 20B → 21 verbatim — channel briefs are reinterpreting the platform.",
     },
   ],
+  synthesiser_skip_leaves_lab_unchanged: [
+    {
+      match: /Could not verify synthesiser_runs/i,
+      severity: "harness",
+      reason: "The side-effect query failed — the skip contract itself was not disproven.",
+    },
+    {
+      match: /.*/,
+      severity: "blocker",
+      reason: "Room 00 is no longer cleanly optional — skipping it now changes the Intelligence Lab.",
+    },
+  ],
 };
 
 // -----------------------------------------------------------------------------

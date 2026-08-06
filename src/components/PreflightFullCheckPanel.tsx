@@ -24,6 +24,7 @@ import {
   runTierTwoChecksFrom11,
   runTierTwoCheck13,
   runTierTwoCheck14,
+  runTierTwoCheck15,
   PREFLIGHT_TESTBRAND_BRAND_INTELLIGENCE,
   type FullCheckId,
   type FullCheckResult,
@@ -299,6 +300,8 @@ const CHECK_NAMES: Record<FullCheckId, string> = {
   loc_track_integrity: "13. Left-of-Centre track — 13 engines, anchors, validation, persistence",
   smp_verbatim_carriage_20_20b_21:
     "14. SMP verbatim carry-through — Stage 20, 20B, 21 (no paraphrase, no channel rewrite)",
+  synthesiser_skip_leaves_lab_unchanged:
+    "15. Research Synthesiser skip path leaves the Intelligence Lab unchanged",
 };
 
 // Central remediation registry — explicit instruction + estimated fix time per
@@ -375,6 +378,11 @@ const REMEDIATION_BY_ID: Record<FullCheckId, { instruction: string; etaMinutes: 
       "The validated SMP was altered somewhere between Stage 20 and Stage 21 — a channel brief paraphrased or rewrote it. Fix the carriage, not the check: smpGoverningBlock() in src/lib/phase2-shared.ts mandates the verbatim 'SMP (VERBATIM):' line for Stages 20, 20B and 21, so confirm each of those user messages still calls it and that no downstream prompt instructs a channel-specific rewording. Do not loosen src/lib/smp-carriage.ts to make this pass.",
     etaMinutes: 15,
   },
+  synthesiser_skip_leaves_lab_unchanged: {
+    instruction:
+      "Room 00 must stay skippable with zero side effects. In src/routes/synthesiser.index.tsx keep both 'Skip to Intelligence Lab' controls pointing at /intelligence/new, keep writeSynthesiserHandoff behind the apply-only `if (fields)` guard, and keep recordSynthesiserRun inside the panel's onSynthesised/onApply callbacks. The Lab must consume the handoff once via a lazy useState initialiser.",
+    etaMinutes: 5,
+  },
 };
 
 function statusBadge(status: FullCheckResult["status"]) {
@@ -420,6 +428,7 @@ export function PreflightFullCheckPanel() {
   const runFrom11Fn = useServerFn(runTierTwoChecksFrom11);
   const runCheck13Fn = useServerFn(runTierTwoCheck13);
   const runCheck14Fn = useServerFn(runTierTwoCheck14);
+  const runCheck15Fn = useServerFn(runTierTwoCheck15);
   const recordCheck3Fn = useServerFn(recordPreflightCheck3Result);
   const recordCheck8Fn = useServerFn(recordPreflightCheck8Result);
   const finalizeRunFn = useServerFn(finalizePreflightRun);
@@ -1532,6 +1541,26 @@ export function PreflightFullCheckPanel() {
         });
       }
 
+      // ---- Client-driven Check 15 (Room 00 skip path, own RPC) ----
+      const def15 = workingResults.find((r) => r.index === 15);
+      if (def15) {
+        setCurrentMessage(`▶ ${def15.name} — running the skip path…`);
+        workingResults = workingResults.map((r) =>
+          r.index === 15 ? { ...r, status: "running" as const } : r,
+        );
+        setResults(workingResults);
+        const c15 = await runCheck15Fn({
+          data: { recordId: outcome5.payload.recordId },
+        });
+        const check15Result: FullCheckResult = { ...def15, ...c15 };
+        workingResults = workingResults.map((r) => (r.index === 15 ? check15Result : r));
+        setResults(workingResults);
+        setCurrentMessage(`✓ ${check15Result.name} — ${check15Result.status.toUpperCase()}`);
+        await recordResultsFn({
+          data: { recordId: outcome5.payload.recordId, allResults: workingResults },
+        });
+      }
+
       const final = await finalizeRunFn({
         data: {
           recordId: outcome5.payload.recordId,
@@ -1544,7 +1573,7 @@ export function PreflightFullCheckPanel() {
       setState("complete");
       setCurrentMessage(`Completed in ${(final.totalDurationMs / 1000).toFixed(1)}s. Cleaned up ${final.sessionIdsCleaned.length} TestBrand session(s).`);
       stopElapsed();
-      if (final.overall === "ready") toast.success("Tier Two: all 14 checks passed");
+      if (final.overall === "ready") toast.success("Tier Two: all 15 checks passed");
       else {
         const { summary: s } = summariseSeverities(workingResults, priorRuns);
         if (s.blocker > 0) toast.error(`Tier Two: ${s.blocker} BLOCKER(s) — do not present live`);
@@ -1622,7 +1651,7 @@ export function PreflightFullCheckPanel() {
           <div className="text-label text-text-secondary">Pre-Flight — Tier Two</div>
           <h2 className="text-h3 mt-1 text-text-primary">Full Integrity Check</h2>
           <p className="text-body mt-1 text-text-secondary">
-            14 deep checks. Single TestBrand session runs Stages 1–16 sequentially. Phase 2 chain (17→17B→18). Two parallel Stage 1 runs. Structural checks for prompts, token caps, sanitiser, and Canvas→Detonation route, Left-of-Centre track, and verbatim SMP carriage through Stages 20/20B/21. Auto-cleans test sessions on completion. Target runtime ~20 minutes.
+            15 deep checks. Single TestBrand session runs Stages 1–16 sequentially. Phase 2 chain (17→17B→18). Two parallel Stage 1 runs. Structural checks for prompts, token caps, sanitiser, and Canvas→Detonation route, Left-of-Centre track, and verbatim SMP carriage through Stages 20/20B/21, and the Research Synthesiser skip path. Auto-cleans test sessions on completion. Target runtime ~20 minutes.
           </p>
         </div>
         <div className="flex flex-col items-end gap-2">
@@ -1644,7 +1673,7 @@ export function PreflightFullCheckPanel() {
           {state === "complete" && overall && (
             <div className="text-[13px]">
               {overall === "ready" ? (
-                <span className="text-primary">✓ Platform Ready — 14/14 passed</span>
+                <span className="text-primary">✓ Platform Ready — 15/15 passed</span>
               ) : escalationVisible ? (
                 <span className="text-primary">
                   ✗ {severitySummary.blocker} blocker{severitySummary.blocker === 1 ? "" : "s"} — do not present live

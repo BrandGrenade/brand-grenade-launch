@@ -49,7 +49,8 @@ export type FullCheckId =
   | "canvas_to_detonation_navigation"
   | "concurrent_session_integrity"
   | "loc_track_integrity"
-  | "smp_verbatim_carriage_20_20b_21";
+  | "smp_verbatim_carriage_20_20b_21"
+  | "synthesiser_skip_leaves_lab_unchanged";
 
 export type FullCheckResult = {
   id: FullCheckId;
@@ -195,6 +196,10 @@ const CHECK_DEFS: ReadonlyArray<{ id: FullCheckId; name: string }> = [
   {
     id: "smp_verbatim_carriage_20_20b_21",
     name: "SMP verbatim carry-through — Stage 20, 20B, 21 (no paraphrase, no channel rewrite)",
+  },
+  {
+    id: "synthesiser_skip_leaves_lab_unchanged",
+    name: "Research Synthesiser skip path leaves the Intelligence Lab unchanged",
   },
 ];
 
@@ -1528,6 +1533,77 @@ export const runTierTwoCheck14 = createServerFn({ method: "POST" })
         detail: msg,
         remediation:
           "Restore verbatim carriage at the source. smpGoverningBlock() in src/lib/phase2-shared.ts is the single mandate for Stages 20, 20B and 21 — confirm each stage's user message still prepends it and that no later instruction tells a channel brief to reword the SMP. Never relax src/lib/smp-carriage.ts to make this check pass.",
+      };
+    }
+  });
+
+// ---------------------------------------------------------------------------
+// Check 15 — Research Synthesiser skip path leaves the Intelligence Lab
+// completely unchanged. Deterministic, no model calls, ~sub-second.
+// ---------------------------------------------------------------------------
+
+export const runTierTwoCheck15 = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => z.object({ recordId: z.string().uuid() }).parse(i))
+  .handler(async ({ data: _data }) => {
+    const started = Date.now();
+    try {
+      const { assertSkipLeavesLabUnchanged, assertSkipSourceInvariants } = await import(
+        "@/lib/synthesiser-skip"
+      );
+      const [{ default: roomSrc }, { default: labSrc }] = await Promise.all([
+        import("@/routes/synthesiser.index.tsx?raw"),
+        import("@/routes/intelligence.new.tsx?raw"),
+      ]);
+
+      const sourceDetail = assertSkipSourceInvariants({
+        synthesiserRoom: roomSrc,
+        intelligenceNew: labSrc,
+      });
+
+      // Byte-identical Lab baseline: with no handoff the Lab starts from the
+      // empty brand + empty field map, exactly as it did before Room 00.
+      const baseline = JSON.stringify({ brand: "", category: "", fields: {} });
+      const behaviourDetail = assertSkipLeavesLabUnchanged({
+        snapshot: baseline,
+        afterSkip: (h) =>
+          JSON.stringify({
+            brand: h?.brand ?? "",
+            category: h?.category ?? "",
+            fields: h?.fields ?? {},
+          }),
+      });
+
+      // No synthesiser_runs row may appear as a side effect of skipping.
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const before = Date.now() - 60_000;
+      const { count, error } = await supabaseAdmin
+        .from("synthesiser_runs")
+        .select("id", { count: "exact", head: true })
+        .gte("created_at", new Date(before).toISOString())
+        .eq("brand_name", "");
+      if (error) {
+        throw new Error(`Could not verify synthesiser_runs side effects: ${error.message}`);
+      }
+      if ((count ?? 0) > 0) {
+        throw new Error(
+          `${count} synthesiser_runs row(s) were written without a brand — the skip path is logging runs it should not.`,
+        );
+      }
+
+      return {
+        status: "pass" as const,
+        durationMs: Date.now() - started,
+        detail: `${behaviourDetail} ${sourceDetail} No stray synthesiser_runs rows.`,
+        remediation: null,
+      };
+    } catch (e) {
+      return {
+        status: "fail" as const,
+        durationMs: Date.now() - started,
+        detail: e instanceof Error ? e.message : String(e),
+        remediation:
+          "Room 00 is optional by contract. Restore the skip path: the 'Skip to Intelligence Lab' controls must navigate straight to /intelligence/new, writeSynthesiserHandoff must stay behind the apply-only `if (fields)` guard in src/routes/synthesiser.index.tsx, recordSynthesiserRun must only fire from the panel's onSynthesised/onApply callbacks, and the Lab must consume the handoff once via a lazy useState initialiser. Do not relax src/lib/synthesiser-skip.ts to make this pass.",
       };
     }
   });
