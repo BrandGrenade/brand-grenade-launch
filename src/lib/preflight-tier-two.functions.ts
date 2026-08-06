@@ -1516,7 +1516,7 @@ export const runTierTwoCheck14 = createServerFn({ method: "POST" })
       const detail = assertSmpVerbatimCarriage(row.selected_smp, [
         { label: "Stage 20", output: row.stage_20_output },
         { label: "Stage 20B", output: row.stage_20b_output },
-        { label: "Stage 21 (all channel briefs)", output: JSON.stringify(row.stage_21_outputs) },
+        { label: "Stage 21 (all channel briefs)", output: flattenStrings(row.stage_21_outputs) },
       ]);
 
       return {
