@@ -228,6 +228,23 @@ const PER_CHECK_RULES: Record<FullCheckId, Rule[]> = {
     },
     { match: /.*/, severity: "blocker", reason: "Left-of-Centre track integrity check failed." },
   ],
+  smp_verbatim_carriage_20_20b_21: [
+    {
+      match: /rate.?limit|overloaded|529|timed? ?out/i,
+      severity: "transient",
+      reason: "Stage 20/20B/21 regeneration hit an upstream model overload — re-run.",
+    },
+    {
+      match: /No selected_smp|no Stage 2[01]|outputs missing/i,
+      severity: "harness",
+      reason: "The TestBrand session never reached Stage 21, so carriage could not be sampled.",
+    },
+    {
+      match: /.*/,
+      severity: "blocker",
+      reason: "The SMP did not survive Stage 20 → 20B → 21 verbatim — channel briefs are reinterpreting the platform.",
+    },
+  ],
 };
 
 // -----------------------------------------------------------------------------
