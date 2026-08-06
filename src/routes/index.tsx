@@ -357,7 +357,15 @@ function Index() {
 
       <nav>
         <div className="nav-inner">
-          <a href="#hero" className="nav-logo" style={{ textDecoration: "none", color: "inherit" }}>
+          <a
+            href="#hero"
+            className="nav-logo"
+            style={{ textDecoration: "none", color: "inherit" }}
+            onClick={(e) => {
+              e.preventDefault();
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+          >
             <img
               src="/brand-grenade-icon.png"
               alt="Brand Grenade"
