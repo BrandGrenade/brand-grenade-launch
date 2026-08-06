@@ -1296,27 +1296,7 @@ export function PreflightFullCheckPanel() {
               },
         );
         setResults(workingResults);
-        // ---- Client-driven Check 15 (Room 00 skip path, own RPC) ----
-      const def15 = workingResults.find((r) => r.index === 15);
-      if (def15) {
-        setCurrentMessage(`▶ ${def15.name} — running the skip path…`);
-        workingResults = workingResults.map((r) =>
-          r.index === 15 ? { ...r, status: "running" as const } : r,
-        );
-        setResults(workingResults);
-        const c15 = await runCheck15Fn({
-          data: { recordId: outcome5.payload.recordId },
-        });
-        const check15Result: FullCheckResult = { ...def15, ...c15 };
-        workingResults = workingResults.map((r) => (r.index === 15 ? check15Result : r));
-        setResults(workingResults);
-        setCurrentMessage(`✓ ${check15Result.name} — ${check15Result.status.toUpperCase()}`);
-        await recordResultsFn({
-          data: { recordId: outcome5.payload.recordId, allResults: workingResults },
-        });
-      }
-
-      const final = await finalizeRunFn({
+        const final = await finalizeRunFn({
           data: {
             recordId: initialOutcome.payload.recordId,
             allResults: workingResults,
