@@ -356,7 +356,7 @@ function Index() {
 
       <nav>
         <div className="nav-inner">
-          <div className="nav-logo">
+          <a href="#hero" className="nav-logo" style={{ textDecoration: "none", color: "inherit" }}>
             <img
               src="/brand-grenade-icon.png"
               alt="Brand Grenade"
@@ -365,7 +365,7 @@ function Index() {
               style={{ display: "block" }}
             />
             <div className="nav-mark">BRAND GRENADE</div>
-          </div>
+          </a>
           <div className="nav-rooms">
             <a href="#room-00">Research Synthesiser</a>
             <span className="nav-arrow">→</span>
@@ -655,8 +655,10 @@ function Index() {
       </div>
 
       <footer>
-        Brand Grenade — Enterprise Brand Strategy and Creative Intelligence
-        System
+        <div>Brand Grenade — Enterprise Brand Strategy and Creative Intelligence System</div>
+        <div className="footer-byline">
+          Brand Grenade was built by Adrian Pritchard, a brand strategist and creative director who has worked at McCann, DDB, and TBWA. His work has been recognised at Cannes, One Show, D&AD, and AWARD. It was built to systemise the strategic and creative intelligence that has traditionally lived inside senior human teams — without removing human judgement from the process.
+        </div>
       </footer>
 
       {showDemo && <RequestDemoModal onClose={() => setShowDemo(false)} />}
