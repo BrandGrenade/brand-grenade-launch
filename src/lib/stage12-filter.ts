@@ -355,11 +355,13 @@ export function applyStage10CodeGate(
       : `CODE FLAGS: none`;
 
     // Inject after the Commercial Precedent line for this SMP block.
+    // Emphasis-tolerant: the model may bold any structural label.
     const escLine = s.smpLine.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     const smpBlockHeadRe = new RegExp(
-      `(SMP:\\s*"${escLine}"[\\s\\S]*?\\n[\\t ]*Commercial\\s+Precedent\\s*:[^\\n]*\\n)`,
+      `(\\*{0,2}SMP:\\*{0,2}\\s*"${escLine}"[\\s\\S]*?\\n[\\t ]*\\*{0,2}Commercial\\s+Precedent\\*{0,2}\\s*:[^\\n]*\\n)`,
       "i",
     );
+
     if (smpBlockHeadRe.test(patched)) {
       patched = patched.replace(
         smpBlockHeadRe,
