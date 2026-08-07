@@ -1803,6 +1803,48 @@ export type Database = {
         }
         Relationships: []
       }
+      tier2_harness_runs: {
+        Row: {
+          attempts: number
+          claimed_at: string | null
+          created_at: string
+          donor_session_id: string | null
+          id: string
+          log: Json
+          phase: string
+          result_detail: string | null
+          session_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          attempts?: number
+          claimed_at?: string | null
+          created_at?: string
+          donor_session_id?: string | null
+          id?: string
+          log?: Json
+          phase?: string
+          result_detail?: string | null
+          session_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          attempts?: number
+          claimed_at?: string | null
+          created_at?: string
+          donor_session_id?: string | null
+          id?: string
+          log?: Json
+          phase?: string
+          result_detail?: string | null
+          session_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       users: {
         Row: {
           created_at: string
