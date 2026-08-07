@@ -116,7 +116,7 @@ export async function seedHarnessRun(donorSessionId: string) {
  * never reaches the catch block, so post-hoc error capture records nothing.
  */
 export async function tickHarness() {
-  const staleBefore = new Date(Date.now() - 8 * 60_000).toISOString();
+  const staleBefore = new Date(Date.now() - 8 * 60000).toISOString();
   const { data: candidates } = await supabaseAdmin
     .from("tier2_harness_runs")
     .select("*")
