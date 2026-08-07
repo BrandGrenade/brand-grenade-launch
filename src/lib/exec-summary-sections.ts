@@ -425,9 +425,15 @@ export function extractVerification(session: ExecSessionRow): VerificationResult
       if (!c) continue;
       const m = c.match(/^Verdict:\s*([A-Z][A-Z ,()a-z-]*?)\s*[—-]\s*(.+)$/);
       if (m) {
-        verdict = m[1].trim();
-        note = firstSentencesOf(m[2], 1);
+        // Keep the verdict token short enough to read as a badge; any
+        // parenthetical qualifier belongs with the note, not the label.
+        const full = m[1].trim();
+        const bracket = full.indexOf("(");
+        verdict = (bracket > 0 ? full.slice(0, bracket) : full).trim();
+        const qualifier = bracket > 0 ? full.slice(bracket).trim() : "";
+        note = firstSentencesOf(qualifier ? `${qualifier} ${m[2]}` : m[2], 1);
       }
+
       break;
     }
     tests.push({ name, verdict, note });
