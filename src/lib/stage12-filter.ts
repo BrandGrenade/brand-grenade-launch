@@ -248,8 +248,10 @@ export function filterValidatedFromStage11(stage11Output: string): FilteredStage
   const validated = verdicts.filter((v) => keep(v.verdict));
   const eliminated = verdicts.filter((v) => !keep(v.verdict));
 
-  const firstIdx = stage11Output.search(/\n?SMP:\s*"/);
-  const preamble = firstIdx > 0 ? stage11Output.slice(0, firstIdx).trim() : "";
+  const flat = stripEmphasis(stage11Output);
+  const firstIdx = flat.search(/\n?SMP:\s*"/);
+  const preamble = firstIdx > 0 ? flat.slice(0, firstIdx).trim() : "";
+
 
   const sections: string[] = [];
   if (preamble) sections.push(preamble);
