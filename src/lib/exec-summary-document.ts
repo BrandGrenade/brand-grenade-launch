@@ -1,32 +1,33 @@
-// Strategy Executive Summary — synthesis document.
+// Strategy Executive Summary — compressed companion to Consulting Delivery.
 //
 // No AI, no new reasoning. Every line is assembled from data already stored
 // on the session (and, where one exists, the Intelligence Lab run for the
-// same brand). Rendered as HTML through the same document design system as
-// every other deliverable.
+// same brand). Mixed format by design: visual process block, bullet audit
+// trails for the countable sections, real prose for the argued ones.
 
 import { baseStyles, escapeHtml, sanitise } from "./phase1-document-builder";
+import { NOT_AVAILABLE } from "./exec-summary-extract";
 import {
-  NOT_AVAILABLE,
-  PROOF_UNAVAILABLE,
-  extractBrandWorld,
-  extractProofAtAGlance,
-  extractShortlist,
-  extractWhyThisWins,
-  firstSentences,
-} from "./exec-summary-extract";
+  buildLeadParagraph,
+  extractBusinessIssue,
+  extractBrandWorldSection,
+  extractFindings,
+  extractFrameworks,
+  extractProcess,
+  extractPropositionsField,
+  extractRecommendations,
+  extractResearch,
+  extractScoring,
+  extractVerification,
+  extractWinning,
+  type ExecSessionRow,
+} from "./exec-summary-sections";
 
-export interface ExecSummarySession {
+export type ExecSummarySession = {
   brand_name?: string | null;
   category?: string | null;
   selected_smp?: string | null;
-  stage_10_output?: string | null;
-  stage_11_output?: string | null;
-  stage_12_output?: string | null;
-  stage_13_output?: string | null;
-  stage_22_output?: string | null;
-  stage_22_distinctive_assets?: string | null;
-}
+} & ExecSessionRow;
 
 export interface ExecSummaryIntel {
   /** Briefing Room governing tension carried in the Intelligence handoff. */
@@ -35,32 +36,35 @@ export interface ExecSummaryIntel {
   executiveSummary?: string | null;
 }
 
-const PROCESS_LINE =
-  "Research → 50+ methodologies & lateral engines → propositions generated → six-dimension validation → one recommendation";
-
 const ACCENT = "#C81E1E";
 
 function extraStyles(): string {
   return `
-.es-process { margin: 6pt 0 0; padding: 12pt 14pt; border: 1pt solid var(--rule); border-radius: 4pt; background: var(--surface); font-size: 10pt; font-weight: 600; letter-spacing: 0.01em; color: var(--ash); }
-.es-list { margin: 0; padding: 0; list-style: none; }
-.es-item { padding: 10pt 0; border-bottom: 0.5pt solid var(--rule); }
-.es-item:last-child { border-bottom: none; }
-.es-item .es-status { display: inline-block; font-size: 9pt; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: ${ACCENT}; margin-bottom: 4pt; }
-.es-item .es-status.muted { color: var(--smoke); }
-.es-item .es-prop { font-size: 11pt; font-weight: 600; color: var(--ash); }
-.es-item .es-note { font-size: 9.5pt; color: var(--smoke); margin-top: 3pt; }
-.es-kv { font-size: 10pt; margin-bottom: 8pt; }
-.es-kv .es-label { font-weight: 600; color: var(--ash); }
+.es-lead { font-size: 12pt; line-height: 1.55; color: var(--ash); border-left: 2pt solid ${ACCENT}; padding: 2pt 0 2pt 14pt; margin: 0 0 26pt; }
+.es-chain { display: flex; flex-wrap: wrap; align-items: center; gap: 8pt; margin: 4pt 0 16pt; }
+.es-chain .node { font-size: 9.5pt; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: var(--ash); border: 1pt solid var(--rule); border-radius: 3pt; padding: 6pt 10pt; background: var(--surface); }
+.es-chain .arrow { font-size: 11pt; color: ${ACCENT}; font-weight: 700; }
+.es-stats { display: flex; flex-wrap: wrap; gap: 26pt; padding: 12pt 0 2pt; border-top: 0.5pt solid var(--rule); }
+.es-stats .stat { min-width: 90pt; }
+.es-stats .num { display: block; font-size: 24pt; font-weight: 700; line-height: 1.1; color: ${ACCENT}; }
+.es-stats .cap { display: block; font-size: 8.5pt; letter-spacing: 0.1em; text-transform: uppercase; color: var(--smoke); margin-top: 3pt; }
+.es-bullets { margin: 0; padding: 0; list-style: none; }
+.es-bullets li { padding: 7pt 0 7pt 14pt; border-bottom: 0.5pt solid var(--rule); position: relative; font-size: 10pt; color: var(--ash); }
+.es-bullets li:last-child { border-bottom: none; }
+.es-bullets li:before { content: "—"; position: absolute; left: 0; color: ${ACCENT}; }
+.es-bullets .k { font-weight: 600; }
+.es-bullets .sub { display: block; font-size: 9.5pt; color: var(--smoke); margin-top: 2pt; }
+.es-tag { display: inline-block; font-size: 8pt; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: ${ACCENT}; margin-right: 6pt; }
+.es-tag.muted { color: var(--smoke); }
 table.es-table { width: 100%; border-collapse: collapse; font-size: 10pt; }
-table.es-table th, table.es-table td { text-align: left; vertical-align: top; padding: 8pt 10pt; border-bottom: 0.5pt solid var(--rule); }
-table.es-table th { width: 34%; font-weight: 600; color: var(--ash); background: var(--surface); }
+table.es-table th, table.es-table td { text-align: left; vertical-align: top; padding: 7pt 10pt; border-bottom: 0.5pt solid var(--rule); }
+table.es-table th { width: 32%; font-weight: 600; color: var(--ash); background: var(--surface); }
+table.es-table td.score { width: 12%; font-weight: 700; color: ${ACCENT}; white-space: nowrap; }
 .es-missing { font-size: 9.5pt; color: var(--smoke); font-style: italic; }
 `;
 }
 
 function section(label: string, title: string, body: string): string {
-  if (!body) return "";
   return `<div class="section"><div class="part-label">${escapeHtml(label)}</div><h2>${escapeHtml(title)}</h2>${body}</div>`;
 }
 
@@ -72,48 +76,50 @@ function missing(): string {
   return `<p class="es-missing">${escapeHtml(NOT_AVAILABLE)}</p>`;
 }
 
+function bullets(items: Array<{ head: string; sub?: string | null; tag?: string; muted?: boolean }>): string {
+  if (!items.length) return missing();
+  return `<ul class="es-bullets">${items
+    .map(
+      (i) =>
+        `<li>${i.tag ? `<span class="es-tag${i.muted ? " muted" : ""}">${escapeHtml(i.tag)}</span>` : ""}<span class="k">${escapeHtml(i.head)}</span>${
+          i.sub ? `<span class="sub">${escapeHtml(i.sub)}</span>` : ""
+        }</li>`,
+    )
+    .join("")}</ul>`;
+}
+
 export function buildExecSummaryDocument(
   session: ExecSummarySession,
   intel: ExecSummaryIntel = {},
 ): string {
   const brand = session.brand_name ?? "Untitled Brand";
-  const date = new Date().toLocaleDateString("en-AU", {
-    month: "long",
-    year: "numeric",
+  const date = new Date().toLocaleDateString("en-AU", { month: "long", year: "numeric" });
+
+  const row = session as ExecSessionRow;
+
+  const businessIssue = extractBusinessIssue(row, intel.tension);
+  const findings = extractFindings(row, intel);
+  const research = extractResearch(row, intel);
+  const frameworks = extractFrameworks(row);
+  const field = extractPropositionsField(row);
+  const winning = extractWinning(row);
+  const verification = extractVerification(row);
+  const scoring = extractScoring(row);
+  const brandWorld = extractBrandWorldSection(row);
+  const recs = extractRecommendations(row);
+
+  const process = extractProcess(
+    row,
+    { propositions: field.length, dimensions: scoring.rows.length, frameworks },
+    Boolean(intel.executiveSummary || intel.tension),
+  );
+
+  const lead = buildLeadParagraph({
+    businessIssue,
+    smp: winning.smp,
+    reason: winning.alignment,
+    verdict: verification.verdict,
   });
-
-  // 1 — The Challenge
-  const challenge = firstSentences(sanitise(intel.tension ?? ""), 3);
-
-  // 2 — What We Found (omitted entirely when no Intelligence Lab run)
-  const found = firstSentences(sanitise(intel.executiveSummary ?? ""), 3);
-
-  // 4 — The Shortlist
-  const shortlist = extractShortlist(session.stage_12_output, {
-    selectedSmp: session.selected_smp,
-    stage11: session.stage_11_output,
-  }).slice(0, 5);
-
-  // 5 — The Recommendation
-  const smp = sanitise(session.selected_smp ?? "").trim();
-
-  // 6 — Why This Wins
-  const why = extractWhyThisWins({
-    stage11: session.stage_11_output,
-    stage13: session.stage_13_output,
-    selectedSmp: session.selected_smp,
-  });
-
-  // 7 — The Proof, At A Glance
-  const proof = extractProofAtAGlance({
-    stage10: session.stage_10_output,
-    stage22: session.stage_22_output,
-    distinctiveAssets: session.stage_22_distinctive_assets,
-    selectedSmp: session.selected_smp,
-  });
-
-  // 8 — The Brand World It Builds
-  const brandWorld = extractBrandWorld(session.stage_22_output);
 
   const cover = `<div class="cover">
   <div class="cover-brand">BRAND GRENADE</div>
@@ -124,70 +130,122 @@ export function buildExecSummaryDocument(
   <div class="cover-confidential">CONFIDENTIAL</div>
 </div>`;
 
-  const shortlistBody = shortlist.length
-    ? `<ul class="es-list">${shortlist
-        .map((item) => {
-          const prop = item.proposition ?? item.owns ?? NOT_AVAILABLE;
-          const note = item.selected
-            ? "Carried forward as the recommendation."
-            : item.setAsideReason ?? "";
-          return `<li class="es-item"><span class="es-status${item.selected ? "" : " muted"}">${escapeHtml(item.status)}</span><div class="es-prop">${escapeHtml(prop)}</div>${note ? `<div class="es-note">${escapeHtml(note)}</div>` : ""}</li>`;
-        })
-        .join("")}</ul>`
+  const leadBlock = lead ? `<div class="es-lead">${escapeHtml(lead)}</div>` : "";
+
+  // 01 — The Process (visual)
+  const chainHtml = process.chain.length
+    ? `<div class="es-chain">${process.chain
+        .map((n) => `<span class="node">${escapeHtml(n)}</span>`)
+        .join('<span class="arrow">→</span>')}</div>`
+    : "";
+  const statsHtml = `<div class="es-stats">${process.stats
+    .map(
+      (s) =>
+        `<div class="stat"><span class="num">${escapeHtml(s.value)}</span><span class="cap">${escapeHtml(s.label)}</span></div>`,
+    )
+    .join("")}</div>`;
+
+  // 03 — Research
+  const researchHtml = bullets(
+    research.map((r) => ({ head: r.label, sub: r.body, tag: undefined })),
+  );
+
+  // 05 — Frameworks
+  const frameworksHtml = bullets([
+    ...frameworks.stages.map((s) => ({ head: s })),
+    ...frameworks.engines.map((e) => ({
+      head: `Lateral engine — ${e}`,
+      tag: "LOC",
+    })),
+  ]);
+
+  // 06 — The Propositions Field
+  const fieldHtml = field.length
+    ? bullets(
+        field.map((f) => ({
+          head: f.proposition,
+          sub: f.selected
+            ? `${f.origin}. Carried forward as the recommendation.`
+            : f.reason
+              ? `${f.origin}. Not the lead: ${f.reason}`
+              : `${f.origin}. Considered, not carried forward.`,
+          tag: f.selected ? "Selected" : "Considered",
+          muted: !f.selected,
+        })),
+      )
     : missing();
 
-  const whyBody = why.formatted.length
-    ? why.formatted
+  // 07 — Winning Proposition
+  const winningHtml = winning.smp
+    ? `<div class="proposition"><div class="label">Strategic Master Proposition</div><div class="stmt">${escapeHtml(
+        winning.smp,
+      )}</div></div>${winning.owns ? p(winning.owns) : ""}${winning.alignment ? p(winning.alignment) : ""}`
+    : missing();
+
+  // 08 — Verification
+  const verificationHtml =
+    verification.verdict || verification.tests.length
+      ? `${verification.verdict ? p(verification.verdict) : ""}${bullets(
+          verification.tests.map((t) => ({
+            head: t.name,
+            sub: t.note,
+            tag: t.verdict ?? undefined,
+            muted: !!t.verdict && !/HOLDS/i.test(t.verdict),
+          })),
+        )}`
+      : missing();
+
+  // 09 — Scoring and Validation
+  const scoringHtml = scoring.rows.length
+    ? `<table class="es-table">${scoring.rows
         .map(
-          (f) =>
-            `<div class="es-kv"><span class="es-label">${escapeHtml(f.label)}:</span> ${escapeHtml(f.body)}</div>`,
+          (r) =>
+            `<tr><th>${escapeHtml(r.dimension)}</th><td class="score">${escapeHtml(r.score)}</td><td>${escapeHtml(
+              r.note ?? "",
+            )}</td></tr>`,
         )
-        .join("")
+        .join("")}${
+        scoring.composite
+          ? `<tr><th>Composite</th><td class="score">${escapeHtml(scoring.composite)}</td><td>${escapeHtml(
+              scoring.weighted ? `Weighted ranking composite ${scoring.weighted}.` : "",
+            )}</td></tr>`
+          : ""
+      }</table>`
     : missing();
 
-  const proofBody = proof
-    ? `<table class="es-table">
-  <tr><th>Overall composite score</th><td>${escapeHtml(proof.composite)}</td></tr>
-  <tr><th>Distinctive asset in play</th><td>${escapeHtml(proof.distinctiveAsset)}</td></tr>
-  <tr><th>Competitive impossibility</th><td>${escapeHtml(proof.impossibility)}</td></tr>
-  <tr><th>Clean air</th><td>${escapeHtml(proof.cleanAir)}</td></tr>
-</table>`
-    : `<p class="es-missing">${escapeHtml(PROOF_UNAVAILABLE)}</p>`;
+  // 10 — Brand World Opportunity
+  const brandWorldHtml = brandWorld.line
+    ? `<blockquote>${escapeHtml(brandWorld.line)}</blockquote>${
+        brandWorld.explanation ? p(brandWorld.explanation) : ""
+      }`
+    : missing();
+
+  // 11 — Recommendations, including channel strategy
+  const recsHtml = `${recs.condition ? p(`Condition on activation: ${recs.condition}`) : ""}${
+    recs.nextStep ? p(`Next step: ${recs.nextStep}`) : ""
+  }${
+    recs.channels.length
+      ? `<div class="part-label" style="margin-top:10pt">CHANNELS THIS STRATEGY ACTIVATES THROUGH</div>${bullets(
+          recs.channels.map((c) => ({ head: c })),
+        )}`
+      : ""
+  }${!recs.condition && !recs.nextStep && !recs.channels.length ? missing() : ""}`;
 
   const body =
     cover +
-    section("SECTION 01", "The Challenge", challenge ? p(challenge) : missing()) +
-    (found ? section("SECTION 02", "What We Found", p(found)) : "") +
-    section(
-      "SECTION 03",
-      "The Process, In Brief",
-      `<div class="es-process">${escapeHtml(PROCESS_LINE)}</div>`,
-    ) +
-    section("SECTION 04", "The Shortlist", shortlistBody) +
-    section(
-      "SECTION 05",
-      "The Recommendation",
-      smp
-        ? `<div class="proposition"><div class="label">Strategic Master Proposition</div><div class="stmt">${escapeHtml(smp)}</div></div>`
-        : missing(),
-    ) +
-    section("SECTION 06", "Why This Wins", whyBody) +
-    section("SECTION 07", "The Proof, At A Glance", proofBody) +
-    section(
-      "SECTION 08",
-      "The Brand World It Builds",
-      brandWorld ? `<blockquote>${escapeHtml(brandWorld)}</blockquote>` : missing(),
-    ) +
-    section(
-      "SECTION 09",
-      "What Sits Behind This / Next Step",
-      `${p(
-        "Full reasoning, stage by stage, sits in the Complete Pipeline Record; the full argument sits in the Board Strategy Recommendation — both available in this session's Deliverables.",
-      )}${p(
-        "Recommended next step: confirm the recommendation with the decision-making group, then move into creative territory development and activation.",
-      )}`,
-    ) +
-    `<div class="footer">Brand Grenade Strategy Intelligence System — Confidential. This summary was assembled from stored session data only; no content was generated for it. All outputs should be reviewed before commercial deployment.</div>`;
+    leadBlock +
+    section("SECTION 01", "The Process", `${chainHtml}${statsHtml}`) +
+    section("SECTION 02", "The Business Issue", businessIssue ? p(businessIssue) : missing()) +
+    section("SECTION 03", "Research", researchHtml) +
+    section("SECTION 04", "Findings", findings ? p(findings) : missing()) +
+    section("SECTION 05", "Frameworks", frameworksHtml) +
+    section("SECTION 06", "The Propositions Field", fieldHtml) +
+    section("SECTION 07", "Winning Proposition", winningHtml) +
+    section("SECTION 08", "Verification", verificationHtml) +
+    section("SECTION 09", "Scoring and Validation", scoringHtml) +
+    section("SECTION 10", "Brand World Opportunity", brandWorldHtml) +
+    section("SECTION 11", "Recommendations, Including Channel Strategy", recsHtml) +
+    `<div class="footer">Brand Grenade Strategy Intelligence System — Confidential. This summary was assembled from stored session data only; no content was generated for it. Full reasoning sits in the Consulting Delivery document and the Complete Pipeline Record.</div>`;
 
   const title = `Strategy Executive Summary — ${brand}`;
   return `<!doctype html>
@@ -226,3 +284,6 @@ export function openExecSummaryDocument(
   win.document.write(html);
   win.document.close();
 }
+
+// `sanitise` retained for callers passing raw text through this module.
+export { sanitise };

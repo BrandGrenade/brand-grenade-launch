@@ -3,11 +3,15 @@
 
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import {
   openExecSummaryDocument,
   type ExecSummarySession,
 } from "@/lib/exec-summary-document";
 import { fetchExecSummaryIntel } from "@/lib/exec-summary-intel";
+
+/** Columns the summary needs that the Deliverables page does not already load. */
+const EXTRA_COLUMNS = "brief_text, loc_engine_outputs, loc_status, loc_decision_packages";
 
 export function ExecSummaryCard({ session }: { session: ExecSummarySession }) {
   const [busy, setBusy] = useState(false);
@@ -18,14 +22,27 @@ export function ExecSummaryCard({ session }: { session: ExecSummarySession }) {
   const handleGenerate = useCallback(async () => {
     setBusy(true);
     try {
-      const intel = await fetchExecSummaryIntel(brand);
-      openExecSummaryDocument(session, intel);
+      const [intel, extra] = await Promise.all([
+        fetchExecSummaryIntel(brand),
+        (async () => {
+          const id = (session as { id?: string }).id;
+          if (!id) return {};
+          const res = await supabase
+            .from("sessions")
+            .select(EXTRA_COLUMNS)
+            .eq("id", id)
+            .maybeSingle();
+          return (res.data as Record<string, unknown> | null) ?? {};
+        })(),
+      ]);
+      openExecSummaryDocument({ ...session, ...extra }, intel);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not build the summary");
     } finally {
       setBusy(false);
     }
   }, [brand, session]);
+
 
   return (
     <div
@@ -56,7 +73,7 @@ export function ExecSummaryCard({ session }: { session: ExecSummarySession }) {
         </span>
         <span className="text-body-sm" style={{ color: "#8B8680", fontSize: 13 }}>
           {ready
-            ? "Nine-section board summary, assembled from this session's stored data."
+            ? "Eleven-section quick-scan companion to Consulting Delivery, assembled from this session's stored data."
             : "Available once a proposition has been selected for this session."}
         </span>
       </div>
