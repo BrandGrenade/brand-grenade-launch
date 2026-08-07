@@ -222,14 +222,19 @@ export async function tickHarness() {
     } else if (!s.stage_21_outputs || Object.keys(s.stage_21_outputs).length === 0) {
       const outputs: Record<string, string> = {};
       for (const c of HARNESS_CHANNELS) {
-        outputs[c.channel] = await generateOne(
-          sessionId,
-          c.channel,
-          c.role,
-          s.stage_20b_output as string,
-          s as never,
-          "",
+        outputs[c.channel] = await withTimeout(
+          generateOne(
+            sessionId,
+            c.channel,
+            c.role,
+            s.stage_20b_output as string,
+            s as never,
+            "",
+          ),
+          220_000,
+          `Stage 21 (${c.channel})`,
         );
+
       }
       await supabaseAdmin
         .from("sessions")
