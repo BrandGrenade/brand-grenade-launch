@@ -312,7 +312,9 @@ function stage9Candidates(stage9: string): Array<{ smp: string; note: string | n
     for (let i = rankIdx + 1; i < lines.length; i++) {
       if (/^#{1,4}\s/.test(lines[i])) break;
       const c = clean(lines[i]);
-      const m = c.match(/^\d+\.\s+(.+?)\s+[—-]\s+(.+)$/);
+      // The proposition itself often contains a dash, so split on the LAST
+      // spaced dash and keep the fuller left side as the match key.
+      const m = c.match(/^\d+\.\s+(.+)\s+[—–-]\s+(.+)$/);
       if (!m) continue;
       rankNotes.push({ key: matchKey(m[1]), note: m[2].trim() });
     }
