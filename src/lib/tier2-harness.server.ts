@@ -110,11 +110,14 @@ export async function tickHarness() {
   if (!run) return { worked: false, reason: "no claimable run" };
 
   const claimedAt = new Date().toISOString();
-  const { data: claimed } = await supabaseAdmin
+  const claimQuery = supabaseAdmin
     .from("tier2_harness_runs")
     .update({ claimed_at: claimedAt })
-    .eq("id", run.id)
-    .eq("claimed_at", run.claimed_at)
+    .eq("id", run.id);
+  const { data: claimed } = await (run.claimed_at
+    ? claimQuery.eq("claimed_at", run.claimed_at)
+    : claimQuery.is("claimed_at", null)
+  )
     .select("id")
     .maybeSingle();
   if (!claimed) return { worked: false, reason: "claim lost" };
