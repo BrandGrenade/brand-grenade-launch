@@ -1,0 +1,1 @@
+UPDATE public.tier2_harness_runs SET status='running', phase='stage20b', attempts=0, claimed_at=NULL, result_detail='reset after shorter soft deadline deployed' WHERE id='b361258f-56bd-4f2b-9de4-381bea78534d';

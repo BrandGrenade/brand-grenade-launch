@@ -116,7 +116,7 @@ export async function seedHarnessRun(donorSessionId: string) {
  * never reaches the catch block, so post-hoc error capture records nothing.
  */
 export async function tickHarness() {
-  const staleBefore = new Date(Date.now() - 4 * 60_000).toISOString();
+  const staleBefore = new Date(Date.now() - 8 * 60000).toISOString();
   const { data: candidates } = await supabaseAdmin
     .from("tier2_harness_runs")
     .select("*")
@@ -186,7 +186,7 @@ export async function tickHarness() {
           stageNumber: "20",
           stageName: "Master Detonation Brief",
         }),
-        220_000,
+        200_000,
         "Stage 20",
       );
 
@@ -209,7 +209,7 @@ export async function tickHarness() {
           stageNumber: "20B",
           stageName: "Channel Strategy",
         }),
-        220_000,
+        200_000,
         "Stage 20B",
       );
 
@@ -231,7 +231,7 @@ export async function tickHarness() {
             s as never,
             "",
           ),
-          220_000,
+          200_000,
           `Stage 21 (${c.channel})`,
         );
 
