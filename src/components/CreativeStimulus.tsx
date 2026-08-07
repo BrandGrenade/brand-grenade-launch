@@ -334,6 +334,10 @@ export function CreativeStimulus({
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [filter, setFilter] = useState<"all" | "keep" | "keep_in_play" | "kill" | "untriaged">("all");
+  // Multi-select for batched Raw Idea export.
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const toggleSelected = (id: string) =>
+    setSelectedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
 
   const refreshRuns = useCallback(async () => {
     try {
@@ -517,12 +521,29 @@ export function CreativeStimulus({
               </div>
 
 
-              <div style={{ ...ideaListStyle, marginTop: 24 }}>
+              <div style={{ marginTop: 24 }}>
+                <MultiRawIdeaExportBar
+                  selectedIds={selectedIds}
+                  totalSelectable={visible.length}
+                  onSelectAll={() => setSelectedIds(visible.map((d) => d.id))}
+                  onClear={() => setSelectedIds([])}
+                />
+              </div>
+
+              <div style={{ ...ideaListStyle, marginTop: 8 }}>
 
                 {visible.map((d) => (
                   <DirectionCard
                     key={d.id}
                     d={d}
+                    selected={selectedIds.includes(d.id)}
+                    onToggleSelect={() => toggleSelected(d.id)}
+                    onReload={async () => {
+                      if (!runId) return;
+                      const cur = await load({ data: { runId } });
+                      setDirections(cur.directions as Direction[]);
+                      setRunMeta(cur.run as RunMeta);
+                    }}
                     onTriage={async (status, instinct) => {
                       await triage({ data: { directionId: d.id, status, instinctBrief: instinct ?? "" } });
                       patch(d.id, { status, instinct_brief: instinct ?? "" });
