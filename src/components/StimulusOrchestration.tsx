@@ -22,6 +22,7 @@ import {
 } from "@/lib/stimulus-gate-two.functions";
 import { buildFullFinishedExport, download } from "@/lib/stimulus-export";
 import { SIGNATURE_CATEGORIES } from "@/lib/stimulus/orchestration-prompts";
+import { StimulusMandate } from "@/components/stimulus/StimulusMandate";
 
 
 const AMBER = "#C81E1E";
