@@ -526,7 +526,7 @@ export function extractVerification(session: ExecSessionRow): VerificationResult
     for (let j = i + 1; j < Math.min(i + 4, block.length); j++) {
       const c = clean(block[j]);
       if (!c) continue;
-      const m = c.match(/^Verdict:\s*([A-Z][A-Z ,()a-z-]*?)\s*[—-]\s*(.+)$/);
+      const m = c.match(/^Verdict:\s*([A-Z][A-Z ,()a-z-]*?)\s+[—–-]\s+(.+)$/);
       if (m) {
         // Keep the verdict token short enough to read as a badge; any
         // parenthetical qualifier belongs with the note, not the label.
