@@ -55,7 +55,7 @@ const STAGE20_SELECT = [
   "stage_20_output",
 ].join(", ");
 
-function buildStage20UserMessage(s: {
+export function buildStage20UserMessage(s: {
   brand_name: string | null;
   category: string | null;
   selected_smp: string | null;
