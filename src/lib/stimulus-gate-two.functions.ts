@@ -295,6 +295,67 @@ export const getRawIdeaExport = createServerFn({ method: "POST" })
   });
 
 /**
+ * MULTI-SELECT RAW IDEA EXPORT — the same content and format as the single Raw
+ * Idea export, batched into one print-ready document. For reviewing the field
+ * away from the screen.
+ */
+export const getRawIdeaExportBatch = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) =>
+    z.object({ directionIds: z.array(z.string().uuid()).min(1).max(40) }).parse(i),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: dirs } = await db
+      .from("stimulus_directions")
+      .select("*")
+      .in("id", data.directionIds);
+    const rows = (dirs ?? []) as AnyRow[];
+    if (rows.length === 0) throw new Error("No directions found");
+
+    const runIds = [...new Set(rows.map((r) => r.run_id as string))];
+    const { data: runs } = await db
+      .from("stimulus_runs")
+      .select("id, session_id, channel_name, smp")
+      .in("id", runIds);
+    const runById = new Map((runs ?? []).map((r: AnyRow) => [r.id as string, r]));
+
+    // Every selected lens must belong to a session this user can reach.
+    const sessionIds = [...new Set((runs ?? []).map((r: AnyRow) => r.session_id as string))];
+    for (const sid of sessionIds) await assertSessionAccess(sid, context.userId);
+
+    const { data: session } = await db
+      .from("sessions")
+      .select("brand_name, category")
+      .eq("id", sessionIds[0])
+      .single();
+
+    const order = new Map(data.directionIds.map((id, i) => [id, i]));
+    rows.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
+
+    return {
+      brandName: session?.brand_name ?? "—",
+      category: session?.category ?? "—",
+      channelName: [...new Set(rows.map((r) => runById.get(r.run_id)?.channel_name))]
+        .filter(Boolean)
+        .join(" · "),
+      smp: (runById.get(rows[0].run_id)?.smp as string) ?? "",
+      directions: rows.map((dir) => ({
+        lensId: dir.lens_id as string,
+        lensName: dir.lens_name as string,
+        text: (dir.direction as string) ?? "",
+        instinctBrief: (dir.instinct_brief as string) ?? "",
+        tissueStatus: dir.status as string,
+        ratings: dir.ratings ?? null,
+        ratedAt: dir.rated_at ?? null,
+        gateOneApproved: Boolean(dir.gate_one_approved),
+        gateOneApprovedAt: dir.gate_one_approved_at ?? null,
+        gateOneNotes: dir.gate_one_notes ?? null,
+      })),
+    };
+  });
+
+
+/**
  * FULL FINISHED EXPORT — the Gate Two-approved, orchestrated prompt set, plus
  * the complete two-gate decision record behind it.
  */
