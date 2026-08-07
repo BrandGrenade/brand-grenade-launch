@@ -18,6 +18,11 @@ import { StimulusOrchestration } from "@/components/StimulusOrchestration";
 import { StimulusPromptAudit } from "@/components/StimulusPromptAudit";
 
 import { RawIdeaExportButton } from "@/components/RawIdeaExportButton";
+import { AttemptHistory } from "@/components/stimulus/AttemptHistory";
+import {
+  MultiRawIdeaExportBar,
+  SelectLensCheckbox,
+} from "@/components/stimulus/MultiRawIdeaExport";
 import { ideaCardStyle, ideaListStyle, IDEA_COLUMN_WIDTH } from "@/components/stimulus/idea-layout";
 
 
@@ -101,10 +106,17 @@ function DirectionCard({
   d,
   onTriage,
   onRevise,
+  onReload,
+  selected,
+  onToggleSelect,
 }: {
   d: Direction;
   onTriage: (status: "keep" | "keep_in_play" | "kill", instinct?: string) => Promise<void>;
   onRevise: (notes: string) => Promise<void>;
+  /** Reloads the run after an attempt is added or switched. */
+  onReload: () => Promise<void>;
+  selected: boolean;
+  onToggleSelect: () => void;
 }) {
   const lens = getLens(d.lens_id);
   const [instinct, setInstinct] = useState(d.instinct_brief ?? "");
@@ -124,7 +136,8 @@ function DirectionCard({
       })}
     >
       <div style={{ display: "flex", justifyContent: "space-between", gap: 16, alignItems: "baseline" }}>
-        <div style={{ display: "flex", alignItems: "baseline", gap: 14, minWidth: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 14, minWidth: 0 }}>
+          <SelectLensCheckbox checked={selected} onToggle={onToggleSelect} />
           <span
             className="text-mono"
             style={{ color: `${AMBER}88`, fontSize: 22, letterSpacing: "0.04em", lineHeight: 1 }}
@@ -239,6 +252,8 @@ function DirectionCard({
         <RawIdeaExportButton directionId={d.id} />
 
       </div>
+
+      <AttemptHistory directionId={d.id} busy={busy} onChanged={onReload} />
 
       {showRevise && (
         <div style={{ marginTop: 12 }}>
