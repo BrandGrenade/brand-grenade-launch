@@ -14,13 +14,75 @@ export type ExecSessionRow = Record<string, unknown>;
 
 export function clean(line: string): string {
   return (line ?? "")
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, "")
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")
+    .replace(/~~/g, "")
     .replace(/\*\*/g, "")
     .replace(/(^|\s)\*(\S[^*]*?)\*(?=\s|$|[.,;:)])/g, "$1$2")
+    .replace(/(^|\s)_(\S[^_]*?)_(?=\s|$|[.,;:)])/g, "$1$2")
+    .replace(/```+/g, "")
     .replace(/`/g, "")
     .replace(/^[>\s]+/, "")
+    .replace(/^\s*#{1,6}\s*/, "")
+    .replace(/\|/g, " ")
     .replace(/[═─━]{3,}/g, "")
+    .replace(/^\s*[-*_]{3,}\s*$/, "")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+/* ── deduplication ──────────────────────────────────────────────── */
+
+/** Split a passage into whole sentences (markdown already stripped). */
+export function splitSentences(text: string | null | undefined): string[] {
+  return sentences(text ?? "");
+}
+
+export interface Deduper {
+  /** Register text as spoken; nothing later may repeat these sentences. */
+  claim(text: string | null | undefined): void;
+  /** Return only the sentences not already spoken, and claim them. */
+  take(text: string | null | undefined, max?: number): string | null;
+  /** True when a short line (label, bullet, quote) has not been used yet. */
+  fresh(line: string | null | undefined): boolean;
+}
+
+export function createDeduper(): Deduper {
+  const seen = new Set<string>();
+  const key = (s: string) => matchKey(s).slice(0, 90);
+  const overlaps = (k: string) => {
+    if (!k) return true;
+    if (seen.has(k)) return true;
+    for (const s of seen) {
+      if (k.length >= 24 && s.length >= 24 && (s.includes(k) || k.includes(s))) return true;
+    }
+    return false;
+  };
+  return {
+    claim(text) {
+      for (const s of sentences(text ?? "")) seen.add(key(s));
+    },
+    take(text, max) {
+      const kept: string[] = [];
+      for (const s of sentences(text ?? "")) {
+        const k = key(s);
+        if (overlaps(k)) continue;
+        seen.add(k);
+        kept.push(s);
+        if (max && kept.length >= max) break;
+      }
+      const out = kept.join(" ").trim();
+      return out.length >= 20 ? out : null;
+    },
+    fresh(line) {
+      const c = clean(line ?? "");
+      if (!c) return false;
+      const k = key(c);
+      if (overlaps(k)) return false;
+      seen.add(k);
+      return true;
+    },
+  };
 }
 
 export function matchKey(s: string): string {
@@ -37,10 +99,11 @@ function sentences(text: string): string[] {
   return (c.match(/[^.?!]+[.?!]["'”’)]?/g) ?? [c]).map((s) => s.trim()).filter(Boolean);
 }
 
-/** First `n` whole sentences of a passage. */
+/** First `n` whole sentences of a passage, markdown stripped. */
 export function firstSentencesOf(text: string | null | undefined, n: number): string | null {
   if (!text) return null;
-  const out = sentences(text).slice(0, n).join(" ").trim();
+  const flat = plainText(text).split("\n").filter((l) => !/^(section|stage)\s+\d/i.test(l)).join(" ");
+  const out = sentences(flat).slice(0, n).join(" ").trim();
   return out.length >= 20 ? out : null;
 }
 
@@ -98,19 +161,35 @@ export interface ResearchItem {
   body: string;
 }
 
+/**
+ * Line-by-line markdown strip. Headings, rules, table pipes and bullet
+ * markers are removed before any sentence splitting so no raw syntax can
+ * survive into the rendered document.
+ */
+function plainText(text: string): string {
+  return (text ?? "")
+    .split("\n")
+    .map((l) => clean(l).replace(/^\s*[-*+•]\s+/, "").replace(/^\s*\d+[.)]\s+/, ""))
+    .filter((l) => l.length > 0 && !/^[-*_=─━═]+$/.test(l))
+    .join("\n");
+}
+
 /** Evidence sentences carrying a real figure — the countable proof base. */
 function statSentences(text: string, limit: number): string[] {
   const out: string[] = [];
   const seen = new Set<string>();
-  for (const raw of sentences(text)) {
-    if (!/\d/.test(raw)) continue;
-    if (!/%|\bper cent\b|\bx\b|\bmillion\b|\bbillion\b|\b\d{4}\b/i.test(raw)) continue;
-    if (raw.length < 40 || raw.length > 300) continue;
-    const key = matchKey(raw).slice(0, 50);
-    if (seen.has(key)) continue;
-    seen.add(key);
-    out.push(raw);
-    if (out.length >= limit) break;
+  for (const line of plainText(text).split("\n")) {
+    for (const raw of sentences(line)) {
+      if (!/\d/.test(raw)) continue;
+      if (!/%|\bper cent\b|\bx\b|\bmillion\b|\bbillion\b|\b\d{4}\b/i.test(raw)) continue;
+      if (raw.length < 40 || raw.length > 300) continue;
+      if (/^(section|stage|test)\b/i.test(raw)) continue;
+      const key = matchKey(raw).slice(0, 50);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push(raw);
+      if (out.length >= limit) return out;
+    }
   }
   return out;
 }
@@ -415,7 +494,9 @@ export function extractVerification(session: ExecSessionRow): VerificationResult
 
   const tests: VerificationTest[] = [];
   for (let i = 0; i < block.length; i++) {
-    const h = clean(block[i]).match(/^###?\s*(Test\s*\d+\s*[—-]\s*.+)$/i);
+    // `clean()` already strips markdown hashes, so the heading may arrive
+    // with or without them.
+    const h = clean(block[i]).match(/^(?:#{1,4}\s*)?(Test\s*\d+\s*[—-]\s*.+)$/i);
     if (!h) continue;
     const name = h[1].replace(/\s*\(diagnostic\)\s*$/i, "").trim();
     let verdict: string | null = null;
@@ -598,63 +679,79 @@ export function extractRecommendations(session: ExecSessionRow): Recommendations
   const s20b = str(session, "stage_20b_output");
   if (!channels.length && s20b) {
     for (const l of s20b.split("\n")) {
-      const m = clean(l).match(/^#{2,4}\s*(?:Channel\s*\d+\s*[—-]\s*)?(.+)$/);
-      if (m && m[1].length < 80) channels.push(m[1]);
+      if (!/^\s*#{2,4}\s+\S/.test(l)) continue;
+      const name = clean(l).replace(/^Channel\s*\d+\s*[—-]\s*/i, "");
+      if (name && name.length < 80) channels.push(name);
       if (channels.length >= 6) break;
     }
   }
   return { nextStep, condition, channels };
 }
 
-/* ── 01 — The Process (arrow chain + stat block) ────────────────── */
+/* ── 01 — Scale of the work (numbers only) ──────────────────────── */
 
 export interface ProcessResult {
-  chain: string[];
   stats: Array<{ value: string; label: string }>;
 }
 
 export function extractProcess(
-  session: ExecSessionRow,
+  _session: ExecSessionRow,
   counts: { propositions: number; dimensions: number; frameworks: FrameworksResult },
-  intelPresent: boolean,
+  _intelPresent: boolean,
 ): ProcessResult {
-  const chain: string[] = [];
-  if (intelPresent) chain.push("Intelligence");
-  if (clean(str(session, "brief_text"))) chain.push("Briefing");
-  if (counts.frameworks.stages.length) chain.push("Strategy Pipeline");
-  if (counts.frameworks.engines.length) chain.push("Lateral Engines");
-  if (clean(str(session, "stage_10_output")) || clean(str(session, "stage_11_output")))
-    chain.push("Validation");
-  if (clean(str(session, "selected_smp"))) chain.push("Recommendation");
-  if (clean(str(session, "stage_20_output")) || clean(str(session, "stage_22_output")))
-    chain.push("Activation");
-
   const methodologies = counts.frameworks.stages.length + counts.frameworks.engines.length;
-  const stats: Array<{ value: string; label: string }> = [
-    { value: String(counts.frameworks.stages.length), label: "stages completed" },
-    { value: String(methodologies), label: "methodologies applied" },
-    { value: String(counts.propositions), label: "propositions considered" },
-    { value: String(counts.dimensions), label: "dimensions validated" },
-  ];
-  return { chain, stats };
+  return {
+    stats: [
+      { value: String(counts.frameworks.stages.length), label: "stages completed" },
+      { value: String(methodologies), label: "methodologies applied" },
+      { value: String(counts.propositions), label: "propositions considered" },
+      { value: String(counts.dimensions), label: "dimensions validated" },
+    ],
+  };
 }
 
 /* ── Lead paragraph ─────────────────────────────────────────────── */
 
-export function buildLeadParagraph(args: {
-  businessIssue: string | null;
-  smp: string | null;
-  reason: string | null;
-  verdict: string | null;
-}): string | null {
+function stripQuotes(s: string): string {
+  return s.replace(/^["“](.+)["”]$/, "$1").replace(/\.$/, "").trim();
+}
+
+/**
+ * Opening thesis. Each sentence used here is claimed on the deduper so no
+ * section downstream may repeat it, and any sentence that merely restates the
+ * proposition line is dropped rather than smoothed over.
+ */
+export function buildLeadParagraph(
+  args: {
+    businessIssue: string | null;
+    smp: string | null;
+    reason: string | null;
+    verdict: string | null;
+  },
+  dedupe: Deduper,
+): string | null {
   const parts: string[] = [];
+  const smp = args.smp ? stripQuotes(clean(args.smp)) : null;
+  const smpKey = smp ? matchKey(smp) : "";
+
   const issue = args.businessIssue ? sentences(args.businessIssue)[0] : null;
-  if (issue) parts.push(issue);
-  if (args.smp) parts.push(`The recommendation is “${args.smp.replace(/^["“](.+)["”]$/, "$1")}”.`);
-  const reason = args.reason ? sentences(args.reason)[0] : null;
-  if (reason) parts.push(reason);
-  const verdict = args.verdict ? sentences(args.verdict)[0] : null;
-  if (verdict && parts.length < 4) parts.push(verdict);
+  if (issue && dedupe.fresh(issue)) parts.push(issue);
+
+  if (smp) {
+    parts.push(`The recommendation is “${smp}”.`);
+    dedupe.claim(`The recommendation is “${smp}”.`);
+  }
+
+  const echoesSmp = (s: string) => !!smpKey && smpKey.length > 8 && matchKey(s).includes(smpKey);
+
+  for (const source of [args.reason, args.verdict]) {
+    if (parts.length >= 4) break;
+    const first = source ? sentences(source)[0] : null;
+    if (!first || echoesSmp(first)) continue;
+    if (!dedupe.fresh(first)) continue;
+    parts.push(first);
+  }
+
   if (!parts.length) return null;
-  return parts.slice(0, 4).join(" ");
+  return parts.join(" ");
 }
