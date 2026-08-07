@@ -305,20 +305,42 @@ function stage9Candidates(stage9: string): Array<{ smp: string; note: string | n
   const lines = stage9.split("\n");
   const out: Array<{ smp: string; note: string | null }> = [];
 
-  // Ranking notes keyed by proposition.
-  const rankNotes: Array<{ key: string; note: string }> = [];
+  // Ranking lines, kept whole. The note is whatever follows the proposition
+  // itself, so it is sliced at match time (propositions often contain dashes).
+  const rankLines: string[] = [];
   const rankIdx = lines.findIndex((l) => /^#{1,4}\s*RANKING\s*$/i.test(l));
   if (rankIdx >= 0) {
     for (let i = rankIdx + 1; i < lines.length; i++) {
       if (/^#{1,4}\s/.test(lines[i])) break;
       const c = clean(lines[i]);
-      // The proposition itself often contains a dash, so split on the LAST
-      // spaced dash and keep the fuller left side as the match key.
-      const m = c.match(/^\d+\.\s+(.+)\s+[—–-]\s+(.+)$/);
-      if (!m) continue;
-      rankNotes.push({ key: matchKey(m[1]), note: m[2].trim() });
+      if (/^\d+\.\s+\S/.test(c)) rankLines.push(c.replace(/^\d+\.\s+/, ""));
     }
   }
+
+  const noteFor = (smp: string): string | null => {
+    const smpKey = matchKey(smp);
+    if (smpKey.length < 5) return null;
+    for (const line of rankLines) {
+      // Walk the line, tracking the normalised key position, so the note can
+      // be sliced immediately after the proposition ends.
+      let norm = "";
+      let cut = -1;
+      for (let i = 0; i < line.length; i++) {
+        const ch = line[i].toLowerCase();
+        if (/[a-z0-9]/.test(ch)) norm += ch;
+        else if (/\s/.test(ch) && norm && !norm.endsWith(" ")) norm += " ";
+        else continue;
+        if (norm.trim().endsWith(smpKey)) {
+          cut = i + 1;
+          break;
+        }
+      }
+      if (cut < 0) continue;
+      const tail = line.slice(cut).replace(/^[\s.”"'’]*[—–-]?\s*/, "").trim();
+      if (tail.length > 20) return tail;
+    }
+    return null;
+  };
 
   for (let i = 0; i < lines.length; i++) {
     if (!/^##\s+\S/.test(lines[i])) continue;
@@ -332,10 +354,10 @@ function stage9Candidates(stage9: string): Array<{ smp: string; note: string | n
       }
     }
     if (!smp) continue;
-    const key = matchKey(smp);
-    const note = rankNotes.find((r) => r.key.includes(key) || key.includes(r.key))?.note ?? null;
-    out.push({ smp, note });
+    out.push({ smp, note: noteFor(smp) });
   }
+  return out;
+}
   return out;
 }
 
