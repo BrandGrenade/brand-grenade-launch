@@ -199,15 +199,20 @@ export async function tickHarness() {
     } else if (!s.stage_20b_output) {
       const audience =
         (s.stage_20b_audience_input as typeof DEFAULT_AUDIENCE | null) ?? DEFAULT_AUDIENCE;
-      const output = await callClaude({
-        systemPrompt: withPhase2Formatting(STAGE_20B_CHANNEL_STRATEGY_PROMPT),
-        userMessage: buildStage20bUserMessage(s as never, audience as never),
-        maxTokens: 64000,
-        sessionId,
-        stageLabel: "Stage 20B (harness)",
-        stageNumber: "20B",
-        stageName: "Channel Strategy",
-      });
+      const output = await withTimeout(
+        callClaude({
+          systemPrompt: withPhase2Formatting(STAGE_20B_CHANNEL_STRATEGY_PROMPT),
+          userMessage: buildStage20bUserMessage(s as never, audience as never),
+          maxTokens: 64000,
+          sessionId,
+          stageLabel: "Stage 20B (harness)",
+          stageNumber: "20B",
+          stageName: "Channel Strategy",
+        }),
+        220_000,
+        "Stage 20B",
+      );
+
       await supabaseAdmin
         .from("sessions")
         .update({ stage_20b_output: output, stage_20b_audience_input: audience as never })
