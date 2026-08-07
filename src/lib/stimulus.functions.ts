@@ -15,11 +15,7 @@ import {
   buildStimulusUserMessage,
   parseStimulusResponse,
 } from "./stimulus/generate-prompt";
-import {
-  BIG_IDEA_SYSTEM_PROMPT,
-  buildBigIdeaUserMessage,
-  parseBigIdeaResponse,
-} from "./stimulus/big-idea-prompt";
+
 
 const SessionOnly = z.object({ sessionId: z.string().uuid() });
 
