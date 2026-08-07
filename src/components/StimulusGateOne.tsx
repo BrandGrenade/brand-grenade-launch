@@ -260,6 +260,7 @@ export function StimulusGateOne({
   const [tbMsg, setTbMsg] = useState<string | null>(null);
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [revise, setRevise] = useState<Record<string, string>>({});
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const survivors = useMemo(
     () => directions.filter((d) => d.status === "keep" || d.status === "keep_in_play"),
