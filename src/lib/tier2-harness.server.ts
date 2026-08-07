@@ -46,6 +46,21 @@ function log(run: { log: unknown }, line: string) {
   return [...prev, `${new Date().toISOString()} ${line}`].slice(-200);
 }
 
+/**
+ * Race a stage call against a soft deadline. Without this, a worker that is
+ * killed for exceeding its execution budget produces no error at all — the
+ * catch block never runs and the run row just shows a stale claim.
+ */
+function withTimeout<T>(p: Promise<T>, ms: number, label: string): Promise<T> {
+  return Promise.race([
+    p,
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error(`${label} exceeded soft deadline of ${ms}ms`)), ms),
+    ),
+  ]);
+}
+
+
 /** Clone a donor session up to Stage 19 into a fresh harness session. */
 export async function seedHarnessRun(donorSessionId: string) {
   const { data: donor, error } = await supabaseAdmin
