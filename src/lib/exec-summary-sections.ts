@@ -557,14 +557,16 @@ export function extractRecommendations(session: ExecSessionRow): Recommendations
   if (block) {
     const note = block.find((l) => /STRATEGIC NOTE/i.test(l));
     if (note) {
-      // Drop the verdict headline (already carried in Section 08) and keep
-      // only the condition that follows it.
+      // Drop the verdict headline (Section 08 already carries it) and keep
+      // only the operating condition that follows it.
       const tail = clean(note)
-        .replace(/^.*?STRATEGIC NOTE[^:]*:\s*/i, "")
-        .replace(/^[A-Z][A-Z ,()-]*[—-]\s*/, "");
-      condition = firstSentencesOf(tail, 3);
+        .replace(/^.*?STRATEGIC NOTE\s*[:—-]?\s*/i, "")
+        .replace(/^[^.]*?[—-]\s*/, "");
+      const trimmed = firstSentencesOf(tail, 3);
+      condition = trimmed && trimmed.length > 30 ? trimmed : null;
     }
   }
+
 
   if (!condition) {
     const cards = stage12Cards(str(session, "stage_12_output"));
