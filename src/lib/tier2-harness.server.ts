@@ -46,6 +46,21 @@ function log(run: { log: unknown }, line: string) {
   return [...prev, `${new Date().toISOString()} ${line}`].slice(-200);
 }
 
+/**
+ * Race a stage call against a soft deadline. Without this, a worker that is
+ * killed for exceeding its execution budget produces no error at all — the
+ * catch block never runs and the run row just shows a stale claim.
+ */
+function withTimeout<T>(p: Promise<T>, ms: number, label: string): Promise<T> {
+  return Promise.race([
+    p,
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error(`${label} exceeded soft deadline of ${ms}ms`)), ms),
+    ),
+  ]);
+}
+
+
 /** Clone a donor session up to Stage 19 into a fresh harness session. */
 export async function seedHarnessRun(donorSessionId: string) {
   const { data: donor, error } = await supabaseAdmin
@@ -94,10 +109,14 @@ export async function seedHarnessRun(donorSessionId: string) {
 /**
  * Advance the oldest live harness run by exactly one phase. Safe to call
  * every minute: a claim update guarantees only one tick works a run at a
- * time, and a stale claim (>15 min without a heartbeat) is reclaimed.
+ * time, and a stale claim (>4 min without a heartbeat) is reclaimed.
+ *
+ * The attempt counter and an "in-flight" marker are written at claim time,
+ * BEFORE the model call — a tick that dies mid-flight (worker timeout, OOM)
+ * never reaches the catch block, so post-hoc error capture records nothing.
  */
 export async function tickHarness() {
-  const staleBefore = new Date(Date.now() - 15 * 60_000).toISOString();
+  const staleBefore = new Date(Date.now() - 4 * 60_000).toISOString();
   const { data: candidates } = await supabaseAdmin
     .from("tier2_harness_runs")
     .select("*")
@@ -109,10 +128,31 @@ export async function tickHarness() {
   );
   if (!run) return { worked: false, reason: "no claimable run" };
 
+  const attemptNo = (run.attempts ?? 0) + 1;
+  if (attemptNo > 6) {
+    await supabaseAdmin
+      .from("tier2_harness_runs")
+      .update({
+        status: "failed",
+        phase: "failed",
+        claimed_at: null,
+        result_detail:
+          run.result_detail ?? `gave up after ${run.attempts} attempts at phase ${run.phase}`,
+        log: log(run, `gave up after ${run.attempts} attempts at phase ${run.phase}`) as never,
+      })
+      .eq("id", run.id);
+    return { worked: false, reason: "attempt budget exhausted" };
+  }
+
   const claimedAt = new Date().toISOString();
   const claimQuery = supabaseAdmin
     .from("tier2_harness_runs")
-    .update({ claimed_at: claimedAt })
+    .update({
+      claimed_at: claimedAt,
+      attempts: attemptNo,
+      result_detail: `in-flight: phase ${run.phase}, attempt ${attemptNo}, claimed ${claimedAt}`,
+      log: log(run, `claim: phase ${run.phase}, attempt ${attemptNo}`) as never,
+    })
     .eq("id", run.id);
   const { data: claimed } = await (run.claimed_at
     ? claimQuery.eq("claimed_at", run.claimed_at)
@@ -121,6 +161,7 @@ export async function tickHarness() {
     .select("id")
     .maybeSingle();
   if (!claimed) return { worked: false, reason: "claim lost" };
+
 
   const sessionId = run.session_id;
   try {
@@ -135,15 +176,20 @@ export async function tickHarness() {
     let note = "";
 
     if (!s.stage_20_output) {
-      const output = await callClaude({
-        systemPrompt: withPhase2Formatting(STAGE_20_MASTER_DETONATION_BRIEF_PROMPT),
-        userMessage: buildStage20UserMessage(s as never),
-        maxTokens: 64000,
-        sessionId,
-        stageLabel: "Stage 20 (harness)",
-        stageNumber: "20",
-        stageName: "Master Detonation Brief",
-      });
+      const output = await withTimeout(
+        callClaude({
+          systemPrompt: withPhase2Formatting(STAGE_20_MASTER_DETONATION_BRIEF_PROMPT),
+          userMessage: buildStage20UserMessage(s as never),
+          maxTokens: 64000,
+          sessionId,
+          stageLabel: "Stage 20 (harness)",
+          stageNumber: "20",
+          stageName: "Master Detonation Brief",
+        }),
+        220_000,
+        "Stage 20",
+      );
+
       await supabaseAdmin
         .from("sessions")
         .update({ stage_20_output: output, stage_20_approved: true })
@@ -153,15 +199,20 @@ export async function tickHarness() {
     } else if (!s.stage_20b_output) {
       const audience =
         (s.stage_20b_audience_input as typeof DEFAULT_AUDIENCE | null) ?? DEFAULT_AUDIENCE;
-      const output = await callClaude({
-        systemPrompt: withPhase2Formatting(STAGE_20B_CHANNEL_STRATEGY_PROMPT),
-        userMessage: buildStage20bUserMessage(s as never, audience as never),
-        maxTokens: 64000,
-        sessionId,
-        stageLabel: "Stage 20B (harness)",
-        stageNumber: "20B",
-        stageName: "Channel Strategy",
-      });
+      const output = await withTimeout(
+        callClaude({
+          systemPrompt: withPhase2Formatting(STAGE_20B_CHANNEL_STRATEGY_PROMPT),
+          userMessage: buildStage20bUserMessage(s as never, audience as never),
+          maxTokens: 64000,
+          sessionId,
+          stageLabel: "Stage 20B (harness)",
+          stageNumber: "20B",
+          stageName: "Channel Strategy",
+        }),
+        220_000,
+        "Stage 20B",
+      );
+
       await supabaseAdmin
         .from("sessions")
         .update({ stage_20b_output: output, stage_20b_audience_input: audience as never })
@@ -171,14 +222,19 @@ export async function tickHarness() {
     } else if (!s.stage_21_outputs || Object.keys(s.stage_21_outputs).length === 0) {
       const outputs: Record<string, string> = {};
       for (const c of HARNESS_CHANNELS) {
-        outputs[c.channel] = await generateOne(
-          sessionId,
-          c.channel,
-          c.role,
-          s.stage_20b_output as string,
-          s as never,
-          "",
+        outputs[c.channel] = await withTimeout(
+          generateOne(
+            sessionId,
+            c.channel,
+            c.role,
+            s.stage_20b_output as string,
+            s as never,
+            "",
+          ),
+          220_000,
+          `Stage 21 (${c.channel})`,
         );
+
       }
       await supabaseAdmin
         .from("sessions")
@@ -207,24 +263,30 @@ export async function tickHarness() {
 
     await supabaseAdmin
       .from("tier2_harness_runs")
-      .update({ phase: nextPhase, claimed_at: null, log: log(run, note) as never })
+      .update({
+        phase: nextPhase,
+        claimed_at: null,
+        attempts: 0,
+        result_detail: note,
+        log: log(run, note) as never,
+      })
       .eq("id", run.id);
     return { worked: true, phase: nextPhase, note };
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
-    const attempts = (run.attempts ?? 0) + 1;
-    const giveUp = attempts >= 6;
+    const stack = e instanceof Error && e.stack ? ` | ${e.stack.split("\n").slice(0, 4).join(" ")}` : "";
+    const giveUp = attemptNo >= 6;
     await supabaseAdmin
       .from("tier2_harness_runs")
       .update({
-        attempts,
         claimed_at: null,
         status: giveUp ? "failed" : "running",
         phase: giveUp ? "failed" : run.phase,
-        result_detail: msg,
-        log: log(run, `error (attempt ${attempts}): ${msg}`) as never,
+        result_detail: `phase ${run.phase} attempt ${attemptNo} failed: ${msg}${stack}`.slice(0, 4000),
+        log: log(run, `error (attempt ${attemptNo}) at ${run.phase}: ${msg}`) as never,
       })
       .eq("id", run.id);
-    return { worked: true, error: msg, attempts, giveUp };
+    return { worked: true, error: msg, attempts: attemptNo, giveUp };
   }
+
 }
