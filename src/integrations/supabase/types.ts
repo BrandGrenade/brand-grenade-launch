@@ -1473,6 +1473,11 @@ export type Database = {
           gate_two_notes: string | null
           gate_two_snapshot: Json | null
           id: string
+          mandate_applied_at: string | null
+          mandate_log: Json
+          mandate_signature_id: string | null
+          mandate_source: string | null
+          mandate_text: string | null
           phase_note: string | null
           registry_version: number
           session_id: string
@@ -1492,6 +1497,11 @@ export type Database = {
           gate_two_notes?: string | null
           gate_two_snapshot?: Json | null
           id?: string
+          mandate_applied_at?: string | null
+          mandate_log?: Json
+          mandate_signature_id?: string | null
+          mandate_source?: string | null
+          mandate_text?: string | null
           phase_note?: string | null
           registry_version?: number
           session_id: string
@@ -1511,6 +1521,11 @@ export type Database = {
           gate_two_notes?: string | null
           gate_two_snapshot?: Json | null
           id?: string
+          mandate_applied_at?: string | null
+          mandate_log?: Json
+          mandate_signature_id?: string | null
+          mandate_source?: string | null
+          mandate_text?: string | null
           phase_note?: string | null
           registry_version?: number
           session_id?: string
@@ -1518,6 +1533,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "stimulus_orchestrations_mandate_signature_id_fkey"
+            columns: ["mandate_signature_id"]
+            isOneToOne: false
+            referencedRelation: "stimulus_signatures"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "stimulus_orchestrations_session_id_fkey"
             columns: ["session_id"]
