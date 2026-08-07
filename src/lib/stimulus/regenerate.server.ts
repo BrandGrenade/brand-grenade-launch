@@ -240,7 +240,7 @@ export async function activateAttempt(directionId: string, attemptId: string) {
     .from("stimulus_directions")
     .update({
       active_attempt_id: attempt.id,
-      direction: attempt.direction,
+      direction: attempt.direction ?? undefined,
       campaign_line: attempt.campaign_line,
       rationale: attempt.rationale,
       line_check: attempt.line_check,
