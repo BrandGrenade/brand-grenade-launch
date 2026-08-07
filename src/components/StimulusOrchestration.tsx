@@ -726,7 +726,7 @@ export function StimulusOrchestration({ sessionId, brandName }: { sessionId: str
                     orchestrationId={orchId!}
                     promptCount={activePrompts.length}
                     onApplied={async () => {
-                      await refresh(orchId!);
+                      await refreshState(orchId!);
                     }}
                   />
 
