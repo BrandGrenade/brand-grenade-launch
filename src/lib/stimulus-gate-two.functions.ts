@@ -317,16 +317,16 @@ export const getRawIdeaExportBatch = createServerFn({ method: "POST" })
       .from("stimulus_runs")
       .select("id, session_id, channel_name, smp")
       .in("id", runIds);
-    const runById = new Map((runs ?? []).map((r: AnyRow) => [r.id as string, r]));
+    const runById = new Map<string, AnyRow>((runs ?? []).map((r: AnyRow) => [r.id as string, r]));
 
     // Every selected lens must belong to a session this user can reach.
     const sessionIds = [...new Set((runs ?? []).map((r: AnyRow) => r.session_id as string))];
-    for (const sid of sessionIds) await assertSessionAccess(sid, context.userId);
+    for (const sid of sessionIds) await assertSessionAccess(sid as string, context.userId);
 
     const { data: session } = await db
       .from("sessions")
       .select("brand_name, category")
-      .eq("id", sessionIds[0])
+      .eq("id", sessionIds[0] as string)
       .single();
 
     const order = new Map(data.directionIds.map((id, i) => [id, i]));
