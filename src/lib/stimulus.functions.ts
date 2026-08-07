@@ -267,7 +267,11 @@ export const triageStimulusDirection = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-/** Revise: regenerate a single direction through the same lens with notes. */
+/**
+ * Revise: regenerate a single direction through the same lens with notes.
+ * Records the result as a new attempt rather than overwriting the previous one
+ * — see stimulus-attempts.functions.ts for the attempt history contract.
+ */
 export const reviseStimulusDirection = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i) =>
@@ -283,101 +287,14 @@ export const reviseStimulusDirection = createServerFn({ method: "POST" })
       .single();
     if (error || !row) throw new Error("Direction not found");
     const run = await loadRun(row.run_id, context.userId);
-    const lens = getLens(row.lens_id);
-    if (!lens) throw new Error(`Unknown lens ${row.lens_id}`);
 
-    const isBigIdea = run.run_mode === "big_idea";
-
-    const { data: sessionRow } = await supabaseAdmin
-      .from("sessions")
-      .select(
-        "brand_name, category, stage_18_detonation_line, truth_product, truth_consumer, truth_cultural, stage_1_output, stage_2_output",
-      )
-      .eq("id", run.session_id)
-      .single();
-
-    const base = isBigIdea
-      ? buildBigIdeaUserMessage({
-          brandName: sessionRow?.brand_name ?? "—",
-          category: sessionRow?.category ?? "—",
-          smp: run.smp,
-          detonationLine: sessionRow?.stage_18_detonation_line ?? "",
-          truths: [
-            sessionRow?.truth_product ? `PRODUCT TRUTH: ${sessionRow.truth_product}` : "",
-            sessionRow?.truth_consumer ? `CONSUMER TRUTH: ${sessionRow.truth_consumer}` : "",
-            sessionRow?.truth_cultural ? `CULTURAL TRUTH: ${sessionRow.truth_cultural}` : "",
-          ]
-            .filter(Boolean)
-            .join("\n"),
-          strategicEvidence: [sessionRow?.stage_1_output ?? "", sessionRow?.stage_2_output ?? ""]
-            .filter(Boolean)
-            .join("\n\n")
-            .slice(0, 14000),
-          lenses: [lens],
-        })
-      : buildStimulusUserMessage({
-          brandName: sessionRow?.brand_name ?? "—",
-          category: sessionRow?.category ?? "—",
-          channelName: run.channel_name,
-          channelBrief: run.channel_brief,
-          smp: run.smp,
-          detonationLine: sessionRow?.stage_18_detonation_line ?? "",
-          lenses: [lens],
-        });
-
-    const userMessage = [
-      base,
-      "",
-      "═══ PREVIOUS OUTPUT FROM THIS LENS ═══",
-      row.direction || "—",
-      "",
-      "═══ MANDATORY REVISION INSTRUCTION FROM THE CREATIVE ═══",
-      data.notes.trim(),
-      "",
-      "Rewrite this lens's output so it obeys the revision instruction. Same output contract. Do not repeat the previous version.",
-    ].join("\n");
-
-    const raw = await callClaude({
-      systemPrompt: isBigIdea ? BIG_IDEA_SYSTEM_PROMPT : STIMULUS_SYSTEM_PROMPT,
-      userMessage,
-      skipUniversalWrapper: true,
-      maxTokens: 4000,
-      temperature: 1,
-      sessionId: run.session_id,
-      stageLabel: `Creative Stimulus revise (${lens.name})`,
+    const { regenerateDirection } = await import("./stimulus/regenerate.server");
+    const result = await regenerateDirection({
+      direction: row,
+      run,
+      mode: "revise",
+      notes: data.notes,
     });
-
-    const bigParsed = isBigIdea ? parseBigIdeaResponse(raw)[lens.id] : undefined;
-    const text = isBigIdea
-      ? bigParsed?.idea?.trim() || raw.trim()
-      : parseStimulusResponse(raw)[lens.id]?.trim() || raw.trim();
-
-
-    const { error: uErr } = await supabaseAdmin
-      .from("stimulus_directions")
-      .update({
-        direction: text,
-        ...(isBigIdea
-          ? {
-              campaign_line: bigParsed?.line || null,
-              rationale: bigParsed?.rationale || null,
-              line_check: null,
-            }
-          : {}),
-        status: "generated",
-        revise_notes: data.notes.trim(),
-        revise_count: (row.revise_count ?? 0) + 1,
-        error: null,
-        // A rewritten direction invalidates its Gate One rating and approval.
-        ratings: null,
-        rating_status: "unrated",
-        rating_error: null,
-        rated_at: null,
-        gate_one_approved: false,
-        gate_one_approved_at: null,
-        gate_one_snapshot: null,
-      })
-      .eq("id", data.directionId);
-    if (uErr) throw new Error(uErr.message);
-    return { direction: text };
+    return { direction: result.direction };
   });
+
