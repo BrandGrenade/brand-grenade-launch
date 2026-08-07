@@ -1571,6 +1571,9 @@ export type Database = {
           id: string
           initial_prompt: string | null
           lens_name: string
+          mandate_carrier: string | null
+          mandate_checked_at: string | null
+          mandate_compliance: string | null
           orchestration_id: string
           propagated: boolean
           rejected_at: string | null
@@ -1602,6 +1605,9 @@ export type Database = {
           id?: string
           initial_prompt?: string | null
           lens_name?: string
+          mandate_carrier?: string | null
+          mandate_checked_at?: string | null
+          mandate_compliance?: string | null
           orchestration_id: string
           propagated?: boolean
           rejected_at?: string | null
@@ -1633,6 +1639,9 @@ export type Database = {
           id?: string
           initial_prompt?: string | null
           lens_name?: string
+          mandate_carrier?: string | null
+          mandate_checked_at?: string | null
+          mandate_compliance?: string | null
           orchestration_id?: string
           propagated?: boolean
           rejected_at?: string | null

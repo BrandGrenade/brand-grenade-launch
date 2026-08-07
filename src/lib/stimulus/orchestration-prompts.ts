@@ -334,3 +334,46 @@ LENS: ${a.lensName}
 PROMPT TO REWRITE:
 ${a.prompt}`;
 }
+
+/* ------------------------------------------------- Gate Two mandate compliance */
+
+/**
+ * MANDATE COMPLIANCE CHECK — Phase 5b.
+ * The mandate is deliberately reworded per channel, so a string match proves
+ * nothing. This is a closed question, one call per prompt, asked after the
+ * rewrite: is the mandated element genuinely present in the work this prompt
+ * would produce, and which phrase carries it.
+ */
+export const MANDATE_COMPLIANCE_SYSTEM = `BRAND GRENADE — MANDATE COMPLIANCE CHECK
+
+A Creative Director mandated one element across an entire set of channel prompts. Each prompt was rewritten to carry it in that channel's own language, so the mandate will NOT appear verbatim. Your job is to judge whether the element is genuinely there.
+
+Judge the element, not the wording. Ask: in the finished work this prompt would produce, would an audience actually encounter the mandated element?
+
+VERDICTS
+· "present" — the element is unmistakably in the work. You can quote the phrase that carries it.
+· "weak" — traceable, but reduced to a passing mention, buried in a stage direction, or so abstracted it would not read as the mandated element in the finished work.
+· "absent" — the element is not in this prompt at all, or what is there is a different idea wearing similar words.
+
+Be strict. A prompt that merely shares a mood with the mandate is "absent". Do not award "present" out of charity.
+
+The carrier MUST be copied word for word from the prompt text you were given. Do not paraphrase it, do not reconstruct it from the mandate, and never invent one. If you cannot copy a phrase out of the prompt, the verdict is "absent".
+
+Return ONLY JSON, no commentary:
+{"verdict":"present|weak|absent","carrier":"the exact phrase from the prompt that carries the mandate, or empty string if absent","reason":"one sentence"}`;
+
+export function buildMandateComplianceMessage(a: {
+  mandate: string;
+  channelName: string;
+  lensName: string;
+  prompt: string;
+}) {
+  return `MANDATED ELEMENT:
+${a.mandate}
+
+CHANNEL: ${a.channelName}
+LENS: ${a.lensName}
+
+PROMPT TO JUDGE:
+${a.prompt}`;
+}

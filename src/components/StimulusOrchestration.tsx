@@ -571,6 +571,26 @@ export function StimulusOrchestration({ sessionId, brandName }: { sessionId: str
                           CD note: {p.cd_note}
                         </div>
                       )}
+                      {p.mandate_compliance && p.mandate_compliance !== "present" && (
+                        <div
+                          className="text-body-sm"
+                          style={{
+                            color: p.mandate_compliance === "absent" ? RED : AMBER,
+                            marginTop: 6,
+                          }}
+                        >
+                          {p.mandate_compliance === "absent"
+                            ? "MANDATE ABSENT — this channel does not carry the mandated element. Gate Two is blocked until it does."
+                            : "Mandate weak — the element is traceable but thin here."}
+                          {p.mandate_carrier ? ` (${p.mandate_carrier})` : ""}
+                        </div>
+                      )}
+                      {p.mandate_compliance === "present" && p.mandate_carrier && (
+                        <div className="text-body-sm" style={{ color: GREEN, marginTop: 6 }}>
+                          Mandate carried: “{p.mandate_carrier}”
+                        </div>
+                      )}
+
 
                       {refs.length > 0 && (
                         <div style={{ marginTop: 12, display: "grid", gap: 8 }}>

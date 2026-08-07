@@ -15,6 +15,8 @@ import {
   COHESION_REVISION_SYSTEM,
   MANDATE_SYSTEM,
   buildMandateMessage,
+  MANDATE_COMPLIANCE_SYSTEM,
+  buildMandateComplianceMessage,
   type BrandAssetRules,
   type SignatureCategory,
 } from "./orchestration-prompts";
@@ -220,3 +222,68 @@ export async function applyMandateToPrompt(a: {
     maxTokens: 4000,
   });
 }
+
+export interface MandateComplianceResult {
+  verdict: "present" | "weak" | "absent";
+  carrier: string;
+  reason: string;
+}
+
+const norm = (s: string) =>
+  s
+    .toLowerCase()
+    .replace(/[“”"'’‘–—-]/g, " ")
+    .replace(/[^a-z0-9 ]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+/**
+ * Deterministic backstop. Live testing showed the judge will happily invent a
+ * carrying phrase that is nowhere in the prompt, so a "present" verdict is only
+ * trusted when the quoted phrase can actually be found in the prompt — verbatim,
+ * or as a run of at least five consecutive words from the quote.
+ */
+function carrierIsInPrompt(carrier: string, prompt: string): boolean {
+  const c = norm(carrier);
+  const p = norm(prompt);
+  if (c.length < 8) return false;
+  if (p.includes(c)) return true;
+  const words = c.split(" ");
+  const WINDOW = 5;
+  if (words.length < WINDOW) return false;
+  for (let i = 0; i + WINDOW <= words.length; i++) {
+    if (p.includes(words.slice(i, i + WINDOW).join(" "))) return true;
+  }
+  return false;
+}
+
+/**
+ * Closed-question check that a mandated element genuinely survived the rewrite
+ * in one channel's prompt. Cheap, and the only thing standing between "we asked
+ * the model to carry it" and "we know it did".
+ */
+export async function checkMandateCompliance(a: {
+  mandate: string;
+  channelName: string;
+  lensName: string;
+  prompt: string;
+}): Promise<MandateComplianceResult> {
+  const text = await anthropic({
+    system: MANDATE_COMPLIANCE_SYSTEM,
+    message: buildMandateComplianceMessage(a),
+    maxTokens: 700,
+  });
+  const p = extractJson<Partial<MandateComplianceResult>>(text);
+  let verdict: MandateComplianceResult["verdict"] =
+    p.verdict === "absent" ? "absent" : p.verdict === "weak" ? "weak" : "present";
+  const carrier = (p.carrier ?? "").trim();
+  let reason = (p.reason ?? "").trim();
+
+  if (verdict !== "absent" && !carrierIsInPrompt(carrier, a.prompt)) {
+    verdict = "absent";
+    reason = `No carrying phrase found in the prompt — the judge cited "${carrier.slice(0, 120)}", which does not appear in it. ${reason}`.trim();
+  }
+
+  return { verdict, carrier, reason };
+}
+

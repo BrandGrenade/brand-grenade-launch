@@ -109,6 +109,9 @@ export const applyGateTwoMandate = createServerFn({ method: "POST" })
     const now = new Date().toISOString();
     const failures: string[] = [];
 
+    let absent = 0;
+    let weak = 0;
+
     for (const p of prompts) {
       const base = (p.final_prompt as string) ?? (p.working_prompt as string) ?? "";
       if (!base) continue;
@@ -119,6 +122,21 @@ export const applyGateTwoMandate = createServerFn({ method: "POST" })
           lensName: p.lens_name as string,
           prompt: base,
         });
+        // The mandate is expressed natively per channel, so a string match proves
+        // nothing. Ask a closed question instead: is the element actually there?
+        let compliance: { verdict: string; carrier: string; reason: string };
+        try {
+          compliance = await passes.checkMandateCompliance({
+            mandate: mandateText,
+            channelName: p.channel_name as string,
+            lensName: p.lens_name as string,
+            prompt: rewritten,
+          });
+        } catch {
+          compliance = { verdict: "absent", carrier: "", reason: "Compliance check failed to run." };
+        }
+        if (compliance.verdict === "absent") absent += 1;
+        if (compliance.verdict === "weak") weak += 1;
         const log = Array.isArray(p.revision_log) ? p.revision_log : [];
         await db
           .from("stimulus_prompts")
@@ -129,9 +147,20 @@ export const applyGateTwoMandate = createServerFn({ method: "POST" })
             gate_two_approved: false,
             gate_two_approved_at: null,
             gate_two_snapshot: null,
+            mandate_compliance: compliance.verdict,
+            mandate_carrier: compliance.carrier || compliance.reason,
+            mandate_checked_at: now,
             revision_log: [
               ...log,
-              { at: now, kind: "gate_two_mandate", mandate: mandateText, source },
+              {
+                at: now,
+                kind: "gate_two_mandate",
+                mandate: mandateText,
+                source,
+                compliance: compliance.verdict,
+                carrier: compliance.carrier,
+                compliance_reason: compliance.reason,
+              },
             ],
             error: null,
           })
@@ -140,6 +169,7 @@ export const applyGateTwoMandate = createServerFn({ method: "POST" })
         failures.push(`${p.channel_name}: ${e instanceof Error ? e.message : "rewrite failed"}`);
       }
     }
+
 
     // Mandatory cohesion re-run — the set is re-judged as a whole.
     const ctxRow = await db
@@ -203,6 +233,8 @@ export const applyGateTwoMandate = createServerFn({ method: "POST" })
             promptsRewritten: prompts.length - failures.length,
             failures,
             cohesion: cd.cohesion,
+            complianceAbsent: absent,
+            complianceWeak: weak,
           },
         ],
         cd_output: cd.reasoning,
@@ -211,9 +243,13 @@ export const applyGateTwoMandate = createServerFn({ method: "POST" })
         gate_two_confirmed: false,
         gate_two_confirmed_at: null,
         phase_note:
-          cdStatus === "flagged"
-            ? "Mandate applied. Cohesion flagged — read the Creative Director note before confirming Gate Two."
-            : "Mandate applied and the set re-judged as cohesive. Gate Two approvals need re-confirming.",
+          absent > 0
+            ? `Mandate applied, but the compliance check found the mandated element ABSENT in ${absent} channel(s). Gate Two is blocked until those carry it.`
+            : cdStatus === "flagged"
+              ? "Mandate applied. Cohesion flagged — read the Creative Director note before confirming Gate Two."
+              : weak > 0
+                ? `Mandate applied and the set re-judged as cohesive. The element sits weakly in ${weak} channel(s) — review before confirming.`
+                : "Mandate applied and the set re-judged as cohesive. Gate Two approvals need re-confirming.",
         error: failures.length ? `Mandate failed on: ${failures.join("; ")}` : null,
       })
       .eq("id", orch.id);
@@ -224,5 +260,9 @@ export const applyGateTwoMandate = createServerFn({ method: "POST" })
       cohesion: cd.cohesion as string,
       cdOutput: cd.reasoning as string,
       cdStatus,
+      complianceAbsent: absent,
+      complianceWeak: weak,
     };
   });
+
+
