@@ -94,10 +94,14 @@ export async function seedHarnessRun(donorSessionId: string) {
 /**
  * Advance the oldest live harness run by exactly one phase. Safe to call
  * every minute: a claim update guarantees only one tick works a run at a
- * time, and a stale claim (>15 min without a heartbeat) is reclaimed.
+ * time, and a stale claim (>4 min without a heartbeat) is reclaimed.
+ *
+ * The attempt counter and an "in-flight" marker are written at claim time,
+ * BEFORE the model call — a tick that dies mid-flight (worker timeout, OOM)
+ * never reaches the catch block, so post-hoc error capture records nothing.
  */
 export async function tickHarness() {
-  const staleBefore = new Date(Date.now() - 15 * 60_000).toISOString();
+  const staleBefore = new Date(Date.now() - 4 * 60_000).toISOString();
   const { data: candidates } = await supabaseAdmin
     .from("tier2_harness_runs")
     .select("*")
@@ -109,10 +113,31 @@ export async function tickHarness() {
   );
   if (!run) return { worked: false, reason: "no claimable run" };
 
+  const attemptNo = (run.attempts ?? 0) + 1;
+  if (attemptNo > 6) {
+    await supabaseAdmin
+      .from("tier2_harness_runs")
+      .update({
+        status: "failed",
+        phase: "failed",
+        claimed_at: null,
+        result_detail:
+          run.result_detail ?? `gave up after ${run.attempts} attempts at phase ${run.phase}`,
+        log: log(run, `gave up after ${run.attempts} attempts at phase ${run.phase}`) as never,
+      })
+      .eq("id", run.id);
+    return { worked: false, reason: "attempt budget exhausted" };
+  }
+
   const claimedAt = new Date().toISOString();
   const claimQuery = supabaseAdmin
     .from("tier2_harness_runs")
-    .update({ claimed_at: claimedAt })
+    .update({
+      claimed_at: claimedAt,
+      attempts: attemptNo,
+      result_detail: `in-flight: phase ${run.phase}, attempt ${attemptNo}, claimed ${claimedAt}`,
+      log: log(run, `claim: phase ${run.phase}, attempt ${attemptNo}`) as never,
+    })
     .eq("id", run.id);
   const { data: claimed } = await (run.claimed_at
     ? claimQuery.eq("claimed_at", run.claimed_at)
@@ -121,6 +146,7 @@ export async function tickHarness() {
     .select("id")
     .maybeSingle();
   if (!claimed) return { worked: false, reason: "claim lost" };
+
 
   const sessionId = run.session_id;
   try {
