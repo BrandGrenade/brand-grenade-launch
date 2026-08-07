@@ -87,6 +87,17 @@ export function download(filename: string, html: string) {
   setTimeout(() => URL.revokeObjectURL(url), 2000);
 }
 
+/** Opens the same document in a new tab and raises the print dialogue. */
+export function openPrintable(html: string) {
+  const w = window.open("", "_blank");
+  if (!w) throw new Error("Pop-up blocked — allow pop-ups to print, or use Download instead.");
+  w.document.open();
+  w.document.write(html);
+  w.document.close();
+  w.focus();
+  setTimeout(() => w.print(), 350);
+}
+
 const slug = (s: string) =>
   s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 48) || "export";
 
