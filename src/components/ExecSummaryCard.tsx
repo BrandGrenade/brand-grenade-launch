@@ -73,7 +73,7 @@ export function ExecSummaryCard({ session }: { session: ExecSummarySession }) {
         </span>
         <span className="text-body-sm" style={{ color: "#8B8680", fontSize: 13 }}>
           {ready
-            ? "Eleven-section quick-scan companion to Consulting Delivery, assembled from this session's stored data."
+            ? "Ten-section quick-scan companion to Consulting Delivery, assembled from this session's stored data."
             : "Available once a proposition has been selected for this session."}
         </span>
       </div>

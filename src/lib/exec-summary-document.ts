@@ -9,6 +9,7 @@ import { baseStyles, escapeHtml, sanitise } from "./phase1-document-builder";
 import { NOT_AVAILABLE } from "./exec-summary-extract";
 import {
   buildLeadParagraph,
+  createDeduper,
   extractBusinessIssue,
   extractBrandWorldSection,
   extractFindings,
@@ -41,9 +42,9 @@ const ACCENT = "#C81E1E";
 function extraStyles(): string {
   return `
 .es-lead { font-size: 12pt; line-height: 1.55; color: var(--ash); border-left: 2pt solid ${ACCENT}; padding: 2pt 0 2pt 14pt; margin: 0 0 26pt; }
-.es-chain { display: flex; flex-wrap: wrap; align-items: center; gap: 8pt; margin: 4pt 0 16pt; }
-.es-chain .node { font-size: 9.5pt; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: var(--ash); border: 1pt solid var(--rule); border-radius: 3pt; padding: 6pt 10pt; background: var(--surface); }
-.es-chain .arrow { font-size: 11pt; color: ${ACCENT}; font-weight: 700; }
+.es-open { page-break-inside: auto; }
+.es-open .section { page-break-inside: auto; }
+.footer { page-break-before: avoid; }
 .es-stats { display: flex; flex-wrap: wrap; gap: 26pt; padding: 12pt 0 2pt; border-top: 0.5pt solid var(--rule); }
 .es-stats .stat { min-width: 90pt; }
 .es-stats .num { display: block; font-size: 24pt; font-weight: 700; line-height: 1.1; color: ${ACCENT}; }
@@ -64,8 +65,8 @@ table.es-table td.score { width: 12%; font-weight: 700; color: ${ACCENT}; white-
 `;
 }
 
-function section(label: string, title: string, body: string): string {
-  return `<div class="section"><div class="part-label">${escapeHtml(label)}</div><h2>${escapeHtml(title)}</h2>${body}</div>`;
+function section(label: string, title: string, body: string, cls = ""): string {
+  return `<div class="section${cls ? ` ${cls}` : ""}"><div class="part-label">${escapeHtml(label)}</div><h2>${escapeHtml(title)}</h2>${body}</div>`;
 }
 
 function p(text: string): string {
@@ -87,6 +88,11 @@ function bullets(items: Array<{ head: string; sub?: string | null; tag?: string;
     )
     .join("")}</ul>`;
 }
+
+const NUMBER_WORD: Record<number, string> = {
+  1: "One", 2: "Two", 3: "Three", 4: "Four", 5: "Five", 6: "Six",
+  7: "Seven", 8: "Eight", 9: "Nine", 10: "Ten", 11: "Eleven", 12: "Twelve",
+};
 
 export function buildExecSummaryDocument(
   session: ExecSummarySession,
@@ -114,12 +120,19 @@ export function buildExecSummaryDocument(
     Boolean(intel.executiveSummary || intel.tension),
   );
 
-  const lead = buildLeadParagraph({
-    businessIssue,
-    smp: winning.smp,
-    reason: winning.alignment,
-    verdict: verification.verdict,
-  });
+  // Single source of truth for "has this already been said?". Every section
+  // below draws through it, so no sentence, quote or figure can appear twice.
+  const dedupe = createDeduper();
+
+  const lead = buildLeadParagraph(
+    {
+      businessIssue,
+      smp: winning.smp,
+      reason: winning.alignment,
+      verdict: verification.verdict,
+    },
+    dedupe,
+  );
 
   const cover = `<div class="cover">
   <div class="cover-brand">BRAND GRENADE</div>
@@ -132,12 +145,7 @@ export function buildExecSummaryDocument(
 
   const leadBlock = lead ? `<div class="es-lead">${escapeHtml(lead)}</div>` : "";
 
-  // 01 — The Process (visual)
-  const chainHtml = process.chain.length
-    ? `<div class="es-chain">${process.chain
-        .map((n) => `<span class="node">${escapeHtml(n)}</span>`)
-        .join('<span class="arrow">→</span>')}</div>`
-    : "";
+  // 01 — Scale of the work: numbers only, no process narration.
   const statsHtml = `<div class="es-stats">${process.stats
     .map(
       (s) =>
@@ -145,65 +153,73 @@ export function buildExecSummaryDocument(
     )
     .join("")}</div>`;
 
+  // 02 — The Business Issue
+  const issueHtml = (() => {
+    const t = dedupe.take(businessIssue);
+    return t ? p(t) : missing();
+  })();
+
   // 03 — Research
   const researchHtml = bullets(
-    research.map((r) => ({ head: r.label, sub: r.body, tag: undefined })),
+    research
+      .map((r) => ({ head: r.label, sub: dedupe.fresh(r.body) ? r.body : null }))
+      .filter((r) => !!r.sub) as Array<{ head: string; sub: string }>,
   );
 
-  // 05 — Frameworks
-  const frameworksHtml = bullets([
-    ...frameworks.stages.map((s) => ({ head: s })),
-    ...frameworks.engines.map((e) => ({
-      head: `Lateral engine — ${e}`,
-      tag: "LOC",
-    })),
-  ]);
+  // 04 — Findings
+  const findingsHtml = (() => {
+    const t = dedupe.take(findings);
+    return t ? p(t) : missing();
+  })();
 
-  // 06 — The Propositions Field
-  const fieldHtml = field.length
+  // 05 — The Propositions Field: alternatives considered and set aside. The
+  // winner has its own home in the next section and is not repeated here.
+  const setAside = field.filter((f) => !f.selected);
+  const fieldHtml = setAside.length
     ? bullets(
-        field.map((f) => ({
-          head: f.proposition,
-          sub: f.selected
-            ? `${f.origin}. Carried forward as the recommendation.`
-            : f.reason
-              ? `${f.origin}. Not the lead: ${f.reason}`
-              : `${f.origin}. Considered, not carried forward.`,
-          tag: f.selected ? "Selected" : "Considered",
-          muted: !f.selected,
-        })),
+        setAside.map((f) => {
+          const reason = f.reason && dedupe.fresh(f.reason) ? f.reason : null;
+          return {
+            head: f.proposition,
+            sub: reason ? `${f.origin}. Not the lead: ${reason}` : `${f.origin}. Considered, not carried forward.`,
+            tag: "Considered",
+            muted: true,
+          };
+        }),
       )
     : missing();
 
-  // 07 — Winning Proposition
+  // 06 — Winning Proposition
+  const owns = dedupe.take(winning.owns);
+  const alignment = dedupe.take(winning.alignment);
   const winningHtml = winning.smp
     ? `<div class="proposition"><div class="label">Strategic Master Proposition</div><div class="stmt">${escapeHtml(
         winning.smp,
-      )}</div></div>${winning.owns ? p(winning.owns) : ""}${winning.alignment ? p(winning.alignment) : ""}`
+      )}</div></div>${owns ? p(owns) : ""}${alignment ? p(alignment) : ""}`
     : missing();
 
-  // 08 — Verification
+  // 07 — Verification
+  const verdictText = dedupe.take(verification.verdict);
+  const testItems = verification.tests.map((t) => ({
+    head: t.name,
+    sub: t.note && dedupe.fresh(t.note) ? t.note : null,
+    tag: t.verdict ?? undefined,
+    muted: !!t.verdict && !/HOLDS/i.test(t.verdict),
+  }));
   const verificationHtml =
-    verification.verdict || verification.tests.length
-      ? `${verification.verdict ? p(verification.verdict) : ""}${bullets(
-          verification.tests.map((t) => ({
-            head: t.name,
-            sub: t.note,
-            tag: t.verdict ?? undefined,
-            muted: !!t.verdict && !/HOLDS/i.test(t.verdict),
-          })),
-        )}`
+    verdictText || testItems.length
+      ? `${verdictText ? p(verdictText) : ""}${bullets(testItems)}`
       : missing();
 
-  // 09 — Scoring and Validation
+  // 08 — Scoring
   const scoringHtml = scoring.rows.length
     ? `<table class="es-table">${scoring.rows
-        .map(
-          (r) =>
-            `<tr><th>${escapeHtml(r.dimension)}</th><td class="score">${escapeHtml(r.score)}</td><td>${escapeHtml(
-              r.note ?? "",
-            )}</td></tr>`,
-        )
+        .map((r) => {
+          const note = r.note && dedupe.fresh(r.note) ? r.note : "";
+          return `<tr><th>${escapeHtml(r.dimension)}</th><td class="score">${escapeHtml(
+            r.score,
+          )}</td><td>${escapeHtml(note)}</td></tr>`;
+        })
         .join("")}${
         scoring.composite
           ? `<tr><th>Composite</th><td class="score">${escapeHtml(scoring.composite)}</td><td>${escapeHtml(
@@ -212,39 +228,46 @@ export function buildExecSummaryDocument(
           : ""
       }</table>`
     : missing();
+  const scoringTitle = `${NUMBER_WORD[scoring.rows.length] ?? String(scoring.rows.length)}-dimension proposition scoring (Stage 10)`;
 
-  // 10 — Brand World Opportunity
-  const brandWorldHtml = brandWorld.line
-    ? `<blockquote>${escapeHtml(brandWorld.line)}</blockquote>${
-        brandWorld.explanation ? p(brandWorld.explanation) : ""
-      }`
-    : missing();
+  // 09 — Brand World Opportunity
+  const bwLine = brandWorld.line && dedupe.fresh(brandWorld.line) ? brandWorld.line : null;
+  const bwExplain = dedupe.take(brandWorld.explanation);
+  const brandWorldHtml = bwLine
+    ? `<blockquote>${escapeHtml(bwLine)}</blockquote>${bwExplain ? p(bwExplain) : ""}`
+    : bwExplain
+      ? p(bwExplain)
+      : missing();
 
-  // 11 — Recommendations, including channel strategy
-  const recsHtml = `${recs.condition ? p(`Condition on activation: ${recs.condition}`) : ""}${
-    recs.nextStep ? p(`Next step: ${recs.nextStep}`) : ""
+  // 10 — Recommendations, including channel strategy
+  const condition = dedupe.take(recs.condition);
+  const nextStep = dedupe.take(recs.nextStep);
+  const channels = recs.channels.filter((c) => dedupe.fresh(c));
+  const recsHtml = `${condition ? p(`Condition on activation: ${condition}`) : ""}${
+    nextStep ? p(`Next step: ${nextStep}`) : ""
   }${
-    recs.channels.length
+    channels.length
       ? `<div class="part-label" style="margin-top:10pt">CHANNELS THIS STRATEGY ACTIVATES THROUGH</div>${bullets(
-          recs.channels.map((c) => ({ head: c })),
+          channels.map((c) => ({ head: c })),
         )}`
       : ""
-  }${!recs.condition && !recs.nextStep && !recs.channels.length ? missing() : ""}`;
+  }${!condition && !nextStep && !channels.length ? missing() : ""}`;
 
   const body =
     cover +
     leadBlock +
-    section("SECTION 01", "The Process", `${chainHtml}${statsHtml}`) +
-    section("SECTION 02", "The Business Issue", businessIssue ? p(businessIssue) : missing()) +
+    `<div class="es-open">` +
+    section("SECTION 01", "Scale of the Work", statsHtml) +
+    section("SECTION 02", "The Business Issue", issueHtml) +
     section("SECTION 03", "Research", researchHtml) +
-    section("SECTION 04", "Findings", findings ? p(findings) : missing()) +
-    section("SECTION 05", "Frameworks", frameworksHtml) +
-    section("SECTION 06", "The Propositions Field", fieldHtml) +
-    section("SECTION 07", "Winning Proposition", winningHtml) +
-    section("SECTION 08", "Verification", verificationHtml) +
-    section("SECTION 09", "Seven-dimension proposition scoring (Stage 10)", scoringHtml) +
-    section("SECTION 10", "Brand World Opportunity", brandWorldHtml) +
-    section("SECTION 11", "Recommendations, Including Channel Strategy", recsHtml) +
+    section("SECTION 04", "Findings", findingsHtml) +
+    section("SECTION 05", "The Propositions Field — Considered and Set Aside", fieldHtml) +
+    section("SECTION 06", "Winning Proposition", winningHtml) +
+    section("SECTION 07", "Verification", verificationHtml) +
+    section("SECTION 08", scoringTitle, scoringHtml) +
+    section("SECTION 09", "Brand World Opportunity", brandWorldHtml) +
+    section("SECTION 10", "Recommendations, Including Channel Strategy", recsHtml, "es-open") +
+    `</div>` +
     `<div class="footer">Brand Grenade Strategy Intelligence System — Confidential. This summary was assembled from stored session data only; no content was generated for it. Full reasoning sits in the Consulting Delivery document and the Complete Pipeline Record.</div>`;
 
   const title = `Strategy Executive Summary — ${brand}`;
