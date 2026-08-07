@@ -176,15 +176,20 @@ export async function tickHarness() {
     let note = "";
 
     if (!s.stage_20_output) {
-      const output = await callClaude({
-        systemPrompt: withPhase2Formatting(STAGE_20_MASTER_DETONATION_BRIEF_PROMPT),
-        userMessage: buildStage20UserMessage(s as never),
-        maxTokens: 64000,
-        sessionId,
-        stageLabel: "Stage 20 (harness)",
-        stageNumber: "20",
-        stageName: "Master Detonation Brief",
-      });
+      const output = await withTimeout(
+        callClaude({
+          systemPrompt: withPhase2Formatting(STAGE_20_MASTER_DETONATION_BRIEF_PROMPT),
+          userMessage: buildStage20UserMessage(s as never),
+          maxTokens: 64000,
+          sessionId,
+          stageLabel: "Stage 20 (harness)",
+          stageNumber: "20",
+          stageName: "Master Detonation Brief",
+        }),
+        220_000,
+        "Stage 20",
+      );
+
       await supabaseAdmin
         .from("sessions")
         .update({ stage_20_output: output, stage_20_approved: true })
