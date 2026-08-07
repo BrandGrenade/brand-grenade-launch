@@ -358,8 +358,6 @@ function stage9Candidates(stage9: string): Array<{ smp: string; note: string | n
   }
   return out;
 }
-  return out;
-}
 
 /** Stage 12 cards: proposition line + PRESSURE_TEST_NOTE. */
 function stage12Cards(stage12: string): Array<{ smp: string; note: string | null }> {
