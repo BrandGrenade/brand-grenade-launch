@@ -1294,8 +1294,75 @@ export type Database = {
           },
         ]
       }
+      stimulus_direction_attempts: {
+        Row: {
+          attempt_no: number
+          campaign_line: string | null
+          created_at: string
+          direction: string | null
+          direction_id: string
+          id: string
+          line_check: Json | null
+          origin: string
+          rated_at: string | null
+          rating_status: string
+          ratings: Json | null
+          rationale: string | null
+          revise_notes: string | null
+          run_id: string
+        }
+        Insert: {
+          attempt_no: number
+          campaign_line?: string | null
+          created_at?: string
+          direction?: string | null
+          direction_id: string
+          id?: string
+          line_check?: Json | null
+          origin?: string
+          rated_at?: string | null
+          rating_status?: string
+          ratings?: Json | null
+          rationale?: string | null
+          revise_notes?: string | null
+          run_id: string
+        }
+        Update: {
+          attempt_no?: number
+          campaign_line?: string | null
+          created_at?: string
+          direction?: string | null
+          direction_id?: string
+          id?: string
+          line_check?: Json | null
+          origin?: string
+          rated_at?: string | null
+          rating_status?: string
+          ratings?: Json | null
+          rationale?: string | null
+          revise_notes?: string | null
+          run_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stimulus_direction_attempts_direction_id_fkey"
+            columns: ["direction_id"]
+            isOneToOne: false
+            referencedRelation: "stimulus_directions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stimulus_direction_attempts_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "stimulus_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stimulus_directions: {
         Row: {
+          active_attempt_id: string | null
           campaign_line: string | null
           created_at: string
           direction: string
@@ -1322,6 +1389,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          active_attempt_id?: string | null
           campaign_line?: string | null
           created_at?: string
           direction?: string
@@ -1348,6 +1416,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          active_attempt_id?: string | null
           campaign_line?: string | null
           created_at?: string
           direction?: string
@@ -1375,6 +1444,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "stimulus_directions_active_attempt_id_fkey"
+            columns: ["active_attempt_id"]
+            isOneToOne: false
+            referencedRelation: "stimulus_direction_attempts"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "stimulus_directions_run_id_fkey"
             columns: ["run_id"]
             isOneToOne: false
@@ -1397,6 +1473,11 @@ export type Database = {
           gate_two_notes: string | null
           gate_two_snapshot: Json | null
           id: string
+          mandate_applied_at: string | null
+          mandate_log: Json
+          mandate_signature_id: string | null
+          mandate_source: string | null
+          mandate_text: string | null
           phase_note: string | null
           registry_version: number
           session_id: string
@@ -1416,6 +1497,11 @@ export type Database = {
           gate_two_notes?: string | null
           gate_two_snapshot?: Json | null
           id?: string
+          mandate_applied_at?: string | null
+          mandate_log?: Json
+          mandate_signature_id?: string | null
+          mandate_source?: string | null
+          mandate_text?: string | null
           phase_note?: string | null
           registry_version?: number
           session_id: string
@@ -1435,6 +1521,11 @@ export type Database = {
           gate_two_notes?: string | null
           gate_two_snapshot?: Json | null
           id?: string
+          mandate_applied_at?: string | null
+          mandate_log?: Json
+          mandate_signature_id?: string | null
+          mandate_source?: string | null
+          mandate_text?: string | null
           phase_note?: string | null
           registry_version?: number
           session_id?: string
@@ -1442,6 +1533,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "stimulus_orchestrations_mandate_signature_id_fkey"
+            columns: ["mandate_signature_id"]
+            isOneToOne: false
+            referencedRelation: "stimulus_signatures"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "stimulus_orchestrations_session_id_fkey"
             columns: ["session_id"]

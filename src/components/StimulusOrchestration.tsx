@@ -22,6 +22,7 @@ import {
 } from "@/lib/stimulus-gate-two.functions";
 import { buildFullFinishedExport, download } from "@/lib/stimulus-export";
 import { SIGNATURE_CATEGORIES } from "@/lib/stimulus/orchestration-prompts";
+import { StimulusMandate } from "@/components/stimulus/StimulusMandate";
 
 
 const AMBER = "#C81E1E";
@@ -721,6 +722,14 @@ export function StimulusOrchestration({ sessionId, brandName }: { sessionId: str
                     choices — music, casting, photography, editing — sit with the creative team and CD, not
                     reopened here.
                   </div>
+
+                  <StimulusMandate
+                    orchestrationId={orchId!}
+                    promptCount={activePrompts.length}
+                    onApplied={async () => {
+                      await refreshState(orchId!);
+                    }}
+                  />
 
                   {!orch.gate_two_confirmed && (
                     <>

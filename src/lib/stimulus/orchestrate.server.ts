@@ -13,6 +13,8 @@ import {
   CD_SYSTEM,
   buildCdMessage,
   COHESION_REVISION_SYSTEM,
+  MANDATE_SYSTEM,
+  buildMandateMessage,
   type BrandAssetRules,
   type SignatureCategory,
 } from "./orchestration-prompts";
@@ -201,6 +203,20 @@ export async function reviseForCohesion(a: {
   return anthropic({
     system: COHESION_REVISION_SYSTEM,
     message: `CHANNEL: ${a.channelName}\n\nCREATIVE DIRECTOR NOTE:\n${a.note}\n\nPROMPT:\n${a.prompt}`,
+    maxTokens: 4000,
+  });
+}
+
+/** Rewrites one prompt so the Gate Two mandated element is carried natively. */
+export async function applyMandateToPrompt(a: {
+  mandate: string;
+  channelName: string;
+  lensName: string;
+  prompt: string;
+}): Promise<string> {
+  return anthropic({
+    system: MANDATE_SYSTEM,
+    message: buildMandateMessage(a),
     maxTokens: 4000,
   });
 }

@@ -18,6 +18,11 @@ import { StimulusOrchestration } from "@/components/StimulusOrchestration";
 import { StimulusPromptAudit } from "@/components/StimulusPromptAudit";
 
 import { RawIdeaExportButton } from "@/components/RawIdeaExportButton";
+import { AttemptHistory } from "@/components/stimulus/AttemptHistory";
+import {
+  MultiRawIdeaExportBar,
+  SelectLensCheckbox,
+} from "@/components/stimulus/MultiRawIdeaExport";
 import { ideaCardStyle, ideaListStyle, IDEA_COLUMN_WIDTH } from "@/components/stimulus/idea-layout";
 
 
@@ -101,10 +106,17 @@ function DirectionCard({
   d,
   onTriage,
   onRevise,
+  onReload,
+  selected,
+  onToggleSelect,
 }: {
   d: Direction;
   onTriage: (status: "keep" | "keep_in_play" | "kill", instinct?: string) => Promise<void>;
   onRevise: (notes: string) => Promise<void>;
+  /** Reloads the run after an attempt is added or switched. */
+  onReload: () => Promise<void>;
+  selected: boolean;
+  onToggleSelect: () => void;
 }) {
   const lens = getLens(d.lens_id);
   const [instinct, setInstinct] = useState(d.instinct_brief ?? "");
@@ -124,7 +136,8 @@ function DirectionCard({
       })}
     >
       <div style={{ display: "flex", justifyContent: "space-between", gap: 16, alignItems: "baseline" }}>
-        <div style={{ display: "flex", alignItems: "baseline", gap: 14, minWidth: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 14, minWidth: 0 }}>
+          <SelectLensCheckbox checked={selected} onToggle={onToggleSelect} />
           <span
             className="text-mono"
             style={{ color: `${AMBER}88`, fontSize: 22, letterSpacing: "0.04em", lineHeight: 1 }}
@@ -240,6 +253,8 @@ function DirectionCard({
 
       </div>
 
+      <AttemptHistory directionId={d.id} busy={busy} onChanged={onReload} />
+
       {showRevise && (
         <div style={{ marginTop: 12 }}>
           <textarea
@@ -319,6 +334,10 @@ export function CreativeStimulus({
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [filter, setFilter] = useState<"all" | "keep" | "keep_in_play" | "kill" | "untriaged">("all");
+  // Multi-select for batched Raw Idea export.
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const toggleSelected = (id: string) =>
+    setSelectedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
 
   const refreshRuns = useCallback(async () => {
     try {
@@ -502,12 +521,29 @@ export function CreativeStimulus({
               </div>
 
 
-              <div style={{ ...ideaListStyle, marginTop: 24 }}>
+              <div style={{ marginTop: 24 }}>
+                <MultiRawIdeaExportBar
+                  selectedIds={selectedIds}
+                  totalSelectable={visible.length}
+                  onSelectAll={() => setSelectedIds(visible.map((d) => d.id))}
+                  onClear={() => setSelectedIds([])}
+                />
+              </div>
+
+              <div style={{ ...ideaListStyle, marginTop: 8 }}>
 
                 {visible.map((d) => (
                   <DirectionCard
                     key={d.id}
                     d={d}
+                    selected={selectedIds.includes(d.id)}
+                    onToggleSelect={() => toggleSelected(d.id)}
+                    onReload={async () => {
+                      if (!runId) return;
+                      const cur = await load({ data: { runId } });
+                      setDirections(cur.directions as Direction[]);
+                      setRunMeta(cur.run as RunMeta);
+                    }}
                     onTriage={async (status, instinct) => {
                       await triage({ data: { directionId: d.id, status, instinctBrief: instinct ?? "" } });
                       patch(d.id, { status, instinct_brief: instinct ?? "" });

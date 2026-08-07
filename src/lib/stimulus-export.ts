@@ -87,6 +87,17 @@ export function download(filename: string, html: string) {
   setTimeout(() => URL.revokeObjectURL(url), 2000);
 }
 
+/** Opens the same document in a new tab and raises the print dialogue. */
+export function openPrintable(html: string) {
+  const w = window.open("", "_blank");
+  if (!w) throw new Error("Pop-up blocked — allow pop-ups to print, or use Download instead.");
+  w.document.open();
+  w.document.write(html);
+  w.document.close();
+  w.focus();
+  setTimeout(() => w.print(), 350);
+}
+
 const slug = (s: string) =>
   s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 48) || "export";
 
@@ -112,8 +123,71 @@ export type RawIdeaExport = {
   };
 };
 
+/** One lens block — identical content in the single and batched exports. */
+function rawIdeaBlock(d: RawIdeaExport["direction"]): string {
+  const lens = getLens(d.lensId);
+  return `
+      <h2>The spark</h2>
+      <div class="card">
+        <h3>${esc(d.lensName)}</h3>
+        <p class="muted">${esc(lens?.approach ?? "")}</p>
+        ${lens ? `<p class="muted"><em>${esc(lens.provocation)}</em></p>` : ""}
+        <pre>${esc(d.text)}</pre>
+        ${refLinks(d.lensId)}
+      </div>
+      ${
+        d.instinctBrief
+          ? `<h2>Initial instinct</h2><div class="card"><p>${esc(d.instinctBrief)}</p></div>`
+          : ""
+      }
+      <h2>Rating snapshot</h2>
+      <div class="card">
+        <p class="muted">Tissue Check: ${esc(d.tissueStatus)} · Gate One: ${
+          d.gateOneApproved ? `approved ${esc(stamp(d.gateOneApprovedAt))}` : "not approved"
+        }${d.ratedAt ? ` · rated ${esc(stamp(d.ratedAt))}` : ""}</p>
+        ${ratingsBlock(d.ratings)}
+        ${d.gateOneNotes ? `<p class="muted">Gate One notes: ${esc(d.gateOneNotes)}</p>` : ""}
+      </div>`;
+}
+
+export type RawIdeaBatchExport = Omit<RawIdeaExport, "direction"> & {
+  directions: RawIdeaExport["direction"][];
+};
+
+/**
+ * Several lenses in one print-ready document — same content and format as the
+ * single Raw Idea export, one lens per printed page.
+ */
+export function buildRawIdeaBatchExport(x: RawIdeaBatchExport): {
+  filename: string;
+  html: string;
+} {
+  const html = doc(
+    `${x.brandName} — Raw ideas — ${x.directions.length} lenses`,
+    `
+      <p class="kicker">Brand Grenade · Creative Stimulus · Raw idea export (${x.directions.length} lenses)</p>
+      <h1>${esc(x.brandName)}</h1>
+      <p class="meta">${esc(x.category)}${x.channelName ? ` · ${esc(x.channelName)}` : ""}</p>
+      ${x.smp ? `<p class="meta">SMP — ${esc(x.smp)}</p>` : ""}
+      <p class="muted">Selected lenses: ${x.directions.map((d) => esc(d.lensName)).join(" · ")}</p>
+      ${x.directions
+        .map(
+          (d, i) =>
+            `<hr/><div${i > 0 ? ' style="page-break-before:always"' : ""}>${rawIdeaBlock(d)}</div>`,
+        )
+        .join("")}
+      <hr/>
+      <p class="muted">Raw stimulus, not finished work. No tool-specific prompt, no signature registry, no
+      Creative Director cohesion pass applies to this export — take the sparks and develop them by hand.</p>
+    `,
+  );
+  return {
+    filename: `${slug(x.brandName)}-raw-ideas-${x.directions.length}-lenses.html`,
+    html,
+  };
+}
+
 export function buildRawIdeaExport(x: RawIdeaExport): { filename: string; html: string } {
-  const lens = getLens(x.direction.lensId);
   const html = doc(
     `${x.brandName} — Raw idea — ${x.direction.lensName}`,
     `
@@ -122,27 +196,7 @@ export function buildRawIdeaExport(x: RawIdeaExport): { filename: string; html: 
       <p class="meta">${esc(x.category)} · ${esc(x.channelName)}</p>
       ${x.smp ? `<p class="meta">SMP — ${esc(x.smp)}</p>` : ""}
       <hr/>
-      <h2>The spark</h2>
-      <div class="card">
-        <h3>${esc(x.direction.lensName)}</h3>
-        <p class="muted">${esc(lens?.approach ?? "")}</p>
-        ${lens ? `<p class="muted"><em>${esc(lens.provocation)}</em></p>` : ""}
-        <pre>${esc(x.direction.text)}</pre>
-        ${refLinks(x.direction.lensId)}
-      </div>
-      ${
-        x.direction.instinctBrief
-          ? `<h2>Initial instinct</h2><div class="card"><p>${esc(x.direction.instinctBrief)}</p></div>`
-          : ""
-      }
-      <h2>Rating snapshot</h2>
-      <div class="card">
-        <p class="muted">Tissue Check: ${esc(x.direction.tissueStatus)} · Gate One: ${
-          x.direction.gateOneApproved ? `approved ${esc(stamp(x.direction.gateOneApprovedAt))}` : "not approved"
-        }${x.direction.ratedAt ? ` · rated ${esc(stamp(x.direction.ratedAt))}` : ""}</p>
-        ${ratingsBlock(x.direction.ratings)}
-        ${x.direction.gateOneNotes ? `<p class="muted">Gate One notes: ${esc(x.direction.gateOneNotes)}</p>` : ""}
-      </div>
+      ${rawIdeaBlock(x.direction)}
       <hr/>
       <p class="muted">Raw stimulus, not finished work. No tool-specific prompt, no signature registry, no
       Creative Director cohesion pass applies to this export — take the spark and develop it by hand.</p>
@@ -150,6 +204,7 @@ export function buildRawIdeaExport(x: RawIdeaExport): { filename: string; html: 
   );
   return { filename: `${slug(x.brandName)}-raw-idea-${slug(x.direction.lensName)}.html`, html };
 }
+
 
 /* -------------------------------------------------------- Full Finished tier */
 
