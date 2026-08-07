@@ -11,6 +11,10 @@ import {
 } from "@/lib/stimulus-rating.functions";
 import type { DirectionRatings } from "@/lib/stimulus/rating-prompts";
 import { RawIdeaExportButton } from "@/components/RawIdeaExportButton";
+import {
+  MultiRawIdeaExportBar,
+  SelectLensCheckbox,
+} from "@/components/stimulus/MultiRawIdeaExport";
 import { ideaCardStyle, ideaListStyle } from "@/components/stimulus/idea-layout";
 
 
@@ -361,14 +365,31 @@ export function StimulusGateOne({
         </div>
       )}
 
-      <div style={{ ...ideaListStyle, marginTop: 28 }}>
+      <div style={{ marginTop: 28 }}>
+        <MultiRawIdeaExportBar
+          selectedIds={selectedIds}
+          totalSelectable={survivors.length}
+          onSelectAll={() => setSelectedIds(survivors.map((d) => d.id))}
+          onClear={() => setSelectedIds([])}
+        />
+      </div>
+
+      <div style={{ ...ideaListStyle, marginTop: 8 }}>
         {survivors.map((d) => (
           <div
             key={d.id}
             style={ideaCardStyle({ accent: d.gate_one_approved ? AMBER : null })}
           >
             <div style={{ display: "flex", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
-              <div style={{ display: "flex", alignItems: "baseline", gap: 14, minWidth: 0 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 14, minWidth: 0 }}>
+                <SelectLensCheckbox
+                  checked={selectedIds.includes(d.id)}
+                  onToggle={() =>
+                    setSelectedIds((prev) =>
+                      prev.includes(d.id) ? prev.filter((x) => x !== d.id) : [...prev, d.id],
+                    )
+                  }
+                />
                 <span className="text-mono" style={{ color: `${AMBER}88`, fontSize: 22, lineHeight: 1 }}>
                   {String(d.sort_order + 1).padStart(2, "0")}
                 </span>
