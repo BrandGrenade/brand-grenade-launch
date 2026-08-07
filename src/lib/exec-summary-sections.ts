@@ -556,8 +556,16 @@ export function extractRecommendations(session: ExecSessionRow): Recommendations
   const block = stage11Block(str(session, "stage_11_output"), selected);
   if (block) {
     const note = block.find((l) => /STRATEGIC NOTE/i.test(l));
-    if (note) condition = firstSentencesOf(clean(note).replace(/^.*?STRATEGIC NOTE[^:]*:\s*/i, ""), 3);
+    if (note) {
+      // Drop the verdict headline (already carried in Section 08) and keep
+      // only the condition that follows it.
+      const tail = clean(note)
+        .replace(/^.*?STRATEGIC NOTE[^:]*:\s*/i, "")
+        .replace(/^[A-Z][A-Z ,()-]*[—-]\s*/, "");
+      condition = firstSentencesOf(tail, 3);
+    }
   }
+
   if (!condition) {
     const cards = stage12Cards(str(session, "stage_12_output"));
     const hit = cards.find((c) => key && matchKey(c.smp).includes(key));
