@@ -47,6 +47,7 @@ import { Route as LovableEmailTransactionalSendRouteImport } from './routes/lova
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 import { Route as ApiRepoViewDocumentIdRouteImport } from './routes/api/repo/view.$documentId'
+import { Route as ApiPublicHooksTier2HarnessRouteImport } from './routes/api/public/hooks/tier2-harness'
 
 const UnsubscribeRoute = UnsubscribeRouteImport.update({
   id: '/unsubscribe',
@@ -241,6 +242,12 @@ const ApiRepoViewDocumentIdRoute = ApiRepoViewDocumentIdRouteImport.update({
   path: '/api/repo/view/$documentId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHooksTier2HarnessRoute =
+  ApiPublicHooksTier2HarnessRouteImport.update({
+    id: '/api/public/hooks/tier2-harness',
+    path: '/api/public/hooks/tier2-harness',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -277,6 +284,7 @@ export interface FileRoutesByFullPath {
   '/admin/preview/$slug': typeof AdminPreviewSlugRoute
   '/intelligence/$id/edit': typeof IntelligenceIdEditRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
+  '/api/public/hooks/tier2-harness': typeof ApiPublicHooksTier2HarnessRoute
   '/api/repo/view/$documentId': typeof ApiRepoViewDocumentIdRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
@@ -312,6 +320,7 @@ export interface FileRoutesByTo {
   '/admin/preview/$slug': typeof AdminPreviewSlugRoute
   '/intelligence/$id/edit': typeof IntelligenceIdEditRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
+  '/api/public/hooks/tier2-harness': typeof ApiPublicHooksTier2HarnessRoute
   '/api/repo/view/$documentId': typeof ApiRepoViewDocumentIdRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
@@ -353,6 +362,7 @@ export interface FileRoutesById {
   '/admin/preview/$slug': typeof AdminPreviewSlugRoute
   '/intelligence/$id_/edit': typeof IntelligenceIdEditRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
+  '/api/public/hooks/tier2-harness': typeof ApiPublicHooksTier2HarnessRoute
   '/api/repo/view/$documentId': typeof ApiRepoViewDocumentIdRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
@@ -395,6 +405,7 @@ export interface FileRouteTypes {
     | '/admin/preview/$slug'
     | '/intelligence/$id/edit'
     | '/lovable/email/suppression'
+    | '/api/public/hooks/tier2-harness'
     | '/api/repo/view/$documentId'
     | '/lovable/email/queue/process'
     | '/lovable/email/transactional/preview'
@@ -430,6 +441,7 @@ export interface FileRouteTypes {
     | '/admin/preview/$slug'
     | '/intelligence/$id/edit'
     | '/lovable/email/suppression'
+    | '/api/public/hooks/tier2-harness'
     | '/api/repo/view/$documentId'
     | '/lovable/email/queue/process'
     | '/lovable/email/transactional/preview'
@@ -470,6 +482,7 @@ export interface FileRouteTypes {
     | '/admin/preview/$slug'
     | '/intelligence/$id_/edit'
     | '/lovable/email/suppression'
+    | '/api/public/hooks/tier2-harness'
     | '/api/repo/view/$documentId'
     | '/lovable/email/queue/process'
     | '/lovable/email/transactional/preview'
@@ -500,6 +513,7 @@ export interface RootRouteChildren {
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
   AdminPreviewSlugRoute: typeof AdminPreviewSlugRoute
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
+  ApiPublicHooksTier2HarnessRoute: typeof ApiPublicHooksTier2HarnessRoute
   ApiRepoViewDocumentIdRoute: typeof ApiRepoViewDocumentIdRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
   LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
@@ -774,6 +788,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiRepoViewDocumentIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/tier2-harness': {
+      id: '/api/public/hooks/tier2-harness'
+      path: '/api/public/hooks/tier2-harness'
+      fullPath: '/api/public/hooks/tier2-harness'
+      preLoaderRoute: typeof ApiPublicHooksTier2HarnessRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -871,6 +892,7 @@ const rootRouteChildren: RootRouteChildren = {
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
   AdminPreviewSlugRoute: AdminPreviewSlugRoute,
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
+  ApiPublicHooksTier2HarnessRoute: ApiPublicHooksTier2HarnessRoute,
   ApiRepoViewDocumentIdRoute: ApiRepoViewDocumentIdRoute,
   LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
   LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
@@ -879,13 +901,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
