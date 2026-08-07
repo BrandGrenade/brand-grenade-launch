@@ -233,24 +233,30 @@ export async function tickHarness() {
 
     await supabaseAdmin
       .from("tier2_harness_runs")
-      .update({ phase: nextPhase, claimed_at: null, log: log(run, note) as never })
+      .update({
+        phase: nextPhase,
+        claimed_at: null,
+        attempts: 0,
+        result_detail: note,
+        log: log(run, note) as never,
+      })
       .eq("id", run.id);
     return { worked: true, phase: nextPhase, note };
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
-    const attempts = (run.attempts ?? 0) + 1;
-    const giveUp = attempts >= 6;
+    const stack = e instanceof Error && e.stack ? ` | ${e.stack.split("\n").slice(0, 4).join(" ")}` : "";
+    const giveUp = attemptNo >= 6;
     await supabaseAdmin
       .from("tier2_harness_runs")
       .update({
-        attempts,
         claimed_at: null,
         status: giveUp ? "failed" : "running",
         phase: giveUp ? "failed" : run.phase,
-        result_detail: msg,
-        log: log(run, `error (attempt ${attempts}): ${msg}`) as never,
+        result_detail: `phase ${run.phase} attempt ${attemptNo} failed: ${msg}${stack}`.slice(0, 4000),
+        log: log(run, `error (attempt ${attemptNo}) at ${run.phase}: ${msg}`) as never,
       })
       .eq("id", run.id);
-    return { worked: true, error: msg, attempts, giveUp };
+    return { worked: true, error: msg, attempts: attemptNo, giveUp };
   }
+
 }
