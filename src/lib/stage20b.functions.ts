@@ -98,7 +98,7 @@ function formatAudienceInput(a: Stage20bAudienceInput): string {
   ].join("\n");
 }
 
-function buildStage20bUserMessage(
+export function buildStage20bUserMessage(
   s: Stage20bSession,
   a: Stage20bAudienceInput,
 ): string {
