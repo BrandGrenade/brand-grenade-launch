@@ -722,6 +722,14 @@ export function StimulusOrchestration({ sessionId, brandName }: { sessionId: str
                     reopened here.
                   </div>
 
+                  <StimulusMandate
+                    orchestrationId={orchId!}
+                    promptCount={activePrompts.length}
+                    onApplied={async () => {
+                      await refresh(orchId!);
+                    }}
+                  />
+
                   {!orch.gate_two_confirmed && (
                     <>
                       <textarea
