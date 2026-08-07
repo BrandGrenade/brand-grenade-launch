@@ -242,7 +242,7 @@ export function buildExecSummaryDocument(
     section("SECTION 06", "The Propositions Field", fieldHtml) +
     section("SECTION 07", "Winning Proposition", winningHtml) +
     section("SECTION 08", "Verification", verificationHtml) +
-    section("SECTION 09", "Scoring and Validation", scoringHtml) +
+    section("SECTION 09", "Seven-dimension proposition scoring (Stage 10)", scoringHtml) +
     section("SECTION 10", "Brand World Opportunity", brandWorldHtml) +
     section("SECTION 11", "Recommendations, Including Channel Strategy", recsHtml) +
     `<div class="footer">Brand Grenade Strategy Intelligence System — Confidential. This summary was assembled from stored session data only; no content was generated for it. Full reasoning sits in the Consulting Delivery document and the Complete Pipeline Record.</div>`;
