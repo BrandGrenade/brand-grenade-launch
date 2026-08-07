@@ -168,9 +168,23 @@ export async function buildAndDownloadBundle(
   // Root — Strategy Executive Summary (synthesis of stored data only)
   onProgress?.("Building Strategy Executive Summary…");
   const execIntel = await fetchExecSummaryIntel(brand);
+  // Same extra columns the Deliverables card loads, so both paths build the
+  // identical eleven-section document.
+  const execExtra = await (async () => {
+    try {
+      const res = await supabase
+        .from("sessions")
+        .select("brief_text, loc_engine_outputs, loc_status, loc_decision_packages")
+        .eq("id", session.id)
+        .maybeSingle();
+      return (res.data as Record<string, unknown> | null) ?? {};
+    } catch {
+      return {};
+    }
+  })();
   tryAdd(
     "Strategy_Executive_Summary.html",
-    () => buildExecSummaryDocument(session, execIntel),
+    () => buildExecSummaryDocument({ ...session, ...execExtra }, execIntel),
     "Building Strategy Executive Summary…",
   );
 
