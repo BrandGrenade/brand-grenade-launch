@@ -72,9 +72,17 @@ function norm(s: string): string {
     .replace(/\s+/g, " ");
 }
 
+/** Stage 10/11 models routinely emit markdown emphasis inside the structural
+ *  labels ("**SMP:**", "**FIELD:**", "**Fame:** 8/10"). The parsers below are
+ *  structural, not typographic — strip emphasis markers before matching so a
+ *  bolded label can never make an SMP invisible to the filter. */
+export function stripEmphasis(text: string): string {
+  return (text ?? "").replace(/\*\*/g, "").replace(/(?<![A-Za-z0-9])__(?![A-Za-z0-9])/g, "");
+}
+
 function splitSmpBlocks(text: string): string[] {
   if (!text) return [];
-  const parts = text.split(
+  const parts = stripEmphasis(text).split(
     /\n(?=(?:#{1,6}\s*)?\*{0,2}(?:SMP:\s*"|SMP\s+(?:One|Two|Three|Four|Five|Six|Seven|Eight|Nine|Ten|\d+)\s*[—–-]\s*"))/gi,
   );
   return parts
@@ -85,6 +93,7 @@ function splitSmpBlocks(text: string): string[] {
       ),
     );
 }
+
 
 function parseSmpHeading(block: string): { smpLine: string; fieldName: string } | null {
   const structured = block.match(
