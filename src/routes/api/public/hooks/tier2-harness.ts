@@ -17,8 +17,12 @@ export const Route = createFileRoute("/api/public/hooks/tier2-harness")({
     handlers: {
       POST: async ({ request }) => {
         const key = request.headers.get("apikey");
-        const expected = process.env["SUPABASE_ANON_KEY"];
-        if (!expected || key !== expected) {
+        const accepted = [
+          process.env["SUPABASE_ANON_KEY"],
+          process.env["SUPABASE_PUBLISHABLE_KEY"],
+          process.env["VITE_SUPABASE_PUBLISHABLE_KEY"],
+        ].filter((v): v is string => Boolean(v));
+        if (!key || !accepted.includes(key)) {
           return new Response(JSON.stringify({ error: "unauthorised" }), {
             status: 401,
             headers: { "Content-Type": "application/json" },
