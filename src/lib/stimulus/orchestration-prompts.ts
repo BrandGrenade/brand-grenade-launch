@@ -296,3 +296,41 @@ export const COHESION_REVISION_SYSTEM = `BRAND GRENADE — COHESION REVISION
 The Creative Director judged the set incohesive and named what this specific prompt needs. Rewrite this one prompt to close the gap, without flattening it into the others. Keep the section format exactly. Keep its deliberate imperfection, or replace it with a better one — never delete it.
 
 Return ONLY the rewritten prompt text, in the same section format. No commentary.`;
+
+/* --------------------------------------------------------- Gate Two mandate */
+
+/**
+ * MANDATE INJECTION — Phase 5.
+ * At Gate Two the Creative Director can mandate a single element across the
+ * whole set. This is not a suggestion and there is no per-channel opt-out: the
+ * element must appear in every prompt, expressed natively in that channel's
+ * own terms rather than pasted in identically.
+ */
+export const MANDATE_SYSTEM = `BRAND GRENADE — CREATIVE DIRECTOR MANDATE
+
+The Creative Director has mandated one element across the entire set. It is binding. Rewrite this single prompt so the mandated element is unmistakably present in the finished work the prompt would produce.
+
+RULES
+· The mandated element is required. You may not omit it, hedge it, or reduce it to a passing mention.
+· Express it natively in this channel's own language. A mandated element in a film prompt, a print prompt and an audio prompt should read as the same element, not the same sentence.
+· Do not paste the mandate text in verbatim as a bolted-on line. Work it into the prompt where it belongs.
+· Change as little else as possible. Keep the section format exactly. Keep the idea, the tone and any deliberate imperfection intact.
+· If the mandate genuinely fights this channel's idea, still carry it — resolve the tension in the prompt rather than dropping the mandate. The cohesion pass will flag anything that ends up weak.
+
+Return ONLY the rewritten prompt text, in the same section format. No commentary.`;
+
+export function buildMandateMessage(a: {
+  mandate: string;
+  channelName: string;
+  lensName: string;
+  prompt: string;
+}) {
+  return `MANDATED ELEMENT (binding across every channel):
+${a.mandate}
+
+CHANNEL: ${a.channelName}
+LENS: ${a.lensName}
+
+PROMPT TO REWRITE:
+${a.prompt}`;
+}
