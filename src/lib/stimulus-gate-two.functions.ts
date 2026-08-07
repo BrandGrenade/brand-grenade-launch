@@ -7,6 +7,8 @@ import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertSessionAccess } from "@/lib/auth-helpers.server";
+import { gateTwoBlockReason, type GateTwoPromptRow } from "@/lib/stimulus/gate-two-rules";
+
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyRow = Record<string, any>;
@@ -208,12 +210,10 @@ export const confirmGateTwo = createServerFn({ method: "POST" })
     const rows = (prompts ?? []) as AnyRow[];
     const active = rows.filter((p) => p.status === "active");
     const approved = active.filter((p) => p.gate_two_approved);
-    if (approved.length === 0) throw new Error("Sign off at least one prompt before confirming Gate Two.");
-    const outstanding = active.filter((p) => !p.gate_two_approved);
-    if (outstanding.length > 0)
-      throw new Error(
-        `${outstanding.length} prompt(s) still awaiting a Gate Two decision — approve, send back, or reject each one first.`,
-      );
+    const blocked = gateTwoBlockReason(active as GateTwoPromptRow[], approved.length);
+    if (blocked) throw new Error(blocked);
+
+
 
     const now = new Date().toISOString();
     const snapshot = {
