@@ -258,7 +258,7 @@ export function NewRunGateButton({ variant = "topnav", label = "Strategy Pipelin
     );
   }
 
-  if (gate?.allowed) {
+  if (gate?.allowed || overridden) {
     return (
       <Link to="/brief" style={finalEnabledStyle} className={className}>
         {prefixNode}
@@ -266,6 +266,7 @@ export function NewRunGateButton({ variant = "topnav", label = "Strategy Pipelin
       </Link>
     );
   }
+
 
   return (
     <>
