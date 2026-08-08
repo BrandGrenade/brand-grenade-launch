@@ -337,7 +337,17 @@ export function NewRunGateButton({ variant = "topnav", label = "Strategy Pipelin
               className="mt-2 w-full bg-card/60 p-3 text-sm text-text-primary outline-none"
               style={{ border: "1px solid #1C1A18", borderRadius: 6 }}
             />
+            {error ? (
+              <p
+                className="text-sm"
+                role="alert"
+                style={{ color: "#C81E1E", marginTop: 10, lineHeight: 1.45 }}
+              >
+                {error}
+              </p>
+            ) : null}
           </div>
+
 
           <AlertDialogFooter
             className="flex flex-row justify-end gap-3 sm:space-x-0"
