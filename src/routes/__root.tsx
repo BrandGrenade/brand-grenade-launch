@@ -13,6 +13,7 @@ import { MobileGate } from "@/components/MobileGate";
 import { DevModeBanner } from "@/components/DevModeBanner";
 import { AppFooter } from "@/components/AppFooter";
 import { LaunchStrip } from "@/components/LaunchStrip";
+import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/context/AuthContext";
 
 
@@ -134,6 +135,7 @@ function RootComponent() {
         <Outlet />
         <AppFooter />
         <MobileGate />
+        <Toaster />
       </AuthProvider>
     </QueryClientProvider>
   );

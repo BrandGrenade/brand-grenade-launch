@@ -29,6 +29,8 @@ import {
   type PipelineGateStatus,
 } from "@/lib/pipeline-gate.functions";
 
+const OVERRIDE_KEY = "brand-grenade:pipeline-gate-override";
+
 export type NewRunGateButtonProps = {
   variant?: "topnav" | "empty" | "launch";
   label?: string;
@@ -47,7 +49,19 @@ export function NewRunGateButton({ variant = "topnav", label = "Strategy Pipelin
   const [dialogOpen, setDialogOpen] = useState(false);
   const [reason, setReason] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [overridden, setOverridden] = useState(false);
   const fetchedAtRef = useRef(0);
+
+  // An override is valid for the browser session: once logged, the gate must
+  // stop blocking, otherwise the user gets bounced back to the same wall.
+  useEffect(() => {
+    try {
+      if (sessionStorage.getItem(OVERRIDE_KEY)) setOverridden(true);
+    } catch {
+      /* storage unavailable */
+    }
+  }, []);
 
   const refresh = useMemo(
     () => async () => {
@@ -103,12 +117,24 @@ export function NewRunGateButton({ variant = "topnav", label = "Strategy Pipelin
     return () => document.removeEventListener("visibilitychange", onVisibility);
   }, [refresh]);
 
+  const proceed = () => {
+    setDialogOpen(false);
+    // Radix leaves `pointer-events: none` on <body> until its close animation
+    // settles; navigating in the same tick can land on a page that ignores
+    // every click. Release the lock explicitly, then navigate.
+    setTimeout(() => {
+      document.body.style.pointerEvents = "";
+      void navigate({ to: "/brief" });
+    }, 60);
+  };
+
   const submitOverride = async () => {
     if (reason.trim().length < 4) {
-      toast.error("Please provide a reason (min 4 characters).");
+      setError("Please provide a reason (min 4 characters).");
       return;
     }
     setSubmitting(true);
+    setError(null);
     try {
       const { data: sess } = await supabase.auth.getSession();
       const token = sess.session?.access_token;
@@ -117,16 +143,25 @@ export function NewRunGateButton({ variant = "topnav", label = "Strategy Pipelin
         data: { reason: reason.trim() },
         headers: { Authorization: `Bearer ${token}` },
       });
+      try {
+        sessionStorage.setItem(OVERRIDE_KEY, new Date().toISOString());
+      } catch {
+        /* storage unavailable */
+      }
+      setOverridden(true);
       toast.success("Override logged. Starting new run.");
-      setDialogOpen(false);
       setReason("");
-      void navigate({ to: "/brief" });
+      proceed();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Failed to log override");
+      const msg = e instanceof Error ? e.message : "Failed to log override";
+      console.error("[PipelineGate] override failed", e);
+      setError(`${msg} — the override was not recorded. You can continue without logging it.`);
+      toast.error(msg);
     } finally {
       setSubmitting(false);
     }
   };
+
 
   const isTopNav = variant === "topnav";
   const isLaunch = variant === "launch";
@@ -223,7 +258,7 @@ export function NewRunGateButton({ variant = "topnav", label = "Strategy Pipelin
     );
   }
 
-  if (gate?.allowed) {
+  if (gate?.allowed || overridden) {
     return (
       <Link to="/brief" style={finalEnabledStyle} className={className}>
         {prefixNode}
@@ -231,6 +266,7 @@ export function NewRunGateButton({ variant = "topnav", label = "Strategy Pipelin
       </Link>
     );
   }
+
 
   return (
     <>
@@ -301,7 +337,17 @@ export function NewRunGateButton({ variant = "topnav", label = "Strategy Pipelin
               className="mt-2 w-full bg-card/60 p-3 text-sm text-text-primary outline-none"
               style={{ border: "1px solid #1C1A18", borderRadius: 6 }}
             />
+            {error ? (
+              <p
+                className="text-sm"
+                role="alert"
+                style={{ color: "#C81E1E", marginTop: 10, lineHeight: 1.45 }}
+              >
+                {error}
+              </p>
+            ) : null}
           </div>
+
 
           <AlertDialogFooter
             className="flex flex-row justify-end gap-3 sm:space-x-0"
@@ -316,6 +362,20 @@ export function NewRunGateButton({ variant = "topnav", label = "Strategy Pipelin
             >
               Cancel
             </button>
+            {error ? (
+              <button
+                type="button"
+                disabled={submitting}
+                onClick={() => {
+                  setOverridden(true);
+                  proceed();
+                }}
+                className="inline-flex h-9 items-center justify-center rounded-lg px-4 text-[13px] font-medium transition-colors disabled:opacity-50"
+                style={{ border: "1px solid #C81E1E", color: "#C81E1E" }}
+              >
+                Continue anyway
+              </button>
+            ) : null}
             <button
               type="button"
               disabled={submitting || reason.trim().length < 4}
