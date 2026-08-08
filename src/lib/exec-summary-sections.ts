@@ -259,38 +259,42 @@ export function extractFindings(
   intel: { executiveSummary?: string | null } = {},
 ): string | null {
   const fromIntel = firstSentencesOf(intel.executiveSummary ?? null, 3);
-  console.log("[DEBUG] fromIntel", fromIntel?.slice(0, 100));
   if (fromIntel) return fromIntel;
 
+  // Template-level priority: synthesised early-stage outputs carry the
+  // strategic findings. The Stage 2 category-belief paragraph is usually the
+  // cleanest statement of what the brand can actually exploit, so it is
+  // preferred before legacy Stage 1 headings.
+  const s2 = str(session, "stage_2_output");
+  const s2Para = paragraphAfterHeading(
+    s2,
+    /What This Category Believes|Category Believes|Category Truth/i,
+  );
+  const fromS2 = firstSentencesOf(s2Para, 3);
+  if (fromS2) return fromS2;
+
+  const s3 = str(session, "stage_3_output");
+  const s3Para = paragraphAfterHeading(
+    s3,
+    /Ledger of Proof|Proof|Strategic Mechanism|What This Brand Can Claim/i,
+  );
+  const fromS3 = firstSentencesOf(s3Para, 3);
+  if (fromS3) return fromS3;
+
+  const s4 = str(session, "stage_4_output");
+  const s4Para = paragraphAfterHeading(s4, /Open Ledger|Strategic Territory|Territory/i);
+  const fromS4 = firstSentencesOf(s4Para, 3);
+  if (fromS4) return fromS4;
+
+  // Legacy Stage 1 headings used by older sessions.
   const s1 = str(session, "stage_1_output");
   const shift = headingBlock(s1, /Human\s*\/?\s*Cultural Shift/i).join(" ");
   const fromShift = firstSentencesOf(shift, 3);
-  console.log("[DEBUG] shift length", shift.length, "fromShift", fromShift?.slice(0, 100));
   if (fromShift) return fromShift;
 
   const challenged = headingBlock(s1, /Category Assumption Challenged/i).join(" ");
   const fromChallenged = firstSentencesOf(challenged, 3);
-  console.log("[DEBUG] challenged length", challenged.length, "fromChallenged", fromChallenged?.slice(0, 100));
   if (fromChallenged) return fromChallenged;
-
-  // Template-level fallbacks: synthesised early-stage outputs carry the
-  // strategic findings when the legacy stage-1 headings are absent.
-  const s2 = str(session, "stage_2_output");
-  const s2Block = headingBlock(s2, /What This Category Believes|Category Believes|Category Truth/i).join(" ");
-  console.log("[DEBUG] s2 length", s2.length, "s2Block length", s2Block.length, "s2Block first 100", s2Block.slice(0, 100));
-  const fromS2 = firstSentencesOf(s2Block || s2, 3);
-  console.log("[DEBUG] fromS2", fromS2?.slice(0, 200));
-  if (fromS2) return fromS2;
-
-  const s3 = str(session, "stage_3_output");
-  const s3Block = headingBlock(s3, /Ledger of Proof|Proof|Strategic Mechanism/i).join(" ");
-  const fromS3 = firstSentencesOf(s3Block || s3, 3);
-  if (fromS3) return fromS3;
-
-  const s4 = str(session, "stage_4_output");
-  const s4Block = headingBlock(s4, /Open Ledger|Strategic Territory|Territory/i).join(" ");
-  const fromS4 = firstSentencesOf(s4Block || s4, 3);
-  if (fromS4) return fromS4;
 
   return firstSentencesOf(s1, 3);
 }
