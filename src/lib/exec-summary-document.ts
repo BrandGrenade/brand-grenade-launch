@@ -29,6 +29,7 @@ import {
   extractRecommendations,
   extractResearch,
   extractScoring,
+  extractSituationFact,
   extractVerification,
   extractWinning,
   type ExecSessionRow,
@@ -105,11 +106,6 @@ const NUMBER_WORD: Record<number, string> = {
   7: "Seven", 8: "Eight", 9: "Nine", 10: "Ten", 11: "Eleven", 12: "Twelve",
 };
 
-/** Strips the platform's own stage numbering from a framework label. */
-function methodLabel(s: string): string {
-  return s.replace(/^Stage\s+[0-9A-Z]+\s*[—-]\s*/i, "").trim();
-}
-
 export function buildExecSummaryDocument(
   session: ExecSummarySession,
   intel: ExecSummaryIntel = {},
@@ -143,6 +139,7 @@ export function buildExecSummaryDocument(
 
   const lead = buildLeadParagraph(
     {
+      fact: extractSituationFact(row, intel),
       businessIssue,
       smp: winning.smp,
       reason: winning.alignment,
@@ -189,14 +186,7 @@ export function buildExecSummaryDocument(
     return t ? p(t) : missing();
   })();
 
-  // 05 — Frameworks: the strategic methods applied, named without any
-  // description of the platform's own stages.
-  const frameworksHtml = bullets([
-    ...frameworks.stages.map(methodLabel).filter(Boolean).map((s) => ({ head: s })),
-    ...frameworks.engines.map((e) => ({ head: `Lateral engine — ${e}`, tag: "LOC" })),
-  ]);
-
-  // 06 — The Propositions Field
+  // 05 — The Propositions Field
   const fieldHtml = field.length
     ? bullets(
         field.map((f) => {
@@ -215,9 +205,9 @@ export function buildExecSummaryDocument(
       )
     : missing();
 
-  // 07 — Winning Proposition, with the proof highlight: one strongest
+  // 06 — Winning Proposition, with the proof highlight: one strongest
   // dimension, the live composite and the distinctive asset. Deliberately
-  // not a second copy of the Section 09 table.
+  // not a second copy of the Section 08 table.
   const owns = dedupe.take(winning.owns, 2);
   const alignment = dedupe.take(winning.alignment, 2);
   const proofBits: string[] = [];
@@ -235,7 +225,7 @@ export function buildExecSummaryDocument(
       )}</div></div>${proofHtml}${owns ? p(owns) : ""}${alignment ? p(alignment) : ""}`
     : missing();
 
-  // 08 — Verification
+  // 07 — Verification
   const verdict = dedupe.take(verification.verdict, 2);
   const testItems = verification.tests
     .map((t) => ({
@@ -250,7 +240,7 @@ export function buildExecSummaryDocument(
       ? `${verdict ? p(verdict) : ""}${testItems.length ? bullets(testItems) : ""}`
       : missing();
 
-  // 09 — Scoring
+  // 08 — Scoring
   const scoringHtml = scoring.rows.length
     ? `<table class="es-table">${scoring.rows
         .map((r) => {
@@ -267,7 +257,7 @@ export function buildExecSummaryDocument(
     : missing();
   const scoringTitle = `${NUMBER_WORD[scoring.rows.length] ?? String(scoring.rows.length)}-dimension proposition scoring (Stage 10)`;
 
-  // 10 — Brand World Opportunity
+  // 09 — Brand World Opportunity
   const bwLine = brandWorld.line && dedupe.fresh(brandWorld.line) ? brandWorld.line : null;
   const bwExplain = dedupe.take(brandWorld.explanation, 1);
   const brandWorldHtml =
@@ -275,7 +265,7 @@ export function buildExecSummaryDocument(
       ? `${bwLine ? `<blockquote>${escapeHtml(bwLine)}</blockquote>` : ""}${bwExplain ? p(bwExplain) : ""}`
       : missing();
 
-  // 11 — Recommendations, including channel strategy
+  // 10 — Recommendations, including channel strategy
   const condition = dedupe.take(recs.condition, 2);
   const nextStep = dedupe.take(recs.nextStep, 2);
   const recsHtml = `${condition ? p(`Condition on activation: ${condition}`) : ""}${
@@ -296,15 +286,15 @@ export function buildExecSummaryDocument(
     section("SECTION 02", "The Business Issue", issueHtml) +
     section("SECTION 03", "Research", researchHtml) +
     section("SECTION 04", "Findings", findingsHtml) +
-    section("SECTION 05", "Frameworks", frameworksHtml) +
-    section("SECTION 06", "The Propositions Field", fieldHtml) +
-    section("SECTION 07", "Winning Proposition", winningHtml) +
-    section("SECTION 08", "Verification", verificationHtml) +
-    section("SECTION 09", scoringTitle, scoringHtml, "es-open") +
-    section("SECTION 10", "Brand World Opportunity", brandWorldHtml) +
-    section("SECTION 11", "Recommendations, Including Channel Strategy", recsHtml, "es-open") +
+    section("SECTION 05", "The Propositions Field", fieldHtml) +
+    section("SECTION 06", "Winning Proposition", winningHtml) +
+    section("SECTION 07", "Verification", verificationHtml) +
+    section("SECTION 08", scoringTitle, scoringHtml, "es-open") +
+    section("SECTION 09", "Brand World Opportunity", brandWorldHtml) +
+    section("SECTION 10", "Recommendations, Including Channel Strategy", recsHtml, "es-open") +
     `</div>` +
     `<div class="footer">Brand Grenade Strategy Intelligence System — Confidential. This summary was assembled from stored session data only; no content was generated for it. Full reasoning sits in the Consulting Delivery document and the Complete Pipeline Record.</div>`;
+
 
   const title = `Strategy Executive Summary — ${brand}`;
   return `<!doctype html>

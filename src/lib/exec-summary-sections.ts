@@ -817,12 +817,63 @@ function stripQuotes(s: string): string {
 }
 
 /**
- * Opening thesis. Each sentence used here is claimed on the deduper so no
+ * Plain statement of what actually happened — a concrete, factual sentence
+ * carrying a figure, percentage or date, drawn from stored source material.
+ * This is what orients a cold reader before any interpretation.
+ */
+export function extractSituationFact(
+  session: ExecSessionRow,
+  intel: { executiveSummary?: string | null; tension?: string | null } = {},
+): string | null {
+  const pools = [
+    str(session, "stage_1_output"),
+    clean(intel.executiveSummary ?? ""),
+    str(session, "brief_text"),
+  ];
+  const HARD = /%|\bper cent\b|\bmillion\b|\bbillion\b|\$[\d]/i;
+  // A measured movement — "fallen from 74% to 39%" — orients a cold reader
+  // faster than a scene-setting sentence or a static datapoint.
+  const MOVEMENT = /(fallen|fell|collaps|dropped|declined|halved|rose|grew)[^.]{0,80}\d/i;
+  const stripTags = (t: string) =>
+    t
+      .replace(/\[source:[^\]]*\]/gi, "")
+      .replace(/\(role:[^)]*\)/gi, "")
+      .replace(/(\d)\.(\d)/g, "$1\u2024$2") // protect decimals from sentence splitting
+      .replace(/\s{2,}/g, " ")
+      .trim();
+  const cands: string[] = [];
+  for (const pool of pools) {
+    if (!pool) continue;
+    for (const line of plainText(pool).split("\n")) {
+      for (const raw of sentences(stripTags(line))) {
+        const t = raw.trim();
+        if (t.length < 40 || t.length > 320) continue;
+        if (!HARD.test(t)) continue;
+        if (/^(section|stage|test)\b/i.test(t)) continue;
+        // Objectives and targets describe intent, not the situation.
+        if (/\b(recover|target|goal|objective|kpi|aim to|must reach|within \d+ months)\b/i.test(t)) continue;
+        cands.push(t.replace(/\u2024/g, "."));
+      }
+    }
+  }
+  if (!cands.length) return null;
+  const FROM_TO = /from\s+[\d.]+\s*%[^.]{0,40}\bto\b\s+[\d.]+\s*%/i;
+  return (
+    cands.find((c) => FROM_TO.test(c) && MOVEMENT.test(c)) ??
+    cands.find((c) => MOVEMENT.test(c)) ??
+    cands[0]
+  );
+}
+
+/**
+ * Opening thesis. Opens on the plain factual situation, then the strategic
+ * reading of it. Each sentence used here is claimed on the deduper so no
  * section downstream may repeat it, and any sentence that merely restates the
  * proposition line is dropped rather than smoothed over.
  */
 export function buildLeadParagraph(
   args: {
+    fact?: string | null;
     businessIssue: string | null;
     smp: string | null;
     reason: string | null;
@@ -834,8 +885,13 @@ export function buildLeadParagraph(
   const smp = args.smp ? stripQuotes(clean(args.smp)) : null;
   const smpKey = smp ? matchKey(smp) : "";
 
+  // Plain fact first — orientation before interpretation.
+  const fact = args.fact ? sentences(args.fact)[0] : null;
+  if (fact && dedupe.fresh(fact)) parts.push(fact);
+
   const issue = args.businessIssue ? sentences(args.businessIssue)[0] : null;
   if (issue && dedupe.fresh(issue)) parts.push(issue);
+
 
   if (smp) {
     parts.push(`The recommendation is “${smp}”.`);
@@ -845,7 +901,7 @@ export function buildLeadParagraph(
   const echoesSmp = (s: string) => !!smpKey && smpKey.length > 8 && matchKey(s).includes(smpKey);
 
   for (const source of [args.reason, args.verdict]) {
-    if (parts.length >= 4) break;
+    if (parts.length >= 5) break;
     const first = source ? sentences(source)[0] : null;
     if (!first || echoesSmp(first)) continue;
     if (!dedupe.fresh(first)) continue;
