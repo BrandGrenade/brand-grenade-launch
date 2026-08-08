@@ -833,17 +833,28 @@ export function extractSituationFact(
   const HARD = /%|\bper cent\b|\bmillion\b|\bbillion\b|\$[\d]/i;
   // A measured movement — "fallen from 74% to 39%" — orients a cold reader
   // faster than a scene-setting sentence or a static datapoint.
-  const MOVEMENT = /(fallen|fell|collapsed?|dropped|declined|down|rose|grew)[^.]{0,60}\d/i;
+  const MOVEMENT = /(fallen|fell|collaps|dropped|declined|halved|rose|grew)[^.]{0,80}\d/i;
+  const stripTags = (t: string) =>
+    t
+      .replace(/\[source:[^\]]*\]/gi, "")
+      .replace(/\(role:[^)]*\)/gi, "")
+      .replace(/\s{2,}/g, " ")
+      .trim();
   const cands: string[] = [];
   for (const pool of pools) {
-    if (pool) cands.push(...statSentences(pool, 12));
+    if (!pool) continue;
+    for (const line of plainText(pool).split("\n")) {
+      for (const raw of sentences(stripTags(line))) {
+        const t = raw.trim();
+        if (t.length < 40 || t.length > 320) continue;
+        if (!HARD.test(t)) continue;
+        if (/^(section|stage|test)\b/i.test(t)) continue;
+        cands.push(t);
+      }
+    }
   }
   if (!cands.length) return null;
-  return (
-    cands.find((c) => MOVEMENT.test(c) && HARD.test(c)) ??
-    cands.find((c) => HARD.test(c)) ??
-    cands[0]
-  );
+  return cands.find((c) => MOVEMENT.test(c)) ?? cands[0];
 }
 
 /**
