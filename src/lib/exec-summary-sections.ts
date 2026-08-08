@@ -600,14 +600,9 @@ export function extractScoring(session: ExecSessionRow): ScoringResult {
     if (comp) composite = comp[1].replace(/\s+/g, "");
   }
 
-  for (const raw of lines) {
-    const c = clean(raw);
-    const w = c.match(/weighted\s+([\d.]+\s*\/\s*\d+)/i);
-    if (w && (!key || matchKey(c).includes(key))) {
-      weighted = w[1].replace(/\s+/g, "");
-      break;
-    }
-  }
+  // The weighted /110 composite is a deprecated framework. It is deliberately
+  // never surfaced in this document, even though the string is still stored.
+  weighted = null;
   return { rows, composite, weighted };
 }
 
