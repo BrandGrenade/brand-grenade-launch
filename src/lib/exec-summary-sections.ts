@@ -174,6 +174,27 @@ function plainText(text: string): string {
     .join("\n");
 }
 
+/**
+ * Find the first heading matching `pattern` and return the first paragraph
+ * that appears after it, skipping any duplicate heading lines. This is more
+ * robust than a single block scan when stage outputs repeat headings (e.g.
+ * "# What This Category Believes" immediately followed by the same H2).
+ */
+function paragraphAfterHeading(text: string, pattern: RegExp): string | null {
+  const lines = plainText(text)
+    .split("\n")
+    .map((l) => l.trim())
+    .filter((l) => l.length > 0);
+
+  for (let i = 0; i < lines.length; i++) {
+    if (!pattern.test(lines[i])) continue;
+    let j = i + 1;
+    while (j < lines.length && pattern.test(lines[j])) j++;
+    if (j < lines.length) return lines[j];
+  }
+  return null;
+}
+
 /** Evidence sentences carrying a real figure — the countable proof base. */
 function statSentences(text: string, limit: number): string[] {
   const out: string[] = [];
