@@ -240,15 +240,18 @@ export function extractFindings(
   intel: { executiveSummary?: string | null } = {},
 ): string | null {
   const fromIntel = firstSentencesOf(intel.executiveSummary ?? null, 3);
+  console.log("[DEBUG] fromIntel", fromIntel?.slice(0, 100));
   if (fromIntel) return fromIntel;
 
   const s1 = str(session, "stage_1_output");
   const shift = headingBlock(s1, /Human\s*\/?\s*Cultural Shift/i).join(" ");
   const fromShift = firstSentencesOf(shift, 3);
+  console.log("[DEBUG] shift length", shift.length, "fromShift", fromShift?.slice(0, 100));
   if (fromShift) return fromShift;
 
   const challenged = headingBlock(s1, /Category Assumption Challenged/i).join(" ");
   const fromChallenged = firstSentencesOf(challenged, 3);
+  console.log("[DEBUG] challenged length", challenged.length, "fromChallenged", fromChallenged?.slice(0, 100));
   if (fromChallenged) return fromChallenged;
 
   // Template-level fallbacks: synthesised early-stage outputs carry the
