@@ -6,8 +6,6 @@
 // the extractor returns null/empty and the document renders the explicit
 // "not available for this session" line for that item.
 
-console.log("[DEBUG] exec-summary-sections.ts loaded v2");
-
 import { STAGE_MANIFEST } from "./pipeline-integrity";
 
 export type ExecSessionRow = Record<string, unknown>;
