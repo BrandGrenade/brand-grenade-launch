@@ -850,6 +850,8 @@ export function extractSituationFact(
         if (t.length < 40 || t.length > 320) continue;
         if (!HARD.test(t)) continue;
         if (/^(section|stage|test)\b/i.test(t)) continue;
+        // Objectives and targets describe intent, not the situation.
+        if (/\b(recover|target|goal|objective|kpi|aim to|must reach|within \d+ months)\b/i.test(t)) continue;
         cands.push(t.replace(/\u2024/g, "."));
       }
     }
@@ -857,7 +859,7 @@ export function extractSituationFact(
   if (!cands.length) return null;
   const FROM_TO = /from\s+[\d.]+\s*%[^.]{0,40}\bto\b\s+[\d.]+\s*%/i;
   return (
-    cands.find((c) => FROM_TO.test(c)) ??
+    cands.find((c) => FROM_TO.test(c) && MOVEMENT.test(c)) ??
     cands.find((c) => MOVEMENT.test(c)) ??
     cands[0]
   );
