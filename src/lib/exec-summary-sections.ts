@@ -239,12 +239,34 @@ export function extractFindings(
 ): string | null {
   const fromIntel = firstSentencesOf(intel.executiveSummary ?? null, 3);
   if (fromIntel) return fromIntel;
+
   const s1 = str(session, "stage_1_output");
   const shift = headingBlock(s1, /Human\s*\/?\s*Cultural Shift/i).join(" ");
   const fromShift = firstSentencesOf(shift, 3);
   if (fromShift) return fromShift;
+
   const challenged = headingBlock(s1, /Category Assumption Challenged/i).join(" ");
-  return firstSentencesOf(challenged, 3);
+  const fromChallenged = firstSentencesOf(challenged, 3);
+  if (fromChallenged) return fromChallenged;
+
+  // Template-level fallbacks: synthesised early-stage outputs carry the
+  // strategic findings when the legacy stage-1 headings are absent.
+  const s2 = str(session, "stage_2_output");
+  const s2Block = headingBlock(s2, /What This Category Believes|Category Believes|Category Truth/i).join(" ");
+  const fromS2 = firstSentencesOf(s2Block || s2, 3);
+  if (fromS2) return fromS2;
+
+  const s3 = str(session, "stage_3_output");
+  const s3Block = headingBlock(s3, /Ledger of Proof|Proof|Strategic Mechanism/i).join(" ");
+  const fromS3 = firstSentencesOf(s3Block || s3, 3);
+  if (fromS3) return fromS3;
+
+  const s4 = str(session, "stage_4_output");
+  const s4Block = headingBlock(s4, /Open Ledger|Strategic Territory|Territory/i).join(" ");
+  const fromS4 = firstSentencesOf(s4Block || s4, 3);
+  if (fromS4) return fromS4;
+
+  return firstSentencesOf(s1, 3);
 }
 
 /* ── 05 — Frameworks ────────────────────────────────────────────── */
