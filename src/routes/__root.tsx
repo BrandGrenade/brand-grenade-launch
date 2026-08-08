@@ -134,6 +134,7 @@ function RootComponent() {
         <Outlet />
         <AppFooter />
         <MobileGate />
+        <Toaster />
       </AuthProvider>
     </QueryClientProvider>
   );
