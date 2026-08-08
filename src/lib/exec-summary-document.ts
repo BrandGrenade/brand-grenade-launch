@@ -2,13 +2,22 @@
 //
 // No AI, no new reasoning. Every line is assembled from data already stored
 // on the session (and, where one exists, the Intelligence Lab run for the
-// same brand). Mixed format by design: visual process block, bullet audit
-// trails for the countable sections, real prose for the argued ones.
+// same brand). Mixed format by design: stat row, bullet audit trails for the
+// countable sections, real prose for the argued ones.
+//
+// Structure is the original eleven sections, channel strategy included.
+// The only corrections layered on top are the ones actually requested:
+//   • zero repetition, enforced by a single shared deduper
+//   • no explanation of Brand Grenade's own phases or stages
+//   • distinctive asset read from stage_22_distinctive_assets
+//   • proof stated as one short highlight, not a second scoring table
+//   • pipeline stage count hard-set to 28
+//   • the deprecated /110 weighted composite never rendered
 
 import { baseStyles, escapeHtml, sanitise } from "./phase1-document-builder";
 import { NOT_AVAILABLE } from "./exec-summary-extract";
 import {
-  buildPrecis,
+  buildLeadParagraph,
   createDeduper,
   extractBusinessIssue,
   extractBrandWorldSection,
@@ -22,14 +31,8 @@ import {
   extractScoring,
   extractVerification,
   extractWinning,
-  splitSentences,
   type ExecSessionRow,
 } from "./exec-summary-sections";
-
-/** First whole sentence of a passage — the shortlist is one line per item. */
-function firstLine(text: string): string {
-  return splitSentences(text)[0] ?? text;
-}
 
 export type ExecSummarySession = {
   brand_name?: string | null;
@@ -49,11 +52,6 @@ const ACCENT = "#C81E1E";
 function extraStyles(): string {
   return `
 .es-lead { font-size: 12pt; line-height: 1.55; color: var(--ash); border-left: 2pt solid ${ACCENT}; padding: 2pt 0 2pt 14pt; margin: 0 0 26pt; }
-.es-precis { margin: 0 0 30pt; border-top: 1pt solid ${ACCENT}; border-bottom: 0.5pt solid var(--rule); }
-.es-precis-row { display: flex; gap: 14pt; padding: 9pt 0; border-bottom: 0.5pt solid var(--rule); }
-.es-precis-row:last-child { border-bottom: none; }
-.es-precis-row .lab { flex: 0 0 92pt; font-size: 8.5pt; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: ${ACCENT}; padding-top: 2pt; }
-.es-precis-row .val { flex: 1; font-size: 11pt; line-height: 1.5; color: var(--ash); }
 .es-open { page-break-inside: auto; }
 .es-open .section { page-break-inside: auto; }
 .footer { page-break-before: avoid; }
@@ -69,6 +67,7 @@ function extraStyles(): string {
 .es-bullets .sub { display: block; font-size: 9.5pt; color: var(--smoke); margin-top: 2pt; }
 .es-tag { display: inline-block; font-size: 8pt; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: ${ACCENT}; margin-right: 6pt; }
 .es-tag.muted { color: var(--smoke); }
+.es-proof { font-size: 10pt; color: var(--ash); border-left: 2pt solid ${ACCENT}; padding: 2pt 0 2pt 12pt; margin: 0 0 12pt; }
 table.es-table { width: 100%; border-collapse: collapse; font-size: 10pt; }
 table.es-table th, table.es-table td { text-align: left; vertical-align: top; padding: 7pt 10pt; border-bottom: 0.5pt solid var(--rule); }
 table.es-table th { width: 32%; font-weight: 600; color: var(--ash); background: var(--surface); }
@@ -106,6 +105,11 @@ const NUMBER_WORD: Record<number, string> = {
   7: "Seven", 8: "Eight", 9: "Nine", 10: "Ten", 11: "Eleven", 12: "Twelve",
 };
 
+/** Strips the platform's own stage numbering from a framework label. */
+function methodLabel(s: string): string {
+  return s.replace(/^Stage\s+[0-9A-Z]+\s*[—-]\s*/i, "").trim();
+}
+
 export function buildExecSummaryDocument(
   session: ExecSummarySession,
   intel: ExecSummaryIntel = {},
@@ -134,13 +138,16 @@ export function buildExecSummaryDocument(
   );
 
   // Single source of truth for "has this already been said?". Every section
-  // below draws through it, so no sentence, quote or figure can appear twice.
+  // below draws through it, so no sentence, quote or figure appears twice.
   const dedupe = createDeduper();
 
-  // The Minto précis speaks first, so it claims the strongest lines and every
-  // later section renders only what the précis did not already say.
-  const precis = buildPrecis(
-    { businessIssue, findings, smp: winning.smp, brand },
+  const lead = buildLeadParagraph(
+    {
+      businessIssue,
+      smp: winning.smp,
+      reason: winning.alignment,
+      verdict: verification.verdict,
+    },
     dedupe,
   );
 
@@ -153,18 +160,9 @@ export function buildExecSummaryDocument(
   <div class="cover-confidential">CONFIDENTIAL</div>
 </div>`;
 
-  const precisRow = (label: string, value: string | null) =>
-    value ? `<div class="es-precis-row"><span class="lab">${escapeHtml(label)}</span><span class="val">${escapeHtml(value)}</span></div>` : "";
+  const leadBlock = lead ? `<div class="es-lead">${escapeHtml(lead)}</div>` : "";
 
-  const precisBlock =
-    precis.situation || precis.complication || precis.answer
-      ? `<div class="es-precis">${precisRow("Situation", precis.situation)}${precisRow(
-          "Complication",
-          precis.complication,
-        )}${precisRow("Question", precis.question)}${precisRow("Answer", precis.answer)}</div>`
-      : "";
-
-  // 01 — Scale of the work: numbers only, no process narration.
+  // 01 — Scale of the work: numbers only, no narration of platform phases.
   const statsHtml = `<div class="es-stats">${process.stats
     .map(
       (s) =>
@@ -191,48 +189,66 @@ export function buildExecSummaryDocument(
     return t ? p(t) : missing();
   })();
 
-  // 05 — The Shortlist: 3–5 alternatives considered and set aside, one line
-  // each. The winner has its own section and is never repeated here.
-  const setAside = field.filter((f) => !f.selected).slice(0, 5);
-  const shortlistHtml = setAside.length
+  // 05 — Frameworks: the strategic methods applied, named without any
+  // description of the platform's own stages.
+  const frameworksHtml = bullets([
+    ...frameworks.stages.map(methodLabel).filter(Boolean).map((s) => ({ head: s })),
+    ...frameworks.engines.map((e) => ({ head: `Lateral engine — ${e}`, tag: "LOC" })),
+  ]);
+
+  // 06 — The Propositions Field
+  const fieldHtml = field.length
     ? bullets(
-        setAside.map((f) => {
+        field.map((f) => {
           const reason = f.reason && dedupe.fresh(f.reason) ? f.reason : null;
           return {
             head: f.proposition,
-            sub: reason ? firstLine(reason) : null,
-            tag: "Considered",
-            muted: true,
+            sub: f.selected
+              ? `${f.origin}. Carried forward as the recommendation.`
+              : reason
+                ? `${f.origin}. Not the lead: ${reason}`
+                : `${f.origin}. Considered, not carried forward.`,
+            tag: f.selected ? "Selected" : "Considered",
+            muted: !f.selected,
           };
         }),
       )
     : missing();
 
-  // 06 — The Recommendation
+  // 07 — Winning Proposition, with the proof highlight: one strongest
+  // dimension, the live composite and the distinctive asset. Deliberately
+  // not a second copy of the Section 09 table.
   const owns = dedupe.take(winning.owns, 2);
+  const alignment = dedupe.take(winning.alignment, 2);
+  const proofBits: string[] = [];
+  if (proof.strongest) {
+    proofBits.push(`Strongest dimension — ${proof.strongest.dimension} ${proof.strongest.score}`);
+  }
+  if (proof.composite) proofBits.push(`Composite score — ${proof.composite}`);
+  if (proof.asset) proofBits.push(`Distinctive asset in play — ${proof.asset}`);
+  const proofHtml = proofBits.length
+    ? `<div class="es-proof">${escapeHtml(proofBits.join(". "))}.</div>`
+    : "";
   const winningHtml = winning.smp
     ? `<div class="proposition"><div class="label">Strategic Master Proposition</div><div class="stmt">${escapeHtml(
         winning.smp,
-      )}</div></div>${owns ? p(owns) : ""}`
+      )}</div></div>${proofHtml}${owns ? p(owns) : ""}${alignment ? p(alignment) : ""}`
     : missing();
 
-  // 07 — Why This Wins: two or three lines, no test-by-test breakdown.
-  const whyLines = [dedupe.take(winning.alignment, 1), dedupe.take(verification.verdict, 1)]
-    .filter((x): x is string => !!x)
-    .slice(0, 2);
-  const whyHtml = whyLines.length ? whyLines.map((l) => p(l)).join("") : missing();
-
-  // 08 — The Proof, At A Glance: one highlight only. Section 09 carries the
-  // full table, so nothing here restates a row's reasoning.
-  const proofItems: Array<{ head: string; sub?: string | null }> = [];
-  if (proof.strongest) {
-    proofItems.push({
-      head: `Strongest dimension — ${proof.strongest.dimension} ${proof.strongest.score}`,
-    });
-  }
-  if (proof.composite) proofItems.push({ head: `Composite score — ${proof.composite}` });
-  if (proof.asset) proofItems.push({ head: `Distinctive asset in play — ${proof.asset}` });
-  const proofHtml = proofItems.length ? bullets(proofItems) : missing();
+  // 08 — Verification
+  const verdict = dedupe.take(verification.verdict, 2);
+  const testItems = verification.tests
+    .map((t) => ({
+      head: t.name,
+      sub: t.note && dedupe.fresh(t.note) ? t.note : null,
+      tag: t.verdict ?? undefined,
+      muted: !!t.verdict && !/HOLDS/i.test(t.verdict),
+    }))
+    .filter((t) => !!t.sub || !!t.tag);
+  const verificationHtml =
+    verdict || testItems.length
+      ? `${verdict ? p(verdict) : ""}${testItems.length ? bullets(testItems) : ""}`
+      : missing();
 
   // 09 — Scoring
   const scoringHtml = scoring.rows.length
@@ -251,31 +267,42 @@ export function buildExecSummaryDocument(
     : missing();
   const scoringTitle = `${NUMBER_WORD[scoring.rows.length] ?? String(scoring.rows.length)}-dimension proposition scoring (Stage 10)`;
 
-  // Coda — the brand world it builds, plus the single operating condition.
+  // 10 — Brand World Opportunity
   const bwLine = brandWorld.line && dedupe.fresh(brandWorld.line) ? brandWorld.line : null;
   const bwExplain = dedupe.take(brandWorld.explanation, 1);
-  const condition = dedupe.take(recs.condition, 1);
-  const nextStep = dedupe.take(recs.nextStep, 1);
-  const codaHtml = `${bwLine ? `<blockquote>${escapeHtml(bwLine)}</blockquote>` : ""}${
-    bwExplain ? p(bwExplain) : ""
-  }${condition ? p(`Condition on activation: ${condition}`) : ""}${
+  const brandWorldHtml =
+    bwLine || bwExplain
+      ? `${bwLine ? `<blockquote>${escapeHtml(bwLine)}</blockquote>` : ""}${bwExplain ? p(bwExplain) : ""}`
+      : missing();
+
+  // 11 — Recommendations, including channel strategy
+  const condition = dedupe.take(recs.condition, 2);
+  const nextStep = dedupe.take(recs.nextStep, 2);
+  const recsHtml = `${condition ? p(`Condition on activation: ${condition}`) : ""}${
     nextStep ? p(`Next step: ${nextStep}`) : ""
-  }`;
+  }${
+    recs.channels.length
+      ? `<div class="part-label" style="margin-top:10pt">CHANNELS THIS STRATEGY ACTIVATES THROUGH</div>${bullets(
+          recs.channels.map((c) => ({ head: c })),
+        )}`
+      : ""
+  }${!condition && !nextStep && !recs.channels.length ? missing() : ""}`;
 
   const body =
     cover +
-    precisBlock +
+    leadBlock +
     `<div class="es-open">` +
     section("SECTION 01", "Scale of the Work", statsHtml) +
     section("SECTION 02", "The Business Issue", issueHtml) +
     section("SECTION 03", "Research", researchHtml) +
     section("SECTION 04", "Findings", findingsHtml) +
-    section("SECTION 05", "The Shortlist", shortlistHtml) +
-    section("SECTION 06", "The Recommendation", winningHtml) +
-    section("SECTION 07", "Why This Wins", whyHtml) +
-    section("SECTION 08", "The Proof, At A Glance", proofHtml) +
+    section("SECTION 05", "Frameworks", frameworksHtml) +
+    section("SECTION 06", "The Propositions Field", fieldHtml) +
+    section("SECTION 07", "Winning Proposition", winningHtml) +
+    section("SECTION 08", "Verification", verificationHtml) +
     section("SECTION 09", scoringTitle, scoringHtml, "es-open") +
-    (codaHtml ? section("", "The Brand World It Builds", codaHtml, "es-open") : "") +
+    section("SECTION 10", "Brand World Opportunity", brandWorldHtml) +
+    section("SECTION 11", "Recommendations, Including Channel Strategy", recsHtml, "es-open") +
     `</div>` +
     `<div class="footer">Brand Grenade Strategy Intelligence System — Confidential. This summary was assembled from stored session data only; no content was generated for it. Full reasoning sits in the Consulting Delivery document and the Complete Pipeline Record.</div>`;
 
