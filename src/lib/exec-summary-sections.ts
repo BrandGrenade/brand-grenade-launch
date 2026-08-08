@@ -817,12 +817,36 @@ function stripQuotes(s: string): string {
 }
 
 /**
- * Opening thesis. Each sentence used here is claimed on the deduper so no
+ * Plain statement of what actually happened — a concrete, factual sentence
+ * carrying a figure, percentage or date, drawn from stored source material.
+ * This is what orients a cold reader before any interpretation.
+ */
+export function extractSituationFact(
+  session: ExecSessionRow,
+  intel: { executiveSummary?: string | null; tension?: string | null } = {},
+): string | null {
+  const pools = [
+    str(session, "stage_1_output"),
+    clean(intel.executiveSummary ?? ""),
+    str(session, "brief_text"),
+  ];
+  for (const pool of pools) {
+    if (!pool) continue;
+    const hit = statSentences(pool, 1)[0];
+    if (hit) return hit;
+  }
+  return null;
+}
+
+/**
+ * Opening thesis. Opens on the plain factual situation, then the strategic
+ * reading of it. Each sentence used here is claimed on the deduper so no
  * section downstream may repeat it, and any sentence that merely restates the
  * proposition line is dropped rather than smoothed over.
  */
 export function buildLeadParagraph(
   args: {
+    fact?: string | null;
     businessIssue: string | null;
     smp: string | null;
     reason: string | null;
@@ -834,8 +858,13 @@ export function buildLeadParagraph(
   const smp = args.smp ? stripQuotes(clean(args.smp)) : null;
   const smpKey = smp ? matchKey(smp) : "";
 
+  // Plain fact first — orientation before interpretation.
+  const fact = args.fact ? sentences(args.fact)[0] : null;
+  if (fact && dedupe.fresh(fact)) parts.push(fact);
+
   const issue = args.businessIssue ? sentences(args.businessIssue)[0] : null;
   if (issue && dedupe.fresh(issue)) parts.push(issue);
+
 
   if (smp) {
     parts.push(`The recommendation is “${smp}”.`);
