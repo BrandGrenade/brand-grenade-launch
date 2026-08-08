@@ -47,7 +47,19 @@ export function NewRunGateButton({ variant = "topnav", label = "Strategy Pipelin
   const [dialogOpen, setDialogOpen] = useState(false);
   const [reason, setReason] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [overridden, setOverridden] = useState(false);
   const fetchedAtRef = useRef(0);
+
+  // An override is valid for the browser session: once logged, the gate must
+  // stop blocking, otherwise the user gets bounced back to the same wall.
+  useEffect(() => {
+    try {
+      if (sessionStorage.getItem(OVERRIDE_KEY)) setOverridden(true);
+    } catch {
+      /* storage unavailable */
+    }
+  }, []);
 
   const refresh = useMemo(
     () => async () => {
@@ -103,12 +115,24 @@ export function NewRunGateButton({ variant = "topnav", label = "Strategy Pipelin
     return () => document.removeEventListener("visibilitychange", onVisibility);
   }, [refresh]);
 
+  const proceed = () => {
+    setDialogOpen(false);
+    // Radix leaves `pointer-events: none` on <body> until its close animation
+    // settles; navigating in the same tick can land on a page that ignores
+    // every click. Release the lock explicitly, then navigate.
+    setTimeout(() => {
+      document.body.style.pointerEvents = "";
+      void navigate({ to: "/brief" });
+    }, 60);
+  };
+
   const submitOverride = async () => {
     if (reason.trim().length < 4) {
-      toast.error("Please provide a reason (min 4 characters).");
+      setError("Please provide a reason (min 4 characters).");
       return;
     }
     setSubmitting(true);
+    setError(null);
     try {
       const { data: sess } = await supabase.auth.getSession();
       const token = sess.session?.access_token;
@@ -117,16 +141,25 @@ export function NewRunGateButton({ variant = "topnav", label = "Strategy Pipelin
         data: { reason: reason.trim() },
         headers: { Authorization: `Bearer ${token}` },
       });
+      try {
+        sessionStorage.setItem(OVERRIDE_KEY, new Date().toISOString());
+      } catch {
+        /* storage unavailable */
+      }
+      setOverridden(true);
       toast.success("Override logged. Starting new run.");
-      setDialogOpen(false);
       setReason("");
-      void navigate({ to: "/brief" });
+      proceed();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Failed to log override");
+      const msg = e instanceof Error ? e.message : "Failed to log override";
+      console.error("[PipelineGate] override failed", e);
+      setError(`${msg} — the override was not recorded. You can continue without logging it.`);
+      toast.error(msg);
     } finally {
       setSubmitting(false);
     }
   };
+
 
   const isTopNav = variant === "topnav";
   const isLaunch = variant === "launch";
