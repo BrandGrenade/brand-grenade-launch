@@ -253,7 +253,9 @@ export function extractFindings(
   // strategic findings when the legacy stage-1 headings are absent.
   const s2 = str(session, "stage_2_output");
   const s2Block = headingBlock(s2, /What This Category Believes|Category Believes|Category Truth/i).join(" ");
+  console.log("[DEBUG] s2 length", s2.length, "s2Block length", s2Block.length, "s2Block first 100", s2Block.slice(0, 100));
   const fromS2 = firstSentencesOf(s2Block || s2, 3);
+  console.log("[DEBUG] fromS2", fromS2?.slice(0, 200));
   if (fromS2) return fromS2;
 
   const s3 = str(session, "stage_3_output");
