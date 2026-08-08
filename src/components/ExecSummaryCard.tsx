@@ -12,7 +12,7 @@ import { fetchExecSummaryIntel } from "@/lib/exec-summary-intel";
 
 /** Columns the summary needs that the Deliverables page does not already load. */
 const EXTRA_COLUMNS =
-  "brief_text, loc_engine_outputs, loc_status, loc_decision_packages, stage_22_distinctive_assets";
+  "brief_text, stage_2_output, stage_3_output, stage_4_output, loc_engine_outputs, loc_status, loc_decision_packages, stage_22_distinctive_assets";
 
 export function ExecSummaryCard({ session }: { session: ExecSummarySession }) {
   const [busy, setBusy] = useState(false);

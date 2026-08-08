@@ -174,6 +174,27 @@ function plainText(text: string): string {
     .join("\n");
 }
 
+/**
+ * Find the first heading matching `pattern` and return the first paragraph
+ * that appears after it, skipping any duplicate heading lines. This is more
+ * robust than a single block scan when stage outputs repeat headings (e.g.
+ * "# What This Category Believes" immediately followed by the same H2).
+ */
+function paragraphAfterHeading(text: string, pattern: RegExp): string | null {
+  const lines = plainText(text)
+    .split("\n")
+    .map((l) => l.trim())
+    .filter((l) => l.length > 0);
+
+  for (let i = 0; i < lines.length; i++) {
+    if (!pattern.test(lines[i])) continue;
+    let j = i + 1;
+    while (j < lines.length && pattern.test(lines[j])) j++;
+    if (j < lines.length) return lines[j];
+  }
+  return null;
+}
+
 /** Evidence sentences carrying a real figure — the countable proof base. */
 function statSentences(text: string, limit: number): string[] {
   const out: string[] = [];
@@ -239,12 +260,43 @@ export function extractFindings(
 ): string | null {
   const fromIntel = firstSentencesOf(intel.executiveSummary ?? null, 3);
   if (fromIntel) return fromIntel;
+
+  // Template-level priority: synthesised early-stage outputs carry the
+  // strategic findings. The Stage 2 category-belief paragraph is usually the
+  // cleanest statement of what the brand can actually exploit, so it is
+  // preferred before legacy Stage 1 headings.
+  const s2 = str(session, "stage_2_output");
+  const s2Para = paragraphAfterHeading(
+    s2,
+    /What This Category Believes|Category Believes|Category Truth/i,
+  );
+  const fromS2 = firstSentencesOf(s2Para, 3);
+  if (fromS2) return fromS2;
+
+  const s3 = str(session, "stage_3_output");
+  const s3Para = paragraphAfterHeading(
+    s3,
+    /Ledger of Proof|Proof|Strategic Mechanism|What This Brand Can Claim/i,
+  );
+  const fromS3 = firstSentencesOf(s3Para, 3);
+  if (fromS3) return fromS3;
+
+  const s4 = str(session, "stage_4_output");
+  const s4Para = paragraphAfterHeading(s4, /Open Ledger|Strategic Territory|Territory/i);
+  const fromS4 = firstSentencesOf(s4Para, 3);
+  if (fromS4) return fromS4;
+
+  // Legacy Stage 1 headings used by older sessions.
   const s1 = str(session, "stage_1_output");
   const shift = headingBlock(s1, /Human\s*\/?\s*Cultural Shift/i).join(" ");
   const fromShift = firstSentencesOf(shift, 3);
   if (fromShift) return fromShift;
+
   const challenged = headingBlock(s1, /Category Assumption Challenged/i).join(" ");
-  return firstSentencesOf(challenged, 3);
+  const fromChallenged = firstSentencesOf(challenged, 3);
+  if (fromChallenged) return fromChallenged;
+
+  return firstSentencesOf(s1, 3);
 }
 
 /* ── 05 — Frameworks ────────────────────────────────────────────── */
