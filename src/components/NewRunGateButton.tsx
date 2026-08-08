@@ -29,6 +29,8 @@ import {
   type PipelineGateStatus,
 } from "@/lib/pipeline-gate.functions";
 
+const OVERRIDE_KEY = "brand-grenade:pipeline-gate-override";
+
 export type NewRunGateButtonProps = {
   variant?: "topnav" | "empty" | "launch";
   label?: string;
