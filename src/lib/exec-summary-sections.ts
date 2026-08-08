@@ -874,7 +874,7 @@ export function buildLeadParagraph(
   const echoesSmp = (s: string) => !!smpKey && smpKey.length > 8 && matchKey(s).includes(smpKey);
 
   for (const source of [args.reason, args.verdict]) {
-    if (parts.length >= 4) break;
+    if (parts.length >= 5) break;
     const first = source ? sentences(source)[0] : null;
     if (!first || echoesSmp(first)) continue;
     if (!dedupe.fresh(first)) continue;
