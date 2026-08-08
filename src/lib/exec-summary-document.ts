@@ -296,15 +296,15 @@ export function buildExecSummaryDocument(
     section("SECTION 02", "The Business Issue", issueHtml) +
     section("SECTION 03", "Research", researchHtml) +
     section("SECTION 04", "Findings", findingsHtml) +
-    section("SECTION 05", "Frameworks", frameworksHtml) +
-    section("SECTION 06", "The Propositions Field", fieldHtml) +
-    section("SECTION 07", "Winning Proposition", winningHtml) +
-    section("SECTION 08", "Verification", verificationHtml) +
-    section("SECTION 09", scoringTitle, scoringHtml, "es-open") +
-    section("SECTION 10", "Brand World Opportunity", brandWorldHtml) +
-    section("SECTION 11", "Recommendations, Including Channel Strategy", recsHtml, "es-open") +
+    section("SECTION 05", "The Propositions Field", fieldHtml) +
+    section("SECTION 06", "Winning Proposition", winningHtml) +
+    section("SECTION 07", "Verification", verificationHtml) +
+    section("SECTION 08", scoringTitle, scoringHtml, "es-open") +
+    section("SECTION 09", "Brand World Opportunity", brandWorldHtml) +
+    section("SECTION 10", "Recommendations, Including Channel Strategy", recsHtml, "es-open") +
     `</div>` +
     `<div class="footer">Brand Grenade Strategy Intelligence System — Confidential. This summary was assembled from stored session data only; no content was generated for it. Full reasoning sits in the Consulting Delivery document and the Complete Pipeline Record.</div>`;
+
 
   const title = `Strategy Executive Summary — ${brand}`;
   return `<!doctype html>
