@@ -8,21 +8,28 @@
 import { baseStyles, escapeHtml, sanitise } from "./phase1-document-builder";
 import { NOT_AVAILABLE } from "./exec-summary-extract";
 import {
-  buildLeadParagraph,
+  buildPrecis,
   createDeduper,
   extractBusinessIssue,
   extractBrandWorldSection,
   extractFindings,
   extractFrameworks,
   extractProcess,
+  extractProof,
   extractPropositionsField,
   extractRecommendations,
   extractResearch,
   extractScoring,
   extractVerification,
   extractWinning,
+  splitSentences,
   type ExecSessionRow,
 } from "./exec-summary-sections";
+
+/** First whole sentence of a passage — the shortlist is one line per item. */
+function firstLine(text: string): string {
+  return splitSentences(text)[0] ?? text;
+}
 
 export type ExecSummarySession = {
   brand_name?: string | null;
