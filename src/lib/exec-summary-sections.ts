@@ -830,12 +830,18 @@ export function extractSituationFact(
     clean(intel.executiveSummary ?? ""),
     str(session, "brief_text"),
   ];
+  const HARD = /%|\bper cent\b|\bmillion\b|\bbillion\b|\$[\d]/i;
+  let fallback: string | null = null;
   for (const pool of pools) {
     if (!pool) continue;
-    const hit = statSentences(pool, 1)[0];
-    if (hit) return hit;
+    const cands = statSentences(pool, 12);
+    // Prefer a concrete measured fact over a scene-setting sentence whose
+    // only figure is a year.
+    const hard = cands.find((c) => HARD.test(c));
+    if (hard) return hard;
+    if (!fallback && cands.length) fallback = cands[0];
   }
-  return null;
+  return fallback;
 }
 
 /**
