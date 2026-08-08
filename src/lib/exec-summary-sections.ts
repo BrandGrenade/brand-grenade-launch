@@ -831,17 +831,19 @@ export function extractSituationFact(
     str(session, "brief_text"),
   ];
   const HARD = /%|\bper cent\b|\bmillion\b|\bbillion\b|\$[\d]/i;
-  let fallback: string | null = null;
+  // A measured movement — "fallen from 74% to 39%" — orients a cold reader
+  // faster than a scene-setting sentence or a static datapoint.
+  const MOVEMENT = /(fallen|fell|collapsed?|dropped|declined|down|rose|grew)[^.]{0,60}\d/i;
+  const cands: string[] = [];
   for (const pool of pools) {
-    if (!pool) continue;
-    const cands = statSentences(pool, 12);
-    // Prefer a concrete measured fact over a scene-setting sentence whose
-    // only figure is a year.
-    const hard = cands.find((c) => HARD.test(c));
-    if (hard) return hard;
-    if (!fallback && cands.length) fallback = cands[0];
+    if (pool) cands.push(...statSentences(pool, 12));
   }
-  return fallback;
+  if (!cands.length) return null;
+  return (
+    cands.find((c) => MOVEMENT.test(c) && HARD.test(c)) ??
+    cands.find((c) => HARD.test(c)) ??
+    cands[0]
+  );
 }
 
 /**
