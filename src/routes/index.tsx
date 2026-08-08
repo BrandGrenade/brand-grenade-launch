@@ -418,7 +418,8 @@ function Index() {
           </div>
 
           <h1 className="hero-title">
-            The intelligence system for brand strategy <em>and creative.</em>
+            The <em>world's first</em> end-to-end Brand Strategy & Creative
+            Intelligence System.
           </h1>
 
           <p className="hero-sub">
