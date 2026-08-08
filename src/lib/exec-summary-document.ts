@@ -8,21 +8,28 @@
 import { baseStyles, escapeHtml, sanitise } from "./phase1-document-builder";
 import { NOT_AVAILABLE } from "./exec-summary-extract";
 import {
-  buildLeadParagraph,
+  buildPrecis,
   createDeduper,
   extractBusinessIssue,
   extractBrandWorldSection,
   extractFindings,
   extractFrameworks,
   extractProcess,
+  extractProof,
   extractPropositionsField,
   extractRecommendations,
   extractResearch,
   extractScoring,
   extractVerification,
   extractWinning,
+  splitSentences,
   type ExecSessionRow,
 } from "./exec-summary-sections";
+
+/** First whole sentence of a passage — the shortlist is one line per item. */
+function firstLine(text: string): string {
+  return splitSentences(text)[0] ?? text;
+}
 
 export type ExecSummarySession = {
   brand_name?: string | null;
@@ -42,6 +49,11 @@ const ACCENT = "#C81E1E";
 function extraStyles(): string {
   return `
 .es-lead { font-size: 12pt; line-height: 1.55; color: var(--ash); border-left: 2pt solid ${ACCENT}; padding: 2pt 0 2pt 14pt; margin: 0 0 26pt; }
+.es-precis { margin: 0 0 30pt; border-top: 1pt solid ${ACCENT}; border-bottom: 0.5pt solid var(--rule); }
+.es-precis-row { display: flex; gap: 14pt; padding: 9pt 0; border-bottom: 0.5pt solid var(--rule); }
+.es-precis-row:last-child { border-bottom: none; }
+.es-precis-row .lab { flex: 0 0 92pt; font-size: 8.5pt; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: ${ACCENT}; padding-top: 2pt; }
+.es-precis-row .val { flex: 1; font-size: 11pt; line-height: 1.5; color: var(--ash); }
 .es-open { page-break-inside: auto; }
 .es-open .section { page-break-inside: auto; }
 .footer { page-break-before: avoid; }
@@ -111,6 +123,7 @@ export function buildExecSummaryDocument(
   const winning = extractWinning(row);
   const verification = extractVerification(row);
   const scoring = extractScoring(row);
+  const proof = extractProof(row, scoring);
   const brandWorld = extractBrandWorldSection(row);
   const recs = extractRecommendations(row);
 
@@ -124,13 +137,10 @@ export function buildExecSummaryDocument(
   // below draws through it, so no sentence, quote or figure can appear twice.
   const dedupe = createDeduper();
 
-  const lead = buildLeadParagraph(
-    {
-      businessIssue,
-      smp: winning.smp,
-      reason: winning.alignment,
-      verdict: verification.verdict,
-    },
+  // The Minto précis speaks first, so it claims the strongest lines and every
+  // later section renders only what the précis did not already say.
+  const precis = buildPrecis(
+    { businessIssue, findings, smp: winning.smp, brand },
     dedupe,
   );
 
@@ -143,7 +153,16 @@ export function buildExecSummaryDocument(
   <div class="cover-confidential">CONFIDENTIAL</div>
 </div>`;
 
-  const leadBlock = lead ? `<div class="es-lead">${escapeHtml(lead)}</div>` : "";
+  const precisRow = (label: string, value: string | null) =>
+    value ? `<div class="es-precis-row"><span class="lab">${escapeHtml(label)}</span><span class="val">${escapeHtml(value)}</span></div>` : "";
+
+  const precisBlock =
+    precis.situation || precis.complication || precis.answer
+      ? `<div class="es-precis">${precisRow("Situation", precis.situation)}${precisRow(
+          "Complication",
+          precis.complication,
+        )}${precisRow("Question", precis.question)}${precisRow("Answer", precis.answer)}</div>`
+      : "";
 
   // 01 — Scale of the work: numbers only, no process narration.
   const statsHtml = `<div class="es-stats">${process.stats
@@ -172,16 +191,16 @@ export function buildExecSummaryDocument(
     return t ? p(t) : missing();
   })();
 
-  // 05 — The Propositions Field: alternatives considered and set aside. The
-  // winner has its own home in the next section and is not repeated here.
-  const setAside = field.filter((f) => !f.selected);
-  const fieldHtml = setAside.length
+  // 05 — The Shortlist: 3–5 alternatives considered and set aside, one line
+  // each. The winner has its own section and is never repeated here.
+  const setAside = field.filter((f) => !f.selected).slice(0, 5);
+  const shortlistHtml = setAside.length
     ? bullets(
         setAside.map((f) => {
           const reason = f.reason && dedupe.fresh(f.reason) ? f.reason : null;
           return {
             head: f.proposition,
-            sub: reason ? `${f.origin}. Not the lead: ${reason}` : `${f.origin}. Considered, not carried forward.`,
+            sub: reason ? firstLine(reason) : null,
             tag: "Considered",
             muted: true,
           };
@@ -189,29 +208,33 @@ export function buildExecSummaryDocument(
       )
     : missing();
 
-  // 06 — Winning Proposition
-  const owns = dedupe.take(winning.owns);
-  const alignment = dedupe.take(winning.alignment);
+  // 06 — The Recommendation
+  const owns = dedupe.take(winning.owns, 2);
   const winningHtml = winning.smp
     ? `<div class="proposition"><div class="label">Strategic Master Proposition</div><div class="stmt">${escapeHtml(
         winning.smp,
-      )}</div></div>${owns ? p(owns) : ""}${alignment ? p(alignment) : ""}`
+      )}</div></div>${owns ? p(owns) : ""}`
     : missing();
 
-  // 07 — Verification
-  const verdictText = dedupe.take(verification.verdict);
-  const testItems = verification.tests.map((t) => ({
-    head: t.name,
-    sub: t.note && dedupe.fresh(t.note) ? t.note : null,
-    tag: t.verdict ?? undefined,
-    muted: !!t.verdict && !/HOLDS/i.test(t.verdict),
-  }));
-  const verificationHtml =
-    verdictText || testItems.length
-      ? `${verdictText ? p(verdictText) : ""}${bullets(testItems)}`
-      : missing();
+  // 07 — Why This Wins: two or three lines, no test-by-test breakdown.
+  const whyLines = [dedupe.take(winning.alignment, 1), dedupe.take(verification.verdict, 1)]
+    .filter((x): x is string => !!x)
+    .slice(0, 2);
+  const whyHtml = whyLines.length ? whyLines.map((l) => p(l)).join("") : missing();
 
-  // 08 — Scoring
+  // 08 — The Proof, At A Glance: one highlight only. Section 09 carries the
+  // full table, so nothing here restates a row's reasoning.
+  const proofItems: Array<{ head: string; sub?: string | null }> = [];
+  if (proof.strongest) {
+    proofItems.push({
+      head: `Strongest dimension — ${proof.strongest.dimension} ${proof.strongest.score}`,
+    });
+  }
+  if (proof.composite) proofItems.push({ head: `Composite score — ${proof.composite}` });
+  if (proof.asset) proofItems.push({ head: `Distinctive asset in play — ${proof.asset}` });
+  const proofHtml = proofItems.length ? bullets(proofItems) : missing();
+
+  // 09 — Scoring
   const scoringHtml = scoring.rows.length
     ? `<table class="es-table">${scoring.rows
         .map((r) => {
@@ -222,51 +245,37 @@ export function buildExecSummaryDocument(
         })
         .join("")}${
         scoring.composite
-          ? `<tr><th>Composite</th><td class="score">${escapeHtml(scoring.composite)}</td><td>${escapeHtml(
-              scoring.weighted ? `Weighted ranking composite ${scoring.weighted}.` : "",
-            )}</td></tr>`
+          ? `<tr><th>Composite</th><td class="score">${escapeHtml(scoring.composite)}</td><td></td></tr>`
           : ""
       }</table>`
     : missing();
   const scoringTitle = `${NUMBER_WORD[scoring.rows.length] ?? String(scoring.rows.length)}-dimension proposition scoring (Stage 10)`;
 
-  // 09 — Brand World Opportunity
+  // Coda — the brand world it builds, plus the single operating condition.
   const bwLine = brandWorld.line && dedupe.fresh(brandWorld.line) ? brandWorld.line : null;
-  const bwExplain = dedupe.take(brandWorld.explanation);
-  const brandWorldHtml = bwLine
-    ? `<blockquote>${escapeHtml(bwLine)}</blockquote>${bwExplain ? p(bwExplain) : ""}`
-    : bwExplain
-      ? p(bwExplain)
-      : missing();
-
-  // 10 — Recommendations, including channel strategy
-  const condition = dedupe.take(recs.condition);
-  const nextStep = dedupe.take(recs.nextStep);
-  const channels = recs.channels.filter((c) => dedupe.fresh(c));
-  const recsHtml = `${condition ? p(`Condition on activation: ${condition}`) : ""}${
+  const bwExplain = dedupe.take(brandWorld.explanation, 1);
+  const condition = dedupe.take(recs.condition, 1);
+  const nextStep = dedupe.take(recs.nextStep, 1);
+  const codaHtml = `${bwLine ? `<blockquote>${escapeHtml(bwLine)}</blockquote>` : ""}${
+    bwExplain ? p(bwExplain) : ""
+  }${condition ? p(`Condition on activation: ${condition}`) : ""}${
     nextStep ? p(`Next step: ${nextStep}`) : ""
-  }${
-    channels.length
-      ? `<div class="part-label" style="margin-top:10pt">CHANNELS THIS STRATEGY ACTIVATES THROUGH</div>${bullets(
-          channels.map((c) => ({ head: c })),
-        )}`
-      : ""
-  }${!condition && !nextStep && !channels.length ? missing() : ""}`;
+  }`;
 
   const body =
     cover +
-    leadBlock +
+    precisBlock +
     `<div class="es-open">` +
     section("SECTION 01", "Scale of the Work", statsHtml) +
     section("SECTION 02", "The Business Issue", issueHtml) +
     section("SECTION 03", "Research", researchHtml) +
     section("SECTION 04", "Findings", findingsHtml) +
-    section("SECTION 05", "The Propositions Field — Considered and Set Aside", fieldHtml) +
-    section("SECTION 06", "Winning Proposition", winningHtml) +
-    section("SECTION 07", "Verification", verificationHtml) +
-    section("SECTION 08", scoringTitle, scoringHtml) +
-    section("SECTION 09", "Brand World Opportunity", brandWorldHtml) +
-    section("SECTION 10", "Recommendations, Including Channel Strategy", recsHtml, "es-open") +
+    section("SECTION 05", "The Shortlist", shortlistHtml) +
+    section("SECTION 06", "The Recommendation", winningHtml) +
+    section("SECTION 07", "Why This Wins", whyHtml) +
+    section("SECTION 08", "The Proof, At A Glance", proofHtml) +
+    section("SECTION 09", scoringTitle, scoringHtml, "es-open") +
+    (codaHtml ? section("", "The Brand World It Builds", codaHtml, "es-open") : "") +
     `</div>` +
     `<div class="footer">Brand Grenade Strategy Intelligence System — Confidential. This summary was assembled from stored session data only; no content was generated for it. Full reasoning sits in the Consulting Delivery document and the Complete Pipeline Record.</div>`;
 

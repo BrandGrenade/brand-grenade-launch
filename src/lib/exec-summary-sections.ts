@@ -600,14 +600,9 @@ export function extractScoring(session: ExecSessionRow): ScoringResult {
     if (comp) composite = comp[1].replace(/\s+/g, "");
   }
 
-  for (const raw of lines) {
-    const c = clean(raw);
-    const w = c.match(/weighted\s+([\d.]+\s*\/\s*\d+)/i);
-    if (w && (!key || matchKey(c).includes(key))) {
-      weighted = w[1].replace(/\s+/g, "");
-      break;
-    }
-  }
+  // The weighted /110 composite is a deprecated framework. It is deliberately
+  // never surfaced in this document, even though the string is still stored.
+  weighted = null;
   return { rows, composite, weighted };
 }
 
@@ -716,20 +711,103 @@ export interface ProcessResult {
   stats: Array<{ value: string; label: string }>;
 }
 
+/** The pipeline is a fixed 28-stage architecture; never a count of columns. */
+export const PIPELINE_STAGE_COUNT = 28;
+
 export function extractProcess(
   _session: ExecSessionRow,
   counts: { propositions: number; dimensions: number; frameworks: FrameworksResult },
   _intelPresent: boolean,
 ): ProcessResult {
-  const methodologies = counts.frameworks.stages.length + counts.frameworks.engines.length;
+  const methodologies = PIPELINE_STAGE_COUNT + counts.frameworks.engines.length;
   return {
     stats: [
-      { value: String(counts.frameworks.stages.length), label: "stages completed" },
+      { value: String(PIPELINE_STAGE_COUNT), label: "stages completed" },
       { value: String(methodologies), label: "methodologies applied" },
       { value: String(counts.propositions), label: "propositions considered" },
       { value: String(counts.dimensions), label: "dimensions validated" },
     ],
   };
+}
+
+/* ── Distinctive asset (Stage 22 — RECOMMENDED ASSETS) ──────────── */
+
+/**
+ * Authoritative source is `stage_22_distinctive_assets` under its
+ * "RECOMMENDED ASSETS" heading. The Stage 22 `ASSETS:` shorthand line is
+ * deliberately NOT used — it is a looser restatement of brand furniture.
+ */
+export function extractDistinctiveAsset(session: ExecSessionRow): string | null {
+  const raw = str(session, "stage_22_distinctive_assets");
+  if (!raw) return null;
+  const lines = raw.split("\n");
+  const start = lines.findIndex((l) => /RECOMMENDED ASSETS/i.test(l));
+  if (start < 0) return null;
+  for (let i = start + 1; i < lines.length; i++) {
+    const c = clean(lines[i]).replace(/^\s*[-*+•]\s*/, "").replace(/^\d+[.)]\s*/, "");
+    if (!c) continue;
+    if (/^[A-Z][A-Z ’'—-]{6,}:?$/.test(c)) break;
+    if (c.length < 4) continue;
+    return c.replace(/\s*[—-]\s*$/, "");
+  }
+  return null;
+}
+
+/* ── Proof, at a glance ─────────────────────────────────────────── */
+
+export interface ProofResult {
+  strongest: { dimension: string; score: string } | null;
+  composite: string | null;
+  asset: string | null;
+}
+
+/**
+ * One real highlight only — strongest scored dimension plus the live
+ * composite — never a second copy of the Stage 10 table.
+ */
+export function extractProof(session: ExecSessionRow, scoring: ScoringResult): ProofResult {
+  let strongest: { dimension: string; score: string } | null = null;
+  let best = -1;
+  for (const r of scoring.rows) {
+    const n = parseInt(r.score, 10);
+    if (Number.isFinite(n) && n > best) {
+      best = n;
+      strongest = { dimension: r.dimension, score: r.score };
+    }
+  }
+  return { strongest, composite: scoring.composite, asset: extractDistinctiveAsset(session) };
+}
+
+/* ── Minto précis ───────────────────────────────────────────────── */
+
+export interface PrecisResult {
+  situation: string | null;
+  complication: string | null;
+  question: string | null;
+  answer: string | null;
+}
+
+/**
+ * Situation / Complication / Question / Answer, assembled from stored text
+ * only. Every line is claimed on the deduper so no section may repeat it.
+ */
+export function buildPrecis(
+  args: {
+    businessIssue: string | null;
+    findings: string | null;
+    smp: string | null;
+    brand: string;
+  },
+  dedupe: Deduper,
+): PrecisResult {
+  const situation = dedupe.take(args.businessIssue, 2);
+  const complication = dedupe.take(args.findings, 2);
+  const smp = args.smp ? stripQuotes(clean(args.smp)) : null;
+  const question = `What proposition can ${args.brand} own that the category cannot answer?`;
+  dedupe.claim(question);
+  const answer = smp ? `“${smp}”` : null;
+  if (answer) dedupe.claim(`The recommendation is ${answer}.`);
+  return { situation, complication, question, answer };
 }
 
 /* ── Lead paragraph ─────────────────────────────────────────────── */
