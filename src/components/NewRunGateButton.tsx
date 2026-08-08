@@ -362,6 +362,20 @@ export function NewRunGateButton({ variant = "topnav", label = "Strategy Pipelin
             >
               Cancel
             </button>
+            {error ? (
+              <button
+                type="button"
+                disabled={submitting}
+                onClick={() => {
+                  setOverridden(true);
+                  proceed();
+                }}
+                className="inline-flex h-9 items-center justify-center rounded-lg px-4 text-[13px] font-medium transition-colors disabled:opacity-50"
+                style={{ border: "1px solid #C81E1E", color: "#C81E1E" }}
+              >
+                Continue anyway
+              </button>
+            ) : null}
             <button
               type="button"
               disabled={submitting || reason.trim().length < 4}
