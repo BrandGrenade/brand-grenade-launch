@@ -49,6 +49,11 @@ const ACCENT = "#C81E1E";
 function extraStyles(): string {
   return `
 .es-lead { font-size: 12pt; line-height: 1.55; color: var(--ash); border-left: 2pt solid ${ACCENT}; padding: 2pt 0 2pt 14pt; margin: 0 0 26pt; }
+.es-precis { margin: 0 0 30pt; border-top: 1pt solid ${ACCENT}; border-bottom: 0.5pt solid var(--rule); }
+.es-precis-row { display: flex; gap: 14pt; padding: 9pt 0; border-bottom: 0.5pt solid var(--rule); }
+.es-precis-row:last-child { border-bottom: none; }
+.es-precis-row .lab { flex: 0 0 92pt; font-size: 8.5pt; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: ${ACCENT}; padding-top: 2pt; }
+.es-precis-row .val { flex: 1; font-size: 11pt; line-height: 1.5; color: var(--ash); }
 .es-open { page-break-inside: auto; }
 .es-open .section { page-break-inside: auto; }
 .footer { page-break-before: avoid; }
