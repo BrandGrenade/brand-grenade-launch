@@ -838,6 +838,7 @@ export function extractSituationFact(
     t
       .replace(/\[source:[^\]]*\]/gi, "")
       .replace(/\(role:[^)]*\)/gi, "")
+      .replace(/(\d)\.(\d)/g, "$1\u2024$2") // protect decimals from sentence splitting
       .replace(/\s{2,}/g, " ")
       .trim();
   const cands: string[] = [];
@@ -849,12 +850,17 @@ export function extractSituationFact(
         if (t.length < 40 || t.length > 320) continue;
         if (!HARD.test(t)) continue;
         if (/^(section|stage|test)\b/i.test(t)) continue;
-        cands.push(t);
+        cands.push(t.replace(/\u2024/g, "."));
       }
     }
   }
   if (!cands.length) return null;
-  return cands.find((c) => MOVEMENT.test(c)) ?? cands[0];
+  const FROM_TO = /from\s+[\d.]+\s*%[^.]{0,40}\bto\b\s+[\d.]+\s*%/i;
+  return (
+    cands.find((c) => FROM_TO.test(c)) ??
+    cands.find((c) => MOVEMENT.test(c)) ??
+    cands[0]
+  );
 }
 
 /**
