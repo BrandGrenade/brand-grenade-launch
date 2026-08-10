@@ -18,6 +18,13 @@ import {
 } from "./output-banned-word-gate";
 
 import { countPropositions } from "./count-helpers";
+import {
+  extractStage8Candidates,
+  missingDispositions,
+  buildCoverageRetryNote,
+  buildForcedRejectionRows,
+  appendDispositionCompletion,
+} from "./stage9-disposition";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertSessionAccess } from "@/lib/auth-helpers.server";
 import { assertUpstreamStageOutput } from "./pipeline-integrity";
