@@ -13,11 +13,8 @@ import { streamClaude } from "./claude.server";
 import { scheduleBackground } from "./background.server";
 import { withIntelligenceWatchdog } from "./intelligence-stream-watchdog";
 
-type SupabaseAuthedClient = Parameters<
-  Parameters<typeof requireSupabaseAuth.server>[0]
->[0] extends never
-  ? never
-  : never;
+type SupabaseAuthedClient = SupabaseClient<Database>;
+
 
 
 import { parseJsonLenient } from "./loc/json-sanitize";
