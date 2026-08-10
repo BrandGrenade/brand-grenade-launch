@@ -1,6 +1,12 @@
 import { useMemo, useState } from "react";
 import { parseStage11Verdicts, parseStage10Scores, type Stage11Verdict } from "@/lib/stage12-filter";
 import type { LocEnginePackage } from "@/lib/loc/decision-package";
+import {
+  applyLocDispositions,
+  type LocPackageWithDisposition,
+  type LocRejection,
+} from "@/lib/loc/stage9-disposition-apply";
+
 
 
 export type SMPCardSource = "CORE" | `LOC — ${string}`;
@@ -29,6 +35,12 @@ export interface SMPCard {
   source?: SMPCardSource;
   /** Machine engine key for LOC cards (e.g. "the_moment"). CORE = undefined. */
   engineKey?: string;
+  /** LOC cards rebuilt at the Stage 9 Distinctiveness Check: the original
+   *  pre-rebuild engine line, kept visible under the offered line. */
+  rebuiltFromLine?: string;
+  /** One-line note on what Stage 9 changed and why. */
+  rebuiltNote?: string;
+
   /** Stage 11 verdict + binding conditions for CORE cards. */
   stage11Verdict?: string;
   stage11Conditions?: string;
@@ -441,8 +453,9 @@ const LOC_ENGINE_DISPLAY: Record<string, string> = {
   naive: "NAIVE",
 };
 
-function buildLocCards(packages: LocEnginePackage[] | null, offset: number): { cards: SMPCard[]; validationWarning: string | null } {
+function buildLocCards(packages: LocPackageWithDisposition[] | null, offset: number): { cards: SMPCard[]; validationWarning: string | null } {
   if (!packages || packages.length === 0) return { cards: [], validationWarning: null };
+
   const cards: SMPCard[] = [];
   let i = 0;
   let pendingCount = 0;
@@ -524,7 +537,10 @@ function buildLocCards(packages: LocEnginePackage[] | null, offset: number): { c
         : statusNote || (validationError ?? ""),
       source: label,
       engineKey,
+      ...(pkg.rebuiltFromLine ? { rebuiltFromLine: pkg.rebuiltFromLine } : {}),
+      ...(pkg.rebuiltNote ? { rebuiltNote: pkg.rebuiltNote } : {}),
     });
+
     i += 1;
   }
   // Hoist any priority-flagged card to the front and renumber.
@@ -553,6 +569,7 @@ export function SMPSelection({
   stage12Output,
   stage11Output,
   stage10Output,
+  stage9Output,
   locPackages,
   locStatus,
   locError,
@@ -564,6 +581,10 @@ export function SMPSelection({
   stage12Output: string;
   stage11Output?: string;
   stage10Output?: string;
+  /** Stage 9 output — read for the CANDIDATE DISPOSITION ledger so the LOC
+   *  pool reflects the Distinctiveness Check (rejected engines dropped,
+   *  rebuilt engines offered as their rebuilt line). */
+  stage9Output?: string;
   /** Optional LOC engine decision packages (from session.loc_decision_packages).
    *  When provided, validated LOC propositions are appended to the unified
    *  selection pool alongside CORE propositions. Only LOC propositions that
@@ -574,6 +595,7 @@ export function SMPSelection({
    *  silently showing CORE only. */
   locStatus?: string | null;
   locError?: string | null;
+
   onSelect: (payload: SMPSelectionPayload) => void;
   onResubmit?: (feedback: string) => void | Promise<void>;
   resubmitting?: boolean;
@@ -611,8 +633,23 @@ export function SMPSelection({
       };
     });
   }, [stage12Output, stage11Output, stage10Output, stage11ByLine]);
-  const locResult = useMemo(() => buildLocCards(locPackages ?? null, coreCards.length), [locPackages, coreCards.length]);
+  // Apply the Stage 9 CANDIDATE DISPOSITION ledger before building cards:
+  // REJECTED engines leave the pool, REBUILT engines carry their rebuilt line.
+  const locDisposed = useMemo(
+    () => applyLocDispositions(locPackages ?? null, stage9Output ?? null),
+    [locPackages, stage9Output],
+  );
+  const locResult = useMemo(() => buildLocCards(locDisposed.packages, coreCards.length), [locDisposed, coreCards.length]);
   const locCards = locResult.cards;
+  const locDispositionNote = useMemo(() => {
+    if (!locDisposed.ledgerFound) return null;
+    const parts: string[] = [];
+    if (locDisposed.rebuiltCount > 0) parts.push(`${locDisposed.rebuiltCount} rebuilt into a stronger line`);
+    if (locDisposed.rejected.length > 0) parts.push(`${locDisposed.rejected.length} rejected with a stated reason`);
+    if (parts.length === 0) return "Stage 9 Distinctiveness Check: every Left-of-Centre candidate survived unchanged.";
+    return `Stage 9 Distinctiveness Check applied to the Left-of-Centre pool — ${parts.join(", ")}.`;
+  }, [locDisposed]);
+
   const locValidationWarning =
     locResult.validationWarning ??
     (locResult.cards.length === 0 && locStatus && locStatus !== "complete"
@@ -902,6 +939,33 @@ export function SMPSelection({
         </div>
       )}
 
+      {locDispositionNote && (
+        <div
+          className="mb-6 rounded-md p-4"
+          style={{
+            border: "1px solid var(--color-border)",
+            backgroundColor: "var(--color-surface-2)",
+          }}
+        >
+          <p className="text-label" style={{ color: "var(--color-text-tertiary)", marginBottom: 6 }}>
+            LEFT-OF-CENTRE — STAGE 9 DISPOSITION
+          </p>
+          <p className="text-body-sm" style={{ color: "var(--color-text-secondary)" }}>
+            {locDispositionNote}
+          </p>
+          {locDisposed.rejected.length > 0 && (
+            <ul className="mt-3 space-y-2">
+              {locDisposed.rejected.map((r: LocRejection) => (
+                <li key={r.index} className="text-body-sm" style={{ color: "var(--color-text-tertiary)" }}>
+                  <span style={{ textDecoration: "line-through" }}>{r.line}</span> — {r.reason}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+
+
 
 
 
@@ -960,6 +1024,32 @@ export function SMPSelection({
               <p className="text-h3 mt-3 text-text-primary" style={{ lineHeight: 1.35 }}>
                 {card.smpLine || "(line missing)"}
               </p>
+              {card.rebuiltFromLine && (
+                <div className="mt-2">
+                  <span
+                    className="text-label"
+                    style={{
+                      display: "inline-block",
+                      padding: "2px 8px",
+                      borderRadius: 999,
+                      border: "1px solid var(--color-warning)",
+                      color: "var(--color-warning)",
+                      letterSpacing: "0.06em",
+                    }}
+                  >
+                    REBUILT AT STAGE 9
+                  </span>
+                  <p className="text-body-sm mt-2" style={{ color: "var(--color-text-tertiary)" }}>
+                    Original engine line: <span style={{ fontStyle: "italic" }}>{card.rebuiltFromLine}</span>
+                  </p>
+                  {card.rebuiltNote && (
+                    <p className="text-body-sm mt-1" style={{ color: "var(--color-text-tertiary)" }}>
+                      {card.rebuiltNote}
+                    </p>
+                  )}
+                </div>
+              )}
+
 
               {card.whatItOwns && <Section title={isLoc ? "Territory" : "What it owns"} body={card.whatItOwns} />}
               {card.truth && <Section title="The truth it is built on" body={card.truth} />}
