@@ -66,6 +66,7 @@ export type Database = {
           created_at: string
           diagnosis: Json | null
           id: string
+          last_error: string | null
           raw_brief: string
           relevance: Json | null
           selected_frame: string | null
@@ -83,6 +84,7 @@ export type Database = {
           created_at?: string
           diagnosis?: Json | null
           id?: string
+          last_error?: string | null
           raw_brief?: string
           relevance?: Json | null
           selected_frame?: string | null
@@ -100,6 +102,7 @@ export type Database = {
           created_at?: string
           diagnosis?: Json | null
           id?: string
+          last_error?: string | null
           raw_brief?: string
           relevance?: Json | null
           selected_frame?: string | null
