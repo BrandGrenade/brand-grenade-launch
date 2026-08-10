@@ -98,17 +98,28 @@ function buildStage21UserMessage(
       ]
     : [];
 
+  // When a campaign line is locked, the Stage 18 line and statement are NOT
+  // sent at all. Sending them as "superseded historical context" still put an
+  // unvalidated line in front of the model alongside the validated one, and
+  // briefs leaked it. Suppression, not labelling, is the fix.
+  const superseded = Boolean(s.locked_campaign_line?.trim());
+  const detonationBlock = superseded
+    ? [
+        "SELECTED DETONATION (Stage 18) — WITHHELD.",
+        "A campaign line and big idea were locked for this campaign after Stage 18, through the 37-lens sweep and its validation gates. The Stage 18 line and statement are therefore superseded and are deliberately not supplied to you. Do not ask for them, do not reconstruct them, and do not invent a substitute: THE DETONATION section of your brief is written from the locked idea and locked line above.",
+      ]
+    : [
+        "SELECTED DETONATION LINE (Stage 18 — short campaign line, must appear first under THE DETONATION)",
+        s.stage_18_detonation_line?.trim() || "—",
+        "",
+        "SELECTED DETONATION STATEMENT (Stage 18 — full statement, must appear directly below the line under THE DETONATION)",
+        s.stage_18_selected_detonation?.trim() || "—",
+      ];
+
   return [
     ...lockedBlock,
-    "BINDING INPUT — THE LEAD CREATIVE EXPRESSION",
-    "This is the decided creative idea for this campaign. It outranks every other input in this message, including the channel strategy below. Your job for this channel is to ADAPT this already-decided idea to this channel's moment and medium. You are NOT permitted to independently interpret the proposition, invent a different idea, or narrow the idea to whatever this channel finds convenient. Every one of the five non-negotiables must be carried in your brief. The misreading named in this document must never appear in your brief — if the channel context below pulls you toward it, ignore the pull and stay with the decided idea. A brief that reads as a different campaign sharing the same proposition is a failure of this stage.",
-    "",
-    s.stage_20l_output?.trim() || "— (none decided; do not invent one, and stay strictly within the Master Detonation Brief's stated meaning)",
-    "",
-    "————",
-    "",
     "SUPPORTING INPUT — CHANNEL STRATEGY AND AUDIENCE INTELLIGENCE (Stage 20B)",
-    "Use this for channel selection rationale, audience definition, mindstate, occasion, behavioural triggers and message priority — the mechanics of the moment. Do NOT use it as a source of creative meaning. Where this document's framing of the proposition differs in meaning from the Lead Creative Expression above, the Lead Creative Expression wins.",
+    "Use this for channel selection rationale, audience definition, mindstate, occasion, behavioural triggers and message priority — the mechanics of the moment. Do NOT use it as a source of creative meaning. Where this document's framing of the proposition differs in meaning from the locked campaign big idea above, the locked idea wins.",
     "",
     s.stage_20b_output?.trim() || "—",
     "",
@@ -121,7 +132,7 @@ function buildStage21UserMessage(
     "CHANNEL CONTEXT FOR THIS CHANNEL (this channel's Section Three paragraph from Stage 20B, or Stage 19 fallback):",
     context?.trim() || "—",
     "",
-    "HOW THIS CHANNEL SHOULD CARRY THE IDEA (Stage 20B's channel translation — mechanics only, subordinate to the Lead Creative Expression):",
+    "HOW THIS CHANNEL SHOULD CARRY THE IDEA (Stage 20B's channel translation — mechanics only, subordinate to the locked campaign big idea):",
     smpTranslation,
 
     "",
@@ -134,14 +145,8 @@ function buildStage21UserMessage(
     "VALIDATED SMP",
     s.selected_smp?.trim() || "—",
     "",
-    s.locked_campaign_line?.trim()
-      ? "SELECTED DETONATION LINE (Stage 18 — SUPERSEDED. A campaign line has been locked above; this text is historical context only. Do not reproduce it as the campaign line and do not open the brief with it.)"
-      : "SELECTED DETONATION LINE (Stage 18 — short campaign line, must appear first under THE DETONATION)",
-    s.stage_18_detonation_line?.trim() || "—",
+    ...detonationBlock,
 
-    "",
-    "SELECTED DETONATION STATEMENT (Stage 18 — full statement, must appear directly below the line under THE DETONATION)",
-    s.stage_18_selected_detonation?.trim() || "—",
     "",
     "THREE TRUTH POSITIONING",
     formatThreeTruths({
