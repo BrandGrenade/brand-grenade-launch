@@ -29,11 +29,9 @@ const STAGE21_SELECT = [
   "stage_18_detonation_line",
   "stage_19_output",
   "stage_20_output",
-  "stage_20l_output",
   "locked_big_idea",
   "locked_campaign_line",
   "locked_big_idea_lens",
-  "stage_20l_approved",
   "stage_20b_output",
   "truth_product",
   "truth_consumer",
@@ -49,17 +47,16 @@ type Stage21Session = {
   stage_18_detonation_line: string | null;
   stage_19_output: string | null;
   stage_20_output: string | null;
-  stage_20l_output: string | null;
   locked_big_idea: string | null;
   locked_campaign_line: string | null;
   locked_big_idea_lens: string | null;
-  stage_20l_approved: boolean | null;
   stage_20b_output: string | null;
   truth_product: string | null;
   truth_consumer: string | null;
   truth_cultural: string | null;
   stage_21_outputs: Record<string, string> | null;
 };
+
 
 
 function extractSection(context: string, label: string): string {
@@ -73,7 +70,7 @@ function extractSection(context: string, label: string): string {
   return m ? m[1].trim() : "";
 }
 
-function buildStage21UserMessage(
+export function buildStage21UserMessage(
   channel: string,
   role: string,
   context: string,
@@ -101,17 +98,28 @@ function buildStage21UserMessage(
       ]
     : [];
 
+  // When a campaign line is locked, the Stage 18 line and statement are NOT
+  // sent at all. Sending them as "superseded historical context" still put an
+  // unvalidated line in front of the model alongside the validated one, and
+  // briefs leaked it. Suppression, not labelling, is the fix.
+  const superseded = Boolean(s.locked_campaign_line?.trim());
+  const detonationBlock = superseded
+    ? [
+        "SELECTED DETONATION (Stage 18) — WITHHELD.",
+        "A campaign line and big idea were locked for this campaign after Stage 18, through the 37-lens sweep and its validation gates. The Stage 18 line and statement are therefore superseded and are deliberately not supplied to you. Do not ask for them, do not reconstruct them, and do not invent a substitute: THE DETONATION section of your brief is written from the locked idea and locked line above.",
+      ]
+    : [
+        "SELECTED DETONATION LINE (Stage 18 — short campaign line, must appear first under THE DETONATION)",
+        s.stage_18_detonation_line?.trim() || "—",
+        "",
+        "SELECTED DETONATION STATEMENT (Stage 18 — full statement, must appear directly below the line under THE DETONATION)",
+        s.stage_18_selected_detonation?.trim() || "—",
+      ];
+
   return [
     ...lockedBlock,
-    "BINDING INPUT — THE LEAD CREATIVE EXPRESSION",
-    "This is the decided creative idea for this campaign. It outranks every other input in this message, including the channel strategy below. Your job for this channel is to ADAPT this already-decided idea to this channel's moment and medium. You are NOT permitted to independently interpret the proposition, invent a different idea, or narrow the idea to whatever this channel finds convenient. Every one of the five non-negotiables must be carried in your brief. The misreading named in this document must never appear in your brief — if the channel context below pulls you toward it, ignore the pull and stay with the decided idea. A brief that reads as a different campaign sharing the same proposition is a failure of this stage.",
-    "",
-    s.stage_20l_output?.trim() || "— (none decided; do not invent one, and stay strictly within the Master Detonation Brief's stated meaning)",
-    "",
-    "————",
-    "",
     "SUPPORTING INPUT — CHANNEL STRATEGY AND AUDIENCE INTELLIGENCE (Stage 20B)",
-    "Use this for channel selection rationale, audience definition, mindstate, occasion, behavioural triggers and message priority — the mechanics of the moment. Do NOT use it as a source of creative meaning. Where this document's framing of the proposition differs in meaning from the Lead Creative Expression above, the Lead Creative Expression wins.",
+    "Use this for channel selection rationale, audience definition, mindstate, occasion, behavioural triggers and message priority — the mechanics of the moment. Do NOT use it as a source of creative meaning. Where this document's framing of the proposition differs in meaning from the locked campaign big idea above, the locked idea wins.",
     "",
     s.stage_20b_output?.trim() || "—",
     "",
@@ -124,7 +132,7 @@ function buildStage21UserMessage(
     "CHANNEL CONTEXT FOR THIS CHANNEL (this channel's Section Three paragraph from Stage 20B, or Stage 19 fallback):",
     context?.trim() || "—",
     "",
-    "HOW THIS CHANNEL SHOULD CARRY THE IDEA (Stage 20B's channel translation — mechanics only, subordinate to the Lead Creative Expression):",
+    "HOW THIS CHANNEL SHOULD CARRY THE IDEA (Stage 20B's channel translation — mechanics only, subordinate to the locked campaign big idea):",
     smpTranslation,
 
     "",
@@ -137,14 +145,8 @@ function buildStage21UserMessage(
     "VALIDATED SMP",
     s.selected_smp?.trim() || "—",
     "",
-    s.locked_campaign_line?.trim()
-      ? "SELECTED DETONATION LINE (Stage 18 — SUPERSEDED. A campaign line has been locked above; this text is historical context only. Do not reproduce it as the campaign line and do not open the brief with it.)"
-      : "SELECTED DETONATION LINE (Stage 18 — short campaign line, must appear first under THE DETONATION)",
-    s.stage_18_detonation_line?.trim() || "—",
+    ...detonationBlock,
 
-    "",
-    "SELECTED DETONATION STATEMENT (Stage 18 — full statement, must appear directly below the line under THE DETONATION)",
-    s.stage_18_selected_detonation?.trim() || "—",
     "",
     "THREE TRUTH POSITIONING",
     formatThreeTruths({
@@ -278,12 +280,17 @@ export const runStage21 = createServerFn({ method: "POST" })
     if (!s.stage_19_output) throw new Error("Stage 19 missing");
     if (!s.stage_20_output) throw new Error("Stage 20 missing");
     if (!s.stage_20b_output) throw new Error("Stage 20B (Channel Strategy and Audience Intelligence) must complete before Stage 21");
-    if (!s.stage_20l_output?.trim())
+    // The Creative Engine's locked big idea replaces the retired Stage 20L as
+    // the single decided idea every channel brief adapts.
+    if (!s.locked_big_idea?.trim())
       throw new Error(
-        "The Lead Creative Expression (Stage 20L) must be generated before Stage 21. Without it, each channel brief independently reinterprets the proposition.",
+        "A campaign big idea must be locked in the Creative Engine before Stage 21. Without it, each channel brief independently reinterprets the proposition.",
       );
-    if (!s.stage_20l_approved)
-      throw new Error("The Lead Creative Expression must be approved before Stage 21 can run.");
+    if (!s.locked_campaign_line?.trim())
+      throw new Error(
+        "A campaign line must be locked in the Creative Engine before Stage 21 can run.",
+      );
+
 
 
     if (
@@ -330,7 +337,7 @@ export const runStage21 = createServerFn({ method: "POST" })
       .eq("id", data.sessionId);
     if (saveErr) throw new Error(`Failed to save Stage 21 outputs: ${saveErr.message}`);
 
-    const fidelity = await checkAndSaveFidelity(data.sessionId, s.stage_20l_output, outputs);
+    const fidelity = await checkAndSaveFidelity(data.sessionId, null, outputs);
     return { outputs, fidelity };
   });
 
@@ -404,7 +411,7 @@ export const recheckStage21Fidelity = createServerFn({ method: "POST" })
     await assertSessionAccess(data.sessionId, context.userId);
     const { data: row, error } = await supabaseAdmin
       .from("sessions")
-      .select("stage_20l_output, stage_21_outputs")
+      .select("stage_21_outputs")
       .eq("id", data.sessionId)
       .single();
     if (error || !row) throw new Error(error?.message ?? "Session not found");
@@ -414,7 +421,7 @@ export const recheckStage21Fidelity = createServerFn({ method: "POST" })
     const { runChannelFidelityCheck } = await import("./stage21-fidelity.server");
     const report = await runChannelFidelityCheck({
       sessionId: data.sessionId,
-      leadExpression: (row.stage_20l_output as string | null) ?? null,
+      leadExpression: null,
       outputs,
     });
     const { error: saveErr } = await supabaseAdmin
@@ -484,7 +491,7 @@ export const retryStage21 = createServerFn({ method: "POST" })
       .eq("id", data.sessionId);
     if (saveErr) throw new Error(saveErr.message);
 
-    const fidelity = await checkAndSaveFidelity(data.sessionId, s.stage_20l_output, merged);
+    const fidelity = await checkAndSaveFidelity(data.sessionId, null, merged);
     return { outputs: merged, fidelity };
 
   });

@@ -41,6 +41,9 @@ const STAGE22_SELECT = [
   "stage_17_selected_territory",
   "stage_17b_output",
   "stage_18_selected_detonation",
+  "locked_big_idea",
+  "locked_campaign_line",
+  "locked_big_idea_lens",
   "stage_19_output",
   "stage_20_output",
   "truth_product",
@@ -65,6 +68,9 @@ type Stage22Session = {
   stage_17_selected_territory: string | null;
   stage_17b_output: string | null;
   stage_18_selected_detonation: string | null;
+  locked_big_idea: string | null;
+  locked_campaign_line: string | null;
+  locked_big_idea_lens: string | null;
   stage_19_output: string | null;
   stage_20_output: string | null;
   truth_product: string | null;
@@ -80,7 +86,28 @@ type Stage22Session = {
 };
 
 function buildStage22UserMessage(s: Stage22Session): string {
+  // The locked campaign big idea and line supersede the Stage 18 detonation
+  // for every downstream stage, Stage 22 included. When one is locked, Stage 22
+  // architects the brand around THAT idea and carries THAT line verbatim.
+  const locked = s.locked_big_idea?.trim();
+  const lockedBlock = locked
+    ? [
+        "BINDING INPUT — THE LOCKED CAMPAIGN BIG IDEA AND LINE",
+        "This idea and line were selected for the whole campaign through the 37-lens sweep and its validation gates. They outrank the Stage 18 detonation supplied below, which is historical context only. The brand architecture and the conceptual assets you produce must be the assets THIS idea needs in order to become recognisable over time.",
+        "",
+        `LOCKED CAMPAIGN BIG IDEA (lens: ${s.locked_big_idea_lens ?? "—"})`,
+        locked,
+        "",
+        "LOCKED CAMPAIGN LINE — reproduce this verbatim, character for character, wherever your output refers to the campaign line. Never paraphrase it and never substitute a line of your own.",
+        s.locked_campaign_line?.trim() || "—",
+        "",
+        "————",
+        "",
+      ]
+    : [];
+
   return [
+    ...lockedBlock,
     smpGoverningBlock(s.selected_smp),
     "",
     `BRAND: ${s.brand_name ?? "—"}`,
@@ -104,7 +131,9 @@ function buildStage22UserMessage(s: Stage22Session): string {
     "DETONATION INTELLIGENCE (Stage 17B)",
     s.stage_17b_output?.trim() || "—",
     "",
-    "SELECTED DETONATION (Stage 18)",
+    locked
+      ? "SELECTED DETONATION (Stage 18 — SUPERSEDED by the locked campaign big idea above; historical context only)"
+      : "SELECTED DETONATION (Stage 18)",
     s.stage_18_selected_detonation?.trim() || "—",
     "",
     "ACTIVATION ARCHITECTURE (Stage 19)",
@@ -170,7 +199,7 @@ export const runStage22 = createServerFn({ method: "POST" })
     await assertUpstreamStageOutput(data.sessionId, 22);
     const { data: session, error } = await supabaseAdmin
       .from("sessions")
-      .select("brand_name, category, selected_smp, stage_5_output, stage_13_output, stage_14c_output, stage_17_selected_territory, stage_17b_output, stage_18_selected_detonation, stage_19_output, stage_20_output, truth_product, truth_consumer, truth_cultural, brand_intel_type, brand_intel_values, brand_intel_tone, brand_intel_assets, stage_22_output, stage_22_brand_architecture, stage_22_distinctive_assets")
+      .select("brand_name, category, selected_smp, stage_5_output, stage_13_output, stage_14c_output, stage_17_selected_territory, stage_17b_output, stage_18_selected_detonation, locked_big_idea, locked_campaign_line, locked_big_idea_lens, stage_19_output, stage_20_output, truth_product, truth_consumer, truth_cultural, brand_intel_type, brand_intel_values, brand_intel_tone, brand_intel_assets, stage_22_output, stage_22_brand_architecture, stage_22_distinctive_assets")
       .eq("id", data.sessionId)
       .single();
     if (error || !session) throw new Error(`Session not found: ${error?.message ?? "no row"}`);
@@ -273,7 +302,7 @@ export const retryStage22 = createServerFn({ method: "POST" })
     await assertSessionAccess(data.sessionId, context.userId);
     const { data: session, error } = await supabaseAdmin
       .from("sessions")
-      .select("brand_name, category, selected_smp, stage_5_output, stage_13_output, stage_14c_output, stage_17_selected_territory, stage_17b_output, stage_18_selected_detonation, stage_19_output, stage_20_output, truth_product, truth_consumer, truth_cultural, brand_intel_type, brand_intel_values, brand_intel_tone, brand_intel_assets, stage_22_output, stage_22_brand_architecture, stage_22_distinctive_assets")
+      .select("brand_name, category, selected_smp, stage_5_output, stage_13_output, stage_14c_output, stage_17_selected_territory, stage_17b_output, stage_18_selected_detonation, locked_big_idea, locked_campaign_line, locked_big_idea_lens, stage_19_output, stage_20_output, truth_product, truth_consumer, truth_cultural, brand_intel_type, brand_intel_values, brand_intel_tone, brand_intel_assets, stage_22_output, stage_22_brand_architecture, stage_22_distinctive_assets")
       .eq("id", data.sessionId)
       .single();
     if (error || !session) throw new Error(`Session not found: ${error?.message ?? "no row"}`);
@@ -354,7 +383,7 @@ export const regenerateStage22 = createServerFn({ method: "POST" })
 
     const { data: session, error } = await supabaseAdmin
       .from("sessions")
-      .select("brand_name, category, selected_smp, stage_5_output, stage_13_output, stage_14c_output, stage_17_selected_territory, stage_17b_output, stage_18_selected_detonation, stage_19_output, stage_20_output, truth_product, truth_consumer, truth_cultural, brand_intel_type, brand_intel_values, brand_intel_tone, brand_intel_assets")
+      .select("brand_name, category, selected_smp, stage_5_output, stage_13_output, stage_14c_output, stage_17_selected_territory, stage_17b_output, stage_18_selected_detonation, locked_big_idea, locked_campaign_line, locked_big_idea_lens, stage_19_output, stage_20_output, truth_product, truth_consumer, truth_cultural, brand_intel_type, brand_intel_values, brand_intel_tone, brand_intel_assets")
       .eq("id", data.sessionId)
       .single();
     if (error || !session) throw new Error(`Session not found: ${error?.message ?? "no row"}`);

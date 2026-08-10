@@ -53,7 +53,6 @@ export const STAGE_MANIFEST: readonly StageManifestEntry[] = [
   { id: "18",  numericStage: 18, phase: 2, label: "The Detonation",                          columns: ["stage_18_output"] },
   { id: "19",  numericStage: 19, phase: 2, label: "Activation Architecture",                 columns: ["stage_19_output"] },
   { id: "20",  numericStage: 20, phase: 2, label: "Master Detonation Brief",                 columns: ["stage_20_output"] },
-  { id: "20l", numericStage: 20, phase: 2, label: "Lead Creative Expression",                 columns: ["stage_20l_output"] },
   { id: "20b", numericStage: 20, phase: 2, label: "Channel Strategy and Audience Intelligence", columns: ["stage_20b_output"] },
 
   { id: "21",  numericStage: 21, phase: 2, label: "Channel Detonation Briefs",               columns: ["stage_21_outputs"] },
