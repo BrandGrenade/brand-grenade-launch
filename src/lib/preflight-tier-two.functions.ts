@@ -1505,7 +1505,7 @@ export const runTierTwoCheck14 = createServerFn({ method: "POST" })
       }
       const { data: row, error } = await supabaseAdmin
         .from("sessions")
-        .select("selected_smp, stage_20_output, stage_20b_output, stage_21_outputs")
+        .select("selected_smp, stage_20_output, stage_20b_output, stage_21_outputs, stage_22_output")
         .eq("id", data.sessionId)
         .single();
       if (error || !row) throw new Error(`Could not reload TestBrand session: ${error?.message ?? "no row"}`);
@@ -1517,6 +1517,11 @@ export const runTierTwoCheck14 = createServerFn({ method: "POST" })
         { label: "Stage 20", output: row.stage_20_output },
         { label: "Stage 20B", output: row.stage_20b_output },
         { label: "Stage 21 (all channel briefs)", output: flattenStrings(row.stage_21_outputs) },
+        // Stage 22 sat outside the carriage chain until now: it is the last
+        // stage to restate the proposition, so it is checked when it exists.
+        ...(row.stage_22_output
+          ? [{ label: "Stage 22 (brand architecture)", output: row.stage_22_output }]
+          : []),
       ]);
 
       return {
@@ -1532,7 +1537,7 @@ export const runTierTwoCheck14 = createServerFn({ method: "POST" })
         durationMs: Date.now() - started,
         detail: msg,
         remediation:
-          "Restore verbatim carriage at the source. smpGoverningBlock() in src/lib/phase2-shared.ts is the single mandate for Stages 20, 20B and 21 — confirm each stage's user message still prepends it and that no later instruction tells a channel brief to reword the SMP. Never relax src/lib/smp-carriage.ts to make this check pass.",
+          "Restore verbatim carriage at the source. smpGoverningBlock() in src/lib/phase2-shared.ts is the single mandate for Stages 20, 20B, 21 and 22 — confirm each stage's user message still prepends it and that no later instruction tells a channel brief to reword the SMP. Never relax src/lib/smp-carriage.ts to make this check pass.",
       };
     }
   });
