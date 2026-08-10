@@ -288,8 +288,18 @@ export async function synthesiseResearchDocuments(args: {
     })).filter((b) => b.list.length > 0);
 
     // Sequential per category — keeps each batch inside the auditor's claim cap
-    // and avoids stacking long web-search calls in parallel.
+    // and avoids stacking long web-search calls in parallel. The whole chain
+    // runs inside one browser request, so a wall-clock deadline is required:
+    // without it six slow web-search batches can outlive the request and the
+    // user loses every extracted claim with no error at all.
+    const verifyDeadline = Date.now() + VERIFICATION_BUDGET_MS;
     for (const batch of batches) {
+      if (Date.now() > verifyDeadline) {
+        warnings.push(
+          "Verification time budget reached — remaining claims are returned unverified rather than losing the whole synthesis.",
+        );
+        break;
+      }
       try {
         await verifyCategoryBatch(
           batch.key,
@@ -304,6 +314,7 @@ export async function synthesiseResearchDocuments(args: {
         warnings.push(`Verification batch failed: ${msg.slice(0, 160)}`);
       }
     }
+
   }
 
   const fields = Object.fromEntries(
