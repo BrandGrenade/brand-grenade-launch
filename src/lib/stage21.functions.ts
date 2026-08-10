@@ -70,7 +70,7 @@ function extractSection(context: string, label: string): string {
   return m ? m[1].trim() : "";
 }
 
-function buildStage21UserMessage(
+export function buildStage21UserMessage(
   channel: string,
   role: string,
   context: string,
