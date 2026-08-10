@@ -441,7 +441,9 @@ async function executeIntelligenceRun(
 
     // 09
     return { success: true, sessionId };
-  });
+  }
+}
+
 
 // ─── Briefing Room handoff ───────────────────────────────────────────────
 
