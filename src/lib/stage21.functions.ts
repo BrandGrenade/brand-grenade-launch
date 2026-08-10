@@ -29,11 +29,9 @@ const STAGE21_SELECT = [
   "stage_18_detonation_line",
   "stage_19_output",
   "stage_20_output",
-  "stage_20l_output",
   "locked_big_idea",
   "locked_campaign_line",
   "locked_big_idea_lens",
-  "stage_20l_approved",
   "stage_20b_output",
   "truth_product",
   "truth_consumer",
@@ -49,17 +47,16 @@ type Stage21Session = {
   stage_18_detonation_line: string | null;
   stage_19_output: string | null;
   stage_20_output: string | null;
-  stage_20l_output: string | null;
   locked_big_idea: string | null;
   locked_campaign_line: string | null;
   locked_big_idea_lens: string | null;
-  stage_20l_approved: boolean | null;
   stage_20b_output: string | null;
   truth_product: string | null;
   truth_consumer: string | null;
   truth_cultural: string | null;
   stage_21_outputs: Record<string, string> | null;
 };
+
 
 
 function extractSection(context: string, label: string): string {
