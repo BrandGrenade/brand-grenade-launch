@@ -29,17 +29,29 @@ export function extractStage8Candidates(stage8Output: string | null | undefined)
   const out: LedgerCandidate[] = [];
   const seen = new Set<string>();
 
-  const push = (raw: string) => {
-    const line = raw.replace(/\s+/g, " ").replace(/^["“”']|["“”']$/g, "").trim();
+  const push = (raw: string, note?: string) => {
+    const line = raw
+      .replace(/\s+/g, " ")
+      .replace(/_\(\d+w\)_\s*$/i, "")
+      .replace(/^["“”']|["“”']$/g, "")
+      .trim();
     if (line.length < 4 || line.length > 200) return;
     const key = line.toLowerCase();
     if (seen.has(key)) return;
     seen.add(key);
-    out.push({ id: `S8-${out.length + 1}`, line });
+    out.push({ id: `S8-${out.length + 1}`, line, ...(note ? { note } : {}) });
   };
 
-  // Primary signal: blockquoted bold proposition lines.
+  // Primary signal: blockquoted bold proposition lines (the territory headline).
   for (const m of text.matchAll(/^>\s*\*\*([^*\n]{4,180})\*\*/gm)) push(m[1]!);
+
+  // Stage 8 also emits a CANDIDATE SET per territory (A · BASE, B · BREACH,
+  // C · FUSE, D · FLASHPOINT). Those are real candidates and were the largest
+  // source of silent filtering, so they enter the ledger too.
+  for (const m of text.matchAll(/^\*\*([A-Z])\s*·\s*([A-Z]+)\*\*\s*[—–-]\s*(.+)$/gm)) {
+    push(m[3]!, `variant ${m[1]} · ${m[2]}`);
+  }
+
 
   if (out.length === 0) {
     // Fallback: "PROPOSITION N" labels — take the next meaningful line.
