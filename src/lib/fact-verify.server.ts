@@ -21,6 +21,8 @@
 const ANTHROPIC_URL = "https://api.anthropic.com/v1/messages";
 const VERIFY_MODEL = "claude-sonnet-4-6";
 const REQUEST_TIMEOUT_MS = 180_000;
+/** Absolute ceiling for the whole verification call, abort failures included. */
+const VERIFY_WALL_CLOCK_MS = 200_000;
 const MAX_SEARCHES = 8;
 
 export type FactVerdict = "verified" | "unverified" | "contradicted";
@@ -249,7 +251,24 @@ function annotateOutput(output: string, results: FactCheckResult[]): string {
 
 export async function verifyRealFacts(args: VerifyArgs): Promise<FactVerificationOutcome> {
   try {
-    const results = await callVerifier(args);
+    // Hard outer wall-clock cap. The fetch AbortController alone is not
+    // sufficient: if the socket hangs without ever settling (or the abort is
+    // swallowed), the stage sits at status='running' forever with no error.
+    // This race guarantees the call always resolves and the stage completes.
+    let capTimer: ReturnType<typeof setTimeout> | undefined;
+    const cap = new Promise<never>((_, reject) => {
+      capTimer = setTimeout(
+        () => reject(new Error(`Fact verification exceeded its ${Math.round(VERIFY_WALL_CLOCK_MS / 60_000)} minute cap`)),
+        VERIFY_WALL_CLOCK_MS,
+      );
+    });
+    let results: FactCheckResult[];
+    try {
+      results = await Promise.race([callVerifier(args), cap]);
+    } finally {
+      if (capTimer) clearTimeout(capTimer);
+    }
+
     if (results.length === 0) {
       return {
         results: [],

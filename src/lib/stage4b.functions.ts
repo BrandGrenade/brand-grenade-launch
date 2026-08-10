@@ -61,6 +61,17 @@ export const runStage4b = createServerFn({ method: "POST" })
       }
 
 
+    // Pre-commit the streamed output BEFORE the verification pass. The
+    // verification call can take minutes; if the Worker is torn down during
+    // it (client navigates away / connection drops), no catch block ever
+    // runs and the row would otherwise sit at status='running' forever.
+    // Committing first means the worst case is an unverified-but-complete
+    // stage, never a hang.
+    await supabaseAdmin
+      .from("sessions")
+      .update({ stage_4b_output: output, stage_4b_error: null, stage_status: "complete:4b" })
+      .eq("id", data.sessionId);
+
     // Mandatory fact-verification pass, via the shared dispatcher in
     // fact-verify.server.ts (FACT_VERIFIED_STAGES.stage4b). Every claim the
     // stage labels "Real Fact" is extracted and web-searched; anything that
@@ -82,6 +93,7 @@ export const runStage4b = createServerFn({ method: "POST" })
           : "_[Fact verification could not run — output flagged for full manual review.]_\n\n",
       };
     }
+
 
 
     const { error: updateErr } = await supabaseAdmin

@@ -62,11 +62,20 @@ export const runStage2 = createServerFn({ method: "POST" })
       }
 
 
+    // Pre-commit the streamed output BEFORE the verification pass so a Worker
+    // teardown during the multi-minute web-search call can never leave the
+    // stage stuck at status='running' with no error.
+    await supabaseAdmin
+      .from("sessions")
+      .update({ stage_2_output: output, stage_2_error: null, stage_status: "complete:2" })
+      .eq("id", data.sessionId);
+
     // Mandatory fact-verification pass, via the shared dispatcher in
     // fact-verify.server.ts (FACT_VERIFIED_STAGES.stage2). Stage 2 asserts
     // market size, regulation and behavioural statistics as established
     // category fact; each is web-searched before the output is saved.
     yield { delta: "\n\n_[Running live fact-verification web search against category-fact claims…]_\n\n" };
+
     let finalOutput = output;
     {
       const { runStageFactVerification } = await import("./fact-verify.server");
