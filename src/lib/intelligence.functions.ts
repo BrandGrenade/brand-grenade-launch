@@ -10,6 +10,8 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { streamClaude } from "./claude.server";
+import { withIntelligenceWatchdog } from "./intelligence-stream-watchdog";
+
 import { parseJsonLenient } from "./loc/json-sanitize";
 import { buildSystemPrompt } from "./intelligence/system-prompt";
 import { buildUserMessage, type IntelligenceInputs } from "./intelligence/user-message";
