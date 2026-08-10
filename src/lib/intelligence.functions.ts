@@ -185,12 +185,33 @@ function normaliseBriefType(raw: string | null | undefined): BriefType {
 const STALE_RUN_MS = 4 * 60_000;
 
 
+/**
+ * Dispatcher. The analysis itself is a multi-minute streamed model call, so it
+ * MUST NOT be awaited inside the browser's request — a closed tab, reload, or
+ * dropped connection kills the Worker mid-flight and the row hangs on
+ * `running` forever. We hand the work to `ctx.waitUntil()` and return
+ * immediately; `/intelligence/$id` polls the row every 3s for progress.
+ */
 export const runIntelligenceAnalysis = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => RunInput.parse(input))
   .handler(async ({ data, context }): Promise<RunIntelligenceResult> => {
     const { supabase, userId } = context;
     const sessionId = data.intelligenceSessionId;
+    scheduleBackground(
+      executeIntelligenceRun(supabase, userId, sessionId),
+      `intelligence:${sessionId}`,
+    );
+    return { success: true, sessionId };
+  });
+
+async function executeIntelligenceRun(
+  supabase: SupabaseAuthedClient,
+  userId: string | undefined,
+  sessionId: string,
+): Promise<RunIntelligenceResult> {
+  {
+
 
     // 01 — Read and authorise.
     const { data: row, error: readErr } = await supabase
