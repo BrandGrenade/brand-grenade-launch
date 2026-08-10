@@ -140,41 +140,93 @@ export async function runStage9LocBatches(args: {
   const candidates = args.candidates.filter((c) => c.proposition);
   if (candidates.length === 0) return "";
 
+  // Stable global ids so the disposition ledger can be checked across batches.
+  const ids = candidates.map((_, i) => `LOC-${i + 1}`);
   const batches = chunk(candidates, LOC_STAGE9_BATCH_SIZE);
   const results = await Promise.all(
     batches.map(async (batch, i) => {
+      const batchIds = ids.slice(i * LOC_STAGE9_BATCH_SIZE, i * LOC_STAGE9_BATCH_SIZE + batch.length);
+      const ledgerCandidates: LedgerCandidate[] = batch.map((c, j) => ({
+        id: batchIds[j]!,
+        line: c.proposition,
+      }));
       const userMessage = buildBatchUserMessage({
         brandName: args.brandName,
         category: args.category,
         cmm: args.cmm,
         stage7DominantSignal: args.stage7DominantSignal,
         candidates: batch,
+        ids: batchIds,
         batchIndex: i,
         batchCount: batches.length,
         competitorOwnedConditionalWords: args.competitorOwnedConditionalWords,
       });
+      let text = "";
       try {
-        const text = await collect({
-          systemPrompt: STAGE_9_SYSTEM_PROMPT,
-          userMessage,
-          maxTokens: 16000,
-          sessionId: args.sessionId,
-          stageLabel: `Stage 9 LOC batch ${i + 1}/${batches.length}`,
-          stageNumber: "9",
-          stageName: "Distinctiveness Check (LOC batch)",
-        });
-        return text.trim();
+        text = (
+          await collect({
+            systemPrompt: STAGE_9_SYSTEM_PROMPT,
+            userMessage,
+            maxTokens: 16000,
+            sessionId: args.sessionId,
+            stageLabel: `Stage 9 LOC batch ${i + 1}/${batches.length}`,
+            stageNumber: "9",
+            stageName: "Distinctiveness Check (LOC batch)",
+          })
+        ).trim();
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
         console.error(
           `[stage9-loc] session=${args.sessionId} batch=${i + 1}/${batches.length} failed: ${msg}`,
         );
-        return `(LOC batch ${i + 1} of ${batches.length} failed: ${msg} — candidates in this batch were not assessed.)`;
+        // A failed batch used to leave its candidates unassessed and unexplained.
+        // They are now recorded explicitly with the failure as the stated reason.
+        return `(LOC batch ${i + 1} of ${batches.length} failed: ${msg})\n\n${DISPOSITION_HEADING}\n${buildForcedRejectionRows(
+          ledgerCandidates,
+          `REJECTED — not assessed. The Stage 9 pass for LOC batch ${i + 1} failed (${msg}), so this candidate could not be reviewed and is not carried forward. Re-run Stage 9 to assess it properly.`,
+        )}`;
       }
+
+      // Coverage check: one targeted retry for any candidate with no verdict,
+      // then an explicit forced row so the ledger is always complete.
+      let missing = missingDispositions(ledgerCandidates, text);
+      if (missing.length > 0) {
+        try {
+          const rows = await collect({
+            systemPrompt: STAGE_9_SYSTEM_PROMPT,
+            userMessage: `${userMessage}\n\n==== YOUR PREVIOUS OUTPUT ====\n${text}${buildCoverageRetryNote(missing)}`,
+            maxTokens: 2000,
+            sessionId: args.sessionId,
+            stageLabel: `Stage 9 LOC batch ${i + 1} disposition retry`,
+            stageNumber: "9",
+            stageName: "Distinctiveness Check (LOC batch)",
+          });
+          const accepted = rows
+            .split("\n")
+            .filter((l) => missing.some((m) => new RegExp(`\\b${m.id}\\b`, "i").test(l)))
+            .join("\n");
+          if (accepted.trim()) text = `${text}\n\nCANDIDATE DISPOSITION — COMPLETION ROWS (added by coverage check)\n${accepted}`;
+        } catch (e) {
+          console.error(
+            `[stage9-loc] session=${args.sessionId} batch=${i + 1} disposition retry failed: ${
+              e instanceof Error ? e.message : String(e)
+            }`,
+          );
+        }
+        missing = missingDispositions(ledgerCandidates, text);
+        if (missing.length > 0) {
+          text = `${text}\n\nCANDIDATE DISPOSITION — COMPLETION ROWS (added by coverage check)\n${buildForcedRejectionRows(
+            missing,
+            "REJECTED — not carried forward. The reviewer returned no reason for this candidate after a coverage retry; recorded here so the ledger accounts for every input rather than dropping it silently.",
+          )}`;
+        }
+      }
+      return text;
     }),
   );
 
   const body = results.filter(Boolean).join("\n\n");
   if (!body) return "";
-  return `\n\n${LOC_STAGE9_SECTION_HEADING}\n${candidates.length} Left-of-Centre candidates assessed in ${batches.length} parallel batch(es) of up to ${LOC_STAGE9_BATCH_SIZE}, using the identical Stage 9 system prompt and rubric applied to the Funnel batch. Propositions below stand on equal footing with the Funnel propositions for Stage 10 scoring.\n\n${body}\n`;
+  return `\n\n${LOC_STAGE9_SECTION_HEADING}\n${candidates.length} Left-of-Centre candidates (${ids[0]}–${ids[ids.length - 1]}) assessed in ${batches.length} parallel batch(es) of up to ${LOC_STAGE9_BATCH_SIZE}, using the identical Stage 9 system prompt and rubric applied to the Funnel batch. Every candidate carries an explicit disposition — survived, rebuilt, or rejected with a reason. Propositions below stand on equal footing with the Funnel propositions for Stage 10 scoring.\n\n${body}\n`;
 }
+
