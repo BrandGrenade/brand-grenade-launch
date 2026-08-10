@@ -337,7 +337,7 @@ export const runStage21 = createServerFn({ method: "POST" })
       .eq("id", data.sessionId);
     if (saveErr) throw new Error(`Failed to save Stage 21 outputs: ${saveErr.message}`);
 
-    const fidelity = await checkAndSaveFidelity(data.sessionId, s.stage_20l_output, outputs);
+    const fidelity = await checkAndSaveFidelity(data.sessionId, null, outputs);
     return { outputs, fidelity };
   });
 
@@ -411,7 +411,7 @@ export const recheckStage21Fidelity = createServerFn({ method: "POST" })
     await assertSessionAccess(data.sessionId, context.userId);
     const { data: row, error } = await supabaseAdmin
       .from("sessions")
-      .select("stage_20l_output, stage_21_outputs")
+      .select("stage_21_outputs")
       .eq("id", data.sessionId)
       .single();
     if (error || !row) throw new Error(error?.message ?? "Session not found");
@@ -421,7 +421,7 @@ export const recheckStage21Fidelity = createServerFn({ method: "POST" })
     const { runChannelFidelityCheck } = await import("./stage21-fidelity.server");
     const report = await runChannelFidelityCheck({
       sessionId: data.sessionId,
-      leadExpression: (row.stage_20l_output as string | null) ?? null,
+      leadExpression: null,
       outputs,
     });
     const { error: saveErr } = await supabaseAdmin
@@ -491,7 +491,7 @@ export const retryStage21 = createServerFn({ method: "POST" })
       .eq("id", data.sessionId);
     if (saveErr) throw new Error(saveErr.message);
 
-    const fidelity = await checkAndSaveFidelity(data.sessionId, s.stage_20l_output, merged);
+    const fidelity = await checkAndSaveFidelity(data.sessionId, null, merged);
     return { outputs: merged, fidelity };
 
   });
