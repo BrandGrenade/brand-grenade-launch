@@ -90,6 +90,49 @@ export function repairTruncatedJson(input: string): string {
   return out;
 }
 
+// Drop stray closing braces/brackets that don't match the currently open
+// container. Long model outputs frequently emit one `}` too many at the end
+// of a repeated array element (`...]}}},{"id":"t2"`), which aborts JSON.parse
+// mid-document — a failure the truncation repair above cannot fix because the
+// document is not truncated, it is over-closed.
+export function dropStrayClosers(input: string): string {
+  let out = "";
+  const stack: string[] = [];
+  let inString = false;
+  let escaped = false;
+  for (let i = 0; i < input.length; i++) {
+    const ch = input[i] as string;
+    if (inString) {
+      out += ch;
+      if (escaped) escaped = false;
+      else if (ch === "\\") escaped = true;
+      else if (ch === '"') inString = false;
+      continue;
+    }
+    if (ch === '"') {
+      inString = true;
+      out += ch;
+      continue;
+    }
+    if (ch === "{" || ch === "[") {
+      stack.push(ch);
+      out += ch;
+      continue;
+    }
+    if (ch === "}" || ch === "]") {
+      const top = stack[stack.length - 1];
+      if ((ch === "}" && top === "{") || (ch === "]" && top === "[")) {
+        stack.pop();
+        out += ch;
+      }
+      // else: unmatched closer — skip it.
+      continue;
+    }
+    out += ch;
+  }
+  return out;
+}
+
 export function parseJsonLenient<T>(raw: string): T {
   try {
     return JSON.parse(raw) as T;
@@ -97,7 +140,17 @@ export function parseJsonLenient<T>(raw: string): T {
     try {
       return JSON.parse(sanitizeJsonControlChars(raw)) as T;
     } catch {
-      return JSON.parse(repairTruncatedJson(raw)) as T;
+      try {
+        return JSON.parse(dropStrayClosers(sanitizeJsonControlChars(raw))) as T;
+      } catch {
+        try {
+          return JSON.parse(repairTruncatedJson(raw)) as T;
+        } catch {
+          return JSON.parse(
+            repairTruncatedJson(dropStrayClosers(sanitizeJsonControlChars(raw))),
+          ) as T;
+        }
+      }
     }
   }
 }
