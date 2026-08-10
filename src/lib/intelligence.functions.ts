@@ -179,6 +179,10 @@ function normaliseBriefType(raw: string | null | undefined): BriefType {
   return raw?.toLowerCase().trim() === "government" ? "government" : "commercial";
 }
 
+/** A 'running' row with no heartbeat for this long is treated as dead. */
+const STALE_RUN_MS = 4 * 60_000;
+
+
 export const runIntelligenceAnalysis = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => RunInput.parse(input))
