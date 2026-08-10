@@ -1,0 +1,1 @@
+ALTER TABLE public.briefing_room_workspaces ADD COLUMN IF NOT EXISTS last_error text;

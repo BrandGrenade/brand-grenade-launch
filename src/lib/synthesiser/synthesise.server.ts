@@ -25,6 +25,14 @@ const ANTHROPIC_URL = "https://api.anthropic.com/v1/messages";
 const MODEL = "claude-sonnet-4-6";
 const REQUEST_TIMEOUT_MS = 180_000;
 
+/**
+ * Wall-clock cap on the sequential verification phase. The synthesiser has no
+ * DB row to resume from, so exceeding the request lifetime means total loss of
+ * work. Better to return extracted claims with some unverified.
+ */
+const VERIFICATION_BUDGET_MS = 6 * 60_000;
+
+
 /** Per-document text cap sent to the classifier (cost/latency control). */
 const MAX_DOC_CHARS = 90_000;
 const MAX_CLAIMS_PER_DOC = 40;
@@ -288,8 +296,18 @@ export async function synthesiseResearchDocuments(args: {
     })).filter((b) => b.list.length > 0);
 
     // Sequential per category — keeps each batch inside the auditor's claim cap
-    // and avoids stacking long web-search calls in parallel.
+    // and avoids stacking long web-search calls in parallel. The whole chain
+    // runs inside one browser request, so a wall-clock deadline is required:
+    // without it six slow web-search batches can outlive the request and the
+    // user loses every extracted claim with no error at all.
+    const verifyDeadline = Date.now() + VERIFICATION_BUDGET_MS;
     for (const batch of batches) {
+      if (Date.now() > verifyDeadline) {
+        warnings.push(
+          "Verification time budget reached — remaining claims are returned unverified rather than losing the whole synthesis.",
+        );
+        break;
+      }
       try {
         await verifyCategoryBatch(
           batch.key,
@@ -304,6 +322,7 @@ export async function synthesiseResearchDocuments(args: {
         warnings.push(`Verification batch failed: ${msg.slice(0, 160)}`);
       }
     }
+
   }
 
   const fields = Object.fromEntries(

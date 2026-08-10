@@ -237,7 +237,10 @@ export const runStage12 = createServerFn({ method: "POST" })
         systemPrompt: STAGE_12_SYSTEM_PROMPT,
         userMessage,
         maxTokens: 64000,
-        timeoutMs: 30_000,
+        // Idle (per-chunk) timeout, not wall-clock. 30s was too tight for a
+        // large selection prompt and caused premature deterministic fallbacks.
+        timeoutMs: 180_000,
+
         skipUniversalWrapper: true,
         sessionId: data.sessionId,
         stageLabel: "Stage 12",

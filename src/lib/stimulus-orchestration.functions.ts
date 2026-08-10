@@ -598,8 +598,13 @@ export const runOrchestrationStep = createServerFn({ method: "POST" })
       return { done: true, phase: status, note: "Nothing left to run." };
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Orchestration step failed";
-      await setPhase(id, { error: msg });
+      // Keep `status` on the current phase: it is the resume point and the
+      // step machine has no 'failed' branch. Mark the failure in phase_note
+      // so a stalled run is distinguishable from one still working.
+      await setPhase(id, { error: msg, phase_note: `Step failed — retry: ${msg}` });
       throw new Error(msg);
+
+
     }
   });
 

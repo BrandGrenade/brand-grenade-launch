@@ -60,6 +60,37 @@ async function loadWorkspace(id: string, userId: string) {
   };
 }
 
+/**
+ * Every Briefing Room step runs inside one browser-initiated request. Without
+ * this guard a failed model call left no trace at all: the workspace kept its
+ * previous values and nothing recorded that a run was attempted or why it
+ * failed. Now the failure is persisted to `last_error` before it is rethrown.
+ */
+async function guardedStep<T>(
+  workspaceId: string,
+  label: string,
+  args: Parameters<typeof callClaude>[0],
+): Promise<T> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  try {
+    const raw = await callClaude(args);
+    const parsed = parseJson<T>(raw, label);
+    await supabaseAdmin
+      .from("briefing_room_workspaces")
+      .update({ last_error: null })
+      .eq("id", workspaceId);
+    return parsed;
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : `${label} failed`;
+    await supabaseAdmin
+      .from("briefing_room_workspaces")
+      .update({ last_error: `${label}: ${msg}` })
+      .eq("id", workspaceId);
+    throw new Error(`${label}: ${msg}`);
+  }
+}
+
+
 function parseJson<T>(raw: string, label: string): T {
   // Strip markdown fences if the model added them despite instructions.
   let s = raw.trim();
@@ -223,13 +254,12 @@ export const runBriefingStep1 = createServerFn({ method: "POST" })
       rawBrief: ws.raw_brief,
       evidence: ws.supporting_evidence,
     })}\n\nProduce the Step 1 diagnostic JSON now.`;
-    const raw = await callClaude({
+    const parsed = await guardedStep<Step1Output>(data.id, "Step 1", {
       systemPrompt: STEP_1_SYSTEM,
       userMessage: user,
       maxTokens: 4000,
       skipUniversalWrapper: true,
     });
-    const parsed = parseJson<Step1Output>(raw, "Step 1");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     // Downstream steps depend on Step 1 — clear them on re-run to avoid stale cascade.
     const { error } = await supabaseAdmin
@@ -258,13 +288,12 @@ export const runBriefingStep2 = createServerFn({ method: "POST" })
       rawBrief: ws.raw_brief,
       evidence: ws.supporting_evidence,
     })}\n\nProduce the Step 2 truths JSON now.`;
-    const raw = await callClaude({
+    const parsed = await guardedStep<Step2Output>(data.id, "Step 2", {
       systemPrompt: STEP_2_SYSTEM,
       userMessage: user,
       maxTokens: 6000,
       skipUniversalWrapper: true,
     });
-    const parsed = parseJson<Step2Output>(raw, "Step 2");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin
       .from("briefing_room_workspaces")
@@ -288,13 +317,12 @@ TRUTHS (Step 2):
 ${JSON.stringify(ws.truths.truths, null, 2)}
 
 Produce the Step 3 relevance JSON now.`;
-    const raw = await callClaude({
+    const parsed = await guardedStep<Step3Output>(data.id, "Step 3", {
       systemPrompt: STEP_3_SYSTEM,
       userMessage: user,
       maxTokens: 4000,
       skipUniversalWrapper: true,
     });
-    const parsed = parseJson<Step3Output>(raw, "Step 3");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin
       .from("briefing_room_workspaces")
@@ -342,13 +370,12 @@ RELEVANT TRUTHS ONLY (from Step 3 filter — indices below refer to these, not t
 ${JSON.stringify(relevantTruths, null, 2)}
 
 Produce the Step 4 candidate tensions JSON now. Cite indices from the array above via "collided_truth_indices".`;
-    const raw = await callClaude({
+    const parsed = await guardedStep<Step4Output>(data.id, "Step 4", {
       systemPrompt: STEP_4_SYSTEM,
       userMessage: user,
       maxTokens: 4000,
       skipUniversalWrapper: true,
     });
-    const parsed = parseJson<Step4Output>(raw, "Step 4");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin
       .from("briefing_room_workspaces")
