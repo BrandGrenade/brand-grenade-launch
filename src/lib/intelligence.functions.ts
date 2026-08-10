@@ -200,10 +200,23 @@ export const runIntelligenceAnalysis = createServerFn({ method: "POST" })
       return { success: false, sessionId, error: "Unauthorised" };
     }
 
-    // Guard: another run already in progress.
+    // Guard: another run already in progress — unless that run is provably
+    // dead. A live run heartbeats updated_at every few seconds (see the
+    // watchdog wiring below), so a row whose updated_at has not moved for
+    // STALE_RUN_MS is a stalled Worker and may be taken over.
     if (row.status === "running") {
-      return { success: false, sessionId, error: "A run is already in progress for this session" };
+      const lastBeat = row.updated_at ? Date.parse(row.updated_at) : 0;
+      const staleFor = Date.now() - lastBeat;
+      if (!Number.isFinite(lastBeat) || staleFor < STALE_RUN_MS) {
+        return { success: false, sessionId, error: "A run is already in progress for this session" };
+      }
+      console.warn(
+        `[intelligence] session=${sessionId} taking over stalled run (no heartbeat for ${Math.round(
+          staleFor / 1000,
+        )}s)`,
+      );
     }
+
 
     // Guard: retry ceiling.
     if ((row.retry_count ?? 0) >= MAX_RETRIES) {
