@@ -9,6 +9,11 @@ import {
   UNIVERSAL_BANNED_STAGE9_LIST,
   CONDITIONALLY_BANNED_STAGE9_LIST,
 } from "./stage9-banned-words";
+import {
+  buildCandidateLedgerBlock,
+  buildDispositionInstruction,
+  type LedgerCandidate,
+} from "./stage9-disposition";
 
 export const STAGE_9_SYSTEM_PROMPT = `You are a world-class advertising strategist. Your task is to take the Stage 8 candidate propositions, interrogate each one for DISTINCTIVENESS and OWNERSHIP, and produce 5-7 Single-Minded Propositions that are genuinely the strongest, most ownable ACTIVE PROMISES available from this brief.
 
@@ -120,11 +125,19 @@ export function buildStage9UserMessage(args: {
   stage7DominantSignal?: string;
   propositionCount: number;
   competitorOwnedConditionalWords?: readonly string[];
+  candidates?: LedgerCandidate[];
 }): string {
   const owned = args.competitorOwnedConditionalWords ?? [];
   const conditionalClause = owned.length
     ? `CONDITIONAL — banned in this core generator for THIS brief because a named competitor already owns them (or the brief's exclusion list forbids them): ${owned.join(", ")}. Do NOT use these or any inflected form. The rest of the conditional list is allowed in core for this brief.`
     : `CONDITIONAL — no words from the conditional list (${CONDITIONALLY_BANNED_STAGE9_LIST}) are banned in core for this brief, because no named competitor in this category owns them and the brief does not exclude them. They are allowed in core if the line genuinely needs them; still prefer a fresher verb where one exists.`;
+  const candidates = args.candidates ?? [];
+  const enumerated = candidates.length
+    ? `\n==== STAGE 8 — ENUMERATED CANDIDATES (every one of these must appear in the CANDIDATE DISPOSITION table) ====\n${buildCandidateLedgerBlock(candidates)}\n`
+    : "";
+  const dispositionInstruction = candidates.length
+    ? `\n\n${buildDispositionInstruction(candidates)}`
+    : "";
   return `Brand: ${args.brandName}
 Category: ${args.category}
 
@@ -137,12 +150,13 @@ ${conditionalClause}
 
 ==== STAGE 8 — CANDIDATE PROPOSITIONS (raw material to interrogate against the impossibility test, NOT to repeat verbatim) ====
 ${args.stage8Output}
-
+${enumerated}
 ==== STAGE 7 — STRATEGIC TERRITORIES / DOMINANT SIGNAL ====
 ${args.stage7DominantSignal ?? "(not provided)"}
 
 ==== STAGE 2 — COMPETITIVE LANDSCAPE (CMM — USE THESE NAMED COMPETITORS IN THE IMPOSSIBILITY ANALYSIS) ====
 ${args.cmm}
 
-Generate 5–7 Single-Minded Propositions per the Stage 9 specification. Each must be an ACTIVE PROMISE (4–12 words) whose central artefact is the STRATEGIC-IMPOSSIBILITY ANALYSIS against every named competitor above. Passive observations and compressed fragments will be rejected. Respect the PRE-COMPUTED BANNED TARGETS block at generation time. For each proposition present: (1) The SMP, (2) The foundation, (3) The strategic-impossibility analysis (per competitor), (4) The creative territory, (5) The creative function classification. Then provide the ranking and the top 1–2 recommendation with full strategic rationale.`;
+Generate 5–7 Single-Minded Propositions per the Stage 9 specification. Each must be an ACTIVE PROMISE (4–12 words) whose central artefact is the STRATEGIC-IMPOSSIBILITY ANALYSIS against every named competitor above. Passive observations and compressed fragments will be rejected. Respect the PRE-COMPUTED BANNED TARGETS block at generation time. For each proposition present: (1) The SMP, (2) The foundation, (3) The strategic-impossibility analysis (per competitor), (4) The creative territory, (5) The creative function classification. Then provide the ranking and the top 1–2 recommendation with full strategic rationale.${dispositionInstruction}`;
 }
+

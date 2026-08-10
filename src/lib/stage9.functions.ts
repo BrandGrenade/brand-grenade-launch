@@ -18,6 +18,13 @@ import {
 } from "./output-banned-word-gate";
 
 import { countPropositions } from "./count-helpers";
+import {
+  extractStage8Candidates,
+  missingDispositions,
+  buildCoverageRetryNote,
+  buildForcedRejectionRows,
+  appendDispositionCompletion,
+} from "./stage9-disposition";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertSessionAccess } from "@/lib/auth-helpers.server";
 import { assertUpstreamStageOutput } from "./pipeline-integrity";
@@ -89,6 +96,8 @@ export const runStage9 = createServerFn({ method: "POST" })
       stage2Output: session.stage_2_output ?? "",
     });
 
+    const stage8Candidates = extractStage8Candidates(session.stage_8_output);
+
     const userMessage = buildStage9UserMessage({
       brandName: session.brand_name,
       category: session.category,
@@ -97,6 +106,7 @@ export const runStage9 = createServerFn({ method: "POST" })
       stage7DominantSignal: session.stage_7_output ?? undefined,
       propositionCount,
       competitorOwnedConditionalWords: coreCompetitorOwnedConditional,
+      candidates: stage8Candidates,
     });
 
     const mode: OutputGateMode = session.is_preflight_test === true ? "test" : "live";
@@ -154,7 +164,70 @@ export const runStage9 = createServerFn({ method: "POST" })
       throw e instanceof Error ? e : new Error(msg);
     }
 
+    // ── DISPOSITION COVERAGE CHECK ──
+    // Every enumerated Stage 8 candidate must carry an explicit verdict.
+    // Missing rows trigger a targeted retry; anything the model still refuses
+    // to account for is written into the ledger as an explicit rejection with
+    // a stated reason, so nothing is ever filtered silently.
+    if (stage8Candidates.length > 0) {
+      for (let attempt = 1; attempt <= 2; attempt++) {
+        const missing = missingDispositions(stage8Candidates, output);
+        if (missing.length === 0) break;
+        await setRetryStatus(
+          data.sessionId,
+          `Stage 9 disposition ledger incomplete — requesting reasons for ${missing.length} unaccounted candidate(s)...`,
+        );
+        let rows = "";
+        try {
+          rows = await collectClaudeText({
+            systemPrompt: STAGE_9_SYSTEM_PROMPT + stage9Directive,
+            userMessage: `${userMessage}\n\n==== YOUR PREVIOUS OUTPUT ====\n${output}${buildCoverageRetryNote(missing)}`,
+            maxTokens: 4000,
+            sessionId: data.sessionId,
+            stageLabel: `Stage 9 (disposition coverage retry ${attempt})`,
+            stageNumber: "9",
+            stageName: "Distinctiveness Check",
+          });
+        } catch (e) {
+          console.error(
+            `[stage9] session=${data.sessionId} disposition retry ${attempt} failed: ${
+              e instanceof Error ? e.message : String(e)
+            }`,
+          );
+        }
+        const accepted = rows
+          .split("\n")
+          .filter((l) => missing.some((m) => new RegExp(`\\b${m.id}\\b`, "i").test(l)))
+          .join("\n");
+        if (accepted.trim()) {
+          const addition = appendDispositionCompletion({
+            output,
+            candidates: stage8Candidates,
+            extraRows: accepted,
+          });
+          const delta = addition.slice(output.length);
+          output = addition;
+          yield { delta };
+        }
+      }
+      const stillMissing = missingDispositions(stage8Candidates, output);
+      if (stillMissing.length > 0) {
+        const forced = appendDispositionCompletion({
+          output,
+          candidates: stage8Candidates,
+          extraRows: buildForcedRejectionRows(
+            stillMissing,
+            "REJECTED — not carried into the Stage 9 set. The reviewer returned no reason for this candidate after two coverage retries; recorded here so the ledger accounts for every input rather than dropping it silently.",
+          ),
+        });
+        const delta = forced.slice(output.length);
+        output = forced;
+        yield { delta };
+      }
+    }
+
     await setRetryStatus(data.sessionId, null);
+
 
     // Read pre-generated LOC output from DB (parallel track). Do NOT
     // regenerate here — LOC is authoritative from its own runner. If it
