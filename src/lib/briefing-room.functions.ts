@@ -60,6 +60,37 @@ async function loadWorkspace(id: string, userId: string) {
   };
 }
 
+/**
+ * Every Briefing Room step runs inside one browser-initiated request. Without
+ * this guard a failed model call left no trace at all: the workspace kept its
+ * previous values and nothing recorded that a run was attempted or why it
+ * failed. Now the failure is persisted to `last_error` before it is rethrown.
+ */
+async function guardedStep<T>(
+  workspaceId: string,
+  label: string,
+  args: Parameters<typeof callClaude>[0],
+): Promise<T> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  try {
+    const raw = await callClaude(args);
+    const parsed = parseJson<T>(raw, label);
+    await supabaseAdmin
+      .from("briefing_room_workspaces")
+      .update({ last_error: null })
+      .eq("id", workspaceId);
+    return parsed;
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : `${label} failed`;
+    await supabaseAdmin
+      .from("briefing_room_workspaces")
+      .update({ last_error: `${label}: ${msg}` })
+      .eq("id", workspaceId);
+    throw new Error(`${label}: ${msg}`);
+  }
+}
+
+
 function parseJson<T>(raw: string, label: string): T {
   // Strip markdown fences if the model added them despite instructions.
   let s = raw.trim();
