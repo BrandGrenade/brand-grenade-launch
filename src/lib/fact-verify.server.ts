@@ -21,6 +21,8 @@
 const ANTHROPIC_URL = "https://api.anthropic.com/v1/messages";
 const VERIFY_MODEL = "claude-sonnet-4-6";
 const REQUEST_TIMEOUT_MS = 180_000;
+/** Absolute ceiling for the whole verification call, abort failures included. */
+const VERIFY_WALL_CLOCK_MS = 200_000;
 const MAX_SEARCHES = 8;
 
 export type FactVerdict = "verified" | "unverified" | "contradicted";
