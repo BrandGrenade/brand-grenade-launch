@@ -10,7 +10,15 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { streamClaude } from "./claude.server";
+import { scheduleBackground } from "./background.server";
 import { withIntelligenceWatchdog } from "./intelligence-stream-watchdog";
+
+type SupabaseAuthedClient = Parameters<
+  Parameters<typeof requireSupabaseAuth.server>[0]
+>[0] extends never
+  ? never
+  : never;
+
 
 import { parseJsonLenient } from "./loc/json-sanitize";
 import { buildSystemPrompt } from "./intelligence/system-prompt";
