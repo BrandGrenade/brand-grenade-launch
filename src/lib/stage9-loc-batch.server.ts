@@ -13,6 +13,14 @@ import {
   UNIVERSAL_BANNED_STAGE9_LIST,
   CONDITIONALLY_BANNED_STAGE9_LIST,
 } from "./stage9-banned-words";
+import {
+  DISPOSITION_HEADING,
+  buildDispositionInstruction,
+  buildForcedRejectionRows,
+  buildCoverageRetryNote,
+  missingDispositions,
+  type LedgerCandidate,
+} from "./stage9-disposition";
 
 export const LOC_STAGE9_SECTION_HEADING =
   "==== LEFT-OF-CENTRE CANDIDATES — STAGE 9 DISTINCTIVENESS PASS (same rubric as Funnel batch) ====";
