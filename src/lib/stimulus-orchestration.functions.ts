@@ -598,8 +598,11 @@ export const runOrchestrationStep = createServerFn({ method: "POST" })
       return { done: true, phase: status, note: "Nothing left to run." };
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Orchestration step failed";
-      await setPhase(id, { error: msg });
+      // Setting only `error` left status on the mid-run phase, which is
+      // indistinguishable from "still working" for anything that polls.
+      await setPhase(id, { error: msg, status: "failed" });
       throw new Error(msg);
+
     }
   });
 

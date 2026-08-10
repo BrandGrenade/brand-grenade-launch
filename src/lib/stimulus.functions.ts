@@ -197,7 +197,17 @@ export const generateStimulusBatch = createServerFn({ method: "POST" })
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Stimulus generation failed";
       await supabaseAdmin.from("stimulus_runs").update({ error: msg }).eq("id", run.id);
+      // Without this the claimed rows stay 'pending' forever and the UI shows
+      // an eternal spinner instead of a failure.
+      await supabaseAdmin
+        .from("stimulus_directions")
+        .update({ status: "failed", error: msg })
+        .in(
+          "id",
+          pending.map((p) => p.id),
+        );
       throw e instanceof Error ? e : new Error(msg);
+
     }
 
     const { count } = await supabaseAdmin
