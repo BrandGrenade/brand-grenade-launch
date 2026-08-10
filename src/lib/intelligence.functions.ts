@@ -316,7 +316,17 @@ export const runIntelligenceAnalysis = createServerFn({ method: "POST" })
         stageName: "Intelligence Engine",
       });
 
-      for await (const delta of stream) {
+      // Stall watchdog: a dead connection now raises a real error (caught
+      // below and persisted as status='failed' + last_error) instead of
+      // hanging in 'running' forever. The heartbeat keeps updated_at moving
+      // while tokens actually flow, which is what makes a stall detectable.
+      const guarded = withIntelligenceWatchdog(stream, {
+        onHeartbeat: async () => {
+          await writeStatus({ stage_status: `running:${Math.max(1, lastLayerPublished)}` });
+        },
+      });
+
+      for await (const delta of guarded) {
         accumulated += delta;
         const layer = Math.min(10, Math.max(1, Math.floor(accumulated.length / STEP_CHARS) + 1));
         if (layer > lastLayerPublished) {
@@ -327,6 +337,7 @@ export const runIntelligenceAnalysis = createServerFn({ method: "POST" })
           });
         }
       }
+
     } catch (e) {
       const message = e instanceof Error ? e.message : "Unknown streaming error";
       await writeStatus({
