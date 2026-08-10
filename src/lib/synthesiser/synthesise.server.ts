@@ -25,6 +25,14 @@ const ANTHROPIC_URL = "https://api.anthropic.com/v1/messages";
 const MODEL = "claude-sonnet-4-6";
 const REQUEST_TIMEOUT_MS = 180_000;
 
+/**
+ * Wall-clock cap on the sequential verification phase. The synthesiser has no
+ * DB row to resume from, so exceeding the request lifetime means total loss of
+ * work. Better to return extracted claims with some unverified.
+ */
+const VERIFICATION_BUDGET_MS = 6 * 60_000;
+
+
 /** Per-document text cap sent to the classifier (cost/latency control). */
 const MAX_DOC_CHARS = 90_000;
 const MAX_CLAIMS_PER_DOC = 40;
