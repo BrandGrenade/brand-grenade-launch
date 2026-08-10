@@ -13,7 +13,11 @@ import { streamClaude } from "./claude.server";
 import { scheduleBackground } from "./background.server";
 import { withIntelligenceWatchdog } from "./intelligence-stream-watchdog";
 
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/integrations/supabase/types";
+
 type SupabaseAuthedClient = SupabaseClient<Database>;
+
 
 
 
