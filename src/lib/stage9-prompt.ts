@@ -9,6 +9,11 @@ import {
   UNIVERSAL_BANNED_STAGE9_LIST,
   CONDITIONALLY_BANNED_STAGE9_LIST,
 } from "./stage9-banned-words";
+import {
+  buildCandidateLedgerBlock,
+  buildDispositionInstruction,
+  type LedgerCandidate,
+} from "./stage9-disposition";
 
 export const STAGE_9_SYSTEM_PROMPT = `You are a world-class advertising strategist. Your task is to take the Stage 8 candidate propositions, interrogate each one for DISTINCTIVENESS and OWNERSHIP, and produce 5-7 Single-Minded Propositions that are genuinely the strongest, most ownable ACTIVE PROMISES available from this brief.
 
