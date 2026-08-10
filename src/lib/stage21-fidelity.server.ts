@@ -1,7 +1,7 @@
 // CHANNEL FIDELITY CHECK
 //
 // Holds every generated Stage 21 channel brief against the decided Lead
-// Creative Expression (Stage 20L) and reports drift BEFORE the briefs reach
+// locked campaign big idea and reports drift BEFORE the briefs reach
 // any downstream consumer — the Creative Stimulus Engine in particular.
 //
 // Same discipline as the Lens Fidelity check in the stimulus layer: it does
@@ -129,11 +129,10 @@ export async function runChannelFidelityCheck(args: {
   const checkedAt = new Date().toISOString();
   let lead = args.leadExpression?.trim() ?? "";
 
-  // Fallback standard: when a session has no Stage 20L Lead Creative
-  // Expression but the Creative Stimulus sweep has locked one big idea and one
-  // campaign line, that lock IS the thing every channel must adapt. Without
-  // this the check reported "unverified" on sessions that in fact had a
-  // binding idea, and drift went ungraded.
+  // Standard: the Creative Stimulus sweep's locked big idea and campaign line
+  // ARE the thing every channel must adapt (this replaced the retired Stage
+  // 20L Lead Creative Expression). leadExpression is only ever passed
+  // explicitly for legacy sessions.
   if (!lead) {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: s } = await supabaseAdmin
@@ -161,7 +160,7 @@ export async function runChannelFidelityCheck(args: {
         verdict: "drift" as const,
         score: 0,
         reasoning:
-          "Neither a Lead Creative Expression (Stage 20L) nor a locked campaign big idea exists for this session, so these briefs each interpreted the proposition independently. Decide one, then regenerate.",
+          "No campaign big idea is locked for this session, so these briefs each interpreted the proposition independently. Lock one in the Creative Engine, then regenerate.",
         missing: [],
         misreadingEvidence: "",
         checkedAt,
