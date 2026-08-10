@@ -89,6 +89,8 @@ export const runStage9 = createServerFn({ method: "POST" })
       stage2Output: session.stage_2_output ?? "",
     });
 
+    const stage8Candidates = extractStage8Candidates(session.stage_8_output);
+
     const userMessage = buildStage9UserMessage({
       brandName: session.brand_name,
       category: session.category,
@@ -97,6 +99,7 @@ export const runStage9 = createServerFn({ method: "POST" })
       stage7DominantSignal: session.stage_7_output ?? undefined,
       propositionCount,
       competitorOwnedConditionalWords: coreCompetitorOwnedConditional,
+      candidates: stage8Candidates,
     });
 
     const mode: OutputGateMode = session.is_preflight_test === true ? "test" : "live";
