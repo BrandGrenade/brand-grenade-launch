@@ -62,6 +62,7 @@ function buildBatchUserMessage(args: {
   cmm: string;
   stage7DominantSignal?: string;
   candidates: LocCandidate[];
+  ids: string[];
   batchIndex: number;
   batchCount: number;
   competitorOwnedConditionalWords?: readonly string[];
@@ -74,11 +75,15 @@ function buildBatchUserMessage(args: {
   const candidateBlock = args.candidates
     .map(
       (c, i) =>
-        `CANDIDATE ${i + 1} — SOURCE: LOC (${c.engine})\nLINE: "${c.proposition}"${
+        `${args.ids[i]} — SOURCE: LOC (${c.engine})\nLINE: "${c.proposition}"${
           c.descriptor ? `\nDESCRIPTOR: ${c.descriptor}` : ""
         }${c.anchor ? `\nANCHOR: ${c.anchor}` : ""}`,
     )
     .join("\n\n");
+
+  const ledger = buildDispositionInstruction(
+    args.candidates.map((c, i) => ({ id: args.ids[i]!, line: c.proposition })),
+  );
 
   return `Brand: ${args.brandName}
 Category: ${args.category}
@@ -112,8 +117,11 @@ For every SURVIVING proposition present, in this exact order:
 5. THE CREATIVE TERRITORY.
 6. CREATIVE FUNCTION CLASSIFICATION — SELF-EXECUTING or PLATFORM with rationale.
 
-Do NOT produce a ranking or a recommendation in this batch — ranking happens once, after all batches are merged.`;
+Do NOT produce a ranking or a recommendation in this batch — ranking happens once, after all batches are merged.
+
+${ledger}`;
 }
+
 
 /**
  * Run the Stage 9 distinctiveness pass over LOC candidates in parallel
