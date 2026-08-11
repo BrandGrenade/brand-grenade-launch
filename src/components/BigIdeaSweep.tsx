@@ -496,6 +496,7 @@ export function BigIdeaSweep({
 }) {
   const start = useServerFn(startBigIdeaRun);
   const batch = useServerFn(generateBigIdeaBatch);
+  const ledger = useServerFn(buildIdeaConvergenceLedger);
   const load = useServerFn(loadStimulusRun);
   const listRuns = useServerFn(listStimulusRuns);
   const checkLines = useServerFn(checkBigIdeaLines);
