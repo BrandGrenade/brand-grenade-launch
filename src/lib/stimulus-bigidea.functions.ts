@@ -132,6 +132,11 @@ export const startBigIdeaRun = createServerFn({ method: "POST" })
   });
 
 /** Generates the next batch of pending lenses for a big idea run. */
+/**
+ * Generates the next batch of pending lenses for a big idea run.
+ * Kept for manual "generate one batch" use; the full sweep is driven
+ * server-side by `resumeBigIdeaSweep` so it survives the browser closing.
+ */
 export const generateBigIdeaBatch = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i) =>
@@ -141,146 +146,31 @@ export const generateBigIdeaBatch = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const run = await assertRunAccess(data.runId, context.userId);
+    const { runBigIdeaBatch } = await import("./stimulus/big-idea-sweep.server");
+    return await runBigIdeaBatch(run.id, data.batchSize);
+  });
 
-    const { data: pending, error } = await supabaseAdmin
-      .from("stimulus_directions")
-      .select("id, lens_id")
-      .eq("run_id", run.id)
-      .eq("status", "pending")
-      .order("sort_order", { ascending: true })
-      .limit(data.batchSize);
-    if (error) throw new Error(error.message);
+/**
+ * Starts (or re-starts) server-side generation of every remaining lens.
+ * Returns immediately; the sweep continues in the background even if the
+ * browser navigates away. Safe to call repeatedly — an actively-beating sweep
+ * is left alone rather than double-driven.
+ */
+export const resumeBigIdeaSweep = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) =>
+    z.object({ runId: z.string().uuid(), force: z.boolean().default(false) }).parse(i),
+  )
+  .handler(async ({ data, context }) => {
+    const run = await assertRunAccess(data.runId, context.userId);
+    const { driveBigIdeaSweep, SWEEP_STALL_MS } = await import("./stimulus/big-idea-sweep.server");
+    const { scheduleBackground } = await import("./background.server");
 
-    if (!pending || pending.length === 0) {
-      await supabaseAdmin
-        .from("stimulus_runs")
-        .update({ status: "tissue_check", error: null })
-        .eq("id", run.id);
-      return { done: true as const, generated: 0, remaining: 0 };
-    }
-
-    const g = await loadGrounding(run.session_id);
-    const lenses = pending
-      .map((p) => getLens(p.lens_id))
-      .filter((l): l is NonNullable<typeof l> => Boolean(l));
-
-    // Every root tension already produced in this sweep. The in-sweep collision
-    // check compares against the FULL prior set, not just this batch.
-    const { data: priorRows } = await supabaseAdmin
-      .from("stimulus_directions")
-      .select("lens_id, lens_name, root_tension")
-      .eq("run_id", run.id)
-      .eq("status", "generated")
-      .not("root_tension", "is", null)
-      .order("sort_order", { ascending: true });
-    const priorTensions: PriorTension[] = (priorRows ?? [])
-      .filter((r) => (r.root_tension ?? "").trim())
-      .map((r) => ({
-        lensId: r.lens_id,
-        lensName: r.lens_name,
-        rootTension: (r.root_tension ?? "").trim(),
-      }));
-
-    // Regeneration is a LOOP, not a one-shot retry: each regenerated idea is
-    // re-tested against the full prior set (including ideas accepted earlier in
-    // this same batch), so a rewrite that dodges lens A but lands on lens B is
-    // caught rather than waved through.
-    const MAX_COLLISION_REGENS = 2;
-
-    try {
-      const raw = await callClaude({
-        systemPrompt: BIG_IDEA_SYSTEM_PROMPT,
-        userMessage: buildBigIdeaUserMessage({
-          ...g,
-          smp: run.smp || g.smp,
-          lenses,
-          priorTensions,
-        }),
-        skipUniversalWrapper: true,
-        maxTokens: 8000,
-        temperature: 1,
-        sessionId: run.session_id,
-        stageLabel: "Creative Stimulus — big idea sweep",
-      });
-      const parsed = parseBigIdeaResponse(raw);
-      for (const p of pending) {
-        let hit = parsed[p.lens_id];
-        let regens = 0;
-        const lens = getLens(p.lens_id);
-
-        while (hit?.idea?.trim() && hit.collisions.length > 0 && lens && regens < MAX_COLLISION_REGENS) {
-          regens += 1;
-          const note = [
-            `Lens ${p.lens_id} produced an idea whose root tension was "${hit.rootTension || "(unstated)"}".`,
-            `It collided with: ${hit.collisions
-              .map((c) => `${c.lensId}${c.why ? ` — ${c.why}` : ""}`)
-              .join("; ")}.`,
-            `This is regeneration attempt ${regens} of ${MAX_COLLISION_REGENS}.`,
-          ].join(" ");
-          const regenRaw = await callClaude({
-            systemPrompt: BIG_IDEA_SYSTEM_PROMPT,
-            userMessage: buildBigIdeaUserMessage({
-              ...g,
-              smp: run.smp || g.smp,
-              lenses: [lens],
-              priorTensions,
-              regenerationNote: note,
-            }),
-            skipUniversalWrapper: true,
-            maxTokens: 3000,
-            temperature: 1,
-            sessionId: run.session_id,
-            stageLabel: "Creative Stimulus — collision regeneration",
-          });
-          const again = parseBigIdeaResponse(regenRaw)[p.lens_id];
-          if (!again?.idea?.trim()) break;
-          hit = again;
-        }
-
-        const unresolved = (hit?.collisions ?? []).length > 0;
-        await supabaseAdmin
-          .from("stimulus_directions")
-          .update(
-            hit?.idea?.trim()
-              ? {
-                  direction: hit.idea.trim(),
-                  campaign_line: hit.line || null,
-                  // Field 2 only exists when a master line was locked at
-                  // generation time. Never store a pairing without recording
-                  // which master line it was written against.
-                  expression_under_master: g.detonationLine
-                    ? hit.expressionUnderMaster || null
-                    : null,
-                  master_line_at_generation: g.detonationLine || null,
-                  rationale: hit.rationale || null,
-                  root_tension: hit.rootTension || null,
-                  convergence: {
-                    source: "in_sweep",
-                    verdict: unresolved ? "COLLIDES" : "CLEAR",
-                    collidesWith: hit.collisions.map((c) => c.lensId),
-                    why: hit.collisions.map((c) => c.why).filter(Boolean).join(" · "),
-                    regenerations: regens,
-                  } as never,
-                  convergence_regen_count: regens,
-                  status: "generated",
-                  error: null,
-                }
-              : { status: "failed", error: "Lens produced no parseable big idea" },
-          )
-          .eq("id", p.id);
-
-        if (hit?.idea?.trim() && (hit.rootTension || "").trim())
-          priorTensions.push({
-            lensId: p.lens_id,
-            lensName: lens?.name ?? p.lens_id,
-            rootTension: hit.rootTension.trim(),
-          });
-      }
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : "Big idea generation failed";
-      await supabaseAdmin.from("stimulus_runs").update({ error: msg }).eq("id", run.id);
-      throw e instanceof Error ? e : new Error(msg);
-    }
+    const { data: row } = await supabaseAdmin
+      .from("stimulus_runs")
+      .select("status, last_batch_at")
+      .eq("id", run.id)
+      .single();
 
     const { count } = await supabaseAdmin
       .from("stimulus_directions")
@@ -288,13 +178,66 @@ export const generateBigIdeaBatch = createServerFn({ method: "POST" })
       .eq("run_id", run.id)
       .eq("status", "pending");
     const remaining = count ?? 0;
-    if (remaining === 0)
+    if (remaining === 0) {
       await supabaseAdmin
         .from("stimulus_runs")
         .update({ status: "tissue_check", error: null })
         .eq("id", run.id);
-    return { done: remaining === 0, generated: pending.length, remaining };
+      return { started: false as const, alreadyRunning: false as const, remaining: 0 };
+    }
+
+    const beat = row?.last_batch_at ? Date.parse(row.last_batch_at) : 0;
+    const live = row?.status === "generating" && Date.now() - beat < SWEEP_STALL_MS;
+    if (live && !data.force)
+      return { started: false as const, alreadyRunning: true as const, remaining };
+
+    await supabaseAdmin
+      .from("stimulus_runs")
+      .update({ status: "generating", error: null, last_batch_at: new Date().toISOString() })
+      .eq("id", run.id);
+
+    scheduleBackground(driveBigIdeaSweep(run.id), "big-idea-sweep");
+    return { started: true as const, alreadyRunning: false as const, remaining };
   });
+
+/** Live progress for the sweep, including stall detection. */
+export const bigIdeaSweepProgress = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => z.object({ runId: z.string().uuid() }).parse(i))
+  .handler(async ({ data, context }) => {
+    const run = await assertRunAccess(data.runId, context.userId);
+    const { SWEEP_STALL_MS } = await import("./stimulus/big-idea-sweep.server");
+
+    const { data: row } = await supabaseAdmin
+      .from("stimulus_runs")
+      .select("status, error, last_batch_at, convergence_ledger")
+      .eq("id", run.id)
+      .single();
+    const { data: rows } = await supabaseAdmin
+      .from("stimulus_directions")
+      .select("status")
+      .eq("run_id", run.id);
+
+    const all = rows ?? [];
+    const pending = all.filter((r) => r.status === "pending").length;
+    const generated = all.length - pending;
+    const beat = row?.last_batch_at ? Date.parse(row.last_batch_at) : 0;
+    const stalled =
+      pending > 0 && (row?.status !== "generating" || Date.now() - beat > SWEEP_STALL_MS);
+
+    return {
+      status: row?.status ?? "unknown",
+      error: row?.error ?? null,
+      total: all.length,
+      generated,
+      pending,
+      lastBatchAt: row?.last_batch_at ?? null,
+      running: pending > 0 && !stalled,
+      stalled,
+      hasLedger: Boolean(row?.convergence_ledger),
+    };
+  });
+
 
 /** Independent on-strategy check across every campaign line in the run. */
 export const checkBigIdeaLines = createServerFn({ method: "POST" })
