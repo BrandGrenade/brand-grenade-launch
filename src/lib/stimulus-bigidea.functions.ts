@@ -9,18 +9,11 @@ import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertSessionAccess } from "@/lib/auth-helpers.server";
-import { callClaude } from "./claude.server";
-import { STIMULUS_LENSES, getLens } from "./stimulus/lenses";
-import {
-  BIG_IDEA_SYSTEM_PROMPT,
-  buildBigIdeaUserMessage,
-  parseBigIdeaResponse,
-  type PriorTension,
-} from "./stimulus/big-idea-prompt";
+import { STIMULUS_LENSES } from "./stimulus/lenses";
+import { loadGrounding } from "./stimulus/big-idea-sweep.server";
 
 export const BIG_IDEA_CHANNEL_LABEL = "Campaign big idea (pre-channel)";
 
-import { loadGrounding } from "./stimulus/big-idea-sweep.server";
 
 async function assertRunAccess(runId: string, userId: string) {
   const { data, error } = await supabaseAdmin
