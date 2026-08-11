@@ -162,10 +162,28 @@ export function buildBigIdeaUserMessage(args: {
         ].join("\n")
       : "NO MASTER LINE IS LOCKED FOR THIS SESSION. Produce FIELD 1 only. Omit the EXPRESSION UNDER MASTER label entirely — do not invent a master line to pair against.",
     "",
+    (args.priorTensions ?? []).length > 0
+      ? [
+          "═══ ROOT TENSIONS ALREADY PRODUCED IN THIS SWEEP — RUN THE IDEA COLLISION CHECK AGAINST EVERY ONE ═══",
+          ...(args.priorTensions ?? []).map(
+            (p) => `${p.lensId} (${p.lensName}): ${p.rootTension}`,
+          ),
+          "Compare underlying territory, not genre, medium, setting, tone or device. Different dressing on the same contradiction is a collision.",
+        ].join("\n")
+      : "NO IDEAS HAVE BEEN PRODUCED YET IN THIS SWEEP. Output IDEA COLLISION CHECK: CLEAR, but still state the ROOT TENSION.",
+    "",
+    args.regenerationNote
+      ? [
+          "═══ FORCED REGENERATION — THE PREVIOUS ATTEMPT COLLIDED ═══",
+          args.regenerationNote,
+          "Do not repair the previous idea. Abandon its root tension entirely and find a different contradiction from this same lens, then re-check it against EVERY root tension listed above — not only the one it previously collided with.",
+        ].join("\n")
+      : "",
+    "",
     "═══ LENSES TO APPLY IN THIS PASS ═══",
     lensBlocks,
     "",
-    `Produce exactly ${args.lenses.length} big ideas — one per lens, in the order given, using the output contract. Each must be genuinely different in underlying thinking from the others, not the same thought in a different device. Nothing else.`,
+    `Produce exactly ${args.lenses.length} big ideas — one per lens, in the order given, using the output contract. Each must be genuinely different in underlying thinking from the others AND from every root tension listed above, not the same thought in a different device. Nothing else.`,
   ]
     .filter((s) => s !== "")
     .join("\n");
