@@ -593,23 +593,47 @@ export function BigIdeaSweep({
     [readProgress, refresh, ledger],
   );
 
-  // Open the session's existing big idea sweep, if there is one.
+  // Open the session's most meaningful big idea sweep. A newer sweep that has
+  // generated nothing must never hide an earlier one that holds real work, so
+  // the choice is: locked run → most generated lenses → newest.
+  const pickBestRun = useCallback((rows: RunSummary[]): RunSummary | null => {
+    if (rows.length === 0) return null;
+    const lockedRun = rows.find((r) => r.lockedAt);
+    if (lockedRun) return lockedRun;
+    const withWork = rows.filter((r) => r.generated > 0);
+    const pool = withWork.length > 0 ? withWork : rows;
+    return [...pool].sort(
+      (a, b) =>
+        b.generated - a.generated ||
+        Date.parse(b.createdAt) - Date.parse(a.createdAt),
+    )[0]!;
+  }, []);
+
+  const openRun = useCallback(
+    async (id: string) => {
+      setRunId(id);
+      setSweep(null);
+      await refresh(id);
+      await watch(id);
+    },
+    [refresh, watch],
+  );
+
   useEffect(() => {
     void (async () => {
       try {
         const r = await listRuns({ data: { sessionId } });
-        const rows = r.runs as { id: string; run_mode?: string }[];
-        const big = rows.find((x) => x.run_mode === "big_idea");
-        if (big) {
-          setRunId(big.id);
-          await refresh(big.id);
-          await watch(big.id);
-        }
+        const rows = (r.runs ?? []) as RunSummary[];
+        setRuns(rows);
+        const best = pickBestRun(rows);
+        if (best) await openRun(best.id);
       } catch {
         /* non-fatal */
       }
     })();
-  }, [listRuns, refresh, watch, sessionId]);
+  }, [listRuns, openRun, pickBestRun, sessionId]);
+
+
 
   const runSweep = async (force: boolean) => {
     setBusy(true);
