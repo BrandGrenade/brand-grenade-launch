@@ -120,8 +120,12 @@ export function buildBigIdeaUserMessage(args: {
     args.strategicEvidence || "—",
     "",
     args.detonationLine
-      ? `EXISTING SHORT LINE FOR CONTEXT ONLY — you are not rewriting or defending it: ${args.detonationLine}`
-      : "",
+      ? [
+          "═══ LOCKED MASTER LINE — FIXED AND MANDATORY ═══",
+          args.detonationLine,
+          "This master line is locked. You may not rewrite, improve, replace or argue with it. Produce FIELD 2 (EXPRESSION UNDER MASTER) for every lens, showing how that lens's idea sits underneath this exact line.",
+        ].join("\n")
+      : "NO MASTER LINE IS LOCKED FOR THIS SESSION. Produce FIELD 1 only. Omit the EXPRESSION UNDER MASTER label entirely — do not invent a master line to pair against.",
     "",
     "═══ LENSES TO APPLY IN THIS PASS ═══",
     lensBlocks,
@@ -135,10 +139,11 @@ export function buildBigIdeaUserMessage(args: {
 export interface ParsedBigIdea {
   idea: string;
   line: string;
+  expressionUnderMaster: string;
   rationale: string;
 }
 
-/** Splits a multi-lens big-idea response into { lensId: {idea, line, rationale} }. */
+/** Splits a multi-lens big-idea response into { lensId: {idea, line, ...} }. */
 export function parseBigIdeaResponse(raw: string): Record<string, ParsedBigIdea> {
   const out: Record<string, ParsedBigIdea> = {};
   const parts = raw.split(/^###\s*LENS:\s*/gim).slice(1);
@@ -158,9 +163,12 @@ export function parseBigIdeaResponse(raw: string): Record<string, ParsedBigIdea>
     // legitimately omitted later fields (the "NO HONEST IDEA" contract) matched
     // nothing, and the final field terminated on "(?=$)" which, under /m,
     // matched the first end-of-line and always returned "".
+    // "CAMPAIGN LINE" is retained as a legacy alias for the field now labelled
+    // CANDIDATE MASTER LINE, so historical output still parses.
     const sections: Record<string, string> = {};
     {
-      const re = /^[ \t]*(THE BIG IDEA|CAMPAIGN LINE|WHY IT WINS)[ \t]*:?[ \t]*$/gim;
+      const re =
+        /^[ \t]*(THE BIG IDEA|CANDIDATE MASTER LINE|CAMPAIGN LINE|EXPRESSION UNDER MASTER|WHY IT WINS)[ \t]*:?[ \t]*$/gim;
       const hits: Array<{ label: string; start: number; end: number }> = [];
       for (let m = re.exec(body); m; m = re.exec(body))
         hits.push({ label: m[1].toUpperCase(), start: m.index, end: m.index + m[0].length });
@@ -169,15 +177,18 @@ export function parseBigIdeaResponse(raw: string): Record<string, ParsedBigIdea>
       });
     }
 
+    const firstLine = (v: string) =>
+      v.split("\n")[0]?.trim().replace(/^["“”']|["“”']$/g, "") ?? "";
 
     const idea = sections["THE BIG IDEA"] ?? "";
-    const line = sections["CAMPAIGN LINE"] ?? "";
+    const line = sections["CANDIDATE MASTER LINE"] ?? sections["CAMPAIGN LINE"] ?? "";
+    const expression = sections["EXPRESSION UNDER MASTER"] ?? "";
     const rationale = sections["WHY IT WINS"] ?? "";
-
 
     out[id] = {
       idea: idea || body.trim(),
-      line: line.split("\n")[0]?.trim().replace(/^["“”']|["“”']$/g, "") ?? "",
+      line: firstLine(line),
+      expressionUnderMaster: firstLine(expression),
       rationale,
     };
   }
