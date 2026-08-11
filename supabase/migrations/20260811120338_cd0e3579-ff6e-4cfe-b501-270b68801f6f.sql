@@ -1,0 +1,1 @@
+ALTER TABLE public.stimulus_runs ADD COLUMN IF NOT EXISTS last_batch_at timestamptz;
