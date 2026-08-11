@@ -43,7 +43,7 @@ import type { DirectionRatings } from "@/lib/stimulus/rating-prompts";
 
 const AMBER = "#C81E1E";
 const MUTED = "#8B8680";
-const RED = "#C81E1E";
+const RED = "#E5484D";
 const GREEN = "#C81E1E";
 
 /**
