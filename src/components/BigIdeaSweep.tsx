@@ -14,7 +14,20 @@ import {
   checkBigIdeaLines,
   lockWinningIdea,
   unlockWinningIdea,
+  listBigIdeaRuns,
 } from "@/lib/stimulus-bigidea.functions";
+
+/** One big idea sweep on this session, with its real generated count. */
+type RunSummary = {
+  id: string;
+  status: string;
+  createdAt: string;
+  lockedAt: string | null;
+  total: number;
+  generated: number;
+  pending: number;
+};
+
 
 /** Live server-side sweep state, as reported by `bigIdeaSweepProgress`. */
 type SweepState = {
@@ -31,7 +44,7 @@ type SweepState = {
 
 import {
   loadStimulusRun,
-  listStimulusRuns,
+  
   triageStimulusDirection,
   reviseStimulusDirection,
 } from "@/lib/stimulus.functions";
@@ -515,7 +528,7 @@ export function BigIdeaSweep({
   const readProgress = useServerFn(bigIdeaSweepProgress);
   const ledger = useServerFn(buildIdeaConvergenceLedger);
   const load = useServerFn(loadStimulusRun);
-  const listRuns = useServerFn(listStimulusRuns);
+  const listRuns = useServerFn(listBigIdeaRuns);
   const checkLines = useServerFn(checkBigIdeaLines);
   const lock = useServerFn(lockWinningIdea);
   const unlock = useServerFn(unlockWinningIdea);
@@ -523,6 +536,8 @@ export function BigIdeaSweep({
   const revise = useServerFn(reviseStimulusDirection);
 
   const [runId, setRunId] = useState<string | null>(null);
+  const [runs, setRuns] = useState<RunSummary[]>([]);
+
   const [ideas, setIdeas] = useState<Idea[]>([]);
   const [run, setRun] = useState<RunMeta>({});
   const [busy, setBusy] = useState(false);
@@ -578,23 +593,56 @@ export function BigIdeaSweep({
     [readProgress, refresh, ledger],
   );
 
-  // Open the session's existing big idea sweep, if there is one.
+  // Open the session's most meaningful big idea sweep. A newer sweep that has
+  // generated nothing must never hide an earlier one that holds real work, so
+  // the choice is: locked run → most generated lenses → newest.
+  const pickBestRun = useCallback((rows: RunSummary[]): RunSummary | null => {
+    if (rows.length === 0) return null;
+    const lockedRun = rows.find((r) => r.lockedAt);
+    if (lockedRun) return lockedRun;
+    const withWork = rows.filter((r) => r.generated > 0);
+    const pool = withWork.length > 0 ? withWork : rows;
+    return [...pool].sort(
+      (a, b) =>
+        b.generated - a.generated ||
+        Date.parse(b.createdAt) - Date.parse(a.createdAt),
+    )[0]!;
+  }, []);
+
+  const openRun = useCallback(
+    async (id: string) => {
+      setRunId(id);
+      setSweep(null);
+      await refresh(id);
+      await watch(id);
+    },
+    [refresh, watch],
+  );
+
   useEffect(() => {
     void (async () => {
       try {
         const r = await listRuns({ data: { sessionId } });
-        const rows = r.runs as { id: string; run_mode?: string }[];
-        const big = rows.find((x) => x.run_mode === "big_idea");
-        if (big) {
-          setRunId(big.id);
-          await refresh(big.id);
-          await watch(big.id);
-        }
+        const rows = (r.runs ?? []) as RunSummary[];
+        setRuns(rows);
+        const best = pickBestRun(rows);
+        if (best) await openRun(best.id);
       } catch {
         /* non-fatal */
       }
     })();
-  }, [listRuns, refresh, watch, sessionId]);
+  }, [listRuns, openRun, pickBestRun, sessionId]);
+
+
+
+  const reloadRuns = useCallback(async () => {
+    try {
+      const r = await listRuns({ data: { sessionId } });
+      setRuns((r.runs ?? []) as RunSummary[]);
+    } catch {
+      /* non-fatal */
+    }
+  }, [listRuns, sessionId]);
 
   const runSweep = async (force: boolean) => {
     setBusy(true);
@@ -602,8 +650,10 @@ export function BigIdeaSweep({
     try {
       const { runId: id } = await start({ data: { sessionId, force } });
       setRunId(id);
+      setSweep(null);
       await refresh(id);
       await resume({ data: { runId: id, force: true } });
+      await reloadRuns();
       setBusy(false);
       await watch(id);
     } catch (e) {
@@ -611,6 +661,7 @@ export function BigIdeaSweep({
       setBusy(false);
     }
   };
+
 
 
   const locked = Boolean(run.locked_at);
@@ -655,6 +706,53 @@ export function BigIdeaSweep({
             {err}
           </div>
         )}
+
+        {runs.length > 1 && (
+          <div
+            style={{
+              marginTop: 14,
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              flexWrap: "wrap",
+            }}
+          >
+            <span
+              className="text-mono"
+              style={{ fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase", color: MUTED }}
+            >
+              Sweep
+            </span>
+            <label className="sr-only" htmlFor="big-idea-run-select">
+              Choose which big idea sweep to view
+            </label>
+            <select
+              id="big-idea-run-select"
+              value={runId ?? ""}
+              disabled={busy}
+              onChange={(e) => void openRun(e.target.value)}
+              style={{
+                background: "#1C1A18",
+                color: "#EDE8E0",
+                border: "1px solid #2A2724",
+                padding: "6px 10px",
+                fontSize: 13,
+                minHeight: 36,
+              }}
+            >
+              {runs.map((r) => (
+                <option key={r.id} value={r.id}>
+                  {new Date(r.createdAt).toLocaleString()} · {r.generated}/{r.total || LENS_COUNT}
+                  {r.lockedAt ? " · locked" : r.pending > 0 ? " · incomplete" : " · complete"}
+                </option>
+              ))}
+            </select>
+            <span className="text-body-sm" style={{ color: MUTED }}>
+              Earlier sweeps are kept in full — switching here never deletes or overwrites one.
+            </span>
+          </div>
+        )}
+
 
         {sweep && sweep.total > 0 && (sweep.running || sweep.stalled) && (
           <div
