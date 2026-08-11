@@ -656,19 +656,57 @@ export function BigIdeaSweep({
           </div>
         )}
 
+        {sweep && sweep.total > 0 && (sweep.running || sweep.stalled) && (
+          <div
+            className="text-body-sm"
+            style={{
+              marginTop: 14,
+              padding: "10px 12px",
+              border: `1px solid ${sweep.stalled ? RED : AMBER}33`,
+              background: sweep.stalled ? `${RED}0F` : `${AMBER}0F`,
+              color: sweep.stalled ? RED : AMBER,
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+            }}
+          >
+            <span>
+              {sweep.stalled
+                ? `Sweep stopped at ${sweep.generated}/${sweep.total} — ${sweep.pending} lenses still to generate.${sweep.error ? ` ${sweep.error}` : ""} Press Resume sweep to continue from lens ${sweep.generated + 1}.`
+                : `Generating on the server — ${sweep.generated}/${sweep.total} lenses complete. You can safely leave this page; generation continues.`}
+            </span>
+            <span style={{ flex: 1 }} />
+            <span className="text-mono" style={{ fontSize: 11 }}>
+              {Math.round((sweep.generated / Math.max(sweep.total, 1)) * 100)}%
+            </span>
+          </div>
+        )}
+
         <div style={{ marginTop: 16, display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
-          <Btn onClick={() => void runSweep(false)} disabled={busy} active>
-            {busy
-              ? `Generating ${progress}/${LENS_COUNT}…`
-              : ideas.length > 0
-                ? "Resume sweep"
-                : `Run ${LENS_COUNT}-lens big idea sweep`}
+          <Btn
+            onClick={() => void runSweep(false)}
+            disabled={busy || Boolean(sweep?.running)}
+            active
+          >
+            {sweep?.running
+              ? `Generating ${sweep.generated}/${sweep.total || LENS_COUNT}…`
+              : busy
+                ? "Starting…"
+                : sweep?.stalled
+                  ? `Resume sweep (${sweep.pending} left)`
+                  : ideas.length > 0
+                    ? "Resume sweep"
+                    : `Run ${LENS_COUNT}-lens big idea sweep`}
           </Btn>
           {ideas.length > 0 && (
-            <Btn onClick={() => void runSweep(true)} disabled={busy || locked}>
+            <Btn
+              onClick={() => void runSweep(true)}
+              disabled={busy || locked || Boolean(sweep?.running)}
+            >
               Start a fresh sweep
             </Btn>
           )}
+
           {runId && lines.length > 0 && (
             <Btn
               disabled={busy}
