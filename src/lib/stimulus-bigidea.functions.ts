@@ -15,6 +15,7 @@ import {
   BIG_IDEA_SYSTEM_PROMPT,
   buildBigIdeaUserMessage,
   parseBigIdeaResponse,
+  type PriorTension,
 } from "./stimulus/big-idea-prompt";
 
 export const BIG_IDEA_CHANNEL_LABEL = "Campaign big idea (pre-channel)";
