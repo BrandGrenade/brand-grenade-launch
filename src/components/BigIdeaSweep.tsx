@@ -536,6 +536,8 @@ export function BigIdeaSweep({
   const revise = useServerFn(reviseStimulusDirection);
 
   const [runId, setRunId] = useState<string | null>(null);
+  const [runs, setRuns] = useState<RunSummary[]>([]);
+
   const [ideas, setIdeas] = useState<Idea[]>([]);
   const [run, setRun] = useState<RunMeta>({});
   const [busy, setBusy] = useState(false);
