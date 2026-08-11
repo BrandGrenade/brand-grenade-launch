@@ -376,6 +376,8 @@ function IdeaCard({
         {d.direction || d.error || "Not generated."}
       </div>
 
+      <ConvergenceBlock d={d} />
+
       <LineBlock d={d} />
 
       {d.rationale && (
