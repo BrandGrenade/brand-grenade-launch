@@ -30,6 +30,20 @@ const MUTED = "#8B8680";
 const RED = "#C81E1E";
 const GREEN = "#C81E1E";
 
+/**
+ * Convergence record. `inSweep` is written as each lens generates (compared
+ * against the prior set, regenerated in a loop on collision); `fullSet` is the
+ * second-pass ledger over all 37 root tensions.
+ */
+type ConvergenceVerdict = {
+  verdict?: string;
+  collidesWith?: string[];
+  why?: string;
+  regenerations?: number;
+  forced?: boolean;
+};
+type IdeaConvergence = ConvergenceVerdict & { fullSet?: ConvergenceVerdict };
+
 type Idea = {
   id: string;
   lens_id: string;
