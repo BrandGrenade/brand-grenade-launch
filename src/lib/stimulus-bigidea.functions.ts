@@ -20,52 +20,7 @@ import {
 
 export const BIG_IDEA_CHANNEL_LABEL = "Campaign big idea (pre-channel)";
 
-type Grounding = {
-  brandName: string;
-  category: string;
-  smp: string;
-  detonationLine: string;
-  truths: string;
-  strategicEvidence: string;
-};
-
-async function loadGrounding(sessionId: string): Promise<Grounding> {
-  const { data, error } = await supabaseAdmin
-    .from("sessions")
-    .select(
-      "brand_name, category, selected_smp, stage_18_detonation_line, truth_product, truth_consumer, truth_cultural, stage_1_output, stage_2_output",
-    )
-    .eq("id", sessionId)
-    .single();
-  if (error || !data) throw new Error(`Session not found: ${error?.message ?? "no row"}`);
-
-  const truths = [
-    data.truth_product ? `PRODUCT TRUTH: ${data.truth_product}` : "",
-    data.truth_consumer ? `CONSUMER TRUTH: ${data.truth_consumer}` : "",
-    data.truth_cultural ? `CULTURAL TRUTH: ${data.truth_cultural}` : "",
-  ]
-    .filter(Boolean)
-    .join("\n");
-
-  const strategicEvidence = [
-    data.stage_1_output ? `ANCHORED STRATEGIC TENSION (Stage 1)\n${data.stage_1_output}` : "",
-    data.stage_2_output
-      ? `DISCRIMINATORS, THORPE CANDIDATES AND MOTIVATORS (Stage 2)\n${data.stage_2_output}`
-      : "",
-  ]
-    .filter(Boolean)
-    .join("\n\n")
-    .slice(0, 14000);
-
-  return {
-    brandName: data.brand_name ?? "—",
-    category: data.category ?? "—",
-    smp: (data.selected_smp ?? "").trim(),
-    detonationLine: (data.stage_18_detonation_line ?? "").trim(),
-    truths,
-    strategicEvidence,
-  };
-}
+import { loadGrounding } from "./stimulus/big-idea-sweep.server";
 
 async function assertRunAccess(runId: string, userId: string) {
   const { data, error } = await supabaseAdmin
