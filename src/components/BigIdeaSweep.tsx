@@ -9,6 +9,7 @@ import { useServerFn } from "@tanstack/react-start";
 import {
   startBigIdeaRun,
   generateBigIdeaBatch,
+  buildIdeaConvergenceLedger,
   checkBigIdeaLines,
   lockWinningIdea,
   unlockWinningIdea,
@@ -30,6 +31,20 @@ const MUTED = "#8B8680";
 const RED = "#C81E1E";
 const GREEN = "#C81E1E";
 
+/**
+ * Convergence record. `inSweep` is written as each lens generates (compared
+ * against the prior set, regenerated in a loop on collision); `fullSet` is the
+ * second-pass ledger over all 37 root tensions.
+ */
+type ConvergenceVerdict = {
+  verdict?: string;
+  collidesWith?: string[];
+  why?: string;
+  regenerations?: number;
+  forced?: boolean;
+};
+type IdeaConvergence = ConvergenceVerdict & { fullSet?: ConvergenceVerdict };
+
 type Idea = {
   id: string;
   lens_id: string;
@@ -40,6 +55,8 @@ type Idea = {
   expression_under_master: string | null;
   master_line_at_generation: string | null;
   rationale: string | null;
+  root_tension: string | null;
+  convergence: IdeaConvergence | null;
   line_check: LineCheck | null;
   status: string;
   instinct_brief: string | null;
@@ -231,6 +248,65 @@ function LineBlock({ d }: { d: Idea }) {
   );
 }
 
+/**
+ * Root tension + collision state. The field label is "Idea collision check",
+ * never "Anti-convergence" — sanitize-output.ts strips blocks under that label.
+ */
+function ConvergenceBlock({ d }: { d: Idea }) {
+  const tension = (d.root_tension ?? "").trim();
+  const inSweep = d.convergence ?? null;
+  const fullSet = d.convergence?.fullSet ?? null;
+  if (!tension && !inSweep) return null;
+
+  const collides =
+    (fullSet?.verdict ?? "").toUpperCase() === "COLLIDES" ||
+    (fullSet == null && (inSweep?.verdict ?? "").toUpperCase() === "COLLIDES");
+  const hits = (fullSet?.collidesWith ?? inSweep?.collidesWith ?? []).filter(Boolean);
+  const why = (fullSet?.why ?? inSweep?.why ?? "").trim();
+  const regens = inSweep?.regenerations ?? 0;
+  const tone = collides ? RED : MUTED;
+
+  return (
+    <div style={{ marginTop: 18, borderTop: "1px solid #1C1A18", paddingTop: 16 }}>
+      <div
+        className="text-mono"
+        style={{
+          color: MUTED,
+          fontSize: 10,
+          letterSpacing: "0.14em",
+          textTransform: "uppercase",
+          display: "flex",
+          gap: 10,
+          alignItems: "baseline",
+          flexWrap: "wrap",
+        }}
+      >
+        <span>Idea collision check</span>
+        <span style={{ border: `1px solid ${tone}`, color: tone, borderRadius: 4, padding: "3px 8px" }}>
+          {collides ? "Collides" : "Clear"}
+        </span>
+        {fullSet && <span>Full-set ledger</span>}
+        {regens > 0 && (
+          <span>
+            {regens} regeneration{regens === 1 ? "" : "s"} to clear
+          </span>
+        )}
+      </div>
+      {tension && (
+        <div className="text-body-sm" style={{ color: "#EDE8E0", marginTop: 8, lineHeight: 1.6 }}>
+          <strong style={{ color: MUTED }}>Root tension:</strong> {tension}
+        </div>
+      )}
+      {collides && (
+        <div className="text-body-sm" style={{ color: tone, marginTop: 8, lineHeight: 1.6 }}>
+          Shares a root tension with {hits.length > 0 ? hits.join(", ") : "another lens"}
+          {why ? ` — ${why}` : "."}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function IdeaCard({
   d,
   isWinner,
@@ -300,6 +376,8 @@ function IdeaCard({
       >
         {d.direction || d.error || "Not generated."}
       </div>
+
+      <ConvergenceBlock d={d} />
 
       <LineBlock d={d} />
 
@@ -419,6 +497,7 @@ export function BigIdeaSweep({
 }) {
   const start = useServerFn(startBigIdeaRun);
   const batch = useServerFn(generateBigIdeaBatch);
+  const ledger = useServerFn(buildIdeaConvergenceLedger);
   const load = useServerFn(loadStimulusRun);
   const listRuns = useServerFn(listStimulusRuns);
   const checkLines = useServerFn(checkBigIdeaLines);
@@ -481,6 +560,11 @@ export function BigIdeaSweep({
         setProgress(LENS_COUNT - r.remaining);
         await refresh(id);
       }
+      // Second pass: the full-set convergence ledger. The in-sweep check only
+      // ever sees prior-in-sequence ideas, so clusters are only visible once
+      // every root tension exists.
+      await ledger({ data: { runId: id, force } });
+      await refresh(id);
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Big idea sweep failed");
     } finally {

@@ -15,6 +15,7 @@ import {
   BIG_IDEA_SYSTEM_PROMPT,
   buildBigIdeaUserMessage,
   parseBigIdeaResponse,
+  type PriorTension,
 } from "./stimulus/big-idea-prompt";
 
 export const BIG_IDEA_CHANNEL_LABEL = "Campaign big idea (pre-channel)";
@@ -163,10 +164,38 @@ export const generateBigIdeaBatch = createServerFn({ method: "POST" })
       .map((p) => getLens(p.lens_id))
       .filter((l): l is NonNullable<typeof l> => Boolean(l));
 
+    // Every root tension already produced in this sweep. The in-sweep collision
+    // check compares against the FULL prior set, not just this batch.
+    const { data: priorRows } = await supabaseAdmin
+      .from("stimulus_directions")
+      .select("lens_id, lens_name, root_tension")
+      .eq("run_id", run.id)
+      .eq("status", "generated")
+      .not("root_tension", "is", null)
+      .order("sort_order", { ascending: true });
+    const priorTensions: PriorTension[] = (priorRows ?? [])
+      .filter((r) => (r.root_tension ?? "").trim())
+      .map((r) => ({
+        lensId: r.lens_id,
+        lensName: r.lens_name,
+        rootTension: (r.root_tension ?? "").trim(),
+      }));
+
+    // Regeneration is a LOOP, not a one-shot retry: each regenerated idea is
+    // re-tested against the full prior set (including ideas accepted earlier in
+    // this same batch), so a rewrite that dodges lens A but lands on lens B is
+    // caught rather than waved through.
+    const MAX_COLLISION_REGENS = 2;
+
     try {
       const raw = await callClaude({
         systemPrompt: BIG_IDEA_SYSTEM_PROMPT,
-        userMessage: buildBigIdeaUserMessage({ ...g, smp: run.smp || g.smp, lenses }),
+        userMessage: buildBigIdeaUserMessage({
+          ...g,
+          smp: run.smp || g.smp,
+          lenses,
+          priorTensions,
+        }),
         skipUniversalWrapper: true,
         maxTokens: 8000,
         temperature: 1,
@@ -175,7 +204,40 @@ export const generateBigIdeaBatch = createServerFn({ method: "POST" })
       });
       const parsed = parseBigIdeaResponse(raw);
       for (const p of pending) {
-        const hit = parsed[p.lens_id];
+        let hit = parsed[p.lens_id];
+        let regens = 0;
+        const lens = getLens(p.lens_id);
+
+        while (hit?.idea?.trim() && hit.collisions.length > 0 && lens && regens < MAX_COLLISION_REGENS) {
+          regens += 1;
+          const note = [
+            `Lens ${p.lens_id} produced an idea whose root tension was "${hit.rootTension || "(unstated)"}".`,
+            `It collided with: ${hit.collisions
+              .map((c) => `${c.lensId}${c.why ? ` — ${c.why}` : ""}`)
+              .join("; ")}.`,
+            `This is regeneration attempt ${regens} of ${MAX_COLLISION_REGENS}.`,
+          ].join(" ");
+          const regenRaw = await callClaude({
+            systemPrompt: BIG_IDEA_SYSTEM_PROMPT,
+            userMessage: buildBigIdeaUserMessage({
+              ...g,
+              smp: run.smp || g.smp,
+              lenses: [lens],
+              priorTensions,
+              regenerationNote: note,
+            }),
+            skipUniversalWrapper: true,
+            maxTokens: 3000,
+            temperature: 1,
+            sessionId: run.session_id,
+            stageLabel: "Creative Stimulus — collision regeneration",
+          });
+          const again = parseBigIdeaResponse(regenRaw)[p.lens_id];
+          if (!again?.idea?.trim()) break;
+          hit = again;
+        }
+
+        const unresolved = (hit?.collisions ?? []).length > 0;
         await supabaseAdmin
           .from("stimulus_directions")
           .update(
@@ -191,12 +253,28 @@ export const generateBigIdeaBatch = createServerFn({ method: "POST" })
                     : null,
                   master_line_at_generation: g.detonationLine || null,
                   rationale: hit.rationale || null,
+                  root_tension: hit.rootTension || null,
+                  convergence: {
+                    source: "in_sweep",
+                    verdict: unresolved ? "COLLIDES" : "CLEAR",
+                    collidesWith: hit.collisions.map((c) => c.lensId),
+                    why: hit.collisions.map((c) => c.why).filter(Boolean).join(" · "),
+                    regenerations: regens,
+                  } as never,
+                  convergence_regen_count: regens,
                   status: "generated",
                   error: null,
                 }
               : { status: "failed", error: "Lens produced no parseable big idea" },
           )
           .eq("id", p.id);
+
+        if (hit?.idea?.trim() && (hit.rootTension || "").trim())
+          priorTensions.push({
+            lensId: p.lens_id,
+            lensName: lens?.name ?? p.lens_id,
+            rootTension: hit.rootTension.trim(),
+          });
       }
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Big idea generation failed";
@@ -348,3 +426,84 @@ export const unlockWinningIdea = createServerFn({ method: "POST" })
       .eq("id", run.session_id);
     return { ok: true };
   });
+
+/**
+ * SECOND PASS — full-set idea convergence ledger. Runs once, after every lens
+ * has generated, comparing all 37 root tensions against each other so clusters
+ * (not just prior-in-sequence pairs) are caught. Mirrors Stage 9's disposition
+ * ledger shape so Tissue Check can render it like the LOC pool.
+ */
+export const buildIdeaConvergenceLedger = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) =>
+    z.object({ runId: z.string().uuid(), force: z.boolean().default(false) }).parse(i),
+  )
+  .handler(async ({ data, context }) => {
+    const run = await assertRunAccess(data.runId, context.userId);
+
+    const { data: existing } = await supabaseAdmin
+      .from("stimulus_runs")
+      .select("convergence_ledger")
+      .eq("id", run.id)
+      .single();
+    if (!data.force && existing?.convergence_ledger)
+      return { reused: true as const, entries: existing.convergence_ledger as never };
+
+    const { data: rows, error } = await supabaseAdmin
+      .from("stimulus_directions")
+      .select("id, lens_id, lens_name, root_tension, convergence, status")
+      .eq("run_id", run.id)
+      .eq("status", "generated")
+      .order("sort_order", { ascending: true });
+    if (error) throw new Error(error.message);
+
+    const ideas = (rows ?? [])
+      .filter((r) => (r.root_tension ?? "").trim())
+      .map((r) => ({
+        lensId: r.lens_id,
+        lensName: r.lens_name,
+        rootTension: (r.root_tension ?? "").trim(),
+      }));
+    if (ideas.length === 0)
+      return { reused: false as const, entries: [] as never, audited: 0 };
+
+    const { runConvergenceLedger } = await import("./stimulus/convergence-ledger.server");
+    const entries = await runConvergenceLedger({ sessionId: run.session_id, ideas });
+
+    const byLens = new Map(entries.map((e) => [e.lensId, e]));
+    for (const r of rows ?? []) {
+      const e = byLens.get(r.lens_id);
+      if (!e) continue;
+      const prior = (r.convergence ?? {}) as Record<string, unknown>;
+      await supabaseAdmin
+        .from("stimulus_directions")
+        .update({
+          convergence: {
+            ...prior,
+            fullSet: {
+              verdict: e.verdict,
+              collidesWith: e.collidesWith,
+              why: e.why,
+              forced: e.forced ?? false,
+            },
+          } as never,
+        })
+        .eq("id", r.id);
+    }
+
+    await supabaseAdmin
+      .from("stimulus_runs")
+      .update({
+        convergence_ledger: entries as never,
+        convergence_ledger_at: new Date().toISOString(),
+      })
+      .eq("id", run.id);
+
+    return {
+      reused: false as const,
+      entries: entries as never,
+      audited: entries.length,
+      collisions: entries.filter((e) => e.verdict === "COLLIDES").length,
+    };
+  });
+

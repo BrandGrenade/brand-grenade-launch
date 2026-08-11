@@ -54,18 +54,42 @@ When a locked master line IS supplied, it is fixed and mandatory. You are not re
 THE RATIONALE
 A short, readable, narrative case for the idea, of the kind a creative director says out loud at first presentation: why it works, why it is relevant to this SMP and to the specific truths it draws on, and why it deserves to go forward relative to the rest of the field. Not a score, not a checklist.
 
+THE IDEA IS A TERRITORY, NOT A TREATMENT
+This is a divergence tool. You are producing the idea, not the film of the idea. Craft — casting, shot grammar, sequencing, sound — belongs to the Writer / AD / CD orchestration pass downstream and must not be pre-empted here.
+
 DO NOT
 - Write channel executions, media plans, or "and on social we could…".
 - Write strategy prose ("resonates with", "leverages", "taps into").
 - Hedge, grade, or apologise for your own work.
 - Produce more than one idea per lens.
+- Name talent, celebrities, or casting choices — no "a young father", cast as a type, is fine; a named or specified performer is not.
+- Write shot lists, shot grammar or camera direction — no "rack-focus", "long take", "final frame", "cut to", "we open on", "close on".
+- Write scene-by-scene or beat-by-beat sequencing. One territory, not a running order.
+- Specify music or sound design — no mic choice, tempo, instrumentation, track references or sound-design beats.
+If the idea can only be expressed by describing exactly how it would be filmed, it is not abstracted enough — push back to the underlying territory and state that instead.
+
+ROOT TENSION — MANDATORY
+Every idea rests on one underlying tension. Name it in one plain line: the human contradiction the idea runs on, stated at territory level, stripped of genre, wrapper, setting, tone and device. "A documentary about X" and "a comedy about X" have the SAME root tension. This field is what the collision check compares, so it must describe the engine of the idea, never its dressing.
+
+IDEA COLLISION CHECK — MANDATORY
+You will be given the ROOT TENSION of every idea already produced earlier in this sweep. Before you output, compare your idea's root tension against every one of them.
+- Collision means SHARED UNDERLYING TERRITORY: the same contradiction, the same conceit, the same move — even where the genre, medium, setting, tone or device are completely different. Four different wrappers around one identical idea is four collisions, not four ideas.
+- Not a collision: the same subject matter or the same brand truth approached through a genuinely different contradiction.
+If you collide, do not ship the idea. Go back to this lens and generate a genuinely different territory from the same angle of attack, then re-check the new one against the full prior list. Only output CLEAR when the idea you are actually outputting has been compared against every prior root tension and collides with none.
+If, after honest attempts, this lens can only produce a colliding idea, output the idea and declare the collision explicitly rather than disguising it.
 
 OUTPUT CONTRACT — follow exactly. No preamble, no closing remarks.
 For each lens given, output:
 
 ### LENS: <exact lens id given to you>
 THE BIG IDEA
-<90–170 words. The single strongest idea this lens yields. Concrete, present tense, specific images, actions and behaviour. Told as if described out loud to another creative.>
+<40–70 words. HARD CEILING — count them. The single strongest idea this lens yields, at territory level. Present tense. What it is and why it bites, not how it is made.>
+
+ROOT TENSION
+<One line. The underlying contradiction, stripped of genre, setting, device and tone.>
+
+IDEA COLLISION CHECK
+<Either "CLEAR" or "COLLIDES WITH <prior lens id> — <one line on the shared root tension, naming the territory both share>". If it collides with more than one, list each on its own line.>
 
 CANDIDATE MASTER LINE
 <3–7 words. Standalone. No quotation marks, no explanation.>
@@ -81,6 +105,13 @@ THE BIG IDEA
 NO HONEST IDEA — <one sentence saying why this lens has no purchase on this proposition>
 and omit the other fields.`;
 
+/** One already-generated idea, reduced to what the collision check compares. */
+export interface PriorTension {
+  lensId: string;
+  lensName: string;
+  rootTension: string;
+}
+
 export function buildBigIdeaUserMessage(args: {
   brandName: string;
   category: string;
@@ -89,6 +120,10 @@ export function buildBigIdeaUserMessage(args: {
   truths: string;
   strategicEvidence: string;
   lenses: StimulusLens[];
+  /** Root tensions of every idea already produced in this sweep. */
+  priorTensions?: PriorTension[];
+  /** Set when this call is a forced regeneration after a detected collision. */
+  regenerationNote?: string;
 }): string {
   const lensBlocks = args.lenses
     .map((l) =>
@@ -127,13 +162,37 @@ export function buildBigIdeaUserMessage(args: {
         ].join("\n")
       : "NO MASTER LINE IS LOCKED FOR THIS SESSION. Produce FIELD 1 only. Omit the EXPRESSION UNDER MASTER label entirely — do not invent a master line to pair against.",
     "",
+    (args.priorTensions ?? []).length > 0
+      ? [
+          "═══ ROOT TENSIONS ALREADY PRODUCED IN THIS SWEEP — RUN THE IDEA COLLISION CHECK AGAINST EVERY ONE ═══",
+          ...(args.priorTensions ?? []).map(
+            (p) => `${p.lensId} (${p.lensName}): ${p.rootTension}`,
+          ),
+          "Compare underlying territory, not genre, medium, setting, tone or device. Different dressing on the same contradiction is a collision.",
+        ].join("\n")
+      : "NO IDEAS HAVE BEEN PRODUCED YET IN THIS SWEEP. Output IDEA COLLISION CHECK: CLEAR, but still state the ROOT TENSION.",
+    "",
+    args.regenerationNote
+      ? [
+          "═══ FORCED REGENERATION — THE PREVIOUS ATTEMPT COLLIDED ═══",
+          args.regenerationNote,
+          "Do not repair the previous idea. Abandon its root tension entirely and find a different contradiction from this same lens, then re-check it against EVERY root tension listed above — not only the one it previously collided with.",
+        ].join("\n")
+      : "",
+    "",
     "═══ LENSES TO APPLY IN THIS PASS ═══",
     lensBlocks,
     "",
-    `Produce exactly ${args.lenses.length} big ideas — one per lens, in the order given, using the output contract. Each must be genuinely different in underlying thinking from the others, not the same thought in a different device. Nothing else.`,
+    `Produce exactly ${args.lenses.length} big ideas — one per lens, in the order given, using the output contract. Each must be genuinely different in underlying thinking from the others AND from every root tension listed above, not the same thought in a different device. Nothing else.`,
   ]
     .filter((s) => s !== "")
     .join("\n");
+}
+
+/** One declared collision between this idea and an earlier lens in the sweep. */
+export interface IdeaCollision {
+  lensId: string;
+  why: string;
 }
 
 export interface ParsedBigIdea {
@@ -141,6 +200,30 @@ export interface ParsedBigIdea {
   line: string;
   expressionUnderMaster: string;
   rationale: string;
+  rootTension: string;
+  /** Empty array = the model declared CLEAR. */
+  collisions: IdeaCollision[];
+}
+
+/**
+ * Parses "COLLIDES WITH <lens id> — <why>" lines. "CLEAR" (or an empty field)
+ * yields []. The heading is IDEA COLLISION CHECK, deliberately NOT
+ * "ANTI-CONVERGENCE": sanitize-output.ts strips any block under that label.
+ */
+export function parseCollisionField(v: string): IdeaCollision[] {
+  const out: IdeaCollision[] = [];
+  for (const rawLine of v.split("\n")) {
+    const l = rawLine.replace(/^[\s*->]+/, "").trim();
+    if (!l || /^clear\b/i.test(l)) continue;
+    const m = l.match(/^collides?\s+with\s+([A-Za-z0-9_.#-]+)\s*(?:[—–:-]\s*(.*))?$/i);
+    if (!m) continue;
+    const lensId = (m[1] ?? "")
+      .toLowerCase()
+      .replace(/[^a-z0-9_]/g, "");
+    if (!lensId) continue;
+    out.push({ lensId, why: (m[2] ?? "").trim() });
+  }
+  return out;
 }
 
 /** Splits a multi-lens big-idea response into { lensId: {idea, line, ...} }. */
@@ -168,7 +251,7 @@ export function parseBigIdeaResponse(raw: string): Record<string, ParsedBigIdea>
     const sections: Record<string, string> = {};
     {
       const re =
-        /^[ \t]*(THE BIG IDEA|CANDIDATE MASTER LINE|CAMPAIGN LINE|EXPRESSION UNDER MASTER|WHY IT WINS)[ \t]*:?[ \t]*$/gim;
+        /^[ \t]*(THE BIG IDEA|ROOT TENSION|IDEA COLLISION CHECK|CANDIDATE MASTER LINE|CAMPAIGN LINE|EXPRESSION UNDER MASTER|WHY IT WINS)[ \t]*:?[ \t]*$/gim;
       const hits: Array<{ label: string; start: number; end: number }> = [];
       for (let m = re.exec(body); m; m = re.exec(body))
         hits.push({ label: m[1].toUpperCase(), start: m.index, end: m.index + m[0].length });
@@ -184,12 +267,15 @@ export function parseBigIdeaResponse(raw: string): Record<string, ParsedBigIdea>
     const line = sections["CANDIDATE MASTER LINE"] ?? sections["CAMPAIGN LINE"] ?? "";
     const expression = sections["EXPRESSION UNDER MASTER"] ?? "";
     const rationale = sections["WHY IT WINS"] ?? "";
+    const collisionField = sections["IDEA COLLISION CHECK"] ?? "";
 
     out[id] = {
       idea: idea || body.trim(),
       line: firstLine(line),
       expressionUnderMaster: firstLine(expression),
       rationale,
+      rootTension: firstLine(sections["ROOT TENSION"] ?? ""),
+      collisions: parseCollisionField(collisionField),
     };
   }
   return out;

@@ -1373,6 +1373,8 @@ export type Database = {
         Row: {
           active_attempt_id: string | null
           campaign_line: string | null
+          convergence: Json | null
+          convergence_regen_count: number
           created_at: string
           direction: string
           error: string | null
@@ -1394,6 +1396,7 @@ export type Database = {
           rationale: string | null
           revise_count: number
           revise_notes: string | null
+          root_tension: string | null
           run_id: string
           sort_order: number
           status: string
@@ -1402,6 +1405,8 @@ export type Database = {
         Insert: {
           active_attempt_id?: string | null
           campaign_line?: string | null
+          convergence?: Json | null
+          convergence_regen_count?: number
           created_at?: string
           direction?: string
           error?: string | null
@@ -1423,6 +1428,7 @@ export type Database = {
           rationale?: string | null
           revise_count?: number
           revise_notes?: string | null
+          root_tension?: string | null
           run_id: string
           sort_order?: number
           status?: string
@@ -1431,6 +1437,8 @@ export type Database = {
         Update: {
           active_attempt_id?: string | null
           campaign_line?: string | null
+          convergence?: Json | null
+          convergence_regen_count?: number
           created_at?: string
           direction?: string
           error?: string | null
@@ -1452,6 +1460,7 @@ export type Database = {
           rationale?: string | null
           revise_count?: number
           revise_notes?: string | null
+          root_tension?: string | null
           run_id?: string
           sort_order?: number
           status?: string
@@ -1702,6 +1711,8 @@ export type Database = {
         Row: {
           channel_brief: string
           channel_name: string
+          convergence_ledger: Json | null
+          convergence_ledger_at: string | null
           created_at: string
           created_by: string | null
           error: string | null
@@ -1725,6 +1736,8 @@ export type Database = {
         Insert: {
           channel_brief?: string
           channel_name: string
+          convergence_ledger?: Json | null
+          convergence_ledger_at?: string | null
           created_at?: string
           created_by?: string | null
           error?: string | null
@@ -1748,6 +1761,8 @@ export type Database = {
         Update: {
           channel_brief?: string
           channel_name?: string
+          convergence_ledger?: Json | null
+          convergence_ledger_at?: string | null
           created_at?: string
           created_by?: string | null
           error?: string | null
