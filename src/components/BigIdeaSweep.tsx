@@ -40,6 +40,8 @@ type Idea = {
   expression_under_master: string | null;
   master_line_at_generation: string | null;
   rationale: string | null;
+  root_tension: string | null;
+  convergence: IdeaConvergence | null;
   line_check: LineCheck | null;
   status: string;
   instinct_brief: string | null;
