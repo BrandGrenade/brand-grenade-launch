@@ -52,6 +52,8 @@
   --color-warning: var(--warning);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
+  /* Legible red for text/icons on the void background (WCAG AA, 5.06:1) */
+  --color-danger-text: var(--danger-text);
 
   /* Borders / form controls */
   --color-border: var(--border);
@@ -111,8 +113,9 @@
   /* Status */
   --success: #8B8680;
   --warning: #8B8680;
-  --destructive: #C81E1E;
-  --destructive-foreground: #EDE8E0;
+  --destructive: #E5484D;
+  --destructive-foreground: #0A0908;
+  --danger-text: #E5484D;
 
   /* Borders */
   --border: #1C1A18;
@@ -149,8 +152,9 @@
   --muted-foreground: #8B8680;
   --accent: #1C1A18;
   --accent-foreground: #EDE8E0;
-  --destructive: #C81E1E;
-  --destructive-foreground: #EDE8E0;
+  --destructive: #E5484D;
+  --destructive-foreground: #0A0908;
+  --danger-text: #E5484D;
   --border: #1C1A18;
   --input: #1C1A18;
   --ring: #C81E1E;
@@ -314,7 +318,7 @@
     font-size: 13px;
     text-transform: uppercase;
     letter-spacing: 0.18em;
-    color: #C81E1E;
+    color: #E5484D;
     margin-top: 20px;
     margin-bottom: 6px;
     font-weight: 500;
@@ -325,7 +329,7 @@
     display: block;
     font-family: 'Inter', sans-serif;
     font-size: 14px;
-    color: #C81E1E;
+    color: #E5484D;
     letter-spacing: 0.12em;
     text-transform: uppercase;
     margin-top: 32px;

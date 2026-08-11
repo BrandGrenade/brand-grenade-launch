@@ -443,7 +443,7 @@ export function CreativeStimulus({
       {open && (
         <div style={{ marginTop: 18 }}>
           {err && (
-            <div className="text-body-sm" style={{ color: "#C81E1E", marginBottom: 12 }}>
+            <div className="text-body-sm" style={{ color: "#E5484D", marginBottom: 12 }}>
               {err}
             </div>
           )}

@@ -579,7 +579,7 @@ function WorkspacePage() {
               {preview.blockers.length > 0 && (
                 <div
                   className="rounded-md p-3"
-                  style={{ backgroundColor: "#0A0908", border: "1px solid #C81E1E", color: "#C81E1E" }}
+                  style={{ backgroundColor: "#0A0908", border: "1px solid #E5484D", color: "#E5484D" }}
                 >
                   <div className="text-label mb-1">BLOCKERS</div>
                   <ul className="text-body-sm list-disc pl-5">
@@ -590,7 +590,7 @@ function WorkspacePage() {
               {preview.warnings.length > 0 && (
                 <div
                   className="mt-3 rounded-md p-3"
-                  style={{ backgroundColor: "#1C1A18", border: "1px solid #1C1A18", color: "#C81E1E" }}
+                  style={{ backgroundColor: "#1C1A18", border: "1px solid #1C1A18", color: "#E5484D" }}
                 >
                   <div className="text-label mb-1">WARNINGS</div>
                   <ul className="text-body-sm list-disc pl-5">
@@ -720,7 +720,7 @@ function SourcePills({
     padding: "2px 6px",
     borderRadius: 4,
     backgroundColor: "#1C1A18",
-    color: "#C81E1E",
+    color: "#E5484D",
     border: "1px solid #1C1A18",
   };
   return (
@@ -767,7 +767,7 @@ function Step1View(props: {
           border: `1px solid ${selected ? "#C81E1E" : "#1C1A18"}`,
         }}
       >
-        <div className="text-label" style={{ color: which === "problem" ? "#C81E1E" : "#C81E1E" }}>
+        <div className="text-label" style={{ color: which === "problem" ? "#E5484D" : "#E5484D" }}>
           {which === "problem" ? "REAL PROBLEM (defensive)" : "REAL OPPORTUNITY (generative)"}
         </div>
         <p className="text-body mt-2 text-text-primary">{item.statement}</p>
@@ -817,7 +817,7 @@ function Step1View(props: {
         style={{
           backgroundColor: bothSelected ? "#1C1A18" : "transparent",
           border: `1px solid ${bothSelected ? "#C81E1E" : "#1C1A18"}`,
-          color: bothSelected ? "#C81E1E" : undefined,
+          color: bothSelected ? "#E5484D" : undefined,
         }}
       >
         {bothSelected ? "✓ Both frames kept open" : "Keep both frames open"}
@@ -951,7 +951,7 @@ function Step2View({ data }: { data: Step2Output }) {
       {data.missing_generative_qualitative_fact && (
         <div
           className="rounded-md p-3"
-          style={{ backgroundColor: "#0A0908", border: "1px solid #C81E1E", color: "#C81E1E" }}
+          style={{ backgroundColor: "#0A0908", border: "1px solid #E5484D", color: "#E5484D" }}
         >
           <div className="text-label">MISSING: GENERATIVE QUALITATIVE FACT</div>
           <p className="text-body-sm mt-1">
@@ -1031,7 +1031,7 @@ function Step4View(props: {
     return (
       <div
         className="rounded-md p-4"
-        style={{ backgroundColor: "#0A0908", border: "1px solid #C81E1E", color: "#C81E1E" }}
+        style={{ backgroundColor: "#0A0908", border: "1px solid #E5484D", color: "#E5484D" }}
       >
         <div className="text-label">NO TENSION YET</div>
         <p className="text-body-sm mt-1">{props.data.no_tension_reason}</p>
@@ -1085,7 +1085,7 @@ function GapsBlock({ title, gaps }: { title: string; gaps: string[] }) {
   return (
     <div
       className="rounded-md p-3"
-      style={{ backgroundColor: "#0A0908", border: "1px solid #C81E1E", color: "#C81E1E" }}
+      style={{ backgroundColor: "#0A0908", border: "1px solid #E5484D", color: "#E5484D" }}
     >
       <div className="text-label">{title}</div>
       <ul className="mt-1 list-disc pl-5">
@@ -1112,11 +1112,11 @@ function TagBadge({
 }) {
   const palette: Record<string, { bg: string; fg: string; bd: string }> = {
     source: { bg: "#1C1A18", fg: "#8B8680", bd: "#1C1A18" },
-    qual: { bg: "#0A0908", fg: "#C81E1E", bd: "#1C1A18" },
-    quant: { bg: "#0A0908", fg: "#C81E1E", bd: "#1C1A18" },
-    good: { bg: "#0A0908", fg: "#C81E1E", bd: "#1C1A18" },
-    warn: { bg: "#1C1A18", fg: "#C81E1E", bd: "#1C1A18" },
-    thorpe: { bg: "#0A0908", fg: "#C81E1E", bd: "#C81E1E" },
+    qual: { bg: "#0A0908", fg: "#E5484D", bd: "#1C1A18" },
+    quant: { bg: "#0A0908", fg: "#E5484D", bd: "#1C1A18" },
+    good: { bg: "#0A0908", fg: "#E5484D", bd: "#1C1A18" },
+    warn: { bg: "#1C1A18", fg: "#E5484D", bd: "#1C1A18" },
+    thorpe: { bg: "#0A0908", fg: "#E5484D", bd: "#E5484D" },
   };
   const p = palette[tone];
   const style: React.CSSProperties = {
@@ -1165,7 +1165,7 @@ function HandoffPreviewView({
         className="rounded-md p-3"
         style={{ backgroundColor: "#1C1A18", border: "1px solid #1C1A18" }}
       >
-        <div className="text-label" style={{ color: "#C81E1E" }}>
+        <div className="text-label" style={{ color: "#E5484D" }}>
           ANCHORED TENSION (rides into Stage 1 verbatim)
         </div>
         <p className="text-body mt-2 text-text-primary whitespace-pre-wrap">

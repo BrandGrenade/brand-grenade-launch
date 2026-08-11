@@ -203,11 +203,11 @@ const LAYER_LABELS: Record<number, string> = {
 };
 
 const TYPE_LABEL: Record<NonNullable<Territory["type"]>, { label: string; color: string }> = {
-  category_ownership: { label: "Category Ownership", color: "#C81E1E" },
-  differentiated_positioning: { label: "Differentiated Positioning", color: "#C81E1E" },
-  category_creation: { label: "Category Creation", color: "#C81E1E" },
-  hermit_crab: { label: "Hermit Crab", color: "#C81E1E" },
-  moment_activated: { label: "Moment Activated", color: "#C81E1E" },
+  category_ownership: { label: "Category Ownership", color: "#E5484D" },
+  differentiated_positioning: { label: "Differentiated Positioning", color: "#E5484D" },
+  category_creation: { label: "Category Creation", color: "#E5484D" },
+  hermit_crab: { label: "Hermit Crab", color: "#E5484D" },
+  moment_activated: { label: "Moment Activated", color: "#E5484D" },
 };
 
 const RISK_COLOR: Record<RiskClass, string> = {
@@ -221,9 +221,9 @@ const RECOMMENDATION_STYLE: Record<
   NonNullable<Territory["strategic_recommendation"]>,
   { label: string; color: string }
 > = {
-  claim: { label: "Claim", color: "#C81E1E" },
-  claim_with_conditions: { label: "Claim with Conditions", color: "#C81E1E" },
-  do_not_claim: { label: "Do Not Claim", color: "#C81E1E" },
+  claim: { label: "Claim", color: "#E5484D" },
+  claim_with_conditions: { label: "Claim with Conditions", color: "#E5484D" },
+  do_not_claim: { label: "Do Not Claim", color: "#E5484D" },
 };
 
 const CONFIDENCE_COLOR: Record<string, string> = {
@@ -719,7 +719,7 @@ function IntelligenceRunPage() {
                           <li key={i} className="flex items-start gap-2 text-sm text-text-primary">
                             <CheckCircle2
                               className="h-4 w-4 mt-0.5 flex-shrink-0"
-                              style={{ color: "#C81E1E" }}
+                              style={{ color: "#E5484D" }}
                             />
                             <span>{x}</span>
                           </li>
@@ -892,7 +892,7 @@ function TerritoryCard({
                 className="text-[13px]"
                 style={{
                   backgroundColor: "rgba(200, 30, 30,0.15)",
-                  color: "#C81E1E",
+                  color: "#E5484D",
                   borderColor: "rgba(200, 30, 30,0.4)",
                 }}
                 variant="outline"

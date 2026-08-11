@@ -184,7 +184,7 @@ function ErrorBanner({ message }: { message: string }) {
       backgroundColor: "#C81E1E12", border: "1px solid #C81E1E",
       borderRadius: 8, padding: 16, marginTop: 16,
     }}>
-      <p className="text-body" style={{ color: "#C81E1E", margin: 0 }}>{message}</p>
+      <p className="text-body" style={{ color: "#E5484D", margin: 0 }}>{message}</p>
     </div>
   );
 }
@@ -1892,7 +1892,7 @@ function FidelityPanel({
         </div>
       ) : (
         <>
-          <div className="text-body-sm" style={{ color: breaks > 0 ? "#C81E1E" : "#8B8680", marginTop: 10 }}>
+          <div className="text-body-sm" style={{ color: breaks > 0 ? "#E5484D" : "#8B8680", marginTop: 10 }}>
             {breaks > 0
               ? `${breaks} brief${breaks === 1 ? "" : "s"} broke away from the decided idea — regenerate ${breaks === 1 ? "it" : "them"} before anything downstream uses ${breaks === 1 ? "it" : "them"}.`
               : drifts > 0
@@ -1925,7 +1925,7 @@ function FidelityPanel({
                   </div>
                 )}
                 {r.misreadingEvidence && (
-                  <div className="text-body-sm" style={{ color: "#C81E1E", marginTop: 6 }}>
+                  <div className="text-body-sm" style={{ color: "#E5484D", marginTop: 6 }}>
                     Misreading: {r.misreadingEvidence}
                   </div>
                 )}

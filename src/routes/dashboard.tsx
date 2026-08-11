@@ -199,7 +199,7 @@ function Dashboard() {
       setPendingDelete(null);
       toast.success(
         `Deleted ${brand.displayName} (${result.totalDeleted} record${result.totalDeleted === 1 ? "" : "s"}).`,
-        { duration: 3000, style: { color: "#C81E1E" } },
+        { duration: 3000, style: { color: "#E5484D" } },
       );
       void refresh();
     } catch (e) {
@@ -334,7 +334,7 @@ function Dashboard() {
                         letterSpacing: "0.1em",
                         border: `1px solid ${active ? "#C81E1E" : "var(--color-border)"}`,
                         backgroundColor: active ? "#C81E1E15" : "transparent",
-                        color: active ? "#C81E1E" : "var(--color-text-secondary)",
+                        color: active ? "#E5484D" : "var(--color-text-secondary)",
                       }}
                     >
                       {f.label}
@@ -347,7 +347,7 @@ function Dashboard() {
 
           <div id="brand-register" className="mt-6 scroll-mt-24">
             {error && (
-              <p className="text-body" style={{ color: "#C81E1E" }}>
+              <p className="text-body" style={{ color: "#E5484D" }}>
                 Failed to load register: {error}
               </p>
             )}
@@ -548,7 +548,7 @@ function NoMatchesState({ onClear }: { onClear: () => void }) {
         type="button"
         onClick={onClear}
         className="mt-4 text-label"
-        style={{ color: "#C81E1E" }}
+        style={{ color: "#E5484D" }}
       >
         Clear filters
       </button>
@@ -832,7 +832,7 @@ function BrandRegisterRow({
                     e.preventDefault();
                     onRequestDelete(row);
                   }}
-                  style={{ color: "#C81E1E" }}
+                  style={{ color: "#E5484D" }}
                 >
                   Delete brand
                 </DropdownMenuItem>

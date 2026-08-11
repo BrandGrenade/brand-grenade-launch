@@ -275,7 +275,7 @@ export function LocControls({ sessionId }: { sessionId: string }) {
           className="mt-3 rounded border p-3"
           style={{ borderColor: "var(--color-error, #C81E1E)", background: "color-mix(in oklab, var(--color-error, #C81E1E) 6%, transparent)" }}
         >
-          <div className="mb-2 font-semibold" style={{ color: "var(--color-error, #C81E1E)" }}>
+          <div className="mb-2 font-semibold" style={{ color: "var(--color-error, #E5484D)" }}>
             {failedEngines.length} engine{failedEngines.length === 1 ? "" : "s"} failed validation
           </div>
           <ul className="space-y-1">
@@ -338,7 +338,7 @@ export function LocControls({ sessionId }: { sessionId: string }) {
       )}
 
       {status?.loc_error && (
-        <div className="mt-2" style={{ color: "var(--color-error, #C81E1E)" }}>
+        <div className="mt-2" style={{ color: "var(--color-error, #E5484D)" }}>
           LOC error: {status.loc_error}
         </div>
       )}

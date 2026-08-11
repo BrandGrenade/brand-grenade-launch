@@ -204,7 +204,7 @@ export function NewRunGateButton({ variant = "topnav", label = "Strategy Pipelin
         padding: "10px 20px",
         borderRadius: 8,
         border: "1px solid #C81E1E",
-        color: "#C81E1E",
+        color: "#E5484D",
         fontWeight: 500,
         fontSize: 13,
         background: "transparent",
@@ -217,7 +217,7 @@ export function NewRunGateButton({ variant = "topnav", label = "Strategy Pipelin
         ...baseEnabledStyle,
         backgroundColor: "transparent",
         border: "1px solid #C81E1E",
-        color: "#C81E1E",
+        color: "#E5484D",
         cursor: "pointer",
         boxShadow: "none",
       };
@@ -323,7 +323,7 @@ export function NewRunGateButton({ variant = "topnav", label = "Strategy Pipelin
             <label
               htmlFor="override-reason"
               className="text-label"
-              style={{ color: "#C81E1E" }}
+              style={{ color: "#E5484D" }}
             >
               Reason for override (required)
             </label>
@@ -341,7 +341,7 @@ export function NewRunGateButton({ variant = "topnav", label = "Strategy Pipelin
               <p
                 className="text-sm"
                 role="alert"
-                style={{ color: "#C81E1E", marginTop: 10, lineHeight: 1.45 }}
+                style={{ color: "#E5484D", marginTop: 10, lineHeight: 1.45 }}
               >
                 {error}
               </p>
@@ -371,7 +371,7 @@ export function NewRunGateButton({ variant = "topnav", label = "Strategy Pipelin
                   proceed();
                 }}
                 className="inline-flex h-9 items-center justify-center rounded-lg px-4 text-[13px] font-medium transition-colors disabled:opacity-50"
-                style={{ border: "1px solid #C81E1E", color: "#C81E1E" }}
+                style={{ border: "1px solid #E5484D", color: "#E5484D" }}
               >
                 Continue anyway
               </button>

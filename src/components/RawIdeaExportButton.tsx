@@ -49,7 +49,7 @@ export function RawIdeaExportButton({ directionId }: { directionId: string }) {
         {busy ? "Exporting…" : "Raw idea export"}
       </button>
       {err && (
-        <span className="text-body-sm" style={{ color: "#C81E1E", marginLeft: 8 }}>
+        <span className="text-body-sm" style={{ color: "#E5484D", marginLeft: 8 }}>
           {err}
         </span>
       )}

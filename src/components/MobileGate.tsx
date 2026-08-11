@@ -64,7 +64,7 @@ export function MobileGate() {
         <p style={{ color: "#8B8680", fontSize: 14, lineHeight: 1.55 }}>
           Brand Grenade is designed for desktop use. Please access on a screen
           wider than{" "}
-          <span style={{ color: "#C81E1E", fontWeight: 600 }}>560px</span>.
+          <span style={{ color: "#E5484D", fontWeight: 600 }}>560px</span>.
         </p>
       </div>
     </div>

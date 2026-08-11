@@ -3629,7 +3629,7 @@ function Breadcrumb({
               type="button"
               onClick={onViewBrief}
               className="inline-flex h-8 items-center gap-1.5 rounded-md px-2.5 text-[13px] font-semibold transition-colors hover:bg-[#C81E1E15]"
-              style={{ border: "1px solid #C81E1E66", color: "#C81E1E", backgroundColor: "transparent" }}
+              style={{ border: "1px solid #E5484D66", color: "#E5484D", backgroundColor: "transparent" }}
               title="View the submitted brief in full"
             >
               <FileText size={13} />
@@ -4477,7 +4477,7 @@ function StreamedOutput({ text, streaming }: { text: string; streaming: boolean 
                 key={i}
                 className="text-label"
                 style={{
-                  color: "#C81E1E",
+                  color: "#E5484D",
                   letterSpacing: "0.08em",
                   textTransform: "uppercase",
                   marginTop: 24,
@@ -5143,9 +5143,9 @@ function StageControlBar({
       </span>
     );
   } else if (status === "complete") {
-    leftEl = <span style={{ color: "#C81E1E" }}>✓ {stage.name} complete</span>;
+    leftEl = <span style={{ color: "#E5484D" }}>✓ {stage.name} complete</span>;
   } else if (status === "error") {
-    leftEl = <span style={{ color: "#C81E1E" }}>⚠ Stage stalled</span>;
+    leftEl = <span style={{ color: "#E5484D" }}>⚠ Stage stalled</span>;
   } else if (status === "checkpoint") {
     leftEl = <span style={{ color: "#8B8680" }}>● Awaiting review</span>;
   } else {
@@ -5203,7 +5203,7 @@ function StallWatcher({ stageKey, onRetry }: { stageKey: string; onRetry: () => 
         backgroundColor: "rgba(138, 106, 42, 0.07)",
       }}
     >
-      <p className="text-body-sm" style={{ color: "#C81E1E" }}>
+      <p className="text-body-sm" style={{ color: "#E5484D" }}>
         Generation has paused. This sometimes happens with longer outputs.
       </p>
       <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
@@ -5300,7 +5300,7 @@ function ErrorStateCard({
           textAlign: "center",
         }}
       >
-        <div style={{ fontSize: 32, color: "#C81E1E", lineHeight: 1 }}>⚠</div>
+        <div style={{ fontSize: 32, color: "#E5484D", lineHeight: 1 }}>⚠</div>
         <h3 className="text-h3" style={{ color: "#EDE8E0", marginTop: 16 }}>
           Stage {stage.number} didn't complete
         </h3>

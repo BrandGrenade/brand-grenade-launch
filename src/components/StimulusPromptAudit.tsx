@@ -12,7 +12,7 @@ import {
 
 const AMBER = "#C81E1E";
 const MUTED = "#8B8680";
-const RED = "#C81E1E";
+const RED = "#E5484D";
 
 function Field({
   label,

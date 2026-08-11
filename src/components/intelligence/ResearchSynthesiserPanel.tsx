@@ -186,7 +186,7 @@ export function ResearchSynthesiserPanel({
   return (
     <Card className="p-6">
       <div className="flex items-baseline gap-3">
-        <Sparkles className="h-4 w-4 flex-shrink-0" style={{ color: "#C81E1E" }} />
+        <Sparkles className="h-4 w-4 flex-shrink-0" style={{ color: "#E5484D" }} />
         <div className="flex-1">
           <h2 className="text-h4 text-text-primary">Upload raw, unsorted research</h2>
           <p className="text-sm mt-1 text-text-secondary">
@@ -317,7 +317,7 @@ export function ResearchSynthesiserPanel({
             {perCategory.map((c) => (
               <div key={c.key} className="flex items-baseline gap-2 text-[13px]">
                 <span
-                  style={{ color: c.count > 0 ? "#C81E1E" : "#8B8680" }}
+                  style={{ color: c.count > 0 ? "#E5484D" : "#8B8680" }}
                   className="w-8"
                 >
                   {c.count}
