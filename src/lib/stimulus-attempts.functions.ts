@@ -47,7 +47,7 @@ export const listDirectionAttempts = createServerFn({ method: "POST" })
     const { data: attempts, error } = await supabaseAdmin
       .from("stimulus_direction_attempts")
       .select(
-        "id, attempt_no, origin, direction, campaign_line, rationale, revise_notes, ratings, rating_status, rated_at, created_at",
+        "id, attempt_no, origin, direction, campaign_line, expression_under_master, master_line_at_generation, rationale, revise_notes, ratings, rating_status, rated_at, created_at",
       )
       .eq("direction_id", dir.id)
       .order("attempt_no", { ascending: true });

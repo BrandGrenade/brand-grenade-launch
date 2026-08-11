@@ -183,6 +183,13 @@ export const generateBigIdeaBatch = createServerFn({ method: "POST" })
               ? {
                   direction: hit.idea.trim(),
                   campaign_line: hit.line || null,
+                  // Field 2 only exists when a master line was locked at
+                  // generation time. Never store a pairing without recording
+                  // which master line it was written against.
+                  expression_under_master: g.detonationLine
+                    ? hit.expressionUnderMaster || null
+                    : null,
+                  master_line_at_generation: g.detonationLine || null,
                   rationale: hit.rationale || null,
                   status: "generated",
                   error: null,

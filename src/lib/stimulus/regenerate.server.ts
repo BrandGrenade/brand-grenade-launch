@@ -110,12 +110,14 @@ export async function regenerateDirection(opts: {
     .eq("id", run.session_id)
     .single();
 
+  const masterLine = (sessionRow?.stage_18_detonation_line ?? "").trim();
+
   const base = isBigIdea
     ? buildBigIdeaUserMessage({
         brandName: sessionRow?.brand_name ?? "—",
         category: sessionRow?.category ?? "—",
         smp: run.smp,
-        detonationLine: sessionRow?.stage_18_detonation_line ?? "",
+        detonationLine: masterLine,
         truths: [
           sessionRow?.truth_product ? `PRODUCT TRUTH: ${sessionRow.truth_product}` : "",
           sessionRow?.truth_consumer ? `CONSUMER TRUTH: ${sessionRow.truth_consumer}` : "",
@@ -135,7 +137,7 @@ export async function regenerateDirection(opts: {
         channelName: run.channel_name,
         channelBrief: run.channel_brief,
         smp: run.smp,
-        detonationLine: sessionRow?.stage_18_detonation_line ?? "",
+        detonationLine: masterLine,
         lenses: [lens],
       });
 
@@ -179,6 +181,9 @@ export async function regenerateDirection(opts: {
       origin: mode,
       direction: text,
       campaign_line: isBigIdea ? bigParsed?.line || null : null,
+      expression_under_master:
+        isBigIdea && masterLine ? bigParsed?.expressionUnderMaster || null : null,
+      master_line_at_generation: isBigIdea ? masterLine || null : null,
       rationale: isBigIdea ? bigParsed?.rationale || null : null,
       line_check: null,
       revise_notes: mode === "revise" ? (notes ?? "").trim() : null,
@@ -199,6 +204,10 @@ export async function regenerateDirection(opts: {
       ...(isBigIdea
         ? {
             campaign_line: bigParsed?.line || null,
+            expression_under_master: masterLine
+              ? bigParsed?.expressionUnderMaster || null
+              : null,
+            master_line_at_generation: masterLine || null,
             rationale: bigParsed?.rationale || null,
             line_check: null,
           }
@@ -230,7 +239,7 @@ export async function regenerateDirection(opts: {
 export async function activateAttempt(directionId: string, attemptId: string) {
   const { data: attempt, error } = await supabaseAdmin
     .from("stimulus_direction_attempts")
-    .select("id, direction_id, direction, campaign_line, rationale, line_check, revise_notes, ratings, rating_status, rated_at")
+    .select("id, direction_id, direction, campaign_line, expression_under_master, master_line_at_generation, rationale, line_check, revise_notes, ratings, rating_status, rated_at")
     .eq("id", attemptId)
     .single();
   if (error || !attempt) throw new Error("Attempt not found");
@@ -242,6 +251,8 @@ export async function activateAttempt(directionId: string, attemptId: string) {
       active_attempt_id: attempt.id,
       direction: attempt.direction ?? undefined,
       campaign_line: attempt.campaign_line,
+      expression_under_master: attempt.expression_under_master,
+      master_line_at_generation: attempt.master_line_at_generation,
       rationale: attempt.rationale,
       line_check: attempt.line_check,
       revise_notes: attempt.revise_notes,
