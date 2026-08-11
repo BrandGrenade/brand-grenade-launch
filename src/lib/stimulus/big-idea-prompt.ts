@@ -105,6 +105,13 @@ THE BIG IDEA
 NO HONEST IDEA — <one sentence saying why this lens has no purchase on this proposition>
 and omit the other fields.`;
 
+/** One already-generated idea, reduced to what the collision check compares. */
+export interface PriorTension {
+  lensId: string;
+  lensName: string;
+  rootTension: string;
+}
+
 export function buildBigIdeaUserMessage(args: {
   brandName: string;
   category: string;
@@ -113,6 +120,10 @@ export function buildBigIdeaUserMessage(args: {
   truths: string;
   strategicEvidence: string;
   lenses: StimulusLens[];
+  /** Root tensions of every idea already produced in this sweep. */
+  priorTensions?: PriorTension[];
+  /** Set when this call is a forced regeneration after a detected collision. */
+  regenerationNote?: string;
 }): string {
   const lensBlocks = args.lenses
     .map((l) =>
