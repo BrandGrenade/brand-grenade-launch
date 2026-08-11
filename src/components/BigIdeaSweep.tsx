@@ -37,6 +37,8 @@ type Idea = {
   sort_order: number;
   direction: string;
   campaign_line: string | null;
+  expression_under_master: string | null;
+  master_line_at_generation: string | null;
   rationale: string | null;
   line_check: LineCheck | null;
   status: string;
@@ -110,15 +112,89 @@ function verdictTone(v: LineCheck["verdict"] | undefined) {
   return MUTED;
 }
 
-function LineBlock({ d }: { d: Idea }) {
-  const c = d.line_check;
+function wordCount(v: string) {
+  return v.trim().split(/\s+/).filter(Boolean).length;
+}
+
+/**
+ * FIELD 2 — Expression under master.
+ *
+ * Structurally cannot exist before Stage 18 locks a master line, so the
+ * "candidate only" state below is the DEFAULT presentation for a first sweep,
+ * not an error or an edge case. When Stage 17 is re-run the master line is
+ * cleared and the stored pairing is nulled in the same operation (DB trigger
+ * sessions_clear_orphaned_expressions), so this block falls back to the
+ * candidate-only state immediately rather than showing a dead pairing.
+ */
+function ExpressionBlock({ d }: { d: Idea }) {
+  const master = (d.master_line_at_generation ?? "").trim();
+  const expression = (d.expression_under_master ?? "").trim();
+  const paired = Boolean(master && expression);
+
   return (
-    <div style={{ marginTop: 18, borderTop: "1px solid #1C1A18", paddingTop: 16 }}>
+    <div
+      style={{
+        marginTop: 14,
+        borderRadius: 10,
+        border: `1px dashed ${paired ? "#2A2724" : "#1C1A18"}`,
+        backgroundColor: paired ? "#0A0908" : "transparent",
+        padding: paired ? "14px 16px" : "12px 16px",
+      }}
+    >
       <div
         className="text-mono"
         style={{ color: MUTED, fontSize: 10, letterSpacing: "0.14em", textTransform: "uppercase" }}
       >
-        Campaign line
+        {paired ? "Field 2 · Expression under master" : "Field 2 · Not applicable yet"}
+      </div>
+      {paired ? (
+        <>
+          <div style={{ marginTop: 10, fontSize: 17, lineHeight: 1.45 }}>
+            <span style={{ color: MUTED }}>{master}</span>{" "}
+            <span style={{ color: "#EDE8E0" }}>{expression}</span>
+          </div>
+          <div className="text-body-sm" style={{ color: MUTED, marginTop: 8, lineHeight: 1.6 }}>
+            Supporting copy under the locked master line (grey). Judged on whether this idea is
+            strong enough to <em>serve</em> the existing line — it is not a candidate to replace it.
+          </div>
+        </>
+      ) : (
+        <div className="text-body-sm" style={{ color: MUTED, marginTop: 8, lineHeight: 1.6 }}>
+          No master line locked yet — candidate only. The sweep runs against the proposition before
+          the Detonation line exists, so on a first pass every lens produces Field 1 alone. Once
+          Stage 18 locks a master line, re-run this lens to generate its expression underneath it.
+        </div>
+      )}
+    </div>
+  );
+}
+
+function LineBlock({ d }: { d: Idea }) {
+  const c = d.line_check;
+  const words = wordCount(d.campaign_line ?? "");
+  const overLength = words > 7;
+  return (
+    <div style={{ marginTop: 18, borderTop: "1px solid #1C1A18", paddingTop: 16 }}>
+      <div
+        className="text-mono"
+        style={{
+          color: MUTED,
+          fontSize: 10,
+          letterSpacing: "0.14em",
+          textTransform: "uppercase",
+          display: "flex",
+          gap: 10,
+          alignItems: "baseline",
+          flexWrap: "wrap",
+        }}
+      >
+        <span>Field 1 · Candidate master line</span>
+        {words > 0 && (
+          <span style={{ color: overLength ? RED : MUTED }}>
+            {words} {words === 1 ? "word" : "words"}
+            {overLength ? " · over the 3–7 word standard" : ""}
+          </span>
+        )}
       </div>
       <div style={{ color: "#EDE8E0", fontSize: 20, marginTop: 8, lineHeight: 1.35 }}>
         {d.campaign_line?.trim() || "—"}
@@ -150,6 +226,7 @@ function LineBlock({ d }: { d: Idea }) {
           </div>
         </div>
       )}
+      <ExpressionBlock d={d} />
     </div>
   );
 }
@@ -442,8 +519,10 @@ export function BigIdeaSweep({
         <p className="text-body-sm" style={{ color: MUTED, marginTop: 8, lineHeight: 1.7 }}>
           One sweep of all {LENS_COUNT} lenses against the approved proposition, verbatim, with the
           strategic truths as supporting evidence only. No channel brief is read or referenced here.
-          Each lens returns its strongest idea, its best campaign line, and the case for taking it
-          forward. One idea and one line get locked — then, and only then, channel briefs adapt them.
+          Each lens returns its strongest idea, a candidate master line built to the 3–7 word poster
+          standard, and the case for taking it forward. Where a master line is already locked, each
+          lens also returns the supporting expression that sits underneath it. One idea and one
+          master line get locked — then, and only then, channel briefs adapt them.
         </p>
 
         {err && (
@@ -495,7 +574,7 @@ export function BigIdeaSweep({
               Ideas
             </Btn>
             <Btn active={view === "lines"} onClick={() => setView("lines")}>
-              Line pool ({lines.length})
+              Candidate master lines ({lines.length})
             </Btn>
           </div>
         )}
@@ -515,7 +594,7 @@ export function BigIdeaSweep({
               className="text-mono"
               style={{ color: locked ? AMBER : MUTED, fontSize: 10, letterSpacing: "0.14em", textTransform: "uppercase" }}
             >
-              {locked ? "Locked campaign idea" : "Select one idea and one line"}
+              {locked ? "Locked campaign idea" : "Select one idea and one candidate master line"}
             </div>
             <div className="text-body-sm" style={{ color: "#EDE8E0", marginTop: 10, lineHeight: 1.7 }}>
               <div>
@@ -523,7 +602,7 @@ export function BigIdeaSweep({
                 {chosenIdea ? `${chosenIdea.lens_name} — ${chosenIdea.direction.slice(0, 160)}…` : "— none selected"}
               </div>
               <div style={{ marginTop: 6 }}>
-                <strong style={{ color: AMBER }}>Line:</strong>{" "}
+                <strong style={{ color: AMBER }}>Master line:</strong>{" "}
                 {chosenLine?.campaign_line ?? "— none selected"}
                 {chosenLine && chosenIdea && chosenLine.id !== chosenIdea.id && (
                   <span className="text-mono" style={{ color: MUTED, fontSize: 10, marginLeft: 8 }}>
@@ -584,7 +663,8 @@ export function BigIdeaSweep({
         )}
       </div>
 
-      {/* The line pool — decoupled from idea authorship. */}
+      {/* The line pool — Field 1 only. Field 2 is never eligible to become the
+          master line, so it deliberately does not appear here. */}
       {view === "lines" && lines.length > 0 && (
         <div style={{ ...ideaListStyle, marginTop: 28, gap: 14 }}>
           {lines.map((d) => (
@@ -598,6 +678,16 @@ export function BigIdeaSweep({
               <div style={{ marginTop: 10, display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
                 <span className="text-mono" style={{ color: MUTED, fontSize: 10, letterSpacing: "0.1em" }}>
                   {d.lens_name}
+                </span>
+                <span
+                  className="text-mono"
+                  style={{
+                    color: wordCount(d.campaign_line ?? "") > 7 ? RED : MUTED,
+                    fontSize: 10,
+                    letterSpacing: "0.1em",
+                  }}
+                >
+                  {wordCount(d.campaign_line ?? "")}w
                 </span>
                 {d.line_check && (
                   <span

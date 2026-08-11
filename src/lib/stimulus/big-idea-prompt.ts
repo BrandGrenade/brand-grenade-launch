@@ -23,9 +23,33 @@ EVERY IDEA MUST SIMULTANEOUSLY BE — not three sequential checks, one idea carr
 - CRAB. Clear, Relevant (grounded in a real human truth, not logical relevance), Appealing, Believable — and made with real craft.
 - FAME-WORTHY. It would get talked about outside the category.
 
-THE CAMPAIGN LINE
-Each lens also produces ONE campaign line, aimed at the highest standard on the FIRST attempt — the caliber of "Just Do It" or "We Try Harder". This is not a draft to be fixed later.
-The line must independently carry the SMP's specific meaning. A catchy line that expresses a nearby idea is a failure even when the idea beneath it is right. Test your own line: could this line sit on a competitor's brief, or on a different proposition in this category, and still make sense? If yes, it is generic — rewrite it. Do not explain or annotate the line. Just the line.
+FIELD 1 — THE CANDIDATE MASTER LINE
+Each lens produces ONE candidate master line, aimed at the highest standard on the FIRST attempt — the caliber of "Just Do It" or "We Try Harder". This is not a draft to be fixed later. It is a candidate to BECOME (or replace) the brand's master line, and it is judged as such.
+
+Shape — mandatory, not aspirational:
+- Three to seven words. No exceptions, no subordinate clauses, no conjunctions that soften.
+- It must stand alone on a poster with ZERO context — no idea underneath it, no explanation beside it.
+- It carries the idea. It does not explain, summarise, restate or annotate the idea.
+- Declarative. Present tense. Active voice. Zero hedging.
+- Read it aloud. If it needs a pause to process, it has failed. If it sounds like a headline for a strategy deck, it has failed.
+
+Forbidden: a compressed restatement of the big idea above it. That is a thesis, not a line. Also forbidden: "A brand that…", "For people who…", "We help… to…", "The [adjective] way to [verb]", and any line that requires a second sentence to be understood.
+
+FIVE MANDATORY STRESS TESTS — all five must pass before the line is output. Run them silently; do not print them.
+Test 1 — Tension. Does the line hold a genuine felt contradiction or charge, rather than stating one? If the tension has to be explained, it has failed.
+Test 2 — Exclusion. Could a direct competitor, or a different proposition in this category, run this line unchanged? If yes, it is generic — rewrite it.
+Test 3 — Standalone. Does it survive with no context, no explanation and no second sentence? If it needs support, compress further.
+Test 4 — Spoken Language. Read aloud, does it land with force in a single breath, as something a person would actually say?
+Test 5 — Category Convention. Does it break the category's default way of speaking, or reproduce it?
+A line that fails any test is rewritten before output, not shipped with a caveat.
+
+FIELD 2 — EXPRESSION UNDER MASTER
+Produce this field ONLY when the user message supplies a LOCKED MASTER LINE. If none is supplied, omit this field entirely — do not invent a master line, do not substitute your own candidate, and do not output the label with nothing under it.
+
+When a locked master line IS supplied, it is fixed and mandatory. You are not rewriting it, not improving it, not competing with it and not defending it. Your job is the opposite: show how THIS lens's idea earns its place underneath it. Write one line of supporting expression that locks up with the master line — the kind of second line that would sit beneath it on the same poster, or run as this idea's specific execution tagline.
+- Reproduce the master line verbatim, then the supporting expression, in the shape: <Master line> <Supporting expression>
+- The supporting expression is itself short — under ten words — and specific to this idea, not a generic sub-line that would work under any idea.
+- The pairing must read as one thought in two beats, not as two lines arguing with each other.
 
 THE RATIONALE
 A short, readable, narrative case for the idea, of the kind a creative director says out loud at first presentation: why it works, why it is relevant to this SMP and to the specific truths it draws on, and why it deserves to go forward relative to the rest of the field. Not a score, not a checklist.
@@ -43,8 +67,11 @@ For each lens given, output:
 THE BIG IDEA
 <90–170 words. The single strongest idea this lens yields. Concrete, present tense, specific images, actions and behaviour. Told as if described out loud to another creative.>
 
-CAMPAIGN LINE
-<The line. One line only. No quotation marks, no explanation.>
+CANDIDATE MASTER LINE
+<3–7 words. Standalone. No quotation marks, no explanation.>
+
+EXPRESSION UNDER MASTER
+<Only if a locked master line was supplied. One line: the master line verbatim, then this idea's supporting expression. Omit this label entirely if no master line was supplied.>
 
 WHY IT WINS
 <70–120 words. Why it works, why it is relevant to this SMP and to the truths it uses, and why it is worthy of going forward against the field.>
@@ -52,7 +79,7 @@ WHY IT WINS
 If a lens genuinely has no honest purchase on this proposition, output:
 THE BIG IDEA
 NO HONEST IDEA — <one sentence saying why this lens has no purchase on this proposition>
-and omit the other two fields.`;
+and omit the other fields.`;
 
 export function buildBigIdeaUserMessage(args: {
   brandName: string;
@@ -93,8 +120,12 @@ export function buildBigIdeaUserMessage(args: {
     args.strategicEvidence || "—",
     "",
     args.detonationLine
-      ? `EXISTING SHORT LINE FOR CONTEXT ONLY — you are not rewriting or defending it: ${args.detonationLine}`
-      : "",
+      ? [
+          "═══ LOCKED MASTER LINE — FIXED AND MANDATORY ═══",
+          args.detonationLine,
+          "This master line is locked. You may not rewrite, improve, replace or argue with it. Produce FIELD 2 (EXPRESSION UNDER MASTER) for every lens, showing how that lens's idea sits underneath this exact line.",
+        ].join("\n")
+      : "NO MASTER LINE IS LOCKED FOR THIS SESSION. Produce FIELD 1 only. Omit the EXPRESSION UNDER MASTER label entirely — do not invent a master line to pair against.",
     "",
     "═══ LENSES TO APPLY IN THIS PASS ═══",
     lensBlocks,
@@ -108,10 +139,11 @@ export function buildBigIdeaUserMessage(args: {
 export interface ParsedBigIdea {
   idea: string;
   line: string;
+  expressionUnderMaster: string;
   rationale: string;
 }
 
-/** Splits a multi-lens big-idea response into { lensId: {idea, line, rationale} }. */
+/** Splits a multi-lens big-idea response into { lensId: {idea, line, ...} }. */
 export function parseBigIdeaResponse(raw: string): Record<string, ParsedBigIdea> {
   const out: Record<string, ParsedBigIdea> = {};
   const parts = raw.split(/^###\s*LENS:\s*/gim).slice(1);
@@ -131,9 +163,12 @@ export function parseBigIdeaResponse(raw: string): Record<string, ParsedBigIdea>
     // legitimately omitted later fields (the "NO HONEST IDEA" contract) matched
     // nothing, and the final field terminated on "(?=$)" which, under /m,
     // matched the first end-of-line and always returned "".
+    // "CAMPAIGN LINE" is retained as a legacy alias for the field now labelled
+    // CANDIDATE MASTER LINE, so historical output still parses.
     const sections: Record<string, string> = {};
     {
-      const re = /^[ \t]*(THE BIG IDEA|CAMPAIGN LINE|WHY IT WINS)[ \t]*:?[ \t]*$/gim;
+      const re =
+        /^[ \t]*(THE BIG IDEA|CANDIDATE MASTER LINE|CAMPAIGN LINE|EXPRESSION UNDER MASTER|WHY IT WINS)[ \t]*:?[ \t]*$/gim;
       const hits: Array<{ label: string; start: number; end: number }> = [];
       for (let m = re.exec(body); m; m = re.exec(body))
         hits.push({ label: m[1].toUpperCase(), start: m.index, end: m.index + m[0].length });
@@ -142,15 +177,18 @@ export function parseBigIdeaResponse(raw: string): Record<string, ParsedBigIdea>
       });
     }
 
+    const firstLine = (v: string) =>
+      v.split("\n")[0]?.trim().replace(/^["“”']|["“”']$/g, "") ?? "";
 
     const idea = sections["THE BIG IDEA"] ?? "";
-    const line = sections["CAMPAIGN LINE"] ?? "";
+    const line = sections["CANDIDATE MASTER LINE"] ?? sections["CAMPAIGN LINE"] ?? "";
+    const expression = sections["EXPRESSION UNDER MASTER"] ?? "";
     const rationale = sections["WHY IT WINS"] ?? "";
-
 
     out[id] = {
       idea: idea || body.trim(),
-      line: line.split("\n")[0]?.trim().replace(/^["“”']|["“”']$/g, "") ?? "",
+      line: firstLine(line),
+      expressionUnderMaster: firstLine(expression),
       rationale,
     };
   }
