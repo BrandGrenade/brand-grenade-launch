@@ -9,6 +9,7 @@ import { useServerFn } from "@tanstack/react-start";
 import {
   startBigIdeaRun,
   generateBigIdeaBatch,
+  buildIdeaConvergenceLedger,
   checkBigIdeaLines,
   lockWinningIdea,
   unlockWinningIdea,
