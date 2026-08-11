@@ -6,6 +6,8 @@
 
 export const tokens = {
   amber: "#C81E1E",
+  // Legible red for text/icons on dark surfaces (5.06:1 on #0A0908 — WCAG AA)
+  dangerText: "#E5484D",
   amberDivider: "rgba(200, 30, 30,0.2)",
   bgPrimary: "#0A0908",
   bgSecondary: "#1C1A18",
