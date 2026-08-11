@@ -247,6 +247,65 @@ function LineBlock({ d }: { d: Idea }) {
   );
 }
 
+/**
+ * Root tension + collision state. The field label is "Idea collision check",
+ * never "Anti-convergence" — sanitize-output.ts strips blocks under that label.
+ */
+function ConvergenceBlock({ d }: { d: Idea }) {
+  const tension = (d.root_tension ?? "").trim();
+  const inSweep = d.convergence ?? null;
+  const fullSet = d.convergence?.fullSet ?? null;
+  if (!tension && !inSweep) return null;
+
+  const collides =
+    (fullSet?.verdict ?? "").toUpperCase() === "COLLIDES" ||
+    (fullSet == null && (inSweep?.verdict ?? "").toUpperCase() === "COLLIDES");
+  const hits = (fullSet?.collidesWith ?? inSweep?.collidesWith ?? []).filter(Boolean);
+  const why = (fullSet?.why ?? inSweep?.why ?? "").trim();
+  const regens = inSweep?.regenerations ?? 0;
+  const tone = collides ? RED : MUTED;
+
+  return (
+    <div style={{ marginTop: 18, borderTop: "1px solid #1C1A18", paddingTop: 16 }}>
+      <div
+        className="text-mono"
+        style={{
+          color: MUTED,
+          fontSize: 10,
+          letterSpacing: "0.14em",
+          textTransform: "uppercase",
+          display: "flex",
+          gap: 10,
+          alignItems: "baseline",
+          flexWrap: "wrap",
+        }}
+      >
+        <span>Idea collision check</span>
+        <span style={{ border: `1px solid ${tone}`, color: tone, borderRadius: 4, padding: "3px 8px" }}>
+          {collides ? "Collides" : "Clear"}
+        </span>
+        {fullSet && <span>Full-set ledger</span>}
+        {regens > 0 && (
+          <span>
+            {regens} regeneration{regens === 1 ? "" : "s"} to clear
+          </span>
+        )}
+      </div>
+      {tension && (
+        <div className="text-body-sm" style={{ color: "#EDE8E0", marginTop: 8, lineHeight: 1.6 }}>
+          <strong style={{ color: MUTED }}>Root tension:</strong> {tension}
+        </div>
+      )}
+      {collides && (
+        <div className="text-body-sm" style={{ color: tone, marginTop: 8, lineHeight: 1.6 }}>
+          Shares a root tension with {hits.length > 0 ? hits.join(", ") : "another lens"}
+          {why ? ` — ${why}` : "."}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function IdeaCard({
   d,
   isWinner,
