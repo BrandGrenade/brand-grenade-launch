@@ -635,14 +635,25 @@ export function BigIdeaSweep({
 
 
 
+  const reloadRuns = useCallback(async () => {
+    try {
+      const r = await listRuns({ data: { sessionId } });
+      setRuns((r.runs ?? []) as RunSummary[]);
+    } catch {
+      /* non-fatal */
+    }
+  }, [listRuns, sessionId]);
+
   const runSweep = async (force: boolean) => {
     setBusy(true);
     setErr(null);
     try {
       const { runId: id } = await start({ data: { sessionId, force } });
       setRunId(id);
+      setSweep(null);
       await refresh(id);
       await resume({ data: { runId: id, force: true } });
+      await reloadRuns();
       setBusy(false);
       await watch(id);
     } catch (e) {
@@ -650,6 +661,7 @@ export function BigIdeaSweep({
       setBusy(false);
     }
   };
+
 
 
   const locked = Boolean(run.locked_at);
