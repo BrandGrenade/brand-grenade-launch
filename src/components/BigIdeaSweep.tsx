@@ -4,16 +4,31 @@
 // Check, Gate One, then ONE winning idea and ONE winning line locked before
 // any channel-specific brief exists.
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import {
   startBigIdeaRun,
-  generateBigIdeaBatch,
+  resumeBigIdeaSweep,
+  bigIdeaSweepProgress,
   buildIdeaConvergenceLedger,
   checkBigIdeaLines,
   lockWinningIdea,
   unlockWinningIdea,
 } from "@/lib/stimulus-bigidea.functions";
+
+/** Live server-side sweep state, as reported by `bigIdeaSweepProgress`. */
+type SweepState = {
+  status: string;
+  error: string | null;
+  total: number;
+  generated: number;
+  pending: number;
+  lastBatchAt: string | null;
+  running: boolean;
+  stalled: boolean;
+  hasLedger: boolean;
+};
+
 import {
   loadStimulusRun,
   listStimulusRuns,
