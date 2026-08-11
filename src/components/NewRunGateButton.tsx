@@ -381,7 +381,7 @@ export function NewRunGateButton({ variant = "topnav", label = "Strategy Pipelin
               disabled={submitting || reason.trim().length < 4}
               onClick={submitOverride}
               className="inline-flex h-9 items-center justify-center rounded-lg px-4 text-[13px] transition-opacity hover:opacity-90 disabled:opacity-50"
-              style={{ backgroundColor: "#E5484D", color: "#EDE8E0", fontWeight: 600 }}
+              style={{ backgroundColor: "#C81E1E", color: "#EDE8E0", fontWeight: 600 }}
             >
               {submitting ? "Logging override…" : "Log override & continue"}
             </button>

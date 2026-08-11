@@ -3647,7 +3647,7 @@ function Breadcrumb({
               type="button"
               onClick={onEditBrief}
               className="inline-flex h-8 items-center gap-1.5 rounded-md px-2.5 text-[13px] font-semibold transition-opacity hover:opacity-90"
-              style={{ backgroundColor: "#E5484D", color: "#0A0908" }}
+              style={{ backgroundColor: "#C81E1E", color: "#0A0908" }}
               title="Edit the brief and rerun Stage 1 — downstream stages will reset"
             >
               <PencilLine size={13} />
@@ -4831,7 +4831,7 @@ function Stage8PropositionsView({
         disabled={!manualLine.trim() || streaming || manualSubmitting}
         onClick={handleManualSubmit}
         className="mt-3 inline-flex h-10 items-center justify-center rounded-md px-5 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-50"
-        style={{ backgroundColor: "#E5484D", color: "#0A0908" }}
+        style={{ backgroundColor: "#C81E1E", color: "#0A0908" }}
       >
         {manualSubmitting ? "Submitting…" : "Use manual proposition →"}
       </button>
@@ -5631,7 +5631,7 @@ function StructuredBriefView({
             type="button"
             onClick={onEdit}
             className="inline-flex h-9 items-center gap-1.5 rounded-md px-3 text-[13px] font-semibold transition-opacity hover:opacity-90"
-            style={{ backgroundColor: "#E5484D", color: "#0A0908" }}
+            style={{ backgroundColor: "#C81E1E", color: "#0A0908" }}
           >
             <PencilLine size={14} />
             Edit Brief

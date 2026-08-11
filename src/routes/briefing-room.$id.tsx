@@ -622,7 +622,7 @@ function WorkspacePage() {
                   (preview.gaps.length > 0 && !ackGaps)
                 }
                 className="mt-4 inline-flex h-10 items-center rounded-md px-5 text-[13px] font-semibold disabled:opacity-50"
-                style={{ backgroundColor: "#E5484D", color: "#0A0908" }}
+                style={{ backgroundColor: "#C81E1E", color: "#0A0908" }}
               >
                 {approving ? "Handing off…" : "Approve and hand off to Saved Briefs"}
               </button>
@@ -685,7 +685,7 @@ function StepCard(props: {
             disabled={props.busy || props.disabled}
             title={props.disabled ? props.disabledReason : undefined}
             className="inline-flex h-9 items-center rounded-md px-4 text-[13px] font-semibold disabled:opacity-50"
-            style={{ backgroundColor: "#E5484D", color: "#0A0908" }}
+            style={{ backgroundColor: "#C81E1E", color: "#0A0908" }}
           >
             {props.busy ? "Running…" : props.runLabel}
           </button>

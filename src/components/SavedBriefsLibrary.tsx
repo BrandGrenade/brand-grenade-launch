@@ -119,7 +119,7 @@ export function SavedBriefsSection({
         <Link
           to="/brief/new"
           className="inline-flex h-10 shrink-0 items-center gap-1.5 self-start rounded-md px-4 text-[13px] font-semibold transition-opacity hover:opacity-90"
-          style={{ backgroundColor: "#E5484D", color: "#0A0908" }}
+          style={{ backgroundColor: "#C81E1E", color: "#0A0908" }}
         >
           <Plus size={14} />
           New Brief
@@ -161,7 +161,7 @@ export function SavedBriefsSection({
                     type="button"
                     onClick={() => onLoad(b)}
                     className="inline-flex h-9 items-center gap-1.5 rounded-md px-3 text-[13px] font-medium transition-opacity hover:opacity-90"
-                    style={{ backgroundColor: "#E5484D", color: "#0A0908" }}
+                    style={{ backgroundColor: "#C81E1E", color: "#0A0908" }}
                   >
                     <FolderOpen size={14} />
                     Load and Run
@@ -265,7 +265,7 @@ export function SavedBriefsPicker({
                       setOpen(false);
                     }}
                     className="inline-flex h-8 shrink-0 items-center rounded-md px-3 text-[13px] font-semibold transition-opacity hover:opacity-90"
-                    style={{ backgroundColor: "#E5484D", color: "#0A0908" }}
+                    style={{ backgroundColor: "#C81E1E", color: "#0A0908" }}
                   >
                     Load
                   </button>
