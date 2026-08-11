@@ -440,70 +440,13 @@ export const buildIdeaConvergenceLedger = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const run = await assertRunAccess(data.runId, context.userId);
-
-    const { data: existing } = await supabaseAdmin
-      .from("stimulus_runs")
-      .select("convergence_ledger")
-      .eq("id", run.id)
-      .single();
-    if (!data.force && existing?.convergence_ledger)
-      return { reused: true as const, entries: existing.convergence_ledger as never };
-
-    const { data: rows, error } = await supabaseAdmin
-      .from("stimulus_directions")
-      .select("id, lens_id, lens_name, root_tension, convergence, status")
-      .eq("run_id", run.id)
-      .eq("status", "generated")
-      .order("sort_order", { ascending: true });
-    if (error) throw new Error(error.message);
-
-    const ideas = (rows ?? [])
-      .filter((r) => (r.root_tension ?? "").trim())
-      .map((r) => ({
-        lensId: r.lens_id,
-        lensName: r.lens_name,
-        rootTension: (r.root_tension ?? "").trim(),
-      }));
-    if (ideas.length === 0)
-      return { reused: false as const, entries: [] as never, audited: 0 };
-
-    const { runConvergenceLedger } = await import("./stimulus/convergence-ledger.server");
-    const entries = await runConvergenceLedger({ sessionId: run.session_id, ideas });
-
-    const byLens = new Map(entries.map((e) => [e.lensId, e]));
-    for (const r of rows ?? []) {
-      const e = byLens.get(r.lens_id);
-      if (!e) continue;
-      const prior = (r.convergence ?? {}) as Record<string, unknown>;
-      await supabaseAdmin
-        .from("stimulus_directions")
-        .update({
-          convergence: {
-            ...prior,
-            fullSet: {
-              verdict: e.verdict,
-              collidesWith: e.collidesWith,
-              why: e.why,
-              forced: e.forced ?? false,
-            },
-          } as never,
-        })
-        .eq("id", r.id);
-    }
-
-    await supabaseAdmin
-      .from("stimulus_runs")
-      .update({
-        convergence_ledger: entries as never,
-        convergence_ledger_at: new Date().toISOString(),
-      })
-      .eq("id", run.id);
-
+    const { buildLedgerForRun } = await import("./stimulus/convergence-ledger-run.server");
+    const r = await buildLedgerForRun(run.id, data.force);
     return {
-      reused: false as const,
-      entries: entries as never,
-      audited: entries.length,
-      collisions: entries.filter((e) => e.verdict === "COLLIDES").length,
+      reused: r.reused,
+      entries: r.entries as never,
+      audited: r.audited,
+      collisions: r.collisions,
     };
   });
 
