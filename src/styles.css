@@ -171,13 +171,20 @@
     color: #EDE8E0;
   }
 
-  /* WebKit scrollbar */
-  ::-webkit-scrollbar { width: 6px; height: 6px; }
-  ::-webkit-scrollbar-track { background: #0A0908; }
-  ::-webkit-scrollbar-thumb { background: #1C1A18; border-radius: 3px; }
-  ::-webkit-scrollbar-thumb:hover { background: #1C1A18; }
+  /* WebKit scrollbar — visible by design: thumb must read against the void. */
+  ::-webkit-scrollbar { width: 12px; height: 12px; }
+  ::-webkit-scrollbar-track { background: #0A0908; border-left: 1px solid #1C1A18; }
+  ::-webkit-scrollbar-thumb {
+    background: #4A4642;
+    border-radius: 6px;
+    border: 3px solid #0A0908;
+    background-clip: padding-box;
+  }
+  ::-webkit-scrollbar-thumb:hover { background: #6E6862; background-clip: padding-box; }
+  ::-webkit-scrollbar-corner { background: #0A0908; }
   /* Firefox */
-  * { scrollbar-width: thin; scrollbar-color: #1C1A18 #0A0908; }
+  * { scrollbar-width: auto; scrollbar-color: #4A4642 #0A0908; }
+
 
   /* Amber-glow focus ring for any keyboard-focused interactive element */
   a:focus-visible,
