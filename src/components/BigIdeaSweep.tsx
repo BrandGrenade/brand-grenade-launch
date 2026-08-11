@@ -528,7 +528,7 @@ export function BigIdeaSweep({
   const readProgress = useServerFn(bigIdeaSweepProgress);
   const ledger = useServerFn(buildIdeaConvergenceLedger);
   const load = useServerFn(loadStimulusRun);
-  const listRuns = useServerFn(listStimulusRuns);
+  const listRuns = useServerFn(listBigIdeaRuns);
   const checkLines = useServerFn(checkBigIdeaLines);
   const lock = useServerFn(lockWinningIdea);
   const unlock = useServerFn(unlockWinningIdea);
