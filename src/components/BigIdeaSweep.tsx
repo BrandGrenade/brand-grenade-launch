@@ -519,8 +519,10 @@ export function BigIdeaSweep({
         <p className="text-body-sm" style={{ color: MUTED, marginTop: 8, lineHeight: 1.7 }}>
           One sweep of all {LENS_COUNT} lenses against the approved proposition, verbatim, with the
           strategic truths as supporting evidence only. No channel brief is read or referenced here.
-          Each lens returns its strongest idea, its best campaign line, and the case for taking it
-          forward. One idea and one line get locked — then, and only then, channel briefs adapt them.
+          Each lens returns its strongest idea, a candidate master line built to the 3–7 word poster
+          standard, and the case for taking it forward. Where a master line is already locked, each
+          lens also returns the supporting expression that sits underneath it. One idea and one
+          master line get locked — then, and only then, channel briefs adapt them.
         </p>
 
         {err && (
@@ -676,6 +678,16 @@ export function BigIdeaSweep({
               <div style={{ marginTop: 10, display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
                 <span className="text-mono" style={{ color: MUTED, fontSize: 10, letterSpacing: "0.1em" }}>
                   {d.lens_name}
+                </span>
+                <span
+                  className="text-mono"
+                  style={{
+                    color: wordCount(d.campaign_line ?? "") > 7 ? RED : MUTED,
+                    fontSize: 10,
+                    letterSpacing: "0.1em",
+                  }}
+                >
+                  {wordCount(d.campaign_line ?? "")}w
                 </span>
                 {d.line_check && (
                   <span
