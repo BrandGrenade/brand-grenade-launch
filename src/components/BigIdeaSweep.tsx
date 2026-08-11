@@ -496,7 +496,8 @@ export function BigIdeaSweep({
   onLocked?: () => void;
 }) {
   const start = useServerFn(startBigIdeaRun);
-  const batch = useServerFn(generateBigIdeaBatch);
+  const resume = useServerFn(resumeBigIdeaSweep);
+  const readProgress = useServerFn(bigIdeaSweepProgress);
   const ledger = useServerFn(buildIdeaConvergenceLedger);
   const load = useServerFn(loadStimulusRun);
   const listRuns = useServerFn(listStimulusRuns);
@@ -510,11 +511,12 @@ export function BigIdeaSweep({
   const [ideas, setIdeas] = useState<Idea[]>([]);
   const [run, setRun] = useState<RunMeta>({});
   const [busy, setBusy] = useState(false);
-  const [progress, setProgress] = useState(0);
+  const [sweep, setSweep] = useState<SweepState | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [view, setView] = useState<"ideas" | "lines">("ideas");
   const [pickIdea, setPickIdea] = useState<string | null>(null);
   const [pickLine, setPickLine] = useState<string | null>(null);
+  const pollingRef = useRef(false);
 
   const refresh = useCallback(
     async (id: string) => {
@@ -524,9 +526,41 @@ export function BigIdeaSweep({
       setRun(r.run as RunMeta);
       setPickIdea((r.run as RunMeta).winning_direction_id ?? null);
       setPickLine((r.run as RunMeta).winning_line_direction_id ?? null);
-      setProgress(list.filter((d) => d.status !== "pending").length);
     },
     [load],
+  );
+
+  // Generation runs on the server. The browser only watches it, so closing the
+  // tab no longer freezes the sweep part-way through the 37 lenses.
+  const watch = useCallback(
+    async (id: string) => {
+      if (pollingRef.current) return;
+      pollingRef.current = true;
+      try {
+        for (;;) {
+          const p = (await readProgress({ data: { runId: id } })) as SweepState;
+          setSweep(p);
+          await refresh(id);
+          if (!p.running) {
+            if (p.pending === 0 && !p.hasLedger) {
+              try {
+                await ledger({ data: { runId: id, force: false } });
+                await refresh(id);
+              } catch {
+                /* ledger is non-fatal */
+              }
+            }
+            break;
+          }
+          await new Promise((r) => setTimeout(r, 6000));
+        }
+      } catch {
+        /* transient — the next action re-polls */
+      } finally {
+        pollingRef.current = false;
+      }
+    },
+    [readProgress, refresh, ledger],
   );
 
   // Open the session's existing big idea sweep, if there is one.
@@ -539,12 +573,13 @@ export function BigIdeaSweep({
         if (big) {
           setRunId(big.id);
           await refresh(big.id);
+          await watch(big.id);
         }
       } catch {
         /* non-fatal */
       }
     })();
-  }, [listRuns, refresh, sessionId]);
+  }, [listRuns, refresh, watch, sessionId]);
 
   const runSweep = async (force: boolean) => {
     setBusy(true);
@@ -553,24 +588,15 @@ export function BigIdeaSweep({
       const { runId: id } = await start({ data: { sessionId, force } });
       setRunId(id);
       await refresh(id);
-      let done = false;
-      while (!done) {
-        const r = await batch({ data: { runId: id, batchSize: 3 } });
-        done = r.done;
-        setProgress(LENS_COUNT - r.remaining);
-        await refresh(id);
-      }
-      // Second pass: the full-set convergence ledger. The in-sweep check only
-      // ever sees prior-in-sequence ideas, so clusters are only visible once
-      // every root tension exists.
-      await ledger({ data: { runId: id, force } });
-      await refresh(id);
+      await resume({ data: { runId: id, force: true } });
+      setBusy(false);
+      await watch(id);
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Big idea sweep failed");
-    } finally {
       setBusy(false);
     }
   };
+
 
   const locked = Boolean(run.locked_at);
   const counts = useMemo(
