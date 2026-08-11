@@ -14,7 +14,20 @@ import {
   checkBigIdeaLines,
   lockWinningIdea,
   unlockWinningIdea,
+  listBigIdeaRuns,
 } from "@/lib/stimulus-bigidea.functions";
+
+/** One big idea sweep on this session, with its real generated count. */
+type RunSummary = {
+  id: string;
+  status: string;
+  createdAt: string;
+  lockedAt: string | null;
+  total: number;
+  generated: number;
+  pending: number;
+};
+
 
 /** Live server-side sweep state, as reported by `bigIdeaSweepProgress`. */
 type SweepState = {
