@@ -3629,7 +3629,7 @@ function Breadcrumb({
               type="button"
               onClick={onViewBrief}
               className="inline-flex h-8 items-center gap-1.5 rounded-md px-2.5 text-[13px] font-semibold transition-colors hover:bg-[#C81E1E15]"
-              style={{ border: "1px solid #C81E1E66", color: "#C81E1E", backgroundColor: "transparent" }}
+              style={{ border: "1px solid #E5484D66", color: "#E5484D", backgroundColor: "transparent" }}
               title="View the submitted brief in full"
             >
               <FileText size={13} />
@@ -3647,7 +3647,7 @@ function Breadcrumb({
               type="button"
               onClick={onEditBrief}
               className="inline-flex h-8 items-center gap-1.5 rounded-md px-2.5 text-[13px] font-semibold transition-opacity hover:opacity-90"
-              style={{ backgroundColor: "#C81E1E", color: "#0A0908" }}
+              style={{ backgroundColor: "#E5484D", color: "#0A0908" }}
               title="Edit the brief and rerun Stage 1 — downstream stages will reset"
             >
               <PencilLine size={13} />
@@ -4477,7 +4477,7 @@ function StreamedOutput({ text, streaming }: { text: string; streaming: boolean 
                 key={i}
                 className="text-label"
                 style={{
-                  color: "#C81E1E",
+                  color: "#E5484D",
                   letterSpacing: "0.08em",
                   textTransform: "uppercase",
                   marginTop: 24,
@@ -4831,7 +4831,7 @@ function Stage8PropositionsView({
         disabled={!manualLine.trim() || streaming || manualSubmitting}
         onClick={handleManualSubmit}
         className="mt-3 inline-flex h-10 items-center justify-center rounded-md px-5 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-50"
-        style={{ backgroundColor: "#C81E1E", color: "#0A0908" }}
+        style={{ backgroundColor: "#E5484D", color: "#0A0908" }}
       >
         {manualSubmitting ? "Submitting…" : "Use manual proposition →"}
       </button>
@@ -5143,9 +5143,9 @@ function StageControlBar({
       </span>
     );
   } else if (status === "complete") {
-    leftEl = <span style={{ color: "#C81E1E" }}>✓ {stage.name} complete</span>;
+    leftEl = <span style={{ color: "#E5484D" }}>✓ {stage.name} complete</span>;
   } else if (status === "error") {
-    leftEl = <span style={{ color: "#C81E1E" }}>⚠ Stage stalled</span>;
+    leftEl = <span style={{ color: "#E5484D" }}>⚠ Stage stalled</span>;
   } else if (status === "checkpoint") {
     leftEl = <span style={{ color: "#8B8680" }}>● Awaiting review</span>;
   } else {
@@ -5203,7 +5203,7 @@ function StallWatcher({ stageKey, onRetry }: { stageKey: string; onRetry: () => 
         backgroundColor: "rgba(138, 106, 42, 0.07)",
       }}
     >
-      <p className="text-body-sm" style={{ color: "#C81E1E" }}>
+      <p className="text-body-sm" style={{ color: "#E5484D" }}>
         Generation has paused. This sometimes happens with longer outputs.
       </p>
       <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
@@ -5300,7 +5300,7 @@ function ErrorStateCard({
           textAlign: "center",
         }}
       >
-        <div style={{ fontSize: 32, color: "#C81E1E", lineHeight: 1 }}>⚠</div>
+        <div style={{ fontSize: 32, color: "#E5484D", lineHeight: 1 }}>⚠</div>
         <h3 className="text-h3" style={{ color: "#EDE8E0", marginTop: 16 }}>
           Stage {stage.number} didn't complete
         </h3>
@@ -5631,7 +5631,7 @@ function StructuredBriefView({
             type="button"
             onClick={onEdit}
             className="inline-flex h-9 items-center gap-1.5 rounded-md px-3 text-[13px] font-semibold transition-opacity hover:opacity-90"
-            style={{ backgroundColor: "#C81E1E", color: "#0A0908" }}
+            style={{ backgroundColor: "#E5484D", color: "#0A0908" }}
           >
             <PencilLine size={14} />
             Edit Brief

@@ -32,11 +32,11 @@ function AdminTestsPage() {
             <p className="text-body mt-2 text-text-secondary">
               Tier One and Tier Two integrity checks. Not for client
               presentation.{" "}
-              <Link to="/dashboard" style={{ color: "#C81E1E" }}>
+              <Link to="/dashboard" style={{ color: "#E5484D" }}>
                 Back to dashboard
               </Link>
               {" · "}
-              <Link to="/admin/repositories" style={{ color: "#C81E1E" }}>
+              <Link to="/admin/repositories" style={{ color: "#E5484D" }}>
                 Repositories admin
               </Link>
               .

@@ -119,7 +119,7 @@ export function SavedBriefsSection({
         <Link
           to="/brief/new"
           className="inline-flex h-10 shrink-0 items-center gap-1.5 self-start rounded-md px-4 text-[13px] font-semibold transition-opacity hover:opacity-90"
-          style={{ backgroundColor: "#C81E1E", color: "#0A0908" }}
+          style={{ backgroundColor: "#E5484D", color: "#0A0908" }}
         >
           <Plus size={14} />
           New Brief
@@ -161,7 +161,7 @@ export function SavedBriefsSection({
                     type="button"
                     onClick={() => onLoad(b)}
                     className="inline-flex h-9 items-center gap-1.5 rounded-md px-3 text-[13px] font-medium transition-opacity hover:opacity-90"
-                    style={{ backgroundColor: "#C81E1E", color: "#0A0908" }}
+                    style={{ backgroundColor: "#E5484D", color: "#0A0908" }}
                   >
                     <FolderOpen size={14} />
                     Load and Run
@@ -170,7 +170,7 @@ export function SavedBriefsSection({
                     type="button"
                     onClick={() => confirmDelete(b.brief_id, b.brand_name)}
                     className="inline-flex h-9 items-center gap-1.5 rounded-md px-3 text-[13px] font-medium transition-colors hover:bg-[#C81E1E15]"
-                    style={{ border: "1px solid #C81E1E66", color: "#C81E1E" }}
+                    style={{ border: "1px solid #E5484D66", color: "#E5484D" }}
                   >
                     <Trash2 size={14} />
                     Delete
@@ -219,7 +219,7 @@ export function SavedBriefsPicker({
         className="flex w-full items-center justify-between gap-3 p-5 text-left"
       >
         <div className="flex items-center gap-3">
-          <FolderOpen size={18} style={{ color: "#C81E1E" }} />
+          <FolderOpen size={18} style={{ color: "#E5484D" }} />
           <div>
             <h3 className="text-h3 text-text-primary">Load a Saved Brief</h3>
             <p className="text-body-sm mt-0.5 text-text-secondary">
@@ -265,7 +265,7 @@ export function SavedBriefsPicker({
                       setOpen(false);
                     }}
                     className="inline-flex h-8 shrink-0 items-center rounded-md px-3 text-[13px] font-semibold transition-opacity hover:opacity-90"
-                    style={{ backgroundColor: "#C81E1E", color: "#0A0908" }}
+                    style={{ backgroundColor: "#E5484D", color: "#0A0908" }}
                   >
                     Load
                   </button>

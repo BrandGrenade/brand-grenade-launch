@@ -501,7 +501,7 @@ export function IntelligenceForm({
                   {present ? (
                     <Check
                       className="h-4 w-4 flex-shrink-0 mt-0.5"
-                      style={{ color: "#C81E1E" }}
+                      style={{ color: "#E5484D" }}
                     />
                   ) : (
                     <Circle
@@ -574,7 +574,7 @@ function ResearchSection({
       <div className="flex items-baseline gap-3">
         <span
           className="text-label"
-          style={{ color: present ? "#C81E1E" : "#8B8680" }}
+          style={{ color: present ? "#E5484D" : "#8B8680" }}
         >
           {spec.number}
         </span>

@@ -176,7 +176,7 @@ function CreativeRoom() {
           )}
 
           {!loading && !session && (
-            <div className="text-body-sm" style={{ color: "#C81E1E", marginTop: 24 }}>
+            <div className="text-body-sm" style={{ color: "#E5484D", marginTop: 24 }}>
               Session not found, or you don&apos;t have access to it.
             </div>
           )}
@@ -204,7 +204,7 @@ function CreativeRoom() {
                   : "Lock a winning idea and line above before generating channel briefs — a channel brief written first is exactly how the proposition gets reinterpreted."}
               </p>
               {channels.length === 0 && (
-                <div className="text-body-sm" style={{ color: "#C81E1E", marginTop: 14 }}>
+                <div className="text-body-sm" style={{ color: "#E5484D", marginTop: 14 }}>
                   No Channel Briefs generated yet — run Stage 21 in the Strategy Pipeline once the idea
                   is locked.
                 </div>

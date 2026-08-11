@@ -87,7 +87,7 @@ export function TopNav({ session }: { session?: SessionContext }) {
                 borderRadius: 6,
                 border: "1px solid #1C1A18",
                 backgroundColor: devModeOn ? "rgba(200, 30, 30,0.15)" : "transparent",
-                color: devModeOn ? "#C81E1E" : "#8B8680",
+                color: devModeOn ? "#E5484D" : "#8B8680",
                 fontSize: 10,
                 fontWeight: 700,
                 letterSpacing: "0.10em",

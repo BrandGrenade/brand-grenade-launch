@@ -370,7 +370,7 @@ function ThreeTruthCanvas() {
             <p className="text-body" style={{ color: "#8B8680" }}>Loading canvas…</p>
           )}
           {error && (
-            <p className="text-body" style={{ color: "#C81E1E" }}>{error}</p>
+            <p className="text-body" style={{ color: "#E5484D" }}>{error}</p>
           )}
 
           {sessionId && !loading && session && (

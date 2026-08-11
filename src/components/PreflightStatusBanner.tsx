@@ -46,10 +46,10 @@ export function PreflightStatusBanner() {
   const palette = (() => {
     switch (phase) {
       case "ready":
-        return { dot: "#C81E1E", border: "#C81E1E", bg: "#C81E1E15", fg: "#C81E1E" };
+        return { dot: "#E5484D", border: "#E5484D", bg: "#E5484D15", fg: "#E5484D" };
       case "issue_detected":
       case "error":
-        return { dot: "#C81E1E", border: "#C81E1E", bg: "#C81E1E15", fg: "#C81E1E" };
+        return { dot: "#E5484D", border: "#E5484D", bg: "#E5484D15", fg: "#E5484D" };
       case "running":
       default:
         return { dot: "#8B8680", border: "#8B8680", bg: "#1C1A18", fg: "#8B8680" };
@@ -129,7 +129,7 @@ export function PreflightStatusBanner() {
                 alignItems: "flex-start",
                 gap: 8,
                 fontSize: 13,
-                color: c.status === "pass" ? "#8B8680" : "#C81E1E",
+                color: c.status === "pass" ? "#8B8680" : "#E5484D",
                 padding: "4px 0",
               }}
             >

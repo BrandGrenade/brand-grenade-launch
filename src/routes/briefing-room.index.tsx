@@ -102,7 +102,7 @@ function BriefingRoomIndex() {
             type="button"
             onClick={() => setCreating(true)}
             className="mt-8 inline-flex h-10 items-center gap-2 rounded-md px-4 text-[13px] font-semibold"
-            style={{ backgroundColor: "#C81E1E", color: "#0A0908" }}
+            style={{ backgroundColor: "#E5484D", color: "#0A0908" }}
           >
             <Plus size={14} /> New Briefing Workspace
           </button>
@@ -136,7 +136,7 @@ function BriefingRoomIndex() {
                   onClick={onCreate}
                   disabled={busy}
                   className="inline-flex h-10 items-center rounded-md px-4 text-[13px] font-semibold disabled:opacity-50"
-                  style={{ backgroundColor: "#C81E1E", color: "#0A0908" }}
+                  style={{ backgroundColor: "#E5484D", color: "#0A0908" }}
                 >
                   {busy ? "Creating…" : "Create workspace"}
                 </button>

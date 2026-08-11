@@ -578,7 +578,7 @@ function BriefIntake() {
               className="inline-flex h-[52px] items-center justify-center rounded-md px-6 text-[15px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background sm:w-auto"
               style={{
                 border: "1px solid #C81E1E",
-                color: canSubmitSections ? "#C81E1E" : "var(--color-text-tertiary)",
+                color: canSubmitSections ? "#E5484D" : "var(--color-text-tertiary)",
                 backgroundColor: "transparent",
                 fontWeight: 600,
                 cursor: canSubmitSections && !saving ? "pointer" : "not-allowed",
@@ -692,7 +692,7 @@ function BriefIntake() {
                 </p>
               )}
               {altStatus === "ready" && (
-                <p className="text-body-sm mt-1" style={{ color: "#C81E1E" }}>
+                <p className="text-body-sm mt-1" style={{ color: "#E5484D" }}>
                   Document received. The Strategy Engine will extract the
                   relevant strategic inputs.
                 </p>
