@@ -189,11 +189,41 @@ export function buildBigIdeaUserMessage(args: {
     .join("\n");
 }
 
+/** One declared collision between this idea and an earlier lens in the sweep. */
+export interface IdeaCollision {
+  lensId: string;
+  why: string;
+}
+
 export interface ParsedBigIdea {
   idea: string;
   line: string;
   expressionUnderMaster: string;
   rationale: string;
+  rootTension: string;
+  /** Empty array = the model declared CLEAR. */
+  collisions: IdeaCollision[];
+}
+
+/**
+ * Parses "COLLIDES WITH <lens id> — <why>" lines. "CLEAR" (or an empty field)
+ * yields []. The heading is IDEA COLLISION CHECK, deliberately NOT
+ * "ANTI-CONVERGENCE": sanitize-output.ts strips any block under that label.
+ */
+export function parseCollisionField(v: string): IdeaCollision[] {
+  const out: IdeaCollision[] = [];
+  for (const rawLine of v.split("\n")) {
+    const l = rawLine.replace(/^[\s*->]+/, "").trim();
+    if (!l || /^clear\b/i.test(l)) continue;
+    const m = l.match(/^collides?\s+with\s+([A-Za-z0-9_.#-]+)\s*(?:[—–:-]\s*(.*))?$/i);
+    if (!m) continue;
+    const lensId = (m[1] ?? "")
+      .toLowerCase()
+      .replace(/[^a-z0-9_]/g, "");
+    if (!lensId) continue;
+    out.push({ lensId, why: (m[2] ?? "").trim() });
+  }
+  return out;
 }
 
 /** Splits a multi-lens big-idea response into { lensId: {idea, line, ...} }. */
@@ -221,7 +251,7 @@ export function parseBigIdeaResponse(raw: string): Record<string, ParsedBigIdea>
     const sections: Record<string, string> = {};
     {
       const re =
-        /^[ \t]*(THE BIG IDEA|CANDIDATE MASTER LINE|CAMPAIGN LINE|EXPRESSION UNDER MASTER|WHY IT WINS)[ \t]*:?[ \t]*$/gim;
+        /^[ \t]*(THE BIG IDEA|ROOT TENSION|IDEA COLLISION CHECK|CANDIDATE MASTER LINE|CAMPAIGN LINE|EXPRESSION UNDER MASTER|WHY IT WINS)[ \t]*:?[ \t]*$/gim;
       const hits: Array<{ label: string; start: number; end: number }> = [];
       for (let m = re.exec(body); m; m = re.exec(body))
         hits.push({ label: m[1].toUpperCase(), start: m.index, end: m.index + m[0].length });
@@ -237,12 +267,15 @@ export function parseBigIdeaResponse(raw: string): Record<string, ParsedBigIdea>
     const line = sections["CANDIDATE MASTER LINE"] ?? sections["CAMPAIGN LINE"] ?? "";
     const expression = sections["EXPRESSION UNDER MASTER"] ?? "";
     const rationale = sections["WHY IT WINS"] ?? "";
+    const collisionField = sections["IDEA COLLISION CHECK"] ?? "";
 
     out[id] = {
       idea: idea || body.trim(),
       line: firstLine(line),
       expressionUnderMaster: firstLine(expression),
       rationale,
+      rootTension: firstLine(sections["ROOT TENSION"] ?? ""),
+      collisions: parseCollisionField(collisionField),
     };
   }
   return out;
