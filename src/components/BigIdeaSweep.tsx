@@ -558,6 +558,11 @@ export function BigIdeaSweep({
         setProgress(LENS_COUNT - r.remaining);
         await refresh(id);
       }
+      // Second pass: the full-set convergence ledger. The in-sweep check only
+      // ever sees prior-in-sequence ideas, so clusters are only visible once
+      // every root tension exists.
+      await ledger({ data: { runId: id, force } });
+      await refresh(id);
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Big idea sweep failed");
     } finally {
