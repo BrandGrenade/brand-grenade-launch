@@ -1719,6 +1719,7 @@ export type Database = {
           gate_one_confirmed: boolean
           gate_one_confirmed_at: string | null
           id: string
+          last_batch_at: string | null
           locked_at: string | null
           run_mode: string
           session_id: string
@@ -1744,6 +1745,7 @@ export type Database = {
           gate_one_confirmed?: boolean
           gate_one_confirmed_at?: string | null
           id?: string
+          last_batch_at?: string | null
           locked_at?: string | null
           run_mode?: string
           session_id: string
@@ -1769,6 +1771,7 @@ export type Database = {
           gate_one_confirmed?: boolean
           gate_one_confirmed_at?: string | null
           id?: string
+          last_batch_at?: string | null
           locked_at?: string | null
           run_mode?: string
           session_id?: string

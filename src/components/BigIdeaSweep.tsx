@@ -4,16 +4,31 @@
 // Check, Gate One, then ONE winning idea and ONE winning line locked before
 // any channel-specific brief exists.
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import {
   startBigIdeaRun,
-  generateBigIdeaBatch,
+  resumeBigIdeaSweep,
+  bigIdeaSweepProgress,
   buildIdeaConvergenceLedger,
   checkBigIdeaLines,
   lockWinningIdea,
   unlockWinningIdea,
 } from "@/lib/stimulus-bigidea.functions";
+
+/** Live server-side sweep state, as reported by `bigIdeaSweepProgress`. */
+type SweepState = {
+  status: string;
+  error: string | null;
+  total: number;
+  generated: number;
+  pending: number;
+  lastBatchAt: string | null;
+  running: boolean;
+  stalled: boolean;
+  hasLedger: boolean;
+};
+
 import {
   loadStimulusRun,
   listStimulusRuns,
@@ -496,7 +511,8 @@ export function BigIdeaSweep({
   onLocked?: () => void;
 }) {
   const start = useServerFn(startBigIdeaRun);
-  const batch = useServerFn(generateBigIdeaBatch);
+  const resume = useServerFn(resumeBigIdeaSweep);
+  const readProgress = useServerFn(bigIdeaSweepProgress);
   const ledger = useServerFn(buildIdeaConvergenceLedger);
   const load = useServerFn(loadStimulusRun);
   const listRuns = useServerFn(listStimulusRuns);
@@ -510,11 +526,12 @@ export function BigIdeaSweep({
   const [ideas, setIdeas] = useState<Idea[]>([]);
   const [run, setRun] = useState<RunMeta>({});
   const [busy, setBusy] = useState(false);
-  const [progress, setProgress] = useState(0);
+  const [sweep, setSweep] = useState<SweepState | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [view, setView] = useState<"ideas" | "lines">("ideas");
   const [pickIdea, setPickIdea] = useState<string | null>(null);
   const [pickLine, setPickLine] = useState<string | null>(null);
+  const pollingRef = useRef(false);
 
   const refresh = useCallback(
     async (id: string) => {
@@ -524,9 +541,41 @@ export function BigIdeaSweep({
       setRun(r.run as RunMeta);
       setPickIdea((r.run as RunMeta).winning_direction_id ?? null);
       setPickLine((r.run as RunMeta).winning_line_direction_id ?? null);
-      setProgress(list.filter((d) => d.status !== "pending").length);
     },
     [load],
+  );
+
+  // Generation runs on the server. The browser only watches it, so closing the
+  // tab no longer freezes the sweep part-way through the 37 lenses.
+  const watch = useCallback(
+    async (id: string) => {
+      if (pollingRef.current) return;
+      pollingRef.current = true;
+      try {
+        for (;;) {
+          const p = (await readProgress({ data: { runId: id } })) as SweepState;
+          setSweep(p);
+          await refresh(id);
+          if (!p.running) {
+            if (p.pending === 0 && !p.hasLedger) {
+              try {
+                await ledger({ data: { runId: id, force: false } });
+                await refresh(id);
+              } catch {
+                /* ledger is non-fatal */
+              }
+            }
+            break;
+          }
+          await new Promise((r) => setTimeout(r, 6000));
+        }
+      } catch {
+        /* transient — the next action re-polls */
+      } finally {
+        pollingRef.current = false;
+      }
+    },
+    [readProgress, refresh, ledger],
   );
 
   // Open the session's existing big idea sweep, if there is one.
@@ -539,12 +588,13 @@ export function BigIdeaSweep({
         if (big) {
           setRunId(big.id);
           await refresh(big.id);
+          await watch(big.id);
         }
       } catch {
         /* non-fatal */
       }
     })();
-  }, [listRuns, refresh, sessionId]);
+  }, [listRuns, refresh, watch, sessionId]);
 
   const runSweep = async (force: boolean) => {
     setBusy(true);
@@ -553,24 +603,15 @@ export function BigIdeaSweep({
       const { runId: id } = await start({ data: { sessionId, force } });
       setRunId(id);
       await refresh(id);
-      let done = false;
-      while (!done) {
-        const r = await batch({ data: { runId: id, batchSize: 3 } });
-        done = r.done;
-        setProgress(LENS_COUNT - r.remaining);
-        await refresh(id);
-      }
-      // Second pass: the full-set convergence ledger. The in-sweep check only
-      // ever sees prior-in-sequence ideas, so clusters are only visible once
-      // every root tension exists.
-      await ledger({ data: { runId: id, force } });
-      await refresh(id);
+      await resume({ data: { runId: id, force: true } });
+      setBusy(false);
+      await watch(id);
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Big idea sweep failed");
-    } finally {
       setBusy(false);
     }
   };
+
 
   const locked = Boolean(run.locked_at);
   const counts = useMemo(
@@ -615,19 +656,57 @@ export function BigIdeaSweep({
           </div>
         )}
 
+        {sweep && sweep.total > 0 && (sweep.running || sweep.stalled) && (
+          <div
+            className="text-body-sm"
+            style={{
+              marginTop: 14,
+              padding: "10px 12px",
+              border: `1px solid ${sweep.stalled ? RED : AMBER}33`,
+              background: sweep.stalled ? `${RED}0F` : `${AMBER}0F`,
+              color: sweep.stalled ? RED : AMBER,
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+            }}
+          >
+            <span>
+              {sweep.stalled
+                ? `Sweep stopped at ${sweep.generated}/${sweep.total} — ${sweep.pending} lenses still to generate.${sweep.error ? ` ${sweep.error}` : ""} Press Resume sweep to continue from lens ${sweep.generated + 1}.`
+                : `Generating on the server — ${sweep.generated}/${sweep.total} lenses complete. You can safely leave this page; generation continues.`}
+            </span>
+            <span style={{ flex: 1 }} />
+            <span className="text-mono" style={{ fontSize: 11 }}>
+              {Math.round((sweep.generated / Math.max(sweep.total, 1)) * 100)}%
+            </span>
+          </div>
+        )}
+
         <div style={{ marginTop: 16, display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
-          <Btn onClick={() => void runSweep(false)} disabled={busy} active>
-            {busy
-              ? `Generating ${progress}/${LENS_COUNT}…`
-              : ideas.length > 0
-                ? "Resume sweep"
-                : `Run ${LENS_COUNT}-lens big idea sweep`}
+          <Btn
+            onClick={() => void runSweep(false)}
+            disabled={busy || Boolean(sweep?.running)}
+            active
+          >
+            {sweep?.running
+              ? `Generating ${sweep.generated}/${sweep.total || LENS_COUNT}…`
+              : busy
+                ? "Starting…"
+                : sweep?.stalled
+                  ? `Resume sweep (${sweep.pending} left)`
+                  : ideas.length > 0
+                    ? "Resume sweep"
+                    : `Run ${LENS_COUNT}-lens big idea sweep`}
           </Btn>
           {ideas.length > 0 && (
-            <Btn onClick={() => void runSweep(true)} disabled={busy || locked}>
+            <Btn
+              onClick={() => void runSweep(true)}
+              disabled={busy || locked || Boolean(sweep?.running)}
+            >
               Start a fresh sweep
             </Btn>
           )}
+
           {runId && lines.length > 0 && (
             <Btn
               disabled={busy}
