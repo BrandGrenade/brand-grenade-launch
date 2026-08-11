@@ -707,6 +707,53 @@ export function BigIdeaSweep({
           </div>
         )}
 
+        {runs.length > 1 && (
+          <div
+            style={{
+              marginTop: 14,
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              flexWrap: "wrap",
+            }}
+          >
+            <span
+              className="text-mono"
+              style={{ fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase", color: MUTED }}
+            >
+              Sweep
+            </span>
+            <label className="sr-only" htmlFor="big-idea-run-select">
+              Choose which big idea sweep to view
+            </label>
+            <select
+              id="big-idea-run-select"
+              value={runId ?? ""}
+              disabled={busy}
+              onChange={(e) => void openRun(e.target.value)}
+              style={{
+                background: "#1C1A18",
+                color: "#EDE8E0",
+                border: "1px solid #2A2724",
+                padding: "6px 10px",
+                fontSize: 13,
+                minHeight: 36,
+              }}
+            >
+              {runs.map((r) => (
+                <option key={r.id} value={r.id}>
+                  {new Date(r.createdAt).toLocaleString()} · {r.generated}/{r.total || LENS_COUNT}
+                  {r.lockedAt ? " · locked" : r.pending > 0 ? " · incomplete" : " · complete"}
+                </option>
+              ))}
+            </select>
+            <span className="text-body-sm" style={{ color: MUTED }}>
+              Earlier sweeps are kept in full — switching here never deletes or overwrites one.
+            </span>
+          </div>
+        )}
+
+
         {sweep && sweep.total > 0 && (sweep.running || sweep.stalled) && (
           <div
             className="text-body-sm"
