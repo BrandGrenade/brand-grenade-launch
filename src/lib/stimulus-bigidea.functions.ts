@@ -148,8 +148,48 @@ export const resumeBigIdeaSweep = createServerFn({ method: "POST" })
     return { started: true as const, alreadyRunning: false as const, remaining };
   });
 
+/**
+ * Every big idea sweep on the session, newest first, with real generated
+ * counts. A newly-started (or abandoned, empty) sweep must never hide an
+ * earlier completed one, so the UI needs the counts to choose what to open.
+ */
+export const listBigIdeaRuns = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => z.object({ sessionId: z.string().uuid() }).parse(i))
+  .handler(async ({ data, context }) => {
+    await assertSessionAccess(data.sessionId, context.userId);
+    const { data: runs, error } = await supabaseAdmin
+      .from("stimulus_runs")
+      .select("id, status, error, created_at, updated_at, last_batch_at, locked_at")
+      .eq("session_id", data.sessionId)
+      .eq("run_mode", "big_idea")
+      .order("created_at", { ascending: false });
+    if (error) throw new Error(error.message);
+
+    const out = [];
+    for (const r of runs ?? []) {
+      const { data: rows } = await supabaseAdmin
+        .from("stimulus_directions")
+        .select("status")
+        .eq("run_id", r.id);
+      const all = rows ?? [];
+      const pending = all.filter((d) => d.status === "pending").length;
+      out.push({
+        id: r.id,
+        status: r.status as string,
+        createdAt: r.created_at as string,
+        lockedAt: (r.locked_at as string | null) ?? null,
+        total: all.length,
+        generated: all.length - pending,
+        pending,
+      });
+    }
+    return { runs: out };
+  });
+
 /** Live progress for the sweep, including stall detection. */
 export const bigIdeaSweepProgress = createServerFn({ method: "POST" })
+
   .middleware([requireSupabaseAuth])
   .inputValidator((i) => z.object({ runId: z.string().uuid() }).parse(i))
   .handler(async ({ data, context }) => {
