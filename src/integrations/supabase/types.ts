@@ -1304,8 +1304,10 @@ export type Database = {
           created_at: string
           direction: string | null
           direction_id: string
+          expression_under_master: string | null
           id: string
           line_check: Json | null
+          master_line_at_generation: string | null
           origin: string
           rated_at: string | null
           rating_status: string
@@ -1320,8 +1322,10 @@ export type Database = {
           created_at?: string
           direction?: string | null
           direction_id: string
+          expression_under_master?: string | null
           id?: string
           line_check?: Json | null
+          master_line_at_generation?: string | null
           origin?: string
           rated_at?: string | null
           rating_status?: string
@@ -1336,8 +1340,10 @@ export type Database = {
           created_at?: string
           direction?: string | null
           direction_id?: string
+          expression_under_master?: string | null
           id?: string
           line_check?: Json | null
+          master_line_at_generation?: string | null
           origin?: string
           rated_at?: string | null
           rating_status?: string
@@ -1370,6 +1376,7 @@ export type Database = {
           created_at: string
           direction: string
           error: string | null
+          expression_under_master: string | null
           gate_one_approved: boolean
           gate_one_approved_at: string | null
           gate_one_notes: string | null
@@ -1379,6 +1386,7 @@ export type Database = {
           lens_id: string
           lens_name: string
           line_check: Json | null
+          master_line_at_generation: string | null
           rated_at: string | null
           rating_error: string | null
           rating_status: string
@@ -1397,6 +1405,7 @@ export type Database = {
           created_at?: string
           direction?: string
           error?: string | null
+          expression_under_master?: string | null
           gate_one_approved?: boolean
           gate_one_approved_at?: string | null
           gate_one_notes?: string | null
@@ -1406,6 +1415,7 @@ export type Database = {
           lens_id: string
           lens_name: string
           line_check?: Json | null
+          master_line_at_generation?: string | null
           rated_at?: string | null
           rating_error?: string | null
           rating_status?: string
@@ -1424,6 +1434,7 @@ export type Database = {
           created_at?: string
           direction?: string
           error?: string | null
+          expression_under_master?: string | null
           gate_one_approved?: boolean
           gate_one_approved_at?: string | null
           gate_one_notes?: string | null
@@ -1433,6 +1444,7 @@ export type Database = {
           lens_id?: string
           lens_name?: string
           line_check?: Json | null
+          master_line_at_generation?: string | null
           rated_at?: string | null
           rating_error?: string | null
           rating_status?: string
