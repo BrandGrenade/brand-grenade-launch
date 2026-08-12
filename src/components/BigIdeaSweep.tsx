@@ -962,9 +962,9 @@ export function BigIdeaSweep({
                     }
                   }}
                 >
-                  Unlock
+                  Unlock and choose a different winner
                 </Btn>
-              )}
+
             </div>
             {locked && (
               <div className="text-body-sm" style={{ color: MUTED, marginTop: 12, lineHeight: 1.7 }}>
