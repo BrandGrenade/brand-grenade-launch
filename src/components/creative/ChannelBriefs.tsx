@@ -30,7 +30,7 @@ import {
 } from "@/lib/stimulus-export";
 import { StimulusOrchestration } from "@/components/StimulusOrchestration";
 import { ideaCardStyle, IDEA_COLUMN_WIDTH } from "@/components/stimulus/idea-layout";
-import { Spinner } from "@/components/ui/busy";
+import { Spinner, ProgressBar } from "@/components/ui/busy";
 
 const AMBER = "#F2665F";
 const MUTED = "#A8A29A";
@@ -666,9 +666,13 @@ export function ChannelBriefs({
             disabled={!locked || anyRunning || channels.length === 0}
             onClick={() => void generateAll()}
           >
-            {anyRunning
-              ? `Generating ${runningCount} channels…`
-              : "Generate all content creation input prompts"}
+            {anyRunning ? (
+              <>
+                <Spinner /> {`Generating ${runningCount} of ${channels.length} channels…`}
+              </>
+            ) : (
+              "Generate all content creation input prompts"
+            )}
           </Btn>
         </div>
         <p className="text-body-sm" style={{ color: MUTED, marginTop: 8, lineHeight: 1.7 }}>
