@@ -1,14 +1,27 @@
 // FULL CREATIVE SHOWCASE — client-side document builder.
 //
-// One campaign, presented as a whole. Four movements, in order:
-//   1. The Foundation      — the locked idea and line, stated once, with the
-//                            real reason it won.
-//   2. The Six Expressions — each channel as an expression of that foundation,
-//                            with the shared signature threads it carries.
-//   3. Proof of Coherence  — the Orchestration Engine's own CD verdict.
-//   4. Full detail         — the complete prompts and offline briefs, last.
+// STANDING TEMPLATE for this document type. Two clearly separated parts in
+// one file:
+//
+//   FRONT MATTER — The Showcase (client-facing, reads first, dominates)
+//     Movement 01  The Foundation — locked idea, campaign line, why it wins,
+//                  and the signature devices named once, confidently.
+//     Movement 02  The Expressions — each channel's creative output as full,
+//                  unbroken hero content, with one short fidelity line that
+//                  points at the appendix instead of reproducing it.
+//     Movement 03  Proof of Coherence — the Orchestration Engine's CD verdict.
+//
+//   APPENDIX — Campaign Signature Registry & Consistency Trace (internal QA)
+//     A. The deduplicated registry in full detail.
+//     B. Per-channel signature trace with the evidence citations.
+//     C. Accepted cross-references with their risk-weighing rationale.
+//     D. Working artefacts — prompts and offline briefs.
+//
+// Registry rows are authored once at orchestration time and stored; evidence
+// citations are recomputed on every render. Deduplication therefore happens
+// here, at render, before either part of the document is built.
 
-import type { CreativeShowcase } from "@/lib/creative-showcase.functions";
+import type { CreativeShowcase, ShowcaseSignature } from "@/lib/creative-showcase.functions";
 
 function esc(v: unknown): string {
   return String(v ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -22,6 +35,58 @@ function stamp(v: unknown): string {
 
 const slug = (s: string) =>
   s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 48) || "showcase";
+
+/** Loose identity key so "Stealth. By Design." and "Stealth By Design" merge. */
+const sigKey = (name: string) => name.toLowerCase().replace(/[^a-z0-9]+/g, "");
+
+/**
+ * Front-matter copy states devices as fact. Strips comparative and hedging
+ * scaffolding ("distinct from the SMP construction", "arguably", …) that
+ * belongs in the QA register, never in the showcase.
+ */
+const HEDGE = /\b(?:as\s+)?(?:distinct from|as opposed to|not to be confused with|unlike)\b/i;
+
+function confident(text: string): string {
+  let t = String(text ?? "").trim();
+
+  // Whole parenthetical asides that only exist to qualify: "(distinct from …)".
+  t = t.replace(/\s*\(([^()]*)\)/g, (m, inner: string) => (HEDGE.test(inner) ? "" : m));
+
+  // Set-off comparative clauses: ", distinct from the SMP construction," / "— unlike …".
+  t = t.replace(
+    /\s*[,;]\s*(?:as\s+)?(?:distinct from|as opposed to|not to be confused with|unlike)\b[^.;]*(?=[.;]|$)/gi,
+    "",
+  );
+  t = t.replace(
+    /\s*[—–-]\s*(?:as\s+)?(?:distinct from|as opposed to|not to be confused with|unlike)\b[^.;]*(?=[.;]|$)/gi,
+    "",
+  );
+
+  // Plain hedges.
+  t = t.replace(/\b(?:arguably|somewhat|fairly|relatively|broadly speaking|in a sense|essentially)\b\s*/gi, "");
+
+  t = t.replace(/\s{2,}/g, " ").replace(/\s+([.,;])/g, "$1").trim();
+  if (t && !/[.!?]$/.test(t)) t += ".";
+  return t;
+}
+
+/** One entry per device. Longest description wins; the rest are folded in. */
+function dedupeSignatures(sigs: ShowcaseSignature[]): ShowcaseSignature[] {
+  const byKey = new Map<string, ShowcaseSignature>();
+  for (const s of sigs) {
+    const k = sigKey(s.name);
+    if (!k) continue;
+    const prev = byKey.get(k);
+    if (!prev) {
+      byKey.set(k, { ...s });
+      continue;
+    }
+    if ((s.description ?? "").length > (prev.description ?? "").length) {
+      byKey.set(k, { ...s, category: prev.category || s.category });
+    }
+  }
+  return [...byKey.values()];
+}
 
 const CSS = `
 :root{--void:#0A0908;--ash:#1C1A18;--paper:#EDE8E0;--smoke:#8B8680;--detonation:#C81E1E;
@@ -43,17 +108,18 @@ p{margin:0 0 10px;}
   border-left:3px solid var(--detonation);padding-left:16px;}
 .idea{font-size:17px;line-height:1.7;}
 .card{border:1px solid var(--rule);border-radius:8px;padding:22px;margin:14px 0;background:var(--surface);}
-.chan{border:1px solid var(--rule);border-left:3px solid var(--detonation);border-radius:8px;padding:22px;margin:16px 0;background:var(--surface);}
-.chan .expresses{font-size:14px;line-height:1.7;}
+.chan{border:1px solid var(--rule);border-left:3px solid var(--detonation);border-radius:8px;padding:26px;margin:20px 0;background:var(--surface);}
+.hero{font-size:16px;line-height:1.75;white-space:pre-wrap;margin:12px 0 0;}
+.fidelity-line{font-size:13px;color:var(--smoke);border-top:1px dashed var(--rule);margin-top:18px;padding-top:10px;}
+.fidelity-line a{color:var(--detonation);text-decoration:none;}
 .pill{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
   border:1px solid var(--rule);border-radius:999px;padding:3px 10px;margin:0 6px 6px 0;color:var(--smoke);}
 .pill.ok{border-color:#2F7D46;color:#67C08A;}
 .pill.warn{border-color:#8A6A1F;color:#E0B34A;}
 .pill.bad{border-color:#7D2F2F;color:#E5484D;}
-.thread{border-top:1px dashed var(--rule);padding-top:10px;margin-top:10px;}
-.thread .name{font-weight:600;font-size:14px;}
-.thread .cat{color:var(--detonation);font-size:10px;letter-spacing:.14em;text-transform:uppercase;margin-left:8px;}
-.evidence{color:var(--smoke);font-size:13px;font-style:italic;margin-top:4px;}
+.device{border-top:1px dashed var(--rule);padding-top:10px;margin-top:10px;}
+.device .name{font-weight:600;font-size:15px;}
+.device .cat{color:var(--detonation);font-size:10px;letter-spacing:.14em;text-transform:uppercase;margin-left:8px;}
 .verdict{font-size:26px;font-weight:700;letter-spacing:-.01em;margin:0 0 8px;}
 .verdict.pass{color:#67C08A;} .verdict.fail{color:#E5484D;} .verdict.none{color:var(--smoke);}
 pre{white-space:pre-wrap;background:var(--surface2);border:1px solid var(--rule);border-radius:6px;padding:16px;
@@ -64,11 +130,29 @@ table.ratings td{padding:5px 12px 5px 0;vertical-align:top;}
 details{border:1px solid var(--rule);border-radius:8px;padding:14px 18px;margin:12px 0;background:var(--surface);}
 summary{cursor:pointer;font-weight:600;}
 hr{border:none;border-top:1px solid var(--rule);margin:30px 0;}
+
+/* ---------- APPENDIX: deliberately denser, more technical, unmistakably backing material ---------- */
+.appendix-divider{margin:96px 0 0;border-top:3px double var(--rule);padding-top:22px;}
+.appendix-divider .tag{display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:10px;letter-spacing:.24em;
+  text-transform:uppercase;color:var(--void);background:var(--smoke);border-radius:3px;padding:4px 10px;margin-bottom:14px;}
+.appendix-divider h2{font-size:20px;letter-spacing:.06em;color:var(--paper);text-transform:none;}
+.appendix{font-family:ui-monospace,Menlo,monospace;font-size:12.5px;line-height:1.6;color:var(--smoke);
+  border-left:2px solid var(--rule);padding-left:20px;margin-top:20px;}
+.appendix h3{font-family:inherit;font-size:13px;letter-spacing:.16em;text-transform:uppercase;color:var(--paper);margin:32px 0 8px;}
+.appendix h4{font-family:inherit;font-size:12px;letter-spacing:.1em;color:var(--detonation);margin:20px 0 6px;}
+.appendix .row{border-bottom:1px solid var(--rule);padding:10px 0;}
+.appendix .k{color:var(--paper);}
+.appendix .quote{color:var(--smoke);font-style:normal;background:var(--surface2);border-left:2px solid var(--rule);
+  padding:8px 12px;margin:6px 0 0;display:block;}
+.appendix details{background:var(--surface2);}
+.appendix .none{color:#6E6862;}
+
 @media print{
   body{background:#fff;color:var(--ash);padding:0;}
-  .movement{page-break-before:always;}
+  .movement,.appendix-divider{page-break-before:always;}
   .card,.chan,pre,details{background:#F4F1EC;border-color:#C2BCB5;color:var(--ash);}
-  .muted,.evidence{color:#6B6660;}
+  .muted,.appendix{color:#6B6660;}
+  .appendix-divider .tag{background:#C2BCB5;color:#1C1A18;}
   details{page-break-inside:avoid;} details[open] summary{margin-bottom:8px;}
 }
 `;
@@ -101,6 +185,28 @@ export function buildCreativeShowcase(x: CreativeShowcase): { filename: string; 
   const f = x.foundation;
   const chans = x.channels;
 
+  // Deduplicate once, before either part of the document is built.
+  const registry = dedupeSignatures(x.signatures);
+  const registryKeys = new Set(registry.map((s) => sigKey(s.name)));
+
+  // Per-channel carried threads, deduplicated against the same registry.
+  const carriedByChannel = new Map<string, CreativeShowcase["channels"][number]["carries"]>();
+  for (const c of chans) {
+    const seen = new Set<string>();
+    carriedByChannel.set(
+      c.channelName,
+      c.carries.filter((s) => {
+        const k = sigKey(s.name);
+        if (!k || seen.has(k) || !registryKeys.has(k)) return false;
+        seen.add(k);
+        return true;
+      }),
+    );
+  }
+
+  const anchor = (name: string) => `trace-${slug(name)}`;
+
+  // ============================================ FRONT MATTER — MOVEMENT 01
   const foundation = `
 <div class="movement" style="border-top:none;padding-top:0;">
   <div class="movement-no">MOVEMENT 01</div>
@@ -122,69 +228,72 @@ export function buildCreativeShowcase(x: CreativeShowcase): { filename: string; 
   ${x.smp ? `<h4>Strategic proposition it carries</h4><div class="card"><p>${esc(x.smp)}</p></div>` : ""}
   ${x.detonationLine ? `<p class="muted">Detonation line — ${esc(x.detonationLine)}</p>` : ""}
   ${
-    x.signatures.length
-      ? `<h4>Campaign signature registry — the shared threads</h4><div class="card">${x.signatures
-          .map(
-            (s) =>
-              `<div class="thread"><span class="name">${esc(s.name)}</span><span class="cat">${esc(
-                s.category,
-              )}</span><div class="muted">${esc(s.description)}</div></div>`,
-          )
-          .join("")}</div>`
-      : `<p class="muted">No campaign signature registry recorded — run the Orchestration Engine to extract one.</p>`
+    registry.length
+      ? `<h4>Signature devices</h4>
+  <div class="card">
+    <p class="muted">The devices every expression is built from. Each is named once, here.</p>
+    ${registry
+      .map(
+        (s) =>
+          `<div class="device"><span class="name">${esc(s.name)}</span><span class="cat">${esc(
+            s.category,
+          )}</span><div class="muted">${esc(confident(s.description))}</div></div>`,
+      )
+      .join("")}
+  </div>`
+      : `<p class="muted">No signature devices recorded — run the Orchestration Engine to extract the registry.</p>`
   }
 </div>`;
 
+  // ============================================ FRONT MATTER — MOVEMENT 02
   const expressions = `
 <div class="movement">
   <div class="movement-no">MOVEMENT 02</div>
   <h2>The ${chans.length === 6 ? "Six" : chans.length} Expressions</h2>
-  <p class="muted">Not six assets. One idea, expressed ${chans.length} ways — each shown against the foundation above, with the shared threads it carries.</p>
+  <p class="muted">Not ${chans.length} assets. One idea, expressed ${chans.length} ways. The work itself follows, whole and uninterrupted.</p>
   ${
     chans.length
       ? chans
-          .map(
-            (c) => `
+          .map((c) => {
+            const carried = carriedByChannel.get(c.channelName) ?? [];
+            const verbatim = c.fidelity?.lineVerbatim;
+            const fidelityLine =
+              `${
+                verbatim
+                  ? `Carries the campaign line verbatim`
+                  : c.fidelity
+                    ? `Campaign line adapted, not verbatim`
+                    : `Fidelity not yet checked`
+              }${c.fidelity ? ` — fidelity ${esc(c.fidelity.verdict)} ${esc(c.fidelity.score)}/10` : ""}` +
+              `${carried.length ? ` · ${carried.length} signature device${carried.length === 1 ? "" : "s"} carried` : ""}` +
+              ` — full signature trace in <a href="#${anchor(c.channelName)}">Appendix B</a>.`;
+            return `
   <div class="chan">
     <h3>${esc(c.channelName)}</h3>
     <p class="muted">How this channel expresses <strong>${esc(f.line || "the locked idea")}</strong></p>
-    <div>
-      <span class="pill ${c.gateOneConfirmed ? "ok" : "warn"}">${c.gateOneConfirmed ? "Gate One confirmed" : "Gate One not confirmed"}</span>
-      ${fidelityPill(c.fidelity)}
-    </div>
-    ${c.fidelity?.reasoning ? `<p class="expresses">${esc(c.fidelity.reasoning)}</p>` : ""}
-    <h4>Threads it carries</h4>
+    <div class="hero">${esc(c.adaptation)}</div>
     ${
-      c.carries.length
-        ? c.carries
-            .map(
-              (s) =>
-                `<div class="thread"><span class="name">${esc(s.name)}</span><span class="cat">${esc(
-                  s.category,
-                )}</span><div class="muted">${esc(s.description)}</div><div class="evidence">“…${esc(
-                  s.evidence,
-                )}…”</div></div>`,
-            )
-            .join("")
-        : `<p class="muted">No registry signature is explicitly carried in this expression — the format legitimately omits the ones that do not apply to it.</p>`
-    }
-    ${
-      c.crossRefs.length
-        ? `<h4>Accepted cross-references</h4>${c.crossRefs
-            .map((r) => `<p class="muted">${esc(r.suggestion)}${r.rationale ? ` — ${esc(r.rationale)}` : ""}</p>`)
-            .join("")}`
+      c.offlineBrief
+        ? `<h4>Offline creative brief</h4><div class="hero">${esc(c.offlineBrief)}</div>`
         : ""
     }
-    ${c.cdNote ? `<h4>Creative Director note</h4><p class="muted">${esc(c.cdNote)}</p>` : ""}
-  </div>`,
-          )
+    <p class="fidelity-line">${fidelityLine}</p>
+  </div>`;
+          })
           .join("")
       : `<p class="muted">No channel expressions generated yet.</p>`
   }
 </div>`;
 
+  // ============================================ FRONT MATTER — MOVEMENT 03
   const cd = (x.coherence.cdStatus ?? "").toLowerCase();
-  const verdictCls = !x.coherence.hasOrchestration ? "none" : cd.includes("pass") || cd === "complete" ? "pass" : cd.includes("fail") ? "fail" : "none";
+  const verdictCls = !x.coherence.hasOrchestration
+    ? "none"
+    : cd.includes("pass") || cd === "complete"
+      ? "pass"
+      : cd.includes("fail")
+        ? "fail"
+        : "none";
   const coherence = `
 <div class="movement">
   <div class="movement-no">MOVEMENT 03</div>
@@ -198,43 +307,120 @@ export function buildCreativeShowcase(x: CreativeShowcase): { filename: string; 
     }</p>
     <p class="muted">${
       x.coherence.hasOrchestration
-        ? `Registry v${esc(x.coherence.registryVersion ?? "—")} · Gate Two ${
+        ? `Registry v${esc(x.coherence.registryVersion ?? "—")} · ${registry.length} signature device${
+            registry.length === 1 ? "" : "s"
+          } · Gate Two ${
             x.coherence.gateTwoConfirmed
               ? `confirmed ${esc(stamp(x.coherence.gateTwoConfirmedAt))}`
               : "not yet confirmed"
           }`
         : "Run orchestration to produce a verified cohesion verdict across the set."
     }</p>
-    ${x.coherence.cdOutput ? `<pre>${esc(x.coherence.cdOutput)}</pre>` : ""}
-    ${x.coherence.gateTwoNotes ? `<p class="muted">Gate Two sign-off note — ${esc(x.coherence.gateTwoNotes)}</p>` : ""}
+    <p class="muted">The evidence behind this verdict — the per-channel signature trace and the cross-reference record — is set out in the Appendix.</p>
   </div>
-  ${
-    x.coherence.rejected.length
-      ? `<h4>Rejected at the CD pass</h4><div class="card">${x.coherence.rejected
-          .map(
-            (r) =>
-              `<p class="muted">${esc(r.channelName)}${r.lensName ? ` · ${esc(r.lensName)}` : ""} — ${esc(
-                r.reason,
-              )} (${esc(stamp(r.at))})</p>`,
-          )
-          .join("")}</div>`
-      : ""
-  }
 </div>`;
 
-  const detail = `
-<div class="movement">
-  <div class="movement-no">MOVEMENT 04</div>
-  <h2>Full Detail</h2>
-  <p class="muted">The working artefacts behind the presentation — open only if you want to go deeper.</p>
+  // ==================================================== APPENDIX (internal)
+  const appxRegistry = `
+  <h3>A · Campaign Signature Registry</h3>
+  ${
+    registry.length
+      ? registry
+          .map(
+            (s) => `
+  <div class="row">
+    <div class="k">${esc(s.name)} <span style="color:var(--detonation)">[${esc(s.category)}]</span> <span class="none">status: ${esc(
+      s.status,
+    )}</span></div>
+    <div>${esc(s.description)}</div>
+  </div>`,
+          )
+          .join("")
+      : `<p class="none">Registry empty — orchestration has not extracted signatures.</p>`
+  }
+  <p class="none">${x.signatures.length - registry.length > 0 ? `${x.signatures.length - registry.length} duplicate registry row(s) merged at render.` : "No duplicate registry rows detected."}</p>`;
+
+  const appxTrace = `
+  <h3>B · Per-channel consistency trace</h3>
+  <p class="none">Traceability record. Each quotation is the passage in that channel's generated output where the device is present.</p>
+  ${chans
+    .map((c) => {
+      const carried = carriedByChannel.get(c.channelName) ?? [];
+      return `
+  <h4 id="${anchor(c.channelName)}">${esc(c.channelName)}</h4>
+  <div class="row"><span class="k">Fidelity:</span> ${
+    c.fidelity
+      ? `${esc(c.fidelity.verdict)} ${esc(c.fidelity.score)}/10 · line verbatim: ${c.fidelity.lineVerbatim ? "yes" : "no"}${
+          c.fidelity.reasoning ? `<div>${esc(c.fidelity.reasoning)}</div>` : ""
+        }`
+      : "not checked"
+  }</div>
+  <div class="row"><span class="k">Gate One:</span> ${c.gateOneConfirmed ? "confirmed" : "not confirmed"} · <span class="k">generated:</span> ${esc(
+    stamp(c.generatedAt),
+  )}</div>
+  ${
+    carried.length
+      ? carried
+          .map(
+            (s) => `
+  <div class="row">
+    <div class="k">${esc(s.name)} <span style="color:var(--detonation)">[${esc(s.category)}]</span></div>
+    <span class="quote">…${esc(s.evidence)}…</span>
+  </div>`,
+          )
+          .join("")
+      : `<div class="row none">No registry device is explicitly carried in this expression — the format legitimately omits devices that do not apply to it.</div>`
+  }
+  ${c.cdNote ? `<div class="row"><span class="k">CD note:</span> ${esc(c.cdNote)}</div>` : ""}`;
+    })
+    .join("")}`;
+
+  const allRefs = chans.flatMap((c) => c.crossRefs.map((r) => ({ ...r, channelName: c.channelName })));
+  const appxRefs = `
+  <h3>C · Accepted cross-references</h3>
+  <p class="none">Suggested additions accepted at the cross-reference pass, with the risk-weighing recorded against each.</p>
+  ${
+    allRefs.length
+      ? allRefs
+          .map(
+            (r) => `
+  <div class="row">
+    <div class="k">${esc(r.channelName)} — ${esc(r.suggestion)}</div>
+    ${r.rationale ? `<div>${esc(r.rationale)}</div>` : `<div class="none">No rationale recorded.</div>`}
+  </div>`,
+          )
+          .join("")
+      : `<p class="none">No cross-references were accepted on this campaign.</p>`
+  }
+  ${
+    x.coherence.rejected.length
+      ? `<h4>Rejected at the CD pass</h4>${x.coherence.rejected
+          .map(
+            (r) =>
+              `<div class="row">${esc(r.channelName)}${r.lensName ? ` · ${esc(r.lensName)}` : ""} — ${esc(
+                r.reason,
+              )} (${esc(stamp(r.at))})</div>`,
+          )
+          .join("")}`
+      : ""
+  }
+  ${x.coherence.cdOutput ? `<h4>CD cohesion pass — full output</h4><pre>${esc(x.coherence.cdOutput)}</pre>` : ""}
+  ${
+    x.coherence.gateTwoNotes
+      ? `<div class="row"><span class="k">Gate Two sign-off note:</span> ${esc(x.coherence.gateTwoNotes)}</div>`
+      : ""
+  }`;
+
+  const appxArtefacts = `
+  <h3>D · Working artefacts</h3>
+  <p class="none">The generated inputs behind each expression, verbatim.</p>
   ${chans
     .map(
       (c) => `
   <details>
     <summary>${esc(c.channelName)} — content creation input prompt</summary>
     <pre>${esc(c.adaptation)}</pre>
-  </details>
-  ${
+  </details>${
     c.offlineBrief
       ? `<details><summary>${esc(c.channelName)} — offline creative brief</summary><pre>${esc(
           c.offlineBrief,
@@ -242,9 +428,23 @@ export function buildCreativeShowcase(x: CreativeShowcase): { filename: string; 
       : ""
   }`,
     )
-    .join("")}
-  <hr/>
-  <p class="muted">Brand Grenade — Creative Engine. One locked idea, ${chans.length} expressions, one verified campaign. Confidential.</p>
+    .join("")}`;
+
+  const appendix = `
+<div class="appendix-divider">
+  <span class="tag">Appendix · internal</span>
+  <h2>Campaign Signature Registry &amp; Consistency Trace</h2>
+  <p class="muted">Backing material, not showcase content. A QA register: what the registry holds, where each device is evidenced channel by channel, and how the cross-references were weighed.</p>
+  <div class="appendix">
+    ${appxRegistry}
+    ${appxTrace}
+    ${appxRefs}
+    ${appxArtefacts}
+    <hr/>
+    <p class="none">Brand Grenade — Creative Engine. One locked idea, ${chans.length} expression${
+      chans.length === 1 ? "" : "s"
+    }, one verified campaign. Confidential.</p>
+  </div>
 </div>`;
 
   const html = `<!doctype html><html lang="en"><head><meta charset="utf-8">
@@ -259,7 +459,7 @@ export function buildCreativeShowcase(x: CreativeShowcase): { filename: string; 
   ${foundation}
   ${expressions}
   ${coherence}
-  ${detail}
+  ${appendix}
 </div></body></html>`;
 
   return { filename: `${slug(x.brandName)}-full-creative-showcase.html`, html };
