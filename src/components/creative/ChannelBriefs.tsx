@@ -10,10 +10,12 @@ import { useServerFn } from "@tanstack/react-start";
 import { Link } from "@tanstack/react-router";
 import { listStimulusRuns, loadStimulusRun } from "@/lib/stimulus.functions";
 import {
+  confirmChannelGateOne,
   editChannelAdaptation,
   generateChannelAdaptation,
   generateOfflineCreativeBrief,
   listAdaptationFidelity,
+  listChannelGateOne,
   listOfflineCreativeBriefs,
   listPromptVersions,
   recheckAdaptationFidelity,
@@ -286,6 +288,8 @@ export function ChannelBriefs({
   const revertVersion = useServerFn(revertPromptVersion);
   const genOffline = useServerFn(generateOfflineCreativeBrief);
   const listOffline = useServerFn(listOfflineCreativeBriefs);
+  const listGateOne = useServerFn(listChannelGateOne);
+  const confirmGate = useServerFn(confirmChannelGateOne);
 
   const [runs, setRuns] = useState<RunRow[]>([]);
   const [running, setRunning] = useState<Record<string, boolean>>({});
@@ -305,6 +309,9 @@ export function ChannelBriefs({
   const [offlineRunning, setOfflineRunning] = useState<Record<string, boolean>>({});
   const [offlineFailed, setOfflineFailed] = useState<Record<string, string>>({});
   const [openOfflineChannel, setOpenOfflineChannel] = useState<string | null>(null);
+  const [gateOne, setGateOne] = useState<Record<string, { runId: string; confirmed: boolean }>>({});
+  const [gateBusy, setGateBusy] = useState<string | null>(null);
+  const [gateError, setGateError] = useState<string | null>(null);
 
   const anyRunning = Object.values(running).some(Boolean);
 
@@ -341,6 +348,15 @@ export function ChannelBriefs({
     }
   }, [listOffline, sessionId]);
 
+  const refreshGateOne = useCallback(async () => {
+    try {
+      const r = await listGateOne({ data: { sessionId } });
+      setGateOne(r.byChannel as Record<string, { runId: string; confirmed: boolean }>);
+    } catch {
+      /* non-fatal */
+    }
+  }, [listGateOne, sessionId]);
+
   const refreshVersions = useCallback(
     async (runId: string, directionId: string) => {
       try {
@@ -357,7 +373,36 @@ export function ChannelBriefs({
     void refreshRuns();
     void refreshFidelity();
     void refreshOffline();
-  }, [refreshRuns, refreshFidelity, refreshOffline]);
+    void refreshGateOne();
+  }, [refreshRuns, refreshFidelity, refreshOffline, refreshGateOne]);
+
+  const confirmGateOneFor = useCallback(
+    async (channelsToConfirm: string[] | null, confirmed = true) => {
+      setGateBusy(channelsToConfirm?.length === 1 ? channelsToConfirm[0]! : "__all__");
+      setGateError(null);
+      try {
+        const r = await confirmGate({
+          data: {
+            sessionId,
+            ...(channelsToConfirm ? { channels: channelsToConfirm } : {}),
+            confirmed,
+          },
+        });
+        if (r.skipped.length > 0) {
+          setGateError(
+            r.skipped.map((s) => `${s.channel}: ${s.reason}`).join(" · "),
+          );
+        }
+      } catch (e) {
+        setGateError(e instanceof Error ? e.message : "Gate One confirmation failed");
+      } finally {
+        setGateBusy(null);
+        await refreshGateOne();
+      }
+    },
+    [confirmGate, refreshGateOne, sessionId],
+  );
+
 
   /** The newest run for a channel is the one that counts. */
   const latest = useMemo(() => {
@@ -449,9 +494,10 @@ export function ChannelBriefs({
         setRunning((p) => ({ ...p, [channel]: false }));
         await refreshRuns();
         await refreshFidelity();
+        await refreshGateOne();
       }
     },
-    [adapt, openBrief, refreshFidelity, refreshRuns, sessionId],
+    [adapt, openBrief, refreshFidelity, refreshGateOne, refreshRuns, sessionId],
   );
 
   /** All channels at once — six concurrent server calls, not a queue. */
@@ -459,6 +505,7 @@ export function ChannelBriefs({
     await Promise.allSettled(channels.map((c) => generate(c)));
     await refreshRuns();
     await refreshFidelity();
+    await refreshGateOne();
   };
 
   const runRecheck = async (runId: string) => {
@@ -533,6 +580,7 @@ export function ChannelBriefs({
   const openChannel = [...latest.entries()].find(([, r]) => r.id === openRunId)?.[0] ?? "";
   const doneCount = channels.filter((c) => stateFor(c) === "complete").length;
   const runningCount = channels.filter((c) => stateFor(c) === "running").length;
+  const confirmedCount = channels.filter((c) => gateOne[c]?.confirmed).length;
 
   return (
     <div style={{ width: "100%" }}>
@@ -629,6 +677,50 @@ export function ChannelBriefs({
           shown as failed when it fails the check twice.
         </p>
 
+        {/* GATE ONE — what Orchestration consumes */}
+        <div
+          style={{
+            marginTop: 20,
+            border: `1px solid ${confirmedCount === doneCount && doneCount > 0 ? GREEN : "#2A2724"}`,
+            borderRadius: 12,
+            padding: "16px 18px",
+          }}
+        >
+          <div style={{ display: "flex", gap: 14, alignItems: "center", flexWrap: "wrap" }}>
+            <div
+              className="text-mono"
+              style={{
+                color: PAPER,
+                fontSize: 11,
+                letterSpacing: "0.14em",
+                textTransform: "uppercase",
+                flex: 1,
+                minWidth: 240,
+              }}
+            >
+              Gate One · {confirmedCount}/{channels.length} prompts confirmed for orchestration
+            </div>
+            <Btn
+              active
+              disabled={gateBusy !== null || doneCount === 0}
+              onClick={() => void confirmGateOneFor(null, true)}
+            >
+              {gateBusy === "__all__" ? "Confirming…" : "Confirm Gate One on all channels"}
+            </Btn>
+          </div>
+          <p className="text-body-sm" style={{ color: MUTED, marginTop: 8, lineHeight: 1.7 }}>
+            The Orchestration Engine only reads Gate One-confirmed content creation input prompts.
+            Confirming is a human sign-off per channel — regenerating or reverting a prompt creates a
+            new run, which must be confirmed again before it can be orchestrated.
+          </p>
+          {gateError && (
+            <div className="text-body-sm" style={{ color: RED, marginTop: 8, lineHeight: 1.6 }}>
+              {gateError}
+            </div>
+          )}
+        </div>
+
+
         {channels.length === 0 && (
           <div className="text-body-sm" style={{ color: RED, marginTop: 14, lineHeight: 1.7 }}>
             No channels exist for this session yet. Run Stage 21 in the Strategy Pipeline to create
@@ -656,6 +748,21 @@ export function ChannelBriefs({
                   <div style={{ color: PAPER, fontSize: 17, fontWeight: 600, flex: 1, minWidth: 220 }}>{c}</div>
                   <StatusBadge state={state} />
                   {run && state === "complete" && f && <FidelityBadge f={f} />}
+                  {gateOne[c]?.confirmed && gateOne[c]?.runId === run?.id && (
+                    <span
+                      className="text-mono"
+                      style={{
+                        color: GREEN,
+                        border: `1px solid ${GREEN}`,
+                        borderRadius: 999,
+                        padding: "3px 10px",
+                        fontSize: 10,
+                        letterSpacing: "0.12em",
+                      }}
+                    >
+                      GATE ONE CONFIRMED
+                    </span>
+                  )}
                 </div>
                 {run && state === "complete" && f && f.verdict !== "pass" && (
                   <div className="text-body-sm" style={{ color: RED, marginTop: 12, lineHeight: 1.6 }}>
@@ -710,6 +817,21 @@ export function ChannelBriefs({
                       disabled={openBusy}
                     >
                       {openRunId === run.id ? `Showing ${c} prompt below` : `Open ${c} prompt`}
+                    </Btn>
+                  )}
+                  {state === "complete" && (
+                    <Btn
+                      disabled={gateBusy !== null}
+                      active={!gateOne[c]?.confirmed}
+                      onClick={() =>
+                        void confirmGateOneFor([c], !(gateOne[c]?.confirmed ?? false))
+                      }
+                    >
+                      {gateBusy === c
+                        ? "Saving…"
+                        : gateOne[c]?.confirmed
+                          ? `Withdraw Gate One on ${c}`
+                          : `Confirm Gate One on ${c}`}
                     </Btn>
                   )}
                 </div>

@@ -237,3 +237,118 @@ export const recheckAdaptationFidelity = createServerFn({ method: "POST" })
     });
     return { fidelity };
   });
+
+// ------------------------------------------------------------------ Gate One
+// Orchestration consumes Gate One-confirmed content creation input prompts.
+// For these artefacts a channel has exactly one prompt, so "Gate One" is a
+// single confirm per channel rather than a pick-from-many approval.
+
+/** The newest content-creation-prompt run per channel, with its Gate One state. */
+export const listChannelGateOne = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => z.object({ sessionId: z.string().uuid() }).parse(i))
+  .handler(async ({ data, context }) => {
+    await assertSessionAccess(data.sessionId, context.userId);
+    const { data: runs } = await supabaseAdmin
+      .from("stimulus_runs")
+      .select("id, channel_name, gate_one_confirmed, gate_one_confirmed_at, created_at")
+      .eq("session_id", data.sessionId)
+      .eq("run_mode", "channel_adaptation")
+      .order("created_at", { ascending: false });
+    const byChannel: Record<
+      string,
+      { runId: string; confirmed: boolean; confirmedAt: string | null }
+    > = {};
+    for (const r of runs ?? []) {
+      if (byChannel[r.channel_name]) continue; // newest wins
+      byChannel[r.channel_name] = {
+        runId: r.id,
+        confirmed: Boolean(r.gate_one_confirmed),
+        confirmedAt: r.gate_one_confirmed_at ?? null,
+      };
+    }
+    return { byChannel };
+  });
+
+/**
+ * Confirms Gate One on the newest prompt for each named channel (all channels
+ * when none are named). Older runs for the same channel are un-confirmed so
+ * orchestration can never pick up a superseded prompt.
+ */
+export const confirmChannelGateOne = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) =>
+    z
+      .object({
+        sessionId: z.string().uuid(),
+        channels: z.array(z.string().min(1)).optional(),
+        confirmed: z.boolean().default(true),
+      })
+      .parse(i),
+  )
+  .handler(async ({ data, context }) => {
+    await assertSessionAccess(data.sessionId, context.userId);
+
+    const { data: runs } = await supabaseAdmin
+      .from("stimulus_runs")
+      .select("id, channel_name, created_at")
+      .eq("session_id", data.sessionId)
+      .eq("run_mode", "channel_adaptation")
+      .order("created_at", { ascending: false });
+
+    const wanted = data.channels ? new Set(data.channels) : null;
+    const newest = new Map<string, string>();
+    const superseded: string[] = [];
+    for (const r of runs ?? []) {
+      if (wanted && !wanted.has(r.channel_name)) continue;
+      if (newest.has(r.channel_name)) superseded.push(r.id);
+      else newest.set(r.channel_name, r.id);
+    }
+    if (newest.size === 0) throw new Error("No content creation input prompts to confirm.");
+
+    const now = new Date().toISOString();
+    const confirmedChannels: string[] = [];
+    const skipped: { channel: string; reason: string }[] = [];
+
+    for (const [channel, runId] of newest) {
+      const { data: dir } = await supabaseAdmin
+        .from("stimulus_directions")
+        .select("id, direction")
+        .eq("run_id", runId)
+        .order("sort_order", { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      if (!dir?.direction?.trim()) {
+        skipped.push({ channel, reason: "no finished prompt on this channel yet" });
+        continue;
+      }
+      await supabaseAdmin
+        .from("stimulus_directions")
+        .update({
+          gate_one_approved: data.confirmed,
+          gate_one_approved_at: data.confirmed ? now : null,
+        })
+        .eq("id", dir.id);
+      await supabaseAdmin
+        .from("stimulus_runs")
+        .update({
+          gate_one_confirmed: data.confirmed,
+          gate_one_confirmed_at: data.confirmed ? now : null,
+        })
+        .eq("id", runId);
+      confirmedChannels.push(channel);
+    }
+
+    if (superseded.length > 0) {
+      await supabaseAdmin
+        .from("stimulus_runs")
+        .update({ gate_one_confirmed: false, gate_one_confirmed_at: null })
+        .in("id", superseded);
+      await supabaseAdmin
+        .from("stimulus_directions")
+        .update({ gate_one_approved: false, gate_one_approved_at: null })
+        .in("run_id", superseded);
+    }
+
+    return { confirmed: confirmedChannels, skipped, confirmedAt: data.confirmed ? now : null };
+  });
