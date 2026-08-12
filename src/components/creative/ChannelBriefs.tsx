@@ -938,7 +938,9 @@ export function ChannelBriefs({
                               disabled={versionBusy}
                               onClick={() => void revertTo(openRunId, d.id, v)}
                             >
-                              {versionBusy ? "Reverting…" : "Revert to this"}
+                              {versionBusy
+                                ? "Copying forward…"
+                                : `Copy v${v.versionNo} forward as v${(versions[0]?.versionNo ?? v.versionNo) + 1}`}
                             </Btn>
                           )}
                         </div>
