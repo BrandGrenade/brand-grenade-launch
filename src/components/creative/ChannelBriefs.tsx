@@ -918,7 +918,8 @@ export function ChannelBriefs({
                             className="text-mono"
                             style={{ color: i === 0 ? GREEN : PAPER, fontSize: 11, letterSpacing: "0.1em" }}
                           >
-                            v{v.versionNo} · {v.origin.replace("_", " ")}
+                            v{v.versionNo} ·{" "}
+                            {v.origin === "reverted" ? "copied forward from an earlier version" : v.origin.replace("_", " ")}
                             {i === 0 ? " · ACTIVE" : ""}
                           </div>
                           <div className="text-mono" style={{ color: MUTED, fontSize: 11, flex: 1 }}>
