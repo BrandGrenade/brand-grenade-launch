@@ -41,11 +41,11 @@ export function TopNav({ session }: { session?: SessionContext }) {
 
   return (
     <>
-      <div style={{ height: "calc(56px + var(--dev-mode-banner-height, 0px))" }} />
+      <div style={{ height: 56 }} />
       <nav
         className="fixed left-0 right-0 flex items-center justify-center px-5 sm:px-8"
         style={{
-          top: "var(--dev-mode-banner-height, 0px)",
+          top: 0,
           height: 56,
           backgroundColor: "#0A0908",
           borderBottom: "1px solid #1C1A18",
@@ -78,16 +78,16 @@ export function TopNav({ session }: { session?: SessionContext }) {
             <button
               type="button"
               role="switch"
-              aria-checked={devModeOn}
-              onClick={() => setDevMode(!devModeOn)}
-              title="Toggle Development Mode — abbreviated AI output"
+              aria-checked={demoModeOn}
+              onClick={() => setDemoMode(!demoModeOn)}
+              title="Toggle Demo Mode — client walkthrough presentation"
               className="flex items-center gap-2 transition-colors"
               style={{
                 padding: "4px 8px",
                 borderRadius: 6,
                 border: "1px solid #1C1A18",
-                backgroundColor: devModeOn ? "rgba(200, 30, 30,0.15)" : "transparent",
-                color: devModeOn ? "#E5484D" : "#8B8680",
+                backgroundColor: demoModeOn ? "rgba(200, 30, 30,0.15)" : "transparent",
+                color: demoModeOn ? "#E5484D" : "#8B8680",
                 fontSize: 10,
                 fontWeight: 700,
                 letterSpacing: "0.10em",
@@ -102,7 +102,7 @@ export function TopNav({ session }: { session?: SessionContext }) {
                   width: 22,
                   height: 12,
                   borderRadius: 999,
-                  backgroundColor: devModeOn ? "#C81E1E" : "#1C1A18",
+                  backgroundColor: demoModeOn ? "#C81E1E" : "#1C1A18",
                   position: "relative",
                   transition: "background-color 120ms ease",
                 }}
@@ -111,7 +111,7 @@ export function TopNav({ session }: { session?: SessionContext }) {
                   style={{
                     position: "absolute",
                     top: 1,
-                    left: devModeOn ? 11 : 1,
+                    left: demoModeOn ? 11 : 1,
                     width: 10,
                     height: 10,
                     borderRadius: 999,
@@ -120,7 +120,7 @@ export function TopNav({ session }: { session?: SessionContext }) {
                   }}
                 />
               </span>
-              DEV MODE
+              DEMO MODE
             </button>
           )}
           {session && (
