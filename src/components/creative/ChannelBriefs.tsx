@@ -387,9 +387,8 @@ export function ChannelBriefs({
             className="text-mono"
             style={{ color: AMBER, fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase" }}
           >
-            Open channel brief · {latest.get(
-              [...latest.entries()].find(([, r]) => r.id === openRunId)?.[0] ?? "",
-            )?.channel_name ?? "run"}
+            Open channel brief ·{" "}
+            {[...latest.entries()].find(([, r]) => r.id === openRunId)?.[0] ?? "run"}
           </div>
           {openBusy && (
             <div className="text-body-sm" style={{ color: MUTED, marginTop: 10 }}>
