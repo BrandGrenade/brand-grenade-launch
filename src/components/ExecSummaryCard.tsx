@@ -9,6 +9,7 @@ import {
   type ExecSummarySession,
 } from "@/lib/exec-summary-document";
 import { fetchExecSummaryIntel } from "@/lib/exec-summary-intel";
+import { Spinner } from "@/components/ui/busy";
 
 /** Columns the summary needs that the Deliverables page does not already load. */
 const EXTRA_COLUMNS =
@@ -98,7 +99,7 @@ export function ExecSummaryCard({ session }: { session: ExecSummarySession }) {
           opacity: busy ? 0.6 : 1,
         }}
       >
-        {busy ? "Building…" : "Generate Executive Summary"}
+        {busy ? <><Spinner /> Building…</> : "Generate Executive Summary"}
       </button>
     </div>
   );

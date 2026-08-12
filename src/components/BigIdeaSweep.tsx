@@ -54,6 +54,7 @@ import { RawIdeaExportButton } from "@/components/RawIdeaExportButton";
 import { ideaCardStyle, ideaListStyle, IDEA_COLUMN_WIDTH } from "@/components/stimulus/idea-layout";
 import type { LineCheck } from "@/lib/stimulus/line-check-types";
 import type { DirectionRatings } from "@/lib/stimulus/rating-prompts";
+import { Spinner } from "@/components/ui/busy";
 
 // Readable palette on the near-black room background (#0A0908).
 // Red is an accent for labels only; all body copy and numerals are paper.
@@ -542,7 +543,7 @@ function IdeaCard({
                 }
               }}
             >
-              {busy ? "Rewriting…" : "Rewrite through this lens"}
+              {busy ? <><Spinner /> Rewriting…</> : "Rewrite through this lens"}
             </Btn>
           </div>
         </div>

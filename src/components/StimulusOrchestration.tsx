@@ -23,6 +23,7 @@ import {
 import { buildFullFinishedExport, download } from "@/lib/stimulus-export";
 import { SIGNATURE_CATEGORIES } from "@/lib/stimulus/orchestration-prompts";
 import { StimulusMandate } from "@/components/stimulus/StimulusMandate";
+import { Spinner } from "@/components/ui/busy";
 
 
 const AMBER = "#F2665F";
@@ -340,7 +341,7 @@ export function StimulusOrchestration({ sessionId, brandName }: { sessionId: str
 
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
             <Btn active disabled={busy} onClick={handleStart}>
-              {busy ? "Running…" : "Run orchestration on approved set"}
+              {busy ? <><Spinner /> Running…</> : "Run orchestration on approved set"}
             </Btn>
             {runs.map((r) => (
               <Btn key={r.id} active={r.id === orchId} disabled={busy} onClick={() => void openRun(r.id)}>

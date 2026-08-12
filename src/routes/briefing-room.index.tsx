@@ -5,6 +5,7 @@ import { ArrowLeft, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { TopNav } from "@/components/TopNav";
 import {
+import { Spinner } from "@/components/ui/busy";
   listBriefingWorkspaces,
   createBriefingWorkspace,
   deleteBriefingWorkspace,
@@ -138,7 +139,7 @@ function BriefingRoomIndex() {
                   className="inline-flex h-10 items-center rounded-md px-4 text-[13px] font-semibold disabled:opacity-50"
                   style={{ backgroundColor: "#C81E1E", color: "#0A0908" }}
                 >
-                  {busy ? "Creating…" : "Create workspace"}
+                  {busy ? <><Spinner /> Creating…</> : "Create workspace"}
                 </button>
                 <button
                   type="button"

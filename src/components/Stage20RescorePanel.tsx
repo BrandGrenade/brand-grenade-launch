@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { rescoreStage20FromExisting } from "@/lib/stage20.functions";
+import { Spinner } from "@/components/ui/busy";
 
 type ScoreResult = Awaited<ReturnType<typeof rescoreStage20FromExisting>>;
 
@@ -49,7 +50,7 @@ export function Stage20RescorePanel() {
           className="rounded px-4 py-2 text-label text-background disabled:opacity-50"
           style={{ background: "#C81E1E" }}
         >
-          {busy ? "Scoring…" : "Re-score"}
+          {busy ? <><Spinner /> Scoring…</> : "Re-score"}
         </button>
       </div>
       {err && <p className="mt-3 text-body text-primary">{err}</p>}

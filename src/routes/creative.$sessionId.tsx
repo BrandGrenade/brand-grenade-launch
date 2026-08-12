@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 import { TopNav } from "@/components/TopNav";
 import { supabase } from "@/integrations/supabase/client";
 import { LENS_COUNT } from "@/lib/stimulus/lenses";
+import { Spinner } from "@/components/ui/busy";
 
 const AMBER = "#F2665F";
 const MUTED = "#A8A29A";
@@ -151,7 +152,7 @@ function CreativeRoom() {
             Creative Engine
           </div>
           <h1 style={{ color: PAPER, fontSize: 34, lineHeight: 1.15, margin: "10px 0 12px", fontWeight: 600 }}>
-            {loading ? "Loading…" : session?.brand_name || "Untitled session"}
+            {loading ? <><Spinner /> Loading…</> : session?.brand_name || "Untitled session"}
           </h1>
           <p className="text-body-sm" style={{ color: MUTED, maxWidth: 760, lineHeight: 1.7 }}>
             Three steps, in order. Sweep all {LENS_COUNT} lenses against the proposition, shortlist what

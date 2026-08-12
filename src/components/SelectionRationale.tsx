@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { Spinner } from "@/components/ui/busy";
 
 interface SelectionRationaleProps {
   selectedSMP?: string;
@@ -221,7 +222,7 @@ export function SelectionRationale({
             transition: "background-color 150ms",
           }}
         >
-          {submitting ? "Saving…" : "Confirm selection — Continue →"}
+          {submitting ? <><Spinner /> Saving…</> : "Confirm selection — Continue →"}
         </button>
 
 

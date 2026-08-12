@@ -10,6 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Download, ExternalLink, Lock, LogOut } from "lucide-react";
+import { Spinner } from "@/components/ui/busy";
 
 type Slug = string;
 
@@ -128,7 +129,7 @@ export function RepositoryView({ slug, title, intro }: Props) {
             disabled={submitting || !password}
             className="w-full bg-card text-text-primary hover:bg-card"
           >
-            {submitting ? "Checking…" : "Enter"}
+            {submitting ? <><Spinner /> Checking…</> : "Enter"}
           </Button>
         </form>
       </div>

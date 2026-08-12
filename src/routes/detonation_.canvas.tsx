@@ -12,6 +12,7 @@ import { SMPAnchor } from "@/components/SMPAnchor";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 import {
+import { Spinner } from "@/components/ui/busy";
   prepareThreeTruths,
   saveCulturalTruth,
   saveBrandIntelligence,
@@ -618,7 +619,7 @@ function ThreeTruthCanvas() {
                           fontWeight: 600,
                         }}
                       >
-                        {pdfBusy ? "Extracting…" : "Upload Brand Guidelines (PDF)"}
+                        {pdfBusy ? <><Spinner /> Extracting…</> : "Upload Brand Guidelines (PDF)"}
                       </button>
                     </div>
 
@@ -714,7 +715,7 @@ function ThreeTruthCanvas() {
                     cursor: advancing ? "wait" : canBegin ? "pointer" : "pointer",
                   }}
                 >
-                  {advancing ? "Saving…" : "Confirm and Begin Stage 17 →"}
+                  {advancing ? <><Spinner /> Saving…</> : "Confirm and Begin Stage 17 →"}
                 </button>
                 {!canBegin && beginBlockers.length > 0 && (
                   <ul
@@ -908,7 +909,7 @@ function TruthPanel({
                 cursor: saving ? "wait" : "pointer",
               }}
             >
-              {saving ? "Saving…" : "Confirm"}
+              {saving ? <><Spinner /> Saving…</> : "Confirm"}
             </button>
           </div>
         )}
@@ -925,7 +926,7 @@ function TruthPanel({
               cursor: saving ? "wait" : "pointer",
             }}
           >
-            {saving ? "Saving…" : "Confirm"}
+            {saving ? <><Spinner /> Saving…</> : "Confirm"}
           </button>
         )}
       </div>

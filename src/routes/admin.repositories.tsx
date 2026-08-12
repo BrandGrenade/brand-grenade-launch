@@ -25,6 +25,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Lock, Trash2, Download, LogOut, KeyRound, Copy, Check, Power, Eye, EyeOff, Plus } from "lucide-react";
+import { Spinner } from "@/components/ui/busy";
 
 type Slug = string;
 interface Repo { slug: string; title: string; intro: string; created_at: string; }
@@ -936,7 +937,7 @@ function NewVisitorForm({
           disabled={busy}
           className="bg-card text-text-primary hover:bg-card"
         >
-          {busy ? "Adding…" : "Add visitor"}
+          {busy ? <><Spinner /> Adding…</> : "Add visitor"}
         </Button>
 
       </form>
@@ -1052,7 +1053,7 @@ function UploadDocForm({
           disabled={busy || !title || !file}
           className="bg-card text-text-primary hover:bg-card"
         >
-          {busy ? "Uploading…" : "Upload document"}
+          {busy ? <><Spinner /> Uploading…</> : "Upload document"}
         </Button>
       </div>
     </form>
@@ -1136,7 +1137,7 @@ function CreateRepositoryPanel({ onCreated }: { onCreated: () => void | Promise<
         {error && <p className="text-sm text-primary">{error}</p>}
         {ok && <p className="text-sm text-primary">{ok}</p>}
         <Button type="submit" disabled={busy} className="bg-card text-text-primary hover:bg-card">
-          {busy ? "Creating…" : "Create repository"}
+          {busy ? <><Spinner /> Creating…</> : "Create repository"}
         </Button>
       </form>
     </div>

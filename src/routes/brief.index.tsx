@@ -19,6 +19,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import {
+import { Spinner } from "@/components/ui/busy";
   BRIEF_SECTIONS as SECTIONS,
   composeBriefText as composeStructuredBriefText,
   briefFieldsFromLegacyText,
@@ -582,7 +583,7 @@ function BriefIntake() {
               }}
               title="Save this brief to your library without starting a pipeline run"
             >
-              {saving ? "Saving…" : "Save Brief"}
+              {saving ? <><Spinner /> Saving…</> : "Save Brief"}
             </button>
           </div>
 

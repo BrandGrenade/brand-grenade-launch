@@ -5,6 +5,7 @@
 import { useCallback, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import {
+import { Spinner } from "@/components/ui/busy";
   auditStimulusRun,
   auditStimulusLensPrompt,
   type StimulusRunAudit,
@@ -238,7 +239,7 @@ export function StimulusPromptAudit({ runId }: { runId: string }) {
                       opacity: busy ? 0.6 : 1,
                     }}
                   >
-                    {busy ? "Loading…" : "Show prompt"}
+                    {busy ? <><Spinner /> Loading…</> : "Show prompt"}
                   </button>
                 </div>
 

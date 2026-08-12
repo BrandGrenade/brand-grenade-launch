@@ -28,6 +28,7 @@ import {
   type BriefFields,
 } from "@/lib/brief-schema";
 import {
+import { Spinner } from "@/components/ui/busy";
   PENDING_BRIEF_STORAGE_KEY,
   saveBrief,
 } from "@/components/SavedBriefsLibrary";
@@ -443,7 +444,7 @@ function WorkspacePage() {
               className="inline-flex h-9 items-center rounded-md px-4 text-[13px] font-semibold disabled:opacity-50"
               style={{ border: "1px solid var(--color-border)", color: "var(--color-text-primary)" }}
             >
-              {savingIntake ? "Saving…" : "Save intake"}
+              {savingIntake ? <><Spinner /> Saving…</> : "Save intake"}
             </button>
           </div>
         </SectionCard>
@@ -624,7 +625,7 @@ function WorkspacePage() {
                 className="mt-4 inline-flex h-10 items-center rounded-md px-5 text-[13px] font-semibold disabled:opacity-50"
                 style={{ backgroundColor: "#C81E1E", color: "#0A0908" }}
               >
-                {approving ? "Handing off…" : "Approve and hand off to Saved Briefs"}
+                {approving ? <><Spinner /> Handing off…</> : "Approve and hand off to Saved Briefs"}
               </button>
             </div>
           )}
@@ -687,7 +688,7 @@ function StepCard(props: {
             className="inline-flex h-9 items-center rounded-md px-4 text-[13px] font-semibold disabled:opacity-50"
             style={{ backgroundColor: "#C81E1E", color: "#0A0908" }}
           >
-            {props.busy ? "Running…" : props.runLabel}
+            {props.busy ? <><Spinner /> Running…</> : props.runLabel}
           </button>
         </div>
       </div>

@@ -30,6 +30,7 @@ import {
 } from "@/lib/stimulus-export";
 import { StimulusOrchestration } from "@/components/StimulusOrchestration";
 import { ideaCardStyle, IDEA_COLUMN_WIDTH } from "@/components/stimulus/idea-layout";
+import { Spinner } from "@/components/ui/busy";
 
 const AMBER = "#F2665F";
 const MUTED = "#A8A29A";
@@ -209,7 +210,7 @@ function AdaptationFidelityPanel({
           Fidelity to the locked idea
         </div>
         <Btn onClick={onRecheck} disabled={busy}>
-          {busy ? "Checking…" : fidelity ? "Re-check" : "Run check"}
+          {busy ? <><Spinner /> Checking…</> : fidelity ? "Re-check" : "Run check"}
         </Btn>
       </div>
 
@@ -953,7 +954,7 @@ export function ChannelBriefs({
                         onClick={() => void saveEdited(openRunId, d.id, editing.text)}
                       >
                         {editBusy
-                          ? "Saving new version and re-checking…"
+                          ? <><Spinner /> Saving new version and re-checking…</>
                           : "Save as new version & re-check fidelity"}
                       </Btn>
                       <Btn onClick={() => setEditing(null)} disabled={editBusy}>
@@ -1062,7 +1063,7 @@ export function ChannelBriefs({
                               onClick={() => void revertTo(openRunId, d.id, v)}
                             >
                               {versionBusy
-                                ? "Copying forward…"
+                                ? <><Spinner /> Copying forward…</>
                                 : `Copy v${v.versionNo} forward as v${(versions[0]?.versionNo ?? v.versionNo) + 1}`}
                             </Btn>
                           )}
