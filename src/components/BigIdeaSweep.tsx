@@ -825,68 +825,74 @@ export function BigIdeaSweep({
           </div>
         )}
 
-        <div style={{ marginTop: 16, display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
-          <Btn
-            onClick={() => void runSweep(false)}
-            disabled={busy || Boolean(sweep?.running)}
-            active
-          >
-            {sweep?.running
-              ? `Generating ${sweep.generated}/${sweep.total || LENS_COUNT}…`
-              : busy
-                ? "Starting…"
-                : sweep?.stalled
-                  ? `Resume sweep (${sweep.pending} left)`
-                  : ideas.length > 0
-                    ? "Resume sweep"
-                    : `Run ${LENS_COUNT}-lens big idea sweep`}
-          </Btn>
-          {ideas.length > 0 && (
+        {!shortlist && (
+          <div style={{ marginTop: 16, display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
             <Btn
-              onClick={() => void runSweep(true)}
-              disabled={busy || locked || Boolean(sweep?.running)}
+              onClick={() => void runSweep(false)}
+              disabled={busy || Boolean(sweep?.running)}
+              active
             >
-              Start a fresh sweep
+              {sweep?.running
+                ? `Generating ${sweep.generated}/${sweep.total || LENS_COUNT}…`
+                : busy
+                  ? "Starting…"
+                  : sweep?.stalled
+                    ? `Resume sweep (${sweep.pending} left)`
+                    : ideas.length > 0
+                      ? "Resume sweep"
+                      : `Run ${LENS_COUNT}-lens big idea sweep`}
             </Btn>
-          )}
+            {ideas.length > 0 && (
+              <Btn
+                onClick={() => void runSweep(true)}
+                disabled={busy || locked || Boolean(sweep?.running)}
+              >
+                Start a fresh sweep
+              </Btn>
+            )}
 
-          {runId && lines.length > 0 && (
-            <Btn
-              disabled={busy}
-              onClick={async () => {
-                setBusy(true);
-                setErr(null);
-                try {
-                  await checkLines({ data: { runId, recheck: false } });
-                  await refresh(runId);
-                } catch (e) {
-                  setErr(e instanceof Error ? e.message : "Line check failed");
-                } finally {
-                  setBusy(false);
-                }
-              }}
-            >
-              {counts.unchecked > 0 ? `Check ${counts.unchecked} lines on strategy` : "Re-check lines"}
-            </Btn>
-          )}
-        </div>
-
-        {ideas.length > 0 && (
-          <div style={{ marginTop: 22, display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
-            <span className="text-mono" style={{ color: MUTED, fontSize: 10, letterSpacing: "0.12em" }}>
-              TISSUE CHECK — {counts.keep} keep · {counts.play} in play · {counts.kill} killed
-            </span>
-            <Btn active={view === "ideas"} onClick={() => setView("ideas")}>
-              Ideas
-            </Btn>
-            <Btn active={view === "lines"} onClick={() => setView("lines")}>
-              Candidate master lines ({lines.length})
-            </Btn>
+            {runId && lines.length > 0 && (
+              <Btn
+                disabled={busy}
+                onClick={async () => {
+                  setBusy(true);
+                  setErr(null);
+                  try {
+                    await checkLines({ data: { runId, recheck: false } });
+                    await refresh(runId);
+                  } catch (e) {
+                    setErr(e instanceof Error ? e.message : "Line check failed");
+                  } finally {
+                    setBusy(false);
+                  }
+                }}
+              >
+                {counts.unchecked > 0 ? `Check ${counts.unchecked} lines on strategy` : "Re-check lines on strategy"}
+              </Btn>
+            )}
           </div>
         )}
 
-        {/* Selection panel — exactly one idea, exactly one line. */}
         {ideas.length > 0 && (
+          <div style={{ marginTop: 22, display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+            <span className="text-mono" style={{ color: PAPER, fontSize: 11, letterSpacing: "0.1em" }}>
+              {counts.keep} KEEP · {counts.play} IN PLAY · {counts.kill} KILLED ·{" "}
+              {ideas.length - counts.keep - counts.play - counts.kill} NOT JUDGED
+            </span>
+            <Btn active={view === "ideas"} onClick={() => setView("ideas")}>
+              Show ideas
+            </Btn>
+            {shortlist && (
+              <Btn active={view === "lines"} onClick={() => setView("lines")}>
+                Show master lines only ({lines.length})
+              </Btn>
+            )}
+          </div>
+        )}
+
+        {/* Selection panel — exactly one idea, exactly one line. Page 2 only. */}
+        {shortlist && shown.length > 0 && (
+
           <div
             style={{
               marginTop: 22,
