@@ -43,6 +43,7 @@ import { Route as BriefingRoomIdRouteImport } from './routes/briefing-room.$id'
 import { Route as BriefNewRouteImport } from './routes/brief.new'
 import { Route as AdminTestsRouteImport } from './routes/admin.tests'
 import { Route as AdminRepositoriesRouteImport } from './routes/admin.repositories'
+import { Route as CreativeSessionIdIndexRouteImport } from './routes/creative.$sessionId.index'
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
 import { Route as IntelligenceIdEditRouteImport } from './routes/intelligence.$id_.edit'
 import { Route as AdminPreviewSlugRouteImport } from './routes/admin.preview.$slug'
@@ -222,6 +223,11 @@ const AdminRepositoriesRoute = AdminRepositoriesRouteImport.update({
   path: '/admin/repositories',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CreativeSessionIdIndexRoute = CreativeSessionIdIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => CreativeSessionIdRoute,
+} as any)
 const LovableEmailSuppressionRoute = LovableEmailSuppressionRouteImport.update({
   id: '/lovable/email/suppression',
   path: '/lovable/email/suppression',
@@ -290,7 +296,7 @@ export interface FileRoutesByFullPath {
   '/admin/tests': typeof AdminTestsRoute
   '/brief/new': typeof BriefNewRoute
   '/briefing-room/$id': typeof BriefingRoomIdRoute
-  '/creative/$sessionId': typeof CreativeSessionIdRoute
+  '/creative/$sessionId': typeof CreativeSessionIdRouteWithChildren
   '/detonation/canvas': typeof DetonationCanvasRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/intelligence/$id': typeof IntelligenceIdRoute
@@ -305,6 +311,7 @@ export interface FileRoutesByFullPath {
   '/admin/preview/$slug': typeof AdminPreviewSlugRoute
   '/intelligence/$id/edit': typeof IntelligenceIdEditRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
+  '/creative/$sessionId/': typeof CreativeSessionIdIndexRoute
   '/api/public/hooks/tier2-harness': typeof ApiPublicHooksTier2HarnessRoute
   '/api/repo/view/$documentId': typeof ApiRepoViewDocumentIdRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -328,7 +335,6 @@ export interface FileRoutesByTo {
   '/admin/tests': typeof AdminTestsRoute
   '/brief/new': typeof BriefNewRoute
   '/briefing-room/$id': typeof BriefingRoomIdRoute
-  '/creative/$sessionId': typeof CreativeSessionIdRoute
   '/detonation/canvas': typeof DetonationCanvasRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/intelligence/$id': typeof IntelligenceIdRoute
@@ -343,6 +349,7 @@ export interface FileRoutesByTo {
   '/admin/preview/$slug': typeof AdminPreviewSlugRoute
   '/intelligence/$id/edit': typeof IntelligenceIdEditRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
+  '/creative/$sessionId': typeof CreativeSessionIdIndexRoute
   '/api/public/hooks/tier2-harness': typeof ApiPublicHooksTier2HarnessRoute
   '/api/repo/view/$documentId': typeof ApiRepoViewDocumentIdRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -373,7 +380,7 @@ export interface FileRoutesById {
   '/admin/tests': typeof AdminTestsRoute
   '/brief/new': typeof BriefNewRoute
   '/briefing-room/$id': typeof BriefingRoomIdRoute
-  '/creative/$sessionId': typeof CreativeSessionIdRoute
+  '/creative/$sessionId': typeof CreativeSessionIdRouteWithChildren
   '/detonation_/canvas': typeof DetonationCanvasRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/intelligence/$id': typeof IntelligenceIdRoute
@@ -388,6 +395,7 @@ export interface FileRoutesById {
   '/admin/preview/$slug': typeof AdminPreviewSlugRoute
   '/intelligence/$id_/edit': typeof IntelligenceIdEditRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
+  '/creative/$sessionId/': typeof CreativeSessionIdIndexRoute
   '/api/public/hooks/tier2-harness': typeof ApiPublicHooksTier2HarnessRoute
   '/api/repo/view/$documentId': typeof ApiRepoViewDocumentIdRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -434,6 +442,7 @@ export interface FileRouteTypes {
     | '/admin/preview/$slug'
     | '/intelligence/$id/edit'
     | '/lovable/email/suppression'
+    | '/creative/$sessionId/'
     | '/api/public/hooks/tier2-harness'
     | '/api/repo/view/$documentId'
     | '/lovable/email/queue/process'
@@ -457,7 +466,6 @@ export interface FileRouteTypes {
     | '/admin/tests'
     | '/brief/new'
     | '/briefing-room/$id'
-    | '/creative/$sessionId'
     | '/detonation/canvas'
     | '/email/unsubscribe'
     | '/intelligence/$id'
@@ -472,6 +480,7 @@ export interface FileRouteTypes {
     | '/admin/preview/$slug'
     | '/intelligence/$id/edit'
     | '/lovable/email/suppression'
+    | '/creative/$sessionId'
     | '/api/public/hooks/tier2-harness'
     | '/api/repo/view/$documentId'
     | '/lovable/email/queue/process'
@@ -516,6 +525,7 @@ export interface FileRouteTypes {
     | '/admin/preview/$slug'
     | '/intelligence/$id_/edit'
     | '/lovable/email/suppression'
+    | '/creative/$sessionId/'
     | '/api/public/hooks/tier2-harness'
     | '/api/repo/view/$documentId'
     | '/lovable/email/queue/process'
@@ -795,6 +805,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminRepositoriesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/creative/$sessionId/': {
+      id: '/creative/$sessionId/'
+      path: '/'
+      fullPath: '/creative/$sessionId/'
+      preLoaderRoute: typeof CreativeSessionIdIndexRouteImport
+      parentRoute: typeof CreativeSessionIdRoute
+    }
     '/lovable/email/suppression': {
       id: '/lovable/email/suppression'
       path: '/lovable/email/suppression'
@@ -880,13 +897,24 @@ const BriefingRoomRouteWithChildren = BriefingRoomRoute._addFileChildren(
   BriefingRoomRouteChildren,
 )
 
+interface CreativeSessionIdRouteChildren {
+  CreativeSessionIdIndexRoute: typeof CreativeSessionIdIndexRoute
+}
+
+const CreativeSessionIdRouteChildren: CreativeSessionIdRouteChildren = {
+  CreativeSessionIdIndexRoute: CreativeSessionIdIndexRoute,
+}
+
+const CreativeSessionIdRouteWithChildren =
+  CreativeSessionIdRoute._addFileChildren(CreativeSessionIdRouteChildren)
+
 interface CreativeRouteChildren {
-  CreativeSessionIdRoute: typeof CreativeSessionIdRoute
+  CreativeSessionIdRoute: typeof CreativeSessionIdRouteWithChildren
   CreativeIndexRoute: typeof CreativeIndexRoute
 }
 
 const CreativeRouteChildren: CreativeRouteChildren = {
-  CreativeSessionIdRoute: CreativeSessionIdRoute,
+  CreativeSessionIdRoute: CreativeSessionIdRouteWithChildren,
   CreativeIndexRoute: CreativeIndexRoute,
 }
 
