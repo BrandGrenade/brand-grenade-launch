@@ -715,9 +715,16 @@ export function BigIdeaSweep({
     [ideas],
   );
 
+  // Page 2 works only on ideas the human kept; Page 1 shows the whole sweep.
+  const shortlist = mode === "shortlist";
+  const shown = useMemo(
+    () => (shortlist ? ideas.filter((d) => d.status === "keep" || d.status === "keep_in_play") : ideas),
+    [ideas, shortlist],
+  );
+
   const lines = useMemo(
-    () => ideas.filter((d) => (d.campaign_line ?? "").trim()),
-    [ideas],
+    () => shown.filter((d) => (d.campaign_line ?? "").trim()),
+    [shown],
   );
 
   const chosenIdea = ideas.find((d) => d.id === pickIdea) ?? null;
@@ -730,16 +737,14 @@ export function BigIdeaSweep({
           className="text-mono"
           style={{ color: AMBER, fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase" }}
         >
-          Step 1 · The big idea, before any channel
+          {shortlist ? "Step 2 · Shortlist and lock the winner" : "Step 1 · The 37-lens sweep"}
         </div>
         <p className="text-body-sm" style={{ color: MUTED, marginTop: 8, lineHeight: 1.7 }}>
-          One sweep of all {LENS_COUNT} lenses against the approved proposition, verbatim, with the
-          strategic truths as supporting evidence only. No channel brief is read or referenced here.
-          Each lens returns its strongest idea, a candidate master line built to the 3–7 word poster
-          standard, and the case for taking it forward. Where a master line is already locked, each
-          lens also returns the supporting expression that sits underneath it. One idea and one
-          master line get locked — then, and only then, channel briefs adapt them.
+          {shortlist
+            ? "Only the ideas you marked Keep or Keep in play on Step 1 appear here. Choose one winning idea and one winning master line, then lock them. Locking is only possible on this page."
+            : `One sweep of all ${LENS_COUNT} lenses against the approved proposition. Read each idea, then mark it Keep, Keep in play, or Kill. Nothing is locked on this page — kept ideas carry forward to Step 2.`}
         </p>
+
 
         {err && (
           <div className="text-body-sm" style={{ color: RED, marginTop: 12 }}>
