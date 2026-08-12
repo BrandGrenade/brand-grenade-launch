@@ -6,7 +6,6 @@ import { toast } from "sonner";
 import { TopNav } from "@/components/TopNav";
 import { createSession } from "@/lib/stage1.functions";
 import { runLeftOfCentre } from "@/lib/loc.functions";
-import { getDevModeFromStorage } from "@/lib/dev-mode";
 import {
   saveBrief,
   PENDING_BRIEF_STORAGE_KEY,
@@ -86,7 +85,6 @@ function NewBriefPage() {
           brandName: saved.brand_name,
           category: saved.category,
           briefText: saved.brief_text,
-          devMode: getDevModeFromStorage(),
         },
       });
       // Fire the Left-of-Centre engine track in parallel with Stage 1.

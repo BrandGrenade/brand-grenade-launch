@@ -10,7 +10,6 @@ import {
 
 import appCss from "../styles.css?url";
 import { MobileGate } from "@/components/MobileGate";
-import { DevModeBanner } from "@/components/DevModeBanner";
 import { AppFooter } from "@/components/AppFooter";
 import { LaunchStrip } from "@/components/LaunchStrip";
 import { Toaster } from "@/components/ui/sonner";
@@ -130,7 +129,6 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <DevModeBanner />
         <LaunchStrip />
         <Outlet />
         <AppFooter />

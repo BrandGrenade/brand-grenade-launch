@@ -7,7 +7,6 @@ import { toast } from "sonner";
 import { TopNav } from "@/components/TopNav";
 import { createSession } from "@/lib/stage1.functions";
 import { resubmitBriefStructured } from "@/lib/stage1b.functions";
-import { getDevModeFromStorage } from "@/lib/dev-mode";
 import {
   SavedBriefsPicker,
   saveBrief,
@@ -158,7 +157,6 @@ function BriefIntake() {
           brandName: b.brief_fields.brandName || b.brand_name,
           category: b.brief_fields.category || b.category,
           briefText: b.brief_text,
-          devMode: getDevModeFromStorage(),
           briefFields: b.brief_fields,
         },
       });
@@ -305,7 +303,6 @@ function BriefIntake() {
           brandName: brand.trim(),
           category: category.trim() || "Unspecified",
           briefText,
-          devMode: getDevModeFromStorage(),
           briefFields,
         },
       });
@@ -336,7 +333,6 @@ function BriefIntake() {
           brandName: brand.trim(),
           category: category.trim() || "Unspecified",
           briefText,
-          devMode: getDevModeFromStorage(),
           briefFields,
         },
       });
