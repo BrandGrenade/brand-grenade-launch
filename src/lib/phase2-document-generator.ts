@@ -443,19 +443,11 @@ export function buildAllPhase2(session: Phase2Session): string {
   sections.push(`<div class="doc-break"></div><div class="section"><h2>Conceptual Assets</h2>${md(sanitise(session.stage_22_distinctive_assets ?? ""))}</div>`);
   {
     const arch = sanitise(session.stage_22_brand_architecture ?? "");
-    const reflection = extractArch(arch, "REFLECTION");
-    const peripherals = ["DOMAIN", "HERITAGE", "VALUES", "ASSETS", "PERSONALITY"]
-      .map((l) => ({ lbl: l, txt: extractArch(arch, l) }));
-    const box = (lbl: string, txt: string) => `<div class="arch-box"><div class="lbl">${escapeHtml(lbl)}</div><div class="txt">${escapeHtml(txt || "—")}</div></div>`;
-    const grid = `<div class="arch-grid">
-      ${box(peripherals[0].lbl, peripherals[0].txt)}
-      ${box(peripherals[1].lbl, peripherals[1].txt)}
-      ${box(peripherals[2].lbl, peripherals[2].txt)}
-      ${box(peripherals[3].lbl, peripherals[3].txt)}
-      <div class="arch-center"><div class="lbl">REFLECTION</div><div class="txt">${escapeHtml(reflection || "—")}</div></div>
-      ${box(peripherals[4].lbl, peripherals[4].txt)}
-    </div>`;
-    sections.push(`<div class="doc-break"></div><h2>Brand Architecture</h2>${grid}<div class="section"><h3>Full Architecture Detail</h3>${md(arch)}</div>`);
+    const { grid, complete } = architectureGrid(arch);
+    sections.push(
+      `<div class="doc-break"></div><h2>Brand Architecture</h2>${grid}` +
+        (complete ? "" : `<div class="section"><h3>Full Architecture Detail</h3>${md(arch)}</div>`),
+    );
   }
 
   const tocHtml = `<div class="toc"><h3>Contents</h3><ol>${tocItems.map((t) => `<li>${escapeHtml(t)}</li>`).join("")}</ol></div>`;
