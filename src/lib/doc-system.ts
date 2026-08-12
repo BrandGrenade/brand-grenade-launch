@@ -55,7 +55,75 @@ export function inlineMd(line: string): string {
   let s = escapeHtml(line);
   s = s.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
   s = s.replace(/(^|\s)\*(?!\s)(.+?)\*(?!\w)/g, "$1<em>$2</em>");
+  // Underscore emphasis used widely by the stage prompts (_note_).
+  s = s.replace(/(^|[\s(])_(?!\s)([^_]+?)_(?=$|[\s.,;:)!?])/g, "$1<em>$2</em>");
   return s;
+}
+
+/**
+ * Block-level markdown → HTML, rendered into the shared document classes.
+ * Lives here (not in a builder) so every migrated document type renders body
+ * copy identically.
+ */
+export function renderMarkdown(text: string): string {
+  if (!text) return "";
+  const out: string[] = [];
+  let inUl = false;
+  const closeUl = () => {
+    if (inUl) {
+      out.push("</ul>");
+      inUl = false;
+    }
+  };
+  for (const raw of text.split("\n")) {
+    const line = raw.trim();
+    if (!line) {
+      closeUl();
+      continue;
+    }
+    if (line.startsWith("> ")) {
+      closeUl();
+      out.push(`<blockquote>${inlineMd(line.replace(/^>\s+/, ""))}</blockquote>`);
+      continue;
+    }
+    if (/^####\s+/.test(line)) {
+      closeUl();
+      out.push(`<h4>${inlineMd(line.replace(/^####\s+/, ""))}</h4>`);
+      continue;
+    }
+    if (/^###\s+/.test(line)) {
+      closeUl();
+      out.push(`<h3>${inlineMd(line.replace(/^###\s+/, ""))}</h3>`);
+      continue;
+    }
+    if (/^##\s+/.test(line)) {
+      closeUl();
+      out.push(`<h3>${inlineMd(line.replace(/^##\s+/, ""))}</h3>`);
+      continue;
+    }
+    if (/^#\s+/.test(line)) {
+      closeUl();
+      out.push(`<h3>${inlineMd(line.replace(/^#\s+/, ""))}</h3>`);
+      continue;
+    }
+    if (/^[-—•]\s+/.test(line)) {
+      if (!inUl) {
+        out.push("<ul>");
+        inUl = true;
+      }
+      out.push(`<li>${inlineMd(line.replace(/^[-—•]\s+/, ""))}</li>`);
+      continue;
+    }
+    if (/^[*\-_]{3,}$/.test(line)) {
+      closeUl();
+      out.push("<hr>");
+      continue;
+    }
+    closeUl();
+    out.push(`<p>${inlineMd(line)}</p>`);
+  }
+  closeUl();
+  return out.join("\n");
 }
 
 /* ─────────────────────────────────────────────── the stylesheet ── */
@@ -106,9 +174,9 @@ body {
 
 @media print {
   #toolbar { display: none; }
-  @page { margin: 18mm 20mm; }
+  @page { margin: 0; }
   html, body { padding: 0; background: var(--paper); }
-  .page { box-shadow: none; max-width: none; padding: 0; background: var(--paper); }
+  .page { box-shadow: none; max-width: none; padding: 18mm 20mm; background: var(--paper); }
   .cover { break-after: page; page-break-after: always; }
   h1, h2, h3, h4, .kicker { break-after: avoid; page-break-after: avoid; }
   .stat-grid, .stat, .pull, .cmp, .cmp thead, .cmp tr, .callout, .toc, .footer { break-inside: avoid; page-break-inside: avoid; }
@@ -173,6 +241,7 @@ blockquote { border-left: 3pt solid var(--detonation); padding: 10pt 14pt; margi
 .cmp { width: 100%; border-collapse: collapse; margin: 16pt 0; font-size: 9.5pt; }
 .cmp caption { caption-side: top; text-align: left; font-size: 8.5pt; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--detonation); padding-bottom: 8pt; }
 .cmp th, .cmp td { text-align: left; padding: 7pt 10pt; border-bottom: 0.5pt solid var(--rule); vertical-align: top; line-height: 1.5; }
+.cmp th:first-child, .cmp td:first-child { width: 34%; }
 .cmp thead th { font-size: 8pt; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--smoke); border-bottom: 1pt solid var(--ash); }
 .cmp tbody tr.win { background: var(--surface); }
 .cmp tbody tr.win td:first-child { box-shadow: inset 3pt 0 0 var(--detonation); font-weight: 600; }

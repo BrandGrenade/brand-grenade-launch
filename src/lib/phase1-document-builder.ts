@@ -79,6 +79,7 @@ export function md(text: string): string {
 }
 
 import { stripDocumentMetadata } from "./strip-document-metadata";
+import { buildBoardStrategyDocument } from "./board-strategy-document";
 
 export function sanitise(t: string | null | undefined): string {
   return stripDocumentMetadata(t ?? "", "phase1-doc")
@@ -250,6 +251,10 @@ function footer(): string {
 }
 
 export function buildPhase1Document(session: Phase1Session, format: Phase1Format): string {
+  // Board Strategy Recommendation is migrated onto the shared design system
+  // and the Minto structure; agency/workshop still use the legacy stitcher.
+  if (format === "consulting") return buildBoardStrategyDocument(session);
+
   const meta = FORMAT_META[format];
   const brand = session.brand_name ?? "Untitled Brand";
   const sections = sectionsFor(format);
