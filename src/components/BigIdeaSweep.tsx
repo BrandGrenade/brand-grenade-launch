@@ -343,6 +343,7 @@ function IdeaCard({
   isWinner,
   isLineWinner,
   locked,
+  mode,
   onTriage,
   onRevise,
   onPickIdea,
@@ -352,6 +353,8 @@ function IdeaCard({
   isWinner: boolean;
   isLineWinner: boolean;
   locked: boolean;
+  /** "sweep" = judge only (Page 1). "shortlist" = choose winners (Page 2). */
+  mode: "sweep" | "shortlist";
   onTriage: (status: "keep" | "keep_in_play" | "kill", instinct: string) => Promise<void>;
   onRevise: (notes: string) => Promise<void>;
   onPickIdea: () => void;
@@ -374,19 +377,33 @@ function IdeaCard({
     >
       <div style={{ display: "flex", justifyContent: "space-between", gap: 16, alignItems: "baseline" }}>
         <div style={{ display: "flex", alignItems: "baseline", gap: 14, minWidth: 0 }}>
-          <span className="text-mono" style={{ color: `${AMBER}88`, fontSize: 22, lineHeight: 1 }}>
+          <span className="text-mono" style={{ color: AMBER, fontSize: 22, lineHeight: 1 }}>
             {String(d.sort_order + 1).padStart(2, "0")}
           </span>
           <span
             style={{
-              color: AMBER,
+              color: PAPER,
               fontFamily: "Inter, system-ui, sans-serif",
-              fontSize: 16,
-              letterSpacing: "0.06em",
-              textTransform: "uppercase",
+              fontSize: 19,
+              fontWeight: 600,
+              letterSpacing: "0.02em",
             }}
           >
             {d.lens_name}
+          </span>
+          <span
+            className="text-mono"
+            style={{
+              color: d.status === "kill" ? RED : d.status === "pending" ? MUTED : AMBER,
+              border: `1px solid ${d.status === "kill" ? RED : d.status === "pending" ? "#2A2724" : AMBER}`,
+              borderRadius: 999,
+              padding: "2px 9px",
+              fontSize: 10,
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
+            }}
+          >
+            {d.status === "keep_in_play" ? "Keep in play" : d.status === "keep" ? "Keep" : d.status === "kill" ? "Killed" : "Not judged"}
           </span>
         </div>
         {(isWinner || isLineWinner) && (
@@ -395,6 +412,7 @@ function IdeaCard({
           </span>
         )}
       </div>
+
       {lens && (
         <div className="text-body-sm" style={{ color: MUTED, marginTop: 8 }}>
           {lens.approach}
