@@ -113,7 +113,11 @@ function WalkthroughPicker() {
               <button
                 key={r.id}
                 onClick={() =>
-                  navigate({ to: "/walkthrough/$sessionId", params: { sessionId: r.id } })
+                  navigate({
+                    to: "/walkthrough/$sessionId",
+                    params: { sessionId: r.id },
+                    search: {},
+                  })
                 }
                 style={{
                   display: "flex",

@@ -1,5 +1,5 @@
-// STEP 3 · The locked winning idea, channel brief generation with real status,
-// and the exports.
+// STEP 3 · The locked winning idea, two artefacts per channel — the content
+// creation input prompt and the offline creative brief — and the exports.
 
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ChannelBriefs } from "@/components/creative/ChannelBriefs";
@@ -9,16 +9,16 @@ export const Route = createFileRoute("/creative/$sessionId/channels")({
   component: ChannelsStep,
   head: () => ({
     meta: [
-      { title: "Step 3 · Channel briefs and export — Brand Grenade" },
+      { title: "Step 3 · Content creation input prompts and offline creative briefs — Brand Grenade" },
       {
         name: "description",
         content:
-          "Generate a channel brief for each channel from the locked winning idea, track its status, and export the finished work.",
+          "Generate a tool-ready content creation input prompt and a human-facing offline creative brief for every channel from the locked winning idea, then export both.",
       },
-      { property: "og:title", content: "Step 3 · Channel briefs and export — Brand Grenade" },
+      { property: "og:title", content: "Step 3 · Content creation input prompts and offline creative briefs — Brand Grenade" },
       {
         property: "og:description",
-        content: "Channel briefs generated from the locked idea, with real run status and exports.",
+        content: "Two artefacts per channel from one locked idea: a tool-ready content creation input prompt and an offline creative brief.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

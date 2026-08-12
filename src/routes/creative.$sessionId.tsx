@@ -1,7 +1,7 @@
 // CREATIVE ENGINE — the room shell. Three explicit steps, one per route:
 //   /creative/$sessionId            → Step 1 · the 37-lens sweep
 //   /creative/$sessionId/shortlist  → Step 2 · shortlist and lock the winner
-//   /creative/$sessionId/channels   → Step 3 · channel briefs and export
+//   /creative/$sessionId/channels   → Step 3 · content prompts, offline briefs, export
 // This file owns only the header, the background input, and the step nav.
 
 import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
@@ -22,7 +22,7 @@ export const Route = createFileRoute("/creative/$sessionId")({
       {
         name: "description",
         content:
-          "Three steps: run the 37-lens sweep, shortlist and lock one winning idea and line, then generate channel briefs and exports.",
+          "Three steps: run the 37-lens sweep, shortlist and lock one winning idea and line, then generate content creation input prompts and offline creative briefs.",
       },
       { property: "og:title", content: "Creative Engine Room — Brand Grenade" },
       {
@@ -155,7 +155,8 @@ function CreativeRoom() {
           </h1>
           <p className="text-body-sm" style={{ color: MUTED, maxWidth: 760, lineHeight: 1.7 }}>
             Three steps, in order. Sweep all {LENS_COUNT} lenses against the proposition, shortlist what
-            survives and lock one winning idea and line, then generate the channel briefs from it.
+            survives and lock one winning idea and line, then generate the content creation input
+            prompts and offline creative briefs from it.
           </p>
 
           {/* STEP NAV — always visible, on every step. */}
@@ -215,7 +216,7 @@ function CreativeRoom() {
                   cursor: "pointer",
                 }}
               >
-                {channels.length} channel brief{channels.length === 1 ? "" : "s"} ·{" "}
+                {channels.length} channel strateg{channels.length === 1 ? "y" : "ies"} ·{" "}
                 {briefsOpen ? "hide" : "view"}
               </button>
               {briefsOpen && (
