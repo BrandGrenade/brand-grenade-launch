@@ -359,7 +359,8 @@ function CompletePage() {
             className="text-body-lg"
             style={{ color: "var(--color-text-secondary)" }}
           >
-            20 stages. 3 human reviews. One complete brand strategy.
+            {stagesCompleted} stage{stagesCompleted === 1 ? "" : "s"}. {humanReviews} human review
+            {humanReviews === 1 ? "" : "s"}. One complete brand strategy.
           </p>
 
           <hr
