@@ -20,7 +20,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { createSession } from "@/lib/stage1.functions";
 import { deleteBrandPermanently } from "@/lib/brand-register.functions";
-import { useIsAdmin } from "@/lib/dev-mode";
+import { useIsAdmin } from "@/lib/demo-mode";
 import { unlockRepositoryAdminFromPlatform } from "@/lib/repo-admin.functions";
 import {
   DropdownMenu,

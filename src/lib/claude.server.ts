@@ -45,32 +45,18 @@ export interface CallClaudeArgs {
   timeoutMs?: number;
   model?: string;
   skipUniversalWrapper?: boolean;
-  /** When provided, retry status is written to sessions.retry_status and
-   *  Development Mode (sessions.dev_mode) overrides the system prompt + max_tokens. */
+  /** When provided, retry status is written to sessions.retry_status. */
   sessionId?: string;
   /** Human-readable stage label, e.g. "Stage 2". Used in the retry message. */
   stageLabel?: string;
-  /** Stage number / id (e.g. "2", "1B") — used to build the Dev Mode prompt. */
+  /** Stage number / id (e.g. "2", "1B"). Used for amendment lookup + telemetry. */
   stageNumber?: string;
-  /** Stage name (e.g. "Category Intelligence") — used to build the Dev Mode prompt. */
+  /** Stage name (e.g. "Category Intelligence"). Telemetry / logging only. */
   stageName?: string;
   /** Optional sampling temperature (0..1). Forwarded to Anthropic when set. */
   temperature?: number;
 }
 
-function buildDevModePrompt(stageNumber: string, stageName: string): string {
-  return `You are Brand Grenade Stage ${stageNumber} — ${stageName}.
-
-Produce a brief but structurally complete output for this stage.
-Include all required sections and headings but keep each section to
-2-3 sentences maximum.
-
-The goal is to confirm pipeline flow and data passing — not to produce
-full production-quality output.
-
-Label your output clearly:
-DEV MODE — ABBREVIATED OUTPUT`;
-}
 
 const UNIVERSAL_SYSTEM_WRAPPER = `You are a senior global strategy director and planning lead at a world-class strategy consultancy. You are producing professional strategic analysis and recommendations for senior client audiences.
 
@@ -109,19 +95,7 @@ ALWAYS WRITE AS:
 A compelling strategic document that a CMO or senior partner would read with confidence and find immediately actionable.
 Every sentence must earn its place. Strategic precision over completeness.`;
 
-async function readDevMode(sessionId: string | undefined): Promise<boolean> {
-  if (!sessionId) return false;
-  try {
-    const { data } = await supabaseAdmin
-      .from("sessions")
-      .select("dev_mode")
-      .eq("id", sessionId)
-      .single();
-    return Boolean(data?.dev_mode);
-  } catch {
-    return false;
-  }
-}
+
 
 async function setRetryStatus(sessionId: string | undefined, message: string | null) {
   if (!sessionId) return;
@@ -222,15 +196,10 @@ async function prepareCall(
 ): Promise<{ apiKey: string; body: string; amendmentKey?: string }> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) throw new Error("ANTHROPIC_API_KEY is not configured");
-  const devMode = await readDevMode(args.sessionId);
-  let effectiveSystem = args.systemPrompt;
-  let effectiveMaxTokens = args.maxTokens ?? 64000;
-  if (devMode && args.stageNumber && args.stageName) {
-    effectiveSystem = buildDevModePrompt(args.stageNumber, args.stageName);
-    effectiveMaxTokens = 500;
-  } else if (!args.skipUniversalWrapper) {
-    effectiveSystem = `${UNIVERSAL_SYSTEM_WRAPPER}\n\n${args.systemPrompt}`;
-  }
+  const effectiveMaxTokens = args.maxTokens ?? 64000;
+  const effectiveSystem = args.skipUniversalWrapper
+    ? args.systemPrompt
+    : `${UNIVERSAL_SYSTEM_WRAPPER}\n\n${args.systemPrompt}`;
 
   // Universal amendment-note injection. If a human reviewer entered amendment
   // notes before retrying this stage, wrap them onto the user message as a
@@ -238,7 +207,7 @@ async function prepareCall(
   // the same block inline (stages 1 / 8 / 12) — detect via the shared marker.
   let effectiveUserMessage = args.userMessage;
   let amendmentKey: string | undefined;
-  if (!devMode) {
+  {
     const amendment = await readAmendment(args.sessionId, args.stageNumber);
     if (amendment) {
       amendmentKey = amendment.key;
@@ -263,6 +232,7 @@ async function prepareCall(
       );
     }
   }
+
 
   return {
     apiKey,

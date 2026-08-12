@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as WalkthroughRouteImport } from './routes/walkthrough'
 import { Route as UnsubscribeRouteImport } from './routes/unsubscribe'
 import { Route as SynthesiserRouteImport } from './routes/synthesiser'
 import { Route as SettingsRouteImport } from './routes/settings'
@@ -26,11 +27,13 @@ import { Route as BriefingRoomRouteImport } from './routes/briefing-room'
 import { Route as BriefRouteImport } from './routes/brief'
 import { Route as RepoSlugRouteImport } from './routes/$repoSlug'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as WalkthroughIndexRouteImport } from './routes/walkthrough.index'
 import { Route as SynthesiserIndexRouteImport } from './routes/synthesiser.index'
 import { Route as IntelligenceIndexRouteImport } from './routes/intelligence.index'
 import { Route as CreativeIndexRouteImport } from './routes/creative.index'
 import { Route as BriefingRoomIndexRouteImport } from './routes/briefing-room.index'
 import { Route as BriefIndexRouteImport } from './routes/brief.index'
+import { Route as WalkthroughSessionIdRouteImport } from './routes/walkthrough.$sessionId'
 import { Route as IntelligenceNewRouteImport } from './routes/intelligence.new'
 import { Route as IntelligenceIdRouteImport } from './routes/intelligence.$id'
 import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
@@ -49,6 +52,11 @@ import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/e
 import { Route as ApiRepoViewDocumentIdRouteImport } from './routes/api/repo/view.$documentId'
 import { Route as ApiPublicHooksTier2HarnessRouteImport } from './routes/api/public/hooks/tier2-harness'
 
+const WalkthroughRoute = WalkthroughRouteImport.update({
+  id: '/walkthrough',
+  path: '/walkthrough',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const UnsubscribeRoute = UnsubscribeRouteImport.update({
   id: '/unsubscribe',
   path: '/unsubscribe',
@@ -134,6 +142,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const WalkthroughIndexRoute = WalkthroughIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => WalkthroughRoute,
+} as any)
 const SynthesiserIndexRoute = SynthesiserIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -158,6 +171,11 @@ const BriefIndexRoute = BriefIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => BriefRoute,
+} as any)
+const WalkthroughSessionIdRoute = WalkthroughSessionIdRouteImport.update({
+  id: '/$sessionId',
+  path: '/$sessionId',
+  getParentRoute: () => WalkthroughRoute,
 } as any)
 const IntelligenceNewRoute = IntelligenceNewRouteImport.update({
   id: '/new',
@@ -267,6 +285,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof SettingsRoute
   '/synthesiser': typeof SynthesiserRouteWithChildren
   '/unsubscribe': typeof UnsubscribeRoute
+  '/walkthrough': typeof WalkthroughRouteWithChildren
   '/admin/repositories': typeof AdminRepositoriesRoute
   '/admin/tests': typeof AdminTestsRoute
   '/brief/new': typeof BriefNewRoute
@@ -276,11 +295,13 @@ export interface FileRoutesByFullPath {
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/intelligence/$id': typeof IntelligenceIdRoute
   '/intelligence/new': typeof IntelligenceNewRoute
+  '/walkthrough/$sessionId': typeof WalkthroughSessionIdRoute
   '/brief/': typeof BriefIndexRoute
   '/briefing-room/': typeof BriefingRoomIndexRoute
   '/creative/': typeof CreativeIndexRoute
   '/intelligence/': typeof IntelligenceIndexRoute
   '/synthesiser/': typeof SynthesiserIndexRoute
+  '/walkthrough/': typeof WalkthroughIndexRoute
   '/admin/preview/$slug': typeof AdminPreviewSlugRoute
   '/intelligence/$id/edit': typeof IntelligenceIdEditRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
@@ -312,11 +333,13 @@ export interface FileRoutesByTo {
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/intelligence/$id': typeof IntelligenceIdRoute
   '/intelligence/new': typeof IntelligenceNewRoute
+  '/walkthrough/$sessionId': typeof WalkthroughSessionIdRoute
   '/brief': typeof BriefIndexRoute
   '/briefing-room': typeof BriefingRoomIndexRoute
   '/creative': typeof CreativeIndexRoute
   '/intelligence': typeof IntelligenceIndexRoute
   '/synthesiser': typeof SynthesiserIndexRoute
+  '/walkthrough': typeof WalkthroughIndexRoute
   '/admin/preview/$slug': typeof AdminPreviewSlugRoute
   '/intelligence/$id/edit': typeof IntelligenceIdEditRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
@@ -345,6 +368,7 @@ export interface FileRoutesById {
   '/settings': typeof SettingsRoute
   '/synthesiser': typeof SynthesiserRouteWithChildren
   '/unsubscribe': typeof UnsubscribeRoute
+  '/walkthrough': typeof WalkthroughRouteWithChildren
   '/admin/repositories': typeof AdminRepositoriesRoute
   '/admin/tests': typeof AdminTestsRoute
   '/brief/new': typeof BriefNewRoute
@@ -354,11 +378,13 @@ export interface FileRoutesById {
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/intelligence/$id': typeof IntelligenceIdRoute
   '/intelligence/new': typeof IntelligenceNewRoute
+  '/walkthrough/$sessionId': typeof WalkthroughSessionIdRoute
   '/brief/': typeof BriefIndexRoute
   '/briefing-room/': typeof BriefingRoomIndexRoute
   '/creative/': typeof CreativeIndexRoute
   '/intelligence/': typeof IntelligenceIndexRoute
   '/synthesiser/': typeof SynthesiserIndexRoute
+  '/walkthrough/': typeof WalkthroughIndexRoute
   '/admin/preview/$slug': typeof AdminPreviewSlugRoute
   '/intelligence/$id_/edit': typeof IntelligenceIdEditRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
@@ -388,6 +414,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/synthesiser'
     | '/unsubscribe'
+    | '/walkthrough'
     | '/admin/repositories'
     | '/admin/tests'
     | '/brief/new'
@@ -397,11 +424,13 @@ export interface FileRouteTypes {
     | '/email/unsubscribe'
     | '/intelligence/$id'
     | '/intelligence/new'
+    | '/walkthrough/$sessionId'
     | '/brief/'
     | '/briefing-room/'
     | '/creative/'
     | '/intelligence/'
     | '/synthesiser/'
+    | '/walkthrough/'
     | '/admin/preview/$slug'
     | '/intelligence/$id/edit'
     | '/lovable/email/suppression'
@@ -433,11 +462,13 @@ export interface FileRouteTypes {
     | '/email/unsubscribe'
     | '/intelligence/$id'
     | '/intelligence/new'
+    | '/walkthrough/$sessionId'
     | '/brief'
     | '/briefing-room'
     | '/creative'
     | '/intelligence'
     | '/synthesiser'
+    | '/walkthrough'
     | '/admin/preview/$slug'
     | '/intelligence/$id/edit'
     | '/lovable/email/suppression'
@@ -465,6 +496,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/synthesiser'
     | '/unsubscribe'
+    | '/walkthrough'
     | '/admin/repositories'
     | '/admin/tests'
     | '/brief/new'
@@ -474,11 +506,13 @@ export interface FileRouteTypes {
     | '/email/unsubscribe'
     | '/intelligence/$id'
     | '/intelligence/new'
+    | '/walkthrough/$sessionId'
     | '/brief/'
     | '/briefing-room/'
     | '/creative/'
     | '/intelligence/'
     | '/synthesiser/'
+    | '/walkthrough/'
     | '/admin/preview/$slug'
     | '/intelligence/$id_/edit'
     | '/lovable/email/suppression'
@@ -507,6 +541,7 @@ export interface RootRouteChildren {
   SettingsRoute: typeof SettingsRoute
   SynthesiserRoute: typeof SynthesiserRouteWithChildren
   UnsubscribeRoute: typeof UnsubscribeRoute
+  WalkthroughRoute: typeof WalkthroughRouteWithChildren
   AdminRepositoriesRoute: typeof AdminRepositoriesRoute
   AdminTestsRoute: typeof AdminTestsRoute
   DetonationCanvasRoute: typeof DetonationCanvasRoute
@@ -522,6 +557,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/walkthrough': {
+      id: '/walkthrough'
+      path: '/walkthrough'
+      fullPath: '/walkthrough'
+      preLoaderRoute: typeof WalkthroughRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/unsubscribe': {
       id: '/unsubscribe'
       path: '/unsubscribe'
@@ -641,6 +683,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/walkthrough/': {
+      id: '/walkthrough/'
+      path: '/'
+      fullPath: '/walkthrough/'
+      preLoaderRoute: typeof WalkthroughIndexRouteImport
+      parentRoute: typeof WalkthroughRoute
+    }
     '/synthesiser/': {
       id: '/synthesiser/'
       path: '/'
@@ -675,6 +724,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/brief/'
       preLoaderRoute: typeof BriefIndexRouteImport
       parentRoute: typeof BriefRoute
+    }
+    '/walkthrough/$sessionId': {
+      id: '/walkthrough/$sessionId'
+      path: '/$sessionId'
+      fullPath: '/walkthrough/$sessionId'
+      preLoaderRoute: typeof WalkthroughSessionIdRouteImport
+      parentRoute: typeof WalkthroughRoute
     }
     '/intelligence/new': {
       id: '/intelligence/new'
@@ -868,6 +924,20 @@ const SynthesiserRouteWithChildren = SynthesiserRoute._addFileChildren(
   SynthesiserRouteChildren,
 )
 
+interface WalkthroughRouteChildren {
+  WalkthroughSessionIdRoute: typeof WalkthroughSessionIdRoute
+  WalkthroughIndexRoute: typeof WalkthroughIndexRoute
+}
+
+const WalkthroughRouteChildren: WalkthroughRouteChildren = {
+  WalkthroughSessionIdRoute: WalkthroughSessionIdRoute,
+  WalkthroughIndexRoute: WalkthroughIndexRoute,
+}
+
+const WalkthroughRouteWithChildren = WalkthroughRoute._addFileChildren(
+  WalkthroughRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   RepoSlugRoute: RepoSlugRoute,
@@ -886,6 +956,7 @@ const rootRouteChildren: RootRouteChildren = {
   SettingsRoute: SettingsRoute,
   SynthesiserRoute: SynthesiserRouteWithChildren,
   UnsubscribeRoute: UnsubscribeRoute,
+  WalkthroughRoute: WalkthroughRouteWithChildren,
   AdminRepositoriesRoute: AdminRepositoriesRoute,
   AdminTestsRoute: AdminTestsRoute,
   DetonationCanvasRoute: DetonationCanvasRoute,
@@ -901,13 +972,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

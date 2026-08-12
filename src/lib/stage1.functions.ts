@@ -23,7 +23,6 @@ const CreateSessionInput = z.object({
   brandName: z.string().min(1).max(200),
   category: z.string().min(1).max(200),
   briefText: z.string().min(20).max(50000),
-  devMode: z.boolean().optional(),
   briefFields: BriefFieldsSchema,
 });
 
@@ -49,7 +48,6 @@ export const createSession = createServerFn({ method: "POST" })
         brief_versions: briefVersions,
         status: "running",
         current_stage: 1,
-        dev_mode: data.devMode ?? false,
         user_id: context.userId,
       })
       .select("id")

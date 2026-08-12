@@ -2,9 +2,20 @@ import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 
-const STORAGE_KEY = "bg_dev_mode";
+/**
+ * DEMO MODE — a pure viewing state.
+ *
+ * This is deliberately NOT the old dev_mode pattern. Nothing here is ever
+ * written to a session row, and nothing here influences generation, prompts,
+ * token budgets, quality or stored data. It is a client-local presentation
+ * flag that unlocks the read-only Walkthrough view for any already-completed
+ * session, and can be toggled on and off at any time with zero side effects.
+ */
 
-function readDevMode(): boolean {
+const STORAGE_KEY = "bg_demo_mode";
+const EVENT = "bg-demo-mode-changed";
+
+function readDemoMode(): boolean {
   if (typeof window === "undefined") return false;
   try {
     return window.localStorage.getItem(STORAGE_KEY) === "1";
@@ -13,22 +24,24 @@ function readDevMode(): boolean {
   }
 }
 
-export function useDevMode(): {
+export function useDemoMode(): {
   enabled: boolean;
   setEnabled: (v: boolean) => void;
 } {
-  const [enabled, setEnabledState] = useState<boolean>(() => readDevMode());
+  const [enabled, setEnabledState] = useState<boolean>(false);
 
+  // Read after mount only — avoids an SSR/hydration mismatch.
   useEffect(() => {
+    setEnabledState(readDemoMode());
     const onStorage = (e: StorageEvent) => {
-      if (e.key === STORAGE_KEY) setEnabledState(readDevMode());
+      if (e.key === STORAGE_KEY) setEnabledState(readDemoMode());
     };
-    const onCustom = () => setEnabledState(readDevMode());
+    const onCustom = () => setEnabledState(readDemoMode());
     window.addEventListener("storage", onStorage);
-    window.addEventListener("bg-dev-mode-changed", onCustom);
+    window.addEventListener(EVENT, onCustom);
     return () => {
       window.removeEventListener("storage", onStorage);
-      window.removeEventListener("bg-dev-mode-changed", onCustom);
+      window.removeEventListener(EVENT, onCustom);
     };
   }, []);
 
@@ -39,14 +52,10 @@ export function useDevMode(): {
       /* ignore */
     }
     setEnabledState(v);
-    window.dispatchEvent(new Event("bg-dev-mode-changed"));
+    window.dispatchEvent(new Event(EVENT));
   }, []);
 
   return { enabled, setEnabled };
-}
-
-export function getDevModeFromStorage(): boolean {
-  return readDevMode();
 }
 
 /** Returns true if the current authenticated user is an admin (users.is_admin). */
