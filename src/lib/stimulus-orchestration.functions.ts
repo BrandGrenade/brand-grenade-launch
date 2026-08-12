@@ -122,13 +122,24 @@ export const startOrchestration = createServerFn({ method: "POST" })
     const { data: runs } = await db
       .from("stimulus_runs")
       .select(
-        "id, channel_name, gate_one_confirmed, locked_big_idea_at_generation, locked_line_at_generation",
+        "id, channel_name, run_mode, gate_one_confirmed, locked_big_idea_at_generation, locked_line_at_generation",
       )
       .eq("session_id", data.sessionId)
       .eq("gate_one_confirmed", true);
-    const confirmed = (runs ?? []) as AnyRow[];
+    const allConfirmed = (runs ?? []) as AnyRow[];
+    // Orchestration consumes the real Step 3 artefacts — the Gate One-confirmed
+    // content creation input prompts adapted from the locked idea. Legacy 37-lens
+    // sweep runs are only used when a session has no adaptation runs at all.
+    const adaptations = allConfirmed.filter((r) => r.run_mode === "channel_adaptation");
+    const confirmed =
+      adaptations.length > 0
+        ? adaptations
+        : allConfirmed.filter((r) => r.run_mode === "channel" || !r.run_mode);
     if (confirmed.length === 0)
-      throw new Error("No Gate One-confirmed channel runs on this session yet.");
+      throw new Error(
+        "No Gate One-confirmed content creation input prompts on this session yet. Confirm Gate One on the channel prompts in Step 3 first.",
+      );
+
 
     // Staleness gate: a run snapshots its Stage 21 brief at creation. If the
     // session's locked idea/line has moved since, orchestrating that run would
