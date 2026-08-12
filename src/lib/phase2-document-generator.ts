@@ -124,6 +124,8 @@ body {
 #toolbar .actions button.close { background: transparent; color: var(--smoke); border: 1px solid #2A2724; }
 @media print {
   #toolbar { display: none; }
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .arch-grid, .arch-box, .arch-center { page-break-inside: avoid; }
   @page { margin: 0; }
   html, body { padding: 0; background: var(--paper); }
   .page { box-shadow: none; max-width: none; padding: 20mm 22mm; background: var(--paper); }
