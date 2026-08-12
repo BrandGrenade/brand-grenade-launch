@@ -58,6 +58,7 @@ import { runStage14b } from "@/lib/stage14b.functions";
 import { runStage14c } from "@/lib/stage14c.functions";
 import { runStage15 } from "@/lib/stage15.functions";
 import { runStage16 } from "@/lib/stage16.functions";
+import { Spinner } from "@/components/ui/busy";
 import { runStage17, selectStage17Territory } from "@/lib/stage17.functions";
 import { runStage17b } from "@/lib/stage17b.functions";
 import { runStage18, selectStage18Detonation } from "@/lib/stage18.functions";
@@ -1658,9 +1659,11 @@ export function PreflightFullCheckPanel() {
           {state === "running" ? (
             <button
               disabled
-              className="cursor-not-allowed bg-card px-5 py-2.5 text-sm font-semibold text-text-secondary"
+              aria-busy="true"
+              data-busy="true"
+              className="inline-flex items-center gap-2 bg-card px-5 py-2.5 text-sm font-semibold text-text-secondary"
             >
-              Running… {(elapsedMs / 1000).toFixed(0)}s
+              <Spinner size={12} /> Running… {(elapsedMs / 1000).toFixed(0)}s
             </button>
           ) : (
             <button
