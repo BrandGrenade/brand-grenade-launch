@@ -1030,12 +1030,23 @@ export function BigIdeaSweep({
         </div>
       )}
 
-      {view === "ideas" && ideas.length > 0 && (
+      {shortlist && ideas.length > 0 && shown.length === 0 && (
+        <div
+          className="text-body-sm"
+          style={{ color: MUTED, maxWidth: IDEA_COLUMN_WIDTH, margin: "28px auto 0", lineHeight: 1.7 }}
+        >
+          Nothing has been kept yet. Go back to Step 1 · Sweep and mark at least one idea Keep or
+          Keep in play — shortlisted ideas appear here.
+        </div>
+      )}
+
+      {view === "ideas" && shown.length > 0 && (
         <div style={{ ...ideaListStyle, marginTop: 28 }}>
-          {ideas.map((d) => (
+          {shown.map((d) => (
             <IdeaCard
               key={d.id}
               d={d}
+              mode={shortlist ? "shortlist" : "sweep"}
               locked={locked}
               isWinner={d.id === pickIdea}
               isLineWinner={d.id === pickLine}
@@ -1056,7 +1067,8 @@ export function BigIdeaSweep({
         </div>
       )}
 
-      {runId && ideas.length > 0 && (
+      {/* Gate One rating operates on survivors — it belongs with the shortlist. */}
+      {shortlist && runId && shown.length > 0 && (
         <StimulusGateOne
           runId={runId}
           run={run}
@@ -1070,6 +1082,7 @@ export function BigIdeaSweep({
           }}
         />
       )}
+
     </div>
   );
 }
