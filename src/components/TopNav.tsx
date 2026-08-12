@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { useDevMode, useIsAdmin } from "@/lib/dev-mode";
+import { useDemoMode, useIsAdmin } from "@/lib/demo-mode";
 import { useAuth } from "@/context/AuthContext";
 import { BrandGrenadeIcon } from "@/components/BrandGrenadeIcon";
 import { unlockRepositoryAdminFromPlatform } from "@/lib/repo-admin.functions";
