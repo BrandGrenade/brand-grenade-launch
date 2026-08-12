@@ -10,7 +10,6 @@ import { Link } from "@tanstack/react-router";
 import { listStimulusRuns, loadStimulusRun } from "@/lib/stimulus.functions";
 import { generateChannelAdaptation } from "@/lib/stimulus-channel.functions";
 import { BIG_IDEA_CHANNEL_LABEL } from "@/lib/stimulus-bigidea.functions";
-import { getLens } from "@/lib/stimulus/lenses";
 import { RawIdeaExportButton } from "@/components/RawIdeaExportButton";
 import { StimulusOrchestration } from "@/components/StimulusOrchestration";
 import { ideaCardStyle, IDEA_COLUMN_WIDTH } from "@/components/stimulus/idea-layout";
@@ -25,9 +24,11 @@ type RunRow = {
   id: string;
   channel_name: string;
   status: string;
+  run_mode?: string | null;
   error?: string | null;
   created_at?: string;
 };
+
 
 type DirectionRow = {
   id: string;
@@ -145,11 +146,19 @@ export function ChannelBriefs({
   const refreshRuns = useCallback(async () => {
     try {
       const r = await listRuns({ data: { sessionId } });
-      setRuns((r.runs as RunRow[]).filter((x) => x.channel_name !== BIG_IDEA_CHANNEL_LABEL));
+      // Only channel-adaptation runs belong on this page. Legacy 37-lens sweep
+      // runs (run_mode "channel"/"big_idea") carry the whole rejected pool and
+      // must never surface here.
+      setRuns(
+        (r.runs as RunRow[]).filter(
+          (x) => x.run_mode === "channel_adaptation" && x.channel_name !== BIG_IDEA_CHANNEL_LABEL,
+        ),
+      );
     } catch {
       /* non-fatal — the next action re-reads */
     }
   }, [listRuns, sessionId]);
+
 
   useEffect(() => {
     void refreshRuns();
@@ -200,7 +209,10 @@ export function ChannelBriefs({
     setOpenRunId(runId);
     try {
       const r = await load({ data: { runId } });
-      setOpenDirections(r.directions as DirectionRow[]);
+      setOpenDirections(
+        (r.directions as DirectionRow[]).filter((d) => Boolean(d.direction?.trim() || d.error)),
+      );
+
     } finally {
       setOpenBusy(false);
     }
@@ -359,35 +371,38 @@ export function ChannelBriefs({
               Loading the channel brief…
             </div>
           )}
+          {!openBusy && openDirections.length === 0 && (
+            <div className="text-body-sm" style={{ color: RED, marginTop: 14, lineHeight: 1.7 }}>
+              This brief has no stored content. Re-generate the channel above.
+            </div>
+          )}
           <div style={{ display: "grid", gap: 20, marginTop: 18 }}>
-            {openDirections.map((d) => {
-              const lens = getLens(d.lens_id);
-              return (
-                <div key={d.id} style={ideaCardStyle({ accent: null })}>
-                  <div style={{ display: "flex", gap: 14, alignItems: "baseline" }}>
-                    <span className="text-mono" style={{ color: AMBER, fontSize: 20 }}>
-                      {String(d.sort_order + 1).padStart(2, "0")}
-                    </span>
-                    <span style={{ color: PAPER, fontSize: 18, fontWeight: 600 }}>{d.lens_name}</span>
-                  </div>
-                  {lens && (
-                    <div className="text-body-sm" style={{ color: MUTED, marginTop: 8 }}>
-                      {lens.approach}
-                    </div>
-                  )}
-                  <div
-                    className="text-body-sm"
-                    style={{ color: PAPER, marginTop: 16, whiteSpace: "pre-wrap", lineHeight: 1.75, fontSize: 15 }}
-                  >
-                    {d.direction || d.error || "Not generated."}
-                  </div>
-                  <div style={{ marginTop: 14 }}>
-                    <RawIdeaExportButton directionId={d.id} />
-                  </div>
+            {openDirections.map((d) => (
+              <div key={d.id} style={ideaCardStyle({ accent: null })}>
+                <div
+                  className="text-mono"
+                  style={{ color: AMBER, fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase" }}
+                >
+                  {d.lens_name || "Channel adaptation"} — the locked idea in this channel
                 </div>
-              );
-            })}
+                <div
+                  style={{
+                    color: PAPER,
+                    marginTop: 16,
+                    whiteSpace: "pre-wrap",
+                    lineHeight: 1.8,
+                    fontSize: 15,
+                  }}
+                >
+                  {d.direction?.trim() || d.error || "Not generated."}
+                </div>
+                <div style={{ marginTop: 14 }}>
+                  <RawIdeaExportButton directionId={d.id} />
+                </div>
+              </div>
+            ))}
           </div>
+
         </div>
       )}
 
