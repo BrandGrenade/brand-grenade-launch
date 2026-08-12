@@ -286,20 +286,41 @@ function channelBriefBody(brand: string, channel: string, body: string): string 
     footer(true);
 }
 
+const ARCH_LABELS = ["REFLECTION", "DOMAIN", "HERITAGE", "VALUES", "ASSETS", "PERSONALITY"];
+
+/** Stage 22 stores each component as `LABEL: value` on one line ("DOMAIN: Electric
+ * performance automotive"). Older/looser outputs put the value on the following
+ * line(s) under a bare or markdown-headed label. Handle both. */
 function extractArch(arch: string, label: string): string {
-  const labels = ["REFLECTION", "DOMAIN", "HERITAGE", "VALUES", "ASSETS", "PERSONALITY"];
-  const re = new RegExp(`(?:^|\\n)\\s*(?:#{1,4}\\s*|\\*+\\s*)?${label}\\b[^\\n]*\\n([\\s\\S]*?)(?=\\n\\s*(?:#{1,4}\\s*|\\*+\\s*)?(?:${labels.join("|")})\\b|$)`, "i");
-  const m = arch.match(re);
-  return m ? m[1].trim() : "";
+  const inline = arch.match(
+    new RegExp(`(?:^|\\n)\\s*(?:#{1,4}\\s*)?\\**\\s*${label}\\s*\\**\\s*:\\s*([^\\n]+)`, "i"),
+  );
+  if (inline?.[1]?.trim()) return inline[1].trim().replace(/^\*+|\*+$/g, "").trim();
+
+  const block = arch.match(
+    new RegExp(
+      `(?:^|\\n)\\s*(?:#{1,4}\\s*|\\*+\\s*)?${label}\\b[^\\n]*\\n([\\s\\S]*?)(?=\\n\\s*(?:#{1,4}\\s*|\\*+\\s*)?(?:${ARCH_LABELS.join("|")})\\b|$)`,
+      "i",
+    ),
+  );
+  return block?.[1]?.trim() ?? "";
 }
 
-function brandArchitectureBody(brand: string, arch: string): string {
-  const sanitised = sanitise(arch);
+/** Slash-delimited component values ("A / B / C") read as a stacked list. */
+function archItems(txt: string): string {
+  if (!txt) return `<span class="empty">—</span>`;
+  const parts = txt.split(/\s+\/\s+/).map((p) => p.trim()).filter(Boolean);
+  if (parts.length < 2) return escapeHtml(txt);
+  return `<ul class="arch-items">${parts.map((p) => `<li>${escapeHtml(p)}</li>`).join("")}</ul>`;
+}
+
+function architectureGrid(sanitised: string): { grid: string; complete: boolean } {
   const reflection = extractArch(sanitised, "REFLECTION");
   const peripherals = ["DOMAIN", "HERITAGE", "VALUES", "ASSETS", "PERSONALITY"]
     .map((l) => ({ lbl: l, txt: extractArch(sanitised, l) }));
 
-  const box = (lbl: string, txt: string) => `<div class="arch-box"><div class="lbl">${escapeHtml(lbl)}</div><div class="txt">${escapeHtml(txt || "—")}</div></div>`;
+  const box = (lbl: string, txt: string) =>
+    `<div class="arch-box"><div class="lbl">${escapeHtml(lbl)}</div><div class="txt">${archItems(txt)}</div></div>`;
   const grid = `<div class="arch-grid">
     ${box(peripherals[0].lbl, peripherals[0].txt)}
     ${box(peripherals[1].lbl, peripherals[1].txt)}
@@ -309,9 +330,19 @@ function brandArchitectureBody(brand: string, arch: string): string {
     ${box(peripherals[4].lbl, peripherals[4].txt)}
   </div>`;
 
+  const complete = Boolean(reflection) && peripherals.every((p) => Boolean(p.txt));
+  return { grid, complete };
+}
+
+function brandArchitectureBody(brand: string, arch: string): string {
+  const sanitised = sanitise(arch);
+  const { grid, complete } = architectureGrid(sanitised);
+
   return cover("BRAND ARCHITECTURE", "Brand Architecture", brand) +
     `<div class="section"><h2>Brand Architecture</h2>${grid}</div>` +
-    `<div class="section"><h3>Full Architecture Detail</h3>${md(sanitised)}</div>` +
+    // The grid IS the document when every component resolved; the raw dump is a
+    // fallback for outputs the extractor could not fully parse.
+    (complete ? "" : `<div class="section"><h3>Full Architecture Detail</h3>${md(sanitised)}</div>`) +
     footer(false);
 }
 
