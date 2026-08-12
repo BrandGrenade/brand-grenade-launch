@@ -45,32 +45,18 @@ export interface CallClaudeArgs {
   timeoutMs?: number;
   model?: string;
   skipUniversalWrapper?: boolean;
-  /** When provided, retry status is written to sessions.retry_status and
-   *  Development Mode (sessions.dev_mode) overrides the system prompt + max_tokens. */
+  /** When provided, retry status is written to sessions.retry_status. */
   sessionId?: string;
   /** Human-readable stage label, e.g. "Stage 2". Used in the retry message. */
   stageLabel?: string;
-  /** Stage number / id (e.g. "2", "1B") — used to build the Dev Mode prompt. */
+  /** Stage number / id (e.g. "2", "1B"). Used for amendment lookup + telemetry. */
   stageNumber?: string;
-  /** Stage name (e.g. "Category Intelligence") — used to build the Dev Mode prompt. */
+  /** Stage name (e.g. "Category Intelligence"). Telemetry / logging only. */
   stageName?: string;
   /** Optional sampling temperature (0..1). Forwarded to Anthropic when set. */
   temperature?: number;
 }
 
-function buildDevModePrompt(stageNumber: string, stageName: string): string {
-  return `You are Brand Grenade Stage ${stageNumber} — ${stageName}.
-
-Produce a brief but structurally complete output for this stage.
-Include all required sections and headings but keep each section to
-2-3 sentences maximum.
-
-The goal is to confirm pipeline flow and data passing — not to produce
-full production-quality output.
-
-Label your output clearly:
-DEV MODE — ABBREVIATED OUTPUT`;
-}
 
 const UNIVERSAL_SYSTEM_WRAPPER = `You are a senior global strategy director and planning lead at a world-class strategy consultancy. You are producing professional strategic analysis and recommendations for senior client audiences.
 
