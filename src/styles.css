@@ -211,6 +211,10 @@
   [data-busy="true"],
   button:disabled[data-busy="true"],
   button[aria-busy="true"] { cursor: progress; }
+  /* Any control currently showing a spinner is working, not blocked.
+     !important so inline `cursor: not-allowed` styles cannot win. */
+  button:has(.bg-spinner),
+  [role="button"]:has(.bg-spinner) { cursor: progress !important; }
 
   /* Progress animations (used by src/components/ui/busy.tsx and inline spinners) */
   @keyframes spin { to { transform: rotate(360deg); } }
