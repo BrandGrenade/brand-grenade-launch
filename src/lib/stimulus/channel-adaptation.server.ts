@@ -15,6 +15,7 @@ import {
 } from "./channel-adaptation";
 import { checkAndStoreAdaptationFidelity } from "./adaptation-fidelity.server";
 import type { AdaptationFidelity } from "./adaptation-fidelity-types";
+import { attachFidelityToLatestVersion, recordPromptVersion } from "./prompt-versions.server";
 
 type SessionRow = {
   brand_name: string | null;
@@ -161,6 +162,15 @@ export async function runChannelAdaptation(args: {
         directionId = direction.id;
       }
 
+      await recordPromptVersion({
+        sessionId: args.sessionId,
+        runId: run.id,
+        directionId,
+        text,
+        origin: attempt > 1 ? "auto_retry" : "generated",
+        userId: args.userId,
+      });
+
       try {
         fidelity = await checkAndStoreAdaptationFidelity({
           sessionId: args.sessionId,
@@ -182,6 +192,8 @@ export async function runChannelAdaptation(args: {
           .eq("id", directionId);
       }
 
+      await attachFidelityToLatestVersion(directionId, fidelity);
+
       if (fidelity.verdict === "pass") break;
     }
 
@@ -202,37 +214,57 @@ export async function runChannelAdaptation(args: {
 }
 
 /** Saves a hand-edited adaptation and re-runs the fidelity check on it. */
+/**
+ * Saves a hand-edited content creation input prompt as a NEW version (never an
+ * overwrite), re-runs the fidelity check on it, and returns both.
+ */
 export async function saveEditedAdaptation(args: {
   sessionId: string;
+  runId: string;
   directionId: string;
   channelName: string;
   text: string;
-}): Promise<AdaptationFidelity> {
+  userId?: string | null;
+  origin?: "edited" | "reverted";
+}): Promise<{ fidelity: AdaptationFidelity; versionNo: number }> {
   const session = await loadLockedSession(args.sessionId);
+  const text = args.text.trim();
   await supabaseAdmin
     .from("stimulus_directions")
-    .update({ direction: args.text.trim() })
+    .update({ direction: text })
     .eq("id", args.directionId);
 
+  const versionNo = await recordPromptVersion({
+    sessionId: args.sessionId,
+    runId: args.runId,
+    directionId: args.directionId,
+    text,
+    origin: args.origin ?? "edited",
+    userId: args.userId ?? null,
+  });
+
+  let fidelity: AdaptationFidelity;
   try {
-    return await checkAndStoreAdaptationFidelity({
+    fidelity = await checkAndStoreAdaptationFidelity({
       sessionId: args.sessionId,
       directionId: args.directionId,
       channelName: args.channelName,
-      adaptation: args.text.trim(),
+      adaptation: text,
       lockedIdea: session.locked_big_idea!,
       lockedLine: session.locked_campaign_line ?? null,
       lockedLens: session.locked_big_idea_lens ?? null,
     });
   } catch (e) {
-    const f = unverified(
+    fidelity = unverified(
       `Fidelity check could not complete after the edit: ${e instanceof Error ? e.message : String(e)}.`,
       session.locked_campaign_line ?? null,
     );
     await supabaseAdmin
       .from("stimulus_directions")
-      .update({ line_check: f as never })
+      .update({ line_check: fidelity as never })
       .eq("id", args.directionId);
-    return f;
   }
+
+  await attachFidelityToLatestVersion(args.directionId, fidelity);
+  return { fidelity, versionNo };
 }

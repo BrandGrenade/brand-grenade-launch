@@ -116,6 +116,45 @@ export type Database = {
         }
         Relationships: []
       }
+      channel_prompt_versions: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          direction_id: string
+          fidelity: Json | null
+          id: string
+          origin: string
+          run_id: string
+          session_id: string
+          text: string
+          version_no: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          direction_id: string
+          fidelity?: Json | null
+          id?: string
+          origin?: string
+          run_id: string
+          session_id: string
+          text: string
+          version_no: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          direction_id?: string
+          fidelity?: Json | null
+          id?: string
+          origin?: string
+          run_id?: string
+          session_id?: string
+          text?: string
+          version_no?: number
+        }
+        Relationships: []
+      }
       demo_requests: {
         Row: {
           company: string

@@ -321,7 +321,7 @@ export function buildFullFinishedExport(x: FullExport): { filename: string; html
   return { filename: `${slug(x.brandName)}-creative-showcase.html`, html };
 }
 
-/* -------------------------------------------- Single channel brief (Step 3) */
+/* ------------------------- Content creation input prompt (Step 3, per channel) */
 
 export type ChannelBriefExport = {
   brandName: string;
@@ -330,6 +330,7 @@ export type ChannelBriefExport = {
   lockedIdea: string | null;
   lockedLens: string | null;
   adaptation: string;
+  versionNo?: number | null;
   fidelity?: { verdict: string; score: number; reasoning: string; lineVerbatim: boolean } | null;
   generatedAt?: string;
 };
@@ -338,10 +339,12 @@ export function buildChannelBriefExport(x: ChannelBriefExport): {
   filename: string;
   html: string;
 } {
-  const title = `${x.brandName} — ${x.channelName} channel brief`;
+  const title = `${x.brandName} — ${x.channelName} content creation input prompt`;
   const body = `
     <h1>${esc(title)}</h1>
-    <div class="meta">${esc(x.generatedAt ?? new Date().toISOString())}</div>
+    <div class="meta">${esc(x.generatedAt ?? new Date().toISOString())}${
+      x.versionNo ? ` · version ${x.versionNo}` : ""
+    }</div>
     <div class="card">
       <h3>Locked campaign line</h3>
       <p>${esc(x.lockedLine ?? "—")}</p>
@@ -349,7 +352,7 @@ export function buildChannelBriefExport(x: ChannelBriefExport): {
       <p>${esc(x.lockedIdea ?? "—")}</p>
     </div>
     <hr>
-    <h3>${esc(x.channelName)} adaptation</h3>
+    <h3>${esc(x.channelName)} — content creation input prompt</h3>
     <pre>${esc(x.adaptation)}</pre>
     ${
       x.fidelity
@@ -362,7 +365,42 @@ export function buildChannelBriefExport(x: ChannelBriefExport): {
     }
   `;
   return {
-    filename: `${slug(x.brandName)}-${slug(x.channelName)}-channel-brief.html`,
+    filename: `${slug(x.brandName)}-${slug(x.channelName)}-content-creation-input-prompt.html`,
+    html: doc(title, body),
+  };
+}
+
+/* ------------------------------ Offline creative brief (Step 3, per channel) */
+
+export type OfflineBriefExport = {
+  brandName: string;
+  channelName: string;
+  lockedLine: string | null;
+  lockedIdea: string | null;
+  lockedLens: string | null;
+  brief: string;
+  generatedAt?: string;
+};
+
+export function buildOfflineCreativeBriefExport(x: OfflineBriefExport): {
+  filename: string;
+  html: string;
+} {
+  const title = `${x.brandName} — ${x.channelName} offline creative brief`;
+  const body = `
+    <h1>${esc(title)}</h1>
+    <div class="meta">${esc(x.generatedAt ?? new Date().toISOString())} · for creative teams working away from the platform</div>
+    <div class="card">
+      <h3>Campaign line</h3>
+      <p>${esc(x.lockedLine ?? "—")}</p>
+      <h3>The locked idea${x.lockedLens ? ` — lens: ${esc(x.lockedLens)}` : ""}</h3>
+      <p>${esc(x.lockedIdea ?? "—")}</p>
+    </div>
+    <hr>
+    <pre>${esc(x.brief)}</pre>
+  `;
+  return {
+    filename: `${slug(x.brandName)}-${slug(x.channelName)}-offline-creative-brief.html`,
     html: doc(title, body),
   };
 }

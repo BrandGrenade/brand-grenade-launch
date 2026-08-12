@@ -12,12 +12,20 @@ import { listStimulusRuns, loadStimulusRun } from "@/lib/stimulus.functions";
 import {
   editChannelAdaptation,
   generateChannelAdaptation,
+  generateOfflineCreativeBrief,
   listAdaptationFidelity,
+  listOfflineCreativeBriefs,
+  listPromptVersions,
   recheckAdaptationFidelity,
+  revertPromptVersion,
 } from "@/lib/stimulus-channel.functions";
 import type { AdaptationFidelity } from "@/lib/stimulus/adaptation-fidelity-types";
 import { BIG_IDEA_CHANNEL_LABEL } from "@/lib/stimulus-bigidea.functions";
-import { buildChannelBriefExport, download } from "@/lib/stimulus-export";
+import {
+  buildChannelBriefExport,
+  buildOfflineCreativeBriefExport,
+  download,
+} from "@/lib/stimulus-export";
 import { StimulusOrchestration } from "@/components/StimulusOrchestration";
 import { ideaCardStyle, IDEA_COLUMN_WIDTH } from "@/components/stimulus/idea-layout";
 
@@ -47,6 +55,17 @@ type DirectionRow = {
 };
 
 type ChannelState = "not_started" | "running" | "complete" | "failed";
+
+type PromptVersionRow = {
+  id: string;
+  versionNo: number;
+  text: string;
+  origin: string;
+  fidelity: AdaptationFidelity | null;
+  createdAt: string;
+};
+
+type OfflineBriefRow = { runId: string; text: string; createdAt: string };
 
 const STATE_LABEL: Record<ChannelState, string> = {
   not_started: "Not started",
@@ -263,6 +282,10 @@ export function ChannelBriefs({
   const listFidelity = useServerFn(listAdaptationFidelity);
   const recheck = useServerFn(recheckAdaptationFidelity);
   const saveEdit = useServerFn(editChannelAdaptation);
+  const listVersions = useServerFn(listPromptVersions);
+  const revertVersion = useServerFn(revertPromptVersion);
+  const genOffline = useServerFn(generateOfflineCreativeBrief);
+  const listOffline = useServerFn(listOfflineCreativeBriefs);
 
   const [runs, setRuns] = useState<RunRow[]>([]);
   const [running, setRunning] = useState<Record<string, boolean>>({});
@@ -274,15 +297,22 @@ export function ChannelBriefs({
   const [recheckBusy, setRecheckBusy] = useState(false);
   const [editing, setEditing] = useState<{ id: string; text: string } | null>(null);
   const [editBusy, setEditBusy] = useState(false);
+  const [versions, setVersions] = useState<PromptVersionRow[]>([]);
+  const [showVersions, setShowVersions] = useState(false);
+  const [viewingVersion, setViewingVersion] = useState<PromptVersionRow | null>(null);
+  const [versionBusy, setVersionBusy] = useState(false);
+  const [offline, setOffline] = useState<Record<string, OfflineBriefRow>>({});
+  const [offlineRunning, setOfflineRunning] = useState<Record<string, boolean>>({});
+  const [offlineFailed, setOfflineFailed] = useState<Record<string, string>>({});
+  const [openOfflineChannel, setOpenOfflineChannel] = useState<string | null>(null);
 
   const anyRunning = Object.values(running).some(Boolean);
 
   const refreshRuns = useCallback(async () => {
     try {
       const r = await listRuns({ data: { sessionId } });
-      // Only channel-adaptation runs belong on this page. Legacy 37-lens sweep
-      // runs (run_mode "channel"/"big_idea") carry the whole rejected pool and
-      // must never surface here.
+      // Only content-creation-prompt runs belong in this list. Legacy 37-lens
+      // sweep runs and the offline creative briefs must never surface here.
       setRuns(
         (r.runs as RunRow[]).filter(
           (x) => x.run_mode === "channel_adaptation" && x.channel_name !== BIG_IDEA_CHANNEL_LABEL,
@@ -302,10 +332,32 @@ export function ChannelBriefs({
     }
   }, [listFidelity, sessionId]);
 
+  const refreshOffline = useCallback(async () => {
+    try {
+      const r = await listOffline({ data: { sessionId } });
+      setOffline(r.byChannel as Record<string, OfflineBriefRow>);
+    } catch {
+      /* non-fatal */
+    }
+  }, [listOffline, sessionId]);
+
+  const refreshVersions = useCallback(
+    async (runId: string, directionId: string) => {
+      try {
+        const r = await listVersions({ data: { runId, directionId } });
+        setVersions(r.versions as PromptVersionRow[]);
+      } catch {
+        setVersions([]);
+      }
+    },
+    [listVersions],
+  );
+
   useEffect(() => {
     void refreshRuns();
     void refreshFidelity();
-  }, [refreshRuns, refreshFidelity]);
+    void refreshOffline();
+  }, [refreshRuns, refreshFidelity, refreshOffline]);
 
   /** The newest run for a channel is the one that counts. */
   const latest = useMemo(() => {
@@ -329,16 +381,49 @@ export function ChannelBriefs({
       setOpenBusy(true);
       setOpenRunId(runId);
       setEditing(null);
+      setShowVersions(false);
+      setViewingVersion(null);
+      setVersions([]);
       try {
         const r = await load({ data: { runId } });
-        setOpenDirections(
-          (r.directions as DirectionRow[]).filter((d) => Boolean(d.direction?.trim() || d.error)),
+        const dirs = (r.directions as DirectionRow[]).filter((d) =>
+          Boolean(d.direction?.trim() || d.error),
         );
+        setOpenDirections(dirs);
+        if (dirs[0]) await refreshVersions(runId, dirs[0].id);
       } finally {
         setOpenBusy(false);
       }
     },
-    [load],
+    [load, refreshVersions],
+  );
+
+  /** One channel: generate the human-facing offline creative brief. */
+  const generateOffline = useCallback(
+    async (channel: string) => {
+      setOfflineRunning((p) => ({ ...p, [channel]: true }));
+      setOfflineFailed((p) => {
+        const next = { ...p };
+        delete next[channel];
+        return next;
+      });
+      try {
+        const r = await genOffline({ data: { sessionId, channelName: channel } });
+        setOffline((p) => ({
+          ...p,
+          [channel]: { runId: r.runId, text: r.text, createdAt: new Date().toISOString() },
+        }));
+        setOpenOfflineChannel(channel);
+      } catch (e) {
+        setOfflineFailed((p) => ({
+          ...p,
+          [channel]: e instanceof Error ? e.message : "Offline creative brief failed",
+        }));
+      } finally {
+        setOfflineRunning((p) => ({ ...p, [channel]: false }));
+      }
+    },
+    [genOffline, sessionId],
   );
 
   /** One channel: generate, auto-check and auto-retry all happen server-side. */
@@ -395,8 +480,25 @@ export function ChannelBriefs({
       setFidelityByRun((p) => ({ ...p, [runId]: r.fidelity as AdaptationFidelity }));
       setOpenDirections((ds) => ds.map((d) => (d.id === directionId ? { ...d, direction: text } : d)));
       setEditing(null);
+      setViewingVersion(null);
+      await refreshVersions(runId, directionId);
     } finally {
       setEditBusy(false);
+    }
+  };
+
+  const revertTo = async (runId: string, directionId: string, version: PromptVersionRow) => {
+    setVersionBusy(true);
+    try {
+      const r = await revertVersion({ data: { runId, directionId, versionId: version.id } });
+      setFidelityByRun((p) => ({ ...p, [runId]: r.fidelity as AdaptationFidelity }));
+      setOpenDirections((ds) =>
+        ds.map((d) => (d.id === directionId ? { ...d, direction: r.text } : d)),
+      );
+      setViewingVersion(null);
+      await refreshVersions(runId, directionId);
+    } finally {
+      setVersionBusy(false);
     }
   };
 
@@ -408,10 +510,24 @@ export function ChannelBriefs({
       lockedIdea,
       lockedLens,
       adaptation,
+      versionNo: versions[0]?.versionNo ?? null,
       fidelity: fidelityByRun[runId] ?? null,
     });
     download(filename, html);
   };
+
+  const downloadOffline = (channel: string, text: string) => {
+    const { filename, html } = buildOfflineCreativeBriefExport({
+      brandName: brandName || "Brand",
+      channelName: channel,
+      lockedLine,
+      lockedIdea,
+      lockedLens,
+      brief: text,
+    });
+    download(filename, html);
+  };
+
 
   const locked = Boolean(lockedIdea);
   const openChannel = [...latest.entries()].find(([, r]) => r.id === openRunId)?.[0] ?? "";
@@ -425,7 +541,7 @@ export function ChannelBriefs({
           className="text-mono"
           style={{ color: AMBER, fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase" }}
         >
-          Step 3 · Winning idea, channel briefs, export
+          Step 3 · Winning idea, content creation input prompts, offline creative briefs, export
         </div>
 
         {/* THE LOCKED WINNER */}
@@ -460,7 +576,7 @@ export function ChannelBriefs({
             </>
           ) : (
             <div className="text-body-sm" style={{ color: MUTED, marginTop: 10, lineHeight: 1.7 }}>
-              Channel briefs must be generated from a locked idea.{" "}
+              Both artefacts must be generated from a locked idea.{" "}
               <Link to="/creative/$sessionId/shortlist" params={{ sessionId }} style={{ color: AMBER }}>
                 Go to Step 2 · Shortlist
               </Link>{" "}
@@ -490,7 +606,7 @@ export function ChannelBriefs({
               minWidth: 240,
             }}
           >
-            Channel briefs · {doneCount}/{channels.length} complete
+            Content creation input prompts · {doneCount}/{channels.length} complete
             {runningCount > 0 ? ` · ${runningCount} running` : ""}
           </div>
           <Btn
@@ -498,20 +614,25 @@ export function ChannelBriefs({
             disabled={!locked || anyRunning || channels.length === 0}
             onClick={() => void generateAll()}
           >
-            {anyRunning ? `Generating ${runningCount} channels…` : "Generate all channel briefs"}
+            {anyRunning
+              ? `Generating ${runningCount} channels…`
+              : "Generate all content creation input prompts"}
           </Btn>
         </div>
         <p className="text-body-sm" style={{ color: MUTED, marginTop: 8, lineHeight: 1.7 }}>
-          Every channel takes the single locked winning idea and line above as a hard constraint and
-          adapts them into that channel's format against its own Stage 21 brief. Each brief is
-          fidelity-checked the moment it finishes, and automatically regenerated once if it drifts —
-          a channel is only shown as failed when it fails the check twice.
+          Every channel produces two artefacts from the one locked idea and line. The{" "}
+          <strong style={{ color: PAPER }}>content creation input prompt</strong> is tool-ready,
+          script-level input for a content-generation system; the{" "}
+          <strong style={{ color: PAPER }}>offline creative brief</strong> is direction and rationale
+          for a human creative team working away from the platform. Prompts are fidelity-checked the
+          moment they finish and automatically regenerated once if they drift — a channel is only
+          shown as failed when it fails the check twice.
         </p>
 
         {channels.length === 0 && (
           <div className="text-body-sm" style={{ color: RED, marginTop: 14, lineHeight: 1.7 }}>
-            No channel briefs exist for this session yet. Run Stage 21 in the Strategy Pipeline to
-            create them, then come back here.
+            No channels exist for this session yet. Run Stage 21 in the Strategy Pipeline to create
+            them, then come back here.
           </div>
         )}
 
@@ -520,6 +641,7 @@ export function ChannelBriefs({
             const state = stateFor(c);
             const run = latest.get(c);
             const f = run ? fidelityByRun[run.id] : undefined;
+            const ob = offline[c];
             return (
               <div
                 key={c}
@@ -537,7 +659,7 @@ export function ChannelBriefs({
                 </div>
                 {run && state === "complete" && f && f.verdict !== "pass" && (
                   <div className="text-body-sm" style={{ color: RED, marginTop: 12, lineHeight: 1.6 }}>
-                    This adaptation {f.verdict === "break" ? "broke away from" : "drifted from"} the
+                    This prompt {f.verdict === "break" ? "broke away from" : "drifted from"} the
                     locked idea, and the automatic retry did not clear it. Open it below for the
                     reasoning, then regenerate or edit.
                   </div>
@@ -545,28 +667,41 @@ export function ChannelBriefs({
 
                 {state === "running" && (
                   <div className="text-body-sm" style={{ color: AMBER, marginTop: 12, lineHeight: 1.6 }}>
-                    Adapting the locked idea into {c}, checking fidelity, retrying if needed…
+                    Turning the locked idea into {c} generation input, checking fidelity, retrying if
+                    needed…
                   </div>
                 )}
 
                 {state === "failed" && (
                   <div className="text-body-sm" style={{ color: RED, marginTop: 12, lineHeight: 1.6 }}>
-                    {failed[c] || run?.error || "This channel brief did not finish."} Regenerate to
-                    run it again.
+                    {failed[c] || run?.error || "This content creation input prompt did not finish."}{" "}
+                    Regenerate to run it again.
                   </div>
                 )}
 
-                <div style={{ marginTop: 16, display: "flex", gap: 10, flexWrap: "wrap" }}>
+                <div
+                  className="text-mono"
+                  style={{
+                    color: MUTED,
+                    fontSize: 10,
+                    letterSpacing: "0.12em",
+                    textTransform: "uppercase",
+                    marginTop: 16,
+                  }}
+                >
+                  Artefact 1 · Content creation input prompt
+                </div>
+                <div style={{ marginTop: 10, display: "flex", gap: 10, flexWrap: "wrap" }}>
                   <Btn
                     active
                     disabled={!locked || running[c]}
                     onClick={() => void generate(c, { open: true })}
                   >
                     {state === "not_started"
-                      ? `Generate ${c} brief`
+                      ? `Generate ${c} prompt`
                       : state === "running"
                         ? `Generating ${c}…`
-                        : `Regenerate ${c} brief`}
+                        : `Regenerate ${c} prompt`}
                   </Btn>
                   {run && state !== "not_started" && (
                     <Btn
@@ -574,33 +709,89 @@ export function ChannelBriefs({
                       active={openRunId === run.id}
                       disabled={openBusy}
                     >
-                      {openRunId === run.id ? `Showing ${c} brief below` : `Open ${c} brief`}
+                      {openRunId === run.id ? `Showing ${c} prompt below` : `Open ${c} prompt`}
                     </Btn>
                   )}
                 </div>
+
+                <div
+                  className="text-mono"
+                  style={{
+                    color: MUTED,
+                    fontSize: 10,
+                    letterSpacing: "0.12em",
+                    textTransform: "uppercase",
+                    marginTop: 18,
+                  }}
+                >
+                  Artefact 2 · Offline creative brief
+                  {ob ? " · generated" : offlineRunning[c] ? " · writing…" : " · not generated"}
+                </div>
+                {offlineFailed[c] && (
+                  <div className="text-body-sm" style={{ color: RED, marginTop: 10, lineHeight: 1.6 }}>
+                    {offlineFailed[c]}
+                  </div>
+                )}
+                <div style={{ marginTop: 10, display: "flex", gap: 10, flexWrap: "wrap" }}>
+                  <Btn disabled={!locked || offlineRunning[c]} onClick={() => void generateOffline(c)}>
+                    {offlineRunning[c]
+                      ? `Writing ${c} offline brief…`
+                      : ob
+                        ? `Regenerate ${c} offline brief`
+                        : `Generate ${c} offline brief`}
+                  </Btn>
+                  {ob && (
+                    <>
+                      <Btn
+                        active={openOfflineChannel === c}
+                        onClick={() => setOpenOfflineChannel(openOfflineChannel === c ? null : c)}
+                      >
+                        {openOfflineChannel === c ? "Hide offline brief" : "Read offline brief"}
+                      </Btn>
+                      <Btn onClick={() => downloadOffline(c, ob.text)}>Download offline brief</Btn>
+                    </>
+                  )}
+                </div>
+                {ob && openOfflineChannel === c && (
+                  <div
+                    style={{
+                      marginTop: 14,
+                      padding: 18,
+                      border: "1px solid #2A2724",
+                      borderRadius: 10,
+                      color: PAPER,
+                      whiteSpace: "pre-wrap",
+                      lineHeight: 1.8,
+                      fontSize: 15,
+                    }}
+                  >
+                    {ob.text}
+                  </div>
+                )}
               </div>
             );
           })}
         </div>
       </div>
 
-      {/* THE OPENED BRIEF */}
+      {/* THE OPENED CONTENT CREATION INPUT PROMPT */}
       {openRunId && (
         <div style={{ maxWidth: IDEA_COLUMN_WIDTH, margin: "42px auto 0" }}>
           <div
             className="text-mono"
             style={{ color: AMBER, fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase" }}
           >
-            Open channel brief · {openChannel || "run"}
+            Content creation input prompt · {openChannel || "run"}
+            {versions[0] ? ` · version ${versions[0].versionNo} (active)` : ""}
           </div>
           {openBusy && (
             <div className="text-body-sm" style={{ color: MUTED, marginTop: 10 }}>
-              Loading the channel brief…
+              Loading the content creation input prompt…
             </div>
           )}
           {!openBusy && openDirections.length === 0 && (
             <div className="text-body-sm" style={{ color: RED, marginTop: 14, lineHeight: 1.7 }}>
-              This brief has no stored content. Re-generate the channel above.
+              This prompt has no stored content. Re-generate the channel above.
             </div>
           )}
           <div style={{ display: "grid", gap: 20, marginTop: 18 }}>
@@ -610,7 +801,7 @@ export function ChannelBriefs({
                   className="text-mono"
                   style={{ color: AMBER, fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase" }}
                 >
-                  {d.lens_name || "Channel adaptation"} — the locked idea in this channel
+                  Tool-ready generation input — the locked idea in this channel
                 </div>
 
                 {editing?.id === d.id ? (
@@ -639,7 +830,9 @@ export function ChannelBriefs({
                         disabled={editBusy || !editing.text.trim()}
                         onClick={() => void saveEdited(openRunId, d.id, editing.text)}
                       >
-                        {editBusy ? "Saving and re-checking…" : "Save edit & re-check fidelity"}
+                        {editBusy
+                          ? "Saving new version and re-checking…"
+                          : "Save as new version & re-check fidelity"}
                       </Btn>
                       <Btn onClick={() => setEditing(null)} disabled={editBusy}>
                         Cancel
@@ -661,22 +854,111 @@ export function ChannelBriefs({
                     </div>
                     <div style={{ marginTop: 14, display: "flex", gap: 10, flexWrap: "wrap" }}>
                       <Btn onClick={() => setEditing({ id: d.id, text: d.direction ?? "" })}>
-                        Edit brief
+                        Edit prompt
                       </Btn>
                       <Btn
                         disabled={!openChannel || Boolean(running[openChannel])}
                         onClick={() => void generate(openChannel, { open: true })}
                       >
-                        {openChannel && running[openChannel] ? "Regenerating…" : "Regenerate brief"}
+                        {openChannel && running[openChannel] ? "Regenerating…" : "Regenerate prompt"}
                       </Btn>
                       <Btn
                         disabled={!d.direction?.trim()}
                         onClick={() => downloadBrief(openChannel, d.direction ?? "", openRunId)}
                       >
-                        Download this brief
+                        Download this prompt
+                      </Btn>
+                      <Btn active={showVersions} onClick={() => setShowVersions(!showVersions)}>
+                        {showVersions
+                          ? "Hide version history"
+                          : `Version history (${versions.length})`}
                       </Btn>
                     </div>
                   </>
+                )}
+
+                {showVersions && !editing && (
+                  <div
+                    style={{
+                      marginTop: 18,
+                      border: "1px solid #2A2724",
+                      borderRadius: 10,
+                      padding: 18,
+                      backgroundColor: "#0A0908",
+                    }}
+                  >
+                    <div
+                      className="text-mono"
+                      style={{ color: AMBER, fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase" }}
+                    >
+                      Version history — every edit is a new version, nothing is overwritten
+                    </div>
+                    {versions.length === 0 && (
+                      <div className="text-body-sm" style={{ color: MUTED, marginTop: 12 }}>
+                        No versions recorded yet for this prompt. Regenerate or edit it to start the
+                        history.
+                      </div>
+                    )}
+                    <div style={{ display: "grid", gap: 10, marginTop: 14 }}>
+                      {versions.map((v, i) => (
+                        <div
+                          key={v.id}
+                          style={{
+                            display: "flex",
+                            gap: 12,
+                            alignItems: "center",
+                            flexWrap: "wrap",
+                            borderTop: i === 0 ? "none" : "1px solid #1E1B19",
+                            paddingTop: i === 0 ? 0 : 10,
+                          }}
+                        >
+                          <div
+                            className="text-mono"
+                            style={{ color: i === 0 ? GREEN : PAPER, fontSize: 11, letterSpacing: "0.1em" }}
+                          >
+                            v{v.versionNo} · {v.origin.replace("_", " ")}
+                            {i === 0 ? " · ACTIVE" : ""}
+                          </div>
+                          <div className="text-mono" style={{ color: MUTED, fontSize: 11, flex: 1 }}>
+                            {new Date(v.createdAt).toLocaleString()}
+                            {v.fidelity ? ` · ${VERDICT_LABEL[v.fidelity.verdict] ?? v.fidelity.verdict} ${v.fidelity.score}/10` : ""}
+                          </div>
+                          <Btn
+                            onClick={() =>
+                              setViewingVersion(viewingVersion?.id === v.id ? null : v)
+                            }
+                            active={viewingVersion?.id === v.id}
+                          >
+                            {viewingVersion?.id === v.id ? "Hide" : "View"}
+                          </Btn>
+                          {i !== 0 && (
+                            <Btn
+                              disabled={versionBusy}
+                              onClick={() => void revertTo(openRunId, d.id, v)}
+                            >
+                              {versionBusy ? "Reverting…" : "Revert to this"}
+                            </Btn>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                    {viewingVersion && (
+                      <div
+                        style={{
+                          marginTop: 14,
+                          padding: 16,
+                          border: "1px solid #2A2724",
+                          borderRadius: 8,
+                          color: PAPER,
+                          whiteSpace: "pre-wrap",
+                          lineHeight: 1.7,
+                          fontSize: 14,
+                        }}
+                      >
+                        {viewingVersion.text}
+                      </div>
+                    )}
+                  </div>
                 )}
 
                 <AdaptationFidelityPanel

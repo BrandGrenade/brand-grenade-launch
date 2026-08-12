@@ -29,7 +29,7 @@ export const generateChannelAdaptation = createServerFn({ method: "POST" })
     });
   });
 
-/** Saves a hand-edited channel brief and re-checks its fidelity. */
+/** Saves a hand-edited content creation input prompt as a new version. */
 export const editChannelAdaptation = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i) =>
@@ -51,13 +51,121 @@ export const editChannelAdaptation = createServerFn({ method: "POST" })
     await assertSessionAccess(run.session_id, context.userId);
 
     const { saveEditedAdaptation } = await import("./stimulus/channel-adaptation.server");
-    const fidelity = await saveEditedAdaptation({
+    return saveEditedAdaptation({
       sessionId: run.session_id,
+      runId: run.id,
       directionId: data.directionId,
       channelName: run.channel_name,
       text: data.text,
+      userId: context.userId,
     });
-    return { fidelity };
+  });
+
+/** Full version history for one content creation input prompt. */
+export const listPromptVersions = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) =>
+    z.object({ runId: z.string().uuid(), directionId: z.string().uuid() }).parse(i),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: run } = await supabaseAdmin
+      .from("stimulus_runs")
+      .select("session_id")
+      .eq("id", data.runId)
+      .single();
+    if (!run) throw new Error("Run not found");
+    await assertSessionAccess(run.session_id, context.userId);
+    const { listPromptVersionsFor } = await import("./stimulus/prompt-versions.server");
+    return { versions: await listPromptVersionsFor(data.directionId) };
+  });
+
+/**
+ * Reverts to an earlier version by writing its text forward as a new version —
+ * history is never destroyed, and the restored text is fidelity-checked again.
+ */
+export const revertPromptVersion = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) =>
+    z
+      .object({
+        runId: z.string().uuid(),
+        directionId: z.string().uuid(),
+        versionId: z.string().uuid(),
+      })
+      .parse(i),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: run } = await supabaseAdmin
+      .from("stimulus_runs")
+      .select("id, session_id, channel_name")
+      .eq("id", data.runId)
+      .single();
+    if (!run) throw new Error("Run not found");
+    await assertSessionAccess(run.session_id, context.userId);
+
+    const { data: version } = await supabaseAdmin
+      .from("channel_prompt_versions")
+      .select("text")
+      .eq("id", data.versionId)
+      .eq("direction_id", data.directionId)
+      .single();
+    if (!version?.text) throw new Error("That version could not be found.");
+
+    const { saveEditedAdaptation } = await import("./stimulus/channel-adaptation.server");
+    const r = await saveEditedAdaptation({
+      sessionId: run.session_id,
+      runId: run.id,
+      directionId: data.directionId,
+      channelName: run.channel_name,
+      text: version.text,
+      userId: context.userId,
+      origin: "reverted",
+    });
+    return { ...r, text: version.text };
+  });
+
+/** Generates the human-facing Offline Creative Brief for one channel. */
+export const generateOfflineCreativeBrief = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => Input.parse(i))
+  .handler(async ({ data, context }) => {
+    await assertSessionAccess(data.sessionId, context.userId);
+    const { runOfflineCreativeBrief } = await import("./stimulus/offline-brief.server");
+    return runOfflineCreativeBrief({
+      sessionId: data.sessionId,
+      userId: context.userId,
+      channelName: data.channelName,
+    });
+  });
+
+/** The latest Offline Creative Brief per channel for a session. */
+export const listOfflineCreativeBriefs = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => z.object({ sessionId: z.string().uuid() }).parse(i))
+  .handler(async ({ data, context }) => {
+    await assertSessionAccess(data.sessionId, context.userId);
+    const { data: runs } = await supabaseAdmin
+      .from("stimulus_runs")
+      .select("id, channel_name, status, error, created_at")
+      .eq("session_id", data.sessionId)
+      .eq("run_mode", "offline_creative_brief")
+      .order("created_at", { ascending: false });
+    const ids = (runs ?? []).map((r) => r.id);
+    const byChannel: Record<string, { runId: string; text: string; createdAt: string }> = {};
+    if (ids.length > 0) {
+      const { data: dirs } = await supabaseAdmin
+        .from("stimulus_directions")
+        .select("run_id, direction")
+        .in("run_id", ids);
+      const textByRun = new Map((dirs ?? []).map((d) => [d.run_id, d.direction ?? ""]));
+      for (const r of runs ?? []) {
+        if (byChannel[r.channel_name]) continue; // newest wins
+        const text = textByRun.get(r.id) ?? "";
+        if (!text.trim()) continue;
+        byChannel[r.channel_name] = { runId: r.id, text, createdAt: r.created_at };
+      }
+    }
+    return { byChannel };
   });
 
 
