@@ -24,7 +24,6 @@ import { buildFullFinishedExport, download } from "@/lib/stimulus-export";
 import { SIGNATURE_CATEGORIES } from "@/lib/stimulus/orchestration-prompts";
 import { StimulusMandate } from "@/components/stimulus/StimulusMandate";
 import { Spinner, ProgressBar } from "@/components/ui/busy";
-import { Spinner } from "@/components/ui/busy";
 
 
 const AMBER = "#F2665F";
