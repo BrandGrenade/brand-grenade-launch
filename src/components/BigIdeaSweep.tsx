@@ -54,10 +54,13 @@ import { ideaCardStyle, ideaListStyle, IDEA_COLUMN_WIDTH } from "@/components/st
 import type { LineCheck } from "@/lib/stimulus/line-check-types";
 import type { DirectionRatings } from "@/lib/stimulus/rating-prompts";
 
-const AMBER = "#C81E1E";
-const MUTED = "#8B8680";
-const RED = "#E5484D";
-const GREEN = "#C81E1E";
+// Readable palette on the near-black room background (#0A0908).
+// Red is an accent for labels only; all body copy and numerals are paper.
+const AMBER = "#F2665F";
+const MUTED = "#A8A29A";
+const RED = "#FF8F87";
+const GREEN = "#5FD08A";
+const PAPER = "#EDE8E0";
 
 /**
  * Convergence record. `inSweep` is written as each lens generates (compared
