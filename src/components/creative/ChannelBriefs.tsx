@@ -103,7 +103,10 @@ function StatusBadge({ state, progress }: { state: ChannelState; progress?: stri
         textTransform: "uppercase",
         whiteSpace: "nowrap",
       }}
+      className="text-mono"
+      aria-busy={state === "running"}
     >
+      {state === "running" ? <Spinner size={11} /> : null}
       {STATE_LABEL[state]}
       {progress ? ` · ${progress}` : ""}
     </span>
