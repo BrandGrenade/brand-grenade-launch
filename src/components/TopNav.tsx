@@ -225,6 +225,16 @@ export function TopNav({ session }: { session?: SessionContext }) {
                     navigate({ to: "/settings" });
                   }}
                 />
+                {isAdmin && demoModeOn && (
+                  <MenuItem
+                    label="Walkthrough"
+                    onClick={() => {
+                      setOpen(false);
+                      navigate({ to: "/walkthrough" });
+                    }}
+                  />
+                )}
+
                 {isAdmin && (
                   <MenuItem
                     label="Repositories Admin"
