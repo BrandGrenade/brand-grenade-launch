@@ -28,7 +28,6 @@ import {
   buildOfflineCreativeBriefExport,
   download,
 } from "@/lib/stimulus-export";
-import { StimulusOrchestration } from "@/components/StimulusOrchestration";
 import { ideaCardStyle, IDEA_COLUMN_WIDTH } from "@/components/stimulus/idea-layout";
 import { Spinner, ProgressBar } from "@/components/ui/busy";
 
@@ -1117,10 +1116,6 @@ export function ChannelBriefs({
         </div>
       )}
 
-      {/* ORCHESTRATION + FULL FINISHED EXPORT */}
-      <div style={{ maxWidth: IDEA_COLUMN_WIDTH, margin: "48px auto 0" }}>
-        <StimulusOrchestration sessionId={sessionId} brandName={brandName} />
-      </div>
     </div>
   );
 }

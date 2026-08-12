@@ -1,11 +1,11 @@
 // CREATIVE STIMULUS ENGINE — PHASE 3 UI. The Orchestration Engine.
 // Session-level: runs across every Gate One-confirmed channel at once.
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import {
   startOrchestration,
-  runOrchestrationStep,
+  driveOrchestration,
   loadOrchestrationState,
   listOrchestrations,
   setCrossRefDecision,
@@ -197,9 +197,17 @@ function BrandAssetPanel({ brandName }: { brandName: string }) {
   );
 }
 
-export function StimulusOrchestration({ sessionId, brandName }: { sessionId: string; brandName: string }) {
+export function StimulusOrchestration({
+  sessionId,
+  brandName,
+  defaultOpen = false,
+}: {
+  sessionId: string;
+  brandName: string;
+  defaultOpen?: boolean;
+}) {
   const start = useServerFn(startOrchestration);
-  const step = useServerFn(runOrchestrationStep);
+  const drive_ = useServerFn(driveOrchestration);
   const load = useServerFn(loadOrchestrationState);
   const list = useServerFn(listOrchestrations);
   const decide = useServerFn(setCrossRefDecision);
@@ -210,7 +218,7 @@ export function StimulusOrchestration({ sessionId, brandName }: { sessionId: str
   const confirmTwo = useServerFn(confirmGateTwo);
   const fullExport = useServerFn(getFullFinishedExport);
 
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(defaultOpen);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [note, setNote] = useState<string>("");
@@ -241,6 +249,17 @@ export function StimulusOrchestration({ sessionId, brandName }: { sessionId: str
     if (open) void refreshList();
   }, [open, refreshList]);
 
+  // Auto re-attach: landing on Step 4 while a run is unfinished picks it back
+  // up (and restarts a dead driver) without the human having to find it.
+  const attached = useRef(false);
+  useEffect(() => {
+    if (!open || attached.current || orchId || runs.length === 0) return;
+    const live = runs.find((r) => r.status !== "complete");
+    if (!live) return;
+    attached.current = true;
+    void openRunRef.current?.(live.id as string);
+  }, [open, orchId, runs]);
+
   const refreshState = useCallback(
     async (id: string) => {
       const s = await load({ data: { orchestrationId: id } });
@@ -249,28 +268,44 @@ export function StimulusOrchestration({ sessionId, brandName }: { sessionId: str
     [load],
   );
 
+  /**
+   * Hand the run to the server and watch the row. The work itself is detached
+   * from this browser via ctx.waitUntil() — closing the tab, switching away or
+   * losing connection does not pause or kill it. This loop is pure observation.
+   */
   const drive = useCallback(
     async (id: string) => {
       setBusy(true);
       setErr(null);
       try {
-        let done = false;
-        let guard = 0;
-        while (!done && guard < 60) {
-          guard += 1;
-          const r = await step({ data: { orchestrationId: id } });
-          done = r.done;
-          setNote(`${r.phase} — ${r.note}`);
-          await refreshState(id);
-        }
+        await drive_({ data: { orchestrationId: id } });
       } catch (e) {
-        setErr(e instanceof Error ? e.message : "Orchestration failed");
-        await refreshState(id);
-      } finally {
+        setErr(e instanceof Error ? e.message : "Could not start the background run");
         setBusy(false);
+        return;
       }
+      let guard = 0;
+      while (guard < 900) {
+        guard += 1;
+        await new Promise((r) => setTimeout(r, 4000));
+        let s: { orchestration: Row } | null = null;
+        try {
+          s = (await load({ data: { orchestrationId: id } })) as any;
+        } catch {
+          continue; // transient — the server keeps working regardless
+        }
+        setState(s as any);
+        const o = s!.orchestration;
+        setNote(`${o.status} — ${o.phase_note ?? ""}`);
+        if (o.driver_status === "failed") {
+          setErr((o.error as string) ?? "Orchestration failed");
+          break;
+        }
+        if (o.status === "complete" || o.driver_status === "idle") break;
+      }
+      setBusy(false);
     },
-    [step, refreshState],
+    [drive_, load],
   );
 
   const handleStart = async () => {
@@ -287,10 +322,19 @@ export function StimulusOrchestration({ sessionId, brandName }: { sessionId: str
     }
   };
 
+  const openRunRef = useRef<((id: string) => Promise<void>) | null>(null);
+
   const openRun = async (id: string) => {
     setOrchId(id);
-    await refreshState(id);
+    const s = (await load({ data: { orchestrationId: id } })) as any;
+    setState(s);
+    const o = s?.orchestration;
+    // Re-attach to a run that is still going (or restart a dead driver). The
+    // server decides — this only asks and then watches.
+    if (o && o.status !== "complete") void drive(id);
   };
+
+  openRunRef.current = openRun;
 
   const orch = state?.orchestration;
   const activePrompts = useMemo(

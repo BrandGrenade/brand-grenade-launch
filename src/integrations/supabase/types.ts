@@ -1530,6 +1530,9 @@ export type Database = {
           cd_status: string
           created_at: string
           created_by: string | null
+          driver_heartbeat_at: string | null
+          driver_started_at: string | null
+          driver_status: string
           error: string | null
           gate_two_confirmed: boolean
           gate_two_confirmed_at: string | null
@@ -1554,6 +1557,9 @@ export type Database = {
           cd_status?: string
           created_at?: string
           created_by?: string | null
+          driver_heartbeat_at?: string | null
+          driver_started_at?: string | null
+          driver_status?: string
           error?: string | null
           gate_two_confirmed?: boolean
           gate_two_confirmed_at?: string | null
@@ -1578,6 +1584,9 @@ export type Database = {
           cd_status?: string
           created_at?: string
           created_by?: string | null
+          driver_heartbeat_at?: string | null
+          driver_started_at?: string | null
+          driver_status?: string
           error?: string | null
           gate_two_confirmed?: boolean
           gate_two_confirmed_at?: string | null
