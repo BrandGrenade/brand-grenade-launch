@@ -466,34 +466,47 @@ function IdeaCard({
         }}
       />
 
-      <div style={{ marginTop: 12, display: "flex", gap: 8, flexWrap: "wrap" }}>
-        {(["keep", "keep_in_play", "kill"] as const).map((t) => (
-          <Btn
-            key={t}
-            active={d.status === t}
-            disabled={busy}
-            onClick={async () => {
-              setBusy(true);
-              try {
-                await onTriage(t, instinct);
-              } finally {
-                setBusy(false);
-              }
-            }}
-          >
-            {t.replace("_", " ")}
-          </Btn>
-        ))}
+      <div style={{ marginTop: 12, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+        {mode === "sweep" &&
+          (
+            [
+              { v: "keep", label: "Keep this idea" },
+              { v: "keep_in_play", label: "Keep in play" },
+              { v: "kill", label: "Kill this idea" },
+            ] as const
+          ).map((t) => (
+            <Btn
+              key={t.v}
+              active={d.status === t.v}
+              disabled={busy}
+              onClick={async () => {
+                setBusy(true);
+                try {
+                  await onTriage(t.v, instinct);
+                } finally {
+                  setBusy(false);
+                }
+              }}
+            >
+              {t.label}
+            </Btn>
+          ))}
         <Btn onClick={() => setShowRevise((v) => !v)} disabled={busy}>
-          Revise
+          Rewrite this idea
         </Btn>
-        <Btn onClick={onPickIdea} active={isWinner} disabled={locked}>
-          Select as winning idea
-        </Btn>
-        <Btn onClick={onPickLine} active={isLineWinner} disabled={locked || !d.campaign_line}>
-          Use this line
-        </Btn>
+        {mode === "sweep" && <RawIdeaExportButton directionId={d.id} />}
+        {mode === "shortlist" && (
+          <>
+            <Btn onClick={onPickIdea} active={isWinner} disabled={locked}>
+              {isWinner ? "Chosen as winning idea" : "Choose as winning idea"}
+            </Btn>
+            <Btn onClick={onPickLine} active={isLineWinner} disabled={locked || !d.campaign_line}>
+              {isLineWinner ? "Chosen as winning line" : "Choose this master line"}
+            </Btn>
+          </>
+        )}
       </div>
+
 
       {showRevise && (
         <div style={{ marginTop: 12 }}>
