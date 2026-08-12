@@ -1462,7 +1462,11 @@ function Phase2Deliverables({ session }: { session: SessionRow }) {
             {channelKeys.map((ch) => {
               const body = channels[ch] ?? "";
               const m = body.match(/CHANNEL\s+ROLE\s*[:\-]?\s*([^\n]+)/i);
-              const role = m ? m[1].trim() : "Channel Brief";
+              // Card subtitles are a one-line label, never the full brief body.
+              const raw = m ? m[1].trim() : "Channel Brief";
+              const firstSentence = raw.split(/(?<=\.)\s/)[0] ?? raw;
+              const role =
+                firstSentence.length > 110 ? firstSentence.slice(0, 107).trimEnd() + "…" : firstSentence;
               return (
                 <Card key={ch} title={ch} subtitle={role} busyKey={`ch-${ch}`}
                   onClick={() => download("channel_brief", `ch-${ch}`, ch)} />
