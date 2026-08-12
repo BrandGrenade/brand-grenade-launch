@@ -7,14 +7,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Link } from "@tanstack/react-router";
-import {
-  listStimulusRuns,
-  startStimulusRun,
-  generateStimulusBatch,
-  loadStimulusRun,
-} from "@/lib/stimulus.functions";
+import { listStimulusRuns, loadStimulusRun } from "@/lib/stimulus.functions";
+import { generateChannelAdaptation } from "@/lib/stimulus-channel.functions";
 import { BIG_IDEA_CHANNEL_LABEL } from "@/lib/stimulus-bigidea.functions";
-import { LENS_COUNT, getLens } from "@/lib/stimulus/lenses";
+import { getLens } from "@/lib/stimulus/lenses";
 import { RawIdeaExportButton } from "@/components/RawIdeaExportButton";
 import { StimulusOrchestration } from "@/components/StimulusOrchestration";
 import { ideaCardStyle, IDEA_COLUMN_WIDTH } from "@/components/stimulus/idea-layout";
@@ -136,12 +132,10 @@ export function ChannelBriefs({
   lockedLens: string | null;
 }) {
   const listRuns = useServerFn(listStimulusRuns);
-  const start = useServerFn(startStimulusRun);
-  const batch = useServerFn(generateStimulusBatch);
+  const adapt = useServerFn(generateChannelAdaptation);
   const load = useServerFn(loadStimulusRun);
 
   const [runs, setRuns] = useState<RunRow[]>([]);
-  const [progress, setProgress] = useState<Record<string, number>>({});
   const [running, setRunning] = useState<string | null>(null);
   const [failed, setFailed] = useState<Record<string, string>>({});
   const [openRunId, setOpenRunId] = useState<string | null>(null);
@@ -181,15 +175,8 @@ export function ChannelBriefs({
   const generate = async (channel: string) => {
     setRunning(channel);
     setFailed((p) => ({ ...p, [channel]: "" }));
-    setProgress((p) => ({ ...p, [channel]: 0 }));
     try {
-      const { runId } = await start({ data: { sessionId, channelName: channel } });
-      let done = false;
-      while (!done) {
-        const r = await batch({ data: { runId, batchSize: 4 } });
-        done = r.done;
-        setProgress((p) => ({ ...p, [channel]: LENS_COUNT - r.remaining }));
-      }
+      const { runId } = await adapt({ data: { sessionId, channelName: channel } });
       await refreshRuns();
       setFailed((p) => {
         const next = { ...p };
@@ -286,8 +273,8 @@ export function ChannelBriefs({
           Channel briefs · {channels.length} channel{channels.length === 1 ? "" : "s"}
         </div>
         <p className="text-body-sm" style={{ color: MUTED, marginTop: 8, lineHeight: 1.7 }}>
-          Each channel is swept through all {LENS_COUNT} lenses against its own Stage 21 brief and the
-          locked idea. Generate them one at a time — the status on each row tells you exactly where it is.
+          Each channel takes the single locked winning idea and line above and adapts them into that
+          channel's format against its own Stage 21 brief. No new ideas are generated here.
         </p>
 
         {channels.length === 0 && (
@@ -301,7 +288,6 @@ export function ChannelBriefs({
           {channels.map((c) => {
             const state = stateFor(c);
             const run = latest.get(c);
-            const done = progress[c] ?? 0;
             return (
               <div
                 key={c}
@@ -314,40 +300,18 @@ export function ChannelBriefs({
               >
                 <div style={{ display: "flex", gap: 14, alignItems: "center", flexWrap: "wrap" }}>
                   <div style={{ color: PAPER, fontSize: 17, fontWeight: 600, flex: 1, minWidth: 220 }}>{c}</div>
-                  <StatusBadge
-                    state={state}
-                    progress={state === "running" ? `${done}/${LENS_COUNT} lenses` : undefined}
-                  />
+                  <StatusBadge state={state} />
                 </div>
 
                 {state === "running" && (
-                  <div
-                    style={{
-                      marginTop: 14,
-                      height: 8,
-                      borderRadius: 999,
-                      backgroundColor: "#1C1A18",
-                      overflow: "hidden",
-                    }}
-                    role="progressbar"
-                    aria-valuemin={0}
-                    aria-valuemax={LENS_COUNT}
-                    aria-valuenow={done}
-                  >
-                    <div
-                      style={{
-                        width: `${Math.round((done / LENS_COUNT) * 100)}%`,
-                        height: "100%",
-                        backgroundColor: AMBER,
-                        transition: "width 0.4s ease",
-                      }}
-                    />
+                  <div className="text-body-sm" style={{ color: AMBER, marginTop: 12, lineHeight: 1.6 }}>
+                    Adapting the locked idea into {c}…
                   </div>
                 )}
 
                 {state === "failed" && (
                   <div className="text-body-sm" style={{ color: RED, marginTop: 12, lineHeight: 1.6 }}>
-                    {failed[c] || run?.error || "This run stopped before all 37 lenses finished."} Press
+                    {failed[c] || run?.error || "This channel brief did not finish."} Press
                     the generate button to run it again.
                   </div>
                 )}
@@ -392,7 +356,7 @@ export function ChannelBriefs({
           </div>
           {openBusy && (
             <div className="text-body-sm" style={{ color: MUTED, marginTop: 10 }}>
-              Loading the 37 directions…
+              Loading the channel brief…
             </div>
           )}
           <div style={{ display: "grid", gap: 20, marginTop: 18 }}>
