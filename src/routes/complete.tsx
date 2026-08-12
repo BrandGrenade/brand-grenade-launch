@@ -125,6 +125,15 @@ type SessionRow = {
   stage_22_output: string | null;
   stage_22_brand_architecture: string | null;
   stage_22_distinctive_assets: string | null;
+
+  // Human checkpoints actually confirmed on this run
+  checkpoint_a_confirmed: boolean | null;
+  checkpoint_b_confirmed: boolean | null;
+  checkpoint_c_confirmed: boolean | null;
+  checkpoint_d_confirmed: boolean | null;
+  checkpoint_e_confirmed: boolean | null;
+  checkpoint_f_confirmed: boolean | null;
+  strategy_signoff_confirmed: boolean | null;
 };
 
 
