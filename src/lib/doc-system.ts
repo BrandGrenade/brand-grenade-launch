@@ -55,6 +55,8 @@ export function inlineMd(line: string): string {
   let s = escapeHtml(line);
   s = s.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
   s = s.replace(/(^|\s)\*(?!\s)(.+?)\*(?!\w)/g, "$1<em>$2</em>");
+  // Underscore emphasis used widely by the stage prompts (_note_).
+  s = s.replace(/(^|[\s(])_(?!\s)([^_]+?)_(?=$|[\s.,;:)!?])/g, "$1<em>$2</em>");
   return s;
 }
 
