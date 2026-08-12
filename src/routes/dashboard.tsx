@@ -1123,12 +1123,9 @@ function InProgressLink({
 function DeliverablesCell({
   pipelineComplete,
   sessionId,
-  showcaseSessionId,
 }: {
   pipelineComplete: boolean;
   sessionId: string | null;
-  /** Set only when Gate Two is confirmed, i.e. the showcase is signed off. */
-  showcaseSessionId?: string | null;
 }) {
   if (!pipelineComplete || !sessionId) {
     return (
@@ -1155,25 +1152,10 @@ function DeliverablesCell({
       >
         Documents
       </a>
-      {showcaseSessionId && (
-        <>
-          <span
-            style={{ color: "var(--color-text-tertiary)", padding: "0 6px" }}
-          >
-            ·
-          </span>
-          <a
-            href={`/showcase?session=${encodeURIComponent(showcaseSessionId)}`}
-            className="text-body"
-            style={linkStyle}
-          >
-            Showcase
-          </a>
-        </>
-      )}
     </span>
   );
 }
+
 
 // ─── Expanded — historical runs ────────────────────────────────────
 
