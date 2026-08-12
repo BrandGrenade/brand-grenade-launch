@@ -146,7 +146,7 @@ strong { font-weight: 600; } em { font-style: italic; }
 blockquote { border-left: 3pt solid var(--detonation); padding: 10pt 14pt; margin: 14pt 0; background: var(--surface); font-style: italic; font-size: 11pt; line-height: 1.6; }
 
 /* ── PRIMITIVE — stat callout ────────────────────────────────────── */
-.stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(110pt, 1fr)); gap: 10pt; margin: 16pt 0; }
+.stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(110pt, 1fr)); gap: 10pt; margin: 16pt 1pt 16pt 0; }
 .stat-grid.cols-2 { grid-template-columns: repeat(2, 1fr); }
 .stat-grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
 .stat-grid.cols-4 { grid-template-columns: repeat(4, 1fr); }
