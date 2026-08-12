@@ -50,6 +50,7 @@ import {
 } from "@/lib/stimulus.functions";
 import { LENS_COUNT, getLens } from "@/lib/stimulus/lenses";
 import { StimulusGateOne, type RatedDirection } from "@/components/StimulusGateOne";
+import { RawIdeaExportButton } from "@/components/RawIdeaExportButton";
 import { ideaCardStyle, ideaListStyle, IDEA_COLUMN_WIDTH } from "@/components/stimulus/idea-layout";
 import type { LineCheck } from "@/lib/stimulus/line-check-types";
 import type { DirectionRatings } from "@/lib/stimulus/rating-prompts";
