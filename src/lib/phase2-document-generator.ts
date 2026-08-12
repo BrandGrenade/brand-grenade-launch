@@ -124,6 +124,8 @@ body {
 #toolbar .actions button.close { background: transparent; color: var(--smoke); border: 1px solid #2A2724; }
 @media print {
   #toolbar { display: none; }
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .arch-grid, .arch-box, .arch-center { page-break-inside: avoid; }
   @page { margin: 0; }
   html, body { padding: 0; background: var(--paper); }
   .page { box-shadow: none; max-width: none; padding: 20mm 22mm; background: var(--paper); }
@@ -171,6 +173,10 @@ strong { font-weight: 600; } em { font-style: italic; }
 .arch-box { background: var(--paper); border: 0.5pt solid var(--rule); border-radius: 3pt; padding: 10pt; min-height: 110pt; }
 .arch-box .lbl { font-size: 9pt; color: var(--detonation); text-transform: uppercase; letter-spacing: 0.16em; margin-bottom: 6pt; font-weight: 600; }
 .arch-box .txt { font-size: 9.5pt; line-height: 1.5; white-space: pre-wrap; color: var(--ash); }
+.arch-box .txt .empty { color: var(--smoke); }
+ul.arch-items { list-style: none; margin: 0; padding: 0; }
+ul.arch-items li { padding-left: 10pt; position: relative; margin-bottom: 4pt; }
+ul.arch-items li::before { content: '—'; position: absolute; left: 0; color: var(--detonation); }
 .arch-center { background: var(--void); color: var(--paper); border-radius: 3pt; padding: 14pt; display: flex; flex-direction: column; justify-content: center; min-height: 110pt; }
 .arch-center .lbl { font-size: 9pt; text-transform: uppercase; letter-spacing: 0.18em; color: var(--smoke); font-weight: 600; }
 .arch-center .txt { font-family: 'Bebas Neue', Impact, sans-serif; font-size: 18pt; line-height: 1.1; margin-top: 8pt; font-weight: 400; white-space: pre-wrap; color: var(--paper); }
@@ -284,20 +290,41 @@ function channelBriefBody(brand: string, channel: string, body: string): string 
     footer(true);
 }
 
+const ARCH_LABELS = ["REFLECTION", "DOMAIN", "HERITAGE", "VALUES", "ASSETS", "PERSONALITY"];
+
+/** Stage 22 stores each component as `LABEL: value` on one line ("DOMAIN: Electric
+ * performance automotive"). Older/looser outputs put the value on the following
+ * line(s) under a bare or markdown-headed label. Handle both. */
 function extractArch(arch: string, label: string): string {
-  const labels = ["REFLECTION", "DOMAIN", "HERITAGE", "VALUES", "ASSETS", "PERSONALITY"];
-  const re = new RegExp(`(?:^|\\n)\\s*(?:#{1,4}\\s*|\\*+\\s*)?${label}\\b[^\\n]*\\n([\\s\\S]*?)(?=\\n\\s*(?:#{1,4}\\s*|\\*+\\s*)?(?:${labels.join("|")})\\b|$)`, "i");
-  const m = arch.match(re);
-  return m ? m[1].trim() : "";
+  const inline = arch.match(
+    new RegExp(`(?:^|\\n)\\s*(?:#{1,4}\\s*)?\\**\\s*${label}\\s*\\**\\s*:\\s*([^\\n]+)`, "i"),
+  );
+  if (inline?.[1]?.trim()) return inline[1].trim().replace(/^\*+|\*+$/g, "").trim();
+
+  const block = arch.match(
+    new RegExp(
+      `(?:^|\\n)\\s*(?:#{1,4}\\s*|\\*+\\s*)?${label}\\b[^\\n]*\\n([\\s\\S]*?)(?=\\n\\s*(?:#{1,4}\\s*|\\*+\\s*)?(?:${ARCH_LABELS.join("|")})\\b|$)`,
+      "i",
+    ),
+  );
+  return block?.[1]?.trim() ?? "";
 }
 
-function brandArchitectureBody(brand: string, arch: string): string {
-  const sanitised = sanitise(arch);
+/** Slash-delimited component values ("A / B / C") read as a stacked list. */
+function archItems(txt: string): string {
+  if (!txt) return `<span class="empty">—</span>`;
+  const parts = txt.split(/\s+\/\s+/).map((p) => p.trim()).filter(Boolean);
+  if (parts.length < 2) return escapeHtml(txt);
+  return `<ul class="arch-items">${parts.map((p) => `<li>${escapeHtml(p)}</li>`).join("")}</ul>`;
+}
+
+function architectureGrid(sanitised: string): { grid: string; complete: boolean } {
   const reflection = extractArch(sanitised, "REFLECTION");
   const peripherals = ["DOMAIN", "HERITAGE", "VALUES", "ASSETS", "PERSONALITY"]
     .map((l) => ({ lbl: l, txt: extractArch(sanitised, l) }));
 
-  const box = (lbl: string, txt: string) => `<div class="arch-box"><div class="lbl">${escapeHtml(lbl)}</div><div class="txt">${escapeHtml(txt || "—")}</div></div>`;
+  const box = (lbl: string, txt: string) =>
+    `<div class="arch-box"><div class="lbl">${escapeHtml(lbl)}</div><div class="txt">${archItems(txt)}</div></div>`;
   const grid = `<div class="arch-grid">
     ${box(peripherals[0].lbl, peripherals[0].txt)}
     ${box(peripherals[1].lbl, peripherals[1].txt)}
@@ -307,9 +334,19 @@ function brandArchitectureBody(brand: string, arch: string): string {
     ${box(peripherals[4].lbl, peripherals[4].txt)}
   </div>`;
 
+  const complete = Boolean(reflection) && peripherals.every((p) => Boolean(p.txt));
+  return { grid, complete };
+}
+
+function brandArchitectureBody(brand: string, arch: string): string {
+  const sanitised = sanitise(arch);
+  const { grid, complete } = architectureGrid(sanitised);
+
   return cover("BRAND ARCHITECTURE", "Brand Architecture", brand) +
     `<div class="section"><h2>Brand Architecture</h2>${grid}</div>` +
-    `<div class="section"><h3>Full Architecture Detail</h3>${md(sanitised)}</div>` +
+    // The grid IS the document when every component resolved; the raw dump is a
+    // fallback for outputs the extractor could not fully parse.
+    (complete ? "" : `<div class="section"><h3>Full Architecture Detail</h3>${md(sanitised)}</div>`) +
     footer(false);
 }
 
@@ -410,19 +447,11 @@ export function buildAllPhase2(session: Phase2Session): string {
   sections.push(`<div class="doc-break"></div><div class="section"><h2>Conceptual Assets</h2>${md(sanitise(session.stage_22_distinctive_assets ?? ""))}</div>`);
   {
     const arch = sanitise(session.stage_22_brand_architecture ?? "");
-    const reflection = extractArch(arch, "REFLECTION");
-    const peripherals = ["DOMAIN", "HERITAGE", "VALUES", "ASSETS", "PERSONALITY"]
-      .map((l) => ({ lbl: l, txt: extractArch(arch, l) }));
-    const box = (lbl: string, txt: string) => `<div class="arch-box"><div class="lbl">${escapeHtml(lbl)}</div><div class="txt">${escapeHtml(txt || "—")}</div></div>`;
-    const grid = `<div class="arch-grid">
-      ${box(peripherals[0].lbl, peripherals[0].txt)}
-      ${box(peripherals[1].lbl, peripherals[1].txt)}
-      ${box(peripherals[2].lbl, peripherals[2].txt)}
-      ${box(peripherals[3].lbl, peripherals[3].txt)}
-      <div class="arch-center"><div class="lbl">REFLECTION</div><div class="txt">${escapeHtml(reflection || "—")}</div></div>
-      ${box(peripherals[4].lbl, peripherals[4].txt)}
-    </div>`;
-    sections.push(`<div class="doc-break"></div><h2>Brand Architecture</h2>${grid}<div class="section"><h3>Full Architecture Detail</h3>${md(arch)}</div>`);
+    const { grid, complete } = architectureGrid(arch);
+    sections.push(
+      `<div class="doc-break"></div><h2>Brand Architecture</h2>${grid}` +
+        (complete ? "" : `<div class="section"><h3>Full Architecture Detail</h3>${md(arch)}</div>`),
+    );
   }
 
   const tocHtml = `<div class="toc"><h3>Contents</h3><ol>${tocItems.map((t) => `<li>${escapeHtml(t)}</li>`).join("")}</ol></div>`;
