@@ -263,7 +263,7 @@ export const getCreativeShowcase = createServerFn({ method: "POST" })
     return {
       brandName: (session.brand_name as string) ?? "—",
       category: (session.category as string) ?? "—",
-      smp: (session.selected_smp as string) ?? "",
+      smp: cleanProposition(session.selected_smp as string | null),
       detonationLine: (session.stage_18_detonation_line as string) ?? "",
       foundation: {
         idea: session.locked_big_idea as string,
