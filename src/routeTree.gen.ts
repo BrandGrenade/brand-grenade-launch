@@ -47,6 +47,7 @@ import { Route as CreativeSessionIdIndexRouteImport } from './routes/creative.$s
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
 import { Route as IntelligenceIdEditRouteImport } from './routes/intelligence.$id_.edit'
 import { Route as CreativeSessionIdShortlistRouteImport } from './routes/creative.$sessionId.shortlist'
+import { Route as CreativeSessionIdChannelsRouteImport } from './routes/creative.$sessionId.channels'
 import { Route as AdminPreviewSlugRouteImport } from './routes/admin.preview.$slug'
 import { Route as LovableEmailTransactionalSendRouteImport } from './routes/lovable/email/transactional/send'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
@@ -245,6 +246,12 @@ const CreativeSessionIdShortlistRoute =
     path: '/shortlist',
     getParentRoute: () => CreativeSessionIdRoute,
   } as any)
+const CreativeSessionIdChannelsRoute =
+  CreativeSessionIdChannelsRouteImport.update({
+    id: '/channels',
+    path: '/channels',
+    getParentRoute: () => CreativeSessionIdRoute,
+  } as any)
 const AdminPreviewSlugRoute = AdminPreviewSlugRouteImport.update({
   id: '/admin/preview/$slug',
   path: '/admin/preview/$slug',
@@ -316,6 +323,7 @@ export interface FileRoutesByFullPath {
   '/synthesiser/': typeof SynthesiserIndexRoute
   '/walkthrough/': typeof WalkthroughIndexRoute
   '/admin/preview/$slug': typeof AdminPreviewSlugRoute
+  '/creative/$sessionId/channels': typeof CreativeSessionIdChannelsRoute
   '/creative/$sessionId/shortlist': typeof CreativeSessionIdShortlistRoute
   '/intelligence/$id/edit': typeof IntelligenceIdEditRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
@@ -355,6 +363,7 @@ export interface FileRoutesByTo {
   '/synthesiser': typeof SynthesiserIndexRoute
   '/walkthrough': typeof WalkthroughIndexRoute
   '/admin/preview/$slug': typeof AdminPreviewSlugRoute
+  '/creative/$sessionId/channels': typeof CreativeSessionIdChannelsRoute
   '/creative/$sessionId/shortlist': typeof CreativeSessionIdShortlistRoute
   '/intelligence/$id/edit': typeof IntelligenceIdEditRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
@@ -402,6 +411,7 @@ export interface FileRoutesById {
   '/synthesiser/': typeof SynthesiserIndexRoute
   '/walkthrough/': typeof WalkthroughIndexRoute
   '/admin/preview/$slug': typeof AdminPreviewSlugRoute
+  '/creative/$sessionId/channels': typeof CreativeSessionIdChannelsRoute
   '/creative/$sessionId/shortlist': typeof CreativeSessionIdShortlistRoute
   '/intelligence/$id_/edit': typeof IntelligenceIdEditRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
@@ -450,6 +460,7 @@ export interface FileRouteTypes {
     | '/synthesiser/'
     | '/walkthrough/'
     | '/admin/preview/$slug'
+    | '/creative/$sessionId/channels'
     | '/creative/$sessionId/shortlist'
     | '/intelligence/$id/edit'
     | '/lovable/email/suppression'
@@ -489,6 +500,7 @@ export interface FileRouteTypes {
     | '/synthesiser'
     | '/walkthrough'
     | '/admin/preview/$slug'
+    | '/creative/$sessionId/channels'
     | '/creative/$sessionId/shortlist'
     | '/intelligence/$id/edit'
     | '/lovable/email/suppression'
@@ -535,6 +547,7 @@ export interface FileRouteTypes {
     | '/synthesiser/'
     | '/walkthrough/'
     | '/admin/preview/$slug'
+    | '/creative/$sessionId/channels'
     | '/creative/$sessionId/shortlist'
     | '/intelligence/$id_/edit'
     | '/lovable/email/suppression'
@@ -846,6 +859,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CreativeSessionIdShortlistRouteImport
       parentRoute: typeof CreativeSessionIdRoute
     }
+    '/creative/$sessionId/channels': {
+      id: '/creative/$sessionId/channels'
+      path: '/channels'
+      fullPath: '/creative/$sessionId/channels'
+      preLoaderRoute: typeof CreativeSessionIdChannelsRouteImport
+      parentRoute: typeof CreativeSessionIdRoute
+    }
     '/admin/preview/$slug': {
       id: '/admin/preview/$slug'
       path: '/admin/preview/$slug'
@@ -918,11 +938,13 @@ const BriefingRoomRouteWithChildren = BriefingRoomRoute._addFileChildren(
 )
 
 interface CreativeSessionIdRouteChildren {
+  CreativeSessionIdChannelsRoute: typeof CreativeSessionIdChannelsRoute
   CreativeSessionIdShortlistRoute: typeof CreativeSessionIdShortlistRoute
   CreativeSessionIdIndexRoute: typeof CreativeSessionIdIndexRoute
 }
 
 const CreativeSessionIdRouteChildren: CreativeSessionIdRouteChildren = {
+  CreativeSessionIdChannelsRoute: CreativeSessionIdChannelsRoute,
   CreativeSessionIdShortlistRoute: CreativeSessionIdShortlistRoute,
   CreativeSessionIdIndexRoute: CreativeSessionIdIndexRoute,
 }
