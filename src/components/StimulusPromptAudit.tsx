@@ -10,8 +10,8 @@ import {
   type StimulusRunAudit,
 } from "@/lib/stimulus-audit.functions";
 
-const AMBER = "#C81E1E";
-const MUTED = "#8B8680";
+const AMBER = "#F2665F";
+const MUTED = "#A8A29A";
 const RED = "#E5484D";
 
 function Field({

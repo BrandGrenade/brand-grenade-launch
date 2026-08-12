@@ -8,8 +8,8 @@ import { useCallback, useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { applyGateTwoMandate, getMandateOptions } from "@/lib/stimulus-mandate.functions";
 
-const AMBER = "#C81E1E";
-const MUTED = "#8B8680";
+const AMBER = "#F2665F";
+const MUTED = "#A8A29A";
 const GREEN = "#3F7D5C";
 
 type Sig = {

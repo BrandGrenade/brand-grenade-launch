@@ -6,8 +6,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { getRawIdeaExport } from "@/lib/stimulus-gate-two.functions";
 import { buildRawIdeaExport, download, type RawIdeaExport } from "@/lib/stimulus-export";
 
-const AMBER = "#C81E1E";
-const MUTED = "#8B8680";
+const AMBER = "#F2665F";
+const MUTED = "#A8A29A";
 
 export function RawIdeaExportButton({ directionId }: { directionId: string }) {
   const fetchExport = useServerFn(getRawIdeaExport);

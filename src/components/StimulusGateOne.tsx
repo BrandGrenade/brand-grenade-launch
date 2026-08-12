@@ -19,8 +19,8 @@ import { ideaCardStyle, ideaListStyle } from "@/components/stimulus/idea-layout"
 
 
 
-const AMBER = "#C81E1E";
-const MUTED = "#8B8680";
+const AMBER = "#F2665F";
+const MUTED = "#A8A29A";
 const RED = "#E5484D";
 
 export type RatedDirection = {
