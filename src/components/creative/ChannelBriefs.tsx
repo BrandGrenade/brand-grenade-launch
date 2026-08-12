@@ -8,7 +8,12 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Link } from "@tanstack/react-router";
 import { listStimulusRuns, loadStimulusRun } from "@/lib/stimulus.functions";
-import { generateChannelAdaptation } from "@/lib/stimulus-channel.functions";
+import {
+  generateChannelAdaptation,
+  listAdaptationFidelity,
+  recheckAdaptationFidelity,
+} from "@/lib/stimulus-channel.functions";
+import type { AdaptationFidelity } from "@/lib/stimulus/adaptation-fidelity-types";
 import { BIG_IDEA_CHANNEL_LABEL } from "@/lib/stimulus-bigidea.functions";
 import { RawIdeaExportButton } from "@/components/RawIdeaExportButton";
 import { StimulusOrchestration } from "@/components/StimulusOrchestration";
@@ -117,6 +122,124 @@ function Btn({
   );
 }
 
+const VERDICT_COLOR: Record<string, string> = {
+  pass: GREEN,
+  drift: "#E5A23D",
+  break: RED,
+};
+
+const VERDICT_LABEL: Record<string, string> = {
+  pass: "Faithful",
+  drift: "Drifted",
+  break: "Broke away",
+};
+
+function FidelityBadge({ f }: { f: AdaptationFidelity }) {
+  const color = VERDICT_COLOR[f.verdict] ?? MUTED;
+  return (
+    <span
+      className="text-mono"
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 6,
+        border: `1px solid ${color}`,
+        color,
+        backgroundColor: `${color}18`,
+        borderRadius: 999,
+        padding: "5px 12px",
+        fontSize: 11,
+        letterSpacing: "0.12em",
+        textTransform: "uppercase",
+        whiteSpace: "nowrap",
+      }}
+    >
+      Fidelity · {VERDICT_LABEL[f.verdict] ?? f.verdict} · {f.score}/10
+    </span>
+  );
+}
+
+function AdaptationFidelityPanel({
+  fidelity,
+  onRecheck,
+  busy,
+}: {
+  fidelity: AdaptationFidelity | null;
+  onRecheck: () => void;
+  busy: boolean;
+}) {
+  const color = fidelity ? (VERDICT_COLOR[fidelity.verdict] ?? MUTED) : MUTED;
+  return (
+    <div
+      style={{
+        marginTop: 18,
+        padding: 20,
+        border: `1px solid ${fidelity && fidelity.verdict !== "pass" ? color : "#2A2724"}`,
+        borderRadius: 10,
+        backgroundColor: "#0A0908",
+      }}
+    >
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16 }}>
+        <div
+          className="text-mono"
+          style={{ color: AMBER, fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase" }}
+        >
+          Fidelity to the locked idea
+        </div>
+        <Btn onClick={onRecheck} disabled={busy}>
+          {busy ? "Checking…" : fidelity ? "Re-check" : "Run check"}
+        </Btn>
+      </div>
+
+      {!fidelity ? (
+        <div className="text-body-sm" style={{ color: MUTED, marginTop: 12, lineHeight: 1.7 }}>
+          This adaptation has not been held against the locked idea yet — treat it as unverified.
+        </div>
+      ) : (
+        <>
+          <div style={{ marginTop: 12 }}>
+            <FidelityBadge f={fidelity} />
+          </div>
+          <div className="text-body-sm" style={{ color: PAPER, marginTop: 12, lineHeight: 1.7 }}>
+            {fidelity.reasoning}
+          </div>
+          <div
+            className="text-mono"
+            style={{
+              color: fidelity.lineVerbatim ? GREEN : RED,
+              fontSize: 11,
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
+              marginTop: 12,
+            }}
+          >
+            {fidelity.lineVerbatim
+              ? "Campaign line carried verbatim"
+              : "Campaign line NOT carried verbatim"}
+          </div>
+          {fidelity.missing.length > 0 && (
+            <ul className="text-body-sm" style={{ color: RED, marginTop: 12, lineHeight: 1.7, paddingLeft: 18 }}>
+              {fidelity.missing.map((m, i) => (
+                <li key={i}>{m}</li>
+              ))}
+            </ul>
+          )}
+          {fidelity.misreadingEvidence && (
+            <div className="text-body-sm" style={{ color: RED, marginTop: 10, lineHeight: 1.7 }}>
+              Misreading evidence: {fidelity.misreadingEvidence}
+            </div>
+          )}
+          {fidelity.verdict !== "pass" && (
+            <div className="text-body-sm" style={{ color: MUTED, marginTop: 12, lineHeight: 1.7 }}>
+              Regenerate this channel before anything downstream uses it.
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
 export function ChannelBriefs({
   sessionId,
   brandName,
@@ -135,6 +258,8 @@ export function ChannelBriefs({
   const listRuns = useServerFn(listStimulusRuns);
   const adapt = useServerFn(generateChannelAdaptation);
   const load = useServerFn(loadStimulusRun);
+  const listFidelity = useServerFn(listAdaptationFidelity);
+  const recheck = useServerFn(recheckAdaptationFidelity);
 
   const [runs, setRuns] = useState<RunRow[]>([]);
   const [running, setRunning] = useState<string | null>(null);
@@ -142,6 +267,8 @@ export function ChannelBriefs({
   const [openRunId, setOpenRunId] = useState<string | null>(null);
   const [openDirections, setOpenDirections] = useState<DirectionRow[]>([]);
   const [openBusy, setOpenBusy] = useState(false);
+  const [fidelityByRun, setFidelityByRun] = useState<Record<string, AdaptationFidelity>>({});
+  const [recheckBusy, setRecheckBusy] = useState(false);
 
   const refreshRuns = useCallback(async () => {
     try {
@@ -160,9 +287,19 @@ export function ChannelBriefs({
   }, [listRuns, sessionId]);
 
 
+  const refreshFidelity = useCallback(async () => {
+    try {
+      const r = await listFidelity({ data: { sessionId } });
+      setFidelityByRun(r.byRun as Record<string, AdaptationFidelity>);
+    } catch {
+      /* non-fatal */
+    }
+  }, [listFidelity, sessionId]);
+
   useEffect(() => {
     void refreshRuns();
-  }, [refreshRuns]);
+    void refreshFidelity();
+  }, [refreshRuns, refreshFidelity]);
 
   /** The newest run for a channel is the one that counts. */
   const latest = useMemo(() => {
@@ -187,6 +324,7 @@ export function ChannelBriefs({
     try {
       const { runId } = await adapt({ data: { sessionId, channelName: channel } });
       await refreshRuns();
+      await refreshFidelity();
       setFailed((p) => {
         const next = { ...p };
         delete next[channel];
@@ -201,6 +339,18 @@ export function ChannelBriefs({
       await refreshRuns();
     } finally {
       setRunning(null);
+    }
+  };
+
+  const runRecheck = async (runId: string) => {
+    setRecheckBusy(true);
+    try {
+      const r = await recheck({ data: { runId } });
+      setFidelityByRun((p) => ({ ...p, [runId]: r.fidelity as AdaptationFidelity }));
+    } catch {
+      await refreshFidelity();
+    } finally {
+      setRecheckBusy(false);
     }
   };
 
@@ -313,7 +463,17 @@ export function ChannelBriefs({
                 <div style={{ display: "flex", gap: 14, alignItems: "center", flexWrap: "wrap" }}>
                   <div style={{ color: PAPER, fontSize: 17, fontWeight: 600, flex: 1, minWidth: 220 }}>{c}</div>
                   <StatusBadge state={state} />
+                  {run && state === "complete" && fidelityByRun[run.id] && (
+                    <FidelityBadge f={fidelityByRun[run.id]!} />
+                  )}
                 </div>
+                {run && state === "complete" && fidelityByRun[run.id] &&
+                  fidelityByRun[run.id]!.verdict !== "pass" && (
+                    <div className="text-body-sm" style={{ color: RED, marginTop: 12, lineHeight: 1.6 }}>
+                      This adaptation {fidelityByRun[run.id]!.verdict === "break" ? "broke away from" : "drifted from"}{" "}
+                      the locked idea. Open it below for the reasoning, then regenerate.
+                    </div>
+                  )}
 
                 {state === "running" && (
                   <div className="text-body-sm" style={{ color: AMBER, marginTop: 12, lineHeight: 1.6 }}>
@@ -399,6 +559,11 @@ export function ChannelBriefs({
                 <div style={{ marginTop: 14 }}>
                   <RawIdeaExportButton directionId={d.id} />
                 </div>
+                <AdaptationFidelityPanel
+                  fidelity={fidelityByRun[openRunId] ?? null}
+                  onRecheck={() => void runRecheck(openRunId)}
+                  busy={recheckBusy}
+                />
               </div>
             ))}
           </div>
