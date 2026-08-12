@@ -16,6 +16,7 @@ import {
   CHANNEL_ADAPTATION_SYSTEM_PROMPT,
   buildChannelAdaptationMessage,
 } from "./stimulus/channel-adaptation";
+import type { AdaptationFidelity } from "./stimulus/adaptation-fidelity-types";
 
 const Input = z.object({
   sessionId: z.string().uuid(),
@@ -101,7 +102,7 @@ export const generateChannelAdaptation = createServerFn({ method: "POST" })
       if (dErr || !direction) throw new Error(dErr?.message ?? "Failed to store adaptation");
 
       // Hold the adaptation against the locked idea before it is usable.
-      let fidelity: unknown = null;
+      let fidelity: AdaptationFidelity;
       try {
         const { checkAndStoreAdaptationFidelity } = await import(
           "./stimulus/adaptation-fidelity.server"
@@ -118,7 +119,7 @@ export const generateChannelAdaptation = createServerFn({ method: "POST" })
       } catch (e) {
         // Never a silent pass: record the failure as an unverified verdict.
         fidelity = {
-          kind: "channel_adaptation_fidelity",
+          kind: "channel_adaptation_fidelity" as const,
           verdict: "drift",
           score: 0,
           reasoning: `Fidelity check could not complete: ${
