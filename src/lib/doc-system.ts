@@ -58,6 +58,72 @@ export function inlineMd(line: string): string {
   return s;
 }
 
+/**
+ * Block-level markdown → HTML, rendered into the shared document classes.
+ * Lives here (not in a builder) so every migrated document type renders body
+ * copy identically.
+ */
+export function renderMarkdown(text: string): string {
+  if (!text) return "";
+  const out: string[] = [];
+  let inUl = false;
+  const closeUl = () => {
+    if (inUl) {
+      out.push("</ul>");
+      inUl = false;
+    }
+  };
+  for (const raw of text.split("\n")) {
+    const line = raw.trim();
+    if (!line) {
+      closeUl();
+      continue;
+    }
+    if (line.startsWith("> ")) {
+      closeUl();
+      out.push(`<blockquote>${inlineMd(line.replace(/^>\s+/, ""))}</blockquote>`);
+      continue;
+    }
+    if (/^####\s+/.test(line)) {
+      closeUl();
+      out.push(`<h4>${inlineMd(line.replace(/^####\s+/, ""))}</h4>`);
+      continue;
+    }
+    if (/^###\s+/.test(line)) {
+      closeUl();
+      out.push(`<h3>${inlineMd(line.replace(/^###\s+/, ""))}</h3>`);
+      continue;
+    }
+    if (/^##\s+/.test(line)) {
+      closeUl();
+      out.push(`<h3>${inlineMd(line.replace(/^##\s+/, ""))}</h3>`);
+      continue;
+    }
+    if (/^#\s+/.test(line)) {
+      closeUl();
+      out.push(`<h3>${inlineMd(line.replace(/^#\s+/, ""))}</h3>`);
+      continue;
+    }
+    if (/^[-—•]\s+/.test(line)) {
+      if (!inUl) {
+        out.push("<ul>");
+        inUl = true;
+      }
+      out.push(`<li>${inlineMd(line.replace(/^[-—•]\s+/, ""))}</li>`);
+      continue;
+    }
+    if (/^[*\-_]{3,}$/.test(line)) {
+      closeUl();
+      out.push("<hr>");
+      continue;
+    }
+    closeUl();
+    out.push(`<p>${inlineMd(line)}</p>`);
+  }
+  closeUl();
+  return out.join("\n");
+}
+
 /* ─────────────────────────────────────────────── the stylesheet ── */
 
 export interface StyleOptions {
