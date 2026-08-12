@@ -28,8 +28,8 @@ import { ideaCardStyle, ideaListStyle, IDEA_COLUMN_WIDTH } from "@/components/st
 
 import type { DirectionRatings } from "@/lib/stimulus/rating-prompts";
 
-const AMBER = "#C81E1E";
-const MUTED = "#8B8680";
+const AMBER = "#F2665F";
+const MUTED = "#A8A29A";
 
 type Direction = {
   id: string;

@@ -1,17 +1,18 @@
-// CREATIVE ENGINE — the room. Full-page environment for the Creative Stimulus
-// Engine, structurally equal to Intelligence Lab / Briefing Room / Pipeline.
-// Reads a session's SMP and Channel Briefs as background input only.
+// CREATIVE ENGINE — the room shell. Three explicit steps, one per route:
+//   /creative/$sessionId            → Step 1 · the 37-lens sweep
+//   /creative/$sessionId/shortlist  → Step 2 · shortlist and lock the winner
+//   /creative/$sessionId/channels   → Step 3 · channel briefs and export
+// This file owns only the header, the background input, and the step nav.
 
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { TopNav } from "@/components/TopNav";
-import { CreativeStimulus } from "@/components/CreativeStimulus";
-import { BigIdeaSweep } from "@/components/BigIdeaSweep";
 import { supabase } from "@/integrations/supabase/client";
 import { LENS_COUNT } from "@/lib/stimulus/lenses";
 
-const AMBER = "#C81E1E";
-const MUTED = "#8B8680";
+const AMBER = "#F2665F";
+const MUTED = "#A8A29A";
+const PAPER = "#EDE8E0";
 
 export const Route = createFileRoute("/creative/$sessionId")({
   component: CreativeRoom,
@@ -21,7 +22,7 @@ export const Route = createFileRoute("/creative/$sessionId")({
       {
         name: "description",
         content:
-          "37 creative lenses, Tissue Check, Gate One rating, orchestration and Gate Two sign-off in one dedicated room.",
+          "Three steps: run the 37-lens sweep, shortlist and lock one winning idea and line, then generate channel briefs and exports.",
       },
       { property: "og:title", content: "Creative Engine Room — Brand Grenade" },
       {
@@ -34,7 +35,7 @@ export const Route = createFileRoute("/creative/$sessionId")({
   }),
 });
 
-type SessionRow = {
+export type CreativeSession = {
   id: string;
   brand_name: string | null;
   selected_smp: string | null;
@@ -44,22 +45,23 @@ type SessionRow = {
   locked_big_idea_lens: string | null;
 };
 
-function CreativeRoom() {
-  const { sessionId } = Route.useParams();
-  const [session, setSession] = useState<SessionRow | null>(null);
+/** Every leaf step loads the session itself — one small read, no shared state. */
+export function useCreativeSession(sessionId: string) {
+  const [session, setSession] = useState<CreativeSession | null>(null);
   const [loading, setLoading] = useState(true);
-  const [briefsOpen, setBriefsOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     void (async () => {
       const { data } = await supabase
         .from("sessions")
-        .select("id, brand_name, selected_smp, stage_21_outputs, locked_big_idea, locked_campaign_line, locked_big_idea_lens")
+        .select(
+          "id, brand_name, selected_smp, stage_21_outputs, locked_big_idea, locked_campaign_line, locked_big_idea_lens",
+        )
         .eq("id", sessionId)
         .maybeSingle();
       if (cancelled) return;
-      setSession((data as SessionRow | null) ?? null);
+      setSession((data as CreativeSession | null) ?? null);
       setLoading(false);
     })();
     return () => {
@@ -67,7 +69,61 @@ function CreativeRoom() {
     };
   }, [sessionId]);
 
+  return { session, loading };
+}
+
+function StepLink({
+  to,
+  sessionId,
+  n,
+  label,
+  active,
+}: {
+  to: string;
+  sessionId: string;
+  n: number;
+  label: string;
+  active: boolean;
+}) {
+  return (
+    <Link
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      to={to as any}
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      params={{ sessionId } as any}
+      className="text-mono"
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
+        border: `1px solid ${active ? AMBER : "#2A2724"}`,
+        backgroundColor: active ? `${AMBER}18` : "transparent",
+        color: active ? AMBER : PAPER,
+        borderRadius: 8,
+        padding: "10px 16px",
+        fontSize: 11,
+        letterSpacing: "0.12em",
+        textTransform: "uppercase",
+        textDecoration: "none",
+        whiteSpace: "nowrap",
+      }}
+    >
+      <span style={{ fontSize: 15, opacity: active ? 1 : 0.7 }}>{n}</span>
+      {label}
+    </Link>
+  );
+}
+
+function CreativeRoom() {
+  const { sessionId } = Route.useParams();
+  const { session, loading } = useCreativeSession(sessionId);
+  const [briefsOpen, setBriefsOpen] = useState(false);
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+
   const channels = Object.keys(session?.stage_21_outputs ?? {});
+  const onShortlist = pathname.endsWith("/shortlist");
+  const onChannels = pathname.endsWith("/channels");
+  const onSweep = !onShortlist && !onChannels;
 
   return (
     <>
@@ -94,29 +150,39 @@ function CreativeRoom() {
           >
             Creative Engine
           </div>
-          <h1
-            style={{
-              color: "#EDE8E0",
-              fontSize: 34,
-              lineHeight: 1.15,
-              margin: "10px 0 12px",
-              fontWeight: 600,
-            }}
-          >
+          <h1 style={{ color: PAPER, fontSize: 34, lineHeight: 1.15, margin: "10px 0 12px", fontWeight: 600 }}>
             {loading ? "Loading…" : session?.brand_name || "Untitled session"}
           </h1>
           <p className="text-body-sm" style={{ color: MUTED, maxWidth: 760, lineHeight: 1.7 }}>
-            One sweep of all {LENS_COUNT} creative lenses against the proposition itself — before any
-            channel brief exists — then Tissue Check, Gate One rating, and one winning idea and line
-            locked. Channel work adapts that locked idea; it never reinterprets the proposition.
+            Three steps, in order. Sweep all {LENS_COUNT} lenses against the proposition, shortlist what
+            survives and lock one winning idea and line, then generate the channel briefs from it.
           </p>
+
+          {/* STEP NAV — always visible, on every step. */}
+          <nav style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 24 }}>
+            <StepLink to="/creative/$sessionId" sessionId={sessionId} n={1} label="Sweep" active={onSweep} />
+            <StepLink
+              to="/creative/$sessionId/shortlist"
+              sessionId={sessionId}
+              n={2}
+              label="Shortlist & lock"
+              active={onShortlist}
+            />
+            <StepLink
+              to="/creative/$sessionId/channels"
+              sessionId={sessionId}
+              n={3}
+              label="Channels & export"
+              active={onChannels}
+            />
+          </nav>
 
           {/* Background input — the session's strategy, collapsed by default. */}
           {!loading && session && (
             <div
               style={{
                 marginTop: 26,
-                border: "1px solid #1C1A18",
+                border: "1px solid #2A2724",
                 borderRadius: 12,
                 backgroundColor: "#0A0908",
                 padding: "18px 22px",
@@ -128,7 +194,7 @@ function CreativeRoom() {
               >
                 Background input
               </div>
-              <div className="text-body-sm" style={{ color: "#EDE8E0", marginTop: 10, lineHeight: 1.7 }}>
+              <div className="text-body-sm" style={{ color: PAPER, marginTop: 10, lineHeight: 1.7 }}>
                 <strong style={{ color: AMBER }}>SMP:</strong>{" "}
                 {session.selected_smp?.trim() || "— not selected"}
               </div>
@@ -139,8 +205,8 @@ function CreativeRoom() {
                 style={{
                   marginTop: 12,
                   background: "none",
-                  border: "1px solid #1C1A18",
-                  color: MUTED,
+                  border: "1px solid #2A2724",
+                  color: PAPER,
                   borderRadius: 6,
                   padding: "6px 12px",
                   fontSize: 10,
@@ -155,7 +221,7 @@ function CreativeRoom() {
               {briefsOpen && (
                 <div style={{ marginTop: 14, display: "grid", gap: 14 }}>
                   {channels.map((c) => (
-                    <div key={c} style={{ borderTop: "1px solid #1C1A18", paddingTop: 12 }}>
+                    <div key={c} style={{ borderTop: "1px solid #2A2724", paddingTop: 12 }}>
                       <div
                         className="text-mono"
                         style={{ color: AMBER, fontSize: 13, textTransform: "uppercase", letterSpacing: "0.06em" }}
@@ -176,50 +242,15 @@ function CreativeRoom() {
           )}
 
           {!loading && !session && (
-            <div className="text-body-sm" style={{ color: "#E5484D", marginTop: 24 }}>
+            <div className="text-body-sm" style={{ color: "#FF8F87", marginTop: 24 }}>
               Session not found, or you don&apos;t have access to it.
             </div>
           )}
-
         </div>
 
-        {!loading && session && (
-          <div style={{ maxWidth: 1180, margin: "36px auto 0" }}>
-            <BigIdeaSweep sessionId={session.id} />
-          </div>
-        )}
-
-        {!loading && session && (
-          <div style={{ maxWidth: 1180, margin: "56px auto 0" }}>
-            <div style={{ maxWidth: 980, margin: "0 auto" }}>
-              <div
-                className="text-mono"
-                style={{ color: AMBER, fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase" }}
-              >
-                Step 2 · Channel cascade
-              </div>
-              <p className="text-body-sm" style={{ color: MUTED, marginTop: 8, lineHeight: 1.7 }}>
-                {session.locked_big_idea
-                  ? `Channel briefs now adapt the locked idea (${session.locked_big_idea_lens ?? "—"}) and line "${session.locked_campaign_line ?? ""}". Regenerate Stage 21 in the Strategy Pipeline to cascade it.`
-                  : "Lock a winning idea and line above before generating channel briefs — a channel brief written first is exactly how the proposition gets reinterpreted."}
-              </p>
-              {channels.length === 0 && (
-                <div className="text-body-sm" style={{ color: "#E5484D", marginTop: 14 }}>
-                  No Channel Briefs generated yet — run Stage 21 in the Strategy Pipeline once the idea
-                  is locked.
-                </div>
-              )}
-            </div>
-            {channels.length > 0 && (
-              <CreativeStimulus
-                variant="page"
-                sessionId={session.id}
-                channels={channels}
-                brandName={session.brand_name ?? ""}
-              />
-            )}
-          </div>
-        )}
+        <div style={{ maxWidth: 1180, margin: "40px auto 0" }}>
+          <Outlet />
+        </div>
       </main>
     </>
   );

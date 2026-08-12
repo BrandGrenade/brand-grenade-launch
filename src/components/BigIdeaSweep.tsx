@@ -50,14 +50,18 @@ import {
 } from "@/lib/stimulus.functions";
 import { LENS_COUNT, getLens } from "@/lib/stimulus/lenses";
 import { StimulusGateOne, type RatedDirection } from "@/components/StimulusGateOne";
+import { RawIdeaExportButton } from "@/components/RawIdeaExportButton";
 import { ideaCardStyle, ideaListStyle, IDEA_COLUMN_WIDTH } from "@/components/stimulus/idea-layout";
 import type { LineCheck } from "@/lib/stimulus/line-check-types";
 import type { DirectionRatings } from "@/lib/stimulus/rating-prompts";
 
-const AMBER = "#C81E1E";
-const MUTED = "#8B8680";
-const RED = "#E5484D";
-const GREEN = "#C81E1E";
+// Readable palette on the near-black room background (#0A0908).
+// Red is an accent for labels only; all body copy and numerals are paper.
+const AMBER = "#F2665F";
+const MUTED = "#A8A29A";
+const RED = "#FF8F87";
+const GREEN = "#5FD08A";
+const PAPER = "#EDE8E0";
 
 /**
  * Convergence record. `inSweep` is written as each lens generates (compared
@@ -340,6 +344,7 @@ function IdeaCard({
   isWinner,
   isLineWinner,
   locked,
+  mode,
   onTriage,
   onRevise,
   onPickIdea,
@@ -349,6 +354,8 @@ function IdeaCard({
   isWinner: boolean;
   isLineWinner: boolean;
   locked: boolean;
+  /** "sweep" = judge only (Page 1). "shortlist" = choose winners (Page 2). */
+  mode: "sweep" | "shortlist";
   onTriage: (status: "keep" | "keep_in_play" | "kill", instinct: string) => Promise<void>;
   onRevise: (notes: string) => Promise<void>;
   onPickIdea: () => void;
@@ -371,19 +378,33 @@ function IdeaCard({
     >
       <div style={{ display: "flex", justifyContent: "space-between", gap: 16, alignItems: "baseline" }}>
         <div style={{ display: "flex", alignItems: "baseline", gap: 14, minWidth: 0 }}>
-          <span className="text-mono" style={{ color: `${AMBER}88`, fontSize: 22, lineHeight: 1 }}>
+          <span className="text-mono" style={{ color: AMBER, fontSize: 22, lineHeight: 1 }}>
             {String(d.sort_order + 1).padStart(2, "0")}
           </span>
           <span
             style={{
-              color: AMBER,
+              color: PAPER,
               fontFamily: "Inter, system-ui, sans-serif",
-              fontSize: 16,
-              letterSpacing: "0.06em",
-              textTransform: "uppercase",
+              fontSize: 19,
+              fontWeight: 600,
+              letterSpacing: "0.02em",
             }}
           >
             {d.lens_name}
+          </span>
+          <span
+            className="text-mono"
+            style={{
+              color: d.status === "kill" ? RED : d.status === "pending" ? MUTED : AMBER,
+              border: `1px solid ${d.status === "kill" ? RED : d.status === "pending" ? "#2A2724" : AMBER}`,
+              borderRadius: 999,
+              padding: "2px 9px",
+              fontSize: 10,
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
+            }}
+          >
+            {d.status === "keep_in_play" ? "Keep in play" : d.status === "keep" ? "Keep" : d.status === "kill" ? "Killed" : "Not judged"}
           </span>
         </div>
         {(isWinner || isLineWinner) && (
@@ -392,6 +413,7 @@ function IdeaCard({
           </span>
         )}
       </div>
+
       {lens && (
         <div className="text-body-sm" style={{ color: MUTED, marginTop: 8 }}>
           {lens.approach}
@@ -445,34 +467,47 @@ function IdeaCard({
         }}
       />
 
-      <div style={{ marginTop: 12, display: "flex", gap: 8, flexWrap: "wrap" }}>
-        {(["keep", "keep_in_play", "kill"] as const).map((t) => (
-          <Btn
-            key={t}
-            active={d.status === t}
-            disabled={busy}
-            onClick={async () => {
-              setBusy(true);
-              try {
-                await onTriage(t, instinct);
-              } finally {
-                setBusy(false);
-              }
-            }}
-          >
-            {t.replace("_", " ")}
-          </Btn>
-        ))}
+      <div style={{ marginTop: 12, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+        {mode === "sweep" &&
+          (
+            [
+              { v: "keep", label: "Keep this idea" },
+              { v: "keep_in_play", label: "Keep in play" },
+              { v: "kill", label: "Kill this idea" },
+            ] as const
+          ).map((t) => (
+            <Btn
+              key={t.v}
+              active={d.status === t.v}
+              disabled={busy}
+              onClick={async () => {
+                setBusy(true);
+                try {
+                  await onTriage(t.v, instinct);
+                } finally {
+                  setBusy(false);
+                }
+              }}
+            >
+              {t.label}
+            </Btn>
+          ))}
         <Btn onClick={() => setShowRevise((v) => !v)} disabled={busy}>
-          Revise
+          Rewrite this idea
         </Btn>
-        <Btn onClick={onPickIdea} active={isWinner} disabled={locked}>
-          Select as winning idea
-        </Btn>
-        <Btn onClick={onPickLine} active={isLineWinner} disabled={locked || !d.campaign_line}>
-          Use this line
-        </Btn>
+        {mode === "sweep" && <RawIdeaExportButton directionId={d.id} />}
+        {mode === "shortlist" && (
+          <>
+            <Btn onClick={onPickIdea} active={isWinner} disabled={locked}>
+              {isWinner ? "Chosen as winning idea" : "Choose as winning idea"}
+            </Btn>
+            <Btn onClick={onPickLine} active={isLineWinner} disabled={locked || !d.campaign_line}>
+              {isLineWinner ? "Chosen as winning line" : "Choose this master line"}
+            </Btn>
+          </>
+        )}
       </div>
+
 
       {showRevise && (
         <div style={{ marginTop: 12 }}>
@@ -519,9 +554,15 @@ function IdeaCard({
 export function BigIdeaSweep({
   sessionId,
   onLocked,
+  mode = "sweep",
 }: {
   sessionId: string;
   onLocked?: () => void;
+  /**
+   * "sweep"     — Page 1: generate and judge all 37 lenses (Keep / Keep in play / Kill).
+   * "shortlist" — Page 2: only kept ideas, and the only place a winner is locked.
+   */
+  mode?: "sweep" | "shortlist";
 }) {
   const start = useServerFn(startBigIdeaRun);
   const resume = useServerFn(resumeBigIdeaSweep);
@@ -675,9 +716,16 @@ export function BigIdeaSweep({
     [ideas],
   );
 
+  // Page 2 works only on ideas the human kept; Page 1 shows the whole sweep.
+  const shortlist = mode === "shortlist";
+  const shown = useMemo(
+    () => (shortlist ? ideas.filter((d) => d.status === "keep" || d.status === "keep_in_play") : ideas),
+    [ideas, shortlist],
+  );
+
   const lines = useMemo(
-    () => ideas.filter((d) => (d.campaign_line ?? "").trim()),
-    [ideas],
+    () => shown.filter((d) => (d.campaign_line ?? "").trim()),
+    [shown],
   );
 
   const chosenIdea = ideas.find((d) => d.id === pickIdea) ?? null;
@@ -690,16 +738,14 @@ export function BigIdeaSweep({
           className="text-mono"
           style={{ color: AMBER, fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase" }}
         >
-          Step 1 · The big idea, before any channel
+          {shortlist ? "Step 2 · Shortlist and lock the winner" : "Step 1 · The 37-lens sweep"}
         </div>
         <p className="text-body-sm" style={{ color: MUTED, marginTop: 8, lineHeight: 1.7 }}>
-          One sweep of all {LENS_COUNT} lenses against the approved proposition, verbatim, with the
-          strategic truths as supporting evidence only. No channel brief is read or referenced here.
-          Each lens returns its strongest idea, a candidate master line built to the 3–7 word poster
-          standard, and the case for taking it forward. Where a master line is already locked, each
-          lens also returns the supporting expression that sits underneath it. One idea and one
-          master line get locked — then, and only then, channel briefs adapt them.
+          {shortlist
+            ? "Only the ideas you marked Keep or Keep in play on Step 1 appear here. Choose one winning idea and one winning master line, then lock them. Locking is only possible on this page."
+            : `One sweep of all ${LENS_COUNT} lenses against the approved proposition. Read each idea, then mark it Keep, Keep in play, or Kill. Nothing is locked on this page — kept ideas carry forward to Step 2.`}
         </p>
+
 
         {err && (
           <div className="text-body-sm" style={{ color: RED, marginTop: 12 }}>
@@ -780,68 +826,74 @@ export function BigIdeaSweep({
           </div>
         )}
 
-        <div style={{ marginTop: 16, display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
-          <Btn
-            onClick={() => void runSweep(false)}
-            disabled={busy || Boolean(sweep?.running)}
-            active
-          >
-            {sweep?.running
-              ? `Generating ${sweep.generated}/${sweep.total || LENS_COUNT}…`
-              : busy
-                ? "Starting…"
-                : sweep?.stalled
-                  ? `Resume sweep (${sweep.pending} left)`
-                  : ideas.length > 0
-                    ? "Resume sweep"
-                    : `Run ${LENS_COUNT}-lens big idea sweep`}
-          </Btn>
-          {ideas.length > 0 && (
+        {!shortlist && (
+          <div style={{ marginTop: 16, display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
             <Btn
-              onClick={() => void runSweep(true)}
-              disabled={busy || locked || Boolean(sweep?.running)}
+              onClick={() => void runSweep(false)}
+              disabled={busy || Boolean(sweep?.running)}
+              active
             >
-              Start a fresh sweep
+              {sweep?.running
+                ? `Generating ${sweep.generated}/${sweep.total || LENS_COUNT}…`
+                : busy
+                  ? "Starting…"
+                  : sweep?.stalled
+                    ? `Resume sweep (${sweep.pending} left)`
+                    : ideas.length > 0
+                      ? "Resume sweep"
+                      : `Run ${LENS_COUNT}-lens big idea sweep`}
             </Btn>
-          )}
+            {ideas.length > 0 && (
+              <Btn
+                onClick={() => void runSweep(true)}
+                disabled={busy || locked || Boolean(sweep?.running)}
+              >
+                Start a fresh sweep
+              </Btn>
+            )}
 
-          {runId && lines.length > 0 && (
-            <Btn
-              disabled={busy}
-              onClick={async () => {
-                setBusy(true);
-                setErr(null);
-                try {
-                  await checkLines({ data: { runId, recheck: false } });
-                  await refresh(runId);
-                } catch (e) {
-                  setErr(e instanceof Error ? e.message : "Line check failed");
-                } finally {
-                  setBusy(false);
-                }
-              }}
-            >
-              {counts.unchecked > 0 ? `Check ${counts.unchecked} lines on strategy` : "Re-check lines"}
-            </Btn>
-          )}
-        </div>
-
-        {ideas.length > 0 && (
-          <div style={{ marginTop: 22, display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
-            <span className="text-mono" style={{ color: MUTED, fontSize: 10, letterSpacing: "0.12em" }}>
-              TISSUE CHECK — {counts.keep} keep · {counts.play} in play · {counts.kill} killed
-            </span>
-            <Btn active={view === "ideas"} onClick={() => setView("ideas")}>
-              Ideas
-            </Btn>
-            <Btn active={view === "lines"} onClick={() => setView("lines")}>
-              Candidate master lines ({lines.length})
-            </Btn>
+            {runId && lines.length > 0 && (
+              <Btn
+                disabled={busy}
+                onClick={async () => {
+                  setBusy(true);
+                  setErr(null);
+                  try {
+                    await checkLines({ data: { runId, recheck: false } });
+                    await refresh(runId);
+                  } catch (e) {
+                    setErr(e instanceof Error ? e.message : "Line check failed");
+                  } finally {
+                    setBusy(false);
+                  }
+                }}
+              >
+                {counts.unchecked > 0 ? `Check ${counts.unchecked} lines on strategy` : "Re-check lines on strategy"}
+              </Btn>
+            )}
           </div>
         )}
 
-        {/* Selection panel — exactly one idea, exactly one line. */}
         {ideas.length > 0 && (
+          <div style={{ marginTop: 22, display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+            <span className="text-mono" style={{ color: PAPER, fontSize: 11, letterSpacing: "0.1em" }}>
+              {counts.keep} KEEP · {counts.play} IN PLAY · {counts.kill} KILLED ·{" "}
+              {ideas.length - counts.keep - counts.play - counts.kill} NOT JUDGED
+            </span>
+            <Btn active={view === "ideas"} onClick={() => setView("ideas")}>
+              Show ideas
+            </Btn>
+            {shortlist && (
+              <Btn active={view === "lines"} onClick={() => setView("lines")}>
+                Show master lines only ({lines.length})
+              </Btn>
+            )}
+          </div>
+        )}
+
+        {/* Selection panel — exactly one idea, exactly one line. Page 2 only. */}
+        {shortlist && shown.length > 0 && (
+
           <div
             style={{
               marginTop: 22,
@@ -855,16 +907,16 @@ export function BigIdeaSweep({
               className="text-mono"
               style={{ color: locked ? AMBER : MUTED, fontSize: 10, letterSpacing: "0.14em", textTransform: "uppercase" }}
             >
-              {locked ? "Locked campaign idea" : "Select one idea and one candidate master line"}
+              {locked ? "★ Locked winning idea and line" : "Choose one idea and one master line, then lock them"}
             </div>
-            <div className="text-body-sm" style={{ color: "#EDE8E0", marginTop: 10, lineHeight: 1.7 }}>
+            <div className="text-body-sm" style={{ color: PAPER, marginTop: 10, lineHeight: 1.7 }}>
               <div>
-                <strong style={{ color: AMBER }}>Idea:</strong>{" "}
-                {chosenIdea ? `${chosenIdea.lens_name} — ${chosenIdea.direction.slice(0, 160)}…` : "— none selected"}
+                <strong style={{ color: AMBER }}>Winning idea:</strong>{" "}
+                {chosenIdea ? `${chosenIdea.lens_name} — ${chosenIdea.direction.slice(0, 160)}…` : "— not chosen yet"}
               </div>
               <div style={{ marginTop: 6 }}>
-                <strong style={{ color: AMBER }}>Master line:</strong>{" "}
-                {chosenLine?.campaign_line ?? "— none selected"}
+                <strong style={{ color: AMBER }}>Winning line:</strong>{" "}
+                {chosenLine?.campaign_line ?? "— not chosen yet"}
                 {chosenLine && chosenIdea && chosenLine.id !== chosenIdea.id && (
                   <span className="text-mono" style={{ color: MUTED, fontSize: 10, marginLeft: 8 }}>
                     (paired from {chosenLine.lens_name})
@@ -892,9 +944,10 @@ export function BigIdeaSweep({
                     }
                   }}
                 >
-                  Lock this idea and line
+                  Lock winning idea and winning line
                 </Btn>
               )}
+
               {locked && (
                 <Btn
                   disabled={busy}
@@ -910,9 +963,11 @@ export function BigIdeaSweep({
                     }
                   }}
                 >
-                  Unlock
+                  Unlock and choose a different winner
                 </Btn>
               )}
+
+
             </div>
             {locked && (
               <div className="text-body-sm" style={{ color: MUTED, marginTop: 12, lineHeight: 1.7 }}>
@@ -976,12 +1031,23 @@ export function BigIdeaSweep({
         </div>
       )}
 
-      {view === "ideas" && ideas.length > 0 && (
+      {shortlist && ideas.length > 0 && shown.length === 0 && (
+        <div
+          className="text-body-sm"
+          style={{ color: MUTED, maxWidth: IDEA_COLUMN_WIDTH, margin: "28px auto 0", lineHeight: 1.7 }}
+        >
+          Nothing has been kept yet. Go back to Step 1 · Sweep and mark at least one idea Keep or
+          Keep in play — shortlisted ideas appear here.
+        </div>
+      )}
+
+      {view === "ideas" && shown.length > 0 && (
         <div style={{ ...ideaListStyle, marginTop: 28 }}>
-          {ideas.map((d) => (
+          {shown.map((d) => (
             <IdeaCard
               key={d.id}
               d={d}
+              mode={shortlist ? "shortlist" : "sweep"}
               locked={locked}
               isWinner={d.id === pickIdea}
               isLineWinner={d.id === pickLine}
@@ -1002,7 +1068,8 @@ export function BigIdeaSweep({
         </div>
       )}
 
-      {runId && ideas.length > 0 && (
+      {/* Gate One rating operates on survivors — it belongs with the shortlist. */}
+      {shortlist && runId && shown.length > 0 && (
         <StimulusGateOne
           runId={runId}
           run={run}
@@ -1016,6 +1083,7 @@ export function BigIdeaSweep({
           }}
         />
       )}
+
     </div>
   );
 }
