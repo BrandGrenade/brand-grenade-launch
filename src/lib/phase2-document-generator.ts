@@ -173,6 +173,10 @@ strong { font-weight: 600; } em { font-style: italic; }
 .arch-box { background: var(--paper); border: 0.5pt solid var(--rule); border-radius: 3pt; padding: 10pt; min-height: 110pt; }
 .arch-box .lbl { font-size: 9pt; color: var(--detonation); text-transform: uppercase; letter-spacing: 0.16em; margin-bottom: 6pt; font-weight: 600; }
 .arch-box .txt { font-size: 9.5pt; line-height: 1.5; white-space: pre-wrap; color: var(--ash); }
+.arch-box .txt .empty { color: var(--smoke); }
+ul.arch-items { list-style: none; margin: 0; padding: 0; }
+ul.arch-items li { padding-left: 10pt; position: relative; margin-bottom: 4pt; }
+ul.arch-items li::before { content: '—'; position: absolute; left: 0; color: var(--detonation); }
 .arch-center { background: var(--void); color: var(--paper); border-radius: 3pt; padding: 14pt; display: flex; flex-direction: column; justify-content: center; min-height: 110pt; }
 .arch-center .lbl { font-size: 9pt; text-transform: uppercase; letter-spacing: 0.18em; color: var(--smoke); font-weight: 600; }
 .arch-center .txt { font-family: 'Bebas Neue', Impact, sans-serif; font-size: 18pt; line-height: 1.1; margin-top: 8pt; font-weight: 400; white-space: pre-wrap; color: var(--paper); }
