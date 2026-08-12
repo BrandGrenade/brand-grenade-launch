@@ -84,24 +84,65 @@ export const generateChannelAdaptation = createServerFn({ method: "POST" })
         stageLabel: `Channel adaptation (${data.channelName})`,
       });
 
-      const { error: dErr } = await supabaseAdmin.from("stimulus_directions").insert({
-        run_id: run.id,
-        lens_id: CHANNEL_ADAPTATION_LENS_ID,
-        lens_name: CHANNEL_ADAPTATION_LENS_NAME,
-        sort_order: 0,
-        direction: text.trim(),
-        campaign_line: session.locked_campaign_line ?? null,
-        master_line_at_generation: session.locked_campaign_line ?? null,
-        status: "generated",
-      });
-      if (dErr) throw new Error(dErr.message);
+      const { data: direction, error: dErr } = await supabaseAdmin
+        .from("stimulus_directions")
+        .insert({
+          run_id: run.id,
+          lens_id: CHANNEL_ADAPTATION_LENS_ID,
+          lens_name: CHANNEL_ADAPTATION_LENS_NAME,
+          sort_order: 0,
+          direction: text.trim(),
+          campaign_line: session.locked_campaign_line ?? null,
+          master_line_at_generation: session.locked_campaign_line ?? null,
+          status: "generated",
+        })
+        .select("id")
+        .single();
+      if (dErr || !direction) throw new Error(dErr?.message ?? "Failed to store adaptation");
+
+      // Hold the adaptation against the locked idea before it is usable.
+      let fidelity: unknown = null;
+      try {
+        const { checkAndStoreAdaptationFidelity } = await import(
+          "./stimulus/adaptation-fidelity.server"
+        );
+        fidelity = await checkAndStoreAdaptationFidelity({
+          sessionId: data.sessionId,
+          directionId: direction.id,
+          channelName: data.channelName,
+          adaptation: text.trim(),
+          lockedIdea: session.locked_big_idea,
+          lockedLine: session.locked_campaign_line ?? null,
+          lockedLens: session.locked_big_idea_lens ?? null,
+        });
+      } catch (e) {
+        // Never a silent pass: record the failure as an unverified verdict.
+        fidelity = {
+          kind: "channel_adaptation_fidelity",
+          verdict: "drift",
+          score: 0,
+          reasoning: `Fidelity check could not complete: ${
+            e instanceof Error ? e.message : String(e)
+          }. Treat this adaptation as unverified.`,
+          missing: [],
+          misreadingEvidence: "",
+          lineVerbatim: false,
+          lockedLine: (session.locked_campaign_line ?? "").trim(),
+          checkedAt: new Date().toISOString(),
+        };
+        await supabaseAdmin
+          .from("stimulus_directions")
+          .update({ line_check: fidelity as never })
+          .eq("id", direction.id);
+      }
 
       await supabaseAdmin
         .from("stimulus_runs")
         .update({ status: "complete", error: null })
         .eq("id", run.id);
 
-      return { runId: run.id };
+      return { runId: run.id, fidelity };
+
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Channel adaptation failed";
       await supabaseAdmin
