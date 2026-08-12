@@ -27,6 +27,7 @@ import { Route as BriefingRoomRouteImport } from './routes/briefing-room'
 import { Route as BriefRouteImport } from './routes/brief'
 import { Route as RepoSlugRouteImport } from './routes/$repoSlug'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as WalkthroughIndexRouteImport } from './routes/walkthrough.index'
 import { Route as SynthesiserIndexRouteImport } from './routes/synthesiser.index'
 import { Route as IntelligenceIndexRouteImport } from './routes/intelligence.index'
 import { Route as CreativeIndexRouteImport } from './routes/creative.index'
@@ -139,6 +140,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const WalkthroughIndexRoute = WalkthroughIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => WalkthroughRoute,
 } as any)
 const SynthesiserIndexRoute = SynthesiserIndexRouteImport.update({
   id: '/',
@@ -273,7 +279,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof SettingsRoute
   '/synthesiser': typeof SynthesiserRouteWithChildren
   '/unsubscribe': typeof UnsubscribeRoute
-  '/walkthrough': typeof WalkthroughRoute
+  '/walkthrough': typeof WalkthroughRouteWithChildren
   '/admin/repositories': typeof AdminRepositoriesRoute
   '/admin/tests': typeof AdminTestsRoute
   '/brief/new': typeof BriefNewRoute
@@ -288,6 +294,7 @@ export interface FileRoutesByFullPath {
   '/creative/': typeof CreativeIndexRoute
   '/intelligence/': typeof IntelligenceIndexRoute
   '/synthesiser/': typeof SynthesiserIndexRoute
+  '/walkthrough/': typeof WalkthroughIndexRoute
   '/admin/preview/$slug': typeof AdminPreviewSlugRoute
   '/intelligence/$id/edit': typeof IntelligenceIdEditRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
@@ -310,7 +317,6 @@ export interface FileRoutesByTo {
   '/pipeline': typeof PipelineRoute
   '/settings': typeof SettingsRoute
   '/unsubscribe': typeof UnsubscribeRoute
-  '/walkthrough': typeof WalkthroughRoute
   '/admin/repositories': typeof AdminRepositoriesRoute
   '/admin/tests': typeof AdminTestsRoute
   '/brief/new': typeof BriefNewRoute
@@ -325,6 +331,7 @@ export interface FileRoutesByTo {
   '/creative': typeof CreativeIndexRoute
   '/intelligence': typeof IntelligenceIndexRoute
   '/synthesiser': typeof SynthesiserIndexRoute
+  '/walkthrough': typeof WalkthroughIndexRoute
   '/admin/preview/$slug': typeof AdminPreviewSlugRoute
   '/intelligence/$id/edit': typeof IntelligenceIdEditRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
@@ -353,7 +360,7 @@ export interface FileRoutesById {
   '/settings': typeof SettingsRoute
   '/synthesiser': typeof SynthesiserRouteWithChildren
   '/unsubscribe': typeof UnsubscribeRoute
-  '/walkthrough': typeof WalkthroughRoute
+  '/walkthrough': typeof WalkthroughRouteWithChildren
   '/admin/repositories': typeof AdminRepositoriesRoute
   '/admin/tests': typeof AdminTestsRoute
   '/brief/new': typeof BriefNewRoute
@@ -368,6 +375,7 @@ export interface FileRoutesById {
   '/creative/': typeof CreativeIndexRoute
   '/intelligence/': typeof IntelligenceIndexRoute
   '/synthesiser/': typeof SynthesiserIndexRoute
+  '/walkthrough/': typeof WalkthroughIndexRoute
   '/admin/preview/$slug': typeof AdminPreviewSlugRoute
   '/intelligence/$id_/edit': typeof IntelligenceIdEditRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
@@ -412,6 +420,7 @@ export interface FileRouteTypes {
     | '/creative/'
     | '/intelligence/'
     | '/synthesiser/'
+    | '/walkthrough/'
     | '/admin/preview/$slug'
     | '/intelligence/$id/edit'
     | '/lovable/email/suppression'
@@ -434,7 +443,6 @@ export interface FileRouteTypes {
     | '/pipeline'
     | '/settings'
     | '/unsubscribe'
-    | '/walkthrough'
     | '/admin/repositories'
     | '/admin/tests'
     | '/brief/new'
@@ -449,6 +457,7 @@ export interface FileRouteTypes {
     | '/creative'
     | '/intelligence'
     | '/synthesiser'
+    | '/walkthrough'
     | '/admin/preview/$slug'
     | '/intelligence/$id/edit'
     | '/lovable/email/suppression'
@@ -491,6 +500,7 @@ export interface FileRouteTypes {
     | '/creative/'
     | '/intelligence/'
     | '/synthesiser/'
+    | '/walkthrough/'
     | '/admin/preview/$slug'
     | '/intelligence/$id_/edit'
     | '/lovable/email/suppression'
@@ -519,7 +529,7 @@ export interface RootRouteChildren {
   SettingsRoute: typeof SettingsRoute
   SynthesiserRoute: typeof SynthesiserRouteWithChildren
   UnsubscribeRoute: typeof UnsubscribeRoute
-  WalkthroughRoute: typeof WalkthroughRoute
+  WalkthroughRoute: typeof WalkthroughRouteWithChildren
   AdminRepositoriesRoute: typeof AdminRepositoriesRoute
   AdminTestsRoute: typeof AdminTestsRoute
   DetonationCanvasRoute: typeof DetonationCanvasRoute
@@ -660,6 +670,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/walkthrough/': {
+      id: '/walkthrough/'
+      path: '/'
+      fullPath: '/walkthrough/'
+      preLoaderRoute: typeof WalkthroughIndexRouteImport
+      parentRoute: typeof WalkthroughRoute
     }
     '/synthesiser/': {
       id: '/synthesiser/'
@@ -888,6 +905,18 @@ const SynthesiserRouteWithChildren = SynthesiserRoute._addFileChildren(
   SynthesiserRouteChildren,
 )
 
+interface WalkthroughRouteChildren {
+  WalkthroughIndexRoute: typeof WalkthroughIndexRoute
+}
+
+const WalkthroughRouteChildren: WalkthroughRouteChildren = {
+  WalkthroughIndexRoute: WalkthroughIndexRoute,
+}
+
+const WalkthroughRouteWithChildren = WalkthroughRoute._addFileChildren(
+  WalkthroughRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   RepoSlugRoute: RepoSlugRoute,
@@ -906,7 +935,7 @@ const rootRouteChildren: RootRouteChildren = {
   SettingsRoute: SettingsRoute,
   SynthesiserRoute: SynthesiserRouteWithChildren,
   UnsubscribeRoute: UnsubscribeRoute,
-  WalkthroughRoute: WalkthroughRoute,
+  WalkthroughRoute: WalkthroughRouteWithChildren,
   AdminRepositoriesRoute: AdminRepositoriesRoute,
   AdminTestsRoute: AdminTestsRoute,
   DetonationCanvasRoute: DetonationCanvasRoute,
