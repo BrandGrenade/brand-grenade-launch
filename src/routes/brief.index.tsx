@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { TopNav } from "@/components/TopNav";
 import { createSession } from "@/lib/stage1.functions";
 import { resubmitBriefStructured } from "@/lib/stage1b.functions";
+import { Spinner } from "@/components/ui/busy";
 import {
   SavedBriefsPicker,
   saveBrief,
@@ -19,7 +20,6 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import {
-import { Spinner } from "@/components/ui/busy";
   BRIEF_SECTIONS as SECTIONS,
   composeBriefText as composeStructuredBriefText,
   briefFieldsFromLegacyText,

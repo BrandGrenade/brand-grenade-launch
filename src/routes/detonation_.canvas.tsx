@@ -11,8 +11,8 @@ import { TopNav } from "@/components/TopNav";
 import { SMPAnchor } from "@/components/SMPAnchor";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
-import {
 import { Spinner } from "@/components/ui/busy";
+import {
   prepareThreeTruths,
   saveCulturalTruth,
   saveBrandIntelligence,

@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import { ArrowLeft, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { TopNav } from "@/components/TopNav";
-import {
 import { Spinner } from "@/components/ui/busy";
+import {
   listBriefingWorkspaces,
   createBriefingWorkspace,
   deleteBriefingWorkspace,
