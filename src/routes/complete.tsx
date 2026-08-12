@@ -386,8 +386,8 @@ function CompletePage() {
             gap: 24,
           }}
         >
-          <Stat value="20" label="STAGES COMPLETED" tone="success" />
-          <Stat value="3" label="CHECKPOINTS CONFIRMED" tone="success" />
+          <Stat value={String(stagesCompleted)} label="STAGES COMPLETED" tone="success" />
+          <Stat value={String(humanReviews)} label="HUMAN CHECKPOINTS CONFIRMED" tone="success" />
           <Stat value={smpPreview} label="STRATEGIC PROPOSITION" tone="primary" />
         </div>
 
