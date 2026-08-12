@@ -226,10 +226,22 @@ export const getCreativeShowcase = createServerFn({ method: "POST" })
       const haystack = `${adaptation}\n${offlineBrief ?? ""}`;
       const carries = signatures
         .map((s) => {
-          const evidence = evidenceFor(haystack, s.name);
-          return evidence ? { name: s.name, category: s.category, description: s.description, evidence } : null;
+          const hit = evidenceFor(haystack, s.name);
+          return hit
+            ? {
+                name: s.name,
+                category: s.category,
+                description: s.description,
+                evidence: hit.evidence,
+                strength: hit.strength,
+              }
+            : null;
         })
-        .filter(Boolean) as ShowcaseChannel["carries"];
+        .filter((v): v is NonNullable<typeof v> => v !== null)
+        .sort((a, b) => b.strength - a.strength)
+        .slice(0, 6)
+        .map(({ strength: _s, ...rest }) => rest);
+
 
       const prompt = promptByChannel.get(channelName);
       channels.push({
