@@ -208,15 +208,10 @@ async function prepareCall(
 ): Promise<{ apiKey: string; body: string; amendmentKey?: string }> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) throw new Error("ANTHROPIC_API_KEY is not configured");
-  const devMode = await readDevMode(args.sessionId);
-  let effectiveSystem = args.systemPrompt;
-  let effectiveMaxTokens = args.maxTokens ?? 64000;
-  if (devMode && args.stageNumber && args.stageName) {
-    effectiveSystem = buildDevModePrompt(args.stageNumber, args.stageName);
-    effectiveMaxTokens = 500;
-  } else if (!args.skipUniversalWrapper) {
-    effectiveSystem = `${UNIVERSAL_SYSTEM_WRAPPER}\n\n${args.systemPrompt}`;
-  }
+  const effectiveMaxTokens = args.maxTokens ?? 64000;
+  const effectiveSystem = args.skipUniversalWrapper
+    ? args.systemPrompt
+    : `${UNIVERSAL_SYSTEM_WRAPPER}\n\n${args.systemPrompt}`;
 
   // Universal amendment-note injection. If a human reviewer entered amendment
   // notes before retrying this stage, wrap them onto the user message as a
@@ -224,7 +219,7 @@ async function prepareCall(
   // the same block inline (stages 1 / 8 / 12) — detect via the shared marker.
   let effectiveUserMessage = args.userMessage;
   let amendmentKey: string | undefined;
-  if (!devMode) {
+  {
     const amendment = await readAmendment(args.sessionId, args.stageNumber);
     if (amendment) {
       amendmentKey = amendment.key;
@@ -249,6 +244,7 @@ async function prepareCall(
       );
     }
   }
+
 
   return {
     apiKey,
