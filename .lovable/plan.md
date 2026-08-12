@@ -1,92 +1,65 @@
-# Strategic Objective — Real Branching
+# Demo Mode — replacing Dev Mode
 
-Scope confirmation before building. This is targeted prompt-injection plus a small
-number of conditional branches. No new stages, no new architecture.
+## Feasibility answers first
 
-## 1. Split "Refresh" into two objectives
+**1. Can the existing room views be reused in a stripped read-only mode?**
+Partly — and the split is uneven, so the honest answer is "reuse two, rebuild two".
 
-`STRATEGIC_OBJECTIVE_OPTIONS` in `src/lib/brief-schema.ts` goes from 7 to 8 entries:
+- `/intelligence/$id` (1,439 lines) and the `/creative/$sessionId` shell (226 lines) are close to pure display off a fetched row. Hiding the action buttons is genuinely cheap.
+- `/briefing-room/$id` renders prop-driven step views inside a card that owns the run button. The views themselves are reusable; the wrapper is not.
+- `/pipeline` (5,774 lines) is a single mega-component where stage output rendering, stream/DB-poll recovery, retry, reset-cascade and checkpoint confirmation are interleaved. There is no `StageOutputCard` boundary to reuse. Threading a `readOnly` flag through it would touch the most critical file in the app.
+- `BigIdeaSweep`'s `IdeaCard` (1,021-line file) interleaves triage buttons and the revise textarea inside the same function as the display blocks.
 
-- `Refresh (Packaging)` — pack/identity/design-system refresh, bounded lifecycle.
-- `Refresh (Campaign)` — new campaign inside a fixed brand platform.
+So: reuse the intelligence report render and the briefing-room step views; write new read-only renderers for pipeline stages and idea cards. The new renderers are formatting-only (markdown text blocks + small typed cards), not new business logic — all the parsing helpers (`stage9-disposition-apply`, `checkpoint-gate`, `exec-summary-extract`) are already standalone and get imported as-is.
 
-The radio group in the brief intake form renders from this array, so it updates
-automatically. Existing sessions holding the literal value `Refresh` are treated as
-`Refresh (Campaign)` by the resolver (no data migration, no rewriting of history).
+**2. Single linear "Next" across four separate routes?**
+Not achievable by chaining the existing routes — each owns its own fetch, its own status polling and its own layout chrome. It needs one new unified route that loads all four data sources for a session and renders them as ordered steps. That is also the only way to get a stable step index for Next/Back and a progress rail.
 
-## 2. Remove `strategic_mode`
+## What gets built
 
-Hardcoded to `"Auto"`, no UI control, injected into five stage prompts for no effect.
-Clean removal:
+### A. Remove Dev Mode entirely
+- Delete `src/lib/dev-mode.ts`'s dev-mode half, `src/components/DevModeBanner.tsx`, its mount in `__root.tsx`.
+- `src/lib/claude.server.ts`: delete `buildDevModePrompt`, `readDevMode`, and the two branches in `prepareCall` — every call keeps the Universal System Wrapper and full `maxTokens`.
+- Drop `devMode` from `stage1.functions.ts` input and stop writing `sessions.dev_mode`; remove `getDevModeFromStorage()` call sites in `brief.index.tsx` and `brief.new.tsx`. The DB column is left in place (harmless, always false) rather than migrating a live table.
 
-- Drop the `strategicMode` argument from the Stage 1, 3, 4, 4B, 5, 6, 7 prompt builders
-  and from the corresponding `*.functions.ts` callers.
-- Drop `strategic_mode` from every `.select(...)` list and from the session insert.
-- Drop it from `brief.index.tsx`, `brief.new.tsx`, `pipeline.tsx`, `dashboard.tsx`,
-  `preflight-tier-two.functions.ts`.
-- One migration: give `sessions.strategic_mode` a default so inserts stop supplying it.
-  The column itself stays (historical rows keep their value); nothing reads it.
+### B. Demo Mode as a pure viewing state
+- New `src/lib/demo-mode.ts`: `useDemoMode()` backed by `localStorage` key `bg_demo_mode`, same cross-tab event pattern. Nothing server-side, nothing written to any session row, ever.
+- `TopNav`: same slot, same admin-only gate, label `DEMO MODE`. When on, it also shows a "Walkthrough" entry that opens the session picker.
+- No banner. Demo Mode ON simply enables the walkthrough route and its entry points.
 
-## 3. Conditional logic — the eight objectives
+### C. New unified walkthrough route
+`src/routes/walkthrough.$sessionId.tsx` plus `src/routes/walkthrough.index.tsx` (picker listing completed sessions, newest first).
 
-New client-safe module `src/lib/strategic-objective.ts`:
+Data loaded once per session through one new server function `getWalkthrough` (`src/lib/walkthrough.functions.ts`), pulling:
+- `intelligence_sessions` row (final_report, ranked territories)
+- briefing-room workspace row (diagnosis, selected frame, tension)
+- `sessions` row: all `stage_N_output(s)`, `selected_smp`, `selection_rationale`, checkpoint flags A–F, `locked_big_idea` / `locked_campaign_line`, `stage_21_outputs`
+- `stimulus_runs` (+ `convergence_ledger`) and `stimulus_directions` for the winning run
+- synthesiser run if present
 
-- `StrategicObjective` union of the eight values.
-- `resolveObjective(briefVersions)` — reads `sections.f2_objective` from the latest
-  brief version, normalises legacy `Refresh`, returns `null` when unset.
-- `objectiveDirective(objective, stageKey)` — returns the injection text for a given
-  stage, or `""` when that objective has no rule at that stage.
+Steps are computed into an ordered array, skipping absent ones:
+```text
+00 Research Synthesis → 01 Intelligence → 02 Briefing Room → Checkpoint A →
+Stages 1–8 → Checkpoint B → Stage 9 (+ disposition ledger) → Stages 10–12
+(+ selection rationale) → Checkpoint C → Stages 13–16 → Stage 17 territory →
+Checkpoint D → Stage 18 Detonation → Checkpoint E → Stage 19 activation →
+Stage 20 Master Brief → Checkpoint F → 04 Creative Engine (37 lenses,
+root tensions, collision ledger, Tissue Check, Gate One, locked idea/line) →
+Channel briefs → Orchestrated output
+```
+Navigation: sticky footer Back / Next with step counter, left rail of section titles for jumping, `?step=` in the URL so a position is shareable, arrow-key support.
 
-Server helper `src/lib/strategic-objective.server.ts` exposes
-`getObjectiveDirective(sessionId, stageKey)`, which loads `brief_versions` once and
-returns the block to append to that stage's user message. When there is no rule the
-call returns `""` and the stage's behaviour is byte-identical to today.
+### D. Presentation chrome
+Read-only throughout: no retry/regenerate/reset, no error or stall banners, no status pills, no heartbeat indicators. Failed or missing steps are simply omitted from the sequence rather than shown as errors.
 
-Injection points, and nothing else:
-
-| Objective | Stage | Injected rule |
-|---|---|---|
-| Launch | 5 | Mandatory "genuine first claim" interrogation; if true it must appear as a candidate territory |
-| Launch | 17–21 | Channel mix weighted to earned/PR and category education |
-| Refresh (Packaging) | 17–21 | Mandatory "reveal moment" beat; bounded lifecycle. No Stage 2/5 rule |
-| Refresh (Campaign) | 17–21 | Existing distinctive assets and brand architecture are fixed constraints; territory-fatigue check against prior campaign history when present |
-| Repositioning | 5 | "What we were vs what we're becoming" contrast required as a structural component of the tension |
-| Repositioning | 13B | Weighting elevated on repositioning-specific historical precedent |
-| Defence | 2 | Named competitive threat gets explicit priority weighting in the competitive set |
-| Defence | 9 | Competitive Impossibility stress-tested against that named competitor |
-| Challenger | 5 | Explicit interrogation of what the named incumbent is structurally blocked from claiming |
-| Challenger | LOC | Engine 08 Enemy First guaranteed to fire and flagged for serious consideration at Checkpoint C |
-| Crisis Recovery | 4B | Elevated fact-verification rigor |
-| Crisis Recovery | 17–21 | Mandatory tonal constraints: no bravado, no minimising, direct acknowledgment required |
-| Category Creation | 5 | Category definition itself as a mandatory output field, distinct from a product benefit |
-| Category Creation | Intelligence Engine | Type 03 Category Creation required as primary lens |
-
-Stages 2, 4B, 5, 9, 13B, 17, 17B, 18, 19, 20, 21 each gain one line appending the
-directive to the existing user message. No other stage is touched.
-
-### Challenger / LOC — the one non-prompt branch
-
-`src/lib/loc.functions.ts` currently fires all thirteen engines equally. For Challenger:
-
-- `enemy_first` is excluded from any engine-subset retry pruning, so it always fires.
-- Its parsed output is tagged `priority: true` in `loc_engine_outputs`.
-- `SMPSelection.tsx` renders an amber "Enemy First — priority for Challenger" badge on
-  that candidate at Checkpoint C.
-
-### Crisis Recovery — Release Gate
-
-Entry #39 Release Gate is not built in this codebase. The tonal constraints are enforced
-via the Stage 17–21 injection. If the Release Gate is built later, Crisis Recovery flips
-it to mandatory; that is a one-line hook, noted but not built here.
-
-## 4. Verification
-
-Two runs on the same underlying brief, one `Launch`, one `Crisis Recovery`, diffing
-Stage 5 and Stage 19 output to prove genuinely different behaviour. Reported stage by
-stage with the actual output excerpts.
+### E. Rejection reasoning as first-class content
+Two dedicated steps rather than footnotes:
+- **Stage 9 — what was considered**: parses the CANDIDATE DISPOSITION ledger with the existing `stage9-disposition-apply` helpers and renders every candidate as its own card — survived / rebuilt / rejected — with the verdict reason given the same weight as the survivors. Rejected cards sit alongside, not below.
+- **Stage 12 — why this one**: the selected SMP beside every alternative it beat, each with its LOC/CORE source and rebuild note, plus the six-part `selection_rationale` including what was sacrificed.
+Creative Engine gets the same treatment: killed and kept-in-play lenses shown with their triage reasoning, not filtered out.
 
 ## Technical notes
-
-- All directive text lives in one module so the rules are auditable in one place.
-- Injection is additive to the user message; system prompts are unchanged, so an unset
-  objective produces exactly today's output.
+- One route, one server function, one fetch — no per-room polling in the walkthrough.
+- New display components under `src/components/walkthrough/`; all parsing reuses existing standalone helpers.
+- `head()` metadata on both new routes.
+- Existing rooms are untouched apart from removing the dev-mode toggle wiring.
