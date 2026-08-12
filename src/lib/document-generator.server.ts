@@ -1,3 +1,4 @@
+import { cleanProposition } from "@/lib/clean-proposition";
 // Server-only helpers for the new document generation system.
 // - Section definitions per format
 // - HTML assembly (cover, sections, prop-reveal page, footer)
@@ -60,7 +61,7 @@ function stripStage1Internals(value: string | null | undefined): string {
 export function getSectionDefs(format: DocFormat, session: SessionLike): SectionDef[] {
   const brand = session.brand_name ?? "Untitled Brand";
   const category = session.category ?? "";
-  const smp = session.selected_smp ?? "";
+  const smp = cleanProposition(session.selected_smp);
   const s1 = slice(stripStage1Internals(session.stage_1_output), 1500);
   const s2 = slice(session.stage_2_output, 3000);
   const s5 = slice(session.stage_5_output, 1500);
@@ -445,7 +446,7 @@ export function buildHtmlDocument(
   };
   const label = labels[format];
   const brand = session.brand_name ?? "Untitled Brand";
-  const smp = sanitiseText(session.selected_smp ?? "");
+  const smp = sanitiseText(cleanProposition(session.selected_smp));
   const date = new Date().toLocaleDateString("en-AU", { month: "long", year: "numeric" });
 
 

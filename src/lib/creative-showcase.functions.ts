@@ -13,6 +13,7 @@ import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertSessionAccess } from "@/lib/auth-helpers.server";
+import { cleanProposition } from "@/lib/clean-proposition";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyRow = Record<string, any>;
@@ -263,7 +264,7 @@ export const getCreativeShowcase = createServerFn({ method: "POST" })
     return {
       brandName: (session.brand_name as string) ?? "—",
       category: (session.category as string) ?? "—",
-      smp: (session.selected_smp as string) ?? "",
+      smp: cleanProposition(session.selected_smp as string | null),
       detonationLine: (session.stage_18_detonation_line as string) ?? "",
       foundation: {
         idea: session.locked_big_idea as string,

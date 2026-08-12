@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as WalkthroughRouteImport } from './routes/walkthrough'
 import { Route as UnsubscribeRouteImport } from './routes/unsubscribe'
 import { Route as SynthesiserRouteImport } from './routes/synthesiser'
+import { Route as ShowcaseRouteImport } from './routes/showcase'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as PipelineRouteImport } from './routes/pipeline'
 import { Route as LoginRouteImport } from './routes/login'
@@ -69,6 +70,11 @@ const UnsubscribeRoute = UnsubscribeRouteImport.update({
 const SynthesiserRoute = SynthesiserRouteImport.update({
   id: '/synthesiser',
   path: '/synthesiser',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ShowcaseRoute = ShowcaseRouteImport.update({
+  id: '/showcase',
+  path: '/showcase',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SettingsRoute = SettingsRouteImport.update({
@@ -310,6 +316,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/pipeline': typeof PipelineRoute
   '/settings': typeof SettingsRoute
+  '/showcase': typeof ShowcaseRoute
   '/synthesiser': typeof SynthesiserRouteWithChildren
   '/unsubscribe': typeof UnsubscribeRoute
   '/walkthrough': typeof WalkthroughRouteWithChildren
@@ -354,6 +361,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/pipeline': typeof PipelineRoute
   '/settings': typeof SettingsRoute
+  '/showcase': typeof ShowcaseRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/admin/repositories': typeof AdminRepositoriesRoute
   '/admin/tests': typeof AdminTestsRoute
@@ -400,6 +408,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/pipeline': typeof PipelineRoute
   '/settings': typeof SettingsRoute
+  '/showcase': typeof ShowcaseRoute
   '/synthesiser': typeof SynthesiserRouteWithChildren
   '/unsubscribe': typeof UnsubscribeRoute
   '/walkthrough': typeof WalkthroughRouteWithChildren
@@ -450,6 +459,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/pipeline'
     | '/settings'
+    | '/showcase'
     | '/synthesiser'
     | '/unsubscribe'
     | '/walkthrough'
@@ -494,6 +504,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/pipeline'
     | '/settings'
+    | '/showcase'
     | '/unsubscribe'
     | '/admin/repositories'
     | '/admin/tests'
@@ -539,6 +550,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/pipeline'
     | '/settings'
+    | '/showcase'
     | '/synthesiser'
     | '/unsubscribe'
     | '/walkthrough'
@@ -588,6 +600,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   PipelineRoute: typeof PipelineRoute
   SettingsRoute: typeof SettingsRoute
+  ShowcaseRoute: typeof ShowcaseRoute
   SynthesiserRoute: typeof SynthesiserRouteWithChildren
   UnsubscribeRoute: typeof UnsubscribeRoute
   WalkthroughRoute: typeof WalkthroughRouteWithChildren
@@ -625,6 +638,13 @@ declare module '@tanstack/react-router' {
       path: '/synthesiser'
       fullPath: '/synthesiser'
       preLoaderRoute: typeof SynthesiserRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/showcase': {
+      id: '/showcase'
+      path: '/showcase'
+      fullPath: '/showcase'
+      preLoaderRoute: typeof ShowcaseRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/settings': {
@@ -1048,6 +1068,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   PipelineRoute: PipelineRoute,
   SettingsRoute: SettingsRoute,
+  ShowcaseRoute: ShowcaseRoute,
   SynthesiserRoute: SynthesiserRouteWithChildren,
   UnsubscribeRoute: UnsubscribeRoute,
   WalkthroughRoute: WalkthroughRouteWithChildren,

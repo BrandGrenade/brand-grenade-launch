@@ -15,6 +15,7 @@ import {
 } from "@/lib/phase2-document-generator";
 import { buildPhase1Document, openPhase1Document, openStage16VisionDocument, PHASE_1_SESSION_COLUMNS, type Phase1Format } from "@/lib/phase1-document-builder";
 import { openFullRunDocument, FULL_RUN_SESSION_COLUMNS, resolveFullRunStages } from "@/lib/full-run-document";
+import { cleanProposition } from "@/lib/clean-proposition";
 import { Document00ACard } from "@/components/Document00ACard";
 import { ExecSummaryCard } from "@/components/ExecSummaryCard";
 import { CreativeShowcaseCard } from "@/components/CreativeShowcaseCard";
@@ -125,6 +126,15 @@ type SessionRow = {
   stage_22_output: string | null;
   stage_22_brand_architecture: string | null;
   stage_22_distinctive_assets: string | null;
+
+  // Human checkpoints actually confirmed on this run
+  checkpoint_a_confirmed: boolean | null;
+  checkpoint_b_confirmed: boolean | null;
+  checkpoint_c_confirmed: boolean | null;
+  checkpoint_d_confirmed: boolean | null;
+  checkpoint_e_confirmed: boolean | null;
+  checkpoint_f_confirmed: boolean | null;
+  strategy_signoff_confirmed: boolean | null;
 };
 
 
@@ -169,7 +179,7 @@ function CompletePage() {
     supabase
       .from("sessions")
       .select(
-        `id, brand_name, category, selected_smp, selected_smp_field_name, user_id, doc_consulting_url, doc_agency_url, doc_workshop_url, phase_2_status, updated_at, created_at, stage_17_selected_territory, stage_18_selected_detonation, stage_22_brand_architecture, stage_22_distinctive_assets, ${FULL_RUN_SESSION_COLUMNS}`,
+        `id, brand_name, category, selected_smp, selected_smp_field_name, user_id, doc_consulting_url, doc_agency_url, doc_workshop_url, phase_2_status, updated_at, created_at, stage_17_selected_territory, stage_18_selected_detonation, stage_22_brand_architecture, stage_22_distinctive_assets, checkpoint_a_confirmed, checkpoint_b_confirmed, checkpoint_c_confirmed, checkpoint_d_confirmed, checkpoint_e_confirmed, checkpoint_f_confirmed, strategy_signoff_confirmed, ${FULL_RUN_SESSION_COLUMNS}`,
       )
       .eq("id", sessionId)
       .maybeSingle()
@@ -196,8 +206,8 @@ function CompletePage() {
   }, [sessionId]);
 
   const brand = session?.brand_name ?? "Untitled Brand";
-  const smp = session?.selected_smp ?? "";
-  const field = session?.category ?? session?.selected_smp_field_name ?? "";
+  const smp = cleanProposition(session?.selected_smp);
+  const field = session?.category ?? cleanProposition(session?.selected_smp_field_name) ?? "";
   const brandRole = "";
   const hasSmp = Boolean(smp && smp.trim().length > 0);
 
@@ -205,9 +215,80 @@ function CompletePage() {
     document.title = `${brand} Deliverables — Brand Grenade`;
   }, [brand]);
 
+  // Real numbers for this run — never boilerplate.
+  const stagesCompleted = session
+    ? resolveFullRunStages(session as unknown as Parameters<typeof resolveFullRunStages>[0]).length
+    : 0;
+
+  const [creativeGates, setCreativeGates] = useState({ gateOne: 0, gateTwo: 0 });
+  useEffect(() => {
+    if (!sessionId) return;
+    let cancelled = false;
+    void (async () => {
+      const { data: runs } = await supabase
+        .from("stimulus_runs")
+        .select("id")
+        .eq("session_id", sessionId);
+      const runIds = (runs ?? []).map((r) => r.id);
+      let gateOne = 0;
+      if (runIds.length) {
+        const { count } = await supabase
+          .from("stimulus_directions")
+          .select("id", { count: "exact", head: true })
+          .in("run_id", runIds)
+          .eq("gate_one_approved", true);
+        gateOne = count ?? 0;
+      }
+      const { count: gateTwo } = await supabase
+        .from("stimulus_orchestrations")
+        .select("id", { count: "exact", head: true })
+        .eq("session_id", sessionId)
+        .eq("gate_two_confirmed", true);
+      if (!cancelled) setCreativeGates({ gateOne, gateTwo: gateTwo ?? 0 });
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [sessionId]);
+
+  const strategyCheckpoints = session
+    ? [
+        session.checkpoint_a_confirmed,
+        session.checkpoint_b_confirmed,
+        session.checkpoint_c_confirmed,
+        session.checkpoint_d_confirmed,
+        session.checkpoint_e_confirmed,
+        session.checkpoint_f_confirmed,
+        session.strategy_signoff_confirmed,
+      ].filter(Boolean).length
+    : 0;
+  const humanReviews = strategyCheckpoints + creativeGates.gateOne + creativeGates.gateTwo;
+
+  // Deep links such as /complete?session=…#creative-showcase must land on the
+  // section itself — the content mounts after the session load resolves.
+  useEffect(() => {
+    if (loading || !session) return;
+    const hash = typeof window !== "undefined" ? window.location.hash.slice(1) : "";
+    if (!hash) return;
+    let tries = 0;
+    const timer = window.setInterval(() => {
+      const el = document.getElementById(hash);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+        window.clearInterval(timer);
+      } else if (++tries > 40) {
+        window.clearInterval(timer);
+      }
+    }, 250);
+    return () => window.clearInterval(timer);
+  }, [loading, session]);
+
   const smpPreview = hasSmp
-    ? smp.split(" ").slice(0, 5).join(" ") + "…"
+    ? smp.split(" ").length > 6
+      ? smp.split(" ").slice(0, 6).join(" ") + "…"
+      : smp
     : "—";
+
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -278,7 +359,8 @@ function CompletePage() {
             className="text-body-lg"
             style={{ color: "var(--color-text-secondary)" }}
           >
-            20 stages. 3 human reviews. One complete brand strategy.
+            {stagesCompleted} stage{stagesCompleted === 1 ? "" : "s"}. {humanReviews} human review
+            {humanReviews === 1 ? "" : "s"}. One complete brand strategy.
           </p>
 
           <hr
@@ -304,8 +386,8 @@ function CompletePage() {
             gap: 24,
           }}
         >
-          <Stat value="20" label="STAGES COMPLETED" tone="success" />
-          <Stat value="3" label="CHECKPOINTS CONFIRMED" tone="success" />
+          <Stat value={String(stagesCompleted)} label="STAGES COMPLETED" tone="success" />
+          <Stat value={String(humanReviews)} label="HUMAN CHECKPOINTS CONFIRMED" tone="success" />
           <Stat value={smpPreview} label="STRATEGIC PROPOSITION" tone="primary" />
         </div>
 
@@ -1380,7 +1462,11 @@ function Phase2Deliverables({ session }: { session: SessionRow }) {
             {channelKeys.map((ch) => {
               const body = channels[ch] ?? "";
               const m = body.match(/CHANNEL\s+ROLE\s*[:\-]?\s*([^\n]+)/i);
-              const role = m ? m[1].trim() : "Channel Brief";
+              // Card subtitles are a one-line label, never the full brief body.
+              const raw = m ? m[1].trim() : "Channel Brief";
+              const firstSentence = raw.split(/(?<=\.)\s/)[0] ?? raw;
+              const role =
+                firstSentence.length > 110 ? firstSentence.slice(0, 107).trimEnd() + "…" : firstSentence;
               return (
                 <Card key={ch} title={ch} subtitle={role} busyKey={`ch-${ch}`}
                   onClick={() => download("channel_brief", `ch-${ch}`, ch)} />

@@ -1,3 +1,4 @@
+import { cleanProposition } from "@/lib/clean-proposition";
 // Strategy Executive Summary — section extraction layer.
 //
 // Deterministic only. No AI, no summarisation, no invented sentences. Every
@@ -479,7 +480,7 @@ export interface WinningResult {
 }
 
 export function extractWinning(session: ExecSessionRow): WinningResult {
-  const smp = clean(str(session, "selected_smp")) || null;
+  const smp = clean(cleanProposition(str(session, "selected_smp"))) || null;
   const key = smp ? matchKey(smp) : "";
   let owns: string | null = null;
 
