@@ -10,6 +10,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertSessionAccess } from "@/lib/auth-helpers.server";
 import { callClaude } from "./claude.server";
 import { STIMULUS_LENSES, getLens } from "./stimulus/lenses";
+import { runStaleness } from "./stimulus/staleness";
 import {
   STIMULUS_SYSTEM_PROMPT,
   buildStimulusUserMessage,
@@ -38,12 +39,14 @@ type RunRow = {
   tiebreaker_at?: string | null;
   gate_one_confirmed?: boolean;
   gate_one_confirmed_at?: string | null;
+  locked_big_idea_at_generation?: string | null;
+  locked_line_at_generation?: string | null;
 };
 
 async function loadRun(runId: string, userId: string): Promise<RunRow> {
   const { data, error } = await supabaseAdmin
     .from("stimulus_runs")
-    .select("id, session_id, channel_name, channel_brief, smp, status, error, run_mode, winning_direction_id, winning_line_direction_id, winning_line, locked_at, tiebreaker_output, tiebreaker_fired, tiebreaker_reason, tiebreaker_at, gate_one_confirmed, gate_one_confirmed_at")
+    .select("id, session_id, channel_name, channel_brief, smp, status, error, run_mode, winning_direction_id, winning_line_direction_id, winning_line, locked_at, tiebreaker_output, tiebreaker_fired, tiebreaker_reason, tiebreaker_at, gate_one_confirmed, gate_one_confirmed_at, locked_big_idea_at_generation, locked_line_at_generation")
     .eq("id", runId)
     .single();
   if (error || !data) throw new Error(`Stimulus run not found: ${error?.message ?? "no row"}`);
@@ -75,11 +78,31 @@ export const listStimulusRuns = createServerFn({ method: "POST" })
     await assertSessionAccess(data.sessionId, context.userId);
     const { data: runs, error } = await supabaseAdmin
       .from("stimulus_runs")
-      .select("id, channel_name, status, error, created_at, run_mode, locked_at")
+      .select("id, channel_name, status, error, created_at, run_mode, locked_at, locked_big_idea_at_generation, locked_line_at_generation")
       .eq("session_id", data.sessionId)
       .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
-    return { runs: runs ?? [] };
+    const { data: sess } = await supabaseAdmin
+      .from("sessions")
+      .select("locked_big_idea, locked_campaign_line")
+      .eq("id", data.sessionId)
+      .single();
+    const lock = {
+      locked_big_idea: sess?.locked_big_idea ?? null,
+      locked_campaign_line: sess?.locked_campaign_line ?? null,
+    };
+    return {
+      runs: (runs ?? []).map((r) => ({
+        ...r,
+        staleness: runStaleness(
+          {
+            locked_big_idea_at_generation: r.locked_big_idea_at_generation ?? null,
+            locked_line_at_generation: r.locked_line_at_generation ?? null,
+          },
+          lock,
+        ),
+      })),
+    };
   });
 
 export const startStimulusRun = createServerFn({ method: "POST" })
@@ -242,7 +265,22 @@ export const loadStimulusRun = createServerFn({ method: "POST" })
       .eq("run_id", run.id)
       .order("sort_order", { ascending: true });
     if (error) throw new Error(error.message);
-    return { run, directions: directions ?? [] };
+    const { data: sess } = await supabaseAdmin
+      .from("sessions")
+      .select("locked_big_idea, locked_campaign_line")
+      .eq("id", run.session_id)
+      .single();
+    const staleness = runStaleness(
+      {
+        locked_big_idea_at_generation: run.locked_big_idea_at_generation ?? null,
+        locked_line_at_generation: run.locked_line_at_generation ?? null,
+      },
+      {
+        locked_big_idea: sess?.locked_big_idea ?? null,
+        locked_campaign_line: sess?.locked_campaign_line ?? null,
+      },
+    );
+    return { run, directions: directions ?? [], staleness };
   });
 
 /** Tissue Check triage — the human pass. */
