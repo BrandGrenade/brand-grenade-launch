@@ -553,9 +553,15 @@ function IdeaCard({
 export function BigIdeaSweep({
   sessionId,
   onLocked,
+  mode = "sweep",
 }: {
   sessionId: string;
   onLocked?: () => void;
+  /**
+   * "sweep"     — Page 1: generate and judge all 37 lenses (Keep / Keep in play / Kill).
+   * "shortlist" — Page 2: only kept ideas, and the only place a winner is locked.
+   */
+  mode?: "sweep" | "shortlist";
 }) {
   const start = useServerFn(startBigIdeaRun);
   const resume = useServerFn(resumeBigIdeaSweep);
