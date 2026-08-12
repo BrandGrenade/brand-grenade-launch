@@ -205,8 +205,8 @@ function CompletePage() {
   }, [sessionId]);
 
   const brand = session?.brand_name ?? "Untitled Brand";
-  const smp = session?.selected_smp ?? "";
-  const field = session?.category ?? session?.selected_smp_field_name ?? "";
+  const smp = cleanProposition(session?.selected_smp);
+  const field = session?.category ?? cleanProposition(session?.selected_smp_field_name) ?? "";
   const brandRole = "";
   const hasSmp = Boolean(smp && smp.trim().length > 0);
 
@@ -214,9 +214,80 @@ function CompletePage() {
     document.title = `${brand} Deliverables — Brand Grenade`;
   }, [brand]);
 
+  // Real numbers for this run — never boilerplate.
+  const stagesCompleted = session
+    ? resolveFullRunStages(session as unknown as Parameters<typeof resolveFullRunStages>[0]).length
+    : 0;
+
+  const [creativeGates, setCreativeGates] = useState({ gateOne: 0, gateTwo: 0 });
+  useEffect(() => {
+    if (!sessionId) return;
+    let cancelled = false;
+    void (async () => {
+      const { data: runs } = await supabase
+        .from("stimulus_runs")
+        .select("id")
+        .eq("session_id", sessionId);
+      const runIds = (runs ?? []).map((r) => r.id);
+      let gateOne = 0;
+      if (runIds.length) {
+        const { count } = await supabase
+          .from("stimulus_directions")
+          .select("id", { count: "exact", head: true })
+          .in("run_id", runIds)
+          .eq("gate_one_approved", true);
+        gateOne = count ?? 0;
+      }
+      const { count: gateTwo } = await supabase
+        .from("stimulus_orchestrations")
+        .select("id", { count: "exact", head: true })
+        .eq("session_id", sessionId)
+        .eq("gate_two_confirmed", true);
+      if (!cancelled) setCreativeGates({ gateOne, gateTwo: gateTwo ?? 0 });
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [sessionId]);
+
+  const strategyCheckpoints = session
+    ? [
+        session.checkpoint_a_confirmed,
+        session.checkpoint_b_confirmed,
+        session.checkpoint_c_confirmed,
+        session.checkpoint_d_confirmed,
+        session.checkpoint_e_confirmed,
+        session.checkpoint_f_confirmed,
+        session.strategy_signoff_confirmed,
+      ].filter(Boolean).length
+    : 0;
+  const humanReviews = strategyCheckpoints + creativeGates.gateOne + creativeGates.gateTwo;
+
+  // Deep links such as /complete?session=…#creative-showcase must land on the
+  // section itself — the content mounts after the session load resolves.
+  useEffect(() => {
+    if (loading || !session) return;
+    const hash = typeof window !== "undefined" ? window.location.hash.slice(1) : "";
+    if (!hash) return;
+    let tries = 0;
+    const timer = window.setInterval(() => {
+      const el = document.getElementById(hash);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+        window.clearInterval(timer);
+      } else if (++tries > 40) {
+        window.clearInterval(timer);
+      }
+    }, 250);
+    return () => window.clearInterval(timer);
+  }, [loading, session]);
+
   const smpPreview = hasSmp
-    ? smp.split(" ").slice(0, 5).join(" ") + "…"
+    ? smp.split(" ").length > 6
+      ? smp.split(" ").slice(0, 6).join(" ") + "…"
+      : smp
     : "—";
+
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
