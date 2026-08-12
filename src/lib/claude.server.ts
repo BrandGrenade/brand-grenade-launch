@@ -95,19 +95,7 @@ ALWAYS WRITE AS:
 A compelling strategic document that a CMO or senior partner would read with confidence and find immediately actionable.
 Every sentence must earn its place. Strategic precision over completeness.`;
 
-async function readDevMode(sessionId: string | undefined): Promise<boolean> {
-  if (!sessionId) return false;
-  try {
-    const { data } = await supabaseAdmin
-      .from("sessions")
-      .select("dev_mode")
-      .eq("id", sessionId)
-      .single();
-    return Boolean(data?.dev_mode);
-  } catch {
-    return false;
-  }
-}
+
 
 async function setRetryStatus(sessionId: string | undefined, message: string | null) {
   if (!sessionId) return;
