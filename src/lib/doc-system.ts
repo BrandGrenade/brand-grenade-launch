@@ -172,9 +172,9 @@ body {
 
 @media print {
   #toolbar { display: none; }
-  @page { margin: 18mm 20mm; }
+  @page { margin: 0; }
   html, body { padding: 0; background: var(--paper); }
-  .page { box-shadow: none; max-width: none; padding: 0; background: var(--paper); }
+  .page { box-shadow: none; max-width: none; padding: 18mm 20mm; background: var(--paper); }
   .cover { break-after: page; page-break-after: always; }
   h1, h2, h3, h4, .kicker { break-after: avoid; page-break-after: avoid; }
   .stat-grid, .stat, .pull, .cmp, .cmp thead, .cmp tr, .callout, .toc, .footer { break-inside: avoid; page-break-inside: avoid; }
