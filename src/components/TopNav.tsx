@@ -21,7 +21,7 @@ export function TopNav({ session }: { session?: SessionContext }) {
   const isAdmin = useIsAdmin();
   const unlockRepoAdmin = useServerFn(unlockRepositoryAdminFromPlatform);
   const { signOut } = useAuth();
-  const { enabled: devModeOn, setEnabled: setDevMode } = useDevMode();
+  const { enabled: demoModeOn, setEnabled: setDemoMode } = useDemoMode();
 
   useEffect(() => {
     if (!open) return;
