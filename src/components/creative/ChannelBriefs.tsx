@@ -891,7 +891,9 @@ export function ChannelBriefs({
                       className="text-mono"
                       style={{ color: AMBER, fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase" }}
                     >
-                      Version history — every edit is a new version, nothing is overwritten
+                      Version history — append-only. Nothing is overwritten and no earlier version
+                      is ever reactivated: restoring an older version copies its text forward into a
+                      new, higher-numbered version, which becomes the active one.
                     </div>
                     {versions.length === 0 && (
                       <div className="text-body-sm" style={{ color: MUTED, marginTop: 12 }}>
@@ -916,7 +918,8 @@ export function ChannelBriefs({
                             className="text-mono"
                             style={{ color: i === 0 ? GREEN : PAPER, fontSize: 11, letterSpacing: "0.1em" }}
                           >
-                            v{v.versionNo} · {v.origin.replace("_", " ")}
+                            v{v.versionNo} ·{" "}
+                            {v.origin === "reverted" ? "copied forward from an earlier version" : v.origin.replace("_", " ")}
                             {i === 0 ? " · ACTIVE" : ""}
                           </div>
                           <div className="text-mono" style={{ color: MUTED, fontSize: 11, flex: 1 }}>
@@ -936,7 +939,9 @@ export function ChannelBriefs({
                               disabled={versionBusy}
                               onClick={() => void revertTo(openRunId, d.id, v)}
                             >
-                              {versionBusy ? "Reverting…" : "Revert to this"}
+                              {versionBusy
+                                ? "Copying forward…"
+                                : `Copy v${v.versionNo} forward as v${(versions[0]?.versionNo ?? v.versionNo) + 1}`}
                             </Btn>
                           )}
                         </div>

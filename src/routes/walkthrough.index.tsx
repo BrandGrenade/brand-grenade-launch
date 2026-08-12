@@ -116,7 +116,8 @@ function WalkthroughPicker() {
                   navigate({
                     to: "/walkthrough/$sessionId",
                     params: { sessionId: r.id },
-                    search: {},
+                    search: { step: 0 },
+                    
                   })
                 }
                 style={{
