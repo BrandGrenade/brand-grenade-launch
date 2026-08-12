@@ -497,8 +497,11 @@ export function CreativeStimulus({
               ))}
             </select>
             <Btn onClick={handleStart} disabled={busy || !channel} active>
-              {busy ? `Generating ${progress}/${LENS_COUNT}…` : "Run 37-lens sweep"}
+              {busy
+                ? `Generating ${progress}/${LENS_COUNT}…`
+                : `Run 37-lens sweep — ${channel || "select a channel"}`}
             </Btn>
+
             {runs.length > 0 && (
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                 {runs.map((r) => (
