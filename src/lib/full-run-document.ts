@@ -1,3 +1,4 @@
+import { cleanProposition } from "@/lib/clean-proposition";
 // Client-side HTML builder for the Complete Pipeline Run deliverable.
 //
 // Iterates the canonical STAGE_MANIFEST, stitches every stage's stored
@@ -235,7 +236,7 @@ function footer(): string {
 
 export function buildFullRunDocument(session: FullRunSession): string {
   const brand = session.brand_name ?? "Untitled Brand";
-  const smp = session.selected_smp ?? null;
+  const smp = cleanProposition(session.selected_smp) || null;
 
   const resolved: ResolvedStage[] = [];
   for (const entry of STAGE_MANIFEST) {
