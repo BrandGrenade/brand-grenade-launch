@@ -12,6 +12,7 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertSessionAccess } from "@/lib/auth-helpers.server";
 import type { BrandAssetRules } from "./stimulus/orchestration-prompts";
+import { runStaleness } from "./stimulus/staleness";
 
 const PROMPT_BATCH = 2;
 
@@ -120,12 +121,46 @@ export const startOrchestration = createServerFn({ method: "POST" })
 
     const { data: runs } = await db
       .from("stimulus_runs")
-      .select("id, channel_name, gate_one_confirmed")
+      .select(
+        "id, channel_name, gate_one_confirmed, locked_big_idea_at_generation, locked_line_at_generation",
+      )
       .eq("session_id", data.sessionId)
       .eq("gate_one_confirmed", true);
     const confirmed = (runs ?? []) as AnyRow[];
     if (confirmed.length === 0)
       throw new Error("No Gate One-confirmed channel runs on this session yet.");
+
+    // Staleness gate: a run snapshots its Stage 21 brief at creation. If the
+    // session's locked idea/line has moved since, orchestrating that run would
+    // build finished creative on a superseded proposition.
+    const { data: lockRow } = await db
+      .from("sessions")
+      .select("locked_big_idea, locked_campaign_line")
+      .eq("id", data.sessionId)
+      .single();
+    const lock = {
+      locked_big_idea: (lockRow?.locked_big_idea as string | null) ?? null,
+      locked_campaign_line: (lockRow?.locked_campaign_line as string | null) ?? null,
+    };
+    const stale = confirmed
+      .map((r) => ({
+        channel: r.channel_name as string,
+        s: runStaleness(
+          {
+            locked_big_idea_at_generation: (r.locked_big_idea_at_generation as string | null) ?? null,
+            locked_line_at_generation: (r.locked_line_at_generation as string | null) ?? null,
+          },
+          lock,
+        ),
+      }))
+      .filter((x) => x.s.stale);
+    if (stale.length > 0) {
+      throw new Error(
+        `Orchestration blocked — ${stale.length} channel run${stale.length > 1 ? "s are" : " is"} stale against the currently locked campaign idea. ` +
+          stale.map((x) => `"${x.channel}": ${x.s.reason}`).join(" ") +
+          " Re-run the sweep for these channels against the current lock before orchestrating.",
+      );
+    }
 
     const runIds = confirmed.map((r) => r.id as string);
     const { data: dirs } = await db
