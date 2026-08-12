@@ -48,7 +48,16 @@ function ChannelsStep() {
         lockedLine={session.locked_campaign_line}
         lockedLens={session.locked_big_idea_lens}
       />
-      <div style={{ maxWidth: 980, margin: "36px auto 0" }}>
+      <div
+        style={{
+          maxWidth: 980,
+          margin: "36px auto 0",
+          display: "flex",
+          gap: 12,
+          flexWrap: "wrap",
+          justifyContent: "space-between",
+        }}
+      >
         <Link
           to="/creative/$sessionId/shortlist"
           params={{ sessionId }}
@@ -66,7 +75,26 @@ function ChannelsStep() {
         >
           ← Back to Step 2 · Shortlist and lock
         </Link>
+        <Link
+          to="/creative/$sessionId/orchestration"
+          params={{ sessionId }}
+          className="text-mono"
+          style={{
+            border: "1px solid #F2665F",
+            backgroundColor: "#F2665F18",
+            color: "#F2665F",
+            borderRadius: 8,
+            padding: "12px 18px",
+            fontSize: 11,
+            letterSpacing: "0.12em",
+            textTransform: "uppercase",
+            textDecoration: "none",
+          }}
+        >
+          Step 4 · Orchestration and Gate Two →
+        </Link>
       </div>
+
     </>
   );
 }

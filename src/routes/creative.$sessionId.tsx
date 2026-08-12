@@ -1,7 +1,8 @@
-// CREATIVE ENGINE — the room shell. Three explicit steps, one per route:
+// CREATIVE ENGINE — the room shell. Four explicit steps, one per route:
 //   /creative/$sessionId            → Step 1 · the 37-lens sweep
 //   /creative/$sessionId/shortlist  → Step 2 · shortlist and lock the winner
-//   /creative/$sessionId/channels   → Step 3 · content prompts, offline briefs, export
+//   /creative/$sessionId/channels   → Step 3 · content prompts, offline briefs, Gate One
+//   /creative/$sessionId/orchestration → Step 4 · orchestration, registry, Gate Two
 // This file owns only the header, the background input, and the step nav.
 
 import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
@@ -124,7 +125,8 @@ function CreativeRoom() {
   const channels = Object.keys(session?.stage_21_outputs ?? {});
   const onShortlist = pathname.endsWith("/shortlist");
   const onChannels = pathname.endsWith("/channels");
-  const onSweep = !onShortlist && !onChannels;
+  const onOrchestration = pathname.endsWith("/orchestration");
+  const onSweep = !onShortlist && !onChannels && !onOrchestration;
 
   return (
     <>
@@ -155,9 +157,10 @@ function CreativeRoom() {
             {loading ? <><Spinner /> Loading…</> : session?.brand_name || "Untitled session"}
           </h1>
           <p className="text-body-sm" style={{ color: MUTED, maxWidth: 760, lineHeight: 1.7 }}>
-            Three steps, in order. Sweep all {LENS_COUNT} lenses against the proposition, shortlist what
-            survives and lock one winning idea and line, then generate the content creation input
-            prompts and offline creative briefs from it.
+            Four steps, in order. Sweep all {LENS_COUNT} lenses against the proposition, shortlist what
+            survives and lock one winning idea and line, generate the content creation input prompts
+            and offline creative briefs from it and confirm Gate One per channel, then orchestrate the
+            confirmed set as one campaign through to Gate Two.
           </p>
 
           {/* STEP NAV — always visible, on every step. */}
@@ -176,6 +179,13 @@ function CreativeRoom() {
               n={3}
               label="Channels & export"
               active={onChannels}
+            />
+            <StepLink
+              to="/creative/$sessionId/orchestration"
+              sessionId={sessionId}
+              n={4}
+              label="Orchestration & Gate Two"
+              active={onOrchestration}
             />
           </nav>
 
