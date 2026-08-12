@@ -891,7 +891,9 @@ export function ChannelBriefs({
                       className="text-mono"
                       style={{ color: AMBER, fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase" }}
                     >
-                      Version history — every edit is a new version, nothing is overwritten
+                      Version history — append-only. Nothing is overwritten and no earlier version
+                      is ever reactivated: restoring an older version copies its text forward into a
+                      new, higher-numbered version, which becomes the active one.
                     </div>
                     {versions.length === 0 && (
                       <div className="text-body-sm" style={{ color: MUTED, marginTop: 12 }}>
