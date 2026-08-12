@@ -33,6 +33,7 @@ import { Route as IntelligenceIndexRouteImport } from './routes/intelligence.ind
 import { Route as CreativeIndexRouteImport } from './routes/creative.index'
 import { Route as BriefingRoomIndexRouteImport } from './routes/briefing-room.index'
 import { Route as BriefIndexRouteImport } from './routes/brief.index'
+import { Route as WalkthroughSessionIdRouteImport } from './routes/walkthrough.$sessionId'
 import { Route as IntelligenceNewRouteImport } from './routes/intelligence.new'
 import { Route as IntelligenceIdRouteImport } from './routes/intelligence.$id'
 import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
@@ -171,6 +172,11 @@ const BriefIndexRoute = BriefIndexRouteImport.update({
   path: '/',
   getParentRoute: () => BriefRoute,
 } as any)
+const WalkthroughSessionIdRoute = WalkthroughSessionIdRouteImport.update({
+  id: '/$sessionId',
+  path: '/$sessionId',
+  getParentRoute: () => WalkthroughRoute,
+} as any)
 const IntelligenceNewRoute = IntelligenceNewRouteImport.update({
   id: '/new',
   path: '/new',
@@ -289,6 +295,7 @@ export interface FileRoutesByFullPath {
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/intelligence/$id': typeof IntelligenceIdRoute
   '/intelligence/new': typeof IntelligenceNewRoute
+  '/walkthrough/$sessionId': typeof WalkthroughSessionIdRoute
   '/brief/': typeof BriefIndexRoute
   '/briefing-room/': typeof BriefingRoomIndexRoute
   '/creative/': typeof CreativeIndexRoute
@@ -326,6 +333,7 @@ export interface FileRoutesByTo {
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/intelligence/$id': typeof IntelligenceIdRoute
   '/intelligence/new': typeof IntelligenceNewRoute
+  '/walkthrough/$sessionId': typeof WalkthroughSessionIdRoute
   '/brief': typeof BriefIndexRoute
   '/briefing-room': typeof BriefingRoomIndexRoute
   '/creative': typeof CreativeIndexRoute
@@ -370,6 +378,7 @@ export interface FileRoutesById {
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/intelligence/$id': typeof IntelligenceIdRoute
   '/intelligence/new': typeof IntelligenceNewRoute
+  '/walkthrough/$sessionId': typeof WalkthroughSessionIdRoute
   '/brief/': typeof BriefIndexRoute
   '/briefing-room/': typeof BriefingRoomIndexRoute
   '/creative/': typeof CreativeIndexRoute
@@ -415,6 +424,7 @@ export interface FileRouteTypes {
     | '/email/unsubscribe'
     | '/intelligence/$id'
     | '/intelligence/new'
+    | '/walkthrough/$sessionId'
     | '/brief/'
     | '/briefing-room/'
     | '/creative/'
@@ -452,6 +462,7 @@ export interface FileRouteTypes {
     | '/email/unsubscribe'
     | '/intelligence/$id'
     | '/intelligence/new'
+    | '/walkthrough/$sessionId'
     | '/brief'
     | '/briefing-room'
     | '/creative'
@@ -495,6 +506,7 @@ export interface FileRouteTypes {
     | '/email/unsubscribe'
     | '/intelligence/$id'
     | '/intelligence/new'
+    | '/walkthrough/$sessionId'
     | '/brief/'
     | '/briefing-room/'
     | '/creative/'
@@ -713,6 +725,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BriefIndexRouteImport
       parentRoute: typeof BriefRoute
     }
+    '/walkthrough/$sessionId': {
+      id: '/walkthrough/$sessionId'
+      path: '/$sessionId'
+      fullPath: '/walkthrough/$sessionId'
+      preLoaderRoute: typeof WalkthroughSessionIdRouteImport
+      parentRoute: typeof WalkthroughRoute
+    }
     '/intelligence/new': {
       id: '/intelligence/new'
       path: '/new'
@@ -906,10 +925,12 @@ const SynthesiserRouteWithChildren = SynthesiserRoute._addFileChildren(
 )
 
 interface WalkthroughRouteChildren {
+  WalkthroughSessionIdRoute: typeof WalkthroughSessionIdRoute
   WalkthroughIndexRoute: typeof WalkthroughIndexRoute
 }
 
 const WalkthroughRouteChildren: WalkthroughRouteChildren = {
+  WalkthroughSessionIdRoute: WalkthroughSessionIdRoute,
   WalkthroughIndexRoute: WalkthroughIndexRoute,
 }
 
