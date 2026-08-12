@@ -1,21 +1,23 @@
 // CREATIVE ENGINE — PAGE 3.
 //
 // The locked winning idea and line, one row per channel with an unmistakable
-// status, and the exports. Nothing on this page belongs to the sweep or the
-// shortlist: this page generates channel briefs and hands them over.
+// status, and the exports. Every channel adaptation is generated from the one
+// locked idea, fidelity-checked automatically, and auto-retried once
+// server-side before it is ever shown as failed.
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Link } from "@tanstack/react-router";
 import { listStimulusRuns, loadStimulusRun } from "@/lib/stimulus.functions";
 import {
+  editChannelAdaptation,
   generateChannelAdaptation,
   listAdaptationFidelity,
   recheckAdaptationFidelity,
 } from "@/lib/stimulus-channel.functions";
 import type { AdaptationFidelity } from "@/lib/stimulus/adaptation-fidelity-types";
 import { BIG_IDEA_CHANNEL_LABEL } from "@/lib/stimulus-bigidea.functions";
-import { RawIdeaExportButton } from "@/components/RawIdeaExportButton";
+import { buildChannelBriefExport, download } from "@/lib/stimulus-export";
 import { StimulusOrchestration } from "@/components/StimulusOrchestration";
 import { ideaCardStyle, IDEA_COLUMN_WIDTH } from "@/components/stimulus/idea-layout";
 
@@ -33,7 +35,6 @@ type RunRow = {
   error?: string | null;
   created_at?: string;
 };
-
 
 type DirectionRow = {
   id: string;
@@ -231,7 +232,8 @@ function AdaptationFidelityPanel({
           )}
           {fidelity.verdict !== "pass" && (
             <div className="text-body-sm" style={{ color: MUTED, marginTop: 12, lineHeight: 1.7 }}>
-              Regenerate this channel before anything downstream uses it.
+              Automatic retry already ran once. Regenerate or edit this channel before anything
+              downstream uses it.
             </div>
           )}
         </>
@@ -260,15 +262,20 @@ export function ChannelBriefs({
   const load = useServerFn(loadStimulusRun);
   const listFidelity = useServerFn(listAdaptationFidelity);
   const recheck = useServerFn(recheckAdaptationFidelity);
+  const saveEdit = useServerFn(editChannelAdaptation);
 
   const [runs, setRuns] = useState<RunRow[]>([]);
-  const [running, setRunning] = useState<string | null>(null);
+  const [running, setRunning] = useState<Record<string, boolean>>({});
   const [failed, setFailed] = useState<Record<string, string>>({});
   const [openRunId, setOpenRunId] = useState<string | null>(null);
   const [openDirections, setOpenDirections] = useState<DirectionRow[]>([]);
   const [openBusy, setOpenBusy] = useState(false);
   const [fidelityByRun, setFidelityByRun] = useState<Record<string, AdaptationFidelity>>({});
   const [recheckBusy, setRecheckBusy] = useState(false);
+  const [editing, setEditing] = useState<{ id: string; text: string } | null>(null);
+  const [editBusy, setEditBusy] = useState(false);
+
+  const anyRunning = Object.values(running).some(Boolean);
 
   const refreshRuns = useCallback(async () => {
     try {
@@ -285,7 +292,6 @@ export function ChannelBriefs({
       /* non-fatal — the next action re-reads */
     }
   }, [listRuns, sessionId]);
-
 
   const refreshFidelity = useCallback(async () => {
     try {
@@ -309,7 +315,7 @@ export function ChannelBriefs({
   }, [runs]);
 
   const stateFor = (channel: string): ChannelState => {
-    if (running === channel) return "running";
+    if (running[channel]) return "running";
     if (failed[channel]) return "failed";
     const run = latest.get(channel);
     if (!run) return "not_started";
@@ -318,28 +324,56 @@ export function ChannelBriefs({
     return "complete";
   };
 
-  const generate = async (channel: string) => {
-    setRunning(channel);
-    setFailed((p) => ({ ...p, [channel]: "" }));
-    try {
-      const { runId } = await adapt({ data: { sessionId, channelName: channel } });
-      await refreshRuns();
-      await refreshFidelity();
+  const openBrief = useCallback(
+    async (runId: string) => {
+      setOpenBusy(true);
+      setOpenRunId(runId);
+      setEditing(null);
+      try {
+        const r = await load({ data: { runId } });
+        setOpenDirections(
+          (r.directions as DirectionRow[]).filter((d) => Boolean(d.direction?.trim() || d.error)),
+        );
+      } finally {
+        setOpenBusy(false);
+      }
+    },
+    [load],
+  );
+
+  /** One channel: generate, auto-check and auto-retry all happen server-side. */
+  const generate = useCallback(
+    async (channel: string, opts?: { open?: boolean }) => {
+      setRunning((p) => ({ ...p, [channel]: true }));
       setFailed((p) => {
         const next = { ...p };
         delete next[channel];
         return next;
       });
-      await openBrief(runId);
-    } catch (e) {
-      setFailed((p) => ({
-        ...p,
-        [channel]: e instanceof Error ? e.message : "Channel brief generation failed",
-      }));
-      await refreshRuns();
-    } finally {
-      setRunning(null);
-    }
+      try {
+        const { runId } = await adapt({ data: { sessionId, channelName: channel } });
+        if (opts?.open) await openBrief(runId);
+        return runId;
+      } catch (e) {
+        setFailed((p) => ({
+          ...p,
+          [channel]: e instanceof Error ? e.message : "Channel brief generation failed",
+        }));
+        return null;
+      } finally {
+        setRunning((p) => ({ ...p, [channel]: false }));
+        await refreshRuns();
+        await refreshFidelity();
+      }
+    },
+    [adapt, openBrief, refreshFidelity, refreshRuns, sessionId],
+  );
+
+  /** All channels at once — six concurrent server calls, not a queue. */
+  const generateAll = async () => {
+    await Promise.allSettled(channels.map((c) => generate(c)));
+    await refreshRuns();
+    await refreshFidelity();
   };
 
   const runRecheck = async (runId: string) => {
@@ -354,21 +388,35 @@ export function ChannelBriefs({
     }
   };
 
-  const openBrief = async (runId: string) => {
-    setOpenBusy(true);
-    setOpenRunId(runId);
+  const saveEdited = async (runId: string, directionId: string, text: string) => {
+    setEditBusy(true);
     try {
-      const r = await load({ data: { runId } });
-      setOpenDirections(
-        (r.directions as DirectionRow[]).filter((d) => Boolean(d.direction?.trim() || d.error)),
-      );
-
+      const r = await saveEdit({ data: { runId, directionId, text } });
+      setFidelityByRun((p) => ({ ...p, [runId]: r.fidelity as AdaptationFidelity }));
+      setOpenDirections((ds) => ds.map((d) => (d.id === directionId ? { ...d, direction: text } : d)));
+      setEditing(null);
     } finally {
-      setOpenBusy(false);
+      setEditBusy(false);
     }
   };
 
+  const downloadBrief = (channel: string, adaptation: string, runId: string) => {
+    const { filename, html } = buildChannelBriefExport({
+      brandName: brandName || "Brand",
+      channelName: channel,
+      lockedLine,
+      lockedIdea,
+      lockedLens,
+      adaptation,
+      fidelity: fidelityByRun[runId] ?? null,
+    });
+    download(filename, html);
+  };
+
   const locked = Boolean(lockedIdea);
+  const openChannel = [...latest.entries()].find(([, r]) => r.id === openRunId)?.[0] ?? "";
+  const doneCount = channels.filter((c) => stateFor(c) === "complete").length;
+  const runningCount = channels.filter((c) => stateFor(c) === "running").length;
 
   return (
     <div style={{ width: "100%" }}>
@@ -423,20 +471,41 @@ export function ChannelBriefs({
 
         {/* CHANNELS */}
         <div
-          className="text-mono"
           style={{
-            color: PAPER,
-            fontSize: 11,
-            letterSpacing: "0.14em",
-            textTransform: "uppercase",
             marginTop: 34,
+            display: "flex",
+            alignItems: "center",
+            gap: 16,
+            flexWrap: "wrap",
           }}
         >
-          Channel briefs · {channels.length} channel{channels.length === 1 ? "" : "s"}
+          <div
+            className="text-mono"
+            style={{
+              color: PAPER,
+              fontSize: 11,
+              letterSpacing: "0.14em",
+              textTransform: "uppercase",
+              flex: 1,
+              minWidth: 240,
+            }}
+          >
+            Channel briefs · {doneCount}/{channels.length} complete
+            {runningCount > 0 ? ` · ${runningCount} running` : ""}
+          </div>
+          <Btn
+            active
+            disabled={!locked || anyRunning || channels.length === 0}
+            onClick={() => void generateAll()}
+          >
+            {anyRunning ? `Generating ${runningCount} channels…` : "Generate all channel briefs"}
+          </Btn>
         </div>
         <p className="text-body-sm" style={{ color: MUTED, marginTop: 8, lineHeight: 1.7 }}>
-          Each channel takes the single locked winning idea and line above and adapts them into that
-          channel's format against its own Stage 21 brief. No new ideas are generated here.
+          Every channel takes the single locked winning idea and line above as a hard constraint and
+          adapts them into that channel's format against its own Stage 21 brief. Each brief is
+          fidelity-checked the moment it finishes, and automatically regenerated once if it drifts —
+          a channel is only shown as failed when it fails the check twice.
         </p>
 
         {channels.length === 0 && (
@@ -450,6 +519,7 @@ export function ChannelBriefs({
           {channels.map((c) => {
             const state = stateFor(c);
             const run = latest.get(c);
+            const f = run ? fidelityByRun[run.id] : undefined;
             return (
               <div
                 key={c}
@@ -463,36 +533,34 @@ export function ChannelBriefs({
                 <div style={{ display: "flex", gap: 14, alignItems: "center", flexWrap: "wrap" }}>
                   <div style={{ color: PAPER, fontSize: 17, fontWeight: 600, flex: 1, minWidth: 220 }}>{c}</div>
                   <StatusBadge state={state} />
-                  {run && state === "complete" && fidelityByRun[run.id] && (
-                    <FidelityBadge f={fidelityByRun[run.id]!} />
-                  )}
+                  {run && state === "complete" && f && <FidelityBadge f={f} />}
                 </div>
-                {run && state === "complete" && fidelityByRun[run.id] &&
-                  fidelityByRun[run.id]!.verdict !== "pass" && (
-                    <div className="text-body-sm" style={{ color: RED, marginTop: 12, lineHeight: 1.6 }}>
-                      This adaptation {fidelityByRun[run.id]!.verdict === "break" ? "broke away from" : "drifted from"}{" "}
-                      the locked idea. Open it below for the reasoning, then regenerate.
-                    </div>
-                  )}
+                {run && state === "complete" && f && f.verdict !== "pass" && (
+                  <div className="text-body-sm" style={{ color: RED, marginTop: 12, lineHeight: 1.6 }}>
+                    This adaptation {f.verdict === "break" ? "broke away from" : "drifted from"} the
+                    locked idea, and the automatic retry did not clear it. Open it below for the
+                    reasoning, then regenerate or edit.
+                  </div>
+                )}
 
                 {state === "running" && (
                   <div className="text-body-sm" style={{ color: AMBER, marginTop: 12, lineHeight: 1.6 }}>
-                    Adapting the locked idea into {c}…
+                    Adapting the locked idea into {c}, checking fidelity, retrying if needed…
                   </div>
                 )}
 
                 {state === "failed" && (
                   <div className="text-body-sm" style={{ color: RED, marginTop: 12, lineHeight: 1.6 }}>
-                    {failed[c] || run?.error || "This channel brief did not finish."} Press
-                    the generate button to run it again.
+                    {failed[c] || run?.error || "This channel brief did not finish."} Regenerate to
+                    run it again.
                   </div>
                 )}
 
                 <div style={{ marginTop: 16, display: "flex", gap: 10, flexWrap: "wrap" }}>
                   <Btn
                     active
-                    disabled={!locked || Boolean(running)}
-                    onClick={() => void generate(c)}
+                    disabled={!locked || running[c]}
+                    onClick={() => void generate(c, { open: true })}
                   >
                     {state === "not_started"
                       ? `Generate ${c} brief`
@@ -523,8 +591,7 @@ export function ChannelBriefs({
             className="text-mono"
             style={{ color: AMBER, fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase" }}
           >
-            Open channel brief ·{" "}
-            {[...latest.entries()].find(([, r]) => r.id === openRunId)?.[0] ?? "run"}
+            Open channel brief · {openChannel || "run"}
           </div>
           {openBusy && (
             <div className="text-body-sm" style={{ color: MUTED, marginTop: 10 }}>
@@ -545,20 +612,73 @@ export function ChannelBriefs({
                 >
                   {d.lens_name || "Channel adaptation"} — the locked idea in this channel
                 </div>
-                <div
-                  style={{
-                    color: PAPER,
-                    marginTop: 16,
-                    whiteSpace: "pre-wrap",
-                    lineHeight: 1.8,
-                    fontSize: 15,
-                  }}
-                >
-                  {d.direction?.trim() || d.error || "Not generated."}
-                </div>
-                <div style={{ marginTop: 14 }}>
-                  <RawIdeaExportButton directionId={d.id} />
-                </div>
+
+                {editing?.id === d.id ? (
+                  <>
+                    <textarea
+                      value={editing.text}
+                      onChange={(e) => setEditing({ id: d.id, text: e.target.value })}
+                      spellCheck={false}
+                      style={{
+                        width: "100%",
+                        minHeight: 320,
+                        marginTop: 16,
+                        background: "#0A0908",
+                        border: "1px solid #2A2724",
+                        borderRadius: 8,
+                        color: PAPER,
+                        padding: 16,
+                        fontSize: 14,
+                        lineHeight: 1.7,
+                        resize: "vertical",
+                      }}
+                    />
+                    <div style={{ marginTop: 12, display: "flex", gap: 10, flexWrap: "wrap" }}>
+                      <Btn
+                        active
+                        disabled={editBusy || !editing.text.trim()}
+                        onClick={() => void saveEdited(openRunId, d.id, editing.text)}
+                      >
+                        {editBusy ? "Saving and re-checking…" : "Save edit & re-check fidelity"}
+                      </Btn>
+                      <Btn onClick={() => setEditing(null)} disabled={editBusy}>
+                        Cancel
+                      </Btn>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div
+                      style={{
+                        color: PAPER,
+                        marginTop: 16,
+                        whiteSpace: "pre-wrap",
+                        lineHeight: 1.8,
+                        fontSize: 15,
+                      }}
+                    >
+                      {d.direction?.trim() || d.error || "Not generated."}
+                    </div>
+                    <div style={{ marginTop: 14, display: "flex", gap: 10, flexWrap: "wrap" }}>
+                      <Btn onClick={() => setEditing({ id: d.id, text: d.direction ?? "" })}>
+                        Edit brief
+                      </Btn>
+                      <Btn
+                        disabled={!openChannel || Boolean(running[openChannel])}
+                        onClick={() => void generate(openChannel, { open: true })}
+                      >
+                        {openChannel && running[openChannel] ? "Regenerating…" : "Regenerate brief"}
+                      </Btn>
+                      <Btn
+                        disabled={!d.direction?.trim()}
+                        onClick={() => downloadBrief(openChannel, d.direction ?? "", openRunId)}
+                      >
+                        Download this brief
+                      </Btn>
+                    </div>
+                  </>
+                )}
+
                 <AdaptationFidelityPanel
                   fidelity={fidelityByRun[openRunId] ?? null}
                   onRecheck={() => void runRecheck(openRunId)}
@@ -567,7 +687,6 @@ export function ChannelBriefs({
               </div>
             ))}
           </div>
-
         </div>
       )}
 
