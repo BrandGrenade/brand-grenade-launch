@@ -812,11 +812,15 @@ export function ChannelBriefs({
                     disabled={!locked || running[c]}
                     onClick={() => void generate(c, { open: true })}
                   >
-                    {state === "not_started"
-                      ? `Generate ${c} prompt`
-                      : state === "running"
-                        ? `Generating ${c}…`
-                        : `Regenerate ${c} prompt`}
+                    {state === "running" ? (
+                      <>
+                        <Spinner /> {`Generating ${c}…`}
+                      </>
+                    ) : state === "not_started" ? (
+                      `Generate ${c} prompt`
+                    ) : (
+                      `Regenerate ${c} prompt`
+                    )}
                   </Btn>
                   {run && state !== "not_started" && (
                     <Btn
@@ -855,7 +859,13 @@ export function ChannelBriefs({
                   }}
                 >
                   Artefact 2 · Offline creative brief
-                  {ob ? " · generated" : offlineRunning[c] ? " · writing…" : " · not generated"}
+                  {ob ? " · generated" : offlineRunning[c] ? null : " · not generated"}
+                  {!ob && offlineRunning[c] && (
+                    <>
+                      {" · "}
+                      <Spinner size={9} /> writing…
+                    </>
+                  )}
                 </div>
                 {offlineFailed[c] && (
                   <div className="text-body-sm" style={{ color: RED, marginTop: 10, lineHeight: 1.6 }}>
