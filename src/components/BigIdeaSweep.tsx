@@ -906,16 +906,16 @@ export function BigIdeaSweep({
               className="text-mono"
               style={{ color: locked ? AMBER : MUTED, fontSize: 10, letterSpacing: "0.14em", textTransform: "uppercase" }}
             >
-              {locked ? "Locked campaign idea" : "Select one idea and one candidate master line"}
+              {locked ? "★ Locked winning idea and line" : "Choose one idea and one master line, then lock them"}
             </div>
-            <div className="text-body-sm" style={{ color: "#EDE8E0", marginTop: 10, lineHeight: 1.7 }}>
+            <div className="text-body-sm" style={{ color: PAPER, marginTop: 10, lineHeight: 1.7 }}>
               <div>
-                <strong style={{ color: AMBER }}>Idea:</strong>{" "}
-                {chosenIdea ? `${chosenIdea.lens_name} — ${chosenIdea.direction.slice(0, 160)}…` : "— none selected"}
+                <strong style={{ color: AMBER }}>Winning idea:</strong>{" "}
+                {chosenIdea ? `${chosenIdea.lens_name} — ${chosenIdea.direction.slice(0, 160)}…` : "— not chosen yet"}
               </div>
               <div style={{ marginTop: 6 }}>
-                <strong style={{ color: AMBER }}>Master line:</strong>{" "}
-                {chosenLine?.campaign_line ?? "— none selected"}
+                <strong style={{ color: AMBER }}>Winning line:</strong>{" "}
+                {chosenLine?.campaign_line ?? "— not chosen yet"}
                 {chosenLine && chosenIdea && chosenLine.id !== chosenIdea.id && (
                   <span className="text-mono" style={{ color: MUTED, fontSize: 10, marginLeft: 8 }}>
                     (paired from {chosenLine.lens_name})
@@ -943,9 +943,10 @@ export function BigIdeaSweep({
                     }
                   }}
                 >
-                  Lock this idea and line
+                  Lock winning idea and winning line
                 </Btn>
               )}
+
               {locked && (
                 <Btn
                   disabled={busy}
