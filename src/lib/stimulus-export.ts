@@ -320,3 +320,49 @@ export function buildFullFinishedExport(x: FullExport): { filename: string; html
   );
   return { filename: `${slug(x.brandName)}-creative-showcase.html`, html };
 }
+
+/* -------------------------------------------- Single channel brief (Step 3) */
+
+export type ChannelBriefExport = {
+  brandName: string;
+  channelName: string;
+  lockedLine: string | null;
+  lockedIdea: string | null;
+  lockedLens: string | null;
+  adaptation: string;
+  fidelity?: { verdict: string; score: number; reasoning: string; lineVerbatim: boolean } | null;
+  generatedAt?: string;
+};
+
+export function buildChannelBriefExport(x: ChannelBriefExport): {
+  filename: string;
+  html: string;
+} {
+  const title = `${x.brandName} — ${x.channelName} channel brief`;
+  const body = `
+    <h1>${esc(title)}</h1>
+    <div class="meta">${esc(x.generatedAt ?? new Date().toISOString())}</div>
+    <div class="card">
+      <h3>Locked campaign line</h3>
+      <p>${esc(x.lockedLine ?? "—")}</p>
+      <h3>Locked winning idea${x.lockedLens ? ` — lens: ${esc(x.lockedLens)}` : ""}</h3>
+      <p>${esc(x.lockedIdea ?? "—")}</p>
+    </div>
+    <hr>
+    <h3>${esc(x.channelName)} adaptation</h3>
+    <pre>${esc(x.adaptation)}</pre>
+    ${
+      x.fidelity
+        ? `<hr><h3>Fidelity to the locked idea</h3><p>${esc(
+            x.fidelity.verdict.toUpperCase(),
+          )} · ${x.fidelity.score}/10 · campaign line ${
+            x.fidelity.lineVerbatim ? "carried verbatim" : "NOT carried verbatim"
+          }</p><p>${esc(x.fidelity.reasoning)}</p>`
+        : ""
+    }
+  `;
+  return {
+    filename: `${slug(x.brandName)}-${slug(x.channelName)}-channel-brief.html`,
+    html: doc(title, body),
+  };
+}
