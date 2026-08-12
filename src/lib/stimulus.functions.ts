@@ -91,7 +91,7 @@ export const startStimulusRun = createServerFn({ method: "POST" })
     await assertSessionAccess(data.sessionId, context.userId);
     const { data: session, error } = await supabaseAdmin
       .from("sessions")
-      .select("selected_smp, stage_21_outputs")
+      .select("selected_smp, stage_21_outputs, locked_big_idea, locked_campaign_line")
       .eq("id", data.sessionId)
       .single();
     if (error || !session) throw new Error(`Session not found: ${error?.message ?? "no row"}`);
@@ -108,11 +108,14 @@ export const startStimulusRun = createServerFn({ method: "POST" })
         channel_name: data.channelName,
         channel_brief: brief,
         smp: session.selected_smp ?? "",
+        locked_big_idea_at_generation: session.locked_big_idea ?? null,
+        locked_line_at_generation: session.locked_campaign_line ?? null,
         status: "generating",
       })
       .select("id")
       .single();
     if (runErr || !run) throw new Error(`Failed to create stimulus run: ${runErr?.message}`);
+
 
     const rows = STIMULUS_LENSES.map((l, i) => ({
       run_id: run.id,
