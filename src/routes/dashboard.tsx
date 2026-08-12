@@ -798,13 +798,8 @@ function BrandRegisterRow({
           <DeliverablesCell
             pipelineComplete={row.pipeline.state === "complete"}
             sessionId={row.pipeline.hrefSearch?.session ?? null}
-            showcaseSessionId={
-              row.creative.state === "complete"
-                ? (row.creative.href?.split("/creative/")[1] ?? null)
-                : null
-            }
-
           />
+
         </td>
         <td className="px-3 py-4" style={{ whiteSpace: "nowrap" }}>
           <div className="flex items-center justify-end">
