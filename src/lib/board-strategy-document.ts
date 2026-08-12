@@ -296,26 +296,42 @@ export function buildBoardStrategyDocument(
       { key: "verdict", label: "Verdict" },
     ],
     tableRows,
-    "Scored candidate set — highlighted row is the recommendation",
+    winner
+      ? "Scored candidate set — highlighted row is the recommendation"
+      : "Scored candidate set — Stage 10 scoring, ranked",
   );
 
   const fitNote = prose(s13, 1)[0];
+  const selectionNote =
+    !winner && smp && candidates.length
+      ? callout(
+          "How the recommendation relates to this set",
+          `<p>The recommended proposition was resolved at selection, after the scored set above was tested for integrity and brand fit. It is not a row in the Stage 10 table.</p>`,
+        )
+      : "";
   const validationBody =
     (validationTable ||
       renderMarkdown(s10.slice(0, 2000)) ||
-      "") + (fitNote ? callout("Brand fit validation", `<p>${inlineMd(fitNote)}</p>`) : "");
+      "") +
+    selectionNote +
+    (fitNote ? callout("Brand fit validation", `<p>${inlineMd(fitNote)}</p>`) : "");
 
   /* ── 5. Rejected — and why ───────────────────────────────────────── */
+  // A verdict note that simply restates that a candidate cleared the floors is
+  // not a rejection rationale — fall back to the weakest scoring dimension.
+  const isFailureNote = (n?: string) =>
+    !!n && /fail|reject|below|does not|doesn't|not carried|weak|breach/i.test(n);
+
   const rejectReasons: Reason[] = rejected
     .slice()
     .sort((a, b) => (a.composite ?? 999) - (b.composite ?? 999))
     .slice(0, 4)
     .map((c) => {
       const weakest = Object.entries(c.dims).sort((a, b) => a[1] - b[1])[0];
-      const detail = c.verdictNote
-        ? c.verdictNote
+      const detail = isFailureNote(c.verdictNote)
+        ? (c.verdictNote as string)
         : weakest
-          ? `Weakest on ${weakest[0].toLowerCase()} (${weakest[1]}/10)${
+          ? `Not carried forward. Weakest on ${weakest[0].toLowerCase()} (${weakest[1]}/10)${
               c.composite != null ? ` · ${c.composite}/100 composite` : ""
             }.`
           : "Not carried forward at selection.";
