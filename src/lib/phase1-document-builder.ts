@@ -79,6 +79,7 @@ export function md(text: string): string {
 }
 
 import { stripDocumentMetadata } from "./strip-document-metadata";
+import { buildBoardStrategyDocument } from "./board-strategy-document";
 
 export function sanitise(t: string | null | undefined): string {
   return stripDocumentMetadata(t ?? "", "phase1-doc")
