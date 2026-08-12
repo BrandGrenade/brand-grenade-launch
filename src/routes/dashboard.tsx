@@ -1163,7 +1163,7 @@ function DeliverablesCell({
             ·
           </span>
           <a
-            href={`/complete?session=${encodeURIComponent(showcaseSessionId)}#creative-showcase`}
+            href={`/showcase?session=${encodeURIComponent(showcaseSessionId)}`}
             className="text-body"
             style={linkStyle}
           >
