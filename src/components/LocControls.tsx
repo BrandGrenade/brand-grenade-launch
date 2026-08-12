@@ -3,6 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { runLeftOfCentre, getLocStatus, resetStuckLoc } from "@/lib/loc.functions";
 import { LOC_ENGINES, LOC_ENGINE_LABEL, type EngineName } from "@/lib/loc/task-types";
+import { Spinner } from "@/components/ui/busy";
 
 type EngineOutputEntry = { ok: boolean; error?: string; output?: unknown };
 
@@ -211,7 +212,7 @@ export function LocControls({ sessionId }: { sessionId: string }) {
               onClick={() => trigger(state === "failed" || stuck)}
             >
               {busy
-                ? "Retrying…"
+                ? <><Spinner /> Retrying…</>
                 : stuck
                   ? "Restart LOC"
                   : state === "failed"
@@ -331,7 +332,7 @@ export function LocControls({ sessionId }: { sessionId: string }) {
                 })
               }
             >
-              {busy ? "Firing…" : "Fire retry"}
+              {busy ? <><Spinner /> Firing…</> : "Fire retry"}
             </button>
           </div>
         </div>

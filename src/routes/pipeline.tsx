@@ -49,6 +49,7 @@ import {
 } from "@/lib/brief-schema";
 import { PENDING_BRIEF_EDIT_STORAGE_KEY } from "@/routes/brief.index";
 import { FileText, PencilLine } from "lucide-react";
+import { Spinner } from "@/components/ui/busy";
 
 const CLIENT_STREAM_IDLE_MS = 8 * 60_000;
 const DB_COMPLETION_POLL_MS = 5_000;
@@ -3907,8 +3908,12 @@ function StageRowStatusLabel({
 
   if (status === "running") {
     return (
-      <span className="text-label shrink-0" style={{ color: "var(--color-primary)", fontSize: 10 }}>
-        Running…
+      <span
+        aria-busy="true"
+        className="text-label shrink-0 inline-flex items-center gap-1.5"
+        style={{ color: "var(--color-primary)", fontSize: 10 }}
+      >
+        <Spinner size={9} /> Running…
       </span>
     );
   }

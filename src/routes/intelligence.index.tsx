@@ -5,6 +5,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Loader2, Plus, Trash2 } from "lucide-react";
+import { Spinner } from "@/components/ui/busy";
 import { toast } from "sonner";
 import { TopNav } from "@/components/TopNav";
 import { Button } from "@/components/ui/button";
@@ -88,11 +89,11 @@ function statusMeta(status: string | null): {
 } {
   switch (status) {
     case "complete":
-      return { label: "Complete", color: "#E5484D", filled: true };
+      return { label: "Complete", color: "#5FD08A", filled: true };
     case "running":
-      return { label: "Running", color: "#E5484D", filled: true };
+      return { label: "Running", color: "#F2A93B", filled: true };
     case "failed":
-      return { label: "Failed", color: "#E5484D", filled: true };
+      return { label: "Failed", color: "#FF8F87", filled: true };
     default:
       return { label: "Draft", color: "#8B8680", filled: false };
   }
@@ -401,18 +402,25 @@ function SessionRowView({
         )}
       </Td>
       <Td>
-        <div style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
-          <span
-            aria-hidden
-            style={{
-              display: "inline-block",
-              width: 10,
-              height: 10,
-              borderRadius: 10,
-              background: s.filled ? s.color : "transparent",
-              border: s.filled ? "none" : `1.5px solid ${s.color}`,
-            }}
-          />
+        <div
+          style={{ display: "inline-flex", alignItems: "center", gap: 8 }}
+          aria-busy={row.status === "running"}
+        >
+          {row.status === "running" ? (
+            <Spinner size={11} style={{ color: s.color }} />
+          ) : (
+            <span
+              aria-hidden
+              style={{
+                display: "inline-block",
+                width: 10,
+                height: 10,
+                borderRadius: 10,
+                background: s.filled ? s.color : "transparent",
+                border: s.filled ? "none" : `1.5px solid ${s.color}`,
+              }}
+            />
+          )}
           <span style={{ color: "var(--color-text-primary)", fontSize: 13 }}>
             {s.label}
           </span>

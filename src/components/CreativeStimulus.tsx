@@ -27,6 +27,7 @@ import { ideaCardStyle, ideaListStyle, IDEA_COLUMN_WIDTH } from "@/components/st
 
 
 import type { DirectionRatings } from "@/lib/stimulus/rating-prompts";
+import { Spinner } from "@/components/ui/busy";
 
 const AMBER = "#F2665F";
 const MUTED = "#A8A29A";
@@ -290,7 +291,7 @@ function DirectionCard({
                 }
               }}
             >
-              {busy ? "Rewriting…" : "Rewrite through this lens"}
+              {busy ? <><Spinner /> Rewriting…</> : "Rewrite through this lens"}
             </Btn>
           </div>
         </div>

@@ -23,6 +23,7 @@ import {
 import { buildFullFinishedExport, download } from "@/lib/stimulus-export";
 import { SIGNATURE_CATEGORIES } from "@/lib/stimulus/orchestration-prompts";
 import { StimulusMandate } from "@/components/stimulus/StimulusMandate";
+import { Spinner, ProgressBar } from "@/components/ui/busy";
 
 
 const AMBER = "#F2665F";
@@ -340,7 +341,7 @@ export function StimulusOrchestration({ sessionId, brandName }: { sessionId: str
 
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
             <Btn active disabled={busy} onClick={handleStart}>
-              {busy ? "Running…" : "Run orchestration on approved set"}
+              {busy ? <><Spinner /> Running…</> : "Run orchestration on approved set"}
             </Btn>
             {runs.map((r) => (
               <Btn key={r.id} active={r.id === orchId} disabled={busy} onClick={() => void openRun(r.id)}>
@@ -360,12 +361,27 @@ export function StimulusOrchestration({ sessionId, brandName }: { sessionId: str
 
           {orch && (
             <>
+              {busy && (
+                <div style={{ marginTop: 14 }}>
+                  <ProgressBar
+                    value={Math.max(0, PHASES.findIndex((p) => p.id === orch.status)) + 1}
+                    total={PHASES.length}
+                    label={`Step ${Math.max(0, PHASES.findIndex((p) => p.id === orch.status)) + 1} of ${PHASES.length} — running`}
+                  />
+                </div>
+              )}
               <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 14 }}>
-                {PHASES.map((p) => (
-                  <Label key={p.id} tone={orch.status === p.id ? AMBER : undefined}>
-                    {p.label}
-                  </Label>
-                ))}
+                {PHASES.map((p, i) => {
+                  const current = orch.status === p.id;
+                  const idx = PHASES.findIndex((x) => x.id === orch.status);
+                  const done = idx > -1 && i < idx;
+                  return (
+                    <Label key={p.id} tone={current ? AMBER : done ? GREEN : undefined}>
+                      {current && busy ? <Spinner size={9} style={{ marginRight: 6 }} /> : done ? "✓ " : null}
+                      {p.label}
+                    </Label>
+                  );
+                })}
                 <Label tone={MUTED}>{`registry v${orch.registry_version}`}</Label>
               </div>
               {orch.phase_note && (

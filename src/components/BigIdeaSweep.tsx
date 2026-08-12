@@ -54,6 +54,7 @@ import { RawIdeaExportButton } from "@/components/RawIdeaExportButton";
 import { ideaCardStyle, ideaListStyle, IDEA_COLUMN_WIDTH } from "@/components/stimulus/idea-layout";
 import type { LineCheck } from "@/lib/stimulus/line-check-types";
 import type { DirectionRatings } from "@/lib/stimulus/rating-prompts";
+import { Spinner, ProgressBar } from "@/components/ui/busy";
 
 // Readable palette on the near-black room background (#0A0908).
 // Red is an accent for labels only; all body copy and numerals are paper.
@@ -542,7 +543,7 @@ function IdeaCard({
                 }
               }}
             >
-              {busy ? "Rewriting…" : "Rewrite through this lens"}
+              {busy ? <><Spinner /> Rewriting…</> : "Rewrite through this lens"}
             </Btn>
           </div>
         </div>
@@ -814,15 +815,19 @@ export function BigIdeaSweep({
               gap: 10,
             }}
           >
+            {!sweep.stalled && <Spinner size={13} />}
             <span>
               {sweep.stalled
                 ? `Sweep stopped at ${sweep.generated}/${sweep.total} — ${sweep.pending} lenses still to generate.${sweep.error ? ` ${sweep.error}` : ""} Press Resume sweep to continue from lens ${sweep.generated + 1}.`
                 : `Generating on the server — ${sweep.generated}/${sweep.total} lenses complete. You can safely leave this page; generation continues.`}
             </span>
             <span style={{ flex: 1 }} />
-            <span className="text-mono" style={{ fontSize: 11 }}>
-              {Math.round((sweep.generated / Math.max(sweep.total, 1)) * 100)}%
-            </span>
+            <ProgressBar
+              value={sweep.generated}
+              total={sweep.total}
+              color={sweep.stalled ? RED : AMBER}
+              label={`${sweep.generated} / ${sweep.total} lenses · ${Math.round((sweep.generated / Math.max(sweep.total, 1)) * 100)}%`}
+            />
           </div>
         )}
 
@@ -833,16 +838,23 @@ export function BigIdeaSweep({
               disabled={busy || Boolean(sweep?.running)}
               active
             >
-              {sweep?.running
-                ? `Generating ${sweep.generated}/${sweep.total || LENS_COUNT}…`
-                : busy
-                  ? "Starting…"
-                  : sweep?.stalled
-                    ? `Resume sweep (${sweep.pending} left)`
-                    : ideas.length > 0
-                      ? "Resume sweep"
-                      : `Run ${LENS_COUNT}-lens big idea sweep`}
+              {sweep?.running ? (
+                <>
+                  <Spinner /> {`Generating ${sweep.generated}/${sweep.total || LENS_COUNT}…`}
+                </>
+              ) : busy ? (
+                <>
+                  <Spinner /> Starting…
+                </>
+              ) : sweep?.stalled ? (
+                `Resume sweep (${sweep.pending} left)`
+              ) : ideas.length > 0 ? (
+                "Resume sweep"
+              ) : (
+                `Run ${LENS_COUNT}-lens big idea sweep`
+              )}
             </Btn>
+
             {ideas.length > 0 && (
               <Btn
                 onClick={() => void runSweep(true)}

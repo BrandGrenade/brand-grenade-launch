@@ -30,6 +30,7 @@ import {
 } from "@/lib/stimulus-export";
 import { StimulusOrchestration } from "@/components/StimulusOrchestration";
 import { ideaCardStyle, IDEA_COLUMN_WIDTH } from "@/components/stimulus/idea-layout";
+import { Spinner, ProgressBar } from "@/components/ui/busy";
 
 const AMBER = "#F2665F";
 const MUTED = "#A8A29A";
@@ -102,7 +103,10 @@ function StatusBadge({ state, progress }: { state: ChannelState; progress?: stri
         textTransform: "uppercase",
         whiteSpace: "nowrap",
       }}
+      aria-busy={state === "running"}
+
     >
+      {state === "running" ? <Spinner size={11} /> : null}
       {STATE_LABEL[state]}
       {progress ? ` · ${progress}` : ""}
     </span>
@@ -209,7 +213,7 @@ function AdaptationFidelityPanel({
           Fidelity to the locked idea
         </div>
         <Btn onClick={onRecheck} disabled={busy}>
-          {busy ? "Checking…" : fidelity ? "Re-check" : "Run check"}
+          {busy ? <><Spinner /> Checking…</> : fidelity ? "Re-check" : "Run check"}
         </Btn>
       </div>
 
@@ -662,9 +666,13 @@ export function ChannelBriefs({
             disabled={!locked || anyRunning || channels.length === 0}
             onClick={() => void generateAll()}
           >
-            {anyRunning
-              ? `Generating ${runningCount} channels…`
-              : "Generate all content creation input prompts"}
+            {anyRunning ? (
+              <>
+                <Spinner /> {`Generating ${runningCount} of ${channels.length} channels…`}
+              </>
+            ) : (
+              "Generate all content creation input prompts"
+            )}
           </Btn>
         </div>
         <p className="text-body-sm" style={{ color: MUTED, marginTop: 8, lineHeight: 1.7 }}>
@@ -804,11 +812,15 @@ export function ChannelBriefs({
                     disabled={!locked || running[c]}
                     onClick={() => void generate(c, { open: true })}
                   >
-                    {state === "not_started"
-                      ? `Generate ${c} prompt`
-                      : state === "running"
-                        ? `Generating ${c}…`
-                        : `Regenerate ${c} prompt`}
+                    {state === "running" ? (
+                      <>
+                        <Spinner /> {`Generating ${c}…`}
+                      </>
+                    ) : state === "not_started" ? (
+                      `Generate ${c} prompt`
+                    ) : (
+                      `Regenerate ${c} prompt`
+                    )}
                   </Btn>
                   {run && state !== "not_started" && (
                     <Btn
@@ -847,7 +859,13 @@ export function ChannelBriefs({
                   }}
                 >
                   Artefact 2 · Offline creative brief
-                  {ob ? " · generated" : offlineRunning[c] ? " · writing…" : " · not generated"}
+                  {ob ? " · generated" : offlineRunning[c] ? null : " · not generated"}
+                  {!ob && offlineRunning[c] && (
+                    <>
+                      {" · "}
+                      <Spinner size={9} /> writing…
+                    </>
+                  )}
                 </div>
                 {offlineFailed[c] && (
                   <div className="text-body-sm" style={{ color: RED, marginTop: 10, lineHeight: 1.6 }}>
@@ -953,7 +971,7 @@ export function ChannelBriefs({
                         onClick={() => void saveEdited(openRunId, d.id, editing.text)}
                       >
                         {editBusy
-                          ? "Saving new version and re-checking…"
+                          ? <><Spinner /> Saving new version and re-checking…</>
                           : "Save as new version & re-check fidelity"}
                       </Btn>
                       <Btn onClick={() => setEditing(null)} disabled={editBusy}>
@@ -1062,7 +1080,7 @@ export function ChannelBriefs({
                               onClick={() => void revertTo(openRunId, d.id, v)}
                             >
                               {versionBusy
-                                ? "Copying forward…"
+                                ? <><Spinner /> Copying forward…</>
                                 : `Copy v${v.versionNo} forward as v${(versions[0]?.versionNo ?? v.versionNo) + 1}`}
                             </Btn>
                           )}

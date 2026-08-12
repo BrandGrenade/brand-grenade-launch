@@ -14,6 +14,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { Spinner } from "@/components/ui/busy";
 
 import {
   AlertDialog,
@@ -253,7 +254,7 @@ export function NewRunGateButton({ variant = "topnav", label = "Strategy Pipelin
     return (
       <span style={loadingStyle} className={className}>
         {prefixNode}
-        {isLaunch ? "Checking…" : "Checking platform…"}
+        {isLaunch ? <><Spinner /> Checking…</> : "Checking platform…"}
       </span>
     );
   }
@@ -383,7 +384,7 @@ export function NewRunGateButton({ variant = "topnav", label = "Strategy Pipelin
               className="inline-flex h-9 items-center justify-center rounded-lg px-4 text-[13px] transition-opacity hover:opacity-90 disabled:opacity-50"
               style={{ backgroundColor: "#C81E1E", color: "#EDE8E0", fontWeight: 600 }}
             >
-              {submitting ? "Logging override…" : "Log override & continue"}
+              {submitting ? <><Spinner /> Logging override…</> : "Log override & continue"}
             </button>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -3,6 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { getFullFinishedExport } from "@/lib/stimulus-gate-two.functions";
 import { buildFullFinishedExport, download } from "@/lib/stimulus-export";
+import { Spinner } from "@/components/ui/busy";
 
 const AMBER = "#C81E1E";
 
@@ -100,7 +101,7 @@ export function CreativeShowcaseCard({
               textTransform: "uppercase",
             }}
           >
-            {busy ? "Building…" : "Download ↓"}
+            {busy ? <><Spinner /> Building…</> : "Download ↓"}
           </span>
         </button>
       </div>

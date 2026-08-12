@@ -158,10 +158,11 @@ function Spinner() {
   return (
     <span
       aria-hidden="true"
+      className="bg-spinner"
       style={{
         width: 12, height: 12, borderRadius: "50%",
         border: "2px solid currentColor", borderTopColor: "transparent",
-        display: "inline-block", animation: "spin 0.8s linear infinite",
+        display: "inline-block", verticalAlign: "-0.1em",
         flex: "0 0 auto",
       }}
     />

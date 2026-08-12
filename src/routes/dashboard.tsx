@@ -8,6 +8,7 @@ import {
   Download,
   Trash2,
 } from "lucide-react";
+import { Spinner } from "@/components/ui/busy";
 import { toast } from "sonner";
 import { TopNav } from "@/components/TopNav";
 import { RequireAuth } from "@/components/RequireAuth";
@@ -504,7 +505,13 @@ function Dashboard() {
                 fontWeight: 600,
               }}
             >
-              {legacyRunning ? "Starting…" : "Run"}
+              {legacyRunning ? (
+                <>
+                  <Spinner /> Starting…
+                </>
+              ) : (
+                "Run"
+              )}
             </button>
           </AlertDialogFooter>
         </AlertDialogContent>

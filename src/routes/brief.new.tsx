@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { TopNav } from "@/components/TopNav";
 import { createSession } from "@/lib/stage1.functions";
 import { runLeftOfCentre } from "@/lib/loc.functions";
+import { Spinner } from "@/components/ui/busy";
 import {
   saveBrief,
   PENDING_BRIEF_STORAGE_KEY,
@@ -165,7 +166,7 @@ function NewBriefPage() {
               color: "var(--color-text-primary)",
             }}
           >
-            {busy === "save" ? "Saving…" : "Save Brief"}
+            {busy === "save" ? <><Spinner /> Saving…</> : "Save Brief"}
           </button>
           <button
             type="button"
@@ -174,7 +175,7 @@ function NewBriefPage() {
             className="inline-flex h-10 items-center justify-center rounded-md px-5 text-[13px] font-semibold transition-opacity hover:opacity-90 disabled:opacity-50"
             style={{ backgroundColor: "#C81E1E", color: "#0A0908" }}
           >
-            {busy === "run" ? "Starting run…" : "Save and Run"}
+            {busy === "run" ? <><Spinner /> Starting run…</> : "Save and Run"}
           </button>
         </div>
       </main>

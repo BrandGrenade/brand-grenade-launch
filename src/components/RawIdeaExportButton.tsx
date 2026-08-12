@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { getRawIdeaExport } from "@/lib/stimulus-gate-two.functions";
 import { buildRawIdeaExport, download, type RawIdeaExport } from "@/lib/stimulus-export";
+import { Spinner } from "@/components/ui/busy";
 
 const AMBER = "#F2665F";
 const MUTED = "#A8A29A";
@@ -46,7 +47,7 @@ export function RawIdeaExportButton({ directionId }: { directionId: string }) {
           opacity: busy ? 0.6 : 1,
         }}
       >
-        {busy ? "Exporting…" : "Raw idea export"}
+        {busy ? <><Spinner /> Exporting…</> : "Raw idea export"}
       </button>
       {err && (
         <span className="text-body-sm" style={{ color: "#E5484D", marginLeft: 8 }}>

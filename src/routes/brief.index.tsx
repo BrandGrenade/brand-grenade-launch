@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { TopNav } from "@/components/TopNav";
 import { createSession } from "@/lib/stage1.functions";
 import { resubmitBriefStructured } from "@/lib/stage1b.functions";
+import { Spinner } from "@/components/ui/busy";
 import {
   SavedBriefsPicker,
   saveBrief,
@@ -582,7 +583,7 @@ function BriefIntake() {
               }}
               title="Save this brief to your library without starting a pipeline run"
             >
-              {saving ? "Saving…" : "Save Brief"}
+              {saving ? <><Spinner /> Saving…</> : "Save Brief"}
             </button>
           </div>
 

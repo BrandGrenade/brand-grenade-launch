@@ -18,6 +18,7 @@ import { openFullRunDocument, FULL_RUN_SESSION_COLUMNS, resolveFullRunStages } f
 import { Document00ACard } from "@/components/Document00ACard";
 import { ExecSummaryCard } from "@/components/ExecSummaryCard";
 import { CreativeShowcaseCard } from "@/components/CreativeShowcaseCard";
+import { Spinner } from "@/components/ui/busy";
 
 
 
@@ -572,7 +573,7 @@ function CompletePage() {
                     opacity: hasSmp && !generating ? 1 : 0.5,
                   }}
                 >
-                  {generating ? "Generating…" : buttonLabel}
+                  {generating ? <><Spinner /> Generating…</> : buttonLabel}
                 </button>
                 <p
                   className="text-body-sm"
@@ -1413,7 +1414,7 @@ function Phase2Deliverables({ session }: { session: SessionRow }) {
             fontWeight: 700, fontSize: 14, cursor: busy ? "wait" : "pointer",
             letterSpacing: "0.04em",
           }}>
-          {busy === "all" ? "Opening…" : "Download All Brand Detonation"}
+          {busy === "all" ? <><Spinner /> Opening…</> : "Download All Brand Detonation"}
         </button>
         <button type="button" onClick={downloadAllZip} disabled={busy !== null}
           style={{
