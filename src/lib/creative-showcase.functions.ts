@@ -78,20 +78,28 @@ const STOP = new Set([
   "campaign", "line", "idea", "signature", "element", "motif", "rule",
 ]);
 
-/** Finds the sentence in the adaptation that evidences a signature. */
-function evidenceFor(text: string, name: string): string | null {
+/**
+ * Evidence that a channel genuinely carries a registry signature. Strict on
+ * purpose — a weak keyword coincidence would turn the coherence claim into
+ * decoration. Full-name match scores highest; otherwise most of the
+ * distinctive words must be present.
+ */
+function evidenceFor(text: string, name: string): { evidence: string; strength: number } | null {
   const tokens = signatureTokens(name);
   if (tokens.length === 0) return null;
   const lower = text.toLowerCase();
-  if (lower.includes(name.toLowerCase())) {
-    const i = lower.indexOf(name.toLowerCase());
-    return text.slice(Math.max(0, i - 90), i + name.length + 110).trim();
+  const full = name.toLowerCase();
+  if (lower.includes(full)) {
+    const i = lower.indexOf(full);
+    return { evidence: text.slice(Math.max(0, i - 90), i + full.length + 110).trim(), strength: 100 };
   }
   const hits = tokens.filter((t) => lower.includes(t));
-  if (hits.length < Math.min(2, tokens.length)) return null;
+  const ratio = hits.length / tokens.length;
+  if (hits.length < 2 || ratio < 0.6) return null;
   const i = lower.indexOf(hits[0]);
-  return text.slice(Math.max(0, i - 90), i + 160).trim();
+  return { evidence: text.slice(Math.max(0, i - 90), i + 160).trim(), strength: Math.round(ratio * 90) };
 }
+
 
 export const getCreativeShowcase = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
