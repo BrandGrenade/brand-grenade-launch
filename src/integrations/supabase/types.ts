@@ -1709,6 +1709,7 @@ export type Database = {
       }
       stimulus_runs: {
         Row: {
+          brief_stale_ack_at: string | null
           channel_brief: string
           channel_name: string
           convergence_ledger: Json | null
@@ -1721,6 +1722,8 @@ export type Database = {
           id: string
           last_batch_at: string | null
           locked_at: string | null
+          locked_big_idea_at_generation: string | null
+          locked_line_at_generation: string | null
           run_mode: string
           session_id: string
           smp: string
@@ -1735,6 +1738,7 @@ export type Database = {
           winning_line_direction_id: string | null
         }
         Insert: {
+          brief_stale_ack_at?: string | null
           channel_brief?: string
           channel_name: string
           convergence_ledger?: Json | null
@@ -1747,6 +1751,8 @@ export type Database = {
           id?: string
           last_batch_at?: string | null
           locked_at?: string | null
+          locked_big_idea_at_generation?: string | null
+          locked_line_at_generation?: string | null
           run_mode?: string
           session_id: string
           smp?: string
@@ -1761,6 +1767,7 @@ export type Database = {
           winning_line_direction_id?: string | null
         }
         Update: {
+          brief_stale_ack_at?: string | null
           channel_brief?: string
           channel_name?: string
           convergence_ledger?: Json | null
@@ -1773,6 +1780,8 @@ export type Database = {
           id?: string
           last_batch_at?: string | null
           locked_at?: string | null
+          locked_big_idea_at_generation?: string | null
+          locked_line_at_generation?: string | null
           run_mode?: string
           session_id?: string
           smp?: string

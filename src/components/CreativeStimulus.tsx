@@ -51,6 +51,8 @@ type Direction = {
   gate_one_notes: string | null;
 };
 
+type Staleness = { stale: boolean; reason: string | null; unverifiable: boolean };
+
 type RunMeta = {
   tiebreaker_output?: string | null;
   tiebreaker_fired?: boolean;
@@ -330,6 +332,7 @@ export function CreativeStimulus({
   >([]);
   const [directions, setDirections] = useState<Direction[]>([]);
   const [runMeta, setRunMeta] = useState<RunMeta>({});
+  const [staleness, setStaleness] = useState<Staleness | null>(null);
   const [progress, setProgress] = useState(0);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -360,6 +363,7 @@ export function CreativeStimulus({
       const r = await load({ data: { runId: id } });
       setDirections(r.directions as Direction[]);
       setRunMeta(r.run as RunMeta);
+      setStaleness((r as { staleness?: Staleness }).staleness ?? null);
       setProgress((r.directions as Direction[]).filter((d) => d.status !== "pending").length);
     },
     [load],
@@ -382,6 +386,7 @@ export function CreativeStimulus({
         const cur = await load({ data: { runId: id } });
         setDirections(cur.directions as Direction[]);
         setRunMeta(cur.run as RunMeta);
+        setStaleness((cur as { staleness?: Staleness }).staleness ?? null);
       }
       await refreshRuns();
     } catch (e) {
@@ -442,6 +447,28 @@ export function CreativeStimulus({
 
       {open && (
         <div style={{ marginTop: 18 }}>
+          {staleness?.stale && (
+            <div
+              className="text-body-sm"
+              style={{
+                color: "#E5484D",
+                border: "1px solid #E5484D66",
+                borderRadius: 8,
+                padding: "12px 14px",
+                marginBottom: 14,
+                lineHeight: 1.6,
+              }}
+            >
+              <span className="text-mono" style={{ letterSpacing: "0.12em", fontSize: 10 }}>
+                STALE RUN — SUPERSEDED PROPOSITION
+              </span>
+              <div style={{ marginTop: 6 }}>
+                {staleness.reason} Orchestration is blocked for this run until the sweep is re-run
+                against the currently locked idea.
+              </div>
+            </div>
+          )}
+
           {err && (
             <div className="text-body-sm" style={{ color: "#E5484D", marginBottom: 12 }}>
               {err}
@@ -543,6 +570,7 @@ export function CreativeStimulus({
                       const cur = await load({ data: { runId } });
                       setDirections(cur.directions as Direction[]);
                       setRunMeta(cur.run as RunMeta);
+                      setStaleness((cur as { staleness?: Staleness }).staleness ?? null);
                     }}
                     onTriage={async (status, instinct) => {
                       await triage({ data: { directionId: d.id, status, instinctBrief: instinct ?? "" } });
@@ -573,6 +601,7 @@ export function CreativeStimulus({
                     const cur = await load({ data: { runId } });
                     setDirections(cur.directions as Direction[]);
                     setRunMeta(cur.run as RunMeta);
+                    setStaleness((cur as { staleness?: Staleness }).staleness ?? null);
                   }}
                   onRevise={async (directionId, notes) => {
                     await revise({ data: { directionId, notes } });
