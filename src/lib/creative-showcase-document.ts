@@ -44,13 +44,27 @@ const sigKey = (name: string) => name.toLowerCase().replace(/[^a-z0-9]+/g, "");
  * scaffolding ("distinct from the SMP construction", "arguably", …) that
  * belongs in the QA register, never in the showcase.
  */
+const HEDGE = /\b(?:as\s+)?(?:distinct from|as opposed to|not to be confused with|unlike)\b/i;
+
 function confident(text: string): string {
   let t = String(text ?? "").trim();
+
+  // Whole parenthetical asides that only exist to qualify: "(distinct from …)".
+  t = t.replace(/\s*\(([^()]*)\)/g, (m, inner: string) => (HEDGE.test(inner) ? "" : m));
+
+  // Set-off comparative clauses: ", distinct from the SMP construction," / "— unlike …".
   t = t.replace(
-    /\s*[,;—-]?\s*\b(?:distinct from|as distinct from|different from|as opposed to|unlike|not to be confused with|rather than)\b[^.;]*/gi,
+    /\s*[,;]\s*(?:as\s+)?(?:distinct from|as opposed to|not to be confused with|unlike)\b[^.;]*(?=[.;]|$)/gi,
     "",
   );
+  t = t.replace(
+    /\s*[—–-]\s*(?:as\s+)?(?:distinct from|as opposed to|not to be confused with|unlike)\b[^.;]*(?=[.;]|$)/gi,
+    "",
+  );
+
+  // Plain hedges.
   t = t.replace(/\b(?:arguably|somewhat|fairly|relatively|broadly speaking|in a sense|essentially)\b\s*/gi, "");
+
   t = t.replace(/\s{2,}/g, " ").replace(/\s+([.,;])/g, "$1").trim();
   if (t && !/[.!?]$/.test(t)) t += ".";
   return t;
