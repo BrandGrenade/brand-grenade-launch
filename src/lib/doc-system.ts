@@ -239,6 +239,7 @@ blockquote { border-left: 3pt solid var(--detonation); padding: 10pt 14pt; margi
 .cmp { width: 100%; border-collapse: collapse; margin: 16pt 0; font-size: 9.5pt; }
 .cmp caption { caption-side: top; text-align: left; font-size: 8.5pt; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--detonation); padding-bottom: 8pt; }
 .cmp th, .cmp td { text-align: left; padding: 7pt 10pt; border-bottom: 0.5pt solid var(--rule); vertical-align: top; line-height: 1.5; }
+.cmp th:first-child, .cmp td:first-child { width: 34%; }
 .cmp thead th { font-size: 8pt; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--smoke); border-bottom: 1pt solid var(--ash); }
 .cmp tbody tr.win { background: var(--surface); }
 .cmp tbody tr.win td:first-child { box-shadow: inset 3pt 0 0 var(--detonation); font-weight: 600; }
