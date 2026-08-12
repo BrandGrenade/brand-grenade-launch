@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as WalkthroughRouteImport } from './routes/walkthrough'
 import { Route as UnsubscribeRouteImport } from './routes/unsubscribe'
 import { Route as SynthesiserRouteImport } from './routes/synthesiser'
 import { Route as SettingsRouteImport } from './routes/settings'
@@ -49,6 +50,11 @@ import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/e
 import { Route as ApiRepoViewDocumentIdRouteImport } from './routes/api/repo/view.$documentId'
 import { Route as ApiPublicHooksTier2HarnessRouteImport } from './routes/api/public/hooks/tier2-harness'
 
+const WalkthroughRoute = WalkthroughRouteImport.update({
+  id: '/walkthrough',
+  path: '/walkthrough',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const UnsubscribeRoute = UnsubscribeRouteImport.update({
   id: '/unsubscribe',
   path: '/unsubscribe',
@@ -267,6 +273,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof SettingsRoute
   '/synthesiser': typeof SynthesiserRouteWithChildren
   '/unsubscribe': typeof UnsubscribeRoute
+  '/walkthrough': typeof WalkthroughRoute
   '/admin/repositories': typeof AdminRepositoriesRoute
   '/admin/tests': typeof AdminTestsRoute
   '/brief/new': typeof BriefNewRoute
@@ -303,6 +310,7 @@ export interface FileRoutesByTo {
   '/pipeline': typeof PipelineRoute
   '/settings': typeof SettingsRoute
   '/unsubscribe': typeof UnsubscribeRoute
+  '/walkthrough': typeof WalkthroughRoute
   '/admin/repositories': typeof AdminRepositoriesRoute
   '/admin/tests': typeof AdminTestsRoute
   '/brief/new': typeof BriefNewRoute
@@ -345,6 +353,7 @@ export interface FileRoutesById {
   '/settings': typeof SettingsRoute
   '/synthesiser': typeof SynthesiserRouteWithChildren
   '/unsubscribe': typeof UnsubscribeRoute
+  '/walkthrough': typeof WalkthroughRoute
   '/admin/repositories': typeof AdminRepositoriesRoute
   '/admin/tests': typeof AdminTestsRoute
   '/brief/new': typeof BriefNewRoute
@@ -388,6 +397,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/synthesiser'
     | '/unsubscribe'
+    | '/walkthrough'
     | '/admin/repositories'
     | '/admin/tests'
     | '/brief/new'
@@ -424,6 +434,7 @@ export interface FileRouteTypes {
     | '/pipeline'
     | '/settings'
     | '/unsubscribe'
+    | '/walkthrough'
     | '/admin/repositories'
     | '/admin/tests'
     | '/brief/new'
@@ -465,6 +476,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/synthesiser'
     | '/unsubscribe'
+    | '/walkthrough'
     | '/admin/repositories'
     | '/admin/tests'
     | '/brief/new'
@@ -507,6 +519,7 @@ export interface RootRouteChildren {
   SettingsRoute: typeof SettingsRoute
   SynthesiserRoute: typeof SynthesiserRouteWithChildren
   UnsubscribeRoute: typeof UnsubscribeRoute
+  WalkthroughRoute: typeof WalkthroughRoute
   AdminRepositoriesRoute: typeof AdminRepositoriesRoute
   AdminTestsRoute: typeof AdminTestsRoute
   DetonationCanvasRoute: typeof DetonationCanvasRoute
@@ -522,6 +535,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/walkthrough': {
+      id: '/walkthrough'
+      path: '/walkthrough'
+      fullPath: '/walkthrough'
+      preLoaderRoute: typeof WalkthroughRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/unsubscribe': {
       id: '/unsubscribe'
       path: '/unsubscribe'
@@ -886,6 +906,7 @@ const rootRouteChildren: RootRouteChildren = {
   SettingsRoute: SettingsRoute,
   SynthesiserRoute: SynthesiserRouteWithChildren,
   UnsubscribeRoute: UnsubscribeRoute,
+  WalkthroughRoute: WalkthroughRoute,
   AdminRepositoriesRoute: AdminRepositoriesRoute,
   AdminTestsRoute: AdminTestsRoute,
   DetonationCanvasRoute: DetonationCanvasRoute,
