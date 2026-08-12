@@ -854,9 +854,36 @@ export function StimulusOrchestration({
                         >
                           Confirm Gate Two
                         </Btn>
+                        <Btn
+                          tone={GREEN}
+                          disabled={busy}
+                          onClick={async () => {
+                            if (!orchId) return;
+                            setBusy(true);
+                            setErr(null);
+                            try {
+                              // Sign off every finished prompt still pending, then confirm the set.
+                              for (const p of activePrompts.filter((x) => !x.gate_two_approved)) {
+                                await approveTwo({ data: { promptId: p.id, approved: true } });
+                              }
+                              const r = await confirmTwo({
+                                data: { orchestrationId: orchId, notes: gateTwoNote.trim() || undefined },
+                              });
+                              setNote(`Gate Two confirmed — ${r.approved} finished prompt(s) signed off.`);
+                              await refreshState(orchId);
+                            } catch (e) {
+                              setErr(e instanceof Error ? e.message : "Gate Two confirmation failed");
+                            } finally {
+                              setBusy(false);
+                            }
+                          }}
+                        >
+                          Sign off all &amp; confirm Gate Two
+                        </Btn>
                         <Btn disabled={busy} onClick={() => setShowAmend((v) => !v)}>
                           Send whole set back with amendments
                         </Btn>
+
                       </div>
                     </>
                   )}
