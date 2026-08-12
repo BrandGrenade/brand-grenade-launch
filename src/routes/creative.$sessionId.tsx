@@ -89,7 +89,8 @@ function StepLink({
     <Link
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       to={to as any}
-      params={{ sessionId }}
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      params={{ sessionId } as any}
       className="text-mono"
       style={{
         display: "flex",
