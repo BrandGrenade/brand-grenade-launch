@@ -964,6 +964,8 @@ export function BigIdeaSweep({
                 >
                   Unlock and choose a different winner
                 </Btn>
+              )}
+
 
             </div>
             {locked && (
