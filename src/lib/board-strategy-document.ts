@@ -198,7 +198,65 @@ const APPENDIX_SECTIONS: Array<{ title: string; key: keyof BoardStrategySession 
 export interface BoardStrategyOptions {
   /** false when rendering headlessly for PDF (no toolbar, no page shadow). */
   screen?: boolean;
+  /**
+   * "condensed" (default) — the appendix carries an evidence extract per stage,
+   * not the verbatim pipeline dump. "full" reproduces every stage output as-is
+   * for archival/audit use.
+   */
+  appendix?: "condensed" | "full";
 }
+
+/** Process scaffolding that carries no evidence for a board reader. */
+const SCAFFOLD_LINE =
+  /^(ok[,.]|understood|here (is|are)|i('| wi)ll |let me |as requested|below (is|are)|note:|reminder:|continuing|proceeding|end of (stage|section)|word count|token|instruction)/i;
+
+/**
+ * Condenses one stage output into board-appendix evidence: headings kept as
+ * structure, the strongest substantive lines kept beneath them, everything
+ * else dropped. Nothing is rewritten — lines are either kept verbatim or cut.
+ */
+function condenseStage(raw: string, opts: { maxUnits?: number; maxChars?: number } = {}): string {
+  const maxUnits = opts.maxUnits ?? 22;
+  const maxChars = opts.maxChars ?? 2600;
+  const out: string[] = [];
+  let chars = 0;
+  let units = 0;
+  let sinceHeading = 0;
+
+  const isHeading = (l: string) =>
+    /^#{1,4}\s/.test(l) || /^(SECTION|STAGE|PART)\b/i.test(l) || /^[A-Z0-9 .,'&()/–—-]{6,70}:?$/.test(l);
+
+  for (const rawLine of raw.split("\n")) {
+    const line = rawLine.trim();
+    if (!line) continue;
+    if (/^[=_*-]{3,}$/.test(line)) continue;
+    if (SCAFFOLD_LINE.test(line)) continue;
+
+    if (isHeading(line)) {
+      // A heading with no room left beneath it is noise — stop emitting.
+      if (units >= maxUnits || chars >= maxChars) continue;
+      // Drop an empty heading left behind by the previous cut.
+      if (out.length && out[out.length - 1].startsWith("### ")) out.pop();
+      out.push(`### ${line.replace(/^#{1,4}\s+/, "").replace(/:$/, "")}`);
+      sinceHeading = 0;
+      continue;
+    }
+    if (units >= maxUnits || chars >= maxChars) continue;
+    // Keep at most four substantive lines under any one heading so a single
+    // verbose section cannot eat the whole budget.
+    if (sinceHeading >= 4) continue;
+    if (line.length < 25 && !/^[-—•]/.test(line)) continue;
+
+    out.push(line);
+    sinceHeading++;
+    units++;
+    chars += line.length;
+  }
+  while (out.length && out[out.length - 1].startsWith("### ")) out.pop();
+  return out.join("\n\n");
+}
+
+
 
 export function buildBoardStrategyDocument(
   session: BoardStrategySession,
@@ -395,15 +453,19 @@ export function buildBoardStrategyDocument(
     .filter(Boolean)
     .join("\n");
 
-  /* ── appendix — full stage detail, unchanged in substance ────────── */
+  /* ── appendix — evidence extract (condensed) or verbatim record ──── */
+  const full = opts.appendix === "full";
   const appendixBody = APPENDIX_SECTIONS.map((s, i) => {
     let raw = clean(session[s.key]);
     if (s.key === "stage_9_output") raw += `\n${clean(session.stage_9_leftofcentre_output)}`;
     if (s.key === "stage_1_output") raw = stripInternals(raw);
+    raw = stripInternals(raw);
     if (!raw.trim()) return "";
+    const body = full ? raw : condenseStage(raw);
+    if (!body.trim()) return "";
     return section(
       { kicker: `Appendix ${String(i + 1).padStart(2, "0")}`, title: s.title },
-      renderMarkdown(raw),
+      renderMarkdown(body),
     );
   })
     .filter(Boolean)
@@ -412,11 +474,16 @@ export function buildBoardStrategyDocument(
   const appendix = appendixBody
     ? `<div class="section doc-break">` +
       `<p class="kicker">Appendix — backing detail</p>` +
-      `<h1>Full validation record</h1>` +
-      `<p>Every stage output behind the recommendation above, in pipeline order. ` +
-      `The front matter is the decision; this is the evidence.</p></div>` +
+      `<h1>${full ? "Full validation record" : "Evidence extract"}</h1>` +
+      `<p>` +
+      (full
+        ? `Every stage output behind the recommendation above, in pipeline order.`
+        : `The load-bearing evidence from each validation stage, in pipeline order. ` +
+          `Cut to what supports the decision; the complete stage transcripts remain in the session record.`) +
+      ` The front matter is the decision; this is the evidence.</p></div>` +
       appendixBody
     : "";
+
 
   return docShell(
     {
