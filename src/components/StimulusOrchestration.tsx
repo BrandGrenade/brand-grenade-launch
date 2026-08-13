@@ -430,17 +430,19 @@ export function StimulusOrchestration({
 
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
             <Btn active disabled={busy} onClick={handleStart}>
-              {busy ? <><Spinner /> Running…</> : "Run orchestration on approved set"}
+              {busy ? <><Spinner /> Running…</> : "Run new orchestration on approved set"}
             </Btn>
             {runs.map((r) => (
               <Btn key={r.id} active={r.id === orchId} disabled={busy} onClick={() => void openRun(r.id)}>
-                {`${r.status} · v${r.registry_version} · ${new Date(r.created_at).toLocaleDateString()} · ${String(r.id).slice(0, 6)}`}
+                {`${r.status === "complete" ? "view" : r.status} · v${r.registry_version} · ${new Date(r.created_at).toLocaleDateString()} · ${String(r.id).slice(0, 6)}`}
               </Btn>
             ))}
-            {orchId && !busy && (
-              <Btn onClick={() => void drive(orchId)}>Resume</Btn>
+            {/* Resume is the ONLY way an existing unfinished run restarts. */}
+            {orchId && !busy && orch && orch.status !== "complete" && (
+              <Btn onClick={() => void drive(orchId)}>Resume this run (generates)</Btn>
             )}
           </div>
+
 
           {note && (
             <div className="text-mono" style={{ color: MUTED, fontSize: 10, marginTop: 10, letterSpacing: "0.1em" }}>
