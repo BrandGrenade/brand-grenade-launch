@@ -54,7 +54,7 @@ export function buildDocument00AMinto(
   opts: { screen?: boolean } = {},
 ): string {
   const report = (input.report ?? {}) as IntelligenceReport & Loose;
-  const territories = Array.isArray(report.territories) ? (report.territories as Loose[]) : [];
+  const territories = Array.isArray(report.territories) ? (report.territories as unknown as Loose[]) : [];
   const primary =
     territories.find((t) => str(t.id) === str(report.recommended_primary_territory_id)) ??
     territories[0] ??
