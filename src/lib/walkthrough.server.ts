@@ -127,7 +127,8 @@ export async function loadWalkthrough(supabase: DB, sessionId: string): Promise<
       .select("*")
       .eq("session_id", sessionId)
       .order("created_at", { ascending: false })
-      .limit(1),
+      .limit(20),
+
   ]);
 
   const runs = (runsRes.data ?? []) as StimulusRunRow[];
