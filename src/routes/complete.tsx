@@ -629,7 +629,8 @@ function CompletePage() {
                 // open, so "Regenerate" is functionally the same as Download
                 // — a fresh build every click using the current prompts and
                 // pipeline outputs.
-                openPhase1Document(session, format as Phase1Format);
+                const live = await resolveLiveDocumentSession(session);
+                openPhase1Document(live, format as Phase1Format);
               } catch (e) {
                 console.error("Document open failed", e);
                 setLastError(

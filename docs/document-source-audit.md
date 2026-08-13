@@ -19,6 +19,7 @@ Audit scope: every user-facing document builder and its actual render/download e
 | Board Strategy §06 scores/verdict | Stage 10 output | Stage 10 scoring snapshot matched to live SMP | Snapshot, visible in appendix/source marker |
 | Board Strategy §07 rejection reasoning | Stage 10 weakest score/verdict | current `selection_rationale` first; Stage 10 fallback | Fixed |
 | Board Strategy §08 winning idea/master line | Stage 14/15 implications; duplicated `sessions.locked_*` prepended | winning Room 04 run + winning directions resolved on click | Fixed |
+| Board Strategy UI open action | session object loaded when Deliverables page mounted | full session refetch + Room 04 winning run/direction join on click | Fixed |
 | Board Strategy appendix | Stage 1–15 outputs | same historical outputs | Flagged visibly as historical snapshots |
 | Strategy Executive Summary winning SMP | `selected_smp` | live `sessions.selected_smp` | Live |
 | Executive Summary proposition rejection reasons | Stage 12 pressure notes | current session plus stage evidence; canonical §07 uses `selection_rationale` | Fixed in canonical section |
