@@ -15,6 +15,8 @@
 //   • the deprecated /110 weighted composite never rendered
 
 import { baseStyles, escapeHtml, sanitise } from "./phase1-document-builder";
+import { buildMintoDocument } from "./minto";
+import { deriveMintoContent, type MintoSession } from "./minto-content";
 import { NOT_AVAILABLE } from "./exec-summary-extract";
 import {
   buildLeadParagraph,
