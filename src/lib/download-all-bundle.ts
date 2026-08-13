@@ -83,6 +83,7 @@ async function fetchDocument00A(brand: string): Promise<Doc00AResult> {
       .limit(500);
     if (res.error) return empty;
     const rows = (res.data ?? []) as unknown as Array<{
+      id: string;
       brand_name: string | null;
       category: string | null;
       status: string | null;

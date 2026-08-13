@@ -214,7 +214,7 @@ export const generateDocument = createServerFn({ method: "POST" })
     const statusAtCol = `doc_${format}_status_at`;
     const { data: session, error } = await supabaseAdmin
       .from("sessions")
-      .select(`id, updated_at, ${urlCol}, ${statusCol}, ${statusAtCol}`)
+      .select("*")
       .eq("id", sessionId)
       .single();
     if (error || !session) {
@@ -223,18 +223,19 @@ export const generateDocument = createServerFn({ method: "POST" })
 
     // Reuse cached doc unless force.
     if (!force) {
-      const existingUrl = (session as Record<string, unknown>)[urlCol] as
+      const sessionRecord = session as unknown as Record<string, unknown>;
+      const existingUrl = sessionRecord[urlCol] as
         | string
         | null
         | undefined;
-      const existingStatus = (session as Record<string, unknown>)[statusCol] as
+      const existingStatus = sessionRecord[statusCol] as
         | string
         | null
         | undefined;
       const generatedAt = Date.parse(
-        ((session as Record<string, unknown>)[statusAtCol] as string | null) ?? "",
+        (sessionRecord[statusAtCol] as string | null) ?? "",
       );
-      const sourceUpdatedAt = Date.parse(session.updated_at ?? "");
+      const sourceUpdatedAt = Date.parse((sessionRecord.updated_at as string | null) ?? "");
       const cacheMatchesCurrentSource =
         Number.isFinite(generatedAt) &&
         Number.isFinite(sourceUpdatedAt) &&
