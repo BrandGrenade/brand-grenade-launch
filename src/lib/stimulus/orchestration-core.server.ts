@@ -518,7 +518,9 @@ export async function driveOrchestrationInBackground(orchestrationId: string, us
           const r = await orchestrationStep(id, userId);
           await heartbeat(id);
           if (r.done) break;
+          if (await isCancelled(id)) return;
         }
+
         await db
           .from("stimulus_orchestrations")
           .update({ driver_status: "idle", driver_heartbeat_at: new Date().toISOString() })
