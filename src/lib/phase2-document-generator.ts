@@ -37,6 +37,9 @@ export interface Phase2Session {
   locked_big_idea?: string | null;
   locked_campaign_line?: string | null;
   locked_big_idea_lens?: string | null;
+  locked_big_idea_at?: string | null;
+  locked_big_idea_run_id?: string | null;
+  updated_at?: string | null;
 }
 
 
@@ -212,6 +215,41 @@ function footer(includeDisclaimer = true): string {
     return `<div class="footer">Brand Grenade Strategy Intelligence System — Confidential</div>`;
   }
   return `<div class="footer">${escapeHtml(LEGAL_DISCLAIMER)}</div>`;
+}
+
+/**
+ * Snapshot provenance. Phase 2 stage outputs are immutable records of the run
+ * that produced them, so every document states which version of the current
+ * authoritative fields it was generated against — staleness stays visible.
+ */
+function provenance(session: Phase2Session): string {
+  const at = new Date().toLocaleString("en-AU");
+  const parts: string[] = [
+    `Generated ${escapeHtml(at)} against session record ${escapeHtml(String(session.id ?? "—").slice(0, 8))}`,
+  ];
+  if (session.updated_at) {
+    parts.push(`session last updated ${escapeHtml(new Date(session.updated_at).toLocaleString("en-AU"))}`);
+  }
+  if (session.selected_smp) parts.push(`SMP — ${escapeHtml(session.selected_smp)}`);
+  if (session.locked_campaign_line) {
+    parts.push(
+      `Room 04 master line — ${escapeHtml(session.locked_campaign_line)}${
+        session.locked_big_idea_at
+          ? ` (locked ${escapeHtml(new Date(session.locked_big_idea_at).toLocaleString("en-AU"))}${
+              session.locked_big_idea_run_id
+                ? `, run ${escapeHtml(session.locked_big_idea_run_id.slice(0, 8))}`
+                : ""
+            })`
+          : ""
+      }`,
+    );
+  } else {
+    parts.push("Room 04 — no winning idea locked at generation time");
+  }
+  return `<div class="section" style="border-top:1px solid #C2BCB5;margin-top:24pt;padding-top:12pt;font-size:9pt;color:#6B6560;">
+  <strong>Source authority</strong><br/>${parts.join("<br/>")}<br/>
+  Stage prose in this document is a historical snapshot of the run that produced it; the fields listed above are the current authoritative values it was generated against.
+</div>`;
 }
 
 function wrapDoc(title: string, brand: string, body: string): string {
@@ -421,7 +459,7 @@ export function buildPhase2Document(
       return buildAllPhase2(session);
   }
 
-  return wrapDoc(title, brand, body);
+  return wrapDoc(title, brand, body + provenance(session));
 }
 
 // ── Combined "All Brand Detonation" document ─────────────────────────────
@@ -484,7 +522,7 @@ export function buildAllPhase2(session: Phase2Session): string {
 
   const tocHtml = `<div class="toc"><h3>Contents</h3><ol>${tocItems.map((t) => `<li>${escapeHtml(t)}</li>`).join("")}</ol></div>`;
 
-  const body = cover("BRAND DETONATION", "Complete Brand Detonation", brand) + tocHtml + sections.join("\n") + footer(true);
+  const body = cover("BRAND DETONATION", "Complete Brand Detonation", brand) + tocHtml + sections.join("\n") + provenance(session) + footer(true);
   return wrapDoc("Brand Detonation", brand, body);
 }
 

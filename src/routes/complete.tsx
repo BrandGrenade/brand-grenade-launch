@@ -21,6 +21,7 @@ import { buildConsultingDeliveryDocument } from "@/lib/consulting-delivery-docum
 import type { MintoSession } from "@/lib/minto-content";
 import { ExecSummaryCard } from "@/components/ExecSummaryCard";
 import { CreativeShowcaseCard } from "@/components/CreativeShowcaseCard";
+import { CreativeEngineDeliverables } from "@/components/CreativeEngineDeliverables";
 import { Spinner } from "@/components/ui/busy";
 import { resolveLiveDocumentSession } from "@/lib/document-live-source";
 
@@ -924,8 +925,12 @@ function CompletePage() {
           session.stage_19_output ||
           session.stage_20_output ||
           session.stage_21_outputs ||
-          session.stage_22_brand_architecture) && (
+          session.stage_22_brand_architecture) ? (
           <Phase2Deliverables session={session} />
+        ) : (
+          // Room 04 can produce output before Phase 2 documents exist, so its
+          // deliverables must still be reachable from this page.
+          <StandaloneCreativeDeliverables sessionId={session.id} />
         )}
 
         {/* Pipeline stages collapsible */}
@@ -1408,6 +1413,32 @@ function ConsultingDeliveryCard({ session }: { session: SessionRow }) {
   );
 }
 
+/** Room 04 deliverables when no Phase 2 section is rendered. */
+function StandaloneCreativeDeliverables({ sessionId }: { sessionId: string }) {
+  const amber = PHASE_2_AMBER_DELIV;
+  const subhead = (label: string) => (
+    <div
+      className="text-mono"
+      style={{
+        color: amber,
+        letterSpacing: "0.16em",
+        textTransform: "uppercase",
+        fontSize: 10,
+        margin: "24px 0 12px",
+      }}
+    >
+      {label}
+    </div>
+  );
+  return (
+    <section style={{ marginTop: 64 }}>
+      <hr style={{ border: 0, borderTop: `1px solid ${amber}`, margin: "0 0 32px" }} />
+      <CreativeEngineDeliverables sessionId={sessionId} subhead={subhead} />
+      <CreativeShowcaseCard sessionId={sessionId} subhead={subhead} />
+    </section>
+  );
+}
+
 function openHtmlInNewTab(html: string) {
   const win = window.open("", "_blank");
   if (!win) { alert("Please allow popups"); return; }
@@ -1562,6 +1593,7 @@ function Phase2Deliverables({ session }: { session: SessionRow }) {
       )}
 
       {/* Creative Stimulus Engine — only after Gate Two is confirmed. */}
+      <CreativeEngineDeliverables sessionId={session.id} subhead={subhead} />
       <CreativeShowcaseCard sessionId={session.id} subhead={subhead} />
 
       {showBrandIdentity && (
