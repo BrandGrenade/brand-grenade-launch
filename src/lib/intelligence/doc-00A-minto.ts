@@ -4,8 +4,8 @@
 // structure as every other primary deliverable. Source is the stored
 // Intelligence Lab report JSON — nothing is generated here.
 //
-// The legacy jsPDF renderer in `pdf-00A.ts` is retained for the in-app
-// one-click download; this builder is the structural, design-system version.
+// This is the only 00A renderer. The legacy jsPDF path has been retired so a
+// non-canonical render can never be served again.')
 
 import {
   callout,
@@ -19,7 +19,8 @@ import {
   type Stat,
 } from "../doc-system";
 import { buildMintoDocument, type MintoContent } from "../minto";
-import type { Document00AInput, IntelligenceReport } from "./pdf-00A";
+import type { Document00AInput, IntelligenceReport } from "./doc-00A-types";
+export type { Document00AInput, IntelligenceReport } from "./doc-00A-types";
 
 type Loose = Record<string, unknown>;
 
@@ -310,4 +311,18 @@ export function buildDocument00AMinto(
         input.brandName,
       )}. Review before commercial deployment.`,
   });
+}
+
+
+/** Opens Document 00A in a new tab using the shared canonical template. */
+export function openDocument00AMinto(input: Document00AInput): void {
+  const html = buildDocument00AMinto(input);
+  const win = window.open("", "_blank");
+  if (!win) {
+    alert("Please allow popups to open your document.");
+    return;
+  }
+  win.document.open("text/html");
+  win.document.write(html);
+  win.document.close();
 }

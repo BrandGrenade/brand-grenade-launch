@@ -8,9 +8,9 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { normalizeBrand } from "@/lib/brand-register";
 import {
-  downloadDocument00APdf,
+  openDocument00AMinto,
   type IntelligenceReport,
-} from "@/lib/intelligence/pdf-00A";
+} from "@/lib/intelligence/doc-00A-minto";
 
 type IntelSummary = {
   id: string;
@@ -96,7 +96,7 @@ export function Document00ACard({ brand }: { brand: string }) {
     if (!intel) return;
     setDownloading(true);
     try {
-      await downloadDocument00APdf({
+      openDocument00AMinto({
         brandName: intel.brandName,
         category: intel.category,
         briefType: intel.briefType,
@@ -178,7 +178,7 @@ export function Document00ACard({ brand }: { brand: string }) {
             opacity: downloading ? 0.6 : 1,
           }}
         >
-          {downloading ? "Building…" : "Download ↓"}
+          {downloading ? "Building…" : "Open ↗"}
         </button>
       </div>
     );
