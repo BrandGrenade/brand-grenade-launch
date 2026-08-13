@@ -135,6 +135,8 @@ export interface MintoDocumentSpec {
   content: MintoContent;
   screen?: boolean;
   footerHtml?: string;
+  /** Document-specific CSS appended to the shared stylesheet. */
+  extraCss?: string;
   /**
    * Start the appendix on a fresh page. Off by default — forcing the break
    * was what left the front matter ending on a half-empty page.
@@ -192,6 +194,7 @@ export function buildMintoDocument(spec: MintoDocumentSpec): string {
       title: spec.title,
       toolbarNote: spec.title,
       screen: spec.screen,
+      extraCss: spec.extraCss,
       footerHtml: spec.footerHtml,
     },
     body.join("\n"),

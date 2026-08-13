@@ -468,6 +468,8 @@ export interface ShellOptions {
   screen?: boolean;
   /** Toolbar caption on screen. */
   toolbarNote?: string;
+  /** Document-specific CSS appended after the shared system stylesheet. */
+  extraCss?: string;
   footerHtml?: string;
 }
 
@@ -487,7 +489,7 @@ export function docShell(opts: ShellOptions, bodyHtml: string): string {
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${escapeHtml(opts.title)}</title>
-<style>${docSystemStyles({ screen })}</style>
+<style>${docSystemStyles({ screen })}${opts.extraCss ?? ""}</style>
 </head><body>
 ${toolbar}
 <div class="page">
