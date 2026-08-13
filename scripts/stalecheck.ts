@@ -13,7 +13,7 @@ const docs: Record<string,string> = {
   arch: buildPhase2Document(s as never, "brand_architecture"),
 };
 const STALE = /Real power never announces/i;
-const LOCK = /Stealth\. By Design\./i;
+const LOCK = /New Jaguar\. Stealth\. By Design\./i;
 for (const [k,v] of Object.entries(docs)) {
   const txt = v.replace(/<[^>]+>/g," ");
   console.log(k, "stale:", STALE.test(txt), "lockedLine:", LOCK.test(txt), "len", v.length);
