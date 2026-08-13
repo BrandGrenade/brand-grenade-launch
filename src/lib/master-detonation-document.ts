@@ -50,7 +50,7 @@ export function buildMasterDetonationDocument(
         label: "The detonation",
         variant: "hero",
       }) + renderMarkdown(detonation)
-    : derived.content.recommendation ?? "";
+    : (derived.content.recommendation ?? "");
 
   /* 04 — proposition: SMP the brief is written against. */
   const proposition =
@@ -73,11 +73,16 @@ export function buildMasterDetonationDocument(
     : (derived.content.why_this_wins ?? "");
 
   /* 06 — validation: brief quality score, as a table. */
-  const scoreRows: CmpRow[] = SCORE_DIMENSIONS.filter(([k]) => score[k] != null).map(([k, label]) => ({
-    cells: { dimension: label, score: `${score[k]}/10` },
-  }));
+  const scoreRows: CmpRow[] = SCORE_DIMENSIONS.filter(([k]) => score[k] != null).map(
+    ([k, label]) => ({
+      cells: { dimension: label, score: `${score[k]}/10` },
+    }),
+  );
   if (score.composite != null) {
-    scoreRows.push({ win: true, cells: { dimension: "Composite", score: `${score.composite}/50` } });
+    scoreRows.push({
+      win: true,
+      cells: { dimension: "Composite", score: `${score.composite}/50` },
+    });
   }
   const validation =
     (scoreRows.length
@@ -98,14 +103,12 @@ export function buildMasterDetonationDocument(
     (derived.content.rejected ?? "");
 
   /* 08 — implications: audience, cultural context, system principles. */
-  const implications = [
-    pick("audience"),
-    pick("cultural_context"),
-    pick("system_principles"),
-  ]
-    .filter((s) => s.trim())
-    .map((s) => renderMarkdown(s))
-    .join("") || (derived.content.implications ?? "");
+  const implications =
+    [pick("audience"), pick("cultural_context"), pick("system_principles")]
+      .filter((s) => s.trim())
+      .map((s) => renderMarkdown(s))
+      .join("") ||
+    (derived.content.implications ?? "");
 
   /* 10 — appendix: the Phase 2 record, then the strategy evidence. */
   const appendix =

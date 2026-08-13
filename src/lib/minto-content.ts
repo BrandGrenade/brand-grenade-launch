@@ -164,7 +164,11 @@ export function parseScoredCandidates(stage10: string): ScoredCandidate[] {
 }
 
 function normalise(s: string): string {
-  return s.toLowerCase().replace(/[^a-z0-9 ]/g, "").replace(/\s+/g, " ").trim();
+  return s
+    .toLowerCase()
+    .replace(/[^a-z0-9 ]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 function findWinner(candidates: ScoredCandidate[], smp: string): ScoredCandidate | null {
@@ -313,10 +317,7 @@ export interface DeriveOptions {
   extraWhyHtml?: string;
 }
 
-export function deriveMintoContent(
-  session: MintoSession,
-  opts: DeriveOptions = {},
-): DerivedMinto {
+export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = {}): DerivedMinto {
   const brand = (session.brand_name ?? "Untitled Brand").trim();
   const category = (session.category ?? "").trim();
   const smp = clean(session.selected_smp).trim();
@@ -334,7 +335,9 @@ export function deriveMintoContent(
   const winner = findWinner(candidates, smp);
   const passed = candidates.filter((c) => c.verdict === "PASS");
   const rejected = candidates.filter((c) => c !== winner);
-  const stagesRun = PIPELINE_APPENDIX.filter((s) => String((session as Record<string, unknown>)[s.key] ?? "").trim()).length;
+  const stagesRun = PIPELINE_APPENDIX.filter((s) =>
+    String((session as Record<string, unknown>)[s.key] ?? "").trim(),
+  ).length;
 
   /* 01 — recommendation */
   const recommendation = smp

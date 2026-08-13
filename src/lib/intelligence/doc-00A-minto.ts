@@ -54,7 +54,9 @@ export function buildDocument00AMinto(
   opts: { screen?: boolean } = {},
 ): string {
   const report = (input.report ?? {}) as IntelligenceReport & Loose;
-  const territories = Array.isArray(report.territories) ? (report.territories as unknown as Loose[]) : [];
+  const territories = Array.isArray(report.territories)
+    ? (report.territories as unknown as Loose[])
+    : [];
   const primary =
     territories.find((t) => str(t.id) === str(report.recommended_primary_territory_id)) ??
     territories[0] ??
@@ -64,7 +66,7 @@ export function buildDocument00AMinto(
   const gov = obj(report.government_addendum);
 
   const primaryName = primary ? str(primary.name) || "Recommended territory" : "";
-  const verdict = primary ? VERDICT_LABEL[str(primary.strategic_recommendation)] ?? "" : "";
+  const verdict = primary ? (VERDICT_LABEL[str(primary.strategic_recommendation)] ?? "") : "";
 
   /* 01 — recommendation */
   const recommendation =
@@ -147,12 +149,17 @@ export function buildDocument00AMinto(
   /* 05 — why this wins */
   const whyReasons: Reason[] = [];
   if (str(permission.rationale)) {
-    whyReasons.push({ title: "Brand has permission", detail: str(permission.rationale).slice(0, 260) });
+    whyReasons.push({
+      title: "Brand has permission",
+      detail: str(permission.rationale).slice(0, 260),
+    });
   }
   if (str(firstMover.competitive_response_scenario)) {
     whyReasons.push({
       title: "First-mover window",
-      detail: `${str(firstMover.window_duration)} ${str(firstMover.competitive_response_scenario)}`.trim().slice(0, 260),
+      detail: `${str(firstMover.window_duration)} ${str(firstMover.competitive_response_scenario)}`
+        .trim()
+        .slice(0, 260),
     });
   }
   const hist = obj(primary?.historical_validation);
