@@ -278,46 +278,66 @@ export function buildExecSummaryDocument(
       : ""
   }${!condition && !nextStep && !recs.channels.length ? missing() : ""}`;
 
-  const body =
-    cover +
-    leadBlock +
-    `<div class="es-open">` +
-    section("SECTION 01", "Scale of the Work", statsHtml) +
-    section("SECTION 02", "The Business Issue", issueHtml) +
-    section("SECTION 03", "Research", researchHtml) +
-    section("SECTION 04", "Findings", findingsHtml) +
-    section("SECTION 05", "The Propositions Field", fieldHtml) +
-    section("SECTION 06", "Winning Proposition", winningHtml) +
-    section("SECTION 07", "Verification", verificationHtml) +
-    section("SECTION 08", scoringTitle, scoringHtml, "es-open") +
-    section("SECTION 09", "Brand World Opportunity", brandWorldHtml) +
-    section("SECTION 10", "Recommendations, Including Channel Strategy", recsHtml, "es-open") +
-    `</div>` +
-    `<div class="footer">Brand Grenade Strategy Intelligence System — Confidential. This summary was assembled from stored session data only; no content was generated for it. Full reasoning sits in the Consulting Delivery document and the Complete Pipeline Record.</div>`;
+  // Assembled against the canonical ten-section Minto structure. The rich
+  // exec-summary extraction above feeds the canonical slots; ordering,
+  // numbering and completeness belong to `minto.ts`, not to this file.
+  const derived = deriveMintoContent(session as MintoSession, {
+    appendix: { mode: "brief" },
+  });
 
+  const rejectedField = field.filter((f) => !f.selected);
 
-  const title = `Strategy Executive Summary — ${brand}`;
-  return `<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<title>${escapeHtml(title)}</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<style>${baseStyles()}${extraStyles()}</style>
-</head>
-<body>
-<div id="toolbar">
-  <span>${escapeHtml(title)}</span>
-  <div class="actions">
-    <button onclick="window.print()">Save as PDF</button>
-    <button class="close" onclick="window.close()">Close</button>
-  </div>
-</div>
-<div class="page">${body}</div>
-<script>setTimeout(function(){try{window.print();}catch(e){}}, 500);</script>
-</body>
-</html>`;
+  return buildMintoDocument({
+    title: `Strategy Executive Summary — ${brand}`,
+    extraCss: extraStyles(),
+    cover: {
+      brand: "BRAND GRENADE",
+      label: "Strategy Executive Summary",
+      title: `${brand} — Strategy Executive Summary`,
+      subtitle: session.category ?? undefined,
+      confidential: true,
+    },
+    headlineStats: process.stats.map((s) => ({ value: s.value, label: s.label })),
+    content: {
+      recommendation:
+        (leadBlock || "") +
+        (winning.smp
+          ? `<div class="proposition"><div class="label">Strategic Master Proposition</div><div class="stmt">${escapeHtml(
+              winning.smp,
+            )}</div></div>`
+          : derived.content.recommendation ?? ""),
+      business_issue: issueHtml,
+      key_insight: findingsHtml,
+      proposition: winningHtml,
+      why_this_wins: `${proofHtml}${verificationHtml}`,
+      validation: `<h3>${escapeHtml(scoringTitle)}</h3>${scoringHtml}`,
+      rejected: rejectedField.length
+        ? bullets(
+            rejectedField.map((f) => ({
+              head: f.proposition,
+              sub: f.reason ? `${f.origin}. Not the lead: ${f.reason}` : `${f.origin}. Considered, not carried forward.`,
+              tag: "Considered",
+              muted: true,
+            })),
+          )
+        : derived.content.rejected ?? "",
+      implications: `${brandWorldHtml}${
+        recs.channels.length
+          ? `<h3>Channels this strategy activates through</h3>${bullets(
+              recs.channels.map((c) => ({ head: c })),
+            )}`
+          : ""
+      }`,
+      next_step: recsHtml,
+      appendix: `<h3>Research the summary draws on</h3>${researchHtml}${
+        derived.content.appendix ?? ""
+      }`,
+    },
+    footerHtml:
+      "Brand Grenade Strategy Intelligence System — Confidential. This summary was assembled from stored session data only; no content was generated for it. Full reasoning sits in the Consulting Delivery document and the Complete Pipeline Record.",
+  });
 }
+
 
 export function openExecSummaryDocument(
   session: ExecSummarySession,
