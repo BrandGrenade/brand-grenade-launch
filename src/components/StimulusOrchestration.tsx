@@ -327,19 +327,59 @@ export function StimulusOrchestration({
     }
   };
 
-  const openRunRef = useRef<((id: string) => Promise<void>) | null>(null);
+  const viewRunRef = useRef<((id: string) => Promise<void>) | null>(null);
 
+  /**
+   * Passive observation of a run the SERVER is already driving. Never calls
+   * driveOrchestration, so it can never start or restart generation.
+   */
+  const watch = useCallback(
+    async (id: string) => {
+      setBusy(true);
+      let guard = 0;
+      while (guard < 900) {
+        guard += 1;
+        await new Promise((r) => setTimeout(r, 4000));
+        let s: { orchestration: Row } | null = null;
+        try {
+          s = (await load({ data: { orchestrationId: id } })) as any;
+        } catch {
+          continue;
+        }
+        setState(s as any);
+        const o = s!.orchestration;
+        setNote(`${o.status} — ${o.phase_note ?? ""}`);
+        if (o.driver_status === "failed") {
+          setErr((o.error as string) ?? "Orchestration failed");
+          break;
+        }
+        if (o.status === "complete" || o.driver_status === "idle") break;
+      }
+      setBusy(false);
+    },
+    [load],
+  );
+
+  /**
+   * READ ONLY. Opens a stored run for viewing. If — and only if — the server
+   * already has a live driver on it, we watch its progress. Nothing here can
+   * trigger generation.
+   */
   const openRun = async (id: string) => {
     setOrchId(id);
+    setErr(null);
     const s = (await load({ data: { orchestrationId: id } })) as any;
     setState(s);
     const o = s?.orchestration;
-    // Re-attach to a run that is still going (or restart a dead driver). The
-    // server decides — this only asks and then watches.
-    if (o && o.status !== "complete") void drive(id);
+    if (o) setNote(`${o.status} — ${o.phase_note ?? ""}`);
+    const hb = o?.driver_heartbeat_at ? Date.parse(o.driver_heartbeat_at as string) : 0;
+    const liveDriver =
+      o && o.status !== "complete" && o.driver_status === "running" && Date.now() - hb < 5 * 60_000;
+    if (liveDriver) void watch(id);
   };
 
-  openRunRef.current = openRun;
+  viewRunRef.current = openRun;
+
 
   const orch = state?.orchestration;
   const activePrompts = useMemo(
