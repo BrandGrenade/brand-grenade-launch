@@ -345,6 +345,28 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
     String((session as Record<string, unknown>)[s.key] ?? "").trim(),
   ).length;
 
+  /* Room 04 lock — authoritative campaign line and winning idea. Stage 14/15
+   * text predates the lock, so the lock is stated first and verbatim. */
+  const lockedLine = (session.locked_campaign_line ?? "").trim();
+  const lockedIdea = clean(session.locked_big_idea).trim();
+  const lockedLens = (session.locked_big_idea_lens ?? "").trim();
+  const lockedIdeaHtml =
+    lockedLine || lockedIdea
+      ? (lockedLine
+          ? pullQuote(lockedLine, {
+              label: lockedLens ? `Locked campaign line — ${lockedLens}` : "Locked campaign line",
+            })
+          : "") +
+        (lockedIdea
+          ? callout(
+              lockedLens ? `Locked creative idea — ${lockedLens}` : "Locked creative idea",
+              `<p>${inlineMd(lockedIdea.slice(0, 900))}</p>`,
+            )
+          : "")
+      : "";
+
+
+
   /* 01 — recommendation */
   const recommendation = smp
     ? pullQuote(smp, { label: "The recommendation", variant: "hero" })
