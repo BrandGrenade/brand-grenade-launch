@@ -54,7 +54,6 @@ export interface MintoSession {
   stage_20_output?: string | null;
   stage_22_brand_architecture?: string | null;
   stage_22_distinctive_assets?: string | null;
-  [key: string]: unknown;
 }
 
 /* ────────────────────────────────────────────────────────── helpers ── */
@@ -182,7 +181,7 @@ function findWinner(candidates: ScoredCandidate[], smp: string): ScoredCandidate
 
 /* ─────────────────────────────────────────────── appendix condensing ── */
 
-export const PIPELINE_APPENDIX: Array<{ title: string; key: keyof MintoSession }> = [
+export const PIPELINE_APPENDIX: Array<{ title: string; key: string }> = [
   { title: "Brief & Context", key: "stage_1_output" },
   { title: "Category Intelligence", key: "stage_2_output" },
   { title: "Strategic Frameworks", key: "stage_3_output" },
@@ -200,7 +199,7 @@ export const PIPELINE_APPENDIX: Array<{ title: string; key: keyof MintoSession }
   { title: "Coherence Audit", key: "stage_15_output" },
 ];
 
-export const DETONATION_APPENDIX: Array<{ title: string; key: keyof MintoSession }> = [
+export const DETONATION_APPENDIX: Array<{ title: string; key: string }> = [
   { title: "Detonation Territory", key: "stage_17_selected_territory" },
   { title: "Detonation Intelligence", key: "stage_17b_output" },
   { title: "The Detonation", key: "stage_18_selected_detonation" },
@@ -261,7 +260,7 @@ export function condenseStage(
 }
 
 export interface AppendixOptions {
-  sections?: Array<{ title: string; key: keyof MintoSession }>;
+  sections?: Array<{ title: string; key: string }>;
   mode?: "condensed" | "full" | "brief";
   intro?: string;
 }
@@ -274,7 +273,7 @@ export function buildAppendix(session: MintoSession, opts: AppendixOptions = {})
 
   const blocks = defs
     .map((s, i) => {
-      let raw = clean(session[s.key]);
+      let raw = clean((session as Record<string, unknown>)[s.key]);
       if (s.key === "stage_9_output") raw += `\n${clean(session.stage_9_leftofcentre_output)}`;
       raw = stripInternals(raw);
       if (!raw.trim()) return "";
@@ -335,7 +334,7 @@ export function deriveMintoContent(
   const winner = findWinner(candidates, smp);
   const passed = candidates.filter((c) => c.verdict === "PASS");
   const rejected = candidates.filter((c) => c !== winner);
-  const stagesRun = PIPELINE_APPENDIX.filter((s) => String(session[s.key] ?? "").trim()).length;
+  const stagesRun = PIPELINE_APPENDIX.filter((s) => String((session as Record<string, unknown>)[s.key] ?? "").trim()).length;
 
   /* 01 — recommendation */
   const recommendation = smp
