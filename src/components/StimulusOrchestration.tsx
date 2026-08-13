@@ -259,8 +259,12 @@ export function StimulusOrchestration({
   useEffect(() => {
     if (!open || attached.current || orchId || runs.length === 0) return;
     attached.current = true;
-    const complete = runs.find((r) => r.status === "complete");
+    const signedOff = runs.find(
+      (r) => r.status === "complete" && (r as { gate_two_confirmed?: boolean }).gate_two_confirmed,
+    );
+    const complete = signedOff ?? runs.find((r) => r.status === "complete");
     const target = complete ?? runs[0];
+
     void viewRunRef.current?.(target.id as string);
   }, [open, orchId, runs]);
 
