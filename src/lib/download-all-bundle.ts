@@ -108,6 +108,7 @@ async function fetchDocument00A(brand: string): Promise<Doc00AResult> {
         ? "government"
         : "commercial";
     const input: Parameters<typeof buildDocument00AMinto>[0] = {
+      sourceRunId: match.id,
       brandName: match.brand_name || brand,
       category: match.category ?? "",
       briefType,

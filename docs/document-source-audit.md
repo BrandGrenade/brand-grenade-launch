@@ -35,7 +35,8 @@ Audit scope: every user-facing document builder and its actual render/download e
 | Creative Showcase ratings/instinct brief | winning direction record | authoritative winning direction record | Live |
 | Creative Showcase channel expressions | newest adaptation/offline-brief runs per channel | same newest live runs | Live |
 | Creative Showcase rejection reasoning | orchestration prompt `rejected_reason` | current orchestration prompt records | Live |
-| Document 00A territories/evidence | latest completed Intelligence run by normalised brand | same completed run | Historical report by design; completion timestamp shown |
+| Document 00A territories/evidence | latest completed Intelligence run by normalised brand | same completed run | Historical report by design; exact run ID and completion timestamp now shown |
+| Executive Summary Intelligence evidence | latest completed Intelligence run by normalised brand | same completed run | Exact run ID/date shown; brand-name linkage explicitly disclosed pending a direct relational link |
 | Strategy & Creative Vision | cached `stage_16_vision_output` | stored generated artefact | Snapshot necessary; UI exposes explicit regenerate against current inputs |
 | Agency Pitch / Workshop Guide | Stage 1–15 outputs + live SMP cover | stage snapshots + live SMP cover | Historical pipeline records; not presented as current Room 04 output |
 | Full Pipeline Run | every stored stage output | same immutable stage record + live SMP cover | Historical record by design and labelled as such |
@@ -45,6 +46,7 @@ Audit scope: every user-facing document builder and its actual render/download e
 | Channel Detonation Briefs | `stage_21_outputs` | generated snapshots | Snapshot by design |
 | Conceptual Assets | `stage_22_distinctive_assets` | current Stage 22 asset output | Live current stored stage result |
 | Download-All copies of all above | page session object, which could age | full session refetch + authoritative Room 04 join before bundle build | Fixed |
+| Generated consulting/agency/workshop URL cache | `status=ready` regardless of later session changes | reused only when document generation timestamp is at/after session `updated_at` | Fixed; otherwise automatically regenerated |
 
 ## Remaining intentional snapshots
 

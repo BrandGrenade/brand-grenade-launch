@@ -97,6 +97,7 @@ export function Document00ACard({ brand }: { brand: string }) {
     setDownloading(true);
     try {
       openDocument00AMinto({
+        sourceRunId: intel.id,
         brandName: intel.brandName,
         category: intel.category,
         briefType: intel.briefType,

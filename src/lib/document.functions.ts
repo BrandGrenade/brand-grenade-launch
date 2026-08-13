@@ -184,10 +184,10 @@ async function runGeneration(sessionId: string, format: DocFormat): Promise<void
 
     const readyUpdate =
       format === "consulting"
-        ? { doc_consulting_status: "ready", doc_consulting_url: signed.signedUrl }
+        ? { doc_consulting_status: "ready", doc_consulting_url: signed.signedUrl, doc_consulting_status_at: new Date().toISOString() }
         : format === "agency"
-          ? { doc_agency_status: "ready", doc_agency_url: signed.signedUrl }
-          : { doc_workshop_status: "ready", doc_workshop_url: signed.signedUrl };
+          ? { doc_agency_status: "ready", doc_agency_url: signed.signedUrl, doc_agency_status_at: new Date().toISOString() }
+          : { doc_workshop_status: "ready", doc_workshop_url: signed.signedUrl, doc_workshop_status_at: new Date().toISOString() };
     await supabaseAdmin.from("sessions").update(readyUpdate).eq("id", sessionId);
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Document generation failed";
@@ -211,9 +211,10 @@ export const generateDocument = createServerFn({ method: "POST" })
     const urlCol = URL_COLS[format];
     const statusCol = STATUS_COLS[format];
 
+    const statusAtCol = `doc_${format}_status_at`;
     const { data: session, error } = await supabaseAdmin
       .from("sessions")
-      .select(`id, ${urlCol}, ${statusCol}`)
+      .select(`id, updated_at, ${urlCol}, ${statusCol}, ${statusAtCol}`)
       .eq("id", sessionId)
       .single();
     if (error || !session) {
@@ -230,7 +231,15 @@ export const generateDocument = createServerFn({ method: "POST" })
         | string
         | null
         | undefined;
-      if (existingStatus === "ready" && existingUrl) {
+      const generatedAt = Date.parse(
+        ((session as Record<string, unknown>)[statusAtCol] as string | null) ?? "",
+      );
+      const sourceUpdatedAt = Date.parse(session.updated_at ?? "");
+      const cacheMatchesCurrentSource =
+        Number.isFinite(generatedAt) &&
+        Number.isFinite(sourceUpdatedAt) &&
+        generatedAt >= sourceUpdatedAt;
+      if (existingStatus === "ready" && existingUrl && cacheMatchesCurrentSource) {
         return { status: "ready" as const, url: existingUrl, format, sessionId, cached: true };
       }
     }

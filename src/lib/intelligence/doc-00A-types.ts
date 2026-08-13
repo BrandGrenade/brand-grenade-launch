@@ -120,6 +120,7 @@ export interface IntelligenceReport {
 }
 
 export interface Document00AInput {
+  sourceRunId?: string | null;
   brandName: string;
   category: string;
   briefType: BriefType;
