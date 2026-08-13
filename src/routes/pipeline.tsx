@@ -718,6 +718,7 @@ const DB_STAGE_ID_TO_UI: Record<string, string> = {
 function PipelineView() {
   const { session: sessionId } = Route.useSearch();
   const navigate = useNavigate();
+  const reclaimStalledStageFn = useServerFn(reclaimStalledStage);
   const runStage1Fn = useServerFn(runStage1);
   const runStage1bFn = useServerFn(runStage1b);
   const resubmitBriefFn = useServerFn(resubmitBrief);
