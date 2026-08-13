@@ -450,15 +450,19 @@ export function buildBoardStrategyDocument(
     .filter(Boolean)
     .join("\n");
 
-  /* ── appendix — full stage detail, unchanged in substance ────────── */
+  /* ── appendix — evidence extract (condensed) or verbatim record ──── */
+  const full = opts.appendix === "full";
   const appendixBody = APPENDIX_SECTIONS.map((s, i) => {
     let raw = clean(session[s.key]);
     if (s.key === "stage_9_output") raw += `\n${clean(session.stage_9_leftofcentre_output)}`;
     if (s.key === "stage_1_output") raw = stripInternals(raw);
+    raw = stripInternals(raw);
     if (!raw.trim()) return "";
+    const body = full ? raw : condenseStage(raw);
+    if (!body.trim()) return "";
     return section(
       { kicker: `Appendix ${String(i + 1).padStart(2, "0")}`, title: s.title },
-      renderMarkdown(raw),
+      renderMarkdown(body),
     );
   })
     .filter(Boolean)
@@ -467,11 +471,16 @@ export function buildBoardStrategyDocument(
   const appendix = appendixBody
     ? `<div class="section doc-break">` +
       `<p class="kicker">Appendix — backing detail</p>` +
-      `<h1>Full validation record</h1>` +
-      `<p>Every stage output behind the recommendation above, in pipeline order. ` +
-      `The front matter is the decision; this is the evidence.</p></div>` +
+      `<h1>${full ? "Full validation record" : "Evidence extract"}</h1>` +
+      `<p>` +
+      (full
+        ? `Every stage output behind the recommendation above, in pipeline order.`
+        : `The load-bearing evidence from each validation stage, in pipeline order. ` +
+          `Cut to what supports the decision; the complete stage transcripts remain in the session record.`) +
+      ` The front matter is the decision; this is the evidence.</p></div>` +
       appendixBody
     : "";
+
 
   return docShell(
     {
