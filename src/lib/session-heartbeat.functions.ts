@@ -91,6 +91,87 @@ export const detectInterruption = createServerFn({ method: "POST" })
   });
 
 /**
+ * Stream-liveness reclaimer.
+ *
+ * A streaming stage runs inside the request's Worker invocation. If the
+ * browser drops that request (tab closed, navigation away, network loss) the
+ * invocation is killed instantly — no catch block runs, so the row keeps
+ * `status='running'`, `stage_status='running:N'` and no error forever. The
+ * client-side idle watchdog cannot help because the client is gone.
+ *
+ * This reclaimer is the server-authoritative escape: it looks at the freshest
+ * liveness signal on the row (`stream_last_delta_at`, then
+ * `last_heartbeat_at`, then `updated_at`) and, when nothing has moved for
+ * STREAM_STALE_MS, flips the stage to `interrupted:N` and writes a real
+ * message into `stage_N_error` so the UI shows the retry affordance instead of
+ * a spinner that never resolves. Any partial output already persisted by
+ * withStreamSafety is left intact.
+ *
+ * Safe to call repeatedly and from any mount — it is a no-op unless the row is
+ * genuinely stale.
+ */
+export const STREAM_STALE_MS = 4 * 60 * 1000;
+
+export const reclaimStalledStage = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ sessionId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertSessionAccess(data.sessionId, context.userId);
+    const { data: row, error } = await supabaseAdmin
+      .from("sessions")
+      .select("stage_status, updated_at, last_heartbeat_at, stream_last_delta_at, status")
+      .eq("id", data.sessionId)
+      .maybeSingle();
+    if (error || !row) return { reclaimed: false as const };
+
+    const marker = /^running:([0-9]+[a-z]?)$/i.exec(row.stage_status ?? "");
+    if (!marker) return { reclaimed: false as const };
+    const stageId = marker[1].toLowerCase();
+
+    const r = row as Record<string, unknown>;
+    const times = [r.stream_last_delta_at, r.last_heartbeat_at, r.updated_at]
+      .map((v) => (typeof v === "string" ? new Date(v).getTime() : NaN))
+      .filter((n) => Number.isFinite(n)) as number[];
+    const freshest = times.length ? Math.max(...times) : 0;
+    const idleMs = Date.now() - freshest;
+    if (idleMs < STREAM_STALE_MS) return { reclaimed: false as const };
+
+    const message =
+      `Stage ${stageId.toUpperCase()} stopped producing output for ` +
+      `${Math.round(idleMs / 60000)} minutes. The generation worker was lost ` +
+      `(usually the browser tab closed or navigated away mid-stream). ` +
+      `Any partial output is preserved — retry this stage to continue.`;
+
+    const now = new Date().toISOString();
+    const update: Record<string, unknown> = {
+      status: "interrupted",
+      stage_status: `interrupted:${stageId}`,
+      interrupted_stage: parseInt(stageId, 10) || null,
+      interrupted_at: now,
+    };
+    update[`stage_${stageId}_error`] = message;
+
+    const { error: writeErr } = await supabaseAdmin
+      .from("sessions")
+      .update(update as never)
+      .eq("id", data.sessionId)
+      // Only reclaim if the row is still on the same running marker, so a
+      // stage that resumed between the read and the write is not clobbered.
+      .eq("stage_status", `running:${stageId}`);
+    if (writeErr) {
+      // The error column may not exist for exotic stage ids — retry without it.
+      delete update[`stage_${stageId}_error`];
+      await supabaseAdmin
+        .from("sessions")
+        .update(update as never)
+        .eq("id", data.sessionId)
+        .eq("stage_status", `running:${stageId}`);
+    }
+
+    return { reclaimed: true as const, stageId, idleMs, message };
+  });
+
+/**
  * Per-stage retry dispatcher. Clears the interrupted markers, bumps the
  * retry counter and hands the caller the stage id to re-run. Stage output
  * clearing itself stays with resetStage / resetStageCascade in
