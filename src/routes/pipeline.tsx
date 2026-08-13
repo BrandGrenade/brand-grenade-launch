@@ -39,6 +39,7 @@ import { runStage8, confirmCheckpointB, regenerateStage8Selective } from "@/lib/
 import { runLeftOfCentre } from "@/lib/loc.functions";
 import { renderLocFullMarkdown, type LocEnginePackage } from "@/lib/loc/decision-package";
 import { resetStage, resetStageCascade } from "@/lib/retry.functions";
+import { reclaimStalledStage } from "@/lib/session-heartbeat.functions";
 import { sanitizeStageOutput } from "@/lib/sanitize-output";
 import { hasStageOutput, isStageOutputComplete } from "@/lib/stage-completion";
 import {
