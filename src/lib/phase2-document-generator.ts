@@ -522,7 +522,7 @@ export function buildAllPhase2(session: Phase2Session): string {
 
   const tocHtml = `<div class="toc"><h3>Contents</h3><ol>${tocItems.map((t) => `<li>${escapeHtml(t)}</li>`).join("")}</ol></div>`;
 
-  const body = cover("BRAND DETONATION", "Complete Brand Detonation", brand) + tocHtml + sections.join("\n") + footer(true);
+  const body = cover("BRAND DETONATION", "Complete Brand Detonation", brand) + tocHtml + sections.join("\n") + provenance(session) + footer(true);
   return wrapDoc("Brand Detonation", brand, body);
 }
 
