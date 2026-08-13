@@ -6,7 +6,7 @@ import { buildConsultingDeliveryDocument } from "../src/lib/consulting-delivery-
 import { buildPhase2Document } from "../src/lib/phase2-document-generator";
 import { buildDocument00AMinto } from "../src/lib/intelligence/doc-00A-minto";
 
-const sb = createClient(process.env.VITE_SUPABASE_URL!, process.env.VITE_SUPABASE_PUBLISHABLE_KEY!);
+const sb = createClient(process.env.VITE_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
 const id = process.argv[2];
 const { data: s, error } = await sb.from("sessions").select("*").eq("id", id).maybeSingle();
 if (error || !s) { console.error("session load failed", error); process.exit(1); }
