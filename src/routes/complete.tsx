@@ -924,8 +924,12 @@ function CompletePage() {
           session.stage_19_output ||
           session.stage_20_output ||
           session.stage_21_outputs ||
-          session.stage_22_brand_architecture) && (
+          session.stage_22_brand_architecture) ? (
           <Phase2Deliverables session={session} />
+        ) : (
+          // Room 04 can produce output before Phase 2 documents exist, so its
+          // deliverables must still be reachable from this page.
+          <StandaloneCreativeDeliverables sessionId={session.id} />
         )}
 
         {/* Pipeline stages collapsible */}
