@@ -50,7 +50,13 @@ Audit scope: every user-facing document builder and its actual render/download e
 | Activation Architecture | `stage_19_output` | generated snapshot | Snapshot by design |
 | Channel Detonation Briefs | `stage_21_outputs` | generated snapshots | Snapshot by design |
 | Conceptual Assets | `stage_22_distinctive_assets` | current Stage 22 asset output | Live current stored stage result |
-| Download-All copies of all above | page session object, which could age | full session refetch + authoritative Room 04 join before bundle build | Fixed |
+| Orchestration Prompt Set (tool-specific MarTech prompts) | reachable only inside Room 04 | Deliverables entry resolving the Gate Two-confirmed (else newest complete) orchestration at click time | Live; now present on Deliverables |
+| Orchestration signature registry / cross-refs / Gate Two record | Room 04 only | same export, resolved live | Live; now present on Deliverables |
+| 37-Lens Sweep raw ideas | Room 04 only | Deliverables batch export resolving directions at click time | Live; now present on Deliverables |
+| Gate One shortlist | Room 04 only | Deliverables batch export filtered on `gate_one_approved` at click time | Live; now present on Deliverables |
+| Full Creative Showcase | Deliverables (Phase 2 section only) | also included in the zip bundle | Live |
+| Phase 2 documents (Territory, Detonation, Activation, Channel Briefs, Assets, Architecture, Complete Detonation) | stage snapshots with no version marker | unchanged snapshots plus a mandatory "Source authority" block naming generation time, session update time, live SMP and Room 04 lock time/run | Snapshot, now explicitly versioned |
+| Download-All copies of all above | page session object, which could age | full session refetch + authoritative Room 04 join before bundle build; Creative Engine exports resolved from their own records | Fixed |
 | Generated consulting/agency/workshop URL cache | `status=ready` regardless of later session changes | reused only when document generation timestamp is at/after session `updated_at` | Fixed; otherwise automatically regenerated |
 
 ## Remaining intentional snapshots
