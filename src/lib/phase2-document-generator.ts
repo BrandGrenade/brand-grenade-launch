@@ -37,6 +37,9 @@ export interface Phase2Session {
   locked_big_idea?: string | null;
   locked_campaign_line?: string | null;
   locked_big_idea_lens?: string | null;
+  locked_big_idea_at?: string | null;
+  locked_big_idea_run_id?: string | null;
+  updated_at?: string | null;
 }
 
 
