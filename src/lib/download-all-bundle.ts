@@ -175,7 +175,7 @@ export async function buildAndDownloadBundle(
       const res = await supabase
         .from("sessions")
         .select(
-          "brief_text, stage_2_output, stage_3_output, stage_4_output, loc_engine_outputs, loc_status, loc_decision_packages, stage_22_distinctive_assets, locked_big_idea_run_id, locked_big_idea, locked_campaign_line, locked_big_idea_lens, locked_big_idea_at, selection_rationale, updated_at",
+          "brief_text, stage_2_output, stage_3_output, stage_4_output, loc_engine_outputs, loc_status, loc_decision_packages, stage_22_output, stage_22_brand_architecture, stage_22_distinctive_assets, locked_big_idea_run_id, locked_big_idea, locked_campaign_line, locked_big_idea_lens, locked_big_idea_at, selection_rationale, updated_at",
         )
         .eq("id", session.id)
         .maybeSingle();

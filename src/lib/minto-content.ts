@@ -564,11 +564,19 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
 
   /* 08 — implications */
   const implicationItems = bullets(s14, 5).length ? bullets(s14, 5) : bullets(s15, 5);
+  const brandArchitecture = (session.stage_22_brand_architecture ?? "").trim();
+  const distinctiveAssets = (session.stage_22_distinctive_assets ?? "").trim();
   const implications =
     lockedIdeaHtml +
     (implicationItems.length
       ? `<ul>${implicationItems.map((b) => `<li>${inlineMd(b)}</li>`).join("")}</ul>`
-      : renderMarkdown((s14 || s15).slice(0, 1600)));
+      : renderMarkdown((s14 || s15).slice(0, 1600))) +
+    (brandArchitecture
+      ? callout("Current brand architecture", renderMarkdown(brandArchitecture.slice(0, 1400)))
+      : "") +
+    (distinctiveAssets
+      ? callout("Current distinctive assets", renderMarkdown(distinctiveAssets.slice(0, 1000)))
+      : "");
 
 
   /* 09 — next step */

@@ -109,7 +109,19 @@ export function buildMasterDetonationDocument(
       .filter((s) => s.trim())
       .map((s) => renderMarkdown(s))
       .join("") ||
-      (derived.content.implications ?? ""));
+      (derived.content.implications ?? "")) +
+    ((session.stage_22_brand_architecture ?? "").trim()
+      ? callout(
+          "Current brand architecture",
+          renderMarkdown((session.stage_22_brand_architecture ?? "").slice(0, 1400)),
+        )
+      : "") +
+    ((session.stage_22_distinctive_assets ?? "").trim()
+      ? callout(
+          "Current distinctive assets",
+          renderMarkdown((session.stage_22_distinctive_assets ?? "").slice(0, 1000)),
+        )
+      : "");
 
   /* 10 — appendix: the Phase 2 record, then the strategy evidence. */
   const appendix =

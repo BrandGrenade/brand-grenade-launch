@@ -19,16 +19,20 @@ Audit scope: every user-facing document builder and its actual render/download e
 | Board Strategy §06 scores/verdict | Stage 10 output | Stage 10 scoring snapshot matched to live SMP | Snapshot, visible in appendix/source marker |
 | Board Strategy §07 rejection reasoning | Stage 10 weakest score/verdict | current `selection_rationale` first; Stage 10 fallback | Fixed |
 | Board Strategy §08 winning idea/master line | Stage 14/15 implications; duplicated `sessions.locked_*` prepended | winning Room 04 run + winning directions resolved on click | Fixed |
+| Board Strategy §08 Brand Architecture/assets | not rendered despite available Stage 22 fields | current `stage_22_brand_architecture` and `stage_22_distinctive_assets`, subordinate to Room 04 lock | Fixed |
 | Board Strategy UI open action | session object loaded when Deliverables page mounted | full session refetch + Room 04 winning run/direction join on click | Fixed |
 | Board Strategy appendix | Stage 1–15 outputs | same historical outputs | Flagged visibly as historical snapshots |
 | Strategy Executive Summary winning SMP | `selected_smp` | live `sessions.selected_smp` | Live |
 | Executive Summary proposition rejection reasons | Stage 12 pressure notes | current session plus stage evidence; canonical §07 uses `selection_rationale` | Fixed in canonical section |
 | Executive Summary scoring/verification | Stage 10/11 outputs | stage snapshots matched to live SMP | Snapshot, visible source marker |
 | Executive Summary Brand World line | Stage 22 `REFLECTION` | authoritative Room 04 winning line; Reflection only when no lock exists | Fixed |
+| Executive Summary Stage 22 Reflection/deployment fallback | builder expected `stage_22_output`, but UI/bundle queries omitted it | `stage_22_output` included at every build entry point; still subordinate to Room 04 lock | Fixed |
 | Executive Summary distinctive asset | Stage 22 shorthand in older code | `stage_22_distinctive_assets` recommended assets | Live current stored stage result |
 | Consulting Delivery all ten sections | Shared Minto derivation | live SMP + authoritative Room 04 run; snapshots marked | Fixed |
+| Consulting Delivery §08 Brand Architecture/assets | absent | current Stage 22 architecture/assets with Room 04 lock first | Fixed |
 | Master Detonation Brief SMP | Stage 20 embedded SMP fallback | live SMP first; Stage 20 only fallback | Fixed precedence |
 | Master Detonation Brief §08 idea/line | Stage 20/14/15 prose | authoritative Room 04 winning run first | Fixed |
+| Master Detonation Brief §08 Brand Architecture/assets | available only in appendix | current Stage 22 architecture/assets also surfaced in §08 | Fixed |
 | Brand Architecture centre Reflection | Stage 22 embedded `REFLECTION` | authoritative Room 04 winning campaign line when locked | Fixed (stale Reflection no longer displayed as current) |
 | Brand Architecture lock block | duplicated `sessions.locked_*` | authoritative Room 04 run resolved on click | Fixed |
 | Complete Brand Detonation Brand Architecture | Stage 22 Reflection + session cache | authoritative Room 04 line injected into grid | Fixed |
