@@ -459,7 +459,7 @@ export function buildPhase2Document(
       return buildAllPhase2(session);
   }
 
-  return wrapDoc(title, brand, body);
+  return wrapDoc(title, brand, body + provenance(session));
 }
 
 // ── Combined "All Brand Detonation" document ─────────────────────────────
