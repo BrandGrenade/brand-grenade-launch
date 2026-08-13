@@ -278,6 +278,92 @@ export async function buildAndDownloadBundle(
     skipped.push(`${support}/Brand_Architecture.html`);
   }
 
+  // Creative Engine (Room 04) — the orchestrated, tool-specific prompt set and
+  // the lens sweep behind it. Resolved live from their own records.
+  onProgress?.("Building Creative Engine exports…");
+  try {
+    const [{ getFullFinishedExport, getRawIdeaExportBatch }, { buildFullFinishedExport, buildRawIdeaBatchExport }] =
+      await Promise.all([
+        import("./stimulus-gate-two.functions"),
+        import("./stimulus-export"),
+      ]);
+
+    const { data: orchs } = await supabase
+      .from("stimulus_orchestrations")
+      .select("id,status,gate_two_confirmed,updated_at")
+      .eq("session_id", session.id)
+      .order("updated_at", { ascending: false });
+    const orch =
+      (orchs ?? []).find((o) => o.gate_two_confirmed) ??
+      (orchs ?? []).find((o) => o.status === "complete") ??
+      null;
+    if (orch) {
+      const data = await getFullFinishedExport({ data: { orchestrationId: orch.id } });
+      const { html } = buildFullFinishedExport(data);
+      zip.file("Creative Engine/Orchestration_Prompt_Set.html", html);
+      included.push("Creative Engine/Orchestration_Prompt_Set.html");
+    } else {
+      skipped.push("Creative Engine/Orchestration_Prompt_Set.html");
+    }
+
+    const { data: runs } = await supabase
+      .from("stimulus_runs")
+      .select("id")
+      .eq("session_id", session.id)
+      .eq("run_mode", "big_idea");
+    const runIds = (runs ?? []).map((r) => r.id);
+    if (runIds.length) {
+      const { data: dirs } = await supabase
+        .from("stimulus_directions")
+        .select("id,sort_order,gate_one_approved,direction")
+        .in("run_id", runIds)
+        .order("sort_order", { ascending: true });
+      const all = (dirs ?? []).filter((d) => (d.direction ?? "").trim().length > 0);
+      const sweep = all.slice(0, 40).map((d) => d.id);
+      const shortlist = all.filter((d) => d.gate_one_approved).slice(0, 40).map((d) => d.id);
+      if (sweep.length) {
+        const data = await getRawIdeaExportBatch({ data: { directionIds: sweep } });
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { html } = buildRawIdeaBatchExport(data as any);
+        zip.file("Creative Engine/Lens_Sweep_Raw_Ideas.html", html);
+        included.push("Creative Engine/Lens_Sweep_Raw_Ideas.html");
+      } else {
+        skipped.push("Creative Engine/Lens_Sweep_Raw_Ideas.html");
+      }
+      if (shortlist.length) {
+        const data = await getRawIdeaExportBatch({ data: { directionIds: shortlist } });
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { html } = buildRawIdeaBatchExport(data as any);
+        zip.file("Creative Engine/Shortlist_Gate_One.html", html);
+        included.push("Creative Engine/Shortlist_Gate_One.html");
+      } else {
+        skipped.push("Creative Engine/Shortlist_Gate_One.html");
+      }
+    } else {
+      skipped.push("Creative Engine/Lens_Sweep_Raw_Ideas.html");
+      skipped.push("Creative Engine/Shortlist_Gate_One.html");
+    }
+  } catch (e) {
+    console.error("[bundle] Creative Engine exports failed", e);
+    skipped.push("Creative Engine/Orchestration_Prompt_Set.html");
+  }
+
+  // Creative Showcase — the locked idea presented whole (foundation, channel
+  // expressions, CD cohesion verdict, prompts and offline briefs).
+  onProgress?.("Building Full Creative Showcase…");
+  try {
+    const [{ getCreativeShowcase }, { buildCreativeShowcase }] = await Promise.all([
+      import("./creative-showcase.functions"),
+      import("./creative-showcase-document"),
+    ]);
+    const data = await getCreativeShowcase({ data: { sessionId: session.id } });
+    const { html } = buildCreativeShowcase(data);
+    zip.file("Creative Engine/Full_Creative_Showcase.html", html);
+    included.push("Creative Engine/Full_Creative_Showcase.html");
+  } catch {
+    skipped.push("Creative Engine/Full_Creative_Showcase.html");
+  }
+
   onProgress?.("Compressing…");
   const blob = await zip.generateAsync({ type: "blob", compression: "DEFLATE" });
   const filename = `Brand_Grenade_${clientSlug}_Run_${runDate}.zip`;
