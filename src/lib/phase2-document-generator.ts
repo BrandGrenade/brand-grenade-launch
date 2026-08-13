@@ -6,6 +6,8 @@
 // the Phase 2 amber #C81E1E. Open in a new tab; user prints natively.
 
 import { parseStage20Output, parseBriefQualityScore, type BriefQualityScore } from "./phase2-shared";
+import { buildMasterDetonationDocument } from "./master-detonation-document";
+import type { MintoSession } from "./minto-content";
 import { stripDocumentMetadata } from "./strip-document-metadata";
 
 export type Phase2DocType =
@@ -378,9 +380,9 @@ export function buildPhase2Document(
       body = plainBody("BRAND DETONATION", title, brand, session.stage_19_output ?? "");
       break;
     case "master_brief":
-      title = "Master Detonation Brief";
-      body = masterBriefBody(brand, session.stage_20_output ?? "");
-      break;
+      // Canonical ten-section Minto template (shared with the other primary
+      // deliverables) — returns a complete document, not a body fragment.
+      return buildMasterDetonationDocument(session as unknown as MintoSession);
     case "channel_brief": {
       const ch = channelKey ?? "";
       const content = session.stage_21_outputs?.[ch] ?? "";
