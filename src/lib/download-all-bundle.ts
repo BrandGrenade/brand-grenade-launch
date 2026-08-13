@@ -16,10 +16,7 @@ import { buildDocument00AMinto } from "./intelligence/doc-00A-minto";
 import { fetchExecSummaryIntel } from "./exec-summary-intel";
 import { supabase } from "@/integrations/supabase/client";
 import { normalizeBrand } from "./brand-register";
-import {
-  generateDocument00APdf,
-  type IntelligenceReport,
-} from "./intelligence/pdf-00A";
+import { generateDocument00APdf, type IntelligenceReport } from "./intelligence/pdf-00A";
 
 export type BundleSession = Phase1Session &
   Phase2Session &
@@ -40,10 +37,7 @@ function safeFilename(s: string): string {
 }
 
 function pickRunDate(session: BundleSession): string {
-  const raw =
-    session.updated_at ||
-    session.created_at ||
-    new Date().toISOString();
+  const raw = session.updated_at || session.created_at || new Date().toISOString();
   return new Date(raw).toISOString().slice(0, 10);
 }
 
@@ -84,13 +78,11 @@ async function fetchDocument00A(brand: string): Promise<Doc00AResult> {
     const res = await supabase
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .from("intelligence_sessions" as any)
-      .select(
-        "id,brand_name,category,status,updated_at,completed_at,final_report,report_metadata",
-      )
+      .select("id,brand_name,category,status,updated_at,completed_at,final_report,report_metadata")
       .order("updated_at", { ascending: false })
       .limit(500);
     if (res.error) return empty;
-    const rows = ((res.data ?? []) as unknown) as Array<{
+    const rows = (res.data ?? []) as unknown as Array<{
       brand_name: string | null;
       category: string | null;
       status: string | null;
@@ -99,9 +91,7 @@ async function fetchDocument00A(brand: string): Promise<Doc00AResult> {
       final_report: string | null;
       report_metadata: unknown;
     }>;
-    const match = rows.find(
-      (r) => normalizeBrand(r.brand_name) === key && r.status === "complete",
-    );
+    const match = rows.find((r) => normalizeBrand(r.brand_name) === key && r.status === "complete");
     if (!match || !match.final_report) return empty;
     let report: IntelligenceReport;
     try {
@@ -111,11 +101,13 @@ async function fetchDocument00A(brand: string): Promise<Doc00AResult> {
     }
     const meta = match.report_metadata;
     const briefType =
-      meta && typeof meta === "object" && !Array.isArray(meta) &&
+      meta &&
+      typeof meta === "object" &&
+      !Array.isArray(meta) &&
       (meta as Record<string, unknown>).brief_type === "government"
         ? "government"
         : "commercial";
-    const input = {
+    const input: Parameters<typeof buildDocument00AMinto>[0] = {
       brandName: match.brand_name || brand,
       category: match.category ?? "",
       briefType,
@@ -147,11 +139,7 @@ export async function buildAndDownloadBundle(
   const clientSlug = sanitizeSegment(brand);
   const runDate = pickRunDate(session);
 
-  const tryAdd = (
-    path: string,
-    build: () => string | null | undefined,
-    label: string,
-  ) => {
+  const tryAdd = (path: string, build: () => string | null | undefined, label: string) => {
     onProgress?.(label);
     try {
       const content = build();
