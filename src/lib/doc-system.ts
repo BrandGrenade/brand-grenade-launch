@@ -267,6 +267,7 @@ blockquote { border-left: 3pt solid var(--detonation); padding: 10pt 14pt; margi
 .proof strong { color: var(--ash); }
 .footer { margin-top: 40pt; padding-top: 16pt; border-top: 0.5pt solid var(--rule); font-size: 9pt; color: var(--smoke); text-align: center; line-height: 1.55; }
 .appendix-ref { font-size: 8.5pt; color: var(--smoke); font-style: italic; margin-top: 6pt; }
+.minto-missing { font-size: 9.5pt; color: var(--smoke); font-style: italic; border-left: 2pt solid var(--rule); padding: 6pt 0 6pt 12pt; margin: 6pt 0 4pt; }
 .appendix-ref a { color: var(--detonation); text-decoration: none; }
 `;
 }
@@ -467,6 +468,8 @@ export interface ShellOptions {
   screen?: boolean;
   /** Toolbar caption on screen. */
   toolbarNote?: string;
+  /** Document-specific CSS appended after the shared system stylesheet. */
+  extraCss?: string;
   footerHtml?: string;
 }
 
@@ -486,7 +489,7 @@ export function docShell(opts: ShellOptions, bodyHtml: string): string {
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${escapeHtml(opts.title)}</title>
-<style>${docSystemStyles({ screen })}</style>
+<style>${docSystemStyles({ screen })}${opts.extraCss ?? ""}</style>
 </head><body>
 ${toolbar}
 <div class="page">
