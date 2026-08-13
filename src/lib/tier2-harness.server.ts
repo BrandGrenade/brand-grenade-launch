@@ -16,7 +16,7 @@ import { withPhase2Formatting } from "./phase2-shared";
 import { STAGE_20_MASTER_DETONATION_BRIEF_PROMPT } from "./stage20-master-detonation-brief-prompt";
 import { STAGE_20B_CHANNEL_STRATEGY_PROMPT } from "./stage20b-prompt";
 import { buildStage20UserMessage } from "./stage20.functions";
-import { buildStage20bUserMessage } from "./stage20b.functions";
+import { buildStage20bUserMessage } from "./stage20b.server";
 import { generateOne } from "./stage21.functions";
 import { assertSmpVerbatimCarriage, flattenStrings } from "./smp-carriage";
 
