@@ -30,8 +30,28 @@ export type Grounding = {
   strategicEvidence: string;
 };
 
-/** A sweep is considered abandoned when no batch has landed within this window. */
-export const SWEEP_STALL_MS = 4 * 60 * 1000;
+/**
+ * A sweep is considered abandoned when no batch has landed within this window.
+ *
+ * Kept deliberately short. Each background invocation now runs for a bounded
+ * budget and then returns, so a healthy sweep lands a batch every ~60-90s and
+ * the client re-kicks the next slice. A long window would make a genuinely
+ * dead invocation look alive for minutes.
+ */
+export const SWEEP_STALL_MS = 150 * 1000;
+
+/**
+ * Wall-clock budget for ONE background invocation. Serverless invocations do
+ * not reliably survive the ~7 minutes a full 37-lens sweep takes, which is how
+ * runs ended up frozen at `generating` with nothing recorded. Each invocation
+ * therefore does as much as it can inside the budget, leaves the run in a
+ * resumable state, and the watching client (or the next resume call) starts
+ * the following slice.
+ */
+const DRIVE_BUDGET_MS = 60 * 1000;
+
+/** How many times a lens that produced nothing usable is retried on its own. */
+const MAX_FAILED_RETRY_ROUNDS = 2;
 
 export async function loadGrounding(sessionId: string): Promise<Grounding> {
   const { data, error } = await supabaseAdmin
@@ -92,7 +112,7 @@ export async function runBigIdeaBatch(
 
   const { data: pending, error } = await supabaseAdmin
     .from("stimulus_directions")
-    .select("id, lens_id")
+    .select("id, lens_id, generation_attempts")
     .eq("run_id", run.id)
     .eq("status", "pending")
     .order("sort_order", { ascending: true })
@@ -156,6 +176,32 @@ export async function runBigIdeaBatch(
       let regens = 0;
       const lens = getLens(p.lens_id);
 
+      // A batched response occasionally drops (or truncates) one lens block.
+      // That is a parse miss, not a creative failure, so the lens gets its own
+      // single-lens call before it is ever recorded as failed.
+      if (!hit?.idea?.trim() && lens) {
+        try {
+          const soloRaw = await callClaude({
+            systemPrompt: BIG_IDEA_SYSTEM_PROMPT,
+            userMessage: buildBigIdeaUserMessage({
+              ...g,
+              smp: run.smp || g.smp,
+              lenses: [lens],
+              priorTensions,
+            }),
+            skipUniversalWrapper: true,
+            maxTokens: 3000,
+            temperature: 1,
+            sessionId: run.session_id,
+            stageLabel: "Creative Stimulus — single-lens recovery",
+          });
+          const solo = parseBigIdeaResponse(soloRaw)[p.lens_id];
+          if (solo?.idea?.trim()) hit = solo;
+        } catch (soloErr) {
+          console.error("[big-idea-solo]", p.lens_id, soloErr);
+        }
+      }
+
       while (
         hit?.idea?.trim() &&
         hit.collisions.length > 0 &&
@@ -218,7 +264,13 @@ export async function runBigIdeaBatch(
                 status: "generated",
                 error: null,
               }
-            : { status: "failed", error: "Lens produced no parseable big idea" },
+            : {
+                status: "failed",
+                error:
+                  "This lens returned no usable idea after a batch pass and a single-lens retry.",
+                generation_attempts:
+                  ((p as { generation_attempts?: number }).generation_attempts ?? 0) + 1,
+              },
         )
         .eq("id", p.id);
 
@@ -237,28 +289,77 @@ export async function runBigIdeaBatch(
 
   await markBatchLanded(run.id);
 
-  const { count } = await supabaseAdmin
-    .from("stimulus_directions")
-    .select("id", { count: "exact", head: true })
-    .eq("run_id", run.id)
-    .eq("status", "pending");
-  const remaining = count ?? 0;
-  if (remaining === 0)
-    await supabaseAdmin
-      .from("stimulus_runs")
-      .update({ status: "tissue_check", error: null })
-      .eq("id", run.id);
+  const remaining = await countByStatus(run.id, "pending");
+  if (remaining === 0) await finishOrRequeue(run.id);
   return { done: remaining === 0, generated: pending.length, remaining };
 }
 
+async function countByStatus(runId: string, status: string): Promise<number> {
+  const { count } = await supabaseAdmin
+    .from("stimulus_directions")
+    .select("id", { count: "exact", head: true })
+    .eq("run_id", runId)
+    .eq("status", status);
+  return count ?? 0;
+}
+
 /**
- * Runs batches until every lens has generated. Survives client disconnects
- * because the caller schedules it with `scheduleBackground()`.
+ * A sweep is only finished when all 37 lenses hold real content. Lenses that
+ * failed are put back in the queue (bounded rounds) rather than left as silent
+ * empty cards — "Not generated." must never be a terminal state reached by
+ * accident.
+ */
+async function finishOrRequeue(runId: string): Promise<void> {
+  const { data: failed } = await supabaseAdmin
+    .from("stimulus_directions")
+    .select("id, generation_attempts")
+    .eq("run_id", runId)
+    .eq("status", "failed");
+
+  const retryable = (failed ?? []).filter(
+    (r) => ((r as { generation_attempts?: number }).generation_attempts ?? 0) < MAX_FAILED_RETRY_ROUNDS,
+  );
+
+  if (retryable.length > 0) {
+    await supabaseAdmin
+      .from("stimulus_directions")
+      .update({ status: "pending", error: null })
+      .in(
+        "id",
+        retryable.map((r) => r.id),
+      );
+    await supabaseAdmin
+      .from("stimulus_runs")
+      .update({ status: "generating", error: null, last_batch_at: new Date().toISOString() })
+      .eq("id", runId);
+    return;
+  }
+
+  await supabaseAdmin
+    .from("stimulus_runs")
+    .update({ status: "tissue_check", error: null })
+    .eq("id", runId);
+}
+
+/**
+ * Runs batches until every lens has generated, OR until this invocation's
+ * wall-clock budget is spent — whichever comes first. A partially-completed
+ * slice leaves the run `generating` with a fresh heartbeat, so the watching
+ * client (or any later resume call) simply starts the next slice. Nothing
+ * depends on one serverless invocation surviving the full ~7 minute sweep.
  */
 export async function driveBigIdeaSweep(runId: string, batchSize = 3): Promise<void> {
   let consecutiveFailures = 0;
+  const startedAt = Date.now();
+  let complete = false;
 
   for (let guard = 0; guard < 60; guard++) {
+    if (Date.now() - startedAt > DRIVE_BUDGET_MS) {
+      // Budget spent mid-sweep: hand off cleanly to the next invocation.
+      await markBatchLanded(runId);
+      return;
+    }
+
     // Stop if a human (or a newer drive) took the run out of `generating`.
     const { data: run } = await supabaseAdmin
       .from("stimulus_runs")
@@ -270,7 +371,15 @@ export async function driveBigIdeaSweep(runId: string, batchSize = 3): Promise<v
     try {
       const { done } = await runBigIdeaBatch(runId, batchSize);
       consecutiveFailures = 0;
-      if (done) break;
+      if (done) {
+        // `done` means no pending rows; finishOrRequeue may have re-queued
+        // failed lenses, in which case the loop keeps going.
+        const stillPending = await countByStatus(runId, "pending");
+        if (stillPending === 0) {
+          complete = true;
+          break;
+        }
+      }
     } catch (e) {
       consecutiveFailures += 1;
       const msg = e instanceof Error ? e.message : "Batch failed";
@@ -289,6 +398,8 @@ export async function driveBigIdeaSweep(runId: string, batchSize = 3): Promise<v
       await new Promise((r) => setTimeout(r, 5000));
     }
   }
+
+  if (!complete) return;
 
   // Sweep complete — build the full-set convergence ledger in the same
   // background invocation so it never depends on the browser staying open.

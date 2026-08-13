@@ -1422,6 +1422,7 @@ export type Database = {
           gate_one_approved_at: string | null
           gate_one_notes: string | null
           gate_one_snapshot: Json | null
+          generation_attempts: number
           id: string
           instinct_brief: string | null
           lens_id: string
@@ -1454,6 +1455,7 @@ export type Database = {
           gate_one_approved_at?: string | null
           gate_one_notes?: string | null
           gate_one_snapshot?: Json | null
+          generation_attempts?: number
           id?: string
           instinct_brief?: string | null
           lens_id: string
@@ -1486,6 +1488,7 @@ export type Database = {
           gate_one_approved_at?: string | null
           gate_one_notes?: string | null
           gate_one_snapshot?: Json | null
+          generation_attempts?: number
           id?: string
           instinct_brief?: string | null
           lens_id?: string

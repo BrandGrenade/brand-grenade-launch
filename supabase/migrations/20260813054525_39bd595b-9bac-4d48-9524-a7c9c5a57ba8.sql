@@ -1,0 +1,1 @@
+ALTER TABLE public.stimulus_directions ADD COLUMN IF NOT EXISTS generation_attempts integer NOT NULL DEFAULT 0;
