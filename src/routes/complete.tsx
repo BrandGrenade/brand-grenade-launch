@@ -21,6 +21,7 @@ import { buildConsultingDeliveryDocument } from "@/lib/consulting-delivery-docum
 import type { MintoSession } from "@/lib/minto-content";
 import { ExecSummaryCard } from "@/components/ExecSummaryCard";
 import { CreativeShowcaseCard } from "@/components/CreativeShowcaseCard";
+import { CreativeEngineDeliverables } from "@/components/CreativeEngineDeliverables";
 import { Spinner } from "@/components/ui/busy";
 import { resolveLiveDocumentSession } from "@/lib/document-live-source";
 
