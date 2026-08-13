@@ -28,7 +28,7 @@ import {
   runStage20, loadStage20, retryStage20,
   regenerateStage20Section, approveStage20,
 } from "@/lib/stage20.functions";
-import { runStage20b, loadStage20b } from "@/lib/stage20b.functions";
+import { startStage20b, loadStage20b } from "@/lib/stage20b.functions";
 import {
   runStage21,
   loadStage21,
