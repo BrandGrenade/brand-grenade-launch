@@ -22,6 +22,7 @@ import type { MintoSession } from "@/lib/minto-content";
 import { ExecSummaryCard } from "@/components/ExecSummaryCard";
 import { CreativeShowcaseCard } from "@/components/CreativeShowcaseCard";
 import { Spinner } from "@/components/ui/busy";
+import { resolveLiveDocumentSession } from "@/lib/document-live-source";
 
 
 
@@ -137,6 +138,12 @@ type SessionRow = {
   checkpoint_e_confirmed: boolean | null;
   checkpoint_f_confirmed: boolean | null;
   strategy_signoff_confirmed: boolean | null;
+  locked_big_idea_run_id?: string | null;
+  locked_big_idea?: string | null;
+  locked_campaign_line?: string | null;
+  locked_big_idea_lens?: string | null;
+  locked_big_idea_at?: string | null;
+  selection_rationale?: unknown;
 };
 
 
@@ -181,7 +188,7 @@ function CompletePage() {
     supabase
       .from("sessions")
       .select(
-        `id, brand_name, category, selected_smp, selected_smp_field_name, user_id, doc_consulting_url, doc_agency_url, doc_workshop_url, phase_2_status, updated_at, created_at, stage_17_selected_territory, stage_18_selected_detonation, stage_22_brand_architecture, stage_22_distinctive_assets, checkpoint_a_confirmed, checkpoint_b_confirmed, checkpoint_c_confirmed, checkpoint_d_confirmed, checkpoint_e_confirmed, checkpoint_f_confirmed, strategy_signoff_confirmed, locked_big_idea, locked_campaign_line, locked_big_idea_lens, locked_big_idea_at, ${FULL_RUN_SESSION_COLUMNS}`,
+        `id, brand_name, category, selected_smp, selected_smp_field_name, user_id, doc_consulting_url, doc_agency_url, doc_workshop_url, phase_2_status, updated_at, created_at, stage_17_selected_territory, stage_18_selected_detonation, stage_22_brand_architecture, stage_22_distinctive_assets, checkpoint_a_confirmed, checkpoint_b_confirmed, checkpoint_c_confirmed, checkpoint_d_confirmed, checkpoint_e_confirmed, checkpoint_f_confirmed, strategy_signoff_confirmed, locked_big_idea_run_id, locked_big_idea, locked_campaign_line, locked_big_idea_lens, locked_big_idea_at, selection_rationale, ${FULL_RUN_SESSION_COLUMNS}`,
       )
       .eq("id", sessionId)
       .maybeSingle()
@@ -1366,10 +1373,11 @@ function ConsultingDeliveryCard({ session }: { session: SessionRow }) {
       <button
         type="button"
         disabled={!ready}
-        onClick={() => {
+          onClick={async () => {
           try {
+              const live = await resolveLiveDocumentSession(session);
             openHtmlInNewTab(
-              buildConsultingDeliveryDocument(session as unknown as MintoSession, {
+              buildConsultingDeliveryDocument(live as unknown as MintoSession, {
                 appendix: "full",
               }),
             );
@@ -1415,7 +1423,7 @@ function Phase2Deliverables({ session }: { session: SessionRow }) {
   const channelKeys = Object.keys(channels);
   const amber = PHASE_2_AMBER_DELIV;
 
-  const download = (
+  const download = async (
     docType:
       | "detonation_territory" | "detonation_intelligence" | "the_detonation"
       | "activation_architecture" | "master_brief" | "channel_brief"
@@ -1425,9 +1433,10 @@ function Phase2Deliverables({ session }: { session: SessionRow }) {
   ) => {
     setBusy(label);
     try {
+      const live = await resolveLiveDocumentSession(session);
       const html = docType === "all_phase2"
-        ? buildAllPhase2(session)
-        : buildPhase2Document(session, docType as Phase2DocType, channelKey);
+        ? buildAllPhase2(live)
+        : buildPhase2Document(live, docType as Phase2DocType, channelKey);
       openHtmlInNewTab(html);
     } catch (e) {
       alert(e instanceof Error ? e.message : "Failed to generate document");

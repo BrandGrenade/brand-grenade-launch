@@ -314,8 +314,9 @@ function archItems(txt: string): string {
   return `<ul class="arch-items">${parts.map((p) => `<li>${escapeHtml(p)}</li>`).join("")}</ul>`;
 }
 
-function architectureGrid(sanitised: string): { grid: string; complete: boolean } {
-  const reflection = extractArch(sanitised, "REFLECTION");
+function architectureGrid(sanitised: string, currentLine = ""): { grid: string; complete: boolean } {
+  const storedReflection = extractArch(sanitised, "REFLECTION");
+  const reflection = currentLine.trim() || storedReflection;
   const peripherals = ["DOMAIN", "HERITAGE", "VALUES", "ASSETS", "PERSONALITY"]
     .map((l) => ({ lbl: l, txt: extractArch(sanitised, l) }));
 
@@ -340,12 +341,12 @@ function brandArchitectureBody(
   lock: { line?: string | null; idea?: string | null; lens?: string | null } = {},
 ): string {
   const sanitised = sanitise(arch);
-  const { grid, complete } = architectureGrid(sanitised);
+  const line = (lock.line ?? "").trim();
+  const { grid, complete } = architectureGrid(sanitised, line);
 
   // Stage 22 is written before a creative idea is locked in Room 04. Where a
   // lock exists it is authoritative and is stated ahead of the grid, so the
   // architecture's reflection line can never read as the campaign line.
-  const line = (lock.line ?? "").trim();
   const idea = (lock.idea ?? "").trim();
   const lens = (lock.lens ?? "").trim();
   const lockBlock =
@@ -467,8 +468,8 @@ export function buildAllPhase2(session: Phase2Session): string {
   sections.push(`<div class="doc-break"></div><div class="section"><h2>Conceptual Assets</h2>${md(sanitise(session.stage_22_distinctive_assets ?? ""))}</div>`);
   {
     const arch = sanitise(session.stage_22_brand_architecture ?? "");
-    const { grid, complete } = architectureGrid(arch);
     const line = (session.locked_campaign_line ?? "").trim();
+    const { grid, complete } = architectureGrid(arch, line);
     const lens = (session.locked_big_idea_lens ?? "").trim();
     sections.push(
       `<div class="doc-break"></div><h2>Brand Architecture</h2>` +

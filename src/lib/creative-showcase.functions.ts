@@ -118,6 +118,13 @@ export const getCreativeShowcase = createServerFn({ method: "POST" })
     if (!session?.locked_big_idea?.trim())
       throw new Error("No winning idea is locked for this session yet.");
 
+    // The run and winning directions are authoritative. sessions.locked_* is
+    // only a denormalised cache and may lag a re-lock.
+    let authoritativeIdea = session.locked_big_idea as string;
+    let authoritativeLine = (session.locked_campaign_line as string) ?? "";
+    let authoritativeLens = (session.locked_big_idea_lens as string) ?? null;
+    let authoritativeLockedAt = (session.locked_big_idea_at as string) ?? null;
+
     // ---------------------------------------------------------- foundation
     let instinctBrief: string | null = null;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -125,7 +132,7 @@ export const getCreativeShowcase = createServerFn({ method: "POST" })
     if (session.locked_big_idea_run_id) {
       const { data: run } = await db
         .from("stimulus_runs")
-        .select("winning_direction_id")
+        .select("winning_direction_id, winning_line_direction_id, winning_line, locked_at")
         .eq("id", session.locked_big_idea_run_id)
         .maybeSingle();
       if (run?.winning_direction_id) {
@@ -136,6 +143,20 @@ export const getCreativeShowcase = createServerFn({ method: "POST" })
           .maybeSingle();
         instinctBrief = (dir?.instinct_brief as string) ?? null;
         ratings = dir?.ratings ?? null;
+        authoritativeIdea = (dir?.direction as string) ?? authoritativeIdea;
+        authoritativeLens = (dir?.lens_name as string) ?? authoritativeLens;
+        authoritativeLockedAt = (run.locked_at as string) ?? authoritativeLockedAt;
+        if (run.winning_line_direction_id) {
+          const { data: lineDir } = await db
+            .from("stimulus_directions")
+            .select("campaign_line")
+            .eq("id", run.winning_line_direction_id)
+            .maybeSingle();
+          authoritativeLine =
+            (lineDir?.campaign_line as string) ??
+            (run.winning_line as string) ??
+            authoritativeLine;
+        }
       }
     }
     let ratingTotal: number | null = null;
@@ -267,10 +288,10 @@ export const getCreativeShowcase = createServerFn({ method: "POST" })
       smp: cleanProposition(session.selected_smp as string | null),
       detonationLine: (session.stage_18_detonation_line as string) ?? "",
       foundation: {
-        idea: session.locked_big_idea as string,
-        line: (session.locked_campaign_line as string) ?? "",
-        lens: (session.locked_big_idea_lens as string) ?? null,
-        lockedAt: (session.locked_big_idea_at as string) ?? null,
+         idea: authoritativeIdea,
+         line: authoritativeLine,
+         lens: authoritativeLens,
+         lockedAt: authoritativeLockedAt,
         instinctBrief,
         ratings,
         ratingTotal,

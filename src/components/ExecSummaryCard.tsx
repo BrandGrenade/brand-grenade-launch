@@ -10,10 +10,11 @@ import {
 } from "@/lib/exec-summary-document";
 import { fetchExecSummaryIntel } from "@/lib/exec-summary-intel";
 import { Spinner } from "@/components/ui/busy";
+import { resolveLiveDocumentSession } from "@/lib/document-live-source";
 
 /** Columns the summary needs that the Deliverables page does not already load. */
 const EXTRA_COLUMNS =
-  "brief_text, stage_2_output, stage_3_output, stage_4_output, loc_engine_outputs, loc_status, loc_decision_packages, stage_22_distinctive_assets";
+  "brief_text, stage_2_output, stage_3_output, stage_4_output, loc_engine_outputs, loc_status, loc_decision_packages, stage_22_distinctive_assets, locked_big_idea_run_id, locked_big_idea, locked_campaign_line, locked_big_idea_lens, locked_big_idea_at, selection_rationale, updated_at";
 
 export function ExecSummaryCard({ session }: { session: ExecSummarySession }) {
   const [busy, setBusy] = useState(false);
@@ -37,7 +38,8 @@ export function ExecSummaryCard({ session }: { session: ExecSummarySession }) {
           return (res.data as Record<string, unknown> | null) ?? {};
         })(),
       ]);
-      openExecSummaryDocument({ ...session, ...extra }, intel);
+      const live = await resolveLiveDocumentSession({ ...session, ...extra });
+      openExecSummaryDocument(live, intel);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not build the summary");
     } finally {
