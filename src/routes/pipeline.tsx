@@ -39,6 +39,7 @@ import { runStage8, confirmCheckpointB, regenerateStage8Selective } from "@/lib/
 import { runLeftOfCentre } from "@/lib/loc.functions";
 import { renderLocFullMarkdown, type LocEnginePackage } from "@/lib/loc/decision-package";
 import { resetStage, resetStageCascade } from "@/lib/retry.functions";
+import { reclaimStalledStage } from "@/lib/session-heartbeat.functions";
 import { sanitizeStageOutput } from "@/lib/sanitize-output";
 import { hasStageOutput, isStageOutputComplete } from "@/lib/stage-completion";
 import {
@@ -717,6 +718,7 @@ const DB_STAGE_ID_TO_UI: Record<string, string> = {
 function PipelineView() {
   const { session: sessionId } = Route.useSearch();
   const navigate = useNavigate();
+  const reclaimStalledStageFn = useServerFn(reclaimStalledStage);
   const runStage1Fn = useServerFn(runStage1);
   const runStage1bFn = useServerFn(runStage1b);
   const resubmitBriefFn = useServerFn(resubmitBrief);
@@ -1412,6 +1414,37 @@ function PipelineView() {
       void supabase.removeChannel(channel);
     };
   }, [sessionId]);
+
+  // Stall reclaimer. A streaming stage lives inside the browser's request:
+  // navigate away or lose the network mid-stream and the worker is killed with
+  // no catch block, leaving the row on `running:N` forever with no error. The
+  // server-side reclaimer flips any such row to `interrupted:N` (with a real
+  // message in stage_N_error) once its liveness timestamps have not moved for
+  // four minutes, so the retry affordance appears instead of a dead spinner.
+  // No-op while tokens are actually flowing — the stream persists a heartbeat
+  // every ~3s.
+  useEffect(() => {
+    if (!sessionId) return;
+    const marker = session?.stage_status ?? "";
+    if (!marker.startsWith("running:")) return;
+    let cancelled = false;
+    const check = async () => {
+      try {
+        await reclaimStalledStageFn({ data: { sessionId } });
+      } catch {
+        /* best-effort — realtime refetch surfaces any change */
+      }
+    };
+    void check();
+    const timer = window.setInterval(() => {
+      if (!cancelled) void check();
+    }, 60_000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
+  }, [sessionId, session?.stage_status, reclaimStalledStageFn]);
+
 
   // Rebuild the visible pipeline state from the persisted session row.
   // This is the reload recovery path: saved outputs are authoritative, so a
