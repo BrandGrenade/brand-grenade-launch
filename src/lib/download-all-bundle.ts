@@ -16,7 +16,7 @@ import { buildDocument00AMinto } from "./intelligence/doc-00A-minto";
 import { fetchExecSummaryIntel } from "./exec-summary-intel";
 import { supabase } from "@/integrations/supabase/client";
 import { normalizeBrand } from "./brand-register";
-import { generateDocument00APdf, type IntelligenceReport } from "./intelligence/pdf-00A";
+import type { IntelligenceReport } from "./intelligence/doc-00A-types";
 
 export type BundleSession = Phase1Session &
   Phase2Session &
@@ -66,13 +66,12 @@ function buildBoardStrategyBundle(session: BundleSession): string | null {
 }
 
 interface Doc00AResult {
-  pdf: Blob | null;
   input: Parameters<typeof buildDocument00AMinto>[0] | null;
 }
 
 async function fetchDocument00A(brand: string): Promise<Doc00AResult> {
   const key = normalizeBrand(brand);
-  const empty: Doc00AResult = { pdf: null, input: null };
+  const empty: Doc00AResult = { input: null };
   if (!key) return empty;
   try {
     const res = await supabase
@@ -114,9 +113,9 @@ async function fetchDocument00A(brand: string): Promise<Doc00AResult> {
       completedAt: match.completed_at ?? match.updated_at,
       report,
     };
-    return { pdf: await generateDocument00APdf(input), input };
+    return { input };
   } catch (e) {
-    console.error("[bundle] Document 00A PDF failed", e);
+    console.error("[bundle] Document 00A build failed", e);
     return empty;
   }
 }
@@ -198,12 +197,6 @@ export async function buildAndDownloadBundle(
   // ten-section HTML version rendered from the same report).
   onProgress?.("Fetching Strategic Territory Intelligence Report…");
   const doc00A = await fetchDocument00A(brand);
-  if (doc00A.pdf) {
-    zip.file("Strategic_Territory_Intelligence_Report.pdf", doc00A.pdf);
-    included.push("Strategic_Territory_Intelligence_Report.pdf");
-  } else {
-    skipped.push("Strategic_Territory_Intelligence_Report.pdf");
-  }
   if (doc00A.input) {
     tryAdd(
       "Strategic_Territory_Intelligence_Report.html",

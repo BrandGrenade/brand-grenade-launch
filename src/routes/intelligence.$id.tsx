@@ -26,7 +26,7 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   createBriefingRoomFromIntelligence,
 } from "@/lib/intelligence.functions";
-import { downloadDocument00APdf } from "@/lib/intelligence/pdf-00A";
+import { openDocument00AMinto } from "@/lib/intelligence/doc-00A-minto";
 
 
 export const Route = createFileRoute("/intelligence/$id")({
@@ -359,7 +359,7 @@ function IntelligenceRunPage() {
     if (!row || !report) return;
     setDownloading(true);
     try {
-      await downloadDocument00APdf({
+      openDocument00AMinto({
         brandName: row.brand_name || "Brand",
         category: row.category || "",
         briefType,
@@ -678,7 +678,7 @@ function IntelligenceRunPage() {
                 ) : (
                   <Download className="mr-2 h-3.5 w-3.5" />
                 )}
-                Download PDF
+                Open Document 00A
               </Button>
               <Link
                 to="/intelligence/$id/edit"
@@ -816,7 +816,7 @@ function IntelligenceRunPage() {
               ) : (
                 <Download className="mr-2 h-3.5 w-3.5" />
               )}
-              Download PDF — Document 00A
+              Open Document 00A
             </Button>
             <Button
               size="sm"
