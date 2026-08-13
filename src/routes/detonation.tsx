@@ -109,7 +109,7 @@ type SessionRow = {
 };
 
 const SESSION_COLS =
-  "id, brand_name, selected_smp, user_id, phase_2_status, phase_2_current_stage, doc_consulting_url, doc_agency_url, doc_workshop_url, checkpoint_a_confirmed, checkpoint_b_confirmed, checkpoint_c_confirmed, stage_16_format, stage_16_consulting_output, stage_16_agency_output, stage_16_workshop_output, stage_16_vision_output, stage_17_output, stage_17_selected_territory, stage_17b_output, stage_18_output, stage_18_selected_detonation, stage_18_detonation_line, stage_19_output, stage_20_output, stage_20_approved, stage_20b_output, stage_20b_audience_input, stage_21_outputs, stage_21_fidelity, stage_22_output, stage_22_brand_architecture, stage_22_distinctive_assets";
+  "id, brand_name, selected_smp, user_id, phase_2_status, phase_2_current_stage, doc_consulting_url, doc_agency_url, doc_workshop_url, checkpoint_a_confirmed, checkpoint_b_confirmed, checkpoint_c_confirmed, stage_16_format, stage_16_consulting_output, stage_16_agency_output, stage_16_workshop_output, stage_16_vision_output, stage_17_output, stage_17_selected_territory, stage_17b_output, stage_18_output, stage_18_selected_detonation, stage_18_detonation_line, stage_19_output, stage_20_output, stage_20_approved, stage_20b_output, stage_20b_audience_input, stage_21_outputs, stage_21_fidelity, stage_22_output, stage_22_brand_architecture, stage_22_distinctive_assets, locked_big_idea, locked_campaign_line, locked_big_idea_lens, locked_big_idea_at";
 
 
 
