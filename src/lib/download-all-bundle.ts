@@ -17,6 +17,7 @@ import { fetchExecSummaryIntel } from "./exec-summary-intel";
 import { supabase } from "@/integrations/supabase/client";
 import { normalizeBrand } from "./brand-register";
 import type { IntelligenceReport } from "./intelligence/doc-00A-types";
+import { resolveLiveDocumentSession } from "./document-live-source";
 
 export type BundleSession = Phase1Session &
   Phase2Session &
@@ -82,6 +83,7 @@ async function fetchDocument00A(brand: string): Promise<Doc00AResult> {
       .limit(500);
     if (res.error) return empty;
     const rows = (res.data ?? []) as unknown as Array<{
+      id: string;
       brand_name: string | null;
       category: string | null;
       status: string | null;
@@ -107,6 +109,7 @@ async function fetchDocument00A(brand: string): Promise<Doc00AResult> {
         ? "government"
         : "commercial";
     const input: Parameters<typeof buildDocument00AMinto>[0] = {
+      sourceRunId: match.id,
       brandName: match.brand_name || brand,
       category: match.category ?? "",
       briefType,
@@ -130,6 +133,7 @@ export async function buildAndDownloadBundle(
   session: BundleSession,
   onProgress?: (label: string) => void,
 ): Promise<BundleResult> {
+  session = await resolveLiveDocumentSession(session);
   const zip = new JSZip();
   const included: string[] = [];
   const skipped: string[] = [];
@@ -171,7 +175,7 @@ export async function buildAndDownloadBundle(
       const res = await supabase
         .from("sessions")
         .select(
-          "brief_text, stage_2_output, stage_3_output, stage_4_output, loc_engine_outputs, loc_status, loc_decision_packages, stage_22_distinctive_assets",
+          "brief_text, stage_2_output, stage_3_output, stage_4_output, loc_engine_outputs, loc_status, loc_decision_packages, stage_22_output, stage_22_brand_architecture, stage_22_distinctive_assets, locked_big_idea_run_id, locked_big_idea, locked_campaign_line, locked_big_idea_lens, locked_big_idea_at, selection_rationale, updated_at",
         )
         .eq("id", session.id)
         .maybeSingle();

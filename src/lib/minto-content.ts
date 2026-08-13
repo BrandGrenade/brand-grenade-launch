@@ -59,6 +59,9 @@ export interface MintoSession {
   locked_campaign_line?: string | null;
   locked_big_idea_lens?: string | null;
   locked_big_idea_at?: string | null;
+  locked_big_idea_run_id?: string | null;
+  updated_at?: string | null;
+  selection_rationale?: unknown;
 }
 
 
@@ -367,6 +370,10 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
           : "")
       : "";
 
+  const sourceStamp = session.locked_big_idea_at
+    ? `Room 04 winning idea resolved from the locked run at ${new Date(session.locked_big_idea_at).toLocaleString("en-AU")}${session.locked_big_idea_run_id ? ` · run ${escapeHtml(session.locked_big_idea_run_id.slice(0, 8))}` : ""}.`
+    : `No Room 04 winning idea was locked when this document was rendered.`;
+
 
 
   /* 01 — recommendation */
@@ -509,13 +516,42 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
   /* 07 — rejected */
   const isFailureNote = (n?: string) =>
     !!n && /fail|reject|below|does not|doesn't|not carried|weak|breach/i.test(n);
+  const rationaleText = (() => {
+    const raw = session.selection_rationale;
+    if (!raw) return "";
+    if (typeof raw === "string") return raw;
+    try { return JSON.stringify(raw); } catch { return ""; }
+  })();
+  const liveReasonFor = (name: string): string | null => {
+    if (!rationaleText) return null;
+    const key = normalise(name);
+    const entries = typeof session.selection_rationale === "object" && session.selection_rationale
+      ? Object.entries(session.selection_rationale as Record<string, unknown>)
+      : [];
+    const hit = entries.find(([k, value]) => {
+      const haystack = normalise(`${k} ${typeof value === "string" ? value : JSON.stringify(value)}`);
+      return key.length > 5 && (haystack.includes(key) || key.includes(haystack.slice(0, key.length)));
+    });
+    if (!hit) return null;
+    const value = hit[1];
+    if (typeof value === "string") return value;
+    if (value && typeof value === "object") {
+      const row = value as Record<string, unknown>;
+      const reason = row.reason ?? row.rationale ?? row.note ?? row.rejection_reason;
+      return typeof reason === "string" ? reason : null;
+    }
+    return null;
+  };
   const rejectReasons: Reason[] = rejected
     .slice()
     .sort((a, b) => (a.composite ?? 999) - (b.composite ?? 999))
     .slice(0, 4)
     .map((c) => {
       const weakest = Object.entries(c.dims).sort((a, b) => a[1] - b[1])[0];
-      const detail = isFailureNote(c.verdictNote)
+      const currentSelectionReason = liveReasonFor(c.name);
+      const detail = currentSelectionReason
+        ? currentSelectionReason
+        : isFailureNote(c.verdictNote)
         ? (c.verdictNote as string)
         : weakest
           ? `Not carried forward. Weakest on ${weakest[0].toLowerCase()} (${weakest[1]}/10)${
@@ -528,11 +564,19 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
 
   /* 08 — implications */
   const implicationItems = bullets(s14, 5).length ? bullets(s14, 5) : bullets(s15, 5);
+  const brandArchitecture = (session.stage_22_brand_architecture ?? "").trim();
+  const distinctiveAssets = (session.stage_22_distinctive_assets ?? "").trim();
   const implications =
     lockedIdeaHtml +
     (implicationItems.length
       ? `<ul>${implicationItems.map((b) => `<li>${inlineMd(b)}</li>`).join("")}</ul>`
-      : renderMarkdown((s14 || s15).slice(0, 1600)));
+      : renderMarkdown((s14 || s15).slice(0, 1600))) +
+    (brandArchitecture
+      ? callout("Current brand architecture", renderMarkdown(brandArchitecture.slice(0, 1400)))
+      : "") +
+    (distinctiveAssets
+      ? callout("Current distinctive assets", renderMarkdown(distinctiveAssets.slice(0, 1000)))
+      : "");
 
 
   /* 09 — next step */
@@ -558,6 +602,7 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
   /* 10 — appendix */
   const appendix =
     buildAppendix(session, opts.appendix) +
+    callout("Source authority", `<p>${sourceStamp}</p><p>Strategic stage outputs in the appendix are historical snapshots. The selected SMP and Room 04 lock above are resolved from their current authoritative fields at render time.</p>`) +
     proofLine({
       stagesRun,
       documents: stagesRun ? PIPELINE_APPENDIX.length : undefined,

@@ -44,6 +44,8 @@ export type ExecSummarySession = {
 } & ExecSessionRow;
 
 export interface ExecSummaryIntel {
+  sourceRunId?: string | null;
+  sourceCompletedAt?: string | null;
   /** Briefing Room governing tension carried in the Intelligence handoff. */
   tension?: string | null;
   /** Intelligence Lab executive summary (report_metadata.executive_summary). */
@@ -341,6 +343,10 @@ export function buildExecSummaryDocument(
       }`,
       next_step: recsHtml,
       appendix: `<h3>Research the summary draws on</h3>${researchHtml}${
+        intel.sourceRunId
+          ? `<div class="callout"><div class="callout-title">Intelligence source snapshot</div><p>Run ${escapeHtml(intel.sourceRunId.slice(0, 8))}${intel.sourceCompletedAt ? `, completed ${escapeHtml(new Date(intel.sourceCompletedAt).toLocaleString("en-AU"))}` : ""}. Matched to this strategy by brand name; verify the run ID when multiple Intelligence runs exist.</p></div>`
+          : ""
+      }${
         derived.content.appendix ?? ""
       }`,
     },

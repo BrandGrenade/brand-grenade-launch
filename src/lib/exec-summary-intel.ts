@@ -15,13 +15,15 @@ export async function fetchExecSummaryIntel(
     const res = await supabase
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .from("intelligence_sessions" as any)
-      .select("brand_name,status,updated_at,handoff_payload,report_metadata")
+      .select("id,brand_name,status,updated_at,completed_at,handoff_payload,report_metadata")
       .order("updated_at", { ascending: false })
       .limit(500);
     if (res.error) return {};
     const rows = ((res.data ?? []) as unknown) as Array<{
+      id: string;
       brand_name: string | null;
       status: string | null;
+      completed_at: string | null;
       handoff_payload: unknown;
       report_metadata: unknown;
     }>;
@@ -36,6 +38,8 @@ export async function fetchExecSummaryIntel(
       | { executive_summary?: string | null }
       | null;
     return {
+      sourceRunId: match.id,
+      sourceCompletedAt: match.completed_at,
       tension: handoff?.prebrief?.tension ?? null,
       executiveSummary: meta?.executive_summary ?? null,
     };

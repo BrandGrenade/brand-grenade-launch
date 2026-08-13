@@ -360,6 +360,7 @@ function IntelligenceRunPage() {
     setDownloading(true);
     try {
       openDocument00AMinto({
+        sourceRunId: row.id,
         brandName: row.brand_name || "Brand",
         category: row.category || "",
         briefType,

@@ -261,6 +261,10 @@ export function buildDocument00AMinto(
 
   /* 10 — appendix */
   const appendix =
+    callout(
+      "Intelligence source snapshot",
+      `<p>Generated from Intelligence run ${escapeHtml(input.sourceRunId?.slice(0, 8) || "not recorded")}${input.completedAt ? `, completed ${escapeHtml(new Date(input.completedAt).toLocaleString("en-AU"))}` : ""}. This report is a historical research snapshot, not a live join to a strategy session.</p>`,
+    ) +
     (arr(completeness.inputs_present).length
       ? callout("Inputs present", list(arr(completeness.inputs_present)))
       : "") +
