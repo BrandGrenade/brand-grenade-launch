@@ -650,6 +650,7 @@ interface SessionData {
   stage_15_error: string | null;
   stage_16_consulting_output: string | null;
   stage_16_error: string | null;
+  phase_2_status: string | null;
   brand_intelligence: Record<string, string> | null;
   selected_smp: string | null;
   selected_smp_field_name: string | null;
@@ -2680,7 +2681,7 @@ function PipelineView() {
   // rows such as 08B can remain pending after reload even when the database
   // proves the strategy and all Phase 2 work are complete.
   const pipelineComplete =
-    isPersistedStageComplete(session ?? {}, "15", 15, session?.stage_15_output) ||
+    (session !== null && isPersistedStageComplete(session, "15", 15, session.stage_15_output)) ||
     mainStages.every((s) => statuses[s.id] === "complete");
 
   // Dynamic document title: "[Brand] — Stage X — Brand Grenade"
