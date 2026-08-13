@@ -409,7 +409,12 @@ export function buildPhase2Document(
       break;
     case "brand_architecture":
       title = "Brand Architecture";
-      body = brandArchitectureBody(brand, session.stage_22_brand_architecture ?? "");
+      body = brandArchitectureBody(brand, session.stage_22_brand_architecture ?? "", {
+        line: session.locked_campaign_line,
+        idea: session.locked_big_idea,
+        lens: session.locked_big_idea_lens,
+      });
+
       break;
     case "all_phase2":
       return buildAllPhase2(session);
