@@ -1412,6 +1412,32 @@ function ConsultingDeliveryCard({ session }: { session: SessionRow }) {
   );
 }
 
+/** Room 04 deliverables when no Phase 2 section is rendered. */
+function StandaloneCreativeDeliverables({ sessionId }: { sessionId: string }) {
+  const amber = PHASE_2_AMBER_DELIV;
+  const subhead = (label: string) => (
+    <div
+      className="text-mono"
+      style={{
+        color: amber,
+        letterSpacing: "0.16em",
+        textTransform: "uppercase",
+        fontSize: 10,
+        margin: "24px 0 12px",
+      }}
+    >
+      {label}
+    </div>
+  );
+  return (
+    <section style={{ marginTop: 64 }}>
+      <hr style={{ border: 0, borderTop: `1px solid ${amber}`, margin: "0 0 32px" }} />
+      <CreativeEngineDeliverables sessionId={sessionId} subhead={subhead} />
+      <CreativeShowcaseCard sessionId={sessionId} subhead={subhead} />
+    </section>
+  );
+}
+
 function openHtmlInNewTab(html: string) {
   const win = window.open("", "_blank");
   if (!win) { alert("Please allow popups"); return; }
