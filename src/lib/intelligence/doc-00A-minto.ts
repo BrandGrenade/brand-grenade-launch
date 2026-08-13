@@ -5,7 +5,7 @@
 // Intelligence Lab report JSON — nothing is generated here.
 //
 // This is the only 00A renderer. The legacy jsPDF path has been retired so a
-// non-canonical render can never be served again.')
+// non-canonical render can never be served again.
 
 import {
   callout,
