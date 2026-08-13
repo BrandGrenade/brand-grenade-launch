@@ -249,16 +249,21 @@ export function StimulusOrchestration({
     if (open) void refreshList();
   }, [open, refreshList]);
 
-  // Auto re-attach: landing on Step 4 while a run is unfinished picks it back
-  // up (and restarts a dead driver) without the human having to find it.
+  // VIEW-ONLY ON ARRIVAL. Landing on Step 4 never starts, resumes or restarts
+  // generation. It selects the most useful existing run — the latest COMPLETE
+  // one if there is one, otherwise the most recent — and displays it read only.
+  // A run the server is already driving is watched passively (no drive call).
+  // Generation only ever happens from an explicit button: "Run orchestration"
+  // or "Resume this run".
   const attached = useRef(false);
   useEffect(() => {
     if (!open || attached.current || orchId || runs.length === 0) return;
-    const live = runs.find((r) => r.status !== "complete");
-    if (!live) return;
     attached.current = true;
-    void openRunRef.current?.(live.id as string);
+    const complete = runs.find((r) => r.status === "complete");
+    const target = complete ?? runs[0];
+    void viewRunRef.current?.(target.id as string);
   }, [open, orchId, runs]);
+
 
   const refreshState = useCallback(
     async (id: string) => {
@@ -322,19 +327,59 @@ export function StimulusOrchestration({
     }
   };
 
-  const openRunRef = useRef<((id: string) => Promise<void>) | null>(null);
+  const viewRunRef = useRef<((id: string) => Promise<void>) | null>(null);
 
+  /**
+   * Passive observation of a run the SERVER is already driving. Never calls
+   * driveOrchestration, so it can never start or restart generation.
+   */
+  const watch = useCallback(
+    async (id: string) => {
+      setBusy(true);
+      let guard = 0;
+      while (guard < 900) {
+        guard += 1;
+        await new Promise((r) => setTimeout(r, 4000));
+        let s: { orchestration: Row } | null = null;
+        try {
+          s = (await load({ data: { orchestrationId: id } })) as any;
+        } catch {
+          continue;
+        }
+        setState(s as any);
+        const o = s!.orchestration;
+        setNote(`${o.status} — ${o.phase_note ?? ""}`);
+        if (o.driver_status === "failed") {
+          setErr((o.error as string) ?? "Orchestration failed");
+          break;
+        }
+        if (o.status === "complete" || o.driver_status === "idle") break;
+      }
+      setBusy(false);
+    },
+    [load],
+  );
+
+  /**
+   * READ ONLY. Opens a stored run for viewing. If — and only if — the server
+   * already has a live driver on it, we watch its progress. Nothing here can
+   * trigger generation.
+   */
   const openRun = async (id: string) => {
     setOrchId(id);
+    setErr(null);
     const s = (await load({ data: { orchestrationId: id } })) as any;
     setState(s);
     const o = s?.orchestration;
-    // Re-attach to a run that is still going (or restart a dead driver). The
-    // server decides — this only asks and then watches.
-    if (o && o.status !== "complete") void drive(id);
+    if (o) setNote(`${o.status} — ${o.phase_note ?? ""}`);
+    const hb = o?.driver_heartbeat_at ? Date.parse(o.driver_heartbeat_at as string) : 0;
+    const liveDriver =
+      o && o.status !== "complete" && o.driver_status === "running" && Date.now() - hb < 5 * 60_000;
+    if (liveDriver) void watch(id);
   };
 
-  openRunRef.current = openRun;
+  viewRunRef.current = openRun;
+
 
   const orch = state?.orchestration;
   const activePrompts = useMemo(
@@ -385,17 +430,19 @@ export function StimulusOrchestration({
 
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
             <Btn active disabled={busy} onClick={handleStart}>
-              {busy ? <><Spinner /> Running…</> : "Run orchestration on approved set"}
+              {busy ? <><Spinner /> Running…</> : "Run new orchestration on approved set"}
             </Btn>
             {runs.map((r) => (
               <Btn key={r.id} active={r.id === orchId} disabled={busy} onClick={() => void openRun(r.id)}>
-                {`${r.status} · v${r.registry_version} · ${new Date(r.created_at).toLocaleDateString()} · ${String(r.id).slice(0, 6)}`}
+                {`${r.status === "complete" ? "view" : r.status} · v${r.registry_version} · ${new Date(r.created_at).toLocaleDateString()} · ${String(r.id).slice(0, 6)}`}
               </Btn>
             ))}
-            {orchId && !busy && (
-              <Btn onClick={() => void drive(orchId)}>Resume</Btn>
+            {/* Resume is the ONLY way an existing unfinished run restarts. */}
+            {orchId && !busy && orch && orch.status !== "complete" && (
+              <Btn onClick={() => void drive(orchId)}>Resume this run (generates)</Btn>
             )}
           </div>
+
 
           {note && (
             <div className="text-mono" style={{ color: MUTED, fontSize: 10, marginTop: 10, letterSpacing: "0.1em" }}>
