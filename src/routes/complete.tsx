@@ -1593,6 +1593,7 @@ function Phase2Deliverables({ session }: { session: SessionRow }) {
       )}
 
       {/* Creative Stimulus Engine — only after Gate Two is confirmed. */}
+      <CreativeEngineDeliverables sessionId={session.id} subhead={subhead} />
       <CreativeShowcaseCard sessionId={session.id} subhead={subhead} />
 
       {showBrandIdentity && (
