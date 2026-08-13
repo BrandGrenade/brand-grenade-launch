@@ -68,13 +68,21 @@ export const detectInterruption = createServerFn({ method: "POST" })
     await assertSessionAccess(data.sessionId, context.userId);
     const { data: row, error } = await supabaseAdmin
       .from("sessions")
-      .select("stage_status, updated_at, last_heartbeat_at, status")
+      .select("stage_status, updated_at, last_heartbeat_at, stream_last_delta_at, status")
       .eq("id", data.sessionId)
       .maybeSingle();
     if (error || !row) return { interrupted: false as const };
     const s = row.stage_status ?? "";
     if (!s.startsWith("running:")) return { interrupted: false as const };
-    const beat = new Date(row.last_heartbeat_at ?? row.updated_at).getTime();
+    const beat = Math.max(
+      ...[
+        (row as Record<string, unknown>).stream_last_delta_at,
+        row.last_heartbeat_at,
+        row.updated_at,
+      ]
+        .map((v) => (typeof v === "string" ? new Date(v).getTime() : 0))
+        .filter((n) => Number.isFinite(n)),
+    );
     if (Date.now() - beat < STALE_MS) return { interrupted: false as const };
     const stageId = s.slice("running:".length);
     const now = new Date().toISOString();
