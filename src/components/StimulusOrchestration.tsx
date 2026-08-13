@@ -249,16 +249,21 @@ export function StimulusOrchestration({
     if (open) void refreshList();
   }, [open, refreshList]);
 
-  // Auto re-attach: landing on Step 4 while a run is unfinished picks it back
-  // up (and restarts a dead driver) without the human having to find it.
+  // VIEW-ONLY ON ARRIVAL. Landing on Step 4 never starts, resumes or restarts
+  // generation. It selects the most useful existing run — the latest COMPLETE
+  // one if there is one, otherwise the most recent — and displays it read only.
+  // A run the server is already driving is watched passively (no drive call).
+  // Generation only ever happens from an explicit button: "Run orchestration"
+  // or "Resume this run".
   const attached = useRef(false);
   useEffect(() => {
     if (!open || attached.current || orchId || runs.length === 0) return;
-    const live = runs.find((r) => r.status !== "complete");
-    if (!live) return;
     attached.current = true;
-    void openRunRef.current?.(live.id as string);
+    const complete = runs.find((r) => r.status === "complete");
+    const target = complete ?? runs[0];
+    void viewRunRef.current?.(target.id as string);
   }, [open, orchId, runs]);
+
 
   const refreshState = useCallback(
     async (id: string) => {
