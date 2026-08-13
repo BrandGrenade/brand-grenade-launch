@@ -217,6 +217,41 @@ function footer(includeDisclaimer = true): string {
   return `<div class="footer">${escapeHtml(LEGAL_DISCLAIMER)}</div>`;
 }
 
+/**
+ * Snapshot provenance. Phase 2 stage outputs are immutable records of the run
+ * that produced them, so every document states which version of the current
+ * authoritative fields it was generated against — staleness stays visible.
+ */
+function provenance(session: Phase2Session): string {
+  const at = new Date().toLocaleString("en-AU");
+  const parts: string[] = [
+    `Generated ${escapeHtml(at)} against session record ${escapeHtml(String(session.id ?? "—").slice(0, 8))}`,
+  ];
+  if (session.updated_at) {
+    parts.push(`session last updated ${escapeHtml(new Date(session.updated_at).toLocaleString("en-AU"))}`);
+  }
+  if (session.selected_smp) parts.push(`SMP — ${escapeHtml(session.selected_smp)}`);
+  if (session.locked_campaign_line) {
+    parts.push(
+      `Room 04 master line — ${escapeHtml(session.locked_campaign_line)}${
+        session.locked_big_idea_at
+          ? ` (locked ${escapeHtml(new Date(session.locked_big_idea_at).toLocaleString("en-AU"))}${
+              session.locked_big_idea_run_id
+                ? `, run ${escapeHtml(session.locked_big_idea_run_id.slice(0, 8))}`
+                : ""
+            })`
+          : ""
+      }`,
+    );
+  } else {
+    parts.push("Room 04 — no winning idea locked at generation time");
+  }
+  return `<div class="section" style="border-top:1px solid #C2BCB5;margin-top:24pt;padding-top:12pt;font-size:9pt;color:#6B6560;">
+  <strong>Source authority</strong><br/>${parts.join("<br/>")}<br/>
+  Stage prose in this document is a historical snapshot of the run that produced it; the fields listed above are the current authoritative values it was generated against.
+</div>`;
+}
+
 function wrapDoc(title: string, brand: string, body: string): string {
   return `<!doctype html>
 <html lang="en">
