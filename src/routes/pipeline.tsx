@@ -2675,7 +2675,13 @@ function PipelineView() {
     return null;
   })();
   const nextStageStatus: StageStatus | null = nextStage ? statuses[nextStage.id] : null;
-  const pipelineComplete = mainStages.every((s) => statuses[s.id] === "complete");
+  // Stage 15 is the persisted boundary between the Strategy Room and Phase 2.
+  // Do not gate this transition on every in-memory sidebar status: synthetic
+  // rows such as 08B can remain pending after reload even when the database
+  // proves the strategy and all Phase 2 work are complete.
+  const pipelineComplete =
+    isPersistedStageComplete(session ?? {}, "15", 15, session?.stage_15_output) ||
+    mainStages.every((s) => statuses[s.id] === "complete");
 
   // Dynamic document title: "[Brand] — Stage X — Brand Grenade"
   useEffect(() => {
@@ -3382,9 +3388,12 @@ function PipelineView() {
             }}
             onContinue={handleContinueStage}
             onViewFinal={() => {
-              if (sessionId) {
-                window.location.href = `/detonation?session=${sessionId}`;
+              if (!sessionId) return;
+              if (session?.phase_2_status === "complete") {
+                window.location.href = `/complete?session=${sessionId}`;
+                return;
               }
+              window.location.href = `/detonation?session=${sessionId}`;
             }}
             onConfirmCheckpoint={async (stageId, notes) => {
               if (stageId === "08" || stageId === "08B") {
