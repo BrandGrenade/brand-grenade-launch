@@ -498,9 +498,12 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
 
   /* 08 — implications */
   const implicationItems = bullets(s14, 5).length ? bullets(s14, 5) : bullets(s15, 5);
-  const implications = implicationItems.length
-    ? `<ul>${implicationItems.map((b) => `<li>${inlineMd(b)}</li>`).join("")}</ul>`
-    : renderMarkdown((s14 || s15).slice(0, 1600));
+  const implications =
+    lockedIdeaHtml +
+    (implicationItems.length
+      ? `<ul>${implicationItems.map((b) => `<li>${inlineMd(b)}</li>`).join("")}</ul>`
+      : renderMarkdown((s14 || s15).slice(0, 1600)));
+
 
   /* 09 — next step */
   const nextCandidates = [
