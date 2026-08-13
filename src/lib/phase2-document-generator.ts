@@ -468,11 +468,18 @@ export function buildAllPhase2(session: Phase2Session): string {
   {
     const arch = sanitise(session.stage_22_brand_architecture ?? "");
     const { grid, complete } = architectureGrid(arch);
+    const line = (session.locked_campaign_line ?? "").trim();
+    const lens = (session.locked_big_idea_lens ?? "").trim();
     sections.push(
-      `<div class="doc-break"></div><h2>Brand Architecture</h2>${grid}` +
+      `<div class="doc-break"></div><h2>Brand Architecture</h2>` +
+        (line
+          ? `<div class="section"><h3>Locked campaign line${lens ? ` — ${escapeHtml(lens)}` : ""}</h3><blockquote>${escapeHtml(line)}</blockquote></div>`
+          : "") +
+        grid +
         (complete ? "" : `<div class="section"><h3>Full Architecture Detail</h3>${md(arch)}</div>`),
     );
   }
+
 
   const tocHtml = `<div class="toc"><h3>Contents</h3><ol>${tocItems.map((t) => `<li>${escapeHtml(t)}</li>`).join("")}</ol></div>`;
 
