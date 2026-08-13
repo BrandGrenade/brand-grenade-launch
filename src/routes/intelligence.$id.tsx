@@ -678,7 +678,7 @@ function IntelligenceRunPage() {
                 ) : (
                   <Download className="mr-2 h-3.5 w-3.5" />
                 )}
-                Download PDF
+                Open Document 00A
               </Button>
               <Link
                 to="/intelligence/$id/edit"
@@ -816,7 +816,7 @@ function IntelligenceRunPage() {
               ) : (
                 <Download className="mr-2 h-3.5 w-3.5" />
               )}
-              Download PDF — Document 00A
+              Open Document 00A
             </Button>
             <Button
               size="sm"
