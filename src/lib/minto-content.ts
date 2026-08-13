@@ -54,7 +54,13 @@ export interface MintoSession {
   stage_20_output?: string | null;
   stage_22_brand_architecture?: string | null;
   stage_22_distinctive_assets?: string | null;
+  /** Room 04 lock — the single winning creative idea and its campaign line. */
+  locked_big_idea?: string | null;
+  locked_campaign_line?: string | null;
+  locked_big_idea_lens?: string | null;
+  locked_big_idea_at?: string | null;
 }
+
 
 /* ────────────────────────────────────────────────────────── helpers ── */
 
@@ -307,6 +313,8 @@ export interface DerivedMinto {
   candidates: ScoredCandidate[];
   winner: ScoredCandidate | null;
   stagesRun: number;
+  /** Room 04 lock block — locked campaign line and winning idea, or "". */
+  lockedIdeaHtml: string;
   headlineStats: Stat[];
   content: MintoContent;
 }
@@ -338,6 +346,28 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
   const stagesRun = PIPELINE_APPENDIX.filter((s) =>
     String((session as Record<string, unknown>)[s.key] ?? "").trim(),
   ).length;
+
+  /* Room 04 lock — authoritative campaign line and winning idea. Stage 14/15
+   * text predates the lock, so the lock is stated first and verbatim. */
+  const lockedLine = (session.locked_campaign_line ?? "").trim();
+  const lockedIdea = clean(session.locked_big_idea).trim();
+  const lockedLens = (session.locked_big_idea_lens ?? "").trim();
+  const lockedIdeaHtml =
+    lockedLine || lockedIdea
+      ? (lockedLine
+          ? pullQuote(lockedLine, {
+              label: lockedLens ? `Locked campaign line — ${lockedLens}` : "Locked campaign line",
+            })
+          : "") +
+        (lockedIdea
+          ? callout(
+              lockedLens ? `Locked creative idea — ${lockedLens}` : "Locked creative idea",
+              `<p>${inlineMd(lockedIdea.slice(0, 900))}</p>`,
+            )
+          : "")
+      : "";
+
+
 
   /* 01 — recommendation */
   const recommendation = smp
@@ -498,9 +528,12 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
 
   /* 08 — implications */
   const implicationItems = bullets(s14, 5).length ? bullets(s14, 5) : bullets(s15, 5);
-  const implications = implicationItems.length
-    ? `<ul>${implicationItems.map((b) => `<li>${inlineMd(b)}</li>`).join("")}</ul>`
-    : renderMarkdown((s14 || s15).slice(0, 1600));
+  const implications =
+    lockedIdeaHtml +
+    (implicationItems.length
+      ? `<ul>${implicationItems.map((b) => `<li>${inlineMd(b)}</li>`).join("")}</ul>`
+      : renderMarkdown((s14 || s15).slice(0, 1600)));
+
 
   /* 09 — next step */
   const nextCandidates = [
@@ -538,6 +571,7 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
     candidates,
     winner,
     stagesRun,
+    lockedIdeaHtml,
     headlineStats,
     content: {
       recommendation,

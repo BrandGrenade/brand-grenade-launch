@@ -104,11 +104,12 @@ export function buildMasterDetonationDocument(
 
   /* 08 — implications: audience, cultural context, system principles. */
   const implications =
-    [pick("audience"), pick("cultural_context"), pick("system_principles")]
+    derived.lockedIdeaHtml +
+    ([pick("audience"), pick("cultural_context"), pick("system_principles")]
       .filter((s) => s.trim())
       .map((s) => renderMarkdown(s))
       .join("") ||
-    (derived.content.implications ?? "");
+      (derived.content.implications ?? ""));
 
   /* 10 — appendix: the Phase 2 record, then the strategy evidence. */
   const appendix =

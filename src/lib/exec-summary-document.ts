@@ -260,12 +260,21 @@ export function buildExecSummaryDocument(
   const scoringTitle = `${NUMBER_WORD[scoring.rows.length] ?? String(scoring.rows.length)}-dimension proposition scoring (Stage 10)`;
 
   // 09 — Brand World Opportunity
-  const bwLine = brandWorld.line && dedupe.fresh(brandWorld.line) ? brandWorld.line : null;
+  // The Room 04 lock supersedes any line carried in Stage 22's brand world
+  // reflection, which is written before a creative idea is locked.
+  const lockedLine = ((session as MintoSession).locked_campaign_line ?? "").trim();
+  const lockedLens = ((session as MintoSession).locked_big_idea_lens ?? "").trim();
+  const rawBwLine = brandWorld.line && dedupe.fresh(brandWorld.line) ? brandWorld.line : null;
+  const bwLine = lockedLine || rawBwLine;
+  const bwLabel = lockedLine
+    ? `Locked campaign line${lockedLens ? ` — ${lockedLens}` : ""}`
+    : null;
   const bwExplain = dedupe.take(brandWorld.explanation, 1);
   const brandWorldHtml =
     bwLine || bwExplain
-      ? `${bwLine ? `<blockquote>${escapeHtml(bwLine)}</blockquote>` : ""}${bwExplain ? p(bwExplain) : ""}`
+      ? `${bwLine ? `${bwLabel ? `<div class="part-label">${escapeHtml(bwLabel)}</div>` : ""}<blockquote>${escapeHtml(bwLine)}</blockquote>` : ""}${bwExplain ? p(bwExplain) : ""}`
       : missing();
+
 
   // 10 — Recommendations, including channel strategy
   const condition = dedupe.take(recs.condition, 2);

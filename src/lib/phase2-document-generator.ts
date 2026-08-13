@@ -33,7 +33,12 @@ export interface Phase2Session {
   stage_21_outputs: Record<string, string> | null;
   stage_22_brand_architecture: string | null;
   stage_22_distinctive_assets: string | null;
+  /** Room 04 lock — supersedes any line written into earlier stage outputs. */
+  locked_big_idea?: string | null;
+  locked_campaign_line?: string | null;
+  locked_big_idea_lens?: string | null;
 }
+
 
 export const PHASE_2_AMBER = "#C81E1E";
 
@@ -329,17 +334,36 @@ function architectureGrid(sanitised: string): { grid: string; complete: boolean 
   return { grid, complete };
 }
 
-function brandArchitectureBody(brand: string, arch: string): string {
+function brandArchitectureBody(
+  brand: string,
+  arch: string,
+  lock: { line?: string | null; idea?: string | null; lens?: string | null } = {},
+): string {
   const sanitised = sanitise(arch);
   const { grid, complete } = architectureGrid(sanitised);
 
+  // Stage 22 is written before a creative idea is locked in Room 04. Where a
+  // lock exists it is authoritative and is stated ahead of the grid, so the
+  // architecture's reflection line can never read as the campaign line.
+  const line = (lock.line ?? "").trim();
+  const idea = (lock.idea ?? "").trim();
+  const lens = (lock.lens ?? "").trim();
+  const lockBlock =
+    line || idea
+      ? `<div class="section"><h3>Locked campaign line${lens ? ` — ${escapeHtml(lens)}` : ""}</h3>${
+          line ? `<blockquote>${escapeHtml(line)}</blockquote>` : ""
+        }${idea ? `<p>${escapeHtml(idea.slice(0, 900))}</p>` : ""}</div>`
+      : "";
+
   return cover("BRAND ARCHITECTURE", "Brand Architecture", brand) +
+    lockBlock +
     `<div class="section"><h2>Brand Architecture</h2>${grid}</div>` +
     // The grid IS the document when every component resolved; the raw dump is a
     // fallback for outputs the extractor could not fully parse.
     (complete ? "" : `<div class="section"><h3>Full Architecture Detail</h3>${md(sanitised)}</div>`) +
     footer(false);
 }
+
 
 // ── Public: build a single document ──────────────────────────────────────
 export function buildPhase2Document(
@@ -385,7 +409,12 @@ export function buildPhase2Document(
       break;
     case "brand_architecture":
       title = "Brand Architecture";
-      body = brandArchitectureBody(brand, session.stage_22_brand_architecture ?? "");
+      body = brandArchitectureBody(brand, session.stage_22_brand_architecture ?? "", {
+        line: session.locked_campaign_line,
+        idea: session.locked_big_idea,
+        lens: session.locked_big_idea_lens,
+      });
+
       break;
     case "all_phase2":
       return buildAllPhase2(session);
@@ -439,11 +468,18 @@ export function buildAllPhase2(session: Phase2Session): string {
   {
     const arch = sanitise(session.stage_22_brand_architecture ?? "");
     const { grid, complete } = architectureGrid(arch);
+    const line = (session.locked_campaign_line ?? "").trim();
+    const lens = (session.locked_big_idea_lens ?? "").trim();
     sections.push(
-      `<div class="doc-break"></div><h2>Brand Architecture</h2>${grid}` +
+      `<div class="doc-break"></div><h2>Brand Architecture</h2>` +
+        (line
+          ? `<div class="section"><h3>Locked campaign line${lens ? ` — ${escapeHtml(lens)}` : ""}</h3><blockquote>${escapeHtml(line)}</blockquote></div>`
+          : "") +
+        grid +
         (complete ? "" : `<div class="section"><h3>Full Architecture Detail</h3>${md(arch)}</div>`),
     );
   }
+
 
   const tocHtml = `<div class="toc"><h3>Contents</h3><ol>${tocItems.map((t) => `<li>${escapeHtml(t)}</li>`).join("")}</ol></div>`;
 
