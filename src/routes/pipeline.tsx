@@ -3388,17 +3388,8 @@ function PipelineView() {
               if (prevStage) setSelectedId(prevStage.id);
             }}
             onContinue={handleContinueStage}
-            onViewFinal={async () => {
+            onViewFinal={() => {
               if (!sessionId) return;
-              const { data: latest } = await supabase
-                .from("sessions")
-                .select("phase_2_status")
-                .eq("id", sessionId)
-                .single();
-              if (latest?.phase_2_status === "complete") {
-                window.location.href = `/complete?session=${sessionId}`;
-                return;
-              }
               window.location.href = `/detonation?session=${sessionId}`;
             }}
             onConfirmCheckpoint={async (stageId, notes) => {
