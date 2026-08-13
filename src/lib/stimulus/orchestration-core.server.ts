@@ -468,6 +468,21 @@ async function heartbeat(id: string) {
 }
 
 /**
+ * A run can be stopped mid-flight by setting driver_status = 'cancelled'.
+ * The loop checks this after every step, so an accidental or superseded run
+ * stops instead of burning tokens forever.
+ */
+async function isCancelled(id: string) {
+  const { data } = await db
+    .from("stimulus_orchestrations")
+    .select("driver_status")
+    .eq("id", id)
+    .maybeSingle();
+  return (data as { driver_status?: string } | null)?.driver_status === "cancelled";
+}
+
+
+/**
  * Runs the whole orchestration server-side, detached from the browser request
  * via ctx.waitUntil() — the same decoupling used by the Intelligence Lab. Once
  * claimed, closing the tab, switching away or losing the connection has no
