@@ -127,7 +127,8 @@ export async function loadWalkthrough(supabase: DB, sessionId: string): Promise<
       .select("*")
       .eq("session_id", sessionId)
       .order("created_at", { ascending: false })
-      .limit(1),
+      .limit(20),
+
   ]);
 
   const runs = (runsRes.data ?? []) as StimulusRunRow[];
@@ -156,7 +157,14 @@ export async function loadWalkthrough(supabase: DB, sessionId: string): Promise<
     directions = creativeRun ? rows.filter((d) => d.run_id === creativeRun!.id) : [];
   }
 
-  const orchestration = ((orchRes.data ?? [])[0] as OrchestrationRow | undefined) ?? null;
+  // Authority: a finished run always outranks a newer unfinished/abandoned one.
+  const orchRows = (orchRes.data ?? []) as OrchestrationRow[];
+  const orchestration =
+    orchRows.find((o) => (o as { gate_two_confirmed?: boolean }).gate_two_confirmed) ??
+    orchRows.find((o) => o.status === "complete") ??
+    orchRows[0] ??
+    null;
+
   let prompts: PromptRow[] = [];
   if (orchestration) {
     const { data: promptRows } = await supabase

@@ -259,8 +259,12 @@ export function StimulusOrchestration({
   useEffect(() => {
     if (!open || attached.current || orchId || runs.length === 0) return;
     attached.current = true;
-    const complete = runs.find((r) => r.status === "complete");
+    const signedOff = runs.find(
+      (r) => r.status === "complete" && (r as { gate_two_confirmed?: boolean }).gate_two_confirmed,
+    );
+    const complete = signedOff ?? runs.find((r) => r.status === "complete");
     const target = complete ?? runs[0];
+
     void viewRunRef.current?.(target.id as string);
   }, [open, orchId, runs]);
 
@@ -429,8 +433,27 @@ export function StimulusOrchestration({
           )}
 
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-            <Btn active disabled={busy} onClick={handleStart}>
-              {busy ? <><Spinner /> Running…</> : "Run new orchestration on approved set"}
+            {/* GENERATION IS ALWAYS AN EXPLICIT, SEPARATE CLICK — never navigation. */}
+            <Btn
+              active
+              disabled={busy}
+              onClick={() => {
+                if (runs.some((r) => r.status === "complete")) {
+                  const ok = window.confirm(
+                    "Regenerate? This starts a NEW orchestration run and generates fresh output. Your existing completed run is kept and stays viewable.",
+                  );
+                  if (!ok) return;
+                }
+                void handleStart();
+              }}
+            >
+              {busy ? (
+                <><Spinner /> Running…</>
+              ) : runs.some((r) => r.status === "complete") ? (
+                "Regenerate — new orchestration run"
+              ) : (
+                "Run orchestration on approved set"
+              )}
             </Btn>
             {runs.map((r) => (
               <Btn key={r.id} active={r.id === orchId} disabled={busy} onClick={() => void openRun(r.id)}>
@@ -442,6 +465,7 @@ export function StimulusOrchestration({
               <Btn onClick={() => void drive(orchId)}>Resume this run (generates)</Btn>
             )}
           </div>
+
 
 
           {note && (
