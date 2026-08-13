@@ -1671,7 +1671,7 @@ const STAGE_20B_FIELDS: Array<{
 ];
 
 function Stage20b({ session, onChange, goNext }: { session: SessionRow; onChange: () => void | Promise<void>; goNext: () => void }) {
-  const run = useServerFn(runStage20b);
+  const start = useServerFn(startStage20b);
   const load = useServerFn(loadStage20b);
 
   const initialInputs: Stage20bInputs = {
@@ -1712,12 +1712,35 @@ function Stage20b({ session, onChange, goNext }: { session: SessionRow; onChange
     }
     setBusy(true); setErr(null);
     try {
-      const r = await run({ data: { sessionId: session.id, audienceInput: inputs } });
-      setOutput(r.output); setEditing(false); await onChange();
+      // Generation runs detached on the server; this screen polls for it, so a
+      // slow model call or a dropped connection can no longer kill the stage.
+      await start({ data: { sessionId: session.id, audienceInput: inputs } });
+
+      const deadline = Date.now() + 20 * 60 * 1000;
+      for (;;) {
+        await new Promise((r) => setTimeout(r, 5000));
+        let r: Awaited<ReturnType<typeof load>>;
+        try {
+          r = await load({ data: { sessionId: session.id } });
+        } catch {
+          continue; // transient — keep polling
+        }
+        if (r.output) {
+          setOutput(r.output); setEditing(false); await onChange();
+          break;
+        }
+        if (r.error) throw new Error(r.error);
+        if (Date.now() > deadline) {
+          throw new Error(
+            "The channel strategy is still generating after 20 minutes. Leave this page open or come back shortly — the result saves automatically.",
+          );
+        }
+      }
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Stage 20B failed");
     } finally { setBusy(false); }
   };
+
 
   const handleProceed = async () => {
     setProceeding(true);
