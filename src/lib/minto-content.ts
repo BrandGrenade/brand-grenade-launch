@@ -313,6 +313,8 @@ export interface DerivedMinto {
   candidates: ScoredCandidate[];
   winner: ScoredCandidate | null;
   stagesRun: number;
+  /** Room 04 lock block — locked campaign line and winning idea, or "". */
+  lockedIdeaHtml: string;
   headlineStats: Stat[];
   content: MintoContent;
 }
@@ -569,6 +571,7 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
     candidates,
     winner,
     stagesRun,
+    lockedIdeaHtml,
     headlineStats,
     content: {
       recommendation,
