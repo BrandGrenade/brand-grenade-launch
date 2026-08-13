@@ -50,6 +50,7 @@ import { Route as IntelligenceIdEditRouteImport } from './routes/intelligence.$i
 import { Route as CreativeSessionIdShortlistRouteImport } from './routes/creative.$sessionId.shortlist'
 import { Route as CreativeSessionIdOrchestrationRouteImport } from './routes/creative.$sessionId.orchestration'
 import { Route as CreativeSessionIdChannelsRouteImport } from './routes/creative.$sessionId.channels'
+import { Route as ApiPublicSweepTickRouteImport } from './routes/api/public/sweep-tick'
 import { Route as AdminPreviewSlugRouteImport } from './routes/admin.preview.$slug'
 import { Route as LovableEmailTransactionalSendRouteImport } from './routes/lovable/email/transactional/send'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
@@ -265,6 +266,11 @@ const CreativeSessionIdChannelsRoute =
     path: '/channels',
     getParentRoute: () => CreativeSessionIdRoute,
   } as any)
+const ApiPublicSweepTickRoute = ApiPublicSweepTickRouteImport.update({
+  id: '/api/public/sweep-tick',
+  path: '/api/public/sweep-tick',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminPreviewSlugRoute = AdminPreviewSlugRouteImport.update({
   id: '/admin/preview/$slug',
   path: '/admin/preview/$slug',
@@ -337,6 +343,7 @@ export interface FileRoutesByFullPath {
   '/synthesiser/': typeof SynthesiserIndexRoute
   '/walkthrough/': typeof WalkthroughIndexRoute
   '/admin/preview/$slug': typeof AdminPreviewSlugRoute
+  '/api/public/sweep-tick': typeof ApiPublicSweepTickRoute
   '/creative/$sessionId/channels': typeof CreativeSessionIdChannelsRoute
   '/creative/$sessionId/orchestration': typeof CreativeSessionIdOrchestrationRoute
   '/creative/$sessionId/shortlist': typeof CreativeSessionIdShortlistRoute
@@ -379,6 +386,7 @@ export interface FileRoutesByTo {
   '/synthesiser': typeof SynthesiserIndexRoute
   '/walkthrough': typeof WalkthroughIndexRoute
   '/admin/preview/$slug': typeof AdminPreviewSlugRoute
+  '/api/public/sweep-tick': typeof ApiPublicSweepTickRoute
   '/creative/$sessionId/channels': typeof CreativeSessionIdChannelsRoute
   '/creative/$sessionId/orchestration': typeof CreativeSessionIdOrchestrationRoute
   '/creative/$sessionId/shortlist': typeof CreativeSessionIdShortlistRoute
@@ -429,6 +437,7 @@ export interface FileRoutesById {
   '/synthesiser/': typeof SynthesiserIndexRoute
   '/walkthrough/': typeof WalkthroughIndexRoute
   '/admin/preview/$slug': typeof AdminPreviewSlugRoute
+  '/api/public/sweep-tick': typeof ApiPublicSweepTickRoute
   '/creative/$sessionId/channels': typeof CreativeSessionIdChannelsRoute
   '/creative/$sessionId/orchestration': typeof CreativeSessionIdOrchestrationRoute
   '/creative/$sessionId/shortlist': typeof CreativeSessionIdShortlistRoute
@@ -480,6 +489,7 @@ export interface FileRouteTypes {
     | '/synthesiser/'
     | '/walkthrough/'
     | '/admin/preview/$slug'
+    | '/api/public/sweep-tick'
     | '/creative/$sessionId/channels'
     | '/creative/$sessionId/orchestration'
     | '/creative/$sessionId/shortlist'
@@ -522,6 +532,7 @@ export interface FileRouteTypes {
     | '/synthesiser'
     | '/walkthrough'
     | '/admin/preview/$slug'
+    | '/api/public/sweep-tick'
     | '/creative/$sessionId/channels'
     | '/creative/$sessionId/orchestration'
     | '/creative/$sessionId/shortlist'
@@ -571,6 +582,7 @@ export interface FileRouteTypes {
     | '/synthesiser/'
     | '/walkthrough/'
     | '/admin/preview/$slug'
+    | '/api/public/sweep-tick'
     | '/creative/$sessionId/channels'
     | '/creative/$sessionId/orchestration'
     | '/creative/$sessionId/shortlist'
@@ -609,6 +621,7 @@ export interface RootRouteChildren {
   DetonationCanvasRoute: typeof DetonationCanvasRoute
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
   AdminPreviewSlugRoute: typeof AdminPreviewSlugRoute
+  ApiPublicSweepTickRoute: typeof ApiPublicSweepTickRoute
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
   ApiPublicHooksTier2HarnessRoute: typeof ApiPublicHooksTier2HarnessRoute
   ApiRepoViewDocumentIdRoute: typeof ApiRepoViewDocumentIdRoute
@@ -906,6 +919,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CreativeSessionIdChannelsRouteImport
       parentRoute: typeof CreativeSessionIdRoute
     }
+    '/api/public/sweep-tick': {
+      id: '/api/public/sweep-tick'
+      path: '/api/public/sweep-tick'
+      fullPath: '/api/public/sweep-tick'
+      preLoaderRoute: typeof ApiPublicSweepTickRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/preview/$slug': {
       id: '/admin/preview/$slug'
       path: '/admin/preview/$slug'
@@ -1077,6 +1097,7 @@ const rootRouteChildren: RootRouteChildren = {
   DetonationCanvasRoute: DetonationCanvasRoute,
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
   AdminPreviewSlugRoute: AdminPreviewSlugRoute,
+  ApiPublicSweepTickRoute: ApiPublicSweepTickRoute,
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
   ApiPublicHooksTier2HarnessRoute: ApiPublicHooksTier2HarnessRoute,
   ApiRepoViewDocumentIdRoute: ApiRepoViewDocumentIdRoute,

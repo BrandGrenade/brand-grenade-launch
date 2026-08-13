@@ -15,6 +15,7 @@ import {
   lockWinningIdea,
   unlockWinningIdea,
   listBigIdeaRuns,
+  retryBigIdeaLens,
 } from "@/lib/stimulus-bigidea.functions";
 
 /** One big idea sweep on this session, with its real generated count. */
@@ -36,6 +37,7 @@ type SweepState = {
   total: number;
   generated: number;
   pending: number;
+  failed?: number;
   lastBatchAt: string | null;
   running: boolean;
   stalled: boolean;
@@ -63,6 +65,9 @@ const MUTED = "#A8A29A";
 const RED = "#FF8F87";
 const GREEN = "#5FD08A";
 const PAPER = "#EDE8E0";
+
+/** Upper bound on how many times the watcher restarts a stalled sweep slice. */
+const MAX_SWEEP_KICKS = 40;
 
 /**
  * Convergence record. `inSweep` is written as each lens generates (compared
@@ -340,6 +345,59 @@ function ConvergenceBlock({ d }: { d: Idea }) {
   );
 }
 
+/**
+ * FAILURE / PENDING STATE. Distinct from any successful state: a lens that
+ * produced nothing shows why and offers a retry, and none of the Field 1 /
+ * Field 2 explanatory copy is rendered for it.
+ */
+function UngeneratedBlock({ d, onRetry }: { d: Idea; onRetry: () => Promise<void> }) {
+  const [busy, setBusy] = useState(false);
+  const failed = d.status === "failed" || Boolean((d.error ?? "").trim());
+
+  return (
+    <div
+      style={{
+        marginTop: 20,
+        borderRadius: 10,
+        border: `1px solid ${failed ? RED : "#2A2724"}`,
+        backgroundColor: "#0A0908",
+        padding: "14px 16px",
+      }}
+    >
+      <div
+        className="text-mono"
+        style={{
+          color: failed ? RED : MUTED,
+          fontSize: 10,
+          letterSpacing: "0.14em",
+          textTransform: "uppercase",
+        }}
+      >
+        {failed ? "Failed to generate" : "Awaiting generation"}
+      </div>
+      <div className="text-body-sm" style={{ color: MUTED, marginTop: 8, lineHeight: 1.6 }}>
+        {failed
+          ? `This lens produced no idea. ${(d.error ?? "").trim() || "The model returned nothing usable."} Nothing here has been judged, and no line exists for it.`
+          : "This lens has not run yet. The sweep is still working through the queue."}
+      </div>
+      {failed && (
+        <div style={{ marginTop: 12 }}>
+          <Btn
+            tone={RED}
+            disabled={busy}
+            onClick={() => {
+              setBusy(true);
+              void onRetry().finally(() => setBusy(false));
+            }}
+          >
+            {busy ? "Retrying…" : "Retry this lens"}
+          </Btn>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function IdeaCard({
   d,
   isWinner,
@@ -350,6 +408,7 @@ function IdeaCard({
   onRevise,
   onPickIdea,
   onPickLine,
+  onRetry,
 }: {
   d: Idea;
   isWinner: boolean;
@@ -361,8 +420,13 @@ function IdeaCard({
   onRevise: (notes: string) => Promise<void>;
   onPickIdea: () => void;
   onPickLine: () => void;
+  onRetry: () => Promise<void>;
 }) {
   const lens = getLens(d.lens_id);
+  // A lens with no idea text has NOT produced a candidate. It must never fall
+  // through to the normal "candidate only" presentation, which reads as a
+  // successful first pass awaiting a master line.
+  const ungenerated = !(d.direction ?? "").trim();
   const [instinct, setInstinct] = useState(d.instinct_brief ?? "");
   const [notes, setNotes] = useState("");
   const [showRevise, setShowRevise] = useState(false);
@@ -396,8 +460,8 @@ function IdeaCard({
           <span
             className="text-mono"
             style={{
-              color: d.status === "kill" ? RED : d.status === "pending" ? MUTED : AMBER,
-              border: `1px solid ${d.status === "kill" ? RED : d.status === "pending" ? "#2A2724" : AMBER}`,
+              color: d.status === "kill" || d.status === "failed" ? RED : d.status === "pending" ? MUTED : AMBER,
+              border: `1px solid ${d.status === "kill" || d.status === "failed" ? RED : d.status === "pending" ? "#2A2724" : AMBER}`,
               borderRadius: 999,
               padding: "2px 9px",
               fontSize: 10,
@@ -405,7 +469,17 @@ function IdeaCard({
               textTransform: "uppercase",
             }}
           >
-            {d.status === "keep_in_play" ? "Keep in play" : d.status === "keep" ? "Keep" : d.status === "kill" ? "Killed" : "Not judged"}
+            {d.status === "failed"
+              ? "Failed to generate"
+              : d.status === "pending"
+                ? "Generating"
+                : d.status === "keep_in_play"
+                  ? "Keep in play"
+                  : d.status === "keep"
+                    ? "Keep"
+                    : d.status === "kill"
+                      ? "Killed"
+                      : "Not judged"}
           </span>
         </div>
         {(isWinner || isLineWinner) && (
@@ -421,16 +495,20 @@ function IdeaCard({
         </div>
       )}
 
-      <div
-        className="text-body-sm"
-        style={{ color: "#EDE8E0", marginTop: 20, whiteSpace: "pre-wrap", lineHeight: 1.75, fontSize: 15 }}
-      >
-        {d.direction || d.error || "Not generated."}
-      </div>
+      {ungenerated ? (
+        <UngeneratedBlock d={d} onRetry={onRetry} />
+      ) : (
+        <div
+          className="text-body-sm"
+          style={{ color: "#EDE8E0", marginTop: 20, whiteSpace: "pre-wrap", lineHeight: 1.75, fontSize: 15 }}
+        >
+          {d.direction}
+        </div>
+      )}
 
-      <ConvergenceBlock d={d} />
+      {!ungenerated && <ConvergenceBlock d={d} />}
 
-      <LineBlock d={d} />
+      {!ungenerated && <LineBlock d={d} />}
 
       {d.rationale && (
         <div style={{ marginTop: 18, borderTop: "1px solid #1C1A18", paddingTop: 16 }}>
@@ -568,6 +646,7 @@ export function BigIdeaSweep({
   const start = useServerFn(startBigIdeaRun);
   const resume = useServerFn(resumeBigIdeaSweep);
   const readProgress = useServerFn(bigIdeaSweepProgress);
+  const retryLens = useServerFn(retryBigIdeaLens);
   const ledger = useServerFn(buildIdeaConvergenceLedger);
   const load = useServerFn(loadStimulusRun);
   const listRuns = useServerFn(listBigIdeaRuns);
@@ -608,11 +687,28 @@ export function BigIdeaSweep({
     async (id: string) => {
       if (pollingRef.current) return;
       pollingRef.current = true;
+      let kicks = 0;
       try {
         for (;;) {
           const p = (await readProgress({ data: { runId: id } })) as SweepState;
           setSweep(p);
           await refresh(id);
+
+          // The sweep is driven in bounded server-side slices. When a slice
+          // ends (or an invocation dies) with lenses still pending, the watcher
+          // kicks the next slice instead of silently giving up — the old loop
+          // broke here and left the run frozen part-way through.
+          if (p.pending > 0 && !p.running && kicks < MAX_SWEEP_KICKS) {
+            kicks += 1;
+            try {
+              await resume({ data: { runId: id, force: true } });
+            } catch {
+              /* transient — retried on the next tick */
+            }
+            await new Promise((r) => setTimeout(r, 6000));
+            continue;
+          }
+
           if (!p.running) {
             if (p.pending === 0 && !p.hasLedger) {
               try {
@@ -632,7 +728,7 @@ export function BigIdeaSweep({
         pollingRef.current = false;
       }
     },
-    [readProgress, refresh, ledger],
+    [readProgress, refresh, ledger, resume],
   );
 
   // Open the session's most meaningful big idea sweep. A newer sweep that has
@@ -1074,6 +1170,13 @@ export function BigIdeaSweep({
               onRevise={async (notes) => {
                 await revise({ data: { directionId: d.id, notes } });
                 if (runId) await refresh(runId);
+              }}
+              onRetry={async () => {
+                await retryLens({ data: { directionId: d.id } });
+                if (runId) {
+                  await refresh(runId);
+                  void watch(runId);
+                }
               }}
             />
           ))}

@@ -187,6 +187,38 @@ export const listBigIdeaRuns = createServerFn({ method: "POST" })
     return { runs: out };
   });
 
+/**
+ * Puts ONE failed lens back in the queue and kicks the server-side sweep.
+ * Powers the per-lens "Retry" control, so a single dud lens never requires
+ * re-running all 37.
+ */
+export const retryBigIdeaLens = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => z.object({ directionId: z.string().uuid() }).parse(i))
+  .handler(async ({ data, context }) => {
+    const { data: row, error } = await supabaseAdmin
+      .from("stimulus_directions")
+      .select("id, run_id")
+      .eq("id", data.directionId)
+      .single();
+    if (error || !row) throw new Error("Lens not found");
+    const run = await assertRunAccess(row.run_id, context.userId);
+
+    await supabaseAdmin
+      .from("stimulus_directions")
+      .update({ status: "pending", error: null, generation_attempts: 0 })
+      .eq("id", row.id);
+    await supabaseAdmin
+      .from("stimulus_runs")
+      .update({ status: "generating", error: null, last_batch_at: new Date().toISOString() })
+      .eq("id", run.id);
+
+    const { driveBigIdeaSweep } = await import("./stimulus/big-idea-sweep.server");
+    const { scheduleBackground } = await import("./background.server");
+    scheduleBackground(driveBigIdeaSweep(run.id), "big-idea-lens-retry");
+    return { queued: true as const };
+  });
+
 /** Live progress for the sweep, including stall detection. */
 export const bigIdeaSweepProgress = createServerFn({ method: "POST" })
 
@@ -208,7 +240,10 @@ export const bigIdeaSweepProgress = createServerFn({ method: "POST" })
 
     const all = rows ?? [];
     const pending = all.filter((r) => r.status === "pending").length;
-    const generated = all.length - pending;
+    const failed = all.filter((r) => r.status === "failed").length;
+    // A failed lens is NOT a generated lens. Counting it as one is how a sweep
+    // reported "37/37" while cards on screen still read "Not generated."
+    const generated = all.length - pending - failed;
     const beat = row?.last_batch_at ? Date.parse(row.last_batch_at) : 0;
     const stalled =
       pending > 0 && (row?.status !== "generating" || Date.now() - beat > SWEEP_STALL_MS);
@@ -219,6 +254,7 @@ export const bigIdeaSweepProgress = createServerFn({ method: "POST" })
       total: all.length,
       generated,
       pending,
+      failed,
       lastBatchAt: row?.last_batch_at ?? null,
       running: pending > 0 && !stalled,
       stalled,
