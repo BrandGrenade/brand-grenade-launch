@@ -233,8 +233,10 @@ function condenseStage(raw: string, opts: { maxUnits?: number; maxChars?: number
     if (SCAFFOLD_LINE.test(line)) continue;
 
     if (isHeading(line)) {
+      // A heading with no room left beneath it is noise — stop emitting.
+      if (units >= maxUnits || chars >= maxChars) continue;
       // Drop an empty heading left behind by the previous cut.
-      if (out.length && isHeading(out[out.length - 1].trim())) out.pop();
+      if (out.length && out[out.length - 1].startsWith("### ")) out.pop();
       out.push(`### ${line.replace(/^#{1,4}\s+/, "").replace(/:$/, "")}`);
       sinceHeading = 0;
       continue;
@@ -250,9 +252,10 @@ function condenseStage(raw: string, opts: { maxUnits?: number; maxChars?: number
     units++;
     chars += line.length;
   }
-  while (out.length && isHeading(out[out.length - 1].replace(/^###\s+/, ""))) out.pop();
+  while (out.length && out[out.length - 1].startsWith("### ")) out.pop();
   return out.join("\n\n");
 }
+
 
 
 export function buildBoardStrategyDocument(
