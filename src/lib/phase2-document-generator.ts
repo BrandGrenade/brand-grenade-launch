@@ -334,17 +334,36 @@ function architectureGrid(sanitised: string): { grid: string; complete: boolean 
   return { grid, complete };
 }
 
-function brandArchitectureBody(brand: string, arch: string): string {
+function brandArchitectureBody(
+  brand: string,
+  arch: string,
+  lock: { line?: string | null; idea?: string | null; lens?: string | null } = {},
+): string {
   const sanitised = sanitise(arch);
   const { grid, complete } = architectureGrid(sanitised);
 
+  // Stage 22 is written before a creative idea is locked in Room 04. Where a
+  // lock exists it is authoritative and is stated ahead of the grid, so the
+  // architecture's reflection line can never read as the campaign line.
+  const line = (lock.line ?? "").trim();
+  const idea = (lock.idea ?? "").trim();
+  const lens = (lock.lens ?? "").trim();
+  const lockBlock =
+    line || idea
+      ? `<div class="section"><h3>Locked campaign line${lens ? ` — ${escapeHtml(lens)}` : ""}</h3>${
+          line ? `<blockquote>${escapeHtml(line)}</blockquote>` : ""
+        }${idea ? `<p>${escapeHtml(idea.slice(0, 900))}</p>` : ""}</div>`
+      : "";
+
   return cover("BRAND ARCHITECTURE", "Brand Architecture", brand) +
+    lockBlock +
     `<div class="section"><h2>Brand Architecture</h2>${grid}</div>` +
     // The grid IS the document when every component resolved; the raw dump is a
     // fallback for outputs the extractor could not fully parse.
     (complete ? "" : `<div class="section"><h3>Full Architecture Detail</h3>${md(sanitised)}</div>`) +
     footer(false);
 }
+
 
 // ── Public: build a single document ──────────────────────────────────────
 export function buildPhase2Document(
