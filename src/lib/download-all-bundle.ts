@@ -11,6 +11,8 @@ import {
 } from "./phase2-document-generator";
 import { buildFullRunDocument, type FullRunSession } from "./full-run-document";
 import { buildExecSummaryDocument } from "./exec-summary-document";
+import { buildConsultingDeliveryDocument } from "./consulting-delivery-document";
+import { buildDocument00AMinto } from "./intelligence/doc-00A-minto";
 import { fetchExecSummaryIntel } from "./exec-summary-intel";
 import { supabase } from "@/integrations/supabase/client";
 import { normalizeBrand } from "./brand-register";
@@ -69,9 +71,15 @@ function buildBoardStrategyBundle(session: BundleSession): string | null {
   }
 }
 
-async function fetchDocument00APdf(brand: string): Promise<Blob | null> {
+interface Doc00AResult {
+  pdf: Blob | null;
+  input: Parameters<typeof buildDocument00AMinto>[0] | null;
+}
+
+async function fetchDocument00A(brand: string): Promise<Doc00AResult> {
   const key = normalizeBrand(brand);
-  if (!key) return null;
+  const empty: Doc00AResult = { pdf: null, input: null };
+  if (!key) return empty;
   try {
     const res = await supabase
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -81,7 +89,7 @@ async function fetchDocument00APdf(brand: string): Promise<Blob | null> {
       )
       .order("updated_at", { ascending: false })
       .limit(500);
-    if (res.error) return null;
+    if (res.error) return empty;
     const rows = ((res.data ?? []) as unknown) as Array<{
       brand_name: string | null;
       category: string | null;
@@ -94,12 +102,12 @@ async function fetchDocument00APdf(brand: string): Promise<Blob | null> {
     const match = rows.find(
       (r) => normalizeBrand(r.brand_name) === key && r.status === "complete",
     );
-    if (!match || !match.final_report) return null;
+    if (!match || !match.final_report) return empty;
     let report: IntelligenceReport;
     try {
       report = JSON.parse(match.final_report) as IntelligenceReport;
     } catch {
-      return null;
+      return empty;
     }
     const meta = match.report_metadata;
     const briefType =
@@ -107,16 +115,17 @@ async function fetchDocument00APdf(brand: string): Promise<Blob | null> {
       (meta as Record<string, unknown>).brief_type === "government"
         ? "government"
         : "commercial";
-    return await generateDocument00APdf({
+    const input = {
       brandName: match.brand_name || brand,
       category: match.category ?? "",
       briefType,
       completedAt: match.completed_at ?? match.updated_at,
       report,
-    });
+    };
+    return { pdf: await generateDocument00APdf(input), input };
   } catch (e) {
     console.error("[bundle] Document 00A PDF failed", e);
-    return null;
+    return empty;
   }
 }
 
@@ -190,14 +199,31 @@ export async function buildAndDownloadBundle(
     "Building Strategy Executive Summary…",
   );
 
-  // Root — Document 00A (real PDF from Intelligence Lab)
+  // Root — Consulting Delivery (canonical ten-section template)
+  tryAdd(
+    "Consulting_Delivery.html",
+    () => buildConsultingDeliveryDocument({ ...session, ...execExtra } as never),
+    "Building Consulting Delivery…",
+  );
+
+  // Root — Document 00A (real PDF from Intelligence Lab, plus the structured
+  // ten-section HTML version rendered from the same report).
   onProgress?.("Fetching Strategic Territory Intelligence Report…");
-  const pdfBlob = await fetchDocument00APdf(brand);
-  if (pdfBlob) {
-    zip.file("Strategic_Territory_Intelligence_Report.pdf", pdfBlob);
+  const doc00A = await fetchDocument00A(brand);
+  if (doc00A.pdf) {
+    zip.file("Strategic_Territory_Intelligence_Report.pdf", doc00A.pdf);
     included.push("Strategic_Territory_Intelligence_Report.pdf");
   } else {
     skipped.push("Strategic_Territory_Intelligence_Report.pdf");
+  }
+  if (doc00A.input) {
+    tryAdd(
+      "Strategic_Territory_Intelligence_Report.html",
+      () => buildDocument00AMinto(doc00A.input!),
+      "Building Strategic Territory Intelligence Report…",
+    );
+  } else {
+    skipped.push("Strategic_Territory_Intelligence_Report.html");
   }
 
   // Creative & Activation folder
