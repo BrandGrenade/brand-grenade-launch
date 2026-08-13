@@ -650,6 +650,7 @@ interface SessionData {
   stage_15_error: string | null;
   stage_16_consulting_output: string | null;
   stage_16_error: string | null;
+  phase_2_status: string | null;
   brand_intelligence: Record<string, string> | null;
   selected_smp: string | null;
   selected_smp_field_name: string | null;
@@ -1059,7 +1060,7 @@ function PipelineView() {
     supabase
       .from("sessions")
       .select(
-        "id, brand_name, category, updated_at, brief_text, brief_versions, current_stage, status, stage_status, stage_1_output, stage_1_tension_score, stage_1b_required, stage_1b_output, stage_1_error, stage_2_output, stage_2_error, stage_3_output, stage_3_error, stage_4_output, stage_4_error, stage_4b_output, stage_4b_error, stage_5_output, stage_5_error, stage_6_output, stage_6_error, stage_7_output, stage_7_error, stage_8_output, stage_8_error, stage_9_output, stage_9_leftofcentre_output, stage_9_error, loc_status, loc_error, loc_decision_packages, loc_retry_count, loc_generated_at, stage_10_output, stage_10_error, stage_11_output, stage_11_error, stage_12_output, stage_12_error, stage_13_output, stage_13_error, stage_13b_output, stage_13b_error, stage_14_output, stage_14_error, stage_14b_output, stage_14b_error, stage_14c_output, stage_14c_error, stage_15_output, stage_15_error, stage_16_consulting_output, stage_16_error, brand_intelligence, selected_smp, selected_smp_field_name, selection_source, selection_engine, selected_loc_expression, checkpoint_a_confirmed, checkpoint_b_confirmed, checkpoint_c_confirmed, strategy_signoff_confirmed, strategy_signoff_stop, retry_status",
+        "id, brand_name, category, updated_at, brief_text, brief_versions, current_stage, status, stage_status, phase_2_status, stage_1_output, stage_1_tension_score, stage_1b_required, stage_1b_output, stage_1_error, stage_2_output, stage_2_error, stage_3_output, stage_3_error, stage_4_output, stage_4_error, stage_4b_output, stage_4b_error, stage_5_output, stage_5_error, stage_6_output, stage_6_error, stage_7_output, stage_7_error, stage_8_output, stage_8_error, stage_9_output, stage_9_leftofcentre_output, stage_9_error, loc_status, loc_error, loc_decision_packages, loc_retry_count, loc_generated_at, stage_10_output, stage_10_error, stage_11_output, stage_11_error, stage_12_output, stage_12_error, stage_13_output, stage_13_error, stage_13b_output, stage_13b_error, stage_14_output, stage_14_error, stage_14b_output, stage_14b_error, stage_14c_output, stage_14c_error, stage_15_output, stage_15_error, stage_16_consulting_output, stage_16_error, brand_intelligence, selected_smp, selected_smp_field_name, selection_source, selection_engine, selected_loc_expression, checkpoint_a_confirmed, checkpoint_b_confirmed, checkpoint_c_confirmed, strategy_signoff_confirmed, strategy_signoff_stop, retry_status",
       )
 
       .eq("id", sessionId)
@@ -1394,7 +1395,7 @@ function PipelineView() {
       const { data } = await supabase
         .from("sessions")
         .select(
-          "id, brand_name, category, updated_at, brief_text, brief_versions, current_stage, status, stage_status, stage_1_output, stage_1_tension_score, stage_1b_required, stage_1b_output, stage_1_error, stage_2_output, stage_2_error, stage_3_output, stage_3_error, stage_4_output, stage_4_error, stage_4b_output, stage_4b_error, stage_5_output, stage_5_error, stage_6_output, stage_6_error, stage_7_output, stage_7_error, stage_8_output, stage_8_error, stage_9_output, stage_9_leftofcentre_output, stage_9_error, loc_status, loc_error, loc_decision_packages, loc_retry_count, loc_generated_at, stage_10_output, stage_10_error, stage_11_output, stage_11_error, stage_12_output, stage_12_error, stage_13_output, stage_13_error, stage_13b_output, stage_13b_error, stage_14_output, stage_14_error, stage_14b_output, stage_14b_error, stage_14c_output, stage_14c_error, stage_15_output, stage_15_error, stage_16_consulting_output, stage_16_error, brand_intelligence, selected_smp, selected_smp_field_name, selection_source, selection_engine, selected_loc_expression, checkpoint_a_confirmed, checkpoint_b_confirmed, checkpoint_c_confirmed, retry_status",
+          "id, brand_name, category, updated_at, brief_text, brief_versions, current_stage, status, stage_status, phase_2_status, stage_1_output, stage_1_tension_score, stage_1b_required, stage_1b_output, stage_1_error, stage_2_output, stage_2_error, stage_3_output, stage_3_error, stage_4_output, stage_4_error, stage_4b_output, stage_4b_error, stage_5_output, stage_5_error, stage_6_output, stage_6_error, stage_7_output, stage_7_error, stage_8_output, stage_8_error, stage_9_output, stage_9_leftofcentre_output, stage_9_error, loc_status, loc_error, loc_decision_packages, loc_retry_count, loc_generated_at, stage_10_output, stage_10_error, stage_11_output, stage_11_error, stage_12_output, stage_12_error, stage_13_output, stage_13_error, stage_13b_output, stage_13b_error, stage_14_output, stage_14_error, stage_14b_output, stage_14b_error, stage_14c_output, stage_14c_error, stage_15_output, stage_15_error, stage_16_consulting_output, stage_16_error, brand_intelligence, selected_smp, selected_smp_field_name, selection_source, selection_engine, selected_loc_expression, checkpoint_a_confirmed, checkpoint_b_confirmed, checkpoint_c_confirmed, retry_status",
         )
         .eq("id", sessionId)
         .single();
@@ -2675,7 +2676,13 @@ function PipelineView() {
     return null;
   })();
   const nextStageStatus: StageStatus | null = nextStage ? statuses[nextStage.id] : null;
-  const pipelineComplete = mainStages.every((s) => statuses[s.id] === "complete");
+  // Stage 15 is the persisted boundary between the Strategy Room and Phase 2.
+  // Do not gate this transition on every in-memory sidebar status: synthetic
+  // rows such as 08B can remain pending after reload even when the database
+  // proves the strategy and all Phase 2 work are complete.
+  const pipelineComplete =
+    (session !== null && isPersistedStageComplete(session, "15", 15, session.stage_15_output)) ||
+    mainStages.every((s) => statuses[s.id] === "complete");
 
   // Dynamic document title: "[Brand] — Stage X — Brand Grenade"
   useEffect(() => {
@@ -3381,10 +3388,18 @@ function PipelineView() {
               if (prevStage) setSelectedId(prevStage.id);
             }}
             onContinue={handleContinueStage}
-            onViewFinal={() => {
-              if (sessionId) {
-                window.location.href = `/detonation?session=${sessionId}`;
+            onViewFinal={async () => {
+              if (!sessionId) return;
+              const { data: latest } = await supabase
+                .from("sessions")
+                .select("phase_2_status")
+                .eq("id", sessionId)
+                .single();
+              if (latest?.phase_2_status === "complete") {
+                window.location.href = `/complete?session=${sessionId}`;
+                return;
               }
+              window.location.href = `/detonation?session=${sessionId}`;
             }}
             onConfirmCheckpoint={async (stageId, notes) => {
               if (stageId === "08" || stageId === "08B") {
