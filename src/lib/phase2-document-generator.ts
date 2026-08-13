@@ -33,7 +33,12 @@ export interface Phase2Session {
   stage_21_outputs: Record<string, string> | null;
   stage_22_brand_architecture: string | null;
   stage_22_distinctive_assets: string | null;
+  /** Room 04 lock — supersedes any line written into earlier stage outputs. */
+  locked_big_idea?: string | null;
+  locked_campaign_line?: string | null;
+  locked_big_idea_lens?: string | null;
 }
+
 
 export const PHASE_2_AMBER = "#C81E1E";
 
