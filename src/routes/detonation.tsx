@@ -1216,18 +1216,26 @@ function Stage18({ session, onChange, goNext }: { session: SessionRow; onChange:
   };
 
 
-  // Extract the line following "THE DETONATION STATEMENT:" — that's the
-  // canonical statement to persist. Falls back to the full card markdown.
+  // Extract the canonical statement to persist. The model writes the label as
+  // "DETONATION STATEMENT:" or "THE DETONATION STATEMENT:", optionally bold,
+  // and sometimes puts the text on the same line. Falls back to the full card.
   const extractStatement = (markdown: string): string => {
-    const m = markdown.match(/THE DETONATION STATEMENT:?\s*\n+\s*([^\n]+(?:\n(?!\s*\n)[^\n]+)*)/i);
+    const m = markdown.match(
+      /(?:^|\n)\s*\**\s*(?:THE\s+)?DETONATION\s+STATEMENT\s*\**\s*:?\s*\n*[ \t]*([^\n]+(?:\n(?!\s*\n)[^\n]+)*)/i,
+    );
     return m ? m[1].trim() : markdown.trim();
   };
 
-  // Extract the short Detonation Line — labelled "THE DETONATION LINE".
-  // Falls back to the card name when the model omits the label.
+  // Extract the short Detonation Line. Same label tolerance as above. Falls
+  // back to the card name ONLY when the label is genuinely absent — never let
+  // an internal reference like "Detonation 3" get persisted as the master line
+  // when real line text exists in the card.
   const extractLine = (markdown: string, fallbackName: string): string => {
-    const m = markdown.match(/THE DETONATION LINE:?\s*\n+\s*([^\n]+)/i);
-    return (m ? m[1] : fallbackName).trim();
+    const m = markdown.match(
+      /(?:^|\n)\s*\**\s*(?:THE\s+)?DETONATION\s+LINE\s*\**\s*:?\s*\n*[ \t]*([^\n]+)/i,
+    );
+    const raw = (m ? m[1] : "").replace(/^\**\s*/, "").replace(/\s*\**$/, "").trim();
+    return raw || fallbackName.trim();
   };
 
   const handleSelect = async (markdown: string, fallbackName: string) => {
