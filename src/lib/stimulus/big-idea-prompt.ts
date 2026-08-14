@@ -97,8 +97,12 @@ CANDIDATE MASTER LINE
 EXPRESSION UNDER MASTER
 <Only if a locked master line was supplied. One line: the master line verbatim, then this idea's supporting expression. Omit this label entirely if no master line was supplied.>
 
+GUIDANCE ALIGNMENT
+<Only if CREATIVE GUIDANCE was supplied for this sweep. Exactly "ALIGNED — <one clause>" or "NOT ALIGNED — <one clause>", judging this idea honestly against the guidance. Omit this label entirely if no guidance was supplied. Never mark an idea ALIGNED to hit a quota if it is not.>
+
 WHY IT WINS
 <70–120 words. Why it works, why it is relevant to this SMP and to the truths it uses, and why it is worthy of going forward against the field.>
+
 
 If a lens genuinely has no honest purchase on this proposition, output:
 THE BIG IDEA
@@ -110,6 +114,61 @@ export interface PriorTension {
   lensId: string;
   lensName: string;
   rootTension: string;
+}
+
+/** Operator-authored steer for the whole sweep, plus live compliance arithmetic. */
+export interface CreativeGuidance {
+  /** Verbatim text the operator typed before the sweep started. */
+  text: string;
+  /** Optional minimum number of lenses (out of totalLenses) that must comply. */
+  target?: number | null;
+  totalLenses: number;
+  /** Lenses generated so far in this sweep (any alignment). */
+  generated: number;
+  /** Of those, how many the model itself marked ALIGNED. */
+  aligned: number;
+  /** Lenses still to be generated after this call's batch is excluded. */
+  remaining: number;
+}
+
+export function buildGuidanceBlock(g: CreativeGuidance): string {
+  const lines = [
+    "═══ CREATIVE GUIDANCE FOR THIS SWEEP — MANDATORY STEER ═══",
+    g.text.trim(),
+    "",
+    "This guidance applies to every lens in this sweep. It steers register, framing and emphasis. It does NOT override the proposition, the lens's angle of attack, the collision check, the word ceilings, or any hard ban in the system prompt — an idea may never be twisted into dishonesty, or into a different proposition, to satisfy it.",
+    "Output the GUIDANCE ALIGNMENT field for every lens, judged honestly. A false ALIGNED is a worse failure than a declared NOT ALIGNED.",
+  ];
+
+  if (g.target && g.target > 0) {
+    const shortfall = Math.max(g.target - g.aligned, 0);
+    const headroom = g.remaining - shortfall;
+    lines.push(
+      "",
+      "COMPLIANCE LEDGER FOR THIS SWEEP — REAL COUNTS, NOT ESTIMATES",
+      `Target: at least ${g.target} of ${g.totalLenses} lenses must be ALIGNED.`,
+      `Generated so far: ${g.generated}. Of those, ALIGNED: ${g.aligned}.`,
+      `Still to generate after this pass: ${g.remaining}. Shortfall against target: ${shortfall}.`,
+    );
+    if (shortfall === 0) {
+      lines.push(
+        "The target is already met. Do not force alignment — from here, take the strongest idea each lens yields and mark it honestly.",
+      );
+    } else if (headroom <= 0) {
+      lines.push(
+        "CRITICAL: the target is now only reachable if EVERY remaining lens is ALIGNED. Unless this lens's angle of attack makes alignment genuinely dishonest, the idea you output must be ALIGNED. If it is honestly impossible for this lens, say so in one clause and move on.",
+      );
+    } else if (headroom <= 4) {
+      lines.push(
+        `MANDATORY CORRECTION: only ${headroom} non-aligned lenses remain affordable. Treat alignment as a requirement for this pass, not a preference.`,
+      );
+    } else {
+      lines.push(
+        "Correct toward the target now rather than late. A sweep that leaves correction to the final batches cannot recover.",
+      );
+    }
+  }
+  return lines.join("\n");
 }
 
 export function buildBigIdeaUserMessage(args: {
@@ -124,7 +183,10 @@ export function buildBigIdeaUserMessage(args: {
   priorTensions?: PriorTension[];
   /** Set when this call is a forced regeneration after a detected collision. */
   regenerationNote?: string;
+  /** Operator guidance for this sweep; omitted entirely when absent. */
+  creativeGuidance?: CreativeGuidance | null;
 }): string {
+
   const lensBlocks = args.lenses
     .map((l) =>
       [
@@ -172,6 +234,10 @@ export function buildBigIdeaUserMessage(args: {
         ].join("\n")
       : "NO IDEAS HAVE BEEN PRODUCED YET IN THIS SWEEP. Output IDEA COLLISION CHECK: CLEAR, but still state the ROOT TENSION.",
     "",
+    args.creativeGuidance?.text?.trim()
+      ? buildGuidanceBlock(args.creativeGuidance)
+      : "",
+
     args.regenerationNote
       ? [
           "═══ FORCED REGENERATION — THE PREVIOUS ATTEMPT COLLIDED ═══",
@@ -203,6 +269,9 @@ export interface ParsedBigIdea {
   rootTension: string;
   /** Empty array = the model declared CLEAR. */
   collisions: IdeaCollision[];
+  /** "aligned" | "not_aligned" | "" when no guidance was in play. */
+  guidanceAlignment: "aligned" | "not_aligned" | "";
+  guidanceAlignmentNote: string;
 }
 
 /**
@@ -251,7 +320,7 @@ export function parseBigIdeaResponse(raw: string): Record<string, ParsedBigIdea>
     const sections: Record<string, string> = {};
     {
       const re =
-        /^[ \t]*(THE BIG IDEA|ROOT TENSION|IDEA COLLISION CHECK|CANDIDATE MASTER LINE|CAMPAIGN LINE|EXPRESSION UNDER MASTER|WHY IT WINS)[ \t]*:?[ \t]*$/gim;
+        /^[ \t]*(THE BIG IDEA|ROOT TENSION|IDEA COLLISION CHECK|CANDIDATE MASTER LINE|CAMPAIGN LINE|EXPRESSION UNDER MASTER|GUIDANCE ALIGNMENT|WHY IT WINS)[ \t]*:?[ \t]*$/gim;
       const hits: Array<{ label: string; start: number; end: number }> = [];
       for (let m = re.exec(body); m; m = re.exec(body))
         hits.push({ label: m[1].toUpperCase(), start: m.index, end: m.index + m[0].length });
@@ -268,6 +337,12 @@ export function parseBigIdeaResponse(raw: string): Record<string, ParsedBigIdea>
     const expression = sections["EXPRESSION UNDER MASTER"] ?? "";
     const rationale = sections["WHY IT WINS"] ?? "";
     const collisionField = sections["IDEA COLLISION CHECK"] ?? "";
+    const alignRaw = firstLine(sections["GUIDANCE ALIGNMENT"] ?? "");
+    const alignment: ParsedBigIdea["guidanceAlignment"] = /^\s*not[\s-]*aligned/i.test(alignRaw)
+      ? "not_aligned"
+      : /^\s*aligned/i.test(alignRaw)
+        ? "aligned"
+        : "";
 
     out[id] = {
       idea: idea || body.trim(),
@@ -276,7 +351,10 @@ export function parseBigIdeaResponse(raw: string): Record<string, ParsedBigIdea>
       rationale,
       rootTension: firstLine(sections["ROOT TENSION"] ?? ""),
       collisions: parseCollisionField(collisionField),
+      guidanceAlignment: alignment,
+      guidanceAlignmentNote: alignRaw.replace(/^\s*(not[\s-]*)?aligned\s*[—–:-]?\s*/i, "").trim(),
     };
+
   }
   return out;
 }

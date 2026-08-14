@@ -95,6 +95,8 @@ type Idea = {
   master_line_at_generation: string | null;
   rationale: string | null;
   root_tension: string | null;
+  guidance_alignment: string | null;
+  guidance_alignment_note: string | null;
   convergence: IdeaConvergence | null;
   line_check: LineCheck | null;
   status: string;
@@ -122,6 +124,8 @@ type RunMeta = {
   tiebreaker_reason?: string | null;
   gate_one_confirmed?: boolean;
   gate_one_confirmed_at?: string | null;
+  creative_guidance?: string | null;
+  creative_guidance_target?: number | null;
 };
 
 function Btn({
@@ -283,6 +287,35 @@ function LineBlock({ d }: { d: Idea }) {
         </div>
       )}
       <ExpressionBlock d={d} />
+      <GuidanceBadge d={d} />
+    </div>
+  );
+}
+
+/** Model's own honest verdict on whether this lens met the sweep's creative guidance. */
+function GuidanceBadge({ d }: { d: Idea }) {
+  const v = (d.guidance_alignment ?? "").trim().toLowerCase();
+  if (!v) return null;
+  const aligned = v === "aligned";
+  const tone = aligned ? AMBER : MUTED;
+  const note = (d.guidance_alignment_note ?? "").trim();
+  return (
+    <div style={{ marginTop: 12 }}>
+      <span
+        className="text-mono"
+        style={{
+          color: tone,
+          border: `1px solid ${tone}55`,
+          borderRadius: 999,
+          padding: "3px 8px",
+          fontSize: 10,
+          letterSpacing: "0.12em",
+          textTransform: "uppercase",
+        }}
+      >
+        Guidance: {aligned ? "aligned" : v === "unstated" ? "not stated" : "not aligned"}
+      </span>
+      {note && <span style={{ color: MUTED, fontSize: 12, marginLeft: 10 }}>{note}</span>}
     </div>
   );
 }
@@ -667,6 +700,8 @@ export function BigIdeaSweep({
   const [sweep, setSweep] = useState<SweepState | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [view, setView] = useState<"ideas" | "lines">("ideas");
+  const [guidance, setGuidance] = useState("");
+  const [guidanceTarget, setGuidanceTarget] = useState("");
   const [pickIdea, setPickIdea] = useState<string | null>(null);
   const [pickLine, setPickLine] = useState<string | null>(null);
   const pollingRef = useRef(false);
@@ -794,7 +829,18 @@ export function BigIdeaSweep({
     setBusy(true);
     setErr(null);
     try {
-      const { runId: id } = await start({ data: { sessionId, force } });
+      const trimmedGuidance = guidance.trim();
+      const parsedTarget = Number.parseInt(guidanceTarget, 10);
+      const { runId: id } = await start({
+        data: {
+          sessionId,
+          force,
+          ...(trimmedGuidance ? { creativeGuidance: trimmedGuidance } : {}),
+          ...(trimmedGuidance && Number.isFinite(parsedTarget)
+            ? { creativeGuidanceTarget: parsedTarget }
+            : {}),
+        },
+      });
       setRunId(id);
       setSweep(null);
       await refresh(id);
@@ -811,6 +857,10 @@ export function BigIdeaSweep({
 
 
   const locked = Boolean(run.locked_at);
+  const alignedCount = useMemo(
+    () => ideas.filter((d) => (d.guidance_alignment ?? "") === "aligned").length,
+    [ideas],
+  );
   const counts = useMemo(
     () => ({
       keep: ideas.filter((d) => d.status === "keep").length,
@@ -935,7 +985,87 @@ export function BigIdeaSweep({
           </div>
         )}
 
+        {!shortlist && (run.creative_guidance ?? "").trim() && (
+          <div
+            style={{
+              marginTop: 16,
+              border: `1px solid ${AMBER}55`,
+              borderRadius: 8,
+              padding: 14,
+              background: "#0A0908",
+            }}
+          >
+            <div
+              className="text-mono"
+              style={{ color: AMBER, fontSize: 10, letterSpacing: "0.14em", textTransform: "uppercase" }}
+            >
+              Creative guidance applied to this sweep
+              {run.creative_guidance_target
+                ? ` · target ${alignedCount}/${run.creative_guidance_target} aligned (of ${LENS_COUNT})`
+                : ` · ${alignedCount} aligned so far`}
+            </div>
+            <p style={{ color: "#EDE8E0", fontSize: 13, marginTop: 8, whiteSpace: "pre-wrap" }}>
+              {run.creative_guidance}
+            </p>
+          </div>
+        )}
+
+        {!shortlist && ideas.length === 0 && !sweep?.running && (
+          <div style={{ marginTop: 16 }}>
+            <label
+              className="text-mono"
+              style={{ color: MUTED, fontSize: 10, letterSpacing: "0.14em", textTransform: "uppercase" }}
+            >
+              Creative guidance (optional)
+            </label>
+            <textarea
+              value={guidance}
+              onChange={(e) => setGuidance(e.target.value)}
+              rows={4}
+              placeholder="Optional steer applied to every lens in this sweep — register, framing, emphasis. Stored against the run and visible in Tissue Check and exports."
+              style={{
+                width: "100%",
+                marginTop: 8,
+                backgroundColor: "#0A0908",
+                color: "#EDE8E0",
+                border: `1px solid ${AMBER}40`,
+                borderRadius: 6,
+                padding: 10,
+                fontFamily: "inherit",
+                fontSize: 13,
+                resize: "vertical",
+              }}
+            />
+            <div style={{ marginTop: 8, display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+              <span className="text-mono" style={{ color: MUTED, fontSize: 10, letterSpacing: "0.1em" }}>
+                MINIMUM LENSES THAT MUST COMPLY (OPTIONAL)
+              </span>
+              <input
+                value={guidanceTarget}
+                onChange={(e) => setGuidanceTarget(e.target.value.replace(/[^0-9]/g, ""))}
+                inputMode="numeric"
+                placeholder="19"
+                style={{
+                  width: 70,
+                  backgroundColor: "#0A0908",
+                  color: "#EDE8E0",
+                  border: `1px solid ${AMBER}40`,
+                  borderRadius: 6,
+                  padding: "6px 8px",
+                  fontFamily: "inherit",
+                  fontSize: 13,
+                }}
+              />
+              <span style={{ color: MUTED, fontSize: 11 }}>
+                Set a number to enforce it: every batch is told the real running count and must
+                correct toward the target before the back half runs out of room.
+              </span>
+            </div>
+          </div>
+        )}
+
         {!shortlist && (
+
           <div style={{ marginTop: 16, display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
             <Btn
               onClick={() => void runSweep(false)}

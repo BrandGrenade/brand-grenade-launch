@@ -30,7 +30,14 @@ async function assertRunAccess(runId: string, userId: string) {
 export const startBigIdeaRun = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i) =>
-    z.object({ sessionId: z.string().uuid(), force: z.boolean().default(false) }).parse(i),
+    z
+      .object({
+        sessionId: z.string().uuid(),
+        force: z.boolean().default(false),
+        creativeGuidance: z.string().trim().max(4000).optional(),
+        creativeGuidanceTarget: z.number().int().min(1).max(37).nullish(),
+      })
+      .parse(i),
   )
   .handler(async ({ data, context }) => {
     await assertSessionAccess(data.sessionId, context.userId);
@@ -61,6 +68,10 @@ export const startBigIdeaRun = createServerFn({ method: "POST" })
         channel_brief: "",
         smp: g.smp,
         status: "generating",
+        creative_guidance: data.creativeGuidance?.trim() || null,
+        creative_guidance_target: data.creativeGuidance?.trim()
+          ? (data.creativeGuidanceTarget ?? null)
+          : null,
       })
       .select("id")
       .single();
