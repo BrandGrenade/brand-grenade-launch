@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { ensureLockedSmpScored } from "./rescore-smp.functions";
 
 export type LiveDocumentSession = Record<string, unknown> & {
   id?: string;
