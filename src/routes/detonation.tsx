@@ -1821,7 +1821,7 @@ function Stage20b({ session, onChange, goNext }: { session: SessionRow; onChange
               Edit Inputs and Regenerate
             </AmberButton>
             <AmberButton onClick={handleProceed} disabled={proceeding}>
-              {proceeding ? <><Spinner /> Loading...</> : "Proceed to Stage 20B"}
+              {proceeding ? <><Spinner /> Loading...</> : "Proceed to Stage 21 — Channel Briefs"}
             </AmberButton>
           </div>
         </>
@@ -2091,9 +2091,46 @@ function Stage21({ session, onChange, goNext }: { session: SessionRow; onChange:
       {err && <ErrorBanner message={err} />}
       {stage21BlockedReason && <ErrorBanner message={stage21BlockedReason} />}
       {!outputs || outputEntries.length === 0 ? (
-        <AmberButton onClick={handleRun} disabled={busy || !!stage21BlockedReason}>
-          {busy && !stage21BlockedReason && <Spinner />} {busy && !stage21BlockedReason ? "Generating channel briefs…" : stage21BlockedReason ? "Blocked — see above" : "Run Stage 21"}
-        </AmberButton>
+        <div
+          style={{
+            backgroundColor: `${AMBER}0F`,
+            border: `1px solid ${AMBER}`,
+            borderRadius: 8,
+            padding: 24,
+          }}
+        >
+          <div
+            className="text-mono"
+            style={{
+              color: AMBER,
+              textTransform: "uppercase",
+              fontSize: 10,
+              letterSpacing: "0.16em",
+              fontWeight: 600,
+              marginBottom: 10,
+            }}
+          >
+            Action required — Stage 21 has not run yet
+          </div>
+          <p className="text-body" style={{ color: "#EDE8E0", margin: "0 0 8px" }}>
+            No channel briefs exist for this session. Stage 21 must be run here and finish
+            successfully before the Creative Engine (Room 04) Step 3 — Channel Adaptation — has
+            anything to work from.
+          </p>
+          <p className="text-body-sm" style={{ color: "#8B8680", margin: "0 0 18px" }}>
+            {busy
+              ? "Generation is running. Keep this panel open until the briefs appear."
+              : "Click the button below to start. Generation takes several minutes."}
+          </p>
+          <AmberButton onClick={handleRun} disabled={busy || !!stage21BlockedReason}>
+            {busy && !stage21BlockedReason && <Spinner />}{" "}
+            {busy && !stage21BlockedReason
+              ? "Generating channel briefs…"
+              : stage21BlockedReason
+                ? "Blocked — see above"
+                : "Run Stage 21 — Generate Channel Briefs"}
+          </AmberButton>
+        </div>
       ) : (
 
         <>
