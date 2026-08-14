@@ -694,18 +694,24 @@ export function BigIdeaSweep({
           setSweep(p);
           await refresh(id);
 
-          // The sweep is driven in bounded server-side slices. When a slice
-          // ends (or an invocation dies) with lenses still pending, the watcher
-          // kicks the next slice instead of silently giving up — the old loop
-          // broke here and left the run frozen part-way through.
-          if (p.pending > 0 && !p.running && kicks < MAX_SWEEP_KICKS) {
+          // Background (waitUntil) slices are not reliably given the ~60s a
+          // batch needs — an invocation can be torn down mid model-call, which
+          // looked like a sweep heartbeating forever with nothing generated.
+          // The browser therefore drives each slice with an AWAITED call, so
+          // real work happens inside a request that is being held open.
+          if (p.pending > 0 && kicks < MAX_SWEEP_KICKS) {
             kicks += 1;
             try {
-              await resume({ data: { runId: id, force: true } });
+              await advance({ data: { runId: id } });
             } catch {
               /* transient — retried on the next tick */
+              try {
+                await resume({ data: { runId: id, force: true } });
+              } catch {
+                /* ignore */
+              }
+              await new Promise((r) => setTimeout(r, 6000));
             }
-            await new Promise((r) => setTimeout(r, 6000));
             continue;
           }
 
@@ -728,7 +734,7 @@ export function BigIdeaSweep({
         pollingRef.current = false;
       }
     },
-    [readProgress, refresh, ledger, resume],
+    [readProgress, refresh, ledger, resume, advance],
   );
 
   // Open the session's most meaningful big idea sweep. A newer sweep that has
