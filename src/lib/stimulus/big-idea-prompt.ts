@@ -116,6 +116,61 @@ export interface PriorTension {
   rootTension: string;
 }
 
+/** Operator-authored steer for the whole sweep, plus live compliance arithmetic. */
+export interface CreativeGuidance {
+  /** Verbatim text the operator typed before the sweep started. */
+  text: string;
+  /** Optional minimum number of lenses (out of totalLenses) that must comply. */
+  target?: number | null;
+  totalLenses: number;
+  /** Lenses generated so far in this sweep (any alignment). */
+  generated: number;
+  /** Of those, how many the model itself marked ALIGNED. */
+  aligned: number;
+  /** Lenses still to be generated after this call's batch is excluded. */
+  remaining: number;
+}
+
+export function buildGuidanceBlock(g: CreativeGuidance): string {
+  const lines = [
+    "═══ CREATIVE GUIDANCE FOR THIS SWEEP — MANDATORY STEER ═══",
+    g.text.trim(),
+    "",
+    "This guidance applies to every lens in this sweep. It steers register, framing and emphasis. It does NOT override the proposition, the lens's angle of attack, the collision check, the word ceilings, or any hard ban in the system prompt — an idea may never be twisted into dishonesty, or into a different proposition, to satisfy it.",
+    "Output the GUIDANCE ALIGNMENT field for every lens, judged honestly. A false ALIGNED is a worse failure than a declared NOT ALIGNED.",
+  ];
+
+  if (g.target && g.target > 0) {
+    const shortfall = Math.max(g.target - g.aligned, 0);
+    const headroom = g.remaining - shortfall;
+    lines.push(
+      "",
+      "COMPLIANCE LEDGER FOR THIS SWEEP — REAL COUNTS, NOT ESTIMATES",
+      `Target: at least ${g.target} of ${g.totalLenses} lenses must be ALIGNED.`,
+      `Generated so far: ${g.generated}. Of those, ALIGNED: ${g.aligned}.`,
+      `Still to generate after this pass: ${g.remaining}. Shortfall against target: ${shortfall}.`,
+    );
+    if (shortfall === 0) {
+      lines.push(
+        "The target is already met. Do not force alignment — from here, take the strongest idea each lens yields and mark it honestly.",
+      );
+    } else if (headroom <= 0) {
+      lines.push(
+        "CRITICAL: the target is now only reachable if EVERY remaining lens is ALIGNED. Unless this lens's angle of attack makes alignment genuinely dishonest, the idea you output must be ALIGNED. If it is honestly impossible for this lens, say so in one clause and move on.",
+      );
+    } else if (headroom <= 4) {
+      lines.push(
+        `MANDATORY CORRECTION: only ${headroom} non-aligned lenses remain affordable. Treat alignment as a requirement for this pass, not a preference.`,
+      );
+    } else {
+      lines.push(
+        "Correct toward the target now rather than late. A sweep that leaves correction to the final batches cannot recover.",
+      );
+    }
+  }
+  return lines.join("\n");
+}
+
 export function buildBigIdeaUserMessage(args: {
   brandName: string;
   category: string;
@@ -128,7 +183,10 @@ export function buildBigIdeaUserMessage(args: {
   priorTensions?: PriorTension[];
   /** Set when this call is a forced regeneration after a detected collision. */
   regenerationNote?: string;
+  /** Operator guidance for this sweep; omitted entirely when absent. */
+  creativeGuidance?: CreativeGuidance | null;
 }): string {
+
   const lensBlocks = args.lenses
     .map((l) =>
       [
