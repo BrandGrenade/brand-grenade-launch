@@ -782,7 +782,7 @@ export function useBrandRegister(): UseBrandRegisterResult {
         .limit(1000),
       supabase
         .from("stimulus_orchestrations")
-        .select("id,session_id,status,gate_two_confirmed,updated_at")
+        .select("id,session_id,status,driver_status,gate_two_confirmed,updated_at")
         .order("updated_at", { ascending: false })
         .limit(1000),
       // Room 00 is optional and recent; absence must never break the register.
