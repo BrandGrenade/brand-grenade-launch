@@ -97,8 +97,20 @@ export function matchKey(s: string): string {
 function sentences(text: string): string[] {
   const c = clean(text);
   if (!c) return [];
-  return (c.match(/[^.?!]+[.?!]["'”’)]?/g) ?? [c]).map((s) => s.trim()).filter(Boolean);
+  const raw = (c.match(/[^.?!]+[.?!]["'”’)]?/g) ?? [c]).map((s) => s.trim()).filter(Boolean);
+  // A full stop inside a quoted phrase — e.g. Westpac could deploy "Build
+  // equity. Build wealth." — is not a sentence boundary. Re-join fragments
+  // until the quote marks balance so nothing is published mid-quotation.
+  const out: string[] = [];
+  for (const piece of raw) {
+    const prev = out.length ? out[out.length - 1] : null;
+    const unbalanced = (s: string) => ((s.match(/["“”]/g) ?? []).length % 2) === 1;
+    if (prev && unbalanced(prev)) out[out.length - 1] = `${prev} ${piece}`;
+    else out.push(piece);
+  }
+  return out;
 }
+
 
 /** First `n` whole sentences of a passage, markdown stripped. */
 export function firstSentencesOf(text: string | null | undefined, n: number): string | null {
