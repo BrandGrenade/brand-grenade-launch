@@ -234,6 +234,10 @@ export function buildBigIdeaUserMessage(args: {
         ].join("\n")
       : "NO IDEAS HAVE BEEN PRODUCED YET IN THIS SWEEP. Output IDEA COLLISION CHECK: CLEAR, but still state the ROOT TENSION.",
     "",
+    args.creativeGuidance?.text?.trim()
+      ? buildGuidanceBlock(args.creativeGuidance)
+      : "",
+
     args.regenerationNote
       ? [
           "═══ FORCED REGENERATION — THE PREVIOUS ATTEMPT COLLIDED ═══",
