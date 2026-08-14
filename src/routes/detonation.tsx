@@ -106,6 +106,10 @@ type SessionRow = {
   stage_22_output: string | null;
   stage_22_brand_architecture: string | null;
   stage_22_distinctive_assets: string | null;
+  locked_big_idea?: string | null;
+  locked_campaign_line?: string | null;
+  locked_big_idea_lens?: string | null;
+  locked_big_idea_at?: string | null;
 };
 
 const SESSION_COLS =
