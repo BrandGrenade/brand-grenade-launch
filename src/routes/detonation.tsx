@@ -2354,7 +2354,9 @@ function Stage22({ session, onChange }: { session: SessionRow; onChange: () => v
           </div>
 
           {showGenerated && (
-            <ArchBox label="Stage 22 reflection (generated, secondary)" content={generatedReflection} />
+            <div style={{ marginTop: 16 }}>
+              <ArchBox label="Stage 22 reflection (generated, secondary)" content={generatedReflection} />
+            </div>
           )}
 
 
