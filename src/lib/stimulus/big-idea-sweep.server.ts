@@ -198,6 +198,7 @@ export async function runBigIdeaBatch(
         smp: run.smp || g.smp,
         lenses,
         priorTensions,
+        creativeGuidance: liveGuidance(),
       }),
       skipUniversalWrapper: true,
       maxTokens: 8000,
@@ -223,6 +224,7 @@ export async function runBigIdeaBatch(
               smp: run.smp || g.smp,
               lenses: [lens],
               priorTensions,
+              creativeGuidance: liveGuidance(),
             }),
             skipUniversalWrapper: true,
             maxTokens: 3000,
@@ -259,6 +261,7 @@ export async function runBigIdeaBatch(
             lenses: [lens],
             priorTensions,
             regenerationNote: note,
+            creativeGuidance: liveGuidance(),
           }),
           skipUniversalWrapper: true,
           maxTokens: 3000,
@@ -288,6 +291,10 @@ export async function runBigIdeaBatch(
                 master_line_at_generation: g.detonationLine || null,
                 rationale: hit.rationale || null,
                 root_tension: hit.rootTension || null,
+                guidance_alignment: guidance ? hit.guidanceAlignment || "unstated" : null,
+                guidance_alignment_note: guidance
+                  ? hit.guidanceAlignmentNote || null
+                  : null,
                 convergence: {
                   source: "in_sweep",
                   verdict: unresolved ? "COLLIDES" : "CLEAR",
@@ -308,6 +315,11 @@ export async function runBigIdeaBatch(
               },
         )
         .eq("id", p.id);
+
+      if (hit?.idea?.trim()) {
+        generatedRunning += 1;
+        if (hit.guidanceAlignment === "aligned") alignedRunning += 1;
+      }
 
       if (hit?.idea?.trim() && (hit.rootTension || "").trim())
         priorTensions.push({
