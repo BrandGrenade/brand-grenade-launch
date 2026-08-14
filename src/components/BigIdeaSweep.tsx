@@ -1010,19 +1010,22 @@ export function BigIdeaSweep({
           </div>
         )}
 
-        {!shortlist && ideas.length === 0 && !sweep?.running && (
+        {/* Optional input sits directly above the run / fresh-sweep buttons so it is
+            filled before the action fires. It applies to the NEXT sweep started, which
+            includes "Start a fresh sweep" on a session that already has ideas. */}
+        {!shortlist && !locked && !sweep?.running && (
           <div style={{ marginTop: 16 }}>
             <label
               className="text-mono"
               style={{ color: MUTED, fontSize: 10, letterSpacing: "0.14em", textTransform: "uppercase" }}
             >
-              Creative guidance (optional)
+              Creative guidance for the next sweep (optional)
             </label>
             <textarea
               value={guidance}
               onChange={(e) => setGuidance(e.target.value)}
               rows={4}
-              placeholder="Optional steer applied to every lens in this sweep — register, framing, emphasis. Stored against the run and visible in Tissue Check and exports."
+              placeholder="Optional steer applied to every lens of the next sweep you start — register, framing, emphasis. Stored against the run and visible in Tissue Check and exports. Resuming an existing sweep keeps that sweep's original guidance."
               style={{
                 width: "100%",
                 marginTop: 8,
