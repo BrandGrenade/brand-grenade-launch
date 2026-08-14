@@ -1821,7 +1821,7 @@ function Stage20b({ session, onChange, goNext }: { session: SessionRow; onChange
               Edit Inputs and Regenerate
             </AmberButton>
             <AmberButton onClick={handleProceed} disabled={proceeding}>
-              {proceeding ? <><Spinner /> Loading...</> : "Proceed to Stage 20B"}
+              {proceeding ? <><Spinner /> Loading...</> : "Proceed to Stage 21 — Channel Briefs"}
             </AmberButton>
           </div>
         </>
