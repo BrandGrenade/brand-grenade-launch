@@ -1,11 +1,10 @@
 import { extractVerification, extractScoring, extractProof } from "../src/lib/exec-summary-sections";
 import { deriveMintoContent } from "../src/lib/minto-content";
-import { Client } from "pg";
-const c = new Client({ connectionString: process.env.DB_URL });
-await c.connect();
+import { SQL } from "bun";
+const c = new SQL(process.env.DB_URL!);
 const ids = ["55a48e67-b303-4b98-bb17-c2eaaa414163","6ab4ea96-7c3a-4e0a-91a9-24b601752b35","df8a6e1d-4fa2-4a4c-a1c6-d6a35486b925"];
 for (const id of ids) {
-  const r = (await c.query("select * from sessions where id=$1",[id])).rows[0];
+  const r = (await c`select * from sessions where id=${id}`)[0];
   const v = extractVerification(r as any);
   const sc = extractScoring(r as any);
   const pr = extractProof(r as any, sc);
