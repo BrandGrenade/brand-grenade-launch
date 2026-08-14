@@ -26,6 +26,10 @@ Where the guidance states a proportion or target, it is measured across the WHOL
 ```
 
 When the guidance field is blank the block is omitted entirely and the prompt is byte-identical to today's.
+**4. Surface it afterwards**
+- Tissue Check / sweep header shows a "Creative guidance applied" block with the verbatim text.
+- The sweep export includes the same block, so any reader can see what steered the mix.
+
 
 ## Making the CommBank test a real check
 
