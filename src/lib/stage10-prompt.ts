@@ -94,9 +94,9 @@ PER-SMP SCORE BLOCK (emit exactly this; do NOT add a VERDICT line)
 SMP: "[line]" — FIELD: [name]
 Fame: [n]/10 — [anchor justification, 1–2 sentences]
 Truth Strength: [n]/10 — [anchor justification]
-Competitive Impossibility: [n]/10 — [anchor justification, name at least one competitor]
+Competitive Impossibility: [n]/10 — [anchor justification; below 10 you MUST name the specific competitor AND the actual positioning claim that makes it available to them — generic word usage is not evidence]
 Brand Permission: [n]/10 — [anchor justification citing brand history or demonstrated behaviour]
-Clean Air: [n]/10 — [anchor justification citing current competitive occupancy]
+Clean Air: [n]/10 — [anchor justification; below 8 you MUST name the competitor brand AND the specific occupying claim/campaign — otherwise state that no competitor occupies this territory]
 Commercial Precedent: [n]/10 — [anchor justification citing named precedent if any]
 
 HEADER
