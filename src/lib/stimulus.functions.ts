@@ -260,7 +260,7 @@ export const loadStimulusRun = createServerFn({ method: "POST" })
     const { data: directions, error } = await supabaseAdmin
       .from("stimulus_directions")
       .select(
-        "id, lens_id, lens_name, sort_order, direction, campaign_line, expression_under_master, master_line_at_generation, rationale, root_tension, convergence, convergence_regen_count, line_check, status, instinct_brief, revise_notes, revise_count, error, ratings, rating_status, rating_error, rated_at, gate_one_approved, gate_one_approved_at, gate_one_notes",
+        "id, lens_id, lens_name, sort_order, direction, campaign_line, expression_under_master, master_line_at_generation, rationale, root_tension, guidance_alignment, guidance_alignment_note, convergence, convergence_regen_count, line_check, status, instinct_brief, revise_notes, revise_count, error, ratings, rating_status, rating_error, rated_at, gate_one_approved, gate_one_approved_at, gate_one_notes",
       )
       .eq("run_id", run.id)
       .order("sort_order", { ascending: true });
