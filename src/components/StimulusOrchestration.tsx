@@ -362,35 +362,11 @@ export function StimulusOrchestration({
   const viewRunRef = useRef<((id: string) => Promise<void>) | null>(null);
 
   /**
-   * Passive observation of a run the SERVER is already driving. Never calls
-   * driveOrchestration, so it can never start or restart generation.
+   * Observation of a run the SERVER is already driving. Never starts a new
+   * orchestration; if the server driver dies mid-run, the pump resumes the
+   * existing run from its persisted phase.
    */
-  const watch = useCallback(
-    async (id: string) => {
-      setBusy(true);
-      let guard = 0;
-      while (guard < 900) {
-        guard += 1;
-        await new Promise((r) => setTimeout(r, 4000));
-        let s: { orchestration: Row } | null = null;
-        try {
-          s = (await load({ data: { orchestrationId: id } })) as any;
-        } catch {
-          continue;
-        }
-        setState(s as any);
-        const o = s!.orchestration;
-        setNote(`${o.status} — ${o.phase_note ?? ""}`);
-        if (o.driver_status === "failed") {
-          setErr((o.error as string) ?? "Orchestration failed");
-          break;
-        }
-        if (o.status === "complete" || o.driver_status === "idle") break;
-      }
-      setBusy(false);
-    },
-    [load],
-  );
+  const watch = useCallback(async (id: string) => pump(id, false), [pump]);
 
   /**
    * READ ONLY. Opens a stored run for viewing. If — and only if — the server
@@ -405,8 +381,10 @@ export function StimulusOrchestration({
     const o = s?.orchestration;
     if (o) setNote(`${o.status} — ${o.phase_note ?? ""}`);
     const hb = o?.driver_heartbeat_at ? Date.parse(o.driver_heartbeat_at as string) : 0;
-    const liveDriver =
-      o && o.status !== "complete" && o.driver_status === "running" && Date.now() - hb < 5 * 60_000;
+    // A run the server claimed but whose Worker was killed shows driver_status
+    // 'running' with a stale heartbeat — still resumable, so watch it too.
+    const liveDriver = o && o.status !== "complete" && o.driver_status === "running";
+    void hb;
     if (liveDriver) void watch(id);
   };
 
