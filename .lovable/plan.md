@@ -1,65 +1,28 @@
-# Demo Mode — replacing Dev Mode
+# Creative Guidance for the Room 04 big-idea sweep
 
-## Feasibility answers first
-
-**1. Can the existing room views be reused in a stripped read-only mode?**
-Partly — and the split is uneven, so the honest answer is "reuse two, rebuild two".
-
-- `/intelligence/$id` (1,439 lines) and the `/creative/$sessionId` shell (226 lines) are close to pure display off a fetched row. Hiding the action buttons is genuinely cheap.
-- `/briefing-room/$id` renders prop-driven step views inside a card that owns the run button. The views themselves are reusable; the wrapper is not.
-- `/pipeline` (5,774 lines) is a single mega-component where stage output rendering, stream/DB-poll recovery, retry, reset-cascade and checkpoint confirmation are interleaved. There is no `StageOutputCard` boundary to reuse. Threading a `readOnly` flag through it would touch the most critical file in the app.
-- `BigIdeaSweep`'s `IdeaCard` (1,021-line file) interleaves triage buttons and the revise textarea inside the same function as the display blocks.
-
-So: reuse the intelligence report render and the briefing-room step views; write new read-only renderers for pipeline stages and idea cards. The new renderers are formatting-only (markdown text blocks + small typed cards), not new business logic — all the parsing helpers (`stage9-disposition-apply`, `checkpoint-gate`, `exec-summary-extract`) are already standalone and get imported as-is.
-
-**2. Single linear "Next" across four separate routes?**
-Not achievable by chaining the existing routes — each owns its own fetch, its own status polling and its own layout chrome. It needs one new unified route that loads all four data sources for a session and renders them as ordered steps. That is also the only way to get a stable step index for Next/Back and a progress rail.
+Feasible, and it fits the existing architecture cleanly. Guidance is stored on the sweep run itself, so it travels with every lens call in that sweep and stays visible afterwards as an attributable input.
 
 ## What gets built
 
-### A. Remove Dev Mode entirely
-- Delete `src/lib/dev-mode.ts`'s dev-mode half, `src/components/DevModeBanner.tsx`, its mount in `__root.tsx`.
-- `src/lib/claude.server.ts`: delete `buildDevModePrompt`, `readDevMode`, and the two branches in `prepareCall` — every call keeps the Universal System Wrapper and full `maxTokens`.
-- Drop `devMode` from `stage1.functions.ts` input and stop writing `sessions.dev_mode`; remove `getDevModeFromStorage()` call sites in `brief.index.tsx` and `brief.new.tsx`. The DB column is left in place (harmless, always false) rather than migrating a live table.
+**1. Store it against the run**
+Add a `creative_guidance` text column to the sweep run record (nullable, defaults to none). Existing runs are unaffected and simply have no guidance.
 
-### B. Demo Mode as a pure viewing state
-- New `src/lib/demo-mode.ts`: `useDemoMode()` backed by `localStorage` key `bg_demo_mode`, same cross-tab event pattern. Nothing server-side, nothing written to any session row, ever.
-- `TopNav`: same slot, same admin-only gate, label `DEMO MODE`. When on, it also shows a "Walkthrough" entry that opens the session picker.
-- No banner. Demo Mode ON simply enables the walkthrough route and its entry points.
+**2. Capture it on the trigger screen**
+On the sweep panel in the Creative Engine, above the "Run 37-lens big idea sweep" / "Start a fresh sweep" buttons, add an optional multi-line "Creative guidance (optional)" field with helper text explaining it steers the register of ideas and is recorded against the sweep. Empty is allowed and behaves exactly as today. The field is only editable before a sweep starts; once a sweep exists its guidance is shown read-only.
 
-### C. New unified walkthrough route
-`src/routes/walkthrough.$sessionId.tsx` plus `src/routes/walkthrough.index.tsx` (picker listing completed sessions, newest first).
+**3. Inject it into every lens call**
+The guidance is passed into the big-idea user message builder as its own clearly-fenced block, sitting alongside the existing constraints (execution-detail ban, word ceilings, collision check). Wording makes its status explicit: it is a steer on register and emphasis, applied across the sweep as a whole; it does not override the SMP, the lens mechanics, the output contract, or any hard ban. It is included in all three call paths — batch, single-lens recovery, and collision regeneration — so no lens in the sweep is generated without it.
 
-Data loaded once per session through one new server function `getWalkthrough` (`src/lib/walkthrough.functions.ts`), pulling:
-- `intelligence_sessions` row (final_report, ranked territories)
-- briefing-room workspace row (diagnosis, selected frame, tension)
-- `sessions` row: all `stage_N_output(s)`, `selected_smp`, `selection_rationale`, checkpoint flags A–F, `locked_big_idea` / `locked_campaign_line`, `stage_21_outputs`
-- `stimulus_runs` (+ `convergence_ledger`) and `stimulus_directions` for the winning run
-- synthesiser run if present
+**4. Surface it afterwards**
+- Tissue Check / sweep header shows a "Creative guidance applied" block with the verbatim text.
+- The sweep export includes the same block, so any reader can see what steered the mix.
 
-Steps are computed into an ordered array, skipping absent ones:
-```text
-00 Research Synthesis → 01 Intelligence → 02 Briefing Room → Checkpoint A →
-Stages 1–8 → Checkpoint B → Stage 9 (+ disposition ledger) → Stages 10–12
-(+ selection rationale) → Checkpoint C → Stages 13–16 → Stage 17 territory →
-Checkpoint D → Stage 18 Detonation → Checkpoint E → Stage 19 activation →
-Stage 20 Master Brief → Checkpoint F → 04 Creative Engine (37 lenses,
-root tensions, collision ledger, Tissue Check, Gate One, locked idea/line) →
-Channel briefs → Orchestrated output
-```
-Navigation: sticky footer Back / Next with step counter, left rail of section titles for jumping, `?step=` in the URL so a position is shareable, arrow-key support.
+## Validation against the CommBank case
 
-### D. Presentation chrome
-Read-only throughout: no retry/regenerate/reset, no error or stall banners, no status pills, no heartbeat indicators. Failed or missing steps are simply omitted from the sequence rather than shown as errors.
-
-### E. Rejection reasoning as first-class content
-Two dedicated steps rather than footnotes:
-- **Stage 9 — what was considered**: parses the CANDIDATE DISPOSITION ledger with the existing `stage9-disposition-apply` helpers and renders every candidate as its own card — survived / rebuilt / rejected — with the verdict reason given the same weight as the survivors. Rejected cards sit alongside, not below.
-- **Stage 12 — why this one**: the selected SMP beside every alternative it beat, each with its LOC/CORE source and rebuild note, plus the six-part `selection_rationale` including what was sacrificed.
-Creative Engine gets the same treatment: killed and kept-in-play lenses shown with their triage reasoning, not filtered out.
+Run a fresh CommBank sweep with the liquidity gain-framing guidance, then compare the resulting 37 root tensions against the current sweep and report the shift in gain- vs loss-framed ideas. The guidance is deliberately phrased as emphasis ("a meaningful share"), not a ban, so loss-framing remains available where a lens genuinely needs it.
 
 ## Technical notes
-- One route, one server function, one fetch — no per-room polling in the walkthrough.
-- New display components under `src/components/walkthrough/`; all parsing reuses existing standalone helpers.
-- `head()` metadata on both new routes.
-- Existing rooms are untouched apart from removing the dev-mode toggle wiring.
+
+- Column: `stimulus_runs.creative_guidance text`.
+- Prompt: new optional `creativeGuidance` arg in `buildBigIdeaUserMessage`; block omitted entirely when blank so existing prompt output is byte-identical for runs without guidance.
+- `startBigIdeaRun` accepts an optional guidance string and persists it at run creation; `runBigIdeaBatch` reads it off the run row.
