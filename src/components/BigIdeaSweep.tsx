@@ -646,6 +646,7 @@ export function BigIdeaSweep({
 }) {
   const start = useServerFn(startBigIdeaRun);
   const resume = useServerFn(resumeBigIdeaSweep);
+  const advance = useServerFn(advanceBigIdeaSweep);
   const readProgress = useServerFn(bigIdeaSweepProgress);
   const retryLens = useServerFn(retryBigIdeaLens);
   const ledger = useServerFn(buildIdeaConvergenceLedger);
