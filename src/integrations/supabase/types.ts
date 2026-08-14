@@ -1423,6 +1423,8 @@ export type Database = {
           gate_one_notes: string | null
           gate_one_snapshot: Json | null
           generation_attempts: number
+          guidance_alignment: string | null
+          guidance_alignment_note: string | null
           id: string
           instinct_brief: string | null
           lens_id: string
@@ -1456,6 +1458,8 @@ export type Database = {
           gate_one_notes?: string | null
           gate_one_snapshot?: Json | null
           generation_attempts?: number
+          guidance_alignment?: string | null
+          guidance_alignment_note?: string | null
           id?: string
           instinct_brief?: string | null
           lens_id: string
@@ -1489,6 +1493,8 @@ export type Database = {
           gate_one_notes?: string | null
           gate_one_snapshot?: Json | null
           generation_attempts?: number
+          guidance_alignment?: string | null
+          guidance_alignment_note?: string | null
           id?: string
           instinct_brief?: string | null
           lens_id?: string
@@ -1767,6 +1773,8 @@ export type Database = {
           convergence_ledger_at: string | null
           created_at: string
           created_by: string | null
+          creative_guidance: string | null
+          creative_guidance_target: number | null
           error: string | null
           gate_one_confirmed: boolean
           gate_one_confirmed_at: string | null
@@ -1796,6 +1804,8 @@ export type Database = {
           convergence_ledger_at?: string | null
           created_at?: string
           created_by?: string | null
+          creative_guidance?: string | null
+          creative_guidance_target?: number | null
           error?: string | null
           gate_one_confirmed?: boolean
           gate_one_confirmed_at?: string | null
@@ -1825,6 +1835,8 @@ export type Database = {
           convergence_ledger_at?: string | null
           created_at?: string
           created_by?: string | null
+          creative_guidance?: string | null
+          creative_guidance_target?: number | null
           error?: string | null
           gate_one_confirmed?: boolean
           gate_one_confirmed_at?: string | null
