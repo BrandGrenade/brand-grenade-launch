@@ -321,6 +321,14 @@ export const saveSelectedSMP = createServerFn({ method: "POST" })
       "SMP selection save",
     );
     if (!res.ok) throw new Error(res.error);
+
+    // STANDING BEHAVIOUR: a proposition may never sit in a selected/locked
+    // state without a current score of its own. Selection (including changing
+    // or refining the selection later) fires an independent Stage 10 pass
+    // whenever the exact chosen wording has not been scored already.
+    const { ensureSmpScoredInBackground } = await import("./rescore-smp.server");
+    ensureSmpScoredInBackground(data.sessionId);
+
     return { ok: true };
   });
 

@@ -8,6 +8,7 @@
 
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { callClaude } from "./claude.server";
+import { scheduleBackground as scheduleBackgroundImpl } from "./background.server";
 import { STAGE_10_SYSTEM_PROMPT } from "./stage10-prompt";
 import {
   applyStage10CodeGate,
@@ -40,6 +41,38 @@ export interface RescoreResult {
   composite?: string | null;
   dimensions?: Record<string, number>;
   verdict?: string | null;
+}
+
+/** Per-worker in-flight guard so concurrent triggers cannot double-append. */
+const inFlight = new Map<string, Promise<RescoreResult>>();
+
+/**
+ * STANDING PLATFORM BEHAVIOUR.
+ *
+ * Idempotent, content-keyed guarantee that the session's currently
+ * selected/locked proposition carries its own independent Stage 10 score.
+ * Because the check keys off the exact proposition TEXT, any refinement or
+ * edit of the SMP — at any stage, by any path — automatically presents as
+ * "unscored" and triggers a fresh scoring pass. Safe to call from anywhere,
+ * as often as you like.
+ */
+export function ensureSmpScored(sessionId: string): Promise<RescoreResult> {
+  const existing = inFlight.get(sessionId);
+  if (existing) return existing;
+  const run = rescoreLockedSmp(sessionId).finally(() => inFlight.delete(sessionId));
+  inFlight.set(sessionId, run);
+  return run;
+}
+
+/** Fire-and-forget variant for write paths that must not block the user. */
+export function ensureSmpScoredInBackground(sessionId: string): void {
+  const { scheduleBackground } = require0();
+  scheduleBackground(ensureSmpScored(sessionId), "smp-rescore");
+}
+
+// Lazy require avoids a module cycle at import time.
+function require0(): { scheduleBackground: (p: Promise<unknown>, l?: string) => void } {
+  return { scheduleBackground: scheduleBackgroundImpl };
 }
 
 export async function rescoreLockedSmp(sessionId: string): Promise<RescoreResult> {
@@ -155,6 +188,18 @@ code. Do not score any other proposition.`;
   const codeLines = `\nCODE VERDICT: ${score.codeVerdict}${score.codeVerdict === "PASS" ? " — clears Stage 10 hard floors." : ` — ${score.codeReason}.`}\nCODE COMPOSITE: ${score.weightedComposite}/100 weighted (Fame 30% · Truth 20% · Competitive Impossibility 15% · Brand Permission 10% · Clean Air 10% · Commercial Precedent 5%).\nCODE BASIS: median of three independent scoring passes on this exact proposition.\n`;
 
   const appended = `${s10.trimEnd()}\n\n${RESCORE_MARKER}\nThis proposition was finalised after the original Stage 10 pass and has been scored independently on its own wording, using the same six-dimension framework and the same hard floors.\n\n${block}\n${codeLines}`;
+
+  // Re-read immediately before writing: another trigger may have scored this
+  // exact line while these passes were running.
+  const { data: fresh } = await supabaseAdmin
+    .from("sessions")
+    .select("stage_10_output, selected_smp")
+    .eq("id", sessionId)
+    .maybeSingle();
+  const freshS10 = fresh?.stage_10_output ?? s10;
+  if ((fresh?.selected_smp ?? smp).trim() !== smp || hasIndependentScore(freshS10, smp)) {
+    return { status: "already_scored", smp };
+  }
 
   await supabaseAdmin
     .from("sessions")
