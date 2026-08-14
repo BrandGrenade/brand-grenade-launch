@@ -101,7 +101,7 @@ Truth Strength: [n]/10 — [anchor justification]
 Competitive Impossibility: [n]/10 — [anchor justification; below 10 you MUST name the specific competitor AND the actual positioning claim that makes it available to them — generic word usage is not evidence]
 Brand Permission: [n]/10 — [anchor justification; below 10 you MUST cite the specific named brand action, campaign, product fact or customer-research/perception data behind any deduction — unsourced assertion about customer belief is not evidence]
 Clean Air: [n]/10 — [anchor justification; below 8 you MUST name the competitor brand AND the specific occupying claim/campaign — otherwise state that no competitor occupies this territory]
-Commercial Precedent: [n]/10 — [anchor justification; you MUST name the brand and the campaign/advertising moment — a general category or trend with no named example is not precedent]
+Commercial Precedent: [n]/10 — [anchor justification; you MUST name the brand, the campaign/advertising moment AND its year — a general category or trend with no named example is not precedent, and a pre-1980 precedent alone cannot justify 7+; state which post-2000 precedents are carrying the score]
 
 HEADER
 SMPS SCORED: [n]
