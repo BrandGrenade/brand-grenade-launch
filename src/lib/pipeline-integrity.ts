@@ -113,4 +113,14 @@ export async function assertUpstreamStageOutput(
   // not between Stage 15 and Stage 17. So Stage 17's upstream is Stage 15.
   const upstream = stageNumber === 17 ? 15 : stageNumber - 1;
   await assertStageOutput(sessionId, upstream, `Stage ${stageNumber}`);
+
+  // Every stage from Brand Fit Validation onward consumes the selected
+  // proposition, and several of them (13, 13b, 14x, 15) can legitimately
+  // refine its wording. Running the content-keyed score guarantee here means
+  // any downstream stage entry re-scores a changed proposition automatically —
+  // one choke point rather than a hook per stage.
+  if (stageNumber >= 13) {
+    const { ensureSmpScoredInBackground } = await import("./rescore-smp.server");
+    ensureSmpScoredInBackground(sessionId);
+  }
 }
