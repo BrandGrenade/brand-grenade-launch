@@ -219,7 +219,18 @@ export function buildExecSummaryDocument(
   if (proof.strongest) {
     proofBits.push(`Strongest dimension — ${proof.strongest.dimension} ${proof.strongest.score}`);
   }
-  if (proof.composite) proofBits.push(`Composite score — ${proof.composite}`);
+  // Section 04 always states the composite position, so the field is
+  // consistent across every session rather than silently disappearing when
+  // the recommended line post-dates Stage 10 scoring.
+  if (proof.composite && scoring.matched) {
+    proofBits.push(`Composite score — ${proof.composite}`);
+  } else if (proof.composite && scoring.scoredSmp) {
+    proofBits.push(
+      `Composite score — ${proof.composite}, scored at Stage 10 against the parent proposition “${scoring.scoredSmp}”`,
+    );
+  } else {
+    proofBits.push("Composite score — not scored at Stage 10 (proposition refined after scoring)");
+  }
   if (proof.asset) proofBits.push(`Distinctive asset in play — ${proof.asset}`);
   const proofHtml = proofBits.length
     ? `<div class="es-proof">${escapeHtml(proofBits.join(". "))}.</div>`
@@ -229,6 +240,10 @@ export function buildExecSummaryDocument(
         winning.smp,
       )}</div></div>${proofHtml}${owns ? p(owns) : ""}${alignment ? p(alignment) : ""}`
     : missing();
+
+  const derived = deriveMintoContent(session as MintoSession, {
+    appendix: { mode: "brief" },
+  });
 
   // 07 — Verification
   const verdict = dedupe.take(verification.verdict, 2);
@@ -253,7 +268,7 @@ export function buildExecSummaryDocument(
               ? p(`Verification verdict: ${verdictFallback}`)
               : ""
         }`
-      : missing();
+      : derived.content.why_this_wins || missing();
 
 
   // 08 — Scoring
@@ -271,7 +286,9 @@ export function buildExecSummaryDocument(
           : ""
       }</table>`
     : missing();
-  const scoringTitle = `${NUMBER_WORD[scoring.rows.length] ?? String(scoring.rows.length)}-dimension proposition scoring (Stage 10)`;
+  const scoringTitle = `${NUMBER_WORD[scoring.rows.length] ?? String(scoring.rows.length)}-dimension proposition scoring (Stage 10)${
+    !scoring.matched && scoring.scoredSmp ? ` — parent proposition “${scoring.scoredSmp}”` : ""
+  }`;
 
   // 09 — Brand World Opportunity
   // The Room 04 lock supersedes any line carried in Stage 22's brand world
@@ -302,10 +319,6 @@ export function buildExecSummaryDocument(
   // Assembled against the canonical ten-section Minto structure. The rich
   // exec-summary extraction above feeds the canonical slots; ordering,
   // numbering and completeness belong to `minto.ts`, not to this file.
-  const derived = deriveMintoContent(session as MintoSession, {
-    appendix: { mode: "brief" },
-  });
-
   const rejectedField = field.filter((f) => !f.selected);
 
   return buildMintoDocument({
@@ -330,7 +343,11 @@ export function buildExecSummaryDocument(
       business_issue: issueHtml,
       key_insight: findingsHtml,
       proposition: winningHtml,
-      why_this_wins: `${proofHtml}${verificationHtml}`,
+      why_this_wins: `${proofHtml}${
+        verificationHtml === missing()
+          ? derived.content.why_this_wins || verificationHtml
+          : verificationHtml
+      }`,
       validation: `<h3>${escapeHtml(scoringTitle)}</h3>${scoringHtml}`,
       rejected: rejectedField.length
         ? bullets(
