@@ -97,9 +97,9 @@ SMP: "[line]" — FIELD: [name]
 Fame: [n]/10 — [anchor justification, 1–2 sentences]
 Truth Strength: [n]/10 — [anchor justification]
 Competitive Impossibility: [n]/10 — [anchor justification; below 10 you MUST name the specific competitor AND the actual positioning claim that makes it available to them — generic word usage is not evidence]
-Brand Permission: [n]/10 — [anchor justification citing brand history or demonstrated behaviour]
+Brand Permission: [n]/10 — [anchor justification; below 10 you MUST cite the specific named brand action, campaign, product fact or customer-research/perception data behind any deduction — unsourced assertion about customer belief is not evidence]
 Clean Air: [n]/10 — [anchor justification; below 8 you MUST name the competitor brand AND the specific occupying claim/campaign — otherwise state that no competitor occupies this territory]
-Commercial Precedent: [n]/10 — [anchor justification citing named precedent if any]
+Commercial Precedent: [n]/10 — [anchor justification; you MUST name the brand and the campaign/advertising moment — a general category or trend with no named example is not precedent]
 
 HEADER
 SMPS SCORED: [n]
