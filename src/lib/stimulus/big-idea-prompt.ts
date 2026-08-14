@@ -97,8 +97,12 @@ CANDIDATE MASTER LINE
 EXPRESSION UNDER MASTER
 <Only if a locked master line was supplied. One line: the master line verbatim, then this idea's supporting expression. Omit this label entirely if no master line was supplied.>
 
+GUIDANCE ALIGNMENT
+<Only if CREATIVE GUIDANCE was supplied for this sweep. Exactly "ALIGNED — <one clause>" or "NOT ALIGNED — <one clause>", judging this idea honestly against the guidance. Omit this label entirely if no guidance was supplied. Never mark an idea ALIGNED to hit a quota if it is not.>
+
 WHY IT WINS
 <70–120 words. Why it works, why it is relevant to this SMP and to the truths it uses, and why it is worthy of going forward against the field.>
+
 
 If a lens genuinely has no honest purchase on this proposition, output:
 THE BIG IDEA
