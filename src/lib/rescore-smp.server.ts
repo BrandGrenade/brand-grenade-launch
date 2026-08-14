@@ -9,7 +9,11 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { callClaude } from "./claude.server";
 import { STAGE_10_SYSTEM_PROMPT } from "./stage10-prompt";
-import { applyStage10CodeGate } from "./stage12-filter";
+import {
+  applyStage10CodeGate,
+  computeWeightedComposite,
+  evaluateStage10Verdict,
+} from "./stage12-filter";
 
 const RESCORE_MARKER = "==== STAGE 10 RE-SCORE — LOCKED PROPOSITION ====";
 
@@ -18,6 +22,10 @@ function key(s: string): string {
     .toLowerCase()
     .replace(/[^a-z0-9 ]/g, "")
     .replace(/\s+/g, " ")
+    .trim()
+    .split("\n")
+    .filter((l) => !/^\s*CODE (VERDICT|COMPOSITE|FLAGS|BASIS)\b/i.test(l))
+    .join("\n")
     .trim();
 }
 
@@ -85,21 +93,54 @@ Clean Air, Commercial Precedent). Use the exact line above in the SMP: header.
 Do NOT emit a VERDICT line and do NOT emit a composite — both are computed in
 code. Do not score any other proposition.`;
 
-  const raw = await callClaude({
-    systemPrompt: STAGE_10_SYSTEM_PROMPT,
-    userMessage,
-    maxTokens: 4000,
-    sessionId,
-    stageLabel: "Stage 10 re-score",
-    stageNumber: "10",
-    stageName: "Locked Proposition Re-score",
-  });
+  // Three independent passes, median per dimension. A single LLM pass carries
+  // enough sampling variance to flip a borderline dimension across the hard
+  // floor; the median is the stable, defensible reading and is never re-rolled.
+  const passes = await Promise.all(
+    [0, 1, 2].map(async () => {
+      const raw = await callClaude({
+        systemPrompt: STAGE_10_SYSTEM_PROMPT,
+        userMessage,
+        maxTokens: 4000,
+        sessionId,
+        stageLabel: "Stage 10 re-score",
+        stageNumber: "10",
+        stageName: "Locked Proposition Re-score",
+      });
+      const gated = applyStage10CodeGate(raw, {
+        isPreflight: session.is_preflight_test === true,
+      });
+      const sc = gated.scores.find((x) => key(x.smpLine).includes(key(smp))) ?? gated.scores[0];
+      return sc ? { gated, score: sc } : null;
+    }),
+  );
+  const valid = passes.filter((p): p is NonNullable<typeof p> => !!p);
+  if (valid.length === 0) return { status: "skipped", smp };
 
-  const gated = applyStage10CodeGate(raw, {
-    isPreflight: session.is_preflight_test === true,
-  });
-  const score = gated.scores.find((s) => key(s.smpLine).includes(key(smp))) ?? gated.scores[0];
-  if (!score) return { status: "skipped", smp };
+  const median = (nums: number[]) => {
+    const a = nums.filter((n) => !Number.isNaN(n)).sort((x, y) => x - y);
+    return a.length ? a[Math.floor((a.length - 1) / 2)] : NaN;
+  };
+  const dims = {
+    fame: median(valid.map((p) => p.score.fame)),
+    truthStrength: median(valid.map((p) => p.score.truthStrength)),
+    competitiveImpossibility: median(valid.map((p) => p.score.competitiveImpossibility)),
+    brandPermission: median(valid.map((p) => p.score.brandPermission)),
+    cleanAir: median(valid.map((p) => p.score.cleanAir)),
+    commercialPrecedent: median(valid.map((p) => p.score.commercialPrecedent)),
+  };
+  const weightedComposite = computeWeightedComposite(dims);
+  const { verdict: codeVerdict, reason: codeReason } = evaluateStage10Verdict(dims);
+  // Narrative comes from the pass closest to the median composite.
+  const chosen = valid
+    .slice()
+    .sort(
+      (a, b) =>
+        Math.abs(a.score.weightedComposite - weightedComposite) -
+        Math.abs(b.score.weightedComposite - weightedComposite),
+    )[0];
+  const gated = chosen.gated;
+  const score = { ...chosen.score, ...dims, weightedComposite, codeVerdict, codeReason };
 
   // Only the per-SMP block is appended; the code gate's set-level summary is
   // discarded so the original Stage 10 header/verdict remains authoritative.
@@ -112,9 +153,7 @@ code. Do not score any other proposition.`;
   // Deterministic code lines: the shared gate injects these only when its
   // block regex matches, so we guarantee them here rather than risk a
   // document rendering a scored block with no composite.
-  const codeLines = /CODE COMPOSITE:/i.test(block)
-    ? ""
-    : `\nCODE VERDICT: ${score.codeVerdict}${score.codeVerdict === "PASS" ? " — clears Stage 10 hard floors." : ` — ${score.codeReason}.`}\nCODE COMPOSITE: ${score.weightedComposite}/100 weighted (Fame 30% · Truth 20% · Competitive Impossibility 15% · Brand Permission 10% · Clean Air 10% · Commercial Precedent 5%).\n`;
+  const codeLines = `\nCODE VERDICT: ${score.codeVerdict}${score.codeVerdict === "PASS" ? " — clears Stage 10 hard floors." : ` — ${score.codeReason}.`}\nCODE COMPOSITE: ${score.weightedComposite}/100 weighted (Fame 30% · Truth 20% · Competitive Impossibility 15% · Brand Permission 10% · Clean Air 10% · Commercial Precedent 5%).\nCODE BASIS: median of three independent scoring passes on this exact proposition.\n`;
 
   const appended = `${s10.trimEnd()}\n\n${RESCORE_MARKER}\nThis proposition was finalised after the original Stage 10 pass and has been scored independently on its own wording, using the same six-dimension framework and the same hard floors.\n\n${block}\n${codeLines}`;
 
