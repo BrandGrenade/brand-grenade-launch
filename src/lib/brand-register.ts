@@ -483,9 +483,20 @@ function assemble({
   }
   const orchBySession = new Map<string, StimulusOrchRow[]>();
   for (const o of stimulusOrchs) {
+    // Cancelled runs are dead history — an accidental re-trigger that was
+    // superseded must never make a finished session read "Orchestration
+    // running" just because its row was touched more recently.
+    if (o.driver_status === "cancelled" || o.status === "cancelled") continue;
     const list = orchBySession.get(o.session_id) ?? [];
     list.push(o);
     orchBySession.set(o.session_id, list);
+  }
+  // Within a session, the most advanced run is authoritative, not the newest:
+  // Gate Two confirmed > complete > everything else, then newest first.
+  const orchWeight = (o: StimulusOrchRow) =>
+    o.gate_two_confirmed === true ? 2 : o.status === "complete" ? 1 : 0;
+  for (const list of orchBySession.values()) {
+    list.sort((a, b) => orchWeight(b) - orchWeight(a) || b.updated_at.localeCompare(a.updated_at));
   }
 
   const groups = new Map<
