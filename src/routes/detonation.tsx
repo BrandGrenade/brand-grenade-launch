@@ -2344,9 +2344,18 @@ function Stage22({ session, onChange }: { session: SessionRow; onChange: () => v
                 fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase",
                 whiteSpace: "pre-wrap",
               }}>{sanitiseOutput(reflection) || "—"}</div>
+              {lockedLine && (
+                <div style={{ color: "#8B8680", fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase", marginTop: 10 }}>
+                  Locked campaign line{session.locked_big_idea_lens ? ` — ${session.locked_big_idea_lens}` : ""}
+                </div>
+              )}
             </div>
             <ArchBox {...peripherals[4]} />
           </div>
+
+          {showGenerated && (
+            <ArchBox label="Stage 22 reflection (generated, secondary)" content={generatedReflection} />
+          )}
 
 
           {/* Distinctive Assets */}
