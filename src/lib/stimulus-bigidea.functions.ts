@@ -149,6 +149,43 @@ export const resumeBigIdeaSweep = createServerFn({ method: "POST" })
   });
 
 /**
+ * Runs ONE bounded sweep slice inside the request and only returns once real
+ * work has landed. Background (`waitUntil`) slices are not reliably given the
+ * ~60s a batch needs — an invocation can be torn down mid model-call, which
+ * shows up as a sweep that heartbeats forever with zero lenses generated. The
+ * watching browser therefore drives progress with awaited slices; the
+ * background kick and the watchdog tick remain as the browser-less fallback.
+ */
+export const advanceBigIdeaSweep = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => z.object({ runId: z.string().uuid() }).parse(i))
+  .handler(async ({ data, context }) => {
+    const run = await assertRunAccess(data.runId, context.userId);
+    const { driveBigIdeaSweep } = await import("./stimulus/big-idea-sweep.server");
+
+    const { count: before } = await supabaseAdmin
+      .from("stimulus_directions")
+      .select("id", { count: "exact", head: true })
+      .eq("run_id", run.id)
+      .eq("status", "pending");
+    if ((before ?? 0) === 0) return { remaining: 0, advanced: false as const };
+
+    await supabaseAdmin
+      .from("stimulus_runs")
+      .update({ status: "generating", error: null, last_batch_at: new Date().toISOString() })
+      .eq("id", run.id);
+
+    await driveBigIdeaSweep(run.id, 3, 45 * 1000);
+
+    const { count: after } = await supabaseAdmin
+      .from("stimulus_directions")
+      .select("id", { count: "exact", head: true })
+      .eq("run_id", run.id)
+      .eq("status", "pending");
+    return { remaining: after ?? 0, advanced: (after ?? 0) < (before ?? 0) };
+  });
+
+/**
  * Every big idea sweep on the session, newest first, with real generated
  * counts. A newly-started (or abandoned, empty) sweep must never hide an
  * earlier completed one, so the UI needs the counts to choose what to open.
