@@ -282,40 +282,66 @@ export function StimulusOrchestration({
    * from this browser via ctx.waitUntil() — closing the tab, switching away or
    * losing connection does not pause or kill it. This loop is pure observation.
    */
-  const drive = useCallback(
-    async (id: string) => {
+  /**
+   * Observe the row and, whenever the detached Worker driver stops heartbeating
+   * (Cloudflare can kill a waitUntil invocation mid-phase), take over by calling
+   * the awaited, resumable step RPC from here. Phases already completed are
+   * never redone — the step machine resumes from the persisted phase.
+   */
+  const pump = useCallback(
+    async (id: string, startDriver: boolean) => {
       setBusy(true);
-      setErr(null);
-      try {
-        await drive_({ data: { orchestrationId: id } });
-      } catch (e) {
-        setErr(e instanceof Error ? e.message : "Could not start the background run");
-        setBusy(false);
-        return;
+      if (startDriver) {
+        setErr(null);
+        try {
+          await drive_({ data: { orchestrationId: id } });
+        } catch {
+          /* fall through — the client-side pump below can carry the run */
+        }
       }
       let guard = 0;
-      while (guard < 900) {
+      while (guard < 2000) {
         guard += 1;
         await new Promise((r) => setTimeout(r, 4000));
         let s: { orchestration: Row } | null = null;
         try {
           s = (await load({ data: { orchestrationId: id } })) as any;
         } catch {
-          continue; // transient — the server keeps working regardless
+          continue; // transient — keep watching
         }
         setState(s as any);
         const o = s!.orchestration;
         setNote(`${o.status} — ${o.phase_note ?? ""}`);
-        if (o.driver_status === "failed") {
-          setErr((o.error as string) ?? "Orchestration failed");
-          break;
+        if (o.status === "complete") break;
+
+        const hb = o.driver_heartbeat_at ? Date.parse(o.driver_heartbeat_at as string) : 0;
+        const stale = Date.now() - hb > 90_000;
+        const dead = o.driver_status === "failed" || o.driver_status === "idle" || stale;
+        if (o.driver_status === "cancelled") break;
+        if (!dead) continue;
+
+        // Server driver is gone. Advance one slice ourselves and keep going.
+        try {
+          const r = (await step({ data: { orchestrationId: id } })) as { done?: boolean };
+          setErr(null);
+          if (r?.done) {
+            try {
+              setState((await load({ data: { orchestrationId: id } })) as any);
+            } catch {
+              /* ignore */
+            }
+            break;
+          }
+        } catch (e) {
+          setErr(e instanceof Error ? e.message : "Orchestration step failed — retrying");
         }
-        if (o.status === "complete" || o.driver_status === "idle") break;
       }
       setBusy(false);
     },
-    [drive_, load],
+    [drive_, load, step],
   );
+
+  const drive = useCallback(async (id: string) => pump(id, true), [pump]);
 
   const handleStart = async () => {
     setBusy(true);
