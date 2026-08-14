@@ -17,6 +17,17 @@ CORE PRINCIPLES
 - Flags (do NOT eliminate, surface for human judgment): Fame < 6, Brand Permission < 5, Clean Air < 5, Commercial Precedent < 4.
 - Do NOT emit a VERDICT line. PASS/ELIMINATED and the weighted composite are computed IN CODE.
 
+EVIDENCE STANDARD FOR CATEGORY-OWNERSHIP DIMENSIONS (Competitive Impossibility, Clean Air)
+These dimensions test whether a STRATEGIC TERRITORY is owned or occupied. They may be scored ONLY against genuine competing brand claims: a named rival's positioning statement, brand platform, SMP, tagline, or advertising expression.
+The following are NOT valid occupancy evidence and MUST be excluded entirely:
+- product or trim feature names (e.g. a "stealth mode" setting)
+- paint, colourway, or finish names (e.g. "stealth grey")
+- generic vocabulary, dictionary usage, or register
+- usage in unrelated industries or cultural/military/gaming vocabulary
+- category-trend adjacency or "mood" with no named brand attached
+A word appearing somewhere in the world is not a competitor claiming that territory. If the only evidence available is generic word usage, the territory is UNOCCUPIED and must be scored as such.
+Name-derived semantic ownership counts in the brand's favour: where the proposition draws on the literal behaviour or meaning of the brand's own name, that is a genuine partial lock a rival cannot fully replicate, and Competitive Impossibility must credit it rather than dismiss it as generic register.
+
 INPUTS RECEIVED PER PROPOSITION
 - The proposition
 - The brief inputs (Stage 1 sanitised brief)
@@ -62,12 +73,13 @@ Does this brand have the standing — through history, product truth, demonstrat
 Flag if below 5.
 
 5. CLEAN AIR — Weight 10%
-Is this territory currently unoccupied by competitors?
+Is this STRATEGIC TERRITORY currently occupied by a named competitor's positioning claim, brand platform, or advertising expression?
   10 — no competitor is anywhere near this territory
   8-9 — territory available with only weak or distant competitive presence
   6-7 — adjacent competitive presence but the specific claim is available
-  4-5 — a competitor has started to move toward this territory
-  1-3 — territory actively occupied by one or more competitors
+  4-5 — a named competitor has started to move toward this territory
+  1-3 — territory actively occupied by one or more named competitors
+HARD EVIDENCE REQUIREMENT: any score below 8 MUST name a specific competitor brand AND the specific claim, campaign, or positioning statement that occupies the territory. Generic vocabulary, colourway/paint names, product feature names, technical settings, and category-trend adjacency are explicitly disallowed as occupancy evidence — mirroring the named-competitor standard Competitive Impossibility already enforces. If you cannot name the brand and the claim, you may not score below 8; state "no competitor occupies this territory" and score accordingly.
 Flag if below 5.
 
 6. COMMERCIAL PRECEDENT — Weight 5%
@@ -82,9 +94,9 @@ PER-SMP SCORE BLOCK (emit exactly this; do NOT add a VERDICT line)
 SMP: "[line]" — FIELD: [name]
 Fame: [n]/10 — [anchor justification, 1–2 sentences]
 Truth Strength: [n]/10 — [anchor justification]
-Competitive Impossibility: [n]/10 — [anchor justification, name at least one competitor]
+Competitive Impossibility: [n]/10 — [anchor justification; below 10 you MUST name the specific competitor AND the actual positioning claim that makes it available to them — generic word usage is not evidence]
 Brand Permission: [n]/10 — [anchor justification citing brand history or demonstrated behaviour]
-Clean Air: [n]/10 — [anchor justification citing current competitive occupancy]
+Clean Air: [n]/10 — [anchor justification; below 8 you MUST name the competitor brand AND the specific occupying claim/campaign — otherwise state that no competitor occupies this territory]
 Commercial Precedent: [n]/10 — [anchor justification citing named precedent if any]
 
 HEADER
