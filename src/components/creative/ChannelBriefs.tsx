@@ -23,6 +23,7 @@ import {
 } from "@/lib/stimulus-channel.functions";
 import type { AdaptationFidelity } from "@/lib/stimulus/adaptation-fidelity-types";
 import { BIG_IDEA_CHANNEL_LABEL } from "@/lib/stimulus-bigidea.functions";
+import { runStage21 } from "@/lib/stage21.functions";
 import {
   buildChannelBriefExport,
   buildOfflineCreativeBriefExport,
@@ -293,6 +294,10 @@ export function ChannelBriefs({
   const listOffline = useServerFn(listOfflineCreativeBriefs);
   const listGateOne = useServerFn(listChannelGateOne);
   const confirmGate = useServerFn(confirmChannelGateOne);
+  const runStage21Fn = useServerFn(runStage21);
+
+  const [stage21Busy, setStage21Busy] = useState(false);
+  const [stage21Error, setStage21Error] = useState<string | null>(null);
 
   const [runs, setRuns] = useState<RunRow[]>([]);
   const [running, setRunning] = useState<Record<string, boolean>>({});
