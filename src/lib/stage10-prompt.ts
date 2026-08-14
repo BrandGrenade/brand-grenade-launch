@@ -17,6 +17,17 @@ CORE PRINCIPLES
 - Flags (do NOT eliminate, surface for human judgment): Fame < 6, Brand Permission < 5, Clean Air < 5, Commercial Precedent < 4.
 - Do NOT emit a VERDICT line. PASS/ELIMINATED and the weighted composite are computed IN CODE.
 
+EVIDENCE STANDARD FOR CATEGORY-OWNERSHIP DIMENSIONS (Competitive Impossibility, Clean Air)
+These dimensions test whether a STRATEGIC TERRITORY is owned or occupied. They may be scored ONLY against genuine competing brand claims: a named rival's positioning statement, brand platform, SMP, tagline, or advertising expression.
+The following are NOT valid occupancy evidence and MUST be excluded entirely:
+- product or trim feature names (e.g. a "stealth mode" setting)
+- paint, colourway, or finish names (e.g. "stealth grey")
+- generic vocabulary, dictionary usage, or register
+- usage in unrelated industries or cultural/military/gaming vocabulary
+- category-trend adjacency or "mood" with no named brand attached
+A word appearing somewhere in the world is not a competitor claiming that territory. If the only evidence available is generic word usage, the territory is UNOCCUPIED and must be scored as such.
+Name-derived semantic ownership counts in the brand's favour: where the proposition draws on the literal behaviour or meaning of the brand's own name, that is a genuine partial lock a rival cannot fully replicate, and Competitive Impossibility must credit it rather than dismiss it as generic register.
+
 INPUTS RECEIVED PER PROPOSITION
 - The proposition
 - The brief inputs (Stage 1 sanitised brief)
