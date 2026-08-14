@@ -507,7 +507,8 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
     ? pullQuote(insightParas[0], { label: "The insight it rests on", variant: "quiet" })
     : renderMarkdown(insightSource.slice(0, 1200));
 
-  /* 04 — proposition */
+  /* 04 — proposition. Scores shown here belong to this exact proposition or
+   * are not shown at all; a parent/earlier-stage line's score is never used. */
   const proposition = smp
     ? pullQuote(smp, { label: "Strategic Master Proposition" }) +
       (winner
@@ -519,7 +520,12 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
             })),
             3,
           )
-        : "")
+        : candidates.length
+          ? callout(
+              "Not independently scored",
+              `<p>This proposition was finalised after the Stage 10 scoring pass, so it carries no composite of its own. No earlier proposition's score is substituted here; the scored candidate set appears in the validation section.</p>`,
+            )
+          : "")
     : "";
 
   /* 05 — why this wins */
