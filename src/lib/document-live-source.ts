@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { ensureLockedSmpScored } from "./rescore-smp.functions";
 
 export type LiveDocumentSession = Record<string, unknown> & {
   id?: string;
@@ -18,6 +19,15 @@ export async function resolveLiveDocumentSession<T extends LiveDocumentSession>(
   supplied: T,
 ): Promise<T> {
   if (!supplied.id) return supplied;
+
+  // Governance rule: every document must report a real score for the exact
+  // proposition it recommends. If the locked SMP was finalised after Stage 10,
+  // score it now rather than rendering a placeholder. Idempotent and silent.
+  try {
+    await ensureLockedSmpScored({ data: { sessionId: supplied.id } });
+  } catch {
+    /* never block document rendering on the re-score */
+  }
 
   const { data: current, error } = await supabase
     .from("sessions")
