@@ -734,9 +734,56 @@ export function ChannelBriefs({
 
 
         {channels.length === 0 && (
-          <div className="text-body-sm" style={{ color: RED, marginTop: 14, lineHeight: 1.7 }}>
-            No channels exist for this session yet. Run Stage 21 in the Strategy Pipeline to create
-            them, then come back here.
+          <div
+            style={{
+              border: `1px solid ${AMBER}`,
+              backgroundColor: `${AMBER}12`,
+              borderRadius: 12,
+              padding: "18px 20px",
+              marginTop: 14,
+            }}
+          >
+            <div
+              className="text-mono"
+              style={{ color: AMBER, fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase" }}
+            >
+              Action required · Stage 21 has not run for this session
+            </div>
+            <p className="text-body-sm" style={{ color: MUTED, marginTop: 8, lineHeight: 1.7 }}>
+              The channel list comes from Stage 21 — Channel Detonation Briefs, generated from the
+              locked winning idea and line. Run it here; you do not need to go back to the Strategy
+              Pipeline.
+            </p>
+            {stage21Error && (
+              <div className="text-body-sm" style={{ color: RED, marginTop: 8, lineHeight: 1.6 }}>
+                {stage21Error}
+              </div>
+            )}
+            <div style={{ marginTop: 12 }}>
+              <Btn
+                active
+                disabled={stage21Busy || !lockedIdea || !lockedLine}
+                onClick={async () => {
+                  setStage21Busy(true);
+                  setStage21Error(null);
+                  try {
+                    await runStage21Fn({ data: { sessionId } });
+                    window.location.reload();
+                  } catch (e) {
+                    setStage21Error(e instanceof Error ? e.message : "Stage 21 failed");
+                    setStage21Busy(false);
+                  }
+                }}
+              >
+                {stage21Busy ? (
+                  <>
+                    <Spinner /> Generating channel briefs…
+                  </>
+                ) : (
+                  "Run Stage 21 · generate channel briefs"
+                )}
+              </Btn>
+            </div>
           </div>
         )}
 
