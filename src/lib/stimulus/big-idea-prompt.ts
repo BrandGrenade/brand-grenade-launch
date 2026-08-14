@@ -269,6 +269,9 @@ export interface ParsedBigIdea {
   rootTension: string;
   /** Empty array = the model declared CLEAR. */
   collisions: IdeaCollision[];
+  /** "aligned" | "not_aligned" | "" when no guidance was in play. */
+  guidanceAlignment: "aligned" | "not_aligned" | "";
+  guidanceAlignmentNote: string;
 }
 
 /**
