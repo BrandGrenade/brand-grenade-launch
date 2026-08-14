@@ -738,16 +738,15 @@ export function extractRecommendations(session: ExecSessionRow): Recommendations
   const key = matchKey(selected);
 
   // Condition on activation — the Stage 11 strategic note for the winner.
+  // Match the note line itself, not the "SMP VERDICT: VALIDATED WITH
+  // STRATEGIC NOTE" headline that precedes it.
   let condition: string | null = null;
   const block = stage11Block(str(session, "stage_11_output"), selected);
   if (block) {
-    const note = block.find((l) => /STRATEGIC NOTE/i.test(l));
+    const note = block.find((l) => /^\s*\**\s*STRATEGIC NOTE\b/i.test(clean(l)));
     if (note) {
-      // Drop the verdict headline (Section 08 already carries it) and keep
-      // only the operating condition that follows it.
       const tail = clean(note)
-        .replace(/^.*?STRATEGIC NOTE\s*[:—-]?\s*/i, "")
-        .replace(/^[^.]*?[—-]\s*/, "");
+        .replace(/^\**\s*STRATEGIC NOTE\s*(\([^)]*\))?\s*[:—-]?\s*\**\s*/i, "");
       const trimmed = firstSentencesOf(tail, 3);
       condition = trimmed && trimmed.length > 30 ? trimmed : null;
     }
@@ -760,21 +759,35 @@ export function extractRecommendations(session: ExecSessionRow): Recommendations
     condition = hit?.note ?? null;
   }
 
-  // Next step — deployment principles / coherence guidance where stored.
+  // Next step — the pipeline's own clearance declaration (Stage 15), which is
+  // the only stage that states what has to happen before this strategy is
+  // deployed. Stage 22's deployment principles are Brand Architecture guidance
+  // and are deliberately NOT used here.
   let nextStep: string | null = null;
-  const s22 = str(session, "stage_22_output");
-  const dpIdx = s22.indexOf("DEPLOYMENT PRINCIPLES");
-  if (dpIdx >= 0) {
-    const after = s22.slice(dpIdx).split("\n").map(clean).filter(Boolean);
-    const first = after.find((l) => /^\d+\.\s+/.test(l));
-    if (first) nextStep = firstSentencesOf(first.replace(/^\d+\.\s+/, ""), 2);
+  const s15 = str(session, "stage_15_output");
+  if (s15) {
+    const declaration = headingBlock(s15, /Clearance Declaration|Clearance Statement/i)
+      .map(clean)
+      .filter((l) => l && !/^\**[A-Z][A-Z ,()-]{5,}\**$/.test(l));
+    nextStep = firstSentencesOf(declaration.join(" "), 2);
+    if (!nextStep) {
+      const status = s15
+        .split("\n")
+        .map(clean)
+        .find((l) => /PIPELINE CLEARANCE STATUS/i.test(l));
+      if (status) {
+        const tail = status.replace(/^.*?PIPELINE CLEARANCE STATUS\s*\**\s*[—:-]?\s*/i, "");
+        nextStep = tail.length > 15 ? tail : null;
+      }
+    }
   }
   if (!nextStep) {
     nextStep = firstSentencesOf(
-      headingBlock(str(session, "stage_15_output"), /Recommendation|Verdict|Summary/i).join(" "),
+      headingBlock(str(session, "stage_13_output"), /Verdict|Recommendation/i).join(" "),
       2,
     );
   }
+
 
   const channels: string[] = [];
   const raw = session["stage_21_outputs"];
