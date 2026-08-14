@@ -177,7 +177,24 @@ export function buildDocument00AMinto(
       detail: str(cult.adaptation_requirement).slice(0, 260) || undefined,
     });
   }
-  const why_this_wins = reasonGrid(whyReasons);
+  // Never let this section fall through to the template's "not available"
+  // line: if no structured reason survived, state the territory's own
+  // rationale instead.
+  if (!whyReasons.length) {
+    const perm = obj(primary?.brand_permission);
+    const detail =
+      str(perm.rationale) ||
+      str(primary?.strategic_rationale) ||
+      str(primary?.description) ||
+      str(primary?.why_it_matters);
+    if (detail) {
+      whyReasons.push({
+        title: str(primary?.name) ? `Why ${str(primary?.name)}` : "Why this territory",
+        detail: detail.slice(0, 300),
+      });
+    }
+  }
+  const why_this_wins = whyReasons.length ? reasonGrid(whyReasons) : "";
 
   /* 06 — validation summary */
   const validationRows: CmpRow[] = territories.map((t) => {
