@@ -278,18 +278,14 @@ export function buildExecSummaryDocument(
       : missing();
 
 
-  // 10 — Recommendations, including channel strategy
+  // 10 — Recommendations. Channels are rendered once, in the implications
+  // section below; they are deliberately not repeated here.
   const condition = dedupe.take(recs.condition, 2);
   const nextStep = dedupe.take(recs.nextStep, 2);
   const recsHtml = `${condition ? p(`Condition on activation: ${condition}`) : ""}${
     nextStep ? p(`Next step: ${nextStep}`) : ""
-  }${
-    recs.channels.length
-      ? `<div class="part-label" style="margin-top:10pt">CHANNELS THIS STRATEGY ACTIVATES THROUGH</div>${bullets(
-          recs.channels.map((c) => ({ head: c })),
-        )}`
-      : ""
-  }${!condition && !nextStep && !recs.channels.length ? missing() : ""}`;
+  }${!condition && !nextStep ? missing() : ""}`;
+
 
   // Assembled against the canonical ten-section Minto structure. The rich
   // exec-summary extraction above feeds the canonical slots; ordering,
