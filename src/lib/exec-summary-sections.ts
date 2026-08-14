@@ -671,9 +671,12 @@ export function extractScoring(session: ExecSessionRow): ScoringResult {
 
   const lines = s10.split("\n");
   const isHeader = (l: string) => /^\s*\**SMP:/i.test(l);
-  let start = lines.findIndex((l) => isHeader(l) && (!key || matchKey(l).includes(key)));
-  matched = start >= 0 && !!key;
-  if (start < 0) start = lines.findIndex(isHeader);
+  // Hard rule: only ever report the score recorded against the actual
+  // selected, locked SMP. If Stage 10 never scored that exact line — because
+  // the proposition was refined after scoring — no score is returned at all.
+  // Falling back to a parent or sibling proposition's block is forbidden.
+  const start = lines.findIndex((l) => isHeader(l) && !!key && matchKey(l).includes(key));
+  matched = start >= 0;
   if (start < 0) return { rows, composite, weighted, matched, scoredSmp };
   scoredSmp =
     clean(lines[start])
