@@ -320,7 +320,7 @@ export function parseBigIdeaResponse(raw: string): Record<string, ParsedBigIdea>
     const sections: Record<string, string> = {};
     {
       const re =
-        /^[ \t]*(THE BIG IDEA|ROOT TENSION|IDEA COLLISION CHECK|CANDIDATE MASTER LINE|CAMPAIGN LINE|EXPRESSION UNDER MASTER|WHY IT WINS)[ \t]*:?[ \t]*$/gim;
+        /^[ \t]*(THE BIG IDEA|ROOT TENSION|IDEA COLLISION CHECK|CANDIDATE MASTER LINE|CAMPAIGN LINE|EXPRESSION UNDER MASTER|GUIDANCE ALIGNMENT|WHY IT WINS)[ \t]*:?[ \t]*$/gim;
       const hits: Array<{ label: string; start: number; end: number }> = [];
       for (let m = re.exec(body); m; m = re.exec(body))
         hits.push({ label: m[1].toUpperCase(), start: m.index, end: m.index + m[0].length });
@@ -337,6 +337,12 @@ export function parseBigIdeaResponse(raw: string): Record<string, ParsedBigIdea>
     const expression = sections["EXPRESSION UNDER MASTER"] ?? "";
     const rationale = sections["WHY IT WINS"] ?? "";
     const collisionField = sections["IDEA COLLISION CHECK"] ?? "";
+    const alignRaw = firstLine(sections["GUIDANCE ALIGNMENT"] ?? "");
+    const alignment: ParsedBigIdea["guidanceAlignment"] = /^\s*not[\s-]*aligned/i.test(alignRaw)
+      ? "not_aligned"
+      : /^\s*aligned/i.test(alignRaw)
+        ? "aligned"
+        : "";
 
     out[id] = {
       idea: idea || body.trim(),
@@ -345,7 +351,10 @@ export function parseBigIdeaResponse(raw: string): Record<string, ParsedBigIdea>
       rationale,
       rootTension: firstLine(sections["ROOT TENSION"] ?? ""),
       collisions: parseCollisionField(collisionField),
+      guidanceAlignment: alignment,
+      guidanceAlignmentNote: alignRaw.replace(/^\s*(not[\s-]*)?aligned\s*[—–:-]?\s*/i, "").trim(),
     };
+
   }
   return out;
 }
