@@ -181,8 +181,6 @@ code. Do not score any other proposition.`;
   // document rendering a scored block with no composite.
   const codeLines = `\nCODE VERDICT: ${score.codeVerdict}${score.codeVerdict === "PASS" ? " — clears Stage 10 hard floors." : ` — ${score.codeReason}.`}\nCODE COMPOSITE: ${score.weightedComposite}/100 weighted (Fame 30% · Truth 20% · Competitive Impossibility 15% · Brand Permission 10% · Clean Air 10% · Commercial Precedent 5%).\nCODE BASIS: median of three independent scoring passes on this exact proposition.\n`;
 
-  const appended = `${s10.trimEnd()}\n\n${RESCORE_MARKER}\nThis proposition was finalised after the original Stage 10 pass and has been scored independently on its own wording, using the same six-dimension framework and the same hard floors.\n\n${block}\n${codeLines}`;
-
   // Re-read immediately before writing: another trigger may have scored this
   // exact line while these passes were running.
   const { data: fresh } = await supabaseAdmin
@@ -194,6 +192,16 @@ code. Do not score any other proposition.`;
   if ((fresh?.selected_smp ?? smp).trim() !== smp || hasIndependentScore(freshS10, smp)) {
     return { status: "already_scored", smp };
   }
+
+  // Drop any earlier re-score section for this same wording so repeated
+  // triggers replace rather than accumulate.
+  const priorTrimmed = freshS10
+    .split(RESCORE_MARKER)
+    .filter((part, i) => i === 0 || !key(part).includes(key(smp)))
+    .join(RESCORE_MARKER)
+    .trimEnd();
+
+  const appended = `${priorTrimmed}\n\n${RESCORE_MARKER}\nThis proposition was finalised after the original Stage 10 pass and has been scored independently on its own wording, using the same six-dimension framework and the same hard floors.\n\n${block}\n${codeLines}`;
 
   await supabaseAdmin
     .from("sessions")
