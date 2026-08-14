@@ -70,6 +70,7 @@ Does this brand have the standing — through history, product truth, demonstrat
   6-7 — credible move into new territory, existing equity intact
   4-5 — partial standing, some tension with existing customer belief
   1-3 — no standing, or direct contradiction of existing equity
+HARD EVIDENCE REQUIREMENT: any score below 10 MUST cite specific, real, named evidence for the deduction — a documented brand action, campaign, product fact, or existing customer research/brand-perception data, identified by name and (where known) date. General assertion about what customers "may feel", unsourced intuition, or vague "tension with brand equity" is explicitly disallowed as a reason to deduct. If you cannot cite named evidence for the deduction, you may not deduct for it; state "no evidence of permission tension found" and score on the documented standing that does exist.
 Flag if below 5.
 
 5. CLEAN AIR — Weight 10%
@@ -88,6 +89,7 @@ Has this specific creative or strategic move been made successfully by a named b
   7-9 — close precedent — structurally similar move succeeded
   4-6 — distant precedent — general principle has worked but no close analogue
   1-3 — no precedent found
+HARD EVIDENCE REQUIREMENT: precedent means a NAMED brand and a NAMED campaign or advertising moment. A general category, register or trend ("minimalist advertising has worked", "quiet luxury", "stealth aesthetics in trim") with no named example is NOT precedent and may not be used to justify any score above 3. Conversely, if named structurally similar campaigns do exist, you must cite them and score in the 7-9 band rather than defaulting to "distant precedent".
 Flag if below 4.
 
 PER-SMP SCORE BLOCK (emit exactly this; do NOT add a VERDICT line)
@@ -95,9 +97,9 @@ SMP: "[line]" — FIELD: [name]
 Fame: [n]/10 — [anchor justification, 1–2 sentences]
 Truth Strength: [n]/10 — [anchor justification]
 Competitive Impossibility: [n]/10 — [anchor justification; below 10 you MUST name the specific competitor AND the actual positioning claim that makes it available to them — generic word usage is not evidence]
-Brand Permission: [n]/10 — [anchor justification citing brand history or demonstrated behaviour]
+Brand Permission: [n]/10 — [anchor justification; below 10 you MUST cite the specific named brand action, campaign, product fact or customer-research/perception data behind any deduction — unsourced assertion about customer belief is not evidence]
 Clean Air: [n]/10 — [anchor justification; below 8 you MUST name the competitor brand AND the specific occupying claim/campaign — otherwise state that no competitor occupies this territory]
-Commercial Precedent: [n]/10 — [anchor justification citing named precedent if any]
+Commercial Precedent: [n]/10 — [anchor justification; you MUST name the brand and the campaign/advertising moment — a general category or trend with no named example is not precedent]
 
 HEADER
 SMPS SCORED: [n]
