@@ -66,13 +66,7 @@ export function ensureSmpScored(sessionId: string): Promise<RescoreResult> {
 
 /** Fire-and-forget variant for write paths that must not block the user. */
 export function ensureSmpScoredInBackground(sessionId: string): void {
-  const { scheduleBackground } = require0();
-  scheduleBackground(ensureSmpScored(sessionId), "smp-rescore");
-}
-
-// Lazy require avoids a module cycle at import time.
-function require0(): { scheduleBackground: (p: Promise<unknown>, l?: string) => void } {
-  return { scheduleBackground: scheduleBackgroundImpl };
+  scheduleBackgroundImpl(ensureSmpScored(sessionId), "smp-rescore");
 }
 
 export async function rescoreLockedSmp(sessionId: string): Promise<RescoreResult> {
