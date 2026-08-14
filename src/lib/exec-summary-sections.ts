@@ -601,6 +601,7 @@ export function extractVerification(session: ExecSessionRow): VerificationResult
       const c = clean(block[j]);
       if (!c) continue;
       if (/^(?:#{1,4}\s*)?Test\s*\d+\s*[—-]/i.test(c)) break;
+      if (/SMP VERDICT|STRATEGIC NOTE/i.test(c)) break;
       // Older format: an explicit "Verdict: X — reasoning" line.
       const m = c.match(/^Verdict:\s*([A-Z][A-Z ,()a-z-]*?)\s+[—–-]\s+(.+)$/);
       if (m) {
