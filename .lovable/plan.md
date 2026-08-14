@@ -11,15 +11,34 @@ Add a `creative_guidance` text column to the sweep run record (nullable, default
 On the sweep panel in the Creative Engine, above the "Run 37-lens big idea sweep" / "Start a fresh sweep" buttons, add an optional multi-line "Creative guidance (optional)" field with helper text explaining it steers the register of ideas and is recorded against the sweep. Empty is allowed and behaves exactly as today. The field is only editable before a sweep starts; once a sweep exists its guidance is shown read-only.
 
 **3. Inject it into every lens call**
-The guidance is passed into the big-idea user message builder as its own clearly-fenced block, sitting alongside the existing constraints (execution-detail ban, word ceilings, collision check). Wording makes its status explicit: it is a steer on register and emphasis, applied across the sweep as a whole; it does not override the SMP, the lens mechanics, the output contract, or any hard ban. It is included in all three call paths — batch, single-lens recovery, and collision regeneration — so no lens in the sweep is generated without it.
+The guidance is passed into the big-idea user message builder as its own clearly-fenced block, sitting alongside the existing constraints (execution-detail ban, word ceilings, collision check). It is included in all three call paths — batch, single-lens recovery, and collision regeneration — so no lens in the sweep is generated without it.
 
+Important: the guidance text itself is yours, injected verbatim. The wrapper around it does not invent a target. Batches are 3 lenses at a time, so a sweep-wide proportion cannot be enforced by the wrapper — the model only sees its current batch plus the root tensions already produced. The wrapper therefore tells the model to read the prior-tension list and judge the running mix, which is what makes a stated numeric target actually operative.
+
+Exact injected block (guidance non-empty):
+
+```text
+═══ CREATIVE GUIDANCE FOR THIS SWEEP — MANDATORY STEER ═══
+<your guidance text, verbatim>
+
+This guidance applies to every lens in this sweep. It steers register, framing and emphasis. It does NOT override the proposition, the lens's angle of attack, the collision check, the word ceilings, or any hard ban in the system prompt — an idea may never be twisted into dishonesty or into a different proposition to satisfy it.
+Where the guidance states a proportion or target, it is measured across the WHOLE 37-lens sweep, not this batch. Before you write, read the ROOT TENSIONS ALREADY PRODUCED list above and judge the running mix against the target: if the sweep so far is short against it, this batch must correct toward it. If a lens genuinely cannot honour the guidance without breaking its own angle of attack, produce the honest idea and say so in one clause in WHY IT WINS.
+```
+
+When the guidance field is blank the block is omitted entirely and the prompt is byte-identical to today's.
 **4. Surface it afterwards**
 - Tissue Check / sweep header shows a "Creative guidance applied" block with the verbatim text.
 - The sweep export includes the same block, so any reader can see what steered the mix.
 
-## Validation against the CommBank case
 
-Run a fresh CommBank sweep with the liquidity gain-framing guidance, then compare the resulting 37 root tensions against the current sweep and report the shift in gain- vs loss-framed ideas. The guidance is deliberately phrased as emphasis ("a meaningful share"), not a ban, so loss-framing remains available where a lens genuinely needs it.
+## Making the CommBank test a real check
+
+"A meaningful share" is left entirely to model judgment as written — 2–3 shifted ideas would technically comply. Recommend running the validation with an explicit target in the guidance text itself:
+
+> Many prior ideas depict the negative of commitment (frozen, trapped, walled in) rather than the positive benefit of liquidity itself. At least half of the 37 ideas in this sweep — 19 or more — must be gain-framed: they must show what staying liquid actively delivers (access, opportunity, capability in the moment), with the positive as the idea's engine, not a closing reassurance after a loss-framed setup. Loss-framing is not banned and should still carry the remainder where a lens genuinely demands it.
+
+Then the pass/fail test is countable: classify all 37 root tensions gain vs loss vs mixed, compare against the current sweep's baseline, and report both counts. I'll do that classification and show the before/after table rather than asserting a shift.
+
 
 ## Technical notes
 
