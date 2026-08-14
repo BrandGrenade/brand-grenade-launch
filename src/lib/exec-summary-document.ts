@@ -200,8 +200,9 @@ export function buildExecSummaryDocument(
             sub: f.selected
               ? `${f.origin}. Carried forward as the recommendation.`
               : reason
-                ? `${f.origin}. Not the lead: ${reason}`
+                ? `${f.origin}. Not carried forward. Pressure-test read: ${reason}`
                 : `${f.origin}. Considered, not carried forward.`,
+
             tag: f.selected ? "Selected" : "Considered",
             muted: !f.selected,
           };
