@@ -452,21 +452,28 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
       });
     }
   }
+  // Stage 11 — pressure tests recorded against the selected proposition.
+  for (const r of stage11TestReasons(s11, smp)) whyReasons.push(r);
   const integrityLine = prose(s11, 1)[0];
   if (integrityLine) {
     whyReasons.push({ title: "Survives integrity testing", detail: integrityLine.slice(0, 260) });
   }
+  // Stage 13 — brand-fit verdict and credibility dimensions. This is the
+  // authoritative "why this wins" read whenever the proposition was refined
+  // after Stage 10/11 and therefore carries no score or pressure-test block.
+  for (const r of stage13Reasons(s13)) whyReasons.push(r);
   const fitLine = prose(s13, 1)[0];
-  if (fitLine) {
+  if (fitLine && whyReasons.length < 6) {
     whyReasons.push({ title: "Brand has permission", detail: fitLine.slice(0, 260) });
   }
-  const whyFallbackBullets = bullets(s12, 4);
+  const whyFallbackBullets = bullets(s12, 4).length ? bullets(s12, 4) : bullets(s13, 4);
   const why_this_wins =
     (whyReasons.length
-      ? reasonGrid(whyReasons)
+      ? reasonGrid(whyReasons.slice(0, 6))
       : whyFallbackBullets.length
         ? `<ul>${whyFallbackBullets.map((b) => `<li>${inlineMd(b)}</li>`).join("")}</ul>`
         : "") + (opts.extraWhyHtml ?? "");
+
 
   /* 06 — validation summary */
   const tableRows: CmpRow[] = candidates
