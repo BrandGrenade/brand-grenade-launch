@@ -73,12 +73,13 @@ Does this brand have the standing — through history, product truth, demonstrat
 Flag if below 5.
 
 5. CLEAN AIR — Weight 10%
-Is this territory currently unoccupied by competitors?
+Is this STRATEGIC TERRITORY currently occupied by a named competitor's positioning claim, brand platform, or advertising expression?
   10 — no competitor is anywhere near this territory
   8-9 — territory available with only weak or distant competitive presence
   6-7 — adjacent competitive presence but the specific claim is available
-  4-5 — a competitor has started to move toward this territory
-  1-3 — territory actively occupied by one or more competitors
+  4-5 — a named competitor has started to move toward this territory
+  1-3 — territory actively occupied by one or more named competitors
+HARD EVIDENCE REQUIREMENT: any score below 8 MUST name a specific competitor brand AND the specific claim, campaign, or positioning statement that occupies the territory. Generic vocabulary, colourway/paint names, product feature names, technical settings, and category-trend adjacency are explicitly disallowed as occupancy evidence — mirroring the named-competitor standard Competitive Impossibility already enforces. If you cannot name the brand and the claim, you may not score below 8; state "no competitor occupies this territory" and score accordingly.
 Flag if below 5.
 
 6. COMMERCIAL PRECEDENT — Weight 5%
