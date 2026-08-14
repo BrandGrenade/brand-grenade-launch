@@ -652,6 +652,10 @@ export interface ScoringResult {
   rows: ScoreRow[];
   composite: string | null;
   weighted: string | null;
+  /** True when the scored block genuinely belongs to the selected SMP. */
+  matched: boolean;
+  /** Name of the SMP the returned scores were recorded against. */
+  scoredSmp: string | null;
 }
 
 export function extractScoring(session: ExecSessionRow): ScoringResult {
@@ -661,13 +665,22 @@ export function extractScoring(session: ExecSessionRow): ScoringResult {
   const rows: ScoreRow[] = [];
   let composite: string | null = null;
   let weighted: string | null = null;
-  if (!s10) return { rows, composite, weighted };
+  let matched = false;
+  let scoredSmp: string | null = null;
+  if (!s10) return { rows, composite, weighted, matched, scoredSmp };
 
   const lines = s10.split("\n");
   const isHeader = (l: string) => /^\s*\**SMP:/i.test(l);
   let start = lines.findIndex((l) => isHeader(l) && (!key || matchKey(l).includes(key)));
+  matched = start >= 0 && !!key;
   if (start < 0) start = lines.findIndex(isHeader);
-  if (start < 0) return { rows, composite, weighted };
+  if (start < 0) return { rows, composite, weighted, matched, scoredSmp };
+  scoredSmp =
+    clean(lines[start])
+      .replace(/^\**SMP:\s*/i, "")
+      .replace(/\s*[—-]\s*FIELD:.*$/i, "")
+      .replace(/^["“']|["”']$/g, "")
+      .trim() || null;
   let end = lines.length;
   for (let i = start + 1; i < lines.length; i++) {
     if (isHeader(lines[i])) {
@@ -685,14 +698,16 @@ export function extractScoring(session: ExecSessionRow): ScoringResult {
       rows.push({ dimension: m[1].trim(), score: `${m[2]}/10`, note });
       continue;
     }
-    const comp = c.match(/^COMPOSITE:\s*([\d.]+\s*\/\s*\d+)/i);
+    // Stage 10 writes this as "COMPOSITE:", "CODE COMPOSITE:" or
+    // "WEIGHTED COMPOSITE:" depending on prompt vintage.
+    const comp = c.match(/^(?:[A-Z]+\s+)?COMPOSITE:\s*([\d.]+\s*\/\s*\d+)/i);
     if (comp) composite = comp[1].replace(/\s+/g, "");
   }
 
   // The weighted /110 composite is a deprecated framework. It is deliberately
   // never surfaced in this document, even though the string is still stored.
   weighted = null;
-  return { rows, composite, weighted };
+  return { rows, composite, weighted, matched, scoredSmp };
 }
 
 /* ── 10 — Brand World Opportunity ───────────────────────────────── */

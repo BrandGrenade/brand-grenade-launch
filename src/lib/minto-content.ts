@@ -328,6 +328,98 @@ export interface DeriveOptions {
   extraWhyHtml?: string;
 }
 
+/* ─────────────────────── "why this wins" evidence (shared) ─────────── */
+
+function tidy(s: string): string {
+  return s
+    .replace(/\*\*/g, "")
+    .replace(/`/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function smpKey(s: string): string {
+  return s.toLowerCase().replace(/[^a-z0-9 ]/g, "").replace(/\s+/g, " ").trim();
+}
+
+/**
+ * Stage 11 pressure tests recorded against the selected proposition.
+ * Handles both "Test 1 — Name: VERDICT" headings and "Verdict: X — reason"
+ * lines beneath them. Returns [] when Stage 11 never tested this line
+ * (which happens when the proposition was refined after Stage 11).
+ */
+function stage11TestReasons(s11: string, smp: string): Reason[] {
+  if (!s11 || !smp) return [];
+  const key = smpKey(smp);
+  if (key.length < 6) return [];
+  const lines = s11.split("\n");
+  const isHeader = (l: string) => /^\s*(#{2,4}\s*)?\*{0,2}SMP:/i.test(l);
+  const start = lines.findIndex((l) => isHeader(l) && smpKey(tidy(l)).includes(key));
+  if (start < 0) return [];
+  let end = lines.length;
+  for (let i = start + 1; i < lines.length; i++) {
+    if (isHeader(lines[i])) {
+      end = i;
+      break;
+    }
+  }
+  const block = lines.slice(start + 1, end);
+  const out: Reason[] = [];
+  for (let i = 0; i < block.length && out.length < 3; i++) {
+    const h = tidy(block[i]).replace(/^#{1,4}\s*/, "");
+    const m = h.match(/^Test\s*\d+\s*[—–-]\s*([^:]{3,60}):\s*([A-Z][A-Z/ ()-]{1,30})(?:\s*[—–-]\s*(.*))?$/);
+    if (!m) continue;
+    let detail = tidy(m[3] ?? "");
+    for (let j = i + 1; j < Math.min(i + 6, block.length) && detail.length < 40; j++) {
+      const c = tidy(block[j]);
+      if (!c || /^Test\s*\d+/i.test(c)) break;
+      detail = `${detail} ${c.replace(/^Verdict:\s*/i, "")}`.trim();
+    }
+    if (!detail) continue;
+    out.push({
+      title: `${m[1].trim()} — ${m[2].trim().toLowerCase()}`,
+      detail: detail.slice(0, 260),
+    });
+  }
+  return out;
+}
+
+/**
+ * Stage 13 brand-fit verdict plus its credibility dimension scores.
+ * This is the fallback authority for "why this wins" when the recommended
+ * proposition post-dates Stage 10 scoring and Stage 11 pressure testing.
+ */
+function stage13Reasons(s13: string): Reason[] {
+  if (!s13) return [];
+  const out: Reason[] = [];
+  const lines = s13.split("\n");
+  const verdictIdx = lines.findIndex((l) => /Brand Fit Verdict/i.test(l));
+  if (verdictIdx >= 0) {
+    const headline = lines
+      .slice(verdictIdx + 1, verdictIdx + 4)
+      .map(tidy)
+      .find((l) => /^[A-Z][A-Z ,—–-]{6,}/.test(l));
+    const rationale = lines
+      .slice(verdictIdx + 1, verdictIdx + 10)
+      .map(tidy)
+      .find((l) => l.length > 120);
+    if (headline || rationale) {
+      out.push({
+        title: headline ? `Brand fit — ${headline.replace(/\.$/, "").toLowerCase()}` : "Brand fit confirmed",
+        detail: (rationale ?? headline ?? "").slice(0, 300),
+      });
+    }
+  }
+  for (const raw of lines) {
+    if (out.length >= 4) break;
+    const c = tidy(raw).replace(/^[-•*]\s*/, "");
+    const m = c.match(/^([A-Z][A-Za-z /-]{4,44})\s*[—–-]\s*(\d{1,2})\s*\/\s*10\.?\s*(.*)$/);
+    if (!m || !m[3] || m[3].length < 30) continue;
+    out.push({ title: `${m[1].trim()} ${m[2]}/10`, detail: m[3].slice(0, 260) });
+  }
+  return out;
+}
+
 export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = {}): DerivedMinto {
   const brand = (session.brand_name ?? "Untitled Brand").trim();
   const category = (session.category ?? "").trim();
@@ -452,21 +544,28 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
       });
     }
   }
+  // Stage 11 — pressure tests recorded against the selected proposition.
+  for (const r of stage11TestReasons(s11, smp)) whyReasons.push(r);
   const integrityLine = prose(s11, 1)[0];
   if (integrityLine) {
     whyReasons.push({ title: "Survives integrity testing", detail: integrityLine.slice(0, 260) });
   }
+  // Stage 13 — brand-fit verdict and credibility dimensions. This is the
+  // authoritative "why this wins" read whenever the proposition was refined
+  // after Stage 10/11 and therefore carries no score or pressure-test block.
+  for (const r of stage13Reasons(s13)) whyReasons.push(r);
   const fitLine = prose(s13, 1)[0];
-  if (fitLine) {
+  if (fitLine && whyReasons.length < 6) {
     whyReasons.push({ title: "Brand has permission", detail: fitLine.slice(0, 260) });
   }
-  const whyFallbackBullets = bullets(s12, 4);
+  const whyFallbackBullets = bullets(s12, 4).length ? bullets(s12, 4) : bullets(s13, 4);
   const why_this_wins =
     (whyReasons.length
-      ? reasonGrid(whyReasons)
+      ? reasonGrid(whyReasons.slice(0, 6))
       : whyFallbackBullets.length
         ? `<ul>${whyFallbackBullets.map((b) => `<li>${inlineMd(b)}</li>`).join("")}</ul>`
         : "") + (opts.extraWhyHtml ?? "");
+
 
   /* 06 — validation summary */
   const tableRows: CmpRow[] = candidates
