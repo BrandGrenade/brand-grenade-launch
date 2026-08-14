@@ -1,7 +1,7 @@
 // STEP 2 · The shortlist. Only ideas kept on Step 1 appear here, and this is
 // the only screen where a winning idea and a winning line can be locked.
 
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { BigIdeaSweep } from "@/components/BigIdeaSweep";
 
 const AMBER = "#F2665F";
@@ -29,9 +29,16 @@ export const Route = createFileRoute("/creative/$sessionId/shortlist")({
 
 function ShortlistStep() {
   const { sessionId } = Route.useParams();
+  const navigate = useNavigate();
   return (
     <>
-      <BigIdeaSweep sessionId={sessionId} mode="shortlist" />
+      <BigIdeaSweep
+        sessionId={sessionId}
+        mode="shortlist"
+        onLocked={() => {
+          void navigate({ to: "/creative/$sessionId/channels", params: { sessionId } });
+        }}
+      />
       <div
         style={{
           maxWidth: 980,
