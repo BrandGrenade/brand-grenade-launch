@@ -6,6 +6,7 @@ import { useServerFn } from "@tanstack/react-start";
 import {
   startOrchestration,
   driveOrchestration,
+  runOrchestrationStep,
   loadOrchestrationState,
   listOrchestrations,
   setCrossRefDecision,
@@ -208,6 +209,7 @@ export function StimulusOrchestration({
 }) {
   const start = useServerFn(startOrchestration);
   const drive_ = useServerFn(driveOrchestration);
+  const step = useServerFn(runOrchestrationStep);
   const load = useServerFn(loadOrchestrationState);
   const list = useServerFn(listOrchestrations);
   const decide = useServerFn(setCrossRefDecision);
