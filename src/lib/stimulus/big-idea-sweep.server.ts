@@ -19,6 +19,7 @@ import {
   buildBigIdeaUserMessage,
   parseBigIdeaResponse,
   type PriorTension,
+  type CreativeGuidance,
 } from "./big-idea-prompt";
 
 export type Grounding = {
