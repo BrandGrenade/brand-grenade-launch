@@ -365,9 +365,14 @@ function architectureGrid(sanitised: string, currentLine = ""): { grid: string; 
     ${box(peripherals[1].lbl, peripherals[1].txt)}
     ${box(peripherals[2].lbl, peripherals[2].txt)}
     ${box(peripherals[3].lbl, peripherals[3].txt)}
-    <div class="arch-center"><div class="lbl">REFLECTION</div><div class="txt">${escapeHtml(reflection || "—")}</div></div>
+    <div class="arch-center"><div class="lbl">REFLECTION</div><div class="txt">${escapeHtml(reflection || "—")}</div>${
+      currentLine.trim() ? `<div class="lbl" style="margin-top:8pt;opacity:.7">Locked campaign line</div>` : ""
+    }</div>
     ${box(peripherals[4].lbl, peripherals[4].txt)}
-  </div>`;
+  </div>` +
+    (currentLine.trim() && storedReflection && storedReflection !== currentLine.trim()
+      ? box("Stage 22 reflection (generated, secondary)", storedReflection)
+      : "");
 
   const complete = Boolean(reflection) && peripherals.every((p) => Boolean(p.txt));
   return { grid, complete };

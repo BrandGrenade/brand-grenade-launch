@@ -106,6 +106,10 @@ type SessionRow = {
   stage_22_output: string | null;
   stage_22_brand_architecture: string | null;
   stage_22_distinctive_assets: string | null;
+  locked_big_idea?: string | null;
+  locked_campaign_line?: string | null;
+  locked_big_idea_lens?: string | null;
+  locked_big_idea_at?: string | null;
 };
 
 const SESSION_COLS =
@@ -2294,7 +2298,13 @@ function Stage22({ session, onChange }: { session: SessionRow; onChange: () => v
 
   const printPdf = () => window.print();
 
-  const reflection = architecture ? extractArchSection(architecture, "REFLECTION") : "";
+  // REFLECTION is the governing statement — the locked campaign line is
+  // authoritative wherever one exists. Stage 22's own generated line is kept
+  // below as a clearly-labelled secondary field.
+  const generatedReflection = architecture ? extractArchSection(architecture, "REFLECTION") : "";
+  const lockedLine = (session.locked_campaign_line ?? "").trim();
+  const reflection = lockedLine || generatedReflection;
+  const showGenerated = Boolean(lockedLine && generatedReflection && generatedReflection !== lockedLine);
   const peripherals = (["DOMAIN", "HERITAGE", "VALUES", "ASSETS", "PERSONALITY"] as const)
     .map((label) => ({ label, content: architecture ? extractArchSection(architecture, label) : "" }));
 
@@ -2334,9 +2344,20 @@ function Stage22({ session, onChange }: { session: SessionRow; onChange: () => v
                 fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase",
                 whiteSpace: "pre-wrap",
               }}>{sanitiseOutput(reflection) || "—"}</div>
+              {lockedLine && (
+                <div style={{ color: "#8B8680", fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase", marginTop: 10 }}>
+                  Locked campaign line{session.locked_big_idea_lens ? ` — ${session.locked_big_idea_lens}` : ""}
+                </div>
+              )}
             </div>
             <ArchBox {...peripherals[4]} />
           </div>
+
+          {showGenerated && (
+            <div style={{ marginTop: 16 }}>
+              <ArchBox label="Stage 22 reflection (generated, secondary)" content={generatedReflection} />
+            </div>
+          )}
 
 
           {/* Distinctive Assets */}
