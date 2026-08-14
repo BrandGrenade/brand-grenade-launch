@@ -95,6 +95,8 @@ type Idea = {
   master_line_at_generation: string | null;
   rationale: string | null;
   root_tension: string | null;
+  guidance_alignment: string | null;
+  guidance_alignment_note: string | null;
   convergence: IdeaConvergence | null;
   line_check: LineCheck | null;
   status: string;
@@ -122,6 +124,8 @@ type RunMeta = {
   tiebreaker_reason?: string | null;
   gate_one_confirmed?: boolean;
   gate_one_confirmed_at?: string | null;
+  creative_guidance?: string | null;
+  creative_guidance_target?: number | null;
 };
 
 function Btn({
@@ -667,6 +671,8 @@ export function BigIdeaSweep({
   const [sweep, setSweep] = useState<SweepState | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [view, setView] = useState<"ideas" | "lines">("ideas");
+  const [guidance, setGuidance] = useState("");
+  const [guidanceTarget, setGuidanceTarget] = useState("");
   const [pickIdea, setPickIdea] = useState<string | null>(null);
   const [pickLine, setPickLine] = useState<string | null>(null);
   const pollingRef = useRef(false);
@@ -794,7 +800,18 @@ export function BigIdeaSweep({
     setBusy(true);
     setErr(null);
     try {
-      const { runId: id } = await start({ data: { sessionId, force } });
+      const trimmedGuidance = guidance.trim();
+      const parsedTarget = Number.parseInt(guidanceTarget, 10);
+      const { runId: id } = await start({
+        data: {
+          sessionId,
+          force,
+          ...(trimmedGuidance ? { creativeGuidance: trimmedGuidance } : {}),
+          ...(trimmedGuidance && Number.isFinite(parsedTarget)
+            ? { creativeGuidanceTarget: parsedTarget }
+            : {}),
+        },
+      });
       setRunId(id);
       setSweep(null);
       await refresh(id);
