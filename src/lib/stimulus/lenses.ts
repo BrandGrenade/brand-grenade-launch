@@ -66,11 +66,11 @@ export const STIMULUS_LENSES: StimulusLens[] = [
     name: "The Brand Anthem",
     approach: "Music and sound as brand idea",
     provocation:
-      "If the proposition cannot be said because it has been said too many times, what unique musical story carries it instead. What is the hook, the emotional register, and what makes it impossible to forget.",
+      "If the proposition cannot be said because it has been said too many times, write the music that carries it instead. The target is a real piece of music — melody and lyric — that could exist independently of any advertising: sung, learned, covered, performed by people who do not work for the brand, and eventually owned by the culture rather than the campaign. What is the hook, what is the lyric idea, what is the emotional register, and what makes it impossible to forget. A pure sonic signature — a short owned audio mark with no lyric — remains a legitimate answer, but only when it genuinely beats a song; it is one option, not the default.",
     subPrompts:
-      "What does this brand sound like when the proposition is true. What sonic signature belongs exclusively to this brand in this specific channel moment.",
+      "What is the line people would sing back without being prompted, and what is the melodic or structural move that makes it stick. What would this piece of music still mean if the brand never appeared in it. If the answer is an owned audio mark rather than a song, what makes that mark inimitable and why is it stronger here than a song would be.",
     formatTags: ["Audio", "Film", "Social"],
-    references: [ref("Qantas I Still Call Australia Home"), ref("Intel Bong sonic logo"), ref("John Lewis Christmas soundtrack")],
+    references: [ref("Qantas I Still Call Australia Home"), ref("Coca-Cola Id Like to Teach the World to Sing"), ref("Intel Bong sonic logo")],
   },
   {
     id: "living_series",
@@ -88,11 +88,17 @@ export const STIMULUS_LENSES: StimulusLens[] = [
     name: "The Undeniable Test",
     approach: "Product demonstration as creative proof",
     provocation:
-      "What is the single most dramatic, unexpected, and visually compelling way to demonstrate the brand doing exactly what the proposition claims. Not describe it. Prove it in a way that cannot be disputed or ignored.",
+      "What is the most dramatic, unexpected and compelling way to demonstrate the brand doing exactly what the proposition claims. Not describe it. Prove it, so the proof cannot be disputed or ignored. Two registers are equally valid: a single literal act of proof staged so plainly that argument is impossible, or an extended narrative or comedic piece where the demonstration is the payoff and the proof lands indirectly. Whichever register you choose, the dramatised proof of this specific claim is the spine of the idea — a funny or charming story that does not prove the claim is a failure of this lens.",
     subPrompts:
-      "What if the demonstration took place in an environment where it was least expected. What if the demonstration destroyed the thing it was proving in the process.",
+      "What if the demonstration took place in an environment where it was least expected. What if the demonstration destroyed the thing it was proving in the process. What if the proof were never announced, and only revealed itself as the punchline of a story people were already enjoying.",
     formatTags: ["Film", "Social", "Outdoor"],
-    references: [ref("Volvo Trucks The Epic Split"), ref("Blendtec Will It Blend"), ref("Red Bull Stratos")],
+    references: [
+      ref("Volvo Trucks The Epic Split"),
+      ref("Mobil We Want You To Live car dropped from a building"),
+      ref("Toyota Hilux Bugger"),
+      ref("Blendtec Will It Blend"),
+      ref("Red Bull Stratos"),
+    ],
   },
   {
     id: "absent_world",

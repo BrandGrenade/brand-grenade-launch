@@ -66,6 +66,7 @@ DO NOT
 - Write shot lists, shot grammar or camera direction — no "rack-focus", "long take", "final frame", "cut to", "we open on", "close on".
 - Write scene-by-scene or beat-by-beat sequencing. One territory, not a running order.
 - Specify music or sound design — no mic choice, tempo, instrumentation, track references or sound-design beats.
+  EXEMPTION — brand_anthem ONLY: for the lens with id "brand_anthem", songwriting vocabulary is permitted and expected. You may describe melody, lyric (including sample lines), hook, chorus, verse, refrain, singability and song form, because for that lens the song IS the idea. The exemption does not extend to production or engineering spec even there: still no mic choice, no BPM or tempo stated as a technical value, no named session players, no mix or master notes, no existing track licences. Every other lens remains fully bound by the ban above.
 If the idea can only be expressed by describing exactly how it would be filmed, it is not abstracted enough — push back to the underlying territory and state that instead.
 
 ROOT TENSION — MANDATORY
