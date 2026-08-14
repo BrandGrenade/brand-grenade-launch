@@ -109,7 +109,14 @@ code. Do not score any other proposition.`;
     .slice(blockStart >= 0 ? blockStart : 0, blockEnd > 0 ? blockEnd : undefined)
     .trim();
 
-  const appended = `${s10.trimEnd()}\n\n${RESCORE_MARKER}\nThis proposition was finalised after the original Stage 10 pass and has been scored independently on its own wording, using the same six-dimension framework and the same hard floors.\n\n${block}\n`;
+  // Deterministic code lines: the shared gate injects these only when its
+  // block regex matches, so we guarantee them here rather than risk a
+  // document rendering a scored block with no composite.
+  const codeLines = /CODE COMPOSITE:/i.test(block)
+    ? ""
+    : `\nCODE VERDICT: ${score.codeVerdict}${score.codeVerdict === "PASS" ? " — clears Stage 10 hard floors." : ` — ${score.codeReason}.`}\nCODE COMPOSITE: ${score.weightedComposite}/100 weighted (Fame 30% · Truth 20% · Competitive Impossibility 15% · Brand Permission 10% · Clean Air 10% · Commercial Precedent 5%).\n`;
+
+  const appended = `${s10.trimEnd()}\n\n${RESCORE_MARKER}\nThis proposition was finalised after the original Stage 10 pass and has been scored independently on its own wording, using the same six-dimension framework and the same hard floors.\n\n${block}\n${codeLines}`;
 
   await supabaseAdmin
     .from("sessions")
