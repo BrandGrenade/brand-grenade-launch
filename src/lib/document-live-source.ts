@@ -20,6 +20,15 @@ export async function resolveLiveDocumentSession<T extends LiveDocumentSession>(
 ): Promise<T> {
   if (!supplied.id) return supplied;
 
+  // Governance rule: every document must report a real score for the exact
+  // proposition it recommends. If the locked SMP was finalised after Stage 10,
+  // score it now rather than rendering a placeholder. Idempotent and silent.
+  try {
+    await ensureLockedSmpScored({ data: { sessionId: supplied.id } });
+  } catch {
+    /* never block document rendering on the re-score */
+  }
+
   const { data: current, error } = await supabase
     .from("sessions")
     .select("*, locked_big_idea_run_id")
