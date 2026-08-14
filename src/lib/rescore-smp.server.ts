@@ -22,10 +22,6 @@ function key(s: string): string {
     .toLowerCase()
     .replace(/[^a-z0-9 ]/g, "")
     .replace(/\s+/g, " ")
-    .trim()
-    .split("\n")
-    .filter((l) => !/^\s*CODE (VERDICT|COMPOSITE|FLAGS|BASIS)\b/i.test(l))
-    .join("\n")
     .trim();
 }
 
@@ -148,6 +144,9 @@ code. Do not score any other proposition.`;
   const blockEnd = gated.output.search(/\n\s*SMPS SCORED:/i);
   const block = gated.output
     .slice(blockStart >= 0 ? blockStart : 0, blockEnd > 0 ? blockEnd : undefined)
+    .split("\n")
+    .filter((l) => !/^\s*CODE (VERDICT|COMPOSITE|FLAGS|BASIS)\b/i.test(l))
+    .join("\n")
     .trim();
 
   // Deterministic code lines: the shared gate injects these only when its
