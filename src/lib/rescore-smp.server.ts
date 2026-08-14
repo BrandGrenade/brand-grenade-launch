@@ -42,7 +42,7 @@ export async function rescoreLockedSmp(sessionId: string): Promise<RescoreResult
   const { data: session, error } = await supabaseAdmin
     .from("sessions")
     .select(
-      "id, brand_name, category, selected_smp, selected_smp_field_name, stage_1_output, stage_10_output, is_preflight_test",
+      "id, brand_name, category, selected_smp, selected_smp_field_name, stage_1_output, stage_8_output, stage_9_output, stage_11_output, stage_10_output, is_preflight_test",
     )
     .eq("id", sessionId)
     .maybeSingle();
@@ -66,6 +66,18 @@ exact wording above, not on any earlier or parent proposition.
 
 ==== STAGE 1 — SANITISED BRIEF ====
 ${session.stage_1_output ?? ""}
+
+==== STAGE 8 — PROPOSITION SET THIS LINE CAME FROM ====
+${(session.stage_8_output ?? "").slice(0, 20000)}
+
+==== STAGE 9 — DIVERGENCE VALIDATION REPORT ====
+${(session.stage_9_output ?? "").slice(0, 15000)}
+
+==== STAGE 11 — PRESSURE TESTS ON THIS PROPOSITION ====
+${(session.stage_11_output ?? "").slice(0, 15000)}
+
+Score with the same evidence base and calibration the sibling propositions
+received — this is a like-for-like pass, not a stricter one.
 
 Emit exactly ONE per-SMP score block for this proposition using the six
 dimensions (Fame, Truth Strength, Competitive Impossibility, Brand Permission,
