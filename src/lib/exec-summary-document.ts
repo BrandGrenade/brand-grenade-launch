@@ -200,8 +200,9 @@ export function buildExecSummaryDocument(
             sub: f.selected
               ? `${f.origin}. Carried forward as the recommendation.`
               : reason
-                ? `${f.origin}. Not the lead: ${reason}`
+                ? `${f.origin}. Not carried forward. Pressure-test read: ${reason}`
                 : `${f.origin}. Considered, not carried forward.`,
+
             tag: f.selected ? "Selected" : "Considered",
             muted: !f.selected,
           };
@@ -239,10 +240,21 @@ export function buildExecSummaryDocument(
       muted: !!t.verdict && !/HOLDS/i.test(t.verdict),
     }))
     .filter((t) => !!t.sub || !!t.tag);
+  // The verdict headline is often already spent in the lead paragraph; the
+  // per-test read is the substance, so fall back to the raw verdict rather
+  // than printing the "not available" placeholder over real data.
+  const verdictFallback = verdict ?? verification.verdict;
   const verificationHtml =
-    verdict || testItems.length
-      ? `${verdict ? p(verdict) : ""}${testItems.length ? bullets(testItems) : ""}`
+    verdictFallback || testItems.length
+      ? `${verdict ? p(verdict) : ""}${
+          testItems.length
+            ? bullets(testItems)
+            : verdictFallback && !verdict
+              ? p(`Verification verdict: ${verdictFallback}`)
+              : ""
+        }`
       : missing();
+
 
   // 08 — Scoring
   const scoringHtml = scoring.rows.length
@@ -278,18 +290,14 @@ export function buildExecSummaryDocument(
       : missing();
 
 
-  // 10 — Recommendations, including channel strategy
+  // 10 — Recommendations. Channels are rendered once, in the implications
+  // section below; they are deliberately not repeated here.
   const condition = dedupe.take(recs.condition, 2);
   const nextStep = dedupe.take(recs.nextStep, 2);
   const recsHtml = `${condition ? p(`Condition on activation: ${condition}`) : ""}${
     nextStep ? p(`Next step: ${nextStep}`) : ""
-  }${
-    recs.channels.length
-      ? `<div class="part-label" style="margin-top:10pt">CHANNELS THIS STRATEGY ACTIVATES THROUGH</div>${bullets(
-          recs.channels.map((c) => ({ head: c })),
-        )}`
-      : ""
-  }${!condition && !nextStep && !recs.channels.length ? missing() : ""}`;
+  }${!condition && !nextStep ? missing() : ""}`;
+
 
   // Assembled against the canonical ten-section Minto structure. The rich
   // exec-summary extraction above feeds the canonical slots; ordering,
