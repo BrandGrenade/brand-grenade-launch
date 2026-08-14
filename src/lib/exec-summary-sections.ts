@@ -585,12 +585,23 @@ export function extractVerification(session: ExecSessionRow): VerificationResult
     // with or without them.
     const h = clean(block[i]).match(/^(?:#{1,4}\s*)?(Test\s*\d+\s*[—-]\s*.+)$/i);
     if (!h) continue;
-    const name = h[1].replace(/\s*\(diagnostic\)\s*$/i, "").trim();
+    let name = h[1].replace(/\s*\(diagnostic\)\s*$/i, "").trim();
     let verdict: string | null = null;
     let note: string | null = null;
-    for (let j = i + 1; j < Math.min(i + 4, block.length); j++) {
+
+    // Stage 11 writes the verdict into the heading itself:
+    //   "Test 1 — Competitive Counter: WOBBLES"
+    const inline = name.match(/^(.*?):\s*([A-Z][A-Z/ ()-]{1,30})$/);
+    if (inline) {
+      name = inline[1].trim();
+      verdict = inline[2].trim();
+    }
+
+    for (let j = i + 1; j < Math.min(i + 8, block.length); j++) {
       const c = clean(block[j]);
       if (!c) continue;
+      if (/^(?:#{1,4}\s*)?Test\s*\d+\s*[—-]/i.test(c)) break;
+      // Older format: an explicit "Verdict: X — reasoning" line.
       const m = c.match(/^Verdict:\s*([A-Z][A-Z ,()a-z-]*?)\s+[—–-]\s+(.+)$/);
       if (m) {
         // Keep the verdict token short enough to read as a badge; any
@@ -600,12 +611,24 @@ export function extractVerification(session: ExecSessionRow): VerificationResult
         verdict = (bracket > 0 ? full.slice(0, bracket) : full).trim();
         const qualifier = bracket > 0 ? full.slice(bracket).trim() : "";
         note = firstSentencesOf(qualifier ? `${qualifier} ${m[2]}` : m[2], 1);
+        break;
       }
-
-      break;
+      // Current format: the reasoning is simply the prose that follows the
+      // heading, sometimes preceded by a "Counter:" line worth keeping.
+      const counter = c.match(/^Counter:\s*(.+)$/i);
+      if (counter) {
+        note = `Counter — ${counter[1].replace(/\s*$/, "")}`;
+        continue;
+      }
+      const prose = firstSentencesOf(c, 1);
+      if (prose) {
+        note = note ? `${note} ${prose}` : prose;
+        break;
+      }
     }
     tests.push({ name, verdict, note });
   }
+
 
   let verdict: string | null = null;
   const vLine = block.find((l) => /SMP VERDICT:/i.test(l));
