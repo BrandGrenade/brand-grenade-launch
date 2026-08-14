@@ -1,0 +1,8 @@
+UPDATE sessions
+SET stage_10_output = replace(
+  stage_10_output,
+  'None of these is the exact "Stealth. By Design." move, so this is close precedent rather than direct: structurally similar moves have succeeded commercially under named campaigns. 7/10.',
+  'None of these is the exact "Stealth. By Design." move, so this is close precedent rather than direct: structurally similar moves have succeeded commercially under named campaigns. 7/10.
+
+RECENCY RE-EVALUATION (added on review; score unchanged at 7/10). Challenged on the age of the Rolls-Royce (1958) and Volkswagen "Think Small" (1959) precedents. Both are now treated as illustrative of the principle only and carry NO weight in the score: they predate the fragmented, feed-first media environment by more than sixty years, and the mechanisms by which a restrained long-copy print ad earned attention in 1958 do not transfer. Re-scored on the post-2000 evidence alone: Bottega Veneta, "When Your Own Initials Are Enough" (2001 onward) — deliberate non-announcement as the whole brand proposition, which drove the house''s commercial transformation under Tomas Maier; and Patagonia, "Don''t Buy This Jacket" (New York Times, Black Friday 2011) — a confident refusal to argue for the sale, which increased sales. Both are 21st-century, both are named campaigns, both are structurally the same move as withholding rather than asserting. They are doing the real work in this score and they are sufficient on their own to hold the 7-9 band entry. Neither is automotive and neither is the exact move, so the score sits at the bottom of the close-precedent band. CONFIRMED: 7/10 holds without the mid-century canon.')
+WHERE id = '6ab4ea96-7c3a-4e0a-91a9-24b601752b35';

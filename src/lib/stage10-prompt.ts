@@ -84,13 +84,15 @@ HARD EVIDENCE REQUIREMENT: any score below 8 MUST name a specific competitor bra
 Flag if below 5.
 
 6. COMMERCIAL PRECEDENT — Weight 5%
-Has this specific creative or strategic move been made successfully by a named brand or campaign in any category?
+Has this specific creative or strategic move been made successfully by a named brand or campaign in any category, in a media environment comparable to today's?
   10 — direct precedent — a named campaign made this exact move and succeeded commercially
   7-9 — close precedent — structurally similar move succeeded
   4-6 — distant precedent — general principle has worked but no close analogue
   1-3 — no precedent found
 HARD EVIDENCE REQUIREMENT: precedent means a NAMED brand and a NAMED campaign or advertising moment. A general category, register or trend ("minimalist advertising has worked", "quiet luxury", "stealth aesthetics in trim") with no named example is NOT precedent and may not be used to justify any score above 3. Conversely, if named structurally similar campaigns do exist, you must cite them and score in the 7-9 band rather than defaulting to "distant precedent".
+RECENCY REQUIREMENT: precedent must be weighted by era, because the mechanisms of advertising effectiveness change over decades. Precedents from 2000 onward carry full weight. Precedents from 1980–1999 carry partial weight. Pre-1980 precedents (e.g. the 1950s–60s Ogilvy/DDB canon) are illustrative of the principle only and MAY NOT on their own justify a score of 7 or above — at least one named post-2000 precedent is required to enter the 7-9 band, and a named post-2000 precedent in a comparable media environment is required for 10. State the year of every precedent cited and say explicitly which precedents are carrying the score.
 Flag if below 4.
+
 
 PER-SMP SCORE BLOCK (emit exactly this; do NOT add a VERDICT line)
 SMP: "[line]" — FIELD: [name]
@@ -99,7 +101,7 @@ Truth Strength: [n]/10 — [anchor justification]
 Competitive Impossibility: [n]/10 — [anchor justification; below 10 you MUST name the specific competitor AND the actual positioning claim that makes it available to them — generic word usage is not evidence]
 Brand Permission: [n]/10 — [anchor justification; below 10 you MUST cite the specific named brand action, campaign, product fact or customer-research/perception data behind any deduction — unsourced assertion about customer belief is not evidence]
 Clean Air: [n]/10 — [anchor justification; below 8 you MUST name the competitor brand AND the specific occupying claim/campaign — otherwise state that no competitor occupies this territory]
-Commercial Precedent: [n]/10 — [anchor justification; you MUST name the brand and the campaign/advertising moment — a general category or trend with no named example is not precedent]
+Commercial Precedent: [n]/10 — [anchor justification; you MUST name the brand, the campaign/advertising moment AND its year — a general category or trend with no named example is not precedent, and a pre-1980 precedent alone cannot justify 7+; state which post-2000 precedents are carrying the score]
 
 HEADER
 SMPS SCORED: [n]
