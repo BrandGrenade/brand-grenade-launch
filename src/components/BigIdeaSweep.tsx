@@ -828,6 +828,10 @@ export function BigIdeaSweep({
 
 
   const locked = Boolean(run.locked_at);
+  const alignedCount = useMemo(
+    () => ideas.filter((d) => (d.guidance_alignment ?? "") === "aligned").length,
+    [ideas],
+  );
   const counts = useMemo(
     () => ({
       keep: ideas.filter((d) => d.status === "keep").length,
