@@ -105,7 +105,7 @@ export async function runBigIdeaBatch(
 ): Promise<{ done: boolean; generated: number; remaining: number }> {
   const { data: run, error: runErr } = await supabaseAdmin
     .from("stimulus_runs")
-    .select("id, session_id, smp")
+    .select("id, session_id, smp, creative_guidance, creative_guidance_target")
     .eq("id", runId)
     .single();
   if (runErr || !run) throw new Error("Stimulus run not found");
@@ -136,7 +136,7 @@ export async function runBigIdeaBatch(
   // check compares against the FULL prior set, not just this batch.
   const { data: priorRows } = await supabaseAdmin
     .from("stimulus_directions")
-    .select("lens_id, lens_name, root_tension")
+    .select("lens_id, lens_name, root_tension, guidance_alignment")
     .eq("run_id", run.id)
     .eq("status", "generated")
     .not("root_tension", "is", null)
@@ -148,6 +148,40 @@ export async function runBigIdeaBatch(
       lensName: r.lens_name,
       rootTension: (r.root_tension ?? "").trim(),
     }));
+
+  // Compliance arithmetic is computed server-side from stored alignments, so
+  // correction is driven by real counts rather than the model's recollection.
+  const guidanceText = (run.creative_guidance ?? "").trim();
+  const { count: totalLenses } = await supabaseAdmin
+    .from("stimulus_directions")
+    .select("id", { count: "exact", head: true })
+    .eq("run_id", run.id);
+  const { count: pendingTotal } = await supabaseAdmin
+    .from("stimulus_directions")
+    .select("id", { count: "exact", head: true })
+    .eq("run_id", run.id)
+    .eq("status", "pending");
+  const generatedSoFar = (priorRows ?? []).length;
+  const alignedSoFar = (priorRows ?? []).filter(
+    (r) => (r.guidance_alignment ?? "") === "aligned",
+  ).length;
+  const guidance: CreativeGuidance | null = guidanceText
+    ? {
+        text: guidanceText,
+        target: run.creative_guidance_target ?? null,
+        totalLenses: totalLenses ?? 37,
+        generated: generatedSoFar,
+        aligned: alignedSoFar,
+        remaining: Math.max((pendingTotal ?? 0) - pending.length, 0),
+      }
+    : null;
+  // Alignment landed inside this batch counts toward the ledger for the
+  // single-lens recovery and regeneration calls that follow it.
+  let alignedRunning = alignedSoFar;
+  let generatedRunning = generatedSoFar;
+  const liveGuidance = (): CreativeGuidance | null =>
+    guidance ? { ...guidance, aligned: alignedRunning, generated: generatedRunning } : null;
+
 
   // Regeneration is a LOOP, not a one-shot retry: each regenerated idea is
   // re-tested against the full prior set (including ideas accepted earlier in
