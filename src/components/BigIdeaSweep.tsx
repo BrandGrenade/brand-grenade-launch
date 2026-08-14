@@ -287,6 +287,35 @@ function LineBlock({ d }: { d: Idea }) {
         </div>
       )}
       <ExpressionBlock d={d} />
+      <GuidanceBadge d={d} />
+    </div>
+  );
+}
+
+/** Model's own honest verdict on whether this lens met the sweep's creative guidance. */
+function GuidanceBadge({ d }: { d: Idea }) {
+  const v = (d.guidance_alignment ?? "").trim().toLowerCase();
+  if (!v) return null;
+  const aligned = v === "aligned";
+  const tone = aligned ? AMBER : MUTED;
+  const note = (d.guidance_alignment_note ?? "").trim();
+  return (
+    <div style={{ marginTop: 12 }}>
+      <span
+        className="text-mono"
+        style={{
+          color: tone,
+          border: `1px solid ${tone}55`,
+          borderRadius: 999,
+          padding: "3px 8px",
+          fontSize: 10,
+          letterSpacing: "0.12em",
+          textTransform: "uppercase",
+        }}
+      >
+        Guidance: {aligned ? "aligned" : v === "unstated" ? "not stated" : "not aligned"}
+      </span>
+      {note && <span style={{ color: MUTED, fontSize: 12, marginLeft: 10 }}>{note}</span>}
     </div>
   );
 }
