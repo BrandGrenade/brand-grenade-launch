@@ -348,13 +348,17 @@ async function finishOrRequeue(runId: string): Promise<void> {
  * client (or any later resume call) simply starts the next slice. Nothing
  * depends on one serverless invocation surviving the full ~7 minute sweep.
  */
-export async function driveBigIdeaSweep(runId: string, batchSize = 3): Promise<void> {
+export async function driveBigIdeaSweep(
+  runId: string,
+  batchSize = 3,
+  budgetMs = DRIVE_BUDGET_MS,
+): Promise<void> {
   let consecutiveFailures = 0;
   const startedAt = Date.now();
   let complete = false;
 
   for (let guard = 0; guard < 60; guard++) {
-    if (Date.now() - startedAt > DRIVE_BUDGET_MS) {
+    if (Date.now() - startedAt > budgetMs) {
       // Budget spent mid-sweep: hand off cleanly to the next invocation.
       await markBatchLanded(runId);
       return;
