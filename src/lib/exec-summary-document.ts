@@ -240,10 +240,21 @@ export function buildExecSummaryDocument(
       muted: !!t.verdict && !/HOLDS/i.test(t.verdict),
     }))
     .filter((t) => !!t.sub || !!t.tag);
+  // The verdict headline is often already spent in the lead paragraph; the
+  // per-test read is the substance, so fall back to the raw verdict rather
+  // than printing the "not available" placeholder over real data.
+  const verdictFallback = verdict ?? verification.verdict;
   const verificationHtml =
-    verdict || testItems.length
-      ? `${verdict ? p(verdict) : ""}${testItems.length ? bullets(testItems) : ""}`
+    verdictFallback || testItems.length
+      ? `${verdict ? p(verdict) : ""}${
+          testItems.length
+            ? bullets(testItems)
+            : verdictFallback && !verdict
+              ? p(`Verification verdict: ${verdictFallback}`)
+              : ""
+        }`
       : missing();
+
 
   // 08 — Scoring
   const scoringHtml = scoring.rows.length
