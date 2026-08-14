@@ -59,7 +59,12 @@ export async function loadAssetRules(userId: string, brandName: string): Promise
 }
 
 export async function setPhase(id: string, patch: AnyRow) {
-  await db.from("stimulus_orchestrations").update(patch).eq("id", id);
+  // Every phase write doubles as a liveness heartbeat, so a browser-driven
+  // step keeps the row visibly alive exactly like the background driver does.
+  await db
+    .from("stimulus_orchestrations")
+    .update({ driver_heartbeat_at: new Date().toISOString(), ...patch })
+    .eq("id", id);
 }
 
 
