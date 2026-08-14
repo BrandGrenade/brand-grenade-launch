@@ -219,17 +219,15 @@ export function buildExecSummaryDocument(
   if (proof.strongest) {
     proofBits.push(`Strongest dimension — ${proof.strongest.dimension} ${proof.strongest.score}`);
   }
-  // Section 04 always states the composite position, so the field is
-  // consistent across every session rather than silently disappearing when
-  // the recommended line post-dates Stage 10 scoring.
+  // Section 04 always states the composite position, but only ever the score
+  // belonging to the actual selected SMP. A parent or sibling proposition's
+  // number is never substituted.
   if (proof.composite && scoring.matched) {
     proofBits.push(`Composite score — ${proof.composite}`);
-  } else if (proof.composite && scoring.scoredSmp) {
-    proofBits.push(
-      `Composite score — ${proof.composite}, scored at Stage 10 against the parent proposition “${scoring.scoredSmp}”`,
-    );
   } else {
-    proofBits.push("Composite score — not scored at Stage 10 (proposition refined after scoring)");
+    proofBits.push(
+      "Composite score — not independently scored (this proposition was finalised after Stage 10 scoring)",
+    );
   }
   if (proof.asset) proofBits.push(`Distinctive asset in play — ${proof.asset}`);
   const proofHtml = proofBits.length
