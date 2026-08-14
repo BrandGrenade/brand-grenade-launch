@@ -2294,7 +2294,13 @@ function Stage22({ session, onChange }: { session: SessionRow; onChange: () => v
 
   const printPdf = () => window.print();
 
-  const reflection = architecture ? extractArchSection(architecture, "REFLECTION") : "";
+  // REFLECTION is the governing statement — the locked campaign line is
+  // authoritative wherever one exists. Stage 22's own generated line is kept
+  // below as a clearly-labelled secondary field.
+  const generatedReflection = architecture ? extractArchSection(architecture, "REFLECTION") : "";
+  const lockedLine = (session.locked_campaign_line ?? "").trim();
+  const reflection = lockedLine || generatedReflection;
+  const showGenerated = Boolean(lockedLine && generatedReflection && generatedReflection !== lockedLine);
   const peripherals = (["DOMAIN", "HERITAGE", "VALUES", "ASSETS", "PERSONALITY"] as const)
     .map((label) => ({ label, content: architecture ? extractArchSection(architecture, label) : "" }));
 
