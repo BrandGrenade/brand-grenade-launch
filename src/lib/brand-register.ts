@@ -164,6 +164,7 @@ type StimulusOrchRow = {
   id: string;
   session_id: string;
   status: string | null;
+  driver_status: string | null;
   gate_two_confirmed: boolean | null;
   updated_at: string;
 };
