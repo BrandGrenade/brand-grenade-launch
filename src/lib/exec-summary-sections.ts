@@ -685,7 +685,9 @@ export function extractScoring(session: ExecSessionRow): ScoringResult {
       rows.push({ dimension: m[1].trim(), score: `${m[2]}/10`, note });
       continue;
     }
-    const comp = c.match(/^COMPOSITE:\s*([\d.]+\s*\/\s*\d+)/i);
+    // Stage 10 writes this as "COMPOSITE:", "CODE COMPOSITE:" or
+    // "WEIGHTED COMPOSITE:" depending on prompt vintage.
+    const comp = c.match(/^(?:[A-Z]+\s+)?COMPOSITE:\s*([\d.]+\s*\/\s*\d+)/i);
     if (comp) composite = comp[1].replace(/\s+/g, "");
   }
 
