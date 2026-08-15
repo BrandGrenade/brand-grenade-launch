@@ -669,7 +669,8 @@ export function extractScoring(session: ExecSessionRow): ScoringResult {
   let weighted: string | null = null;
   let matched = false;
   let scoredSmp: string | null = null;
-  if (!s10) return { rows, composite, weighted, matched, scoredSmp };
+  let verdict: string | null = null;
+  if (!s10) return { rows, composite, weighted, verdict, matched, scoredSmp };
 
   const lines = s10.split("\n");
   const isHeader = (l: string) => /^\s*\**SMP:/i.test(l);
@@ -679,7 +680,7 @@ export function extractScoring(session: ExecSessionRow): ScoringResult {
   // Falling back to a parent or sibling proposition's block is forbidden.
   const start = lines.findIndex((l) => isHeader(l) && !!key && matchKey(l).includes(key));
   matched = start >= 0;
-  if (start < 0) return { rows, composite, weighted, matched, scoredSmp };
+  if (start < 0) return { rows, composite, weighted, verdict, matched, scoredSmp };
   scoredSmp =
     clean(lines[start])
       .replace(/^\**SMP:\s*/i, "")
@@ -707,12 +708,14 @@ export function extractScoring(session: ExecSessionRow): ScoringResult {
     // "WEIGHTED COMPOSITE:" depending on prompt vintage.
     const comp = c.match(/^(?:[A-Z]+\s+)?COMPOSITE:\s*([\d.]+\s*\/\s*\d+)/i);
     if (comp) composite = comp[1].replace(/\s+/g, "");
+    const verd = c.match(/^(?:CODE\s+)?VERDICT:\s*(PASS|ELIMINATED)\b/i);
+    if (verd) verdict = verd[1].toUpperCase();
   }
 
   // The weighted /110 composite is a deprecated framework. It is deliberately
   // never surfaced in this document, even though the string is still stored.
   weighted = null;
-  return { rows, composite, weighted, matched, scoredSmp };
+  return { rows, composite, weighted, verdict, matched, scoredSmp };
 }
 
 /* ── 10 — Brand World Opportunity ───────────────────────────────── */
