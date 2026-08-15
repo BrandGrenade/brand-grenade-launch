@@ -323,17 +323,33 @@ export const reviseStimulusDirection = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i) =>
     z
-      .object({ directionId: z.string().uuid(), notes: z.string().trim().min(1).max(2000) })
+      .object({
+        directionId: z.string().uuid(),
+        notes: z.string().trim().min(1).max(2000),
+        // Caller's stated target. Verified against the stored row before any
+        // write, so a stale or mis-copied request fails loudly instead of
+        // landing in the wrong idea's slot.
+        expectedSlot: z.number().int().min(1).max(99).nullish(),
+        expectedLensId: z.string().nullish(),
+      })
       .parse(i),
   )
   .handler(async ({ data, context }) => {
     const { data: row, error } = await supabaseAdmin
       .from("stimulus_directions")
-      .select("id, run_id, lens_id, direction, revise_count")
+      .select("id, run_id, lens_id, lens_name, sort_order, direction, revise_count")
       .eq("id", data.directionId)
       .single();
     if (error || !row) throw new Error("Direction not found");
     const run = await loadRun(row.run_id, context.userId);
+
+    const { assertReviseTarget } = await import("./stimulus/revise-target");
+    assertReviseTarget({
+      notes: data.notes,
+      actual: { slot: (row.sort_order ?? 0) + 1, lensName: row.lens_name ?? row.lens_id },
+      actualLensId: row.lens_id,
+      expected: { slot: data.expectedSlot, lensId: data.expectedLensId },
+    });
 
     const { regenerateDirection } = await import("./stimulus/regenerate.server");
     const result = await regenerateDirection({
@@ -344,4 +360,5 @@ export const reviseStimulusDirection = createServerFn({ method: "POST" })
     });
     return { direction: result.direction };
   });
+
 
