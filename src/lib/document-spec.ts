@@ -13,7 +13,7 @@
 // else, so a document type cannot pass an audit for a section list it invented.
 
 import { MINTO_SECTIONS, type MintoSectionDef } from "./minto";
-import { DETONATION_APPENDIX, PIPELINE_APPENDIX } from "./minto-content";
+import { DETONATION_APPENDIX, NO_STAGE_OUTPUT, PIPELINE_APPENDIX } from "./minto-content";
 
 export type DocumentTypeId =
   | "board_strategy"
@@ -75,6 +75,4 @@ export const DOCUMENT_SPEC_BY_LABEL: Record<string, DocumentSpec> = Object.fromE
   Object.values(DOCUMENT_SPECS).map((s) => [s.label, s]),
 );
 
-/** Placeholder body for a canonical section with no stored output. */
-export const NO_STAGE_OUTPUT =
-  "No output was recorded for this stage in this session.";
+export { NO_STAGE_OUTPUT };

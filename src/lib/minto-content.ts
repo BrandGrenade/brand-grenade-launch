@@ -482,6 +482,9 @@ function findWinner(candidates: ScoredCandidate[], smp: string): ScoredCandidate
 
 /* ─────────────────────────────────────────────── appendix condensing ── */
 
+/** Placeholder body for a canonical section with no stored output. */
+export const NO_STAGE_OUTPUT = "No output was recorded for this stage in this session.";
+
 export const PIPELINE_APPENDIX: Array<{ title: string; key: string }> = [
   { title: "Brief & Context", key: "stage_1_output" },
   { title: "Category Intelligence", key: "stage_2_output" },
