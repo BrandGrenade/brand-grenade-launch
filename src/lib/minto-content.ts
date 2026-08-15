@@ -209,6 +209,80 @@ export function orderBySelected(raw: string, smp: string, aliases: string[] = []
   return promoteParagraphs(raw, has);
 }
 
+/**
+ * Returns only evidence belonging to the locked proposition from a stage that
+ * contains several candidate write-ups. Reordering is not enough for a
+ * document appendix: the later candidate blocks still render and read as a
+ * second recommendation. This selector preserves shared stage context, but
+ * removes every candidate-owned block/paragraph except the selected one.
+ */
+export function scopeToSelected(raw: string, smp: string, aliases: string[] = []): string {
+  const keys = [smp, ...aliases].map(smpKey).filter((k) => k.length >= 6);
+  if (!raw.trim() || !keys.length) return raw;
+  const has = (s: string) => {
+    const keyed = smpKey(s);
+    return keys.some((key) => keyed.includes(key) || key.includes(keyed));
+  };
+  const lines = raw.split("\n");
+  const boundaries: Array<{ matches: (line: string) => boolean; allowBodyMatch: boolean }> = [
+    { matches: (line) => /^\s*\*{0,2}(?:PROPOSITION|SMP|CANDIDATE|OPTION|CARD|TERRITORY)\s*\d+\*{0,2}\s*$/i.test(line), allowBodyMatch: true },
+    { matches: (line) => /^\s*(?:#{1,6}\s*)?\*{0,2}(?:Proposition|Candidate|Option|Card|Field)\s*\d+\s*[:—–-]/i.test(line), allowBodyMatch: true },
+    // A generic markdown heading may own an entire themed section containing
+    // several candidates. Its body mentioning the selected line does not make
+    // that whole section selected-candidate evidence; require a header match.
+    { matches: (line) => /^\s*#{1,6}\s+\S/.test(line), allowBodyMatch: false },
+    { matches: (line) => /^\s*(?:#{1,6}\s*)?\*{0,2}SMP\s*\d*\s*:/i.test(line), allowBodyMatch: true },
+  ];
+
+  for (const boundary of boundaries) {
+    const starts: number[] = [];
+    lines.forEach((line, index) => {
+      if (boundary.matches(line)) starts.push(index);
+    });
+    if (starts.length < 2) continue;
+    const blocks = starts.map((start, index) => lines.slice(start, starts[index + 1] ?? lines.length));
+    const headerHit = blocks.findIndex((block) => has(block[0] ?? ""));
+    const bodyHit = headerHit >= 0
+      ? headerHit
+      : boundary.allowBodyMatch
+        ? blocks.findIndex((block) => has(block.join(" ")))
+        : -1;
+    if (bodyHit < 0) continue;
+    const preamble = lines.slice(0, starts[0]);
+    while (preamble.length && /^\s*(?:#{1,6}\s+\S|\*\*[^*]{3,90}\*\*\s*)$/.test(preamble[preamble.length - 1])) {
+      preamble.pop();
+    }
+    return [...preamble, ...blocks[bodyHit]].join("\n").trim();
+  }
+
+  // Theme-led stages (notably Stage 9) place one bold candidate paragraph
+  // beneath each shared heading. Keep shared prose and the selected paragraph,
+  // but never carry the sibling paragraphs into the document.
+  const paragraphs = raw.split(/\n\s*\n/);
+  const named = paragraphs.filter((paragraph) => /^\s*\*\*[^*]{3,90}\*\*/.test(paragraph));
+  if (named.length >= 2 && named.some(has)) {
+    // Collect every bold territory name, including names embedded in later
+    // comparative-summary paragraphs, before filtering candidate blocks.
+    const siblingNames = [...raw.matchAll(/\*\*([^*\n]{3,90})\*\*/g)]
+      .map((match) => match[1].trim())
+      .filter((name) => name && !has(name));
+    return paragraphs
+      .filter((paragraph) => {
+        if (/^\s*\*\*[^*]{3,90}\*\*/.test(paragraph)) return has(paragraph);
+        // Summary paragraphs that explicitly enumerate sibling territory
+        // names are comparative set evidence, not evidence for the selected
+        // proposition. They belong in rejection records, never in its own
+        // distinctiveness appendix card.
+        const paragraphKey = smpKey(paragraph);
+        const siblingMentions = siblingNames.filter((name) => paragraphKey.includes(smpKey(name))).length;
+        return siblingMentions === 0;
+      })
+      .join("\n\n")
+      .trim();
+  }
+  return raw;
+}
+
 
 /**
  * Some stages are organised by theme rather than by candidate: each themed
@@ -460,10 +534,14 @@ export function condenseStage(
   let units = 0;
   let sinceHeading = 0;
 
-  const isHeading = (l: string) =>
-    /^#{1,4}\s/.test(l) ||
-    /^(SECTION|STAGE|PART)\b/i.test(l) ||
-    /^[A-Z0-9 .,'&()/–—-]{6,70}:?$/.test(l);
+  const headingText = (line: string) => line.replace(/^#{1,4}\s+/, "").replace(/^\*\*(.*?)\*\*\s*(?:[—–-]\s*Validated)?\s*$/i, "$1").trim();
+  const isHeading = (line: string) => {
+    const unwrapped = headingText(line);
+    return /^#{1,4}\s/.test(line) ||
+      /^(SECTION|STAGE|PART)\b/i.test(unwrapped) ||
+      /^\*\*[^*]{3,90}\*\*\s*(?:[—–-]\s*Validated)?\s*$/i.test(line) ||
+      /^[A-Z0-9 .,'&()/–—-]{6,70}:?$/.test(unwrapped);
+  };
 
   for (const rawLine of raw.split("\n")) {
     const line = rawLine.trim();
@@ -474,7 +552,7 @@ export function condenseStage(
     if (isHeading(line)) {
       if (units >= maxUnits || chars >= maxChars) continue;
       if (out.length && out[out.length - 1].startsWith("### ")) out.pop();
-      out.push(`### ${line.replace(/^#{1,4}\s+/, "").replace(/:$/, "")}`);
+      out.push(`### ${headingText(line).replace(/:$/, "")}`);
       sinceHeading = 0;
       continue;
     }
@@ -522,7 +600,7 @@ export function buildAppendix(session: MintoSession, opts: AppendixOptions = {})
         .filter((l) => !BOOKKEEPING_LINE.test(l.trim()))
         .join("\n");
       if (!raw.trim()) return "";
-      if (CANDIDATE_STAGES.has(s.key)) raw = orderBySelected(raw, selectedSmp, aliases);
+       if (CANDIDATE_STAGES.has(s.key)) raw = scopeToSelected(raw, selectedSmp, aliases);
       const body = mode === "full" ? raw : condenseStage(raw, budget);
 
       if (!body.trim()) return "";

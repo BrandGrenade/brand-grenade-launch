@@ -121,6 +121,13 @@ interface Finding {
   detail: string;
 }
 
+interface StringOccurrence {
+  value: string;
+  section: string;
+  count: number;
+  legitimateRejectedList: boolean;
+}
+
 function auditDocument(html: string, ctx: {
   smp: string;
   siblings: string[];
@@ -129,6 +136,7 @@ function auditDocument(html: string, ctx: {
   corpusText: string;
   /** Appendix stage titles whose source column actually contains the locked SMP. */
   stagesNamingSmp: Set<string>;
+  probes?: string[];
 }): Finding[] {
   const findings: Finding[] = [];
   const smpN = norm(ctx.smp);
@@ -226,7 +234,59 @@ function auditDocument(html: string, ctx: {
     }
   }
 
+  /* P7 — explicit subject-string search. Presence in the canonical rejected
+   * section is legitimate; every other occurrence is candidate contamination.
+   * This deliberately catches fluent, source-traceable sibling copy that P1
+   * cannot distinguish from the selected proposition's own evidence. */
+  for (const probe of ctx.probes ?? []) {
+    const probeN = norm(probe);
+    if (!probeN) continue;
+    for (const sec of secs) {
+      const text = strip(sec);
+      const textN = norm(text);
+      if (!textN.includes(probeN)) continue;
+      const heading = text.slice(0, 100).replace(/\s+/g, " ").trim();
+      const legitimate = /^(?:0?7\s+)?what was rejected|considered and set aside|not carried forward/i.test(heading);
+      if (!legitimate) {
+        findings.push({
+          code: "P7 SIBLING OCCURRENCE",
+          detail: `“${probe}” appears outside a legitimate rejected-proposition list in section “${heading}”`,
+        });
+      }
+    }
+  }
+
+  /* P8 — no heading may be followed immediately by another heading or the
+   * end of its appendix block. This is the orphan-fragment shape that allowed
+   * “The Quiet Rebellion / The Permission Price Point — Validated” through. */
+  const orphanHeadings = html.match(/<h3[^>]*>[^<]+<\/h3>\s*(?=<h3|<\/div>)/g) ?? [];
+  for (const orphan of orphanHeadings) {
+    findings.push({ code: "P8 ORPHAN HEADING", detail: `heading has no attached evidence: “${strip(orphan)}”` });
+  }
+
   return findings;
+}
+
+function stringOccurrences(html: string, probes: string[]): StringOccurrence[] {
+  const sections = html.split(/<div class="section/).slice(1);
+  const out: StringOccurrence[] = [];
+  for (const probe of probes) {
+    const needle = norm(probe);
+    for (const sec of sections) {
+      const text = strip(sec);
+      const haystack = norm(text);
+      const count = needle ? haystack.split(needle).length - 1 : 0;
+      if (!count) continue;
+      const section = text.slice(0, 100).replace(/\s+/g, " ").trim();
+      out.push({
+        value: probe,
+        section,
+        count,
+        legitimateRejectedList: /^(?:0?7\s+)?what was rejected|considered and set aside|not carried forward/i.test(section),
+      });
+    }
+  }
+  return out;
 }
 
 /* ── run ────────────────────────────────────────────────────────────── */
@@ -278,6 +338,7 @@ for (const row of (rows ?? []) as Row[]) {
       s.replace(/\*\*/g, "").trim(),
     ),
   ].filter((s) => s && norm(s) !== norm(smp) && s.split(" ").length <= 12);
+  const danMurphysPdfProbes = ["Confidence Paradox", "Quiet Rebellion"];
 
   const docs: Record<string, string> = {};
   const safe = (name: string, fn: () => string) => {
@@ -305,6 +366,12 @@ for (const row of (rows ?? []) as Row[]) {
   }
 
   for (const [name, html] of Object.entries(docs)) {
+    // Regression requested against the regenerated Dan Murphy's Strategy
+    // Executive Summary PDF. Other document types can legitimately reuse a
+    // later selected creative territory with the same historical label.
+    const regressionProbes = /dan murphy/i.test(brand) && name === "Strategy Executive Summary"
+      ? danMurphysPdfProbes
+      : [];
     docCount++;
     const key = `${row.id}__${name}`;
     const h = createHash("sha256").update(html).digest("hex").slice(0, 16);
@@ -323,13 +390,21 @@ for (const row of (rows ?? []) as Row[]) {
         String(row.stage_18_detonation_line ?? ""),
       ].filter(Boolean),
       corpusShingles,
+      probes: regressionProbes,
     });
+    const occurrences = stringOccurrences(html, regressionProbes);
     for (const f of findings) tally[f.code] = (tally[f.code] ?? 0) + 1;
     if (!findings.length) clean++;
 
     report.push(`## ${brand} · ${name}`);
     report.push(`\`${String(row.id).slice(0, 8)}\` · locked SMP: “${smp}” · sha ${h} (${drift})`);
     if (!findings.length) report.push("- clean");
+    for (const occurrence of occurrences) {
+      report.push(`- **STRING SEARCH** — “${occurrence.value}” ×${occurrence.count} in “${occurrence.section}” · ${occurrence.legitimateRejectedList ? "legitimate rejected-proposition list" : "outside rejected-proposition list"}`);
+    }
+    for (const probe of regressionProbes.filter((value) => !occurrences.some((o) => o.value === value))) {
+      report.push(`- **STRING SEARCH** — “${probe}” ×0`);
+    }
     for (const f of findings.slice(0, 12)) report.push(`- **${f.code}** — ${f.detail}`);
     if (findings.length > 12) report.push(`- …and ${findings.length - 12} more`);
     report.push("");
