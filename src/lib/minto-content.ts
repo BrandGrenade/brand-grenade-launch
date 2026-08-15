@@ -404,14 +404,8 @@ export function buildAppendix(session: MintoSession, opts: AppendixOptions = {})
   // Stages that enumerate several candidate propositions. Condensing reads
   // from the top, so the selected proposition's block is promoted first;
   // otherwise the appendix evidences a candidate the document did not choose.
-  const CANDIDATE_STAGES = new Set([
-    "stage_8_output",
-    "stage_9_output",
-    "stage_10_output",
-    "stage_11_output",
-    "stage_12_output",
-    "stage_14_output",
-  ]);
+  const CANDIDATE_STAGES = CANDIDATE_STAGE_KEYS;
+
   const selectedSmp = clean(session.selected_smp).trim();
 
   const blocks = defs
