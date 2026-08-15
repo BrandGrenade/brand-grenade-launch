@@ -1227,6 +1227,16 @@ export function BigIdeaSweep({
 
 
             </div>
+            {!locked && err && (
+              <div className="text-body-sm" style={{ color: RED, marginTop: 12, lineHeight: 1.7 }}>
+                {err}
+              </div>
+            )}
+            {!locked && !pickIdea && (
+              <div className="text-body-sm" style={{ color: MUTED, marginTop: 12, lineHeight: 1.7 }}>
+                Pick a winning idea above (Winning idea) to enable locking.
+              </div>
+            )}
             {locked && (
               <div className="text-body-sm" style={{ color: MUTED, marginTop: 12, lineHeight: 1.7 }}>
                 Channel briefs generated from here on are bound to this idea and line. Regenerate
