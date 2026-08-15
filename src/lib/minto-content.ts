@@ -128,17 +128,28 @@ export function orderBySelected(raw: string, smp: string): string {
   // Boundaries must sit at candidate level, not at every sub-heading, or a
   // candidate's own body is torn away from its header and the reorder moves
   // a bare title instead of the evidence beneath it.
+  //
+  // Ordering matters: a candidate's TITLE is what a reader sees as the
+  // section header, so title-bearing boundaries (markdown headings,
+  // "PROPOSITION 2") are tried before body-level labels such as `SMP: "..."`.
+  // Splitting on `SMP:` leaves the first candidate's title stranded in the
+  // preamble, which is how a scoring section ended up headed by one
+  // proposition while the line beneath it belonged to another.
   const candidates: Array<(l: string) => boolean> = [
     (l) => /^\s*\*{0,2}(?:PROPOSITION|SMP|CANDIDATE|OPTION|CARD|TERRITORY)\s*\d+\*{0,2}\s*$/i.test(l),
-    (l) => /^\s*(?:#{1,6}\s*)?\*{0,2}SMP\s*\d*\s*:/i.test(l),
     (l) => /^\s*(?:#{1,6}\s*)?\*{0,2}(?:Proposition|Candidate|Option|Card|Field)\s*\d+\s*[:—–-]/i.test(l),
-    (l) => /^\s*##\s+\S/.test(l),
     (l) => /^\s*###\s+\S/.test(l),
+    (l) => /^\s*##\s+\S/.test(l),
     (l) => /^\s*#\s+\S/.test(l),
+    (l) => /^\s*(?:#{1,6}\s*)?\*{0,2}SMP\s*\d*\s*:/i.test(l),
     // Bold-only lines are the weakest signal: they are often sub-labels
     // inside a candidate block, so they are tried last.
     (l) => /^\s*\*\*[^*]{3,90}\*\*\s*$/.test(l),
   ];
+
+  /** A preamble line that reads as a candidate title rather than context. */
+  const looksLikeTitle = (l: string) =>
+    /^\s*#{1,6}\s+\S/.test(l) || /^\s*\*\*[^*]{3,90}\*\*\s*$/.test(l);
 
   for (const isBoundary of candidates) {
     const starts: number[] = [];
@@ -146,18 +157,34 @@ export function orderBySelected(raw: string, smp: string): string {
       if (isBoundary(l)) starts.push(i);
     });
     if (starts.length < 2) continue;
-    const preamble = lines.slice(0, starts[0]);
+    let preamble = lines.slice(0, starts[0]);
     const blocks = starts.map((s, n) => lines.slice(s, starts[n + 1] ?? lines.length));
     const headerHit = blocks.findIndex((b) => smpKey(b[0] ?? "").includes(key));
     const bodyHit = blocks.findIndex((b) => smpKey(b.join(" ")).includes(key));
     const hit = headerHit >= 0 ? headerHit : bodyHit;
     if (hit < 0) continue;
-    if (hit === 0) return raw;
+    // Any trailing preamble title belongs to whichever candidate happened to
+    // be written first. Once the order changes it would mislabel the block
+    // beneath it, so it is dropped unless it names the selected proposition.
+    while (preamble.length) {
+      const last = preamble[preamble.length - 1];
+      if (!last.trim()) {
+        preamble.pop();
+        continue;
+      }
+      if (looksLikeTitle(last) && !smpKey(last).includes(key)) {
+        preamble.pop();
+        continue;
+      }
+      break;
+    }
+    if (hit === 0 && preamble.length === starts[0]) return raw;
     const ordered = [blocks[hit], ...blocks.filter((_, i) => i !== hit)];
     return [...preamble, ...ordered.flat()].join("\n");
   }
   return raw;
 }
+
 
 
 
