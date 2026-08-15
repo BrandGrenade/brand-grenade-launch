@@ -261,6 +261,9 @@ export function scopeToSelected(raw: string, smp: string, aliases: string[] = []
   const paragraphs = raw.split(/\n\s*\n/);
   const named = paragraphs.filter((paragraph) => /^\s*\*\*[^*]{3,90}\*\*/.test(paragraph));
   if (named.length >= 2 && named.some(has)) {
+    const siblingNames = named
+      .map((candidate) => candidate.match(/^\s*\*\*([^*]{3,90})\*\*/)?.[1] ?? "")
+      .filter((name) => name && !has(name));
     return paragraphs
       .filter((paragraph) => {
         if (/^\s*\*\*[^*]{3,90}\*\*/.test(paragraph)) return has(paragraph);
@@ -268,10 +271,8 @@ export function scopeToSelected(raw: string, smp: string, aliases: string[] = []
         // names are comparative set evidence, not evidence for the selected
         // proposition. They belong in rejection records, never in its own
         // distinctiveness appendix card.
-        const siblingMentions = named.filter((candidate) => {
-          const name = candidate.match(/^\s*\*\*([^*]{3,90})\*\*/)?.[1] ?? "";
-          return name && !has(name) && smpKey(paragraph).includes(smpKey(name));
-        }).length;
+        const paragraphKey = smpKey(paragraph);
+        const siblingMentions = siblingNames.filter((name) => paragraphKey.includes(smpKey(name))).length;
         return siblingMentions === 0;
       })
       .join("\n\n")

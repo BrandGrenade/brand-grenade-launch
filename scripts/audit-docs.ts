@@ -339,7 +339,7 @@ for (const row of (rows ?? []) as Row[]) {
     ),
   ].filter((s) => s && norm(s) !== norm(smp) && s.split(" ").length <= 12);
   const regressionProbes = /dan murphy/i.test(brand)
-    ? ["Confidence Paradox", "You already know what you're doing here", "Quiet Rebellion"]
+    ? ["Confidence Paradox", "Quiet Rebellion"]
     : [];
 
   const docs: Record<string, string> = {};
