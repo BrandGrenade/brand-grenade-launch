@@ -652,6 +652,8 @@ export interface ScoringResult {
   rows: ScoreRow[];
   composite: string | null;
   weighted: string | null;
+  /** Code-computed Stage 10 verdict for this exact proposition (PASS/ELIMINATED). */
+  verdict: string | null;
   /** True when the scored block genuinely belongs to the selected SMP. */
   matched: boolean;
   /** Name of the SMP the returned scores were recorded against. */
