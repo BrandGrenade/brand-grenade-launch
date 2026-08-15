@@ -63,6 +63,26 @@ export function stripSelectionArtifacts(html: string): string {
 }
 
 /**
+ * Where a section's body starts carrying the NEXT canonical section's content.
+ * A heading that names the following section, appearing after this section has
+ * already said something of its own, is a boundary bleed. A recap heading that
+ * names a distant section is legitimate and is left alone.
+ */
+function bleedOffset(sections: GateSection[], i: number): number {
+  const sec = sections[i];
+  const next = sections[i + 1];
+  if (!next) return -1;
+  const nextTitle = norm(next.title);
+  if (!nextTitle || nextTitle === norm(sec.title)) return -1;
+  for (const m of sec.bodyHtml.matchAll(/<h[1-6][^>]*>([\s\S]*?)<\/h[1-6]>/g)) {
+    if (norm(strip(m[1])) !== nextTitle) continue;
+    const before = strip(sec.bodyHtml.slice(0, m.index)).length;
+    if (before > 200) return m.index!;
+  }
+  return -1;
+}
+
+/**
  * Section-boundary seal. A section body may only contain its own content:
  * if a heading inside a section names a DIFFERENT canonical section of the
  * same document, everything from that heading onward is another section's
@@ -70,28 +90,14 @@ export function stripSelectionArtifacts(html: string): string {
  * bleed cannot reappear in one builder after being fixed in another.
  */
 export function sealSectionBoundaries(html: string, spec: DocumentSpec): string {
-  const canonical = new Map<string, string>();
-  for (const f of spec.frontMatter) canonical.set(norm(f.kicker), f.kicker);
-  for (const a of spec.appendix) canonical.set(norm(a.title), a.title);
 
   const sections = renderedSections(html);
   let out = html;
   // last → first so earlier offsets stay valid
   for (let i = sections.length - 1; i >= 0; i--) {
-    const sec = sections[i];
-    const own = norm(sec.title);
-    const headRe = /<h[1-6][^>]*>([\s\S]*?)<\/h[1-6]>/g;
-    let m: RegExpExecArray | null;
-    let cutAt = -1;
-    while ((m = headRe.exec(sec.bodyHtml))) {
-      const t = norm(strip(m[1]));
-      if (!t || t === own) continue;
-      if (canonical.has(t) && canonical.get(t) !== sec.title) {
-        cutAt = m.index;
-        break;
-      }
-    }
+    const cutAt = bleedOffset(sections, i);
     if (cutAt < 0) continue;
+    const sec = sections[i];
     const tail = /((?:\s*<\/div>)+\s*)$/.exec(sec.bodyHtml)?.[1] ?? "";
     const kept = sec.bodyHtml.slice(0, cutAt).replace(/\s+$/, "") + tail;
     out = out.slice(0, sec.bodyAt) + kept + out.slice(sec.bodyAt + sec.bodyHtml.length);
@@ -112,10 +118,6 @@ export function checkDocumentStructure(html: string, spec: DocumentSpec): string
   for (const a of spec.appendix) {
     if (!seen.has(`${a.index}|${norm(a.title)}`)) failures.push(`missing section ${a.index} "${a.title}"`);
   }
-  const canonical = new Map<string, string>();
-  for (const f of spec.frontMatter) canonical.set(norm(f.kicker), f.kicker);
-  for (const a of spec.appendix) canonical.set(norm(a.title), a.title);
-
   for (const sec of rendered) {
     if (!sec.text.trim()) failures.push(`section ${sec.index} "${sec.title}" has no body`);
     const orphans = sec.bodyHtml.match(/<h[23][^>]*>[^<]*<\/h[23]>\s*(?=<h[23]|<\/div>|$)/g) ?? [];
@@ -124,12 +126,9 @@ export function checkDocumentStructure(html: string, spec: DocumentSpec): string
     if (/CANDIDATE SET\s*[—–-]\s*(?:select|choose) one|\b[A-Z]\s*[·•]\s*(?:BASE|BREACH|FUSE|FLASHPOINT)\b/.test(sec.text)) {
       failures.push(`internal selection artifact in section ${sec.index} "${sec.title}"`);
     }
-    // C6 — boundary: a section may not contain another canonical section.
-    for (const m of sec.bodyHtml.matchAll(/<h[1-6][^>]*>([\s\S]*?)<\/h[1-6]>/g)) {
-      const t = norm(strip(m[1]));
-      if (t && t !== norm(sec.title) && canonical.has(t)) {
-        failures.push(`section ${sec.index} "${sec.title}" contains "${canonical.get(t)}" content`);
-      }
+    // C6 — boundary: a section may not run on into the next canonical section.
+    if (bleedOffset(rendered, rendered.indexOf(sec)) >= 0) {
+      failures.push(`section ${sec.index} "${sec.title}" runs on into the next section`);
     }
   }
   return failures;
