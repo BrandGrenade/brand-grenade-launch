@@ -1344,9 +1344,18 @@ export function BigIdeaSweep({
             if (runId) await refresh(runId);
           }}
           onRevise={async (directionId, notes) => {
-            await revise({ data: { directionId, notes } });
+            const target = ideas.find((x) => x.id === directionId);
+            await revise({
+              data: {
+                directionId,
+                notes,
+                expectedSlot: target ? target.sort_order + 1 : null,
+                expectedLensId: target?.lens_id ?? null,
+              },
+            });
             if (runId) await refresh(runId);
           }}
+
         />
       )}
 
