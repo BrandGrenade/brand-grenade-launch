@@ -148,8 +148,11 @@ export function parseScoredCandidates(stage10: string): ScoredCandidate[] {
     if (current && current.name) out.push(current);
   };
   for (const raw of stage10.split("\n")) {
-    const line = raw.trim();
-    const smp = line.match(/^SMP:\s*[""]?(.+?)[""]?\s*(?:—\s*FIELD:.*)?$/i);
+    // Markdown emphasis and heading markers are cosmetic; strip them before
+    // matching so a re-scored block written as `**Fame:** 7/10` parses
+    // identically to the plain `Fame: 7/10` the original pass emits.
+    const line = raw.trim().replace(/^#{1,6}\s*/, "").replace(/\*\*/g, "").trim();
+    const smp = line.match(/^SMP:\s*[""“”"']?(.+?)[""“”"']?\s*(?:—\s*FIELD:.*)?$/i);
     if (smp) {
       push();
       current = { name: smp[1].trim(), composite: null, verdict: null, verdictNote: "", dims: {} };
@@ -157,19 +160,38 @@ export function parseScoredCandidates(stage10: string): ScoredCandidate[] {
     }
     if (!current) continue;
     for (const dim of DIMENSIONS) {
-      const m = line.match(new RegExp(`^${dim}:\\s*(\\d+(?:\\.\\d+)?)\\s*/\\s*10`, "i"));
+      const m = line.match(new RegExp(`^${dim}\\s*:\\s*(\\d+(?:\\.\\d+)?)\\s*/\\s*10`, "i"));
       if (m) current.dims[dim] = Number(m[1]);
     }
     const comp = line.match(/CODE COMPOSITE:\s*(\d+(?:\.\d+)?)\s*\/\s*100/i);
     if (comp) current.composite = Number(comp[1]);
-    const verdict = line.match(/CODE VERDICT:\s*(PASS|FAIL)\s*(?:—\s*(.*))?/i);
+    const verdict = line.match(/CODE VERDICT:\s*(PASS|FAIL|ELIMINATED)\s*(?:—\s*(.*))?/i);
     if (verdict) {
-      current.verdict = verdict[1].toUpperCase() as "PASS" | "FAIL";
+      const v = verdict[1].toUpperCase();
+      current.verdict = v === "PASS" ? "PASS" : "FAIL";
       current.verdictNote = (verdict[2] ?? "").trim();
     }
   }
   push();
-  return out;
+  // Re-scores are appended to the same Stage 10 output, so the same
+  // proposition can appear twice. The last block wins; earlier values are
+  // kept only where the later block is silent.
+  const merged: ScoredCandidate[] = [];
+  for (const c of out) {
+    const prior = merged.findIndex((m) => normalise(m.name) === normalise(c.name));
+    if (prior < 0) {
+      merged.push(c);
+      continue;
+    }
+    merged[prior] = {
+      name: c.name,
+      composite: c.composite ?? merged[prior].composite,
+      verdict: c.verdict ?? merged[prior].verdict,
+      verdictNote: c.verdictNote || merged[prior].verdictNote,
+      dims: { ...merged[prior].dims, ...c.dims },
+    };
+  }
+  return merged;
 }
 
 function normalise(s: string): string {
