@@ -72,7 +72,13 @@ async function fetchLatestIntelligence(
   }
 }
 
-export function Document00ACard({ briefText }: { briefText?: string | null }) {
+export function Document00ACard({
+  brand,
+  briefText,
+}: {
+  brand: string;
+  briefText?: string | null;
+}) {
   const [intel, setIntel] = useState<IntelSummary | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [downloading, setDownloading] = useState(false);
