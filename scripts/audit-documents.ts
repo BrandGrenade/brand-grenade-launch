@@ -116,7 +116,7 @@ function c1Completeness(spec: DocumentSpec, rendered: RenderedSection[]): CheckR
 
 function c2Subject(
   rendered: RenderedSection[],
-  ctx: { smp: string; siblings: string[] },
+  ctx: { smp: string; siblings: string[]; frontMatterTitles: Set<string>; stagesNamingSmp: Set<string> },
 ): CheckResult {
   const detail: string[] = [];
   const smpN = norm(ctx.smp);
@@ -138,6 +138,12 @@ function c2Subject(
       }
     }
     if (sec.text.length < 200) continue;
+    // An appendix card is a historical transcript. A stage recorded before the
+    // lock legitimately discusses other candidates; it is only a subject
+    // defect when that stage DOES carry the locked proposition and the card
+    // shows a sibling instead.
+    const isFrontMatter = ctx.frontMatterTitles.has(norm(sec.title));
+    if (!isFrontMatter && !ctx.stagesNamingSmp.has(norm(sec.title))) continue;
     const n = norm(sec.text);
     const namesLocked = smpN.length > 8 && n.includes(smpN);
     const hit = sibN.filter((s) => n.includes(s));
@@ -241,7 +247,22 @@ for (const row of live) {
     const rendered = sections(html);
     const results: Array<[string, CheckResult]> = [
       ["C1", c1Completeness(spec, rendered)],
-      ["C2", c2Subject(rendered, { smp, siblings })],
+      [
+        "C2",
+        c2Subject(rendered, {
+          smp,
+          siblings,
+          frontMatterTitles: new Set(spec.frontMatter.map((f) => norm(f.kicker))),
+          stagesNamingSmp: new Set(
+            spec.appendix
+              .filter((a) => {
+                const raw = norm(String((row as Row)[a.key] ?? ""));
+                return raw.includes(norm(smp)) && norm(smp).length > 8;
+              })
+              .map((a) => norm(a.title)),
+          ),
+        }),
+      ],
       ["C3", c3Foreign(rendered, foreign)],
       ["C4", c4Orphans(rendered)],
     ];
