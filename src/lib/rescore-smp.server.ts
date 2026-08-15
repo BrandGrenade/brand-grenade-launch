@@ -56,10 +56,10 @@ const inFlight = new Map<string, Promise<RescoreResult>>();
  * "unscored" and triggers a fresh scoring pass. Safe to call from anywhere,
  * as often as you like.
  */
-export function ensureSmpScored(sessionId: string): Promise<RescoreResult> {
+export function ensureSmpScored(sessionId: string, force = false): Promise<RescoreResult> {
   const existing = inFlight.get(sessionId);
   if (existing) return existing;
-  const run = rescoreLockedSmp(sessionId).finally(() => inFlight.delete(sessionId));
+  const run = rescoreLockedSmp(sessionId, force).finally(() => inFlight.delete(sessionId));
   inFlight.set(sessionId, run);
   return run;
 }
@@ -69,7 +69,14 @@ export function ensureSmpScoredInBackground(sessionId: string): void {
   scheduleBackgroundImpl(ensureSmpScored(sessionId), "smp-rescore");
 }
 
-export async function rescoreLockedSmp(sessionId: string): Promise<RescoreResult> {
+/**
+ * `force` re-scores even when a score block already exists — used when the
+ * scoring anchors themselves change and older scores must be refreshed.
+ */
+export async function rescoreLockedSmp(
+  sessionId: string,
+  force = false,
+): Promise<RescoreResult> {
   const { data: session, error } = await supabaseAdmin
     .from("sessions")
     .select(
@@ -82,7 +89,7 @@ export async function rescoreLockedSmp(sessionId: string): Promise<RescoreResult
   const smp = (session.selected_smp ?? "").trim();
   const s10 = session.stage_10_output ?? "";
   if (!smp || !s10.trim()) return { status: "skipped" };
-  if (hasIndependentScore(s10, smp)) return { status: "already_scored", smp };
+  if (!force && hasIndependentScore(s10, smp)) return { status: "already_scored", smp };
 
   const field = session.selected_smp_field_name || "Selected proposition";
   const userMessage = `BRAND: ${session.brand_name}
@@ -189,7 +196,7 @@ code. Do not score any other proposition.`;
     .eq("id", sessionId)
     .maybeSingle();
   const freshS10 = fresh?.stage_10_output ?? s10;
-  if ((fresh?.selected_smp ?? smp).trim() !== smp || hasIndependentScore(freshS10, smp)) {
+  if ((fresh?.selected_smp ?? smp).trim() !== smp || (!force && hasIndependentScore(freshS10, smp))) {
     return { status: "already_scored", smp };
   }
 

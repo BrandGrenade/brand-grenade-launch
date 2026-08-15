@@ -678,7 +678,11 @@ export function extractScoring(session: ExecSessionRow): ScoringResult {
   // selected, locked SMP. If Stage 10 never scored that exact line — because
   // the proposition was refined after scoring — no score is returned at all.
   // Falling back to a parent or sibling proposition's block is forbidden.
-  const start = lines.findIndex((l) => isHeader(l) && !!key && matchKey(l).includes(key));
+  // When a proposition has been re-scored (Stage 10 re-score section appended),
+  // the LAST matching block is the current, authoritative one.
+  const start = key
+    ? lines.reduce((acc, l, i) => (isHeader(l) && matchKey(l).includes(key) ? i : acc), -1)
+    : -1;
   matched = start >= 0;
   if (start < 0) return { rows, composite, weighted, verdict, matched, scoredSmp };
   scoredSmp =

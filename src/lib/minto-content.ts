@@ -352,7 +352,11 @@ function stage11TestReasons(s11: string, smp: string): Reason[] {
   if (key.length < 6) return [];
   const lines = s11.split("\n");
   const isHeader = (l: string) => /^\s*(#{2,4}\s*)?\*{0,2}SMP:/i.test(l);
-  const start = lines.findIndex((l) => isHeader(l) && smpKey(tidy(l)).includes(key));
+  // Last matching block wins: a re-score is appended after the original.
+  const start = lines.reduce(
+    (acc, l, i) => (isHeader(l) && smpKey(tidy(l)).includes(key) ? i : acc),
+    -1,
+  );
   if (start < 0) return [];
   let end = lines.length;
   for (let i = start + 1; i < lines.length; i++) {
