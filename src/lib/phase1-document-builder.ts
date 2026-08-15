@@ -79,7 +79,7 @@ export function md(text: string): string {
 }
 
 import { stripDocumentMetadata } from "./strip-document-metadata";
-import { BOOKKEEPING_LINE, orderBySelected } from "./minto-content";
+import { BOOKKEEPING_LINE, CANDIDATE_STAGE_KEYS, orderBySelected } from "./minto-content";
 import { buildBoardStrategyDocument } from "./board-strategy-document";
 
 export function sanitise(t: string | null | undefined): string {
