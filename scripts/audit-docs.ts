@@ -176,15 +176,19 @@ function auditDocument(html: string, ctx: {
     if (/what was rejected|considered and set aside|not carried forward/i.test(t.slice(0, 160))) continue;
     if (/Appendix|backing detail/i.test(t.slice(0, 140))) { appendix = true; continue; }
     // Appendix blocks carry a stage title from the shared appendix spec.
-    const head = t.slice(0, 80).replace(/^\d+\s*/, "").trim().toLowerCase();
+    const head = t
+      .slice(0, 120)
+      .replace(/^[^A-Za-z]*(?:keep-together|page-break)?"?>?\s*/i, "")
+      .replace(/^\d+\s*/, "")
+      .trim()
+      .toLowerCase();
     if (PIPELINE_APPENDIX.some((d) => head.startsWith(d.title.toLowerCase()))) appendix = true;
     // Appendix blocks are historical transcripts. A stage that predates the
     // lock legitimately discusses other candidates; it is only a defect when
     // that stage DOES contain the locked proposition and the document showed
     // a sibling instead.
     if (appendix) {
-      const title = t.slice(0, 60).replace(/^\d+\s*/, "").trim();
-      const stage = [...ctx.stagesNamingSmp].find((x) => title.toLowerCase().startsWith(x.toLowerCase()));
+      const stage = [...ctx.stagesNamingSmp].find((x) => head.startsWith(x.toLowerCase()));
       if (!stage) continue;
     }
     const n = norm(t);
