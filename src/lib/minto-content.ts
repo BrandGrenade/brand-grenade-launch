@@ -261,8 +261,10 @@ export function scopeToSelected(raw: string, smp: string, aliases: string[] = []
   const paragraphs = raw.split(/\n\s*\n/);
   const named = paragraphs.filter((paragraph) => /^\s*\*\*[^*]{3,90}\*\*/.test(paragraph));
   if (named.length >= 2 && named.some(has)) {
-    const siblingNames = named
-      .map((candidate) => candidate.match(/^\s*\*\*([^*]{3,90})\*\*/)?.[1] ?? "")
+    // Collect every bold territory name, including names embedded in later
+    // comparative-summary paragraphs, before filtering candidate blocks.
+    const siblingNames = [...raw.matchAll(/\*\*([^*\n]{3,90})\*\*/g)]
+      .map((match) => match[1].trim())
       .filter((name) => name && !has(name));
     return paragraphs
       .filter((paragraph) => {
