@@ -491,6 +491,7 @@ export function buildAppendix(session: MintoSession, opts: AppendixOptions = {})
   const CANDIDATE_STAGES = CANDIDATE_STAGE_KEYS;
 
   const selectedSmp = clean(session.selected_smp).trim();
+  const aliases = selectedAliases(session);
 
   const blocks = defs
     .map((s, i) => {
@@ -503,7 +504,7 @@ export function buildAppendix(session: MintoSession, opts: AppendixOptions = {})
         .filter((l) => !BOOKKEEPING_LINE.test(l.trim()))
         .join("\n");
       if (!raw.trim()) return "";
-      if (CANDIDATE_STAGES.has(s.key)) raw = orderBySelected(raw, selectedSmp);
+      if (CANDIDATE_STAGES.has(s.key)) raw = orderBySelected(raw, selectedSmp, aliases);
       const body = mode === "full" ? raw : condenseStage(raw, budget);
 
       if (!body.trim()) return "";
