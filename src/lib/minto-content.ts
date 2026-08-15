@@ -131,9 +131,12 @@ export function orderBySelected(raw: string, smp: string): string {
   const candidates: Array<(l: string) => boolean> = [
     (l) => /^\s*(?:#{1,6}\s*)?\*{0,2}SMP\s*\d*\s*:/i.test(l),
     (l) => /^\s*(?:#{1,6}\s*)?\*{0,2}(?:Proposition|Candidate|Option|Card|Field)\s*\d+\s*[:—–-]/i.test(l),
-    (l) => /^\s*\*\*[^*]{3,90}\*\*\s*$/.test(l),
     (l) => /^\s*##\s+\S/.test(l),
     (l) => /^\s*###\s+\S/.test(l),
+    (l) => /^\s*#\s+\S/.test(l),
+    // Bold-only lines are the weakest signal: they are often sub-labels
+    // inside a candidate block, so they are tried last.
+    (l) => /^\s*\*\*[^*]{3,90}\*\*\s*$/.test(l),
   ];
 
   for (const isBoundary of candidates) {
