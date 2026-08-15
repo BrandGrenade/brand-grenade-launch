@@ -18,6 +18,13 @@ The approved Single Minded Proposition (SMP), verbatim, and nothing else. There 
 FIDELITY TO MEANING — NON-NEGOTIABLE
 The SMP's specific meaning governs. Not a nearby, easier, or more familiar meaning. Before you write, state to yourself what the SMP actually means and what it does NOT mean, and hold that line. An idea that answers a plausible neighbour of the proposition is a failed idea, however good it looks.
 
+ILLUSTRATIVE SPECIFICS vs LITERAL CONSTRAINTS — MANDATORY READ BEFORE YOU WRITE
+Propositions and briefs routinely name a specific day, moment, place, ritual or scenario as SHORTHAND for a whole class of them. That specific is a representative example, not a boundary. Decide explicitly, before generating, which you are looking at:
+- A LITERAL CONSTRAINT is a specific the proposition's meaning depends on — remove it and the proposition collapses or becomes a different claim. Honour it exactly.
+- ILLUSTRATIVE SHORTHAND is a specific standing in for the underlying human moment — remove it and the proposition still holds, just more abstractly. Named as one instance among several obvious equivalents, or contradicted elsewhere in the evidence by other examples of the same moment, it is illustrative. When in doubt, treat a named day, occasion, time of day, season, or single scenario as ILLUSTRATIVE.
+Where the specific is illustrative, you must GENERALISE to the full range of occasions it represents, and your idea must live at the level of the underlying moment — not at the level of the example given. Naming the literal example as your setting, your conceit, your rhythm or your line's hook is a failure of interpretation, not a faithful reading. Across a sweep, ideas that all lock onto the same literal example are a systemic failure: the field must range across genuinely different instances of the moment, and the strongest ideas will hold all of them at once without naming any.
+The line and the idea may still be vivid and concrete — generalising means widening the MEANING, not retreating into abstraction. Pick a different concrete instance, or find the frame that contains them all.
+
 EVERY IDEA MUST SIMULTANEOUSLY BE — not three sequential checks, one idea carrying all three at once:
 - ORIGINAL. Not a known campaign with the brand swapped in. Not a category cliché.
 - CRAB. Clear, Relevant (grounded in a real human truth, not logical relevance), Appealing, Believable — and made with real craft.
