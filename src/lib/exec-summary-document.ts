@@ -155,8 +155,8 @@ export function buildExecSummaryDocument(
 
   const cover = `<div class="cover">
   <div class="cover-brand">BRAND GRENADE</div>
-  <div class="cover-label">STRATEGY EXECUTIVE SUMMARY</div>
-  <div class="cover-title">${escapeHtml(brand)} — Strategy Executive Summary</div>
+  <div class="cover-label">BRAND STRATEGY AND CREATIVE INTELLIGENCE SUMMARY</div>
+  <div class="cover-title">${escapeHtml(brand)} — Brand Strategy and Creative Intelligence Summary</div>
   <div class="cover-rule"></div>
   <div class="cover-date">${escapeHtml(date)}</div>
   <div class="cover-confidential">CONFIDENTIAL</div>
@@ -339,12 +339,12 @@ export function buildExecSummaryDocument(
 
   return buildMintoDocument({
     canonical: DOCUMENT_SPECS.exec_summary,
-    title: `Strategy Executive Summary — ${brand}`,
+    title: `Brand Strategy and Creative Intelligence Summary — ${brand}`,
     extraCss: extraStyles(),
     cover: {
       brand: "BRAND GRENADE",
-      label: "Strategy Executive Summary",
-      title: `${brand} — Strategy Executive Summary`,
+      label: "Brand Strategy and Creative Intelligence Summary",
+      title: `${brand} — Brand Strategy and Creative Intelligence Summary`,
       subtitle: session.category ?? undefined,
       confidential: true,
     },

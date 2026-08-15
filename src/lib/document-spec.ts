@@ -53,7 +53,7 @@ export const DOCUMENT_SPECS: Record<DocumentTypeId, DocumentSpec> = {
   },
   exec_summary: {
     id: "exec_summary",
-    label: "Strategy Executive Summary",
+    label: "Brand Strategy and Creative Intelligence Summary",
     frontMatter: MINTO_SECTIONS,
     appendix: PIPELINE_APPENDIX_SECTIONS,
   },

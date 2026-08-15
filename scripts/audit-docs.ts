@@ -349,7 +349,7 @@ for (const row of (rows ?? []) as Row[]) {
     }
   };
   safe("Board Strategy Recommendation", () => buildBoardStrategyDocument(row as never));
-  safe("Strategy Executive Summary", () => buildExecSummaryDocument(row as never, {} as never));
+  safe("Brand Strategy and Creative Intelligence Summary", () => buildExecSummaryDocument(row as never, {} as never));
   safe("Consulting Delivery", () => buildConsultingDeliveryDocument(row as never));
   safe("Master Detonation Brief", () => buildMasterDetonationDocument(row as never));
   if (ir?.final_report) {
@@ -369,7 +369,7 @@ for (const row of (rows ?? []) as Row[]) {
     // Regression requested against the regenerated Dan Murphy's Strategy
     // Executive Summary PDF. Other document types can legitimately reuse a
     // later selected creative territory with the same historical label.
-    const regressionProbes = /dan murphy/i.test(brand) && name === "Strategy Executive Summary"
+    const regressionProbes = /dan murphy/i.test(brand) && name === "Brand Strategy and Creative Intelligence Summary"
       ? danMurphysPdfProbes
       : [];
     docCount++;

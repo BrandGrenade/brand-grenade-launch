@@ -153,7 +153,7 @@ for (const [key, s] of Object.entries(picked)) {
     }
   };
   safe("Board Strategy Recommendation", () => buildBoardStrategyDocument(s as never));
-  safe("Strategy Executive Summary", () => buildExecSummaryDocument(s as never, {} as never));
+  safe("Brand Strategy and Creative Intelligence Summary", () => buildExecSummaryDocument(s as never, {} as never));
   safe("Consulting Delivery", () => buildConsultingDeliveryDocument(s as never));
   safe("Master Detonation Brief", () => buildMasterDetonationDocument(s as never));
 
