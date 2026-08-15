@@ -67,7 +67,7 @@ export const DOCUMENT_SPECS: Record<DocumentTypeId, DocumentSpec> = {
     id: "master_detonation",
     label: "Master Detonation Brief",
     frontMatter: MINTO_SECTIONS,
-    appendix: [...PIPELINE_APPENDIX_SECTIONS, ...numbered(DETONATION_APPENDIX)],
+    appendix: [...DETONATION_APPENDIX_SECTIONS, ...PIPELINE_APPENDIX_SECTIONS],
   },
 };
 
