@@ -442,7 +442,7 @@ function CompletePage() {
         </div>
 
         {/* Document 00A — Strategic Territory Intelligence Report */}
-        <Document00ACard brand={brand} />
+        <Document00ACard briefText={typeof session.brief_text === "string" ? session.brief_text : null} />
 
         {/* Strategy Executive Summary — on-demand synthesis */}
         <ExecSummaryCard session={session} />
