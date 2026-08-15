@@ -619,9 +619,11 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
         fame: c.dims["Fame"],
         truth: c.dims["Truth Strength"],
         impossibility: c.dims["Competitive Impossibility"],
+        permission: c.dims["Brand Permission"],
         cleanAir: c.dims["Clean Air"],
+        precedent: c.dims["Commercial Precedent"],
         composite: c.composite,
-        verdict: c.verdict ?? "",
+        verdict: c.verdict === "FAIL" ? "ELIMINATED" : (c.verdict ?? ""),
       },
     }));
   const validationTable = comparisonTable(
@@ -630,7 +632,9 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
       { key: "fame", label: "Fame", numeric: true },
       { key: "truth", label: "Truth", numeric: true },
       { key: "impossibility", label: "Impossibility", numeric: true },
+      { key: "permission", label: "Permission", numeric: true },
       { key: "cleanAir", label: "Clean air", numeric: true },
+      { key: "precedent", label: "Precedent", numeric: true },
       { key: "composite", label: "Score /100", numeric: true },
       { key: "verdict", label: "Verdict" },
     ],
