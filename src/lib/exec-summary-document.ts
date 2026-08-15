@@ -282,6 +282,14 @@ export function buildExecSummaryDocument(
         scoring.composite
           ? `<tr><th>Composite</th><td class="score">${escapeHtml(scoring.composite)}</td><td></td></tr>`
           : ""
+      }${
+        scoring.verdict
+          ? `<tr><th>Verdict</th><td class="score">${escapeHtml(scoring.verdict)}</td><td>${escapeHtml(
+              scoring.verdict === "PASS"
+                ? "Clears both Stage 10 hard floors (Truth Strength ≥ 5, Competitive Impossibility ≥ 6)."
+                : "Does not clear the Stage 10 hard floors.",
+            )}</td></tr>`
+          : ""
       }</table>`
     : `<p>The recommended proposition was not independently scored at Stage 10 — it was finalised after the scoring pass. No other proposition's score is substituted here.</p>`;
   const scoringTitle = scoring.rows.length

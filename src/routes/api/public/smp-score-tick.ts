@@ -28,6 +28,9 @@ export const Route = createFileRoute("/api/public/smp-score-tick")({
         const url = new URL(request.url);
         const only = url.searchParams.get("sessionId");
         const limit = Math.min(Number(url.searchParams.get("limit") ?? 5) || 5, 20);
+        // force=1 re-scores sessions that already carry a score block — used
+        // when the Stage 10 evidence anchors themselves have changed.
+        const force = url.searchParams.get("force") === "1";
 
         let q = supabaseAdmin
           .from("sessions")
@@ -44,11 +47,11 @@ export const Route = createFileRoute("/api/public/smp-score-tick")({
           if (scored.length >= limit) break;
           const smp = (r.selected_smp ?? "").trim();
           if (!smp) continue;
-          if (hasIndependentScore(r.stage_10_output ?? "", smp)) continue;
+          if (!force && hasIndependentScore(r.stage_10_output ?? "", smp)) continue;
           scored.push({
             id: r.id,
             brand: r.brand_name,
-            result: await ensureSmpScored(r.id),
+            result: await ensureSmpScored(r.id, force),
           });
         }
 

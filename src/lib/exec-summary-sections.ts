@@ -652,6 +652,8 @@ export interface ScoringResult {
   rows: ScoreRow[];
   composite: string | null;
   weighted: string | null;
+  /** Code-computed Stage 10 verdict for this exact proposition (PASS/ELIMINATED). */
+  verdict: string | null;
   /** True when the scored block genuinely belongs to the selected SMP. */
   matched: boolean;
   /** Name of the SMP the returned scores were recorded against. */
@@ -667,7 +669,8 @@ export function extractScoring(session: ExecSessionRow): ScoringResult {
   let weighted: string | null = null;
   let matched = false;
   let scoredSmp: string | null = null;
-  if (!s10) return { rows, composite, weighted, matched, scoredSmp };
+  let verdict: string | null = null;
+  if (!s10) return { rows, composite, weighted, verdict, matched, scoredSmp };
 
   const lines = s10.split("\n");
   const isHeader = (l: string) => /^\s*\**SMP:/i.test(l);
@@ -675,9 +678,13 @@ export function extractScoring(session: ExecSessionRow): ScoringResult {
   // selected, locked SMP. If Stage 10 never scored that exact line — because
   // the proposition was refined after scoring — no score is returned at all.
   // Falling back to a parent or sibling proposition's block is forbidden.
-  const start = lines.findIndex((l) => isHeader(l) && !!key && matchKey(l).includes(key));
+  // When a proposition has been re-scored (Stage 10 re-score section appended),
+  // the LAST matching block is the current, authoritative one.
+  const start = key
+    ? lines.reduce((acc, l, i) => (isHeader(l) && matchKey(l).includes(key) ? i : acc), -1)
+    : -1;
   matched = start >= 0;
-  if (start < 0) return { rows, composite, weighted, matched, scoredSmp };
+  if (start < 0) return { rows, composite, weighted, verdict, matched, scoredSmp };
   scoredSmp =
     clean(lines[start])
       .replace(/^\**SMP:\s*/i, "")
@@ -705,12 +712,14 @@ export function extractScoring(session: ExecSessionRow): ScoringResult {
     // "WEIGHTED COMPOSITE:" depending on prompt vintage.
     const comp = c.match(/^(?:[A-Z]+\s+)?COMPOSITE:\s*([\d.]+\s*\/\s*\d+)/i);
     if (comp) composite = comp[1].replace(/\s+/g, "");
+    const verd = c.match(/^(?:CODE\s+)?VERDICT:\s*(PASS|ELIMINATED)\b/i);
+    if (verd) verdict = verd[1].toUpperCase();
   }
 
   // The weighted /110 composite is a deprecated framework. It is deliberately
   // never surfaced in this document, even though the string is still stored.
   weighted = null;
-  return { rows, composite, weighted, matched, scoredSmp };
+  return { rows, composite, weighted, verdict, matched, scoredSmp };
 }
 
 /* ── 10 — Brand World Opportunity ───────────────────────────────── */
