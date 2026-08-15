@@ -296,21 +296,30 @@ export function buildExecSummaryDocument(
     ? `${NUMBER_WORD[scoring.rows.length] ?? String(scoring.rows.length)}-dimension proposition scoring (Stage 10)`
     : "Proposition scoring (Stage 10) — not independently scored";
 
-  // 09 — Brand World Opportunity
-  // The Room 04 lock supersedes any line carried in Stage 22's brand world
-  // reflection, which is written before a creative idea is locked.
+  // 08/09 — Room 04 lock + Brand World Opportunity.
+  // The locked idea block is owned by the shared Minto derivation
+  // (`derived.lockedIdeaHtml`): locked campaign line pull quote plus the
+  // locked creative idea callout. This document must render that block
+  // rather than re-deriving a line-only version of it, otherwise the
+  // winning Room 04 idea never appears in the executive summary.
+  const lockedIdeaHtml = derived.lockedIdeaHtml ?? "";
   const lockedLine = ((session as MintoSession).locked_campaign_line ?? "").trim();
   const lockedLens = ((session as MintoSession).locked_big_idea_lens ?? "").trim();
   const rawBwLine = brandWorld.line && dedupe.fresh(brandWorld.line) ? brandWorld.line : null;
-  const bwLine = lockedLine || rawBwLine;
-  const bwLabel = lockedLine
-    ? `Locked campaign line${lockedLens ? ` — ${lockedLens}` : ""}`
-    : null;
+  // The lock renders above; only fall back to the Stage 22 line when no lock exists.
+  const bwLine = lockedIdeaHtml ? null : lockedLine || rawBwLine;
+  const bwLabel =
+    bwLine && lockedLine
+      ? `Locked campaign line${lockedLens ? ` — ${lockedLens}` : ""}`
+      : null;
   const bwExplain = dedupe.take(brandWorld.explanation, 1);
   const brandWorldHtml =
     bwLine || bwExplain
       ? `${bwLine ? `${bwLabel ? `<div class="part-label">${escapeHtml(bwLabel)}</div>` : ""}<blockquote>${escapeHtml(bwLine)}</blockquote>` : ""}${bwExplain ? p(bwExplain) : ""}`
-      : missing();
+      : lockedIdeaHtml
+        ? ""
+        : missing();
+
 
 
   // 10 — Recommendations. Channels are rendered once, in the implications
