@@ -1177,13 +1177,21 @@ export function BigIdeaSweep({
               {!locked && (
                 <Btn
                   active
-                  disabled={busy || !pickIdea || !pickLine}
+                  disabled={busy || !pickIdea}
                   onClick={async () => {
-                    if (!runId || !pickIdea || !pickLine) return;
+                    if (!runId || !pickIdea) return;
+                    const lineId =
+                      pickLine ?? (chosenIdea?.campaign_line?.trim() ? chosenIdea.id : null);
+                    if (!lineId) {
+                      setErr(
+                        "This idea's lens produced no master line. Choose a line from another idea (Use this line) before locking.",
+                      );
+                      return;
+                    }
                     setBusy(true);
                     setErr(null);
                     try {
-                      await lock({ data: { runId, directionId: pickIdea, lineDirectionId: pickLine } });
+                      await lock({ data: { runId, directionId: pickIdea, lineDirectionId: lineId } });
                       await refresh(runId);
                       onLocked?.();
                     } catch (e) {
@@ -1193,9 +1201,10 @@ export function BigIdeaSweep({
                     }
                   }}
                 >
-                  Lock winning idea and winning line
+                  {busy ? "Locking…" : "Lock winning idea and winning line"}
                 </Btn>
               )}
+
 
               {locked && (
                 <Btn
@@ -1218,6 +1227,16 @@ export function BigIdeaSweep({
 
 
             </div>
+            {!locked && err && (
+              <div className="text-body-sm" style={{ color: RED, marginTop: 12, lineHeight: 1.7 }}>
+                {err}
+              </div>
+            )}
+            {!locked && !pickIdea && (
+              <div className="text-body-sm" style={{ color: MUTED, marginTop: 12, lineHeight: 1.7 }}>
+                Pick a winning idea above (Winning idea) to enable locking.
+              </div>
+            )}
             {locked && (
               <div className="text-body-sm" style={{ color: MUTED, marginTop: 12, lineHeight: 1.7 }}>
                 Channel briefs generated from here on are bound to this idea and line. Regenerate
@@ -1300,7 +1319,13 @@ export function BigIdeaSweep({
               locked={locked}
               isWinner={d.id === pickIdea}
               isLineWinner={d.id === pickLine}
-              onPickIdea={() => setPickIdea(d.id)}
+              onPickIdea={() => {
+                setPickIdea(d.id);
+                // Picking an idea whose own lens carries a master line should
+                // not also require a second click — the common case is that the
+                // winning idea's line wins with it.
+                if (!pickLine && d.campaign_line?.trim()) setPickLine(d.id);
+              }}
               onPickLine={() => setPickLine(d.id)}
               onTriage={async (status, instinct) => {
                 await triage({ data: { directionId: d.id, status, instinctBrief: instinct } });
