@@ -482,6 +482,9 @@ function findWinner(candidates: ScoredCandidate[], smp: string): ScoredCandidate
 
 /* ─────────────────────────────────────────────── appendix condensing ── */
 
+/** Placeholder body for a canonical section with no stored output. */
+export const NO_STAGE_OUTPUT = "No output was recorded for this stage in this session.";
+
 export const PIPELINE_APPENDIX: Array<{ title: string; key: string }> = [
   { title: "Brief & Context", key: "stage_1_output" },
   { title: "Category Intelligence", key: "stage_2_output" },
@@ -599,17 +602,34 @@ export function buildAppendix(session: MintoSession, opts: AppendixOptions = {})
         .split("\n")
         .filter((l) => !BOOKKEEPING_LINE.test(l.trim()))
         .join("\n");
-      if (!raw.trim()) return "";
-       if (CANDIDATE_STAGES.has(s.key)) raw = scopeToSelected(raw, selectedSmp, aliases);
-      const body = mode === "full" ? raw : condenseStage(raw, budget);
 
-      if (!body.trim()) return "";
+      const card = (inner: string) =>
+        `<div class="section keep-together"><p class="kicker"><span class="idx">${String(
+          i + 1,
+        ).padStart(2, "0")}</span>${escapeHtml(s.title)}</p>${inner}</div>`;
 
-      return `<div class="section keep-together"><p class="kicker"><span class="idx">${String(
-        i + 1,
-      ).padStart(2, "0")}</span>${escapeHtml(s.title)}</p>${renderMarkdown(body)}</div>`;
+      // A canonical card is never dropped. Dropping one silently renumbered
+      // the appendix and is how "Brand Fit Validation" disappeared from a
+      // document that still reported complete.
+      if (!raw.trim()) return card(`<p class="minto-missing">${escapeHtml(NO_STAGE_OUTPUT)}</p>`);
+
+      const scoped = CANDIDATE_STAGES.has(s.key)
+        ? scopeToSelected(raw, selectedSmp, aliases)
+        : raw;
+      // Scoping to the locked proposition must never empty a stage that has
+      // real evidence: fall back to the unscoped transcript rather than
+      // rendering nothing.
+      const source = scoped.trim() ? scoped : raw;
+      let body = mode === "full" ? source : condenseStage(source, budget);
+      if (!body.trim()) body = condenseStage(raw, { maxUnits: 6, maxChars: 700 });
+      if (!body.trim()) {
+        return card(`<p class="minto-missing">${escapeHtml(NO_STAGE_OUTPUT)}</p>`);
+      }
+
+      return card(renderMarkdown(body));
     })
     .filter(Boolean);
+
 
   if (!blocks.length) return "";
   const intro =

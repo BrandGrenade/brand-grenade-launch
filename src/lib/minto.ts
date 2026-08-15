@@ -33,6 +33,8 @@ import {
   type CoverOptions,
   type Stat,
 } from "./doc-system";
+import { gateDocument } from "./document-gate";
+import type { DocumentSpec } from "./document-spec";
 
 export const MINTO_SECTION_IDS = [
   "recommendation",
@@ -142,6 +144,12 @@ export interface MintoDocumentSpec {
    * was what left the front matter ending on a half-empty page.
    */
   appendixOnNewPage?: boolean;
+  /**
+   * Canonical section spec for this document type. When supplied, the
+   * rendered output is gated: a missing canonical section or an orphaned
+   * heading throws rather than shipping a document that looks complete.
+   */
+  canonical?: DocumentSpec;
 }
 
 /**
@@ -189,7 +197,7 @@ export function buildMintoDocument(spec: MintoDocumentSpec): string {
     }
   }
 
-  return docShell(
+  const html = docShell(
     {
       title: spec.title,
       toolbarNote: spec.title,
@@ -199,6 +207,8 @@ export function buildMintoDocument(spec: MintoDocumentSpec): string {
     },
     body.join("\n"),
   );
+
+  return spec.canonical ? gateDocument(html, spec.canonical) : html;
 }
 
 export interface MintoAudit {

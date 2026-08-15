@@ -14,6 +14,7 @@ import {
   type Reason,
 } from "./doc-system";
 import { buildMintoDocument } from "./minto";
+import { DOCUMENT_SPECS } from "./document-spec";
 import {
   buildAppendix,
   clean,
@@ -129,6 +130,7 @@ export function buildMasterDetonationDocument(
     (derived.content.appendix ?? "");
 
   return buildMintoDocument({
+    canonical: DOCUMENT_SPECS.master_detonation,
     title: `Master Detonation Brief — ${derived.brand}`,
     screen: opts.screen,
     cover: {

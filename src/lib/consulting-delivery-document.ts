@@ -6,6 +6,7 @@
 
 import { callout } from "./doc-system";
 import { buildMintoDocument } from "./minto";
+import { DOCUMENT_SPECS } from "./document-spec";
 import { deriveMintoContent, type MintoSession } from "./minto-content";
 
 export function buildConsultingDeliveryDocument(
@@ -21,6 +22,7 @@ export function buildConsultingDeliveryDocument(
   });
 
   return buildMintoDocument({
+    canonical: DOCUMENT_SPECS.consulting_delivery,
     title: `Consulting Delivery — ${derived.brand}`,
     screen: opts.screen,
     cover: {

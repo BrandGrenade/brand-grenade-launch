@@ -6,6 +6,7 @@
 // all extraction logic are shared with the other primary deliverables.
 
 import { buildMintoDocument } from "./minto";
+import { DOCUMENT_SPECS } from "./document-spec";
 import { deriveMintoContent, type MintoSession } from "./minto-content";
 
 export type BoardStrategySession = MintoSession;
@@ -31,6 +32,7 @@ export function buildBoardStrategyDocument(
   });
 
   return buildMintoDocument({
+    canonical: DOCUMENT_SPECS.board_strategy,
     title: `Board Strategy Recommendation — ${derived.brand}`,
     screen: opts.screen,
     cover: {
