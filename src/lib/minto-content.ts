@@ -649,10 +649,14 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
   }
   // Stage 11 — pressure tests recorded against the selected proposition.
   for (const r of stage11TestReasons(s11, smp)) whyReasons.push(r);
-  const integrityLine = prose(s11, 1)[0];
-  if (integrityLine) {
+  // The integrity line must come from the selected proposition's own Stage 11
+  // block, never from the top of the transcript (which is bookkeeping, or
+  // another candidate's testing).
+  const integrityLine = prose(orderBySelected(s11, smp), 1)[0];
+  if (integrityLine && !isScaffoldProse(integrityLine)) {
     whyReasons.push({ title: "Survives integrity testing", detail: integrityLine.slice(0, 260) });
   }
+
   const why_this_wins =
     (whyReasons.length
       ? reasonGrid(whyReasons.slice(0, 6))
