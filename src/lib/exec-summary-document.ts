@@ -374,7 +374,7 @@ export function buildExecSummaryDocument(
             })),
           )
         : derived.content.rejected ?? "",
-      implications: `${brandWorldHtml}${
+      implications: `${lockedIdeaHtml}${brandWorldHtml}${
         recs.channels.length
           ? `<h3>Channels this strategy activates through</h3>${bullets(
               recs.channels.map((c) => ({ head: c })),
