@@ -52,6 +52,7 @@ export async function resolveLiveDocumentSession<T extends LiveDocumentSession>(
       .select("id,session_id,winning_direction_id,winning_line_direction_id,winning_line,locked_at")
       .eq("id", runId)
       .eq("session_id", supplied.id)
+      .eq("run_mode", "big_idea")
       .maybeSingle();
     run = result.data;
   }
@@ -69,7 +70,16 @@ export async function resolveLiveDocumentSession<T extends LiveDocumentSession>(
     runId = run?.id ?? null;
   }
 
-  if (!run) return merged;
+  if (!run) {
+    return {
+      ...merged,
+      locked_big_idea_run_id: null,
+      locked_big_idea: null,
+      locked_campaign_line: null,
+      locked_big_idea_lens: null,
+      locked_big_idea_at: null,
+    };
+  }
   const ids = [run.winning_direction_id, run.winning_line_direction_id].filter(
     (id): id is string => Boolean(id),
   );
@@ -86,10 +96,10 @@ export async function resolveLiveDocumentSession<T extends LiveDocumentSession>(
   return {
     ...merged,
     locked_big_idea_run_id: runId,
-    locked_big_idea: idea?.direction ?? merged.locked_big_idea ?? null,
-    locked_big_idea_lens: idea?.lens_name ?? merged.locked_big_idea_lens ?? null,
+    locked_big_idea: idea?.direction ?? null,
+    locked_big_idea_lens: idea?.lens_name ?? null,
     locked_campaign_line:
-      line?.campaign_line ?? run.winning_line ?? merged.locked_campaign_line ?? null,
-    locked_big_idea_at: run.locked_at ?? merged.locked_big_idea_at ?? null,
+      line?.campaign_line ?? run.winning_line ?? null,
+    locked_big_idea_at: run.locked_at ?? null,
   };
 }

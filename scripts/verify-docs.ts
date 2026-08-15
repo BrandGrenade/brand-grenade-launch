@@ -10,6 +10,7 @@ import { buildConsultingDeliveryDocument } from "../src/lib/consulting-delivery-
 import { buildMasterDetonationDocument } from "../src/lib/master-detonation-document";
 import { buildDocument00AMinto } from "../src/lib/intelligence/doc-00A-minto";
 import { MINTO_SECTIONS } from "../src/lib/minto";
+import { intelligenceSourceIdFromBrief } from "../src/lib/document-source-authority";
 
 const sb = createClient(process.env.VITE_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
 
@@ -63,7 +64,7 @@ function auditDuplicates(sec: Record<string, string>) {
 }
 
 const PRAISE = /\b(strong(est)?|compelling|powerful|excellent|impressive|wins|best|outstanding|distinctive and|clears the field)\b/i;
-const REJECTION = /\b(not carried|not the lead|weakest|below|fails?|rejected|does not|doesn't|eliminated|considered|superseded|narrower|less)\b/i;
+const REJECTION = /\b(not carried|not the lead|never|weakest|below|fails?|rejected|does not|doesn't|eliminated|considered|superseded|narrower|less)\b/i;
 
 function auditRejected(sec: Record<string, string>) {
   const h = sec["rejected"] ?? "";
@@ -126,15 +127,10 @@ const { data: rows, error } = await sb
   .order("created_at", { ascending: false });
 if (error) throw error;
 
-const WANT = ["jaguar", "commbank", "ey", "kpmg", "qantas", "dan murphy"];
 const picked: Record<string, Record<string, unknown>> = {};
 for (const r of rows ?? []) {
-  const b = String(r.brand_name ?? "").toLowerCase();
-  const key = WANT.find((w) => b.includes(w));
-  if (!key) continue;
-  const score = (Object.keys(r) as string[]).filter((k) => k.endsWith("_output") && String(r[k] ?? "").trim()).length;
-  const prev = picked[key];
-  if (!prev || score > (prev.__score as number)) picked[key] = { ...r, __score: score };
+  if (r.is_preflight_test) continue;
+  picked[r.id] = r as Record<string, unknown>;
 }
 
 const { data: intel } = await sb
@@ -159,9 +155,10 @@ for (const [key, s] of Object.entries(picked)) {
   safe("Consulting Delivery", () => buildConsultingDeliveryDocument(s as never));
   safe("Master Detonation Brief", () => buildMasterDetonationDocument(s as never));
 
-  const ir = (intel ?? []).find((i) =>
-    String(i.brand_name ?? "").toLowerCase().includes(brand.split(" ")[0].toLowerCase()),
+  const intelligenceSourceId = intelligenceSourceIdFromBrief(
+    typeof s.brief_text === "string" ? s.brief_text : null,
   );
+  const ir = (intel ?? []).find((i) => i.id === intelligenceSourceId);
   if (ir?.final_report) {
     safe("Document 00A", () =>
       buildDocument00AMinto({
