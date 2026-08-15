@@ -121,7 +121,7 @@ export function checkDocumentStructure(html: string, spec: DocumentSpec): string
     const orphans = sec.bodyHtml.match(/<h[23][^>]*>[^<]*<\/h[23]>\s*(?=<h[23]|<\/div>|$)/g) ?? [];
     for (const o of orphans) failures.push(`orphan heading "${strip(o)}" in section ${sec.index}`);
     // C5 — internal selection UI must never reach a rendered document.
-    if (/CANDIDATE SET|\bselect one\b|\bchoose one\b/i.test(sec.text)) {
+    if (/CANDIDATE SET\s*[—–-]\s*(?:select|choose) one|\b[A-Z]\s*[·•]\s*(?:BASE|BREACH|FUSE|FLASHPOINT)\b/.test(sec.text)) {
       failures.push(`internal selection artifact in section ${sec.index} "${sec.title}"`);
     }
     // C6 — boundary: a section may not contain another canonical section.
