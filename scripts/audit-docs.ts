@@ -386,7 +386,7 @@ for (const row of (rows ?? []) as Row[]) {
         String(row.stage_18_detonation_line ?? ""),
       ].filter(Boolean),
       corpusShingles,
-      probes: [...siblings, ...regressionProbes],
+      probes: regressionProbes,
     });
     const occurrences = stringOccurrences(html, regressionProbes);
     for (const f of findings) tally[f.code] = (tally[f.code] ?? 0) + 1;
