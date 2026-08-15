@@ -174,8 +174,10 @@ function auditDocument(html: string, ctx: {
     if (t.length < 200) continue;
     // The rejected section names siblings on purpose.
     if (/what was rejected|considered and set aside|not carried forward/i.test(t.slice(0, 160))) continue;
-    const inAppendix = /Appendix|backing detail/i.test(t.slice(0, 140));
-    if (inAppendix) { appendix = true; continue; }
+    if (/Appendix|backing detail/i.test(t.slice(0, 140))) { appendix = true; continue; }
+    // Appendix blocks carry a stage title from the shared appendix spec.
+    const head = t.slice(0, 80).replace(/^\d+\s*/, "").trim().toLowerCase();
+    if (PIPELINE_APPENDIX.some((d) => head.startsWith(d.title.toLowerCase()))) appendix = true;
     // Appendix blocks are historical transcripts. A stage that predates the
     // lock legitimately discusses other candidates; it is only a defect when
     // that stage DOES contain the locked proposition and the document showed
