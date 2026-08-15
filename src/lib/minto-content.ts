@@ -26,6 +26,7 @@ import {
 } from "./doc-system";
 import type { MintoContent } from "./minto";
 import { stripDocumentMetadata } from "./strip-document-metadata";
+import { extractShortlist } from "./exec-summary-extract";
 
 export interface MintoSession {
   brand_name?: string | null;
