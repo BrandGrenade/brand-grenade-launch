@@ -294,6 +294,23 @@ function normalise(s: string): string {
     .trim();
 }
 
+/**
+ * Stage outputs that enumerate several candidate propositions. Every document
+ * builder must promote the locked proposition's block to the top of these
+ * before condensing, or the section's subject is whichever candidate the
+ * model happened to write first.
+ */
+export const CANDIDATE_STAGE_KEYS = new Set([
+  "stage_7_output",
+  "stage_8_output",
+  "stage_9_output",
+  "stage_10_output",
+  "stage_11_output",
+  "stage_12_output",
+  "stage_13_output",
+  "stage_14_output",
+]);
+
 function findWinner(candidates: ScoredCandidate[], smp: string): ScoredCandidate | null {
   // Exact match only. Substring matching used to attach a parent or sibling
   // proposition's Stage 10 score to a refined final line; that is forbidden.
