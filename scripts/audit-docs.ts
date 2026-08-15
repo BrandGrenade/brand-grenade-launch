@@ -38,7 +38,7 @@ import { buildConsultingDeliveryDocument } from "../src/lib/consulting-delivery-
 import { buildMasterDetonationDocument } from "../src/lib/master-detonation-document";
 import { buildDocument00AMinto } from "../src/lib/intelligence/doc-00A-minto";
 import { intelligenceSourceIdFromBrief } from "../src/lib/document-source-authority";
-import { parseScoredCandidates } from "../src/lib/minto-content";
+import { PIPELINE_APPENDIX, parseScoredCandidates } from "../src/lib/minto-content";
 
 const sb = createClient(process.env.VITE_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
 const OUT = "/tmp/docaudit";
@@ -126,6 +126,9 @@ function auditDocument(html: string, ctx: {
   siblings: string[];
   owned: string[];
   corpusShingles: Set<string>;
+  corpusText: string;
+  /** Appendix stage titles whose source column actually contains the locked SMP. */
+  stagesNamingSmp: Set<string>;
 }): Finding[] {
   const findings: Finding[] = [];
   const smpN = norm(ctx.smp);
@@ -159,20 +162,29 @@ function auditDocument(html: string, ctx: {
     if (!n || n === smpN) continue;
     if (ctx.siblings.some((s) => norm(s) === n)) continue;
     if (ctx.owned.some((s) => norm(s) && (norm(s) === n || norm(s).includes(n)))) continue;
-    if (ctx.corpusShingles.has(shingles(t, Math.min(6, t.split(" ").length))[0] ?? "###")) continue;
-    if (norm(JSON.stringify([...ctx.corpusShingles].slice(0, 0))) === n) continue;
+    if (ctx.corpusText.includes(n)) continue;
     findings.push({ code: "P2 FOREIGN LINE", detail: `proposition-shaped line not owned by this session: "${t}"` });
   }
 
   /* P3 — wrong subject in a front-matter section */
   const secs = html.split(/<div class="section/).slice(1);
+  let appendix = false;
   for (const sec of secs) {
     const t = strip(sec);
     if (t.length < 200) continue;
-    // The rejected section names siblings on purpose; the appendix is a
-    // transcript record. Both are excluded by design, not by convenience.
-    if (/Appendix|backing detail/i.test(t.slice(0, 140))) break;
+    // The rejected section names siblings on purpose.
     if (/what was rejected|considered and set aside|not carried forward/i.test(t.slice(0, 160))) continue;
+    const inAppendix = /Appendix|backing detail/i.test(t.slice(0, 140));
+    if (inAppendix) { appendix = true; continue; }
+    // Appendix blocks are historical transcripts. A stage that predates the
+    // lock legitimately discusses other candidates; it is only a defect when
+    // that stage DOES contain the locked proposition and the document showed
+    // a sibling instead.
+    if (appendix) {
+      const title = t.slice(0, 60).replace(/^\d+\s*/, "").trim();
+      const stage = [...ctx.stagesNamingSmp].find((x) => title.toLowerCase().startsWith(x.toLowerCase()));
+      if (!stage) continue;
+    }
     const n = norm(t);
     const namesLocked = smpN.length > 8 && n.includes(smpN);
     const sibs = ctx.siblings.filter((s) => norm(s).length > 8 && n.includes(norm(s)));
@@ -247,6 +259,13 @@ for (const row of (rows ?? []) as Row[]) {
     for (let i = 0; i + 6 <= w.length; i++) corpusShingles.add(w.slice(i, i + 6).join(" "));
   }
 
+  const corpusNorm = norm(corpusParts.join(" \n "));
+  const stagesNamingSmp = new Set<string>();
+  for (const def of PIPELINE_APPENDIX) {
+    const v = String(row[def.key] ?? "");
+    if (v && norm(v).includes(norm(smp))) stagesNamingSmp.add(def.title);
+  }
+
   const siblings = [
     ...parseScoredCandidates(String(row.stage_10_output ?? "")).map((c) => c.name),
     ...(String(row.stage_12_output ?? "").match(/^\*\*(.+?)\*\*$/gm) ?? []).map((s) =>
@@ -290,6 +309,8 @@ for (const row of (rows ?? []) as Row[]) {
     const findings = auditDocument(html, {
       smp,
       siblings,
+      corpusText: corpusNorm,
+      stagesNamingSmp,
       owned: [
         String(row.locked_campaign_line ?? ""),
         String(row.locked_big_idea ?? ""),
