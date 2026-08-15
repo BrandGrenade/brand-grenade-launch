@@ -224,22 +224,29 @@ export function scopeToSelected(raw: string, smp: string, aliases: string[] = []
     return keys.some((key) => keyed.includes(key) || key.includes(keyed));
   };
   const lines = raw.split("\n");
-  const boundaries: Array<(line: string) => boolean> = [
-    (line) => /^\s*\*{0,2}(?:PROPOSITION|SMP|CANDIDATE|OPTION|CARD|TERRITORY)\s*\d+\*{0,2}\s*$/i.test(line),
-    (line) => /^\s*(?:#{1,6}\s*)?\*{0,2}(?:Proposition|Candidate|Option|Card|Field)\s*\d+\s*[:—–-]/i.test(line),
-    (line) => /^\s*#{1,6}\s+\S/.test(line),
-    (line) => /^\s*(?:#{1,6}\s*)?\*{0,2}SMP\s*\d*\s*:/i.test(line),
+  const boundaries: Array<{ matches: (line: string) => boolean; allowBodyMatch: boolean }> = [
+    { matches: (line) => /^\s*\*{0,2}(?:PROPOSITION|SMP|CANDIDATE|OPTION|CARD|TERRITORY)\s*\d+\*{0,2}\s*$/i.test(line), allowBodyMatch: true },
+    { matches: (line) => /^\s*(?:#{1,6}\s*)?\*{0,2}(?:Proposition|Candidate|Option|Card|Field)\s*\d+\s*[:—–-]/i.test(line), allowBodyMatch: true },
+    // A generic markdown heading may own an entire themed section containing
+    // several candidates. Its body mentioning the selected line does not make
+    // that whole section selected-candidate evidence; require a header match.
+    { matches: (line) => /^\s*#{1,6}\s+\S/.test(line), allowBodyMatch: false },
+    { matches: (line) => /^\s*(?:#{1,6}\s*)?\*{0,2}SMP\s*\d*\s*:/i.test(line), allowBodyMatch: true },
   ];
 
-  for (const isBoundary of boundaries) {
+  for (const boundary of boundaries) {
     const starts: number[] = [];
     lines.forEach((line, index) => {
-      if (isBoundary(line)) starts.push(index);
+      if (boundary.matches(line)) starts.push(index);
     });
     if (starts.length < 2) continue;
     const blocks = starts.map((start, index) => lines.slice(start, starts[index + 1] ?? lines.length));
     const headerHit = blocks.findIndex((block) => has(block[0] ?? ""));
-    const bodyHit = headerHit >= 0 ? headerHit : blocks.findIndex((block) => has(block.join(" ")));
+    const bodyHit = headerHit >= 0
+      ? headerHit
+      : boundary.allowBodyMatch
+        ? blocks.findIndex((block) => has(block.join(" ")))
+        : -1;
     if (bodyHit < 0) continue;
     const preamble = lines.slice(0, starts[0]);
     while (preamble.length && /^\s*(?:#{1,6}\s+\S|\*\*[^*]{3,90}\*\*\s*)$/.test(preamble[preamble.length - 1])) {
