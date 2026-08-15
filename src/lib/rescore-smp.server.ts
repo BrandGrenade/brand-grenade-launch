@@ -140,7 +140,10 @@ code. Do not score any other proposition.`;
       const gated = applyStage10CodeGate(raw, {
         isPreflight: session.is_preflight_test === true,
       });
-      const sc = gated.scores.find((x) => key(x.smpLine).includes(key(smp))) ?? gated.scores[0];
+      // The model was asked for one exact proposition, but its output is still
+      // untrusted. Never attach a sibling/first score when the header differs.
+      const target = key(smp);
+      const sc = gated.scores.find((x) => key(x.smpLine) === target);
       return sc ? { gated, score: sc } : null;
     }),
   );

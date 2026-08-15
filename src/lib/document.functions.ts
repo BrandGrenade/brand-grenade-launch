@@ -221,29 +221,14 @@ export const generateDocument = createServerFn({ method: "POST" })
       throw new Error(`Session not found: ${error?.message ?? "no row"}`);
     }
 
-    // Reuse cached doc unless force.
-    if (!force) {
-      const sessionRecord = session as unknown as Record<string, unknown>;
-      const existingUrl = sessionRecord[urlCol] as
-        | string
-        | null
-        | undefined;
-      const existingStatus = sessionRecord[statusCol] as
-        | string
-        | null
-        | undefined;
-      const generatedAt = Date.parse(
-        (sessionRecord[statusAtCol] as string | null) ?? "",
-      );
-      const sourceUpdatedAt = Date.parse((sessionRecord.updated_at as string | null) ?? "");
-      const cacheMatchesCurrentSource =
-        Number.isFinite(generatedAt) &&
-        Number.isFinite(sourceUpdatedAt) &&
-        generatedAt >= sourceUpdatedAt;
-      if (existingStatus === "ready" && existingUrl && cacheMatchesCurrentSource) {
-        return { status: "ready" as const, url: existingUrl, format, sessionId, cached: true };
-      }
-    }
+    // Document source authority spans the strategy row plus relational Room 04
+    // records. A sessions.updated_at comparison cannot prove that the cached
+    // artifact represents the current lock, so documents are always rebuilt
+    // from the live source graph rather than serving an unverifiable cache.
+    void force;
+    void urlCol;
+    void statusCol;
+    void statusAtCol;
 
     // Mark generating immediately and respond. Generation continues in the
     // background via ctx.waitUntil (Cloudflare Workers), so it isn't subject

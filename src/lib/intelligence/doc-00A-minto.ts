@@ -59,9 +59,7 @@ export function buildDocument00AMinto(
     ? (report.territories as unknown as Loose[])
     : [];
   const primary =
-    territories.find((t) => str(t.id) === str(report.recommended_primary_territory_id)) ??
-    territories[0] ??
-    null;
+    territories.find((t) => str(t.id) === str(report.recommended_primary_territory_id)) ?? null;
   const others = territories.filter((t) => t !== primary);
   const completeness = obj(report.completeness_assessment);
   const gov = obj(report.government_addendum);
