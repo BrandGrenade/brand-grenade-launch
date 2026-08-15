@@ -124,24 +124,37 @@ export function orderBySelected(raw: string, smp: string): string {
   const key = smpKey(smp);
   if (!raw.trim() || key.length < 6) return raw;
   const lines = raw.split("\n");
-  const isBoundary = (l: string) =>
-    /^\s*#{1,4}\s+\S/.test(l) ||
-    /^\s*\*\*[^*]{3,90}\*\*\s*$/.test(l) ||
-    /^\s*(?:#{1,4}\s*)?\*{0,2}(?:SMP|Proposition|Candidate|Option|Card|Field)\b\s*\d*\s*[:—–-]/i.test(l);
-  const starts: number[] = [];
-  lines.forEach((l, i) => {
-    if (isBoundary(l)) starts.push(i);
-  });
-  if (starts.length < 2) return raw;
-  const preamble = lines.slice(0, starts[0]);
-  const blocks = starts.map((s, n) => lines.slice(s, starts[n + 1] ?? lines.length));
-  const headerHit = blocks.findIndex((b) => smpKey(b[0] ?? "").includes(key));
-  const bodyHit = blocks.findIndex((b) => smpKey(b.join(" ")).includes(key));
-  const hit = headerHit >= 0 ? headerHit : bodyHit;
-  if (hit <= 0) return raw;
-  const ordered = [blocks[hit], ...blocks.filter((_, i) => i !== hit)];
-  return [...preamble, ...ordered.flat()].join("\n");
+
+  // Boundaries must sit at candidate level, not at every sub-heading, or a
+  // candidate's own body is torn away from its header and the reorder moves
+  // a bare title instead of the evidence beneath it.
+  const candidates: Array<(l: string) => boolean> = [
+    (l) => /^\s*(?:#{1,6}\s*)?\*{0,2}SMP\s*\d*\s*:/i.test(l),
+    (l) => /^\s*(?:#{1,6}\s*)?\*{0,2}(?:Proposition|Candidate|Option|Card|Field)\s*\d+\s*[:—–-]/i.test(l),
+    (l) => /^\s*\*\*[^*]{3,90}\*\*\s*$/.test(l),
+    (l) => /^\s*##\s+\S/.test(l),
+    (l) => /^\s*###\s+\S/.test(l),
+  ];
+
+  for (const isBoundary of candidates) {
+    const starts: number[] = [];
+    lines.forEach((l, i) => {
+      if (isBoundary(l)) starts.push(i);
+    });
+    if (starts.length < 2) continue;
+    const preamble = lines.slice(0, starts[0]);
+    const blocks = starts.map((s, n) => lines.slice(s, starts[n + 1] ?? lines.length));
+    const headerHit = blocks.findIndex((b) => smpKey(b[0] ?? "").includes(key));
+    const bodyHit = blocks.findIndex((b) => smpKey(b.join(" ")).includes(key));
+    const hit = headerHit >= 0 ? headerHit : bodyHit;
+    if (hit < 0) continue;
+    if (hit === 0) return raw;
+    const ordered = [blocks[hit], ...blocks.filter((_, i) => i !== hit)];
+    return [...preamble, ...ordered.flat()].join("\n");
+  }
+  return raw;
 }
+
 
 
 /** Text under a heading-ish marker, up to the next marker. */
