@@ -217,6 +217,8 @@ export function buildBigIdeaUserMessage(args: {
     "",
     "This proposition is the entire brief. There is no channel brief. Nothing below may be used to re-interpret, soften or narrow the meaning above.",
     "",
+    "INTERPRETATION CHECK — run it before you generate. If this proposition names a specific day, time, occasion, place or scenario, decide whether the meaning depends on that specific (literal constraint) or whether it stands in for a whole class of equivalent moments (illustrative shorthand). Check the supporting evidence below: if it lists other examples of the same moment, the specific is illustrative. Where it is illustrative, generalise to the full range of occasions it represents. Do not build the idea, the setting or the line around the literal example.",
+    "",
     "═══ SUPPORTING EVIDENCE — THE STRATEGIC TRUTHS (context only, never a substitute brief) ═══",
     "THREE TRUTHS",
     args.truths || "—",
