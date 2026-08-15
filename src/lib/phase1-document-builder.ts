@@ -79,6 +79,7 @@ export function md(text: string): string {
 }
 
 import { stripDocumentMetadata } from "./strip-document-metadata";
+import { BOOKKEEPING_LINE, orderBySelected } from "./minto-content";
 import { buildBoardStrategyDocument } from "./board-strategy-document";
 
 export function sanitise(t: string | null | undefined): string {
@@ -209,11 +210,28 @@ function sectionsFor(format: Phase1Format): SectionDef[] {
   return SECTIONS_CONSULTING;
 }
 
+const CANDIDATE_KEYS = new Set([
+  "stage_8_output",
+  "stage_9_output",
+  "stage_10_output",
+  "stage_11_output",
+  "stage_12_output",
+  "stage_14_output",
+]);
+
 function sectionOutput(session: Phase1Session, key: keyof Phase1Session): string {
   const primary = (session[key] ?? "").toString();
-  if (key !== "stage_9_output") return primary;
-  const loc = (session.stage_9_leftofcentre_output ?? "").toString();
-  return `${primary}${loc}`;
+  const loc = key === "stage_9_output" ? (session.stage_9_leftofcentre_output ?? "").toString() : "";
+  // Shared document rules: drop run-count bookkeeping, and lead with the
+  // locked proposition so the section's subject is the one on the cover.
+  let raw = `${primary}${loc}`
+    .split("\n")
+    .filter((l) => !BOOKKEEPING_LINE.test(l.trim()))
+    .join("\n");
+  if (CANDIDATE_KEYS.has(String(key))) {
+    raw = orderBySelected(raw, ((session as unknown as Record<string, unknown>)["selected_smp"] ?? "").toString());
+  }
+  return raw;
 }
 
 function cover(label: string, title: string, brand: string): string {

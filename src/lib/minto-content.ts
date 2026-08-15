@@ -91,11 +91,75 @@ export function prose(text: string, limit: number): string[] {
     if (/^[#>*\-—•=]/.test(p)) continue;
     if (/^[A-Z0-9 .—–:'"()/]{0,60}:\s*$/.test(p)) continue;
     if (p.length < 90) continue;
+    if (isScaffoldProse(p)) continue;
     out.push(p);
     if (out.length >= limit) break;
   }
   return out;
 }
+
+/**
+ * Process bookkeeping that a model emits at the top of a stage transcript
+ * ("SMPS RECEIVED FROM STAGE 10: 5 / PRESSURE TESTS APPLIED PER SMP: 5").
+ * It is not evidence and must never be promoted into a document section.
+ */
+export function isScaffoldProse(p: string): boolean {
+  if (/\b[A-Z][A-Z /()-]{6,}:\s*\d/.test(p)) return true;
+  if (/\b(SMPS?|TESTS?|CANDIDATES?|ITEMS?|SECTIONS?)\s+(RECEIVED|APPLIED|RETURNED|GENERATED|PROCESSED)\b/i.test(p))
+    return true;
+  const letters = p.replace(/[^A-Za-z]/g, "");
+  if (letters.length > 20 && letters.replace(/[^A-Z]/g, "").length / letters.length > 0.6) return true;
+  return false;
+}
+
+/**
+ * Reorders a multi-candidate stage transcript so the block that names the
+ * selected proposition comes first. Nothing is dropped — but because every
+ * downstream consumer (condensing, prose(), "first paragraph" pickers) reads
+ * from the top, positional reading would otherwise surface whichever
+ * candidate the model happened to write first. That is how a document ends
+ * up describing a proposition other than the one on its own cover.
+ */
+export function orderBySelected(raw: string, smp: string): string {
+  const key = smpKey(smp);
+  if (!raw.trim() || key.length < 6) return raw;
+  const lines = raw.split("\n");
+
+  // Boundaries must sit at candidate level, not at every sub-heading, or a
+  // candidate's own body is torn away from its header and the reorder moves
+  // a bare title instead of the evidence beneath it.
+  const candidates: Array<(l: string) => boolean> = [
+    (l) => /^\s*\*{0,2}(?:PROPOSITION|SMP|CANDIDATE|OPTION|CARD|TERRITORY)\s*\d+\*{0,2}\s*$/i.test(l),
+    (l) => /^\s*(?:#{1,6}\s*)?\*{0,2}SMP\s*\d*\s*:/i.test(l),
+    (l) => /^\s*(?:#{1,6}\s*)?\*{0,2}(?:Proposition|Candidate|Option|Card|Field)\s*\d+\s*[:—–-]/i.test(l),
+    (l) => /^\s*##\s+\S/.test(l),
+    (l) => /^\s*###\s+\S/.test(l),
+    (l) => /^\s*#\s+\S/.test(l),
+    // Bold-only lines are the weakest signal: they are often sub-labels
+    // inside a candidate block, so they are tried last.
+    (l) => /^\s*\*\*[^*]{3,90}\*\*\s*$/.test(l),
+  ];
+
+  for (const isBoundary of candidates) {
+    const starts: number[] = [];
+    lines.forEach((l, i) => {
+      if (isBoundary(l)) starts.push(i);
+    });
+    if (starts.length < 2) continue;
+    const preamble = lines.slice(0, starts[0]);
+    const blocks = starts.map((s, n) => lines.slice(s, starts[n + 1] ?? lines.length));
+    const headerHit = blocks.findIndex((b) => smpKey(b[0] ?? "").includes(key));
+    const bodyHit = blocks.findIndex((b) => smpKey(b.join(" ")).includes(key));
+    const hit = headerHit >= 0 ? headerHit : bodyHit;
+    if (hit < 0) continue;
+    if (hit === 0) return raw;
+    const ordered = [blocks[hit], ...blocks.filter((_, i) => i !== hit)];
+    return [...preamble, ...ordered.flat()].join("\n");
+  }
+  return raw;
+}
+
+
 
 /** Text under a heading-ish marker, up to the next marker. */
 export function blockAfter(text: string, marker: RegExp): string {
@@ -246,6 +310,11 @@ export const DETONATION_APPENDIX: Array<{ title: string; key: string }> = [
 const SCAFFOLD_LINE =
   /^(ok[,.]|understood|here (is|are)|i('| wi)ll |let me |as requested|below (is|are)|note:|reminder:|continuing|proceeding|end of (stage|section)|word count|token|instruction)/i;
 
+/** Run-count bookkeeping a model writes above its own output. */
+export const BOOKKEEPING_LINE =
+  /^\*{0,2}[A-Za-z][A-Za-z0-9/()-]*(?: [A-Za-z0-9/()-]+){1,8}:\s*\*{0,2}\s*\d+\s*\*{0,2}\s*(?:\([^)]{0,90}\))?\*{0,2}\s*$/;
+
+
 /**
  * Condenses one stage output into appendix evidence: headings kept as
  * structure, the strongest substantive lines kept beneath them, everything
@@ -271,7 +340,7 @@ export function condenseStage(
     const line = rawLine.trim();
     if (!line) continue;
     if (/^[=_*-]{3,}$/.test(line)) continue;
-    if (SCAFFOLD_LINE.test(line)) continue;
+    if (SCAFFOLD_LINE.test(line) || BOOKKEEPING_LINE.test(line)) continue;
 
     if (isHeading(line)) {
       if (units >= maxUnits || chars >= maxChars) continue;
@@ -305,14 +374,35 @@ export function buildAppendix(session: MintoSession, opts: AppendixOptions = {})
   const budget =
     mode === "brief" ? { maxUnits: 8, maxChars: 900 } : { maxUnits: 22, maxChars: 2600 };
 
+  // Stages that enumerate several candidate propositions. Condensing reads
+  // from the top, so the selected proposition's block is promoted first;
+  // otherwise the appendix evidences a candidate the document did not choose.
+  const CANDIDATE_STAGES = new Set([
+    "stage_8_output",
+    "stage_9_output",
+    "stage_10_output",
+    "stage_11_output",
+    "stage_12_output",
+    "stage_14_output",
+  ]);
+  const selectedSmp = clean(session.selected_smp).trim();
+
   const blocks = defs
     .map((s, i) => {
       let raw = clean((session as Record<string, unknown>)[s.key]);
       if (s.key === "stage_9_output") raw += `\n${clean(session.stage_9_leftofcentre_output)}`;
       raw = stripInternals(raw);
+      // Run-count bookkeeping is never evidence, in either appendix mode.
+      raw = raw
+        .split("\n")
+        .filter((l) => !BOOKKEEPING_LINE.test(l.trim()))
+        .join("\n");
       if (!raw.trim()) return "";
+      if (CANDIDATE_STAGES.has(s.key)) raw = orderBySelected(raw, selectedSmp);
       const body = mode === "full" ? raw : condenseStage(raw, budget);
+
       if (!body.trim()) return "";
+
       return `<div class="section keep-together"><p class="kicker"><span class="idx">${String(
         i + 1,
       ).padStart(2, "0")}</span>${escapeHtml(s.title)}</p>${renderMarkdown(body)}</div>`;
@@ -581,16 +671,20 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
     if (runnerUp?.composite != null && winner.composite != null) {
       whyReasons.push({
         title: "Clears the field",
-        detail: `${winner.composite}/100 against ${runnerUp.composite}/100 for the next-best candidate (${runnerUp.name}).`,
+        detail: `“${smp}” scores ${winner.composite}/100 against ${runnerUp.composite}/100 for the next-best candidate (${runnerUp.name}).`,
       });
     }
   }
   // Stage 11 — pressure tests recorded against the selected proposition.
   for (const r of stage11TestReasons(s11, smp)) whyReasons.push(r);
-  const integrityLine = prose(s11, 1)[0];
-  if (integrityLine) {
+  // The integrity line must come from the selected proposition's own Stage 11
+  // block, never from the top of the transcript (which is bookkeeping, or
+  // another candidate's testing).
+  const integrityLine = prose(orderBySelected(s11, smp), 1)[0];
+  if (integrityLine && !isScaffoldProse(integrityLine)) {
     whyReasons.push({ title: "Survives integrity testing", detail: integrityLine.slice(0, 260) });
   }
+
   const why_this_wins =
     (whyReasons.length
       ? reasonGrid(whyReasons.slice(0, 6))
