@@ -229,7 +229,7 @@ function sectionOutput(session: Phase1Session, key: keyof Phase1Session): string
     .filter((l) => !BOOKKEEPING_LINE.test(l.trim()))
     .join("\n");
   if (CANDIDATE_KEYS.has(String(key))) {
-    raw = orderBySelected(raw, ((session as Record<string, unknown>)["selected_smp"] ?? "").toString());
+    raw = orderBySelected(raw, ((session as unknown as Record<string, unknown>)["selected_smp"] ?? "").toString());
   }
   return raw;
 }
