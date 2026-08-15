@@ -25,6 +25,10 @@ export interface GateSection {
   title: string;
   bodyHtml: string;
   text: string;
+  /** Offset of the section's kicker in the source HTML. */
+  at: number;
+  /** Offset immediately after the kicker — where the body starts. */
+  bodyAt: number;
 }
 
 export function renderedSections(html: string): GateSection[] {
@@ -34,9 +38,67 @@ export function renderedSections(html: string): GateSection[] {
   while ((m = re.exec(html))) marks.push({ index: m[1], title: strip(m[2]), at: m.index, end: re.lastIndex });
   return marks.map((mk, i) => {
     const bodyHtml = html.slice(mk.end, marks[i + 1]?.at ?? html.length);
-    return { index: mk.index, title: mk.title, bodyHtml, text: strip(bodyHtml) };
+    return { index: mk.index, title: mk.title, bodyHtml, text: strip(bodyHtml), at: mk.at, bodyAt: mk.end };
   });
 }
+
+/**
+ * Internal selection UI that only ever belonged to the pipeline screens:
+ * the Stage 8 candidate chooser and its A · / B · option rows, plus the
+ * word-count annotations the chooser prints. A rendered document that shows
+ * these is asking a client to make an internal selection.
+ */
+const SELECTION_UI_HTML: RegExp[] = [
+  // heading row of a candidate chooser, plus every option row beneath it
+  /<h[1-6][^>]*>\s*(?:[^<]*\b(?:CANDIDATE SET|SELECT ONE|CHOOSE ONE)\b[^<]*)<\/h[1-6]>(?:\s*<(p|ul|ol|blockquote)[^>]*>[\s\S]*?<\/\1>)*?(?=\s*(?:<h[1-6]|<\/div>|$))/gi,
+  // a stray option row that survived without its heading
+  /<p[^>]*>\s*<strong>\s*[A-Z]\s*[·•.]\s*(?:BASE|BREACH|FUSE|FLASHPOINT|LOC|OPTION)\b[\s\S]*?<\/p>/gi,
+];
+
+/** Removes internal selection-UI artifacts from rendered document HTML. */
+export function stripSelectionArtifacts(html: string): string {
+  let out = html;
+  for (const re of SELECTION_UI_HTML) out = out.replace(re, "");
+  return out;
+}
+
+/**
+ * Section-boundary seal. A section body may only contain its own content:
+ * if a heading inside a section names a DIFFERENT canonical section of the
+ * same document, everything from that heading onward is another section's
+ * content and is cut. Applied to every section of every document type, so a
+ * bleed cannot reappear in one builder after being fixed in another.
+ */
+export function sealSectionBoundaries(html: string, spec: DocumentSpec): string {
+  const canonical = new Map<string, string>();
+  for (const f of spec.frontMatter) canonical.set(norm(f.kicker), f.kicker);
+  for (const a of spec.appendix) canonical.set(norm(a.title), a.title);
+
+  const sections = renderedSections(html);
+  let out = html;
+  // last → first so earlier offsets stay valid
+  for (let i = sections.length - 1; i >= 0; i--) {
+    const sec = sections[i];
+    const own = norm(sec.title);
+    const headRe = /<h[1-6][^>]*>([\s\S]*?)<\/h[1-6]>/g;
+    let m: RegExpExecArray | null;
+    let cutAt = -1;
+    while ((m = headRe.exec(sec.bodyHtml))) {
+      const t = norm(strip(m[1]));
+      if (!t || t === own) continue;
+      if (canonical.has(t) && canonical.get(t) !== sec.title) {
+        cutAt = m.index;
+        break;
+      }
+    }
+    if (cutAt < 0) continue;
+    const tail = /((?:\s*<\/div>)+\s*)$/.exec(sec.bodyHtml)?.[1] ?? "";
+    const kept = sec.bodyHtml.slice(0, cutAt).replace(/\s+$/, "") + tail;
+    out = out.slice(0, sec.bodyAt) + kept + out.slice(sec.bodyAt + sec.bodyHtml.length);
+  }
+  return out;
+}
+
 
 /** C1 completeness + C4 orphan checks. Returns human-readable failures. */
 export function checkDocumentStructure(html: string, spec: DocumentSpec): string[] {
