@@ -535,6 +535,16 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
 
   /* 04 — proposition. Scores shown here belong to this exact proposition or
    * are not shown at all; a parent/earlier-stage line's score is never used. */
+  const winnerVerdictHtml = winner
+    ? callout(
+        "Stage 10 verdict",
+        `<p><strong>${winner.verdict === "FAIL" ? "ELIMINATED" : (winner.verdict ?? "PASS")}</strong>${
+          winner.composite != null
+            ? ` · composite ${winner.composite}/100 across the six-dimension framework`
+            : ""
+        }.${winner.verdictNote ? ` ${escapeHtml(winner.verdictNote)}` : ""}</p>`,
+      )
+    : "";
   const proposition = smp
     ? pullQuote(smp, { label: "Strategic Master Proposition" }) +
       (winner
@@ -545,7 +555,7 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
               label: d,
             })),
             3,
-          )
+          ) + winnerVerdictHtml
         : candidates.length
           ? callout(
               "Not independently scored",
