@@ -308,7 +308,7 @@ const SCAFFOLD_LINE =
 
 /** Run-count bookkeeping a model writes above its own output. */
 const BOOKKEEPING_LINE =
-  /^\*{0,2}(?:SMPS?|TESTS?|CANDIDATES?|ITEMS?|PROPOSITIONS?|TERRITORIES)\b[A-Z /()-]*\s*:\s*\d/i;
+  /^\*{0,2}[A-Z][A-Z0-9 /()-]{4,60}:\s*\d+\**\s*(?:\([^)]{0,80}\))?\s*$/;
 
 
 /**
