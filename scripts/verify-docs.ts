@@ -129,7 +129,9 @@ if (error) throw error;
 
 const picked: Record<string, Record<string, unknown>> = {};
 for (const r of rows ?? []) {
-  if (r.is_preflight_test) continue;
+  // Only sessions with a selected proposition have strategy documents. Draft
+  // rows are not "generated documents" and must not be reported as failures.
+  if (r.is_preflight_test || !String(r.selected_smp ?? "").trim()) continue;
   picked[r.id] = r as Record<string, unknown>;
 }
 
