@@ -338,9 +338,7 @@ for (const row of (rows ?? []) as Row[]) {
       s.replace(/\*\*/g, "").trim(),
     ),
   ].filter((s) => s && norm(s) !== norm(smp) && s.split(" ").length <= 12);
-  const regressionProbes = /dan murphy/i.test(brand)
-    ? ["Confidence Paradox", "Quiet Rebellion"]
-    : [];
+  const danMurphysPdfProbes = ["Confidence Paradox", "Quiet Rebellion"];
 
   const docs: Record<string, string> = {};
   const safe = (name: string, fn: () => string) => {
@@ -368,6 +366,12 @@ for (const row of (rows ?? []) as Row[]) {
   }
 
   for (const [name, html] of Object.entries(docs)) {
+    // Regression requested against the regenerated Dan Murphy's Strategy
+    // Executive Summary PDF. Other document types can legitimately reuse a
+    // later selected creative territory with the same historical label.
+    const regressionProbes = /dan murphy/i.test(brand) && name === "Strategy Executive Summary"
+      ? danMurphysPdfProbes
+      : [];
     docCount++;
     const key = `${row.id}__${name}`;
     const h = createHash("sha256").update(html).digest("hex").slice(0, 16);
