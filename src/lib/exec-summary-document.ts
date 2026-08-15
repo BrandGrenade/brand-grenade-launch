@@ -16,6 +16,7 @@
 
 import { baseStyles, escapeHtml, sanitise } from "./phase1-document-builder";
 import { buildMintoDocument } from "./minto";
+import { DOCUMENT_SPECS } from "./document-spec";
 import { deriveMintoContent, type MintoSession } from "./minto-content";
 import { NOT_AVAILABLE } from "./exec-summary-extract";
 import {
@@ -337,6 +338,7 @@ export function buildExecSummaryDocument(
   const rejectedField = field.filter((f) => !f.selected);
 
   return buildMintoDocument({
+    canonical: DOCUMENT_SPECS.exec_summary,
     title: `Strategy Executive Summary — ${brand}`,
     extraCss: extraStyles(),
     cover: {
