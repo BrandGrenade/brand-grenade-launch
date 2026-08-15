@@ -129,6 +129,7 @@ export function orderBySelected(raw: string, smp: string): string {
   // candidate's own body is torn away from its header and the reorder moves
   // a bare title instead of the evidence beneath it.
   const candidates: Array<(l: string) => boolean> = [
+    (l) => /^\s*\*{0,2}(?:PROPOSITION|SMP|CANDIDATE|OPTION|CARD|TERRITORY)\s*\d+\*{0,2}\s*$/i.test(l),
     (l) => /^\s*(?:#{1,6}\s*)?\*{0,2}SMP\s*\d*\s*:/i.test(l),
     (l) => /^\s*(?:#{1,6}\s*)?\*{0,2}(?:Proposition|Candidate|Option|Card|Field)\s*\d+\s*[:—–-]/i.test(l),
     (l) => /^\s*##\s+\S/.test(l),
