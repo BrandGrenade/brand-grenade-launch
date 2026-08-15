@@ -352,14 +352,29 @@ export function buildAppendix(session: MintoSession, opts: AppendixOptions = {})
   const budget =
     mode === "brief" ? { maxUnits: 8, maxChars: 900 } : { maxUnits: 22, maxChars: 2600 };
 
+  // Stages that enumerate several candidate propositions. Condensing reads
+  // from the top, so the selected proposition's block is promoted first;
+  // otherwise the appendix evidences a candidate the document did not choose.
+  const CANDIDATE_STAGES = new Set([
+    "stage_8_output",
+    "stage_9_output",
+    "stage_10_output",
+    "stage_11_output",
+    "stage_12_output",
+    "stage_14_output",
+  ]);
+  const selectedSmp = clean(session.selected_smp).trim();
+
   const blocks = defs
     .map((s, i) => {
       let raw = clean((session as Record<string, unknown>)[s.key]);
       if (s.key === "stage_9_output") raw += `\n${clean(session.stage_9_leftofcentre_output)}`;
       raw = stripInternals(raw);
       if (!raw.trim()) return "";
+      if (CANDIDATE_STAGES.has(s.key)) raw = orderBySelected(raw, selectedSmp);
       const body = mode === "full" ? raw : condenseStage(raw, budget);
       if (!body.trim()) return "";
+
       return `<div class="section keep-together"><p class="kicker"><span class="idx">${String(
         i + 1,
       ).padStart(2, "0")}</span>${escapeHtml(s.title)}</p>${renderMarkdown(body)}</div>`;
