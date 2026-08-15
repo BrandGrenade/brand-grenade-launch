@@ -306,6 +306,11 @@ export const DETONATION_APPENDIX: Array<{ title: string; key: string }> = [
 const SCAFFOLD_LINE =
   /^(ok[,.]|understood|here (is|are)|i('| wi)ll |let me |as requested|below (is|are)|note:|reminder:|continuing|proceeding|end of (stage|section)|word count|token|instruction)/i;
 
+/** Run-count bookkeeping a model writes above its own output. */
+const BOOKKEEPING_LINE =
+  /^\*{0,2}(?:SMPS?|TESTS?|CANDIDATES?|ITEMS?|PROPOSITIONS?|TERRITORIES)\b[A-Z /()-]*\s*:\s*\d/i;
+
+
 /**
  * Condenses one stage output into appendix evidence: headings kept as
  * structure, the strongest substantive lines kept beneath them, everything
