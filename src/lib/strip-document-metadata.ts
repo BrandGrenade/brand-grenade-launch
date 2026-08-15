@@ -65,7 +65,10 @@ export function stripDocumentMetadata(input: string | null | undefined, telemetr
     })
     .join("\n");
 
+  for (const re of INLINE_STRIP) t = t.replace(re, "");
+
   t = t.replace(/\n{3,}/g, "\n\n").trim();
+
 
   if (telemetryLabel && (found.length > 0 || strippedLines > 0)) {
     console.log(
