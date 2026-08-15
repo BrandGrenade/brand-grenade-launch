@@ -262,7 +262,18 @@ export function scopeToSelected(raw: string, smp: string, aliases: string[] = []
   const named = paragraphs.filter((paragraph) => /^\s*\*\*[^*]{3,90}\*\*/.test(paragraph));
   if (named.length >= 2 && named.some(has)) {
     return paragraphs
-      .filter((paragraph) => !/^\s*\*\*[^*]{3,90}\*\*/.test(paragraph) || has(paragraph))
+      .filter((paragraph) => {
+        if (/^\s*\*\*[^*]{3,90}\*\*/.test(paragraph)) return has(paragraph);
+        // Summary paragraphs that explicitly enumerate sibling territory
+        // names are comparative set evidence, not evidence for the selected
+        // proposition. They belong in rejection records, never in its own
+        // distinctiveness appendix card.
+        const siblingMentions = named.filter((candidate) => {
+          const name = candidate.match(/^\s*\*\*([^*]{3,90})\*\*/)?.[1] ?? "";
+          return name && !has(name) && smpKey(paragraph).includes(smpKey(name));
+        }).length;
+        return siblingMentions === 0;
+      })
       .join("\n\n")
       .trim();
   }
