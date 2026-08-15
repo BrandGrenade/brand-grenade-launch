@@ -794,9 +794,12 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
         (lockedIdea
           ? callout(
               lockedLens ? `Locked creative idea — ${lockedLens}` : "Locked creative idea",
-              `<p>${inlineMd(lockedIdea.slice(0, 900))}</p>`,
+              // Verbatim and complete: the winning Room 04 idea is never
+              // truncated or summarised in any deliverable.
+              renderMarkdown(lockedIdea),
             )
           : "")
+
       : "";
 
   const sourceStamp = session.locked_big_idea_at
