@@ -91,11 +91,58 @@ export function prose(text: string, limit: number): string[] {
     if (/^[#>*\-—•=]/.test(p)) continue;
     if (/^[A-Z0-9 .—–:'"()/]{0,60}:\s*$/.test(p)) continue;
     if (p.length < 90) continue;
+    if (isScaffoldProse(p)) continue;
     out.push(p);
     if (out.length >= limit) break;
   }
   return out;
 }
+
+/**
+ * Process bookkeeping that a model emits at the top of a stage transcript
+ * ("SMPS RECEIVED FROM STAGE 10: 5 / PRESSURE TESTS APPLIED PER SMP: 5").
+ * It is not evidence and must never be promoted into a document section.
+ */
+export function isScaffoldProse(p: string): boolean {
+  if (/\b[A-Z][A-Z /()-]{6,}:\s*\d/.test(p)) return true;
+  if (/\b(SMPS?|TESTS?|CANDIDATES?|ITEMS?|SECTIONS?)\s+(RECEIVED|APPLIED|RETURNED|GENERATED|PROCESSED)\b/i.test(p))
+    return true;
+  const letters = p.replace(/[^A-Za-z]/g, "");
+  if (letters.length > 20 && letters.replace(/[^A-Z]/g, "").length / letters.length > 0.6) return true;
+  return false;
+}
+
+/**
+ * Reorders a multi-candidate stage transcript so the block that names the
+ * selected proposition comes first. Nothing is dropped — but because every
+ * downstream consumer (condensing, prose(), "first paragraph" pickers) reads
+ * from the top, positional reading would otherwise surface whichever
+ * candidate the model happened to write first. That is how a document ends
+ * up describing a proposition other than the one on its own cover.
+ */
+export function orderBySelected(raw: string, smp: string): string {
+  const key = smpKey(smp);
+  if (!raw.trim() || key.length < 6) return raw;
+  const lines = raw.split("\n");
+  const isBoundary = (l: string) =>
+    /^\s*#{1,4}\s+\S/.test(l) ||
+    /^\s*\*\*[^*]{3,90}\*\*\s*$/.test(l) ||
+    /^\s*(?:#{1,4}\s*)?\*{0,2}(?:SMP|Proposition|Candidate|Option|Card|Field)\b\s*\d*\s*[:—–-]/i.test(l);
+  const starts: number[] = [];
+  lines.forEach((l, i) => {
+    if (isBoundary(l)) starts.push(i);
+  });
+  if (starts.length < 2) return raw;
+  const preamble = lines.slice(0, starts[0]);
+  const blocks = starts.map((s, n) => lines.slice(s, starts[n + 1] ?? lines.length));
+  const headerHit = blocks.findIndex((b) => smpKey(b[0] ?? "").includes(key));
+  const bodyHit = blocks.findIndex((b) => smpKey(b.join(" ")).includes(key));
+  const hit = headerHit >= 0 ? headerHit : bodyHit;
+  if (hit <= 0) return raw;
+  const ordered = [blocks[hit], ...blocks.filter((_, i) => i !== hit)];
+  return [...preamble, ...ordered.flat()].join("\n");
+}
+
 
 /** Text under a heading-ish marker, up to the next marker. */
 export function blockAfter(text: string, marker: RegExp): string {
