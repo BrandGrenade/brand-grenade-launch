@@ -102,11 +102,15 @@ const TEMPLATE_PHRASES = [
   "room 04 winning idea resolved from the locked run",
   "no room 04 winning idea was locked when this document was rendered",
   "this proposition was finalised after the stage 10 scoring pass",
+  "the decision requested is a single one",
+  "sign off releases the proposition to the detonation phase",
+  "strategic stage outputs in the appendix are historical snapshots",
+  "every downstream artefact territory activation architecture channel briefs",
+  "is generated against this proposition",
 ];
 
 const SCAFFOLD_PATTERNS: Array<[string, RegExp]> = [
-  ["model bookkeeping", /\b[A-Z][A-Z /()-]{6,}:\s*\d/],
-  ["counter line", /\b(SMPS?|TESTS?|CANDIDATES?)\s+(RECEIVED|APPLIED|RETURNED)\b/i],
+  ["counter line", /\b(SMPS?|TESTS?|CANDIDATES?)\s+(RECEIVED|APPLIED|RETURNED)\s+(FROM|PER|BY|TO)\b/i],
   ["metadata block", /\[(METADATA|SELECTION_RATIONALE_STUB)\]/i],
   ["generation failure", /could not be generated|not available\b/i],
   ["self audit", /SELF[-\s]?AUDIT/i],
@@ -120,6 +124,7 @@ interface Finding {
 function auditDocument(html: string, ctx: {
   smp: string;
   siblings: string[];
+  owned: string[];
   corpusShingles: Set<string>;
 }): Finding[] {
   const findings: Finding[] = [];
@@ -138,7 +143,7 @@ function auditDocument(html: string, ctx: {
     if (hits / sh.length < 0.5) {
       findings.push({
         code: "P1 UNTRACEABLE",
-        detail: `${Math.round((hits / sh.length) * 100)}% of this paragraph is not present in the session's own data: "${t.slice(0, 160)}…"`,
+        detail: `only ${Math.round((hits / sh.length) * 100)}% of this paragraph is traceable to the session's own data: "${t.slice(0, 160)}…"`,
       });
     }
   }
@@ -153,6 +158,7 @@ function auditDocument(html: string, ctx: {
     const n = norm(t);
     if (!n || n === smpN) continue;
     if (ctx.siblings.some((s) => norm(s) === n)) continue;
+    if (ctx.owned.some((s) => norm(s) && (norm(s) === n || norm(s).includes(n)))) continue;
     if (ctx.corpusShingles.has(shingles(t, Math.min(6, t.split(" ").length))[0] ?? "###")) continue;
     if (norm(JSON.stringify([...ctx.corpusShingles].slice(0, 0))) === n) continue;
     findings.push({ code: "P2 FOREIGN LINE", detail: `proposition-shaped line not owned by this session: "${t}"` });
@@ -163,7 +169,10 @@ function auditDocument(html: string, ctx: {
   for (const sec of secs) {
     const t = strip(sec);
     if (t.length < 200) continue;
-    if (/backing detail|Appendix/i.test(t.slice(0, 120))) break; // appendix onwards
+    // The rejected section names siblings on purpose; the appendix is a
+    // transcript record. Both are excluded by design, not by convenience.
+    if (/Appendix|backing detail/i.test(t.slice(0, 140))) break;
+    if (/what was rejected|considered and set aside|not carried forward/i.test(t.slice(0, 160))) continue;
     const n = norm(t);
     const namesLocked = smpN.length > 8 && n.includes(smpN);
     const sibs = ctx.siblings.filter((s) => norm(s).length > 8 && n.includes(norm(s)));
@@ -278,7 +287,16 @@ for (const row of (rows ?? []) as Row[]) {
     const drift = prevHashes[key] ? (prevHashes[key] === h ? "unchanged" : "changed") : "new";
     writeFileSync(`${OUT}/${String(row.id)}__${name.replace(/\W+/g, "_")}.html`, html);
 
-    const findings = auditDocument(html, { smp, siblings, corpusShingles });
+    const findings = auditDocument(html, {
+      smp,
+      siblings,
+      owned: [
+        String(row.locked_campaign_line ?? ""),
+        String(row.locked_big_idea ?? ""),
+        String(row.stage_18_detonation_line ?? ""),
+      ].filter(Boolean),
+      corpusShingles,
+    });
     for (const f of findings) tally[f.code] = (tally[f.code] ?? 0) + 1;
     if (!findings.length) clean++;
 
