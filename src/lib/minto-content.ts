@@ -703,6 +703,23 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
           : "Not carried forward at selection.";
       return { title: c.name, detail };
     });
+  // Shared fallback: when Stage 10 carries only the selected proposition (a
+  // re-scored session, or a line resolved after the scoring pass), the
+  // considered-and-set-aside field lives in the Stage 12 shortlist. Every
+  // document type reads it from here, so no document can fall through to the
+  // "no rejected alternatives" placeholder while a real field exists.
+  if (!rejectReasons.length) {
+    for (const item of extractShortlist(s12, { selectedSmp: smp, stage11: s11 })) {
+      if (item.selected || !item.proposition) continue;
+      rejectReasons.push({
+        title: item.proposition,
+        detail: item.setAsideReason
+          ? `Not carried forward: ${item.setAsideReason}`
+          : "Considered at selection and set aside — the recommended proposition tested stronger against the Stage 10 framework.",
+      });
+      if (rejectReasons.length >= 4) break;
+    }
+  }
   const rejectedHtml = rejectReasons.length ? reasonGrid(rejectReasons) : "";
 
   /* 08 — implications */
