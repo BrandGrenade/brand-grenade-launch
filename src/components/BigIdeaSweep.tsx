@@ -1309,9 +1309,19 @@ export function BigIdeaSweep({
                 );
               }}
               onRevise={async (notes) => {
-                await revise({ data: { directionId: d.id, notes } });
+                // Declare the intended target alongside the id; the server
+                // refuses the write if the two disagree.
+                await revise({
+                  data: {
+                    directionId: d.id,
+                    notes,
+                    expectedSlot: d.sort_order + 1,
+                    expectedLensId: d.lens_id,
+                  },
+                });
                 if (runId) await refresh(runId);
               }}
+
               onRetry={async () => {
                 await retryLens({ data: { directionId: d.id } });
                 if (runId) {
