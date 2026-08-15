@@ -210,14 +210,7 @@ function sectionsFor(format: Phase1Format): SectionDef[] {
   return SECTIONS_CONSULTING;
 }
 
-const CANDIDATE_KEYS = new Set([
-  "stage_8_output",
-  "stage_9_output",
-  "stage_10_output",
-  "stage_11_output",
-  "stage_12_output",
-  "stage_14_output",
-]);
+const CANDIDATE_KEYS = CANDIDATE_STAGE_KEYS;
 
 function sectionOutput(session: Phase1Session, key: keyof Phase1Session): string {
   const primary = (session[key] ?? "").toString();
