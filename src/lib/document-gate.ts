@@ -149,5 +149,5 @@ export function gateDocument(html: string, spec: DocumentSpec): string {
     );
   }
 
-  return html;
+  return cleaned;
 }
