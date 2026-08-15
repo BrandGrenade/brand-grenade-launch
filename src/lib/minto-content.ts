@@ -710,13 +710,22 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
   // document type reads it from here, so no document can fall through to the
   // "no rejected alternatives" placeholder while a real field exists.
   if (!rejectReasons.length) {
+    // A Stage 12 pressure-test note is not always set-aside reasoning; it can
+    // read as endorsement of a line that was in fact carried forward. Only
+    // genuine rejection reasoning is admitted here.
+    const readsAsRejection = (n: string) =>
+      /not\s|never|fail|weak|narrow|risk|limit|thin|lack|misses|breach|too\s|cannot|struggle|reject|set aside|second|less/i.test(
+        n,
+      ) && !/^carried forward|is carried forward|selected as|chosen as/i.test(n.trim());
     for (const item of extractShortlist(s12, { selectedSmp: smp, stage11: s11 })) {
       if (item.selected || !item.proposition) continue;
+      const note = (item.setAsideReason ?? "").trim();
       rejectReasons.push({
         title: item.proposition,
-        detail: item.setAsideReason
-          ? `Not carried forward: ${item.setAsideReason}`
-          : "Considered at selection and set aside — the recommended proposition tested stronger against the Stage 10 framework.",
+        detail:
+          note && readsAsRejection(note)
+            ? `Not carried forward: ${note}`
+            : "Considered at selection and set aside — the recommended proposition tested stronger against the Stage 10 framework.",
       });
       if (rejectReasons.length >= 4) break;
     }
