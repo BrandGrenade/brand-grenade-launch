@@ -336,7 +336,7 @@ export function condenseStage(
     const line = rawLine.trim();
     if (!line) continue;
     if (/^[=_*-]{3,}$/.test(line)) continue;
-    if (SCAFFOLD_LINE.test(line)) continue;
+    if (SCAFFOLD_LINE.test(line) || BOOKKEEPING_LINE.test(line)) continue;
 
     if (isHeading(line)) {
       if (units >= maxUnits || chars >= maxChars) continue;
