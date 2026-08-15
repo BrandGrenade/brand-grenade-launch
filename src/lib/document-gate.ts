@@ -112,25 +112,42 @@ export function checkDocumentStructure(html: string, spec: DocumentSpec): string
   for (const a of spec.appendix) {
     if (!seen.has(`${a.index}|${norm(a.title)}`)) failures.push(`missing section ${a.index} "${a.title}"`);
   }
+  const canonical = new Map<string, string>();
+  for (const f of spec.frontMatter) canonical.set(norm(f.kicker), f.kicker);
+  for (const a of spec.appendix) canonical.set(norm(a.title), a.title);
+
   for (const sec of rendered) {
     if (!sec.text.trim()) failures.push(`section ${sec.index} "${sec.title}" has no body`);
     const orphans = sec.bodyHtml.match(/<h[23][^>]*>[^<]*<\/h[23]>\s*(?=<h[23]|<\/div>|$)/g) ?? [];
     for (const o of orphans) failures.push(`orphan heading "${strip(o)}" in section ${sec.index}`);
+    // C5 — internal selection UI must never reach a rendered document.
+    if (/CANDIDATE SET|\bselect one\b|\bchoose one\b/i.test(sec.text)) {
+      failures.push(`internal selection artifact in section ${sec.index} "${sec.title}"`);
+    }
+    // C6 — boundary: a section may not contain another canonical section.
+    for (const m of sec.bodyHtml.matchAll(/<h[1-6][^>]*>([\s\S]*?)<\/h[1-6]>/g)) {
+      const t = norm(strip(m[1]));
+      if (t && t !== norm(sec.title) && canonical.has(t)) {
+        failures.push(`section ${sec.index} "${sec.title}" contains "${canonical.get(t)}" content`);
+      }
+    }
   }
   return failures;
 }
 
 /**
- * Hard gate. A document that fails the canonical structure is not returned:
- * silently shipping an incomplete document is what allowed a missing
- * "Brand Fit Validation" card to be reported as a clean pass.
+ * Hard gate. The document is first cleaned at the shared layer — internal
+ * selection UI stripped, section boundaries sealed — and only then checked.
+ * A document that still fails the canonical structure is not returned.
  */
 export function gateDocument(html: string, spec: DocumentSpec): string {
-  const failures = checkDocumentStructure(html, spec);
+  const cleaned = sealSectionBoundaries(stripSelectionArtifacts(html), spec);
+  const failures = checkDocumentStructure(cleaned, spec);
   if (failures.length) {
     throw new Error(
       `${spec.label} failed the canonical document gate:\n- ${failures.slice(0, 12).join("\n- ")}`,
     );
   }
+
   return html;
 }
