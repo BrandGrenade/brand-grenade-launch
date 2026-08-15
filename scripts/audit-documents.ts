@@ -31,7 +31,7 @@ import { buildExecSummaryDocument } from "../src/lib/exec-summary-document";
 import { buildConsultingDeliveryDocument } from "../src/lib/consulting-delivery-document";
 import { buildMasterDetonationDocument } from "../src/lib/master-detonation-document";
 import { DOCUMENT_SPECS, type DocumentSpec } from "../src/lib/document-spec";
-import { parseScoredCandidates } from "../src/lib/minto-content";
+import { parseScoredCandidates, selectedAliases } from "../src/lib/minto-content";
 
 const sb = createClient(process.env.VITE_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
 const OUT = "/tmp/docgate";
@@ -230,7 +230,21 @@ for (const row of live) {
   const mine = new Set((owned.get(String(row.id)) ?? []).map(norm));
   const foreign = [...new Set(live.filter((r) => r.id !== row.id).flatMap((r) => owned.get(String(r.id)) ?? []))]
     .filter((n) => !mine.has(norm(n)));
-  const siblings = (owned.get(String(row.id)) ?? []).filter((n) => norm(n) !== norm(smp));
+  // Names this session legitimately owns beyond the SMP string itself: the
+  // locked Room 04 line/idea and the territory aliases the SMP was resolved
+  // from. These are not siblings and must never be reported as contamination.
+  const ownedByLock = new Set(
+    [
+      smp,
+      String(row.locked_campaign_line ?? ""),
+      String(row.locked_big_idea ?? ""),
+      String(row.stage_18_detonation_line ?? ""),
+      ...selectedAliases(row as never),
+    ]
+      .filter(Boolean)
+      .map(norm),
+  );
+  const siblings = (owned.get(String(row.id)) ?? []).filter((n) => !ownedByLock.has(norm(n)));
 
   for (const { spec, build } of builders) {
     docs++;
