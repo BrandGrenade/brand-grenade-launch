@@ -158,18 +158,8 @@ export function orderBySelected(raw: string, smp: string, aliases: string[] = []
   const looksLikeTitle = (l: string) =>
     /^\s*#{1,6}\s+\S/.test(l) || /^\s*\*\*[^*]{3,90}\*\*\s*$/.test(l);
 
-  for (const isBoundary of candidates) {
-    const starts: number[] = [];
-    lines.forEach((l, i) => {
-      if (isBoundary(l)) starts.push(i);
-    });
-    if (starts.length < 2) continue;
+  const apply = (starts: number[], blocks: string[][], hit: number): string => {
     const preamble = lines.slice(0, starts[0]);
-    const blocks = starts.map((s, n) => lines.slice(s, starts[n + 1] ?? lines.length));
-    const headerHit = blocks.findIndex((b) => has(b[0] ?? ""));
-    const bodyHit = blocks.findIndex((b) => has(b.join(" ")));
-    const hit = headerHit >= 0 ? headerHit : bodyHit;
-    if (hit < 0) continue;
     // Any trailing preamble title belongs to whichever candidate happened to
     // be written first. Once the order changes it would mislabel the block
     // beneath it, so it is dropped unless it names the selected proposition.
@@ -188,9 +178,37 @@ export function orderBySelected(raw: string, smp: string, aliases: string[] = []
     if (hit === 0 && preamble.length === starts[0]) return promoteParagraphs(raw, has);
     const ordered = [blocks[hit], ...blocks.filter((_, i) => i !== hit)];
     return promoteParagraphs([...preamble, ...ordered.flat()].join("\n"), has);
+  };
+
+  const segment = (isBoundary: (l: string) => boolean) => {
+    const starts: number[] = [];
+    lines.forEach((l, i) => {
+      if (isBoundary(l)) starts.push(i);
+    });
+    if (starts.length < 2) return null;
+    return { starts, blocks: starts.map((s, n) => lines.slice(s, starts[n + 1] ?? lines.length)) };
+  };
+
+  // A block whose own HEADER names the proposition is unambiguous. A block
+  // that merely mentions it somewhere in its body may be a coarse grouping
+  // that opens with a different candidate — promoting that would move the
+  // wrong title to the front. So every segmentation is tried for a header
+  // match first, and body matches are only used when no header match exists.
+  for (const isBoundary of candidates) {
+    const seg = segment(isBoundary);
+    if (!seg) continue;
+    const hit = seg.blocks.findIndex((b) => has(b[0] ?? ""));
+    if (hit >= 0) return apply(seg.starts, seg.blocks, hit);
+  }
+  for (const isBoundary of candidates) {
+    const seg = segment(isBoundary);
+    if (!seg) continue;
+    const hit = seg.blocks.findIndex((b) => has(b.join(" ")));
+    if (hit >= 0) return apply(seg.starts, seg.blocks, hit);
   }
   return promoteParagraphs(raw, has);
 }
+
 
 /**
  * Some stages are organised by theme rather than by candidate: each themed
