@@ -388,9 +388,15 @@ export function buildAppendix(session: MintoSession, opts: AppendixOptions = {})
       let raw = clean((session as Record<string, unknown>)[s.key]);
       if (s.key === "stage_9_output") raw += `\n${clean(session.stage_9_leftofcentre_output)}`;
       raw = stripInternals(raw);
+      // Run-count bookkeeping is never evidence, in either appendix mode.
+      raw = raw
+        .split("\n")
+        .filter((l) => !BOOKKEEPING_LINE.test(l.trim()))
+        .join("\n");
       if (!raw.trim()) return "";
       if (CANDIDATE_STAGES.has(s.key)) raw = orderBySelected(raw, selectedSmp);
       const body = mode === "full" ? raw : condenseStage(raw, budget);
+
       if (!body.trim()) return "";
 
       return `<div class="section keep-together"><p class="kicker"><span class="idx">${String(
