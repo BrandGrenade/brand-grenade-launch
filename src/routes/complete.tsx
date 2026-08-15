@@ -98,6 +98,7 @@ type SessionRow = {
   stage_6_output: string | null;
   stage_7_output: string | null;
   stage_8_output: string | null;
+  brief_text: string | null;
   stage_9_output: string | null;
   stage_9_leftofcentre_output: string | null;
   stage_10_output: string | null;
@@ -189,7 +190,7 @@ function CompletePage() {
     supabase
       .from("sessions")
       .select(
-        `id, brand_name, category, selected_smp, selected_smp_field_name, user_id, doc_consulting_url, doc_agency_url, doc_workshop_url, phase_2_status, updated_at, created_at, stage_17_selected_territory, stage_18_selected_detonation, stage_22_brand_architecture, stage_22_distinctive_assets, checkpoint_a_confirmed, checkpoint_b_confirmed, checkpoint_c_confirmed, checkpoint_d_confirmed, checkpoint_e_confirmed, checkpoint_f_confirmed, strategy_signoff_confirmed, locked_big_idea_run_id, locked_big_idea, locked_campaign_line, locked_big_idea_lens, locked_big_idea_at, selection_rationale, ${FULL_RUN_SESSION_COLUMNS}`,
+        `id, brand_name, category, brief_text, selected_smp, selected_smp_field_name, user_id, doc_consulting_url, doc_agency_url, doc_workshop_url, phase_2_status, updated_at, created_at, stage_17_selected_territory, stage_18_selected_detonation, stage_22_brand_architecture, stage_22_distinctive_assets, checkpoint_a_confirmed, checkpoint_b_confirmed, checkpoint_c_confirmed, checkpoint_d_confirmed, checkpoint_e_confirmed, checkpoint_f_confirmed, strategy_signoff_confirmed, locked_big_idea_run_id, locked_big_idea, locked_campaign_line, locked_big_idea_lens, locked_big_idea_at, selection_rationale, ${FULL_RUN_SESSION_COLUMNS}`,
       )
       .eq("id", sessionId)
       .maybeSingle()
@@ -442,7 +443,7 @@ function CompletePage() {
         </div>
 
         {/* Document 00A — Strategic Territory Intelligence Report */}
-        <Document00ACard brand={brand} />
+        <Document00ACard brand={brand} briefText={session.brief_text} />
 
         {/* Strategy Executive Summary — on-demand synthesis */}
         <ExecSummaryCard session={session} />

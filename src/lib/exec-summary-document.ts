@@ -375,7 +375,7 @@ export function buildExecSummaryDocument(
       next_step: recsHtml,
       appendix: `<h3>Research the summary draws on</h3>${researchHtml}${
         intel.sourceRunId
-          ? `<div class="callout"><div class="callout-title">Intelligence source snapshot</div><p>Run ${escapeHtml(intel.sourceRunId.slice(0, 8))}${intel.sourceCompletedAt ? `, completed ${escapeHtml(new Date(intel.sourceCompletedAt).toLocaleString("en-AU"))}` : ""}. Matched to this strategy by brand name; verify the run ID when multiple Intelligence runs exist.</p></div>`
+          ? `<div class="callout"><div class="callout-title">Intelligence source snapshot</div><p>Run ${escapeHtml(intel.sourceRunId.slice(0, 8))}${intel.sourceCompletedAt ? `, completed ${escapeHtml(new Date(intel.sourceCompletedAt).toLocaleString("en-AU"))}` : ""}. Resolved from the exact Intelligence source ID carried in this strategy session's brief.</p></div>`
           : ""
       }${
         derived.content.appendix ?? ""

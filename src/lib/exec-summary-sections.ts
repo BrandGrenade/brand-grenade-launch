@@ -783,7 +783,7 @@ export function extractRecommendations(session: ExecSessionRow): Recommendations
 
   if (!condition) {
     const cards = stage12Cards(str(session, "stage_12_output"));
-    const hit = cards.find((c) => key && matchKey(c.smp).includes(key));
+    const hit = cards.find((c) => key && matchKey(c.smp) === key);
     condition = hit?.note ?? null;
   }
 

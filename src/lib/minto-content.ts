@@ -591,21 +591,10 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
   if (integrityLine) {
     whyReasons.push({ title: "Survives integrity testing", detail: integrityLine.slice(0, 260) });
   }
-  // Stage 13 — brand-fit verdict and credibility dimensions. This is the
-  // authoritative "why this wins" read whenever the proposition was refined
-  // after Stage 10/11 and therefore carries no score or pressure-test block.
-  for (const r of stage13Reasons(s13)) whyReasons.push(r);
-  const fitLine = prose(s13, 1)[0];
-  if (fitLine && whyReasons.length < 6) {
-    whyReasons.push({ title: "Brand has permission", detail: fitLine.slice(0, 260) });
-  }
-  const whyFallbackBullets = bullets(s12, 4).length ? bullets(s12, 4) : bullets(s13, 4);
   const why_this_wins =
     (whyReasons.length
       ? reasonGrid(whyReasons.slice(0, 6))
-      : whyFallbackBullets.length
-        ? `<ul>${whyFallbackBullets.map((b) => `<li>${inlineMd(b)}</li>`).join("")}</ul>`
-        : "") + (opts.extraWhyHtml ?? "");
+      : "") + (opts.extraWhyHtml ?? "");
 
 
   /* 06 — validation summary */
@@ -651,11 +640,9 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
           `<p>The recommended proposition was resolved at selection, after the scored set above was tested for integrity and brand fit. It is not a row in the Stage 10 table.</p>`,
         )
       : "";
-  const fitNote = prose(s13, 1)[0];
   const validation =
     (validationTable || renderMarkdown(s10.slice(0, 2000)) || "") +
-    selectionNote +
-    (fitNote ? callout("Brand fit validation", `<p>${inlineMd(fitNote)}</p>`) : "");
+    selectionNote;
 
   /* 07 — rejected */
   const isFailureNote = (n?: string) =>

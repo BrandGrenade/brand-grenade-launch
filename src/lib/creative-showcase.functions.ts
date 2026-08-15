@@ -14,6 +14,7 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertSessionAccess } from "@/lib/auth-helpers.server";
 import { cleanProposition } from "@/lib/clean-proposition";
+import { sameTextAuthority } from "@/lib/document-source-authority";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyRow = Record<string, any>;
@@ -132,14 +133,16 @@ export const getCreativeShowcase = createServerFn({ method: "POST" })
     if (session.locked_big_idea_run_id) {
       const { data: run } = await db
         .from("stimulus_runs")
-        .select("winning_direction_id, winning_line_direction_id, winning_line, locked_at")
+        .select("session_id, winning_direction_id, winning_line_direction_id, winning_line, locked_at")
         .eq("id", session.locked_big_idea_run_id)
+        .eq("session_id", data.sessionId)
         .maybeSingle();
       if (run?.winning_direction_id) {
         const { data: dir } = await db
           .from("stimulus_directions")
-          .select("instinct_brief, ratings")
+          .select("run_id, direction, lens_name, instinct_brief, ratings")
           .eq("id", run.winning_direction_id)
+          .eq("run_id", session.locked_big_idea_run_id)
           .maybeSingle();
         instinctBrief = (dir?.instinct_brief as string) ?? null;
         ratings = dir?.ratings ?? null;
@@ -149,8 +152,9 @@ export const getCreativeShowcase = createServerFn({ method: "POST" })
         if (run.winning_line_direction_id) {
           const { data: lineDir } = await db
             .from("stimulus_directions")
-            .select("campaign_line")
+            .select("run_id, campaign_line")
             .eq("id", run.winning_line_direction_id)
+            .eq("run_id", session.locked_big_idea_run_id)
             .maybeSingle();
           authoritativeLine =
             (lineDir?.campaign_line as string) ??
@@ -170,7 +174,7 @@ export const getCreativeShowcase = createServerFn({ method: "POST" })
     // ------------------------------------------------------------ channels
     const { data: runs } = await db
       .from("stimulus_runs")
-      .select("id, channel_name, run_mode, gate_one_confirmed, created_at")
+      .select("id, channel_name, run_mode, gate_one_confirmed, created_at, locked_big_idea_at_generation, locked_line_at_generation")
       .eq("session_id", data.sessionId)
       .in("run_mode", ["channel_adaptation", "offline_creative_brief"])
       .order("created_at", { ascending: false });
@@ -179,6 +183,10 @@ export const getCreativeShowcase = createServerFn({ method: "POST" })
     const newestAdapt = new Map<string, AnyRow>();
     const newestBrief = new Map<string, AnyRow>();
     for (const r of allRuns) {
+      if (
+        !sameTextAuthority(r.locked_big_idea_at_generation as string | null, authoritativeIdea) ||
+        !sameTextAuthority(r.locked_line_at_generation as string | null, authoritativeLine)
+      ) continue;
       const bucket = r.run_mode === "channel_adaptation" ? newestAdapt : newestBrief;
       if (!bucket.has(r.channel_name)) bucket.set(r.channel_name, r);
     }

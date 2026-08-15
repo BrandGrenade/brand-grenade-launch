@@ -15,9 +15,9 @@ import { buildConsultingDeliveryDocument } from "./consulting-delivery-document"
 import { buildDocument00AMinto } from "./intelligence/doc-00A-minto";
 import { fetchExecSummaryIntel } from "./exec-summary-intel";
 import { supabase } from "@/integrations/supabase/client";
-import { normalizeBrand } from "./brand-register";
 import type { IntelligenceReport } from "./intelligence/doc-00A-types";
 import { resolveLiveDocumentSession } from "./document-live-source";
+import { intelligenceSourceIdFromBrief } from "./document-source-authority";
 
 export type BundleSession = Phase1Session &
   Phase2Session &
@@ -70,19 +70,20 @@ interface Doc00AResult {
   input: Parameters<typeof buildDocument00AMinto>[0] | null;
 }
 
-async function fetchDocument00A(brand: string): Promise<Doc00AResult> {
-  const key = normalizeBrand(brand);
+async function fetchDocument00A(briefText: string | null | undefined): Promise<Doc00AResult> {
+  const sourceId = intelligenceSourceIdFromBrief(briefText);
   const empty: Doc00AResult = { input: null };
-  if (!key) return empty;
+  if (!sourceId) return empty;
   try {
     const res = await supabase
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .from("intelligence_sessions" as any)
       .select("id,brand_name,category,status,updated_at,completed_at,final_report,report_metadata")
-      .order("updated_at", { ascending: false })
-      .limit(500);
+      .eq("id", sourceId)
+      .eq("status", "complete")
+      .maybeSingle();
     if (res.error) return empty;
-    const rows = (res.data ?? []) as unknown as Array<{
+    const match = res.data as unknown as {
       id: string;
       brand_name: string | null;
       category: string | null;
@@ -91,8 +92,7 @@ async function fetchDocument00A(brand: string): Promise<Doc00AResult> {
       completed_at: string | null;
       final_report: string | null;
       report_metadata: unknown;
-    }>;
-    const match = rows.find((r) => normalizeBrand(r.brand_name) === key && r.status === "complete");
+    } | null;
     if (!match || !match.final_report) return empty;
     let report: IntelligenceReport;
     try {
@@ -110,7 +110,7 @@ async function fetchDocument00A(brand: string): Promise<Doc00AResult> {
         : "commercial";
     const input: Parameters<typeof buildDocument00AMinto>[0] = {
       sourceRunId: match.id,
-      brandName: match.brand_name || brand,
+      brandName: match.brand_name || "Untitled Brand",
       category: match.category ?? "",
       briefType,
       completedAt: match.completed_at ?? match.updated_at,
@@ -167,7 +167,9 @@ export async function buildAndDownloadBundle(
 
   // Root — Strategy Executive Summary (synthesis of stored data only)
   onProgress?.("Building Strategy Executive Summary…");
-  const execIntel = await fetchExecSummaryIntel(brand);
+  const execIntel = await fetchExecSummaryIntel(
+    typeof session.brief_text === "string" ? session.brief_text : null,
+  );
   // Same extra columns the Deliverables card loads, so both paths build the
   // identical document.
   const execExtra = await (async () => {
@@ -200,7 +202,9 @@ export async function buildAndDownloadBundle(
   // Root — Document 00A (real PDF from Intelligence Lab, plus the structured
   // ten-section HTML version rendered from the same report).
   onProgress?.("Fetching Strategic Territory Intelligence Report…");
-  const doc00A = await fetchDocument00A(brand);
+  const doc00A = await fetchDocument00A(
+    typeof session.brief_text === "string" ? session.brief_text : null,
+  );
   if (doc00A.input) {
     tryAdd(
       "Strategic_Territory_Intelligence_Report.html",

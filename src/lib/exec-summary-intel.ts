@@ -3,33 +3,31 @@
 // Lab executive summary. Returns empty values when no run exists for the brand.
 
 import { supabase } from "@/integrations/supabase/client";
-import { normalizeBrand } from "./brand-register";
 import type { ExecSummaryIntel } from "./exec-summary-document";
+import { intelligenceSourceIdFromBrief } from "./document-source-authority";
 
 export async function fetchExecSummaryIntel(
-  brand: string,
+  briefText: string | null | undefined,
 ): Promise<ExecSummaryIntel> {
-  const key = normalizeBrand(brand);
-  if (!key) return {};
+  const sourceId = intelligenceSourceIdFromBrief(briefText);
+  if (!sourceId) return {};
   try {
     const res = await supabase
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .from("intelligence_sessions" as any)
       .select("id,brand_name,status,updated_at,completed_at,handoff_payload,report_metadata")
-      .order("updated_at", { ascending: false })
-      .limit(500);
+      .eq("id", sourceId)
+      .eq("status", "complete")
+      .maybeSingle();
     if (res.error) return {};
-    const rows = ((res.data ?? []) as unknown) as Array<{
+    const match = res.data as unknown as {
       id: string;
       brand_name: string | null;
       status: string | null;
       completed_at: string | null;
       handoff_payload: unknown;
       report_metadata: unknown;
-    }>;
-    const match = rows.find(
-      (r) => normalizeBrand(r.brand_name) === key && r.status === "complete",
-    );
+    } | null;
     if (!match) return {};
     const handoff = match.handoff_payload as
       | { prebrief?: { tension?: string | null } }

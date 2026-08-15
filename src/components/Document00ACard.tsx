@@ -6,7 +6,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { normalizeBrand } from "@/lib/brand-register";
+import { intelligenceSourceIdFromBrief } from "@/lib/document-source-authority";
 import {
   openDocument00AMinto,
   type IntelligenceReport,
@@ -22,10 +22,9 @@ type IntelSummary = {
 };
 
 async function fetchLatestIntelligence(
-  brand: string,
+  sourceId: string | null,
 ): Promise<IntelSummary | null> {
-  const key = normalizeBrand(brand);
-  if (!key) return null;
+  if (!sourceId) return null;
   try {
     const res = await supabase
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -33,10 +32,11 @@ async function fetchLatestIntelligence(
       .select(
         "id,brand_name,category,status,updated_at,completed_at,final_report,report_metadata",
       )
-      .order("updated_at", { ascending: false })
-      .limit(500);
+      .eq("id", sourceId)
+      .eq("status", "complete")
+      .maybeSingle();
     if (res.error) return null;
-    const rows = ((res.data ?? []) as unknown) as Array<{
+    const match = res.data as unknown as {
       id: string;
       brand_name: string | null;
       category: string | null;
@@ -45,10 +45,7 @@ async function fetchLatestIntelligence(
       completed_at: string | null;
       final_report: string | null;
       report_metadata: unknown;
-    }>;
-    const match = rows.find(
-      (r) => normalizeBrand(r.brand_name) === key && r.status === "complete",
-    );
+    } | null;
     if (!match || !match.final_report) return null;
     let report: IntelligenceReport | null = null;
     try {
@@ -64,7 +61,7 @@ async function fetchLatestIntelligence(
         : "commercial";
     return {
       id: match.id,
-      brandName: match.brand_name || brand,
+      brandName: match.brand_name || "Untitled Brand",
       category: match.category ?? "",
       briefType,
       completedAt: match.completed_at ?? match.updated_at,
@@ -75,14 +72,21 @@ async function fetchLatestIntelligence(
   }
 }
 
-export function Document00ACard({ brand }: { brand: string }) {
+export function Document00ACard({
+  brand,
+  briefText,
+}: {
+  brand: string;
+  briefText?: string | null;
+}) {
   const [intel, setIntel] = useState<IntelSummary | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [downloading, setDownloading] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
-    void fetchLatestIntelligence(brand).then((r) => {
+    const sourceId = intelligenceSourceIdFromBrief(briefText);
+    void fetchLatestIntelligence(sourceId).then((r) => {
       if (cancelled) return;
       setIntel(r);
       setLoaded(true);
@@ -90,7 +94,7 @@ export function Document00ACard({ brand }: { brand: string }) {
     return () => {
       cancelled = true;
     };
-  }, [brand]);
+  }, [briefText]);
 
   const handleDownload = useCallback(async () => {
     if (!intel) return;
