@@ -308,7 +308,7 @@ const SCAFFOLD_LINE =
 
 /** Run-count bookkeeping a model writes above its own output. */
 export const BOOKKEEPING_LINE =
-  /^\*{0,2}[A-Z][A-Z0-9 /()-]{4,60}:\s*\d+\**\s*(?:\([^)]{0,80}\))?\s*$/;
+  /^\*{0,2}[A-Za-z][A-Za-z0-9 /()-]{4,60}:?\*{0,2}:?\s*\d+\*{0,2}\s*(?:\([^)]{0,90}\))?\*{0,2}\s*$/;
 
 
 /**
