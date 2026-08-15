@@ -166,7 +166,7 @@ export async function buildAndDownloadBundle(
   );
 
   // Root — Strategy Executive Summary (synthesis of stored data only)
-  onProgress?.("Building Strategy Executive Summary…");
+  onProgress?.("Building Brand Strategy and Creative Intelligence Summary…");
   const execIntel = await fetchExecSummaryIntel(
     typeof session.brief_text === "string" ? session.brief_text : null,
   );
@@ -187,9 +187,9 @@ export async function buildAndDownloadBundle(
     }
   })();
   tryAdd(
-    "Strategy_Executive_Summary.html",
+    "Brand_Strategy_and_Creative_Intelligence_Summary.html",
     () => buildExecSummaryDocument({ ...session, ...execExtra }, execIntel),
-    "Building Strategy Executive Summary…",
+    "Building Brand Strategy and Creative Intelligence Summary…",
   );
 
   // Root — Consulting Delivery (canonical ten-section template)

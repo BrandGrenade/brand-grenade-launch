@@ -72,7 +72,7 @@ export function ExecSummaryCard({ session }: { session: ExecSummarySession }) {
             fontWeight: 600,
           }}
         >
-          Strategy Executive Summary
+          Brand Strategy and Creative Intelligence Summary
         </span>
         <span className="text-body-sm" style={{ color: "#8B8680", fontSize: 13 }}>
           {ready
@@ -100,7 +100,7 @@ export function ExecSummaryCard({ session }: { session: ExecSummarySession }) {
           opacity: busy ? 0.6 : 1,
         }}
       >
-        {busy ? <><Spinner /> Building…</> : "Generate Executive Summary"}
+        {busy ? <><Spinner /> Building…</> : "Generate Summary"}
       </button>
     </div>
   );

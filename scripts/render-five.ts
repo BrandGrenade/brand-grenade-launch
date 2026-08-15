@@ -13,7 +13,7 @@ if (error || !s) { console.error("session load failed", error); process.exit(1);
 mkdirSync("/tmp/browser/five", { recursive: true });
 const out: Record<string, string> = {
   "01_Board_Strategy_Recommendation": buildPhase1Document(s as never, "consulting"),
-  "02_Strategy_Executive_Summary": buildExecSummaryDocument(s as never, {} as never),
+  "02_Brand_Strategy_and_Creative_Intelligence_Summary": buildExecSummaryDocument(s as never, {} as never),
   "03_Consulting_Delivery": buildConsultingDeliveryDocument(s as never),
   "04_Master_Detonation_Brief": buildPhase2Document(s as never, "master_brief"),
 };
