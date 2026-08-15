@@ -1177,13 +1177,21 @@ export function BigIdeaSweep({
               {!locked && (
                 <Btn
                   active
-                  disabled={busy || !pickIdea || !pickLine}
+                  disabled={busy || !pickIdea}
                   onClick={async () => {
-                    if (!runId || !pickIdea || !pickLine) return;
+                    if (!runId || !pickIdea) return;
+                    const lineId =
+                      pickLine ?? (chosenIdea?.campaign_line?.trim() ? chosenIdea.id : null);
+                    if (!lineId) {
+                      setErr(
+                        "This idea's lens produced no master line. Choose a line from another idea (Use this line) before locking.",
+                      );
+                      return;
+                    }
                     setBusy(true);
                     setErr(null);
                     try {
-                      await lock({ data: { runId, directionId: pickIdea, lineDirectionId: pickLine } });
+                      await lock({ data: { runId, directionId: pickIdea, lineDirectionId: lineId } });
                       await refresh(runId);
                       onLocked?.();
                     } catch (e) {
@@ -1193,9 +1201,10 @@ export function BigIdeaSweep({
                     }
                   }}
                 >
-                  Lock winning idea and winning line
+                  {busy ? "Locking…" : "Lock winning idea and winning line"}
                 </Btn>
               )}
+
 
               {locked && (
                 <Btn
