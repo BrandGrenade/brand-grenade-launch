@@ -49,11 +49,13 @@ export async function resolveLiveDocumentSession<T extends LiveDocumentSession>(
   if (runId) {
     const result = await supabase
       .from("stimulus_runs")
-      .select("id,winning_direction_id,winning_line_direction_id,winning_line,locked_at")
+      .select("id,session_id,winning_direction_id,winning_line_direction_id,winning_line,locked_at")
       .eq("id", runId)
+      .eq("session_id", supplied.id)
       .maybeSingle();
     run = result.data;
-  } else {
+  }
+  if (!run) {
     const result = await supabase
       .from("stimulus_runs")
       .select("id,winning_direction_id,winning_line_direction_id,winning_line,locked_at")
@@ -74,7 +76,8 @@ export async function resolveLiveDocumentSession<T extends LiveDocumentSession>(
   const { data: directions } = ids.length
     ? await supabase
         .from("stimulus_directions")
-        .select("id,lens_name,direction,campaign_line")
+         .select("id,run_id,lens_name,direction,campaign_line")
+         .eq("run_id", run.id)
         .in("id", ids)
     : { data: [] };
   const idea = directions?.find((row) => row.id === run?.winning_direction_id);

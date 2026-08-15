@@ -19,15 +19,12 @@ const EXTRA_COLUMNS =
 export function ExecSummaryCard({ session }: { session: ExecSummarySession }) {
   const [busy, setBusy] = useState(false);
   const amber = "#C81E1E";
-  const brand = session.brand_name ?? "Untitled Brand";
   const ready = Boolean(session.selected_smp && session.selected_smp.trim());
 
   const handleGenerate = useCallback(async () => {
     setBusy(true);
     try {
-      const [intel, extra] = await Promise.all([
-        fetchExecSummaryIntel(brand),
-        (async () => {
+      const extra = await (async () => {
           const id = (session as { id?: string }).id;
           if (!id) return {};
           const res = await supabase
@@ -36,16 +33,18 @@ export function ExecSummaryCard({ session }: { session: ExecSummarySession }) {
             .eq("id", id)
             .maybeSingle();
           return (res.data as Record<string, unknown> | null) ?? {};
-        })(),
-      ]);
+        })();
       const live = await resolveLiveDocumentSession({ ...session, ...extra });
+      const intel = await fetchExecSummaryIntel(
+        typeof live.brief_text === "string" ? live.brief_text : null,
+      );
       openExecSummaryDocument(live, intel);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not build the summary");
     } finally {
       setBusy(false);
     }
-  }, [brand, session]);
+  }, [session]);
 
 
   return (
