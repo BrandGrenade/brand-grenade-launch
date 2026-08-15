@@ -1300,7 +1300,13 @@ export function BigIdeaSweep({
               locked={locked}
               isWinner={d.id === pickIdea}
               isLineWinner={d.id === pickLine}
-              onPickIdea={() => setPickIdea(d.id)}
+              onPickIdea={() => {
+                setPickIdea(d.id);
+                // Picking an idea whose own lens carries a master line should
+                // not also require a second click — the common case is that the
+                // winning idea's line wins with it.
+                if (!pickLine && d.campaign_line?.trim()) setPickLine(d.id);
+              }}
               onPickLine={() => setPickLine(d.id)}
               onTriage={async (status, instinct) => {
                 await triage({ data: { directionId: d.id, status, instinctBrief: instinct } });
