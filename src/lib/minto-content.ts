@@ -120,9 +120,16 @@ export function isScaffoldProse(p: string): boolean {
  * candidate the model happened to write first. That is how a document ends
  * up describing a proposition other than the one on its own cover.
  */
-export function orderBySelected(raw: string, smp: string): string {
-  const key = smpKey(smp);
-  if (!raw.trim() || key.length < 6) return raw;
+export function orderBySelected(raw: string, smp: string, aliases: string[] = []): string {
+  // A stage rarely repeats the proposition line verbatim: Stage 7 names the
+  // territory ("The Designed Spontaneity"), Stage 9 names it in bold at the
+  // head of a paragraph. Aliases let the same reorder work on those stages.
+  const keys = [smp, ...aliases].map(smpKey).filter((k) => k.length >= 6);
+  if (!raw.trim() || !keys.length) return raw;
+  const has = (s: string) => {
+    const k = smpKey(s);
+    return keys.some((key) => k.includes(key));
+  };
   const lines = raw.split("\n");
 
   // Boundaries must sit at candidate level, not at every sub-heading, or a
@@ -157,10 +164,10 @@ export function orderBySelected(raw: string, smp: string): string {
       if (isBoundary(l)) starts.push(i);
     });
     if (starts.length < 2) continue;
-    let preamble = lines.slice(0, starts[0]);
+    const preamble = lines.slice(0, starts[0]);
     const blocks = starts.map((s, n) => lines.slice(s, starts[n + 1] ?? lines.length));
-    const headerHit = blocks.findIndex((b) => smpKey(b[0] ?? "").includes(key));
-    const bodyHit = blocks.findIndex((b) => smpKey(b.join(" ")).includes(key));
+    const headerHit = blocks.findIndex((b) => has(b[0] ?? ""));
+    const bodyHit = blocks.findIndex((b) => has(b.join(" ")));
     const hit = headerHit >= 0 ? headerHit : bodyHit;
     if (hit < 0) continue;
     // Any trailing preamble title belongs to whichever candidate happened to
@@ -172,18 +179,78 @@ export function orderBySelected(raw: string, smp: string): string {
         preamble.pop();
         continue;
       }
-      if (looksLikeTitle(last) && !smpKey(last).includes(key)) {
+      if (looksLikeTitle(last) && !has(last)) {
         preamble.pop();
         continue;
       }
       break;
     }
-    if (hit === 0 && preamble.length === starts[0]) return raw;
+    if (hit === 0 && preamble.length === starts[0]) return promoteParagraphs(raw, has);
     const ordered = [blocks[hit], ...blocks.filter((_, i) => i !== hit)];
-    return [...preamble, ...ordered.flat()].join("\n");
+    return promoteParagraphs([...preamble, ...ordered.flat()].join("\n"), has);
   }
-  return raw;
+  return promoteParagraphs(raw, has);
 }
+
+/**
+ * Some stages are organised by theme rather than by candidate: each themed
+ * heading contains one paragraph per proposition, in generation order. The
+ * block reorder cannot help there, so within every heading section the
+ * paragraph that names the selected proposition is moved to the front.
+ */
+function promoteParagraphs(raw: string, has: (s: string) => boolean): string {
+  const lines = raw.split("\n");
+  const headIdx: number[] = [];
+  lines.forEach((l, i) => {
+    if (/^\s*#{1,6}\s+\S/.test(l)) headIdx.push(i);
+  });
+  if (!headIdx.length) return raw;
+
+  const out: string[] = lines.slice(0, headIdx[0]);
+  headIdx.forEach((start, n) => {
+    const end = headIdx[n + 1] ?? lines.length;
+    const heading = lines[start];
+    const body = lines.slice(start + 1, end).join("\n");
+    const paras = body.split(/\n\s*\n/);
+    // Only sections that enumerate several named candidates qualify.
+    const named = paras.filter((p) => /^\s*\*\*[^*]{3,90}\*\*/.test(p.trim()));
+    if (named.length >= 2) {
+      const hit = paras.findIndex((p) => /^\s*\*\*[^*]{3,90}\*\*/.test(p.trim()) && has(p.split("\n")[0]));
+      if (hit > 0) {
+        const reordered = [paras[hit], ...paras.filter((_, i) => i !== hit)];
+        out.push(heading, "", reordered.join("\n\n").replace(/^\n+/, ""));
+        return;
+      }
+    }
+    out.push(heading, body);
+  });
+  return out.join("\n");
+}
+
+/**
+ * Names the selected proposition also travels under: the FIELD/territory
+ * label recorded alongside it in the pipeline transcripts. Used so stages
+ * that never repeat the proposition line can still be scoped to it.
+ */
+export function selectedAliases(session: MintoSession): string[] {
+  const smpKeyed = smpKey(clean(session.selected_smp));
+  if (smpKeyed.length < 6) return [];
+  const haystack = [
+    clean(session.stage_10_output),
+    clean(session.stage_12_output),
+    clean(session.stage_8_output),
+  ].join("\n");
+  const out = new Set<string>();
+  for (const line of haystack.split("\n")) {
+    const m = line.match(/SMP\s*\d*\s*:\s*["“'”]?(.+?)["“'”]?\s*[—–-]\s*FIELD:\s*(.+?)\s*$/i);
+    if (!m) continue;
+    if (!smpKey(m[1]).includes(smpKeyed) && !smpKeyed.includes(smpKey(m[1]))) continue;
+    const field = m[2].replace(/\*+/g, "").trim();
+    if (field.length >= 6) out.add(field);
+  }
+  return [...out];
+}
+
 
 
 
