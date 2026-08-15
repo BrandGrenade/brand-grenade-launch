@@ -667,7 +667,7 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
     if (runnerUp?.composite != null && winner.composite != null) {
       whyReasons.push({
         title: "Clears the field",
-        detail: `${winner.composite}/100 against ${runnerUp.composite}/100 for the next-best candidate (${runnerUp.name}).`,
+        detail: `“${smp}” scores ${winner.composite}/100 against ${runnerUp.composite}/100 for the next-best candidate (${runnerUp.name}).`,
       });
     }
   }
