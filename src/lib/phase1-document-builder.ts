@@ -79,7 +79,7 @@ export function md(text: string): string {
 }
 
 import { stripDocumentMetadata } from "./strip-document-metadata";
-import { BOOKKEEPING_LINE, orderBySelected } from "./minto-content";
+import { BOOKKEEPING_LINE, CANDIDATE_STAGE_KEYS, orderBySelected, selectedAliases } from "./minto-content";
 import { buildBoardStrategyDocument } from "./board-strategy-document";
 
 export function sanitise(t: string | null | undefined): string {
@@ -210,14 +210,7 @@ function sectionsFor(format: Phase1Format): SectionDef[] {
   return SECTIONS_CONSULTING;
 }
 
-const CANDIDATE_KEYS = new Set([
-  "stage_8_output",
-  "stage_9_output",
-  "stage_10_output",
-  "stage_11_output",
-  "stage_12_output",
-  "stage_14_output",
-]);
+const CANDIDATE_KEYS = CANDIDATE_STAGE_KEYS;
 
 function sectionOutput(session: Phase1Session, key: keyof Phase1Session): string {
   const primary = (session[key] ?? "").toString();
@@ -229,7 +222,11 @@ function sectionOutput(session: Phase1Session, key: keyof Phase1Session): string
     .filter((l) => !BOOKKEEPING_LINE.test(l.trim()))
     .join("\n");
   if (CANDIDATE_KEYS.has(String(key))) {
-    raw = orderBySelected(raw, ((session as unknown as Record<string, unknown>)["selected_smp"] ?? "").toString());
+    raw = orderBySelected(
+      raw,
+      ((session as unknown as Record<string, unknown>)["selected_smp"] ?? "").toString(),
+      selectedAliases(session as never),
+    );
   }
   return raw;
 }

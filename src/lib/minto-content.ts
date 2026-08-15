@@ -120,44 +120,156 @@ export function isScaffoldProse(p: string): boolean {
  * candidate the model happened to write first. That is how a document ends
  * up describing a proposition other than the one on its own cover.
  */
-export function orderBySelected(raw: string, smp: string): string {
-  const key = smpKey(smp);
-  if (!raw.trim() || key.length < 6) return raw;
+export function orderBySelected(raw: string, smp: string, aliases: string[] = []): string {
+  // A stage rarely repeats the proposition line verbatim: Stage 7 names the
+  // territory ("The Designed Spontaneity"), Stage 9 names it in bold at the
+  // head of a paragraph. Aliases let the same reorder work on those stages.
+  const keys = [smp, ...aliases].map(smpKey).filter((k) => k.length >= 6);
+  if (!raw.trim() || !keys.length) return raw;
+  const has = (s: string) => {
+    const k = smpKey(s);
+    return keys.some((key) => k.includes(key));
+  };
   const lines = raw.split("\n");
 
   // Boundaries must sit at candidate level, not at every sub-heading, or a
   // candidate's own body is torn away from its header and the reorder moves
   // a bare title instead of the evidence beneath it.
+  //
+  // Ordering matters: a candidate's TITLE is what a reader sees as the
+  // section header, so title-bearing boundaries (markdown headings,
+  // "PROPOSITION 2") are tried before body-level labels such as `SMP: "..."`.
+  // Splitting on `SMP:` leaves the first candidate's title stranded in the
+  // preamble, which is how a scoring section ended up headed by one
+  // proposition while the line beneath it belonged to another.
   const candidates: Array<(l: string) => boolean> = [
     (l) => /^\s*\*{0,2}(?:PROPOSITION|SMP|CANDIDATE|OPTION|CARD|TERRITORY)\s*\d+\*{0,2}\s*$/i.test(l),
-    (l) => /^\s*(?:#{1,6}\s*)?\*{0,2}SMP\s*\d*\s*:/i.test(l),
     (l) => /^\s*(?:#{1,6}\s*)?\*{0,2}(?:Proposition|Candidate|Option|Card|Field)\s*\d+\s*[:—–-]/i.test(l),
-    (l) => /^\s*##\s+\S/.test(l),
     (l) => /^\s*###\s+\S/.test(l),
+    (l) => /^\s*##\s+\S/.test(l),
     (l) => /^\s*#\s+\S/.test(l),
+    (l) => /^\s*(?:#{1,6}\s*)?\*{0,2}SMP\s*\d*\s*:/i.test(l),
     // Bold-only lines are the weakest signal: they are often sub-labels
     // inside a candidate block, so they are tried last.
     (l) => /^\s*\*\*[^*]{3,90}\*\*\s*$/.test(l),
   ];
 
-  for (const isBoundary of candidates) {
+  /** A preamble line that reads as a candidate title rather than context. */
+  const looksLikeTitle = (l: string) =>
+    /^\s*#{1,6}\s+\S/.test(l) || /^\s*\*\*[^*]{3,90}\*\*\s*$/.test(l);
+
+  const apply = (starts: number[], blocks: string[][], hit: number): string => {
+    const preamble = lines.slice(0, starts[0]);
+    // Any trailing preamble title belongs to whichever candidate happened to
+    // be written first. Once the order changes it would mislabel the block
+    // beneath it, so it is dropped unless it names the selected proposition.
+    while (preamble.length) {
+      const last = preamble[preamble.length - 1];
+      if (!last.trim()) {
+        preamble.pop();
+        continue;
+      }
+      if (looksLikeTitle(last) && !has(last)) {
+        preamble.pop();
+        continue;
+      }
+      break;
+    }
+    if (hit === 0 && preamble.length === starts[0]) return promoteParagraphs(raw, has);
+    const ordered = [blocks[hit], ...blocks.filter((_, i) => i !== hit)];
+    return promoteParagraphs([...preamble, ...ordered.flat()].join("\n"), has);
+  };
+
+  const segment = (isBoundary: (l: string) => boolean) => {
     const starts: number[] = [];
     lines.forEach((l, i) => {
       if (isBoundary(l)) starts.push(i);
     });
-    if (starts.length < 2) continue;
-    const preamble = lines.slice(0, starts[0]);
-    const blocks = starts.map((s, n) => lines.slice(s, starts[n + 1] ?? lines.length));
-    const headerHit = blocks.findIndex((b) => smpKey(b[0] ?? "").includes(key));
-    const bodyHit = blocks.findIndex((b) => smpKey(b.join(" ")).includes(key));
-    const hit = headerHit >= 0 ? headerHit : bodyHit;
-    if (hit < 0) continue;
-    if (hit === 0) return raw;
-    const ordered = [blocks[hit], ...blocks.filter((_, i) => i !== hit)];
-    return [...preamble, ...ordered.flat()].join("\n");
+    if (starts.length < 2) return null;
+    return { starts, blocks: starts.map((s, n) => lines.slice(s, starts[n + 1] ?? lines.length)) };
+  };
+
+  // A block whose own HEADER names the proposition is unambiguous. A block
+  // that merely mentions it somewhere in its body may be a coarse grouping
+  // that opens with a different candidate — promoting that would move the
+  // wrong title to the front. So every segmentation is tried for a header
+  // match first, and body matches are only used when no header match exists.
+  for (const isBoundary of candidates) {
+    const seg = segment(isBoundary);
+    if (!seg) continue;
+    const hit = seg.blocks.findIndex((b) => has(b[0] ?? ""));
+    if (hit >= 0) return apply(seg.starts, seg.blocks, hit);
   }
-  return raw;
+  for (const isBoundary of candidates) {
+    const seg = segment(isBoundary);
+    if (!seg) continue;
+    const hit = seg.blocks.findIndex((b) => has(b.join(" ")));
+    if (hit >= 0) return apply(seg.starts, seg.blocks, hit);
+  }
+  return promoteParagraphs(raw, has);
 }
+
+
+/**
+ * Some stages are organised by theme rather than by candidate: each themed
+ * heading contains one paragraph per proposition, in generation order. The
+ * block reorder cannot help there, so within every heading section the
+ * paragraph that names the selected proposition is moved to the front.
+ */
+function promoteParagraphs(raw: string, has: (s: string) => boolean): string {
+  const lines = raw.split("\n");
+  const headIdx: number[] = [];
+  lines.forEach((l, i) => {
+    if (/^\s*#{1,6}\s+\S/.test(l)) headIdx.push(i);
+  });
+  if (!headIdx.length) return raw;
+
+  const out: string[] = lines.slice(0, headIdx[0]);
+  headIdx.forEach((start, n) => {
+    const end = headIdx[n + 1] ?? lines.length;
+    const heading = lines[start];
+    const body = lines.slice(start + 1, end).join("\n");
+    const paras = body.split(/\n\s*\n/);
+    // Only sections that enumerate several named candidates qualify.
+    const named = paras.filter((p) => /^\s*\*\*[^*]{3,90}\*\*/.test(p.trim()));
+    if (named.length >= 2) {
+      const hit = paras.findIndex((p) => /^\s*\*\*[^*]{3,90}\*\*/.test(p.trim()) && has(p.split("\n")[0]));
+      if (hit > 0) {
+        const reordered = [paras[hit], ...paras.filter((_, i) => i !== hit)];
+        out.push(heading, "", reordered.join("\n\n").replace(/^\n+/, ""));
+        return;
+      }
+    }
+    out.push(heading, body);
+  });
+  return out.join("\n");
+}
+
+/**
+ * Names the selected proposition also travels under: the FIELD/territory
+ * label recorded alongside it in the pipeline transcripts. Used so stages
+ * that never repeat the proposition line can still be scoped to it.
+ */
+export function selectedAliases(session: MintoSession): string[] {
+  const smpKeyed = smpKey(clean(session.selected_smp));
+  if (smpKeyed.length < 6) return [];
+  const haystack = [
+    clean(session.stage_10_output),
+    clean(session.stage_12_output),
+    clean(session.stage_8_output),
+  ].join("\n");
+  const out = new Set<string>();
+  for (const line of haystack.split("\n")) {
+    const m = line.match(/SMP\s*\d*\s*:\s*["“'”]?(.+?)["“'”]?\s*[—–-]\s*FIELD:\s*(.+?)\s*$/i);
+    if (!m) continue;
+    if (!smpKey(m[1]).includes(smpKeyed) && !smpKeyed.includes(smpKey(m[1]))) continue;
+    const field = m[2].replace(/\*+/g, "").trim();
+    if (field.length >= 6) out.add(field);
+  }
+  return [...out];
+}
+
+
 
 
 
@@ -266,6 +378,23 @@ function normalise(s: string): string {
     .replace(/\s+/g, " ")
     .trim();
 }
+
+/**
+ * Stage outputs that enumerate several candidate propositions. Every document
+ * builder must promote the locked proposition's block to the top of these
+ * before condensing, or the section's subject is whichever candidate the
+ * model happened to write first.
+ */
+export const CANDIDATE_STAGE_KEYS = new Set([
+  "stage_7_output",
+  "stage_8_output",
+  "stage_9_output",
+  "stage_10_output",
+  "stage_11_output",
+  "stage_12_output",
+  "stage_13_output",
+  "stage_14_output",
+]);
 
 function findWinner(candidates: ScoredCandidate[], smp: string): ScoredCandidate | null {
   // Exact match only. Substring matching used to attach a parent or sibling
@@ -377,15 +506,10 @@ export function buildAppendix(session: MintoSession, opts: AppendixOptions = {})
   // Stages that enumerate several candidate propositions. Condensing reads
   // from the top, so the selected proposition's block is promoted first;
   // otherwise the appendix evidences a candidate the document did not choose.
-  const CANDIDATE_STAGES = new Set([
-    "stage_8_output",
-    "stage_9_output",
-    "stage_10_output",
-    "stage_11_output",
-    "stage_12_output",
-    "stage_14_output",
-  ]);
+  const CANDIDATE_STAGES = CANDIDATE_STAGE_KEYS;
+
   const selectedSmp = clean(session.selected_smp).trim();
+  const aliases = selectedAliases(session);
 
   const blocks = defs
     .map((s, i) => {
@@ -398,7 +522,7 @@ export function buildAppendix(session: MintoSession, opts: AppendixOptions = {})
         .filter((l) => !BOOKKEEPING_LINE.test(l.trim()))
         .join("\n");
       if (!raw.trim()) return "";
-      if (CANDIDATE_STAGES.has(s.key)) raw = orderBySelected(raw, selectedSmp);
+      if (CANDIDATE_STAGES.has(s.key)) raw = orderBySelected(raw, selectedSmp, aliases);
       const body = mode === "full" ? raw : condenseStage(raw, budget);
 
       if (!body.trim()) return "";
