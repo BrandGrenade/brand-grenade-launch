@@ -26,6 +26,7 @@ import {
 } from "./doc-system";
 import type { MintoContent } from "./minto";
 import { stripDocumentMetadata } from "./strip-document-metadata";
+import { extractShortlist } from "./exec-summary-extract";
 
 export interface MintoSession {
   brand_name?: string | null;
@@ -148,8 +149,11 @@ export function parseScoredCandidates(stage10: string): ScoredCandidate[] {
     if (current && current.name) out.push(current);
   };
   for (const raw of stage10.split("\n")) {
-    const line = raw.trim();
-    const smp = line.match(/^SMP:\s*[""]?(.+?)[""]?\s*(?:—\s*FIELD:.*)?$/i);
+    // Markdown emphasis and heading markers are cosmetic; strip them before
+    // matching so a re-scored block written as `**Fame:** 7/10` parses
+    // identically to the plain `Fame: 7/10` the original pass emits.
+    const line = raw.trim().replace(/^#{1,6}\s*/, "").replace(/\*\*/g, "").trim();
+    const smp = line.match(/^SMP:\s*[""“”"']?(.+?)[""“”"']?\s*(?:—\s*FIELD:.*)?$/i);
     if (smp) {
       push();
       current = { name: smp[1].trim(), composite: null, verdict: null, verdictNote: "", dims: {} };
@@ -157,19 +161,38 @@ export function parseScoredCandidates(stage10: string): ScoredCandidate[] {
     }
     if (!current) continue;
     for (const dim of DIMENSIONS) {
-      const m = line.match(new RegExp(`^${dim}:\\s*(\\d+(?:\\.\\d+)?)\\s*/\\s*10`, "i"));
+      const m = line.match(new RegExp(`^${dim}\\s*:\\s*(\\d+(?:\\.\\d+)?)\\s*/\\s*10`, "i"));
       if (m) current.dims[dim] = Number(m[1]);
     }
     const comp = line.match(/CODE COMPOSITE:\s*(\d+(?:\.\d+)?)\s*\/\s*100/i);
     if (comp) current.composite = Number(comp[1]);
-    const verdict = line.match(/CODE VERDICT:\s*(PASS|FAIL)\s*(?:—\s*(.*))?/i);
+    const verdict = line.match(/CODE VERDICT:\s*(PASS|FAIL|ELIMINATED)\s*(?:—\s*(.*))?/i);
     if (verdict) {
-      current.verdict = verdict[1].toUpperCase() as "PASS" | "FAIL";
+      const v = verdict[1].toUpperCase();
+      current.verdict = v === "PASS" ? "PASS" : "FAIL";
       current.verdictNote = (verdict[2] ?? "").trim();
     }
   }
   push();
-  return out;
+  // Re-scores are appended to the same Stage 10 output, so the same
+  // proposition can appear twice. The last block wins; earlier values are
+  // kept only where the later block is silent.
+  const merged: ScoredCandidate[] = [];
+  for (const c of out) {
+    const prior = merged.findIndex((m) => normalise(m.name) === normalise(c.name));
+    if (prior < 0) {
+      merged.push(c);
+      continue;
+    }
+    merged[prior] = {
+      name: c.name,
+      composite: c.composite ?? merged[prior].composite,
+      verdict: c.verdict ?? merged[prior].verdict,
+      verdictNote: c.verdictNote || merged[prior].verdictNote,
+      dims: { ...merged[prior].dims, ...c.dims },
+    };
+  }
+  return merged;
 }
 
 function normalise(s: string): string {
@@ -513,6 +536,16 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
 
   /* 04 — proposition. Scores shown here belong to this exact proposition or
    * are not shown at all; a parent/earlier-stage line's score is never used. */
+  const winnerVerdictHtml = winner
+    ? callout(
+        "Stage 10 verdict",
+        `<p><strong>${winner.verdict === "FAIL" ? "ELIMINATED" : (winner.verdict ?? "PASS")}</strong>${
+          winner.composite != null
+            ? ` · composite ${winner.composite}/100 across the six-dimension framework`
+            : ""
+        }.${winner.verdictNote ? ` ${escapeHtml(winner.verdictNote)}` : ""}</p>`,
+      )
+    : "";
   const proposition = smp
     ? pullQuote(smp, { label: "Strategic Master Proposition" }) +
       (winner
@@ -523,7 +556,7 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
               label: d,
             })),
             3,
-          )
+          ) + winnerVerdictHtml
         : candidates.length
           ? callout(
               "Not independently scored",
@@ -587,9 +620,11 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
         fame: c.dims["Fame"],
         truth: c.dims["Truth Strength"],
         impossibility: c.dims["Competitive Impossibility"],
+        permission: c.dims["Brand Permission"],
         cleanAir: c.dims["Clean Air"],
+        precedent: c.dims["Commercial Precedent"],
         composite: c.composite,
-        verdict: c.verdict ?? "",
+        verdict: c.verdict === "FAIL" ? "ELIMINATED" : (c.verdict ?? ""),
       },
     }));
   const validationTable = comparisonTable(
@@ -598,7 +633,9 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
       { key: "fame", label: "Fame", numeric: true },
       { key: "truth", label: "Truth", numeric: true },
       { key: "impossibility", label: "Impossibility", numeric: true },
+      { key: "permission", label: "Permission", numeric: true },
       { key: "cleanAir", label: "Clean air", numeric: true },
+      { key: "precedent", label: "Precedent", numeric: true },
       { key: "composite", label: "Score /100", numeric: true },
       { key: "verdict", label: "Verdict" },
     ],
@@ -667,6 +704,32 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
           : "Not carried forward at selection.";
       return { title: c.name, detail };
     });
+  // Shared fallback: when Stage 10 carries only the selected proposition (a
+  // re-scored session, or a line resolved after the scoring pass), the
+  // considered-and-set-aside field lives in the Stage 12 shortlist. Every
+  // document type reads it from here, so no document can fall through to the
+  // "no rejected alternatives" placeholder while a real field exists.
+  if (!rejectReasons.length) {
+    // A Stage 12 pressure-test note is not always set-aside reasoning; it can
+    // read as endorsement of a line that was in fact carried forward. Only
+    // genuine rejection reasoning is admitted here.
+    const readsAsRejection = (n: string) =>
+      /not\s|never|fail|weak|narrow|risk|limit|thin|lack|misses|breach|too\s|cannot|struggle|reject|set aside|second|less/i.test(
+        n,
+      ) && !/^carried forward|is carried forward|selected as|chosen as/i.test(n.trim());
+    for (const item of extractShortlist(s12, { selectedSmp: smp, stage11: s11 })) {
+      if (item.selected || !item.proposition) continue;
+      const note = (item.setAsideReason ?? "").trim();
+      rejectReasons.push({
+        title: item.proposition,
+        detail:
+          note && readsAsRejection(note)
+            ? `Not carried forward: ${note}`
+            : "Considered at selection and set aside — the recommended proposition tested stronger against the Stage 10 framework.",
+      });
+      if (rejectReasons.length >= 4) break;
+    }
+  }
   const rejectedHtml = rejectReasons.length ? reasonGrid(rejectReasons) : "";
 
   /* 08 — implications */
