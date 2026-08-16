@@ -320,12 +320,17 @@ export function pullQuote(body: string, opts: PullQuoteOptions = {}): string {
   const text = sanitiseText(body).trim();
   if (!text) return "";
   const variant = opts.variant && opts.variant !== "default" ? ` ${opts.variant}` : "";
+  // Bebas Neue is a condensed display face: at 30pt a short line reads as a
+  // statement, but a full sentence of prose reads as words running together.
+  // Anything longer than a headline is set in the body face instead.
+  const proseClass = text.length > 150 ? " prose" : "";
   return `<div class="pull${variant} keep-together">
     ${opts.label ? `<div class="pull-label">${escapeHtml(opts.label)}</div>` : ""}
-    <div class="pull-body">${escapeHtml(text)}</div>
+    <div class="pull-body${proseClass}">${escapeHtml(text)}</div>
     ${opts.attribution ? `<div class="pull-attr">${escapeHtml(opts.attribution)}</div>` : ""}
   </div>`;
 }
+
 
 export interface CmpColumn {
   key: string;
