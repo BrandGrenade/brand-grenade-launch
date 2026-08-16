@@ -48,6 +48,9 @@ function fmt(line: string): string {
   let s = escapeHtml(line);
   s = s.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
   s = s.replace(/(^|\s)\*(?!\s)(.+?)\*(?!\w)/g, "$1<em>$2</em>");
+  // Unpaired markers left by a truncated or malformed run must never survive
+  // into a rendered document as literal asterisks.
+  s = s.replace(/\*\*/g, "").replace(/(^|\s)\*(?=\S)/g, "$1");
   return s;
 }
 
