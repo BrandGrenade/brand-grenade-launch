@@ -123,11 +123,13 @@ interface SectionDef {
   body: string;
 }
 
+const BREAK_BEFORE = new Set(["01", "04", "09", "16", "19"]);
+
 function renderSections(defs: SectionDef[]): string {
   return defs
     .map((d, i) =>
       section(
-        { kicker: d.kicker, index: d.index, title: d.title, breakBefore: i > 0 && i % 2 === 0 },
+        { kicker: d.kicker, index: d.index, title: d.title, breakBefore: BREAK_BEFORE.has(d.index) },
         `<p class="lede">${escapeHtml(d.lede)}</p>${d.body || nothing("No stored output for this stage.")}`,
       ),
     )
@@ -207,13 +209,14 @@ export function buildJaguarSummaryDocument(
   }`;
 
   /* 02 — What we know about the brand */
+  const fact = (key: string, n = 3) => firstSentencesOf(clean(str(session, key)), n);
   const brandFactsHtml = defList([
-    { label: "Positioning today", body: str(session, "brand_positioning") },
-    { label: "Product truth", body: str(session, "brand_product_truth") },
-    { label: "Audience relationship", body: str(session, "brand_audience_relationship") },
-    { label: "Tone of voice", body: str(session, "brand_tone_of_voice") },
-    { label: "Constraints", body: str(session, "brand_constraints") },
-    { label: "Organisational context", body: str(session, "brand_organisational_context") },
+    { label: "Positioning today", body: fact("brand_positioning") },
+    { label: "Product truth", body: fact("brand_product_truth") },
+    { label: "Audience relationship", body: fact("brand_audience_relationship") },
+    { label: "Tone of voice", body: fact("brand_tone_of_voice", 2) },
+    { label: "Constraints", body: fact("brand_constraints") },
+    { label: "Organisational context", body: fact("brand_organisational_context") },
   ]);
 
   /* 03 — How this was built */
@@ -241,8 +244,8 @@ export function buildJaguarSummaryDocument(
   ])}`;
 
   /* 04 — Category intelligence */
-  const categoryHtml = `${stageBlock(session, "stage_2_output", 12, 1700)}${list(
-    research.map((r) => `**${r.label}.** ${r.body}`),
+  const categoryHtml = `${stageBlock(session, "stage_2_output", 8, 1100)}${list(
+    research.slice(0, 6).map((r) => `**${r.label}.** ${r.body}`),
   )}`;
 
   /* 05 — Category insight */
@@ -256,25 +259,15 @@ export function buildJaguarSummaryDocument(
     : "";
 
   /* 06 — Synthesis */
-  const synthesisHtml = `${stageBlock(session, "stage_4_output", 10, 1400)}${stageBlock(
-    session,
-    "stage_6_output",
-    8,
-    1100,
-  )}`;
+  const synthesisHtml = `${stageBlock(session, "stage_4_output", 7, 900)}${stageBlock(session, "stage_6_output", 5, 650)}`;
 
   /* 07 — Proposition generation */
   const generationHtml = list(
-    field.map((f) => `**${f.proposition}** — ${f.origin}${f.reason ? `. ${f.reason}` : ""}`),
+    field.slice(0, 10).map((f) => `**${f.proposition}** — ${f.origin}`),
   );
 
   /* 08 — Distinctiveness testing */
-  const distinctHtml = `${stageBlock(session, "stage_9_leftofcentre_output", 10, 1400)}${stageBlock(
-    session,
-    "stage_11_output",
-    8,
-    1100,
-  )}`;
+  const distinctHtml = `${stageBlock(session, "stage_9_leftofcentre_output", 7, 900)}${stageBlock(session, "stage_11_output", 5, 650)}`;
 
   /* 09 — Scoring */
   const scoringHtml = scoring.rows.length
@@ -310,10 +303,14 @@ export function buildJaguarSummaryDocument(
   const rejected = field.filter((f) => !f.selected);
   const rejectedHtml = rejected.length
     ? list(
-        rejected.map(
-          (f) =>
-            `**${f.proposition}** — ${f.reason ? f.reason : "considered, not carried forward"} (${f.origin})`,
-        ),
+        rejected
+          .slice(0, 8)
+          .map(
+            (f) =>
+              `**${f.proposition}** — ${
+                firstSentencesOf(f.reason ?? "", 1) ?? "considered, not carried forward"
+              }`,
+          ),
       )
     : "";
 
@@ -327,26 +324,16 @@ export function buildJaguarSummaryDocument(
         ],
         verification.tests.map((t) => ({ cells: { t: t.name, v: t.verdict, n: t.note } })),
       )}`
-    : stageBlock(session, "stage_13_output", 10, 1300);
+    : stageBlock(session, "stage_13_output", 7, 900);
 
   /* 13 — Brand fit */
-  const fitHtml = `${stageBlock(session, "stage_14_output", 10, 1400)}${stageBlock(
-    session,
-    "stage_14b_output",
-    6,
-    800,
-  )}`;
+  const fitHtml = `${stageBlock(session, "stage_14_output", 7, 900)}${stageBlock(session, "stage_14b_output", 4, 500)}`;
 
   /* 14 — Territory mapping */
-  const territoryHtml = `${stageBlock(session, "stage_17_output", 10, 1400)}${stageBlock(
-    session,
-    "stage_18_output",
-    8,
-    1000,
-  )}`;
+  const territoryHtml = `${stageBlock(session, "stage_17_output", 7, 900)}${stageBlock(session, "stage_18_output", 5, 650)}`;
 
   /* 15 — Coherence audit */
-  const coherenceHtml = stageBlock(session, "stage_15_output", 10, 1400);
+  const coherenceHtml = stageBlock(session, "stage_15_output", 7, 900);
 
   /* 16 — Creative sweep */
   const sweepHtml = `${statGrid([
@@ -408,9 +395,7 @@ export function buildJaguarSummaryDocument(
     : "";
 
   /* 20 — Brand architecture and distinctive assets */
-  const architectureHtml = `${stageBlock(session, "stage_22_output", 10, 1400)}${p(
-    str(session, "stage_22_distinctive_assets"),
-  )}`;
+  const architectureHtml = `${stageBlock(session, "stage_22_output", 7, 900)}${p(firstSentencesOf(str(session, "stage_22_distinctive_assets"), 4))}`;
 
   /* 21 — Next step */
   const nextHtml = `${p(recs.condition ? `Condition on activation: ${recs.condition}` : "")}${p(
