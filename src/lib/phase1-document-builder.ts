@@ -287,10 +287,18 @@ export function buildPhase1Document(session: Phase1Session, format: Phase1Format
         let raw = sectionOutput(session, s.key);
         if (s.key === "stage_1_output") raw = stripStage1Internals(raw);
         if (!raw.trim()) return "";
-        return `<div class="section"><div class="part-label">${escapeHtml(s.label)}</div><h2>${escapeHtml(s.title)}</h2>${md(sanitise(raw))}</div>`;
+        let inner = md(sanitise(raw));
+        // The stored output existed but carried nothing publishable once
+        // internal bookkeeping was removed. State the gap rather than
+        // shipping a heading with an empty body.
+        if (!inner.replace(/<[^>]+>/g, "").trim()) {
+          inner = `<p>This session's stored output for this stage contains no client-facing content — only internal pipeline bookkeeping, which is not reproduced here.</p>`;
+        }
+        return `<div class="section"><div class="part-label">${escapeHtml(s.label)}</div><h2>${escapeHtml(s.title)}</h2>${inner}</div>`;
       })
       .filter(Boolean)
       .join("\n") +
+
     footer();
 
   return certifyDocument(
