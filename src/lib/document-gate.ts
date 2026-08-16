@@ -8,6 +8,7 @@
 // Every primary builder returns its HTML through `gateDocument`.
 
 import type { DocumentSpec } from "./document-spec";
+import { certifyDocument } from "./content-integrity";
 
 const strip = (h: string) =>
   h
@@ -148,5 +149,10 @@ export function gateDocument(html: string, spec: DocumentSpec): string {
     );
   }
 
-  return cleaned;
+  // Structure is only half of publishable. The shared content-integrity layer
+  // certifies the other half — clean, complete, consistent, client voice.
+  return certifyDocument(cleaned, spec.label, {
+    narrativeSections: spec.frontMatter.map((f) => f.index),
+    transcriptSections: spec.appendix.map((a) => a.index),
+  });
 }
