@@ -19,13 +19,15 @@ function rating(direction: DirectionRow, category: string, field = "rating"): st
   return direction.ratings?.[category]?.[field] ?? null;
 }
 
-export async function fetchJaguarSummaryExtras(
+/** Creative-engine figures for any session. No per-brand branching. */
+export async function fetchSummaryExtras(
   session: Record<string, unknown>,
 ): Promise<SummaryCreativeExtras> {
   const sessionId = typeof session.id === "string" ? session.id : "";
-  if (sessionId !== JAGUAR_REBUILD_SESSION_ID) {
+  if (!sessionId) {
     return { lensesSwept: 0, directionsGenerated: 0, directionsRated: 0, shortlist: [] };
   }
+
 
   const { data: runs, error: runsError } = await supabase
     .from("stimulus_runs")
