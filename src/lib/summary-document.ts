@@ -444,7 +444,9 @@ export function buildSummaryDocument(
   const intelJson = (session["brand_intelligence"] ?? {}) as Record<string, unknown>;
   const fact = (key: string, jsonKey: string, n = 3) => {
     const raw = clean(str(session, key)) || clean(String(intelJson[jsonKey] ?? ""));
-    return firstSentencesOf(raw, n);
+    // The schema is fixed: a field with nothing behind it says so rather than
+    // disappearing, so a reader can see what the brief did not supply.
+    return firstSentencesOf(raw, n) || "Not supplied in the brief for this session.";
   };
   const brandFactsHtml = defList([
     { label: "Positioning today", body: fact("brand_positioning", "positioning", 4) },
@@ -456,7 +458,15 @@ export function buildSummaryDocument(
   ]);
 
   /* 03 — How this was built */
-  const buildHtml = `${band("Strategy", [
+  const checkpointNote =
+    checkpoints < 6
+      ? p(
+          `${checkpoints} of 6 human checkpoints are signed off; ` +
+            `${6 - checkpoints} checkpoint${6 - checkpoints === 1 ? " remains" : "s remain"} outstanding, ` +
+            `so this document is not fully cleared.`,
+        )
+      : "";
+  const buildHtml = `${checkpointNote}${band("Strategy", [
     { value: 28, label: "pipeline stages run" },
     { value: checkpoints, suffix: "/6", label: "human checkpoints signed off" },
     { value: field.length, label: "propositions considered" },
@@ -481,6 +491,7 @@ export function buildSummaryDocument(
     { value: extras.promptsWritten ?? 0, label: "production prompts written" },
     { value: 5, label: "documents produced" },
   ])}`;
+
 
   /* 04 — Category intelligence */
   const categoryHtml = `${stageBlock(session, "stage_2_output", 14, 2200)}${list(
