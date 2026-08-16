@@ -627,14 +627,15 @@ export function buildSummaryDocument(
   const rejected = field.filter((f) => !f.selected);
   const rejectedHtml = rejected.length
     ? list(
-        rejected
-          .slice(0, 8)
-          .map(
-            (f) =>
-              `**${f.proposition}** — ${
-                firstSentencesOf(f.reason ?? "", 1) ?? "considered, not carried forward"
-              }`,
-          ),
+        rejected.slice(0, 8).map((f) => {
+          // The stored note is a pressure-test observation, not a rejection
+          // reason. It is labelled as what it is, so a positive note can never
+          // read as the reason a proposition was set aside.
+          const note = firstSentencesOf(f.reason ?? "", 1);
+          return `**${f.proposition}** — Not carried forward at proposition lock.${
+            note ? ` Pressure test recorded: ${note}` : ""
+          }`;
+        }),
       )
     : "";
 
