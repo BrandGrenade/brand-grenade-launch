@@ -4,10 +4,10 @@
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import type { ExecSummarySession } from "@/lib/exec-summary-sections";
+
 import { Spinner } from "@/components/ui/busy";
 import { resolveLiveDocumentSession } from "@/lib/document-live-source";
-import { buildSummaryDocument } from "@/lib/summary-document";
+import { buildSummaryDocument, type ExecSummarySession } from "@/lib/summary-document";
 import { fetchSummaryExtras } from "@/lib/summary-data";
 
 /** Columns the summary needs that the Deliverables page does not already load. */
@@ -78,9 +78,7 @@ export function ExecSummaryCard({ session }: { session: ExecSummarySession }) {
         </span>
         <span className="text-body-sm" style={{ color: "#8B8680", fontSize: 13 }}>
           {ready
-            ? session.id === JAGUAR_REBUILD_SESSION_ID
-              ? "Rebuilt 21-section Jaguar summary, assembled live from this session's stored data."
-              : "Ten-section quick-scan companion to Consulting Delivery, assembled from this session's stored data."
+            ? "Twenty-one-section summary, assembled live from this session's stored data."
             : "Available once a proposition has been selected for this session."}
         </span>
       </div>
