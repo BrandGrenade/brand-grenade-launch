@@ -184,6 +184,9 @@ export interface IntegritySection {
   title: string;
   html: string;
   text: string;
+  /** Offsets of `html` inside the source document. */
+  start: number;
+  end: number;
 }
 
 export function splitSections(html: string): IntegritySection[] {
@@ -198,7 +201,8 @@ export function splitSections(html: string): IntegritySection[] {
         at: m.index ?? 0,
         end: (m.index ?? 0) + m[0].length,
       }));
-  if (!marks.length) return [{ index: "01", title: "document", html, text: strip(html) }];
+  if (!marks.length)
+    return [{ index: "01", title: "document", html, text: strip(html), start: 0, end: html.length }];
   return marks.map((mk, i) => {
     const body = html.slice(mk.end, marks[i + 1]?.at ?? html.length);
     return {
@@ -206,6 +210,8 @@ export function splitSections(html: string): IntegritySection[] {
       title: mk.title,
       html: body,
       text: strip(body),
+      start: mk.end,
+      end: marks[i + 1]?.at ?? html.length,
     };
   });
 }
@@ -417,4 +423,21 @@ export function closeIncompleteTail(bodyHtml: string): string {
   if (!looksCut(text, tag === "li") && !/\w(?:\u2026|\.\.\.)$/.test(text)) return bodyHtml;
   const after = bodyHtml.slice(closeAt + `</${tag}>`.length);
   return `${bodyHtml.slice(0, openAt)}${after}${CUT_NOTE}`;
+}
+
+/**
+ * The one call every builder ends with: drop any tail the pipeline itself cut
+ * off (stating the gap instead of inventing an ending), then certify. A
+ * document that still fails is thrown, never returned, so no generation path
+ * can put it in front of a reader.
+ */
+export function certifyDocument(html: string, label: string, opts: IntegrityOptions = {}): string {
+  let out = html;
+  const sections = splitSections(out);
+  for (let i = sections.length - 1; i >= 0; i--) {
+    const sec = sections[i];
+    const fixed = closeIncompleteTail(sec.html);
+    if (fixed !== sec.html) out = out.slice(0, sec.start) + fixed + out.slice(sec.end);
+  }
+  return assertPublishable(out, label, opts);
 }
