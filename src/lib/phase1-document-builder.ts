@@ -48,6 +48,9 @@ function fmt(line: string): string {
   let s = escapeHtml(line);
   s = s.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
   s = s.replace(/(^|\s)\*(?!\s)(.+?)\*(?!\w)/g, "$1<em>$2</em>");
+  // Unpaired markers left by a truncated or malformed run must never survive
+  // into a rendered document as literal asterisks.
+  s = s.replace(/\*\*/g, "").replace(/(^|\s)\*(?=\S)/g, "$1");
   return s;
 }
 
@@ -79,6 +82,7 @@ export function md(text: string): string {
 }
 
 import { stripDocumentMetadata } from "./strip-document-metadata";
+import { certifyDocument } from "./content-integrity";
 import { BOOKKEEPING_LINE, CANDIDATE_STAGE_KEYS, scopeToSelected, selectedAliases } from "./minto-content";
 import { buildBoardStrategyDocument } from "./board-strategy-document";
 
@@ -283,13 +287,25 @@ export function buildPhase1Document(session: Phase1Session, format: Phase1Format
         let raw = sectionOutput(session, s.key);
         if (s.key === "stage_1_output") raw = stripStage1Internals(raw);
         if (!raw.trim()) return "";
-        return `<div class="section"><div class="part-label">${escapeHtml(s.label)}</div><h2>${escapeHtml(s.title)}</h2>${md(sanitise(raw))}</div>`;
+        let inner = md(sanitise(raw));
+        // The stage output often opens with its own title heading, which would
+        // otherwise leave this section's canonical heading with no body.
+        inner = inner.replace(/^\s*<h2>[\s\S]*?<\/h2>\s*/, "");
+        // The stored output existed but carried nothing publishable once
+        // internal bookkeeping was removed. State the gap rather than
+        // shipping a heading with an empty body.
+        if (!inner.replace(/<[^>]+>/g, "").trim()) {
+          inner = `<p>This session's stored output for this stage contains no client-facing content — only internal pipeline bookkeeping, which is not reproduced here.</p>`;
+        }
+        return `<div class="section"><div class="part-label">${escapeHtml(s.label)}</div><h2>${escapeHtml(s.title)}</h2>${inner}</div>`;
       })
       .filter(Boolean)
       .join("\n") +
+
     footer();
 
-  return `<!doctype html>
+  return certifyDocument(
+    `<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -308,7 +324,10 @@ export function buildPhase1Document(session: Phase1Session, format: Phase1Format
 <div class="page">${body}</div>
 <script>setTimeout(function(){try{window.print();}catch(e){}}, 500);</script>
 </body>
-</html>`;
+</html>`,
+    meta.title,
+    { narrativeSections: [] },
+  );
 }
 
 export function openPhase1Document(session: Phase1Session, format: Phase1Format): void {

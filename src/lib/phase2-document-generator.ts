@@ -9,6 +9,7 @@ import { parseStage20Output, parseBriefQualityScore, type BriefQualityScore } fr
 import { buildMasterDetonationDocument } from "./master-detonation-document";
 import type { MintoSession } from "./minto-content";
 import { stripDocumentMetadata } from "./strip-document-metadata";
+import { certifyDocument, inlinePlainText } from "./content-integrity";
 
 export type Phase2DocType =
   | "detonation_territory"
@@ -62,6 +63,9 @@ function fmt(line: string): string {
   let s = escapeHtml(line);
   s = s.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
   s = s.replace(/(^|\s)\*(?!\s)(.+?)\*(?!\w)/g, "$1<em>$2</em>");
+  // Unpaired markers left by a truncated or malformed run must never survive
+  // into a rendered document as literal asterisks.
+  s = s.replace(/\*\*/g, "").replace(/(^|\s)\*(?=\S)/g, "$1");
   return s;
 }
 
@@ -314,7 +318,7 @@ function scoreCardHtml(score: BriefQualityScore): string {
 function channelBriefBody(brand: string, channel: string, body: string): string {
   const sanitised = sanitise(body);
   const roleMatch = sanitised.match(/CHANNEL\s+ROLE\s*[:\-]?\s*([^\n]+)/i);
-  const role = roleMatch ? roleMatch[1].trim() : "";
+  const role = roleMatch ? inlinePlainText(roleMatch[1]) : "";
   return cover("CHANNEL BRIEF", `${channel} — Detonation Brief`, brand) +
     `<div class="single-page">
       <h2>${escapeHtml(channel)} — Detonation Brief</h2>
@@ -464,11 +468,17 @@ export function buildPhase2Document(
       return buildAllPhase2(session);
   }
 
-  return wrapDoc(title, brand, body + provenance(session));
+  // Stage transcripts: count-consistency is a property of the model output,
+  // not of assembly, so it is not compared here — but clean, complete and
+  // client voice are enforced exactly as they are on every other document.
+  return certifyDocument(wrapDoc(title, brand, body + provenance(session)), title, {
+    narrativeSections: [],
+  });
 }
 
 // ── Combined "All Brand Detonation" document ─────────────────────────────
 export function buildAllPhase2(session: Phase2Session): string {
+  // Certified at the end of this function, on the assembled document.
   const brand = session.brand_name ?? "Untitled Brand";
   const channelKeys = session.stage_21_outputs ? Object.keys(session.stage_21_outputs) : [];
 
@@ -505,7 +515,7 @@ export function buildAllPhase2(session: Phase2Session): string {
   for (const ch of channelKeys) {
     const body = sanitise(session.stage_21_outputs?.[ch] ?? "");
     const roleMatch = body.match(/CHANNEL\s+ROLE\s*[:\-]?\s*([^\n]+)/i);
-    const role = roleMatch ? roleMatch[1].trim() : "";
+    const role = roleMatch ? inlinePlainText(roleMatch[1]) : "";
     sections.push(`<div class="doc-break"></div><h2>${escapeHtml(ch)} — Detonation Brief</h2>${role ? `<p style="color:#8B8680;font-style:italic;margin-bottom:14pt">${escapeHtml(role)}</p>` : ""}<div class="section">${md(body)}</div>`);
   }
   sections.push(`<div class="doc-break"></div><div class="section"><h2>Conceptual Assets</h2>${md(sanitise(session.stage_22_distinctive_assets ?? ""))}</div>`);
@@ -528,7 +538,9 @@ export function buildAllPhase2(session: Phase2Session): string {
   const tocHtml = `<div class="toc"><h3>Contents</h3><ol>${tocItems.map((t) => `<li>${escapeHtml(t)}</li>`).join("")}</ol></div>`;
 
   const body = cover("BRAND DETONATION", "Complete Brand Detonation", brand) + tocHtml + sections.join("\n") + provenance(session) + footer(true);
-  return wrapDoc("Brand Detonation", brand, body);
+  return certifyDocument(wrapDoc("Brand Detonation", brand, body), "Complete Brand Detonation", {
+    narrativeSections: [],
+  });
 }
 
 function extractBodyContent(html: string): string {

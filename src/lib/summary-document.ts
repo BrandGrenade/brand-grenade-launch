@@ -32,7 +32,8 @@ import {
 import { condenseStage } from "./minto-content";
 import { stripDocumentMetadata } from "./strip-document-metadata";
 import { stripSelectionArtifacts } from "./document-gate";
-import { gateSummary, looksCut, type GateSectionInput } from "./summary-gate";
+import { gateSummary, type GateSectionInput } from "./summary-gate";
+import { closeIncompleteTail } from "./content-integrity";
 import {
   extractBrandArchitecture,
   extractChannelRole,
@@ -336,23 +337,6 @@ function sealBody(bodyHtml: string, ownTitle: string, otherTitles: Set<string>):
  * pipeline wrote them. A cut sentence is never shown to a reader and is never
  * completed by guessing: the incomplete tail is dropped and the gap is stated.
  */
-const CUT_NOTE = `<p class="note">The stored output for this stage ends mid-sentence in the pipeline record. Nothing has been invented to complete it.</p>`;
-
-function closeIncompleteTail(bodyHtml: string): string {
-  // The final prose block of the section: a paragraph, or the last item of a
-  // trailing list. Never anything else — tables and stat cards end on labels.
-  const openAt = Math.max(bodyHtml.lastIndexOf("<p"), bodyHtml.lastIndexOf("<li"));
-  if (openAt < 0) return bodyHtml;
-  const tag = bodyHtml.startsWith("<li", openAt) ? "li" : "p";
-  const closeAt = bodyHtml.indexOf(`</${tag}>`, openAt);
-  if (closeAt < 0) return bodyHtml;
-  const inner = bodyHtml.slice(bodyHtml.indexOf(">", openAt) + 1, closeAt);
-  if (!looksCut(strip(inner), tag === "li")) return bodyHtml;
-  // The incomplete block is removed whole — never re-cut, never completed.
-  const after = bodyHtml.slice(closeAt + `</${tag}>`.length);
-  return `${bodyHtml.slice(0, openAt)}${after}${CUT_NOTE}`;
-}
-
 function renderSections(defs: SectionDef[]): { html: string; sealed: GateSectionInput[] } {
   const titles = new Set(defs.map((d) => normTitle(d.title)));
   const sealed: GateSectionInput[] = [];

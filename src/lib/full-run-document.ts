@@ -15,6 +15,7 @@ import { cleanProposition } from "@/lib/clean-proposition";
 
 import { STAGE_MANIFEST, type StageManifestEntry } from "./pipeline-integrity";
 import { stripDocumentMetadata } from "./strip-document-metadata";
+import { certifyDocument } from "./content-integrity";
 
 const ACCENT = "#C81E1E";
 
@@ -56,6 +57,7 @@ function fmt(line: string): string {
   let s = escapeHtml(line);
   s = s.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
   s = s.replace(/(^|\s)\*(?!\s)(.+?)\*(?!\w)/g, "$1<em>$2</em>");
+  s = s.replace(/\*\*/g, "").replace(/(^|\s)\*(?=\S)/g, "$1");
   return s;
 }
 
@@ -253,7 +255,8 @@ export function buildFullRunDocument(session: FullRunSession): string {
 
   const body = cover(brand, smp) + toc(resolved) + sections + footer();
 
-  return `<!doctype html>
+  return certifyDocument(
+    `<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -272,7 +275,10 @@ export function buildFullRunDocument(session: FullRunSession): string {
 <div class="page">${body}</div>
 <script>setTimeout(function(){try{window.print();}catch(e){}}, 500);</script>
 </body>
-</html>`;
+</html>`,
+    "Full Pipeline Record",
+    { narrativeSections: [] },
+  );
 }
 
 /** Lightweight helper used by acceptance tests / diagnostics — returns the
