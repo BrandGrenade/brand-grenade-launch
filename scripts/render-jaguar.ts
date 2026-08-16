@@ -16,7 +16,7 @@ if (error || !s) {
 
 const { data: runs } = await sb
   .from("stimulus_runs")
-  .select("id, guidance_text, created_at")
+  .select("id, creative_guidance, created_at")
   .eq("session_id", id);
 const runIds = (runs ?? []).map((r: any) => r.id);
 
@@ -83,7 +83,7 @@ const extras: JaguarCreativeExtras = {
   directionsGenerated: all.length,
   directionsRated: rated.length,
   promptsWritten: promptCount ?? 0,
-  guidance: (runs ?? []).map((r: any) => r.guidance_text).find(Boolean) ?? null,
+  guidance: (runs ?? []).map((r: any) => r.creative_guidance).find(Boolean) ?? null,
   shortlist,
   winnerReasons,
   channels,
