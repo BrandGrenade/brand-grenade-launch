@@ -511,18 +511,30 @@ export function buildJaguarSummaryDocument(
 
 
   /* 08 — Distinctiveness testing.
-     The Left-of-Centre stage writes one Strategic-Impossibility Analysis per
-     candidate. Condensing the stage put two of them on the page — the same
-     competitive-impossibility argument about Tesla in two different phrasings,
-     which reads as a leftover draft. Only the first analysis is rendered. */
-  const distinctHtml = dedupeRepeatedAnalysis(
-    `${stageBlock(session, "stage_9_leftofcentre_output", 8, 1200)}${stageBlock(
-      session,
-      "stage_9_output",
-      8,
-      1200,
-    )}`,
+     Read structurally, one candidate block at a time. Condensing the raw stage
+     output used to cut the rival list after its first bullet, deleting the
+     Porsche, Mercedes, BMW, Lucid/Rivian and Bentley arguments; the list is now
+     rendered whole under its own heading. */
+  const impossibility = extractImpossibilityAnalysis(
+    str(session, "stage_9_output"),
+    str(session, "selected_smp"),
   );
+  const distinctHtml = impossibility
+    ? `${p(`Candidate pressure-tested: **${impossibility.heading.replace(/\.$/, "")}**`)}${p(
+        impossibility.foundation,
+      )}${
+        impossibility.rivals.length
+          ? `<h3>Strategic-impossibility analysis — why no rival can run this</h3>${list(
+              impossibility.rivals,
+            )}`
+          : ""
+      }${
+        impossibility.proof
+          ? pullQuote(impossibility.proof, { label: "The distinctiveness test, stated plainly" })
+          : ""
+      }`
+    : dedupeRepeatedAnalysis(stageBlock(session, "stage_9_output", 8, 1200));
+
 
 
 
