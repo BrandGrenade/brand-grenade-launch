@@ -533,20 +533,29 @@ function duplicateFindings(sections: IntegritySection[]): IntegrityFinding[] {
     const local = new Map<string, number>();
     for (const m of sec.html.matchAll(/<(p|li|h3|h4|th|td|blockquote)\b[^>]*>([\s\S]*?)<\/\1>/gi)) {
       const text = strip(m[2]);
+      const tag = m[1].toLowerCase();
       if (text.length < 24) continue;
       const key = nkey(text);
       if (!key) continue;
-      const isRow = /^(?:th|td|h3|h4)$/i.test(m[1]);
+      // Within a section, a repeated heading, table header or substantial cell
+      // is always a defect — this is the short/table content the old
+      // paragraph-only rule could not see (Jaguar's duplicated table header).
+      const localRepeatable =
+        tag === "th" || tag === "h3" || tag === "h4" || (tag === "td" && text.length >= 60);
       local.set(key, (local.get(key) ?? 0) + 1);
-      if (isRow && (local.get(key) ?? 0) > 1) {
+      if (localRepeatable && (local.get(key) ?? 0) > 1) {
         out.push({
           section: where,
           criterion: "DUPLICATE",
-          detail: `the same ${m[1].toLowerCase()} is printed twice in this section`,
+          detail: `the same ${tag} is printed twice in this section`,
           quote: text.slice(0, 140),
         });
         continue;
       }
+      // Across sections, a Minto document legitimately restates the
+      // proposition and the recommendation, so only substantial prose blocks
+      // are compared.
+      if (text.length < 180 || tag === "th" || tag === "td") continue;
       const prior = seen.get(key);
       if (prior && prior.section !== where) {
         out.push({
@@ -557,6 +566,7 @@ function duplicateFindings(sections: IntegritySection[]): IntegrityFinding[] {
         });
       } else if (!prior) seen.set(key, { section: where, count: 1 });
     }
+
   }
   return out;
 }
