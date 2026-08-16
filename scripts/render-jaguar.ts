@@ -22,13 +22,18 @@ const runIds = (runs ?? []).map((r: any) => r.id);
 
 const { data: dirs } = await sb
   .from("stimulus_directions")
-  .select("id, lens_name, campaign_line, expression_under_master, rating_status, ratings")
+  .select("id, run_id, lens_name, campaign_line, expression_under_master, rating_status, ratings")
   .in("run_id", runIds.length ? runIds : ["00000000-0000-0000-0000-000000000000"]);
 
 const all = dirs ?? [];
 const rated = all.filter((d: any) => d.rating_status === "rated");
 const lockedLine = (s as any).locked_campaign_line?.trim();
 const lockedLens = (s as any).locked_big_idea_lens?.trim();
+
+// The lens sweep is counted on the run that produced the locked idea, not
+// across every run in the session (later runs re-use lenses).
+const winnerRun = all.find((d: any) => d.campaign_line?.trim() === (s as any).locked_campaign_line?.trim())?.run_id;
+const sweepRun = winnerRun ? all.filter((d: any) => d.run_id === winnerRun) : all;
 
 const rating = (d: any, k: string, f = "rating") => d.ratings?.[k]?.[f] ?? null;
 const shortlist = rated.map((d: any) => ({
@@ -79,8 +84,8 @@ const channels =
     : [];
 
 const extras: JaguarCreativeExtras = {
-  lensesSwept: new Set(all.map((d: any) => d.lens_name)).size || 37,
-  directionsGenerated: all.length,
+  lensesSwept: new Set(sweepRun.map((d: any) => d.lens_name)).size || 37,
+  directionsGenerated: sweepRun.length,
   directionsRated: rated.length,
   promptsWritten: promptCount ?? 0,
   guidance: (runs ?? []).map((r: any) => r.creative_guidance).find(Boolean) ?? null,

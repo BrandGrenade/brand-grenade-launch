@@ -372,10 +372,15 @@ export function buildJaguarSummaryDocument(
         ],
         verification.tests.map((t) => ({ cells: { t: t.name, v: t.verdict, n: t.note } })),
       )}`
-    : stageBlock(session, "stage_13_output", 9, 1400);
+    : stageBlock(session, "stage_13b_output", 9, 1400);
 
   /* 13 — Brand fit */
-  const fitHtml = `${stageBlock(session, "stage_14_output", 9, 1400)}${stageBlock(session, "stage_14b_output", 5, 600)}`;
+  const fitHtml = `${stageBlock(session, "stage_13_output", 9, 1400)}${stageBlock(
+    session,
+    "stage_14_output",
+    6,
+    800,
+  )}`;
 
   /* 14 — Territory mapping */
   const territoryHtml = `${stageBlock(session, "stage_17_output", 10, 1600)}${stageBlock(session, "stage_18_output", 7, 900)}`;
