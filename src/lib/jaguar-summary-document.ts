@@ -104,11 +104,28 @@ function defList(rows: Array<{ label: string; body?: string | null }>): string {
     .join("")}</div>`;
 }
 
+/**
+ * Hard character clamp on a condensed block. `condenseStage` budgets by line,
+ * so a stage stored as one long paragraph blows straight through it — this cuts
+ * at the last sentence boundary inside the budget instead.
+ */
+function clampText(text: string, maxChars: number): string {
+  if (text.length <= maxChars) return text;
+  const head = text.slice(0, maxChars);
+  const cut = Math.max(head.lastIndexOf(". "), head.lastIndexOf(".\n"), head.lastIndexOf("\n"));
+  return (cut > maxChars * 0.4 ? head.slice(0, cut + 1) : head).trim();
+}
+
 function stageBlock(session: ExecSessionRow, key: string, units: number, chars: number): string {
   const raw = clean(str(session, key));
   if (!raw) return "";
-  return renderMarkdown(condenseStage(raw, { maxUnits: units, maxChars: chars }));
+  const condensed = condenseStage(raw, { maxUnits: units, maxChars: chars })
+    .split("\n\n")
+    .map((block) => (block.startsWith("### ") ? block : clampText(block, Math.round(chars * 0.6))))
+    .join("\n\n");
+  return renderMarkdown(clampText(condensed, chars));
 }
+
 
 function nothing(what: string): string {
   return `<p class="muted">${escapeHtml(what)}</p>`;
