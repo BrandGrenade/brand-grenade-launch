@@ -350,7 +350,18 @@ const EXTRA_CSS = `
 .defbody { font-size: 13px; line-height: 1.55; }
 .statband { margin: 14px 0 4px; }
 .statband > h4 { font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase; opacity: .6; margin: 0 0 8px; }
-@media print { .defrow { grid-template-columns: 160px 1fr; } }
+/* Chromium fragments a multi-row CSS grid badly when it crosses a printed page
+   boundary: later rows are painted after content that follows the grid, which
+   is what put Section 19/20 material below the closing footer line. In print,
+   the definition list and reason grid are laid out in normal block flow, which
+   fragments correctly. */
+@media print {
+  .defrow { grid-template-columns: 160px 1fr; }
+  .deflist { display: block; }
+  .deflist > .defrow + .defrow { margin-top: 10px; }
+  .reasons { display: block; }
+  .reasons > * + * { margin-top: 12pt; }
+}
 `;
 
 function band(title: string, stats: Stat[]): string {
