@@ -33,20 +33,14 @@ export function ExecSummaryCard({ session }: { session: ExecSummarySession }) {
           return (res.data as Record<string, unknown> | null) ?? {};
         })();
       const live = await resolveLiveDocumentSession({ ...session, ...extra });
-       if (live.id === JAGUAR_REBUILD_SESSION_ID) {
-         const extras = await fetchJaguarSummaryExtras(live);
-         const html = buildJaguarSummaryDocument(live, extras);
-         const win = window.open("", "_blank");
-         if (!win) throw new Error("Please allow popups to open the summary");
-         win.document.open("text/html");
-         win.document.write(html);
-         win.document.close();
-       } else {
-         const intel = await fetchExecSummaryIntel(
-           typeof live.brief_text === "string" ? live.brief_text : null,
-         );
-         openExecSummaryDocument(live, intel);
-       }
+      // One builder, one 21-section spec, every session.
+      const extras = await fetchSummaryExtras(live);
+      const html = buildSummaryDocument(live, extras);
+      const win = window.open("", "_blank");
+      if (!win) throw new Error("Please allow popups to open the summary");
+      win.document.open("text/html");
+      win.document.write(html);
+      win.document.close();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not build the summary");
     } finally {
