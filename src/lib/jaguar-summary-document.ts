@@ -473,13 +473,24 @@ export function buildJaguarSummaryDocument(
   }`;
 
 
-  /* 08 — Distinctiveness testing */
-  const distinctHtml = `${stageBlock(session, "stage_9_leftofcentre_output", 8, 1200)}${stageBlock(
-    session,
-    "stage_9_output",
-    8,
-    1200,
-  )}`;
+  /* 08 — Distinctiveness testing.
+     Two stages both write a Strategic-Impossibility Analysis. Rendering both
+     put two different phrasings of the same argument side by side, which read
+     as a leftover draft: the Left-of-Centre pass is authoritative, so the
+     duplicate analysis in the validation pass is dropped. */
+  const locHtml = stageBlock(session, "stage_9_leftofcentre_output", 8, 1200);
+  const validationHtml = stageBlock(session, "stage_9_output", 8, 1200);
+  const IMPOSSIBILITY = /strategic[\s-]?impossibility/i;
+  const distinctHtml = `${locHtml}${
+    IMPOSSIBILITY.test(strip(locHtml))
+      ? dropDanglingLabel(
+          validationHtml.replace(
+            /(?:<h[1-6][^>]*>[\s\S]*?strategic[\s-]?impossibility[\s\S]*?<\/h[1-6]>|<p>(?:<strong>)?\s*STRATEGIC[\s-]?IMPOSSIBILITY[\s\S]*?<\/p>)[\s\S]*$/i,
+            "",
+          ),
+        )
+      : validationHtml
+  }`;
 
 
   /* 09 — Scoring */
@@ -489,9 +500,10 @@ export function buildJaguarSummaryDocument(
     ? winnerScores.map((r) => ({
         dimension: r.dimension,
         score: r.score,
-        note: safeClamp(sentences(r.rationale, 3), 460),
+        note: wholeSentences(r.rationale, 3, 900),
       }))
     : scoring.rows;
+
   const scoringHtml = scoreRows.length
     ? `${comparisonTable(
         [
