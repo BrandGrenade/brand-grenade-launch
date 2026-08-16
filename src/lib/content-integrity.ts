@@ -307,7 +307,7 @@ export function contentIntegrityFindings(
     // PROMISED — "the following three principles" must be followed by three.
     const promise = sec.text.match(
       new RegExp(
-        `\\b(?:the following|these|below are|listed below|shown below|all)\\s+(\\d{1,2}|${Object.keys(
+        `\\b(?:the following|these|below are|listed below|shown below)\\s+(\\d{1,2}|${Object.keys(
           WORD_NUMBERS,
         ).join("|")})\\s+(${COUNTED_NOUNS})\\b`,
         "i",
@@ -315,10 +315,10 @@ export function contentIntegrityFindings(
     );
     if (promise) {
       const n = numberOf(promise[1]);
-      const rendered =
-        (sec.html.match(/<li[^>]*>/g) ?? []).length +
-        (sec.html.match(/<h3[^>]*>/g) ?? []).length +
-        (sec.html.match(/<tr[^>]*>/g) ?? []).length;
+      const rendered = ["<li", "<h3", "<h4", "<tr", "<blockquote"].reduce(
+        (t, tag) => t + (sec.html.split(tag).length - 1),
+        0,
+      );
       if (Number.isFinite(n) && n >= 2 && rendered < n) {
         findings.push({
           section: where,
@@ -330,10 +330,17 @@ export function contentIntegrityFindings(
     }
   }
 
-  // CONSISTENT — one number per noun across the whole document. Transcript
-  // sections are historical records of what an earlier stage counted and are
-  // excluded from the comparison, but never from CLEAN or VOICE.
-  const live = sections.filter((s) => !(opts.transcriptSections ?? []).includes(s.index));
+  // CONSISTENT — one number per noun across the sections this builder writes
+  // itself. Stage transcripts are historical records of what an earlier stage
+  // counted, and a table of contents or stat block is numbered navigation, not
+  // a claim; neither is compared, but both are still checked for CLEAN/VOICE.
+  const narrative = opts.narrativeSections;
+  const live = sections.filter(
+    (s) =>
+      (!narrative || narrative.includes(s.index)) &&
+      !(opts.transcriptSections ?? []).includes(s.index) &&
+      !/^contents$/i.test(s.title),
+  );
   const byNoun = new Map<string, StatedCount & { section: string }>();
   for (const sec of live) {
     for (const c of statedCounts(sec.text)) {
