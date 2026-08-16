@@ -229,6 +229,28 @@ const strip = (h: string) =>
 
 const normTitle = (s: string) => s.toLowerCase().replace(/[^a-z0-9 ]/g, " ").replace(/\s+/g, " ").trim();
 
+/**
+ * Whole sentences only, up to `count` sentences and a soft character budget.
+ * A rationale is never cut mid-sentence: if the first sentence alone exceeds
+ * the budget it is still rendered complete, because a scoring rationale that
+ * stops at "…Rivian on adventure and…" is worse than a long one.
+ */
+function wholeSentences(text: string, count: number, budget: number): string {
+  const parts = text
+    .replace(/\s+/g, " ")
+    .trim()
+    .split(/(?<=[.!?])\s+/)
+    .filter(Boolean)
+    .slice(0, count);
+  const out: string[] = [];
+  for (const s of parts) {
+    if (out.length && out.join(" ").length + s.length > budget) break;
+    out.push(s);
+  }
+  return (out.length ? out : parts.slice(0, 1)).join(" ").trim();
+}
+
+
 function nothing(what: string): string {
   return `<p class="muted">${escapeHtml(what)}</p>`;
 }
