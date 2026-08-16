@@ -184,14 +184,10 @@ export async function buildAndDownloadBundle(
     }
   })();
   const summarySession = { ...session, ...execExtra };
-  const jaguarExtras = session.id === JAGUAR_REBUILD_SESSION_ID
-    ? await fetchJaguarSummaryExtras(summarySession)
-    : null;
+  const summaryExtras = await fetchSummaryExtras(summarySession);
   tryAdd(
     "Brand_Strategy_and_Creative_Intelligence_Summary.html",
-    () => jaguarExtras
-      ? buildJaguarSummaryDocument(summarySession, jaguarExtras)
-      : buildExecSummaryDocument(summarySession, execIntel),
+    () => buildSummaryDocument(summarySession as never, summaryExtras),
     "Building Brand Strategy and Creative Intelligence Summary…",
   );
 
