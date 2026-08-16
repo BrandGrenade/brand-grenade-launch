@@ -491,13 +491,21 @@ export function extractTerritoryOutcomes(
     );
     if (!m) continue;
     const line = m[1].replace(/["“”]/g, "").trim();
-    const name = m[2].replace(/["“”]/g, "").trim();
+    const field = m[2].replace(/["“”]/g, "").trim();
+    // Some runs write the brand/category into FIELD rather than a territory.
+    // Only trust FIELD when it names a Stage 7 territory; otherwise the entry
+    // is identified by the proposition itself.
+    const known = territories.find(
+      (t) => okey(t) === okey(field) || okey(field).includes(okey(t)) || okey(t).includes(okey(field)),
+    );
+    const name = known ?? (territories.length ? `"${line}"` : field);
     const verdict = block.body.match(/SMP VERDICT\s*[:.]?\s*\**\s*([A-Z][A-Z ]{2,})/i)?.[1] ?? "";
     const eliminated = /ELIMINAT/i.test(verdict);
-    const reason = (block.body.match(/ELIMINATION PATHWAY\s*[:.]?\s*\**\s*([^\n]+)/i)?.[1] ?? "")
+    let reason = (block.body.match(/ELIMINATION PATHWAY\s*[:.]?\s*\**\s*([^\n]+)/i)?.[1] ?? "")
       .replace(/\*\*/g, "")
       .split(/(?<=[.!?])\s/)[0]
       .trim();
+    if (reason) reason = reason.charAt(0).toUpperCase() + reason.slice(1);
     put({
       name,
       line,
@@ -505,6 +513,7 @@ export function extractTerritoryOutcomes(
       stage: eliminated ? "Stage 11" : undefined,
       reason: eliminated ? reason || undefined : undefined,
     });
+
   }
 
   // Explicit "…ELIMINATED at Stage N" notes, wherever the pipeline wrote them.
