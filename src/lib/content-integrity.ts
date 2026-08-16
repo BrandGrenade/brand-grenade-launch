@@ -507,10 +507,20 @@ export function contentIntegrityFindings(
     }
   }
 
-  findings.push(...duplicateFindings(sections));
-  findings.push(...placementFindings(sections));
-  findings.push(...dispositionFindings(sections));
+  // Duplication, placement and disposition are rules about prose the builder
+  // writes itself. A stage transcript is a historical record: it reproduces
+  // what a stage actually wrote, repetitions and all, and is not rewritten.
+  const authored = sections.filter(
+    (s) =>
+      (!narrative || narrative.includes(s.index)) &&
+      !(opts.transcriptSections ?? []).includes(s.index),
+  );
+  const authoredOnly = narrative ? authored : [];
+  findings.push(...duplicateFindings(authoredOnly));
+  findings.push(...placementFindings(authoredOnly));
+  findings.push(...dispositionFindings(authoredOnly));
   findings.push(...checkpointFindings(sections));
+
 
   return findings;
 }
