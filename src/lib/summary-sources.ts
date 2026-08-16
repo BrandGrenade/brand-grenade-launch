@@ -259,10 +259,25 @@ export function extractImpossibilityAnalysis(
   const blocks = mdBlocks(stage9);
   if (!blocks.length) return null;
   const key = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+  // A leading "Distinctiveness Assessment"/"Overview" block is the stage's own
+  // preamble, not a candidate. Never pressure-test the preamble.
+  const GENERIC = /^(distinctiveness assessment|overview|summary|introduction|assessment)$/;
+  const candidates = blocks.filter((b) => !GENERIC.test(key(b.heading)));
+  const pool = candidates.length ? candidates : blocks;
   const want = key(preferred);
-  const block =
-    (want && blocks.find((b) => key(b.heading).includes(want) || want.includes(key(b.heading)))) ||
-    blocks[0];
+  const wantWords = new Set(want.split(" ").filter((w) => w.length > 3));
+  const overlap = (b: MdBlock) => {
+    const words = key(`${b.heading} ${b.body}`).split(" ");
+    let hit = 0;
+    for (const w of wantWords) if (words.includes(w)) hit++;
+    return hit;
+  };
+  const named =
+    want && pool.find((b) => key(b.heading).includes(want) || want.includes(key(b.heading)));
+  const scored = wantWords.size
+    ? [...pool].sort((a, b) => overlap(b) - overlap(a))[0]
+    : undefined;
+  const block = named || (scored && overlap(scored) > 0 ? scored : pool[0]);
 
   const body = block.body;
   const label = (re: RegExp) => {
