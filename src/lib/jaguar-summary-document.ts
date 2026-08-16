@@ -25,6 +25,8 @@ import {
   type Stat,
 } from "./doc-system";
 import { condenseStage } from "./minto-content";
+import { stripDocumentMetadata } from "./strip-document-metadata";
+import { stripSelectionArtifacts } from "./document-gate";
 import {
   clean,
   firstSentencesOf,
@@ -75,9 +77,26 @@ const EMPTY_EXTRAS: JaguarCreativeExtras = {
 
 /* ─────────────────────────────────────────────────────────── helpers ── */
 
+/**
+ * Briefing Room anchors and prompt scaffolding are internal instructions to the
+ * model, never client-facing copy. They are stripped at the source layer so no
+ * section can inherit them.
+ */
+function sanitiseSource(text: string): string {
+  return stripDocumentMetadata(text)
+    .replace(/={3,}[^=\n]*={3,}/g, " ")
+    .replace(/The following inputs have been[^.]*\.\s*/gi, "")
+    .replace(/Stage \d+[a-z]? must treat these[^.]*\.\s*/gi, "")
+    .replace(/\(see system prompt\)\.?\s*/gi, "")
+    .replace(/\bFRAME SELECTED:\s*[A-Z ]+\s*/g, "")
+    .replace(/\bREAL PROBLEM:\s*/g, "")
+    .replace(/[ \t]{2,}/g, " ")
+    .trim();
+}
+
 function str(session: ExecSessionRow, key: string): string {
   const v = session[key];
-  return typeof v === "string" ? v : "";
+  return typeof v === "string" ? sanitiseSource(v) : "";
 }
 
 function p(text?: string | null): string {
@@ -591,7 +610,8 @@ export function buildJaguarSummaryDocument(
 ${tableOfContents(defs)}
 ${renderSections(defs)}`;
 
-  return docShell(
+  return stripSelectionArtifacts(
+    docShell(
     {
       title: `Brand Strategy and Creative Intelligence Summary — ${brand}`,
       toolbarNote: `${brand} — Brand Strategy and Creative Intelligence Summary`,
@@ -599,6 +619,7 @@ ${renderSections(defs)}`;
       footerHtml:
         "Brand Grenade Strategy Intelligence System — Confidential. Assembled from stored session data only; the locked creative idea is reproduced verbatim.",
     },
-    body,
+      body,
+    ),
   );
 }
