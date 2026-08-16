@@ -290,7 +290,13 @@ export function buildJaguarSummaryDocument(
   );
 
   /* 08 — Distinctiveness testing */
-  const distinctHtml = `${stageBlock(session, "stage_9_leftofcentre_output", 7, 900)}${stageBlock(session, "stage_11_output", 5, 650)}`;
+  const distinctHtml = `${stageBlock(session, "stage_9_leftofcentre_output", 8, 1200)}${stageBlock(
+    session,
+    "stage_9_output",
+    8,
+    1200,
+  )}${stageBlock(session, "stage_11_output", 8, 1200)}`;
+
 
   /* 09 — Scoring */
   const scoringHtml = scoring.rows.length
