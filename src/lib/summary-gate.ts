@@ -53,7 +53,8 @@ const ARTIFACTS: Array<[RegExp, string]> = [
  * Truncation detection lives in the shared content-integrity layer so this
  * gate and the platform-wide certification agree on what "cut" means.
  */
-export { looksCut } from "./content-integrity";
+import { looksCut } from "./content-integrity";
+export { looksCut };
 
 function truncationFaults(text: string, listItem: boolean): string[] {
   const out: string[] = [];
