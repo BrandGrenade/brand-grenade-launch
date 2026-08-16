@@ -156,6 +156,34 @@ function cleanBlock(text: string): string {
     .trim();
 }
 
+/**
+ * The generated proposition a later refinement came out of. Scored on the
+ * winning proposition's own Stage 10 re-score rationale: the candidate whose
+ * distinctive words the reviewers kept reaching for is its antecedent.
+ * Returns null when nothing in the field is close enough to claim lineage.
+ */
+function nearestAntecedent(
+  locked: string,
+  field: Array<{ proposition: string }>,
+  stage10: string,
+): string | null {
+  if (!locked || !field.length) return null;
+  const rationale = stage10.slice(stage10.search(/RE-?SCORE/i) + 1).toLowerCase();
+  if (!rationale.trim()) return null;
+  const words = (s: string) =>
+    [...new Set(s.toLowerCase().match(/[a-z]{5,}/g) ?? [])].filter(
+      (w) => !["their", "which", "there", "these", "those", "about", "field"].includes(w),
+    );
+  let best: { text: string; score: number } | null = null;
+  for (const item of field) {
+    const w = words(item.proposition);
+    if (!w.length) continue;
+    const hits = w.filter((x) => rationale.includes(x)).length / w.length;
+    if (!best || hits > best.score) best = { text: item.proposition, score: hits };
+  }
+  return best && best.score >= 0.5 ? best.text : null;
+}
+
 function stageBlock(session: ExecSessionRow, key: string, units: number, chars: number): string {
   const raw = cleanBlock(str(session, key));
   if (!raw) return "";
