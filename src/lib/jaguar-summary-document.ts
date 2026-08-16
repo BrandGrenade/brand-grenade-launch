@@ -391,6 +391,7 @@ export function buildJaguarSummaryDocument(
       return !!a && !!b && (a.includes(b) || b.includes(a));
     });
   const antecedent = lockedInField ? null : nearestAntecedent(lockedSmp, field, str(session, "stage_10_output"));
+  if (process.env.JAG_DEBUG) console.error("DEBUG", { lockedSmp, lockedInField, antecedent });
   const generationHtml = `${list([
     ...field.slice(0, 10).map((f) => `**${f.proposition}** — ${f.origin}`),
     lockedInField || !lockedSmp
