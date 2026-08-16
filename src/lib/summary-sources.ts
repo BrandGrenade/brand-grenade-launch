@@ -540,10 +540,10 @@ export function outcomeFor(
 ): TerritoryOutcome | undefined {
   const k = okey(name);
   if (!k) return undefined;
-  return outcomes.find((o) => {
-    const t = okey(o.name);
-    return t === k || (t.length > 8 && k.includes(t)) || (k.length > 8 && t.includes(k));
-  });
+  const near = (a: string, b: string) =>
+    !!a && !!b && (a === b || (a.length > 8 && b.includes(a)) || (b.length > 8 && a.includes(b)));
+  return outcomes.find((o) => near(okey(o.name), k) || near(okey(o.line ?? ""), k));
+
 }
 
 /** "Eliminated at Stage 10" / "Carried forward". */
