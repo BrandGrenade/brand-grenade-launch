@@ -82,6 +82,7 @@ export function md(text: string): string {
 }
 
 import { stripDocumentMetadata } from "./strip-document-metadata";
+import { certifyDocument } from "./content-integrity";
 import { BOOKKEEPING_LINE, CANDIDATE_STAGE_KEYS, scopeToSelected, selectedAliases } from "./minto-content";
 import { buildBoardStrategyDocument } from "./board-strategy-document";
 
@@ -292,7 +293,8 @@ export function buildPhase1Document(session: Phase1Session, format: Phase1Format
       .join("\n") +
     footer();
 
-  return `<!doctype html>
+  return certifyDocument(
+    `<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -311,7 +313,10 @@ export function buildPhase1Document(session: Phase1Session, format: Phase1Format
 <div class="page">${body}</div>
 <script>setTimeout(function(){try{window.print();}catch(e){}}, 500);</script>
 </body>
-</html>`;
+</html>`,
+    meta.title,
+    { narrativeSections: [] },
+  );
 }
 
 export function openPhase1Document(session: Phase1Session, format: Phase1Format): void {

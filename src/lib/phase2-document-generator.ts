@@ -9,6 +9,7 @@ import { parseStage20Output, parseBriefQualityScore, type BriefQualityScore } fr
 import { buildMasterDetonationDocument } from "./master-detonation-document";
 import type { MintoSession } from "./minto-content";
 import { stripDocumentMetadata } from "./strip-document-metadata";
+import { certifyDocument } from "./content-integrity";
 
 export type Phase2DocType =
   | "detonation_territory"
@@ -467,7 +468,12 @@ export function buildPhase2Document(
       return buildAllPhase2(session);
   }
 
-  return wrapDoc(title, brand, body + provenance(session));
+  // Stage transcripts: count-consistency is a property of the model output,
+  // not of assembly, so it is not compared here — but clean, complete and
+  // client voice are enforced exactly as they are on every other document.
+  return certifyDocument(wrapDoc(title, brand, body + provenance(session)), title, {
+    narrativeSections: [],
+  });
 }
 
 // ── Combined "All Brand Detonation" document ─────────────────────────────
