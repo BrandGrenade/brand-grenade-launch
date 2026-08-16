@@ -40,6 +40,8 @@ import {
   extractImpossibilityAnalysis,
 
   extractRecognitionTest,
+  extractSelectedDetonation,
+
   extractWinnerScores,
   labelledBlocks,
   mdBlock,
