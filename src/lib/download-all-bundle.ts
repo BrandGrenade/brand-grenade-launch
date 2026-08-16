@@ -167,9 +167,6 @@ export async function buildAndDownloadBundle(
 
   // Root — Strategy Executive Summary (synthesis of stored data only)
   onProgress?.("Building Brand Strategy and Creative Intelligence Summary…");
-  const execIntel = await fetchExecSummaryIntel(
-    typeof session.brief_text === "string" ? session.brief_text : null,
-  );
   // Same extra columns the Deliverables card loads, so both paths build the
   // identical document.
   const execExtra = await (async () => {
