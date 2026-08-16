@@ -387,13 +387,16 @@ export function reasonGrid(reasons: Reason[]): string {
   if (items.length === 0) return "";
   return `<div class="reasons">${items
     .map(
-      (r, i) => `<div class="reason keep-together">
+      // A long card kept together can push the whole grid onto the next page
+      // and strand half a page of white space, so only short cards are pinned.
+      (r, i) => `<div class="reason ${(r.detail ?? "").length > 420 ? "allow-break" : "keep-together"}">
       <div class="n">${String(i + 1).padStart(2, "0")}</div>
       <div class="t">${inlineMd(sanitiseText(r.title))}</div>
       ${r.detail ? `<div class="d">${inlineMd(sanitiseText(r.detail))}</div>` : ""}
     </div>`,
     )
     .join("")}</div>`;
+
 }
 
 /** Bordered supporting block — rejected-and-why, caveats, short notes. */
