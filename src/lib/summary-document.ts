@@ -574,11 +574,39 @@ export function buildSummaryDocument(
     str(session, "stage_9_output"),
     str(session, "selected_smp"),
   );
+  // Every territory's recorded outcome, so a profiled territory always states
+  // whether it was carried forward or eliminated, and at which stage.
+  const outcomes = extractTerritoryOutcomes(
+    str(session, "stage_10_output"),
+    str(session, "stage_11_output"),
+    extractTerritoryNames(str(session, "stage_7_output")),
+  );
+  const outcomeLedger = outcomes.length
+    ? comparisonTable(
+        [
+          { key: "t", label: "Territory" },
+          { key: "o", label: "Outcome" },
+          { key: "r", label: "Why" },
+        ],
+        outcomes.map((o) => ({
+          cells: {
+            t: o.name,
+            o: outcomeLabel(o),
+            r:
+              o.status === "eliminated"
+                ? wholeSentences(o.reason ?? "Failed the Stage 11 pressure test.", 2, 400)
+                : "Held under pressure testing and carried into scoring.",
+          },
+        })),
+        "Outcome of every strategic territory in this run",
+      )
+    : "";
+  const profiled = impossibility && !impossibility.generic ? outcomeFor(outcomes, impossibility.heading) : undefined;
   const distinctHtml = impossibility
-    ? `${p(
+    ? `${outcomeLedger}${p(
         impossibility.generic
           ? ""
-          : `Candidate pressure-tested: **${impossibility.heading.replace(/\.$/, "")}**`,
+          : `Candidate pressure-tested: **${impossibility.heading.replace(/\.$/, "")}** — ${outcomeLabel(profiled)}.`,
       )}${p(
         impossibility.foundation,
       )}${
@@ -592,7 +620,8 @@ export function buildSummaryDocument(
           ? pullQuote(impossibility.proof, { label: "The distinctiveness test, stated plainly" })
           : ""
       }`
-    : dedupeRepeatedAnalysis(stageBlock(session, "stage_9_output", 8, 1200));
+    : `${outcomeLedger}${dedupeRepeatedAnalysis(stageBlock(session, "stage_9_output", 8, 1200))}`;
+
 
 
 
