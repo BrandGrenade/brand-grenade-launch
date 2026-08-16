@@ -360,3 +360,74 @@ export function ownStageCorpus(session: Record<string, unknown>): string {
     .map(([, v]) => (typeof v === "string" ? v : JSON.stringify(v)))
     .join("\n");
 }
+
+export interface SelectedDetonation {
+  line: string;
+  statement: string;
+  rationale: string;
+}
+
+/**
+ * The Stage 18 Detonation the session actually selected, read whole.
+ *
+ * Sessions that ran before the Creative Engine existed have no locked big
+ * idea; their creative decision is the selected Detonation. Section 17 falls
+ * back to this so the document states what was actually chosen rather than
+ * printing an empty section.
+ */
+export function extractSelectedDetonation(
+  stage18: string,
+  selectedStatement = "",
+  selectedLine = "",
+): SelectedDetonation | null {
+  if (!stage18?.trim()) return null;
+  const text = normaliseMd(stage18);
+  const marks = [...text.matchAll(/^\s*#{0,4}\s*DETONATION (ONE|TWO|THREE)\b.*$/gim)];
+  if (!marks.length) return null;
+
+  const blocks = marks.map((m, i) => ({
+    ordinal: m[1].toUpperCase(),
+    body: text.slice(m.index! + m[0].length, marks[i + 1]?.index ?? text.length),
+  }));
+
+  const needle = selectedStatement.replace(/\s+/g, " ").trim().slice(0, 70).toLowerCase();
+  const lineNeedle = selectedLine.replace(/\s+/g, " ").trim().toLowerCase();
+  const ordinalFromLabel = lineNeedle.match(/^detonation (one|two|three)$/)?.[1]?.toUpperCase();
+  const chosen =
+    (needle &&
+      blocks.find((b) => b.body.replace(/\s+/g, " ").toLowerCase().includes(needle))) ||
+    (ordinalFromLabel && blocks.find((b) => b.ordinal === ordinalFromLabel)) ||
+    (lineNeedle &&
+      !ordinalFromLabel &&
+      blocks.find((b) => b.body.toLowerCase().includes(lineNeedle))) ||
+    blocks[blocks.length - 1];
+  if (!chosen) return null;
+
+  const fields = labelledBlocks(chosen.body);
+  const clean = (v: string) => (v ?? "").replace(/\*\*/g, "").trim();
+  let line = clean((fields["THE DETONATION LINE"] ?? "").split("\n")[0]).replace(
+    /^["“]|["”]$/g,
+    "",
+  );
+  if (!line) {
+    // Some sessions title the Detonation on its own line instead of labelling it.
+    line =
+      chosen.body
+        .split("\n")
+        .map((l) => clean(l))
+        .find((l) => l && !/:/.test(l) && l.length < 80) ?? "";
+    if (/^detonation (one|two|three)$/i.test(line)) line = "";
+  }
+  if (ordinalFromLabel && !line) line = "";
+
+  const rationale = clean(fields["WHY THIS DETONATION SERVES THE SMP"] ?? "")
+    .split(/\n(?=[A-Z][A-Z '’/&-]{6,}:)/)[0]
+    .replace(/\s+/g, " ")
+    .trim();
+  const statement =
+    clean(selectedStatement) ||
+    clean(fields["THE DETONATION STATEMENT"] ?? "").replace(/\s+/g, " ").trim();
+
+  if (!line && !statement && !rationale) return null;
+  return { line, statement, rationale };
+}
