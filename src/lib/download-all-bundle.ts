@@ -18,6 +18,11 @@ import { supabase } from "@/integrations/supabase/client";
 import type { IntelligenceReport } from "./intelligence/doc-00A-types";
 import { resolveLiveDocumentSession } from "./document-live-source";
 import { intelligenceSourceIdFromBrief } from "./document-source-authority";
+import { buildJaguarSummaryDocument } from "./jaguar-summary-document";
+import {
+  fetchJaguarSummaryExtras,
+  JAGUAR_REBUILD_SESSION_ID,
+} from "./jaguar-summary-data";
 
 export type BundleSession = Phase1Session &
   Phase2Session &
@@ -186,9 +191,15 @@ export async function buildAndDownloadBundle(
       return {};
     }
   })();
+  const summarySession = { ...session, ...execExtra };
+  const jaguarExtras = session.id === JAGUAR_REBUILD_SESSION_ID
+    ? await fetchJaguarSummaryExtras(summarySession)
+    : null;
   tryAdd(
     "Brand_Strategy_and_Creative_Intelligence_Summary.html",
-    () => buildExecSummaryDocument({ ...session, ...execExtra }, execIntel),
+    () => jaguarExtras
+      ? buildJaguarSummaryDocument(summarySession, jaguarExtras)
+      : buildExecSummaryDocument(summarySession, execIntel),
     "Building Brand Strategy and Creative Intelligence Summary…",
   );
 
