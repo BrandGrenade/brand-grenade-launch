@@ -49,13 +49,28 @@ const ARTIFACTS: Array<[RegExp, string]> = [
   [/\bword count\s*:/i, "word-count annotation"],
 ];
 
-function truncationFaults(text: string): string[] {
+/**
+ * Whether a prose block reads as cut mid-sentence. Provenance tags this builder
+ * writes itself ("— Stage 12 shortlist") are not sentences and never count.
+ */
+export function looksCut(text: string, listItem = false): boolean {
+  if (text.split(/\s+/).length < 7) return false;
+  if (/[.!?:;"”’)\]]$/.test(text)) return false;
+  if (/(?:shortlist|LOC engine|refinement|Stage\s+\d+[A-Za-z]*|winner|locked)$/i.test(text))
+    return false;
+  // A bullet legitimately ends without a full stop, so only a dangling function
+  // word or a trailing comma proves a bullet was cut.
+  if (listItem)
+    return /,$/.test(text) || /\b(?:the|a|an|and|or|but|of|to|in|on|for|with|that|which|is|are|was|were|it|its|by|as|at|from|into|than)$/i.test(text);
+  return /[a-z,]$/.test(text);
+}
+
+function truncationFaults(text: string, listItem: boolean): string[] {
   const out: string[] = [];
   // safeClamp's ellipsis is only legitimate after a complete word AND is not
   // permitted at all in a finished document: it means content was cut.
   if (/\w…/.test(text) || /\w\.\.\.(?:\s|$)/.test(text)) out.push("text cut with an ellipsis");
-  // A body that stops on a conjunction is a mid-sentence cut.
-  if (!/[.!?:;"”’)\]]$/.test(text)) out.push("body ends mid-sentence");
+  if (looksCut(text, listItem)) out.push("body ends mid-sentence");
   return out;
 }
 
@@ -96,11 +111,12 @@ export function summaryGateFailures(
       ...sec.html.replace(/<table[\s\S]*?<\/table>/gi, " ").matchAll(/<(p|li)([^>]*)>([\s\S]*?)<\/\1>/gi),
     ]
       .filter((m) => !/class="(?:label|value|num[^"]*|score|n|d|t|kicker|idx)"/i.test(m[2]))
-      .map((m) => strip(m[3]))
-      .filter((t) => t.split(/\s+/).length > 6);
-    const lastProse = proseBlocks[proseBlocks.length - 1] ?? "";
+      .map((m) => ({ tag: m[1].toLowerCase(), text: strip(m[3]) }))
+      .filter((b) => b.text.split(/\s+/).length > 6);
+    const lastProse = proseBlocks[proseBlocks.length - 1];
     if (lastProse)
-      for (const f of truncationFaults(lastProse)) fail.push(`section ${sec.index}: ${f}`);
+      for (const f of truncationFaults(lastProse.text, lastProse.tag === "li"))
+        fail.push(`section ${sec.index}: ${f}`);
     if (/\w…|\w\.\.\.(?:\s|$)/.test(text)) fail.push(`section ${sec.index}: text cut with an ellipsis`);
 
     // C5 — no internal artifacts.

@@ -32,7 +32,7 @@ import {
 import { condenseStage } from "./minto-content";
 import { stripDocumentMetadata } from "./strip-document-metadata";
 import { stripSelectionArtifacts } from "./document-gate";
-import { gateSummary, type GateSectionInput } from "./summary-gate";
+import { gateSummary, looksCut, type GateSectionInput } from "./summary-gate";
 import {
   extractBrandArchitecture,
   extractChannelRole,
@@ -329,20 +329,21 @@ function sealBody(bodyHtml: string, ownTitle: string, otherTitles: Set<string>):
  * pipeline wrote them. A cut sentence is never shown to a reader and is never
  * completed by guessing: the incomplete tail is dropped and the gap is stated.
  */
+const CUT_NOTE = `<p class="note">The stored output for this stage ends mid-sentence in the pipeline record. Nothing has been invented to complete it.</p>`;
+
 function closeIncompleteTail(bodyHtml: string): string {
-  const m = /<(p|li)([^>]*)>([\s\S]*?)<\/\1>(?![\s\S]*<(?:p|li)[ >])/.exec(bodyHtml);
-  if (!m) return bodyHtml;
-  const text = m[3]
-    .replace(/<[^>]+>/g, "")
-    .replace(/&[a-z#0-9]+;/g, "x")
-    .trim();
-  if (!text || /[.!?:;"”’)\]]$/.test(text)) return bodyHtml;
-  const cutAt = Math.max(m[3].lastIndexOf(". "), m[3].lastIndexOf(".<"), m[3].lastIndexOf("."));
-  const kept = cutAt > 0 ? `${m[3].slice(0, cutAt + 1)}` : "";
-  const replacement = kept ? `<${m[1]}${m[2]}>${kept}</${m[1]}>` : "";
-  return `${bodyHtml.slice(0, m.index)}${replacement}${bodyHtml.slice(
-    m.index + m[0].length,
-  )}<p class="note">The stored output for this stage ends mid-sentence in the pipeline record. Nothing has been invented to complete it.</p>`;
+  // The final prose block of the section: a paragraph, or the last item of a
+  // trailing list. Never anything else — tables and stat cards end on labels.
+  const openAt = Math.max(bodyHtml.lastIndexOf("<p"), bodyHtml.lastIndexOf("<li"));
+  if (openAt < 0) return bodyHtml;
+  const tag = bodyHtml.startsWith("<li", openAt) ? "li" : "p";
+  const closeAt = bodyHtml.indexOf(`</${tag}>`, openAt);
+  if (closeAt < 0) return bodyHtml;
+  const inner = bodyHtml.slice(bodyHtml.indexOf(">", openAt) + 1, closeAt);
+  if (!looksCut(strip(inner), tag === "li")) return bodyHtml;
+  // The incomplete block is removed whole — never re-cut, never completed.
+  const after = bodyHtml.slice(closeAt + `</${tag}>`.length);
+  return `${bodyHtml.slice(0, openAt)}${after}${CUT_NOTE}`;
 }
 
 function renderSections(defs: SectionDef[]): { html: string; sealed: GateSectionInput[] } {

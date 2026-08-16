@@ -17,7 +17,6 @@ import { DETONATION_APPENDIX, NO_STAGE_OUTPUT, PIPELINE_APPENDIX } from "./minto
 
 export type DocumentTypeId =
   | "board_strategy"
-  | "exec_summary"
   | "consulting_delivery"
   | "master_detonation";
 
@@ -48,12 +47,6 @@ export const DOCUMENT_SPECS: Record<DocumentTypeId, DocumentSpec> = {
   board_strategy: {
     id: "board_strategy",
     label: "Board Strategy Recommendation",
-    frontMatter: MINTO_SECTIONS,
-    appendix: PIPELINE_APPENDIX_SECTIONS,
-  },
-  exec_summary: {
-    id: "exec_summary",
-    label: "Brand Strategy and Creative Intelligence Summary",
     frontMatter: MINTO_SECTIONS,
     appendix: PIPELINE_APPENDIX_SECTIONS,
   },

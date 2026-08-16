@@ -267,7 +267,7 @@ export function extractImpossibilityAnalysis(
   // A leading "Distinctiveness Assessment"/"Overview" block is the stage's own
   // preamble, not a candidate. Never pressure-test the preamble.
   const GENERIC =
-    /^(distinctiveness assessment|overview|summary|introduction|assessment|category differentiation|strategic uniqueness|territory claimed|conclusion|verdict)$/;
+    /^(distinctiveness assessment|overview|summary|introduction|assessment|category differentiation|strategic uniqueness|territory claimed|conclusion|verdict|strategic impossibility analysis|impossibility analysis|distinctiveness testing|set assessment|assessment summary|analysis)$/;
   const candidates = blocks.filter((b) => !GENERIC.test(key(b.heading)));
   const pool = candidates.length ? candidates : blocks;
   const want = key(preferred);
