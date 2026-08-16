@@ -391,15 +391,29 @@ export function contentIntegrityFindings(
  * Deliverables cards, the zip bundle, the PDF renderer, the repository view —
  * can publish a document that fails certification.
  */
+export class DocumentCertificationError extends Error {
+  constructor(
+    message: string,
+    /** The rejected document, carried for diagnostics only — never published. */
+    readonly html: string,
+    readonly findings: IntegrityFinding[],
+  ) {
+    super(message);
+    this.name = "DocumentCertificationError";
+  }
+}
+
 export function assertPublishable(html: string, label: string, opts: IntegrityOptions = {}): string {
   const findings = contentIntegrityFindings(html, opts);
   if (findings.length) {
-    throw new Error(
+    throw new DocumentCertificationError(
       `${label} failed content-integrity certification:\n- ` +
         findings
           .slice(0, 15)
           .map((f) => `[${f.criterion}] section ${f.section}: ${f.detail}${f.quote ? ` — “${f.quote}”` : ""}`)
           .join("\n- "),
+      html,
+      findings,
     );
   }
   return html;
