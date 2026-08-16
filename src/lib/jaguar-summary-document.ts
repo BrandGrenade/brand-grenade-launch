@@ -210,13 +210,14 @@ function stageBlock(session: ExecSessionRow, key: string, units: number, chars: 
  */
 function dropDanglingLabel(html: string): string {
   let out = html.replace(/(?:\s*<h[1-6][^>]*>[\s\S]*?<\/h[1-6]>)+\s*$/, "");
-  const trailing = out.match(/<p>([\s\S]*?)<\/p>\s*$/);
+  const trailing = out.match(/<p>((?:(?!<\/p>)[\s\S])*)<\/p>\s*$/);
   if (trailing) {
     const text = strip(trailing[1]);
     if (text.length < 130 && !/[.!?:]$/.test(text)) out = out.slice(0, trailing.index).trimEnd();
   }
-  return out;
+  return out.trim();
 }
+
 
 const strip = (h: string) =>
   h
