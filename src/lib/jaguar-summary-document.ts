@@ -26,7 +26,7 @@ import {
 } from "./doc-system";
 import { condenseStage } from "./minto-content";
 import { stripDocumentMetadata } from "./strip-document-metadata";
-import { sealSectionBoundaries, stripSelectionArtifacts } from "./document-gate";
+import { stripSelectionArtifacts } from "./document-gate";
 import {
   extractBrandArchitecture,
   extractChannelRole,
