@@ -33,7 +33,9 @@ import {
   extractDetonationCandidates,
   extractRecognitionTest,
   extractWinnerScores,
+  labelledBlocks,
   mdBlock,
+  mdBlocks,
   normaliseMd,
   safeClamp,
   sentences,
@@ -422,19 +424,48 @@ export function buildJaguarSummaryDocument(
     : stageBlock(session, "stage_13_output", 9, 1400);
 
   /* 14 — Territory mapping */
-  const detonations = extractDetonationCandidates(str(session, "stage_18_output"));
-  const territoryHtml = `${stageBlock(session, "stage_17_output", 10, 1600)}${
-    detonations.length
-      ? `<h3>The ${
-          ["", "one", "two", "three"][detonations.length] ?? detonations.length
-        } Detonation candidates written against this territory</h3>${defList(
-          detonations.map((d) => ({
-            label: d.line || d.label,
-            body: safeClamp(d.statement, 520),
-          })),
-        )}`
-      : ""
-  }`;
+  const s17 = str(session, "stage_17_output");
+  const s18 = str(session, "stage_18_output");
+  const chosenTerritoryName =
+    (s18.match(/^#{0,4}\s*([A-Z][A-Z '’—-]{4,60}?)\s*[—-]\s*THE DETONATION/m)?.[1] ?? "").trim();
+  const territoryBlocks = mdBlocks(s17);
+  const territory =
+    (chosenTerritoryName
+      ? territoryBlocks.find(
+          (b) => b.heading.toUpperCase().trim() === chosenTerritoryName.toUpperCase(),
+        )
+      : undefined) ?? territoryBlocks[0];
+  const territoryFields = territory ? labelledBlocks(territory.body) : {};
+  const detonations = extractDetonationCandidates(s18);
+  const territoryHtml = territory
+    ? `${p(`Territory taken forward: **${territory.heading}**`)}${defList([
+        {
+          label: "Why it serves the proposition",
+          body: safeClamp(
+            (territoryFields["WHY THIS TERRITORY SERVES THE SMP"] ?? "").replace(/\s+/g, " "),
+            900,
+          ),
+        },
+        {
+          label: "The territory described",
+          body: safeClamp(
+            (territoryFields["TERRITORY DESCRIPTION"] ?? "").replace(/\s+/g, " "),
+            1100,
+          ),
+        },
+      ])}${
+        detonations.length
+          ? `<h3>The ${
+              ["", "one", "two", "three"][detonations.length] ?? detonations.length
+            } Detonation candidates written against this territory</h3>${defList(
+              detonations.map((d) => ({
+                label: d.line || d.label,
+                body: safeClamp(d.statement, 520),
+              })),
+            )}`
+          : ""
+      }`
+    : stageBlock(session, "stage_17_output", 10, 1600);
 
   /* 15 — Coherence audit */
   const coherenceHtml = stageBlock(session, "stage_15_output", 8, 1200);
