@@ -41,6 +41,11 @@ import {
 
   extractRecognitionTest,
   extractSelectedDetonation,
+  extractTerritoryNames,
+  extractTerritoryOutcomes,
+  outcomeFor,
+  outcomeLabel,
+
 
   extractWinnerScores,
   labelledBlocks,
