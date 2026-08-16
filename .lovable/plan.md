@@ -1,47 +1,53 @@
-# Creative Guidance for the Room 04 big-idea sweep
+# Jaguar — Brand Strategy and Creative Intelligence Summary: structural rebuild (outline for approval)
 
-Feasible, and it fits the existing architecture cleanly. Guidance is stored on the sweep run itself, so it travels with every lens call in that sweep and stays visible afterwards as an attributable input.
+Jaguar only. A Jaguar-specific document spec and builder; no other session's documents change until this is approved as the template.
 
-## What gets built
+## Channel check (done, not guessed)
 
-**1. Store it against the run**
-Add a `creative_guidance` text column to the sweep run record (nullable, defaults to none). Existing runs are unaffected and simply have no guidance.
+Stage 21 for Jaguar produced six real channel briefs:
+Targeted Premium Film in Broadcast and Streaming · Independent Automotive Press and Critic Reviews · Social and Short-form on Design and Automotive Feeds · Peer Owner Communities and Word of Mouth · Partnership and Cultural Adjacency · Search and Configurator.
+(A seventh row, "Campaign big idea (pre-channel)", is the pre-channel idea record, not a channel.)
+No separate mainstream/broadcast channel was scoped for this session — the Targeted Premium Film in Broadcast and Streaming brief is the broadcast line and already covers it. The document will say so explicitly rather than leaving the gap ambiguous.
 
-**2. Capture it on the trigger screen**
-On the sweep panel in the Creative Engine, above the "Run 37-lens big idea sweep" / "Start a fresh sweep" buttons, add an optional multi-line "Creative guidance (optional)" field with helper text explaining it steers the register of ideas and is recorded against the sweep. Empty is allowed and behaves exactly as today. The field is only editable before a sweep starts; once a sweep exists its guidance is shown read-only.
+## Proposed section-by-section outline
 
-**3. Inject it into every lens call**
-The guidance is passed into the big-idea user message builder as its own clearly-fenced block, sitting alongside the existing constraints (execution-detail ban, word ceilings, collision check). It is included in all three call paths — batch, single-lens recovery, and collision regeneration — so no lens in the sweep is generated without it.
+Cover: brand, document title, SMP, date, confidential.
 
-Important: the guidance text itself is yours, injected verbatim. The wrapper around it does not invent a target. Batches are 3 lenses at a time, so a sweep-wide proportion cannot be enforced by the wrapper — the model only sees its current batch plus the root tensions already produced. The wrapper therefore tells the model to read the prior-tension list and judge the running mix, which is what makes a stated numeric target actually operative.
+| # | Section | Contains (one line) |
+|---|---------|---------------------|
+| — | Table of Contents | Real titles, page one, in the exact order below. |
+| 01 | Background | Why this project exists: 2024 repositioning fallout, Type 01 unseen and unreleased, Bentley-tier price ambition, the tension the engagement was set to resolve. Prose. |
+| 02 | What We Know About the Brand | Established brand facts and inherited conditions. Bullets. |
+| 03 | How This Was Built — Pipeline Activity | Grouped stat block: **Strategy** (stages, methodologies, propositions, scoring dimensions) · **Intelligence** (research passes, sources, validation checks) · **Creative** (lens sweep count × shortlisted candidates) · **Executional** (channel prompts, offline briefs, documents produced) · plus human checkpoints. Bullets/stats only. |
+| 04 | Category Intelligence | What the category believes and how it behaves. Descriptor line + bullets. |
+| 05 | The Category Insight | Headed and led explicitly as a *category-level* insight, then the insight and its validation. Prose. |
+| 06 | Territory Synthesis | Descriptor line ("the strategic ground the insight opens"), then the territories considered and the one taken. |
+| 07 | Proposition Generation | Total propositions generated across the funnel and LOC engines stated up front, then the shortlist carried forward. Bullets. |
+| 08 | Distinctiveness Check | Descriptor line, then the ownability read against named competitors. |
+| 09 | Proposition Scoring | Full scoring table plus Stage 10 rationale kept as full prose — not bulleted. |
+| 10 | The Winning Proposition | The SMP arrives here, at the point it was actually reached. Declared explicitly with the case for why it won. Prose. |
+| 11 | What Was Rejected, and Why | Every non-selected proposition with its one-line reason. Bullets. |
+| 12 | Integrity Testing | Descriptor line, then the pressure tests and verdicts. |
+| 13 | Brand Fit Validation | Stage 13 brand-fit reasoning and guardrails in full prose — not bulleted. |
+| 14 | Territory Mapping | Descriptor line, then how the proposition maps across territory. |
+| 15 | Coherence and Consistency Audit | Descriptor line, then the audit findings and verdict. |
+| 16 | Creative Intelligence — The Sweep | The 37-lens sweep explained in one line, then the shortlisted creative candidates. Bullets. |
+| 17 | The Winning Creative Idea | Locked campaign line plus the complete locked creative idea narrative, verbatim and untruncated. Full prose. |
+| 18 | Why This Idea Won | The case for the locked idea against its shortlist rivals. Prose. |
+| 19 | Channels This Strategy Activates Through | The six Stage 21 channels as bullets, each with one line of strategic role, plus the explicit note that broadcast is covered by the Targeted Premium Film brief. |
+| 20 | Brand Architecture and Distinctive Assets | Descriptor line, then architecture and distinctive assets in play. |
+| 21 | Next Step | What happens next. Short. |
 
-Exact injected block (guidance non-empty):
+No appendix — the workflow is the body, in sequence.
 
-```text
-═══ CREATIVE GUIDANCE FOR THIS SWEEP — MANDATORY STEER ═══
-<your guidance text, verbatim>
+## Notes on treatment
 
-This guidance applies to every lens in this sweep. It steers register, framing and emphasis. It does NOT override the proposition, the lens's angle of attack, the collision check, the word ceilings, or any hard ban in the system prompt — an idea may never be twisted into dishonesty or into a different proposition to satisfy it.
-Where the guidance states a proportion or target, it is measured across the WHOLE 37-lens sweep, not this batch. Before you write, read the ROOT TENSIONS ALREADY PRODUCED list above and judge the running mix against the target: if the sweep so far is short against it, this batch must correct toward it. If a lens genuinely cannot honour the guidance without breaking its own angle of attack, produce the honest idea and say so in one clause in WHY IT WINS.
-```
+- Plain-language descriptor line under every system-jargon heading (Territory Synthesis, Insight Generation, Coherence Audit, Distinctiveness Check, Integrity Testing).
+- Compression is selective: bullets for stats, rejected propositions, channels, category beliefs; full prose preserved for Stage 10 rationale, Stage 13 reasoning and guardrails, and the locked creative narrative.
+- SMP on the cover only, then not restated until section 10.
 
-When the guidance field is blank the block is omitted entirely and the prompt is byte-identical to today's.
-**4. Surface it afterwards**
-- Tissue Check / sweep header shows a "Creative guidance applied" block with the verbatim text.
-- The sweep export includes the same block, so any reader can see what steered the mix.
+## Technical approach (for reference)
 
+A new `jaguar_exec_summary` entry in `src/lib/document-spec.ts` with this ordered section list, and a dedicated builder that draws from the existing extractors in `exec-summary-sections.ts` / `minto-content.ts` plus the Room 04 stimulus tables for the creative sections. The existing exec-summary builder and all other sessions stay untouched. The completeness/integrity gate (`document-gate.ts`) is pointed at the new spec so the 21 sections are enforced the same way.
 
-## Making the CommBank test a real check
-
-"A meaningful share" is left entirely to model judgment as written — 2–3 shifted ideas would technically comply. Recommend running the validation with an explicit target in the guidance text itself:
-
-> Many prior ideas depict the negative of commitment (frozen, trapped, walled in) rather than the positive benefit of liquidity itself. At least half of the 37 ideas in this sweep — 19 or more — must be gain-framed: they must show what staying liquid actively delivers (access, opportunity, capability in the moment), with the positive as the idea's engine, not a closing reassurance after a loss-framed setup. Loss-framing is not banned and should still carry the remainder where a lens genuinely demands it.
-
-Then the pass/fail test is countable: classify all 37 root tensions gain vs loss vs mixed, compare against the current sweep's baseline, and report both counts. I'll do that classification and show the before/after table rather than asserting a shift.
-
-
-## Technical notes
-
-- Column: `stimulus_runs.creative_guidance text`.
-- Prompt: new optional `creativeGuidance` arg in `buildBigIdeaUserMessage`; block omitted entirely when blank so existing prompt output is byte-identical for runs without guidance.
-- `startBigIdeaRun` accepts an optional guidance string and persists it at run creation; `runBigIdeaBatch` reads it off the run row.
+Confirm the outline and I'll build it.
