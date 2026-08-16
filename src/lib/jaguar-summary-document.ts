@@ -317,15 +317,21 @@ export function buildJaguarSummaryDocument(
     research.slice(0, 6).map((r) => `**${r.label}.** ${r.body}`),
   )}`;
 
-  /* 05 — Category insight */
+  /* 05 — Category insight. The display treatment carries the insight itself;
+     anything past the opening statement reads as body copy, not a pull quote. */
+  const insightLede = findings ? safeClamp(findings, 240) : "";
+  const insightRest = findings.startsWith(insightLede.replace(/…$/, ""))
+    ? findings.slice(insightLede.replace(/…$/, "").length).trim()
+    : "";
   const insightHtml = findings
-    ? `${pullQuote(findings, {
+    ? `${pullQuote(insightLede.replace(/…$/, ""), {
         label: "Category-level insight — true of the category, not of this brand alone",
         variant: "hero",
-      })}${p(
+      })}${insightRest ? renderMarkdown(insightRest) : ""}${p(
         "This is what the whole category believes and behaves on. The strategy that follows is built to break it, not to restate it.",
       )}`
     : "";
+
 
   /* 06 — Synthesis */
   const synthesisHtml = `${stageBlock(session, "stage_4_output", 10, 1600)}${stageBlock(session, "stage_6_output", 7, 900)}`;
