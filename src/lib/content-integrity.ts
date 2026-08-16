@@ -223,6 +223,11 @@ export interface IntegrityFinding {
 export interface IntegrityOptions {
   /** Sections whose bodies are historical transcripts of raw stage output. */
   transcriptSections?: readonly string[];
+  /**
+   * Sections whose prose the builder writes itself. Count consistency is only
+   * enforced across these; omit to enforce across every non-transcript section.
+   */
+  narrativeSections?: readonly string[];
   /** Additional clean-check exemptions, e.g. a brand whose name is "Date". */
   allow?: readonly RegExp[];
 }
