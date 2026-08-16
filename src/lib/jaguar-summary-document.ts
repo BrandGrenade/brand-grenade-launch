@@ -320,9 +320,12 @@ export function buildJaguarSummaryDocument(
   /* 05 — Category insight. The display treatment carries the insight itself;
      anything past the opening statement reads as body copy, not a pull quote. */
   const insightLede = findings ? safeClamp(findings, 240) : "";
-  const insightRest = findings.startsWith(insightLede.replace(/…$/, ""))
-    ? findings.slice(insightLede.replace(/…$/, "").length).trim()
-    : "";
+  const insightHead = insightLede.replace(/…$/, "");
+  const insightRest =
+    findings && insightHead && findings.startsWith(insightHead)
+      ? findings.slice(insightHead.length).trim()
+      : "";
+
   const insightHtml = findings
     ? `${pullQuote(insightLede.replace(/…$/, ""), {
         label: "Category-level insight — true of the category, not of this brand alone",
