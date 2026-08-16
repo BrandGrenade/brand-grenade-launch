@@ -551,7 +551,11 @@ export function buildSummaryDocument(
     str(session, "selected_smp"),
   );
   const distinctHtml = impossibility
-    ? `${p(`Candidate pressure-tested: **${impossibility.heading.replace(/\.$/, "")}**`)}${p(
+    ? `${p(
+        impossibility.generic
+          ? ""
+          : `Candidate pressure-tested: **${impossibility.heading.replace(/\.$/, "")}**`,
+      )}${p(
         impossibility.foundation,
       )}${
         impossibility.rivals.length

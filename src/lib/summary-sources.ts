@@ -239,6 +239,8 @@ export function extractWinnerScores(stage10: string, smp: string): WinnerScore[]
 
 export interface ImpossibilityAnalysis {
   heading: string;
+  /** True when the block read is the stage's own commentary, not a named candidate. */
+  generic: boolean;
   foundation: string;
   rivals: string[];
   proof: string;
@@ -261,7 +263,8 @@ export function extractImpossibilityAnalysis(
   const key = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
   // A leading "Distinctiveness Assessment"/"Overview" block is the stage's own
   // preamble, not a candidate. Never pressure-test the preamble.
-  const GENERIC = /^(distinctiveness assessment|overview|summary|introduction|assessment)$/;
+  const GENERIC =
+    /^(distinctiveness assessment|overview|summary|introduction|assessment|category differentiation|strategic uniqueness|territory claimed|conclusion|verdict)$/;
   const candidates = blocks.filter((b) => !GENERIC.test(key(b.heading)));
   const pool = candidates.length ? candidates : blocks;
   const want = key(preferred);
@@ -311,5 +314,5 @@ export function extractImpossibilityAnalysis(
     foundation = prose.replace(/\s+/g, " ").trim();
   }
 
-  return { heading: block.heading, foundation, rivals, proof };
+  return { heading: block.heading, generic: GENERIC.test(key(block.heading)), foundation, rivals, proof };
 }
