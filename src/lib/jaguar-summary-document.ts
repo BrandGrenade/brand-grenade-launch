@@ -319,8 +319,18 @@ export function buildJaguarSummaryDocument(
 
   /* 05 — Category insight. The display treatment carries the insight itself;
      anything past the opening statement reads as body copy, not a pull quote. */
-  const insightLede = findings ? safeClamp(findings, 240) : "";
-  const insightHead = insightLede.replace(/…$/, "");
+  // Display treatment carries whole clauses only — never a cut mid-phrase.
+  const insightFirst = findings ? (findings.match(/^[\s\S]*?\.(?=\s|$)/)?.[0] ?? findings) : "";
+  const insightHead =
+    insightFirst.length > 380
+      ? insightFirst.slice(
+          0,
+          Math.max(
+            insightFirst.slice(0, 300).lastIndexOf(" — ") + 1,
+            insightFirst.slice(0, 300).lastIndexOf(", ") + 1,
+          ) || 300,
+        ).trim()
+      : insightFirst.trim();
   const insightRest =
     findings && insightHead && findings.startsWith(insightHead)
       ? findings.slice(insightHead.length).trim()
