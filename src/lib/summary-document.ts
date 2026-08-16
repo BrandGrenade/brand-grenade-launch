@@ -324,13 +324,34 @@ function sealBody(bodyHtml: string, ownTitle: string, otherTitles: Set<string>):
   return dropDanglingLabel(out).trim();
 }
 
+/**
+ * Some stored stage outputs were themselves cut off mid-sentence when the
+ * pipeline wrote them. A cut sentence is never shown to a reader and is never
+ * completed by guessing: the incomplete tail is dropped and the gap is stated.
+ */
+function closeIncompleteTail(bodyHtml: string): string {
+  const m = /<(p|li)([^>]*)>([\s\S]*?)<\/\1>(?![\s\S]*<(?:p|li)[ >])/.exec(bodyHtml);
+  if (!m) return bodyHtml;
+  const text = m[3]
+    .replace(/<[^>]+>/g, "")
+    .replace(/&[a-z#0-9]+;/g, "x")
+    .trim();
+  if (!text || /[.!?:;"”’)\]]$/.test(text)) return bodyHtml;
+  const cutAt = Math.max(m[3].lastIndexOf(". "), m[3].lastIndexOf(".<"), m[3].lastIndexOf("."));
+  const kept = cutAt > 0 ? `${m[3].slice(0, cutAt + 1)}` : "";
+  const replacement = kept ? `<${m[1]}${m[2]}>${kept}</${m[1]}>` : "";
+  return `${bodyHtml.slice(0, m.index)}${replacement}${bodyHtml.slice(
+    m.index + m[0].length,
+  )}<p class="note">The stored output for this stage ends mid-sentence in the pipeline record. Nothing has been invented to complete it.</p>`;
+}
+
 function renderSections(defs: SectionDef[]): { html: string; sealed: GateSectionInput[] } {
   const titles = new Set(defs.map((d) => normTitle(d.title)));
   const sealed: GateSectionInput[] = [];
   const html = defs
     .map((d) => {
       const others = new Set([...titles].filter((t) => t !== normTitle(d.title)));
-      const body = sealBody(d.body, d.title, others);
+      const body = closeIncompleteTail(sealBody(d.body, d.title, others));
       sealed.push({ index: d.index, title: d.title, html: body });
       return section(
         { kicker: d.kicker, index: d.index, title: d.title, breakBefore: BREAK_BEFORE.has(d.index) },
