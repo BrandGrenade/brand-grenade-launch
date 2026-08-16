@@ -31,6 +31,8 @@ import {
   extractBrandArchitecture,
   extractChannelRole,
   extractDetonationCandidates,
+  extractImpossibilityAnalysis,
+
   extractRecognitionTest,
   extractWinnerScores,
   labelledBlocks,
