@@ -976,7 +976,7 @@ export function buildSummaryDocument(
   // on every render, for every session.
   return gateSummary(rendered.sealed, html, {
     order: defs.map((d) => d.index),
-    lockedSmp: winning.smp?.trim() || selectedSmp,
+    lockedSmp: (winning.smp?.trim() || selectedSmp || "").replace(/^["“”\s]+|["“”\s.]+$/g, ""),
     lockedIdea,
     foreignMarkers: extras.foreignMarkers,
     requiredProse: ["09", "13", "17"],

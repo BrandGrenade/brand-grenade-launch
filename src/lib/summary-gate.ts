@@ -142,7 +142,7 @@ export function summaryGateFailures(
   }
 
   // C11 — the footer is the true last content of the document.
-  const footerAt = fullHtml.lastIndexOf("<footer");
+  const footerAt = fullHtml.lastIndexOf('<div class="footer"');
   if (footerAt < 0) fail.push("document has no footer");
   else {
     const after = fullHtml.slice(fullHtml.indexOf("</footer>", footerAt));
