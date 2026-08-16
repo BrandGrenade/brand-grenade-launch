@@ -95,7 +95,7 @@ export function summaryGateFailures(
     const prose = strip(
       sec.html.replace(/<table[\s\S]*?<\/table>/gi, " ").replace(/<div class="stat[\s\S]*?<\/div>/gi, " "),
     );
-    for (const f of truncationFaults(prose)) fail.push(`section ${sec.index}: ${f}`);
+    for (const f of truncationFaults(prose)) fail.push(`section ${sec.index}: ${f} [...${prose.slice(-120)}]`);
 
     // C5 — no internal artifacts.
     for (const [re, label] of ARTIFACTS)
