@@ -233,6 +233,8 @@ blockquote { border-left: 3pt solid var(--detonation); padding: 10pt 14pt; margi
 .pull.hero .pull-body { font-size: 30pt; max-width: 480pt; margin: 0 auto; }
 .pull.quiet { background: transparent; border-left: 3pt solid var(--rule); padding: 14pt 18pt; }
 .pull.quiet .pull-body { font-family: 'Inter', sans-serif; font-size: 12.5pt; font-weight: 600; line-height: 1.5; }
+.pull .pull-body.prose, .pull.hero .pull-body.prose { font-family: 'Inter', sans-serif; font-size: 13pt; font-weight: 500; line-height: 1.55; letter-spacing: 0; text-align: left; max-width: 100%; word-spacing: normal; }
+
 .proposition { text-align: center; padding: 36pt 20pt; border-top: 2pt solid var(--detonation); border-bottom: 2pt solid var(--detonation); margin: 0 0 32pt; }
 .proposition .label { font-size: 9pt; font-weight: 600; letter-spacing: 0.18em; color: var(--detonation); text-transform: uppercase; margin-bottom: 14pt; }
 .proposition .stmt { font-family: 'Bebas Neue', Impact, sans-serif; font-size: 30pt; line-height: 1.06; letter-spacing: 0.01em; color: var(--ash); font-weight: 400; max-width: 480pt; margin: 0 auto; }
