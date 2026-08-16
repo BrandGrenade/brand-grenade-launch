@@ -327,7 +327,7 @@ export function buildJaguarSummaryDocument(
       : "";
 
   const insightHtml = findings
-    ? `${pullQuote(insightLede.replace(/…$/, ""), {
+    ? `${pullQuote(insightHead, {
         label: "Category-level insight — true of the category, not of this brand alone",
         variant: "hero",
       })}${insightRest ? renderMarkdown(insightRest) : ""}${p(
