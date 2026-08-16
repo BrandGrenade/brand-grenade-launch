@@ -234,3 +234,51 @@ export function extractWinnerScores(stage10: string, smp: string): WinnerScore[]
   }
   return out;
 }
+
+export interface ImpossibilityAnalysis {
+  heading: string;
+  foundation: string;
+  rivals: string[];
+  proof: string;
+}
+
+/**
+ * One candidate's Left-of-Centre analysis, read whole.
+ *
+ * Section 08 previously condensed the raw stage output, which cut the rival
+ * list after its first bullet (Tesla) and deleted Porsche, Mercedes, BMW,
+ * Lucid/Rivian and Bentley outright. The block is now read structurally so the
+ * "cannot run this" argument always renders complete.
+ */
+export function extractImpossibilityAnalysis(
+  stage9: string,
+  preferred = "",
+): ImpossibilityAnalysis | null {
+  const blocks = mdBlocks(stage9);
+  if (!blocks.length) return null;
+  const key = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+  const want = key(preferred);
+  const block =
+    (want && blocks.find((b) => key(b.heading).includes(want) || want.includes(key(b.heading)))) ||
+    blocks[0];
+
+  const body = block.body;
+  const label = (re: RegExp) => {
+    const i = body.search(re);
+    if (i < 0) return "";
+    const rest = body.slice(i).replace(re, "");
+    return rest.split(/\n\s*\n(?=\**[A-Z])/)[0].trim();
+  };
+
+  const foundation = label(/\*\*The Foundation\.\*\*\s*/i).replace(/\s+/g, " ").trim();
+  const analysis = label(/\*\*Strategic-Impossibility Analysis\.\*\*\s*/i);
+  const rivals = analysis
+    .split("\n")
+    .map((l) => l.trim())
+    .filter((l) => /^[-*•]\s/.test(l))
+    .map((l) => l.replace(/^[-*•]\s*/, "").trim())
+    .filter(Boolean);
+  const proof = (body.match(/^>\s*(.+)$/m)?.[1] ?? "").trim();
+
+  return { heading: block.heading, foundation, rivals, proof };
+}
