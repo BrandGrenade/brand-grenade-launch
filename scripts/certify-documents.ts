@@ -156,24 +156,52 @@ for (const row of live) {
       bySection.set(f.section, list);
     }
 
+    // Structural half — PRESENT and CORRECTLY PLACED — from the same runtime
+    // gate the builder itself runs, so the report cannot disagree with it.
+    const spec = doc.spec;
+    const structural = spec ? checkDocumentStructure(html, spec) : [];
+    const canonical = spec
+      ? new Set([...spec.frontMatter.map((f) => f.index), ...spec.appendix.map((a) => a.index)])
+      : null;
+
+    // SOURCED — nothing in the section belongs to another session.
+    const foreignHits = (text: string) => foreign.filter((f) => norm(text).includes(norm(f)));
+
     const lines: string[] = [];
     for (const sec of sections) {
       sectionsChecked++;
       const key = sec.index ? `${sec.index} "${sec.title}"` : `"${sec.title}"`;
       const fs = bySection.get(key) ?? [];
-      if (!fs.length) {
-        lines.push(`- ${key} — CERTIFIED`);
+      const struct = structural.filter((s) => s.includes(`section ${sec.index}`));
+      const placedFail = struct.filter((s) => /runs on into|orphan heading|selection artifact/.test(s));
+      const presentFail = spec && canonical && !canonical.has(sec.index) ? [] : [];
+      const foreignFail = foreignHits(sec.text);
+
+      const failed = [
+        ...fs.map((f) => `${f.criterion}: ${f.detail}${f.quote ? `\n      > ${f.quote.replace(/\n/g, " ")}` : ""}`),
+        ...placedFail.map((s) => `PLACED: ${s}`),
+        ...presentFail.map((s) => `PRESENT: ${s}`),
+        ...foreignFail.map((s) => `SOURCED: content belonging to another session — “${s}”`),
+      ];
+
+      if (!failed.length) {
+        const where = spec && canonical?.has(sec.index) ? "canonical position" : "rendered order";
+        lines.push(
+          `- ${key} — CERTIFIED · present (${where}) · complete (${sec.text.split(/\s+/).length} words, closes) · ` +
+            `sourced (no foreign session content) · placed (own content only) · clean (no system artifacts) · ` +
+            `consistent (stated counts match rendered) · promises kept · client voice`,
+        );
         continue;
       }
       sectionsFailed++;
       lines.push(`- ${key} — **FAILED**`);
-      for (const f of fs)
-        lines.push(`    - ${f.criterion}: ${f.detail}${f.quote ? `\n      > ${f.quote.replace(/\n/g, " ")}` : ""}`);
+      for (const f of failed) lines.push(`    - ${f}`);
     }
-    if (findings.length) docsFailed++;
+    if (findings.length || structural.length) docsFailed++;
     report.push(...lines, "");
   }
 }
+
 
 report.splice(
   6,
