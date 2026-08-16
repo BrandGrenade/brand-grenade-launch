@@ -29,8 +29,11 @@ import { mkdirSync, writeFileSync } from "fs";
 import { buildBoardStrategyDocument } from "../src/lib/board-strategy-document";
 import { buildConsultingDeliveryDocument } from "../src/lib/consulting-delivery-document";
 import { buildMasterDetonationDocument } from "../src/lib/master-detonation-document";
+import { buildSummaryDocument } from "../src/lib/summary-document";
+import { summaryExtras } from "./summary-extras";
 import { DOCUMENT_SPECS, type DocumentSpec } from "../src/lib/document-spec";
 import { parseScoredCandidates, selectedAliases } from "../src/lib/minto-content";
+
 
 const sb = createClient(process.env.VITE_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
 const OUT = "/tmp/docgate";
