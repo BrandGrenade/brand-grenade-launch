@@ -214,7 +214,8 @@ function statedCounts(text: string): StatedCount[] {
  * against the rendered item count — not one hardcoded sentence pattern.
  */
 const PRESENTING =
-  "the following|below are|listed below are|shown below are|set out below are|these|shown here are|listed here are|we (?:generated|wrote|shortlisted|considered|carried forward)|there (?:are|were)";
+  "the following|below are|listed below are|shown below are|set out below are|shown here are|listed here are|listed below|shown below|set out below|are as follows";
+
 
 export function promisedCounts(text: string): StatedCount[] {
   const re = new RegExp(
