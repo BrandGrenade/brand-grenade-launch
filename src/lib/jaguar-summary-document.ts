@@ -168,8 +168,12 @@ function nearestAntecedent(
   stage10: string,
 ): string | null {
   if (!locked || !field.length) return null;
-  const rationale = stage10.slice(stage10.search(/RE-?SCORE/i) + 1).toLowerCase();
-  if (process.env.JAG_DEBUG) console.error("HELPER", { locked, n: field.length, len: stage10.length, rlen: rationale.length });
+  // The re-score block runs from the first mention of the locked proposition
+  // to the end of the stage output; the earlier candidate list is excluded so
+  // a candidate cannot match itself.
+  const at = stage10.indexOf(locked);
+  if (at < 0) return null;
+  const rationale = stage10.slice(at + locked.length).toLowerCase();
   if (!rationale.trim()) return null;
   const words = (s: string) =>
     [...new Set(s.toLowerCase().match(/[a-z]{5,}/g) ?? [])].filter(
@@ -392,7 +396,6 @@ export function buildJaguarSummaryDocument(
       return !!a && !!b && (a.includes(b) || b.includes(a));
     });
   const antecedent = lockedInField ? null : nearestAntecedent(lockedSmp, field, str(session, "stage_10_output"));
-  if (process.env.JAG_DEBUG) console.error("DEBUG", { lockedSmp, lockedInField, antecedent });
   const generationHtml = `${list([
     ...field.slice(0, 10).map((f) => `**${f.proposition}** — ${f.origin}`),
     lockedInField || !lockedSmp
