@@ -273,7 +273,10 @@ export function buildJaguarSummaryDocument(
       value: extras.intelligenceReportPresent ? "Yes" : "In-pipeline",
       label: "external intelligence run",
     },
-    { value: verification.tests.length, label: "fact-verification tests" },
+    {
+      value: verification.tests.length || (str(session, "stage_13b_output") ? "Complete" : 0),
+      label: "fact-verification pass",
+    },
   ])}${band("Creative", [
     { value: extras.lensesSwept || 37, label: "creative lenses swept" },
     { value: extras.directionsGenerated, label: "directions generated" },

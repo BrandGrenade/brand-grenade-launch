@@ -30,10 +30,19 @@ const rated = all.filter((d: any) => d.rating_status === "rated");
 const lockedLine = (s as any).locked_campaign_line?.trim();
 const lockedLens = (s as any).locked_big_idea_lens?.trim();
 
-// The lens sweep is counted on the run that produced the locked idea, not
-// across every run in the session (later runs re-use lenses).
-const winnerRun = all.find((d: any) => d.campaign_line?.trim() === (s as any).locked_campaign_line?.trim())?.run_id;
-const sweepRun = winnerRun ? all.filter((d: any) => d.run_id === winnerRun) : all;
+// The lens sweep is counted on the run that produced the locked idea — the
+// pre-channel big-idea run, which is the largest run carrying that line.
+const lockedLineRuns = new Map<string, number>();
+for (const d of all as any[]) {
+  if (d.campaign_line?.trim() !== (s as any).locked_campaign_line?.trim()) continue;
+  lockedLineRuns.set(d.run_id, (lockedLineRuns.get(d.run_id) ?? 0) + 1);
+}
+const runSizes = new Map<string, number>();
+for (const d of all as any[]) runSizes.set(d.run_id, (runSizes.get(d.run_id) ?? 0) + 1);
+const winnerRun = [...(lockedLineRuns.size ? lockedLineRuns.keys() : runSizes.keys())].sort(
+  (a, b) => (runSizes.get(b) ?? 0) - (runSizes.get(a) ?? 0),
+)[0];
+const sweepRun = winnerRun ? (all as any[]).filter((d) => d.run_id === winnerRun) : (all as any[]);
 
 const rating = (d: any, k: string, f = "rating") => d.ratings?.[k]?.[f] ?? null;
 const shortlist = rated.map((d: any) => ({
