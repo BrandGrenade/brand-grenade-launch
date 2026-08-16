@@ -125,7 +125,7 @@ export interface DetonationCandidate {
 /** The three Detonation candidates written at Stage 18. */
 export function extractDetonationCandidates(stage18: string): DetonationCandidate[] {
   const text = normaliseMd(stage18);
-  const marks = [...text.matchAll(/^\s*#{0,4}\s*DETONATION (?:CANDIDATE\\s+)?(ONE|TWO|THREE)\b.*$/gim)];
+  const marks = [...text.matchAll(/^\s*#{0,4}\s*DETONATION (?:CANDIDATE\s+)?(ONE|TWO|THREE)\b.*$/gim)];
   const out: DetonationCandidate[] = [];
   const byOrdinal = new Map<string, DetonationCandidate>();
   marks.forEach((m, i) => {
@@ -382,7 +382,7 @@ export function extractSelectedDetonation(
 ): SelectedDetonation | null {
   if (!stage18?.trim()) return null;
   const text = normaliseMd(stage18);
-  const marks = [...text.matchAll(/^\s*#{0,4}\s*DETONATION (?:CANDIDATE\\s+)?(ONE|TWO|THREE)\b.*$/gim)];
+  const marks = [...text.matchAll(/^\s*#{0,4}\s*DETONATION (?:CANDIDATE\s+)?(ONE|TWO|THREE)\b.*$/gim)];
   if (!marks.length) return null;
 
   const blocks = marks.map((m, i) => ({
