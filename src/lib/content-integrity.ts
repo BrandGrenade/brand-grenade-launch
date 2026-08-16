@@ -53,6 +53,22 @@ export function looksCut(text: string, listItem = false): boolean {
   return /[a-z,]$/.test(text);
 }
 
+/**
+ * Any raw model value a builder lifts out of a stage output and drops straight
+ * into markup (a channel role, a label, a one-line quote) must be reduced to
+ * plain text first — otherwise markdown emphasis arrives on the page as
+ * literal asterisks.
+ */
+export function inlinePlainText(value: string): string {
+  return value
+    .replace(/\*\*([^*]+)\*\*/g, "$1")
+    .replace(/\*\*/g, "")
+    .replace(/(^|[\s(])[*_]([^*_\n]+)[*_](?=[\s).,;:!?]|$)/g, "$1$2")
+    .replace(/^#{1,6}\s+/, "")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
 /* ── the artifact vocabulary ─────────────────────────────────────────── */
 
 /**

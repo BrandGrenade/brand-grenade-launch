@@ -9,7 +9,7 @@ import { parseStage20Output, parseBriefQualityScore, type BriefQualityScore } fr
 import { buildMasterDetonationDocument } from "./master-detonation-document";
 import type { MintoSession } from "./minto-content";
 import { stripDocumentMetadata } from "./strip-document-metadata";
-import { certifyDocument } from "./content-integrity";
+import { certifyDocument, inlinePlainText } from "./content-integrity";
 
 export type Phase2DocType =
   | "detonation_territory"
@@ -318,7 +318,7 @@ function scoreCardHtml(score: BriefQualityScore): string {
 function channelBriefBody(brand: string, channel: string, body: string): string {
   const sanitised = sanitise(body);
   const roleMatch = sanitised.match(/CHANNEL\s+ROLE\s*[:\-]?\s*([^\n]+)/i);
-  const role = roleMatch ? roleMatch[1].trim() : "";
+  const role = roleMatch ? inlinePlainText(roleMatch[1]) : "";
   return cover("CHANNEL BRIEF", `${channel} — Detonation Brief`, brand) +
     `<div class="single-page">
       <h2>${escapeHtml(channel)} — Detonation Brief</h2>
@@ -515,7 +515,7 @@ export function buildAllPhase2(session: Phase2Session): string {
   for (const ch of channelKeys) {
     const body = sanitise(session.stage_21_outputs?.[ch] ?? "");
     const roleMatch = body.match(/CHANNEL\s+ROLE\s*[:\-]?\s*([^\n]+)/i);
-    const role = roleMatch ? roleMatch[1].trim() : "";
+    const role = roleMatch ? inlinePlainText(roleMatch[1]) : "";
     sections.push(`<div class="doc-break"></div><h2>${escapeHtml(ch)} — Detonation Brief</h2>${role ? `<p style="color:#8B8680;font-style:italic;margin-bottom:14pt">${escapeHtml(role)}</p>` : ""}<div class="section">${md(body)}</div>`);
   }
   sections.push(`<div class="doc-break"></div><div class="section"><h2>Conceptual Assets</h2>${md(sanitise(session.stage_22_distinctive_assets ?? ""))}</div>`);
