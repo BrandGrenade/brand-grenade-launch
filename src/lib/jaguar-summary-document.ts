@@ -26,7 +26,7 @@ import {
 } from "./doc-system";
 import { condenseStage } from "./minto-content";
 import { stripDocumentMetadata } from "./strip-document-metadata";
-import { sealSectionBoundaries, stripSelectionArtifacts } from "./document-gate";
+import { stripSelectionArtifacts } from "./document-gate";
 import {
   extractBrandArchitecture,
   extractChannelRole,
@@ -199,7 +199,70 @@ function stageBlock(session: ExecSessionRow, key: string, units: number, chars: 
     .split("\n\n")
     .map((block) => (block.startsWith("### ") ? block : clampText(block, Math.round(chars * 0.6))))
     .join("\n\n");
-  return renderMarkdown(clampText(condensed, chars));
+  return dropDanglingLabel(renderMarkdown(clampText(condensed, chars)));
+}
+
+/**
+ * A clamp can land immediately after a label line ("A Reveal Everyone Is
+ * Already Watching — Validated") and cut the body it introduced. A trailing
+ * label with nothing beneath it is not content, so it is removed rather than
+ * left on the page as a fragment.
+ */
+function dropDanglingLabel(html: string): string {
+  let out = html.replace(/(?:\s*<h[1-6][^>]*>[\s\S]*?<\/h[1-6]>)+\s*$/, "");
+  const trailing = out.match(/<p>((?:(?!<\/p>)[\s\S])*)<\/p>\s*$/);
+  if (trailing) {
+    const text = strip(trailing[1]);
+    if (text.length < 130 && !/[.!?:]$/.test(text)) out = out.slice(0, trailing.index).trimEnd();
+  }
+  return out.trim();
+}
+
+/**
+ * A stage that writes the same analysis block once per candidate can put two
+ * phrasings of one argument on the page. The second and later repeats of a
+ * named analysis heading — and everything under them — are dropped.
+ */
+function dedupeRepeatedAnalysis(html: string): string {
+  const marker = /strategic[\s-]?impossibility/i;
+  const heads = [...html.matchAll(/<(h[1-6])[^>]*>([\s\S]*?)<\/\1>|<p>((?:(?!<\/p>)[\s\S])*)<\/p>/g)];
+  const seen = heads.filter((m) => marker.test(strip(m[2] ?? m[3] ?? "")));
+  if (seen.length < 2) return html;
+  return dropDanglingLabel(html.slice(0, seen[1].index));
+}
+
+
+
+const strip = (h: string) =>
+  h
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&#39;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/\s+/g, " ")
+    .trim();
+
+const normTitle = (s: string) => s.toLowerCase().replace(/[^a-z0-9 ]/g, " ").replace(/\s+/g, " ").trim();
+
+/**
+ * Whole sentences only, up to `count` sentences and a soft character budget.
+ * A rationale is never cut mid-sentence: if the first sentence alone exceeds
+ * the budget it is still rendered complete, because a scoring rationale that
+ * stops at "…Rivian on adventure and…" is worse than a long one.
+ */
+function wholeSentences(text: string, count: number, budget: number): string {
+  const parts = text
+    .replace(/\s+/g, " ")
+    .trim()
+    .split(/(?<=[.!?])\s+/)
+    .filter(Boolean)
+    .slice(0, count);
+  const out: string[] = [];
+  for (const s of parts) {
+    if (out.length && out.join(" ").length + s.length > budget) break;
+    out.push(s);
+  }
+  return (out.length ? out : parts.slice(0, 1)).join(" ").trim();
 }
 
 
@@ -216,18 +279,48 @@ interface SectionDef {
   body: string;
 }
 
-const BREAK_BEFORE = new Set(["01", "04", "09", "16", "19"]);
+const BREAK_BEFORE = new Set(["01", "04", "16", "19"]);
+
+/**
+ * Generic section seal, applied to every section body BEFORE assembly.
+ *
+ * A section may contain only its own designated content: if a heading inside
+ * the body names a different canonical section of this document, everything
+ * from that heading onward belongs to that section and is cut. Trailing
+ * headings with no body beneath them are dropped. Because this runs on the
+ * body — not on the finished document string — nothing downstream of the last
+ * section (the footer, the closing markup) can ever be moved or truncated.
+ */
+function sealBody(bodyHtml: string, ownTitle: string, otherTitles: Set<string>): string {
+  let out = stripSelectionArtifacts(bodyHtml);
+  const own = normTitle(ownTitle);
+  const re = /<h[1-6][^>]*>([\s\S]*?)<\/h[1-6]>/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(out))) {
+    const t = normTitle(strip(m[1]));
+    if (!t || t === own) continue;
+    if (otherTitles.has(t)) {
+      out = out.slice(0, m.index);
+      break;
+    }
+  }
+  return dropDanglingLabel(out).trim();
+}
 
 function renderSections(defs: SectionDef[]): string {
+  const titles = new Set(defs.map((d) => normTitle(d.title)));
   return defs
-    .map((d, i) =>
-      section(
+    .map((d) => {
+      const others = new Set([...titles].filter((t) => t !== normTitle(d.title)));
+      const sealed = sealBody(d.body, d.title, others);
+      return section(
         { kicker: d.kicker, index: d.index, title: d.title, breakBefore: BREAK_BEFORE.has(d.index) },
-        `<p class="lede">${escapeHtml(d.lede)}</p>${d.body || nothing("No stored output for this stage.")}`,
-      ),
-    )
+        `<p class="lede">${escapeHtml(d.lede)}</p>${sealed || nothing("No stored output for this stage.")}`,
+      );
+    })
     .join("\n");
 }
+
 
 function tableOfContents(defs: SectionDef[]): string {
   return `<div class="toc keep-together">
@@ -417,13 +510,20 @@ export function buildJaguarSummaryDocument(
   }`;
 
 
-  /* 08 — Distinctiveness testing */
-  const distinctHtml = `${stageBlock(session, "stage_9_leftofcentre_output", 8, 1200)}${stageBlock(
-    session,
-    "stage_9_output",
-    8,
-    1200,
-  )}`;
+  /* 08 — Distinctiveness testing.
+     The Left-of-Centre stage writes one Strategic-Impossibility Analysis per
+     candidate. Condensing the stage put two of them on the page — the same
+     competitive-impossibility argument about Tesla in two different phrasings,
+     which reads as a leftover draft. Only the first analysis is rendered. */
+  const distinctHtml = dedupeRepeatedAnalysis(
+    `${stageBlock(session, "stage_9_leftofcentre_output", 8, 1200)}${stageBlock(
+      session,
+      "stage_9_output",
+      8,
+      1200,
+    )}`,
+  );
+
 
 
   /* 09 — Scoring */
@@ -433,9 +533,10 @@ export function buildJaguarSummaryDocument(
     ? winnerScores.map((r) => ({
         dimension: r.dimension,
         score: r.score,
-        note: safeClamp(sentences(r.rationale, 3), 460),
+        note: wholeSentences(r.rationale, 3, 900),
       }))
     : scoring.rows;
+
   const scoringHtml = scoreRows.length
     ? `${comparisonTable(
         [
@@ -800,19 +901,23 @@ export function buildJaguarSummaryDocument(
     },
   ];
 
-  const body = `${cover({
-    brand: "BRAND GRENADE",
-    label: "Brand Strategy and Creative Intelligence Summary",
-    title: `${brand} — Brand Strategy and Creative Intelligence Summary`,
-    subtitle: category || undefined,
-    confidential: true,
-  })}
-${tableOfContents(defs)}
-${renderSections(defs)}`;
+  // Assembly order is literal and final: cover, contents, every sealed section
+  // in order, then the shell — which writes the footer after the body, always
+  // last. Nothing is inserted at a fixed position and no pass rewrites the
+  // finished string, so no content can appear after the closing footer line.
+  const body = [
+    cover({
+      brand: "BRAND GRENADE",
+      label: "Brand Strategy and Creative Intelligence Summary",
+      title: `${brand} — Brand Strategy and Creative Intelligence Summary`,
+      subtitle: category || undefined,
+      confidential: true,
+    }),
+    tableOfContents(defs),
+    renderSections(defs),
+  ].join("\n");
 
-  return sealSectionBoundaries(
-    stripSelectionArtifacts(
-      docShell(
+  return docShell(
     {
       title: `Brand Strategy and Creative Intelligence Summary — ${brand}`,
       toolbarNote: `${brand} — Brand Strategy and Creative Intelligence Summary`,
@@ -820,9 +925,7 @@ ${renderSections(defs)}`;
       footerHtml:
         "Brand Grenade Strategy Intelligence System — Confidential. Assembled from stored session data only; the locked creative idea is reproduced verbatim.",
     },
-        body,
-      ),
-    ),
-    { frontMatter: [], appendix: [] } as never,
+    body,
   );
 }
+

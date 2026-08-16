@@ -233,6 +233,8 @@ blockquote { border-left: 3pt solid var(--detonation); padding: 10pt 14pt; margi
 .pull.hero .pull-body { font-size: 30pt; max-width: 480pt; margin: 0 auto; }
 .pull.quiet { background: transparent; border-left: 3pt solid var(--rule); padding: 14pt 18pt; }
 .pull.quiet .pull-body { font-family: 'Inter', sans-serif; font-size: 12.5pt; font-weight: 600; line-height: 1.5; }
+.pull .pull-body.prose, .pull.hero .pull-body.prose { font-family: 'Inter', sans-serif; font-size: 13pt; font-weight: 500; line-height: 1.55; letter-spacing: 0; text-align: left; max-width: 100%; word-spacing: normal; }
+
 .proposition { text-align: center; padding: 36pt 20pt; border-top: 2pt solid var(--detonation); border-bottom: 2pt solid var(--detonation); margin: 0 0 32pt; }
 .proposition .label { font-size: 9pt; font-weight: 600; letter-spacing: 0.18em; color: var(--detonation); text-transform: uppercase; margin-bottom: 14pt; }
 .proposition .stmt { font-family: 'Bebas Neue', Impact, sans-serif; font-size: 30pt; line-height: 1.06; letter-spacing: 0.01em; color: var(--ash); font-weight: 400; max-width: 480pt; margin: 0 auto; }
@@ -320,12 +322,17 @@ export function pullQuote(body: string, opts: PullQuoteOptions = {}): string {
   const text = sanitiseText(body).trim();
   if (!text) return "";
   const variant = opts.variant && opts.variant !== "default" ? ` ${opts.variant}` : "";
+  // Bebas Neue is a condensed display face: at 30pt a short line reads as a
+  // statement, but a full sentence of prose reads as words running together.
+  // Anything longer than a headline is set in the body face instead.
+  const proseClass = text.length > 150 ? " prose" : "";
   return `<div class="pull${variant} keep-together">
     ${opts.label ? `<div class="pull-label">${escapeHtml(opts.label)}</div>` : ""}
-    <div class="pull-body">${escapeHtml(text)}</div>
+    <div class="pull-body${proseClass}">${escapeHtml(text)}</div>
     ${opts.attribution ? `<div class="pull-attr">${escapeHtml(opts.attribution)}</div>` : ""}
   </div>`;
 }
+
 
 export interface CmpColumn {
   key: string;
@@ -380,13 +387,16 @@ export function reasonGrid(reasons: Reason[]): string {
   if (items.length === 0) return "";
   return `<div class="reasons">${items
     .map(
-      (r, i) => `<div class="reason keep-together">
+      // A long card kept together can push the whole grid onto the next page
+      // and strand half a page of white space, so only short cards are pinned.
+      (r, i) => `<div class="reason ${(r.detail ?? "").length > 420 ? "allow-break" : "keep-together"}">
       <div class="n">${String(i + 1).padStart(2, "0")}</div>
       <div class="t">${inlineMd(sanitiseText(r.title))}</div>
       ${r.detail ? `<div class="d">${inlineMd(sanitiseText(r.detail))}</div>` : ""}
     </div>`,
     )
     .join("")}</div>`;
+
 }
 
 /** Bordered supporting block — rejected-and-why, caveats, short notes. */
