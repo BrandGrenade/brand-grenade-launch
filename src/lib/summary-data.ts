@@ -2,6 +2,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { SummaryCreativeExtras } from "./summary-document";
 import { extractChannelRole } from "./summary-sources";
 
+/** Kept only so older imports resolve; no code path branches on it any more. */
 export const JAGUAR_REBUILD_SESSION_ID = "6ab4ea96-7c3a-4e0a-91a9-24b601752b35";
 
 type DirectionRow = {
