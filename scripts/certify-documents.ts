@@ -26,7 +26,9 @@ import { summaryExtras } from "./summary-extras";
 import { contentIntegrityFindings, splitSections, type IntegrityOptions } from "../src/lib/content-integrity";
 import { DOCUMENT_SPECS, type DocumentSpec } from "../src/lib/document-spec";
 import { checkDocumentStructure } from "../src/lib/document-gate";
+import { SUMMARY_SCHEMA } from "../src/lib/summary-gate";
 import { parseScoredCandidates } from "../src/lib/minto-content";
+
 
 const norm = (s: string) =>
   s.toLowerCase().replace(/[^a-z0-9 ]/g, " ").replace(/\s+/g, " ").trim();
@@ -148,8 +150,10 @@ for (const row of live) {
             run: () => buildSummaryDocument(row as never, extras),
             opts: {
               narrativeSections: Array.from({ length: 20 }, (_, i) => String(i + 1).padStart(2, "0")),
+              schemaSections: SUMMARY_SCHEMA,
             },
           },
+
         ]
       : []),
     ...jobs.map((j) => ({ label: j.label, run: () => j.build(row, {}), opts: j.opts, spec: j.spec })),
@@ -189,37 +193,74 @@ for (const row of live) {
     const foreignHits = (text: string) => foreign.filter((f) => norm(text).includes(norm(f)));
 
     const lines: string[] = [];
+    const renderedIdx = new Set(sections.map((s) => s.index));
+
+    // PRESENT is a document-level check as well: a canonical section that the
+    // builder never rendered has no section row to fail, so it is reported here.
+    const missing = canonical
+      ? [...canonical].filter((i) => !renderedIdx.has(i))
+      : [];
+    for (const i of missing) {
+      sectionsFailed++;
+      lines.push(`- section ${i} — **FAILED**`, `    - PRESENT: canonical section ${i} was not rendered`);
+    }
+
     for (const sec of sections) {
       sectionsChecked++;
       const key = sec.index ? `${sec.index} "${sec.title}"` : `"${sec.title}"`;
       const fs = bySection.get(key) ?? [];
       const struct = structural.filter((s) => s.includes(`section ${sec.index}`));
       const placedFail = struct.filter((s) => /runs on into|orphan heading|selection artifact/.test(s));
-      const presentFail = spec && canonical && !canonical.has(sec.index) ? [] : [];
+      // PRESENT — the section exists, is canonical when a spec exists, and has
+      // a body. Evaluated, never assumed.
+      const presentFail: string[] = [];
+      if (canonical && sec.index && !canonical.has(sec.index) && !/^contents$/i.test(sec.title))
+        presentFail.push(`section ${sec.index} "${sec.title}" is not part of the canonical structure`);
+      if (!sec.text.trim()) presentFail.push(`section ${sec.index} renders with no body`);
       const foreignFail = foreignHits(sec.text);
 
-      const failed = [
-        ...fs.map((f) => `${f.criterion}: ${f.detail}${f.quote ? `\n      > ${f.quote.replace(/\n/g, " ")}` : ""}`),
-        ...placedFail.map((s) => `PLACED: ${s}`),
-        ...presentFail.map((s) => `PRESENT: ${s}`),
-        ...foreignFail.map((s) => `SOURCED: content belonging to another session — “${s}”`),
+      const byCriterion = new Map<string, string[]>();
+      const add = (c: string, msg: string) => byCriterion.set(c, [...(byCriterion.get(c) ?? []), msg]);
+      for (const f of fs) add(f.criterion, `${f.detail}${f.quote ? ` — “${f.quote.replace(/\n/g, " ")}”` : ""}`);
+      for (const s of placedFail) add("PLACED", s);
+      for (const s of presentFail) add("PRESENT", s);
+      for (const s of foreignFail) add("SOURCED", `content belonging to another session — “${s}”`);
+
+      // Every criterion reports the check that actually ran. Nothing defaults
+      // to a pass, and a criterion with no applicable check says so.
+      const words = sec.text.split(/\s+/).filter(Boolean).length;
+      const results: Array<[string, string]> = [
+        ["PRESENT", `rendered${canonical ? (canonical.has(sec.index) ? " at its canonical index" : "") : ""}, ${words} words`],
+        ["COMPLETE", `no empty body, orphan heading, cut sentence or trailing ellipsis`],
+        ["SOURCED", foreign.length ? `no match against ${foreign.length} foreign-session markers` : "not checked — no other sessions to compare against"],
+        ["PLACED", spec ? "structural gate: no bleed, orphan or selection artifact; no foreign heading" : "no canonical spec — heading-overlap check only"],
+        ["CLEAN", "no metadata label, UUID, timestamp, unrendered markdown or telemetry"],
+        ["CONSISTENT", doc.opts?.narrativeSections?.length === 0 ? "not checked — stage transcript" : "stated counts reconcile across narrative sections"],
+        ["PROMISED", `numeric claims reconciled against ${(sec.html.match(/<li\b|<h[34]\b|<tr\b|<blockquote\b/gi) ?? []).length} rendered items`],
+        ["VOICE", "no first-person system commentary outside quoted verbatim"],
+        ["DUPLICATE", "no paragraph, list item, heading or table cell repeated"],
+        ["SCHEMA", doc.opts?.schemaSections?.[sec.index] ? "all declared fields present with real values" : "not checked — no field schema declared"],
+        ["DISPOSITION", "eliminated items reconciled against the disposition section"],
+        ["CHECKPOINT", "checkpoint count reconciled against verdict language"],
       ];
 
-      if (!failed.length) {
-        const where = spec && canonical?.has(sec.index) ? "canonical position" : "rendered order";
-        lines.push(
-          `- ${key} — CERTIFIED · present (${where}) · complete (${sec.text.split(/\s+/).length} words, closes) · ` +
-            `sourced (no foreign session content) · placed (own content only) · clean (no system artifacts) · ` +
-            `consistent (stated counts match rendered) · promises kept · client voice`,
-        );
+      const anyFail = byCriterion.size > 0;
+      if (!anyFail) {
+        lines.push(`- ${key} — CERTIFIED`);
+        for (const [c, how] of results) lines.push(`    - ${c}: pass — ${how}`);
         continue;
       }
       sectionsFailed++;
       lines.push(`- ${key} — **FAILED**`);
-      for (const f of failed) lines.push(`    - ${f}`);
+      for (const [c, how] of results) {
+        const fails = byCriterion.get(c);
+        if (fails) for (const f of fails) lines.push(`    - ${c}: **fail** — ${f}`);
+        else lines.push(`    - ${c}: pass — ${how}`);
+      }
     }
-    if (findings.length || structural.length) docsFailed++;
+    if (findings.length || structural.length || missing.length) docsFailed++;
     report.push(...lines, "");
+
   }
 }
 
