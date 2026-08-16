@@ -194,3 +194,32 @@ export function sentences(text: string, count: number): string {
     .join(" ")
     .trim();
 }
+
+export interface WinnerScore {
+  dimension: string;
+  score: string;
+  rationale: string;
+}
+
+/**
+ * The six-dimension score block written against the selected proposition.
+ * Read from the last block that names it, which is the independent re-score.
+ */
+export function extractWinnerScores(stage10: string, smp: string): WinnerScore[] {
+  const text = normaliseMd(stage10);
+  const needle = smp.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/\s+/g, "\\s+");
+  const marks = [...text.matchAll(new RegExp(`SMP:\\s*["“]?${needle}["”]?`, "gi"))];
+  if (!marks.length) return [];
+  const start = marks[marks.length - 1].index!;
+  const endRel = text.slice(start).search(/\n\s*(?:CODE VERDICT|====|##\s)/);
+  const block = text.slice(start, endRel > 0 ? start + endRel : text.length);
+
+  const out: WinnerScore[] = [];
+  const re = /^\s*\**([A-Z][A-Za-z /-]{3,40})\**\s*:\**\s*(\d{1,2})\s*\/\s*10\s*[—–-]\s*([\s\S]*?)(?=\n\s*\**[A-Z][A-Za-z /-]{3,40}\**\s*:\**\s*\d{1,2}\s*\/\s*10|$)/gm;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(block))) {
+    const rationale = stripAuditMarkers(m[3].replace(/\s+/g, " ").trim());
+    out.push({ dimension: m[1].trim(), score: `${m[2]}/10`, rationale });
+  }
+  return out;
+}
