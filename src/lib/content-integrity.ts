@@ -612,7 +612,8 @@ function placementFindings(sections: IntegritySection[]): IntegrityFinding[] {
       const htok = tokens(heading);
       if (!htok.size) continue;
       for (const t of titles) {
-        if (t.index === sec.index || !t.tok.size) continue;
+        // A one-word kicker ("Insight") is too coarse to attribute a heading.
+        if (t.index === sec.index || t.tok.size < 2) continue;
         const overlapOther = [...t.tok].filter((w) => htok.has(w)).length / t.tok.size;
         const overlapOwn = [...own].filter((w) => htok.has(w)).length / Math.max(1, own.size);
         if (overlapOther >= 0.75 && overlapOther > overlapOwn) {
@@ -763,7 +764,7 @@ export function closeIncompleteTail(bodyHtml: string): string {
  * Quoted verbatim speech is left untouched.
  */
 export function removeSystemVoice(html: string): string {
-  return html.replace(/<(p|li|blockquote)\b([^>]*)>([\s\S]*?)<\/\1>/gi, (whole, tag, attrs, inner) => {
+  return html.replace(/<(p|li|blockquote|td|th)\b([^>]*)>([\s\S]*?)<\/\1>/gi, (whole, tag, attrs, inner) => {
     const text = strip(inner);
     if (!VOICE_PATTERNS.some((re) => re.test(text))) return whole;
     // Only operate on plain prose blocks; anything with nested markup is left
