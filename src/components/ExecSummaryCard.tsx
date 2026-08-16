@@ -4,18 +4,11 @@
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  openExecSummaryDocument,
-  type ExecSummarySession,
-} from "@/lib/exec-summary-document";
-import { fetchExecSummaryIntel } from "@/lib/exec-summary-intel";
+import type { ExecSummarySession } from "@/lib/exec-summary-sections";
 import { Spinner } from "@/components/ui/busy";
 import { resolveLiveDocumentSession } from "@/lib/document-live-source";
-import { buildJaguarSummaryDocument } from "@/lib/jaguar-summary-document";
-import {
-  fetchJaguarSummaryExtras,
-  JAGUAR_REBUILD_SESSION_ID,
-} from "@/lib/jaguar-summary-data";
+import { buildSummaryDocument } from "@/lib/summary-document";
+import { fetchSummaryExtras } from "@/lib/summary-data";
 
 /** Columns the summary needs that the Deliverables page does not already load. */
 const EXTRA_COLUMNS =
