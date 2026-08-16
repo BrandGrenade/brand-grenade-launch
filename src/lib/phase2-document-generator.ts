@@ -478,6 +478,7 @@ export function buildPhase2Document(
 
 // ── Combined "All Brand Detonation" document ─────────────────────────────
 export function buildAllPhase2(session: Phase2Session): string {
+  // Certified at the end of this function, on the assembled document.
   const brand = session.brand_name ?? "Untitled Brand";
   const channelKeys = session.stage_21_outputs ? Object.keys(session.stage_21_outputs) : [];
 

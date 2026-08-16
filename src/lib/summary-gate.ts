@@ -53,7 +53,7 @@ const ARTIFACTS: Array<[RegExp, string]> = [
  * Truncation detection lives in the shared content-integrity layer so this
  * gate and the platform-wide certification agree on what "cut" means.
  */
-import { looksCut } from "./content-integrity";
+import { certifyDocument, looksCut } from "./content-integrity";
 export { looksCut };
 
 function truncationFaults(text: string, listItem: boolean): string[] {
@@ -181,5 +181,9 @@ export function gateSummary(
     throw new Error(
       `Brand Strategy and Creative Intelligence Summary failed its gate:\n- ${fail.join("\n- ")}`,
     );
-  return fullHtml;
+  // Shared platform certification: clean, complete, consistent, client voice.
+  // Sections 21+ are stage transcripts; the narrative sections are 01–20.
+  return certifyDocument(fullHtml, "Brand Strategy and Creative Intelligence Summary", {
+    narrativeSections: sections.filter((s) => Number(s.index) <= 20).map((s) => s.index),
+  });
 }
