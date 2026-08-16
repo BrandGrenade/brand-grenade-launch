@@ -63,6 +63,12 @@ import {
 
 /* ─────────────────────────────────────────────────────────── inputs ── */
 
+export type ExecSummarySession = {
+  brand_name?: string | null;
+  category?: string | null;
+  selected_smp?: string | null;
+} & ExecSessionRow;
+
 export interface SummaryShortlistItem {
   lens: string;
   line: string;
