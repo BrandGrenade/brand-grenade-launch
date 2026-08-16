@@ -210,6 +210,17 @@ export function splitSections(html: string): IntegritySection[] {
   });
 }
 
+/**
+ * Numbered navigation and stat cards ("07 Proposition generation",
+ * "37 directions generated") are labels, not claims about how many of a thing
+ * exist, so they are removed before counts are compared.
+ */
+function withoutNavigation(html: string): string {
+  return html
+    .replace(/<(div|ol|ul|nav)[^>]*class="[^"]*(?:toc|stat|headline|nav)[^"]*"[\s\S]*?<\/\1>/gi, " ")
+    .replace(/<table[\s\S]*?<\/table>/gi, " ");
+}
+
 /* ── the certification ───────────────────────────────────────────────── */
 
 export interface IntegrityFinding {
@@ -348,7 +359,7 @@ export function contentIntegrityFindings(
   );
   const byNoun = new Map<string, StatedCount & { section: string }>();
   for (const sec of live) {
-    for (const c of statedCounts(sec.text)) {
+    for (const c of statedCounts(strip(withoutNavigation(sec.html)))) {
       const prior = byNoun.get(c.noun);
       if (!prior) {
         byNoun.set(c.noun, { ...c, section: sec.index || sec.title });
@@ -385,4 +396,25 @@ export function assertPublishable(html: string, label: string, opts: IntegrityOp
     );
   }
   return html;
+}
+
+/**
+ * Some stored stage outputs were themselves cut off mid-sentence when the
+ * pipeline wrote them. A cut sentence is never shown to a reader and is never
+ * completed by guessing: the incomplete tail is dropped and the gap is stated.
+ * Shared by every builder so one deliverable cannot silently keep the cut.
+ */
+export const CUT_NOTE = `<p class="note">The stored output for this stage ends mid-sentence in the pipeline record. Nothing has been invented to complete it.</p>`;
+
+export function closeIncompleteTail(bodyHtml: string): string {
+  const openAt = Math.max(bodyHtml.lastIndexOf("<p"), bodyHtml.lastIndexOf("<li"));
+  if (openAt < 0) return bodyHtml;
+  const tag = bodyHtml.startsWith("<li", openAt) ? "li" : "p";
+  const closeAt = bodyHtml.indexOf(`</${tag}>`, openAt);
+  if (closeAt < 0) return bodyHtml;
+  const inner = bodyHtml.slice(bodyHtml.indexOf(">", openAt) + 1, closeAt);
+  const text = strip(inner);
+  if (!looksCut(text, tag === "li") && !/\w(?:\u2026|\.\.\.)$/.test(text)) return bodyHtml;
+  const after = bodyHtml.slice(closeAt + `</${tag}>`.length);
+  return `${bodyHtml.slice(0, openAt)}${after}${CUT_NOTE}`;
 }
