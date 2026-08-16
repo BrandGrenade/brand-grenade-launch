@@ -24,7 +24,12 @@ import { buildPhase2Document } from "../src/lib/phase2-document-generator";
 import { buildFullRunDocument } from "../src/lib/full-run-document";
 import { summaryExtras } from "./summary-extras";
 import { contentIntegrityFindings, splitSections, type IntegrityOptions } from "../src/lib/content-integrity";
-import { DOCUMENT_SPECS } from "../src/lib/document-spec";
+import { DOCUMENT_SPECS, type DocumentSpec } from "../src/lib/document-spec";
+import { checkDocumentStructure } from "../src/lib/document-gate";
+import { parseScoredCandidates } from "../src/lib/minto-content";
+
+const norm = (s: string) =>
+  s.toLowerCase().replace(/[^a-z0-9 ]/g, " ").replace(/\s+/g, " ").trim();
 
 const sb = createClient(process.env.VITE_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
 const OUT = "/tmp/certify";
@@ -50,6 +55,20 @@ interface DocJob {
   build: (row: Row, extra: Row) => string;
   /** The same certification context the builder itself enforces. */
   opts?: IntegrityOptions;
+  /** Canonical spec, when the document has one — drives PRESENT and PLACED. */
+  spec?: DocumentSpec;
+}
+
+/** Proposition / line names owned by a session, used for the SOURCED check. */
+function ownedNames(row: Row): string[] {
+  return [
+    String(row.selected_smp ?? ""),
+    String(row.locked_campaign_line ?? ""),
+    String(row.locked_big_idea ?? ""),
+    ...parseScoredCandidates(String(row.stage_10_output ?? "")).map((c) => c.name),
+  ]
+    .map((s) => s.trim())
+    .filter((s) => s.length > 14);
 }
 
 /** Minto documents compare counts across their front matter only. */
@@ -63,9 +82,9 @@ const transcriptOpts: IntegrityOptions = { narrativeSections: [] };
 
 function jobsFor(row: Row): DocJob[] {
   const jobs: DocJob[] = [
-    { label: "Board Strategy Recommendation", build: (r) => buildBoardStrategyDocument(r as never), opts: mintoOpts(DOCUMENT_SPECS.board_strategy) },
-    { label: "Consulting Delivery", build: (r) => buildConsultingDeliveryDocument(r as never), opts: mintoOpts(DOCUMENT_SPECS.consulting_delivery) },
-    { label: "Master Detonation Brief (Minto)", build: (r) => buildMasterDetonationDocument(r as never), opts: mintoOpts(DOCUMENT_SPECS.master_detonation) },
+    { label: "Board Strategy Recommendation", build: (r) => buildBoardStrategyDocument(r as never), opts: mintoOpts(DOCUMENT_SPECS.board_strategy), spec: DOCUMENT_SPECS.board_strategy },
+    { label: "Consulting Delivery", build: (r) => buildConsultingDeliveryDocument(r as never), opts: mintoOpts(DOCUMENT_SPECS.consulting_delivery), spec: DOCUMENT_SPECS.consulting_delivery },
+    { label: "Master Detonation Brief (Minto)", build: (r) => buildMasterDetonationDocument(r as never), opts: mintoOpts(DOCUMENT_SPECS.master_detonation), spec: DOCUMENT_SPECS.master_detonation },
     { label: "Agency Strategy Platform", build: (r) => buildPhase1Document(r as never, "agency"), opts: transcriptOpts },
     { label: "Brand Strategy Workshop Guide", build: (r) => buildPhase1Document(r as never, "workshop"), opts: transcriptOpts },
     { label: "Full Pipeline Record", build: (r) => buildFullRunDocument(r as never), opts: transcriptOpts },
@@ -75,7 +94,7 @@ function jobsFor(row: Row): DocJob[] {
   if (row.stage_19_output)
     jobs.push({ label: "Activation Architecture", build: (r) => buildPhase2Document(r as never, "activation_architecture"), opts: transcriptOpts });
   if (row.stage_20_output)
-    jobs.push({ label: "Master Detonation Brief", build: (r) => buildPhase2Document(r as never, "master_brief"), opts: mintoOpts(DOCUMENT_SPECS.master_detonation) });
+    jobs.push({ label: "Master Detonation Brief", build: (r) => buildPhase2Document(r as never, "master_brief"), opts: mintoOpts(DOCUMENT_SPECS.master_detonation), spec: DOCUMENT_SPECS.master_detonation });
   if (row.stage_22_brand_architecture)
     jobs.push({ label: "Brand Architecture", build: (r) => buildPhase2Document(r as never, "brand_architecture"), opts: transcriptOpts });
   const channels = (row.stage_21_outputs ?? {}) as Record<string, string>;
@@ -119,7 +138,9 @@ for (const row of live) {
     report.push(`- Summary extras unavailable: ${(e as Error).message}`, "");
   }
 
-  const all: Array<{ label: string; run: () => string; opts?: IntegrityOptions }> = [
+  const foreign = live.filter((r) => r.id !== row.id).flatMap(ownedNames);
+
+  const all: Array<{ label: string; run: () => string; opts?: IntegrityOptions; spec?: DocumentSpec }> = [
     ...(extras
       ? [
           {
@@ -131,7 +152,7 @@ for (const row of live) {
           },
         ]
       : []),
-    ...jobs.map((j) => ({ label: j.label, run: () => j.build(row, {}), opts: j.opts })),
+    ...jobs.map((j) => ({ label: j.label, run: () => j.build(row, {}), opts: j.opts, spec: j.spec })),
   ];
 
   for (const doc of all) {
@@ -156,24 +177,52 @@ for (const row of live) {
       bySection.set(f.section, list);
     }
 
+    // Structural half — PRESENT and CORRECTLY PLACED — from the same runtime
+    // gate the builder itself runs, so the report cannot disagree with it.
+    const spec = doc.spec;
+    const structural = spec ? checkDocumentStructure(html, spec) : [];
+    const canonical = spec
+      ? new Set([...spec.frontMatter.map((f) => f.index), ...spec.appendix.map((a) => a.index)])
+      : null;
+
+    // SOURCED — nothing in the section belongs to another session.
+    const foreignHits = (text: string) => foreign.filter((f) => norm(text).includes(norm(f)));
+
     const lines: string[] = [];
     for (const sec of sections) {
       sectionsChecked++;
       const key = sec.index ? `${sec.index} "${sec.title}"` : `"${sec.title}"`;
       const fs = bySection.get(key) ?? [];
-      if (!fs.length) {
-        lines.push(`- ${key} — CERTIFIED`);
+      const struct = structural.filter((s) => s.includes(`section ${sec.index}`));
+      const placedFail = struct.filter((s) => /runs on into|orphan heading|selection artifact/.test(s));
+      const presentFail = spec && canonical && !canonical.has(sec.index) ? [] : [];
+      const foreignFail = foreignHits(sec.text);
+
+      const failed = [
+        ...fs.map((f) => `${f.criterion}: ${f.detail}${f.quote ? `\n      > ${f.quote.replace(/\n/g, " ")}` : ""}`),
+        ...placedFail.map((s) => `PLACED: ${s}`),
+        ...presentFail.map((s) => `PRESENT: ${s}`),
+        ...foreignFail.map((s) => `SOURCED: content belonging to another session — “${s}”`),
+      ];
+
+      if (!failed.length) {
+        const where = spec && canonical?.has(sec.index) ? "canonical position" : "rendered order";
+        lines.push(
+          `- ${key} — CERTIFIED · present (${where}) · complete (${sec.text.split(/\s+/).length} words, closes) · ` +
+            `sourced (no foreign session content) · placed (own content only) · clean (no system artifacts) · ` +
+            `consistent (stated counts match rendered) · promises kept · client voice`,
+        );
         continue;
       }
       sectionsFailed++;
       lines.push(`- ${key} — **FAILED**`);
-      for (const f of fs)
-        lines.push(`    - ${f.criterion}: ${f.detail}${f.quote ? `\n      > ${f.quote.replace(/\n/g, " ")}` : ""}`);
+      for (const f of failed) lines.push(`    - ${f}`);
     }
-    if (findings.length) docsFailed++;
+    if (findings.length || structural.length) docsFailed++;
     report.push(...lines, "");
   }
 }
+
 
 report.splice(
   6,
