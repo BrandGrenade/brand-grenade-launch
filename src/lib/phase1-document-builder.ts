@@ -288,6 +288,9 @@ export function buildPhase1Document(session: Phase1Session, format: Phase1Format
         if (s.key === "stage_1_output") raw = stripStage1Internals(raw);
         if (!raw.trim()) return "";
         let inner = md(sanitise(raw));
+        // The stage output often opens with its own title heading, which would
+        // otherwise leave this section's canonical heading with no body.
+        inner = inner.replace(/^\s*<h2>[\s\S]*?<\/h2>\s*/, "");
         // The stored output existed but carried nothing publishable once
         // internal bookkeeping was removed. State the gap rather than
         // shipping a heading with an empty body.
