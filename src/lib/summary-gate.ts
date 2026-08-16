@@ -49,13 +49,25 @@ const ARTIFACTS: Array<[RegExp, string]> = [
   [/\bword count\s*:/i, "word-count annotation"],
 ];
 
+/**
+ * Whether a prose block reads as cut mid-sentence. Provenance tags this builder
+ * writes itself ("— Stage 12 shortlist") are not sentences and never count.
+ */
+export function looksCut(text: string): boolean {
+  if (text.split(/\s+/).length < 7) return false;
+  if (/[.!?:;"”’)\]]$/.test(text)) return false;
+  if (/(?:shortlist|LOC engine|refinement|Stage\s+\d+[A-Za-z]*|winner|locked)$/i.test(text))
+    return false;
+  return /[a-z,]$/.test(text);
+}
+
 function truncationFaults(text: string): string[] {
   const out: string[] = [];
   // safeClamp's ellipsis is only legitimate after a complete word AND is not
   // permitted at all in a finished document: it means content was cut.
   if (/\w…/.test(text) || /\w\.\.\.(?:\s|$)/.test(text)) out.push("text cut with an ellipsis");
   // A body that stops on a conjunction is a mid-sentence cut.
-  if (!/[.!?:;"”’)\]]$/.test(text)) out.push("body ends mid-sentence");
+  if (looksCut(text)) out.push("body ends mid-sentence");
   return out;
 }
 
