@@ -121,7 +121,8 @@ const CLEAN_PATTERNS: Array<[RegExp, string]> = [
  * not system voice, and is exempt.
  */
 const VOICE_PATTERNS: RegExp[] = [
-  /\bI (?:cannot|can't|could not|couldn't|am unable|was unable|will now|should note|must note|apologi[sz]e)\b/i,
+  /\bI (?:cannot|can't|could not|couldn't|am unable|was unable) (?:cite|verify|confirm|source|generate|produce|provide|access|locate|determine|complete|identify)\b/i,
+  /\bI (?:will now|should note that|must note that|apologi[sz]e)\b/i,
   /\bI(?:'ve| have) (?:not )?(?:generated|produced|written|included|selected)\b/i,
   /\bas an? (?:AI|language model|assistant)\b/i,
   /\bmy (?:training data|instructions|context window|previous response)\b/i,
@@ -329,7 +330,7 @@ export function contentIntegrityFindings(
     // PROMISED — "the following three principles" must be followed by three.
     const promise = sec.text.match(
       new RegExp(
-        `\\b(?:the following|these|below are|listed below|shown below)\\s+(\\d{1,2}|${Object.keys(
+        `\\b(?:the following|below are|listed below are|shown below are)\\s+(\\d{1,2}|${Object.keys(
           WORD_NUMBERS,
         ).join("|")})\\s+(${COUNTED_NOUNS})\\b`,
         "i",

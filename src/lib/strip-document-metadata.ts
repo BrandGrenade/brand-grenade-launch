@@ -29,7 +29,7 @@ const LINE_STRIP: RegExp[] = [
   // Standalone ==== separator markers
   /^\s*={3,}\s*$/,
   // Any remaining "==== SOMETHING ====" header line (defence in depth)
-  /^\s*={2,}\s+[A-Z][A-Z0-9 _\-/]*\s*={0,}\s*$/,
+  /^\s*={2,}\s*[A-Z][A-Z0-9 _\-/\u2013\u2014.,'()]*\s*={0,}\s*$/,
   // Internal selection UI — chooser heading
   /^\s*#{0,6}\s*\*{0,2}\s*CANDIDATE SET\b.*$/i,
   /^\s*#{0,6}\s*\*{0,2}\s*(?:SELECT|CHOOSE)\s+ONE\b.*$/i,
