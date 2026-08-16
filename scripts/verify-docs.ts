@@ -5,7 +5,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { mkdirSync, writeFileSync } from "fs";
 import { buildBoardStrategyDocument } from "../src/lib/board-strategy-document";
-import { buildExecSummaryDocument } from "../src/lib/exec-summary-document";
+import { buildSummaryDocument } from "../src/lib/summary-document";
 import { buildConsultingDeliveryDocument } from "../src/lib/consulting-delivery-document";
 import { buildMasterDetonationDocument } from "../src/lib/master-detonation-document";
 import { buildDocument00AMinto } from "../src/lib/intelligence/doc-00A-minto";
@@ -153,7 +153,7 @@ for (const [key, s] of Object.entries(picked)) {
     }
   };
   safe("Board Strategy Recommendation", () => buildBoardStrategyDocument(s as never));
-  safe("Brand Strategy and Creative Intelligence Summary", () => buildExecSummaryDocument(s as never, {} as never));
+  safe("Brand Strategy and Creative Intelligence Summary", () => buildSummaryDocument(s as never, undefined as never));
   safe("Consulting Delivery", () => buildConsultingDeliveryDocument(s as never));
   safe("Master Detonation Brief", () => buildMasterDetonationDocument(s as never));
 

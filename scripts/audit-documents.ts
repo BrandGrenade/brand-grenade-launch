@@ -27,7 +27,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { mkdirSync, writeFileSync } from "fs";
 import { buildBoardStrategyDocument } from "../src/lib/board-strategy-document";
-import { buildExecSummaryDocument } from "../src/lib/exec-summary-document";
+import { buildSummaryDocument } from "../src/lib/summary-document";
 import { buildConsultingDeliveryDocument } from "../src/lib/consulting-delivery-document";
 import { buildMasterDetonationDocument } from "../src/lib/master-detonation-document";
 import { DOCUMENT_SPECS, type DocumentSpec } from "../src/lib/document-spec";
@@ -208,7 +208,7 @@ for (const r of live) owned.set(String(r.id), ownedNames(r));
 
 const builders: Array<{ spec: DocumentSpec; build: (row: Row) => string }> = [
   { spec: DOCUMENT_SPECS.board_strategy, build: (r) => buildBoardStrategyDocument(r as never) },
-  { spec: DOCUMENT_SPECS.exec_summary, build: (r) => buildExecSummaryDocument(r as never, {} as never) },
+  { spec: DOCUMENT_SPECS.exec_summary, build: (r) => buildSummaryDocument(r as never, undefined as never) },
   { spec: DOCUMENT_SPECS.consulting_delivery, build: (r) => buildConsultingDeliveryDocument(r as never) },
   { spec: DOCUMENT_SPECS.master_detonation, build: (r) => buildMasterDetonationDocument(r as never) },
 ];

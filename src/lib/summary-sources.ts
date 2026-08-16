@@ -95,7 +95,9 @@ export function extractBrandArchitecture(stage22: string): BrandArchitecture {
     const i = text.search(label);
     if (i < 0) return "";
     const rest = text.slice(i).replace(label, "");
-    return rest.split(/\n(?=[A-Z][A-Z ()]{3,}\s*:)/)[0].trim();
+    // A block ends at the next LABEL: line OR the next markdown heading —
+    // stage 22 is written both ways depending on the session.
+    return rest.split(/\n(?=(?:#{1,4}\s)|(?:[A-Z][A-Z ()]{3,}\s*:))/)[0].trim();
   };
   const bullets = (s: string) =>
     s
@@ -104,8 +106,11 @@ export function extractBrandArchitecture(stage22: string): BrandArchitecture {
       .filter((l) => l.length > 2);
 
   return {
-    assets: bullets(grab(/RECOMMENDED ASSETS\s*:?\s*/i)),
-    principles: bullets(grab(/DEPLOYMENT PRINCIPLES\s*:?\s*/i)),
+    // Stage 22 labels its two lists differently depending on the session.
+    assets: bullets(grab(/(?:RECOMMENDED|OWNABLE|DISTINCTIVE)\s+ASSETS\s*:?\s*/i)),
+    principles: bullets(
+      grab(/(?:DEPLOYMENT PRINCIPLES|ACTIVATION RULES|DEPLOYMENT RULES)\s*:?\s*/i),
+    ),
     reflection: grab(/REFLECTION\s*:\s*/i).split("\n")[0]?.trim() ?? "",
     personality: grab(/PERSONALITY\s*:\s*/i).split("\n")[0]?.trim() ?? "",
   };
@@ -237,6 +242,8 @@ export function extractWinnerScores(stage10: string, smp: string): WinnerScore[]
 
 export interface ImpossibilityAnalysis {
   heading: string;
+  /** True when the block read is the stage's own commentary, not a named candidate. */
+  generic: boolean;
   foundation: string;
   rivals: string[];
   proof: string;
@@ -257,10 +264,26 @@ export function extractImpossibilityAnalysis(
   const blocks = mdBlocks(stage9);
   if (!blocks.length) return null;
   const key = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+  // A leading "Distinctiveness Assessment"/"Overview" block is the stage's own
+  // preamble, not a candidate. Never pressure-test the preamble.
+  const GENERIC =
+    /^(distinctiveness assessment|overview|summary|introduction|assessment|category differentiation|strategic uniqueness|territory claimed|conclusion|verdict)$/;
+  const candidates = blocks.filter((b) => !GENERIC.test(key(b.heading)));
+  const pool = candidates.length ? candidates : blocks;
   const want = key(preferred);
-  const block =
-    (want && blocks.find((b) => key(b.heading).includes(want) || want.includes(key(b.heading)))) ||
-    blocks[0];
+  const wantWords = new Set(want.split(" ").filter((w) => w.length > 3));
+  const overlap = (b: MdBlock) => {
+    const words = key(`${b.heading} ${b.body}`).split(" ");
+    let hit = 0;
+    for (const w of wantWords) if (words.includes(w)) hit++;
+    return hit;
+  };
+  const named =
+    want && pool.find((b) => key(b.heading).includes(want) || want.includes(key(b.heading)));
+  const scored = wantWords.size
+    ? [...pool].sort((a, b) => overlap(b) - overlap(a))[0]
+    : undefined;
+  const block = named || (scored && overlap(scored) > 0 ? scored : pool[0]);
 
   const body = block.body;
   const label = (re: RegExp) => {
@@ -270,7 +293,7 @@ export function extractImpossibilityAnalysis(
     return rest.split(/\n\s*\n(?=\**[A-Z])/)[0].trim();
   };
 
-  const foundation = label(/\*\*The Foundation\.\*\*\s*/i).replace(/\s+/g, " ").trim();
+  let foundation = label(/\*\*The Foundation\.\*\*\s*/i).replace(/\s+/g, " ").trim();
   const analysis = label(/\*\*Strategic-Impossibility Analysis\.\*\*\s*/i);
   const rivals = analysis
     .split("\n")
@@ -280,5 +303,19 @@ export function extractImpossibilityAnalysis(
     .filter(Boolean);
   const proof = (body.match(/^>\s*(.+)$/m)?.[1] ?? "").trim();
 
-  return { heading: block.heading, foundation, rivals, proof };
+  // Sessions whose stage 9 is written without the labelled sub-blocks still
+  // have exactly one candidate block of their own: read it whole as prose,
+  // scoped to this candidate, rather than rendering an empty section.
+  if (!foundation && !rivals.length) {
+    const prose = body
+      .split("\n")
+      .filter((l) => !/^>\s/.test(l) && !/^#{1,4}\s/.test(l))
+      .join("\n")
+      .replace(/\*\*/g, "")
+      .trim();
+    if (!prose) return null;
+    foundation = prose.replace(/\s+/g, " ").trim();
+  }
+
+  return { heading: block.heading, generic: GENERIC.test(key(block.heading)), foundation, rivals, proof };
 }

@@ -1,13 +1,18 @@
 /**
- * Jaguar-only rebuild of the Brand Strategy and Creative Intelligence Summary.
+ * THE Brand Strategy and Creative Intelligence Summary builder.
  *
- * Structural redesign, approved outline: 21 numbered sections plus a table of
- * contents on page one, workflow folded into the body in sequence (no
- * appendix), plain-language descriptors under every system-jargon heading, and
- * the locked creative idea rendered complete and verbatim.
+ * One canonical builder, one 21-section spec, every session. Nothing in here
+ * is brand-specific: every value is read from the session row and the creative
+ * engine tables. There is no second Executive Summary code path.
  *
- * This builder is deliberately separate from `exec-summary-document.ts` until
- * the structure is signed off; once approved it becomes the template.
+ * Structure: 21 numbered sections plus a table of contents on page one,
+ * workflow folded into the body in sequence (no appendix), plain-language
+ * descriptors under every system-jargon heading, and the locked creative idea
+ * rendered complete and verbatim.
+ *
+ * Every render is passed through `gateSummary` (summary-gate.ts) before it is
+ * returned, so a document that breaks any of the standing rules throws instead
+ * of reaching a reader.
  */
 
 import {
@@ -27,6 +32,7 @@ import {
 import { condenseStage } from "./minto-content";
 import { stripDocumentMetadata } from "./strip-document-metadata";
 import { stripSelectionArtifacts } from "./document-gate";
+import { gateSummary, type GateSectionInput } from "./summary-gate";
 import {
   extractBrandArchitecture,
   extractChannelRole,
@@ -41,7 +47,7 @@ import {
   normaliseMd,
   safeClamp,
   sentences,
-} from "./jaguar-sources";
+} from "./summary-sources";
 import {
   clean,
   firstSentencesOf,
@@ -58,7 +64,13 @@ import {
 
 /* ─────────────────────────────────────────────────────────── inputs ── */
 
-export interface JaguarShortlistItem {
+export type ExecSummarySession = {
+  brand_name?: string | null;
+  category?: string | null;
+  selected_smp?: string | null;
+} & ExecSessionRow;
+
+export interface SummaryShortlistItem {
   lens: string;
   line: string;
   expression?: string | null;
@@ -68,22 +80,25 @@ export interface JaguarShortlistItem {
   winner?: boolean;
 }
 
-export interface JaguarCreativeExtras {
+export interface SummaryCreativeExtras {
   lensesSwept: number;
   directionsGenerated: number;
   directionsRated: number;
   promptsWritten?: number;
   guidance?: string | null;
-  shortlist: JaguarShortlistItem[];
+  shortlist: SummaryShortlistItem[];
   /** Rating rationales recorded against the winning direction. */
   winnerReasons?: Array<{ title: string; detail?: string }>;
   /** Channel name → its strategic role in the plan (one line, from the brief). */
   channels?: Array<{ name: string; role?: string | null }>;
   intelligenceReportPresent?: boolean;
   researchSources?: number;
+  /** Propositions, lines and territories owned by OTHER sessions. Checked at
+   *  generation time so no foreign content can reach this document. */
+  foreignMarkers?: string[];
 }
 
-const EMPTY_EXTRAS: JaguarCreativeExtras = {
+const EMPTY_EXTRAS: SummaryCreativeExtras = {
   lensesSwept: 0,
   directionsGenerated: 0,
   directionsRated: 0,
@@ -309,18 +324,42 @@ function sealBody(bodyHtml: string, ownTitle: string, otherTitles: Set<string>):
   return dropDanglingLabel(out).trim();
 }
 
-function renderSections(defs: SectionDef[]): string {
+/**
+ * Some stored stage outputs were themselves cut off mid-sentence when the
+ * pipeline wrote them. A cut sentence is never shown to a reader and is never
+ * completed by guessing: the incomplete tail is dropped and the gap is stated.
+ */
+function closeIncompleteTail(bodyHtml: string): string {
+  const m = /<(p|li)([^>]*)>([\s\S]*?)<\/\1>(?![\s\S]*<(?:p|li)[ >])/.exec(bodyHtml);
+  if (!m) return bodyHtml;
+  const text = m[3]
+    .replace(/<[^>]+>/g, "")
+    .replace(/&[a-z#0-9]+;/g, "x")
+    .trim();
+  if (!text || /[.!?:;"”’)\]]$/.test(text)) return bodyHtml;
+  const cutAt = Math.max(m[3].lastIndexOf(". "), m[3].lastIndexOf(".<"), m[3].lastIndexOf("."));
+  const kept = cutAt > 0 ? `${m[3].slice(0, cutAt + 1)}` : "";
+  const replacement = kept ? `<${m[1]}${m[2]}>${kept}</${m[1]}>` : "";
+  return `${bodyHtml.slice(0, m.index)}${replacement}${bodyHtml.slice(
+    m.index + m[0].length,
+  )}<p class="note">The stored output for this stage ends mid-sentence in the pipeline record. Nothing has been invented to complete it.</p>`;
+}
+
+function renderSections(defs: SectionDef[]): { html: string; sealed: GateSectionInput[] } {
   const titles = new Set(defs.map((d) => normTitle(d.title)));
-  return defs
+  const sealed: GateSectionInput[] = [];
+  const html = defs
     .map((d) => {
       const others = new Set([...titles].filter((t) => t !== normTitle(d.title)));
-      const sealed = sealBody(d.body, d.title, others);
+      const body = closeIncompleteTail(sealBody(d.body, d.title, others));
+      sealed.push({ index: d.index, title: d.title, html: body });
       return section(
         { kicker: d.kicker, index: d.index, title: d.title, breakBefore: BREAK_BEFORE.has(d.index) },
-        `<p class="lede">${escapeHtml(d.lede)}</p>${sealed || nothing("No stored output for this stage.")}`,
+        `<p class="lede">${escapeHtml(d.lede)}</p>${body || nothing("No stored output for this stage.")}`,
       );
     })
     .join("\n");
+  return { html, sealed };
 }
 
 
@@ -372,9 +411,9 @@ function band(title: string, stats: Stat[]): string {
 
 /* ─────────────────────────────────────────────────────────── builder ── */
 
-export function buildJaguarSummaryDocument(
+export function buildSummaryDocument(
   session: ExecSessionRow,
-  extras: JaguarCreativeExtras = EMPTY_EXTRAS,
+  extras: SummaryCreativeExtras = EMPTY_EXTRAS,
 ): string {
   const brand = (str(session, "brand_name") || "Brand").trim();
   const category = str(session, "category").trim();
@@ -533,7 +572,11 @@ export function buildJaguarSummaryDocument(
     str(session, "selected_smp"),
   );
   const distinctHtml = impossibility
-    ? `${p(`Candidate pressure-tested: **${impossibility.heading.replace(/\.$/, "")}**`)}${p(
+    ? `${p(
+        impossibility.generic
+          ? ""
+          : `Candidate pressure-tested: **${impossibility.heading.replace(/\.$/, "")}**`,
+      )}${p(
         impossibility.foundation,
       )}${
         impossibility.rivals.length
@@ -609,14 +652,15 @@ export function buildJaguarSummaryDocument(
   const rejected = field.filter((f) => !f.selected);
   const rejectedHtml = rejected.length
     ? list(
-        rejected
-          .slice(0, 8)
-          .map(
-            (f) =>
-              `**${f.proposition}** — ${
-                firstSentencesOf(f.reason ?? "", 1) ?? "considered, not carried forward"
-              }`,
-          ),
+        rejected.slice(0, 8).map((f) => {
+          // The stored note is a pressure-test observation, not a rejection
+          // reason. It is labelled as what it is, so a positive note can never
+          // read as the reason a proposition was set aside.
+          const note = firstSentencesOf(f.reason ?? "", 1);
+          return `**${f.proposition}** — Not carried forward at proposition lock.${
+            note ? ` Pressure test recorded: ${note}` : ""
+          }`;
+        }),
       )
     : "";
 
@@ -930,6 +974,7 @@ export function buildJaguarSummaryDocument(
   // in order, then the shell — which writes the footer after the body, always
   // last. Nothing is inserted at a fixed position and no pass rewrites the
   // finished string, so no content can appear after the closing footer line.
+  const rendered = renderSections(defs);
   const body = [
     cover({
       brand: "BRAND GRENADE",
@@ -939,10 +984,10 @@ export function buildJaguarSummaryDocument(
       confidential: true,
     }),
     tableOfContents(defs),
-    renderSections(defs),
+    rendered.html,
   ].join("\n");
 
-  return docShell(
+  const html = docShell(
     {
       title: `Brand Strategy and Creative Intelligence Summary — ${brand}`,
       toolbarNote: `${brand} — Brand Strategy and Creative Intelligence Summary`,
@@ -952,5 +997,15 @@ export function buildJaguarSummaryDocument(
     },
     body,
   );
+
+  // Standing gate. Every rule this document has ever broken is checked here,
+  // on every render, for every session.
+  return gateSummary(rendered.sealed, html, {
+    order: defs.map((d) => d.index),
+    lockedSmp: (winning.smp?.trim() || selectedSmp || "").replace(/^["“”\s]+|["“”\s.]+$/g, ""),
+    lockedIdea,
+    foreignMarkers: extras.foreignMarkers,
+    requiredProse: ["09", "13", "17"],
+  });
 }
 

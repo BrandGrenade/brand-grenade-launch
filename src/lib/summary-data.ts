@@ -1,7 +1,8 @@
 import { supabase } from "@/integrations/supabase/client";
-import type { JaguarCreativeExtras } from "./jaguar-summary-document";
-import { extractChannelRole } from "./jaguar-sources";
+import type { SummaryCreativeExtras } from "./summary-document";
+import { extractChannelRole } from "./summary-sources";
 
+/** Kept only so older imports resolve; no code path branches on it any more. */
 export const JAGUAR_REBUILD_SESSION_ID = "6ab4ea96-7c3a-4e0a-91a9-24b601752b35";
 
 type DirectionRow = {
@@ -18,13 +19,15 @@ function rating(direction: DirectionRow, category: string, field = "rating"): st
   return direction.ratings?.[category]?.[field] ?? null;
 }
 
-export async function fetchJaguarSummaryExtras(
+/** Creative-engine figures for any session. No per-brand branching. */
+export async function fetchSummaryExtras(
   session: Record<string, unknown>,
-): Promise<JaguarCreativeExtras> {
+): Promise<SummaryCreativeExtras> {
   const sessionId = typeof session.id === "string" ? session.id : "";
-  if (sessionId !== JAGUAR_REBUILD_SESSION_ID) {
+  if (!sessionId) {
     return { lensesSwept: 0, directionsGenerated: 0, directionsRated: 0, shortlist: [] };
   }
+
 
   const { data: runs, error: runsError } = await supabase
     .from("stimulus_runs")
@@ -110,7 +113,22 @@ export async function fetchJaguarSummaryExtras(
       }))
     : [];
 
+  // Every other session's own propositions/lines — the gate rejects the
+  // document if any of them appear in it.
+  const { data: others } = await supabase
+    .from("sessions")
+    .select("id, selected_smp, locked_campaign_line, locked_big_idea_lens")
+    .neq("id", sessionId);
+  const foreignMarkers = [
+    ...new Set(
+      (others ?? []).flatMap((row) =>
+        [row.selected_smp, row.locked_campaign_line].map((v) => (v ?? "").trim()),
+      ),
+    ),
+  ].filter((v) => v.length > 12);
+
   return {
+    foreignMarkers,
     lensesSwept: new Set(sweep.map((direction) => direction.lens_name).filter(Boolean)).size || 37,
     directionsGenerated: sweep.length,
     directionsRated: rated.length,

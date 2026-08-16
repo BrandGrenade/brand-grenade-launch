@@ -4,18 +4,11 @@
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  openExecSummaryDocument,
-  type ExecSummarySession,
-} from "@/lib/exec-summary-document";
-import { fetchExecSummaryIntel } from "@/lib/exec-summary-intel";
+
 import { Spinner } from "@/components/ui/busy";
 import { resolveLiveDocumentSession } from "@/lib/document-live-source";
-import { buildJaguarSummaryDocument } from "@/lib/jaguar-summary-document";
-import {
-  fetchJaguarSummaryExtras,
-  JAGUAR_REBUILD_SESSION_ID,
-} from "@/lib/jaguar-summary-data";
+import { buildSummaryDocument, type ExecSummarySession } from "@/lib/summary-document";
+import { fetchSummaryExtras } from "@/lib/summary-data";
 
 /** Columns the summary needs that the Deliverables page does not already load. */
 const EXTRA_COLUMNS =
@@ -40,20 +33,14 @@ export function ExecSummaryCard({ session }: { session: ExecSummarySession }) {
           return (res.data as Record<string, unknown> | null) ?? {};
         })();
       const live = await resolveLiveDocumentSession({ ...session, ...extra });
-       if (live.id === JAGUAR_REBUILD_SESSION_ID) {
-         const extras = await fetchJaguarSummaryExtras(live);
-         const html = buildJaguarSummaryDocument(live, extras);
-         const win = window.open("", "_blank");
-         if (!win) throw new Error("Please allow popups to open the summary");
-         win.document.open("text/html");
-         win.document.write(html);
-         win.document.close();
-       } else {
-         const intel = await fetchExecSummaryIntel(
-           typeof live.brief_text === "string" ? live.brief_text : null,
-         );
-         openExecSummaryDocument(live, intel);
-       }
+      // One builder, one 21-section spec, every session.
+      const extras = await fetchSummaryExtras(live);
+      const html = buildSummaryDocument(live, extras);
+      const win = window.open("", "_blank");
+      if (!win) throw new Error("Please allow popups to open the summary");
+      win.document.open("text/html");
+      win.document.write(html);
+      win.document.close();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not build the summary");
     } finally {
@@ -91,9 +78,7 @@ export function ExecSummaryCard({ session }: { session: ExecSummarySession }) {
         </span>
         <span className="text-body-sm" style={{ color: "#8B8680", fontSize: 13 }}>
           {ready
-            ? session.id === JAGUAR_REBUILD_SESSION_ID
-              ? "Rebuilt 21-section Jaguar summary, assembled live from this session's stored data."
-              : "Ten-section quick-scan companion to Consulting Delivery, assembled from this session's stored data."
+            ? "Twenty-one-section summary, assembled live from this session's stored data."
             : "Available once a proposition has been selected for this session."}
         </span>
       </div>
