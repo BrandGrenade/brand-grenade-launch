@@ -356,7 +356,7 @@ export function buildForeignMarkers(
 /** All stage text a session owns, for own-content comparison. */
 export function ownStageCorpus(session: Record<string, unknown>): string {
   return Object.entries(session)
-    .filter(([k, v]) => /^stage_/.test(k) && typeof v === "string")
-    .map(([, v]) => v as string)
+    .filter(([k, v]) => /^stage_/.test(k) && v != null)
+    .map(([, v]) => (typeof v === "string" ? v : JSON.stringify(v)))
     .join("\n");
 }

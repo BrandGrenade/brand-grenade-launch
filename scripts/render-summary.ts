@@ -4,7 +4,7 @@ import {
   buildSummaryDocument,
   type SummaryCreativeExtras,
 } from "../src/lib/summary-document";
-import { extractChannelRole } from "../src/lib/summary-sources";
+import { buildForeignMarkers, extractChannelRole, ownStageCorpus } from "../src/lib/summary-sources";
 
 const sb = createClient(process.env.VITE_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
 const id = process.argv[2] ?? "6ab4ea96-7c3a-4e0a-91a9-24b601752b35";
@@ -103,13 +103,12 @@ const extras: SummaryCreativeExtras = {
 
 const { data: others } = await sb
   .from("sessions")
-  .select("id, selected_smp, locked_campaign_line")
+  .select("id, selected_smp, locked_campaign_line, stage_7_output")
   .neq("id", id);
-extras.foreignMarkers = [
-  ...new Set(
-    (others ?? []).flatMap((r: any) => [r.selected_smp, r.locked_campaign_line].map((v) => (v ?? "").trim())),
-  ),
-].filter((v) => v.length > 12);
+extras.foreignMarkers = buildForeignMarkers(
+  (others ?? []) as Array<Record<string, unknown>>,
+  ownStageCorpus(s as Record<string, unknown>),
+);
 
 const slug = String((s as any).brand_name ?? "session").replace(/[^A-Za-z0-9]+/g, "_");
 mkdirSync("/tmp/browser/summaries", { recursive: true });
