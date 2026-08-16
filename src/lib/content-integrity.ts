@@ -1,0 +1,352 @@
+// BRAND GRENADE — SHARED CONTENT-INTEGRITY CERTIFICATION
+// ============================================================================
+// The structural gate (document-gate.ts) answers "is every canonical section
+// present and in its own lane?". This file answers the other half of the
+// certification standard, and it is document-type agnostic so a fault fixed
+// for one deliverable cannot reappear in another:
+//
+//   COMPLETE      no section body that is empty, a bare heading, or prose that
+//                 stops mid-sentence / on an ellipsis.
+//   CLEAN         no raw brief metadata labels ("Date:", "Submitted by:"),
+//                 audit-trail notes, run IDs, timestamps, unrendered markdown
+//                 or template syntax, selection UI, word-count annotations.
+//   VOICE         no first-person system/process commentary ("I cannot cite…").
+//   CONSISTENT    a count stated in one place must match the count stated
+//                 anywhere else in the same document for the same noun.
+//   PROMISED      a section that says it will show N items must show N items.
+//
+// Every builder routes its finished HTML through `assertPublishable`, so a
+// document that fails cannot reach Deliverables by any path.
+
+/* ── text helpers ────────────────────────────────────────────────────── */
+
+const strip = (h: string) =>
+  h
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&#39;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/&nbsp;/g, " ")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/\s+/g, " ")
+    .trim();
+
+/**
+ * Whether a prose block reads as cut mid-sentence. Provenance tags the
+ * builders write themselves ("— Stage 12 shortlist") are not sentences and
+ * never count. Shared with summary-gate.ts so both gates agree.
+ */
+export function looksCut(text: string, listItem = false): boolean {
+  if (text.split(/\s+/).length < 7) return false;
+  if (/[.!?:;"”’)\]]$/.test(text)) return false;
+  if (/(?:shortlist|LOC engine|refinement|Stage\s+\d+[A-Za-z]*|winner|locked)$/i.test(text)) return false;
+  if (listItem)
+    return (
+      /,$/.test(text) ||
+      /\b(?:the|a|an|and|or|but|of|to|in|on|for|with|that|which|is|are|was|were|it|its|by|as|at|from|into|than)$/i.test(
+        text,
+      )
+    );
+  return /[a-z,]$/.test(text);
+}
+
+/* ── the artifact vocabulary ─────────────────────────────────────────── */
+
+/**
+ * Raw brief/system field labels. These are how a submitted brief is written
+ * down, not how a document speaks to a reader: any of them surviving into
+ * rendered prose is a leak from the source text into the deliverable.
+ */
+const METADATA_LABELS = [
+  "date",
+  "submitted by",
+  "submitted",
+  "prepared by",
+  "prepared for",
+  "author",
+  "client",
+  "version",
+  "run id",
+  "session id",
+  "run date",
+  "brief id",
+  "word count",
+  "status",
+  "source",
+  "the core challenge",
+  "core challenge",
+  "brand facts",
+  "business context",
+  "target audience",
+  "the ask",
+  "deliverable",
+  "objective type",
+  "strategic objective",
+];
+
+const CLEAN_PATTERNS: Array<[RegExp, string]> = [
+  [
+    new RegExp(`(?:^|[.\\u2022\\u2014|]\\s|\\s{2,})(?:\\*\\*)?(${METADATA_LABELS.join("|")})(?:\\*\\*)?\\s*:`, "i"),
+    "raw brief metadata label",
+  ],
+  [/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i, "run/session UUID"],
+  [/\b\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/, "ISO timestamp"],
+  [/\bRE-?RUN\s+UNDER\b|\bCORRECTED\s+ANCHORS\b|\bANCHOR\s+CORRECTION\b/i, "audit-trail note"],
+  [
+    /\b(AUDIT DATE|AUDIT TRAIL|TOTAL FLAGS RAISED|SELF[-\s]?AUDIT|STAGE \d+[A-Z]? OUTPUT|RAW OUTPUT|SYSTEM PROMPT|PRESENTATION ORDER LOG)\b/i,
+    "pipeline bookkeeping label",
+  ],
+  [/CANDIDATE SET\s*[—–-]\s*(?:select|choose) one|\b[A-Z]\s*[·•]\s*(?:BASE|BREACH|FUSE|FLASHPOINT)\b/i, "selection UI"],
+  [/(?:^|\s)\*\*[^*\n]{2,80}\*\*/, "unrendered markdown bold"],
+  [/(?:^|\s)#{2,4}\s+[A-Za-z]/, "unrendered markdown heading"],
+  [/\|\s*-{3,}\s*\|/, "unrendered markdown table"],
+  [/\{\{[^}]+\}\}|\$\{[^}]+\}|\[(?:PLACEHOLDER|TODO|TBC|INSERT)[^\]]*\]/i, "unrendered template syntax"],
+  [/_\(\d+\s*w\)_|\bword count\s*:/i, "word-count annotation"],
+];
+
+/** First-person system/process commentary. Never client-facing voice. */
+const VOICE_PATTERNS: RegExp[] = [
+  /\bI (?:cannot|can't|could not|couldn't|am unable|was unable|do not|don't|have not|haven't|will now|should note|must note|note that|apologi[sz]e|need to)\b/i,
+  /\bI(?:'ve| have) (?:not )?(?:been|generated|produced|written|included)\b/i,
+  /\bas an? (?:AI|language model|assistant)\b/i,
+  /\bmy (?:training data|instructions|context window|previous response)\b/i,
+  /\b(?:I|we) (?:cannot|can't) (?:cite|verify|confirm|source)\b/i,
+];
+
+/* ── counting ────────────────────────────────────────────────────────── */
+
+const WORD_NUMBERS: Record<string, number> = {
+  one: 1, two: 2, three: 3, four: 4, five: 5, six: 6,
+  seven: 7, eight: 8, nine: 9, ten: 10, eleven: 11, twelve: 12,
+};
+
+const COUNTED_NOUNS =
+  "propositions?|territories|territory|candidates?|channels?|lenses|dimensions?|directions?|briefs?|findings?|pillars?|engines?|stages?|principles?";
+
+const singular = (noun: string) =>
+  noun
+    .toLowerCase()
+    .replace(/^territories$/, "territory")
+    .replace(/^lenses$/, "lens")
+    .replace(/s$/, "");
+
+const numberOf = (token: string) =>
+  /^\d+$/.test(token) ? Number(token) : (WORD_NUMBERS[token.toLowerCase()] ?? NaN);
+
+interface StatedCount {
+  noun: string;
+  n: number;
+  quote: string;
+}
+
+function statedCounts(text: string): StatedCount[] {
+  const re = new RegExp(
+    `\\b(\\d{1,3}|${Object.keys(WORD_NUMBERS).join("|")})\\s+(?:distinct\\s+|strategic\\s+|scored\\s+|creative\\s+)?(${COUNTED_NOUNS})\\b`,
+    "gi",
+  );
+  const out: StatedCount[] = [];
+  for (const m of text.matchAll(re)) {
+    const n = numberOf(m[1]);
+    if (!Number.isFinite(n) || n < 2 || n > 60) continue;
+    const at = m.index ?? 0;
+    out.push({ noun: singular(m[2]), n, quote: text.slice(Math.max(0, at - 50), at + 70).trim() });
+  }
+  return out;
+}
+
+/* ── section splitting (works for every builder's markup) ────────────── */
+
+export interface IntegritySection {
+  index: string;
+  title: string;
+  html: string;
+  text: string;
+}
+
+export function splitSections(html: string): IntegritySection[] {
+  const kickers = [
+    ...html.matchAll(/<p class="kicker">(?:<span class="idx">(\d{2})<\/span>)?([^<]*)<\/p>/g),
+  ];
+  const marks = kickers.length
+    ? kickers.map((m) => ({ index: m[1] ?? "", title: strip(m[2]), at: m.index ?? 0, end: (m.index ?? 0) + m[0].length }))
+    : [...html.matchAll(/<h2[^>]*>([\s\S]*?)<\/h2>/g)].map((m) => ({
+        index: "",
+        title: strip(m[1]),
+        at: m.index ?? 0,
+        end: (m.index ?? 0) + m[0].length,
+      }));
+  if (!marks.length) return [{ index: "01", title: "document", html, text: strip(html) }];
+  return marks.map((mk, i) => {
+    const body = html.slice(mk.end, marks[i + 1]?.at ?? html.length);
+    return {
+      index: mk.index || String(i + 1).padStart(2, "0"),
+      title: mk.title,
+      html: body,
+      text: strip(body),
+    };
+  });
+}
+
+/* ── the certification ───────────────────────────────────────────────── */
+
+export interface IntegrityFinding {
+  section: string;
+  criterion: "COMPLETE" | "CLEAN" | "VOICE" | "CONSISTENT" | "PROMISED";
+  detail: string;
+  /** The offending text, quoted verbatim. */
+  quote: string;
+}
+
+export interface IntegrityOptions {
+  /** Sections whose bodies are historical transcripts of raw stage output. */
+  transcriptSections?: readonly string[];
+  /** Additional clean-check exemptions, e.g. a brand whose name is "Date". */
+  allow?: readonly RegExp[];
+}
+
+export function contentIntegrityFindings(
+  html: string,
+  opts: IntegrityOptions = {},
+): IntegrityFinding[] {
+  const findings: IntegrityFinding[] = [];
+  const sections = splitSections(html);
+  const allow = opts.allow ?? [];
+  const exempt = (s: string) => allow.some((re) => re.test(s));
+
+  for (const sec of sections) {
+    const where = sec.index ? `${sec.index} "${sec.title}"` : `"${sec.title}"`;
+
+    // COMPLETE — a body, and prose that finishes its sentence.
+    if (!sec.text) {
+      findings.push({ section: where, criterion: "COMPLETE", detail: "section has no body", quote: "" });
+      continue;
+    }
+    if (/<h[1-6][^>]*>[\s\S]*?<\/h[1-6]>\s*(?:<\/div>\s*)*$/.test(sec.html.trim())) {
+      findings.push({
+        section: where,
+        criterion: "COMPLETE",
+        detail: "section ends on a heading with nothing beneath it",
+        quote: strip(sec.html.slice(-200)),
+      });
+    }
+    const prose = [
+      ...sec.html.replace(/<table[\s\S]*?<\/table>/gi, " ").matchAll(/<(p|li)([^>]*)>([\s\S]*?)<\/\1>/gi),
+    ]
+      .filter((m) => !/class="(?:label|value|num[^"]*|score|n|d|t|kicker|idx|part-label)"/i.test(m[2]))
+      .map((m) => ({ tag: m[1].toLowerCase(), text: strip(m[3]) }))
+      .filter((b) => b.text.split(/\s+/).length > 6);
+    const last = prose[prose.length - 1];
+    if (last && looksCut(last.text, last.tag === "li")) {
+      findings.push({
+        section: where,
+        criterion: "COMPLETE",
+        detail: "section body stops mid-sentence",
+        quote: last.text.slice(-160),
+      });
+    }
+    if (/\w…|\w\.\.\.(?:\s|$)/.test(sec.text)) {
+      const at = sec.text.search(/\w…|\w\.\.\.(?:\s|$)/);
+      findings.push({
+        section: where,
+        criterion: "COMPLETE",
+        detail: "text cut with an ellipsis",
+        quote: sec.text.slice(Math.max(0, at - 90), at + 40),
+      });
+    }
+
+    // CLEAN — no artifact of the machine that made the document.
+    for (const [re, label] of CLEAN_PATTERNS) {
+      const m = sec.text.match(re);
+      if (!m) continue;
+      const at = sec.text.indexOf(m[0]);
+      const quote = sec.text.slice(Math.max(0, at - 60), at + 90);
+      if (exempt(quote)) continue;
+      findings.push({ section: where, criterion: "CLEAN", detail: label, quote });
+    }
+
+    // VOICE — no first-person system commentary, transcripts included.
+    for (const re of VOICE_PATTERNS) {
+      const m = sec.text.match(re);
+      if (!m) continue;
+      const at = sec.text.indexOf(m[0]);
+      findings.push({
+        section: where,
+        criterion: "VOICE",
+        detail: "first-person system voice",
+        quote: sec.text.slice(Math.max(0, at - 60), at + 120),
+      });
+    }
+
+    // PROMISED — "the following three principles" must be followed by three.
+    const promise = sec.text.match(
+      new RegExp(
+        `\\b(?:the following|these|below are|listed below|shown below|all)\\s+(\\d{1,2}|${Object.keys(
+          WORD_NUMBERS,
+        ).join("|")})\\s+(${COUNTED_NOUNS})\\b`,
+        "i",
+      ),
+    );
+    if (promise) {
+      const n = numberOf(promise[1]);
+      const rendered =
+        (sec.html.match(/<li[^>]*>/g) ?? []).length +
+        (sec.html.match(/<h3[^>]*>/g) ?? []).length +
+        (sec.html.match(/<tr[^>]*>/g) ?? []).length;
+      if (Number.isFinite(n) && n >= 2 && rendered < n) {
+        findings.push({
+          section: where,
+          criterion: "PROMISED",
+          detail: `promises ${n} ${promise[2]} but renders ${rendered} item(s)`,
+          quote: promise[0],
+        });
+      }
+    }
+  }
+
+  // CONSISTENT — one number per noun across the whole document. Transcript
+  // sections are historical records of what an earlier stage counted and are
+  // excluded from the comparison, but never from CLEAN or VOICE.
+  const live = sections.filter((s) => !(opts.transcriptSections ?? []).includes(s.index));
+  const byNoun = new Map<string, StatedCount & { section: string }>();
+  for (const sec of live) {
+    for (const c of statedCounts(sec.text)) {
+      const prior = byNoun.get(c.noun);
+      if (!prior) {
+        byNoun.set(c.noun, { ...c, section: sec.index || sec.title });
+        continue;
+      }
+      if (prior.n !== c.n) {
+        findings.push({
+          section: sec.index ? `${sec.index} "${sec.title}"` : `"${sec.title}"`,
+          criterion: "CONSISTENT",
+          detail: `states ${c.n} ${c.noun}(s) while section ${prior.section} states ${prior.n}`,
+          quote: `${prior.quote} ⟷ ${c.quote}`,
+        });
+      }
+    }
+  }
+
+  return findings;
+}
+
+/**
+ * Hard gate. Every builder ends with this call, so no generation path — the
+ * Deliverables cards, the zip bundle, the PDF renderer, the repository view —
+ * can publish a document that fails certification.
+ */
+export function assertPublishable(html: string, label: string, opts: IntegrityOptions = {}): string {
+  const findings = contentIntegrityFindings(html, opts);
+  if (findings.length) {
+    throw new Error(
+      `${label} failed content-integrity certification:\n- ` +
+        findings
+          .slice(0, 15)
+          .map((f) => `[${f.criterion}] section ${f.section}: ${f.detail}${f.quote ? ` — “${f.quote}”` : ""}`)
+          .join("\n- "),
+    );
+  }
+  return html;
+}
