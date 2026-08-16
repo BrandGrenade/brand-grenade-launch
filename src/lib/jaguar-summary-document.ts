@@ -349,10 +349,40 @@ export function buildJaguarSummaryDocument(
   /* 06 — Synthesis */
   const synthesisHtml = `${stageBlock(session, "stage_4_output", 10, 1600)}${stageBlock(session, "stage_6_output", 7, 900)}`;
 
-  /* 07 — Proposition generation */
-  const generationHtml = list(
-    field.slice(0, 10).map((f) => `**${f.proposition}** — ${f.origin}`),
-  );
+  /* 07 — Proposition generation.
+     The locked proposition must be traceable here. When it was refined after
+     the shortlist (so it never appears as a generated candidate), it is listed
+     explicitly and its closest antecedent in the generated field is named. */
+  const lockedSmp = winning.smp?.trim() ?? "";
+  const propKey = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+  const lockedInField =
+    !!lockedSmp &&
+    field.some((f) => {
+      const a = propKey(f.proposition);
+      const b = propKey(lockedSmp);
+      return !!a && !!b && (a.includes(b) || b.includes(a));
+    });
+  const antecedent = lockedInField ? null : nearestAntecedent(lockedSmp, field, str(session, "stage_10_output"));
+  const generationHtml = `${list([
+    ...field.slice(0, 10).map((f) => `**${f.proposition}** — ${f.origin}`),
+    lockedInField || !lockedSmp
+      ? null
+      : `**${lockedSmp}** — Refined out of the shortlist above after Stage 12, then re-scored independently at Stage 10 on its own wording. This is the locked proposition carried through the rest of this document.`,
+  ])}${
+    lockedInField || !lockedSmp
+      ? ""
+      : callout(
+          "How the winning proposition got here",
+          `${p(
+            `"${lockedSmp}" is not a standalone entry in the generated field. It is a refinement written after the shortlist had been scored${
+              antecedent ? `, closest to the shortlisted candidate "${antecedent}"` : ""
+            } — the same concealment truth, compressed into a shorter, ownable form.`,
+          )}${p(
+            "Because it was written after the original Stage 10 pass, it was put back through the full six-dimension framework and the same hard floors as an independent re-score, recorded in the following sections.",
+          )}`,
+        )
+  }`;
+
 
   /* 08 — Distinctiveness testing */
   const distinctHtml = `${stageBlock(session, "stage_9_leftofcentre_output", 8, 1200)}${stageBlock(
