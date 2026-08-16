@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { JaguarCreativeExtras } from "./jaguar-summary-document";
+import { extractChannelRole } from "./jaguar-sources";
 
 export const JAGUAR_REBUILD_SESSION_ID = "6ab4ea96-7c3a-4e0a-91a9-24b601752b35";
 
@@ -103,14 +104,10 @@ export async function fetchJaguarSummaryExtras(
 
   const rawChannels = session.stage_21_outputs;
   const channels = rawChannels && typeof rawChannels === "object" && !Array.isArray(rawChannels)
-    ? Object.entries(rawChannels as Record<string, string>).map(([name, body]) => {
-        const role = String(body)
-          .split("\n")
-          .map((line) => line.trim())
-          .filter((line) => line.length > 50 && !line.startsWith("#") && !line.startsWith(">"))
-          .find((line) => /channel|this is where|carries|role|reaches|audience/i.test(line));
-        return { name, role: role ?? null };
-      })
+    ? Object.entries(rawChannels as Record<string, string>).map(([name, body]) => ({
+        name,
+        role: extractChannelRole(String(body)),
+      }))
     : [];
 
   return {

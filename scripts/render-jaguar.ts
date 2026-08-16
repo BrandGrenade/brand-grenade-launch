@@ -4,6 +4,7 @@ import {
   buildJaguarSummaryDocument,
   type JaguarCreativeExtras,
 } from "../src/lib/jaguar-summary-document";
+import { extractChannelRole } from "../src/lib/jaguar-sources";
 
 const sb = createClient(process.env.VITE_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
 const id = process.argv[2] ?? "6ab4ea96-7c3a-4e0a-91a9-24b601752b35";
@@ -80,24 +81,12 @@ const { count: promptCount } = await sb
   );
 
 const raw21 = (s as any).stage_21_outputs;
-const META =
-  /^(GOVERNING FRAMEWORK|BEFORE|THIS BRIEF|CLASSIFICATION|FRAMEWORK|THE PRIMARY INPUT|NOTE)/i;
 const channels =
   raw21 && typeof raw21 === "object" && !Array.isArray(raw21)
-    ? Object.entries(raw21 as Record<string, string>).map(([name, body]) => {
-        const sentences = String(body)
-          .split("\n")
-          .map((l) => l.trim())
-          .filter((l) => l.length > 60 && !l.startsWith("#") && !l.startsWith(">"))
-          .flatMap((l) => l.split(/(?<=\.)\s+/))
-          .map((s) => s.trim())
-          .filter((s) => s.length > 50 && !META.test(s));
-        const role =
-          sentences.find((s) => /channel|this is where|carries|role|reaches|audience/i.test(s)) ??
-          sentences[0] ??
-          null;
-        return { name, role };
-      })
+    ? Object.entries(raw21 as Record<string, string>).map(([name, body]) => ({
+        name,
+        role: extractChannelRole(String(body)),
+      }))
     : [];
 
 const extras: JaguarCreativeExtras = {
