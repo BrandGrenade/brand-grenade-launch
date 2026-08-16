@@ -143,8 +143,19 @@ function defList(rows: Array<{ label: string; body?: string | null }>): string {
  */
 const clampText = safeClamp;
 
+/** `clean` collapses all whitespace, so it is applied line by line — a stage
+ * flattened to a single line loses every heading boundary. */
+function cleanBlock(text: string): string {
+  return text
+    .split("\n")
+    .map((line) => clean(line))
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
 function stageBlock(session: ExecSessionRow, key: string, units: number, chars: number): string {
-  const raw = clean(str(session, key));
+  const raw = cleanBlock(str(session, key));
   if (!raw) return "";
   // condenseStage can pull a heading onto the end of the previous line; put it
   // back on its own line so no raw "## Heading" markup reaches the page.
