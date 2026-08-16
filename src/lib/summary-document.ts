@@ -627,7 +627,7 @@ export function buildSummaryDocument(
     ? `${outcomeLedger}${p(
         impossibility.generic
           ? ""
-          : `Candidate pressure-tested: **${impossibility.heading.replace(/\.$/, "")}** — ${outcomeLabel(profiled)}.`,
+          : `Candidate pressure-tested: **${impossibility.heading.replace(/\.$/, "")}** — ${profiledLabel}.`,
       )}${p(
         impossibility.foundation,
       )}${
