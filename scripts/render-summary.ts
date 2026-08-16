@@ -1,10 +1,10 @@
 import { createClient } from "@supabase/supabase-js";
 import { writeFileSync, mkdirSync } from "fs";
 import {
-  buildJaguarSummaryDocument,
-  type JaguarCreativeExtras,
-} from "../src/lib/jaguar-summary-document";
-import { extractChannelRole } from "../src/lib/jaguar-sources";
+  buildSummaryDocument,
+  type SummaryCreativeExtras,
+} from "../src/lib/summary-document";
+import { extractChannelRole } from "../src/lib/summary-sources";
 
 const sb = createClient(process.env.VITE_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
 const id = process.argv[2] ?? "6ab4ea96-7c3a-4e0a-91a9-24b601752b35";
@@ -89,7 +89,7 @@ const channels =
       }))
     : [];
 
-const extras: JaguarCreativeExtras = {
+const extras: SummaryCreativeExtras = {
   lensesSwept: new Set(sweepRun.map((d: any) => d.lens_name)).size || 37,
   directionsGenerated: sweepRun.length,
   directionsRated: rated.length,
@@ -102,6 +102,6 @@ const extras: JaguarCreativeExtras = {
 };
 
 mkdirSync("/tmp/browser/jaguar", { recursive: true });
-const html = buildJaguarSummaryDocument(s as never, extras);
+const html = buildSummaryDocument(s as never, extras);
 writeFileSync("/tmp/browser/jaguar/summary.html", html);
 console.log("written", html.length, "chars; shortlist", shortlist.length, "channels", channels.length);

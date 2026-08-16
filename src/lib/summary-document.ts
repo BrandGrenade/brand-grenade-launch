@@ -41,7 +41,7 @@ import {
   normaliseMd,
   safeClamp,
   sentences,
-} from "./jaguar-sources";
+} from "./summary-sources";
 import {
   clean,
   firstSentencesOf,
@@ -58,7 +58,7 @@ import {
 
 /* ─────────────────────────────────────────────────────────── inputs ── */
 
-export interface JaguarShortlistItem {
+export interface SummaryShortlistItem {
   lens: string;
   line: string;
   expression?: string | null;
@@ -68,13 +68,13 @@ export interface JaguarShortlistItem {
   winner?: boolean;
 }
 
-export interface JaguarCreativeExtras {
+export interface SummaryCreativeExtras {
   lensesSwept: number;
   directionsGenerated: number;
   directionsRated: number;
   promptsWritten?: number;
   guidance?: string | null;
-  shortlist: JaguarShortlistItem[];
+  shortlist: SummaryShortlistItem[];
   /** Rating rationales recorded against the winning direction. */
   winnerReasons?: Array<{ title: string; detail?: string }>;
   /** Channel name → its strategic role in the plan (one line, from the brief). */
@@ -83,7 +83,7 @@ export interface JaguarCreativeExtras {
   researchSources?: number;
 }
 
-const EMPTY_EXTRAS: JaguarCreativeExtras = {
+const EMPTY_EXTRAS: SummaryCreativeExtras = {
   lensesSwept: 0,
   directionsGenerated: 0,
   directionsRated: 0,
@@ -372,9 +372,9 @@ function band(title: string, stats: Stat[]): string {
 
 /* ─────────────────────────────────────────────────────────── builder ── */
 
-export function buildJaguarSummaryDocument(
+export function buildSummaryDocument(
   session: ExecSessionRow,
-  extras: JaguarCreativeExtras = EMPTY_EXTRAS,
+  extras: SummaryCreativeExtras = EMPTY_EXTRAS,
 ): string {
   const brand = (str(session, "brand_name") || "Brand").trim();
   const category = str(session, "category").trim();

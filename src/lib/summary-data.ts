@@ -1,6 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
-import type { JaguarCreativeExtras } from "./jaguar-summary-document";
-import { extractChannelRole } from "./jaguar-sources";
+import type { SummaryCreativeExtras } from "./summary-document";
+import { extractChannelRole } from "./summary-sources";
 
 export const JAGUAR_REBUILD_SESSION_ID = "6ab4ea96-7c3a-4e0a-91a9-24b601752b35";
 
@@ -20,7 +20,7 @@ function rating(direction: DirectionRow, category: string, field = "rating"): st
 
 export async function fetchJaguarSummaryExtras(
   session: Record<string, unknown>,
-): Promise<JaguarCreativeExtras> {
+): Promise<SummaryCreativeExtras> {
   const sessionId = typeof session.id === "string" ? session.id : "";
   if (sessionId !== JAGUAR_REBUILD_SESSION_ID) {
     return { lensesSwept: 0, directionsGenerated: 0, directionsRated: 0, shortlist: [] };
