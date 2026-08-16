@@ -87,34 +87,54 @@ const METADATA_LABELS = [
   "strategic objective",
 ];
 
+/**
+ * A bookkeeping label is only a leak when it is written as a label: the label
+ * word in caps or title case, immediately followed by a colon or em-dash.
+ * "…a documented audit trail…" in prose is the phrase, not the artifact.
+ */
+const LABELLED = (words: string) =>
+  new RegExp(`(?:^|[.\\u2022\\u2014|]\\s|\\s{2,}|\\n)(?:\\*\\*)?(?:${words})(?:\\*\\*)?\\s*(?::|\\s—\\s)`);
+
 const CLEAN_PATTERNS: Array<[RegExp, string]> = [
-  [
-    new RegExp(`(?:^|[.\\u2022\\u2014|]\\s|\\s{2,})(?:\\*\\*)?(${METADATA_LABELS.join("|")})(?:\\*\\*)?\\s*:`, "i"),
-    "raw brief metadata label",
-  ],
+  [LABELLED(METADATA_LABELS.map((l) => l.replace(/ /g, "\\s")).join("|")), "raw brief metadata label"],
   [/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i, "run/session UUID"],
   [/\b\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/, "ISO timestamp"],
-  [/\bRE-?RUN\s+UNDER\b|\bCORRECTED\s+ANCHORS\b|\bANCHOR\s+CORRECTION\b/i, "audit-trail note"],
+  [/\bRE-?RUN\s+UNDER\s+CORRECTED\s+ANCHORS\b|\bANCHOR\s+CORRECTION\b/i, "audit-trail note"],
   [
-    /\b(AUDIT DATE|AUDIT TRAIL|TOTAL FLAGS RAISED|SELF[-\s]?AUDIT|STAGE \d+[A-Z]? OUTPUT|RAW OUTPUT|SYSTEM PROMPT|PRESENTATION ORDER LOG)\b/i,
+    LABELLED(
+      "AUDIT\\s?DATE|AUDIT\\s?TRAIL|PIPELINE\\s+DOCUMENTS\\s+REVIEWED|TOTAL\\s+FLAGS\\s+RAISED|SELF[-\\s]?AUDIT|STAGE\\s+\\d+[A-Z]?\\s+OUTPUT|RAW\\s+OUTPUT|SYSTEM\\s+PROMPT|PRESENTATION\\s+ORDER\\s+LOG|SELECTED\\s+SMP|COURAGE\\s+ASSESSMENT|DERIVATION\\s+CHAIN\\s+INTEGRITY",
+    ),
     "pipeline bookkeeping label",
   ],
   [/CANDIDATE SET\s*[—–-]\s*(?:select|choose) one|\b[A-Z]\s*[·•]\s*(?:BASE|BREACH|FUSE|FLASHPOINT)\b/i, "selection UI"],
-  [/(?:^|\s)\*\*[^*\n]{2,80}\*\*/, "unrendered markdown bold"],
+  [/(?:^|\s)\*\*[^*\n]{2,80}\*\*|\*\*/, "unrendered markdown bold"],
   [/(?:^|\s)#{2,4}\s+[A-Za-z]/, "unrendered markdown heading"],
   [/\|\s*-{3,}\s*\|/, "unrendered markdown table"],
   [/\{\{[^}]+\}\}|\$\{[^}]+\}|\[(?:PLACEHOLDER|TODO|TBC|INSERT)[^\]]*\]/i, "unrendered template syntax"],
   [/_\(\d+\s*w\)_|\bword count\s*:/i, "word-count annotation"],
+  [/\(retry\s+\d+\)|_Generated\s*:/i, "generation telemetry"],
 ];
 
-/** First-person system/process commentary. Never client-facing voice. */
+/**
+ * First-person system/process commentary. Audience verbatims are written in
+ * the first person by design, so a match inside quotation marks is speech,
+ * not system voice, and is exempt.
+ */
 const VOICE_PATTERNS: RegExp[] = [
-  /\bI (?:cannot|can't|could not|couldn't|am unable|was unable|do not|don't|have not|haven't|will now|should note|must note|note that|apologi[sz]e|need to)\b/i,
-  /\bI(?:'ve| have) (?:not )?(?:been|generated|produced|written|included)\b/i,
+  /\bI (?:cannot|can't|could not|couldn't|am unable|was unable|will now|should note|must note|apologi[sz]e)\b/i,
+  /\bI(?:'ve| have) (?:not )?(?:generated|produced|written|included|selected)\b/i,
   /\bas an? (?:AI|language model|assistant)\b/i,
   /\bmy (?:training data|instructions|context window|previous response)\b/i,
-  /\b(?:I|we) (?:cannot|can't) (?:cite|verify|confirm|source)\b/i,
+  /\b(?:I|we) (?:cannot|can't|could not) (?:cite|verify|confirm|source)\b/i,
 ];
+
+/** True when the match sits inside a quoted verbatim. */
+function insideQuote(text: string, at: number): boolean {
+  const before = text.slice(0, at);
+  const opens = (before.match(/["“]/g) ?? []).length;
+  const closes = (before.match(/["”]/g) ?? []).length;
+  return opens > closes || /["“][^"”]{0,400}$/.test(before);
+}
 
 /* ── counting ────────────────────────────────────────────────────────── */
 
