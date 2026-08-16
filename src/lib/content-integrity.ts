@@ -295,6 +295,7 @@ export function contentIntegrityFindings(
       const m = sec.text.match(re);
       if (!m) continue;
       const at = sec.text.indexOf(m[0]);
+      if (insideQuote(sec.text, at)) continue;
       findings.push({
         section: where,
         criterion: "VOICE",
