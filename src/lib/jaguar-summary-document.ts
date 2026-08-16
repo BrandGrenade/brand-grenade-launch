@@ -856,19 +856,23 @@ export function buildJaguarSummaryDocument(
     },
   ];
 
-  const body = `${cover({
-    brand: "BRAND GRENADE",
-    label: "Brand Strategy and Creative Intelligence Summary",
-    title: `${brand} — Brand Strategy and Creative Intelligence Summary`,
-    subtitle: category || undefined,
-    confidential: true,
-  })}
-${tableOfContents(defs)}
-${renderSections(defs)}`;
+  // Assembly order is literal and final: cover, contents, every sealed section
+  // in order, then the shell — which writes the footer after the body, always
+  // last. Nothing is inserted at a fixed position and no pass rewrites the
+  // finished string, so no content can appear after the closing footer line.
+  const body = [
+    cover({
+      brand: "BRAND GRENADE",
+      label: "Brand Strategy and Creative Intelligence Summary",
+      title: `${brand} — Brand Strategy and Creative Intelligence Summary`,
+      subtitle: category || undefined,
+      confidential: true,
+    }),
+    tableOfContents(defs),
+    renderSections(defs),
+  ].join("\n");
 
-  return sealSectionBoundaries(
-    stripSelectionArtifacts(
-      docShell(
+  return docShell(
     {
       title: `Brand Strategy and Creative Intelligence Summary — ${brand}`,
       toolbarNote: `${brand} — Brand Strategy and Creative Intelligence Summary`,
@@ -876,9 +880,7 @@ ${renderSections(defs)}`;
       footerHtml:
         "Brand Grenade Strategy Intelligence System — Confidential. Assembled from stored session data only; the locked creative idea is reproduced verbatim.",
     },
-        body,
-      ),
-    ),
-    { frontMatter: [], appendix: [] } as never,
+    body,
   );
 }
+
