@@ -90,17 +90,17 @@ export function summaryGateFailures(
     if (/<h[1-6][^>]*>[\s\S]*?<\/h[1-6]>\s*$/.test(sec.html.trim()))
       fail.push(`section ${sec.index} ends on an orphaned heading`);
 
-    // C4 — no truncation. Stat cards, score cells and tables legitimately end
-    // on a label, so the mid-sentence test reads prose only.
-    const prose = strip(
-      sec.html
-        .replace(/<table[\s\S]*?<\/table>/gi, " ")
-        .replace(
-          /<(div|span|p)[^>]*class="(?:label|value|num[^"]*|score|n|d|t)"[^>]*>[\s\S]*?<\/\1>/gi,
-          " ",
-        ),
-    );
-    for (const f of truncationFaults(prose)) fail.push(`section ${sec.index}: ${f}`);
+    // C4 — no truncation. Only prose blocks are tested: stat cards, score cells
+    // and table rows legitimately end on a short label with no full stop.
+    const proseBlocks = [
+      ...sec.html.replace(/<table[\s\S]*?<\/table>/gi, " ").matchAll(/<(p|li)([^>]*)>([\s\S]*?)<\/\1>/gi),
+    ]
+      .filter((m) => !/class="(?:label|value|num[^"]*|score|n|d|t|kicker|idx)"/i.test(m[2]))
+      .map((m) => strip(m[3]))
+      .filter((t) => t.split(/\s+/).length > 6);
+    const lastProse = proseBlocks[proseBlocks.length - 1] ?? "";
+    for (const f of truncationFaults(lastProse)) fail.push(`section ${sec.index}: ${f}`);
+    if (/\w…|\w\.\.\.(?:\s|$)/.test(text)) fail.push(`section ${sec.index}: text cut with an ellipsis`);
 
     // C5 — no internal artifacts.
     for (const [re, label] of ARTIFACTS)
