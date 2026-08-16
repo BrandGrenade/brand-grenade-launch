@@ -178,10 +178,10 @@ function nearestAntecedent(
   for (const item of field) {
     const w = words(item.proposition);
     if (!w.length) continue;
-    const hits = w.filter((x) => rationale.includes(x)).length / w.length;
+    const hits = w.filter((x) => rationale.includes(x.slice(0, 5))).length / w.length;
     if (!best || hits > best.score) best = { text: item.proposition, score: hits };
   }
-  return best && best.score >= 0.5 ? best.text : null;
+  return best && best.score >= 0.6 ? best.text : null;
 }
 
 function stageBlock(session: ExecSessionRow, key: string, units: number, chars: number): string {
