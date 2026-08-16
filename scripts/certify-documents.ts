@@ -23,7 +23,8 @@ import { buildPhase1Document } from "../src/lib/phase1-document-builder";
 import { buildPhase2Document } from "../src/lib/phase2-document-generator";
 import { buildFullRunDocument } from "../src/lib/full-run-document";
 import { summaryExtras } from "./summary-extras";
-import { contentIntegrityFindings, splitSections } from "../src/lib/content-integrity";
+import { contentIntegrityFindings, splitSections, type IntegrityOptions } from "../src/lib/content-integrity";
+import { DOCUMENT_SPECS } from "../src/lib/document-spec";
 
 const sb = createClient(process.env.VITE_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
 const OUT = "/tmp/certify";
@@ -47,30 +48,42 @@ const live = ((rows ?? []) as Row[]).filter(
 interface DocJob {
   label: string;
   build: (row: Row, extra: Row) => string;
+  /** The same certification context the builder itself enforces. */
+  opts?: IntegrityOptions;
 }
+
+/** Minto documents compare counts across their front matter only. */
+const mintoOpts = (spec: { frontMatter: Array<{ index: string }>; appendix: Array<{ index: string }> }): IntegrityOptions => ({
+  narrativeSections: spec.frontMatter.map((f) => f.index),
+  transcriptSections: spec.appendix.map((a) => a.index),
+});
+
+/** Stage-transcript documents: counts belong to the model output, not assembly. */
+const transcriptOpts: IntegrityOptions = { narrativeSections: [] };
 
 function jobsFor(row: Row): DocJob[] {
   const jobs: DocJob[] = [
-    { label: "Board Strategy Recommendation", build: (r) => buildBoardStrategyDocument(r as never) },
-    { label: "Consulting Delivery", build: (r) => buildConsultingDeliveryDocument(r as never) },
-    { label: "Master Detonation Brief (Minto)", build: (r) => buildMasterDetonationDocument(r as never) },
-    { label: "Agency Strategy Platform", build: (r) => buildPhase1Document(r as never, "agency") },
-    { label: "Brand Strategy Workshop Guide", build: (r) => buildPhase1Document(r as never, "workshop") },
-    { label: "Full Pipeline Record", build: (r) => buildFullRunDocument(r as never) },
+    { label: "Board Strategy Recommendation", build: (r) => buildBoardStrategyDocument(r as never), opts: mintoOpts(DOCUMENT_SPECS.board_strategy) },
+    { label: "Consulting Delivery", build: (r) => buildConsultingDeliveryDocument(r as never), opts: mintoOpts(DOCUMENT_SPECS.consulting_delivery) },
+    { label: "Master Detonation Brief (Minto)", build: (r) => buildMasterDetonationDocument(r as never), opts: mintoOpts(DOCUMENT_SPECS.master_detonation) },
+    { label: "Agency Strategy Platform", build: (r) => buildPhase1Document(r as never, "agency"), opts: transcriptOpts },
+    { label: "Brand Strategy Workshop Guide", build: (r) => buildPhase1Document(r as never, "workshop"), opts: transcriptOpts },
+    { label: "Full Pipeline Record", build: (r) => buildFullRunDocument(r as never), opts: transcriptOpts },
   ];
   if (row.stage_18_selected_detonation)
-    jobs.push({ label: "The Detonation", build: (r) => buildPhase2Document(r as never, "the_detonation") });
+    jobs.push({ label: "The Detonation", build: (r) => buildPhase2Document(r as never, "the_detonation"), opts: transcriptOpts });
   if (row.stage_19_output)
-    jobs.push({ label: "Activation Architecture", build: (r) => buildPhase2Document(r as never, "activation_architecture") });
+    jobs.push({ label: "Activation Architecture", build: (r) => buildPhase2Document(r as never, "activation_architecture"), opts: transcriptOpts });
   if (row.stage_20_output)
-    jobs.push({ label: "Master Detonation Brief", build: (r) => buildPhase2Document(r as never, "master_brief") });
+    jobs.push({ label: "Master Detonation Brief", build: (r) => buildPhase2Document(r as never, "master_brief"), opts: mintoOpts(DOCUMENT_SPECS.master_detonation) });
   if (row.stage_22_brand_architecture)
-    jobs.push({ label: "Brand Architecture", build: (r) => buildPhase2Document(r as never, "brand_architecture") });
+    jobs.push({ label: "Brand Architecture", build: (r) => buildPhase2Document(r as never, "brand_architecture"), opts: transcriptOpts });
   const channels = (row.stage_21_outputs ?? {}) as Record<string, string>;
   for (const ch of Object.keys(channels))
     jobs.push({
       label: `Channel Detonation Brief — ${ch}`,
       build: (r) => buildPhase2Document(r as never, "channel_brief", ch),
+      opts: transcriptOpts,
     });
   return jobs;
 }
@@ -106,16 +119,19 @@ for (const row of live) {
     report.push(`- Summary extras unavailable: ${(e as Error).message}`, "");
   }
 
-  const all: Array<{ label: string; run: () => string }> = [
+  const all: Array<{ label: string; run: () => string; opts?: IntegrityOptions }> = [
     ...(extras
       ? [
           {
             label: "Brand Strategy and Creative Intelligence Summary",
             run: () => buildSummaryDocument(row as never, extras),
+            opts: {
+              narrativeSections: Array.from({ length: 20 }, (_, i) => String(i + 1).padStart(2, "0")),
+            },
           },
         ]
       : []),
-    ...jobs.map((j) => ({ label: j.label, run: () => j.build(row, {}) })),
+    ...jobs.map((j) => ({ label: j.label, run: () => j.build(row, {}), opts: j.opts })),
   ];
 
   for (const doc of all) {
@@ -132,7 +148,7 @@ for (const row of live) {
     writeFileSync(`${OUT}/${row.id}__${doc.label.replace(/[^A-Za-z0-9]+/g, "_")}.html`, html);
 
     const sections = splitSections(html);
-    const findings = contentIntegrityFindings(html);
+    const findings = contentIntegrityFindings(html, doc.opts ?? {});
     const bySection = new Map<string, typeof findings>();
     for (const f of findings) {
       const list = bySection.get(f.section) ?? [];
