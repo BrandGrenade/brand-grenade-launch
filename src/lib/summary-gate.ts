@@ -53,11 +53,15 @@ const ARTIFACTS: Array<[RegExp, string]> = [
  * Whether a prose block reads as cut mid-sentence. Provenance tags this builder
  * writes itself ("— Stage 12 shortlist") are not sentences and never count.
  */
-export function looksCut(text: string): boolean {
+export function looksCut(text: string, listItem = false): boolean {
   if (text.split(/\s+/).length < 7) return false;
   if (/[.!?:;"”’)\]]$/.test(text)) return false;
   if (/(?:shortlist|LOC engine|refinement|Stage\s+\d+[A-Za-z]*|winner|locked)$/i.test(text))
     return false;
+  // A bullet legitimately ends without a full stop, so only a dangling function
+  // word or a trailing comma proves a bullet was cut.
+  if (listItem)
+    return /,$/.test(text) || /\b(?:the|a|an|and|or|but|of|to|in|on|for|with|that|which|is|are|was|were|it|its|by|as|at|from|into|than)$/i.test(text);
   return /[a-z,]$/.test(text);
 }
 

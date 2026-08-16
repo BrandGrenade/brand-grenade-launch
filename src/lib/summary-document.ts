@@ -340,7 +340,7 @@ function closeIncompleteTail(bodyHtml: string): string {
   const closeAt = bodyHtml.indexOf(`</${tag}>`, openAt);
   if (closeAt < 0) return bodyHtml;
   const inner = bodyHtml.slice(bodyHtml.indexOf(">", openAt) + 1, closeAt);
-  if (!looksCut(strip(inner))) return bodyHtml;
+  if (!looksCut(strip(inner), tag === "li")) return bodyHtml;
   // The incomplete block is removed whole — never re-cut, never completed.
   const after = bodyHtml.slice(closeAt + `</${tag}>`.length);
   return `${bodyHtml.slice(0, openAt)}${after}${CUT_NOTE}`;
