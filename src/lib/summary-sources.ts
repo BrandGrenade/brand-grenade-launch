@@ -125,7 +125,7 @@ export interface DetonationCandidate {
 /** The three Detonation candidates written at Stage 18. */
 export function extractDetonationCandidates(stage18: string): DetonationCandidate[] {
   const text = normaliseMd(stage18);
-  const marks = [...text.matchAll(/^\s*#{0,4}\s*DETONATION (ONE|TWO|THREE)\b.*$/gim)];
+  const marks = [...text.matchAll(/^\s*#{0,4}\s*DETONATION (?:CANDIDATE\s+)?(ONE|TWO|THREE)\b.*$/gim)];
   const out: DetonationCandidate[] = [];
   const byOrdinal = new Map<string, DetonationCandidate>();
   marks.forEach((m, i) => {
@@ -318,4 +318,116 @@ export function extractImpossibilityAnalysis(
   }
 
   return { heading: block.heading, generic: GENERIC.test(key(block.heading)), foundation, rivals, proof };
+}
+
+/**
+ * Every named strategic territory in a Stage 7 output. Used to build the
+ * foreign-marker set: a territory name owned by another session must never
+ * appear in this session's document.
+ */
+export function extractTerritoryNames(stage7: unknown): string[] {
+  if (typeof stage7 !== "string" || !stage7.trim()) return [];
+  const names = mdBlocks(stage7)
+    .map((b) => b.heading.replace(/^territory\s*\d*\s*[:—–-]\s*/i, "").replace(/["“”]/g, "").trim())
+    // Section labels a stage writes about itself are not territory names.
+    .filter((h) => !/^(overview|summary|introduction|conclusion|verdict|assessment|analysis|the territories|territories|recommendation|next steps)$/i.test(h));
+  return [...new Set(names)].filter((n) => n.length > 8 && n.split(/\s+/).length <= 12);
+}
+
+/**
+ * Markers owned by other sessions, with anything this session legitimately
+ * says itself removed — a name shared by two sessions is not contamination.
+ */
+export function buildForeignMarkers(
+  others: Array<Record<string, unknown>>,
+  ownCorpus: string,
+): string[] {
+  const own = ownCorpus.toLowerCase();
+  const raw = others.flatMap((row) => [
+    typeof row.selected_smp === "string" ? row.selected_smp : "",
+    typeof row.locked_campaign_line === "string" ? row.locked_campaign_line : "",
+    ...extractTerritoryNames(row.stage_7_output),
+  ]);
+  return [...new Set(raw.map((v) => v.trim()).filter((v) => v.length > 12))].filter(
+    (v) => !own.includes(v.toLowerCase()),
+  );
+}
+
+/** All stage text a session owns, for own-content comparison. */
+export function ownStageCorpus(session: Record<string, unknown>): string {
+  return Object.entries(session)
+    .filter(([k, v]) => /^stage_/.test(k) && v != null)
+    .map(([, v]) => (typeof v === "string" ? v : JSON.stringify(v)))
+    .join("\n");
+}
+
+export interface SelectedDetonation {
+  line: string;
+  statement: string;
+  rationale: string;
+}
+
+/**
+ * The Stage 18 Detonation the session actually selected, read whole.
+ *
+ * Sessions that ran before the Creative Engine existed have no locked big
+ * idea; their creative decision is the selected Detonation. Section 17 falls
+ * back to this so the document states what was actually chosen rather than
+ * printing an empty section.
+ */
+export function extractSelectedDetonation(
+  stage18: string,
+  selectedStatement = "",
+  selectedLine = "",
+): SelectedDetonation | null {
+  if (!stage18?.trim()) return null;
+  const text = normaliseMd(stage18);
+  const marks = [...text.matchAll(/^\s*#{0,4}\s*DETONATION (?:CANDIDATE\s+)?(ONE|TWO|THREE)\b.*$/gim)];
+  if (!marks.length) return null;
+
+  const blocks = marks.map((m, i) => ({
+    ordinal: m[1].toUpperCase(),
+    body: text.slice(m.index! + m[0].length, marks[i + 1]?.index ?? text.length),
+  }));
+
+  const needle = selectedStatement.replace(/\s+/g, " ").trim().slice(0, 70).toLowerCase();
+  const lineNeedle = selectedLine.replace(/\s+/g, " ").trim().toLowerCase();
+  const ordinalFromLabel = lineNeedle.match(/^detonation (one|two|three)$/)?.[1]?.toUpperCase();
+  const chosen =
+    (needle &&
+      blocks.find((b) => b.body.replace(/\s+/g, " ").toLowerCase().includes(needle))) ||
+    (ordinalFromLabel && blocks.find((b) => b.ordinal === ordinalFromLabel)) ||
+    (lineNeedle &&
+      !ordinalFromLabel &&
+      blocks.find((b) => b.body.toLowerCase().includes(lineNeedle))) ||
+    blocks[blocks.length - 1];
+  if (!chosen) return null;
+
+  const fields = labelledBlocks(chosen.body);
+  const clean = (v: string) => (v ?? "").replace(/\*\*/g, "").trim();
+  let line = clean((fields["THE DETONATION LINE"] ?? "").split("\n")[0]).replace(
+    /^["“]|["”]$/g,
+    "",
+  );
+  if (!line) {
+    // Some sessions title the Detonation on its own line instead of labelling it.
+    line =
+      chosen.body
+        .split("\n")
+        .map((l) => clean(l))
+        .find((l) => l && !/:/.test(l) && l.length < 80) ?? "";
+    if (/^detonation (one|two|three)$/i.test(line)) line = "";
+  }
+  if (ordinalFromLabel && !line) line = "";
+
+  const rationale = clean(fields["WHY THIS DETONATION SERVES THE SMP"] ?? "")
+    .split(/\n(?=[A-Z][A-Z '’/&-]{6,}:)/)[0]
+    .replace(/\s+/g, " ")
+    .trim();
+  const statement =
+    clean(selectedStatement) ||
+    clean(fields["THE DETONATION STATEMENT"] ?? "").replace(/\s+/g, " ").trim();
+
+  if (!line && !statement && !rationale) return null;
+  return { line, statement, rationale };
 }

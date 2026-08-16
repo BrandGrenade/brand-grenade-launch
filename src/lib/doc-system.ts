@@ -181,7 +181,11 @@ body {
   h1, h2, h3, h4, .kicker { break-after: avoid; page-break-after: avoid; }
   .stat-grid, .stat, .pull, .cmp, .cmp thead, .cmp tr, .callout, .toc, .footer { break-inside: avoid; page-break-inside: avoid; }
   .cmp { break-inside: auto; page-break-inside: auto; }
-  .cmp thead { display: table-header-group; }
+  .cmp thead { display: table-header-group; break-after: avoid; page-break-after: avoid; }
+  /* A repeated header must never be the last thing on a page: keep the first
+     body row with it, so no page ends on a column header with no rows. */
+  .cmp tbody tr:first-child { break-before: avoid; page-break-before: avoid; }
+
   p, li { orphans: 3; widows: 3; }
 }
 

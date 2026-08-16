@@ -1,6 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { SummaryCreativeExtras } from "./summary-document";
-import { extractChannelRole } from "./summary-sources";
+import { buildForeignMarkers, extractChannelRole, ownStageCorpus } from "./summary-sources";
 
 type DirectionRow = {
   id: string;
@@ -110,19 +110,16 @@ export async function fetchSummaryExtras(
       }))
     : [];
 
-  // Every other session's own propositions/lines — the gate rejects the
-  // document if any of them appear in it.
+  // Every other session's own propositions, campaign lines and Stage 7
+  // territory names — the gate rejects the document if any appear in it.
   const { data: others } = await supabase
     .from("sessions")
-    .select("id, selected_smp, locked_campaign_line, locked_big_idea_lens")
+    .select("id, selected_smp, locked_campaign_line, stage_7_output")
     .neq("id", sessionId);
-  const foreignMarkers = [
-    ...new Set(
-      (others ?? []).flatMap((row) =>
-        [row.selected_smp, row.locked_campaign_line].map((v) => (v ?? "").trim()),
-      ),
-    ),
-  ].filter((v) => v.length > 12);
+  const foreignMarkers = buildForeignMarkers(
+    (others ?? []) as Array<Record<string, unknown>>,
+    ownStageCorpus(session),
+  );
 
   return {
     foreignMarkers,
