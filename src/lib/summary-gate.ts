@@ -185,5 +185,19 @@ export function gateSummary(
   // Sections 21+ are stage transcripts; the narrative sections are 01–20.
   return certifyDocument(fullHtml, "Brand Strategy and Creative Intelligence Summary", {
     narrativeSections: sections.filter((s) => Number(s.index) <= 20).map((s) => s.index),
+    schemaSections: SUMMARY_SCHEMA,
   });
 }
+
+/** Section 02 renders a fixed brand-facts schema; every field must be real. */
+export const SUMMARY_SCHEMA: Record<string, string[]> = {
+  "02": [
+    "Positioning today",
+    "Product truth",
+    "Audience relationship",
+    "Tone of voice",
+    "Constraints",
+    "Organisational context",
+  ],
+};
+
