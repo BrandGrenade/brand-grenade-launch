@@ -599,7 +599,13 @@ export function buildSummaryDocument(
             o: outcomeLabel(o),
             r:
               o.status === "eliminated"
-                ? wholeSentences(o.reason ?? "Failed the Stage 11 pressure test.", 2, 400)
+                ? wholeSentences(
+                    o.reason ??
+                      `Did not survive ${o.stage ?? "the pressure test"}; not carried into the scored set.`,
+                    2,
+                    400,
+                  )
+
                 : "Held under pressure testing and carried into scoring.",
           },
         })),
