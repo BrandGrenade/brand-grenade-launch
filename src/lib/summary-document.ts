@@ -93,6 +93,9 @@ export interface SummaryCreativeExtras {
   channels?: Array<{ name: string; role?: string | null }>;
   intelligenceReportPresent?: boolean;
   researchSources?: number;
+  /** Propositions, lines and territories owned by OTHER sessions. Checked at
+   *  generation time so no foreign content can reach this document. */
+  foreignMarkers?: string[];
 }
 
 const EMPTY_EXTRAS: SummaryCreativeExtras = {

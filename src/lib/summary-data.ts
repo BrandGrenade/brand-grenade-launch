@@ -113,7 +113,22 @@ export async function fetchSummaryExtras(
       }))
     : [];
 
+  // Every other session's own propositions/lines — the gate rejects the
+  // document if any of them appear in it.
+  const { data: others } = await supabase
+    .from("sessions")
+    .select("id, selected_smp, locked_campaign_line, locked_big_idea_lens")
+    .neq("id", sessionId);
+  const foreignMarkers = [
+    ...new Set(
+      (others ?? []).flatMap((row) =>
+        [row.selected_smp, row.locked_campaign_line].map((v) => (v ?? "").trim()),
+      ),
+    ),
+  ].filter((v) => v.length > 12);
+
   return {
+    foreignMarkers,
     lensesSwept: new Set(sweep.map((direction) => direction.lens_name).filter(Boolean)).size || 37,
     directionsGenerated: sweep.length,
     directionsRated: rated.length,
