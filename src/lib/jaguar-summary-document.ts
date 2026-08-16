@@ -149,6 +149,8 @@ function cleanBlock(text: string): string {
   return text
     .split("\n")
     .map((line) => clean(line))
+    // pipeline bookkeeping fields ("AUDIT DATE — …", "TOTAL FLAGS RAISED — 6")
+    .filter((line) => !/^[A-Z][A-Z /()-]{4,40}\s*[—–-]\s/.test(line))
     .join("\n")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
