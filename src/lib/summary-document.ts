@@ -32,6 +32,7 @@ import {
 import { condenseStage } from "./minto-content";
 import { stripDocumentMetadata } from "./strip-document-metadata";
 import { stripSelectionArtifacts } from "./document-gate";
+import { gateSummary, type GateSectionInput } from "./summary-gate";
 import {
   extractBrandArchitecture,
   extractChannelRole,
@@ -944,6 +945,7 @@ export function buildSummaryDocument(
   // in order, then the shell — which writes the footer after the body, always
   // last. Nothing is inserted at a fixed position and no pass rewrites the
   // finished string, so no content can appear after the closing footer line.
+  const rendered = renderSections(defs);
   const body = [
     cover({
       brand: "BRAND GRENADE",
@@ -953,10 +955,10 @@ export function buildSummaryDocument(
       confidential: true,
     }),
     tableOfContents(defs),
-    renderSections(defs),
+    rendered.html,
   ].join("\n");
 
-  return docShell(
+  const html = docShell(
     {
       title: `Brand Strategy and Creative Intelligence Summary — ${brand}`,
       toolbarNote: `${brand} — Brand Strategy and Creative Intelligence Summary`,
@@ -966,5 +968,15 @@ export function buildSummaryDocument(
     },
     body,
   );
+
+  // Standing gate. Every rule this document has ever broken is checked here,
+  // on every render, for every session.
+  return gateSummary(rendered.sealed, html, {
+    order: defs.map((d) => d.index),
+    lockedSmp: winning.smp?.trim() || selectedSmp,
+    lockedIdea,
+    foreignMarkers: extras.foreignMarkers,
+    requiredProse: ["09", "13", "17"],
+  });
 }
 
