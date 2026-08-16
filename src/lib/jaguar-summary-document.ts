@@ -26,7 +26,18 @@ import {
 } from "./doc-system";
 import { condenseStage } from "./minto-content";
 import { stripDocumentMetadata } from "./strip-document-metadata";
-import { stripSelectionArtifacts } from "./document-gate";
+import { sealSectionBoundaries, stripSelectionArtifacts } from "./document-gate";
+import {
+  extractBrandArchitecture,
+  extractChannelRole,
+  extractDetonationCandidates,
+  extractRecognitionTest,
+  extractWinnerScores,
+  mdBlock,
+  normaliseMd,
+  safeClamp,
+  sentences,
+} from "./jaguar-sources";
 import {
   clean,
   firstSentencesOf,
@@ -83,7 +94,7 @@ const EMPTY_EXTRAS: JaguarCreativeExtras = {
  * section can inherit them.
  */
 function sanitiseSource(text: string): string {
-  return stripDocumentMetadata(text)
+  return normaliseMd(stripDocumentMetadata(text))
     .replace(/={3,}[^=\n]*={3,}/g, " ")
     .replace(/The following inputs have been[^.]*\.\s*/gi, "")
     .replace(/Stage \d+[a-z]? must treat these[^.]*\.\s*/gi, "")
@@ -128,12 +139,7 @@ function defList(rows: Array<{ label: string; body?: string | null }>): string {
  * so a stage stored as one long paragraph blows straight through it — this cuts
  * at the last sentence boundary inside the budget instead.
  */
-function clampText(text: string, maxChars: number): string {
-  if (text.length <= maxChars) return text;
-  const head = text.slice(0, maxChars);
-  const cut = Math.max(head.lastIndexOf(". "), head.lastIndexOf(".\n"), head.lastIndexOf("\n"));
-  return (cut > maxChars * 0.4 ? head.slice(0, cut + 1) : head).trim();
-}
+const clampText = safeClamp;
 
 function stageBlock(session: ExecSessionRow, key: string, units: number, chars: number): string {
   const raw = clean(str(session, key));
@@ -317,25 +323,33 @@ export function buildJaguarSummaryDocument(
     "stage_9_output",
     8,
     1200,
-  )}${stageBlock(session, "stage_11_output", 8, 1200)}`;
+  )}`;
 
 
   /* 09 — Scoring */
-  const scoringHtml = scoring.rows.length
+  const selectedSmp = str(session, "selected_smp").trim();
+  const winnerScores = extractWinnerScores(str(session, "stage_10_output"), selectedSmp);
+  const scoreRows = winnerScores.length
+    ? winnerScores.map((r) => ({
+        dimension: r.dimension,
+        score: r.score,
+        note: safeClamp(sentences(r.rationale, 3), 460),
+      }))
+    : scoring.rows;
+  const scoringHtml = scoreRows.length
     ? `${comparisonTable(
         [
           { key: "d", label: "Dimension" },
           { key: "s", label: "Score", numeric: true },
-          { key: "n", label: "Assessment" },
+          { key: "n", label: "Why it scored there" },
         ],
-        scoring.rows.map((r) => ({ cells: { d: r.dimension, s: r.score, n: r.note } })),
-        scoring.scoredSmp ? `Scored against: ${scoring.scoredSmp}` : undefined,
+        scoreRows.map((r) => ({ cells: { d: r.dimension, s: r.score, n: r.note } })),
+        selectedSmp ? `Scored against: ${selectedSmp}` : scoring.scoredSmp ? `Scored against: ${scoring.scoredSmp}` : undefined,
       )}${
         scoring.composite || scoring.verdict
           ? statGrid(
               [
                 scoring.composite ? { value: scoring.composite, label: "composite score" } : null,
-                scoring.weighted ? { value: scoring.weighted, label: "weighted score" } : null,
                 scoring.verdict ? { value: scoring.verdict, label: "stage 10 verdict" } : null,
               ].filter(Boolean) as Stat[],
             )
@@ -344,10 +358,25 @@ export function buildJaguarSummaryDocument(
     : "";
 
   /* 10 — The winning proposition */
+  const topScore = [...scoreRows].sort(
+    (a, b) => parseInt(b.score ?? "0", 10) - parseInt(a.score ?? "0", 10),
+  )[0];
+  const whyItWon = [
+    scoring.verdict === "PASS"
+      ? `It is the only proposition to clear both hard floors and be carried through Stage 10 scoring${scoring.composite ? ` on a composite of ${scoring.composite}` : ""}.`
+      : "",
+    topScore?.note
+      ? `Its strongest dimension is ${topScore.dimension.toLowerCase()} (${topScore.score}): ${topScore.note}`
+      : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
   const winnerHtml = winning.smp
     ? `${pullQuote(winning.smp, { label: "The proposition that won", variant: "hero" })}${p(
         winning.owns,
-      )}${p(winning.alignment)}`
+      )}${p(winning.alignment)}${
+        whyItWon ? callout("Why this proposition won", p(whyItWon)) : ""
+      }`
     : "";
 
   /* 11 — Not carried forward */
@@ -378,15 +407,31 @@ export function buildJaguarSummaryDocument(
     : stageBlock(session, "stage_13b_output", 9, 1400);
 
   /* 13 — Brand fit */
-  const fitHtml = `${stageBlock(session, "stage_13_output", 9, 1400)}${stageBlock(
-    session,
-    "stage_14_output",
-    6,
-    800,
-  )}`;
+  const s13 = str(session, "stage_13_output");
+  const fitVerdict = mdBlock(s13, /Brand Fit Verdict/i);
+  const fitGuardrails = mdBlock(s13, /Communication Guardrails/i);
+  const fitHtml = fitVerdict || fitGuardrails
+    ? `${fitVerdict ? renderMarkdown(safeClamp(fitVerdict, 2000)) : ""}${
+        fitGuardrails
+          ? `<h3>Communication guardrails</h3>${renderMarkdown(fitGuardrails)}`
+          : ""
+      }`
+    : stageBlock(session, "stage_13_output", 9, 1400);
 
   /* 14 — Territory mapping */
-  const territoryHtml = `${stageBlock(session, "stage_17_output", 10, 1600)}${stageBlock(session, "stage_18_output", 7, 900)}`;
+  const detonations = extractDetonationCandidates(str(session, "stage_18_output"));
+  const territoryHtml = `${stageBlock(session, "stage_17_output", 10, 1600)}${
+    detonations.length
+      ? `<h3>The ${
+          detonations.length === 3 ? "three" : detonations.length
+        } Detonation candidates written against this territory</h3>${defList(
+          detonations.map((d) => ({
+            label: d.line || d.label,
+            body: safeClamp(d.statement, 520),
+          })),
+        )}`
+      : ""
+  }`;
 
   /* 15 — Coherence audit */
   const coherenceHtml = stageBlock(session, "stage_15_output", 8, 1200);
@@ -426,6 +471,7 @@ export function buildJaguarSummaryDocument(
   }`;
 
   /* 17 — The winning creative idea (verbatim, complete) */
+  const recognitionTest = extractRecognitionTest(str(session, "stage_22_output"));
   const creativeHtml = lockedIdea || lockedLine
     ? `${
         lockedLine
@@ -434,7 +480,11 @@ export function buildJaguarSummaryDocument(
               variant: "hero",
             })
           : ""
-      }${lockedIdea ? renderMarkdown(lockedIdea) : ""}`
+      }${lockedIdea ? renderMarkdown(lockedIdea) : ""}${
+        recognitionTest
+          ? `<h3>The recognition test</h3>${renderMarkdown(recognitionTest)}`
+          : ""
+      }`
     : "";
 
   /* 18 — Why it won */
@@ -445,13 +495,26 @@ export function buildJaguarSummaryDocument(
     ? defList(
         channels.map((c) => ({
           label: c.name,
-          body: c.role || "Carries the strategy into market with a dedicated detonation brief.",
+          body:
+            c.role ||
+            "Carries the strategy into market with a dedicated detonation brief.",
         })),
       )
     : "";
 
   /* 20 — Brand architecture and distinctive assets */
-  const architectureHtml = `${stageBlock(session, "stage_22_output", 8, 1200)}${p(firstSentencesOf(str(session, "stage_22_distinctive_assets"), 4))}`;
+  const arch = extractBrandArchitecture(str(session, "stage_22_output"));
+  const architectureHtml = `${p(
+    arch.personality ? `Brand personality: ${arch.personality}` : "",
+  )}${p(arch.reflection ? `Reflection: ${arch.reflection}` : "")}${
+    arch.assets.length
+      ? `<h3>Recommended distinctive assets</h3>${list(arch.assets)}`
+      : ""
+  }${
+    arch.principles.length
+      ? `<h3>Deployment principles</h3>${list(arch.principles)}`
+      : ""
+  }`;
 
   /* 21 — Next step */
   const nextHtml = `${p(recs.condition ? `Condition on activation: ${recs.condition}` : "")}${p(
@@ -618,8 +681,9 @@ export function buildJaguarSummaryDocument(
 ${tableOfContents(defs)}
 ${renderSections(defs)}`;
 
-  return stripSelectionArtifacts(
-    docShell(
+  return sealSectionBoundaries(
+    stripSelectionArtifacts(
+      docShell(
     {
       title: `Brand Strategy and Creative Intelligence Summary — ${brand}`,
       toolbarNote: `${brand} — Brand Strategy and Creative Intelligence Summary`,
@@ -627,7 +691,9 @@ ${renderSections(defs)}`;
       footerHtml:
         "Brand Grenade Strategy Intelligence System — Confidential. Assembled from stored session data only; the locked creative idea is reproduced verbatim.",
     },
-      body,
+        body,
+      ),
     ),
+    { frontMatter: [], appendix: [] } as never,
   );
 }
