@@ -122,15 +122,26 @@ export function extractDetonationCandidates(stage18: string): DetonationCandidat
   const text = normaliseMd(stage18);
   const marks = [...text.matchAll(/^\s*#{0,4}\s*DETONATION (ONE|TWO|THREE)\b.*$/gim)];
   const out: DetonationCandidate[] = [];
+  const byOrdinal = new Map<string, DetonationCandidate>();
   marks.forEach((m, i) => {
     const body = text.slice(m.index! + m[0].length, marks[i + 1]?.index ?? text.length);
     const fields = labelledBlocks(body);
     const line = (fields["THE DETONATION LINE"] ?? "").split("\n")[0].replace(/^["“]|["”]$/g, "").trim();
     const statement = (fields["THE DETONATION STATEMENT"] ?? "").replace(/\s+/g, " ").trim();
     if (line || statement) {
-      out.push({ label: `Detonation ${m[1].toLowerCase()}`, line, statement });
+      // A "DETONATION ONE — REPLACEMENT" block supersedes the original: keep
+      // the last block written for each ordinal, never both.
+      byOrdinal.set(m[1].toUpperCase(), {
+        label: `Detonation ${m[1].toLowerCase()}`,
+        line,
+        statement,
+      });
     }
   });
+  for (const key of ["ONE", "TWO", "THREE"]) {
+    const hit = byOrdinal.get(key);
+    if (hit) out.push(hit);
+  }
   return out;
 }
 

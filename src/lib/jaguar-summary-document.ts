@@ -144,7 +144,10 @@ const clampText = safeClamp;
 function stageBlock(session: ExecSessionRow, key: string, units: number, chars: number): string {
   const raw = clean(str(session, key));
   if (!raw) return "";
+  // condenseStage can pull a heading onto the end of the previous line; put it
+  // back on its own line so no raw "## Heading" markup reaches the page.
   const condensed = condenseStage(raw, { maxUnits: units, maxChars: chars })
+    .replace(/([^\n])\s+(#{2,4}\s)/g, "$1\n\n$2")
     .split("\n\n")
     .map((block) => (block.startsWith("### ") ? block : clampText(block, Math.round(chars * 0.6))))
     .join("\n\n");
@@ -423,7 +426,7 @@ export function buildJaguarSummaryDocument(
   const territoryHtml = `${stageBlock(session, "stage_17_output", 10, 1600)}${
     detonations.length
       ? `<h3>The ${
-          detonations.length === 3 ? "three" : detonations.length
+          ["", "one", "two", "three"][detonations.length] ?? detonations.length
         } Detonation candidates written against this territory</h3>${defList(
           detonations.map((d) => ({
             label: d.line || d.label,
@@ -617,7 +620,7 @@ export function buildJaguarSummaryDocument(
       index: "14",
       kicker: "Expression",
       title: "Territory mapping",
-      lede: "The territory the strategy occupies, and the detonation point chosen within it.",
+      lede: "The territory the strategy occupies, and the Detonation candidates written within it.",
       body: territoryHtml,
     },
     {
