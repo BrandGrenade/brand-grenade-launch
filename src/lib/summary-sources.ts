@@ -548,7 +548,7 @@ export function outcomeFor(
 
 /** "Eliminated at Stage 10" / "Carried forward". */
 export function outcomeLabel(outcome?: TerritoryOutcome): string {
-  if (!outcome) return "Outcome not recorded";
+  if (!outcome) return "No elimination recorded against it";
   return outcome.status === "eliminated"
     ? `Eliminated at ${outcome.stage ?? "the pressure test"}`
     : "Carried forward";
