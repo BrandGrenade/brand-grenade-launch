@@ -1,13 +1,18 @@
 /**
- * Jaguar-only rebuild of the Brand Strategy and Creative Intelligence Summary.
+ * THE Brand Strategy and Creative Intelligence Summary builder.
  *
- * Structural redesign, approved outline: 21 numbered sections plus a table of
- * contents on page one, workflow folded into the body in sequence (no
- * appendix), plain-language descriptors under every system-jargon heading, and
- * the locked creative idea rendered complete and verbatim.
+ * One canonical builder, one 21-section spec, every session. Nothing in here
+ * is brand-specific: every value is read from the session row and the creative
+ * engine tables. There is no second Executive Summary code path.
  *
- * This builder is deliberately separate from `exec-summary-document.ts` until
- * the structure is signed off; once approved it becomes the template.
+ * Structure: 21 numbered sections plus a table of contents on page one,
+ * workflow folded into the body in sequence (no appendix), plain-language
+ * descriptors under every system-jargon heading, and the locked creative idea
+ * rendered complete and verbatim.
+ *
+ * Every render is passed through `gateSummary` (summary-gate.ts) before it is
+ * returned, so a document that breaks any of the standing rules throws instead
+ * of reaching a reader.
  */
 
 import {
