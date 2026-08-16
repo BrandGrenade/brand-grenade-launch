@@ -226,14 +226,20 @@ export function buildJaguarSummaryDocument(
   }`;
 
   /* 02 — What we know about the brand */
-  const fact = (key: string, n = 3) => firstSentencesOf(clean(str(session, key)), n);
+  // Brand facts live either in the flat columns or in the `brand_intelligence`
+  // JSON captured at brief time — read both, column first.
+  const intelJson = (session["brand_intelligence"] ?? {}) as Record<string, unknown>;
+  const fact = (key: string, jsonKey: string, n = 3) => {
+    const raw = clean(str(session, key)) || clean(String(intelJson[jsonKey] ?? ""));
+    return firstSentencesOf(raw, n);
+  };
   const brandFactsHtml = defList([
-    { label: "Positioning today", body: fact("brand_positioning") },
-    { label: "Product truth", body: fact("brand_product_truth") },
-    { label: "Audience relationship", body: fact("brand_audience_relationship") },
-    { label: "Tone of voice", body: fact("brand_tone_of_voice", 2) },
-    { label: "Constraints", body: fact("brand_constraints") },
-    { label: "Organisational context", body: fact("brand_organisational_context") },
+    { label: "Positioning today", body: fact("brand_positioning", "positioning", 4) },
+    { label: "Product truth", body: fact("brand_product_truth", "product", 4) },
+    { label: "Audience relationship", body: fact("brand_audience_relationship", "audience", 4) },
+    { label: "Tone of voice", body: fact("brand_tone_of_voice", "tone", 3) },
+    { label: "Constraints", body: fact("brand_constraints", "constraints", 4) },
+    { label: "Organisational context", body: fact("brand_organisational_context", "org", 4) },
   ]);
 
   /* 03 — How this was built */
@@ -261,7 +267,7 @@ export function buildJaguarSummaryDocument(
   ])}`;
 
   /* 04 — Category intelligence */
-  const categoryHtml = `${stageBlock(session, "stage_2_output", 8, 1100)}${list(
+  const categoryHtml = `${stageBlock(session, "stage_2_output", 14, 2200)}${list(
     research.slice(0, 6).map((r) => `**${r.label}.** ${r.body}`),
   )}`;
 
@@ -276,7 +282,7 @@ export function buildJaguarSummaryDocument(
     : "";
 
   /* 06 — Synthesis */
-  const synthesisHtml = `${stageBlock(session, "stage_4_output", 7, 900)}${stageBlock(session, "stage_6_output", 5, 650)}`;
+  const synthesisHtml = `${stageBlock(session, "stage_4_output", 10, 1600)}${stageBlock(session, "stage_6_output", 7, 900)}`;
 
   /* 07 — Proposition generation */
   const generationHtml = list(
@@ -341,16 +347,16 @@ export function buildJaguarSummaryDocument(
         ],
         verification.tests.map((t) => ({ cells: { t: t.name, v: t.verdict, n: t.note } })),
       )}`
-    : stageBlock(session, "stage_13_output", 7, 900);
+    : stageBlock(session, "stage_13_output", 9, 1400);
 
   /* 13 — Brand fit */
-  const fitHtml = `${stageBlock(session, "stage_14_output", 7, 900)}${stageBlock(session, "stage_14b_output", 4, 500)}`;
+  const fitHtml = `${stageBlock(session, "stage_14_output", 9, 1400)}${stageBlock(session, "stage_14b_output", 5, 600)}`;
 
   /* 14 — Territory mapping */
-  const territoryHtml = `${stageBlock(session, "stage_17_output", 7, 900)}${stageBlock(session, "stage_18_output", 5, 650)}`;
+  const territoryHtml = `${stageBlock(session, "stage_17_output", 10, 1600)}${stageBlock(session, "stage_18_output", 7, 900)}`;
 
   /* 15 — Coherence audit */
-  const coherenceHtml = stageBlock(session, "stage_15_output", 7, 900);
+  const coherenceHtml = stageBlock(session, "stage_15_output", 8, 1200);
 
   /* 16 — Creative sweep */
   const sweepHtml = `${statGrid([
@@ -412,7 +418,7 @@ export function buildJaguarSummaryDocument(
     : "";
 
   /* 20 — Brand architecture and distinctive assets */
-  const architectureHtml = `${stageBlock(session, "stage_22_output", 7, 900)}${p(firstSentencesOf(str(session, "stage_22_distinctive_assets"), 4))}`;
+  const architectureHtml = `${stageBlock(session, "stage_22_output", 8, 1200)}${p(firstSentencesOf(str(session, "stage_22_distinctive_assets"), 4))}`;
 
   /* 21 — Next step */
   const nextHtml = `${p(recs.condition ? `Condition on activation: ${recs.condition}` : "")}${p(
