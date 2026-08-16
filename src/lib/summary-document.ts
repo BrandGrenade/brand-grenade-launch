@@ -772,6 +772,17 @@ export function buildSummaryDocument(
 
   /* 17 — The winning creative idea (verbatim, complete) */
   const recognitionTest = extractRecognitionTest(str(session, "stage_22_output"));
+  // Sessions that predate the Creative Engine locked no idea. Their creative
+  // decision is the Detonation selected at Stage 18, which is then read here in
+  // full — same template, same section, honestly labelled by its own source.
+  const selectedDetonation =
+    lockedIdea || lockedLine
+      ? null
+      : extractSelectedDetonation(
+          str(session, "stage_18_output"),
+          str(session, "stage_18_selected_detonation"),
+          str(session, "stage_18_detonation_line"),
+        );
   const creativeHtml = lockedIdea || lockedLine
     ? `${
         lockedLine
@@ -785,10 +796,40 @@ export function buildSummaryDocument(
           ? `<h3>The recognition test</h3>${renderMarkdown(recognitionTest)}`
           : ""
       }`
-    : "";
+    : selectedDetonation
+      ? `${p(
+          "This session was completed before the Creative Engine lens sweep existed, so no campaign line was locked in that stage. The creative decision on record is the Detonation selected at Stage 18, reproduced below in full and word for word.",
+        )}${
+          selectedDetonation.line
+            ? pullQuote(selectedDetonation.line, {
+                label: "Selected Detonation — Stage 18",
+                variant: "hero",
+              })
+            : ""
+        }${
+          selectedDetonation.statement
+            ? `<h3>The Detonation statement</h3>${p(selectedDetonation.statement)}`
+            : ""
+        }${
+          recognitionTest
+            ? `<h3>The recognition test</h3>${renderMarkdown(recognitionTest)}`
+            : ""
+        }`
+      : "";
 
   /* 18 — Why it won */
-  const whyHtml = extras.winnerReasons?.length ? reasonGrid(extras.winnerReasons) : "";
+  const whyHtml = extras.winnerReasons?.length
+    ? reasonGrid(extras.winnerReasons)
+    : selectedDetonation?.rationale
+      ? `${p(
+          "No lens-sweep ratings exist for this session. The judgement on record is the argument written against the selected Detonation at Stage 18, reproduced verbatim.",
+        )}<h3>Why this Detonation serves the proposition</h3>${p(selectedDetonation.rationale)}`
+      : lockedIdea || lockedLine
+        ? p(
+            "The idea was locked by human decision at the Creative Engine gate without a recorded rating set; the judgement on record is the lock itself, together with the strategic compliance argument carried in the sections above.",
+          )
+        : "";
+
 
   /* 19 — Channels */
   const channelHtml = channels.length
