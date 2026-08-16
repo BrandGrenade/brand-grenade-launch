@@ -431,3 +431,125 @@ export function extractSelectedDetonation(
   if (!line && !statement && !rationale) return null;
   return { line, statement, rationale };
 }
+
+/* ───────────────────────────────────── territory / proposition outcomes ── */
+
+export interface TerritoryOutcome {
+  /** Territory or field name as the pipeline named it. */
+  name: string;
+  /** The proposition written under it, when the stage records one. */
+  line?: string;
+  status: "survived" | "eliminated";
+  /** Stage at which it was eliminated, e.g. "Stage 10". */
+  stage?: string;
+  /** Why it was eliminated, first sentence of the recorded pathway. */
+  reason?: string;
+}
+
+const okey = (s: string) =>
+  s.toLowerCase().replace(/[^a-z0-9]+/g, " ").replace(/\s+/g, " ").trim();
+
+/**
+ * The outcome of every strategic territory in the run: survived, or eliminated
+ * and at which stage. Read from the pipeline's own records — Stage 11's per-SMP
+ * verdict blocks, plus any explicit "ELIMINATED at Stage N" note in Stage 10 or
+ * 11 — so a document can never profile a territory without stating what
+ * happened to it. Nothing here is brand-specific.
+ */
+export function extractTerritoryOutcomes(
+  stage10: string,
+  stage11: string,
+  territories: string[],
+): TerritoryOutcome[] {
+  const s10 = normaliseMd(stage10 ?? "");
+  const s11 = normaliseMd(stage11 ?? "");
+  const byName = new Map<string, TerritoryOutcome>();
+
+  const put = (o: TerritoryOutcome) => {
+    const k = okey(o.name);
+    if (!k) return;
+    const prior = byName.get(k);
+    if (!prior) return void byName.set(k, o);
+    byName.set(k, {
+      ...prior,
+      ...o,
+      // an elimination recorded anywhere wins over a survival
+      status: prior.status === "eliminated" ? "eliminated" : o.status,
+      line: o.line || prior.line,
+      stage: o.stage || prior.stage,
+      reason: o.reason || prior.reason,
+    });
+  };
+
+  // Every territory named at Stage 7 starts as surviving.
+  for (const name of territories) put({ name, status: "survived" });
+
+  // Stage 11 per-SMP verdict blocks: ### SMP 1: "line" — FIELD: <territory>
+  for (const block of mdBlocks(s11)) {
+    const m = block.heading.match(
+      /SMP\s*\d*\s*[:.]?\s*["“]?(.+?)["”]?\s*[—–-]\s*FIELD\s*[:.]?\s*([^—–]+)/i,
+    );
+    if (!m) continue;
+    const line = m[1].replace(/["“”]/g, "").trim();
+    const field = m[2].replace(/["“”]/g, "").trim();
+    // Some runs write the brand/category into FIELD rather than a territory.
+    // Only trust FIELD when it names a Stage 7 territory; otherwise the entry
+    // is identified by the proposition itself.
+    const known = territories.find(
+      (t) => okey(t) === okey(field) || okey(field).includes(okey(t)) || okey(t).includes(okey(field)),
+    );
+    const name = known ?? (territories.length ? `"${line}"` : field);
+    const verdict = block.body.match(/SMP VERDICT\s*[:.]?\s*\**\s*([A-Z][A-Z ]{2,})/i)?.[1] ?? "";
+    const eliminated = /ELIMINAT/i.test(verdict);
+    let reason = (block.body.match(/ELIMINATION PATHWAY\s*[:.]?\s*\**\s*([^\n]+)/i)?.[1] ?? "")
+      .replace(/\*\*/g, "")
+      .split(/(?<=[.!?])\s/)[0]
+      .trim();
+    if (reason) reason = reason.charAt(0).toUpperCase() + reason.slice(1);
+    put({
+      name,
+      line,
+      status: eliminated ? "eliminated" : "survived",
+      stage: eliminated ? "Stage 11" : undefined,
+      reason: eliminated ? reason || undefined : undefined,
+    });
+
+  }
+
+  // Explicit "…ELIMINATED at Stage N" notes, wherever the pipeline wrote them.
+  for (const source of [s10, s11]) {
+    for (const m of source.matchAll(
+      /([A-Z][^\n(*]{6,70}?)\s*[（(]?\s*ELIMINATED\s+at\s+Stage\s+(\d+[A-Za-z]?)/gi,
+    )) {
+      const raw = m[1].replace(/^\s*\d+[.)]\s*/, "").replace(/["“”*]/g, "").trim();
+      const match = territories.find(
+        (t) => okey(t) === okey(raw) || okey(raw).endsWith(okey(t)) || okey(raw).includes(okey(t)),
+      );
+      if (!match) continue;
+      put({ name: match, status: "eliminated", stage: `Stage ${m[2]}` });
+    }
+  }
+
+  return [...byName.values()];
+}
+
+/** The recorded outcome for a named territory, matched loosely. */
+export function outcomeFor(
+  outcomes: TerritoryOutcome[],
+  name: string,
+): TerritoryOutcome | undefined {
+  const k = okey(name);
+  if (!k) return undefined;
+  const near = (a: string, b: string) =>
+    !!a && !!b && (a === b || (a.length > 8 && b.includes(a)) || (b.length > 8 && a.includes(b)));
+  return outcomes.find((o) => near(okey(o.name), k) || near(okey(o.line ?? ""), k));
+
+}
+
+/** "Eliminated at Stage 10" / "Carried forward". */
+export function outcomeLabel(outcome?: TerritoryOutcome): string {
+  if (!outcome) return "No elimination recorded against it";
+  return outcome.status === "eliminated"
+    ? `Eliminated at ${outcome.stage ?? "the pressure test"}`
+    : "Carried forward";
+}

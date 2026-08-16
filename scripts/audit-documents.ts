@@ -29,8 +29,11 @@ import { mkdirSync, writeFileSync } from "fs";
 import { buildBoardStrategyDocument } from "../src/lib/board-strategy-document";
 import { buildConsultingDeliveryDocument } from "../src/lib/consulting-delivery-document";
 import { buildMasterDetonationDocument } from "../src/lib/master-detonation-document";
+import { buildSummaryDocument } from "../src/lib/summary-document";
+import { summaryExtras } from "./summary-extras";
 import { DOCUMENT_SPECS, type DocumentSpec } from "../src/lib/document-spec";
 import { parseScoredCandidates, selectedAliases } from "../src/lib/minto-content";
+
 
 const sb = createClient(process.env.VITE_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
 const OUT = "/tmp/docgate";
@@ -291,7 +294,47 @@ for (const row of live) {
       );
     }
   }
+
+  // The Brand Strategy and Creative Intelligence Summary. Its own permanent
+  // gate (summary-gate.ts) is the C1/C2 equivalent and throws on failure; the
+  // foreign-content and orphan checks are applied here as for every other
+  // document, so no document type can be published un-audited.
+  docs++;
+  const label = "Brand Strategy and Creative Intelligence Summary";
+  try {
+    const extras = await summaryExtras(
+      sb,
+      row as Record<string, any>,
+      live.filter((r) => r.id !== row.id) as Array<Record<string, any>>,
+    );
+    const html = buildSummaryDocument(row as never, extras);
+    writeFileSync(`${OUT}/${String(row.id)}__summary.html`, html);
+    const rendered = sections(html);
+    const results: Array<[string, CheckResult]> = [
+      ["C3", c3Foreign(rendered, foreign)],
+      ["C4", c4Orphans(rendered)],
+    ];
+    const bad = results.filter(([, r]) => !r.pass);
+    if (bad.length) failures++;
+    table.push(
+      `| ${brand} | ${label} | PASS (gate) | PASS (gate) | ${results
+        .map(([, r]) => (r.pass ? "PASS" : `FAIL (${r.detail.length})`))
+        .join(" | ")} |`,
+    );
+    if (bad.length)
+      evidence.push(
+        `### ${brand} · ${label}\n\n` +
+          bad
+            .map(([code, r]) => `**${code}**\n` + r.detail.slice(0, 12).map((d) => `- ${d}`).join("\n"))
+            .join("\n\n"),
+      );
+  } catch (e) {
+    failures++;
+    table.push(`| ${brand} | ${label} | THREW | THREW | THREW | THREW |`);
+    evidence.push(`### ${brand} · ${label}\n\n- THREW: ${(e as Error).message}\n`);
+  }
 }
+
 
 const report = [
   "# Document completeness + integrity gate",
