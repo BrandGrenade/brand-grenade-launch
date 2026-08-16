@@ -95,7 +95,9 @@ export function extractBrandArchitecture(stage22: string): BrandArchitecture {
     const i = text.search(label);
     if (i < 0) return "";
     const rest = text.slice(i).replace(label, "");
-    return rest.split(/\n(?=[A-Z][A-Z ()]{3,}\s*:)/)[0].trim();
+    // A block ends at the next LABEL: line OR the next markdown heading —
+    // stage 22 is written both ways depending on the session.
+    return rest.split(/\n(?=(?:#{1,4}\s)|(?:[A-Z][A-Z ()]{3,}\s*:))/)[0].trim();
   };
   const bullets = (s: string) =>
     s
@@ -270,7 +272,7 @@ export function extractImpossibilityAnalysis(
     return rest.split(/\n\s*\n(?=\**[A-Z])/)[0].trim();
   };
 
-  const foundation = label(/\*\*The Foundation\.\*\*\s*/i).replace(/\s+/g, " ").trim();
+  let foundation = label(/\*\*The Foundation\.\*\*\s*/i).replace(/\s+/g, " ").trim();
   const analysis = label(/\*\*Strategic-Impossibility Analysis\.\*\*\s*/i);
   const rivals = analysis
     .split("\n")
@@ -279,6 +281,20 @@ export function extractImpossibilityAnalysis(
     .map((l) => l.replace(/^[-*•]\s*/, "").trim())
     .filter(Boolean);
   const proof = (body.match(/^>\s*(.+)$/m)?.[1] ?? "").trim();
+
+  // Sessions whose stage 9 is written without the labelled sub-blocks still
+  // have exactly one candidate block of their own: read it whole as prose,
+  // scoped to this candidate, rather than rendering an empty section.
+  if (!foundation && !rivals.length) {
+    const prose = body
+      .split("\n")
+      .filter((l) => !/^>\s/.test(l) && !/^#{1,4}\s/.test(l))
+      .join("\n")
+      .replace(/\*\*/g, "")
+      .trim();
+    if (!prose) return null;
+    foundation = prose.replace(/\s+/g, " ").trim();
+  }
 
   return { heading: block.heading, foundation, rivals, proof };
 }
