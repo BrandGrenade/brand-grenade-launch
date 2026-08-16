@@ -106,8 +106,11 @@ export function extractBrandArchitecture(stage22: string): BrandArchitecture {
       .filter((l) => l.length > 2);
 
   return {
-    assets: bullets(grab(/RECOMMENDED ASSETS\s*:?\s*/i)),
-    principles: bullets(grab(/DEPLOYMENT PRINCIPLES\s*:?\s*/i)),
+    // Stage 22 labels its two lists differently depending on the session.
+    assets: bullets(grab(/(?:RECOMMENDED|OWNABLE|DISTINCTIVE)\s+ASSETS\s*:?\s*/i)),
+    principles: bullets(
+      grab(/(?:DEPLOYMENT PRINCIPLES|ACTIVATION RULES|DEPLOYMENT RULES)\s*:?\s*/i),
+    ),
     reflection: grab(/REFLECTION\s*:\s*/i).split("\n")[0]?.trim() ?? "",
     personality: grab(/PERSONALITY\s*:\s*/i).split("\n")[0]?.trim() ?? "",
   };

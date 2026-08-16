@@ -55,8 +55,7 @@ function truncationFaults(text: string): string[] {
   // permitted at all in a finished document: it means content was cut.
   if (/\w…/.test(text) || /\w\.\.\.(?:\s|$)/.test(text)) out.push("text cut with an ellipsis");
   // A body that stops on a conjunction is a mid-sentence cut.
-  if (/\b(and|or|but|with|the|of|to|on|in|for|that|which)\s*$/i.test(text))
-    out.push("body ends mid-sentence");
+  if (!/[.!?:;"”’)\]]$/.test(text)) out.push("body ends mid-sentence");
   return out;
 }
 
