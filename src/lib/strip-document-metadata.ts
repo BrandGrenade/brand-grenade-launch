@@ -35,10 +35,24 @@ const LINE_STRIP: RegExp[] = [
   /^\s*#{0,6}\s*\*{0,2}\s*(?:SELECT|CHOOSE)\s+ONE\b.*$/i,
   // Internal selection UI — "A · BASE — ..." / "B · BREACH — ..." option rows
   /^\s*\*{0,2}\s*[A-Z]\s*[·•]\s*(?:BASE|BREACH|FUSE|FLASHPOINT|LOC|OPTION)\b.*$/i,
+  // Stage-output bookkeeping headers. A short label line of the form
+  // "AUDIT DATE — current cycle" / "SOURCE: LOC (invented_authority)" is how a
+  // stage annotates its own run; it is never part of the argument a reader is
+  // being shown, so it is stripped wherever a stage output is rendered.
+  /^\s*\*{0,2}\s*(?:AUDIT\s?DATE|AUDIT\s?TRAIL|PIPELINE\s+DOCUMENTS?\s+REVIEWED|TOTAL\s+FLAGS?\s+RAISED|COURAGE\s+ASSESSMENT|DERIVATION\s+CHAIN\s+INTEGRITY|SELECTED\s+SMP|SELECTED\s+PROPOSITION|SOURCE|STATUS|SUBMITTED\s+BY|PREPARED\s+BY|RUN\s+ID|SESSION\s+ID|WORD\s+COUNT|DATE)\s*\*{0,2}\s*(?::|—|–|-)\s?.{0,180}$/i,
 ];
 
-/** Word-count annotations the chooser prints, e.g. "_(4w)_". */
-const INLINE_STRIP: RegExp[] = [/\s*_\(\d+\s*w\)_/gi];
+const INLINE_STRIP: RegExp[] = [
+  /** Word-count annotations the chooser prints, e.g. "_(4w)_". */
+  /\s*_\(\d+\s*w\)_/gi,
+  // Generation telemetry the LOC engines prepend: "_Generated: <ISO> (retry 2) — …_"
+  /_?\s*Generated\s*:\s*\d{4}-\d{2}-\d{2}T[^_\n]*_?/gi,
+  /\s*\(retry\s+\d+\)/gi,
+  // Score-correction audit notes written inline into a rating line.
+  /\s*[—–-]?\s*RE-?RUN\s+UNDER\s+CORRECTED\s+ANCHORS\s*(?:\(was[^)]*\))?/gi,
+  // Any bare ISO timestamp that survives the line-level strips.
+  /\b\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z?\b/g,
+];
 
 
 export function stripDocumentMetadata(input: string | null | undefined, telemetryLabel?: string): string {
