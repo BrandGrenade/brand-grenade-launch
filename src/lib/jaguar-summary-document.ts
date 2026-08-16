@@ -279,7 +279,7 @@ interface SectionDef {
   body: string;
 }
 
-const BREAK_BEFORE = new Set(["01", "04", "09", "16", "19"]);
+const BREAK_BEFORE = new Set(["01", "04", "16", "19"]);
 
 /**
  * Generic section seal, applied to every section body BEFORE assembly.
