@@ -31,6 +31,8 @@ import {
   extractBrandArchitecture,
   extractChannelRole,
   extractDetonationCandidates,
+  extractImpossibilityAnalysis,
+
   extractRecognitionTest,
   extractWinnerScores,
   labelledBlocks,
@@ -348,7 +350,18 @@ const EXTRA_CSS = `
 .defbody { font-size: 13px; line-height: 1.55; }
 .statband { margin: 14px 0 4px; }
 .statband > h4 { font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase; opacity: .6; margin: 0 0 8px; }
-@media print { .defrow { grid-template-columns: 160px 1fr; } }
+/* Chromium fragments a multi-row CSS grid badly when it crosses a printed page
+   boundary: later rows are painted after content that follows the grid, which
+   is what put Section 19/20 material below the closing footer line. In print,
+   the definition list and reason grid are laid out in normal block flow, which
+   fragments correctly. */
+@media print {
+  .defrow { grid-template-columns: 160px 1fr; }
+  .deflist { display: block; }
+  .deflist > .defrow + .defrow { margin-top: 10px; }
+  .reasons { display: block; }
+  .reasons > * + * { margin-top: 12pt; }
+}
 `;
 
 function band(title: string, stats: Stat[]): string {
@@ -511,18 +524,30 @@ export function buildJaguarSummaryDocument(
 
 
   /* 08 — Distinctiveness testing.
-     The Left-of-Centre stage writes one Strategic-Impossibility Analysis per
-     candidate. Condensing the stage put two of them on the page — the same
-     competitive-impossibility argument about Tesla in two different phrasings,
-     which reads as a leftover draft. Only the first analysis is rendered. */
-  const distinctHtml = dedupeRepeatedAnalysis(
-    `${stageBlock(session, "stage_9_leftofcentre_output", 8, 1200)}${stageBlock(
-      session,
-      "stage_9_output",
-      8,
-      1200,
-    )}`,
+     Read structurally, one candidate block at a time. Condensing the raw stage
+     output used to cut the rival list after its first bullet, deleting the
+     Porsche, Mercedes, BMW, Lucid/Rivian and Bentley arguments; the list is now
+     rendered whole under its own heading. */
+  const impossibility = extractImpossibilityAnalysis(
+    str(session, "stage_9_output"),
+    str(session, "selected_smp"),
   );
+  const distinctHtml = impossibility
+    ? `${p(`Candidate pressure-tested: **${impossibility.heading.replace(/\.$/, "")}**`)}${p(
+        impossibility.foundation,
+      )}${
+        impossibility.rivals.length
+          ? `<h3>Strategic-impossibility analysis — why no rival can run this</h3>${list(
+              impossibility.rivals,
+            )}`
+          : ""
+      }${
+        impossibility.proof
+          ? pullQuote(impossibility.proof, { label: "The distinctiveness test, stated plainly" })
+          : ""
+      }`
+    : dedupeRepeatedAnalysis(stageBlock(session, "stage_9_output", 8, 1200));
+
 
 
 
