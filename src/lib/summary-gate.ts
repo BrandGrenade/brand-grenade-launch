@@ -90,8 +90,12 @@ export function summaryGateFailures(
     if (/<h[1-6][^>]*>[\s\S]*?<\/h[1-6]>\s*$/.test(sec.html.trim()))
       fail.push(`section ${sec.index} ends on an orphaned heading`);
 
-    // C4 — no truncation.
-    for (const f of truncationFaults(text)) fail.push(`section ${sec.index}: ${f}`);
+    // C4 — no truncation. Tables and stat blocks legitimately end on a label,
+    // so the mid-sentence test reads prose only.
+    const prose = strip(
+      sec.html.replace(/<table[\s\S]*?<\/table>/gi, " ").replace(/<div class="stat[\s\S]*?<\/div>/gi, " "),
+    );
+    for (const f of truncationFaults(prose)) fail.push(`section ${sec.index}: ${f}`);
 
     // C5 — no internal artifacts.
     for (const [re, label] of ARTIFACTS)
