@@ -470,9 +470,20 @@ export function contentIntegrityFindings(
           });
         }
       }
-      for (const d of textQualityDefects(sec.text)) {
-        findings.push({ section: where, criterion: "SCHEMA", detail: d.detail, quote: d.quote });
+      // Text-quality is judged on the field values themselves; the label/value
+      // join is not prose and produces false doubled-word hits.
+      for (const label of schema) {
+        const re = new RegExp(
+          `${label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*[:\\u2014-]?\\s*([^\\n]{0,160})`,
+          "i",
+        );
+        const value = (sec.text.match(re)?.[1] ?? "").trim();
+        if (!value) continue;
+        for (const d of textQualityDefects(value)) {
+          findings.push({ section: where, criterion: "SCHEMA", detail: d.detail, quote: d.quote });
+        }
       }
+
     }
   }
 
