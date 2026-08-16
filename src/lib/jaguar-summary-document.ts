@@ -199,9 +199,35 @@ function stageBlock(session: ExecSessionRow, key: string, units: number, chars: 
     .split("\n\n")
     .map((block) => (block.startsWith("### ") ? block : clampText(block, Math.round(chars * 0.6))))
     .join("\n\n");
-  return renderMarkdown(clampText(condensed, chars));
+  return dropDanglingLabel(renderMarkdown(clampText(condensed, chars)));
 }
 
+/**
+ * A clamp can land immediately after a label line ("A Reveal Everyone Is
+ * Already Watching — Validated") and cut the body it introduced. A trailing
+ * label with nothing beneath it is not content, so it is removed rather than
+ * left on the page as a fragment.
+ */
+function dropDanglingLabel(html: string): string {
+  let out = html.replace(/(?:\s*<h[1-6][^>]*>[\s\S]*?<\/h[1-6]>)+\s*$/, "");
+  const trailing = out.match(/<p>([\s\S]*?)<\/p>\s*$/);
+  if (trailing) {
+    const text = strip(trailing[1]);
+    if (text.length < 130 && !/[.!?:]$/.test(text)) out = out.slice(0, trailing.index).trimEnd();
+  }
+  return out;
+}
+
+const strip = (h: string) =>
+  h
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&#39;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/\s+/g, " ")
+    .trim();
+
+const normTitle = (s: string) => s.toLowerCase().replace(/[^a-z0-9 ]/g, " ").replace(/\s+/g, " ").trim();
 
 function nothing(what: string): string {
   return `<p class="muted">${escapeHtml(what)}</p>`;
@@ -218,16 +244,46 @@ interface SectionDef {
 
 const BREAK_BEFORE = new Set(["01", "04", "09", "16", "19"]);
 
+/**
+ * Generic section seal, applied to every section body BEFORE assembly.
+ *
+ * A section may contain only its own designated content: if a heading inside
+ * the body names a different canonical section of this document, everything
+ * from that heading onward belongs to that section and is cut. Trailing
+ * headings with no body beneath them are dropped. Because this runs on the
+ * body — not on the finished document string — nothing downstream of the last
+ * section (the footer, the closing markup) can ever be moved or truncated.
+ */
+function sealBody(bodyHtml: string, ownTitle: string, otherTitles: Set<string>): string {
+  let out = stripSelectionArtifacts(bodyHtml);
+  const own = normTitle(ownTitle);
+  const re = /<h[1-6][^>]*>([\s\S]*?)<\/h[1-6]>/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(out))) {
+    const t = normTitle(strip(m[1]));
+    if (!t || t === own) continue;
+    if (otherTitles.has(t)) {
+      out = out.slice(0, m.index);
+      break;
+    }
+  }
+  return dropDanglingLabel(out).trim();
+}
+
 function renderSections(defs: SectionDef[]): string {
+  const titles = new Set(defs.map((d) => normTitle(d.title)));
   return defs
-    .map((d, i) =>
-      section(
+    .map((d) => {
+      const others = new Set([...titles].filter((t) => t !== normTitle(d.title)));
+      const sealed = sealBody(d.body, d.title, others);
+      return section(
         { kicker: d.kicker, index: d.index, title: d.title, breakBefore: BREAK_BEFORE.has(d.index) },
-        `<p class="lede">${escapeHtml(d.lede)}</p>${d.body || nothing("No stored output for this stage.")}`,
-      ),
-    )
+        `<p class="lede">${escapeHtml(d.lede)}</p>${sealed || nothing("No stored output for this stage.")}`,
+      );
+    })
     .join("\n");
 }
+
 
 function tableOfContents(defs: SectionDef[]): string {
   return `<div class="toc keep-together">
