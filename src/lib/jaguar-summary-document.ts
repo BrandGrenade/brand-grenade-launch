@@ -169,6 +169,7 @@ function nearestAntecedent(
 ): string | null {
   if (!locked || !field.length) return null;
   const rationale = stage10.slice(stage10.search(/RE-?SCORE/i) + 1).toLowerCase();
+  if (process.env.JAG_DEBUG) console.error("HELPER", { locked, n: field.length, len: stage10.length, rlen: rationale.length });
   if (!rationale.trim()) return null;
   const words = (s: string) =>
     [...new Set(s.toLowerCase().match(/[a-z]{5,}/g) ?? [])].filter(
