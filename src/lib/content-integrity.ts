@@ -267,14 +267,17 @@ export function contentIntegrityFindings(
         quote: last.text.slice(-160),
       });
     }
-    if (/\w…|\w\.\.\.(?:\s|$)/.test(sec.text)) {
-      const at = sec.text.search(/\w…|\w\.\.\.(?:\s|$)/);
+    // An ellipsis inside a sentence is an author's elision of a quotation; an
+    // ellipsis that ENDS a block is content that was cut.
+    for (const b of prose) {
+      if (!/\w(?:…|\.\.\.)$/.test(b.text)) continue;
       findings.push({
         section: where,
         criterion: "COMPLETE",
-        detail: "text cut with an ellipsis",
-        quote: sec.text.slice(Math.max(0, at - 90), at + 40),
+        detail: "block ends cut with an ellipsis",
+        quote: b.text.slice(-140),
       });
+      break;
     }
 
     // CLEAN — no artifact of the machine that made the document.
