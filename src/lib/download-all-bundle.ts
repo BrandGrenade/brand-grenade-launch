@@ -10,19 +10,14 @@ import {
   type Phase2Session,
 } from "./phase2-document-generator";
 import { buildFullRunDocument, type FullRunSession } from "./full-run-document";
-import { buildExecSummaryDocument } from "./exec-summary-document";
 import { buildConsultingDeliveryDocument } from "./consulting-delivery-document";
 import { buildDocument00AMinto } from "./intelligence/doc-00A-minto";
-import { fetchExecSummaryIntel } from "./exec-summary-intel";
 import { supabase } from "@/integrations/supabase/client";
 import type { IntelligenceReport } from "./intelligence/doc-00A-types";
 import { resolveLiveDocumentSession } from "./document-live-source";
 import { intelligenceSourceIdFromBrief } from "./document-source-authority";
-import { buildJaguarSummaryDocument } from "./jaguar-summary-document";
-import {
-  fetchJaguarSummaryExtras,
-  JAGUAR_REBUILD_SESSION_ID,
-} from "./jaguar-summary-data";
+import { buildSummaryDocument } from "./summary-document";
+import { fetchSummaryExtras } from "./summary-data";
 
 export type BundleSession = Phase1Session &
   Phase2Session &
