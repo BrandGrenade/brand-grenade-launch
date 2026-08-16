@@ -319,3 +319,44 @@ export function extractImpossibilityAnalysis(
 
   return { heading: block.heading, generic: GENERIC.test(key(block.heading)), foundation, rivals, proof };
 }
+
+/**
+ * Every named strategic territory in a Stage 7 output. Used to build the
+ * foreign-marker set: a territory name owned by another session must never
+ * appear in this session's document.
+ */
+export function extractTerritoryNames(stage7: unknown): string[] {
+  if (typeof stage7 !== "string" || !stage7.trim()) return [];
+  const names = mdBlocks(stage7)
+    .map((b) => b.heading.replace(/^territory\s*\d*\s*[:—–-]\s*/i, "").replace(/["“”]/g, "").trim())
+    // Section labels a stage writes about itself are not territory names.
+    .filter((h) => !/^(overview|summary|introduction|conclusion|verdict|assessment|analysis|the territories|territories|recommendation|next steps)$/i.test(h));
+  return [...new Set(names)].filter((n) => n.length > 8 && n.split(/\s+/).length <= 12);
+}
+
+/**
+ * Markers owned by other sessions, with anything this session legitimately
+ * says itself removed — a name shared by two sessions is not contamination.
+ */
+export function buildForeignMarkers(
+  others: Array<Record<string, unknown>>,
+  ownCorpus: string,
+): string[] {
+  const own = ownCorpus.toLowerCase();
+  const raw = others.flatMap((row) => [
+    typeof row.selected_smp === "string" ? row.selected_smp : "",
+    typeof row.locked_campaign_line === "string" ? row.locked_campaign_line : "",
+    ...extractTerritoryNames(row.stage_7_output),
+  ]);
+  return [...new Set(raw.map((v) => v.trim()).filter((v) => v.length > 12))].filter(
+    (v) => !own.includes(v.toLowerCase()),
+  );
+}
+
+/** All stage text a session owns, for own-content comparison. */
+export function ownStageCorpus(session: Record<string, unknown>): string {
+  return Object.entries(session)
+    .filter(([k, v]) => /^stage_/.test(k) && typeof v === "string")
+    .map(([, v]) => v as string)
+    .join("\n");
+}
