@@ -344,6 +344,12 @@ function closeIncompleteTail(bodyHtml: string): string {
   // Only a real sentence can be judged cut: short labels legitimately have no
   // full stop, and a complete sentence is left exactly as written.
   if (text.split(/\s+/).length < 7 || /[.!?:;"”’)\]]$/.test(text)) return bodyHtml;
+  // Provenance tags this builder writes itself ("— Stage 12 shortlist") are not
+  // sentences and are never a cut.
+  if (/(?:shortlist|LOC engine|refinement|Stage\s+\d+[A-Za-z]*|winner|locked)$/i.test(text))
+    return bodyHtml;
+  // A cut always stops on a lower-case word or a comma.
+  if (!/[a-z,]$/.test(text)) return bodyHtml;
   // The incomplete block is removed whole — never re-cut, never completed.
   const after = bodyHtml.slice(closeAt + `</${tag}>`.length);
   return `${bodyHtml.slice(0, openAt)}${after}${CUT_NOTE}`;
