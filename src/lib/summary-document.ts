@@ -320,18 +320,21 @@ function sealBody(bodyHtml: string, ownTitle: string, otherTitles: Set<string>):
   return dropDanglingLabel(out).trim();
 }
 
-function renderSections(defs: SectionDef[]): string {
+function renderSections(defs: SectionDef[]): { html: string; sealed: GateSectionInput[] } {
   const titles = new Set(defs.map((d) => normTitle(d.title)));
-  return defs
+  const sealed: GateSectionInput[] = [];
+  const html = defs
     .map((d) => {
       const others = new Set([...titles].filter((t) => t !== normTitle(d.title)));
-      const sealed = sealBody(d.body, d.title, others);
+      const body = sealBody(d.body, d.title, others);
+      sealed.push({ index: d.index, title: d.title, html: body });
       return section(
         { kicker: d.kicker, index: d.index, title: d.title, breakBefore: BREAK_BEFORE.has(d.index) },
-        `<p class="lede">${escapeHtml(d.lede)}</p>${sealed || nothing("No stored output for this stage.")}`,
+        `<p class="lede">${escapeHtml(d.lede)}</p>${body || nothing("No stored output for this stage.")}`,
       );
     })
     .join("\n");
+  return { html, sealed };
 }
 
 
