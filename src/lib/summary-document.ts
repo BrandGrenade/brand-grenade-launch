@@ -613,6 +613,16 @@ export function buildSummaryDocument(
       )
     : "";
   const profiled = impossibility && !impossibility.generic ? outcomeFor(outcomes, impossibility.heading) : undefined;
+  // The locked proposition survived by definition, even where the stage text
+  // records no per-candidate verdict block.
+  const profiledLabel =
+    profiled || !lockedSmp || !impossibility
+      ? outcomeLabel(profiled)
+      : propKey(impossibility.heading).includes(propKey(lockedSmp)) ||
+          propKey(lockedSmp).includes(propKey(impossibility.heading))
+        ? "Carried forward"
+        : outcomeLabel(profiled);
+
   const distinctHtml = impossibility
     ? `${outcomeLedger}${p(
         impossibility.generic
