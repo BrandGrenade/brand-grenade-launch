@@ -218,6 +218,20 @@ function dropDanglingLabel(html: string): string {
   return out.trim();
 }
 
+/**
+ * A stage that writes the same analysis block once per candidate can put two
+ * phrasings of one argument on the page. The second and later repeats of a
+ * named analysis heading — and everything under them — are dropped.
+ */
+function dedupeRepeatedAnalysis(html: string): string {
+  const marker = /strategic[\s-]?impossibility/i;
+  const heads = [...html.matchAll(/<(h[1-6])[^>]*>([\s\S]*?)<\/\1>|<p>((?:(?!<\/p>)[\s\S])*)<\/p>/g)];
+  const seen = heads.filter((m) => marker.test(strip(m[2] ?? m[3] ?? "")));
+  if (seen.length < 2) return html;
+  return dropDanglingLabel(html.slice(0, seen[1].index));
+}
+
+
 
 const strip = (h: string) =>
   h
