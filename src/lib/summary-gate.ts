@@ -99,7 +99,8 @@ export function summaryGateFailures(
       .map((m) => strip(m[3]))
       .filter((t) => t.split(/\s+/).length > 6);
     const lastProse = proseBlocks[proseBlocks.length - 1] ?? "";
-    for (const f of truncationFaults(lastProse)) fail.push(`section ${sec.index}: ${f} <<${lastProse.slice(-90)}>>`);
+    if (lastProse)
+      for (const f of truncationFaults(lastProse)) fail.push(`section ${sec.index}: ${f}`);
     if (/\w…|\w\.\.\.(?:\s|$)/.test(text)) fail.push(`section ${sec.index}: text cut with an ellipsis`);
 
     // C5 — no internal artifacts.
