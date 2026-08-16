@@ -735,13 +735,40 @@ export function closeIncompleteTail(bodyHtml: string): string {
 }
 
 /**
+ * Some stored stage outputs narrate the model's own process ("Because I cannot
+ * cite a named campaign…"). That is system voice, not client voice. The
+ * sentence carrying it is removed — never rewritten, never replaced with an
+ * invented equivalent — so the surrounding argument still reads as written.
+ * Quoted verbatim speech is left untouched.
+ */
+export function removeSystemVoice(html: string): string {
+  return html.replace(/<(p|li|blockquote)\b([^>]*)>([\s\S]*?)<\/\1>/gi, (whole, tag, attrs, inner) => {
+    const text = strip(inner);
+    if (!VOICE_PATTERNS.some((re) => re.test(text))) return whole;
+    // Only operate on plain prose blocks; anything with nested markup is left
+    // alone so a rewrite cannot damage structure.
+    if (/<(?!\/?(?:em|strong|b|i|span)\b)[a-z]/i.test(inner)) return whole;
+    const sentences = inner.split(/(?<=[.!?])\s+/);
+    const kept = sentences.filter((s: string) => {
+      const plain = strip(s);
+      return !VOICE_PATTERNS.some((re) => {
+        const m = plain.match(re);
+        return m && !insideQuote(plain, plain.indexOf(m[0]));
+      });
+    });
+    const body = kept.join(" ").trim();
+    return body ? `<${tag}${attrs}>${body}</${tag}>` : "";
+  });
+}
+
+/**
  * The one call every builder ends with: drop any tail the pipeline itself cut
- * off (stating the gap instead of inventing an ending), then certify. A
- * document that still fails is thrown, never returned, so no generation path
- * can put it in front of a reader.
+ * off (stating the gap instead of inventing an ending), remove system voice,
+ * then certify. A document that still fails is thrown, never returned, so no
+ * generation path can put it in front of a reader.
  */
 export function certifyDocument(html: string, label: string, opts: IntegrityOptions = {}): string {
-  let out = html;
+  let out = removeSystemVoice(html);
   const sections = splitSections(out);
   for (let i = sections.length - 1; i >= 0; i--) {
     const sec = sections[i];
@@ -750,3 +777,4 @@ export function certifyDocument(html: string, label: string, opts: IntegrityOpti
   }
   return assertPublishable(out, label, opts);
 }
+
