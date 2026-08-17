@@ -553,7 +553,7 @@ export function extractTerritoryOutcomes(
       territories.find(
         (t) => okey(t) === okey(candidate ?? "") || okey(candidate ?? "").includes(okey(t)),
       ) ?? block.heading;
-    const reason = sentences(v[1].replace(/\*\*/g, "").trim()).slice(0, 2).join(" ").trim();
+    const reason = sentences(v[1].replace(/\*\*/g, "").trim(), 2);
     put({ name, status: "eliminated", stage: "Stage 10", reason: reason || undefined });
   }
 
