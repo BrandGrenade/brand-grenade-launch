@@ -195,30 +195,35 @@ export function reconcileAuditClaims(
     });
   };
 
-  // The claim lives in one sentence; only that sentence is touched.
+  // The claim lives in one sentence, and inside that sentence only in the
+  // clause that carries the test — items named in earlier clauses (poison
+  // words, tone drift) are other findings and are never touched.
   const sentences = text.split(/(?<=\.)\s+/);
   const out = sentences.map((sentence) => {
-    if (!TEST.test(sentence)) return sentence;
-    const terms = [...sentence.matchAll(/["“”']([^"“”']{3,60})["“”']/g)].map((m) => m[1]);
-    const claimed = terms.filter((t) => /[a-z]/i.test(t));
+    const at = sentence.search(TEST);
+    if (at < 0) return sentence;
+    const comma = sentence.lastIndexOf(", ", at);
+    const start = comma >= 0 ? comma + 2 : 0;
+    const head = sentence.slice(0, start);
+    let clause = sentence.slice(start);
+
+    const claimed = [...clause.matchAll(/["“”']([^"“”']{3,60})["“”']/g)]
+      .map((m) => m[1])
+      .filter((t) => /[a-z]/i.test(t));
     if (!claimed.length) return sentence;
     const unsupported = claimed.filter((t) => !supports(t));
     if (!unsupported.length) return sentence;
     const supported = claimed.filter((t) => supports(t));
 
     if (!supported.length) {
-      // Nothing in the audit supports the claim: the clause goes.
-      const cut = sentence.replace(
-        /(?:,|;|\band\b)?\s*[^,;]*brand[\s-]?name[\s-]?removal\s+test[^.]*\./i,
-        ".",
-      );
+      // Nothing in the audit supports the claim: the whole clause goes.
+      const cut = `${head.replace(/,?\s*(?:and\s+)?$/, "")}.`;
       return cut.replace(/\s+([,.])/g, "$1").replace(/,\s*\./, ".").trim();
     }
 
-    let s = sentence;
     for (const term of unsupported) {
       const esc = term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-      s = s.replace(
+      clause = clause.replace(
         new RegExp(
           `(?:\\s+and)?\\s*(?:the\\s+)?["“”']${esc}["“”'][^,.]*?(?=\\s+and\\s|\\s+soften|,|\\.)`,
           "i",
@@ -226,18 +231,18 @@ export function reconcileAuditClaims(
         "",
       );
     }
-    // The count word and verb agreement follow the surviving list.
     const before = claimed.length;
     const after = supported.length;
     if (NUM_WORD[before]) {
-      s = s.replace(
+      clause = clause.replace(
         new RegExp(`\\b${NUM_WORD[before]}\\s+specificity\\s+failures?\\b`, "i"),
         `${NUM_WORD[after] ?? after} specificity failure${after === 1 ? "" : "s"}`,
       );
     }
-    if (after === 1) s = s.replace(/\bsoften\b/g, "softens");
-    return s.replace(/\s{2,}/g, " ").replace(/\s+([,.])/g, "$1").trim();
+    if (after === 1) clause = clause.replace(/\bsoften\b/g, "softens");
+    return `${head}${clause}`.replace(/\s{2,}/g, " ").replace(/\s+([,.])/g, "$1").trim();
   });
+
 
   return out.join(" ");
 }
