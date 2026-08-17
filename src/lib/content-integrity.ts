@@ -738,10 +738,12 @@ export function assertPublishable(html: string, label: string, opts: IntegrityOp
 /**
  * Some stored stage outputs were themselves cut off mid-sentence when the
  * pipeline wrote them. A cut sentence is never shown to a reader and is never
- * completed by guessing: the incomplete tail is dropped and the gap is stated.
+ * completed by guessing: the incomplete tail is dropped, silently. Commentary
+ * about the state of the pipeline record is internal system voice and has no
+ * place in a client deliverable, so nothing is written in its place.
  * Shared by every builder so one deliverable cannot silently keep the cut.
  */
-export const CUT_NOTE = `<p class="note">The stored output for this stage ends mid-sentence in the pipeline record. Nothing has been invented to complete it.</p>`;
+export const CUT_NOTE = "";
 
 export function closeIncompleteTail(bodyHtml: string): string {
   const openAt = Math.max(bodyHtml.lastIndexOf("<p"), bodyHtml.lastIndexOf("<li"));
@@ -755,6 +757,7 @@ export function closeIncompleteTail(bodyHtml: string): string {
   const after = bodyHtml.slice(closeAt + `</${tag}>`.length);
   return `${bodyHtml.slice(0, openAt)}${after}${CUT_NOTE}`;
 }
+
 
 /**
  * Some stored stage outputs narrate the model's own process ("Because I cannot
