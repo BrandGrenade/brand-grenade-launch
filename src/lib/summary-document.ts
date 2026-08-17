@@ -368,7 +368,10 @@ interface SectionDef {
   body: string;
 }
 
-const BREAK_BEFORE = new Set(["01", "04", "16", "19"]);
+// Section 20 carries two short lists that must not be split around Section 21,
+// so it starts its own printed page.
+const BREAK_BEFORE = new Set(["01", "04", "16", "19", "20"]);
+
 
 /**
  * Generic section seal, applied to every section body BEFORE assembly.
