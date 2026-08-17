@@ -766,19 +766,41 @@ export function buildSummaryDocument(
       }`
     : "";
 
-  /* 11 — Not carried forward */
+  /* 11 — Not carried forward.
+     Every alternative states a real, non-contradictory reason. A pressure-test
+     note that records no weakness is not a reason to set a proposition aside,
+     so it is never printed as one: the reason given is the recorded elimination
+     where the pipeline recorded one, and otherwise the comparative decision at
+     proposition lock, with the scores that decision was taken against. */
   const rejected = field.filter((f) => !f.selected);
+  const winnerComposite = field.find((f) => f.selected)?.composite ?? null;
+  const weakness =
+    /(wobble|fails?|failed|risk|counter|weak|thin|generic|collaps|vulnerab|eliminat|drift|breach)/i;
+  const rejectionReason = (f: (typeof field)[number]): string => {
+    const recorded = outcomeFor(outcomes, f.proposition);
+    if (recorded?.status === "eliminated" && recorded.reason) {
+      return `Eliminated at ${recorded.stage ?? "pressure testing"}: ${wholeSentences(recorded.reason, 2, 380)}`;
+    }
+    const note = firstSentencesOf(f.reason ?? "", 2);
+    if (note && weakness.test(note)) {
+      return `Set aside at proposition lock: ${note}`;
+    }
+    const scores =
+      f.composite && winnerComposite
+        ? ` It scored ${f.composite} at Stage 12 against the selected proposition's ${winnerComposite}.`
+        : f.composite
+          ? ` It scored ${f.composite} at Stage 12.`
+          : "";
+    return (
+      `Cleared pressure testing but was not selected at proposition lock: only one proposition is carried forward` +
+      `${lockedSmp ? `, and "${lockedSmp}" was judged the stronger platform for this brand` : ""}.${scores}`
+    );
+  };
   const rejectedHtml = rejected.length
     ? list(
-        rejected.slice(0, 8).map((f) => {
-          // The stored note is a pressure-test observation, not a rejection
-          // reason. It is labelled as what it is, so a positive note can never
-          // read as the reason a proposition was set aside.
-          const note = firstSentencesOf(f.reason ?? "", 1);
-          return `**${f.proposition}** — Not carried forward at proposition lock.${
-            note ? ` Pressure test recorded: ${note}` : ""
-          }`;
-        }),
+        rejected
+          .slice(0, 8)
+          .map((f) => `**${f.proposition}** — ${rejectionReason(f)}`),
       )
     : "";
 
