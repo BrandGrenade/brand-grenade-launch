@@ -1094,10 +1094,14 @@ export function buildSummaryDocument(
   }`;
 
 
-  /* 21 — Next step */
-  const nextHtml = `${p(recs.condition ? `Condition on activation: ${recs.condition}` : "")}${p(
-    recs.nextStep ? `Next step: ${recs.nextStep}` : "",
-  )}`;
+  /* 21 — Next step.
+     Recommendations are read from a separate extractor, so the shared source
+     normalisation is applied here too — the same finding must not change
+     polarity between Section 15 and this one. */
+  const nextHtml = `${p(
+    recs.condition ? normalisePhrasing(`Condition on activation: ${recs.condition}`) : "",
+  )}${p(recs.nextStep ? normalisePhrasing(`Next step: ${recs.nextStep}`) : "")}`;
+
 
   const defs: SectionDef[] = [
     {
