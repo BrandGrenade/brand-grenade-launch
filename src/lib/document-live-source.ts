@@ -8,7 +8,18 @@ export type LiveDocumentSession = Record<string, unknown> & {
   locked_campaign_line?: string | null;
   locked_big_idea_lens?: string | null;
   locked_big_idea_at?: string | null;
+  locked_source_fallback?: string | null;
 };
+
+/** Surface a visible warning when a document falls back to cached locked values. */
+function warnFallback(reason: string) {
+  const message = `Using saved locked creative idea — ${reason}. Document may not reflect the latest re-lock.`;
+  console.warn(`[document-live-source] ${message}`);
+  void import("sonner")
+    .then(({ toast }) => toast.warning("Locked idea served from saved copy", { description: message, duration: 8000 }))
+    .catch(() => {});
+}
+
 
 /**
  * Resolves Room 04 from its authoritative relational records at the instant a
