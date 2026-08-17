@@ -8,7 +8,18 @@ export type LiveDocumentSession = Record<string, unknown> & {
   locked_campaign_line?: string | null;
   locked_big_idea_lens?: string | null;
   locked_big_idea_at?: string | null;
+  locked_source_fallback?: string | null;
 };
+
+/** Surface a visible warning when a document falls back to cached locked values. */
+function warnFallback(reason: string) {
+  const message = `Using saved locked creative idea — ${reason}. Document may not reflect the latest re-lock.`;
+  console.warn(`[document-live-source] ${message}`);
+  void import("sonner")
+    .then(({ toast }) => toast.warning("Locked idea served from saved copy", { description: message, duration: 8000 }))
+    .catch(() => {});
+}
+
 
 /**
  * Resolves Room 04 from its authoritative relational records at the instant a
@@ -70,7 +81,26 @@ export async function resolveLiveDocumentSession<T extends LiveDocumentSession>(
     runId = run?.id ?? null;
   }
 
+  const storedIdea = (current.locked_big_idea as string | null) ?? supplied.locked_big_idea ?? null;
+  const storedLine =
+    (current.locked_campaign_line as string | null) ?? supplied.locked_campaign_line ?? null;
+  const storedLens =
+    (current.locked_big_idea_lens as string | null) ?? supplied.locked_big_idea_lens ?? null;
+  const storedAt = (current.locked_big_idea_at as string | null) ?? supplied.locked_big_idea_at ?? null;
+
   if (!run) {
+    if (storedIdea || storedLine) {
+      warnFallback("the winning creative run could not be found");
+      return {
+        ...merged,
+        locked_big_idea_run_id: (current.locked_big_idea_run_id as string | null) ?? null,
+        locked_big_idea: storedIdea,
+        locked_campaign_line: storedLine,
+        locked_big_idea_lens: storedLens,
+        locked_big_idea_at: storedAt,
+        locked_source_fallback: "run-lookup-failed",
+      };
+    }
     return {
       ...merged,
       locked_big_idea_run_id: null,
@@ -93,13 +123,24 @@ export async function resolveLiveDocumentSession<T extends LiveDocumentSession>(
   const idea = directions?.find((row) => row.id === run?.winning_direction_id);
   const line = directions?.find((row) => row.id === run?.winning_line_direction_id);
 
+  const resolvedIdea = idea?.direction ?? null;
+  const resolvedLine = line?.campaign_line ?? run.winning_line ?? null;
+
+  const ideaFallback = !resolvedIdea && Boolean(storedIdea);
+  const lineFallback = !resolvedLine && Boolean(storedLine);
+  if (ideaFallback || lineFallback) {
+    warnFallback("the locked creative direction row could not be read");
+  }
+
   return {
     ...merged,
     locked_big_idea_run_id: runId,
-    locked_big_idea: idea?.direction ?? null,
-    locked_big_idea_lens: idea?.lens_name ?? null,
-    locked_campaign_line:
-      line?.campaign_line ?? run.winning_line ?? null,
-    locked_big_idea_at: run.locked_at ?? null,
+    locked_big_idea: resolvedIdea ?? storedIdea,
+    locked_big_idea_lens: idea?.lens_name ?? (ideaFallback ? storedLens : null),
+    locked_campaign_line: resolvedLine ?? storedLine,
+    locked_big_idea_at: run.locked_at ?? (ideaFallback || lineFallback ? storedAt : null),
+    ...(ideaFallback || lineFallback
+      ? { locked_source_fallback: "direction-lookup-failed" }
+      : {}),
   };
 }
