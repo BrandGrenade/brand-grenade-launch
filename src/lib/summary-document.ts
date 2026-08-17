@@ -538,8 +538,10 @@ export function buildSummaryDocument(
 
 
   /* 04 — Category intelligence */
+  // Section 03 states how many research inputs were drawn on; every one of them
+  // is listed here, so the two numbers can never disagree.
   const categoryHtml = `${stageBlock(session, "stage_2_output", 14, 2200)}${list(
-    research.slice(0, 6).map((r) => `**${r.label}.** ${r.body}`),
+    research.map((r) => `**${r.label}.** ${r.body}`),
   )}`;
 
   /* 05 — Category insight. The display treatment carries the insight itself;
@@ -845,8 +847,17 @@ export function buildSummaryDocument(
       }`
     : stageBlock(session, "stage_17_output", 10, 1600);
 
-  /* 15 — Coherence audit */
-  const coherenceHtml = stageBlock(session, "stage_15_output", 8, 1200);
+  /* 15 — Coherence audit.
+     Section 21 quotes the audit's findings by name, so the findings themselves
+     are rendered here rather than condensed away. */
+  const auditFlags = extractAuditFlags(str(session, "stage_15_output"));
+  const coherenceHtml = `${stageBlock(session, "stage_15_output", 8, 1200)}${
+    auditFlags.length
+      ? `<h3>Findings raised by the audit</h3>${defList(
+          auditFlags.map((f) => ({ label: f.label, body: f.detail })),
+        )}`
+      : ""
+  }`;
 
   /* 16 — Creative sweep */
   const sweepHtml = `${statGrid([
