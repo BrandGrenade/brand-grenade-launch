@@ -441,10 +441,21 @@ function renderSections(defs: SectionDef[]): { html: string; sealed: GateSection
         acronymsSeen,
       );
       sealed.push({ index: d.index, title: d.title, html: body });
+      // A short section is one unit: its heading, descriptor and content stay
+      // on the same printed page, so a heading is never stranded above a page
+      // break with its content appearing to belong to the next section.
+      const keepTogether = strip(body).length < 1400;
       return section(
-        { kicker: d.kicker, index: d.index, title: d.title, breakBefore: BREAK_BEFORE.has(d.index) },
+        {
+          kicker: d.kicker,
+          index: d.index,
+          title: d.title,
+          breakBefore: BREAK_BEFORE.has(d.index),
+          keepTogether,
+        },
         `<p class="lede">${escapeHtml(d.lede)}</p>${body || nothing("No stored output for this stage.")}`,
       );
+
     })
     .join("\n");
   return { html, sealed };
