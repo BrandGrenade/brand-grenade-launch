@@ -471,6 +471,24 @@ const okey = (s: string) =>
   s.toLowerCase().replace(/[^a-z0-9]+/g, " ").replace(/\s+/g, " ").trim();
 
 /**
+ * The substantive reason written as prose immediately beneath an SMP verdict
+ * line. Stage 11 records the argument there far more often than under a
+ * labelled "ELIMINATION PATHWAY", and a document must never restate the
+ * verdict as though it were the reason.
+ */
+function prosAfterVerdict(body: string): string {
+  const at = body.search(/SMP VERDICT\s*[:.]?\s*\**\s*[A-Z]/i);
+  if (at < 0) return "";
+  const tail = body.slice(at).split("\n").slice(1).join("\n");
+  const para = tail
+    .split(/\n\s*\n/)
+    .map((b) => b.replace(/\*\*/g, "").replace(/\s+/g, " ").trim())
+    .find((b) => b.length > 40 && !/^[A-Z][A-Z ]{4,}\s*[:.]/.test(b));
+  return para ? sentences(para, 2) : "";
+}
+
+
+/**
  * The outcome of every strategic territory in the run: survived, or eliminated
  * and at which stage. Read from the pipeline's own records — Stage 11's per-SMP
  * verdict blocks, plus any explicit "ELIMINATED at Stage N" note in Stage 10 or
