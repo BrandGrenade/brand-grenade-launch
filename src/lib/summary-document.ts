@@ -135,8 +135,11 @@ const SOURCE_TYPOS: Array<[RegExp, string]> = [
   [/\bCombank\b/g, "CommBank"],
   [/\bCommbank\b/g, "CommBank"],
   [/\bteh\b/gi, "the"],
-  [/\brecieve(d|s)?\b/gi, (_m: string, t = "") => `receive${t}`],
-  [/\bseperate(d|ly)?\b/gi, (_m: string, t = "") => `separate${t}`],
+  [/\brecieve\b/gi, "receive"],
+  [/\brecieved\b/gi, "received"],
+  [/\bseperate\b/gi, "separate"],
+  [/\bseperately\b/gi, "separately"],
+
   [/\boccured\b/gi, "occurred"],
   [/\bconsistant\b/gi, "consistent"],
   [/\bdefinately\b/gi, "definitely"],
