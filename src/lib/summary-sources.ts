@@ -231,7 +231,16 @@ export function extractWinnerScores(stage10: string, smp: string): WinnerScore[]
   const block = text.slice(start, endRel > 0 ? start + endRel : text.length);
 
   const out: WinnerScore[] = [];
-  const re = /^\s*\**([A-Z][A-Za-z /-]{3,40})\**\s*:\**\s*(\d{1,2})\s*\/\s*10\s*[—–-]\s*([\s\S]*?)(?=\n\s*\**[A-Z][A-Za-z /-]{3,40}\**\s*:\**\s*\d{1,2}\s*\/\s*10|$)/gm;
+  // Review annotations are removed before this parser runs. That can leave
+  // either the original score separator ("7/10 — rationale") or a sentence
+  // stop ("7/10. Rationale"). Accept both forms: the latter previously made
+  // the regex consume Brand Permission, Clean Air and Commercial Precedent as
+  // part of the preceding Competitive Impossibility rationale.
+  const scoreLine = String.raw`\n\s*\**[A-Z][A-Za-z /-]{3,40}\**\s*:\**\s*\d{1,2}\s*\/\s*10`;
+  const re = new RegExp(
+    String.raw`^\s*\**([A-Z][A-Za-z /-]{3,40})\**\s*:\**\s*(\d{1,2})\s*\/\s*10\s*(?:[—–-]|\.)\s*([\s\S]*?)(?=${scoreLine}|$)`,
+    "gm",
+  );
   let m: RegExpExecArray | null;
   while ((m = re.exec(block))) {
     const rationale = stripAuditMarkers(m[3].replace(/\s+/g, " ").trim());

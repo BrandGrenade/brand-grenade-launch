@@ -394,6 +394,10 @@ const EXTRA_CSS = `
   .reasons > * + * { margin-top: 12pt; }
   .section:last-of-type { break-after: avoid; page-break-after: avoid; }
   .section:last-of-type + .footer { break-before: avoid; page-break-before: avoid; }
+  /* Each long comparison owns its printed pages. Starting the following
+     section on a fresh page prevents Chromium from painting a repeated table
+     header and deferred rows into the next section's visual region. */
+  .section:has(.cmp) + .section { break-before: page; page-break-before: always; }
 }
 `;
 
@@ -654,6 +658,27 @@ export function buildSummaryDocument(
         note: wholeSentences(r.rationale, 3, 900),
       }))
     : scoring.rows;
+
+  // Never publish a partial table with a composite calculated from dimensions
+  // the reader cannot see. If extraction regresses, generation stops here.
+  const expectedScoreDimensions = [
+    "Fame",
+    "Truth Strength",
+    "Competitive Impossibility",
+    "Brand Permission",
+    "Clean Air",
+    "Commercial Precedent",
+  ];
+  const scoreDimensionKey = (value: string) => value.toLowerCase().replace(/[^a-z0-9]+/g, "");
+  const presentScoreDimensions = new Set(scoreRows.map((row) => scoreDimensionKey(row.dimension)));
+  const missingScoreDimensions = expectedScoreDimensions.filter(
+    (dimension) => !presentScoreDimensions.has(scoreDimensionKey(dimension)),
+  );
+  if ((scoring.composite || scoring.verdict) && missingScoreDimensions.length) {
+    throw new Error(
+      `Proposition scoring is incomplete; missing ${missingScoreDimensions.join(", ")}`,
+    );
+  }
 
   const scoringHtml = scoreRows.length
     ? `${comparisonTable(
