@@ -165,6 +165,84 @@ function normalisePhrasing(text: string): string {
   );
 }
 
+const NUM_WORD = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight"];
+
+function normTerm(s: string): string {
+  return s.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+/**
+ * The closing recommendation quotes the coherence audit by name. A claim it
+ * attributes to the audit ("X fails the brand name removal test") is only
+ * printed when the audit's own finding for that item actually makes it: an
+ * attribution the reader can check against Section 15 and find missing is a
+ * defect, so the unsupported item is dropped from the sentence rather than
+ * left standing.
+ */
+export function reconcileAuditClaims(
+  text: string,
+  flags: Array<{ label: string; detail?: string }>,
+): string {
+  const TEST = /brand[\s-]?name[\s-]?removal\s+test/i;
+  if (!TEST.test(text)) return text;
+
+  const supports = (term: string): boolean => {
+    const t = normTerm(term);
+    if (!t) return false;
+    return flags.some((f) => {
+      const body = normTerm(`${f.label} ${f.detail ?? ""}`);
+      return body.includes(t) && /brand name removal test/.test(body);
+    });
+  };
+
+  // The claim lives in one sentence; only that sentence is touched.
+  const sentences = text.split(/(?<=\.)\s+/);
+  const out = sentences.map((sentence) => {
+    if (!TEST.test(sentence)) return sentence;
+    const terms = [...sentence.matchAll(/["“”']([^"“”']{3,60})["“”']/g)].map((m) => m[1]);
+    const claimed = terms.filter((t) => /[a-z]/i.test(t));
+    if (!claimed.length) return sentence;
+    const unsupported = claimed.filter((t) => !supports(t));
+    if (!unsupported.length) return sentence;
+    const supported = claimed.filter((t) => supports(t));
+
+    if (!supported.length) {
+      // Nothing in the audit supports the claim: the clause goes.
+      const cut = sentence.replace(
+        /(?:,|;|\band\b)?\s*[^,;]*brand[\s-]?name[\s-]?removal\s+test[^.]*\./i,
+        ".",
+      );
+      return cut.replace(/\s+([,.])/g, "$1").replace(/,\s*\./, ".").trim();
+    }
+
+    let s = sentence;
+    for (const term of unsupported) {
+      const esc = term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      s = s.replace(
+        new RegExp(
+          `(?:\\s+and)?\\s*(?:the\\s+)?["“”']${esc}["“”'][^,.]*?(?=\\s+and\\s|\\s+soften|,|\\.)`,
+          "i",
+        ),
+        "",
+      );
+    }
+    // The count word and verb agreement follow the surviving list.
+    const before = claimed.length;
+    const after = supported.length;
+    if (NUM_WORD[before]) {
+      s = s.replace(
+        new RegExp(`\\b${NUM_WORD[before]}\\s+specificity\\s+failures?\\b`, "i"),
+        `${NUM_WORD[after] ?? after} specificity failure${after === 1 ? "" : "s"}`,
+      );
+    }
+    if (after === 1) s = s.replace(/\bsoften\b/g, "softens");
+    return s.replace(/\s{2,}/g, " ").replace(/\s+([,.])/g, "$1").trim();
+  });
+
+  return out.join(" ");
+}
+
+
 function sanitiseSource(text: string): string {
   return normalisePhrasing(fixSourceTypos(normaliseMd(stripDocumentMetadata(text))))
     .replace(/={3,}[^=\n]*={3,}/g, " ")
