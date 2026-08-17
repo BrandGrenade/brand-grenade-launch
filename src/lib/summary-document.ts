@@ -165,6 +165,89 @@ function normalisePhrasing(text: string): string {
   );
 }
 
+const NUM_WORD = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight"];
+
+function normTerm(s: string): string {
+  return s.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+/**
+ * The closing recommendation quotes the coherence audit by name. A claim it
+ * attributes to the audit ("X fails the brand name removal test") is only
+ * printed when the audit's own finding for that item actually makes it: an
+ * attribution the reader can check against Section 15 and find missing is a
+ * defect, so the unsupported item is dropped from the sentence rather than
+ * left standing.
+ */
+export function reconcileAuditClaims(
+  text: string,
+  flags: Array<{ label: string; detail?: string }>,
+): string {
+  const TEST = /brand[\s-]?name[\s-]?removal\s+test/i;
+  if (!TEST.test(text)) return text;
+
+  const supports = (term: string): boolean => {
+    const t = normTerm(term);
+    if (!t) return false;
+    return flags.some((f) => {
+      const body = normTerm(`${f.label} ${f.detail ?? ""}`);
+      return body.includes(t) && /brand name removal test/.test(body);
+    });
+  };
+
+  // The claim lives in one sentence, and inside that sentence only in the
+  // clause that carries the test — items named in earlier clauses (poison
+  // words, tone drift) are other findings and are never touched.
+  const sentences = text.split(/(?<=\.)\s+/);
+  const out = sentences.map((sentence) => {
+    const at = sentence.search(TEST);
+    if (at < 0) return sentence;
+    const comma = sentence.lastIndexOf(", ", at);
+    const start = comma >= 0 ? comma + 2 : 0;
+    const head = sentence.slice(0, start);
+    let clause = sentence.slice(start);
+
+    const claimed = [...clause.matchAll(/["“”']([^"“”']{3,60})["“”']/g)]
+      .map((m) => m[1])
+      .filter((t) => /[a-z]/i.test(t));
+    if (!claimed.length) return sentence;
+    const unsupported = claimed.filter((t) => !supports(t));
+    if (!unsupported.length) return sentence;
+    const supported = claimed.filter((t) => supports(t));
+
+    if (!supported.length) {
+      // Nothing in the audit supports the claim: the whole clause goes.
+      const cut = `${head.replace(/,?\s*(?:and\s+)?$/, "")}.`;
+      return cut.replace(/\s+([,.])/g, "$1").replace(/,\s*\./, ".").trim();
+    }
+
+    for (const term of unsupported) {
+      const esc = term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      clause = clause.replace(
+        new RegExp(
+          `(?:\\s+and)?\\s*(?:the\\s+)?["“”']${esc}["“”'][^,.]*?(?=\\s+and\\s|\\s+soften|,|\\.)`,
+          "i",
+        ),
+        "",
+      );
+    }
+    const before = claimed.length;
+    const after = supported.length;
+    if (NUM_WORD[before]) {
+      clause = clause.replace(
+        new RegExp(`\\b${NUM_WORD[before]}\\s+specificity\\s+failures?\\b`, "i"),
+        `${NUM_WORD[after] ?? after} specificity failure${after === 1 ? "" : "s"}`,
+      );
+    }
+    if (after === 1) clause = clause.replace(/\bsoften\b/g, "softens");
+    return `${head}${clause}`.replace(/\s{2,}/g, " ").replace(/\s+([,.])/g, "$1").trim();
+  });
+
+
+  return out.join(" ");
+}
+
+
 function sanitiseSource(text: string): string {
   return normalisePhrasing(fixSourceTypos(normaliseMd(stripDocumentMetadata(text))))
     .replace(/={3,}[^=\n]*={3,}/g, " ")
@@ -388,8 +471,12 @@ interface SectionDef {
 }
 
 // Section 20 carries two short lists that must not be split around Section 21,
-// so it starts its own printed page.
-const BREAK_BEFORE = new Set(["01", "04", "16", "19", "20"]);
+// so it starts its own printed page — and Section 21 starts a fresh page after
+// it, so no part of Section 21 can be painted between Section 20's lists.
+// Section 12 does the same for Section 11's rejected-proposition list, whose
+// final entry was otherwise deferred past the Section 12 heading in print.
+const BREAK_BEFORE = new Set(["01", "04", "12", "16", "19", "20", "21"]);
+
 
 
 /**
@@ -531,11 +618,15 @@ const EXTRA_CSS = `
   /* The closing footer is the last content in the document. It starts its own
      printed page so no fragment of the final sections can be painted after it,
      and the final section is never split across the footer boundary. */
-  .footer { break-before: page; page-break-before: always; break-inside: avoid; }
+  .footer { break-before: page; page-break-before: always; break-inside: avoid; margin-top: 28pt; padding-top: 14pt; }
   .section:last-of-type { break-after: auto; page-break-after: auto; }
   .section:last-of-type + .footer { break-before: page; page-break-before: always; }
+  /* Whatever the fragmentation outcome, the closing line is never glued to the
+     last bullet above it. */
+  .section + .footer { margin-top: 28pt; }
 }
 `;
+
 
 function band(title: string, stats: Stat[]): string {
   const grid = statGrid(stats);
@@ -1130,7 +1221,12 @@ export function buildSummaryDocument(
      polarity between Section 15 and this one. */
   const nextHtml = `${p(
     recs.condition ? normalisePhrasing(`Condition on activation: ${recs.condition}`) : "",
-  )}${p(recs.nextStep ? normalisePhrasing(`Next step: ${recs.nextStep}`) : "")}`;
+  )}${p(
+    recs.nextStep
+      ? reconcileAuditClaims(normalisePhrasing(`Next step: ${recs.nextStep}`), auditFlags)
+      : "",
+  )}`;
+
 
 
   const defs: SectionDef[] = [
