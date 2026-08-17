@@ -151,8 +151,22 @@ export function fixSourceTypos(text: string): string {
   return out;
 }
 
+/**
+ * The same underlying finding must read the same way wherever it is quoted.
+ * The coherence audit records a soft, category-generic paragraph as failing
+ * the brand-name-removal test; a later stage describes the same fault as copy
+ * that "survives" the test. Both mean the brand is removable, so the wording
+ * is normalised to the audit's own polarity everywhere it appears.
+ */
+function normalisePhrasing(text: string): string {
+  return text.replace(
+    /\bsurvives?\b(\s+(?:the\s+)?brand[\s-]name[\s-]removal\s+test)/gi,
+    (_m, tail: string) => `fails${tail}`,
+  );
+}
+
 function sanitiseSource(text: string): string {
-  return fixSourceTypos(normaliseMd(stripDocumentMetadata(text)))
+  return normalisePhrasing(fixSourceTypos(normaliseMd(stripDocumentMetadata(text))))
     .replace(/={3,}[^=\n]*={3,}/g, " ")
     .replace(/The following inputs have been[^.]*\.\s*/gi, "")
     .replace(/Stage \d+[a-z]? must treat these[^.]*\.\s*/gi, "")
@@ -173,11 +187,19 @@ function p(text?: string | null): string {
   return t ? `<p>${inlineMd(t)}</p>` : "";
 }
 
-function list(items: Array<string | null | undefined>): string {
+/**
+ * A short list is one unit of argument and is never split across a page
+ * boundary: a two-item fragment followed by the next section's heading reads
+ * as two different lists. Long lists still fragment, because a list that
+ * cannot fit a page must break somewhere.
+ */
+function list(items: Array<string | null | undefined>, keepTogether = false): string {
   const rows = items.map((i) => (i ?? "").trim()).filter(Boolean);
   if (!rows.length) return "";
-  return `<ul>${rows.map((r) => `<li>${inlineMd(r)}</li>`).join("")}</ul>`;
+  const cls = keepTogether && rows.length <= 10 ? ' class="keep-together"' : "";
+  return `<ul${cls}>${rows.map((r) => `<li>${inlineMd(r)}</li>`).join("")}</ul>`;
 }
+
 
 function defList(rows: Array<{ label: string; body?: string | null }>): string {
   const items = rows.filter((r) => (r.body ?? "").trim());
@@ -199,6 +221,15 @@ function defList(rows: Array<{ label: string; body?: string | null }>): string {
  */
 const clampText = safeClamp;
 
+/**
+ * Raw pipeline bookkeeping written at the head of a stage output — the brand
+ * echo, the framework version, the clearance status line — is internal
+ * addressing, not client-facing prose. It is removed wherever it appears,
+ * whether written with a dash or a colon after the label.
+ */
+const METADATA_LABEL =
+  /^(?:BRAND|SESSION|SESSION ID|CLIENT|CATEGORY|DATE|AUDIT DATE|REPORT DATE|VERSION|CMM VERSION|STRL VERSION|PROMPT VERSION|MODEL|STAGE|STAGE NUMBER|PIPELINE CLEARANCE STATUS|CLEARANCE STATUS|PIPELINE STATUS|STATUS|TOTAL FLAGS RAISED|FLAGS RAISED|DOCUMENT|PREPARED BY|AUTHOR|OWNER|RUN ID|SMP VERSION)\s*[:—–-]\s*.*$/i;
+
 /** `clean` collapses all whitespace, so it is applied line by line — a stage
  * flattened to a single line loses every heading boundary. */
 function cleanBlock(text: string): string {
@@ -207,10 +238,12 @@ function cleanBlock(text: string): string {
     .map((line) => clean(line))
     // pipeline bookkeeping fields ("AUDIT DATE — …", "TOTAL FLAGS RAISED — 6")
     .filter((line) => !/^[A-Z][A-Z /()-]{4,40}\s*[—–-]\s/.test(line))
+    .filter((line) => !METADATA_LABEL.test(line.replace(/^[#*\s]+/, "").trim()))
     .join("\n")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
 }
+
 
 /**
  * The generated proposition a later refinement came out of. Scored on the
@@ -335,7 +368,10 @@ interface SectionDef {
   body: string;
 }
 
-const BREAK_BEFORE = new Set(["01", "04", "16", "19"]);
+// Section 20 carries two short lists that must not be split around Section 21,
+// so it starts its own printed page.
+const BREAK_BEFORE = new Set(["01", "04", "16", "19", "20"]);
+
 
 /**
  * Generic section seal, applied to every section body BEFORE assembly.
@@ -405,10 +441,21 @@ function renderSections(defs: SectionDef[]): { html: string; sealed: GateSection
         acronymsSeen,
       );
       sealed.push({ index: d.index, title: d.title, html: body });
+      // A short section is one unit: its heading, descriptor and content stay
+      // on the same printed page, so a heading is never stranded above a page
+      // break with its content appearing to belong to the next section.
+      const keepTogether = strip(body).length < 1400;
       return section(
-        { kicker: d.kicker, index: d.index, title: d.title, breakBefore: BREAK_BEFORE.has(d.index) },
+        {
+          kicker: d.kicker,
+          index: d.index,
+          title: d.title,
+          breakBefore: BREAK_BEFORE.has(d.index),
+          keepTogether,
+        },
         `<p class="lede">${escapeHtml(d.lede)}</p>${body || nothing("No stored output for this stage.")}`,
       );
+
     })
     .join("\n");
   return { html, sealed };
@@ -838,8 +885,10 @@ export function buildSummaryDocument(
         rejected
           .slice(0, 8)
           .map((f) => `**${f.proposition}** — ${rejectionReason(f)}`),
+        true,
       )
     : "";
+
 
   /* 12 — Integrity and fact verification */
   const verifyHtml = verification.tests.length
@@ -1047,18 +1096,23 @@ export function buildSummaryDocument(
     arch.personality ? `Brand personality: ${arch.personality}` : "",
   )}${
     arch.assets.length
-      ? `<h3>Recommended distinctive assets</h3>${list(arch.assets)}`
+      ? `<h3>Recommended distinctive assets</h3>${list(arch.assets, true)}`
       : ""
   }${
     arch.principles.length
-      ? `<h3>Deployment principles</h3>${list(arch.principles)}`
+      ? `<h3>Deployment principles</h3>${list(arch.principles, true)}`
       : ""
   }`;
 
-  /* 21 — Next step */
-  const nextHtml = `${p(recs.condition ? `Condition on activation: ${recs.condition}` : "")}${p(
-    recs.nextStep ? `Next step: ${recs.nextStep}` : "",
-  )}`;
+
+  /* 21 — Next step.
+     Recommendations are read from a separate extractor, so the shared source
+     normalisation is applied here too — the same finding must not change
+     polarity between Section 15 and this one. */
+  const nextHtml = `${p(
+    recs.condition ? normalisePhrasing(`Condition on activation: ${recs.condition}`) : "",
+  )}${p(recs.nextStep ? normalisePhrasing(`Next step: ${recs.nextStep}`) : "")}`;
+
 
   const defs: SectionDef[] = [
     {
