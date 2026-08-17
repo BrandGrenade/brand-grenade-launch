@@ -526,6 +526,10 @@ export function extractTerritoryOutcomes(
       .replace(/\*\*/g, "")
       .split(/(?<=[.!?])\s/)[0]
       .trim();
+    // Most runs write the substantive reason as prose immediately under the
+    // verdict rather than under an "ELIMINATION PATHWAY" label. A recorded
+    // reason is always preferred to a restatement of the verdict itself.
+    if (!reason && eliminated) reason = prosAfterVerdict(block.body);
     if (reason) reason = reason.charAt(0).toUpperCase() + reason.slice(1);
     put({
       name,
@@ -535,6 +539,22 @@ export function extractTerritoryOutcomes(
       reason: eliminated ? reason || undefined : undefined,
     });
 
+  }
+
+  // Stage 10 per-candidate blocks: "### <territory>" … "VERDICT: ELIMINATED — why"
+  for (const block of mdBlocks(s10)) {
+    const v = block.body.match(/\bVERDICT\s*[:.]?\s*\**\s*ELIMINATED\b\s*[—–-]?\s*([^\n]*)/i);
+    if (!v) continue;
+    const fieldName = (block.body.match(/FIELD\s*[:.]?\s*([^\n—–]+)/i)?.[1] ?? "").trim();
+    const candidate = [block.heading, fieldName].find((n) =>
+      territories.some((t) => okey(t) === okey(n) || okey(n).includes(okey(t))),
+    );
+    const name =
+      territories.find(
+        (t) => okey(t) === okey(candidate ?? "") || okey(candidate ?? "").includes(okey(t)),
+      ) ?? block.heading;
+    const reason = sentences(v[1].replace(/\*\*/g, "").trim()).slice(0, 2).join(" ").trim();
+    put({ name, status: "eliminated", stage: "Stage 10", reason: reason || undefined });
   }
 
   // Explicit "…ELIMINATED at Stage N" notes, wherever the pipeline wrote them.
@@ -550,6 +570,7 @@ export function extractTerritoryOutcomes(
       put({ name: match, status: "eliminated", stage: `Stage ${m[2]}` });
     }
   }
+
 
   return [...byName.values()];
 }
