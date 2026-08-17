@@ -221,6 +221,15 @@ function defList(rows: Array<{ label: string; body?: string | null }>): string {
  */
 const clampText = safeClamp;
 
+/**
+ * Raw pipeline bookkeeping written at the head of a stage output — the brand
+ * echo, the framework version, the clearance status line — is internal
+ * addressing, not client-facing prose. It is removed wherever it appears,
+ * whether written with a dash or a colon after the label.
+ */
+const METADATA_LABEL =
+  /^(?:BRAND|SESSION|SESSION ID|CLIENT|CATEGORY|DATE|AUDIT DATE|REPORT DATE|VERSION|CMM VERSION|STRL VERSION|PROMPT VERSION|MODEL|STAGE|STAGE NUMBER|PIPELINE CLEARANCE STATUS|CLEARANCE STATUS|PIPELINE STATUS|STATUS|TOTAL FLAGS RAISED|FLAGS RAISED|DOCUMENT|PREPARED BY|AUTHOR|OWNER|RUN ID|SMP VERSION)\s*[:—–-]\s*.*$/i;
+
 /** `clean` collapses all whitespace, so it is applied line by line — a stage
  * flattened to a single line loses every heading boundary. */
 function cleanBlock(text: string): string {
@@ -229,10 +238,12 @@ function cleanBlock(text: string): string {
     .map((line) => clean(line))
     // pipeline bookkeeping fields ("AUDIT DATE — …", "TOTAL FLAGS RAISED — 6")
     .filter((line) => !/^[A-Z][A-Z /()-]{4,40}\s*[—–-]\s/.test(line))
+    .filter((line) => !METADATA_LABEL.test(line.replace(/^[#*\s]+/, "").trim()))
     .join("\n")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
 }
+
 
 /**
  * The generated proposition a later refinement came out of. Scored on the
