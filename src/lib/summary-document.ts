@@ -37,8 +37,10 @@ import { closeIncompleteTail } from "./content-integrity";
 import {
   extractBrandArchitecture,
   extractChannelRole,
+  extractAuditFlags,
   extractDetonationCandidates,
   extractImpossibilityAnalysis,
+  extractTerritoryBlocks,
 
   extractRecognitionTest,
   extractSelectedDetonation,
@@ -120,8 +122,34 @@ const EMPTY_EXTRAS: SummaryCreativeExtras = {
  * model, never client-facing copy. They are stripped at the source layer so no
  * section can inherit them.
  */
+/**
+ * Source-side typos the pipeline inherited from the brief. A document is a
+ * client deliverable: a misspelling in stored input is corrected on the way
+ * out, never left on the page. Corrections are spelling-only — no wording,
+ * meaning or emphasis is changed.
+ */
+const SOURCE_TYPOS: Array<[RegExp, string]> = [
+  [/\bC[gh]{1,2}heapest\b/gi, "Cheapest"],
+  [/\bopportunty\b/gi, "opportunity"],
+  [/\bopportunties\b/gi, "opportunities"],
+  [/\bCombank\b/g, "CommBank"],
+  [/\bCommbank\b/g, "CommBank"],
+  [/\bteh\b/gi, "the"],
+  [/\brecieve(d|s)?\b/gi, (_m: string, t = "") => `receive${t}`],
+  [/\bseperate(d|ly)?\b/gi, (_m: string, t = "") => `separate${t}`],
+  [/\boccured\b/gi, "occurred"],
+  [/\bconsistant\b/gi, "consistent"],
+  [/\bdefinately\b/gi, "definitely"],
+];
+
+export function fixSourceTypos(text: string): string {
+  let out = text;
+  for (const [re, rep] of SOURCE_TYPOS) out = out.replace(re, rep as string);
+  return out;
+}
+
 function sanitiseSource(text: string): string {
-  return normaliseMd(stripDocumentMetadata(text))
+  return fixSourceTypos(normaliseMd(stripDocumentMetadata(text)))
     .replace(/={3,}[^=\n]*={3,}/g, " ")
     .replace(/The following inputs have been[^.]*\.\s*/gi, "")
     .replace(/Stage \d+[a-z]? must treat these[^.]*\.\s*/gi, "")
@@ -398,6 +426,16 @@ const EXTRA_CSS = `
      section on a fresh page prevents Chromium from painting a repeated table
      header and deferred rows into the next section's visual region. */
   .section:has(.cmp) + .section { break-before: page; page-break-before: always; }
+  /* Chromium repeats a table-header-group on every page a long table spans,
+     and when the table fragments it can paint that repeat inside the following
+     paragraph. The header is printed once, with the first rows. */
+  .cmp thead { display: table-row-group; }
+  /* The closing footer is the last content in the document. It starts its own
+     printed page so no fragment of the final sections can be painted after it,
+     and the final section is never split across the footer boundary. */
+  .footer { break-before: page; page-break-before: always; break-inside: avoid; }
+  .section:last-of-type { break-after: auto; page-break-after: auto; }
+  .section:last-of-type + .footer { break-before: page; page-break-before: always; }
 }
 `;
 
