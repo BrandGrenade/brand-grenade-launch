@@ -818,15 +818,19 @@ export function buildSummaryDocument(
     if (note && weakness.test(note)) {
       return `Set aside at proposition lock: ${note}`;
     }
+    // A comparative score is only printed when it supports the decision. Where
+    // the alternative scored higher, the decision was taken on strategic fit at
+    // proposition lock, and printing the score alone would misread as a
+    // contradiction.
+    const num = (v: string | null | undefined) => Number((v ?? "").split("/")[0]) || 0;
     const scores =
-      f.composite && winnerComposite
+      f.composite && winnerComposite && num(f.composite) <= num(winnerComposite)
         ? ` It scored ${f.composite} at Stage 12 against the selected proposition's ${winnerComposite}.`
-        : f.composite
-          ? ` It scored ${f.composite} at Stage 12.`
-          : "";
+        : "";
+    const winner = lockedSmp ? lockedSmp.replace(/^["“]|["”]$/g, "") : "";
     return (
-      `Cleared pressure testing but was not selected at proposition lock: only one proposition is carried forward` +
-      `${lockedSmp ? `, and "${lockedSmp}" was judged the stronger platform for this brand` : ""}.${scores}`
+      `Cleared pressure testing, but only one proposition is carried forward` +
+      `${winner ? `, and "${winner}" was judged the stronger strategic platform for this brand` : ""}.${scores}`
     );
   };
   const rejectedHtml = rejected.length
