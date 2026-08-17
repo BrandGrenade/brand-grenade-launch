@@ -803,12 +803,22 @@ export function buildSummaryDocument(
       }`
     : stageBlock(session, "stage_13_output", 9, 1400);
 
-  /* 14 — Territory mapping */
+  /* 14 — Territory mapping.
+     The territory taken forward is the one the session recorded as selected;
+     a section preamble ("Three Detonation Territories for …") is a count of
+     what follows, never the territory itself. */
   const s17 = str(session, "stage_17_output");
   const s18 = str(session, "stage_18_output");
+  const selectedTerritoryName = (
+    str(session, "stage_17_selected_territory").split("\n")[0] ?? ""
+  )
+    .replace(/^#{1,4}\s*/, "")
+    .replace(/\*\*/g, "")
+    .trim();
   const chosenTerritoryName =
+    selectedTerritoryName ||
     (s18.match(/^#{0,4}\s*([A-Z][A-Z '’—-]{4,60}?)\s*[—-]\s*THE DETONATION/m)?.[1] ?? "").trim();
-  const territoryBlocks = mdBlocks(s17);
+  const territoryBlocks = extractTerritoryBlocks(s17);
   const territory =
     (chosenTerritoryName
       ? territoryBlocks.find(
@@ -829,7 +839,9 @@ export function buildSummaryDocument(
         {
           label: "The territory described",
           body: safeClamp(
-            (territoryFields["TERRITORY DESCRIPTION"] ?? "").replace(/\s+/g, " "),
+            (territoryFields["TERRITORY DESCRIPTION"] ??
+              territory.body.split(/\n(?=[A-Z][A-Z '’/&-]{6,}:)/)[0] ??
+              "").replace(/\s+/g, " "),
             1100,
           ),
         },
@@ -837,7 +849,7 @@ export function buildSummaryDocument(
         detonations.length
           ? `<h3>The ${
               ["", "one", "two", "three"][detonations.length] ?? detonations.length
-            } Detonation candidates written against this territory</h3>${defList(
+            } Detonation candidate${detonations.length === 1 ? "" : "s"} written against this territory</h3>${defList(
               detonations.map((d) => ({
                 label: d.line || d.label,
                 body: safeClamp(d.statement, 520),
@@ -846,6 +858,7 @@ export function buildSummaryDocument(
           : ""
       }`
     : stageBlock(session, "stage_17_output", 10, 1600);
+
 
   /* 15 — Coherence audit.
      Section 21 quotes the audit's findings by name, so the findings themselves
