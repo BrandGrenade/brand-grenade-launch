@@ -388,8 +388,12 @@ interface SectionDef {
 }
 
 // Section 20 carries two short lists that must not be split around Section 21,
-// so it starts its own printed page.
-const BREAK_BEFORE = new Set(["01", "04", "16", "19", "20"]);
+// so it starts its own printed page — and Section 21 starts a fresh page after
+// it, so no part of Section 21 can be painted between Section 20's lists.
+// Section 12 does the same for Section 11's rejected-proposition list, whose
+// final entry was otherwise deferred past the Section 12 heading in print.
+const BREAK_BEFORE = new Set(["01", "04", "12", "16", "19", "20", "21"]);
+
 
 
 /**
