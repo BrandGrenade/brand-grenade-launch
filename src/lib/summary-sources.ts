@@ -664,6 +664,30 @@ export function extractAuditFlags(stage15: string): AuditFlag[] {
   const lines = text.split("\n");
   const out: AuditFlag[] = [];
   const seen = new Set<string>();
+
+  // Many runs close with a consolidated "Flag Register" listing every finding
+  // the audit raised. When one exists it is authoritative: per-dimension FLAGS
+  // lines repeat only a subset, which is how a document could cite findings in
+  // its closing section that never appeared in the audit section.
+  const regAt = lines.findIndex((l) => /^\s*#{1,4}\s*FLAG REGISTER\b/i.test(l));
+  if (regAt >= 0) {
+    for (let i = regAt + 1; i < lines.length; i++) {
+      const l = lines[i].trim();
+      if (/^#{1,4}\s/.test(l)) break;
+      if (!/^[-*]\s+/.test(l)) continue;
+      const clean = l.replace(/^[-*]\s+/, "").replace(/\*\*/g, "").replace(/\s+/g, " ").trim();
+      if (clean.length < 30 || /^none\b/i.test(clean)) continue;
+      const split = clean.match(/^(.{6,110}?[.)])\s+(.+)$/);
+      const label = (split?.[1] ?? "Flag").replace(/[.]$/, "");
+      const detail = sentences(split?.[2] ?? clean, 3);
+      const key = detail.slice(0, 60).toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push({ label, detail });
+    }
+    if (out.length) return out.slice(0, 10);
+  }
+
   for (let i = 0; i < lines.length; i++) {
     if (!/^\s*\**\s*FLAGS?\b\s*\**\s*(—|–|-|:)?/i.test(lines[i])) continue;
     const inline = lines[i].replace(/^\s*\**\s*FLAGS?\b\s*\**\s*(—|–|-|:)?\s*/i, "").trim();
