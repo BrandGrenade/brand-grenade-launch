@@ -368,13 +368,42 @@ function sealBody(bodyHtml: string, ownTitle: string, otherTitles: Set<string>):
  * pipeline wrote them. A cut sentence is never shown to a reader and is never
  * completed by guessing: the incomplete tail is dropped and the gap is stated.
  */
+/**
+ * Internal acronyms are expanded the first time a reader meets them, once per
+ * document, in document order. An unexplained acronym is a defect in a client
+ * deliverable; expanding every instance would be noise.
+ */
+const ACRONYMS: Array<{ short: string; long: string }> = [
+  { short: "SMP", long: "Strategic Marketing Proposition" },
+  { short: "STRL", long: "Strategic Territory Reference Layer" },
+  { short: "CMM", long: "Category Convention Map" },
+  { short: "LOC", long: "Left-of-Centre" },
+];
+
+function expandAcronymsFirstUse(html: string, seen: Set<string>): string {
+  let out = html;
+  for (const { short, long } of ACRONYMS) {
+    if (seen.has(short)) continue;
+    const re = new RegExp(`(^|[^A-Za-z0-9>/-])(${short})\\b`);
+    if (!re.test(out)) continue;
+    // Never rewrite inside a tag or an attribute: the match is on visible text.
+    out = out.replace(re, (_m, pre: string, tok: string) => `${pre}${tok} (${long})`);
+    seen.add(short);
+  }
+  return out;
+}
+
 function renderSections(defs: SectionDef[]): { html: string; sealed: GateSectionInput[] } {
+  const acronymsSeen = new Set<string>();
   const titles = new Set(defs.map((d) => normTitle(d.title)));
   const sealed: GateSectionInput[] = [];
   const html = defs
     .map((d) => {
       const others = new Set([...titles].filter((t) => t !== normTitle(d.title)));
-      const body = closeIncompleteTail(sealBody(d.body, d.title, others));
+      const body = expandAcronymsFirstUse(
+        closeIncompleteTail(sealBody(d.body, d.title, others)),
+        acronymsSeen,
+      );
       sealed.push({ index: d.index, title: d.title, html: body });
       return section(
         { kicker: d.kicker, index: d.index, title: d.title, breakBefore: BREAK_BEFORE.has(d.index) },
