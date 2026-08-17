@@ -370,7 +370,7 @@ export interface FieldItem {
 function stage9Candidates(stage9: string): Array<{ smp: string; note: string | null }> {
   if (!stage9) return [];
   const lines = stage9.split("\n");
-  const out: Array<{ smp: string; note: string | null; composite: string | null }> = [];
+  const out: Array<{ smp: string; note: string | null }> = [];
 
   // Ranking lines, kept whole. The note is whatever follows the proposition
   // itself, so it is sliced at match time (propositions often contain dashes).
