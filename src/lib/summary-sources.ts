@@ -131,8 +131,20 @@ export function extractDetonationCandidates(stage18: string): DetonationCandidat
   marks.forEach((m, i) => {
     const body = text.slice(m.index! + m[0].length, marks[i + 1]?.index ?? text.length);
     const fields = labelledBlocks(body);
-    const line = (fields["THE DETONATION LINE"] ?? "").split("\n")[0].replace(/^["“]|["”]$/g, "").trim();
-    const statement = (fields["THE DETONATION STATEMENT"] ?? "").replace(/\s+/g, " ").trim();
+    // Stage 18 labels these fields two ways depending on the session.
+    const pick = (...keys: string[]) => keys.map((k) => fields[k]).find((v) => (v ?? "").trim()) ?? "";
+    const line = pick("THE DETONATION LINE", "DETONATION LINE")
+      .split("\n")[0]
+      .replace(/^["“]|["”]$/g, "")
+      .trim();
+    const statement = pick(
+      "THE DETONATION STATEMENT",
+      "DETONATION STATEMENT",
+      "WHY THIS DETONATION SERVES THE SMP",
+    )
+      .replace(/\s+/g, " ")
+      .trim();
+
     if (line || statement) {
       // A "DETONATION ONE — REPLACEMENT" block supersedes the original: keep
       // the last block written for each ordinal, never both.
