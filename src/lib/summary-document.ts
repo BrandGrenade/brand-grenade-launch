@@ -520,10 +520,14 @@ export function buildSummaryDocument(
   const intelJson = (session["brand_intelligence"] ?? {}) as Record<string, unknown>;
   const fact = (key: string, jsonKey: string, n = 3) => {
     const raw = clean(str(session, key)) || clean(String(intelJson[jsonKey] ?? ""));
+    // Brief fields are typed by hand and are not run through the pipeline, so
+    // they are the one place raw source spelling reaches the reader directly.
+    const corrected = fixSourceTypos(raw);
     // The schema is fixed: a field with nothing behind it says so rather than
     // disappearing, so a reader can see what the brief did not supply.
-    return firstSentencesOf(raw, n) || "Not supplied in the brief for this session.";
+    return firstSentencesOf(corrected, n) || "Not supplied in the brief for this session.";
   };
+
   const brandFactsHtml = defList([
     { label: "Positioning today", body: fact("brand_positioning", "positioning", 4) },
     { label: "Product truth", body: fact("brand_product_truth", "product", 4) },
