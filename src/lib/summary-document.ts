@@ -151,8 +151,22 @@ export function fixSourceTypos(text: string): string {
   return out;
 }
 
+/**
+ * The same underlying finding must read the same way wherever it is quoted.
+ * The coherence audit records a soft, category-generic paragraph as failing
+ * the brand-name-removal test; a later stage describes the same fault as copy
+ * that "survives" the test. Both mean the brand is removable, so the wording
+ * is normalised to the audit's own polarity everywhere it appears.
+ */
+function normalisePhrasing(text: string): string {
+  return text.replace(
+    /\bsurvives?\b(\s+(?:the\s+)?brand[\s-]name[\s-]removal\s+test)/gi,
+    (_m, tail: string) => `fails${tail}`,
+  );
+}
+
 function sanitiseSource(text: string): string {
-  return fixSourceTypos(normaliseMd(stripDocumentMetadata(text)))
+  return normalisePhrasing(fixSourceTypos(normaliseMd(stripDocumentMetadata(text))))
     .replace(/={3,}[^=\n]*={3,}/g, " ")
     .replace(/The following inputs have been[^.]*\.\s*/gi, "")
     .replace(/Stage \d+[a-z]? must treat these[^.]*\.\s*/gi, "")
@@ -173,11 +187,19 @@ function p(text?: string | null): string {
   return t ? `<p>${inlineMd(t)}</p>` : "";
 }
 
-function list(items: Array<string | null | undefined>): string {
+/**
+ * A short list is one unit of argument and is never split across a page
+ * boundary: a two-item fragment followed by the next section's heading reads
+ * as two different lists. Long lists still fragment, because a list that
+ * cannot fit a page must break somewhere.
+ */
+function list(items: Array<string | null | undefined>, keepTogether = false): string {
   const rows = items.map((i) => (i ?? "").trim()).filter(Boolean);
   if (!rows.length) return "";
-  return `<ul>${rows.map((r) => `<li>${inlineMd(r)}</li>`).join("")}</ul>`;
+  const cls = keepTogether && rows.length <= 10 ? ' class="keep-together"' : "";
+  return `<ul${cls}>${rows.map((r) => `<li>${inlineMd(r)}</li>`).join("")}</ul>`;
 }
+
 
 function defList(rows: Array<{ label: string; body?: string | null }>): string {
   const items = rows.filter((r) => (r.body ?? "").trim());
