@@ -874,8 +874,10 @@ export function buildSummaryDocument(
         rejected
           .slice(0, 8)
           .map((f) => `**${f.proposition}** — ${rejectionReason(f)}`),
+        true,
       )
     : "";
+
 
   /* 12 — Integrity and fact verification */
   const verifyHtml = verification.tests.length
