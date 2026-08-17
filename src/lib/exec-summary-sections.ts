@@ -436,7 +436,8 @@ function stage12Cards(
   lines.forEach((l, i) => {
     if (/^\s*\**PROPOSITION\s+\d+\**\s*$/i.test(l)) starts.push(i);
   });
-  const out: Array<{ smp: string; note: string | null }> = [];
+  const out: Array<{ smp: string; note: string | null; composite: string | null }> = [];
+
   starts.forEach((start, n) => {
     const end = starts[n + 1] ?? lines.length;
     const block = lines.slice(start + 1, end);
