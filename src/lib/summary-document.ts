@@ -37,8 +37,10 @@ import { closeIncompleteTail } from "./content-integrity";
 import {
   extractBrandArchitecture,
   extractChannelRole,
+  extractAuditFlags,
   extractDetonationCandidates,
   extractImpossibilityAnalysis,
+  extractTerritoryBlocks,
 
   extractRecognitionTest,
   extractSelectedDetonation,
@@ -120,8 +122,37 @@ const EMPTY_EXTRAS: SummaryCreativeExtras = {
  * model, never client-facing copy. They are stripped at the source layer so no
  * section can inherit them.
  */
+/**
+ * Source-side typos the pipeline inherited from the brief. A document is a
+ * client deliverable: a misspelling in stored input is corrected on the way
+ * out, never left on the page. Corrections are spelling-only — no wording,
+ * meaning or emphasis is changed.
+ */
+const SOURCE_TYPOS: Array<[RegExp, string]> = [
+  [/\bC[gh]{1,2}heapest\b/gi, "Cheapest"],
+  [/\bopportunty\b/gi, "opportunity"],
+  [/\bopportunties\b/gi, "opportunities"],
+  [/\bCombank\b/g, "CommBank"],
+  [/\bCommbank\b/g, "CommBank"],
+  [/\bteh\b/gi, "the"],
+  [/\brecieve\b/gi, "receive"],
+  [/\brecieved\b/gi, "received"],
+  [/\bseperate\b/gi, "separate"],
+  [/\bseperately\b/gi, "separately"],
+
+  [/\boccured\b/gi, "occurred"],
+  [/\bconsistant\b/gi, "consistent"],
+  [/\bdefinately\b/gi, "definitely"],
+];
+
+export function fixSourceTypos(text: string): string {
+  let out = text;
+  for (const [re, rep] of SOURCE_TYPOS) out = out.replace(re, rep as string);
+  return out;
+}
+
 function sanitiseSource(text: string): string {
-  return normaliseMd(stripDocumentMetadata(text))
+  return fixSourceTypos(normaliseMd(stripDocumentMetadata(text)))
     .replace(/={3,}[^=\n]*={3,}/g, " ")
     .replace(/The following inputs have been[^.]*\.\s*/gi, "")
     .replace(/Stage \d+[a-z]? must treat these[^.]*\.\s*/gi, "")
@@ -337,13 +368,42 @@ function sealBody(bodyHtml: string, ownTitle: string, otherTitles: Set<string>):
  * pipeline wrote them. A cut sentence is never shown to a reader and is never
  * completed by guessing: the incomplete tail is dropped and the gap is stated.
  */
+/**
+ * Internal acronyms are expanded the first time a reader meets them, once per
+ * document, in document order. An unexplained acronym is a defect in a client
+ * deliverable; expanding every instance would be noise.
+ */
+const ACRONYMS: Array<{ short: string; long: string }> = [
+  { short: "SMP", long: "Strategic Marketing Proposition" },
+  { short: "STRL", long: "Strategic Territory Reference Layer" },
+  { short: "CMM", long: "Category Convention Map" },
+  { short: "LOC", long: "Left-of-Centre" },
+];
+
+function expandAcronymsFirstUse(html: string, seen: Set<string>): string {
+  let out = html;
+  for (const { short, long } of ACRONYMS) {
+    if (seen.has(short)) continue;
+    const re = new RegExp(`(^|[^A-Za-z0-9>/-])(${short})\\b`);
+    if (!re.test(out)) continue;
+    // Never rewrite inside a tag or an attribute: the match is on visible text.
+    out = out.replace(re, (_m, pre: string, tok: string) => `${pre}${tok} (${long})`);
+    seen.add(short);
+  }
+  return out;
+}
+
 function renderSections(defs: SectionDef[]): { html: string; sealed: GateSectionInput[] } {
+  const acronymsSeen = new Set<string>();
   const titles = new Set(defs.map((d) => normTitle(d.title)));
   const sealed: GateSectionInput[] = [];
   const html = defs
     .map((d) => {
       const others = new Set([...titles].filter((t) => t !== normTitle(d.title)));
-      const body = closeIncompleteTail(sealBody(d.body, d.title, others));
+      const body = expandAcronymsFirstUse(
+        closeIncompleteTail(sealBody(d.body, d.title, others)),
+        acronymsSeen,
+      );
       sealed.push({ index: d.index, title: d.title, html: body });
       return section(
         { kicker: d.kicker, index: d.index, title: d.title, breakBefore: BREAK_BEFORE.has(d.index) },
@@ -398,6 +458,16 @@ const EXTRA_CSS = `
      section on a fresh page prevents Chromium from painting a repeated table
      header and deferred rows into the next section's visual region. */
   .section:has(.cmp) + .section { break-before: page; page-break-before: always; }
+  /* Chromium repeats a table-header-group on every page a long table spans,
+     and when the table fragments it can paint that repeat inside the following
+     paragraph. The header is printed once, with the first rows. */
+  .cmp thead { display: table-row-group; }
+  /* The closing footer is the last content in the document. It starts its own
+     printed page so no fragment of the final sections can be painted after it,
+     and the final section is never split across the footer boundary. */
+  .footer { break-before: page; page-break-before: always; break-inside: avoid; }
+  .section:last-of-type { break-after: auto; page-break-after: auto; }
+  .section:last-of-type + .footer { break-before: page; page-break-before: always; }
 }
 `;
 
@@ -450,10 +520,14 @@ export function buildSummaryDocument(
   const intelJson = (session["brand_intelligence"] ?? {}) as Record<string, unknown>;
   const fact = (key: string, jsonKey: string, n = 3) => {
     const raw = clean(str(session, key)) || clean(String(intelJson[jsonKey] ?? ""));
+    // Brief fields are typed by hand and are not run through the pipeline, so
+    // they are the one place raw source spelling reaches the reader directly.
+    const corrected = fixSourceTypos(raw);
     // The schema is fixed: a field with nothing behind it says so rather than
     // disappearing, so a reader can see what the brief did not supply.
-    return firstSentencesOf(raw, n) || "Not supplied in the brief for this session.";
+    return firstSentencesOf(corrected, n) || "Not supplied in the brief for this session.";
   };
+
   const brandFactsHtml = defList([
     { label: "Positioning today", body: fact("brand_positioning", "positioning", 4) },
     { label: "Product truth", body: fact("brand_product_truth", "product", 4) },
@@ -500,8 +574,10 @@ export function buildSummaryDocument(
 
 
   /* 04 — Category intelligence */
+  // Section 03 states how many research inputs were drawn on; every one of them
+  // is listed here, so the two numbers can never disagree.
   const categoryHtml = `${stageBlock(session, "stage_2_output", 14, 2200)}${list(
-    research.slice(0, 6).map((r) => `**${r.label}.** ${r.body}`),
+    research.map((r) => `**${r.label}.** ${r.body}`),
   )}`;
 
   /* 05 — Category insight. The display treatment carries the insight itself;
@@ -723,19 +799,45 @@ export function buildSummaryDocument(
       }`
     : "";
 
-  /* 11 — Not carried forward */
+  /* 11 — Not carried forward.
+     Every alternative states a real, non-contradictory reason. A pressure-test
+     note that records no weakness is not a reason to set a proposition aside,
+     so it is never printed as one: the reason given is the recorded elimination
+     where the pipeline recorded one, and otherwise the comparative decision at
+     proposition lock, with the scores that decision was taken against. */
   const rejected = field.filter((f) => !f.selected);
+  const winnerComposite = field.find((f) => f.selected)?.composite ?? null;
+  const weakness =
+    /(wobble|fails?|failed|risk|counter|weak|thin|generic|collaps|vulnerab|eliminat|drift|breach)/i;
+  const rejectionReason = (f: (typeof field)[number]): string => {
+    const recorded = outcomeFor(outcomes, f.proposition);
+    if (recorded?.status === "eliminated" && recorded.reason) {
+      return `Eliminated at ${recorded.stage ?? "pressure testing"}: ${wholeSentences(recorded.reason, 2, 380)}`;
+    }
+    const note = firstSentencesOf(f.reason ?? "", 2);
+    if (note && weakness.test(note)) {
+      return `Set aside at proposition lock: ${note}`;
+    }
+    // A comparative score is only printed when it supports the decision. Where
+    // the alternative scored higher, the decision was taken on strategic fit at
+    // proposition lock, and printing the score alone would misread as a
+    // contradiction.
+    const num = (v: string | null | undefined) => Number((v ?? "").split("/")[0]) || 0;
+    const scores =
+      f.composite && winnerComposite && num(f.composite) <= num(winnerComposite)
+        ? ` It scored ${f.composite} at Stage 12 against the selected proposition's ${winnerComposite}.`
+        : "";
+    const winner = lockedSmp ? lockedSmp.replace(/^["“]|["”]$/g, "") : "";
+    return (
+      `Cleared pressure testing, but only one proposition is carried forward` +
+      `${winner ? `, and "${winner}" was judged the stronger strategic platform for this brand` : ""}.${scores}`
+    );
+  };
   const rejectedHtml = rejected.length
     ? list(
-        rejected.slice(0, 8).map((f) => {
-          // The stored note is a pressure-test observation, not a rejection
-          // reason. It is labelled as what it is, so a positive note can never
-          // read as the reason a proposition was set aside.
-          const note = firstSentencesOf(f.reason ?? "", 1);
-          return `**${f.proposition}** — Not carried forward at proposition lock.${
-            note ? ` Pressure test recorded: ${note}` : ""
-          }`;
-        }),
+        rejected
+          .slice(0, 8)
+          .map((f) => `**${f.proposition}** — ${rejectionReason(f)}`),
       )
     : "";
 
@@ -763,12 +865,22 @@ export function buildSummaryDocument(
       }`
     : stageBlock(session, "stage_13_output", 9, 1400);
 
-  /* 14 — Territory mapping */
+  /* 14 — Territory mapping.
+     The territory taken forward is the one the session recorded as selected;
+     a section preamble ("Three Detonation Territories for …") is a count of
+     what follows, never the territory itself. */
   const s17 = str(session, "stage_17_output");
   const s18 = str(session, "stage_18_output");
+  const selectedTerritoryName = (
+    str(session, "stage_17_selected_territory").split("\n")[0] ?? ""
+  )
+    .replace(/^#{1,4}\s*/, "")
+    .replace(/\*\*/g, "")
+    .trim();
   const chosenTerritoryName =
+    selectedTerritoryName ||
     (s18.match(/^#{0,4}\s*([A-Z][A-Z '’—-]{4,60}?)\s*[—-]\s*THE DETONATION/m)?.[1] ?? "").trim();
-  const territoryBlocks = mdBlocks(s17);
+  const territoryBlocks = extractTerritoryBlocks(s17);
   const territory =
     (chosenTerritoryName
       ? territoryBlocks.find(
@@ -789,7 +901,9 @@ export function buildSummaryDocument(
         {
           label: "The territory described",
           body: safeClamp(
-            (territoryFields["TERRITORY DESCRIPTION"] ?? "").replace(/\s+/g, " "),
+            (territoryFields["TERRITORY DESCRIPTION"] ??
+              territory.body.split(/\n(?=[A-Z][A-Z '’/&-]{6,}:)/)[0] ??
+              "").replace(/\s+/g, " "),
             1100,
           ),
         },
@@ -797,7 +911,7 @@ export function buildSummaryDocument(
         detonations.length
           ? `<h3>The ${
               ["", "one", "two", "three"][detonations.length] ?? detonations.length
-            } Detonation candidates written against this territory</h3>${defList(
+            } Detonation candidate${detonations.length === 1 ? "" : "s"} written against this territory</h3>${defList(
               detonations.map((d) => ({
                 label: d.line || d.label,
                 body: safeClamp(d.statement, 520),
@@ -807,8 +921,18 @@ export function buildSummaryDocument(
       }`
     : stageBlock(session, "stage_17_output", 10, 1600);
 
-  /* 15 — Coherence audit */
-  const coherenceHtml = stageBlock(session, "stage_15_output", 8, 1200);
+
+  /* 15 — Coherence audit.
+     Section 21 quotes the audit's findings by name, so the findings themselves
+     are rendered here rather than condensed away. */
+  const auditFlags = extractAuditFlags(str(session, "stage_15_output"));
+  const coherenceHtml = `${stageBlock(session, "stage_15_output", 8, 1200)}${
+    auditFlags.length
+      ? `<h3>Findings raised by the audit</h3>${defList(
+          auditFlags.map((f) => ({ label: f.label, body: f.detail })),
+        )}`
+      : ""
+  }`;
 
   /* 16 — Creative sweep */
   const sweepHtml = `${statGrid([

@@ -362,6 +362,8 @@ export interface FieldItem {
   origin: string;
   selected: boolean;
   reason: string | null;
+  /** Stage 12 composite score, e.g. "43/60", when the stage recorded one. */
+  composite?: string | null;
 }
 
 /** Stage 9 candidates: "## Heading" blocks carrying a "The SMP:" line. */
@@ -425,14 +427,17 @@ function stage9Candidates(stage9: string): Array<{ smp: string; note: string | n
 }
 
 /** Stage 12 cards: proposition line + PRESSURE_TEST_NOTE. */
-function stage12Cards(stage12: string): Array<{ smp: string; note: string | null }> {
+function stage12Cards(
+  stage12: string,
+): Array<{ smp: string; note: string | null; composite: string | null }> {
   if (!stage12) return [];
   const lines = stage12.split("\n");
   const starts: number[] = [];
   lines.forEach((l, i) => {
     if (/^\s*\**PROPOSITION\s+\d+\**\s*$/i.test(l)) starts.push(i);
   });
-  const out: Array<{ smp: string; note: string | null }> = [];
+  const out: Array<{ smp: string; note: string | null; composite: string | null }> = [];
+
   starts.forEach((start, n) => {
     const end = starts[n + 1] ?? lines.length;
     const block = lines.slice(start + 1, end);
@@ -452,7 +457,13 @@ function stage12Cards(stage12: string): Array<{ smp: string; note: string | null
       const s = sentences(body);
       note = s.length ? s.slice(0, 2).join(" ") : null;
     }
-    out.push({ smp: smp.replace(/^["“](.+)["”]$/, "$1"), note });
+    const composite =
+      block.join("\n").match(/Composite\s*[:.]?\s*\**\s*(\d{1,3}\s*\/\s*\d{1,3})/i)?.[1] ?? null;
+    out.push({
+      smp: smp.replace(/^["“](.+)["”]$/, "$1"),
+      note,
+      composite: composite ? composite.replace(/\s+/g, "") : null,
+    });
   });
   return out;
 }
@@ -462,17 +473,28 @@ export function extractPropositionsField(session: ExecSessionRow): FieldItem[] {
   const items: FieldItem[] = [];
   const seen = new Set<string>();
 
-  const push = (smp: string, origin: string, reason: string | null) => {
+  const push = (
+    smp: string,
+    origin: string,
+    reason: string | null,
+    composite: string | null = null,
+  ) => {
     const key = matchKey(smp);
     if (!key || key.length < 5) return;
     if (seen.has(key)) return;
     seen.add(key);
     const selected = !!selectedKey && (key.includes(selectedKey) || selectedKey.includes(key));
-    items.push({ proposition: smp, origin, selected, reason: selected ? null : reason });
+    items.push({
+      proposition: smp,
+      origin,
+      selected,
+      reason: selected ? null : reason,
+      composite,
+    });
   };
 
   for (const c of stage12Cards(str(session, "stage_12_output"))) {
-    push(c.smp, "Stage 12 shortlist", c.note);
+    push(c.smp, "Stage 12 shortlist", c.note, c.composite);
   }
   for (const c of stage9Candidates(str(session, "stage_9_output"))) {
     push(c.smp, "Stage 9 distinctiveness field", c.note);

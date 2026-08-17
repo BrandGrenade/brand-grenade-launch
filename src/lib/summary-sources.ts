@@ -131,8 +131,20 @@ export function extractDetonationCandidates(stage18: string): DetonationCandidat
   marks.forEach((m, i) => {
     const body = text.slice(m.index! + m[0].length, marks[i + 1]?.index ?? text.length);
     const fields = labelledBlocks(body);
-    const line = (fields["THE DETONATION LINE"] ?? "").split("\n")[0].replace(/^["“]|["”]$/g, "").trim();
-    const statement = (fields["THE DETONATION STATEMENT"] ?? "").replace(/\s+/g, " ").trim();
+    // Stage 18 labels these fields two ways depending on the session.
+    const pick = (...keys: string[]) => keys.map((k) => fields[k]).find((v) => (v ?? "").trim()) ?? "";
+    const line = pick("THE DETONATION LINE", "DETONATION LINE")
+      .split("\n")[0]
+      .replace(/^["“]|["”]$/g, "")
+      .trim();
+    const statement = pick(
+      "THE DETONATION STATEMENT",
+      "DETONATION STATEMENT",
+      "WHY THIS DETONATION SERVES THE SMP",
+    )
+      .replace(/\s+/g, " ")
+      .trim();
+
     if (line || statement) {
       // A "DETONATION ONE — REPLACEMENT" block supersedes the original: keep
       // the last block written for each ordinal, never both.
@@ -459,6 +471,24 @@ const okey = (s: string) =>
   s.toLowerCase().replace(/[^a-z0-9]+/g, " ").replace(/\s+/g, " ").trim();
 
 /**
+ * The substantive reason written as prose immediately beneath an SMP verdict
+ * line. Stage 11 records the argument there far more often than under a
+ * labelled "ELIMINATION PATHWAY", and a document must never restate the
+ * verdict as though it were the reason.
+ */
+function prosAfterVerdict(body: string): string {
+  const at = body.search(/SMP VERDICT\s*[:.]?\s*\**\s*[A-Z]/i);
+  if (at < 0) return "";
+  const tail = body.slice(at).split("\n").slice(1).join("\n");
+  const para = tail
+    .split(/\n\s*\n/)
+    .map((b) => b.replace(/\*\*/g, "").replace(/\s+/g, " ").trim())
+    .find((b) => b.length > 40 && !/^[A-Z][A-Z ]{4,}\s*[:.]/.test(b));
+  return para ? sentences(para, 2) : "";
+}
+
+
+/**
  * The outcome of every strategic territory in the run: survived, or eliminated
  * and at which stage. Read from the pipeline's own records — Stage 11's per-SMP
  * verdict blocks, plus any explicit "ELIMINATED at Stage N" note in Stage 10 or
@@ -514,6 +544,10 @@ export function extractTerritoryOutcomes(
       .replace(/\*\*/g, "")
       .split(/(?<=[.!?])\s/)[0]
       .trim();
+    // Most runs write the substantive reason as prose immediately under the
+    // verdict rather than under an "ELIMINATION PATHWAY" label. A recorded
+    // reason is always preferred to a restatement of the verdict itself.
+    if (!reason && eliminated) reason = prosAfterVerdict(block.body);
     if (reason) reason = reason.charAt(0).toUpperCase() + reason.slice(1);
     put({
       name,
@@ -523,6 +557,22 @@ export function extractTerritoryOutcomes(
       reason: eliminated ? reason || undefined : undefined,
     });
 
+  }
+
+  // Stage 10 per-candidate blocks: "### <territory>" … "VERDICT: ELIMINATED — why"
+  for (const block of mdBlocks(s10)) {
+    const v = block.body.match(/\bVERDICT\s*[:.]?\s*\**\s*ELIMINATED\b\s*[—–-]?\s*([^\n]*)/i);
+    if (!v) continue;
+    const fieldName = (block.body.match(/FIELD\s*[:.]?\s*([^\n—–]+)/i)?.[1] ?? "").trim();
+    const candidate = [block.heading, fieldName].find((n) =>
+      territories.some((t) => okey(t) === okey(n) || okey(n).includes(okey(t))),
+    );
+    const name =
+      territories.find(
+        (t) => okey(t) === okey(candidate ?? "") || okey(candidate ?? "").includes(okey(t)),
+      ) ?? block.heading;
+    const reason = sentences(v[1].replace(/\*\*/g, "").trim(), 2);
+    put({ name, status: "eliminated", stage: "Stage 10", reason: reason || undefined });
   }
 
   // Explicit "…ELIMINATED at Stage N" notes, wherever the pipeline wrote them.
@@ -538,6 +588,7 @@ export function extractTerritoryOutcomes(
       put({ name: match, status: "eliminated", stage: `Stage ${m[2]}` });
     }
   }
+
 
   return [...byName.values()];
 }
@@ -561,4 +612,108 @@ export function outcomeLabel(outcome?: TerritoryOutcome): string {
   return outcome.status === "eliminated"
     ? `Eliminated at ${outcome.stage ?? "the pressure test"}`
     : "Carried forward";
+}
+
+/* ─────────────────────────────────────────── stage 17 territory blocks ── */
+
+/**
+ * Stage 17 writes its territories two ways: as markdown headings in some runs,
+ * as bare ALL-CAPS name lines in others. Both are read here, and the section
+ * preamble ("Three Detonation Territories for …") is never mistaken for a
+ * territory — it is a count, not a place to stand.
+ */
+const TERRITORY_PREAMBLE =
+  /(detonation territor|territories for|strategic territor(y|ies) map|^overview$|^introduction$)/i;
+
+export function extractTerritoryBlocks(stage17: string): MdBlock[] {
+  const text = normaliseMd(stage17);
+  const blocks: MdBlock[] = [];
+  let current: MdBlock | null = null;
+  for (const raw of text.split("\n")) {
+    const line = raw.trim();
+    const heading =
+      line.match(/^#{2,4}\s+(.+?)\s*$/)?.[1] ??
+      (/^[A-Z][A-Z0-9 '’—-]{5,60}$/.test(line) && !line.endsWith(":") ? line : null);
+    if (heading) {
+      if (current) blocks.push(current);
+      current = { heading: heading.replace(/\*\*/g, "").trim(), body: "" };
+      continue;
+    }
+    if (current) current.body += `${raw}\n`;
+  }
+  if (current) blocks.push(current);
+  return blocks
+    .map((b) => ({ heading: b.heading, body: b.body.trim() }))
+    .filter((b) => b.body.length > 120 && !TERRITORY_PREAMBLE.test(b.heading));
+}
+
+/* ──────────────────────────────────────────── stage 15 audit findings ── */
+
+export interface AuditFlag {
+  label: string;
+  detail: string;
+}
+
+/**
+ * The individual findings raised by the coherence audit. Section 21 cites them
+ * by name, so they must be readable in the audit section itself rather than
+ * condensed away.
+ */
+export function extractAuditFlags(stage15: string): AuditFlag[] {
+  const text = normaliseMd(stage15);
+  const lines = text.split("\n");
+  const out: AuditFlag[] = [];
+  const seen = new Set<string>();
+
+  // Many runs close with a consolidated "Flag Register" listing every finding
+  // the audit raised. When one exists it is authoritative: per-dimension FLAGS
+  // lines repeat only a subset, which is how a document could cite findings in
+  // its closing section that never appeared in the audit section.
+  const regAt = lines.findIndex((l) => /^\s*#{1,4}\s*FLAG REGISTER\b/i.test(l));
+  if (regAt >= 0) {
+    for (let i = regAt + 1; i < lines.length; i++) {
+      const l = lines[i].trim();
+      if (/^#{1,4}\s/.test(l)) break;
+      if (!/^[-*]\s+/.test(l)) continue;
+      const clean = l.replace(/^[-*]\s+/, "").replace(/\*\*/g, "").replace(/\s+/g, " ").trim();
+      if (clean.length < 30 || /^none\b/i.test(clean)) continue;
+      const split = clean.match(/^(.{6,110}?[.)])\s+(.+)$/);
+      const label = (split?.[1] ?? "Flag").replace(/[.]$/, "");
+      const detail = sentences(split?.[2] ?? clean, 3);
+      const key = detail.slice(0, 60).toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push({ label, detail });
+    }
+    if (out.length) return out.slice(0, 10);
+  }
+
+  for (let i = 0; i < lines.length; i++) {
+    if (!/^\s*\**\s*FLAGS?\b\s*\**\s*(—|–|-|:)?/i.test(lines[i])) continue;
+    const inline = lines[i].replace(/^\s*\**\s*FLAGS?\b\s*\**\s*(—|–|-|:)?\s*/i, "").trim();
+    const bullets: string[] = [];
+    if (inline && !/^none\b/i.test(inline)) bullets.push(inline);
+    for (let j = i + 1; j < lines.length; j++) {
+      const l = lines[j].trim();
+      if (!l) continue;
+      if (/^[-*]\s+/.test(l)) {
+        bullets.push(l.replace(/^[-*]\s+/, ""));
+        continue;
+      }
+      break;
+    }
+    for (const b of bullets) {
+      const clean = b.replace(/\*\*/g, "").replace(/\s+/g, " ").trim();
+      if (clean.length < 40 || /^none\b/i.test(clean)) continue;
+      const split = clean.match(/^(.{6,90}?[.)])\s+(.+)$/);
+      const label = (split?.[1] ?? "Flag").replace(/[.]$/, "");
+      const detail = sentences(split?.[2] ?? clean, 3);
+      const key = detail.slice(0, 60).toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push({ label, detail });
+      if (out.length >= 8) return out;
+    }
+  }
+  return out;
 }
