@@ -661,23 +661,35 @@ export interface AuditFlag {
  */
 export function extractAuditFlags(stage15: string): AuditFlag[] {
   const text = normaliseMd(stage15);
+  const lines = text.split("\n");
   const out: AuditFlag[] = [];
   const seen = new Set<string>();
-  const re =
-    /^\s*(?:[-*]\s*)?\**\s*(FLAG(?:\s*\d+)?|FINDING(?:\s*\d+)?|POISON WORD|SPECIFICITY (?:FAILURE|FLAG)|TONE DRIFT|VOICE FLAG)\b\s*\**\s*[—–:-]?\s*(.*)$/gim;
-  let m: RegExpExecArray | null;
-  while ((m = re.exec(text))) {
-    const after = text.slice(m.index + m[0].length);
-    const detail = sentences(
-      `${m[2]} ${after.split(/\n\s*\n/)[0] ?? ""}`.replace(/\*\*/g, "").replace(/\s+/g, " ").trim(),
-      3,
-    );
-    if (detail.length < 30) continue;
-    const key = detail.slice(0, 60).toLowerCase();
-    if (seen.has(key)) continue;
-    seen.add(key);
-    out.push({ label: m[1].replace(/\s+/g, " ").trim(), detail });
-    if (out.length >= 8) break;
+  for (let i = 0; i < lines.length; i++) {
+    if (!/^\s*\**\s*FLAGS?\b\s*\**\s*(—|–|-|:)?/i.test(lines[i])) continue;
+    const inline = lines[i].replace(/^\s*\**\s*FLAGS?\b\s*\**\s*(—|–|-|:)?\s*/i, "").trim();
+    const bullets: string[] = [];
+    if (inline && !/^none\b/i.test(inline)) bullets.push(inline);
+    for (let j = i + 1; j < lines.length; j++) {
+      const l = lines[j].trim();
+      if (!l) continue;
+      if (/^[-*]\s+/.test(l)) {
+        bullets.push(l.replace(/^[-*]\s+/, ""));
+        continue;
+      }
+      break;
+    }
+    for (const b of bullets) {
+      const clean = b.replace(/\*\*/g, "").replace(/\s+/g, " ").trim();
+      if (clean.length < 40 || /^none\b/i.test(clean)) continue;
+      const split = clean.match(/^(.{6,90}?[.)])\s+(.+)$/);
+      const label = (split?.[1] ?? "Flag").replace(/[.]$/, "");
+      const detail = sentences(split?.[2] ?? clean, 3);
+      const key = detail.slice(0, 60).toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push({ label, detail });
+      if (out.length >= 8) return out;
+    }
   }
   return out;
 }
