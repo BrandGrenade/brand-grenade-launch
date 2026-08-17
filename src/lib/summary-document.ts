@@ -1138,7 +1138,12 @@ export function buildSummaryDocument(
      polarity between Section 15 and this one. */
   const nextHtml = `${p(
     recs.condition ? normalisePhrasing(`Condition on activation: ${recs.condition}`) : "",
-  )}${p(recs.nextStep ? normalisePhrasing(`Next step: ${recs.nextStep}`) : "")}`;
+  )}${p(
+    recs.nextStep
+      ? reconcileAuditClaims(normalisePhrasing(`Next step: ${recs.nextStep}`), auditFlags)
+      : "",
+  )}`;
+
 
 
   const defs: SectionDef[] = [
