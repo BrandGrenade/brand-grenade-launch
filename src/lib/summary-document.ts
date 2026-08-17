@@ -535,11 +535,15 @@ const EXTRA_CSS = `
   /* The closing footer is the last content in the document. It starts its own
      printed page so no fragment of the final sections can be painted after it,
      and the final section is never split across the footer boundary. */
-  .footer { break-before: page; page-break-before: always; break-inside: avoid; }
+  .footer { break-before: page; page-break-before: always; break-inside: avoid; margin-top: 28pt; padding-top: 14pt; }
   .section:last-of-type { break-after: auto; page-break-after: auto; }
   .section:last-of-type + .footer { break-before: page; page-break-before: always; }
+  /* Whatever the fragmentation outcome, the closing line is never glued to the
+     last bullet above it. */
+  .section + .footer { margin-top: 28pt; }
 }
 `;
+
 
 function band(title: string, stats: Stat[]): string {
   const grid = statGrid(stats);
