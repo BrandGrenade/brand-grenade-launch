@@ -392,6 +392,8 @@ const EXTRA_CSS = `
   .deflist > .defrow + .defrow { margin-top: 10px; }
   .reasons { display: block; }
   .reasons > * + * { margin-top: 12pt; }
+  .section:last-of-type { break-after: avoid; page-break-after: avoid; }
+  .section:last-of-type + .footer { break-before: avoid; page-break-before: avoid; }
 }
 `;
 
@@ -894,7 +896,7 @@ export function buildSummaryDocument(
   const arch = extractBrandArchitecture(str(session, "stage_22_output"));
   const architectureHtml = `${p(
     arch.personality ? `Brand personality: ${arch.personality}` : "",
-  )}${p(arch.reflection ? `Reflection: ${arch.reflection}` : "")}${
+  )}${
     arch.assets.length
       ? `<h3>Recommended distinctive assets</h3>${list(arch.assets)}`
       : ""
