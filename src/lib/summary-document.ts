@@ -1085,13 +1085,14 @@ export function buildSummaryDocument(
     arch.personality ? `Brand personality: ${arch.personality}` : "",
   )}${
     arch.assets.length
-      ? `<h3>Recommended distinctive assets</h3>${list(arch.assets)}`
+      ? `<h3>Recommended distinctive assets</h3>${list(arch.assets, true)}`
       : ""
   }${
     arch.principles.length
-      ? `<h3>Deployment principles</h3>${list(arch.principles)}`
+      ? `<h3>Deployment principles</h3>${list(arch.principles, true)}`
       : ""
   }`;
+
 
   /* 21 — Next step */
   const nextHtml = `${p(recs.condition ? `Condition on activation: ${recs.condition}` : "")}${p(
