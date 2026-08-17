@@ -288,8 +288,27 @@ function stageBlock(session: ExecSessionRow, key: string, units: number, chars: 
     .split("\n\n")
     .map((block) => (block.startsWith("### ") ? block : clampText(block, Math.round(chars * 0.6))))
     .join("\n\n");
-  return dropDanglingLabel(renderMarkdown(clampText(condensed, chars)));
+  return dedupeRepeatedHeadings(dropDanglingLabel(renderMarkdown(clampText(condensed, chars))));
 }
+
+/**
+ * Condensing a stage can drop a parent heading ("CHECK 2: …") while keeping the
+ * sub-label written beneath it ("TESTS APPLIED"), which leaves the same label
+ * printed twice with two different lists under it. A repeated identical heading
+ * inside one stage block is not a second section, so the later heading tags are
+ * removed and their content continues under the first.
+ */
+function dedupeRepeatedHeadings(html: string): string {
+  const seen = new Set<string>();
+  return html.replace(/<(h[1-6])[^>]*>([\s\S]*?)<\/\1>/g, (full, _tag, inner: string) => {
+    const key = strip(inner).replace(/\s+/g, " ").trim().toLowerCase();
+    if (!key) return full;
+    if (seen.has(key)) return "";
+    seen.add(key);
+    return full;
+  });
+}
+
 
 /**
  * A clamp can land immediately after a label line ("A Reveal Everyone Is
