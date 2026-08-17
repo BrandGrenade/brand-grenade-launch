@@ -613,3 +613,71 @@ export function outcomeLabel(outcome?: TerritoryOutcome): string {
     ? `Eliminated at ${outcome.stage ?? "the pressure test"}`
     : "Carried forward";
 }
+
+/* ─────────────────────────────────────────── stage 17 territory blocks ── */
+
+/**
+ * Stage 17 writes its territories two ways: as markdown headings in some runs,
+ * as bare ALL-CAPS name lines in others. Both are read here, and the section
+ * preamble ("Three Detonation Territories for …") is never mistaken for a
+ * territory — it is a count, not a place to stand.
+ */
+const TERRITORY_PREAMBLE =
+  /(detonation territor|territories for|strategic territor(y|ies) map|^overview$|^introduction$)/i;
+
+export function extractTerritoryBlocks(stage17: string): MdBlock[] {
+  const text = normaliseMd(stage17);
+  const blocks: MdBlock[] = [];
+  let current: MdBlock | null = null;
+  for (const raw of text.split("\n")) {
+    const line = raw.trim();
+    const heading =
+      line.match(/^#{2,4}\s+(.+?)\s*$/)?.[1] ??
+      (/^[A-Z][A-Z0-9 '’—-]{5,60}$/.test(line) && !line.endsWith(":") ? line : null);
+    if (heading) {
+      if (current) blocks.push(current);
+      current = { heading: heading.replace(/\*\*/g, "").trim(), body: "" };
+      continue;
+    }
+    if (current) current.body += `${raw}\n`;
+  }
+  if (current) blocks.push(current);
+  return blocks
+    .map((b) => ({ heading: b.heading, body: b.body.trim() }))
+    .filter((b) => b.body.length > 120 && !TERRITORY_PREAMBLE.test(b.heading));
+}
+
+/* ──────────────────────────────────────────── stage 15 audit findings ── */
+
+export interface AuditFlag {
+  label: string;
+  detail: string;
+}
+
+/**
+ * The individual findings raised by the coherence audit. Section 21 cites them
+ * by name, so they must be readable in the audit section itself rather than
+ * condensed away.
+ */
+export function extractAuditFlags(stage15: string): AuditFlag[] {
+  const text = normaliseMd(stage15);
+  const out: AuditFlag[] = [];
+  const seen = new Set<string>();
+  const re =
+    /^\s*(?:[-*]\s*)?\**\s*(FLAG(?:\s*\d+)?|FINDING(?:\s*\d+)?|POISON WORD|SPECIFICITY (?:FAILURE|FLAG)|TONE DRIFT|VOICE FLAG)\b\s*\**\s*[—–:-]?\s*(.*)$/gim;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(text))) {
+    const after = text.slice(m.index + m[0].length);
+    const detail = sentences(
+      `${m[2]} ${after.split(/\n\s*\n/)[0] ?? ""}`.replace(/\*\*/g, "").replace(/\s+/g, " ").trim(),
+      3,
+    );
+    if (detail.length < 30) continue;
+    const key = detail.slice(0, 60).toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push({ label: m[1].replace(/\s+/g, " ").trim(), detail });
+    if (out.length >= 8) break;
+  }
+  return out;
+}
