@@ -207,12 +207,31 @@ export const runIntelligenceAnalysis = createServerFn({ method: "POST" })
   .handler(async ({ data, context }): Promise<RunIntelligenceResult> => {
     const { supabase, userId } = context;
     const sessionId = data.intelligenceSessionId;
+    // The background job returns failure objects rather than throwing, so a
+    // rejected-promise logger alone loses every early-exit reason (session not
+    // found, unauthorised, run-in-progress, retry ceiling). Record them.
     scheduleBackground(
-      executeIntelligenceRun(supabase, userId, sessionId),
+      executeIntelligenceRun(supabase, userId, sessionId).then(async (result) => {
+        if (result.success) return result;
+        console.error(
+          `[intelligence:${sessionId}] run did not start: ${result.error}`,
+        );
+        try {
+          const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+          await supabaseAdmin
+            .from("intelligence_sessions")
+            .update({ last_error: `Run did not start: ${result.error}` })
+            .eq("id", sessionId);
+        } catch {
+          /* best effort */
+        }
+        return result;
+      }),
       `intelligence:${sessionId}`,
     );
     return { success: true, sessionId };
   });
+
 
 async function executeIntelligenceRun(
   supabase: SupabaseAuthedClient,
