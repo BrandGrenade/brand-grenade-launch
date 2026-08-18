@@ -1,0 +1,1 @@
+UPDATE public.sessions SET loc_status='pending', loc_error=NULL, loc_engine_outputs=NULL, loc_generated_at=NULL WHERE id='217fcaea-167e-4c7a-9015-d42816294ee6';
