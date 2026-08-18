@@ -1,7 +1,9 @@
 import "./lib/error-capture";
 
+import { runWithExecutionContext } from "./lib/background.server";
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
+
 
 type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
@@ -68,21 +70,24 @@ async function normalizeCatastrophicSsrResponse(response: Response): Promise<Res
 
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
-    // Stash the Cloudflare ExecutionContext so server functions can call
-    // ctx.waitUntil() for fire-and-forget background work that outlives
-    // the response.
+    // Bind the Cloudflare ExecutionContext to THIS request's async context so
+    // ctx.waitUntil() reaches the right invocation. The globalThis copy is a
+    // legacy fallback only — it races across concurrent requests.
     try {
       (globalThis as unknown as { __cfCtx?: unknown }).__cfCtx = ctx;
     } catch {
       // ignore
     }
-    try {
-      const handler = await getServerEntry();
-      const response = await handler.fetch(request, env, ctx);
-      return await normalizeCatastrophicSsrResponse(response);
-    } catch (error) {
-      console.error(error);
-      return brandedErrorResponse();
-    }
+    return runWithExecutionContext(ctx, async () => {
+      try {
+        const handler = await getServerEntry();
+        const response = await handler.fetch(request, env, ctx);
+        return await normalizeCatastrophicSsrResponse(response);
+      } catch (error) {
+        console.error(error);
+        return brandedErrorResponse();
+      }
+    });
   },
 };
+
