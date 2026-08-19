@@ -26,7 +26,7 @@ const TARGETING_VERB = /(rewrite|redo|regenerate|revise|replace|change|fix|updat
 const REFERENTIAL_LEAD = /(like|as|similar to|closer to|compare|compared to|reference|referencing|inspired by|see|per|unlike|than|from)\s+(idea\s*)?$/i;
 
 export function namedSlotInNotes(notes: string): number | null {
-  const re = /\b(?:idea\s*)?#\s*(\d{1,2})\b/gi;
+  const re = /(?:\bidea\s*)?#\s*(\d{1,2})\b/gi;
   for (let m = re.exec(notes); m; m = re.exec(notes)) {
     const before = notes.slice(0, m.index);
     // Skip comparative references: "... more like idea #3".
