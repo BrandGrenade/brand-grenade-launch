@@ -1748,6 +1748,7 @@ function Stage20b({ session, onChange, goNext }: { session: SessionRow; onChange
       await start({ data: { sessionId: session.id, audienceInput: inputs } });
 
       const deadline = Date.now() + 20 * 60 * 1000;
+      let recoveredStaleJob = false;
       for (;;) {
         await new Promise((r) => setTimeout(r, 5000));
         let r: Awaited<ReturnType<typeof load>>;
@@ -1761,6 +1762,15 @@ function Stage20b({ session, onChange, goNext }: { session: SessionRow; onChange
           break;
         }
         if (r.error) throw new Error(r.error);
+        if (r.stale && !recoveredStaleJob && r.audienceInput) {
+          recoveredStaleJob = true;
+          await start({
+            data: {
+              sessionId: session.id,
+              audienceInput: r.audienceInput as Stage20bInputs,
+            },
+          });
+        }
         if (Date.now() > deadline) {
           throw new Error(
             "The channel strategy is still generating after 20 minutes. Leave this page open or come back shortly — the result saves automatically.",
