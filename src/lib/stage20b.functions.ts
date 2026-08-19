@@ -13,6 +13,9 @@ import type { Stage20bAudienceInput } from "./stage20b.server";
 
 export type { Stage20bAudienceInput } from "./stage20b.server";
 
+const STAGE_20B_RUNNING = "__STAGE_20B_RUNNING__";
+const STAGE_20B_STALE_MS = 8 * 60 * 1000;
+
 const AudienceInput = z.object({
   audienceAsHumans: z.string().trim().min(1).max(8000),
   dayInTheirLife: z.string().trim().min(1).max(8000),
@@ -46,7 +49,7 @@ export const startStage20b = createServerFn({ method: "POST" })
       .from("sessions")
       .update({
         stage_20b_output: null,
-        stage_20b_error: null,
+        stage_20b_error: STAGE_20B_RUNNING,
         stage_20b_audience_input: data.audienceInput as never,
       })
       .eq("id", data.sessionId);
@@ -88,13 +91,19 @@ export const loadStage20b = createServerFn({ method: "POST" })
     await assertSessionAccess(data.sessionId, context.userId);
     const { data: row, error } = await supabaseAdmin
       .from("sessions")
-      .select("stage_20b_output, stage_20b_error, stage_20b_audience_input")
+      .select("stage_20b_output, stage_20b_error, stage_20b_audience_input, updated_at")
       .eq("id", data.sessionId)
       .single();
     if (error) throw new Error(error.message);
+    const storedError = (row?.stage_20b_error as string | null) ?? null;
+    const running = storedError === STAGE_20B_RUNNING;
     return {
       output: (row?.stage_20b_output as string | null) ?? null,
-      error: (row?.stage_20b_error as string | null) ?? null,
+      error: running ? null : storedError,
+      running,
+      stale:
+        running &&
+        Date.now() - Date.parse((row?.updated_at as string | null) ?? "") > STAGE_20B_STALE_MS,
       audienceInput:
         (row?.stage_20b_audience_input as Stage20bAudienceInput | null) ?? null,
     };
