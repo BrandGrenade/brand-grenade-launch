@@ -12,6 +12,13 @@ describe("Issue 4 — proposition truncation", () => {
     expect(cleanProposition(trap)).toBe(trap);
   });
 
+  it("keeps the exact reported failing case verbatim", () => {
+    const input = "It moves before you hear it. This plays across every touchpoint.";
+    expect(cleanProposition(input)).toBe(input);
+  });
+
+
+
   it("keeps 'This speaks', 'This works', 'This nods' second sentences", () => {
     for (const v of ["speaks", "works", "refers", "nods", "plays", "lands"]) {
       const s = `Own the last mile. This ${v} to the customer's real problem, not ours.`;
