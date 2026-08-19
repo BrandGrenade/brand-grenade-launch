@@ -35,13 +35,23 @@ Four sub-blocks:
 - STRL DIFFERENTIATION PROTECTION: explicit instructions on what to avoid to differentiate from the STRL historical references.
 
 DIMENSION 7 — CREATIVE POTENTIAL ASSESSMENT
-One paragraph rating territory richness for 3–5 years of creative work. Cite: number of distinct creative directions available, ability to sustain multi-format expression, cultural durability.`;
+One paragraph rating territory richness for 3–5 years of creative work. Cite: number of distinct creative directions available, ability to sustain multi-format expression, cultural durability.
+
+BUYER GAIN CARRIAGE (MANDATORY)
+Immediately after Dimension 7, output a final block exactly in this shape:
+
+WHAT THE BUYER GAINS (carried from Stage 8): [reproduce the STATED BUYER GAIN supplied in the input VERBATIM — do not reword, soften, expand or improve it. If the input says "No functional gain — truth claim only." reproduce that sentence exactly.]
+Creative implication: [one or two sentences on what that stated gain — or its absence — means for the work made inside this territory.]
+
+Never invent a buyer gain that was not supplied. Never omit this block.`;
+
 export const STAGE_14_INTELLIGENCE = STAGE_14_SYSTEM_PROMPT;
 
 export function buildStage14UserMessage(args: {
   brandName: string;
   category: string;
   selectedSMP: string;
+  buyerGain?: string | null;
   stage12Output: string;
   stage13Output: string;
   stage13bOutput: string;
@@ -51,6 +61,9 @@ export function buildStage14UserMessage(args: {
 CATEGORY: ${args.category}
 
 SELECTED SMP: "${args.selectedSMP}"
+
+═══ STATED BUYER GAIN (from Stage 8 — carry VERBATIM) ═══
+${args.buyerGain?.trim() || "No functional gain — truth claim only."}
 
 ═══ STAGE 12 — SELECTION RATIONALE & CHECKPOINT C ═══
 ${args.stage12Output}
@@ -64,5 +77,6 @@ ${args.stage13bOutput}
 ═══ CATEGORY INTELLIGENCE (CMM) ═══
 ${args.cmm}
 
-Produce the full Stage 14 Creative Territory Map (all seven dimensions + self-audit) now.`;
+Produce the full Stage 14 Creative Territory Map (all seven dimensions + the buyer gain carriage block) now.`;
 }
+

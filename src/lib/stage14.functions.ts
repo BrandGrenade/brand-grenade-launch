@@ -9,6 +9,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertSessionAccess } from "@/lib/auth-helpers.server";
 import { assertUpstreamStageOutput } from "./pipeline-integrity";
 import { isStageOutputComplete } from "./stage-completion";
+import { extractBuyerGainForSmp } from "./buyer-gain";
 
 const Input = z.object({ sessionId: z.string().uuid() });
 
@@ -21,7 +22,7 @@ export const runStage14 = createServerFn({ method: "POST" })
     const { data: session, error } = await supabaseAdmin
       .from("sessions")
       .select(
-        "brand_name, category, selected_smp, current_stage, status, stage_status, updated_at, stage_2_output, stage_12_output, stage_13_output, stage_13b_output, stage_14_output"
+        "brand_name, category, selected_smp, current_stage, status, stage_status, updated_at, stage_2_output, stage_8_output, stage_12_output, stage_13_output, stage_13b_output, stage_14_output"
       )
       .eq("id", data.sessionId)
       .single();
@@ -48,6 +49,9 @@ export const runStage14 = createServerFn({ method: "POST" })
           brandName: session.brand_name,
           category: session.category,
           selectedSMP: session.selected_smp ?? "",
+          // Stage 8 states the buyer gain; Stage 14 carries it verbatim rather
+          // than inventing one downstream.
+          buyerGain: extractBuyerGainForSmp(session.stage_8_output, session.selected_smp),
           stage12Output: "",
           stage13Output: trimBrandFitForDownstream(session.stage_13_output ?? ""),
           stage13bOutput: session.stage_13b_output,
