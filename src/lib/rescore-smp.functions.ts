@@ -2,8 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertSessionAccess } from "@/lib/auth-helpers.server";
-import { ensureSmpScored, peekSmpScored, rescoreLockedSmp } from "./rescore-smp.server";
-import { scheduleBackground } from "./background.server";
+import { ensureSmpScoredInBackground, peekSmpScored, rescoreLockedSmp } from "./rescore-smp.server";
 
 const Input = z.object({ sessionId: z.string().uuid() });
 
@@ -27,7 +26,7 @@ export const ensureLockedSmpScored = createServerFn({ method: "POST" })
     const peek = await peekSmpScored(data.sessionId);
     if (!peek.scoreable) return { status: "skipped" as const };
     if (peek.scored) return { status: "already_scored" as const };
-    scheduleBackground(ensureSmpScored(data.sessionId), "smp-rescore");
+    ensureSmpScoredInBackground(data.sessionId);
     return { status: "scheduled" as const };
   });
 
