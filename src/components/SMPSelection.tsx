@@ -655,13 +655,16 @@ export function SMPSelection({
 
   const locValidationWarning =
     locResult.validationWarning ??
-    (locResult.cards.length === 0 && locStatus && locStatus !== "complete"
+    (locResult.cards.length === 0 && locStatus
       ? locStatus === "failed"
         ? `Left-of-Centre propositions are missing — LOC generation/validation failed${locError ? `: ${locError}` : "."} Only CORE propositions are shown. Recover LOC at Stage 09 before selecting if you need the LOC pool.`
         : locStatus === "running"
           ? "Left-of-Centre propositions are still generating — only CORE propositions are shown right now."
-          : null
+          : locStatus === "complete"
+            ? "LOC validation failed — no Left-of-Centre propositions reached this screen. Only CORE options are shown. This is not the same as LOC producing nothing: re-run Stage 09 before selecting."
+            : null
       : null);
+
 
   const cards = useMemo(() => [...coreCards, ...locCards], [coreCards, locCards]);
   const usingStage11Fallback = useMemo(
