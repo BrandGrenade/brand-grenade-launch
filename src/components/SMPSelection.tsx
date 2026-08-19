@@ -553,15 +553,18 @@ function buildLocCards(packages: LocPackageWithDisposition[] | null, offset: num
     cards.forEach((c, idx) => { c.cardNumber = offset + idx + 1; });
   }
   let validationWarning: string | null = null;
-  if (pendingCount > 0 || failedFloorCount > 0 || hadValidationError) {
+  if (hadValidationError) {
+    // Issue 5: an explicit, unmissable statement of the failure and its scale.
+    validationWarning = `LOC validation failed — ${pendingCount} of ${cards.length} Left-of-Centre ${pendingCount === 1 ? "idea" : "ideas"} could not be validated. They are shown below unscored and flagged rather than hidden; do not treat their absence of scores as a pass.`;
+  } else if (pendingCount > 0 || failedFloorCount > 0) {
     const parts: string[] = [];
     if (pendingCount > 0) parts.push(`${pendingCount} awaiting validation`);
     if (failedFloorCount > 0) parts.push(`${failedFloorCount} below six-dimension floors`);
-    if (hadValidationError && pendingCount === 0) parts.push("validation errors present");
     validationWarning = `LOC six-dimension validation did not complete cleanly — ${parts.join(", ")}. Propositions are shown unscored or with partial scores so nothing is silently hidden.`;
   }
   return { cards, validationWarning };
 }
+
 
 
 
@@ -652,13 +655,16 @@ export function SMPSelection({
 
   const locValidationWarning =
     locResult.validationWarning ??
-    (locResult.cards.length === 0 && locStatus && locStatus !== "complete"
+    (locResult.cards.length === 0 && locStatus
       ? locStatus === "failed"
         ? `Left-of-Centre propositions are missing — LOC generation/validation failed${locError ? `: ${locError}` : "."} Only CORE propositions are shown. Recover LOC at Stage 09 before selecting if you need the LOC pool.`
         : locStatus === "running"
           ? "Left-of-Centre propositions are still generating — only CORE propositions are shown right now."
-          : null
+          : locStatus === "complete"
+            ? "LOC validation failed — no Left-of-Centre propositions reached this screen. Only CORE options are shown. This is not the same as LOC producing nothing: re-run Stage 09 before selecting."
+            : null
       : null);
+
 
   const cards = useMemo(() => [...coreCards, ...locCards], [coreCards, locCards]);
   const usingStage11Fallback = useMemo(

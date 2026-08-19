@@ -163,14 +163,44 @@ export async function regenerateDirection(opts: {
     : parseStimulusResponse(raw)[lens.id]?.trim() || raw.trim();
   if (!text) throw new Error("Regeneration produced no parseable output");
 
-  const { data: last } = await supabaseAdmin
+  // Issue 2: the FIRST output must survive its first Revise / Try Again. If no
+  // attempt rows exist yet, the lens's current text is the original generation
+  // and is persisted as Attempt 1 before the new attempt is written, so the
+  // user can always view or restore it.
+  const { data: existing } = await supabaseAdmin
     .from("stimulus_direction_attempts")
-    .select("attempt_no")
+    .select("id, attempt_no")
     .eq("direction_id", row.id)
     .order("attempt_no", { ascending: false })
     .limit(1)
     .maybeSingle();
+
+  let last = existing;
+  if (!existing && currentText) {
+    const { data: seeded } = await supabaseAdmin
+      .from("stimulus_direction_attempts")
+      .insert({
+        direction_id: row.id,
+        run_id: run.id,
+        attempt_no: 1,
+        origin: "initial",
+        direction: currentText,
+        campaign_line: (row as { campaign_line?: string | null }).campaign_line ?? null,
+        expression_under_master:
+          (row as { expression_under_master?: string | null }).expression_under_master ?? null,
+        master_line_at_generation: masterLine || null,
+        rationale: (row as { rationale?: string | null }).rationale ?? null,
+        line_check: null,
+        revise_notes: null,
+        ratings: ((row as { ratings?: unknown }).ratings ?? null) as never,
+        rating_status: (row as { rating_status?: string | null }).rating_status ?? "unrated",
+      })
+      .select("id, attempt_no")
+      .maybeSingle();
+    last = seeded ?? { id: "", attempt_no: 1 };
+  }
   const attemptNo = (last?.attempt_no ?? 0) + 1;
+
 
   const { data: attempt, error: aErr } = await supabaseAdmin
     .from("stimulus_direction_attempts")

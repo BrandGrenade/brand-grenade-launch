@@ -14,13 +14,32 @@ export interface ReviseTarget {
   lensName: string;
 }
 
-/** Extracts the idea number an instruction explicitly names, if any. */
+/**
+ * Extracts the idea number an instruction explicitly names AS ITS OWN TARGET.
+ *
+ * Only an imperative rewrite phrase counts ("rewrite idea #17", "redo #4").
+ * A comparative or referential mention — "make this more like idea #3",
+ * "closer in tone to #9" — is about a different card and must never block the
+ * write (Issue 3).
+ */
+const TARGETING_VERB = /(rewrite|redo|regenerate|revise|replace|change|fix|update|amend|reword)/i;
+const REFERENTIAL_LEAD = /(like|as|similar to|closer to|compare|compared to|reference|referencing|inspired by|see|per|unlike|than|from)\s+(idea\s*)?$/i;
+
 export function namedSlotInNotes(notes: string): number | null {
-  const m = /\bidea\s*#\s*(\d{1,2})\b/i.exec(notes) ?? /#\s*(\d{1,2})\b/.exec(notes);
-  if (!m) return null;
-  const n = Number(m[1]);
-  return Number.isFinite(n) && n >= 1 && n <= 99 ? n : null;
+  const re = /(?:\bidea\s*)?#\s*(\d{1,2})\b/gi;
+  for (let m = re.exec(notes); m; m = re.exec(notes)) {
+    const before = notes.slice(0, m.index);
+    // Skip comparative references: "... more like idea #3".
+    if (REFERENTIAL_LEAD.test(before.replace(/\s+$/, " "))) continue;
+    // Only an imperative targeting verb within the preceding clause counts.
+    const clause = before.split(/[.;\n]/).pop() ?? "";
+    if (!TARGETING_VERB.test(clause)) continue;
+    const n = Number(m[1]);
+    if (Number.isFinite(n) && n >= 1 && n <= 99) return n;
+  }
+  return null;
 }
+
 
 /**
  * Throws when the rewrite instruction names a different idea from the row the

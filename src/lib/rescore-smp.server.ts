@@ -70,6 +70,27 @@ export function ensureSmpScoredInBackground(sessionId: string): void {
 }
 
 /**
+ * Cheap, single-query check used by document opens (Issue 1). Opening a
+ * document must never block on three live scoring calls: we read the cached
+ * score block keyed off the exact proposition text and only schedule work when
+ * that cache misses.
+ */
+export async function peekSmpScored(
+  sessionId: string,
+): Promise<{ scored: boolean; scoreable: boolean }> {
+  const { data } = await supabaseAdmin
+    .from("sessions")
+    .select("selected_smp, stage_10_output")
+    .eq("id", sessionId)
+    .maybeSingle();
+  const smp = (data?.selected_smp ?? "").trim();
+  const s10 = data?.stage_10_output ?? "";
+  if (!smp || !s10.trim()) return { scored: false, scoreable: false };
+  return { scored: hasIndependentScore(s10, smp), scoreable: true };
+}
+
+
+/**
  * `force` re-scores even when a score block already exists — used when the
  * scoring anchors themselves change and older scores must be refreshed.
  */

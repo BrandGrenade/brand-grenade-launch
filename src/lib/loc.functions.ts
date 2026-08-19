@@ -365,7 +365,10 @@ export const runLeftOfCentre = createServerFn({ method: "POST" })
           engine: p.engine,
           engineOutput: p.engineOutput,
           validation: v?.score ?? null,
-          validationError: v?.error ?? null,
+          // Issue 5: a run-level validation failure must be attached to every
+          // package, otherwise Checkpoint C reports "awaiting validation" and
+          // the actual failure is invisible.
+          validationError: v?.error ?? validationError ?? null,
           // Challenger objective: flag Engine 08 for serious consideration at
           // Checkpoint C rather than equal weight among the thirteen.
           priority: enemyFirstPriority && p.engine === "enemy_first",
@@ -375,6 +378,7 @@ export const runLeftOfCentre = createServerFn({ method: "POST" })
               : null,
         };
       });
+
 
       await supabaseAdmin
         .from("sessions")
