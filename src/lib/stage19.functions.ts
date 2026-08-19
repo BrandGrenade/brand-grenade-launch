@@ -7,65 +7,16 @@ import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { callClaude } from "./claude.server";
 import { STAGE_19_ACTIVATION_ARCHITECTURE_PROMPT } from "./stage19-activation-architecture-prompt";
-import { appendRedirect, formatThreeTruths, smpGoverningBlock, withPhase2Formatting } from "./phase2-shared";
+import { appendRedirect, withPhase2Formatting } from "./phase2-shared";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertSessionAccess } from "@/lib/auth-helpers.server";
 import { assertUpstreamStageOutput } from "./pipeline-integrity";
 import { getObjectiveDirective } from "./strategic-objective.server";
-
-const STAGE19_SELECT = [
-  "brand_name",
-  "category",
-  "selected_smp",
-  "stage_18_selected_detonation",
-  "stage_18_output",
-  "stage_14b_output",
-  "truth_product",
-  "truth_consumer",
-  "truth_cultural",
-  "stage_19_output",
-].join(", ");
-
-function buildStage19UserMessage(s: {
-  brand_name: string | null;
-  category: string | null;
-  selected_smp: string | null;
-  stage_18_selected_detonation: string | null;
-  stage_18_output: string | null;
-  stage_14b_output: string | null;
-  truth_product: string | null;
-  truth_consumer: string | null;
-  truth_cultural: string | null;
-}): string {
-  return [
-    smpGoverningBlock(s.selected_smp),
-    "",
-    `BRAND: ${s.brand_name ?? "—"}`,
-    `CATEGORY: ${s.category ?? "—"}`,
-    "",
-    "SELECTED DETONATION (Stage 18)",
-    s.stage_18_selected_detonation?.trim() || "—",
-    "",
-    "CAMPAIGN OR PLATFORM ASSESSMENT (from Stage 18 Compounding Assessment)",
-    s.stage_18_output?.trim() || "—",
-    "",
-    "THREE TRUTH POSITIONING",
-    formatThreeTruths({
-      product: s.truth_product,
-      consumer: s.truth_consumer,
-      cultural: s.truth_cultural,
-    }),
-    "",
-    "CHANNEL EXPRESSION MAPPING (Stage 14B)",
-    s.stage_14b_output?.trim() || "—",
-  ].join("\n");
-}
-
-const RunInput = z.object({ sessionId: z.string().uuid() });
+import { buildStage19UserMessage } from "./stage19.server";
 
 export const runStage19 = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((i) => RunInput.parse(i))
+  .inputValidator((i) => z.object({ sessionId: z.string().uuid() }).parse(i))
   .handler(async ({ data, context }) => {
     await assertSessionAccess(data.sessionId, context.userId);
     const { requireConfirmedSelection } = await import("./checkpoint-gate");
@@ -73,7 +24,7 @@ export const runStage19 = createServerFn({ method: "POST" })
     await assertUpstreamStageOutput(data.sessionId, 19);
     const { data: session, error } = await supabaseAdmin
       .from("sessions")
-      .select("brand_name, category, selected_smp, stage_18_selected_detonation, stage_18_output, stage_14b_output, truth_product, truth_consumer, truth_cultural, stage_19_output")
+      .select("brand_name, category, selected_smp, stage_18_selected_detonation, stage_18_detonation_line, stage_18_output, stage_14b_output, truth_product, truth_consumer, truth_cultural, stage_19_output")
       .eq("id", data.sessionId)
       .single();
     if (error || !session) throw new Error(`Session not found: ${error?.message ?? "no row"}`);
@@ -136,22 +87,20 @@ export const loadStage19 = createServerFn({ method: "POST" })
     return { output: (row?.stage_19_output as string | null) ?? null };
   });
 
-const RetryInput = z.object({
-  sessionId: z.string().uuid(),
-  cardIds: z.array(z.string()).default([]),
-  redirectInstructions: z.record(z.string(), z.string()).default({}),
-});
-
 export const retryStage19 = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((i) => RetryInput.parse(i))
+  .inputValidator((i) => z.object({
+    sessionId: z.string().uuid(),
+    cardIds: z.array(z.string()).default([]),
+    redirectInstructions: z.record(z.string(), z.string()).default({}),
+  }).parse(i))
   .handler(async ({ data, context }) => {
     await assertSessionAccess(data.sessionId, context.userId);
     const { requireConfirmedSelection } = await import("./checkpoint-gate");
     await requireConfirmedSelection(data.sessionId, "E");
     const { data: session, error } = await supabaseAdmin
       .from("sessions")
-      .select("brand_name, category, selected_smp, stage_18_selected_detonation, stage_18_output, stage_14b_output, truth_product, truth_consumer, truth_cultural, stage_19_output")
+      .select("brand_name, category, selected_smp, stage_18_selected_detonation, stage_18_detonation_line, stage_18_output, stage_14b_output, truth_product, truth_consumer, truth_cultural, stage_19_output")
       .eq("id", data.sessionId)
       .single();
     if (error || !session) throw new Error(`Session not found: ${error?.message ?? "no row"}`);

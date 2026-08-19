@@ -202,10 +202,12 @@ function GlobalRetryDirection({
   value,
   onChange,
   disabled,
+  label = "Creative Direction — applied to all cards on retry",
 }: {
   value: string;
   onChange: (v: string) => void;
   disabled?: boolean;
+  label?: string;
 }) {
   return (
     <div style={{ marginTop: 24 }}>
@@ -222,7 +224,7 @@ function GlobalRetryDirection({
           fontWeight: 500,
         }}
       >
-        Creative Direction — applied to all cards on retry
+        {label}
       </label>
       <textarea
         id="global-creative-direction"
@@ -1361,6 +1363,7 @@ function Stage19({ session, onChange, goNext }: { session: SessionRow; onChange:
   const [err, setErr] = useState<string | null>(null);
   const autoTriggeredRef = useRef(false);
   const [stage19Checked, setStage19Checked] = useState<Record<string, boolean>>({});
+  const [retryDirection, setRetryDirection] = useState("");
 
   useEffect(() => { setOutput(session.stage_19_output); }, [session.stage_19_output]);
 
@@ -1376,7 +1379,17 @@ function Stage19({ session, onChange, goNext }: { session: SessionRow; onChange:
   };
   const handleRetry = async () => {
     setBusy(true); setErr(null);
-    try { const r = await retry({ data: { sessionId: session.id, cardIds: [], redirectInstructions: {} } }); setOutput(r.output); await onChange(); }
+    try {
+      const r = await retry({
+        data: {
+          sessionId: session.id,
+          cardIds: [],
+          redirectInstructions: { "card-1": retryDirection },
+        },
+      });
+      setOutput(r.output);
+      await onChange();
+    }
     catch (e) { setErr(e instanceof Error ? e.message : "Retry failed"); }
     finally { setBusy(false); }
   };
@@ -1442,7 +1455,13 @@ function Stage19({ session, onChange, goNext }: { session: SessionRow; onChange:
               {block.content && <RichOutput text={block.content} />}
             </div>
           ))}
-          <div style={{ marginTop: 28, display: "flex", gap: 12, justifyContent: "flex-end" }}>
+          <GlobalRetryDirection
+            value={retryDirection}
+            onChange={setRetryDirection}
+            disabled={busy}
+            label="Retry direction — applied to Activation Architecture"
+          />
+          <div style={{ marginTop: 12, display: "flex", gap: 12, justifyContent: "flex-end" }}>
             <AmberButton variant="ghost" onClick={handleRetry} disabled={busy}>{busy && <Spinner />} Retry</AmberButton>
             <AmberButton onClick={handleProceed} disabled={proceeding}>
               {proceeding ? <><Spinner /> Loading...</> : "Proceed to Stage 20"}
