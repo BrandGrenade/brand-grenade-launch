@@ -192,7 +192,7 @@ export async function regenerateDirection(opts: {
         rationale: (row as { rationale?: string | null }).rationale ?? null,
         line_check: null,
         revise_notes: null,
-        ratings: (row as { ratings?: unknown }).ratings ?? null,
+        ratings: ((row as { ratings?: unknown }).ratings ?? null) as never,
         rating_status: (row as { rating_status?: string | null }).rating_status ?? "unrated",
       })
       .select("id, attempt_no")
