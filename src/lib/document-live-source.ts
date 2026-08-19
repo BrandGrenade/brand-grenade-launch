@@ -32,13 +32,29 @@ export async function resolveLiveDocumentSession<T extends LiveDocumentSession>(
   if (!supplied.id) return supplied;
 
   // Governance rule: every document must report a real score for the exact
-  // proposition it recommends. If the locked SMP was finalised after Stage 10,
-  // score it now rather than rendering a placeholder. Idempotent and silent.
+  // proposition it recommends. The score is cached against the proposition
+  // text, so this is a single cheap read; when the proposition has changed the
+  // scoring pass runs in the BACKGROUND and the user is told, rather than the
+  // open blocking on three live scoring calls (Issue 1).
   try {
-    await ensureLockedSmpScored({ data: { sessionId: supplied.id } });
+    const r = (await ensureLockedSmpScored({ data: { sessionId: supplied.id } })) as {
+      status?: string;
+    };
+    if (r?.status === "scheduled") {
+      void import("sonner")
+        .then(({ toast }) =>
+          toast.info("Scoring the recommended proposition", {
+            description:
+              "This proposition was finalised after Stage 10, so it is being scored in the background. The document opens now; its score appears once scoring completes — reopen the document to see it.",
+            duration: 9000,
+          }),
+        )
+        .catch(() => {});
+    }
   } catch {
     /* never block document rendering on the re-score */
   }
+
 
   const { data: current, error } = await supabase
     .from("sessions")
