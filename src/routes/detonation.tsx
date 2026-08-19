@@ -202,10 +202,12 @@ function GlobalRetryDirection({
   value,
   onChange,
   disabled,
+  label = "Creative Direction — applied to all cards on retry",
 }: {
   value: string;
   onChange: (v: string) => void;
   disabled?: boolean;
+  label?: string;
 }) {
   return (
     <div style={{ marginTop: 24 }}>
@@ -222,7 +224,7 @@ function GlobalRetryDirection({
           fontWeight: 500,
         }}
       >
-        Creative Direction — applied to all cards on retry
+        {label}
       </label>
       <textarea
         id="global-creative-direction"
@@ -1453,7 +1455,12 @@ function Stage19({ session, onChange, goNext }: { session: SessionRow; onChange:
               {block.content && <RichOutput text={block.content} />}
             </div>
           ))}
-          <GlobalRetryDirection value={retryDirection} onChange={setRetryDirection} disabled={busy} />
+          <GlobalRetryDirection
+            value={retryDirection}
+            onChange={setRetryDirection}
+            disabled={busy}
+            label="Retry direction — applied to Activation Architecture"
+          />
           <div style={{ marginTop: 12, display: "flex", gap: 12, justifyContent: "flex-end" }}>
             <AmberButton variant="ghost" onClick={handleRetry} disabled={busy}>{busy && <Spinner />} Retry</AmberButton>
             <AmberButton onClick={handleProceed} disabled={proceeding}>
