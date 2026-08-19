@@ -1,0 +1,11 @@
+import { supabaseAdmin } from "../src/integrations/supabase/client.server";
+import { extractBuyerGainForSmp } from "../src/lib/buyer-gain";
+const SID="df21eef0-0e66-4a00-90a6-a4a1e6242391";
+const { data } = await supabaseAdmin.from("sessions").select("stage_8_output").eq("id",SID).single();
+const t = data!.stage_8_output as string;
+const props = [...t.matchAll(/^>\s*\*\*(.+?)\*\*\s*$/gm)].map(m=>m[1]);
+console.log(props);
+const chosen = props[0];
+await supabaseAdmin.from("sessions").update({ selected_smp: chosen }).eq("id",SID);
+console.log("SELECTED:", chosen);
+console.log("EXTRACTED GAIN:", extractBuyerGainForSmp(t, chosen));

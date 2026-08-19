@@ -53,6 +53,10 @@ What it challenges: [One sentence on the category convention or competitor posit
 
 What it makes possible: [2-3 sentences on the creative territory it opens — what work could be built inside this proposition]
 
+What the buyer gains: [MANDATORY — one or two sentences naming the concrete gain the buyer actually gets, in the buyer's own terms, not the brand's. Name the practical outcome, not the feeling about the brand. If this proposition rests on a truth claim with no functional gain behind it, write exactly: "No functional gain — truth claim only." Never omit this field, never leave it blank, never soften it into restated positioning.]
+
+
+
 Earlier draft: [a real earlier, weaker draft of the same line]
 
 Cut: [what you cut from it and why — one line]

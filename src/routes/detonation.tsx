@@ -710,6 +710,23 @@ function stageStatus(num: string, s: SessionRow | null): StageStatus {
   return "pending";
 }
 
+// Resume point: the first stage that is not yet finished. Stage 20 also needs
+// an explicit human approval, so "complete" is not enough there. If every
+// stage is done we land on the last one rather than sending the user back to
+// Stage 17.
+function resolveResumeStage(s: SessionRow | null): string {
+  if (!s) return "17";
+  for (const stage of PHASE_2_STAGES) {
+    const status = stageStatus(stage.number, s);
+    if (stage.number === "20") {
+      if (status !== "approved") return stage.number;
+      continue;
+    }
+    if (status === "pending") return stage.number;
+  }
+  return PHASE_2_STAGES[PHASE_2_STAGES.length - 1]?.number ?? "17";
+}
+
 // ── Main page ────────────────────────────────────────────────────────────
 function DetonationPage() {
   const { session: sessionId, panel } = Route.useSearch();
@@ -722,11 +739,22 @@ function DetonationPage() {
   const [activeStage, setActiveStage] = useState<string>(
     panel === "creative" ? "21" : "17",
   );
+  // On first load, resume at the stage actually in progress instead of
+  // resetting to Stage 17. Only runs once, so later manual navigation sticks.
+  const resumedRef = useRef(false);
+  useEffect(() => {
+    if (resumedRef.current || !session) return;
+    resumedRef.current = true;
+    if (panel === "creative") return;
+    setActiveStage(resolveResumeStage(session));
+  }, [session, panel]);
 
   useEffect(() => {
     if (panel === "creative" && activeStage === "21") return;
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [activeStage, panel]);
+
+
 
   // Once Stage 21 has rendered its content, bring the Creative Stimulus panel
   // into view. Stage 21 loads asynchronously, so poll briefly for the anchor.
@@ -1842,7 +1870,18 @@ function Stage20b({ session, onChange, goNext }: { session: SessionRow; onChange
             <AmberButton onClick={handleRun} disabled={busy || !canRun}>
               {busy ? <><Spinner /> Generating Channel Strategy…</> : "Generate Channel Strategy"}
             </AmberButton>
+            {/* Forward affordance stays on screen during generation so the
+                route onward is never invisible; it simply cannot be used
+                until the channel strategy exists. */}
+            <AmberButton
+              onClick={handleProceed}
+              disabled={proceeding || busy || !output}
+            >
+              {proceeding ? <><Spinner /> Loading...</> : "Proceed to Stage 21 — Channel Briefs"}
+            </AmberButton>
+
           </div>
+
         </div>
       ) : output ? (
         <>
