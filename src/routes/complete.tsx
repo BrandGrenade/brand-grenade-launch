@@ -442,8 +442,12 @@ function CompletePage() {
           )}
         </div>
 
+        {/* Research provenance — Room 00 (Research Synthesiser) run status */}
+        <ResearchProvenanceCard brand={brand} />
+
         {/* Document 00A — Strategic Territory Intelligence Report */}
         <Document00ACard brand={brand} briefText={session.brief_text} />
+
 
         {/* Strategy Executive Summary — on-demand synthesis */}
         <ExecSummaryCard session={session} />
