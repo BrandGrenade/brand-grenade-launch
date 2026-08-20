@@ -17,6 +17,8 @@ import { buildPhase1Document, openPhase1Document, openStage16VisionDocument, PHA
 import { openFullRunDocument, FULL_RUN_SESSION_COLUMNS, resolveFullRunStages } from "@/lib/full-run-document";
 import { cleanProposition } from "@/lib/clean-proposition";
 import { Document00ACard } from "@/components/Document00ACard";
+import { ResearchProvenanceCard } from "@/components/ResearchProvenanceCard";
+
 import { buildConsultingDeliveryDocument } from "@/lib/consulting-delivery-document";
 import type { MintoSession } from "@/lib/minto-content";
 import { ExecSummaryCard } from "@/components/ExecSummaryCard";
@@ -442,8 +444,12 @@ function CompletePage() {
           )}
         </div>
 
+        {/* Research provenance — Room 00 (Research Synthesiser) run status */}
+        <ResearchProvenanceCard brand={brand} />
+
         {/* Document 00A — Strategic Territory Intelligence Report */}
         <Document00ACard brand={brand} briefText={session.brief_text} />
+
 
         {/* Strategy Executive Summary — on-demand synthesis */}
         <ExecSummaryCard session={session} />
