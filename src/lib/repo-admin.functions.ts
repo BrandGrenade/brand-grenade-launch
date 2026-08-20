@@ -5,8 +5,10 @@ import {
   requireAdmin,
   requirePlatformAdminByEmail,
   unlockAdminSession,
+  verifyAdminPasswordSafe,
+  hashPasswordSafe,
 } from "./repo/admin-guard.server";
-import { adminSession, verifyAdminPassword, hashPassword } from "./repo/session.server";
+
 
 const slugSchema = z
   .string()

@@ -9,10 +9,14 @@
  * protection blocks this file from every client bundle.
  */
 
-import { adminSession } from "./session.server";
+// `session.server.ts` imports `node:crypto`; it is loaded lazily, inside function
+// bodies only, so it can never appear in a client bundle's static graph.
+async function session() {
+  return (await import("./session.server")).adminSession();
+}
 
 export async function requireAdmin(): Promise<void> {
-  const s = await adminSession();
+  const s = await session();
   if (!s.data.unlocked) throw new Error("Unauthorized");
 }
 
@@ -44,6 +48,16 @@ export async function requirePlatformAdminByEmail(
 }
 
 export async function unlockAdminSession(): Promise<void> {
-  const s = await adminSession();
+  const s = await session();
   await s.update({ unlocked: true });
+}
+
+export async function verifyAdminPasswordSafe(password: string): Promise<boolean> {
+  const { verifyAdminPassword } = await import("./session.server");
+  return verifyAdminPassword(password);
+}
+
+export async function hashPasswordSafe(password: string): Promise<string> {
+  const { hashPassword } = await import("./session.server");
+  return hashPassword(password);
 }
