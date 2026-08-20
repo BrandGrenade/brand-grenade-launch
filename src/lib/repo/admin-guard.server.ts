@@ -61,3 +61,13 @@ export async function hashPasswordSafe(password: string): Promise<string> {
   const { hashPassword } = await import("./session.server");
   return hashPassword(password);
 }
+
+export async function clearAdminSession(): Promise<void> {
+  const s = await session();
+  await s.clear();
+}
+
+export async function isAdminUnlocked(): Promise<boolean> {
+  const s = await session();
+  return !!s.data.unlocked;
+}

@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { clientIpAndUa } from "./repo/request-meta.server";
-import { visitorSession, verifyPassword } from "./repo/session.server";
+import { visitorSession, verifyPassword } from "./repo/visitor-guard.server";
 import { z } from "zod";
 
 const slugSchema = z
@@ -38,7 +38,8 @@ export const unlockRepo = createServerFn({ method: "POST" })
       .eq("is_active", true);
     if (error) throw new Error(error.message);
 
-    const match = (rows ?? []).find((r) => verifyPassword(data.password, r.password_hash));
+    const verify = await verifyPassword();
+    const match = (rows ?? []).find((r) => verify(data.password, r.password_hash));
     if (!match) return { ok: false as const };
 
     const s = await visitorSession(data.slug);

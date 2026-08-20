@@ -7,6 +7,8 @@ import {
   unlockAdminSession,
   verifyAdminPasswordSafe,
   hashPasswordSafe,
+  clearAdminSession,
+  isAdminUnlocked,
 } from "./repo/admin-guard.server";
 
 
@@ -31,21 +33,18 @@ export const adminLogin = createServerFn({ method: "POST" })
     password: z.string().min(1).max(200).parse(d.password),
   }))
   .handler(async ({ data }) => {
-    if (!verifyAdminPassword(data.password)) return { ok: false as const };
-    const s = await adminSession();
-    await s.update({ unlocked: true });
+    if (!(await verifyAdminPasswordSafe(data.password))) return { ok: false as const };
+    await unlockAdminSession();
     return { ok: true as const };
   });
 
 export const adminLogout = createServerFn({ method: "POST" }).handler(async () => {
-  const s = await adminSession();
-  await s.clear();
+  await clearAdminSession();
   return { ok: true as const };
 });
 
 export const adminStatus = createServerFn({ method: "GET" }).handler(async () => {
-  const s = await adminSession();
-  return { unlocked: !!s.data.unlocked };
+  return { unlocked: await isAdminUnlocked() };
 });
 
 // ---- Visitor management ----
@@ -148,7 +147,7 @@ export const createVisitor = createServerFn({ method: "POST" })
       name: data.name,
       organisation: data.organisation,
       email: data.email,
-      password_hash: hashPassword(data.password),
+      password_hash: await hashPasswordSafe(data.password),
       plaintext_password: data.password,
     });
     if (error) throw new Error(error.message);
@@ -175,7 +174,7 @@ export const resetVisitorPassword = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin
       .from("repository_visitors")
-      .update({ password_hash: hashPassword(data.password), plaintext_password: data.password })
+      .update({ password_hash: await hashPasswordSafe(data.password), plaintext_password: data.password })
       .eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true as const, password: data.password };
