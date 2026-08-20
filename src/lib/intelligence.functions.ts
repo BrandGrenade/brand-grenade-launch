@@ -10,7 +10,6 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { streamClaude } from "./claude.server";
-import { scheduleBackground } from "./background.server";
 import { withIntelligenceWatchdog } from "./intelligence-stream-watchdog";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -210,6 +209,7 @@ export const runIntelligenceAnalysis = createServerFn({ method: "POST" })
     // The background job returns failure objects rather than throwing, so a
     // rejected-promise logger alone loses every early-exit reason (session not
     // found, unauthorised, run-in-progress, retry ceiling). Record them.
+    const { scheduleBackground } = await import("./background.server");
     scheduleBackground(
       executeIntelligenceRun(supabase, userId, sessionId).then(async (result) => {
         if (result.success) return result;
