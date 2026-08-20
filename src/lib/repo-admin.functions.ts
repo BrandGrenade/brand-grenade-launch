@@ -1,6 +1,16 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import {
+  requireAdmin,
+  requirePlatformAdminByEmail,
+  unlockAdminSession,
+  verifyAdminPasswordSafe,
+  hashPasswordSafe,
+  clearAdminSession,
+  isAdminUnlocked,
+} from "./repo/admin-guard.server";
+
 
 const slugSchema = z
   .string()
@@ -9,41 +19,12 @@ const slugSchema = z
   .regex(/^[a-z0-9]([a-z0-9-]{0,38}[a-z0-9])?$/, "Invalid repository slug");
 type SlugT = string;
 
-async function requireAdmin() {
-  const { adminSession } = await import("./repo/session.server");
-  const s = await adminSession();
-  if (!s.data.unlocked) throw new Error("Unauthorized");
-}
-
-async function requirePlatformAdminByEmail(email: string | undefined, supabase: unknown) {
-  if (!email) throw new Error("Unauthorized");
-  const client = supabase as {
-    from: (table: string) => {
-      select: (columns: string) => {
-        eq: (column: string, value: string) => {
-          eq: (column: string, value: boolean) => { maybeSingle: () => Promise<{ data: unknown; error: { message: string } | null }> };
-        };
-      };
-    };
-  };
-  const { data, error } = await client
-    .from("users")
-    .select("id")
-    .eq("email", email)
-    .eq("is_admin", true)
-    .maybeSingle();
-  if (error) throw new Error(error.message);
-  if (!data) throw new Error("Unauthorized");
-}
-
 export const unlockRepositoryAdminFromPlatform = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const email = typeof context.claims.email === "string" ? context.claims.email : undefined;
     await requirePlatformAdminByEmail(email, context.supabase);
-    const { adminSession } = await import("./repo/session.server");
-    const s = await adminSession();
-    await s.update({ unlocked: true });
+    await unlockAdminSession();
     return { ok: true as const };
   });
 
@@ -52,24 +33,18 @@ export const adminLogin = createServerFn({ method: "POST" })
     password: z.string().min(1).max(200).parse(d.password),
   }))
   .handler(async ({ data }) => {
-    const { adminSession, verifyAdminPassword } = await import("./repo/session.server");
-    if (!verifyAdminPassword(data.password)) return { ok: false as const };
-    const s = await adminSession();
-    await s.update({ unlocked: true });
+    if (!(await verifyAdminPasswordSafe(data.password))) return { ok: false as const };
+    await unlockAdminSession();
     return { ok: true as const };
   });
 
 export const adminLogout = createServerFn({ method: "POST" }).handler(async () => {
-  const { adminSession } = await import("./repo/session.server");
-  const s = await adminSession();
-  await s.clear();
+  await clearAdminSession();
   return { ok: true as const };
 });
 
 export const adminStatus = createServerFn({ method: "GET" }).handler(async () => {
-  const { adminSession } = await import("./repo/session.server");
-  const s = await adminSession();
-  return { unlocked: !!s.data.unlocked };
+  return { unlocked: await isAdminUnlocked() };
 });
 
 // ---- Visitor management ----
@@ -167,13 +142,12 @@ export const createVisitor = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     await requireAdmin();
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { hashPassword } = await import("./repo/session.server");
     const { error } = await supabaseAdmin.from("repository_visitors").insert({
       repository_slug: data.slug,
       name: data.name,
       organisation: data.organisation,
       email: data.email,
-      password_hash: hashPassword(data.password),
+      password_hash: await hashPasswordSafe(data.password),
       plaintext_password: data.password,
     });
     if (error) throw new Error(error.message);
@@ -198,10 +172,9 @@ export const resetVisitorPassword = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     await requireAdmin();
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { hashPassword } = await import("./repo/session.server");
     const { error } = await supabaseAdmin
       .from("repository_visitors")
-      .update({ password_hash: hashPassword(data.password), plaintext_password: data.password })
+      .update({ password_hash: await hashPasswordSafe(data.password), plaintext_password: data.password })
       .eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true as const, password: data.password };

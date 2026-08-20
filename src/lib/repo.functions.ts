@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
-import { getRequest } from "@tanstack/react-start/server";
+import { clientIpAndUa } from "./repo/request-meta.server";
+import { visitorSession, verifyPassword } from "./repo/visitor-guard.server";
 import { z } from "zod";
 
 const slugSchema = z
@@ -9,25 +10,9 @@ const slugSchema = z
   .regex(/^[a-z0-9]([a-z0-9-]{0,38}[a-z0-9])?$/, "Invalid repository slug");
 type Slug = string;
 
-function clientIpAndUa(): { ip: string | null; ua: string | null } {
-  try {
-    const req = getRequest();
-    const h = req.headers;
-    const ip =
-      h.get("cf-connecting-ip") ??
-      h.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-      h.get("x-real-ip") ??
-      null;
-    return { ip, ua: h.get("user-agent") };
-  } catch {
-    return { ip: null, ua: null };
-  }
-}
-
 export const getRepoSession = createServerFn({ method: "GET" })
   .inputValidator((d: { slug: Slug }) => ({ slug: slugSchema.parse(d.slug) }))
   .handler(async ({ data }) => {
-    const { visitorSession } = await import("./repo/session.server");
     const s = await visitorSession(data.slug);
     if (!s.data.visitorId || s.data.repositorySlug !== data.slug) {
       return { unlocked: false as const };
@@ -45,7 +30,6 @@ export const unlockRepo = createServerFn({ method: "POST" })
   }))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { visitorSession, verifyPassword } = await import("./repo/session.server");
 
     const { data: rows, error } = await supabaseAdmin
       .from("repository_visitors")
@@ -54,7 +38,8 @@ export const unlockRepo = createServerFn({ method: "POST" })
       .eq("is_active", true);
     if (error) throw new Error(error.message);
 
-    const match = (rows ?? []).find((r) => verifyPassword(data.password, r.password_hash));
+    const verify = await verifyPassword();
+    const match = (rows ?? []).find((r) => verify(data.password, r.password_hash));
     if (!match) return { ok: false as const };
 
     const s = await visitorSession(data.slug);
@@ -80,7 +65,6 @@ export const unlockRepo = createServerFn({ method: "POST" })
 export const logoutRepo = createServerFn({ method: "POST" })
   .inputValidator((d: { slug: Slug }) => ({ slug: slugSchema.parse(d.slug) }))
   .handler(async ({ data }) => {
-    const { visitorSession } = await import("./repo/session.server");
     const s = await visitorSession(data.slug);
     await s.clear();
     return { ok: true as const };
@@ -90,7 +74,6 @@ export const logRepoVisit = createServerFn({ method: "POST" })
   .inputValidator((d: { slug: Slug }) => ({ slug: slugSchema.parse(d.slug) }))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { visitorSession } = await import("./repo/session.server");
     const s = await visitorSession(data.slug);
     if (!s.data.visitorId || s.data.repositorySlug !== data.slug) {
       return { ok: false as const };
@@ -111,7 +94,6 @@ export const listRepoDocuments = createServerFn({ method: "GET" })
   .inputValidator((d: { slug: Slug }) => ({ slug: slugSchema.parse(d.slug) }))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { visitorSession } = await import("./repo/session.server");
     const s = await visitorSession(data.slug);
     if (!s.data.visitorId || s.data.repositorySlug !== data.slug) {
       throw new Error("Unauthorized");
@@ -134,7 +116,6 @@ export const openRepoDocument = createServerFn({ method: "POST" })
   }))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { visitorSession } = await import("./repo/session.server");
     const s = await visitorSession(data.slug);
     if (!s.data.visitorId || s.data.repositorySlug !== data.slug) {
       throw new Error("Unauthorized");
