@@ -20,20 +20,24 @@
  * that race for every caller of scheduleBackground.
  */
 
-import { AsyncLocalStorage } from "node:async_hooks";
+// NOTE: this module is reachable from the client graph via server-function
+// wrappers, so it must not import `node:async_hooks` directly. The Node-only
+// AsyncLocalStorage lives in `exec-context.server.ts` (SSR entry only) and
+// registers itself here.
 
-type ExecCtx = { waitUntil?: (p: Promise<unknown>) => void };
+export type ExecCtx = { waitUntil?: (p: Promise<unknown>) => void };
 
-const ctxStore = new AsyncLocalStorage<ExecCtx | undefined>();
+type CtxStore = { getStore(): ExecCtx | undefined };
 
-/** Runs `fn` with `ctx` bound to the current async context. */
-export function runWithExecutionContext<T>(ctx: unknown, fn: () => T): T {
-  return ctxStore.run(ctx as ExecCtx | undefined, fn);
+let ctxStore: CtxStore | undefined;
+
+export function registerContextStore(store: CtxStore): void {
+  ctxStore = store;
 }
 
 function currentCtx(): ExecCtx | undefined {
   return (
-    ctxStore.getStore() ??
+    ctxStore?.getStore() ??
     (globalThis as unknown as { __cfCtx?: ExecCtx }).__cfCtx
   );
 }
