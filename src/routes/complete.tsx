@@ -17,6 +17,8 @@ import { buildPhase1Document, openPhase1Document, openStage16VisionDocument, PHA
 import { openFullRunDocument, FULL_RUN_SESSION_COLUMNS, resolveFullRunStages } from "@/lib/full-run-document";
 import { cleanProposition } from "@/lib/clean-proposition";
 import { Document00ACard } from "@/components/Document00ACard";
+import { ResearchProvenanceCard } from "@/components/ResearchProvenanceCard";
+
 import { buildConsultingDeliveryDocument } from "@/lib/consulting-delivery-document";
 import type { MintoSession } from "@/lib/minto-content";
 import { ExecSummaryCard } from "@/components/ExecSummaryCard";
