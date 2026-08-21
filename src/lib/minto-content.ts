@@ -25,6 +25,7 @@ import {
   type Stat,
 } from "./doc-system";
 import type { MintoContent } from "./minto";
+import { buildCurrentStateSection } from "./current-state";
 import { stripDocumentMetadata } from "./strip-document-metadata";
 import { extractShortlist } from "./exec-summary-extract";
 
@@ -929,8 +930,28 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
       ? reasonGrid(whyReasons.slice(0, 6))
       : "") + (opts.extraWhyHtml ?? "");
 
+  /* 07 — current state versus recommended change. Existing activity is quoted
+   * from the session's own brief and brand-architecture inputs; the asks are
+   * the activation lines the recommendation carries. Nothing is invented — if
+   * the session recorded no current activity, the section says so. */
+  const current_state = buildCurrentStateSection({
+    brand,
+    evidence: [
+      { label: "Session brief and category context (Stage 1)", text: s1 },
+      { label: "Insight and evidence base (Stage 5)", text: s5 },
+      {
+        label: "Current brand architecture (Stage 22)",
+        text: clean(session.stage_22_brand_architecture),
+      },
+      {
+        label: "Current distinctive assets (Stage 22)",
+        text: clean(session.stage_22_distinctive_assets),
+      },
+    ].filter((e) => e.text.trim()),
+    proposedActions: [...bullets(s14, 6), ...bullets(s15, 6)].slice(0, 8),
+  });
 
-  /* 06 — validation summary */
+  /* 08 — validation summary */
   const tableRows: CmpRow[] = candidates
     .slice()
     .sort((a, b) => (b.composite ?? -1) - (a.composite ?? -1))
@@ -1116,6 +1137,7 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
       key_insight,
       proposition,
       why_this_wins,
+      current_state,
       validation,
       rejected: rejectedHtml,
       implications,
