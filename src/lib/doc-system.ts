@@ -340,6 +340,7 @@ export function pullQuote(body: string, opts: PullQuoteOptions = {}): string {
   return `<div class="pull${variant} keep-together">
     ${opts.label ? `<div class="pull-label">${escapeHtml(opts.label)}</div>` : ""}
     <div class="pull-body${proseClass}">${escapeHtml(text)}</div>
+    ${opts.caption ? `<div class="pull-caption">${escapeHtml(sanitiseText(opts.caption).trim())}</div>` : ""}
     ${opts.attribution ? `<div class="pull-attr">${escapeHtml(opts.attribution)}</div>` : ""}
   </div>`;
 }
