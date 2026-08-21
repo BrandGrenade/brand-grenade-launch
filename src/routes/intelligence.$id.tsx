@@ -36,6 +36,7 @@ import {
 } from "@/lib/intelligence.functions";
 
 import { openDocument00AMinto } from "@/lib/intelligence/doc-00A-minto";
+import { SupervisionStatus } from "@/components/SupervisionStatus";
 
 
 export const Route = createFileRoute("/intelligence/$id")({
