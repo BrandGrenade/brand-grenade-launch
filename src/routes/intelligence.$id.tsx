@@ -258,6 +258,24 @@ function IntelligenceRunPage() {
   const [row, setRow] = useState<SessionRow | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [selectedTerritoryId, setSelectedTerritoryId] = useState<string | null>(null);
+  const [starting, setStarting] = useState(false);
+  const runAnalysisFn = useServerFn(runIntelligenceAnalysis);
+
+  // A saved-but-idle session must be startable from here. Previously the only
+  // route back into a run was the edit page's fire-and-forget dispatch, so a
+  // lost dispatch left the session permanently stranded on "Analysis is not
+  // running" with no recovery control.
+  const startAnalysis = useCallback(async () => {
+    setStarting(true);
+    try {
+      await runAnalysisFn({ data: { intelligenceSessionId: id } });
+      toast.success("Analysis started");
+    } catch (err) {
+      setStarting(false);
+      toast.error(err instanceof Error ? err.message : "Could not start analysis");
+    }
+  }, [id, runAnalysisFn]);
+
 
   // Poll session row until complete/failed.
   useEffect(() => {
