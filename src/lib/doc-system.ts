@@ -319,6 +319,11 @@ export function statGrid(stats: Stat[], cols?: 2 | 3 | 4): string {
 export interface PullQuoteOptions {
   label?: string;
   attribution?: string;
+  /**
+   * Qualifying status set beneath the headline in small, light caption type.
+   * Never concatenate a verdict or status into the headline itself.
+   */
+  caption?: string;
   /** hero = full-bleed rules, cover-adjacent. quiet = supporting emphasis. */
   variant?: "default" | "hero" | "quiet";
 }
