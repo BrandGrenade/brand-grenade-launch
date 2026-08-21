@@ -219,19 +219,43 @@ export const runIntelligenceAnalysis = createServerFn({ method: "POST" })
     // guard below can reclaim.
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     try {
+      const patch: Record<string, unknown> = {
+        status: "running",
+        stage_status: "queued",
+        started_at: new Date().toISOString(),
+        current_layer: 0,
+        last_error: null,
+      };
+      const instructions = data.instructions?.trim();
+      if (instructions) {
+        // Human redirect for this re-run: persisted so the background worker
+        // (which re-reads the row) picks it up, and the retry ceiling is
+        // reset because this is a deliberate, directed re-run.
+        const { data: cur } = await supabaseAdmin
+          .from("intelligence_sessions")
+          .select("report_metadata, final_report")
+          .eq("id", sessionId)
+          .maybeSingle();
+        const meta =
+          cur?.report_metadata && typeof cur.report_metadata === "object" && !Array.isArray(cur.report_metadata)
+            ? (cur.report_metadata as Record<string, unknown>)
+            : {};
+        patch["report_metadata"] = {
+          ...meta,
+          redirect_instructions: instructions,
+          redirect_previous_report: (cur?.final_report ?? "").slice(0, 40000) || null,
+          redirect_at: new Date().toISOString(),
+        };
+        patch["retry_count"] = 0;
+      }
       await supabaseAdmin
         .from("intelligence_sessions")
-        .update({
-          status: "running",
-          stage_status: "queued",
-          started_at: new Date().toISOString(),
-          current_layer: 0,
-          last_error: null,
-        })
+        .update(patch as never)
         .eq("id", sessionId);
     } catch (e) {
       console.error(`[intelligence:${sessionId}] could not write dispatch marker`, e);
     }
+
 
     // The background job returns failure objects rather than throwing, so a
     // rejected-promise logger alone loses every early-exit reason (session not
