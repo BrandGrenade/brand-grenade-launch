@@ -206,21 +206,44 @@ export const runIntelligenceAnalysis = createServerFn({ method: "POST" })
   .handler(async ({ data, context }): Promise<RunIntelligenceResult> => {
     const { supabase, userId } = context;
     const sessionId = data.intelligenceSessionId;
+
+    // Durable dispatch marker, written INSIDE the request (not in the
+    // background continuation). Without it a lost background invocation is
+    // indistinguishable from a request that never arrived: the row simply
+    // stays `draft` with started_at and last_error null — exactly the state
+    // session cd9acf53 was found in. With it, every accepted dispatch is
+    // visible, and a dead worker leaves a stale `running` row the takeover
+    // guard below can reclaim.
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    try {
+      await supabaseAdmin
+        .from("intelligence_sessions")
+        .update({
+          status: "running",
+          stage_status: "queued",
+          started_at: new Date().toISOString(),
+          current_layer: 0,
+          last_error: null,
+        })
+        .eq("id", sessionId);
+    } catch (e) {
+      console.error(`[intelligence:${sessionId}] could not write dispatch marker`, e);
+    }
+
     // The background job returns failure objects rather than throwing, so a
     // rejected-promise logger alone loses every early-exit reason (session not
     // found, unauthorised, run-in-progress, retry ceiling). Record them.
     const { scheduleBackground } = await import("./background.server");
     scheduleBackground(
-      executeIntelligenceRun(supabase, userId, sessionId).then(async (result) => {
+      executeIntelligenceRun(supabase, userId, sessionId, true).then(async (result) => {
         if (result.success) return result;
         console.error(
           `[intelligence:${sessionId}] run did not start: ${result.error}`,
         );
         try {
-          const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
           await supabaseAdmin
             .from("intelligence_sessions")
-            .update({ last_error: `Run did not start: ${result.error}` })
+            .update({ status: "failed", last_error: `Run did not start: ${result.error}` })
             .eq("id", sessionId);
         } catch {
           /* best effort */
@@ -231,6 +254,7 @@ export const runIntelligenceAnalysis = createServerFn({ method: "POST" })
     );
     return { success: true, sessionId };
   });
+
 
 
 async function executeIntelligenceRun(
