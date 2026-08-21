@@ -52,6 +52,7 @@ import { Route as CreativeSessionIdOrchestrationRouteImport } from './routes/cre
 import { Route as CreativeSessionIdChannelsRouteImport } from './routes/creative.$sessionId.channels'
 import { Route as ApiPublicSweepTickRouteImport } from './routes/api/public/sweep-tick'
 import { Route as ApiPublicSmpScoreTickRouteImport } from './routes/api/public/smp-score-tick'
+import { Route as ApiPublicReliabilityTickRouteImport } from './routes/api/public/reliability-tick'
 import { Route as ApiPublicOrchestrationTickRouteImport } from './routes/api/public/orchestration-tick'
 import { Route as ApiPublicIntelligenceTickRouteImport } from './routes/api/public/intelligence-tick'
 import { Route as AdminPreviewSlugRouteImport } from './routes/admin.preview.$slug'
@@ -279,6 +280,12 @@ const ApiPublicSmpScoreTickRoute = ApiPublicSmpScoreTickRouteImport.update({
   path: '/api/public/smp-score-tick',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicReliabilityTickRoute =
+  ApiPublicReliabilityTickRouteImport.update({
+    id: '/api/public/reliability-tick',
+    path: '/api/public/reliability-tick',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicOrchestrationTickRoute =
   ApiPublicOrchestrationTickRouteImport.update({
     id: '/api/public/orchestration-tick',
@@ -365,6 +372,7 @@ export interface FileRoutesByFullPath {
   '/admin/preview/$slug': typeof AdminPreviewSlugRoute
   '/api/public/intelligence-tick': typeof ApiPublicIntelligenceTickRoute
   '/api/public/orchestration-tick': typeof ApiPublicOrchestrationTickRoute
+  '/api/public/reliability-tick': typeof ApiPublicReliabilityTickRoute
   '/api/public/smp-score-tick': typeof ApiPublicSmpScoreTickRoute
   '/api/public/sweep-tick': typeof ApiPublicSweepTickRoute
   '/creative/$sessionId/channels': typeof CreativeSessionIdChannelsRoute
@@ -411,6 +419,7 @@ export interface FileRoutesByTo {
   '/admin/preview/$slug': typeof AdminPreviewSlugRoute
   '/api/public/intelligence-tick': typeof ApiPublicIntelligenceTickRoute
   '/api/public/orchestration-tick': typeof ApiPublicOrchestrationTickRoute
+  '/api/public/reliability-tick': typeof ApiPublicReliabilityTickRoute
   '/api/public/smp-score-tick': typeof ApiPublicSmpScoreTickRoute
   '/api/public/sweep-tick': typeof ApiPublicSweepTickRoute
   '/creative/$sessionId/channels': typeof CreativeSessionIdChannelsRoute
@@ -465,6 +474,7 @@ export interface FileRoutesById {
   '/admin/preview/$slug': typeof AdminPreviewSlugRoute
   '/api/public/intelligence-tick': typeof ApiPublicIntelligenceTickRoute
   '/api/public/orchestration-tick': typeof ApiPublicOrchestrationTickRoute
+  '/api/public/reliability-tick': typeof ApiPublicReliabilityTickRoute
   '/api/public/smp-score-tick': typeof ApiPublicSmpScoreTickRoute
   '/api/public/sweep-tick': typeof ApiPublicSweepTickRoute
   '/creative/$sessionId/channels': typeof CreativeSessionIdChannelsRoute
@@ -520,6 +530,7 @@ export interface FileRouteTypes {
     | '/admin/preview/$slug'
     | '/api/public/intelligence-tick'
     | '/api/public/orchestration-tick'
+    | '/api/public/reliability-tick'
     | '/api/public/smp-score-tick'
     | '/api/public/sweep-tick'
     | '/creative/$sessionId/channels'
@@ -566,6 +577,7 @@ export interface FileRouteTypes {
     | '/admin/preview/$slug'
     | '/api/public/intelligence-tick'
     | '/api/public/orchestration-tick'
+    | '/api/public/reliability-tick'
     | '/api/public/smp-score-tick'
     | '/api/public/sweep-tick'
     | '/creative/$sessionId/channels'
@@ -619,6 +631,7 @@ export interface FileRouteTypes {
     | '/admin/preview/$slug'
     | '/api/public/intelligence-tick'
     | '/api/public/orchestration-tick'
+    | '/api/public/reliability-tick'
     | '/api/public/smp-score-tick'
     | '/api/public/sweep-tick'
     | '/creative/$sessionId/channels'
@@ -661,6 +674,7 @@ export interface RootRouteChildren {
   AdminPreviewSlugRoute: typeof AdminPreviewSlugRoute
   ApiPublicIntelligenceTickRoute: typeof ApiPublicIntelligenceTickRoute
   ApiPublicOrchestrationTickRoute: typeof ApiPublicOrchestrationTickRoute
+  ApiPublicReliabilityTickRoute: typeof ApiPublicReliabilityTickRoute
   ApiPublicSmpScoreTickRoute: typeof ApiPublicSmpScoreTickRoute
   ApiPublicSweepTickRoute: typeof ApiPublicSweepTickRoute
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
@@ -974,6 +988,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicSmpScoreTickRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/reliability-tick': {
+      id: '/api/public/reliability-tick'
+      path: '/api/public/reliability-tick'
+      fullPath: '/api/public/reliability-tick'
+      preLoaderRoute: typeof ApiPublicReliabilityTickRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/orchestration-tick': {
       id: '/api/public/orchestration-tick'
       path: '/api/public/orchestration-tick'
@@ -1161,6 +1182,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminPreviewSlugRoute: AdminPreviewSlugRoute,
   ApiPublicIntelligenceTickRoute: ApiPublicIntelligenceTickRoute,
   ApiPublicOrchestrationTickRoute: ApiPublicOrchestrationTickRoute,
+  ApiPublicReliabilityTickRoute: ApiPublicReliabilityTickRoute,
   ApiPublicSmpScoreTickRoute: ApiPublicSmpScoreTickRoute,
   ApiPublicSweepTickRoute: ApiPublicSweepTickRoute,
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
