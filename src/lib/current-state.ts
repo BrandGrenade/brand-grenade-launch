@@ -280,5 +280,11 @@ export function buildCurrentStateSection(input: CurrentStateInput): string {
       )
     : "";
 
-  return intro + existingHtml + explicitHtml + newHtml;
+  const sourcesHtml = order.length
+    ? `<ul class="cs-sources">${order
+        .map((s, i) => `<li>${i + 1}. ${escapeHtml(s)}</li>`)
+        .join("")}</ul>`
+    : "";
+
+  return intro + existingHtml + explicitHtml + newHtml + sourcesHtml;
 }
