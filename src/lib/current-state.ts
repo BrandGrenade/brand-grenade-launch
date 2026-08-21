@@ -225,9 +225,26 @@ export function buildCurrentStateSection(input: CurrentStateInput): string {
   const model = deriveCurrentState(input);
   if (model.noBaseline && !model.madeExplicit.length && !model.genuinelyNew.length) return "";
 
+  // Footnote registry — sources are cited by number, never dropped into prose.
+  const order: string[] = [];
+  const cite = (source: string): string => {
+    const clean = (source || "Session research").trim();
+    let i = order.indexOf(clean);
+    if (i === -1) i = order.push(clean) - 1;
+    return `<span class="cs-cite">${i + 1}</span>`;
+  };
+
+  const statusPhrase = (s: VerificationStatus): string =>
+    s ? ` <span class="cs-status">(${s})</span>` : "";
+
+  const sentence = (t: string): string => {
+    const trimmed = t.trim();
+    return /[.!?]$/.test(trimmed) ? trimmed.slice(0, -1) : trimmed;
+  };
+
   const intro = `<p>This section separates what ${escapeHtml(
     input.brand,
-  )} is already doing from what this recommendation actually changes, so the proposal is not read as if it were being made in a vacuum. Existing activity is quoted from the research ingested for this session and attributed to its source.</p>`;
+  )} is already doing from what this recommendation actually changes, so the proposal is not read as if it were being made in a vacuum. Existing activity is drawn from the research ingested for this session; sources are numbered and listed beneath, and each point states plainly how far it has been verified.</p>`;
 
   const existingHtml = model.existing.length
     ? callout(
@@ -235,7 +252,7 @@ export function buildCurrentStateSection(input: CurrentStateInput): string {
         `<ul>${model.existing
           .map(
             (e) =>
-              `<li>${inlineMd(e.text)} <span class="muted">— ${escapeHtml(e.source)}</span></li>`,
+              `<li>${inlineMd(sentence(e.text))}${cite(e.source)}${statusPhrase(e.status)}.</li>`,
           )
           .join("")}</ul>`,
       )
@@ -247,9 +264,9 @@ export function buildCurrentStateSection(input: CurrentStateInput): string {
         `<ul>${model.madeExplicit
           .map(
             (e) =>
-              `<li>${inlineMd(e.text)}<br><span class="muted">Builds on: ${inlineMd(
-                e.echo,
-              )} — ${escapeHtml(e.source)}</span></li>`,
+              `<li>${inlineMd(sentence(e.text))}. Builds on existing activity: ${inlineMd(
+                sentence(e.echo),
+              )}${cite(e.source)}${statusPhrase(e.status)}.</li>`,
           )
           .join("")}</ul>`,
       )
