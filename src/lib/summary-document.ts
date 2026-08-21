@@ -1246,12 +1246,10 @@ export function buildSummaryDocument(
         { label: "Organisational context", text: str(session, "brand_organisational_context") },
         { label: "Research inputs", text: str(session, "stage_2_output") },
       ].filter((e) => e.text.trim()),
-      proposedActions: [
-        recs.condition ?? "",
-        recs.nextStep ?? "",
-        ...arch.assets,
-        ...arch.principles,
-      ].filter(Boolean) as string[],
+      // Only the durable commitments belong here — the audit verdict and the
+      // next-step line are their own sections and must not be re-read as
+      // proposed activity.
+      proposedActions: [...arch.assets, ...arch.principles].filter(Boolean),
     }) || nothing("No record of current activity was available for this session.");
 
   const defs: SectionDef[] = [
