@@ -536,7 +536,15 @@ export async function executeIntelligenceRun(
       null;
     const handoffPayload = primary?.prebrief_for_briefing_room ?? null;
 
+    const priorMeta =
+      row.report_metadata && typeof row.report_metadata === "object" && !Array.isArray(row.report_metadata)
+        ? { ...(row.report_metadata as Record<string, unknown>) }
+        : {};
+    // The redirect marker is single-use; never carry it into the final row.
+    delete priorMeta["redirect_instructions"];
+    delete priorMeta["redirect_previous_report"];
     const reportMetadata = {
+      ...priorMeta,
       // Preserve brief_type so downstream hydration (report page, PDF export,
       // Government Addendum rendering) reflects the user's original choice.
       brief_type: briefType,
@@ -545,6 +553,7 @@ export async function executeIntelligenceRun(
       recommended_primary_territory_id: recommendedId,
       territory_count: territories.length,
     };
+
 
     await writeStatus({
       status: "complete",
