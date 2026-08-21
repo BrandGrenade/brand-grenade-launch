@@ -48,6 +48,15 @@ const STOP = new Set([
   "makes","made","need","needs","used","using","use","the","and","for","are","was","were","its","it's",
 ]);
 
+/** Source text is raw transcript: markdown scaffolding must never survive. */
+function tidySentence(s: string): string {
+  return s
+    .replace(/^[#>*\-—•\s]+/, "")
+    .replace(/[#*_`|]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 function sentences(text: string): string[] {
   return text
     .replace(/\s+/g, " ")
@@ -89,22 +98,24 @@ export function deriveCurrentState(input: CurrentStateInput): CurrentStateModel 
   const seen = new Set<string>();
 
   for (const { text, source } of input.knownActivity ?? []) {
-    const key = text.toLowerCase().slice(0, 60);
-    if (!text || seen.has(key)) continue;
+    const clean = tidySentence(text ?? "");
+    const key = clean.toLowerCase().slice(0, 60);
+    if (!clean || seen.has(key)) continue;
     seen.add(key);
-    mined.push({ text, source });
+    mined.push({ text: clean, source });
   }
 
   for (const src of input.evidence) {
     if (!src?.text) continue;
     for (const s of sentences(src.text)) {
-      if (s.length < 60 || s.length > 340) continue;
-      if (!ACTIVITY_RE.test(s)) continue;
-      if (NOT_ACTIVITY_RE.test(s)) continue;
-      const key = s.toLowerCase().slice(0, 60);
+      const t = tidySentence(s);
+      if (t.length < 60 || t.length > 340) continue;
+      if (!ACTIVITY_RE.test(t)) continue;
+      if (NOT_ACTIVITY_RE.test(t)) continue;
+      const key = t.toLowerCase().slice(0, 60);
       if (seen.has(key)) continue;
       seen.add(key);
-      mined.push({ text: s, source: src.label });
+      mined.push({ text: t, source: src.label });
     }
   }
 
@@ -114,7 +125,7 @@ export function deriveCurrentState(input: CurrentStateInput): CurrentStateModel 
   const madeExplicit: CurrentStateModel["madeExplicit"] = [];
   const genuinelyNew: string[] = [];
 
-  for (const action of input.proposedActions.map((a) => a.trim()).filter(Boolean)) {
+  for (const action of input.proposedActions.map((a) => tidySentence(a)).filter(Boolean)) {
     const at = tokens(action);
     let best: { m: (typeof corpusIndex)[number]; n: number } | null = null;
     for (const m of corpusIndex) {
