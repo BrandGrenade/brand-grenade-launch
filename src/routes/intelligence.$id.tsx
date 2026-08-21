@@ -921,9 +921,11 @@ function IntelligenceRunPage() {
             <Card className="p-6">
               <h2 className="text-h3 text-text-primary">Retry with instructions</h2>
               <p className="text-sm text-text-secondary mt-1">
-                Re-runs the whole report. Your redirect overrides the default direction
-                wherever they conflict, and the current report is passed in as rejected
-                output so the engine cannot reproduce it.
+                Re-runs the whole report and replaces every territory. Your redirect
+                overrides the default direction wherever they conflict, and the current
+                report is passed in as rejected output so the engine cannot reproduce it.
+                The current report is saved to version history first and can be restored
+                below. To change one territory only, use “Revise this territory”.
               </p>
               <Textarea
                 value={redirectText}
