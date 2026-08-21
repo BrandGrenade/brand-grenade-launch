@@ -23,6 +23,8 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { supabase } from "@/integrations/supabase/client";
+import { Textarea } from "@/components/ui/textarea";
+import { reviseIntelligenceTerritory } from "@/lib/intelligence-revise.functions";
 import {
   createBriefingRoomFromIntelligence,
   runIntelligenceAnalysis,
