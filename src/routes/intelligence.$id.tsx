@@ -614,7 +614,7 @@ function IntelligenceRunPage() {
   }
 
   // Interrupted / unavailable report state — do not block access behind a spinner.
-  if (row.status !== "complete" || !report) {
+  if ((row.status !== "complete" && !revisingId) || !report) {
     // If status is complete but report failed to parse — show a graceful error.
     if (row.status === "complete" && !report) {
       return (
