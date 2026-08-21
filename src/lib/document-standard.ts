@@ -182,7 +182,7 @@ export function repairVerdictRationales(html: string): string {
 // ---------------------------------------------------------------------------
 // U1 / U2 — universal sections
 
-const BACKGROUND_RE = /background\s*(?:and|&amp;|&)\s*context|^\s*background\b/im;
+const BACKGROUND_RE = /\bbackground\b/i;
 const NEXT_STEP_RE = /next step|recommendation\s*(?:and|&amp;|&)\s*next step|decisive recommendation/i;
 
 export function universalStructureFailures(html: string): string[] {
