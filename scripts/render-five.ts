@@ -5,6 +5,7 @@ import { buildSummaryDocument } from "../src/lib/summary-document";
 import { buildConsultingDeliveryDocument } from "../src/lib/consulting-delivery-document";
 import { buildPhase2Document } from "../src/lib/phase2-document-generator";
 import { buildDocument00AMinto } from "../src/lib/intelligence/doc-00A-minto";
+import { researchEvidenceFromSession } from "../src/lib/intelligence/research-evidence";
 
 const sb = createClient(process.env.VITE_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
 const id = process.argv[2];
@@ -23,6 +24,7 @@ if (intel && intel[0]?.final_report) {
   out["05_Strategic_Territory_Intelligence_Report"] = buildDocument00AMinto({
     brandName: intel[0].brand_name, category: intel[0].category ?? "", briefType: "commercial",
     completedAt: intel[0].completed_at ?? null, report: JSON.parse(intel[0].final_report),
+    research: researchEvidenceFromSession(intel[0] as never),
   } as never);
 } else console.log("!! no intelligence report for", brand);
 for (const [k, v] of Object.entries(out)) writeFileSync(`/tmp/browser/five/${k}.html`, v);

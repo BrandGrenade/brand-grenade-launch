@@ -15,6 +15,7 @@
  * of reaching a reader.
  */
 
+import { buildCurrentStateSection } from "./current-state";
 import {
   cover,
   docShell,
@@ -475,7 +476,7 @@ interface SectionDef {
 // it, so no part of Section 21 can be painted between Section 20's lists.
 // Section 12 does the same for Section 11's rejected-proposition list, whose
 // final entry was otherwise deferred past the Section 12 heading in print.
-const BREAK_BEFORE = new Set(["01", "04", "12", "16", "19", "20", "21"]);
+const BREAK_BEFORE = new Set(["01", "04", "12", "16", "19", "20", "21", "22"]);
 
 
 
@@ -1229,6 +1230,28 @@ export function buildSummaryDocument(
 
 
 
+  /* 21 — Current state versus recommended change. Derived by the shared
+     current-state module so every document type answers the same question
+     identically: what is already happening, what this makes explicit, and
+     what is genuinely new. Existing activity is quoted from the session's own
+     brief and brand inputs and attributed — never inferred. */
+  const currentStateHtml =
+    buildCurrentStateSection({
+      brand,
+      evidence: [
+        { label: "Client brief", text: str(session, "brief_text") },
+        { label: "Brand positioning today", text: str(session, "brand_positioning") },
+        { label: "Product truth", text: str(session, "brand_product_truth") },
+        { label: "Audience relationship", text: str(session, "brand_audience_relationship") },
+        { label: "Organisational context", text: str(session, "brand_organisational_context") },
+        { label: "Research inputs", text: str(session, "stage_2_output") },
+      ].filter((e) => e.text.trim()),
+      // Only the durable commitments belong here — the audit verdict and the
+      // next-step line are their own sections and must not be re-read as
+      // proposed activity.
+      proposedActions: [...arch.assets, ...arch.principles].filter(Boolean),
+    }) || nothing("No record of current activity was available for this session.");
+
   const defs: SectionDef[] = [
     {
       index: "01",
@@ -1372,6 +1395,13 @@ export function buildSummaryDocument(
     },
     {
       index: "21",
+      kicker: "Change",
+      title: "Current state versus recommended change",
+      lede: "What the brand is already doing, what this recommendation makes explicit, and what is genuinely new.",
+      body: currentStateHtml,
+    },
+    {
+      index: "22",
       kicker: "Next",
       title: "Next step",
       lede: "What has to happen before this strategy goes to market.",

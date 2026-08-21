@@ -21,6 +21,7 @@ import {
 import { buildMintoDocument, type MintoContent } from "../minto";
 import { NO_COMPARATIVE_RATIONALE, SYSTEM_TOKEN_MAP } from "../document-standard";
 import { DOCUMENT_SPECS } from "../document-spec";
+import { buildCurrentStateSection } from "../current-state";
 
 import type { Document00AInput, IntelligenceReport } from "./doc-00A-types";
 export type { Document00AInput, IntelligenceReport } from "./doc-00A-types";
@@ -303,7 +304,22 @@ export function buildDocument00AMinto(
 
   const why_this_wins = whyReasons.length ? reasonGrid(whyReasons) : "";
 
-  /* 06 — validation summary */
+  /* 07 — current state versus recommended change. Existing activity is quoted
+   * from the ingested research corpus for this session and attributed; the
+   * asks are the recommendation's own conditions, pre-brief inclusions and
+   * immediate behaviour-change measures. Nothing is inferred beyond that. */
+  const behaviourNow = obj(obj(primary?.measurement_framework).behaviour_change_metrics);
+  const current_state = buildCurrentStateSection({
+    brand: input.brandName,
+    evidence: (input.research ?? []).filter((r) => r && r.text && r.text.trim()),
+    proposedActions: [
+      ...arr(primary?.conditions),
+      ...arr(obj(primary?.prebrief_for_briefing_room).must_include),
+      ...arr(behaviourNow.immediate_0_4_weeks),
+    ].slice(0, 10),
+  });
+
+  /* 08 — validation summary */
   const validationRows: CmpRow[] = territories.map((t) => {
     const p = obj(t.brand_permission);
     const f = obj(t.first_mover);
@@ -436,6 +452,7 @@ export function buildDocument00AMinto(
     key_insight,
     proposition,
     why_this_wins,
+    current_state,
     validation,
     rejected,
     implications,

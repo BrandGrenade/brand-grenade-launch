@@ -126,4 +126,10 @@ export interface Document00AInput {
   briefType: BriefType;
   completedAt: string | null;
   report: IntelligenceReport;
+  /**
+   * The research corpus ingested for this Intelligence Lab session, per named
+   * source field. Used to state what the client is already doing versus what
+   * the recommendation changes. Optional: absent means no baseline is claimed.
+   */
+  research?: { label: string; text: string }[];
 }
