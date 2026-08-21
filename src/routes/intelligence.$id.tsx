@@ -25,7 +25,9 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import {
   createBriefingRoomFromIntelligence,
+  runIntelligenceAnalysis,
 } from "@/lib/intelligence.functions";
+
 import { openDocument00AMinto } from "@/lib/intelligence/doc-00A-minto";
 
 
