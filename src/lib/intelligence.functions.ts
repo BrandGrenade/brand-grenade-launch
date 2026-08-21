@@ -26,7 +26,10 @@ import { buildUserMessage, type IntelligenceInputs } from "./intelligence/user-m
 
 const RunInput = z.object({
   intelligenceSessionId: z.string().uuid(),
+  /** Optional free-text human redirect applied to this re-run only. */
+  instructions: z.string().trim().max(8000).optional(),
 });
+
 
 const FileMetaSchema = z.object({
   field: z.string(),
