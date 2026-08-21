@@ -104,13 +104,13 @@ function IntelligenceEditPage() {
           ...values,
         },
       });
-      // 2. Fire the analysis WITHOUT awaiting — it streams for minutes and
-      //    the report page owns the running-state UI.
-      void runFn({ data: { intelligenceSessionId: id } }).catch(() => {
-        // errors surface on the report page via session.last_error
-      });
-      // 3. Navigate to the report immediately so the user sees streaming
-      //    progress instead of a frozen edit page.
+      // 2. AWAIT the dispatch. It returns as soon as the server has written a
+      //    durable "queued" marker — the long model call continues in the
+      //    background. Firing it without awaiting and navigating in the same
+      //    tick meant a dropped request left the row silently on `draft`
+      //    with no started_at and no last_error.
+      await runFn({ data: { intelligenceSessionId: id } });
+      // 3. Navigate to the report so the user sees streaming progress.
       toast.success("Analysis started");
       navigate({ to: "/intelligence/$id", params: { id } });
     } catch (err) {
@@ -119,6 +119,7 @@ function IntelligenceEditPage() {
       throw err;
     }
   }
+
 
   if (notFound) {
     return (
