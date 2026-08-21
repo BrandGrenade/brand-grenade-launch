@@ -992,12 +992,21 @@ function TerritoryCard({
   isPrimary,
   selected,
   onSelect,
+  revising,
+  busy,
+  onRevise,
 }: {
   territory: Territory;
   isPrimary: boolean;
   selected: boolean;
   onSelect: () => void;
+  revising: boolean;
+  busy: boolean;
+  onRevise: (instructions: string) => void | Promise<void>;
 }) {
+  const [reviseText, setReviseText] = useState("");
+  const [reviseOpen, setReviseOpen] = useState(false);
+
   const typeMeta = territory.type ? TYPE_LABEL[territory.type] : null;
   const risk = territory.historical_validation?.risk_classification;
   const rec = territory.strategic_recommendation
