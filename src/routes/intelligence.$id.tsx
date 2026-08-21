@@ -23,6 +23,8 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { supabase } from "@/integrations/supabase/client";
+import { Textarea } from "@/components/ui/textarea";
+import { reviseIntelligenceTerritory } from "@/lib/intelligence-revise.functions";
 import {
   createBriefingRoomFromIntelligence,
   runIntelligenceAnalysis,
@@ -261,7 +263,14 @@ function IntelligenceRunPage() {
   const [loaded, setLoaded] = useState(false);
   const [selectedTerritoryId, setSelectedTerritoryId] = useState<string | null>(null);
   const [starting, setStarting] = useState(false);
+  // Bumped after any action that restarts server-side work so the poller
+  // (which stops itself on complete/failed) picks the run back up.
+  const [pollEpoch, setPollEpoch] = useState(0);
+  const [redirectText, setRedirectText] = useState("");
+  const [redirecting, setRedirecting] = useState(false);
+  const [revisingTerritoryId, setRevisingTerritoryId] = useState<string | null>(null);
   const runAnalysisFn = useServerFn(runIntelligenceAnalysis);
+  const reviseTerritoryFn = useServerFn(reviseIntelligenceTerritory);
 
   // A saved-but-idle session must be startable from here. Previously the only
   // route back into a run was the edit page's fire-and-forget dispatch, so a
@@ -272,11 +281,53 @@ function IntelligenceRunPage() {
     try {
       await runAnalysisFn({ data: { intelligenceSessionId: id } });
       toast.success("Analysis started");
+      setPollEpoch((n) => n + 1);
     } catch (err) {
       setStarting(false);
       toast.error(err instanceof Error ? err.message : "Could not start analysis");
     }
   }, [id, runAnalysisFn]);
+
+  // Session-level "Retry with instructions": re-runs the whole report with a
+  // mandatory human redirect folded into the prompt.
+  const retryWithInstructions = useCallback(async () => {
+    const instructions = redirectText.trim();
+    if (instructions.length < 3) {
+      toast.error("Add the redirect instructions first");
+      return;
+    }
+    setRedirecting(true);
+    try {
+      await runAnalysisFn({ data: { intelligenceSessionId: id, instructions } });
+      toast.success("Re-running the report with your redirect");
+      setRedirectText("");
+      setPollEpoch((n) => n + 1);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not start re-run");
+    } finally {
+      setRedirecting(false);
+    }
+  }, [id, redirectText, runAnalysisFn]);
+
+  // Territory-level revise: regenerates one territory only.
+  const reviseTerritory = useCallback(
+    async (territoryId: string, instructions: string) => {
+      setRevisingTerritoryId(territoryId);
+      try {
+        await reviseTerritoryFn({
+          data: { intelligenceSessionId: id, territoryId, instructions },
+        });
+        toast.success("Revising this territory");
+        setPollEpoch((n) => n + 1);
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Could not start revision");
+      } finally {
+        setRevisingTerritoryId(null);
+      }
+    },
+    [id, reviseTerritoryFn],
+  );
+
 
 
   // Poll session row until complete/failed.
@@ -308,7 +359,7 @@ function IntelligenceRunPage() {
       alive = false;
       if (interval) clearInterval(interval);
     };
-  }, [id]);
+  }, [id, pollEpoch]);
 
   // Ownership check — redirect if session belongs to another user.
   useEffect(() => {
@@ -508,7 +559,12 @@ function IntelligenceRunPage() {
   }
 
   // Running state — show live progress instead of the "not active" fallback.
-  if (row.status === "running") {
+  // A territory-level revision keeps the report on screen (only one card is
+  // regenerating), so it is excluded from this branch.
+  const revisingId = row.stage_status?.startsWith("revising:")
+    ? row.stage_status.slice("revising:".length)
+    : null;
+  if (row.status === "running" && !revisingId) {
     const layer = row.current_layer ?? 0;
     const pct = Math.min(100, Math.max(5, Math.round((layer / 10) * 100)));
     const queued = row.stage_status === "queued";
@@ -558,7 +614,7 @@ function IntelligenceRunPage() {
   }
 
   // Interrupted / unavailable report state — do not block access behind a spinner.
-  if (row.status !== "complete" || !report) {
+  if ((row.status !== "complete" && !revisingId) || !report) {
     // If status is complete but report failed to parse — show a graceful error.
     if (row.status === "complete" && !report) {
       return (
@@ -810,6 +866,9 @@ function IntelligenceRunPage() {
                   isPrimary={t.id === primaryId}
                   selected={t.id === selectedTerritoryId}
                   onSelect={() => setSelectedTerritoryId(t.id)}
+                  revising={revisingId === t.id}
+                  busy={revisingTerritoryId === t.id || revisingId !== null}
+                  onRevise={(instructions) => reviseTerritory(t.id, instructions)}
                 />
               ))}
               {ordered.length === 0 ? (
@@ -821,6 +880,37 @@ function IntelligenceRunPage() {
               ) : null}
             </div>
           </section>
+
+          {/* Session-level retry with instructions */}
+          <section className="mt-10">
+            <Card className="p-6">
+              <h2 className="text-h3 text-text-primary">Retry with instructions</h2>
+              <p className="text-sm text-text-secondary mt-1">
+                Re-runs the whole report. Your redirect overrides the default direction
+                wherever they conflict, and the current report is passed in as rejected
+                output so the engine cannot reproduce it.
+              </p>
+              <Textarea
+                value={redirectText}
+                onChange={(e) => setRedirectText(e.target.value)}
+                rows={4}
+                className="mt-4"
+                placeholder="e.g. Drop the sustainability territory entirely. Focus on the price-trust tension in the everyday shopper segment, and treat the premium tier as out of scope."
+              />
+              <div className="mt-3 flex justify-end">
+                <Button
+                  size="sm"
+                  onClick={retryWithInstructions}
+                  disabled={redirecting || revisingId !== null}
+                  className="bg-primary text-background hover:bg-primary disabled:opacity-60"
+                >
+                  {redirecting ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : null}
+                  Re-run report with redirect
+                </Button>
+              </div>
+            </Card>
+          </section>
+
 
           {/* Government addendum */}
           {govAddendum ? <GovernmentAddendumSection addendum={govAddendum} /> : null}
@@ -902,12 +992,21 @@ function TerritoryCard({
   isPrimary,
   selected,
   onSelect,
+  revising,
+  busy,
+  onRevise,
 }: {
   territory: Territory;
   isPrimary: boolean;
   selected: boolean;
   onSelect: () => void;
+  revising: boolean;
+  busy: boolean;
+  onRevise: (instructions: string) => void | Promise<void>;
 }) {
+  const [reviseText, setReviseText] = useState("");
+  const [reviseOpen, setReviseOpen] = useState(false);
+
   const typeMeta = territory.type ? TYPE_LABEL[territory.type] : null;
   const risk = territory.historical_validation?.risk_classification;
   const rec = territory.strategic_recommendation
@@ -1294,10 +1393,49 @@ function TerritoryCard({
             </AccordionItem>
           ) : null}
         </Accordion>
+
+        {/* Territory-level revise — regenerates this territory only */}
+        <div className="mt-4 border-t pt-4">
+          {revising ? (
+            <p className="text-[13px] text-text-secondary inline-flex items-center gap-2">
+              <Loader2 className="h-3.5 w-3.5 animate-spin" /> Revising this territory…
+            </p>
+          ) : reviseOpen ? (
+            <div>
+              <Textarea
+                value={reviseText}
+                onChange={(e) => setReviseText(e.target.value)}
+                rows={3}
+                placeholder="What should change about this territory? e.g. the brand permission score is too generous — reassess against the lack of proof in service."
+              />
+              <div className="mt-2 flex justify-end gap-2">
+                <Button variant="ghost" size="sm" onClick={() => setReviseOpen(false)}>
+                  Cancel
+                </Button>
+                <Button
+                  size="sm"
+                  disabled={busy || reviseText.trim().length < 3}
+                  onClick={() => {
+                    void onRevise(reviseText.trim());
+                    setReviseText("");
+                    setReviseOpen(false);
+                  }}
+                >
+                  Revise territory
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <Button variant="outline" size="sm" disabled={busy} onClick={() => setReviseOpen(true)}>
+              Revise this territory
+            </Button>
+          )}
+        </div>
       </div>
     </Card>
   );
 }
+
 
 function GovernmentAddendumSection({ addendum }: { addendum: GovernmentAddendum }) {
   const backlashColor = addendum.backlash_risk
