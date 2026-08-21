@@ -79,7 +79,7 @@ async function fetchDocument00A(briefText: string | null | undefined): Promise<D
     const res = await supabase
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .from("intelligence_sessions" as any)
-      .select("id,brand_name,category,status,updated_at,completed_at,final_report,report_metadata")
+      .select("id,brand_name,category,status,updated_at,completed_at,final_report,report_metadata,territory_input,additional_context,input_primary_consumer,input_brand_health,input_competitive_audit,input_cultural_trends,input_audience_segmentation,input_bg_intel_pack")
       .eq("id", sourceId)
       .eq("status", "complete")
       .maybeSingle();
