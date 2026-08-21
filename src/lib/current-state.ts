@@ -42,7 +42,7 @@ const NOT_ACTIVITY_RE =
 
 const STOP = new Set([
   "about","above","across","after","against","among","around","because","before","behind","between","brand","brands",
-  "could","during","every","from","into","其它","other","should","their","there","these","those","through","under",
+  "could","during","every","from","into","other","should","their","there","these","those","through","under",
   "where","which","while","with","would","that","this","than","then","they","them","have","been","being","more",
   "most","such","only","also","both","each","into","over","upon","what","when","will","your","ours","must","make",
   "makes","made","need","needs","used","using","use","the","and","for","are","was","were","its","it's",
