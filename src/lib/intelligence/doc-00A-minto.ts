@@ -101,9 +101,12 @@ export function buildDocument00AMinto(
   /* 01 — recommendation */
   const recommendation =
     (primaryName
-      ? pullQuote(verdict ? `${primaryName} — ${verdict}` : primaryName, {
+      ? pullQuote(primaryName, {
           label: "Recommended territory",
           variant: "hero",
+          // The verdict is a qualifying status, not part of the territory's
+          // name — it is demoted to caption type beneath the headline.
+          caption: verdict ? `Verdict — ${verdict}` : undefined,
         })
       : "") + paras(str(primary?.recommendation_rationale));
 

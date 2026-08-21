@@ -233,6 +233,8 @@ blockquote { border-left: 3pt solid var(--detonation); padding: 10pt 14pt; margi
 .pull .pull-label { font-size: 8.5pt; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: var(--detonation); margin-bottom: 12pt; }
 .pull .pull-body { font-family: 'Bebas Neue', Impact, sans-serif; font-size: 22pt; line-height: 1.12; letter-spacing: 0.01em; color: var(--ash); }
 .pull .pull-attr { font-size: 8.5pt; color: var(--smoke); margin-top: 10pt; letter-spacing: 0.05em; }
+.pull .pull-caption { font-family: 'Inter', sans-serif; font-size: 8.5pt; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: var(--smoke); margin-top: 10pt; }
+.pull.hero .pull-caption { margin-top: 14pt; }
 .pull.hero { text-align: center; border-left: none; border-top: 2pt solid var(--detonation); border-bottom: 2pt solid var(--detonation); background: transparent; padding: 34pt 20pt; }
 .pull.hero .pull-body { font-size: 30pt; max-width: 480pt; margin: 0 auto; }
 .pull.quiet { background: transparent; border-left: 3pt solid var(--rule); padding: 14pt 18pt; }
@@ -317,6 +319,11 @@ export function statGrid(stats: Stat[], cols?: 2 | 3 | 4): string {
 export interface PullQuoteOptions {
   label?: string;
   attribution?: string;
+  /**
+   * Qualifying status set beneath the headline in small, light caption type.
+   * Never concatenate a verdict or status into the headline itself.
+   */
+  caption?: string;
   /** hero = full-bleed rules, cover-adjacent. quiet = supporting emphasis. */
   variant?: "default" | "hero" | "quiet";
 }
@@ -333,6 +340,7 @@ export function pullQuote(body: string, opts: PullQuoteOptions = {}): string {
   return `<div class="pull${variant} keep-together">
     ${opts.label ? `<div class="pull-label">${escapeHtml(opts.label)}</div>` : ""}
     <div class="pull-body${proseClass}">${escapeHtml(text)}</div>
+    ${opts.caption ? `<div class="pull-caption">${escapeHtml(sanitiseText(opts.caption).trim())}</div>` : ""}
     ${opts.attribution ? `<div class="pull-attr">${escapeHtml(opts.attribution)}</div>` : ""}
   </div>`;
 }
