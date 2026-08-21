@@ -222,11 +222,67 @@ export function buildDocument00AMinto(
 
   const cult = obj(primary?.cultural_adaptation);
   if (str(cult.resonance_overall)) {
+    // Bug fix: this column previously mapped straight to
+    // `adaptation_requirement`, which is frequently a bare scale word such as
+    // "minor" — a requirement level, not a cultural resonance summary. Build a
+    // genuine summary from the per-context ratings, CALD mapping and risk
+    // flags, and only fall back to the adaptation requirement when it carries
+    // real prose (and then label it as what it is).
+    const contexts = Array.isArray(cult.resonance_by_context) ? cult.resonance_by_context : [];
+    const contextLine = contexts
+      .map((c) => {
+        const ctx = str(c?.context);
+        const rating = human(c?.rating).toLowerCase();
+        const notes = str(c?.notes);
+        if (!ctx) return notes;
+        const head = rating ? `${ctx}: ${rating}` : ctx;
+        return notes ? `${head} — ${notes}` : head;
+      })
+      .filter(Boolean)
+      .join(" ");
+
+    const cald = obj(cult.cald_mapping);
+    const caldCommunities = Array.isArray(cald.communities) ? cald.communities : [];
+    const caldLine = caldCommunities
+      .map((c) => {
+        const name = str(c?.community);
+        const res = str(c?.resonance);
+        if (!name) return res;
+        return res ? `${name}: ${res}` : name;
+      })
+      .filter(Boolean)
+      .join("; ");
+
+    const flags = (Array.isArray(cult.cultural_risk_flags) ? cult.cultural_risk_flags : [])
+      .map((f) => str(f))
+      .filter(Boolean);
+
+    const requirementRaw = str(cult.adaptation_requirement);
+    // A requirement value is only usable prose if it reads as a sentence, not
+    // as a scale label ("minor", "none", "moderate", "significant").
+    const requirementIsProse = requirementRaw.split(/\s+/).length > 4;
+    const requirementLine = requirementRaw
+      ? requirementIsProse
+        ? requirementRaw
+        : `Adaptation requirement: ${human(requirementRaw).toLowerCase()}.`
+      : "";
+
+    const detail =
+      [
+        contextLine,
+        caldLine ? `Community resonance — ${caldLine}.` : "",
+        flags.length ? `Watch-outs: ${flags.join("; ")}.` : "",
+        requirementLine,
+      ]
+        .filter(Boolean)
+        .join(" ") || "";
+
     whyReasons.push({
       title: `Cultural resonance ${human(cult.resonance_overall).toLowerCase()}`,
-      detail: clamp(str(cult.adaptation_requirement), 320) || undefined,
+      detail: clamp(detail, 320) || undefined,
     });
   }
+
   // Never let this section fall through to the template's "not available"
   // line: if no structured reason survived, state the territory's own
   // rationale instead.
