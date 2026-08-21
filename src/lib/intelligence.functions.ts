@@ -257,7 +257,9 @@ export const runIntelligenceAnalysis = createServerFn({ method: "POST" })
 
 
 
-async function executeIntelligenceRun(
+export { STALE_RUN_MS };
+
+export async function executeIntelligenceRun(
   supabase: SupabaseAuthedClient,
   userId: string | undefined,
   sessionId: string,
