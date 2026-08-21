@@ -136,11 +136,18 @@ function overlap(a: Set<string>, b: Set<string>): number {
   return n;
 }
 
+export interface CurrentStateFact {
+  text: string;
+  source: string;
+  /** Verification wording derived from the corpus, never an icon or raw label. */
+  status: VerificationStatus;
+}
+
 export interface CurrentStateModel {
   /** Quoted, attributed statements of what is already happening. */
-  existing: { text: string; source: string }[];
+  existing: CurrentStateFact[];
   /** Recommendation asks that the corpus already evidences in some form. */
-  madeExplicit: { text: string; echo: string; source: string }[];
+  madeExplicit: { text: string; echo: string; source: string; status: VerificationStatus }[];
   /** Recommendation asks with no corresponding activity in the corpus. */
   genuinelyNew: string[];
   /** True when no source material described current activity at all. */
@@ -149,7 +156,7 @@ export interface CurrentStateModel {
 
 export function deriveCurrentState(input: CurrentStateInput): CurrentStateModel {
   const limit = input.limit ?? 6;
-  const mined: { text: string; source: string }[] = [];
+  const mined: CurrentStateFact[] = [];
   const seen = new Set<string>();
 
   for (const { text, source } of input.knownActivity ?? []) {
@@ -157,7 +164,7 @@ export function deriveCurrentState(input: CurrentStateInput): CurrentStateModel 
     const key = clean.toLowerCase().slice(0, 60);
     if (!clean || seen.has(key)) continue;
     seen.add(key);
-    mined.push({ text: clean, source });
+    mined.push({ text: clean, source, status: detectStatus(text ?? "") });
   }
 
   for (const src of input.evidence) {
@@ -170,7 +177,7 @@ export function deriveCurrentState(input: CurrentStateInput): CurrentStateModel 
       const key = t.toLowerCase().slice(0, 60);
       if (seen.has(key)) continue;
       seen.add(key);
-      mined.push({ text: t, source: src.label });
+      mined.push({ text: t, source: src.label, status: detectStatus(s) });
     }
   }
 
