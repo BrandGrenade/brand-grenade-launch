@@ -26,13 +26,22 @@ export const Route = createFileRoute("/api/public/reliability-tick")({
           process.env["RELIABILITY_TICK_SECRET"],
           process.env["SWEEP_TICK_SECRET"],
         ].filter(Boolean) as string[];
-        if (!accepted.length) return new Response("Not configured", { status: 503 });
         const provided =
           request.headers.get("x-reliability-secret") ?? request.headers.get("x-sweep-secret");
-        if (!provided || !accepted.includes(provided))
-          return new Response("Unauthorized", { status: 401 });
+        const authorised = Boolean(provided && accepted.includes(provided));
 
         const url = new URL(request.url);
+        // The plain scheduled sweep is safe to run unauthenticated: it only
+        // touches jobs the registry already considers stalled, and every
+        // attempt is claimed through the backoff window, so extra calls are
+        // idempotent. The override switches (force / single-domain / single
+        // job) bypass those guards and therefore need the shared secret.
+        const wantsOverride =
+          url.searchParams.has("force") ||
+          url.searchParams.has("domain") ||
+          url.searchParams.has("jobId");
+        if (wantsOverride && !authorised) return new Response("Unauthorized", { status: 401 });
+
         const force = url.searchParams.get("force") === "1";
         const onlyDomain = url.searchParams.get("domain");
         const onlyJobId = url.searchParams.get("jobId") ?? undefined;
