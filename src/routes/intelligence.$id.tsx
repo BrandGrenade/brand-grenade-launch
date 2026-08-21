@@ -290,6 +290,10 @@ function IntelligenceRunPage() {
     }
   }, [id, listVersionsFn]);
 
+  useEffect(() => {
+    void loadVersions();
+  }, [loadVersions, pollEpoch]);
+
   const restoreVersion = useCallback(
     async (versionId: string) => {
       setRestoringId(versionId);
