@@ -68,6 +68,7 @@ async function fetchLatestIntelligence(
       briefType,
       completedAt: match.completed_at ?? match.updated_at,
       report,
+      research: researchEvidenceFromSession(match as unknown as Record<string, unknown>),
     };
   } catch {
     return null;
