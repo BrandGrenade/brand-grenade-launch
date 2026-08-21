@@ -36,6 +36,7 @@ import {
 } from "@/lib/intelligence.functions";
 
 import { openDocument00AMinto } from "@/lib/intelligence/doc-00A-minto";
+import { SupervisionStatus } from "@/components/SupervisionStatus";
 
 
 export const Route = createFileRoute("/intelligence/$id")({
@@ -532,6 +533,7 @@ function IntelligenceRunPage() {
                 <p className="text-sm text-text-secondary mt-1">
                   {row.last_error ?? "Unknown error"}
                 </p>
+                <SupervisionStatus domain="intelligence" jobId={id} />
                 <Link
                   to="/intelligence/$id/edit"
                   params={{ id }}
@@ -645,6 +647,7 @@ function IntelligenceRunPage() {
                 Restart run
               </Button>
             </div>
+            <SupervisionStatus domain="intelligence" jobId={id} />
           </Card>
 
         </main>

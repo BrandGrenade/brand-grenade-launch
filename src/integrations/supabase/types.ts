@@ -433,6 +433,54 @@ export type Database = {
         }
         Relationships: []
       }
+      job_supervision: {
+        Row: {
+          attempts: number
+          created_at: string
+          detail: string | null
+          domain: string
+          first_seen_at: string
+          id: string
+          job_id: string
+          last_attempt_at: string | null
+          last_error: string | null
+          next_attempt_at: string | null
+          owner_user_id: string | null
+          state: string
+          updated_at: string
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          detail?: string | null
+          domain: string
+          first_seen_at?: string
+          id?: string
+          job_id: string
+          last_attempt_at?: string | null
+          last_error?: string | null
+          next_attempt_at?: string | null
+          owner_user_id?: string | null
+          state?: string
+          updated_at?: string
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          detail?: string | null
+          domain?: string
+          first_seen_at?: string
+          id?: string
+          job_id?: string
+          last_attempt_at?: string | null
+          last_error?: string | null
+          next_attempt_at?: string | null
+          owner_user_id?: string | null
+          state?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       preflight_checks: {
         Row: {
           check_type: string
