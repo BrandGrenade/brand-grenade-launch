@@ -12,6 +12,7 @@ import {
 import { buildFullRunDocument, type FullRunSession } from "./full-run-document";
 import { buildConsultingDeliveryDocument } from "./consulting-delivery-document";
 import { buildDocument00AMinto } from "./intelligence/doc-00A-minto";
+import { researchEvidenceFromSession } from "./intelligence/research-evidence";
 import { supabase } from "@/integrations/supabase/client";
 import type { IntelligenceReport } from "./intelligence/doc-00A-types";
 import { resolveLiveDocumentSession } from "./document-live-source";
@@ -115,6 +116,7 @@ async function fetchDocument00A(briefText: string | null | undefined): Promise<D
       briefType,
       completedAt: match.completed_at ?? match.updated_at,
       report,
+      research: researchEvidenceFromSession(match as unknown as Record<string, unknown>),
     };
     return { input };
   } catch (e) {

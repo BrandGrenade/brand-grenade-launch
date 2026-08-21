@@ -36,6 +36,7 @@ import {
 } from "@/lib/intelligence.functions";
 
 import { openDocument00AMinto } from "@/lib/intelligence/doc-00A-minto";
+import { researchEvidenceFromSession } from "@/lib/intelligence/research-evidence";
 import { SupervisionStatus } from "@/components/SupervisionStatus";
 
 
@@ -477,6 +478,7 @@ function IntelligenceRunPage() {
         briefType,
         completedAt: row.completed_at,
         report,
+        research: researchEvidenceFromSession(row as unknown as Record<string, unknown>),
       });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "PDF generation failed");

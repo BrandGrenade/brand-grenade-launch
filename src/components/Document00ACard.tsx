@@ -7,6 +7,7 @@ import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { intelligenceSourceIdFromBrief } from "@/lib/document-source-authority";
+import { researchEvidenceFromSession } from "@/lib/intelligence/research-evidence";
 import {
   openDocument00AMinto,
   type IntelligenceReport,
@@ -19,6 +20,7 @@ type IntelSummary = {
   briefType: "commercial" | "government";
   completedAt: string | null;
   report: IntelligenceReport;
+  research: { label: string; text: string }[];
 };
 
 async function fetchLatestIntelligence(
@@ -30,7 +32,7 @@ async function fetchLatestIntelligence(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .from("intelligence_sessions" as any)
       .select(
-        "id,brand_name,category,status,updated_at,completed_at,final_report,report_metadata",
+        "id,brand_name,category,status,updated_at,completed_at,final_report,report_metadata,territory_input,additional_context,input_primary_consumer,input_brand_health,input_competitive_audit,input_cultural_trends,input_audience_segmentation,input_bg_intel_pack",
       )
       .eq("id", sourceId)
       .eq("status", "complete")
@@ -107,6 +109,7 @@ export function Document00ACard({
         briefType: intel.briefType,
         completedAt: intel.completedAt,
         report: intel.report,
+        research: intel.research,
       });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "PDF generation failed");
