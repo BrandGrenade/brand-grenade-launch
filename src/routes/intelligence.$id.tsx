@@ -263,7 +263,14 @@ function IntelligenceRunPage() {
   const [loaded, setLoaded] = useState(false);
   const [selectedTerritoryId, setSelectedTerritoryId] = useState<string | null>(null);
   const [starting, setStarting] = useState(false);
+  // Bumped after any action that restarts server-side work so the poller
+  // (which stops itself on complete/failed) picks the run back up.
+  const [pollEpoch, setPollEpoch] = useState(0);
+  const [redirectText, setRedirectText] = useState("");
+  const [redirecting, setRedirecting] = useState(false);
+  const [revisingTerritoryId, setRevisingTerritoryId] = useState<string | null>(null);
   const runAnalysisFn = useServerFn(runIntelligenceAnalysis);
+  const reviseTerritoryFn = useServerFn(reviseIntelligenceTerritory);
 
   // A saved-but-idle session must be startable from here. Previously the only
   // route back into a run was the edit page's fire-and-forget dispatch, so a
@@ -274,11 +281,53 @@ function IntelligenceRunPage() {
     try {
       await runAnalysisFn({ data: { intelligenceSessionId: id } });
       toast.success("Analysis started");
+      setPollEpoch((n) => n + 1);
     } catch (err) {
       setStarting(false);
       toast.error(err instanceof Error ? err.message : "Could not start analysis");
     }
   }, [id, runAnalysisFn]);
+
+  // Session-level "Retry with instructions": re-runs the whole report with a
+  // mandatory human redirect folded into the prompt.
+  const retryWithInstructions = useCallback(async () => {
+    const instructions = redirectText.trim();
+    if (instructions.length < 3) {
+      toast.error("Add the redirect instructions first");
+      return;
+    }
+    setRedirecting(true);
+    try {
+      await runAnalysisFn({ data: { intelligenceSessionId: id, instructions } });
+      toast.success("Re-running the report with your redirect");
+      setRedirectText("");
+      setPollEpoch((n) => n + 1);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not start re-run");
+    } finally {
+      setRedirecting(false);
+    }
+  }, [id, redirectText, runAnalysisFn]);
+
+  // Territory-level revise: regenerates one territory only.
+  const reviseTerritory = useCallback(
+    async (territoryId: string, instructions: string) => {
+      setRevisingTerritoryId(territoryId);
+      try {
+        await reviseTerritoryFn({
+          data: { intelligenceSessionId: id, territoryId, instructions },
+        });
+        toast.success("Revising this territory");
+        setPollEpoch((n) => n + 1);
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Could not start revision");
+      } finally {
+        setRevisingTerritoryId(null);
+      }
+    },
+    [id, reviseTerritoryFn],
+  );
+
 
 
   // Poll session row until complete/failed.
