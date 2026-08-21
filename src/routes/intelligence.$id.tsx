@@ -559,7 +559,12 @@ function IntelligenceRunPage() {
   }
 
   // Running state — show live progress instead of the "not active" fallback.
-  if (row.status === "running") {
+  // A territory-level revision keeps the report on screen (only one card is
+  // regenerating), so it is excluded from this branch.
+  const revisingId = row.stage_status?.startsWith("revising:")
+    ? row.stage_status.slice("revising:".length)
+    : null;
+  if (row.status === "running" && !revisingId) {
     const layer = row.current_layer ?? 0;
     const pct = Math.min(100, Math.max(5, Math.round((layer / 10) * 100)));
     const queued = row.stage_status === "queued";
