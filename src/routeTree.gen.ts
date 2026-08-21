@@ -53,6 +53,7 @@ import { Route as CreativeSessionIdChannelsRouteImport } from './routes/creative
 import { Route as ApiPublicSweepTickRouteImport } from './routes/api/public/sweep-tick'
 import { Route as ApiPublicSmpScoreTickRouteImport } from './routes/api/public/smp-score-tick'
 import { Route as ApiPublicOrchestrationTickRouteImport } from './routes/api/public/orchestration-tick'
+import { Route as ApiPublicIntelligenceTickRouteImport } from './routes/api/public/intelligence-tick'
 import { Route as AdminPreviewSlugRouteImport } from './routes/admin.preview.$slug'
 import { Route as LovableEmailTransactionalSendRouteImport } from './routes/lovable/email/transactional/send'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
@@ -284,6 +285,12 @@ const ApiPublicOrchestrationTickRoute =
     path: '/api/public/orchestration-tick',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicIntelligenceTickRoute =
+  ApiPublicIntelligenceTickRouteImport.update({
+    id: '/api/public/intelligence-tick',
+    path: '/api/public/intelligence-tick',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AdminPreviewSlugRoute = AdminPreviewSlugRouteImport.update({
   id: '/admin/preview/$slug',
   path: '/admin/preview/$slug',
@@ -356,6 +363,7 @@ export interface FileRoutesByFullPath {
   '/synthesiser/': typeof SynthesiserIndexRoute
   '/walkthrough/': typeof WalkthroughIndexRoute
   '/admin/preview/$slug': typeof AdminPreviewSlugRoute
+  '/api/public/intelligence-tick': typeof ApiPublicIntelligenceTickRoute
   '/api/public/orchestration-tick': typeof ApiPublicOrchestrationTickRoute
   '/api/public/smp-score-tick': typeof ApiPublicSmpScoreTickRoute
   '/api/public/sweep-tick': typeof ApiPublicSweepTickRoute
@@ -401,6 +409,7 @@ export interface FileRoutesByTo {
   '/synthesiser': typeof SynthesiserIndexRoute
   '/walkthrough': typeof WalkthroughIndexRoute
   '/admin/preview/$slug': typeof AdminPreviewSlugRoute
+  '/api/public/intelligence-tick': typeof ApiPublicIntelligenceTickRoute
   '/api/public/orchestration-tick': typeof ApiPublicOrchestrationTickRoute
   '/api/public/smp-score-tick': typeof ApiPublicSmpScoreTickRoute
   '/api/public/sweep-tick': typeof ApiPublicSweepTickRoute
@@ -454,6 +463,7 @@ export interface FileRoutesById {
   '/synthesiser/': typeof SynthesiserIndexRoute
   '/walkthrough/': typeof WalkthroughIndexRoute
   '/admin/preview/$slug': typeof AdminPreviewSlugRoute
+  '/api/public/intelligence-tick': typeof ApiPublicIntelligenceTickRoute
   '/api/public/orchestration-tick': typeof ApiPublicOrchestrationTickRoute
   '/api/public/smp-score-tick': typeof ApiPublicSmpScoreTickRoute
   '/api/public/sweep-tick': typeof ApiPublicSweepTickRoute
@@ -508,6 +518,7 @@ export interface FileRouteTypes {
     | '/synthesiser/'
     | '/walkthrough/'
     | '/admin/preview/$slug'
+    | '/api/public/intelligence-tick'
     | '/api/public/orchestration-tick'
     | '/api/public/smp-score-tick'
     | '/api/public/sweep-tick'
@@ -553,6 +564,7 @@ export interface FileRouteTypes {
     | '/synthesiser'
     | '/walkthrough'
     | '/admin/preview/$slug'
+    | '/api/public/intelligence-tick'
     | '/api/public/orchestration-tick'
     | '/api/public/smp-score-tick'
     | '/api/public/sweep-tick'
@@ -605,6 +617,7 @@ export interface FileRouteTypes {
     | '/synthesiser/'
     | '/walkthrough/'
     | '/admin/preview/$slug'
+    | '/api/public/intelligence-tick'
     | '/api/public/orchestration-tick'
     | '/api/public/smp-score-tick'
     | '/api/public/sweep-tick'
@@ -646,6 +659,7 @@ export interface RootRouteChildren {
   DetonationCanvasRoute: typeof DetonationCanvasRoute
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
   AdminPreviewSlugRoute: typeof AdminPreviewSlugRoute
+  ApiPublicIntelligenceTickRoute: typeof ApiPublicIntelligenceTickRoute
   ApiPublicOrchestrationTickRoute: typeof ApiPublicOrchestrationTickRoute
   ApiPublicSmpScoreTickRoute: typeof ApiPublicSmpScoreTickRoute
   ApiPublicSweepTickRoute: typeof ApiPublicSweepTickRoute
@@ -967,6 +981,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicOrchestrationTickRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/intelligence-tick': {
+      id: '/api/public/intelligence-tick'
+      path: '/api/public/intelligence-tick'
+      fullPath: '/api/public/intelligence-tick'
+      preLoaderRoute: typeof ApiPublicIntelligenceTickRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/preview/$slug': {
       id: '/admin/preview/$slug'
       path: '/admin/preview/$slug'
@@ -1138,6 +1159,7 @@ const rootRouteChildren: RootRouteChildren = {
   DetonationCanvasRoute: DetonationCanvasRoute,
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
   AdminPreviewSlugRoute: AdminPreviewSlugRoute,
+  ApiPublicIntelligenceTickRoute: ApiPublicIntelligenceTickRoute,
   ApiPublicOrchestrationTickRoute: ApiPublicOrchestrationTickRoute,
   ApiPublicSmpScoreTickRoute: ApiPublicSmpScoreTickRoute,
   ApiPublicSweepTickRoute: ApiPublicSweepTickRoute,
