@@ -26,6 +26,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { Textarea } from "@/components/ui/textarea";
 import { reviseIntelligenceTerritory } from "@/lib/intelligence-revise.functions";
 import {
+  listIntelligenceVersions,
+  restoreIntelligenceVersion,
+  type IntelligenceVersionRow,
+} from "@/lib/intelligence-versions.functions";
+import {
   createBriefingRoomFromIntelligence,
   runIntelligenceAnalysis,
 } from "@/lib/intelligence.functions";
