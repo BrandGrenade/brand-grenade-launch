@@ -866,6 +866,9 @@ function IntelligenceRunPage() {
                   isPrimary={t.id === primaryId}
                   selected={t.id === selectedTerritoryId}
                   onSelect={() => setSelectedTerritoryId(t.id)}
+                  revising={revisingId === t.id}
+                  busy={revisingTerritoryId === t.id || revisingId !== null}
+                  onRevise={(instructions) => reviseTerritory(t.id, instructions)}
                 />
               ))}
               {ordered.length === 0 ? (
@@ -877,6 +880,37 @@ function IntelligenceRunPage() {
               ) : null}
             </div>
           </section>
+
+          {/* Session-level retry with instructions */}
+          <section className="mt-10">
+            <Card className="p-6">
+              <h2 className="text-h3 text-text-primary">Retry with instructions</h2>
+              <p className="text-sm text-text-secondary mt-1">
+                Re-runs the whole report. Your redirect overrides the default direction
+                wherever they conflict, and the current report is passed in as rejected
+                output so the engine cannot reproduce it.
+              </p>
+              <Textarea
+                value={redirectText}
+                onChange={(e) => setRedirectText(e.target.value)}
+                rows={4}
+                className="mt-4"
+                placeholder="e.g. Drop the sustainability territory entirely. Focus on the price-trust tension in the everyday shopper segment, and treat the premium tier as out of scope."
+              />
+              <div className="mt-3 flex justify-end">
+                <Button
+                  size="sm"
+                  onClick={retryWithInstructions}
+                  disabled={redirecting || revisingId !== null}
+                  className="bg-primary text-background hover:bg-primary disabled:opacity-60"
+                >
+                  {redirecting ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : null}
+                  Re-run report with redirect
+                </Button>
+              </div>
+            </Card>
+          </section>
+
 
           {/* Government addendum */}
           {govAddendum ? <GovernmentAddendumSection addendum={govAddendum} /> : null}
