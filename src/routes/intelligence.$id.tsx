@@ -25,7 +25,9 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import {
   createBriefingRoomFromIntelligence,
+  runIntelligenceAnalysis,
 } from "@/lib/intelligence.functions";
+
 import { openDocument00AMinto } from "@/lib/intelligence/doc-00A-minto";
 
 
@@ -258,6 +260,24 @@ function IntelligenceRunPage() {
   const [row, setRow] = useState<SessionRow | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [selectedTerritoryId, setSelectedTerritoryId] = useState<string | null>(null);
+  const [starting, setStarting] = useState(false);
+  const runAnalysisFn = useServerFn(runIntelligenceAnalysis);
+
+  // A saved-but-idle session must be startable from here. Previously the only
+  // route back into a run was the edit page's fire-and-forget dispatch, so a
+  // lost dispatch left the session permanently stranded on "Analysis is not
+  // running" with no recovery control.
+  const startAnalysis = useCallback(async () => {
+    setStarting(true);
+    try {
+      await runAnalysisFn({ data: { intelligenceSessionId: id } });
+      toast.success("Analysis started");
+    } catch (err) {
+      setStarting(false);
+      toast.error(err instanceof Error ? err.message : "Could not start analysis");
+    }
+  }, [id, runAnalysisFn]);
+
 
   // Poll session row until complete/failed.
   useEffect(() => {
@@ -461,18 +481,22 @@ function IntelligenceRunPage() {
           <Card className="mt-8 p-6">
             <p className="text-body text-text-primary font-medium">Inputs saved</p>
             <p className="text-sm text-text-secondary mt-2">
-              Analysis is not running. Edit the inputs to re-run the intelligence analysis.
+              Analysis is not running. Start it below, or edit the inputs first.
             </p>
             <div className="mt-5 flex flex-wrap items-center gap-3">
+              <Button
+                onClick={() => void startAnalysis()}
+                disabled={starting}
+                className="h-9 gap-2 text-sm font-semibold"
+                style={{ backgroundColor: "#C81E1E", color: "#0A0908" }}
+              >
+                {starting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                {starting ? "Starting…" : "Start Analysis"}
+              </Button>
               <Link
                 to="/intelligence/$id/edit"
                 params={{ id }}
-                className="inline-flex items-center justify-center gap-2 h-9 px-4 rounded-md text-sm font-semibold"
-                style={{
-                  backgroundColor: "#C81E1E",
-                  color: "#0A0908",
-                  boxShadow: "0 2px 12px rgba(200, 30, 30,0.25)",
-                }}
+                className="inline-flex items-center justify-center gap-2 h-9 px-4 rounded-md border border-border text-sm font-semibold text-text-primary"
               >
                 Edit Inputs
               </Link>
@@ -487,6 +511,7 @@ function IntelligenceRunPage() {
   if (row.status === "running") {
     const layer = row.current_layer ?? 0;
     const pct = Math.min(100, Math.max(5, Math.round((layer / 10) * 100)));
+    const queued = row.stage_status === "queued";
     return (
       <div className="min-h-screen bg-background">
         <TopNav />
@@ -503,7 +528,7 @@ function IntelligenceRunPage() {
           </div>
           <Card className="mt-8 p-6">
             <p className="text-body text-text-primary font-medium">
-              Analysing… layer {Math.max(1, layer)} of 10
+              {queued ? "Queued — waiting for the engine to pick up the run" : `Analysing… layer ${Math.max(1, layer)} of 10`}
             </p>
             <p className="mt-2 text-sm text-text-secondary">
               The intelligence engine is streaming. This page updates automatically.
@@ -514,7 +539,19 @@ function IntelligenceRunPage() {
                 style={{ width: `${pct}%`, backgroundColor: "#C81E1E" }}
               />
             </div>
+            <div className="mt-5">
+              <Button
+                variant="outline"
+                onClick={() => void startAnalysis()}
+                disabled={starting}
+                className="h-9 gap-2 text-sm"
+              >
+                {starting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                Restart run
+              </Button>
+            </div>
           </Card>
+
         </main>
       </div>
     );
