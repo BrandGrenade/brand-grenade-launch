@@ -195,7 +195,12 @@ export function deriveCurrentState(input: CurrentStateInput): CurrentStateModel 
       if (n >= 2 && (!best || n > best.n)) best = { m, n };
     }
     if (best) {
-      madeExplicit.push({ text: action, echo: best.m.text, source: best.m.source });
+      madeExplicit.push({
+        text: action,
+        echo: best.m.text,
+        source: best.m.source,
+        status: best.m.status,
+      });
     } else {
       genuinelyNew.push(action);
     }
