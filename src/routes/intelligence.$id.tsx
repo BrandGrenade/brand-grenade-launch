@@ -26,6 +26,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { Textarea } from "@/components/ui/textarea";
 import { reviseIntelligenceTerritory } from "@/lib/intelligence-revise.functions";
 import {
+  listIntelligenceVersions,
+  restoreIntelligenceVersion,
+  type IntelligenceVersionRow,
+} from "@/lib/intelligence-versions.functions";
+import {
   createBriefingRoomFromIntelligence,
   runIntelligenceAnalysis,
 } from "@/lib/intelligence.functions";
@@ -271,6 +276,40 @@ function IntelligenceRunPage() {
   const [revisingTerritoryId, setRevisingTerritoryId] = useState<string | null>(null);
   const runAnalysisFn = useServerFn(runIntelligenceAnalysis);
   const reviseTerritoryFn = useServerFn(reviseIntelligenceTerritory);
+  const listVersionsFn = useServerFn(listIntelligenceVersions);
+  const restoreVersionFn = useServerFn(restoreIntelligenceVersion);
+  const [versions, setVersions] = useState<IntelligenceVersionRow[]>([]);
+  const [restoringId, setRestoringId] = useState<string | null>(null);
+
+  const loadVersions = useCallback(async () => {
+    try {
+      const res = await listVersionsFn({ data: { intelligenceSessionId: id } });
+      setVersions(res.versions);
+    } catch {
+      /* non-blocking */
+    }
+  }, [id, listVersionsFn]);
+
+  useEffect(() => {
+    void loadVersions();
+  }, [loadVersions, pollEpoch]);
+
+  const restoreVersion = useCallback(
+    async (versionId: string) => {
+      setRestoringId(versionId);
+      try {
+        await restoreVersionFn({ data: { intelligenceSessionId: id, versionId } });
+        toast.success("Previous report restored");
+        setPollEpoch((n) => n + 1);
+        await loadVersions();
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Could not restore that version");
+      } finally {
+        setRestoringId(null);
+      }
+    },
+    [id, restoreVersionFn, loadVersions],
+  );
 
   // A saved-but-idle session must be startable from here. Previously the only
   // route back into a run was the edit page's fire-and-forget dispatch, so a
@@ -886,9 +925,11 @@ function IntelligenceRunPage() {
             <Card className="p-6">
               <h2 className="text-h3 text-text-primary">Retry with instructions</h2>
               <p className="text-sm text-text-secondary mt-1">
-                Re-runs the whole report. Your redirect overrides the default direction
-                wherever they conflict, and the current report is passed in as rejected
-                output so the engine cannot reproduce it.
+                Re-runs the whole report and replaces every territory. Your redirect
+                overrides the default direction wherever they conflict, and the current
+                report is passed in as rejected output so the engine cannot reproduce it.
+                The current report is saved to version history first and can be restored
+                below. To change one territory only, use “Revise this territory”.
               </p>
               <Textarea
                 value={redirectText}
@@ -910,6 +951,45 @@ function IntelligenceRunPage() {
               </div>
             </Card>
           </section>
+
+          {/* Version history — every re-run or revision snapshots the prior report */}
+          {versions.length > 0 ? (
+            <section className="mt-6">
+              <Card className="p-6">
+                <h2 className="text-h3 text-text-primary">Version history</h2>
+                <p className="text-sm text-text-secondary mt-1">
+                  Saved automatically before every re-run and territory revision.
+                  Restoring puts the selected version back as the live report.
+                </p>
+                <ul className="mt-4 divide-y divide-border">
+                  {versions.map((v) => (
+                    <li key={v.id} className="flex items-center justify-between gap-4 py-3">
+                      <div className="min-w-0">
+                        <p className="text-sm text-text-primary">
+                          {new Date(v.created_at).toLocaleString()} ·{" "}
+                          {v.territory_count ?? "?"} territories
+                        </p>
+                        <p className="text-xs text-text-secondary">
+                          {v.reason.replace(/-/g, " ")} · {v.chars.toLocaleString()} characters
+                        </p>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={restoringId !== null || redirecting || revisingId !== null}
+                        onClick={() => restoreVersion(v.id)}
+                      >
+                        {restoringId === v.id ? (
+                          <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
+                        ) : null}
+                        Restore
+                      </Button>
+                    </li>
+                  ))}
+                </ul>
+              </Card>
+            </section>
+          ) : null}
 
 
           {/* Government addendum */}

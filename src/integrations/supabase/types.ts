@@ -275,6 +275,47 @@ export type Database = {
         }
         Relationships: []
       }
+      intelligence_report_versions: {
+        Row: {
+          created_at: string
+          final_report: string | null
+          id: string
+          reason: string
+          report_metadata: Json | null
+          session_id: string
+          territory_count: number | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          final_report?: string | null
+          id?: string
+          reason: string
+          report_metadata?: Json | null
+          session_id: string
+          territory_count?: number | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          final_report?: string | null
+          id?: string
+          reason?: string
+          report_metadata?: Json | null
+          session_id?: string
+          territory_count?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "intelligence_report_versions_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "intelligence_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       intelligence_sessions: {
         Row: {
           additional_context: string | null

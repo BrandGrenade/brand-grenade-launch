@@ -342,6 +342,15 @@ export async function executeIntelligenceRun(
     // long streams and after the request context tears down.
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
+    // Snapshot the existing report BEFORE anything overwrites it. Partial
+    // stream persistence writes into final_report while the run is in flight,
+    // so this must happen before the first write of the run, on every entry
+    // point (UI dispatch, redirect re-run, watchdog takeover).
+    if (row.final_report) {
+      const { snapshotIntelligenceReport } = await import("./intelligence-versions.server");
+      await snapshotIntelligenceReport(sessionId, "before-rerun");
+    }
+
     type IntelligenceUpdate =
       import("@/integrations/supabase/types").Database["public"]["Tables"]["intelligence_sessions"]["Update"];
     const writeStatus = async (patch: IntelligenceUpdate): Promise<void> => {

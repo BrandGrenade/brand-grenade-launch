@@ -33,6 +33,11 @@ export async function reviseTerritoryRun(args: {
     }
   };
 
+  {
+    const { snapshotIntelligenceReport } = await import("./intelligence-versions.server");
+    await snapshotIntelligenceReport(sessionId, "before-territory-revision");
+  }
+
   const { data: row } = await supabaseAdmin
     .from("intelligence_sessions")
     .select("id, brand_name, category, final_report, report_metadata")
