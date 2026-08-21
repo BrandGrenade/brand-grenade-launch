@@ -1,0 +1,79 @@
+import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { streamClaude } from "./claude.server";
+import { withStreamSafety } from "./stream-stage-safety";
+import { STAGE_14_SYSTEM_PROMPT, buildStage14UserMessage } from "./stage14-prompt";
+import { trimBrandFitForDownstream } from "./context-trim";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { assertSessionAccess } from "@/lib/auth-helpers.server";
+import { assertUpstreamStageOutput } from "./pipeline-integrity";
+import { isStageOutputComplete } from "./stage-completion";
+import { extractBuyerGainForSmp } from "./buyer-gain";
+
+const Input = z.object({ sessionId: z.string().uuid() });
+
+export const runStage14 = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => Input.parse(i))
+  .handler(async function* ({ data, context }) {
+    await assertSessionAccess(data.sessionId, context.userId);
+    await assertUpstreamStageOutput(data.sessionId, 14);
+    const { data: session, error } = await supabaseAdmin
+      .from("sessions")
+      .select(
+        "brand_name, category, selected_smp, current_stage, status, stage_status, updated_at, stage_2_output, stage_8_output, stage_12_output, stage_13_output, stage_13b_output, stage_14_output"
+      )
+      .eq("id", data.sessionId)
+      .single();
+    if (error || !session) throw new Error(`Session not found: ${error?.message ?? "no row"}`);
+    if (!session.stage_13b_output) throw new Error("Stage 13B output missing — cannot run Stage 14");
+    if (isStageOutputComplete(session, "14", 14, session.stage_14_output)) {
+      const cached = session.stage_14_output ?? "";
+      yield { delta: cached };
+      yield { done: true as const, output: cached };
+      return;
+    }
+
+    await supabaseAdmin
+      .from("sessions")
+      .update({ current_stage: 14, status: "running", stage_status: "running:14", stage_14_output: null, stage_14_error: null })
+      .eq("id", data.sessionId);
+
+    let output = "";
+    for await (const delta of withStreamSafety(
+      { sessionId: data.sessionId, stageLabel: "Stage 14", stageStatusId: "14", outputColumn: "stage_14_output", errorColumn: "stage_14_error" },
+      streamClaude({
+        systemPrompt: STAGE_14_SYSTEM_PROMPT,
+        userMessage: buildStage14UserMessage({
+          brandName: session.brand_name,
+          category: session.category,
+          selectedSMP: session.selected_smp ?? "",
+          // Stage 8 states the buyer gain; Stage 14 carries it verbatim rather
+          // than inventing one downstream.
+          buyerGain: extractBuyerGainForSmp(session.stage_8_output, session.selected_smp),
+          stage12Output: "",
+          stage13Output: trimBrandFitForDownstream(session.stage_13_output ?? ""),
+          stage13bOutput: session.stage_13b_output,
+          cmm: "",
+        }),
+        sessionId: data.sessionId,
+        stageLabel: "Stage 14",
+        maxTokens: 64000,
+        stageNumber: "14",
+        stageName: "Territory Mapping",
+      }),
+    )) {
+        output += delta;
+        yield { delta };
+      }
+
+
+    const { error: ue } = await supabaseAdmin
+      .from("sessions")
+      .update({ stage_14_output: output, stage_14_error: null, stage_status: "complete:14" })
+      .eq("id", data.sessionId);
+    if (ue) throw new Error(`Failed to save Stage 14 output: ${ue.message}`);
+
+    yield { done: true as const, output };
+  });
