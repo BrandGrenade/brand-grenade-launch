@@ -647,6 +647,7 @@ function IntelligenceRunPage() {
                 Restart run
               </Button>
             </div>
+            <SupervisionStatus domain="intelligence" jobId={id} />
           </Card>
 
         </main>
