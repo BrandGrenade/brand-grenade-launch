@@ -239,7 +239,7 @@ export function buildCurrentStateSection(input: CurrentStateInput): string {
 
   const sentence = (t: string): string => {
     const trimmed = t.trim();
-    return /[.!?]$/.test(trimmed) ? trimmed.slice(0, -1) : trimmed;
+    return trimmed.replace(/[\s,;:.!?]+$/, "");
   };
 
   const intro = `<p>This section separates what ${escapeHtml(
