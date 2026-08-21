@@ -359,7 +359,7 @@ function IntelligenceRunPage() {
       alive = false;
       if (interval) clearInterval(interval);
     };
-  }, [id]);
+  }, [id, pollEpoch]);
 
   // Ownership check — redirect if session belongs to another user.
   useEffect(() => {
