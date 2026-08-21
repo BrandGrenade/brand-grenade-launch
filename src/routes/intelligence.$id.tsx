@@ -948,6 +948,45 @@ function IntelligenceRunPage() {
             </Card>
           </section>
 
+          {/* Version history — every re-run or revision snapshots the prior report */}
+          {versions.length > 0 ? (
+            <section className="mt-6">
+              <Card className="p-6">
+                <h2 className="text-h3 text-text-primary">Version history</h2>
+                <p className="text-sm text-text-secondary mt-1">
+                  Saved automatically before every re-run and territory revision.
+                  Restoring puts the selected version back as the live report.
+                </p>
+                <ul className="mt-4 divide-y divide-border">
+                  {versions.map((v) => (
+                    <li key={v.id} className="flex items-center justify-between gap-4 py-3">
+                      <div className="min-w-0">
+                        <p className="text-sm text-text-primary">
+                          {new Date(v.created_at).toLocaleString()} ·{" "}
+                          {v.territory_count ?? "?"} territories
+                        </p>
+                        <p className="text-xs text-text-secondary">
+                          {v.reason.replace(/-/g, " ")} · {v.chars.toLocaleString()} characters
+                        </p>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={restoringId !== null || redirecting || revisingId !== null}
+                        onClick={() => restoreVersion(v.id)}
+                      >
+                        {restoringId === v.id ? (
+                          <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
+                        ) : null}
+                        Restore
+                      </Button>
+                    </li>
+                  ))}
+                </ul>
+              </Card>
+            </section>
+          ) : null}
+
 
           {/* Government addendum */}
           {govAddendum ? <GovernmentAddendumSection addendum={govAddendum} /> : null}
