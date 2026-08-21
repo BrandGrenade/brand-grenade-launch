@@ -398,7 +398,42 @@ export async function executeIntelligenceRun(
       input_audience_segmentation: row.input_audience_segmentation ?? null,
       input_bg_intel_pack: row.input_bg_intel_pack ?? null,
     };
-    const userMessage = buildUserMessage(inputs);
+    let userMessage = buildUserMessage(inputs);
+
+    // Human redirect (session-level "Retry with instructions"). Applied once:
+    // the marker is cleared as soon as it has been folded into the prompt so a
+    // later untargeted re-run does not silently re-apply it.
+    {
+      const metaAll =
+        row.report_metadata && typeof row.report_metadata === "object" && !Array.isArray(row.report_metadata)
+          ? (row.report_metadata as Record<string, unknown>)
+          : {};
+      const redirect = typeof metaAll["redirect_instructions"] === "string"
+        ? (metaAll["redirect_instructions"] as string).trim()
+        : "";
+      if (redirect) {
+        const { buildFeedbackInjection } = await import("./feedback-injection");
+        const prevReport = typeof metaAll["redirect_previous_report"] === "string"
+          ? (metaAll["redirect_previous_report"] as string)
+          : null;
+        const injection = buildFeedbackInjection({
+          feedback: redirect,
+          previousOutput: prevReport,
+          stageLabel: "Intelligence Lab report",
+        });
+        userMessage = `${injection.prefix}${userMessage}${injection.suffix}`;
+        const cleared = { ...metaAll };
+        delete cleared["redirect_instructions"];
+        delete cleared["redirect_previous_report"];
+        const log = Array.isArray(cleared["redirect_log"]) ? (cleared["redirect_log"] as unknown[]) : [];
+        log.push({ instructions: redirect.slice(0, 4000), at: new Date().toISOString() });
+        cleared["redirect_log"] = log.slice(-50);
+        await writeStatus({
+          report_metadata: cleared as unknown as import("@/integrations/supabase/types").Json,
+        });
+      }
+    }
+
 
     // 05/06 — Stream the single Claude call and publish running:1..running:10
     // heartbeats keyed off cumulative character count. Ten evenly-spaced
