@@ -22,11 +22,15 @@ export const Route = createFileRoute("/api/public/reliability-tick")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const secret = process.env["SWEEP_TICK_SECRET"];
-        if (!secret) return new Response("Not configured", { status: 503 });
+        const accepted = [
+          process.env["RELIABILITY_TICK_SECRET"],
+          process.env["SWEEP_TICK_SECRET"],
+        ].filter(Boolean) as string[];
+        if (!accepted.length) return new Response("Not configured", { status: 503 });
         const provided =
-          request.headers.get("x-sweep-secret") ?? request.headers.get("x-reliability-secret");
-        if (provided !== secret) return new Response("Unauthorized", { status: 401 });
+          request.headers.get("x-reliability-secret") ?? request.headers.get("x-sweep-secret");
+        if (!provided || !accepted.includes(provided))
+          return new Response("Unauthorized", { status: 401 });
 
         const url = new URL(request.url);
         const force = url.searchParams.get("force") === "1";
