@@ -271,6 +271,36 @@ function IntelligenceRunPage() {
   const [revisingTerritoryId, setRevisingTerritoryId] = useState<string | null>(null);
   const runAnalysisFn = useServerFn(runIntelligenceAnalysis);
   const reviseTerritoryFn = useServerFn(reviseIntelligenceTerritory);
+  const listVersionsFn = useServerFn(listIntelligenceVersions);
+  const restoreVersionFn = useServerFn(restoreIntelligenceVersion);
+  const [versions, setVersions] = useState<IntelligenceVersionRow[]>([]);
+  const [restoringId, setRestoringId] = useState<string | null>(null);
+
+  const loadVersions = useCallback(async () => {
+    try {
+      const res = await listVersionsFn({ data: { intelligenceSessionId: id } });
+      setVersions(res.versions);
+    } catch {
+      /* non-blocking */
+    }
+  }, [id, listVersionsFn]);
+
+  const restoreVersion = useCallback(
+    async (versionId: string) => {
+      setRestoringId(versionId);
+      try {
+        await restoreVersionFn({ data: { intelligenceSessionId: id, versionId } });
+        toast.success("Previous report restored");
+        setPollEpoch((n) => n + 1);
+        await loadVersions();
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Could not restore that version");
+      } finally {
+        setRestoringId(null);
+      }
+    },
+    [id, restoreVersionFn, loadVersions],
+  );
 
   // A saved-but-idle session must be startable from here. Previously the only
   // route back into a run was the edit page's fire-and-forget dispatch, so a
