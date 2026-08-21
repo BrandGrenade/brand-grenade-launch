@@ -261,6 +261,8 @@ async function executeIntelligenceRun(
   supabase: SupabaseAuthedClient,
   userId: string | undefined,
   sessionId: string,
+  /** Set when this call owns the dispatch marker it just wrote. */
+  ownsDispatch = false,
 ): Promise<RunIntelligenceResult> {
   {
 
@@ -283,7 +285,7 @@ async function executeIntelligenceRun(
     // dead. A live run heartbeats updated_at every few seconds (see the
     // watchdog wiring below), so a row whose updated_at has not moved for
     // STALE_RUN_MS is a stalled Worker and may be taken over.
-    if (row.status === "running") {
+    if (!ownsDispatch && row.status === "running" && row.stage_status !== "queued") {
       const lastBeat = row.updated_at ? Date.parse(row.updated_at) : 0;
       const staleFor = Date.now() - lastBeat;
       if (!Number.isFinite(lastBeat) || staleFor < STALE_RUN_MS) {
@@ -295,6 +297,7 @@ async function executeIntelligenceRun(
         )}s)`,
       );
     }
+
 
 
     // Guard: retry ceiling.
