@@ -258,6 +258,12 @@ blockquote { border-left: 3pt solid var(--detonation); padding: 10pt 14pt; margi
 .cmp .muted { color: var(--smoke); }
 .cmp tbody tr:last-child td { border-bottom: 1pt solid var(--ash); }
 
+/* ── current-state citations ─────────────────────────────────────── */
+.cs-cite { font-size: 7pt; vertical-align: super; line-height: 0; color: var(--smoke); }
+.cs-status { color: var(--smoke); font-style: italic; }
+.cs-sources { margin: 10pt 0 0; padding-top: 7pt; border-top: 0.75pt solid var(--rule); font-size: 8pt; color: var(--smoke); line-height: 1.5; list-style: none; }
+.cs-sources li { margin: 2pt 0; padding-left: 0; }
+
 /* ── supporting blocks ───────────────────────────────────────────── */
 .callout { border: 0.75pt solid var(--rule); background: var(--surface); padding: 14pt 16pt; margin: 14pt 0; }
 .callout .callout-label { font-size: 8.5pt; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--detonation); margin-bottom: 7pt; }

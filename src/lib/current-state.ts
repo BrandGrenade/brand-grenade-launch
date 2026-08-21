@@ -48,13 +48,68 @@ const STOP = new Set([
   "makes","made","need","needs","used","using","use","the","and","for","are","was","were","its","it's",
 ]);
 
+/**
+ * Verification status expressed in the source corpus as icons or internal
+ * status labels. Rendered as plain wording, never as an icon or raw label.
+ */
+export type VerificationStatus =
+  | "independently confirmed"
+  | "not independently verified"
+  | "as supplied by the client, unconfirmed"
+  | null;
+
+const EMOJI_RE =
+  /[\u2190-\u21FF\u2300-\u27BF\u2B00-\u2BFF\uFE0F\u{1F000}-\u{1FAFF}]/gu;
+
+function detectStatus(raw: string): VerificationStatus {
+  const t = raw.toLowerCase();
+  if (/client[-\s]?(supplied|provided|stated|reported)|per (the )?client|as supplied by the client/.test(t))
+    return "as supplied by the client, unconfirmed";
+  if (
+    /\u26A0|not (independently )?(verified|confirmed)|unverified|unconfirmed|could not be (re-?)?(verified|confirmed)|no (independent )?source/.test(
+      raw.toLowerCase(),
+    ) || /\u26A0/.test(raw)
+  )
+    return "not independently verified";
+  if (/\u2705|\u2714|independently (confirmed|verified)|\bverified\b|\bconfirmed\b/.test(raw.toLowerCase()) || /[\u2705\u2714]/.test(raw))
+    return "independently confirmed";
+  return null;
+}
+
+/**
+ * Removes internal citation plumbing — filenames, "Source:" fragments, status
+ * icons, "Note:" interjections — so the sentence reads as client-facing prose.
+ */
+function stripPlumbing(s: string): string {
+  return s
+    .replace(EMOJI_RE, " ")
+    // "Source: Per BegaMilkResearchFINALv2.md.pdf" and friends.
+    .replace(/\(?\b(?:source|sources|ref|reference|citation|file)\s*[:\-—]\s*[^.;)\]]*\)?/gi, " ")
+    // Bare filenames anywhere.
+    .replace(/\b[\w .\-]+\.(?:pdf|md|docx?|txt|csv|xlsx?|pptx?|json)\b/gi, " ")
+    // Internal status labels.
+    .replace(/\b(?:status|verification|confidence|flag)\s*[:\-—]\s*[A-Za-z_ ]{0,40}/gi, " ")
+    .replace(/\[(?:verified|unverified|client[-\s]?supplied|unconfirmed)\]/gi, " ")
+    // "Note:" interjections, leading or mid-sentence.
+    .replace(/^\s*(?:note|caveat|nb)\s*[:\-—]\s*/i, "")
+    .replace(/[;,.]?\s*\b(?:note|nb)\s*[:\-—]\s*/gi, ". ")
+    .replace(/\s*[—–-]\s*$/, "")
+    .replace(/\s+([.,;:])/g, "$1")
+    .replace(/\.\s*\./g, ".")
+    .replace(/\(\s*\)/g, "")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
 /** Source text is raw transcript: markdown scaffolding must never survive. */
 function tidySentence(s: string): string {
-  return s
-    .replace(/^[#>*\-—•\s]+/, "")
-    .replace(/[#*_`|]/g, "")
-    .replace(/\s+/g, " ")
-    .trim();
+  const cleaned = stripPlumbing(
+    s
+      .replace(/^[#>*\-—•\s]+/, "")
+      .replace(/[#*_`|]/g, "")
+      .replace(/\s+/g, " "),
+  );
+  return cleaned.replace(/^[a-z]/, (c) => c.toUpperCase());
 }
 
 function sentences(text: string): string[] {
@@ -81,11 +136,18 @@ function overlap(a: Set<string>, b: Set<string>): number {
   return n;
 }
 
+export interface CurrentStateFact {
+  text: string;
+  source: string;
+  /** Verification wording derived from the corpus, never an icon or raw label. */
+  status: VerificationStatus;
+}
+
 export interface CurrentStateModel {
   /** Quoted, attributed statements of what is already happening. */
-  existing: { text: string; source: string }[];
+  existing: CurrentStateFact[];
   /** Recommendation asks that the corpus already evidences in some form. */
-  madeExplicit: { text: string; echo: string; source: string }[];
+  madeExplicit: { text: string; echo: string; source: string; status: VerificationStatus }[];
   /** Recommendation asks with no corresponding activity in the corpus. */
   genuinelyNew: string[];
   /** True when no source material described current activity at all. */
@@ -94,7 +156,7 @@ export interface CurrentStateModel {
 
 export function deriveCurrentState(input: CurrentStateInput): CurrentStateModel {
   const limit = input.limit ?? 6;
-  const mined: { text: string; source: string }[] = [];
+  const mined: CurrentStateFact[] = [];
   const seen = new Set<string>();
 
   for (const { text, source } of input.knownActivity ?? []) {
@@ -102,7 +164,7 @@ export function deriveCurrentState(input: CurrentStateInput): CurrentStateModel 
     const key = clean.toLowerCase().slice(0, 60);
     if (!clean || seen.has(key)) continue;
     seen.add(key);
-    mined.push({ text: clean, source });
+    mined.push({ text: clean, source, status: detectStatus(text ?? "") });
   }
 
   for (const src of input.evidence) {
@@ -115,7 +177,7 @@ export function deriveCurrentState(input: CurrentStateInput): CurrentStateModel 
       const key = t.toLowerCase().slice(0, 60);
       if (seen.has(key)) continue;
       seen.add(key);
-      mined.push({ text: t, source: src.label });
+      mined.push({ text: t, source: src.label, status: detectStatus(s) });
     }
   }
 
@@ -133,7 +195,12 @@ export function deriveCurrentState(input: CurrentStateInput): CurrentStateModel 
       if (n >= 2 && (!best || n > best.n)) best = { m, n };
     }
     if (best) {
-      madeExplicit.push({ text: action, echo: best.m.text, source: best.m.source });
+      madeExplicit.push({
+        text: action,
+        echo: best.m.text,
+        source: best.m.source,
+        status: best.m.status,
+      });
     } else {
       genuinelyNew.push(action);
     }
@@ -158,9 +225,26 @@ export function buildCurrentStateSection(input: CurrentStateInput): string {
   const model = deriveCurrentState(input);
   if (model.noBaseline && !model.madeExplicit.length && !model.genuinelyNew.length) return "";
 
+  // Footnote registry — sources are cited by number, never dropped into prose.
+  const order: string[] = [];
+  const cite = (source: string): string => {
+    const clean = (source || "Session research").trim();
+    let i = order.indexOf(clean);
+    if (i === -1) i = order.push(clean) - 1;
+    return `<span class="cs-cite">${i + 1}</span>`;
+  };
+
+  const statusPhrase = (s: VerificationStatus): string =>
+    s ? ` <span class="cs-status">(${s})</span>` : "";
+
+  const sentence = (t: string): string => {
+    const trimmed = t.trim();
+    return trimmed.replace(/[\s,;:.!?]+$/, "");
+  };
+
   const intro = `<p>This section separates what ${escapeHtml(
     input.brand,
-  )} is already doing from what this recommendation actually changes, so the proposal is not read as if it were being made in a vacuum. Existing activity is quoted from the research ingested for this session and attributed to its source.</p>`;
+  )} is already doing from what this recommendation actually changes, so the proposal is not read as if it were being made in a vacuum. Existing activity is drawn from the research ingested for this session; sources are numbered and listed beneath, and each point states plainly how far it has been verified.</p>`;
 
   const existingHtml = model.existing.length
     ? callout(
@@ -168,7 +252,7 @@ export function buildCurrentStateSection(input: CurrentStateInput): string {
         `<ul>${model.existing
           .map(
             (e) =>
-              `<li>${inlineMd(e.text)} <span class="muted">— ${escapeHtml(e.source)}</span></li>`,
+              `<li>${inlineMd(sentence(e.text))}${cite(e.source)}${statusPhrase(e.status)}.</li>`,
           )
           .join("")}</ul>`,
       )
@@ -180,9 +264,9 @@ export function buildCurrentStateSection(input: CurrentStateInput): string {
         `<ul>${model.madeExplicit
           .map(
             (e) =>
-              `<li>${inlineMd(e.text)}<br><span class="muted">Builds on: ${inlineMd(
-                e.echo,
-              )} — ${escapeHtml(e.source)}</span></li>`,
+              `<li>${inlineMd(sentence(e.text))}. Builds on existing activity: ${inlineMd(
+                sentence(e.echo),
+              )}${cite(e.source)}${statusPhrase(e.status)}.</li>`,
           )
           .join("")}</ul>`,
       )
@@ -196,5 +280,11 @@ export function buildCurrentStateSection(input: CurrentStateInput): string {
       )
     : "";
 
-  return intro + existingHtml + explicitHtml + newHtml;
+  const sourcesHtml = order.length
+    ? `<ul class="cs-sources">${order
+        .map((s, i) => `<li>${i + 1}. ${escapeHtml(s)}</li>`)
+        .join("")}</ul>`
+    : "";
+
+  return intro + existingHtml + explicitHtml + newHtml + sourcesHtml;
 }
