@@ -532,6 +532,7 @@ function IntelligenceRunPage() {
                 <p className="text-sm text-text-secondary mt-1">
                   {row.last_error ?? "Unknown error"}
                 </p>
+                <SupervisionStatus domain="intelligence" jobId={id} />
                 <Link
                   to="/intelligence/$id/edit"
                   params={{ id }}
