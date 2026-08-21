@@ -8,7 +8,13 @@
 // Every primary builder returns its HTML through `gateDocument`.
 
 import type { DocumentSpec } from "./document-spec";
-import { certifyDocument } from "./content-integrity";
+import { certifyDocument, type IntegrityOptions } from "./content-integrity";
+import {
+  applyUniversalSafeguards,
+  findSystemTokens,
+  universalStructureFailures,
+} from "./document-standard";
+
 
 const strip = (h: string) =>
   h
@@ -137,12 +143,19 @@ export function checkDocumentStructure(html: string, spec: DocumentSpec): string
 
 /**
  * Hard gate. The document is first cleaned at the shared layer — internal
- * selection UI stripped, section boundaries sealed — and only then checked.
+ * selection UI stripped, section boundaries sealed, internal enum/system
+ * tokens humanised and verdict-as-rationale repaired — and only then checked.
  * A document that still fails the canonical structure is not returned.
  */
 export function gateDocument(html: string, spec: DocumentSpec): string {
-  const cleaned = sealSectionBoundaries(stripSelectionArtifacts(html), spec);
-  const failures = checkDocumentStructure(cleaned, spec);
+  const cleaned = applyUniversalSafeguards(
+    sealSectionBoundaries(stripSelectionArtifacts(html), spec),
+  );
+  const failures = [
+    ...checkDocumentStructure(cleaned, spec),
+    ...universalStructureFailures(cleaned),
+    ...leakFailures(cleaned),
+  ];
   if (failures.length) {
     throw new Error(
       `${spec.label} failed the canonical document gate:\n- ${failures.slice(0, 12).join("\n- ")}`,
@@ -156,3 +169,33 @@ export function gateDocument(html: string, spec: DocumentSpec): string {
     transcriptSections: spec.appendix.map((a) => a.index),
   });
 }
+
+/** S1 survivors — an internal token that the humaniser could not resolve. */
+function leakFailures(html: string): string[] {
+  return findSystemTokens(html)
+    .slice(0, 5)
+    .map((t) => `internal system value "${t}" rendered into client-facing text`);
+}
+
+/**
+ * Shared gate for the document types that own their own shell and section
+ * numbering (Strategy Executive Summary, Full Pipeline Run, Creative
+ * Showcase). They get the identical safeguards and the identical universal
+ * structure rules; only the canonical section list differs, which those
+ * builders check themselves.
+ */
+export function gateGenericDocument(
+  html: string,
+  label: string,
+  opts: IntegrityOptions = {},
+): string {
+  const cleaned = applyUniversalSafeguards(stripSelectionArtifacts(html));
+  const failures = [...universalStructureFailures(cleaned), ...leakFailures(cleaned)];
+  if (failures.length) {
+    throw new Error(
+      `${label} failed the universal document standard:\n- ${failures.slice(0, 12).join("\n- ")}`,
+    );
+  }
+  return certifyDocument(cleaned, label, opts);
+}
+

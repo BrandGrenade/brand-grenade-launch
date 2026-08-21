@@ -18,7 +18,9 @@ import { DETONATION_APPENDIX, NO_STAGE_OUTPUT, PIPELINE_APPENDIX } from "./minto
 export type DocumentTypeId =
   | "board_strategy"
   | "consulting_delivery"
-  | "master_detonation";
+  | "master_detonation"
+  | "intelligence_00a";
+
 
 export interface AppendixSectionDef {
   /** Two-digit printed index. Fixed by position — never renumbered. */
@@ -62,7 +64,14 @@ export const DOCUMENT_SPECS: Record<DocumentTypeId, DocumentSpec> = {
     frontMatter: MINTO_SECTIONS,
     appendix: [...DETONATION_APPENDIX_SECTIONS, ...PIPELINE_APPENDIX_SECTIONS],
   },
+  intelligence_00a: {
+    id: "intelligence_00a",
+    label: "Strategic Territory Intelligence Report",
+    frontMatter: MINTO_SECTIONS,
+    appendix: [],
+  },
 };
+
 
 export const DOCUMENT_SPEC_BY_LABEL: Record<string, DocumentSpec> = Object.fromEntries(
   Object.values(DOCUMENT_SPECS).map((s) => [s.label, s]),
