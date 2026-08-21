@@ -48,6 +48,22 @@ export const Route = createFileRoute("/api/public/intelligence-tick")({
           const threshold = isQueued ? QUEUED_STALE_MS : STALE_RUN_MS;
           if (!force && quietFor < threshold) continue;
 
+          // A stalled territory revision must NOT be escalated into a full
+          // re-run — the stored report is still valid. Release it instead.
+          if (row.stage_status?.startsWith("revising:")) {
+            await supabaseAdmin
+              .from("intelligence_sessions")
+              .update({
+                status: "complete",
+                stage_status: "complete:10",
+                last_error: "Watchdog: territory revision stalled — original territory kept",
+              } as never)
+              .eq("id", row.id);
+            results.push({ id: row.id, outcome: "revision-released" });
+            continue;
+          }
+
+
           // Awaited on purpose: the watchdog's own request keeps the run alive.
           const r = await executeIntelligenceRun(
             supabaseAdmin as never,
