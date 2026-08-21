@@ -48,13 +48,68 @@ const STOP = new Set([
   "makes","made","need","needs","used","using","use","the","and","for","are","was","were","its","it's",
 ]);
 
+/**
+ * Verification status expressed in the source corpus as icons or internal
+ * status labels. Rendered as plain wording, never as an icon or raw label.
+ */
+export type VerificationStatus =
+  | "independently confirmed"
+  | "not independently verified"
+  | "as supplied by the client, unconfirmed"
+  | null;
+
+const EMOJI_RE =
+  /[\u2190-\u21FF\u2300-\u27BF\u2B00-\u2BFF\uFE0F\u{1F000}-\u{1FAFF}]/gu;
+
+function detectStatus(raw: string): VerificationStatus {
+  const t = raw.toLowerCase();
+  if (/client[-\s]?(supplied|provided|stated|reported)|per (the )?client|as supplied by the client/.test(t))
+    return "as supplied by the client, unconfirmed";
+  if (
+    /\u26A0|not (independently )?(verified|confirmed)|unverified|unconfirmed|could not be (re-?)?(verified|confirmed)|no (independent )?source/.test(
+      raw.toLowerCase(),
+    ) || /\u26A0/.test(raw)
+  )
+    return "not independently verified";
+  if (/\u2705|\u2714|independently (confirmed|verified)|\bverified\b|\bconfirmed\b/.test(raw.toLowerCase()) || /[\u2705\u2714]/.test(raw))
+    return "independently confirmed";
+  return null;
+}
+
+/**
+ * Removes internal citation plumbing — filenames, "Source:" fragments, status
+ * icons, "Note:" interjections — so the sentence reads as client-facing prose.
+ */
+function stripPlumbing(s: string): string {
+  return s
+    .replace(EMOJI_RE, " ")
+    // "Source: Per BegaMilkResearchFINALv2.md.pdf" and friends.
+    .replace(/\(?\b(?:source|sources|ref|reference|citation|file)\s*[:\-—]\s*[^.;)\]]*\)?/gi, " ")
+    // Bare filenames anywhere.
+    .replace(/\b[\w .\-]+\.(?:pdf|md|docx?|txt|csv|xlsx?|pptx?|json)\b/gi, " ")
+    // Internal status labels.
+    .replace(/\b(?:status|verification|confidence|flag)\s*[:\-—]\s*[A-Za-z_ ]{0,40}/gi, " ")
+    .replace(/\[(?:verified|unverified|client[-\s]?supplied|unconfirmed)\]/gi, " ")
+    // "Note:" interjections, leading or mid-sentence.
+    .replace(/^\s*(?:note|caveat|nb)\s*[:\-—]\s*/i, "")
+    .replace(/[;,.]?\s*\b(?:note|nb)\s*[:\-—]\s*/gi, ". ")
+    .replace(/\s*[—–-]\s*$/, "")
+    .replace(/\s+([.,;:])/g, "$1")
+    .replace(/\.\s*\./g, ".")
+    .replace(/\(\s*\)/g, "")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
 /** Source text is raw transcript: markdown scaffolding must never survive. */
 function tidySentence(s: string): string {
-  return s
-    .replace(/^[#>*\-—•\s]+/, "")
-    .replace(/[#*_`|]/g, "")
-    .replace(/\s+/g, " ")
-    .trim();
+  const cleaned = stripPlumbing(
+    s
+      .replace(/^[#>*\-—•\s]+/, "")
+      .replace(/[#*_`|]/g, "")
+      .replace(/\s+/g, " "),
+  );
+  return cleaned.replace(/^[a-z]/, (c) => c.toUpperCase());
 }
 
 function sentences(text: string): string[] {
