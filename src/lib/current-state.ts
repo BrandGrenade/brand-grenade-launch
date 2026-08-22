@@ -162,6 +162,11 @@ function overlap(a: Set<string>, b: Set<string>): number {
 export interface CurrentStateFact {
   text: string;
   source: string;
+  /**
+   * Secondary sources from verification notes folded onto this claim, cited
+   * alongside the primary source instead of forming their own bullet.
+   */
+  extraSources?: string[];
   /** Verification wording derived from the corpus, never an icon or raw label. */
   status: VerificationStatus;
 }
