@@ -108,8 +108,31 @@ function tidySentence(s: string): string {
       .replace(/^[#>*\-—•\s]+/, "")
       .replace(/[#*_`|]/g, "")
       .replace(/\s+/g, " "),
-  );
+  )
+    // Stripping "Note:" / "Source:" labels can leave an orphaned leading
+    // fragment such as ".: " — never let that reach the page.
+    .replace(/^[\s.,;:•\-—]+/, "")
+    .trim();
   return cleaned.replace(/^[a-z]/, (c) => c.toUpperCase());
+}
+
+/**
+ * A sentence that only certifies another claim ("Confirmed by multiple
+ * sources…", "Verified against…") has no subject of its own. It must never
+ * become its own bullet: it is folded onto the claim it verifies, or dropped.
+ */
+function isVerificationFragment(s: string): boolean {
+  return /^(?:confirmed|verified|corroborated|cross[-\s]?checked|substantiated|re[-\s]?confirmed|checked|sourced|supported)\b/i.test(
+    s.trim(),
+  );
+}
+
+/** Trailing raw citation digits from the source must not collide with ours. */
+function stripTrailingCitation(s: string): string {
+  return s
+    .replace(/[\u00B2\u00B3\u00B9\u2070-\u209F]+/g, "")
+    .replace(/[\s,;:.]*\[?\d{1,2}\]?$/, "")
+    .trim();
 }
 
 function sentences(text: string): string[] {
@@ -139,6 +162,11 @@ function overlap(a: Set<string>, b: Set<string>): number {
 export interface CurrentStateFact {
   text: string;
   source: string;
+  /**
+   * Secondary sources from verification notes folded onto this claim, cited
+   * alongside the primary source instead of forming their own bullet.
+   */
+  extraSources?: string[];
   /** Verification wording derived from the corpus, never an icon or raw label. */
   status: VerificationStatus;
 }
@@ -159,25 +187,52 @@ export function deriveCurrentState(input: CurrentStateInput): CurrentStateModel 
   const mined: CurrentStateFact[] = [];
   const seen = new Set<string>();
 
-  for (const { text, source } of input.knownActivity ?? []) {
-    const clean = tidySentence(text ?? "");
-    const key = clean.toLowerCase().slice(0, 60);
-    if (!clean || seen.has(key)) continue;
+  /**
+   * A verification-only fragment is folded onto the claim immediately above
+   * it — its source becomes a second citation on that claim. With no parent
+   * claim it is dropped outright: never rendered as a headless bullet.
+   */
+  const add = (text: string, source: string, raw: string, parent: CurrentStateFact | null) => {
+    if (!text) return null;
+    if (isVerificationFragment(text)) {
+      if (parent) {
+        const clean = (source || "").trim();
+        if (clean && clean !== parent.source && !(parent.extraSources ?? []).includes(clean)) {
+          parent.extraSources = [...(parent.extraSources ?? []), clean];
+        }
+        if (!parent.status) parent.status = detectStatus(raw);
+      }
+      return parent;
+    }
+    const key = text.toLowerCase().slice(0, 60);
+    if (seen.has(key)) return parent;
     seen.add(key);
-    mined.push({ text: clean, source, status: detectStatus(text ?? "") });
+    const fact: CurrentStateFact = { text, source, status: detectStatus(raw) };
+    mined.push(fact);
+    return fact;
+  };
+
+  let last: CurrentStateFact | null = null;
+  for (const { text, source } of input.knownActivity ?? []) {
+    last = add(tidySentence(text ?? ""), source, text ?? "", last);
   }
 
   for (const src of input.evidence) {
     if (!src?.text) continue;
+    last = null;
     for (const s of sentences(src.text)) {
       const t = tidySentence(s);
+      if (!t) continue;
+      // Verification notes are folded onto the claim above before any of the
+      // activity filters, which would otherwise discard the note silently.
+      if (isVerificationFragment(t)) {
+        add(t, src.label, s, last);
+        continue;
+      }
       if (t.length < 60 || t.length > 340) continue;
       if (!ACTIVITY_RE.test(t)) continue;
       if (NOT_ACTIVITY_RE.test(t)) continue;
-      const key = t.toLowerCase().slice(0, 60);
-      if (seen.has(key)) continue;
-      seen.add(key);
-      mined.push({ text: t, source: src.label, status: detectStatus(s) });
+      last = add(t, src.label, s, last);
     }
   }
 
@@ -234,11 +289,27 @@ export function buildCurrentStateSection(input: CurrentStateInput): string {
     return `<span class="cs-cite">${i + 1}</span>`;
   };
 
+  /** One claim, one citation marker — several sources read as "1, 2". */
+  const citeAll = (primary: string, extra?: string[]): string => {
+    const seenSrc: string[] = [];
+    for (const s of [primary, ...(extra ?? [])]) {
+      const clean = (s || "Session research").trim();
+      if (clean && !seenSrc.includes(clean)) seenSrc.push(clean);
+    }
+    const nums = seenSrc.map((s) => {
+      const clean = s;
+      let i = order.indexOf(clean);
+      if (i === -1) i = order.push(clean) - 1;
+      return i + 1;
+    });
+    return `<span class="cs-cite">${nums.join(", ")}</span>`;
+  };
+
   const statusPhrase = (s: VerificationStatus): string =>
     s ? ` <span class="cs-status">(${s})</span>` : "";
 
   const sentence = (t: string): string => {
-    const trimmed = t.trim();
+    const trimmed = stripTrailingCitation(t.trim());
     return trimmed.replace(/[\s,;:.!?]+$/, "");
   };
 
@@ -252,7 +323,7 @@ export function buildCurrentStateSection(input: CurrentStateInput): string {
         `<ul>${model.existing
           .map(
             (e) =>
-              `<li>${inlineMd(sentence(e.text))}${cite(e.source)}${statusPhrase(e.status)}.</li>`,
+              `<li>${inlineMd(sentence(e.text))}${citeAll(e.source, e.extraSources)}${statusPhrase(e.status)}.</li>`,
           )
           .join("")}</ul>`,
       )
