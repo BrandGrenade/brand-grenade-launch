@@ -108,8 +108,31 @@ function tidySentence(s: string): string {
       .replace(/^[#>*\-—•\s]+/, "")
       .replace(/[#*_`|]/g, "")
       .replace(/\s+/g, " "),
-  );
+  )
+    // Stripping "Note:" / "Source:" labels can leave an orphaned leading
+    // fragment such as ".: " — never let that reach the page.
+    .replace(/^[\s.,;:•\-—]+/, "")
+    .trim();
   return cleaned.replace(/^[a-z]/, (c) => c.toUpperCase());
+}
+
+/**
+ * A sentence that only certifies another claim ("Confirmed by multiple
+ * sources…", "Verified against…") has no subject of its own. It must never
+ * become its own bullet: it is folded onto the claim it verifies, or dropped.
+ */
+function isVerificationFragment(s: string): boolean {
+  return /^(?:confirmed|verified|corroborated|cross[-\s]?checked|substantiated|re[-\s]?confirmed|checked|sourced|supported)\b/i.test(
+    s.trim(),
+  );
+}
+
+/** Trailing raw citation digits from the source must not collide with ours. */
+function stripTrailingCitation(s: string): string {
+  return s
+    .replace(/[\u00B2\u00B3\u00B9\u2070-\u209F]+/g, "")
+    .replace(/[\s,;:.]*\[?\d{1,2}\]?$/, "")
+    .trim();
 }
 
 function sentences(text: string): string[] {
