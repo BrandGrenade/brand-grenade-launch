@@ -222,6 +222,13 @@ export function deriveCurrentState(input: CurrentStateInput): CurrentStateModel 
     last = null;
     for (const s of sentences(src.text)) {
       const t = tidySentence(s);
+      if (!t) continue;
+      // Verification notes are folded onto the claim above before any of the
+      // activity filters, which would otherwise discard the note silently.
+      if (isVerificationFragment(t)) {
+        add(t, src.label, s, last);
+        continue;
+      }
       if (t.length < 60 || t.length > 340) continue;
       if (!ACTIVITY_RE.test(t)) continue;
       if (NOT_ACTIVITY_RE.test(t)) continue;
