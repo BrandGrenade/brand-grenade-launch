@@ -187,25 +187,45 @@ export function deriveCurrentState(input: CurrentStateInput): CurrentStateModel 
   const mined: CurrentStateFact[] = [];
   const seen = new Set<string>();
 
-  for (const { text, source } of input.knownActivity ?? []) {
-    const clean = tidySentence(text ?? "");
-    const key = clean.toLowerCase().slice(0, 60);
-    if (!clean || seen.has(key)) continue;
+  /**
+   * A verification-only fragment is folded onto the claim immediately above
+   * it — its source becomes a second citation on that claim. With no parent
+   * claim it is dropped outright: never rendered as a headless bullet.
+   */
+  const add = (text: string, source: string, raw: string, parent: CurrentStateFact | null) => {
+    if (!text) return null;
+    if (isVerificationFragment(text)) {
+      if (parent) {
+        const clean = (source || "").trim();
+        if (clean && clean !== parent.source && !(parent.extraSources ?? []).includes(clean)) {
+          parent.extraSources = [...(parent.extraSources ?? []), clean];
+        }
+        if (!parent.status) parent.status = detectStatus(raw);
+      }
+      return parent;
+    }
+    const key = text.toLowerCase().slice(0, 60);
+    if (seen.has(key)) return parent;
     seen.add(key);
-    mined.push({ text: clean, source, status: detectStatus(text ?? "") });
+    const fact: CurrentStateFact = { text, source, status: detectStatus(raw) };
+    mined.push(fact);
+    return fact;
+  };
+
+  let last: CurrentStateFact | null = null;
+  for (const { text, source } of input.knownActivity ?? []) {
+    last = add(tidySentence(text ?? ""), source, text ?? "", last);
   }
 
   for (const src of input.evidence) {
     if (!src?.text) continue;
+    last = null;
     for (const s of sentences(src.text)) {
       const t = tidySentence(s);
       if (t.length < 60 || t.length > 340) continue;
       if (!ACTIVITY_RE.test(t)) continue;
       if (NOT_ACTIVITY_RE.test(t)) continue;
-      const key = t.toLowerCase().slice(0, 60);
-      if (seen.has(key)) continue;
-      seen.add(key);
-      mined.push({ text: t, source: src.label, status: detectStatus(s) });
+      last = add(t, src.label, s, last);
     }
   }
 
