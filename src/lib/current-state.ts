@@ -289,11 +289,27 @@ export function buildCurrentStateSection(input: CurrentStateInput): string {
     return `<span class="cs-cite">${i + 1}</span>`;
   };
 
+  /** One claim, one citation marker — several sources read as "1, 2". */
+  const citeAll = (primary: string, extra?: string[]): string => {
+    const seenSrc: string[] = [];
+    for (const s of [primary, ...(extra ?? [])]) {
+      const clean = (s || "Session research").trim();
+      if (clean && !seenSrc.includes(clean)) seenSrc.push(clean);
+    }
+    const nums = seenSrc.map((s) => {
+      const clean = s;
+      let i = order.indexOf(clean);
+      if (i === -1) i = order.push(clean) - 1;
+      return i + 1;
+    });
+    return `<span class="cs-cite">${nums.join(", ")}</span>`;
+  };
+
   const statusPhrase = (s: VerificationStatus): string =>
     s ? ` <span class="cs-status">(${s})</span>` : "";
 
   const sentence = (t: string): string => {
-    const trimmed = t.trim();
+    const trimmed = stripTrailingCitation(t.trim());
     return trimmed.replace(/[\s,;:.!?]+$/, "");
   };
 
