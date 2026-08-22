@@ -323,7 +323,7 @@ export function buildCurrentStateSection(input: CurrentStateInput): string {
         `<ul>${model.existing
           .map(
             (e) =>
-              `<li>${inlineMd(sentence(e.text))}${cite(e.source)}${statusPhrase(e.status)}.</li>`,
+              `<li>${inlineMd(sentence(e.text))}${citeAll(e.source, e.extraSources)}${statusPhrase(e.status)}.</li>`,
           )
           .join("")}</ul>`,
       )
