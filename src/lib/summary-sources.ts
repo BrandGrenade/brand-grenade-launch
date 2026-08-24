@@ -391,7 +391,7 @@ export interface SelectedDetonation {
 /**
  * The Stage 18 Detonation the session actually selected, read whole.
  *
- * Sessions that ran before the Creative Engine existed have no locked big
+ * Sessions that ran before the Creative Stimulus Engine existed have no locked big
  * idea; their creative decision is the selected Detonation. Section 17 falls
  * back to this so the document states what was actually chosen rather than
  * printing an empty section.

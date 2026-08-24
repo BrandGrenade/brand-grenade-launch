@@ -225,7 +225,7 @@ export const runStage12 = createServerFn({ method: "POST" })
       const { prefix, suffix } = buildFeedbackInjection({
         feedback,
         previousOutput,
-        stageLabel: "Stage 12 — Strategic Master Propositions",
+        stageLabel: "Stage 12 — Single-Minded Propositions",
       });
       userMessage = `${prefix}${userMessage}${suffix}`;
     }

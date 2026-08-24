@@ -434,7 +434,7 @@ export const Route = createFileRoute("/pipeline")({
   ),
   head: () => ({
     meta: [
-      { title: "Strategy Room — Brand Grenade" },
+      { title: "Strategy Pipeline — Brand Grenade" },
       {
         name: "description",
         content:
@@ -2676,7 +2676,7 @@ function PipelineView() {
     return null;
   })();
   const nextStageStatus: StageStatus | null = nextStage ? statuses[nextStage.id] : null;
-  // Stage 15 is the persisted boundary between the Strategy Room and Phase 2.
+  // Stage 15 is the persisted boundary between the Strategy Pipeline and Phase 2.
   // Do not gate this transition on every in-memory sidebar status: synthetic
   // rows such as 08B can remain pending after reload even when the database
   // proves the strategy and all Phase 2 work are complete.
@@ -2686,7 +2686,7 @@ function PipelineView() {
 
   // Dynamic document title: "[Brand] — Stage X — Brand Grenade"
   useEffect(() => {
-    document.title = `${brandLabel} Strategy Room — Stage ${Math.max(1, session?.current_stage ?? currentMainNumber)} — Brand Grenade`;
+    document.title = `${brandLabel} Strategy Pipeline — Stage ${Math.max(1, session?.current_stage ?? currentMainNumber)} — Brand Grenade`;
   }, [brandLabel, currentMainNumber, session?.current_stage]);
 
   // Keyboard shortcut: Cmd/Ctrl+Enter confirms standard checkpoints.
@@ -3659,7 +3659,7 @@ function Breadcrumb({
         <span>→</span>
         <span className="text-text-secondary truncate">{brand}</span>
         <span>→</span>
-        <span>Strategy Room</span>
+        <span>Strategy Pipeline</span>
       </nav>
 
       <div className="ml-4 flex shrink-0 items-center gap-2">
@@ -5094,7 +5094,7 @@ function BottomBar({
   onViewFinal: () => void;
 }) {
   const continueLabel = pipelineComplete
-    ? "Begin Phase 2 →"
+    ? "Begin Brand Detonation →"
     : nextStage
       ? `Continue to Stage ${nextStage.number} →`
       : "Continue →";

@@ -203,7 +203,7 @@ export function CreativeEngineDeliverables({
 
   return (
     <div id="creative-engine">
-      {subhead("Creative Engine — Room 04")}
+      {subhead("Creative Stimulus Engine — Room 04")}
       <div
         style={{
           display: "grid",

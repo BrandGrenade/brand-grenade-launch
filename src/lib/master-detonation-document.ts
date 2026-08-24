@@ -55,7 +55,7 @@ export function buildMasterDetonationDocument(
 
   /* 04 — proposition: SMP the brief is written against. */
   const proposition =
-    (smp ? pullQuote(smp, { label: "Strategic Master Proposition" }) : "") +
+    (smp ? pullQuote(smp, { label: "Single-Minded Proposition" }) : "") +
     renderMarkdown(pick("smp")) +
     renderMarkdown(pick("response"));
 

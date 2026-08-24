@@ -251,7 +251,7 @@ function proposition(smp: string | null | undefined): string {
   const s = sanitise(smp);
   if (!s.trim()) return "";
   return `<div class="proposition">
-  <div class="label">Strategic Master Proposition</div>
+  <div class="label">Single-Minded Proposition</div>
   <div class="stmt">${escapeHtml(s)}</div>
 </div>`;
 }

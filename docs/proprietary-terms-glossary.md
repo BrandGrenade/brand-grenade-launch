@@ -15,7 +15,7 @@ Each entry: **Term** — plain-English definition — *Application* (where it ap
 - **Room 01 · Intelligence Lab** — finds and ranks strategic territory opportunities before a brief is written. *Homepage; produces Document 00A.*
 - **Room 02 · Briefing Room** — interrogates a client brief through a six-step diagnostic until it names a real tension. *Homepage; produces the Strategic Anchor.*
 - **Room 03 · Strategy Pipeline** — explores many strategic routes in parallel, then validates the survivor. *Homepage; Stages 1–16.*
-- **Room 04 · Creative Engine** — generates 37 divergent creative directions, scores and orchestrates the strongest into one campaign. *Homepage; Stages 17–22 plus the Stimulus Engine.*
+- **Room 04 · Creative Stimulus Engine** — generates 37 divergent creative directions, scores and orchestrates the strongest into one campaign. *Homepage; Stages 17–22 plus the Stimulus Engine.*
 - **The Bottleneck** — the named problem the platform claims to solve: strategy capacity, not strategy quality. *Homepage section.*
 - **The Rhythm (Generates → Judge → Validates → Approve → Orchestrate → Sign off)** — the coined human/machine cadence showing where human judgement stays. *Homepage "What doesn't change" section.*
 - **"Human judgement stays in the room. The heavy lifting doesn't."** — primary platform tagline. *Homepage hero.*
@@ -57,7 +57,7 @@ Each entry: **Term** — plain-English definition — *Application* (where it ap
 - **Checkpoint C** — "Strategy Review — Selection": the human's final proposition pick, whose rationale carries through every later stage. *Before Stage 13.*
 - **Checkpoint D** — the selected Detonation Territory sign-off. *Before Stage 18.*
 - **Confirm and Proceed / Return for Revision / Escalate to Human Review** — the coined three-way action set on every checkpoint. *All checkpoint UI.*
-- **Gate One / Gate Two** — the two creative-side human confirmation gates (individual directions; then the orchestrated cross-channel set). *Creative Engine.*
+- **Gate One / Gate Two** — the two creative-side human confirmation gates (individual directions; then the orchestrated cross-channel set). *Creative Stimulus Engine.*
 
 ---
 
@@ -171,7 +171,7 @@ Each entry: **Term** — plain-English definition — *Application* (where it ap
 
 ### Stage 8 — Proposition Generation
 
-- **SMP (Single-Minded / Strategic Master Proposition)** — the 4–12 word core strategic line; the spine of the entire platform. Translated to "strategic proposition" for clients.
+- **SMP (Single-Minded Proposition)** — canonical expansion; "Strategic Master Proposition" is retired. The 4–12 word core strategic line; the spine of the entire platform. Translated to "strategic proposition" for clients.
 - **CRAB** — the writing standard every proposition must pass: **C**lear, **R**elevant (fails the swap-the-brand-name test if not), **A**ppealing, **B**elievable.
 - **Active Promise** — the required proposition form: a directive the brand can act on, as opposed to a passive atmospheric observation, which auto-fails.
 - **Anchor / Anchor Gate** — the universal rule that no proposition may be output without naming one real, verifiable capability that defends it. Structurally enforced before an LLM gate.
@@ -368,9 +368,9 @@ Each entry: **Term** — plain-English definition — *Application* (where it ap
 
 ## 9. ROOM 04 — CREATIVE ENGINE / CREATIVE STIMULUS ENGINE
 
-- **Creative Stimulus Engine** — the internal name for the whole Room 04 ideation subsystem.
+- **Creative Stimulus Engine** — the canonical name for the whole Room 04 ideation subsystem, client-facing and internal alike.
 - **The 37 Lenses / 37-Lens Sweep** — the fixed library of named creative angles of attack, each generating a divergent big-idea direction. Includes: The Silent Proof, The Naked Truth, The Famous Face, The Impossible World, The Brand Anthem, The Living Series, The Undeniable Test, The Absent World, The Environment Is The Idea, The Living Character, The Iconic Property, The Child's Version, The Brand Story, The Enormous Problem, The Unsung Human, The Other Dimension, The Origin, The Cultural Signal, The Human Motivation, The Worthy Opponent, The Fear Inside, The Undeniable Fact, The Unexpected Endorsement, The Time Machine, The Rare Thing, The Bookmark Moment, The Human Object, The Broken Rule, The Solution First, The Sensory World, The Ignition Point, The Better World, The Misdirection, The Shock of the New, The Relief, The Hidden World, The Open Question.
-- **Big Idea Sweep** — the one-per-session pass where every lens answers the verbatim SMP.
+- **37-Lens Sweep** — the one-per-session pass where every lens answers the verbatim SMP.
 - **Root Tension** — the one-line, device-stripped statement of an idea's underlying human contradiction; the unit compared across the sweep.
 - **Idea Collision Check** — the per-idea test comparing its Root Tension against every prior idea, distinguishing shared underlying territory from merely similar subject matter.
 - **Idea Convergence Ledger** — the full-set second-pass audit re-running the collision check across all ideas at once, catching clusters the sequential check misses.
@@ -484,4 +484,4 @@ Each entry: **Term** — plain-English definition — *Application* (where it ap
 - **Headline Craft Library (Stage 18)** and **Channel Framework Library (Stage 21)** — resolved: both relocated to `docs/methodology-inventory.md` (P26, P27) as structured technique libraries, not vocabulary.
 - **"Jaguar pool"** does not exist as a platform concept in the code; "Jaguar" appears only as an example/test brand name. Likely a recollection from a session, not a term.
 - **Room numbering** — resolved: one convention, "Room NN · Name", defined in `src/lib/rooms.ts` and applied across the marketing site, the dashboard register and the walkthrough.
-- **Terms with two names** worth reconciling before any glossary is published: SMP (Single-Minded Proposition vs Strategic Master Proposition), Strategy Pipeline vs Strategy Room, Creative Engine vs Creative Stimulus Engine, Big Idea Sweep vs 37-Lens Sweep, Brand Detonation vs Phase 2.
+- **Terms with two names** — resolved. Canonical names now applied platform-wide: SMP = Single-Minded Proposition; Room 03 = Strategy Pipeline; Room 04 = Creative Stimulus Engine (the simpler client-facing "Creative Engine" has been merged into it); the sweep = 37-Lens Sweep; the Phase 2 output = Brand Detonation ("Phase 2" survives only as internal stage-sequencing shorthand, never as a product name).

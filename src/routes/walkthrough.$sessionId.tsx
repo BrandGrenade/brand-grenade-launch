@@ -456,13 +456,13 @@ function buildSteps(data: WalkthroughPayload): Step[] {
     ),
   });
 
-  // ── Room 04 — Creative Engine ────────────────────────────────────────
+  // ── Room 04 — Creative Stimulus Engine ────────────────────────────────────────
   if (data.creativeRun) {
     const run = data.creativeRun;
     const generated = data.directions.filter((d) => d.direction && d.direction.trim());
     steps.push({
       id: "room-04-sweep",
-      kicker: "Room 04 · Creative Engine",
+      kicker: "Room 04 · Creative Stimulus Engine",
       title: "The lens sweep",
       subtitle: `${generated.length} of ${data.directions.length} lenses generated for “${run.channel_name}”.`,
       body: (
@@ -516,7 +516,7 @@ function buildSteps(data: WalkthroughPayload): Step[] {
     if (run.convergence_ledger) {
       steps.push({
         id: "room-04-ledger",
-        kicker: "Room 04 · Creative Engine",
+        kicker: "Room 04 · Creative Stimulus Engine",
         title: "Collision ledger",
         subtitle: "Where ideas converged, and what was rebuilt as a result.",
         body: <JsonBlock value={run.convergence_ledger} />,
@@ -526,7 +526,7 @@ function buildSteps(data: WalkthroughPayload): Step[] {
     if (str(run.tiebreaker_output)) {
       steps.push({
         id: "room-04-tissue",
-        kicker: "Room 04 · Creative Engine",
+        kicker: "Room 04 · Creative Stimulus Engine",
         title: "Tissue Check",
         body: <Prose text={run.tiebreaker_output} />,
       });

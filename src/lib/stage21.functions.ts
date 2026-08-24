@@ -280,15 +280,15 @@ export const runStage21 = createServerFn({ method: "POST" })
     if (!s.stage_19_output) throw new Error("Stage 19 missing");
     if (!s.stage_20_output) throw new Error("Stage 20 missing");
     if (!s.stage_20b_output) throw new Error("Stage 20B (Channel Strategy and Audience Intelligence) must complete before Stage 21");
-    // The Creative Engine's locked big idea replaces the retired Stage 20L as
+    // The Creative Stimulus Engine's locked big idea replaces the retired Stage 20L as
     // the single decided idea every channel brief adapts.
     if (!s.locked_big_idea?.trim())
       throw new Error(
-        "A campaign big idea must be locked in the Creative Engine before Stage 21. Without it, each channel brief independently reinterprets the proposition.",
+        "A campaign big idea must be locked in the Creative Stimulus Engine before Stage 21. Without it, each channel brief independently reinterprets the proposition.",
       );
     if (!s.locked_campaign_line?.trim())
       throw new Error(
-        "A campaign line must be locked in the Creative Engine before Stage 21 can run.",
+        "A campaign line must be locked in the Creative Stimulus Engine before Stage 21 can run.",
       );
 
 

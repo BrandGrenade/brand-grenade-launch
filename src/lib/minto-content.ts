@@ -847,7 +847,7 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
       candidates.length === 1 ? "" : "s"
     } were generated and scored, and the recommendation above is the one that survived that process.</p>` +
     `<p>Nothing here is written from outside the session. Where a stage produced no output, the section says so rather than filling the gap.</p>` +
-    `<p>It serves one decision: whether to adopt the recommended Strategic Master Proposition and release it into creative development. The argument is ordered to that decision — recommendation first, evidence behind it, and the action requested at the end.</p>`;
+    `<p>It serves one decision: whether to adopt the recommended Single-Minded Proposition and release it into creative development. The argument is ordered to that decision — recommendation first, evidence behind it, and the action requested at the end.</p>`;
 
   /* 03 — business issue */
   const issueSource = blockAfter(s12, /SECTION\s+1\s*[—-]\s*PRESENTATION CONTEXT/i) || s1;
@@ -877,7 +877,7 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
       )
     : "";
   const proposition = smp
-    ? pullQuote(smp, { label: "Strategic Master Proposition" }) +
+    ? pullQuote(smp, { label: "Single-Minded Proposition" }) +
       (winner
         ? statGrid(
             DIMENSIONS.filter((d) => winner.dims[d] != null).map((d) => ({
@@ -1098,7 +1098,7 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
   const decisionAsk = smp
     ? `<p>The decision requested is a single one: adopt <strong>${escapeHtml(
         smp,
-      )}</strong> as the Strategic Master Proposition for ${escapeHtml(brand)}, and release it into creative development.</p>`
+      )}</strong> as the Single-Minded Proposition for ${escapeHtml(brand)}, and release it into creative development.</p>`
     : "";
   const next_step =
     decisionAsk +

@@ -303,7 +303,7 @@ const ROOMS: Room[] = [
   {
     id: "room-04",
     num: "ROOM 04",
-    name: "Creative Engine",
+    name: "Creative Stimulus Engine",
     desc: "Generates 37 divergent creative territories at once. Human judgement selects the field. The system then scores, develops and orchestrates the strongest ideas into one coherent campaign — built to the standard of the best creative teams, without fracturing into five different ideas under one client name.",
     facts: [
       "37 creative lenses",
@@ -385,7 +385,7 @@ function Index() {
             <span className="nav-arrow">→</span>
             <a href="#room-03">Strategy Pipeline</a>
             <span className="nav-arrow">→</span>
-            <a href="#room-04">Creative Engine</a>
+            <a href="#room-04">Creative Stimulus Engine</a>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
             <Link to="/login" className="nav-signin">

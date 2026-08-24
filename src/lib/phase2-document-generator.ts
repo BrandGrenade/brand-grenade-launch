@@ -569,7 +569,7 @@ export async function buildCompleteBundle(
   const tocHtml = `<div class="toc"><h3>Contents</h3>
     <ol>
       <li>Phase 1 — Brand Strategy Platform</li>
-      <li>Phase 2 — Brand Detonation</li>
+      <li>Brand Detonation</li>
     </ol>
   </div>`;
 

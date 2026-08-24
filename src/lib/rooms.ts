@@ -37,7 +37,7 @@ export const ROOM_DEFS: RoomDef[] = [
   { key: "intelligence", num: "01", name: "Intelligence Lab", anchor: "room-01" },
   { key: "briefing_room", num: "02", name: "Briefing Room", anchor: "room-02" },
   { key: "pipeline", num: "03", name: "Strategy Pipeline", anchor: "room-03" },
-  { key: "creative", num: "04", name: "Creative Engine", anchor: "room-04" },
+  { key: "creative", num: "04", name: "Creative Stimulus Engine", anchor: "room-04" },
 ];
 
 const BY_KEY = Object.fromEntries(ROOM_DEFS.map((r) => [r.key, r])) as Record<

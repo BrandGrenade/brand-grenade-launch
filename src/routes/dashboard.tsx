@@ -60,7 +60,7 @@ export const Route = createFileRoute("/dashboard")({
       {
         name: "description",
         content:
-          "One row per brand. Every Intelligence Lab analysis, Briefing Room session, Strategy Pipeline, and Phase 2 detonation for that brand, in one register.",
+          "One row per brand. Every Intelligence Lab analysis, Briefing Room session, Strategy Pipeline, and Brand Detonation for that brand, in one register.",
       },
     ],
   }),
@@ -262,7 +262,7 @@ function Dashboard() {
               <h1 className="text-h2 mt-3 text-text-primary">Your Brands</h1>
               <p className="text-body mt-2 text-text-secondary">
                 One row per brand. Every Intelligence Lab analysis, Briefing
-                Room session, Strategy Pipeline, and Phase 2 detonation lives here.
+                Room session, Strategy Pipeline, and Brand Detonation lives here.
               </p>
             </div>
             {isAdmin && (
@@ -616,7 +616,7 @@ const COLUMN_HEADERS = [
   roomLabel("intelligence"),
   roomLabel("briefing_room"),
   roomLabel("pipeline"),
-  "Phase 2",
+  "Brand Detonation",
   roomLabel("creative"),
   "Deliverables",
   "",
@@ -1159,7 +1159,7 @@ const SYSTEM_SECTION_TITLE: Record<SystemKey, string> = {
   intelligence: roomLabel("intelligence"),
   briefing_room: roomLabel("briefing_room"),
   pipeline: roomLabel("pipeline"),
-  phase_2: "Phase 2 — Detonation",
+  phase_2: "Brand Detonation",
   creative: "Creative Stimulus Engine",
 };
 
