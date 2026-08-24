@@ -171,7 +171,7 @@ Each entry: **Term** — plain-English definition — *Application* (where it ap
 
 ### Stage 8 — Proposition Generation
 
-- **SMP (Single-Minded / Single-Minded Proposition)** — the 4–12 word core strategic line; the spine of the entire platform. Translated to "strategic proposition" for clients.
+- **SMP (Single-Minded Proposition)** — canonical expansion; "Strategic Master Proposition" is retired. The 4–12 word core strategic line; the spine of the entire platform. Translated to "strategic proposition" for clients.
 - **CRAB** — the writing standard every proposition must pass: **C**lear, **R**elevant (fails the swap-the-brand-name test if not), **A**ppealing, **B**elievable.
 - **Active Promise** — the required proposition form: a directive the brand can act on, as opposed to a passive atmospheric observation, which auto-fails.
 - **Anchor / Anchor Gate** — the universal rule that no proposition may be output without naming one real, verifiable capability that defends it. Structurally enforced before an LLM gate.
@@ -368,7 +368,7 @@ Each entry: **Term** — plain-English definition — *Application* (where it ap
 
 ## 9. ROOM 04 — CREATIVE ENGINE / CREATIVE STIMULUS ENGINE
 
-- **Creative Stimulus Engine** — the internal name for the whole Room 04 ideation subsystem.
+- **Creative Stimulus Engine** — the canonical name for the whole Room 04 ideation subsystem, client-facing and internal alike.
 - **The 37 Lenses / 37-Lens Sweep** — the fixed library of named creative angles of attack, each generating a divergent big-idea direction. Includes: The Silent Proof, The Naked Truth, The Famous Face, The Impossible World, The Brand Anthem, The Living Series, The Undeniable Test, The Absent World, The Environment Is The Idea, The Living Character, The Iconic Property, The Child's Version, The Brand Story, The Enormous Problem, The Unsung Human, The Other Dimension, The Origin, The Cultural Signal, The Human Motivation, The Worthy Opponent, The Fear Inside, The Undeniable Fact, The Unexpected Endorsement, The Time Machine, The Rare Thing, The Bookmark Moment, The Human Object, The Broken Rule, The Solution First, The Sensory World, The Ignition Point, The Better World, The Misdirection, The Shock of the New, The Relief, The Hidden World, The Open Question.
 - **37-Lens Sweep** — the one-per-session pass where every lens answers the verbatim SMP.
 - **Root Tension** — the one-line, device-stripped statement of an idea's underlying human contradiction; the unit compared across the sweep.
@@ -484,4 +484,4 @@ Each entry: **Term** — plain-English definition — *Application* (where it ap
 - **Headline Craft Library (Stage 18)** and **Channel Framework Library (Stage 21)** — resolved: both relocated to `docs/methodology-inventory.md` (P26, P27) as structured technique libraries, not vocabulary.
 - **"Jaguar pool"** does not exist as a platform concept in the code; "Jaguar" appears only as an example/test brand name. Likely a recollection from a session, not a term.
 - **Room numbering** — resolved: one convention, "Room NN · Name", defined in `src/lib/rooms.ts` and applied across the marketing site, the dashboard register and the walkthrough.
-- **Terms with two names** worth reconciling before any glossary is published: SMP (Single-Minded Proposition vs Single-Minded Proposition), Strategy Pipeline vs Strategy Pipeline, Creative Stimulus Engine vs Creative Stimulus Engine, 37-Lens Sweep vs 37-Lens Sweep, Brand Detonation vs Phase 2.
+- **Terms with two names** — resolved. Canonical names now applied platform-wide: SMP = Single-Minded Proposition; Room 03 = Strategy Pipeline; Room 04 = Creative Stimulus Engine (the simpler client-facing "Creative Engine" has been merged into it); the sweep = 37-Lens Sweep; the Phase 2 output = Brand Detonation ("Phase 2" survives only as internal stage-sequencing shorthand, never as a product name).
