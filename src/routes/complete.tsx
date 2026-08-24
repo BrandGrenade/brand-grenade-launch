@@ -1552,7 +1552,7 @@ function Phase2Deliverables({ session }: { session: SessionRow }) {
         fontSize: 13, fontWeight: 700, marginBottom: 8,
       }}>BRAND DETONATION</div>
       <p className="text-body-sm" style={{ color: "#8B8680", marginBottom: 16 }}>
-        Phase 2 deliverables. Click any card to open and save as PDF.
+        Brand Detonation deliverables. Click any card to open and save as PDF.
       </p>
 
       {showStrategic && (

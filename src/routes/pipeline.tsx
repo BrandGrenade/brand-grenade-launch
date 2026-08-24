@@ -5094,7 +5094,7 @@ function BottomBar({
   onViewFinal: () => void;
 }) {
   const continueLabel = pipelineComplete
-    ? "Begin Phase 2 →"
+    ? "Begin Brand Detonation →"
     : nextStage
       ? `Continue to Stage ${nextStage.number} →`
       : "Continue →";

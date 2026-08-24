@@ -81,7 +81,7 @@ export const runStage16 = createServerFn({ method: "POST" })
     if (!phase2Ready && !hasCachedOutput) {
       throw new Error(
         "Document Assembly is locked until the full pipeline is complete. " +
-          "Finish Phase 2 (Stages 17–22), select a Creative Territory (Checkpoint D), " +
+          "Finish Brand Detonation (Stages 17–22), select a Creative Territory (Checkpoint D), " +
           "and select the Detonation (Checkpoint E) before generating any document format.",
       );
     }

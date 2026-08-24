@@ -57,7 +57,7 @@ export const Route = createFileRoute("/detonation")({
       {
         name: "description",
         content:
-          "Phase 2 of the Brand Grenade pipeline. Turn your validated brand strategy into a Master Detonation Brief.",
+          "Brand Detonation — Phase 2 of the Brand Grenade pipeline. Turn your validated brand strategy into a Master Detonation Brief.",
       },
     ],
   }),
