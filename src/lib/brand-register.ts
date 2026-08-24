@@ -357,7 +357,7 @@ function deriveCreative(
 
   if (!latestSessionId) {
     // No creative run yet. Every brand with any session still gets a way into
-    // its own Creative Engine room — never a dead dash, never a link that
+    // its own Creative Stimulus Engine room — never a dead dash, never a link that
     // lands somewhere else (the pipeline, Phase 2) instead.
     const p2 = sessions.find(
       (s) =>

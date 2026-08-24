@@ -20,13 +20,13 @@ export const Route = createFileRoute("/creative/$sessionId")({
   component: CreativeRoom,
   head: () => ({
     meta: [
-      { title: "Creative Engine Room — Brand Grenade" },
+      { title: "Creative Stimulus Engine Room — Brand Grenade" },
       {
         name: "description",
         content:
           "Three steps: run the 37-lens sweep, shortlist and lock one winning idea and line, then generate content creation input prompts and offline creative briefs.",
       },
-      { property: "og:title", content: "Creative Engine Room — Brand Grenade" },
+      { property: "og:title", content: "Creative Stimulus Engine Room — Brand Grenade" },
       {
         property: "og:description",
         content: "Raw creative stimulus, judged one idea at a time.",
@@ -151,7 +151,7 @@ function CreativeRoom() {
               marginTop: 22,
             }}
           >
-            Creative Engine
+            Creative Stimulus Engine
           </div>
           <h1 style={{ color: PAPER, fontSize: 34, lineHeight: 1.15, margin: "10px 0 12px", fontWeight: 600 }}>
             {loading ? <><Spinner /> Loading…</> : session?.brand_name || "Untitled session"}

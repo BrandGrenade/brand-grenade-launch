@@ -13,13 +13,13 @@ export const Route = createFileRoute("/creative/")({
   component: CreativeIndex,
   head: () => ({
     meta: [
-      { title: "Creative Engine — Brand Grenade" },
+      { title: "Creative Stimulus Engine — Brand Grenade" },
       {
         name: "description",
         content:
           "Sweep a channel brief through 37 creative lenses, then run Tissue Check, Gate One, orchestration and Gate Two.",
       },
-      { property: "og:title", content: "Creative Engine — Brand Grenade" },
+      { property: "og:title", content: "Creative Stimulus Engine — Brand Grenade" },
       {
         property: "og:description",
         content: "Raw creative stimulus, judged one idea at a time.",
@@ -45,7 +45,7 @@ function CreativeIndex() {
   useEffect(() => {
     let cancelled = false;
     void (async () => {
-      // Same rule as the dashboard's Creative Engine column: every session
+      // Same rule as the dashboard's Creative Stimulus Engine column: every session
       // the user can reach has a creative room, whether or not Stage 21 has
       // produced channel briefs yet. Filtering on stage_21_outputs here made
       // brands linked from the dashboard disappear from "All sessions".
@@ -86,7 +86,7 @@ function CreativeIndex() {
           className="text-mono"
           style={{ color: AMBER, fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase" }}
         >
-          Creative Engine
+          Creative Stimulus Engine
         </div>
         <h1
           style={{

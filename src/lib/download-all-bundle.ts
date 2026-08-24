@@ -283,9 +283,9 @@ export async function buildAndDownloadBundle(
     skipped.push(`${support}/Brand_Architecture.html`);
   }
 
-  // Creative Engine (Room 04) — the orchestrated, tool-specific prompt set and
+  // Creative Stimulus Engine (Room 04) — the orchestrated, tool-specific prompt set and
   // the lens sweep behind it. Resolved live from their own records.
-  onProgress?.("Building Creative Engine exports…");
+  onProgress?.("Building Creative Stimulus Engine exports…");
   try {
     const [{ getFullFinishedExport, getRawIdeaExportBatch }, { buildFullFinishedExport, buildRawIdeaBatchExport }] =
       await Promise.all([
@@ -305,10 +305,10 @@ export async function buildAndDownloadBundle(
     if (orch) {
       const data = await getFullFinishedExport({ data: { orchestrationId: orch.id } });
       const { html } = buildFullFinishedExport(data);
-      zip.file("Creative Engine/Orchestration_Prompt_Set.html", html);
-      included.push("Creative Engine/Orchestration_Prompt_Set.html");
+      zip.file("Creative Stimulus Engine/Orchestration_Prompt_Set.html", html);
+      included.push("Creative Stimulus Engine/Orchestration_Prompt_Set.html");
     } else {
-      skipped.push("Creative Engine/Orchestration_Prompt_Set.html");
+      skipped.push("Creative Stimulus Engine/Orchestration_Prompt_Set.html");
     }
 
     const { data: runs } = await supabase
@@ -330,27 +330,27 @@ export async function buildAndDownloadBundle(
         const data = await getRawIdeaExportBatch({ data: { directionIds: sweep } });
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { html } = buildRawIdeaBatchExport(data as any);
-        zip.file("Creative Engine/Lens_Sweep_Raw_Ideas.html", html);
-        included.push("Creative Engine/Lens_Sweep_Raw_Ideas.html");
+        zip.file("Creative Stimulus Engine/Lens_Sweep_Raw_Ideas.html", html);
+        included.push("Creative Stimulus Engine/Lens_Sweep_Raw_Ideas.html");
       } else {
-        skipped.push("Creative Engine/Lens_Sweep_Raw_Ideas.html");
+        skipped.push("Creative Stimulus Engine/Lens_Sweep_Raw_Ideas.html");
       }
       if (shortlist.length) {
         const data = await getRawIdeaExportBatch({ data: { directionIds: shortlist } });
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { html } = buildRawIdeaBatchExport(data as any);
-        zip.file("Creative Engine/Shortlist_Gate_One.html", html);
-        included.push("Creative Engine/Shortlist_Gate_One.html");
+        zip.file("Creative Stimulus Engine/Shortlist_Gate_One.html", html);
+        included.push("Creative Stimulus Engine/Shortlist_Gate_One.html");
       } else {
-        skipped.push("Creative Engine/Shortlist_Gate_One.html");
+        skipped.push("Creative Stimulus Engine/Shortlist_Gate_One.html");
       }
     } else {
-      skipped.push("Creative Engine/Lens_Sweep_Raw_Ideas.html");
-      skipped.push("Creative Engine/Shortlist_Gate_One.html");
+      skipped.push("Creative Stimulus Engine/Lens_Sweep_Raw_Ideas.html");
+      skipped.push("Creative Stimulus Engine/Shortlist_Gate_One.html");
     }
   } catch (e) {
-    console.error("[bundle] Creative Engine exports failed", e);
-    skipped.push("Creative Engine/Orchestration_Prompt_Set.html");
+    console.error("[bundle] Creative Stimulus Engine exports failed", e);
+    skipped.push("Creative Stimulus Engine/Orchestration_Prompt_Set.html");
   }
 
   // Creative Showcase — the locked idea presented whole (foundation, channel
@@ -363,10 +363,10 @@ export async function buildAndDownloadBundle(
     ]);
     const data = await getCreativeShowcase({ data: { sessionId: session.id } });
     const { html } = buildCreativeShowcase(data);
-    zip.file("Creative Engine/Full_Creative_Showcase.html", html);
-    included.push("Creative Engine/Full_Creative_Showcase.html");
+    zip.file("Creative Stimulus Engine/Full_Creative_Showcase.html", html);
+    included.push("Creative Stimulus Engine/Full_Creative_Showcase.html");
   } catch {
-    skipped.push("Creative Engine/Full_Creative_Showcase.html");
+    skipped.push("Creative Stimulus Engine/Full_Creative_Showcase.html");
   }
 
   onProgress?.("Compressing…");

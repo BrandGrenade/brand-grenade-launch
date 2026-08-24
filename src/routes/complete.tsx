@@ -993,7 +993,7 @@ function CompletePage() {
                     onClick={() => setModalStage(name)}
                     className="text-body-sm font-medium text-primary transition-colors hover:text-primary-hover"
                   >
-                    Open in Strategy Room
+                    Open in Strategy Pipeline
                   </button>
                 </li>
               ))}

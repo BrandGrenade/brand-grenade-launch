@@ -25,7 +25,7 @@ Headline numbers:
 | P6 | Stage 8 Disruption Engines | 3 | `src/lib/stage8-disruption-engines.ts:20–28` |
 | P7 | CRAB (Clear, Relevant, Appealing, Believable) | 4 | `src/lib/stage8-prompt.ts:11`; `src/lib/stage8-disruption-engines.ts:43–51`; `src/lib/stimulus/rating-prompts.ts:83`; `src/lib/stimulus/rating-score.ts:72`; `src/lib/stimulus/big-idea-prompt.ts:23` |
 | P8 | The Writer Standard / Craft Bar | — | `src/lib/stage8-disruption-engines.ts:43,77` |
-| P9 | 37-Lens Big Idea Sweep | 37 | `src/lib/stimulus/lenses.ts:33–435` |
+| P9 | 37-Lens Sweep | 37 | `src/lib/stimulus/lenses.ts:33–435` |
 | P10 | Eight-Dimension Creative Rating System | 8 | `src/lib/stimulus/rating-prompts.ts:71–93` |
 | P11 | Detonation Stress Test (Stage 18) | 8 | `src/lib/stage18-the-detonation-prompt.ts:49–89` |
 | P12 | Forcing Proposition Test (Stage 13 §2B) | — | `src/lib/stage13-prompt.ts:28–48` |

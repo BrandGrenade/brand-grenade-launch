@@ -1,4 +1,4 @@
-// Staleness of a Creative Engine channel run against the session's locked idea.
+// Staleness of a Creative Stimulus Engine channel run against the session's locked idea.
 //
 // A stimulus_run snapshots the Stage 21 channel brief at creation time. If the
 // session's locked big idea / campaign line changes afterwards, that snapshot —

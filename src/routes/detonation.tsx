@@ -2186,7 +2186,7 @@ function Stage21({ session, onChange, goNext }: { session: SessionRow; onChange:
           </div>
           <p className="text-body" style={{ color: "#EDE8E0", margin: "0 0 8px" }}>
             No channel briefs exist for this session. Stage 21 must be run here and finish
-            successfully before the Creative Engine (Room 04) Step 3 — Channel Adaptation — has
+            successfully before the Creative Stimulus Engine (Room 04) Step 3 — Channel Adaptation — has
             anything to work from.
           </p>
           <p className="text-body-sm" style={{ color: "#8B8680", margin: "0 0 18px" }}>
@@ -2274,7 +2274,7 @@ function Stage21({ session, onChange, goNext }: { session: SessionRow; onChange:
               }}
             >
               <div className="text-mono" style={{ color: AMBER, fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase" }}>
-                Creative Engine →
+                Creative Stimulus Engine →
               </div>
               <div className="text-body-sm" style={{ color: "#8B8680", marginTop: 6 }}>
                 The Creative Stimulus Engine now has its own room. It reads these channel briefs as

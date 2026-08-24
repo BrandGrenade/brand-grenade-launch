@@ -160,7 +160,7 @@ export async function runChannelFidelityCheck(args: {
         verdict: "drift" as const,
         score: 0,
         reasoning:
-          "No campaign big idea is locked for this session, so these briefs each interpreted the proposition independently. Lock one in the Creative Engine, then regenerate.",
+          "No campaign big idea is locked for this session, so these briefs each interpreted the proposition independently. Lock one in the Creative Stimulus Engine, then regenerate.",
         missing: [],
         misreadingEvidence: "",
         checkedAt,

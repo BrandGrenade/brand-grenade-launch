@@ -263,7 +263,7 @@ export function buildFullRunDocument(session: FullRunSession): string {
   const nextStep = `<div class="stage-block"><div class="part-label">NEXT STEP</div><h2>Decisive recommendation — next step</h2>
 ${
   smp
-    ? `<p>Adopt <strong>${escapeHtml(smp)}</strong> as the Strategic Master Proposition for ${escapeHtml(brand)} and release it into creative development. This record is the evidence behind that single decision.</p>`
+    ? `<p>Adopt <strong>${escapeHtml(smp)}</strong> as the Single-Minded Proposition for ${escapeHtml(brand)} and release it into creative development. This record is the evidence behind that single decision.</p>`
     : `<p>No proposition has been locked for this session. The next step is to complete proposition selection before this record is used to support a decision.</p>`
 }
 <p>Use this document for audit and interrogation of the reasoning. For the decision itself, take the Board Strategy Recommendation; for delivery, take the Consulting Delivery document.</p></div>`;

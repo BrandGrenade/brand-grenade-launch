@@ -1,6 +1,6 @@
 // Regression test for the Stage 18 line contamination bug.
 //
-// When the Creative Engine has locked a campaign line, the superseded Stage 18
+// When the Creative Stimulus Engine has locked a campaign line, the superseded Stage 18
 // detonation line and statement must NOT appear anywhere in the Stage 21 user
 // message. Labelling them "superseded" was not enough — briefs still leaked the
 // unvalidated line alongside the validated one.

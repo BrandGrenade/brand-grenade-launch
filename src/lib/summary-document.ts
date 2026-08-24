@@ -1130,7 +1130,7 @@ export function buildSummaryDocument(
 
   /* 17 — The winning creative idea (verbatim, complete) */
   const recognitionTest = extractRecognitionTest(str(session, "stage_22_output"));
-  // Sessions that predate the Creative Engine locked no idea. Their creative
+  // Sessions that predate the Creative Stimulus Engine locked no idea. Their creative
   // decision is the Detonation selected at Stage 18, which is then read here in
   // full — same template, same section, honestly labelled by its own source.
   const selectedDetonation =
@@ -1156,7 +1156,7 @@ export function buildSummaryDocument(
       }`
     : selectedDetonation
       ? `${p(
-          "This session was completed before the Creative Engine lens sweep existed, so no campaign line was locked in that stage. The creative decision on record is the Detonation selected at Stage 18, reproduced below in full and word for word.",
+          "This session was completed before the Creative Stimulus Engine lens sweep existed, so no campaign line was locked in that stage. The creative decision on record is the Detonation selected at Stage 18, reproduced below in full and word for word.",
         )}${
           selectedDetonation.line
             ? pullQuote(selectedDetonation.line, {
@@ -1184,7 +1184,7 @@ export function buildSummaryDocument(
         )}<h3>Why this Detonation serves the proposition</h3>${p(selectedDetonation.rationale)}`
       : lockedIdea || lockedLine
         ? p(
-            "The idea was locked by human decision at the Creative Engine gate without a recorded rating set; the judgement on record is the lock itself, together with the strategic compliance argument carried in the sections above.",
+            "The idea was locked by human decision at the Creative Stimulus Engine gate without a recorded rating set; the judgement on record is the lock itself, together with the strategic compliance argument carried in the sections above.",
           )
         : "";
 

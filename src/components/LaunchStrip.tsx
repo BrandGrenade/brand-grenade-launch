@@ -101,7 +101,7 @@ function useLatestCreativeSession(enabled: boolean): string | null {
 
 /**
  * Session the user is currently working in, read from the URL. Keeps the
- * Creative Engine button anchored to the brand on screen instead of jumping
+ * Creative Stimulus Engine button anchored to the brand on screen instead of jumping
  * to whichever session happened to be touched last.
  */
 function useSessionInContext(pathname: string, search: string): string | null {
@@ -199,7 +199,7 @@ export function LaunchStrip() {
               className={buttonClass}
               title="Open your most recent creative work"
             >
-              Creative Engine
+              Creative Stimulus Engine
             </Link>
           ) : (
             <button
@@ -207,9 +207,9 @@ export function LaunchStrip() {
               style={{ ...buttonStyle, cursor: "not-allowed", opacity: 0.55 }}
               className={buttonClass}
               disabled
-              title="No creative work started yet — open the Creative Engine room from the dashboard"
+              title="No creative work started yet — open the Creative Stimulus Engine room from the dashboard"
             >
-              Creative Engine
+              Creative Stimulus Engine
             </button>
           )}
         </div>
