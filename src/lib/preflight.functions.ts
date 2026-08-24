@@ -41,7 +41,8 @@ export type TierOneResult = {
 const FAST_CHECK_NAMES: Record<FastCheckId, string> = {
   db_connectivity: "Database Connectivity",
   claude_api_health: "Claude API Health",
-  stage9_edt_guard_prompt: "Stage 9 EDT Guard Present (v2.1 restored)",
+  stage9_edt_guard_prompt:
+    "Stage 9 EDT (Emotional Direction Test) Guard Present (v2.1 restored)",
   stage12_query_speed: "Stage 12 Database Query Speed",
   stage17_route_registration: "Stage 17 Route Registration",
 };

@@ -60,7 +60,7 @@ WHAT TO AVOID
 - Strategy-document language that sounds like a planning deck.
 - Propositions that float free of all three truth foundations.
 
-EDT GUARD — UNIVERSAL BANNED WORDS
+EDT GUARD (EMOTIONAL DIRECTION TEST) — UNIVERSAL BANNED WORDS
 The following words are UNIVERSALLY BANNED from every Stage 9 proposition, foundation, impossibility analysis, and every subsequent block of Stage 9 output (including the LEFT-OF-CENTRE ALTERNATIVES layer). No brief, no competitor situation, no engine, and no exemption may relax this list: ${UNIVERSAL_BANNED_STAGE9_LIST}. If a proposition contains any of these words in any inflected form, the proposition is REJECTED — regenerate from a different emotional direction.
 
 Separately, these words are CONDITIONALLY watched in the core Stage 9 generator: ${CONDITIONALLY_BANNED_STAGE9_LIST}. They are ALLOWED in this core layer by default — they are the natural verb-space for many categories — and are BANNED here only when a named competitor in this brief already owns one, or when the brief's exclusion list forbids it. The runtime sanitiser enforces this per brief.

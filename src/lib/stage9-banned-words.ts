@@ -13,7 +13,7 @@
 // UNIVERSAL — nothing relaxes these. Apply to the ENTIRE Stage 9 output,
 // including the left-of-centre Breach / Fuse / Flashpoint block.
 export const UNIVERSAL_BANNED_STAGE9 = [
-  // v2.1 EDT core — grievance language.
+  // v2.1 EDT (Emotional Direction Test) core — grievance language.
   // "permission" moved to CONDITIONAL (July 2026): the word is legitimate
   // strategic territory for challenger, autonomy, and unlock briefs and
   // must not be blanket-banned; competitor-owned / brief-excluded cases
