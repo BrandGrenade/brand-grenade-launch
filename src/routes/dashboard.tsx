@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { roomLabel } from "@/lib/rooms";
 import { useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import {
@@ -611,12 +612,12 @@ function PaginationBar({
 
 const COLUMN_HEADERS = [
   "Brand",
-  "Research Synthesiser",
-  "Intelligence",
-  "Briefing Room",
-  "Strategy Pipeline",
+  roomLabel("synthesiser"),
+  roomLabel("intelligence"),
+  roomLabel("briefing_room"),
+  roomLabel("pipeline"),
   "Phase 2",
-  "Creative Engine",
+  roomLabel("creative"),
   "Deliverables",
   "",
 ];
@@ -1155,9 +1156,9 @@ function DeliverablesCell({
 // ─── Expanded — historical runs ────────────────────────────────────
 
 const SYSTEM_SECTION_TITLE: Record<SystemKey, string> = {
-  intelligence: "Intelligence Lab",
-  briefing_room: "Briefing Room",
-  pipeline: "Strategy Pipeline",
+  intelligence: roomLabel("intelligence"),
+  briefing_room: roomLabel("briefing_room"),
+  pipeline: roomLabel("pipeline"),
   phase_2: "Phase 2 — Detonation",
   creative: "Creative Stimulus Engine",
 };
