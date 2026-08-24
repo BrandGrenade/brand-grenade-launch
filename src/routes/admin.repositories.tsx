@@ -391,7 +391,7 @@ function AllAccessPanel({ repos }: { repos: Repo[] }) {
                     {!r.is_active ? (
                       <span className="text-[10px] uppercase font-semibold text-text-secondary bg-card px-1.5 py-0.5 rounded">Disabled</span>
                     ) : isActive ? (
-                      <span className="text-[10px] uppercase font-semibold text-primary bg-primary px-1.5 py-0.5 rounded">Active</span>
+                      <span className="text-[10px] uppercase font-semibold text-primary-foreground bg-primary px-1.5 py-0.5 rounded">Active</span>
                     ) : (
                       <span className="text-[10px] uppercase font-semibold text-text-secondary bg-card px-1.5 py-0.5 rounded">Inactive</span>
                     )}
@@ -518,7 +518,7 @@ function RepositoryAdminPanel({ slug, repos }: { slug: Slug; repos: Repo[] }) {
                         </span>
                       )}
                       {visits > 1 && (
-                        <span className="text-[10px] uppercase font-semibold text-primary bg-primary px-1.5 py-0.5 rounded">
+                        <span className="text-[10px] uppercase font-semibold text-primary-foreground bg-primary px-1.5 py-0.5 rounded">
                           Returning
                         </span>
                       )}
@@ -687,7 +687,7 @@ function RepositoryAdminPanel({ slug, repos }: { slug: Slug; repos: Repo[] }) {
                     <td className="px-3 py-2 truncate max-w-xs">{l.document_title ?? ""}</td>
                     <td className="px-3 py-2">
                       {returning ? (
-                        <span className="text-[10px] uppercase font-semibold text-primary bg-primary px-1.5 py-0.5 rounded">
+                        <span className="text-[10px] uppercase font-semibold text-primary-foreground bg-primary px-1.5 py-0.5 rounded">
                           Returning
                         </span>
                       ) : (
