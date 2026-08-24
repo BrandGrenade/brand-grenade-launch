@@ -5,8 +5,8 @@ methodologies actually referenced in prompt text or evaluation logic.
 
 Headline numbers:
 
-- **53 distinct named methodologies / frameworks** (25 proprietary + 28 borrowed)
-- **102 individually named components** inside those frameworks (layers, engines,
+- **55 distinct named methodologies / frameworks** (27 proprietary + 28 borrowed)
+- **126 individually named components** inside those frameworks (layers, engines,
   lenses, types, dimensions, sections)
 - Stage 3 does **not** draw on a named library — it *generates* 3–6 bespoke
   strategic frameworks per run (`src/lib/stage3-prompt.ts:1`)
@@ -42,6 +42,8 @@ Headline numbers:
 | P23 | Fact Verification Safeguard | — | `src/lib/fact-verify.server.ts` |
 | P24 | Stage 9 Disposition (mandatory rejection rationale) | — | `src/lib/stage9-disposition.ts`; `src/lib/loc/stage9-disposition-apply.ts` |
 | P25 | Research Synthesiser six-category claim model | 6 | `src/lib/synthesiser/types.ts:32`; `src/components/intelligence/ResearchSynthesiserPanel.tsx:3` |
+| P26 | Headline Craft Library (Stage 18 springboard mechanics) | 8 | `src/lib/stage18-the-detonation-prompt.ts:125` |
+| P27 | Channel Framework Library (Stage 21 per-channel psychological frameworks) | 16 | `src/lib/stage21-channel-detonation-briefs-prompt.ts:26-72` |
 
 Supporting quality gates (counted inside the above, not separately): banned-word
 output gate (`src/lib/output-banned-word-gate.ts`), proposition quality gate
@@ -63,6 +65,22 @@ Mapping · 04 Permission and Vulnerability Assessment · 05 First-Mover
 Assessment · 06 Historical Validation · 07 Cultural Adaptation · 08 Audience and
 Commercial Assessment · 09 Measurement Framework · 10 Output
 (`src/lib/intelligence/system-prompt.ts:14–66`)
+
+### Named Headline Craft mechanics (P26)
+
+Relatability · Vernacular · Structural · Point Strengthening · Emotional Trigger
+· Rhythm and Sound · Subversion · Product and Brand Truth — each containing named
+sub-mechanics (e.g. The Pivot, The Gut Punch, Monosyllabic Power, The
+Anti-Headline) (`src/lib/stage18-the-detonation-prompt.ts:125`)
+
+### Named Channel Frameworks (P27)
+
+Mental Availability · Distinctive Asset Recognition · Agenda Setting · Fast
+Intuitive Processing · Liking and Social Proof · Parasocial Relationship Theory ·
+Jobs to be Done · Commitment and Consistency · Reciprocity and Scarcity · Loss
+Aversion · Choice Architecture · Mental Accounting · Peak End Rule · Endowment
+Effect · Self-Perception · Elaboration Likelihood
+(`src/lib/stage21-channel-detonation-briefs-prompt.ts:26-72`)
 
 ### Named LOC engines (P5)
 
@@ -112,8 +130,8 @@ Referenced in prompt text, mostly unattributed (mechanism named, source not).
 
 ## PART C — VERDICT ON THE "50+" CLAIM
 
-"50+" is **defensible and now evidenced**: 53 distinct named methodologies, of
-which 25 are proprietary to this platform. The Jaguar document's "41" is a
+"50+" is **defensible and now evidenced**: 55 distinct named methodologies, of
+which 27 are proprietary to this platform. The Jaguar document's "41" is a
 different, narrower metric — methodologies *invoked on that run* (28 pipeline
 stages + 13 LOC engines). Both are correct against their own definition; they
 should be labelled distinctly ("methodology library" vs "applied on this run").

@@ -194,7 +194,7 @@ Each entry: **Term** — plain-English definition — *Application* (where it ap
 - **Self-Executing vs Platform** — whether a proposition is already consumer-facing sharp, or strategically precise but needs a Phase 2 creative idea to come alive.
 - **The Five Stress Tests** — Tension Test, Exclusion Test, Standalone Test, Spoken Language Test, Category Convention Test.
 - **Anti-Convergence Rule** — no two propositions in the final set may share the same root tension, register or frame.
-- **EDT Guard** — the label on the universal banned-word enforcement block. *(Acronym expansion not documented anywhere in the codebase — flagged.)*
+- **EDT Guard** — Emotional Direction Test guard: the universal banned-word enforcement block in Stage 9 (apology / guilt / permission language banned outright). *Stage 9 prompt and preflight checks.*
 - **List A (Universal Banned)** — zero-exception banned words: apology, guilt, transformation, journey, authentic, unleash, elevate, redefine.
 - **List B (Conditionally Banned)** — allowed unless a named competitor owns them or the brief excludes them: reward, earn, deserve, permission.
 - **Candidate Disposition Ledger** — the closing table accounting for every candidate as SURVIVED / REBUILT INTO / REJECTED, so nothing is silently dropped.
@@ -319,7 +319,7 @@ Each entry: **Term** — plain-English definition — *Application* (where it ap
 - **The Courage Requirement** — the check for whether a Detonation creates strategic discomfort on presentation. Scored STRATEGIC DISCOMFORT PRESENT/ABSENT, with COURAGE REVIEW RECOMMENDED as the flag when absent.
 - **The Compounding Assessment** — binary classification as **CAMPAIGN** (burst lifecycle) or **PLATFORM** (compounds over time). Drives Stage 19's media logic.
 - **Detonation Status: ONE TRUTH / TWO TRUTHS / BRAND DNA DETONATION** — mirrors Territory Status at idea level.
-- **Creative Springboard / Headline Craft Library** — the named mechanic library turning a validated Detonation into craft inspiration (Relatability, Vernacular, Structural, Point Strengthening, Emotional Trigger, Rhythm and Sound, Subversion, Product and Brand Truth mechanics — containing named sub-mechanics such as The Pivot, The Gut Punch, Monosyllabic Power, The Anti-Headline). *Flagged: borderline against the excluded methodologies library.*
+- **Creative Springboard** — the Stage 18 step turning a validated Detonation into craft inspiration. *The named mechanic set it draws on (Headline Craft Library) now lives in `docs/methodology-inventory.md` (P26).*
 
 ### Stage 19 — Activation Architecture
 
@@ -354,7 +354,6 @@ Each entry: **Term** — plain-English definition — *Application* (where it ap
 ### Stage 21 — Channel Detonation Briefs
 
 - **Channel Detonation Briefs / Channel Briefing Engine** — per-channel creative briefs generated from the master brief.
-- **Channel Framework Library** — the fixed set of psychological frameworks assigned per channel cluster (Mental Availability, Distinctive Asset Recognition, Agenda Setting, Fast Intuitive Processing, Liking and Social Proof, Parasocial Relationship Theory, Jobs to be Done, Commitment and Consistency, Reciprocity and Scarcity, Loss Aversion, Choice Architecture, Mental Accounting, Peak End Rule, Endowment Effect, Self-Perception, Elaboration Likelihood). *Flagged: borderline against the excluded methodologies library.*
 - **The Locked Campaign Line / Carriage Check** — the mandatory verbatim reproduction of the locked line in every channel brief.
 - **Line Contamination** — internal QA term for the Detonation Line leaking or mutating across stages; guarded by the carriage check.
 - **Framework Activation Instruction** — the section naming the psychological mechanism at a touchpoint and translating it into a creative instruction.
@@ -481,8 +480,8 @@ Each entry: **Term** — plain-English definition — *Application* (where it ap
 
 ## 11. OPEN ITEMS / FLAGS FOR REVIEW
 
-- **EDT Guard** — the acronym is used as a label in Stage 9 but is never expanded anywhere in the codebase. Legacy term; needs a decision on expansion or removal.
-- **Headline Craft Library (Stage 18)** and **Channel Framework Library (Stage 21)** are themselves large named libraries. Included above, but flagged as borderline against the excluded 50+ methodologies list — confirm whether they belong here or there.
+- **EDT Guard** — resolved: EDT expands to Emotional Direction Test; the expansion is now written into the Stage 9 prompt heading and the preflight check labels.
+- **Headline Craft Library (Stage 18)** and **Channel Framework Library (Stage 21)** — resolved: both relocated to `docs/methodology-inventory.md` (P26, P27) as structured technique libraries, not vocabulary.
 - **"Jaguar pool"** does not exist as a platform concept in the code; "Jaguar" appears only as an example/test brand name. Likely a recollection from a session, not a term.
-- **Room numbering** — "Room 00", "Briefing Room" and "Room 04" appear literally in code; "Room 01/02/03" appear on the marketing site but not consistently as internal labels. Naming is not yet uniform across marketing and product.
+- **Room numbering** — resolved: one convention, "Room NN · Name", defined in `src/lib/rooms.ts` and applied across the marketing site, the dashboard register and the walkthrough.
 - **Terms with two names** worth reconciling before any glossary is published: SMP (Single-Minded Proposition vs Strategic Master Proposition), Strategy Pipeline vs Strategy Room, Creative Engine vs Creative Stimulus Engine, Big Idea Sweep vs 37-Lens Sweep, Brand Detonation vs Phase 2.
