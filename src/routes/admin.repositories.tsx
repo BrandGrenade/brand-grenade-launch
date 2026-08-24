@@ -767,8 +767,8 @@ function VisitorPasswordInline({ password }: { password: string | null }) {
 function PasswordReveal({ password, onDismiss }: { password: string; onDismiss: () => void }) {
   const [copied, setCopied] = useState(false);
   return (
-    <div className="mt-1 flex items-center gap-2 bg-primary border border-primary rounded px-3 py-2">
-      <span className="text-[13px] text-primary shrink-0">New password (shown once):</span>
+    <div className="mt-1 flex items-center gap-2 bg-primary-subtle border border-primary rounded px-3 py-2">
+      <span className="text-[13px] text-text-primary shrink-0">New password (shown once):</span>
       <code className="text-[13px] font-mono bg-card border border-primary rounded px-2 py-1 flex-1 truncate">
         {password}
       </code>
