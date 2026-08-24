@@ -290,7 +290,7 @@ const CHECK_NAMES: Record<FullCheckId, string> = {
   phase1a_chain_2_to_7: "2. Stages 2–7 — Phase 1A sequential chain",
   stage_8_checkpoint_b: "3. Stage 8 — Proposition + Checkpoint B confirmation",
   stage_prompts_integrity: "4. All 22 stage system prompts present & non-empty",
-  stage_9_edt_guard_output: "5. Stage 9 — EDT guard output sanitisation",
+  stage_9_edt_guard_output: "5. Stage 9 — EDT (Emotional Direction Test) guard output sanitisation",
   stage_10_11_evaluation_chain: "6. Stages 10–11 — Evaluation chain",
   stage_12_smp_selection: "7. Stage 12 — SMP selection + rationale persistence",
   phase1_completion_13_to_16: "8. Stages 13–15 — Phase 1 completion + Stage 16 gate correctly locked pre-Phase 2",

@@ -141,7 +141,7 @@ function buildSteps(data: WalkthroughPayload): Step[] {
     const r = data.synthesiser;
     steps.push({
       id: "room-00",
-      kicker: "Room 00",
+      kicker: "Room 00 · Research Synthesiser",
       title: "Research Synthesis",
       subtitle: "Source material reduced to verified claims before any strategy is written.",
       body: (
@@ -176,7 +176,7 @@ function buildSteps(data: WalkthroughPayload): Step[] {
     ];
     steps.push({
       id: "room-01",
-      kicker: "Room 01",
+      kicker: "Room 01 · Intelligence Lab",
       title: "Intelligence Lab",
       subtitle: "Ten layers of territory intelligence, ending in a single findings report.",
       body: (
@@ -205,7 +205,7 @@ function buildSteps(data: WalkthroughPayload): Step[] {
     const b = data.briefing;
     steps.push({
       id: "room-02",
-      kicker: "Room 02",
+      kicker: "Room 02 · Briefing Room",
       title: "Briefing Room",
       subtitle: "The governing tension the whole run is answerable to.",
       body: (
@@ -292,7 +292,7 @@ function buildSteps(data: WalkthroughPayload): Step[] {
   if (str(s.stage_9_output) || ledger.length) {
     steps.push({
       id: "stage-9",
-      kicker: "Room 03 · Strategy",
+      kicker: "Room 03 · Strategy Pipeline",
       title: "Stage 9 — Distinctiveness Check",
       subtitle: "Every candidate accounted for. Nothing is filtered silently.",
       body: (
@@ -328,7 +328,7 @@ function buildSteps(data: WalkthroughPayload): Step[] {
     ].filter((r): r is string => Boolean(r && r.trim()));
     steps.push({
       id: "stage-12",
-      kicker: "Room 03 · Strategy",
+      kicker: "Room 03 · Strategy Pipeline",
       title: "Stage 12 — Proposition Selection",
       subtitle: "The full pool that was on the table, and why one was carried forward.",
       body: (

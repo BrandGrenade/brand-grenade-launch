@@ -184,7 +184,7 @@ const CHECK_DEFS: ReadonlyArray<{ id: FullCheckId; name: string }> = [
   { id: "phase1a_chain_2_to_7", name: "Stages 2–7 — Phase 1A sequential chain" },
   { id: "stage_8_checkpoint_b", name: "Stage 8 — Proposition + Checkpoint B confirmation" },
   { id: "stage_prompts_integrity", name: "All 22 stage system prompts present & non-empty" },
-  { id: "stage_9_edt_guard_output", name: "Stage 9 — EDT guard output sanitisation" },
+  { id: "stage_9_edt_guard_output", name: "Stage 9 — EDT (Emotional Direction Test) guard output sanitisation" },
   { id: "stage_10_11_evaluation_chain", name: "Stages 10–11 — Evaluation chain" },
   { id: "stage_12_smp_selection", name: "Stage 12 — SMP selection + rationale persistence" },
   { id: "phase1_completion_13_to_16", name: "Stages 13–15 — Phase 1 completion + Stage 16 gate correctly locked pre-Phase 2" },

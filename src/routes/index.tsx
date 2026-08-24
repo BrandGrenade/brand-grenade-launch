@@ -185,27 +185,27 @@ const CSS = `
 const QUICK = [
   {
     id: "room-00",
-    num: "00 · RESEARCH SYNTHESISER — OPTIONAL",
+    num: "ROOM 00 · RESEARCH SYNTHESISER — OPTIONAL",
     desc: "Turn disparate research — scan data, sales data, qualitative, quantitative, desktop, industry reports — into one structured, attributed evidence base.",
   },
   {
     id: "room-01",
-    num: "01 · INTELLIGENCE LAB",
+    num: "ROOM 01 · INTELLIGENCE LAB",
     desc: "Turn research, culture, category and competitive signals into ranked strategic territory — before a brief is even written.",
   },
   {
     id: "room-02",
-    num: "02 · BRIEFING ROOM",
+    num: "ROOM 02 · BRIEFING ROOM",
     desc: "Interrogate the brief until it names the real tension, and answers it rather than avoiding it.",
   },
   {
     id: "room-03",
-    num: "03 · STRATEGY PIPELINE",
+    num: "ROOM 03 · STRATEGY PIPELINE",
     desc: "Explore every serious strategic route in parallel, then validate the one that survives against real precedent.",
   },
   {
     id: "room-04",
-    num: "04 · CREATIVE ENGINE",
+    num: "ROOM 04 · CREATIVE ENGINE",
     desc: "Generate 37 divergent creative territories, score them, and orchestrate the strongest approved ideas into one campaign.",
   },
 ];
@@ -227,7 +227,7 @@ const R = ({ n }: { n: number }) => (
 const ROOMS: Room[] = [
   {
     id: "room-00",
-    num: "ROOM 00 — OPTIONAL",
+    num: "ROOM 00 · RESEARCH SYNTHESISER — OPTIONAL",
     name: "Research Synthesiser",
     desc: (
       <>
