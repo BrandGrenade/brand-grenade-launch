@@ -208,6 +208,11 @@ export const generateDocument = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { sessionId, format, force } = data;
     await assertSessionAccess(sessionId, context.userId);
+    {
+      // A channel brief in fidelity BREAK must never reach a reader.
+      const { requireNoFidelityBreak } = await import("./stage21-fidelity-gate.server");
+      await requireNoFidelityBreak(sessionId, "Document generation");
+    }
     const urlCol = URL_COLS[format];
     const statusCol = STATUS_COLS[format];
 

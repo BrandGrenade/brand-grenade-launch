@@ -197,6 +197,10 @@ export const runStage22 = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await assertSessionAccess(data.sessionId, context.userId);
     await assertUpstreamStageOutput(data.sessionId, 22);
+    {
+      const { requireNoFidelityBreak } = await import("./stage21-fidelity-gate.server");
+      await requireNoFidelityBreak(data.sessionId, "Stage 22 (Brand Architecture)");
+    }
     const { data: session, error } = await supabaseAdmin
       .from("sessions")
       .select("brand_name, category, selected_smp, stage_5_output, stage_13_output, stage_14c_output, stage_17_selected_territory, stage_17b_output, stage_18_selected_detonation, locked_big_idea, locked_campaign_line, locked_big_idea_lens, stage_19_output, stage_20_output, truth_product, truth_consumer, truth_cultural, brand_intel_type, brand_intel_values, brand_intel_tone, brand_intel_assets, stage_22_output, stage_22_brand_architecture, stage_22_distinctive_assets")
@@ -300,6 +304,10 @@ export const retryStage22 = createServerFn({ method: "POST" })
   .inputValidator((i) => RetryInput.parse(i))
   .handler(async ({ data, context }) => {
     await assertSessionAccess(data.sessionId, context.userId);
+    {
+      const { requireNoFidelityBreak } = await import("./stage21-fidelity-gate.server");
+      await requireNoFidelityBreak(data.sessionId, "Stage 22 (Brand Architecture)");
+    }
     const { data: session, error } = await supabaseAdmin
       .from("sessions")
       .select("brand_name, category, selected_smp, stage_5_output, stage_13_output, stage_14c_output, stage_17_selected_territory, stage_17b_output, stage_18_selected_detonation, locked_big_idea, locked_campaign_line, locked_big_idea_lens, stage_19_output, stage_20_output, truth_product, truth_consumer, truth_cultural, brand_intel_type, brand_intel_values, brand_intel_tone, brand_intel_assets, stage_22_output, stage_22_brand_architecture, stage_22_distinctive_assets")
@@ -370,6 +378,10 @@ export const regenerateStage22 = createServerFn({ method: "POST" })
   .inputValidator((i) => z.object({ sessionId: z.string().uuid() }).parse(i))
   .handler(async ({ data, context }) => {
     await assertSessionAccess(data.sessionId, context.userId);
+    {
+      const { requireNoFidelityBreak } = await import("./stage21-fidelity-gate.server");
+      await requireNoFidelityBreak(data.sessionId, "Stage 22 (Brand Architecture)");
+    }
     // Clear existing outputs so the generation starts from scratch.
     await supabaseAdmin
       .from("sessions")
