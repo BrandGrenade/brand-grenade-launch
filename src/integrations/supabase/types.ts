@@ -939,6 +939,7 @@ export type Database = {
           stage_20l_output: string | null
           stage_21_error: string | null
           stage_21_fidelity: Json | null
+          stage_21_fidelity_override: Json | null
           stage_21_outputs: Json | null
           stage_22_brand_architecture: string | null
           stage_22_distinctive_assets: string | null
@@ -1126,6 +1127,7 @@ export type Database = {
           stage_20l_output?: string | null
           stage_21_error?: string | null
           stage_21_fidelity?: Json | null
+          stage_21_fidelity_override?: Json | null
           stage_21_outputs?: Json | null
           stage_22_brand_architecture?: string | null
           stage_22_distinctive_assets?: string | null
@@ -1313,6 +1315,7 @@ export type Database = {
           stage_20l_output?: string | null
           stage_21_error?: string | null
           stage_21_fidelity?: Json | null
+          stage_21_fidelity_override?: Json | null
           stage_21_outputs?: Json | null
           stage_22_brand_architecture?: string | null
           stage_22_distinctive_assets?: string | null

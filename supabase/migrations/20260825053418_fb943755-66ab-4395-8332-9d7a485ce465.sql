@@ -1,0 +1,1 @@
+ALTER TABLE public.sessions ADD COLUMN IF NOT EXISTS stage_21_fidelity_override jsonb;

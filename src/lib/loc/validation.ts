@@ -7,7 +7,7 @@
 // Weights (sum = 100):
 //   Fame                     30
 //   Truth Strength           20   (hard floor: >= 5)
-//   Competitive Impossibility 15  (hard floor: >= 5)
+//   Competitive Impossibility 15  (hard floor: >= 6 — Stage 10 canonical)
 //   Brand Permission         10
 //   Clean Air                10
 //   Commercial Precedent     5
@@ -49,7 +49,9 @@ export const DIMENSION_LABEL: Record<ValidationDimension, string> = {
 
 export const HARD_FLOORS: Partial<Record<ValidationDimension, number>> = {
   truth_strength: 5,
-  competitive_impossibility: 5,
+  // Aligned to the Stage 10 code-enforced floor (STAGE_10_FLOORS) — the two
+  // systems are presented as one framework and must eliminate identically.
+  competitive_impossibility: 6,
 };
 
 export type ValidationScore = {
@@ -99,7 +101,7 @@ You will be given up to 13 proposition candidates, each produced by a distinct L
 DIMENSIONS AND WEIGHTS
 1. Fame (weight 30) — Would this generate unpaid conversation, press, or cultural traction? 10 = category-defining; 0 = invisible.
 2. Truth Strength (weight 20) — Is the underlying human truth durable, specific, non-generic? 10 = undeniable; 0 = platitude. HARD FLOOR at 5.
-3. Competitive Impossibility (weight 15) — Could a direct competitor say this credibly next week? 10 = only this brand can own it; 0 = anyone could say it. HARD FLOOR at 5.
+3. Competitive Impossibility (weight 15) — Could a direct competitor say this credibly next week? 10 = only this brand can own it; 0 = anyone could say it. HARD FLOOR at 6.
 4. Brand Permission (weight 10) — Does the brand have credible right to make this claim today? 10 = obvious fit; 0 = would ring false.
 5. Clean Air (weight 10) — Is this territory unclaimed in the category? 10 = pristine; 0 = crowded.
 6. Commercial Precedent (weight 5) — Has anything like this ever paid off commercially in any category? 10 = strong precedent; 0 = no evidence it works.

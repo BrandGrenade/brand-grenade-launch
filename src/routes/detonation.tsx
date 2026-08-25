@@ -34,8 +34,10 @@ import {
   loadStage21,
   clearStage21,
   recheckStage21Fidelity,
+  overrideStage21FidelityBreak,
 } from "@/lib/stage21.functions";
 import type { FidelityReport as Stage21FidelityReport } from "@/lib/stage21-fidelity-types";
+import { fidelityBlockReason, type FidelityOverride } from "@/lib/stage21-fidelity-gate";
 import { runStage22, loadStage22, regenerateStage22 } from "@/lib/stage22.functions";
 
 
@@ -103,6 +105,7 @@ type SessionRow = {
   stage_20b_audience_input: Record<string, string> | null;
   stage_21_outputs: Record<string, string> | null;
   stage_21_fidelity: Stage21FidelityReport | null;
+  stage_21_fidelity_override?: FidelityOverride | null;
   stage_22_output: string | null;
   stage_22_brand_architecture: string | null;
   stage_22_distinctive_assets: string | null;
@@ -1940,13 +1943,19 @@ function getStage21OutputEntries(outputs: Record<string, string>) {
 // Expression. Judging only — it never rewrites a brief.
 function FidelityPanel({
   report,
+  override,
   onRecheck,
+  onOverride,
   busy,
 }: {
   report: Stage21FidelityReport | null;
+  override: FidelityOverride | null;
   onRecheck: () => void;
+  onOverride: (reason: string) => void;
   busy: boolean;
 }) {
+  const [overrideReason, setOverrideReason] = useState("");
+  const blocked = fidelityBlockReason(report, override);
   const colour = (v: string) => (v === "pass" ? AMBER : v === "drift" ? "#C81E1E" : "#C81E1E");
   const breaks = report?.results.filter((r) => r.verdict === "break").length ?? 0;
   const drifts = report?.results.filter((r) => r.verdict === "drift").length ?? 0;
@@ -1996,6 +2005,69 @@ function FidelityPanel({
         </div>
       ) : (
         <>
+          {blocked && (
+            <div
+              style={{
+                marginTop: 12,
+                padding: 12,
+                border: "1px solid #C81E1E",
+                borderRadius: 6,
+                backgroundColor: "#C81E1E12",
+              }}
+            >
+              <div
+                className="text-mono"
+                style={{ color: "#E5484D", fontSize: 10, letterSpacing: "0.14em", textTransform: "uppercase" }}
+              >
+                Progression blocked — human review required
+              </div>
+              <div className="text-body-sm" style={{ color: "#EDE8E0", marginTop: 8, lineHeight: 1.6 }}>
+                {blocked}
+              </div>
+              <textarea
+                value={overrideReason}
+                onChange={(e) => setOverrideReason(e.target.value)}
+                placeholder="Written reason for overriding this break (minimum 20 characters). This is recorded against the session."
+                rows={3}
+                className="text-body-sm"
+                style={{
+                  marginTop: 10,
+                  width: "100%",
+                  backgroundColor: "#0A0908",
+                  border: "1px solid #1C1A18",
+                  borderRadius: 6,
+                  color: "#EDE8E0",
+                  padding: 10,
+                }}
+              />
+              <button
+                type="button"
+                disabled={busy || overrideReason.trim().length < 20}
+                onClick={() => onOverride(overrideReason.trim())}
+                className="text-mono"
+                style={{
+                  marginTop: 8,
+                  background: "none",
+                  border: "1px solid #C81E1E",
+                  color: "#E5484D",
+                  padding: "6px 12px",
+                  borderRadius: 6,
+                  fontSize: 10,
+                  letterSpacing: "0.12em",
+                  textTransform: "uppercase",
+                  cursor: busy || overrideReason.trim().length < 20 ? "default" : "pointer",
+                  opacity: busy || overrideReason.trim().length < 20 ? 0.5 : 1,
+                }}
+              >
+                Record human override and unblock
+              </button>
+            </div>
+          )}
+          {!blocked && breaks > 0 && override && (
+            <div className="text-body-sm" style={{ color: "#8B8680", marginTop: 10, lineHeight: 1.6 }}>
+              Break overridden by human review on {new Date(override.at).toLocaleString()} — “{override.reason}”
+            </div>
+          )}
           <div className="text-body-sm" style={{ color: breaks > 0 ? "#E5484D" : "#8B8680", marginTop: 10 }}>
             {breaks > 0
               ? `${breaks} brief${breaks === 1 ? "" : "s"} broke away from the decided idea — regenerate ${breaks === 1 ? "it" : "them"} before anything downstream uses ${breaks === 1 ? "it" : "them"}.`
@@ -2047,8 +2119,12 @@ function Stage21({ session, onChange, goNext }: { session: SessionRow; onChange:
   const load = useServerFn(loadStage21);
   const clear = useServerFn(clearStage21);
   const recheck = useServerFn(recheckStage21Fidelity);
+  const overrideBreak = useServerFn(overrideStage21FidelityBreak);
   const [outputs, setOutputs] = useState<Record<string, string> | null>(session.stage_21_outputs);
   const [fidelity, setFidelity] = useState<Stage21FidelityReport | null>(session.stage_21_fidelity);
+  const [fidelityOverride, setFidelityOverride] = useState<FidelityOverride | null>(
+    session.stage_21_fidelity_override ?? null,
+  );
   const [fidelityBusy, setFidelityBusy] = useState(false);
   const [busy, setBusy] = useState(false);
   const [proceeding, setProceeding] = useState(false);
@@ -2058,6 +2134,9 @@ function Stage21({ session, onChange, goNext }: { session: SessionRow; onChange:
   const autoTriggeredRef = useRef(false);
 
   useEffect(() => { setFidelity(session.stage_21_fidelity); }, [session.stage_21_fidelity]);
+  useEffect(() => {
+    setFidelityOverride(session.stage_21_fidelity_override ?? null);
+  }, [session.stage_21_fidelity_override]);
 
   const handleRecheck = async () => {
     setFidelityBusy(true);
@@ -2065,9 +2144,25 @@ function Stage21({ session, onChange, goNext }: { session: SessionRow; onChange:
     try {
       const r = await recheck({ data: { sessionId: session.id } });
       setFidelity(r.fidelity as Stage21FidelityReport);
+      // A fresh check always invalidates any prior override.
+      setFidelityOverride(null);
       await onChange();
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Fidelity check failed");
+    } finally {
+      setFidelityBusy(false);
+    }
+  };
+
+  const handleOverride = async (reason: string) => {
+    setFidelityBusy(true);
+    setErr(null);
+    try {
+      const r = await overrideBreak({ data: { sessionId: session.id, reason } });
+      setFidelityOverride(r.override as FidelityOverride);
+      await onChange();
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Override failed");
     } finally {
       setFidelityBusy(false);
     }
@@ -2149,6 +2244,8 @@ function Stage21({ session, onChange, goNext }: { session: SessionRow; onChange:
     download(`${session.brand_name ?? "brand"}-channel-briefs.md`, combined);
   };
   const outputEntries = outputs ? getStage21OutputEntries(outputs) : [];
+
+  const fidelityBreakBlock = fidelityBlockReason(fidelity, fidelityOverride);
 
   const stage21BlockedReason = !session.stage_20_approved
     ? "Stage 20 must be approved before Stage 21 can run."
@@ -2238,7 +2335,13 @@ function Stage21({ session, onChange, goNext }: { session: SessionRow; onChange:
               );
             })}
           </div>
-          <FidelityPanel report={fidelity} onRecheck={handleRecheck} busy={fidelityBusy} />
+          <FidelityPanel
+            report={fidelity}
+            override={fidelityOverride}
+            onRecheck={handleRecheck}
+            onOverride={handleOverride}
+            busy={fidelityBusy}
+          />
 
           <div style={{ marginTop: 24, padding: 16, border: `1px solid ${AMBER}33`, borderRadius: 8, backgroundColor: "#0A0908" }}>
             <label htmlFor="stage21-audience-channel" className="text-mono" style={{ display: "block", color: AMBER, fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 8 }}>
@@ -2289,8 +2392,11 @@ function Stage21({ session, onChange, goNext }: { session: SessionRow; onChange:
               {busy ? <><Spinner /> Regenerating…</> : "Retry"}
             </AmberButton>
             <AmberButton variant="ghost" onClick={downloadAll}>Download All Channel Briefs</AmberButton>
-            <AmberButton onClick={handleProceed} disabled={proceeding}>
-              {proceeding ? <><Spinner /> Loading...</> : "Proceed to Stage 22"}
+            <AmberButton
+              onClick={handleProceed}
+              disabled={proceeding || fidelityBreakBlock !== null}
+            >
+              {proceeding ? <><Spinner /> Loading...</> : fidelityBreakBlock ? "Blocked — fidelity break" : "Proceed to Stage 22"}
             </AmberButton>
           </div>
 

@@ -241,7 +241,7 @@ async function checkAndSaveFidelity(
     const report = await runChannelFidelityCheck({ sessionId, leadExpression, outputs });
     await supabaseAdmin
       .from("sessions")
-      .update({ stage_21_fidelity: report as never })
+      .update({ stage_21_fidelity: report as never, stage_21_fidelity_override: null })
       .eq("id", sessionId);
     return report;
   } catch (e) {
@@ -382,10 +382,54 @@ export const clearStage21 = createServerFn({ method: "POST" })
     await assertSessionAccess(data.sessionId, context.userId);
     const { error } = await supabaseAdmin
       .from("sessions")
-      .update({ stage_21_outputs: null, stage_21_error: null, stage_21_fidelity: null })
+      .update({ stage_21_outputs: null, stage_21_error: null, stage_21_fidelity: null, stage_21_fidelity_override: null })
       .eq("id", data.sessionId);
     if (error) throw new Error(error.message);
     return { ok: true };
+  });
+
+/**
+ * Records a human override for an outstanding fidelity BREAK. This is the only
+ * way past the gate, it requires a written reason, and it is bound to the exact
+ * report it was granted against — a later re-check invalidates it.
+ */
+export const overrideStage21FidelityBreak = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) =>
+    z
+      .object({ sessionId: z.string().uuid(), reason: z.string().trim().min(20).max(2000) })
+      .parse(i),
+  )
+  .handler(async ({ data, context }) => {
+    await assertSessionAccess(data.sessionId, context.userId);
+    const { brokenChannels } = await import("./stage21-fidelity-gate");
+    const { data: row, error } = await supabaseAdmin
+      .from("sessions")
+      .select("stage_21_fidelity, stage_21_fidelity_override")
+      .eq("id", data.sessionId)
+      .single();
+    if (error || !row) throw new Error(error?.message ?? "Session not found");
+    const report = row.stage_21_fidelity as never as
+      | import("./stage21-fidelity-types").FidelityReport
+      | null;
+    const channels = brokenChannels(report);
+    if (!report || channels.length === 0)
+      throw new Error("There is no outstanding fidelity break to override.");
+
+    const override = {
+      kind: "stage_21_fidelity_override" as const,
+      reason: data.reason.trim(),
+      overriddenBy: context.userId,
+      channels,
+      reportCheckedAt: report.checkedAt,
+      at: new Date().toISOString(),
+    };
+    const { error: saveErr } = await supabaseAdmin
+      .from("sessions")
+      .update({ stage_21_fidelity_override: override as never })
+      .eq("id", data.sessionId);
+    if (saveErr) throw new Error(saveErr.message);
+    return { override };
   });
 
 /** Reads the stored fidelity report without re-running the check. */
@@ -396,7 +440,7 @@ export const loadStage21Fidelity = createServerFn({ method: "POST" })
     await assertSessionAccess(data.sessionId, context.userId);
     const { data: row, error } = await supabaseAdmin
       .from("sessions")
-      .select("stage_21_fidelity")
+      .select("stage_21_fidelity, stage_21_fidelity_override")
       .eq("id", data.sessionId)
       .single();
     if (error) throw new Error(error.message);
@@ -426,7 +470,7 @@ export const recheckStage21Fidelity = createServerFn({ method: "POST" })
     });
     const { error: saveErr } = await supabaseAdmin
       .from("sessions")
-      .update({ stage_21_fidelity: report as never })
+      .update({ stage_21_fidelity: report as never, stage_21_fidelity_override: null })
       .eq("id", data.sessionId);
     if (saveErr) throw new Error(saveErr.message);
     return { fidelity: report };
