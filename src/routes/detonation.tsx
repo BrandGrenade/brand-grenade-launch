@@ -2395,7 +2395,6 @@ function Stage21({ session, onChange, goNext }: { session: SessionRow; onChange:
             <AmberButton
               onClick={handleProceed}
               disabled={proceeding || fidelityBreakBlock !== null}
-              title={fidelityBreakBlock ?? undefined}
             >
               {proceeding ? <><Spinner /> Loading...</> : fidelityBreakBlock ? "Blocked — fidelity break" : "Proceed to Stage 22"}
             </AmberButton>
