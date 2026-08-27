@@ -482,12 +482,18 @@ function Index() {
                 </div>
               </div>
               <div className="hstat">
-                <div className="n">14</div>
+                <div className="n">
+                  {STRATEGY_SCORING_DIMENSIONS}
+                  <span>+{CREATIVE_SCORING_DIMENSIONS}</span>
+                </div>
                 <div className="l">
-                  Scoring dimensions applied across strategy and creative,
-                  before anything reaches a human for sign-off
+                  {STRATEGY_SCORING_DIMENSIONS} strategic scoring dimensions,{" "}
+                  {CREATIVE_SCORING_DIMENSIONS} creative scoring dimensions,
+                  plus dedicated validation rubrics — before anything reaches a
+                  human for sign-off
                 </div>
               </div>
+
               <div className="hstat">
                 <div className="n">23</div>
                 <div className="l">
