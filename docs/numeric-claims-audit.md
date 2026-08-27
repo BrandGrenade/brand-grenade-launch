@@ -63,3 +63,19 @@ Single sources of truth:
 No marketing surface or document template may introduce a new numeric claim as
 a literal. Add the figure to `platform-metrics.ts` (or the owning module) and
 import it.
+
+## Repositioning pass (marketing site rebuild)
+
+New derived constants in `platform-metrics.ts`: `GOVERNANCE_GATE_COUNT`,
+`HUMAN_CONFIRMATIONS_TYPICAL_RUN` (15, observed), `METHODOLOGY_COUNT` (55) with
+`METHODOLOGY_HEADLINE` ("50+"), `LATERAL_ENGINE_COUNT` (LOC engines + Stage 8
+disruption engines = 16), `PROCESSING_HOURS_MIN/MAX` (asserted, flagged in copy
+as observed rather than telemetry-aggregated).
+
+All new pages (`/demo`, `/for-cmos`, `/for-consultancies`, `/for-agencies`,
+`/methodology`, `/enterprise`) import these; no page states a numeric claim as
+a bare literal.
+
+Open discrepancy: `STRUCTURED_OUTPUT_COUNT` currently evaluates to the live
+appendix lengths in `minto-content.ts`, not the "23" quoted in the brief. The
+site shows the derived value.
