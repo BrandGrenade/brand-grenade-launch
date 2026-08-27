@@ -241,6 +241,41 @@ const QUICK = [
   },
 ];
 
+const OUTPUTS = [
+  {
+    title: "Board Strategy Recommendation",
+    desc: "The commercial case for the chosen proposition — validation, alternatives rejected, and what the business must change.",
+  },
+  {
+    title: "CMO Strategy & Creative Vision",
+    desc: "The strategic platform and creative world in a single CMO-ready view, ready to align leadership and agencies.",
+  },
+  {
+    title: "Complete Brand Strategy",
+    desc: "The full reasoning, every proposition considered, scoring, and the decision trail — one source document.",
+  },
+  {
+    title: "Agency Strategy/Creative Pitch",
+    desc: "A pitch-ready translation of the platform for agencies, partners, or new-market briefing.",
+  },
+  {
+    title: "Brand Workshop",
+    desc: "A facilitator guide, structure, and materials to land the strategy inside the organisation.",
+  },
+  {
+    title: "Creative Territories & Ideas",
+    desc: "The full 37-lens sweep, the shortlist, and the locked creative idea reproduced verbatim.",
+  },
+  {
+    title: "Channel Briefs",
+    desc: "A brief for every channel the strategy activates through, each bound to the same proposition and idea.",
+  },
+  {
+    title: "Creative/MarTech Prompts",
+    desc: "Execution prompts that keep the strategy coherent across production, automation, and Martech deployment.",
+  },
+];
+
 type Room = {
   id: string;
   num: string;
