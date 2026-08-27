@@ -20,6 +20,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as KpmgRouteImport } from './routes/kpmg'
 import { Route as IntelligenceRouteImport } from './routes/intelligence'
 import { Route as ForConsultanciesRouteImport } from './routes/for-consultancies'
+import { Route as ForCmosRouteImport } from './routes/for-cmos'
 import { Route as ForAgenciesRouteImport } from './routes/for-agencies'
 import { Route as EyRouteImport } from './routes/ey'
 import { Route as EnterpriseRouteImport } from './routes/enterprise'
@@ -120,6 +121,11 @@ const IntelligenceRoute = IntelligenceRouteImport.update({
 const ForConsultanciesRoute = ForConsultanciesRouteImport.update({
   id: '/for-consultancies',
   path: '/for-consultancies',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ForCmosRoute = ForCmosRouteImport.update({
+  id: '/for-cmos',
+  path: '/for-cmos',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ForAgenciesRoute = ForAgenciesRouteImport.update({
@@ -377,6 +383,7 @@ export interface FileRoutesByFullPath {
   '/enterprise': typeof EnterpriseRoute
   '/ey': typeof EyRoute
   '/for-agencies': typeof ForAgenciesRoute
+  '/for-cmos': typeof ForCmosRoute
   '/for-consultancies': typeof ForConsultanciesRoute
   '/intelligence': typeof IntelligenceRouteWithChildren
   '/kpmg': typeof KpmgRoute
@@ -433,6 +440,7 @@ export interface FileRoutesByTo {
   '/enterprise': typeof EnterpriseRoute
   '/ey': typeof EyRoute
   '/for-agencies': typeof ForAgenciesRoute
+  '/for-cmos': typeof ForCmosRoute
   '/for-consultancies': typeof ForConsultanciesRoute
   '/kpmg': typeof KpmgRoute
   '/login': typeof LoginRoute
@@ -489,6 +497,7 @@ export interface FileRoutesById {
   '/enterprise': typeof EnterpriseRoute
   '/ey': typeof EyRoute
   '/for-agencies': typeof ForAgenciesRoute
+  '/for-cmos': typeof ForCmosRoute
   '/for-consultancies': typeof ForConsultanciesRoute
   '/intelligence': typeof IntelligenceRouteWithChildren
   '/kpmg': typeof KpmgRoute
@@ -550,6 +559,7 @@ export interface FileRouteTypes {
     | '/enterprise'
     | '/ey'
     | '/for-agencies'
+    | '/for-cmos'
     | '/for-consultancies'
     | '/intelligence'
     | '/kpmg'
@@ -606,6 +616,7 @@ export interface FileRouteTypes {
     | '/enterprise'
     | '/ey'
     | '/for-agencies'
+    | '/for-cmos'
     | '/for-consultancies'
     | '/kpmg'
     | '/login'
@@ -661,6 +672,7 @@ export interface FileRouteTypes {
     | '/enterprise'
     | '/ey'
     | '/for-agencies'
+    | '/for-cmos'
     | '/for-consultancies'
     | '/intelligence'
     | '/kpmg'
@@ -721,6 +733,7 @@ export interface RootRouteChildren {
   EnterpriseRoute: typeof EnterpriseRoute
   EyRoute: typeof EyRoute
   ForAgenciesRoute: typeof ForAgenciesRoute
+  ForCmosRoute: typeof ForCmosRoute
   ForConsultanciesRoute: typeof ForConsultanciesRoute
   IntelligenceRoute: typeof IntelligenceRouteWithChildren
   KpmgRoute: typeof KpmgRoute
@@ -827,6 +840,13 @@ declare module '@tanstack/react-router' {
       path: '/for-consultancies'
       fullPath: '/for-consultancies'
       preLoaderRoute: typeof ForConsultanciesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/for-cmos': {
+      id: '/for-cmos'
+      path: '/for-cmos'
+      fullPath: '/for-cmos'
+      preLoaderRoute: typeof ForCmosRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/for-agencies': {
@@ -1269,6 +1289,7 @@ const rootRouteChildren: RootRouteChildren = {
   EnterpriseRoute: EnterpriseRoute,
   EyRoute: EyRoute,
   ForAgenciesRoute: ForAgenciesRoute,
+  ForCmosRoute: ForCmosRoute,
   ForConsultanciesRoute: ForConsultanciesRoute,
   IntelligenceRoute: IntelligenceRouteWithChildren,
   KpmgRoute: KpmgRoute,
