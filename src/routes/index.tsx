@@ -107,14 +107,15 @@ const CSS = `
 .bg-home .qcard .q-desc{font-size:13px;color:var(--smoke);line-height:1.55}
 
 /* Output ecosystem card grid */
-.bg-home .out-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--ash);border:1px solid var(--ash);margin-bottom:32px}
+.bg-home .out-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--ash);border:1px solid var(--ash);margin-bottom:32px}
 @media (max-width:900px){.bg-home .out-grid{grid-template-columns:1fr 1fr}}
 @media (max-width:560px){.bg-home .out-grid{grid-template-columns:1fr}}
 .bg-home .ocard{background:var(--void);padding:26px 22px;display:flex;flex-direction:column;gap:10px;transition:background .2s}
 .bg-home .ocard:hover{background:var(--ash)}
 .bg-home .ocard .o-title{font-size:15px;font-weight:600;color:var(--paper);line-height:1.35}
 .bg-home .ocard .o-desc{font-size:13px;color:var(--smoke);line-height:1.6}
-.bg-home .out-close{font-size:16px;font-weight:600;color:var(--paper);max-width:48ch;line-height:1.5}
+.bg-home .out-close{font-size:16px;font-weight:600;color:var(--paper);max-width:48ch;line-height:1.5;margin-top:34px}
+
 
 .bg-home .room{padding:56px 0;border-top:1px solid var(--ash);display:grid;grid-template-columns:64px 1fr 1fr;gap:32px}
 @media (max-width:820px){.bg-home .room{grid-template-columns:28px 1fr;gap:20px}.bg-home .room-proof{grid-column:2}}
@@ -243,38 +244,37 @@ const QUICK = [
 
 const OUTPUTS = [
   {
-    title: "Board Strategy Recommendation",
-    desc: "The commercial case for the chosen proposition — validation, alternatives rejected, and what the business must change.",
+    title: "BOARD",
+    lead: "The decision.",
+    desc: "Evidence-led recommendations built for the room that approves the direction.",
   },
   {
-    title: "CMO Strategy & Creative Vision",
-    desc: "The strategic platform and creative world in a single CMO-ready view, ready to align leadership and agencies.",
+    title: "CMO",
+    lead: "The story.",
+    desc: "Strategy and creative vision brought together to socialise the opportunity and align the organisation.",
   },
   {
-    title: "Complete Brand Strategy",
-    desc: "The full reasoning, every proposition considered, scoring, and the decision trail — one source document.",
+    title: "AGENCY",
+    lead: "The brief to make the work.",
+    desc: "A proposition-led strategy and creative platform built for the people who will develop the campaign.",
   },
   {
-    title: "Agency Strategy/Creative Pitch",
-    desc: "A pitch-ready translation of the platform for agencies, partners, or new-market briefing.",
+    title: "CREATIVE",
+    lead: "The territory and the idea.",
+    desc: "37 creative lenses explored, scored and developed into distinctive creative territories — then orchestrated into one coherent campaign.",
   },
   {
-    title: "Brand Workshop",
-    desc: "A facilitator guide, structure, and materials to land the strategy inside the organisation.",
+    title: "CHANNEL",
+    lead: "The expression.",
+    desc: "Channel-specific strategies and briefs that translate the campaign without losing the strategic or creative idea.",
   },
   {
-    title: "Creative Territories & Ideas",
-    desc: "The full 37-lens sweep, the shortlist, and the locked creative idea reproduced verbatim.",
-  },
-  {
-    title: "Channel Briefs",
-    desc: "A brief for every channel the strategy activates through, each bound to the same proposition and idea.",
-  },
-  {
-    title: "Creative/MarTech Prompts",
-    desc: "Execution prompts that keep the strategy coherent across production, automation, and Martech deployment.",
+    title: "EXECUTION",
+    lead: "The tools to make it happen.",
+    desc: "Detailed briefs, prompt sets and supporting outputs that carry the strategy through to the work.",
   },
 ];
+
 
 type Room = {
   id: string;
@@ -596,27 +596,33 @@ function Index() {
 
         {/* OUTPUT ECOSYSTEM */}
         <section className="section" id="outputs">
-          <div className="section-eyebrow">Output Ecosystem</div>
           <h2>
-            One strategic source of truth. Every output the organisation needs.
+            FROM STRATEGY TO THE WORK THAT MAKES IT HAPPEN.
           </h2>
           <p className="body">
-            A single run produces the complete set of downstream artefacts —
-            not slide decks, but decision-ready documents and execution-ready
-            briefs, all locked to the same strategy.
+            Brand Grenade doesn't end with a strategy document. Every run produces a connected suite of strategic, creative and executional deliverables - tailored to the people who need to use them. Board. CMO. Strategy team. Agency. Creative team. Channel teams. Same intelligence. Same strategic foundation. Different outputs for different decisions.
           </p>
           <div className="out-grid">
             {OUTPUTS.map((o) => (
               <div className="ocard" key={o.title}>
                 <div className="o-title">{o.title}</div>
-                <div className="o-desc">{o.desc}</div>
+                <div className="o-desc">
+                  <strong>{o.lead}</strong> {o.desc}
+                </div>
               </div>
             ))}
           </div>
+          <div className="callout">
+            <div className="c-title">ONE STRATEGIC SOURCE OF TRUTH. EVERYONE WORKING FROM IT.</div>
+            <div className="c-body">
+              Instead of a strategy disappearing into a deck and being reinterpreted by every team downstream, Brand Grenade carries the validated thinking through the entire process. Less translation. Less loss. More coherence. More usable work.
+            </div>
+          </div>
           <p className="out-close">
-            One strategy. Different outputs for everyone who has to act on it.
+            The strategy doesn't sit on a shelf. It becomes the system that drives the work.
           </p>
         </section>
+
 
         {/* THE BOTTLENECK */}
         <section className="section">
