@@ -19,6 +19,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as KpmgRouteImport } from './routes/kpmg'
 import { Route as IntelligenceRouteImport } from './routes/intelligence'
 import { Route as ForConsultanciesRouteImport } from './routes/for-consultancies'
+import { Route as ForAgenciesRouteImport } from './routes/for-agencies'
 import { Route as EyRouteImport } from './routes/ey'
 import { Route as DetonationRouteImport } from './routes/detonation'
 import { Route as DemoRouteImport } from './routes/demo'
@@ -112,6 +113,11 @@ const IntelligenceRoute = IntelligenceRouteImport.update({
 const ForConsultanciesRoute = ForConsultanciesRouteImport.update({
   id: '/for-consultancies',
   path: '/for-consultancies',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ForAgenciesRoute = ForAgenciesRouteImport.update({
+  id: '/for-agencies',
+  path: '/for-agencies',
   getParentRoute: () => rootRouteImport,
 } as any)
 const EyRoute = EyRouteImport.update({
@@ -357,6 +363,7 @@ export interface FileRoutesByFullPath {
   '/demo': typeof DemoRoute
   '/detonation': typeof DetonationRoute
   '/ey': typeof EyRoute
+  '/for-agencies': typeof ForAgenciesRoute
   '/for-consultancies': typeof ForConsultanciesRoute
   '/intelligence': typeof IntelligenceRouteWithChildren
   '/kpmg': typeof KpmgRoute
@@ -410,6 +417,7 @@ export interface FileRoutesByTo {
   '/demo': typeof DemoRoute
   '/detonation': typeof DetonationRoute
   '/ey': typeof EyRoute
+  '/for-agencies': typeof ForAgenciesRoute
   '/for-consultancies': typeof ForConsultanciesRoute
   '/kpmg': typeof KpmgRoute
   '/login': typeof LoginRoute
@@ -463,6 +471,7 @@ export interface FileRoutesById {
   '/demo': typeof DemoRoute
   '/detonation': typeof DetonationRoute
   '/ey': typeof EyRoute
+  '/for-agencies': typeof ForAgenciesRoute
   '/for-consultancies': typeof ForConsultanciesRoute
   '/intelligence': typeof IntelligenceRouteWithChildren
   '/kpmg': typeof KpmgRoute
@@ -521,6 +530,7 @@ export interface FileRouteTypes {
     | '/demo'
     | '/detonation'
     | '/ey'
+    | '/for-agencies'
     | '/for-consultancies'
     | '/intelligence'
     | '/kpmg'
@@ -574,6 +584,7 @@ export interface FileRouteTypes {
     | '/demo'
     | '/detonation'
     | '/ey'
+    | '/for-agencies'
     | '/for-consultancies'
     | '/kpmg'
     | '/login'
@@ -626,6 +637,7 @@ export interface FileRouteTypes {
     | '/demo'
     | '/detonation'
     | '/ey'
+    | '/for-agencies'
     | '/for-consultancies'
     | '/intelligence'
     | '/kpmg'
@@ -683,6 +695,7 @@ export interface RootRouteChildren {
   DemoRoute: typeof DemoRoute
   DetonationRoute: typeof DetonationRoute
   EyRoute: typeof EyRoute
+  ForAgenciesRoute: typeof ForAgenciesRoute
   ForConsultanciesRoute: typeof ForConsultanciesRoute
   IntelligenceRoute: typeof IntelligenceRouteWithChildren
   KpmgRoute: typeof KpmgRoute
@@ -781,6 +794,13 @@ declare module '@tanstack/react-router' {
       path: '/for-consultancies'
       fullPath: '/for-consultancies'
       preLoaderRoute: typeof ForConsultanciesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/for-agencies': {
+      id: '/for-agencies'
+      path: '/for-agencies'
+      fullPath: '/for-agencies'
+      preLoaderRoute: typeof ForAgenciesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/ey': {
@@ -1207,6 +1227,7 @@ const rootRouteChildren: RootRouteChildren = {
   DemoRoute: DemoRoute,
   DetonationRoute: DetonationRoute,
   EyRoute: EyRoute,
+  ForAgenciesRoute: ForAgenciesRoute,
   ForConsultanciesRoute: ForConsultanciesRoute,
   IntelligenceRoute: IntelligenceRouteWithChildren,
   KpmgRoute: KpmgRoute,
