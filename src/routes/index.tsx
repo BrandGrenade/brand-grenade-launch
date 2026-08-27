@@ -596,27 +596,33 @@ function Index() {
 
         {/* OUTPUT ECOSYSTEM */}
         <section className="section" id="outputs">
-          <div className="section-eyebrow">Output Ecosystem</div>
           <h2>
-            One strategic source of truth. Every output the organisation needs.
+            FROM STRATEGY TO THE WORK THAT MAKES IT HAPPEN.
           </h2>
           <p className="body">
-            A single run produces the complete set of downstream artefacts —
-            not slide decks, but decision-ready documents and execution-ready
-            briefs, all locked to the same strategy.
+            Brand Grenade doesn't end with a strategy document. Every run produces a connected suite of strategic, creative and executional deliverables - tailored to the people who need to use them. Board. CMO. Strategy team. Agency. Creative team. Channel teams. Same intelligence. Same strategic foundation. Different outputs for different decisions.
           </p>
           <div className="out-grid">
             {OUTPUTS.map((o) => (
               <div className="ocard" key={o.title}>
                 <div className="o-title">{o.title}</div>
-                <div className="o-desc">{o.desc}</div>
+                <div className="o-desc">
+                  <strong>{o.lead}</strong> {o.desc}
+                </div>
               </div>
             ))}
           </div>
+          <div className="callout">
+            <div className="c-title">ONE STRATEGIC SOURCE OF TRUTH. EVERYONE WORKING FROM IT.</div>
+            <div className="c-body">
+              Instead of a strategy disappearing into a deck and being reinterpreted by every team downstream, Brand Grenade carries the validated thinking through the entire process. Less translation. Less loss. More coherence. More usable work.
+            </div>
+          </div>
           <p className="out-close">
-            One strategy. Different outputs for everyone who has to act on it.
+            The strategy doesn't sit on a shelf. It becomes the system that drives the work.
           </p>
         </section>
+
 
         {/* THE BOTTLENECK */}
         <section className="section">
