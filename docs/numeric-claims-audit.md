@@ -36,12 +36,13 @@ Single sources of truth:
 
 | Claim | Location | Status | Source |
 |---|---|---|---|
-| "pipeline stages run" = 28 | `summary-document.ts` build band | **now derived** | `TOTAL_PIPELINE_STEPS` |
+| "pipeline stages run" | `summary-document.ts` build band | **now derived per session** | `countStagesRun(session)` — counts manifest steps with real output (26–28 on completed runs), capped at `TOTAL_PIPELINE_STEPS` (29) |
 | "human checkpoints signed off" = n/6 | `summary-document.ts` | **now derived** | `HUMAN_CHECKPOINT_COUNT` (gates A–F) |
 | "scoring dimensions applied" | `summary-document.ts` | **derived — relabelled** | `scoring.rows.length`; now reads "strategic scoring dimensions applied" so it can't be read as the platform total |
 | "creative lenses swept" fallback 37 | `summary-document.ts` | **now derived** | `extras.lensesSwept \|\| LENS_COUNT` |
 | "propositions considered" | `summary-document.ts` | **derived** | `extractPropositionsField().length` — Stage 12 shortlist (2–7 observed) |
-| "stages completed" = 28 | `exec-summary-sections.ts:867` | **derived** | `TOTAL_PIPELINE_STEPS` |
+| "stages completed" | `exec-summary-sections.ts` | **now derived per session** | `countStagesRun(session)`; the flat 28/29 figure is gone |
+| "pipeline steps" on `/methodology`, `/enterprise` | marketing pages | **derived + observed band** | `PIPELINE_STEPS_CLAIM` = "up to 29 … 26–28 (median 27)" |
 | "Stage 8 of 22" nav labels | `brand-register.ts`, `TopNav.tsx`, `pipeline.tsx` | **derived** | `NUMBERED_STAGE_COUNT` |
 | "six-dimension framework" prose (×3) | `summary-document.ts`, `minto-content.ts` | **constant-ok** | Matches Stage 10 rubric |
 | "composite /100", "/10" score suffixes | `minto-content.ts`, `doc-00A-minto.ts` | **constant-ok** | Rubric scale definitions |
