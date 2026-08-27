@@ -13,7 +13,7 @@ export const Route = createFileRoute("/deck")({
     <RepositoryView
       slug="deck"
       title="Brand Grenade — Platform Overview"
-      intro="This is the complete Brand Grenade platform overview — the world's first complete brand strategy, creative intelligence, and campaign execution system. Four connected rooms. One AI-governed methodology. One audit trail from research to execution."
+      intro="This is the complete Brand Grenade platform overview — the world's first complete brand strategy, creative development, and campaign execution system. Four connected rooms. One AI-governed methodology. One audit trail from research to execution."
     />
   ),
 });

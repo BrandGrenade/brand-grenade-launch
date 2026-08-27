@@ -1,5 +1,5 @@
 /**
- * THE Brand Strategy and Creative Intelligence Summary builder.
+ * THE Brand Strategy and Creative Development Summary builder.
  *
  * One canonical builder, one 21-section spec, every session. Nothing in here
  * is brand-specific: every value is read from the session row and the creative
@@ -1368,21 +1368,21 @@ export function buildSummaryDocument(
     },
     {
       index: "16",
-      kicker: "Creative intelligence",
+      kicker: "Creative development",
       title: "The creative sweep",
       lede: "The full creative search: every lens applied, every direction generated, and the shortlist that survived rating.",
       body: sweepHtml,
     },
     {
       index: "17",
-      kicker: "Creative intelligence",
+      kicker: "Creative development",
       title: "The winning creative idea",
       lede: "The locked idea, reproduced in full and word for word as it was written and approved.",
       body: creativeHtml,
     },
     {
       index: "18",
-      kicker: "Creative intelligence",
+      kicker: "Creative development",
       title: "Why this idea won",
       lede: "The judgement recorded against the winning idea at the point it was locked.",
       body: whyHtml,
@@ -1425,8 +1425,8 @@ export function buildSummaryDocument(
   const body = [
     cover({
       brand: "BRAND GRENADE",
-      label: "Brand Strategy and Creative Intelligence Summary",
-      title: `${brand} — Brand Strategy and Creative Intelligence Summary`,
+      label: "Brand Strategy and Creative Development Summary",
+      title: `${brand} — Brand Strategy and Creative Development Summary`,
       subtitle: category || undefined,
       confidential: true,
     }),
@@ -1436,8 +1436,8 @@ export function buildSummaryDocument(
 
   const html = docShell(
     {
-      title: `Brand Strategy and Creative Intelligence Summary — ${brand}`,
-      toolbarNote: `${brand} — Brand Strategy and Creative Intelligence Summary`,
+      title: `Brand Strategy and Creative Development Summary — ${brand}`,
+      toolbarNote: `${brand} — Brand Strategy and Creative Development Summary`,
       extraCss: EXTRA_CSS,
       footerHtml:
         "Brand Grenade Strategy Intelligence System — Confidential. Assembled from stored session data only; the locked creative idea is reproduced verbatim.",

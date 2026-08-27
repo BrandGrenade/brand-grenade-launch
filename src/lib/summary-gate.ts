@@ -180,11 +180,11 @@ export function gateSummary(
   const fail = summaryGateFailures(sections, fullHtml, ctx);
   if (fail.length)
     throw new Error(
-      `Brand Strategy and Creative Intelligence Summary failed its gate:\n- ${fail.join("\n- ")}`,
+      `Brand Strategy and Creative Development Summary failed its gate:\n- ${fail.join("\n- ")}`,
     );
   // Shared platform certification: clean, complete, consistent, client voice.
   // Sections 21+ are stage transcripts; the narrative sections are 01–20.
-  return gateGenericDocument(fullHtml, "Brand Strategy and Creative Intelligence Summary", {
+  return gateGenericDocument(fullHtml, "Brand Strategy and Creative Development Summary", {
     narrativeSections: sections.filter((s) => Number(s.index) <= 20).map((s) => s.index),
     schemaSections: SUMMARY_SCHEMA,
   });
