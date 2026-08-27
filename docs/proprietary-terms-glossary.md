@@ -422,7 +422,7 @@ Each entry: **Term** — plain-English definition — *Application* (where it ap
 - **Consulting Delivery** — the working delivery document for the agency/consulting team; adds a "what this means for delivery" callout.
 - **Master Detonation Brief (document)** — the creative-brief deliverable.
 - **Strategic Territory Intelligence Report (Document 00A)** — the Intelligence Lab deliverable.
-- **Brand Strategy and Creative Intelligence Summary (Strategy Executive Summary)** — the synthesised whole-session summary, assembled from stored data with no new AI run.
+- **Brand Strategy and Creative Development Summary (Strategy Executive Summary)** — the synthesised whole-session summary, assembled from stored data with no new AI run.
 - **Full Pipeline Run** — the complete stage-by-stage reproduction document, driven by the **Stage Manifest**.
 - **Full Creative Showcase** — the presentable document rendering one locked campaign in full. Structured as **Movement 01 — The Foundation, Movement 02 — The Expressions, Movement 03 — Proof of Coherence**, plus a **Campaign Signature Registry & Consistency Trace** appendix.
 - **Vision / Agency / Consulting / Workshop formats** — the four alternate output styles for the Phase 1 platform document.

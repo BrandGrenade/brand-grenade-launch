@@ -74,7 +74,7 @@ export function ExecSummaryCard({ session }: { session: ExecSummarySession }) {
             fontWeight: 600,
           }}
         >
-          Brand Strategy and Creative Intelligence Summary
+          Brand Strategy and Creative Development Summary
         </span>
         <span className="text-body-sm" style={{ color: "#8B8680", fontSize: 13 }}>
           {ready

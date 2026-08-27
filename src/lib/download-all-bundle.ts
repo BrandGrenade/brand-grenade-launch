@@ -168,7 +168,7 @@ export async function buildAndDownloadBundle(
   );
 
   // Root — Strategy Executive Summary (synthesis of stored data only)
-  onProgress?.("Building Brand Strategy and Creative Intelligence Summary…");
+  onProgress?.("Building Brand Strategy and Creative Development Summary…");
   // Same extra columns the Deliverables card loads, so both paths build the
   // identical document.
   const execExtra = await (async () => {
@@ -188,9 +188,9 @@ export async function buildAndDownloadBundle(
   const summarySession = { ...session, ...execExtra };
   const summaryExtras = await fetchSummaryExtras(summarySession);
   tryAdd(
-    "Brand_Strategy_and_Creative_Intelligence_Summary.html",
+    "Brand_Strategy_and_Creative_Development_Summary.html",
     () => buildSummaryDocument(summarySession as never, summaryExtras),
-    "Building Brand Strategy and Creative Intelligence Summary…",
+    "Building Brand Strategy and Creative Development Summary…",
   );
 
   // Root — Consulting Delivery (canonical ten-section template)

@@ -17,7 +17,7 @@ export const Route = createFileRoute("/")({
   component: Index,
   head: () => ({
     meta: [
-      { title: "Brand Grenade — Brand Strategy & Creative Intelligence System" },
+      { title: "Brand Grenade — Brand Strategy and Creative Development System" },
       {
         name: "description",
         content:
@@ -25,7 +25,7 @@ export const Route = createFileRoute("/")({
       },
       {
         property: "og:title",
-        content: "Brand Grenade — Brand Strategy & Creative Intelligence System",
+        content: "Brand Grenade — Brand Strategy and Creative Development System",
       },
       {
         property: "og:description",
@@ -434,19 +434,19 @@ function Index() {
               </div>
             ))}
             <span className="pin-label">
-              Enterprise Brand Strategy and Creative Intelligence System
+              Enterprise Brand Strategy and Creative Development System
             </span>
           </div>
 
           <h1 className="hero-title">
-            The <em>first</em> end-to-end Brand Strategy & Creative
-            Intelligence System.
+            The <em>first</em> end-to-end Brand Strategy and Creative
+              Development System.
           </h1>
 
           <p className="hero-sub">
             Brand Grenade takes a brand from raw intelligence to validated
             strategy to orchestrated creative — in hours, not weeks. Proven
-            methodologies, lateral engines and creative intelligence run in
+            methodologies, lateral engines and creative development run in
             parallel so the strongest opportunity is identified,
             pressure-tested, and turned into distinctive work that stays
             coherent from first idea to final channel.
@@ -695,12 +695,12 @@ function Index() {
       </div>
 
       <footer>
-        <div>Brand Grenade — Enterprise Brand Strategy and Creative Intelligence System</div>
+        <div>Brand Grenade — Enterprise Brand Strategy and Creative Development System</div>
         <div className="footer-byline">
           Brand Grenade was built by Adrian Pritchard, a brand strategist and creative director who has worked at McCann, DDB, and TBWA. His work has been recognised at Cannes, One Show, D&AD, and AWARD.
         </div>
         <div className="footer-byline">
-          It was built to systemise the strategic and creative intelligence that has traditionally lived inside senior human teams — without removing human judgement from the process.
+          It was built to systemise the strategic and creative development that has traditionally lived inside senior human teams — without removing human judgement from the process.
         </div>
       </footer>
 
