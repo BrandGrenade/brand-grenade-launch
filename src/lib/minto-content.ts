@@ -28,6 +28,7 @@ import type { MintoContent } from "./minto";
 import { buildCurrentStateSection } from "./current-state";
 import { stripDocumentMetadata } from "./strip-document-metadata";
 import { extractShortlist } from "./exec-summary-extract";
+import { STRATEGY_SCORING_DIMENSION_NAMES } from "@/lib/platform-metrics";
 
 export interface MintoSession {
   brand_name?: string | null;
@@ -384,14 +385,7 @@ export interface ScoredCandidate {
   dims: Record<string, number>;
 }
 
-export const DIMENSIONS = [
-  "Fame",
-  "Truth Strength",
-  "Competitive Impossibility",
-  "Brand Permission",
-  "Clean Air",
-  "Commercial Precedent",
-] as const;
+export const DIMENSIONS = STRATEGY_SCORING_DIMENSION_NAMES;
 
 export function parseScoredCandidates(stage10: string): ScoredCandidate[] {
   const out: ScoredCandidate[] = [];

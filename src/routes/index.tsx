@@ -2,6 +2,13 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { submitDemoRequest } from "@/lib/demo-request.functions";
+import {
+  STRATEGY_SCORING_DIMENSIONS,
+  CREATIVE_SCORING_DIMENSIONS,
+  PROPOSITIONS_HEADLINE_CEILING,
+  PROPOSITIONS_SHORTLIST_MIN,
+  PROPOSITIONS_SHORTLIST_MAX,
+} from "@/lib/platform-metrics";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -458,10 +465,12 @@ function Index() {
               </div>
               <div className="hstat">
                 <div className="n">
-                  20<span>+</span>
+                  ~{PROPOSITIONS_HEADLINE_CEILING}
                 </div>
                 <div className="l">
-                  Divergent strategic propositions, explored in parallel
+                  Divergent propositions generated and scored per brief,
+                  shortlisted to {PROPOSITIONS_SHORTLIST_MIN}–
+                  {PROPOSITIONS_SHORTLIST_MAX} for human judgement
                 </div>
               </div>
               <div className="hstat">

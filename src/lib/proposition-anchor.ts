@@ -1,3 +1,4 @@
+import { PROPOSITION_VOLUME_CLAIM } from "@/lib/platform-metrics";
 // UNIVERSAL PROPOSITION ANCHOR REQUIREMENT
 //
 // ONE shared rule governing EVERY mechanism in this platform that generates
@@ -40,7 +41,8 @@ export const REAL_CAPABILITY_REGISTER: readonly string[] = [
   "Stage 8 runs a base generator plus three independent Disruption engines (Breach, Fuse, Flashpoint) on every territory, producing four competing candidates side by side instead of one pre-selected winner.",
 
   // Search volume and selection
-  "20+ genuinely divergent propositions searched per brief before anything reaches a human, rather than a handful of variations on the first good line.",
+  PROPOSITION_VOLUME_CLAIM +
+    " Rather than a handful of variations on the first good line.",
   "Nine analytical approaches at Stage 3 generating nine distinct strategic frameworks, each carried through to its own territory universe.",
   "Every candidate is shown with the earlier, weaker draft it replaced and what was cut — the editing pass is visible, not hidden.",
   "Human checkpoints are mandatory between stages — no output advances without a person confirming it, so nothing ships on model confidence alone.",

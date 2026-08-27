@@ -63,4 +63,7 @@ export const PROPOSITIONS_PER_BRIEF_MAX = 23;
 export const PROPOSITIONS_SHORTLIST_MIN = 3;
 export const PROPOSITIONS_SHORTLIST_MAX = 5;
 
-export const PROPOSITION_VOLUME_CLAIM = `Up to ~${PROPOSITIONS_PER_BRIEF_MAX - 3} divergent propositions generated and scored per brief, shortlisted to ${PROPOSITIONS_SHORTLIST_MIN}–${PROPOSITIONS_SHORTLIST_MAX} for human judgement.`;
+export const PROPOSITIONS_HEADLINE_CEILING =
+  Math.floor(PROPOSITIONS_PER_BRIEF_MAX / 10) * 10; // 20
+
+export const PROPOSITION_VOLUME_CLAIM = `Up to ~${PROPOSITIONS_HEADLINE_CEILING} divergent propositions generated and scored per brief, shortlisted to ${PROPOSITIONS_SHORTLIST_MIN}–${PROPOSITIONS_SHORTLIST_MAX} for human judgement.`;
