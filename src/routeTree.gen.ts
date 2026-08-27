@@ -22,6 +22,7 @@ import { Route as IntelligenceRouteImport } from './routes/intelligence'
 import { Route as ForConsultanciesRouteImport } from './routes/for-consultancies'
 import { Route as ForAgenciesRouteImport } from './routes/for-agencies'
 import { Route as EyRouteImport } from './routes/ey'
+import { Route as EnterpriseRouteImport } from './routes/enterprise'
 import { Route as DetonationRouteImport } from './routes/detonation'
 import { Route as DemoRouteImport } from './routes/demo'
 import { Route as DeckRouteImport } from './routes/deck'
@@ -129,6 +130,11 @@ const ForAgenciesRoute = ForAgenciesRouteImport.update({
 const EyRoute = EyRouteImport.update({
   id: '/ey',
   path: '/ey',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EnterpriseRoute = EnterpriseRouteImport.update({
+  id: '/enterprise',
+  path: '/enterprise',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DetonationRoute = DetonationRouteImport.update({
@@ -368,6 +374,7 @@ export interface FileRoutesByFullPath {
   '/deck': typeof DeckRoute
   '/demo': typeof DemoRoute
   '/detonation': typeof DetonationRoute
+  '/enterprise': typeof EnterpriseRoute
   '/ey': typeof EyRoute
   '/for-agencies': typeof ForAgenciesRoute
   '/for-consultancies': typeof ForConsultanciesRoute
@@ -423,6 +430,7 @@ export interface FileRoutesByTo {
   '/deck': typeof DeckRoute
   '/demo': typeof DemoRoute
   '/detonation': typeof DetonationRoute
+  '/enterprise': typeof EnterpriseRoute
   '/ey': typeof EyRoute
   '/for-agencies': typeof ForAgenciesRoute
   '/for-consultancies': typeof ForConsultanciesRoute
@@ -478,6 +486,7 @@ export interface FileRoutesById {
   '/deck': typeof DeckRoute
   '/demo': typeof DemoRoute
   '/detonation': typeof DetonationRoute
+  '/enterprise': typeof EnterpriseRoute
   '/ey': typeof EyRoute
   '/for-agencies': typeof ForAgenciesRoute
   '/for-consultancies': typeof ForConsultanciesRoute
@@ -538,6 +547,7 @@ export interface FileRouteTypes {
     | '/deck'
     | '/demo'
     | '/detonation'
+    | '/enterprise'
     | '/ey'
     | '/for-agencies'
     | '/for-consultancies'
@@ -593,6 +603,7 @@ export interface FileRouteTypes {
     | '/deck'
     | '/demo'
     | '/detonation'
+    | '/enterprise'
     | '/ey'
     | '/for-agencies'
     | '/for-consultancies'
@@ -647,6 +658,7 @@ export interface FileRouteTypes {
     | '/deck'
     | '/demo'
     | '/detonation'
+    | '/enterprise'
     | '/ey'
     | '/for-agencies'
     | '/for-consultancies'
@@ -706,6 +718,7 @@ export interface RootRouteChildren {
   DeckRoute: typeof DeckRoute
   DemoRoute: typeof DemoRoute
   DetonationRoute: typeof DetonationRoute
+  EnterpriseRoute: typeof EnterpriseRoute
   EyRoute: typeof EyRoute
   ForAgenciesRoute: typeof ForAgenciesRoute
   ForConsultanciesRoute: typeof ForConsultanciesRoute
@@ -828,6 +841,13 @@ declare module '@tanstack/react-router' {
       path: '/ey'
       fullPath: '/ey'
       preLoaderRoute: typeof EyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/enterprise': {
+      id: '/enterprise'
+      path: '/enterprise'
+      fullPath: '/enterprise'
+      preLoaderRoute: typeof EnterpriseRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/detonation': {
@@ -1246,6 +1266,7 @@ const rootRouteChildren: RootRouteChildren = {
   DeckRoute: DeckRoute,
   DemoRoute: DemoRoute,
   DetonationRoute: DetonationRoute,
+  EnterpriseRoute: EnterpriseRoute,
   EyRoute: EyRoute,
   ForAgenciesRoute: ForAgenciesRoute,
   ForConsultanciesRoute: ForConsultanciesRoute,
