@@ -594,6 +594,30 @@ function Index() {
           </div>
         </section>
 
+        {/* OUTPUT ECOSYSTEM */}
+        <section className="section" id="outputs">
+          <div className="section-eyebrow">Output Ecosystem</div>
+          <h2>
+            One strategic source of truth. Every output the organisation needs.
+          </h2>
+          <p className="body">
+            A single run produces the complete set of downstream artefacts —
+            not slide decks, but decision-ready documents and execution-ready
+            briefs, all locked to the same strategy.
+          </p>
+          <div className="out-grid">
+            {OUTPUTS.map((o) => (
+              <div className="ocard" key={o.title}>
+                <div className="o-title">{o.title}</div>
+                <div className="o-desc">{o.desc}</div>
+              </div>
+            ))}
+          </div>
+          <p className="out-close">
+            One strategy. Different outputs for everyone who has to act on it.
+          </p>
+        </section>
+
         {/* THE BOTTLENECK */}
         <section className="section">
           <div className="section-eyebrow">The Bottleneck</div>
