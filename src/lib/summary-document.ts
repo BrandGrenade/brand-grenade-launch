@@ -59,11 +59,12 @@ import {
   safeClamp,
   sentences,
 } from "./summary-sources";
-import {
 import { HUMAN_CHECKPOINT_COUNT } from "./platform-metrics";
 import { TOTAL_PIPELINE_STEPS } from "./stage-manifest";
 import { LENS_COUNT } from "./stimulus/lenses";
+import {
   clean,
+
   firstSentencesOf,
   extractBusinessIssue,
   extractFindings,
