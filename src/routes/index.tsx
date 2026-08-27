@@ -106,6 +106,16 @@ const CSS = `
 .bg-home .qcard .q-arrow{color:var(--ash2);font-size:14px}
 .bg-home .qcard .q-desc{font-size:13px;color:var(--smoke);line-height:1.55}
 
+/* Output ecosystem card grid */
+.bg-home .out-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--ash);border:1px solid var(--ash);margin-bottom:32px}
+@media (max-width:900px){.bg-home .out-grid{grid-template-columns:1fr 1fr}}
+@media (max-width:560px){.bg-home .out-grid{grid-template-columns:1fr}}
+.bg-home .ocard{background:var(--void);padding:26px 22px;display:flex;flex-direction:column;gap:10px;transition:background .2s}
+.bg-home .ocard:hover{background:var(--ash)}
+.bg-home .ocard .o-title{font-size:15px;font-weight:600;color:var(--paper);line-height:1.35}
+.bg-home .ocard .o-desc{font-size:13px;color:var(--smoke);line-height:1.6}
+.bg-home .out-close{font-size:16px;font-weight:600;color:var(--paper);max-width:48ch;line-height:1.5}
+
 .bg-home .room{padding:56px 0;border-top:1px solid var(--ash);display:grid;grid-template-columns:64px 1fr 1fr;gap:32px}
 @media (max-width:820px){.bg-home .room{grid-template-columns:28px 1fr;gap:20px}.bg-home .room-proof{grid-column:2}}
 .bg-home .room-pin-col{display:flex;flex-direction:column;align-items:center;padding-top:4px}
