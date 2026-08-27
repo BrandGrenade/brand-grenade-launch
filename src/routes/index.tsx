@@ -160,7 +160,7 @@ const CSS = `
   .bg-home .nav-rooms a{font-size:9px;letter-spacing:0}
   .bg-home .nav-arrow{display:none}
   .bg-home .nav-mark{font-size:15px}
-  .bg-home .nav-cta{padding:7px 12px;font-size:11px}
+  .bg-home .nav-cta{padding:5px 10px;font-size:11px;white-space:nowrap}
   .bg-home .nav-signin{font-size:11px}
 }
 
