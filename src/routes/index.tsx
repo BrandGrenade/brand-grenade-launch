@@ -10,6 +10,7 @@ import {
   PROPOSITIONS_SHORTLIST_MAX,
 } from "@/lib/platform-metrics";
 import { LENS_COUNT } from "@/lib/stimulus/lenses";
+import { ROOM_DEFS } from "@/lib/rooms";
 import { STRUCTURED_OUTPUT_COUNT } from "@/lib/minto-content";
 
 export const Route = createFileRoute("/")({
@@ -20,7 +21,7 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Brand Grenade takes a brand from raw intelligence to validated strategy to orchestrated creative — in hours, not weeks. Four connected rooms, 50+ methodologies, 37 creative lenses.",
+          "Brand Grenade takes a brand from raw intelligence to validated strategy to orchestrated creative — in hours, not weeks. Five connected rooms, 50+ methodologies, 37 creative lenses.",
       },
       {
         property: "og:title",
@@ -450,7 +451,7 @@ function Index() {
               Follow a real brief through it ↓
             </a>
             <a href="#rooms-nav" className="btn-ghost">
-              See the five rooms
+              See the {ROOM_DEFS.length === 5 ? "five" : String(ROOM_DEFS.length)} rooms
             </a>
           </div>
 
