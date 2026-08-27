@@ -7,6 +7,7 @@
 // stage totals) so the claim can never drift from the code that produces it.
 
 import { LOC_ENGINES } from "./loc/task-types";
+import { TOTAL_PIPELINE_STEPS } from "./stage-manifest";
 
 /**
  * Stage 10 strategic scoring rubric. Mirrored by DIMENSIONS in
@@ -116,3 +117,25 @@ export const LATERAL_ENGINE_COUNT =
 export const PROCESSING_HOURS_MIN = 2;
 export const PROCESSING_HOURS_MAX = 4;
 export const PROCESSING_TIME_CLAIM = `${PROCESSING_HOURS_MIN}–${PROCESSING_HOURS_MAX} hours of system processing time (observed, not telemetry-aggregated) — human judgement and checkpoints continue throughout.`;
+
+/* ── Pipeline step counts ───────────────────────────────────────────── */
+
+/**
+ * The manifest maximum: every executable step including sub-stages (1B, 4B,
+ * 13B, 14B/14C, 17B, 20B). Derived from STAGE_MANIFEST — never asserted.
+ */
+export const PIPELINE_STEPS_MAX = TOTAL_PIPELINE_STEPS;
+
+/**
+ * OBSERVED, NOT DERIVED AT RUNTIME. Measured across the 13 sessions that have
+ * reached Stage 22 (Brand Architecture): min 15, median 27, max 28. The
+ * typical band excludes partial/abandoned runs. Re-measure before changing.
+ * Documents never use this band — they count that session's own steps via
+ * countStagesRun().
+ */
+export const TYPICAL_PIPELINE_STEPS_MIN = 26;
+export const TYPICAL_PIPELINE_STEPS_MAX = 28;
+export const TYPICAL_PIPELINE_STEPS_MEDIAN = 27;
+
+/** Honest public framing: a ceiling plus the observed completion band. */
+export const PIPELINE_STEPS_CLAIM = `up to ${PIPELINE_STEPS_MAX} pipeline steps, with completed runs to date landing at ${TYPICAL_PIPELINE_STEPS_MIN}–${TYPICAL_PIPELINE_STEPS_MAX} (median ${TYPICAL_PIPELINE_STEPS_MEDIAN})`;
