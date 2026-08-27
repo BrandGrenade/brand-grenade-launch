@@ -56,7 +56,7 @@ const CSS = `
 .bg-home .nav-mark{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:.04em}
 .bg-home .nav-signin{color:var(--smoke);font-size:13px;font-weight:500;text-decoration:none;flex-shrink:0;transition:color .2s}
 .bg-home .nav-signin:hover{color:var(--paper)}
-.bg-home .nav-cta{background:var(--detonation);color:var(--paper);font-size:13px;font-weight:600;padding:9px 18px;border-radius:3px;text-decoration:none;border:none;cursor:pointer;font-family:inherit}
+.bg-home .nav-cta{background:var(--detonation);color:var(--paper);font-size:12px;font-weight:600;padding:6px 12px;border-radius:3px;text-decoration:none;border:none;cursor:pointer;font-family:inherit;line-height:1;white-space:nowrap}
 .bg-home .nav-rooms{display:flex;align-items:center;gap:10px;flex-wrap:nowrap;flex-shrink:1;min-width:0}
 .bg-home .nav-rooms a{color:var(--smoke);text-decoration:none;font-size:11px;font-weight:600;letter-spacing:.02em;white-space:nowrap;transition:color .2s}
 .bg-home .nav-rooms a:hover{color:var(--paper)}
@@ -160,7 +160,7 @@ const CSS = `
   .bg-home .nav-rooms a{font-size:9px;letter-spacing:0}
   .bg-home .nav-arrow{display:none}
   .bg-home .nav-mark{font-size:15px}
-  .bg-home .nav-cta{padding:7px 12px;font-size:11px}
+  .bg-home .nav-cta{padding:5px 10px;font-size:11px;white-space:nowrap}
   .bg-home .nav-signin{font-size:11px}
 }
 
@@ -170,7 +170,7 @@ const CSS = `
   .bg-home .nav-inner{gap:12px;flex-wrap:nowrap}
   .bg-home .nav-rooms{display:none}
   .bg-home .nav-mark{font-size:16px}
-  .bg-home .nav-cta{padding:10px 14px;font-size:13px}
+  .bg-home .nav-cta{padding:8px 12px;font-size:12px;white-space:nowrap}
   .bg-home .nav-signin{font-size:13px}
   .bg-home .pin-row{gap:14px;margin-bottom:32px}
   .bg-home h1.hero-title{font-size:clamp(40px,11vw,58px);max-width:none;margin-bottom:20px}
