@@ -20,7 +20,7 @@ Single sources of truth:
 | "6 strategic / 8 creative scoring dimensions, plus validation rubrics" (was "14") | hero stat | **now derived** | `STRATEGY_SCORING_DIMENSIONS`, `CREATIVE_SCORING_DIMENSIONS` |
 | "~20 divergent propositions … shortlisted to 3–5" (was "20+") | hero stat | **now derived** | `PROPOSITIONS_HEADLINE_CEILING`, shortlist constants (real range 6–23) |
 | "37 creative lenses" | hero stat | **now derived** | `LENS_COUNT` |
-| "23 structured outputs" | hero stat | **now derived** | `STRUCTURED_OUTPUT_COUNT` (pipeline 16 + detonation 7) |
+| "23 structured outputs" | hero stat | **now derived** | `STRUCTURED_OUTPUT_COUNT` (pipeline 15 + detonation 8) |
 | "Five connected rooms" (meta said "Four", body said "five") | head meta + body | **now derived / fixed** | `ROOM_DEFS.length` |
 | "2–4 hrs raw intelligence to finished direction" | hero stat | **asserted** | No run-duration telemetry aggregated; observed range only |
 | "50+ methodologies" (×2: meta + Room 03 facts) | meta, room card | **asserted but true** | `docs/methodology-inventory.md` lists 55; not code-derived |
