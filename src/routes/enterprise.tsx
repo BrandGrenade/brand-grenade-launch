@@ -10,6 +10,7 @@ import {
   HUMAN_CONFIRMATIONS_TYPICAL_RUN,
   STRATEGY_SCORING_DIMENSIONS,
   CREATIVE_SCORING_DIMENSIONS,
+  PIPELINE_STEPS_CLAIM,
 } from "@/lib/platform-metrics";
 
 import { STRUCTURED_OUTPUT_COUNT } from "@/lib/minto-content";

@@ -15,6 +15,7 @@ import {
   PROPOSITIONS_HEADLINE_CEILING,
   PROPOSITIONS_SHORTLIST_MIN,
   PROPOSITIONS_SHORTLIST_MAX,
+  PIPELINE_STEPS_CLAIM,
 } from "@/lib/platform-metrics";
 
 import { LENS_COUNT } from "@/lib/stimulus/lenses";
