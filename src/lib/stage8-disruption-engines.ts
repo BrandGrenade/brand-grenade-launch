@@ -17,7 +17,9 @@ import {
 } from "./stage9-banned-words";
 import { ANCHOR_PROMPT_RULE, ANCHOR_TEXT_FIELD_SPEC } from "./proposition-anchor";
 
-export const STAGE_8_DISRUPTION_ENGINES = ["breach", "fuse", "flashpoint"] as const;
+import { STAGE_8_DISRUPTION_ENGINE_KEYS } from "./platform-metrics";
+
+export const STAGE_8_DISRUPTION_ENGINES = STAGE_8_DISRUPTION_ENGINE_KEYS;
 export type DisruptionEngine = (typeof STAGE_8_DISRUPTION_ENGINES)[number];
 
 export const DISRUPTION_ENGINE_LABEL: Record<DisruptionEngine, string> = {

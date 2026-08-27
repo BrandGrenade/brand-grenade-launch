@@ -6,6 +6,8 @@
 // or checkpoint counts. Import from here (or from stage-manifest.ts for
 // stage totals) so the claim can never drift from the code that produces it.
 
+import { LOC_ENGINES } from "./loc/task-types";
+
 /**
  * Stage 10 strategic scoring rubric. Mirrored by DIMENSIONS in
  * minto-content.ts (which imports this list) and by the weighting block in
@@ -71,3 +73,46 @@ export const PROPOSITION_VOLUME_CLAIM = `Up to ~${PROPOSITIONS_HEADLINE_CEILING}
 /** Architectural human checkpoint gates A–F. Run-specific approvals (creative
  * direction sign-offs) are counted separately and are not part of this figure. */
 export const HUMAN_CHECKPOINT_COUNT = 6;
+
+/* ── Governance ─────────────────────────────────────────────────────── */
+
+/** Hard architectural governance gates (A–F). */
+export const GOVERNANCE_GATE_COUNT = HUMAN_CHECKPOINT_COUNT;
+
+/**
+ * Individual human confirmations observed across a typical full run
+ * (governance gates plus run-specific creative approvals). Observed on
+ * completed sessions; not a rubric constant.
+ */
+export const HUMAN_CONFIRMATIONS_TYPICAL_RUN = 15;
+
+export const GOVERNANCE_CLAIM = `${GOVERNANCE_GATE_COUNT} hard governance gates (A–F), with ${HUMAN_CONFIRMATIONS_TYPICAL_RUN} individual human confirmations across a typical full run.`;
+
+/* ── Methodologies and engines ──────────────────────────────────────── */
+
+/** Distinct named methodologies/frameworks inventoried in docs/methodology-inventory.md. */
+export const METHODOLOGY_COUNT = 55;
+/** Conservative public-facing figure, floored to the nearest ten. */
+export const METHODOLOGY_HEADLINE = `${Math.floor(METHODOLOGY_COUNT / 10) * 10}+`;
+
+/** Stage 8 disruption engines — canonical key list (re-exported by stage8-disruption-engines.ts). */
+export const STAGE_8_DISRUPTION_ENGINE_KEYS = [
+  "breach",
+  "fuse",
+  "flashpoint",
+] as const;
+
+/** 13 Left-of-Centre engines + 3 Stage 8 disruption engines. */
+export const LATERAL_ENGINE_COUNT =
+  LOC_ENGINES.length + STAGE_8_DISRUPTION_ENGINE_KEYS.length;
+
+/* ── Run duration ───────────────────────────────────────────────────── */
+
+/**
+ * ASSERTED, NOT DERIVED. No aggregated run-duration telemetry exists yet.
+ * Observed system processing time only — human judgement and checkpoints
+ * sit outside this window.
+ */
+export const PROCESSING_HOURS_MIN = 2;
+export const PROCESSING_HOURS_MAX = 4;
+export const PROCESSING_TIME_CLAIM = `${PROCESSING_HOURS_MIN}–${PROCESSING_HOURS_MAX} hours of system processing time (observed, not telemetry-aggregated) — human judgement and checkpoints continue throughout.`;
