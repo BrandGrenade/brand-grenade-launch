@@ -406,7 +406,7 @@ function Index() {
               className="nav-cta"
               onClick={() => setShowDemo(true)}
             >
-              Request a demo
+              Request demo
             </button>
           </div>
         </div>
