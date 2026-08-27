@@ -142,6 +142,17 @@ const CSS = `
 .bg-home .footer-byline + .footer-byline{margin-top:8px}
 .bg-home footer{border-top:1px solid var(--ash);padding:32px 0;text-align:center;font-size:13px;color:var(--smoke)}
 
+/* ---------- Narrow desktop / tablet ---------- */
+@media (max-width:980px){
+  .bg-home .nav-inner{padding:14px 28px;gap:16px}
+  .bg-home .nav-rooms{gap:6px}
+  .bg-home .nav-rooms a{font-size:10px}
+  .bg-home .nav-arrow{font-size:10px}
+  .bg-home .nav-mark{font-size:16px}
+  .bg-home .nav-cta{padding:8px 14px;font-size:12px}
+  .bg-home .nav-signin{font-size:12px}
+}
+
 /* ---------- Mobile ---------- */
 @media (max-width:720px){
   .bg-home{overflow-x:hidden}
