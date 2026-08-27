@@ -15,6 +15,7 @@ import { Route as SynthesiserRouteImport } from './routes/synthesiser'
 import { Route as ShowcaseRouteImport } from './routes/showcase'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as PipelineRouteImport } from './routes/pipeline'
+import { Route as MethodologyRouteImport } from './routes/methodology'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as KpmgRouteImport } from './routes/kpmg'
 import { Route as IntelligenceRouteImport } from './routes/intelligence'
@@ -93,6 +94,11 @@ const SettingsRoute = SettingsRouteImport.update({
 const PipelineRoute = PipelineRouteImport.update({
   id: '/pipeline',
   path: '/pipeline',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MethodologyRoute = MethodologyRouteImport.update({
+  id: '/methodology',
+  path: '/methodology',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -368,6 +374,7 @@ export interface FileRoutesByFullPath {
   '/intelligence': typeof IntelligenceRouteWithChildren
   '/kpmg': typeof KpmgRoute
   '/login': typeof LoginRoute
+  '/methodology': typeof MethodologyRoute
   '/pipeline': typeof PipelineRoute
   '/settings': typeof SettingsRoute
   '/showcase': typeof ShowcaseRoute
@@ -421,6 +428,7 @@ export interface FileRoutesByTo {
   '/for-consultancies': typeof ForConsultanciesRoute
   '/kpmg': typeof KpmgRoute
   '/login': typeof LoginRoute
+  '/methodology': typeof MethodologyRoute
   '/pipeline': typeof PipelineRoute
   '/settings': typeof SettingsRoute
   '/showcase': typeof ShowcaseRoute
@@ -476,6 +484,7 @@ export interface FileRoutesById {
   '/intelligence': typeof IntelligenceRouteWithChildren
   '/kpmg': typeof KpmgRoute
   '/login': typeof LoginRoute
+  '/methodology': typeof MethodologyRoute
   '/pipeline': typeof PipelineRoute
   '/settings': typeof SettingsRoute
   '/showcase': typeof ShowcaseRoute
@@ -535,6 +544,7 @@ export interface FileRouteTypes {
     | '/intelligence'
     | '/kpmg'
     | '/login'
+    | '/methodology'
     | '/pipeline'
     | '/settings'
     | '/showcase'
@@ -588,6 +598,7 @@ export interface FileRouteTypes {
     | '/for-consultancies'
     | '/kpmg'
     | '/login'
+    | '/methodology'
     | '/pipeline'
     | '/settings'
     | '/showcase'
@@ -642,6 +653,7 @@ export interface FileRouteTypes {
     | '/intelligence'
     | '/kpmg'
     | '/login'
+    | '/methodology'
     | '/pipeline'
     | '/settings'
     | '/showcase'
@@ -700,6 +712,7 @@ export interface RootRouteChildren {
   IntelligenceRoute: typeof IntelligenceRouteWithChildren
   KpmgRoute: typeof KpmgRoute
   LoginRoute: typeof LoginRoute
+  MethodologyRoute: typeof MethodologyRoute
   PipelineRoute: typeof PipelineRoute
   SettingsRoute: typeof SettingsRoute
   ShowcaseRoute: typeof ShowcaseRoute
@@ -766,6 +779,13 @@ declare module '@tanstack/react-router' {
       path: '/pipeline'
       fullPath: '/pipeline'
       preLoaderRoute: typeof PipelineRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/methodology': {
+      id: '/methodology'
+      path: '/methodology'
+      fullPath: '/methodology'
+      preLoaderRoute: typeof MethodologyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -1232,6 +1252,7 @@ const rootRouteChildren: RootRouteChildren = {
   IntelligenceRoute: IntelligenceRouteWithChildren,
   KpmgRoute: KpmgRoute,
   LoginRoute: LoginRoute,
+  MethodologyRoute: MethodologyRoute,
   PipelineRoute: PipelineRoute,
   SettingsRoute: SettingsRoute,
   ShowcaseRoute: ShowcaseRoute,
