@@ -20,7 +20,7 @@ Single sources of truth:
 | "6 strategic / 8 creative scoring dimensions, plus validation rubrics" (was "14") | hero stat | **now derived** | `STRATEGY_SCORING_DIMENSIONS`, `CREATIVE_SCORING_DIMENSIONS` |
 | "~20 divergent propositions … shortlisted to 3–5" (was "20+") | hero stat | **now derived** | `PROPOSITIONS_HEADLINE_CEILING`, shortlist constants (real range 6–23) |
 | "37 creative lenses" | hero stat | **now derived** | `LENS_COUNT` |
-| "23 structured outputs" | hero stat | **now derived** | `STRUCTURED_OUTPUT_COUNT` (pipeline 16 + detonation 7) |
+| "23 structured outputs" | hero stat | **now derived** | `STRUCTURED_OUTPUT_COUNT` (pipeline 15 + detonation 8) |
 | "Five connected rooms" (meta said "Four", body said "five") | head meta + body | **now derived / fixed** | `ROOM_DEFS.length` |
 | "2–4 hrs raw intelligence to finished direction" | hero stat | **asserted** | No run-duration telemetry aggregated; observed range only |
 | "50+ methodologies" (×2: meta + Room 03 facts) | meta, room card | **asserted but true** | `docs/methodology-inventory.md` lists 55; not code-derived |
@@ -77,28 +77,17 @@ All new pages (`/demo`, `/for-cmos`, `/for-consultancies`, `/for-agencies`,
 a bare literal.
 
 Open discrepancy: `STRUCTURED_OUTPUT_COUNT` currently evaluates to the live
-appendix lengths in `minto-content.ts`, not the "23" quoted in the brief. The
-site shows the derived value.
+appendix lengths in `minto-content.ts`. After adding Stage 20b and Stage 21 to
+`DETONATION_APPENDIX`, the derived total is **23**.
 
-## UNRESOLVED — structured output count: 23 (earlier audit) vs 21 (derived)
+## RESOLVED — structured output count: 23
 
-The two figures read **different sources** and are not measuring the same thing.
+`STRUCTURED_OUTPUT_COUNT` now reads from the corrected appendix lists:
 
-- **Earlier "16 + 7 = 23"** counted *numbered pipeline stages* (Stage 1–16 = 16;
-  detonation stages 17, 17b, 18, 19, 20, 20b/21, 22 ≈ 7). That is a count of
-  stages that run, not of documents/appendix outputs that exist.
-- **Current "15 + 6 = 21"** is `PIPELINE_APPENDIX.length + DETONATION_APPENDIX.length`
-  in `src/lib/minto-content.ts` — the actual structured outputs assembled into
-  client-facing documents.
+- **PIPELINE_APPENDIX** = 15 (Stage 1–15, with Stage 16 excluded by design because
+  it is the deliverable builder, not an appendix section).
+- **DETONATION_APPENDIX** = 8 (Stages 17, 17b, 18, 19, 20, 20b, 21, 22).
+- **Total = 23 structured outputs** assembled into client-facing documents.
 
-Entries present as stages but absent from the appendix lists:
-- **Stage 16 — Document Assembly** (excluded by design: it *is* the deliverable
-  builder, not an appendix section)
-- **Stage 20b — Channel Strategy & Audience Intelligence** (candidate genuine omission)
-- **Stage 21 — Channel Detonation Briefs** (candidate genuine omission)
-
-So the 16 was counting stage numbers, not outputs, and was wrong as an output
-claim. **21 is the real, current, code-derived number and is what the site
-shows.** Open question for confirmation: whether Stage 20b and Stage 21 should
-be added to `DETONATION_APPENDIX` — if both are added the derived figure becomes
-23 legitimately.
+The earlier "16 + 7 = 23" count was measuring *numbered stages that run*, not the
+actual appendix entries, and is no longer used as the output claim.

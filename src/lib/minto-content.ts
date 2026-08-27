@@ -55,6 +55,8 @@ export interface MintoSession {
   stage_18_selected_detonation?: string | null;
   stage_19_output?: string | null;
   stage_20_output?: string | null;
+  stage_20b_output?: string | null;
+  stage_21_outputs?: string | null;
   stage_22_brand_architecture?: string | null;
   stage_22_distinctive_assets?: string | null;
   /** Room 04 lock — the single winning creative idea and its campaign line. */
@@ -504,6 +506,8 @@ export const DETONATION_APPENDIX: Array<{ title: string; key: string }> = [
   { title: "The Detonation", key: "stage_18_selected_detonation" },
   { title: "Activation Architecture", key: "stage_19_output" },
   { title: "Master Brief Detail", key: "stage_20_output" },
+  { title: "Channel Strategy & Audience Intelligence", key: "stage_20b_output" },
+  { title: "Channel Detonation Briefs", key: "stage_21_outputs" },
   { title: "Brand Architecture", key: "stage_22_brand_architecture" },
 ];
 
