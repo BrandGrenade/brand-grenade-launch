@@ -51,6 +51,7 @@ import {
 import { PENDING_BRIEF_EDIT_STORAGE_KEY } from "@/routes/brief.index";
 import { FileText, PencilLine } from "lucide-react";
 import { Spinner } from "@/components/ui/busy";
+import { NUMBERED_STAGE_COUNT } from "@/lib/stage-manifest";
 
 const CLIENT_STREAM_IDLE_MS = 8 * 60_000;
 const DB_COMPLETION_POLL_MS = 5_000;
@@ -3110,7 +3111,7 @@ function PipelineView() {
         session={{
           brand: brandLabel,
           currentStage: Math.max(1, currentMainNumber),
-          totalStages: 27,
+          totalStages: NUMBERED_STAGE_COUNT,
           isRunning: pipelineIsRunning,
         }}
       />
@@ -3753,7 +3754,7 @@ function LeftPanel({
           />
         </div>
         <p className="text-body-sm mt-2" style={{ color: "var(--color-text-tertiary)" }}>
-          Stage {currentMainNumber} of 27
+          Stage {currentMainNumber} of {NUMBERED_STAGE_COUNT}
         </p>
       </header>
 

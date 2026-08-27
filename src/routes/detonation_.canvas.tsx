@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 import { Spinner } from "@/components/ui/busy";
 import {
+import { NUMBERED_STAGE_COUNT } from "@/lib/stage-manifest";
   prepareThreeTruths,
   saveCulturalTruth,
   saveBrandIntelligence,
@@ -335,7 +336,7 @@ function ThreeTruthCanvas() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
-      <TopNav session={{ brand, currentStage: 16, totalStages: 23, isRunning: false }} />
+      <TopNav session={{ brand, currentStage: 16, totalStages: NUMBERED_STAGE_COUNT, isRunning: false }} />
       <div className="flex items-center border-b border-border bg-background px-5 py-3 sm:px-8">
         <nav
           className="text-body-sm flex items-center gap-1.5 truncate"

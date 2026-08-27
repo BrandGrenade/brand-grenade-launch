@@ -13,6 +13,7 @@ import { getCreativeShowcase } from "@/lib/creative-showcase.functions";
 import { buildCreativeShowcase } from "@/lib/creative-showcase-document";
 import { download, openPrintable } from "@/lib/stimulus-export";
 import { Spinner } from "@/components/ui/busy";
+import { NUMBERED_STAGE_COUNT } from "@/lib/stage-manifest";
 
 const AMBER = "#C81E1E";
 const MUTED = "#8B8680";
@@ -90,7 +91,7 @@ function ShowcasePage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
-      <TopNav session={{ brand: brand || "Showcase", currentStage: 23, totalStages: 23, isRunning: false }} />
+      <TopNav session={{ brand: brand || "Showcase", currentStage: NUMBERED_STAGE_COUNT, totalStages: NUMBERED_STAGE_COUNT, isRunning: false }} />
       <div className="flex items-center border-b border-border bg-background px-5 py-3 sm:px-8">
         <nav className="text-body-sm flex items-center gap-1.5 truncate" style={{ color: "var(--color-text-tertiary)" }}>
           <Link to="/dashboard" className="transition-colors hover:text-text-secondary">
