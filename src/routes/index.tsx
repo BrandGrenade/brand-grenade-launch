@@ -144,13 +144,13 @@ const CSS = `
 
 /* ---------- Narrow desktop / tablet ---------- */
 @media (max-width:980px){
-  .bg-home .nav-inner{padding:14px 28px;gap:16px}
-  .bg-home .nav-rooms{gap:6px}
-  .bg-home .nav-rooms a{font-size:10px}
-  .bg-home .nav-arrow{font-size:10px}
-  .bg-home .nav-mark{font-size:16px}
-  .bg-home .nav-cta{padding:8px 14px;font-size:12px}
-  .bg-home .nav-signin{font-size:12px}
+  .bg-home .nav-inner{padding:14px 16px;gap:12px;flex-wrap:nowrap}
+  .bg-home .nav-rooms{gap:4px}
+  .bg-home .nav-rooms a{font-size:9px;letter-spacing:0}
+  .bg-home .nav-arrow{display:none}
+  .bg-home .nav-mark{font-size:15px}
+  .bg-home .nav-cta{padding:7px 12px;font-size:11px}
+  .bg-home .nav-signin{font-size:11px}
 }
 
 /* ---------- Mobile ---------- */
