@@ -55,6 +55,8 @@ export interface MintoSession {
   stage_18_selected_detonation?: string | null;
   stage_19_output?: string | null;
   stage_20_output?: string | null;
+  stage_20b_output?: string | null;
+  stage_21_outputs?: string | null;
   stage_22_brand_architecture?: string | null;
   stage_22_distinctive_assets?: string | null;
   /** Room 04 lock — the single winning creative idea and its campaign line. */
