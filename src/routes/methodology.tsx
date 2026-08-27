@@ -15,8 +15,9 @@ import {
   PROPOSITIONS_HEADLINE_CEILING,
   PROPOSITIONS_SHORTLIST_MIN,
   PROPOSITIONS_SHORTLIST_MAX,
+  PIPELINE_STEPS_CLAIM,
 } from "@/lib/platform-metrics";
-import { TOTAL_PIPELINE_STEPS } from "@/lib/stage-manifest";
+
 import { LENS_COUNT } from "@/lib/stimulus/lenses";
 import { STRUCTURED_OUTPUT_COUNT } from "@/lib/minto-content";
 
@@ -81,7 +82,7 @@ const ARCHITECTURE: Array<[string, string]> = [
   ],
   [
     "Output generation",
-    `${STRUCTURED_OUTPUT_COUNT} structured outputs generated from the same validated source of truth, across ${TOTAL_PIPELINE_STEPS} pipeline steps.`,
+    `${STRUCTURED_OUTPUT_COUNT} structured outputs generated from the same validated source of truth, across ${PIPELINE_STEPS_CLAIM}.`,
   ],
 ];
 

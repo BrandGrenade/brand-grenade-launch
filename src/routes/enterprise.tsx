@@ -10,8 +10,9 @@ import {
   HUMAN_CONFIRMATIONS_TYPICAL_RUN,
   STRATEGY_SCORING_DIMENSIONS,
   CREATIVE_SCORING_DIMENSIONS,
+  PIPELINE_STEPS_CLAIM,
 } from "@/lib/platform-metrics";
-import { TOTAL_PIPELINE_STEPS } from "@/lib/stage-manifest";
+
 import { STRUCTURED_OUTPUT_COUNT } from "@/lib/minto-content";
 
 export const Route = createFileRoute("/enterprise")({
@@ -63,7 +64,7 @@ const GOVERNANCE: Array<[string, string]> = [
   ],
   [
     "Output provenance",
-    `Every one of the ${STRUCTURED_OUTPUT_COUNT} structured outputs is built from the recorded stage outputs of a specific session — across ${TOTAL_PIPELINE_STEPS} pipeline steps — not regenerated freehand at export time.`,
+    `Every one of the ${STRUCTURED_OUTPUT_COUNT} structured outputs is built from the recorded stage outputs of a specific session — across ${PIPELINE_STEPS_CLAIM} — not regenerated freehand at export time.`,
   ],
   [
     "Scoring transparency",
