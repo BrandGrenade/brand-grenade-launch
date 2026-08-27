@@ -8,6 +8,7 @@ import { cleanProposition } from "@/lib/clean-proposition";
 // "not available for this session" line for that item.
 
 import { STAGE_MANIFEST } from "./pipeline-integrity";
+import { TOTAL_PIPELINE_STEPS } from "./stage-manifest";
 
 export type ExecSessionRow = Record<string, unknown>;
 
@@ -862,8 +863,8 @@ export interface ProcessResult {
   stats: Array<{ value: string; label: string }>;
 }
 
-/** The pipeline is a fixed 28-stage architecture; never a count of columns. */
-export const PIPELINE_STAGE_COUNT = 28;
+/** Derived from STAGE_MANIFEST; never a count of columns. */
+export const PIPELINE_STAGE_COUNT = TOTAL_PIPELINE_STEPS;
 
 export function extractProcess(
   _session: ExecSessionRow,

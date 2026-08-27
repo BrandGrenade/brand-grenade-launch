@@ -26,6 +26,7 @@ import { CreativeShowcaseCard } from "@/components/CreativeShowcaseCard";
 import { CreativeEngineDeliverables } from "@/components/CreativeEngineDeliverables";
 import { Spinner } from "@/components/ui/busy";
 import { resolveLiveDocumentSession } from "@/lib/document-live-source";
+import { NUMBERED_STAGE_COUNT } from "@/lib/stage-manifest";
 
 
 
@@ -305,7 +306,7 @@ function CompletePage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
-      <TopNav session={{ brand, currentStage: session?.stage_22_brand_architecture ? 23 : 16, totalStages: 23, isRunning: false }} />
+      <TopNav session={{ brand, currentStage: session?.stage_22_brand_architecture ? NUMBERED_STAGE_COUNT : 16, totalStages: NUMBERED_STAGE_COUNT, isRunning: false }} />
       {/* Breadcrumb */}
       <div className="flex items-center border-b border-border bg-background px-5 py-3 sm:px-8">
         <nav

@@ -7,6 +7,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { NUMBERED_STAGE_COUNT } from "./stage-manifest";
 
 // ─── Types ─────────────────────────────────────────────────────────
 
@@ -21,7 +22,7 @@ export type SystemState = "not_started" | "in_progress" | "complete" | "interrup
 
 export type SystemStatus = {
   state: SystemState;
-  /** Short label shown in the collapsed row (e.g. "Stage 8 of 27"). */
+  /** Short label shown in the collapsed row (e.g. "Stage 8 of 22"). */
   label: string | null;
   /** ISO completion timestamp when state === "complete". */
   timestamp: string | null;
@@ -243,7 +244,7 @@ function derivePipeline(sessions: SessionRow[]): SystemStatus {
 
   return {
     state: "in_progress",
-    label: `Stage ${stage} of 27`,
+    label: `Stage ${stage} of ${NUMBERED_STAGE_COUNT}`,
     timestamp: null,
     href: "/pipeline",
     hrefSearch: { session: latest.id },
@@ -627,7 +628,7 @@ function assemble({
             : "in_progress",
         label: pipelineComplete
           ? "Pipeline complete"
-          : `Stage ${s.current_stage ?? 1} of 27`,
+          : `Stage ${s.current_stage ?? 1} of ${NUMBERED_STAGE_COUNT}`,
         href: "/pipeline",
         hrefSearch: { session: s.id },
         downloadHref: null,

@@ -5,6 +5,7 @@ import { useDemoMode, useIsAdmin } from "@/lib/demo-mode";
 import { useAuth } from "@/context/AuthContext";
 import { BrandGrenadeIcon } from "@/components/BrandGrenadeIcon";
 import { unlockRepositoryAdminFromPlatform } from "@/lib/repo-admin.functions";
+import { NUMBERED_STAGE_COUNT } from "@/lib/stage-manifest";
 
 
 export interface SessionContext {
@@ -136,7 +137,7 @@ export function TopNav({ session }: { session?: SessionContext }) {
                     'ui-monospace, "JetBrains Mono", SFMono-Regular, Menlo, monospace',
                 }}
               >
-                Stage {session.currentStage} / {session.totalStages ?? 27}
+                Stage {session.currentStage} / {session.totalStages ?? NUMBERED_STAGE_COUNT}
               </span>
               {session.isRunning && (
                 <span
