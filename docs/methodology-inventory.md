@@ -132,7 +132,6 @@ Referenced in prompt text, mostly unattributed (mechanism named, source not).
 
 "50+" is **defensible and now evidenced**: 55 distinct named methodologies, of
 which 27 are proprietary to this platform. The Jaguar document's "41" is a
-different, narrower metric — methodologies *invoked on that run* (the pipeline steps that
-actually produced output on that session — 26–28 of a 29-step maximum — plus
-13 LOC engines). Both are correct against their own definition; they
+different, narrower metric — methodologies *invoked on that run* (28 pipeline
+stages + 13 LOC engines). Both are correct against their own definition; they
 should be labelled distinctly ("methodology library" vs "applied on this run").

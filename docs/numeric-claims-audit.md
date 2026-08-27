@@ -20,7 +20,7 @@ Single sources of truth:
 | "6 strategic / 8 creative scoring dimensions, plus validation rubrics" (was "14") | hero stat | **now derived** | `STRATEGY_SCORING_DIMENSIONS`, `CREATIVE_SCORING_DIMENSIONS` |
 | "~20 divergent propositions … shortlisted to 3–5" (was "20+") | hero stat | **now derived** | `PROPOSITIONS_HEADLINE_CEILING`, shortlist constants (real range 6–23) |
 | "37 creative lenses" | hero stat | **now derived** | `LENS_COUNT` |
-| "23 structured outputs" | hero stat | **now derived** | `STRUCTURED_OUTPUT_COUNT` (pipeline 15 + detonation 8) |
+| "23 structured outputs" | hero stat | **now derived** | `STRUCTURED_OUTPUT_COUNT` (pipeline 16 + detonation 7) |
 | "Five connected rooms" (meta said "Four", body said "five") | head meta + body | **now derived / fixed** | `ROOM_DEFS.length` |
 | "2–4 hrs raw intelligence to finished direction" | hero stat | **asserted** | No run-duration telemetry aggregated; observed range only |
 | "50+ methodologies" (×2: meta + Room 03 facts) | meta, room card | **asserted but true** | `docs/methodology-inventory.md` lists 55; not code-derived |
@@ -36,13 +36,12 @@ Single sources of truth:
 
 | Claim | Location | Status | Source |
 |---|---|---|---|
-| "pipeline stages run" | `summary-document.ts` build band | **now derived per session** | `countStagesRun(session)` — counts manifest steps with real output (26–28 on completed runs), capped at `TOTAL_PIPELINE_STEPS` (29) |
+| "pipeline stages run" = 28 | `summary-document.ts` build band | **now derived** | `TOTAL_PIPELINE_STEPS` |
 | "human checkpoints signed off" = n/6 | `summary-document.ts` | **now derived** | `HUMAN_CHECKPOINT_COUNT` (gates A–F) |
 | "scoring dimensions applied" | `summary-document.ts` | **derived — relabelled** | `scoring.rows.length`; now reads "strategic scoring dimensions applied" so it can't be read as the platform total |
 | "creative lenses swept" fallback 37 | `summary-document.ts` | **now derived** | `extras.lensesSwept \|\| LENS_COUNT` |
 | "propositions considered" | `summary-document.ts` | **derived** | `extractPropositionsField().length` — Stage 12 shortlist (2–7 observed) |
-| "stages completed" | `exec-summary-sections.ts` | **now derived per session** | `countStagesRun(session)`; the flat 28/29 figure is gone |
-| "pipeline steps" on `/methodology`, `/enterprise` | marketing pages | **derived + observed band** | `PIPELINE_STEPS_CLAIM` = "up to 29 … 26–28 (median 27)" |
+| "stages completed" = 28 | `exec-summary-sections.ts:867` | **derived** | `TOTAL_PIPELINE_STEPS` |
 | "Stage 8 of 22" nav labels | `brand-register.ts`, `TopNav.tsx`, `pipeline.tsx` | **derived** | `NUMBERED_STAGE_COUNT` |
 | "six-dimension framework" prose (×3) | `summary-document.ts`, `minto-content.ts` | **constant-ok** | Matches Stage 10 rubric |
 | "composite /100", "/10" score suffixes | `minto-content.ts`, `doc-00A-minto.ts` | **constant-ok** | Rubric scale definitions |
@@ -64,31 +63,3 @@ Single sources of truth:
 No marketing surface or document template may introduce a new numeric claim as
 a literal. Add the figure to `platform-metrics.ts` (or the owning module) and
 import it.
-
-## Repositioning pass (marketing site rebuild)
-
-New derived constants in `platform-metrics.ts`: `GOVERNANCE_GATE_COUNT`,
-`HUMAN_CONFIRMATIONS_TYPICAL_RUN` (15, observed), `METHODOLOGY_COUNT` (55) with
-`METHODOLOGY_HEADLINE` ("50+"), `LATERAL_ENGINE_COUNT` (LOC engines + Stage 8
-disruption engines = 16), `PROCESSING_HOURS_MIN/MAX` (asserted, flagged in copy
-as observed rather than telemetry-aggregated).
-
-All new pages (`/demo`, `/for-cmos`, `/for-consultancies`, `/for-agencies`,
-`/methodology`, `/enterprise`) import these; no page states a numeric claim as
-a bare literal.
-
-Open discrepancy: `STRUCTURED_OUTPUT_COUNT` currently evaluates to the live
-appendix lengths in `minto-content.ts`. After adding Stage 20b and Stage 21 to
-`DETONATION_APPENDIX`, the derived total is **23**.
-
-## RESOLVED — structured output count: 23
-
-`STRUCTURED_OUTPUT_COUNT` now reads from the corrected appendix lists:
-
-- **PIPELINE_APPENDIX** = 15 (Stage 1–15, with Stage 16 excluded by design because
-  it is the deliverable builder, not an appendix section).
-- **DETONATION_APPENDIX** = 8 (Stages 17, 17b, 18, 19, 20, 20b, 21, 22).
-- **Total = 23 structured outputs** assembled into client-facing documents.
-
-The earlier "16 + 7 = 23" count was measuring *numbered stages that run*, not the
-actual appendix entries, and is no longer used as the output claim.

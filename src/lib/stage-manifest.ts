@@ -69,20 +69,3 @@ export const NUMBERED_STAGE_COUNT = new Set(
 
 /** Count of every executable step, including sub-stages (1b, 4b, 13b, …). */
 export const TOTAL_PIPELINE_STEPS = STAGE_MANIFEST.length;
-
-/**
- * Count of manifest steps that actually produced output for a given session.
- * Documents must state what ran, not the theoretical maximum.
- */
-export function countStagesRun(session: Record<string, unknown>): number {
-  return STAGE_MANIFEST.filter((entry) =>
-    entry.columns.some((col) => {
-      const v = session[col];
-      if (v == null) return false;
-      if (typeof v === "string") return v.trim().length > 0;
-      if (Array.isArray(v)) return v.length > 0;
-      if (typeof v === "object") return Object.keys(v as object).length > 0;
-      return Boolean(v);
-    }),
-  ).length;
-}

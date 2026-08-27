@@ -844,12 +844,7 @@ function DetonationPage() {
   );
 
   const phase2Index = PHASE_2_STAGES.findIndex((s) => s.number === activeStage);
-  // Stage numbers are the canonical numeric stage (sub-stages like 20B share
-  // their parent's number) — never a positional index, which overshoots the total.
-  const unifiedStage =
-    phase2Index >= 0
-      ? Number.parseInt(PHASE_2_STAGES[phase2Index]!.number, 10) || 17
-      : 17;
+  const unifiedStage = phase2Index >= 0 ? 16 + phase2Index + 1 : 17;
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
