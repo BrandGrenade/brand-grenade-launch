@@ -170,7 +170,7 @@ const CSS = `
   .bg-home .nav-inner{gap:12px;flex-wrap:nowrap}
   .bg-home .nav-rooms{display:none}
   .bg-home .nav-mark{font-size:16px}
-  .bg-home .nav-cta{padding:10px 14px;font-size:13px}
+  .bg-home .nav-cta{padding:8px 12px;font-size:12px;white-space:nowrap}
   .bg-home .nav-signin{font-size:13px}
   .bg-home .pin-row{gap:14px;margin-bottom:32px}
   .bg-home h1.hero-title{font-size:clamp(40px,11vw,58px);max-width:none;margin-bottom:20px}
