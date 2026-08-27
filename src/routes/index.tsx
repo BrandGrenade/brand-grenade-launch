@@ -50,14 +50,14 @@ const CSS = `
 @media (max-width:720px){.bg-home .wrap{padding:0 22px}}
 
 .bg-home nav{position:sticky;top:0;z-index:50;background:rgba(10,9,8,0.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--ash)}
-.bg-home .nav-inner{max-width:1080px;margin:0 auto;padding:16px 48px;display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap}
+.bg-home .nav-inner{max-width:1080px;margin:0 auto;padding:16px 48px;display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:nowrap}
 @media (max-width:720px){.bg-home .nav-inner{padding:14px 22px}}
 .bg-home .nav-logo{display:flex;align-items:center;gap:10px;flex-shrink:0}
 .bg-home .nav-mark{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:.04em}
 .bg-home .nav-signin{color:var(--smoke);font-size:13px;font-weight:500;text-decoration:none;flex-shrink:0;transition:color .2s}
 .bg-home .nav-signin:hover{color:var(--paper)}
 .bg-home .nav-cta{background:var(--detonation);color:var(--paper);font-size:13px;font-weight:600;padding:9px 18px;border-radius:3px;text-decoration:none;border:none;cursor:pointer;font-family:inherit}
-.bg-home .nav-rooms{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.bg-home .nav-rooms{display:flex;align-items:center;gap:10px;flex-wrap:nowrap;flex-shrink:1;min-width:0}
 .bg-home .nav-rooms a{color:var(--smoke);text-decoration:none;font-size:11px;font-weight:600;letter-spacing:.02em;white-space:nowrap;transition:color .2s}
 .bg-home .nav-rooms a:hover{color:var(--paper)}
 .bg-home .nav-arrow{color:var(--ash2);font-size:11px}
@@ -141,6 +141,17 @@ const CSS = `
 .bg-home .footer-byline{font-size:12px;color:var(--smoke);margin-top:16px;line-height:1.6;text-align:center;width:100%;max-width:640px;margin-left:auto;margin-right:auto}
 .bg-home .footer-byline + .footer-byline{margin-top:8px}
 .bg-home footer{border-top:1px solid var(--ash);padding:32px 0;text-align:center;font-size:13px;color:var(--smoke)}
+
+/* ---------- Narrow desktop / tablet ---------- */
+@media (max-width:980px){
+  .bg-home .nav-inner{padding:14px 16px;gap:12px;flex-wrap:nowrap}
+  .bg-home .nav-rooms{gap:4px}
+  .bg-home .nav-rooms a{font-size:9px;letter-spacing:0}
+  .bg-home .nav-arrow{display:none}
+  .bg-home .nav-mark{font-size:15px}
+  .bg-home .nav-cta{padding:7px 12px;font-size:11px}
+  .bg-home .nav-signin{font-size:11px}
+}
 
 /* ---------- Mobile ---------- */
 @media (max-width:720px){
@@ -406,7 +417,7 @@ function Index() {
               className="nav-cta"
               onClick={() => setShowDemo(true)}
             >
-              Request a demo
+              Request demo
             </button>
           </div>
         </div>
