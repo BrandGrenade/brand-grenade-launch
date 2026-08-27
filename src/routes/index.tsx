@@ -597,11 +597,12 @@ function Index() {
         {/* OUTPUT ECOSYSTEM */}
         <section className="section" id="outputs">
           <h2>
-            FROM STRATEGY TO THE WORK THAT MAKES IT HAPPEN.
+            FROM RAW DATA TO THE WORK THAT MAKES IT HAPPEN.
           </h2>
           <p className="body">
-            Brand Grenade doesn't end with a strategy document. Every run produces a connected suite of strategic, creative and executional deliverables - tailored to the people who need to use them. Board. CMO. Strategy team. Agency. Creative team. Channel teams. Same intelligence. Same strategic foundation. Different outputs for different decisions.
+            Brand Grenade takes raw data through intelligence, validated strategy and creative development — producing a connected suite of strategic and creative deliverables along the way. Board. CMO. Strategy team. Agency. Creative team. Channel teams. Same intelligence. Same strategic foundation. Different outputs for different decisions.
           </p>
+
           <div className="out-grid">
             {OUTPUTS.map((o) => (
               <div className="ocard" key={o.title}>
