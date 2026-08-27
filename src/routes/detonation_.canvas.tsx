@@ -12,8 +12,8 @@ import { SMPAnchor } from "@/components/SMPAnchor";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 import { Spinner } from "@/components/ui/busy";
-import {
 import { NUMBERED_STAGE_COUNT } from "@/lib/stage-manifest";
+import {
   prepareThreeTruths,
   saveCulturalTruth,
   saveBrandIntelligence,
