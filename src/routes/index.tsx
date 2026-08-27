@@ -2,6 +2,16 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { submitDemoRequest } from "@/lib/demo-request.functions";
+import {
+  STRATEGY_SCORING_DIMENSIONS,
+  CREATIVE_SCORING_DIMENSIONS,
+  PROPOSITIONS_HEADLINE_CEILING,
+  PROPOSITIONS_SHORTLIST_MIN,
+  PROPOSITIONS_SHORTLIST_MAX,
+} from "@/lib/platform-metrics";
+import { LENS_COUNT } from "@/lib/stimulus/lenses";
+import { ROOM_DEFS } from "@/lib/rooms";
+import { STRUCTURED_OUTPUT_COUNT } from "@/lib/minto-content";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -11,7 +21,7 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Brand Grenade takes a brand from raw intelligence to validated strategy to orchestrated creative — in hours, not weeks. Four connected rooms, 50+ methodologies, 37 creative lenses.",
+          "Brand Grenade takes a brand from raw intelligence to validated strategy to orchestrated creative — in hours, not weeks. Five connected rooms, 50+ methodologies, 37 creative lenses.",
       },
       {
         property: "og:title",
@@ -441,7 +451,7 @@ function Index() {
               Follow a real brief through it ↓
             </a>
             <a href="#rooms-nav" className="btn-ghost">
-              See the five rooms
+              See the {ROOM_DEFS.length === 5 ? "five" : String(ROOM_DEFS.length)} rooms
             </a>
           </div>
 
@@ -458,14 +468,16 @@ function Index() {
               </div>
               <div className="hstat">
                 <div className="n">
-                  20<span>+</span>
+                  ~{PROPOSITIONS_HEADLINE_CEILING}
                 </div>
                 <div className="l">
-                  Divergent strategic propositions, explored in parallel
+                  Divergent propositions generated and scored per brief,
+                  shortlisted to {PROPOSITIONS_SHORTLIST_MIN}–
+                  {PROPOSITIONS_SHORTLIST_MAX} for human judgement
                 </div>
               </div>
               <div className="hstat">
-                <div className="n">37</div>
+                <div className="n">{LENS_COUNT}</div>
                 <div className="l">
                   Creative lenses, orchestrated into one coherent campaign
                 </div>
@@ -482,14 +494,20 @@ function Index() {
                 </div>
               </div>
               <div className="hstat">
-                <div className="n">14</div>
+                <div className="n">
+                  {STRATEGY_SCORING_DIMENSIONS}
+                  <span>+{CREATIVE_SCORING_DIMENSIONS}</span>
+                </div>
                 <div className="l">
-                  Scoring dimensions applied across strategy and creative,
-                  before anything reaches a human for sign-off
+                  {STRATEGY_SCORING_DIMENSIONS} strategic scoring dimensions,{" "}
+                  {CREATIVE_SCORING_DIMENSIONS} creative scoring dimensions,
+                  plus dedicated validation rubrics — before anything reaches a
+                  human for sign-off
                 </div>
               </div>
+
               <div className="hstat">
-                <div className="n">23</div>
+                <div className="n">{STRUCTURED_OUTPUT_COUNT}</div>
                 <div className="l">
                   Structured outputs, every run — strategy, creative platform,
                   and channel execution
