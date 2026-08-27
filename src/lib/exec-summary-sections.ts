@@ -8,7 +8,7 @@ import { cleanProposition } from "@/lib/clean-proposition";
 // "not available for this session" line for that item.
 
 import { STAGE_MANIFEST } from "./pipeline-integrity";
-import { TOTAL_PIPELINE_STEPS } from "./stage-manifest";
+import { TOTAL_PIPELINE_STEPS, countStagesRun } from "./stage-manifest";
 
 export type ExecSessionRow = Record<string, unknown>;
 
@@ -867,14 +867,19 @@ export interface ProcessResult {
 export const PIPELINE_STAGE_COUNT = TOTAL_PIPELINE_STEPS;
 
 export function extractProcess(
-  _session: ExecSessionRow,
+  session: ExecSessionRow,
   counts: { propositions: number; dimensions: number; frameworks: FrameworksResult },
   _intelPresent: boolean,
 ): ProcessResult {
-  const methodologies = PIPELINE_STAGE_COUNT + counts.frameworks.engines.length;
+  // Count what this session actually produced, not the theoretical maximum.
+  const stagesCompleted = Math.min(
+    countStagesRun(session as unknown as Record<string, unknown>),
+    PIPELINE_STAGE_COUNT,
+  );
+  const methodologies = stagesCompleted + counts.frameworks.engines.length;
   return {
     stats: [
-      { value: String(PIPELINE_STAGE_COUNT), label: "stages completed" },
+      { value: String(stagesCompleted), label: "stages completed" },
       { value: String(methodologies), label: "methodologies applied" },
       { value: String(counts.propositions), label: "propositions considered" },
       { value: String(counts.dimensions), label: "dimensions validated" },

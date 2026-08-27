@@ -60,7 +60,7 @@ import {
   sentences,
 } from "./summary-sources";
 import { HUMAN_CHECKPOINT_COUNT } from "./platform-metrics";
-import { TOTAL_PIPELINE_STEPS } from "./stage-manifest";
+import { TOTAL_PIPELINE_STEPS, countStagesRun } from "./stage-manifest";
 import { LENS_COUNT } from "./stimulus/lenses";
 import {
   clean,
@@ -708,8 +708,12 @@ export function buildSummaryDocument(
             `so this document is not fully cleared.`,
         )
       : "";
+  const stagesRun = Math.min(
+    countStagesRun(session as unknown as Record<string, unknown>),
+    TOTAL_PIPELINE_STEPS,
+  );
   const buildHtml = `${checkpointNote}${band("Strategy", [
-    { value: TOTAL_PIPELINE_STEPS, label: "pipeline stages run" },
+    { value: stagesRun, label: "pipeline stages run" },
     {
       value: checkpoints,
       suffix: `/${HUMAN_CHECKPOINT_COUNT}`,
