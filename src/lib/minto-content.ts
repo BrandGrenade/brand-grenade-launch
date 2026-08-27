@@ -1140,3 +1140,7 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
     },
   };
 }
+
+/** Structured client-facing outputs produced by a full run (pipeline + detonation appendices). */
+export const STRUCTURED_OUTPUT_COUNT =
+  PIPELINE_APPENDIX.length + DETONATION_APPENDIX.length;

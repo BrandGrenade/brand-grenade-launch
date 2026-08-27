@@ -67,3 +67,7 @@ export const PROPOSITIONS_HEADLINE_CEILING =
   Math.floor(PROPOSITIONS_PER_BRIEF_MAX / 10) * 10; // 20
 
 export const PROPOSITION_VOLUME_CLAIM = `Up to ~${PROPOSITIONS_HEADLINE_CEILING} divergent propositions generated and scored per brief, shortlisted to ${PROPOSITIONS_SHORTLIST_MIN}–${PROPOSITIONS_SHORTLIST_MAX} for human judgement.`;
+
+/** Architectural human checkpoint gates A–F. Run-specific approvals (creative
+ * direction sign-offs) are counted separately and are not part of this figure. */
+export const HUMAN_CHECKPOINT_COUNT = 6;

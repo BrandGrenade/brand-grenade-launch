@@ -60,6 +60,9 @@ import {
   sentences,
 } from "./summary-sources";
 import {
+import { HUMAN_CHECKPOINT_COUNT } from "./platform-metrics";
+import { TOTAL_PIPELINE_STEPS } from "./stage-manifest";
+import { LENS_COUNT } from "./stimulus/lenses";
   clean,
   firstSentencesOf,
   extractBusinessIssue,
@@ -697,18 +700,22 @@ export function buildSummaryDocument(
 
   /* 03 — How this was built */
   const checkpointNote =
-    checkpoints < 6
+    checkpoints < HUMAN_CHECKPOINT_COUNT
       ? p(
-          `${checkpoints} of 6 human checkpoints are signed off; ` +
-            `${6 - checkpoints} checkpoint${6 - checkpoints === 1 ? " remains" : "s remain"} outstanding, ` +
+          `${checkpoints} of ${HUMAN_CHECKPOINT_COUNT} human checkpoints are signed off; ` +
+            `${HUMAN_CHECKPOINT_COUNT - checkpoints} checkpoint${HUMAN_CHECKPOINT_COUNT - checkpoints === 1 ? " remains" : "s remain"} outstanding, ` +
             `so this document is not fully cleared.`,
         )
       : "";
   const buildHtml = `${checkpointNote}${band("Strategy", [
-    { value: 28, label: "pipeline stages run" },
-    { value: checkpoints, suffix: "/6", label: "human checkpoints signed off" },
+    { value: TOTAL_PIPELINE_STEPS, label: "pipeline stages run" },
+    {
+      value: checkpoints,
+      suffix: `/${HUMAN_CHECKPOINT_COUNT}`,
+      label: "human checkpoints signed off",
+    },
     { value: field.length, label: "propositions considered" },
-    { value: scoring.rows.length, label: "scoring dimensions applied" },
+    { value: scoring.rows.length, label: "strategic scoring dimensions applied" },
   ])}${band("Intelligence", [
     { value: research.length, label: "research inputs drawn on" },
     {
@@ -720,7 +727,7 @@ export function buildSummaryDocument(
       label: "fact-verification pass",
     },
   ])}${band("Creative", [
-    { value: extras.lensesSwept || 37, label: "creative lenses swept" },
+    { value: extras.lensesSwept || LENS_COUNT, label: "creative lenses swept" },
     { value: extras.directionsGenerated, label: "directions generated" },
     { value: extras.directionsRated, label: "directions fully rated" },
     { value: extras.shortlist.length, label: "shortlisted for judgement" },
@@ -1096,7 +1103,7 @@ export function buildSummaryDocument(
 
   /* 16 — Creative sweep */
   const sweepHtml = `${statGrid([
-    { value: extras.lensesSwept || 37, label: "lenses applied" },
+    { value: extras.lensesSwept || LENS_COUNT, label: "lenses applied" },
     { value: extras.directionsGenerated, label: "directions generated" },
     { value: extras.directionsRated, label: "taken to full rating" },
   ])}${

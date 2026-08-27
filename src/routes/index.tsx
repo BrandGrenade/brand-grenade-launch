@@ -9,6 +9,8 @@ import {
   PROPOSITIONS_SHORTLIST_MIN,
   PROPOSITIONS_SHORTLIST_MAX,
 } from "@/lib/platform-metrics";
+import { LENS_COUNT } from "@/lib/stimulus/lenses";
+import { STRUCTURED_OUTPUT_COUNT } from "@/lib/minto-content";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -474,7 +476,7 @@ function Index() {
                 </div>
               </div>
               <div className="hstat">
-                <div className="n">37</div>
+                <div className="n">{LENS_COUNT}</div>
                 <div className="l">
                   Creative lenses, orchestrated into one coherent campaign
                 </div>
@@ -504,7 +506,7 @@ function Index() {
               </div>
 
               <div className="hstat">
-                <div className="n">23</div>
+                <div className="n">{STRUCTURED_OUTPUT_COUNT}</div>
                 <div className="l">
                   Structured outputs, every run — strategy, creative platform,
                   and channel execution
