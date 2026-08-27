@@ -57,7 +57,7 @@ const CSS = `
 .bg-home .nav-signin{color:var(--smoke);font-size:13px;font-weight:500;text-decoration:none;flex-shrink:0;transition:color .2s}
 .bg-home .nav-signin:hover{color:var(--paper)}
 .bg-home .nav-cta{background:var(--detonation);color:var(--paper);font-size:13px;font-weight:600;padding:9px 18px;border-radius:3px;text-decoration:none;border:none;cursor:pointer;font-family:inherit}
-.bg-home .nav-rooms{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.bg-home .nav-rooms{display:flex;align-items:center;gap:10px;flex-wrap:nowrap;flex-shrink:1;min-width:0}
 .bg-home .nav-rooms a{color:var(--smoke);text-decoration:none;font-size:11px;font-weight:600;letter-spacing:.02em;white-space:nowrap;transition:color .2s}
 .bg-home .nav-rooms a:hover{color:var(--paper)}
 .bg-home .nav-arrow{color:var(--ash2);font-size:11px}
