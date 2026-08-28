@@ -154,11 +154,11 @@ const CSS = `
 .bg-home footer{border-top:1px solid var(--ash);padding:32px 0;text-align:center;font-size:13px;color:var(--smoke)}
 
 /* ---------- Narrow desktop / tablet ---------- */
+@media (max-width:1240px){
+  .bg-home .nav-rooms{display:none}
+}
 @media (max-width:980px){
   .bg-home .nav-inner{padding:14px 16px;gap:12px;flex-wrap:nowrap}
-  .bg-home .nav-rooms{gap:4px}
-  .bg-home .nav-rooms a{font-size:9px;letter-spacing:0}
-  .bg-home .nav-arrow{display:none}
   .bg-home .nav-mark{font-size:15px}
   .bg-home .nav-cta{padding:5px 10px;font-size:11px;white-space:nowrap}
   .bg-home .nav-signin{font-size:11px}
