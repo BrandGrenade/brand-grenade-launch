@@ -50,7 +50,7 @@ const CSS = `
 @media (max-width:720px){.bg-home .wrap{padding:0 22px}}
 
 .bg-home nav{position:sticky;top:0;z-index:50;background:rgba(10,9,8,0.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--ash)}
-.bg-home .nav-inner{max-width:1080px;margin:0 auto;padding:16px 48px;display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:nowrap}
+.bg-home .nav-inner{max-width:1280px;margin:0 auto;padding:16px 48px;display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:nowrap}
 @media (max-width:720px){.bg-home .nav-inner{padding:14px 22px}}
 .bg-home .nav-logo{display:flex;align-items:center;gap:10px;flex-shrink:0}
 .bg-home .nav-mark{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:.04em}
