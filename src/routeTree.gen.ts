@@ -19,6 +19,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as KpmgRouteImport } from './routes/kpmg'
 import { Route as IntelligenceRouteImport } from './routes/intelligence'
 import { Route as EyRouteImport } from './routes/ey'
+import { Route as DoneForYouRouteImport } from './routes/done-for-you'
 import { Route as DetonationRouteImport } from './routes/detonation'
 import { Route as DeckRouteImport } from './routes/deck'
 import { Route as DashboardRouteImport } from './routes/dashboard'
@@ -110,6 +111,11 @@ const IntelligenceRoute = IntelligenceRouteImport.update({
 const EyRoute = EyRouteImport.update({
   id: '/ey',
   path: '/ey',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DoneForYouRoute = DoneForYouRouteImport.update({
+  id: '/done-for-you',
+  path: '/done-for-you',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DetonationRoute = DetonationRouteImport.update({
@@ -343,6 +349,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRoute
   '/deck': typeof DeckRoute
   '/detonation': typeof DetonationRoute
+  '/done-for-you': typeof DoneForYouRoute
   '/ey': typeof EyRoute
   '/intelligence': typeof IntelligenceRouteWithChildren
   '/kpmg': typeof KpmgRoute
@@ -394,6 +401,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardRoute
   '/deck': typeof DeckRoute
   '/detonation': typeof DetonationRoute
+  '/done-for-you': typeof DoneForYouRoute
   '/ey': typeof EyRoute
   '/kpmg': typeof KpmgRoute
   '/login': typeof LoginRoute
@@ -445,6 +453,7 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRoute
   '/deck': typeof DeckRoute
   '/detonation': typeof DetonationRoute
+  '/done-for-you': typeof DoneForYouRoute
   '/ey': typeof EyRoute
   '/intelligence': typeof IntelligenceRouteWithChildren
   '/kpmg': typeof KpmgRoute
@@ -501,6 +510,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/deck'
     | '/detonation'
+    | '/done-for-you'
     | '/ey'
     | '/intelligence'
     | '/kpmg'
@@ -552,6 +562,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/deck'
     | '/detonation'
+    | '/done-for-you'
     | '/ey'
     | '/kpmg'
     | '/login'
@@ -602,6 +613,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/deck'
     | '/detonation'
+    | '/done-for-you'
     | '/ey'
     | '/intelligence'
     | '/kpmg'
@@ -657,6 +669,7 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRoute
   DeckRoute: typeof DeckRoute
   DetonationRoute: typeof DetonationRoute
+  DoneForYouRoute: typeof DoneForYouRoute
   EyRoute: typeof EyRoute
   IntelligenceRoute: typeof IntelligenceRouteWithChildren
   KpmgRoute: typeof KpmgRoute
@@ -755,6 +768,13 @@ declare module '@tanstack/react-router' {
       path: '/ey'
       fullPath: '/ey'
       preLoaderRoute: typeof EyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/done-for-you': {
+      id: '/done-for-you'
+      path: '/done-for-you'
+      fullPath: '/done-for-you'
+      preLoaderRoute: typeof DoneForYouRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/detonation': {
@@ -1165,6 +1185,7 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRoute,
   DeckRoute: DeckRoute,
   DetonationRoute: DetonationRoute,
+  DoneForYouRoute: DoneForYouRoute,
   EyRoute: EyRoute,
   IntelligenceRoute: IntelligenceRouteWithChildren,
   KpmgRoute: KpmgRoute,

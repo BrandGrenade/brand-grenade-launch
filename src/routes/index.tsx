@@ -454,6 +454,9 @@ function Index() {
             <a href="#room-04">Creative Stimulus Engine</a>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
+            <Link to="/done-for-you" className="nav-signin">
+              Done-For-You
+            </Link>
             <Link to="/login" className="nav-signin">
               Sign in
             </Link>
@@ -767,6 +770,29 @@ function Index() {
           >
             Request a demo
           </button>
+        </section>
+
+        {/* DONE-FOR-YOU SIGNPOST */}
+        <section className="section" style={{ padding: "48px 0" }}>
+          <div className="section-eyebrow">Or Start Right Now</div>
+          <p
+            className="body"
+            style={{ color: "var(--paper)", fontWeight: 600, maxWidth: "52ch" }}
+          >
+            Don't need the full deployment conversation? Run a real brief
+            through Brand Grenade, done for you.
+          </p>
+          <p className="body">
+            Each stage delivered in 48 hours. No implementation, no sales
+            process - just the work.
+          </p>
+          <Link
+            to="/done-for-you"
+            className="nav-signin"
+            style={{ color: "var(--paper)", fontWeight: 600, fontSize: 14 }}
+          >
+            Explore Done-For-You →
+          </Link>
         </section>
       </div>
 
