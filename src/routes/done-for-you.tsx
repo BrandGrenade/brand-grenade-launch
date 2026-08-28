@@ -753,7 +753,7 @@ function DoneForYou() {
             Want to talk it through first?{" "}
             <button
               type="button"
-              onClick={() => open("Book a 20-minute call")}
+              onClick={() => open("Book a 30-minute call")}
               style={{
                 background: "none",
                 border: "none",
@@ -767,7 +767,7 @@ function DoneForYou() {
                 textUnderlineOffset: 3,
               }}
             >
-              Book a 20-minute call →
+              Book a 30-minute call →
             </button>
           </p>
           <div className="callout">
