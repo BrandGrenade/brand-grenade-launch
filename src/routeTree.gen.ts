@@ -15,12 +15,18 @@ import { Route as SynthesiserRouteImport } from './routes/synthesiser'
 import { Route as ShowcaseRouteImport } from './routes/showcase'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as PipelineRouteImport } from './routes/pipeline'
+import { Route as MethodologyRouteImport } from './routes/methodology'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as KpmgRouteImport } from './routes/kpmg'
 import { Route as IntelligenceRouteImport } from './routes/intelligence'
+import { Route as ForConsultanciesRouteImport } from './routes/for-consultancies'
+import { Route as ForCmosRouteImport } from './routes/for-cmos'
+import { Route as ForAgenciesRouteImport } from './routes/for-agencies'
 import { Route as EyRouteImport } from './routes/ey'
+import { Route as EnterpriseRouteImport } from './routes/enterprise'
 import { Route as DoneForYouRouteImport } from './routes/done-for-you'
 import { Route as DetonationRouteImport } from './routes/detonation'
+import { Route as DemoRouteImport } from './routes/demo'
 import { Route as DeckRouteImport } from './routes/deck'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as CreativeRouteImport } from './routes/creative'
@@ -93,6 +99,11 @@ const PipelineRoute = PipelineRouteImport.update({
   path: '/pipeline',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MethodologyRoute = MethodologyRouteImport.update({
+  id: '/methodology',
+  path: '/methodology',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
@@ -108,9 +119,29 @@ const IntelligenceRoute = IntelligenceRouteImport.update({
   path: '/intelligence',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ForConsultanciesRoute = ForConsultanciesRouteImport.update({
+  id: '/for-consultancies',
+  path: '/for-consultancies',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ForCmosRoute = ForCmosRouteImport.update({
+  id: '/for-cmos',
+  path: '/for-cmos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ForAgenciesRoute = ForAgenciesRouteImport.update({
+  id: '/for-agencies',
+  path: '/for-agencies',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const EyRoute = EyRouteImport.update({
   id: '/ey',
   path: '/ey',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EnterpriseRoute = EnterpriseRouteImport.update({
+  id: '/enterprise',
+  path: '/enterprise',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DoneForYouRoute = DoneForYouRouteImport.update({
@@ -121,6 +152,11 @@ const DoneForYouRoute = DoneForYouRouteImport.update({
 const DetonationRoute = DetonationRouteImport.update({
   id: '/detonation',
   path: '/detonation',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DemoRoute = DemoRouteImport.update({
+  id: '/demo',
+  path: '/demo',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DeckRoute = DeckRouteImport.update({
@@ -348,12 +384,18 @@ export interface FileRoutesByFullPath {
   '/creative': typeof CreativeRouteWithChildren
   '/dashboard': typeof DashboardRoute
   '/deck': typeof DeckRoute
+  '/demo': typeof DemoRoute
   '/detonation': typeof DetonationRoute
   '/done-for-you': typeof DoneForYouRoute
+  '/enterprise': typeof EnterpriseRoute
   '/ey': typeof EyRoute
+  '/for-agencies': typeof ForAgenciesRoute
+  '/for-cmos': typeof ForCmosRoute
+  '/for-consultancies': typeof ForConsultanciesRoute
   '/intelligence': typeof IntelligenceRouteWithChildren
   '/kpmg': typeof KpmgRoute
   '/login': typeof LoginRoute
+  '/methodology': typeof MethodologyRoute
   '/pipeline': typeof PipelineRoute
   '/settings': typeof SettingsRoute
   '/showcase': typeof ShowcaseRoute
@@ -400,11 +442,17 @@ export interface FileRoutesByTo {
   '/complete': typeof CompleteRoute
   '/dashboard': typeof DashboardRoute
   '/deck': typeof DeckRoute
+  '/demo': typeof DemoRoute
   '/detonation': typeof DetonationRoute
   '/done-for-you': typeof DoneForYouRoute
+  '/enterprise': typeof EnterpriseRoute
   '/ey': typeof EyRoute
+  '/for-agencies': typeof ForAgenciesRoute
+  '/for-cmos': typeof ForCmosRoute
+  '/for-consultancies': typeof ForConsultanciesRoute
   '/kpmg': typeof KpmgRoute
   '/login': typeof LoginRoute
+  '/methodology': typeof MethodologyRoute
   '/pipeline': typeof PipelineRoute
   '/settings': typeof SettingsRoute
   '/showcase': typeof ShowcaseRoute
@@ -452,12 +500,18 @@ export interface FileRoutesById {
   '/creative': typeof CreativeRouteWithChildren
   '/dashboard': typeof DashboardRoute
   '/deck': typeof DeckRoute
+  '/demo': typeof DemoRoute
   '/detonation': typeof DetonationRoute
   '/done-for-you': typeof DoneForYouRoute
+  '/enterprise': typeof EnterpriseRoute
   '/ey': typeof EyRoute
+  '/for-agencies': typeof ForAgenciesRoute
+  '/for-cmos': typeof ForCmosRoute
+  '/for-consultancies': typeof ForConsultanciesRoute
   '/intelligence': typeof IntelligenceRouteWithChildren
   '/kpmg': typeof KpmgRoute
   '/login': typeof LoginRoute
+  '/methodology': typeof MethodologyRoute
   '/pipeline': typeof PipelineRoute
   '/settings': typeof SettingsRoute
   '/showcase': typeof ShowcaseRoute
@@ -509,12 +563,18 @@ export interface FileRouteTypes {
     | '/creative'
     | '/dashboard'
     | '/deck'
+    | '/demo'
     | '/detonation'
     | '/done-for-you'
+    | '/enterprise'
     | '/ey'
+    | '/for-agencies'
+    | '/for-cmos'
+    | '/for-consultancies'
     | '/intelligence'
     | '/kpmg'
     | '/login'
+    | '/methodology'
     | '/pipeline'
     | '/settings'
     | '/showcase'
@@ -561,11 +621,17 @@ export interface FileRouteTypes {
     | '/complete'
     | '/dashboard'
     | '/deck'
+    | '/demo'
     | '/detonation'
     | '/done-for-you'
+    | '/enterprise'
     | '/ey'
+    | '/for-agencies'
+    | '/for-cmos'
+    | '/for-consultancies'
     | '/kpmg'
     | '/login'
+    | '/methodology'
     | '/pipeline'
     | '/settings'
     | '/showcase'
@@ -612,12 +678,18 @@ export interface FileRouteTypes {
     | '/creative'
     | '/dashboard'
     | '/deck'
+    | '/demo'
     | '/detonation'
     | '/done-for-you'
+    | '/enterprise'
     | '/ey'
+    | '/for-agencies'
+    | '/for-cmos'
+    | '/for-consultancies'
     | '/intelligence'
     | '/kpmg'
     | '/login'
+    | '/methodology'
     | '/pipeline'
     | '/settings'
     | '/showcase'
@@ -668,12 +740,18 @@ export interface RootRouteChildren {
   CreativeRoute: typeof CreativeRouteWithChildren
   DashboardRoute: typeof DashboardRoute
   DeckRoute: typeof DeckRoute
+  DemoRoute: typeof DemoRoute
   DetonationRoute: typeof DetonationRoute
   DoneForYouRoute: typeof DoneForYouRoute
+  EnterpriseRoute: typeof EnterpriseRoute
   EyRoute: typeof EyRoute
+  ForAgenciesRoute: typeof ForAgenciesRoute
+  ForCmosRoute: typeof ForCmosRoute
+  ForConsultanciesRoute: typeof ForConsultanciesRoute
   IntelligenceRoute: typeof IntelligenceRouteWithChildren
   KpmgRoute: typeof KpmgRoute
   LoginRoute: typeof LoginRoute
+  MethodologyRoute: typeof MethodologyRoute
   PipelineRoute: typeof PipelineRoute
   SettingsRoute: typeof SettingsRoute
   ShowcaseRoute: typeof ShowcaseRoute
@@ -742,6 +820,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PipelineRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/methodology': {
+      id: '/methodology'
+      path: '/methodology'
+      fullPath: '/methodology'
+      preLoaderRoute: typeof MethodologyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
@@ -763,11 +848,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IntelligenceRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/for-consultancies': {
+      id: '/for-consultancies'
+      path: '/for-consultancies'
+      fullPath: '/for-consultancies'
+      preLoaderRoute: typeof ForConsultanciesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/for-cmos': {
+      id: '/for-cmos'
+      path: '/for-cmos'
+      fullPath: '/for-cmos'
+      preLoaderRoute: typeof ForCmosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/for-agencies': {
+      id: '/for-agencies'
+      path: '/for-agencies'
+      fullPath: '/for-agencies'
+      preLoaderRoute: typeof ForAgenciesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/ey': {
       id: '/ey'
       path: '/ey'
       fullPath: '/ey'
       preLoaderRoute: typeof EyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/enterprise': {
+      id: '/enterprise'
+      path: '/enterprise'
+      fullPath: '/enterprise'
+      preLoaderRoute: typeof EnterpriseRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/done-for-you': {
@@ -782,6 +895,13 @@ declare module '@tanstack/react-router' {
       path: '/detonation'
       fullPath: '/detonation'
       preLoaderRoute: typeof DetonationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/demo': {
+      id: '/demo'
+      path: '/demo'
+      fullPath: '/demo'
+      preLoaderRoute: typeof DemoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/deck': {
@@ -1184,12 +1304,18 @@ const rootRouteChildren: RootRouteChildren = {
   CreativeRoute: CreativeRouteWithChildren,
   DashboardRoute: DashboardRoute,
   DeckRoute: DeckRoute,
+  DemoRoute: DemoRoute,
   DetonationRoute: DetonationRoute,
   DoneForYouRoute: DoneForYouRoute,
+  EnterpriseRoute: EnterpriseRoute,
   EyRoute: EyRoute,
+  ForAgenciesRoute: ForAgenciesRoute,
+  ForCmosRoute: ForCmosRoute,
+  ForConsultanciesRoute: ForConsultanciesRoute,
   IntelligenceRoute: IntelligenceRouteWithChildren,
   KpmgRoute: KpmgRoute,
   LoginRoute: LoginRoute,
+  MethodologyRoute: MethodologyRoute,
   PipelineRoute: PipelineRoute,
   SettingsRoute: SettingsRoute,
   ShowcaseRoute: ShowcaseRoute,
