@@ -154,7 +154,7 @@ const CSS = `
 .bg-home footer{border-top:1px solid var(--ash);padding:32px 0;text-align:center;font-size:13px;color:var(--smoke)}
 
 /* ---------- Narrow desktop / tablet ---------- */
-@media (max-width:1240px){
+@media (max-width:1360px){
   .bg-home .nav-rooms{display:none}
 }
 @media (max-width:980px){
