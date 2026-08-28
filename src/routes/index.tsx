@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { submitDemoRequest } from "@/lib/demo-request.functions";
+import { openCalendlyBooking } from "@/lib/calendly";
 import {
   STRATEGY_SCORING_DIMENSIONS,
   CREATIVE_SCORING_DIMENSIONS,
@@ -403,7 +403,6 @@ const RHYTHM: Array<[string, string]> = [
 function Index() {
   const navigate = useNavigate();
   const { user, isAuthReady } = useAuth();
-  const [showDemo, setShowDemo] = useState(false);
   const [armed, setArmed] = useState(0);
 
   useEffect(() => {
@@ -463,7 +462,7 @@ function Index() {
             <button
               type="button"
               className="nav-cta"
-              onClick={() => setShowDemo(true)}
+              onClick={() => openCalendlyBooking("Homepage — Request Demo")}
             >
               Request demo
             </button>
@@ -766,7 +765,7 @@ function Index() {
           <button
             type="button"
             className="btn-primary"
-            onClick={() => setShowDemo(true)}
+            onClick={() => openCalendlyBooking("Homepage — Request Demo")}
           >
             Request a demo
           </button>
@@ -806,197 +805,6 @@ function Index() {
         </div>
       </footer>
 
-      {showDemo && <RequestDemoModal onClose={() => setShowDemo(false)} />}
-    </div>
-  );
-}
-
-/* -------------------- Modal -------------------- */
-
-const fieldStyle: React.CSSProperties = { resize: "vertical" };
-
-const labelStyle: React.CSSProperties = {
-  display: "block",
-  fontSize: 13,
-  color: "var(--smoke)",
-  marginBottom: 6,
-  letterSpacing: ".04em",
-  textTransform: "uppercase",
-};
-
-function RequestDemoModal({ onClose }: { onClose: () => void }) {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [company, setCompany] = useState("");
-  const [message, setMessage] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState("");
-  const [done, setDone] = useState(false);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (submitting) return;
-    setError("");
-    if (!name.trim() || !email.trim() || !company.trim()) {
-      setError("Name, email and company are required.");
-      return;
-    }
-    setSubmitting(true);
-    try {
-      await submitDemoRequest({
-        data: {
-          name: name.trim(),
-          email: email.trim(),
-          company: company.trim(),
-          message: message.trim() || null,
-        },
-      });
-      setDone(true);
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Something went wrong. Please try again.",
-      );
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  return (
-    <div
-      className="bg-demo-overlay"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="demo-heading"
-      onClick={onClose}
-    >
-      <div
-        className="bg-demo-panel"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "flex-start",
-            marginBottom: 22,
-          }}
-        >
-          <h2
-            id="demo-heading"
-            className="display"
-            style={{ fontSize: 28, fontWeight: 400, color: "var(--paper)" }}
-          >
-            {done ? "Request received" : "Request a demo"}
-          </h2>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close"
-            style={{
-              background: "none",
-              border: "none",
-              color: "var(--smoke)",
-              cursor: "pointer",
-              fontSize: 16,
-            }}
-          >
-            ✕
-          </button>
-        </div>
-
-        {done ? (
-          <>
-            <p style={{ fontSize: 14, color: "var(--smoke)", lineHeight: 1.7 }}>
-              Thanks — we'll be in touch.
-            </p>
-            <button
-              type="button"
-              onClick={onClose}
-              className="btn-primary"
-              style={{ marginTop: 24, width: "100%" }}
-            >
-              Close
-            </button>
-          </>
-        ) : (
-          <form
-            onSubmit={handleSubmit}
-            style={{ display: "flex", flexDirection: "column", gap: 16 }}
-          >
-            <div>
-              <label htmlFor="demo-name" style={labelStyle}>
-                Name
-              </label>
-              <input
-                id="demo-name"
-                required
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="bg-demo-field"
-                maxLength={120}
-              />
-            </div>
-            <div>
-              <label htmlFor="demo-email" style={labelStyle}>
-                Email
-              </label>
-              <input
-                id="demo-email"
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="bg-demo-field"
-                maxLength={255}
-              />
-            </div>
-            <div>
-              <label htmlFor="demo-company" style={labelStyle}>
-                Company
-              </label>
-              <input
-                id="demo-company"
-                required
-                value={company}
-                onChange={(e) => setCompany(e.target.value)}
-                className="bg-demo-field"
-                maxLength={160}
-              />
-            </div>
-            <div>
-              <label htmlFor="demo-message" style={labelStyle}>
-                Message (optional)
-              </label>
-              <textarea
-                id="demo-message"
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                className="bg-demo-field"
-                style={fieldStyle}
-                rows={4}
-                maxLength={2000}
-              />
-            </div>
-
-            {error && (
-              <p style={{ fontSize: 13, color: "var(--detonation)" }}>
-                {error}
-              </p>
-            )}
-
-            <button
-              type="submit"
-              disabled={submitting}
-              className="btn-primary"
-              style={{ opacity: submitting ? 0.6 : 1 }}
-            >
-              {submitting ? "Sending…" : "Send request"}
-            </button>
-          </form>
-        )}
-      </div>
     </div>
   );
 }
