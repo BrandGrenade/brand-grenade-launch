@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { submitDemoRequest } from "@/lib/demo-request.functions";
+import { useEffect } from "react";
+import { openCalendlyBooking } from "@/lib/calendly";
 import { LENS_COUNT } from "@/lib/stimulus/lenses";
 import { STRUCTURED_OUTPUT_COUNT } from "@/lib/minto-content";
 
@@ -299,13 +299,11 @@ const FAQS: [string, string][] = [
 /* -------------------- Page -------------------- */
 
 function DoneForYou() {
-  const [intake, setIntake] = useState<string | null>(null);
-
   useEffect(() => {
     document.title = "Done-For-You — Brand Grenade Run On Your Brief";
   }, []);
 
-  const open = (context: string) => setIntake(context);
+  const open = (context: string) => openCalendlyBooking(context);
 
   return (
     <div className="bg-dfy">
@@ -824,203 +822,7 @@ function DoneForYou() {
           Start a project
         </button>
       </div>
-
-      {intake && (
-        <IntakeModal context={intake} onClose={() => setIntake(null)} />
-      )}
     </div>
   );
 }
 
-/* -------------------- Intake modal -------------------- */
-
-const labelStyle: React.CSSProperties = {
-  display: "block",
-  fontSize: 13,
-  color: "var(--smoke)",
-  marginBottom: 6,
-  letterSpacing: ".04em",
-  textTransform: "uppercase",
-};
-
-function IntakeModal({
-  context,
-  onClose,
-}: {
-  context: string;
-  onClose: () => void;
-}) {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [company, setCompany] = useState("");
-  const [message, setMessage] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState("");
-  const [done, setDone] = useState(false);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (submitting) return;
-    setError("");
-    if (!name.trim() || !email.trim() || !company.trim()) {
-      setError("Name, email and company are required.");
-      return;
-    }
-    setSubmitting(true);
-    try {
-      await submitDemoRequest({
-        data: {
-          name: name.trim(),
-          email: email.trim(),
-          company: company.trim(),
-          message:
-            `[Done-For-You — ${context}]` +
-            (message.trim() ? `\n${message.trim()}` : ""),
-        },
-      });
-      setDone(true);
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Something went wrong. Please try again.",
-      );
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  return (
-    <div
-      className="bg-dfy-overlay"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="intake-heading"
-      onClick={onClose}
-    >
-      <div className="bg-dfy-panel" onClick={(e) => e.stopPropagation()}>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "flex-start",
-            marginBottom: 22,
-          }}
-        >
-          <h2
-            id="intake-heading"
-            className="display"
-            style={{ fontSize: 28, fontWeight: 400, color: "var(--paper)" }}
-          >
-            {done ? "Request received" : context}
-          </h2>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close"
-            style={{
-              background: "none",
-              border: "none",
-              color: "var(--smoke)",
-              cursor: "pointer",
-              fontSize: 16,
-            }}
-          >
-            ✕
-          </button>
-        </div>
-
-        {done ? (
-          <>
-            <p style={{ fontSize: 14, color: "var(--smoke)", lineHeight: 1.7 }}>
-              Thanks — we'll be in touch.
-            </p>
-            <button
-              type="button"
-              onClick={onClose}
-              className="btn-primary"
-              style={{ marginTop: 24, width: "100%" }}
-            >
-              Close
-            </button>
-          </>
-        ) : (
-          <form
-            onSubmit={handleSubmit}
-            style={{ display: "flex", flexDirection: "column", gap: 16 }}
-          >
-            <div>
-              <label htmlFor="dfy-name" style={labelStyle}>
-                Name
-              </label>
-              <input
-                id="dfy-name"
-                required
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="bg-dfy-field"
-                maxLength={120}
-              />
-            </div>
-            <div>
-              <label htmlFor="dfy-email" style={labelStyle}>
-                Email
-              </label>
-              <input
-                id="dfy-email"
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="bg-dfy-field"
-                maxLength={255}
-              />
-            </div>
-            <div>
-              <label htmlFor="dfy-company" style={labelStyle}>
-                Company
-              </label>
-              <input
-                id="dfy-company"
-                required
-                value={company}
-                onChange={(e) => setCompany(e.target.value)}
-                className="bg-dfy-field"
-                maxLength={160}
-              />
-            </div>
-            <div>
-              <label htmlFor="dfy-message" style={labelStyle}>
-                What are you trying to solve? (optional)
-              </label>
-              <textarea
-                id="dfy-message"
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                className="bg-dfy-field"
-                style={{ resize: "vertical" }}
-                rows={4}
-                maxLength={2000}
-              />
-            </div>
-
-            {error && (
-              <p style={{ fontSize: 13, color: "var(--detonation)" }}>
-                {error}
-              </p>
-            )}
-
-            <button
-              type="submit"
-              disabled={submitting}
-              className="btn-primary"
-              style={{ opacity: submitting ? 0.6 : 1 }}
-            >
-              {submitting ? "Sending…" : "Send request"}
-            </button>
-          </form>
-        )}
-      </div>
-    </div>
-  );
-}
