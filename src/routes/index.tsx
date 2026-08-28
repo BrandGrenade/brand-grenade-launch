@@ -50,7 +50,7 @@ const CSS = `
 @media (max-width:720px){.bg-home .wrap{padding:0 22px}}
 
 .bg-home nav{position:sticky;top:0;z-index:50;background:rgba(10,9,8,0.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--ash)}
-.bg-home .nav-inner{max-width:1080px;margin:0 auto;padding:16px 48px;display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:nowrap}
+.bg-home .nav-inner{max-width:1280px;margin:0 auto;padding:16px 48px;display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:nowrap}
 @media (max-width:720px){.bg-home .nav-inner{padding:14px 22px}}
 .bg-home .nav-logo{display:flex;align-items:center;gap:10px;flex-shrink:0}
 .bg-home .nav-mark{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:.04em}
@@ -154,11 +154,11 @@ const CSS = `
 .bg-home footer{border-top:1px solid var(--ash);padding:32px 0;text-align:center;font-size:13px;color:var(--smoke)}
 
 /* ---------- Narrow desktop / tablet ---------- */
+@media (max-width:1360px){
+  .bg-home .nav-rooms{display:none}
+}
 @media (max-width:980px){
   .bg-home .nav-inner{padding:14px 16px;gap:12px;flex-wrap:nowrap}
-  .bg-home .nav-rooms{gap:4px}
-  .bg-home .nav-rooms a{font-size:9px;letter-spacing:0}
-  .bg-home .nav-arrow{display:none}
   .bg-home .nav-mark{font-size:15px}
   .bg-home .nav-cta{padding:5px 10px;font-size:11px;white-space:nowrap}
   .bg-home .nav-signin{font-size:11px}
@@ -454,6 +454,9 @@ function Index() {
             <a href="#room-04">Creative Stimulus Engine</a>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
+            <Link to="/done-for-you" className="nav-signin">
+              Done-For-You
+            </Link>
             <Link to="/login" className="nav-signin">
               Sign in
             </Link>
@@ -767,6 +770,29 @@ function Index() {
           >
             Request a demo
           </button>
+        </section>
+
+        {/* DONE-FOR-YOU SIGNPOST */}
+        <section className="section" style={{ padding: "48px 0" }}>
+          <div className="section-eyebrow">Or Start Right Now</div>
+          <p
+            className="body"
+            style={{ color: "var(--paper)", fontWeight: 600, maxWidth: "52ch" }}
+          >
+            Don't need the full deployment conversation? Run a real brief
+            through Brand Grenade, done for you.
+          </p>
+          <p className="body">
+            Each stage delivered in 48 hours. No implementation, no sales
+            process - just the work.
+          </p>
+          <Link
+            to="/done-for-you"
+            className="nav-signin"
+            style={{ color: "var(--paper)", fontWeight: 600, fontSize: 14 }}
+          >
+            Explore Done-For-You →
+          </Link>
         </section>
       </div>
 
