@@ -774,6 +774,7 @@ function DoneForYou() {
               Book a 30-minute call →
             </button>
           </p>
+          <div className="btn-note">Books a 30-minute call to scope this tier - no payment required yet.</div>
           <div className="callout">
             <div className="c-title">
               WANT TO TRY BRAND GRENADE BEFORE YOU IMPLEMENT IT?
