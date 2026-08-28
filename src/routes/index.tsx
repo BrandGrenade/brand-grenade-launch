@@ -153,22 +153,23 @@ const CSS = `
 .bg-home .footer-byline + .footer-byline{margin-top:8px}
 .bg-home footer{border-top:1px solid var(--ash);padding:32px 0;text-align:center;font-size:13px;color:var(--smoke)}
 
-/* ---------- Narrow desktop / tablet ---------- */
-@media (max-width:1360px){
-  .bg-home .nav-rooms{display:none}
-}
-@media (max-width:980px){
-  .bg-home .nav-inner{padding:14px 16px;gap:12px;flex-wrap:nowrap}
+/* ---------- Narrow desktop / tablet: rooms drop to a visible second row ---------- */
+@media (max-width:1024px){
+  .bg-home .nav-inner{padding:14px 16px;gap:12px 20px;flex-wrap:wrap}
   .bg-home .nav-mark{font-size:15px}
   .bg-home .nav-cta{padding:5px 10px;font-size:11px;white-space:nowrap}
   .bg-home .nav-signin{font-size:11px}
+  .bg-home .nav-rooms{order:3;flex-basis:100%;justify-content:center;gap:8px;
+    padding-top:10px;margin-top:2px;border-top:1px solid var(--ash)}
 }
 
 /* ---------- Mobile ---------- */
+@media (max-width:768px){
+  .bg-home .nav-rooms{display:none}
+}
 @media (max-width:720px){
   .bg-home{overflow-x:hidden}
   .bg-home .nav-inner{gap:12px;flex-wrap:nowrap}
-  .bg-home .nav-rooms{display:none}
   .bg-home .nav-mark{font-size:16px}
   .bg-home .nav-cta{padding:8px 12px;font-size:12px;white-space:nowrap}
   .bg-home .nav-signin{font-size:13px}
