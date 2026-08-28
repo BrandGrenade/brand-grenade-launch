@@ -1,3 +1,6 @@
+import { LOC_ENGINES } from "./loc/task-types";
+import { TOTAL_PIPELINE_STEPS } from "./stage-manifest";
+
 // PLATFORM METRICS — single source of truth for every publicly asserted
 // number about how the platform scores work.
 //
@@ -71,3 +74,68 @@ export const PROPOSITION_VOLUME_CLAIM = `Up to ~${PROPOSITIONS_HEADLINE_CEILING}
 /** Architectural human checkpoint gates A–F. Run-specific approvals (creative
  * direction sign-offs) are counted separately and are not part of this figure. */
 export const HUMAN_CHECKPOINT_COUNT = 6;
+
+/* ── Governance ─────────────────────────────────────────────────────── */
+
+/** Hard architectural governance gates (A–F). */
+export const GOVERNANCE_GATE_COUNT = HUMAN_CHECKPOINT_COUNT;
+
+/**
+ * Individual human confirmations observed across a typical full run
+ * (governance gates plus run-specific creative approvals). Observed on
+ * completed sessions; not a rubric constant.
+ */
+export const HUMAN_CONFIRMATIONS_TYPICAL_RUN = 15;
+
+export const GOVERNANCE_CLAIM = `${GOVERNANCE_GATE_COUNT} hard governance gates (A–F), with ${HUMAN_CONFIRMATIONS_TYPICAL_RUN} individual human confirmations across a typical full run.`;
+
+/* ── Methodologies and engines ──────────────────────────────────────── */
+
+/** Distinct named methodologies/frameworks inventoried in docs/methodology-inventory.md. */
+export const METHODOLOGY_COUNT = 55;
+/** Conservative public-facing figure, floored to the nearest ten. */
+export const METHODOLOGY_HEADLINE = `${Math.floor(METHODOLOGY_COUNT / 10) * 10}+`;
+
+/** Stage 8 disruption engines — canonical key list (re-exported by stage8-disruption-engines.ts). */
+export const STAGE_8_DISRUPTION_ENGINE_KEYS = [
+  "breach",
+  "fuse",
+  "flashpoint",
+] as const;
+
+/** 13 Left-of-Centre engines + 3 Stage 8 disruption engines. */
+export const LATERAL_ENGINE_COUNT =
+  LOC_ENGINES.length + STAGE_8_DISRUPTION_ENGINE_KEYS.length;
+
+/* ── Run duration ───────────────────────────────────────────────────── */
+
+/**
+ * ASSERTED, NOT DERIVED. No aggregated run-duration telemetry exists yet.
+ * Observed system processing time only — human judgement and checkpoints
+ * sit outside this window.
+ */
+export const PROCESSING_HOURS_MIN = 2;
+export const PROCESSING_HOURS_MAX = 4;
+export const PROCESSING_TIME_CLAIM = `${PROCESSING_HOURS_MIN}–${PROCESSING_HOURS_MAX} hours of system processing time (observed, not telemetry-aggregated) — human judgement and checkpoints continue throughout.`;
+
+/* ── Pipeline step counts ───────────────────────────────────────────── */
+
+/**
+ * The manifest maximum: every executable step including sub-stages (1B, 4B,
+ * 13B, 14B/14C, 17B, 20B). Derived from STAGE_MANIFEST — never asserted.
+ */
+export const PIPELINE_STEPS_MAX = TOTAL_PIPELINE_STEPS;
+
+/**
+ * OBSERVED, NOT DERIVED AT RUNTIME. Measured across the 13 sessions that have
+ * reached Stage 22 (Brand Architecture): min 15, median 27, max 28. The
+ * typical band excludes partial/abandoned runs. Re-measure before changing.
+ * Documents never use this band — they count that session's own steps via
+ * countStagesRun().
+ */
+export const TYPICAL_PIPELINE_STEPS_MIN = 26;
+export const TYPICAL_PIPELINE_STEPS_MAX = 28;
+export const TYPICAL_PIPELINE_STEPS_MEDIAN = 27;
+
+/** Honest public framing: a ceiling plus the observed completion band. */
+export const PIPELINE_STEPS_CLAIM = `up to ${PIPELINE_STEPS_MAX} pipeline steps, with completed runs to date landing at ${TYPICAL_PIPELINE_STEPS_MIN}–${TYPICAL_PIPELINE_STEPS_MAX} (median ${TYPICAL_PIPELINE_STEPS_MEDIAN})`;
