@@ -104,6 +104,7 @@ const CSS = `
 .bg-dfy .faq-a{font-size:14px;color:var(--smoke);line-height:1.7;max-width:68ch}
 
 .bg-dfy .cta-row{display:flex;gap:14px;flex-wrap:wrap;margin-top:8px}
+.bg-dfy .btn-note{font-size:12px;color:var(--smoke);line-height:1.5;margin-top:8px}
 .bg-dfy footer{border-top:1px solid var(--ash);padding:32px 0;text-align:center;font-size:13px;color:var(--smoke)}
 
 .bg-dfy .sticky-cta{position:fixed;left:0;right:0;bottom:0;z-index:60;background:rgba(10,9,8,0.94);backdrop-filter:blur(8px);border-top:1px solid var(--ash);padding:12px 22px;display:flex;align-items:center;justify-content:center;gap:18px}
@@ -447,6 +448,7 @@ function DoneForYou() {
               >
                 Start Tier 1 →
               </button>
+              <div className="btn-note">Books a 30-minute call to scope this tier - no payment required yet.</div>
             </div>
             <div className="tier">
               <div className="t-tag">TIER 2</div>
@@ -477,6 +479,7 @@ function DoneForYou() {
               >
                 Start Tier 2 →
               </button>
+              <div className="btn-note">Books a 30-minute call to scope this tier - no payment required yet.</div>
             </div>
             <div className="tier">
               <div className="t-tag">TIER 3</div>
@@ -511,6 +514,7 @@ function DoneForYou() {
               >
                 Start Full Pipeline →
               </button>
+              <div className="btn-note">Books a 30-minute call to scope this tier - no payment required yet.</div>
             </div>
           </div>
           <div className="callout">
@@ -770,6 +774,7 @@ function DoneForYou() {
               Book a 30-minute call →
             </button>
           </p>
+          <div className="btn-note">Books a 30-minute call to scope this tier - no payment required yet.</div>
           <div className="callout">
             <div className="c-title">
               WANT TO TRY BRAND GRENADE BEFORE YOU IMPLEMENT IT?
