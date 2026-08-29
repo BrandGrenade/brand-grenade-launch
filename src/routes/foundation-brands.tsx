@@ -195,6 +195,7 @@ function ApplicationForm() {
   if (done) {
     const booking = new URL("https://calendly.com/brandgrenade/brand-grenade");
     booking.searchParams.set("hide_gdpr_banner", "1");
+    booking.searchParams.set("hide_cookie_banner", "1");
     booking.searchParams.set("name", name.trim());
     booking.searchParams.set("email", email.trim());
     booking.searchParams.set(
