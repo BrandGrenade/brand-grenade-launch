@@ -59,8 +59,9 @@ const CSS = `
 .bg-dfy .btn-primary{background:var(--detonation);color:var(--paper);font-size:14px;font-weight:600;padding:14px 26px;border-radius:3px;text-decoration:none;border:none;cursor:pointer;font-family:inherit;display:inline-block}
 .bg-dfy .btn-ghost{border:1px solid var(--ash2);color:var(--paper);font-size:14px;font-weight:500;padding:13px 26px;border-radius:3px;text-decoration:none;background:none;cursor:pointer;font-family:inherit;display:inline-block}
 
-.bg-dfy .section{padding:72px 0;border-top:1px solid var(--ash)}
-@media (max-width:720px){.bg-dfy .section{padding:52px 0}}
+.bg-dfy .section{padding:56px 0;border-top:1px solid var(--ash)}
+.bg-dfy .section > :last-child{margin-bottom:0}
+@media (max-width:720px){.bg-dfy .section{padding:44px 0}}
 .bg-dfy .section-eyebrow{font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--smoke);margin-bottom:16px}
 .bg-dfy .section h2{font-family:'Bebas Neue',sans-serif;font-size:clamp(30px,4vw,44px);font-weight:400;max-width:26ch;margin-bottom:26px;line-height:1.05}
 .bg-dfy .section p.body{font-size:15px;color:var(--smoke);line-height:1.75;max-width:64ch;margin-bottom:18px}
@@ -86,14 +87,14 @@ const CSS = `
 .bg-dfy .tier .t-desc{font-size:14px;color:var(--smoke);line-height:1.7}
 .bg-dfy .tier .t-meta{font-size:12px;color:var(--paper);font-weight:600;letter-spacing:.04em}
 .bg-dfy .tier .t-note{font-size:12px;color:var(--smoke);line-height:1.6}
-.bg-dfy .tier .t-best{font-size:13px;color:var(--smoke);line-height:1.6;border-top:1px solid var(--ash);padding-top:14px}
+.bg-dfy .tier .t-best{font-size:13px;color:var(--smoke);line-height:1.6;border-top:1px solid var(--ash);padding-top:14px;margin-top:auto}
 .bg-dfy .tier .t-best strong{color:var(--paper)}
 .bg-dfy .tier .t-deliverables{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
 .bg-dfy .tier .t-deliverables li{font-size:13px;color:var(--smoke);line-height:1.55;padding-left:16px;position:relative}
 .bg-dfy .tier .t-deliverables li::before{content:"•";position:absolute;left:0;color:var(--detonation)}
 .bg-dfy .tier .t-deliverables .t-lead{font-size:12px;color:var(--paper);font-weight:600;letter-spacing:.04em;padding-left:0;margin-bottom:2px}
 .bg-dfy .tier .t-deliverables .t-lead::before{display:none}
-.bg-dfy .tier .btn-primary{margin-top:auto;text-align:center}
+.bg-dfy .tier .btn-primary{text-align:center}
 
 .bg-dfy .seq{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:8px 0 26px}
 .bg-dfy .seq b{font-size:13px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--paper)}
@@ -104,13 +105,18 @@ const CSS = `
 .bg-dfy .fact-row::before{content:"—";color:var(--detonation);flex-shrink:0}
 
 .bg-dfy .faq{border-top:1px solid var(--ash);margin-top:8px}
-.bg-dfy .faq-item{border-bottom:1px solid var(--ash);padding:22px 0}
-.bg-dfy .faq-q{font-size:15px;font-weight:600;color:var(--paper);margin-bottom:8px}
-.bg-dfy .faq-a{font-size:14px;color:var(--smoke);line-height:1.7;max-width:68ch}
+.bg-dfy .faq-item{border-bottom:1px solid var(--ash);padding:0}
+.bg-dfy .faq-q{font-size:15px;font-weight:600;color:var(--paper);margin:0;padding:18px 0;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:baseline;gap:16px;transition:color .15s}
+.bg-dfy .faq-q::-webkit-details-marker{display:none}
+.bg-dfy .faq-q::after{content:"+";color:var(--detonation);font-size:17px;font-weight:400;flex-shrink:0;line-height:1}
+.bg-dfy .faq-item[open] .faq-q::after{content:"–"}
+.bg-dfy .faq-q:hover{color:var(--detonation)}
+.bg-dfy .faq-a{font-size:14px;color:var(--smoke);line-height:1.7;max-width:68ch;padding:0 0 20px}
 
 .bg-dfy .cta-row{display:flex;gap:14px;flex-wrap:wrap;margin-top:8px}
 .bg-dfy .btn-note{font-size:12px;color:var(--smoke);line-height:1.5;margin-top:8px}
-.bg-dfy footer{border-top:1px solid var(--ash);padding:32px 0;text-align:center;font-size:13px;color:var(--smoke)}
+.bg-dfy footer{border-top:1px solid var(--ash);padding:32px 0 92px;text-align:center;font-size:13px;color:var(--smoke)}
+@media (max-width:720px){.bg-dfy footer{padding:32px 0}}
 
 .bg-dfy .sticky-cta{position:fixed;left:0;right:0;bottom:0;z-index:60;background:rgba(10,9,8,0.94);backdrop-filter:blur(8px);border-top:1px solid var(--ash);padding:12px 22px;display:flex;align-items:center;justify-content:center;gap:18px}
 .bg-dfy .sticky-cta span{font-size:12px;color:var(--smoke);letter-spacing:.06em;text-transform:uppercase;font-weight:600}
@@ -339,7 +345,7 @@ function DoneForYou() {
               className="nav-cta"
               onClick={() => open("Done-For-You project")}
             >
-              Start a project
+              Book a Call
             </button>
           </div>
         </div>
@@ -368,7 +374,7 @@ function DoneForYou() {
             className="btn-primary"
             onClick={() => open("Done-For-You project")}
           >
-            Start a Done-For-You project →
+            Book a Call →
           </button>
           <div className="hero-note">Each stage delivered in 48 hours.</div>
         </section>
@@ -456,7 +462,7 @@ function DoneForYou() {
                 className="btn-primary"
                 onClick={() => open("Tier 1 — Intelligence")}
               >
-                Start Tier 1 →
+                Book a Call About Tier 1 →
               </button>
               <div className="btn-note">Books a 30-minute call to scope this tier - no payment required yet.</div>
             </div>
@@ -495,7 +501,7 @@ function DoneForYou() {
                 className="btn-primary"
                 onClick={() => open("Tier 2 — Strategy")}
               >
-                Start Tier 2 →
+                Book a Call About Tier 2 →
               </button>
               <div className="btn-note">Books a 30-minute call to scope this tier - no payment required yet.</div>
             </div>
@@ -539,24 +545,17 @@ function DoneForYou() {
                 className="btn-primary"
                 onClick={() => open("Tier 3 — Full Pipeline")}
               >
-                Start Full Pipeline →
+                Book a Call About Tier 3 →
               </button>
               <div className="btn-note">Books a 30-minute call to scope this tier - no payment required yet.</div>
             </div>
           </div>
           <div className="callout">
             <div className="c-title">Not sure which tier fits?</div>
-            <div className="c-body" style={{ marginBottom: 18 }}>
+            <div className="c-body">
               Tell us what you're trying to solve and we'll recommend where to
               start.
             </div>
-            <button
-              type="button"
-              className="btn-ghost"
-              onClick={() => open("Not sure which tier")}
-            >
-              Talk to us →
-            </button>
           </div>
         </section>
 
@@ -764,62 +763,27 @@ function DoneForYou() {
             Tell us what you're trying to solve and we'll recommend the right
             level of Brand Grenade engagement.
           </p>
-          <div className="cta-row" style={{ marginBottom: 20 }}>
+          <div className="cta-row">
             <button
               type="button"
               className="btn-primary"
               onClick={() => open("Done-For-You project")}
             >
-              Start a Done-For-You project →
-            </button>
-            <button
-              type="button"
-              className="btn-ghost"
-              onClick={() => open("Discuss a project")}
-            >
-              Discuss your project →
+              Book a Call →
             </button>
           </div>
-          <p className="body">
-            Want to talk it through first?{" "}
-            <button
-              type="button"
-              onClick={() => open("Book a 30-minute call")}
-              style={{
-                background: "none",
-                border: "none",
-                padding: 0,
-                color: "var(--paper)",
-                fontWeight: 600,
-                fontSize: "inherit",
-                fontFamily: "inherit",
-                cursor: "pointer",
-                textDecoration: "underline",
-                textUnderlineOffset: 3,
-              }}
-            >
-              Book a 30-minute call →
-            </button>
-          </p>
-          <div className="btn-note">Books a 30-minute call to scope this tier - no payment required yet.</div>
+          <div className="btn-note" style={{ marginBottom: 20 }}>Books a 30-minute call to scope your project - no payment required yet.</div>
           <div className="callout">
             <div className="c-title">
               WANT TO TRY BRAND GRENADE BEFORE YOU IMPLEMENT IT?
             </div>
-            <div className="c-body" style={{ marginBottom: 18 }}>
+            <div className="c-body">
               Done-for-You is also the fastest way to experience the system on
               a real business problem before bringing the capability into your
               own organisation. Run a real brief with us. See what Brand
               Grenade produces. Then decide whether you want to implement it
               yourself.
             </div>
-            <button
-              type="button"
-              className="btn-ghost"
-              onClick={() => open("Discuss implementation")}
-            >
-              Discuss implementation →
-            </button>
           </div>
         </section>
 
@@ -828,10 +792,10 @@ function DoneForYou() {
           <div className="section-eyebrow">Frequently asked questions</div>
           <div className="faq">
             {FAQS.map(([q, a]) => (
-              <div className="faq-item" key={q}>
-                <div className="faq-q">{q}</div>
+              <details className="faq-item" key={q}>
+                <summary className="faq-q">{q}</summary>
                 <div className="faq-a">{a}</div>
-              </div>
+              </details>
             ))}
           </div>
         </section>
@@ -851,7 +815,7 @@ function DoneForYou() {
           className="nav-cta"
           onClick={() => open("Done-For-You project")}
         >
-          Start a project
+          Book a Call
         </button>
       </div>
     </div>
