@@ -59,8 +59,9 @@ const CSS = `
 .bg-dfy .btn-primary{background:var(--detonation);color:var(--paper);font-size:14px;font-weight:600;padding:14px 26px;border-radius:3px;text-decoration:none;border:none;cursor:pointer;font-family:inherit;display:inline-block}
 .bg-dfy .btn-ghost{border:1px solid var(--ash2);color:var(--paper);font-size:14px;font-weight:500;padding:13px 26px;border-radius:3px;text-decoration:none;background:none;cursor:pointer;font-family:inherit;display:inline-block}
 
-.bg-dfy .section{padding:72px 0;border-top:1px solid var(--ash)}
-@media (max-width:720px){.bg-dfy .section{padding:52px 0}}
+.bg-dfy .section{padding:56px 0;border-top:1px solid var(--ash)}
+.bg-dfy .section > :last-child{margin-bottom:0}
+@media (max-width:720px){.bg-dfy .section{padding:44px 0}}
 .bg-dfy .section-eyebrow{font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--smoke);margin-bottom:16px}
 .bg-dfy .section h2{font-family:'Bebas Neue',sans-serif;font-size:clamp(30px,4vw,44px);font-weight:400;max-width:26ch;margin-bottom:26px;line-height:1.05}
 .bg-dfy .section p.body{font-size:15px;color:var(--smoke);line-height:1.75;max-width:64ch;margin-bottom:18px}
@@ -114,7 +115,8 @@ const CSS = `
 
 .bg-dfy .cta-row{display:flex;gap:14px;flex-wrap:wrap;margin-top:8px}
 .bg-dfy .btn-note{font-size:12px;color:var(--smoke);line-height:1.5;margin-top:8px}
-.bg-dfy footer{border-top:1px solid var(--ash);padding:32px 0;text-align:center;font-size:13px;color:var(--smoke)}
+.bg-dfy footer{border-top:1px solid var(--ash);padding:32px 0 92px;text-align:center;font-size:13px;color:var(--smoke)}
+@media (max-width:720px){.bg-dfy footer{padding:32px 0}}
 
 .bg-dfy .sticky-cta{position:fixed;left:0;right:0;bottom:0;z-index:60;background:rgba(10,9,8,0.94);backdrop-filter:blur(8px);border-top:1px solid var(--ash);padding:12px 22px;display:flex;align-items:center;justify-content:center;gap:18px}
 .bg-dfy .sticky-cta span{font-size:12px;color:var(--smoke);letter-spacing:.06em;text-transform:uppercase;font-weight:600}
