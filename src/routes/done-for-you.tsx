@@ -88,6 +88,11 @@ const CSS = `
 .bg-dfy .tier .t-note{font-size:12px;color:var(--smoke);line-height:1.6}
 .bg-dfy .tier .t-best{font-size:13px;color:var(--smoke);line-height:1.6;border-top:1px solid var(--ash);padding-top:14px}
 .bg-dfy .tier .t-best strong{color:var(--paper)}
+.bg-dfy .tier .t-deliverables{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.bg-dfy .tier .t-deliverables li{font-size:13px;color:var(--smoke);line-height:1.55;padding-left:16px;position:relative}
+.bg-dfy .tier .t-deliverables li::before{content:"•";position:absolute;left:0;color:var(--detonation)}
+.bg-dfy .tier .t-deliverables .t-lead{font-size:12px;color:var(--paper);font-weight:600;letter-spacing:.04em;padding-left:0;margin-bottom:2px}
+.bg-dfy .tier .t-deliverables .t-lead::before{display:none}
 .bg-dfy .tier .btn-primary{margin-top:auto;text-align:center}
 
 .bg-dfy .seq{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:8px 0 26px}
@@ -436,6 +441,11 @@ function DoneForYou() {
                 compared, and a clear recommendation with the reasoning shown.
               </div>
               <div className="t-meta">One 48-hour stage.</div>
+              <ul className="t-deliverables">
+                <li>Full Research Synthesiser evidence base — every claim classified and verified</li>
+                <li>Strategic Territory Intelligence Report — multiple distinct territories, scored and compared, with full reasoning shown</li>
+                <li>Honest reasoning included even where no clear rationale existed for what wasn't recommended</li>
+              </ul>
               <div className="t-best">
                 <strong>Best when:</strong> you need to understand the problem,
                 identify the opportunity and establish where the strategy
@@ -468,6 +478,14 @@ function DoneForYou() {
                 development begins. Overall timing depends on your review and
                 approval.
               </div>
+              <ul className="t-deliverables">
+                <li className="t-lead">Everything in Tier 1, plus:</li>
+                <li>Brand Strategy and Creative Development Summary</li>
+                <li>Consulting Delivery document with full working appendix</li>
+                <li>Your validated proposition and positioning, fully reasoned</li>
+                <li>Four audience-tailored formats: executive Strategy & Creative Vision, Agency Pitch, Board Strategy Recommendation, Brand Workshop</li>
+                <li>The complete strategy pipeline — full canonical record, every stage</li>
+              </ul>
               <div className="t-best">
                 <strong>Best when:</strong> you need a complete strategic
                 answer, not just a diagnosis.
@@ -502,6 +520,15 @@ function DoneForYou() {
               <div className="t-note">
                 Capacity is limited to protect quality and turnaround.
               </div>
+              <ul className="t-deliverables">
+                <li className="t-lead">Everything in Tier 2, plus:</li>
+                <li>The complete creative sweep — every direction generated and rated, through to the approved shortlist</li>
+                <li>Full Brand Detonation suite: Detonation Territory, Detonation Intelligence, The Detonation, Activation Architecture, Master Detonation Brief</li>
+                <li>Individual channel-specific briefs, each with its own strategic rationale</li>
+                <li>A tool-specific, paste-ready prompt set for executional development</li>
+                <li>Conceptual creative assets and brand architecture documentation</li>
+                <li>The full creative showcase — one campaign, every channel expression, presented as a whole</li>
+              </ul>
               <div className="t-best">
                 <strong>Best when:</strong> you need to go from the strategic
                 problem all the way to creative ideation and coherent campaign
