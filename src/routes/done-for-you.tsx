@@ -761,62 +761,27 @@ function DoneForYou() {
             Tell us what you're trying to solve and we'll recommend the right
             level of Brand Grenade engagement.
           </p>
-          <div className="cta-row" style={{ marginBottom: 20 }}>
+          <div className="cta-row">
             <button
               type="button"
               className="btn-primary"
               onClick={() => open("Done-For-You project")}
             >
-              Start a Done-For-You project →
-            </button>
-            <button
-              type="button"
-              className="btn-ghost"
-              onClick={() => open("Discuss a project")}
-            >
-              Discuss your project →
+              Book a Call →
             </button>
           </div>
-          <p className="body">
-            Want to talk it through first?{" "}
-            <button
-              type="button"
-              onClick={() => open("Book a 30-minute call")}
-              style={{
-                background: "none",
-                border: "none",
-                padding: 0,
-                color: "var(--paper)",
-                fontWeight: 600,
-                fontSize: "inherit",
-                fontFamily: "inherit",
-                cursor: "pointer",
-                textDecoration: "underline",
-                textUnderlineOffset: 3,
-              }}
-            >
-              Book a 30-minute call →
-            </button>
-          </p>
-          <div className="btn-note">Books a 30-minute call to scope this tier - no payment required yet.</div>
+          <div className="btn-note" style={{ marginBottom: 20 }}>Books a 30-minute call to scope your project - no payment required yet.</div>
           <div className="callout">
             <div className="c-title">
               WANT TO TRY BRAND GRENADE BEFORE YOU IMPLEMENT IT?
             </div>
-            <div className="c-body" style={{ marginBottom: 18 }}>
+            <div className="c-body">
               Done-for-You is also the fastest way to experience the system on
               a real business problem before bringing the capability into your
               own organisation. Run a real brief with us. See what Brand
               Grenade produces. Then decide whether you want to implement it
               yourself.
             </div>
-            <button
-              type="button"
-              className="btn-ghost"
-              onClick={() => open("Discuss implementation")}
-            >
-              Discuss implementation →
-            </button>
           </div>
         </section>
 
