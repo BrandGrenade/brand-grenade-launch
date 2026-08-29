@@ -343,7 +343,7 @@ function DoneForYou() {
               className="nav-cta"
               onClick={() => open("Done-For-You project")}
             >
-              Start a project
+              Book a Call
             </button>
           </div>
         </div>
@@ -813,7 +813,7 @@ function DoneForYou() {
           className="nav-cta"
           onClick={() => open("Done-For-You project")}
         >
-          Start a project
+          Book a Call
         </button>
       </div>
     </div>
