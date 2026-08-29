@@ -86,14 +86,14 @@ const CSS = `
 .bg-dfy .tier .t-desc{font-size:14px;color:var(--smoke);line-height:1.7}
 .bg-dfy .tier .t-meta{font-size:12px;color:var(--paper);font-weight:600;letter-spacing:.04em}
 .bg-dfy .tier .t-note{font-size:12px;color:var(--smoke);line-height:1.6}
-.bg-dfy .tier .t-best{font-size:13px;color:var(--smoke);line-height:1.6;border-top:1px solid var(--ash);padding-top:14px}
+.bg-dfy .tier .t-best{font-size:13px;color:var(--smoke);line-height:1.6;border-top:1px solid var(--ash);padding-top:14px;margin-top:auto}
 .bg-dfy .tier .t-best strong{color:var(--paper)}
 .bg-dfy .tier .t-deliverables{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
 .bg-dfy .tier .t-deliverables li{font-size:13px;color:var(--smoke);line-height:1.55;padding-left:16px;position:relative}
 .bg-dfy .tier .t-deliverables li::before{content:"•";position:absolute;left:0;color:var(--detonation)}
 .bg-dfy .tier .t-deliverables .t-lead{font-size:12px;color:var(--paper);font-weight:600;letter-spacing:.04em;padding-left:0;margin-bottom:2px}
 .bg-dfy .tier .t-deliverables .t-lead::before{display:none}
-.bg-dfy .tier .btn-primary{margin-top:auto;text-align:center}
+.bg-dfy .tier .btn-primary{text-align:center}
 
 .bg-dfy .seq{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:8px 0 26px}
 .bg-dfy .seq b{font-size:13px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--paper)}
@@ -104,9 +104,13 @@ const CSS = `
 .bg-dfy .fact-row::before{content:"—";color:var(--detonation);flex-shrink:0}
 
 .bg-dfy .faq{border-top:1px solid var(--ash);margin-top:8px}
-.bg-dfy .faq-item{border-bottom:1px solid var(--ash);padding:22px 0}
-.bg-dfy .faq-q{font-size:15px;font-weight:600;color:var(--paper);margin-bottom:8px}
-.bg-dfy .faq-a{font-size:14px;color:var(--smoke);line-height:1.7;max-width:68ch}
+.bg-dfy .faq-item{border-bottom:1px solid var(--ash);padding:0}
+.bg-dfy .faq-q{font-size:15px;font-weight:600;color:var(--paper);margin:0;padding:18px 0;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:baseline;gap:16px;transition:color .15s}
+.bg-dfy .faq-q::-webkit-details-marker{display:none}
+.bg-dfy .faq-q::after{content:"+";color:var(--detonation);font-size:17px;font-weight:400;flex-shrink:0;line-height:1}
+.bg-dfy .faq-item[open] .faq-q::after{content:"–"}
+.bg-dfy .faq-q:hover{color:var(--detonation)}
+.bg-dfy .faq-a{font-size:14px;color:var(--smoke);line-height:1.7;max-width:68ch;padding:0 0 20px}
 
 .bg-dfy .cta-row{display:flex;gap:14px;flex-wrap:wrap;margin-top:8px}
 .bg-dfy .btn-note{font-size:12px;color:var(--smoke);line-height:1.5;margin-top:8px}
@@ -828,10 +832,10 @@ function DoneForYou() {
           <div className="section-eyebrow">Frequently asked questions</div>
           <div className="faq">
             {FAQS.map(([q, a]) => (
-              <div className="faq-item" key={q}>
-                <div className="faq-q">{q}</div>
+              <details className="faq-item" key={q}>
+                <summary className="faq-q">{q}</summary>
                 <div className="faq-a">{a}</div>
-              </div>
+              </details>
             ))}
           </div>
         </section>
