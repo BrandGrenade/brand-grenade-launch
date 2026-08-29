@@ -23,20 +23,38 @@ type IntelSummary = {
   research: { label: string; text: string }[];
 };
 
+const INTEL_SELECT =
+  "id,brand_name,category,status,updated_at,completed_at,final_report,report_metadata,territory_input,additional_context,input_primary_consumer,input_brand_health,input_competitive_audit,input_cultural_trends,input_audience_segmentation,input_bg_intel_pack";
+
 async function fetchLatestIntelligence(
   sourceId: string | null,
+  brand?: string | null,
 ): Promise<IntelSummary | null> {
-  if (!sourceId) return null;
+  if (!sourceId && !brand?.trim()) return null;
   try {
-    const res = await supabase
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .from("intelligence_sessions" as any)
-      .select(
-        "id,brand_name,category,status,updated_at,completed_at,final_report,report_metadata,territory_input,additional_context,input_primary_consumer,input_brand_health,input_competitive_audit,input_cultural_trends,input_audience_segmentation,input_bg_intel_pack",
-      )
-      .eq("id", sourceId)
-      .eq("status", "complete")
-      .maybeSingle();
+    // Authority order: the exact run stamped into the brief wins. When no
+    // marker is present (e.g. briefs composed in the Briefing Room before the
+    // marker was carried through), fall back to the latest complete run for
+    // the same brand owned by this user — RLS scopes the query to them.
+    const res = sourceId
+      ? await supabase
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          .from("intelligence_sessions" as any)
+          .select(INTEL_SELECT)
+          .eq("id", sourceId)
+          .eq("status", "complete")
+          .maybeSingle()
+      : await supabase
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          .from("intelligence_sessions" as any)
+          .select(INTEL_SELECT)
+          .ilike("brand_name", (brand ?? "").trim())
+          .eq("status", "complete")
+          .not("final_report", "is", null)
+          .order("completed_at", { ascending: false, nullsFirst: false })
+          .limit(1)
+          .maybeSingle();
+
     if (res.error) return null;
     const match = res.data as unknown as {
       id: string;
@@ -89,7 +107,7 @@ export function Document00ACard({
   useEffect(() => {
     let cancelled = false;
     const sourceId = intelligenceSourceIdFromBrief(briefText);
-    void fetchLatestIntelligence(sourceId).then((r) => {
+    void fetchLatestIntelligence(sourceId, brand).then((r) => {
       if (cancelled) return;
       setIntel(r);
       setLoaded(true);
@@ -97,7 +115,8 @@ export function Document00ACard({
     return () => {
       cancelled = true;
     };
-  }, [briefText]);
+  }, [briefText, brand]);
+
 
   const handleDownload = useCallback(async () => {
     if (!intel) return;

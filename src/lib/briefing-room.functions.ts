@@ -460,6 +460,7 @@ export const getBriefingHandoffPreview = createServerFn({ method: "POST" })
       selected_tension_index: ws.selected_tension_index,
       prebrief,
       llm_fields,
+      raw_brief: ws.raw_brief,
     });
   });
 
