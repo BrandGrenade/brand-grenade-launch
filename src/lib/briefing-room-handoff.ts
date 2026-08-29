@@ -41,6 +41,10 @@ export type WorkspaceForHandoff = {
    *  must_include/must_avoid/competitive_context/cultural_context into the
    *  correct Step-5 fields instead of leaving them stranded in raw_brief. */
   prebrief?: PrebriefForBriefingRoom | null;
+  /** The workspace raw brief. Only used to carry the Intelligence Engine
+   *  provenance marker "[FROM_INTELLIGENCE_ENGINE session=<uuid>]" through to
+   *  brief_text, so downstream deliverables can resolve the exact source run. */
+  raw_brief?: string | null;
   /** LLM-generated content for ALL eleven brief fields, produced from the
    *  unified context (raw brief + research documents + Intelligence Engine
    *  prebrief + Steps 1–4 outputs + selected frame + selected tension).
@@ -408,7 +412,16 @@ export function buildHandoffPayload(ws: WorkspaceForHandoff): HandoffPayload {
 
   // ─── brief_text: anchor block THEN composed sections ─────────────
   const composed = composeBriefText(b);
-  const briefText = `${anchorBlock}\n\n${composed}`;
+  // Preserve Intelligence Engine provenance: when the workspace was seeded from
+  // the Intelligence Lab, the marker line must survive into brief_text or
+  // Document 00A cannot resolve the source run (it would falsely report
+  // "Intelligence Lab not run for this brand").
+  const sourceMarker = ws.raw_brief?.match(
+    /\[FROM_INTELLIGENCE_ENGINE\s+session=[0-9a-fA-F-]{36}\]/,
+  )?.[0];
+  const briefText = [sourceMarker, anchorBlock, composed]
+    .filter(Boolean)
+    .join("\n\n");
 
   const ready = blockers.length === 0;
 
