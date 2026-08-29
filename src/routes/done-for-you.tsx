@@ -372,7 +372,7 @@ function DoneForYou() {
             className="btn-primary"
             onClick={() => open("Done-For-You project")}
           >
-            Start a Done-For-You project →
+            Book a Call →
           </button>
           <div className="hero-note">Each stage delivered in 48 hours.</div>
         </section>
@@ -550,17 +550,10 @@ function DoneForYou() {
           </div>
           <div className="callout">
             <div className="c-title">Not sure which tier fits?</div>
-            <div className="c-body" style={{ marginBottom: 18 }}>
+            <div className="c-body">
               Tell us what you're trying to solve and we'll recommend where to
               start.
             </div>
-            <button
-              type="button"
-              className="btn-ghost"
-              onClick={() => open("Not sure which tier")}
-            >
-              Talk to us →
-            </button>
           </div>
         </section>
 
