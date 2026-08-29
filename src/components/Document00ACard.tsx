@@ -107,7 +107,7 @@ export function Document00ACard({
   useEffect(() => {
     let cancelled = false;
     const sourceId = intelligenceSourceIdFromBrief(briefText);
-    void fetchLatestIntelligence(sourceId).then((r) => {
+    void fetchLatestIntelligence(sourceId, brand).then((r) => {
       if (cancelled) return;
       setIntel(r);
       setLoaded(true);
@@ -115,7 +115,8 @@ export function Document00ACard({
     return () => {
       cancelled = true;
     };
-  }, [briefText]);
+  }, [briefText, brand]);
+
 
   const handleDownload = useCallback(async () => {
     if (!intel) return;
