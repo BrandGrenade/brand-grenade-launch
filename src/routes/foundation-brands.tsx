@@ -13,7 +13,7 @@ import { submitDemoRequest } from "@/lib/demo-request.functions";
  */
 
 // Editable value: update as Foundation Brand places are filled.
-const REMAINING_PLACES = 3;
+const REMAINING_PLACES: number = 3;
 
 export const Route = createFileRoute("/foundation-brands")({
   component: FoundationBrands,

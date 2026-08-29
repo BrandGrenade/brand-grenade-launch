@@ -19,6 +19,7 @@ import { Route as MethodologyRouteImport } from './routes/methodology'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as KpmgRouteImport } from './routes/kpmg'
 import { Route as IntelligenceRouteImport } from './routes/intelligence'
+import { Route as FoundationBrandsRouteImport } from './routes/foundation-brands'
 import { Route as ForConsultanciesRouteImport } from './routes/for-consultancies'
 import { Route as ForCmosRouteImport } from './routes/for-cmos'
 import { Route as ForAgenciesRouteImport } from './routes/for-agencies'
@@ -117,6 +118,11 @@ const KpmgRoute = KpmgRouteImport.update({
 const IntelligenceRoute = IntelligenceRouteImport.update({
   id: '/intelligence',
   path: '/intelligence',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FoundationBrandsRoute = FoundationBrandsRouteImport.update({
+  id: '/foundation-brands',
+  path: '/foundation-brands',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ForConsultanciesRoute = ForConsultanciesRouteImport.update({
@@ -392,6 +398,7 @@ export interface FileRoutesByFullPath {
   '/for-agencies': typeof ForAgenciesRoute
   '/for-cmos': typeof ForCmosRoute
   '/for-consultancies': typeof ForConsultanciesRoute
+  '/foundation-brands': typeof FoundationBrandsRoute
   '/intelligence': typeof IntelligenceRouteWithChildren
   '/kpmg': typeof KpmgRoute
   '/login': typeof LoginRoute
@@ -450,6 +457,7 @@ export interface FileRoutesByTo {
   '/for-agencies': typeof ForAgenciesRoute
   '/for-cmos': typeof ForCmosRoute
   '/for-consultancies': typeof ForConsultanciesRoute
+  '/foundation-brands': typeof FoundationBrandsRoute
   '/kpmg': typeof KpmgRoute
   '/login': typeof LoginRoute
   '/methodology': typeof MethodologyRoute
@@ -508,6 +516,7 @@ export interface FileRoutesById {
   '/for-agencies': typeof ForAgenciesRoute
   '/for-cmos': typeof ForCmosRoute
   '/for-consultancies': typeof ForConsultanciesRoute
+  '/foundation-brands': typeof FoundationBrandsRoute
   '/intelligence': typeof IntelligenceRouteWithChildren
   '/kpmg': typeof KpmgRoute
   '/login': typeof LoginRoute
@@ -571,6 +580,7 @@ export interface FileRouteTypes {
     | '/for-agencies'
     | '/for-cmos'
     | '/for-consultancies'
+    | '/foundation-brands'
     | '/intelligence'
     | '/kpmg'
     | '/login'
@@ -629,6 +639,7 @@ export interface FileRouteTypes {
     | '/for-agencies'
     | '/for-cmos'
     | '/for-consultancies'
+    | '/foundation-brands'
     | '/kpmg'
     | '/login'
     | '/methodology'
@@ -686,6 +697,7 @@ export interface FileRouteTypes {
     | '/for-agencies'
     | '/for-cmos'
     | '/for-consultancies'
+    | '/foundation-brands'
     | '/intelligence'
     | '/kpmg'
     | '/login'
@@ -748,6 +760,7 @@ export interface RootRouteChildren {
   ForAgenciesRoute: typeof ForAgenciesRoute
   ForCmosRoute: typeof ForCmosRoute
   ForConsultanciesRoute: typeof ForConsultanciesRoute
+  FoundationBrandsRoute: typeof FoundationBrandsRoute
   IntelligenceRoute: typeof IntelligenceRouteWithChildren
   KpmgRoute: typeof KpmgRoute
   LoginRoute: typeof LoginRoute
@@ -846,6 +859,13 @@ declare module '@tanstack/react-router' {
       path: '/intelligence'
       fullPath: '/intelligence'
       preLoaderRoute: typeof IntelligenceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/foundation-brands': {
+      id: '/foundation-brands'
+      path: '/foundation-brands'
+      fullPath: '/foundation-brands'
+      preLoaderRoute: typeof FoundationBrandsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/for-consultancies': {
@@ -1312,6 +1332,7 @@ const rootRouteChildren: RootRouteChildren = {
   ForAgenciesRoute: ForAgenciesRoute,
   ForCmosRoute: ForCmosRoute,
   ForConsultanciesRoute: ForConsultanciesRoute,
+  FoundationBrandsRoute: FoundationBrandsRoute,
   IntelligenceRoute: IntelligenceRouteWithChildren,
   KpmgRoute: KpmgRoute,
   LoginRoute: LoginRoute,
