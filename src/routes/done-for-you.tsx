@@ -460,7 +460,7 @@ function DoneForYou() {
                 className="btn-primary"
                 onClick={() => open("Tier 1 — Intelligence")}
               >
-                Start Tier 1 →
+                Book a Call About Tier 1 →
               </button>
               <div className="btn-note">Books a 30-minute call to scope this tier - no payment required yet.</div>
             </div>
@@ -499,7 +499,7 @@ function DoneForYou() {
                 className="btn-primary"
                 onClick={() => open("Tier 2 — Strategy")}
               >
-                Start Tier 2 →
+                Book a Call About Tier 2 →
               </button>
               <div className="btn-note">Books a 30-minute call to scope this tier - no payment required yet.</div>
             </div>
@@ -543,7 +543,7 @@ function DoneForYou() {
                 className="btn-primary"
                 onClick={() => open("Tier 3 — Full Pipeline")}
               >
-                Start Full Pipeline →
+                Book a Call About Tier 3 →
               </button>
               <div className="btn-note">Books a 30-minute call to scope this tier - no payment required yet.</div>
             </div>
