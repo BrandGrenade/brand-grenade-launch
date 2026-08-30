@@ -30,7 +30,7 @@ import {
   inlineMd,
   type Stat,
 } from "./doc-system";
-import { condenseStage } from "./minto-content";
+import { condenseStage, smpScoreProvenance } from "./minto-content";
 import { stripDocumentMetadata } from "./strip-document-metadata";
 import { stripSelectionArtifacts } from "./document-gate";
 import { gateSummary, type GateSectionInput } from "./summary-gate";
@@ -922,6 +922,11 @@ export function buildSummaryDocument(
     );
   }
 
+  // Provenance guard: when the locked line was written after the competitive
+  // scoring pass, no part of this document may present its re-score as a
+  // competitive result.
+  const scoreProvenance = smpScoreProvenance(str(session, "stage_10_output"), selectedSmp);
+
   const scoringHtml = scoreRows.length
     ? `${comparisonTable(
         [
@@ -930,12 +935,21 @@ export function buildSummaryDocument(
           { key: "n", label: "Why it scored there" },
         ],
         scoreRows.map((r) => ({ cells: { d: r.dimension, s: r.score, n: r.note } })),
-        selectedSmp ? `Scored against: ${selectedSmp}` : scoring.scoredSmp ? `Scored against: ${scoring.scoredSmp}` : undefined,
-      )}${
+        scoreProvenance.postSelection && selectedSmp
+          ? `Post-lock re-score of the final wording: ${selectedSmp} — not a competitive rank`
+          : selectedSmp ? `Scored against: ${selectedSmp}` : scoring.scoredSmp ? `Scored against: ${scoring.scoredSmp}` : undefined,
+      )}${scoreProvenance.html}${
         scoring.composite || scoring.verdict
           ? statGrid(
               [
-                scoring.composite ? { value: scoring.composite, label: "composite score" } : null,
+                scoring.composite
+                  ? {
+                      value: scoring.composite,
+                      label: scoreProvenance.postSelection
+                        ? "post-lock re-score (not a rank)"
+                        : "composite score",
+                    }
+                  : null,
                 scoring.verdict ? { value: scoring.verdict, label: "stage 10 verdict" } : null,
               ].filter(Boolean) as Stat[],
             )
@@ -948,9 +962,13 @@ export function buildSummaryDocument(
     (a, b) => parseInt(b.score ?? "0", 10) - parseInt(a.score ?? "0", 10),
   )[0];
   const whyItWon = [
-    scoring.verdict === "PASS"
-      ? `It is the only proposition to clear both hard floors and be carried through Stage 10 scoring${scoring.composite ? ` on a composite of ${scoring.composite}` : ""}.`
-      : "",
+    scoreProvenance.postSelection
+      ? scoreProvenance.topCompetitive?.composite != null
+        ? `The territory it expresses was validated competitively: "${scoreProvenance.topCompetitive.name}" scored ${scoreProvenance.topCompetitive.composite}/100 against ${scoreProvenance.competitive.length} candidates in the scored field. This line is the refined expression of that territory, locked by human judgement after the competitive pass closed — the system explored and scored, a human made the final call.`
+        : `The territory it expresses was validated competitively in the scored field; this line is its refined expression, locked by human judgement after the competitive pass closed.`
+      : scoring.verdict === "PASS"
+        ? `It is the only proposition to clear both hard floors and be carried through Stage 10 scoring${scoring.composite ? ` on a composite of ${scoring.composite}` : ""}.`
+        : "",
     topScore?.note
       ? `Its strongest dimension is ${topScore.dimension.toLowerCase()} (${topScore.score}): ${topScore.note}`
       : "",

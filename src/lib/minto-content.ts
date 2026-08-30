@@ -475,6 +475,88 @@ function findWinner(candidates: ScoredCandidate[], smp: string): ScoredCandidate
   return candidates.find((c) => normalise(c.name) === target) ?? null;
 }
 
+/* ─────────────────────────────── score provenance (honest framing) ── */
+
+/**
+ * Stage 10 can carry two different kinds of score for the same session:
+ *
+ *  1. the competitive field — every candidate scored against each other in the
+ *     original pass; and
+ *  2. a re-score block appended later, after a human locked a refined
+ *     expression of the winning territory at the judgement gate.
+ *
+ * A re-score is NOT a competitive result. No deliverable may present it as a
+ * rank, a win, or a "cleared the field" number. This helper is the single
+ * place that tells every document builder which kind of score it is holding.
+ */
+const RESCORE_MARKER =
+  /^\s*=*\s*(?:stage\s*10\s*)?re[\s-]?score\b|locked proposition\s*re[\s-]?score|\bre[\s-]?score\s*[—-]\s*locked/im;
+
+export interface SmpScoreProvenance {
+  /** true when the selected SMP's only score comes from a post-lock re-score. */
+  postSelection: boolean;
+  /** Candidates scored in the original competitive pass. */
+  competitive: ScoredCandidate[];
+  /** Highest-scoring candidate of the genuine competitive field. */
+  topCompetitive: ScoredCandidate | null;
+  /** One-sentence plain-text statement of the accurate story ("" when clean). */
+  sentence: string;
+  /** Callout HTML for the accurate story ("" when clean). */
+  html: string;
+}
+
+export function smpScoreProvenance(stage10: string, smp: string): SmpScoreProvenance {
+  const empty: SmpScoreProvenance = {
+    postSelection: false,
+    competitive: parseScoredCandidates(stage10),
+    topCompetitive: null,
+    sentence: "",
+    html: "",
+  };
+  const target = normalise(smp);
+  if (!target || !stage10.trim()) return empty;
+
+  const lines = stage10.split("\n");
+  const markerAt = lines.findIndex((l) => RESCORE_MARKER.test(l));
+  if (markerAt < 0) return empty;
+
+  const competitive = parseScoredCandidates(lines.slice(0, markerAt).join("\n"));
+  const topCompetitive =
+    competitive
+      .filter((c) => c.composite != null)
+      .sort((a, b) => (b.composite ?? 0) - (a.composite ?? 0))[0] ?? null;
+  const inCompetitiveField = competitive.some((c) => normalise(c.name) === target);
+  if (inCompetitiveField || !competitive.length) {
+    return { ...empty, competitive, topCompetitive };
+  }
+
+  const rank =
+    topCompetitive && topCompetitive.composite != null
+      ? `“${topCompetitive.name}” (${topCompetitive.composite}/100, the highest of ${competitive.length} candidate${
+          competitive.length === 1 ? "" : "s"
+        } in the scored field)`
+      : "the highest-scoring candidate in the scored field";
+  const sentence =
+    `The territory behind “${smp}” was validated through genuine competitive scoring as ${rank
+      .replace(/<[^>]+>/g, "")}. ` +
+    `“${smp}” is the refined expression of that territory, locked by human judgement after the competitive pass closed. ` +
+    `Any score shown against this exact wording is a post-lock re-score of the final line, not a competitive rank.`;
+  const html = callout(
+    "How this proposition was arrived at",
+    `<p>The system explored and scored the field; a human made the final call. ` +
+      `The territory question was settled competitively: ${rank
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")} carried the territory through the six-dimension framework against the full candidate set.</p>` +
+      `<p><strong>${escapeHtml(smp)}</strong> is the refined, locked expression of that same territory, ` +
+      `written at the human judgement gate after the competitive pass had closed. ` +
+      `Where a score appears against this exact wording, it is a post-lock re-score of the final line ` +
+      `against the same rubric — it is not a competitive result and does not rank it against the field.</p>`,
+  );
+  return { postSelection: true, competitive, topCompetitive, sentence, html };
+}
+
+
+
 /* ─────────────────────────────────────────────── appendix condensing ── */
 
 /** Placeholder body for a canonical section with no stored output. */
@@ -767,9 +849,15 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
   const s15 = clean(session.stage_15_output);
 
   const candidates = parseScoredCandidates(s10);
+  const provenance = smpScoreProvenance(s10, smp);
   const winner = findWinner(candidates, smp);
   const passed = candidates.filter((c) => c.verdict === "PASS");
-  const rejected = candidates.filter((c) => c !== winner);
+  // A candidate that carried the winning territory competitively is not a
+  // rejected alternative, even though the locked line is worded differently.
+  const rejected = candidates.filter(
+    (c) => c !== winner && !(provenance.postSelection && c === provenance.topCompetitive),
+  );
+
   const stagesRun = PIPELINE_APPENDIX.filter((s) =>
     String((session as Record<string, unknown>)[s.key] ?? "").trim(),
   ).length;
@@ -813,14 +901,25 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
     headlineStats.push({
       value: winner.composite,
       suffix: "/100",
-      label: "Recommended SMP score",
-      note: "Weighted composite across six scoring dimensions.",
+      label: provenance.postSelection ? "Locked line — post-lock re-score" : "Recommended SMP score",
+      note: provenance.postSelection
+        ? "Re-score of the final wording after the competitive pass closed. Not a competitive rank."
+        : "Weighted composite across six scoring dimensions.",
     });
   }
-  if (candidates.length) {
+  if (provenance.postSelection && provenance.topCompetitive?.composite != null) {
     headlineStats.push({
-      value: candidates.length,
-      label: "Propositions scored",
+      value: provenance.topCompetitive.composite,
+      suffix: "/100",
+      label: "Territory — competitive score",
+      note: `“${provenance.topCompetitive.name}” carried this territory through the scored field.`,
+    });
+  }
+  const scoredCount = provenance.postSelection ? provenance.competitive.length : candidates.length;
+  if (scoredCount) {
+    headlineStats.push({
+      value: scoredCount,
+      label: "Propositions competitively scored",
       note: `${passed.length} cleared the hard floors.`,
     });
   }
@@ -837,9 +936,14 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
       brand,
     )}</strong>${category ? ` in the ${escapeHtml(category)} category` : ""}. It is assembled entirely from one strategy session: ${stagesRun} validation stage${
       stagesRun === 1 ? "" : "s"
-    } were run and are reproduced in the appendix, ${candidates.length || "no"} proposition${
-      candidates.length === 1 ? "" : "s"
-    } were generated and scored, and the recommendation above is the one that survived that process.</p>` +
+    } were run and are reproduced in the appendix, ${scoredCount || "no"} proposition${
+      scoredCount === 1 ? "" : "s"
+    } were generated and competitively scored, and the recommendation above is ${
+      provenance.postSelection
+        ? "the locked expression of the territory that survived that process — refined by human judgement after the scoring pass closed"
+        : "the one that survived that process"
+    }.</p>` +
+
     `<p>Nothing here is written from outside the session. Where a stage produced no output, the section says so rather than filling the gap.</p>` +
     `<p>It serves one decision: whether to adopt the recommended Single-Minded Proposition and release it into creative development. The argument is ordered to that decision — recommendation first, evidence behind it, and the action requested at the end.</p>`;
 
@@ -862,12 +966,16 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
    * are not shown at all; a parent/earlier-stage line's score is never used. */
   const winnerVerdictHtml = winner
     ? callout(
-        "Stage 10 verdict",
+        provenance.postSelection ? "Post-lock re-score of the final wording" : "Stage 10 verdict",
         `<p><strong>${winner.verdict === "FAIL" ? "ELIMINATED" : (winner.verdict ?? "PASS")}</strong>${
           winner.composite != null
-            ? ` · composite ${winner.composite}/100 across the six-dimension framework`
+            ? ` · ${provenance.postSelection ? "re-score" : "composite"} ${winner.composite}/100 across the six-dimension framework`
             : ""
-        }.${winner.verdictNote ? ` ${escapeHtml(winner.verdictNote)}` : ""}</p>`,
+        }.${winner.verdictNote ? ` ${escapeHtml(winner.verdictNote)}` : ""}</p>${
+          provenance.postSelection
+            ? `<p>This number was produced after the competitive pass closed, against the locked wording alone. It is not a rank against the field.</p>`
+            : ""
+        }`,
       )
     : "";
   const proposition = smp
@@ -886,7 +994,8 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
               "Not independently scored",
               `<p>This proposition was finalised after the Stage 10 scoring pass, so it carries no composite of its own. No earlier proposition's score is substituted here; the scored candidate set appears in the validation section.</p>`,
             )
-          : "")
+          : "") +
+      provenance.html
     : "";
 
   /* 05 — why this wins */
@@ -894,6 +1003,12 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
     .filter((c) => c !== winner && c.composite != null)
     .sort((a, b) => (b.composite ?? 0) - (a.composite ?? 0))[0];
   const whyReasons: Reason[] = [];
+  if (provenance.postSelection && provenance.topCompetitive?.composite != null) {
+    whyReasons.push({
+      title: "The territory was won competitively",
+      detail: `“${provenance.topCompetitive.name}” scored ${provenance.topCompetitive.composite}/100 against ${provenance.competitive.length} candidates in the scored field. The locked line is the refined expression of that territory, chosen by human judgement at the selection gate.`,
+    });
+  }
   if (winner) {
     const strongest = Object.entries(winner.dims).sort((a, b) => b[1] - a[1])[0];
     if (strongest) {
@@ -902,12 +1017,13 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
         detail: `Scores ${strongest[1]}/10 on the dimension that carries the campaign.`,
       });
     }
-    if (runnerUp?.composite != null && winner.composite != null) {
+    if (!provenance.postSelection && runnerUp?.composite != null && winner.composite != null) {
       whyReasons.push({
         title: "Clears the field",
         detail: `“${smp}” scores ${winner.composite}/100 against ${runnerUp.composite}/100 for the next-best candidate (${runnerUp.name}).`,
       });
     }
+
   }
   // Stage 11 — pressure tests recorded against the selected proposition.
   for (const r of stage11TestReasons(s11, smp)) whyReasons.push(r);
@@ -945,13 +1061,16 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
     proposedActions: [...bullets(s14, 6), ...bullets(s15, 6)].slice(0, 8),
   });
 
-  /* 08 — validation summary */
-  const tableRows: CmpRow[] = candidates
+  /* 08 — validation summary. When the locked line was written after the
+   * competitive pass, the table is the genuine competitive field only — the
+   * post-lock re-score is reported separately so it can never read as a rank. */
+  const tableCandidates = provenance.postSelection ? provenance.competitive : candidates;
+  const tableRows: CmpRow[] = tableCandidates
     .slice()
     .sort((a, b) => (b.composite ?? -1) - (a.composite ?? -1))
     .slice(0, 12)
     .map((c) => ({
-      win: c === winner,
+      win: provenance.postSelection ? c === provenance.topCompetitive : c === winner,
       cells: {
         name: c.name,
         fame: c.dims["Fame"],
@@ -977,9 +1096,11 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
       { key: "verdict", label: "Verdict" },
     ],
     tableRows,
-    winner
-      ? "Scored candidate set — highlighted row is the recommendation"
-      : "Scored candidate set — Stage 10 scoring, ranked",
+    provenance.postSelection
+      ? "Competitively scored field — highlighted row carried the winning territory"
+      : winner
+        ? "Scored candidate set — highlighted row is the recommendation"
+        : "Scored candidate set — Stage 10 scoring, ranked",
   );
   const selectionNote =
     !winner && smp && candidates.length
@@ -990,7 +1111,16 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
       : "";
   const validation =
     (validationTable || renderMarkdown(s10.slice(0, 2000)) || "") +
+    provenance.html +
+    (provenance.postSelection && winner?.composite != null
+      ? callout(
+          "Re-score of the locked line",
+          `<p>“${escapeHtml(smp)}” was re-scored against the same rubric after locking: <strong>${winner.composite}/100</strong>. ` +
+            `That number measures the final wording in isolation. It was never in the competitive field above and is not a rank against it.</p>`,
+        )
+      : "") +
     selectionNote;
+
 
   /* 07 — rejected */
   const isFailureNote = (n?: string) =>
@@ -1111,7 +1241,7 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
     proofLine({
       stagesRun,
       documents: stagesRun ? PIPELINE_APPENDIX.length : undefined,
-      extra: candidates.length ? `${candidates.length} propositions scored` : undefined,
+      extra: scoredCount ? `${scoredCount} propositions competitively scored` : undefined,
     });
 
   return {
