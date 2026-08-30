@@ -126,9 +126,16 @@ export function buildDocument00AMinto(
       value: firstMover.score,
       suffix: "/10",
       label: "First-mover advantage",
-      note: str(firstMover.window_duration) || undefined,
+      // The window is a modelled estimate, not an observed fact. It is
+      // caveated here exactly as it is caveated in the companion documents —
+      // stating it with full confidence in one document and as unverified in
+      // another is the contradiction this line exists to prevent.
+      note: str(firstMover.window_duration)
+        ? `${str(firstMover.window_duration)} — modelled estimate, not independently verified.`
+        : undefined,
     });
   }
+
   if (territories.length) {
     headlineStats.push({
       value: territories.length,
