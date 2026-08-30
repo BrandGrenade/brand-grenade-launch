@@ -590,7 +590,13 @@ export const DETONATION_APPENDIX: Array<{ title: string; key: string }> = [
 ];
 
 /** Process scaffolding that carries no evidence for a board reader. */
+/** Lines written in the system's audit voice — statements about checks the
+ * pipeline performed on itself. Never a client-facing commitment. */
+const AUDIT_VOICE =
+  /^(?:[-—•]\s*)?(?:traced|verified|checked|confirmed that|audited|cross[- ]?check|tested|validated|no contradiction|all (?:checks|tests))\b/i;
+
 const SCAFFOLD_LINE =
+
   /^(ok[,.]|understood|here (is|are)|i('| wi)ll |let me |as requested|below (is|are)|note:|reminder:|continuing|proceeding|end of (stage|section)|word count|token|instruction)/i;
 
 /** Run-count bookkeeping a model writes above its own output. */
