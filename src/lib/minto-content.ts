@@ -490,7 +490,7 @@ function findWinner(candidates: ScoredCandidate[], smp: string): ScoredCandidate
  * place that tells every document builder which kind of score it is holding.
  */
 const RESCORE_MARKER =
-  /^\s*=*\s*(?:stage\s*10\s*)?re[\s-]?score\b|locked proposition\s*re[\s-]?score|\bre[\s-]?score\s*[—-]\s*locked/im;
+  /^\s*=*\s*(?:stage\s*10\s*)?re[\s-]?score\b|locked proposition\s*re[\s-]?score|\bre[\s-]?score\s*[—-]\s*locked|finalised after the (?:original )?stage\s*10 pass/im;
 
 export interface SmpScoreProvenance {
   /** true when the selected SMP's only score comes from a post-lock re-score. */
