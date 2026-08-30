@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { openCalendlyBooking } from "@/lib/calendly";
 import { submitDemoRequest } from "@/lib/demo-request.functions";
 
 /*
@@ -193,18 +194,16 @@ function ApplicationForm() {
   };
 
   if (done) {
-    const booking = new URL("https://calendly.com/brandgrenade/brand-grenade");
-    booking.searchParams.set("hide_gdpr_banner", "1");
-    booking.searchParams.set("hide_cookie_banner", "1");
-    booking.searchParams.set("name", name.trim());
-    booking.searchParams.set("email", email.trim());
-    booking.searchParams.set(
-      "a1",
-      `Foundation Brands Application - ${company.trim()}`,
-    );
-    booking.searchParams.set("utm_source", "brandgrenade-site");
-    booking.searchParams.set("utm_medium", "cta");
-    booking.searchParams.set("utm_campaign", "foundation-brands-application");
+    const book = () =>
+      openCalendlyBooking(
+        `Foundation Brands Application - ${company.trim()}`,
+        {
+          name: name.trim(),
+          email: email.trim(),
+          campaign: "foundation-brands-application",
+          hideGdprBanner: true,
+        },
+      );
 
     return (
       <div className="form-panel" style={{ maxWidth: 720 }}>
@@ -214,20 +213,12 @@ function ApplicationForm() {
         <p className="body" style={{ fontSize: 14, color: "var(--smoke)", lineHeight: 1.7, margin: "0 0 18px" }}>
           We'll review your application and use the conversation to confirm fit. Foundation Brand places are limited and not automatically allocated.
         </p>
-        <p className="body" style={{ fontSize: 14, color: "var(--smoke)", lineHeight: 1.7, margin: "0 0 18px" }}>
+        <p className="body" style={{ fontSize: 14, color: "var(--smoke)", lineHeight: 1.7, margin: "0 0 22px" }}>
           Pick a time below for a short qualification conversation.
         </p>
-        <iframe
-          src={booking.toString()}
-          title="Book a qualification conversation"
-          style={{
-            width: "100%",
-            height: 680,
-            border: "1px solid var(--ash2)",
-            borderRadius: 4,
-            background: "var(--void)",
-          }}
-        />
+        <button type="button" className="btn-primary" onClick={book}>
+          Book a qualification conversation →
+        </button>
       </div>
     );
   }
