@@ -897,14 +897,25 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
     headlineStats.push({
       value: winner.composite,
       suffix: "/100",
-      label: "Recommended SMP score",
-      note: "Weighted composite across six scoring dimensions.",
+      label: provenance.postSelection ? "Locked line — post-lock re-score" : "Recommended SMP score",
+      note: provenance.postSelection
+        ? "Re-score of the final wording after the competitive pass closed. Not a competitive rank."
+        : "Weighted composite across six scoring dimensions.",
     });
   }
-  if (candidates.length) {
+  if (provenance.postSelection && provenance.topCompetitive?.composite != null) {
     headlineStats.push({
-      value: candidates.length,
-      label: "Propositions scored",
+      value: provenance.topCompetitive.composite,
+      suffix: "/100",
+      label: "Territory — competitive score",
+      note: `“${provenance.topCompetitive.name}” carried this territory through the scored field.`,
+    });
+  }
+  const scoredCount = provenance.postSelection ? provenance.competitive.length : candidates.length;
+  if (scoredCount) {
+    headlineStats.push({
+      value: scoredCount,
+      label: "Propositions competitively scored",
       note: `${passed.length} cleared the hard floors.`,
     });
   }
@@ -921,9 +932,14 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
       brand,
     )}</strong>${category ? ` in the ${escapeHtml(category)} category` : ""}. It is assembled entirely from one strategy session: ${stagesRun} validation stage${
       stagesRun === 1 ? "" : "s"
-    } were run and are reproduced in the appendix, ${candidates.length || "no"} proposition${
-      candidates.length === 1 ? "" : "s"
-    } were generated and scored, and the recommendation above is the one that survived that process.</p>` +
+    } were run and are reproduced in the appendix, ${scoredCount || "no"} proposition${
+      scoredCount === 1 ? "" : "s"
+    } were generated and competitively scored, and the recommendation above is ${
+      provenance.postSelection
+        ? "the locked expression of the territory that survived that process — refined by human judgement after the scoring pass closed"
+        : "the one that survived that process"
+    }.</p>` +
+
     `<p>Nothing here is written from outside the session. Where a stage produced no output, the section says so rather than filling the gap.</p>` +
     `<p>It serves one decision: whether to adopt the recommended Single-Minded Proposition and release it into creative development. The argument is ordered to that decision — recommendation first, evidence behind it, and the action requested at the end.</p>`;
 
