@@ -544,7 +544,7 @@ export function smpScoreProvenance(stage10: string, smp: string): SmpScoreProven
   const html = callout(
     "How this proposition was arrived at",
     `<p>The system explored and scored the field; a human made the final call. ` +
-      `The stealth-of-territory question was settled competitively: ${rank
+      `The territory question was settled competitively: ${rank
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")} carried the territory through the six-dimension framework against the full candidate set.</p>` +
       `<p><strong>${escapeHtml(smp)}</strong> is the refined, locked expression of that same territory, ` +
