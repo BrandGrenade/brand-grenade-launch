@@ -81,25 +81,36 @@ function detectStatus(raw: string): VerificationStatus {
  * icons, "Note:" interjections — so the sentence reads as client-facing prose.
  */
 function stripPlumbing(s: string): string {
-  return s
-    .replace(EMOJI_RE, " ")
-    // "Source: Per BegaMilkResearchFINALv2.md.pdf" and friends.
-    .replace(/\(?\b(?:source|sources|ref|reference|citation|file)\s*[:\-—]\s*[^.;)\]]*\)?/gi, " ")
-    // Bare filenames anywhere.
-    .replace(/\b[\w .\-]+\.(?:pdf|md|docx?|txt|csv|xlsx?|pptx?|json)\b/gi, " ")
-    // Internal status labels.
-    .replace(/\b(?:status|verification|confidence|flag)\s*[:\-—]\s*[A-Za-z_ ]{0,40}/gi, " ")
-    .replace(/\[(?:verified|unverified|client[-\s]?supplied|unconfirmed)\]/gi, " ")
-    // "Note:" interjections, leading or mid-sentence.
-    .replace(/^\s*(?:note|caveat|nb)\s*[:\-—]\s*/i, "")
-    .replace(/[;,.]?\s*\b(?:note|nb)\s*[:\-—]\s*/gi, ". ")
-    .replace(/\s*[—–-]\s*$/, "")
-    .replace(/\s+([.,;:])/g, "$1")
-    .replace(/\.\s*\./g, ".")
-    .replace(/\(\s*\)/g, "")
-    .replace(/\s{2,}/g, " ")
-    .trim();
+  return (
+    s
+      .replace(EMOJI_RE, " ")
+      // Bare filenames first: "Source: Per Analysis_v2.txt" otherwise had its
+      // label consumed up to the dot, leaving an orphaned "Txt:" on the page.
+      .replace(/\b[\w .\-]+\.(?:pdf|md|docx?|txt|csv|xlsx?|pptx?|json)\b/gi, " ")
+      // "Source: Per BegaMilkResearchFINALv2" and friends.
+      .replace(/\(?\b(?:source|sources|ref|reference|citation|file)\s*[:\-—]\s*[^.;)\]]*\)?/gi, " ")
+      // Any residual extension token left behind by an earlier pass.
+      .replace(/(^|[\s(])(?:txt|pdf|md|docx?|csv|xlsx?|pptx?|json)\s*:\s*/gi, "$1")
+      // Internal status labels. The separator must be a colon or a dash with
+      // spacing around it — a bare hyphen matched inside ordinary hyphenated
+      // words and silently ate copy ("not a flag-waving exercise").
+      .replace(
+        /\b(?:status|verification|confidence|flag)\s*(?::|\s+[-—–]\s+)\s*[A-Za-z_ ]{0,40}/gi,
+        " ",
+      )
+      .replace(/\[(?:verified|unverified|client[-\s]?supplied|unconfirmed)\]/gi, " ")
+      // "Note:" interjections, leading or mid-sentence.
+      .replace(/^\s*(?:note|caveat|nb)\s*[:\-—]\s*/i, "")
+      .replace(/[;,.]?\s*\b(?:note|nb)\s*[:\-—]\s*/gi, ". ")
+      .replace(/\s*[—–-]\s*$/, "")
+      .replace(/\s+([.,;:])/g, "$1")
+      .replace(/\.\s*\./g, ".")
+      .replace(/\(\s*\)/g, "")
+      .replace(/\s{2,}/g, " ")
+      .trim()
+  );
 }
+
 
 /** Source text is raw transcript: markdown scaffolding must never survive. */
 function tidySentence(s: string): string {

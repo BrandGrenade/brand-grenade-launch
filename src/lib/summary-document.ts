@@ -15,6 +15,7 @@
  * of reaching a reader.
  */
 
+import { expandAcronymsFirstUse } from "./acronyms";
 import { buildCurrentStateSection } from "./current-state";
 import {
   cover,
@@ -520,26 +521,6 @@ function sealBody(bodyHtml: string, ownTitle: string, otherTitles: Set<string>):
  * document, in document order. An unexplained acronym is a defect in a client
  * deliverable; expanding every instance would be noise.
  */
-const ACRONYMS: Array<{ short: string; long: string }> = [
-  { short: "SMP", long: "Strategic Marketing Proposition" },
-  { short: "STRL", long: "Strategic Territory Reference Layer" },
-  { short: "CMM", long: "Category Convention Map" },
-  { short: "LOC", long: "Left-of-Centre" },
-];
-
-function expandAcronymsFirstUse(html: string, seen: Set<string>): string {
-  let out = html;
-  for (const { short, long } of ACRONYMS) {
-    if (seen.has(short)) continue;
-    const re = new RegExp(`(^|[^A-Za-z0-9>/-])(${short})\\b`);
-    if (!re.test(out)) continue;
-    // Never rewrite inside a tag or an attribute: the match is on visible text.
-    out = out.replace(re, (_m, pre: string, tok: string) => `${pre}${tok} (${long})`);
-    seen.add(short);
-  }
-  return out;
-}
-
 function renderSections(defs: SectionDef[]): { html: string; sealed: GateSectionInput[] } {
   const acronymsSeen = new Set<string>();
   const titles = new Set(defs.map((d) => normTitle(d.title)));

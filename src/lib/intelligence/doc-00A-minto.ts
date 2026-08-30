@@ -126,9 +126,16 @@ export function buildDocument00AMinto(
       value: firstMover.score,
       suffix: "/10",
       label: "First-mover advantage",
-      note: str(firstMover.window_duration) || undefined,
+      // The window is a modelled estimate, not an observed fact. It is
+      // caveated here exactly as it is caveated in the companion documents —
+      // stating it with full confidence in one document and as unverified in
+      // another is the contradiction this line exists to prevent.
+      note: str(firstMover.window_duration)
+        ? `${str(firstMover.window_duration)} — modelled estimate, not independently verified.`
+        : undefined,
     });
   }
+
   if (territories.length) {
     headlineStats.push({
       value: territories.length,
@@ -205,16 +212,22 @@ export function buildDocument00AMinto(
     const scenario = human(firstMover.competitive_response_scenario);
     whyReasons.push({
       title: "First-mover window",
-      detail: clamp(
-        [
-          window ? `Open for ${window}.` : "",
-          scenario ? `Likely competitive response: ${scenario.toLowerCase()}.` : "",
-        ]
-          .filter(Boolean)
-          .join(" "),
-        320,
-      ),
+      // The caveat is appended after clamping, never inside it: the window
+      // text is often a full sentence, so a caveat placed in the body was the
+      // first thing the clamp removed — leaving the estimate stated with
+      // full confidence here while the companion documents caveat it.
+      detail:
+        clamp(
+          [
+            window ? `Open for an estimated ${window}` : "",
+            scenario ? `Likely competitive response: ${scenario.toLowerCase()}.` : "",
+          ]
+            .filter(Boolean)
+            .join(" "),
+          300,
+        ) + (window ? " The window is a modelled estimate, not independently verified." : ""),
     });
+
   }
   const hist = obj(primary?.historical_validation);
   if (str(hist.risk_rationale)) {
@@ -408,19 +421,39 @@ export function buildDocument00AMinto(
       ? callout("Institutional trust", paras(str(gov.institutional_trust_assessment)))
       : "");
 
-  /* 09 — next step */
+  /* 09 — next step.
+   * The conditions on claiming and the required inclusions are stated once,
+   * in section 07, where each is classified against what the research shows
+   * is already happening. Repeating them verbatim here duplicated five
+   * paragraphs and failed content integrity, so this section points to them
+   * rather than restating them. */
   const conditions = arr(primary?.conditions);
+  const mustInclude = arr(prebrief.must_include);
+  const crossRef =
+    conditions.length || mustInclude.length
+      ? `<p>${
+          conditions.length
+            ? `${conditions.length} condition${conditions.length === 1 ? "" : "s"} govern${
+                conditions.length === 1 ? "s" : ""
+              } this claim`
+            : ""
+        }${conditions.length && mustInclude.length ? ", and " : ""}${
+          mustInclude.length
+            ? `${mustInclude.length} inclusion${mustInclude.length === 1 ? "" : "s"} ${
+                mustInclude.length === 1 ? "is" : "are"
+              } required of the work`
+            : ""
+        }. Each is set out in section 07, alongside whether it is already happening today, currently implicit, or a genuinely new commitment.</p>`
+      : "";
   const next_step =
     (primaryName
       ? `<p>The decision requested is to ${verdict === "DO NOT CLAIM" ? "reject" : "adopt"} <strong>${escapeHtml(
           primaryName,
         )}</strong> as the strategic territory for ${escapeHtml(input.brandName)} and release it into the Briefing Room.</p>`
       : "") +
-    (conditions.length ? callout("Conditions on claiming", list(conditions)) : "") +
-    (arr(prebrief.must_include).length
-      ? callout("Must include", list(arr(prebrief.must_include)))
-      : "") +
+    crossRef +
     (arr(prebrief.must_avoid).length ? callout("Must avoid", list(arr(prebrief.must_avoid))) : "");
+
 
   /* 10 — appendix */
   const appendix =
