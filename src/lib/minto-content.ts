@@ -1096,7 +1096,14 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
         text: clean(session.stage_22_distinctive_assets),
       },
     ].filter((e) => e.text.trim()),
-    proposedActions: [...bullets(s14, 6), ...bullets(s15, 6)].slice(0, 8),
+    // Stage 15 is the coherence audit — its bullets describe checks the system
+    // ran on itself ("Traced every Stage 14C world component..."), not things
+    // the client would commit to. They are not proposed actions and were
+    // polluting "Genuinely new — not happening today".
+    proposedActions: bullets(s14, 8)
+      .filter((b) => !AUDIT_VOICE.test(b))
+      .slice(0, 8),
+
   });
 
   /* 08 — validation summary. When the locked line was written after the
