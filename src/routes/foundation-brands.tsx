@@ -212,6 +212,9 @@ function ApplicationForm() {
           Application received.
         </h2>
         <p className="body" style={{ fontSize: 14, color: "var(--smoke)", lineHeight: 1.7, margin: "0 0 18px" }}>
+          We'll review your application and use the conversation to confirm fit. Foundation Brand places are limited and not automatically allocated.
+        </p>
+        <p className="body" style={{ fontSize: 14, color: "var(--smoke)", lineHeight: 1.7, margin: "0 0 18px" }}>
           Pick a time below for a short qualification conversation.
         </p>
         <iframe
@@ -411,6 +414,21 @@ function FoundationBrands() {
               referenced, how, and with what approval.
             </div>
           </div>
+        </section>
+
+        {/* WHY WE'RE DOING THIS */}
+        <section className="section">
+          <div className="section-eyebrow">Why We're Doing This</div>
+          <h2>Real complexity, real conditions.</h2>
+          <p className="body">
+            Brand Grenade has been tested on real brands and real problems — public research, independently applied. We're not looking to prove whether it works. We're looking to prove how it performs against the hardest commercial and brand challenges available.
+          </p>
+          <p className="body">
+            We're selecting three Foundation Brands with genuinely difficult, unresolved strategic or creative challenges — not straightforward briefs. This is where the complete system runs at full capability, against real complexity, under real conditions.
+          </p>
+          <p className="body">
+            This is not a discounted engagement and not a free trial. It is a capped Foundation Brand programme. There is no charge for the run.
+          </p>
         </section>
 
         {/* HOW IT WORKS */}
