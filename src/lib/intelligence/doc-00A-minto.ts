@@ -212,17 +212,22 @@ export function buildDocument00AMinto(
     const scenario = human(firstMover.competitive_response_scenario);
     whyReasons.push({
       title: "First-mover window",
-      detail: clamp(
-        [
-          window ? `Open for an estimated ${window} — modelled, not independently verified.` : "",
-          scenario ? `Likely competitive response: ${scenario.toLowerCase()}.` : "",
-        ]
-          .filter(Boolean)
-          .join(" "),
-        340,
-      ),
-
+      // The caveat is appended after clamping, never inside it: the window
+      // text is often a full sentence, so a caveat placed in the body was the
+      // first thing the clamp removed — leaving the estimate stated with
+      // full confidence here while the companion documents caveat it.
+      detail:
+        clamp(
+          [
+            window ? `Open for an estimated ${window}` : "",
+            scenario ? `Likely competitive response: ${scenario.toLowerCase()}.` : "",
+          ]
+            .filter(Boolean)
+            .join(" "),
+          300,
+        ) + (window ? " The window is a modelled estimate, not independently verified." : ""),
     });
+
   }
   const hist = obj(primary?.historical_validation);
   if (str(hist.risk_rationale)) {
