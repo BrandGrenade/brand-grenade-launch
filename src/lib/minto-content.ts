@@ -615,6 +615,17 @@ export function condenseStage(
   let sinceHeading = 0;
 
   const headingText = (line: string) => line.replace(/^#{1,4}\s+/, "").replace(/^\*\*(.*?)\*\*\s*(?:[—–-]\s*Validated)?\s*$/i, "$1").trim();
+  // A bold, all-caps label on its own line ("**TESTS APPLIED:**") is a
+  // lead-in to the lines beneath it, not a section heading. Treated as a
+  // heading it displaced the real check heading above it, leaving a run of
+  // identical shouty "TESTS APPLIED" blocks with no context.
+  const isLeadIn = (line: string) =>
+    /^\*\*[A-Z0-9 .,'&()/–—-]{3,60}:?\*\*:?\s*$/.test(line);
+  const sentenceCase = (s: string) => {
+    const t = s.replace(/:$/, "").trim();
+    if (!/[a-z]/.test(t)) return t.charAt(0) + t.slice(1).toLowerCase();
+    return t;
+  };
   const isHeading = (line: string) => {
     const unwrapped = headingText(line);
     return /^#{1,4}\s/.test(line) ||
@@ -629,9 +640,18 @@ export function condenseStage(
     if (/^[=_*-]{3,}$/.test(line)) continue;
     if (SCAFFOLD_LINE.test(line) || BOOKKEEPING_LINE.test(line)) continue;
 
+    if (isLeadIn(line)) {
+      if (units >= maxUnits || chars >= maxChars) continue;
+      const label = sentenceCase(headingText(line.replace(/\*\*/g, "")));
+      if (out.length && out[out.length - 1] === `#### ${label}`) continue;
+      out.push(`#### ${label}`);
+      sinceHeading = 0;
+      continue;
+    }
+
     if (isHeading(line)) {
       if (units >= maxUnits || chars >= maxChars) continue;
-      if (out.length && out[out.length - 1].startsWith("### ")) out.pop();
+      while (out.length && /^#{3,4} /.test(out[out.length - 1])) out.pop();
       out.push(`### ${headingText(line).replace(/:$/, "")}`);
       sinceHeading = 0;
       continue;
@@ -645,9 +665,20 @@ export function condenseStage(
     units++;
     chars += line.length;
   }
-  while (out.length && out[out.length - 1].startsWith("### ")) out.pop();
-  return out.join("\n\n");
+  while (out.length && /^#{3,4} /.test(out[out.length - 1])) out.pop();
+  // Bullets stay adjacent so they render as one list rather than a run of
+  // single-item lists.
+  const joined: string[] = [];
+  for (let i = 0; i < out.length; i++) {
+    joined.push(out[i]);
+    const next = out[i + 1];
+    if (next === undefined) break;
+    const bothBullets = /^[-—•]\s/.test(out[i]) && /^[-—•]\s/.test(next);
+    joined.push(bothBullets ? "\n" : "\n\n");
+  }
+  return joined.join("");
 }
+
 
 export interface AppendixOptions {
   sections?: Array<{ title: string; key: string }>;
