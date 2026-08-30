@@ -75,12 +75,21 @@ export function renderMarkdown(text: string): string {
       inUl = false;
     }
   };
-  for (const raw of text.split("\n")) {
+  const lines = text.split("\n");
+  for (let i = 0; i < lines.length; i++) {
+    const raw = lines[i];
     const line = raw.trim();
     if (!line) {
-      closeUl();
+      // A blank line between two bullets is spacing, not the end of the list.
+      // Closing on it produced a run of single-item lists that read as a
+      // run-on instead of one readable list.
+      let j = i + 1;
+      while (j < lines.length && !lines[j].trim()) j++;
+      const next = j < lines.length ? lines[j].trim() : "";
+      if (!(inUl && /^[-—•]\s+/.test(next))) closeUl();
       continue;
     }
+
     if (line.startsWith("> ")) {
       closeUl();
       out.push(`<blockquote>${inlineMd(line.replace(/^>\s+/, ""))}</blockquote>`);
