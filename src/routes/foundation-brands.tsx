@@ -358,8 +358,8 @@ function FoundationBrands() {
           <div className="section-eyebrow">Who this is for</div>
           <h2>Enterprise brands with a live challenge.</h2>
           <p className="body">
-            Enterprise brands — Australia/APAC focus, selectively global — with
-            a visible strategic, brand, repositioning or campaign challenge.
+            Enterprise brands with a visible strategic, brand, repositioning or
+            campaign challenge.
           </p>
           <p className="body">
             Best suited to senior decision-makers:{" "}
@@ -367,6 +367,21 @@ function FoundationBrands() {
               CMO, Chief Brand Officer, Marketing Director, Brand Director, Head
               of Strategy, Chief Strategy Officer.
             </strong>
+          </p>
+        </section>
+
+        {/* WHY WE'RE DOING THIS */}
+        <section className="section">
+          <div className="section-eyebrow">Why We're Doing This</div>
+          <h2>Real complexity, real conditions.</h2>
+          <p className="body">
+            Brand Grenade has been tested on real brands and real problems — public research, independently applied. We're not looking to prove whether it works. We're looking to prove how it performs against the hardest commercial and brand challenges available.
+          </p>
+          <p className="body">
+            We're selecting three Foundation Brands with genuinely difficult, unresolved strategic or creative challenges — not straightforward briefs. This is where the complete system runs at full capability, against real complexity, under real conditions.
+          </p>
+          <p className="body">
+            This is not a discounted engagement and not a free trial. It is a capped Foundation Brand programme. There is no charge for the run.
           </p>
         </section>
 
@@ -405,21 +420,6 @@ function FoundationBrands() {
               referenced, how, and with what approval.
             </div>
           </div>
-        </section>
-
-        {/* WHY WE'RE DOING THIS */}
-        <section className="section">
-          <div className="section-eyebrow">Why We're Doing This</div>
-          <h2>Real complexity, real conditions.</h2>
-          <p className="body">
-            Brand Grenade has been tested on real brands and real problems — public research, independently applied. We're not looking to prove whether it works. We're looking to prove how it performs against the hardest commercial and brand challenges available.
-          </p>
-          <p className="body">
-            We're selecting three Foundation Brands with genuinely difficult, unresolved strategic or creative challenges — not straightforward briefs. This is where the complete system runs at full capability, against real complexity, under real conditions.
-          </p>
-          <p className="body">
-            This is not a discounted engagement and not a free trial. It is a capped Foundation Brand programme. There is no charge for the run.
-          </p>
         </section>
 
         {/* HOW IT WORKS */}
