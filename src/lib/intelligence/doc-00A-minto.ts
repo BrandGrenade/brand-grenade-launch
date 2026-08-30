@@ -214,13 +214,14 @@ export function buildDocument00AMinto(
       title: "First-mover window",
       detail: clamp(
         [
-          window ? `Open for ${window}.` : "",
+          window ? `Open for an estimated ${window} — modelled, not independently verified.` : "",
           scenario ? `Likely competitive response: ${scenario.toLowerCase()}.` : "",
         ]
           .filter(Boolean)
           .join(" "),
-        320,
+        340,
       ),
+
     });
   }
   const hist = obj(primary?.historical_validation);
