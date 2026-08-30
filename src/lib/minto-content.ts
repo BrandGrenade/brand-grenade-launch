@@ -490,7 +490,7 @@ function findWinner(candidates: ScoredCandidate[], smp: string): ScoredCandidate
  * place that tells every document builder which kind of score it is holding.
  */
 const RESCORE_MARKER =
-  /^\s*=*\s*(?:stage\s*10\s*)?re[\s-]?score\b|locked proposition\s*re[\s-]?score|\bre[\s-]?score\s*[—-]\s*locked/im;
+  /^\s*=*\s*(?:stage\s*10\s*)?re[\s-]?score\b|locked proposition\s*re[\s-]?score|\bre[\s-]?score\s*[—-]\s*locked|finalised after the (?:original )?stage\s*10 pass/im;
 
 export interface SmpScoreProvenance {
   /** true when the selected SMP's only score comes from a post-lock re-score. */
@@ -849,9 +849,16 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
   const s15 = clean(session.stage_15_output);
 
   const candidates = parseScoredCandidates(s10);
-  const provenance = smpScoreProvenance(s10, smp);
+  // Provenance must read the RAW stage 10 text: clean() strips the
+  // "==== STAGE 10 RE-SCORE — LOCKED PROPOSITION ====" banner as plumbing,
+  // which silently made the whole re-score detection inert.
+  const provenance = smpScoreProvenance(String(session.stage_10_output ?? ""), smp);
   const winner = findWinner(candidates, smp);
-  const passed = candidates.filter((c) => c.verdict === "PASS");
+  // "cleared the hard floors" must count the same field that "competitively
+  // scored" counts — otherwise the cover reads "10 scored / 11 cleared".
+  const passed = (provenance.postSelection ? provenance.competitive : candidates).filter(
+    (c) => c.verdict === "PASS",
+  );
   // A candidate that carried the winning territory competitively is not a
   // rejected alternative, even though the locked line is worded differently.
   const rejected = candidates.filter(
