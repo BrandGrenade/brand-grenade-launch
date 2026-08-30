@@ -1057,13 +1057,16 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
     proposedActions: [...bullets(s14, 6), ...bullets(s15, 6)].slice(0, 8),
   });
 
-  /* 08 — validation summary */
-  const tableRows: CmpRow[] = candidates
+  /* 08 — validation summary. When the locked line was written after the
+   * competitive pass, the table is the genuine competitive field only — the
+   * post-lock re-score is reported separately so it can never read as a rank. */
+  const tableCandidates = provenance.postSelection ? provenance.competitive : candidates;
+  const tableRows: CmpRow[] = tableCandidates
     .slice()
     .sort((a, b) => (b.composite ?? -1) - (a.composite ?? -1))
     .slice(0, 12)
     .map((c) => ({
-      win: c === winner,
+      win: provenance.postSelection ? c === provenance.topCompetitive : c === winner,
       cells: {
         name: c.name,
         fame: c.dims["Fame"],
@@ -1089,9 +1092,11 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
       { key: "verdict", label: "Verdict" },
     ],
     tableRows,
-    winner
-      ? "Scored candidate set — highlighted row is the recommendation"
-      : "Scored candidate set — Stage 10 scoring, ranked",
+    provenance.postSelection
+      ? "Competitively scored field — highlighted row carried the winning territory"
+      : winner
+        ? "Scored candidate set — highlighted row is the recommendation"
+        : "Scored candidate set — Stage 10 scoring, ranked",
   );
   const selectionNote =
     !winner && smp && candidates.length
@@ -1102,7 +1107,16 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
       : "";
   const validation =
     (validationTable || renderMarkdown(s10.slice(0, 2000)) || "") +
+    provenance.html +
+    (provenance.postSelection && winner?.composite != null
+      ? callout(
+          "Re-score of the locked line",
+          `<p>“${escapeHtml(smp)}” was re-scored against the same rubric after locking: <strong>${winner.composite}/100</strong>. ` +
+            `That number measures the final wording in isolation. It was never in the competitive field above and is not a rank against it.</p>`,
+        )
+      : "") +
     selectionNote;
+
 
   /* 07 — rejected */
   const isFailureNote = (n?: string) =>
