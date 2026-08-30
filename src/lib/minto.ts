@@ -34,6 +34,7 @@ import {
   type Stat,
 } from "./doc-system";
 import { gateDocument } from "./document-gate";
+import { expandAcronymsFirstUse } from "./acronyms";
 import type { DocumentSpec } from "./document-spec";
 
 export const MINTO_SECTION_IDS = [
@@ -221,11 +222,14 @@ function purposeBlock(spec: MintoDocumentSpec): string {
  */
 export function buildMintoDocument(spec: MintoDocumentSpec): string {
   const body: string[] = [cover(spec.cover)];
+  // Acronyms are expanded on first use across the whole document, not per
+  // section — the appendix path used to miss this entirely.
+  const acronymsSeen = new Set<string>();
 
   for (const def of MINTO_SECTIONS) {
     const supplied =
       (spec.content[def.id] ?? "").trim() || (def.id === "background" ? purposeBlock(spec) : "");
-    const html = supplied || missingBlock(def.fallback);
+    const html = expandAcronymsFirstUse(supplied || missingBlock(def.fallback), acronymsSeen);
 
     const isAppendix = def.id === "appendix";
     body.push(
