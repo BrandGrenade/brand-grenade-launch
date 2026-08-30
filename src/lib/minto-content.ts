@@ -849,9 +849,11 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
   const s15 = clean(session.stage_15_output);
 
   const candidates = parseScoredCandidates(s10);
+  const provenance = smpScoreProvenance(s10, smp);
   const winner = findWinner(candidates, smp);
   const passed = candidates.filter((c) => c.verdict === "PASS");
   const rejected = candidates.filter((c) => c !== winner);
+
   const stagesRun = PIPELINE_APPENDIX.filter((s) =>
     String((session as Record<string, unknown>)[s.key] ?? "").trim(),
   ).length;
