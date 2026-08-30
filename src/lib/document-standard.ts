@@ -27,7 +27,10 @@ export const SYSTEM_TOKEN_MAP: Record<string, string> = {
   adjacent_response: "Adjacent response",
   category_leadership: "Category leadership",
   white_space: "White space",
-  hermit_crab: "Hermit crab",
+  // Named for the crab that occupies a shell another animal has left. Spelled
+  // out because the bare term means nothing to a reader outside the method.
+  hermit_crab: "Vacated-territory reoccupation (hermit crab)",
+
   first_mover: "First-mover advantage",
   brand_permission: "Brand permission",
   historical_validation: "Historical validation",
