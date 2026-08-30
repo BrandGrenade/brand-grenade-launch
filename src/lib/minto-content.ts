@@ -852,7 +852,11 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
   const provenance = smpScoreProvenance(s10, smp);
   const winner = findWinner(candidates, smp);
   const passed = candidates.filter((c) => c.verdict === "PASS");
-  const rejected = candidates.filter((c) => c !== winner);
+  // A candidate that carried the winning territory competitively is not a
+  // rejected alternative, even though the locked line is worded differently.
+  const rejected = candidates.filter(
+    (c) => c !== winner && !(provenance.postSelection && c === provenance.topCompetitive),
+  );
 
   const stagesRun = PIPELINE_APPENDIX.filter((s) =>
     String((session as Record<string, unknown>)[s.key] ?? "").trim(),
@@ -1237,7 +1241,7 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
     proofLine({
       stagesRun,
       documents: stagesRun ? PIPELINE_APPENDIX.length : undefined,
-      extra: candidates.length ? `${candidates.length} propositions scored` : undefined,
+      extra: scoredCount ? `${scoredCount} propositions competitively scored` : undefined,
     });
 
   return {
