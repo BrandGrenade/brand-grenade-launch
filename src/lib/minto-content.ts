@@ -962,12 +962,16 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
    * are not shown at all; a parent/earlier-stage line's score is never used. */
   const winnerVerdictHtml = winner
     ? callout(
-        "Stage 10 verdict",
+        provenance.postSelection ? "Post-lock re-score of the final wording" : "Stage 10 verdict",
         `<p><strong>${winner.verdict === "FAIL" ? "ELIMINATED" : (winner.verdict ?? "PASS")}</strong>${
           winner.composite != null
-            ? ` · composite ${winner.composite}/100 across the six-dimension framework`
+            ? ` · ${provenance.postSelection ? "re-score" : "composite"} ${winner.composite}/100 across the six-dimension framework`
             : ""
-        }.${winner.verdictNote ? ` ${escapeHtml(winner.verdictNote)}` : ""}</p>`,
+        }.${winner.verdictNote ? ` ${escapeHtml(winner.verdictNote)}` : ""}</p>${
+          provenance.postSelection
+            ? `<p>This number was produced after the competitive pass closed, against the locked wording alone. It is not a rank against the field.</p>`
+            : ""
+        }`,
       )
     : "";
   const proposition = smp
@@ -986,7 +990,8 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
               "Not independently scored",
               `<p>This proposition was finalised after the Stage 10 scoring pass, so it carries no composite of its own. No earlier proposition's score is substituted here; the scored candidate set appears in the validation section.</p>`,
             )
-          : "")
+          : "") +
+      provenance.html
     : "";
 
   /* 05 — why this wins */
@@ -994,6 +999,12 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
     .filter((c) => c !== winner && c.composite != null)
     .sort((a, b) => (b.composite ?? 0) - (a.composite ?? 0))[0];
   const whyReasons: Reason[] = [];
+  if (provenance.postSelection && provenance.topCompetitive?.composite != null) {
+    whyReasons.push({
+      title: "The territory was won competitively",
+      detail: `“${provenance.topCompetitive.name}” scored ${provenance.topCompetitive.composite}/100 against ${provenance.competitive.length} candidates in the scored field. The locked line is the refined expression of that territory, chosen by human judgement at the selection gate.`,
+    });
+  }
   if (winner) {
     const strongest = Object.entries(winner.dims).sort((a, b) => b[1] - a[1])[0];
     if (strongest) {
@@ -1002,12 +1013,13 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
         detail: `Scores ${strongest[1]}/10 on the dimension that carries the campaign.`,
       });
     }
-    if (runnerUp?.composite != null && winner.composite != null) {
+    if (!provenance.postSelection && runnerUp?.composite != null && winner.composite != null) {
       whyReasons.push({
         title: "Clears the field",
         detail: `“${smp}” scores ${winner.composite}/100 against ${runnerUp.composite}/100 for the next-best candidate (${runnerUp.name}).`,
       });
     }
+
   }
   // Stage 11 — pressure tests recorded against the selected proposition.
   for (const r of stage11TestReasons(s11, smp)) whyReasons.push(r);
