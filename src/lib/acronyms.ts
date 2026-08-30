@@ -20,14 +20,21 @@ export const ACRONYMS: Array<{ short: string; long: string }> = [
  * state across the sections of one document so the expansion happens once.
  */
 export function expandAcronymsFirstUse(html: string, seen: Set<string>): string {
-  let out = html;
+  // Split into tags and text nodes so a match is only ever made on visible
+  // text — never inside a tag name, attribute or URL. Matching on the raw
+  // string previously skipped any acronym that opened a heading, because the
+  // character before it was the closing ">" of the tag.
+  const parts = html.split(/(<[^>]*>)/);
   for (const { short, long } of ACRONYMS) {
     if (seen.has(short)) continue;
-    const re = new RegExp(`(^|[^A-Za-z0-9>/-])(${short})\\b`);
-    if (!re.test(out)) continue;
-    // Never rewrite inside a tag or an attribute: the match is on visible text.
-    out = out.replace(re, (_m, pre: string, tok: string) => `${pre}${tok} (${long})`);
-    seen.add(short);
+    const re = new RegExp(`(^|[^A-Za-z0-9/-])(${short})\\b`);
+    for (let i = 0; i < parts.length; i++) {
+      if (parts[i].startsWith("<")) continue;
+      if (!re.test(parts[i])) continue;
+      parts[i] = parts[i].replace(re, (_m, pre: string, tok: string) => `${pre}${tok} (${long})`);
+      seen.add(short);
+      break;
+    }
   }
-  return out;
+  return parts.join("");
 }
