@@ -475,6 +475,88 @@ function findWinner(candidates: ScoredCandidate[], smp: string): ScoredCandidate
   return candidates.find((c) => normalise(c.name) === target) ?? null;
 }
 
+/* ─────────────────────────────── score provenance (honest framing) ── */
+
+/**
+ * Stage 10 can carry two different kinds of score for the same session:
+ *
+ *  1. the competitive field — every candidate scored against each other in the
+ *     original pass; and
+ *  2. a re-score block appended later, after a human locked a refined
+ *     expression of the winning territory at the judgement gate.
+ *
+ * A re-score is NOT a competitive result. No deliverable may present it as a
+ * rank, a win, or a "cleared the field" number. This helper is the single
+ * place that tells every document builder which kind of score it is holding.
+ */
+const RESCORE_MARKER =
+  /^\s*=*\s*(?:stage\s*10\s*)?re[\s-]?score\b|locked proposition\s*re[\s-]?score|\bre[\s-]?score\s*[—-]\s*locked/im;
+
+export interface SmpScoreProvenance {
+  /** true when the selected SMP's only score comes from a post-lock re-score. */
+  postSelection: boolean;
+  /** Candidates scored in the original competitive pass. */
+  competitive: ScoredCandidate[];
+  /** Highest-scoring candidate of the genuine competitive field. */
+  topCompetitive: ScoredCandidate | null;
+  /** One-sentence plain-text statement of the accurate story ("" when clean). */
+  sentence: string;
+  /** Callout HTML for the accurate story ("" when clean). */
+  html: string;
+}
+
+export function smpScoreProvenance(stage10: string, smp: string): SmpScoreProvenance {
+  const empty: SmpScoreProvenance = {
+    postSelection: false,
+    competitive: parseScoredCandidates(stage10),
+    topCompetitive: null,
+    sentence: "",
+    html: "",
+  };
+  const target = normalise(smp);
+  if (!target || !stage10.trim()) return empty;
+
+  const lines = stage10.split("\n");
+  const markerAt = lines.findIndex((l) => RESCORE_MARKER.test(l));
+  if (markerAt < 0) return empty;
+
+  const competitive = parseScoredCandidates(lines.slice(0, markerAt).join("\n"));
+  const topCompetitive =
+    competitive
+      .filter((c) => c.composite != null)
+      .sort((a, b) => (b.composite ?? 0) - (a.composite ?? 0))[0] ?? null;
+  const inCompetitiveField = competitive.some((c) => normalise(c.name) === target);
+  if (inCompetitiveField || !competitive.length) {
+    return { ...empty, competitive, topCompetitive };
+  }
+
+  const rank =
+    topCompetitive && topCompetitive.composite != null
+      ? `“${topCompetitive.name}” (${topCompetitive.composite}/100, the highest of ${competitive.length} candidate${
+          competitive.length === 1 ? "" : "s"
+        } in the scored field)`
+      : "the highest-scoring candidate in the scored field";
+  const sentence =
+    `The territory behind “${smp}” was validated through genuine competitive scoring as ${rank
+      .replace(/<[^>]+>/g, "")}. ` +
+    `“${smp}” is the refined expression of that territory, locked by human judgement after the competitive pass closed. ` +
+    `Any score shown against this exact wording is a post-lock re-score of the final line, not a competitive rank.`;
+  const html = callout(
+    "How this proposition was arrived at",
+    `<p>The system explored and scored the field; a human made the final call. ` +
+      `The stealth-of-territory question was settled competitively: ${rank
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")} carried the territory through the six-dimension framework against the full candidate set.</p>` +
+      `<p><strong>${escapeHtml(smp)}</strong> is the refined, locked expression of that same territory, ` +
+      `written at the human judgement gate after the competitive pass had closed. ` +
+      `Where a score appears against this exact wording, it is a post-lock re-score of the final line ` +
+      `against the same rubric — it is not a competitive result and does not rank it against the field.</p>`,
+  );
+  return { postSelection: true, competitive, topCompetitive, sentence, html };
+}
+
+
+
 /* ─────────────────────────────────────────────── appendix condensing ── */
 
 /** Placeholder body for a canonical section with no stored output. */
