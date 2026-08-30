@@ -849,7 +849,10 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
   const s15 = clean(session.stage_15_output);
 
   const candidates = parseScoredCandidates(s10);
-  const provenance = smpScoreProvenance(s10, smp);
+  // Provenance must read the RAW stage 10 text: clean() strips the
+  // "==== STAGE 10 RE-SCORE — LOCKED PROPOSITION ====" banner as plumbing,
+  // which silently made the whole re-score detection inert.
+  const provenance = smpScoreProvenance(String(session.stage_10_output ?? ""), smp);
   const winner = findWinner(candidates, smp);
   const passed = candidates.filter((c) => c.verdict === "PASS");
   // A candidate that carried the winning territory competitively is not a
