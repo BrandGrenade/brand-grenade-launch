@@ -408,19 +408,39 @@ export function buildDocument00AMinto(
       ? callout("Institutional trust", paras(str(gov.institutional_trust_assessment)))
       : "");
 
-  /* 09 — next step */
+  /* 09 — next step.
+   * The conditions on claiming and the required inclusions are stated once,
+   * in section 07, where each is classified against what the research shows
+   * is already happening. Repeating them verbatim here duplicated five
+   * paragraphs and failed content integrity, so this section points to them
+   * rather than restating them. */
   const conditions = arr(primary?.conditions);
+  const mustInclude = arr(prebrief.must_include);
+  const crossRef =
+    conditions.length || mustInclude.length
+      ? `<p>${
+          conditions.length
+            ? `${conditions.length} condition${conditions.length === 1 ? "" : "s"} govern${
+                conditions.length === 1 ? "s" : ""
+              } this claim`
+            : ""
+        }${conditions.length && mustInclude.length ? ", and " : ""}${
+          mustInclude.length
+            ? `${mustInclude.length} inclusion${mustInclude.length === 1 ? "" : "s"} ${
+                mustInclude.length === 1 ? "is" : "are"
+              } required of the work`
+            : ""
+        }. Each is set out in section 07, alongside whether it is already happening today, currently implicit, or a genuinely new commitment.</p>`
+      : "";
   const next_step =
     (primaryName
       ? `<p>The decision requested is to ${verdict === "DO NOT CLAIM" ? "reject" : "adopt"} <strong>${escapeHtml(
           primaryName,
         )}</strong> as the strategic territory for ${escapeHtml(input.brandName)} and release it into the Briefing Room.</p>`
       : "") +
-    (conditions.length ? callout("Conditions on claiming", list(conditions)) : "") +
-    (arr(prebrief.must_include).length
-      ? callout("Must include", list(arr(prebrief.must_include)))
-      : "") +
+    crossRef +
     (arr(prebrief.must_avoid).length ? callout("Must avoid", list(arr(prebrief.must_avoid))) : "");
+
 
   /* 10 — appendix */
   const appendix =
