@@ -11,9 +11,17 @@
  */
 export const CALENDLY_BOOKING_URL = "https://calendly.com/brandgrenade/brand-grenade";
 
-export function calendlyBookingUrl(context: string): string {
+export function calendlyBookingUrl(
+  context: string,
+  opts?: {
+    name?: string;
+    email?: string;
+    campaign?: string;
+    hideGdprBanner?: boolean;
+  },
+): string {
   const url = new URL(CALENDLY_BOOKING_URL);
-  const campaign = context
+  const campaign = (opts?.campaign ?? context)
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)/g, "");
@@ -21,9 +29,20 @@ export function calendlyBookingUrl(context: string): string {
   url.searchParams.set("utm_medium", "cta");
   url.searchParams.set("utm_campaign", campaign);
   url.searchParams.set("a1", context);
+  if (opts?.name) url.searchParams.set("name", opts.name);
+  if (opts?.email) url.searchParams.set("email", opts.email);
+  if (opts?.hideGdprBanner) url.searchParams.set("hide_gdpr_banner", "1");
   return url.toString();
 }
 
-export function openCalendlyBooking(context: string): void {
-  window.open(calendlyBookingUrl(context), "_blank", "noopener,noreferrer");
+export function openCalendlyBooking(
+  context: string,
+  opts?: {
+    name?: string;
+    email?: string;
+    campaign?: string;
+    hideGdprBanner?: boolean;
+  },
+): void {
+  window.open(calendlyBookingUrl(context, opts), "_blank", "noopener,noreferrer");
 }

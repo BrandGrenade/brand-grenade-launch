@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { openCalendlyBooking } from "@/lib/calendly";
 import { submitDemoRequest } from "@/lib/demo-request.functions";
 
 /*
