@@ -854,7 +854,11 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
   // which silently made the whole re-score detection inert.
   const provenance = smpScoreProvenance(String(session.stage_10_output ?? ""), smp);
   const winner = findWinner(candidates, smp);
-  const passed = candidates.filter((c) => c.verdict === "PASS");
+  // "cleared the hard floors" must count the same field that "competitively
+  // scored" counts — otherwise the cover reads "10 scored / 11 cleared".
+  const passed = (provenance.postSelection ? provenance.competitive : candidates).filter(
+    (c) => c.verdict === "PASS",
+  );
   // A candidate that carried the winning territory competitively is not a
   // rejected alternative, even though the locked line is worded differently.
   const rejected = candidates.filter(
