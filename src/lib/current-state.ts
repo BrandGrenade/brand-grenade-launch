@@ -107,7 +107,7 @@ function stripPlumbing(s: string): string {
       .replace(/\.\s*\./g, ".")
       .replace(/\(\s*\)/g, "")
       // "[ ]" / "[]" residue left by removed status markers.
-      .replace(/\[\s*\]/g, " ")
+      .replace(/\[[\s;:,.\-—–|]*\]/g, " ")
       .replace(/\s{2,}/g, " ")
       .trim()
   );
@@ -280,7 +280,10 @@ export function deriveCurrentState(input: CurrentStateInput): CurrentStateModel 
     let best: { m: (typeof corpusIndex)[number]; n: number } | null = null;
     for (const m of corpusIndex) {
       const n = overlap(at, m.tok);
-      if (n >= 2 && (!best || n > best.n)) best = { m, n };
+      // Two shared tokens is noise — an unrelated corpus line can share
+      // "brand" and "every". Only a genuinely overlapping statement counts as
+      // existing activity the recommendation builds on.
+      if (n >= 3 && (!best || n > best.n)) best = { m, n };
     }
     if (best) {
       madeExplicit.push({
