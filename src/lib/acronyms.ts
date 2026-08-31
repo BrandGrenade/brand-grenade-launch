@@ -27,7 +27,10 @@ export function expandAcronymsFirstUse(html: string, seen: Set<string>): string 
   const parts = html.split(/(<[^>]*>)/);
   for (const { short, long } of ACRONYMS) {
     if (seen.has(short)) continue;
-    const re = new RegExp(`(^|[^A-Za-z0-9/-])(${short})\\b`);
+    // Never expand inside an identifier token such as "LOC-1" or a range
+    // like "LOC-1–LOC-12": expanding the first half produced the unreadable
+    // "LOC (Left-of-Centre)-1-LOC-12". Only a standalone acronym is expanded.
+    const re = new RegExp(`(^|[^A-Za-z0-9/-])(${short})\\b(?![-–—]?\\d)`);
     for (let i = 0; i < parts.length; i++) {
       if (parts[i].startsWith("<")) continue;
       if (!re.test(parts[i])) continue;
