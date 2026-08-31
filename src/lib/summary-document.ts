@@ -61,6 +61,7 @@ import {
   sentences,
 } from "./summary-sources";
 import { HUMAN_CHECKPOINT_COUNT } from "./platform-metrics";
+import { relabelScoreScale, SCORE_CEILING } from "./appendix-humanise";
 import { TOTAL_PIPELINE_STEPS } from "./stage-manifest";
 import { LENS_COUNT } from "./stimulus/lenses";
 import {
@@ -680,13 +681,28 @@ export function buildSummaryDocument(
     { label: "Organisational context", body: fact("brand_organisational_context", "org", 4) },
   ]);
 
-  /* 03 — How this was built */
+  /* 03 — How this was built.
+     Checkpoint language is precise: the count is of the named hard governance
+     gates A–F (a fixed six), not of every individual human confirmation made
+     across a run — that larger figure is session-specific and includes
+     creative-direction approvals that are not governance gates. An unsigned
+     gate on a run that nevertheless completed its downstream work is a gate
+     held open deliberately, not unfinished work, and is stated as such. */
+  const signedGates = ["a", "b", "c", "d", "e", "f"].filter(
+    (k) => session[`checkpoint_${k}_confirmed`] === true,
+  );
+  const runCompleted = Boolean(
+    lockedLine || lockedIdea || str(session, "stage_22_output").trim(),
+  );
+  const gateList = signedGates.map((k) => k.toUpperCase()).join(", ");
   const checkpointNote =
     checkpoints < HUMAN_CHECKPOINT_COUNT
       ? p(
-          `${checkpoints} of ${HUMAN_CHECKPOINT_COUNT} human checkpoints are signed off; ` +
-            `${HUMAN_CHECKPOINT_COUNT - checkpoints} checkpoint${HUMAN_CHECKPOINT_COUNT - checkpoints === 1 ? " remains" : "s remain"} outstanding, ` +
-            `so this document is not fully cleared.`,
+          `${checkpoints} of the ${HUMAN_CHECKPOINT_COUNT} named hard governance gates (A–F) were formally signed off on this run` +
+            `${gateList ? ` — ${gateList}` : ""}. That count is of governance gates only; it is not the number of individual human confirmations made during the run, which is larger and includes creative-direction approvals that are not governance gates.` +
+            (runCompleted
+              ? ` The remaining gates were held open deliberately while the platform itself was being exercised on this session; the work behind them was completed and is reproduced in the sections that follow. This document is a record of a complete run, not of unfinished work.`
+              : ` The work behind the remaining gates has not been completed on this run.`),
         )
       : "";
   const buildHtml = `${checkpointNote}${band("Strategy", [
@@ -694,8 +710,9 @@ export function buildSummaryDocument(
     {
       value: checkpoints,
       suffix: `/${HUMAN_CHECKPOINT_COUNT}`,
-      label: "human checkpoints signed off",
+      label: "governance gates (A–F) signed off",
     },
+
     { value: field.length, label: "propositions considered" },
     { value: scoring.rows.length, label: "strategic scoring dimensions applied" },
   ])}${band("Intelligence", [
@@ -925,7 +942,7 @@ export function buildSummaryDocument(
               [
                 scoring.composite
                   ? {
-                      value: scoring.composite,
+                      value: relabelScoreScale(scoring.composite),
                       label: scoreProvenance.postSelection
                         ? "post-lock re-score (not a rank)"
                         : "composite score",
@@ -935,7 +952,9 @@ export function buildSummaryDocument(
               ].filter(Boolean) as Stat[],
             )
           : ""
-      }`
+      }${p(
+        `Composite scores are on the ${SCORE_CEILING}-point weighted scale: the dimension weights above total ${SCORE_CEILING} points by design, so ${SCORE_CEILING} — not 100 — is the ceiling a perfect card can reach.`,
+      )}`
     : "";
 
   /* 10 — The winning proposition */
@@ -945,10 +964,10 @@ export function buildSummaryDocument(
   const whyItWon = [
     scoreProvenance.postSelection
       ? scoreProvenance.topCompetitive?.composite != null
-        ? `The territory it expresses was validated competitively: "${scoreProvenance.topCompetitive.name}" — the closest scored expression of that territory — scored ${scoreProvenance.topCompetitive.composite}/100 in a field of ${scoreProvenance.competitive.length} candidates. This line is the refined expression of that territory, locked by human judgement after the competitive pass closed — the system explored and scored, a human made the final call.`
+        ? `The territory it expresses was validated competitively: "${scoreProvenance.topCompetitive.name}" — the closest scored expression of that territory — scored ${scoreProvenance.topCompetitive.composite}/${SCORE_CEILING} in a field of ${scoreProvenance.competitive.length} candidates. This line is the refined expression of that territory, locked by human judgement after the competitive pass closed — the system explored and scored, a human made the final call.`
         : `The territory it expresses was validated competitively in the scored field; this line is its refined expression, locked by human judgement after the competitive pass closed.`
       : scoring.verdict === "PASS"
-        ? `It is the only proposition to clear both hard floors and be carried through Stage 10 scoring${scoring.composite ? ` on a composite of ${scoring.composite}` : ""}.`
+        ? `It is the only proposition to clear both hard floors and be carried through Stage 10 scoring${scoring.composite ? ` on a composite of ${relabelScoreScale(scoring.composite)}` : ""}.`
         : "",
     topScore?.note
       ? `Its strongest dimension is ${topScore.dimension.toLowerCase()} (${topScore.score}): ${topScore.note}`
@@ -1148,8 +1167,51 @@ export function buildSummaryDocument(
           str(session, "stage_18_selected_detonation"),
           str(session, "stage_18_detonation_line"),
         );
+  /* The strategy-to-creative hierarchy is stated explicitly rather than left
+     to be inferred: the strategic proposition and the campaign line are
+     written in different registers, and a reader comparing them side by side
+     should not read the difference as a drift. */
+  const hierarchyHtml = defList(
+    [
+      territory?.heading
+        ? { label: "1. Territory", body: `${territory.heading} — the strategic space the brand is claiming.` }
+        : null,
+      lockedSmp
+        ? {
+            label: "2. Proposition",
+            body: `${lockedSmp} — the strategic articulation. Written to be argued and scored, not to be run as copy.`,
+          }
+        : null,
+      lockedIdea
+        ? {
+            label: "3. Creative expression",
+            body: `${lockedLens ? `${lockedLens} lens — ` : ""}${firstSentencesOf(lockedIdea, 1)}`,
+          }
+        : null,
+      lockedLine
+        ? {
+            label: "4. Campaign line",
+            body: `${lockedLine} — the public-facing register. Ad copy, judged on recognition and memorability, not on strategic completeness.`,
+          }
+        : null,
+      channels.length
+        ? {
+            label: "5. Execution",
+            body: `${channels.map((c) => c.name).join(", ")} — each with its own Channel Detonation Brief.`,
+          }
+        : null,
+    ].filter(Boolean) as Array<{ label: string; body: string }>,
+  );
+  const hierarchyBlock = hierarchyHtml
+    ? callout(
+        "How the strategy becomes the creative",
+        `${hierarchyHtml}${p(
+          "The proposition and the campaign line operate in different registers by design. The proposition is the strategic argument the work has to hold to; the line is the expression that carries it in market. They are not competing statements of the same thing, and neither is a rewrite of the other.",
+        )}`,
+      )
+    : "";
   const creativeHtml = lockedIdea || lockedLine
-    ? `${
+    ? `${hierarchyBlock}${
         lockedLine
           ? pullQuote(lockedLine, {
               label: `Locked campaign line${lockedLens ? ` — ${lockedLens}` : ""}`,
@@ -1161,6 +1223,7 @@ export function buildSummaryDocument(
           ? `<h3>The recognition test</h3>${renderMarkdown(recognitionTest)}`
           : ""
       }`
+
     : selectedDetonation
       ? `${p(
           "This session was completed before the Creative Stimulus Engine lens sweep existed, so no campaign line was locked in that stage. The creative decision on record is the Detonation selected at Stage 18, reproduced below in full and word for word.",
@@ -1182,9 +1245,30 @@ export function buildSummaryDocument(
         }`
       : "";
 
-  /* 18 — Why it won */
+  /* 18 — Why it won.
+     Where the recorded judgement marks the idea down for using a known
+     archetype, the honest observation is kept exactly as written and the
+     counter-context is added beside it: category precedent and brand-relative
+     freshness are two different tests, and only one of them is the question
+     this brand actually faces. */
+  const uniquenessCritique = (extras.winnerReasons ?? []).some(
+    (r) =>
+      /unique/i.test(r.title ?? "") &&
+      /(archetype|trope|well[- ]trodden|familiar|precedent|been (executed|done)|not (a )?genuinely original)/i.test(
+        r.detail ?? "",
+      ),
+  );
+  const brandRelativeNote = uniquenessCritique
+    ? callout(
+        "Counter-context on the uniqueness judgement",
+        p(
+          `The uniqueness note above is a category-level test: has this device been used anywhere before. It is recorded as written and is not withdrawn. The test that governs this decision is narrower — has ${brand} used it before. Brand-relative freshness is a legitimate form of distinctiveness: a device that is familiar across advertising but unused by this brand in this category still arrives as new to the audience that matters, and it carries the compensating advantage of a proven mechanic. Both readings are true at once, and the idea was locked with the category-level limitation understood.`,
+        ),
+      )
+    : "";
   const whyHtml = extras.winnerReasons?.length
-    ? reasonGrid(extras.winnerReasons)
+    ? `${reasonGrid(extras.winnerReasons)}${brandRelativeNote}`
+
     : selectedDetonation?.rationale
       ? `${p(
           "No lens-sweep ratings exist for this session. The judgement on record is the argument written against the selected Detonation at Stage 18, reproduced verbatim.",
@@ -1256,7 +1340,27 @@ export function buildSummaryDocument(
       // Only the durable commitments belong here — the audit verdict and the
       // next-step line are their own sections and must not be re-read as
       // proposed activity.
-      proposedActions: [...arch.assets, ...arch.principles].filter(Boolean),
+      // Deployment principles are printed in full in Section 20. Repeating
+      // them verbatim here would put the same paragraphs in two sections, so
+      // Section 21 carries each one's opening clause only.
+      proposedActions: [
+        ...arch.assets,
+        ...arch.principles.map((principle) => {
+          // Longest clause boundary inside the first ~110 characters, so the
+          // lead is a readable instruction rather than two words.
+          const head = principle.slice(0, 110);
+          const cut = Math.max(
+            head.lastIndexOf(", "),
+            head.lastIndexOf(" because "),
+            head.lastIndexOf(" so that "),
+            head.lastIndexOf(" — "),
+          );
+          const lead = (cut >= 40 ? head.slice(0, cut) : head).trim().replace(/[,;:]$/, "");
+          return lead.length >= 40 && lead.length < principle.length - 8
+            ? `${lead} (stated in full in Section 20)`
+            : principle;
+        }),
+      ].filter(Boolean),
     }) || nothing("No record of current activity was available for this session.");
 
   const defs: SectionDef[] = [

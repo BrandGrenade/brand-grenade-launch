@@ -231,7 +231,13 @@ export function deriveCurrentState(input: CurrentStateInput): CurrentStateModel 
   for (const src of input.evidence) {
     if (!src?.text) continue;
     last = null;
-    for (const s of sentences(src.text)) {
+    // Source text is transcript markdown: headings and list items carry no
+    // terminal punctuation, so sentence-splitting the whole blob glued a
+    // heading onto the paragraph beneath it ("The Category This Brand
+    // Operates In What does the category currently believe? ..."). Blocks are
+    // separated by line breaks first, and each block is split on its own.
+    const blocks = src.text.split(/\n+/).map((b) => b.trim()).filter(Boolean);
+    for (const s of blocks.flatMap((b) => sentences(b))) {
       const t = tidySentence(s);
       if (!t) continue;
       // Verification notes are folded onto the claim above before any of the
