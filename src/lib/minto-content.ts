@@ -219,12 +219,45 @@ export function orderBySelected(raw: string, smp: string, aliases: string[] = []
  * removes every candidate-owned block/paragraph except the selected one.
  */
 export function scopeToSelected(raw: string, smp: string, aliases: string[] = []): string {
+  const scoped = scopeToSelectedInner(raw, smp, aliases);
+  // Scoping removes sibling-candidate evidence. It must never remove the body
+  // of a heading that survives: a heading left standing with nothing beneath
+  // it is content loss, not scoping, and the transcript is returned whole.
+  return keepsHeadingBodies(raw, scoped) ? scoped : raw;
+}
+
+/**
+ * True when every markdown heading kept by `scoped` still carries at least one
+ * line of real body beneath it (prose, bullet, quote — anything that is not
+ * another heading or a rule).
+ */
+function keepsHeadingBodies(raw: string, scoped: string): boolean {
+  if (!scoped.trim() || scoped.trim() === raw.trim()) return true;
+  const lines = scoped.split("\n");
+  const isHeading = (l: string) => /^\s*#{1,6}\s+\S/.test(l.trim());
+  const isFiller = (l: string) => !l.trim() || /^\s*(?:[*\-_]{3,}|—+)\s*$/.test(l.trim());
+  for (let i = 0; i < lines.length; i++) {
+    if (!isHeading(lines[i])) continue;
+    let j = i + 1;
+    while (j < lines.length && isFiller(lines[j])) j++;
+    if (j >= lines.length || isHeading(lines[j])) {
+      // A heading directly above a deeper heading is a legitimate parent.
+      const level = (l: string) => (l.trim().match(/^#+/)?.[0].length ?? 0);
+      if (j < lines.length && level(lines[j]) > level(lines[i])) continue;
+      return false;
+    }
+  }
+  return true;
+}
+
+function scopeToSelectedInner(raw: string, smp: string, aliases: string[] = []): string {
   const keys = [smp, ...aliases].map(smpKey).filter((k) => k.length >= 6);
   if (!raw.trim() || !keys.length) return raw;
   const has = (s: string) => {
     const keyed = smpKey(s);
     return keys.some((key) => keyed.includes(key) || key.includes(keyed));
   };
+
   const lines = raw.split("\n");
   const boundaries: Array<{ matches: (line: string) => boolean; allowBodyMatch: boolean }> = [
     { matches: (line) => /^\s*\*{0,2}(?:PROPOSITION|SMP|CANDIDATE|OPTION|CARD|TERRITORY)\s*\d+\*{0,2}\s*$/i.test(line), allowBodyMatch: true },
