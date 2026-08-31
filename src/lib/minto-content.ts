@@ -1061,11 +1061,18 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
   /* 03 — key insight. The block after the INSIGHT marker is preferred, but
    * some stage formats put a rule there and the prose above it; take the first
    * source that actually yields a sentence rather than shipping a bare rule. */
+  // Stage 5 opens with instructions to itself ("each universe below is tested
+  // against…"). That is method, not insight, and must never be quoted as one.
+  const isMethodProse = (p: string) =>
+    /\b(each universe|below is tested|have been rejected|fails? the .*filter|this stage|the brief above)\b/i.test(p);
   const insightSources = [blockAfter(s5, /INSIGHT|^##/i), s5].filter((t) => t && t.trim());
-  const insightPick = insightSources.map((t) => ({ t, p: prose(t, 1) })).find((c) => c.p.length);
+  const insightPick = insightSources
+    .map((t) => ({ t, p: prose(t, 6).filter((x) => !isMethodProse(x)) }))
+    .find((c) => c.p.length);
   const key_insight = insightPick
     ? pullQuote(insightPick.p[0], { label: "The insight it rests on", variant: "quiet" })
     : renderMarkdown(pruneEmptyHeadings((insightSources[0] ?? "").slice(0, 1200)));
+
 
 
   /* 04 — proposition. Scores shown here belong to this exact proposition or
