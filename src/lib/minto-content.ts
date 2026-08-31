@@ -27,6 +27,7 @@ import {
   type Reason,
   type Stat,
 } from "./doc-system";
+import { humaniseStageOutput } from "./appendix-humanise";
 import type { MintoContent } from "./minto";
 import { buildCurrentStateSection } from "./current-state";
 import { stripDocumentMetadata } from "./strip-document-metadata";
