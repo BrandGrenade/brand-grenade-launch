@@ -106,6 +106,8 @@ function stripPlumbing(s: string): string {
       .replace(/\s+([.,;:])/g, "$1")
       .replace(/\.\s*\./g, ".")
       .replace(/\(\s*\)/g, "")
+      // "[ ]" / "[]" residue left by removed status markers.
+      .replace(/\[[\s;:,.\-—–|]*\]/g, " ")
       .replace(/\s{2,}/g, " ")
       .trim()
   );
@@ -125,6 +127,19 @@ function tidySentence(s: string): string {
     .replace(/^[\s.,;:•\-—]+/, "")
     .trim();
   return cleaned.replace(/^[a-z]/, (c) => c.toUpperCase());
+}
+
+/**
+ * Pipeline field lines — machine labels and enum payloads that live in the
+ * research corpus for the system's own use ("PROBLEM SHAPE(S): …",
+ * "Frame: problem Why it matters: …", "Step 1 gap: …"). They are internal
+ * plumbing, never client-facing statements of current activity.
+ */
+const MACHINE_FIELD_RE =
+  /^(?:[A-Z][A-Z0-9 ()\/&-]{3,}\s*:|frame\s*:|step\s*\d+\s+(?:gap|check|note)\s*:|problem shape|why it matters\s*:|verdict\s*:|evidence\s*:|confidence\s*:)/i;
+
+function isMachineField(s: string): boolean {
+  return MACHINE_FIELD_RE.test(s.trim()) || /\bwhy it matters\s*:/i.test(s);
 }
 
 /**
@@ -246,6 +261,7 @@ export function deriveCurrentState(input: CurrentStateInput): CurrentStateModel 
         add(t, src.label, s, last);
         continue;
       }
+      if (isMachineField(t) || isMachineField(s)) continue;
       if (t.length < 60 || t.length > 340) continue;
       if (!ACTIVITY_RE.test(t)) continue;
       if (NOT_ACTIVITY_RE.test(t)) continue;
@@ -264,7 +280,10 @@ export function deriveCurrentState(input: CurrentStateInput): CurrentStateModel 
     let best: { m: (typeof corpusIndex)[number]; n: number } | null = null;
     for (const m of corpusIndex) {
       const n = overlap(at, m.tok);
-      if (n >= 2 && (!best || n > best.n)) best = { m, n };
+      // Two shared tokens is noise — an unrelated corpus line can share
+      // "brand" and "every". Only a genuinely overlapping statement counts as
+      // existing activity the recommendation builds on.
+      if (n >= 3 && (!best || n > best.n)) best = { m, n };
     }
     if (best) {
       madeExplicit.push({

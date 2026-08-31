@@ -1114,7 +1114,7 @@ export function buildSummaryDocument(
   const auditFlags = extractAuditFlags(str(session, "stage_15_output"));
   const coherenceHtml = `${stageBlock(session, "stage_15_output", 8, 1200)}${
     auditFlags.length
-      ? `<h3>Findings raised by the audit</h3>${defList(
+      ? `<h3>Findings raised by the audit</h3><p class="muted">These are the system's own self-audit notes, recorded verbatim against the working stages that produced this strategy. They are printed unedited so the correction record is visible; each is a note on the drafting stages, not an outstanding action for the client.</p>${defList(
           auditFlags.map((f) => ({ label: f.label, body: f.detail })),
         )}`
       : ""
@@ -1353,10 +1353,15 @@ export function buildSummaryDocument(
             head.lastIndexOf(", "),
             head.lastIndexOf(" because "),
             head.lastIndexOf(" so that "),
+            head.lastIndexOf(" so the "),
+            head.lastIndexOf(" and never "),
             head.lastIndexOf(" — "),
           );
-          const lead = (cut >= 40 ? head.slice(0, cut) : head).trim().replace(/[,;:]$/, "");
-          return lead.length >= 40 && lead.length < principle.length - 8
+          // No clause boundary: fall back to the last word break, so a
+          // principle is never reprinted verbatim in two sections.
+          const fallback = principle.length > 96 ? head.slice(0, head.lastIndexOf(" ")) : head;
+          const lead = (cut >= 30 ? head.slice(0, cut) : fallback).trim().replace(/[,;:]$/, "");
+          return lead.length >= 30 && lead.length < principle.length - 8
             ? `${lead} (stated in full in Section 20)`
             : principle;
         }),
