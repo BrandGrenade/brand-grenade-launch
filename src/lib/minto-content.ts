@@ -293,9 +293,27 @@ function scopeToSelectedInner(raw: string, smp: string, aliases: string[] = []):
   // Theme-led stages (notably Stage 9) place one bold candidate paragraph
   // beneath each shared heading. Keep shared prose and the selected paragraph,
   // but never carry the sibling paragraphs into the document.
+  //
+  // A bold lead is only a candidate NAME. Bold verdicts ("CONFIRMED WITH
+  // ADJUSTMENTS — PROCEED."), scored dimensions ("Product Truth Alignment —
+  // 8/10.") and bold sentence openers are stage findings about the locked
+  // proposition; reading them as sibling names deleted whole stages (Stage 13
+  // lost every body under its headings).
+  const isCandidateName = (label: string) => {
+    const t = label.trim().replace(/[.:—–-]+$/, "").trim();
+    if (!t || t.length > 60) return false;
+    if (/\d/.test(t)) return false;
+    if (t.split(/\s+/).length > 8) return false;
+    if (t === t.toUpperCase() && /[A-Z]{3}/.test(t)) return false;
+    return true;
+  };
   const paragraphs = raw.split(/\n\s*\n/);
-  const named = paragraphs.filter((paragraph) => /^\s*\*\*[^*]{3,90}\*\*/.test(paragraph));
+  const named = paragraphs.filter((paragraph) => {
+    const lead = /^\s*\*\*([^*]{3,90})\*\*/.exec(paragraph);
+    return !!lead && isCandidateName(lead[1]);
+  });
   if (named.length >= 2 && named.some(has)) {
+
     // Collect every bold territory name, including names embedded in later
     // comparative-summary paragraphs, before filtering candidate blocks.
     const siblingNames = [...raw.matchAll(/\*\*([^*\n]{3,90})\*\*/g)]
