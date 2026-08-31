@@ -1321,9 +1321,24 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
           `<p>The recommended proposition was resolved at selection, after the scored set above was tested for integrity and brand fit. It is not a row in the Stage 10 table.</p>`,
         )
       : "";
+  // The six published dimensions carry 90 of the 100 available points. The
+  // remaining 10 are deliberately unallocated, so a perfect card scores 90,
+  // not 100. Scores are shown on the /100 scale for comparability across
+  // sessions; the ceiling is disclosed here rather than left implicit.
+  const scaleNote = tableRows.length
+    ? callout(
+        "How to read the scores",
+        `<p>Each proposition is scored 0–10 on six dimensions, weighted into a single figure on a 100-point scale: ` +
+          `Fame 30, Truth 20, Competitive Impossibility 15, Brand Permission 10, Clean Air 10, Commercial Precedent 5. ` +
+          `Those six weights total 90, so <strong>90/100 is the maximum attainable score</strong> — the remaining 10 points are held unallocated by design. ` +
+          `Two dimensions carry hard floors: Truth below 5/10 or Competitive Impossibility below 6/10 eliminates a proposition regardless of its total.</p>`,
+      )
+    : "";
   const validation =
     (validationTable || renderMarkdown(s10.slice(0, 2000)) || "") +
+    scaleNote +
     provenance.html +
+
     (provenance.postSelection && winner?.composite != null
       ? callout(
           "Re-score of the locked line",
