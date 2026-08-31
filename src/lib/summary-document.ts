@@ -1360,8 +1360,8 @@ export function buildSummaryDocument(
           // No clause boundary: fall back to the last word break, so a
           // principle is never reprinted verbatim in two sections.
           const fallback = principle.length > 96 ? head.slice(0, head.lastIndexOf(" ")) : head;
-          const lead = (cut >= 40 ? head.slice(0, cut) : fallback).trim().replace(/[,;:]$/, "");
-          return lead.length >= 40 && lead.length < principle.length - 8
+          const lead = (cut >= 30 ? head.slice(0, cut) : fallback).trim().replace(/[,;:]$/, "");
+          return lead.length >= 30 && lead.length < principle.length - 8
             ? `${lead} (stated in full in Section 20)`
             : principle;
         }),
