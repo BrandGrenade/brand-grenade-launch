@@ -50,6 +50,31 @@ export function sanitiseText(s: unknown): string {
     .replace(/\u2026/g, "...");
 }
 
+/**
+ * Length clamp that never cuts mid-word or mid-sentence.
+ *
+ * A raw `slice()` shipped "…the publicly documented rupture of 2024. Every
+ * line writ" to a client document. Prefer the last complete sentence inside
+ * the budget; if there is none, fall back to the last whole word and mark the
+ * cut with an ellipsis so a truncation always reads as one.
+ */
+export function clampProse(text: string, max: number): string {
+  const t = String(text ?? "").trim();
+  if (t.length <= max) return t;
+  const window = t.slice(0, max);
+  const lastSentence = Math.max(
+    window.lastIndexOf(". "),
+    window.lastIndexOf("? "),
+    window.lastIndexOf("! "),
+  );
+  if (lastSentence >= max * 0.5) return window.slice(0, lastSentence + 1).trim();
+  if (/[.?!]$/.test(window)) return window.trim();
+  const lastSpace = window.lastIndexOf(" ");
+  return `${window.slice(0, lastSpace > 0 ? lastSpace : max).replace(/[\s,;:—–-]+$/, "")}…`;
+}
+
+
+
 /** Inline markdown (bold/italic) → HTML, escaped first. */
 export function inlineMd(line: string): string {
   let s = escapeHtml(line);
@@ -312,6 +337,12 @@ blockquote { border-left: 3pt solid var(--detonation); padding: 10pt 14pt; margi
 .cs-status { color: var(--smoke); font-style: italic; }
 .cs-sources { margin: 10pt 0 0; padding-top: 7pt; border-top: 0.75pt solid var(--rule); font-size: 8pt; color: var(--smoke); line-height: 1.5; list-style: none; }
 .cs-sources li { margin: 2pt 0; padding-left: 0; }
+/* The global list marker (an em dash at left: 0) sat on top of the numeral in
+   the numbered source list and read as a strikethrough. Sources carry their
+   own numbering, so the marker is suppressed here. */
+.cs-sources li::before { content: none; }
+.cs-sources li .cs-num { color: var(--smoke); margin-right: 3pt; }
+
 
 /* ── supporting blocks ───────────────────────────────────────────── */
 .callout { border: 0.75pt solid var(--rule); background: var(--surface); padding: 14pt 16pt; margin: 14pt 0; }

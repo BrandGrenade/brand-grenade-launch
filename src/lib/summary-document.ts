@@ -945,7 +945,7 @@ export function buildSummaryDocument(
   const whyItWon = [
     scoreProvenance.postSelection
       ? scoreProvenance.topCompetitive?.composite != null
-        ? `The territory it expresses was validated competitively: "${scoreProvenance.topCompetitive.name}" scored ${scoreProvenance.topCompetitive.composite}/100 against ${scoreProvenance.competitive.length} candidates in the scored field. This line is the refined expression of that territory, locked by human judgement after the competitive pass closed — the system explored and scored, a human made the final call.`
+        ? `The territory it expresses was validated competitively: "${scoreProvenance.topCompetitive.name}" — the closest scored expression of that territory — scored ${scoreProvenance.topCompetitive.composite}/100 in a field of ${scoreProvenance.competitive.length} candidates. This line is the refined expression of that territory, locked by human judgement after the competitive pass closed — the system explored and scored, a human made the final call.`
         : `The territory it expresses was validated competitively in the scored field; this line is its refined expression, locked by human judgement after the competitive pass closed.`
       : scoring.verdict === "PASS"
         ? `It is the only proposition to clear both hard floors and be carried through Stage 10 scoring${scoring.composite ? ` on a composite of ${scoring.composite}` : ""}.`
