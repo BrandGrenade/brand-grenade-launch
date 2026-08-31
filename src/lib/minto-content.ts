@@ -18,6 +18,8 @@ import {
   pullQuote,
   reasonGrid,
   renderMarkdown,
+  pruneEmptyHeadings,
+
   sanitiseText,
   statGrid,
   type CmpRow,
