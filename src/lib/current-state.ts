@@ -106,6 +106,8 @@ function stripPlumbing(s: string): string {
       .replace(/\s+([.,;:])/g, "$1")
       .replace(/\.\s*\./g, ".")
       .replace(/\(\s*\)/g, "")
+      // "[ ]" / "[]" residue left by removed status markers.
+      .replace(/\[\s*\]/g, " ")
       .replace(/\s{2,}/g, " ")
       .trim()
   );
@@ -136,15 +138,8 @@ function tidySentence(s: string): string {
 const MACHINE_FIELD_RE =
   /^(?:[A-Z][A-Z0-9 ()\/&-]{3,}\s*:|frame\s*:|step\s*\d+\s+(?:gap|check|note)\s*:|problem shape|why it matters\s*:|verdict\s*:|evidence\s*:|confidence\s*:)/i;
 
-/** Run-together enum tokens ("favourabilitydecline") betray a machine payload. */
-const ENUM_TOKEN_RE = /\b[a-z]{12,}\b/;
-
 function isMachineField(s: string): boolean {
-  if (MACHINE_FIELD_RE.test(s.trim())) return true;
-  if (/\bwhy it matters\s*:/i.test(s)) return true;
-  const words = s.split(/\s+/);
-  const enumish = words.filter((w) => ENUM_TOKEN_RE.test(w.replace(/[^a-z]/gi, "")) && !/[A-Z]/.test(w.slice(1)));
-  return enumish.length >= 2;
+  return MACHINE_FIELD_RE.test(s.trim()) || /\bwhy it matters\s*:/i.test(s);
 }
 
 /**
@@ -266,6 +261,7 @@ export function deriveCurrentState(input: CurrentStateInput): CurrentStateModel 
         add(t, src.label, s, last);
         continue;
       }
+      if (isMachineField(t) || isMachineField(s)) continue;
       if (t.length < 60 || t.length > 340) continue;
       if (!ACTIVITY_RE.test(t)) continue;
       if (NOT_ACTIVITY_RE.test(t)) continue;
