@@ -1058,12 +1058,15 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
     : renderMarkdown(issueSource.slice(0, 1800));
 
 
-  /* 03 — key insight */
-  const insightSource = blockAfter(s5, /INSIGHT|^##/i) || s5;
-  const insightParas = prose(insightSource, 1);
-  const key_insight = insightParas.length
-    ? pullQuote(insightParas[0], { label: "The insight it rests on", variant: "quiet" })
-    : renderMarkdown(insightSource.slice(0, 1200));
+  /* 03 — key insight. The block after the INSIGHT marker is preferred, but
+   * some stage formats put a rule there and the prose above it; take the first
+   * source that actually yields a sentence rather than shipping a bare rule. */
+  const insightSources = [blockAfter(s5, /INSIGHT|^##/i), s5].filter((t) => t && t.trim());
+  const insightPick = insightSources.map((t) => ({ t, p: prose(t, 1) })).find((c) => c.p.length);
+  const key_insight = insightPick
+    ? pullQuote(insightPick.p[0], { label: "The insight it rests on", variant: "quiet" })
+    : renderMarkdown(pruneEmptyHeadings((insightSources[0] ?? "").slice(0, 1200)));
+
 
   /* 04 — proposition. Scores shown here belong to this exact proposition or
    * are not shown at all; a parent/earlier-stage line's score is never used. */
