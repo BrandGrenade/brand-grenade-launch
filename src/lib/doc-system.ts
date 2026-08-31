@@ -61,10 +61,45 @@ export function inlineMd(line: string): string {
 }
 
 /**
+ * Removes markdown headings that have lost their body.
+ *
+ * Stage transcripts are filtered before they render — run-count bookkeeping is
+ * dropped, sibling-candidate blocks are scoped out, condensation cuts to a
+ * budget. Any of those can leave a heading standing over nothing, which the
+ * document gate correctly refuses to publish. A heading directly above a
+ * DEEPER heading is a parent and is kept; a heading followed by a
+ * same-or-shallower heading, or by the end of the text, is dropped along with
+ * the rule that separated it.
+ */
+export function pruneEmptyHeadings(md: string): string {
+  if (!md.trim()) return md;
+  const lines = md.split("\n");
+  const level = (l: string) => l.trim().match(/^#{1,6}(?=\s)/)?.[0].length ?? 0;
+  const isRule = (l: string) => /^\s*(?:[*\-_]{3,}|—+)\s*$/.test(l);
+  const keep = lines.map(() => true);
+  for (let i = lines.length - 1; i >= 0; i--) {
+    if (!level(lines[i])) continue;
+    let j = i + 1;
+    while (j < lines.length && (!keep[j] || !lines[j].trim() || isRule(lines[j]))) j++;
+    if (j < lines.length && level(lines[j]) > level(lines[i])) continue;
+    if (j < lines.length && !level(lines[j])) continue;
+    keep[i] = false;
+    // drop the rules/blank run that belonged to the removed heading
+    for (let k = i + 1; k < j; k++) if (isRule(lines[k])) keep[k] = false;
+  }
+  return lines
+    .filter((_, i) => keep[i])
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+/**
  * Block-level markdown → HTML, rendered into the shared document classes.
  * Lives here (not in a builder) so every migrated document type renders body
  * copy identically.
  */
+
 export function renderMarkdown(text: string): string {
   if (!text) return "";
   const out: string[] = [];
@@ -95,26 +130,31 @@ export function renderMarkdown(text: string): string {
       out.push(`<blockquote>${inlineMd(line.replace(/^>\s+/, ""))}</blockquote>`);
       continue;
     }
+    // Heading depth is flattened for typography (everything below h4 renders
+    // as h3) but the markdown level is preserved as data-md-level, so the
+    // document gate can tell a parent heading followed by its own subheading
+    // apart from a heading that genuinely lost its body.
     if (/^####\s+/.test(line)) {
       closeUl();
-      out.push(`<h4>${inlineMd(line.replace(/^####\s+/, ""))}</h4>`);
+      out.push(`<h4 data-md-level="4">${inlineMd(line.replace(/^####\s+/, ""))}</h4>`);
       continue;
     }
     if (/^###\s+/.test(line)) {
       closeUl();
-      out.push(`<h3>${inlineMd(line.replace(/^###\s+/, ""))}</h3>`);
+      out.push(`<h3 data-md-level="3">${inlineMd(line.replace(/^###\s+/, ""))}</h3>`);
       continue;
     }
     if (/^##\s+/.test(line)) {
       closeUl();
-      out.push(`<h3>${inlineMd(line.replace(/^##\s+/, ""))}</h3>`);
+      out.push(`<h3 data-md-level="2">${inlineMd(line.replace(/^##\s+/, ""))}</h3>`);
       continue;
     }
     if (/^#\s+/.test(line)) {
       closeUl();
-      out.push(`<h3>${inlineMd(line.replace(/^#\s+/, ""))}</h3>`);
+      out.push(`<h3 data-md-level="1">${inlineMd(line.replace(/^#\s+/, ""))}</h3>`);
       continue;
     }
+
     if (/^[-—•]\s+/.test(line)) {
       if (!inUl) {
         out.push("<ul>");
@@ -345,7 +385,14 @@ export interface PullQuoteOptions {
 
 /** The governing recommendation / key insight / why-it-wins treatment. */
 export function pullQuote(body: string, opts: PullQuoteOptions = {}): string {
-  const text = sanitiseText(body).trim();
+  // A pull quote is set as display type, so emphasis markers carried over from
+  // the stage transcript have nothing to render into and would print as
+  // literal asterisks. Strip them rather than escape them.
+  const text = sanitiseText(body)
+    .replace(/\*\*(.+?)\*\*/g, "$1")
+    .replace(/(^|\s)\*(?!\s)([^*]+?)\*(?!\w)/g, "$1$2")
+    .trim();
+
   if (!text) return "";
   const variant = opts.variant && opts.variant !== "default" ? ` ${opts.variant}` : "";
   // Bebas Neue is a condensed display face: at 30pt a short line reads as a

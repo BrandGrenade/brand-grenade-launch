@@ -530,7 +530,7 @@ export function contentIntegrityFindings(
   findings.push(...duplicateFindings(authoredOnly));
   findings.push(...placementFindings(authoredOnly));
   findings.push(...dispositionFindings(authoredOnly));
-  findings.push(...checkpointFindings(sections));
+  findings.push(...checkpointFindings(sections, authored));
 
 
   return findings;
@@ -673,7 +673,10 @@ function dispositionFindings(sections: IntegritySection[]): IntegrityFinding[] {
  * CHECKPOINT — a document that records fewer than the full set of human
  * checkpoints may not also read as cleared without saying so.
  */
-function checkpointFindings(sections: IntegritySection[]): IntegrityFinding[] {
+function checkpointFindings(
+  sections: IntegritySection[],
+  authored: IntegritySection[] = sections,
+): IntegrityFinding[] {
   const out: IntegrityFinding[] = [];
   const whole = sections.map((s) => s.text).join(" ");
   const m = whole.match(/\b(\d{1,2})\s*\/\s*(\d{1,2})\b[^.]{0,60}checkpoint/i) ??
@@ -682,9 +685,30 @@ function checkpointFindings(sections: IntegritySection[]): IntegrityFinding[] {
   const done = Number(m[1]);
   const total = Number(m[2]);
   if (!Number.isFinite(done) || !Number.isFinite(total) || done >= total) return out;
-  const cleared = whole.match(
-    /\b(?:all checkpoints (?:cleared|signed off|complete)|fully cleared|CLEARED\b|every checkpoint (?:cleared|signed off))/i,
-  );
+  // Only the document's OWN prose can overclaim. A stage transcript in the
+  // appendix that records its own clearance declaration is history, not a
+  // claim the deliverable is making about the human checkpoints. Appendix
+  // numbering restarts at 01, so the front matter is everything before the
+  // first index that does not advance.
+  let frontMatter = authored.length ? authored : sections;
+  let prevIndex = -1;
+  const cut = frontMatter.findIndex((s) => {
+    const n = Number(s.index);
+    if (!Number.isFinite(n)) return false;
+    const reset = n <= prevIndex;
+    prevIndex = n;
+    return reset;
+  });
+  if (cut > 0) frontMatter = frontMatter.slice(0, cut);
+  const authoredText = frontMatter.map((s) => s.text).join(" ");
+
+  // "CLEARED" is a verdict stamp and matched case-sensitively; the ordinary
+  // verb ("10 cleared the hard floors") is a statistic, not a clearance claim.
+  const cleared =
+    authoredText.match(
+      /\b(?:all checkpoints (?:cleared|signed off|complete)|fully cleared|every checkpoint (?:cleared|signed off))/i,
+    ) ?? authoredText.match(/\bCLEARED\b/);
+
   const acknowledged =
     /\b(?:checkpoints? (?:remain|outstanding|incomplete|not yet|pending)|remaining checkpoint|awaiting sign[- ]off|not all checkpoints)\b/i.test(
       whole,

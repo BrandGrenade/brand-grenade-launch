@@ -18,6 +18,8 @@ import {
   pullQuote,
   reasonGrid,
   renderMarkdown,
+  pruneEmptyHeadings,
+
   sanitiseText,
   statGrid,
   type CmpRow,
@@ -219,12 +221,45 @@ export function orderBySelected(raw: string, smp: string, aliases: string[] = []
  * removes every candidate-owned block/paragraph except the selected one.
  */
 export function scopeToSelected(raw: string, smp: string, aliases: string[] = []): string {
+  const scoped = scopeToSelectedInner(raw, smp, aliases);
+  // Scoping removes sibling-candidate evidence. It must never remove the body
+  // of a heading that survives: a heading left standing with nothing beneath
+  // it is content loss, not scoping, and the transcript is returned whole.
+  return keepsHeadingBodies(raw, scoped) ? scoped : raw;
+}
+
+/**
+ * True when every markdown heading kept by `scoped` still carries at least one
+ * line of real body beneath it (prose, bullet, quote — anything that is not
+ * another heading or a rule).
+ */
+function keepsHeadingBodies(raw: string, scoped: string): boolean {
+  if (!scoped.trim() || scoped.trim() === raw.trim()) return true;
+  const lines = scoped.split("\n");
+  const isHeading = (l: string) => /^\s*#{1,6}\s+\S/.test(l.trim());
+  const isFiller = (l: string) => !l.trim() || /^\s*(?:[*\-_]{3,}|—+)\s*$/.test(l.trim());
+  for (let i = 0; i < lines.length; i++) {
+    if (!isHeading(lines[i])) continue;
+    let j = i + 1;
+    while (j < lines.length && isFiller(lines[j])) j++;
+    if (j >= lines.length || isHeading(lines[j])) {
+      // A heading directly above a deeper heading is a legitimate parent.
+      const level = (l: string) => (l.trim().match(/^#+/)?.[0].length ?? 0);
+      if (j < lines.length && level(lines[j]) > level(lines[i])) continue;
+      return false;
+    }
+  }
+  return true;
+}
+
+function scopeToSelectedInner(raw: string, smp: string, aliases: string[] = []): string {
   const keys = [smp, ...aliases].map(smpKey).filter((k) => k.length >= 6);
   if (!raw.trim() || !keys.length) return raw;
   const has = (s: string) => {
     const keyed = smpKey(s);
     return keys.some((key) => keyed.includes(key) || key.includes(keyed));
   };
+
   const lines = raw.split("\n");
   const boundaries: Array<{ matches: (line: string) => boolean; allowBodyMatch: boolean }> = [
     { matches: (line) => /^\s*\*{0,2}(?:PROPOSITION|SMP|CANDIDATE|OPTION|CARD|TERRITORY)\s*\d+\*{0,2}\s*$/i.test(line), allowBodyMatch: true },
@@ -260,17 +295,37 @@ export function scopeToSelected(raw: string, smp: string, aliases: string[] = []
   // Theme-led stages (notably Stage 9) place one bold candidate paragraph
   // beneath each shared heading. Keep shared prose and the selected paragraph,
   // but never carry the sibling paragraphs into the document.
+  //
+  // A bold lead is only a candidate NAME. Bold verdicts ("CONFIRMED WITH
+  // ADJUSTMENTS — PROCEED."), scored dimensions ("Product Truth Alignment —
+  // 8/10.") and bold sentence openers are stage findings about the locked
+  // proposition; reading them as sibling names deleted whole stages (Stage 13
+  // lost every body under its headings).
+  const isCandidateName = (label: string) => {
+    const t = label.trim().replace(/[.:—–-]+$/, "").trim();
+    if (!t || t.length > 60) return false;
+    if (/\d/.test(t)) return false;
+    if (t.split(/\s+/).length > 8) return false;
+    if (t === t.toUpperCase() && /[A-Z]{3}/.test(t)) return false;
+    return true;
+  };
   const paragraphs = raw.split(/\n\s*\n/);
-  const named = paragraphs.filter((paragraph) => /^\s*\*\*[^*]{3,90}\*\*/.test(paragraph));
+  const named = paragraphs.filter((paragraph) => {
+    const lead = /^\s*\*\*([^*]{3,90})\*\*/.exec(paragraph);
+    return !!lead && isCandidateName(lead[1]);
+  });
   if (named.length >= 2 && named.some(has)) {
+
     // Collect every bold territory name, including names embedded in later
     // comparative-summary paragraphs, before filtering candidate blocks.
     const siblingNames = [...raw.matchAll(/\*\*([^*\n]{3,90})\*\*/g)]
       .map((match) => match[1].trim())
-      .filter((name) => name && !has(name));
+      .filter((name) => name && isCandidateName(name) && !has(name));
     return paragraphs
       .filter((paragraph) => {
-        if (/^\s*\*\*[^*]{3,90}\*\*/.test(paragraph)) return has(paragraph);
+        const lead = /^\s*\*\*([^*]{3,90})\*\*/.exec(paragraph);
+        if (lead && isCandidateName(lead[1])) return has(paragraph);
+
         // Summary paragraphs that explicitly enumerate sibling territory
         // names are comparative set evidence, not evidence for the selected
         // proposition. They belong in rejection records, never in its own
@@ -736,11 +791,15 @@ export function buildAppendix(session: MintoSession, opts: AppendixOptions = {})
       const source = scoped.trim() ? scoped : raw;
       let body = mode === "full" ? source : condenseStage(source, budget);
       if (!body.trim()) body = condenseStage(raw, { maxUnits: 6, maxChars: 700 });
+      // Bookkeeping removal, scoping and condensation can each leave a heading
+      // over nothing. Drop those before render so no card ships a bare label.
+      body = pruneEmptyHeadings(body);
       if (!body.trim()) {
         return card(`<p class="minto-missing">${escapeHtml(NO_STAGE_OUTPUT)}</p>`);
       }
 
       return card(renderMarkdown(body));
+
     })
     .filter(Boolean);
 
@@ -999,12 +1058,22 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
     : renderMarkdown(issueSource.slice(0, 1800));
 
 
-  /* 03 — key insight */
-  const insightSource = blockAfter(s5, /INSIGHT|^##/i) || s5;
-  const insightParas = prose(insightSource, 1);
-  const key_insight = insightParas.length
-    ? pullQuote(insightParas[0], { label: "The insight it rests on", variant: "quiet" })
-    : renderMarkdown(insightSource.slice(0, 1200));
+  /* 03 — key insight. The block after the INSIGHT marker is preferred, but
+   * some stage formats put a rule there and the prose above it; take the first
+   * source that actually yields a sentence rather than shipping a bare rule. */
+  // Stage 5 opens with instructions to itself ("each universe below is tested
+  // against…"). That is method, not insight, and must never be quoted as one.
+  const isMethodProse = (p: string) =>
+    /\b(each universe|below is tested|have been rejected|fails? the .*filter|this stage|the brief above)\b/i.test(p);
+  const insightSources = [blockAfter(s5, /INSIGHT|^##/i), s5].filter((t) => t && t.trim());
+  const insightPick = insightSources
+    .map((t) => ({ t, p: prose(t, 6).filter((x) => !isMethodProse(x)) }))
+    .find((c) => c.p.length);
+  const key_insight = insightPick
+    ? pullQuote(insightPick.p[0], { label: "The insight it rests on", variant: "quiet" })
+    : renderMarkdown(pruneEmptyHeadings((insightSources[0] ?? "").slice(0, 1200)));
+
+
 
   /* 04 — proposition. Scores shown here belong to this exact proposition or
    * are not shown at all; a parent/earlier-stage line's score is never used. */
