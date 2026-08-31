@@ -530,7 +530,7 @@ export function contentIntegrityFindings(
   findings.push(...duplicateFindings(authoredOnly));
   findings.push(...placementFindings(authoredOnly));
   findings.push(...dispositionFindings(authoredOnly));
-  findings.push(...checkpointFindings(sections));
+  findings.push(...checkpointFindings(sections, authored));
 
 
   return findings;
