@@ -1340,7 +1340,18 @@ export function buildSummaryDocument(
       // Only the durable commitments belong here — the audit verdict and the
       // next-step line are their own sections and must not be re-read as
       // proposed activity.
-      proposedActions: [...arch.assets, ...arch.principles].filter(Boolean),
+      // Deployment principles are printed in full in Section 20. Repeating
+      // them verbatim here would put the same paragraphs in two sections, so
+      // Section 21 carries each one's opening clause only.
+      proposedActions: [
+        ...arch.assets,
+        ...arch.principles.map((principle) => {
+          const lead = principle.split(/,\s|\sbecause\s|\sso that\s/)[0].trim();
+          return lead.length >= 24 && lead.length < principle.length
+            ? `${lead} (stated in full in Section 20)`
+            : principle;
+        }),
+      ].filter(Boolean),
     }) || nothing("No record of current activity was available for this session.");
 
   const defs: SectionDef[] = [
