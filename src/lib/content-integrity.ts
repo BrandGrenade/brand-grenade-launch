@@ -687,8 +687,21 @@ function checkpointFindings(
   if (!Number.isFinite(done) || !Number.isFinite(total) || done >= total) return out;
   // Only the document's OWN prose can overclaim. A stage transcript in the
   // appendix that records its own clearance declaration is history, not a
-  // claim the deliverable is making about the human checkpoints.
-  const authoredText = (authored.length ? authored : sections).map((s) => s.text).join(" ");
+  // claim the deliverable is making about the human checkpoints. Appendix
+  // numbering restarts at 01, so the front matter is everything before the
+  // first index that does not advance.
+  let frontMatter = authored.length ? authored : sections;
+  let prevIndex = -1;
+  const cut = frontMatter.findIndex((s) => {
+    const n = Number(s.index);
+    if (!Number.isFinite(n)) return false;
+    const reset = n <= prevIndex;
+    prevIndex = n;
+    return reset;
+  });
+  if (cut > 0) frontMatter = frontMatter.slice(0, cut);
+  const authoredText = frontMatter.map((s) => s.text).join(" ");
+
   // "CLEARED" is a verdict stamp and matched case-sensitively; the ordinary
   // verb ("10 cleared the hard floors") is a statistic, not a clearance claim.
   const cleared =
