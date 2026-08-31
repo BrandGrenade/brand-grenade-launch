@@ -791,11 +791,15 @@ export function buildAppendix(session: MintoSession, opts: AppendixOptions = {})
       const source = scoped.trim() ? scoped : raw;
       let body = mode === "full" ? source : condenseStage(source, budget);
       if (!body.trim()) body = condenseStage(raw, { maxUnits: 6, maxChars: 700 });
+      // Bookkeeping removal, scoping and condensation can each leave a heading
+      // over nothing. Drop those before render so no card ships a bare label.
+      body = pruneEmptyHeadings(body);
       if (!body.trim()) {
         return card(`<p class="minto-missing">${escapeHtml(NO_STAGE_OUTPUT)}</p>`);
       }
 
       return card(renderMarkdown(body));
+
     })
     .filter(Boolean);
 
