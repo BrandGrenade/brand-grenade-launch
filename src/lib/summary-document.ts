@@ -61,6 +61,7 @@ import {
   sentences,
 } from "./summary-sources";
 import { HUMAN_CHECKPOINT_COUNT } from "./platform-metrics";
+import { relabelScoreScale, SCORE_CEILING } from "./appendix-humanise";
 import { TOTAL_PIPELINE_STEPS } from "./stage-manifest";
 import { LENS_COUNT } from "./stimulus/lenses";
 import {
@@ -941,7 +942,7 @@ export function buildSummaryDocument(
               [
                 scoring.composite
                   ? {
-                      value: scoring.composite,
+                      value: relabelScoreScale(scoring.composite),
                       label: scoreProvenance.postSelection
                         ? "post-lock re-score (not a rank)"
                         : "composite score",
@@ -951,7 +952,9 @@ export function buildSummaryDocument(
               ].filter(Boolean) as Stat[],
             )
           : ""
-      }`
+      }${p(
+        `Composite scores are on the ${SCORE_CEILING}-point weighted scale: the six dimension weights total ${SCORE_CEILING}% by design, so ${SCORE_CEILING} — not 100 — is the ceiling a perfect card can reach.`,
+      )}`
     : "";
 
   /* 10 — The winning proposition */
@@ -961,10 +964,10 @@ export function buildSummaryDocument(
   const whyItWon = [
     scoreProvenance.postSelection
       ? scoreProvenance.topCompetitive?.composite != null
-        ? `The territory it expresses was validated competitively: "${scoreProvenance.topCompetitive.name}" — the closest scored expression of that territory — scored ${scoreProvenance.topCompetitive.composite}/100 in a field of ${scoreProvenance.competitive.length} candidates. This line is the refined expression of that territory, locked by human judgement after the competitive pass closed — the system explored and scored, a human made the final call.`
+        ? `The territory it expresses was validated competitively: "${scoreProvenance.topCompetitive.name}" — the closest scored expression of that territory — scored ${scoreProvenance.topCompetitive.composite}/${SCORE_CEILING} in a field of ${scoreProvenance.competitive.length} candidates. This line is the refined expression of that territory, locked by human judgement after the competitive pass closed — the system explored and scored, a human made the final call.`
         : `The territory it expresses was validated competitively in the scored field; this line is its refined expression, locked by human judgement after the competitive pass closed.`
       : scoring.verdict === "PASS"
-        ? `It is the only proposition to clear both hard floors and be carried through Stage 10 scoring${scoring.composite ? ` on a composite of ${scoring.composite}` : ""}.`
+        ? `It is the only proposition to clear both hard floors and be carried through Stage 10 scoring${scoring.composite ? ` on a composite of ${relabelScoreScale(scoring.composite)}` : ""}.`
         : "",
     topScore?.note
       ? `Its strongest dimension is ${topScore.dimension.toLowerCase()} (${topScore.score}): ${topScore.note}`
