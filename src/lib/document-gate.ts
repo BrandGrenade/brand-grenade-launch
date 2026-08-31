@@ -113,6 +113,36 @@ export function sealSectionBoundaries(html: string, spec: DocumentSpec): string 
 }
 
 
+/**
+ * Headings inside a section body that carry no content of their own.
+ *
+ * A heading immediately followed by a heading ONE LEVEL DEEPER is a parent
+ * heading, not an orphan — "## Pressure Test Report" over "### Section 1 —
+ * Competitive Resistance" is ordinary document hierarchy. Markdown depth is
+ * flattened for typography, so the renderer records it as data-md-level and
+ * the check reads it back. A heading followed by a same-or-shallower heading,
+ * or by the end of the section, genuinely lost its body.
+ */
+export function orphanHeadings(bodyHtml: string): string[] {
+  const heads = [...bodyHtml.matchAll(/<h([1-6])([^>]*)>([\s\S]*?)<\/h\1>/g)];
+  const out: string[] = [];
+  heads.forEach((h, i) => {
+    const level = Number(/data-md-level="(\d)"/.exec(h[2] ?? "")?.[1] ?? h[1]);
+    const start = h.index! + h[0].length;
+    const next = heads[i + 1];
+    const between = bodyHtml.slice(start, next ? next.index! : bodyHtml.length);
+    if (strip(between.replace(/<hr\s*\/?>/g, " ")).length > 0) return;
+    if (next) {
+      const nextLevel = Number(
+        /data-md-level="(\d)"/.exec(next[2] ?? "")?.[1] ?? next[1],
+      );
+      if (nextLevel > level) return; // parent heading over its own subheading
+    }
+    out.push(strip(h[3]));
+  });
+  return out;
+}
+
 /** C1 completeness + C4 orphan checks. Returns human-readable failures. */
 export function checkDocumentStructure(html: string, spec: DocumentSpec): string[] {
   const rendered = renderedSections(html);
@@ -127,8 +157,9 @@ export function checkDocumentStructure(html: string, spec: DocumentSpec): string
   }
   for (const sec of rendered) {
     if (!sec.text.trim()) failures.push(`section ${sec.index} "${sec.title}" has no body`);
-    const orphans = sec.bodyHtml.match(/<h[23][^>]*>[^<]*<\/h[23]>\s*(?=<h[23]|<\/div>|$)/g) ?? [];
-    for (const o of orphans) failures.push(`orphan heading "${strip(o)}" in section ${sec.index}`);
+    for (const o of orphanHeadings(sec.bodyHtml))
+      failures.push(`orphan heading "${o}" in section ${sec.index}`);
+
     // C5 — internal selection UI must never reach a rendered document.
     if (/CANDIDATE SET\s*[—–-]\s*(?:select|choose) one|\b[A-Z]\s*[·•]\s*(?:BASE|BREACH|FUSE|FLASHPOINT)\b/.test(sec.text)) {
       failures.push(`internal selection artifact in section ${sec.index} "${sec.title}"`);
