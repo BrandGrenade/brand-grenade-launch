@@ -19,6 +19,7 @@ import {
   reasonGrid,
   renderMarkdown,
   pruneEmptyHeadings,
+  clampProse,
 
   sanitiseText,
   statGrid,
