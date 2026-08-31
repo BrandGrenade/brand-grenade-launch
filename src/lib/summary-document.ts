@@ -1164,8 +1164,51 @@ export function buildSummaryDocument(
           str(session, "stage_18_selected_detonation"),
           str(session, "stage_18_detonation_line"),
         );
+  /* The strategy-to-creative hierarchy is stated explicitly rather than left
+     to be inferred: the strategic proposition and the campaign line are
+     written in different registers, and a reader comparing them side by side
+     should not read the difference as a drift. */
+  const hierarchyHtml = defList(
+    [
+      territory?.heading
+        ? { label: "1. Territory", body: `${territory.heading} — the strategic space the brand is claiming.` }
+        : null,
+      lockedSmp
+        ? {
+            label: "2. Proposition",
+            body: `${lockedSmp} — the strategic articulation. Written to be argued and scored, not to be run as copy.`,
+          }
+        : null,
+      lockedIdea
+        ? {
+            label: "3. Creative expression",
+            body: `${lockedLens ? `${lockedLens} lens — ` : ""}${firstSentencesOf(lockedIdea, 1)}`,
+          }
+        : null,
+      lockedLine
+        ? {
+            label: "4. Campaign line",
+            body: `${lockedLine} — the public-facing register. Ad copy, judged on recognition and memorability, not on strategic completeness.`,
+          }
+        : null,
+      channels.length
+        ? {
+            label: "5. Execution",
+            body: `${channels.map((c) => c.name).join(", ")} — each with its own Channel Detonation Brief.`,
+          }
+        : null,
+    ].filter(Boolean) as Array<{ label: string; body: string }>,
+  );
+  const hierarchyBlock = hierarchyHtml
+    ? callout(
+        "How the strategy becomes the creative",
+        `${hierarchyHtml}${p(
+          "The proposition and the campaign line operate in different registers by design. The proposition is the strategic argument the work has to hold to; the line is the expression that carries it in market. They are not competing statements of the same thing, and neither is a rewrite of the other.",
+        )}`,
+      )
+    : "";
   const creativeHtml = lockedIdea || lockedLine
-    ? `${
+    ? `${hierarchyBlock}${
         lockedLine
           ? pullQuote(lockedLine, {
               label: `Locked campaign line${lockedLens ? ` — ${lockedLens}` : ""}`,
@@ -1177,6 +1220,7 @@ export function buildSummaryDocument(
           ? `<h3>The recognition test</h3>${renderMarkdown(recognitionTest)}`
           : ""
       }`
+
     : selectedDetonation
       ? `${p(
           "This session was completed before the Creative Stimulus Engine lens sweep existed, so no campaign line was locked in that stage. The creative decision on record is the Detonation selected at Stage 18, reproduced below in full and word for word.",
