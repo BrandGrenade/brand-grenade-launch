@@ -318,10 +318,12 @@ function scopeToSelectedInner(raw: string, smp: string, aliases: string[] = []):
     // comparative-summary paragraphs, before filtering candidate blocks.
     const siblingNames = [...raw.matchAll(/\*\*([^*\n]{3,90})\*\*/g)]
       .map((match) => match[1].trim())
-      .filter((name) => name && !has(name));
+      .filter((name) => name && isCandidateName(name) && !has(name));
     return paragraphs
       .filter((paragraph) => {
-        if (/^\s*\*\*[^*]{3,90}\*\*/.test(paragraph)) return has(paragraph);
+        const lead = /^\s*\*\*([^*]{3,90})\*\*/.exec(paragraph);
+        if (lead && isCandidateName(lead[1])) return has(paragraph);
+
         // Summary paragraphs that explicitly enumerate sibling territory
         // names are comparative set evidence, not evidence for the selected
         // proposition. They belong in rejection records, never in its own
