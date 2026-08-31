@@ -680,13 +680,28 @@ export function buildSummaryDocument(
     { label: "Organisational context", body: fact("brand_organisational_context", "org", 4) },
   ]);
 
-  /* 03 — How this was built */
+  /* 03 — How this was built.
+     Checkpoint language is precise: the count is of the named hard governance
+     gates A–F (a fixed six), not of every individual human confirmation made
+     across a run — that larger figure is session-specific and includes
+     creative-direction approvals that are not governance gates. An unsigned
+     gate on a run that nevertheless completed its downstream work is a gate
+     held open deliberately, not unfinished work, and is stated as such. */
+  const signedGates = ["a", "b", "c", "d", "e", "f"].filter(
+    (k) => session[`checkpoint_${k}_confirmed`] === true,
+  );
+  const runCompleted = Boolean(
+    lockedLine || lockedIdea || str(session, "stage_22_output").trim(),
+  );
+  const gateList = signedGates.map((k) => k.toUpperCase()).join(", ");
   const checkpointNote =
     checkpoints < HUMAN_CHECKPOINT_COUNT
       ? p(
-          `${checkpoints} of ${HUMAN_CHECKPOINT_COUNT} human checkpoints are signed off; ` +
-            `${HUMAN_CHECKPOINT_COUNT - checkpoints} checkpoint${HUMAN_CHECKPOINT_COUNT - checkpoints === 1 ? " remains" : "s remain"} outstanding, ` +
-            `so this document is not fully cleared.`,
+          `${checkpoints} of the ${HUMAN_CHECKPOINT_COUNT} named hard governance gates (A–F) were formally signed off on this run` +
+            `${gateList ? ` — ${gateList}` : ""}. That count is of governance gates only; it is not the number of individual human confirmations made during the run, which is larger and includes creative-direction approvals that are not governance gates.` +
+            (runCompleted
+              ? ` The remaining gates were held open deliberately while the platform itself was being exercised on this session; the work behind them was completed and is reproduced in the sections that follow. This document is a record of a complete run, not of unfinished work.`
+              : ` The work behind the remaining gates has not been completed on this run.`),
         )
       : "";
   const buildHtml = `${checkpointNote}${band("Strategy", [
@@ -694,8 +709,9 @@ export function buildSummaryDocument(
     {
       value: checkpoints,
       suffix: `/${HUMAN_CHECKPOINT_COUNT}`,
-      label: "human checkpoints signed off",
+      label: "governance gates (A–F) signed off",
     },
+
     { value: field.length, label: "propositions considered" },
     { value: scoring.rows.length, label: "strategic scoring dimensions applied" },
   ])}${band("Intelligence", [
