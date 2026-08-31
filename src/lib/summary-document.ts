@@ -953,7 +953,7 @@ export function buildSummaryDocument(
             )
           : ""
       }${p(
-        `Composite scores are on the ${SCORE_CEILING}-point weighted scale: the six dimension weights total ${SCORE_CEILING}% by design, so ${SCORE_CEILING} — not 100 — is the ceiling a perfect card can reach.`,
+        `Composite scores are on the ${SCORE_CEILING}-point weighted scale: the dimension weights above total ${SCORE_CEILING} points by design, so ${SCORE_CEILING} — not 100 — is the ceiling a perfect card can reach.`,
       )}`
     : "";
 
