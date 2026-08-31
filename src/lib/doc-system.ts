@@ -385,7 +385,14 @@ export interface PullQuoteOptions {
 
 /** The governing recommendation / key insight / why-it-wins treatment. */
 export function pullQuote(body: string, opts: PullQuoteOptions = {}): string {
-  const text = sanitiseText(body).trim();
+  // A pull quote is set as display type, so emphasis markers carried over from
+  // the stage transcript have nothing to render into and would print as
+  // literal asterisks. Strip them rather than escape them.
+  const text = sanitiseText(body)
+    .replace(/\*\*(.+?)\*\*/g, "$1")
+    .replace(/(^|\s)\*(?!\s)([^*]+?)\*(?!\w)/g, "$1$2")
+    .trim();
+
   if (!text) return "";
   const variant = opts.variant && opts.variant !== "default" ? ` ${opts.variant}` : "";
   // Bebas Neue is a condensed display face: at 30pt a short line reads as a
