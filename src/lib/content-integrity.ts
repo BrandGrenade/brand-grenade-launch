@@ -692,9 +692,6 @@ function checkpointFindings(
   const cleared = authoredText.match(
     /\b(?:all checkpoints (?:cleared|signed off|complete)|fully cleared|CLEARED\b|every checkpoint (?:cleared|signed off))/i,
   );
-
-    /\b(?:all checkpoints (?:cleared|signed off|complete)|fully cleared|CLEARED\b|every checkpoint (?:cleared|signed off))/i,
-  );
   const acknowledged =
     /\b(?:checkpoints? (?:remain|outstanding|incomplete|not yet|pending)|remaining checkpoint|awaiting sign[- ]off|not all checkpoints)\b/i.test(
       whole,
