@@ -1114,7 +1114,7 @@ export function buildSummaryDocument(
   const auditFlags = extractAuditFlags(str(session, "stage_15_output"));
   const coherenceHtml = `${stageBlock(session, "stage_15_output", 8, 1200)}${
     auditFlags.length
-      ? `<h3>Findings raised by the audit</h3>${defList(
+      ? `<h3>Findings raised by the audit</h3><p class="muted">These are the system's own self-audit notes, recorded verbatim against the working stages that produced this strategy. They are printed unedited so the correction record is visible; each is a note on the drafting stages, not an outstanding action for the client.</p>${defList(
           auditFlags.map((f) => ({ label: f.label, body: f.detail })),
         )}`
       : ""
