@@ -95,26 +95,31 @@ export function renderMarkdown(text: string): string {
       out.push(`<blockquote>${inlineMd(line.replace(/^>\s+/, ""))}</blockquote>`);
       continue;
     }
+    // Heading depth is flattened for typography (everything below h4 renders
+    // as h3) but the markdown level is preserved as data-md-level, so the
+    // document gate can tell a parent heading followed by its own subheading
+    // apart from a heading that genuinely lost its body.
     if (/^####\s+/.test(line)) {
       closeUl();
-      out.push(`<h4>${inlineMd(line.replace(/^####\s+/, ""))}</h4>`);
+      out.push(`<h4 data-md-level="4">${inlineMd(line.replace(/^####\s+/, ""))}</h4>`);
       continue;
     }
     if (/^###\s+/.test(line)) {
       closeUl();
-      out.push(`<h3>${inlineMd(line.replace(/^###\s+/, ""))}</h3>`);
+      out.push(`<h3 data-md-level="3">${inlineMd(line.replace(/^###\s+/, ""))}</h3>`);
       continue;
     }
     if (/^##\s+/.test(line)) {
       closeUl();
-      out.push(`<h3>${inlineMd(line.replace(/^##\s+/, ""))}</h3>`);
+      out.push(`<h3 data-md-level="2">${inlineMd(line.replace(/^##\s+/, ""))}</h3>`);
       continue;
     }
     if (/^#\s+/.test(line)) {
       closeUl();
-      out.push(`<h3>${inlineMd(line.replace(/^#\s+/, ""))}</h3>`);
+      out.push(`<h3 data-md-level="1">${inlineMd(line.replace(/^#\s+/, ""))}</h3>`);
       continue;
     }
+
     if (/^[-—•]\s+/.test(line)) {
       if (!inUl) {
         out.push("<ul>");
