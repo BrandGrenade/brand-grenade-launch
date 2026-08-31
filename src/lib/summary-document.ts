@@ -1353,9 +1353,14 @@ export function buildSummaryDocument(
             head.lastIndexOf(", "),
             head.lastIndexOf(" because "),
             head.lastIndexOf(" so that "),
+            head.lastIndexOf(" so the "),
+            head.lastIndexOf(" and never "),
             head.lastIndexOf(" — "),
           );
-          const lead = (cut >= 40 ? head.slice(0, cut) : head).trim().replace(/[,;:]$/, "");
+          // No clause boundary: fall back to the last word break, so a
+          // principle is never reprinted verbatim in two sections.
+          const fallback = principle.length > 96 ? head.slice(0, head.lastIndexOf(" ")) : head;
+          const lead = (cut >= 40 ? head.slice(0, cut) : fallback).trim().replace(/[,;:]$/, "");
           return lead.length >= 40 && lead.length < principle.length - 8
             ? `${lead} (stated in full in Section 20)`
             : principle;
