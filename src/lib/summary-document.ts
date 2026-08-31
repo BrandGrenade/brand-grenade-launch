@@ -1346,8 +1346,17 @@ export function buildSummaryDocument(
       proposedActions: [
         ...arch.assets,
         ...arch.principles.map((principle) => {
-          const lead = principle.split(/,\s|\sbecause\s|\sso that\s/)[0].trim();
-          return lead.length >= 24 && lead.length < principle.length
+          // Longest clause boundary inside the first ~110 characters, so the
+          // lead is a readable instruction rather than two words.
+          const head = principle.slice(0, 110);
+          const cut = Math.max(
+            head.lastIndexOf(", "),
+            head.lastIndexOf(" because "),
+            head.lastIndexOf(" so that "),
+            head.lastIndexOf(" — "),
+          );
+          const lead = (cut >= 40 ? head.slice(0, cut) : head).trim().replace(/[,;:]$/, "");
+          return lead.length >= 40 && lead.length < principle.length - 8
             ? `${lead} (stated in full in Section 20)`
             : principle;
         }),
