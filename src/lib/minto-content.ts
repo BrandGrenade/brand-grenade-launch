@@ -978,7 +978,7 @@ function stage11TestReasons(s11: string, smp: string): Reason[] {
     if (!detail) continue;
     out.push({
       title: `${m[1].trim()} — ${m[2].trim().toLowerCase()}`,
-      detail: detail.slice(0, 260),
+      detail: clampProse(detail, 260),
     });
   }
   return out;
@@ -1006,7 +1006,7 @@ function stage13Reasons(s13: string): Reason[] {
     if (headline || rationale) {
       out.push({
         title: headline ? `Brand fit — ${headline.replace(/\.$/, "").toLowerCase()}` : "Brand fit confirmed",
-        detail: (rationale ?? headline ?? "").slice(0, 300),
+        detail: clampProse(rationale ?? headline ?? "", 300),
       });
     }
   }
@@ -1015,7 +1015,7 @@ function stage13Reasons(s13: string): Reason[] {
     const c = tidy(raw).replace(/^[-•*]\s*/, "");
     const m = c.match(/^([A-Z][A-Za-z /-]{4,44})\s*[—–-]\s*(\d{1,2})\s*\/\s*10\.?\s*(.*)$/);
     if (!m || !m[3] || m[3].length < 30) continue;
-    out.push({ title: `${m[1].trim()} ${m[2]}/10`, detail: m[3].slice(0, 260) });
+    out.push({ title: `${m[1].trim()} ${m[2]}/10`, detail: clampProse(m[3], 260) });
   }
   return out;
 }
@@ -1236,7 +1236,7 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
   // another candidate's testing).
   const integrityLine = prose(orderBySelected(s11, smp), 1)[0];
   if (integrityLine && !isScaffoldProse(integrityLine)) {
-    whyReasons.push({ title: "Survives integrity testing", detail: integrityLine.slice(0, 260) });
+    whyReasons.push({ title: "Survives integrity testing", detail: clampProse(integrityLine, 260) });
   }
 
   const why_this_wins =
