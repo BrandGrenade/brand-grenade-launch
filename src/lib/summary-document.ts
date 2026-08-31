@@ -1242,9 +1242,30 @@ export function buildSummaryDocument(
         }`
       : "";
 
-  /* 18 — Why it won */
+  /* 18 — Why it won.
+     Where the recorded judgement marks the idea down for using a known
+     archetype, the honest observation is kept exactly as written and the
+     counter-context is added beside it: category precedent and brand-relative
+     freshness are two different tests, and only one of them is the question
+     this brand actually faces. */
+  const uniquenessCritique = (extras.winnerReasons ?? []).some(
+    (r) =>
+      /unique/i.test(r.title ?? "") &&
+      /(archetype|trope|well[- ]trodden|familiar|precedent|been (executed|done)|not (a )?genuinely original)/i.test(
+        r.detail ?? "",
+      ),
+  );
+  const brandRelativeNote = uniquenessCritique
+    ? callout(
+        "Counter-context on the uniqueness judgement",
+        p(
+          `The uniqueness note above is a category-level test: has this device been used anywhere before. It is recorded as written and is not withdrawn. The test that governs this decision is narrower — has ${brand} used it before. Brand-relative freshness is a legitimate form of distinctiveness: a device that is familiar across advertising but unused by this brand in this category still arrives as new to the audience that matters, and it carries the compensating advantage of a proven mechanic. Both readings are true at once, and the idea was locked with the category-level limitation understood.`,
+        ),
+      )
+    : "";
   const whyHtml = extras.winnerReasons?.length
-    ? reasonGrid(extras.winnerReasons)
+    ? `${reasonGrid(extras.winnerReasons)}${brandRelativeNote}`
+
     : selectedDetonation?.rationale
       ? `${p(
           "No lens-sweep ratings exist for this session. The judgement on record is the argument written against the selected Detonation at Stage 18, reproduced verbatim.",
