@@ -128,6 +128,26 @@ function tidySentence(s: string): string {
 }
 
 /**
+ * Pipeline field lines — machine labels and enum payloads that live in the
+ * research corpus for the system's own use ("PROBLEM SHAPE(S): …",
+ * "Frame: problem Why it matters: …", "Step 1 gap: …"). They are internal
+ * plumbing, never client-facing statements of current activity.
+ */
+const MACHINE_FIELD_RE =
+  /^(?:[A-Z][A-Z0-9 ()\/&-]{3,}\s*:|frame\s*:|step\s*\d+\s+(?:gap|check|note)\s*:|problem shape|why it matters\s*:|verdict\s*:|evidence\s*:|confidence\s*:)/i;
+
+/** Run-together enum tokens ("favourabilitydecline") betray a machine payload. */
+const ENUM_TOKEN_RE = /\b[a-z]{12,}\b/;
+
+function isMachineField(s: string): boolean {
+  if (MACHINE_FIELD_RE.test(s.trim())) return true;
+  if (/\bwhy it matters\s*:/i.test(s)) return true;
+  const words = s.split(/\s+/);
+  const enumish = words.filter((w) => ENUM_TOKEN_RE.test(w.replace(/[^a-z]/gi, "")) && !/[A-Z]/.test(w.slice(1)));
+  return enumish.length >= 2;
+}
+
+/**
  * A sentence that only certifies another claim ("Confirmed by multiple
  * sources…", "Verified against…") has no subject of its own. It must never
  * become its own bullet: it is folded onto the claim it verifies, or dropped.
