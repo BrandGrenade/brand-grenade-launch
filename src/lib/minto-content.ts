@@ -857,6 +857,10 @@ export function buildAppendix(session: MintoSession, opts: AppendixOptions = {})
       let raw = clean((session as Record<string, unknown>)[s.key]);
       if (s.key === "stage_9_output") raw += `\n${clean(session.stage_9_leftofcentre_output)}`;
       raw = stripInternals(raw);
+      // Applied in BOTH appendix modes. "full" bypasses condenseStage, which
+      // is how machine banners, templated score blocks and self-negating
+      // audit bullets reached client-facing documents.
+      raw = humaniseStageOutput(s.key, raw, session as { stage_10_output?: string | null });
       // Run-count bookkeeping is never evidence, in either appendix mode.
       raw = raw
         .split("\n")
