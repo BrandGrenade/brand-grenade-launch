@@ -438,7 +438,10 @@ export interface ScoredCandidate {
   verdict: "PASS" | "FAIL" | null;
   verdictNote: string;
   dims: Record<string, number>;
+  /** The candidate's own scoring rationale text — used for thematic matching. */
+  body: string;
 }
+
 
 export const DIMENSIONS = STRATEGY_SCORING_DIMENSION_NAMES;
 
@@ -456,10 +459,12 @@ export function parseScoredCandidates(stage10: string): ScoredCandidate[] {
     const smp = line.match(/^SMP:\s*[""“”"']?(.+?)[""“”"']?\s*(?:—\s*FIELD:.*)?$/i);
     if (smp) {
       push();
-      current = { name: smp[1].trim(), composite: null, verdict: null, verdictNote: "", dims: {} };
+      current = { name: smp[1].trim(), composite: null, verdict: null, verdictNote: "", dims: {}, body: "" };
       continue;
     }
     if (!current) continue;
+    if (line) current.body += `${line}\n`;
+
     for (const dim of DIMENSIONS) {
       const m = line.match(new RegExp(`^${dim}\\s*:\\s*(\\d+(?:\\.\\d+)?)\\s*/\\s*10`, "i"));
       if (m) current.dims[dim] = Number(m[1]);
@@ -490,6 +495,8 @@ export function parseScoredCandidates(stage10: string): ScoredCandidate[] {
       verdict: c.verdict ?? merged[prior].verdict,
       verdictNote: c.verdictNote || merged[prior].verdictNote,
       dims: { ...merged[prior].dims, ...c.dims },
+      body: `${merged[prior].body}\n${c.body}`.trim(),
+
     };
   }
   return merged;
@@ -552,12 +559,88 @@ export interface SmpScoreProvenance {
   postSelection: boolean;
   /** Candidates scored in the original competitive pass. */
   competitive: ScoredCandidate[];
-  /** Highest-scoring candidate of the genuine competitive field. */
+  /**
+   * The scored candidate the locked line actually refines — its closest
+   * thematic ancestor in the competitive field, not simply the top scorer.
+   * Attributing the locked line to whichever candidate scored highest is a
+   * provenance error: the two can be about entirely different territories.
+   */
   topCompetitive: ScoredCandidate | null;
+  /** Highest-scoring candidate of the field, whatever its territory. */
+  fieldTop: ScoredCandidate | null;
   /** One-sentence plain-text statement of the accurate story ("" when clean). */
   sentence: string;
   /** Callout HTML for the accurate story ("" when clean). */
   html: string;
+}
+
+const THEME_STOP = new Set([
+  "that","this","with","from","have","been","they","them","their","than","then","which","while","would","could",
+  "should","about","there","these","those","only","also","more","most","into","over","upon","what","when","will",
+  "your","does","doing","because","against","between","every","other","score","scored","scoring","stage","field",
+  "line","lines","proposition","brand","category","point","points","band","note","noted","rather","real","still",
+]);
+
+function themeTokens(text: string): string[] {
+  return text
+    .toLowerCase()
+    .replace(/[^a-z ]/g, " ")
+    .split(/\s+/)
+    .filter((w) => w.length > 3 && !THEME_STOP.has(w));
+}
+
+/**
+ * Closest thematic ancestor of the locked line inside the scored field.
+ *
+ * Uses TF-IDF cosine similarity across each candidate's own scoring rationale
+ * (the language the scoring pass used about it), which is where the shared
+ * territory actually shows up — the surface wording of a refined line rarely
+ * shares vocabulary with its parent. Falls back to the highest scorer only
+ * when no candidate is clearly nearer than the rest.
+ */
+function nearestThematicCandidate(
+  locked: { name: string; body: string },
+  field: ScoredCandidate[],
+): ScoredCandidate | null {
+  const scored = field.filter((c) => c.composite != null);
+  if (!scored.length) return null;
+  const docs = [...scored.map((c) => ({ c, t: themeTokens(`${c.name} ${c.body}`) })), null].filter(
+    Boolean,
+  ) as { c: ScoredCandidate; t: string[] }[];
+  const targetTokens = themeTokens(`${locked.name} ${locked.body}`);
+  if (targetTokens.length < 20) return null;
+
+  const all = [...docs.map((d) => d.t), targetTokens];
+  const n = all.length;
+  const df = new Map<string, number>();
+  for (const d of all) for (const w of new Set(d)) df.set(w, (df.get(w) ?? 0) + 1);
+  const vec = (toks: string[]) => {
+    const tf = new Map<string, number>();
+    for (const w of toks) tf.set(w, (tf.get(w) ?? 0) + 1);
+    const v = new Map<string, number>();
+    for (const [w, c] of tf) {
+      const d = df.get(w) ?? 1;
+      if (d >= n) continue;
+      v.set(w, (1 + Math.log(c)) * Math.log(n / d));
+    }
+    return v;
+  };
+  const norm = (v: Map<string, number>) => Math.sqrt([...v.values()].reduce((s, x) => s + x * x, 0)) || 1;
+  const tv = vec(targetTokens);
+  const tn = norm(tv);
+  const ranked = docs
+    .map((d) => {
+      const v = vec(d.t);
+      let dot = 0;
+      for (const [w, x] of tv) dot += x * (v.get(w) ?? 0);
+      return { c: d.c, sim: dot / (tn * norm(v)) };
+    })
+    .sort((a, b) => b.sim - a.sim);
+
+  const [first, second] = ranked;
+  if (!first || first.sim < 0.05) return null;
+  if (second && first.sim < second.sim * 1.15) return null;
+  return first.c;
 }
 
 export function smpScoreProvenance(stage10: string, smp: string): SmpScoreProvenance {
@@ -565,6 +648,7 @@ export function smpScoreProvenance(stage10: string, smp: string): SmpScoreProven
     postSelection: false,
     competitive: parseScoredCandidates(stage10),
     topCompetitive: null,
+    fieldTop: null,
     sentence: "",
     html: "",
   };
@@ -576,21 +660,27 @@ export function smpScoreProvenance(stage10: string, smp: string): SmpScoreProven
   if (markerAt < 0) return empty;
 
   const competitive = parseScoredCandidates(lines.slice(0, markerAt).join("\n"));
-  const topCompetitive =
+  const fieldTop =
     competitive
       .filter((c) => c.composite != null)
       .sort((a, b) => (b.composite ?? 0) - (a.composite ?? 0))[0] ?? null;
   const inCompetitiveField = competitive.some((c) => normalise(c.name) === target);
   if (inCompetitiveField || !competitive.length) {
-    return { ...empty, competitive, topCompetitive };
+    return { ...empty, competitive, topCompetitive: fieldTop, fieldTop };
   }
 
+  const rescored = parseScoredCandidates(lines.slice(markerAt).join("\n")).find(
+    (c) => normalise(c.name) === target,
+  );
+  const ancestor =
+    nearestThematicCandidate({ name: smp, body: rescored?.body ?? "" }, competitive) ?? fieldTop;
+
   const rank =
-    topCompetitive && topCompetitive.composite != null
-      ? `“${topCompetitive.name}” (${topCompetitive.composite}/100, the highest of ${competitive.length} candidate${
+    ancestor && ancestor.composite != null
+      ? `“${ancestor.name}” (${ancestor.composite}/100, scored against a field of ${competitive.length} candidate${
           competitive.length === 1 ? "" : "s"
-        } in the scored field)`
-      : "the highest-scoring candidate in the scored field";
+        })`
+      : "the scored candidate closest to it in territory";
   const sentence =
     `The territory behind “${smp}” was validated through genuine competitive scoring as ${rank
       .replace(/<[^>]+>/g, "")}. ` +
@@ -601,13 +691,13 @@ export function smpScoreProvenance(stage10: string, smp: string): SmpScoreProven
     `<p>The system explored and scored the field; a human made the final call. ` +
       `The territory question was settled competitively: ${rank
         .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")} carried the territory through the six-dimension framework against the full candidate set.</p>` +
+        .replace(/</g, "&lt;")} is the scored candidate this territory came through — the closest expression of it in the competitive field.</p>` +
       `<p><strong>${escapeHtml(smp)}</strong> is the refined, locked expression of that same territory, ` +
       `written at the human judgement gate after the competitive pass had closed. ` +
       `Where a score appears against this exact wording, it is a post-lock re-score of the final line ` +
       `against the same rubric — it is not a competitive result and does not rank it against the field.</p>`,
   );
-  return { postSelection: true, competitive, topCompetitive, sentence, html };
+  return { postSelection: true, competitive, topCompetitive: ancestor, fieldTop, sentence, html };
 }
 
 
@@ -1015,7 +1105,7 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
       value: provenance.topCompetitive.composite,
       suffix: "/100",
       label: "Territory — competitive score",
-      note: `“${provenance.topCompetitive.name}” carried this territory through the scored field.`,
+      note: `“${provenance.topCompetitive.name}” is the closest scored expression of this territory.`,
     });
   }
   const scoredCount = provenance.postSelection ? provenance.competitive.length : candidates.length;
@@ -1118,8 +1208,9 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
   const whyReasons: Reason[] = [];
   if (provenance.postSelection && provenance.topCompetitive?.composite != null) {
     whyReasons.push({
-      title: "The territory was won competitively",
-      detail: `“${provenance.topCompetitive.name}” scored ${provenance.topCompetitive.composite}/100 against ${provenance.competitive.length} candidates in the scored field. The locked line is the refined expression of that territory, chosen by human judgement at the selection gate.`,
+      title: "The territory was validated competitively",
+      detail: `“${provenance.topCompetitive.name}” — the closest scored expression of this territory — scored ${provenance.topCompetitive.composite}/100 in a field of ${provenance.competitive.length} candidates. The locked line is the refined expression of that territory, chosen by human judgement at the selection gate.`,
+
     });
   }
   if (winner) {
@@ -1217,7 +1308,7 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
     ],
     tableRows,
     provenance.postSelection
-      ? "Competitively scored field — highlighted row carried the winning territory"
+      ? "Competitively scored field — highlighted row is the closest scored expression of the locked territory"
       : winner
         ? "Scored candidate set — highlighted row is the recommendation"
         : "Scored candidate set — Stage 10 scoring, ranked",
