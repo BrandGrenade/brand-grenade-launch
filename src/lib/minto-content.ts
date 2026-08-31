@@ -678,7 +678,7 @@ export function smpScoreProvenance(stage10: string, smp: string): SmpScoreProven
 
   const rank =
     ancestor && ancestor.composite != null
-      ? `“${ancestor.name}” (${ancestor.composite}/100, scored against a field of ${competitive.length} candidate${
+      ? `“${ancestor.name}” (${ancestor.composite}/90, scored against a field of ${competitive.length} candidate${
           competitive.length === 1 ? "" : "s"
         })`
       : "the scored candidate closest to it in territory";
@@ -1094,7 +1094,7 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
   if (winner?.composite != null) {
     headlineStats.push({
       value: winner.composite,
-      suffix: "/100",
+      suffix: "/90",
       label: provenance.postSelection ? "Locked line — post-lock re-score" : "Recommended SMP score",
       note: provenance.postSelection
         ? "Re-score of the final wording after the competitive pass closed. Not a competitive rank."
@@ -1104,7 +1104,7 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
   if (provenance.postSelection && provenance.topCompetitive?.composite != null) {
     headlineStats.push({
       value: provenance.topCompetitive.composite,
-      suffix: "/100",
+      suffix: "/90",
       label: "Territory — competitive score",
       note: `“${provenance.topCompetitive.name}” is the closest scored expression of this territory.`,
     });
@@ -1173,7 +1173,7 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
         provenance.postSelection ? "Post-lock re-score of the final wording" : "Stage 10 verdict",
         `<p><strong>${winner.verdict === "FAIL" ? "ELIMINATED" : (winner.verdict ?? "PASS")}</strong>${
           winner.composite != null
-            ? ` · ${provenance.postSelection ? "re-score" : "composite"} ${winner.composite}/100 across the six-dimension framework`
+            ? ` · ${provenance.postSelection ? "re-score" : "composite"} ${winner.composite}/90 across the six-dimension framework`
             : ""
         }.${winner.verdictNote ? ` ${escapeHtml(winner.verdictNote)}` : ""}</p>${
           provenance.postSelection
@@ -1210,7 +1210,7 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
   if (provenance.postSelection && provenance.topCompetitive?.composite != null) {
     whyReasons.push({
       title: "The territory was validated competitively",
-      detail: `“${provenance.topCompetitive.name}” — the closest scored expression of this territory — scored ${provenance.topCompetitive.composite}/100 in a field of ${provenance.competitive.length} candidates. The locked line is the refined expression of that territory, chosen by human judgement at the selection gate.`,
+      detail: `“${provenance.topCompetitive.name}” — the closest scored expression of this territory — scored ${provenance.topCompetitive.composite}/90 in a field of ${provenance.competitive.length} candidates. The locked line is the refined expression of that territory, chosen by human judgement at the selection gate.`,
 
     });
   }
@@ -1225,7 +1225,7 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
     if (!provenance.postSelection && runnerUp?.composite != null && winner.composite != null) {
       whyReasons.push({
         title: "Clears the field",
-        detail: `“${smp}” scores ${winner.composite}/100 against ${runnerUp.composite}/100 for the next-best candidate (${runnerUp.name}).`,
+        detail: `“${smp}” scores ${winner.composite}/90 against ${runnerUp.composite}/90 for the next-best candidate (${runnerUp.name}).`,
       });
     }
 
@@ -1304,7 +1304,7 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
       { key: "permission", label: "Permission", numeric: true },
       { key: "cleanAir", label: "Clean air", numeric: true },
       { key: "precedent", label: "Precedent", numeric: true },
-      { key: "composite", label: "Score /100", numeric: true },
+      { key: "composite", label: "Score /90", numeric: true },
       { key: "verdict", label: "Verdict" },
     ],
     tableRows,
@@ -1321,16 +1321,15 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
           `<p>The recommended proposition was resolved at selection, after the scored set above was tested for integrity and brand fit. It is not a row in the Stage 10 table.</p>`,
         )
       : "";
-  // The six published dimensions carry 90 of the 100 available points. The
-  // remaining 10 are deliberately unallocated, so a perfect card scores 90,
-  // not 100. Scores are shown on the /100 scale for comparability across
-  // sessions; the ceiling is disclosed here rather than left implicit.
+  // The six published dimensions carry 90 weighted points between them. The
+  // scale is therefore labelled /90 throughout — printing a 90-point figure
+  // as "/100" overstated the ceiling on every card in the document.
   const scaleNote = tableRows.length
     ? callout(
         "How to read the scores",
-        `<p>Each proposition is scored 0–10 on six dimensions, weighted into a single figure on a 100-point scale: ` +
+        `<p>Each proposition is scored 0–10 on six dimensions and weighted into a single composite: ` +
           `Fame 30, Truth 20, Competitive Impossibility 15, Brand Permission 10, Clean Air 10, Commercial Precedent 5. ` +
-          `Those six weights total 90, so <strong>90/100 is the maximum attainable score</strong> — the remaining 10 points are held unallocated by design. ` +
+          `Those six weights total 90, so the scale is <strong>0–90</strong> and every score in this document is shown as <strong>/90</strong>. A perfect card scores 90. ` +
           `Two dimensions carry hard floors: Truth below 5/10 or Competitive Impossibility below 6/10 eliminates a proposition regardless of its total.</p>`,
       )
     : "";
@@ -1342,7 +1341,7 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
     (provenance.postSelection && winner?.composite != null
       ? callout(
           "Re-score of the locked line",
-          `<p>“${escapeHtml(smp)}” was re-scored against the same rubric after locking: <strong>${winner.composite}/100</strong>. ` +
+          `<p>“${escapeHtml(smp)}” was re-scored against the same rubric after locking: <strong>${winner.composite}/90</strong>. ` +
             `That number measures the final wording in isolation. It was never in the competitive field above and is not a rank against it.</p>`,
         )
       : "") +
@@ -1391,7 +1390,7 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
         ? (c.verdictNote as string)
         : weakest
           ? `Not carried forward. Weakest on ${weakest[0].toLowerCase()} (${weakest[1]}/10)${
-              c.composite != null ? ` · ${c.composite}/100 composite` : ""
+              c.composite != null ? ` · ${c.composite}/90 composite` : ""
             }.`
           : "Not carried forward at selection.";
       return { title: c.name, detail };
