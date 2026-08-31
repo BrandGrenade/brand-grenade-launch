@@ -673,7 +673,10 @@ function dispositionFindings(sections: IntegritySection[]): IntegrityFinding[] {
  * CHECKPOINT — a document that records fewer than the full set of human
  * checkpoints may not also read as cleared without saying so.
  */
-function checkpointFindings(sections: IntegritySection[]): IntegrityFinding[] {
+function checkpointFindings(
+  sections: IntegritySection[],
+  authored: IntegritySection[] = sections,
+): IntegrityFinding[] {
   const out: IntegrityFinding[] = [];
   const whole = sections.map((s) => s.text).join(" ");
   const m = whole.match(/\b(\d{1,2})\s*\/\s*(\d{1,2})\b[^.]{0,60}checkpoint/i) ??
@@ -682,7 +685,14 @@ function checkpointFindings(sections: IntegritySection[]): IntegrityFinding[] {
   const done = Number(m[1]);
   const total = Number(m[2]);
   if (!Number.isFinite(done) || !Number.isFinite(total) || done >= total) return out;
-  const cleared = whole.match(
+  // Only the document's OWN prose can overclaim. A stage transcript in the
+  // appendix that records its own clearance declaration is history, not a
+  // claim the deliverable is making about the human checkpoints.
+  const authoredText = (authored.length ? authored : sections).map((s) => s.text).join(" ");
+  const cleared = authoredText.match(
+    /\b(?:all checkpoints (?:cleared|signed off|complete)|fully cleared|CLEARED\b|every checkpoint (?:cleared|signed off))/i,
+  );
+
     /\b(?:all checkpoints (?:cleared|signed off|complete)|fully cleared|CLEARED\b|every checkpoint (?:cleared|signed off))/i,
   );
   const acknowledged =
