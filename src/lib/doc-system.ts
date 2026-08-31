@@ -61,10 +61,45 @@ export function inlineMd(line: string): string {
 }
 
 /**
+ * Removes markdown headings that have lost their body.
+ *
+ * Stage transcripts are filtered before they render — run-count bookkeeping is
+ * dropped, sibling-candidate blocks are scoped out, condensation cuts to a
+ * budget. Any of those can leave a heading standing over nothing, which the
+ * document gate correctly refuses to publish. A heading directly above a
+ * DEEPER heading is a parent and is kept; a heading followed by a
+ * same-or-shallower heading, or by the end of the text, is dropped along with
+ * the rule that separated it.
+ */
+export function pruneEmptyHeadings(md: string): string {
+  if (!md.trim()) return md;
+  const lines = md.split("\n");
+  const level = (l: string) => l.trim().match(/^#{1,6}(?=\s)/)?.[0].length ?? 0;
+  const isRule = (l: string) => /^\s*(?:[*\-_]{3,}|—+)\s*$/.test(l);
+  const keep = lines.map(() => true);
+  for (let i = lines.length - 1; i >= 0; i--) {
+    if (!level(lines[i])) continue;
+    let j = i + 1;
+    while (j < lines.length && (!keep[j] || !lines[j].trim() || isRule(lines[j]))) j++;
+    if (j < lines.length && level(lines[j]) > level(lines[i])) continue;
+    if (j < lines.length && !level(lines[j])) continue;
+    keep[i] = false;
+    // drop the rules/blank run that belonged to the removed heading
+    for (let k = i + 1; k < j; k++) if (isRule(lines[k])) keep[k] = false;
+  }
+  return lines
+    .filter((_, i) => keep[i])
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+/**
  * Block-level markdown → HTML, rendered into the shared document classes.
  * Lives here (not in a builder) so every migrated document type renders body
  * copy identically.
  */
+
 export function renderMarkdown(text: string): string {
   if (!text) return "";
   const out: string[] = [];
