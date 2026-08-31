@@ -689,9 +689,13 @@ function checkpointFindings(
   // appendix that records its own clearance declaration is history, not a
   // claim the deliverable is making about the human checkpoints.
   const authoredText = (authored.length ? authored : sections).map((s) => s.text).join(" ");
-  const cleared = authoredText.match(
-    /\b(?:all checkpoints (?:cleared|signed off|complete)|fully cleared|CLEARED\b|every checkpoint (?:cleared|signed off))/i,
-  );
+  // "CLEARED" is a verdict stamp and matched case-sensitively; the ordinary
+  // verb ("10 cleared the hard floors") is a statistic, not a clearance claim.
+  const cleared =
+    authoredText.match(
+      /\b(?:all checkpoints (?:cleared|signed off|complete)|fully cleared|every checkpoint (?:cleared|signed off))/i,
+    ) ?? authoredText.match(/\bCLEARED\b/);
+
   const acknowledged =
     /\b(?:checkpoints? (?:remain|outstanding|incomplete|not yet|pending)|remaining checkpoint|awaiting sign[- ]off|not all checkpoints)\b/i.test(
       whole,
