@@ -364,7 +364,7 @@ export function buildCurrentStateSection(input: CurrentStateInput): string {
 
   const sourcesHtml = order.length
     ? `<ul class="cs-sources">${order
-        .map((s, i) => `<li>${i + 1}. ${escapeHtml(s)}</li>`)
+        .map((s, i) => `<li><span class="cs-num">${i + 1}.</span> ${escapeHtml(s)}</li>`)
         .join("")}</ul>`
     : "";
 
