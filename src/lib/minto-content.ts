@@ -935,6 +935,8 @@ export interface DerivedMinto {
   stagesRun: number;
   /** Room 04 lock block — locked campaign line and winning idea, or "". */
   lockedIdeaHtml: string;
+  /** Shared "how this proposition was arrived at" block, or "". */
+  propositionProvenanceHtml: string;
   headlineStats: Stat[];
   content: MintoContent;
 }
