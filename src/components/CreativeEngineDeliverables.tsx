@@ -21,6 +21,7 @@ import {
   type RawIdeaBatchExport,
 } from "@/lib/stimulus-export";
 import { Spinner } from "@/components/ui/busy";
+import { selectOperativeOrchestration, selectOperativeSweep } from "@/lib/stimulus-sweep";
 
 const AMBER = "#C81E1E";
 
@@ -28,6 +29,7 @@ type State = {
   orchestrationId: string | null;
   orchestrationLabel: string;
   sweepIds: string[];
+  lensCount: number;
   shortlistIds: string[];
 };
 
@@ -42,6 +44,7 @@ export function CreativeEngineDeliverables({
     orchestrationId: null,
     orchestrationLabel: "",
     sweepIds: [],
+    lensCount: 0,
     shortlistIds: [],
   });
   const [busy, setBusy] = useState<string | null>(null);
@@ -72,6 +75,7 @@ export function CreativeEngineDeliverables({
             : `Complete run · registry v${chosen.registry_version}`
           : "",
         sweepIds,
+        lensCount,
         shortlistIds,
       });
     })();
@@ -204,7 +208,7 @@ export function CreativeEngineDeliverables({
         {state.sweepIds.length > 0 && (
           <Card
             title="37-Lens Sweep — raw ideas"
-            note={`Every generated lens direction with its rating snapshot (${state.sweepIds.length} lenses)`}
+            note={`Every direction from the operative sweep with its rating snapshot (${state.lensCount} lenses · ${state.sweepIds.length} directions)`}
             busyKey="sweep"
             onClick={() => void runBatch("sweep", state.sweepIds)}
           />
