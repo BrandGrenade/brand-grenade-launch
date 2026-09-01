@@ -85,7 +85,10 @@ export function findModelledFindings(
         text: sentence,
         confidence: confidenceOf(sentence),
         sourceLabel: source.label,
-        provenance: trailing.replace(/\s+/g, " ").trim(),
+        provenance: trailing
+          .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}]/gu, "")
+          .replace(/\s+/g, " ")
+          .trim(),
       });
     }
   }
