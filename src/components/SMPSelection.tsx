@@ -254,6 +254,19 @@ function parsePropositions(rawOutput: string): RawProp[] {
     const fieldName = grabMeta("FIELD_NAME");
     const iconicTierStatus = grabMeta("ICONIC_TIER_STATUS");
     const pressureTestNote = grabMeta("PRESSURE_TEST_NOTE");
+    const exposureStatus = grabMeta("EXPOSURE_STATUS");
+    const exposureFlagsRaw = grabMeta("EXPOSURE_FLAGS");
+    const exposureFlags = /^(none|n\/a|-)?$/i.test(exposureFlagsRaw)
+      ? []
+      : exposureFlagsRaw
+          .split(/[,;]/)
+          .map((s) => s.trim())
+          .filter(Boolean);
+    const noExposure = /no\s+open\s+exposure/i.test(exposureSection);
+    const exposed =
+      /EXPOSED/i.test(exposureStatus) ||
+      exposureFlags.length > 0 ||
+      (!!exposureSection && !noExposure);
 
     propositions.push({
       line: propositionLine,
@@ -266,6 +279,9 @@ function parsePropositions(rawOutput: string): RawProp[] {
       fieldName,
       iconicTierStatus,
       pressureTestNote,
+      exposed,
+      exposureNote: exposed && !noExposure ? exposureSection : undefined,
+      exposureFlags: exposureFlags.length ? exposureFlags : undefined,
     });
   }
 
