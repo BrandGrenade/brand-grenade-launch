@@ -33,7 +33,7 @@ export async function selectOperativeSweep(
     .eq("session_id", sessionId)
     .eq("run_mode", "big_idea")
     .order("created_at", { ascending: false });
-  const runIds = (runs ?? []).map((r: any) => r.id as string);
+  const runIds: string[] = ((runs ?? []) as any[]).map((r) => String(r.id));
   if (!runIds.length) return { runId: null, directionIds: [], lensCount: 0, shortlistIds: [] };
 
   const { data: dirs } = await sb
