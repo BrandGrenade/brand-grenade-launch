@@ -1027,14 +1027,15 @@ export function buildSummaryDocument(
       `${winner ? `, and "${winner}" was judged the stronger strategic platform for this brand` : ""}.${scores}`
     );
   };
-  const rejectedHtml = rejected.length
-    ? list(
-        rejected
-          .slice(0, 8)
-          .map((f) => `**${f.proposition}** — ${rejectionReason(f)}`),
-        true,
-      )
-    : "";
+  const rejectedHtml =
+    (rejected.length
+      ? list(
+          rejected
+            .slice(0, 8)
+            .map((f) => `**${f.proposition}** — ${rejectionReason(f)}`),
+          true,
+        )
+      : "") + overAlternativesHtml(selectedSmp);
 
 
   /* 12 — Integrity and fact verification */
