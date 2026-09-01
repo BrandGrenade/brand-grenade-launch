@@ -352,6 +352,15 @@ export const runLeftOfCentre = createServerFn({ method: "POST" })
       }
       await bumpHeartbeat();
 
+      // Brand-context vector for stimulus distance filtering — embedded ONCE
+      // per run; corpus vectors are precomputed at build time.
+      const brandContext = buildStimulusContext({
+        brandName: session.brand_name,
+        category: session.category,
+        opportunity: inputs.realOpportunity ?? "",
+      });
+      const contextVector = await embedText(brandContext);
+
       // CHALLENGER OBJECTIVE — Engine 08 (Enemy First) is guaranteed to fire.
       // It is never skipped by a selective retry, and a failed run is retried
       // once before the pool is assembled.
