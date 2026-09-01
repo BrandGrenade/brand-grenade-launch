@@ -32,6 +32,7 @@ import type { MintoContent } from "./minto";
 import { buildCurrentStateSection } from "./current-state";
 import { stripDocumentMetadata } from "./strip-document-metadata";
 import { extractShortlist } from "./exec-summary-extract";
+import { arrivedAtReasoningHtml, overAlternativesHtml } from "./proposition-rationale";
 import { STRATEGY_SCORING_DIMENSION_NAMES } from "@/lib/platform-metrics";
 
 export interface MintoSession {
@@ -574,6 +575,8 @@ export interface SmpScoreProvenance {
   sentence: string;
   /** Callout HTML for the accurate story ("" when clean). */
   html: string;
+  /** Same callout without the session-authored reasoning ("" when clean). */
+  htmlCore: string;
 }
 
 const THEME_STOP = new Set([
@@ -653,6 +656,7 @@ export function smpScoreProvenance(stage10: string, smp: string): SmpScoreProven
     fieldTop: null,
     sentence: "",
     html: "",
+    htmlCore: "",
   };
   const target = normalise(smp);
   if (!target || !stage10.trim()) return empty;
@@ -688,18 +692,29 @@ export function smpScoreProvenance(stage10: string, smp: string): SmpScoreProven
       .replace(/<[^>]+>/g, "")}. ` +
     `“${smp}” is the refined expression of that territory, locked by human judgement after the competitive pass closed. ` +
     `Any score shown against this exact wording is a post-lock re-score of the final line, not a competitive rank.`;
-  const html = callout(
-    "How this proposition was arrived at",
+  const core =
     `<p>The system explored and scored the field; a human made the final call. ` +
-      `The territory question was settled competitively: ${rank
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")} is the scored candidate this territory came through — the closest expression of it in the competitive field.</p>` +
-      `<p><strong>${escapeHtml(smp)}</strong> is the refined, locked expression of that same territory, ` +
-      `written at the human judgement gate after the competitive pass had closed. ` +
-      `Where a score appears against this exact wording, it is a post-lock re-score of the final line ` +
-      `against the same rubric — it is not a competitive result and does not rank it against the field.</p>`,
-  );
-  return { postSelection: true, competitive, topCompetitive: ancestor, fieldTop, sentence, html };
+    `The territory question was settled competitively: ${rank
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")} is the scored candidate this territory came through — the closest expression of it in the competitive field.</p>` +
+    `<p><strong>${escapeHtml(smp)}</strong> is the refined, locked expression of that same territory, ` +
+    `written at the human judgement gate after the competitive pass had closed. ` +
+    `Where a score appears against this exact wording, it is a post-lock re-score of the final line ` +
+    `against the same rubric — it is not a competitive result and does not rank it against the field.</p>`;
+  const heading = "How this proposition was arrived at";
+  // Session-authored reasoning for the locked line, applied at the shared
+  // layer so every deliverable that renders provenance carries it.
+  const html = callout(heading, core + arrivedAtReasoningHtml(smp));
+  const htmlCore = callout(heading, core);
+  return {
+    postSelection: true,
+    competitive,
+    topCompetitive: ancestor,
+    fieldTop,
+    sentence,
+    html,
+    htmlCore,
+  };
 }
 
 
@@ -1204,7 +1219,12 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
               `<p>This proposition was finalised after the Stage 10 scoring pass, so it carries no composite of its own. No earlier proposition's score is substituted here; the scored candidate set appears in the validation section.</p>`,
             )
           : "") +
-      provenance.html
+      // provenance.html already carries the session-authored reasoning; when
+      // there is no provenance correction to make, the reasoning still ships.
+      (provenance.html ||
+        (arrivedAtReasoningHtml(smp)
+          ? callout("How this proposition was arrived at", arrivedAtReasoningHtml(smp))
+          : ""))
     : "";
 
   /* 05 — why this wins */
@@ -1341,7 +1361,8 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
   const validation =
     (validationTable || renderMarkdown(s10.slice(0, 2000)) || "") +
     scaleNote +
-    provenance.html +
+    // Reasoning-free here: the full reasoning sits with the proposition in 04.
+    provenance.htmlCore +
 
     (provenance.postSelection && winner?.composite != null
       ? callout(
@@ -1426,7 +1447,8 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
       if (rejectReasons.length >= 4) break;
     }
   }
-  const rejectedHtml = rejectReasons.length ? reasonGrid(rejectReasons) : "";
+  const rejectedHtml =
+    (rejectReasons.length ? reasonGrid(rejectReasons) : "") + overAlternativesHtml(smp);
 
   /* 08 — implications */
   const implicationItems = bullets(s14, 5).length ? bullets(s14, 5) : bullets(s15, 5);
@@ -1483,6 +1505,13 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
     winner,
     stagesRun,
     lockedIdeaHtml,
+    /** Provenance + session-authored reasoning for the locked proposition.
+     *  Exposed so a builder that writes its own section 04 still carries it. */
+    propositionProvenanceHtml:
+      provenance.html ||
+      (arrivedAtReasoningHtml(smp)
+        ? callout("How this proposition was arrived at", arrivedAtReasoningHtml(smp))
+        : ""),
     headlineStats,
     content: {
       recommendation,

@@ -57,7 +57,8 @@ export function buildMasterDetonationDocument(
   const proposition =
     (smp ? pullQuote(smp, { label: "Single-Minded Proposition" }) : "") +
     renderMarkdown(pick("smp")) +
-    renderMarkdown(pick("response"));
+    renderMarkdown(pick("response")) +
+    derived.propositionProvenanceHtml;
 
   /* 05 — why this wins: three truths + compounding mechanism + courage. */
   const whyReasons: Reason[] = [];

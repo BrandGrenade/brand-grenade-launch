@@ -32,6 +32,7 @@ import {
   type Stat,
 } from "./doc-system";
 import { condenseStage, smpScoreProvenance } from "./minto-content";
+import { arrivedAtReasoningHtml, overAlternativesHtml } from "./proposition-rationale";
 import { stripDocumentMetadata } from "./strip-document-metadata";
 import { stripSelectionArtifacts } from "./document-gate";
 import { gateSummary, type GateSectionInput } from "./summary-gate";
@@ -980,6 +981,15 @@ export function buildSummaryDocument(
         winning.owns,
       )}${p(winning.alignment)}${
         whyItWon ? callout("Why this proposition won", p(whyItWon)) : ""
+      }${
+        // The shared reasoning already ships inside scoreProvenance.html above
+        // when a provenance correction applies; otherwise it ships here.
+        !scoreProvenance.html && arrivedAtReasoningHtml(selectedSmp)
+          ? callout(
+              "How this proposition was arrived at",
+              arrivedAtReasoningHtml(selectedSmp),
+            )
+          : ""
       }`
     : "";
 
@@ -1017,14 +1027,15 @@ export function buildSummaryDocument(
       `${winner ? `, and "${winner}" was judged the stronger strategic platform for this brand` : ""}.${scores}`
     );
   };
-  const rejectedHtml = rejected.length
-    ? list(
-        rejected
-          .slice(0, 8)
-          .map((f) => `**${f.proposition}** — ${rejectionReason(f)}`),
-        true,
-      )
-    : "";
+  const rejectedHtml =
+    (rejected.length
+      ? list(
+          rejected
+            .slice(0, 8)
+            .map((f) => `**${f.proposition}** — ${rejectionReason(f)}`),
+          true,
+        )
+      : "") + overAlternativesHtml(selectedSmp);
 
 
   /* 12 — Integrity and fact verification */
