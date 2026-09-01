@@ -348,6 +348,11 @@ export function parseSMPCards(
             }
           : p.scores;
 
+      // Stage 11 is authoritative on exposure: a Stage 12 card that omitted
+      // the metadata must still show the flag the pressure test raised.
+      const s11 = s11ExposureByKey.get(norm(line)) ?? s11ExposureByKey.get(norm(p.fieldName ?? ""));
+      const exposed = p.exposed || !!s11?.exposed;
+
       return {
         cardNumber: idx + 1,
         smpLine: line,
@@ -360,18 +365,20 @@ export function parseSMPCards(
         fieldName: p.fieldName,
         iconicTierStatus: p.iconicTierStatus,
         pressureTestNote: p.pressureTestNote,
+        exposed,
+        exposureNote: p.exposureNote ?? s11?.exposureNote,
+        exposureFlags: p.exposureFlags ?? s11?.flags,
       };
     });
   }
 
 
-  // Fallback: render the VALIDATED propositions from Stage 11 directly so the
+  // Fallback: render the surviving propositions from Stage 11 directly so the
   // human always sees the propositions, even when Stage 12 parsing fails or
-  // Stage 12 output has not yet been produced.
+  // Stage 12 output has not yet been produced. Stage 11 V2 removes only
+  // fatal-tier failures, so EXPOSED survivors appear here too.
   const stage11Verdicts = stage11Fallback
-    ? parseStage11Verdicts(stage11Fallback).filter(
-        (v) => v.verdict === "VALIDATED" || v.verdict === "VALIDATED WITH STRATEGIC NOTE",
-      )
+    ? parseStage11Verdicts(stage11Fallback).filter((v) => v.verdict !== "ELIMINATED")
     : [];
   const verdicts = stage11Verdicts.length
     ? stage11Verdicts
