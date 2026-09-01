@@ -163,9 +163,9 @@ export function buildRawIdeaBatchExport(x: RawIdeaBatchExport): {
   html: string;
 } {
   const html = doc(
-    `${x.brandName} — Raw ideas — ${x.directions.length} lenses`,
+    `${x.brandName} — Raw ideas — ${x.directions.length} directions`,
     `
-      <p class="kicker">Brand Grenade · Creative Stimulus · Raw idea export (${x.directions.length} lenses)</p>
+      <p class="kicker">Brand Grenade · Creative Stimulus · Raw idea export (${new Set(x.directions.map((d) => d.lensName)).size} lenses · ${x.directions.length} directions)</p>
       <h1>${esc(x.brandName)}</h1>
       <p class="meta">${esc(x.category)}${x.channelName ? ` · ${esc(x.channelName)}` : ""}</p>
       ${x.smp ? `<p class="meta">SMP — ${esc(x.smp)}</p>` : ""}
@@ -182,7 +182,7 @@ export function buildRawIdeaBatchExport(x: RawIdeaBatchExport): {
     `,
   );
   return {
-    filename: `${slug(x.brandName)}-raw-ideas-${x.directions.length}-lenses.html`,
+    filename: `${slug(x.brandName)}-raw-ideas-${x.directions.length}-directions.html`,
     html,
   };
 }

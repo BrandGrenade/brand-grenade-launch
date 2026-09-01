@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { SummaryCreativeExtras } from "./summary-document";
+import { countOperativePrompts } from "./stimulus-sweep";
 import { buildForeignMarkers, extractChannelRole, ownStageCorpus } from "./summary-sources";
 
 type DirectionRow = {
@@ -90,17 +91,9 @@ export async function fetchSummaryExtras(
       ].filter((item): item is { title: string; detail: string } => Boolean(item.detail))
     : [];
 
-  const { data: orchestrations } = await supabase
-    .from("stimulus_orchestrations")
-    .select("id")
-    .eq("session_id", sessionId);
-  const orchestrationIds = (orchestrations ?? []).map((item) => item.id);
-  const promptResult = orchestrationIds.length
-    ? await supabase
-        .from("stimulus_prompts")
-        .select("id", { count: "exact", head: true })
-        .in("orchestration_id", orchestrationIds)
-    : { count: 0 };
+  // Only the operative orchestration counts — superseded attempts duplicate
+  // the same channels and inflate the figure.
+  const promptCount = await countOperativePrompts(supabase, sessionId);
 
   const rawChannels = session.stage_21_outputs;
   const channels = rawChannels && typeof rawChannels === "object" && !Array.isArray(rawChannels)
@@ -126,7 +119,7 @@ export async function fetchSummaryExtras(
     lensesSwept: new Set(sweep.map((direction) => direction.lens_name).filter(Boolean)).size || 37,
     directionsGenerated: sweep.length,
     directionsRated: rated.length,
-    promptsWritten: promptResult.count ?? 0,
+    promptsWritten: promptCount,
     guidance: (runs ?? []).map((run) => run.creative_guidance).find(Boolean) ?? null,
     shortlist,
     winnerReasons,

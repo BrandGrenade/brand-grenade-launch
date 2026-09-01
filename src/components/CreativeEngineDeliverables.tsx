@@ -21,6 +21,7 @@ import {
   type RawIdeaBatchExport,
 } from "@/lib/stimulus-export";
 import { Spinner } from "@/components/ui/busy";
+import { selectOperativeOrchestration, selectOperativeSweep } from "@/lib/stimulus-sweep";
 
 const AMBER = "#C81E1E";
 
@@ -28,6 +29,7 @@ type State = {
   orchestrationId: string | null;
   orchestrationLabel: string;
   sweepIds: string[];
+  lensCount: number;
   shortlistIds: string[];
 };
 
@@ -42,6 +44,7 @@ export function CreativeEngineDeliverables({
     orchestrationId: null,
     orchestrationLabel: "",
     sweepIds: [],
+    lensCount: 0,
     shortlistIds: [],
   });
   const [busy, setBusy] = useState<string | null>(null);
@@ -53,42 +56,15 @@ export function CreativeEngineDeliverables({
   useEffect(() => {
     let cancelled = false;
     void (async () => {
-      // Orchestration: prefer the Gate Two-confirmed run, else the newest
-      // complete one. Never a run that is still generating.
-      const { data: orchs } = await supabase
-        .from("stimulus_orchestrations")
-        .select("id, status, gate_two_confirmed, gate_two_confirmed_at, updated_at, registry_version")
-        .eq("session_id", sessionId)
-        .order("updated_at", { ascending: false });
-      const rows = orchs ?? [];
-      const chosen =
-        rows.find((r) => r.gate_two_confirmed) ??
-        rows.find((r) => r.status === "complete") ??
-        null;
+      // Orchestration: the Gate Two-confirmed run, else the newest complete
+      // one. Never a superseded or still-generating attempt.
+      const chosen = await selectOperativeOrchestration(supabase, sessionId);
 
-      // Sweep + shortlist directions for the big-idea runs of this session.
-      const { data: runs } = await supabase
-        .from("stimulus_runs")
-        .select("id, run_mode, created_at")
-        .eq("session_id", sessionId)
-        .eq("run_mode", "big_idea")
-        .order("created_at", { ascending: false });
-      const runIds = (runs ?? []).map((r) => r.id);
-      let sweepIds: string[] = [];
-      let shortlistIds: string[] = [];
-      if (runIds.length) {
-        const { data: dirs } = await supabase
-          .from("stimulus_directions")
-          .select("id, sort_order, gate_one_approved, direction")
-          .in("run_id", runIds)
-          .order("sort_order", { ascending: true });
-        const all = (dirs ?? []).filter((d) => (d.direction ?? "").trim().length > 0);
-        sweepIds = all.slice(0, 40).map((d) => d.id);
-        shortlistIds = all
-          .filter((d) => d.gate_one_approved)
-          .slice(0, 40)
-          .map((d) => d.id);
-      }
+      // Sweep: only the operative run — the one holding the Gate One keeps.
+      const { directionIds: sweepIds, lensCount, shortlistIds } = await selectOperativeSweep(
+        supabase,
+        sessionId,
+      );
 
       if (cancelled) return;
       setState({
@@ -99,6 +75,7 @@ export function CreativeEngineDeliverables({
             : `Complete run · registry v${chosen.registry_version}`
           : "",
         sweepIds,
+        lensCount,
         shortlistIds,
       });
     })();
@@ -231,7 +208,7 @@ export function CreativeEngineDeliverables({
         {state.sweepIds.length > 0 && (
           <Card
             title="37-Lens Sweep — raw ideas"
-            note={`Every generated lens direction with its rating snapshot (${state.sweepIds.length} lenses)`}
+            note={`Every direction from the operative sweep with its rating snapshot (${state.lensCount} lenses · ${state.sweepIds.length} directions)`}
             busyKey="sweep"
             onClick={() => void runBatch("sweep", state.sweepIds)}
           />

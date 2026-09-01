@@ -293,15 +293,10 @@ export async function buildAndDownloadBundle(
         import("./stimulus-export"),
       ]);
 
-    const { data: orchs } = await supabase
-      .from("stimulus_orchestrations")
-      .select("id,status,gate_two_confirmed,updated_at")
-      .eq("session_id", session.id)
-      .order("updated_at", { ascending: false });
-    const orch =
-      (orchs ?? []).find((o) => o.gate_two_confirmed) ??
-      (orchs ?? []).find((o) => o.status === "complete") ??
-      null;
+    const { selectOperativeOrchestration, selectOperativeSweep } = await import(
+      "./stimulus-sweep"
+    );
+    const orch = await selectOperativeOrchestration(supabase, session.id);
     if (orch) {
       const data = await getFullFinishedExport({ data: { orchestrationId: orch.id } });
       const { html } = buildFullFinishedExport(data);
@@ -311,21 +306,11 @@ export async function buildAndDownloadBundle(
       skipped.push("Creative Stimulus Engine/Orchestration_Prompt_Set.html");
     }
 
-    const { data: runs } = await supabase
-      .from("stimulus_runs")
-      .select("id")
-      .eq("session_id", session.id)
-      .eq("run_mode", "big_idea");
-    const runIds = (runs ?? []).map((r) => r.id);
-    if (runIds.length) {
-      const { data: dirs } = await supabase
-        .from("stimulus_directions")
-        .select("id,sort_order,gate_one_approved,direction")
-        .in("run_id", runIds)
-        .order("sort_order", { ascending: true });
-      const all = (dirs ?? []).filter((d) => (d.direction ?? "").trim().length > 0);
-      const sweep = all.slice(0, 40).map((d) => d.id);
-      const shortlist = all.filter((d) => d.gate_one_approved).slice(0, 40).map((d) => d.id);
+    const { directionIds: sweep, shortlistIds: shortlist } = await selectOperativeSweep(
+      supabase,
+      session.id,
+    );
+    {
       if (sweep.length) {
         const data = await getRawIdeaExportBatch({ data: { directionIds: sweep } });
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -344,9 +329,6 @@ export async function buildAndDownloadBundle(
       } else {
         skipped.push("Creative Stimulus Engine/Shortlist_Gate_One.html");
       }
-    } else {
-      skipped.push("Creative Stimulus Engine/Lens_Sweep_Raw_Ideas.html");
-      skipped.push("Creative Stimulus Engine/Shortlist_Gate_One.html");
     }
   } catch (e) {
     console.error("[bundle] Creative Stimulus Engine exports failed", e);

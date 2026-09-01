@@ -5,6 +5,7 @@
  */
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { SummaryCreativeExtras } from "../src/lib/summary-document";
+import { countOperativePrompts } from "../src/lib/stimulus-sweep";
 import { buildForeignMarkers, extractChannelRole, ownStageCorpus } from "../src/lib/summary-sources";
 
 type Any = Record<string, any>;
@@ -66,12 +67,8 @@ export async function summaryExtras(
       ].filter((r) => r.detail)
     : [];
 
-  const orchestrations = (await sb.from("stimulus_orchestrations").select("id").eq("session_id", id))
-    .data ?? [];
-  const { count: promptCount } = await sb
-    .from("stimulus_prompts")
-    .select("id", { count: "exact", head: true })
-    .in("orchestration_id", orchestrations.map((o: Any) => o.id));
+  // Operative orchestration only — superseded attempts are not deliverables.
+  const promptCount = await countOperativePrompts(sb, id);
 
   const raw21 = session.stage_21_outputs;
   const channels =
