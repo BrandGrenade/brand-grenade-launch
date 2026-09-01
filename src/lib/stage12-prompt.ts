@@ -87,6 +87,9 @@ LAYER 1 — STRATEGIC PRIORITY QUESTIONS
 Q1 (Longevity): "This brand needs to stand on this proposition for three to five years. Which of these propositions do you believe will still feel true and distinctive in five years — and which might feel dated or absorbed by the category?"
 Q2 (Creative Ambition): "Which proposition gives your creative teams the most room to surprise you? Not the most obvious work — the most unexpected work that would still be unmistakably right for the brand?"
 Q3 (Commercial Courage): "Which proposition requires the most courage from the brand? And is this the right moment for that level of courage — or does the brand need to build to it?"
+Q3b (Exposure): Include this question ONLY when the set contains at least one EXPOSED proposition — "The exposed propositions claim territory a competitor could contest. Is that exposure something this brand should avoid, or something it should get to first?"
+
+SET DISCIPLINE: before presenting the framework, state in one sentence which two or three propositions represent the genuinely different bets, so a larger surviving set narrows into real choices rather than diluting into a longlist. Do not rank them and do not recommend one.
 
 LAYER 2 — BRAND TRUTH QUESTIONS
 Q4 (Credibility): "Which proposition can this brand own today — not aspirationally, not in three years, but now — given what the product actually does, what the brand actually has done, and what the audience actually believes about it?"
