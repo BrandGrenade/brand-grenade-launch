@@ -84,10 +84,18 @@ export function buildStage8UserMessage(args: {
   territoryCount: number;
   territoryNames: string[];
   stage4bOutput?: string;
+  /** Room 01's authoritative recommended territory block, when one exists. */
+  recommendedTerritoryBlock?: string;
 }): string {
+  const anchor = args.recommendedTerritoryBlock?.trim()
+    ? `\n${args.recommendedTerritoryBlock.trim()}\n`
+    : "";
+  const extra = anchor
+    ? ` One of those propositions MUST be written against the Room 01 recommended territory above.`
+    : "";
   return `Brand: ${args.brandName}
 Category: ${args.category}
-
+${anchor}
 Strategic Territories:
 
 ${args.stage7Output}
@@ -96,7 +104,7 @@ Competitor positions to avoid:
 
 ${args.cmm}
 
-Write one Strategic Proposition per territory. Minimum 3 propositions. The input contains ${args.territoryCount} territories — generate exactly ${args.territoryCount} propositions.`;
+Write one Strategic Proposition per territory. Minimum 3 propositions. The input contains ${args.territoryCount} territories — generate exactly ${args.territoryCount} propositions.${extra}`;
 }
 
 export function buildStage8ContinuationMessage(args: {
