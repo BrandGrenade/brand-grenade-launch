@@ -575,6 +575,8 @@ export interface SmpScoreProvenance {
   sentence: string;
   /** Callout HTML for the accurate story ("" when clean). */
   html: string;
+  /** Same callout without the session-authored reasoning ("" when clean). */
+  htmlCore: string;
 }
 
 const THEME_STOP = new Set([
@@ -654,6 +656,7 @@ export function smpScoreProvenance(stage10: string, smp: string): SmpScoreProven
     fieldTop: null,
     sentence: "",
     html: "",
+    htmlCore: "",
   };
   const target = normalise(smp);
   if (!target || !stage10.trim()) return empty;
