@@ -32,7 +32,7 @@ import type { MintoContent } from "./minto";
 import { buildCurrentStateSection } from "./current-state";
 import { stripDocumentMetadata } from "./strip-document-metadata";
 import { extractShortlist } from "./exec-summary-extract";
-import { arrivedAtReasoningHtml, overAlternativesHtml } from "./proposition-rationale";
+import { arrivedAtReasoningHtml, overAlternativesHtml, propositionReasoning } from "./proposition-rationale";
 import {
   extractRecommendedTerritory,
   reconcileTerritory,
