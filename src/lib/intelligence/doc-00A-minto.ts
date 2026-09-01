@@ -104,6 +104,28 @@ export function buildDocument00AMinto(
   const primaryName = primary ? str(primary.name) || "Recommended territory" : "";
   const verdict = primary ? (VERDICT_LABEL[str(primary.strategic_recommendation)] ?? "") : "";
 
+  /* Why the recommendation is not the highest-scoring territory. Stated once
+   * here and reused verbatim in section 09 so both readings agree. */
+  const preferenceApplies = portfolioPreferenceApplies(primary, others);
+  const preferenceRationale = preferenceApplies
+    ? paras(PORTFOLIO_OVER_SINGLE_BRAND_RATIONALE)
+    : "";
+
+  /* Explicitly-modelled findings carried out of the research base, verbatim,
+   * with their stated confidence intact. They are decision-relevant, so they
+   * are surfaced in the recommendation rather than filed in the appendix. */
+  const modelled: ModelledFinding[] = findModelledFindings(input.research);
+  function modelledCallout(f: ModelledFinding): string {
+    const conf = f.confidence ? `${f.confidence} confidence` : "confidence not stated";
+    return callout(
+      `Modelled finding ${f.code} — ${conf}, not established fact`,
+      `<p>${inlineMd(f.text)}</p>` +
+        `<p class="kicker">${escapeHtml(f.sourceLabel)}${
+          f.provenance ? ` — ${escapeHtml(f.provenance)}` : ""
+        }</p>`,
+    );
+  }
+
   /* 01 — recommendation */
   const recommendation =
     (primaryName
@@ -114,7 +136,10 @@ export function buildDocument00AMinto(
           // name — it is demoted to caption type beneath the headline.
           caption: verdict ? `Verdict — ${verdict}` : undefined,
         })
-      : "") + paras(str(primary?.recommendation_rationale));
+      : "") +
+    paras(str(primary?.recommendation_rationale)) +
+    preferenceRationale +
+    modelled.map(modelledCallout).join("");
 
   const permission = obj(primary?.brand_permission);
   const firstMover = obj(primary?.first_mover);
