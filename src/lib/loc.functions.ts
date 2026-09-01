@@ -16,11 +16,17 @@ import { buildLocInputs, type WorkspaceInputSnapshot } from "./loc/brief-extract
 import {
   abstractStrategicOpportunity,
   buildEngineUserMessage,
+  buildStimulusContext,
   getEngineSystemPrompt,
   parseEngineOutput,
   BRIEF_ISOLATED_ENGINES,
   type EngineOutput,
 } from "./loc/engine-prompts";
+import {
+  drawStimuli,
+  embedText,
+  type AssignedStimulus,
+} from "./loc/stimulus-select.server";
 import { enforcePropositionAnchor } from "./proposition-anchor.server";
 import {
   renderLocFullMarkdown,
@@ -44,6 +50,7 @@ async function runOneEngine(args: {
   inputs: ReturnType<typeof buildLocInputs>;
   retryInstructions?: string;
   abstractOpportunity?: string;
+  assignedStimulus?: AssignedStimulus | null;
 }): Promise<{ engine: EngineName; output: EngineOutput | null; error?: string }> {
   try {
     const systemPrompt = getEngineSystemPrompt(args.engine);
@@ -52,6 +59,14 @@ async function runOneEngine(args: {
       inputs: args.inputs,
       retryInstructions: args.retryInstructions,
       abstractOpportunity: args.abstractOpportunity,
+      assignedStimulus: args.assignedStimulus
+        ? {
+            kind: args.assignedStimulus.kind,
+            name: args.assignedStimulus.name,
+            detail: args.assignedStimulus.detail,
+            domain: args.assignedStimulus.domain,
+          }
+        : null,
     });
     const raw = await callClaude({
       systemPrompt,

@@ -61,15 +61,15 @@ const INTERMEDIATES: Partial<Record<EngineName, IntermediateField[]>> = {
     { key: "sacred_assumption", spec: `"sacred_assumption": "<MANDATORY — state the single category assumption every brand competes on, in the form: 'Every brand in this category competes on [X].' Written BEFORE the proposition.>"` },
   ],
   wrong_room: [
-    { key: "wrong_room_chosen", spec: `"wrong_room_chosen": "<MANDATORY — name the specific unrelated industry entered (e.g. 'competitive powerlifting', 'monastic order', 'submarine warfare'). Not a category — a specific world.>"` },
-    { key: "lines_from_inside", array: true, minItems: 2, spec: `"lines_from_inside": ["<MANDATORY — line one, produced entirely inside the wrong room's logic, before any translation>", "<line two, same rule>"]` },
+    { key: "wrong_room_chosen", spec: `"wrong_room_chosen": "<MANDATORY — the ASSIGNED world, copied verbatim from the ASSIGNED WORLD block in the user message. You do not choose it and you may not substitute it.>"` },
+    { key: "lines_from_inside", array: true, minItems: 2, spec: `"lines_from_inside": ["<MANDATORY — line one, produced entirely inside the assigned world's logic, before any translation>", "<line two, same rule>"]` },
   ],
   delete_customer: [
     { key: "ideology", spec: `"ideology": "<MANDATORY — state the conviction this brand would hold even if nobody bought anything. Not a customer description. Not 'for people who'. A belief. Written BEFORE the proposition.>"` },
   ],
   random_connection: [
-    { key: "stimulus", spec: `"stimulus": "<MANDATORY — name one specific random object or phenomenon (not a category). E.g. 'a lighthouse', 'the migration pattern of monarch butterflies', 'the sound of ice cracking on a frozen lake'.>"` },
-    { key: "stimulus_properties", array: true, minItems: 3, spec: `"stimulus_properties": ["<MANDATORY — true property one of the stimulus>", "<true property two>", "<true property three>"]` },
+    { key: "stimulus", spec: `"stimulus": "<MANDATORY — the ASSIGNED stimulus, copied verbatim from the ASSIGNED STIMULUS block in the user message. You do not choose it, you may not swap it, and you may not reject it.>"` },
+    { key: "stimulus_properties", array: true, minItems: 3, spec: `"stimulus_properties": ["<MANDATORY — three true properties of the ASSIGNED stimulus. Use the supplied properties or better ones you know to be true of it.>", "<true property two>", "<true property three>"]` },
   ],
   time_displacement: [
     { key: "abandoned_truth", spec: `"abandoned_truth": "<MANDATORY — name what this category left behind fifty years ago and why. Written BEFORE the contemporary translation.>"` },
@@ -1079,13 +1079,22 @@ ${BRIEF_ISOLATED_ENGINES.has(engine) ? "" : `${ANCHOR_PROMPT_RULE}
 `}${OUTPUT_CONTRACT(engine)}`;
 }
 
+/** A stimulus chosen in code and handed to the engine as non-negotiable. */
+export type AssignedStimulusInput = {
+  kind: "object" | "world";
+  name: string;
+  detail: string[];
+  domain: string;
+};
+
 export function buildEngineUserMessage(args: {
   engine: EngineName;
   inputs: LocInputs;
   retryInstructions?: string;
   abstractOpportunity?: string;
+  assignedStimulus?: AssignedStimulusInput | null;
 }): string {
-  const { engine, inputs, retryInstructions, abstractOpportunity } = args;
+  const { engine, inputs, retryInstructions, abstractOpportunity, assignedStimulus } = args;
   const opportunity =
     inputs.realOpportunity && inputs.realOpportunity !== "(not diagnosed)"
       ? inputs.realOpportunity
@@ -1107,9 +1116,34 @@ export function buildEngineUserMessage(args: {
     const abstract =
       (abstractOpportunity && abstractOpportunity.trim()) ||
       "(no abstract strategic opportunity available — fire your move from your own worldview)";
-    return `Strategic opportunity (abstract — all brand, category, industry, product, and competitor identifiers removed): ${abstract}
 
-Perform ${LOC_ENGINE_LABEL[engine]} per your system prompt. You have deliberately been given no brand name, no category, and no industry descriptor. This engine's move is designed to fire without that information — using only the abstract opportunity above, your ENGINE_MOVES block, and your rejection test. Return the JSON.${retryBlock}`;
+    // ASSIGNED STIMULUS — selected in code from an external corpus, filtered
+    // for semantic distance from the brand. It is not a suggestion: models
+    // asked to pick "something random" converge on whatever the context has
+    // already activated, which is exactly the failure this removes.
+    let stimulusBlock = "";
+    if (assignedStimulus) {
+      const label = assignedStimulus.kind === "world" ? "ASSIGNED WORLD" : "ASSIGNED STIMULUS";
+      const noun = assignedStimulus.kind === "world" ? "world" : "stimulus";
+      stimulusBlock = `
+
+=== ${label} (NON-NEGOTIABLE — selected outside this conversation) ===
+${noun.toUpperCase()}: ${assignedStimulus.name}
+${assignedStimulus.kind === "world" ? "HOW THIS WORLD DEFINES SUCCESS" : "TRUE PROPERTIES"}:
+${assignedStimulus.detail.map((d) => `- ${d}`).join("\n")}
+
+RULES FOR THE ASSIGNED ${noun.toUpperCase()}:
+1. You MUST use this ${noun}. It is not a suggestion, an example, or a starting point you may improve on.
+2. You may NOT reject it, swap it, generalise it, or quietly drift to a different ${noun} mid-process.
+3. "It doesn't fit" is not grounds for rejection — non-fit is the entire mechanism. The value comes from forcing a connection that did not previously exist.
+4. If the ${noun} feels arbitrary, that is correct. Work harder on the connection, not on finding a better ${noun}.
+5. Copy the ${noun} verbatim into the required intermediate field.
+=== END ${label} ===`;
+    }
+
+    return `Strategic opportunity (abstract — all brand, category, industry, product, and competitor identifiers removed): ${abstract}${stimulusBlock}
+
+Perform ${LOC_ENGINE_LABEL[engine]} per your system prompt. You have deliberately been given no brand name, no category, and no industry descriptor. This engine's move is designed to fire without that information — using only the abstract opportunity above${assignedStimulus ? ", the assigned stimulus" : ""}, your ENGINE_MOVES block, and your rejection test. Return the JSON.${retryBlock}`;
   }
 
   const header = `Brand: ${inputs.brandName}
@@ -1161,24 +1195,86 @@ export async function abstractStrategicOpportunity(args: {
 }): Promise<string> {
   const source = args.opportunityStatement?.trim();
   if (!source || source === "(not diagnosed)") return "";
-  const systemPrompt = `You strip identifying information from a strategic opportunity statement. Return exactly ONE sentence describing the opportunity in the abstract, with EVERY brand name, category descriptor, industry label, product name, and competitor name removed and replaced with generic references such as "the brand", "the offering", "the audience", "the space", "the moment". No JSON. No markdown. No preamble. No quotation marks. Just the single abstract sentence.`;
-  const userMessage = `BRAND (to be stripped): ${args.brandName}
+
+  // STRICT ABSTRACTION CONTRACT. Stripping the brand name is not enough:
+  // a sentence that still carries a material, an era, a sensory register, an
+  // animal, a country or a category noun re-activates the same neighbourhood
+  // in the model, and the "isolated" engines stop being isolated.
+  const systemPrompt = `You convert a strategic opportunity statement into ONE abstract sentence that could belong to any organisation in any sector.
+
+STRIP COMPLETELY — the output must contain NONE of the following:
+- Brand, product, sub-brand or competitor names
+- Category or industry nouns (car, bank, retailer, drink, handset, policy, patient, driver, shopper, showroom, shelf...)
+- Materials (leather, steel, chrome, glass, wool, timber, marble...)
+- Heritage and time markers (heritage, founded, legacy, since 1935, post-war, mid-century, generations, archive...)
+- Countries, nationalities, cities and regional adjectives (British, German, Japanese, Nordic, Milanese...)
+- Sensory registers tied to a category (roar, growl, aroma, silky, buttery, throaty...)
+- Animals and animal metaphors (falcon, jaguar, apex, predator, prowl...)
+
+REPLACE WITH structural language only: "the organisation", "the offering", "the audience", "the category", "the moment", "the incumbent position", "the decision".
+
+The sentence must describe the STRUCTURE of the opportunity — what is being traded off, who is being underserved, what belief is being relied on — not its texture.
+
+Output: exactly one sentence. No JSON, no markdown, no preamble, no quotation marks.`;
+
+  const buildUser = (leaks: string[]) => `BRAND (to be stripped): ${args.brandName}
 CATEGORY (to be stripped): ${args.category}
 
 STRATEGIC OPPORTUNITY (as written):
 ${source}
+${
+    leaks.length
+      ? `\nYOUR PREVIOUS ATTEMPT WAS REJECTED. It still contained these forbidden terms: ${leaks.join(", ")}. Rewrite so that none of them — or any synonym of them — appears. Describe the structure of the opportunity, not its texture.\n`
+      : ""
+  }
+Rewrite as ONE abstract sentence under the strict contract. Return only the sentence.`;
 
-Rewrite as ONE abstract sentence with every brand name, category descriptor, industry label, product name, and competitor name removed. Return only the sentence.`;
-  const raw = await args.callClaude({
-    systemPrompt,
-    userMessage,
-    maxTokens: 300,
-    sessionId: args.sessionId,
-    stageLabel: "LOC abstract-opportunity",
-    stageNumber: "9-loc",
-    stageName: "LOC abstract-opportunity",
-  });
-  return raw.trim().split(/\n+/)[0].trim().replace(/^["'“”]+|["'“”]+$/g, "");
+  const oneCall = async (leaks: string[]) => {
+    const raw = await args.callClaude({
+      systemPrompt,
+      userMessage: buildUser(leaks),
+      maxTokens: 300,
+      sessionId: args.sessionId,
+      stageLabel: "LOC abstract-opportunity",
+      stageNumber: "9-loc",
+      stageName: "LOC abstract-opportunity",
+    });
+    return raw.trim().split(/\n+/)[0].trim().replace(/^["'“”]+|["'“”]+$/g, "");
+  };
+
+  const { detectLeaks } = await import("./stimulus-adjacency");
+
+  let candidate = await oneCall([]);
+  let hits = detectLeaks(candidate);
+  if (hits.length > 0) {
+    // One code-driven retry naming the exact leaked terms.
+    candidate = await oneCall(Array.from(new Set(hits.map((h) => h.term))));
+    hits = detectLeaks(candidate);
+  }
+  if (hits.length > 0) {
+    // Still leaking — redact rather than hand a brand-shaped sentence to the
+    // isolated engines. A blunt sentence beats a contaminated one.
+    const terms = Array.from(new Set(hits.map((h) => h.term))).sort(
+      (a, b) => b.length - a.length,
+    );
+    for (const t of terms) {
+      candidate = candidate.replace(
+        new RegExp(`\\b${t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}s?\\b`, "gi"),
+        "—",
+      );
+    }
+    candidate = candidate.replace(/(\s*—\s*)+/g, " — ").replace(/\s{2,}/g, " ").trim();
+  }
+  return candidate;
+}
+
+/** Brand-context string used for stimulus distance filtering. */
+export function buildStimulusContext(args: {
+  brandName: string;
+  category: string;
+  opportunity: string;
+}): string {
+  return `${args.brandName}. ${args.category}. ${args.opportunity}`.slice(0, 2000);
 }
 
 
