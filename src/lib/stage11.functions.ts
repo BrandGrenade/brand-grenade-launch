@@ -3,7 +3,11 @@ import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { streamClaude } from "./claude.server";
 import { withStreamSafety } from "./stream-stage-safety";
-import { STAGE_11_SYSTEM_PROMPT, buildStage11UserMessage } from "./stage11-prompt";
+import {
+  STAGE_11_SYSTEM_PROMPT,
+  STAGE_11_LOGIC_VERSION,
+  buildStage11UserMessage,
+} from "./stage11-prompt";
 import { countPropositions } from "./count-helpers";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertSessionAccess } from "@/lib/auth-helpers.server";
