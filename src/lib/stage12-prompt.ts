@@ -138,9 +138,15 @@ export function buildStage12UserMessage(args: {
   stage1Output: string;
   validatedCount: number;
   eliminatedCount: number;
+  /** Room 01's authoritative recommended territory block, when one exists. */
+  recommendedTerritoryBlock?: string;
 }): string {
+  const territoryAnchor = args.recommendedTerritoryBlock?.trim()
+    ? `\n${args.recommendedTerritoryBlock.trim()}\n`
+    : "";
   return `BRAND: ${args.brandName}
 CATEGORY: ${args.category}
+${territoryAnchor}
 
 INPUT CONTROL: ${args.validatedCount} SMP(s) forwarded from Stage 11. ${args.eliminatedCount} SMP(s) excluded (ELIMINATED / REWRITTEN / other). Produce exactly ${args.validatedCount} card(s).
 
