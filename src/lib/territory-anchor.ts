@@ -197,6 +197,16 @@ export interface TerritoryReconciliation {
   heading: string;
 }
 
+/** First sentence of a description, trimmed and de-punctuated for inline use. */
+function firstSentence(text: string | undefined, max: number): string {
+  const t = (text ?? "").trim();
+  if (!t) return "";
+  const stop = t.search(/[.!?](\s|$)/);
+  let out = stop > 40 ? t.slice(0, stop) : t;
+  if (out.length > max) out = `${out.slice(0, max).replace(/[\s,;:—-]+\S*$/, "")}…`;
+  return out.replace(/[.\s]+$/, "");
+}
+
 function esc(s: string): string {
   return s
     .replace(/&/g, "&amp;")
@@ -260,9 +270,10 @@ export function reconcileTerritory(args: {
     };
   }
 
+  const gist = firstSentence(rec.description, 240);
   paragraphs.push(
     `Two recommendations exist in this body of work and they are not the same. The Intelligence Lab recommended the territory “${rec.name}”${
-      rec.description ? ` — ${rec.description}` : ""
+      gist ? ` — ${gist}` : ""
     }. The proposition locked at the selection gate is “${smp}”${
       lockedName ? `, which came through the territory “${lockedName}”` : ""
     }. This paragraph exists so the reader is not left holding two unreconciled best answers.`,
