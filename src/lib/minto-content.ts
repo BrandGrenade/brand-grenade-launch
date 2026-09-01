@@ -1361,7 +1361,8 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
   const validation =
     (validationTable || renderMarkdown(s10.slice(0, 2000)) || "") +
     scaleNote +
-    provenance.html +
+    // Reasoning-free here: the full reasoning sits with the proposition in 04.
+    provenance.htmlCore +
 
     (provenance.postSelection && winner?.composite != null
       ? callout(
