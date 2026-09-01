@@ -26,6 +26,11 @@ import type {
   Truth,
 } from "./briefing-room-prompts";
 import type { PrebriefForBriefingRoom } from "./intelligence/prebrief-text";
+import {
+  extractRecommendedTerritoryFromPrebrief,
+  territoryAnchorLines,
+  territoryAnchorBlock,
+} from "./territory-anchor";
 
 export type WorkspaceForHandoff = {
   brand_name: string;
