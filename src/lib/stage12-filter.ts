@@ -34,9 +34,17 @@ export interface Stage10Score {
 export interface Stage11Verdict {
   smpLine: string;
   fieldName: string;
-  verdict: string;          // VALIDATED | VALIDATED WITH STRATEGIC NOTE | REWRITTEN | ELIMINATED
+  verdict: string;          // VALIDATED | VALIDATED — EXPOSED | VALIDATED WITH STRATEGIC NOTE | REWRITTEN | ELIMINATED
   iconicStatus: string;     // CONFIRMED | DOWNGRADED | N/A
   block: string;            // raw stage 11 per-SMP block
+  /** Stage 11 V2 machine-readable fatal-tier test ids (T1-T4, or an unclassified T5). */
+  fatal?: string[];
+  /** Stage 11 V2 machine-readable non-fatal flags (T5-COMPETITIVE, T6-DECAY, T7-DRIFT). */
+  flags?: string[];
+  /** True when the proposition survives carrying competitive/decay/drift exposure. */
+  exposed?: boolean;
+  /** One-sentence human-facing statement of the exposure. */
+  exposureNote?: string;
 }
 
 // ─── V6 weighting (percent, sums to 100) ─────────────────────────────────
