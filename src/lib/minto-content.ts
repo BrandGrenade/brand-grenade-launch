@@ -1208,7 +1208,12 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
               `<p>This proposition was finalised after the Stage 10 scoring pass, so it carries no composite of its own. No earlier proposition's score is substituted here; the scored candidate set appears in the validation section.</p>`,
             )
           : "") +
-      provenance.html
+      // provenance.html already carries the session-authored reasoning; when
+      // there is no provenance correction to make, the reasoning still ships.
+      (provenance.html ||
+        (arrivedAtReasoningHtml(smp)
+          ? callout("How this proposition was arrived at", arrivedAtReasoningHtml(smp))
+          : ""))
     : "";
 
   /* 05 — why this wins */
