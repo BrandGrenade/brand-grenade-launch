@@ -44,6 +44,13 @@ export interface SMPCard {
   /** Stage 11 verdict + binding conditions for CORE cards. */
   stage11Verdict?: string;
   stage11Conditions?: string;
+  /** Stage 11 V2: survived every fatal test but carries competitive / decay /
+   *  interpretation exposure. Shown at Checkpoint D on equal footing. */
+  exposed?: boolean;
+  /** Plain-language statement of where the proposition is exposed. */
+  exposureNote?: string;
+  /** Machine-readable flag ids (T5-COMPETITIVE, T6-DECAY, T7-DRIFT). */
+  exposureFlags?: string[];
   loc10?: {
     genuine_surprise?: number;
     credible_path?: number;
