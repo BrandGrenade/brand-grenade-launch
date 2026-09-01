@@ -219,8 +219,10 @@ function parsePropositions(rawOutput: string): RawProp[] {
     ]);
     const requires = grabSection("WHAT IT REQUIRES OF THE BRAND", [
       "STRATEGIC QUALITY SCORES",
+      "WHERE IT IS EXPOSED",
       "\\[METADATA\\]",
     ]);
+    const exposureSection = grabSection("WHERE IT IS EXPOSED", ["\\[METADATA\\]"]);
 
     // Accept markdown wrappers and legacy /70 composites (rescaled to /100).
     const compositeRe =
@@ -252,6 +254,19 @@ function parsePropositions(rawOutput: string): RawProp[] {
     const fieldName = grabMeta("FIELD_NAME");
     const iconicTierStatus = grabMeta("ICONIC_TIER_STATUS");
     const pressureTestNote = grabMeta("PRESSURE_TEST_NOTE");
+    const exposureStatus = grabMeta("EXPOSURE_STATUS");
+    const exposureFlagsRaw = grabMeta("EXPOSURE_FLAGS");
+    const exposureFlags = /^(none|n\/a|-)?$/i.test(exposureFlagsRaw)
+      ? []
+      : exposureFlagsRaw
+          .split(/[,;]/)
+          .map((s) => s.trim())
+          .filter(Boolean);
+    const noExposure = /no\s+open\s+exposure/i.test(exposureSection);
+    const exposed =
+      /EXPOSED/i.test(exposureStatus) ||
+      exposureFlags.length > 0 ||
+      (!!exposureSection && !noExposure);
 
     propositions.push({
       line: propositionLine,
@@ -264,6 +279,9 @@ function parsePropositions(rawOutput: string): RawProp[] {
       fieldName,
       iconicTierStatus,
       pressureTestNote,
+      exposed,
+      exposureNote: exposed && !noExposure ? exposureSection : undefined,
+      exposureFlags: exposureFlags.length ? exposureFlags : undefined,
     });
   }
 
@@ -301,6 +319,14 @@ export function parseSMPCards(
         .trim()
         .toLowerCase();
 
+    const s11ExposureByKey = new Map<string, Stage11Verdict>();
+    if (stage11Fallback) {
+      for (const v of parseStage11Verdicts(stage11Fallback)) {
+        if (v.smpLine) s11ExposureByKey.set(norm(v.smpLine), v);
+        if (v.fieldName) s11ExposureByKey.set(norm(v.fieldName), v);
+      }
+    }
+
     return raw.map((p, idx) => {
       const line = p.line.replace(/^["""]|["""]$/g, "").trim();
       const match = byLine.get(norm(line)) ?? byField.get(norm(p.fieldName ?? ""));
@@ -330,6 +356,11 @@ export function parseSMPCards(
             }
           : p.scores;
 
+      // Stage 11 is authoritative on exposure: a Stage 12 card that omitted
+      // the metadata must still show the flag the pressure test raised.
+      const s11 = s11ExposureByKey.get(norm(line)) ?? s11ExposureByKey.get(norm(p.fieldName ?? ""));
+      const exposed = p.exposed || !!s11?.exposed;
+
       return {
         cardNumber: idx + 1,
         smpLine: line,
@@ -342,18 +373,20 @@ export function parseSMPCards(
         fieldName: p.fieldName,
         iconicTierStatus: p.iconicTierStatus,
         pressureTestNote: p.pressureTestNote,
+        exposed,
+        exposureNote: p.exposureNote ?? s11?.exposureNote,
+        exposureFlags: p.exposureFlags ?? s11?.flags,
       };
     });
   }
 
 
-  // Fallback: render the VALIDATED propositions from Stage 11 directly so the
+  // Fallback: render the surviving propositions from Stage 11 directly so the
   // human always sees the propositions, even when Stage 12 parsing fails or
-  // Stage 12 output has not yet been produced.
+  // Stage 12 output has not yet been produced. Stage 11 V2 removes only
+  // fatal-tier failures, so EXPOSED survivors appear here too.
   const stage11Verdicts = stage11Fallback
-    ? parseStage11Verdicts(stage11Fallback).filter(
-        (v) => v.verdict === "VALIDATED" || v.verdict === "VALIDATED WITH STRATEGIC NOTE",
-      )
+    ? parseStage11Verdicts(stage11Fallback).filter((v) => v.verdict !== "ELIMINATED")
     : [];
   const verdicts = stage11Verdicts.length
     ? stage11Verdicts
@@ -416,6 +449,9 @@ export function parseSMPCards(
       fieldName: v.fieldName,
       iconicTierStatus: v.iconicStatus,
       pressureTestNote: v.verdict,
+      exposed: v.exposed,
+      exposureNote: v.exposureNote,
+      exposureFlags: v.flags,
     };
   });
 }
@@ -1078,6 +1114,32 @@ export function SMPSelection({
               {card.whatItRequires && (
                 <Section title="What it requires of the brand" body={card.whatItRequires} />
               )}
+              {card.exposed && (
+                <div
+                  className="mt-4 rounded-md p-3"
+                  style={{
+                    border: "1px solid var(--color-warning)",
+                    background: "color-mix(in srgb, var(--color-warning) 8%, transparent)",
+                  }}
+                >
+                  <span
+                    className="text-label"
+                    style={{ color: "var(--color-warning)", letterSpacing: "0.06em" }}
+                  >
+                    EXPOSED — PASSED EVERY FATAL TEST
+                  </span>
+                  <p className="text-body-sm mt-2" style={{ color: "var(--color-text-secondary)" }}>
+                    {card.exposureNote ||
+                      "A competitor could contest this territory. That is a competitive condition, not a truth failure."}
+                  </p>
+                  {card.exposureFlags?.length ? (
+                    <p className="text-body-sm mt-1" style={{ color: "var(--color-text-tertiary)" }}>
+                      {card.exposureFlags.join(" · ")}
+                    </p>
+                  ) : null}
+                </div>
+              )}
+
 
               <hr
                 className="my-4 h-px border-0"
