@@ -289,14 +289,21 @@ export interface FilteredStage11 {
   filteredOutput: string;
   validated: Stage11Verdict[];
   eliminated: Stage11Verdict[];
+  /** Survivors carrying non-fatal exposure (competitive / decay / drift). */
+  exposed: Stage11Verdict[];
 }
 
+/**
+ * Stage 11 V2: ONLY fatal-tier failures are removed. Propositions that
+ * survive with competitive, decay, or interpretation exposure travel forward
+ * flagged, and are shown to the human alongside the safe survivors.
+ */
 export function filterValidatedFromStage11(stage11Output: string): FilteredStage11 {
   const verdicts = parseStage11Verdicts(stage11Output);
-  const keep = (v: string) =>
-    v === "VALIDATED" || v === "VALIDATED WITH STRATEGIC NOTE" || v === "REWRITTEN";
-  const validated = verdicts.filter((v) => keep(v.verdict));
-  const eliminated = verdicts.filter((v) => !keep(v.verdict));
+  const keep = (v: Stage11Verdict) => v.verdict !== "ELIMINATED";
+  const validated = verdicts.filter(keep);
+  const eliminated = verdicts.filter((v) => !keep(v));
+  const exposed = validated.filter((v) => v.exposed);
 
   const flat = stripEmphasis(stage11Output);
   const firstIdx = flat.search(/\n?SMP:\s*"/);
@@ -306,23 +313,40 @@ export function filterValidatedFromStage11(stage11Output: string): FilteredStage
   const sections: string[] = [];
   if (preamble) sections.push(preamble);
   sections.push(
-    `==== FILTERED PRESSURE TEST RESULTS — VALIDATED SMPS ONLY (${validated.length}) ====`,
+    `==== FILTERED PRESSURE TEST RESULTS — SURVIVING PROPOSITIONS (${validated.length}, of which EXPOSED: ${exposed.length}) ====`,
+  );
+  sections.push(
+    `EXPOSED means the proposition survived every fatal test (factual truth, logical coherence, brand permission, forbidden zones) but carries competitive, time-decay, or interpretation risk. It is a live option, not a weakened one. Present it on equal footing and state its exposure plainly.`,
   );
   if (validated.length) {
     sections.push(validated.map((v) => v.block).join("\n\n"));
   } else {
-    sections.push("(no validated SMPs — Stage 12 cannot proceed)");
+    sections.push("(no surviving propositions — Stage 12 cannot proceed)");
   }
-  sections.push(`==== EXCLUDED FROM STAGE 12 — DO NOT PRESENT ====`);
+  if (exposed.length) {
+    sections.push(`==== EXPOSED SURVIVORS — PRESENT WITH EXPOSURE STATED ====`);
+    sections.push(
+      exposed
+        .map(
+          (v) =>
+            `- "${v.smpLine}" — FIELD: ${v.fieldName} — FLAGS: ${(v.flags ?? []).join(", ") || "unspecified"}${v.exposureNote ? ` — EXPOSURE: ${v.exposureNote}` : ""}`,
+        )
+        .join("\n"),
+    );
+  }
+  sections.push(`==== ELIMINATED ON FATAL GROUNDS — DO NOT PRESENT ====`);
   sections.push(
     eliminated.length
       ? eliminated
-          .map((v) => `- "${v.smpLine}" — FIELD: ${v.fieldName} — VERDICT: ${v.verdict}`)
+          .map(
+            (v) =>
+              `- "${v.smpLine}" — FIELD: ${v.fieldName} — FATAL: ${(v.fatal ?? []).join(", ") || "declared eliminated"}`,
+          )
           .join("\n")
       : "(none)",
   );
 
-  return { filteredOutput: sections.join("\n\n"), validated, eliminated };
+  return { filteredOutput: sections.join("\n\n"), validated, eliminated, exposed };
 }
 
 export function countStage12PropositionCards(output: string): number {
