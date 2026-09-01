@@ -32,6 +32,7 @@ import type { MintoContent } from "./minto";
 import { buildCurrentStateSection } from "./current-state";
 import { stripDocumentMetadata } from "./strip-document-metadata";
 import { extractShortlist } from "./exec-summary-extract";
+import { arrivedAtReasoningHtml, overAlternativesHtml } from "./proposition-rationale";
 import { STRATEGY_SCORING_DIMENSION_NAMES } from "@/lib/platform-metrics";
 
 export interface MintoSession {
