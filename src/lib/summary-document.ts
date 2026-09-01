@@ -464,6 +464,69 @@ function wholeSentences(text: string, count: number, budget: number): string {
   return (out.length ? out : parts.slice(0, 1)).join(" ").trim();
 }
 
+/**
+ * Stage 10 dimension weights. The composite is a weighted sum, so a document
+ * that prints raw /10 dimension scores next to a composite is unverifiable
+ * unless the weights travel with them.
+ */
+const DIMENSION_WEIGHTS: Array<[RegExp, number]> = [
+  [/fame/i, 30],
+  [/truth/i, 20],
+  [/competitive\s*impossib|impossib/i, 15],
+  [/brand\s*permission|permission/i, 10],
+  [/clean\s*air/i, 10],
+  [/commercial\s*precedent|precedent/i, 5],
+];
+
+function dimensionWeight(dimension: string): number | null {
+  const d = (dimension ?? "").trim();
+  return DIMENSION_WEIGHTS.find(([re]) => re.test(d))?.[1] ?? null;
+}
+
+const round1 = (n: number) => (Math.round(n * 10) / 10).toString();
+
+/**
+ * Two blocks that make the same point in two registers, back to back, read as
+ * padding. Keep the first block whole, then carry over only those sentences of
+ * the second that add information the first did not already state — so the
+ * point is made once, in one paragraph, rather than restated immediately after
+ * in more literary language.
+ */
+export function mergeRestatement(lead: string, follow: string): string {
+  const a = (lead ?? "").trim();
+  const b = (follow ?? "").trim();
+  if (!a) return b;
+  if (!b) return a;
+  const STOP = new Set([
+    "that","this","what","with","which","from","they","them","their","there","then","than",
+    "have","been","were","was","will","would","could","should","because","about","into",
+    "these","those","when","where","while","itself","after","before","also","only","still",
+    "even","much","more","most","such","some","other","being","does","doing","over","under",
+  ]);
+  const words = (t: string) =>
+    t
+      .toLowerCase()
+      .replace(/&#?\w+;/g, " ")
+      .replace(/[^a-z0-9\s]/g, " ")
+      .split(/\s+/)
+      .filter((w) => w.length > 3)
+      .map((w) => w.replace(/(ies|es|s)$/, ""))
+      .filter((w) => !STOP.has(w));
+  const leadWords = new Set(words(a));
+  const kept = b
+    .split(/(?<=[.!?])\s+/)
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .filter((s) => {
+      const w = words(s);
+      if (w.length < 4) return true;
+      const shared = w.filter((x) => leadWords.has(x)).length;
+      return shared / w.length < 0.2;
+    });
+  return kept.length ? `${a} ${kept.join(" ")}` : a;
+}
+
+
 
 function nothing(what: string): string {
   return `<p class="muted">${escapeHtml(what)}</p>`;
@@ -652,12 +715,16 @@ export function buildSummaryDocument(
     (k) => session[`checkpoint_${k}_confirmed`] === true,
   ).length;
 
-  /* 01 — Background */
-  const briefLead = firstSentencesOf(str(session, "brief_text"), 4);
-  const issue = extractBusinessIssue(session);
-  const backgroundHtml = `${p(briefLead)}${p(issue)}${
-    briefLead || issue ? "" : nothing("No brief text stored for this session.")
-  }`;
+  /* 01 — Background.
+     The brief lead and the extracted business issue routinely make the same
+     point twice in different registers. They are merged into one paragraph
+     that states it once and keeps only what the second block genuinely adds. */
+  const briefLead = firstSentencesOf(str(session, "brief_text"), 4) ?? "";
+  const issue = extractBusinessIssue(session) ?? "";
+  const background = mergeRestatement(briefLead, issue);
+  const backgroundHtml = background
+    ? p(background)
+    : nothing("No brief text stored for this session.");
 
   /* 02 — What we know about the brand */
   // Brand facts live either in the flat columns or in the `brand_intelligence`
@@ -926,14 +993,39 @@ export function buildSummaryDocument(
   // competitive result.
   const scoreProvenance = smpScoreProvenance(str(session, "stage_10_output"), selectedSmp);
 
+  // The composite is a weighted sum, so the weights are printed alongside the
+  // raw dimension scores and each dimension's contribution is shown — the
+  // reader can add the column up and verify the composite on the page.
+  const contributions = scoreRows.map((r) => {
+    const weight = dimensionWeight(r.dimension);
+    // Scores arrive as "6/10" — take the numerator only, never the digits of
+    // the whole string, or a 6/10 silently becomes 610.
+    const raw = parseFloat((String(r.score ?? "").match(/-?\d+(?:\.\d+)?/) ?? ["NaN"])[0]);
+    const points = weight != null && Number.isFinite(raw) ? (raw / 10) * weight : null;
+    return { ...r, weight, points };
+  });
+  const weightedTotal = contributions.every((c) => c.points != null)
+    ? contributions.reduce((sum, c) => sum + (c.points ?? 0), 0)
+    : null;
+
   const scoringHtml = scoreRows.length
     ? `${comparisonTable(
         [
           { key: "d", label: "Dimension" },
+          { key: "w", label: "Weight", numeric: true },
           { key: "s", label: "Score", numeric: true },
+          { key: "c", label: "Contribution", numeric: true },
           { key: "n", label: "Why it scored there" },
         ],
-        scoreRows.map((r) => ({ cells: { d: r.dimension, s: r.score, n: r.note } })),
+        contributions.map((r) => ({
+          cells: {
+            d: r.dimension,
+            w: r.weight != null ? `${r.weight}%` : null,
+            s: r.score,
+            c: r.points != null ? `${round1(r.points)}` : null,
+            n: r.note,
+          },
+        })),
         scoreProvenance.postSelection && selectedSmp
           ? `Post-lock re-score of the final wording: ${selectedSmp} — not a competitive rank`
           : selectedSmp ? `Scored against: ${selectedSmp}` : scoring.scoredSmp ? `Scored against: ${scoring.scoredSmp}` : undefined,
@@ -954,7 +1046,11 @@ export function buildSummaryDocument(
             )
           : ""
       }${p(
-        `Composite scores are on the ${SCORE_CEILING}-point weighted scale: the dimension weights above total ${SCORE_CEILING} points by design, so ${SCORE_CEILING} — not 100 — is the ceiling a perfect card can reach.`,
+        `Each dimension contributes its score out of 10 multiplied by its weight${
+          weightedTotal != null
+            ? `, so the six contributions above add to ${round1(weightedTotal)}`
+            : ""
+        }. Composite scores are on the ${SCORE_CEILING}-point weighted scale: the dimension weights total ${SCORE_CEILING} points by design, so ${SCORE_CEILING} — not 100 — is the ceiling a perfect card can reach.`,
       )}`
     : "";
 
@@ -970,8 +1066,11 @@ export function buildSummaryDocument(
       : scoring.verdict === "PASS"
         ? `It is the only proposition to clear both hard floors and be carried through Stage 10 scoring${scoring.composite ? ` on a composite of ${relabelScoreScale(scoring.composite)}` : ""}.`
         : "",
-    topScore?.note
-      ? `Its strongest dimension is ${topScore.dimension.toLowerCase()} (${topScore.score}): ${topScore.note}`
+    // This section is the decision layer on top of the scoring, not a second
+    // printing of it: the strongest dimension is named and the reader is sent
+    // back to the scoring section for the evidence behind it.
+    topScore
+      ? `Scoring establishes which candidate is strongest; this section records the decision taken on top of it. Its strongest dimension is ${topScore.dimension.toLowerCase()} (${topScore.score}) — the dimension-by-dimension reasoning behind that, including the competitive occupancy read, is set out in the scoring section above and is not repeated here.`
       : "",
   ]
     .filter(Boolean)
@@ -1054,10 +1153,25 @@ export function buildSummaryDocument(
   const s13 = str(session, "stage_13_output");
   const fitVerdict = mdBlock(s13, /Brand Fit Verdict/i);
   const fitGuardrails = mdBlock(s13, /Communication Guardrails/i);
+  // A guardrail that defers repositioning claims until the product is publicly
+  // reviewed governs pre-reveal communications; a locked campaign line that
+  // carries such a claim is a post-reveal asset. Stated explicitly so the two
+  // do not read as a contradiction.
+  const repositioningGuardrail =
+    /repositioning claims?[\s\S]{0,200}?(before|until)[\s\S]{0,120}?(review|reveal|in market)/i.test(
+      fitGuardrails ?? "",
+    );
+  const lineCarriesClaim = /\bnew\s+\w+|reborn|has changed|returns?\b/i.test(lockedLine);
+  const sequencingNote =
+    repositioningGuardrail && lineCarriesClaim
+      ? p(
+          `**Sequencing:** this guardrail governs pre-reveal communications. The locked campaign line carries a repositioning claim and is therefore a post-reveal asset — it deploys once the product is publicly revealed and independently reviewed, not before.`,
+        )
+      : "";
   const fitHtml = fitVerdict || fitGuardrails
     ? `${fitVerdict ? renderMarkdown(safeClamp(fitVerdict, 2000)) : ""}${
         fitGuardrails
-          ? `<h3>Communication guardrails</h3>${renderMarkdown(fitGuardrails)}`
+          ? `<h3>Communication guardrails</h3>${renderMarkdown(fitGuardrails)}${sequencingNote}`
           : ""
       }`
     : stageBlock(session, "stage_13_output", 9, 1400);
