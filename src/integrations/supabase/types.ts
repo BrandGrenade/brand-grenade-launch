@@ -553,6 +553,7 @@ export type Database = {
       repositories: {
         Row: {
           created_at: string
+          disclaimer: string | null
           intro: string
           slug: string
           title: string
@@ -560,6 +561,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          disclaimer?: string | null
           intro?: string
           slug: string
           title: string
@@ -567,6 +569,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          disclaimer?: string | null
           intro?: string
           slug?: string
           title?: string
