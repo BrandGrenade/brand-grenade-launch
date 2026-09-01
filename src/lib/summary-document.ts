@@ -1056,8 +1056,11 @@ export function buildSummaryDocument(
       : scoring.verdict === "PASS"
         ? `It is the only proposition to clear both hard floors and be carried through Stage 10 scoring${scoring.composite ? ` on a composite of ${relabelScoreScale(scoring.composite)}` : ""}.`
         : "",
-    topScore?.note
-      ? `Its strongest dimension is ${topScore.dimension.toLowerCase()} (${topScore.score}): ${topScore.note}`
+    // This section is the decision layer on top of the scoring, not a second
+    // printing of it: the strongest dimension is named and the reader is sent
+    // back to the scoring section for the evidence behind it.
+    topScore
+      ? `Scoring establishes which candidate is strongest; this section records the decision taken on top of it. Its strongest dimension is ${topScore.dimension.toLowerCase()} (${topScore.score}) — the dimension-by-dimension reasoning behind that, including the competitive occupancy read, is set out in the scoring section above and is not repeated here.`
       : "",
   ]
     .filter(Boolean)
