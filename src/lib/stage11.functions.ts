@@ -70,7 +70,14 @@ export const runStage11 = createServerFn({ method: "POST" })
 
     const { error: updateErr } = await supabaseAdmin
       .from("sessions")
-      .update({ stage_11_output: output, stage_11_error: null, stage_status: "complete:11" })
+      .update({
+        stage_11_output: output,
+        stage_11_error: null,
+        stage_status: "complete:11",
+        // Stamp the pressure-test logic generation so pre- and post-V2 runs
+        // are never treated as comparable.
+        stage_11_logic_version: STAGE_11_LOGIC_VERSION,
+      } as never)
       .eq("id", data.sessionId);
     if (updateErr) throw new Error(`Failed to save Stage 11 output: ${updateErr.message}`);
 
