@@ -283,9 +283,7 @@ export function reconcileTerritory(args: {
     // Short connecting note: the substantive answer already exists in this
     // document as recorded selection reasoning. Do not restate it here.
     paragraphs.push(
-      `The Intelligence Lab's recommended territory for this brand was “${rec.name}”${
-        gist ? ` — ${gist.endsWith("…") ? gist.slice(0, -1) : gist}.` : "."
-      } It was not carried forward. The proposition locked at the selection gate is “${smp}”${
+      `The Intelligence Lab's recommended territory for this brand was “${rec.name}”. It was not carried forward. The proposition locked at the selection gate is “${smp}”${
         lockedName ? `, which came through the territory “${lockedName}”` : ""
       }.`,
     );
