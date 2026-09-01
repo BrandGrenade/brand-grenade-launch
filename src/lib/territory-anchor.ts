@@ -278,23 +278,42 @@ export function reconcileTerritory(args: {
   }
 
   const gist = firstSentence(rec.description, 240);
-  paragraphs.push(
-    `Two recommendations exist in this body of work and they are not the same. The Intelligence Lab recommended the territory “${rec.name}”${
-      gist ? ` — ${gist.endsWith("…") ? gist.slice(0, -1) : gist}.` : "."
-    } The proposition locked at the selection gate is “${smp}”${
-      lockedName ? `, which came through the territory “${lockedName}”` : ""
-    }. This paragraph exists so the reader is not left holding two unreconciled best answers.`,
-  );
 
-  paragraphs.push(
-    args.humanOverride
-      ? `The divergence was a conscious decision, not an oversight. The strategy pipeline generated and scored its own field of territories and propositions, and at the human judgement gate the locked line was selected over the alternatives on the record set out elsewhere in this document. The Intelligence Lab recommendation remains the correct reading of the evidence base; the locked proposition is the expression judged most ownable and most campaignable off that evidence.`
-      : `The divergence is structural rather than a disagreement about the evidence. The strategy pipeline synthesised its own territories from the same evidence base and generated propositions against those, so it reached its conclusion independently of the Intelligence Lab's recommendation rather than in opposition to it. Where the two differ, the difference is one of expression and emphasis, not of fact.`,
-  );
+  if (args.reasoningRecorded) {
+    // Short connecting note: the substantive answer already exists in this
+    // document as recorded selection reasoning. Do not restate it here.
+    paragraphs.push(
+      `The Intelligence Lab's recommended territory for this brand was “${rec.name}”${
+        gist ? ` — ${gist.endsWith("…") ? gist.slice(0, -1) : gist}.` : "."
+      } It was not carried forward. The proposition locked at the selection gate is “${smp}”${
+        lockedName ? `, which came through the territory “${lockedName}”` : ""
+      }.`,
+    );
+    paragraphs.push(
+      `The reason is already set out in this document, under “Why this proposition over the alternatives”, and is not restated here: the recommended territory is a comparative claim — it answers the category on the category's own terms — and the locked proposition was chosen precisely because it refuses that comparison. That reasoning is the substantive answer to why the Intelligence Lab's recommendation was not the line taken forward.`,
+    );
+    paragraphs.push(
+      `“${rec.name}” has not been rejected on merit and nothing in the validation record eliminated it. It remains live as strategic context for how the locked proposition is evidenced, designed and defended.`,
+    );
+  } else {
+    paragraphs.push(
+      `Two recommendations exist in this body of work and they are not the same. The Intelligence Lab recommended the territory “${rec.name}”${
+        gist ? ` — ${gist.endsWith("…") ? gist.slice(0, -1) : gist}.` : "."
+      } The proposition locked at the selection gate is “${smp}”${
+        lockedName ? `, which came through the territory “${lockedName}”` : ""
+      }. This paragraph exists so the reader is not left holding two unreconciled best answers.`,
+    );
 
-  paragraphs.push(
-    `The practical consequence: “${rec.name}” remains live as strategic context and should continue to inform how the locked proposition is evidenced and defended. It has not been rejected on merit, and nothing in the validation record eliminated it. If the intention is to run the Intelligence Lab recommendation instead, that is a live option and should be taken explicitly rather than by default.`,
-  );
+    paragraphs.push(
+      args.humanOverride
+        ? `The divergence was a conscious decision, not an oversight. The strategy pipeline generated and scored its own field of territories and propositions, and at the human judgement gate the locked line was selected over the alternatives on the record set out elsewhere in this document. The Intelligence Lab recommendation remains the correct reading of the evidence base; the locked proposition is the expression judged most ownable and most campaignable off that evidence.`
+        : `The divergence is structural rather than a disagreement about the evidence. The strategy pipeline synthesised its own territories from the same evidence base and generated propositions against those, so it reached its conclusion independently of the Intelligence Lab's recommendation rather than in opposition to it. Where the two differ, the difference is one of expression and emphasis, not of fact.`,
+    );
+
+    paragraphs.push(
+      `The practical consequence: “${rec.name}” remains live as strategic context and should continue to inform how the locked proposition is evidenced and defended. It has not been rejected on merit, and nothing in the validation record eliminated it. If the intention is to run the Intelligence Lab recommendation instead, that is a live option and should be taken explicitly rather than by default.`,
+    );
+  }
 
   return {
     divergent,
