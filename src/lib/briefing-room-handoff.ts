@@ -298,7 +298,14 @@ export function buildHandoffPayload(ws: WorkspaceForHandoff): HandoffPayload {
           : ws.diagnosis.real_problem.statement;
     f3Fallback = `Frame: ${frame.toUpperCase()}. ${framedStatement} ${TAG("briefing_room")}`;
   }
-  b.sections.f3_outcome = pick(llm.f3_outcome, f3Fallback);
+  // Territory contract: as with the tension in f4, the recommended territory
+  // is ALWAYS appended after any LLM draft so it cannot be paraphrased away.
+  {
+    const base = pick(llm.f3_outcome, f3Fallback);
+    b.sections.f3_outcome = recommendedTerritory
+      ? `${base}\n\n${territoryAnchorBlock(recommendedTerritory)}`.trim()
+      : base;
+  }
 
   // f4 — Primary Barrier
   const barrierParts: string[] = [];
