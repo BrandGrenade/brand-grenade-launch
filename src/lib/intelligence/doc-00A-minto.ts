@@ -445,7 +445,7 @@ export function buildDocument00AMinto(
     (modelled.length
       ? `<p>The modelled finding${modelled.length === 1 ? "" : "s"} set out in section 01 (${modelled
           .map((f) => escapeHtml(f.code))
-          .join(", ")}) bear directly on what follows: ${
+          .join(", ")}) bear${modelled.length === 1 ? "s" : ""} directly on what follows: ${
           modelled.length === 1 ? "it is" : "they are"
         } inference, not observed fact, so the measures below are what would confirm or break ${
           modelled.length === 1 ? "it" : "them"
