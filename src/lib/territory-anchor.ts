@@ -273,8 +273,8 @@ export function reconcileTerritory(args: {
   const gist = firstSentence(rec.description, 240);
   paragraphs.push(
     `Two recommendations exist in this body of work and they are not the same. The Intelligence Lab recommended the territory “${rec.name}”${
-      gist ? ` — ${gist}` : ""
-    }. The proposition locked at the selection gate is “${smp}”${
+      gist ? ` — ${gist.endsWith("…") ? gist.slice(0, -1) : gist}.` : "."
+    } The proposition locked at the selection gate is “${smp}”${
       lockedName ? `, which came through the territory “${lockedName}”` : ""
     }. This paragraph exists so the reader is not left holding two unreconciled best answers.`,
   );
