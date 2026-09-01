@@ -1435,7 +1435,8 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
       if (rejectReasons.length >= 4) break;
     }
   }
-  const rejectedHtml = rejectReasons.length ? reasonGrid(rejectReasons) : "";
+  const rejectedHtml =
+    (rejectReasons.length ? reasonGrid(rejectReasons) : "") + overAlternativesHtml(smp);
 
   /* 08 — implications */
   const implicationItems = bullets(s14, 5).length ? bullets(s14, 5) : bullets(s15, 5);
