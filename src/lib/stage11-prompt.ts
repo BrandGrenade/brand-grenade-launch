@@ -76,6 +76,15 @@ T7 — INTERPRETATION DRIFT
 Could this proposition be reasonably misread into a meaning the organisation does not intend? Verdict: HOLDS / WOBBLES / CRACKS.
 CRACKS = FLAG as EXPOSED with the specific misreading named and a guard-rail proposed. Never fatal.
 
+════════════════════════════════════════
+FLAG DISCIPLINE (READ BEFORE WRITING ANY [FLAGS: ...] LINE)
+════════════════════════════════════════
+A flag is a DISCRIMINATOR, not a courtesy. If most of the set carries the same flag, the flag tells the human nothing and the whole exercise fails.
+- ONLY a CRACKS verdict produces a flag. WOBBLES NEVER produces a flag — a wobble is noted in the rationale and nothing else.
+- Every proposition is contestable, every line ages, and any line can be wilfully misread. Those generic conditions are NOT flags. Flag T5 only when a named competitor could credibly run the counter line you constructed within 12 months. Flag T6 only when you can name the specific event or shift that dates it. Flag T7 only when the misreading is the more natural reading for a normal reader, not merely an available one.
+- Calibration: across the whole set, expect roughly a third or fewer of the propositions to carry any flag at all. If you find yourself flagging nearly everything, your threshold is wrong — re-run the tier with the stricter reading above before writing the output.
+- Never flag a proposition simply because it is bold. Boldness is not exposure.
+
 T8 — ICONIC TIER SUSTAINABILITY (only for Iconic Tier flagged propositions)
 Does the proposition genuinely require all three truth types to be simultaneously active, or does it function with only one or two? Verdict: HOLDS (Iconic confirmed) / DOWNGRADE (Iconic flag removed). Never fatal.
 
