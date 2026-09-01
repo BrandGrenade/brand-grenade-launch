@@ -698,7 +698,10 @@ export function smpScoreProvenance(stage10: string, smp: string): SmpScoreProven
       `<p><strong>${escapeHtml(smp)}</strong> is the refined, locked expression of that same territory, ` +
       `written at the human judgement gate after the competitive pass had closed. ` +
       `Where a score appears against this exact wording, it is a post-lock re-score of the final line ` +
-      `against the same rubric — it is not a competitive result and does not rank it against the field.</p>`,
+      `against the same rubric — it is not a competitive result and does not rank it against the field.</p>` +
+      // Session-authored reasoning for the locked line, applied at the shared
+      // layer so every deliverable that renders provenance carries it.
+      arrivedAtReasoningHtml(smp),
   );
   return { postSelection: true, competitive, topCompetitive: ancestor, fieldTop, sentence, html };
 }
