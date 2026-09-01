@@ -465,6 +465,27 @@ function wholeSentences(text: string, count: number, budget: number): string {
 }
 
 /**
+ * Stage 10 dimension weights. The composite is a weighted sum, so a document
+ * that prints raw /10 dimension scores next to a composite is unverifiable
+ * unless the weights travel with them.
+ */
+const DIMENSION_WEIGHTS: Array<[RegExp, number]> = [
+  [/fame/i, 30],
+  [/truth/i, 20],
+  [/competitive\s*impossib|impossib/i, 15],
+  [/brand\s*permission|permission/i, 10],
+  [/clean\s*air/i, 10],
+  [/commercial\s*precedent|precedent/i, 5],
+];
+
+function dimensionWeight(dimension: string): number | null {
+  const d = (dimension ?? "").trim();
+  return DIMENSION_WEIGHTS.find(([re]) => re.test(d))?.[1] ?? null;
+}
+
+const round1 = (n: number) => (Math.round(n * 10) / 10).toString();
+
+/**
  * Two blocks that make the same point in two registers, back to back, read as
  * padding. Keep the first block whole, then carry over only those sentences of
  * the second that add information the first did not already state — so the
