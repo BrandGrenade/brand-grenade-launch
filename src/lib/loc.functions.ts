@@ -374,13 +374,25 @@ export const runLeftOfCentre = createServerFn({ method: "POST" })
       const enginesToRun = LOC_ENGINES.filter((e) => !keepSet.has(e));
       const engineResults = await Promise.all(
         enginesToRun.map(async (engine) => {
-          const r = await runOneEngine({
-            engine,
-            sessionId: data.sessionId,
-            inputs,
-            retryInstructions: data.retryInstructions,
-            abstractOpportunity,
-          });
+          const kind = STIMULUS_ENGINES[engine];
+          const r = kind
+            ? await runStimulusEngine({
+                engine,
+                kind,
+                sessionId: data.sessionId,
+                inputs,
+                retryInstructions: data.retryInstructions,
+                abstractOpportunity,
+                brandContext,
+                contextVector,
+              })
+            : await runOneEngine({
+                engine,
+                sessionId: data.sessionId,
+                inputs,
+                retryInstructions: data.retryInstructions,
+                abstractOpportunity,
+              });
           await bumpHeartbeat();
           return r;
         }),
