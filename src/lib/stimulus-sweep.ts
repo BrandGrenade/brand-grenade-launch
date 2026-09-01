@@ -45,7 +45,7 @@ export async function selectOperativeSweep(
     (d) => String(d.direction ?? "").trim().length > 0,
   );
 
-  const order = new Map(runIds.map((id, i) => [id, i]));
+  const order = new Map<string, number>(runIds.map((id, i) => [id, i] as [string, number]));
   const byRun = new Map<string, any[]>();
   for (const d of all) {
     const list = byRun.get(d.run_id) ?? [];
