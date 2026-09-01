@@ -686,12 +686,16 @@ export function buildSummaryDocument(
     (k) => session[`checkpoint_${k}_confirmed`] === true,
   ).length;
 
-  /* 01 — Background */
-  const briefLead = firstSentencesOf(str(session, "brief_text"), 4);
-  const issue = extractBusinessIssue(session);
-  const backgroundHtml = `${p(briefLead)}${p(issue)}${
-    briefLead || issue ? "" : nothing("No brief text stored for this session.")
-  }`;
+  /* 01 — Background.
+     The brief lead and the extracted business issue routinely make the same
+     point twice in different registers. They are merged into one paragraph
+     that states it once and keeps only what the second block genuinely adds. */
+  const briefLead = firstSentencesOf(str(session, "brief_text"), 4) ?? "";
+  const issue = extractBusinessIssue(session) ?? "";
+  const background = mergeRestatement(briefLead, issue);
+  const backgroundHtml = background
+    ? p(background)
+    : nothing("No brief text stored for this session.");
 
   /* 02 — What we know about the brand */
   // Brand facts live either in the flat columns or in the `brand_intelligence`
