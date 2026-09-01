@@ -158,7 +158,7 @@ export const getRepositoryPublic = createServerFn({ method: "GET" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: repo, error } = await supabaseAdmin
       .from("repositories")
-      .select("slug, title, intro")
+      .select("slug, title, intro, disclaimer")
       .eq("slug", data.slug)
       .maybeSingle();
     if (error) throw new Error(error.message);

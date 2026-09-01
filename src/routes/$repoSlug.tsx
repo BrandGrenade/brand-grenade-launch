@@ -2,9 +2,9 @@ import { createFileRoute, notFound } from "@tanstack/react-router";
 import { RepositoryView } from "@/components/RepositoryView";
 import { getRepositoryPublic } from "@/lib/repo.functions";
 
-// Dynamic client repository route. Static routes (kpmg/ey/deck) take precedence
-// so nothing changes for existing repositories; any other slug is resolved
-// from the `repositories` table (created via /admin/repositories).
+// Dynamic client repository route. Every repository — including kpmg, ey and
+// deck, which used to be hardcoded route files — is resolved from the
+// `repositories` table and edited via /admin/repositories.
 export const Route = createFileRoute("/$repoSlug")({
   loader: async ({ params }) => {
     const slug = params.repoSlug;
@@ -16,6 +16,10 @@ export const Route = createFileRoute("/$repoSlug")({
   head: ({ loaderData }) => ({
     meta: [
       { title: loaderData?.repository.title ?? "Repository — Brand Grenade" },
+      {
+        name: "description",
+        content: `Reference resource for ${loaderData?.repository.title ?? "Brand Grenade"}.`,
+      },
       { name: "robots", content: "noindex, nofollow" },
     ],
   }),
@@ -39,6 +43,7 @@ function DynamicRepositoryPage() {
       slug={repository.slug}
       title={repository.title}
       intro={repository.intro}
+      disclaimer={repository.disclaimer ?? null}
     />
   );
 }

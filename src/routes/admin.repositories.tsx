@@ -19,16 +19,19 @@ import {
   listAllVisitorsAccess,
   listRepositories,
   createRepository,
+  updateRepository,
+  updateVisitor,
+  updateDocument,
 } from "@/lib/repo-admin.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Lock, Trash2, Download, LogOut, KeyRound, Copy, Check, Power, Eye, EyeOff, Plus } from "lucide-react";
+import { Lock, Trash2, Download, LogOut, KeyRound, Copy, Check, Power, Eye, EyeOff, Plus, Pencil, X } from "lucide-react";
 import { Spinner } from "@/components/ui/busy";
 
 type Slug = string;
-interface Repo { slug: string; title: string; intro: string; created_at: string; }
+interface Repo { slug: string; title: string; intro: string; disclaimer: string | null; created_at: string; }
 function labelFor(slug: string, repos: Repo[]): string {
   const r = repos.find((x) => x.slug === slug);
   if (r) return r.title.replace(/^Brand Grenade\s*—\s*/, "") || r.slug;
@@ -168,7 +171,7 @@ function RepositoriesTabs() {
       </TabsContent>
       {repos.map((r) => (
         <TabsContent key={r.slug} value={r.slug} className="mt-6">
-          <RepositoryAdminPanel slug={r.slug} repos={repos} />
+          <RepositoryAdminPanel slug={r.slug} repos={repos} onRepoUpdated={refresh} />
         </TabsContent>
       ))}
       <TabsContent value="__new__" className="mt-6">
@@ -437,7 +440,7 @@ function AllAccessPanel({ repos }: { repos: Repo[] }) {
   );
 }
 
-function RepositoryAdminPanel({ slug, repos }: { slug: Slug; repos: Repo[] }) {
+function RepositoryAdminPanel({ slug, repos, onRepoUpdated }: { slug: Slug; repos: Repo[]; onRepoUpdated: () => void | Promise<void> }) {
   const fListVisitors = useServerFn(listVisitors);
   const fCreateVisitor = useServerFn(createVisitor);
   const fDeleteVisitor = useServerFn(deleteVisitor);
@@ -453,6 +456,10 @@ function RepositoryAdminPanel({ slug, repos }: { slug: Slug; repos: Repo[] }) {
   const [docs, setDocs] = useState<Doc[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [revealedPasswords, setRevealedPasswords] = useState<Record<string, string>>({});
+  const [editingVisitorId, setEditingVisitorId] = useState<string | null>(null);
+  const [editingDocId, setEditingDocId] = useState<string | null>(null);
+  const fUpdateVisitor = useServerFn(updateVisitor);
+  const fUpdateDoc = useServerFn(updateDocument);
 
   const refresh = useCallback(async () => {
     const [v, d, s] = await Promise.all([
@@ -475,6 +482,11 @@ function RepositoryAdminPanel({ slug, repos }: { slug: Slug; repos: Repo[] }) {
 
   return (
     <div className="space-y-10">
+      <RepositoryContentEditor
+        repo={repos.find((r) => r.slug === slug) ?? null}
+        onSaved={onRepoUpdated}
+      />
+
       {stats && (
         <section className="grid grid-cols-3 gap-4">
           <StatCard label="Visits this week" value={stats.visits.week} />
@@ -540,6 +552,14 @@ function RepositoryAdminPanel({ slug, repos }: { slug: Slug; repos: Repo[] }) {
                     >
                       <Eye className="h-4 w-4 mr-1.5" /> View as
                     </a>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      title="Edit name, organisation, email"
+                      onClick={() => setEditingVisitorId(editingVisitorId === v.id ? null : v.id)}
+                    >
+                      <Pencil className="h-4 w-4 mr-1.5" /> Edit
+                    </Button>
                     <SetPasswordButton
                       visitorName={v.name}
                       onSet={async (password) => {
@@ -576,6 +596,17 @@ function RepositoryAdminPanel({ slug, repos }: { slug: Slug; repos: Repo[] }) {
 
 
                 </div>
+                {editingVisitorId === v.id && (
+                  <EditVisitorForm
+                    visitor={v}
+                    onCancel={() => setEditingVisitorId(null)}
+                    onSave={async (input) => {
+                      await fUpdateVisitor({ data: { id: v.id, ...input } });
+                      setEditingVisitorId(null);
+                      await refresh();
+                    }}
+                  />
+                )}
                 {revealed && (
                   <PasswordReveal
                     password={revealed}
@@ -609,26 +640,49 @@ function RepositoryAdminPanel({ slug, repos }: { slug: Slug; repos: Repo[] }) {
             <div className="p-4 text-sm text-text-secondary">No documents uploaded.</div>
           )}
           {docs.map((d) => (
-            <div key={d.id} className="p-4 flex items-center justify-between gap-4">
-              <div className="min-w-0">
-                <p className="text-sm font-medium">
-                  <span className="text-[13px] text-text-secondary mr-2">#{d.display_order}</span>
-                  {d.title}
-                </p>
-                {d.description && <p className="text-[13px] text-text-secondary">{d.description}</p>}
-                <p className="text-[13px] text-text-secondary uppercase">{d.file_type}</p>
+            <div key={d.id} className="p-4 flex flex-col gap-2">
+              <div className="flex items-center justify-between gap-4">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium">
+                    <span className="text-[13px] text-text-secondary mr-2">#{d.display_order}</span>
+                    {d.title}
+                  </p>
+                  {d.description && <p className="text-[13px] text-text-secondary">{d.description}</p>}
+                  <p className="text-[13px] text-text-secondary uppercase">{d.file_type}</p>
+                </div>
+                <div className="flex gap-2 shrink-0">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    title="Edit title, description, order"
+                    onClick={() => setEditingDocId(editingDocId === d.id ? null : d.id)}
+                  >
+                    <Pencil className="h-4 w-4 mr-1.5" /> Edit
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={async () => {
+                      if (!confirm(`Delete ${d.title}?`)) return;
+                      await fDeleteDoc({ data: { id: d.id } });
+                      await refresh();
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={async () => {
-                  if (!confirm(`Delete ${d.title}?`)) return;
-                  await fDeleteDoc({ data: { id: d.id } });
-                  await refresh();
-                }}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
+              {editingDocId === d.id && (
+                <EditDocumentForm
+                  doc={d}
+                  onCancel={() => setEditingDocId(null)}
+                  onSave={async (input) => {
+                    await fUpdateDoc({ data: { id: d.id, ...input } });
+                    setEditingDocId(null);
+                    await refresh();
+                  }}
+                />
+              )}
             </div>
           ))}
         </div>
@@ -1065,6 +1119,7 @@ function CreateRepositoryPanel({ onCreated }: { onCreated: () => void | Promise<
   const [slug, setSlug] = useState("");
   const [title, setTitle] = useState("");
   const [intro, setIntro] = useState("");
+  const [disclaimer, setDisclaimer] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [ok, setOk] = useState<string | null>(null);
@@ -1082,10 +1137,10 @@ function CreateRepositoryPanel({ onCreated }: { onCreated: () => void | Promise<
     if (!title.trim()) { setError("Title required."); return; }
     setBusy(true);
     try {
-      const res = await fCreate({ data: { slug: s, title: title.trim(), intro: intro.trim() } });
+      const res = await fCreate({ data: { slug: s, title: title.trim(), intro: intro.trim(), disclaimer: disclaimer.trim() } });
       if (!res.ok) { setError(res.error ?? "Failed to create repository."); return; }
       setOk(`Repository "${s}" created. It's now live at /${s} and ready for visitors and documents.`);
-      setSlug(""); setTitle(""); setIntro("");
+      setSlug(""); setTitle(""); setIntro(""); setDisclaimer("");
       await onCreated();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create repository.");
@@ -1134,6 +1189,15 @@ function CreateRepositoryPanel({ onCreated }: { onCreated: () => void | Promise<
             rows={5}
           />
         </div>
+        <div>
+          <label className="block text-[13px] font-medium text-text-secondary mb-1">Disclaimer (optional)</label>
+          <Textarea
+            value={disclaimer}
+            onChange={(e) => setDisclaimer(e.target.value)}
+            placeholder="e.g. Independent, unaffiliated demonstration — not commissioned, endorsed, or reviewed."
+            rows={3}
+          />
+        </div>
         {error && <p className="text-sm text-primary">{error}</p>}
         {ok && <p className="text-sm text-primary">{ok}</p>}
         <Button type="submit" disabled={busy} className="bg-card text-text-primary hover:bg-card">
@@ -1141,5 +1205,204 @@ function CreateRepositoryPanel({ onCreated }: { onCreated: () => void | Promise<
         </Button>
       </form>
     </div>
+  );
+}
+
+function RepositoryContentEditor({
+  repo,
+  onSaved,
+}: {
+  repo: Repo | null;
+  onSaved: () => void | Promise<void>;
+}) {
+  const fUpdate = useServerFn(updateRepository);
+  const [title, setTitle] = useState(repo?.title ?? "");
+  const [intro, setIntro] = useState(repo?.intro ?? "");
+  const [disclaimer, setDisclaimer] = useState(repo?.disclaimer ?? "");
+  const [busy, setBusy] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    setTitle(repo?.title ?? "");
+    setIntro(repo?.intro ?? "");
+    setDisclaimer(repo?.disclaimer ?? "");
+    setSaved(false);
+    // Reset only when switching repository, so a "Saved." confirmation
+    // isn't wiped by the refresh that follows a successful save.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [repo?.slug]);
+
+  if (!repo) return null;
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!repo) return;
+    setError("");
+    setSaved(false);
+    setBusy(true);
+    try {
+      await fUpdate({ data: { slug: repo.slug, title: title.trim(), intro, disclaimer } });
+      setSaved(true);
+      await onSaved();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to save.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <section>
+      <h2 className="text-sm font-semibold uppercase tracking-wider text-text-secondary">
+        Page content — {labelFor(repo.slug, [repo])}
+      </h2>
+      <p className="mt-1 text-[13px] text-text-secondary">
+        Edits appear immediately on <code className="font-mono">/{repo.slug}</code>.
+      </p>
+      <form onSubmit={submit} className="mt-4 space-y-4 border border-border rounded-lg p-5">
+        <div>
+          <label className="block text-[13px] font-medium text-text-secondary mb-1">Title</label>
+          <Input value={title} onChange={(e) => setTitle(e.target.value)} required />
+        </div>
+        <div>
+          <label className="block text-[13px] font-medium text-text-secondary mb-1">Intro</label>
+          <Textarea value={intro} onChange={(e) => setIntro(e.target.value)} rows={5} />
+        </div>
+        <div>
+          <label className="block text-[13px] font-medium text-text-secondary mb-1">Disclaimer (optional)</label>
+          <Textarea
+            value={disclaimer}
+            onChange={(e) => setDisclaimer(e.target.value)}
+            rows={3}
+            placeholder="e.g. Independent, unaffiliated demonstration — not commissioned, endorsed, or reviewed."
+          />
+        </div>
+        {error && <p className="text-sm text-primary">{error}</p>}
+        <div className="flex items-center gap-3">
+          <Button type="submit" disabled={busy} className="bg-card text-text-primary hover:bg-card">
+            {busy ? <><Spinner /> Saving…</> : "Save page content"}
+          </Button>
+          {saved && <span className="text-[13px] text-text-secondary">Saved.</span>}
+        </div>
+      </form>
+    </section>
+  );
+}
+
+function EditVisitorForm({
+  visitor,
+  onSave,
+  onCancel,
+}: {
+  visitor: Visitor;
+  onSave: (input: { name: string; organisation?: string; email?: string }) => Promise<void>;
+  onCancel: () => void;
+}) {
+  const [name, setName] = useState(visitor.name);
+  const [organisation, setOrganisation] = useState(visitor.organisation ?? "");
+  const [email, setEmail] = useState(visitor.email ?? "");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+
+  return (
+    <form
+      onSubmit={async (e) => {
+        e.preventDefault();
+        setError("");
+        setBusy(true);
+        try {
+          await onSave({ name: name.trim(), organisation, email });
+        } catch (err) {
+          setError(err instanceof Error ? err.message : "Failed to save.");
+        } finally {
+          setBusy(false);
+        }
+      }}
+      className="rounded-lg border border-border p-4 space-y-3"
+    >
+      <div className="grid gap-3 sm:grid-cols-3">
+        <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Name" required />
+        <Input
+          value={organisation}
+          onChange={(e) => setOrganisation(e.target.value)}
+          placeholder="Organisation (optional)"
+        />
+        <Input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email (optional)" />
+      </div>
+      {error && <p className="text-sm text-primary">{error}</p>}
+      <div className="flex gap-2">
+        <Button type="submit" size="sm" disabled={busy || !name.trim()} className="bg-card text-text-primary hover:bg-card">
+          {busy ? <><Spinner /> Saving…</> : "Save changes"}
+        </Button>
+        <Button type="button" size="sm" variant="outline" onClick={onCancel}>
+          <X className="h-4 w-4 mr-1.5" /> Cancel
+        </Button>
+      </div>
+    </form>
+  );
+}
+
+function EditDocumentForm({
+  doc,
+  onSave,
+  onCancel,
+}: {
+  doc: Doc;
+  onSave: (input: { title: string; description?: string; displayOrder: number }) => Promise<void>;
+  onCancel: () => void;
+}) {
+  const [title, setTitle] = useState(doc.title);
+  const [description, setDescription] = useState(doc.description ?? "");
+  const [order, setOrder] = useState(String(doc.display_order));
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+
+  return (
+    <form
+      onSubmit={async (e) => {
+        e.preventDefault();
+        setError("");
+        setBusy(true);
+        try {
+          await onSave({
+            title: title.trim(),
+            description,
+            displayOrder: Number.parseInt(order, 10) || 0,
+          });
+        } catch (err) {
+          setError(err instanceof Error ? err.message : "Failed to save.");
+        } finally {
+          setBusy(false);
+        }
+      }}
+      className="rounded-lg border border-border p-4 space-y-3"
+    >
+      <div className="grid gap-3 sm:grid-cols-[1fr_120px]">
+        <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Title" required />
+        <Input
+          type="number"
+          min={0}
+          value={order}
+          onChange={(e) => setOrder(e.target.value)}
+          placeholder="Order"
+        />
+      </div>
+      <Textarea
+        value={description}
+        onChange={(e) => setDescription(e.target.value)}
+        placeholder="Short description (optional)"
+        rows={2}
+      />
+      {error && <p className="text-sm text-primary">{error}</p>}
+      <div className="flex gap-2">
+        <Button type="submit" size="sm" disabled={busy || !title.trim()} className="bg-card text-text-primary hover:bg-card">
+          {busy ? <><Spinner /> Saving…</> : "Save changes"}
+        </Button>
+        <Button type="button" size="sm" variant="outline" onClick={onCancel}>
+          <X className="h-4 w-4 mr-1.5" /> Cancel
+        </Button>
+      </div>
+    </form>
   );
 }

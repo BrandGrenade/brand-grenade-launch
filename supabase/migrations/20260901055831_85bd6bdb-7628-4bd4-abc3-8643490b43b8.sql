@@ -1,0 +1,1 @@
+ALTER TABLE public.repositories ADD COLUMN IF NOT EXISTS disclaimer text;
