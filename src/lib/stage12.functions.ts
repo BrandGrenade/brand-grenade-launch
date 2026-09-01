@@ -14,6 +14,10 @@ import {
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertSessionAccess } from "@/lib/auth-helpers.server";
 import { assertUpstreamStageOutput } from "./pipeline-integrity";
+import {
+  extractRecommendedTerritory,
+  territoryPromptBlockForSelection,
+} from "./territory-anchor";
 
 const Input = z.object({
   sessionId: z.string().uuid(),
@@ -194,6 +198,8 @@ export const runStage12 = createServerFn({ method: "POST" })
       .update({ current_stage: 12, status: "running", stage_12_error: null })
       .eq("id", data.sessionId);
 
+    const recommendedTerritory = extractRecommendedTerritory(session.brief_text);
+
     const stage10Output = session.stage_10_output ?? "";
     const { filteredOutput, validated, eliminated } = filterValidatedFromStage11(session.stage_11_output);
     if (validated.length === 0) {
@@ -219,6 +225,9 @@ export const runStage12 = createServerFn({ method: "POST" })
       stage1Output: session.stage_1_output ?? "",
       validatedCount: validated.length,
       eliminatedCount: eliminated.length,
+      recommendedTerritoryBlock: recommendedTerritory
+        ? territoryPromptBlockForSelection(recommendedTerritory)
+        : undefined,
     });
     if (feedback) {
       const { buildFeedbackInjection } = await import("./feedback-injection");
