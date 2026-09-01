@@ -689,21 +689,29 @@ export function smpScoreProvenance(stage10: string, smp: string): SmpScoreProven
       .replace(/<[^>]+>/g, "")}. ` +
     `“${smp}” is the refined expression of that territory, locked by human judgement after the competitive pass closed. ` +
     `Any score shown against this exact wording is a post-lock re-score of the final line, not a competitive rank.`;
-  const html = callout(
-    "How this proposition was arrived at",
+  const core =
     `<p>The system explored and scored the field; a human made the final call. ` +
-      `The territory question was settled competitively: ${rank
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")} is the scored candidate this territory came through — the closest expression of it in the competitive field.</p>` +
-      `<p><strong>${escapeHtml(smp)}</strong> is the refined, locked expression of that same territory, ` +
-      `written at the human judgement gate after the competitive pass had closed. ` +
-      `Where a score appears against this exact wording, it is a post-lock re-score of the final line ` +
-      `against the same rubric — it is not a competitive result and does not rank it against the field.</p>` +
-      // Session-authored reasoning for the locked line, applied at the shared
-      // layer so every deliverable that renders provenance carries it.
-      arrivedAtReasoningHtml(smp),
-  );
-  return { postSelection: true, competitive, topCompetitive: ancestor, fieldTop, sentence, html };
+    `The territory question was settled competitively: ${rank
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")} is the scored candidate this territory came through — the closest expression of it in the competitive field.</p>` +
+    `<p><strong>${escapeHtml(smp)}</strong> is the refined, locked expression of that same territory, ` +
+    `written at the human judgement gate after the competitive pass had closed. ` +
+    `Where a score appears against this exact wording, it is a post-lock re-score of the final line ` +
+    `against the same rubric — it is not a competitive result and does not rank it against the field.</p>`;
+  const heading = "How this proposition was arrived at";
+  // Session-authored reasoning for the locked line, applied at the shared
+  // layer so every deliverable that renders provenance carries it.
+  const html = callout(heading, core + arrivedAtReasoningHtml(smp));
+  const htmlCore = callout(heading, core);
+  return {
+    postSelection: true,
+    competitive,
+    topCompetitive: ancestor,
+    fieldTop,
+    sentence,
+    html,
+    htmlCore,
+  };
 }
 
 
