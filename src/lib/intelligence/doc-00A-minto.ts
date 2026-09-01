@@ -426,12 +426,16 @@ export function buildDocument00AMinto(
     if (parts.length) return `Scored lower on ${parts.join(" and ")}.`;
     return NO_COMPARATIVE_RATIONALE;
   }
-  const rejected = reasonGrid(
-    others.slice(0, 4).map((t) => ({
-      title: str(t.name) || "Unnamed territory",
-      detail: notCarriedDetail(t),
-    })),
-  );
+  const rejected =
+    (preferenceApplies
+      ? `<p>One territory below scores at or above the recommendation on every dimension shown in section 08. It was still not carried forward: the cost-and-risk reasoning for preferring portfolio coherence over the higher-scoring single-brand defence is set out in full in section 01, and applies directly to that option.</p>`
+      : "") +
+    reasonGrid(
+      others.slice(0, 4).map((t) => ({
+        title: str(t.name) || "Unnamed territory",
+        detail: notCarriedDetail(t),
+      })),
+    );
 
 
   /* 08 — implications */
