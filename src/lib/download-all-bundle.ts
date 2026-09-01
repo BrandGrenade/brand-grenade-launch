@@ -329,9 +329,6 @@ export async function buildAndDownloadBundle(
       } else {
         skipped.push("Creative Stimulus Engine/Shortlist_Gate_One.html");
       }
-    } else {
-      skipped.push("Creative Stimulus Engine/Lens_Sweep_Raw_Ideas.html");
-      skipped.push("Creative Stimulus Engine/Shortlist_Gate_One.html");
     }
   } catch (e) {
     console.error("[bundle] Creative Stimulus Engine exports failed", e);
