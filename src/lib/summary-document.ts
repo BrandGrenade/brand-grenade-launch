@@ -497,13 +497,21 @@ export function mergeRestatement(lead: string, follow: string): string {
   const b = (follow ?? "").trim();
   if (!a) return b;
   if (!b) return a;
+  const STOP = new Set([
+    "that","this","what","with","which","from","they","them","their","there","then","than",
+    "have","been","were","was","will","would","could","should","because","about","into",
+    "these","those","when","where","while","itself","after","before","also","only","still",
+    "even","much","more","most","such","some","other","being","does","doing","over","under",
+  ]);
   const words = (t: string) =>
     t
       .toLowerCase()
       .replace(/&#?\w+;/g, " ")
       .replace(/[^a-z0-9\s]/g, " ")
       .split(/\s+/)
-      .filter((w) => w.length > 3);
+      .filter((w) => w.length > 3)
+      .map((w) => w.replace(/(ies|es|s)$/, ""))
+      .filter((w) => !STOP.has(w));
   const leadWords = new Set(words(a));
   const kept = b
     .split(/(?<=[.!?])\s+/)
@@ -513,7 +521,7 @@ export function mergeRestatement(lead: string, follow: string): string {
       const w = words(s);
       if (w.length < 4) return true;
       const shared = w.filter((x) => leadWords.has(x)).length;
-      return shared / w.length < 0.34;
+      return shared / w.length < 0.2;
     });
   return kept.length ? `${a} ${kept.join(" ")}` : a;
 }
