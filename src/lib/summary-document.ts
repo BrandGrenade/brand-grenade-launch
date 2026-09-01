@@ -464,6 +464,40 @@ function wholeSentences(text: string, count: number, budget: number): string {
   return (out.length ? out : parts.slice(0, 1)).join(" ").trim();
 }
 
+/**
+ * Two blocks that make the same point in two registers, back to back, read as
+ * padding. Keep the first block whole, then carry over only those sentences of
+ * the second that add information the first did not already state — so the
+ * point is made once, in one paragraph, rather than restated immediately after
+ * in more literary language.
+ */
+export function mergeRestatement(lead: string, follow: string): string {
+  const a = (lead ?? "").trim();
+  const b = (follow ?? "").trim();
+  if (!a) return b;
+  if (!b) return a;
+  const words = (t: string) =>
+    t
+      .toLowerCase()
+      .replace(/&#?\w+;/g, " ")
+      .replace(/[^a-z0-9\s]/g, " ")
+      .split(/\s+/)
+      .filter((w) => w.length > 3);
+  const leadWords = new Set(words(a));
+  const kept = b
+    .split(/(?<=[.!?])\s+/)
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .filter((s) => {
+      const w = words(s);
+      if (w.length < 4) return true;
+      const shared = w.filter((x) => leadWords.has(x)).length;
+      return shared / w.length < 0.34;
+    });
+  return kept.length ? `${a} ${kept.join(" ")}` : a;
+}
+
+
 
 function nothing(what: string): string {
   return `<p class="muted">${escapeHtml(what)}</p>`;
