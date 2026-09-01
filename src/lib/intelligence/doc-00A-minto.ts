@@ -424,6 +424,20 @@ export function buildDocument00AMinto(
       parts.push(`first-mover advantage ${f}/10 against ${primaryFirstMover}/10`);
     }
     if (parts.length) return `Scored lower on ${parts.join(" and ")}.`;
+    // The territory that outscores the recommendation is not left with "no
+    // rationale recorded": the cost-and-risk reasoning in section 01 is
+    // precisely the reason it was not carried forward.
+    if (
+      preferenceApplies &&
+      p != null &&
+      f != null &&
+      primaryPermission != null &&
+      primaryFirstMover != null &&
+      p >= primaryPermission &&
+      f >= primaryFirstMover
+    ) {
+      return `Scores at or above the recommendation (brand permission ${p}/10, first-mover advantage ${f}/10) and was still not carried forward, on the cost-and-risk reasoning set out in section 01.`;
+    }
     return NO_COMPARATIVE_RATIONALE;
   }
   const rejected =
