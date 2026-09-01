@@ -48,8 +48,16 @@ function unnumber(s: string): string {
 }
 
 function confidenceOf(s: string): string {
-  const m = s.match(/\b((?:very\s+)?(?:med(?:ium)?|low|high)(?:[-–](?:med(?:ium)?|low|high))?)\s+confidence\b/i);
-  return m ? m[1]!.replace(/med\b/i, "medium").replace(/[-–]/, "-") : "";
+  const m = s.match(
+    /\b((?:very\s+)?(?:med(?:ium)?|low|high)(?:[-–](?:med(?:ium)?|low|high))?)\s+confidence\b/i,
+  );
+  if (!m) return "";
+  return m[1]!
+    .toLowerCase()
+    .replace(/–/g, "-")
+    .split("-")
+    .map((w) => (w === "med" ? "medium" : w))
+    .join("-");
 }
 
 /**
