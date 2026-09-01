@@ -998,7 +998,9 @@ export function buildSummaryDocument(
   // reader can add the column up and verify the composite on the page.
   const contributions = scoreRows.map((r) => {
     const weight = dimensionWeight(r.dimension);
-    const raw = parseFloat(String(r.score ?? "").replace(/[^0-9.]/g, ""));
+    // Scores arrive as "6/10" — take the numerator only, never the digits of
+    // the whole string, or a 6/10 silently becomes 610.
+    const raw = parseFloat((String(r.score ?? "").match(/-?\d+(?:\.\d+)?/) ?? ["NaN"])[0]);
     const points = weight != null && Number.isFinite(raw) ? (raw / 10) * weight : null;
     return { ...r, weight, points };
   });
