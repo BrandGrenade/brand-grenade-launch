@@ -452,17 +452,18 @@ export const listRepositories = createServerFn({ method: "GET" }).handler(async 
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data, error } = await supabaseAdmin
     .from("repositories")
-    .select("slug, title, intro, created_at")
+    .select("slug, title, intro, disclaimer, created_at")
     .order("created_at", { ascending: true });
   if (error) throw new Error(error.message);
   return { repositories: data ?? [] };
 });
 
 export const createRepository = createServerFn({ method: "POST" })
-  .inputValidator((d: { slug: string; title: string; intro?: string }) => ({
+  .inputValidator((d: { slug: string; title: string; intro?: string; disclaimer?: string }) => ({
     slug: slugSchema.parse(d.slug),
     title: z.string().min(1).max(300).parse(d.title),
     intro: z.string().max(4000).parse(d.intro ?? ""),
+    disclaimer: z.string().max(4000).parse(d.disclaimer ?? ""),
   }))
   .handler(async ({ data }) => {
     await requireAdmin();
@@ -477,7 +478,78 @@ export const createRepository = createServerFn({ method: "POST" })
       slug: data.slug,
       title: data.title,
       intro: data.intro,
+      disclaimer: data.disclaimer || null,
     });
     if (error) throw new Error(error.message);
     return { ok: true as const, slug: data.slug };
+  });
+
+export const updateRepository = createServerFn({ method: "POST" })
+  .inputValidator((d: { slug: string; title: string; intro?: string; disclaimer?: string }) => ({
+    slug: slugSchema.parse(d.slug),
+    title: z.string().min(1).max(300).parse(d.title),
+    intro: z.string().max(4000).parse(d.intro ?? ""),
+    disclaimer: z.string().max(4000).parse(d.disclaimer ?? ""),
+  }))
+  .handler(async ({ data }) => {
+    await requireAdmin();
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin
+      .from("repositories")
+      .update({
+        title: data.title,
+        intro: data.intro,
+        disclaimer: data.disclaimer.trim() ? data.disclaimer : null,
+      })
+      .eq("slug", data.slug);
+    if (error) throw new Error(error.message);
+    return { ok: true as const };
+  });
+
+export const updateVisitor = createServerFn({ method: "POST" })
+  .inputValidator((d: { id: string; name: string; organisation?: string; email?: string }) => ({
+    id: z.string().uuid().parse(d.id),
+    name: z.string().min(1).max(200).parse(d.name),
+    organisation: d.organisation?.trim() ? z.string().max(200).parse(d.organisation.trim()) : null,
+    email: d.email?.trim()
+      ? z
+          .string()
+          .max(200)
+          .regex(/^[^@\s]+@[^@\s]+\.[^@\s]+$/, "Invalid email address")
+          .parse(d.email.trim().toLowerCase())
+      : null,
+  }))
+  .handler(async ({ data }) => {
+    await requireAdmin();
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin
+      .from("repository_visitors")
+      .update({ name: data.name, organisation: data.organisation, email: data.email })
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true as const };
+  });
+
+export const updateDocument = createServerFn({ method: "POST" })
+  .inputValidator((d: { id: string; title: string; description?: string; displayOrder?: number }) => ({
+    id: z.string().uuid().parse(d.id),
+    title: z.string().min(1).max(300).parse(d.title),
+    description: d.description?.trim() ? z.string().max(2000).parse(d.description) : null,
+    displayOrder: z.number().int().min(0).max(9999).parse(
+      typeof d.displayOrder === "number" ? d.displayOrder : 0,
+    ),
+  }))
+  .handler(async ({ data }) => {
+    await requireAdmin();
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin
+      .from("repository_documents")
+      .update({
+        title: data.title,
+        description: data.description,
+        display_order: data.displayOrder,
+      })
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true as const };
   });
