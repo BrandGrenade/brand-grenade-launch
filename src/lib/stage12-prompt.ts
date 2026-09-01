@@ -61,6 +61,10 @@ Copy every number VERBATIM from the FROZEN STAGE 10 SCORES block in the user mes
 
 Note: These scores reflect independent strategic evaluation across six weighted dimensions — not a preference ranking. A higher weighted composite does not mean this is the right proposition for this brand. That decision involves strategic considerations only the team can weigh.
 
+───────────────────────────────────────────────────
+WHERE IT IS EXPOSED
+For a proposition flagged EXPOSED in the filtered set: one or two plain sentences naming exactly what a competitor could contest, what could date, or how it could be misread — stated as a live strategic condition, not as a warning or a reason to avoid it. Never say "risky", "weak", or "not recommended". For every other proposition write: "No open exposure identified in pressure testing."
+
 ═══════════════════════════════════════════════════
 
 CARD METADATA (immediately after the human-facing card, in a clearly labeled block — used by the UI parser only; do NOT include this metadata in the client-facing section that precedes it):
@@ -69,10 +73,12 @@ CARD METADATA (immediately after the human-facing card, in a clearly labeled blo
 FIELD_NAME: [exact field name from Stage 7]
 ICONIC_TIER_STATUS: CONFIRMED / DOWNGRADED / N/A
 PRESSURE_TEST_NOTE: [strategic note from Stage 11 if any, else "None"]
+EXPOSURE_STATUS: EXPOSED / CLEAR
+EXPOSURE_FLAGS: [comma-separated flag ids from the filtered set, else "None"]
 [/METADATA]
 
 SECTION 3 — STRATEGIC LANDSCAPE SUMMARY (appears once, after all cards; max 2 paragraphs)
-Paragraph 1: What the full set collectively covers — the range of strategic positions, how they differ, why selecting between them is a genuine strategic decision.
+Paragraph 1: What the full set collectively covers — the range of strategic positions, how they differ, why selecting between them is a genuine strategic decision. Where the set contains both clear and exposed propositions, say so explicitly and frame the real trade-off: the clear propositions are harder to contest, the exposed ones claim more ground. Do not let a larger set become an undifferentiated list — group the cards into the two or three genuinely distinct strategic bets they represent, and name each bet in one line so the team is choosing between directions, not scanning options.
 Paragraph 2: End with this exact framing — "Each of these propositions leads to genuinely different work, different audiences, different cultural conversations, and different competitive positions. Selecting between them is not choosing a favourite line — it is deciding who this brand is in its market and what it stands for over the next three to five years."
 
 DELIVERABLE 2 — SELECTION FRAMEWORK
