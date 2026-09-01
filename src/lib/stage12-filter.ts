@@ -220,11 +220,49 @@ export function parseStage11Verdicts(text: string): Stage11Verdict[] {
     if (!head) continue;
     const verdictLine = block.match(/SMP\s+VERDICT\s*:\s*([^\n]+)/i);
     const rawVerdict = verdictLine ? verdictLine[1].trim().toUpperCase() : "";
+
+    // ── Stage 11 V2 machine-readable tiers ────────────────────────────────
+    const listOf = (raw: string | undefined): string[] =>
+      !raw || /^\s*NONE\s*$/i.test(raw)
+        ? []
+        : raw
+            .split(/[,;]/)
+            .map((s) => s.trim().toUpperCase())
+            .filter(Boolean);
+    const fatalMatch = block.match(/\[?\s*FATAL\s*:\s*([^\]\n]+)\]?/i);
+    const flagsMatch = block.match(/\[?\s*FLAGS\s*:\s*([^\]\n]+)\]?/i);
+    const fatal = listOf(fatalMatch?.[1]);
+    const flags = listOf(flagsMatch?.[1]);
+    const exposureNote =
+      block.match(/EXPOSURE\s+NOTE[^:]*:\s*([^\n]+)/i)?.[1]?.trim() || undefined;
+
+    // V1 fallback: when a run predates the fatal/flags block, infer the tier
+    // from the T5 classification discriminator, defaulting to fatal.
+    const hasMachineBlock = !!fatalMatch || !!flagsMatch;
+    const competesOnly =
+      /CLASSIFICATION\s*:\s*COMPETES[- ]FOR[- ]TERRITORY/i.test(block);
+
     let verdict = rawVerdict;
     if (/ELIMINAT/.test(rawVerdict)) verdict = "ELIMINATED";
     else if (/REWRIT/.test(rawVerdict)) verdict = "REWRITTEN";
+    else if (/VALIDATED\s*[—\-–]\s*EXPOSED|VALIDATED\s+EXPOSED/.test(rawVerdict))
+      verdict = "VALIDATED — EXPOSED";
     else if (/VALIDATED\s+WITH\s+STRATEGIC\s+NOTE/.test(rawVerdict)) verdict = "VALIDATED WITH STRATEGIC NOTE";
     else if (/VALIDATED/.test(rawVerdict)) verdict = "VALIDATED";
+
+    // The machine-readable block is authoritative over the prose verdict: a
+    // model that wrote ELIMINATED while declaring [FATAL: NONE] eliminated a
+    // proposition for being contestable, which V2 does not permit.
+    if (verdict === "ELIMINATED" && hasMachineBlock && fatal.length === 0) {
+      verdict = flags.length ? "VALIDATED — EXPOSED" : "VALIDATED WITH STRATEGIC NOTE";
+    }
+    // Conversely, a declared fatal test always eliminates.
+    if (fatal.length > 0) verdict = "ELIMINATED";
+    if (verdict !== "ELIMINATED" && flags.length > 0) verdict = "VALIDATED — EXPOSED";
+    if (!hasMachineBlock && verdict === "ELIMINATED" && competesOnly) {
+      // Pre-V2 output whose only crack competed for territory — not fatal.
+      verdict = "VALIDATED — EXPOSED";
+    }
 
     const iconic = block.match(/ICONIC\s+TIER\s+FINAL\s+STATUS\s*:\s*([A-Z\/ ]+)/i);
     const rewriteLine = verdict === "REWRITTEN" ? extractRewriteLine(block) : null;
@@ -235,6 +273,10 @@ export function parseStage11Verdicts(text: string): Stage11Verdict[] {
       fieldName,
       verdict,
       iconicStatus: iconic ? iconic[1].trim().toUpperCase() : "N/A",
+      fatal,
+      flags,
+      exposed: verdict === "VALIDATED — EXPOSED",
+      exposureNote,
       block: rewriteLine
         ? `SMP: "${rewriteLine}" — FIELD: ${fieldName}\nSMP VERDICT: REWRITTEN\nREWRITE SOURCE: original line "${head.smpLine}"\n\n${block}`
         : block,
