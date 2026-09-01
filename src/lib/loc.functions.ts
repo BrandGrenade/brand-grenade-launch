@@ -16,11 +16,17 @@ import { buildLocInputs, type WorkspaceInputSnapshot } from "./loc/brief-extract
 import {
   abstractStrategicOpportunity,
   buildEngineUserMessage,
+  buildStimulusContext,
   getEngineSystemPrompt,
   parseEngineOutput,
   BRIEF_ISOLATED_ENGINES,
   type EngineOutput,
 } from "./loc/engine-prompts";
+import {
+  drawStimuli,
+  embedText,
+  type AssignedStimulus,
+} from "./loc/stimulus-select.server";
 import { enforcePropositionAnchor } from "./proposition-anchor.server";
 import {
   renderLocFullMarkdown,
@@ -44,6 +50,7 @@ async function runOneEngine(args: {
   inputs: ReturnType<typeof buildLocInputs>;
   retryInstructions?: string;
   abstractOpportunity?: string;
+  assignedStimulus?: AssignedStimulus | null;
 }): Promise<{ engine: EngineName; output: EngineOutput | null; error?: string }> {
   try {
     const systemPrompt = getEngineSystemPrompt(args.engine);
@@ -52,6 +59,14 @@ async function runOneEngine(args: {
       inputs: args.inputs,
       retryInstructions: args.retryInstructions,
       abstractOpportunity: args.abstractOpportunity,
+      assignedStimulus: args.assignedStimulus
+        ? {
+            kind: args.assignedStimulus.kind,
+            name: args.assignedStimulus.name,
+            detail: args.assignedStimulus.detail,
+            domain: args.assignedStimulus.domain,
+          }
+        : null,
     });
     const raw = await callClaude({
       systemPrompt,
@@ -72,6 +87,130 @@ async function runOneEngine(args: {
     };
   }
 }
+
+// RANDOMISATION ENGINES — the two engines whose entire move depends on a
+// stimulus that must not be brand-adjacent. The stimulus is drawn in code
+// (see loc/stimulus-select.server.ts) and handed over as non-rejectable.
+const STIMULUS_ENGINES: Partial<Record<EngineName, "object" | "world">> = {
+  random_connection: "object",
+  wrong_room: "world",
+};
+
+/** Draws per randomisation engine — forced stimuli lower the hit rate, so we
+ *  generate several candidates and keep the strongest. */
+const STIMULUS_DRAWS = 3;
+
+function heuristicScore(o: EngineOutput): number {
+  const words = o.proposition.trim().split(/\s+/).length;
+  let s = 0;
+  if (words >= 2 && words <= 10) s += 3;
+  else if (words <= 14) s += 1;
+  if ((o.process ?? "").length > 400) s += 2;
+  if ((o.descriptor ?? "").length > 60) s += 1;
+  if (o.stimulus_properties && o.stimulus_properties.length >= 3) s += 1;
+  if (o.lines_from_inside && o.lines_from_inside.length >= 2) s += 1;
+  if (/\b(innovat|solution|journey|empower|unlock|redefin|reimagin)\w*/i.test(o.proposition)) s -= 3;
+  return s;
+}
+
+/** Runs a stimulus engine three times against three different stimuli and
+ *  keeps the single strongest candidate. Adjudication is a cheap model call
+ *  with a deterministic heuristic fallback. */
+async function runStimulusEngine(args: {
+  engine: EngineName;
+  kind: "object" | "world";
+  sessionId: string;
+  inputs: ReturnType<typeof buildLocInputs>;
+  retryInstructions?: string;
+  abstractOpportunity?: string;
+  brandContext: string;
+  contextVector: number[] | null;
+}): Promise<{
+  engine: EngineName;
+  output: EngineOutput | null;
+  error?: string;
+  stimuli?: AssignedStimulus[];
+}> {
+  let stimuli: AssignedStimulus[] = [];
+  try {
+    const drawn = await drawStimuli({
+      kind: args.kind,
+      count: STIMULUS_DRAWS,
+      brandContext: args.brandContext,
+      seed: `${args.sessionId}|${args.engine}`,
+      contextVector: args.contextVector,
+    });
+    stimuli = drawn.stimuli;
+  } catch {
+    stimuli = [];
+  }
+
+  if (stimuli.length === 0) {
+    // Corpus filter produced nothing usable — fall back to the unassigned run
+    // rather than blocking the engine.
+    const r = await runOneEngine({ ...args, assignedStimulus: null });
+    return r;
+  }
+
+  const attempts = await Promise.all(
+    stimuli.map((st) => runOneEngine({ ...args, assignedStimulus: st })),
+  );
+  const usable = attempts
+    .map((a, i) => ({ a, st: stimuli[i]! }))
+    .filter((x): x is { a: { engine: EngineName; output: EngineOutput }; st: AssignedStimulus } =>
+      x.a.output !== null,
+    );
+
+  if (usable.length === 0) {
+    return { engine: args.engine, output: null, error: attempts[0]?.error, stimuli };
+  }
+
+  // Stamp provenance onto every candidate so the draw is auditable.
+  for (const u of usable) {
+    u.a.output.stimulus = u.a.output.stimulus || u.st.name;
+    (u.a.output as EngineOutput & { stimulusProvenance?: unknown }).stimulusProvenance = {
+      id: u.st.id,
+      name: u.st.name,
+      domain: u.st.domain,
+      distance: u.st.distance,
+      method: u.st.method,
+      corpusVersion: u.st.corpusVersion,
+    };
+  }
+
+  if (usable.length === 1) {
+    return { engine: args.engine, output: usable[0]!.a.output, stimuli };
+  }
+
+  let bestIdx = usable
+    .map((u, i) => ({ i, score: heuristicScore(u.a.output) }))
+    .sort((x, y) => y.score - x.score)[0]!.i;
+
+  try {
+    const listing = usable
+      .map(
+        (u, i) =>
+          `CANDIDATE ${i + 1}\nStimulus: ${u.st.name}\nProposition: ${u.a.output.proposition}\nDescriptor: ${u.a.output.descriptor}\nProcess: ${(u.a.output.process ?? "").slice(0, 900)}`,
+      )
+      .join("\n\n---\n\n");
+    const verdict = await callClaude({
+      systemPrompt: `You are a creative director choosing between candidate propositions produced by the same creative engine from different forced stimuli. Choose the ONE with the sharpest, most surprising, most specific proposition that still says something true and usable. Penalise generic marketing language, restatements of the obvious, and lines that could belong to any organisation. Reply with the candidate number ONLY — a single digit, nothing else.`,
+      userMessage: listing,
+      maxTokens: 10,
+      sessionId: args.sessionId,
+      stageLabel: `LOC ${args.engine} adjudication`,
+      stageNumber: "9-loc",
+      stageName: `LOC ${args.engine} adjudication`,
+    });
+    const n = parseInt((verdict.match(/\d+/) ?? [])[0] ?? "", 10);
+    if (Number.isFinite(n) && n >= 1 && n <= usable.length) bestIdx = n - 1;
+  } catch {
+    /* heuristic winner stands */
+  }
+
+  return { engine: args.engine, output: usable[bestIdx]!.a.output, stimuli };
+}
+
 
 export const runLeftOfCentre = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -213,6 +352,15 @@ export const runLeftOfCentre = createServerFn({ method: "POST" })
       }
       await bumpHeartbeat();
 
+      // Brand-context vector for stimulus distance filtering — embedded ONCE
+      // per run; corpus vectors are precomputed at build time.
+      const brandContext = buildStimulusContext({
+        brandName: session.brand_name,
+        category: session.category,
+        opportunity: inputs.realOpportunity ?? "",
+      });
+      const contextVector = await embedText(brandContext);
+
       // CHALLENGER OBJECTIVE — Engine 08 (Enemy First) is guaranteed to fire.
       // It is never skipped by a selective retry, and a failed run is retried
       // once before the pool is assembled.
@@ -226,13 +374,25 @@ export const runLeftOfCentre = createServerFn({ method: "POST" })
       const enginesToRun = LOC_ENGINES.filter((e) => !keepSet.has(e));
       const engineResults = await Promise.all(
         enginesToRun.map(async (engine) => {
-          const r = await runOneEngine({
-            engine,
-            sessionId: data.sessionId,
-            inputs,
-            retryInstructions: data.retryInstructions,
-            abstractOpportunity,
-          });
+          const kind = STIMULUS_ENGINES[engine];
+          const r = kind
+            ? await runStimulusEngine({
+                engine,
+                kind,
+                sessionId: data.sessionId,
+                inputs,
+                retryInstructions: data.retryInstructions,
+                abstractOpportunity,
+                brandContext,
+                contextVector,
+              })
+            : await runOneEngine({
+                engine,
+                sessionId: data.sessionId,
+                inputs,
+                retryInstructions: data.retryInstructions,
+                abstractOpportunity,
+              });
           await bumpHeartbeat();
           return r;
         }),

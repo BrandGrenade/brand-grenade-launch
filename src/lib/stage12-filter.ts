@@ -34,9 +34,17 @@ export interface Stage10Score {
 export interface Stage11Verdict {
   smpLine: string;
   fieldName: string;
-  verdict: string;          // VALIDATED | VALIDATED WITH STRATEGIC NOTE | REWRITTEN | ELIMINATED
+  verdict: string;          // VALIDATED | VALIDATED — EXPOSED | VALIDATED WITH STRATEGIC NOTE | REWRITTEN | ELIMINATED
   iconicStatus: string;     // CONFIRMED | DOWNGRADED | N/A
   block: string;            // raw stage 11 per-SMP block
+  /** Stage 11 V2 machine-readable fatal-tier test ids (T1-T4, or an unclassified T5). */
+  fatal?: string[];
+  /** Stage 11 V2 machine-readable non-fatal flags (T5-COMPETITIVE, T6-DECAY, T7-DRIFT). */
+  flags?: string[];
+  /** True when the proposition survives carrying competitive/decay/drift exposure. */
+  exposed?: boolean;
+  /** One-sentence human-facing statement of the exposure. */
+  exposureNote?: string;
 }
 
 // ─── V6 weighting (percent, sums to 100) ─────────────────────────────────
@@ -212,11 +220,49 @@ export function parseStage11Verdicts(text: string): Stage11Verdict[] {
     if (!head) continue;
     const verdictLine = block.match(/SMP\s+VERDICT\s*:\s*([^\n]+)/i);
     const rawVerdict = verdictLine ? verdictLine[1].trim().toUpperCase() : "";
+
+    // ── Stage 11 V2 machine-readable tiers ────────────────────────────────
+    const listOf = (raw: string | undefined): string[] =>
+      !raw || /^\s*NONE\s*$/i.test(raw)
+        ? []
+        : raw
+            .split(/[,;]/)
+            .map((s) => s.trim().toUpperCase())
+            .filter(Boolean);
+    const fatalMatch = block.match(/\[?\s*FATAL\s*:\s*([^\]\n]+)\]?/i);
+    const flagsMatch = block.match(/\[?\s*FLAGS\s*:\s*([^\]\n]+)\]?/i);
+    const fatal = listOf(fatalMatch?.[1]);
+    const flags = listOf(flagsMatch?.[1]);
+    const exposureNote =
+      block.match(/EXPOSURE\s+NOTE[^:]*:\s*([^\n]+)/i)?.[1]?.trim() || undefined;
+
+    // V1 fallback: when a run predates the fatal/flags block, infer the tier
+    // from the T5 classification discriminator, defaulting to fatal.
+    const hasMachineBlock = !!fatalMatch || !!flagsMatch;
+    const competesOnly =
+      /CLASSIFICATION\s*:\s*COMPETES[- ]FOR[- ]TERRITORY/i.test(block);
+
     let verdict = rawVerdict;
     if (/ELIMINAT/.test(rawVerdict)) verdict = "ELIMINATED";
     else if (/REWRIT/.test(rawVerdict)) verdict = "REWRITTEN";
+    else if (/VALIDATED\s*[—\-–]\s*EXPOSED|VALIDATED\s+EXPOSED/.test(rawVerdict))
+      verdict = "VALIDATED — EXPOSED";
     else if (/VALIDATED\s+WITH\s+STRATEGIC\s+NOTE/.test(rawVerdict)) verdict = "VALIDATED WITH STRATEGIC NOTE";
     else if (/VALIDATED/.test(rawVerdict)) verdict = "VALIDATED";
+
+    // The machine-readable block is authoritative over the prose verdict: a
+    // model that wrote ELIMINATED while declaring [FATAL: NONE] eliminated a
+    // proposition for being contestable, which V2 does not permit.
+    if (verdict === "ELIMINATED" && hasMachineBlock && fatal.length === 0) {
+      verdict = flags.length ? "VALIDATED — EXPOSED" : "VALIDATED WITH STRATEGIC NOTE";
+    }
+    // Conversely, a declared fatal test always eliminates.
+    if (fatal.length > 0) verdict = "ELIMINATED";
+    if (verdict !== "ELIMINATED" && flags.length > 0) verdict = "VALIDATED — EXPOSED";
+    if (!hasMachineBlock && verdict === "ELIMINATED" && competesOnly) {
+      // Pre-V2 output whose only crack competed for territory — not fatal.
+      verdict = "VALIDATED — EXPOSED";
+    }
 
     const iconic = block.match(/ICONIC\s+TIER\s+FINAL\s+STATUS\s*:\s*([A-Z\/ ]+)/i);
     const rewriteLine = verdict === "REWRITTEN" ? extractRewriteLine(block) : null;
@@ -227,6 +273,10 @@ export function parseStage11Verdicts(text: string): Stage11Verdict[] {
       fieldName,
       verdict,
       iconicStatus: iconic ? iconic[1].trim().toUpperCase() : "N/A",
+      fatal,
+      flags,
+      exposed: verdict === "VALIDATED — EXPOSED",
+      exposureNote,
       block: rewriteLine
         ? `SMP: "${rewriteLine}" — FIELD: ${fieldName}\nSMP VERDICT: REWRITTEN\nREWRITE SOURCE: original line "${head.smpLine}"\n\n${block}`
         : block,
@@ -239,14 +289,21 @@ export interface FilteredStage11 {
   filteredOutput: string;
   validated: Stage11Verdict[];
   eliminated: Stage11Verdict[];
+  /** Survivors carrying non-fatal exposure (competitive / decay / drift). */
+  exposed: Stage11Verdict[];
 }
 
+/**
+ * Stage 11 V2: ONLY fatal-tier failures are removed. Propositions that
+ * survive with competitive, decay, or interpretation exposure travel forward
+ * flagged, and are shown to the human alongside the safe survivors.
+ */
 export function filterValidatedFromStage11(stage11Output: string): FilteredStage11 {
   const verdicts = parseStage11Verdicts(stage11Output);
-  const keep = (v: string) =>
-    v === "VALIDATED" || v === "VALIDATED WITH STRATEGIC NOTE" || v === "REWRITTEN";
-  const validated = verdicts.filter((v) => keep(v.verdict));
-  const eliminated = verdicts.filter((v) => !keep(v.verdict));
+  const keep = (v: Stage11Verdict) => v.verdict !== "ELIMINATED";
+  const validated = verdicts.filter(keep);
+  const eliminated = verdicts.filter((v) => !keep(v));
+  const exposed = validated.filter((v) => v.exposed);
 
   const flat = stripEmphasis(stage11Output);
   const firstIdx = flat.search(/\n?SMP:\s*"/);
@@ -256,23 +313,40 @@ export function filterValidatedFromStage11(stage11Output: string): FilteredStage
   const sections: string[] = [];
   if (preamble) sections.push(preamble);
   sections.push(
-    `==== FILTERED PRESSURE TEST RESULTS — VALIDATED SMPS ONLY (${validated.length}) ====`,
+    `==== FILTERED PRESSURE TEST RESULTS — SURVIVING PROPOSITIONS (${validated.length}, of which EXPOSED: ${exposed.length}) ====`,
+  );
+  sections.push(
+    `EXPOSED means the proposition survived every fatal test (factual truth, logical coherence, brand permission, forbidden zones) but carries competitive, time-decay, or interpretation risk. It is a live option, not a weakened one. Present it on equal footing and state its exposure plainly.`,
   );
   if (validated.length) {
     sections.push(validated.map((v) => v.block).join("\n\n"));
   } else {
-    sections.push("(no validated SMPs — Stage 12 cannot proceed)");
+    sections.push("(no surviving propositions — Stage 12 cannot proceed)");
   }
-  sections.push(`==== EXCLUDED FROM STAGE 12 — DO NOT PRESENT ====`);
+  if (exposed.length) {
+    sections.push(`==== EXPOSED SURVIVORS — PRESENT WITH EXPOSURE STATED ====`);
+    sections.push(
+      exposed
+        .map(
+          (v) =>
+            `- "${v.smpLine}" — FIELD: ${v.fieldName} — FLAGS: ${(v.flags ?? []).join(", ") || "unspecified"}${v.exposureNote ? ` — EXPOSURE: ${v.exposureNote}` : ""}`,
+        )
+        .join("\n"),
+    );
+  }
+  sections.push(`==== ELIMINATED ON FATAL GROUNDS — DO NOT PRESENT ====`);
   sections.push(
     eliminated.length
       ? eliminated
-          .map((v) => `- "${v.smpLine}" — FIELD: ${v.fieldName} — VERDICT: ${v.verdict}`)
+          .map(
+            (v) =>
+              `- "${v.smpLine}" — FIELD: ${v.fieldName} — FATAL: ${(v.fatal ?? []).join(", ") || "declared eliminated"}`,
+          )
           .join("\n")
       : "(none)",
   );
 
-  return { filteredOutput: sections.join("\n\n"), validated, eliminated };
+  return { filteredOutput: sections.join("\n\n"), validated, eliminated, exposed };
 }
 
 export function countStage12PropositionCards(output: string): number {
