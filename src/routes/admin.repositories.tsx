@@ -1228,7 +1228,10 @@ function RepositoryContentEditor({
     setIntro(repo?.intro ?? "");
     setDisclaimer(repo?.disclaimer ?? "");
     setSaved(false);
-  }, [repo?.slug, repo?.title, repo?.intro, repo?.disclaimer]);
+    // Reset only when switching repository, so a "Saved." confirmation
+    // isn't wiped by the refresh that follows a successful save.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [repo?.slug]);
 
   if (!repo) return null;
 
