@@ -32,6 +32,7 @@ import {
   type Stat,
 } from "./doc-system";
 import { condenseStage, smpScoreProvenance } from "./minto-content";
+import { arrivedAtReasoningHtml, overAlternativesHtml } from "./proposition-rationale";
 import { stripDocumentMetadata } from "./strip-document-metadata";
 import { stripSelectionArtifacts } from "./document-gate";
 import { gateSummary, type GateSectionInput } from "./summary-gate";
