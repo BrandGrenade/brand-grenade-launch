@@ -95,6 +95,9 @@ interface RawProp {
   fieldName: string;
   iconicTierStatus: string;
   pressureTestNote: string;
+  exposed?: boolean;
+  exposureNote?: string;
+  exposureFlags?: string[];
 }
 
 function parsePropositions(rawOutput: string): RawProp[] {
