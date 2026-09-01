@@ -449,6 +449,9 @@ export function parseSMPCards(
       fieldName: v.fieldName,
       iconicTierStatus: v.iconicStatus,
       pressureTestNote: v.verdict,
+      exposed: v.exposed,
+      exposureNote: v.exposureNote,
+      exposureFlags: v.flags,
     };
   });
 }
