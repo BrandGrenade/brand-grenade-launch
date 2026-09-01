@@ -319,6 +319,14 @@ export function parseSMPCards(
         .trim()
         .toLowerCase();
 
+    const s11ExposureByKey = new Map<string, Stage11Verdict>();
+    if (stage11Fallback) {
+      for (const v of parseStage11Verdicts(stage11Fallback)) {
+        if (v.smpLine) s11ExposureByKey.set(norm(v.smpLine), v);
+        if (v.fieldName) s11ExposureByKey.set(norm(v.fieldName), v);
+      }
+    }
+
     return raw.map((p, idx) => {
       const line = p.line.replace(/^["""]|["""]$/g, "").trim();
       const match = byLine.get(norm(line)) ?? byField.get(norm(p.fieldName ?? ""));
