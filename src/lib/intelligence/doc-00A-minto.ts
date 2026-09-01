@@ -23,6 +23,12 @@ import { NO_COMPARATIVE_RATIONALE, SYSTEM_TOKEN_MAP } from "../document-standard
 import { DOCUMENT_SPECS } from "../document-spec";
 import { buildCurrentStateSection } from "../current-state";
 
+import { findModelledFindings, type ModelledFinding } from "./modelled-findings";
+import {
+  PORTFOLIO_OVER_SINGLE_BRAND_RATIONALE,
+  portfolioPreferenceApplies,
+} from "./portfolio-preference";
+
 import type { Document00AInput, IntelligenceReport } from "./doc-00A-types";
 export type { Document00AInput, IntelligenceReport } from "./doc-00A-types";
 
