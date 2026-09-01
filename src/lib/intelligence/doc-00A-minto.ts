@@ -28,6 +28,7 @@ import {
   PORTFOLIO_OVER_SINGLE_BRAND_RATIONALE,
   portfolioPreferenceApplies,
 } from "./portfolio-preference";
+import { buildNextActions, buildRiskRegister } from "./risk-register";
 
 import type { Document00AInput, IntelligenceReport } from "./doc-00A-types";
 export type { Document00AInput, IntelligenceReport } from "./doc-00A-types";
@@ -472,9 +473,6 @@ export function buildDocument00AMinto(
     (arr(behaviour.medium_term_12_24_months).length
       ? callout("Medium term (12–24 months)", list(arr(behaviour.medium_term_12_24_months)))
       : "") +
-    (arr(measurement.early_warning_signals).length
-      ? callout("Early warning signals", list(arr(measurement.early_warning_signals)))
-      : "") +
     (str(gov.institutional_trust_assessment)
       ? callout("Institutional trust", paras(str(gov.institutional_trust_assessment)))
       : "");
@@ -503,6 +501,42 @@ export function buildDocument00AMinto(
             : ""
         }. Each is set out in section 07, alongside whether it is already happening today, currently implicit, or a genuinely new commitment.</p>`
       : "";
+  // Risk register: the measurement framework's early-warning signals,
+  // re-presented with a directional likelihood/impact rating each. The
+  // signals themselves are carried through verbatim; the ratings are derived
+  // from each signal's wording and labelled as directional, not observed.
+  const register = buildRiskRegister(arr(measurement.early_warning_signals));
+  const riskRegister = register.length
+    ? comparisonTable(
+        [
+          { key: "signal", label: "Early-warning signal" },
+          { key: "likelihood", label: "Likelihood" },
+          { key: "impact", label: "Impact" },
+        ],
+        register.map((r) => ({
+          cells: { signal: r.signal, likelihood: r.likelihood, impact: r.impact },
+        })),
+        "Risk register — likelihood and impact are directional assessments drawn from each signal's wording, not observed fact",
+      )
+    : "";
+  const nextActions = buildNextActions({
+    brandName: input.brandName,
+    primaryName,
+    verdict,
+    conditions,
+    mustInclude,
+    registerSize: register.length,
+  });
+  const actionTable = nextActions.length
+    ? comparisonTable(
+        [
+          { key: "action", label: "Next action" },
+          { key: "owner", label: "Owner" },
+        ],
+        nextActions.map((a) => ({ cells: { action: a.action, owner: a.owner } })),
+        "Ownership is by function, not individual — assign names internally",
+      )
+    : "";
   const next_step =
     (primaryName
       ? `<p>The decision requested is to ${verdict === "DO NOT CLAIM" ? "reject" : "adopt"} <strong>${escapeHtml(
@@ -510,7 +544,9 @@ export function buildDocument00AMinto(
         )}</strong> as the strategic territory for ${escapeHtml(input.brandName)} and release it into the Briefing Room.</p>`
       : "") +
     crossRef +
-    (arr(prebrief.must_avoid).length ? callout("Must avoid", list(arr(prebrief.must_avoid))) : "");
+    (arr(prebrief.must_avoid).length ? callout("Must avoid", list(arr(prebrief.must_avoid))) : "") +
+    riskRegister +
+    actionTable;
 
 
   /* 10 — appendix */
