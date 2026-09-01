@@ -1505,6 +1505,13 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
     winner,
     stagesRun,
     lockedIdeaHtml,
+    /** Provenance + session-authored reasoning for the locked proposition.
+     *  Exposed so a builder that writes its own section 04 still carries it. */
+    propositionProvenanceHtml:
+      provenance.html ||
+      (arrivedAtReasoningHtml(smp)
+        ? callout("How this proposition was arrived at", arrivedAtReasoningHtml(smp))
+        : ""),
     headlineStats,
     content: {
       recommendation,
