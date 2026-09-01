@@ -442,6 +442,15 @@ export function buildDocument00AMinto(
   const measurement = obj(primary?.measurement_framework);
   const behaviour = obj(measurement.behaviour_change_metrics);
   const implications =
+    (modelled.length
+      ? `<p>The modelled finding${modelled.length === 1 ? "" : "s"} set out in section 01 (${modelled
+          .map((f) => escapeHtml(f.code))
+          .join(", ")}) bear directly on what follows: ${
+          modelled.length === 1 ? "it is" : "they are"
+        } inference, not observed fact, so the measures below are what would confirm or break ${
+          modelled.length === 1 ? "it" : "them"
+        } in market.</p>`
+      : "") +
     list(arr(measurement.brand_associations_to_track).slice(0, 5)) +
     (arr(behaviour.immediate_0_4_weeks).length
       ? callout("Immediate (0–4 weeks)", list(arr(behaviour.immediate_0_4_weeks)))
