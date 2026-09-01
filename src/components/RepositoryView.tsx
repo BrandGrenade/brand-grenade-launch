@@ -18,6 +18,7 @@ interface Props {
   slug: Slug;
   title: string;
   intro: string;
+  disclaimer?: string | null;
 }
 
 interface Doc {
@@ -30,7 +31,7 @@ interface Doc {
   created_at: string;
 }
 
-export function RepositoryView({ slug, title, intro }: Props) {
+export function RepositoryView({ slug, title, intro, disclaimer }: Props) {
   const getSession = useServerFn(getRepoSession);
   const unlock = useServerFn(unlockRepo);
   const logVisit = useServerFn(logRepoVisit);
@@ -168,6 +169,11 @@ export function RepositoryView({ slug, title, intro }: Props) {
       <main className="mx-auto max-w-3xl px-6 py-12">
         <h1 className="text-3xl font-semibold text-text-primary">{title}</h1>
         <p className="mt-4 text-base leading-relaxed text-text-primary">{intro}</p>
+        {disclaimer?.trim() && (
+          <p className="mt-6 rounded-lg border border-border px-4 py-3 text-[13px] leading-relaxed text-text-secondary">
+            {disclaimer}
+          </p>
+        )}
 
         <section className="mt-12">
           <h2 className="text-[13px] font-semibold uppercase tracking-wider text-text-secondary">
