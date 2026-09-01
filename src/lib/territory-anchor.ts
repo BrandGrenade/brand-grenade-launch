@@ -230,6 +230,13 @@ export function reconcileTerritory(args: {
   lockedTerritoryName?: string | null;
   /** Set when the human overrode a system-ranked recommendation at the gate. */
   humanOverride?: boolean;
+  /**
+   * Set when session-recorded selection reasoning already answers the
+   * divergence substantively. The reconciliation then becomes a short
+   * connecting note pointing at that reasoning, rather than deriving a
+   * second, weaker explanation alongside it.
+   */
+  reasoningRecorded?: boolean;
   /** Threshold below which the two are treated as different territories. */
   threshold?: number;
 }): TerritoryReconciliation | null {
