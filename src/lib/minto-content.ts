@@ -33,6 +33,11 @@ import { buildCurrentStateSection } from "./current-state";
 import { stripDocumentMetadata } from "./strip-document-metadata";
 import { extractShortlist } from "./exec-summary-extract";
 import { arrivedAtReasoningHtml, overAlternativesHtml } from "./proposition-rationale";
+import {
+  extractRecommendedTerritory,
+  reconcileTerritory,
+  type TerritoryReconciliation,
+} from "./territory-anchor";
 import { STRATEGY_SCORING_DIMENSION_NAMES } from "@/lib/platform-metrics";
 
 export interface MintoSession {
@@ -70,6 +75,8 @@ export interface MintoSession {
   locked_big_idea_run_id?: string | null;
   updated_at?: string | null;
   selection_rationale?: unknown;
+  /** Carries the Room 01 territory anchor block (territory-preservation contract). */
+  brief_text?: string | null;
 }
 
 
@@ -648,6 +655,26 @@ function nearestThematicCandidate(
   return first.c;
 }
 
+/**
+ * Mandatory reconciliation between Room 01's recommended territory and the
+ * proposition actually locked. Shared derivation layer — every deliverable
+ * that renders provenance picks this up automatically.
+ */
+export function territoryReconciliation(
+  session: MintoSession,
+  smp: string,
+  lockedTerritoryName?: string | null,
+): TerritoryReconciliation | null {
+  return reconcileTerritory({
+    recommended: extractRecommendedTerritory(String(session.brief_text ?? "")),
+    lockedSmp: smp,
+    lockedTerritoryName: lockedTerritoryName ?? null,
+    // A locked line that never appeared in the competitive field was written
+    // by a human at the selection gate — that is a conscious override.
+    humanOverride: /====\s*STAGE 10 RE-SCORE/i.test(String(session.stage_10_output ?? "")),
+  });
+}
+
 export function smpScoreProvenance(stage10: string, smp: string): SmpScoreProvenance {
   const empty: SmpScoreProvenance = {
     postSelection: false,
@@ -1063,6 +1090,11 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
   // which silently made the whole re-score detection inert.
   const provenance = smpScoreProvenance(String(session.stage_10_output ?? ""), smp);
   const winner = findWinner(candidates, smp);
+  const reconciliation = territoryReconciliation(
+    session,
+    smp,
+    provenance.topCompetitive?.name ?? null,
+  );
   // "cleared the hard floors" must count the same field that "competitively
   // scored" counts — otherwise the cover reads "10 scored / 11 cleared".
   const passed = (provenance.postSelection ? provenance.competitive : candidates).filter(
@@ -1226,7 +1258,8 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
       (provenance.html ||
         (arrivedAtReasoningHtml(smp)
           ? callout("How this proposition was arrived at", arrivedAtReasoningHtml(smp))
-          : ""))
+          : "")) +
+      (reconciliation ? callout(reconciliation.heading, reconciliation.html) : "")
     : "";
 
   /* 05 — why this wins */
