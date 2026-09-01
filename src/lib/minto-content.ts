@@ -32,7 +32,7 @@ import type { MintoContent } from "./minto";
 import { buildCurrentStateSection } from "./current-state";
 import { stripDocumentMetadata } from "./strip-document-metadata";
 import { extractShortlist } from "./exec-summary-extract";
-import { arrivedAtReasoningHtml, overAlternativesHtml } from "./proposition-rationale";
+import { arrivedAtReasoningHtml, overAlternativesHtml, propositionReasoning } from "./proposition-rationale";
 import {
   extractRecommendedTerritory,
   reconcileTerritory,
@@ -669,6 +669,9 @@ export function territoryReconciliation(
     recommended: extractRecommendedTerritory(String(session.brief_text ?? "")),
     lockedSmp: smp,
     lockedTerritoryName: lockedTerritoryName ?? null,
+    // When session-recorded selection reasoning already answers the
+    // divergence, the reconciliation is a connecting note, not a restatement.
+    reasoningRecorded: (propositionReasoning(smp)?.overAlternatives?.length ?? 0) > 0,
     // A locked line that never appeared in the competitive field was written
     // by a human at the selection gate — that is a conscious override.
     humanOverride: /====\s*STAGE 10 RE-SCORE/i.test(String(session.stage_10_output ?? "")),
