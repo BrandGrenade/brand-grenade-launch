@@ -14,6 +14,10 @@ import {
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertSessionAccess } from "@/lib/auth-helpers.server";
 import { assertUpstreamStageOutput } from "./pipeline-integrity";
+import {
+  extractRecommendedTerritory,
+  territoryPromptBlockForSelection,
+} from "./territory-anchor";
 
 const Input = z.object({
   sessionId: z.string().uuid(),
@@ -167,7 +171,7 @@ export const runStage12 = createServerFn({ method: "POST" })
     await assertUpstreamStageOutput(data.sessionId, 12);
     const { data: session, error } = await supabaseAdmin
       .from("sessions")
-      .select("brand_name, category, stage_1_output, stage_2_output, stage_10_output, stage_11_output, stage_12_output")
+      .select("brand_name, category, brief_text, stage_1_output, stage_2_output, stage_10_output, stage_11_output, stage_12_output")
       .eq("id", data.sessionId)
       .single();
     if (error || !session) throw new Error(`Session not found: ${error?.message ?? "no row"}`);
@@ -194,6 +198,8 @@ export const runStage12 = createServerFn({ method: "POST" })
       .update({ current_stage: 12, status: "running", stage_12_error: null })
       .eq("id", data.sessionId);
 
+    const recommendedTerritory = extractRecommendedTerritory(session.brief_text);
+
     const stage10Output = session.stage_10_output ?? "";
     const { filteredOutput, validated, eliminated } = filterValidatedFromStage11(session.stage_11_output);
     if (validated.length === 0) {
@@ -219,6 +225,9 @@ export const runStage12 = createServerFn({ method: "POST" })
       stage1Output: session.stage_1_output ?? "",
       validatedCount: validated.length,
       eliminatedCount: eliminated.length,
+      recommendedTerritoryBlock: recommendedTerritory
+        ? territoryPromptBlockForSelection(recommendedTerritory)
+        : undefined,
     });
     if (feedback) {
       const { buildFeedbackInjection } = await import("./feedback-injection");

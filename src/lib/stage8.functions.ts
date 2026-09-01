@@ -12,6 +12,10 @@ import { trimValidatedInsightsForDownstream } from "./context-trim";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertSessionAccess } from "@/lib/auth-helpers.server";
 import { assertUpstreamStageOutput } from "./pipeline-integrity";
+import {
+  extractRecommendedTerritory,
+  territoryPromptBlockForGeneration,
+} from "./territory-anchor";
 
 const Input = z.object({
   sessionId: z.string().uuid(),
@@ -186,6 +190,16 @@ export const runStage8 = createServerFn({ method: "POST" })
 
     const territoryCount = territoryNames.length;
 
+    // Territory-preservation contract: Room 01's authoritative recommended
+    // territory rides in brief_text and must reach proposition generation, not
+    // just Stage 1. Silent omission here is how Room 03 diverged unnoticed.
+    const recommendedTerritory = extractRecommendedTerritory(session.brief_text);
+    if (recommendedTerritory) {
+      console.log(
+        `[stage8] session=${data.sessionId} Room 01 recommended territory carried into generation: ${recommendedTerritory.name}`,
+      );
+    }
+
     await supabaseAdmin
       .from("sessions")
       .update({
@@ -206,6 +220,9 @@ export const runStage8 = createServerFn({ method: "POST" })
       territoryCount,
       territoryNames,
       stage4bOutput: session.stage_4b_output ?? undefined,
+      recommendedTerritoryBlock: recommendedTerritory
+        ? territoryPromptBlockForGeneration(recommendedTerritory)
+        : undefined,
     });
     if (feedback) {
       const { buildFeedbackInjection } = await import("./feedback-injection");

@@ -31,7 +31,7 @@ import {
   inlineMd,
   type Stat,
 } from "./doc-system";
-import { condenseStage, smpScoreProvenance } from "./minto-content";
+import { condenseStage, smpScoreProvenance, territoryReconciliation } from "./minto-content";
 import { arrivedAtReasoningHtml, overAlternativesHtml } from "./proposition-rationale";
 import { stripDocumentMetadata } from "./strip-document-metadata";
 import { stripSelectionArtifacts } from "./document-gate";
@@ -992,6 +992,13 @@ export function buildSummaryDocument(
   // scoring pass, no part of this document may present its re-score as a
   // competitive result.
   const scoreProvenance = smpScoreProvenance(str(session, "stage_10_output"), selectedSmp);
+  // Territory-preservation contract: reconcile Room 01's recommendation with
+  // whatever was actually locked (see territory-anchor.ts).
+  const territoryReconcile = territoryReconciliation(
+    session as never,
+    selectedSmp,
+    scoreProvenance.topCompetitive?.name ?? null,
+  );
 
   // The composite is a weighted sum, so the weights are printed alongside the
   // raw dimension scores and each dimension's contribution is shown — the
@@ -1088,6 +1095,10 @@ export function buildSummaryDocument(
               "How this proposition was arrived at",
               arrivedAtReasoningHtml(selectedSmp),
             )
+          : ""
+      }${
+        territoryReconcile
+          ? callout(territoryReconcile.heading, territoryReconcile.html)
           : ""
       }`
     : "";

@@ -26,6 +26,11 @@ import type {
   Truth,
 } from "./briefing-room-prompts";
 import type { PrebriefForBriefingRoom } from "./intelligence/prebrief-text";
+import {
+  extractRecommendedTerritoryFromPrebrief,
+  territoryAnchorLines,
+  territoryAnchorBlock,
+} from "./territory-anchor";
 
 export type WorkspaceForHandoff = {
   brand_name: string;
@@ -227,6 +232,21 @@ export function buildHandoffPayload(ws: WorkspaceForHandoff): HandoffPayload {
     anchorLines.push(`  Reason: ${ws.tensions.no_tension_reason}`);
     anchorLines.push("");
   }
+  // Territory-preservation contract — same standing as the Step-4 tension.
+  // Room 01's authoritative recommended territory must survive verbatim into
+  // brief_text under its label, so Stages 8 and 12 can re-extract it.
+  const recommendedTerritory =
+    extractRecommendedTerritoryFromPrebrief(ws.raw_brief) ??
+    (ws.prebrief?.creative_territory_direction?.trim()
+      ? {
+          name: ws.prebrief.creative_territory_direction.trim(),
+          description: "",
+        }
+      : null);
+  if (recommendedTerritory) {
+    anchorLines.push(...territoryAnchorLines(recommendedTerritory));
+    anchorLines.push("");
+  }
   if (gaps.length) {
     anchorLines.push("OPEN GAPS (preserve verbatim in Stage 1 assumption/flag block):");
     for (const g of gaps) anchorLines.push(`  - ${g}`);
@@ -278,7 +298,14 @@ export function buildHandoffPayload(ws: WorkspaceForHandoff): HandoffPayload {
           : ws.diagnosis.real_problem.statement;
     f3Fallback = `Frame: ${frame.toUpperCase()}. ${framedStatement} ${TAG("briefing_room")}`;
   }
-  b.sections.f3_outcome = pick(llm.f3_outcome, f3Fallback);
+  // Territory contract: as with the tension in f4, the recommended territory
+  // is ALWAYS appended after any LLM draft so it cannot be paraphrased away.
+  {
+    const base = pick(llm.f3_outcome, f3Fallback);
+    b.sections.f3_outcome = recommendedTerritory
+      ? `${base}\n\n${territoryAnchorBlock(recommendedTerritory)}`.trim()
+      : base;
+  }
 
   // f4 — Primary Barrier
   const barrierParts: string[] = [];
