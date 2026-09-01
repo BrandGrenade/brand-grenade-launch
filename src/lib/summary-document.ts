@@ -964,14 +964,37 @@ export function buildSummaryDocument(
   // competitive result.
   const scoreProvenance = smpScoreProvenance(str(session, "stage_10_output"), selectedSmp);
 
+  // The composite is a weighted sum, so the weights are printed alongside the
+  // raw dimension scores and each dimension's contribution is shown — the
+  // reader can add the column up and verify the composite on the page.
+  const contributions = scoreRows.map((r) => {
+    const weight = dimensionWeight(r.dimension);
+    const raw = parseFloat(String(r.score ?? "").replace(/[^0-9.]/g, ""));
+    const points = weight != null && Number.isFinite(raw) ? (raw / 10) * weight : null;
+    return { ...r, weight, points };
+  });
+  const weightedTotal = contributions.every((c) => c.points != null)
+    ? contributions.reduce((sum, c) => sum + (c.points ?? 0), 0)
+    : null;
+
   const scoringHtml = scoreRows.length
     ? `${comparisonTable(
         [
           { key: "d", label: "Dimension" },
+          { key: "w", label: "Weight", numeric: true },
           { key: "s", label: "Score", numeric: true },
+          { key: "c", label: "Contribution", numeric: true },
           { key: "n", label: "Why it scored there" },
         ],
-        scoreRows.map((r) => ({ cells: { d: r.dimension, s: r.score, n: r.note } })),
+        contributions.map((r) => ({
+          cells: {
+            d: r.dimension,
+            w: r.weight != null ? `${r.weight}%` : null,
+            s: r.score,
+            c: r.points != null ? `${round1(r.points)}` : null,
+            n: r.note,
+          },
+        })),
         scoreProvenance.postSelection && selectedSmp
           ? `Post-lock re-score of the final wording: ${selectedSmp} — not a competitive rank`
           : selectedSmp ? `Scored against: ${selectedSmp}` : scoring.scoredSmp ? `Scored against: ${scoring.scoredSmp}` : undefined,
