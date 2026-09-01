@@ -23,6 +23,12 @@ import { NO_COMPARATIVE_RATIONALE, SYSTEM_TOKEN_MAP } from "../document-standard
 import { DOCUMENT_SPECS } from "../document-spec";
 import { buildCurrentStateSection } from "../current-state";
 
+import { findModelledFindings, type ModelledFinding } from "./modelled-findings";
+import {
+  PORTFOLIO_OVER_SINGLE_BRAND_RATIONALE,
+  portfolioPreferenceApplies,
+} from "./portfolio-preference";
+
 import type { Document00AInput, IntelligenceReport } from "./doc-00A-types";
 export type { Document00AInput, IntelligenceReport } from "./doc-00A-types";
 
@@ -98,6 +104,28 @@ export function buildDocument00AMinto(
   const primaryName = primary ? str(primary.name) || "Recommended territory" : "";
   const verdict = primary ? (VERDICT_LABEL[str(primary.strategic_recommendation)] ?? "") : "";
 
+  /* Why the recommendation is not the highest-scoring territory. Stated once
+   * here and reused verbatim in section 09 so both readings agree. */
+  const preferenceApplies = portfolioPreferenceApplies(primary, others);
+  const preferenceRationale = preferenceApplies
+    ? paras(PORTFOLIO_OVER_SINGLE_BRAND_RATIONALE)
+    : "";
+
+  /* Explicitly-modelled findings carried out of the research base, verbatim,
+   * with their stated confidence intact. They are decision-relevant, so they
+   * are surfaced in the recommendation rather than filed in the appendix. */
+  const modelled: ModelledFinding[] = findModelledFindings(input.research);
+  function modelledCallout(f: ModelledFinding): string {
+    const conf = f.confidence ? `${f.confidence} confidence` : "confidence not stated";
+    return callout(
+      `Modelled finding ${f.code} — ${conf}, not established fact`,
+      `<p>${inlineMd(f.text)}</p>` +
+        `<p class="kicker">${escapeHtml(f.sourceLabel)}${
+          f.provenance ? ` — ${escapeHtml(f.provenance)}` : ""
+        }</p>`,
+    );
+  }
+
   /* 01 — recommendation */
   const recommendation =
     (primaryName
@@ -108,7 +136,10 @@ export function buildDocument00AMinto(
           // name — it is demoted to caption type beneath the headline.
           caption: verdict ? `Verdict — ${verdict}` : undefined,
         })
-      : "") + paras(str(primary?.recommendation_rationale));
+      : "") +
+    paras(str(primary?.recommendation_rationale)) +
+    preferenceRationale +
+    modelled.map(modelledCallout).join("");
 
   const permission = obj(primary?.brand_permission);
   const firstMover = obj(primary?.first_mover);
@@ -393,20 +424,47 @@ export function buildDocument00AMinto(
       parts.push(`first-mover advantage ${f}/10 against ${primaryFirstMover}/10`);
     }
     if (parts.length) return `Scored lower on ${parts.join(" and ")}.`;
+    // The territory that outscores the recommendation is not left with "no
+    // rationale recorded": the cost-and-risk reasoning in section 01 is
+    // precisely the reason it was not carried forward.
+    if (
+      preferenceApplies &&
+      p != null &&
+      f != null &&
+      primaryPermission != null &&
+      primaryFirstMover != null &&
+      p >= primaryPermission &&
+      f >= primaryFirstMover
+    ) {
+      return `Scores at or above the recommendation (brand permission ${p}/10, first-mover advantage ${f}/10) and was still not carried forward, on the cost-and-risk reasoning set out in section 01.`;
+    }
     return NO_COMPARATIVE_RATIONALE;
   }
-  const rejected = reasonGrid(
-    others.slice(0, 4).map((t) => ({
-      title: str(t.name) || "Unnamed territory",
-      detail: notCarriedDetail(t),
-    })),
-  );
+  const rejected =
+    (preferenceApplies
+      ? `<p>One territory below scores at or above the recommendation on every dimension shown in section 08. It was still not carried forward: the cost-and-risk reasoning for preferring portfolio coherence over the higher-scoring single-brand defence is set out in full in section 01, and applies directly to that option.</p>`
+      : "") +
+    reasonGrid(
+      others.slice(0, 4).map((t) => ({
+        title: str(t.name) || "Unnamed territory",
+        detail: notCarriedDetail(t),
+      })),
+    );
 
 
   /* 08 — implications */
   const measurement = obj(primary?.measurement_framework);
   const behaviour = obj(measurement.behaviour_change_metrics);
   const implications =
+    (modelled.length
+      ? `<p>The modelled finding${modelled.length === 1 ? "" : "s"} set out in section 01 (${modelled
+          .map((f) => escapeHtml(f.code))
+          .join(", ")}) bear${modelled.length === 1 ? "s" : ""} directly on what follows: ${
+          modelled.length === 1 ? "it is" : "they are"
+        } inference, not observed fact, so the measures below are what would confirm or break ${
+          modelled.length === 1 ? "it" : "them"
+        } in market.</p>`
+      : "") +
     list(arr(measurement.brand_associations_to_track).slice(0, 5)) +
     (arr(behaviour.immediate_0_4_weeks).length
       ? callout("Immediate (0–4 weeks)", list(arr(behaviour.immediate_0_4_weeks)))
