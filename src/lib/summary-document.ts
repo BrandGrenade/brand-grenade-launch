@@ -1143,10 +1143,25 @@ export function buildSummaryDocument(
   const s13 = str(session, "stage_13_output");
   const fitVerdict = mdBlock(s13, /Brand Fit Verdict/i);
   const fitGuardrails = mdBlock(s13, /Communication Guardrails/i);
+  // A guardrail that defers repositioning claims until the product is publicly
+  // reviewed governs pre-reveal communications; a locked campaign line that
+  // carries such a claim is a post-reveal asset. Stated explicitly so the two
+  // do not read as a contradiction.
+  const repositioningGuardrail =
+    /repositioning claims?[\s\S]{0,200}?(before|until)[\s\S]{0,120}?(review|reveal|in market)/i.test(
+      fitGuardrails ?? "",
+    );
+  const lineCarriesClaim = /\bnew\s+\w+|reborn|has changed|returns?\b/i.test(lockedLine);
+  const sequencingNote =
+    repositioningGuardrail && lineCarriesClaim
+      ? p(
+          `**Sequencing:** this guardrail governs pre-reveal communications. The locked campaign line carries a repositioning claim and is therefore a post-reveal asset — it deploys once the product is publicly revealed and independently reviewed, not before.`,
+        )
+      : "";
   const fitHtml = fitVerdict || fitGuardrails
     ? `${fitVerdict ? renderMarkdown(safeClamp(fitVerdict, 2000)) : ""}${
         fitGuardrails
-          ? `<h3>Communication guardrails</h3>${renderMarkdown(fitGuardrails)}`
+          ? `<h3>Communication guardrails</h3>${renderMarkdown(fitGuardrails)}${sequencingNote}`
           : ""
       }`
     : stageBlock(session, "stage_13_output", 9, 1400);
