@@ -219,8 +219,10 @@ function parsePropositions(rawOutput: string): RawProp[] {
     ]);
     const requires = grabSection("WHAT IT REQUIRES OF THE BRAND", [
       "STRATEGIC QUALITY SCORES",
+      "WHERE IT IS EXPOSED",
       "\\[METADATA\\]",
     ]);
+    const exposureSection = grabSection("WHERE IT IS EXPOSED", ["\\[METADATA\\]"]);
 
     // Accept markdown wrappers and legacy /70 composites (rescaled to /100).
     const compositeRe =
