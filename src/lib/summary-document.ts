@@ -1015,7 +1015,11 @@ export function buildSummaryDocument(
             )
           : ""
       }${p(
-        `Composite scores are on the ${SCORE_CEILING}-point weighted scale: the dimension weights above total ${SCORE_CEILING} points by design, so ${SCORE_CEILING} — not 100 — is the ceiling a perfect card can reach.`,
+        `Each dimension contributes its score out of 10 multiplied by its weight${
+          weightedTotal != null
+            ? `, so the six contributions above add to ${round1(weightedTotal)}`
+            : ""
+        }. Composite scores are on the ${SCORE_CEILING}-point weighted scale: the dimension weights total ${SCORE_CEILING} points by design, so ${SCORE_CEILING} — not 100 — is the ceiling a perfect card can reach.`,
       )}`
     : "";
 
