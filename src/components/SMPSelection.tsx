@@ -1114,6 +1114,32 @@ export function SMPSelection({
               {card.whatItRequires && (
                 <Section title="What it requires of the brand" body={card.whatItRequires} />
               )}
+              {card.exposed && (
+                <div
+                  className="mt-4 rounded-md p-3"
+                  style={{
+                    border: "1px solid var(--color-warning)",
+                    background: "color-mix(in srgb, var(--color-warning) 8%, transparent)",
+                  }}
+                >
+                  <span
+                    className="text-label"
+                    style={{ color: "var(--color-warning)", letterSpacing: "0.06em" }}
+                  >
+                    EXPOSED — PASSED EVERY FATAL TEST
+                  </span>
+                  <p className="text-body-sm mt-2" style={{ color: "var(--color-text-secondary)" }}>
+                    {card.exposureNote ||
+                      "A competitor could contest this territory. That is a competitive condition, not a truth failure."}
+                  </p>
+                  {card.exposureFlags?.length ? (
+                    <p className="text-body-sm mt-1" style={{ color: "var(--color-text-tertiary)" }}>
+                      {card.exposureFlags.join(" · ")}
+                    </p>
+                  ) : null}
+                </div>
+              )}
+
 
               <hr
                 className="my-4 h-px border-0"
