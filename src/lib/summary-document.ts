@@ -981,6 +981,15 @@ export function buildSummaryDocument(
         winning.owns,
       )}${p(winning.alignment)}${
         whyItWon ? callout("Why this proposition won", p(whyItWon)) : ""
+      }${
+        // The shared reasoning already ships inside scoreProvenance.html above
+        // when a provenance correction applies; otherwise it ships here.
+        !scoreProvenance.html && arrivedAtReasoningHtml(selectedSmp)
+          ? callout(
+              "How this proposition was arrived at",
+              arrivedAtReasoningHtml(selectedSmp),
+            )
+          : ""
       }`
     : "";
 
