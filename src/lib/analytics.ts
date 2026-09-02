@@ -58,6 +58,8 @@ export function initAnalytics(): void {
   });
 
   initialized = true;
+  // Expose for debugging/verification (harmless; PostHog supports this pattern).
+  (window as unknown as { posthog?: typeof posthog }).posthog = posthog;
 }
 
 export function trackPageView(path: string): void {
