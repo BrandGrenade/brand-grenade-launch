@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   Outlet,
@@ -14,6 +15,7 @@ import { AppFooter } from "@/components/AppFooter";
 import { LaunchStrip } from "@/components/LaunchStrip";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/context/AuthContext";
+import { initAnalytics, trackPageView } from "@/lib/analytics";
 
 
 function NotFoundComponent() {
@@ -125,6 +127,16 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const router = useRouter();
+
+  useEffect(() => {
+    initAnalytics();
+    trackPageView(window.location.pathname);
+    const unsub = router.subscribe("onResolved", () => {
+      trackPageView(window.location.pathname);
+    });
+    return unsub;
+  }, [router]);
 
   return (
     <QueryClientProvider client={queryClient}>
