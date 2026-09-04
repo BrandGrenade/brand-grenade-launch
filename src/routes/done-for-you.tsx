@@ -3,6 +3,12 @@ import { useEffect } from "react";
 import { openCalendlyBooking } from "@/lib/calendly";
 import { LENS_COUNT } from "@/lib/stimulus/lenses";
 import { STRUCTURED_OUTPUT_COUNT } from "@/lib/minto-content";
+import {
+  METHODOLOGY_HEADLINE,
+  PROPOSITIONS_HEADLINE_CEILING,
+  PROPOSITIONS_SHORTLIST_MIN,
+  PROPOSITIONS_SHORTLIST_MAX,
+} from "@/lib/platform-metrics";
 
 export const Route = createFileRoute("/done-for-you")({
   component: DoneForYou,
@@ -718,10 +724,14 @@ function DoneForYou() {
           </p>
           <div className="facts">
             <div className="fact-row">{LENS_COUNT} creative lenses</div>
-            <div className="fact-row">50+ proven strategic methodologies</div>
             <div className="fact-row">
-              Up to ~20 divergent strategic propositions explored, shortlisted
-              to 3-5 for human judgement
+              {METHODOLOGY_HEADLINE} proven strategic methodologies
+            </div>
+            <div className="fact-row">
+              Up to ~{PROPOSITIONS_HEADLINE_CEILING} divergent strategic
+              propositions explored, shortlisted to{" "}
+              {PROPOSITIONS_SHORTLIST_MIN}–{PROPOSITIONS_SHORTLIST_MAX} for
+              human judgement
             </div>
             <div className="fact-row">
               {STRUCTURED_OUTPUT_COUNT} structured outputs

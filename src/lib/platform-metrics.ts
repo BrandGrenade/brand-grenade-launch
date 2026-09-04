@@ -1,4 +1,8 @@
 import { LOC_ENGINES } from "./loc/task-types";
+import {
+  REGISTER_METHODOLOGY_COUNT,
+  REGISTER_METHODOLOGY_HEADLINE,
+} from "./methodology-register";
 import { TOTAL_PIPELINE_STEPS } from "./stage-manifest";
 
 // PLATFORM METRICS — single source of truth for every publicly asserted
@@ -91,10 +95,16 @@ export const GOVERNANCE_CLAIM = `${GOVERNANCE_GATE_COUNT} hard governance gates 
 
 /* ── Methodologies and engines ──────────────────────────────────────── */
 
-/** Distinct named methodologies/frameworks inventoried in docs/methodology-inventory.md. */
-export const METHODOLOGY_COUNT = 55;
-/** Conservative public-facing figure, floored to the nearest ten. */
-export const METHODOLOGY_HEADLINE = `${Math.floor(METHODOLOGY_COUNT / 10) * 10}+`;
+/**
+ * Distinct named methodologies, DERIVED from the audited register in
+ * methodology-register.ts (one entry per underlying methodology, no container
+ * entries, no sub-components counted twice, QA/governance guards excluded).
+ * The previous literal 55 came from docs/methodology-inventory.md and
+ * double-counted the Channel Framework Library against its own constituents.
+ */
+export const METHODOLOGY_COUNT = REGISTER_METHODOLOGY_COUNT;
+/** Conservative public-facing figure, floored to the nearest five. */
+export const METHODOLOGY_HEADLINE = REGISTER_METHODOLOGY_HEADLINE;
 
 /** Stage 8 disruption engines — canonical key list (re-exported by stage8-disruption-engines.ts). */
 export const STAGE_8_DISRUPTION_ENGINE_KEYS = [

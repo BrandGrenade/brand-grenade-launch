@@ -3,7 +3,19 @@
 Combined audit: proprietary (platform-originated) + borrowed (external) named
 methodologies actually referenced in prompt text or evaluation logic.
 
-Headline numbers:
+> **SUPERSEDED AS A COUNTING SOURCE (audit, Sep 2026).** The "55" below
+> double-counted: the Channel Framework Library (P27) was counted as one
+> framework *and* its 23 constituent behavioural frameworks were counted again
+> as B1–B23; the canonical Minto section spec (P15) duplicated the Minto
+> Pyramid (B26); seven Cialdini principles from one framework were counted as
+> seven methodologies; and ten entries are QA/governance guards, not
+> methodologies. The audited, de-duplicated count is **40 distinct
+> methodologies** (16 proprietary + 24 borrowed) plus 10 governance guards,
+> and it is now DERIVED from `src/lib/methodology-register.ts`. This document
+> remains useful as a citation map only. Public copy must never read a number
+> off it.
+
+Headline numbers (original, uncorrected):
 
 - **55 distinct named methodologies / frameworks** (27 proprietary + 28 borrowed)
 - **126 individually named components** inside those frameworks (layers, engines,
@@ -128,10 +140,26 @@ Referenced in prompt text, mostly unattributed (mechanism named, source not).
 
 ---
 
-## PART C — VERDICT ON THE "50+" CLAIM
+## PART C — VERDICT ON THE "50+" CLAIM (WITHDRAWN)
 
-"50+" is **defensible and now evidenced**: 55 distinct named methodologies, of
+Original verdict, now withdrawn by the September 2026 audit: "50+" was claimed
+defensible on the basis of 55 distinct named methodologies, of
 which 27 are proprietary to this platform. The Jaguar document's "41" is a
 different, narrower metric — methodologies *invoked on that run* (28 pipeline
 stages + 13 LOC engines). Both are correct against their own definition; they
 should be labelled distinctly ("methodology library" vs "applied on this run").
+
+## PART D — SEPTEMBER 2026 AUDIT OUTCOME
+
+- Every citation in this document was checked: all referenced source files exist.
+- Double counts removed: P27 vs B1–B23 (container vs constituents), P15 vs B26.
+- Cialdini's seven principles collapsed to one framework (components: 7).
+- Near-duplicates merged: prospect theory / loss aversion; unity / in-group identity;
+  mental availability / distinctive assets / category cues / emotional priming /
+  reach over frequency (one Ehrenberg-Bass doctrine).
+- Frameworks present in prompt logic but missing from this document added:
+  parasocial relationship theory, Elaboration Likelihood Model, self-perception
+  theory, classical conditioning, effort reduction, Fatal/Flagged attackability.
+- Ten QA/governance guards reclassified out of the methodology count.
+- Verified count: **40**. Public headline: **40+**, derived from
+  `REGISTER_METHODOLOGY_COUNT`, floored to the nearest five.

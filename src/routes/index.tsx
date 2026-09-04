@@ -8,6 +8,7 @@ import {
   PROPOSITIONS_HEADLINE_CEILING,
   PROPOSITIONS_SHORTLIST_MIN,
   PROPOSITIONS_SHORTLIST_MAX,
+  METHODOLOGY_HEADLINE,
 } from "@/lib/platform-metrics";
 import { LENS_COUNT } from "@/lib/stimulus/lenses";
 import { ROOM_DEFS } from "@/lib/rooms";
@@ -20,8 +21,7 @@ export const Route = createFileRoute("/")({
       { title: "Brand Grenade — Brand Strategy and Creative Development System" },
       {
         name: "description",
-        content:
-          "Brand Grenade takes a brand from raw intelligence to validated strategy to orchestrated creative — in hours, not weeks. Five connected rooms, 50+ methodologies, 37 creative lenses.",
+        content: `Brand Grenade takes a brand from raw intelligence to validated strategy to orchestrated creative — in hours, not weeks. Five connected rooms, ${METHODOLOGY_HEADLINE} methodologies, ${LENS_COUNT} creative lenses.`,
       },
       {
         property: "og:title",
@@ -354,7 +354,7 @@ const ROOMS: Room[] = [
     name: "Strategy Pipeline",
     desc: "Searches every serious direction at once, then proves the one that survives — so the strategy in the room already beat the twenty that didn't, not one team's best guess under deadline.",
     facts: [
-      "50+ methodologies",
+      `${METHODOLOGY_HEADLINE} methodologies`,
       "16 lateral engines",
       "Six-dimension strategic validation",
       "Historical territory validation",
