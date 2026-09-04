@@ -21,8 +21,7 @@ export const Route = createFileRoute("/")({
       { title: "Brand Grenade — Brand Strategy and Creative Development System" },
       {
         name: "description",
-        content:
-          "Brand Grenade takes a brand from raw intelligence to validated strategy to orchestrated creative — in hours, not weeks. `+`Five connected rooms, ${METHODOLOGY_HEADLINE} methodologies, ${LENS_COUNT} creative lenses.",
+        content: `Brand Grenade takes a brand from raw intelligence to validated strategy to orchestrated creative — in hours, not weeks. Five connected rooms, ${METHODOLOGY_HEADLINE} methodologies, ${LENS_COUNT} creative lenses.`,
       },
       {
         property: "og:title",
