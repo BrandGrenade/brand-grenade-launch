@@ -1,4 +1,8 @@
 import { LOC_ENGINES } from "./loc/task-types";
+import {
+  REGISTER_METHODOLOGY_COUNT,
+  REGISTER_METHODOLOGY_HEADLINE,
+} from "./methodology-register";
 import { TOTAL_PIPELINE_STEPS } from "./stage-manifest";
 
 // PLATFORM METRICS — single source of truth for every publicly asserted
