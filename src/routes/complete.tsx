@@ -19,7 +19,6 @@ import { cleanProposition } from "@/lib/clean-proposition";
 import { Document00ACard } from "@/components/Document00ACard";
 import { ResearchProvenanceCard } from "@/components/ResearchProvenanceCard";
 
-import { buildConsultingDeliveryDocument } from "@/lib/consulting-delivery-document";
 import type { MintoSession } from "@/lib/minto-content";
 import { ExecSummaryCard } from "@/components/ExecSummaryCard";
 import { CreativeShowcaseCard } from "@/components/CreativeShowcaseCard";
@@ -460,8 +459,6 @@ function CompletePage() {
         {/* Strategy Executive Summary — on-demand synthesis */}
         <ExecSummaryCard session={session} />
 
-        {/* Consulting Delivery — canonical Minto template */}
-        <ConsultingDeliveryCard session={session} />
 
         {/* Format selection */}
         <div style={{ marginBottom: 16 }}>
@@ -1423,77 +1420,6 @@ function PeopleIcon() {
 
 // ─── Phase 2 Deliverables ─────────────────────────────────────────────
 const PHASE_2_AMBER_DELIV = "#C81E1E";
-
-function ConsultingDeliveryCard({ session }: { session: SessionRow }) {
-  const amber = "#C81E1E";
-  const ready = Boolean(session.selected_smp && String(session.selected_smp).trim());
-  return (
-    <div
-      data-doc="consulting-delivery"
-      style={{
-        padding: "16px 20px",
-        borderRadius: 8,
-        border: `1px solid ${ready ? amber + "55" : "var(--color-border)"}`,
-        background: ready ? "var(--color-surface-2)" : "var(--color-surface-3)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        gap: 16,
-        marginBottom: 24,
-      }}
-    >
-      <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
-        <span
-          className="text-body"
-          style={{
-            color: ready ? "var(--color-text-primary)" : "var(--color-text-tertiary)",
-            fontWeight: 600,
-          }}
-        >
-          Consulting Delivery
-        </span>
-        <span className="text-body-sm" style={{ color: "#8B8680", fontSize: 13 }}>
-          {ready
-            ? "Ten-section delivery document with the full working appendix."
-            : "Available once a proposition has been selected for this session."}
-        </span>
-      </div>
-      <button
-        type="button"
-        disabled={!ready}
-          onClick={async () => {
-          try {
-              const live = await resolveLiveDocumentSession(session);
-            openHtmlInNewTab(
-              buildConsultingDeliveryDocument(live as unknown as MintoSession, {
-                appendix: "full",
-              }),
-            );
-          } catch (e) {
-            alert(e instanceof Error ? e.message : "Document build failed");
-          }
-        }}
-        style={{
-          height: 32,
-          padding: "0 14px",
-          borderRadius: 6,
-          border: `1px solid ${amber}`,
-          background: "transparent",
-          color: amber,
-          fontSize: 13,
-          fontWeight: 600,
-          letterSpacing: "0.08em",
-          textTransform: "uppercase",
-          cursor: ready ? "pointer" : "not-allowed",
-          whiteSpace: "nowrap",
-          opacity: ready ? 1 : 0.5,
-        }}
-      >
-        Open ↗
-      </button>
-    </div>
-  );
-}
 
 /** Room 04 deliverables when no Phase 2 section is rendered. */
 function StandaloneCreativeDeliverables({ sessionId }: { sessionId: string }) {
