@@ -221,7 +221,16 @@ function lockedCreativeSection(session: Phase1Session): string {
     const written = entries.filter((e) => e.body);
     if (written.length) {
       channels = written
-        .map((e) => `- **${e.name}** — ${e.body.split("\n").find((l) => l.trim())?.slice(0, 400) ?? ""}`)
+        .map((e) => {
+          // Channel briefs are whole documents; the platform section carries a
+          // one-line summary, never a heading or a markdown marker.
+          const first =
+            e.body
+              .split("\n")
+              .map((l) => l.replace(/^\s*#{1,6}\s*/, "").replace(/\*\*/g, "").trim())
+              .find((l) => l && !/^[-—*_=]{2,}$/.test(l)) ?? "";
+          return `- **${e.name}** — ${first.slice(0, 400)}`;
+        })
         .join("\n");
     }
   }
