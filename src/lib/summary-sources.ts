@@ -401,10 +401,16 @@ export function extractSelectedDetonation(
   selectedStatement = "",
   selectedLine = "",
 ): SelectedDetonation | null {
-  if (!stage18?.trim()) return null;
+  // The selected Detonation is sometimes persisted on its own, with the full
+  // candidate sweep never written back to stage_18_output. That record is the
+  // decision itself, so it is read directly rather than treated as absent.
+  if (!stage18?.trim() || !/DETONATION (?:CANDIDATE\s+)?(?:ONE|TWO|THREE)\b/i.test(normaliseMd(stage18))) {
+    return fromSelectedRecordOnly(selectedStatement, selectedLine);
+  }
   const text = normaliseMd(stage18);
   const marks = [...text.matchAll(/^\s*#{0,4}\s*DETONATION (?:CANDIDATE\s+)?(ONE|TWO|THREE)\b.*$/gim)];
-  if (!marks.length) return null;
+  if (!marks.length) return fromSelectedRecordOnly(selectedStatement, selectedLine);
+
 
   const blocks = marks.map((m, i) => ({
     ordinal: m[1].toUpperCase(),
