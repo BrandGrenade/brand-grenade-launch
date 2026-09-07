@@ -91,6 +91,15 @@ export function relabelScoreScale(text: string): string {
     .replace(
       /\bweighted\s+into\s+a\s+single\s+figure\s+on\s+a\s+100-point\s+scale\b/gi,
       `weighted into a single figure on a ${SCORE_CEILING}-point scale`,
+    )
+    // Superseded scoring passes (the earlier /60 and /110 rubrics) can still
+    // sit in an old transcript. They cannot be rescaled honestly, so they are
+    // labelled as superseded rather than presented alongside current scores
+    // as if they were on the same scale.
+    .replace(
+      /\b(\d+(?:\.\d+)?)\s*\/\s*(60|110)\b/g,
+      (_m, n: string, ceiling: string) =>
+        `${n}/${ceiling} (superseded scoring pass — current scale is ${SCORE_CEILING})`,
     );
 }
 

@@ -133,9 +133,10 @@ RUN FACTS
 - Propositions considered: ${f.propositionsConsidered}
 - Propositions competitively scored: ${f.propositionsScored}
 - Propositions clearing the hard floors: ${f.propositionsPassed}
-- Documents produced from this run: ${f.documentsProduced}
 - Governance gates confirmed: ${f.gatesConfirmed} of ${f.gatesTotal}
 ${gateLines}
+
+This run produces up to four document formats from the same locked strategy; never state how many documents exist.
 
 Scoring scale: six weighted dimensions totalling 90 points (Fame 30, Truth Strength 20, Competitive Impossibility 15, Brand Permission 10, Clean Air 10, Commercial Precedent 5). Every composite score is out of 90. Never write a composite out of 60, 100 or 110, and never compute a composite yourself — quote only the composite supplied in the pipeline inputs.
 
