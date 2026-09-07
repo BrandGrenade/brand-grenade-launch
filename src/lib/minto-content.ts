@@ -1611,7 +1611,11 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
           const flag = ipClearanceFlag(row.ratings);
           return callout(
             `${escapeHtml(row.lens_name ?? "Creative direction")}${isWinner ? " — recommended" : " — not carried forward"}`,
-            (row.campaign_line ? pullQuote(row.campaign_line, { label: "Campaign line" }) : "") +
+            (row.campaign_line
+              ? pullQuote(row.campaign_line, {
+                  label: isWinner ? "Locked campaign line" : "Line explored — not locked",
+                })
+              : "") +
               (row.direction ? renderMarkdown(row.direction) : "") +
               (flag
                 ? `<div class="flag-callout"><strong>Rights and clearance:</strong> ${escapeHtml(flag)}</div>`
