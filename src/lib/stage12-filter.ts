@@ -1,13 +1,13 @@
 // Stage 12 input hardening + Stage 10 in-code selection gate (V6).
 //
 // V6 unifies core SMP scoring with the LOC validation framework:
-//   Six dimensions, weighted composite /100, hard floors on Truth Strength
+//   Six dimensions, weighted composite /90, hard floors on Truth Strength
 //   (≥5) and Competitive Impossibility (≥6). Fame / Brand Permission /
 //   Clean Air / Commercial Precedent surface human flags only.
 //
 // Permanent guarantees enforced HERE, not in the prompt alone:
 //   1. Stage 10 PASS/ELIMINATED is computed IN CODE from parsed scores.
-//   2. Weighted composite /100 is computed IN CODE (ordering + display).
+//   2. Weighted composite /90 is computed IN CODE (ordering + display).
 //   3. Human flags are computed IN CODE and rendered per SMP.
 //   4. ELIMINATED SMPs from Stage 11 are stripped from the Stage 12 input.
 //   5. Stage 10 scores are re-emitted as a FROZEN SCORES block for Stage 12.
@@ -21,7 +21,7 @@ export interface Stage10Score {
   brandPermission: number;
   cleanAir: number;
   commercialPrecedent: number;
-  /** Weighted composite score out of 100 (code-computed; authoritative). */
+  /** Weighted composite score out of 90 (code-computed; authoritative). */
   weightedComposite: number;
   /** Code-computed verdict per V6 floors. */
   codeVerdict: "PASS" | "ELIMINATED";
@@ -56,7 +56,8 @@ export const STAGE_10_WEIGHTS = {
   cleanAir: 10,
   commercialPrecedent: 5,
 } as const;
-export const STAGE_10_WEIGHTED_MAX = 100;
+// The six weights total 90, so a perfect card scores 90 — not 100.
+export const STAGE_10_WEIGHTED_MAX = 90;
 
 export const STAGE_10_FLOORS = {
   truthStrength: 5,
@@ -371,7 +372,7 @@ export function buildFrozenScoresBlock(
 
   const lines: string[] = [];
   lines.push(
-    "==== FROZEN STAGE 10 SCORES (V6 SIX-DIMENSION FRAMEWORK) — USE VERBATIM IN STAGE 12 CARDS. DO NOT RECALCULATE OR ADJUST. ====",
+    "==== FROZEN STAGE 10 SCORES (V6 SIX-DIMENSION FRAMEWORK — SCALE /90) — USE VERBATIM IN STAGE 12 CARDS. DO NOT RECALCULATE OR ADJUST. ====",
   );
   for (const v of validated) {
     const s = byField.get(norm(v.fieldName)) ?? byLine.get(norm(v.smpLine));
@@ -389,7 +390,7 @@ export function buildFrozenScoresBlock(
     lines.push(
       `Brand Permission: ${s.brandPermission}/10 (10%) | Clean Air: ${s.cleanAir}/10 (10%) | Commercial Precedent: ${s.commercialPrecedent}/10 (5%)`,
     );
-    lines.push(`Weighted Composite: ${s.weightedComposite}/100`);
+    lines.push(`Weighted Composite: ${s.weightedComposite}/${STAGE_10_WEIGHTED_MAX}`);
     if (s.flags.length) {
       for (const f of s.flags) lines.push(f);
     }
@@ -399,7 +400,7 @@ export function buildFrozenScoresBlock(
 
 /**
  * Post-process raw Stage 10 LLM output under V6:
- *  - Append CODE VERDICT, CODE COMPOSITE (weighted /100), and CODE FLAGS
+ *  - Append CODE VERDICT, CODE COMPOSITE (weighted /90), and CODE FLAGS
  *    lines to every Per-SMP block.
  *  - Emit a CODE-COMPUTED STAGE 10 SUMMARY block at the end that Stage 11
  *    and Stage 12 consume as authoritative.
@@ -455,7 +456,7 @@ export function applyStage10CodeGate(
     );
   } else {
     summaryLines.push(
-      `Selection rule: ELIMINATED if Truth Strength < ${STAGE_10_FLOORS.truthStrength} OR Competitive Impossibility < ${STAGE_10_FLOORS.competitiveImpossibility}. Fame, Brand Permission, Clean Air and Commercial Precedent surface human flags but do not eliminate. Weighted composite /100 is for ranking and display.`,
+      `Selection rule: ELIMINATED if Truth Strength < ${STAGE_10_FLOORS.truthStrength} OR Competitive Impossibility < ${STAGE_10_FLOORS.competitiveImpossibility}. Fame, Brand Permission, Clean Air and Commercial Precedent surface human flags but do not eliminate. Weighted composite /90 is for ranking and display.`,
     );
   }
   const sorted = [...scores].sort((a, b) => b.weightedComposite - a.weightedComposite);

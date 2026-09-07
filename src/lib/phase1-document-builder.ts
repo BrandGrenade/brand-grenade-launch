@@ -82,12 +82,17 @@ export function md(text: string): string {
 }
 
 import { stripDocumentMetadata } from "./strip-document-metadata";
+import { relabelScoreScale } from "./appendix-humanise";
 import { certifyDocument } from "./content-integrity";
 import { BOOKKEEPING_LINE, CANDIDATE_STAGE_KEYS, scopeToSelected, selectedAliases } from "./minto-content";
 import { buildBoardStrategyDocument } from "./board-strategy-document";
 
 export function sanitise(t: string | null | undefined): string {
-  return stripDocumentMetadata(t ?? "", "phase1-doc")
+  // Legacy transcripts carry composites written on the superseded /100 and
+  // /60 scales. The shared relabeller puts every score on the one canonical
+  // 90-point scale (or marks it superseded) so no two documents rendered from
+  // this session can disagree about the ceiling.
+  return relabelScoreScale(stripDocumentMetadata(t ?? "", "phase1-doc"))
     .replace(/\u2014/g, "—").replace(/\u2013/g, "–")
     .replace(/\u201C/g, '"').replace(/\u201D/g, '"')
     .replace(/\u2018/g, "'").replace(/\u2019/g, "'")

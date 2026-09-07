@@ -11,6 +11,7 @@ import {
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertSessionAccess } from "@/lib/auth-helpers.server";
 import { assertUpstreamStageOutput } from "./pipeline-integrity";
+import { deriveRunFacts, runFactsBlock } from "./run-facts";
 
 const FormatSchema = z.enum(["agency", "consulting", "workshop", "vision"]);
 const Input = z.object({
@@ -133,6 +134,10 @@ export const runStage16 = createServerFn({ method: "POST" })
       })
       .eq("id", data.sessionId);
 
+    // Authoritative run-level counts — identical for every format rendered
+    // from this session, so vision / consulting / agency cannot disagree.
+    const runFacts = deriveRunFacts(s, data.format);
+
     const brand = session.brand_name ?? "Untitled Brand";
     const category = session.category ?? "";
     const selectedSmp = session.selected_smp ?? "";
@@ -155,6 +160,14 @@ export const runStage16 = createServerFn({ method: "POST" })
       stage_14b_output: session.stage_14b_output ?? null,
       stage_14c_output: session.stage_14c_output ?? null,
       stage_15_output: session.stage_15_output ?? null,
+      stage_17_selected_territory: (s.stage_17_selected_territory as string | null) ?? null,
+      stage_18_detonation_line: (s.stage_18_detonation_line as string | null) ?? null,
+      stage_18_selected_detonation: (s.stage_18_selected_detonation as string | null) ?? null,
+      stage_19_output: (s.stage_19_output as string | null) ?? null,
+      stage_22_output: (s.stage_22_output as string | null) ?? null,
+      locked_campaign_line: (s.locked_campaign_line as string | null) ?? null,
+      locked_big_idea: (s.locked_big_idea as string | null) ?? null,
+      run_facts: runFacts,
     };
 
     const sections = getSectionsForFormat(data.format, sessionForSections);
@@ -185,6 +198,7 @@ export const runStage16 = createServerFn({ method: "POST" })
 CATEGORY: ${category}
 SELECTED PROPOSITION: "${selectedSmp}"
 
+${runFactsBlock(runFacts)}
 COMPLETE PIPELINE INTELLIGENCE — use exclusively as your evidential foundation. Do not invent.
 
 STRATEGIC BRIEF:

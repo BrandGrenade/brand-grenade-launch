@@ -1127,8 +1127,15 @@ export function buildSummaryDocument(
     // proposition lock, and printing the score alone would misread as a
     // contradiction.
     const num = (v: string | null | undefined) => Number((v ?? "").split("/")[0]) || 0;
+    // Only scores on the current canonical ceiling are quoted. A run that was
+    // scored under a superseded rubric carries a different ceiling, and
+    // printing those figures beside today's would invite a false comparison.
+    const onCanonicalScale = (v: string | null | undefined) =>
+      new RegExp(`/\\s*${SCORE_CEILING}\\b`).test(v ?? "");
     const scores =
-      f.composite && winnerComposite && num(f.composite) <= num(winnerComposite)
+      f.composite && winnerComposite &&
+      onCanonicalScale(f.composite) && onCanonicalScale(winnerComposite) &&
+      num(f.composite) <= num(winnerComposite)
         ? ` It scored ${f.composite} at Stage 12 against the selected proposition's ${winnerComposite}.`
         : "";
     const winner = lockedSmp ? lockedSmp.replace(/^["“]|["”]$/g, "") : "";
