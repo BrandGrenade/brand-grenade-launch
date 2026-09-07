@@ -807,8 +807,11 @@ export function buildSummaryDocument(
   ])}${band("Executional", [
     { value: channels.length, label: "channel briefs written" },
     { value: extras.promptsWritten ?? 0, label: "production prompts written" },
-    { value: runFacts.documentsProduced, label: "documents produced" },
+    // A "documents produced" figure counts export formats, not work done, and
+    // was the one stat that legitimately differed between exports of the same
+    // run. It is not stated in any document.
   ])}`;
+
 
 
   /* 04 — Category intelligence */
