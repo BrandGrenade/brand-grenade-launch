@@ -55,9 +55,37 @@ const INLINE_STRIP: RegExp[] = [
 ];
 
 
+/**
+ * Post-selection framing strip.
+ *
+ * Stage 12 writes its proposition set while several options are still live, so
+ * its text addresses a reader who is choosing ("Each of the following
+ * propositions…", "Read each proposition slowly…", the Q1-Q6 selection
+ * questions). Once a proposition is locked, every deliverable presents ONE
+ * recommendation, and that comparison scaffolding is a selection-UI artifact
+ * rather than content. It is removed wherever a stage output is rendered.
+ */
+const COMPARISON_PARAGRAPH: RegExp[] = [
+  /^\s*\*{0,2}Each of the (?:following|these)\s+propositions\b/i,
+  /^\s*\*{0,2}Read each proposition\b/i,
+  /^\s*\*{0,2}(?:Taken together,\s*)?These\s+(?:two|three|four|five|six|seven|eight|\d+)\s+propositions\b/i,
+  /^\s*\*{0,2}Taken together,\s*these\s+(?:two|three|four|five|six|seven|eight|\d+)?\s*propositions\b/i,
+  /^\s*\*{0,2}Q\s?[1-9]\d?\s*\((?:Longevity|Creative Ambition|Commercial Courage|Credibility|Discomfort|Selection)\)/i,
+  /^\s*\*{0,2}(?:SELECTION|DECISION)\s+QUESTIONS?\*{0,2}\s*:?\s*$/i,
+  /^\s*\*{0,2}(?:Which|Choose which)\s+proposition\s+(?:do you|would you|should)\b/i,
+];
+
+export function stripComparisonFraming(input: string): string {
+  if (!input) return input;
+  return input
+    .split(/\n{2,}/)
+    .filter((block) => !COMPARISON_PARAGRAPH.some((re) => re.test(block)))
+    .join("\n\n");
+}
+
 export function stripDocumentMetadata(input: string | null | undefined, telemetryLabel?: string): string {
   if (!input) return "";
-  let t = input;
+  let t = stripComparisonFraming(input);
 
   const found: string[] = [];
   for (const re of BLOCK_PATTERNS) {
