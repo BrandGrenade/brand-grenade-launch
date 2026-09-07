@@ -36,6 +36,12 @@ import { stripDocumentMetadata , stripPluralSetFraming } from "./strip-document-
 import { extractShortlist } from "./exec-summary-extract";
 import { arrivedAtReasoningHtml, overAlternativesHtml, propositionReasoning } from "./proposition-rationale";
 import {
+  ipClearanceFlag,
+  renderRatingTable,
+  type ShortlistDirection,
+} from "./creative-shortlist";
+
+import {
   extractRecommendedTerritory,
   reconcileTerritory,
   type TerritoryReconciliation,
