@@ -1544,7 +1544,86 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
   const brandArchitecture = (session.stage_22_brand_architecture ?? "").trim();
   const distinctiveAssets = (session.stage_22_distinctive_assets ?? "").trim();
   const implications =
-    lockedIdeaHtml +
+  /* 10 — the creative recommendation (locked idea, line and Detonation) */
+  const shortlistRows: ShortlistDirection[] = Array.isArray(session.creative_shortlist)
+    ? (session.creative_shortlist as ShortlistDirection[])
+    : [];
+  const lockedRow =
+    shortlistRows.find((r) => (r.lens_name ?? "").trim() === lockedLens && lockedLens) ?? null;
+  const detonationStatement = clean(session.stage_18_selected_detonation).trim();
+  const detonationLine = (
+    (session as unknown as Record<string, unknown>).stage_18_detonation_line as string | null
+  )?.trim();
+  const creativeRecParts: string[] = [];
+  if (lockedIdeaHtml) {
+    creativeRecParts.push(lockedIdeaHtml);
+  } else {
+    creativeRecParts.push(
+      `<p class="muted">[PENDING — no creative idea had been locked for this session when this document was rendered.]</p>`,
+    );
+  }
+  if (detonationStatement || detonationLine) {
+    creativeRecParts.push(
+      callout(
+        "The Detonation",
+        (detonationLine ? pullQuote(detonationLine, { label: "Detonation line" }) : "") +
+          (detonationStatement ? renderMarkdown(detonationStatement) : ""),
+      ),
+    );
+  } else {
+    creativeRecParts.push(
+      `<p class="muted">[PENDING — no Detonation had been selected for this session when this document was rendered.]</p>`,
+    );
+  }
+  const wonJudgements = (() => {
+    const r = lockedRow?.ratings as Record<string, unknown> | undefined;
+    if (!r) return "";
+    const pick = (key: string, label: string) => {
+      const v = r[key] as Record<string, unknown> | undefined;
+      if (!v) return "";
+      const rating = v.rating ? ` — ${escapeHtml(String(v.rating))}` : "";
+      const text = String(v.judgement ?? v.rationale ?? v.verdict ?? "").trim();
+      return text ? `<li><strong>${label}${rating}.</strong> ${escapeHtml(text)}</li>` : "";
+    };
+    const items = [
+      pick("creative_ambition", "Creative ambition"),
+      pick("fame", "Fame potential"),
+      pick("creative_uniqueness", "Creative uniqueness"),
+      pick("brand_glue", "Brand glue"),
+    ]
+      .filter(Boolean)
+      .join("");
+    return items ? callout("Why this idea won", `<ul>${items}</ul>`) : "";
+  })();
+  creativeRecParts.push(
+    wonJudgements ||
+      `<p class="muted">[PENDING — the rated judgement behind the locked idea was not available for this session.]</p>`,
+  );
+  const creative_recommendation = creativeRecParts.join("");
+
+  /* 11 — the creative shortlist (rated directions from the sweep) */
+  const creative_shortlist = shortlistRows.length
+    ? `<p>Two-stage rating carried these directions through the creative sweep to Tissue Check. Both are shown — the one taken forward and the one set aside — so the decision can be read against its alternative.</p>` +
+      shortlistRows
+        .map((row) => {
+          const isWinner =
+            Boolean(lockedLens) && (row.lens_name ?? "").trim() === lockedLens;
+          const flag = ipClearanceFlag(row.ratings);
+          return callout(
+            `${escapeHtml(row.lens_name ?? "Creative direction")}${isWinner ? " — recommended" : " — not carried forward"}`,
+            (row.campaign_line ? pullQuote(row.campaign_line, { label: "Campaign line" }) : "") +
+              (row.direction ? renderMarkdown(row.direction) : "") +
+              (flag
+                ? `<div class="flag-callout"><strong>Rights and clearance:</strong> ${escapeHtml(flag)}</div>`
+                : "") +
+              renderRatingTable(row.ratings),
+          );
+        })
+        .join("")
+    : `<p class="muted">[PENDING — no rated creative directions were recorded for this session.]</p>`;
+
+  /* 12 — implications */
+
     (implicationItems.length
       ? `<ul>${implicationItems.map((b) => `<li>${inlineMd(b)}</li>`).join("")}</ul>`
       : renderMarkdown((s14 || s15).slice(0, 1600))) +
