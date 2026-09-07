@@ -1368,6 +1368,15 @@ export function buildSummaryDocument(
         )}`,
       )
     : "";
+  // A locked Detonation is part of the locked creative record. If the agency
+  // document prints it and this one does not, the same run tells two audiences
+  // different things about what was decided — so it is reproduced here too,
+  // from the same stored field, never re-written.
+  const lockedDetonationBlock = selectedDetonation
+    ? `${selectedDetonation.line ? pullQuote(selectedDetonation.line, { label: "Selected Detonation — Stage 18" }) : ""}${
+        selectedDetonation.statement ? p(selectedDetonation.statement) : ""
+      }`
+    : "";
   const creativeHtml = lockedIdea || lockedLine
     ? `${hierarchyBlock}${
         lockedLine
@@ -1376,11 +1385,12 @@ export function buildSummaryDocument(
               variant: "hero",
             })
           : ""
-      }${lockedIdea ? renderMarkdown(lockedIdea) : ""}${
+      }${lockedIdea ? renderMarkdown(lockedIdea) : ""}${lockedDetonationBlock}${
         recognitionTest
           ? `<h3>The recognition test</h3>${renderMarkdown(recognitionTest)}`
           : ""
       }`
+
 
     : selectedDetonation
       ? `${p(
