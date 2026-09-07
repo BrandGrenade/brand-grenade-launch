@@ -418,14 +418,8 @@ export function openStage16VisionDocument(
   brand: string,
   smp: string | null | undefined,
   visionOutput: string,
+  win?: Window | null,
 ): void {
   const html = buildStage16VisionDocument(brand, smp, visionOutput);
-  const win = window.open("", "_blank");
-  if (!win) {
-    alert("Please allow popups to download your document.");
-    return;
-  }
-  win.document.open("text/html");
-  win.document.write(html);
-  win.document.close();
+  presentDocument(html, `${safeFile(brand)}-strategy-and-creative-vision`, win);
 }
