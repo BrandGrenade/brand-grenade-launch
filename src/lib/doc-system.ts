@@ -346,6 +346,13 @@ blockquote { border-left: 3pt solid var(--detonation); padding: 10pt 14pt; margi
 
 /* ── supporting blocks ───────────────────────────────────────────── */
 .callout { border: 0.75pt solid var(--rule); background: var(--surface); padding: 14pt 16pt; margin: 14pt 0; }
+/* Rights and clearance obligations — a board has to see these, so they carry
+   their own visible treatment rather than sitting inside a table row. */
+.flag-callout { border-left: 2.5pt solid var(--detonation); background: var(--surface); padding: 9pt 12pt; margin: 10pt 0; font-size: 9.5pt; }
+table.ratings { border-collapse: collapse; width: 100%; font-size: 9pt; margin: 10pt 0; }
+table.ratings th, table.ratings td { border: 0.5pt solid var(--rule); padding: 5pt 7pt; text-align: left; vertical-align: top; }
+table.ratings thead th { font-size: 8pt; letter-spacing: 0.08em; text-transform: uppercase; color: var(--detonation); }
+table.ratings tbody th { width: 26%; font-weight: 600; }
 .callout .callout-label { font-size: 8.5pt; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--detonation); margin-bottom: 7pt; }
 .reasons { display: grid; grid-template-columns: repeat(auto-fit, minmax(140pt, 1fr)); gap: 12pt; margin: 16pt 0; }
 .reason { border-top: 1.5pt solid var(--ash); padding-top: 9pt; }
