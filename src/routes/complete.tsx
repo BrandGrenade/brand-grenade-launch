@@ -26,6 +26,7 @@ import { CreativeShowcaseCard } from "@/components/CreativeShowcaseCard";
 import { CreativeEngineDeliverables } from "@/components/CreativeEngineDeliverables";
 import { Spinner } from "@/components/ui/busy";
 import { resolveLiveDocumentSession } from "@/lib/document-live-source";
+import { DocumentCertificationError } from "@/lib/content-integrity";
 import { NUMBERED_STAGE_COUNT } from "@/lib/stage-manifest";
 
 
@@ -181,6 +182,10 @@ function CompletePage() {
   const [loading, setLoading] = useState(true);
   const [lastError, setLastError] = useState<string | null>(null);
   const [lastOutput, setLastOutput] = useState<string>("");
+  // When a document build is rejected by the integrity gate, the built HTML is
+  // still carried on the error. Keeping it lets the reader open and print the
+  // document rather than being dead-ended on a plain-text download.
+  const [fallbackHtml, setFallbackHtml] = useState<string | null>(null);
   const regenerateRef = useRef<((id: Format) => void) | null>(null);
 
   useEffect(() => {
@@ -576,6 +581,7 @@ function CompletePage() {
             const runGenerate = async (force = false) => {
               if (!hasSmp || !session) return;
               setLastError(null);
+              setFallbackHtml(null);
               if (format === "vision") {
                 // Stage 16 vision is generated on demand via the server fn.
                 // Returns cached output if already populated (no extra Claude
@@ -641,9 +647,22 @@ function CompletePage() {
                 const live = await resolveLiveDocumentSession(session);
                 openPhase1Document(live, format as Phase1Format);
               } catch (e) {
-                console.error("Document open failed", e);
+                // Log the whole error — name, message, stack and any
+                // certification findings — so the real cause is visible.
+                console.error("Document build failed", {
+                  format,
+                  sessionId: session.id,
+                  type: e instanceof Error ? e.name : typeof e,
+                  message: e instanceof Error ? e.message : String(e),
+                  stack: e instanceof Error ? e.stack : undefined,
+                  findings:
+                    e instanceof DocumentCertificationError ? e.findings : undefined,
+                });
+                if (e instanceof DocumentCertificationError && e.html) {
+                  setFallbackHtml(e.html);
+                }
                 setLastError(
-                  e instanceof Error ? e.message : "Document open failed",
+                  e instanceof Error ? e.message : "Document build failed",
                 );
               }
             };
@@ -739,9 +758,47 @@ function CompletePage() {
                 borderRadius: 8,
               }}
             >
-              <p className="text-body-sm" style={{ color: "#8B8680", margin: 0 }}>
-                PDF generation failed. Try downloading as a text document instead.
+              <p
+                className="text-body-sm"
+                style={{ color: "#EDE8E0", margin: 0, fontWeight: 600 }}
+              >
+                This document could not be published.
               </p>
+              <p
+                className="text-body-sm"
+                style={{ color: "#8B8680", margin: "6px 0 0", whiteSpace: "pre-wrap" }}
+              >
+                {lastError}
+              </p>
+              {fallbackHtml && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const win = window.open("", "_blank");
+                    if (!win) {
+                      alert("Please allow popups to open the document.");
+                      return;
+                    }
+                    win.document.open("text/html");
+                    win.document.write(fallbackHtml);
+                    win.document.close();
+                  }}
+                  className="text-body-sm transition-colors"
+                  style={{
+                    marginTop: 12,
+                    display: "block",
+                    background: "transparent",
+                    border: "1px solid #C81E1E",
+                    borderRadius: 6,
+                    padding: "8px 14px",
+                    color: "#C81E1E",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                  }}
+                >
+                  Open it anyway and save as PDF from the print dialog ↗
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => {
