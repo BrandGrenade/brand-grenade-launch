@@ -134,36 +134,56 @@ const LOCKED_FIELDS: Array<{ column: string; label: string }> = [
   { column: "locked_big_idea", label: "locked idea" },
 ];
 
-/** Any locked creative a document prints must be present in the stored record. */
+/**
+ * The severe failure mode: a document presenting creative that was never
+ * decided. So the test runs in the direction that catches it — every
+ * substantial line a document prints under a locked-creative label must exist
+ * in this session's own stored columns. Merely mentioning the word
+ * "detonation" is not presenting one, so headings alone are not flagged.
+ */
 function gate4Provenance(doc: string, t: string, session: Record<string, unknown>): Finding[] {
   const out: Finding[] = [];
-  const nt = norm(t);
-  for (const { column, label } of LOCKED_FIELDS) {
-    const raw = typeof session[column] === "string" ? (session[column] as string) : "";
-    if (!raw.trim()) continue;
-    // Headline of the stored record: the sentence a document would quote.
-    const headline = raw.split("\n").map((l) => l.trim()).filter(Boolean)[0] ?? "";
-    if (!headline || headline.length < 12) continue;
-    const key = norm(headline).split(" ").slice(0, 8).join(" ");
-    const mentionsLabel = new RegExp(`\\b${label.split(" ")[0]}\\b`, "i").test(t);
-    if (mentionsLabel && key && !nt.includes(key)) {
-      out.push({
-        gate: "G4 PROVENANCE",
-        doc,
-        detail: `refers to the ${label} but does not reproduce the stored one`,
-        evidence: headline.slice(0, 120),
-      });
+  const source = norm(
+    Object.entries(session)
+      .filter(([k, v]) => typeof v === "string" && (k.startsWith("stage_") || k.startsWith("locked_") || k.startsWith("truth_") || k.startsWith("brand_")))
+      .map(([, v]) => v as string)
+      .join("\n"),
+  );
+  const lines = t.split("\n").map((l) => l.trim());
+  const LABEL = /^(?:the\s+)?(?:locked\s+)?(?:detonation(?:\s+line)?|campaign line|locked creative platform|locked idea|creative idea)\b/i;
+  lines.forEach((line, i) => {
+    if (!LABEL.test(line)) return;
+    // Inspect what the document prints as the locked content itself.
+    for (const claim of lines.slice(i + 1, i + 6)) {
+      const words = norm(claim).split(" ").filter(Boolean);
+      if (words.length < 8) continue;
+      const shingle = words.slice(0, 8).join(" ");
+      if (!source.includes(shingle)) {
+        out.push({
+          gate: "G4 PROVENANCE",
+          doc,
+          detail: `prints locked creative under "${line.slice(0, 40)}" that is not in this session's stored record`,
+          evidence: claim.slice(0, 160),
+        });
+      }
+      break;
     }
-  }
+  });
   return out;
 }
 
+/**
+ * Set-framing is only a defect when it quantifies over PROPOSITIONS the reader
+ * cannot see. "each one" about channels or alternatives is ordinary English,
+ * so the sentence itself must be about the proposition set.
+ */
 const SET_FRAMING = [
-  /each of (?:these|the) (?:\w+ )?propositions/i,
-  /all (?:\w+ )?propositions/i,
-  /\beach one\b/i,
+  /each of (?:these|the) (?:\w+ )?(?:propositions|routes|options)\b/i,
+  /\ball (?:\w+ )?propositions\b/i,
   /\bthese propositions\b/i,
   /\bboth propositions\b/i,
+  /\beach one\b[^.!?]*\b(?:proposition|route|territory|truth)s?\b/i,
+  /\b(?:proposition|route)s\b[^.!?]*\beach one\b/i,
   /compare (?:the|these) (?:propositions|options)/i,
 ];
 
@@ -188,6 +208,7 @@ function gate5Scaffold(doc: string, t: string): Finding[] {
   }
   return out;
 }
+
 
 function gate7Surface(doc: string, t: string, html: string): Finding[] {
   const out: Finding[] = [];
