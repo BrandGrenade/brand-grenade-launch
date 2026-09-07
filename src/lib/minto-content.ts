@@ -1543,7 +1543,7 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
   const implicationItems = bullets(s14, 5).length ? bullets(s14, 5) : bullets(s15, 5);
   const brandArchitecture = (session.stage_22_brand_architecture ?? "").trim();
   const distinctiveAssets = (session.stage_22_distinctive_assets ?? "").trim();
-  const implications =
+  
   /* 10 — the creative recommendation (locked idea, line and Detonation) */
   const shortlistRows: ShortlistDirection[] = Array.isArray(session.creative_shortlist)
     ? (session.creative_shortlist as ShortlistDirection[])
