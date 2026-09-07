@@ -597,7 +597,7 @@ function CompletePage() {
                 const existing = session.stage_16_vision_output;
                 if (!force && existing && existing.trim().length > 1000) {
                   try {
-                    openStage16VisionDocument(brand, smp, existing);
+                    openStage16VisionDocument(brand, smp, existing, docWin);
                   } catch (e) {
                     console.error("Vision doc open failed", e);
                     setLastError(e instanceof Error ? e.message : "Document open failed");
