@@ -16,6 +16,32 @@ import {
   evaluateStage10Verdict,
 } from "./stage12-filter";
 
+/** Rewrite the per-dimension score numbers in a scored block to the supplied
+ *  (median) values, preserving each dimension's justification text. */
+export function restateDimensions(
+  block: string,
+  dims: Record<string, number>,
+): string {
+  const labels: Array<[string, number]> = [
+    ["Fame", dims.fame],
+    ["Truth Strength", dims.truthStrength],
+    ["Competitive Impossibility", dims.competitiveImpossibility],
+    ["Brand Permission", dims.brandPermission],
+    ["Clean Air", dims.cleanAir],
+    ["Commercial Precedent", dims.commercialPrecedent],
+  ];
+  let out = block;
+  for (const [label, value] of labels) {
+    if (typeof value !== "number" || Number.isNaN(value)) continue;
+    const re = new RegExp(
+      `(^\\s*\\*{0,2}${label.replace(/ /g, "\\s+")}\\*{0,2}\\s*:?\\s*\\*{0,2}\\s*)(\\d+(?:\\.\\d+)?)(\\s*/\\s*10)`,
+      "gim",
+    );
+    out = out.replace(re, (_m, head: string, _n: string, tail: string) => `${head}${value}${tail}`);
+  }
+  return out;
+}
+
 const RESCORE_MARKER = "==== STAGE 10 RE-SCORE — LOCKED PROPOSITION ====";
 
 function key(s: string): string {
@@ -144,6 +170,7 @@ Clean Air, Commercial Precedent). Use the exact line above in the SMP: header.
 Do NOT emit a VERDICT line and do NOT emit a composite — both are computed in
 code. Do not score any other proposition.`;
 
+
   // Three independent passes, median per dimension. A single LLM pass carries
   // enough sampling variance to flip a borderline dimension across the hard
   // floor; the median is the stable, defensible reading and is never re-rolled.
@@ -200,17 +227,22 @@ code. Do not score any other proposition.`;
   // discarded so the original Stage 10 header/verdict remains authoritative.
   const blockStart = gated.output.search(/^\s*\**SMP:/im);
   const blockEnd = gated.output.search(/\n\s*SMPS SCORED:/i);
-  const block = gated.output
+  const rawBlock = gated.output
     .slice(blockStart >= 0 ? blockStart : 0, blockEnd > 0 ? blockEnd : undefined)
     .split("\n")
     .filter((l) => !/^\s*CODE (VERDICT|COMPOSITE|FLAGS|BASIS)\b/i.test(l))
     .join("\n")
     .trim();
+  // The narrative comes from ONE pass but the composite is computed from the
+  // median of three. Left alone the document shows dimension scores that do
+  // not add up to the composite printed beneath them. Restate every dimension
+  // line at its median value so the arithmetic on the page is checkable.
+  const block = restateDimensions(rawBlock, dims);
 
   // Deterministic code lines: the shared gate injects these only when its
   // block regex matches, so we guarantee them here rather than risk a
   // document rendering a scored block with no composite.
-  const codeLines = `\nCODE VERDICT: ${score.codeVerdict}${score.codeVerdict === "PASS" ? " — clears Stage 10 hard floors." : ` — ${score.codeReason}.`}\nCODE COMPOSITE: ${score.weightedComposite}/100 weighted (Fame 30% · Truth 20% · Competitive Impossibility 15% · Brand Permission 10% · Clean Air 10% · Commercial Precedent 5%).\nCODE BASIS: median of three independent scoring passes on this exact proposition.\n`;
+  const codeLines = `\nCODE VERDICT: ${score.codeVerdict}${score.codeVerdict === "PASS" ? " — clears Stage 10 hard floors." : ` — ${score.codeReason}.`}\nCODE COMPOSITE: ${score.weightedComposite}/90 weighted (Fame 30% · Truth 20% · Competitive Impossibility 15% · Brand Permission 10% · Clean Air 10% · Commercial Precedent 5%).\nCODE BASIS: median of three independent scoring passes on this exact proposition.\n`;
 
   // Re-read immediately before writing: another trigger may have scored this
   // exact line while these passes were running.
@@ -242,7 +274,7 @@ code. Do not score any other proposition.`;
   return {
     status: "rescored",
     smp,
-    composite: `${score.weightedComposite}/100`,
+    composite: `${score.weightedComposite}/90`,
     dimensions: {
       fame: score.fame,
       truthStrength: score.truthStrength,

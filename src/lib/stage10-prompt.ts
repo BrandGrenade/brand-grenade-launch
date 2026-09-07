@@ -2,7 +2,7 @@
 //
 // V6 aligns core SMP scoring with the LOC validation framework so both
 // streams are directly comparable at Stage 12. Six dimensions, weighted sum
-// out of 100, with hard floors on Truth Strength (≥5) and Competitive
+// out of 90, with hard floors on Truth Strength (≥5) and Competitive
 // Impossibility (≥6). Additional dimensions surface human flags but do not
 // eliminate. Stage 10 PASS/ELIMINATED verdicts and the weighted composite
 // are enforced IN CODE, not by the LLM.
@@ -105,7 +105,7 @@ Commercial Precedent: [n]/10 — [anchor justification; you MUST name the brand,
 
 HEADER
 SMPS SCORED: [n]
-SELECTION RULE: Truth Strength ≥ 5 AND Competitive Impossibility ≥ 6 are hard floors. Below either eliminates. Fame, Brand Permission, Clean Air and Commercial Precedent surface human flags but do not eliminate. Weighted composite out of 100 is computed in code.
+SELECTION RULE: Truth Strength ≥ 5 AND Competitive Impossibility ≥ 6 are hard floors. Below either eliminates. Fame, Brand Permission, Clean Air and Commercial Precedent surface human flags but do not eliminate. Weighted composite out of 90 (the six weights total 90) is computed in code.
 
 SET-LEVEL VERDICT
 SMPS SCORED: [n]

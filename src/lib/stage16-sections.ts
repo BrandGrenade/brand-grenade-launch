@@ -6,6 +6,9 @@
 // impossible. Sections are stitched together by `assembleDocument` with the
 // proposition reveal inserted at the correct location.
 
+import type { RunFacts } from "./run-facts";
+import { runFactsBlock } from "./run-facts";
+
 export type Stage16Format = "consulting" | "agency" | "workshop" | "vision";
 
 export interface SessionForStage16 {
@@ -26,6 +29,18 @@ export interface SessionForStage16 {
   stage_14b_output: string | null;
   stage_14c_output: string | null;
   stage_15_output: string | null;
+  /** Phase 2 creative lock — agency formats must carry the real campaign line,
+   *  creative idea and activation architecture rather than restating strategy. */
+  stage_17_selected_territory?: string | null;
+  stage_18_detonation_line?: string | null;
+  stage_18_selected_detonation?: string | null;
+  stage_19_output?: string | null;
+  stage_22_output?: string | null;
+  locked_campaign_line?: string | null;
+  locked_big_idea?: string | null;
+  /** Authoritative run-level counts. Every section prompt is handed these and
+   *  may state no other figure about the run. */
+  run_facts?: RunFacts | null;
 }
 
 export interface SectionDef {
@@ -96,6 +111,23 @@ If you can remove the brand name and the paragraph still makes sense — rewrite
 Generic observations that could apply to any brand in any category have no place in this document.
 
 Every sentence must earn its place by being specific to this brand, this category, and this moment.
+
+`;
+
+const SINGLE_PROPOSITION_RULE = `════════════════════════════════════════
+RULE 6 — ONE PROPOSITION, ALREADY SELECTED
+════════════════════════════════════════
+
+The proposition has already been chosen and signed off. This document presents ONE proposition as the recommendation. It is not a comparison document and the reader is not being asked to choose.
+
+Forbidden entirely — never write these or anything like them:
+- "Each of the following propositions…"
+- "Read each proposition slowly…"
+- "these four propositions", "these five propositions", "collectively they map…"
+- numbered or lettered proposition menus, side-by-side comparison tables of live options
+- any question that invites the reader to pick between propositions
+
+Pipeline inputs supplied to you (particularly the selection-stage output) were written while several propositions were still live and use that comparison language. Ignore that framing completely. Rejected propositions may only appear in the section explicitly about what was set aside, in the past tense, as decisions already made.
 
 `;
 
@@ -227,7 +259,7 @@ Start immediately. No heading. No preamble.`;
 
 export const AGENCY_BEFORE_YOU_READ_PROMPT = `You are a senior strategy partner at a world-class creative agency writing the opening framing of a strategic platform document for a brand's marketing leadership.
 
-Tell the reader how to read this document and what it is for. Set expectation that this is a proposition-led document built for the teams who will make the work — not a research deck.
+Tell the reader how to read this document and what it is for. One proposition has already been selected and signed off — this document presents that single recommendation and the creative platform built on it. Set the expectation that this is a proposition-led document for the teams who will make the work, not a research deck and not a menu of options to choose between.
 
 Write 300 words maximum. 2 paragraphs. Direct. No preamble. No heading.`;
 
@@ -263,14 +295,28 @@ Write 400 words maximum. Two paragraphs per alternative. No heading. No preamble
 
 export const AGENCY_PROPOSITION_PROMPT = `You are a senior strategy partner at a creative agency writing the proposition section.
 
-Three paragraphs that build the argument without naming the proposition. Then:
+Exactly one proposition is being presented — the selected one, supplied in the inputs. Never present it as one of several, never invite comparison, never ask the reader to weigh options.
+
+Three paragraphs that build the argument towards it without naming it. Then:
 
 PROPOSITION REVEAL:
 [blank line — proposition inserted]
 
-Then three paragraphs on what the proposition claims, requires, and unlocks.
+Then three paragraphs on what this proposition claims, what it requires of the brand, and what it unlocks for the work.
 
 Write 450 words maximum total. No heading. No preamble.`;
+
+export const AGENCY_LOCKED_CREATIVE_PROMPT = `You are a senior strategy partner at a creative agency writing the locked creative section of a strategic platform.
+
+This section carries the creative decisions that have already been made and locked: the campaign line, the creative idea it expresses, and how that idea behaves across channels in activation.
+
+Rules specific to this section:
+- The campaign line and creative idea are supplied in the inputs. Reproduce the campaign line VERBATIM — exact words, exact casing. Never rewrite, improve, shorten or invent a line.
+- Describe the locked creative idea in the terms supplied. Do not substitute your own idea.
+- Summarise the channel activation in one short paragraph per channel, drawn only from the activation architecture supplied.
+- If an input reads "[NOT YET LOCKED]", write exactly "*[Pending — not yet locked in the pipeline]*" for that item and write nothing further about it. Never fill the gap with invention.
+
+Write 500 words maximum. No heading. No preamble.`;
 
 export const AGENCY_CREATIVE_WORLD_PROMPT = `You are a senior strategy partner at a creative agency writing the creative world section.
 
@@ -544,8 +590,26 @@ export function getAgencySections(s: SessionForStage16): SectionDef[] {
       maxTokens: 64000,
     },
     {
+      name: "locked_creative",
+      title: "PART NINE — THE LOCKED CREATIVE",
+      systemPrompt: STAGE_16_UNIVERSAL_RULES + AGENCY_LOCKED_CREATIVE_PROMPT,
+      pipelineInputs: [
+        `CAMPAIGN LINE (verbatim, do not alter): ${
+          (s.locked_campaign_line ?? s.stage_18_detonation_line ?? "").trim() || "[NOT YET LOCKED]"
+        }`,
+        `CREATIVE IDEA: ${
+          (s.locked_big_idea ?? s.stage_18_selected_detonation ?? "").trim() || "[NOT YET LOCKED]"
+        }`,
+        `CREATIVE TERRITORY: ${(s.stage_17_selected_territory ?? "").trim() || "[NOT YET LOCKED]"}`,
+        `ACTIVATION ARCHITECTURE:\n${cut(s.stage_19_output, 3000) || "[NOT YET LOCKED]"}`,
+        `BRAND ARCHITECTURE:\n${cut(s.stage_22_output, 1500) || "[NOT YET LOCKED]"}`,
+      ],
+      targetWords: 500,
+      maxTokens: 64000,
+    },
+    {
       name: "brief_to_creative",
-      title: "PART NINE — THE BRIEF TO CREATIVE TEAMS",
+      title: "PART TEN — THE BRIEF TO CREATIVE TEAMS",
       systemPrompt: STAGE_16_UNIVERSAL_RULES + AGENCY_BRIEF_TO_CREATIVE_PROMPT,
       pipelineInputs: [
         `PROPOSITION: "${smp}"`,
@@ -639,17 +703,33 @@ export function getWorkshopSections(s: SessionForStage16): SectionDef[] {
   ];
 }
 
+/** Prepend the authoritative run-facts block (and, post-selection, the
+ *  single-proposition rule) to every section prompt in a format. No section
+ *  may state a run count that is not interpolated here. */
+function withSharedRules(
+  sections: SectionDef[],
+  session: SessionForStage16,
+): SectionDef[] {
+  const facts = session.run_facts ? runFactsBlock(session.run_facts) : "";
+  const single = session.selected_smp?.trim() ? SINGLE_PROPOSITION_RULE : "";
+  if (!facts && !single) return sections;
+  return sections.map((sec) => ({
+    ...sec,
+    systemPrompt: `${sec.systemPrompt}\n${facts}${single}`,
+  }));
+}
+
 export function getSectionsForFormat(
   format: Stage16Format,
   session: SessionForStage16,
 ): SectionDef[] {
   switch (format) {
     case "consulting":
-      return getConsultingSections(session);
+      return withSharedRules(getConsultingSections(session), session);
     case "agency":
-      return getAgencySections(session);
+      return withSharedRules(getAgencySections(session), session);
     case "workshop":
-      return getWorkshopSections(session);
+      return withSharedRules(getWorkshopSections(session), session);
     case "vision":
       // Vision is generated as a single unified narrative — not sectioned.
       // The runStage16 handler special-cases this format.

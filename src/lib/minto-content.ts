@@ -9,6 +9,8 @@
 // Nothing is invented. If a value cannot be found in session data the slot is
 // left empty and the canonical template renders its declared fallback.
 
+import { computeWeightedComposite } from "./stage12-filter";
+import { deriveRunFacts } from "./run-facts";
 import {
   callout,
   comparisonTable,
@@ -492,6 +494,7 @@ export function parseScoredCandidates(stage10: string): ScoredCandidate[] {
   // Re-scores are appended to the same Stage 10 output, so the same
   // proposition can appear twice. The last block wins; earlier values are
   // kept only where the later block is silent.
+  // (composites are reconciled against the printed dimensions below)
   const merged: ScoredCandidate[] = [];
   for (const c of out) {
     const prior = merged.findIndex((m) => normalise(m.name) === normalise(c.name));
@@ -508,6 +511,24 @@ export function parseScoredCandidates(stage10: string): ScoredCandidate[] {
       body: `${merged[prior].body}\n${c.body}`.trim(),
 
     };
+  }
+  // A composite printed in the transcript is only trustworthy when it agrees
+  // with the six dimensions printed beside it. Where all six are present the
+  // composite is recomputed in code — Fame 30, Truth 20, Competitive
+  // Impossibility 15, Brand Permission 10, Clean Air 10, Commercial Precedent
+  // 5, total 90 — so no document can show scores that do not add up.
+  for (const c of merged) {
+    const dims = {
+      fame: c.dims["Fame"],
+      truthStrength: c.dims["Truth Strength"],
+      competitiveImpossibility: c.dims["Competitive Impossibility"],
+      brandPermission: c.dims["Brand Permission"],
+      cleanAir: c.dims["Clean Air"],
+      commercialPrecedent: c.dims["Commercial Precedent"],
+    };
+    if (Object.values(dims).every((v) => typeof v === "number" && !Number.isNaN(v))) {
+      c.composite = computeWeightedComposite(dims as Record<keyof typeof dims, number>);
+    }
   }
   return merged;
 }
@@ -1109,9 +1130,10 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
     (c) => c !== winner && !(provenance.postSelection && c === provenance.topCompetitive),
   );
 
-  const stagesRun = PIPELINE_APPENDIX.filter((s) =>
-    String((session as Record<string, unknown>)[s.key] ?? "").trim(),
-  ).length;
+  // Run-level counts come from the shared authority so every deliverable
+  // rendered from this session states the same figures.
+  const runFacts = deriveRunFacts(session as unknown as Record<string, unknown>);
+  const stagesRun = runFacts.stagesCompleted;
 
   /* Room 04 lock — authoritative campaign line and winning idea. Stage 14/15
    * text predates the lock, so the lock is stated first and verbatim. */
@@ -1531,8 +1553,10 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
     callout("Source authority", `<p>${sourceStamp}</p><p>Strategic stage outputs in the appendix are historical snapshots. The selected SMP and Room 04 lock above are resolved from their current authoritative fields at render time.</p>`) +
     proofLine({
       stagesRun,
-      documents: stagesRun ? PIPELINE_APPENDIX.length : undefined,
-      extra: scoredCount ? `${scoredCount} propositions competitively scored` : undefined,
+      documents: runFacts.documentsProduced || undefined,
+      extra: runFacts.propositionsScored
+        ? `${runFacts.propositionsScored} propositions competitively scored · ${runFacts.gatesConfirmed} of ${runFacts.gatesTotal} governance gates confirmed`
+        : undefined,
     });
 
   return {
