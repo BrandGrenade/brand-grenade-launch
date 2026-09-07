@@ -562,7 +562,9 @@ export function proofLine(p: ProofLine): string {
   const bits = [
     p.stagesRun ? `<strong>${escapeHtml(p.stagesRun)}</strong> stages run` : "",
     p.runtime ? `<strong>${escapeHtml(p.runtime)}</strong> elapsed` : "",
-    p.documents ? `<strong>${escapeHtml(p.documents)}</strong> documents produced` : "",
+    p.documents
+      ? `<strong>${escapeHtml(p.documents)}</strong> document${String(p.documents) === "1" ? "" : "s"} produced`
+      : "",
     p.extra ? escapeHtml(p.extra) : "",
   ].filter(Boolean);
   if (bits.length === 0) return "";
