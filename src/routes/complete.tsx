@@ -637,6 +637,7 @@ function CompletePage() {
                   setLastOutput(finalOutput);
                   openStage16VisionDocument(brand, smp, finalOutput, docWin);
                 } catch (e) {
+                  try { docWin?.close(); } catch { /* ignore */ }
                   console.error("Vision generation failed", e);
                   setLastError(e instanceof Error ? e.message : "Vision generation failed");
                 } finally {
