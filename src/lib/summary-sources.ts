@@ -396,15 +396,48 @@ export interface SelectedDetonation {
  * back to this so the document states what was actually chosen rather than
  * printing an empty section.
  */
+/**
+ * Reads a Detonation from the persisted selection alone: its headline first
+ * line, the labelled statement/rationale blocks beneath it, and nothing added.
+ */
+function fromSelectedRecordOnly(
+  selectedStatement: string,
+  selectedLine: string,
+): SelectedDetonation | null {
+  const raw = (selectedStatement ?? "").trim();
+  if (!raw && !selectedLine?.trim()) return null;
+  const fields = labelledBlocks(raw);
+  const clean = (v: string) => (v ?? "").replace(/\*\*/g, "").trim();
+  const firstLine = raw.split("\n").map((l) => clean(l)).find(Boolean) ?? "";
+  const line = clean(selectedLine) || (firstLine.length < 120 ? firstLine.replace(/^["“]|["”]$/g, "") : "");
+  const statement =
+    clean(fields["THE DETONATION DESCRIPTION"] ?? fields["THE DETONATION STATEMENT"] ?? "")
+      .replace(/\s+/g, " ")
+      .trim() || (line && raw.startsWith(firstLine) ? clean(raw.slice(firstLine.length)).split("\n\n")[0]?.replace(/\s+/g, " ").trim() ?? "" : "");
+  const rationale = clean(fields["WHY THIS DETONATION SERVES THE SMP"] ?? "")
+    .split(/\n(?=[A-Z][A-Z '’/&-]{6,}:)/)[0]
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!line && !statement && !rationale) return null;
+  return { line, statement, rationale };
+}
+
 export function extractSelectedDetonation(
+
   stage18: string,
   selectedStatement = "",
   selectedLine = "",
 ): SelectedDetonation | null {
-  if (!stage18?.trim()) return null;
+  // The selected Detonation is sometimes persisted on its own, with the full
+  // candidate sweep never written back to stage_18_output. That record is the
+  // decision itself, so it is read directly rather than treated as absent.
+  if (!stage18?.trim() || !/DETONATION (?:CANDIDATE\s+)?(?:ONE|TWO|THREE)\b/i.test(normaliseMd(stage18))) {
+    return fromSelectedRecordOnly(selectedStatement, selectedLine);
+  }
   const text = normaliseMd(stage18);
   const marks = [...text.matchAll(/^\s*#{0,4}\s*DETONATION (?:CANDIDATE\s+)?(ONE|TWO|THREE)\b.*$/gim)];
-  if (!marks.length) return null;
+  if (!marks.length) return fromSelectedRecordOnly(selectedStatement, selectedLine);
+
 
   const blocks = marks.map((m, i) => ({
     ordinal: m[1].toUpperCase(),

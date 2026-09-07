@@ -1317,14 +1317,15 @@ export function buildSummaryDocument(
   // Sessions that predate the Creative Stimulus Engine locked no idea. Their creative
   // decision is the Detonation selected at Stage 18, which is then read here in
   // full — same template, same section, honestly labelled by its own source.
-  const selectedDetonation =
-    lockedIdea || lockedLine
-      ? null
-      : extractSelectedDetonation(
-          str(session, "stage_18_output"),
-          str(session, "stage_18_selected_detonation"),
-          str(session, "stage_18_detonation_line"),
-        );
+  // The Stage 18 Detonation is read whether or not a later idea was locked:
+  // when both exist they are two parts of one locked record, and a document
+  // that shows only one of them tells a partial story about what was decided.
+  const selectedDetonation = extractSelectedDetonation(
+    str(session, "stage_18_output"),
+    str(session, "stage_18_selected_detonation"),
+    str(session, "stage_18_detonation_line"),
+  );
+
   /* The strategy-to-creative hierarchy is stated explicitly rather than left
      to be inferred: the strategic proposition and the campaign line are
      written in different registers, and a reader comparing them side by side
@@ -1368,6 +1369,15 @@ export function buildSummaryDocument(
         )}`,
       )
     : "";
+  // A locked Detonation is part of the locked creative record. If the agency
+  // document prints it and this one does not, the same run tells two audiences
+  // different things about what was decided — so it is reproduced here too,
+  // from the same stored field, never re-written.
+  const lockedDetonationBlock = selectedDetonation
+    ? `${selectedDetonation.line ? pullQuote(selectedDetonation.line, { label: "Selected Detonation — Stage 18" }) : ""}${
+        selectedDetonation.statement ? p(selectedDetonation.statement) : ""
+      }`
+    : "";
   const creativeHtml = lockedIdea || lockedLine
     ? `${hierarchyBlock}${
         lockedLine
@@ -1376,11 +1386,12 @@ export function buildSummaryDocument(
               variant: "hero",
             })
           : ""
-      }${lockedIdea ? renderMarkdown(lockedIdea) : ""}${
+      }${lockedIdea ? renderMarkdown(lockedIdea) : ""}${lockedDetonationBlock}${
         recognitionTest
           ? `<h3>The recognition test</h3>${renderMarkdown(recognitionTest)}`
           : ""
       }`
+
 
     : selectedDetonation
       ? `${p(
@@ -1643,7 +1654,7 @@ export function buildSummaryDocument(
       index: "17",
       kicker: "Creative development",
       title: "The winning creative idea",
-      lede: "The locked idea, reproduced in full and word for word as it was written and approved.",
+      lede: "How the strategy becomes the creative, then the locked idea itself — campaign line, idea and Detonation reproduced word for word as they were approved.",
       body: creativeHtml,
     },
     {
