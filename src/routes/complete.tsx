@@ -582,6 +582,12 @@ function CompletePage() {
               if (!hasSmp || !session) return;
               setLastError(null);
               setFallbackHtml(null);
+              // Open the document tab NOW, while we're still inside the click.
+              // Opening it after the build (which awaits) makes browsers treat
+              // it as an unrequested popup and block it silently — the cause of
+              // "clicked download, nothing happened". If it is blocked anyway,
+              // the builder saves the document as a file instead.
+              const docWin = window.open("", "_blank");
               if (format === "vision") {
                 // Stage 16 vision is generated on demand via the server fn.
                 // Returns cached output if already populated (no extra Claude
