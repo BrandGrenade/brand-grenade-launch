@@ -98,8 +98,8 @@ export function relabelScoreScale(text: string): string {
     // as if they were on the same scale.
     .replace(
       /\b(\d+(?:\.\d+)?)\s*\/\s*(60|110)\b/g,
-      (_m, n: string, ceiling: string) =>
-        `${n}/${ceiling} (superseded scoring pass — current scale is ${SCORE_CEILING})`,
+      (_m, _n: string, _ceiling: string) =>
+        `a score from a superseded scoring pass (not comparable to the current ${SCORE_CEILING}-point scale)`,
     );
 }
 

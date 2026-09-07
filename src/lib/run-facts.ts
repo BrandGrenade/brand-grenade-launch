@@ -50,11 +50,13 @@ function text(row: Row, key: string): string {
   return typeof v === "string" ? v.trim() : "";
 }
 
+// The public governance contract is the six named hard gates A-F. Strategy
+// sign-off is an internal control, not one of the named gates, and counting it
+// made one document say "2 of 7" while every other said "2 of 6".
 const GATE_DEFS: Array<{ name: string; column: string }> = [
   { name: "Checkpoint A — brief confirmed", column: "checkpoint_a_confirmed" },
   { name: "Checkpoint B — territories confirmed", column: "checkpoint_b_confirmed" },
   { name: "Checkpoint C — proposition selected", column: "checkpoint_c_confirmed" },
-  { name: "Strategy sign-off", column: "strategy_signoff_confirmed" },
   { name: "Checkpoint D — creative territory selected", column: "checkpoint_d_confirmed" },
   { name: "Checkpoint E — detonation selected", column: "checkpoint_e_confirmed" },
   { name: "Checkpoint F — activation approved", column: "checkpoint_f_confirmed" },

@@ -62,6 +62,7 @@ import {
   sentences,
 } from "./summary-sources";
 import { HUMAN_CHECKPOINT_COUNT } from "./platform-metrics";
+import { deriveRunFacts } from "./run-facts";
 import { relabelScoreScale, SCORE_CEILING } from "./appendix-humanise";
 import { TOTAL_PIPELINE_STEPS } from "./stage-manifest";
 import { LENS_COUNT } from "./stimulus/lenses";
@@ -773,15 +774,18 @@ export function buildSummaryDocument(
               : ` The work behind the remaining gates has not been completed on this run.`),
         )
       : "";
+  // Every count in this block comes from the shared run-facts derivation, so
+  // no two documents rendered from the same session can disagree.
+  const runFacts = deriveRunFacts(session as Record<string, unknown>);
   const buildHtml = `${checkpointNote}${band("Strategy", [
-    { value: TOTAL_PIPELINE_STEPS, label: "pipeline stages run" },
+    { value: runFacts.stagesCompleted, suffix: `/${runFacts.stagesTotal}`, label: "pipeline stages run" },
     {
       value: checkpoints,
       suffix: `/${HUMAN_CHECKPOINT_COUNT}`,
       label: "governance gates (A–F) signed off",
     },
 
-    { value: field.length, label: "propositions considered" },
+    { value: runFacts.propositionsConsidered, label: "propositions considered" },
     { value: scoring.rows.length, label: "strategic scoring dimensions applied" },
   ])}${band("Intelligence", [
     { value: research.length, label: "research inputs drawn on" },
@@ -801,7 +805,7 @@ export function buildSummaryDocument(
   ])}${band("Executional", [
     { value: channels.length, label: "channel briefs written" },
     { value: extras.promptsWritten ?? 0, label: "production prompts written" },
-    { value: 5, label: "documents produced" },
+    { value: runFacts.documentsProduced, label: "documents produced" },
   ])}`;
 
 
@@ -1042,7 +1046,13 @@ export function buildSummaryDocument(
               [
                 scoring.composite
                   ? {
-                      value: relabelScoreScale(scoring.composite),
+                      // The composite shown is the sum of the contributions
+                      // printed above it, never a figure from the transcript
+                      // that the table cannot be added up to reach.
+                      value:
+                        weightedTotal != null
+                          ? `${round1(weightedTotal)}/${SCORE_CEILING}`
+                          : relabelScoreScale(scoring.composite),
                       label: scoreProvenance.postSelection
                         ? "post-lock re-score (not a rank)"
                         : "composite score",
@@ -1071,7 +1081,7 @@ export function buildSummaryDocument(
         ? `The territory it expresses was validated competitively: "${scoreProvenance.topCompetitive.name}" — the closest scored expression of that territory — scored ${scoreProvenance.topCompetitive.composite}/${SCORE_CEILING} in a field of ${scoreProvenance.competitive.length} candidates. This line is the refined expression of that territory, locked by human judgement after the competitive pass closed — the system explored and scored, a human made the final call.`
         : `The territory it expresses was validated competitively in the scored field; this line is its refined expression, locked by human judgement after the competitive pass closed.`
       : scoring.verdict === "PASS"
-        ? `It is the only proposition to clear both hard floors and be carried through Stage 10 scoring${scoring.composite ? ` on a composite of ${relabelScoreScale(scoring.composite)}` : ""}.`
+        ? `It is the only proposition to clear both hard floors and be carried through Stage 10 scoring${scoring.composite ? ` on a composite of ${weightedTotal != null ? `${round1(weightedTotal)}/${SCORE_CEILING}` : relabelScoreScale(scoring.composite)}` : ""}.`
         : "",
     // This section is the decision layer on top of the scoring, not a second
     // printing of it: the strongest dimension is named and the reader is sent

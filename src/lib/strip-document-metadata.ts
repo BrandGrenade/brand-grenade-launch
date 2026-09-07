@@ -83,9 +83,84 @@ export function stripComparisonFraming(input: string): string {
     .join("\n\n");
 }
 
+/**
+ * Sentence-level strip of set framing.
+ *
+ * Several stage outputs are written while a whole candidate set is still on
+ * the table ("All five propositions reject…", "These propositions are ready
+ * for scoring"). Once a document has been scoped to the one locked
+ * proposition, those sentences describe a set the reader can no longer see.
+ * They are removed sentence by sentence — the surrounding argument is kept.
+ */
+const PLURAL_SET_SENTENCE: RegExp[] = [
+  /^\s*Each of (?:these|the following|the) (?:\w+\s+)?propositions\b/i,
+  /^\s*(?:And\s+)?All (?:two|three|four|five|six|seven|eight|\d+) propositions\b/i,
+  /^\s*None of (?:these|the) propositions\b/i,
+  /^\s*These propositions\b/i,
+  /^\s*This set (?:represents|of propositions)\b/i,
+  /^\s*What unites them\b/i,
+  /^\s*What separates them\b/i,
+  /^\s*They do not converge\b/i,
+  /^\s*They compete\b/i,
+  /^\s*Selecting between them\b/i,
+  /^\s*Each represents a genuinely distinctive strategic choice\b/i,
+  /^\s*(?:Taken together,\s*)?these (?:two|three|four|five|six|seven|eight|\d+) propositions\b/i,
+];
+
+export function stripPluralSetFraming(input: string): string {
+  if (!input) return input;
+  return input
+    .split("\n")
+    .map((line) => {
+      if (/^\s*#{1,6}\s/.test(line) || !/[.!?]/.test(line)) return line;
+      // Split on sentence ends, keeping the terminator with its sentence.
+      const parts = line.match(/[^.!?]+[.!?]+["')\]]*\s*|[^.!?]+$/g) ?? [line];
+      const kept = parts.filter((s) => !PLURAL_SET_SENTENCE.some((re) => re.test(s)));
+      return kept.length === parts.length ? line : kept.join("").trimEnd();
+    })
+    .filter((line, i, all) => line.trim() !== "" || (all[i - 1] ?? "").trim() !== "" || i === 0)
+    .join("\n");
+}
+
+/**
+ * A heading whose body was removed by an earlier strip promises content that
+ * is not there. Any heading followed only by blank lines, rules, or another
+ * heading of the same or shallower level is dropped.
+ */
+export function dropEmptyHeadings(input: string): string {
+  if (!input) return input;
+  const lines = input.split("\n");
+  const level = (l: string) => l.trim().match(/^#{1,6}/)?.[0].length ?? 0;
+  const isFiller = (l: string) => !l.trim() || /^\s*(?:[*\-_]{3,}|—+)\s*$/.test(l.trim());
+  const drop = new Set<number>();
+  for (let i = 0; i < lines.length; i++) {
+    if (!level(lines[i])) continue;
+    let j = i + 1;
+    const filler: number[] = [];
+    while (j < lines.length && isFiller(lines[j])) {
+      filler.push(j);
+      j++;
+    }
+    const next = j < lines.length ? level(lines[j]) : 0;
+    // A parent heading directly above a deeper heading is legitimate.
+    if (j < lines.length && next > level(lines[i])) continue;
+    if (j >= lines.length || next > 0) {
+      drop.add(i);
+      for (const f of filler) drop.add(f);
+    }
+  }
+  if (!drop.size) return input;
+  return lines
+    .filter((_, i) => !drop.has(i))
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
 export function stripDocumentMetadata(input: string | null | undefined, telemetryLabel?: string): string {
   if (!input) return "";
   let t = stripComparisonFraming(input);
+
 
   const found: string[] = [];
   for (const re of BLOCK_PATTERNS) {
@@ -109,7 +184,8 @@ export function stripDocumentMetadata(input: string | null | undefined, telemetr
 
   for (const re of INLINE_STRIP) t = t.replace(re, "");
 
-  t = t.replace(/\n{3,}/g, "\n\n").trim();
+  // A heading left standing with no body is a defect the strips above create.
+  t = dropEmptyHeadings(t.replace(/\n{3,}/g, "\n\n").trim());
 
 
   if (telemetryLabel && (found.length > 0 || strippedLines > 0)) {

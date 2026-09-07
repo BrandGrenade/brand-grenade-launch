@@ -32,7 +32,7 @@ import {
 import { humaniseStageOutput } from "./appendix-humanise";
 import type { MintoContent } from "./minto";
 import { buildCurrentStateSection } from "./current-state";
-import { stripDocumentMetadata } from "./strip-document-metadata";
+import { stripDocumentMetadata , stripPluralSetFraming } from "./strip-document-metadata";
 import { extractShortlist } from "./exec-summary-extract";
 import { arrivedAtReasoningHtml, overAlternativesHtml, propositionReasoning } from "./proposition-rationale";
 import {
@@ -233,7 +233,7 @@ export function orderBySelected(raw: string, smp: string, aliases: string[] = []
  * removes every candidate-owned block/paragraph except the selected one.
  */
 export function scopeToSelected(raw: string, smp: string, aliases: string[] = []): string {
-  const scoped = scopeToSelectedInner(raw, smp, aliases);
+  const scoped = stripPluralSetFraming(scopeToSelectedInner(raw, smp, aliases));
   // Scoping removes sibling-candidate evidence. It must never remove the body
   // of a heading that survives: a heading left standing with nothing beneath
   // it is content loss, not scoping, and the transcript is returned whole.
