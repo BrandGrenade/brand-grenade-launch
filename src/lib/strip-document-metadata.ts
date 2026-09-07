@@ -113,10 +113,15 @@ export function stripPluralSetFraming(input: string): string {
     .split("\n")
     .map((line) => {
       if (/^\s*#{1,6}\s/.test(line) || !/[.!?]/.test(line)) return line;
+      // A blockquote or bullet marker must not hide the sentence behind it.
+      const prefix = line.match(/^\s*(?:>\s*|[-—•*]\s+)?/)?.[0] ?? "";
+      const body = line.slice(prefix.length);
       // Split on sentence ends, keeping the terminator with its sentence.
-      const parts = line.match(/[^.!?]+[.!?]+["')\]]*\s*|[^.!?]+$/g) ?? [line];
+      const parts = body.match(/[^.!?]+[.!?]+["')\]]*\s*|[^.!?]+$/g) ?? [body];
       const kept = parts.filter((s) => !PLURAL_SET_SENTENCE.some((re) => re.test(s)));
-      return kept.length === parts.length ? line : kept.join("").trimEnd();
+      if (kept.length === parts.length) return line;
+      const rest = kept.join("").trimEnd();
+      return rest ? `${prefix}${rest}` : "";
     })
     .filter((line, i, all) => line.trim() !== "" || (all[i - 1] ?? "").trim() !== "" || i === 0)
     .join("\n");
