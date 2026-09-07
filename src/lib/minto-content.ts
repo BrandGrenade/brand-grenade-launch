@@ -75,6 +75,9 @@ export interface MintoSession {
   locked_big_idea_lens?: string | null;
   locked_big_idea_at?: string | null;
   locked_big_idea_run_id?: string | null;
+  /** Rated creative directions kept by the sweep, attached at render time. */
+  creative_shortlist?: ShortlistDirection[] | null;
+
   updated_at?: string | null;
   selection_rationale?: unknown;
   /** Carries the Room 01 territory anchor block (territory-preservation contract). */
