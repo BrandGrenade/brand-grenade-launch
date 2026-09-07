@@ -1699,6 +1699,9 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
       current_state,
       validation,
       rejected: rejectedHtml,
+      creative_recommendation,
+      creative_shortlist,
+
       implications,
       next_step,
       appendix,
