@@ -635,7 +635,7 @@ function CompletePage() {
                   setProgressLabel("Strategy and Creative Vision ready");
                   setSession({ ...session, stage_16_vision_output: finalOutput });
                   setLastOutput(finalOutput);
-                  openStage16VisionDocument(brand, smp, finalOutput);
+                  openStage16VisionDocument(brand, smp, finalOutput, docWin);
                 } catch (e) {
                   console.error("Vision generation failed", e);
                   setLastError(e instanceof Error ? e.message : "Vision generation failed");
