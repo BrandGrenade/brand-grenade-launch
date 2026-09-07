@@ -330,16 +330,42 @@ export function buildPhase1Document(session: Phase1Session, format: Phase1Format
   );
 }
 
-export function openPhase1Document(session: Phase1Session, format: Phase1Format): void {
-  const html = buildPhase1Document(session, format);
-  const win = window.open("", "_blank");
-  if (!win) {
-    alert("Please allow popups to download your document.");
+/**
+ * Write built HTML into a tab. The tab MUST be opened synchronously in the
+ * click handler — browsers block `window.open` once an `await` has run, which
+ * made downloads silently do nothing. If no usable tab exists (blocked, or
+ * the user closed it), save the document as a file instead so the reader
+ * still gets the full formatting rather than nothing at all.
+ */
+export function presentDocument(html: string, filename: string, win?: Window | null): void {
+  if (win && !win.closed) {
+    win.document.open("text/html");
+    win.document.write(html);
+    win.document.close();
     return;
   }
-  win.document.open("text/html");
-  win.document.write(html);
-  win.document.close();
+  const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename.endsWith(".html") ? filename : `${filename}.html`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 10_000);
+}
+
+const safeFile = (s: string) =>
+  s.replace(/[^a-z0-9]+/gi, "-").replace(/^-+|-+$/g, "").toLowerCase() || "document";
+
+export function openPhase1Document(
+  session: Phase1Session,
+  format: Phase1Format,
+  win?: Window | null,
+): void {
+  const html = buildPhase1Document(session, format);
+  const brand = (session as { brand_name?: string | null }).brand_name ?? "brand-grenade";
+  presentDocument(html, `${safeFile(brand)}-${format}`, win);
 }
 
 // ─── Stage 16 Vision document ───────────────────────────────────────
@@ -392,14 +418,8 @@ export function openStage16VisionDocument(
   brand: string,
   smp: string | null | undefined,
   visionOutput: string,
+  win?: Window | null,
 ): void {
   const html = buildStage16VisionDocument(brand, smp, visionOutput);
-  const win = window.open("", "_blank");
-  if (!win) {
-    alert("Please allow popups to download your document.");
-    return;
-  }
-  win.document.open("text/html");
-  win.document.write(html);
-  win.document.close();
+  presentDocument(html, `${safeFile(brand)}-strategy-and-creative-vision`, win);
 }

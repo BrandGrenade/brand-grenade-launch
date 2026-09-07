@@ -582,6 +582,12 @@ function CompletePage() {
               if (!hasSmp || !session) return;
               setLastError(null);
               setFallbackHtml(null);
+              // Open the document tab NOW, while we're still inside the click.
+              // Opening it after the build (which awaits) makes browsers treat
+              // it as an unrequested popup and block it silently — the cause of
+              // "clicked download, nothing happened". If it is blocked anyway,
+              // the builder saves the document as a file instead.
+              const docWin = window.open("", "_blank");
               if (format === "vision") {
                 // Stage 16 vision is generated on demand via the server fn.
                 // Returns cached output if already populated (no extra Claude
@@ -591,7 +597,7 @@ function CompletePage() {
                 const existing = session.stage_16_vision_output;
                 if (!force && existing && existing.trim().length > 1000) {
                   try {
-                    openStage16VisionDocument(brand, smp, existing);
+                    openStage16VisionDocument(brand, smp, existing, docWin);
                   } catch (e) {
                     console.error("Vision doc open failed", e);
                     setLastError(e instanceof Error ? e.message : "Document open failed");
@@ -629,8 +635,9 @@ function CompletePage() {
                   setProgressLabel("Strategy and Creative Vision ready");
                   setSession({ ...session, stage_16_vision_output: finalOutput });
                   setLastOutput(finalOutput);
-                  openStage16VisionDocument(brand, smp, finalOutput);
+                  openStage16VisionDocument(brand, smp, finalOutput, docWin);
                 } catch (e) {
+                  try { docWin?.close(); } catch { /* ignore */ }
                   console.error("Vision generation failed", e);
                   setLastError(e instanceof Error ? e.message : "Vision generation failed");
                 } finally {
@@ -645,8 +652,10 @@ function CompletePage() {
                 // — a fresh build every click using the current prompts and
                 // pipeline outputs.
                 const live = await resolveLiveDocumentSession(session);
-                openPhase1Document(live, format as Phase1Format);
+                openPhase1Document(live, format as Phase1Format, docWin);
               } catch (e) {
+                // The blank tab is useless if the build failed — close it.
+                try { docWin?.close(); } catch { /* ignore */ }
                 // Log the whole error — name, message, stack and any
                 // certification findings — so the real cause is visible.
                 console.error("Document build failed", {
