@@ -1653,7 +1653,7 @@ export function buildSummaryDocument(
       index: "17",
       kicker: "Creative development",
       title: "The winning creative idea",
-      lede: "The locked idea, reproduced in full and word for word as it was written and approved.",
+      lede: "How the strategy becomes the creative, then the locked idea itself — campaign line, idea and Detonation reproduced word for word as they were approved.",
       body: creativeHtml,
     },
     {
