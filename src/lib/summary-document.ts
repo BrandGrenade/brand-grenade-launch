@@ -1320,13 +1320,12 @@ export function buildSummaryDocument(
   // The Stage 18 Detonation is read whether or not a later idea was locked:
   // when both exist they are two parts of one locked record, and a document
   // that shows only one of them tells a partial story about what was decided.
-  const selectedDetonation =
-        extractSelectedDetonation(
+  const selectedDetonation = extractSelectedDetonation(
+    str(session, "stage_18_output"),
+    str(session, "stage_18_selected_detonation"),
+    str(session, "stage_18_detonation_line"),
+  );
 
-          str(session, "stage_18_output"),
-          str(session, "stage_18_selected_detonation"),
-          str(session, "stage_18_detonation_line"),
-        );
   /* The strategy-to-creative hierarchy is stated explicitly rather than left
      to be inferred: the strategic proposition and the campaign line are
      written in different registers, and a reader comparing them side by side
