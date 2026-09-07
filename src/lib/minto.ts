@@ -47,6 +47,9 @@ export const MINTO_SECTION_IDS = [
   "current_state",
   "validation",
   "rejected",
+  "creative_recommendation",
+  "creative_shortlist",
+
   "implications",
   "next_step",
   "appendix",
@@ -121,20 +124,34 @@ export const MINTO_SECTIONS: readonly MintoSectionDef[] = [
     fallback: "No rejected alternatives were recorded for this session.",
   },
   {
-    id: "implications",
+    id: "creative_recommendation",
     index: "10",
+    kicker: "The creative recommendation",
+    fallback:
+      "No creative idea had been locked for this session when this document was rendered.",
+  },
+  {
+    id: "creative_shortlist",
+    index: "11",
+    kicker: "The creative shortlist",
+    fallback: "No creative directions had been rated for this session when this document was rendered.",
+  },
+  {
+    id: "implications",
+    index: "12",
     kicker: "Implications",
     fallback: "No downstream implications were recorded for this session.",
   },
   {
     id: "next_step",
-    index: "11",
+    index: "13",
     kicker: "Decisive recommendation — next step",
     fallback: "No next step was recorded for this session.",
   },
   {
     id: "appendix",
-    index: "12",
+    index: "14",
+
     kicker: "Appendix — backing detail",
     fallback: "No backing detail is available for this session.",
   },

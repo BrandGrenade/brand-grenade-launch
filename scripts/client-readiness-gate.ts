@@ -26,7 +26,6 @@ import { createClient } from "@supabase/supabase-js";
 import { mkdirSync, writeFileSync } from "fs";
 import { buildPhase1Document, type Phase1Format } from "../src/lib/phase1-document-builder";
 import { buildSummaryDocument } from "../src/lib/summary-document";
-import { buildConsultingDeliveryDocument } from "../src/lib/consulting-delivery-document";
 
 const sb = createClient(process.env.VITE_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
 const OUT = "/tmp/client-gate";
@@ -277,12 +276,24 @@ async function auditSession(id: string) {
   if (error || !session) throw new Error(`session ${id} not loadable: ${error?.message}`);
   const brand = (session as Record<string, unknown>)["brand_name"] as string;
 
+  // Documents render the rated creative shortlist from the winning sweep run,
+  // exactly as the app attaches it when a user opens a document.
+  const runId = (session as Record<string, unknown>)["locked_big_idea_run_id"] as string | null;
+  if (runId) {
+    const { data: shortlist } = await sb
+      .from("stimulus_directions")
+      .select("lens_name,direction,campaign_line,rationale,status,rating_status,gate_one_approved,ratings")
+      .eq("run_id", runId)
+      .eq("status", "keep")
+      .order("sort_order", { ascending: true });
+    (session as Record<string, unknown>)["creative_shortlist"] = shortlist ?? [];
+  }
+
   const set: Array<{ name: string; audience: string; html: string }> = [
     { name: "Vision — Strategy & Creative Summary", audience: "vision", html: buildSummaryDocument(session as never, undefined as never) },
     { name: "Board Strategy Recommendation", audience: "board", html: buildPhase1Document(session as never, "consulting" as Phase1Format) },
     { name: "Agency Strategy Platform", audience: "agency", html: buildPhase1Document(session as never, "agency" as Phase1Format) },
     { name: "Workshop Pack", audience: "workshop", html: buildPhase1Document(session as never, "workshop" as Phase1Format) },
-    { name: "Consulting Delivery", audience: "board", html: buildConsultingDeliveryDocument(session as never) },
   ];
 
   const findings: Finding[] = [];

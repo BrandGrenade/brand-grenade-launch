@@ -20,7 +20,7 @@ import { gateGenericDocument } from "./document-gate";
 const ACCENT = "#C81E1E";
 
 const STAGE_16_FORMAT_LABELS: Record<string, string> = {
-  stage_16_consulting_output: "Consulting Delivery",
+  stage_16_consulting_output: "Board Strategy Recommendation",
   stage_16_agency_output: "Agency Pitch",
   stage_16_workshop_output: "Brand Workshop Guide",
   stage_16_vision_output: "Strategy and Creative Vision",
@@ -266,7 +266,7 @@ ${
     ? `<p>Adopt <strong>${escapeHtml(smp)}</strong> as the Single-Minded Proposition for ${escapeHtml(brand)} and release it into creative development. This record is the evidence behind that single decision.</p>`
     : `<p>No proposition has been locked for this session. The next step is to complete proposition selection before this record is used to support a decision.</p>`
 }
-<p>Use this document for audit and interrogation of the reasoning. For the decision itself, take the Board Strategy Recommendation; for delivery, take the Consulting Delivery document.</p></div>`;
+<p>Use this document for audit and interrogation of the reasoning. For the decision itself, take the Board Strategy Recommendation.</p></div>`;
 
   const body = cover(brand, smp) + toc(resolved) + background + sections + nextStep + footer();
 

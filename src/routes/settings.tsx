@@ -13,8 +13,8 @@ export const Route = createFileRoute("/settings")({
   }),
 });
 
-type Format = "Agency Pitch" | "Consulting Delivery" | "Brand Workshop";
-const FORMATS: Format[] = ["Agency Pitch", "Consulting Delivery", "Brand Workshop"];
+type Format = "Agency Pitch" | "Board Strategy Recommendation" | "Brand Workshop";
+const FORMATS: Format[] = ["Agency Pitch", "Board Strategy Recommendation", "Brand Workshop"];
 
 interface Prefs {
   defaultFormat: Format;
@@ -25,7 +25,7 @@ interface Prefs {
 }
 
 const DEFAULTS: Prefs = {
-  defaultFormat: "Consulting Delivery",
+  defaultFormat: "Board Strategy Recommendation",
   autoProceed: true,
   claudeKeyLast4: "",
   notifyComplete: false,

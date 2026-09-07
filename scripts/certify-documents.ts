@@ -16,7 +16,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { mkdirSync, writeFileSync } from "fs";
 import { buildBoardStrategyDocument } from "../src/lib/board-strategy-document";
-import { buildConsultingDeliveryDocument } from "../src/lib/consulting-delivery-document";
 import { buildMasterDetonationDocument } from "../src/lib/master-detonation-document";
 import { buildSummaryDocument } from "../src/lib/summary-document";
 import { buildPhase1Document } from "../src/lib/phase1-document-builder";
@@ -85,7 +84,6 @@ const transcriptOpts: IntegrityOptions = { narrativeSections: [] };
 function jobsFor(row: Row): DocJob[] {
   const jobs: DocJob[] = [
     { label: "Board Strategy Recommendation", build: (r) => buildBoardStrategyDocument(r as never), opts: mintoOpts(DOCUMENT_SPECS.board_strategy), spec: DOCUMENT_SPECS.board_strategy },
-    { label: "Consulting Delivery", build: (r) => buildConsultingDeliveryDocument(r as never), opts: mintoOpts(DOCUMENT_SPECS.consulting_delivery), spec: DOCUMENT_SPECS.consulting_delivery },
     { label: "Master Detonation Brief (Minto)", build: (r) => buildMasterDetonationDocument(r as never), opts: mintoOpts(DOCUMENT_SPECS.master_detonation), spec: DOCUMENT_SPECS.master_detonation },
     { label: "Agency Strategy Platform", build: (r) => buildPhase1Document(r as never, "agency"), opts: transcriptOpts },
     { label: "Brand Strategy Workshop Guide", build: (r) => buildPhase1Document(r as never, "workshop"), opts: transcriptOpts },

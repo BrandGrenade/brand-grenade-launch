@@ -139,6 +139,19 @@ export async function resolveLiveDocumentSession<T extends LiveDocumentSession>(
   const idea = directions?.find((row) => row.id === run?.winning_direction_id);
   const line = directions?.find((row) => row.id === run?.winning_line_direction_id);
 
+  // The rated shortlist from the creative sweep. Documents render it from the
+  // same rows the Creative Stimulus screens show, so a board reading the
+  // recommendation sees exactly what was kept, scored and flagged.
+  const { data: shortlist } = await supabase
+    .from("stimulus_directions")
+    .select(
+      "lens_name,direction,campaign_line,rationale,status,rating_status,gate_one_approved,ratings",
+    )
+    .eq("run_id", run.id)
+    .eq("status", "keep")
+    .order("sort_order", { ascending: true });
+
+
   const resolvedIdea = idea?.direction ?? null;
   const resolvedLine = line?.campaign_line ?? run.winning_line ?? null;
 
@@ -150,7 +163,9 @@ export async function resolveLiveDocumentSession<T extends LiveDocumentSession>(
 
   return {
     ...merged,
+    creative_shortlist: shortlist ?? [],
     locked_big_idea_run_id: runId,
+
     locked_big_idea: resolvedIdea ?? storedIdea,
     locked_big_idea_lens: idea?.lens_name ?? (ideaFallback ? storedLens : null),
     locked_campaign_line: resolvedLine ?? storedLine,

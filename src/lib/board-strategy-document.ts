@@ -17,8 +17,9 @@ export interface BoardStrategyOptions {
   /** false when rendering headlessly for PDF (no toolbar, no page shadow). */
   screen?: boolean;
   /**
-   * "condensed" (default) — the appendix carries an evidence extract per stage.
-   * "full" reproduces every stage output verbatim for archival/audit use.
+   * "full" (default) — every stage output is reproduced in full, so no
+   * proposition card or score table can be dropped by condensation.
+   * "condensed" carries an evidence extract per stage instead.
    */
   appendix?: "condensed" | "full";
 }
@@ -28,7 +29,7 @@ export function buildBoardStrategyDocument(
   opts: BoardStrategyOptions = {},
 ): string {
   const derived = deriveMintoContent(session, {
-    appendix: { mode: opts.appendix === "full" ? "full" : "condensed" },
+    appendix: { mode: opts.appendix === "condensed" ? "condensed" : "full" },
   });
 
   return buildMintoDocument({

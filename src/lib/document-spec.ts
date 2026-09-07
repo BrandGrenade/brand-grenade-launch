@@ -17,7 +17,6 @@ import { DETONATION_APPENDIX, NO_STAGE_OUTPUT, PIPELINE_APPENDIX } from "./minto
 
 export type DocumentTypeId =
   | "board_strategy"
-  | "consulting_delivery"
   | "master_detonation"
   | "intelligence_00a";
 
@@ -52,12 +51,9 @@ export const DOCUMENT_SPECS: Record<DocumentTypeId, DocumentSpec> = {
     frontMatter: MINTO_SECTIONS,
     appendix: PIPELINE_APPENDIX_SECTIONS,
   },
-  consulting_delivery: {
-    id: "consulting_delivery",
-    label: "Consulting Delivery",
-    frontMatter: MINTO_SECTIONS,
-    appendix: PIPELINE_APPENDIX_SECTIONS,
-  },
+  // "Consulting Delivery" was retired as a separate title: it was a duplicate
+  // export of the board recommendation. Historical records keep their stored
+  // title; no new document renders under it.
   master_detonation: {
     id: "master_detonation",
     label: "Master Detonation Brief",
