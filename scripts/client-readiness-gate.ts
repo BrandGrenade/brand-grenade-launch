@@ -219,12 +219,17 @@ function gate7Surface(doc: string, t: string, html: string): Finding[] {
   if (/[ÃÂ]\s?[\u0080-\u00BF]/.test(t)) {
     out.push({ gate: "G7 SURFACE", doc, detail: "mojibake / broken encoding in body text" });
   }
-  // Orphan heading: a rendered heading whose element is followed by another
-  // heading (or the end of the document) with no prose between them.
+  // Orphan heading: a heading with no prose anywhere in the block it owns.
+  // A heading immediately followed by a SUB-heading is ordinary nesting, so
+  // the block runs to the next heading of the same or a shallower level.
   const heads = [...html.matchAll(/<h([1-6])[^>]*>([\s\S]*?)<\/h\1>/g)];
   heads.forEach((m, i) => {
-    const after = html.slice(m.index! + m[0].length, heads[i + 1]?.index ?? html.length);
-    if (text(after).replace(/\s/g, "").length < 25) {
+    const level = Number(m[1]);
+    const next = heads.slice(i + 1).find((h) => Number(h[1]) <= level);
+    const block = html.slice(m.index! + m[0].length, next?.index ?? html.length);
+    // Strip nested headings: their own text is not this heading's content.
+    const body = text(block.replace(/<h([1-6])[^>]*>[\s\S]*?<\/h\1>/g, " "));
+    if (body.replace(/\s/g, "").length < 25) {
       out.push({
         gate: "G7 SURFACE",
         doc,
@@ -233,6 +238,7 @@ function gate7Surface(doc: string, t: string, html: string): Finding[] {
       });
     }
   });
+
   return out;
 }
 
