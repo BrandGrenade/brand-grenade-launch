@@ -1623,6 +1623,8 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
     : `<p class="muted">[PENDING — no rated creative directions were recorded for this session.]</p>`;
 
   /* 12 — implications */
+  const implications =
+
 
     (implicationItems.length
       ? `<ul>${implicationItems.map((b) => `<li>${inlineMd(b)}</li>`).join("")}</ul>`
