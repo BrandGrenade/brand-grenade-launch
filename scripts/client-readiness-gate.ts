@@ -26,7 +26,6 @@ import { createClient } from "@supabase/supabase-js";
 import { mkdirSync, writeFileSync } from "fs";
 import { buildPhase1Document, type Phase1Format } from "../src/lib/phase1-document-builder";
 import { buildSummaryDocument } from "../src/lib/summary-document";
-import { buildConsultingDeliveryDocument } from "../src/lib/consulting-delivery-document";
 
 const sb = createClient(process.env.VITE_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
 const OUT = "/tmp/client-gate";
@@ -282,7 +281,6 @@ async function auditSession(id: string) {
     { name: "Board Strategy Recommendation", audience: "board", html: buildPhase1Document(session as never, "consulting" as Phase1Format) },
     { name: "Agency Strategy Platform", audience: "agency", html: buildPhase1Document(session as never, "agency" as Phase1Format) },
     { name: "Workshop Pack", audience: "workshop", html: buildPhase1Document(session as never, "workshop" as Phase1Format) },
-    { name: "Consulting Delivery", audience: "board", html: buildConsultingDeliveryDocument(session as never) },
   ];
 
   const findings: Finding[] = [];

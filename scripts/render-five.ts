@@ -2,7 +2,6 @@ import { createClient } from "@supabase/supabase-js";
 import { writeFileSync, mkdirSync } from "fs";
 import { buildPhase1Document } from "../src/lib/phase1-document-builder";
 import { buildSummaryDocument } from "../src/lib/summary-document";
-import { buildConsultingDeliveryDocument } from "../src/lib/consulting-delivery-document";
 import { buildPhase2Document } from "../src/lib/phase2-document-generator";
 import { buildDocument00AMinto } from "../src/lib/intelligence/doc-00A-minto";
 import { researchEvidenceFromSession } from "../src/lib/intelligence/research-evidence";
@@ -15,7 +14,6 @@ mkdirSync("/tmp/browser/five", { recursive: true });
 const out: Record<string, string> = {
   "01_Board_Strategy_Recommendation": buildPhase1Document(s as never, "consulting"),
   "02_Brand_Strategy_and_Creative_Intelligence_Summary": buildSummaryDocument(s as never, undefined as never),
-  "03_Consulting_Delivery": buildConsultingDeliveryDocument(s as never),
   "04_Master_Detonation_Brief": buildPhase2Document(s as never, "master_brief"),
 };
 const brand = (s as any).brand_name ?? "";
