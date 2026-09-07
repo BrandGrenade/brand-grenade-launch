@@ -220,24 +220,31 @@ function gate7Surface(doc: string, t: string, html: string): Finding[] {
     out.push({ gate: "G7 SURFACE", doc, detail: "mojibake / broken encoding in body text" });
   }
   // Orphan heading: a heading with no prose anywhere in the block it owns.
-  // A heading immediately followed by a SUB-heading is ordinary nesting, so
-  // the block runs to the next heading of the same or a shallower level.
+  // Two exclusions keep this on real defects. Nesting is not a defect, so the
+  // block runs to the next heading of the same or a shallower level; and a
+  // grouping heading whose siblings DO carry content is a hierarchy, not a
+  // deletion scar — the defect is a heading, and its neighbour, left with
+  // nothing beneath either (the empty "Layer 1/2/3" case).
   const heads = [...html.matchAll(/<h([1-6])[^>]*>([\s\S]*?)<\/h\1>/g)];
-  heads.forEach((m, i) => {
+  const bodyOf = (i: number) => {
+    const m = heads[i]!;
     const level = Number(m[1]);
     const next = heads.slice(i + 1).find((h) => Number(h[1]) <= level);
     const block = html.slice(m.index! + m[0].length, next?.index ?? html.length);
-    // Strip nested headings: their own text is not this heading's content.
-    const body = text(block.replace(/<h([1-6])[^>]*>[\s\S]*?<\/h\1>/g, " "));
-    if (body.replace(/\s/g, "").length < 25) {
-      out.push({
-        gate: "G7 SURFACE",
-        doc,
-        detail: "heading with no content beneath it",
-        evidence: text(m[2]!).trim().slice(0, 80),
-      });
-    }
+    return text(block.replace(/<h([1-6])[^>]*>[\s\S]*?<\/h\1>/g, " ")).replace(/\s/g, "");
+  };
+  heads.forEach((m, i) => {
+    if (bodyOf(i).length >= 12) return;
+    const neighbourIsEmpty = i + 1 >= heads.length || bodyOf(i + 1).length < 12;
+    if (!neighbourIsEmpty) return;
+    out.push({
+      gate: "G7 SURFACE",
+      doc,
+      detail: "heading with no content beneath it",
+      evidence: text(m[2]!).trim().slice(0, 80),
+    });
   });
+
 
   return out;
 }
