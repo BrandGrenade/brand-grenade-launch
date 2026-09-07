@@ -338,14 +338,21 @@ export function buildPhase1Document(session: Phase1Session, format: Phase1Format
  * still gets the full formatting rather than nothing at all.
  */
 export function presentDocument(html: string, filename: string, win?: Window | null): void {
-  if (win && !win.closed) {
-    win.document.open("text/html");
-    win.document.write(html);
-    win.document.close();
-    return;
-  }
   const blob = new Blob([html], { type: "text/html;charset=utf-8" });
   const url = URL.createObjectURL(blob);
+  if (win && !win.closed) {
+    try {
+      // Navigating the pre-opened tab to a complete Blob document is more
+      // reliable than writing into about:blank after an awaited data refresh.
+      // Some production browser policies keep the Window handle but discard
+      // or isolate its document, which previously left a permanently blank tab.
+      win.location.replace(url);
+      window.setTimeout(() => URL.revokeObjectURL(url), 60 * 60 * 1000);
+      return;
+    } catch (error) {
+      console.error("Document tab navigation failed; downloading instead", error);
+    }
+  }
   const a = document.createElement("a");
   a.href = url;
   a.download = filename.endsWith(".html") ? filename : `${filename}.html`;

@@ -588,6 +588,14 @@ function CompletePage() {
               // "clicked download, nothing happened". If it is blocked anyway,
               // the builder saves the document as a file instead.
               const docWin = window.open("", "_blank");
+              if (docWin) {
+                // Give immediate visible feedback while the latest session
+                // payload is resolved. The finished document replaces this
+                // page via a Blob URL rather than a delayed document.write().
+                docWin.document.open("text/html");
+                docWin.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Preparing ${brand.replace(/[<>&"']/g, "")}</title><style>html,body{height:100%;margin:0}body{display:grid;place-items:center;background:#0A0908;color:#EDE8E0;font:500 16px system-ui,sans-serif}.status{padding:24px;text-align:center}.mark{color:#C81E1E;font-size:28px;margin-bottom:12px}</style></head><body><div class="status"><div class="mark">●</div>Preparing ${brand.replace(/[<>&"']/g, "")} document…</div></body></html>`);
+                docWin.document.close();
+              }
               if (format === "vision") {
                 // Stage 16 vision is generated on demand via the server fn.
                 // Returns cached output if already populated (no extra Claude
