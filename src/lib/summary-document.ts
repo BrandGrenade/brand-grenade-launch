@@ -786,6 +786,8 @@ export function buildSummaryDocument(
     },
 
     { value: runFacts.propositionsConsidered, label: "propositions considered" },
+    { value: runFacts.propositionsScored, label: "propositions competitively scored" },
+
     { value: scoring.rows.length, label: "strategic scoring dimensions applied" },
   ])}${band("Intelligence", [
     { value: research.length, label: "research inputs drawn on" },
