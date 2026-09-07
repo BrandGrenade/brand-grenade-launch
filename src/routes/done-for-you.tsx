@@ -493,7 +493,7 @@ function DoneForYou() {
               <ul className="t-deliverables">
                 <li className="t-lead">Everything in Tier 1, plus:</li>
                 <li>Brand Strategy and Creative Development Summary</li>
-                <li>Consulting Delivery document with full working appendix</li>
+                <li>Board Strategy Recommendation with full working appendix</li>
                 <li>Your validated proposition and positioning, fully reasoned</li>
                 <li>Four audience-tailored formats: executive Strategy & Creative Vision, Agency Pitch, Board Strategy Recommendation, Brand Workshop</li>
                 <li>The complete strategy pipeline — full canonical record, every stage</li>

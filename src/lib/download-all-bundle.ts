@@ -10,7 +10,6 @@ import {
   type Phase2Session,
 } from "./phase2-document-generator";
 import { buildFullRunDocument, type FullRunSession } from "./full-run-document";
-import { buildConsultingDeliveryDocument } from "./consulting-delivery-document";
 import { buildDocument00AMinto } from "./intelligence/doc-00A-minto";
 import { researchEvidenceFromSession } from "./intelligence/research-evidence";
 import { supabase } from "@/integrations/supabase/client";
@@ -191,13 +190,6 @@ export async function buildAndDownloadBundle(
     "Brand_Strategy_and_Creative_Development_Summary.html",
     () => buildSummaryDocument(summarySession as never, summaryExtras),
     "Building Brand Strategy and Creative Development Summary…",
-  );
-
-  // Root — Consulting Delivery (canonical ten-section template)
-  tryAdd(
-    "Consulting_Delivery.html",
-    () => buildConsultingDeliveryDocument({ ...session, ...execExtra } as never),
-    "Building Consulting Delivery…",
   );
 
   // Root — Document 00A (real PDF from Intelligence Lab, plus the structured
