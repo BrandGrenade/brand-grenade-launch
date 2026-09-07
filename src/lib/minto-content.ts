@@ -233,12 +233,28 @@ export function orderBySelected(raw: string, smp: string, aliases: string[] = []
  * removes every candidate-owned block/paragraph except the selected one.
  */
 export function scopeToSelected(raw: string, smp: string, aliases: string[] = []): string {
-  const scoped = stripPluralSetFraming(scopeToSelectedInner(raw, smp, aliases));
+  const inner = scopeToSelectedInner(raw, smp, aliases);
+  // Whether set-quantifying prose ("Each one identifies a different truth…")
+  // is a defect depends on ONE thing: how many propositions the reader can
+  // still see once scoping is done. Counting them here fixes the class, so a
+  // reworded set sentence cannot reappear, while leaving prose intact in the
+  // sections that genuinely still print the whole candidate field.
+  const cardCount = countPropositionCards(inner);
+  const scoped = stripPluralSetFraming(inner, { singleView: cardCount <= 1 });
   // Scoping removes sibling-candidate evidence. It must never remove the body
   // of a heading that survives: a heading left standing with nothing beneath
   // it is content loss, not scoping, and the transcript is returned whole.
   return keepsHeadingBodies(raw, scoped) ? scoped : raw;
 }
+
+/** Distinct proposition write-ups still present in a scoped stage output. */
+function countPropositionCards(text: string): number {
+  const markers = text.match(
+    /^\s*(?:#{1,6}\s*)?(?:\*{0,2})PROPOSITION\s+(?:\d+|ONE|TWO|THREE|FOUR|FIVE|SIX)\b/gim,
+  );
+  return markers ? new Set(markers.map((m) => m.trim().toUpperCase())).size : 1;
+}
+
 
 /**
  * True when every markdown heading kept by `scoped` still carries at least one
