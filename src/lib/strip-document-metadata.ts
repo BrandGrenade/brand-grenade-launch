@@ -162,9 +162,39 @@ export function dropEmptyHeadings(input: string): string {
     .trim();
 }
 
+/**
+ * Stray non-Latin characters.
+ *
+ * Generation occasionally drops a CJK token mid-sentence ("cultural升級
+ * rather than upselling"). It is never content — it is a decoding artifact of
+ * the model, and it is unreadable to the audience these documents are written
+ * for. Known tokens are translated back into the English word they stand for;
+ * anything else is removed and the surrounding spacing repaired.
+ */
+const SCRIPT_ARTIFACT_TRANSLATIONS: Array<[RegExp, string]> = [
+  [/升級|升级/g, "upgrade"],
+  [/優化|优化/g, "optimisation"],
+  [/品牌/g, "brand"],
+];
+
+const CJK_RUN = /[\u3000-\u303f\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff00-\uffef]+/g;
+
+export function stripStrayScriptArtifacts(input: string): string {
+  if (!input) return input;
+  let t = input;
+  for (const [re, word] of SCRIPT_ARTIFACT_TRANSLATIONS) {
+    // "cultural升級 rather" → "cultural upgrade rather": a missing space on
+    // either side is restored so the repaired sentence reads normally.
+    t = t.replace(re, ` ${word} `);
+  }
+  t = t.replace(CJK_RUN, " ");
+  return t.replace(/[ \t]{2,}/g, " ").replace(/ ([,.;:!?])/g, "$1");
+}
+
 export function stripDocumentMetadata(input: string | null | undefined, telemetryLabel?: string): string {
   if (!input) return "";
-  let t = stripComparisonFraming(input);
+  let t = stripStrayScriptArtifacts(stripComparisonFraming(input));
+
 
 
   const found: string[] = [];
