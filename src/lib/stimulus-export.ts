@@ -1,4 +1,5 @@
 // CREATIVE STIMULUS ENGINE — PHASE 4 export builders (client side).
+import { renderRatingTable } from "./creative-shortlist";
 // Two tiers: Raw Idea (the spark, no orchestration required) and Full Finished
 // (the Gate Two-approved, orchestrated prompt set). Reference examples are
 // linked out, never embedded — consistent with the licensing approach.
@@ -28,19 +29,10 @@ function refLinks(lensId: string): string {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function ratingsBlock(ratings: any): string {
-  if (!ratings || typeof ratings !== "object") return `<p class="muted">Not scored.</p>`;
-  const dims = Object.entries(ratings).filter(
-    ([, v]) => v && typeof v === "object" && "score" in (v as object),
-  );
-  if (dims.length === 0) return `<pre class="muted">${esc(JSON.stringify(ratings, null, 2))}</pre>`;
-  return `<table class="ratings"><tbody>${dims
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .map(([k, v]: [string, any]) => {
-      const label = k.replace(/_/g, " ");
-      return `<tr><th>${esc(label)}</th><td>${esc(v.score)}</td><td>${esc(v.rationale ?? v.reason ?? "")}</td></tr>`;
-    })
-    .join("")}</tbody></table>`;
+function ratingsBlock(ratings: unknown): string {
+  // Shared renderer — the same formatted table the Board Strategy
+  // Recommendation shows. Never a raw JSON dump.
+  return renderRatingTable(ratings);
 }
 
 const CSS = `
