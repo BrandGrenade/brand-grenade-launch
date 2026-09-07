@@ -1572,12 +1572,15 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
     buildAppendix(session, opts.appendix) +
     callout("Source authority", `<p>${sourceStamp}</p><p>Strategic stage outputs in the appendix are historical snapshots. The selected SMP and Room 04 lock above are resolved from their current authoritative fields at render time.</p>`) +
     proofLine({
-      stagesRun,
-      documents: runFacts.documentsProduced || undefined,
-      extra: runFacts.propositionsScored
-        ? `${runFacts.propositionsScored} propositions competitively scored · ${runFacts.gatesConfirmed} of ${runFacts.gatesTotal} governance gates confirmed`
-        : undefined,
+      // "Documents produced" is not a property of the strategy run — the same
+      // locked run can be exported in four formats — so no document states it.
+      stagesRun: `${stagesRun} of ${runFacts.stagesTotal}`,
+      extra:
+        `${runFacts.propositionsConsidered} propositions considered · ` +
+        `${runFacts.propositionsScored} competitively scored · ` +
+        `${runFacts.gatesConfirmed} of ${runFacts.gatesTotal} governance gates confirmed`,
     });
+
 
   return {
     brand,
