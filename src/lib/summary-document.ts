@@ -1317,10 +1317,12 @@ export function buildSummaryDocument(
   // Sessions that predate the Creative Stimulus Engine locked no idea. Their creative
   // decision is the Detonation selected at Stage 18, which is then read here in
   // full — same template, same section, honestly labelled by its own source.
+  // The Stage 18 Detonation is read whether or not a later idea was locked:
+  // when both exist they are two parts of one locked record, and a document
+  // that shows only one of them tells a partial story about what was decided.
   const selectedDetonation =
-    lockedIdea || lockedLine
-      ? null
-      : extractSelectedDetonation(
+        extractSelectedDetonation(
+
           str(session, "stage_18_output"),
           str(session, "stage_18_selected_detonation"),
           str(session, "stage_18_detonation_line"),
