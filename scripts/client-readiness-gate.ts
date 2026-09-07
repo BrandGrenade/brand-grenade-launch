@@ -69,8 +69,11 @@ function extractFacts(t: string): Facts {
   return {
     stagesRun: uniq([
       ...all(/(\d{1,2})\s*(?:of|\/)\s*\d{1,2}\s*(?:pipeline |validation )?stages?/gi),
-      ...all(/(\d{1,2})\s*(?:pipeline |validation )stages? (?:run|were run|completed)/gi),
+      // "20 validation stages were run" — but never the tail of "20 of 22
+      // validation stages", which the pattern above has already counted.
+      ...all(/(?:^|[^\/]\b(?!of\s)\w+\s|[.:;·]\s*)(\d{1,2})\s*(?:pipeline |validation )stages? (?:run|were run|completed)/gi),
     ]),
+
     stagesTotal: uniq(all(/\d{1,2}\s*(?:of|\/)\s*(\d{1,2})\s*(?:pipeline |validation )?stages?/gi)),
     considered: uniq(all(/(\d{1,2})\s*propositions? considered/gi)),
     scored: uniq(all(/(\d{1,2})\s*(?:propositions? )?competitively scored/gi)),
