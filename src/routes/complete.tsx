@@ -651,8 +651,10 @@ function CompletePage() {
                 // — a fresh build every click using the current prompts and
                 // pipeline outputs.
                 const live = await resolveLiveDocumentSession(session);
-                openPhase1Document(live, format as Phase1Format);
+                openPhase1Document(live, format as Phase1Format, docWin);
               } catch (e) {
+                // The blank tab is useless if the build failed — close it.
+                try { docWin?.close(); } catch { /* ignore */ }
                 // Log the whole error — name, message, stack and any
                 // certification findings — so the real cause is visible.
                 console.error("Document build failed", {
