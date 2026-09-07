@@ -107,8 +107,30 @@ const PLURAL_SET_SENTENCE: RegExp[] = [
   /^\s*(?:Taken together,\s*)?these (?:two|three|four|five|six|seven|eight|\d+) propositions\b/i,
 ];
 
-export function stripPluralSetFraming(input: string): string {
+/**
+ * Extra patterns used only where the surrounding document has been reduced to
+ * ONE proposition. They quantify over a set the reader cannot see ("Each one
+ * identifies a different truth…"), which is the recurring defect; they are
+ * legitimate wherever the full candidate set is still printed, so they are
+ * applied by caller decision rather than globally.
+ */
+const SINGLE_VIEW_SET_SENTENCE: RegExp[] = [
+  /^\s*Each one\b/i,
+  /^\s*Each (?:proposition|option|route|territory|candidate|of the (?:two|three|four|five|six|seven|eight|\d+))\b/i,
+  /^\s*(?:Both|All) (?:of )?(?:these|the) (?:propositions|options|routes|territories)\b/i,
+  /^\s*They (?:each|all|represent|offer)\b/i,
+  /\bcollectively\b[^.!?]*\b(?:propositions|options|routes|territories)\b/i,
+  /\b(?:propositions|options|routes)\b[^.!?]*\bcollectively\b/i,
+];
+
+export function stripPluralSetFraming(
+  input: string,
+  opts: { singleView?: boolean } = {},
+): string {
   if (!input) return input;
+  const patterns = opts.singleView
+    ? [...PLURAL_SET_SENTENCE, ...SINGLE_VIEW_SET_SENTENCE]
+    : PLURAL_SET_SENTENCE;
   return input
     .split("\n")
     .map((line) => {
@@ -118,7 +140,7 @@ export function stripPluralSetFraming(input: string): string {
       const body = line.slice(prefix.length);
       // Split on sentence ends, keeping the terminator with its sentence.
       const parts = body.match(/[^.!?]+[.!?]+["')\]]*\s*|[^.!?]+$/g) ?? [body];
-      const kept = parts.filter((s) => !PLURAL_SET_SENTENCE.some((re) => re.test(s)));
+      const kept = parts.filter((s) => !patterns.some((re) => re.test(s)));
       if (kept.length === parts.length) return line;
       const rest = kept.join("").trimEnd();
       return rest ? `${prefix}${rest}` : "";
@@ -126,6 +148,7 @@ export function stripPluralSetFraming(input: string): string {
     .filter((line, i, all) => line.trim() !== "" || (all[i - 1] ?? "").trim() !== "" || i === 0)
     .join("\n");
 }
+
 
 /**
  * A heading whose body was removed by an earlier strip promises content that
