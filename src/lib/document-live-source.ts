@@ -163,7 +163,9 @@ export async function resolveLiveDocumentSession<T extends LiveDocumentSession>(
 
   return {
     ...merged,
+    creative_shortlist: shortlist ?? [],
     locked_big_idea_run_id: runId,
+
     locked_big_idea: resolvedIdea ?? storedIdea,
     locked_big_idea_lens: idea?.lens_name ?? (ideaFallback ? storedLens : null),
     locked_campaign_line: resolvedLine ?? storedLine,
