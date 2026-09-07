@@ -43,15 +43,18 @@ export function looksCut(text: string, listItem = false): boolean {
   if (text.split(/\s+/).length < 7) return false;
   if (/[.!?:;"”’)\]]$/.test(text)) return false;
   if (/(?:shortlist|LOC engine|refinement|Stage\s+\d+[A-Za-z]*|winner|locked)$/i.test(text)) return false;
-  if (listItem)
-    return (
-      /,$/.test(text) ||
-      /\b(?:the|a|an|and|or|but|of|to|in|on|for|with|that|which|is|are|was|were|it|its|by|as|at|from|into|than)$/i.test(
-        text,
-      )
-    );
-  return /[a-z,]$/.test(text);
+  // A block that simply ends without a full stop is not evidence of a cut —
+  // register entries, advisories and table-style lines routinely do. Only a
+  // trailing comma or a dangling function word shows the sentence was severed.
+  // Same rule for paragraphs and list items so the two gates cannot disagree.
+  return (
+    /,$/.test(text) ||
+    /\b(?:the|a|an|and|or|but|of|to|in|on|for|with|that|which|is|are|was|were|it|its|by|as|at|from|into|than)$/i.test(
+      text,
+    )
+  );
 }
+
 
 /**
  * Any raw model value a builder lifts out of a stage output and drops straight
