@@ -47,6 +47,9 @@ export const MINTO_SECTION_IDS = [
   "current_state",
   "validation",
   "rejected",
+  "creative_recommendation",
+  "creative_shortlist",
+
   "implications",
   "next_step",
   "appendix",
