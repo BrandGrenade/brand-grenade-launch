@@ -1,0 +1,12 @@
+import { createClient } from "@supabase/supabase-js";
+import { writeFileSync } from "fs";
+import { buildPhase1Document } from "../src/lib/phase1-document-builder";
+import { buildSummaryDocument } from "../src/lib/summary-document";
+import { buildConsultingDeliveryDocument } from "../src/lib/consulting-delivery-document";
+const sb = createClient(process.env.VITE_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
+const { data: s } = await sb.from("sessions").select("*").eq("id", process.argv[2]).maybeSingle();
+writeFileSync("/tmp/dan/summary.html", buildSummaryDocument(s as never, undefined as never));
+writeFileSync("/tmp/dan/consultingdelivery.html", buildConsultingDeliveryDocument(s as never));
+writeFileSync("/tmp/dan/board.html", buildPhase1Document(s as never, "consulting"));
+writeFileSync("/tmp/dan/agency.html", buildPhase1Document(s as never, "agency"));
+console.log("ok");

@@ -28,12 +28,23 @@ export interface Phase1Session {
   stage_13_output?: string | null;
   stage_14_output?: string | null;
   stage_15_output?: string | null;
+  // Locked Room 04 creative. Present on a run that has been through the
+  // Creative Stimulus Engine; absent runs print an explicit pending note
+  // rather than leaving an agency reader to assume the work was skipped.
+  locked_campaign_line?: string | null;
+  locked_big_idea?: string | null;
+  locked_big_idea_lens?: string | null;
+  stage_18_detonation_line?: string | null;
+  stage_18_selected_detonation?: string | null;
+  stage_22_brand_architecture?: string | null;
+  stage_22_distinctive_assets?: string | null;
+  stage_21_outputs?: unknown;
 }
 
 const ACCENT = "#C81E1E";
 
 export const PHASE_1_SESSION_COLUMNS =
-  "stage_1_output, stage_2_output, stage_3_output, stage_4_output, stage_5_output, stage_6_output, stage_7_output, stage_8_output, stage_9_output, stage_9_leftofcentre_output, stage_10_output, stage_11_output, stage_12_output, stage_13_output, stage_14_output, stage_15_output";
+  "stage_1_output, stage_2_output, stage_3_output, stage_4_output, stage_5_output, stage_6_output, stage_7_output, stage_8_output, stage_9_output, stage_9_leftofcentre_output, stage_10_output, stage_11_output, stage_12_output, stage_13_output, stage_14_output, stage_15_output, locked_campaign_line, locked_big_idea, locked_big_idea_lens, stage_18_detonation_line, stage_18_selected_detonation, stage_21_outputs, stage_22_brand_architecture, stage_22_distinctive_assets";
 
 export function escapeHtml(s: string): string {
   return (s ?? "")
@@ -167,7 +178,82 @@ const FORMAT_META: Record<Phase1Format, { label: string; title: string }> = {
   workshop: { label: "BRAND WORKSHOP GUIDE", title: "Brand Workshop Guide" },
 };
 
-interface SectionDef { label: string; title: string; key: keyof Phase1Session; }
+interface SectionDef {
+  label: string;
+  title: string;
+  key: keyof Phase1Session;
+  /** Sections assembled in code rather than read from one stage column. */
+  derive?: (session: Phase1Session) => string;
+}
+
+/**
+ * The locked creative platform, for the agency document only.
+ *
+ * An agency reads this document to make work, so the campaign line, the
+ * creative idea and the channel activation are the operative content. Each
+ * field states plainly that it is pending when the run has not locked it —
+ * a missing line is never silently omitted.
+ */
+function lockedCreativeSection(session: Phase1Session): string {
+  const val = (v: unknown) => (typeof v === "string" ? v.trim() : "");
+  const pending = (what: string) =>
+    `[PENDING — ${what} has not been locked on this run. The Creative Stimulus Engine stage that produces it has not been completed and signed off.]`;
+
+  const line = val(session.locked_campaign_line);
+  const idea = val(session.locked_big_idea);
+  const lens = val(session.locked_big_idea_lens);
+  const detonation = val(session.stage_18_detonation_line) || val(session.stage_18_selected_detonation);
+  const architecture = val(session.stage_22_brand_architecture);
+  const assets = val(session.stage_22_distinctive_assets);
+
+  let channels = "";
+  const raw = session.stage_21_outputs;
+  if (raw && typeof raw === "object") {
+    const entries = Array.isArray(raw)
+      ? (raw as Array<Record<string, unknown>>).map((c, i) => ({
+          name: val(c["channel_name"]) || val(c["channel"]) || `Channel ${i + 1}`,
+          body: val(c["brief"]) || val(c["output"]) || val(c["text"]),
+        }))
+      : Object.entries(raw as Record<string, unknown>).map(([k, v]) => ({
+          name: k,
+          body: val(v),
+        }));
+    const written = entries.filter((e) => e.body);
+    if (written.length) {
+      channels = written
+        .map((e) => {
+          // Channel briefs are whole documents; the platform section carries a
+          // one-line summary, never a heading or a markdown marker.
+          const first =
+            e.body
+              .split("\n")
+              .map((l) => l.replace(/^\s*#{1,6}\s*/, "").replace(/\*\*/g, "").trim())
+              .find((l) => l && !/^[-—*_=]{2,}$/.test(l)) ?? "";
+          return `- **${e.name}** — ${first.slice(0, 400)}`;
+        })
+        .join("\n");
+    }
+  }
+
+  return [
+    "## Campaign line",
+    line || pending("the campaign line"),
+    "",
+    "## Creative idea",
+    idea || pending("the creative idea"),
+    lens ? `\nGenerating lens: ${lens}` : "",
+    "",
+    "## Detonation",
+    detonation || pending("the detonation"),
+    "",
+    "## Channel activation",
+    channels || pending("channel activation"),
+    architecture ? `\n## Brand architecture\n${architecture}` : "",
+    assets ? `\n## Distinctive assets\n${assets}` : "",
+  ]
+    .filter((b) => b !== "")
+    .join("\n");
+}
 
 const SECTIONS_CONSULTING: SectionDef[] = [
   { label: "PART 01", title: "Brief & Context", key: "stage_1_output" },
@@ -189,14 +275,20 @@ const SECTIONS_CONSULTING: SectionDef[] = [
 
 const SECTIONS_AGENCY: SectionDef[] = [
   { label: "PART 01", title: "The Proposition", key: "stage_12_output" },
-  { label: "PART 02", title: "Territory Mapping", key: "stage_14_output" },
-  { label: "PART 03", title: "Distinctiveness", key: "stage_9_output" },
-  { label: "PART 04", title: "Insight Foundation", key: "stage_5_output" },
-  { label: "PART 05", title: "Strategic Universes", key: "stage_4_output" },
-  { label: "PART 06", title: "Category Intelligence", key: "stage_2_output" },
-  { label: "PART 07", title: "Brand Fit Validation", key: "stage_13_output" },
-  { label: "PART 08", title: "Coherence Audit", key: "stage_15_output" },
-  { label: "PART 09", title: "Brief & Context", key: "stage_1_output" },
+  {
+    label: "PART 02",
+    title: "Locked Creative Platform",
+    key: "selected_smp",
+    derive: lockedCreativeSection,
+  },
+  { label: "PART 03", title: "Territory Mapping", key: "stage_14_output" },
+  { label: "PART 04", title: "Distinctiveness", key: "stage_9_output" },
+  { label: "PART 05", title: "Insight Foundation", key: "stage_5_output" },
+  { label: "PART 06", title: "Strategic Universes", key: "stage_4_output" },
+  { label: "PART 07", title: "Category Intelligence", key: "stage_2_output" },
+  { label: "PART 08", title: "Brand Fit Validation", key: "stage_13_output" },
+  { label: "PART 09", title: "Coherence Audit", key: "stage_15_output" },
+  { label: "PART 10", title: "Brief & Context", key: "stage_1_output" },
 ];
 
 const SECTIONS_WORKSHOP: SectionDef[] = [
@@ -221,7 +313,8 @@ function sectionsFor(format: Phase1Format): SectionDef[] {
 
 const CANDIDATE_KEYS = CANDIDATE_STAGE_KEYS;
 
-function sectionOutput(session: Phase1Session, key: keyof Phase1Session): string {
+function sectionOutput(session: Phase1Session, key: keyof Phase1Session, def?: SectionDef): string {
+  if (def?.derive) return def.derive(session);
   const primary = (session[key] ?? "").toString();
   const loc = key === "stage_9_output" ? (session.stage_9_leftofcentre_output ?? "").toString() : "";
   // Shared document rules: drop run-count bookkeeping, and lead with the
@@ -263,7 +356,7 @@ function proposition(smp: string | null | undefined): string {
 
 function toc(sections: SectionDef[], session: Phase1Session): string {
   const items = sections
-    .filter((s) => sectionOutput(session, s.key).trim())
+    .filter((s) => sectionOutput(session, s.key, s).trim())
     .map((s) => `<li>${escapeHtml(s.title)}</li>`)
     .join("");
   if (!items) return "";
@@ -289,7 +382,7 @@ export function buildPhase1Document(session: Phase1Session, format: Phase1Format
     toc(sections, session) +
     sections
       .map((s) => {
-        let raw = sectionOutput(session, s.key);
+        let raw = sectionOutput(session, s.key, s);
         if (s.key === "stage_1_output") raw = stripStage1Internals(raw);
         if (!raw.trim()) return "";
         let inner = md(sanitise(raw));
