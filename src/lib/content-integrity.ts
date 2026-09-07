@@ -40,6 +40,7 @@ const strip = (h: string) =>
  * never count. Shared with summary-gate.ts so both gates agree.
  */
 export function looksCut(text: string, listItem = false): boolean {
+  void listItem;
   if (text.split(/\s+/).length < 7) return false;
   if (/[.!?:;"”’)\]]$/.test(text)) return false;
   if (/(?:shortlist|LOC engine|refinement|Stage\s+\d+[A-Za-z]*|winner|locked)$/i.test(text)) return false;
