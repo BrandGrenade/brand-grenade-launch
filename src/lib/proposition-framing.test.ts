@@ -22,8 +22,10 @@ describe("proposition-count framing contract", () => {
   });
 
   it("hard-fails when the round-four defect is deliberately reintroduced", () => {
-    expect(() =>
-      assertPropositionFraming(ROUND_FOUR_DISTINCTIVENESS, 1, "Agency Part 04"),
-    ).toThrow(/failed proposition-count framing/);
+    expect(() => assertPropositionFraming(ROUND_FOUR, 1, "Agency Part 01")).toThrow(
+      /failed proposition-count framing/,
+    );
+    expect(() => assertPropositionFraming(ROUND_FOUR_DISTINCTIVENESS, 1, "Agency Part 04"))
+      .toThrow(/failed proposition-count framing/);
   });
 });
