@@ -6,7 +6,7 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 const ANTHROPIC_URL = "https://api.anthropic.com/v1/messages";
-const DEFAULT_MODEL = "claude-opus-4-8";
+const DEFAULT_MODEL = "claude-opus-5";
 // Per-chunk inactivity budget. The previous flat 180s wall-clock abort would
 // kill long-but-progressing streams (notably Stage 20B, which can stream for
 // 5+ minutes). We now abort only when no SSE chunk has arrived within this
@@ -240,9 +240,10 @@ async function prepareCall(
     body: JSON.stringify({
       model: args.model ?? DEFAULT_MODEL,
       max_tokens: effectiveMaxTokens,
-      // Opus 4.8 rejects `temperature` outright ("`temperature` is deprecated
-      // for this model", HTTP 400). Only forward it to models that still take it.
-      ...(typeof args.temperature === "number" && !(args.model ?? DEFAULT_MODEL).startsWith("claude-opus-4-8")
+      // Opus 4.8+ rejects `temperature` outright ("`temperature` is deprecated
+      // for this model", HTTP 400 — verified live against claude-opus-5).
+      // Only forward it to models that still take it.
+      ...(typeof args.temperature === "number" && !(args.model ?? DEFAULT_MODEL).startsWith("claude-opus")
         ? { temperature: args.temperature }
         : {}),
 
