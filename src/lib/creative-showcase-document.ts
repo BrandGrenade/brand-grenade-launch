@@ -306,6 +306,15 @@ export function buildCreativeShowcase(x: CreativeShowcase): { filename: string; 
         ? `<h4>Offline creative brief</h4><div class="hero">${esc(c.offlineBrief)}</div>`
         : ""
     }
+    ${
+      isFidelityBreak(c)
+        ? `<div class="break-alert"><span class="k">Gate One not confirmed — fidelity break, human review required</span>${
+            c.fidelity?.reasoning
+              ? esc(c.fidelity.reasoning)
+              : "This expression is executing a different idea to the locked campaign and must not go to production unreviewed."
+          }</div>`
+        : ""
+    }
     <p class="fidelity-line">${fidelityLine}</p>
   </div>`;
           })
