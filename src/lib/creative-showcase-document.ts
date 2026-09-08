@@ -486,11 +486,29 @@ export function buildCreativeShowcase(x: CreativeShowcase): { filename: string; 
 </div>`;
 
   // ============================================ UNIVERSAL — NEXT STEP
+  const broken = chans.filter(isFidelityBreak);
   const nextStep = `
 <div class="movement">
   <div class="movement-no">NEXT STEP</div>
   <h2>Decisive recommendation — next step</h2>
-  <p>Approve this campaign for production as presented: one locked idea carried across ${chans.length} channel expression${chans.length === 1 ? "" : "s"}, verified for consistency against the campaign signature registry.</p>
+  ${
+    broken.length
+      ? `<div class="break-alert"><span class="k">${broken.length} expression${
+          broken.length === 1 ? "" : "s"
+        } cannot be approved as presented</span>${broken
+          .map(
+            (c) =>
+              `<p><strong>${esc(c.channelName)}</strong> — fidelity break${
+                c.fidelity ? ` ${esc(c.fidelity.score)}/10` : ""
+              }. Gate One is not confirmed. ${esc(c.fidelity?.reasoning ?? "")}</p>`,
+          )
+          .join("")}<p>Approve the remaining ${chans.length - broken.length} expression${
+            chans.length - broken.length === 1 ? "" : "s"
+          } if satisfied. ${
+            broken.length === 1 ? "This expression" : "These expressions"
+          } must be revised against the locked idea and re-checked, or dropped from the campaign, by a human decision — nothing here has been auto-corrected.</p></div>`
+      : `<p>Approve this campaign for production as presented: one locked idea carried across ${chans.length} channel expression${chans.length === 1 ? "" : "s"}, verified for consistency against the campaign signature registry.</p>`
+  }
   <p>On approval, the channel expressions here become the production briefs. Any new channel added later must be generated against the same locked idea and re-run through the consistency trace before it is used.</p>
 </div>`;
 
