@@ -51,6 +51,8 @@ export interface SectionDef {
   targetWords: number;
   maxTokens: number;
   includesPropositionReveal?: boolean;
+  /** Number of proposition cards this section's final format presents. */
+  propositionCount?: number;
 }
 
 const STAGE_16_UNIVERSAL_RULES = `════════════════════════════════════════
@@ -130,6 +132,13 @@ Forbidden entirely — never write these or anything like them:
 Pipeline inputs supplied to you (particularly the selection-stage output) were written while several propositions were still live and use that comparison language. Ignore that framing completely. Rejected propositions may only appear in the section explicitly about what was set aside, in the past tense, as decisions already made.
 
 `;
+
+function propositionCountRule(count: number): string {
+  if (count > 1) {
+    return `\nPROPOSITION COUNT CONTRACT\nThis rendered section presents ${count} proposition cards. Set comparison and plural proposition framing are permitted only because those cards are visible in this format.\n`;
+  }
+  return `\nPROPOSITION COUNT CONTRACT\nPROPOSITION_CARDS_RENDERED: 1\nThe reader sees exactly one already-selected proposition. Describe what THIS proposition claims, why it was selected, and how it differs from category conventions or competitor positions. Never compare it with sibling propositions, options, routes, territories, assumptions, truths, or theories that are not rendered here. Do not use plural or pronoun set framing such as “the propositions”, “these”, “they”, “each one”, “both”, “four” or “five” to refer to candidates.\n`;
+}
 
 // ────────────────────────────────────────────────────────────────────────
 // CONSULTING SECTION PROMPTS
@@ -512,6 +521,7 @@ export function getAgencySections(s: SessionForStage16): SectionDef[] {
       pipelineInputs: [cut(s.stage_1_output, 1500)],
       targetWords: 300,
       maxTokens: 64000,
+      propositionCount: 1,
     },
     {
       name: "strategic_context",
@@ -520,6 +530,7 @@ export function getAgencySections(s: SessionForStage16): SectionDef[] {
       pipelineInputs: [cut(s.stage_1_output, 2000), cut(s.stage_2_output, 1500)],
       targetWords: 350,
       maxTokens: 64000,
+      propositionCount: 1,
     },
     {
       name: "category",
@@ -528,6 +539,7 @@ export function getAgencySections(s: SessionForStage16): SectionDef[] {
       pipelineInputs: [cut(s.stage_2_output, 3000)],
       targetWords: 400,
       maxTokens: 64000,
+      propositionCount: 1,
     },
     {
       name: "human_truth",
@@ -536,6 +548,7 @@ export function getAgencySections(s: SessionForStage16): SectionDef[] {
       pipelineInputs: [cut(s.stage_7_output, 2000), cut(s.stage_5_output, 1500)],
       targetWords: 350,
       maxTokens: 64000,
+      propositionCount: 1,
     },
     {
       name: "why_brand",
@@ -544,6 +557,7 @@ export function getAgencySections(s: SessionForStage16): SectionDef[] {
       pipelineInputs: [cut(s.stage_13_output, 2500)],
       targetWords: 300,
       maxTokens: 64000,
+      propositionCount: 1,
     },
     {
       name: "what_was_set_aside",
@@ -555,6 +569,7 @@ export function getAgencySections(s: SessionForStage16): SectionDef[] {
       ],
       targetWords: 400,
       maxTokens: 64000,
+      propositionCount: 1,
     },
     {
       name: "proposition",
@@ -568,6 +583,7 @@ export function getAgencySections(s: SessionForStage16): SectionDef[] {
       targetWords: 450,
       maxTokens: 64000,
       includesPropositionReveal: true,
+      propositionCount: 1,
     },
     {
       name: "creative_world",
@@ -580,6 +596,7 @@ export function getAgencySections(s: SessionForStage16): SectionDef[] {
       ],
       targetWords: 600,
       maxTokens: 64000,
+      propositionCount: 1,
     },
     {
       name: "across_channels",
@@ -588,6 +605,7 @@ export function getAgencySections(s: SessionForStage16): SectionDef[] {
       pipelineInputs: [cut(s.stage_14b_output, 2500)],
       targetWords: 400,
       maxTokens: 64000,
+      propositionCount: 1,
     },
     {
       name: "locked_creative",
@@ -606,6 +624,7 @@ export function getAgencySections(s: SessionForStage16): SectionDef[] {
       ],
       targetWords: 500,
       maxTokens: 64000,
+      propositionCount: 1,
     },
     {
       name: "brief_to_creative",
@@ -617,6 +636,7 @@ export function getAgencySections(s: SessionForStage16): SectionDef[] {
       ],
       targetWords: 250,
       maxTokens: 64000,
+      propositionCount: 1,
     },
   ];
 }
@@ -715,7 +735,9 @@ function withSharedRules(
   if (!facts && !single) return sections;
   return sections.map((sec) => ({
     ...sec,
-    systemPrompt: `${sec.systemPrompt}\n${facts}${single}`,
+    systemPrompt: `${sec.systemPrompt}\n${facts}${single}${
+      sec.propositionCount != null ? propositionCountRule(sec.propositionCount) : ""
+    }`,
   }));
 }
 

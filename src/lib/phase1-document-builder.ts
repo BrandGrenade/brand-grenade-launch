@@ -97,6 +97,10 @@ import { relabelScoreScale } from "./appendix-humanise";
 import { certifyDocument } from "./content-integrity";
 import { BOOKKEEPING_LINE, CANDIDATE_STAGE_KEYS, scopeToSelected, selectedAliases } from "./minto-content";
 import { buildBoardStrategyDocument } from "./board-strategy-document";
+import {
+  assertPropositionFraming,
+  frameForPropositionCount,
+} from "./proposition-framing";
 
 export function sanitise(t: string | null | undefined): string {
   // Legacy transcripts carry composites written on the superseded /100 and
@@ -313,7 +317,12 @@ function sectionsFor(format: Phase1Format): SectionDef[] {
 
 const CANDIDATE_KEYS = CANDIDATE_STAGE_KEYS;
 
-function sectionOutput(session: Phase1Session, key: keyof Phase1Session, def?: SectionDef): string {
+function sectionOutput(
+  session: Phase1Session,
+  key: keyof Phase1Session,
+  def?: SectionDef,
+  format?: Phase1Format,
+): string {
   if (def?.derive) return def.derive(session);
   const primary = (session[key] ?? "").toString();
   const loc = key === "stage_9_output" ? (session.stage_9_leftofcentre_output ?? "").toString() : "";
@@ -329,6 +338,12 @@ function sectionOutput(session: Phase1Session, key: keyof Phase1Session, def?: S
       ((session as unknown as Record<string, unknown>)["selected_smp"] ?? "").toString(),
       selectedAliases(session as never),
     );
+  }
+  // Agency presents one locked proposition. Its Stage 12 and Stage 9 source
+  // prose was authored while several candidates were live, so count-aware
+  // framing is applied at this template boundary. Board remains untouched.
+  if (format === "agency" && (key === "stage_12_output" || key === "stage_9_output")) {
+    raw = frameForPropositionCount(raw, 1);
   }
   return raw;
 }
@@ -382,10 +397,14 @@ export function buildPhase1Document(session: Phase1Session, format: Phase1Format
     toc(sections, session) +
     sections
       .map((s) => {
-        let raw = sectionOutput(session, s.key, s);
+        let raw = sectionOutput(session, s.key, s, format);
         if (s.key === "stage_1_output") raw = stripStage1Internals(raw);
         if (!raw.trim()) return "";
-        let inner = md(sanitise(raw));
+        const cleaned = sanitise(raw);
+        if (format === "agency" && (s.key === "stage_12_output" || s.key === "stage_9_output")) {
+          assertPropositionFraming(cleaned, 1, `Agency ${s.label} “${s.title}”`);
+        }
+        let inner = md(cleaned);
         // The stage output often opens with its own title heading, which would
         // otherwise leave this section's canonical heading with no body.
         inner = inner.replace(/^\s*<h2>[\s\S]*?<\/h2>\s*/, "");
