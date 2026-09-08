@@ -246,7 +246,7 @@ export function buildCreativeShowcase(x: CreativeShowcase): { filename: string; 
     <h4>The winning idea${f.lens ? ` · lens: ${esc(f.lens)}` : ""}</h4>
     <p class="idea">${esc(f.idea)}</p>
     <p class="muted">Locked ${esc(stamp(f.lockedAt))}${
-      f.ratingTotal != null ? ` · rated ${esc(f.ratingTotal)}/80 at the sweep` : ""
+      f.ratingTotal != null ? ` · rated ${esc(f.ratingTotal)}/${esc(f.ratingOutOf ?? 80)} at the sweep` : ""
     }</p>
   </div>
   <h4>Why this idea wins</h4>

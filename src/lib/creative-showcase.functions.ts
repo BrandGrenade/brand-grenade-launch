@@ -53,6 +53,7 @@ export type CreativeShowcase = {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ratings: any;
     ratingTotal: number | null;
+    ratingOutOf: number | null;
   };
   signatures: ShowcaseSignature[];
   channels: ShowcaseChannel[];
@@ -317,6 +318,7 @@ export const getCreativeShowcase = createServerFn({ method: "POST" })
         instinctBrief,
         ratings,
         ratingTotal,
+        ratingOutOf,
       },
       signatures,
       channels,
