@@ -212,7 +212,7 @@ The occasion supplier — now Coles' single liquor banner after absorbing Vintag
       replace: `**BWS** owns the pre-party, under \\"Refreshingly BWS\\" and \\"Here for it\\" — cold drinks ready when you are.`,
     },
     {
-      find: `**Liquorland** occupies almost identical territory to BWS — Coles-proximate convenience with promotional pricing — but with lower share of mind and weaker distribution. The brand cannot claim anything BWS doesn't already own, and its Coles-group ownership prevents it from developing independent brand meaning.`,
+      find: `**Liquorland** occupies almost identical territory to BWS — Coles-proximate convenience with promotional pricing — but with lower share of mind and weaker distribution. It survives on shoppers who already shop at Coles, not shoppers who choose it deliberately. The brand cannot claim anything BWS doesn't already own, and its Coles-group ownership prevents it from developing independent brand meaning.`,
       replace: `**Liquorland** is the closest real threat. It is now Coles' single liquor banner, having absorbed the Vintage Cellars and First Choice Liquor Market networks through 2025 for roughly a quarter more national footprint, and its \\"Legendary\\" platform explicitly claims occasion — hosting, celebrating, the everyday hero arriving with the drinks.`,
     },
     {
