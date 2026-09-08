@@ -1,21 +1,28 @@
-// CREATIVE STIMULUS ENGINE — server functions.
-// Trigger: manual, in-pipeline, one channel per run.
-// Generation is resumable: the client calls generateStimulusBatch until the
-// run reports complete, so no single request has to carry all 37 lenses.
+// CREATIVE STIMULUS ENGINE — shared run/direction server functions.
+//
+// ARCHITECTURE (current, single source of truth):
+//   The 37-Lens Sweep fires ONCE per session, BEFORE any channel brief exists,
+//   against the validated proposition / Detonation (see
+//   src/lib/stimulus-bigidea.functions.ts → startBigIdeaRun / driveBigIdeaSweep).
+//   Human gating then runs Tissue Check triage → Gate One approval
+//   (setGateOneApproval / confirmGateOne) → lockWinningIdea. Stage 21 channel
+//   briefs and every downstream channel / martech prompt are generated only
+//   from that locked idea and locked line.
+//
+//   RETIRED: the legacy per-channel sweep (one run per Stage 21 channel brief)
+//   was removed in Sep 2026 along with its only UI. Historical `stimulus_runs`
+//   rows from that era remain readable; nothing generates new ones.
+//
+// The functions below are the shared read/triage/revise layer used by the
+// pre-channel sweep and by channel-adaptation runs.
 
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertSessionAccess } from "@/lib/auth-helpers.server";
-import { callClaude } from "./claude.server";
-import { STIMULUS_LENSES, getLens } from "./stimulus/lenses";
 import { runStaleness } from "./stimulus/staleness";
-import {
-  STIMULUS_SYSTEM_PROMPT,
-  buildStimulusUserMessage,
-  parseStimulusResponse,
-} from "./stimulus/generate-prompt";
+
 
 
 const SessionOnly = z.object({ sessionId: z.string().uuid() });
