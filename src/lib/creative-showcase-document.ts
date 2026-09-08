@@ -166,20 +166,30 @@ hr{border:none;border-top:1px solid var(--rule);margin:30px 0;}
 }
 `;
 
+/**
+ * The winning idea's rating snapshot. Rendered through the same shared
+ * renderer the raw-ideas export uses, so the Showcase can never disagree with
+ * it — the earlier local implementation looked for a `score` key the stored
+ * snapshot does not use, and so reported real data as absent.
+ */
 function ratingsTable(ratings: unknown): string {
   if (!ratings || typeof ratings !== "object") return "";
-  const dims = Object.entries(ratings as Record<string, unknown>).filter(
-    ([, v]) => v && typeof v === "object" && "score" in (v as object),
-  );
-  if (!dims.length) return "";
-  return `<table class="ratings"><tbody>${dims
-    .map(([k, v]) => {
-      const row = v as { score?: unknown; rationale?: unknown };
-      return `<tr><th>${esc(k.replace(/_/g, " "))}</th><td>${esc(row.score)}</td><td class="muted">${esc(
-        row.rationale ?? "",
-      )}</td></tr>`;
-    })
-    .join("")}</tbody></table>`;
+  const html = renderRatingTable(ratings);
+  return html.includes("<table") ? html : "";
+}
+
+/**
+ * A fidelity BREAK means this expression is executing a different idea. Gate
+ * One is not an approval button: a break can never render as confirmed,
+ * whatever was recorded against the run at generation time.
+ */
+export function isFidelityBreak(c: CreativeShowcase["channels"][number]): boolean {
+  return (c.fidelity?.verdict ?? "").toLowerCase() === "break";
+}
+
+export function gateOneStatusLabel(c: CreativeShowcase["channels"][number]): string {
+  if (isFidelityBreak(c)) return "not confirmed — fidelity break, human review required";
+  return c.gateOneConfirmed ? "confirmed" : "not confirmed";
 }
 
 function fidelityPill(f: CreativeShowcase["channels"][number]["fidelity"]): string {
