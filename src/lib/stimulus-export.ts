@@ -68,6 +68,8 @@ const CSS = `
     body{background:var(--paper);color:var(--ash);padding:24px;}
     h1,h3,table.ratings td{color:var(--ash);}
     .card,pre{background:#E1DCD4;border-color:#C2BCB5;color:var(--ash);}
+    .rating-sub-label,.rating-sub,.rating-list{color:var(--ash);}
+    .ip-callout{background:#F6E3E3;color:var(--ash);}
     hr{border-top-color:#C2BCB5;}
   }
 `;
