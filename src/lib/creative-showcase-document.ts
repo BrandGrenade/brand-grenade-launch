@@ -393,7 +393,7 @@ export function buildCreativeShowcase(x: CreativeShowcase): { filename: string; 
         }`
       : "not checked"
   }</div>
-  <div class="row"><span class="k">Gate One:</span> ${c.gateOneConfirmed ? "confirmed" : "not confirmed"} · <span class="k">generated:</span> ${esc(
+  <div class="row"><span class="k">Gate One:</span> ${esc(gateOneStatusLabel(c))} · <span class="k">generated:</span> ${esc(
     stamp(c.generatedAt),
   )}</div>
   ${
