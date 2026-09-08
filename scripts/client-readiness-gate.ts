@@ -178,6 +178,10 @@ function gate4Provenance(doc: string, t: string, session: Record<string, unknown
  * so the sentence itself must be about the proposition set.
  */
 function gate5Scaffold(doc: string, t: string): Finding[] {
+  // This count contract applies to the Agency format, whose template presents
+  // one locked proposition. Vision and Workshop intentionally discuss rejected
+  // sets without rendering them as proposition cards; Board renders all cards.
+  if (doc !== "Agency Strategy Platform") return [];
   const cards = new Set(
     [...t.matchAll(/PROPOSITION\s+(\d+|ONE|TWO|THREE|FOUR|FIVE|SIX)\b/gi)].map((m) => m[0].toUpperCase()),
   ).size;
