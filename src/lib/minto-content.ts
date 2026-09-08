@@ -1620,7 +1620,7 @@ export function deriveMintoContent(session: MintoSession, opts: DeriveOptions = 
               (flag
                 ? `<div class="flag-callout"><strong>Rights and clearance:</strong> ${escapeHtml(flag)}</div>`
                 : "") +
-              renderRatingTable(row.ratings),
+              renderRatingTable(row.ratings, { ipCallout: false }),
           );
         })
         .join("")
