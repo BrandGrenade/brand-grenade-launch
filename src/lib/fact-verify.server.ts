@@ -317,7 +317,7 @@ export const FACT_VERIFIED_STAGES = {
     label: "Stage 2 — Category Intelligence",
     outputColumn: "stage_2_output",
     claimFocus:
-      "- Market size, value, volume, growth rate or share figures\n- Regulation, legislation, labelling law, advertising code or compliance requirement\n- Behavioural or penetration statistics attributed to the category or its buyers\n- Named competitor ownership, launch dates, portfolio composition, pricing or claims\n- Category history: when something started, who was first, what changed and when",
+      "- Market size, value, volume, growth rate or share figures\n- Regulation, legislation, labelling law, advertising code or compliance requirement\n- Behavioural or penetration statistics attributed to the category or its buyers\n- Named competitor ownership, launch dates, portfolio composition, pricing or claims\n- CURRENCY OF THE COMPETITIVE SET. For EVERY competitor the document names, search and confirm three things separately: (a) the brand still trades under that name today and has not been retired, merged, rebranded or absorbed into another banner; (b) the stated owner or parent company is its current owner; (c) the positioning attributed to it matches its CURRENT live brand platform or campaign, not a historical one. A competitor that has been discontinued, or is described using a superseded platform, is 'contradicted', not 'unverified'. Retail banner consolidations and rebrands are common and are exactly the failure this check exists to catch.\n- Category history: when something started, who was first, what changed and when",
     maxClaims: 25,
   },
   stage4b: {
