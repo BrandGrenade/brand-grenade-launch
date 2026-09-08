@@ -7,16 +7,12 @@ import {
   buildStage11UserMessage,
 } from "../src/lib/stage11-prompt";
 import { countPropositions } from "../src/lib/count-helpers";
-import { createClient } from "@supabase/supabase-js";
+import { supabaseAdmin } from "../src/integrations/supabase/client.server";
 
 const SESSION_ID = "c5142f1d-a381-44aa-9b88-c21875cc7996";
 
 async function main() {
-  const url = process.env.VITE_SUPABASE_URL ?? process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_PUBLISHABLE_KEY ?? process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-  if (!url || !key) throw new Error("Supabase env missing");
-  const sb = createClient(url, key);
-  const { data: s, error } = await sb
+  const { data: s, error } = await supabaseAdmin
     .from("sessions")
     .select("brand_name, category, stage_2_output, stage_8_output, stage_10_output, is_preflight_test")
     .eq("id", SESSION_ID)
