@@ -10,10 +10,10 @@ export type PropositionFramingViolation = {
 const SENTENCE_PATTERNS: Array<{ label: string; re: RegExp }> = [
   { label: "plural proposition noun", re: /\b(?:these|the|following|all|both|several|multiple|two|three|four|five|six)\s+propositions\b/i },
   { label: "propositions as subject", re: /\bthe propositions\b/i },
-  { label: "set comparison", re: /\b(?:compare|comparison|differ|differentiate|distinguish|choose|select(?:ing)?)\b[^.!?]{0,100}\b(?:propositions|options|routes|territories)\b/i },
+  { label: "set comparison", re: /\b(?:compare|comparison|differ|differentiate|choose|select(?:ing)?)\b[^.!?]{0,100}\bpropositions\b/i },
   { label: "set comparison", re: /\b(?:propositions|options|routes|territories)\b[^.!?]{0,100}\b(?:differ|different|variations?|theories|assumptions|collectively|each|between)\b/i },
-  { label: "plural set pronoun", re: /\b(?:they|these|each one)\b[^.!?]{0,120}\b(?:variations?|theories|truths?|propositions?|options?|routes?|territories?|assumptions?)\b/i },
-  { label: "plural set pronoun", re: /\b(?:variations?|theories|truths?|propositions?|options?|routes?|territories?|assumptions?)\b[^.!?]{0,120}\b(?:they|these|each one|each other)\b/i },
+  { label: "plural set pronoun", re: /\b(?:they|these|each one)\s+(?:are|represent|offer|identify|define|express|lead to)\b[^.!?]{0,120}\b(?:variations?|theories|truths?|propositions?|options?|routes?|territories?|assumptions?)\b/i },
+  { label: "plural set pronoun", re: /\b(?:variations?|theories|truths?|propositions?|options?|routes?|territories?|assumptions?)\b[^.!?]{0,80}\b(?:they|these|each one|each other)\s+(?:are|represent|offer|identify|define|express|lead to)\b/i },
   { label: "numbered proposition set", re: /\b(?:two|three|four|five|six|\d+)\s+(?:different\s+)?(?:propositions|options|routes|territories)\b/i },
 ];
 
