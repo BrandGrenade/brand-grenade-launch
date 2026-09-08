@@ -90,7 +90,7 @@ async function main() {
   const { data: s, error } = await supabaseAdmin
     .from("sessions")
     .select(
-      "brand_name, category, stage_1_output, stage_2_output, stage_7_output, stage_8_output, stage_9_output, stage_10_output, territory_count",
+      "brand_name, category, stage_1_output, stage_2_output, stage_7_output, stage_8_output, stage_9_output, stage_10_output",
     )
     .eq("id", sessionId)
     .single();
