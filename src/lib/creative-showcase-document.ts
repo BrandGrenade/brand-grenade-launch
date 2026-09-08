@@ -22,6 +22,7 @@
 // here, at render, before either part of the document is built.
 
 import type { CreativeShowcase, ShowcaseSignature } from "@/lib/creative-showcase.functions";
+import { renderRatingTable } from "./creative-shortlist";
 import { gateGenericDocument } from "./document-gate";
 
 function esc(v: unknown): string {
