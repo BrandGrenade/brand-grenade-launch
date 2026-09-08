@@ -62,21 +62,6 @@ async function loadRun(runId: string, userId: string): Promise<RunRow> {
 }
 
 
-/** Channels available for a stimulus run — the Stage 21 channel brief keys. */
-export const listStimulusChannels = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((i) => SessionOnly.parse(i))
-  .handler(async ({ data, context }) => {
-    await assertSessionAccess(data.sessionId, context.userId);
-    const { data: row, error } = await supabaseAdmin
-      .from("sessions")
-      .select("stage_21_outputs")
-      .eq("id", data.sessionId)
-      .single();
-    if (error) throw new Error(error.message);
-    const outputs = (row?.stage_21_outputs as Record<string, string> | null) ?? {};
-    return { channels: Object.keys(outputs) };
-  });
 
 export const listStimulusRuns = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
