@@ -12,6 +12,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertSessionAccess } from "@/lib/auth-helpers.server";
 import { assertUpstreamStageOutput } from "./pipeline-integrity";
 import { deriveRunFacts, runFactsBlock } from "./run-facts";
+import { assertPropositionFraming } from "./proposition-framing";
 
 const FormatSchema = z.enum(["agency", "consulting", "workshop", "vision"]);
 const Input = z.object({
@@ -346,6 +347,14 @@ Write the complete STRATEGY AND CREATIVE VISION document now. Begin immediately.
             const msg = e instanceof Error ? e.message : "section call failed";
             // Don't fail the entire document for one section — note the gap and move on.
             body = `*[Section "${section.title}" could not be generated: ${msg}]*`;
+          }
+
+          if (data.format === "agency" && section.propositionCount != null) {
+            assertPropositionFraming(
+              body,
+              section.propositionCount,
+              `Stage 16 Agency section “${section.title}”`,
+            );
           }
 
           let sectionBlock = `\n# ${section.title}\n\n${body.trim()}\n`;

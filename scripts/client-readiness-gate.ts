@@ -26,6 +26,7 @@ import { createClient } from "@supabase/supabase-js";
 import { mkdirSync, writeFileSync } from "fs";
 import { buildPhase1Document, type Phase1Format } from "../src/lib/phase1-document-builder";
 import { buildSummaryDocument } from "../src/lib/summary-document";
+import { findPropositionFramingViolations } from "../src/lib/proposition-framing";
 
 const sb = createClient(process.env.VITE_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
 const OUT = "/tmp/client-gate";
@@ -176,36 +177,21 @@ function gate4Provenance(doc: string, t: string, session: Record<string, unknown
  * cannot see. "each one" about channels or alternatives is ordinary English,
  * so the sentence itself must be about the proposition set.
  */
-const SET_FRAMING = [
-  /each of (?:these|the) (?:\w+ )?(?:propositions|routes|options)\b/i,
-  /\ball (?:\w+ )?propositions\b/i,
-  /\bthese propositions\b/i,
-  /\bboth propositions\b/i,
-  /\beach one\b[^.!?]*\b(?:proposition|route|territory|truth)s?\b/i,
-  /\b(?:proposition|route)s\b[^.!?]*\beach one\b/i,
-  /compare (?:the|these) (?:propositions|options)/i,
-];
-
 function gate5Scaffold(doc: string, t: string): Finding[] {
+  // This count contract applies to the Agency format, whose template presents
+  // one locked proposition. Vision and Workshop intentionally discuss rejected
+  // sets without rendering them as proposition cards; Board renders all cards.
+  if (doc !== "Agency Strategy Platform") return [];
   const cards = new Set(
     [...t.matchAll(/PROPOSITION\s+(\d+|ONE|TWO|THREE|FOUR|FIVE|SIX)\b/gi)].map((m) => m[0].toUpperCase()),
   ).size;
   if (cards > 1) return []; // a genuine comparison section may say so
-  const out: Finding[] = [];
-  for (const line of t.split("\n")) {
-    for (const re of SET_FRAMING) {
-      if (re.test(line)) {
-        out.push({
-          gate: "G5 SCAFFOLD",
-          doc,
-          detail: "set-framing language over a single presented proposition",
-          evidence: line.trim().slice(0, 160),
-        });
-        break;
-      }
-    }
-  }
-  return out;
+  return findPropositionFramingViolations(t, cards || 1).map((violation) => ({
+    gate: "G5 SCAFFOLD",
+    doc,
+    detail: "set-framing language over a single presented proposition",
+    evidence: violation.sentence.slice(0, 160),
+  }));
 }
 
 
