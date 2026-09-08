@@ -53,6 +53,15 @@ const CSS = `
   table.ratings{border-collapse:collapse;width:100%;font-size:13px;}
   table.ratings th{text-align:left;color:var(--smoke);font-weight:500;padding:5px 12px 5px 0;text-transform:capitalize;width:190px;vertical-align:top;}
   table.ratings td{padding:5px 12px 5px 0;vertical-align:top;color:var(--paper);}
+  table.ratings td p{margin:0 0 6px;}
+  .rating-sub{margin:0 0 6px;font-size:12.5px;color:var(--smoke);}
+  .rating-sub-label{color:var(--paper);font-weight:600;}
+  .rating-list{margin:0 0 8px;padding-left:18px;font-size:12.5px;color:var(--smoke);}
+  .ip-callout{border:1px solid var(--detonation);border-left-width:4px;border-radius:6px;
+    background:rgba(200,30,30,.10);padding:14px 16px;margin:14px 0 0;font-size:13px;}
+  .ip-callout-title{margin:0 0 6px;color:var(--detonation);font-weight:700;letter-spacing:.08em;
+    text-transform:uppercase;font-size:12px;}
+
   a{color:var(--detonation);}
   hr{border:none;border-top:1px solid var(--rule);margin:30px 0;}
   @media print{
