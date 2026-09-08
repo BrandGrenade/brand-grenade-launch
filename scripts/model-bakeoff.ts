@@ -82,7 +82,7 @@ async function run(model: string, stage: string, system: string, user: string, m
 
 async function main() {
   const sessionId = arg("session");
-  const models = arg("models", "claude-opus-4-8,claude-fable-5-1").split(",").map((m) => m.trim());
+  const models = arg("models", "claude-opus-5,claude-fable-5-1").split(",").map((m) => m.trim());
   const stages = arg("stages", "2,8,10,11,sweep").split(",").map((s) => s.trim());
   const lensCount = Number(arg("lenses", "3"));
   const label = arg("label", sessionId.slice(0, 8));
