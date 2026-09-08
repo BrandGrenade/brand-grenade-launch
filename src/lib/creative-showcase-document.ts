@@ -22,6 +22,7 @@
 // here, at render, before either part of the document is built.
 
 import type { CreativeShowcase, ShowcaseSignature } from "@/lib/creative-showcase.functions";
+import { renderRatingTable } from "./creative-shortlist";
 import { gateGenericDocument } from "./document-gate";
 
 function esc(v: unknown): string {
@@ -128,6 +129,13 @@ pre{white-space:pre-wrap;background:var(--surface2);border:1px solid var(--rule)
 table.ratings{border-collapse:collapse;width:100%;font-size:13px;}
 table.ratings th{text-align:left;color:var(--smoke);font-weight:500;padding:5px 12px 5px 0;text-transform:capitalize;width:200px;vertical-align:top;}
 table.ratings td{padding:5px 12px 5px 0;vertical-align:top;}
+table.ratings thead th{color:var(--paper);text-transform:uppercase;font-size:10px;letter-spacing:.12em;}
+.rating-caption,.rating-sub{display:block;color:var(--smoke);font-size:12px;margin-top:4px;}
+.rating-list{margin:4px 0 0 18px;color:var(--smoke);font-size:12px;}
+.rating-ip{border:1px solid #7D2F2F;background:rgba(125,47,47,.12);border-radius:6px;padding:10px 12px;margin-top:10px;font-size:13px;}
+.rating-ip .k{color:#E5484D;font-weight:700;text-transform:uppercase;letter-spacing:.1em;font-size:10px;display:block;margin-bottom:4px;}
+.break-alert{border:1px solid #7D2F2F;background:rgba(125,47,47,.12);border-radius:6px;padding:12px 14px;margin:10px 0;font-size:13px;color:var(--paper);}
+.break-alert .k{color:#E5484D;font-weight:700;text-transform:uppercase;letter-spacing:.1em;font-size:10px;display:block;margin-bottom:4px;}
 details{border:1px solid var(--rule);border-radius:8px;padding:14px 18px;margin:12px 0;background:var(--surface);}
 summary{cursor:pointer;font-weight:600;}
 hr{border:none;border-top:1px solid var(--rule);margin:30px 0;}
@@ -158,20 +166,30 @@ hr{border:none;border-top:1px solid var(--rule);margin:30px 0;}
 }
 `;
 
+/**
+ * The winning idea's rating snapshot. Rendered through the same shared
+ * renderer the raw-ideas export uses, so the Showcase can never disagree with
+ * it — the earlier local implementation looked for a `score` key the stored
+ * snapshot does not use, and so reported real data as absent.
+ */
 function ratingsTable(ratings: unknown): string {
   if (!ratings || typeof ratings !== "object") return "";
-  const dims = Object.entries(ratings as Record<string, unknown>).filter(
-    ([, v]) => v && typeof v === "object" && "score" in (v as object),
-  );
-  if (!dims.length) return "";
-  return `<table class="ratings"><tbody>${dims
-    .map(([k, v]) => {
-      const row = v as { score?: unknown; rationale?: unknown };
-      return `<tr><th>${esc(k.replace(/_/g, " "))}</th><td>${esc(row.score)}</td><td class="muted">${esc(
-        row.rationale ?? "",
-      )}</td></tr>`;
-    })
-    .join("")}</tbody></table>`;
+  const html = renderRatingTable(ratings);
+  return html.includes("<table") ? html : "";
+}
+
+/**
+ * A fidelity BREAK means this expression is executing a different idea. Gate
+ * One is not an approval button: a break can never render as confirmed,
+ * whatever was recorded against the run at generation time.
+ */
+export function isFidelityBreak(c: CreativeShowcase["channels"][number]): boolean {
+  return (c.fidelity?.verdict ?? "").toLowerCase() === "break";
+}
+
+export function gateOneStatusLabel(c: CreativeShowcase["channels"][number]): string {
+  if (isFidelityBreak(c)) return "not confirmed — fidelity break, human review required";
+  return c.gateOneConfirmed ? "confirmed" : "not confirmed";
 }
 
 function fidelityPill(f: CreativeShowcase["channels"][number]["fidelity"]): string {
@@ -228,7 +246,7 @@ export function buildCreativeShowcase(x: CreativeShowcase): { filename: string; 
     <h4>The winning idea${f.lens ? ` · lens: ${esc(f.lens)}` : ""}</h4>
     <p class="idea">${esc(f.idea)}</p>
     <p class="muted">Locked ${esc(stamp(f.lockedAt))}${
-      f.ratingTotal != null ? ` · rated ${esc(f.ratingTotal)}/80 at the sweep` : ""
+      f.ratingTotal != null ? ` · rated ${esc(f.ratingTotal)}/${esc(f.ratingOutOf ?? 80)} at the sweep` : ""
     }</p>
   </div>
   <h4>Why this idea wins</h4>
@@ -286,6 +304,15 @@ export function buildCreativeShowcase(x: CreativeShowcase): { filename: string; 
     ${
       c.offlineBrief
         ? `<h4>Offline creative brief</h4><div class="hero">${esc(c.offlineBrief)}</div>`
+        : ""
+    }
+    ${
+      isFidelityBreak(c)
+        ? `<div class="break-alert"><span class="k">Gate One not confirmed — fidelity break, human review required</span>${
+            c.fidelity?.reasoning
+              ? esc(c.fidelity.reasoning)
+              : "This expression is executing a different idea to the locked campaign and must not go to production unreviewed."
+          }</div>`
         : ""
     }
     <p class="fidelity-line">${fidelityLine}</p>
@@ -366,7 +393,7 @@ export function buildCreativeShowcase(x: CreativeShowcase): { filename: string; 
         }`
       : "not checked"
   }</div>
-  <div class="row"><span class="k">Gate One:</span> ${c.gateOneConfirmed ? "confirmed" : "not confirmed"} · <span class="k">generated:</span> ${esc(
+  <div class="row"><span class="k">Gate One:</span> ${esc(gateOneStatusLabel(c))} · <span class="k">generated:</span> ${esc(
     stamp(c.generatedAt),
   )}</div>
   ${
@@ -459,11 +486,29 @@ export function buildCreativeShowcase(x: CreativeShowcase): { filename: string; 
 </div>`;
 
   // ============================================ UNIVERSAL — NEXT STEP
+  const broken = chans.filter(isFidelityBreak);
   const nextStep = `
 <div class="movement">
   <div class="movement-no">NEXT STEP</div>
   <h2>Decisive recommendation — next step</h2>
-  <p>Approve this campaign for production as presented: one locked idea carried across ${chans.length} channel expression${chans.length === 1 ? "" : "s"}, verified for consistency against the campaign signature registry.</p>
+  ${
+    broken.length
+      ? `<div class="break-alert"><span class="k">${broken.length} expression${
+          broken.length === 1 ? "" : "s"
+        } cannot be approved as presented</span>${broken
+          .map(
+            (c) =>
+              `<p><strong>${esc(c.channelName)}</strong> — fidelity break${
+                c.fidelity ? ` ${esc(c.fidelity.score)}/10` : ""
+              }. Gate One is not confirmed. ${esc(c.fidelity?.reasoning ?? "")}</p>`,
+          )
+          .join("")}<p>Approve the remaining ${chans.length - broken.length} expression${
+            chans.length - broken.length === 1 ? "" : "s"
+          } if satisfied. ${
+            broken.length === 1 ? "This expression" : "These expressions"
+          } must be revised against the locked idea and re-checked, or dropped from the campaign, by a human decision — nothing here has been auto-corrected.</p></div>`
+      : `<p>Approve this campaign for production as presented: one locked idea carried across ${chans.length} channel expression${chans.length === 1 ? "" : "s"}, verified for consistency against the campaign signature registry.</p>`
+  }
   <p>On approval, the channel expressions here become the production briefs. Any new channel added later must be generated against the same locked idea and re-run through the consistency trace before it is used.</p>
 </div>`;
 
