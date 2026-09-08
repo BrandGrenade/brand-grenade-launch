@@ -29,7 +29,7 @@ const docs: Record<string, string> = {
   "Agency_Strategy_Platform": buildPhase1Document(s as never, "agency"),
   "Consulting_Delivery": buildPhase1Document(s as never, "consulting"),
   "Workshop": buildPhase1Document(s as never, "workshop"),
-  "Strategy_and_Creative_Vision": buildStage16VisionDocument(s as never),
+  "Strategy_and_Creative_Vision": buildStage16VisionDocument((s as any).brand_name, (s as any).selected_smp, (s as any).stage_16_vision_output),
   "Brand_Strategy_and_Creative_Development_Summary": buildSummaryDocument(s as never, undefined as never),
   "Master_Detonation_Brief": buildPhase2Document(s as never, "master_brief"),
 };
