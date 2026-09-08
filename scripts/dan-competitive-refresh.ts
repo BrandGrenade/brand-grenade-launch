@@ -11,10 +11,12 @@
 // Deterministic, idempotent, and auditable: every edit is an explicit string
 // replacement that must match exactly once, or the script aborts.
 
-import { SQL } from "bun";
+import { createClient } from "@supabase/supabase-js";
 
 const SESSION = "c5142f1d-a381-44aa-9b88-c21875cc7996";
-const db = new SQL({ url: process.env["SUPABASE_DB_URL"] ?? process.env["DB_URL"]!, prepare: false });
+const sb = createClient(process.env["SUPABASE_URL"]!, process.env["SUPABASE_SERVICE_ROLE_KEY"]!, {
+  auth: { persistSession: false },
+});
 
 type Edit = { find: string; replace: string; optional?: boolean };
 
@@ -273,8 +275,8 @@ function applyEdits(field: string, text: string, edits: Edit[]): string {
   return out;
 }
 
-const row = (await db`select * from sessions where id = ${SESSION}`)[0];
-if (!row) throw new Error("session not found");
+const { data: row, error: loadErr } = await sb.from("sessions").select("*").eq("id", SESSION).maybeSingle();
+if (loadErr || !row) throw new Error(`session not found: ${loadErr?.message}`);
 
 const updates: Record<string, unknown> = {};
 for (const [field, edits] of Object.entries(EDITS)) {
@@ -286,20 +288,22 @@ for (const [field, edits] of Object.entries(EDITS)) {
   if (next !== text) updates[field] = isJson ? JSON.parse(next) : next;
 }
 
-for (const [field, value] of Object.entries(updates)) {
-  const v = typeof value === "string" ? value : JSON.stringify(value);
-  await db.unsafe(`update sessions set ${field} = $1 where id = $2`, [v, SESSION]);
-  console.log(`saved ${field}`);
+if (Object.keys(updates).length) {
+  const { error } = await sb.from("sessions").update(updates).eq("id", SESSION);
+  if (error) throw new Error(`session update failed: ${error.message}`);
+  console.log(`saved ${Object.keys(updates).join(", ")}`);
 }
 
 // saved brief carries the same stale input copy
 const briefEdits = EDITS["brief_text"]!;
-const brief = (await db`select brief_id, brief_text from saved_briefs where brief_text ~* '(vintage cellars|first choice)'`)[0];
-if (brief) {
+const { data: briefs } = await sb
+  .from("saved_briefs")
+  .select("brief_id, brief_text")
+  .ilike("brief_text", "%Vintage Cellars%");
+for (const brief of briefs ?? []) {
   const next = applyEdits("saved_briefs.brief_text", brief.brief_text as string, briefEdits);
-  await db`update saved_briefs set brief_text = ${next} where brief_id = ${brief.brief_id}`;
-  console.log("saved saved_briefs.brief_text");
+  const { error } = await sb.from("saved_briefs").update({ brief_text: next }).eq("brief_id", brief.brief_id);
+  if (error) throw new Error(`saved_briefs update failed: ${error.message}`);
+  console.log("saved saved_briefs.brief_text", brief.brief_id);
 }
-
-await db.end();
 console.log("done");
