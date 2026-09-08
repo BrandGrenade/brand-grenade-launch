@@ -129,6 +129,13 @@ pre{white-space:pre-wrap;background:var(--surface2);border:1px solid var(--rule)
 table.ratings{border-collapse:collapse;width:100%;font-size:13px;}
 table.ratings th{text-align:left;color:var(--smoke);font-weight:500;padding:5px 12px 5px 0;text-transform:capitalize;width:200px;vertical-align:top;}
 table.ratings td{padding:5px 12px 5px 0;vertical-align:top;}
+table.ratings thead th{color:var(--paper);text-transform:uppercase;font-size:10px;letter-spacing:.12em;}
+.rating-caption,.rating-sub{display:block;color:var(--smoke);font-size:12px;margin-top:4px;}
+.rating-list{margin:4px 0 0 18px;color:var(--smoke);font-size:12px;}
+.rating-ip{border:1px solid #7D2F2F;background:rgba(125,47,47,.12);border-radius:6px;padding:10px 12px;margin-top:10px;font-size:13px;}
+.rating-ip .k{color:#E5484D;font-weight:700;text-transform:uppercase;letter-spacing:.1em;font-size:10px;display:block;margin-bottom:4px;}
+.break-alert{border:1px solid #7D2F2F;background:rgba(125,47,47,.12);border-radius:6px;padding:12px 14px;margin:10px 0;font-size:13px;color:var(--paper);}
+.break-alert .k{color:#E5484D;font-weight:700;text-transform:uppercase;letter-spacing:.1em;font-size:10px;display:block;margin-bottom:4px;}
 details{border:1px solid var(--rule);border-radius:8px;padding:14px 18px;margin:12px 0;background:var(--surface);}
 summary{cursor:pointer;font-weight:600;}
 hr{border:none;border-top:1px solid var(--rule);margin:30px 0;}
