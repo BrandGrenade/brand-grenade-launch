@@ -1,21 +1,28 @@
-// CREATIVE STIMULUS ENGINE — server functions.
-// Trigger: manual, in-pipeline, one channel per run.
-// Generation is resumable: the client calls generateStimulusBatch until the
-// run reports complete, so no single request has to carry all 37 lenses.
+// CREATIVE STIMULUS ENGINE — shared run/direction server functions.
+//
+// ARCHITECTURE (current, single source of truth):
+//   The 37-Lens Sweep fires ONCE per session, BEFORE any channel brief exists,
+//   against the validated proposition / Detonation (see
+//   src/lib/stimulus-bigidea.functions.ts → startBigIdeaRun / driveBigIdeaSweep).
+//   Human gating then runs Tissue Check triage → Gate One approval
+//   (setGateOneApproval / confirmGateOne) → lockWinningIdea. Stage 21 channel
+//   briefs and every downstream channel / martech prompt are generated only
+//   from that locked idea and locked line.
+//
+//   RETIRED: the legacy per-channel sweep (one run per Stage 21 channel brief)
+//   was removed in Sep 2026 along with its only UI. Historical `stimulus_runs`
+//   rows from that era remain readable; nothing generates new ones.
+//
+// The functions below are the shared read/triage/revise layer used by the
+// pre-channel sweep and by channel-adaptation runs.
 
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertSessionAccess } from "@/lib/auth-helpers.server";
-import { callClaude } from "./claude.server";
-import { STIMULUS_LENSES, getLens } from "./stimulus/lenses";
 import { runStaleness } from "./stimulus/staleness";
-import {
-  STIMULUS_SYSTEM_PROMPT,
-  buildStimulusUserMessage,
-  parseStimulusResponse,
-} from "./stimulus/generate-prompt";
+
 
 
 const SessionOnly = z.object({ sessionId: z.string().uuid() });
@@ -55,21 +62,6 @@ async function loadRun(runId: string, userId: string): Promise<RunRow> {
 }
 
 
-/** Channels available for a stimulus run — the Stage 21 channel brief keys. */
-export const listStimulusChannels = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((i) => SessionOnly.parse(i))
-  .handler(async ({ data, context }) => {
-    await assertSessionAccess(data.sessionId, context.userId);
-    const { data: row, error } = await supabaseAdmin
-      .from("sessions")
-      .select("stage_21_outputs")
-      .eq("id", data.sessionId)
-      .single();
-    if (error) throw new Error(error.message);
-    const outputs = (row?.stage_21_outputs as Record<string, string> | null) ?? {};
-    return { channels: Object.keys(outputs) };
-  });
 
 export const listStimulusRuns = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -103,153 +95,6 @@ export const listStimulusRuns = createServerFn({ method: "POST" })
         ),
       })),
     };
-  });
-
-export const startStimulusRun = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((i) =>
-    z.object({ sessionId: z.string().uuid(), channelName: z.string().min(1) }).parse(i),
-  )
-  .handler(async ({ data, context }) => {
-    await assertSessionAccess(data.sessionId, context.userId);
-    const { data: session, error } = await supabaseAdmin
-      .from("sessions")
-      .select("selected_smp, stage_21_outputs, locked_big_idea, locked_campaign_line")
-      .eq("id", data.sessionId)
-      .single();
-    if (error || !session) throw new Error(`Session not found: ${error?.message ?? "no row"}`);
-    const outputs = (session.stage_21_outputs as Record<string, string> | null) ?? {};
-    const brief = outputs[data.channelName];
-    if (!brief?.trim())
-      throw new Error(`No Stage 21 Channel Detonation Brief found for "${data.channelName}"`);
-
-    const { data: run, error: runErr } = await supabaseAdmin
-      .from("stimulus_runs")
-      .insert({
-        session_id: data.sessionId,
-        created_by: context.userId,
-        channel_name: data.channelName,
-        channel_brief: brief,
-        smp: session.selected_smp ?? "",
-        locked_big_idea_at_generation: session.locked_big_idea ?? null,
-        locked_line_at_generation: session.locked_campaign_line ?? null,
-        status: "generating",
-      })
-      .select("id")
-      .single();
-    if (runErr || !run) throw new Error(`Failed to create stimulus run: ${runErr?.message}`);
-
-
-    const rows = STIMULUS_LENSES.map((l, i) => ({
-      run_id: run.id,
-      lens_id: l.id,
-      lens_name: l.name,
-      sort_order: i,
-      status: "pending",
-    }));
-    const { error: dErr } = await supabaseAdmin.from("stimulus_directions").insert(rows);
-    if (dErr) throw new Error(`Failed to seed stimulus directions: ${dErr.message}`);
-
-    return { runId: run.id, total: rows.length };
-  });
-
-/** Generates the next batch of pending lenses. Call repeatedly until done. */
-export const generateStimulusBatch = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((i) =>
-    z.object({ runId: z.string().uuid(), batchSize: z.number().int().min(1).max(6).default(4) }).parse(i),
-  )
-  .handler(async ({ data, context }) => {
-    const run = await loadRun(data.runId, context.userId);
-
-    const { data: pending, error } = await supabaseAdmin
-      .from("stimulus_directions")
-      .select("id, lens_id")
-      .eq("run_id", run.id)
-      .eq("status", "pending")
-      .order("sort_order", { ascending: true })
-      .limit(data.batchSize);
-    if (error) throw new Error(error.message);
-
-    if (!pending || pending.length === 0) {
-      await supabaseAdmin
-        .from("stimulus_runs")
-        .update({ status: "complete", error: null })
-        .eq("id", run.id);
-      return { done: true as const, generated: 0, remaining: 0 };
-    }
-
-    const { data: sessionRow } = await supabaseAdmin
-      .from("sessions")
-      .select("brand_name, category, stage_18_detonation_line")
-      .eq("id", run.session_id)
-      .single();
-
-    const lenses = pending
-      .map((p) => getLens(p.lens_id))
-      .filter((l): l is NonNullable<typeof l> => Boolean(l));
-
-    try {
-      const raw = await callClaude({
-        systemPrompt: STIMULUS_SYSTEM_PROMPT,
-        userMessage: buildStimulusUserMessage({
-          brandName: sessionRow?.brand_name ?? "—",
-          category: sessionRow?.category ?? "—",
-          channelName: run.channel_name,
-          channelBrief: run.channel_brief,
-          smp: run.smp,
-          detonationLine: sessionRow?.stage_18_detonation_line ?? "",
-          lenses,
-        }),
-        skipUniversalWrapper: true,
-        maxTokens: 8000,
-        temperature: 1,
-        sessionId: run.session_id,
-        stageLabel: `Creative Stimulus (${run.channel_name})`,
-      });
-
-      const parsed = parseStimulusResponse(raw);
-      for (const p of pending) {
-        const text = parsed[p.lens_id]?.trim();
-        await supabaseAdmin
-          .from("stimulus_directions")
-          .update(
-            text
-              ? { direction: text, status: "generated", error: null }
-              : { status: "failed", error: "Lens produced no parseable direction" },
-          )
-          .eq("id", p.id);
-      }
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : "Stimulus generation failed";
-      await supabaseAdmin.from("stimulus_runs").update({ error: msg }).eq("id", run.id);
-      // Without this the claimed rows stay 'pending' forever and the UI shows
-      // an eternal spinner instead of a failure.
-      await supabaseAdmin
-        .from("stimulus_directions")
-        .update({ status: "failed", error: msg })
-        .in(
-          "id",
-          pending.map((p) => p.id),
-        );
-      throw e instanceof Error ? e : new Error(msg);
-
-    }
-
-    const { count } = await supabaseAdmin
-      .from("stimulus_directions")
-      .select("id", { count: "exact", head: true })
-      .eq("run_id", run.id)
-      .eq("status", "pending");
-
-    const remaining = count ?? 0;
-    if (remaining === 0) {
-      await supabaseAdmin
-        .from("stimulus_runs")
-        .update({ status: "tissue_check", error: null })
-        .eq("id", run.id);
-    }
-    return { done: remaining === 0, generated: pending.length, remaining };
   });
 
 export const loadStimulusRun = createServerFn({ method: "POST" })
