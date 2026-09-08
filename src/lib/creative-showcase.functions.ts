@@ -163,12 +163,26 @@ export const getCreativeShowcase = createServerFn({ method: "POST" })
         }
       }
     }
+    // The stored snapshot scores each dimension under `rating` (a few legacy
+    // rows use `score`). Reading only `score` reported real snapshots as absent.
     let ratingTotal: number | null = null;
+    let ratingOutOf: number | null = null;
     if (ratings && typeof ratings === "object") {
       const scores = Object.values(ratings as AnyRow)
-        .filter((v) => v && typeof v === "object" && typeof (v as AnyRow).score === "number")
-        .map((v) => (v as AnyRow).score as number);
-      if (scores.length) ratingTotal = scores.reduce((a, b) => a + b, 0);
+        .filter((v) => v && typeof v === "object")
+        .map((v) => {
+          const r = v as AnyRow;
+          return typeof r.rating === "number"
+            ? r.rating
+            : typeof r.score === "number"
+              ? r.score
+              : null;
+        })
+        .filter((n): n is number => n !== null);
+      if (scores.length) {
+        ratingTotal = scores.reduce((a, b) => a + b, 0);
+        ratingOutOf = scores.length * 10;
+      }
     }
 
     // ------------------------------------------------------------ channels
