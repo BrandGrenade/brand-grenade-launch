@@ -26,6 +26,7 @@ import { CreativeEngineDeliverables } from "@/components/CreativeEngineDeliverab
 import { Spinner } from "@/components/ui/busy";
 import { resolveLiveDocumentSession } from "@/lib/document-live-source";
 import { DocumentCertificationError } from "@/lib/content-integrity";
+import { deriveRunFacts } from "@/lib/run-facts";
 import { NUMBERED_STAGE_COUNT } from "@/lib/stage-manifest";
 
 
@@ -233,10 +234,14 @@ function CompletePage() {
     document.title = `${brand} Deliverables — Brand Grenade`;
   }, [brand]);
 
-  // Real numbers for this run — never boilerplate.
-  const stagesCompleted = session
-    ? resolveFullRunStages(session as unknown as Parameters<typeof resolveFullRunStages>[0]).length
-    : 0;
+  // Real numbers for this run — never boilerplate. Counted the same way the
+  // pipeline header and every deliverable count it: numbered pipeline stages
+  // completed out of the 22 numbered stages. Executable sub-steps (1b, 4b,
+  // 13b, …) are variants of their parent stage, not extra stages, and counting
+  // them here is what produced the impossible "29 stages completed".
+  const runFacts = deriveRunFacts((session ?? {}) as Record<string, unknown>);
+  const stagesCompleted = session ? runFacts.stagesCompleted : 0;
+  const stagesTotal = runFacts.stagesTotal;
 
   const [creativeGates, setCreativeGates] = useState({ gateOne: 0, gateTwo: 0 });
   useEffect(() => {
@@ -377,7 +382,7 @@ function CompletePage() {
             className="text-body-lg"
             style={{ color: "var(--color-text-secondary)" }}
           >
-            {stagesCompleted} stage{stagesCompleted === 1 ? "" : "s"}. {humanReviews} human review
+            {stagesCompleted} of {stagesTotal} pipeline stages. {humanReviews} human review
             {humanReviews === 1 ? "" : "s"}. One complete brand strategy.
           </p>
 
@@ -404,7 +409,7 @@ function CompletePage() {
             gap: 24,
           }}
         >
-          <Stat value={String(stagesCompleted)} label="STAGES COMPLETED" tone="success" />
+          <Stat value={`${stagesCompleted}/${stagesTotal}`} label="PIPELINE STAGES COMPLETED" tone="success" />
           <Stat value={String(humanReviews)} label="HUMAN CHECKPOINTS CONFIRMED" tone="success" />
           <Stat value={smpPreview} label="STRATEGIC PROPOSITION" tone="primary" />
         </div>
