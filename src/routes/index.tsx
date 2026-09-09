@@ -106,6 +106,30 @@ const CSS = `
 .bg-home .qcard .q-arrow{color:var(--ash2);font-size:14px}
 .bg-home .qcard .q-desc{font-size:13px;color:var(--smoke);line-height:1.55}
 
+/* Five Rooms — a deliberate, high-contrast connected sequence */
+.bg-home .rooms-quicknav{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;background:transparent;border:0}
+.bg-home .rooms-quicknav .qcard{position:relative;min-width:0;min-height:188px;padding:22px 20px;background:var(--ash);border:1px solid #403b37;border-radius:6px;transition:border-color .2s,background .2s,transform .2s}
+.bg-home .rooms-quicknav .qcard:hover{background:var(--ash2);border-color:#E5484D;transform:translateY(-2px)}
+.bg-home .rooms-quicknav .q-top{align-items:flex-start;gap:10px;margin-bottom:14px}
+.bg-home .rooms-quicknav .q-num{color:#FF555A;font-size:15px;line-height:1.25;letter-spacing:.08em}
+.bg-home .rooms-quicknav .q-arrow{position:absolute;z-index:2;top:50%;right:-21px;display:grid;width:29px;height:29px;place-items:center;transform:translateY(-50%);border:1px solid #5A514B;border-radius:50%;background:var(--void);color:#FF555A;font-size:19px;font-weight:700;line-height:1}
+.bg-home .rooms-quicknav .qcard:last-child .q-arrow{display:none}
+.bg-home .rooms-quicknav .q-desc{color:#C5BEB7;font-size:13px;font-weight:500;line-height:1.65}
+.bg-home .rooms-quicknav .qcard.optional{border-style:dashed;border-color:#625850;background:#171513}
+.bg-home .rooms-quicknav .optional-tag{display:inline-flex;margin-bottom:12px;border:1px solid #625850;border-radius:3px;padding:3px 7px;color:#B9B1AA;font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
+@media (max-width:960px){
+  .bg-home .rooms-quicknav{grid-template-columns:repeat(6,minmax(0,1fr))}
+  .bg-home .rooms-quicknav .qcard{grid-column:span 2}
+  .bg-home .rooms-quicknav .qcard:nth-child(4),.bg-home .rooms-quicknav .qcard:nth-child(5){grid-column:span 3}
+  .bg-home .rooms-quicknav .qcard:nth-child(3) .q-arrow{display:none}
+}
+@media (max-width:620px){
+  .bg-home .rooms-quicknav{grid-template-columns:1fr;gap:14px}
+  .bg-home .rooms-quicknav .qcard,.bg-home .rooms-quicknav .qcard:nth-child(4),.bg-home .rooms-quicknav .qcard:nth-child(5){grid-column:auto;min-height:0}
+  .bg-home .rooms-quicknav .qcard .q-arrow,.bg-home .rooms-quicknav .qcard:nth-child(3) .q-arrow{display:grid;top:auto;right:22px;bottom:-22px;transform:rotate(90deg)}
+  .bg-home .rooms-quicknav .qcard:last-child .q-arrow{display:none}
+}
+
 /* Output ecosystem card grid */
 .bg-home .out-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--ash);border:1px solid var(--ash);margin-bottom:32px}
 @media (max-width:900px){.bg-home .out-grid{grid-template-columns:1fr 1fr}}
@@ -218,28 +242,33 @@ const CSS = `
 const QUICK = [
   {
     id: "room-00",
-    num: "ROOM 00 · RESEARCH SYNTHESISER — OPTIONAL",
+    num: "ROOM 00 · RESEARCH SYNTHESISER",
     desc: "Turn disparate research — scan data, sales data, qualitative, quantitative, desktop, industry reports — into one structured, attributed evidence base.",
+    optional: true,
   },
   {
     id: "room-01",
     num: "ROOM 01 · INTELLIGENCE LAB",
     desc: "Turn research, culture, category and competitive signals into ranked strategic territory — before a brief is even written.",
+    optional: false,
   },
   {
     id: "room-02",
     num: "ROOM 02 · BRIEFING ROOM",
     desc: "Interrogate the brief until it names the real tension, and answers it rather than avoiding it.",
+    optional: false,
   },
   {
     id: "room-03",
     num: "ROOM 03 · STRATEGY PIPELINE",
     desc: "Explore every serious strategic route in parallel, then validate the one that survives against real precedent.",
+    optional: false,
   },
   {
     id: "room-04",
     num: "ROOM 04 · CREATIVE ENGINE",
     desc: "Generate 37 divergent creative territories, score them, and orchestrate the strongest approved ideas into one campaign.",
+    optional: false,
   },
 ];
 
@@ -576,7 +605,7 @@ function Index() {
           </div>
         </section>
 
-        {/* FOUR ROOMS QUICK NAV */}
+        {/* FIVE ROOMS QUICK NAV */}
         <section
           id="rooms-nav"
           style={{ padding: "64px 0", borderTop: "1px solid var(--ash)" }}
@@ -584,9 +613,14 @@ function Index() {
           <div className="section-eyebrow">
             The Five Rooms — One Connected System
           </div>
-          <div className="quicknav">
+          <div className="quicknav rooms-quicknav">
             {QUICK.map((q) => (
-              <a key={q.id} href={`#${q.id}`} className="qcard">
+              <a
+                key={q.id}
+                href={`#${q.id}`}
+                className={`qcard${q.optional ? " optional" : ""}`}
+              >
+                {q.optional ? <span className="optional-tag">Optional pre-step</span> : null}
                 <div className="q-top">
                   <span className="q-num">{q.num}</span>
                   <span className="q-arrow">→</span>
