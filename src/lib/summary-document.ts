@@ -1137,22 +1137,28 @@ export function buildSummaryDocument(
     if (note && weakness.test(note)) {
       return `Set aside at proposition lock: ${note}`;
     }
-    // A comparative score is only printed when it supports the decision. Where
-    // the alternative scored higher, the decision was taken on strategic fit at
-    // proposition lock, and printing the score alone would misread as a
-    // contradiction.
+    // The comparison line is the evidence behind the decision, so it is always
+    // printed when both figures exist ON THE SAME SCALE — including when the
+    // alternative scored higher, which is stated plainly rather than hidden.
+    // Two scales are never mixed: a run scored under a superseded rubric is
+    // compared only against its own run's winner, and labelled as such.
     const num = (v: string | null | undefined) => Number((v ?? "").split("/")[0]) || 0;
-    // Only scores on the current canonical ceiling are quoted. A run that was
-    // scored under a superseded rubric carries a different ceiling, and
-    // printing those figures beside today's would invite a false comparison.
-    const onCanonicalScale = (v: string | null | undefined) =>
-      new RegExp(`/\\s*${SCORE_CEILING}\\b`).test(v ?? "");
-    const scores =
-      f.composite && winnerComposite &&
-      onCanonicalScale(f.composite) && onCanonicalScale(winnerComposite) &&
-      num(f.composite) <= num(winnerComposite)
-        ? ` It scored ${f.composite} at Stage 12 against the selected proposition's ${winnerComposite}.`
+    const ceilingOf = (v: string | null | undefined) => {
+      const c = Number((v ?? "").split("/")[1]);
+      return Number.isFinite(c) && c > 0 ? c : null;
+    };
+    const fCeil = ceilingOf(f.composite);
+    const wCeil = ceilingOf(winnerComposite);
+    const sameScale = Boolean(f.composite && winnerComposite && fCeil && fCeil === wCeil);
+    const scaleNote =
+      sameScale && fCeil !== SCORE_CEILING
+        ? ` (both figures on the ${fCeil}-point rubric in force when this run was scored, not today's ${SCORE_CEILING}-point scale)`
         : "";
+    const scores = !sameScale
+      ? ""
+      : num(f.composite) <= num(winnerComposite)
+        ? ` It scored ${f.composite} at Stage 12 against the selected proposition's ${winnerComposite}${scaleNote}.`
+        : ` It scored ${f.composite} at Stage 12, above the selected proposition's ${winnerComposite}${scaleNote}; the selection was taken on strategic fit at proposition lock, not on the composite alone.`;
     const winner = lockedSmp ? lockedSmp.replace(/^["“]|["”]$/g, "") : "";
     return (
       `Cleared pressure testing, but only one proposition is carried forward` +

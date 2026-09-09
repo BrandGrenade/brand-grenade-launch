@@ -9,6 +9,8 @@ import { cleanProposition } from "@/lib/clean-proposition";
 
 import { STAGE_MANIFEST } from "./pipeline-integrity";
 import { TOTAL_PIPELINE_STEPS } from "./stage-manifest";
+import { deriveRunFacts } from "./run-facts";
+import { REGISTER_METHODOLOGY_COUNT } from "./methodology-register";
 
 export type ExecSessionRow = Record<string, unknown>;
 
@@ -863,19 +865,29 @@ export interface ProcessResult {
   stats: Array<{ value: string; label: string }>;
 }
 
-/** Derived from STAGE_MANIFEST; never a count of columns. */
-export const PIPELINE_STAGE_COUNT = TOTAL_PIPELINE_STEPS;
+/**
+ * The manifest's executable-step ceiling (every step including sub-stages).
+ * This is a CAPACITY figure, not a count of what a given run completed, and it
+ * must never be labelled "stages completed" — that conflated 29 executable
+ * steps with the 22 numbered stages the app counts against.
+ */
+export const PIPELINE_STEP_CEILING = TOTAL_PIPELINE_STEPS;
 
 export function extractProcess(
-  _session: ExecSessionRow,
+  session: ExecSessionRow,
   counts: { propositions: number; dimensions: number; frameworks: FrameworksResult },
   _intelPresent: boolean,
 ): ProcessResult {
-  const methodologies = PIPELINE_STAGE_COUNT + counts.frameworks.engines.length;
+  // Same derivation the rest of the deliverables use, so a document can never
+  // disagree with the live app about how much of the pipeline actually ran.
+  const facts = deriveRunFacts(session as Record<string, unknown>);
   return {
     stats: [
-      { value: String(PIPELINE_STAGE_COUNT), label: "stages completed" },
-      { value: String(methodologies), label: "methodologies applied" },
+      {
+        value: `${facts.stagesCompleted}/${facts.stagesTotal}`,
+        label: "pipeline stages completed",
+      },
+      { value: String(REGISTER_METHODOLOGY_COUNT), label: "methodologies applied" },
       { value: String(counts.propositions), label: "propositions considered" },
       { value: String(counts.dimensions), label: "dimensions validated" },
     ],

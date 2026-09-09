@@ -269,6 +269,26 @@ export function parseStage11Verdicts(text: string): Stage11Verdict[] {
     const rewriteLine = verdict === "REWRITTEN" ? extractRewriteLine(block) : null;
     const smpLine = rewriteLine ?? head.smpLine;
     const fieldName = head.fieldName;
+    // A pressure-test rewrite is a governance correction: the flagged wording
+    // must not survive anywhere downstream as if it were still the line. The
+    // original block still opens with its own `SMP: "<flagged line>"` heading,
+    // and Stage 12 was reading that heading back out and carrying the flagged
+    // wording into selection. Rewrite every occurrence of the superseded line
+    // inside the block, and mark the one remaining reference as superseded.
+    const supersede = (raw: string, from: string, to: string): string =>
+      from && from !== to
+        ? raw.split(from).join(to)
+        : raw;
+    const rewrittenBlock = rewriteLine
+      ? [
+          `SMP: "${rewriteLine}" — FIELD: ${fieldName}`,
+          `SMP VERDICT: REWRITTEN`,
+          `AUTHORITATIVE LINE — the pressure test rewrote this proposition to close a flagged exposure. Use the wording above verbatim in every Stage 12 card, quote and heading. The pre-rewrite wording is superseded and must never be presented, quoted or reinstated.`,
+          `SUPERSEDED ORIGINAL (do not use): "${head.smpLine}"`,
+          ``,
+          supersede(block, head.smpLine, rewriteLine),
+        ].join("\n")
+      : block;
     out.push({
       smpLine,
       fieldName,
@@ -278,9 +298,7 @@ export function parseStage11Verdicts(text: string): Stage11Verdict[] {
       flags,
       exposed: verdict === "VALIDATED — EXPOSED",
       exposureNote,
-      block: rewriteLine
-        ? `SMP: "${rewriteLine}" — FIELD: ${fieldName}\nSMP VERDICT: REWRITTEN\nREWRITE SOURCE: original line "${head.smpLine}"\n\n${block}`
-        : block,
+      block: rewrittenBlock,
     });
   }
   return out;
