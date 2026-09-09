@@ -119,9 +119,26 @@ function parseSmpHeading(block: string): { smpLine: string; fieldName: string } 
   };
 }
 
+/**
+ * The rewritten line a pressure test produced. Models emit this line with any
+ * mix of italic markers and smart quotes — `REWRITE: *"…"*`, `REWRITE: “…”`,
+ * `REWRITE (v2): _"…"_`. A quote-only regex missed every emphasised form,
+ * which silently dropped the rewrite and carried the flagged original into
+ * selection. Matching is therefore emphasis- and quote-agnostic.
+ */
 function extractRewriteLine(block: string): string | null {
-  const rewrite = block.match(/REWRITE\s*(?:\([^)]*\))?\s*:\s*"([^"]+)"/i);
-  return rewrite ? rewrite[1].trim() : null;
+  const m = block.match(
+    /REWRITE\s*(?:\([^)]*\))?\s*:\s*[*_~`]*\s*["“”'‘’]([^"“”\n]+)["“”'‘’]/i,
+  );
+  if (m) return m[1].trim().replace(/[*_~`]+$/g, "").trim();
+  // Unquoted form: `REWRITE: The machine can fly it. A named human clears it. — Reason: …`
+  const bare = block.match(/REWRITE\s*(?:\([^)]*\))?\s*:\s*[*_~`]*\s*([^\n]+)/i);
+  if (!bare) return null;
+  const line = bare[1]
+    .split(/\s+[—–-]\s+(?:Reason|Re-test|Rationale|Why)\b/i)[0]
+    .replace(/[*_~`]+/g, "")
+    .trim();
+  return line.length >= 5 ? line : null;
 }
 
 function pickNumber(block: string, label: string): number {
