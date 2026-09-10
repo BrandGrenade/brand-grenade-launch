@@ -1463,7 +1463,7 @@ function openHtmlInNewTab(html: string) {
 function Phase2Deliverables({ session }: { session: SessionRow }) {
   const [busy, setBusy] = useState<string | null>(null);
   const [bundleProgress, setBundleProgress] = useState<string | null>(null);
-  const [bundleResult, setBundleResult] = useState<{ filename: string; included: string[]; skipped: string[] } | null>(null);
+  const [bundleResult, setBundleResult] = useState<{ filename: string; included: string[]; skipped: string[]; failed: string[] } | null>(null);
   const channels = session.stage_21_outputs ?? {};
   const channelKeys = Object.keys(channels);
   const amber = PHASE_2_AMBER_DELIV;
