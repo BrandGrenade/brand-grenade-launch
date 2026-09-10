@@ -1646,6 +1646,14 @@ function Phase2Deliverables({ session }: { session: SessionRow }) {
             <div>Included {bundleResult.included.length} file{bundleResult.included.length === 1 ? "" : "s"}.
               {bundleResult.skipped.length > 0 && ` Skipped ${bundleResult.skipped.length} (missing source): ${bundleResult.skipped.join(", ")}.`}
             </div>
+            {bundleResult.failed.length > 0 && (
+              <div style={{ color: "#E5484D", marginTop: 6 }}>
+                {bundleResult.failed.length} file{bundleResult.failed.length === 1 ? "" : "s"} could not be built and {bundleResult.failed.length === 1 ? "is" : "are"} missing from the zip:
+                <ul style={{ margin: "4px 0 0 18px" }}>
+                  {bundleResult.failed.map((f) => <li key={f}>{f}</li>)}
+                </ul>
+              </div>
+            )}
           </div>
         )}
       </div>
