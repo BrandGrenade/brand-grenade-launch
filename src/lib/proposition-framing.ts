@@ -63,11 +63,28 @@ export function frameForPropositionCount(text: string, propositionCount: number)
         .filter((part) => findPropositionFramingViolations(part, propositionCount).length === 0)
         .join("")
         .trimEnd();
-      // Dropping every sentence of a list item would leave a naked bullet.
-      return kept.trim() ? kept : stripPrefixKeepingMarker(line);
+      // Dropping every sentence of a list item would leave a naked bullet, and
+      // a sentence split inside a quoted proposition can leave an orphan
+      // fragment ("” ranked strongest…"). Neither is publishable, so the whole
+      // line goes instead.
+      return isPublishableRemainder(line, kept) ? kept : stripPrefixKeepingMarker(line);
     })
     .filter((line, index, all) => line.trim() || index === 0 || (all[index - 1] ?? "").trim())
     .join("\n");
+}
+
+/**
+ * A repaired line only ships when what survives still reads as prose: it has
+ * to start with a list marker or a capital letter, carry some length, and not
+ * open on stray closing punctuation left behind by a split mid-quotation.
+ */
+function isPublishableRemainder(original: string, kept: string): boolean {
+  const body = kept.replace(/^\s*(?:[-*•]|\d+[.)])\s*/, "").trim();
+  if (!body) return false;
+  if (body === original.replace(/^\s*(?:[-*•]|\d+[.)])\s*/, "").trim()) return true;
+  if (/^["'”’)\]:;,.–—-]/.test(body)) return false;
+  if (!/^[A-Z“"(]/.test(body)) return false;
+  return body.length >= 25;
 }
 
 /** Removes an offending list item entirely, marker included. */
