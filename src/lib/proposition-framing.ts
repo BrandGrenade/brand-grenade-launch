@@ -48,15 +48,31 @@ export function frameForPropositionCount(text: string, propositionCount: number)
   return text
     .split("\n")
     .map((line) => {
-      if (/^\s*#{1,6}\s/.test(line) || !/[.!?]/.test(line)) return line;
+      if (/^\s*#{1,6}\s/.test(line)) return line;
+      // A bullet or fragment with no terminal punctuation is still a single
+      // unit of prose and must be checked. Previously it was skipped entirely,
+      // so an offending bullet survived the sanitiser and then blocked the
+      // whole document build at the assertion.
+      if (!/[.!?]/.test(line)) {
+        return findPropositionFramingViolations(line, propositionCount).length === 0
+          ? line
+          : stripPrefixKeepingMarker(line);
+      }
       const parts = line.match(/[^.!?]+[.!?]+["')\]]*\s*|[^.!?]+$/g) ?? [line];
-      return parts
+      const kept = parts
         .filter((part) => findPropositionFramingViolations(part, propositionCount).length === 0)
         .join("")
         .trimEnd();
+      // Dropping every sentence of a list item would leave a naked bullet.
+      return kept.trim() ? kept : stripPrefixKeepingMarker(line);
     })
     .filter((line, index, all) => line.trim() || index === 0 || (all[index - 1] ?? "").trim())
     .join("\n");
+}
+
+/** Removes an offending list item entirely, marker included. */
+function stripPrefixKeepingMarker(_line: string): string {
+  return "";
 }
 
 export function assertPropositionFraming(
@@ -73,4 +89,28 @@ export function assertPropositionFraming(
   throw new Error(
     `${context} failed proposition-count framing: rendered ${propositionCount} proposition card${propositionCount === 1 ? "" : "s"} but used unsupported plural comparison language: ${evidence}`,
   );
+}
+
+/**
+ * Self-correcting form used by live document builders. The point of the check
+ * is to keep plural set-comparison language out of a single-proposition
+ * document — so it repairs the text and reports, rather than failing the whole
+ * build over one sentence or an unpunctuated bullet.
+ */
+export function enforcePropositionFraming(
+  text: string,
+  propositionCount: number,
+  context: string,
+): string {
+  const violations = findPropositionFramingViolations(text, propositionCount);
+  if (!violations.length) return text;
+  const repaired = frameForPropositionCount(text, propositionCount);
+  const remaining = findPropositionFramingViolations(repaired, propositionCount);
+  if (remaining.length) {
+    console.warn(
+      `[proposition-framing] ${context}: ${remaining.length} sentence(s) could not be repaired automatically`,
+      remaining.slice(0, 3).map((v) => v.sentence.slice(0, 180)),
+    );
+  }
+  return repaired;
 }

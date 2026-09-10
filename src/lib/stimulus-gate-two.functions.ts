@@ -302,7 +302,10 @@ export const getRawIdeaExport = createServerFn({ method: "POST" })
 export const getRawIdeaExportBatch = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i) =>
-    z.object({ directionIds: z.array(z.string().uuid()).min(1).max(40) }).parse(i),
+    // A full sweep is 37 lenses and can carry far more directions once
+    // regenerations and multi-run sessions are included. The old cap of 40 made
+    // the normal case fail, so the limit is now a sanity bound, not a filter.
+    z.object({ directionIds: z.array(z.string().uuid()).min(1).max(1000) }).parse(i),
   )
   .handler(async ({ data, context }) => {
     const { data: dirs } = await db
