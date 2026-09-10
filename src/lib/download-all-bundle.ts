@@ -278,53 +278,74 @@ export async function buildAndDownloadBundle(
   // Creative Stimulus Engine (Room 04) — the orchestrated, tool-specific prompt set and
   // the lens sweep behind it. Resolved live from their own records.
   onProgress?.("Building Creative Stimulus Engine exports…");
-  try {
-    const [{ getFullFinishedExport, getRawIdeaExportBatch }, { buildFullFinishedExport, buildRawIdeaBatchExport }] =
-      await Promise.all([
+  {
+    // Each export stands alone. Previously one failure was caught for all
+    // three, so a failed sweep export silently removed the Lens Sweep and
+    // Gate One shortlist files with no indication in the result.
+    const stim = "Creative Stimulus Engine";
+    try {
+      const [
+        { getFullFinishedExport, getRawIdeaExportBatch },
+        { buildFullFinishedExport, buildRawIdeaBatchExport },
+        { selectOperativeOrchestration, selectOperativeSweep },
+      ] = await Promise.all([
         import("./stimulus-gate-two.functions"),
         import("./stimulus-export"),
+        import("./stimulus-sweep"),
       ]);
 
-    const { selectOperativeOrchestration, selectOperativeSweep } = await import(
-      "./stimulus-sweep"
-    );
-    const orch = await selectOperativeOrchestration(supabase, session.id);
-    if (orch) {
-      const data = await getFullFinishedExport({ data: { orchestrationId: orch.id } });
-      const { html } = buildFullFinishedExport(data);
-      zip.file("Creative Stimulus Engine/Orchestration_Prompt_Set.html", html);
-      included.push("Creative Stimulus Engine/Orchestration_Prompt_Set.html");
-    } else {
-      skipped.push("Creative Stimulus Engine/Orchestration_Prompt_Set.html");
-    }
+      const orchPath = `${stim}/Orchestration_Prompt_Set.html`;
+      try {
+        const orch = await selectOperativeOrchestration(supabase, session.id);
+        if (orch) {
+          const data = await getFullFinishedExport({ data: { orchestrationId: orch.id } });
+          zip.file(orchPath, buildFullFinishedExport(data).html);
+          included.push(orchPath);
+        } else {
+          skipped.push(orchPath);
+        }
+      } catch (e) {
+        console.error(`[bundle] ${orchPath} failed`, e);
+        failed.push(`${orchPath} — ${e instanceof Error ? e.message : "export failed"}`);
+      }
 
-    const { directionIds: sweep, shortlistIds: shortlist } = await selectOperativeSweep(
-      supabase,
-      session.id,
-    );
-    {
-      if (sweep.length) {
-        const data = await getRawIdeaExportBatch({ data: { directionIds: sweep } });
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { html } = buildRawIdeaBatchExport(data as any);
-        zip.file("Creative Stimulus Engine/Lens_Sweep_Raw_Ideas.html", html);
-        included.push("Creative Stimulus Engine/Lens_Sweep_Raw_Ideas.html");
-      } else {
-        skipped.push("Creative Stimulus Engine/Lens_Sweep_Raw_Ideas.html");
+      let sweep: string[] = [];
+      let shortlist: string[] = [];
+      try {
+        const sel = await selectOperativeSweep(supabase, session.id);
+        sweep = sel.directionIds;
+        shortlist = sel.shortlistIds;
+      } catch (e) {
+        console.error("[bundle] sweep lookup failed", e);
+        failed.push(
+          `${stim}/Lens_Sweep_Raw_Ideas.html — ${e instanceof Error ? e.message : "sweep lookup failed"}`,
+        );
       }
-      if (shortlist.length) {
-        const data = await getRawIdeaExportBatch({ data: { directionIds: shortlist } });
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { html } = buildRawIdeaBatchExport(data as any);
-        zip.file("Creative Stimulus Engine/Shortlist_Gate_One.html", html);
-        included.push("Creative Stimulus Engine/Shortlist_Gate_One.html");
-      } else {
-        skipped.push("Creative Stimulus Engine/Shortlist_Gate_One.html");
+
+      for (const [ids, path] of [
+        [sweep, `${stim}/Lens_Sweep_Raw_Ideas.html`],
+        [shortlist, `${stim}/Shortlist_Gate_One.html`],
+      ] as Array<[string[], string]>) {
+        if (!ids.length) {
+          skipped.push(path);
+          continue;
+        }
+        try {
+          const data = await getRawIdeaExportBatch({ data: { directionIds: ids } });
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          zip.file(path, buildRawIdeaBatchExport(data as any).html);
+          included.push(path);
+        } catch (e) {
+          console.error(`[bundle] ${path} failed`, e);
+          failed.push(`${path} — ${e instanceof Error ? e.message : "export failed"}`);
+        }
       }
+    } catch (e) {
+      console.error("[bundle] Creative Stimulus Engine exports failed", e);
+      failed.push(
+        `${stim} exports — ${e instanceof Error ? e.message : "could not be built"}`,
+      );
     }
-  } catch (e) {
-    console.error("[bundle] Creative Stimulus Engine exports failed", e);
-    skipped.push("Creative Stimulus Engine/Orchestration_Prompt_Set.html");
   }
 
   // Creative Showcase — the locked idea presented whole (foundation, channel
