@@ -363,8 +363,11 @@ export async function buildAndDownloadBundle(
     const { html } = buildCreativeShowcase(data);
     zip.file("Creative Stimulus Engine/Full_Creative_Showcase.html", html);
     included.push("Creative Stimulus Engine/Full_Creative_Showcase.html");
-  } catch {
-    skipped.push("Creative Stimulus Engine/Full_Creative_Showcase.html");
+  } catch (e) {
+    console.error("[bundle] Full Creative Showcase failed", e);
+    failed.push(
+      `Creative Stimulus Engine/Full_Creative_Showcase.html — ${e instanceof Error ? e.message : "export failed"}`,
+    );
   }
 
   onProgress?.("Compressing…");
@@ -380,5 +383,5 @@ export async function buildAndDownloadBundle(
   document.body.removeChild(a);
   setTimeout(() => URL.revokeObjectURL(url), 5_000);
 
-  return { filename, included, skipped };
+  return { filename, included, skipped, failed };
 }
