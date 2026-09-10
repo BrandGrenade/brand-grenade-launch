@@ -317,6 +317,18 @@ export async function runBigIdeaBatch(
         .eq("id", p.id);
 
       if (hit?.idea?.trim()) {
+        // The original take is banked as Attempt 1 the moment it exists, so a
+        // later Revise / Try Again can never be the thing that loses it.
+        const { recordInitialAttempt } = await import("@/lib/stimulus/regenerate.server");
+        await recordInitialAttempt({
+          directionId: p.id,
+          runId: run.id,
+          direction: hit.idea.trim(),
+          campaignLine: hit.line || null,
+          expressionUnderMaster: g.detonationLine ? hit.expressionUnderMaster || null : null,
+          masterLineAtGeneration: g.detonationLine || null,
+          rationale: hit.rationale || null,
+        });
         generatedRunning += 1;
         if (hit.guidanceAlignment === "aligned") alignedRunning += 1;
       }
