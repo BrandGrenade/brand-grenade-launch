@@ -128,6 +128,8 @@ export interface BundleResult {
   filename: string;
   included: string[];
   skipped: string[];
+  /** Files that should have been produced but errored — never silently dropped. */
+  failed: string[];
 }
 
 export async function buildAndDownloadBundle(
@@ -138,6 +140,7 @@ export async function buildAndDownloadBundle(
   const zip = new JSZip();
   const included: string[] = [];
   const skipped: string[] = [];
+  const failed: string[] = [];
 
   const brand = session.brand_name ?? "Untitled Brand";
   const clientSlug = sanitizeSegment(brand);
