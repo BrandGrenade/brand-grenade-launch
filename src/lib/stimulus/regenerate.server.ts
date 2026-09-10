@@ -51,6 +51,64 @@ async function priorAttemptTexts(directionId: string): Promise<string[]> {
     .filter((t) => t.length > 0);
 }
 
+/**
+ * Records the FIRST generation of a lens as Attempt 1, at generation time, and
+ * makes it the active attempt. Idempotent: if any attempt row already exists
+ * for this lens the call is a no-op. This is what guarantees the original take
+ * survives the first Revise / Try Again — it no longer depends on the
+ * regeneration path seeding it after the fact.
+ */
+export async function recordInitialAttempt(input: {
+  directionId: string;
+  runId: string;
+  direction: string;
+  campaignLine?: string | null;
+  expressionUnderMaster?: string | null;
+  masterLineAtGeneration?: string | null;
+  rationale?: string | null;
+}): Promise<string | null> {
+  const text = (input.direction ?? "").trim();
+  if (!text) return null;
+
+  const { data: existing } = await supabaseAdmin
+    .from("stimulus_direction_attempts")
+    .select("id")
+    .eq("direction_id", input.directionId)
+    .limit(1)
+    .maybeSingle();
+  if (existing) return existing.id;
+
+  const { data: attempt, error } = await supabaseAdmin
+    .from("stimulus_direction_attempts")
+    .insert({
+      direction_id: input.directionId,
+      run_id: input.runId,
+      attempt_no: 1,
+      origin: "initial",
+      direction: text,
+      campaign_line: input.campaignLine ?? null,
+      expression_under_master: input.expressionUnderMaster ?? null,
+      master_line_at_generation: input.masterLineAtGeneration ?? null,
+      rationale: input.rationale ?? null,
+      line_check: null,
+      revise_notes: null,
+      ratings: null,
+      rating_status: "unrated",
+    })
+    .select("id")
+    .single();
+  if (error || !attempt) {
+    console.error("[stimulus] failed to record initial attempt", error);
+    return null;
+  }
+
+  await supabaseAdmin
+    .from("stimulus_directions")
+    .update({ active_attempt_id: attempt.id })
+    .eq("id", input.directionId);
+  return attempt.id;
+}
+
 function buildInstruction(mode: RegenMode, notes: string | undefined, priors: string[]): string {
   const priorBlock =
     priors.length > 0
