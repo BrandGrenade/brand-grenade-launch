@@ -3,6 +3,7 @@ import {
   assertPropositionFraming,
   findPropositionFramingViolations,
   frameForPropositionCount,
+  enforcePropositionFraming,
 } from "./proposition-framing";
 
 const ROUND_FOUR = `The propositions differ not just in their creative expression but in their fundamental assumptions about what customers want. This proposition makes Friday permission the organising thought.`;
@@ -27,5 +28,21 @@ describe("proposition-count framing contract", () => {
     );
     expect(() => assertPropositionFraming(ROUND_FOUR_DISTINCTIVENESS, 1, "Agency Part 04"))
       .toThrow(/failed proposition-count framing/);
+  });
+});
+describe("self-correcting enforcement", () => {
+  it("removes an offending bullet with no full stop instead of throwing", () => {
+    const bad = "- Of the propositions considered, “Friday starts in aisle six.” ranked strongest\n- Kept line about the idea itself.";
+    expect(() => assertPropositionFraming(bad, 1, "ctx")).toThrow();
+    const out = enforcePropositionFraming(bad, 1, "ctx");
+    expect(findPropositionFramingViolations(out, 1)).toHaveLength(0);
+    expect(out).not.toMatch(/ranked strongest/);
+    expect(out).toContain("Kept line about the idea itself.");
+  });
+
+  it("never emits an orphan fragment left by a split inside a quotation", () => {
+    const bad = '- These propositions differ: "Friday starts in aisle six." leads the set';
+    const out = enforcePropositionFraming(bad, 1, "ctx");
+    expect(out.trim()).toBe("");
   });
 });

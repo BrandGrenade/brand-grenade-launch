@@ -157,8 +157,10 @@ export async function buildAndDownloadBundle(
         skipped.push(path);
       }
     } catch (e) {
+      // An error is not a missing source. It is reported as a failure so the
+      // bundle can never quietly ship without a document the run produced.
       console.error(`[bundle] ${path} failed`, e);
-      skipped.push(path);
+      failed.push(`${path} — ${e instanceof Error ? e.message : "build failed"}`);
     }
   };
 
