@@ -400,9 +400,10 @@ export function buildPhase1Document(session: Phase1Session, format: Phase1Format
         let raw = sectionOutput(session, s.key, s, format);
         if (s.key === "stage_1_output") raw = stripStage1Internals(raw);
         if (!raw.trim()) return "";
-        const cleaned = sanitise(raw);
+        let cleaned = sanitise(raw);
         if (format === "agency" && (s.key === "stage_12_output" || s.key === "stage_9_output")) {
-          assertPropositionFraming(cleaned, 1, `Agency ${s.label} “${s.title}”`);
+          // Self-correcting: repair plural framing rather than block the build.
+          cleaned = enforcePropositionFraming(cleaned, 1, `Agency ${s.label} “${s.title}”`);
         }
         let inner = md(cleaned);
         // The stage output often opens with its own title heading, which would
