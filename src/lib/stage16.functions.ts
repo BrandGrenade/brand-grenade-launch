@@ -12,7 +12,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertSessionAccess } from "@/lib/auth-helpers.server";
 import { assertUpstreamStageOutput } from "./pipeline-integrity";
 import { deriveRunFacts, runFactsBlock } from "./run-facts";
-import { assertPropositionFraming } from "./proposition-framing";
+import { enforcePropositionFraming } from "./proposition-framing";
 
 const FormatSchema = z.enum(["agency", "consulting", "workshop", "vision"]);
 const Input = z.object({
@@ -350,7 +350,7 @@ Write the complete STRATEGY AND CREATIVE VISION document now. Begin immediately.
           }
 
           if (data.format === "agency" && section.propositionCount != null) {
-            assertPropositionFraming(
+            body = enforcePropositionFraming(
               body,
               section.propositionCount,
               `Stage 16 Agency section “${section.title}”`,

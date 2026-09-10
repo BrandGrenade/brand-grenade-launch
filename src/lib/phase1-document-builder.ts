@@ -98,7 +98,7 @@ import { certifyDocument } from "./content-integrity";
 import { BOOKKEEPING_LINE, CANDIDATE_STAGE_KEYS, scopeToSelected, selectedAliases } from "./minto-content";
 import { buildBoardStrategyDocument } from "./board-strategy-document";
 import {
-  assertPropositionFraming,
+  enforcePropositionFraming,
   frameForPropositionCount,
 } from "./proposition-framing";
 
