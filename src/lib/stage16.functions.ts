@@ -14,7 +14,7 @@ import { assertUpstreamStageOutput } from "./pipeline-integrity";
 import { deriveRunFacts, runFactsBlock } from "./run-facts";
 import { enforcePropositionFraming } from "./proposition-framing";
 
-const FormatSchema = z.enum(["agency", "consulting", "workshop", "vision"]);
+const FormatSchema = z.enum(["agency", "consulting", "workshop", "vision", "valuation"]);
 const Input = z.object({
   sessionId: z.string().uuid(),
   format: FormatSchema,
@@ -27,11 +27,13 @@ const COLUMN_BY_FORMAT: Record<
   | "stage_16_consulting_output"
   | "stage_16_workshop_output"
   | "stage_16_vision_output"
+  | "stage_16_valuation_output"
 > = {
   agency: "stage_16_agency_output",
   consulting: "stage_16_consulting_output",
   workshop: "stage_16_workshop_output",
   vision: "stage_16_vision_output",
+  valuation: "stage_16_valuation_output",
 };
 
 function documentHeader(brand: string, category: string, format: Stage16Format): string {
@@ -42,9 +44,27 @@ function documentHeader(brand: string, category: string, format: Stage16Format):
         ? "STRATEGIC PLATFORM"
         : format === "vision"
           ? "STRATEGY AND CREATIVE VISION"
-          : "BRAND STRATEGY WORKSHOP";
+          : format === "valuation"
+            ? "VALUATION INPUT BRIEF"
+            : "BRAND STRATEGY WORKSHOP";
   return `# ${title}\n## ${brand} — ${category}\n\n*Brand Grenade Strategy Intelligence System*\n\n---\n`;
 }
+
+// Fixed boundary disclaimer for the Valuation Input Brief. Inserted verbatim
+// by this assembler and NEVER passed through callClaude, so it cannot be
+// paraphrased, softened or dropped by the model.
+export const VALUATION_DISCLAIMER = `## IMPORTANT — SCOPE AND BOUNDARY OF THIS DOCUMENT
+
+This document is a qualitative strategic input, not a valuation. It contains no monetary value, royalty rate, discount rate or other financial estimate, and none should be inferred from it.
+
+No ISO 10668, USPAP or other certified valuation methodology has been applied in producing this document. Brand Grenade is not a valuation firm and does not provide valuation, audit, accounting, tax or legal advice.
+
+The certified figure, the choice and application of valuation method, the modelling, and the professional sign-off remain entirely the responsibility of the receiving valuation firm.
+
+Every finding below is a restatement of analysis already generated and human-checkpointed within the Brand Grenade strategy pipeline, with its source stage cited.
+
+---
+`;
 
 const DOCUMENT_FOOTER = `\n---\n\n*Brand Grenade Strategy Intelligence System*\n*Confidential*\n`;
 
@@ -118,7 +138,9 @@ export const runStage16 = createServerFn({ method: "POST" })
             ? { stage_16_consulting_output: null, stage_16_error: null }
             : column === "stage_16_vision_output"
               ? { stage_16_vision_output: null, stage_16_error: null }
-              : { stage_16_workshop_output: null, stage_16_error: null };
+              : column === "stage_16_valuation_output"
+                ? { stage_16_valuation_output: null, stage_16_error: null }
+                : { stage_16_workshop_output: null, stage_16_error: null };
       await supabaseAdmin
         .from("sessions")
         .update(clearUpdate as never)
@@ -153,6 +175,9 @@ export const runStage16 = createServerFn({ method: "POST" })
       stage_5_output: session.stage_5_output ?? null,
       stage_7_output: session.stage_7_output ?? null,
       stage_8_output: session.stage_8_output ?? null,
+      // Stage 9 (Distinctiveness Check) is the sole permitted source for the
+      // Valuation Input Brief's defensibility narrative.
+      stage_9_output: session.stage_9_output ?? null,
       stage_10_output: session.stage_10_output ?? null,
       stage_11_output: session.stage_11_output ?? null,
       stage_12_output: session.stage_12_output ?? null,
@@ -176,6 +201,13 @@ export const runStage16 = createServerFn({ method: "POST" })
     const header = documentHeader(brand, category, data.format);
     parts.push(header);
     yield { delta: header };
+
+    // Hard-coded, code-inserted boundary disclaimer — never model-generated.
+    if (data.format === "valuation") {
+      const disclaimer = `\n${VALUATION_DISCLAIMER}\n`;
+      parts.push(disclaimer);
+      yield { delta: disclaimer };
+    }
 
     try {
       if (data.format === "vision") {
@@ -297,12 +329,18 @@ Write the complete STRATEGY AND CREATIVE VISION document now. Begin immediately.
         yield { delta: DOCUMENT_FOOTER };
       } else {
         // Compute the target output column once so we can persist per-section.
-        const outputColumnName: "stage_16_agency_output" | "stage_16_consulting_output" | "stage_16_workshop_output" =
+        const outputColumnName:
+          | "stage_16_agency_output"
+          | "stage_16_consulting_output"
+          | "stage_16_workshop_output"
+          | "stage_16_valuation_output" =
           data.format === "agency"
             ? "stage_16_agency_output"
             : data.format === "consulting"
               ? "stage_16_consulting_output"
-              : "stage_16_workshop_output";
+              : data.format === "valuation"
+                ? "stage_16_valuation_output"
+                : "stage_16_workshop_output";
 
         const persistPartial16 = async (errorMsg: string | null) => {
           try {
@@ -394,7 +432,9 @@ Write the complete STRATEGY AND CREATIVE VISION document now. Begin immediately.
               ? "stage_16_consulting_output"
               : data.format === "vision"
                 ? "stage_16_vision_output"
-                : "stage_16_workshop_output";
+                : data.format === "valuation"
+                  ? "stage_16_valuation_output"
+                  : "stage_16_workshop_output";
         await supabaseAdmin
           .from("sessions")
           .update({
@@ -418,7 +458,9 @@ Write the complete STRATEGY AND CREATIVE VISION document now. Begin immediately.
           ? { stage_16_consulting_output: output }
           : data.format === "vision"
             ? { stage_16_vision_output: output }
-            : { stage_16_workshop_output: output };
+            : data.format === "valuation"
+              ? { stage_16_valuation_output: output }
+              : { stage_16_workshop_output: output };
 
     const { error: ue } = await supabaseAdmin
       .from("sessions")

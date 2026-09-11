@@ -13,7 +13,7 @@ import {
   buildAllPhase2,
   type Phase2DocType,
 } from "@/lib/phase2-document-generator";
-import { buildPhase1Document, openPhase1Document, openStage16VisionDocument, PHASE_1_SESSION_COLUMNS, type Phase1Format } from "@/lib/phase1-document-builder";
+import { buildPhase1Document, openPhase1Document, openStage16ValuationDocument, openStage16VisionDocument, PHASE_1_SESSION_COLUMNS, type Phase1Format } from "@/lib/phase1-document-builder";
 import { openFullRunDocument, FULL_RUN_SESSION_COLUMNS, resolveFullRunStages } from "@/lib/full-run-document";
 import { cleanProposition } from "@/lib/clean-proposition";
 import { Document00ACard } from "@/components/Document00ACard";
@@ -78,7 +78,7 @@ const STAGES = [
   "Document Assembly",
 ];
 
-type Format = "vision" | "agency" | "consulting" | "workshop";
+type Format = "vision" | "agency" | "consulting" | "workshop" | "valuation";
 
 type SessionRow = {
   id: string;
@@ -94,6 +94,7 @@ type SessionRow = {
   updated_at: string | null;
   created_at: string | null;
   stage_16_vision_output: string | null;
+  stage_16_valuation_output: string | null;
   stage_1_output: string | null;
   stage_2_output: string | null;
   stage_3_output: string | null;
@@ -573,6 +574,17 @@ function CompletePage() {
                 tag="~20 pages + session guide"
                 disabled={lockDownload}
               />
+              <FormatCard
+                id="valuation"
+                selected={format === "valuation"}
+                onSelect={setFormat}
+                onRegenerate={(id) => regenerateRef.current?.(id)}
+                icon={<DocsIcon />}
+                title="Valuation Input Brief"
+                description="Qualitative inputs for a brand valuer — strength index, defensibility, durability and risk. Not a valuation."
+                tag="~10 pages"
+                disabled={lockDownload}
+              />
             </div>
           );
         })()}
@@ -597,6 +609,54 @@ function CompletePage() {
                 docWin.document.open("text/html");
                 docWin.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Preparing ${brand.replace(/[<>&"']/g, "")}</title><style>html,body{height:100%;margin:0}body{display:grid;place-items:center;background:#0A0908;color:#EDE8E0;font:500 16px system-ui,sans-serif}.status{padding:24px;text-align:center}.mark{color:#C81E1E;font-size:28px;margin-bottom:12px}</style></head><body><div class="status"><div class="mark">●</div>Preparing ${brand.replace(/[<>&"']/g, "")} document…</div></body></html>`);
                 docWin.document.close();
+              }
+              if (format === "valuation") {
+                const existingVal = session.stage_16_valuation_output;
+                if (!force && existingVal && existingVal.trim().length > 1000) {
+                  try {
+                    openStage16ValuationDocument(brand, existingVal, docWin);
+                  } catch (e) {
+                    console.error("Valuation doc open failed", e);
+                    setLastError(e instanceof Error ? e.message : "Document open failed");
+                  }
+                  return;
+                }
+                setGenerating(true);
+                setDone(false);
+                setProgress(10);
+                setProgressLabel(
+                  force ? "Regenerating Valuation Input Brief…" : "Generating Valuation Input Brief…",
+                );
+                try {
+                  const stream = await runStage16Fn({
+                    data: { sessionId: session.id, format: "valuation", force },
+                  });
+                  let finalOutput = "";
+                  for await (const chunk of stream as AsyncIterable<{
+                    delta?: string;
+                    done?: boolean;
+                    output?: string;
+                  }>) {
+                    if (chunk.delta) {
+                      finalOutput += chunk.delta;
+                      setProgress((p) => Math.min(90, p + 2));
+                    }
+                    if (chunk.done && chunk.output) finalOutput = chunk.output;
+                  }
+                  setProgress(100);
+                  setDone(true);
+                  setProgressLabel("Valuation Input Brief ready");
+                  setSession({ ...session, stage_16_valuation_output: finalOutput });
+                  setLastOutput(finalOutput);
+                  openStage16ValuationDocument(brand, finalOutput, docWin);
+                } catch (e) {
+                  try { docWin?.close(); } catch { /* ignore */ }
+                  console.error("Valuation generation failed", e);
+                  setLastError(e instanceof Error ? e.message : "Valuation generation failed");
+                } finally {
+                  setGenerating(false);
+                }
+                return;
               }
               if (format === "vision") {
                 // Stage 16 vision is generated on demand via the server fn.
@@ -693,7 +753,9 @@ function CompletePage() {
             // Expose handler to the cards rendered above via a ref.
             regenerateRef.current = handleRegenerate;
             const buttonLabel =
-              format === "vision"
+              format === "valuation"
+                ? `Download ${brand} Valuation Input Brief ↓`
+                : format === "vision"
                 ? `Download ${brand} Strategy and Creative Vision ↓`
                 : `Download ${brand} Strategic Platform ↓`;
             return (
@@ -828,6 +890,7 @@ function CompletePage() {
                     consulting: "BoardStrategyRecommendation",
                     agency: "AgencyStrategyPlatform",
                     workshop: "BrandStrategyWorkshopGuide",
+                    valuation: "ValuationInputBrief",
                   }[format];
                   const blob = new Blob([lastOutput || "(no content available)"], {
                     type: "text/plain;charset=utf-8",

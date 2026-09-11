@@ -2,7 +2,12 @@
 // Four format variants.
 // Partner-level writing standard.
 
-export type Stage16Format = "consulting" | "agency" | "workshop" | "vision";
+export type Stage16Format =
+  | "consulting"
+  | "agency"
+  | "workshop"
+  | "vision"
+  | "valuation";
 
 export const STAGE_16_CONSULTING_PROMPT = `
 ════════════════════════════════════════
@@ -1787,6 +1792,10 @@ export function getStage16SystemPrompt(format: Stage16Format): string {
       return COMPLETION_PRIORITY_PREAMBLE + STAGE_16_WORKSHOP_PROMPT;
     case "vision":
       return COMPLETION_PRIORITY_PREAMBLE + STAGE_16_VISION_PROMPT;
+    case "valuation":
+      // Valuation is rendered section by section (see stage16-sections.ts);
+      // there is no single whole-document system prompt for it.
+      return COMPLETION_PRIORITY_PREAMBLE;
   }
 }
 

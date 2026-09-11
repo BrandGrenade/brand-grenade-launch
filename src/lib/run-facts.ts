@@ -23,6 +23,7 @@ export const STAGE_16_FORMAT_COLUMNS = [
   "stage_16_consulting_output",
   "stage_16_workshop_output",
   "stage_16_vision_output",
+  "stage_16_valuation_output",
 ] as const;
 
 export interface GateFact {
@@ -71,7 +72,7 @@ const GATE_DEFS: Array<{ name: string; column: string }> = [
  */
 export function deriveRunFacts(
   session: Row,
-  includeFormat?: "agency" | "consulting" | "workshop" | "vision",
+  includeFormat?: "agency" | "consulting" | "workshop" | "vision" | "valuation",
 ): RunFacts {
   const stagesCompleted = NUMBERED_STAGE_COLUMNS.filter((c) => text(session, c)).length;
 

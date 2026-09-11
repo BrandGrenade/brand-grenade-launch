@@ -498,13 +498,14 @@ export function openPhase1Document(
 // standalone HTML doc using the same Phase 1 visual treatment. Used for
 // the "Strategy and Creative Vision" format card on the deliverables
 // page — distinct from the raw stage-1..15 stitched Phase 1 documents.
-export function buildStage16VisionDocument(
+export function buildStage16MarkdownDocument(
   brand: string,
   smp: string | null | undefined,
   visionOutput: string,
+  label = "STRATEGY AND CREATIVE VISION",
+  title = "Strategy and Creative Vision",
+  opts: { showProposition?: boolean } = {},
 ): string {
-  const label = "STRATEGY AND CREATIVE VISION";
-  const title = "Strategy and Creative Vision";
   // stage_16_vision_output already begins with its own `# ...` heading
   // (documentHeader in stage16.functions.ts). Strip that leading H1/H2 so we
   // don't double up the cover title.
@@ -514,7 +515,7 @@ export function buildStage16VisionDocument(
   );
   const body =
     cover(label, title, brand) +
-    proposition(smp) +
+    (opts.showProposition === false ? "" : proposition(smp)) +
     `<div class="section"><div class="part-label">${escapeHtml(label)}</div>${md(cleaned)}</div>` +
     footer();
   return `<!doctype html>
@@ -537,6 +538,32 @@ export function buildStage16VisionDocument(
 <script>setTimeout(function(){try{window.print();}catch(e){}}, 500);</script>
 </body>
 </html>`;
+}
+
+export function buildStage16VisionDocument(
+  brand: string,
+  smp: string | null | undefined,
+  visionOutput: string,
+): string {
+  return buildStage16MarkdownDocument(brand, smp, visionOutput);
+}
+
+/** Valuation Input Brief — same visual treatment, no proposition reveal page
+ *  (this document is an evidence pack, not a strategy recommendation). */
+export function openStage16ValuationDocument(
+  brand: string,
+  output: string,
+  win?: Window | null,
+): void {
+  const html = buildStage16MarkdownDocument(
+    brand,
+    null,
+    output,
+    "VALUATION INPUT BRIEF",
+    "Valuation Input Brief",
+    { showProposition: false },
+  );
+  presentDocument(html, `${safeFile(brand)}-valuation-input-brief`, win);
 }
 
 export function openStage16VisionDocument(

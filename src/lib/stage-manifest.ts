@@ -49,7 +49,7 @@ export const STAGE_MANIFEST: readonly StageManifestEntry[] = [
   { id: "14b", numericStage: 14, phase: 1, label: "Channel Expression",                      columns: ["stage_14b_output"] },
   { id: "14c", numericStage: 14, phase: 1, label: "Brand World Definition",                  columns: ["stage_14c_output"] },
   { id: "15",  numericStage: 15, phase: 1, label: "Coherence Audit",                         columns: ["stage_15_output"] },
-  { id: "16",  numericStage: 16, phase: 1, label: "Document Assembly",                       columns: ["stage_16_consulting_output", "stage_16_agency_output", "stage_16_workshop_output", "stage_16_vision_output"] },
+  { id: "16",  numericStage: 16, phase: 1, label: "Document Assembly",                       columns: ["stage_16_consulting_output", "stage_16_agency_output", "stage_16_workshop_output", "stage_16_vision_output", "stage_16_valuation_output"] },
   { id: "17",  numericStage: 17, phase: 2, label: "Detonation Territory",                    columns: ["stage_17_output"] },
   { id: "17b", numericStage: 17, phase: 2, label: "Detonation Intelligence",                 columns: ["stage_17b_output"] },
   { id: "18",  numericStage: 18, phase: 2, label: "The Detonation",                          columns: ["stage_18_output"] },
