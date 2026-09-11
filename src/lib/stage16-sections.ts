@@ -9,7 +9,12 @@
 import type { RunFacts } from "./run-facts";
 import { runFactsBlock } from "./run-facts";
 
-export type Stage16Format = "consulting" | "agency" | "workshop" | "vision";
+export type Stage16Format =
+  | "consulting"
+  | "agency"
+  | "workshop"
+  | "vision"
+  | "valuation";
 
 export interface SessionForStage16 {
   brand_name: string | null;
@@ -21,6 +26,7 @@ export interface SessionForStage16 {
   stage_5_output: string | null;
   stage_7_output: string | null;
   stage_8_output: string | null;
+  stage_9_output?: string | null;
   stage_10_output: string | null;
   stage_11_output: string | null;
   stage_12_output: string | null;
@@ -723,6 +729,132 @@ export function getWorkshopSections(s: SessionForStage16): SectionDef[] {
   ];
 }
 
+// ────────────────────────────────────────────────────────────────────────
+// VALUATION INPUT BRIEF
+// ────────────────────────────────────────────────────────────────────────
+// A reformatting of already-frozen Stage 9 / 10 / 11 / 13 output into the
+// qualitative inputs a professional brand valuer needs upstream of their own
+// certified model. Brand Grenade never produces a dollar figure, a royalty
+// rate or a discount rate; the boundary disclaimer is inserted in code by the
+// assembler and never passes through the model.
+
+export const VALUATION_RULES = `════════════════════════════════════════
+RULE 5 — VALUATION BOUNDARY (THIS DOCUMENT ONLY)
+════════════════════════════════════════
+
+This is a qualitative input pack for a professional valuer. It is NOT a valuation.
+
+Never produce, estimate, imply or "illustrate" any of the following: a monetary value or dollar figure, a royalty rate, a discount rate, a WACC, a brand contribution percentage, a multiple, a growth rate, or any percentage that is not already present verbatim in the supplied stage output.
+
+Never reference ISO 10668, USPAP, Royalty Relief, Earnings Attribution or Capital Premium as methods you are applying. You may note only that the findings below are the qualitative inputs a valuer may use; method selection, modelling and certification belong entirely to the receiving firm.
+
+If the underlying stage data contains no number for a finding, describe the finding qualitatively. Never estimate one.
+
+Score scales: individual dimensions are scored out of 10. Weighted composites use the six-dimension framework whose weights total 90, so every composite is printed as /90 — including any composite the source labels "/100", which is legacy labelling of the same 90-point figure. Carry the numeric value exactly as recorded and never rescale it. State once, in the strength-index section only, that dimensions are /10 and composites are /90; never repeat a scale explanation elsewhere.
+
+Do not draw on any material other than the four supplied stage inputs. Creative, campaign, activation and brand-architecture material is out of scope for this document even if you know it exists.
+
+Each section is supplied only with the stage output it needs. Never remark on, apologise for, or draw inferences from stages that are not supplied to the section you are writing — the other stages are carried in their own sections of this same brief. Write only from what is in front of you.
+
+Cite the source stage inline for every substantive claim, in the form (Stage 10 — Proposition Scoring), (Stage 9 — Distinctiveness Check), (Stage 11 — Integrity Testing) or (Stage 13 — Brand Fit Validation).
+
+`;
+
+export const VALUATION_INDEX_PROMPT = `You are a brand strategist preparing an input pack for a professional intangible-asset valuer.
+
+Write the Brand Strength Index Summary. Translate the composite proposition score and each of its six dimensions — Fame, Truth Strength, Competitive Impossibility, Brand Permission, Clean Air, Commercial Precedent — into a clearly labelled qualitative index. Report each dimension's score exactly as it appears in the supplied output, with the reasoning that produced it retained. Where the supplied output has no score for a dimension, say so plainly.
+
+Use a labelled paragraph or short table per dimension, then one closing paragraph on what the composite indicates about brand strength qualitatively.
+
+Write 600 words maximum. No heading. No preamble. Start immediately.`;
+
+export const VALUATION_DEFENSIBILITY_PROMPT = `You are a brand strategist preparing an input pack for a professional intangible-asset valuer.
+
+Write the Competitive Defensibility Narrative, drawn only from the supplied distinctiveness analysis. For each named competitor: what they currently own, and the precise structural reason they cannot occupy the same position. Name the competitors exactly as the source names them; do not add competitors the source does not name.
+
+Close with one paragraph on what this means for the durability of the brand's position — qualitatively, with no rate or figure of any kind.
+
+Write 600 words maximum. No heading. No preamble. Start immediately.`;
+
+export const VALUATION_DURABILITY_PROMPT = `You are a brand strategist preparing an input pack for a professional intangible-asset valuer.
+
+Write the Durability and Risk Read from the supplied pressure-test output. Take each of the five conditions in turn, state the verdict exactly as recorded (Holds / Wobbles / Cracks), summarise the reasoning, and describe the qualitative risk factor a valuer would want reflected when they select their own rates. Never suggest a rate, a direction of adjustment in numeric terms, or a magnitude.
+
+Close with one paragraph naming the strongest durability signal and the most material residual risk.
+
+Write 600 words maximum. No heading. No preamble. Start immediately.`;
+
+export const VALUATION_FIT_PROMPT = `You are a brand strategist preparing an input pack for a professional intangible-asset valuer.
+
+Write the Brand Fit Cross-Check from the supplied brand-fit validation. Summarise each of the six dimensions and its verdict, then state plainly whether the fit assessment supports, qualifies or contradicts the durability read. Where the fit assessment exposes a gap, name it.
+
+Write 450 words maximum. No heading. No preamble. Start immediately.`;
+
+export const VALUATION_APPENDIX_PROMPT = `You are a brand strategist preparing an input pack for a professional intangible-asset valuer.
+
+Write the Evidence Appendix. List every substantive claim carried in this brief as a bullet, each followed by its source stage in the form (Stage 9 — Distinctiveness Check), (Stage 10 — Proposition Scoring), (Stage 11 — Integrity Testing) or (Stage 13 — Brand Fit Validation). Quote scores and verdicts exactly as recorded in the source. Nothing may appear here that is not in the supplied source material, and nothing carried above may be omitted.
+
+Write 700 words maximum. Bullets only. No heading. No preamble. Start immediately.`;
+
+export function getValuationSections(s: SessionForStage16): SectionDef[] {
+  const rules = STAGE_16_UNIVERSAL_RULES + VALUATION_RULES;
+  return [
+    {
+      name: "strength_index",
+      title: "SECTION ONE — BRAND STRENGTH INDEX SUMMARY",
+      systemPrompt: rules + VALUATION_INDEX_PROMPT,
+      pipelineInputs: [
+        `SOURCE — STAGE 10, PROPOSITION SCORING:\n${cut(s.stage_10_output, 45000)}`,
+      ],
+      targetWords: 600,
+      maxTokens: 32000,
+    },
+    {
+      name: "defensibility",
+      title: "SECTION TWO — COMPETITIVE DEFENSIBILITY NARRATIVE",
+      systemPrompt: rules + VALUATION_DEFENSIBILITY_PROMPT,
+      pipelineInputs: [
+        `SOURCE — STAGE 9, DISTINCTIVENESS CHECK:\n${cut(s.stage_9_output, 45000)}`,
+      ],
+      targetWords: 600,
+      maxTokens: 32000,
+    },
+    {
+      name: "durability_risk",
+      title: "SECTION THREE — DURABILITY AND RISK READ",
+      systemPrompt: rules + VALUATION_DURABILITY_PROMPT,
+      pipelineInputs: [
+        `SOURCE — STAGE 11, INTEGRITY TESTING:\n${cut(s.stage_11_output, 45000)}`,
+      ],
+      targetWords: 600,
+      maxTokens: 32000,
+    },
+    {
+      name: "brand_fit_cross_check",
+      title: "SECTION FOUR — BRAND FIT CROSS-CHECK",
+      systemPrompt: rules + VALUATION_FIT_PROMPT,
+      pipelineInputs: [
+        `SOURCE — STAGE 13, BRAND FIT VALIDATION:\n${cut(s.stage_13_output, 45000)}`,
+      ],
+      targetWords: 450,
+      maxTokens: 32000,
+    },
+    {
+      name: "evidence_appendix",
+      title: "SECTION FIVE — EVIDENCE APPENDIX",
+      systemPrompt: rules + VALUATION_APPENDIX_PROMPT,
+      pipelineInputs: [
+        `SOURCE — STAGE 9, DISTINCTIVENESS CHECK:\n${cut(s.stage_9_output, 22000)}`,
+        `SOURCE — STAGE 10, PROPOSITION SCORING:\n${cut(s.stage_10_output, 22000)}`,
+        `SOURCE — STAGE 11, INTEGRITY TESTING:\n${cut(s.stage_11_output, 22000)}`,
+        `SOURCE — STAGE 13, BRAND FIT VALIDATION:\n${cut(s.stage_13_output, 22000)}`,
+      ],
+      targetWords: 700,
+      maxTokens: 32000,
+    },
+  ];
+}
+
 /** Prepend the authoritative run-facts block (and, post-selection, the
  *  single-proposition rule) to every section prompt in a format. No section
  *  may state a run count that is not interpolated here. */
@@ -752,6 +884,10 @@ export function getSectionsForFormat(
       return withSharedRules(getAgencySections(session), session);
     case "workshop":
       return withSharedRules(getWorkshopSections(session), session);
+    case "valuation":
+      // Valuation carries no proposition-set framing and no run-facts counts —
+      // it is a restatement of frozen evidence, not a narrative about the run.
+      return getValuationSections(session);
     case "vision":
       // Vision is generated as a single unified narrative — not sectioned.
       // The runStage16 handler special-cases this format.

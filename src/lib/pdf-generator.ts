@@ -87,6 +87,7 @@ const DOC_LABEL: Record<PdfFormat, string> = {
   consulting: "BOARD STRATEGY RECOMMENDATION",
   workshop: "BRAND STRATEGY WORKSHOP GUIDE",
   vision: "STRATEGY AND CREATIVE VISION",
+  valuation: "VALUATION INPUT BRIEF",
 };
 
 const FORMAT_FILE: Record<PdfFormat, string> = {
@@ -94,6 +95,7 @@ const FORMAT_FILE: Record<PdfFormat, string> = {
   consulting: "BoardStrategyRecommendation",
   workshop: "BrandStrategyWorkshopGuide",
   vision: "StrategyAndCreativeVision",
+  valuation: "ValuationInputBrief",
 };
 
 // ─── Helpers ────────────────────────────────────────────────────────────

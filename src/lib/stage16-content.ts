@@ -26,6 +26,8 @@ export const WORKSHOP_GUIDE_CONTENT = ``;
 
 export const VISION_CONTENT = ``;
 
+export const VALUATION_CONTENT = ``;
+
 // ─── Demo Mode pre-formatted documents ──────────────────────────────────
 // Used directly (no live Stage 16 call) for demo sessions.
 
@@ -36,6 +38,8 @@ export const DEMO_CONSULTING_PDF_CONTENT = ``;
 export const DEMO_WORKSHOP_PDF_CONTENT = ``;
 
 export const DEMO_VISION_PDF_CONTENT = ``;
+
+export const DEMO_VALUATION_PDF_CONTENT = ``;
 
 import type { Stage16Format } from "./stage16-prompt";
 
@@ -49,6 +53,8 @@ export function getTemplateContent(format: Stage16Format): string {
       return WORKSHOP_GUIDE_CONTENT;
     case "vision":
       return VISION_CONTENT;
+    case "valuation":
+      return VALUATION_CONTENT;
   }
 }
 
@@ -62,5 +68,7 @@ export function getDemoContent(format: Stage16Format): string {
       return DEMO_WORKSHOP_PDF_CONTENT;
     case "vision":
       return DEMO_VISION_PDF_CONTENT;
+    case "valuation":
+      return DEMO_VALUATION_PDF_CONTENT;
   }
 }

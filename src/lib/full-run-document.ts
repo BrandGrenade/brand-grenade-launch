@@ -24,6 +24,7 @@ const STAGE_16_FORMAT_LABELS: Record<string, string> = {
   stage_16_agency_output: "Agency Pitch",
   stage_16_workshop_output: "Brand Workshop Guide",
   stage_16_vision_output: "Strategy and Creative Vision",
+  stage_16_valuation_output: "Valuation Input Brief",
 };
 
 const MULTI_COLUMN_LABELS: Record<string, string> = {
