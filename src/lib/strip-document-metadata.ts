@@ -42,13 +42,28 @@ const LINE_STRIP: RegExp[] = [
   /^\s*\*{0,2}\s*(?:AUDIT\s?DATE|AUDIT\s?TRAIL|PIPELINE\s+DOCUMENTS?\s+REVIEWED|TOTAL\s+FLAGS?\s+RAISED|COURAGE\s+ASSESSMENT|DERIVATION\s+CHAIN\s+INTEGRITY|SELECTED\s+SMP|SELECTED\s+PROPOSITION|SOURCE|STATUS|SUBMITTED\s+BY|PREPARED\s+BY|RUN\s+ID|SESSION\s+ID|WORD\s+COUNT|DATE)\s*\*{0,2}\s*(?::|—|–|-)\s?.{0,180}$/i,
 ];
 
+/**
+ * Score-correction audit notes carry a prior score ("Re-run under corrected
+ * anchors from 6", "CORRECTED ON REVIEW (was 5/10)"). Deleting the marker on
+ * its own orphaned the remainder and produced broken sentences of the form
+ * "7/10.from 6." — so the marker plus its prior score is rewritten as a single
+ * readable parenthetical BEFORE the deletion pass runs.
+ */
+const AUDIT_MARKER_NORMALISE: Array<[RegExp, string]> = [
+  [
+    /\s*[—–,:-]?\s*(?:RE-?RUN\s+UNDER\s+CORRECTED\s+ANCHORS|CORRECTED\s+ON\s+REVIEW|RE-?SCORED\s+ON\s+REVIEW)\s*(?:\(\s*(?:was|from|up\s+from)\s*(\d{1,2}(?:\.\d)?)(?:\s*\/\s*10)?\s*\)|[,:—–-]?\s*(?:was|from|up\s+from)\s+(\d{1,2}(?:\.\d)?)(?:\s*\/\s*10)?)\s*\.?/gi,
+    " (revised from $1$2/10).",
+  ],
+];
+
 const INLINE_STRIP: RegExp[] = [
   /** Word-count annotations the chooser prints, e.g. "_(4w)_". */
   /\s*_\(\d+\s*w\)_/gi,
   // Generation telemetry the LOC engines prepend: "_Generated: <ISO> (retry 2) — …_"
   /_?\s*Generated\s*:\s*\d{4}-\d{2}-\d{2}T[^_\n]*_?/gi,
   /\s*\(retry\s+\d+\)/gi,
-  // Score-correction audit notes written inline into a rating line.
+  // Score-correction audit notes written inline into a rating line, with no
+  // prior score attached (the ones that carry a score are normalised above).
   /\s*[—–-]?\s*RE-?RUN\s+UNDER\s+CORRECTED\s+ANCHORS\s*(?:\(was[^)]*\))?/gi,
   // Any bare ISO timestamp that survives the line-level strips.
   /\b\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z?\b/g,
@@ -240,7 +255,14 @@ export function stripDocumentMetadata(input: string | null | undefined, telemetr
     })
     .join("\n");
 
+  for (const [re, rep] of AUDIT_MARKER_NORMALISE) t = t.replace(re, rep);
   for (const re of INLINE_STRIP) t = t.replace(re, "");
+  // Repair a score line the strips glued together ("7/10.from 6").
+  t = t
+    .replace(/(\d\s*\/\s*10\*{0,2}\.)(?=[A-Za-z])/g, "$1 ")
+    
+    .replace(/[ \t]{2,}/g, " ")
+    .replace(/[ \t]+([.,;:!?])/g, "$1");
 
   // A heading left standing with no body is a defect the strips above create.
   t = dropEmptyHeadings(t.replace(/\n{3,}/g, "\n\n").trim());

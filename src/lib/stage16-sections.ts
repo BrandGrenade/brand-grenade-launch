@@ -750,19 +750,29 @@ Never reference ISO 10668, USPAP, Royalty Relief, Earnings Attribution or Capita
 
 If the underlying stage data contains no number for a finding, describe the finding qualitatively. Never estimate one.
 
-Score scales: individual dimensions are scored out of 10. Weighted composites use the six-dimension framework whose weights total 90, so every composite is printed as /90 — including any composite the source labels "/100", which is legacy labelling of the same 90-point figure. Carry the numeric value exactly as recorded and never rescale it. State once, in the strength-index section only, that dimensions are /10 and composites are /90; never repeat a scale explanation elsewhere.
+Score scales: individual dimensions are scored out of 10. Weighted composites use the six-dimension framework whose weights total 90, so every composite is printed as /90 — including any composite the source labels "/100", which is legacy labelling of the same 90-point figure. Carry the numeric value exactly as recorded and never rescale it. The scale and the dimension weights are already printed in the front matter of this brief; never explain either again in a section.
 
 Do not draw on any material other than the four supplied stage inputs. Creative, campaign, activation and brand-architecture material is out of scope for this document even if you know it exists.
 
 Each section is supplied only with the stage output it needs. Never remark on, apologise for, or draw inferences from stages that are not supplied to the section you are writing — the other stages are carried in their own sections of this same brief. Write only from what is in front of you.
 
-Cite the source stage inline for every substantive claim, in the form (Stage 10 — Proposition Scoring), (Stage 9 — Distinctiveness Check), (Stage 11 — Integrity Testing) or (Stage 13 — Brand Fit Validation).
+READER: a valuation professional with no knowledge of this platform. Write in plain professional English.
+
+NO INTERNAL CITATIONS IN THE BODY. Body sections must never print a stage number or a stage name — no "(Stage 10 — Proposition Scoring)", no "Stage 9", no "Stage 11 — Integrity Testing", no pipeline or platform vocabulary of any kind. Where a source needs naming, use plain phrasing: "as assessed in the scoring framework", "as assessed in the distinctiveness analysis", "in the pressure testing", "in the brand fit assessment". Full stage citations belong in the Evidence Appendix ONLY, which is instructed separately.
+
+NO AUDIT MARKERS. Never carry internal review annotations such as "CORRECTED ON REVIEW", "re-run under corrected anchors" or "recency re-evaluation" into the text. Where a dimension score was revised, write it as a clean parenthetical: "7/10 (revised from 6/10)".
+
+NO RHETORICAL FLOURISH. This is a professional evidence pack, not a creative pitch. No literary imagery, no aphorisms, no epigram or paradox constructions, no dramatic sentence fragments. Keep every underlying insight; state it plainly and once.
 
 `;
 
 export const VALUATION_INDEX_PROMPT = `You are a brand strategist preparing an input pack for a professional intangible-asset valuer.
 
-Write the Brand Strength Index Summary. Translate the composite proposition score and each of its six dimensions — Fame, Truth Strength, Competitive Impossibility, Brand Permission, Clean Air, Commercial Precedent — into a clearly labelled qualitative index. Report each dimension's score exactly as it appears in the supplied output, with the reasoning that produced it retained. Where the supplied output has no score for a dimension, say so plainly.
+Write the Brand Strength Index Summary.
+
+OPEN WITH A ONE-SENTENCE SUMMARY, in bold, on its own line, before anything else. It must name in a single sentence where the position is strong and which dimensions are the principal exposures — drawn strictly from the supplied scores. Model of the form required (do not copy the wording, write it from the actual scores): "**In summary: the proposition occupies vacant strategic territory with credible heritage permission, but attachment, ownership demonstration and behavioural capacity remain the principal exposures.**"
+
+Then translate the composite proposition score and each of its six dimensions — Fame, Truth Strength, Competitive Impossibility, Brand Permission, Clean Air, Commercial Precedent — into a clearly labelled qualitative index. Report each dimension's score exactly as it appears in the supplied output, with the reasoning that produced it retained. Where the supplied output has no score for a dimension, say so plainly.
 
 Use a labelled paragraph or short table per dimension, then one closing paragraph on what the composite indicates about brand strength qualitatively.
 
@@ -790,9 +800,26 @@ Write the Brand Fit Cross-Check from the supplied brand-fit validation. Summaris
 
 Write 450 words maximum. No heading. No preamble. Start immediately.`;
 
+export const VALUATION_OPEN_CONDITIONS_PROMPT = `You are a brand strategist preparing an input pack for a professional intangible-asset valuer.
+
+Write "Open Conditions for Valuation Purposes" — a short, scannable list of the residual conditions and exposures a valuer must carry forward. This is a checklist, not an essay: bullets only, one line to two lines each, no linking prose, no closing paragraph.
+
+Group the bullets under exactly these four bold sub-headings, and include a group only where the supplied sources contain material for it:
+
+**Scored exposures** — every dimension scored 5/10 or below in the supplied scoring output, each with its score and the specific named constraint behind it.
+**Dependencies** — the external events the position depends on (product launches, reveals, independent reviews or third-party verdicts) exactly as the sources name and date them.
+**Concentrated credibility risk** — where several exposures trace back to one shared fact pattern, name the fact pattern once and list what depends on it.
+**Guard-rails that must hold** — the conditions the sources state must be observed for the assessment to remain valid, phrased as instructions ("no nostalgia-led framing", "no repositioning claims before independent review").
+
+Every bullet must come from the supplied material. Invent no condition, no date and no number. Where the sources give no material for a group, omit that group silently.
+
+Write 400 words maximum. Bullets only. No heading. No preamble. Start immediately.`;
+
 export const VALUATION_APPENDIX_PROMPT = `You are a brand strategist preparing an input pack for a professional intangible-asset valuer.
 
-Write the Evidence Appendix. List every substantive claim carried in this brief as a bullet, each followed by its source stage in the form (Stage 9 — Distinctiveness Check), (Stage 10 — Proposition Scoring), (Stage 11 — Integrity Testing) or (Stage 13 — Brand Fit Validation). Quote scores and verdicts exactly as recorded in the source. Nothing may appear here that is not in the supplied source material, and nothing carried above may be omitted.
+Write the Evidence Appendix. This is the ONLY section of the brief that carries internal stage citations, and the no-internal-citations rule stated above is lifted here and here only.
+
+List every substantive claim carried in this brief as a bullet, each followed by its source stage in the form (Stage 9 — Distinctiveness Check), (Stage 10 — Proposition Scoring), (Stage 11 — Integrity Testing) or (Stage 13 — Brand Fit Validation). Quote scores and verdicts exactly as recorded in the source. Nothing may appear here that is not in the supplied source material, and nothing carried above may be omitted.
 
 Write 700 words maximum. Bullets only. No heading. No preamble. Start immediately.`;
 
@@ -840,8 +867,20 @@ export function getValuationSections(s: SessionForStage16): SectionDef[] {
       maxTokens: 32000,
     },
     {
+      name: "open_conditions",
+      title: "SECTION FIVE — OPEN CONDITIONS FOR VALUATION PURPOSES",
+      systemPrompt: rules + VALUATION_OPEN_CONDITIONS_PROMPT,
+      pipelineInputs: [
+        `SOURCE — STAGE 10, PROPOSITION SCORING:\n${cut(s.stage_10_output, 20000)}`,
+        `SOURCE — STAGE 11, INTEGRITY TESTING:\n${cut(s.stage_11_output, 20000)}`,
+        `SOURCE — STAGE 13, BRAND FIT VALIDATION:\n${cut(s.stage_13_output, 20000)}`,
+      ],
+      targetWords: 400,
+      maxTokens: 32000,
+    },
+    {
       name: "evidence_appendix",
-      title: "SECTION FIVE — EVIDENCE APPENDIX",
+      title: "SECTION SIX — EVIDENCE APPENDIX",
       systemPrompt: rules + VALUATION_APPENDIX_PROMPT,
       pipelineInputs: [
         `SOURCE — STAGE 9, DISTINCTIVENESS CHECK:\n${cut(s.stage_9_output, 22000)}`,
