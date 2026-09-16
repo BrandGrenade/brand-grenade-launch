@@ -63,7 +63,7 @@ function buildDeterministicStage12Output(args: {
       /Test\s+2\s*[—\-–]\s*Time-Decay[^—\-–\n]*[—\-–]\s*([^\n]{40,320})/i,
     ]);
     const scoresBlock = score
-      ? `Fame: ${score.fame}/10 (30%) | Truth Strength: ${score.truthStrength}/10 (20%) | Competitive Impossibility: ${score.competitiveImpossibility}/10 (15%)\nBrand Permission: ${score.brandPermission}/10 (10%) | Clean Air: ${score.cleanAir}/10 (10%) | Commercial Precedent: ${score.commercialPrecedent}/10 (5%)\nWeighted Composite: ${score.weightedComposite}/100${score.flags.length ? "\n" + score.flags.join("\n") : ""}`
+      ? `Fame: ${score.fame}/10 (30%) | Truth Strength: ${score.truthStrength}/10 (20%) | Competitive Impossibility: ${score.competitiveImpossibility}/10 (15%)\nBrand Permission: ${score.brandPermission}/10 (10%) | Clean Air: ${score.cleanAir}/10 (10%) | Commercial Precedent: ${score.commercialPrecedent}/10 (5%)\nWeighted Composite: ${score.weightedComposite}/90${score.flags.length ? "\n" + score.flags.join("\n") : ""}`
       : `Scores: not available`;
     return `═══════════════════════════════════════════════════
 PROPOSITION ${index + 1}
@@ -95,7 +95,7 @@ It requires ${args.brandName} to commit to the truth behind this line consistent
 STRATEGIC QUALITY SCORES (from independent evaluation)
 ${scoresBlock}
 
-Note: These scores reflect independent strategic evaluation across six weighted dimensions, expressed as a composite out of 100 — not a preference ranking. A higher composite score does not mean this is the right proposition for this brand. That decision involves strategic considerations only the team can weigh.
+Note: These scores reflect independent strategic evaluation across six weighted dimensions whose weights total 90, so the composite is expressed out of 90 — not a preference ranking. A higher composite score does not mean this is the right proposition for this brand. That decision involves strategic considerations only the team can weigh.
 
 ═══════════════════════════════════════════════════
 

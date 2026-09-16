@@ -224,9 +224,12 @@ function parsePropositions(rawOutput: string): RawProp[] {
     ]);
     const exposureSection = grabSection("WHERE IT IS EXPOSED", ["\\[METADATA\\]"]);
 
-    // Accept markdown wrappers and legacy /70 composites (rescaled to /100).
+    // The six V6 weights total 90, so the authoritative scale is /90. Older
+    // transcripts label the same 90-point figure "/100" — carry those values
+    // through unchanged. Legacy /70 composites are a genuinely different
+    // scale and are rescaled onto /90.
     const compositeRe =
-      /(?:Weighted\s+)?Composite(?:\s+Score)?[\s*_:\-—–]+(\d+(?:\.\d+)?)\s*\/\s*(100|70)/i;
+      /(?:Weighted\s+)?Composite(?:\s+Score)?[\s*_:\-—–]+(\d+(?:\.\d+)?)\s*\/\s*(90|100|70)/i;
     const compMatch = block.match(compositeRe);
 
     const flagRe = /⚠\s+[A-Z][A-Z\s]+:[^\n]+/g;
@@ -240,7 +243,7 @@ function parsePropositions(rawOutput: string): RawProp[] {
       commercialPrecedent: extractScore(block, "Commercial Precedent"),
       weightedComposite: compMatch
         ? compMatch[2] === "70"
-          ? Math.round((parseFloat(compMatch[1]) / 70) * 1000) / 10
+          ? Math.round((parseFloat(compMatch[1]) / 70) * 900) / 10
           : parseFloat(compMatch[1])
         : undefined,
 
@@ -1158,7 +1161,7 @@ export function SMPSelection({
                   className="text-body-sm mt-3"
                   style={{ color: "var(--color-text-tertiary)" }}
                 >
-                  Weighted {card.scores.weightedComposite}/100
+                  Weighted {card.scores.weightedComposite}/90
                   {!isLoc && card.fieldName ? ` · ${card.fieldName}` : ""}
                 </p>
               )}

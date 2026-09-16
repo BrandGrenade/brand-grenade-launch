@@ -171,7 +171,7 @@ This override exists so the pipeline can validate end-to-end execution under mar
   return `BRAND: ${args.brandName}
 CATEGORY: ${args.category}
 
-==== STAGE 10 — SCORED PROPOSITION SET (seven-dimension v5.5 rubric; Stage 10 CODE VERDICT is authoritative) ====
+==== STAGE 10 — SCORED PROPOSITION SET (six-dimension V6 unified rubric; Stage 10 CODE VERDICT is authoritative) ====
 ${args.stage10Output}
 
 ==== STAGE 2 — CMM (Forbidden Zones, Dominant Logic, Competitor Proposition Patterns) ====

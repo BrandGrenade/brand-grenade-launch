@@ -1,7 +1,18 @@
 // Stage 21 — Channel Detonation Briefs
-// Generates one brief per active channel from Stage 19. Briefs are generated
-// in parallel with Promise.all and stored as a JSON object in
-// stage_21_outputs keyed by channel name.
+// Generates one brief per active channel from Stage 19, stored as a JSON
+// object in stage_21_outputs keyed by channel name.
+//
+// THROTTLING: briefs are generated STRICTLY ONE AT A TIME, never with
+// Promise.all. This is deliberate and must not be "optimised" back to
+// parallel. Each brief is a 64k-max-token Anthropic call (see generateOne),
+// and a session commonly carries 6-12 channels; firing those concurrently is
+// exactly the burst shape Anthropic's per-minute input/output token limits
+// (ITPM/OTPM) reject. callClaude retries only 502/503/504/524 — a 429 is NOT
+// retried, so a single rate-limit response aborts the whole stage and writes
+// stage_21_error. The loop was changed from Promise.all to sequential for
+// this reason (commit dcb1bfcf). The serialisation is the actual protection;
+// the extra STAGE21_CHANNEL_GAP_MS pause below is a small guard band between
+// calls, not a figure derived from a published limit.
 
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
@@ -20,6 +31,10 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertSessionAccess } from "@/lib/auth-helpers.server";
 import { assertUpstreamStageOutput } from "./pipeline-integrity";
 import { getObjectiveDirective } from "./strategic-objective.server";
+
+/** Guard-band pause between sequential channel-brief calls. See the
+ *  THROTTLING note at the top of this file before changing it. */
+const STAGE21_CHANNEL_GAP_MS = 2000;
 
 const STAGE21_SELECT = [
   "brand_name",
@@ -315,11 +330,13 @@ export const runStage21 = createServerFn({ method: "POST" })
 
     let outputs: Record<string, string>;
     try {
+      // Sequential by design — see the THROTTLING note at the top of the file.
       const results: string[] = [];
-      for (const e of entries) {
+      for (const [i, e] of entries.entries()) {
         const result = await generateOne(data.sessionId, e.name, e.role, e.content, s, redirectText);
         results.push(result);
-        await new Promise((resolve) => setTimeout(resolve, 2000));
+        if (i < entries.length - 1)
+          await new Promise((resolve) => setTimeout(resolve, STAGE21_CHANNEL_GAP_MS));
       }
       outputs = Object.fromEntries(entries.map((e, i) => [e.name, results[i]]));
     } catch (e) {
@@ -511,8 +528,9 @@ export const retryStage21 = createServerFn({ method: "POST" })
         ? allEntries
         : allEntries.filter((e) => data.cardIds.includes(e.name));
 
+    // Sequential by design — see the THROTTLING note at the top of the file.
     const results: string[] = [];
-    for (const e of regenerate) {
+    for (const [i, e] of regenerate.entries()) {
       const result = await generateOne(
         data.sessionId,
         e.name,
@@ -522,7 +540,8 @@ export const retryStage21 = createServerFn({ method: "POST" })
         data.redirectInstructions[e.name] ?? "",
       );
       results.push(result);
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      if (i < regenerate.length - 1)
+        await new Promise((resolve) => setTimeout(resolve, STAGE21_CHANNEL_GAP_MS));
     }
     const merged: Record<string, string> = { ...existing };
     regenerate.forEach((e, i) => {

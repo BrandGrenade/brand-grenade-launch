@@ -214,24 +214,48 @@ export const listBigIdeaRuns = createServerFn({ method: "POST" })
       .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
 
-    const out = [];
-    for (const r of runs ?? []) {
-      const { data: rows } = await supabaseAdmin
-        .from("stimulus_directions")
-        .select("status")
-        .eq("run_id", r.id);
-      const all = rows ?? [];
-      const pending = all.filter((d) => d.status === "pending").length;
-      out.push({
+    // One batched read for every run on the session, grouped in memory. The
+    // previous per-run query fired N round trips for a list that is rendered
+    // on every visit to the sweep screen.
+    const runList = runs ?? [];
+    const counts = new Map<string, { total: number; pending: number }>();
+    if (runList.length > 0) {
+      const ids = runList.map((r) => r.id);
+      // Paged: 37 directions per run means a session with 28+ sweeps would
+      // otherwise silently truncate at PostgREST's 1000-row ceiling and
+      // under-report counts.
+      const PAGE = 1000;
+      for (let from = 0; ; from += PAGE) {
+        const { data: rows, error: rowsErr } = await supabaseAdmin
+          .from("stimulus_directions")
+          .select("run_id, status")
+          .in("run_id", ids)
+          .range(from, from + PAGE - 1);
+        if (rowsErr) throw new Error(rowsErr.message);
+        const page = rows ?? [];
+        for (const d of page) {
+          const key = d.run_id as string;
+          const c = counts.get(key) ?? { total: 0, pending: 0 };
+          c.total += 1;
+          if (d.status === "pending") c.pending += 1;
+          counts.set(key, c);
+        }
+        if (page.length < PAGE) break;
+      }
+    }
+
+    const out = runList.map((r) => {
+      const c = counts.get(r.id) ?? { total: 0, pending: 0 };
+      return {
         id: r.id,
         status: r.status as string,
         createdAt: r.created_at as string,
         lockedAt: (r.locked_at as string | null) ?? null,
-        total: all.length,
-        generated: all.length - pending,
-        pending,
-      });
-    }
+        total: c.total,
+        generated: c.total - c.pending,
+        pending: c.pending,
+      };
+    });
     return { runs: out };
   });
 
