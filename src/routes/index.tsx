@@ -483,8 +483,8 @@ function Index() {
             <a href="#room-04">Creative Stimulus Engine</a>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
-            <Link to="/done-for-you" className="nav-signin">
-              Done-For-You
+            <Link to="/consulting" className="nav-signin">
+              Consulting
             </Link>
             <Link to="/login" className="nav-signin">
               Sign in
