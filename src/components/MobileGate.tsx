@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useRouterState } from "@tanstack/react-router";
 
 // Public marketing surfaces are fully responsive and must never be gated.
-const MOBILE_ALLOWED = ["/", "/login", "/unsubscribe"];
+const MOBILE_ALLOWED = ["/", "/consulting", "/login", "/unsubscribe"];
 
 export function MobileGate() {
   const [tooNarrow, setTooNarrow] = useState(false);
