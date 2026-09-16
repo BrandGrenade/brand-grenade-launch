@@ -31,7 +31,7 @@ export const Route = createFileRoute("/foundation-brands")({
   }),
 });
 
-/* -------------------- Design system (shared with Done-For-You page) -------------------- */
+/* -------------------- Design system (shared with Consulting page) -------------------- */
 
 const CSS = `
 .bg-fb{--void:#0A0908;--ash:#1C1A18;--ash2:#252220;--paper:#EDE8E0;--smoke:#8B8680;
