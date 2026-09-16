@@ -3,7 +3,7 @@ import { useEffect } from "react";
 import { openCalendlyBooking } from "@/lib/calendly";
 import { LENS_COUNT } from "@/lib/stimulus/lenses";
 
-export const Route = createFileRoute("/done-for-you")({
+export const Route = createFileRoute("/consulting")({
   component: DoneForYou,
   head: () => ({
     meta: [

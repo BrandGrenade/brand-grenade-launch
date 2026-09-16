@@ -23,11 +23,11 @@ import { Route as ForConsultanciesRouteImport } from './routes/for-consultancies
 import { Route as ForCmosRouteImport } from './routes/for-cmos'
 import { Route as ForAgenciesRouteImport } from './routes/for-agencies'
 import { Route as EnterpriseRouteImport } from './routes/enterprise'
-import { Route as DoneForYouRouteImport } from './routes/done-for-you'
 import { Route as DetonationRouteImport } from './routes/detonation'
 import { Route as DemoRouteImport } from './routes/demo'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as CreativeRouteImport } from './routes/creative'
+import { Route as ConsultingRouteImport } from './routes/consulting'
 import { Route as CompleteRouteImport } from './routes/complete'
 import { Route as BriefingRoomRouteImport } from './routes/briefing-room'
 import { Route as BriefRouteImport } from './routes/brief'
@@ -137,11 +137,6 @@ const EnterpriseRoute = EnterpriseRouteImport.update({
   path: '/enterprise',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DoneForYouRoute = DoneForYouRouteImport.update({
-  id: '/done-for-you',
-  path: '/done-for-you',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const DetonationRoute = DetonationRouteImport.update({
   id: '/detonation',
   path: '/detonation',
@@ -160,6 +155,11 @@ const DashboardRoute = DashboardRouteImport.update({
 const CreativeRoute = CreativeRouteImport.update({
   id: '/creative',
   path: '/creative',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ConsultingRoute = ConsultingRouteImport.update({
+  id: '/consulting',
+  path: '/consulting',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CompleteRoute = CompleteRouteImport.update({
@@ -369,11 +369,11 @@ export interface FileRoutesByFullPath {
   '/brief': typeof BriefRouteWithChildren
   '/briefing-room': typeof BriefingRoomRouteWithChildren
   '/complete': typeof CompleteRoute
+  '/consulting': typeof ConsultingRoute
   '/creative': typeof CreativeRouteWithChildren
   '/dashboard': typeof DashboardRoute
   '/demo': typeof DemoRoute
   '/detonation': typeof DetonationRoute
-  '/done-for-you': typeof DoneForYouRoute
   '/enterprise': typeof EnterpriseRoute
   '/for-agencies': typeof ForAgenciesRoute
   '/for-cmos': typeof ForCmosRoute
@@ -426,10 +426,10 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/$repoSlug': typeof RepoSlugRoute
   '/complete': typeof CompleteRoute
+  '/consulting': typeof ConsultingRoute
   '/dashboard': typeof DashboardRoute
   '/demo': typeof DemoRoute
   '/detonation': typeof DetonationRoute
-  '/done-for-you': typeof DoneForYouRoute
   '/enterprise': typeof EnterpriseRoute
   '/for-agencies': typeof ForAgenciesRoute
   '/for-cmos': typeof ForCmosRoute
@@ -481,11 +481,11 @@ export interface FileRoutesById {
   '/brief': typeof BriefRouteWithChildren
   '/briefing-room': typeof BriefingRoomRouteWithChildren
   '/complete': typeof CompleteRoute
+  '/consulting': typeof ConsultingRoute
   '/creative': typeof CreativeRouteWithChildren
   '/dashboard': typeof DashboardRoute
   '/demo': typeof DemoRoute
   '/detonation': typeof DetonationRoute
-  '/done-for-you': typeof DoneForYouRoute
   '/enterprise': typeof EnterpriseRoute
   '/for-agencies': typeof ForAgenciesRoute
   '/for-cmos': typeof ForCmosRoute
@@ -542,11 +542,11 @@ export interface FileRouteTypes {
     | '/brief'
     | '/briefing-room'
     | '/complete'
+    | '/consulting'
     | '/creative'
     | '/dashboard'
     | '/demo'
     | '/detonation'
-    | '/done-for-you'
     | '/enterprise'
     | '/for-agencies'
     | '/for-cmos'
@@ -599,10 +599,10 @@ export interface FileRouteTypes {
     | '/'
     | '/$repoSlug'
     | '/complete'
+    | '/consulting'
     | '/dashboard'
     | '/demo'
     | '/detonation'
-    | '/done-for-you'
     | '/enterprise'
     | '/for-agencies'
     | '/for-cmos'
@@ -653,11 +653,11 @@ export interface FileRouteTypes {
     | '/brief'
     | '/briefing-room'
     | '/complete'
+    | '/consulting'
     | '/creative'
     | '/dashboard'
     | '/demo'
     | '/detonation'
-    | '/done-for-you'
     | '/enterprise'
     | '/for-agencies'
     | '/for-cmos'
@@ -713,11 +713,11 @@ export interface RootRouteChildren {
   BriefRoute: typeof BriefRouteWithChildren
   BriefingRoomRoute: typeof BriefingRoomRouteWithChildren
   CompleteRoute: typeof CompleteRoute
+  ConsultingRoute: typeof ConsultingRoute
   CreativeRoute: typeof CreativeRouteWithChildren
   DashboardRoute: typeof DashboardRoute
   DemoRoute: typeof DemoRoute
   DetonationRoute: typeof DetonationRoute
-  DoneForYouRoute: typeof DoneForYouRoute
   EnterpriseRoute: typeof EnterpriseRoute
   ForAgenciesRoute: typeof ForAgenciesRoute
   ForCmosRoute: typeof ForCmosRoute
@@ -850,13 +850,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EnterpriseRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/done-for-you': {
-      id: '/done-for-you'
-      path: '/done-for-you'
-      fullPath: '/done-for-you'
-      preLoaderRoute: typeof DoneForYouRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/detonation': {
       id: '/detonation'
       path: '/detonation'
@@ -883,6 +876,13 @@ declare module '@tanstack/react-router' {
       path: '/creative'
       fullPath: '/creative'
       preLoaderRoute: typeof CreativeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/consulting': {
+      id: '/consulting'
+      path: '/consulting'
+      fullPath: '/consulting'
+      preLoaderRoute: typeof ConsultingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/complete': {
@@ -1261,11 +1261,11 @@ const rootRouteChildren: RootRouteChildren = {
   BriefRoute: BriefRouteWithChildren,
   BriefingRoomRoute: BriefingRoomRouteWithChildren,
   CompleteRoute: CompleteRoute,
+  ConsultingRoute: ConsultingRoute,
   CreativeRoute: CreativeRouteWithChildren,
   DashboardRoute: DashboardRoute,
   DemoRoute: DemoRoute,
   DetonationRoute: DetonationRoute,
-  DoneForYouRoute: DoneForYouRoute,
   EnterpriseRoute: EnterpriseRoute,
   ForAgenciesRoute: ForAgenciesRoute,
   ForCmosRoute: ForCmosRoute,
