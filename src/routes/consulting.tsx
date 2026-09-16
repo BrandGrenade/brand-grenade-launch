@@ -60,11 +60,7 @@ const CSS = `
 .bg-dfy .hero-body{font-size:16px;color:var(--smoke);max-width:60ch;line-height:1.7;margin-bottom:18px}
 .bg-dfy .hero-guarantee{font-size:17px;font-weight:600;color:var(--paper);max-width:56ch;line-height:1.6;margin-bottom:18px}
 .bg-dfy .btn-primary{background:var(--detonation);color:var(--paper);font-size:14px;font-weight:600;padding:14px 26px;border-radius:3px;text-decoration:none;border:none;cursor:pointer;font-family:inherit;display:inline-block}
-.bg-dfy .full-run-offer{display:grid;grid-template-columns:auto 1fr;gap:20px;align-items:center;background:var(--ash);border:1px solid var(--detonation-line);border-left:4px solid var(--detonation);border-radius:6px;padding:24px 26px;margin:30px 0}
-.bg-dfy .full-run-price{font-family:'Bebas Neue',sans-serif;font-size:clamp(34px,4.5vw,50px);line-height:.95;color:var(--paper);white-space:nowrap}
-.bg-dfy .full-run-price span{display:block;font-family:'Inter',sans-serif;font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--detonation);margin-bottom:8px}
-.bg-dfy .full-run-copy{font-size:16px;font-weight:600;color:var(--paper);line-height:1.55;max-width:46ch}
-@media (max-width:620px){.bg-dfy .full-run-offer{grid-template-columns:1fr;gap:12px;padding:22px}.bg-dfy .full-run-price{white-space:normal}}
+.bg-dfy .full-run-note{font-size:15px;color:var(--smoke);line-height:1.75;max-width:64ch;margin:20px 0 0}
 
 .bg-dfy .section{padding:56px 0;border-top:1px solid var(--ash)}
 .bg-dfy .section > :last-child{margin-bottom:0}
@@ -265,7 +261,6 @@ function Consulting() {
           <p className="hero-body">
             You review. You approve. We move to the next stage.
           </p>
-          <FullRunOffer />
           <ScopingCallCta context="Brand Grenade Consulting" />
         </section>
 
@@ -322,7 +317,6 @@ function Consulting() {
         {/* THREE TIERS */}
         <section className="section">
           <div className="section-eyebrow">Three levels of engagement</div>
-          <FullRunOffer />
           <div className="card-grid">
             <div className="tier">
               <div className="t-tag">TIER 1 — INTELLIGENCE</div>
@@ -425,6 +419,11 @@ function Consulting() {
               <ScopingCallCta context="Tier 3 — Full Pipeline" />
             </div>
           </div>
+          <p className="full-run-note">
+            Full run: {FULL_RUN_PRICE}. Buy the three stages separately and
+            it's {FULL_RUN_INDIVIDUAL} — save {FULL_RUN_SAVING} by committing
+            upfront.
+          </p>
         </section>
 
         {/* HOW IT WORKS */}
@@ -501,21 +500,6 @@ function Consulting() {
         >
           Book a 30-minute scoping call
         </button>
-      </div>
-    </div>
-  );
-}
-
-function FullRunOffer() {
-  return (
-    <div className="full-run-offer" aria-label="Full run pricing">
-      <div className="full-run-price">
-        <span>Full run</span>
-        {FULL_RUN_PRICE}
-      </div>
-      <div className="full-run-copy">
-        Buy the three stages separately and it's {FULL_RUN_INDIVIDUAL} — save{" "}
-        {FULL_RUN_SAVING} by committing upfront.
       </div>
     </div>
   );
