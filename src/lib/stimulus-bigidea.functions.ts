@@ -220,17 +220,27 @@ export const listBigIdeaRuns = createServerFn({ method: "POST" })
     const runList = runs ?? [];
     const counts = new Map<string, { total: number; pending: number }>();
     if (runList.length > 0) {
-      const { data: rows, error: rowsErr } = await supabaseAdmin
-        .from("stimulus_directions")
-        .select("run_id, status")
-        .in("run_id", runList.map((r) => r.id));
-      if (rowsErr) throw new Error(rowsErr.message);
-      for (const d of rows ?? []) {
-        const key = d.run_id as string;
-        const c = counts.get(key) ?? { total: 0, pending: 0 };
-        c.total += 1;
-        if (d.status === "pending") c.pending += 1;
-        counts.set(key, c);
+      const ids = runList.map((r) => r.id);
+      // Paged: 37 directions per run means a session with 28+ sweeps would
+      // otherwise silently truncate at PostgREST's 1000-row ceiling and
+      // under-report counts.
+      const PAGE = 1000;
+      for (let from = 0; ; from += PAGE) {
+        const { data: rows, error: rowsErr } = await supabaseAdmin
+          .from("stimulus_directions")
+          .select("run_id, status")
+          .in("run_id", ids)
+          .range(from, from + PAGE - 1);
+        if (rowsErr) throw new Error(rowsErr.message);
+        const page = rows ?? [];
+        for (const d of page) {
+          const key = d.run_id as string;
+          const c = counts.get(key) ?? { total: 0, pending: 0 };
+          c.total += 1;
+          if (d.status === "pending") c.pending += 1;
+          counts.set(key, c);
+        }
+        if (page.length < PAGE) break;
       }
     }
 
