@@ -330,11 +330,13 @@ export const runStage21 = createServerFn({ method: "POST" })
 
     let outputs: Record<string, string>;
     try {
+      // Sequential by design — see the THROTTLING note at the top of the file.
       const results: string[] = [];
-      for (const e of entries) {
+      for (const [i, e] of entries.entries()) {
         const result = await generateOne(data.sessionId, e.name, e.role, e.content, s, redirectText);
         results.push(result);
-        await new Promise((resolve) => setTimeout(resolve, 2000));
+        if (i < entries.length - 1)
+          await new Promise((resolve) => setTimeout(resolve, STAGE21_CHANNEL_GAP_MS));
       }
       outputs = Object.fromEntries(entries.map((e, i) => [e.name, results[i]]));
     } catch (e) {
@@ -526,8 +528,9 @@ export const retryStage21 = createServerFn({ method: "POST" })
         ? allEntries
         : allEntries.filter((e) => data.cardIds.includes(e.name));
 
+    // Sequential by design — see the THROTTLING note at the top of the file.
     const results: string[] = [];
-    for (const e of regenerate) {
+    for (const [i, e] of regenerate.entries()) {
       const result = await generateOne(
         data.sessionId,
         e.name,
@@ -537,7 +540,8 @@ export const retryStage21 = createServerFn({ method: "POST" })
         data.redirectInstructions[e.name] ?? "",
       );
       results.push(result);
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      if (i < regenerate.length - 1)
+        await new Promise((resolve) => setTimeout(resolve, STAGE21_CHANNEL_GAP_MS));
     }
     const merged: Record<string, string> = { ...existing };
     regenerate.forEach((e, i) => {
