@@ -23,6 +23,7 @@ import { Route as ForConsultanciesRouteImport } from './routes/for-consultancies
 import { Route as ForCmosRouteImport } from './routes/for-cmos'
 import { Route as ForAgenciesRouteImport } from './routes/for-agencies'
 import { Route as EnterpriseRouteImport } from './routes/enterprise'
+import { Route as DoneForYouRouteImport } from './routes/done-for-you'
 import { Route as DetonationRouteImport } from './routes/detonation'
 import { Route as DemoRouteImport } from './routes/demo'
 import { Route as DashboardRouteImport } from './routes/dashboard'
@@ -135,6 +136,11 @@ const ForAgenciesRoute = ForAgenciesRouteImport.update({
 const EnterpriseRoute = EnterpriseRouteImport.update({
   id: '/enterprise',
   path: '/enterprise',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DoneForYouRoute = DoneForYouRouteImport.update({
+  id: '/done-for-you',
+  path: '/done-for-you',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DetonationRoute = DetonationRouteImport.update({
@@ -374,6 +380,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRoute
   '/demo': typeof DemoRoute
   '/detonation': typeof DetonationRoute
+  '/done-for-you': typeof DoneForYouRoute
   '/enterprise': typeof EnterpriseRoute
   '/for-agencies': typeof ForAgenciesRoute
   '/for-cmos': typeof ForCmosRoute
@@ -430,6 +437,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardRoute
   '/demo': typeof DemoRoute
   '/detonation': typeof DetonationRoute
+  '/done-for-you': typeof DoneForYouRoute
   '/enterprise': typeof EnterpriseRoute
   '/for-agencies': typeof ForAgenciesRoute
   '/for-cmos': typeof ForCmosRoute
@@ -486,6 +494,7 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRoute
   '/demo': typeof DemoRoute
   '/detonation': typeof DetonationRoute
+  '/done-for-you': typeof DoneForYouRoute
   '/enterprise': typeof EnterpriseRoute
   '/for-agencies': typeof ForAgenciesRoute
   '/for-cmos': typeof ForCmosRoute
@@ -547,6 +556,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/demo'
     | '/detonation'
+    | '/done-for-you'
     | '/enterprise'
     | '/for-agencies'
     | '/for-cmos'
@@ -603,6 +613,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/demo'
     | '/detonation'
+    | '/done-for-you'
     | '/enterprise'
     | '/for-agencies'
     | '/for-cmos'
@@ -658,6 +669,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/demo'
     | '/detonation'
+    | '/done-for-you'
     | '/enterprise'
     | '/for-agencies'
     | '/for-cmos'
@@ -718,6 +730,7 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRoute
   DemoRoute: typeof DemoRoute
   DetonationRoute: typeof DetonationRoute
+  DoneForYouRoute: typeof DoneForYouRoute
   EnterpriseRoute: typeof EnterpriseRoute
   ForAgenciesRoute: typeof ForAgenciesRoute
   ForCmosRoute: typeof ForCmosRoute
@@ -848,6 +861,13 @@ declare module '@tanstack/react-router' {
       path: '/enterprise'
       fullPath: '/enterprise'
       preLoaderRoute: typeof EnterpriseRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/done-for-you': {
+      id: '/done-for-you'
+      path: '/done-for-you'
+      fullPath: '/done-for-you'
+      preLoaderRoute: typeof DoneForYouRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/detonation': {
@@ -1266,6 +1286,7 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRoute,
   DemoRoute: DemoRoute,
   DetonationRoute: DetonationRoute,
+  DoneForYouRoute: DoneForYouRoute,
   EnterpriseRoute: EnterpriseRoute,
   ForAgenciesRoute: ForAgenciesRoute,
   ForCmosRoute: ForCmosRoute,
