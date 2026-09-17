@@ -184,23 +184,46 @@ async function checkRawSweepExport(): Promise<Result> {
   );
   const { data: run } = await sb
     .from("stimulus_runs")
-    .select("id, channel_name, smp")
+    .select("id, session_id, channel_name, smp")
     .eq("id", biggestRun)
     .maybeSingle();
+  const { data: session } = await sb
+    .from("sessions")
+    .select("brand_name, category")
+    .eq("id", (run?.session_id as string) ?? "")
+    .maybeSingle();
+
+  // Same shape the real server function hands the builder.
   const doc = buildRawIdeaBatchExport({
-    runs: [
-      {
-        runId: biggestRun,
-        channelName: (run?.channel_name as string) ?? "",
-        smp: (run?.smp as string) ?? "",
-        directions: rows as never,
-      },
-    ] as never,
-  } as never);
-  const rendered = typeof doc === "string" ? doc : JSON.stringify(doc);
+    brandName: session?.brand_name ?? "—",
+    category: session?.category ?? "—",
+    channelName: (run?.channel_name as string) ?? "",
+    smp: (run?.smp as string) ?? "",
+    directions: rows.map((dir) => ({
+      lensId: dir.lens_id as string,
+      lensName: dir.lens_name as string,
+      text: ((dir.direction as string) ?? "").trim(),
+      instinctBrief: (dir.instinct_brief as string) ?? "",
+      tissueStatus: dir.status as string,
+      ratings: dir.ratings ?? null,
+      ratedAt: (dir.rated_at as string) ?? null,
+      gateOneApproved: Boolean(dir.gate_one_approved),
+      gateOneApprovedAt: (dir.gate_one_approved_at as string) ?? null,
+      gateOneNotes: (dir.gate_one_notes as string) ?? null,
+    })),
+  });
+  const rendered = doc.html;
   const missing = rows.filter((r) => {
     const text = String((r as { direction?: string }).direction ?? "").trim();
-    return text && !rendered.includes(text.slice(0, 40));
+    if (!text) return false;
+    // HTML-escaped in the document, so compare on an escaped fragment.
+    const fragment = text
+      .slice(0, 40)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+    return !rendered.includes(fragment);
   });
   if (missing.length) {
     findings.push({
