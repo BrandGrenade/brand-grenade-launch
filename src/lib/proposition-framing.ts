@@ -38,39 +38,84 @@ export function findPropositionFramingViolations(
   return violations;
 }
 
+/** A visible stand-in left wherever a whole line had to be dropped. */
+export const REMOVAL_NOTICE =
+  "_[Editorial note: a sentence written for a multi-proposition comparison was removed here. This document presents a single proposition.]_";
+
+export type FramingRepair = {
+  text: string;
+  /** Lines removed in full — never silent; each leaves a visible notice. */
+  removedLines: string[];
+  /** Lines where only the offending sentence was removed. */
+  trimmedLines: string[];
+};
+
 /**
- * Removes whole unsupported set-comparison sentences from inherited stage
- * prose. This is deliberately count-driven: the same source is untouched in
- * Board/workshop comparison views that actually render multiple cards.
+ * Repairs unsupported set-comparison prose for a single-proposition document.
+ * Order of preference: keep the line and drop only the offending sentence;
+ * failing that, drop the line but leave a visible editorial notice so nothing
+ * disappears without the reader (and the builder log) seeing it.
  */
-export function frameForPropositionCount(text: string, propositionCount: number): string {
-  if (propositionCount > 1 || !text.trim()) return text;
-  return text
+export function repairPropositionFraming(
+  text: string,
+  propositionCount: number,
+): FramingRepair {
+  if (propositionCount > 1 || !text.trim()) {
+    return { text, removedLines: [], trimmedLines: [] };
+  }
+  const removedLines: string[] = [];
+  const trimmedLines: string[] = [];
+
+  const out = text
     .split("\n")
     .map((line) => {
       if (/^\s*#{1,6}\s/.test(line)) return line;
-      // A bullet or fragment with no terminal punctuation is still a single
-      // unit of prose and must be checked. Previously it was skipped entirely,
-      // so an offending bullet survived the sanitiser and then blocked the
-      // whole document build at the assertion.
-      if (!/[.!?]/.test(line)) {
-        return findPropositionFramingViolations(line, propositionCount).length === 0
-          ? line
-          : stripPrefixKeepingMarker(line);
+      if (findPropositionFramingViolations(line, propositionCount).length === 0) return line;
+
+      if (/[.!?]/.test(line)) {
+        const parts = line.match(/[^.!?]+[.!?]+["')\]]*\s*|[^.!?]+$/g) ?? [line];
+        const kept = tidyRemainder(
+          parts
+            .filter(
+              (part) => findPropositionFramingViolations(part, propositionCount).length === 0,
+            )
+            .join("")
+            .trimEnd(),
+        );
+        if (isPublishableRemainder(line, kept)) {
+          if (kept.trim() !== line.trim()) trimmedLines.push(line.trim());
+          return kept;
+        }
       }
-      const parts = line.match(/[^.!?]+[.!?]+["')\]]*\s*|[^.!?]+$/g) ?? [line];
-      const kept = parts
-        .filter((part) => findPropositionFramingViolations(part, propositionCount).length === 0)
-        .join("")
-        .trimEnd();
-      // Dropping every sentence of a list item would leave a naked bullet, and
-      // a sentence split inside a quoted proposition can leave an orphan
-      // fragment ("” ranked strongest…"). Neither is publishable, so the whole
-      // line goes instead.
-      return isPublishableRemainder(line, kept) ? kept : stripPrefixKeepingMarker(line);
+      removedLines.push(line.trim());
+      return keepListMarker(line);
     })
     .filter((line, index, all) => line.trim() || index === 0 || (all[index - 1] ?? "").trim())
     .join("\n");
+
+  return { text: out, removedLines, trimmedLines };
+}
+
+/**
+ * Back-compatible wrapper: returns just the repaired text.
+ */
+export function frameForPropositionCount(text: string, propositionCount: number): string {
+  return repairPropositionFraming(text, propositionCount).text;
+}
+
+/**
+ * Tidies what survives a sentence removal so a salvageable line is not thrown
+ * away over stray punctuation: drops a leading orphan quote/punctuation mark
+ * and restores terminal punctuation.
+ */
+function tidyRemainder(kept: string): string {
+  if (!kept.trim()) return kept;
+  const marker = kept.match(/^\s*(?:[-*•]|\d+[.)])\s*/)?.[0] ?? "";
+  let body = kept.slice(marker.length).trim();
+  body = body.replace(/^["'”’)\]:;,–—-]+\s*/, "");
+  if (!body) return "";
+  if (!/[.!?]["'”’)\]]?$/.test(body)) body = `${body}.`;
+  return `${marker}${body}`;
 }
 
 /**
@@ -87,10 +132,15 @@ function isPublishableRemainder(original: string, kept: string): boolean {
   return body.length >= 25;
 }
 
-/** Removes an offending list item entirely, marker included. */
-function stripPrefixKeepingMarker(_line: string): string {
-  return "";
+/**
+ * Replaces an unsalvageable line with a visible notice, preserving any list
+ * marker so the surrounding structure still reads correctly.
+ */
+function keepListMarker(line: string): string {
+  const marker = line.match(/^\s*(?:[-*•]|\d+[.)])\s*/)?.[0] ?? "";
+  return `${marker}${REMOVAL_NOTICE}`;
 }
+
 
 export function assertPropositionFraming(
   text: string,
