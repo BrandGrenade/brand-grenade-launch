@@ -226,13 +226,13 @@ async function checkRawSweepExport(): Promise<Result> {
   const missing = rows.filter((r) => {
     const text = String((r as { direction?: string }).direction ?? "").trim();
     if (!text) return false;
-    // HTML-escaped in the document, so compare on an escaped fragment.
+    // Escaped exactly as stimulus-export's esc() does, so the comparison
+    // cannot produce a false "missing" on punctuation.
     const fragment = text
       .slice(0, 40)
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;");
+      .replace(/>/g, "&gt;");
     return !rendered.includes(fragment);
   });
   if (missing.length) {
