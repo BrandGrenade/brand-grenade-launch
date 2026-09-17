@@ -171,7 +171,22 @@ export function enforcePropositionFraming(
 ): string {
   const violations = findPropositionFramingViolations(text, propositionCount);
   if (!violations.length) return text;
-  const repaired = frameForPropositionCount(text, propositionCount);
+  const { text: repaired, removedLines, trimmedLines } = repairPropositionFraming(
+    text,
+    propositionCount,
+  );
+  if (removedLines.length) {
+    console.warn(
+      `[proposition-framing] ${context}: ${removedLines.length} line(s) removed in full and replaced with a visible editorial notice`,
+      removedLines.slice(0, 3).map((l) => l.slice(0, 180)),
+    );
+  }
+  if (trimmedLines.length) {
+    console.warn(
+      `[proposition-framing] ${context}: ${trimmedLines.length} line(s) had one comparison sentence removed`,
+      trimmedLines.slice(0, 3).map((l) => l.slice(0, 180)),
+    );
+  }
   const remaining = findPropositionFramingViolations(repaired, propositionCount);
   if (remaining.length) {
     console.warn(
@@ -179,5 +194,6 @@ export function enforcePropositionFraming(
       remaining.slice(0, 3).map((v) => v.sentence.slice(0, 180)),
     );
   }
+
   return repaired;
 }
