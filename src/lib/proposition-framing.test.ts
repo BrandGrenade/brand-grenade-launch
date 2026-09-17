@@ -4,6 +4,9 @@ import {
   findPropositionFramingViolations,
   frameForPropositionCount,
   enforcePropositionFraming,
+  repairPropositionFraming,
+  REMOVAL_NOTICE,
+
 } from "./proposition-framing";
 
 const ROUND_FOUR = `The propositions differ not just in their creative expression but in their fundamental assumptions about what customers want. This proposition makes Friday permission the organising thought.`;
@@ -43,6 +46,32 @@ describe("self-correcting enforcement", () => {
   it("never emits an orphan fragment left by a split inside a quotation", () => {
     const bad = '- These propositions differ: "Friday starts in aisle six." leads the set';
     const out = enforcePropositionFraming(bad, 1, "ctx");
-    expect(out.trim()).toBe("");
+    expect(findPropositionFramingViolations(out, 1)).toHaveLength(0);
+    expect(out).not.toMatch(/leads the set/);
+  });
+
+  it("leaves a visible notice instead of silently deleting a line", () => {
+    const bad = '- These propositions differ: "Friday starts in aisle six." leads the set';
+    const out = enforcePropositionFraming(bad, 1, "ctx");
+    expect(out).toContain(REMOVAL_NOTICE);
+    expect(out.trim()).not.toBe("");
+  });
+
+  it("keeps surrounding prose when only one sentence offends", () => {
+    const bad =
+      "The idea holds because the brand already owns the moment. These propositions differ in how far they push. It still lands on the same truth about Friday nights.";
+    const out = enforcePropositionFraming(bad, 1, "ctx");
+    expect(out).toContain("The idea holds because the brand already owns the moment.");
+    expect(out).toContain("It still lands on the same truth about Friday nights.");
+    expect(out).not.toMatch(/These propositions differ/);
+    expect(out).not.toContain(REMOVAL_NOTICE);
+  });
+
+  it("reports removals and trims", () => {
+    const bad = '- These propositions differ: "Friday starts in aisle six." leads the set\n- A clean line that stays exactly as written.';
+    const repair = repairPropositionFraming(bad, 1);
+    expect(repair.removedLines).toHaveLength(1);
+    expect(repair.text).toContain("A clean line that stays exactly as written.");
   });
 });
+

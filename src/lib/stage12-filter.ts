@@ -283,7 +283,14 @@ export function parseStage11Verdicts(text: string): Stage11Verdict[] {
     }
 
     const iconic = block.match(/ICONIC\s+TIER\s+FINAL\s+STATUS\s*:\s*([A-Z\/ ]+)/i);
-    const rewriteLine = verdict === "REWRITTEN" ? extractRewriteLine(block) : null;
+    // A pressure test that rewrote the line AND flagged an exposure is
+    // reclassified above as "VALIDATED — EXPOSED". The rewrite must still be
+    // honoured: gating on the final verdict alone discarded the corrected
+    // wording in exactly the case the rewrite existed to fix.
+    const rewriteRequested = /REWRIT/.test(rawVerdict) || verdict === "REWRITTEN";
+    const rewriteLine =
+      rewriteRequested && verdict !== "ELIMINATED" ? extractRewriteLine(block) : null;
+
     const smpLine = rewriteLine ?? head.smpLine;
     const fieldName = head.fieldName;
     // A pressure-test rewrite is a governance correction: the flagged wording
@@ -299,7 +306,7 @@ export function parseStage11Verdicts(text: string): Stage11Verdict[] {
     const rewrittenBlock = rewriteLine
       ? [
           `SMP: "${rewriteLine}" — FIELD: ${fieldName}`,
-          `SMP VERDICT: REWRITTEN`,
+          `SMP VERDICT: ${verdict}`,
           `AUTHORITATIVE LINE — the pressure test rewrote this proposition to close a flagged exposure. Use the wording above verbatim in every Stage 12 card, quote and heading. The pre-rewrite wording is superseded and must never be presented, quoted or reinstated.`,
           `SUPERSEDED ORIGINAL (do not use): "${head.smpLine}"`,
           ``,
