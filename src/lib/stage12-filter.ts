@@ -283,7 +283,14 @@ export function parseStage11Verdicts(text: string): Stage11Verdict[] {
     }
 
     const iconic = block.match(/ICONIC\s+TIER\s+FINAL\s+STATUS\s*:\s*([A-Z\/ ]+)/i);
-    const rewriteLine = verdict === "REWRITTEN" ? extractRewriteLine(block) : null;
+    // A pressure test that rewrote the line AND flagged an exposure is
+    // reclassified above as "VALIDATED — EXPOSED". The rewrite must still be
+    // honoured: gating on the final verdict alone discarded the corrected
+    // wording in exactly the case the rewrite existed to fix.
+    const rewriteRequested = /REWRIT/.test(rawVerdict) || verdict === "REWRITTEN";
+    const rewriteLine =
+      rewriteRequested && verdict !== "ELIMINATED" ? extractRewriteLine(block) : null;
+
     const smpLine = rewriteLine ?? head.smpLine;
     const fieldName = head.fieldName;
     // A pressure-test rewrite is a governance correction: the flagged wording
