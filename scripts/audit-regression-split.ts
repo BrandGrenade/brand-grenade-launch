@@ -147,18 +147,28 @@ async function checkRawSweepExport(): Promise<Result> {
   const { buildRawIdeaBatchExport } = await import("../src/lib/stimulus-export");
   const VALIDATOR = z.object({ directionIds: z.array(z.string().uuid()).min(1).max(1000) });
 
+  // The export is a SESSION-level selection across every run, which is how a
+  // real sweep exceeds 40 (37 lenses per run, several runs per session).
+  const runs = await pagedSelect<{ id: string; session_id: string; channel_name: string | null; smp: string | null }>(
+    "stimulus_runs",
+    "id, session_id, channel_name, smp",
+  );
   const dirs = await pagedSelect<{ id: string; run_id: string }>(
     "stimulus_directions",
     "id, run_id",
   );
-  const byRun = new Map<string, string[]>();
-  for (const d of dirs) byRun.set(d.run_id, [...(byRun.get(d.run_id) ?? []), d.id]);
-  const [biggestRun, ids] = [...byRun.entries()].sort((a, b) => b[1].length - a[1].length)[0] ?? [
-    null,
-    [] as string[],
-  ];
+  const sessionOfRun = new Map(runs.map((r) => [r.id, r.session_id]));
+  const bySession = new Map<string, string[]>();
+  for (const d of dirs) {
+    const sid = sessionOfRun.get(d.run_id);
+    if (!sid) continue;
+    bySession.set(sid, [...(bySession.get(sid) ?? []), d.id]);
+  }
+  const [biggestSession, ids] = [...bySession.entries()].sort(
+    (a, b) => b[1].length - a[1].length,
+  )[0] ?? [null, [] as string[]];
 
-  if (!biggestRun || ids.length <= 40) {
+  if (!biggestSession || ids.length <= 40) {
     return {
       freshScanned: 0,
       findings: [],
@@ -170,27 +180,24 @@ async function checkRawSweepExport(): Promise<Result> {
   const parsed = VALIDATOR.safeParse({ directionIds: ids });
   if (!parsed.success) {
     findings.push({
-      ref: `run ${biggestRun}`,
+      ref: `session ${biggestSession}`,
       detail: `export validator rejected ${ids.length} directions`,
       writtenAt: new Date().toISOString(),
       reproducedByCurrentCode: true,
     });
   }
 
-  const rows = await pagedSelect<Record<string, unknown>>(
-    "stimulus_directions",
-    "*",
-    (q: any) => q.eq("run_id", biggestRun),
-  );
-  const { data: run } = await sb
-    .from("stimulus_runs")
-    .select("id, session_id, channel_name, smp")
-    .eq("id", biggestRun)
-    .maybeSingle();
+  const sessionRunIds = runs.filter((r) => r.session_id === biggestSession).map((r) => r.id);
+  const rows = (
+    await pagedSelect<Record<string, unknown>>("stimulus_directions", "*", (q: any) =>
+      q.in("run_id", sessionRunIds),
+    )
+  ).filter((r) => String((r as { direction?: string }).direction ?? "").trim());
+  const run = runs.find((r) => r.id === (rows[0]?.run_id as string));
   const { data: session } = await sb
     .from("sessions")
     .select("brand_name, category")
-    .eq("id", (run?.session_id as string) ?? "")
+    .eq("id", biggestSession)
     .maybeSingle();
 
   // Same shape the real server function hands the builder.
