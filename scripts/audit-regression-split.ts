@@ -109,7 +109,7 @@ async function checkPropositionTruncation(fixedAt: string): Promise<Result> {
 
   const findings: Finding[] = [];
   let fresh = 0;
-  let patternsExercised = 0;
+  let triggerPresent = 0;
 
   for (const r of rows) {
     const smp = (r.selected_smp ?? "").trim();
@@ -117,10 +117,11 @@ async function checkPropositionTruncation(fixedAt: string): Promise<Result> {
     const writtenAt = r.updated_at ?? r.created_at;
     if (writtenAt && new Date(writtenAt) >= new Date(fixedAt)) fresh += 1;
 
+    if (/\bthis\s+(speaks|works|refers|nods|plays|lands)\b/i.test(smp)) triggerPresent += 1;
     const wouldLegacyTrim = LEGACY_RULE.test(smp) && smp.replace(LEGACY_RULE, "").trim() !== smp;
     const currentTrims = cleanProposition(smp).trim() !== smp;
     if (!wouldLegacyTrim && !currentTrims) continue;
-    if (LEGACY_RULE.test(smp)) patternsExercised += 1;
+
 
     findings.push({
       ref: `${r.brand_name ?? "(unnamed)"} — ${r.id}`,
@@ -135,7 +136,9 @@ async function checkPropositionTruncation(fixedAt: string): Promise<Result> {
   return {
     freshScanned: fresh,
     findings,
-    note: `${patternsExercised} stored proposition(s) contain a trigger phrase, so the case is exercised by real data rather than merely absent.`,
+    note: triggerPresent
+      ? `${triggerPresent} stored proposition(s) contain a trigger phrase, so the case is exercised by real data.`
+      : "no stored proposition currently contains a trigger phrase, so stored data cannot exercise this case — the unit tests in src/lib/clean-proposition.test.ts are the live evidence.",
   };
 }
 
@@ -234,7 +237,7 @@ async function checkRawSweepExport(): Promise<Result> {
   });
   if (missing.length) {
     findings.push({
-      ref: `run ${biggestRun}`,
+      ref: `session ${biggestSession}`,
       detail: `${missing.length} of ${rows.length} directions missing from the rendered export`,
       writtenAt: new Date().toISOString(),
       reproducedByCurrentCode: true,
@@ -244,7 +247,7 @@ async function checkRawSweepExport(): Promise<Result> {
   return {
     freshScanned: ids.length,
     findings,
-    note: `re-ran the live validator and export builder against the largest real sweep (${ids.length} directions, run ${biggestRun})`,
+    note: `re-ran the live validator and export builder against the largest real sweep (${ids.length} directions across ${sessionRunIds.length} run(s), session ${biggestSession}); ${rows.length} carry text and all were checked in the rendered document`,
   };
 }
 
