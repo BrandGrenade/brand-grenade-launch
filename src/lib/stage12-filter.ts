@@ -306,7 +306,7 @@ export function parseStage11Verdicts(text: string): Stage11Verdict[] {
     const rewrittenBlock = rewriteLine
       ? [
           `SMP: "${rewriteLine}" — FIELD: ${fieldName}`,
-          `SMP VERDICT: REWRITTEN`,
+          `SMP VERDICT: ${verdict}`,
           `AUTHORITATIVE LINE — the pressure test rewrote this proposition to close a flagged exposure. Use the wording above verbatim in every Stage 12 card, quote and heading. The pre-rewrite wording is superseded and must never be presented, quoted or reinstated.`,
           `SUPERSEDED ORIGINAL (do not use): "${head.smpLine}"`,
           ``,
