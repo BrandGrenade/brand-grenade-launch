@@ -32,6 +32,11 @@ const intelligenceDomain: JobDomain = {
   timeoutMs: INTEL_QUEUED_MS,
   maxAttempts: 3,
   backoffMs: DEFAULT_BACKOFF,
+  // A full analysis is a ~10 minute streamed run — far longer than the tick
+  // request that discovers it. Awaiting it inline meant the scheduler hung up,
+  // the Worker invocation was cancelled mid-stream, and the run froze part-way
+  // (observed 2026-09-19: session 22c0ba9b froze at running:2 on every tick).
+  detached: true,
   async list(admin) {
     const { data } = await admin
       .from("intelligence_sessions")
