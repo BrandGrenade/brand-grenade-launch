@@ -103,7 +103,7 @@ async function loadRow(
 ): Promise<SupervisionRow> {
   const { data } = await admin
     .from("job_supervision")
-    .select("id, attempts, state, next_attempt_at, last_error")
+    .select(SUPERVISION_SELECT)
     .eq("domain", domain)
     .eq("job_id", job.jobId)
     .maybeSingle();
@@ -119,7 +119,7 @@ async function loadRow(
       attempts: 0,
       detail: job.detail ?? null,
     })
-    .select("id, attempts, state, next_attempt_at, last_error")
+    .select(SUPERVISION_SELECT)
     .single();
   return (inserted as SupervisionRow) ?? {
     id: "",
