@@ -126,6 +126,7 @@ async function loadRow(
     attempts: 0,
     state: "watching",
     next_attempt_at: null,
+    last_attempt_at: null,
     last_error: null,
   };
 }
