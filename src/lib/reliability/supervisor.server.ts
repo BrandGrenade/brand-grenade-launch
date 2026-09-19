@@ -43,6 +43,18 @@ export interface JobDomain {
   maxAttempts: number;
   /** Backoff before attempt N (1-indexed), in ms. */
   backoffMs?: (attempt: number) => number;
+  /**
+   * Recovery takes far longer than one tick request may live.
+   *
+   * The tick is called on a one-minute cadence by a scheduler that hangs up
+   * long before a multi-minute model run finishes. Awaiting `recover()` inline
+   * means the Worker invocation is cancelled with the caller's connection and
+   * the job freezes part-way through — repeatedly, burning the retry budget
+   * each time. Detached domains hand recovery to the background scheduler
+   * (waitUntil), so the tick answers immediately and the run continues
+   * independently of the caller.
+   */
+  detached?: boolean;
   /** All currently non-terminal jobs whose heartbeat is quiet past timeoutMs. */
   list(admin: Admin): Promise<SupervisedJob[]>;
   /**
@@ -61,7 +73,13 @@ export const DEFAULT_BACKOFF = (attempt: number): number =>
 export interface SupervisionOutcome {
   domain: string;
   jobId: string;
-  action: "recovered" | "retry-failed" | "escalated" | "waiting-backoff" | "already-escalated";
+  action:
+    | "recovered"
+    | "recovery-dispatched"
+    | "retry-failed"
+    | "escalated"
+    | "waiting-backoff"
+    | "already-escalated";
   attempts: number;
   error?: string;
 }
@@ -71,8 +89,12 @@ interface SupervisionRow {
   attempts: number;
   state: string;
   next_attempt_at: string | null;
+  last_attempt_at: string | null;
   last_error: string | null;
 }
+
+/** Heartbeat moved after the last recovery attempt = that attempt worked. */
+const SUPERVISION_SELECT = "id, attempts, state, next_attempt_at, last_attempt_at, last_error";
 
 async function loadRow(
   admin: Admin,
