@@ -181,7 +181,19 @@ export async function superviseDomain(
       continue;
     }
 
-    const attempts = row.attempts + 1;
+    // A recovery that produced real progress must not count against the retry
+    // budget. The job's own heartbeat is the evidence: if it moved AFTER the
+    // last attempt was claimed, that attempt did resume the job, and the job
+    // only stalled again later. Without this, a run that advances a few layers
+    // per attempt exhausts maxAttempts and is escalated to `failed` despite
+    // never having actually failed.
+    const lastAttemptAt = row.last_attempt_at ? Date.parse(row.last_attempt_at) : 0;
+    const heartbeatAt = Date.now() - job.quietMs;
+    const progressedSinceLastAttempt =
+      Number.isFinite(lastAttemptAt) && lastAttemptAt > 0 && heartbeatAt > lastAttemptAt + 5_000;
+    const priorAttempts = progressedSinceLastAttempt ? 0 : row.attempts;
+
+    const attempts = priorAttempts + 1;
     const backoff = (domain.backoffMs ?? DEFAULT_BACKOFF)(attempts);
 
     // Retry budget exhausted, or this domain cannot be resumed server-side:
