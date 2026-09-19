@@ -211,13 +211,13 @@ export async function superviseDomain(
       }
       await patchRow(admin, row.id, {
         state: "escalated",
-        attempts: row.attempts,
+        attempts: priorAttempts,
         last_attempt_at: new Date().toISOString(),
         next_attempt_at: null,
         last_error: message,
         detail: job.detail ?? null,
       });
-      out.push({ domain: domain.name, jobId: job.jobId, action: "escalated", attempts: row.attempts, error: message });
+      out.push({ domain: domain.name, jobId: job.jobId, action: "escalated", attempts: priorAttempts, error: message });
       continue;
     }
 
@@ -232,19 +232,37 @@ export async function superviseDomain(
       detail: job.detail ?? null,
     });
 
+    const recover = domain.recover;
+    const runRecovery = async (): Promise<void> => {
+      try {
+        await recover(admin, job);
+        await patchRow(admin, row.id, {
+          state: "recovered",
+          next_attempt_at: null,
+          last_error: null,
+        });
+      } catch (e) {
+        const message = e instanceof Error ? e.message : String(e);
+        await patchRow(admin, row.id, { state: "watching", last_error: message });
+        console.error(`[reliability:${domain.name}:${job.jobId}] attempt ${attempts} failed: ${message}`);
+        throw e;
+      }
+    };
+
+    if (domain.detached) {
+      // Hand it to waitUntil and answer the tick now — see JobDomain.detached.
+      const { scheduleBackground } = await import("@/lib/background.server");
+      scheduleBackground(runRecovery(), `reliability:${domain.name}:${job.jobId}`);
+      out.push({ domain: domain.name, jobId: job.jobId, action: "recovery-dispatched", attempts });
+      continue;
+    }
+
     try {
-      await domain.recover(admin, job);
-      await patchRow(admin, row.id, {
-        state: "recovered",
-        next_attempt_at: null,
-        last_error: null,
-      });
+      await runRecovery();
       out.push({ domain: domain.name, jobId: job.jobId, action: "recovered", attempts });
     } catch (e) {
       const message = e instanceof Error ? e.message : String(e);
-      await patchRow(admin, row.id, { state: "watching", last_error: message });
       out.push({ domain: domain.name, jobId: job.jobId, action: "retry-failed", attempts, error: message });
-      console.error(`[reliability:${domain.name}:${job.jobId}] attempt ${attempts} failed: ${message}`);
     }
   }
 
