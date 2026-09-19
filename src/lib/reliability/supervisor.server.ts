@@ -43,6 +43,18 @@ export interface JobDomain {
   maxAttempts: number;
   /** Backoff before attempt N (1-indexed), in ms. */
   backoffMs?: (attempt: number) => number;
+  /**
+   * Recovery takes far longer than one tick request may live.
+   *
+   * The tick is called on a one-minute cadence by a scheduler that hangs up
+   * long before a multi-minute model run finishes. Awaiting `recover()` inline
+   * means the Worker invocation is cancelled with the caller's connection and
+   * the job freezes part-way through — repeatedly, burning the retry budget
+   * each time. Detached domains hand recovery to the background scheduler
+   * (waitUntil), so the tick answers immediately and the run continues
+   * independently of the caller.
+   */
+  detached?: boolean;
   /** All currently non-terminal jobs whose heartbeat is quiet past timeoutMs. */
   list(admin: Admin): Promise<SupervisedJob[]>;
   /**
@@ -61,7 +73,13 @@ export const DEFAULT_BACKOFF = (attempt: number): number =>
 export interface SupervisionOutcome {
   domain: string;
   jobId: string;
-  action: "recovered" | "retry-failed" | "escalated" | "waiting-backoff" | "already-escalated";
+  action:
+    | "recovered"
+    | "recovery-dispatched"
+    | "retry-failed"
+    | "escalated"
+    | "waiting-backoff"
+    | "already-escalated";
   attempts: number;
   error?: string;
 }
@@ -71,8 +89,12 @@ interface SupervisionRow {
   attempts: number;
   state: string;
   next_attempt_at: string | null;
+  last_attempt_at: string | null;
   last_error: string | null;
 }
+
+/** Heartbeat moved after the last recovery attempt = that attempt worked. */
+const SUPERVISION_SELECT = "id, attempts, state, next_attempt_at, last_attempt_at, last_error";
 
 async function loadRow(
   admin: Admin,
@@ -81,7 +103,7 @@ async function loadRow(
 ): Promise<SupervisionRow> {
   const { data } = await admin
     .from("job_supervision")
-    .select("id, attempts, state, next_attempt_at, last_error")
+    .select(SUPERVISION_SELECT)
     .eq("domain", domain)
     .eq("job_id", job.jobId)
     .maybeSingle();
@@ -97,13 +119,14 @@ async function loadRow(
       attempts: 0,
       detail: job.detail ?? null,
     })
-    .select("id, attempts, state, next_attempt_at, last_error")
+    .select(SUPERVISION_SELECT)
     .single();
   return (inserted as SupervisionRow) ?? {
     id: "",
     attempts: 0,
     state: "watching",
     next_attempt_at: null,
+    last_attempt_at: null,
     last_error: null,
   };
 }
@@ -158,7 +181,19 @@ export async function superviseDomain(
       continue;
     }
 
-    const attempts = row.attempts + 1;
+    // A recovery that produced real progress must not count against the retry
+    // budget. The job's own heartbeat is the evidence: if it moved AFTER the
+    // last attempt was claimed, that attempt did resume the job, and the job
+    // only stalled again later. Without this, a run that advances a few layers
+    // per attempt exhausts maxAttempts and is escalated to `failed` despite
+    // never having actually failed.
+    const lastAttemptAt = row.last_attempt_at ? Date.parse(row.last_attempt_at) : 0;
+    const heartbeatAt = Date.now() - job.quietMs;
+    const progressedSinceLastAttempt =
+      Number.isFinite(lastAttemptAt) && lastAttemptAt > 0 && heartbeatAt > lastAttemptAt + 5_000;
+    const priorAttempts = progressedSinceLastAttempt ? 0 : row.attempts;
+
+    const attempts = priorAttempts + 1;
     const backoff = (domain.backoffMs ?? DEFAULT_BACKOFF)(attempts);
 
     // Retry budget exhausted, or this domain cannot be resumed server-side:
@@ -176,13 +211,13 @@ export async function superviseDomain(
       }
       await patchRow(admin, row.id, {
         state: "escalated",
-        attempts: row.attempts,
+        attempts: priorAttempts,
         last_attempt_at: new Date().toISOString(),
         next_attempt_at: null,
         last_error: message,
         detail: job.detail ?? null,
       });
-      out.push({ domain: domain.name, jobId: job.jobId, action: "escalated", attempts: row.attempts, error: message });
+      out.push({ domain: domain.name, jobId: job.jobId, action: "escalated", attempts: priorAttempts, error: message });
       continue;
     }
 
@@ -197,19 +232,37 @@ export async function superviseDomain(
       detail: job.detail ?? null,
     });
 
+    const recover = domain.recover;
+    const runRecovery = async (): Promise<void> => {
+      try {
+        await recover(admin, job);
+        await patchRow(admin, row.id, {
+          state: "recovered",
+          next_attempt_at: null,
+          last_error: null,
+        });
+      } catch (e) {
+        const message = e instanceof Error ? e.message : String(e);
+        await patchRow(admin, row.id, { state: "watching", last_error: message });
+        console.error(`[reliability:${domain.name}:${job.jobId}] attempt ${attempts} failed: ${message}`);
+        throw e;
+      }
+    };
+
+    if (domain.detached) {
+      // Hand it to waitUntil and answer the tick now — see JobDomain.detached.
+      const { scheduleBackground } = await import("@/lib/background.server");
+      scheduleBackground(runRecovery(), `reliability:${domain.name}:${job.jobId}`);
+      out.push({ domain: domain.name, jobId: job.jobId, action: "recovery-dispatched", attempts });
+      continue;
+    }
+
     try {
-      await domain.recover(admin, job);
-      await patchRow(admin, row.id, {
-        state: "recovered",
-        next_attempt_at: null,
-        last_error: null,
-      });
+      await runRecovery();
       out.push({ domain: domain.name, jobId: job.jobId, action: "recovered", attempts });
     } catch (e) {
       const message = e instanceof Error ? e.message : String(e);
-      await patchRow(admin, row.id, { state: "watching", last_error: message });
       out.push({ domain: domain.name, jobId: job.jobId, action: "retry-failed", attempts, error: message });
-      console.error(`[reliability:${domain.name}:${job.jobId}] attempt ${attempts} failed: ${message}`);
     }
   }
 
