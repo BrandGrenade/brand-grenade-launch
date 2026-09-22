@@ -6,6 +6,8 @@ const TerritoryReviseInput = z.object({
   intelligenceSessionId: z.string().uuid(),
   territoryId: z.string().min(1).max(64),
   instructions: z.string().trim().min(3).max(8000),
+  /** "replace" swaps this one territory for a different one; the rest of the report is untouched. */
+  mode: z.enum(["revise", "replace"]).optional(),
 });
 
 /** Regenerate one territory against a free-text human redirect. */
@@ -35,6 +37,8 @@ export const reviseIntelligenceTerritory = createServerFn({ method: "POST" })
         ? (row.report_metadata as Record<string, unknown>)
         : {};
 
+    const mode = data.mode === "replace" ? "replace" : "revise";
+
     await supabaseAdmin
       .from("intelligence_sessions")
       .update({
@@ -46,6 +50,7 @@ export const reviseIntelligenceTerritory = createServerFn({ method: "POST" })
           pending_revision: {
             territory_id: data.territoryId,
             instructions: data.instructions,
+            mode,
             requested_at: new Date().toISOString(),
           },
         },
@@ -59,6 +64,7 @@ export const reviseIntelligenceTerritory = createServerFn({ method: "POST" })
         sessionId: data.intelligenceSessionId,
         territoryId: data.territoryId,
         instructions: data.instructions,
+        mode,
       }),
       `intelligence-revise:${data.intelligenceSessionId}`,
     );

@@ -166,7 +166,9 @@ Return ONLY the ${mode === "replace" ? "replacement" : "revised"} JSON object. N
       model: MODEL,
       temperature: TEMPERATURE,
       skipUniversalWrapper: true,
-      stageLabel: "Intelligence Engine — Territory revision",
+      stageLabel: mode === "replace"
+        ? "Intelligence Engine — Territory replacement"
+        : "Intelligence Engine — Territory revision",
       stageNumber: "IE-R",
       stageName: "Intelligence Territory Revision",
     });
@@ -213,6 +215,7 @@ Return ONLY the ${mode === "replace" ? "replacement" : "revised"} JSON object. N
     : [];
   revisionLog.push({
     territory_id: territoryId,
+    mode,
     instructions: args.instructions.slice(0, 4000),
     at: new Date().toISOString(),
   });

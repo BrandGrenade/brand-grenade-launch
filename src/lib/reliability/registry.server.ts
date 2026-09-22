@@ -127,7 +127,8 @@ const intelligenceReviseDomain: JobDomain = {
       return;
     }
     const { reviseTerritoryRun } = await import("@/lib/intelligence-revise.server");
-    const r = await reviseTerritoryRun({ sessionId: job.jobId, territoryId, instructions });
+    const mode = pending?.mode === "replace" ? "replace" : "revise";
+    const r = await reviseTerritoryRun({ sessionId: job.jobId, territoryId, instructions, mode });
     if (!r.success) throw new Error(r.error ?? "Territory revision failed");
   },
   async escalate(admin, job) {
