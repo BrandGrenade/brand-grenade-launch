@@ -1,0 +1,14 @@
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { STEP_2_SYSTEM, buildIntakeBlock } from "@/lib/briefing-room-prompts";
+import { callClaude } from "@/lib/claude.server";
+const id = "bd9cee43-e186-4ac0-8abf-008db47b9d99";
+const { data: ws } = await supabaseAdmin.from("briefing_room_workspaces").select("*").eq("id", id).single();
+const user = `${buildIntakeBlock({ brandName: ws.brand_name, category: ws.category, rawBrief: ws.raw_brief, evidence: ws.supporting_evidence })}\n\nProduce the Step 2 truths JSON now.`;
+const t0 = Date.now();
+const raw = await callClaude({ systemPrompt: STEP_2_SYSTEM, userMessage: user, maxTokens: 20000, skipUniversalWrapper: true });
+console.log("elapsed_s", ((Date.now()-t0)/1000).toFixed(1), "chars", raw.length);
+const s = raw.slice(raw.indexOf("{"), raw.lastIndexOf("}")+1);
+const p = JSON.parse(s);
+console.log("truths", p.truths?.length);
+await supabaseAdmin.from("briefing_room_workspaces").update({ truths: p, relevance: null, tensions: null, selected_tension_index: null, last_error: null }).eq("id", id);
+console.log("saved");
