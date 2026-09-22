@@ -361,7 +361,7 @@ function WorkspacePage() {
               </button>
             </div>
             <p className="text-body-sm mt-1 text-text-tertiary">
-              For the EY / KPMG demo, label anything concocted as{" "}
+              Label anything illustrative or constructed as{" "}
               <span className="italic">ILLUSTRATIVE</span> — never present it as real client data.
             </p>
             <div className="mt-3 flex flex-col gap-3">
