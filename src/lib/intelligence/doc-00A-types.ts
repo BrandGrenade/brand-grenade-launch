@@ -121,6 +121,15 @@ export interface IntelligenceReport {
 
 export interface Document00AInput {
   sourceRunId?: string | null;
+  /**
+   * Document 00A regeneration provenance. Present once the report has been
+   * reconciled against the session's current downstream state: the revision
+   * number, the run reference stamped by that reconciliation run, and when it
+   * ran. Absent means the document is the original engine run, unreconciled.
+   */
+  revision?: number | null;
+  runRef?: string | null;
+  regeneratedAt?: string | null;
   brandName: string;
   category: string;
   briefType: BriefType;

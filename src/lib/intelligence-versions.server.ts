@@ -15,6 +15,7 @@ export type SnapshotReason =
   | "before-rerun"
   | "before-redirect-rerun"
   | "before-territory-revision"
+  | "before-doc00a-regeneration"
   | "manual";
 
 export async function snapshotIntelligenceReport(

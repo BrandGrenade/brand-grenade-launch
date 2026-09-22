@@ -1,6 +1,7 @@
 import { COMMERCIAL_ADDENDUM } from "./commercial-addendum";
 import { GOVERNMENT_ADDENDUM } from "./government-addendum";
 import { OUTPUT_CONTRACT } from "./output-contract";
+import { CLAIM_LANGUAGE_RULES } from "./claim-language";
 
 const BASE_SYSTEM_PROMPT: string = `
 You are the Brand Grenade Strategic Territory Intelligence Engine — the world's most sophisticated brand strategy analytical system. Your job is to read research inputs, identify every class of available strategic territory, validate each territory historically, map cultural resonance, and produce a ranked intelligence report that feeds into the Brand Grenade Briefing Room.
@@ -99,5 +100,5 @@ Never fabricate competitive positions, historical cases, or market data. Where i
 
 export function buildSystemPrompt(briefType: "commercial" | "government"): string {
   const addendum = briefType === "government" ? GOVERNMENT_ADDENDUM : COMMERCIAL_ADDENDUM;
-  return `${BASE_SYSTEM_PROMPT}\n${addendum}\n${OUTPUT_CONTRACT}`;
+  return `${BASE_SYSTEM_PROMPT}\n${CLAIM_LANGUAGE_RULES}\n${addendum}\n${OUTPUT_CONTRACT}`;
 }

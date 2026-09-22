@@ -21,6 +21,9 @@ type IntelSummary = {
   completedAt: string | null;
   report: IntelligenceReport;
   research: { label: string; text: string }[];
+  revision: number | null;
+  runRef: string | null;
+  regeneratedAt: string | null;
 };
 
 const INTEL_SELECT =
@@ -79,6 +82,10 @@ async function fetchLatestIntelligence(
       (meta as Record<string, unknown>).brief_type === "government"
         ? "government"
         : "commercial";
+    const metaRec =
+      meta && typeof meta === "object" && !Array.isArray(meta)
+        ? (meta as Record<string, unknown>)
+        : {};
     return {
       id: match.id,
       brandName: match.brand_name || "Untitled Brand",
@@ -87,6 +94,12 @@ async function fetchLatestIntelligence(
       completedAt: match.completed_at ?? match.updated_at,
       report,
       research: researchEvidenceFromSession(match as unknown as Record<string, unknown>),
+      revision: typeof metaRec["doc00a_revision"] === "number" ? (metaRec["doc00a_revision"] as number) : null,
+      runRef: typeof metaRec["doc00a_run_ref"] === "string" ? (metaRec["doc00a_run_ref"] as string) : null,
+      regeneratedAt:
+        typeof metaRec["doc00a_regenerated_at"] === "string"
+          ? (metaRec["doc00a_regenerated_at"] as string)
+          : null,
     };
   } catch {
     return null;
@@ -130,6 +143,9 @@ export function Document00ACard({
         completedAt: intel.completedAt,
         report: intel.report,
         research: intel.research,
+        revision: intel.revision,
+        runRef: intel.runRef,
+        regeneratedAt: intel.regeneratedAt,
       });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "PDF generation failed");
