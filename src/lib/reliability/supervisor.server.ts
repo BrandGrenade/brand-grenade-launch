@@ -223,7 +223,7 @@ export async function superviseDomain(
     if (!domain.recover || attempts > domain.maxAttempts || totalAttempts > maxTotal) {
       const exhaustedLifetime = Boolean(domain.recover) && totalAttempts > maxTotal;
       const message = exhaustedLifetime
-        ? `This run was automatically restarted ${maxTotal} times and still could not finish${row.last_error ? `: ${row.last_error}` : "."} It has been stopped so it no longer consumes processing in the background. Please start it again, or contact support if it keeps failing.`
+        ? `This run was automatically restarted ${maxTotal} times and still could not finish${row.last_error ? ` (last error: ${row.last_error.replace(/\s*$/, "").replace(/\.$/, "")})` : ""}. It has been stopped so it no longer consumes processing in the background. Please start it again, or contact support if it keeps failing.`
         : (row.last_error ??
           (domain.recover
             ? `Automatic recovery failed after ${domain.maxAttempts} attempts.`
