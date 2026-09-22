@@ -222,12 +222,15 @@ export async function superviseDomain(
     // resumed server-side: escalate with the real error, and stop touching it.
     if (!domain.recover || attempts > domain.maxAttempts || totalAttempts > maxTotal) {
       const exhaustedLifetime = Boolean(domain.recover) && totalAttempts > maxTotal;
-      const message = exhaustedLifetime
-        ? `This run was automatically restarted ${maxTotal} times and still could not finish${row.last_error ? ` (last error: ${row.last_error.replace(/\s*$/, "").replace(/\.$/, "")})` : ""}. It has been stopped so it no longer consumes processing in the background. Please start it again, or contact support if it keeps failing.`
-        : (row.last_error ??
-          (domain.recover
-            ? `Automatic recovery failed after ${domain.maxAttempts} attempts.`
-            : `Run stalled for ${Math.round(job.quietMs / 60_000)} min with no progress and cannot be resumed automatically.`));
+      // A terminal state a person has to read: plain cause, plain next step.
+      const cause = row.last_error
+        ? ` (last error: ${row.last_error.trim().replace(/\.$/, "")})`
+        : "";
+      const restarts = exhaustedLifetime ? maxTotal : domain.maxAttempts;
+      const message = domain.recover
+        ? `This run was automatically restarted ${restarts} times and still could not finish${cause}. It has been stopped, so nothing is running in the background any more. Please start it again, or contact support if it keeps failing.`
+        : `This run stopped responding for ${Math.round(job.quietMs / 60_000)} minutes and cannot be restarted automatically${cause}. Please start it again.`;
+
       try {
         await domain.escalate(admin, job, message);
       } catch (e) {
