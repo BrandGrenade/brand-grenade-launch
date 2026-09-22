@@ -13,6 +13,9 @@ import {
   runBriefingStep4,
   setBriefingSelections,
   getBriefingHandoffPreview,
+  correctBriefingTruth,
+  addBriefingTruth,
+  deleteBriefingTruth,
 } from "@/lib/briefing-room.functions";
 import type {
   Step1Output,
@@ -58,6 +61,10 @@ function WorkspacePage() {
   const step4 = useServerFn(runBriefingStep4);
   const setSel = useServerFn(setBriefingSelections);
   const previewHandoff = useServerFn(getBriefingHandoffPreview);
+  const correctTruth = useServerFn(correctBriefingTruth);
+  const addTruth = useServerFn(addBriefingTruth);
+  const removeTruth = useServerFn(deleteBriefingTruth);
+  const [truthBusy, setTruthBusy] = useState(false);
   const navigate = useNavigate();
 
   const [ws, setWs] = useState<Ws | null>(null);
@@ -530,7 +537,48 @@ function WorkspacePage() {
           disabled={rawBrief.trim().length < 20}
           disabledReason="Raw brief must be at least 20 characters."
         >
-          {ws.truths && <Step2View data={ws.truths} />}
+          {ws.truths && (
+            <Step2View
+              data={ws.truths}
+              busy={truthBusy}
+              onCorrect={async (index, patch) => {
+                setTruthBusy(true);
+                try {
+                  await correctTruth({ data: { id, index, patch } as never });
+                  toast.success("Truth corrected");
+                  await refresh();
+                } catch (e) {
+                  toast.error(e instanceof Error ? e.message : "Correction failed");
+                } finally {
+                  setTruthBusy(false);
+                }
+              }}
+              onAdd={async (truth) => {
+                setTruthBusy(true);
+                try {
+                  await addTruth({ data: { id, truth } as never });
+                  toast.success("Truth added — Steps 3 and 4 cleared, re-run them");
+                  await refresh();
+                } catch (e) {
+                  toast.error(e instanceof Error ? e.message : "Add failed");
+                } finally {
+                  setTruthBusy(false);
+                }
+              }}
+              onDelete={async (index) => {
+                setTruthBusy(true);
+                try {
+                  await removeTruth({ data: { id, index } });
+                  toast.success("Truth removed — Steps 3 and 4 cleared, re-run them");
+                  await refresh();
+                } catch (e) {
+                  toast.error(e instanceof Error ? e.message : "Remove failed");
+                } finally {
+                  setTruthBusy(false);
+                }
+              }}
+            />
+          )}
         </StepCard>
 
         {/* ─── STEP 3 ─── */}
@@ -887,7 +935,101 @@ const EMPTY_FILTERS: TruthFilters = {
   thorpe: false,
 };
 
-function Step2View({ data }: { data: Step2Output }) {
+type TruthItem = Step2Output["truths"][number];
+type TruthValues = Pick<
+  TruthItem,
+  "text" | "category" | "source" | "tag_type" | "role" | "thorpe_candidate"
+>;
+
+/** Inline editor for one truth — the human-correction checkpoint at Step 2. */
+function TruthEditor({
+  mode,
+  initial,
+  busy,
+  onCancel,
+  onSave,
+}: {
+  mode: "add" | "edit";
+  initial: TruthValues;
+  busy: boolean;
+  onCancel: () => void;
+  onSave: (values: TruthValues, note: string, source: string) => Promise<void> | void;
+}) {
+  const [v, setV] = useState<TruthValues>({
+    text: initial.text,
+    category: initial.category,
+    source: initial.source,
+    tag_type: initial.tag_type,
+    role: initial.role,
+    thorpe_candidate: initial.thorpe_candidate,
+  });
+  const [note, setNote] = useState("");
+  const [src, setSrc] = useState("");
+  const field = "w-full rounded-md bg-[#0A0908] p-2 text-body-sm text-text-primary border border-[#2A2724]";
+  return (
+    <div className="mt-2 flex flex-col gap-2 rounded-md p-3" style={{ backgroundColor: "#0A0908", border: "1px solid #2A2724" }}>
+      <textarea
+        className={field}
+        rows={3}
+        value={v.text}
+        placeholder="Corrected truth — state the fact as it should read"
+        onChange={(e) => setV((p) => ({ ...p, text: e.target.value }))}
+      />
+      <div className="flex flex-wrap gap-2">
+        <select className={field + " max-w-[10rem]"} value={v.category} onChange={(e) => setV((p) => ({ ...p, category: e.target.value as TruthValues["category"] }))}>
+          <option value="product">product</option>
+          <option value="human">human</option>
+          <option value="cultural">cultural</option>
+          <option value="brand">brand</option>
+        </select>
+        <select className={field + " max-w-[10rem]"} value={v.tag_type} onChange={(e) => setV((p) => ({ ...p, tag_type: e.target.value as TruthValues["tag_type"] }))}>
+          <option value="quantitative">quantitative</option>
+          <option value="qualitative">qualitative</option>
+        </select>
+        <select className={field + " max-w-[10rem]"} value={v.role} onChange={(e) => setV((p) => ({ ...p, role: e.target.value as TruthValues["role"] }))}>
+          <option value="motivator">motivator</option>
+          <option value="discriminator">discriminator</option>
+        </select>
+        <label className="text-body-sm flex items-center gap-2 text-text-secondary">
+          <input type="checkbox" checked={v.thorpe_candidate} onChange={(e) => setV((p) => ({ ...p, thorpe_candidate: e.target.checked }))} />
+          Thorpe candidate
+        </label>
+      </div>
+      <input className={field} value={v.source} placeholder="Tag: where this truth comes from" onChange={(e) => setV((p) => ({ ...p, source: e.target.value }))} />
+      <input className={field} value={src} placeholder="Source for this correction (publication, dataset, date)" onChange={(e) => setSrc(e.target.value)} />
+      <textarea className={field} rows={2} value={note} placeholder="Why this was corrected (kept with the brief)" onChange={(e) => setNote(e.target.value)} />
+      <div className="flex gap-3">
+        <button
+          type="button"
+          disabled={busy || v.text.trim().length < 3}
+          onClick={() => void onSave({ ...v, text: v.text.trim() }, note.trim(), src.trim())}
+          className="text-body-sm text-primary hover:opacity-80 disabled:opacity-50"
+        >
+          {mode === "add" ? "Add truth" : "Save correction"}
+        </button>
+        <button type="button" onClick={onCancel} className="text-body-sm text-text-tertiary hover:opacity-80">
+          Cancel
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function Step2View({
+  data,
+  busy,
+  onCorrect,
+  onAdd,
+  onDelete,
+}: {
+  data: Step2Output;
+  busy: boolean;
+  onCorrect: (index: number, patch: Record<string, unknown>) => Promise<void>;
+  onAdd: (truth: Record<string, unknown>) => Promise<void>;
+  onDelete: (index: number) => Promise<void>;
+}) {
+  const [editing, setEditing] = useState<number | null>(null);
+  const [adding, setAdding] = useState<TruthItem["category"] | null>(null);
   const groups: Array<[Step2Output["truths"][number]["category"], string]> = [
     ["product", "Product truths"],
     ["human", "Human truths"],
@@ -937,11 +1079,41 @@ function Step2View({ data }: { data: Step2Output }) {
         )}
       </div>
       {groups.map(([key, label]) => {
-        const all = data.truths.filter((t) => t.category === key);
-        const items = all.filter(matches);
+        const all = data.truths
+          .map((t, index) => ({ t, index }))
+          .filter(({ t }) => t.category === key);
+        const items = all.filter(({ t }) => matches(t));
         return (
           <div key={key}>
-            <div className="text-label text-text-secondary">{label}</div>
+            <div className="flex items-center justify-between gap-2">
+              <div className="text-label text-text-secondary">{label}</div>
+              <button
+                type="button"
+                onClick={() => setAdding(key)}
+                className="text-body-sm text-primary hover:opacity-80"
+              >
+                + Add a truth
+              </button>
+            </div>
+            {adding === key && (
+              <TruthEditor
+                mode="add"
+                initial={{
+                  text: "",
+                  category: key,
+                  source: "human correction",
+                  tag_type: "quantitative",
+                  role: "motivator",
+                  thorpe_candidate: false,
+                }}
+                busy={busy}
+                onCancel={() => setAdding(null)}
+                onSave={async (values, note, source) => {
+                  await onAdd({ ...values, correction_note: note, correction_source: source });
+                  setAdding(null);
+                }}
+              />
+            )}
             {all.length === 0 ? (
               <p className="text-body-sm mt-1 text-text-tertiary italic">
                 None captured — {data.missing_types.includes(key) ? "flagged as missing." : "not present in the supplied material."}
@@ -952,41 +1124,103 @@ function Step2View({ data }: { data: Step2Output }) {
               </p>
             ) : (
               <ul className="mt-2 flex flex-col gap-2">
-                {items.map((t, i) => (
+                {items.map(({ t, index }) => (
                   <li
-                    key={i}
+                    key={index}
                     className="rounded-md p-3"
                     style={{ backgroundColor: "#1C1A18", border: "1px solid #1C1A18" }}
                   >
-                    <p className="text-body text-text-primary">{t.text}</p>
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      <TagBadge
-                        label={t.source}
-                        tone="source"
-                        active={filters.source === t.source}
-                        onClick={() => toggle("source", t.source)}
+                    {editing === index ? (
+                      <TruthEditor
+                        mode="edit"
+                        initial={t}
+                        busy={busy}
+                        onCancel={() => setEditing(null)}
+                        onSave={async (values, note, source) => {
+                          await onCorrect(index, {
+                            ...values,
+                            correction_note: note,
+                            correction_source: source,
+                          });
+                          setEditing(null);
+                        }}
                       />
-                      <TagBadge
-                        label={t.tag_type}
-                        tone={t.tag_type === "qualitative" ? "qual" : "quant"}
-                        active={filters.tag_type === t.tag_type}
-                        onClick={() => toggle("tag_type", t.tag_type)}
-                      />
-                      <TagBadge
-                        label={t.role}
-                        tone={t.role === "discriminator" ? "good" : "warn"}
-                        active={filters.role === t.role}
-                        onClick={() => toggle("role", t.role)}
-                      />
-                      {t.thorpe_candidate && (
-                        <TagBadge
-                          label="Thorpe candidate"
-                          tone="thorpe"
-                          active={filters.thorpe}
-                          onClick={() => toggle("thorpe", !filters.thorpe)}
-                        />
-                      )}
-                    </div>
+                    ) : (
+                      <>
+                        <p className="text-body text-text-primary">{t.text}</p>
+                        <div className="mt-2 flex flex-wrap items-center gap-2">
+                          <TagBadge
+                            label={t.source}
+                            tone="source"
+                            active={filters.source === t.source}
+                            onClick={() => toggle("source", t.source)}
+                          />
+                          <TagBadge
+                            label={t.tag_type}
+                            tone={t.tag_type === "qualitative" ? "qual" : "quant"}
+                            active={filters.tag_type === t.tag_type}
+                            onClick={() => toggle("tag_type", t.tag_type)}
+                          />
+                          <TagBadge
+                            label={t.role}
+                            tone={t.role === "discriminator" ? "good" : "warn"}
+                            active={filters.role === t.role}
+                            onClick={() => toggle("role", t.role)}
+                          />
+                          {t.thorpe_candidate && (
+                            <TagBadge
+                              label="Thorpe candidate"
+                              tone="thorpe"
+                              active={filters.thorpe}
+                              onClick={() => toggle("thorpe", !filters.thorpe)}
+                            />
+                          )}
+                          {(t.human_corrected || t.human_added) && (
+                            <span
+                              className="text-label rounded px-2 py-0.5"
+                              style={{ backgroundColor: "#0A0908", border: "1px solid #3FA46A", color: "#3FA46A" }}
+                            >
+                              {t.human_added ? "Human-added" : "Human-corrected"}
+                            </span>
+                          )}
+                          <span className="flex-1" />
+                          <button
+                            type="button"
+                            disabled={busy}
+                            onClick={() => setEditing(index)}
+                            className="text-body-sm text-primary hover:opacity-80 disabled:opacity-50"
+                          >
+                            Correct
+                          </button>
+                          <button
+                            type="button"
+                            disabled={busy}
+                            onClick={() => {
+                              if (
+                                window.confirm(
+                                  "Remove this truth? Steps 3 and 4 will be cleared because truth numbering changes.",
+                                )
+                              )
+                                void onDelete(index);
+                            }}
+                            className="text-body-sm text-text-tertiary hover:opacity-80 disabled:opacity-50"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                        {(t.correction_note || t.correction_source) && (
+                          <p className="text-body-sm mt-2 text-text-tertiary">
+                            Correction{t.correction_source ? ` — source: ${t.correction_source}` : ""}
+                            {t.correction_note ? `. ${t.correction_note}` : ""}
+                          </p>
+                        )}
+                        {t.original_text && t.original_text !== t.text && (
+                          <p className="text-body-sm mt-1 text-text-tertiary italic">
+                            Originally: {t.original_text}
+                          </p>
+                        )}
+                      </>
+                    )}
                   </li>
                 ))}
               </ul>

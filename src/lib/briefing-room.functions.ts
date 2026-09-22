@@ -603,3 +603,117 @@ Produce the unified Step 5 field JSON now. Every one of the eleven fields must b
   return parseJson<NonNullable<WorkspaceForHandoff["llm_fields"]>>(raw, "Step 5 unified synthesis");
 }
 
+
+// ─── STEP 2 HUMAN CORRECTIONS ────────────────────────────────────────
+// The Briefing Room is a human-checkpoint system: when a person catches a
+// wrong fact in a captured truth, they must be able to correct that one entry
+// without re-running Step 2 (which would regenerate every other truth and
+// wipe Steps 3–4). These three functions edit the stored truths array in
+// place and record the correction provenance alongside the text.
+
+const TruthPatchSchema = z.object({
+  text: z.string().trim().min(3).max(4000).optional(),
+  category: z.enum(["product", "human", "cultural", "brand"]).optional(),
+  source: z.string().trim().max(200).optional(),
+  tag_type: z.enum(["qualitative", "quantitative"]).optional(),
+  role: z.enum(["motivator", "discriminator"]).optional(),
+  thorpe_candidate: z.boolean().optional(),
+  correction_note: z.string().trim().max(2000).optional(),
+  correction_source: z.string().trim().max(500).optional(),
+});
+
+async function loadTruths(id: string, userId: string) {
+  const ws = await loadWorkspace(id, userId);
+  if (!ws.truths) throw new Error("Run Step 2 first.");
+  return { ws, truths: [...ws.truths.truths] as Truth[] };
+}
+
+async function writeTruths(
+  id: string,
+  base: Step2Output,
+  truths: Truth[],
+  clearDownstream: boolean,
+) {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const patch: Record<string, unknown> = { truths: { ...base, truths } };
+  if (clearDownstream) {
+    // Adding or removing a truth shifts the indices Step 3/4 refer to, so
+    // those results would silently point at the wrong truth. Clear them.
+    patch["relevance"] = null;
+    patch["tensions"] = null;
+    patch["selected_tension_index"] = null;
+  }
+  const { error } = await supabaseAdmin
+    .from("briefing_room_workspaces")
+    .update(patch as never)
+    .eq("id", id);
+  if (error) throw new Error(error.message);
+}
+
+export const correctBriefingTruth = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) =>
+    z
+      .object({ id: z.string().uuid(), index: z.number().int().min(0), patch: TruthPatchSchema })
+      .parse(i),
+  )
+  .handler(async ({ data, context }) => {
+    const { ws, truths } = await loadTruths(data.id, context.userId!);
+    const current = truths[data.index];
+    if (!current) throw new Error("Truth not found");
+    const next: Truth = {
+      ...current,
+      ...data.patch,
+      human_corrected: true,
+      original_text: current.original_text ?? current.text,
+      corrected_at: new Date().toISOString(),
+    };
+    truths[data.index] = next;
+    // Editing in place keeps indices stable, so Steps 3–4 stay valid.
+    await writeTruths(data.id, ws.truths!, truths, false);
+    return { ok: true };
+  });
+
+export const addBriefingTruth = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) =>
+    z
+      .object({
+        id: z.string().uuid(),
+        truth: z.object({
+          text: z.string().trim().min(3).max(4000),
+          category: z.enum(["product", "human", "cultural", "brand"]),
+          source: z.string().trim().max(200).default("human correction"),
+          tag_type: z.enum(["qualitative", "quantitative"]),
+          role: z.enum(["motivator", "discriminator"]),
+          thorpe_candidate: z.boolean().default(false),
+          correction_note: z.string().trim().max(2000).optional(),
+          correction_source: z.string().trim().max(500).optional(),
+        }),
+      })
+      .parse(i),
+  )
+  .handler(async ({ data, context }) => {
+    const { ws, truths } = await loadTruths(data.id, context.userId!);
+    truths.push({
+      ...data.truth,
+      human_added: true,
+      human_corrected: true,
+      corrected_at: new Date().toISOString(),
+    } as Truth);
+    await writeTruths(data.id, ws.truths!, truths, true);
+    return { ok: true };
+  });
+
+export const deleteBriefingTruth = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) =>
+    z.object({ id: z.string().uuid(), index: z.number().int().min(0) }).parse(i),
+  )
+  .handler(async ({ data, context }) => {
+    const { ws, truths } = await loadTruths(data.id, context.userId!);
+    if (!truths[data.index]) throw new Error("Truth not found");
+    truths.splice(data.index, 1);
+    await writeTruths(data.id, ws.truths!, truths, true);
+    return { ok: true };
+  });
