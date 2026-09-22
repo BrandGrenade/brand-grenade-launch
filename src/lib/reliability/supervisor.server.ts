@@ -118,7 +118,11 @@ async function loadRow(
     .eq("domain", domain)
     .eq("job_id", job.jobId)
     .maybeSingle();
-  if (data) return { total_attempts: 0, ...(data as SupervisionRow) };
+  if (data) {
+    const row = data as SupervisionRow;
+    return { ...row, total_attempts: row.total_attempts ?? 0 };
+  }
+
 
   const { data: inserted } = await admin
     .from("job_supervision")
