@@ -350,15 +350,18 @@ function IntelligenceRunPage() {
     }
   }, [id, redirectText, runAnalysisFn]);
 
-  // Territory-level revise: regenerates one territory only.
+  // Territory-level revise/replace: touches one territory only, never the
+  // rest of the report.
   const reviseTerritory = useCallback(
-    async (territoryId: string, instructions: string) => {
+    async (territoryId: string, instructions: string, mode: "revise" | "replace" = "revise") => {
       setRevisingTerritoryId(territoryId);
       try {
         await reviseTerritoryFn({
-          data: { intelligenceSessionId: id, territoryId, instructions },
+          data: { intelligenceSessionId: id, territoryId, instructions, mode },
         });
-        toast.success("Revising this territory");
+        toast.success(
+          mode === "replace" ? "Replacing this territory" : "Revising this territory",
+        );
         setPollEpoch((n) => n + 1);
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Could not start revision");
