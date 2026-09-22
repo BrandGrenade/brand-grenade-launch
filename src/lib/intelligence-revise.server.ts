@@ -150,6 +150,7 @@ Return ONLY the revised JSON object. No preamble, no markdown fences.`;
   } catch (e) {
     const message = e instanceof Error ? e.message : "Streaming error";
     await write({ status: "complete", stage_status: "complete:10", last_error: `Territory revision failed: ${message}` });
+    await clearPending();
     return { success: false, error: message };
   }
 
