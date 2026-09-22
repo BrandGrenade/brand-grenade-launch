@@ -915,7 +915,7 @@ function IntelligenceRunPage() {
                   onSelect={() => setSelectedTerritoryId(t.id)}
                   revising={revisingId === t.id}
                   busy={revisingTerritoryId === t.id || revisingId !== null}
-                  onRevise={(instructions) => reviseTerritory(t.id, instructions)}
+                  onRevise={(instructions, mode) => reviseTerritory(t.id, instructions, mode)}
                 />
               ))}
               {ordered.length === 0 ? (
@@ -933,11 +933,16 @@ function IntelligenceRunPage() {
             <Card className="p-6">
               <h2 className="text-h3 text-text-primary">Retry with instructions</h2>
               <p className="text-sm text-text-secondary mt-1">
-                Re-runs the whole report and replaces every territory. Your redirect
-                overrides the default direction wherever they conflict, and the current
-                report is passed in as rejected output so the engine cannot reproduce it.
-                The current report is saved to version history first and can be restored
-                below. To change one territory only, use “Revise this territory”.
+                <strong className="text-text-primary">
+                  Warning: this discards every territory in the current report and rebuilds
+                  all of them from scratch.
+                </strong>{" "}
+                Your redirect overrides the default direction wherever they conflict, and the
+                current report is passed in as rejected output so the engine cannot reproduce
+                it. The current report is saved to version history first and can be restored
+                below. To change or swap out a single territory without touching the others,
+                use “Revise this territory” or “Replace this territory” on the territory
+                itself.
               </p>
               <Textarea
                 value={redirectText}
