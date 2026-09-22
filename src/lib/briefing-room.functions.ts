@@ -589,7 +589,7 @@ Produce the unified Step 5 field JSON now. Every one of the eleven fields must b
   const raw = await callClaude({
     systemPrompt: STEP_5_UNIFIED_SYSTEM,
     userMessage: user,
-    maxTokens: 8000,
+    maxTokens: 24000,
     skipUniversalWrapper: true,
   });
   return parseJson<NonNullable<WorkspaceForHandoff["llm_fields"]>>(raw, "Step 5 unified synthesis");
