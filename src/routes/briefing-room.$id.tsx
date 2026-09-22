@@ -146,6 +146,46 @@ function WorkspacePage() {
     }
   }
 
+  // A dropped browser connection ("Failed to fetch") is a transport failure,
+  // not a failed generation: the step keeps running server-side and writes its
+  // result to the workspace row. When that happens we poll the row rather than
+  // telling the user the step failed.
+  function isTransportError(e: unknown): boolean {
+    const m = e instanceof Error ? e.message : String(e ?? "");
+    return /failed to fetch|networkerror|load failed|network request failed|fetch failed|err_network|connection closed|terminated/i.test(
+      m,
+    );
+  }
+
+  const STEP_FIELD = {
+    1: "diagnosis",
+    2: "truths",
+    3: "relevance",
+    4: "tensions",
+  } as const;
+
+  async function awaitStepResult(n: 1 | 2 | 3 | 4): Promise<boolean> {
+    const field = STEP_FIELD[n];
+    const deadline = Date.now() + 10 * 60_000;
+    while (Date.now() < deadline) {
+      await new Promise((r) => setTimeout(r, 6000));
+      try {
+        const w = await load({ data: { id } });
+        if ((w as unknown as Record<string, unknown>)[field]) {
+          setWs(w);
+          return true;
+        }
+        const err = (w as unknown as { last_error?: string | null }).last_error;
+        if (err) throw new Error(err);
+      } catch (e) {
+        if (!isTransportError(e)) throw e;
+      }
+    }
+    throw new Error(
+      `Step ${n} is taking longer than expected and the connection was lost. Reload the page in a minute — if the result has landed it will appear.`,
+    );
+  }
+
   async function runStep(n: 1 | 2 | 3 | 4) {
     setBusyStep(n);
     try {
@@ -156,7 +196,13 @@ function WorkspacePage() {
         });
       }
       const fn = n === 1 ? step1 : n === 2 ? step2 : n === 3 ? step3 : step4;
-      await fn({ data: { id } });
+      try {
+        await fn({ data: { id } });
+      } catch (e) {
+        if (!isTransportError(e)) throw e;
+        toast.info(`Step ${n} is still running — waiting for it to finish…`);
+        await awaitStepResult(n);
+      }
       await refresh();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : `Step ${n} failed`);
