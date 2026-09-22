@@ -645,7 +645,7 @@ async function writeTruths(
   }
   const { error } = await supabaseAdmin
     .from("briefing_room_workspaces")
-    .update(patch)
+    .update(patch as never)
     .eq("id", id);
   if (error) throw new Error(error.message);
 }

@@ -13,6 +13,9 @@ import {
   runBriefingStep4,
   setBriefingSelections,
   getBriefingHandoffPreview,
+  correctBriefingTruth,
+  addBriefingTruth,
+  deleteBriefingTruth,
 } from "@/lib/briefing-room.functions";
 import type {
   Step1Output,
@@ -58,6 +61,10 @@ function WorkspacePage() {
   const step4 = useServerFn(runBriefingStep4);
   const setSel = useServerFn(setBriefingSelections);
   const previewHandoff = useServerFn(getBriefingHandoffPreview);
+  const correctTruth = useServerFn(correctBriefingTruth);
+  const addTruth = useServerFn(addBriefingTruth);
+  const removeTruth = useServerFn(deleteBriefingTruth);
+  const [truthBusy, setTruthBusy] = useState(false);
   const navigate = useNavigate();
 
   const [ws, setWs] = useState<Ws | null>(null);
@@ -530,7 +537,48 @@ function WorkspacePage() {
           disabled={rawBrief.trim().length < 20}
           disabledReason="Raw brief must be at least 20 characters."
         >
-          {ws.truths && <Step2View data={ws.truths} />}
+          {ws.truths && (
+            <Step2View
+              data={ws.truths}
+              busy={truthBusy}
+              onCorrect={async (index, patch) => {
+                setTruthBusy(true);
+                try {
+                  await correctTruth({ data: { id, index, patch } as never });
+                  toast.success("Truth corrected");
+                  await refresh();
+                } catch (e) {
+                  toast.error(e instanceof Error ? e.message : "Correction failed");
+                } finally {
+                  setTruthBusy(false);
+                }
+              }}
+              onAdd={async (truth) => {
+                setTruthBusy(true);
+                try {
+                  await addTruth({ data: { id, truth } as never });
+                  toast.success("Truth added — Steps 3 and 4 cleared, re-run them");
+                  await refresh();
+                } catch (e) {
+                  toast.error(e instanceof Error ? e.message : "Add failed");
+                } finally {
+                  setTruthBusy(false);
+                }
+              }}
+              onDelete={async (index) => {
+                setTruthBusy(true);
+                try {
+                  await removeTruth({ data: { id, index } });
+                  toast.success("Truth removed — Steps 3 and 4 cleared, re-run them");
+                  await refresh();
+                } catch (e) {
+                  toast.error(e instanceof Error ? e.message : "Remove failed");
+                } finally {
+                  setTruthBusy(false);
+                }
+              }}
+            />
+          )}
         </StepCard>
 
         {/* ─── STEP 3 ─── */}
