@@ -339,12 +339,13 @@ function sectionOutput(
       selectedAliases(session as never),
     );
   }
-  // Agency presents one locked proposition. Its Stage 12 and Stage 9 source
-  // prose was authored while several candidates were live, so count-aware
-  // framing is applied at this template boundary. Board remains untouched.
-  if (format === "agency" && (key === "stage_12_output" || key === "stage_9_output")) {
-    raw = frameForPropositionCount(raw, 1);
-  }
+  // Agency presents one locked proposition, and its Stage 12 / Stage 9 source
+  // prose was authored while several candidates were live. The count-aware
+  // repair is applied once, at the rendering boundary in buildPhase1Document,
+  // so that every removal is reported there rather than silently pre-applied
+  // here (which would hide it from the materiality check).
+  void format;
+
   return raw;
 }
 
