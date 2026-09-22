@@ -18,17 +18,17 @@ You MUST return a single valid JSON object matching the exact structure below. R
       "description": "string",
       "type": "category_ownership" | "differentiated_positioning" | "category_creation" | "hermit_crab" | "moment_activated",
       "white_space": {
-        "perceptual": { "assessment": "string", "evidence": "string", "territory_type": "rational" | "emotional" | "both" },
-        "emotional": { "assessment": "string", "evidence": "string", "territory_type": "rational" | "emotional" | "both" },
-        "cultural": { "assessment": "string", "evidence": "string", "territory_type": "rational" | "emotional" | "both" },
-        "motivational": { "assessment": "string", "evidence": "string", "territory_type": "rational" | "emotional" | "both" }
+        "perceptual": { "assessment": "string", "evidence": "string", "evidence_basis": "observed" | "inferred" | "absence_of_evidence", "territory_type": "rational" | "emotional" | "both" },
+        "emotional": { "assessment": "string", "evidence": "string", "evidence_basis": "observed" | "inferred" | "absence_of_evidence", "territory_type": "rational" | "emotional" | "both" },
+        "cultural": { "assessment": "string", "evidence": "string", "evidence_basis": "observed" | "inferred" | "absence_of_evidence", "territory_type": "rational" | "emotional" | "both" },
+        "motivational": { "assessment": "string", "evidence": "string", "evidence_basis": "observed" | "inferred" | "absence_of_evidence", "territory_type": "rational" | "emotional" | "both" }
       },
       "brand_permission": { "score": 1-10, "rationale": "string", "permission_sources": ["string array"], "permission_gaps": ["string array"] },
       "first_mover": {
         "score": 1-10,
         "adoption_curve_stage": "string",
         "competitive_response_scenario": "no_credible_response" | "adjacent_response" | "direct_competition",
-        "window_duration": "string",
+        "window_duration": "string — state the horizon with its basis, e.g. '18-24 months (modelled estimate, not measured)'",
         "investment_threshold": "low" | "moderate" | "high" | "scale_independent"
       },
       "hermit_crab": null | {

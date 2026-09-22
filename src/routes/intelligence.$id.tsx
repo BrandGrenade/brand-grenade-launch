@@ -25,6 +25,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { Textarea } from "@/components/ui/textarea";
 import { reviseIntelligenceTerritory } from "@/lib/intelligence-revise.functions";
+import { regenerateDocument00A } from "@/lib/doc00a-regenerate.functions";
 import {
   listIntelligenceVersions,
   restoreIntelligenceVersion,
@@ -278,6 +279,9 @@ function IntelligenceRunPage() {
   const [revisingTerritoryId, setRevisingTerritoryId] = useState<string | null>(null);
   const runAnalysisFn = useServerFn(runIntelligenceAnalysis);
   const reviseTerritoryFn = useServerFn(reviseIntelligenceTerritory);
+  const regenerateDoc00AFn = useServerFn(regenerateDocument00A);
+  const [doc00aNotes, setDoc00aNotes] = useState("");
+  const [regeneratingDoc00A, setRegeneratingDoc00A] = useState(false);
   const listVersionsFn = useServerFn(listIntelligenceVersions);
   const restoreVersionFn = useServerFn(restoreIntelligenceVersion);
   const [versions, setVersions] = useState<IntelligenceVersionRow[]>([]);
@@ -352,6 +356,27 @@ function IntelligenceRunPage() {
 
   // Territory-level revise/replace: touches one territory only, never the
   // rest of the report.
+  // Document 00A regeneration: reconciles the stored report against the
+  // session's current downstream state and stamps a new run reference.
+  const regenerateDoc00A = useCallback(async () => {
+    setRegeneratingDoc00A(true);
+    try {
+      await regenerateDoc00AFn({
+        data: {
+          intelligenceSessionId: id,
+          instructions: doc00aNotes.trim() ? doc00aNotes.trim() : undefined,
+        },
+      });
+      toast.success("Regenerating Document 00A from the session's current state");
+      setDoc00aNotes("");
+      setPollEpoch((n) => n + 1);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not start regeneration");
+    } finally {
+      setRegeneratingDoc00A(false);
+    }
+  }, [id, doc00aNotes, regenerateDoc00AFn]);
+
   const reviseTerritory = useCallback(
     async (territoryId: string, instructions: string, mode: "revise" | "replace" = "revise") => {
       setRevisingTerritoryId(territoryId);
@@ -610,7 +635,12 @@ function IntelligenceRunPage() {
   const revisingId = row.stage_status?.startsWith("revising:")
     ? row.stage_status.slice("revising:".length)
     : null;
-  if (row.status === "running" && !revisingId) {
+  // A Document 00A regeneration reconciles the stored report territory by
+  // territory; the existing report stays readable while it runs.
+  const doc00aProgress = row.stage_status?.startsWith("doc00a:")
+    ? row.stage_status.slice("doc00a:".length)
+    : null;
+  if (row.status === "running" && !revisingId && !doc00aProgress) {
     const layer = row.current_layer ?? 0;
     const pct = Math.min(100, Math.max(5, Math.round((layer / 10) * 100)));
     const queued = row.stage_status === "queued";
@@ -926,6 +956,47 @@ function IntelligenceRunPage() {
                 </Card>
               ) : null}
             </div>
+          </section>
+
+          {/* Document 00A regeneration — reconcile, don't rebuild */}
+          <section className="mt-10">
+            <Card className="p-6">
+              <h2 className="text-h3 text-text-primary">Regenerate Document 00A</h2>
+              <p className="text-sm text-text-secondary mt-1">
+                Rebuilds the Strategic Territory Intelligence Report from this session’s
+                current state and stamps it with its own run reference. Territory
+                absorptions, corrected evidence and anything excluded downstream in the
+                Briefing Room are folded in; every territory keeps its place unless the
+                reconciliation changes it, and the current report is saved to version
+                history first.
+              </p>
+              {doc00aProgress ? (
+                <p className="mt-3 text-sm text-text-primary">
+                  <Loader2 className="mr-2 inline h-3.5 w-3.5 animate-spin" />
+                  Reconciling territories… {doc00aProgress}
+                </p>
+              ) : null}
+              <Textarea
+                value={doc00aNotes}
+                onChange={(e) => setDoc00aNotes(e.target.value)}
+                rows={4}
+                className="mt-4"
+                placeholder="e.g. Built Different has absorbed the engineering-heritage and technology territories — treat it as primary. Remove all internal-culture language. Carry the corrected BYD 2025 volume (52,415) through."
+              />
+              <div className="mt-3 flex justify-end">
+                <Button
+                  size="sm"
+                  onClick={regenerateDoc00A}
+                  disabled={regeneratingDoc00A || doc00aProgress !== null || revisingId !== null}
+                  className="bg-primary text-background hover:bg-primary disabled:opacity-60"
+                >
+                  {regeneratingDoc00A ? (
+                    <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
+                  ) : null}
+                  Regenerate Document 00A
+                </Button>
+              </div>
+            </Card>
           </section>
 
           {/* Session-level retry with instructions */}
