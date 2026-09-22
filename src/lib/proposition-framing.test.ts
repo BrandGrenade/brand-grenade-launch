@@ -5,9 +5,8 @@ import {
   frameForPropositionCount,
   enforcePropositionFraming,
   repairPropositionFraming,
-  REMOVAL_NOTICE,
-
 } from "./proposition-framing";
+
 
 const ROUND_FOUR = `The propositions differ not just in their creative expression but in their fundamental assumptions about what customers want. This proposition makes Friday permission the organising thought.`;
 const ROUND_FOUR_DISTINCTIVENESS = `They are not variations on a theme — they are fundamentally different theories about what the brand should mean. The selected proposition departs from category discount language.`;
