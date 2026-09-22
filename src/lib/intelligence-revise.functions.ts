@@ -16,7 +16,7 @@ export const reviseIntelligenceTerritory = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     const { data: row, error } = await supabase
       .from("intelligence_sessions")
-      .select("id, user_id, status, final_report")
+      .select("id, user_id, status, final_report, report_metadata")
       .eq("id", data.intelligenceSessionId)
       .maybeSingle();
     if (error || !row) throw new Error("Intelligence session not found");
@@ -25,13 +25,31 @@ export const reviseIntelligenceTerritory = createServerFn({ method: "POST" })
     if (row.status === "running") throw new Error("A run is already in progress for this session");
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // Persist the request itself BEFORE dispatch. If the background invocation
+    // is lost (Worker torn down before the continuation runs), the watchdog has
+    // no other way to know what the human asked for — without this the revision
+    // is silently dropped and the user must retype the instruction.
+    const meta =
+      row.report_metadata && typeof row.report_metadata === "object" && !Array.isArray(row.report_metadata)
+        ? (row.report_metadata as Record<string, unknown>)
+        : {};
+
     await supabaseAdmin
       .from("intelligence_sessions")
       .update({
         status: "running",
         stage_status: `revising:${data.territoryId}`,
         last_error: null,
-      })
+        report_metadata: {
+          ...meta,
+          pending_revision: {
+            territory_id: data.territoryId,
+            instructions: data.instructions,
+            requested_at: new Date().toISOString(),
+          },
+        },
+      } as never)
       .eq("id", data.intelligenceSessionId);
 
     const { scheduleBackground } = await import("./background.server");
