@@ -31,7 +31,11 @@ const intelligenceDomain: JobDomain = {
   name: "intelligence",
   timeoutMs: INTEL_QUEUED_MS,
   maxAttempts: 3,
+  // Lifetime ceiling: a run that keeps inching forward and dying must still
+  // terminate in a visible failure rather than retry (and bill) forever.
+  maxTotalAttempts: 5,
   backoffMs: DEFAULT_BACKOFF,
+
   // A full analysis is a ~10 minute streamed run — far longer than the tick
   // request that discovers it. Awaiting it inline meant the scheduler hung up,
   // the Worker invocation was cancelled mid-stream, and the run froze part-way
