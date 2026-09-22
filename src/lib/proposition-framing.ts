@@ -38,17 +38,22 @@ export function findPropositionFramingViolations(
   return violations;
 }
 
-/** A visible stand-in left wherever a whole line had to be dropped. */
-export const REMOVAL_NOTICE =
-  "_[Editorial note: a sentence written for a multi-proposition comparison was removed here. This document presents a single proposition.]_";
+/**
+ * Client-facing documents never carry housekeeping language. A line that
+ * cannot be repaired is dropped from the rendered prose and reported through
+ * `FramingRepair.removedLines` instead, so the removal is visible to review
+ * tooling (and, past a materiality threshold, stops the build) without a
+ * reader ever seeing internal editorial text.
+ */
 
 export type FramingRepair = {
   text: string;
-  /** Lines removed in full — never silent; each leaves a visible notice. */
+  /** Lines removed in full — reported to the caller, never left in the prose. */
   removedLines: string[];
   /** Lines where only the offending sentence was removed. */
   trimmedLines: string[];
 };
+
 
 /**
  * Repairs unsupported set-comparison prose for a single-proposition document.
