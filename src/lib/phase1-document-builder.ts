@@ -97,10 +97,8 @@ import { relabelScoreScale } from "./appendix-humanise";
 import { certifyDocument } from "./content-integrity";
 import { BOOKKEEPING_LINE, CANDIDATE_STAGE_KEYS, scopeToSelected, selectedAliases } from "./minto-content";
 import { buildBoardStrategyDocument } from "./board-strategy-document";
-import {
-  enforcePropositionFraming,
-  frameForPropositionCount,
-} from "./proposition-framing";
+import { enforcePropositionFraming } from "./proposition-framing";
+
 
 export function sanitise(t: string | null | undefined): string {
   // Legacy transcripts carry composites written on the superseded /100 and
