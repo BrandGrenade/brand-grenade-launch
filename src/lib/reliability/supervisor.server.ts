@@ -41,8 +41,17 @@ export interface JobDomain {
   timeoutMs: number;
   /** Automatic attempts before a human is involved. */
   maxAttempts: number;
+  /**
+   * Hard ceiling on TOTAL recovery attempts for one job, counted across the
+   * whole life of the job and never reset by progress. Without it, a run that
+   * advances a little and dies again resets `attempts` forever (see the
+   * progress rule below) and retries without end — expensive, invisible, and
+   * never resolving. Defaults to maxAttempts * 2.
+   */
+  maxTotalAttempts?: number;
   /** Backoff before attempt N (1-indexed), in ms. */
   backoffMs?: (attempt: number) => number;
+
   /**
    * Recovery takes far longer than one tick request may live.
    *
