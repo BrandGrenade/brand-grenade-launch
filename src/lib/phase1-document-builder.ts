@@ -392,6 +392,11 @@ export function buildPhase1Document(session: Phase1Session, format: Phase1Format
   const brand = session.brand_name ?? "Untitled Brand";
   const sections = sectionsFor(format);
 
+  // Framing repairs are recorded here and emitted as an HTML comment at the end
+  // of the file: reviewable in the artifact, invisible to the reader, and never
+  // silent. Material loss throws out of enforcePropositionFraming instead.
+  const repairs: string[] = [];
+
   const body =
     cover(meta.label, meta.title, brand) +
     proposition(session.selected_smp) +
@@ -403,8 +408,19 @@ export function buildPhase1Document(session: Phase1Session, format: Phase1Format
         if (!raw.trim()) return "";
         let cleaned = sanitise(raw);
         if (format === "agency" && (s.key === "stage_12_output" || s.key === "stage_9_output")) {
-          // Self-correcting: repair plural framing rather than block the build.
-          cleaned = enforcePropositionFraming(cleaned, 1, `Agency ${s.label} “${s.title}”`);
+          cleaned = enforcePropositionFraming(
+            cleaned,
+            1,
+            `Agency ${s.label} “${s.title}”`,
+            (record) => {
+              for (const line of record.removedLines) {
+                repairs.push(`${record.context} — removed line: ${line.replace(/--+/g, "-")}`);
+              }
+              for (const line of record.trimmedLines) {
+                repairs.push(`${record.context} — trimmed sentence in: ${line.replace(/--+/g, "-")}`);
+              }
+            },
+          );
         }
         let inner = md(cleaned);
         // The stage output often opens with its own title heading, which would
@@ -421,7 +437,11 @@ export function buildPhase1Document(session: Phase1Session, format: Phase1Format
       .filter(Boolean)
       .join("\n") +
 
-    footer();
+    footer() +
+    (repairs.length
+      ? `\n<!-- proposition-framing repairs (internal, not rendered):\n${repairs.join("\n")}\n-->`
+      : "");
+
 
   return certifyDocument(
     `<!doctype html>
