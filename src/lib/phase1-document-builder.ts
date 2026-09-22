@@ -97,10 +97,8 @@ import { relabelScoreScale } from "./appendix-humanise";
 import { certifyDocument } from "./content-integrity";
 import { BOOKKEEPING_LINE, CANDIDATE_STAGE_KEYS, scopeToSelected, selectedAliases } from "./minto-content";
 import { buildBoardStrategyDocument } from "./board-strategy-document";
-import {
-  enforcePropositionFraming,
-  frameForPropositionCount,
-} from "./proposition-framing";
+import { enforcePropositionFraming } from "./proposition-framing";
+
 
 export function sanitise(t: string | null | undefined): string {
   // Legacy transcripts carry composites written on the superseded /100 and
@@ -339,12 +337,13 @@ function sectionOutput(
       selectedAliases(session as never),
     );
   }
-  // Agency presents one locked proposition. Its Stage 12 and Stage 9 source
-  // prose was authored while several candidates were live, so count-aware
-  // framing is applied at this template boundary. Board remains untouched.
-  if (format === "agency" && (key === "stage_12_output" || key === "stage_9_output")) {
-    raw = frameForPropositionCount(raw, 1);
-  }
+  // Agency presents one locked proposition, and its Stage 12 / Stage 9 source
+  // prose was authored while several candidates were live. The count-aware
+  // repair is applied once, at the rendering boundary in buildPhase1Document,
+  // so that every removal is reported there rather than silently pre-applied
+  // here (which would hide it from the materiality check).
+  void format;
+
   return raw;
 }
 
@@ -391,6 +390,11 @@ export function buildPhase1Document(session: Phase1Session, format: Phase1Format
   const brand = session.brand_name ?? "Untitled Brand";
   const sections = sectionsFor(format);
 
+  // Framing repairs are recorded here and emitted as an HTML comment at the end
+  // of the file: reviewable in the artifact, invisible to the reader, and never
+  // silent. Material loss throws out of enforcePropositionFraming instead.
+  const repairs: string[] = [];
+
   const body =
     cover(meta.label, meta.title, brand) +
     proposition(session.selected_smp) +
@@ -402,8 +406,19 @@ export function buildPhase1Document(session: Phase1Session, format: Phase1Format
         if (!raw.trim()) return "";
         let cleaned = sanitise(raw);
         if (format === "agency" && (s.key === "stage_12_output" || s.key === "stage_9_output")) {
-          // Self-correcting: repair plural framing rather than block the build.
-          cleaned = enforcePropositionFraming(cleaned, 1, `Agency ${s.label} “${s.title}”`);
+          cleaned = enforcePropositionFraming(
+            cleaned,
+            1,
+            `Agency ${s.label} “${s.title}”`,
+            (record) => {
+              for (const line of record.removedLines) {
+                repairs.push(`${record.context} — removed line: ${line.replace(/--+/g, "-")}`);
+              }
+              for (const line of record.trimmedLines) {
+                repairs.push(`${record.context} — trimmed sentence in: ${line.replace(/--+/g, "-")}`);
+              }
+            },
+          );
         }
         let inner = md(cleaned);
         // The stage output often opens with its own title heading, which would
@@ -420,7 +435,11 @@ export function buildPhase1Document(session: Phase1Session, format: Phase1Format
       .filter(Boolean)
       .join("\n") +
 
-    footer();
+    footer() +
+    (repairs.length
+      ? `\n<!-- proposition-framing repairs (internal, not rendered):\n${repairs.join("\n")}\n-->`
+      : "");
+
 
   return certifyDocument(
     `<!doctype html>

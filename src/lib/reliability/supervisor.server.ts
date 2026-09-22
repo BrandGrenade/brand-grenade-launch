@@ -41,8 +41,17 @@ export interface JobDomain {
   timeoutMs: number;
   /** Automatic attempts before a human is involved. */
   maxAttempts: number;
+  /**
+   * Hard ceiling on TOTAL recovery attempts for one job, counted across the
+   * whole life of the job and never reset by progress. Without it, a run that
+   * advances a little and dies again resets `attempts` forever (see the
+   * progress rule below) and retries without end — expensive, invisible, and
+   * never resolving. Defaults to maxAttempts * 2.
+   */
+  maxTotalAttempts?: number;
   /** Backoff before attempt N (1-indexed), in ms. */
   backoffMs?: (attempt: number) => number;
+
   /**
    * Recovery takes far longer than one tick request may live.
    *
@@ -87,6 +96,7 @@ export interface SupervisionOutcome {
 interface SupervisionRow {
   id: string;
   attempts: number;
+  total_attempts: number;
   state: string;
   next_attempt_at: string | null;
   last_attempt_at: string | null;
@@ -94,7 +104,8 @@ interface SupervisionRow {
 }
 
 /** Heartbeat moved after the last recovery attempt = that attempt worked. */
-const SUPERVISION_SELECT = "id, attempts, state, next_attempt_at, last_attempt_at, last_error";
+const SUPERVISION_SELECT =
+  "id, attempts, total_attempts, state, next_attempt_at, last_attempt_at, last_error";
 
 async function loadRow(
   admin: Admin,
@@ -107,7 +118,11 @@ async function loadRow(
     .eq("domain", domain)
     .eq("job_id", job.jobId)
     .maybeSingle();
-  if (data) return data as SupervisionRow;
+  if (data) {
+    const row = data as SupervisionRow;
+    return { ...row, total_attempts: row.total_attempts ?? 0 };
+  }
+
 
   const { data: inserted } = await admin
     .from("job_supervision")
@@ -117,6 +132,7 @@ async function loadRow(
       owner_user_id: job.ownerUserId ?? null,
       state: "watching",
       attempts: 0,
+      total_attempts: 0,
       detail: job.detail ?? null,
     })
     .select(SUPERVISION_SELECT)
@@ -124,12 +140,14 @@ async function loadRow(
   return (inserted as SupervisionRow) ?? {
     id: "",
     attempts: 0,
+    total_attempts: 0,
     state: "watching",
     next_attempt_at: null,
     last_attempt_at: null,
     last_error: null,
   };
 }
+
 
 async function patchRow(admin: Admin, id: string, patch: Record<string, unknown>): Promise<void> {
   if (!id) return;
@@ -194,16 +212,25 @@ export async function superviseDomain(
     const priorAttempts = progressedSinceLastAttempt ? 0 : row.attempts;
 
     const attempts = priorAttempts + 1;
+    // Never reset: the ceiling that guarantees termination even when every
+    // attempt makes a little progress before dying again.
+    const totalAttempts = (row.total_attempts ?? 0) + 1;
+    const maxTotal = domain.maxTotalAttempts ?? domain.maxAttempts * 2;
     const backoff = (domain.backoffMs ?? DEFAULT_BACKOFF)(attempts);
 
-    // Retry budget exhausted, or this domain cannot be resumed server-side:
-    // escalate with the real error, and stop touching it automatically.
-    if (!domain.recover || attempts > domain.maxAttempts) {
-      const message =
-        row.last_error ??
-        (domain.recover
-          ? `Automatic recovery failed after ${domain.maxAttempts} attempts.`
-          : `Run stalled for ${Math.round(job.quietMs / 60_000)} min with no progress and cannot be resumed automatically.`);
+    // Retry budget exhausted (per-stall or lifetime), or this domain cannot be
+    // resumed server-side: escalate with the real error, and stop touching it.
+    if (!domain.recover || attempts > domain.maxAttempts || totalAttempts > maxTotal) {
+      const exhaustedLifetime = Boolean(domain.recover) && totalAttempts > maxTotal;
+      // A terminal state a person has to read: plain cause, plain next step.
+      const cause = row.last_error
+        ? ` (last error: ${row.last_error.trim().replace(/\.$/, "")})`
+        : "";
+      const restarts = exhaustedLifetime ? maxTotal : domain.maxAttempts;
+      const message = domain.recover
+        ? `This run was automatically restarted ${restarts} times and still could not finish${cause}. It has been stopped, so nothing is running in the background any more. Please start it again, or contact support if it keeps failing.`
+        : `This run stopped responding for ${Math.round(job.quietMs / 60_000)} minutes and cannot be restarted automatically${cause}. Please start it again.`;
+
       try {
         await domain.escalate(admin, job, message);
       } catch (e) {
@@ -212,6 +239,7 @@ export async function superviseDomain(
       await patchRow(admin, row.id, {
         state: "escalated",
         attempts: priorAttempts,
+        total_attempts: row.total_attempts ?? 0,
         last_attempt_at: new Date().toISOString(),
         next_attempt_at: null,
         last_error: message,
@@ -226,6 +254,8 @@ export async function superviseDomain(
     await patchRow(admin, row.id, {
       state: "retrying",
       attempts,
+      total_attempts: totalAttempts,
+
       owner_user_id: job.ownerUserId ?? null,
       last_attempt_at: new Date().toISOString(),
       next_attempt_at: new Date(Date.now() + backoff).toISOString(),

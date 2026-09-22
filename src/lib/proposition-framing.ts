@@ -38,17 +38,22 @@ export function findPropositionFramingViolations(
   return violations;
 }
 
-/** A visible stand-in left wherever a whole line had to be dropped. */
-export const REMOVAL_NOTICE =
-  "_[Editorial note: a sentence written for a multi-proposition comparison was removed here. This document presents a single proposition.]_";
+/**
+ * Client-facing documents never carry housekeeping language. A line that
+ * cannot be repaired is dropped from the rendered prose and reported through
+ * `FramingRepair.removedLines` instead, so the removal is visible to review
+ * tooling (and, past a materiality threshold, stops the build) without a
+ * reader ever seeing internal editorial text.
+ */
 
 export type FramingRepair = {
   text: string;
-  /** Lines removed in full — never silent; each leaves a visible notice. */
+  /** Lines removed in full — reported to the caller, never left in the prose. */
   removedLines: string[];
   /** Lines where only the offending sentence was removed. */
   trimmedLines: string[];
 };
+
 
 /**
  * Repairs unsupported set-comparison prose for a single-proposition document.
@@ -88,7 +93,8 @@ export function repairPropositionFraming(
         }
       }
       removedLines.push(line.trim());
-      return keepListMarker(line);
+      return "";
+
     })
     .filter((line, index, all) => line.trim() || index === 0 || (all[index - 1] ?? "").trim())
     .join("\n");
@@ -132,14 +138,6 @@ function isPublishableRemainder(original: string, kept: string): boolean {
   return body.length >= 25;
 }
 
-/**
- * Replaces an unsalvageable line with a visible notice, preserving any list
- * marker so the surrounding structure still reads correctly.
- */
-function keepListMarker(line: string): string {
-  const marker = line.match(/^\s*(?:[-*•]|\d+[.)])\s*/)?.[0] ?? "";
-  return `${marker}${REMOVAL_NOTICE}`;
-}
 
 
 export function assertPropositionFraming(
@@ -158,16 +156,38 @@ export function assertPropositionFraming(
   );
 }
 
+/** A repair that a reviewer should be able to see after the fact. */
+export type FramingRepairRecord = {
+  context: string;
+  removedLines: string[];
+  trimmedLines: string[];
+  unrepairedSentences: string[];
+};
+
 /**
- * Self-correcting form used by live document builders. The point of the check
- * is to keep plural set-comparison language out of a single-proposition
- * document — so it repairs the text and reports, rather than failing the whole
- * build over one sentence or an unpunctuated bullet.
+ * More full-line removals than this in one section is treated as material
+ * content loss: the build stops for human review rather than shipping a
+ * quietly shortened section.
+ */
+export const MAX_REMOVED_LINES = 2;
+
+/**
+ * Self-correcting form used by live document builders.
+ *
+ * Contract:
+ *  - the returned prose NEVER contains editorial/housekeeping language; a
+ *    client reading the exported document sees only strategy prose;
+ *  - every repair is reported through `onRepair` (and the server log) so the
+ *    removal is reviewable rather than silent;
+ *  - material loss — more than MAX_REMOVED_LINES removed lines, a section
+ *    emptied by the repair, or prose the repair could not fix — throws, so a
+ *    human sees it instead of a client receiving a shortened document.
  */
 export function enforcePropositionFraming(
   text: string,
   propositionCount: number,
   context: string,
+  onRepair?: (record: FramingRepairRecord) => void,
 ): string {
   const violations = findPropositionFramingViolations(text, propositionCount);
   if (!violations.length) return text;
@@ -175,25 +195,32 @@ export function enforcePropositionFraming(
     text,
     propositionCount,
   );
-  if (removedLines.length) {
+  const remaining = findPropositionFramingViolations(repaired, propositionCount);
+
+  if (removedLines.length || trimmedLines.length || remaining.length) {
+    const record: FramingRepairRecord = {
+      context,
+      removedLines,
+      trimmedLines,
+      unrepairedSentences: remaining.map((v) => v.sentence),
+    };
+    onRepair?.(record);
     console.warn(
-      `[proposition-framing] ${context}: ${removedLines.length} line(s) removed in full and replaced with a visible editorial notice`,
+      `[proposition-framing] ${context}: ${removedLines.length} line(s) removed, ${trimmedLines.length} line(s) trimmed, ${remaining.length} unrepaired`,
       removedLines.slice(0, 3).map((l) => l.slice(0, 180)),
     );
   }
-  if (trimmedLines.length) {
-    console.warn(
-      `[proposition-framing] ${context}: ${trimmedLines.length} line(s) had one comparison sentence removed`,
-      trimmedLines.slice(0, 3).map((l) => l.slice(0, 180)),
-    );
-  }
-  const remaining = findPropositionFramingViolations(repaired, propositionCount);
-  if (remaining.length) {
-    console.warn(
-      `[proposition-framing] ${context}: ${remaining.length} sentence(s) could not be repaired automatically`,
-      remaining.slice(0, 3).map((v) => v.sentence.slice(0, 180)),
+
+  const emptied = Boolean(text.replace(/[\s#>*-]/g, "")) && !repaired.replace(/[\s#>*-]/g, "");
+  if (remaining.length || removedLines.length > MAX_REMOVED_LINES || emptied) {
+    throw new Error(
+      `${context}: proposition framing could not be repaired safely for a client-facing document — ` +
+        `${removedLines.length} line(s) would be removed, ${remaining.length} sentence(s) unrepaired` +
+        (emptied ? ", and the section would be left empty" : "") +
+        `. Halting for human review rather than shipping altered prose.`,
     );
   }
 
   return repaired;
+
 }

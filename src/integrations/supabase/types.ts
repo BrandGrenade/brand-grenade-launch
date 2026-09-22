@@ -447,6 +447,7 @@ export type Database = {
           next_attempt_at: string | null
           owner_user_id: string | null
           state: string
+          total_attempts: number
           updated_at: string
         }
         Insert: {
@@ -462,6 +463,7 @@ export type Database = {
           next_attempt_at?: string | null
           owner_user_id?: string | null
           state?: string
+          total_attempts?: number
           updated_at?: string
         }
         Update: {
@@ -477,6 +479,7 @@ export type Database = {
           next_attempt_at?: string | null
           owner_user_id?: string | null
           state?: string
+          total_attempts?: number
           updated_at?: string
         }
         Relationships: []
