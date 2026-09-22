@@ -1487,41 +1487,55 @@ function TerritoryCard({
           ) : null}
         </Accordion>
 
-        {/* Territory-level revise — regenerates this territory only */}
+        {/* Territory-level revise/replace — touches this territory only */}
         <div className="mt-4 border-t pt-4">
           {revising ? (
             <p className="text-[13px] text-text-secondary inline-flex items-center gap-2">
-              <Loader2 className="h-3.5 w-3.5 animate-spin" /> Revising this territory…
+              <Loader2 className="h-3.5 w-3.5 animate-spin" /> Working on this territory…
             </p>
           ) : reviseOpen ? (
             <div>
+              <p className="text-[13px] text-text-secondary mb-2">
+                {reviseOpen === "replace"
+                  ? "This territory is discarded and a genuinely different one is written in its place. Every other territory in the report is left untouched."
+                  : "This territory is rewritten against your direction. Every other territory in the report is left untouched."}
+              </p>
               <Textarea
                 value={reviseText}
                 onChange={(e) => setReviseText(e.target.value)}
                 rows={3}
-                placeholder="What should change about this territory? e.g. the brand permission score is too generous — reassess against the lack of proof in service."
+                placeholder={
+                  reviseOpen === "replace"
+                    ? "What should the replacement explore, and what must it avoid? e.g. find new ground away from trust and engineering pride; do not propose anything based on the waitlist angle."
+                    : "What should change about this territory? e.g. the brand permission score is too generous — reassess against the lack of proof in service."
+                }
               />
               <div className="mt-2 flex justify-end gap-2">
-                <Button variant="ghost" size="sm" onClick={() => setReviseOpen(false)}>
+                <Button variant="ghost" size="sm" onClick={() => setReviseOpen(null)}>
                   Cancel
                 </Button>
                 <Button
                   size="sm"
                   disabled={busy || reviseText.trim().length < 3}
                   onClick={() => {
-                    void onRevise(reviseText.trim());
+                    void onRevise(reviseText.trim(), reviseOpen);
                     setReviseText("");
-                    setReviseOpen(false);
+                    setReviseOpen(null);
                   }}
                 >
-                  Revise territory
+                  {reviseOpen === "replace" ? "Replace territory" : "Revise territory"}
                 </Button>
               </div>
             </div>
           ) : (
-            <Button variant="outline" size="sm" disabled={busy} onClick={() => setReviseOpen(true)}>
-              Revise this territory
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outline" size="sm" disabled={busy} onClick={() => setReviseOpen("revise")}>
+                Revise this territory
+              </Button>
+              <Button variant="outline" size="sm" disabled={busy} onClick={() => setReviseOpen("replace")}>
+                Replace this territory
+              </Button>
+            </div>
           )}
         </div>
       </div>
