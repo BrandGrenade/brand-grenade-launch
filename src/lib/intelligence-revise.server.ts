@@ -67,6 +67,7 @@ export async function reviseTerritoryRun(args: {
     .maybeSingle();
   if (!row?.final_report) {
     await write({ status: "complete", stage_status: "complete:10", last_error: "No report to revise" });
+    await clearPending();
     return { success: false, error: "No report to revise" };
   }
 
@@ -75,12 +76,14 @@ export async function reviseTerritoryRun(args: {
     report = JSON.parse(row.final_report) as ReportShape;
   } catch {
     await write({ status: "complete", stage_status: "complete:10", last_error: "Stored report is not valid JSON" });
+    await clearPending();
     return { success: false, error: "Stored report is not valid JSON" };
   }
   const territories = Array.isArray(report.territories) ? report.territories : [];
   const index = territories.findIndex((t) => t?.id === territoryId);
   if (index < 0) {
     await write({ status: "complete", stage_status: "complete:10", last_error: "Territory not found" });
+    await clearPending();
     return { success: false, error: "Territory not found" };
   }
   const target = territories[index]!;
