@@ -17,11 +17,20 @@ interface ReportShape {
   [key: string]: unknown;
 }
 
+export type TerritoryRunMode = "revise" | "replace";
+
 export async function reviseTerritoryRun(args: {
   sessionId: string;
   territoryId: string;
   instructions: string;
+  /**
+   * "revise" edits the existing territory in place. "replace" discards it and
+   * generates a genuinely different territory in the same slot — the targeted
+   * alternative to the whole-report redirect, which regenerates everything.
+   */
+  mode?: TerritoryRunMode;
 }): Promise<{ success: boolean; error?: string }> {
+  const mode: TerritoryRunMode = args.mode === "replace" ? "replace" : "revise";
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { sessionId, territoryId } = args;
 
