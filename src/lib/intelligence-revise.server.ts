@@ -190,12 +190,15 @@ Return ONLY the revised JSON object. No preamble, no markdown fences.`;
     at: new Date().toISOString(),
   });
 
+  const nextMeta = { ...meta, territory_revisions: revisionLog.slice(-50) };
+  delete (nextMeta as Record<string, unknown>)["pending_revision"];
+
   await write({
     final_report: JSON.stringify(nextReport),
     status: "complete",
     stage_status: "complete:10",
     last_error: null,
-    report_metadata: { ...meta, territory_revisions: revisionLog.slice(-50) },
+    report_metadata: nextMeta,
   });
   return { success: true };
 }
