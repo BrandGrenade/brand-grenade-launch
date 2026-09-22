@@ -172,6 +172,7 @@ Return ONLY the revised JSON object. No preamble, no markdown fences.`;
       stage_status: "complete:10",
       last_error: "Territory revision returned unparseable JSON — original territory kept",
     });
+    await clearPending();
     return { success: false, error: "Unparseable revision" };
   }
 
