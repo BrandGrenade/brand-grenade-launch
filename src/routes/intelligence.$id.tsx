@@ -350,15 +350,18 @@ function IntelligenceRunPage() {
     }
   }, [id, redirectText, runAnalysisFn]);
 
-  // Territory-level revise: regenerates one territory only.
+  // Territory-level revise/replace: touches one territory only, never the
+  // rest of the report.
   const reviseTerritory = useCallback(
-    async (territoryId: string, instructions: string) => {
+    async (territoryId: string, instructions: string, mode: "revise" | "replace" = "revise") => {
       setRevisingTerritoryId(territoryId);
       try {
         await reviseTerritoryFn({
-          data: { intelligenceSessionId: id, territoryId, instructions },
+          data: { intelligenceSessionId: id, territoryId, instructions, mode },
         });
-        toast.success("Revising this territory");
+        toast.success(
+          mode === "replace" ? "Replacing this territory" : "Revising this territory",
+        );
         setPollEpoch((n) => n + 1);
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Could not start revision");
@@ -912,7 +915,7 @@ function IntelligenceRunPage() {
                   onSelect={() => setSelectedTerritoryId(t.id)}
                   revising={revisingId === t.id}
                   busy={revisingTerritoryId === t.id || revisingId !== null}
-                  onRevise={(instructions) => reviseTerritory(t.id, instructions)}
+                  onRevise={(instructions, mode) => reviseTerritory(t.id, instructions, mode)}
                 />
               ))}
               {ordered.length === 0 ? (
@@ -930,11 +933,16 @@ function IntelligenceRunPage() {
             <Card className="p-6">
               <h2 className="text-h3 text-text-primary">Retry with instructions</h2>
               <p className="text-sm text-text-secondary mt-1">
-                Re-runs the whole report and replaces every territory. Your redirect
-                overrides the default direction wherever they conflict, and the current
-                report is passed in as rejected output so the engine cannot reproduce it.
-                The current report is saved to version history first and can be restored
-                below. To change one territory only, use “Revise this territory”.
+                <strong className="text-text-primary">
+                  Warning: this discards every territory in the current report and rebuilds
+                  all of them from scratch.
+                </strong>{" "}
+                Your redirect overrides the default direction wherever they conflict, and the
+                current report is passed in as rejected output so the engine cannot reproduce
+                it. The current report is saved to version history first and can be restored
+                below. To change or swap out a single territory without touching the others,
+                use “Revise this territory” or “Replace this territory” on the territory
+                itself.
               </p>
               <Textarea
                 value={redirectText}
@@ -1087,10 +1095,10 @@ function TerritoryCard({
   onSelect: () => void;
   revising: boolean;
   busy: boolean;
-  onRevise: (instructions: string) => void | Promise<void>;
+  onRevise: (instructions: string, mode: "revise" | "replace") => void | Promise<void>;
 }) {
   const [reviseText, setReviseText] = useState("");
-  const [reviseOpen, setReviseOpen] = useState(false);
+  const [reviseOpen, setReviseOpen] = useState<null | "revise" | "replace">(null);
 
   const typeMeta = territory.type ? TYPE_LABEL[territory.type] : null;
   const risk = territory.historical_validation?.risk_classification;
@@ -1479,41 +1487,55 @@ function TerritoryCard({
           ) : null}
         </Accordion>
 
-        {/* Territory-level revise — regenerates this territory only */}
+        {/* Territory-level revise/replace — touches this territory only */}
         <div className="mt-4 border-t pt-4">
           {revising ? (
             <p className="text-[13px] text-text-secondary inline-flex items-center gap-2">
-              <Loader2 className="h-3.5 w-3.5 animate-spin" /> Revising this territory…
+              <Loader2 className="h-3.5 w-3.5 animate-spin" /> Working on this territory…
             </p>
           ) : reviseOpen ? (
             <div>
+              <p className="text-[13px] text-text-secondary mb-2">
+                {reviseOpen === "replace"
+                  ? "This territory is discarded and a genuinely different one is written in its place. Every other territory in the report is left untouched."
+                  : "This territory is rewritten against your direction. Every other territory in the report is left untouched."}
+              </p>
               <Textarea
                 value={reviseText}
                 onChange={(e) => setReviseText(e.target.value)}
                 rows={3}
-                placeholder="What should change about this territory? e.g. the brand permission score is too generous — reassess against the lack of proof in service."
+                placeholder={
+                  reviseOpen === "replace"
+                    ? "What should the replacement explore, and what must it avoid? e.g. find new ground away from trust and engineering pride; do not propose anything based on the waitlist angle."
+                    : "What should change about this territory? e.g. the brand permission score is too generous — reassess against the lack of proof in service."
+                }
               />
               <div className="mt-2 flex justify-end gap-2">
-                <Button variant="ghost" size="sm" onClick={() => setReviseOpen(false)}>
+                <Button variant="ghost" size="sm" onClick={() => setReviseOpen(null)}>
                   Cancel
                 </Button>
                 <Button
                   size="sm"
                   disabled={busy || reviseText.trim().length < 3}
                   onClick={() => {
-                    void onRevise(reviseText.trim());
+                    void onRevise(reviseText.trim(), reviseOpen);
                     setReviseText("");
-                    setReviseOpen(false);
+                    setReviseOpen(null);
                   }}
                 >
-                  Revise territory
+                  {reviseOpen === "replace" ? "Replace territory" : "Revise territory"}
                 </Button>
               </div>
             </div>
           ) : (
-            <Button variant="outline" size="sm" disabled={busy} onClick={() => setReviseOpen(true)}>
-              Revise this territory
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outline" size="sm" disabled={busy} onClick={() => setReviseOpen("revise")}>
+                Revise this territory
+              </Button>
+              <Button variant="outline" size="sm" disabled={busy} onClick={() => setReviseOpen("replace")}>
+                Replace this territory
+              </Button>
+            </div>
           )}
         </div>
       </div>
