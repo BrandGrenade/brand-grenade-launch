@@ -33,6 +33,28 @@ export async function reviseTerritoryRun(args: {
     }
   };
 
+  /** Drop the durable "a revision is owed" marker once the run reaches a terminal state. */
+  const clearPending = async () => {
+    try {
+      const { data } = await supabaseAdmin
+        .from("intelligence_sessions")
+        .select("report_metadata")
+        .eq("id", sessionId)
+        .maybeSingle();
+      const m =
+        data?.report_metadata && typeof data.report_metadata === "object" && !Array.isArray(data.report_metadata)
+          ? ({ ...(data.report_metadata as Record<string, unknown>) })
+          : {};
+      delete m["pending_revision"];
+      await supabaseAdmin
+        .from("intelligence_sessions")
+        .update({ report_metadata: m } as never)
+        .eq("id", sessionId);
+    } catch {
+      /* best effort */
+    }
+  };
+
   {
     const { snapshotIntelligenceReport } = await import("./intelligence-versions.server");
     await snapshotIntelligenceReport(sessionId, "before-territory-revision");
@@ -45,6 +67,7 @@ export async function reviseTerritoryRun(args: {
     .maybeSingle();
   if (!row?.final_report) {
     await write({ status: "complete", stage_status: "complete:10", last_error: "No report to revise" });
+    await clearPending();
     return { success: false, error: "No report to revise" };
   }
 
@@ -53,12 +76,14 @@ export async function reviseTerritoryRun(args: {
     report = JSON.parse(row.final_report) as ReportShape;
   } catch {
     await write({ status: "complete", stage_status: "complete:10", last_error: "Stored report is not valid JSON" });
+    await clearPending();
     return { success: false, error: "Stored report is not valid JSON" };
   }
   const territories = Array.isArray(report.territories) ? report.territories : [];
   const index = territories.findIndex((t) => t?.id === territoryId);
   if (index < 0) {
     await write({ status: "complete", stage_status: "complete:10", last_error: "Territory not found" });
+    await clearPending();
     return { success: false, error: "Territory not found" };
   }
   const target = territories[index]!;
@@ -125,6 +150,7 @@ Return ONLY the revised JSON object. No preamble, no markdown fences.`;
   } catch (e) {
     const message = e instanceof Error ? e.message : "Streaming error";
     await write({ status: "complete", stage_status: "complete:10", last_error: `Territory revision failed: ${message}` });
+    await clearPending();
     return { success: false, error: message };
   }
 
@@ -146,6 +172,7 @@ Return ONLY the revised JSON object. No preamble, no markdown fences.`;
       stage_status: "complete:10",
       last_error: "Territory revision returned unparseable JSON — original territory kept",
     });
+    await clearPending();
     return { success: false, error: "Unparseable revision" };
   }
 
@@ -163,12 +190,15 @@ Return ONLY the revised JSON object. No preamble, no markdown fences.`;
     at: new Date().toISOString(),
   });
 
+  const nextMeta = { ...meta, territory_revisions: revisionLog.slice(-50) };
+  delete (nextMeta as Record<string, unknown>)["pending_revision"];
+
   await write({
     final_report: JSON.stringify(nextReport),
     status: "complete",
     stage_status: "complete:10",
     last_error: null,
-    report_metadata: { ...meta, territory_revisions: revisionLog.slice(-50) },
+    report_metadata: nextMeta,
   });
   return { success: true };
 }
