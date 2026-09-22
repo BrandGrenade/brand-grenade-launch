@@ -93,7 +93,8 @@ export function repairPropositionFraming(
         }
       }
       removedLines.push(line.trim());
-      return keepListMarker(line);
+      return "";
+
     })
     .filter((line, index, all) => line.trim() || index === 0 || (all[index - 1] ?? "").trim())
     .join("\n");
@@ -137,14 +138,6 @@ function isPublishableRemainder(original: string, kept: string): boolean {
   return body.length >= 25;
 }
 
-/**
- * Replaces an unsalvageable line with a visible notice, preserving any list
- * marker so the surrounding structure still reads correctly.
- */
-function keepListMarker(line: string): string {
-  const marker = line.match(/^\s*(?:[-*•]|\d+[.)])\s*/)?.[0] ?? "";
-  return `${marker}${REMOVAL_NOTICE}`;
-}
 
 
 export function assertPropositionFraming(
