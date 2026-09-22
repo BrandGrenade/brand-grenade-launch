@@ -184,6 +184,17 @@ export type Truth = {
   tag_type: "qualitative" | "quantitative";
   role: "motivator" | "discriminator";
   thorpe_candidate: boolean;
+  /**
+   * Human-correction provenance. Set only when a person edits or adds a truth
+   * at the Step 2 checkpoint; the model never writes these fields. Kept with
+   * the truth so the correction and its source survive into the handoff.
+   */
+  human_corrected?: boolean;
+  human_added?: boolean;
+  correction_note?: string;
+  correction_source?: string;
+  corrected_at?: string;
+  original_text?: string;
 };
 
 export type Step2Output = {
