@@ -117,15 +117,22 @@ export async function reviseTerritoryRun(args: {
     .map((t) => `- ${String(t?.["name"] ?? t?.id ?? "")}`)
     .join("\n");
 
-  const userMessage = `${injection.prefix}TERRITORY REVISION REQUEST
+  const task =
+    mode === "replace"
+      ? `You are REPLACING ONE territory in an existing Strategic Territory Intelligence Report.
+Discard the territory below entirely and develop a genuinely different strategic
+territory in its slot — new ground, not a variant, rename or softening of it.
+The replacement must not duplicate or drift into the other territories listed
+above, and must obey every constraint in the human direction.
 
-Brand: ${row.brand_name ?? "Not specified"}
-Category: ${row.category ?? "Not specified"}
-Brief type: ${briefType}
+Return a SINGLE JSON object for the replacement territory, using EXACTLY the
+same key structure and enum vocabulary as the object below. Keep the "id" value
+unchanged ("${territoryId}"). Every field must be written fresh for the new
+territory — name, description, evidence, scores, rationales and the prebrief.
+Do not carry over any wording from the rejected territory.
 
-You are revising ONE territory from an existing Strategic Territory Intelligence Report.
-Other territories in the report (do not duplicate or drift into them):
-${otherNames || "(none)"}
+REJECTED TERRITORY OBJECT (structure reference only — its content is out of scope):`
+      : `You are revising ONE territory from an existing Strategic Territory Intelligence Report.
 
 Return a SINGLE JSON object for this territory only, using EXACTLY the same
 key structure and enum vocabulary as the object below. Keep the "id" value
@@ -133,11 +140,22 @@ unchanged ("${territoryId}"). Preserve any field the human direction does not
 require changing, but rewrite every field the direction affects — including
 downstream reasoning, scores, rationales and the prebrief.
 
-CURRENT TERRITORY OBJECT:
+CURRENT TERRITORY OBJECT:`;
+
+  const userMessage = `${injection.prefix}${mode === "replace" ? "TERRITORY REPLACEMENT REQUEST" : "TERRITORY REVISION REQUEST"}
+
+Brand: ${row.brand_name ?? "Not specified"}
+Category: ${row.category ?? "Not specified"}
+Brief type: ${briefType}
+
+Other territories in the report (do not duplicate or drift into them):
+${otherNames || "(none)"}
+
+${task}
 ${previous}
 ${injection.suffix}
 
-Return ONLY the revised JSON object. No preamble, no markdown fences.`;
+Return ONLY the ${mode === "replace" ? "replacement" : "revised"} JSON object. No preamble, no markdown fences.`;
 
   let accumulated = "";
   try {
