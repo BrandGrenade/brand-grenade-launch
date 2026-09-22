@@ -212,16 +212,22 @@ export async function superviseDomain(
     const priorAttempts = progressedSinceLastAttempt ? 0 : row.attempts;
 
     const attempts = priorAttempts + 1;
+    // Never reset: the ceiling that guarantees termination even when every
+    // attempt makes a little progress before dying again.
+    const totalAttempts = (row.total_attempts ?? 0) + 1;
+    const maxTotal = domain.maxTotalAttempts ?? domain.maxAttempts * 2;
     const backoff = (domain.backoffMs ?? DEFAULT_BACKOFF)(attempts);
 
-    // Retry budget exhausted, or this domain cannot be resumed server-side:
-    // escalate with the real error, and stop touching it automatically.
-    if (!domain.recover || attempts > domain.maxAttempts) {
-      const message =
-        row.last_error ??
-        (domain.recover
-          ? `Automatic recovery failed after ${domain.maxAttempts} attempts.`
-          : `Run stalled for ${Math.round(job.quietMs / 60_000)} min with no progress and cannot be resumed automatically.`);
+    // Retry budget exhausted (per-stall or lifetime), or this domain cannot be
+    // resumed server-side: escalate with the real error, and stop touching it.
+    if (!domain.recover || attempts > domain.maxAttempts || totalAttempts > maxTotal) {
+      const exhaustedLifetime = Boolean(domain.recover) && totalAttempts > maxTotal;
+      const message = exhaustedLifetime
+        ? `This run was automatically restarted ${maxTotal} times and still could not finish${row.last_error ? `: ${row.last_error}` : "."} It has been stopped so it no longer consumes processing in the background. Please start it again, or contact support if it keeps failing.`
+        : (row.last_error ??
+          (domain.recover
+            ? `Automatic recovery failed after ${domain.maxAttempts} attempts.`
+            : `Run stalled for ${Math.round(job.quietMs / 60_000)} min with no progress and cannot be resumed automatically.`));
       try {
         await domain.escalate(admin, job, message);
       } catch (e) {
@@ -230,6 +236,7 @@ export async function superviseDomain(
       await patchRow(admin, row.id, {
         state: "escalated",
         attempts: priorAttempts,
+        total_attempts: row.total_attempts ?? 0,
         last_attempt_at: new Date().toISOString(),
         next_attempt_at: null,
         last_error: message,
@@ -244,6 +251,8 @@ export async function superviseDomain(
     await patchRow(admin, row.id, {
       state: "retrying",
       attempts,
+      total_attempts: totalAttempts,
+
       owner_user_id: job.ownerUserId ?? null,
       last_attempt_at: new Date().toISOString(),
       next_attempt_at: new Date(Date.now() + backoff).toISOString(),
