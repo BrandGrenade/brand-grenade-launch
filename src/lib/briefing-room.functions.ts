@@ -56,6 +56,7 @@ async function loadWorkspace(id: string, userId: string) {
     selected_frame: string | null;
     selected_tension_index: number | null;
     status: string;
+    last_error: string | null;
     updated_at: string;
   };
 }
@@ -72,6 +73,13 @@ async function guardedStep<T>(
   args: Parameters<typeof callClaude>[0],
 ): Promise<T> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  // Clear any previous failure up-front. The client polls this row when its
+  // own HTTP request is dropped by an intermediary during a long generation,
+  // so a stale last_error must not be mistaken for this run's outcome.
+  await supabaseAdmin
+    .from("briefing_room_workspaces")
+    .update({ last_error: null })
+    .eq("id", workspaceId);
   try {
     const raw = await callClaude(args);
     const parsed = parseJson<T>(raw, label);
