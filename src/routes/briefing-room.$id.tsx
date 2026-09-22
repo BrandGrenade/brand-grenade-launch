@@ -887,7 +887,101 @@ const EMPTY_FILTERS: TruthFilters = {
   thorpe: false,
 };
 
-function Step2View({ data }: { data: Step2Output }) {
+type TruthItem = Step2Output["truths"][number];
+type TruthValues = Pick<
+  TruthItem,
+  "text" | "category" | "source" | "tag_type" | "role" | "thorpe_candidate"
+>;
+
+/** Inline editor for one truth — the human-correction checkpoint at Step 2. */
+function TruthEditor({
+  mode,
+  initial,
+  busy,
+  onCancel,
+  onSave,
+}: {
+  mode: "add" | "edit";
+  initial: TruthValues;
+  busy: boolean;
+  onCancel: () => void;
+  onSave: (values: TruthValues, note: string, source: string) => Promise<void> | void;
+}) {
+  const [v, setV] = useState<TruthValues>({
+    text: initial.text,
+    category: initial.category,
+    source: initial.source,
+    tag_type: initial.tag_type,
+    role: initial.role,
+    thorpe_candidate: initial.thorpe_candidate,
+  });
+  const [note, setNote] = useState("");
+  const [src, setSrc] = useState("");
+  const field = "w-full rounded-md bg-[#0A0908] p-2 text-body-sm text-text-primary border border-[#2A2724]";
+  return (
+    <div className="mt-2 flex flex-col gap-2 rounded-md p-3" style={{ backgroundColor: "#0A0908", border: "1px solid #2A2724" }}>
+      <textarea
+        className={field}
+        rows={3}
+        value={v.text}
+        placeholder="Corrected truth — state the fact as it should read"
+        onChange={(e) => setV((p) => ({ ...p, text: e.target.value }))}
+      />
+      <div className="flex flex-wrap gap-2">
+        <select className={field + " max-w-[10rem]"} value={v.category} onChange={(e) => setV((p) => ({ ...p, category: e.target.value as TruthValues["category"] }))}>
+          <option value="product">product</option>
+          <option value="human">human</option>
+          <option value="cultural">cultural</option>
+          <option value="brand">brand</option>
+        </select>
+        <select className={field + " max-w-[10rem]"} value={v.tag_type} onChange={(e) => setV((p) => ({ ...p, tag_type: e.target.value as TruthValues["tag_type"] }))}>
+          <option value="quantitative">quantitative</option>
+          <option value="qualitative">qualitative</option>
+        </select>
+        <select className={field + " max-w-[10rem]"} value={v.role} onChange={(e) => setV((p) => ({ ...p, role: e.target.value as TruthValues["role"] }))}>
+          <option value="motivator">motivator</option>
+          <option value="discriminator">discriminator</option>
+        </select>
+        <label className="text-body-sm flex items-center gap-2 text-text-secondary">
+          <input type="checkbox" checked={v.thorpe_candidate} onChange={(e) => setV((p) => ({ ...p, thorpe_candidate: e.target.checked }))} />
+          Thorpe candidate
+        </label>
+      </div>
+      <input className={field} value={v.source} placeholder="Tag: where this truth comes from" onChange={(e) => setV((p) => ({ ...p, source: e.target.value }))} />
+      <input className={field} value={src} placeholder="Source for this correction (publication, dataset, date)" onChange={(e) => setSrc(e.target.value)} />
+      <textarea className={field} rows={2} value={note} placeholder="Why this was corrected (kept with the brief)" onChange={(e) => setNote(e.target.value)} />
+      <div className="flex gap-3">
+        <button
+          type="button"
+          disabled={busy || v.text.trim().length < 3}
+          onClick={() => void onSave({ ...v, text: v.text.trim() }, note.trim(), src.trim())}
+          className="text-body-sm text-primary hover:opacity-80 disabled:opacity-50"
+        >
+          {mode === "add" ? "Add truth" : "Save correction"}
+        </button>
+        <button type="button" onClick={onCancel} className="text-body-sm text-text-tertiary hover:opacity-80">
+          Cancel
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function Step2View({
+  data,
+  busy,
+  onCorrect,
+  onAdd,
+  onDelete,
+}: {
+  data: Step2Output;
+  busy: boolean;
+  onCorrect: (index: number, patch: Record<string, unknown>) => Promise<void>;
+  onAdd: (truth: Record<string, unknown>) => Promise<void>;
+  onDelete: (index: number) => Promise<void>;
+}) {
+  const [editing, setEditing] = useState<number | null>(null);
+  const [adding, setAdding] = useState<TruthItem["category"] | null>(null);
   const groups: Array<[Step2Output["truths"][number]["category"], string]> = [
     ["product", "Product truths"],
     ["human", "Human truths"],
