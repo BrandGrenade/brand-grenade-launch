@@ -88,7 +88,16 @@ const TAG = (source: string, tagType?: string): string =>
   tagType ? `[source: ${source} | type: ${tagType}]` : `[source: ${source}]`;
 
 function truthLine(t: Truth): string {
-  return `- ${t.text} ${TAG(t.source, t.tag_type)} (role: ${t.role}${t.thorpe_candidate ? "; thorpe-candidate" : ""})`;
+  // A human correction is provenance, not decoration: it must travel with the
+  // truth into the brief so downstream stages (and the reader) can see that a
+  // person overrode the system here, and on what authority.
+  const human =
+    t.human_corrected || t.human_added
+      ? ` [${t.human_added ? "human-added" : "human-corrected"}${
+          t.correction_source ? `; source: ${t.correction_source}` : ""
+        }${t.correction_note ? `; note: ${t.correction_note}` : ""}]`
+      : "";
+  return `- ${t.text} ${TAG(t.source, t.tag_type)} (role: ${t.role}${t.thorpe_candidate ? "; thorpe-candidate" : ""})${human}`;
 }
 
 function pickRelevantTruths(ws: WorkspaceForHandoff): Truth[] {
