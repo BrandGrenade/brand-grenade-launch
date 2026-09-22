@@ -33,6 +33,28 @@ export async function reviseTerritoryRun(args: {
     }
   };
 
+  /** Drop the durable "a revision is owed" marker once the run reaches a terminal state. */
+  const clearPending = async () => {
+    try {
+      const { data } = await supabaseAdmin
+        .from("intelligence_sessions")
+        .select("report_metadata")
+        .eq("id", sessionId)
+        .maybeSingle();
+      const m =
+        data?.report_metadata && typeof data.report_metadata === "object" && !Array.isArray(data.report_metadata)
+          ? ({ ...(data.report_metadata as Record<string, unknown>) })
+          : {};
+      delete m["pending_revision"];
+      await supabaseAdmin
+        .from("intelligence_sessions")
+        .update({ report_metadata: m } as never)
+        .eq("id", sessionId);
+    } catch {
+      /* best effort */
+    }
+  };
+
   {
     const { snapshotIntelligenceReport } = await import("./intelligence-versions.server");
     await snapshotIntelligenceReport(sessionId, "before-territory-revision");
