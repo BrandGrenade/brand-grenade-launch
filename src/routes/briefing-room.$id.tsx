@@ -937,11 +937,41 @@ function Step2View({ data }: { data: Step2Output }) {
         )}
       </div>
       {groups.map(([key, label]) => {
-        const all = data.truths.filter((t) => t.category === key);
-        const items = all.filter(matches);
+        const all = data.truths
+          .map((t, index) => ({ t, index }))
+          .filter(({ t }) => t.category === key);
+        const items = all.filter(({ t }) => matches(t));
         return (
           <div key={key}>
-            <div className="text-label text-text-secondary">{label}</div>
+            <div className="flex items-center justify-between gap-2">
+              <div className="text-label text-text-secondary">{label}</div>
+              <button
+                type="button"
+                onClick={() => setAdding(key)}
+                className="text-body-sm text-primary hover:opacity-80"
+              >
+                + Add a truth
+              </button>
+            </div>
+            {adding === key && (
+              <TruthEditor
+                mode="add"
+                initial={{
+                  text: "",
+                  category: key,
+                  source: "human correction",
+                  tag_type: "quantitative",
+                  role: "motivator",
+                  thorpe_candidate: false,
+                }}
+                busy={busy}
+                onCancel={() => setAdding(null)}
+                onSave={async (values, note, source) => {
+                  await onAdd({ ...values, correction_note: note, correction_source: source });
+                  setAdding(null);
+                }}
+              />
+            )}
             {all.length === 0 ? (
               <p className="text-body-sm mt-1 text-text-tertiary italic">
                 None captured — {data.missing_types.includes(key) ? "flagged as missing." : "not present in the supplied material."}
@@ -952,41 +982,103 @@ function Step2View({ data }: { data: Step2Output }) {
               </p>
             ) : (
               <ul className="mt-2 flex flex-col gap-2">
-                {items.map((t, i) => (
+                {items.map(({ t, index }) => (
                   <li
-                    key={i}
+                    key={index}
                     className="rounded-md p-3"
                     style={{ backgroundColor: "#1C1A18", border: "1px solid #1C1A18" }}
                   >
-                    <p className="text-body text-text-primary">{t.text}</p>
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      <TagBadge
-                        label={t.source}
-                        tone="source"
-                        active={filters.source === t.source}
-                        onClick={() => toggle("source", t.source)}
+                    {editing === index ? (
+                      <TruthEditor
+                        mode="edit"
+                        initial={t}
+                        busy={busy}
+                        onCancel={() => setEditing(null)}
+                        onSave={async (values, note, source) => {
+                          await onCorrect(index, {
+                            ...values,
+                            correction_note: note,
+                            correction_source: source,
+                          });
+                          setEditing(null);
+                        }}
                       />
-                      <TagBadge
-                        label={t.tag_type}
-                        tone={t.tag_type === "qualitative" ? "qual" : "quant"}
-                        active={filters.tag_type === t.tag_type}
-                        onClick={() => toggle("tag_type", t.tag_type)}
-                      />
-                      <TagBadge
-                        label={t.role}
-                        tone={t.role === "discriminator" ? "good" : "warn"}
-                        active={filters.role === t.role}
-                        onClick={() => toggle("role", t.role)}
-                      />
-                      {t.thorpe_candidate && (
-                        <TagBadge
-                          label="Thorpe candidate"
-                          tone="thorpe"
-                          active={filters.thorpe}
-                          onClick={() => toggle("thorpe", !filters.thorpe)}
-                        />
-                      )}
-                    </div>
+                    ) : (
+                      <>
+                        <p className="text-body text-text-primary">{t.text}</p>
+                        <div className="mt-2 flex flex-wrap items-center gap-2">
+                          <TagBadge
+                            label={t.source}
+                            tone="source"
+                            active={filters.source === t.source}
+                            onClick={() => toggle("source", t.source)}
+                          />
+                          <TagBadge
+                            label={t.tag_type}
+                            tone={t.tag_type === "qualitative" ? "qual" : "quant"}
+                            active={filters.tag_type === t.tag_type}
+                            onClick={() => toggle("tag_type", t.tag_type)}
+                          />
+                          <TagBadge
+                            label={t.role}
+                            tone={t.role === "discriminator" ? "good" : "warn"}
+                            active={filters.role === t.role}
+                            onClick={() => toggle("role", t.role)}
+                          />
+                          {t.thorpe_candidate && (
+                            <TagBadge
+                              label="Thorpe candidate"
+                              tone="thorpe"
+                              active={filters.thorpe}
+                              onClick={() => toggle("thorpe", !filters.thorpe)}
+                            />
+                          )}
+                          {(t.human_corrected || t.human_added) && (
+                            <span
+                              className="text-label rounded px-2 py-0.5"
+                              style={{ backgroundColor: "#0A0908", border: "1px solid #3FA46A", color: "#3FA46A" }}
+                            >
+                              {t.human_added ? "Human-added" : "Human-corrected"}
+                            </span>
+                          )}
+                          <span className="flex-1" />
+                          <button
+                            type="button"
+                            disabled={busy}
+                            onClick={() => setEditing(index)}
+                            className="text-body-sm text-primary hover:opacity-80 disabled:opacity-50"
+                          >
+                            Correct
+                          </button>
+                          <button
+                            type="button"
+                            disabled={busy}
+                            onClick={() => {
+                              if (
+                                window.confirm(
+                                  "Remove this truth? Steps 3 and 4 will be cleared because truth numbering changes.",
+                                )
+                              )
+                                void onDelete(index);
+                            }}
+                            className="text-body-sm text-text-tertiary hover:opacity-80 disabled:opacity-50"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                        {(t.correction_note || t.correction_source) && (
+                          <p className="text-body-sm mt-2 text-text-tertiary">
+                            Correction{t.correction_source ? ` — source: ${t.correction_source}` : ""}
+                            {t.correction_note ? `. ${t.correction_note}` : ""}
+                          </p>
+                        )}
+                        {t.original_text && t.original_text !== t.text && (
+                          <p className="text-body-sm mt-1 text-text-tertiary italic">
+                            Originally: {t.original_text}
+                          </p>
+                        )}
+                      </>
+                    )}
                   </li>
                 ))}
               </ul>
