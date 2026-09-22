@@ -96,6 +96,7 @@ export interface SupervisionOutcome {
 interface SupervisionRow {
   id: string;
   attempts: number;
+  total_attempts: number;
   state: string;
   next_attempt_at: string | null;
   last_attempt_at: string | null;
@@ -103,7 +104,8 @@ interface SupervisionRow {
 }
 
 /** Heartbeat moved after the last recovery attempt = that attempt worked. */
-const SUPERVISION_SELECT = "id, attempts, state, next_attempt_at, last_attempt_at, last_error";
+const SUPERVISION_SELECT =
+  "id, attempts, total_attempts, state, next_attempt_at, last_attempt_at, last_error";
 
 async function loadRow(
   admin: Admin,
@@ -116,7 +118,7 @@ async function loadRow(
     .eq("domain", domain)
     .eq("job_id", job.jobId)
     .maybeSingle();
-  if (data) return data as SupervisionRow;
+  if (data) return { total_attempts: 0, ...(data as SupervisionRow) };
 
   const { data: inserted } = await admin
     .from("job_supervision")
@@ -126,6 +128,7 @@ async function loadRow(
       owner_user_id: job.ownerUserId ?? null,
       state: "watching",
       attempts: 0,
+      total_attempts: 0,
       detail: job.detail ?? null,
     })
     .select(SUPERVISION_SELECT)
@@ -133,12 +136,14 @@ async function loadRow(
   return (inserted as SupervisionRow) ?? {
     id: "",
     attempts: 0,
+    total_attempts: 0,
     state: "watching",
     next_attempt_at: null,
     last_attempt_at: null,
     last_error: null,
   };
 }
+
 
 async function patchRow(admin: Admin, id: string, patch: Record<string, unknown>): Promise<void> {
   if (!id) return;
