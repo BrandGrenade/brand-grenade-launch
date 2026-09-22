@@ -1095,10 +1095,10 @@ function TerritoryCard({
   onSelect: () => void;
   revising: boolean;
   busy: boolean;
-  onRevise: (instructions: string) => void | Promise<void>;
+  onRevise: (instructions: string, mode: "revise" | "replace") => void | Promise<void>;
 }) {
   const [reviseText, setReviseText] = useState("");
-  const [reviseOpen, setReviseOpen] = useState(false);
+  const [reviseOpen, setReviseOpen] = useState<null | "revise" | "replace">(null);
 
   const typeMeta = territory.type ? TYPE_LABEL[territory.type] : null;
   const risk = territory.historical_validation?.risk_classification;
