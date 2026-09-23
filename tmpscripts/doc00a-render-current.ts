@@ -1,0 +1,10 @@
+import { createClient } from "@supabase/supabase-js";
+import { writeFileSync } from "node:fs";
+import { buildDocument00AMinto } from "../src/lib/intelligence/doc-00A-minto";
+import { researchEvidenceFromSession } from "../src/lib/intelligence/research-evidence";
+const id="22c0ba9b-21af-41ce-8416-a259a4ae4541";
+const sb=createClient(process.env.VITE_SUPABASE_URL!,process.env.SUPABASE_SERVICE_ROLE_KEY!);
+const {data:s,error}=await sb.from("intelligence_sessions").select("*").eq("id",id).single(); if(error||!s?.final_report) throw error??new Error("missing session");
+const meta=(s.report_metadata??{}) as Record<string,unknown>; const report=JSON.parse(s.final_report);
+const html=buildDocument00AMinto({sourceRunId:s.id,brandName:s.brand_name??"Nissan",category:s.category??"",briefType:meta.brief_type==="government"?"government":"commercial",completedAt:s.completed_at??s.updated_at,report,research:researchEvidenceFromSession(s as Record<string,unknown>),revision:meta.doc00a_revision as number,runRef:meta.doc00a_run_ref as string,regeneratedAt:meta.doc00a_regenerated_at as string});
+writeFileSync("/tmp/doc00a-layout/nissan-document-00a-revision-2.html",html); console.log(JSON.stringify({bytes:html.length,revision:meta.doc00a_revision,runRef:meta.doc00a_run_ref}));
