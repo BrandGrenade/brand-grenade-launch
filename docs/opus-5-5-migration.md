@@ -77,3 +77,33 @@ Wave 1: `1b` only. Verified end-to-end on the real Dan Murphy's session through
 `callClaude` with the live policy: routed to `claude-opus-5-5`, PASS in 5.7 s,
 valid contract output (`## BRIEF SUFFICIENT — ADVANCE TO STAGE 2`).
 Later waves add stages one at a time, each with a real run before the next.
+
+## Effort capability guard (23 Sep 2026)
+
+`effortConfig()` now strips `output_config.effort` for any model outside the
+`modelSupportsEffort()` allow-list and logs a loud `[MODEL-POLICY]` warning
+naming the stage and model, instead of letting the call 400. Live proof
+(`tmpscripts/haiku-effort-guard.ts`): raw Haiku call with effort → HTTP 400
+"This model does not support the effort parameter."; the same request through
+`callClaude` (model `claude-haiku-4-5`, stage `10`, effort `high`) → warning
+logged, `effort=model-default`, reply "READY" in 958 ms. Unit coverage in
+`src/lib/model-policy.test.ts` (6 tests). Permanent rules documented in
+`docs/model-and-effort-policy.md`.
+
+## Wave 2 — Stage 3 (Strategic Frameworks)
+
+Classification: formatting/structure, not scoring — runs on the model default
+effort. Routed via `STAGE_MODEL["3"] = OPUS_5_5`.
+
+Real run on the live Dan Murphy's session (`c5142f1d`), through `callClaude`
+with the live policy: model `claude-opus-5-5`, 43.9 s, 7,663 chars.
+Structural contract check against what Stage 4 consumes
+(`countSections(stage_3_output)` = `##` heading count):
+
+- 5 `##` framework headings (contract: 3-6) — `countSections` = 5
+- `**The opportunity:**` / `**What this excludes:**` / `**Why it is available:**`
+  present 5/5/5, one per framework
+- output begins immediately with `## ` (no header block / metadata)
+
+VERDICT PASS. Stage 11 remains on Opus 5, blocked pending a hardened heading
+instruction and re-test.

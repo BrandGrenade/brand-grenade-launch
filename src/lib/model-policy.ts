@@ -29,6 +29,8 @@ const STAGE_MODEL: Record<string, string> = {
   // ─── Migrated to Opus 5.5 ───────────────────────────────────────────
   // Wave 1 (low stakes: brief-gap review, no scoring, no downstream lock).
   "1b": OPUS_5_5,
+  // Wave 2 (formatting/structure: 3-6 framework blocks, model default effort).
+  "3": OPUS_5_5,
 };
 
 /**
@@ -48,8 +50,16 @@ const HIGH_EFFORT_STAGES = new Set<string>([
   "anchor-gate",
 ]);
 
-/** Models that accept `output_config.effort`. Haiku 4.5 rejects it (400). */
-function modelSupportsEffort(model: string): boolean {
+/**
+ * Models that accept `output_config.effort`.
+ *
+ * Verified live 23 Sep 2026: opus-5, opus-5-5, sonnet-5 and sonnet-4-6 accept
+ * `output_config.effort`; `claude-haiku-4-5` rejects it with HTTP 400
+ * ("output_config.effort: Extra inputs are not permitted"). This allow-list is
+ * the single capability gate — every request body is built through
+ * `effortConfig()`, so an unsupported model can never receive the field.
+ */
+export function modelSupportsEffort(model: string): boolean {
   return (
     model.startsWith("claude-opus-5") ||
     model.startsWith("claude-sonnet-5") ||
@@ -69,17 +79,32 @@ export function resolveModel(stageNumber?: string, explicit?: string): string {
 /**
  * Returns the `output_config` fragment to merge into the request body, or an
  * empty object when this model/stage combination should use the model default.
+ *
+ * Defensive guard: if effort is requested (explicitly, or implied by the stage
+ * policy) for a model that does not accept it, the field is stripped so the
+ * call cannot 400 — and a loud warning is logged naming the stage and model,
+ * so the misconfiguration is visible instead of silent. This is the only place
+ * `output_config` is constructed.
  */
 export function effortConfig(
   model: string,
   stageNumber?: string,
   explicit?: Effort,
 ): { output_config?: { effort: Effort } } {
-  if (!modelSupportsEffort(model)) return {};
   const effort =
     explicit ??
     (stageNumber && HIGH_EFFORT_STAGES.has(stageNumber.toLowerCase()) ? "high" : undefined);
-  return effort ? { output_config: { effort } } : {};
+  if (!effort) return {};
+  if (!modelSupportsEffort(model)) {
+    console.warn(
+      `[MODEL-POLICY] effort="${effort}" requested for stage=${stageNumber ?? "?"} on ` +
+        `model="${model}", which does not accept output_config.effort. ` +
+        `Stripping it — the call will run at the model default. ` +
+        `Fix the stage/model pairing in src/lib/model-policy.ts.`,
+    );
+    return {};
+  }
+  return { output_config: { effort } };
 }
 
 export const __policyInternals = { STAGE_MODEL, HIGH_EFFORT_STAGES, modelSupportsEffort };
