@@ -48,8 +48,16 @@ const HIGH_EFFORT_STAGES = new Set<string>([
   "anchor-gate",
 ]);
 
-/** Models that accept `output_config.effort`. Haiku 4.5 rejects it (400). */
-function modelSupportsEffort(model: string): boolean {
+/**
+ * Models that accept `output_config.effort`.
+ *
+ * Verified live 23 Sep 2026: opus-5, opus-5-5, sonnet-5 and sonnet-4-6 accept
+ * `output_config.effort`; `claude-haiku-4-5` rejects it with HTTP 400
+ * ("output_config.effort: Extra inputs are not permitted"). This allow-list is
+ * the single capability gate — every request body is built through
+ * `effortConfig()`, so an unsupported model can never receive the field.
+ */
+export function modelSupportsEffort(model: string): boolean {
   return (
     model.startsWith("claude-opus-5") ||
     model.startsWith("claude-sonnet-5") ||
