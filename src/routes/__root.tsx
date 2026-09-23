@@ -129,6 +129,28 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const router = useRouter();
 
+  // A deploy replaces the hashed asset files, so a tab that was open across the
+  // rebuild asks for a chunk that no longer exists and renders blank. Reload
+  // once (guarded, so a genuine network fault can't loop) to pick up the new build.
+  useEffect(() => {
+    const isStaleChunk = (reason: unknown) =>
+      /Failed to fetch dynamically imported module|Importing a module script failed|error loading dynamically imported module/i.test(
+        String((reason as Error | undefined)?.message ?? reason ?? ""),
+      );
+    const onRejection = (event: PromiseRejectionEvent) => {
+      if (!isStaleChunk(event.reason)) return;
+      if (sessionStorage.getItem("bg_chunk_reload") === "1") return;
+      sessionStorage.setItem("bg_chunk_reload", "1");
+      window.location.reload();
+    };
+    window.addEventListener("unhandledrejection", onRejection);
+    const clear = window.setTimeout(() => sessionStorage.removeItem("bg_chunk_reload"), 10_000);
+    return () => {
+      window.removeEventListener("unhandledrejection", onRejection);
+      window.clearTimeout(clear);
+    };
+  }, []);
+
   useEffect(() => {
     initAnalytics();
     trackPageView(window.location.pathname);
