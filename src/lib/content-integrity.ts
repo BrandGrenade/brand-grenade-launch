@@ -207,6 +207,12 @@ function statedCounts(text: string): StatedCount[] {
     const n = numberOf(m[1]);
     if (!Number.isFinite(n) || n < 2 || n > 60) continue;
     const at = m.index ?? 0;
+    // A qualified remainder is a subset, not a competing statement of the
+    // document-wide total (for example, "four territories" followed by "the
+    // remaining three territories"). PROMISED still validates a remainder
+    // when it introduces a rendered list; CONSISTENT must not compare it with
+    // the whole-set count.
+    if (/\b(?:remaining|other)\s*$/i.test(text.slice(Math.max(0, at - 24), at))) continue;
     out.push({ noun: singular(m[2]), n, quote: text.slice(Math.max(0, at - 50), at + 70).trim() });
   }
   return out;
