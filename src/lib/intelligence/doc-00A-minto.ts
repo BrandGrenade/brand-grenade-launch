@@ -245,7 +245,7 @@ export function buildDocument00AMinto(
   const tension = str(obj(primary?.prebrief_for_briefing_room).tension);
   const key_insight =
     (tension ? pullQuote(tension, { label: "The governing tension", variant: "quiet" }) : "") +
-    comparisonTable(
+    `<div class="doc00a-white-space">${comparisonTable(
       [
         { key: "dimension", label: "White space" },
         { key: "assessment", label: "Assessment" },
@@ -256,7 +256,7 @@ export function buildDocument00AMinto(
       wsRows.length
         ? "White space assessment for the recommended territory — 'Basis' states whether each finding is observed in the inputs, inferred, or an absence finding"
         : undefined,
-    );
+    )}</div>`;
 
   /* 04 — proposition (the territory itself) */
   const prebrief = obj(primary?.prebrief_for_briefing_room);
@@ -432,7 +432,7 @@ export function buildDocument00AMinto(
     ),
   ].slice(0, 4);
   const validation =
-    comparisonTable(
+    `<div class="doc00a-validation">${comparisonTable(
       [
         { key: "name", label: "Territory" },
         { key: "type", label: "Type" },
@@ -443,7 +443,10 @@ export function buildDocument00AMinto(
       ],
       validationRows,
       "Territories assessed — highlighted row is the recommendation",
-    ) + (precedents.length ? callout("Historical precedent", list(precedents)) : "");
+    )}</div>` +
+    (precedents.length
+      ? `<div class="doc00a-validation-followup">${callout("Historical precedent", list(precedents))}</div>`
+      : "");
 
   /* 07 — options not carried forward. A territory's own verdict label is
    * never used as the reason it was not chosen: either a real rationale
@@ -656,6 +659,48 @@ export function buildDocument00AMinto(
     },
     headlineStats,
     content,
+    extraCss: `
+/* Document 00A print flow: use real page margins so every fragmented page,
+   not only the outer document box, receives the same top and bottom space. */
+@media print {
+  @page { size: A4; margin: 18mm 20mm; }
+  .page { padding: 0; }
+
+  /* Recommendation cards size to their own content instead of stretching to
+     the height of the longest first-mover explanation. */
+  .stat-grid { align-items: start; }
+
+  /* This table carries one short label, one basis tag and two prose columns.
+     The generic table's 34% first-column rule crushed the prose into narrow
+     strips; these widths reflect the actual content and keep all four rows
+     compact and scannable. */
+  .doc00a-white-space .cmp { table-layout: fixed; font-size: 7.6pt; }
+  .doc00a-white-space .cmp th,
+  .doc00a-white-space .cmp td { padding: 4pt 5pt; line-height: 1.3; overflow-wrap: anywhere; }
+  .doc00a-white-space .cmp th:nth-child(1),
+  .doc00a-white-space .cmp td:nth-child(1) { width: 13%; }
+  .doc00a-white-space .cmp th:nth-child(2),
+  .doc00a-white-space .cmp td:nth-child(2) { width: 37%; }
+  .doc00a-white-space .cmp th:nth-child(3),
+  .doc00a-white-space .cmp td:nth-child(3) { width: 13%; }
+  .doc00a-white-space .cmp th:nth-child(4),
+  .doc00a-white-space .cmp td:nth-child(4) { width: 37%; }
+  /* These source cells can each exceed half a page. Keeping a whole row
+     together forced one row per page; allow natural continuation while the
+     repeated header preserves the table structure on every page. */
+  .doc00a-white-space .cmp tbody tr { break-inside: auto; page-break-inside: auto; }
+  .doc00a-white-space .cmp tbody td { break-inside: auto; page-break-inside: auto; }
+
+  /* Keep the compact validation table attached to its section heading while
+     still allowing the following precedent block to flow independently. */
+  .doc00a-validation { break-before: avoid; page-break-before: avoid; }
+  .doc00a-validation .cmp { break-before: avoid; page-break-before: avoid; }
+  /* A long precedent callout may start beneath the compact table and continue
+     onto the next page instead of pushing the entire block away and leaving
+     the validation page mostly empty. */
+  .doc00a-validation-followup .callout { break-inside: auto; page-break-inside: auto; }
+}
+`,
     footerHtml:
       `Brand Grenade Intelligence Lab — Confidential. ` +
       `${input.briefType === "government" ? "Government" : "Commercial"} brief for ${escapeHtml(
