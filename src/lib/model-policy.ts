@@ -29,6 +29,8 @@ const STAGE_MODEL: Record<string, string> = {
   // ─── Migrated to Opus 5.5 ───────────────────────────────────────────
   // Wave 1 (low stakes: brief-gap review, no scoring, no downstream lock).
   "1b": OPUS_5_5,
+  // Wave 2 (formatting/structure: 3-6 framework blocks, model default effort).
+  "3": OPUS_5_5,
 };
 
 /**
