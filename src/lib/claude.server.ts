@@ -4,9 +4,9 @@
 // - Optional sessionId + stageLabel to publish a transient "retrying" status
 //   to the sessions.retry_status column (consumed by the pipeline right panel).
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { resolveModel, effortConfig, type Effort } from "./model-policy";
 
 const ANTHROPIC_URL = "https://api.anthropic.com/v1/messages";
-const DEFAULT_MODEL = "claude-opus-5";
 // Per-chunk inactivity budget. The previous flat 180s wall-clock abort would
 // kill long-but-progressing streams (notably Stage 20B, which can stream for
 // 5+ minutes). We now abort only when no SSE chunk has arrived within this
@@ -55,6 +55,11 @@ export interface CallClaudeArgs {
   stageName?: string;
   /** Optional sampling temperature (0..1). Forwarded to Anthropic when set. */
   temperature?: number;
+  /**
+   * Reasoning effort. Sent as `output_config.effort` (the top-level `effort`
+   * field is rejected). Omit to use the per-stage policy in model-policy.ts.
+   */
+  effort?: Effort;
 }
 
 
@@ -234,18 +239,24 @@ async function prepareCall(
   }
 
 
+  const effectiveModel = resolveModel(args.stageNumber, args.model);
+
   return {
     apiKey,
     amendmentKey,
     body: JSON.stringify({
-      model: args.model ?? DEFAULT_MODEL,
+      model: effectiveModel,
       max_tokens: effectiveMaxTokens,
       // Opus 4.8+ rejects `temperature` outright ("`temperature` is deprecated
-      // for this model", HTTP 400 — verified live against claude-opus-5).
-      // Only forward it to models that still take it.
-      ...(typeof args.temperature === "number" && !(args.model ?? DEFAULT_MODEL).startsWith("claude-opus")
+      // for this model", HTTP 400 — verified live against claude-opus-5 and
+      // claude-opus-5-5). Only forward it to models that still take it.
+      ...(typeof args.temperature === "number" && !effectiveModel.startsWith("claude-opus")
         ? { temperature: args.temperature }
         : {}),
+      // Reasoning effort. Opus 5.5 defaults to medium where Opus 5 defaulted
+      // to high, so reasoning-critical stages set `high` explicitly.
+      ...effortConfig(effectiveModel, args.stageNumber, args.effort),
+
 
       system: [
         {
@@ -353,8 +364,11 @@ export async function* streamClaude(args: CallClaudeArgs): AsyncGenerator<string
   const __telemetryStart = Date.now();
   const __telemetryLabel = args.stageLabel ?? args.stageNumber ?? "unknown";
   const __telemetrySession = args.sessionId ?? "no-session";
+  const __telemetryModel = resolveModel(args.stageNumber, args.model);
+  const __telemetryEffort =
+    effortConfig(__telemetryModel, args.stageNumber, args.effort).output_config?.effort ?? "model-default";
   console.log(
-    `[TELEMETRY] stage=${__telemetryLabel} session=${__telemetrySession} event=start ts=${__telemetryStart}`,
+    `[TELEMETRY] stage=${__telemetryLabel} session=${__telemetrySession} event=start ts=${__telemetryStart} model=${__telemetryModel} effort=${__telemetryEffort}`,
   );
   let __telemetryChars = 0;
   let __telemetryFailed = false;

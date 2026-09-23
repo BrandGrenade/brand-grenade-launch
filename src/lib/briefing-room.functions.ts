@@ -267,6 +267,8 @@ export const runBriefingStep1 = createServerFn({ method: "POST" })
       userMessage: user,
       maxTokens: 16000,
       skipUniversalWrapper: true,
+      stageNumber: "BR1",
+      stageName: "Briefing Room — Diagnosis",
     });
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     // Downstream steps depend on Step 1 — clear them on re-run to avoid stale cascade.
@@ -301,6 +303,8 @@ export const runBriefingStep2 = createServerFn({ method: "POST" })
       userMessage: user,
       maxTokens: 20000,
       skipUniversalWrapper: true,
+      stageNumber: "BR2",
+      stageName: "Briefing Room — Truth Capture",
     });
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin
@@ -330,6 +334,8 @@ Produce the Step 3 relevance JSON now.`;
       userMessage: user,
       maxTokens: 16000,
       skipUniversalWrapper: true,
+      stageNumber: "BR3",
+      stageName: "Briefing Room — Relevance",
     });
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin
@@ -383,6 +389,8 @@ Produce the Step 4 candidate tensions JSON now. Cite indices from the array abov
       userMessage: user,
       maxTokens: 16000,
       skipUniversalWrapper: true,
+      stageNumber: "BR4",
+      stageName: "Briefing Room — Tension Collision",
     });
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin
@@ -599,6 +607,8 @@ Produce the unified Step 5 field JSON now. Every one of the eleven fields must b
     userMessage: user,
     maxTokens: 24000,
     skipUniversalWrapper: true,
+    stageNumber: "BR5",
+    stageName: "Briefing Room — Unified Synthesis",
   });
   return parseJson<NonNullable<WorkspaceForHandoff["llm_fields"]>>(raw, "Step 5 unified synthesis");
 }

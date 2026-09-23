@@ -1,0 +1,79 @@
+# Claude Opus 5.5 migration — test record
+
+Model id: `claude-opus-5-5`. Policy lives in `src/lib/model-policy.ts`
+(`STAGE_MODEL` ledger + `HIGH_EFFORT_STAGES`), applied in
+`src/lib/claude.server.ts` via `resolveModel()` / `effortConfig()`.
+A stage absent from `STAGE_MODEL` stays on `claude-opus-5`.
+
+## Item 1 — forced tool use
+
+Codebase search for `tool_choice` across `src/`, `scripts/`, `supabase/`:
+zero occurrences. Only two tool-using call sites exist —
+`src/lib/fact-verify.server.ts:131` and `src/lib/stimulus/rate.server.ts:86` —
+both pass `tools: [web_search_20250305]` with no `tool_choice`, so the model
+chooses freely.
+
+Live tests (real Anthropic API):
+- `tool_choice: {type:"any"}` → HTTP 400 on `claude-opus-5-5`, 200 on `claude-opus-5`.
+  Confirms the breaking change is real and that we are not exposed to it.
+- Both call-site request shapes replayed on 5.5 with `output_config.effort: high`:
+  both PASS, `web_search_requests` = 1 and 4, JSON returned as expected.
+  `server_tool_use` blocks still present, so `rate.server.ts`'s structural
+  search-count check keeps working on 5.5.
+
+## Item 2 — reasoning effort
+
+The parameter is **not** a top-level `effort` field (400 "Extra inputs are not
+permitted"). Correct location is `output_config.effort`, values
+low | medium | high | xhigh | max. Supported: opus-5, opus-5-5, sonnet-5,
+sonnet-4-6. Rejected (400): haiku-4-5. `temperature` is rejected outright by
+opus-5-5.
+
+High effort is set explicitly for scoring/selection (8, 9, 9-loc,
+9-loc-validation, 10, 11, 12, 13, 13b, 15, 16, 18, 20, 20b, 21, 21f), territory
+and intelligence reasoning (14, 14b, 14c, 00a, ie, ie-r), Briefing Room
+(br1, br2, br4, br5) and anchor-gate. Formatting/extraction stages (1b, 2, 3,
+17, 19, 22, preflight, document assembly) take the model default.
+
+Side-by-side Stage 11 on the real Dan Murphy's session, identical input,
+`output_config.effort: high`:
+
+| | Opus 5 | Opus 5.5 |
+|---|---|---|
+| duration | 322.0 s | 287.6 s |
+| output | 24,057 chars / 3,688 words | 25,640 chars / 3,954 words |
+| fatal-test failures found | 9 | 11 |
+
+5.5 caught four evidence-base faults Opus 5 did not: BWS mislabelled as a
+competitor (Endeavour sister banner since the 2021 demerger), an incomplete
+scoring record on one proposition, a proposition scored twice on different
+frameworks, and a category-intelligence contradiction of a differentiation
+claim. Reasoning depth is better.
+
+**But** 5.5 deviated from the Stage 11 output contract: it dropped the
+`## Stage 11 — Proposition Pressure Test` and `## Per-Proposition Pressure
+Blocks` headings and promoted per-proposition blocks from `###` to `##`.
+Nothing parses those headings today (Stage 11 output is displayed, and sliced
+into `rescore-smp.server.ts`), so it is cosmetic — but Stage 11 does not
+migrate until the prompt's format instruction is hardened and re-tested.
+
+## Item 3 — intermediate progress text
+
+Streaming through the platform's own `streamClaude` path, effort high:
+
+| model | deltas | first delta | max silent gap |
+|---|---|---|---|
+| opus-5-5 | 191 | 4,126 ms | 4,126 ms |
+| opus-5 | 172 | 7,356 ms | 7,356 ms |
+
+Text still arrives as `text_delta`; no silent-progress problem. With tools on,
+5.5 interleaves `thinking` blocks between tool calls where Opus 5 did not — but
+both tool-using call sites are non-streaming and stay on sonnet-4-5, and every
+streamed stage has no tools, so nothing in the UI is affected.
+
+## Rollout
+
+Wave 1: `1b` only. Verified end-to-end on the real Dan Murphy's session through
+`callClaude` with the live policy: routed to `claude-opus-5-5`, PASS in 5.7 s,
+valid contract output (`## BRIEF SUFFICIENT — ADVANCE TO STAGE 2`).
+Later waves add stages one at a time, each with a real run before the next.
