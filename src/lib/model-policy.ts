@@ -77,17 +77,32 @@ export function resolveModel(stageNumber?: string, explicit?: string): string {
 /**
  * Returns the `output_config` fragment to merge into the request body, or an
  * empty object when this model/stage combination should use the model default.
+ *
+ * Defensive guard: if effort is requested (explicitly, or implied by the stage
+ * policy) for a model that does not accept it, the field is stripped so the
+ * call cannot 400 — and a loud warning is logged naming the stage and model,
+ * so the misconfiguration is visible instead of silent. This is the only place
+ * `output_config` is constructed.
  */
 export function effortConfig(
   model: string,
   stageNumber?: string,
   explicit?: Effort,
 ): { output_config?: { effort: Effort } } {
-  if (!modelSupportsEffort(model)) return {};
   const effort =
     explicit ??
     (stageNumber && HIGH_EFFORT_STAGES.has(stageNumber.toLowerCase()) ? "high" : undefined);
-  return effort ? { output_config: { effort } } : {};
+  if (!effort) return {};
+  if (!modelSupportsEffort(model)) {
+    console.warn(
+      `[MODEL-POLICY] effort="${effort}" requested for stage=${stageNumber ?? "?"} on ` +
+        `model="${model}", which does not accept output_config.effort. ` +
+        `Stripping it — the call will run at the model default. ` +
+        `Fix the stage/model pairing in src/lib/model-policy.ts.`,
+    );
+    return {};
+  }
+  return { output_config: { effort } };
 }
 
 export const __policyInternals = { STAGE_MODEL, HIGH_EFFORT_STAGES, modelSupportsEffort };
