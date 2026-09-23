@@ -70,3 +70,36 @@ async function stage11(model: string | undefined, tag: string) {
 if (mode === "1b") await stage1b();
 if (mode === "11-opus5") await stage11("claude-opus-5", "opus5-high");
 if (mode === "11-opus55") await stage11("claude-opus-5-5", "opus55-high");
+
+async function stage3() {
+  const { STAGE_3_SYSTEM_PROMPT, buildStage3UserMessage } = await import("../src/lib/stage3-prompt");
+  const { countSections } = await import("../src/lib/count-helpers");
+  const { trimStage1ForDownstream } = await import("../src/lib/context-trim");
+  const s = await session();
+  const userMessage = buildStage3UserMessage({
+    brandName: s.brand_name,
+    category: s.category,
+    sanitisedBrief: trimStage1ForDownstream(s.stage_1_output ?? ""),
+    cmm: s.stage_2_output ?? "",
+  });
+  const t0 = Date.now();
+  const out = await callClaude({
+    systemPrompt: STAGE_3_SYSTEM_PROMPT,
+    userMessage,
+    maxTokens: 64000,
+    stageLabel: "Stage 3 (opus5.5 migration check)",
+    stageNumber: "3",
+    stageName: "Strategic Frameworks",
+  });
+  writeFileSync("/tmp/opus55/stage3-55.md", out);
+  const sections = countSections(out, 0);
+  const headings = (out.match(/^## .+$/gm) ?? []).length;
+  const req = ["**The opportunity:**", "**What this excludes:**", "**Why it is available:**"];
+  const perBlock = req.map((r) => (out.split(r).length - 1));
+  console.log(`[3] ${(Date.now() - t0) / 1000}s chars=${out.length} headings=${headings} countSections=${sections}`);
+  console.log(`[3] labels: opportunity=${perBlock[0]} excludes=${perBlock[1]} available=${perBlock[2]}`);
+  console.log(`[3] starts-with-heading=${out.trimStart().startsWith("## ")}`);
+  console.log(`[3] VERDICT=${headings >= 3 && headings <= 6 && perBlock.every((n) => n === headings) && out.trimStart().startsWith("## ") ? "PASS" : "FAIL"}`);
+  console.log(out.slice(0, 700));
+}
+if (mode === "3") await stage3();
