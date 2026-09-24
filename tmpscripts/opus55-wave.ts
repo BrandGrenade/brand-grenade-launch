@@ -8,7 +8,8 @@ export type Spec = { id: string; name: string; cols?: string; sessionId?: string
 const { SPECS_A } = await import("./opus55-specs-a").catch(() => ({ SPECS_A: [] as Spec[] }));
 const { SPECS_B } = await import("./opus55-specs-b").catch(() => ({ SPECS_B: [] as Spec[] }));
 const { SPECS_C } = await import("./opus55-specs-c").catch(() => ({ SPECS_C: [] as Spec[] }));
-const ALL: Spec[] = [...SPECS_A, ...SPECS_B, ...SPECS_C];
+const { SPECS_D } = await import("./opus55-specs-d").catch(() => ({ SPECS_D: [] as Spec[] }));
+const ALL: Spec[] = [...SPECS_A, ...SPECS_B, ...SPECS_C, ...SPECS_D];
 const [id, which = "both"] = process.argv.slice(2);
 const spec = ALL.find((x) => x.id === id);
 if (!spec) throw new Error(`no spec ${id}; have ${ALL.map((x) => x.id).join(",")}`);
