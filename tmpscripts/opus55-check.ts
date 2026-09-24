@@ -103,3 +103,28 @@ async function stage3() {
   console.log(out.slice(0, 700));
 }
 if (mode === "3") await stage3();
+
+async function stage4() {
+  const { STAGE_4_SYSTEM_PROMPT, buildStage4UserMessage } = await import("../src/lib/stage4-prompt");
+  const { countSections } = await import("../src/lib/count-helpers");
+  const { trimStage1ForDownstream } = await import("../src/lib/context-trim");
+  const { resolveModel } = await import("../src/lib/model-policy");
+  const { data: s } = await supabaseAdmin.from("sessions").select("brand_name, category, stage_1_output, stage_2_output, stage_3_output").eq("id", SESSION_ID).single();
+  const expected = countSections(s!.stage_3_output, 4);
+  const t0 = Date.now();
+  const out = await callClaude({
+    systemPrompt: STAGE_4_SYSTEM_PROMPT,
+    userMessage: buildStage4UserMessage({ brandName: s!.brand_name, category: s!.category, sanitisedBrief: trimStage1ForDownstream(s!.stage_1_output ?? ""), cmm: s!.stage_2_output ?? "", constraintMatrix: s!.stage_3_output ?? "", constraintSetCount: expected }),
+    maxTokens: 64000, stageLabel: "Stage 4 (opus5.5 migration check)", stageNumber: "4", stageName: "Strategic Universes",
+  });
+  writeFileSync("/tmp/opus55/stage4-55.md", out);
+  const blocks = out.split(/^## /m).slice(1);
+  const heads = blocks.length;
+  const withTension = blocks.filter((b) => /^>\s/m.test(b)).length;
+  const withRule = blocks.filter((b) => /^---\s*$/m.test(b)).length;
+  console.log(`[4] model=${resolveModel("4")} ${(Date.now() - t0) / 1000}s chars=${out.length}`);
+  console.log(`[4] frameworks-in=${expected} universes=${heads} tension-lines=${withTension} dividers=${withRule} starts-with-heading=${out.trimStart().startsWith("## ")}`);
+  console.log(`[4] VERDICT=${heads >= 3 && heads <= 6 && heads === expected && withTension === heads && out.trimStart().startsWith("## ") ? "PASS" : "FAIL"}`);
+  console.log(out.slice(0, 900));
+}
+if (mode === "4") await stage4();
