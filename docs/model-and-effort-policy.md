@@ -74,3 +74,33 @@ Opus 4.8+ rejects `temperature`. `claude.server.ts` forwards it only to non-Opus
 A stage absent from it stays on `claude-opus-5`. Per-stage test evidence lives in
 `docs/opus-5-5-migration.md`. Stage 11 is **blocked** from migration until its heading
 contract is hardened and re-tested (5.5 dropped required headings there).
+
+## Reclassifications — 24 Sep 2026
+
+Every model call now carries a stage id, and each id sits on exactly one list:
+`HIGH_EFFORT_STAGES` or `DEFAULT_EFFORT_STAGES`. `model-policy.test.ts` scans
+the real source for every `callClaude`/`streamClaude` call and fails if one has
+no literal `stageNumber`, or has one that is unclassified or on both lists.
+Negative control: removing preflight's id makes the test fail naming
+`preflight.functions.ts:150`. A second test fails on any new direct
+`api.anthropic.com` call site that isn't on the reviewed allow-list.
+
+Moved from the formatting list to high:
+- **Stage 17 (Detonation Territory)** — it authors the territory the client
+  selects at the Stage 17 checkpoint, and everything in 17B–21 builds on it.
+  That is strategic authorship, not formatting. The original list classified it
+  by output shape (structured blocks) instead of by what it decides.
+- **Stage 22 (Brand Architecture)** — it settles the relationships between brand,
+  sub-brands and territory, a judgement the client acts on directly. Same
+  mistake: structured output, but the content is a strategic decision.
+- **Stages 4, 4B, 5, 6, 7** — strategic-space generation, asset mining, insight
+  generation/validation and territory synthesis. Stage 4 based on the
+  side-by-side in `docs/opus-5-5-migration.md`.
+- **Creative Stimulus**: cs-bigidea, cs-ledger, cs-linecheck, cs-regen.
+
+Default, on purpose: 1, 1B, 2, 3, 19, BR3, cs-channel, cs-offline, three-truth,
+preflight. **Preflight** is not a pipeline stage. Before this change its
+health-check ping had no stage id at all, so no classification covered it; it
+now carries id `preflight` on the default list. It is pinned to
+`claude-haiku-4-5`, which rejects effort, so the capability guard would strip
+the setting anyway.
