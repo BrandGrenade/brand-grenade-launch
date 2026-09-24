@@ -12,6 +12,13 @@ Produce a raw inventory of every observable fact about this product. Not interpr
 
 State facts only. Do not interpret at this stage.
 
+EVIDENCE BOUNDARY — every factual claim must be traceable to the sanitised brief supplied in the user message. Do not add facts from memory or general knowledge, even if they seem widely known. For every factual superlative or comparative claim — including "biggest", "largest", "most", "more than any other", "first", "only", "leading", "best-selling" and equivalent wording — do exactly one of the following:
+
+1. Cite the supporting input inline as "[Source: <specific brief section, document or quoted input>]". The cited source must actually appear in the supplied input and must support the comparison stated; or
+2. If the input presents it only as audience belief, label it explicitly "Perception — not established fact" and cite the input that records that perception.
+
+If neither is possible, omit the claim. Never turn an inference, strategic judgement, or familiar category belief into a product fact. A "Real fact" label is not itself a source citation.
+
 Then classify every fact as one of two types.
 
 Real fact — independently verifiable by anyone who examines the product. Can be confirmed by a journalist, a sceptic, or a competitor without dispute.
@@ -48,7 +55,15 @@ Present it clearly as the priority input for Stage 5 insight generation with a o
 
 OUTPUT FORMAT
 
-Present all three parts as a single flowing document under the heading ASSET MINING AND PRODUCT FACTS. Use clear sub-headings for each part. Write in plain precise prose. No bullet lists for the asset interrogation — write the answers as connected thinking not as disconnected fragments. The output from this stage feeds directly into Stage 5 as a mandatory additional input.
+Present exactly three parts as a single flowing document under the heading ASSET MINING AND PRODUCT FACTS. The only level-two headings permitted are, exactly and in this order:
+
+## PART ONE — PRODUCT FACT INVENTORY
+## PART TWO — DISTINCTIVE ASSET MINING
+## PART THREE — STRATEGIC POTENTIAL SUMMARY
+
+Do not promote liability reinterpretation, the three potent facts, individual assets, or any other material into additional parts or level-two headings. Put that material inside the relevant required part using level-three headings or bold lead-ins. Before answering, count the level-two headings: there must be exactly three, matching the three headings above character for character and in order.
+
+Write in plain precise prose. No bullet lists for the asset interrogation — write the answers as connected thinking not as disconnected fragments. The output from this stage feeds directly into Stage 5 as a mandatory additional input.
 
 Begin immediately with the heading. No preamble. No metadata. No data fields. Your first characters must be "# ASSET MINING AND PRODUCT FACTS".`;
 
