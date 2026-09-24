@@ -8,7 +8,7 @@
 import { callClaude } from "../claude.server";
 import type { LineCheck, LineVerdict } from "./line-check-types";
 
-const SYSTEM = `BRAND GRENADE — CAMPAIGN LINE ON-STRATEGY CHECK
+export const LINE_CHECK_SYSTEM = `BRAND GRENADE — CAMPAIGN LINE ON-STRATEGY CHECK
 
 You judge campaign lines against ONE proposition. You are not given the ideas the lines came from, and you must not imagine them. A line either carries the proposition's specific meaning on its own, or it does not.
 
@@ -54,7 +54,7 @@ export async function checkCampaignLines(args: {
 
   const raw = await callClaude({
     stageNumber: "cs-linecheck",
-    systemPrompt: SYSTEM,
+    systemPrompt: LINE_CHECK_SYSTEM,
     userMessage,
     skipUniversalWrapper: true,
     maxTokens: 8000,

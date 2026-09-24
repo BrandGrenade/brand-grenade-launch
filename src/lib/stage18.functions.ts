@@ -36,7 +36,7 @@ const STAGE18_SELECT = [
   "stage_18_output",
 ].join(", ");
 
-function buildStage18UserMessage(s: {
+export function buildStage18UserMessage(s: {
   brand_name: string | null;
   category: string | null;
   selected_smp: string | null;

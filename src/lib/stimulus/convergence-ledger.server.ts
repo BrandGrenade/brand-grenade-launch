@@ -39,7 +39,7 @@ export type LedgerEntry = {
   forced?: boolean;
 };
 
-const LEDGER_SYSTEM_PROMPT = `You are the convergence auditor for a creative big-idea sweep. You are not writing, rating or improving ideas. You compare them.
+export const LEDGER_SYSTEM_PROMPT = `You are the convergence auditor for a creative big-idea sweep. You are not writing, rating or improving ideas. You compare them.
 
 You are given the ROOT TENSION of every idea in the sweep — the underlying human contradiction each idea runs on, stripped of genre, medium, setting, tone and device.
 

@@ -85,7 +85,7 @@ type Stage22Session = {
   stage_22_distinctive_assets: string | null;
 };
 
-function buildStage22UserMessage(s: Stage22Session): string {
+export function buildStage22UserMessage(s: Stage22Session): string {
   // The locked campaign big idea and line supersede the Stage 18 detonation
   // for every downstream stage, Stage 22 included. When one is locked, Stage 22
   // architects the brand around THAT idea and carries THAT line verbatim.
