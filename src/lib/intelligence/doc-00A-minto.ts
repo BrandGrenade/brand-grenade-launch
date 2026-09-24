@@ -660,15 +660,22 @@ export function buildDocument00AMinto(
     headlineStats,
     content,
     extraCss: `
-/* Document 00A print flow: use real page margins so every fragmented page,
-   not only the outer document box, receives the same top and bottom space. */
+/* Document 00A print flow only. Keep the physical page margin at zero so
+   Chromium has no margin box in which to inject its optional date, URL and
+   page-number headers/footers. Clone the document padding across fragmented
+   pages instead, preserving a consistent printable inset on every page. */
 @media print {
-  @page { size: A4; margin: 18mm 20mm; }
-  .page { padding: 0; }
+  @page { size: A4; margin: 0; }
+  .page {
+    padding: 18mm 20mm;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+  }
 
   /* Recommendation cards size to their own content instead of stretching to
      the height of the longest first-mover explanation. */
   .stat-grid { align-items: start; }
+  .stat { align-self: start; }
 
   /* This table carries one short label, one basis tag and two prose columns.
      The generic table's 34% first-column rule crushed the prose into narrow
