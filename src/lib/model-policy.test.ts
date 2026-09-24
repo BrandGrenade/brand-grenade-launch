@@ -39,8 +39,8 @@ describe("model capability guard for output_config.effort", () => {
   });
 
   it("omits output_config entirely when no effort applies", () => {
-    expect(effortConfig(OPUS_5_5, "17")).toEqual({});
-    expect(effortConfig("claude-haiku-4-5", "17")).toEqual({});
+    expect(effortConfig(OPUS_5_5, "19")).toEqual({});
+    expect(effortConfig("claude-haiku-4-5", "19")).toEqual({});
   });
 
   it("keeps unmigrated stages on Opus 5 and honours explicit overrides", () => {
