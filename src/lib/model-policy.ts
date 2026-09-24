@@ -128,4 +128,4 @@ export function effortConfig(
   return { output_config: { effort } };
 }
 
-export const __policyInternals = { STAGE_MODEL, HIGH_EFFORT_STAGES, modelSupportsEffort };
+export const __policyInternals = { STAGE_MODEL, HIGH_EFFORT_STAGES, DEFAULT_EFFORT_STAGES, modelSupportsEffort };
