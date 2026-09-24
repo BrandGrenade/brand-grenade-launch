@@ -75,6 +75,19 @@ A stage absent from it stays on `claude-opus-5`. Per-stage test evidence lives i
 `docs/opus-5-5-migration.md`. Stage 11 is **blocked** from migration until its heading
 contract is hardened and re-tested (5.5 dropped required headings there).
 
+### Fact-bound migration gate
+
+Every fact-bound stage must pass an input-grounding check before its model route can
+move to Opus 5.5. Its side-by-side record must state whether either model introduced
+any factual claim absent from the identical supplied inputs. Superlative and
+comparative claims (for example "biggest", "most", "first" or "more than any other")
+receive an explicit source check: the source must be present in the supplied inputs
+and support the comparison, or the output must label the claim as a perception rather
+than established fact. An unsourced new claim blocks migration even when the output is
+otherwise stronger or structurally valid. Apply this gate first to Stage 4B, Stage 5,
+and Briefing Room Steps 1–2 and 4–5; Step 2's truth extraction is highest risk because
+its output becomes the source-tagged evidence set used downstream.
+
 ## Reclassifications — 24 Sep 2026
 
 Every model call now carries a stage id, and each id sits on exactly one list:

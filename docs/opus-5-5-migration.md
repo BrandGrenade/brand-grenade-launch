@@ -131,3 +131,13 @@ Opus 5.5 @ high, 51s, 5/5 universes, 5/5 tension lines. "whoever" occurrences: 0
 | Priority combination | Founder's published wine writing + price guarantee retiring the price argument | Possessive name + "more Australian occasions pass through Dan's than any other retailer" |
 | Fact discipline | Anchor is a real, checkable historical fact | **Anchor is an unsourced superlative, stated as fact** (not in the brief), in the stage whose job is raw verifiable facts |
 Downstream parses 4B as free text (stage5-prompt.ts), so the part drift would not break Stage 5 — but it is contract drift of the Stage 11 kind, and the fact lapse is a quality regression. Decision: 4B stays on Opus 5 (high). Re-test after hardening the part structure and fact-sourcing rule.
+
+### Fact-bound checks for all subsequent migrations
+
+From Stage 4B onward, every fact-bound side-by-side includes a claim-origin audit
+against the exact inputs used for both models. It records whether Opus 5.5 added any
+claim not present in those inputs, with a separate check for sourced or explicitly
+perception-labelled superlatives/comparatives. Any unsourced introduced claim blocks
+migration. Stage 5 and Briefing Room truth-producing Steps 1–2 and 4–5 are the first
+priority; Step 2 receives the strictest treatment because its source-tagged truths
+become downstream evidence.
