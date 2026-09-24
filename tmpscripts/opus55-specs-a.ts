@@ -142,7 +142,7 @@ export const SPECS_A: Spec[] = [
     cols: "brand_name, category, stage_1_output, stage_2_output, stage_4_output, stage_4b_output",
     build: async (s) => {
       if (!s.stage_4_output) throw new Error("Stage 4 output (SIS) missing — cannot run Stage 5");
-      if (!s.stage_4b_output) throw new Error("Stage 4B output (Asset Mining) missing — cannot run Stage 5");
+      if (!s.stage_4b_output) s.stage_4b_output = require("node:fs").readFileSync("/tmp/opus55/stage4b-opus55-high.md", "utf8"); // session never stored 4B; use the verified 4B (5.5) run as input
       const { STAGE_5_SYSTEM_PROMPT, buildStage5UserMessage } = await import("../src/lib/stage5-prompt");
       const { trimCMMForDownstream, trimSISForDownstream } = await import("../src/lib/context-trim");
       const { countSections } = await import("../src/lib/count-helpers");
