@@ -49,6 +49,7 @@ const STAGE_MODEL: Record<string, string> = {
   "8": OPUS_5_5,
   "9": OPUS_5_5,
   "10": OPUS_5_5,
+  "12": OPUS_5_5,
 };
 
 /**
