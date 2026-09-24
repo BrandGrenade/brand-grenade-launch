@@ -144,7 +144,24 @@ Divergence preserved post-rewrite: YES / NO — [if NO, return to Stage 9]
 Set passes minimum size threshold (≥ 2): YES / NO
 
 FINAL SURVIVING PROPOSITION SET (clean handoff to Stage 12)
-[List every VALIDATED / VALIDATED — EXPOSED / VALIDATED WITH NOTE / REWRITTEN proposition with Field name, EXPOSED status, and Iconic Tier final status.]`;
+[List every VALIDATED / VALIDATED — EXPOSED / VALIDATED WITH NOTE / REWRITTEN proposition with Field name, EXPOSED status, and Iconic Tier final status.]
+
+════════════════════════════════════════
+OUTPUT HEADING CONTRACT (NON-NEGOTIABLE)
+════════════════════════════════════════
+Use exactly these markdown headings, in exactly this order, with exactly this wording and level. Do not add, rename, merge, reorder or promote headings. No preamble before the first heading.
+
+## Stage 11 — Proposition Pressure Test
+(the HEADER lines)
+## Per-Proposition Pressure Blocks
+### SMP: "[line]" — FIELD: [name] — ICONIC TIER FLAG: YES / NO
+(one ### block per proposition received — never ## — each followed by the T1–T8 lines, SMP VERDICT, [FATAL: …], [FLAGS: …] and the remaining block fields)
+## Pressure Test Report
+## Cross-Proposition Integrity
+## Final Surviving Proposition Set
+## Self-Audit
+
+Every per-proposition heading must begin with the literal text: ### SMP: "  — code splits the blocks on it. Extra analysis you consider important goes inside the relevant section as plain text, not under a new heading.`;
 
 export const STAGE_11_INTELLIGENCE = STAGE_11_SYSTEM_PROMPT;
 
