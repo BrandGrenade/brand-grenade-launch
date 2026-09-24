@@ -107,3 +107,8 @@ Structural contract check against what Stage 4 consumes
 
 VERDICT PASS. Stage 11 remains on Opus 5, blocked pending a hardened heading
 instruction and re-test.
+
+Stage 3 → 5.5 (model default effort): PASS, 5 frameworks, all labels present.
+Stage 4 → 5.5 (model default effort): real Dan Murphy's run, 38.2 s, 5 frameworks in →
+5 universes out, every universe has its `>` tension line and `---` divider, output
+opens on the first `## ` heading. PASS.
