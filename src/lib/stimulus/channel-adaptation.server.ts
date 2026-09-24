@@ -69,6 +69,7 @@ async function generateOnce(args: {
       ? "\n\nPREVIOUS ATTEMPT FAILED THE FIDELITY CHECK. It drifted from the locked idea or did not carry the locked campaign line verbatim. This attempt must stay inside the locked idea and reproduce the locked line exactly as written."
       : "";
   const text = await callClaude({
+    stageNumber: "cs-channel",
     systemPrompt: CHANNEL_ADAPTATION_SYSTEM_PROMPT,
     userMessage:
       buildChannelAdaptationMessage({

@@ -148,6 +148,7 @@ export const runTierOneFastCheck = createServerFn({ method: "POST" })
     const c2 = await runCheck("claude_api_health", async () => {
       const reply = await withTimeout(
         callClaude({
+          stageNumber: "preflight",
           systemPrompt:
             "You are a health-check probe. Reply with exactly the single word READY and nothing else.",
           userMessage: "ping",

@@ -53,6 +53,7 @@ export async function checkCampaignLines(args: {
   ].join("\n");
 
   const raw = await callClaude({
+    stageNumber: "cs-linecheck",
     systemPrompt: SYSTEM,
     userMessage,
     skipUniversalWrapper: true,

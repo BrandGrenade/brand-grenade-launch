@@ -206,6 +206,7 @@ export async function regenerateDirection(opts: {
   const userMessage = [base, "", buildInstruction(mode, notes, priors)].join("\n");
 
   const raw = await callClaude({
+    stageNumber: "cs-regen",
     systemPrompt: isBigIdea ? BIG_IDEA_SYSTEM_PROMPT : STIMULUS_SYSTEM_PROMPT,
     userMessage,
     skipUniversalWrapper: true,
