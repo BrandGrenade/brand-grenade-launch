@@ -109,7 +109,13 @@ SELECTION RULE: Truth Strength ≥ 5 AND Competitive Impossibility ≥ 6 are har
 
 SET-LEVEL VERDICT
 SMPS SCORED: [n]
-READY FOR STAGE 11: YES / HOLD — [if fewer than 2 SMPs clear the floors, HOLD for Stage 8 regen]`;
+READY FOR STAGE 11: YES / HOLD — [if fewer than 2 SMPs clear the floors, HOLD for Stage 8 regen]
+
+OUTPUT FORMAT CONTRACT (NON-NEGOTIABLE — scores are parsed by code)
+- Include the HEADER lines "SMPS SCORED: [n]" and "SELECTION RULE: …" exactly as written above.
+- Emit one PER-SMP SCORE BLOCK per proposition, in exactly the shape above: the line beginning SMP: "[line]" — FIELD: [name], then six lines each beginning with the dimension name, a colon, and the score written as digits "[n]/10" (for example "Fame: 7/10 — …"), in the order Fame, Truth Strength, Competitive Impossibility, Brand Permission, Clean Air, Commercial Precedent.
+- Never write a score in prose ("Fame scores 7 out of 10"), as a bullet, or in a table. A block the parser cannot read is treated as unscored and the proposition is lost from selection.
+- End with the SET-LEVEL VERDICT block.`;
 
 export const STAGE_10_INTELLIGENCE = STAGE_10_SYSTEM_PROMPT;
 

@@ -14,7 +14,9 @@ export const SPECS_D: Spec[] = [{
     const { parseStage11Verdicts } = require("../src/lib/stage12-filter");
     const v = parseStage11Verdicts(out);
     const withTags = v.filter((x: any) => x.fatal !== undefined && x.flags !== undefined).length;
+    // A parsed block with an empty verdict means the "SMP VERDICT:" line was missing.
+    const withVerdict = v.filter((x: any) => typeof x.verdict === "string" && x.verdict.length > 0).length;
     const h2ok = JSON.stringify(h2.map((x) => x.trim())) === JSON.stringify(H2);
-    return { pass: h2ok && h3 > 0 && v.length === h3 && withTags === v.length && out.trimStart().startsWith("## Stage 11"), detail: `h2ok=${h2ok} h2=${JSON.stringify(h2)} smpBlocks=${h3} parsedVerdicts=${v.length} withFatalFlags=${withTags}` };
+    return { pass: h2ok && h3 > 0 && v.length === h3 && withTags === v.length && withVerdict === v.length && out.trimStart().startsWith("## Stage 11"), detail: `h2ok=${h2ok} smpBlocks=${h3} parsedBlocks=${v.length} verdictsRead=${withVerdict} withFatalFlags=${withTags} verdicts=${JSON.stringify(v.map((x: any) => x.verdict))}` };
   },
 }];

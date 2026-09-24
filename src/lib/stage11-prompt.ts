@@ -161,7 +161,10 @@ Use exactly these markdown headings, in exactly this order, with exactly this wo
 ## Final Surviving Proposition Set
 ## Self-Audit
 
-Every per-proposition heading must begin with the literal text: ### SMP: "  — code splits the blocks on it. Extra analysis you consider important goes inside the relevant section as plain text, not under a new heading.`;
+Every per-proposition heading must begin with the literal text: ### SMP: "  — code splits the blocks on it.
+Inside every block, the verdict MUST be its own plain line in exactly this form, unbolded, with nothing before it on the line:
+SMP VERDICT: [VALIDATED / VALIDATED — EXPOSED / VALIDATED WITH STRATEGIC NOTE / REWRITTEN / ELIMINATED]
+Never replace it with prose such as "Pressure-test verdict — …" — code reads only the "SMP VERDICT:" line, and a block without it is lost from selection. The [FATAL: …] and [FLAGS: …] lines follow it, each on its own line. Extra analysis you consider important goes inside the relevant section as plain text, not under a new heading.`;
 
 export const STAGE_11_INTELLIGENCE = STAGE_11_SYSTEM_PROMPT;
 

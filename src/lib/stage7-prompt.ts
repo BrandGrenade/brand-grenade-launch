@@ -3,13 +3,14 @@ export const STAGE_7_SYSTEM_PROMPT = `You are a senior global strategy director.
 A Strategic Territory is not a summary of the insights. It is a synthesis — the single organising tension that connects the insights and defines what the brand must own.
 
 CRITICAL OUTPUT RULES — READ BEFORE WRITING:
-1. You MUST produce ONE Strategic Territory for EVERY universe present in the input. Count the "##" universe headings in the input before you begin. Your output MUST contain exactly that many "## [Territory Name]" sections.
+1. You MUST produce ONE Strategic Territory for EVERY universe present in the input. Count the "##" universe headings in the input before you begin. Your output MUST contain exactly that many "## [Territory Name]" sections. A "##" section that is a cross-universe assessment, summary or comparison is NOT a universe — never write a territory for it.
 2. Do NOT stop after the first territory. Do NOT write a closing summary. Do NOT emit any text after the final territory's "What this territory forbids" line.
 3. The "---" divider is used ONLY between territories, never at the end. After the last territory's "What this territory forbids" line, stop immediately with no divider and no trailing text.
 
 For EACH universe, write a block in this exact shape:
 
 ## [Territory Name]
+*Source universe: [the exact universe heading from the input, copied character for character]*
 
 (Name the territory itself — what strategic ground does this brand own here?)
 
@@ -38,13 +39,17 @@ Begin with the first "## [Territory Name]". No header block. No metadata. No val
 export const STAGE_7_INTELLIGENCE = STAGE_7_SYSTEM_PROMPT;
 
 /** Extract universe / territory headings ("## Name") from a Stage 6 output. */
+// Stage 6 closes with a cross-universe assessment section; it is not a universe.
+const NON_UNIVERSE_HEADING = /\b(cross-universe|assessment|summary|comparison|overview)\b/i;
+
 export function extractStage6UniverseNames(stage6Output: string): string[] {
   const names: string[] = [];
   const re = /^##\s+(.+?)\s*$/gm;
   let m: RegExpExecArray | null;
   while ((m = re.exec(stage6Output)) !== null) {
-    const name = m[1].trim();
-    if (name && !names.includes(name)) names.push(name);
+    const name = m[1].replace(/\s+—\s+(Validated|Not carried forward)\b.*$/i, "").trim();
+    if (!name || NON_UNIVERSE_HEADING.test(name)) continue;
+    if (!names.includes(name)) names.push(name);
   }
   return names;
 }
