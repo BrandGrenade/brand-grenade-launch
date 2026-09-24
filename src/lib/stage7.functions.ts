@@ -50,7 +50,11 @@ function capStage7Territories(text: string, max: number, sessionId: string): str
 
 /** Universes from Stage 6 that have no matching "## …" heading in Stage 7 output. */
 function findMissingUniverses(stage6Universes: string[], stage7Output: string): string[] {
-  const produced = headingsIn(stage7Output).map((s) => s.toLowerCase());
+  const produced = [
+    ...headingsIn(stage7Output),
+    // Territories are renamed; each block declares the universe it came from.
+    ...[...stage7Output.matchAll(/^\*?Source universe:\s*(.+?)\*?\s*$/gim)].map((m) => m[1].trim()),
+  ].map((s) => s.toLowerCase());
   return stage6Universes.filter((u) => {
     const low = u.toLowerCase();
     // Match if the territory heading either equals or contains the universe name
@@ -206,6 +210,9 @@ export const runStage7 = createServerFn({ method: "POST" })
     // Trim to the first 5 `##` heading blocks before saving so Stage 8 is
     // never handed more than it can process in a single Worker budget.
     const MAX_TERRITORIES = 5;
+    // The "Source universe" line exists only for the completeness check above;
+    // strip it so it never reaches downstream stages or client documents.
+    output = output.replace(/^\*?Source universe:.*\n?/gim, "");
     output = capStage7Territories(output, MAX_TERRITORIES, data.sessionId);
 
     const { error: updateErr } = await supabaseAdmin

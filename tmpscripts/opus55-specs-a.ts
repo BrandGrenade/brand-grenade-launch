@@ -71,19 +71,17 @@ export const SPECS_A: Spec[] = [
     // downstream code actually parses out of Stage 1 output — plus the
     // banned-word gate STAGE_1_POISON_WORDS via findBannedWordHits(), which
     // production runs via generateWithBannedWordGate before ever saving.
+    // Real contract (stage1-prompt.ts "REQUIRED OUTPUT STRUCTURE — STRICT"):
+    // six "## Section N — …" headings in order. The tension score is
+    // informational only (stage1.functions.ts) and the current prompt never
+    // asks for it, so it is NOT required.
     check: (out, _s) => {
-      const m = out.match(/Strategic\s+Tension\s+Score\s*[:\-]?\s*\**\s*(\d{1,2})\s*\/\s*10/i);
-      const hasScore = !!m && Number.isFinite(parseInt(m[1], 10));
       const gatekept = /does not meet the minimum input standard/i.test(out);
-      const pass = out.trim().length > 0 && (hasScore || gatekept);
-      return {
-        pass,
-        detail: gatekept
-          ? "Stage 1 gatekeep fired (2+ required fields missing) — valid terminal output."
-          : hasScore
-          ? `Tension score parsed: ${m![1]}/10`
-          : "No 'Strategic Tension Score: N/10' line found and no gatekeep message — extractTensionScore() would return null.",
-      };
+      const heads = [...out.matchAll(/^##\s*Section\s+(\d)\b/gm)].map((m) => Number(m[1]));
+      const ordered = heads.join(",") === "1,2,3,4,5,6";
+      const preamble = out.trim().length > 0 && !/^##\s*Section\s+1/.test(out.trim());
+      const pass = gatekept || (ordered && !preamble);
+      return { pass, detail: gatekept ? "gatekeep fired" : `sections=[${heads.join(",")}] ordered=${ordered} preamble=${preamble}` };
     },
     factBound: false,
   },
@@ -250,7 +248,7 @@ export const SPECS_A: Spec[] = [
           return [];
         }
       })();
-      const produced = headingsIn(out).map((x) => x.toLowerCase());
+      const produced = [...headingsIn(out), ...[...out.matchAll(/^\*?Source universe:\s*(.+?)\*?\s*$/gim)].map((m) => m[1].trim())].map((x) => x.toLowerCase());
       const missing = universes.filter(
         (u: string) => !produced.some((p) => p === u.toLowerCase() || p.includes(u.toLowerCase()) || u.toLowerCase().includes(p)),
       );
@@ -525,8 +523,12 @@ All six scores are integers 0–10. Include one entry per engine key you receive
     check: (out, s) => {
       try {
         const { applyStage10CodeGate } = require("../src/lib/stage12-filter");
+        const { parseStage10Scores } = require("../src/lib/stage12-filter");
         const gated = applyStage10CodeGate(out, { isPreflight: s.is_preflight_test === true });
-        return { pass: !!gated.output && gated.output.length > 0, detail: `applyStage10CodeGate ran without throwing; gated_output_len=${gated.output.length}.` };
+        const parsed = parseStage10Scores(out);
+        const expected = (out.match(/^SMP:\s*"/gm) ?? []).length;
+        const pass = parsed.length >= 2 && parsed.length === expected && /^SMPS SCORED:/m.test(out);
+        return { pass, detail: `parsed_score_blocks=${parsed.length} smp_lines=${expected} gated_len=${gated.output.length}` };
       } catch (e: any) {
         return { pass: false, detail: `applyStage10CodeGate threw: ${e?.message ?? e}` };
       }

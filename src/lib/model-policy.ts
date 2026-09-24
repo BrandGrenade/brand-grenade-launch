@@ -36,6 +36,21 @@ const STAGE_MODEL: Record<string, string> = {
   // Wave 2 cont. (asset mining: hardened three-part + input-grounding contract;
   // real side-by-side passed structure and claim-origin audit on 24 Sep 2026).
   "4b": OPUS_5_5,
+  // Wave 3 (24 Sep 2026): real side-by-side, structure + input-grounding passed.
+  "1": OPUS_5_5,
+  "2": OPUS_5_5,
+  "19": OPUS_5_5,
+  "br3": OPUS_5_5,
+  "cs-channel": OPUS_5_5,
+  "cs-offline": OPUS_5_5,
+  "5": OPUS_5_5,
+  "6": OPUS_5_5,
+  "7": OPUS_5_5,
+  "8": OPUS_5_5,
+  "9": OPUS_5_5,
+  "10": OPUS_5_5,
+  "11": OPUS_5_5,
+  "12": OPUS_5_5,
 };
 
 /**

@@ -44,7 +44,7 @@ describe("model capability guard for output_config.effort", () => {
   });
 
   it("keeps unmigrated stages on Opus 5 and honours explicit overrides", () => {
-    expect(resolveModel("10")).toBe(OPUS_5);
+    expect(resolveModel("13")).toBe(OPUS_5);
     expect(resolveModel("1b")).toBe(OPUS_5_5);
     expect(resolveModel("1B")).toBe(OPUS_5_5);
     expect(resolveModel("4b")).toBe(OPUS_5_5);

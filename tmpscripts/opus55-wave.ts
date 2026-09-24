@@ -19,6 +19,8 @@ if (spec.cols) {
   if (r.error) throw r.error; s = r.data;
 }
 const call = spec.direct ? null as any : await spec.build(s);
+if (call) writeFileSync(`/tmp/opus55/wave/${id}-input.txt`, call.system + "\n" + call.user);
+if (process.env.INPUT_ONLY) process.exit(0);
 const eff = __policyInternals.HIGH_EFFORT_STAGES.has(id) ? "high" : undefined;
 async function run(model: string, tag: string) {
   const t0 = Date.now();
