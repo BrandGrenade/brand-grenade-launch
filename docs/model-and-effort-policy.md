@@ -88,6 +88,13 @@ otherwise stronger or structurally valid. Apply this gate first to Stage 4B, Sta
 and Briefing Room Steps 1–2 and 4–5; Step 2's truth extraction is highest risk because
 its output becomes the source-tagged evidence set used downstream.
 
+This is enforced at two levels: the fact-bound prompts carry the evidence-boundary
+and comparative-claim rule (Stage 4B, Stage 5, and the shared Briefing Room discipline
+block), and the migration record contains the human semantic audit against the exact
+input. A lexical scan is only a locator because words such as "first" and "most" also
+occur in ranking instructions and strategic judgements; it cannot replace checking
+whether the sentence makes a factual claim and whether its cited input supports it.
+
 ## Reclassifications — 24 Sep 2026
 
 Every model call now carries a stage id, and each id sits on exactly one list:
