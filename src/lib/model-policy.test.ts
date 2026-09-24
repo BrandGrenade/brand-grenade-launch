@@ -47,6 +47,7 @@ describe("model capability guard for output_config.effort", () => {
     expect(resolveModel("10")).toBe(OPUS_5);
     expect(resolveModel("1b")).toBe(OPUS_5_5);
     expect(resolveModel("1B")).toBe(OPUS_5_5);
+    expect(resolveModel("4b")).toBe(OPUS_5_5);
     expect(resolveModel("10", "claude-haiku-4-5")).toBe("claude-haiku-4-5");
   });
 });

@@ -33,6 +33,9 @@ const STAGE_MODEL: Record<string, string> = {
   "3": OPUS_5_5,
   // Wave 2 cont. (universe expansion: one block per framework, fixed structure).
   "4": OPUS_5_5,
+  // Wave 2 cont. (asset mining: hardened three-part + input-grounding contract;
+  // real side-by-side passed structure and claim-origin audit on 24 Sep 2026).
+  "4b": OPUS_5_5,
 };
 
 /**

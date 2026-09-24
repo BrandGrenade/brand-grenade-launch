@@ -160,7 +160,24 @@ async function stage4bcmp(model: string, tag: string) {
   });
   writeFileSync(`/tmp/opus55/stage4b-${tag}.md`, out);
   const bullets = (out.match(/^\s*[-*•] /gm) ?? []).length;
-  console.log(`[4b:${tag}] ${(Date.now() - t0) / 1000}s chars=${out.length} starts=${out.startsWith("# ASSET MINING AND PRODUCT FACTS")} partOne=${/part one/i.test(out)} partTwo=${/part two/i.test(out)} partThree=${/part three/i.test(out)} real=${(out.match(/real fact/gi) ?? []).length} perceived=${(out.match(/perceived fact/gi) ?? []).length} bullets=${bullets}`);
+  const requiredHeadings = [
+    "## PART ONE — PRODUCT FACT INVENTORY",
+    "## PART TWO — DISTINCTIVE ASSET MINING",
+    "## PART THREE — STRATEGIC POTENTIAL SUMMARY",
+  ];
+  const levelTwoHeadings = out.match(/^## .+$/gm) ?? [];
+  const structurePass =
+    out.startsWith("# ASSET MINING AND PRODUCT FACTS") &&
+    JSON.stringify(levelTwoHeadings) === JSON.stringify(requiredHeadings);
+  const comparatives = out
+    .split("\n")
+    .filter((line) => /\b(biggest|largest|most|more than any other|first|only|leading|best-selling)\b/i.test(line));
+  const unsupportedComparatives = comparatives.filter(
+    (line) => !/\[Source:\s*[^\]]+\]/i.test(line) && !/Perception — not established fact/i.test(line),
+  );
+  console.log(`[4b:${tag}] ${(Date.now() - t0) / 1000}s chars=${out.length} structure=${structurePass ? "PASS" : "FAIL"} h2=${JSON.stringify(levelTwoHeadings)} real=${(out.match(/real fact/gi) ?? []).length} perceived=${(out.match(/perceived fact/gi) ?? []).length} bullets=${bullets}`);
+  console.log(`[4b:${tag}] comparative-lines=${comparatives.length} unsupported-comparative-lines=${unsupportedComparatives.length}`);
+  if (unsupportedComparatives.length) console.log(unsupportedComparatives.join("\n---\n"));
 }
 if (mode === "4b-opus5") await stage4bcmp("claude-opus-5", "opus5-high");
 if (mode === "4b-opus55") await stage4bcmp("claude-opus-5-5", "opus55-high");

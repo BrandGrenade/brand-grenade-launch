@@ -19,6 +19,7 @@ OUTPUT RULES
 - Tag every insight with its territory in the title.
 - Cover all six territories before repeating any.
 - Do not output only grievance-shaped or problem-shaped insights.
+- FACT-BOUND CLAIM CHECK: treat the Brief, Stage 4B and Strategic Universes as the complete evidence boundary. Do not add a factual claim, statistic, product property, market condition, audience behaviour or cultural signal from memory or general knowledge. Every factual premise in an insight must be traceable to those supplied inputs. Any superlative or comparative premise (including "biggest", "largest", "most", "more than any other", "first", "only", "leading" or equivalent wording) must either cite the supporting supplied input inline or be explicitly labelled "Perception — not established fact". If neither is possible, omit the claim. Strategic interpretation is allowed; invented evidence is not.
 
 FORMAT
 

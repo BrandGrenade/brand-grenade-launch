@@ -131,3 +131,30 @@ Opus 5.5 @ high, 51s, 5/5 universes, 5/5 tension lines. "whoever" occurrences: 0
 | Priority combination | Founder's published wine writing + price guarantee retiring the price argument | Possessive name + "more Australian occasions pass through Dan's than any other retailer" |
 | Fact discipline | Anchor is a real, checkable historical fact | **Anchor is an unsourced superlative, stated as fact** (not in the brief), in the stage whose job is raw verifiable facts |
 Downstream parses 4B as free text (stage5-prompt.ts), so the part drift would not break Stage 5 — but it is contract drift of the Stage 11 kind, and the fact lapse is a quality regression. Decision: 4B stays on Opus 5 (high). Re-test after hardening the part structure and fact-sourcing rule.
+
+### Fact-bound checks for all subsequent migrations
+
+From Stage 4B onward, every fact-bound side-by-side includes a claim-origin audit
+against the exact inputs used for both models. It records whether Opus 5.5 added any
+claim not present in those inputs, with a separate check for sourced or explicitly
+perception-labelled superlatives/comparatives. Any unsourced introduced claim blocks
+migration. Stage 5 and Briefing Room truth-producing Steps 1–2 and 4–5 are the first
+priority; Step 2 receives the strictest treatment because its source-tagged truths
+become downstream evidence.
+
+### Stage 4B hardened re-test (24 Sep 2026, same Dan Murphy's input, both @ high)
+
+| | Opus 5 | Opus 5.5 |
+|---|---|---|
+| Time / chars | 96.7 s / 14,557 | 152.7 s / 18,027 |
+| Exact three-part contract | PASS — exactly 3 required level-two headings | PASS — exactly 3 required level-two headings |
+| Input-absent factual claims | **FAIL** — introduced unsupported absolutes including the brand having spent its "entire existence" proving only price, attendance at "every occasion in the country", and "the best advice in the country" | **PASS — none found.** It explicitly excluded unavailable founding/store/range facts, treated the brief's comparative data-depth claims as assertions requiring audit, and did not claim the named person was a founder |
+| Comparative/superlative discipline | Several strategic superlatives escaped without input support | Comparative factual statements cite the supplied brief; unverifiable comparisons are labelled as brief assertions and held for audit |
+
+The prior 5.5 failures are gone: the output now has exactly the three permitted parts,
+and the unsourced "more Australian drinking occasions ... than any other retailer"
+claim did not recur. 5.5 showed materially better evidence discipline than Opus 5 on
+this re-test. Decision: **Stage 4B migrated to Opus 5.5 at high effort**. Stage 5 and
+the shared Briefing Room truth discipline now carry the same input-bound comparative
+claim rule before their own migrations; each still requires a real side-by-side and
+semantic claim-origin audit.
