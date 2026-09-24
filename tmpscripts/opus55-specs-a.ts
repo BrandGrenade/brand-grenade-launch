@@ -550,6 +550,7 @@ All six scores are integers 0–10. Include one entry per engine key you receive
       const { extractRecommendedTerritory, territoryPromptBlockForSelection } = await import("../src/lib/territory-anchor");
       const recommendedTerritory = extractRecommendedTerritory(s.brief_text);
       const stage10Output = s.stage_10_output ?? "";
+      s.stage_11_output = require("node:fs").readFileSync("/tmp/opus55/wave/11-opus55.md", "utf8"); // fresh Stage 11 under the hardened heading contract
       const { filteredOutput, validated, eliminated } = filterValidatedFromStage11(s.stage_11_output);
       if (validated.length === 0) throw new Error("Stage 11 produced no selectable SMPs — cannot run Stage 12.");
       const scores = parseStage10Scores(stage10Output);
