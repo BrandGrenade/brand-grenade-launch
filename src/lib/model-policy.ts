@@ -31,6 +31,8 @@ const STAGE_MODEL: Record<string, string> = {
   "1b": OPUS_5_5,
   // Wave 2 (formatting/structure: 3-6 framework blocks, model default effort).
   "3": OPUS_5_5,
+  // Wave 2 cont. (universe expansion: one block per framework, fixed structure).
+  "4": OPUS_5_5,
 };
 
 /**
