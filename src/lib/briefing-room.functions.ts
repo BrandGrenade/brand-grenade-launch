@@ -535,7 +535,9 @@ OUTPUT JSON SCHEMA (strict):
   "f11_mandatories_reason": string  // required when f11_mandatories is ""
 }`;
 
-async function synthesiseAllFields(args: {
+export async function synthesiseAllFields(args: {
+  /** Test-harness override only; production never sets it. */
+  modelOverride?: string;
   brandName: string;
   category: string;
   rawBrief: string;
@@ -607,6 +609,7 @@ Produce the unified Step 5 field JSON now. Every one of the eleven fields must b
     userMessage: user,
     maxTokens: 24000,
     skipUniversalWrapper: true,
+    ...(args.modelOverride ? { model: args.modelOverride } : {}),
     stageNumber: "BR5",
     stageName: "Briefing Room — Unified Synthesis",
   });
