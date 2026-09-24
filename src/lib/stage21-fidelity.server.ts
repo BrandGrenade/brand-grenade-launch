@@ -20,7 +20,7 @@ import type {
   FidelityReport,
 } from "./stage21-fidelity-types";
 
-const FIDELITY_SYSTEM = `You are the Executive Creative Director's fidelity check.
+export const FIDELITY_SYSTEM = `You are the Executive Creative Director's fidelity check.
 
 A single Lead Creative Expression has been decided for this campaign. Every channel brief is required to ADAPT that decided idea to its own moment and medium. No channel brief is permitted to independently reinterpret the proposition.
 

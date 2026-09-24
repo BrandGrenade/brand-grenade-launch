@@ -25,7 +25,7 @@ import {
 } from "./proposition-anchor";
 import { callClaude } from "./claude.server";
 
-const GATE_SYSTEM_PROMPT = `You are the anchor gate for a brand strategy platform. You do not write propositions and you do not improve them. You decide one thing: is there a REAL, SPECIFIC, NAMED capability that defends this proposition?
+export const GATE_SYSTEM_PROMPT = `You are the anchor gate for a brand strategy platform. You do not write propositions and you do not improve them. You decide one thing: is there a REAL, SPECIFIC, NAMED capability that defends this proposition?
 
 ${ANCHOR_PROMPT_RULE}
 
