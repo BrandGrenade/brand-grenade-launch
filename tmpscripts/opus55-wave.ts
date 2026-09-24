@@ -4,7 +4,7 @@ import { supabaseAdmin } from "../src/integrations/supabase/client.server";
 import { __policyInternals } from "../src/lib/model-policy";
 import { writeFileSync } from "node:fs";
 export const SESSION_ID = "c5142f1d-a381-44aa-9b88-c21875cc7996";
-export type Spec = { id: string; name: string; cols?: string; sessionId?: string; build: (s: any) => Promise<{ system: string; user: string; maxTokens: number }>; check: (out: string, s?: any) => { pass: boolean; detail: string }; factBound: boolean };
+export type Spec = { id: string; name: string; cols?: string; sessionId?: string; build: (s: any) => Promise<{ system: string; user: string; maxTokens: number }>; check: (out: string, s?: any) => { pass: boolean; detail: string }; factBound: boolean; skipWrapper?: boolean; direct?: (model: string) => Promise<string> };
 const { SPECS_A } = await import("./opus55-specs-a").catch(() => ({ SPECS_A: [] as Spec[] }));
 const { SPECS_B } = await import("./opus55-specs-b").catch(() => ({ SPECS_B: [] as Spec[] }));
 const { SPECS_C } = await import("./opus55-specs-c").catch(() => ({ SPECS_C: [] as Spec[] }));
@@ -18,12 +18,12 @@ if (spec.cols) {
   const r = await supabaseAdmin.from("sessions").select(spec.cols).eq("id", spec.sessionId ?? SESSION_ID).single();
   if (r.error) throw r.error; s = r.data;
 }
-const call = await spec.build(s);
+const call = spec.direct ? null as any : await spec.build(s);
 const eff = __policyInternals.HIGH_EFFORT_STAGES.has(id) ? "high" : undefined;
 async function run(model: string, tag: string) {
   const t0 = Date.now();
   try {
-    const out = await callClaude({ systemPrompt: call.system, userMessage: call.user, maxTokens: call.maxTokens, model, stageLabel: `Stage ${id} (${tag} wave check)`, stageNumber: id, stageName: spec!.name } as any);
+    const out = spec!.direct ? await spec!.direct(model) : await callClaude({ systemPrompt: call.system, userMessage: call.user, maxTokens: call.maxTokens, model, stageLabel: `Stage ${id} (${tag} wave check)`, stageNumber: id, stageName: spec!.name, skipUniversalWrapper: spec!.skipWrapper === true } as any);
     const secs = (Date.now() - t0) / 1000;
     writeFileSync(`/tmp/opus55/wave/${id}-${tag}.md`, out);
     const c = spec!.check(out, s);
