@@ -1,7 +1,7 @@
 // Full-wave Opus 5.5 migration runner. Usage: bun tmpscripts/opus55-wave.ts <id> [opus5|opus55|both]
 import { callClaude } from "../src/lib/claude.server";
 import { supabaseAdmin } from "../src/integrations/supabase/client.server";
-import { effortFor } from "../src/lib/model-policy";
+import { __policyInternals } from "../src/lib/model-policy";
 import { writeFileSync } from "node:fs";
 export const SESSION_ID = "c5142f1d-a381-44aa-9b88-c21875cc7996";
 export type Spec = { id: string; name: string; cols?: string; sessionId?: string; build: (s: any) => Promise<{ system: string; user: string; maxTokens: number }>; check: (out: string, s?: any) => { pass: boolean; detail: string }; factBound: boolean };
@@ -18,11 +18,11 @@ if (spec.cols) {
   if (r.error) throw r.error; s = r.data;
 }
 const call = await spec.build(s);
-const eff = effortFor(id);
+const eff = __policyInternals.HIGH_EFFORT_STAGES.has(id) ? "high" : undefined;
 async function run(model: string, tag: string) {
   const t0 = Date.now();
   try {
-    const out = await callClaude({ systemPrompt: call.system, userMessage: call.user, maxTokens: call.maxTokens, model, ...(eff ? { effort: eff } : {}), stageLabel: `Stage ${id} (${tag} wave check)`, stageNumber: id, stageName: spec!.name } as any);
+    const out = await callClaude({ systemPrompt: call.system, userMessage: call.user, maxTokens: call.maxTokens, model, stageLabel: `Stage ${id} (${tag} wave check)`, stageNumber: id, stageName: spec!.name } as any);
     const secs = (Date.now() - t0) / 1000;
     writeFileSync(`/tmp/opus55/wave/${id}-${tag}.md`, out);
     const c = spec!.check(out, s);
