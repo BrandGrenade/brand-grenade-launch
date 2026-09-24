@@ -10,3 +10,6 @@ console.log("UNIQUE_URLS", urls.length); console.log(urls.join("\n"));
 const src = [...new Set((all.match(/Source:\s*([^\]\n;]+)/gi) ?? []).map((x) => x.replace(/Source:\s*/i, "").trim()))];
 console.log("UNIQUE_SOURCE_NAMES", src.length); console.log(src.slice(0, 80).join("\n"));
 console.log("META_KEYS", Object.keys((s as any).report_metadata ?? {}));
+const doms = new Set<string>(); const docs = new Set<string>();
+for (const x of src) { if (/\.pdf/i.test(x)) docs.add(x.replace(/^Per /, "").replace(/, client-supplied/, "")); else for (const d of x.split(/[,\/]| citing /)) { const t = d.trim().replace(/\.$/, "").replace(/^BCG$/, "bcg.com"); if (t) doms.add(t); } }
+console.log("DOCS", docs.size, [...docs]); console.log("DOMAINS", doms.size, [...doms].sort().join(", "));
