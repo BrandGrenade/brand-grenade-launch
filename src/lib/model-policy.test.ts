@@ -53,10 +53,52 @@ describe("model capability guard for output_config.effort", () => {
 
 import { __policyInternals as P } from "./model-policy";
 import { test as t2, expect as e2 } from "vitest";
-t2("every pipeline stage id is explicitly classified for effort", () => {
-  const ids = "00A 1 10 11 12 13 13B 14 14B 14C 15 16 17 17B 18 19 1B 2 20 20B 21 21F 22 3 4 4b 5 6 7 8 9 9-loc 9-loc-validation BR1 BR2 BR3 BR4 BR5 IE IE-R anchor-gate".split(" ");
-  const missing = ids.filter((i) => !P.HIGH_EFFORT_STAGES.has(i.toLowerCase()) && !P.DEFAULT_EFFORT_STAGES.has(i.toLowerCase()));
-  e2(missing).toEqual([]);
-  const both = ids.filter((i) => P.HIGH_EFFORT_STAGES.has(i.toLowerCase()) && P.DEFAULT_EFFORT_STAGES.has(i.toLowerCase()));
-  e2(both).toEqual([]);
+import { readdirSync, readFileSync, statSync } from "node:fs";
+
+// Scans the real source rather than a hand-kept list, so a new model call
+// cannot slip through unclassified.
+function sourceFiles(d: string): string[] {
+  return readdirSync(d).flatMap((f) => {
+    const p = `${d}/${f}`;
+    if (statSync(p).isDirectory()) return sourceFiles(p);
+    return /\.tsx?$/.test(f) && !/\.test\./.test(f) ? [p] : [];
+  });
+}
+const files = sourceFiles("src").map((f) => ({ f, s: readFileSync(f, "utf8") }));
+
+t2("every callClaude/streamClaude call carries a stage id classified for effort", () => {
+  const problems: string[] = [];
+  for (const { f, s } of files) {
+    const re = /\b(callClaude|streamClaude)\(\s*\{/g;
+    let m: RegExpExecArray | null;
+    while ((m = re.exec(s))) {
+      const chunk = s.slice(m.index, m.index + 2500);
+      const end = chunk.indexOf("});");
+      const body = end > 0 ? chunk.slice(0, end) : chunk;
+      const line = s.slice(0, m.index).split("\n").length;
+      const sn = body.match(/stageNumber:\s*["'`]([^"'`]+)["'`]/);
+      if (!sn) { problems.push(`${f}:${line} has no literal stageNumber`); continue; }
+      const id = sn[1]!.toLowerCase();
+      const hi = P.HIGH_EFFORT_STAGES.has(id), df = P.DEFAULT_EFFORT_STAGES.has(id);
+      if (!hi && !df) problems.push(`${f}:${line} stage "${id}" is unclassified`);
+      if (hi && df) problems.push(`${f}:${line} stage "${id}" is on both lists`);
+    }
+  }
+  e2(problems).toEqual([]);
+});
+
+// Direct API calls bypass the policy entirely. Each is pinned to a model that
+// is not being migrated; a new one must be reviewed and added here.
+const DIRECT_API_ALLOWED = [
+  "src/lib/claude.server.ts",              // the policy-enforcing caller itself
+  "src/lib/document.functions.ts",         // sonnet-4-5
+  "src/lib/fact-verify.server.ts",         // sonnet-4-5, tools, free choice
+  "src/lib/stimulus/orchestrate.server.ts",// sonnet-4-5-20250929
+  "src/lib/stimulus/rate.server.ts",       // sonnet-4-5, tools, free choice
+  "src/lib/synthesiser/synthesise.server.ts",
+  "src/lib/threeTruth.functions.ts",
+];
+t2("no unreviewed direct Anthropic API call sites", () => {
+  const found = files.filter(({ s }) => s.includes("api.anthropic.com")).map(({ f }) => f).sort();
+  e2(found).toEqual([...DIRECT_API_ALLOWED].sort());
 });

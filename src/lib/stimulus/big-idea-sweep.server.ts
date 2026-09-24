@@ -192,6 +192,7 @@ export async function runBigIdeaBatch(
 
   try {
     const raw = await callClaude({
+      stageNumber: "cs-bigidea",
       systemPrompt: BIG_IDEA_SYSTEM_PROMPT,
       userMessage: buildBigIdeaUserMessage({
         ...g,
@@ -218,6 +219,7 @@ export async function runBigIdeaBatch(
       if (!hit?.idea?.trim() && lens) {
         try {
           const soloRaw = await callClaude({
+            stageNumber: "cs-bigidea",
             systemPrompt: BIG_IDEA_SYSTEM_PROMPT,
             userMessage: buildBigIdeaUserMessage({
               ...g,
@@ -254,6 +256,7 @@ export async function runBigIdeaBatch(
           `This is regeneration attempt ${regens} of ${MAX_COLLISION_REGENS}.`,
         ].join(" ");
         const regenRaw = await callClaude({
+          stageNumber: "cs-bigidea",
           systemPrompt: BIG_IDEA_SYSTEM_PROMPT,
           userMessage: buildBigIdeaUserMessage({
             ...g,

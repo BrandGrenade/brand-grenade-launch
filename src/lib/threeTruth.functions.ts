@@ -72,6 +72,7 @@ Return JSON:
 }`;
 
     const raw = await callClaude({
+      stageNumber: "three-truth",
       systemPrompt: system,
       userMessage: user,
       model: MODEL,

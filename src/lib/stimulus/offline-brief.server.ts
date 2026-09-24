@@ -91,6 +91,7 @@ export async function runOfflineCreativeBrief(args: {
   try {
     const text = (
       await callClaude({
+        stageNumber: "cs-offline",
         systemPrompt: OFFLINE_CREATIVE_BRIEF_SYSTEM_PROMPT,
         userMessage: buildOfflineCreativeBriefMessage({
           brandName: session.brand_name ?? "—",

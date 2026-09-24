@@ -163,6 +163,7 @@ export async function runConvergenceLedger(args: {
 
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     const raw = await callClaude({
+      stageNumber: "cs-ledger",
       systemPrompt: LEDGER_SYSTEM_PROMPT,
       userMessage: transcript,
       skipUniversalWrapper: true,
