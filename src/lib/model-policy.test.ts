@@ -39,8 +39,8 @@ describe("model capability guard for output_config.effort", () => {
   });
 
   it("omits output_config entirely when no effort applies", () => {
-    expect(effortConfig(OPUS_5_5, "17")).toEqual({});
-    expect(effortConfig("claude-haiku-4-5", "17")).toEqual({});
+    expect(effortConfig(OPUS_5_5, "19")).toEqual({});
+    expect(effortConfig("claude-haiku-4-5", "19")).toEqual({});
   });
 
   it("keeps unmigrated stages on Opus 5 and honours explicit overrides", () => {
@@ -49,4 +49,14 @@ describe("model capability guard for output_config.effort", () => {
     expect(resolveModel("1B")).toBe(OPUS_5_5);
     expect(resolveModel("10", "claude-haiku-4-5")).toBe("claude-haiku-4-5");
   });
+});
+
+import { __policyInternals as P } from "./model-policy";
+import { test as t2, expect as e2 } from "vitest";
+t2("every pipeline stage id is explicitly classified for effort", () => {
+  const ids = "00A 1 10 11 12 13 13B 14 14B 14C 15 16 17 17B 18 19 1B 2 20 20B 21 21F 22 3 4 4b 5 6 7 8 9 9-loc 9-loc-validation BR1 BR2 BR3 BR4 BR5 IE IE-R anchor-gate".split(" ");
+  const missing = ids.filter((i) => !P.HIGH_EFFORT_STAGES.has(i.toLowerCase()) && !P.DEFAULT_EFFORT_STAGES.has(i.toLowerCase()));
+  e2(missing).toEqual([]);
+  const both = ids.filter((i) => P.HIGH_EFFORT_STAGES.has(i.toLowerCase()) && P.DEFAULT_EFFORT_STAGES.has(i.toLowerCase()));
+  e2(both).toEqual([]);
 });

@@ -46,10 +46,29 @@ const HIGH_EFFORT_STAGES = new Set<string>([
   "13", "13b", "15", "16", "18", "20", "20b", "21", "21f",
   // Brand-world and territory reasoning.
   "14", "14b", "14c", "00a", "ie", "ie-r",
+  // Strategic-space generation everything downstream builds on (reclassified
+  // 24 Sep 2026 after the Stage 4 side-by-side — see docs/opus-5-5-migration.md).
+  "4", "4b", "5", "6", "7",
+  // Phase 2 strategic authorship.
+  "17", "17b", "22",
   // Briefing Room: diagnosis and tension collision are the reasoning core.
   "br1", "br2", "br4", "br5",
   // Anchor gate is a hard admissibility check.
   "anchor-gate",
+]);
+
+/**
+ * Stages deliberately left on the model's default effort (extraction,
+ * formatting, structuring). Listed explicitly so every stage id is classified —
+ * the test suite fails if a stage appears in neither set.
+ */
+const DEFAULT_EFFORT_STAGES = new Set<string>([
+  "1",   // Brief Analysis — extraction/sanitisation
+  "1b",  // Brief Enhancement — gap review
+  "2",   // Category Intelligence — research compilation
+  "3",   // Strategic Frameworks — fixed-structure framework blocks
+  "19",  // Activation Architecture — structuring an already-chosen territory
+  "br3", // Briefing Room relevance filter — sorting existing truths
 ]);
 
 /**
@@ -109,4 +128,4 @@ export function effortConfig(
   return { output_config: { effort } };
 }
 
-export const __policyInternals = { STAGE_MODEL, HIGH_EFFORT_STAGES, modelSupportsEffort };
+export const __policyInternals = { STAGE_MODEL, HIGH_EFFORT_STAGES, DEFAULT_EFFORT_STAGES, modelSupportsEffort };

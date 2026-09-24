@@ -112,3 +112,10 @@ Stage 3 → 5.5 (model default effort): PASS, 5 frameworks, all labels present.
 Stage 4 → 5.5 (model default effort): real Dan Murphy's run, 38.2 s, 5 frameworks in →
 5 universes out, every universe has its `>` tension line and `---` divider, output
 opens on the first `## ` heading. PASS.
+
+## Stage 4 side-by-side (24 Sep 2026, Dan Murphy's session c5142f1d, same input)
+| | Opus 5 @ high | Opus 5.5 @ high | Opus 5.5 @ default (medium) |
+|---|---|---|---|
+| Time / chars | 41s / 8,301 | 44s / 9,469 | 38s |
+| Universes / tension lines | 5/5, 5/5 | 5/5, 5/5 | 5/5, 5/5 |
+Finding: 5.5 high tension lines are more two-sided and human; 3 of 5 reuse a "…to whoever…" closing formula (watch item). Opus 5 lines are terser and more contrarian. Medium was not structurally worse. Decision: Stage 4 classified reasoning-critical → high effort on 5.5. All stage ids now explicitly classified (test enforced).

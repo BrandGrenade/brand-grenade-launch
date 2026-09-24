@@ -128,3 +128,22 @@ async function stage4() {
   console.log(out.slice(0, 900));
 }
 if (mode === "4") await stage4();
+
+async function stage4cmp(model: string, tag: string) {
+  const { STAGE_4_SYSTEM_PROMPT, buildStage4UserMessage } = await import("../src/lib/stage4-prompt");
+  const { countSections } = await import("../src/lib/count-helpers");
+  const { trimStage1ForDownstream } = await import("../src/lib/context-trim");
+  const { data: s } = await supabaseAdmin.from("sessions").select("brand_name, category, stage_1_output, stage_2_output, stage_3_output").eq("id", SESSION_ID).single();
+  const expected = countSections(s!.stage_3_output, 4);
+  const t0 = Date.now();
+  const out = await callClaude({
+    systemPrompt: STAGE_4_SYSTEM_PROMPT,
+    userMessage: buildStage4UserMessage({ brandName: s!.brand_name, category: s!.category, sanitisedBrief: trimStage1ForDownstream(s!.stage_1_output ?? ""), cmm: s!.stage_2_output ?? "", constraintMatrix: s!.stage_3_output ?? "", constraintSetCount: expected }),
+    maxTokens: 64000, model, effort: "high", stageLabel: `Stage 4 (${tag})`, stageNumber: "4", stageName: "Strategic Universes",
+  });
+  writeFileSync(`/tmp/opus55/stage4-${tag}.md`, out);
+  const blocks = out.split(/^## /m).slice(1);
+  console.log(`[4:${tag}] ${(Date.now() - t0) / 1000}s chars=${out.length} expected=${expected} universes=${blocks.length} tension=${blocks.filter((b) => /^>\s/m.test(b)).length}`);
+}
+if (mode === "4-opus5") await stage4cmp("claude-opus-5", "opus5-high");
+if (mode === "4-opus55") await stage4cmp("claude-opus-5-5", "opus55-high");
