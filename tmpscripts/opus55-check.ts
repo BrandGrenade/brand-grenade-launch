@@ -147,3 +147,20 @@ async function stage4cmp(model: string, tag: string) {
 }
 if (mode === "4-opus5") await stage4cmp("claude-opus-5", "opus5-high");
 if (mode === "4-opus55") await stage4cmp("claude-opus-5-5", "opus55-high");
+
+async function stage4bcmp(model: string, tag: string) {
+  const { STAGE_4B_SYSTEM_PROMPT, buildStage4bUserMessage } = await import("../src/lib/stage4b-prompt");
+  const { trimStage1ForDownstream } = await import("../src/lib/context-trim");
+  const { data: s } = await supabaseAdmin.from("sessions").select("brand_name, category, stage_1_output").eq("id", SESSION_ID).single();
+  const t0 = Date.now();
+  const out = await callClaude({
+    systemPrompt: STAGE_4B_SYSTEM_PROMPT,
+    userMessage: buildStage4bUserMessage({ brandName: s!.brand_name, category: s!.category, sanitisedBrief: trimStage1ForDownstream(s!.stage_1_output ?? "") }),
+    maxTokens: 64000, model, effort: "high", stageLabel: `Stage 4B (${tag})`, stageNumber: "4b", stageName: "Asset Mining & Product Facts",
+  });
+  writeFileSync(`/tmp/opus55/stage4b-${tag}.md`, out);
+  const bullets = (out.match(/^\s*[-*•] /gm) ?? []).length;
+  console.log(`[4b:${tag}] ${(Date.now() - t0) / 1000}s chars=${out.length} starts=${out.startsWith("# ASSET MINING AND PRODUCT FACTS")} partOne=${/part one/i.test(out)} partTwo=${/part two/i.test(out)} partThree=${/part three/i.test(out)} real=${(out.match(/real fact/gi) ?? []).length} perceived=${(out.match(/perceived fact/gi) ?? []).length} bullets=${bullets}`);
+}
+if (mode === "4b-opus5") await stage4bcmp("claude-opus-5", "opus5-high");
+if (mode === "4b-opus55") await stage4bcmp("claude-opus-5-5", "opus55-high");
