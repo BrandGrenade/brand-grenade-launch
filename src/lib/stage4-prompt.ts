@@ -14,6 +14,8 @@ For each universe write:
 
 > [The single core tension this universe is built on — one sentence, stated as a human truth]
 
+TENSION LINE CONSTRUCTION: Across the full set, every tension line must use a different sentence construction. Do not repeat a closing formula (for example ending several lines with "...to whoever...", "...and they love whoever...", "...grateful to whoever..."), a shared opening ("Most people...", "Everyone..."), or the same clause pattern. Before finalising, compare the tension lines side by side and rewrite any that echo another's grammatical shape.
+
 [One paragraph — why this territory is strategically available. What no competitor has claimed. Why this brand has the right to claim it.]
 
 ---
