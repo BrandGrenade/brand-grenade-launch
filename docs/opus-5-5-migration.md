@@ -119,3 +119,15 @@ opens on the first `## ` heading. PASS.
 | Time / chars | 41s / 8,301 | 44s / 9,469 | 38s |
 | Universes / tension lines | 5/5, 5/5 | 5/5, 5/5 | 5/5, 5/5 |
 Finding: 5.5 high tension lines are more two-sided and human; 3 of 5 reuse a "…to whoever…" closing formula (watch item). Opus 5 lines are terser and more contrarian. Medium was not structurally worse. Decision: Stage 4 classified reasoning-critical → high effort on 5.5. All stage ids now explicitly classified (test enforced).
+
+### Stage 4 re-run after tension-line variety instruction (24 Sep 2026)
+Opus 5.5 @ high, 51s, 5/5 universes, 5/5 tension lines. "whoever" occurrences: 0 (was 3 of 5). Five distinct constructions (clause + reversal, paradox, rhetorical question, imperative-conditional, appositive). Stage 4 stays migrated.
+
+## Stage 4B side-by-side (24 Sep 2026, same session, both @ high) — NOT MIGRATED
+| | Opus 5 | Opus 5.5 |
+|---|---|---|
+| Time / chars | 163s / 21,745 | 139s / 24,375 |
+| Heading contract | 3 parts, as specified | **5 parts** — promoted liability reinterpretation and top-3 facts to their own parts |
+| Priority combination | Founder's published wine writing + price guarantee retiring the price argument | Possessive name + "more Australian occasions pass through Dan's than any other retailer" |
+| Fact discipline | Anchor is a real, checkable historical fact | **Anchor is an unsourced superlative, stated as fact** (not in the brief), in the stage whose job is raw verifiable facts |
+Downstream parses 4B as free text (stage5-prompt.ts), so the part drift would not break Stage 5 — but it is contract drift of the Stage 11 kind, and the fact lapse is a quality regression. Decision: 4B stays on Opus 5 (high). Re-test after hardening the part structure and fact-sourcing rule.
