@@ -55,6 +55,9 @@ const HIGH_EFFORT_STAGES = new Set<string>([
   "br1", "br2", "br4", "br5",
   // Anchor gate is a hard admissibility check.
   "anchor-gate",
+  // Creative Stimulus Engine: idea generation, convergence judging, the
+  // on-strategy line gate and revise/try-again all depend on reasoning depth.
+  "cs-bigidea", "cs-ledger", "cs-linecheck", "cs-regen",
 ]);
 
 /**
@@ -69,6 +72,10 @@ const DEFAULT_EFFORT_STAGES = new Set<string>([
   "3",   // Strategic Frameworks — fixed-structure framework blocks
   "19",  // Activation Architecture — structuring an already-chosen territory
   "br3", // Briefing Room relevance filter — sorting existing truths
+  "cs-channel",  // Channel adaptation — reformatting an approved idea per channel
+  "cs-offline",  // Offline creative brief — structuring existing material
+  "three-truth", // Three Truths — pinned to Sonnet 4.5, extraction
+  "preflight",   // Health-check ping — pinned to Haiku 4.5 (rejects effort)
 ]);
 
 /**
