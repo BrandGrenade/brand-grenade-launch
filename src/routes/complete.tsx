@@ -592,7 +592,10 @@ function CompletePage() {
         {/* Download section */}
         <div style={{ marginTop: 32 }}>
           {(() => {
-            const runGenerate = async (force = false) => {
+            const runGenerate = async (force = false, fmt: Format = format) => {
+              // The document type is passed in explicitly. Reading `format` from
+              // this render's closure after a setFormat() served the previously
+              // selected type on the first click (stale closure).
               if (!hasSmp || !session) return;
               setLastError(null);
               setFallbackHtml(null);
@@ -610,7 +613,7 @@ function CompletePage() {
                 docWin.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Preparing ${brand.replace(/[<>&"']/g, "")}</title><style>html,body{height:100%;margin:0}body{display:grid;place-items:center;background:#0A0908;color:#EDE8E0;font:500 16px system-ui,sans-serif}.status{padding:24px;text-align:center}.mark{color:#C81E1E;font-size:28px;margin-bottom:12px}</style></head><body><div class="status"><div class="mark">●</div>Preparing ${brand.replace(/[<>&"']/g, "")} document…</div></body></html>`);
                 docWin.document.close();
               }
-              if (format === "valuation") {
+              if (fmt === "valuation") {
                 const existingVal = session.stage_16_valuation_output;
                 if (!force && existingVal && existingVal.trim().length > 1000) {
                   try {
@@ -658,7 +661,7 @@ function CompletePage() {
                 }
                 return;
               }
-              if (format === "vision") {
+              if (fmt === "vision") {
                 // Stage 16 vision is generated on demand via the server fn.
                 // Returns cached output if already populated (no extra Claude
                 // call); otherwise streams generation and persists.
@@ -722,14 +725,14 @@ function CompletePage() {
                 // — a fresh build every click using the current prompts and
                 // pipeline outputs.
                 const live = await resolveLiveDocumentSession(session);
-                openPhase1Document(live, format as Phase1Format, docWin);
+                openPhase1Document(live, fmt as Phase1Format, docWin);
               } catch (e) {
                 // The blank tab is useless if the build failed — close it.
                 try { docWin?.close(); } catch { /* ignore */ }
                 // Log the whole error — name, message, stack and any
                 // certification findings — so the real cause is visible.
                 console.error("Document build failed", {
-                  format,
+                  format: fmt,
                   sessionId: session.id,
                   type: e instanceof Error ? e.name : typeof e,
                   message: e instanceof Error ? e.message : String(e),
