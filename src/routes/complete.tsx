@@ -750,8 +750,10 @@ function CompletePage() {
             };
             const handleRegenerate = (id: Format) => {
               setFormat(id);
-              // Defer one tick so the format state update lands before run.
-              setTimeout(() => runGenerate(true), 0);
+              // Run synchronously with the clicked type — no deferred tick, so
+              // the stale-closure format can't be used and the new tab still
+              // opens inside the click.
+              void runGenerate(true, id);
             };
             // Expose handler to the cards rendered above via a ref.
             regenerateRef.current = handleRegenerate;
