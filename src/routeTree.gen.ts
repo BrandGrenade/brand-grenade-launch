@@ -61,6 +61,7 @@ import { Route as ApiPublicSmpScoreTickRouteImport } from './routes/api/public/s
 import { Route as ApiPublicReliabilityTickRouteImport } from './routes/api/public/reliability-tick'
 import { Route as ApiPublicOrchestrationTickRouteImport } from './routes/api/public/orchestration-tick'
 import { Route as ApiPublicIntelligenceTickRouteImport } from './routes/api/public/intelligence-tick'
+import { Route as ApiPublicHubTickRouteImport } from './routes/api/public/hub-tick'
 import { Route as AdminPreviewSlugRouteImport } from './routes/admin.preview.$slug'
 import { Route as LovableEmailTransactionalSendRouteImport } from './routes/lovable/email/transactional/send'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
@@ -334,6 +335,11 @@ const ApiPublicIntelligenceTickRoute =
     path: '/api/public/intelligence-tick',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHubTickRoute = ApiPublicHubTickRouteImport.update({
+  id: '/api/public/hub-tick',
+  path: '/api/public/hub-tick',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminPreviewSlugRoute = AdminPreviewSlugRouteImport.update({
   id: '/admin/preview/$slug',
   path: '/admin/preview/$slug',
@@ -412,6 +418,7 @@ export interface FileRoutesByFullPath {
   '/synthesiser/': typeof SynthesiserIndexRoute
   '/walkthrough/': typeof WalkthroughIndexRoute
   '/admin/preview/$slug': typeof AdminPreviewSlugRoute
+  '/api/public/hub-tick': typeof ApiPublicHubTickRoute
   '/api/public/intelligence-tick': typeof ApiPublicIntelligenceTickRoute
   '/api/public/orchestration-tick': typeof ApiPublicOrchestrationTickRoute
   '/api/public/reliability-tick': typeof ApiPublicReliabilityTickRoute
@@ -465,6 +472,7 @@ export interface FileRoutesByTo {
   '/synthesiser': typeof SynthesiserIndexRoute
   '/walkthrough': typeof WalkthroughIndexRoute
   '/admin/preview/$slug': typeof AdminPreviewSlugRoute
+  '/api/public/hub-tick': typeof ApiPublicHubTickRoute
   '/api/public/intelligence-tick': typeof ApiPublicIntelligenceTickRoute
   '/api/public/orchestration-tick': typeof ApiPublicOrchestrationTickRoute
   '/api/public/reliability-tick': typeof ApiPublicReliabilityTickRoute
@@ -526,6 +534,7 @@ export interface FileRoutesById {
   '/synthesiser/': typeof SynthesiserIndexRoute
   '/walkthrough/': typeof WalkthroughIndexRoute
   '/admin/preview/$slug': typeof AdminPreviewSlugRoute
+  '/api/public/hub-tick': typeof ApiPublicHubTickRoute
   '/api/public/intelligence-tick': typeof ApiPublicIntelligenceTickRoute
   '/api/public/orchestration-tick': typeof ApiPublicOrchestrationTickRoute
   '/api/public/reliability-tick': typeof ApiPublicReliabilityTickRoute
@@ -588,6 +597,7 @@ export interface FileRouteTypes {
     | '/synthesiser/'
     | '/walkthrough/'
     | '/admin/preview/$slug'
+    | '/api/public/hub-tick'
     | '/api/public/intelligence-tick'
     | '/api/public/orchestration-tick'
     | '/api/public/reliability-tick'
@@ -641,6 +651,7 @@ export interface FileRouteTypes {
     | '/synthesiser'
     | '/walkthrough'
     | '/admin/preview/$slug'
+    | '/api/public/hub-tick'
     | '/api/public/intelligence-tick'
     | '/api/public/orchestration-tick'
     | '/api/public/reliability-tick'
@@ -701,6 +712,7 @@ export interface FileRouteTypes {
     | '/synthesiser/'
     | '/walkthrough/'
     | '/admin/preview/$slug'
+    | '/api/public/hub-tick'
     | '/api/public/intelligence-tick'
     | '/api/public/orchestration-tick'
     | '/api/public/reliability-tick'
@@ -750,6 +762,7 @@ export interface RootRouteChildren {
   DetonationCanvasRoute: typeof DetonationCanvasRoute
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
   AdminPreviewSlugRoute: typeof AdminPreviewSlugRoute
+  ApiPublicHubTickRoute: typeof ApiPublicHubTickRoute
   ApiPublicIntelligenceTickRoute: typeof ApiPublicIntelligenceTickRoute
   ApiPublicOrchestrationTickRoute: typeof ApiPublicOrchestrationTickRoute
   ApiPublicReliabilityTickRoute: typeof ApiPublicReliabilityTickRoute
@@ -1129,6 +1142,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicIntelligenceTickRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hub-tick': {
+      id: '/api/public/hub-tick'
+      path: '/api/public/hub-tick'
+      fullPath: '/api/public/hub-tick'
+      preLoaderRoute: typeof ApiPublicHubTickRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/preview/$slug': {
       id: '/admin/preview/$slug'
       path: '/admin/preview/$slug'
@@ -1306,6 +1326,7 @@ const rootRouteChildren: RootRouteChildren = {
   DetonationCanvasRoute: DetonationCanvasRoute,
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
   AdminPreviewSlugRoute: AdminPreviewSlugRoute,
+  ApiPublicHubTickRoute: ApiPublicHubTickRoute,
   ApiPublicIntelligenceTickRoute: ApiPublicIntelligenceTickRoute,
   ApiPublicOrchestrationTickRoute: ApiPublicOrchestrationTickRoute,
   ApiPublicReliabilityTickRoute: ApiPublicReliabilityTickRoute,
