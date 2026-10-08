@@ -4,7 +4,7 @@
 // - Optional sessionId + stageLabel to publish a transient "retrying" status
 //   to the sessions.retry_status column (consumed by the pipeline right panel).
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { resolveModel, effortConfig, type Effort } from "./model-policy";
+import { resolveModel, effortConfig, MIGRATION_ACTIVE, type Effort } from "./model-policy";
 
 const ANTHROPIC_URL = "https://api.anthropic.com/v1/messages";
 // Per-chunk inactivity budget. The previous flat 180s wall-clock abort would
