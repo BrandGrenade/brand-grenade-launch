@@ -11,6 +11,9 @@ import {
 } from "@/lib/hub/context";
 import { findPriorHubWork, stampHubContext } from "@/lib/hub.functions";
 
+// Capture at first load, before any sign-in redirect rewrites the address.
+if (typeof window !== "undefined") captureHubContextFromUrl();
+
 type Table = "sessions" | "intelligence_sessions" | "briefing_room_workspaces" | "synthesiser_runs";
 type RoomMatch = { table: Table; id: string | null; openPath: (id: string) => string };
 
