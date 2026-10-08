@@ -1,5 +1,7 @@
 # Roadmap
 
+- [ ] Correct the Hub sending-details example to Marlowe Motor Company and report other old-name mentions; locating the Hub-owned example.
+
 - [x] Restrict email queue RPCs and dispatcher to trusted server execution.
 - [x] Verify live grants and rerun the security scanner.
 - [ ] Replace `repository_visitors.plaintext_password` with a non-recoverable credential design and remove existing plaintext values. Blocker: requires a separately scoped migration and product-flow update.
