@@ -26,11 +26,8 @@ export const DEFAULT_MODEL = OPUS_5;
  * Preview-only switch for the Opus 5.5 migration. True only in the dev-server
  * preview; every production (published) build compiles this to false, so the
  * published site runs every stage on Opus 5 with no migration prompt rules.
- * Tests can force it with OPUS55_MIGRATION=1.
  */
-export const MIGRATION_ACTIVE: boolean =
-  Boolean(import.meta.env?.DEV) ||
-  (typeof process !== "undefined" && process.env?.["OPUS55_MIGRATION"] === "1");
+export const MIGRATION_ACTIVE: boolean = Boolean(import.meta.env?.DEV);
 
 export type Effort = "low" | "medium" | "high" | "xhigh" | "max";
 
