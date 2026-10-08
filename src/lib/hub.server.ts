@@ -58,11 +58,37 @@ export async function drainHubOutbox(limit = 25) {
       .select("id");
     if (!claimed?.length) continue;
 
-    const r = await postToHub(row.payload);
+    // A document reference becomes the real file at send time; if the file
+    // cannot be produced the event still goes, without a document.
+    let payload = row.payload as Record<string, unknown>;
+    let docNote: string | null = null;
+    let docMeta: { doc_bytes: number | null; doc_delivery: string | null } = { doc_bytes: null, doc_delivery: null };
+    const doc = payload["document"] as { name?: string; ref?: string } | undefined;
+    if (doc && typeof doc.ref === "string") {
+      const { document: _d, ...rest } = payload;
+      void _d;
+      payload = rest;
+      if (doc.ref !== "drop") {
+        const { resolveHubDocument } = await import("./hub-documents.server");
+        const res = await resolveHubDocument(doc.name ?? "Document", doc.ref, row.id);
+        if (res.ok) {
+          payload = { ...rest, document: res.document };
+          docMeta = { doc_bytes: res.bytes, doc_delivery: res.delivery };
+        } else {
+          docNote = `Document not attached: ${res.reason}`;
+          docMeta = { doc_bytes: null, doc_delivery: "none" };
+        }
+      } else {
+        docNote = "Document not attached: queued before files were supported";
+        docMeta = { doc_bytes: null, doc_delivery: "none" };
+      }
+    }
+
+    const r = await postToHub(payload);
     const attempts = row.attempts + 1;
     if (r.ok) {
       await supabaseAdmin.from("hub_outbox")
-        .update({ status: "sent", attempts, sent_at: new Date().toISOString(), last_error: null })
+        .update({ status: "sent", attempts, sent_at: new Date().toISOString(), last_error: docNote, ...docMeta })
         .eq("id", row.id);
       sent++;
     } else if ((r.status >= 400 && r.status < 500) || attempts >= MAX_ATTEMPTS) {
