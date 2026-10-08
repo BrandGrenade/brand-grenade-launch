@@ -9,3 +9,5 @@
 - [x] Harden Stage 4B’s three-part and evidence-source contract, rerun Opus 5 vs 5.5, retain 5.5 only if structure and claims pass, and add fact-bound claim checks to future migration comparisons (Stage 5 and Briefing Room truth steps first).
 - [ ] Opus 5.5 full migration: every remaining stage, one at a time — real run, structure check, claim-origin audit for fact-bound stages, side-by-side for reasoning-critical; tighten & re-run on failure. Stage 11 stays blocked until heading format fixed + re-tested. Report per-stage result + total run time before/after. No publish. BLOCKED: AI provider account out of credit (24 Sep 02:20 UTC); partial results in /tmp/opus55/wave.
 - [x] Report number of research sources used in the Research Synthesiser and the Nissan Intelligence Lab run.
+
+- [ ] Partner Hub link: blocked on HUB_INGEST_KEY; document files (PDF/DOCX or 24h signed link) and export events not yet sent
