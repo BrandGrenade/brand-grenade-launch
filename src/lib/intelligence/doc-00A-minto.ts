@@ -38,6 +38,7 @@ import {
 import { buildNextActions, buildRiskRegister } from "./risk-register";
 
 import type { Document00AInput, IntelligenceReport } from "./doc-00A-types";
+import { noteHubExport } from "@/lib/hub/export";
 export type { Document00AInput, IntelligenceReport } from "./doc-00A-types";
 
 type Loose = Record<string, unknown>;
@@ -720,6 +721,7 @@ export function buildDocument00AMinto(
 /** Opens Document 00A in a new tab using the shared canonical template. */
 export function openDocument00AMinto(input: Document00AInput): void {
   const html = buildDocument00AMinto(input);
+  noteHubExport(html);
   const win = window.open("", "_blank");
   if (!win) {
     alert("Please allow popups to open your document.");

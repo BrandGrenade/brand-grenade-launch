@@ -5,6 +5,7 @@ import { renderRatingTable } from "./creative-shortlist";
 // linked out, never embedded — consistent with the licensing approach.
 
 import { getLens } from "@/lib/stimulus/lenses";
+import { noteHubExport } from "@/lib/hub/export";
 
 
 function esc(v: unknown): string {
@@ -79,6 +80,7 @@ function doc(title: string, body: string): string {
 }
 
 export function download(filename: string, html: string) {
+  noteHubExport(html.includes("<title") ? html : filename);
   const blob = new Blob([html], { type: "text/html;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -92,6 +94,7 @@ export function download(filename: string, html: string) {
 
 /** Opens the same document in a new tab and raises the print dialogue. */
 export function openPrintable(html: string) {
+  noteHubExport(html);
   const w = window.open("", "_blank");
   if (!w) throw new Error("Pop-up blocked — allow pop-ups to print, or use Download instead.");
   w.document.open();

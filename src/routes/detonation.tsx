@@ -40,6 +40,7 @@ import type { FidelityReport as Stage21FidelityReport } from "@/lib/stage21-fide
 import { fidelityBlockReason, type FidelityOverride } from "@/lib/stage21-fidelity-gate";
 import { runStage22, loadStage22, regenerateStage22 } from "@/lib/stage22.functions";
 import { NUMBERED_STAGE_COUNT } from "@/lib/stage-manifest";
+import { noteHubExport } from "@/lib/hub/export";
 
 
 const AMBER = PHASE_2_AMBER;
@@ -2233,6 +2234,7 @@ function Stage21({ session, onChange, goNext }: { session: SessionRow; onChange:
 
 
   const download = (filename: string, content: string) => {
+    noteHubExport(filename);
     const blob = new Blob([content], { type: "text/markdown" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a"); a.href = url; a.download = filename; a.click();

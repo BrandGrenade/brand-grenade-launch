@@ -18,6 +18,7 @@ import { resolveLiveDocumentSession } from "./document-live-source";
 import { intelligenceSourceIdFromBrief } from "./document-source-authority";
 import { buildSummaryDocument } from "./summary-document";
 import { fetchSummaryExtras } from "./summary-data";
+import { noteHubExport } from "@/lib/hub/export";
 
 export type BundleSession = Phase1Session &
   Phase2Session &
@@ -376,6 +377,7 @@ export async function buildAndDownloadBundle(
   const blob = await zip.generateAsync({ type: "blob", compression: "DEFLATE" });
   const filename = `Brand_Grenade_${clientSlug}_Run_${runDate}.zip`;
 
+  noteHubExport(filename);
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
