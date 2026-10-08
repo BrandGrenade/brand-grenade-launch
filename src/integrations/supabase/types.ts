@@ -65,6 +65,9 @@ export type Database = {
           category: string
           created_at: string
           diagnosis: Json | null
+          hub_client: string | null
+          hub_ctx: string | null
+          hub_job: string | null
           id: string
           last_error: string | null
           raw_brief: string
@@ -83,6 +86,9 @@ export type Database = {
           category?: string
           created_at?: string
           diagnosis?: Json | null
+          hub_client?: string | null
+          hub_ctx?: string | null
+          hub_job?: string | null
           id?: string
           last_error?: string | null
           raw_brief?: string
@@ -101,6 +107,9 @@ export type Database = {
           category?: string
           created_at?: string
           diagnosis?: Json | null
+          hub_client?: string | null
+          hub_ctx?: string | null
+          hub_job?: string | null
           id?: string
           last_error?: string | null
           raw_brief?: string
@@ -275,6 +284,45 @@ export type Database = {
         }
         Relationships: []
       }
+      hub_outbox: {
+        Row: {
+          attempts: number
+          created_at: string
+          hub_client: string
+          hub_job: string | null
+          id: string
+          last_error: string | null
+          next_attempt_at: string
+          payload: Json
+          sent_at: string | null
+          status: string
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          hub_client: string
+          hub_job?: string | null
+          id?: string
+          last_error?: string | null
+          next_attempt_at?: string
+          payload: Json
+          sent_at?: string | null
+          status?: string
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          hub_client?: string
+          hub_job?: string | null
+          id?: string
+          last_error?: string | null
+          next_attempt_at?: string
+          payload?: Json
+          sent_at?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
       intelligence_report_versions: {
         Row: {
           created_at: string
@@ -327,6 +375,9 @@ export type Database = {
           final_report: string | null
           handoff_payload: Json | null
           handoff_written_at: string | null
+          hub_client: string | null
+          hub_ctx: string | null
+          hub_job: string | null
           id: string
           input_audience_segmentation: string | null
           input_bg_intel_pack: string | null
@@ -365,6 +416,9 @@ export type Database = {
           final_report?: string | null
           handoff_payload?: Json | null
           handoff_written_at?: string | null
+          hub_client?: string | null
+          hub_ctx?: string | null
+          hub_job?: string | null
           id?: string
           input_audience_segmentation?: string | null
           input_bg_intel_pack?: string | null
@@ -403,6 +457,9 @@ export type Database = {
           final_report?: string | null
           handoff_payload?: Json | null
           handoff_written_at?: string | null
+          hub_client?: string | null
+          hub_ctx?: string | null
+          hub_job?: string | null
           id?: string
           input_audience_segmentation?: string | null
           input_bg_intel_pack?: string | null
@@ -851,6 +908,9 @@ export type Database = {
           doc_workshop_status: string | null
           doc_workshop_status_at: string | null
           doc_workshop_url: string | null
+          hub_client: string | null
+          hub_ctx: string | null
+          hub_job: string | null
           id: string
           interrupted_at: string | null
           interrupted_stage: number | null
@@ -1041,6 +1101,9 @@ export type Database = {
           doc_workshop_status?: string | null
           doc_workshop_status_at?: string | null
           doc_workshop_url?: string | null
+          hub_client?: string | null
+          hub_ctx?: string | null
+          hub_job?: string | null
           id?: string
           interrupted_at?: string | null
           interrupted_stage?: number | null
@@ -1231,6 +1294,9 @@ export type Database = {
           doc_workshop_status?: string | null
           doc_workshop_status_at?: string | null
           doc_workshop_url?: string | null
+          hub_client?: string | null
+          hub_ctx?: string | null
+          hub_job?: string | null
           id?: string
           interrupted_at?: string | null
           interrupted_stage?: number | null
@@ -1882,6 +1948,9 @@ export type Database = {
           error: string | null
           gate_one_confirmed: boolean
           gate_one_confirmed_at: string | null
+          hub_client: string | null
+          hub_ctx: string | null
+          hub_job: string | null
           id: string
           last_batch_at: string | null
           locked_at: string | null
@@ -1913,6 +1982,9 @@ export type Database = {
           error?: string | null
           gate_one_confirmed?: boolean
           gate_one_confirmed_at?: string | null
+          hub_client?: string | null
+          hub_ctx?: string | null
+          hub_job?: string | null
           id?: string
           last_batch_at?: string | null
           locked_at?: string | null
@@ -1944,6 +2016,9 @@ export type Database = {
           error?: string | null
           gate_one_confirmed?: boolean
           gate_one_confirmed_at?: string | null
+          hub_client?: string | null
+          hub_ctx?: string | null
+          hub_job?: string | null
           id?: string
           last_batch_at?: string | null
           locked_at?: string | null
@@ -2090,6 +2165,9 @@ export type Database = {
           category: string | null
           claim_count: number
           created_at: string
+          hub_client: string | null
+          hub_ctx: string | null
+          hub_job: string | null
           id: string
           status: string
           updated_at: string
@@ -2101,6 +2179,9 @@ export type Database = {
           category?: string | null
           claim_count?: number
           created_at?: string
+          hub_client?: string | null
+          hub_ctx?: string | null
+          hub_job?: string | null
           id?: string
           status?: string
           updated_at?: string
@@ -2112,6 +2193,9 @@ export type Database = {
           category?: string | null
           claim_count?: number
           created_at?: string
+          hub_client?: string | null
+          hub_ctx?: string | null
+          hub_job?: string | null
           id?: string
           status?: string
           updated_at?: string
@@ -2298,6 +2382,24 @@ export type Database = {
         Args: { payload: Json; queue_name: string }
         Returns: number
       }
+      hub_actor: { Args: { _uid: string }; Returns: string }
+      hub_disarm_if_drained: { Args: { _force?: boolean }; Returns: undefined }
+      hub_doc: { Args: { _name: string; _path: string }; Returns: Json }
+      hub_enqueue: {
+        Args: {
+          _actor: string
+          _client: string
+          _doc: Json
+          _event: string
+          _fp: string
+          _job: string
+          _room: string
+          _title: string
+        }
+        Returns: undefined
+      }
+      hub_fp: { Args: { _j: Json }; Returns: string }
+      hub_wake: { Args: never; Returns: undefined }
       is_session_owner: {
         Args: { _session_id: string; _user_id: string }
         Returns: boolean

@@ -3,6 +3,7 @@
 // Intelligence Lab.
 
 import { supabase } from "@/integrations/supabase/client";
+import { hubColumns } from "@/lib/hub/context";
 
 export type SynthesiserRunStatus = "in_progress" | "applied";
 
@@ -42,7 +43,7 @@ export async function recordSynthesiserRun(input: {
 
     const { data, error } = await supabase
       .from("synthesiser_runs")
-      .insert({ ...patch, user_id: userId })
+      .insert({ ...patch, ...hubColumns(), user_id: userId })
       .select("id")
       .single();
     if (error || !data) return null;

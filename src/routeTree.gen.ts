@@ -50,6 +50,7 @@ import { Route as BriefingRoomIdRouteImport } from './routes/briefing-room.$id'
 import { Route as BriefNewRouteImport } from './routes/brief.new'
 import { Route as AdminTestsRouteImport } from './routes/admin.tests'
 import { Route as AdminRepositoriesRouteImport } from './routes/admin.repositories'
+import { Route as AdminHubRouteImport } from './routes/admin.hub'
 import { Route as CreativeSessionIdIndexRouteImport } from './routes/creative.$sessionId.index'
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
 import { Route as IntelligenceIdEditRouteImport } from './routes/intelligence.$id_.edit'
@@ -61,6 +62,7 @@ import { Route as ApiPublicSmpScoreTickRouteImport } from './routes/api/public/s
 import { Route as ApiPublicReliabilityTickRouteImport } from './routes/api/public/reliability-tick'
 import { Route as ApiPublicOrchestrationTickRouteImport } from './routes/api/public/orchestration-tick'
 import { Route as ApiPublicIntelligenceTickRouteImport } from './routes/api/public/intelligence-tick'
+import { Route as ApiPublicHubTickRouteImport } from './routes/api/public/hub-tick'
 import { Route as AdminPreviewSlugRouteImport } from './routes/admin.preview.$slug'
 import { Route as LovableEmailTransactionalSendRouteImport } from './routes/lovable/email/transactional/send'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
@@ -273,6 +275,11 @@ const AdminRepositoriesRoute = AdminRepositoriesRouteImport.update({
   path: '/admin/repositories',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminHubRoute = AdminHubRouteImport.update({
+  id: '/admin/hub',
+  path: '/admin/hub',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CreativeSessionIdIndexRoute = CreativeSessionIdIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -334,6 +341,11 @@ const ApiPublicIntelligenceTickRoute =
     path: '/api/public/intelligence-tick',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHubTickRoute = ApiPublicHubTickRouteImport.update({
+  id: '/api/public/hub-tick',
+  path: '/api/public/hub-tick',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminPreviewSlugRoute = AdminPreviewSlugRouteImport.update({
   id: '/admin/preview/$slug',
   path: '/admin/preview/$slug',
@@ -395,6 +407,7 @@ export interface FileRoutesByFullPath {
   '/synthesiser': typeof SynthesiserRouteWithChildren
   '/unsubscribe': typeof UnsubscribeRoute
   '/walkthrough': typeof WalkthroughRouteWithChildren
+  '/admin/hub': typeof AdminHubRoute
   '/admin/repositories': typeof AdminRepositoriesRoute
   '/admin/tests': typeof AdminTestsRoute
   '/brief/new': typeof BriefNewRoute
@@ -412,6 +425,7 @@ export interface FileRoutesByFullPath {
   '/synthesiser/': typeof SynthesiserIndexRoute
   '/walkthrough/': typeof WalkthroughIndexRoute
   '/admin/preview/$slug': typeof AdminPreviewSlugRoute
+  '/api/public/hub-tick': typeof ApiPublicHubTickRoute
   '/api/public/intelligence-tick': typeof ApiPublicIntelligenceTickRoute
   '/api/public/orchestration-tick': typeof ApiPublicOrchestrationTickRoute
   '/api/public/reliability-tick': typeof ApiPublicReliabilityTickRoute
@@ -449,6 +463,7 @@ export interface FileRoutesByTo {
   '/settings': typeof SettingsRoute
   '/showcase': typeof ShowcaseRoute
   '/unsubscribe': typeof UnsubscribeRoute
+  '/admin/hub': typeof AdminHubRoute
   '/admin/repositories': typeof AdminRepositoriesRoute
   '/admin/tests': typeof AdminTestsRoute
   '/brief/new': typeof BriefNewRoute
@@ -465,6 +480,7 @@ export interface FileRoutesByTo {
   '/synthesiser': typeof SynthesiserIndexRoute
   '/walkthrough': typeof WalkthroughIndexRoute
   '/admin/preview/$slug': typeof AdminPreviewSlugRoute
+  '/api/public/hub-tick': typeof ApiPublicHubTickRoute
   '/api/public/intelligence-tick': typeof ApiPublicIntelligenceTickRoute
   '/api/public/orchestration-tick': typeof ApiPublicOrchestrationTickRoute
   '/api/public/reliability-tick': typeof ApiPublicReliabilityTickRoute
@@ -509,6 +525,7 @@ export interface FileRoutesById {
   '/synthesiser': typeof SynthesiserRouteWithChildren
   '/unsubscribe': typeof UnsubscribeRoute
   '/walkthrough': typeof WalkthroughRouteWithChildren
+  '/admin/hub': typeof AdminHubRoute
   '/admin/repositories': typeof AdminRepositoriesRoute
   '/admin/tests': typeof AdminTestsRoute
   '/brief/new': typeof BriefNewRoute
@@ -526,6 +543,7 @@ export interface FileRoutesById {
   '/synthesiser/': typeof SynthesiserIndexRoute
   '/walkthrough/': typeof WalkthroughIndexRoute
   '/admin/preview/$slug': typeof AdminPreviewSlugRoute
+  '/api/public/hub-tick': typeof ApiPublicHubTickRoute
   '/api/public/intelligence-tick': typeof ApiPublicIntelligenceTickRoute
   '/api/public/orchestration-tick': typeof ApiPublicOrchestrationTickRoute
   '/api/public/reliability-tick': typeof ApiPublicReliabilityTickRoute
@@ -571,6 +589,7 @@ export interface FileRouteTypes {
     | '/synthesiser'
     | '/unsubscribe'
     | '/walkthrough'
+    | '/admin/hub'
     | '/admin/repositories'
     | '/admin/tests'
     | '/brief/new'
@@ -588,6 +607,7 @@ export interface FileRouteTypes {
     | '/synthesiser/'
     | '/walkthrough/'
     | '/admin/preview/$slug'
+    | '/api/public/hub-tick'
     | '/api/public/intelligence-tick'
     | '/api/public/orchestration-tick'
     | '/api/public/reliability-tick'
@@ -625,6 +645,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/showcase'
     | '/unsubscribe'
+    | '/admin/hub'
     | '/admin/repositories'
     | '/admin/tests'
     | '/brief/new'
@@ -641,6 +662,7 @@ export interface FileRouteTypes {
     | '/synthesiser'
     | '/walkthrough'
     | '/admin/preview/$slug'
+    | '/api/public/hub-tick'
     | '/api/public/intelligence-tick'
     | '/api/public/orchestration-tick'
     | '/api/public/reliability-tick'
@@ -684,6 +706,7 @@ export interface FileRouteTypes {
     | '/synthesiser'
     | '/unsubscribe'
     | '/walkthrough'
+    | '/admin/hub'
     | '/admin/repositories'
     | '/admin/tests'
     | '/brief/new'
@@ -701,6 +724,7 @@ export interface FileRouteTypes {
     | '/synthesiser/'
     | '/walkthrough/'
     | '/admin/preview/$slug'
+    | '/api/public/hub-tick'
     | '/api/public/intelligence-tick'
     | '/api/public/orchestration-tick'
     | '/api/public/reliability-tick'
@@ -745,11 +769,13 @@ export interface RootRouteChildren {
   SynthesiserRoute: typeof SynthesiserRouteWithChildren
   UnsubscribeRoute: typeof UnsubscribeRoute
   WalkthroughRoute: typeof WalkthroughRouteWithChildren
+  AdminHubRoute: typeof AdminHubRoute
   AdminRepositoriesRoute: typeof AdminRepositoriesRoute
   AdminTestsRoute: typeof AdminTestsRoute
   DetonationCanvasRoute: typeof DetonationCanvasRoute
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
   AdminPreviewSlugRoute: typeof AdminPreviewSlugRoute
+  ApiPublicHubTickRoute: typeof ApiPublicHubTickRoute
   ApiPublicIntelligenceTickRoute: typeof ApiPublicIntelligenceTickRoute
   ApiPublicOrchestrationTickRoute: typeof ApiPublicOrchestrationTickRoute
   ApiPublicReliabilityTickRoute: typeof ApiPublicReliabilityTickRoute
@@ -1052,6 +1078,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminRepositoriesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/hub': {
+      id: '/admin/hub'
+      path: '/admin/hub'
+      fullPath: '/admin/hub'
+      preLoaderRoute: typeof AdminHubRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/creative/$sessionId/': {
       id: '/creative/$sessionId/'
       path: '/'
@@ -1127,6 +1160,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/intelligence-tick'
       fullPath: '/api/public/intelligence-tick'
       preLoaderRoute: typeof ApiPublicIntelligenceTickRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hub-tick': {
+      id: '/api/public/hub-tick'
+      path: '/api/public/hub-tick'
+      fullPath: '/api/public/hub-tick'
+      preLoaderRoute: typeof ApiPublicHubTickRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/preview/$slug': {
@@ -1301,11 +1341,13 @@ const rootRouteChildren: RootRouteChildren = {
   SynthesiserRoute: SynthesiserRouteWithChildren,
   UnsubscribeRoute: UnsubscribeRoute,
   WalkthroughRoute: WalkthroughRouteWithChildren,
+  AdminHubRoute: AdminHubRoute,
   AdminRepositoriesRoute: AdminRepositoriesRoute,
   AdminTestsRoute: AdminTestsRoute,
   DetonationCanvasRoute: DetonationCanvasRoute,
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
   AdminPreviewSlugRoute: AdminPreviewSlugRoute,
+  ApiPublicHubTickRoute: ApiPublicHubTickRoute,
   ApiPublicIntelligenceTickRoute: ApiPublicIntelligenceTickRoute,
   ApiPublicOrchestrationTickRoute: ApiPublicOrchestrationTickRoute,
   ApiPublicReliabilityTickRoute: ApiPublicReliabilityTickRoute,
