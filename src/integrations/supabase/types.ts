@@ -2383,7 +2383,7 @@ export type Database = {
         Returns: number
       }
       hub_actor: { Args: { _uid: string }; Returns: string }
-      hub_disarm_if_drained: { Args: never; Returns: undefined }
+      hub_disarm_if_drained: { Args: { _force?: boolean }; Returns: undefined }
       hub_doc: { Args: { _name: string; _path: string }; Returns: Json }
       hub_enqueue: {
         Args: {

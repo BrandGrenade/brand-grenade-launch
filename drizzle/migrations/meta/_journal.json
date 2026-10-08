@@ -15,6 +15,13 @@
       "when": 1791419652017,
       "tag": "0001_hub_link",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791419803444,
+      "tag": "0002_hub_disarm_force",
+      "breakpoints": true
     }
   ]
 }
