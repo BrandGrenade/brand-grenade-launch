@@ -1,6 +1,6 @@
 # Roadmap
 
-- [ ] Correct the Hub sending-details example to Marlowe Motor Company and report other old-name mentions; locating the Hub-owned example.
+- [ ] Correct the Hub sending-details example to Marlowe Motor Company. BLOCKED: example belongs to Pixel Perfect Replica; cross-project access is read-only. Located at src/components/admin/OpsTabs.tsx:128. Audit found no other old-name mentions in either app’s source/prompts; prior Brand Grenade connection-test chat still mentions it.
 
 - [x] Restrict email queue RPCs and dispatcher to trusted server execution.
 - [x] Verify live grants and rerun the security scanner.
