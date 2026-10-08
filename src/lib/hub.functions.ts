@@ -90,7 +90,15 @@ export const getHubAdminStatus = createServerFn({ method: "GET" })
       .select("id, hub_client, hub_job, payload, status, attempts, last_error, created_at, sent_at")
       .order("created_at", { ascending: false })
       .limit(50);
-    return { urlSet: cfg.urlSet, keySet: cfg.keySet, sent, pending, failed, rows: rows ?? [] };
+    const { data: lastDoc } = await supabaseAdmin
+      .from("hub_outbox")
+      .select("payload, sent_at, doc_bytes, doc_delivery, last_error")
+      .eq("status", "sent")
+      .not("doc_delivery", "is", null)
+      .order("sent_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    return { urlSet: cfg.urlSet, keySet: cfg.keySet, sent, pending, failed, rows: rows ?? [], lastDoc: lastDoc ?? null };
   });
 
 export const retryFailedHub = createServerFn({ method: "POST" })

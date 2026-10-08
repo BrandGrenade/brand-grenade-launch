@@ -44,6 +44,9 @@ function HubAdmin() {
           <p className="mt-4 text-text-secondary">Loading…</p>
         ) : (
           <>
+            {!(q.data.urlSet && q.data.keySet) ? (
+              <Card className="mt-6 p-4 text-text-primary">Hub connection not set up. Items stay pending and nothing is sent until the hub address and key are added.</Card>
+            ) : null}
             <Card className="mt-6 grid gap-4 p-6 md:grid-cols-5">
               <Stat label="Hub address" value={q.data.urlSet ? "Set" : "Not set"} />
               <Stat label="Hub key" value={q.data.keySet ? "Set" : "Not set"} />
@@ -85,6 +88,23 @@ function HubAdmin() {
                 </Button>
               </div>
               {reply ? <pre className="w-full whitespace-pre-wrap text-[12px] text-text-secondary">{reply}</pre> : null}
+            </Card>
+
+            <Card className="mt-6 p-6">
+              <div className="text-label text-text-secondary">Last document sent</div>
+              {q.data.lastDoc ? (
+                <div className="mt-1 text-text-primary">
+                  {(q.data.lastDoc.payload as any)?.title} ·{" "}
+                  {q.data.lastDoc.doc_delivery === "file"
+                    ? `sent as a file (${((q.data.lastDoc.doc_bytes ?? 0) / 1024).toFixed(0)} KB)`
+                    : q.data.lastDoc.doc_delivery === "link"
+                      ? `sent as a 24-hour link (${((q.data.lastDoc.doc_bytes ?? 0) / 1024 / 1024).toFixed(1)} MB)`
+                      : `sent without a file — ${q.data.lastDoc.last_error ?? "file could not be generated"}`}
+                  {q.data.lastDoc.sent_at ? ` · ${new Date(q.data.lastDoc.sent_at).toLocaleString()}` : ""}
+                </div>
+              ) : (
+                <div className="mt-1 text-text-secondary">No document sent yet.</div>
+              )}
             </Card>
 
             <Card className="mt-6 overflow-x-auto p-0">
