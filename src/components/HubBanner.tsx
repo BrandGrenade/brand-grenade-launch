@@ -81,14 +81,14 @@ export function HubBanner() {
 
   if (!hub) {
     return (
-      <div className="border-b border-border bg-background px-5 py-1 text-[11px] text-muted-foreground">
+      <div className="fixed inset-x-0 bottom-0 z-50 border-t border-border bg-background px-5 py-1 text-[11px] text-muted-foreground">
         Not linked to a hub client, nothing sent
       </div>
     );
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-b border-border bg-muted px-5 py-1.5 text-[12px] text-foreground">
+    <div className="fixed inset-x-0 bottom-0 z-50 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-border bg-muted px-5 py-1.5 text-[12px] text-foreground">
       <span>
         Working for <strong>{hub.client}</strong>
         {hub.job ? (
