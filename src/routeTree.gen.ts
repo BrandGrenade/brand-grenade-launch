@@ -50,6 +50,7 @@ import { Route as BriefingRoomIdRouteImport } from './routes/briefing-room.$id'
 import { Route as BriefNewRouteImport } from './routes/brief.new'
 import { Route as AdminTestsRouteImport } from './routes/admin.tests'
 import { Route as AdminRepositoriesRouteImport } from './routes/admin.repositories'
+import { Route as AdminHubRouteImport } from './routes/admin.hub'
 import { Route as CreativeSessionIdIndexRouteImport } from './routes/creative.$sessionId.index'
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
 import { Route as IntelligenceIdEditRouteImport } from './routes/intelligence.$id_.edit'
@@ -274,6 +275,11 @@ const AdminRepositoriesRoute = AdminRepositoriesRouteImport.update({
   path: '/admin/repositories',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminHubRoute = AdminHubRouteImport.update({
+  id: '/admin/hub',
+  path: '/admin/hub',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CreativeSessionIdIndexRoute = CreativeSessionIdIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -401,6 +407,7 @@ export interface FileRoutesByFullPath {
   '/synthesiser': typeof SynthesiserRouteWithChildren
   '/unsubscribe': typeof UnsubscribeRoute
   '/walkthrough': typeof WalkthroughRouteWithChildren
+  '/admin/hub': typeof AdminHubRoute
   '/admin/repositories': typeof AdminRepositoriesRoute
   '/admin/tests': typeof AdminTestsRoute
   '/brief/new': typeof BriefNewRoute
@@ -456,6 +463,7 @@ export interface FileRoutesByTo {
   '/settings': typeof SettingsRoute
   '/showcase': typeof ShowcaseRoute
   '/unsubscribe': typeof UnsubscribeRoute
+  '/admin/hub': typeof AdminHubRoute
   '/admin/repositories': typeof AdminRepositoriesRoute
   '/admin/tests': typeof AdminTestsRoute
   '/brief/new': typeof BriefNewRoute
@@ -517,6 +525,7 @@ export interface FileRoutesById {
   '/synthesiser': typeof SynthesiserRouteWithChildren
   '/unsubscribe': typeof UnsubscribeRoute
   '/walkthrough': typeof WalkthroughRouteWithChildren
+  '/admin/hub': typeof AdminHubRoute
   '/admin/repositories': typeof AdminRepositoriesRoute
   '/admin/tests': typeof AdminTestsRoute
   '/brief/new': typeof BriefNewRoute
@@ -580,6 +589,7 @@ export interface FileRouteTypes {
     | '/synthesiser'
     | '/unsubscribe'
     | '/walkthrough'
+    | '/admin/hub'
     | '/admin/repositories'
     | '/admin/tests'
     | '/brief/new'
@@ -635,6 +645,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/showcase'
     | '/unsubscribe'
+    | '/admin/hub'
     | '/admin/repositories'
     | '/admin/tests'
     | '/brief/new'
@@ -695,6 +706,7 @@ export interface FileRouteTypes {
     | '/synthesiser'
     | '/unsubscribe'
     | '/walkthrough'
+    | '/admin/hub'
     | '/admin/repositories'
     | '/admin/tests'
     | '/brief/new'
@@ -757,6 +769,7 @@ export interface RootRouteChildren {
   SynthesiserRoute: typeof SynthesiserRouteWithChildren
   UnsubscribeRoute: typeof UnsubscribeRoute
   WalkthroughRoute: typeof WalkthroughRouteWithChildren
+  AdminHubRoute: typeof AdminHubRoute
   AdminRepositoriesRoute: typeof AdminRepositoriesRoute
   AdminTestsRoute: typeof AdminTestsRoute
   DetonationCanvasRoute: typeof DetonationCanvasRoute
@@ -1065,6 +1078,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminRepositoriesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/hub': {
+      id: '/admin/hub'
+      path: '/admin/hub'
+      fullPath: '/admin/hub'
+      preLoaderRoute: typeof AdminHubRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/creative/$sessionId/': {
       id: '/creative/$sessionId/'
       path: '/'
@@ -1321,6 +1341,7 @@ const rootRouteChildren: RootRouteChildren = {
   SynthesiserRoute: SynthesiserRouteWithChildren,
   UnsubscribeRoute: UnsubscribeRoute,
   WalkthroughRoute: WalkthroughRouteWithChildren,
+  AdminHubRoute: AdminHubRoute,
   AdminRepositoriesRoute: AdminRepositoriesRoute,
   AdminTestsRoute: AdminTestsRoute,
   DetonationCanvasRoute: DetonationCanvasRoute,
