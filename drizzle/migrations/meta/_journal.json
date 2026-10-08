@@ -22,6 +22,13 @@
       "when": 1791419803444,
       "tag": "0002_hub_disarm_force",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1791420974941,
+      "tag": "0003_hub_documents_as_files",
+      "breakpoints": true
     }
   ]
 }

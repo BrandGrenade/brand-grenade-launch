@@ -288,6 +288,8 @@ export type Database = {
         Row: {
           attempts: number
           created_at: string
+          doc_bytes: number | null
+          doc_delivery: string | null
           hub_client: string
           hub_job: string | null
           id: string
@@ -300,6 +302,8 @@ export type Database = {
         Insert: {
           attempts?: number
           created_at?: string
+          doc_bytes?: number | null
+          doc_delivery?: string | null
           hub_client: string
           hub_job?: string | null
           id?: string
@@ -312,6 +316,8 @@ export type Database = {
         Update: {
           attempts?: number
           created_at?: string
+          doc_bytes?: number | null
+          doc_delivery?: string | null
           hub_client?: string
           hub_job?: string | null
           id?: string
