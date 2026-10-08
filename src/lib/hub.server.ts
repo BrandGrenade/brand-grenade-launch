@@ -30,7 +30,12 @@ export async function postToHub(payload: unknown): Promise<{ ok: boolean; status
 export async function drainHubOutbox(limit = 25) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const cfg = hubConfig();
-  if (!cfg.urlSet || !cfg.keySet) return { sent: 0, failed: 0, retried: 0, configured: false };
+  if (!cfg.urlSet || !cfg.keySet) {
+    // Leave items pending; stop the retry tick until the key is added (the
+    // admin "Retry failed" button or the next queued item wakes it again).
+    await supabaseAdmin.rpc("hub_disarm_if_drained" as never, { _force: true } as never);
+    return { sent: 0, failed: 0, retried: 0, configured: false };
+  }
 
   const now = new Date();
   const { data: rows } = await supabaseAdmin
