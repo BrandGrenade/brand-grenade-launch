@@ -4,7 +4,7 @@
 // - Optional sessionId + stageLabel to publish a transient "retrying" status
 //   to the sessions.retry_status column (consumed by the pipeline right panel).
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { resolveModel, effortConfig, type Effort } from "./model-policy";
+import { resolveModel, effortConfig, MIGRATION_ACTIVE, type Effort } from "./model-policy";
 
 const ANTHROPIC_URL = "https://api.anthropic.com/v1/messages";
 // Per-chunk inactivity budget. The previous flat 180s wall-clock abort would
@@ -98,10 +98,14 @@ NEVER OUTPUT:
 
 ALWAYS WRITE AS:
 A compelling strategic document that a CMO or senior partner would read with confidence and find immediately actionable.
-Every sentence must earn its place. Strategic precision over completeness.
+Every sentence must earn its place. Strategic precision over completeness.${
+  MIGRATION_ACTIVE
+    ? `
 
 PRECEDENCE:
-The stage instructions that follow may define an exact output template: required headings, labelled lines (for example "Fame: 7/10" or "SMP VERDICT: …"), delimiters such as "==== DELIVERABLE 1 ====", or bracketed machine-readable blocks such as [METADATA] or [FATAL: …]. Wherever they do, reproduce that template exactly as specified; it overrides the FORMAT and NEVER OUTPUT rules above, because code parses those lines and a missing or reworded one silently loses work. Apply the style rules above only to the free prose inside that template.`;
+The stage instructions that follow may define an exact output template: required headings, labelled lines (for example "Fame: 7/10" or "SMP VERDICT: …"), delimiters such as "==== DELIVERABLE 1 ====", or bracketed machine-readable blocks such as [METADATA] or [FATAL: …]. Wherever they do, reproduce that template exactly as specified; it overrides the FORMAT and NEVER OUTPUT rules above, because code parses those lines and a missing or reworded one silently loses work. Apply the style rules above only to the free prose inside that template.`
+    : ""
+}`;
 
 
 

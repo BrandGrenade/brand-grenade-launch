@@ -28,6 +28,7 @@ import { resolveLiveDocumentSession } from "@/lib/document-live-source";
 import { DocumentCertificationError } from "@/lib/content-integrity";
 import { deriveRunFacts } from "@/lib/run-facts";
 import { NUMBERED_STAGE_COUNT } from "@/lib/stage-manifest";
+import { noteHubExport } from "@/lib/hub/export";
 
 
 
@@ -157,6 +158,7 @@ type SessionRow = {
 async function openDocument(url: string) {
   const response = await fetch(url);
   const html = await response.text();
+  noteHubExport(html);
   const win = window.open("", "_blank");
   if (!win) {
     alert("Please allow popups");
@@ -1521,6 +1523,7 @@ function StandaloneCreativeDeliverables({ sessionId }: { sessionId: string }) {
 }
 
 function openHtmlInNewTab(html: string) {
+  noteHubExport(html);
   const win = window.open("", "_blank");
   if (!win) { alert("Please allow popups"); return; }
   win.document.open("text/html");

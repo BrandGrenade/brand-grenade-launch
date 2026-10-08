@@ -22,6 +22,13 @@ export const OPUS_5 = "claude-opus-5";
 export const OPUS_5_5 = "claude-opus-5-5";
 export const DEFAULT_MODEL = OPUS_5;
 
+/**
+ * Preview-only switch for the Opus 5.5 migration. True only in the dev-server
+ * preview; every production (published) build compiles this to false, so the
+ * published site runs every stage on Opus 5 with no migration prompt rules.
+ */
+export const MIGRATION_ACTIVE: boolean = Boolean(import.meta.env?.DEV);
+
 export type Effort = "low" | "medium" | "high" | "xhigh" | "max";
 
 /** Lowercased stage id -> model. Absent = still on the platform default. */
@@ -116,7 +123,7 @@ export function modelSupportsEffort(model: string): boolean {
 
 export function resolveModel(stageNumber?: string, explicit?: string): string {
   if (explicit) return explicit;
-  if (stageNumber && STAGE_MODEL[stageNumber.toLowerCase()]) {
+  if (MIGRATION_ACTIVE && stageNumber && STAGE_MODEL[stageNumber.toLowerCase()]) {
     return STAGE_MODEL[stageNumber.toLowerCase()]!;
   }
   return DEFAULT_MODEL;

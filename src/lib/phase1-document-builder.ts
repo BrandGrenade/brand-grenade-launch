@@ -98,6 +98,7 @@ import { certifyDocument } from "./content-integrity";
 import { BOOKKEEPING_LINE, CANDIDATE_STAGE_KEYS, scopeToSelected, selectedAliases } from "./minto-content";
 import { buildBoardStrategyDocument } from "./board-strategy-document";
 import { enforcePropositionFraming } from "./proposition-framing";
+import { noteHubExport } from "@/lib/hub/export";
 
 
 export function sanitise(t: string | null | undefined): string {
@@ -475,6 +476,7 @@ export function buildPhase1Document(session: Phase1Session, format: Phase1Format
  * still gets the full formatting rather than nothing at all.
  */
 export function presentDocument(html: string, filename: string, win?: Window | null): void {
+  noteHubExport(html.includes("<title") ? html : filename);
   const blob = new Blob([html], { type: "text/html;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   if (win && !win.closed) {

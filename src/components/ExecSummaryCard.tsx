@@ -9,6 +9,7 @@ import { Spinner } from "@/components/ui/busy";
 import { resolveLiveDocumentSession } from "@/lib/document-live-source";
 import { buildSummaryDocument, type ExecSummarySession } from "@/lib/summary-document";
 import { fetchSummaryExtras } from "@/lib/summary-data";
+import { noteHubExport } from "@/lib/hub/export";
 
 /** Columns the summary needs that the Deliverables page does not already load. */
 const EXTRA_COLUMNS =
@@ -36,6 +37,7 @@ export function ExecSummaryCard({ session }: { session: ExecSummarySession }) {
       // One builder, one 21-section spec, every session.
       const extras = await fetchSummaryExtras(live);
       const html = buildSummaryDocument(live, extras);
+      noteHubExport(html);
       const win = window.open("", "_blank");
       if (!win) throw new Error("Please allow popups to open the summary");
       win.document.open("text/html");

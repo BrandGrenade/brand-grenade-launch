@@ -16,6 +16,7 @@ import { cleanProposition } from "@/lib/clean-proposition";
 import { STAGE_MANIFEST, type StageManifestEntry } from "./pipeline-integrity";
 import { stripDocumentMetadata } from "./strip-document-metadata";
 import { gateGenericDocument } from "./document-gate";
+import { noteHubExport } from "@/lib/hub/export";
 
 const ACCENT = "#C81E1E";
 
@@ -310,6 +311,7 @@ export function resolveFullRunStages(session: FullRunSession): StageManifestEntr
 
 export function openFullRunDocument(session: FullRunSession): void {
   const html = buildFullRunDocument(session);
+  noteHubExport(html);
   const win = window.open("", "_blank");
   if (!win) {
     alert("Please allow popups to download your document.");

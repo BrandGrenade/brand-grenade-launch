@@ -10,6 +10,7 @@ import { jsPDF } from "jspdf";
 import type { Stage16Format } from "./stage16-prompt";
 import { getTemplateContent } from "./stage16-content";
 import { stripDocumentMetadata } from "./strip-document-metadata";
+import { noteHubExport } from "@/lib/hub/export";
 
 export type PdfFormat = Stage16Format;
 
@@ -1043,6 +1044,7 @@ export async function generateStrategicPlatformPdf(input: PdfInput) {
   const safe = (input.brandName || "Brand").replace(/[^a-zA-Z0-9]+/g, "");
   const filename = `BrandGrenade_${safe}_${FORMAT_FILE[input.format]}_${date}.pdf`;
   console.log("PDF: before save", Date.now());
+  noteHubExport(filename);
   doc.save(filename);
   console.log("PDF: save complete", Date.now(), "(save ms:", Date.now() - tRenderEnd, ")");
   console.log("PDF: complete", Date.now());
