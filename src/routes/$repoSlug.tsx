@@ -30,7 +30,7 @@ export const Route = createFileRoute("/$repoSlug")({
   ),
   errorComponent: ({ error }) => (
     <div className="min-h-screen bg-card flex items-center justify-center text-text-secondary text-sm">
-      Unable to load repository: {error.message}
+      Unable to load repository: {error instanceof Error ? error.message : String(error)}
     </div>
   ),
   component: DynamicRepositoryPage,
