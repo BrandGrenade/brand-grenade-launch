@@ -727,7 +727,11 @@ export function extractScoring(session: ExecSessionRow): ScoringResult {
 
   for (const raw of block) {
     const c = clean(raw);
-    const m = c.match(/^([A-Z][A-Za-z /-]{3,40}):\s*(\d{1,2})\s*\/\s*10\s*(?:[—-]\s*(.*))?$/);
+    // Tolerates review annotations between score and note:
+    // "6/10 (revised from 5/10). Note" and "6/10 — CORRECTED ON REVIEW (was 5/10). Note".
+    const m = c.match(
+      /^([A-Z][A-Za-z /-]{3,40}):\s*(\d{1,2})\s*\/\s*10\s*(?:\([^)]{0,120}\)\s*)?(?:[—–.:-]\s*(.*))?$/,
+    );
     if (m) {
       const note = m[3] ? firstSentencesOf(m[3], 1) : null;
       rows.push({ dimension: m[1].trim(), score: `${m[2]}/10`, note });

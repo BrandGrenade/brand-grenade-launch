@@ -506,7 +506,8 @@ export function parseScoredCandidates(stage10: string): ScoredCandidate[] {
       const m = line.match(new RegExp(`^${dim}\\s*:\\s*(\\d+(?:\\.\\d+)?)\\s*/\\s*10`, "i"));
       if (m) current.dims[dim] = Number(m[1]);
     }
-    const comp = line.match(/CODE COMPOSITE:\s*(\d+(?:\.\d+)?)\s*\/\s*100/i);
+    // Re-score blocks write the composite as /90; older passes as /100.
+    const comp = line.match(/CODE COMPOSITE:\s*(\d+(?:\.\d+)?)\s*\/\s*(?:90|100)\b/i);
     if (comp) current.composite = Number(comp[1]);
     const verdict = line.match(/CODE VERDICT:\s*(PASS|FAIL|ELIMINATED)\s*(?:—\s*(.*))?/i);
     if (verdict) {
@@ -1112,7 +1113,9 @@ function stage13Reasons(s13: string): Reason[] {
   for (const raw of lines) {
     if (out.length >= 4) break;
     const c = tidy(raw).replace(/^[-•*]\s*/, "");
-    const m = c.match(/^([A-Z][A-Za-z /-]{4,44})\s*[—–-]\s*(\d{1,2})\s*\/\s*10\.?\s*(.*)$/);
+    const m = c.match(
+      /^([A-Z][A-Za-z /-]{4,44})\s*[—–-]\s*(\d{1,2})\s*\/\s*10\s*(?:\([^)]{0,120}\)\s*)?\.?\s*(.*)$/,
+    );
     if (!m || !m[3] || m[3].length < 30) continue;
     out.push({ title: `${m[1].trim()} ${m[2]}/10`, detail: clampProse(m[3], 260) });
   }

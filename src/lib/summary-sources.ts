@@ -248,9 +248,13 @@ export function extractWinnerScores(stage10: string, smp: string): WinnerScore[]
   // stop ("7/10. Rationale"). Accept both forms: the latter previously made
   // the regex consume Brand Permission, Clean Air and Commercial Precedent as
   // part of the preceding Competitive Impossibility rationale.
+  // A revised score is rewritten upstream as "6/10 (revised from 5/10)." —
+  // the parenthetical sits between the score and the separator. Without
+  // tolerating it, every revised dimension silently failed to parse and the
+  // document refused to build ("Proposition scoring is incomplete").
   const scoreLine = String.raw`\n\s*\**[A-Z][A-Za-z /-]{3,40}\**\s*:\**\s*\d{1,2}\s*\/\s*10`;
   const re = new RegExp(
-    String.raw`^\s*\**([A-Z][A-Za-z /-]{3,40})\**\s*:\**\s*(\d{1,2})\s*\/\s*10\s*(?:[—–-]|\.)\s*([\s\S]*?)(?=${scoreLine}|$)`,
+    String.raw`^\s*\**([A-Z][A-Za-z /-]{3,40})\**\s*:\**\s*(\d{1,2})\s*\/\s*10\s*\**\s*(?:\([^)\n]{0,120}\)\s*)?\**\s*(?:[—–:-]|\.)?\s*([\s\S]*?)(?=${scoreLine}|$)`,
     "gm",
   );
   let m: RegExpExecArray | null;
