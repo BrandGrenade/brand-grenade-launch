@@ -506,7 +506,8 @@ export function parseScoredCandidates(stage10: string): ScoredCandidate[] {
       const m = line.match(new RegExp(`^${dim}\\s*:\\s*(\\d+(?:\\.\\d+)?)\\s*/\\s*10`, "i"));
       if (m) current.dims[dim] = Number(m[1]);
     }
-    const comp = line.match(/CODE COMPOSITE:\s*(\d+(?:\.\d+)?)\s*\/\s*100/i);
+    // Re-score blocks write the composite as /90; older passes as /100.
+    const comp = line.match(/CODE COMPOSITE:\s*(\d+(?:\.\d+)?)\s*\/\s*(?:90|100)\b/i);
     if (comp) current.composite = Number(comp[1]);
     const verdict = line.match(/CODE VERDICT:\s*(PASS|FAIL|ELIMINATED)\s*(?:—\s*(.*))?/i);
     if (verdict) {
