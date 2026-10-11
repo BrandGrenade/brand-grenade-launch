@@ -254,7 +254,7 @@ export function extractWinnerScores(stage10: string, smp: string): WinnerScore[]
   // document refused to build ("Proposition scoring is incomplete").
   const scoreLine = String.raw`\n\s*\**[A-Z][A-Za-z /-]{3,40}\**\s*:\**\s*\d{1,2}\s*\/\s*10`;
   const re = new RegExp(
-    String.raw`^\s*\**([A-Z][A-Za-z /-]{3,40})\**\s*:\**\s*(\d{1,2})\s*\/\s*10\s*(?:\([^)\n]{0,120}\)\s*)?(?:[—–:-]|\.)?\s*([\s\S]*?)(?=${scoreLine}|$)`,
+    String.raw`^\s*\**([A-Z][A-Za-z /-]{3,40})\**\s*:\**\s*(\d{1,2})\s*\/\s*10\s*\**\s*(?:\([^)\n]{0,120}\)\s*)?\**\s*(?:[—–:-]|\.)?\s*([\s\S]*?)(?=${scoreLine}|$)`,
     "gm",
   );
   let m: RegExpExecArray | null;
