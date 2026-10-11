@@ -1113,7 +1113,9 @@ function stage13Reasons(s13: string): Reason[] {
   for (const raw of lines) {
     if (out.length >= 4) break;
     const c = tidy(raw).replace(/^[-•*]\s*/, "");
-    const m = c.match(/^([A-Z][A-Za-z /-]{4,44})\s*[—–-]\s*(\d{1,2})\s*\/\s*10\.?\s*(.*)$/);
+    const m = c.match(
+      /^([A-Z][A-Za-z /-]{4,44})\s*[—–-]\s*(\d{1,2})\s*\/\s*10\s*(?:\([^)]{0,120}\)\s*)?\.?\s*(.*)$/,
+    );
     if (!m || !m[3] || m[3].length < 30) continue;
     out.push({ title: `${m[1].trim()} ${m[2]}/10`, detail: clampProse(m[3], 260) });
   }
