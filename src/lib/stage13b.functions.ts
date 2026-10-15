@@ -18,6 +18,12 @@ export const runStage13b = createServerFn({ method: "POST" })
   .handler(async function* ({ data, context }) {
     await assertSessionAccess(data.sessionId, context.userId);
     await assertStageOutput(data.sessionId, 13, "Stage 13B");
+    {
+      const { data: mode } = await supabaseAdmin.from("sessions").select("run_mode").eq("id", data.sessionId).single();
+      if ((mode as { run_mode?: string } | null)?.run_mode === "diagnostic") {
+        throw new Error("This is a diagnostic run: it stops after Stage 13. Start a new full run from it to continue.");
+      }
+    }
     const { data: session, error } = await supabaseAdmin
       .from("sessions")
       .select(
