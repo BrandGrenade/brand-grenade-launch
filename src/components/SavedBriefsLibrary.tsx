@@ -34,6 +34,8 @@ export async function saveBrief(input: {
   category: string;
   briefText: string;
   briefFields?: BriefFields;
+  /** Briefing Room workspace this brief came from (client/engagement inherited). */
+  sourceWorkspaceId?: string;
 }): Promise<SavedBrief | null> {
   const { data: userRes } = await supabase.auth.getUser();
   const userId = userRes.user?.id;
@@ -49,6 +51,7 @@ export async function saveBrief(input: {
       category: input.category,
       brief_text: input.briefText,
       brief_fields: (input.briefFields ?? null) as unknown as never,
+      ...(input.sourceWorkspaceId ? { bg_source_id: input.sourceWorkspaceId } : {}),
     })
     .select("brief_id,brand_name,category,brief_text,brief_fields,created_at")
     .single();

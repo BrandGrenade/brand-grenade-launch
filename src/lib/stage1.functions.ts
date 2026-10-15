@@ -24,6 +24,8 @@ const CreateSessionInput = z.object({
   category: z.string().min(1).max(200),
   briefText: z.string().min(20).max(50000),
   briefFields: BriefFieldsSchema,
+  /** Saved brief this run starts from (client/engagement inherited). */
+  sourceBriefId: z.string().uuid().optional(),
 });
 
 export const createSession = createServerFn({ method: "POST" })
@@ -49,6 +51,7 @@ export const createSession = createServerFn({ method: "POST" })
         status: "running",
         current_stage: 1,
         user_id: context.userId,
+        bg_source_id: data.sourceBriefId ?? null,
       })
       .select("id")
       .single();

@@ -173,6 +173,7 @@ function Dashboard() {
           brandName: pendingLegacy.brand_name,
           category: pendingLegacy.category || "Unspecified",
           briefText: pendingLegacy.brief_text,
+          sourceBriefId: pendingLegacy.brief_id,
         },
       });
       setPendingLegacy(null);
