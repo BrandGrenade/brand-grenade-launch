@@ -32,6 +32,12 @@ const EvidenceSchema = z.object({
   content: z.string().max(50000).default(""),
 });
 
+function assertWorkspaceUnlocked(ws: { locked_at?: string | null; lock_reason?: string | null }) {
+  if (ws.locked_at) {
+    throw new Error(`This workspace is locked, so its content cannot change and reruns are refused.${ws.lock_reason ? ` (${ws.lock_reason})` : ""}`);
+  }
+}
+
 async function loadWorkspace(id: string, userId: string) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data, error } = await supabaseAdmin
@@ -255,6 +261,7 @@ export const runBriefingStep1 = createServerFn({ method: "POST" })
   .inputValidator((i) => z.object({ id: z.string().uuid() }).parse(i))
   .handler(async ({ data, context }) => {
     const ws = await loadWorkspace(data.id, context.userId!);
+    assertWorkspaceUnlocked(ws as never);
     await requireIntake(ws);
     const user = `${buildIntakeBlock({
       brandName: ws.brand_name,
@@ -276,6 +283,8 @@ export const runBriefingStep1 = createServerFn({ method: "POST" })
       .from("briefing_room_workspaces")
       .update({
         diagnosis: parsed,
+        version_reason: "rerun: Step 1",
+        version_actor: context.userId,
         truths: null,
         relevance: null,
         tensions: null,
@@ -291,6 +300,7 @@ export const runBriefingStep2 = createServerFn({ method: "POST" })
   .inputValidator((i) => z.object({ id: z.string().uuid() }).parse(i))
   .handler(async ({ data, context }) => {
     const ws = await loadWorkspace(data.id, context.userId!);
+    assertWorkspaceUnlocked(ws as never);
     await requireIntake(ws);
     const user = `${buildIntakeBlock({
       brandName: ws.brand_name,
@@ -309,7 +319,7 @@ export const runBriefingStep2 = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin
       .from("briefing_room_workspaces")
-      .update({ truths: parsed, relevance: null, tensions: null, selected_tension_index: null })
+      .update({ version_reason: "rerun: Step 2", version_actor: context.userId, truths: parsed, relevance: null, tensions: null, selected_tension_index: null })
       .eq("id", data.id);
     if (error) throw new Error(error.message);
     return parsed;
@@ -320,6 +330,7 @@ export const runBriefingStep3 = createServerFn({ method: "POST" })
   .inputValidator((i) => z.object({ id: z.string().uuid() }).parse(i))
   .handler(async ({ data, context }) => {
     const ws = await loadWorkspace(data.id, context.userId!);
+    assertWorkspaceUnlocked(ws as never);
     if (!ws.diagnosis) throw new Error("Run Step 1 first.");
     if (!ws.truths) throw new Error("Run Step 2 first.");
     const user = `DIAGNOSIS (Step 1):
@@ -340,7 +351,7 @@ Produce the Step 3 relevance JSON now.`;
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin
       .from("briefing_room_workspaces")
-      .update({ relevance: parsed, tensions: null, selected_tension_index: null })
+      .update({ version_reason: "rerun: Step 3", version_actor: context.userId, relevance: parsed, tensions: null, selected_tension_index: null })
       .eq("id", data.id);
     if (error) throw new Error(error.message);
     return parsed;
@@ -351,6 +362,7 @@ export const runBriefingStep4 = createServerFn({ method: "POST" })
   .inputValidator((i) => z.object({ id: z.string().uuid() }).parse(i))
   .handler(async ({ data, context }) => {
     const ws = await loadWorkspace(data.id, context.userId!);
+    assertWorkspaceUnlocked(ws as never);
     if (!ws.diagnosis) throw new Error("Run Step 1 first.");
     if (!ws.truths) throw new Error("Run Step 2 first.");
     if (!ws.relevance) throw new Error("Run Step 3 first.");
@@ -371,7 +383,7 @@ export const runBriefingStep4 = createServerFn({ method: "POST" })
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
       const { error } = await supabaseAdmin
         .from("briefing_room_workspaces")
-        .update({ tensions: parsed })
+        .update({ version_reason: "rerun: Step 4", version_actor: context.userId, tensions: parsed })
         .eq("id", data.id);
       if (error) throw new Error(error.message);
       return parsed;
@@ -395,7 +407,7 @@ Produce the Step 4 candidate tensions JSON now. Cite indices from the array abov
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin
       .from("briefing_room_workspaces")
-      .update({ tensions: parsed, selected_tension_index: null })
+      .update({ version_reason: "rerun: Step 4", version_actor: context.userId, tensions: parsed, selected_tension_index: null })
       .eq("id", data.id);
     if (error) throw new Error(error.message);
     return parsed;
