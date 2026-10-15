@@ -47,13 +47,15 @@ export const createSession = createServerFn({ method: "POST" })
           },
         ]
       : [];
+    let inheritedSource: string | null = null;
     if (data.continuesDiagnosticId) {
       const { assertSessionAccess: check } = await import("@/lib/auth-helpers.server");
       await check(data.continuesDiagnosticId, context.userId);
       const { data: src } = await supabaseAdmin
-        .from("sessions").select("run_mode").eq("id", data.continuesDiagnosticId).single();
+        .from("sessions").select("run_mode, bg_source_id").eq("id", data.continuesDiagnosticId).single();
       if ((src as { run_mode?: string } | null)?.run_mode !== "diagnostic") throw new Error("Source run is not a diagnostic run");
       if (data.runMode !== "full") throw new Error("A run continuing a diagnostic must be a full run");
+      inheritedSource = (src as { bg_source_id?: string | null }).bg_source_id ?? null;
     }
     const cp = data.currentProposition?.trim() || null;
     const { data: row, error } = await supabaseAdmin
@@ -72,7 +74,7 @@ export const createSession = createServerFn({ method: "POST" })
         status: "running",
         current_stage: 1,
         user_id: context.userId,
-        bg_source_id: data.sourceBriefId ?? null,
+        bg_source_id: data.sourceBriefId ?? inheritedSource,
       })
       .select("id")
       .single();
