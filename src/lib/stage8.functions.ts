@@ -152,7 +152,7 @@ export const runStage8 = createServerFn({ method: "POST" })
     if (feedback) {
       await supabaseAdmin
         .from("sessions")
-        .update({ stage_8_output: null, stage_8_error: null })
+        .update({ version_reason: "rerun: stage 8 (with amendment note)", version_actor: context.userId, stage_8_output: null, stage_8_error: null } as never)
         .eq("id", data.sessionId);
     }
 

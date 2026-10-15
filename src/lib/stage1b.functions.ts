@@ -137,6 +137,8 @@ export const resubmitBrief = createServerFn({ method: "POST" })
     const { error: updateErr } = await supabaseAdmin
       .from("sessions")
       .update({
+        version_reason: "rerun: stage 1b enrichment",
+        version_actor: context.userId,
         brief_text: enriched,
         stage_1_output: null,
         stage_1_tension_score: null,

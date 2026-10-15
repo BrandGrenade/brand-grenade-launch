@@ -37,7 +37,7 @@ export const runStage14 = createServerFn({ method: "POST" })
 
     await supabaseAdmin
       .from("sessions")
-      .update({ current_stage: 14, status: "running", stage_status: "running:14", stage_14_output: null, stage_14_error: null })
+      .update({ version_reason: "rerun: stage 14", version_actor: context.userId, current_stage: 14, status: "running", stage_status: "running:14", stage_14_output: null, stage_14_error: null } as never)
       .eq("id", data.sessionId);
 
     let output = "";
