@@ -126,6 +126,7 @@ export function CheckpointCard({
   what,
   confirmed,
   confirmedAt,
+  approvedBy,
   notes,
   decision,
 }: {
@@ -134,6 +135,8 @@ export function CheckpointCard({
   what: string;
   confirmed: boolean;
   confirmedAt?: string | null;
+  /** Approver label; undefined/null = not recorded. */
+  approvedBy?: string | null;
   notes?: string | null;
   decision?: string | null;
 }) {
@@ -189,6 +192,11 @@ export function CheckpointCard({
       {confirmedAt ? (
         <p className="text-label" style={{ color: MUTED, marginTop: 12 }}>
           {new Date(confirmedAt).toLocaleString("en-GB")}
+        </p>
+      ) : null}
+      {confirmed ? (
+        <p className="text-label" style={{ color: MUTED, marginTop: 6 }}>
+          Approved by: {approvedBy ? approvedBy : "not recorded"}
         </p>
       ) : null}
     </Panel>
