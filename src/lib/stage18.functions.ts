@@ -268,6 +268,7 @@ export const selectStage18Detonation = createServerFn({ method: "POST" })
       phase_2_current_stage: '19' as const,
       checkpoint_e_confirmed: true,
       checkpoint_e_confirmed_at: new Date().toISOString(),
+      checkpoint_e_confirmed_by: context.userId,
     };
     const clearUpdate = isChange
       ? {

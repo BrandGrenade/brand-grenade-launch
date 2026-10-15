@@ -380,6 +380,7 @@ export const approveStage20 = createServerFn({ method: "POST" })
         // composite score >= 40 above before this row is reached.
         checkpoint_f_confirmed: true,
         checkpoint_f_confirmed_at: new Date().toISOString(),
+        checkpoint_f_confirmed_by: context.userId,
       })
       .eq("id", data.sessionId);
     if (upErr) throw new Error(upErr.message);

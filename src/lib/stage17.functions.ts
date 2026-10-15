@@ -313,6 +313,7 @@ export const selectStage17Territory = createServerFn({ method: "POST" })
       // has been selected. Mirrors checkpoint_a/b/c_confirmed structure.
       checkpoint_d_confirmed: true,
       checkpoint_d_confirmed_at: new Date().toISOString(),
+      checkpoint_d_confirmed_by: context.userId,
     };
     const clearUpdate = isChange
       ? {

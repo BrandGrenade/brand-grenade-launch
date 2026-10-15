@@ -211,6 +211,7 @@ export const setGateOneApproval = createServerFn({ method: "POST" })
       .update({
         gate_one_approved: data.approved,
         gate_one_approved_at: data.approved ? now : null,
+        gate_one_approved_by: data.approved ? context.userId : null,
         gate_one_notes: data.notes ?? null,
         gate_one_snapshot: data.approved
           ? JSON.parse(JSON.stringify({ approved_at: now, ratings: row.ratings, notes: data.notes ?? null }))
@@ -236,7 +237,7 @@ export const confirmGateOne = createServerFn({ method: "POST" })
     const now = new Date().toISOString();
     await supabaseAdmin
       .from("stimulus_runs")
-      .update({ gate_one_confirmed: true, gate_one_confirmed_at: now, status: "gate_one" })
+      .update({ gate_one_confirmed: true, gate_one_confirmed_at: now, gate_one_confirmed_by: context.userId, status: "gate_one" })
       .eq("id", data.runId);
     return { ok: true, approvedCount: count, confirmedAt: now };
   });

@@ -111,6 +111,8 @@ function stageStep(
 
 function buildSteps(data: WalkthroughPayload): Step[] {
   const s = data.session;
+  const who = (id: string | null | undefined) =>
+    id ? (data.approvers?.[id] ?? "a team member (recorded)") : null;
   const steps: Step[] = [];
 
   // ── Cover ────────────────────────────────────────────────────────────
@@ -162,18 +164,6 @@ function buildSteps(data: WalkthroughPayload): Step[] {
   // ── Room 01 — Intelligence Lab ───────────────────────────────────────
   if (data.intelligence) {
     const i = data.intelligence;
-    const layers = [
-      i.layer_1_output,
-      i.layer_2_output,
-      i.layer_3_output,
-      i.layer_4_output,
-      i.layer_5_output,
-      i.layer_6_output,
-      i.layer_7_output,
-      i.layer_8_output,
-      i.layer_9_output,
-      i.layer_10_output,
-    ];
     steps.push({
       id: "room-01",
       kicker: "Room 01 · Intelligence Lab",
@@ -187,13 +177,6 @@ function buildSteps(data: WalkthroughPayload): Step[] {
             </Panel>
           ) : (
             <Empty text="No final report was produced for this brand." />
-          )}
-          {layers.map((l, idx) =>
-            str(l) ? (
-              <Panel key={idx} title={`Layer ${idx + 1}`}>
-                <Prose text={l} />
-              </Panel>
-            ) : null,
           )}
         </>
       ),
@@ -255,6 +238,7 @@ function buildSteps(data: WalkthroughPayload): Step[] {
         what="The interrogated brief is accepted as the basis for the run."
         confirmed={Boolean(s.checkpoint_a_confirmed)}
         confirmedAt={s.checkpoint_a_confirmed_at}
+        approvedBy={who(s.checkpoint_a_confirmed_by)}
         notes={s.checkpoint_a_notes}
       />
     ),
@@ -278,6 +262,7 @@ function buildSteps(data: WalkthroughPayload): Step[] {
         what="The generated proposition set is accepted into the distinctiveness check."
         confirmed={Boolean(s.checkpoint_b_confirmed)}
         confirmedAt={s.checkpoint_b_confirmed_at}
+        approvedBy={who(s.checkpoint_b_confirmed_by)}
         notes={s.checkpoint_b_notes}
       />
     ),
@@ -383,6 +368,7 @@ function buildSteps(data: WalkthroughPayload): Step[] {
         what="A single strategic proposition is selected by a human before validation runs."
         confirmed={Boolean(s.checkpoint_c_confirmed)}
         confirmedAt={s.checkpoint_c_confirmed_at}
+        approvedBy={who(s.checkpoint_c_confirmed_by)}
         notes={s.checkpoint_c_notes}
         decision={str(s.selected_smp)}
       />
@@ -406,6 +392,7 @@ function buildSteps(data: WalkthroughPayload): Step[] {
         what="Brand-fit and historical validation are read and accepted before mapping begins."
         confirmed={Boolean(s.checkpoint_d_confirmed)}
         confirmedAt={s.checkpoint_d_confirmed_at}
+        approvedBy={who(s.checkpoint_d_confirmed_by)}
         notes={s.checkpoint_d_notes}
         decision={str(s.stage_17_selected_territory)}
       />
@@ -434,6 +421,7 @@ function buildSteps(data: WalkthroughPayload): Step[] {
         what="One detonation is chosen from the set before activation architecture is written."
         confirmed={Boolean(s.checkpoint_e_confirmed)}
         confirmedAt={s.checkpoint_e_confirmed_at}
+        approvedBy={who(s.checkpoint_e_confirmed_by)}
         notes={s.checkpoint_e_notes}
         decision={str(s.stage_18_detonation_line) ?? str(s.stage_18_selected_detonation)}
       />
@@ -451,6 +439,7 @@ function buildSteps(data: WalkthroughPayload): Step[] {
         what="The master detonation brief is approved before any channel work is produced."
         confirmed={Boolean(s.checkpoint_f_confirmed || s.stage_20_approved)}
         confirmedAt={s.checkpoint_f_confirmed_at}
+        approvedBy={who(s.checkpoint_f_confirmed_by)}
         notes={s.checkpoint_f_notes}
       />
     ),
@@ -543,6 +532,7 @@ function buildSteps(data: WalkthroughPayload): Step[] {
           what="The ideas taken forward into orchestration are approved by a human."
           confirmed={Boolean(run.gate_one_confirmed)}
           confirmedAt={run.gate_one_confirmed_at}
+          approvedBy={who(run.gate_one_confirmed_by)}
           decision={str(run.winning_line)}
         />
       ),
@@ -566,6 +556,7 @@ function buildSteps(data: WalkthroughPayload): Step[] {
             what="Channel prompts are confirmed against the mandate before export."
             confirmed={Boolean(o.gate_two_confirmed)}
             confirmedAt={o.gate_two_confirmed_at}
+            approvedBy={who(o.gate_two_confirmed_by)}
             notes={o.gate_two_notes}
           />
         </>

@@ -159,6 +159,7 @@ function BriefIntake() {
           category: b.brief_fields.category || b.category,
           briefText: b.brief_text,
           briefFields: b.brief_fields,
+          sourceBriefId: b.brief_id,
         },
       });
       navigate({ to: "/pipeline", search: { session: sessionId } });

@@ -86,6 +86,7 @@ function NewBriefPage() {
           brandName: saved.brand_name,
           category: saved.category,
           briefText: saved.brief_text,
+          sourceBriefId: saved.brief_id,
         },
       });
       // Fire the Left-of-Centre engine track in parallel with Stage 1.

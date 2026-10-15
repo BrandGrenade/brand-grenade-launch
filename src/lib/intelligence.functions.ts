@@ -692,6 +692,7 @@ export const createBriefingRoomFromIntelligence = createServerFn({ method: "POST
         category,
         raw_brief: rawBrief,
         supporting_evidence: evidenceBlocks,
+        bg_source_id: row.id,
       })
       .select("id")
       .single();

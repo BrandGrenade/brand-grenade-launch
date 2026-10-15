@@ -14,6 +14,146 @@ export type Database = {
   }
   public: {
     Tables: {
+      bg_clients: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          name: string
+          notes: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+        }
+        Relationships: []
+      }
+      bg_engagements: {
+        Row: {
+          bg_client_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          bg_client_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          bg_client_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bg_engagements_bg_client_id_fkey"
+            columns: ["bg_client_id"]
+            isOneToOne: false
+            referencedRelation: "bg_clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bg_external_ids: {
+        Row: {
+          bg_client_id: string
+          created_at: string
+          created_by: string | null
+          engagement_id: string | null
+          external_id: string
+          id: string
+          system: string
+        }
+        Insert: {
+          bg_client_id: string
+          created_at?: string
+          created_by?: string | null
+          engagement_id?: string | null
+          external_id: string
+          id?: string
+          system: string
+        }
+        Update: {
+          bg_client_id?: string
+          created_at?: string
+          created_by?: string | null
+          engagement_id?: string | null
+          external_id?: string
+          id?: string
+          system?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bg_external_ids_bg_client_id_fkey"
+            columns: ["bg_client_id"]
+            isOneToOne: false
+            referencedRelation: "bg_clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bg_external_ids_engagement_id_fkey"
+            columns: ["engagement_id"]
+            isOneToOne: false
+            referencedRelation: "bg_engagements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bg_link_events: {
+        Row: {
+          bg_client_id: string | null
+          created_at: string
+          engagement_id: string | null
+          from_status: string | null
+          id: string
+          linked_by: string | null
+          run_id: string
+          run_table: string
+          source: string
+          to_status: string
+        }
+        Insert: {
+          bg_client_id?: string | null
+          created_at?: string
+          engagement_id?: string | null
+          from_status?: string | null
+          id?: string
+          linked_by?: string | null
+          run_id: string
+          run_table: string
+          source: string
+          to_status: string
+        }
+        Update: {
+          bg_client_id?: string | null
+          created_at?: string
+          engagement_id?: string | null
+          from_status?: string | null
+          id?: string
+          linked_by?: string | null
+          run_id?: string
+          run_table?: string
+          source?: string
+          to_status?: string
+        }
+        Relationships: []
+      }
       brand_asset_rules: {
         Row: {
           brand_key: string
@@ -61,15 +201,19 @@ export type Database = {
       }
       briefing_room_workspaces: {
         Row: {
+          bg_client_id: string | null
+          bg_source_id: string | null
           brand_name: string
           category: string
           created_at: string
           diagnosis: Json | null
+          engagement_id: string | null
           hub_client: string | null
           hub_ctx: string | null
           hub_job: string | null
           id: string
           last_error: string | null
+          link_status: string
           raw_brief: string
           relevance: Json | null
           selected_frame: string | null
@@ -82,15 +226,19 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          bg_client_id?: string | null
+          bg_source_id?: string | null
           brand_name?: string
           category?: string
           created_at?: string
           diagnosis?: Json | null
+          engagement_id?: string | null
           hub_client?: string | null
           hub_ctx?: string | null
           hub_job?: string | null
           id?: string
           last_error?: string | null
+          link_status?: string
           raw_brief?: string
           relevance?: Json | null
           selected_frame?: string | null
@@ -103,15 +251,19 @@ export type Database = {
           user_id: string
         }
         Update: {
+          bg_client_id?: string | null
+          bg_source_id?: string | null
           brand_name?: string
           category?: string
           created_at?: string
           diagnosis?: Json | null
+          engagement_id?: string | null
           hub_client?: string | null
           hub_ctx?: string | null
           hub_job?: string | null
           id?: string
           last_error?: string | null
+          link_status?: string
           raw_brief?: string
           relevance?: Json | null
           selected_frame?: string | null
@@ -123,7 +275,22 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "briefing_room_workspaces_bg_client_id_fkey"
+            columns: ["bg_client_id"]
+            isOneToOne: false
+            referencedRelation: "bg_clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "briefing_room_workspaces_engagement_id_fkey"
+            columns: ["engagement_id"]
+            isOneToOne: false
+            referencedRelation: "bg_engagements"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       channel_prompt_versions: {
         Row: {
@@ -373,11 +540,13 @@ export type Database = {
       intelligence_sessions: {
         Row: {
           additional_context: string | null
+          bg_client_id: string | null
           brand_name: string
           category: string | null
           completed_at: string | null
           created_at: string
           current_layer: number
+          engagement_id: string | null
           final_report: string | null
           handoff_payload: Json | null
           handoff_written_at: string | null
@@ -403,6 +572,7 @@ export type Database = {
           layer_7_output: string | null
           layer_8_output: string | null
           layer_9_output: string | null
+          link_status: string
           report_metadata: Json | null
           retry_count: number
           stage_status: string | null
@@ -414,11 +584,13 @@ export type Database = {
         }
         Insert: {
           additional_context?: string | null
+          bg_client_id?: string | null
           brand_name: string
           category?: string | null
           completed_at?: string | null
           created_at?: string
           current_layer?: number
+          engagement_id?: string | null
           final_report?: string | null
           handoff_payload?: Json | null
           handoff_written_at?: string | null
@@ -444,6 +616,7 @@ export type Database = {
           layer_7_output?: string | null
           layer_8_output?: string | null
           layer_9_output?: string | null
+          link_status?: string
           report_metadata?: Json | null
           retry_count?: number
           stage_status?: string | null
@@ -455,11 +628,13 @@ export type Database = {
         }
         Update: {
           additional_context?: string | null
+          bg_client_id?: string | null
           brand_name?: string
           category?: string | null
           completed_at?: string | null
           created_at?: string
           current_layer?: number
+          engagement_id?: string | null
           final_report?: string | null
           handoff_payload?: Json | null
           handoff_written_at?: string | null
@@ -485,6 +660,7 @@ export type Database = {
           layer_7_output?: string | null
           layer_8_output?: string | null
           layer_9_output?: string | null
+          link_status?: string
           report_metadata?: Json | null
           retry_count?: number
           stage_status?: string | null
@@ -494,7 +670,22 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "intelligence_sessions_bg_client_id_fkey"
+            columns: ["bg_client_id"]
+            isOneToOne: false
+            referencedRelation: "bg_clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "intelligence_sessions_engagement_id_fkey"
+            columns: ["engagement_id"]
+            isOneToOne: false
+            referencedRelation: "bg_engagements"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       job_supervision: {
         Row: {
@@ -793,33 +984,60 @@ export type Database = {
       }
       saved_briefs: {
         Row: {
+          bg_client_id: string | null
+          bg_source_id: string | null
           brand_name: string
           brief_fields: Json | null
           brief_id: string
           brief_text: string
           category: string
           created_at: string
+          engagement_id: string | null
+          link_status: string
           user_id: string
         }
         Insert: {
+          bg_client_id?: string | null
+          bg_source_id?: string | null
           brand_name: string
           brief_fields?: Json | null
           brief_id?: string
           brief_text?: string
           category?: string
           created_at?: string
+          engagement_id?: string | null
+          link_status?: string
           user_id: string
         }
         Update: {
+          bg_client_id?: string | null
+          bg_source_id?: string | null
           brand_name?: string
           brief_fields?: Json | null
           brief_id?: string
           brief_text?: string
           category?: string
           created_at?: string
+          engagement_id?: string | null
+          link_status?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "saved_briefs_bg_client_id_fkey"
+            columns: ["bg_client_id"]
+            isOneToOne: false
+            referencedRelation: "bg_clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "saved_briefs_engagement_id_fkey"
+            columns: ["engagement_id"]
+            isOneToOne: false
+            referencedRelation: "bg_engagements"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       session_collaborators: {
         Row: {
@@ -868,6 +1086,8 @@ export type Database = {
       }
       sessions: {
         Row: {
+          bg_client_id: string | null
+          bg_source_id: string | null
           brand_audience_relationship: string | null
           brand_constraints: string | null
           brand_intel_assets: Json | null
@@ -886,21 +1106,27 @@ export type Database = {
           category: string
           checkpoint_a_confirmed: boolean
           checkpoint_a_confirmed_at: string | null
+          checkpoint_a_confirmed_by: string | null
           checkpoint_a_notes: string | null
           checkpoint_b_confirmed: boolean
           checkpoint_b_confirmed_at: string | null
+          checkpoint_b_confirmed_by: string | null
           checkpoint_b_notes: string | null
           checkpoint_c_confirmed: boolean
           checkpoint_c_confirmed_at: string | null
+          checkpoint_c_confirmed_by: string | null
           checkpoint_c_notes: string | null
           checkpoint_d_confirmed: boolean
           checkpoint_d_confirmed_at: string | null
+          checkpoint_d_confirmed_by: string | null
           checkpoint_d_notes: string | null
           checkpoint_e_confirmed: boolean
           checkpoint_e_confirmed_at: string | null
+          checkpoint_e_confirmed_by: string | null
           checkpoint_e_notes: string | null
           checkpoint_f_confirmed: boolean
           checkpoint_f_confirmed_at: string | null
+          checkpoint_f_confirmed_by: string | null
           checkpoint_f_notes: string | null
           created_at: string
           current_stage: number
@@ -917,6 +1143,7 @@ export type Database = {
           doc_workshop_status: string | null
           doc_workshop_status_at: string | null
           doc_workshop_url: string | null
+          engagement_id: string | null
           hub_client: string | null
           hub_ctx: string | null
           hub_job: string | null
@@ -925,6 +1152,7 @@ export type Database = {
           interrupted_stage: number | null
           is_preflight_test: boolean
           last_heartbeat_at: string | null
+          link_status: string
           loc_classifier_rationale: string | null
           loc_decision_packages: Json | null
           loc_engine_outputs: Json | null
@@ -1061,6 +1289,8 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          bg_client_id?: string | null
+          bg_source_id?: string | null
           brand_audience_relationship?: string | null
           brand_constraints?: string | null
           brand_intel_assets?: Json | null
@@ -1079,21 +1309,27 @@ export type Database = {
           category: string
           checkpoint_a_confirmed?: boolean
           checkpoint_a_confirmed_at?: string | null
+          checkpoint_a_confirmed_by?: string | null
           checkpoint_a_notes?: string | null
           checkpoint_b_confirmed?: boolean
           checkpoint_b_confirmed_at?: string | null
+          checkpoint_b_confirmed_by?: string | null
           checkpoint_b_notes?: string | null
           checkpoint_c_confirmed?: boolean
           checkpoint_c_confirmed_at?: string | null
+          checkpoint_c_confirmed_by?: string | null
           checkpoint_c_notes?: string | null
           checkpoint_d_confirmed?: boolean
           checkpoint_d_confirmed_at?: string | null
+          checkpoint_d_confirmed_by?: string | null
           checkpoint_d_notes?: string | null
           checkpoint_e_confirmed?: boolean
           checkpoint_e_confirmed_at?: string | null
+          checkpoint_e_confirmed_by?: string | null
           checkpoint_e_notes?: string | null
           checkpoint_f_confirmed?: boolean
           checkpoint_f_confirmed_at?: string | null
+          checkpoint_f_confirmed_by?: string | null
           checkpoint_f_notes?: string | null
           created_at?: string
           current_stage?: number
@@ -1110,6 +1346,7 @@ export type Database = {
           doc_workshop_status?: string | null
           doc_workshop_status_at?: string | null
           doc_workshop_url?: string | null
+          engagement_id?: string | null
           hub_client?: string | null
           hub_ctx?: string | null
           hub_job?: string | null
@@ -1118,6 +1355,7 @@ export type Database = {
           interrupted_stage?: number | null
           is_preflight_test?: boolean
           last_heartbeat_at?: string | null
+          link_status?: string
           loc_classifier_rationale?: string | null
           loc_decision_packages?: Json | null
           loc_engine_outputs?: Json | null
@@ -1254,6 +1492,8 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          bg_client_id?: string | null
+          bg_source_id?: string | null
           brand_audience_relationship?: string | null
           brand_constraints?: string | null
           brand_intel_assets?: Json | null
@@ -1272,21 +1512,27 @@ export type Database = {
           category?: string
           checkpoint_a_confirmed?: boolean
           checkpoint_a_confirmed_at?: string | null
+          checkpoint_a_confirmed_by?: string | null
           checkpoint_a_notes?: string | null
           checkpoint_b_confirmed?: boolean
           checkpoint_b_confirmed_at?: string | null
+          checkpoint_b_confirmed_by?: string | null
           checkpoint_b_notes?: string | null
           checkpoint_c_confirmed?: boolean
           checkpoint_c_confirmed_at?: string | null
+          checkpoint_c_confirmed_by?: string | null
           checkpoint_c_notes?: string | null
           checkpoint_d_confirmed?: boolean
           checkpoint_d_confirmed_at?: string | null
+          checkpoint_d_confirmed_by?: string | null
           checkpoint_d_notes?: string | null
           checkpoint_e_confirmed?: boolean
           checkpoint_e_confirmed_at?: string | null
+          checkpoint_e_confirmed_by?: string | null
           checkpoint_e_notes?: string | null
           checkpoint_f_confirmed?: boolean
           checkpoint_f_confirmed_at?: string | null
+          checkpoint_f_confirmed_by?: string | null
           checkpoint_f_notes?: string | null
           created_at?: string
           current_stage?: number
@@ -1303,6 +1549,7 @@ export type Database = {
           doc_workshop_status?: string | null
           doc_workshop_status_at?: string | null
           doc_workshop_url?: string | null
+          engagement_id?: string | null
           hub_client?: string | null
           hub_ctx?: string | null
           hub_job?: string | null
@@ -1311,6 +1558,7 @@ export type Database = {
           interrupted_stage?: number | null
           is_preflight_test?: boolean
           last_heartbeat_at?: string | null
+          link_status?: string
           loc_classifier_rationale?: string | null
           loc_decision_packages?: Json | null
           loc_engine_outputs?: Json | null
@@ -1446,7 +1694,22 @@ export type Database = {
           updated_at?: string
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "sessions_bg_client_id_fkey"
+            columns: ["bg_client_id"]
+            isOneToOne: false
+            referencedRelation: "bg_clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sessions_engagement_id_fkey"
+            columns: ["engagement_id"]
+            isOneToOne: false
+            referencedRelation: "bg_engagements"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       stimulus_cross_refs: {
         Row: {
@@ -1599,6 +1862,7 @@ export type Database = {
           expression_under_master: string | null
           gate_one_approved: boolean
           gate_one_approved_at: string | null
+          gate_one_approved_by: string | null
           gate_one_notes: string | null
           gate_one_snapshot: Json | null
           generation_attempts: number
@@ -1634,6 +1898,7 @@ export type Database = {
           expression_under_master?: string | null
           gate_one_approved?: boolean
           gate_one_approved_at?: string | null
+          gate_one_approved_by?: string | null
           gate_one_notes?: string | null
           gate_one_snapshot?: Json | null
           generation_attempts?: number
@@ -1669,6 +1934,7 @@ export type Database = {
           expression_under_master?: string | null
           gate_one_approved?: boolean
           gate_one_approved_at?: string | null
+          gate_one_approved_by?: string | null
           gate_one_notes?: string | null
           gate_one_snapshot?: Json | null
           generation_attempts?: number
@@ -1724,6 +1990,7 @@ export type Database = {
           error: string | null
           gate_two_confirmed: boolean
           gate_two_confirmed_at: string | null
+          gate_two_confirmed_by: string | null
           gate_two_notes: string | null
           gate_two_snapshot: Json | null
           id: string
@@ -1751,6 +2018,7 @@ export type Database = {
           error?: string | null
           gate_two_confirmed?: boolean
           gate_two_confirmed_at?: string | null
+          gate_two_confirmed_by?: string | null
           gate_two_notes?: string | null
           gate_two_snapshot?: Json | null
           id?: string
@@ -1778,6 +2046,7 @@ export type Database = {
           error?: string | null
           gate_two_confirmed?: boolean
           gate_two_confirmed_at?: string | null
+          gate_two_confirmed_by?: string | null
           gate_two_notes?: string | null
           gate_two_snapshot?: Json | null
           id?: string
@@ -1826,6 +2095,7 @@ export type Database = {
           final_prompt: string | null
           gate_two_approved: boolean
           gate_two_approved_at: string | null
+          gate_two_approved_by: string | null
           gate_two_notes: string | null
           gate_two_snapshot: Json | null
           id: string
@@ -1860,6 +2130,7 @@ export type Database = {
           final_prompt?: string | null
           gate_two_approved?: boolean
           gate_two_approved_at?: string | null
+          gate_two_approved_by?: string | null
           gate_two_notes?: string | null
           gate_two_snapshot?: Json | null
           id?: string
@@ -1894,6 +2165,7 @@ export type Database = {
           final_prompt?: string | null
           gate_two_approved?: boolean
           gate_two_approved_at?: string | null
+          gate_two_approved_by?: string | null
           gate_two_notes?: string | null
           gate_two_snapshot?: Json | null
           id?: string
@@ -1945,6 +2217,7 @@ export type Database = {
       }
       stimulus_runs: {
         Row: {
+          bg_client_id: string | null
           brief_stale_ack_at: string | null
           channel_brief: string
           channel_name: string
@@ -1954,14 +2227,17 @@ export type Database = {
           created_by: string | null
           creative_guidance: string | null
           creative_guidance_target: number | null
+          engagement_id: string | null
           error: string | null
           gate_one_confirmed: boolean
           gate_one_confirmed_at: string | null
+          gate_one_confirmed_by: string | null
           hub_client: string | null
           hub_ctx: string | null
           hub_job: string | null
           id: string
           last_batch_at: string | null
+          link_status: string
           locked_at: string | null
           locked_big_idea_at_generation: string | null
           locked_line_at_generation: string | null
@@ -1979,6 +2255,7 @@ export type Database = {
           winning_line_direction_id: string | null
         }
         Insert: {
+          bg_client_id?: string | null
           brief_stale_ack_at?: string | null
           channel_brief?: string
           channel_name: string
@@ -1988,14 +2265,17 @@ export type Database = {
           created_by?: string | null
           creative_guidance?: string | null
           creative_guidance_target?: number | null
+          engagement_id?: string | null
           error?: string | null
           gate_one_confirmed?: boolean
           gate_one_confirmed_at?: string | null
+          gate_one_confirmed_by?: string | null
           hub_client?: string | null
           hub_ctx?: string | null
           hub_job?: string | null
           id?: string
           last_batch_at?: string | null
+          link_status?: string
           locked_at?: string | null
           locked_big_idea_at_generation?: string | null
           locked_line_at_generation?: string | null
@@ -2013,6 +2293,7 @@ export type Database = {
           winning_line_direction_id?: string | null
         }
         Update: {
+          bg_client_id?: string | null
           brief_stale_ack_at?: string | null
           channel_brief?: string
           channel_name?: string
@@ -2022,14 +2303,17 @@ export type Database = {
           created_by?: string | null
           creative_guidance?: string | null
           creative_guidance_target?: number | null
+          engagement_id?: string | null
           error?: string | null
           gate_one_confirmed?: boolean
           gate_one_confirmed_at?: string | null
+          gate_one_confirmed_by?: string | null
           hub_client?: string | null
           hub_ctx?: string | null
           hub_job?: string | null
           id?: string
           last_batch_at?: string | null
+          link_status?: string
           locked_at?: string | null
           locked_big_idea_at_generation?: string | null
           locked_line_at_generation?: string | null
@@ -2047,6 +2331,20 @@ export type Database = {
           winning_line_direction_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "stimulus_runs_bg_client_id_fkey"
+            columns: ["bg_client_id"]
+            isOneToOne: false
+            referencedRelation: "bg_clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stimulus_runs_engagement_id_fkey"
+            columns: ["engagement_id"]
+            isOneToOne: false
+            referencedRelation: "bg_engagements"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "stimulus_runs_session_id_fkey"
             columns: ["session_id"]
@@ -2170,47 +2468,71 @@ export type Database = {
       synthesiser_runs: {
         Row: {
           applied_at: string | null
+          bg_client_id: string | null
           brand_name: string
           category: string | null
           claim_count: number
           created_at: string
+          engagement_id: string | null
           hub_client: string | null
           hub_ctx: string | null
           hub_job: string | null
           id: string
+          link_status: string
           status: string
           updated_at: string
           user_id: string
         }
         Insert: {
           applied_at?: string | null
+          bg_client_id?: string | null
           brand_name: string
           category?: string | null
           claim_count?: number
           created_at?: string
+          engagement_id?: string | null
           hub_client?: string | null
           hub_ctx?: string | null
           hub_job?: string | null
           id?: string
+          link_status?: string
           status?: string
           updated_at?: string
           user_id: string
         }
         Update: {
           applied_at?: string | null
+          bg_client_id?: string | null
           brand_name?: string
           category?: string | null
           claim_count?: number
           created_at?: string
+          engagement_id?: string | null
           hub_client?: string | null
           hub_ctx?: string | null
           hub_job?: string | null
           id?: string
+          link_status?: string
           status?: string
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "synthesiser_runs_bg_client_id_fkey"
+            columns: ["bg_client_id"]
+            isOneToOne: false
+            referencedRelation: "bg_clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "synthesiser_runs_engagement_id_fkey"
+            columns: ["engagement_id"]
+            isOneToOne: false
+            referencedRelation: "bg_engagements"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       tier2_harness_runs: {
         Row: {
@@ -2378,6 +2700,24 @@ export type Database = {
       }
     }
     Functions: {
+      bg_admin_link_run: {
+        Args: {
+          _client: string
+          _engagement: string
+          _run_id: string
+          _table: string
+        }
+        Returns: string
+      }
+      bg_is_admin: { Args: { _uid: string }; Returns: boolean }
+      bg_resolve_hub: {
+        Args: { _client: string; _job: string }
+        Returns: Record<string, unknown>
+      }
+      bg_source_link: {
+        Args: { _owner: string; _source: string; _table: string }
+        Returns: Record<string, unknown>
+      }
       can_access_session: {
         Args: { _session_id: string; _user_id: string }
         Returns: boolean

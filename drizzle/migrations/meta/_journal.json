@@ -50,6 +50,34 @@
       "when": 1792025400909,
       "tag": "0006_repo_visitor_bcrypt_only_guard",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1792026109804,
+      "tag": "0007_bg_foundation_clients_engagements",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1792026393017,
+      "tag": "0008_bg_link_helper_grants",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1792026413849,
+      "tag": "0009_bg_link_helpers_public_execute",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1792026554941,
+      "tag": "0010_bg_link_helpers_no_anon",
+      "breakpoints": true
     }
   ]
 }

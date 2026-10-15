@@ -39,6 +39,8 @@ export type WalkthroughPayload = {
   directions: DirectionRow[];
   orchestration: OrchestrationRow | null;
   prompts: PromptRow[];
+  /** Approver user id -> email, for approvers the viewer may see. */
+  approvers: Record<string, string>;
 };
 
 export async function listSessionsForWalkthrough(
@@ -189,7 +191,22 @@ export async function loadWalkthrough(supabase: DB, sessionId: string): Promise<
 
   const synthesiser = ((synthRes.data ?? [])[0] as SynthRow | undefined) ?? null;
 
+  const approverIds = new Set<string>();
+  const addId = (v: unknown) => {
+    if (typeof v === "string" && v) approverIds.add(v);
+  };
+  const sRec = session as Record<string, unknown>;
+  for (const k of ["a", "b", "c", "d", "e", "f"]) addId(sRec[`checkpoint_${k}_confirmed_by`]);
+  addId((creativeRun as Record<string, unknown> | null)?.gate_one_confirmed_by);
+  addId((orchestration as Record<string, unknown> | null)?.gate_two_confirmed_by);
+  const approvers: Record<string, string> = {};
+  if (approverIds.size) {
+    const { data: people } = await supabase.from("users").select("id, email").in("id", [...approverIds]);
+    for (const p of people ?? []) approvers[p.id] = p.email;
+  }
+
   return {
+    approvers,
     session: session as SessionRow,
     intelligence,
     briefing,

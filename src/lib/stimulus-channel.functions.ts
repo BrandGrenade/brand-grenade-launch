@@ -327,6 +327,7 @@ export const confirmChannelGateOne = createServerFn({ method: "POST" })
         .update({
           gate_one_approved: data.confirmed,
           gate_one_approved_at: data.confirmed ? now : null,
+          gate_one_approved_by: data.confirmed ? context.userId : null,
         })
         .eq("id", dir.id);
       await supabaseAdmin
@@ -334,6 +335,7 @@ export const confirmChannelGateOne = createServerFn({ method: "POST" })
         .update({
           gate_one_confirmed: data.confirmed,
           gate_one_confirmed_at: data.confirmed ? now : null,
+          gate_one_confirmed_by: data.confirmed ? context.userId : null,
         })
         .eq("id", runId);
       confirmedChannels.push(channel);
