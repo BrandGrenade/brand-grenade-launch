@@ -13,6 +13,7 @@ import {
   createBgMapping,
   getLinkingOverview,
   linkRun,
+  lockRunEarly,
 } from "@/lib/bg-clients.functions";
 
 export const Route = createFileRoute("/admin/clients")({
@@ -39,6 +40,10 @@ function ClientsAdmin() {
   const addEng = useServerFn(createBgEngagement);
   const addMap = useServerFn(createBgMapping);
   const link = useServerFn(linkRun);
+  const lockRun = useServerFn(lockRunEarly);
+  const [lockTable, setLockTable] = useState<"sessions" | "briefing_room_workspaces">("sessions");
+  const [lockId, setLockId] = useState("");
+  const [lockReason, setLockReason] = useState("");
   const qc = useQueryClient();
   const q = useQuery({ queryKey: ["bg-linking"], queryFn: () => overview(), retry: false });
   const refresh = () => qc.invalidateQueries({ queryKey: ["bg-linking"] });
@@ -92,6 +97,23 @@ function ClientsAdmin() {
                   ))}
                 </tbody>
               </table>
+            </Card>
+
+            <Card className="mt-6 p-6">
+              <h2 className="text-h3 text-text-primary">Lock a run early</h2>
+              <p className="mt-1 text-body-sm text-text-secondary">Runs lock automatically when they complete. A lock is permanent: content cannot change and retries are refused.</p>
+              <div className="mt-3 flex flex-wrap gap-3">
+                <select className={selectCls} value={lockTable} onChange={(e) => setLockTable(e.target.value as "sessions" | "briefing_room_workspaces")}>
+                  <option value="sessions">Strategy Pipeline run</option>
+                  <option value="briefing_room_workspaces">Briefing Room workspace</option>
+                </select>
+                <Input className="max-w-[340px]" placeholder="Run id" value={lockId} onChange={(e) => setLockId(e.target.value)} />
+                <Input className="max-w-[340px]" placeholder="Reason" value={lockReason} onChange={(e) => setLockReason(e.target.value)} />
+                <Button
+                  disabled={!lockId.trim() || lockReason.trim().length < 3}
+                  onClick={() => run(async () => { await lockRun({ data: { table: lockTable, runId: lockId.trim(), reason: lockReason } }); setLockId(""); setLockReason(""); }, "Run locked")}
+                >Lock run</Button>
+              </div>
             </Card>
 
             <div className="mt-6 grid gap-6 md:grid-cols-3">
