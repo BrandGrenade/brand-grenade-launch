@@ -14,13 +14,13 @@ function makeDb(versions: Record<string, VersionRow[]> = {}): Db {
   const runs: RunRec[] = [
     { table: "sessions", id: RUN, row: { ...linked, id: RUN, brand_name: "Marlowe", status: "complete", run_mode: "full", earlier_versions_kept: true,
       stage_2_output: "Stage 2 text", stage_9_output: "Stage 9 text", stage_9_structured: { candidates: [] }, stage_10_output: "Stage 10 text", stage_10_structured: null,
-      stage_10_structured_error: "bad", stage_16_agency_output: "# Agency doc", stage_16_valuation_output: "# Valuation", stage_22_brand_architecture: "DOMAIN: X",
-      checkpoint_a_confirmed: true, checkpoint_a_confirmed_by: "u1", checkpoint_a_confirmed_at: "2026-10-01", checkpoint_b_confirmed: true, checkpoint_b_confirmed_by: null } },
+      stage_10_structured_error: "bad", stage_16_agency_output: "# Agency doc", stage_16_valuation_output: "# Valuation", stage_22_brand_architecture: ARCH, stage_22_distinctive_assets: "free prose only",
+            checkpoint_a_confirmed: true, checkpoint_a_confirmed_by: "u1", checkpoint_a_confirmed_at: "2026-10-01", checkpoint_b_confirmed: true, checkpoint_b_confirmed_by: null } },
     { table: "sessions", id: LEGACY, row: { ...linked, link_status: "legacy", id: LEGACY, stage_2_output: "x" } },
     { table: "sessions", id: UNLINKED, row: { ...linked, link_status: "unlinked", id: UNLINKED, stage_2_output: "x" } },
     { table: "sessions", id: OTHER, row: { ...linked, bg_client_id: C2, id: OTHER, stage_2_output: "x" } },
     { table: "sessions", id: DIAG, row: { ...linked, id: DIAG, status: "complete", run_mode: "diagnostic", diagnostic_status: "partial", locked_at: "2026-10-01", earlier_versions_kept: true,
-      stage_2_output: "d2", stage_10_output: "t10", stage_10_structured: { current_position: { status: "scored", line: "Built to last", evidence_label: "Client-supplied", composite: 50 } }, stage_16_agency_output: "should not show" } },
+      stage_2_output: "d2", stage_10_output: "t10", stage_10_structured: { current_position: { status: "scored", line: "Built to last", evidence_label: "Client-supplied", source: "Brief", source_date: "2026-10-01", is_current: true, excluded_from_selection: true, composite: 50, code_verdict: "PASS", code_verdict_reason: "", deltas: [], smp: "Built to last", field_name: "", fame: { score: 7, justification: "j" }, truth_strength: { score: 7, justification: "j" }, competitive_impossibility: { score: 7, justification: "j", competitor: null, competitor_claim: null }, brand_permission: { score: 7, justification: "j", evidence: null }, clean_air: { score: 7, justification: "j", occupier: null, occupying_claim: null }, commercial_precedent: { score: 7, justification: "j", precedents: [] } } }, stage_16_agency_output: "should not show" } },
     { table: "sessions", id: LOCKED, row: { ...linked, id: LOCKED, status: "complete", locked_at: "2026-10-01", earlier_versions_kept: true, stage_2_output: "v2 text" } },
     { table: "synthesiser_runs", id: SYNTH, row: { ...linked, id: SYNTH, claims_stored: true } },
     { table: "synthesiser_runs", id: SYNTH_NONE, row: { ...linked, id: SYNTH_NONE, claims_stored: false } },
@@ -65,6 +65,7 @@ const err = async (p: Promise<unknown>) => {
 const STD_KEYS = ["scope", "client_ref", "bg_client_id", "engagement_id", "run_id", "room", "run_mode", "run_status", "version", "locked", "output_id", "schema_version",
   "content_status", "content", "evidence", "checkpoints", "documents", "provenance", "legacy", "earlier_versions_kept", "generated_at"];
 
+const ARCH = "DOMAIN: Luxury EV\nHERITAGE: Coventry / Racing\nVALUES: Craft / Daring\nASSETS: Leaper / Growl\nPERSONALITY: Bold sharp warm — E-Type\nREFLECTION: I choose the unexpected";
 describe("BG access point", () => {
   const db = makeDb();
   const g = (run_id: string, output_id: string, key: Key = HUB, version = 1) => call(db, key, "get_output", { client_ref: "hub-c1", run_id, version, output_id });
@@ -89,7 +90,12 @@ describe("BG access point", () => {
     expect((await g(RUN, "stage02")).content).toEqual({ text: "Stage 2 text" });
     expect((await g(RUN, "stage11")).content_status).toBe("not_produced");
     expect((await g(SYNTH_NONE, "room00.claims")).content_status).toBe("not_produced");
-    expect((await g(RUN, "stage22_architecture")).content).toEqual({ text: "DOMAIN: X" });
+    const a = await g(RUN, "stage22_architecture");
+    expect(a.content_status).toBe("structured");
+    expect((a.content as any).record).toEqual({ domain: "Luxury EV", heritage: ["Coventry", "Racing"], values: ["Craft", "Daring"], assets: ["Leaper", "Growl"], personality: { words: "Bold sharp warm", exemplar: "E-Type" }, reflection: "I choose the unexpected" });
+    const b = await g(RUN, "stage22_assets");
+    expect(b.content_status).toBe("text_only");
+    expect((b.content as any).reason).toMatch(/format/);
   });
 
   it("labels map without upgrading and missing labels show Missing", async () => {
@@ -133,7 +139,7 @@ describe("BG access point", () => {
 
   it("scopes: Second Brain and Admin limits hold", async () => {
     expect((await g(RUN, "stage16.agency", SB)).content_status).toBe("text_only");
-    expect((await g(RUN, "stage22_architecture", SB)).content_status).toBe("text_only");
+    expect((await g(RUN, "stage22_architecture", SB)).content_status).toBe("structured");
     expect((await g(STIM, "room04.final_prompts", SB)).content_status).toBe("structured");
     expect((await err(g(RUN, "stage09", SB))).code).toBe("forbidden_scope");
     expect((await err(g(RUN, "stage22_assets", SB))).code).toBe("forbidden_scope");
@@ -189,6 +195,15 @@ describe("BG access point", () => {
     const cp = await g(DIAG, "stage10_current_position");
     expect(cp.content_status).toBe("structured");
     expect(cp.evidence).toEqual([{ claim: "Built to last", bg_label: "client_supplied", label: "Client-supplied" }]);
+  });
+
+  it("stage22 assets parse and current position failing F1d schema is partial", async () => {
+    const { parseStage22Assets } = await import("./stage22-parse");
+    expect(parseStage22Assets("RECOMMENDED ASSETS\n- Leaper mark (Visual)\nDEPLOYMENT PRINCIPLES\n1. Lead with the mark.\nTHE RECOGNITION TEST\nKnown without logo. Fails if generic.")).toEqual({
+      recommended_assets: [{ asset: "Leaper mark", type: "Visual" }], deployment_principles: ["Lead with the mark."], recognition_test: "Known without logo. Fails if generic." });
+    const { checkCurrentPosition } = await import("@/lib/structured-output");
+    const bad = checkCurrentPosition({ status: "scored", line: "x", evidence_label: "Client-supplied", composite: 50 });
+    expect(bad.ok).toBe(false);
   });
 
   it("invalid requests", async () => {
