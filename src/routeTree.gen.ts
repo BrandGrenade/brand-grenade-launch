@@ -51,6 +51,7 @@ import { Route as BriefNewRouteImport } from './routes/brief.new'
 import { Route as AdminTestsRouteImport } from './routes/admin.tests'
 import { Route as AdminRepositoriesRouteImport } from './routes/admin.repositories'
 import { Route as AdminHubRouteImport } from './routes/admin.hub'
+import { Route as AdminClientsRouteImport } from './routes/admin.clients'
 import { Route as CreativeSessionIdIndexRouteImport } from './routes/creative.$sessionId.index'
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
 import { Route as IntelligenceIdEditRouteImport } from './routes/intelligence.$id_.edit'
@@ -280,6 +281,11 @@ const AdminHubRoute = AdminHubRouteImport.update({
   path: '/admin/hub',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminClientsRoute = AdminClientsRouteImport.update({
+  id: '/admin/clients',
+  path: '/admin/clients',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CreativeSessionIdIndexRoute = CreativeSessionIdIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -407,6 +413,7 @@ export interface FileRoutesByFullPath {
   '/synthesiser': typeof SynthesiserRouteWithChildren
   '/unsubscribe': typeof UnsubscribeRoute
   '/walkthrough': typeof WalkthroughRouteWithChildren
+  '/admin/clients': typeof AdminClientsRoute
   '/admin/hub': typeof AdminHubRoute
   '/admin/repositories': typeof AdminRepositoriesRoute
   '/admin/tests': typeof AdminTestsRoute
@@ -463,6 +470,7 @@ export interface FileRoutesByTo {
   '/settings': typeof SettingsRoute
   '/showcase': typeof ShowcaseRoute
   '/unsubscribe': typeof UnsubscribeRoute
+  '/admin/clients': typeof AdminClientsRoute
   '/admin/hub': typeof AdminHubRoute
   '/admin/repositories': typeof AdminRepositoriesRoute
   '/admin/tests': typeof AdminTestsRoute
@@ -525,6 +533,7 @@ export interface FileRoutesById {
   '/synthesiser': typeof SynthesiserRouteWithChildren
   '/unsubscribe': typeof UnsubscribeRoute
   '/walkthrough': typeof WalkthroughRouteWithChildren
+  '/admin/clients': typeof AdminClientsRoute
   '/admin/hub': typeof AdminHubRoute
   '/admin/repositories': typeof AdminRepositoriesRoute
   '/admin/tests': typeof AdminTestsRoute
@@ -589,6 +598,7 @@ export interface FileRouteTypes {
     | '/synthesiser'
     | '/unsubscribe'
     | '/walkthrough'
+    | '/admin/clients'
     | '/admin/hub'
     | '/admin/repositories'
     | '/admin/tests'
@@ -645,6 +655,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/showcase'
     | '/unsubscribe'
+    | '/admin/clients'
     | '/admin/hub'
     | '/admin/repositories'
     | '/admin/tests'
@@ -706,6 +717,7 @@ export interface FileRouteTypes {
     | '/synthesiser'
     | '/unsubscribe'
     | '/walkthrough'
+    | '/admin/clients'
     | '/admin/hub'
     | '/admin/repositories'
     | '/admin/tests'
@@ -769,6 +781,7 @@ export interface RootRouteChildren {
   SynthesiserRoute: typeof SynthesiserRouteWithChildren
   UnsubscribeRoute: typeof UnsubscribeRoute
   WalkthroughRoute: typeof WalkthroughRouteWithChildren
+  AdminClientsRoute: typeof AdminClientsRoute
   AdminHubRoute: typeof AdminHubRoute
   AdminRepositoriesRoute: typeof AdminRepositoriesRoute
   AdminTestsRoute: typeof AdminTestsRoute
@@ -1085,6 +1098,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminHubRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/clients': {
+      id: '/admin/clients'
+      path: '/admin/clients'
+      fullPath: '/admin/clients'
+      preLoaderRoute: typeof AdminClientsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/creative/$sessionId/': {
       id: '/creative/$sessionId/'
       path: '/'
@@ -1341,6 +1361,7 @@ const rootRouteChildren: RootRouteChildren = {
   SynthesiserRoute: SynthesiserRouteWithChildren,
   UnsubscribeRoute: UnsubscribeRoute,
   WalkthroughRoute: WalkthroughRouteWithChildren,
+  AdminClientsRoute: AdminClientsRoute,
   AdminHubRoute: AdminHubRoute,
   AdminRepositoriesRoute: AdminRepositoriesRoute,
   AdminTestsRoute: AdminTestsRoute,
