@@ -1,3 +1,5 @@
+import { checkCurrentPosition } from "@/lib/structured-output";
+import { parseStage22Architecture, parseStage22Assets } from "./stage22-parse";
 // BG access point — pure request logic. Read-only: the Db interface exposes
 // reads only, so nothing in here can write to BG data. The server adapter
 // (access.server.ts) supplies the reads and writes the request log.
@@ -162,6 +164,14 @@ function textOutput(field: string, schema: string, c: Ctx): Built {
     ? { content_status: "text_only", schema_version: schema, content: { text: t }, evidence: [], fields: [field] }
     : { content_status: "not_produced", schema_version: schema, content: null, evidence: [], fields: [field] };
 }
+function stage22Output(field: string, id: string, parse: (t: string) => unknown, c: Ctx): Built {
+  const t = text(c.get(field));
+  if (!t) return { content_status: "not_produced", schema_version: `${id}.v1`, content: null, evidence: [], fields: [field] };
+  const rec = parse(t);
+  return rec
+    ? { content_status: "structured", schema_version: `${id}.v1`, content: { record: rec, text: t }, evidence: [], fields: [field] }
+    : { content_status: "text_only", schema_version: `${id}.text.v1`, content: { text: t, reason: "Stored text does not follow the Stage 22 format" }, evidence: [], fields: [field] };
+}
 function jsonOutput(field: string, schema: string, c: Ctx): Built {
   const v = c.get(field);
   return present(v)
@@ -203,9 +213,8 @@ async function buildOutput(outputId: string, c: Ctx): Promise<Built> {
   switch (outputId) {
     case "stage02": return textOutput("stage_2_output", "stage02.text.v1", c);
     case "stage04b": return textOutput("stage_4b_output", "stage04b.text.v1", c);
-    // Stored as prose by Stage 22; returned as text, never parsed.
-    case "stage22_architecture": return textOutput("stage_22_brand_architecture", "stage22_architecture.text.v1", c);
-    case "stage22_assets": return textOutput("stage_22_distinctive_assets", "stage22_assets.text.v1", c);
+    case "stage22_architecture": return stage22Output("stage_22_brand_architecture", "stage22_architecture", parseStage22Architecture, c);
+    case "stage22_assets": return stage22Output("stage_22_distinctive_assets", "stage22_assets", parseStage22Assets, c);
     case "stage12_propositions": return jsonOutput("stage_12_smps", "stage12_propositions.v1", c);
     case "stage21_channels": return jsonOutput("stage_21_outputs", "stage21_channels.v1", c);
     case "stage09_loc": {
@@ -233,6 +242,10 @@ async function buildOutput(outputId: string, c: Ctx): Promise<Built> {
       if (!cp) return { content_status: "not_produced", schema_version: "stage10_current_position.v1", content: null, evidence: [], fields };
       if (cp.status !== "scored") {
         return { content_status: "not_produced", schema_version: "stage10_current_position.v1", content: { status: cp.status ?? null, reason: cp.reason ?? null }, evidence: [], fields };
+      }
+      const chk = checkCurrentPosition(cp);
+      if (!chk.ok) {
+        return { content_status: "partial", schema_version: "stage10_current_position.v1", content: { reason: `Failed F1d current-position schema: ${chk.reason}`, record: cp }, evidence: [], fields };
       }
       const disp = typeof cp.evidence_label === "string" ? cp.evidence_label : null;
       const lab = disp && DISPLAY_TO_BG[disp] ? mapLabel(DISPLAY_TO_BG[disp]) : { bg_label: disp, label: "Missing" };

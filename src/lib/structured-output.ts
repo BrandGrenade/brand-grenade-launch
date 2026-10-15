@@ -311,3 +311,22 @@ ${STRUCTURED_OPEN}
 ${STRUCTURED_CLOSE}
 Every value must match the written answer. Scores are integers 1–10. Use null where a field does not apply. Output nothing after ${STRUCTURED_CLOSE}.${extra}`;
 }
+
+// ── Stage 10 current position (F1d stored shape) ─────────────────────────
+export const Stage10CurrentPositionSchema = Stage10Row.extend({
+  status: z.literal("scored"),
+  line: str,
+  evidence_label: z.enum(["Client-supplied", "Unverified"]),
+  source: z.string().nullable(),
+  source_date: z.string().nullable(),
+  is_current: z.literal(true),
+  excluded_from_selection: z.literal(true),
+  composite: z.number(),
+  code_verdict: z.string(),
+  code_verdict_reason: z.string(),
+  deltas: z.array(z.object({ smp: str, composite: z.number() }).passthrough()),
+});
+export function checkCurrentPosition(v: unknown): { ok: true } | { ok: false; reason: string } {
+  const r = Stage10CurrentPositionSchema.safeParse(v);
+  return r.success ? { ok: true } : { ok: false, reason: zodMsg(r.error) };
+}
