@@ -7,6 +7,7 @@
 // Nothing is written until the user clicks Apply — the six textareas below
 // remain the human checkpoint and stay fully editable.
 
+import type { SynthesisedClaim } from "@/lib/synthesiser/types";
 import { useRef, useState } from "react";
 import { FileText, Loader2, Sparkles, Upload, X } from "lucide-react";
 import { toast } from "sonner";
