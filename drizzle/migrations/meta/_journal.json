@@ -113,6 +113,13 @@
       "when": 1792035577348,
       "tag": "0015_a1_bg_access_point",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1792036117252,
+      "tag": "0016_a1_access_tables_revoke",
+      "breakpoints": true
     }
   ]
 }
