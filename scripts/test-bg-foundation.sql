@@ -3,7 +3,6 @@
 BEGIN;
 CREATE TEMP TABLE t_results(name text, ok boolean, detail text) ON COMMIT DROP;
 GRANT ALL ON t_results TO authenticated, service_role;
-SET LOCAL ROLE service_role;
 
 DO $$
 DECLARE
@@ -131,6 +130,8 @@ BEGIN
 END $$;
 RESET ROLE;
 
-SELECT name, CASE WHEN ok THEN 'PASS' ELSE 'FAIL' END AS result, detail FROM t_results;
-SELECT count(*) FILTER (WHERE NOT ok) AS failures, count(*) AS total FROM t_results;
+-- Report and undo everything: the exception aborts the transaction.
+DO $$ BEGIN
+  RAISE EXCEPTION 'BG_TEST_RESULTS %', (SELECT string_agg(CASE WHEN ok THEN 'PASS ' ELSE 'FAIL ' END || name || coalesce(' ['||detail||']',''), ' | ') FROM t_results);
+END $$;
 ROLLBACK;
