@@ -207,6 +207,7 @@ export type Database = {
           category: string
           created_at: string
           diagnosis: Json | null
+          earlier_versions_kept: boolean
           engagement_id: string | null
           hub_client: string | null
           hub_ctx: string | null
@@ -214,6 +215,9 @@ export type Database = {
           id: string
           last_error: string | null
           link_status: string
+          lock_reason: string | null
+          locked_at: string | null
+          locked_by: string | null
           raw_brief: string
           relevance: Json | null
           selected_frame: string | null
@@ -224,6 +228,8 @@ export type Database = {
           truths: Json | null
           updated_at: string
           user_id: string
+          version_actor: string | null
+          version_reason: string | null
         }
         Insert: {
           bg_client_id?: string | null
@@ -232,6 +238,7 @@ export type Database = {
           category?: string
           created_at?: string
           diagnosis?: Json | null
+          earlier_versions_kept?: boolean
           engagement_id?: string | null
           hub_client?: string | null
           hub_ctx?: string | null
@@ -239,6 +246,9 @@ export type Database = {
           id?: string
           last_error?: string | null
           link_status?: string
+          lock_reason?: string | null
+          locked_at?: string | null
+          locked_by?: string | null
           raw_brief?: string
           relevance?: Json | null
           selected_frame?: string | null
@@ -249,6 +259,8 @@ export type Database = {
           truths?: Json | null
           updated_at?: string
           user_id: string
+          version_actor?: string | null
+          version_reason?: string | null
         }
         Update: {
           bg_client_id?: string | null
@@ -257,6 +269,7 @@ export type Database = {
           category?: string
           created_at?: string
           diagnosis?: Json | null
+          earlier_versions_kept?: boolean
           engagement_id?: string | null
           hub_client?: string | null
           hub_ctx?: string | null
@@ -264,6 +277,9 @@ export type Database = {
           id?: string
           last_error?: string | null
           link_status?: string
+          lock_reason?: string | null
+          locked_at?: string | null
+          locked_by?: string | null
           raw_brief?: string
           relevance?: Json | null
           selected_frame?: string | null
@@ -274,6 +290,8 @@ export type Database = {
           truths?: Json | null
           updated_at?: string
           user_id?: string
+          version_actor?: string | null
+          version_reason?: string | null
         }
         Relationships: [
           {
@@ -982,6 +1000,42 @@ export type Database = {
           },
         ]
       }
+      run_output_versions: {
+        Row: {
+          content: Json
+          created_at: string
+          created_by: string | null
+          field: string
+          id: string
+          reason: string
+          run_id: string
+          run_table: string
+          version_no: number
+        }
+        Insert: {
+          content: Json
+          created_at?: string
+          created_by?: string | null
+          field: string
+          id?: string
+          reason: string
+          run_id: string
+          run_table: string
+          version_no: number
+        }
+        Update: {
+          content?: Json
+          created_at?: string
+          created_by?: string | null
+          field?: string
+          id?: string
+          reason?: string
+          run_id?: string
+          run_table?: string
+          version_no?: number
+        }
+        Relationships: []
+      }
       saved_briefs: {
         Row: {
           bg_client_id: string | null
@@ -1143,6 +1197,7 @@ export type Database = {
           doc_workshop_status: string | null
           doc_workshop_status_at: string | null
           doc_workshop_url: string | null
+          earlier_versions_kept: boolean
           engagement_id: string | null
           hub_client: string | null
           hub_ctx: string | null
@@ -1163,10 +1218,13 @@ export type Database = {
           loc_task_runner_up: string | null
           loc_task_type: string | null
           loc_validation: Json | null
+          lock_reason: string | null
+          locked_at: string | null
           locked_big_idea: string | null
           locked_big_idea_at: string | null
           locked_big_idea_lens: string | null
           locked_big_idea_run_id: string | null
+          locked_by: string | null
           locked_campaign_line: string | null
           phase_2_current_stage: string
           phase_2_status: string
@@ -1287,6 +1345,8 @@ export type Database = {
           truth_product: string | null
           updated_at: string
           user_id: string | null
+          version_actor: string | null
+          version_reason: string | null
         }
         Insert: {
           bg_client_id?: string | null
@@ -1346,6 +1406,7 @@ export type Database = {
           doc_workshop_status?: string | null
           doc_workshop_status_at?: string | null
           doc_workshop_url?: string | null
+          earlier_versions_kept?: boolean
           engagement_id?: string | null
           hub_client?: string | null
           hub_ctx?: string | null
@@ -1366,10 +1427,13 @@ export type Database = {
           loc_task_runner_up?: string | null
           loc_task_type?: string | null
           loc_validation?: Json | null
+          lock_reason?: string | null
+          locked_at?: string | null
           locked_big_idea?: string | null
           locked_big_idea_at?: string | null
           locked_big_idea_lens?: string | null
           locked_big_idea_run_id?: string | null
+          locked_by?: string | null
           locked_campaign_line?: string | null
           phase_2_current_stage?: string
           phase_2_status?: string
@@ -1490,6 +1554,8 @@ export type Database = {
           truth_product?: string | null
           updated_at?: string
           user_id?: string | null
+          version_actor?: string | null
+          version_reason?: string | null
         }
         Update: {
           bg_client_id?: string | null
@@ -1549,6 +1615,7 @@ export type Database = {
           doc_workshop_status?: string | null
           doc_workshop_status_at?: string | null
           doc_workshop_url?: string | null
+          earlier_versions_kept?: boolean
           engagement_id?: string | null
           hub_client?: string | null
           hub_ctx?: string | null
@@ -1569,10 +1636,13 @@ export type Database = {
           loc_task_runner_up?: string | null
           loc_task_type?: string | null
           loc_validation?: Json | null
+          lock_reason?: string | null
+          locked_at?: string | null
           locked_big_idea?: string | null
           locked_big_idea_at?: string | null
           locked_big_idea_lens?: string | null
           locked_big_idea_run_id?: string | null
+          locked_by?: string | null
           locked_campaign_line?: string | null
           phase_2_current_stage?: string
           phase_2_status?: string
@@ -1693,6 +1763,8 @@ export type Database = {
           truth_product?: string | null
           updated_at?: string
           user_id?: string | null
+          version_actor?: string | null
+          version_reason?: string | null
         }
         Relationships: [
           {
@@ -2465,6 +2537,50 @@ export type Database = {
         }
         Relationships: []
       }
+      synthesiser_claims: {
+        Row: {
+          claim_text: string
+          created_at: string
+          heading: string
+          id: string
+          label: string
+          position: number
+          source: string | null
+          source_date: string | null
+          synthesiser_run_id: string
+        }
+        Insert: {
+          claim_text: string
+          created_at?: string
+          heading: string
+          id?: string
+          label: string
+          position: number
+          source?: string | null
+          source_date?: string | null
+          synthesiser_run_id: string
+        }
+        Update: {
+          claim_text?: string
+          created_at?: string
+          heading?: string
+          id?: string
+          label?: string
+          position?: number
+          source?: string | null
+          source_date?: string | null
+          synthesiser_run_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "synthesiser_claims_synthesiser_run_id_fkey"
+            columns: ["synthesiser_run_id"]
+            isOneToOne: false
+            referencedRelation: "synthesiser_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       synthesiser_runs: {
         Row: {
           applied_at: string | null
@@ -2472,6 +2588,7 @@ export type Database = {
           brand_name: string
           category: string | null
           claim_count: number
+          claims_stored: boolean
           created_at: string
           engagement_id: string | null
           hub_client: string | null
@@ -2489,6 +2606,7 @@ export type Database = {
           brand_name: string
           category?: string | null
           claim_count?: number
+          claims_stored?: boolean
           created_at?: string
           engagement_id?: string | null
           hub_client?: string | null
@@ -2506,6 +2624,7 @@ export type Database = {
           brand_name?: string
           category?: string | null
           claim_count?: number
+          claims_stored?: boolean
           created_at?: string
           engagement_id?: string | null
           hub_client?: string | null
@@ -2710,6 +2829,10 @@ export type Database = {
         Returns: string
       }
       bg_is_admin: { Args: { _uid: string }; Returns: boolean }
+      bg_output_field: {
+        Args: { _k: string; _table: string; _versioned: boolean }
+        Returns: boolean
+      }
       bg_resolve_hub: {
         Args: { _client: string; _job: string }
         Returns: Record<string, unknown>

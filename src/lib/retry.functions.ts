@@ -4,6 +4,14 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertSessionAccess } from "@/lib/auth-helpers.server";
 
+
+const LOCKED_MSG = "This run is locked, so its content cannot change and retries are refused.";
+async function assertRunUnlocked(sessionId: string) {
+  const { data } = await supabaseAdmin.from("sessions").select("locked_at, lock_reason").eq("id", sessionId).maybeSingle();
+  const row = data as { locked_at: string | null; lock_reason: string | null } | null;
+  if (row?.locked_at) throw new Error(`${LOCKED_MSG}${row.lock_reason ? ` (${row.lock_reason})` : ""}`);
+}
+
 type StageId =
   | "1"
   | "1b"
@@ -67,7 +75,10 @@ export const resetStage = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await assertSessionAccess(data.sessionId, context.userId);
     const id = data.stageId as StageId;
+    await assertRunUnlocked(data.sessionId);
     const baseFields = {
+      version_reason: `retry: stage ${id}`,
+      version_actor: context.userId,
       status: "running" as const,
       stage_status: `running:${id}`,
       retry_status: null as string | null,
@@ -292,6 +303,7 @@ export const resetStageCascade = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await assertSessionAccess(data.sessionId, context.userId);
+    await assertRunUnlocked(data.sessionId);
     const id = data.stageId as StageId;
     const start = stageOrder.indexOf(id);
     if (start < 0) throw new Error(`Unknown stage id: ${id}`);
@@ -328,6 +340,8 @@ export const resetStageCascade = createServerFn({ method: "POST" })
       stage_status: `running:${id}`,
       retry_status: null,
       stage_amendments: nextAmendments,
+      version_reason: `retry: stage ${id}${feedback ? " (with amendment note)" : ""}`,
+      version_actor: context.userId,
     };
 
     for (const stageId of stageOrder.slice(start)) {
