@@ -110,6 +110,10 @@ function BriefIntake() {
   const altInputRef = useRef<HTMLInputElement>(null);
 
   const [submitting, setSubmitting] = useState(false);
+  const [runMode, setRunMode] = useState<"full" | "diagnostic">("full");
+  const [currentProp, setCurrentProp] = useState("");
+  const [currentPropSource, setCurrentPropSource] = useState("");
+  const [currentPropDate, setCurrentPropDate] = useState("");
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -306,6 +310,10 @@ function BriefIntake() {
           category: category.trim() || "Unspecified",
           briefText,
           briefFields,
+          runMode,
+          currentProposition: currentProp.trim() || undefined,
+          currentPropositionSource: currentPropSource.trim() || undefined,
+          currentPropositionDate: currentPropDate || undefined,
         },
       });
       navigate({ to: "/pipeline", search: { session: sessionId } });
@@ -336,6 +344,10 @@ function BriefIntake() {
           category: category.trim() || "Unspecified",
           briefText,
           briefFields,
+          runMode,
+          currentProposition: currentProp.trim() || undefined,
+          currentPropositionSource: currentPropSource.trim() || undefined,
+          currentPropositionDate: currentPropDate || undefined,
         },
       });
       navigate({ to: "/pipeline", search: { session: sessionId } });
@@ -550,6 +562,42 @@ function BriefIntake() {
               />
             </div>
           </div>
+
+          {/* RUN TYPE + CURRENT PROPOSITION */}
+          {!isEditMode && (
+            <div className="mt-6 space-y-4 rounded-md border p-4" style={{ borderColor: "var(--color-border)" }}>
+              <fieldset>
+                <legend className="text-body-sm font-semibold">Run type</legend>
+                <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:gap-6">
+                  <label className="flex items-start gap-2 text-body-sm">
+                    <input type="radio" name="run_mode" checked={runMode === "full"} onChange={() => setRunMode("full")} />
+                    <span>Full run — every stage and document.</span>
+                  </label>
+                  <label className="flex items-start gap-2 text-body-sm">
+                    <input type="radio" name="run_mode" checked={runMode === "diagnostic"} onChange={() => setRunMode("diagnostic")} />
+                    <span>Diagnostic — Stages 1–13 with Checkpoints A, B and C, then stops and locks.</span>
+                  </label>
+                </div>
+              </fieldset>
+              <div>
+                <label className="text-body-sm font-semibold" htmlFor="current_prop">Current proposition (optional)</label>
+                <p className="text-body-sm" style={{ color: "var(--color-text-secondary)" }}>
+                  The line the brand uses today. Scored as a baseline at Stage 10, never selected.
+                </p>
+                <input id="current_prop" value={currentProp} maxLength={300} onChange={(e) => setCurrentProp(e.target.value)}
+                  className="mt-2 w-full rounded-md border bg-background px-3 py-2 text-body-sm" style={{ borderColor: "var(--color-border)" }} />
+                {currentProp.trim() && (
+                  <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+                    <input aria-label="Source of current proposition" placeholder="Source (e.g. brand website, TV campaign)" value={currentPropSource} maxLength={300}
+                      onChange={(e) => setCurrentPropSource(e.target.value)}
+                      className="flex-1 rounded-md border bg-background px-3 py-2 text-body-sm" style={{ borderColor: "var(--color-border)" }} />
+                    <input aria-label="Date of current proposition" type="date" value={currentPropDate} onChange={(e) => setCurrentPropDate(e.target.value)}
+                      className="rounded-md border bg-background px-3 py-2 text-body-sm" style={{ borderColor: "var(--color-border)" }} />
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* SUBMIT + SAVE */}
           <div className="mt-6 flex flex-col gap-3 sm:flex-row">
