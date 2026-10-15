@@ -7,6 +7,7 @@ import { STAGE_10_SYSTEM_PROMPT, buildStage10UserMessage } from "./stage10-promp
 import { applyStage10CodeGate } from "./stage12-filter";
 
 import { countPropositions } from "./count-helpers";
+import { filterStructuredStream, resolveCurrentProposition, splitStructured, structuredInstruction, validateStructured } from "./structured-output";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertSessionAccess } from "@/lib/auth-helpers.server";
 import { assertUpstreamStageOutput } from "./pipeline-integrity";
@@ -21,7 +22,7 @@ export const runStage10 = createServerFn({ method: "POST" })
     await assertUpstreamStageOutput(data.sessionId, 10);
     const { data: session, error } = await supabaseAdmin
       .from("sessions")
-      .select("brand_name, category, stage_1_output, stage_8_output, stage_9_output, stage_10_output, is_preflight_test")
+      .select("brand_name, category, stage_1_output, stage_8_output, stage_9_output, stage_10_output, is_preflight_test, current_proposition, current_proposition_source, current_proposition_date, brand_positioning")
       .eq("id", data.sessionId)
       .single();
     if (error || !session) throw new Error(`Session not found: ${error?.message ?? "no row"}`);
@@ -50,18 +51,20 @@ export const runStage10 = createServerFn({ method: "POST" })
       isPreflight: session.is_preflight_test === true,
     });
 
+    const current = resolveCurrentProposition(session);
+    const sink = { raw: "" };
     let output = "";
     for await (const delta of withStreamSafety(
       { sessionId: data.sessionId, stageLabel: "Stage 10", outputColumn: "stage_10_output", errorColumn: "stage_10_error" },
-      streamClaude({
+      filterStructuredStream(streamClaude({
         systemPrompt: STAGE_10_SYSTEM_PROMPT,
-        userMessage,
+        userMessage: userMessage + structuredInstruction("10", current),
         maxTokens: 64000,
         sessionId: data.sessionId,
         stageLabel: "Stage 10",
         stageNumber: "10",
         stageName: "Proposition Scoring",
-      }),
+      }), sink),
     )) {
         output += delta;
         yield { delta };
@@ -78,7 +81,19 @@ export const runStage10 = createServerFn({ method: "POST" })
 
     const { error: updateErr } = await supabaseAdmin
       .from("sessions")
-      .update({ stage_10_output: finalOutput, stage_10_error: null, stage_status: "complete:10" })
+      .update({
+        stage_10_output: finalOutput,
+        stage_10_error: null,
+        stage_status: "complete:10",
+        ...(() => {
+          const v = validateStructured("10", splitStructured(sink.raw).block, {
+            expectedCount: propositionCount,
+            current,
+            isPreflight: session.is_preflight_test === true,
+          });
+          return { stage_10_structured: v.structured, stage_10_structured_error: v.error };
+        })(),
+      } as never)
       .eq("id", data.sessionId);
     if (updateErr) throw new Error(`Failed to save Stage 10 output: ${updateErr.message}`);
 

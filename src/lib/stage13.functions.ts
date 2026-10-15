@@ -3,6 +3,7 @@ import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { streamClaude } from "./claude.server";
 import { STAGE_13_SYSTEM_PROMPT, buildStage13UserMessage } from "./stage13-prompt";
+import { splitStructured, structuredInstruction, validateStructured } from "./structured-output";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertSessionAccess } from "@/lib/auth-helpers.server";
 import { assertUpstreamStageOutput } from "./pipeline-integrity";
@@ -78,6 +79,7 @@ export const runStage13 = createServerFn({ method: "POST" })
       .eq("id", data.sessionId);
 
     let output = "";
+    let structuredBlock: string | null = null;
     try {
       const userMessage = buildStage13UserMessage({
           brandName: session.brand_name,
@@ -98,7 +100,7 @@ export const runStage13 = createServerFn({ method: "POST" })
         maxAttempts: 3,
         validate: (text) =>
           findBannedWordHits({
-            text,
+            text: splitStructured(text).text,
             terms: STAGE_13_POISON_WORDS,
             rule: "stage13-poison-words",
             stageLabel: "Stage 13",
@@ -107,7 +109,7 @@ export const runStage13 = createServerFn({ method: "POST" })
         generate: (attempt, retryNote) =>
           collectClaudeText({
             systemPrompt: STAGE_13_SYSTEM_PROMPT,
-            userMessage: `${userMessage}${retryNote ?? ""}`,
+            userMessage: `${userMessage}${structuredInstruction("13")}${retryNote ?? ""}`,
             sessionId: data.sessionId,
             stageLabel: attempt === 1 ? "Stage 13" : `Stage 13 (sanitiser retry ${attempt})`,
             maxTokens: 64000,
@@ -115,7 +117,9 @@ export const runStage13 = createServerFn({ method: "POST" })
             stageName: "Brand Fit Validation",
           }),
       });
-      output = gated.output;
+      const split = splitStructured(gated.output);
+      output = split.text;
+      structuredBlock = split.block;
       yield { delta: output };
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Stage 13 failed";
@@ -125,7 +129,15 @@ export const runStage13 = createServerFn({ method: "POST" })
 
     const { error: ue } = await supabaseAdmin
       .from("sessions")
-      .update({ stage_13_output: output, stage_13_error: null, stage_status: "complete:13" })
+      .update({
+        stage_13_output: output,
+        stage_13_error: null,
+        stage_status: "complete:13",
+        ...(() => {
+          const v = validateStructured("13", structuredBlock);
+          return { stage_13_structured: v.structured, stage_13_structured_error: v.error };
+        })(),
+      } as never)
       .eq("id", data.sessionId);
     if (ue) throw new Error(`Failed to save Stage 13 output: ${ue.message}`);
 

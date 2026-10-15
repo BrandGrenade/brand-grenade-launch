@@ -18,6 +18,7 @@ import {
 } from "./output-banned-word-gate";
 
 import { countPropositions } from "./count-helpers";
+import { splitStructured, structuredInstruction, validateStructured } from "./structured-output";
 import {
   extractStage8Candidates,
   missingDispositions,
@@ -138,17 +139,18 @@ export const runStage9 = createServerFn({ method: "POST" })
     const stage9Directive = await getObjectiveDirective(data.sessionId, "stage9");
 
     let output = "";
+    let structuredBlock: string | null = null;
     try {
       const gated = await generateWithBannedWordGate({
         stageLabel: "Stage 9",
         columnLabel: "stage_9_output",
         mode,
         maxAttempts: 3,
-        validate: validateCore,
+        validate: (text: string) => validateCore(splitStructured(text).text),
         generate: (attempt, retryNote) =>
           collectClaudeText({
             systemPrompt: STAGE_9_SYSTEM_PROMPT + stage9Directive,
-            userMessage: `${userMessage}${retryNote ?? ""}`,
+            userMessage: `${userMessage}${structuredInstruction("9")}${retryNote ?? ""}`,
             maxTokens: 64000,
             sessionId: data.sessionId,
             stageLabel: attempt === 1 ? "Stage 9" : `Stage 9 (sanitiser retry ${attempt})`,
@@ -156,7 +158,9 @@ export const runStage9 = createServerFn({ method: "POST" })
             stageName: "Distinctiveness Check",
           }),
       });
-      output = gated.output;
+      const split = splitStructured(gated.output);
+      output = split.text;
+      structuredBlock = split.block;
       yield { delta: output };
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Stage 9 failed";
@@ -289,6 +293,10 @@ export const runStage9 = createServerFn({ method: "POST" })
       .update({
         stage_9_output: output,
         stage_9_error: null,
+        ...(() => {
+          const v = validateStructured("9", structuredBlock);
+          return { stage_9_structured: v.structured, stage_9_structured_error: v.error };
+        })(),
         stage_status: "complete:9",
       } as never)
       .eq("id", data.sessionId);

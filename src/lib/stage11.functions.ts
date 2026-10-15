@@ -9,6 +9,7 @@ import {
   buildStage11UserMessage,
 } from "./stage11-prompt";
 import { countPropositions } from "./count-helpers";
+import { filterStructuredStream, splitStructured, structuredInstruction, validateStructured } from "./structured-output";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertSessionAccess } from "@/lib/auth-helpers.server";
 import { assertUpstreamStageOutput } from "./pipeline-integrity";
@@ -23,7 +24,7 @@ export const runStage11 = createServerFn({ method: "POST" })
     await assertUpstreamStageOutput(data.sessionId, 11);
     const { data: session, error } = await supabaseAdmin
       .from("sessions")
-      .select("brand_name, category, stage_2_output, stage_8_output, stage_10_output, stage_11_output, is_preflight_test")
+      .select("brand_name, category, stage_2_output, stage_8_output, stage_10_output, stage_11_output, is_preflight_test, stage_10_structured")
       .eq("id", data.sessionId)
       .single();
     if (error || !session) throw new Error(`Session not found: ${error?.message ?? "no row"}`);
@@ -50,18 +51,20 @@ export const runStage11 = createServerFn({ method: "POST" })
       isPreflight: session.is_preflight_test === true,
     });
 
+    const s10 = (session as { stage_10_structured?: { scores?: { smp: string; code_verdict?: string }[] } | null }).stage_10_structured;
+    const sink = { raw: "" };
     let output = "";
     for await (const delta of withStreamSafety(
       { sessionId: data.sessionId, stageLabel: "Stage 11", outputColumn: "stage_11_output", errorColumn: "stage_11_error" },
-      streamClaude({
+      filterStructuredStream(streamClaude({
         systemPrompt: STAGE_11_SYSTEM_PROMPT,
-        userMessage,
+        userMessage: userMessage + structuredInstruction("11"),
         maxTokens: 64000,
         sessionId: data.sessionId,
         stageLabel: "Stage 11",
         stageNumber: "11",
         stageName: "Integrity Testing",
-      }),
+      }), sink),
     )) {
         output += delta;
         yield { delta };
@@ -77,6 +80,13 @@ export const runStage11 = createServerFn({ method: "POST" })
         // Stamp the pressure-test logic generation so pre- and post-V2 runs
         // are never treated as comparable.
         stage_11_logic_version: STAGE_11_LOGIC_VERSION,
+        ...(() => {
+          const v = validateStructured("11", splitStructured(sink.raw).block, {
+            expectedCount: s10?.scores?.length ?? propositionCount,
+            stage10Eliminated: (s10?.scores ?? []).filter((r) => r.code_verdict === "ELIMINATED").map((r) => r.smp),
+          });
+          return { stage_11_structured: v.structured, stage_11_structured_error: v.error };
+        })(),
       } as never)
       .eq("id", data.sessionId);
     if (updateErr) throw new Error(`Failed to save Stage 11 output: ${updateErr.message}`);
