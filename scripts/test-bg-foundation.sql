@@ -1,10 +1,8 @@
--- F1a database tests. Everything runs in one transaction and is rolled back.
--- Run: psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f scripts/test-bg-foundation.sql
-BEGIN;
-CREATE TEMP TABLE t_results(name text, ok boolean, detail text) ON COMMIT DROP;
-GRANT ALL ON t_results TO authenticated, service_role;
+DO $outer$
+BEGIN
+CREATE TEMP TABLE t_results(name text, ok boolean, detail text);
+GRANT ALL ON t_results TO authenticated;
 
-DO $$
 DECLARE
   adm uuid := (SELECT id FROM public.users WHERE is_admin LIMIT 1);
   c1 uuid; c2 uuid; e1 uuid; e2 uuid; s1 uuid; s2 uuid; s3 uuid; r1 uuid; ws uuid; br uuid; s4 uuid;
@@ -95,12 +93,11 @@ BEGIN
   PERFORM set_config('t.s2', s2::text, true); PERFORM set_config('t.s1', s1::text, true);
   PERFORM set_config('t.c1', c1::text, true); PERFORM set_config('t.e1', e1::text, true);
   PERFORM set_config('t.adm', adm::text, true);
-END $$;
+END;
 
--- As a signed-in non-admin: cannot see/create clients, cannot self-link, cannot forge approver.
-SET LOCAL ROLE authenticated;
-SELECT set_config('request.jwt.claims', json_build_object('sub', '00000000-0000-0000-0000-00000000beef', 'role', 'authenticated')::text, true);
-DO $$
+
+EXECUTE 'SET LOCAL ROLE authenticated';
+PERFORM set_config('request.jwt.claims', json_build_object('sub', '00000000-0000-0000-0000-00000000beef', 'role', 'authenticated')::text, true);
 DECLARE ok boolean; n int;
 BEGIN
   SELECT count(*) INTO n FROM public.bg_clients;
@@ -110,10 +107,9 @@ BEGIN
   BEGIN PERFORM public.bg_admin_link_run('sessions', current_setting('t.s2')::uuid, current_setting('t.c1')::uuid, current_setting('t.e1')::uuid); ok := false;
   EXCEPTION WHEN raise_exception THEN ok := true; END;
   INSERT INTO t_results VALUES ('non-admin cannot link runs', ok, NULL);
-END $$;
--- As the admin: link one run, recorded.
-SELECT set_config('request.jwt.claims', json_build_object('sub', current_setting('t.adm'), 'role', 'authenticated')::text, true);
-DO $$
+END;
+
+PERFORM set_config('request.jwt.claims', json_build_object('sub', current_setting('t.adm'), 'role', 'authenticated')::text, true);
 DECLARE st text; n int;
 BEGIN
   st := public.bg_admin_link_run('sessions', current_setting('t.s2')::uuid, current_setting('t.c1')::uuid, current_setting('t.e1')::uuid);
@@ -127,11 +123,10 @@ BEGIN
   UPDATE public.sessions SET checkpoint_a_confirmed = true, checkpoint_a_confirmed_at = now() WHERE id = current_setting('t.s1')::uuid;
   SELECT CASE WHEN checkpoint_a_confirmed_by = current_setting('t.adm')::uuid THEN 'ok' ELSE 'missing' END INTO st FROM public.sessions WHERE id = current_setting('t.s1')::uuid;
   INSERT INTO t_results VALUES ('approver recorded on signed-in confirm', st = 'ok', st);
-END $$;
-RESET ROLE;
+END;
+EXECUTE 'RESET ROLE';
 
--- Report and undo everything: the exception aborts the transaction.
-DO $$ BEGIN
+
   RAISE EXCEPTION 'BG_TEST_RESULTS %', (SELECT string_agg(CASE WHEN ok THEN 'PASS ' ELSE 'FAIL ' END || name || coalesce(' ['||detail||']',''), ' | ') FROM t_results);
-END $$;
-ROLLBACK;
+
+END $outer$;
