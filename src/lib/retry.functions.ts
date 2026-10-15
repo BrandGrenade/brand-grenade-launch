@@ -153,19 +153,19 @@ export const resetStage = createServerFn({ method: "POST" })
       case "9":
         await supabaseAdmin
           .from("sessions")
-          .update({ ...baseFields, stage_9_output: null, stage_9_leftofcentre_output: null, stage_9_error: null } as never)
+          .update({ ...baseFields, stage_9_output: null, stage_9_leftofcentre_output: null, stage_9_error: null, stage_9_structured: null, stage_9_structured_error: null } as never)
           .eq("id", data.sessionId);
         break;
       case "10":
         await supabaseAdmin
           .from("sessions")
-          .update({ ...baseFields, stage_10_output: null, stage_10_error: null })
+          .update({ ...baseFields, stage_10_output: null, stage_10_error: null, stage_10_structured: null, stage_10_structured_error: null })
           .eq("id", data.sessionId);
         break;
       case "11":
         await supabaseAdmin
           .from("sessions")
-          .update({ ...baseFields, stage_11_output: null, stage_11_error: null })
+          .update({ ...baseFields, stage_11_output: null, stage_11_error: null, stage_11_structured: null, stage_11_structured_error: null })
           .eq("id", data.sessionId);
         break;
       case "12":
@@ -177,7 +177,7 @@ export const resetStage = createServerFn({ method: "POST" })
       case "13":
         await supabaseAdmin
           .from("sessions")
-          .update({ ...baseFields, stage_13_output: null, stage_13_error: null })
+          .update({ ...baseFields, stage_13_output: null, stage_13_error: null, stage_13_structured: null, stage_13_structured_error: null })
           .eq("id", data.sessionId);
         break;
       case "13b":
@@ -239,11 +239,11 @@ const stageClearFields: Record<StageId, Record<string, null>> = {
   "6": { stage_6_output: null, stage_6_error: null },
   "7": { stage_7_output: null, stage_7_error: null },
   "8": { stage_8_output: null, stage_8_error: null },
-  "9": { stage_9_output: null, stage_9_leftofcentre_output: null, stage_9_error: null },
-  "10": { stage_10_output: null, stage_10_error: null },
-  "11": { stage_11_output: null, stage_11_error: null },
+  "9": { stage_9_output: null, stage_9_leftofcentre_output: null, stage_9_error: null, stage_9_structured: null, stage_9_structured_error: null },
+  "10": { stage_10_output: null, stage_10_error: null, stage_10_structured: null, stage_10_structured_error: null },
+  "11": { stage_11_output: null, stage_11_error: null, stage_11_structured: null, stage_11_structured_error: null },
   "12": { stage_12_output: null, stage_12_error: null, stage_12_smps: null },
-  "13": { stage_13_output: null, stage_13_error: null, stage_13_verdict: null },
+  "13": { stage_13_output: null, stage_13_error: null, stage_13_structured: null, stage_13_structured_error: null, stage_13_verdict: null },
   "13b": { stage_13b_output: null, stage_13b_error: null },
   "14": { stage_14_output: null, stage_14_error: null },
   "14b": { stage_14b_output: null, stage_14b_error: null },

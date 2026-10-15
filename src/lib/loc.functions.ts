@@ -306,6 +306,7 @@ export const runLeftOfCentre = createServerFn({ method: "POST" })
       .update({
         loc_status: "running",
         loc_error: null,
+        ...(data.force ? { version_reason: "rerun: Left-of-Centre", version_actor: context.userId } : {}),
         loc_generated_at: new Date().toISOString(),
         ...(data.force
           ? {

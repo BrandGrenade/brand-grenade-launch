@@ -123,7 +123,7 @@ export const runStage1 = createServerFn({ method: "POST" })
     if (feedback) {
       await supabaseAdmin
         .from("sessions")
-        .update({ stage_1_output: null, stage_1_tension_score: null, stage_1_error: null })
+        .update({ version_reason: "rerun: stage 1 (with amendment note)", version_actor: context.userId, stage_1_output: null, stage_1_tension_score: null, stage_1_error: null } as never)
         .eq("id", data.sessionId);
     }
 
