@@ -2,7 +2,8 @@
 -- Run: psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f scripts/test-bg-foundation.sql
 BEGIN;
 CREATE TEMP TABLE t_results(name text, ok boolean, detail text) ON COMMIT DROP;
-GRANT ALL ON t_results TO authenticated;
+GRANT ALL ON t_results TO authenticated, service_role;
+SET LOCAL ROLE service_role;
 
 DO $$
 DECLARE
