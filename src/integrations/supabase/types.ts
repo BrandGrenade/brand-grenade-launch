@@ -14,6 +14,78 @@ export type Database = {
   }
   public: {
     Tables: {
+      bg_access_keys: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          key_hash: string
+          label: string
+          revoked_at: string | null
+          scope: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          key_hash: string
+          label: string
+          revoked_at?: string | null
+          scope: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          key_hash?: string
+          label?: string
+          revoked_at?: string | null
+          scope?: string
+        }
+        Relationships: []
+      }
+      bg_access_log: {
+        Row: {
+          client_ref: string | null
+          created_at: string
+          error_code: string | null
+          id: number
+          key_id: string | null
+          outcome: string
+          output_id: string | null
+          request: string | null
+          request_id: string
+          run_id: string | null
+          scope: string | null
+        }
+        Insert: {
+          client_ref?: string | null
+          created_at?: string
+          error_code?: string | null
+          id?: never
+          key_id?: string | null
+          outcome: string
+          output_id?: string | null
+          request?: string | null
+          request_id: string
+          run_id?: string | null
+          scope?: string | null
+        }
+        Update: {
+          client_ref?: string | null
+          created_at?: string
+          error_code?: string | null
+          id?: never
+          key_id?: string | null
+          outcome?: string
+          output_id?: string | null
+          request?: string | null
+          request_id?: string
+          run_id?: string | null
+          scope?: string | null
+        }
+        Relationships: []
+      }
       bg_clients: {
         Row: {
           created_at: string

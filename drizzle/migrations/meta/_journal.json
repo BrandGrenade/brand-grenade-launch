@@ -106,6 +106,13 @@
       "when": 1792029980762,
       "tag": "0014_f1d_structured_current_position_diagnostic",
       "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1792035577348,
+      "tag": "0015_a1_bg_access_point",
+      "breakpoints": true
     }
   ]
 }
