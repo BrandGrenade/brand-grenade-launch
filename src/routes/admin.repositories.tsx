@@ -27,7 +27,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Lock, Trash2, Download, LogOut, KeyRound, Copy, Check, Power, Eye, EyeOff, Plus, Pencil, X } from "lucide-react";
+import { Lock, Trash2, Download, LogOut, KeyRound, Copy, Check, Power, Eye, Plus, Pencil, X } from "lucide-react";
 import { Spinner } from "@/components/ui/busy";
 
 type Slug = string;
@@ -241,7 +241,6 @@ function AllAccessPanel({ repos }: { repos: Repo[] }) {
   const [filterSlug, setFilterSlug] = useState<"all" | Slug>("all");
   const [query, setQuery] = useState("");
   const [revealed, setRevealed] = useState<Record<string, string>>({});
-  const [showPw, setShowPw] = useState<Record<string, boolean>>({});
 
   const refresh = useCallback(async () => {
     setLoading(true);
