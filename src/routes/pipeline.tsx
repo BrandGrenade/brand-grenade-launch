@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { toast } from "sonner";
 import { tokens } from "@/styles/tokens";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
@@ -2905,6 +2906,11 @@ function PipelineView() {
       if (stageId === "01") setRetryNonce((n) => n + 1);
     } catch (e) {
       console.error("retry cascade failed", e);
+      const msg = e instanceof Error ? e.message : "";
+      if (/locked/i.test(msg)) {
+        toast.error(msg);
+        return;
+      }
       setStatuses((p) => ({ ...p, [stageId]: "error" }));
     }
   };
