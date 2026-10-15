@@ -67,7 +67,7 @@ export function supabaseDb(sb: any): Db {
     async stimulus(runId) {
       const [d, p] = await Promise.all([
         sb.from("stimulus_directions").select("lens_id, lens_name, sort_order, direction, campaign_line, rationale, status, ratings, gate_one_approved, gate_one_approved_at").eq("run_id", runId),
-        // initial_prompt and working_prompt are deliberately not selected.
+        // Only the final prompt column is selected; earlier prompt drafts are never read.
         sb.from("stimulus_prompts").select("orchestration_id, channel_name, lens_name, tool_target, sort_order, final_prompt, status").eq("run_id", runId),
       ]);
       const orchIds = [...new Set((p.data ?? []).map((x: any) => x.orchestration_id).filter(Boolean))];
