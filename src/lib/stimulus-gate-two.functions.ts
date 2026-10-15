@@ -86,6 +86,7 @@ export const setGateTwoApproval = createServerFn({ method: "POST" })
       .update({
         gate_two_approved: data.approved,
         gate_two_approved_at: data.approved ? now : null,
+        gate_two_approved_by: data.approved ? context.userId : null,
         gate_two_notes: data.notes ?? null,
         gate_two_snapshot: snapshot,
       })
@@ -240,6 +241,7 @@ export const confirmGateTwo = createServerFn({ method: "POST" })
       .update({
         gate_two_confirmed: true,
         gate_two_confirmed_at: now,
+        gate_two_confirmed_by: context.userId,
         gate_two_notes: data.notes ?? null,
         gate_two_snapshot: snapshot,
         phase_note: `Gate Two confirmed — ${approved.length} finished prompt(s) signed off.`,
