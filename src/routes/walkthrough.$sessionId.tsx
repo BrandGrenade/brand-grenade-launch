@@ -162,18 +162,6 @@ function buildSteps(data: WalkthroughPayload): Step[] {
   // ── Room 01 — Intelligence Lab ───────────────────────────────────────
   if (data.intelligence) {
     const i = data.intelligence;
-    const layers = [
-      i.layer_1_output,
-      i.layer_2_output,
-      i.layer_3_output,
-      i.layer_4_output,
-      i.layer_5_output,
-      i.layer_6_output,
-      i.layer_7_output,
-      i.layer_8_output,
-      i.layer_9_output,
-      i.layer_10_output,
-    ];
     steps.push({
       id: "room-01",
       kicker: "Room 01 · Intelligence Lab",
@@ -187,13 +175,6 @@ function buildSteps(data: WalkthroughPayload): Step[] {
             </Panel>
           ) : (
             <Empty text="No final report was produced for this brand." />
-          )}
-          {layers.map((l, idx) =>
-            str(l) ? (
-              <Panel key={idx} title={`Layer ${idx + 1}`}>
-                <Prose text={l} />
-              </Panel>
-            ) : null,
           )}
         </>
       ),

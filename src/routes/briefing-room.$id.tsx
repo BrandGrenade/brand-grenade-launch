@@ -283,6 +283,7 @@ function WorkspacePage() {
         category: editedFields.category || category,
         briefText,
         briefFields: editedFields,
+        sourceWorkspaceId: id,
       });
       if (!saved) {
         setApproving(false);
