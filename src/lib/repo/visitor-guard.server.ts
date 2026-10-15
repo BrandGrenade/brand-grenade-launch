@@ -10,7 +10,3 @@
 export async function visitorSession(slug: string) {
   return (await import("./session.server")).visitorSession(slug);
 }
-
-export async function verifyPassword(): Promise<(password: string, hash: string) => boolean> {
-  return (await import("./session.server")).verifyPassword;
-}
