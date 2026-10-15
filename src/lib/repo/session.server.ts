@@ -1,5 +1,5 @@
 import { useSession } from "@tanstack/react-start/server";
-import { scryptSync, randomBytes, timingSafeEqual, createHash } from "node:crypto";
+import { timingSafeEqual, createHash } from "node:crypto";
 
 const SESSION_MAX_AGE = 60 * 60 * 24 * 30; // 30 days
 
@@ -35,22 +35,6 @@ export function adminSession() {
     maxAge: 60 * 60 * 24 * 7, // 7 days
     cookie: { httpOnly: true, secure: true, sameSite: "lax", path: "/" },
   });
-}
-
-// scrypt-based password hashing
-export function hashPassword(password: string): string {
-  const salt = randomBytes(16);
-  const key = scryptSync(password, salt, 64);
-  return `scrypt$${salt.toString("hex")}$${key.toString("hex")}`;
-}
-
-export function verifyPassword(password: string, stored: string): boolean {
-  const parts = stored.split("$");
-  if (parts.length !== 3 || parts[0] !== "scrypt") return false;
-  const salt = Buffer.from(parts[1], "hex");
-  const expected = Buffer.from(parts[2], "hex");
-  const derived = scryptSync(password, salt, expected.length);
-  return derived.length === expected.length && timingSafeEqual(derived, expected);
 }
 
 export function verifyAdminPassword(input: string): boolean {

@@ -57,11 +57,6 @@ export async function verifyAdminPasswordSafe(password: string): Promise<boolean
   return verifyAdminPassword(password);
 }
 
-export async function hashPasswordSafe(password: string): Promise<string> {
-  const { hashPassword } = await import("./session.server");
-  return hashPassword(password);
-}
-
 export async function clearAdminSession(): Promise<void> {
   const s = await session();
   await s.clear();
