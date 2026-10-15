@@ -78,6 +78,13 @@
       "when": 1792026554941,
       "tag": "0010_bg_link_helpers_no_anon",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1792027608754,
+      "tag": "0011_versions_locking_claims",
+      "breakpoints": true
     }
   ]
 }
