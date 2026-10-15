@@ -1,0 +1,3 @@
+CREATE TRIGGER repository_visitors_password_guard BEFORE INSERT OR UPDATE ON public.repository_visitors FOR EACH ROW EXECUTE FUNCTION public.repository_visitors_password_guard();
+ALTER TABLE public.repository_visitors ADD CONSTRAINT repository_visitors_no_plaintext CHECK (plaintext_password IS NULL);
+REVOKE EXECUTE ON FUNCTION public.repository_visitors_password_guard() FROM PUBLIC, anon, authenticated;
