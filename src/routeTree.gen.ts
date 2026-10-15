@@ -9,180 +9,70 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as RepoSlugRouteImport } from './routes/$repoSlug'
-import { Route as BriefRouteImport } from './routes/brief'
-import { Route as BriefingRoomRouteImport } from './routes/briefing-room'
-import { Route as CompleteRouteImport } from './routes/complete'
-import { Route as ConsultingRouteImport } from './routes/consulting'
-import { Route as CreativeRouteImport } from './routes/creative'
-import { Route as DashboardRouteImport } from './routes/dashboard'
-import { Route as DemoRouteImport } from './routes/demo'
-import { Route as DetonationRouteImport } from './routes/detonation'
-import { Route as DoneForYouRouteImport } from './routes/done-for-you'
-import { Route as EnterpriseRouteImport } from './routes/enterprise'
-import { Route as ForAgenciesRouteImport } from './routes/for-agencies'
-import { Route as ForCmosRouteImport } from './routes/for-cmos'
-import { Route as ForConsultanciesRouteImport } from './routes/for-consultancies'
-import { Route as FoundationBrandsRouteImport } from './routes/foundation-brands'
-import { Route as IntelligenceRouteImport } from './routes/intelligence'
-import { Route as LoginRouteImport } from './routes/login'
-import { Route as MethodologyRouteImport } from './routes/methodology'
-import { Route as PipelineRouteImport } from './routes/pipeline'
-import { Route as SettingsRouteImport } from './routes/settings'
-import { Route as ShowcaseRouteImport } from './routes/showcase'
-import { Route as SynthesiserRouteImport } from './routes/synthesiser'
-import { Route as UnsubscribeRouteImport } from './routes/unsubscribe'
 import { Route as WalkthroughRouteImport } from './routes/walkthrough'
-import { Route as AdminHubRouteImport } from './routes/admin.hub'
-import { Route as AdminRepositoriesRouteImport } from './routes/admin.repositories'
-import { Route as AdminTestsRouteImport } from './routes/admin.tests'
-import { Route as BriefIndexRouteImport } from './routes/brief.index'
-import { Route as BriefNewRouteImport } from './routes/brief.new'
-import { Route as BriefingRoomIndexRouteImport } from './routes/briefing-room.index'
-import { Route as BriefingRoomIdRouteImport } from './routes/briefing-room.$id'
-import { Route as CreativeIndexRouteImport } from './routes/creative.index'
-import { Route as CreativeSessionIdRouteImport } from './routes/creative.$sessionId'
-import { Route as DetonationCanvasRouteImport } from './routes/detonation_.canvas'
-import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
-import { Route as IntelligenceIndexRouteImport } from './routes/intelligence.index'
-import { Route as IntelligenceIdRouteImport } from './routes/intelligence.$id'
-import { Route as IntelligenceNewRouteImport } from './routes/intelligence.new'
-import { Route as SynthesiserIndexRouteImport } from './routes/synthesiser.index'
+import { Route as UnsubscribeRouteImport } from './routes/unsubscribe'
+import { Route as SynthesiserRouteImport } from './routes/synthesiser'
+import { Route as ShowcaseRouteImport } from './routes/showcase'
+import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as PipelineRouteImport } from './routes/pipeline'
+import { Route as MethodologyRouteImport } from './routes/methodology'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as IntelligenceRouteImport } from './routes/intelligence'
+import { Route as FoundationBrandsRouteImport } from './routes/foundation-brands'
+import { Route as ForConsultanciesRouteImport } from './routes/for-consultancies'
+import { Route as ForCmosRouteImport } from './routes/for-cmos'
+import { Route as ForAgenciesRouteImport } from './routes/for-agencies'
+import { Route as EnterpriseRouteImport } from './routes/enterprise'
+import { Route as DoneForYouRouteImport } from './routes/done-for-you'
+import { Route as DetonationRouteImport } from './routes/detonation'
+import { Route as DemoRouteImport } from './routes/demo'
+import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as CreativeRouteImport } from './routes/creative'
+import { Route as ConsultingRouteImport } from './routes/consulting'
+import { Route as CompleteRouteImport } from './routes/complete'
+import { Route as BriefingRoomRouteImport } from './routes/briefing-room'
+import { Route as BriefRouteImport } from './routes/brief'
+import { Route as RepoSlugRouteImport } from './routes/$repoSlug'
+import { Route as IndexRouteImport } from './routes/index'
 import { Route as WalkthroughIndexRouteImport } from './routes/walkthrough.index'
+import { Route as SynthesiserIndexRouteImport } from './routes/synthesiser.index'
+import { Route as IntelligenceIndexRouteImport } from './routes/intelligence.index'
+import { Route as CreativeIndexRouteImport } from './routes/creative.index'
+import { Route as BriefingRoomIndexRouteImport } from './routes/briefing-room.index'
+import { Route as BriefIndexRouteImport } from './routes/brief.index'
 import { Route as WalkthroughSessionIdRouteImport } from './routes/walkthrough.$sessionId'
-import { Route as AdminPreviewSlugRouteImport } from './routes/admin.preview.$slug'
-import { Route as ApiPublicHubTickRouteImport } from './routes/api/public/hub-tick'
-import { Route as ApiPublicIntelligenceTickRouteImport } from './routes/api/public/intelligence-tick'
-import { Route as ApiPublicOrchestrationTickRouteImport } from './routes/api/public/orchestration-tick'
-import { Route as ApiPublicReliabilityTickRouteImport } from './routes/api/public/reliability-tick'
-import { Route as ApiPublicSmpScoreTickRouteImport } from './routes/api/public/smp-score-tick'
-import { Route as ApiPublicSweepTickRouteImport } from './routes/api/public/sweep-tick'
+import { Route as IntelligenceNewRouteImport } from './routes/intelligence.new'
+import { Route as IntelligenceIdRouteImport } from './routes/intelligence.$id'
+import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
+import { Route as DetonationCanvasRouteImport } from './routes/detonation_.canvas'
+import { Route as CreativeSessionIdRouteImport } from './routes/creative.$sessionId'
+import { Route as BriefingRoomIdRouteImport } from './routes/briefing-room.$id'
+import { Route as BriefNewRouteImport } from './routes/brief.new'
+import { Route as AdminTestsRouteImport } from './routes/admin.tests'
+import { Route as AdminRepositoriesRouteImport } from './routes/admin.repositories'
+import { Route as AdminHubRouteImport } from './routes/admin.hub'
 import { Route as CreativeSessionIdIndexRouteImport } from './routes/creative.$sessionId.index'
-import { Route as CreativeSessionIdChannelsRouteImport } from './routes/creative.$sessionId.channels'
-import { Route as CreativeSessionIdOrchestrationRouteImport } from './routes/creative.$sessionId.orchestration'
-import { Route as CreativeSessionIdShortlistRouteImport } from './routes/creative.$sessionId.shortlist'
-import { Route as IntelligenceIdEditRouteImport } from './routes/intelligence.$id_.edit'
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
-import { Route as ApiPublicHooksTier2HarnessRouteImport } from './routes/api/public/hooks/tier2-harness'
-import { Route as ApiRepoViewDocumentIdRouteImport } from './routes/api/repo/view.$documentId'
-import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
-import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
+import { Route as IntelligenceIdEditRouteImport } from './routes/intelligence.$id_.edit'
+import { Route as CreativeSessionIdShortlistRouteImport } from './routes/creative.$sessionId.shortlist'
+import { Route as CreativeSessionIdOrchestrationRouteImport } from './routes/creative.$sessionId.orchestration'
+import { Route as CreativeSessionIdChannelsRouteImport } from './routes/creative.$sessionId.channels'
+import { Route as ApiPublicSweepTickRouteImport } from './routes/api/public/sweep-tick'
+import { Route as ApiPublicSmpScoreTickRouteImport } from './routes/api/public/smp-score-tick'
+import { Route as ApiPublicReliabilityTickRouteImport } from './routes/api/public/reliability-tick'
+import { Route as ApiPublicOrchestrationTickRouteImport } from './routes/api/public/orchestration-tick'
+import { Route as ApiPublicIntelligenceTickRouteImport } from './routes/api/public/intelligence-tick'
+import { Route as ApiPublicHubTickRouteImport } from './routes/api/public/hub-tick'
+import { Route as AdminPreviewSlugRouteImport } from './routes/admin.preview.$slug'
 import { Route as LovableEmailTransactionalSendRouteImport } from './routes/lovable/email/transactional/send'
+import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
+import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
+import { Route as ApiRepoViewDocumentIdRouteImport } from './routes/api/repo/view.$documentId'
+import { Route as ApiPublicHooksTier2HarnessRouteImport } from './routes/api/public/hooks/tier2-harness'
 
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RepoSlugRoute = RepoSlugRouteImport.update({
-  id: '/$repoSlug',
-  path: '/$repoSlug',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BriefRoute = BriefRouteImport.update({
-  id: '/brief',
-  path: '/brief',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BriefingRoomRoute = BriefingRoomRouteImport.update({
-  id: '/briefing-room',
-  path: '/briefing-room',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CompleteRoute = CompleteRouteImport.update({
-  id: '/complete',
-  path: '/complete',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ConsultingRoute = ConsultingRouteImport.update({
-  id: '/consulting',
-  path: '/consulting',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CreativeRoute = CreativeRouteImport.update({
-  id: '/creative',
-  path: '/creative',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DashboardRoute = DashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DemoRoute = DemoRouteImport.update({
-  id: '/demo',
-  path: '/demo',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DetonationRoute = DetonationRouteImport.update({
-  id: '/detonation',
-  path: '/detonation',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DoneForYouRoute = DoneForYouRouteImport.update({
-  id: '/done-for-you',
-  path: '/done-for-you',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const EnterpriseRoute = EnterpriseRouteImport.update({
-  id: '/enterprise',
-  path: '/enterprise',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ForAgenciesRoute = ForAgenciesRouteImport.update({
-  id: '/for-agencies',
-  path: '/for-agencies',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ForCmosRoute = ForCmosRouteImport.update({
-  id: '/for-cmos',
-  path: '/for-cmos',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ForConsultanciesRoute = ForConsultanciesRouteImport.update({
-  id: '/for-consultancies',
-  path: '/for-consultancies',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const FoundationBrandsRoute = FoundationBrandsRouteImport.update({
-  id: '/foundation-brands',
-  path: '/foundation-brands',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const IntelligenceRoute = IntelligenceRouteImport.update({
-  id: '/intelligence',
-  path: '/intelligence',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const MethodologyRoute = MethodologyRouteImport.update({
-  id: '/methodology',
-  path: '/methodology',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PipelineRoute = PipelineRouteImport.update({
-  id: '/pipeline',
-  path: '/pipeline',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SettingsRoute = SettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ShowcaseRoute = ShowcaseRouteImport.update({
-  id: '/showcase',
-  path: '/showcase',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SynthesiserRoute = SynthesiserRouteImport.update({
-  id: '/synthesiser',
-  path: '/synthesiser',
+const WalkthroughRoute = WalkthroughRouteImport.update({
+  id: '/walkthrough',
+  path: '/walkthrough',
   getParentRoute: () => rootRouteImport,
 } as any)
 const UnsubscribeRoute = UnsubscribeRouteImport.update({
@@ -190,69 +80,159 @@ const UnsubscribeRoute = UnsubscribeRouteImport.update({
   path: '/unsubscribe',
   getParentRoute: () => rootRouteImport,
 } as any)
-const WalkthroughRoute = WalkthroughRouteImport.update({
-  id: '/walkthrough',
-  path: '/walkthrough',
+const SynthesiserRoute = SynthesiserRouteImport.update({
+  id: '/synthesiser',
+  path: '/synthesiser',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AdminHubRoute = AdminHubRouteImport.update({
-  id: '/admin/hub',
-  path: '/admin/hub',
+const ShowcaseRoute = ShowcaseRouteImport.update({
+  id: '/showcase',
+  path: '/showcase',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AdminRepositoriesRoute = AdminRepositoriesRouteImport.update({
-  id: '/admin/repositories',
-  path: '/admin/repositories',
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AdminTestsRoute = AdminTestsRouteImport.update({
-  id: '/admin/tests',
-  path: '/admin/tests',
+const PipelineRoute = PipelineRouteImport.update({
+  id: '/pipeline',
+  path: '/pipeline',
   getParentRoute: () => rootRouteImport,
 } as any)
-const BriefIndexRoute = BriefIndexRouteImport.update({
+const MethodologyRoute = MethodologyRouteImport.update({
+  id: '/methodology',
+  path: '/methodology',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IntelligenceRoute = IntelligenceRouteImport.update({
+  id: '/intelligence',
+  path: '/intelligence',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FoundationBrandsRoute = FoundationBrandsRouteImport.update({
+  id: '/foundation-brands',
+  path: '/foundation-brands',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ForConsultanciesRoute = ForConsultanciesRouteImport.update({
+  id: '/for-consultancies',
+  path: '/for-consultancies',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ForCmosRoute = ForCmosRouteImport.update({
+  id: '/for-cmos',
+  path: '/for-cmos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ForAgenciesRoute = ForAgenciesRouteImport.update({
+  id: '/for-agencies',
+  path: '/for-agencies',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EnterpriseRoute = EnterpriseRouteImport.update({
+  id: '/enterprise',
+  path: '/enterprise',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DoneForYouRoute = DoneForYouRouteImport.update({
+  id: '/done-for-you',
+  path: '/done-for-you',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DetonationRoute = DetonationRouteImport.update({
+  id: '/detonation',
+  path: '/detonation',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DemoRoute = DemoRouteImport.update({
+  id: '/demo',
+  path: '/demo',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CreativeRoute = CreativeRouteImport.update({
+  id: '/creative',
+  path: '/creative',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ConsultingRoute = ConsultingRouteImport.update({
+  id: '/consulting',
+  path: '/consulting',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CompleteRoute = CompleteRouteImport.update({
+  id: '/complete',
+  path: '/complete',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BriefingRoomRoute = BriefingRoomRouteImport.update({
+  id: '/briefing-room',
+  path: '/briefing-room',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BriefRoute = BriefRouteImport.update({
+  id: '/brief',
+  path: '/brief',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RepoSlugRoute = RepoSlugRouteImport.update({
+  id: '/$repoSlug',
+  path: '/$repoSlug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => BriefRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-const BriefNewRoute = BriefNewRouteImport.update({
-  id: '/new',
-  path: '/new',
-  getParentRoute: () => BriefRoute,
-} as any)
-const BriefingRoomIndexRoute = BriefingRoomIndexRouteImport.update({
+const WalkthroughIndexRoute = WalkthroughIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => BriefingRoomRoute,
+  getParentRoute: () => WalkthroughRoute,
 } as any)
-const BriefingRoomIdRoute = BriefingRoomIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => BriefingRoomRoute,
+const SynthesiserIndexRoute = SynthesiserIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => SynthesiserRoute,
+} as any)
+const IntelligenceIndexRoute = IntelligenceIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => IntelligenceRoute,
 } as any)
 const CreativeIndexRoute = CreativeIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => CreativeRoute,
 } as any)
-const CreativeSessionIdRoute = CreativeSessionIdRouteImport.update({
-  id: '/$sessionId',
-  path: '/$sessionId',
-  getParentRoute: () => CreativeRoute,
-} as any)
-const DetonationCanvasRoute = DetonationCanvasRouteImport.update({
-  id: '/detonation_/canvas',
-  path: '/detonation/canvas',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const EmailUnsubscribeRoute = EmailUnsubscribeRouteImport.update({
-  id: '/email/unsubscribe',
-  path: '/email/unsubscribe',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const IntelligenceIndexRoute = IntelligenceIndexRouteImport.update({
+const BriefingRoomIndexRoute = BriefingRoomIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => BriefingRoomRoute,
+} as any)
+const BriefIndexRoute = BriefIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => BriefRoute,
+} as any)
+const WalkthroughSessionIdRoute = WalkthroughSessionIdRouteImport.update({
+  id: '/$sessionId',
+  path: '/$sessionId',
+  getParentRoute: () => WalkthroughRoute,
+} as any)
+const IntelligenceNewRoute = IntelligenceNewRouteImport.update({
+  id: '/new',
+  path: '/new',
   getParentRoute: () => IntelligenceRoute,
 } as any)
 const IntelligenceIdRoute = IntelligenceIdRouteImport.update({
@@ -260,62 +240,44 @@ const IntelligenceIdRoute = IntelligenceIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => IntelligenceRoute,
 } as any)
-const IntelligenceNewRoute = IntelligenceNewRouteImport.update({
-  id: '/new',
-  path: '/new',
-  getParentRoute: () => IntelligenceRoute,
+const EmailUnsubscribeRoute = EmailUnsubscribeRouteImport.update({
+  id: '/email/unsubscribe',
+  path: '/email/unsubscribe',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const SynthesiserIndexRoute = SynthesiserIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => SynthesiserRoute,
+const DetonationCanvasRoute = DetonationCanvasRouteImport.update({
+  id: '/detonation_/canvas',
+  path: '/detonation/canvas',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const WalkthroughIndexRoute = WalkthroughIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => WalkthroughRoute,
-} as any)
-const WalkthroughSessionIdRoute = WalkthroughSessionIdRouteImport.update({
+const CreativeSessionIdRoute = CreativeSessionIdRouteImport.update({
   id: '/$sessionId',
   path: '/$sessionId',
-  getParentRoute: () => WalkthroughRoute,
+  getParentRoute: () => CreativeRoute,
 } as any)
-const AdminPreviewSlugRoute = AdminPreviewSlugRouteImport.update({
-  id: '/admin/preview/$slug',
-  path: '/admin/preview/$slug',
+const BriefingRoomIdRoute = BriefingRoomIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => BriefingRoomRoute,
+} as any)
+const BriefNewRoute = BriefNewRouteImport.update({
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => BriefRoute,
+} as any)
+const AdminTestsRoute = AdminTestsRouteImport.update({
+  id: '/admin/tests',
+  path: '/admin/tests',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicHubTickRoute = ApiPublicHubTickRouteImport.update({
-  id: '/api/public/hub-tick',
-  path: '/api/public/hub-tick',
+const AdminRepositoriesRoute = AdminRepositoriesRouteImport.update({
+  id: '/admin/repositories',
+  path: '/admin/repositories',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicIntelligenceTickRoute =
-  ApiPublicIntelligenceTickRouteImport.update({
-    id: '/api/public/intelligence-tick',
-    path: '/api/public/intelligence-tick',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicOrchestrationTickRoute =
-  ApiPublicOrchestrationTickRouteImport.update({
-    id: '/api/public/orchestration-tick',
-    path: '/api/public/orchestration-tick',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicReliabilityTickRoute =
-  ApiPublicReliabilityTickRouteImport.update({
-    id: '/api/public/reliability-tick',
-    path: '/api/public/reliability-tick',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicSmpScoreTickRoute = ApiPublicSmpScoreTickRouteImport.update({
-  id: '/api/public/smp-score-tick',
-  path: '/api/public/smp-score-tick',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicSweepTickRoute = ApiPublicSweepTickRouteImport.update({
-  id: '/api/public/sweep-tick',
-  path: '/api/public/sweep-tick',
+const AdminHubRoute = AdminHubRouteImport.update({
+  id: '/admin/hub',
+  path: '/admin/hub',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CreativeSessionIdIndexRoute = CreativeSessionIdIndexRouteImport.update({
@@ -323,10 +285,20 @@ const CreativeSessionIdIndexRoute = CreativeSessionIdIndexRouteImport.update({
   path: '/',
   getParentRoute: () => CreativeSessionIdRoute,
 } as any)
-const CreativeSessionIdChannelsRoute =
-  CreativeSessionIdChannelsRouteImport.update({
-    id: '/channels',
-    path: '/channels',
+const LovableEmailSuppressionRoute = LovableEmailSuppressionRouteImport.update({
+  id: '/lovable/email/suppression',
+  path: '/lovable/email/suppression',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IntelligenceIdEditRoute = IntelligenceIdEditRouteImport.update({
+  id: '/$id_/edit',
+  path: '/$id/edit',
+  getParentRoute: () => IntelligenceRoute,
+} as any)
+const CreativeSessionIdShortlistRoute =
+  CreativeSessionIdShortlistRouteImport.update({
+    id: '/shortlist',
+    path: '/shortlist',
     getParentRoute: () => CreativeSessionIdRoute,
   } as any)
 const CreativeSessionIdOrchestrationRoute =
@@ -335,37 +307,54 @@ const CreativeSessionIdOrchestrationRoute =
     path: '/orchestration',
     getParentRoute: () => CreativeSessionIdRoute,
   } as any)
-const CreativeSessionIdShortlistRoute =
-  CreativeSessionIdShortlistRouteImport.update({
-    id: '/shortlist',
-    path: '/shortlist',
+const CreativeSessionIdChannelsRoute =
+  CreativeSessionIdChannelsRouteImport.update({
+    id: '/channels',
+    path: '/channels',
     getParentRoute: () => CreativeSessionIdRoute,
   } as any)
-const IntelligenceIdEditRoute = IntelligenceIdEditRouteImport.update({
-  id: '/$id_/edit',
-  path: '/$id/edit',
-  getParentRoute: () => IntelligenceRoute,
-} as any)
-const LovableEmailSuppressionRoute = LovableEmailSuppressionRouteImport.update({
-  id: '/lovable/email/suppression',
-  path: '/lovable/email/suppression',
+const ApiPublicSweepTickRoute = ApiPublicSweepTickRouteImport.update({
+  id: '/api/public/sweep-tick',
+  path: '/api/public/sweep-tick',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicHooksTier2HarnessRoute =
-  ApiPublicHooksTier2HarnessRouteImport.update({
-    id: '/api/public/hooks/tier2-harness',
-    path: '/api/public/hooks/tier2-harness',
+const ApiPublicSmpScoreTickRoute = ApiPublicSmpScoreTickRouteImport.update({
+  id: '/api/public/smp-score-tick',
+  path: '/api/public/smp-score-tick',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicReliabilityTickRoute =
+  ApiPublicReliabilityTickRouteImport.update({
+    id: '/api/public/reliability-tick',
+    path: '/api/public/reliability-tick',
     getParentRoute: () => rootRouteImport,
   } as any)
-const ApiRepoViewDocumentIdRoute = ApiRepoViewDocumentIdRouteImport.update({
-  id: '/api/repo/view/$documentId',
-  path: '/api/repo/view/$documentId',
+const ApiPublicOrchestrationTickRoute =
+  ApiPublicOrchestrationTickRouteImport.update({
+    id: '/api/public/orchestration-tick',
+    path: '/api/public/orchestration-tick',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicIntelligenceTickRoute =
+  ApiPublicIntelligenceTickRouteImport.update({
+    id: '/api/public/intelligence-tick',
+    path: '/api/public/intelligence-tick',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHubTickRoute = ApiPublicHubTickRouteImport.update({
+  id: '/api/public/hub-tick',
+  path: '/api/public/hub-tick',
   getParentRoute: () => rootRouteImport,
 } as any)
-const LovableEmailQueueProcessRoute =
-  LovableEmailQueueProcessRouteImport.update({
-    id: '/lovable/email/queue/process',
-    path: '/lovable/email/queue/process',
+const AdminPreviewSlugRoute = AdminPreviewSlugRouteImport.update({
+  id: '/admin/preview/$slug',
+  path: '/admin/preview/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LovableEmailTransactionalSendRoute =
+  LovableEmailTransactionalSendRouteImport.update({
+    id: '/lovable/email/transactional/send',
+    path: '/lovable/email/transactional/send',
     getParentRoute: () => rootRouteImport,
   } as any)
 const LovableEmailTransactionalPreviewRoute =
@@ -374,10 +363,21 @@ const LovableEmailTransactionalPreviewRoute =
     path: '/lovable/email/transactional/preview',
     getParentRoute: () => rootRouteImport,
   } as any)
-const LovableEmailTransactionalSendRoute =
-  LovableEmailTransactionalSendRouteImport.update({
-    id: '/lovable/email/transactional/send',
-    path: '/lovable/email/transactional/send',
+const LovableEmailQueueProcessRoute =
+  LovableEmailQueueProcessRouteImport.update({
+    id: '/lovable/email/queue/process',
+    path: '/lovable/email/queue/process',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiRepoViewDocumentIdRoute = ApiRepoViewDocumentIdRouteImport.update({
+  id: '/api/repo/view/$documentId',
+  path: '/api/repo/view/$documentId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicHooksTier2HarnessRoute =
+  ApiPublicHooksTier2HarnessRouteImport.update({
+    id: '/api/public/hooks/tier2-harness',
+    path: '/api/public/hooks/tier2-harness',
     getParentRoute: () => rootRouteImport,
   } as any)
 
@@ -791,165 +791,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/$repoSlug': {
-      id: '/$repoSlug'
-      path: '/$repoSlug'
-      fullPath: '/$repoSlug'
-      preLoaderRoute: typeof RepoSlugRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/brief': {
-      id: '/brief'
-      path: '/brief'
-      fullPath: '/brief'
-      preLoaderRoute: typeof BriefRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/briefing-room': {
-      id: '/briefing-room'
-      path: '/briefing-room'
-      fullPath: '/briefing-room'
-      preLoaderRoute: typeof BriefingRoomRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/complete': {
-      id: '/complete'
-      path: '/complete'
-      fullPath: '/complete'
-      preLoaderRoute: typeof CompleteRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/consulting': {
-      id: '/consulting'
-      path: '/consulting'
-      fullPath: '/consulting'
-      preLoaderRoute: typeof ConsultingRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/creative': {
-      id: '/creative'
-      path: '/creative'
-      fullPath: '/creative'
-      preLoaderRoute: typeof CreativeRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/dashboard': {
-      id: '/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof DashboardRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/demo': {
-      id: '/demo'
-      path: '/demo'
-      fullPath: '/demo'
-      preLoaderRoute: typeof DemoRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/detonation': {
-      id: '/detonation'
-      path: '/detonation'
-      fullPath: '/detonation'
-      preLoaderRoute: typeof DetonationRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/done-for-you': {
-      id: '/done-for-you'
-      path: '/done-for-you'
-      fullPath: '/done-for-you'
-      preLoaderRoute: typeof DoneForYouRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/enterprise': {
-      id: '/enterprise'
-      path: '/enterprise'
-      fullPath: '/enterprise'
-      preLoaderRoute: typeof EnterpriseRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/for-agencies': {
-      id: '/for-agencies'
-      path: '/for-agencies'
-      fullPath: '/for-agencies'
-      preLoaderRoute: typeof ForAgenciesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/for-cmos': {
-      id: '/for-cmos'
-      path: '/for-cmos'
-      fullPath: '/for-cmos'
-      preLoaderRoute: typeof ForCmosRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/for-consultancies': {
-      id: '/for-consultancies'
-      path: '/for-consultancies'
-      fullPath: '/for-consultancies'
-      preLoaderRoute: typeof ForConsultanciesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/foundation-brands': {
-      id: '/foundation-brands'
-      path: '/foundation-brands'
-      fullPath: '/foundation-brands'
-      preLoaderRoute: typeof FoundationBrandsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/intelligence': {
-      id: '/intelligence'
-      path: '/intelligence'
-      fullPath: '/intelligence'
-      preLoaderRoute: typeof IntelligenceRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/methodology': {
-      id: '/methodology'
-      path: '/methodology'
-      fullPath: '/methodology'
-      preLoaderRoute: typeof MethodologyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/pipeline': {
-      id: '/pipeline'
-      path: '/pipeline'
-      fullPath: '/pipeline'
-      preLoaderRoute: typeof PipelineRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/settings': {
-      id: '/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof SettingsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/showcase': {
-      id: '/showcase'
-      path: '/showcase'
-      fullPath: '/showcase'
-      preLoaderRoute: typeof ShowcaseRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/synthesiser': {
-      id: '/synthesiser'
-      path: '/synthesiser'
-      fullPath: '/synthesiser'
-      preLoaderRoute: typeof SynthesiserRouteImport
+    '/walkthrough': {
+      id: '/walkthrough'
+      path: '/walkthrough'
+      fullPath: '/walkthrough'
+      preLoaderRoute: typeof WalkthroughRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/unsubscribe': {
@@ -959,61 +805,187 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof UnsubscribeRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/walkthrough': {
-      id: '/walkthrough'
-      path: '/walkthrough'
-      fullPath: '/walkthrough'
-      preLoaderRoute: typeof WalkthroughRouteImport
+    '/synthesiser': {
+      id: '/synthesiser'
+      path: '/synthesiser'
+      fullPath: '/synthesiser'
+      preLoaderRoute: typeof SynthesiserRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/admin/hub': {
-      id: '/admin/hub'
-      path: '/admin/hub'
-      fullPath: '/admin/hub'
-      preLoaderRoute: typeof AdminHubRouteImport
+    '/showcase': {
+      id: '/showcase'
+      path: '/showcase'
+      fullPath: '/showcase'
+      preLoaderRoute: typeof ShowcaseRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/admin/repositories': {
-      id: '/admin/repositories'
-      path: '/admin/repositories'
-      fullPath: '/admin/repositories'
-      preLoaderRoute: typeof AdminRepositoriesRouteImport
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/admin/tests': {
-      id: '/admin/tests'
-      path: '/admin/tests'
-      fullPath: '/admin/tests'
-      preLoaderRoute: typeof AdminTestsRouteImport
+    '/pipeline': {
+      id: '/pipeline'
+      path: '/pipeline'
+      fullPath: '/pipeline'
+      preLoaderRoute: typeof PipelineRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/brief/': {
-      id: '/brief/'
+    '/methodology': {
+      id: '/methodology'
+      path: '/methodology'
+      fullPath: '/methodology'
+      preLoaderRoute: typeof MethodologyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/intelligence': {
+      id: '/intelligence'
+      path: '/intelligence'
+      fullPath: '/intelligence'
+      preLoaderRoute: typeof IntelligenceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/foundation-brands': {
+      id: '/foundation-brands'
+      path: '/foundation-brands'
+      fullPath: '/foundation-brands'
+      preLoaderRoute: typeof FoundationBrandsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/for-consultancies': {
+      id: '/for-consultancies'
+      path: '/for-consultancies'
+      fullPath: '/for-consultancies'
+      preLoaderRoute: typeof ForConsultanciesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/for-cmos': {
+      id: '/for-cmos'
+      path: '/for-cmos'
+      fullPath: '/for-cmos'
+      preLoaderRoute: typeof ForCmosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/for-agencies': {
+      id: '/for-agencies'
+      path: '/for-agencies'
+      fullPath: '/for-agencies'
+      preLoaderRoute: typeof ForAgenciesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/enterprise': {
+      id: '/enterprise'
+      path: '/enterprise'
+      fullPath: '/enterprise'
+      preLoaderRoute: typeof EnterpriseRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/done-for-you': {
+      id: '/done-for-you'
+      path: '/done-for-you'
+      fullPath: '/done-for-you'
+      preLoaderRoute: typeof DoneForYouRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/detonation': {
+      id: '/detonation'
+      path: '/detonation'
+      fullPath: '/detonation'
+      preLoaderRoute: typeof DetonationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/demo': {
+      id: '/demo'
+      path: '/demo'
+      fullPath: '/demo'
+      preLoaderRoute: typeof DemoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/creative': {
+      id: '/creative'
+      path: '/creative'
+      fullPath: '/creative'
+      preLoaderRoute: typeof CreativeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/consulting': {
+      id: '/consulting'
+      path: '/consulting'
+      fullPath: '/consulting'
+      preLoaderRoute: typeof ConsultingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/complete': {
+      id: '/complete'
+      path: '/complete'
+      fullPath: '/complete'
+      preLoaderRoute: typeof CompleteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/briefing-room': {
+      id: '/briefing-room'
+      path: '/briefing-room'
+      fullPath: '/briefing-room'
+      preLoaderRoute: typeof BriefingRoomRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/brief': {
+      id: '/brief'
+      path: '/brief'
+      fullPath: '/brief'
+      preLoaderRoute: typeof BriefRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/$repoSlug': {
+      id: '/$repoSlug'
+      path: '/$repoSlug'
+      fullPath: '/$repoSlug'
+      preLoaderRoute: typeof RepoSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/': {
+      id: '/'
       path: '/'
-      fullPath: '/brief/'
-      preLoaderRoute: typeof BriefIndexRouteImport
-      parentRoute: typeof BriefRoute
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/brief/new': {
-      id: '/brief/new'
-      path: '/new'
-      fullPath: '/brief/new'
-      preLoaderRoute: typeof BriefNewRouteImport
-      parentRoute: typeof BriefRoute
-    }
-    '/briefing-room/': {
-      id: '/briefing-room/'
+    '/walkthrough/': {
+      id: '/walkthrough/'
       path: '/'
-      fullPath: '/briefing-room/'
-      preLoaderRoute: typeof BriefingRoomIndexRouteImport
-      parentRoute: typeof BriefingRoomRoute
+      fullPath: '/walkthrough/'
+      preLoaderRoute: typeof WalkthroughIndexRouteImport
+      parentRoute: typeof WalkthroughRoute
     }
-    '/briefing-room/$id': {
-      id: '/briefing-room/$id'
-      path: '/$id'
-      fullPath: '/briefing-room/$id'
-      preLoaderRoute: typeof BriefingRoomIdRouteImport
-      parentRoute: typeof BriefingRoomRoute
+    '/synthesiser/': {
+      id: '/synthesiser/'
+      path: '/'
+      fullPath: '/synthesiser/'
+      preLoaderRoute: typeof SynthesiserIndexRouteImport
+      parentRoute: typeof SynthesiserRoute
+    }
+    '/intelligence/': {
+      id: '/intelligence/'
+      path: '/'
+      fullPath: '/intelligence/'
+      preLoaderRoute: typeof IntelligenceIndexRouteImport
+      parentRoute: typeof IntelligenceRoute
     }
     '/creative/': {
       id: '/creative/'
@@ -1022,32 +994,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CreativeIndexRouteImport
       parentRoute: typeof CreativeRoute
     }
-    '/creative/$sessionId': {
-      id: '/creative/$sessionId'
-      path: '/$sessionId'
-      fullPath: '/creative/$sessionId'
-      preLoaderRoute: typeof CreativeSessionIdRouteImport
-      parentRoute: typeof CreativeRoute
-    }
-    '/detonation_/canvas': {
-      id: '/detonation_/canvas'
-      path: '/detonation/canvas'
-      fullPath: '/detonation/canvas'
-      preLoaderRoute: typeof DetonationCanvasRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/email/unsubscribe': {
-      id: '/email/unsubscribe'
-      path: '/email/unsubscribe'
-      fullPath: '/email/unsubscribe'
-      preLoaderRoute: typeof EmailUnsubscribeRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/intelligence/': {
-      id: '/intelligence/'
+    '/briefing-room/': {
+      id: '/briefing-room/'
       path: '/'
-      fullPath: '/intelligence/'
-      preLoaderRoute: typeof IntelligenceIndexRouteImport
+      fullPath: '/briefing-room/'
+      preLoaderRoute: typeof BriefingRoomIndexRouteImport
+      parentRoute: typeof BriefingRoomRoute
+    }
+    '/brief/': {
+      id: '/brief/'
+      path: '/'
+      fullPath: '/brief/'
+      preLoaderRoute: typeof BriefIndexRouteImport
+      parentRoute: typeof BriefRoute
+    }
+    '/walkthrough/$sessionId': {
+      id: '/walkthrough/$sessionId'
+      path: '/$sessionId'
+      fullPath: '/walkthrough/$sessionId'
+      preLoaderRoute: typeof WalkthroughSessionIdRouteImport
+      parentRoute: typeof WalkthroughRoute
+    }
+    '/intelligence/new': {
+      id: '/intelligence/new'
+      path: '/new'
+      fullPath: '/intelligence/new'
+      preLoaderRoute: typeof IntelligenceNewRouteImport
       parentRoute: typeof IntelligenceRoute
     }
     '/intelligence/$id': {
@@ -1057,81 +1029,60 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IntelligenceIdRouteImport
       parentRoute: typeof IntelligenceRoute
     }
-    '/intelligence/new': {
-      id: '/intelligence/new'
-      path: '/new'
-      fullPath: '/intelligence/new'
-      preLoaderRoute: typeof IntelligenceNewRouteImport
-      parentRoute: typeof IntelligenceRoute
+    '/email/unsubscribe': {
+      id: '/email/unsubscribe'
+      path: '/email/unsubscribe'
+      fullPath: '/email/unsubscribe'
+      preLoaderRoute: typeof EmailUnsubscribeRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/synthesiser/': {
-      id: '/synthesiser/'
-      path: '/'
-      fullPath: '/synthesiser/'
-      preLoaderRoute: typeof SynthesiserIndexRouteImport
-      parentRoute: typeof SynthesiserRoute
+    '/detonation_/canvas': {
+      id: '/detonation_/canvas'
+      path: '/detonation/canvas'
+      fullPath: '/detonation/canvas'
+      preLoaderRoute: typeof DetonationCanvasRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/walkthrough/': {
-      id: '/walkthrough/'
-      path: '/'
-      fullPath: '/walkthrough/'
-      preLoaderRoute: typeof WalkthroughIndexRouteImport
-      parentRoute: typeof WalkthroughRoute
-    }
-    '/walkthrough/$sessionId': {
-      id: '/walkthrough/$sessionId'
+    '/creative/$sessionId': {
+      id: '/creative/$sessionId'
       path: '/$sessionId'
-      fullPath: '/walkthrough/$sessionId'
-      preLoaderRoute: typeof WalkthroughSessionIdRouteImport
-      parentRoute: typeof WalkthroughRoute
+      fullPath: '/creative/$sessionId'
+      preLoaderRoute: typeof CreativeSessionIdRouteImport
+      parentRoute: typeof CreativeRoute
     }
-    '/admin/preview/$slug': {
-      id: '/admin/preview/$slug'
-      path: '/admin/preview/$slug'
-      fullPath: '/admin/preview/$slug'
-      preLoaderRoute: typeof AdminPreviewSlugRouteImport
+    '/briefing-room/$id': {
+      id: '/briefing-room/$id'
+      path: '/$id'
+      fullPath: '/briefing-room/$id'
+      preLoaderRoute: typeof BriefingRoomIdRouteImport
+      parentRoute: typeof BriefingRoomRoute
+    }
+    '/brief/new': {
+      id: '/brief/new'
+      path: '/new'
+      fullPath: '/brief/new'
+      preLoaderRoute: typeof BriefNewRouteImport
+      parentRoute: typeof BriefRoute
+    }
+    '/admin/tests': {
+      id: '/admin/tests'
+      path: '/admin/tests'
+      fullPath: '/admin/tests'
+      preLoaderRoute: typeof AdminTestsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/hub-tick': {
-      id: '/api/public/hub-tick'
-      path: '/api/public/hub-tick'
-      fullPath: '/api/public/hub-tick'
-      preLoaderRoute: typeof ApiPublicHubTickRouteImport
+    '/admin/repositories': {
+      id: '/admin/repositories'
+      path: '/admin/repositories'
+      fullPath: '/admin/repositories'
+      preLoaderRoute: typeof AdminRepositoriesRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/intelligence-tick': {
-      id: '/api/public/intelligence-tick'
-      path: '/api/public/intelligence-tick'
-      fullPath: '/api/public/intelligence-tick'
-      preLoaderRoute: typeof ApiPublicIntelligenceTickRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/orchestration-tick': {
-      id: '/api/public/orchestration-tick'
-      path: '/api/public/orchestration-tick'
-      fullPath: '/api/public/orchestration-tick'
-      preLoaderRoute: typeof ApiPublicOrchestrationTickRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/reliability-tick': {
-      id: '/api/public/reliability-tick'
-      path: '/api/public/reliability-tick'
-      fullPath: '/api/public/reliability-tick'
-      preLoaderRoute: typeof ApiPublicReliabilityTickRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/smp-score-tick': {
-      id: '/api/public/smp-score-tick'
-      path: '/api/public/smp-score-tick'
-      fullPath: '/api/public/smp-score-tick'
-      preLoaderRoute: typeof ApiPublicSmpScoreTickRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/sweep-tick': {
-      id: '/api/public/sweep-tick'
-      path: '/api/public/sweep-tick'
-      fullPath: '/api/public/sweep-tick'
-      preLoaderRoute: typeof ApiPublicSweepTickRouteImport
+    '/admin/hub': {
+      id: '/admin/hub'
+      path: '/admin/hub'
+      fullPath: '/admin/hub'
+      preLoaderRoute: typeof AdminHubRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/creative/$sessionId/': {
@@ -1141,11 +1092,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CreativeSessionIdIndexRouteImport
       parentRoute: typeof CreativeSessionIdRoute
     }
-    '/creative/$sessionId/channels': {
-      id: '/creative/$sessionId/channels'
-      path: '/channels'
-      fullPath: '/creative/$sessionId/channels'
-      preLoaderRoute: typeof CreativeSessionIdChannelsRouteImport
+    '/lovable/email/suppression': {
+      id: '/lovable/email/suppression'
+      path: '/lovable/email/suppression'
+      fullPath: '/lovable/email/suppression'
+      preLoaderRoute: typeof LovableEmailSuppressionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/intelligence/$id_/edit': {
+      id: '/intelligence/$id_/edit'
+      path: '/$id/edit'
+      fullPath: '/intelligence/$id/edit'
+      preLoaderRoute: typeof IntelligenceIdEditRouteImport
+      parentRoute: typeof IntelligenceRoute
+    }
+    '/creative/$sessionId/shortlist': {
+      id: '/creative/$sessionId/shortlist'
+      path: '/shortlist'
+      fullPath: '/creative/$sessionId/shortlist'
+      preLoaderRoute: typeof CreativeSessionIdShortlistRouteImport
       parentRoute: typeof CreativeSessionIdRoute
     }
     '/creative/$sessionId/orchestration': {
@@ -1155,46 +1120,67 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CreativeSessionIdOrchestrationRouteImport
       parentRoute: typeof CreativeSessionIdRoute
     }
-    '/creative/$sessionId/shortlist': {
-      id: '/creative/$sessionId/shortlist'
-      path: '/shortlist'
-      fullPath: '/creative/$sessionId/shortlist'
-      preLoaderRoute: typeof CreativeSessionIdShortlistRouteImport
+    '/creative/$sessionId/channels': {
+      id: '/creative/$sessionId/channels'
+      path: '/channels'
+      fullPath: '/creative/$sessionId/channels'
+      preLoaderRoute: typeof CreativeSessionIdChannelsRouteImport
       parentRoute: typeof CreativeSessionIdRoute
     }
-    '/intelligence/$id_/edit': {
-      id: '/intelligence/$id_/edit'
-      path: '/$id/edit'
-      fullPath: '/intelligence/$id/edit'
-      preLoaderRoute: typeof IntelligenceIdEditRouteImport
-      parentRoute: typeof IntelligenceRoute
-    }
-    '/lovable/email/suppression': {
-      id: '/lovable/email/suppression'
-      path: '/lovable/email/suppression'
-      fullPath: '/lovable/email/suppression'
-      preLoaderRoute: typeof LovableEmailSuppressionRouteImport
+    '/api/public/sweep-tick': {
+      id: '/api/public/sweep-tick'
+      path: '/api/public/sweep-tick'
+      fullPath: '/api/public/sweep-tick'
+      preLoaderRoute: typeof ApiPublicSweepTickRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/hooks/tier2-harness': {
-      id: '/api/public/hooks/tier2-harness'
-      path: '/api/public/hooks/tier2-harness'
-      fullPath: '/api/public/hooks/tier2-harness'
-      preLoaderRoute: typeof ApiPublicHooksTier2HarnessRouteImport
+    '/api/public/smp-score-tick': {
+      id: '/api/public/smp-score-tick'
+      path: '/api/public/smp-score-tick'
+      fullPath: '/api/public/smp-score-tick'
+      preLoaderRoute: typeof ApiPublicSmpScoreTickRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/repo/view/$documentId': {
-      id: '/api/repo/view/$documentId'
-      path: '/api/repo/view/$documentId'
-      fullPath: '/api/repo/view/$documentId'
-      preLoaderRoute: typeof ApiRepoViewDocumentIdRouteImport
+    '/api/public/reliability-tick': {
+      id: '/api/public/reliability-tick'
+      path: '/api/public/reliability-tick'
+      fullPath: '/api/public/reliability-tick'
+      preLoaderRoute: typeof ApiPublicReliabilityTickRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/lovable/email/queue/process': {
-      id: '/lovable/email/queue/process'
-      path: '/lovable/email/queue/process'
-      fullPath: '/lovable/email/queue/process'
-      preLoaderRoute: typeof LovableEmailQueueProcessRouteImport
+    '/api/public/orchestration-tick': {
+      id: '/api/public/orchestration-tick'
+      path: '/api/public/orchestration-tick'
+      fullPath: '/api/public/orchestration-tick'
+      preLoaderRoute: typeof ApiPublicOrchestrationTickRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/intelligence-tick': {
+      id: '/api/public/intelligence-tick'
+      path: '/api/public/intelligence-tick'
+      fullPath: '/api/public/intelligence-tick'
+      preLoaderRoute: typeof ApiPublicIntelligenceTickRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hub-tick': {
+      id: '/api/public/hub-tick'
+      path: '/api/public/hub-tick'
+      fullPath: '/api/public/hub-tick'
+      preLoaderRoute: typeof ApiPublicHubTickRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/preview/$slug': {
+      id: '/admin/preview/$slug'
+      path: '/admin/preview/$slug'
+      fullPath: '/admin/preview/$slug'
+      preLoaderRoute: typeof AdminPreviewSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lovable/email/transactional/send': {
+      id: '/lovable/email/transactional/send'
+      path: '/lovable/email/transactional/send'
+      fullPath: '/lovable/email/transactional/send'
+      preLoaderRoute: typeof LovableEmailTransactionalSendRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/lovable/email/transactional/preview': {
@@ -1204,11 +1190,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LovableEmailTransactionalPreviewRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/lovable/email/transactional/send': {
-      id: '/lovable/email/transactional/send'
-      path: '/lovable/email/transactional/send'
-      fullPath: '/lovable/email/transactional/send'
-      preLoaderRoute: typeof LovableEmailTransactionalSendRouteImport
+    '/lovable/email/queue/process': {
+      id: '/lovable/email/queue/process'
+      path: '/lovable/email/queue/process'
+      fullPath: '/lovable/email/queue/process'
+      preLoaderRoute: typeof LovableEmailQueueProcessRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/repo/view/$documentId': {
+      id: '/api/repo/view/$documentId'
+      path: '/api/repo/view/$documentId'
+      fullPath: '/api/repo/view/$documentId'
+      preLoaderRoute: typeof ApiRepoViewDocumentIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/tier2-harness': {
+      id: '/api/public/hooks/tier2-harness'
+      path: '/api/public/hooks/tier2-harness'
+      fullPath: '/api/public/hooks/tier2-harness'
+      preLoaderRoute: typeof ApiPublicHooksTier2HarnessRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
