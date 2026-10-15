@@ -1182,9 +1182,14 @@ export type Database = {
           checkpoint_f_confirmed_at: string | null
           checkpoint_f_confirmed_by: string | null
           checkpoint_f_notes: string | null
+          continues_diagnostic_id: string | null
           created_at: string
+          current_proposition: string | null
+          current_proposition_date: string | null
+          current_proposition_source: string | null
           current_stage: number
           dev_mode: boolean
+          diagnostic_status: string | null
           doc_agency_sections: Json | null
           doc_agency_status: string | null
           doc_agency_status_at: string | null
@@ -1230,6 +1235,7 @@ export type Database = {
           phase_2_status: string
           retry_count: number
           retry_status: string | null
+          run_mode: string
           selected_format: string | null
           selected_loc_expression: string | null
           selected_smp: string | null
@@ -1248,14 +1254,20 @@ export type Database = {
           stage_1_tension_score: number | null
           stage_10_error: string | null
           stage_10_output: string | null
+          stage_10_structured: Json | null
+          stage_10_structured_error: string | null
           stage_11_error: string | null
           stage_11_logic_version: number | null
           stage_11_output: string | null
+          stage_11_structured: Json | null
+          stage_11_structured_error: string | null
           stage_12_error: string | null
           stage_12_output: string | null
           stage_12_smps: Json | null
           stage_13_error: string | null
           stage_13_output: string | null
+          stage_13_structured: Json | null
+          stage_13_structured_error: string | null
           stage_13_verdict: string | null
           stage_13b_error: string | null
           stage_13b_output: string | null
@@ -1328,6 +1340,8 @@ export type Database = {
           stage_9_error: string | null
           stage_9_leftofcentre_output: string | null
           stage_9_output: string | null
+          stage_9_structured: Json | null
+          stage_9_structured_error: string | null
           stage_amendments: Json
           stage_started_at: string | null
           stage_status: string | null
@@ -1391,9 +1405,14 @@ export type Database = {
           checkpoint_f_confirmed_at?: string | null
           checkpoint_f_confirmed_by?: string | null
           checkpoint_f_notes?: string | null
+          continues_diagnostic_id?: string | null
           created_at?: string
+          current_proposition?: string | null
+          current_proposition_date?: string | null
+          current_proposition_source?: string | null
           current_stage?: number
           dev_mode?: boolean
+          diagnostic_status?: string | null
           doc_agency_sections?: Json | null
           doc_agency_status?: string | null
           doc_agency_status_at?: string | null
@@ -1439,6 +1458,7 @@ export type Database = {
           phase_2_status?: string
           retry_count?: number
           retry_status?: string | null
+          run_mode?: string
           selected_format?: string | null
           selected_loc_expression?: string | null
           selected_smp?: string | null
@@ -1457,14 +1477,20 @@ export type Database = {
           stage_1_tension_score?: number | null
           stage_10_error?: string | null
           stage_10_output?: string | null
+          stage_10_structured?: Json | null
+          stage_10_structured_error?: string | null
           stage_11_error?: string | null
           stage_11_logic_version?: number | null
           stage_11_output?: string | null
+          stage_11_structured?: Json | null
+          stage_11_structured_error?: string | null
           stage_12_error?: string | null
           stage_12_output?: string | null
           stage_12_smps?: Json | null
           stage_13_error?: string | null
           stage_13_output?: string | null
+          stage_13_structured?: Json | null
+          stage_13_structured_error?: string | null
           stage_13_verdict?: string | null
           stage_13b_error?: string | null
           stage_13b_output?: string | null
@@ -1537,6 +1563,8 @@ export type Database = {
           stage_9_error?: string | null
           stage_9_leftofcentre_output?: string | null
           stage_9_output?: string | null
+          stage_9_structured?: Json | null
+          stage_9_structured_error?: string | null
           stage_amendments?: Json
           stage_started_at?: string | null
           stage_status?: string | null
@@ -1600,9 +1628,14 @@ export type Database = {
           checkpoint_f_confirmed_at?: string | null
           checkpoint_f_confirmed_by?: string | null
           checkpoint_f_notes?: string | null
+          continues_diagnostic_id?: string | null
           created_at?: string
+          current_proposition?: string | null
+          current_proposition_date?: string | null
+          current_proposition_source?: string | null
           current_stage?: number
           dev_mode?: boolean
+          diagnostic_status?: string | null
           doc_agency_sections?: Json | null
           doc_agency_status?: string | null
           doc_agency_status_at?: string | null
@@ -1648,6 +1681,7 @@ export type Database = {
           phase_2_status?: string
           retry_count?: number
           retry_status?: string | null
+          run_mode?: string
           selected_format?: string | null
           selected_loc_expression?: string | null
           selected_smp?: string | null
@@ -1666,14 +1700,20 @@ export type Database = {
           stage_1_tension_score?: number | null
           stage_10_error?: string | null
           stage_10_output?: string | null
+          stage_10_structured?: Json | null
+          stage_10_structured_error?: string | null
           stage_11_error?: string | null
           stage_11_logic_version?: number | null
           stage_11_output?: string | null
+          stage_11_structured?: Json | null
+          stage_11_structured_error?: string | null
           stage_12_error?: string | null
           stage_12_output?: string | null
           stage_12_smps?: Json | null
           stage_13_error?: string | null
           stage_13_output?: string | null
+          stage_13_structured?: Json | null
+          stage_13_structured_error?: string | null
           stage_13_verdict?: string | null
           stage_13b_error?: string | null
           stage_13b_output?: string | null
@@ -1746,6 +1786,8 @@ export type Database = {
           stage_9_error?: string | null
           stage_9_leftofcentre_output?: string | null
           stage_9_output?: string | null
+          stage_9_structured?: Json | null
+          stage_9_structured_error?: string | null
           stage_amendments?: Json
           stage_started_at?: string | null
           stage_status?: string | null
@@ -1772,6 +1814,20 @@ export type Database = {
             columns: ["bg_client_id"]
             isOneToOne: false
             referencedRelation: "bg_clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sessions_continues_diagnostic_id_fkey"
+            columns: ["continues_diagnostic_id"]
+            isOneToOne: false
+            referencedRelation: "brand_register_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sessions_continues_diagnostic_id_fkey"
+            columns: ["continues_diagnostic_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
             referencedColumns: ["id"]
           },
           {
@@ -2828,6 +2884,7 @@ export type Database = {
         }
         Returns: string
       }
+      bg_diagnostic_complete: { Args: { n: Json }; Returns: boolean }
       bg_is_admin: { Args: { _uid: string }; Returns: boolean }
       bg_output_field: {
         Args: { _k: string; _table: string; _versioned: boolean }

@@ -6,6 +6,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } 
 import { z } from "zod";
 import { TopNav } from "@/components/TopNav";
 import { SessionSharePopover } from "@/components/SessionSharePopover";
+import { RunModePanel } from "@/components/RunModePanel";
 import { RequireAuth } from "@/components/RequireAuth";
 import { LocControls } from "@/components/LocControls";
 import { Checkpoint, buildRevisionInstruction } from "@/components/Checkpoint";
@@ -3124,6 +3125,7 @@ function PipelineView() {
       <div className="flex justify-end px-5 pt-3">
         <SessionSharePopover sessionId={sessionId} />
       </div>
+      {sessionId && <RunModePanel sessionId={sessionId} refreshKey={`${statuses["10"]}-${statuses["13"]}`} />}
 
       <Breadcrumb
         brand={brandLabel}

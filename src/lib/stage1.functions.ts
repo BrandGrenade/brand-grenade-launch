@@ -26,6 +26,12 @@ const CreateSessionInput = z.object({
   briefFields: BriefFieldsSchema,
   /** Saved brief this run starts from (client/engagement inherited). */
   sourceBriefId: z.string().uuid().optional(),
+  runMode: z.enum(["full", "diagnostic"]).default("full"),
+  currentProposition: z.string().max(300).optional(),
+  currentPropositionSource: z.string().max(300).optional(),
+  currentPropositionDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  /** Locked diagnostic run this full run continues from (never altered). */
+  continuesDiagnosticId: z.string().uuid().optional(),
 });
 
 export const createSession = createServerFn({ method: "POST" })
@@ -41,9 +47,26 @@ export const createSession = createServerFn({ method: "POST" })
           },
         ]
       : [];
+    let inheritedSource: string | null = null;
+    if (data.continuesDiagnosticId) {
+      const { assertSessionAccess: check } = await import("@/lib/auth-helpers.server");
+      await check(data.continuesDiagnosticId, context.userId);
+      const { data: src } = await supabaseAdmin
+        .from("sessions").select("run_mode, bg_source_id").eq("id", data.continuesDiagnosticId).single();
+      if ((src as { run_mode?: string } | null)?.run_mode !== "diagnostic") throw new Error("Source run is not a diagnostic run");
+      if (data.runMode !== "full") throw new Error("A run continuing a diagnostic must be a full run");
+      inheritedSource = (src as { bg_source_id?: string | null }).bg_source_id ?? null;
+    }
+    const cp = data.currentProposition?.trim() || null;
     const { data: row, error } = await supabaseAdmin
       .from("sessions")
       .insert({
+        run_mode: data.runMode,
+        diagnostic_status: data.runMode === "diagnostic" ? "in_progress" : null,
+        current_proposition: cp,
+        current_proposition_source: cp ? data.currentPropositionSource?.trim() || null : null,
+        current_proposition_date: cp ? data.currentPropositionDate ?? null : null,
+        continues_diagnostic_id: data.continuesDiagnosticId ?? null,
         brand_name: data.brandName,
         category: data.category,
         brief_text: data.briefText,
@@ -51,7 +74,7 @@ export const createSession = createServerFn({ method: "POST" })
         status: "running",
         current_stage: 1,
         user_id: context.userId,
-        bg_source_id: data.sourceBriefId ?? null,
+        bg_source_id: data.sourceBriefId ?? inheritedSource,
       })
       .select("id")
       .single();
@@ -123,7 +146,7 @@ export const runStage1 = createServerFn({ method: "POST" })
     if (feedback) {
       await supabaseAdmin
         .from("sessions")
-        .update({ stage_1_output: null, stage_1_tension_score: null, stage_1_error: null })
+        .update({ version_reason: "rerun: stage 1 (with amendment note)", version_actor: context.userId, stage_1_output: null, stage_1_tension_score: null, stage_1_error: null } as never)
         .eq("id", data.sessionId);
     }
 

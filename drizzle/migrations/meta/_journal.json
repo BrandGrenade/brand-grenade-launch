@@ -99,6 +99,13 @@
       "when": 1792027906883,
       "tag": "0013_tighten_versions_claims_grants",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1792029980762,
+      "tag": "0014_f1d_structured_current_position_diagnostic",
+      "breakpoints": true
     }
   ]
 }

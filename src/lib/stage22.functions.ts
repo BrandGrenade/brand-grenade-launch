@@ -386,6 +386,8 @@ export const regenerateStage22 = createServerFn({ method: "POST" })
     await supabaseAdmin
       .from("sessions")
       .update({
+        version_reason: "rerun: stage 22",
+        version_actor: context.userId,
         stage_22_output: null,
         stage_22_brand_architecture: null,
         stage_22_distinctive_assets: null,

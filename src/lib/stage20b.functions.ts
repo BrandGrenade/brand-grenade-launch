@@ -48,6 +48,8 @@ export const startStage20b = createServerFn({ method: "POST" })
     await supabaseAdmin
       .from("sessions")
       .update({
+        version_reason: "rerun: stage 20b",
+        version_actor: context.userId,
         stage_20b_output: null,
         stage_20b_error: STAGE_20B_RUNNING,
         stage_20b_audience_input: data.audienceInput as never,
@@ -136,7 +138,7 @@ export const clearStage20b = createServerFn({ method: "POST" })
     await assertSessionAccess(data.sessionId, context.userId);
     const { error } = await supabaseAdmin
       .from("sessions")
-      .update({ stage_20b_output: null, stage_20b_error: null })
+      .update({ version_reason: "cleared: stage 20b", version_actor: context.userId, stage_20b_output: null, stage_20b_error: null } as never)
       .eq("id", data.sessionId);
     if (error) throw new Error(error.message);
     return { ok: true };
