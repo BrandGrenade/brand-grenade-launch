@@ -146,3 +146,24 @@ export const linkRun = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { status: status as string };
   });
+
+/** Admin: lock a Strategy Pipeline run or Briefing Room workspace before it completes. Locks are permanent. */
+export const lockRunEarly = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) =>
+    z.object({ table: z.enum(["sessions", "briefing_room_workspaces"]), runId: z.string().uuid(), reason: z.string().trim().min(3).max(500) }).parse(i),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context as Ctx);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: row, error } = await (supabaseAdmin as any)
+      .from(data.table)
+      .update({ locked_at: new Date().toISOString(), locked_by: context.userId, lock_reason: data.reason })
+      .eq("id", data.runId)
+      .is("locked_at", null)
+      .select("id")
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!row) throw new Error("Run not found, or it is already locked.");
+    return { ok: true };
+  });
