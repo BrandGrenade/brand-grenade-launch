@@ -1,5 +1,4 @@
--- F1b tests: versions, locking, claims. Self-rolling-back: run with psql -v ON_ERROR_STOP=1 -f.
-BEGIN;
+-- F1b tests: versions, locking, claims. Self-rolling-back: ends by raising F1B_TEST_RESULTS, which aborts every change.
 CREATE TEMP TABLE r(name text, ok boolean);
 
 -- Legacy rows were flagged, never given invented versions.
@@ -91,6 +90,8 @@ INSERT INTO r SELECT 'authenticated cannot insert versions', NOT has_table_privi
 INSERT INTO r SELECT 'anon cannot read versions', NOT has_table_privilege('anon', 'public.run_output_versions', 'SELECT');
 INSERT INTO r SELECT 'authenticated cannot update/delete claims', NOT has_table_privilege('authenticated', 'public.synthesiser_claims', 'UPDATE') AND NOT has_table_privilege('authenticated', 'public.synthesiser_claims', 'DELETE');
 
-SELECT CASE WHEN ok THEN 'PASS' ELSE 'FAIL' END AS result, name FROM r;
-SELECT count(*) FILTER (WHERE ok) AS passed, count(*) FILTER (WHERE NOT ok OR ok IS NULL) AS failed FROM r;
-ROLLBACK;
+DO $$ BEGIN
+  RAISE EXCEPTION 'F1B_TEST_RESULTS passed=% failed=% :: %',
+    (SELECT count(*) FILTER (WHERE ok) FROM r), (SELECT count(*) FILTER (WHERE ok IS NOT TRUE) FROM r),
+    (SELECT string_agg(CASE WHEN ok THEN 'PASS ' ELSE 'FAIL ' END || name, ' | ') FROM r);
+END $$;
