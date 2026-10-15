@@ -27,7 +27,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Lock, Trash2, Download, LogOut, KeyRound, Copy, Check, Power, Eye, EyeOff, Plus, Pencil, X } from "lucide-react";
+import { Lock, Trash2, Download, LogOut, KeyRound, Copy, Check, Power, Eye, Plus, Pencil, X } from "lucide-react";
 import { Spinner } from "@/components/ui/busy";
 
 type Slug = string;
@@ -187,7 +187,6 @@ interface Visitor {
   organisation: string | null;
   email: string | null;
   is_active: boolean;
-  plaintext_password: string | null;
 }
 
 interface Doc {
@@ -231,7 +230,6 @@ interface AllAccessRow {
   created_at: string;
   repository_slug: Slug;
   last_active_at: string | null;
-  plaintext_password: string | null;
 }
 
 function AllAccessPanel({ repos }: { repos: Repo[] }) {
@@ -243,7 +241,6 @@ function AllAccessPanel({ repos }: { repos: Repo[] }) {
   const [filterSlug, setFilterSlug] = useState<"all" | Slug>("all");
   const [query, setQuery] = useState("");
   const [revealed, setRevealed] = useState<Record<string, string>>({});
-  const [showPw, setShowPw] = useState<Record<string, boolean>>({});
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -352,37 +349,7 @@ function AllAccessPanel({ repos }: { repos: Repo[] }) {
                   </td>
                   <td className="px-3 py-3 text-text-primary">{labelFor(r.repository_slug, repos)}</td>
                   <td className="px-3 py-3">
-                    {r.plaintext_password ? (
-                      <div className="flex items-center gap-1.5">
-                        <code className="text-[13px] font-mono bg-card border border-border rounded px-2 py-1">
-                          {showPw[r.id] ? r.plaintext_password : "••••••••"}
-                        </code>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="h-7 px-2"
-                          title={showPw[r.id] ? "Hide password" : "Show password"}
-                          onClick={() => setShowPw((p) => ({ ...p, [r.id]: !p[r.id] }))}
-                        >
-                          {showPw[r.id] ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-                        </Button>
-                        {showPw[r.id] && (
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="h-7 px-2"
-                            title="Copy password"
-                            onClick={async () => {
-                              try { await navigator.clipboard.writeText(r.plaintext_password!); } catch { /* ignore */ }
-                            }}
-                          >
-                            <Copy className="h-3.5 w-3.5" />
-                          </Button>
-                        )}
-                      </div>
-                    ) : (
-                      <span className="text-[13px] text-text-secondary italic">Not stored — reset to view</span>
-                    )}
+                    <span className="text-[13px] text-text-secondary italic">Hidden — use Reset password</span>
                   </td>
                   <td className="px-3 py-3 text-text-secondary text-[13px] whitespace-nowrap">
                     {new Date(r.created_at).toLocaleDateString()}
@@ -413,7 +380,7 @@ function AllAccessPanel({ repos }: { repos: Repo[] }) {
                           await refresh();
                         }}
                       >
-                        <KeyRound className="h-4 w-4 mr-1.5" /> Set password
+                        <KeyRound className="h-4 w-4 mr-1.5" /> Reset password
                       </Button>
                       <Button
                         size="sm"
@@ -539,7 +506,6 @@ function RepositoryAdminPanel({ slug, repos, onRepoUpdated }: { slug: Slug; repo
                       {v.organisation ?? ""} {v.email ? `· ${v.email}` : ""}
                     </p>
                     <div className="mt-2">
-                      <VisitorPasswordInline password={v.plaintext_password} />
                     </div>
                   </div>
                   <div className="flex gap-2 shrink-0">
@@ -770,54 +736,6 @@ function StatCard({ label, value }: { label: string; value: number }) {
   );
 }
 
-function VisitorPasswordInline({ password }: { password: string | null }) {
-  const [show, setShow] = useState(false);
-  const [copied, setCopied] = useState(false);
-  if (!password) {
-    return (
-      <span className="text-[13px] text-text-secondary italic">
-        Password not stored — click Set password to issue a new one you can view.
-      </span>
-    );
-  }
-  return (
-    <div className="flex items-center gap-1.5">
-      <span className="text-[10px] uppercase tracking-wide text-text-secondary mr-1">Password</span>
-      <code className="text-[13px] font-mono bg-card border border-border rounded px-2 py-1">
-        {show ? password : "••••••••"}
-      </code>
-      <Button
-        size="sm"
-        variant="ghost"
-        className="h-7 px-2"
-        title={show ? "Hide password" : "Show password"}
-        onClick={() => setShow((s) => !s)}
-      >
-        {show ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-      </Button>
-      {show && (
-        <Button
-          size="sm"
-          variant="ghost"
-          className="h-7 px-2"
-          title="Copy password"
-          onClick={async () => {
-            try {
-              await navigator.clipboard.writeText(password);
-              setCopied(true);
-              setTimeout(() => setCopied(false), 1500);
-            } catch {
-              /* ignore */
-            }
-          }}
-        >
-          {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-        </Button>
-      )}
-    </div>
-  );
-}
-
 function PasswordReveal({ password, onDismiss }: { password: string; onDismiss: () => void }) {
   const [copied, setCopied] = useState(false);
   return (
@@ -866,11 +784,11 @@ function SetPasswordButton({
         title="Set or reset password"
         onClick={() => setOpen((v) => !v)}
       >
-        <KeyRound className="h-4 w-4 mr-1.5" /> Set password
+        <KeyRound className="h-4 w-4 mr-1.5" /> Reset password
       </Button>
       {open && (
         <div className="absolute z-10 mt-10 bg-card border border-border rounded-lg shadow-lg p-3 w-72 space-y-2">
-          <p className="text-[13px] text-text-secondary">Set password for {visitorName} (min 6 chars)</p>
+          <p className="text-[13px] text-text-secondary">Reset password for {visitorName} (min 6 chars)</p>
           <Input
             type="text"
             placeholder="Enter password"

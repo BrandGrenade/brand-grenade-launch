@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { clientIpAndUa } from "./repo/request-meta.server";
-import { visitorSession, verifyPassword } from "./repo/visitor-guard.server";
+import { visitorSession } from "./repo/visitor-guard.server";
 import { z } from "zod";
 
 const slugSchema = z
@@ -33,13 +33,16 @@ export const unlockRepo = createServerFn({ method: "POST" })
 
     const { data: rows, error } = await supabaseAdmin
       .from("repository_visitors")
-      .select("id, name, password_hash, is_active")
+      .select("id, name, password_hash, password_hash_bcrypt, is_active")
       .eq("repository_slug", data.slug)
       .eq("is_active", true);
     if (error) throw new Error(error.message);
 
-    const verify = await verifyPassword();
-    const match = (rows ?? []).find((r) => verify(data.password, r.password_hash));
+    const { verifyVisitorPassword } = await import("./repo/password-hash.server");
+    let match: (typeof rows)[number] | undefined;
+    for (const r of rows ?? []) {
+      if (await verifyVisitorPassword(data.password, r)) { match = r; break; }
+    }
     if (!match) return { ok: false as const };
 
     const s = await visitorSession(data.slug);

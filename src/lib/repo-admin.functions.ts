@@ -6,7 +6,6 @@ import {
   requirePlatformAdminByEmail,
   unlockAdminSession,
   verifyAdminPasswordSafe,
-  hashPasswordSafe,
   clearAdminSession,
   isAdminUnlocked,
 } from "./repo/admin-guard.server";
@@ -56,7 +55,7 @@ export const listVisitors = createServerFn({ method: "GET" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: visitors, error } = await supabaseAdmin
       .from("repository_visitors")
-      .select("id, name, organisation, email, is_active, created_at, plaintext_password")
+      .select("id, name, organisation, email, is_active, created_at")
       .eq("repository_slug", data.slug)
       .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
@@ -69,7 +68,7 @@ export const listAllVisitorsAccess = createServerFn({ method: "GET" }).handler(a
   const [vRes, lRes] = await Promise.all([
     supabaseAdmin
       .from("repository_visitors")
-      .select("id, name, organisation, email, is_active, created_at, repository_slug, plaintext_password")
+      .select("id, name, organisation, email, is_active, created_at, repository_slug")
       .order("created_at", { ascending: false }),
     supabaseAdmin
       .from("repository_access_log")
@@ -95,7 +94,6 @@ export const listAllVisitorsAccess = createServerFn({ method: "GET" }).handler(a
     is_active: v.is_active,
     created_at: v.created_at,
     repository_slug: v.repository_slug,
-    plaintext_password: v.plaintext_password ?? null,
     last_active_at: lastByVisitor.get(v.id) ?? null,
   }));
   return { rows };
@@ -147,8 +145,7 @@ export const createVisitor = createServerFn({ method: "POST" })
       name: data.name,
       organisation: data.organisation,
       email: data.email,
-      password_hash: await hashPasswordSafe(data.password),
-      plaintext_password: data.password,
+      ...(await bcryptPair(data.password)),
     });
     if (error) throw new Error(error.message);
     return { ok: true as const, password: data.password };
@@ -174,7 +171,7 @@ export const resetVisitorPassword = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin
       .from("repository_visitors")
-      .update({ password_hash: await hashPasswordSafe(data.password), plaintext_password: data.password })
+      .update(await bcryptPair(data.password))
       .eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true as const, password: data.password };
@@ -553,3 +550,9 @@ export const updateDocument = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true as const };
   });
+
+async function bcryptPair(password: string) {
+  const { hashVisitorPassword } = await import("./repo/password-hash.server");
+  const h = hashVisitorPassword(password);
+  return { password_hash: h, password_hash_bcrypt: h };
+}
