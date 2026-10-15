@@ -8,7 +8,7 @@ DO $$
 DECLARE
   adm uuid := (SELECT id FROM public.users WHERE is_admin LIMIT 1);
   c1 uuid; c2 uuid; e1 uuid; e2 uuid; s1 uuid; s2 uuid; s3 uuid; r1 uuid; ws uuid; br uuid; s4 uuid;
-  st text; cid uuid; eid uuid; ok boolean; by uuid; outbox_before int; outbox_after int;
+  st text; cid uuid; eid uuid; ok boolean; apv uuid; outbox_before int; outbox_after int;
 BEGIN
   INSERT INTO public.bg_clients(name) VALUES ('Marlowe Motor Company (test)') RETURNING id INTO c1;
   INSERT INTO public.bg_clients(name) VALUES ('Other client (test)') RETURNING id INTO c2;
@@ -72,13 +72,13 @@ BEGIN
   -- Approver recorded (service-side write supplies id; signed-in write uses auth.uid())
   outbox_before := (SELECT count(*) FROM public.hub_outbox);
   UPDATE public.sessions SET checkpoint_d_confirmed = true, checkpoint_d_confirmed_at = now(), checkpoint_d_confirmed_by = adm WHERE id = s1
-    RETURNING checkpoint_d_confirmed_by INTO by;
-  INSERT INTO t_results VALUES ('approver recorded on server confirm', by = adm, NULL);
-  UPDATE public.sessions SET checkpoint_d_confirmed_at = NULL WHERE id = s1 RETURNING checkpoint_d_confirmed_by INTO by;
-  INSERT INTO t_results VALUES ('approver cleared when approval cleared', by IS NULL, NULL);
+    RETURNING checkpoint_d_confirmed_by INTO apv;
+  INSERT INTO t_results VALUES ('approver recorded on server confirm', apv = adm, NULL);
+  UPDATE public.sessions SET checkpoint_d_confirmed_at = NULL WHERE id = s1 RETURNING checkpoint_d_confirmed_by INTO apv;
+  INSERT INTO t_results VALUES ('approver cleared when approval cleared', apv IS NULL, NULL);
   UPDATE public.stimulus_runs SET gate_one_confirmed = true, gate_one_confirmed_at = now(), gate_one_confirmed_by = adm, status = 'gate_one' WHERE id = r1
-    RETURNING gate_one_confirmed_by INTO by;
-  INSERT INTO t_results VALUES ('gate one approver recorded', by = adm, NULL);
+    RETURNING gate_one_confirmed_by INTO apv;
+  INSERT INTO t_results VALUES ('gate one approver recorded', apv = adm, NULL);
   outbox_after := (SELECT count(*) FROM public.hub_outbox);
   INSERT INTO t_results VALUES ('checkpoint still queues its hub event', outbox_after > outbox_before, (outbox_after - outbox_before)::text);
 
