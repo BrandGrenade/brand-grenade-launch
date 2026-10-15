@@ -5,7 +5,7 @@ CREATE TEMP TABLE r(name text, ok boolean);
 INSERT INTO r SELECT 'legacy sessions flagged earlier_versions_kept=false', bool_and(NOT earlier_versions_kept) FROM public.sessions WHERE created_at < '2026-10-15 01:30+00';
 INSERT INTO r SELECT 'legacy workspaces flagged earlier_versions_kept=false', coalesce(bool_and(NOT earlier_versions_kept), true) FROM public.briefing_room_workspaces WHERE created_at < '2026-10-15 01:30+00';
 INSERT INTO r SELECT 'legacy synthesiser runs claims_stored=false', coalesce(bool_and(NOT claims_stored), true) FROM public.synthesiser_runs WHERE created_at < '2026-10-15 01:30+00';
-INSERT INTO r SELECT 'no versions invented for legacy runs', NOT EXISTS (SELECT 1 FROM public.run_output_versions);
+INSERT INTO r SELECT 'no versions invented for legacy runs', NOT EXISTS (SELECT 1 FROM public.run_output_versions v JOIN public.sessions s ON s.id = v.run_id WHERE s.created_at < '2026-10-15 01:30+00' AND v.created_at < '2026-10-15 01:30+00');
 
 -- Test session (copied minimal fields from an existing row's owner).
 INSERT INTO public.sessions (id, brand_name, category, strategic_mode, brief_text, status, current_stage, user_id, stage_1_output, stage_2_output, stage_status)

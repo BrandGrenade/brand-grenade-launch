@@ -1,8 +1,8 @@
 -- F1d tests: structured outputs versioned/locked, run type, diagnostic stop/lock/partial. Self-rolling-back.
 CREATE TEMP TABLE r(name text, ok boolean);
 
-INSERT INTO r SELECT 'old runs stay text only (no back-fill)', NOT EXISTS (SELECT 1 FROM public.sessions WHERE stage_9_structured IS NOT NULL OR stage_10_structured IS NOT NULL OR stage_11_structured IS NOT NULL OR stage_13_structured IS NOT NULL);
-INSERT INTO r SELECT 'existing runs default to full', bool_and(run_mode = 'full' AND diagnostic_status IS NULL) FROM public.sessions;
+INSERT INTO r SELECT 'old runs stay text only (no back-fill)', NOT EXISTS (SELECT 1 FROM public.sessions WHERE stage_9_structured IS NOT NULL OR stage_10_structured IS NOT NULL OR stage_11_structured IS NOT NULL OR stage_13_structured IS NOT NULL) AND created_at < '2026-10-16');
+INSERT INTO r SELECT 'existing runs default to full', bool_and(run_mode = 'full' AND diagnostic_status IS NULL) FROM public.sessions WHERE created_at < '2026-10-16';
 
 DO $$ BEGIN
   BEGIN
