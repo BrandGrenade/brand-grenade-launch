@@ -156,13 +156,14 @@ function SynthesiserRoom() {
                   claimCount,
                 }).then((id) => setRunId(id));
               }}
-              onApply={(fields, claimCount) => {
+              onApply={(fields, claimCount, claims) => {
                 void recordSynthesiserRun({
                   id: runId,
                   brandName: brand.trim(),
                   category: category.trim() || null,
                   status: "applied",
                   claimCount,
+                  claims,
                 });
                 goToLab(fields);
               }}

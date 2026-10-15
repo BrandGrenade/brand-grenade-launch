@@ -54,6 +54,7 @@ export interface ResearchSynthesiserPanelProps {
   onApply: (
     fields: Record<SynthesiserCategory, string>,
     claimCount: number,
+    claims?: SynthesisedClaim[],
   ) => void;
 }
 
@@ -172,7 +173,7 @@ export function ResearchSynthesiserPanel({
 
   function handleApply() {
     if (!result) return;
-    onApply(result.fields, result.stats.totalClaims);
+    onApply(result.fields, result.stats.totalClaims, result.claims);
     setApplied(true);
     toast.success("Applied. Review and edit the six research fields before running.");
   }
