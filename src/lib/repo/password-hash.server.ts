@@ -11,16 +11,11 @@ export function isBcryptHash(stored: string | null | undefined): boolean {
   return !!stored && /^\$2[aby]\$\d{2}\$/.test(stored);
 }
 
-/**
- * Check a password against a visitor row. Prefers the bcrypt hash; falls back
- * to a legacy scrypt hash only when no bcrypt hash exists.
- */
+/** bcrypt only: any non-bcrypt stored value never matches. */
 export async function verifyVisitorPassword(
   password: string,
   row: { password_hash: string; password_hash_bcrypt?: string | null },
 ): Promise<boolean> {
-  const bc = row.password_hash_bcrypt ?? (isBcryptHash(row.password_hash) ? row.password_hash : null);
-  if (bc) return bcrypt.compareSync(password, bc);
-  const { verifyPassword } = await import("./session.server");
-  return verifyPassword(password, row.password_hash);
+  const bc = isBcryptHash(row.password_hash_bcrypt) ? row.password_hash_bcrypt! : isBcryptHash(row.password_hash) ? row.password_hash : null;
+  return bc ? bcrypt.compareSync(password, bc) : false;
 }

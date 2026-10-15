@@ -1,6 +1,5 @@
 import { describe, it, expect } from "vitest";
 import { hashVisitorPassword, isBcryptHash, verifyVisitorPassword } from "./password-hash.server";
-import { hashPassword } from "./session.server";
 
 describe("repository visitor password hashing", () => {
   it("stores a salted bcrypt hash, never the password", () => {
@@ -26,9 +25,8 @@ describe("repository visitor password hashing", () => {
     expect(await verifyVisitorPassword("new-pass", after)).toBe(true);
   });
 
-  it("prefers bcrypt over a legacy scrypt hash", async () => {
-    const row = { password_hash: hashPassword("old-pass"), password_hash_bcrypt: hashVisitorPassword("new-pass") };
-    expect(await verifyVisitorPassword("old-pass", row)).toBe(false);
-    expect(await verifyVisitorPassword("new-pass", row)).toBe(true);
+  it("never accepts a legacy scrypt hash", async () => {
+    const row = { password_hash: "scrypt$00$00", password_hash_bcrypt: null };
+    expect(await verifyVisitorPassword("anything", row)).toBe(false);
   });
 });
