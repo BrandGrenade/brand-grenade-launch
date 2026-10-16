@@ -3,7 +3,7 @@ import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { streamClaude } from "./claude.server";
 import { STAGE_13_SYSTEM_PROMPT, buildStage13UserMessage } from "./stage13-prompt";
-import { splitStructured, structuredInstruction, validateStructured } from "./structured-output";
+import { resolveCurrentProposition, splitStructured, structuredInstruction, validateStructured } from "./structured-output";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertSessionAccess } from "@/lib/auth-helpers.server";
 import { assertUpstreamStageOutput } from "./pipeline-integrity";
@@ -60,7 +60,7 @@ export const runStage13 = createServerFn({ method: "POST" })
     const { data: session, error } = await supabaseAdmin
       .from("sessions")
       .select(
-        "brand_name, category, selected_smp, selected_smp_field_name, stage_2_output, stage_10_output, stage_11_output, stage_12_output, stage_13_output, brand_intelligence, is_preflight_test"
+        "brand_name, category, selected_smp, selected_smp_field_name, stage_2_output, stage_10_output, stage_11_output, stage_12_output, stage_13_output, brand_intelligence, is_preflight_test, brief_type, current_proposition, current_proposition_source, current_proposition_date, brand_positioning"
       )
       .eq("id", data.sessionId)
       .single();
@@ -78,6 +78,8 @@ export const runStage13 = createServerFn({ method: "POST" })
       .update({ current_stage: 13, status: "running", stage_13_error: null })
       .eq("id", data.sessionId);
 
+    // T1: Deal briefs also score the current proposition's credibility (baseline only) in this same call.
+    const current = session.brief_type === "deal" ? resolveCurrentProposition(session) : undefined;
     let output = "";
     let structuredBlock: string | null = null;
     try {
@@ -109,7 +111,7 @@ export const runStage13 = createServerFn({ method: "POST" })
         generate: (attempt, retryNote) =>
           collectClaudeText({
             systemPrompt: STAGE_13_SYSTEM_PROMPT,
-            userMessage: `${userMessage}${structuredInstruction("13")}${retryNote ?? ""}`,
+            userMessage: `${userMessage}${structuredInstruction("13", current)}${retryNote ?? ""}`,
             sessionId: data.sessionId,
             stageLabel: attempt === 1 ? "Stage 13" : `Stage 13 (sanitiser retry ${attempt})`,
             maxTokens: 64000,
@@ -134,7 +136,7 @@ export const runStage13 = createServerFn({ method: "POST" })
         stage_13_error: null,
         stage_status: "complete:13",
         ...(() => {
-          const v = validateStructured("13", structuredBlock);
+          const v = validateStructured("13", structuredBlock, { current });
           return { stage_13_structured: v.structured, stage_13_structured_error: v.error };
         })(),
       } as never)
