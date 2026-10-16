@@ -1,3 +1,4 @@
+import { DealFieldsSchema, linesToList, TRANSACTION_TYPES, DEAL_DEPTHS } from "@/lib/deal-brief";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -111,6 +112,13 @@ function BriefIntake() {
 
   const [submitting, setSubmitting] = useState(false);
   const [runMode, setRunMode] = useState<"full" | "diagnostic">("full");
+  const [briefType, setBriefType] = useState<"campaign" | "deal">("campaign");
+  const [dealTx, setDealTx] = useState("");
+  const [dealTargets, setDealTargets] = useState("");
+  const [dealQuestions, setDealQuestions] = useState("");
+  const [dealCompetitors, setDealCompetitors] = useState("");
+  const [dealDate, setDealDate] = useState("");
+  const [dealDepth, setDealDepth] = useState("");
   const [currentProp, setCurrentProp] = useState("");
   const [currentPropSource, setCurrentPropSource] = useState("");
   const [currentPropDate, setCurrentPropDate] = useState("");
@@ -265,9 +273,18 @@ function BriefIntake() {
   }, [values, files, existingFileNames]);
 
   const objectiveSelected = (values["f2_objective"] ?? "").trim().length > 0;
-  const canSubmitSections = brand.trim().length >= 2 && objectiveSelected;
+  const dealParsed = DealFieldsSchema.safeParse({
+    transactionType: dealTx || undefined,
+    targetBrands: linesToList(dealTargets),
+    decisionQuestions: linesToList(dealQuestions),
+    competitors: linesToList(dealCompetitors),
+    decisionDate: dealDate || undefined,
+    depth: dealDepth || undefined,
+  });
+  const dealValid = briefType !== "deal" || (dealParsed.success && !!currentProp.trim() && !!currentPropSource.trim() && !!currentPropDate);
+  const canSubmitSections = brand.trim().length >= 2 && (briefType === "deal" ? dealValid : objectiveSelected);
 
-  const canSubmitAlt = !!altFile && brand.trim().length >= 2;
+  const canSubmitAlt = !!altFile && brand.trim().length >= 2 && dealValid;
 
   function addFiles(incoming: FileList | File[], target: "support" | "alt") {
     const list = Array.from(incoming).filter((f) => {
@@ -311,6 +328,8 @@ function BriefIntake() {
           briefText,
           briefFields,
           runMode,
+          briefType,
+          deal: briefType === "deal" && dealParsed.success ? dealParsed.data : undefined,
           currentProposition: currentProp.trim() || undefined,
           currentPropositionSource: currentPropSource.trim() || undefined,
           currentPropositionDate: currentPropDate || undefined,
@@ -345,6 +364,8 @@ function BriefIntake() {
           briefText,
           briefFields,
           runMode,
+          briefType,
+          deal: briefType === "deal" && dealParsed.success ? dealParsed.data : undefined,
           currentProposition: currentProp.trim() || undefined,
           currentPropositionSource: currentPropSource.trim() || undefined,
           currentPropositionDate: currentPropDate || undefined,
@@ -563,6 +584,56 @@ function BriefIntake() {
             </div>
           </div>
 
+          {/* BRIEF TYPE (T1) — chosen by hand */}
+          {!isEditMode && (
+            <div className="mt-6 space-y-4 rounded-md border p-4" style={{ borderColor: "var(--color-border)" }}>
+              <fieldset>
+                <legend className="text-body-sm font-semibold">Brief type</legend>
+                <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:gap-6">
+                  <label className="flex items-start gap-2 text-body-sm">
+                    <input type="radio" name="brief_type" checked={briefType === "campaign"} onChange={() => { setBriefType("campaign"); setRunMode("full"); }} />
+                    <span>Campaign — framed by the strategic objective.</span>
+                  </label>
+                  <label className="flex items-start gap-2 text-body-sm">
+                    <input type="radio" name="brief_type" checked={briefType === "deal"} onChange={() => { setBriefType("deal"); setRunMode("diagnostic"); }} />
+                    <span>Deal — diligence or exit, framed by the decision questions. Defaults to a diagnostic run.</span>
+                  </label>
+                </div>
+              </fieldset>
+              {briefType === "deal" && (
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <label className="text-body-sm font-semibold">Transaction type
+                    <select value={dealTx} onChange={(e) => setDealTx(e.target.value)} className="mt-1 w-full rounded-md border bg-background px-3 py-2 text-body-sm" style={{ borderColor: "var(--color-border)" }}>
+                      <option value="">Select…</option>
+                      {TRANSACTION_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+                    </select>
+                  </label>
+                  <label className="text-body-sm font-semibold">Depth
+                    <select value={dealDepth} onChange={(e) => setDealDepth(e.target.value)} className="mt-1 w-full rounded-md border bg-background px-3 py-2 text-body-sm" style={{ borderColor: "var(--color-border)" }}>
+                      <option value="">Select…</option>
+                      {DEAL_DEPTHS.map((t) => <option key={t} value={t}>{t}</option>)}
+                    </select>
+                  </label>
+                  <label className="text-body-sm font-semibold">Target brand or brands (one per line)
+                    <textarea rows={2} value={dealTargets} onChange={(e) => setDealTargets(e.target.value)} className="mt-1 w-full rounded-md border bg-background px-3 py-2 text-body-sm" style={{ borderColor: "var(--color-border)" }} />
+                  </label>
+                  <label className="text-body-sm font-semibold">Named competitors (one per line)
+                    <textarea rows={2} value={dealCompetitors} onChange={(e) => setDealCompetitors(e.target.value)} className="mt-1 w-full rounded-md border bg-background px-3 py-2 text-body-sm" style={{ borderColor: "var(--color-border)" }} />
+                  </label>
+                  <label className="text-body-sm font-semibold sm:col-span-2">Decision questions (one per line)
+                    <textarea rows={4} value={dealQuestions} onChange={(e) => setDealQuestions(e.target.value)} className="mt-1 w-full rounded-md border bg-background px-3 py-2 text-body-sm" style={{ borderColor: "var(--color-border)" }} />
+                  </label>
+                  <label className="text-body-sm font-semibold">Decision date
+                    <input type="date" value={dealDate} onChange={(e) => setDealDate(e.target.value)} className="mt-1 w-full rounded-md border bg-background px-3 py-2 text-body-sm" style={{ borderColor: "var(--color-border)" }} />
+                  </label>
+                  <p className="text-body-sm sm:col-span-2" style={{ color: "var(--color-text-secondary)" }}>
+                    All deal fields are required, including the current proposition below with its source and date.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* RUN TYPE + CURRENT PROPOSITION */}
           {!isEditMode && (
             <div className="mt-6 space-y-4 rounded-md border p-4" style={{ borderColor: "var(--color-border)" }}>
@@ -580,7 +651,7 @@ function BriefIntake() {
                 </div>
               </fieldset>
               <div>
-                <label className="text-body-sm font-semibold" htmlFor="current_prop">Current proposition (optional)</label>
+                <label className="text-body-sm font-semibold" htmlFor="current_prop">Current proposition {briefType === "deal" ? "(required)" : "(optional)"}</label>
                 <p className="text-body-sm" style={{ color: "var(--color-text-secondary)" }}>
                   The line the brand uses today. Scored as a baseline at Stage 10, never selected.
                 </p>

@@ -19,7 +19,7 @@ function makeDb(versions: Record<string, VersionRow[]> = {}): Db {
     { table: "sessions", id: LEGACY, row: { ...linked, link_status: "legacy", id: LEGACY, stage_2_output: "x" } },
     { table: "sessions", id: UNLINKED, row: { ...linked, link_status: "unlinked", id: UNLINKED, stage_2_output: "x" } },
     { table: "sessions", id: OTHER, row: { ...linked, bg_client_id: C2, id: OTHER, stage_2_output: "x" } },
-    { table: "sessions", id: DIAG, row: { ...linked, id: DIAG, status: "complete", run_mode: "diagnostic", diagnostic_status: "partial", locked_at: "2026-10-01", earlier_versions_kept: true,
+    { table: "sessions", id: DIAG, row: { ...linked, id: DIAG, status: "complete", run_mode: "diagnostic", diagnostic_status: "partial", brief_type: "deal", deal_transaction_type: "exit", deal_target_brands: ["Marlowe"], deal_decision_questions: ["Hold or sell?"], deal_competitors: ["Rival"], deal_decision_date: "2026-12-01", deal_depth: "outside-in", current_proposition: "Built to last", current_proposition_source: "Brief", current_proposition_date: "2026-10-01", locked_at: "2026-10-01", earlier_versions_kept: true,
       stage_2_output: "d2", stage_10_output: "t10", stage_10_structured: { current_position: { status: "scored", line: "Built to last", evidence_label: "Client-supplied", source: "Brief", source_date: "2026-10-01", is_current: true, excluded_from_selection: true, composite: 50, code_verdict: "PASS", code_verdict_reason: "", deltas: [], smp: "Built to last", field_name: "", fame: { score: 7, justification: "j" }, truth_strength: { score: 7, justification: "j" }, competitive_impossibility: { score: 7, justification: "j", competitor: null, competitor_claim: null }, brand_permission: { score: 7, justification: "j", evidence: null }, clean_air: { score: 7, justification: "j", occupier: null, occupying_claim: null }, commercial_precedent: { score: 7, justification: "j", precedents: [] } } }, stage_16_agency_output: "should not show" } },
     { table: "sessions", id: LOCKED, row: { ...linked, id: LOCKED, status: "complete", locked_at: "2026-10-01", earlier_versions_kept: true, stage_2_output: "v2 text" } },
     { table: "synthesiser_runs", id: SYNTH, row: { ...linked, id: SYNTH, claims_stored: true } },
@@ -149,6 +149,20 @@ describe("BG access point", () => {
     expect(JSON.stringify(man)).not.toContain("Stage 2 text");
     const sbMan = await call(db, SB, "run_manifest", { client_ref: "hub-c1", run_id: RUN });
     expect((sbMan.content as any).outputs.every((o: any) => o.output_id.startsWith("stage16.") || o.output_id === "stage22_architecture")).toBe(true);
+  });
+
+  it("T1: brief type and deal fields on run_manifest and list_runs", async () => {
+    const man = await call(db, HUB, "run_manifest", { client_ref: "hub-c1", run_id: DIAG });
+    expect((man.content as any).brief_type).toBe("deal");
+    expect((man.content as any).deal).toMatchObject({ transaction_type: "exit", decision_questions: ["Hold or sell?"], competitors: ["Rival"], depth: "outside-in", current_proposition_source: "Brief" });
+    const camp = await call(db, HUB, "run_manifest", { client_ref: "hub-c1", run_id: RUN });
+    expect((camp.content as any).brief_type).toBe("campaign");
+    expect((camp.content as any).deal).toBeNull();
+    const list = await call(db, HUB, "list_runs", { client_ref: "hub-c1" });
+    const runs = (list.content as any).runs;
+    expect(runs.find((r: any) => r.run_id === DIAG).deal.target_brands).toEqual(["Marlowe"]);
+    expect(runs.find((r: any) => r.run_id === RUN).brief_type).toBe("campaign");
+    expect(runs.find((r: any) => r.run_id === SYNTH).brief_type).toBeNull();
   });
 
   it("final prompts only — never initial or working prompts", async () => {

@@ -63,6 +63,15 @@ BEGIN
     RETURNING id, link_status, engagement_id INTO s4, st, eid;
   INSERT INTO t_results VALUES ('pipeline run inherits from saved brief', st = 'linked' AND eid = e1, st);
 
+  -- T1: Deal run opened from the Hub links exactly like a Campaign run
+  INSERT INTO public.sessions(brand_name, category, strategic_mode, brief_text, status, current_stage, user_id, hub_client, hub_job,
+      run_mode, diagnostic_status, brief_type, deal_transaction_type, deal_target_brands, deal_decision_questions, deal_competitors, deal_decision_date, deal_depth,
+      current_proposition, current_proposition_source, current_proposition_date)
+    VALUES ('BG test brand', 'test', 'standard', 'test brief text long enough', 'running', 1, adm, 'test-hub-mmc', 'test-job-1',
+      'diagnostic', 'in_progress', 'deal', 'exit', ARRAY['A'], ARRAY['Q?'], ARRAY['C'], '2026-12-01', 'outside-in', 'Line', 'Brief', '2026-10-01')
+    RETURNING link_status, bg_client_id, engagement_id INTO st, cid, eid;
+  INSERT INTO t_results VALUES ('T1 deal run from hub is linked to client and job', st = 'linked' AND cid = c1 AND eid = e1, st);
+
   -- Existing runs stayed legacy
   SELECT count(*) = 0 INTO ok FROM public.intelligence_sessions WHERE brand_name ILIKE 'nissan%' AND link_status <> 'legacy';
   INSERT INTO t_results VALUES ('Nissan runs stay legacy', ok, NULL);

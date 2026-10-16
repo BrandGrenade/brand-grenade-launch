@@ -245,6 +245,22 @@ async function prepareCall(
     }
   }
 
+  // Deal briefs (T1): append the transaction type and decision questions to
+  // Stages 1–13 as context. Campaign runs are untouched (no block, no change).
+  if (args.sessionId && isDealFramedStage(args.stageNumber) && !effectiveUserMessage.includes(DEAL_CONTEXT_MARKER)) {
+    try {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { data: dealRow } = await supabaseAdmin
+        .from("sessions")
+        .select("brief_type, deal_transaction_type, deal_target_brands, deal_decision_questions")
+        .eq("id", args.sessionId)
+        .maybeSingle();
+      const block = buildDealContext(dealRow as DealRow | null);
+      if (block) effectiveUserMessage = `${effectiveUserMessage}${block}`;
+    } catch (e) {
+      console.warn("[DEAL] context lookup failed", e);
+    }
+  }
 
   const effectiveModel = resolveModel(args.stageNumber, args.model);
 

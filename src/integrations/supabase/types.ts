@@ -1228,6 +1228,7 @@ export type Database = {
           brand_product_truth: string | null
           brand_tone_of_voice: string | null
           brief_text: string
+          brief_type: string
           brief_versions: Json
           category: string
           checkpoint_a_confirmed: boolean
@@ -1260,6 +1261,12 @@ export type Database = {
           current_proposition_date: string | null
           current_proposition_source: string | null
           current_stage: number
+          deal_competitors: string[] | null
+          deal_decision_date: string | null
+          deal_decision_questions: string[] | null
+          deal_depth: string | null
+          deal_target_brands: string[] | null
+          deal_transaction_type: string | null
           dev_mode: boolean
           diagnostic_status: string | null
           doc_agency_sections: Json | null
@@ -1451,6 +1458,7 @@ export type Database = {
           brand_product_truth?: string | null
           brand_tone_of_voice?: string | null
           brief_text: string
+          brief_type?: string
           brief_versions?: Json
           category: string
           checkpoint_a_confirmed?: boolean
@@ -1483,6 +1491,12 @@ export type Database = {
           current_proposition_date?: string | null
           current_proposition_source?: string | null
           current_stage?: number
+          deal_competitors?: string[] | null
+          deal_decision_date?: string | null
+          deal_decision_questions?: string[] | null
+          deal_depth?: string | null
+          deal_target_brands?: string[] | null
+          deal_transaction_type?: string | null
           dev_mode?: boolean
           diagnostic_status?: string | null
           doc_agency_sections?: Json | null
@@ -1674,6 +1688,7 @@ export type Database = {
           brand_product_truth?: string | null
           brand_tone_of_voice?: string | null
           brief_text?: string
+          brief_type?: string
           brief_versions?: Json
           category?: string
           checkpoint_a_confirmed?: boolean
@@ -1706,6 +1721,12 @@ export type Database = {
           current_proposition_date?: string | null
           current_proposition_source?: string | null
           current_stage?: number
+          deal_competitors?: string[] | null
+          deal_decision_date?: string | null
+          deal_decision_questions?: string[] | null
+          deal_depth?: string | null
+          deal_target_brands?: string[] | null
+          deal_transaction_type?: string | null
           dev_mode?: boolean
           diagnostic_status?: string | null
           doc_agency_sections?: Json | null

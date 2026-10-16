@@ -120,6 +120,13 @@
       "when": 1792036117252,
       "tag": "0016_a1_access_tables_revoke",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1792109002114,
+      "tag": "0017_t1_deal_brief_type",
+      "breakpoints": true
     }
   ]
 }

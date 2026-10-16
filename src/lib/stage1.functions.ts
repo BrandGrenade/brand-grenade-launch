@@ -6,6 +6,7 @@ import { STAGE_1_SYSTEM_PROMPT, buildStage1UserMessage } from "./stage1-prompt";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertSessionAccess } from "@/lib/auth-helpers.server";
 import { findBannedWordHits, generateWithBannedWordGate, type OutputGateMode } from "./output-banned-word-gate";
+import { BRIEF_TYPES, DealFieldsSchema } from "./deal-brief";
 
 const BriefFieldsSchema = z
   .object({
@@ -32,6 +33,14 @@ const CreateSessionInput = z.object({
   currentPropositionDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   /** Locked diagnostic run this full run continues from (never altered). */
   continuesDiagnosticId: z.string().uuid().optional(),
+  briefType: z.enum(BRIEF_TYPES).default("campaign"),
+  deal: DealFieldsSchema.optional(),
+}).superRefine((d, ctx) => {
+  if (d.briefType === "deal") {
+    if (!d.deal) ctx.addIssue({ code: "custom", message: "Deal briefs need every deal field." });
+    if (!d.currentProposition?.trim() || !d.currentPropositionSource?.trim() || !d.currentPropositionDate)
+      ctx.addIssue({ code: "custom", message: "Deal briefs need the current proposition with source and date." });
+  } else if (d.deal) ctx.addIssue({ code: "custom", message: "Deal fields are only allowed on Deal briefs." });
 });
 
 export const createSession = createServerFn({ method: "POST" })
@@ -48,25 +57,52 @@ export const createSession = createServerFn({ method: "POST" })
         ]
       : [];
     let inheritedSource: string | null = null;
+    // A full run continuing a Deal diagnostic keeps its brief type and deal fields.
+    let inheritedDeal: Record<string, unknown> | null = null;
     if (data.continuesDiagnosticId) {
       const { assertSessionAccess: check } = await import("@/lib/auth-helpers.server");
       await check(data.continuesDiagnosticId, context.userId);
       const { data: src } = await supabaseAdmin
-        .from("sessions").select("run_mode, bg_source_id").eq("id", data.continuesDiagnosticId).single();
+        .from("sessions")
+        .select("run_mode, bg_source_id, brief_type, deal_transaction_type, deal_target_brands, deal_decision_questions, deal_competitors, deal_decision_date, deal_depth, current_proposition, current_proposition_source, current_proposition_date")
+        .eq("id", data.continuesDiagnosticId).single();
       if ((src as { run_mode?: string } | null)?.run_mode !== "diagnostic") throw new Error("Source run is not a diagnostic run");
       if (data.runMode !== "full") throw new Error("A run continuing a diagnostic must be a full run");
       inheritedSource = (src as { bg_source_id?: string | null }).bg_source_id ?? null;
+      const s = src as Record<string, unknown>;
+      if (s.brief_type === "deal") {
+        inheritedDeal = {
+          brief_type: "deal",
+          deal_transaction_type: s.deal_transaction_type, deal_target_brands: s.deal_target_brands,
+          deal_decision_questions: s.deal_decision_questions, deal_competitors: s.deal_competitors,
+          deal_decision_date: s.deal_decision_date, deal_depth: s.deal_depth,
+          current_proposition: s.current_proposition, current_proposition_source: s.current_proposition_source,
+          current_proposition_date: s.current_proposition_date,
+        };
+      }
     }
     const cp = data.currentProposition?.trim() || null;
     const { data: row, error } = await supabaseAdmin
       .from("sessions")
       .insert({
         run_mode: data.runMode,
+        brief_type: data.briefType,
+        ...(data.briefType === "deal" && data.deal
+          ? {
+              deal_transaction_type: data.deal.transactionType,
+              deal_target_brands: data.deal.targetBrands,
+              deal_decision_questions: data.deal.decisionQuestions,
+              deal_competitors: data.deal.competitors,
+              deal_decision_date: data.deal.decisionDate,
+              deal_depth: data.deal.depth,
+            }
+          : {}),
         diagnostic_status: data.runMode === "diagnostic" ? "in_progress" : null,
         current_proposition: cp,
         current_proposition_source: cp ? data.currentPropositionSource?.trim() || null : null,
         current_proposition_date: cp ? data.currentPropositionDate ?? null : null,
         continues_diagnostic_id: data.continuesDiagnosticId ?? null,
+        ...(inheritedDeal ?? {}),
         brand_name: data.brandName,
         category: data.category,
         brief_text: data.briefText,

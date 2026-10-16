@@ -8,6 +8,10 @@ import { z } from "zod";
 export type Scope = "hub_tools" | "second_brain" | "admin";
 export type ErrorCode = "invalid_request" | "unauthorised" | "forbidden_scope" | "not_found" | "unavailable";
 export type ContentStatus = "structured" | "text_only" | "partial" | "unavailable" | "not_produced";
+import { dealSummary } from "../deal-brief";
+/** T1: brief type + deal fields (Strategy Engine runs only; other Rooms have no brief type). */
+const briefInfo = (r: RunRec) => (r.table === "sessions" ? dealSummary(r.row) : { brief_type: null, deal: null });
+
 export const REQUESTS = ["list_runs", "run_manifest", "get_output", "list_documents", "document_metadata", "provenance"] as const;
 export type RequestName = (typeof REQUESTS)[number];
 
@@ -492,6 +496,7 @@ export async function handleAccess(
         engagement_id: r.row.engagement_id ?? null,
         brand_name: r.row.brand_name ?? null,
         run_mode: r.table === "sessions" ? r.row.run_mode ?? "full" : "full",
+        ...briefInfo(r),
         run_status: runStatus(r),
         version: vc.current,
         locked: !!r.row.locked_at,
@@ -538,7 +543,7 @@ export async function handleAccess(
     }
     return base(c, {
       schema_version: "run_manifest.v1",
-      content: { outputs, current_version: c.vc.current, versions: Array.from({ length: c.vc.current }, (_, i) => i + 1) },
+      content: { ...briefInfo(run), outputs, current_version: c.vc.current, versions: Array.from({ length: c.vc.current }, (_, i) => i + 1) },
       checkpoints: await checkpoints(c),
       documents: key.scope === "admin" ? [] : documents(c, clientRef),
     });
