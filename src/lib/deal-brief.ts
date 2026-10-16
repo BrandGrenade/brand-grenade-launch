@@ -81,3 +81,35 @@ export function dealSummary(row: Record<string, unknown>) {
         : null,
   };
 }
+
+/** createSession payload fields from a saved brief's meta (Campaign when absent or invalid). */
+export function sessionFieldsFromMeta(meta: {
+  briefType?: string;
+  runMode?: string;
+  deal?: unknown;
+  currentProposition?: { line?: string; source?: string; date?: string } | null;
+} | null | undefined): {
+  ok: boolean;
+  fields: {
+    briefType: BriefType;
+    runMode?: "full" | "diagnostic";
+    deal?: DealFields;
+    currentProposition?: string;
+    currentPropositionSource?: string;
+    currentPropositionDate?: string;
+  };
+} {
+  const cp = meta?.currentProposition;
+  const cpFields = cp?.line?.trim()
+    ? {
+        currentProposition: cp.line.trim(),
+        currentPropositionSource: cp.source?.trim() || undefined,
+        currentPropositionDate: cp.date && /^\d{4}-\d{2}-\d{2}$/.test(cp.date) ? cp.date : undefined,
+      }
+    : {};
+  const runMode = meta?.runMode === "diagnostic" || meta?.runMode === "full" ? meta.runMode : undefined;
+  if (meta?.briefType !== "deal") return { ok: true, fields: { briefType: "campaign", runMode, ...cpFields } };
+  const d = DealFieldsSchema.safeParse(meta.deal);
+  const ok = d.success && !!cpFields.currentProposition && !!cpFields.currentPropositionSource && !!cpFields.currentPropositionDate;
+  return { ok, fields: { briefType: "deal", runMode: runMode ?? "diagnostic", deal: d.success ? d.data : undefined, ...cpFields } };
+}

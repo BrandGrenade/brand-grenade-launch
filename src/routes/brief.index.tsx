@@ -1,4 +1,5 @@
-import { DealFieldsSchema, linesToList, TRANSACTION_TYPES, DEAL_DEPTHS } from "@/lib/deal-brief";
+import { DealFieldsSchema, linesToList, TRANSACTION_TYPES, DEAL_DEPTHS, sessionFieldsFromMeta } from "@/lib/deal-brief";
+import { supabase } from "@/integrations/supabase/client";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -25,6 +26,7 @@ import {
   composeBriefText as composeStructuredBriefText,
   briefFieldsFromLegacyText,
   type BriefFields,
+  type BriefMeta,
   type BriefSection as Section,
 } from "@/lib/brief-schema";
 
@@ -124,6 +126,17 @@ function BriefIntake() {
   const [currentPropDate, setCurrentPropDate] = useState("");
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  // Edit mode: deal fields as stored on the run (fixed once Stage 1 has run; kept on resubmit).
+  const [editRun, setEditRun] = useState<Record<string, unknown> | null>(null);
+  useEffect(() => {
+    if (!editSessionId) return;
+    void supabase
+      .from("sessions")
+      .select("brief_type, run_mode, deal_transaction_type, deal_target_brands, deal_decision_questions, deal_competitors, deal_decision_date, deal_depth, current_proposition, current_proposition_source, current_proposition_date")
+      .eq("id", editSessionId)
+      .maybeSingle()
+      .then(({ data }) => setEditRun((data as Record<string, unknown> | null) ?? null));
+  }, [editSessionId]);
 
   /** Populate every field from a structured BriefFields object. */
   function applyBriefFields(b: BriefFields) {
@@ -135,6 +148,20 @@ function BriefIntake() {
     setValues(() => ({ ...b.sections }));
     setExistingFileNames(b.supportingMaterials ?? []);
     setOpenMap(Object.fromEntries(SECTIONS.map((s) => [s.num, true])));
+    const m = b.briefMeta;
+    if (m) {
+      setBriefType(m.briefType === "deal" ? "deal" : "campaign");
+      setRunMode(m.runMode ?? (m.briefType === "deal" ? "diagnostic" : "full"));
+      setDealTx(m.deal?.transactionType ?? "");
+      setDealDepth(m.deal?.depth ?? "");
+      setDealTargets((m.deal?.targetBrands ?? []).join("\n"));
+      setDealQuestions((m.deal?.decisionQuestions ?? []).join("\n"));
+      setDealCompetitors((m.deal?.competitors ?? []).join("\n"));
+      setDealDate(m.deal?.decisionDate ?? "");
+      setCurrentProp(m.currentProposition?.line ?? "");
+      setCurrentPropSource(m.currentProposition?.source ?? "");
+      setCurrentPropDate(m.currentProposition?.date ?? "");
+    }
     if (typeof window !== "undefined") {
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
@@ -162,6 +189,12 @@ function BriefIntake() {
       loadSavedBrief(b);
       return;
     }
+    const meta = sessionFieldsFromMeta(b.brief_fields.briefMeta);
+    if (!meta.ok) {
+      applyBriefFields(b.brief_fields);
+      toast.message("This Deal brief is missing deal fields — complete them and click Submit.");
+      return;
+    }
     setSubmitting(true);
     setSubmitError(null);
     try {
@@ -172,6 +205,7 @@ function BriefIntake() {
           briefText: b.brief_text,
           briefFields: b.brief_fields,
           sourceBriefId: b.brief_id,
+          ...meta.fields,
         },
       });
       navigate({ to: "/pipeline", search: { session: sessionId } });
@@ -181,6 +215,27 @@ function BriefIntake() {
       applyBriefFields(b.brief_fields);
       toast.error("Briefing Room handoff failed — the brief is pre-loaded for manual review.");
     }
+  }
+
+  function currentBriefMeta(): BriefMeta {
+    const cp = currentProp.trim()
+      ? { line: currentProp.trim(), source: currentPropSource.trim(), date: currentPropDate }
+      : null;
+    return {
+      briefType,
+      runMode,
+      deal: briefType === "deal"
+        ? {
+            transactionType: dealTx,
+            targetBrands: linesToList(dealTargets),
+            decisionQuestions: linesToList(dealQuestions),
+            competitors: linesToList(dealCompetitors),
+            decisionDate: dealDate,
+            depth: dealDepth,
+          }
+        : null,
+      currentProposition: cp,
+    };
   }
 
   function currentBriefFields(): BriefFields {
@@ -195,6 +250,7 @@ function BriefIntake() {
         ...existingFileNames,
         ...files.map((f) => f.name),
       ],
+      ...(isEditMode ? {} : { briefMeta: currentBriefMeta() }),
     };
   }
 
@@ -633,6 +689,8 @@ function BriefIntake() {
               )}
             </div>
           )}
+
+          {isEditMode && editRun && <EditRunDealPanel row={editRun} />}
 
           {/* RUN TYPE + CURRENT PROPOSITION */}
           {!isEditMode && (
@@ -1095,5 +1153,46 @@ function BigUploadIcon() {
         strokeLinejoin="round"
       />
     </svg>
+  );
+}
+
+function EditRunDealPanel({ row }: { row: Record<string, unknown> }) {
+  const isDeal = row.brief_type === "deal";
+  const list = (v: unknown) => (Array.isArray(v) ? (v as string[]) : []);
+  const rows: [string, string][] = [
+    ["Brief type", isDeal ? "Deal" : "Campaign"],
+    ["Run type", row.run_mode === "diagnostic" ? "Diagnostic" : "Full"],
+    ...(isDeal
+      ? ([
+          ["Transaction type", String(row.deal_transaction_type ?? "—")],
+          ["Depth", String(row.deal_depth ?? "—")],
+          ["Target brand(s)", list(row.deal_target_brands).join("; ") || "—"],
+          ["Named competitors", list(row.deal_competitors).join("; ") || "—"],
+          ["Decision questions", list(row.deal_decision_questions).map((q, i) => `${i + 1}. ${q}`).join("\n") || "—"],
+          ["Decision date", String(row.deal_decision_date ?? "—")],
+        ] as [string, string][])
+      : []),
+    ...(row.current_proposition
+      ? ([[
+          "Current proposition",
+          `${row.current_proposition}${row.current_proposition_source ? ` — ${row.current_proposition_source}` : ""}${row.current_proposition_date ? `, ${row.current_proposition_date}` : ""}`,
+        ]] as [string, string][])
+      : []),
+  ];
+  return (
+    <div className="mt-6 rounded-md border p-4" style={{ borderColor: "var(--color-border)" }} data-testid="edit-run-deal-panel">
+      <p className="text-body-sm font-semibold">Brief type and deal fields</p>
+      <p className="text-body-sm" style={{ color: "var(--color-text-secondary)" }}>
+        Fixed for this run and kept unchanged when you resubmit.
+      </p>
+      <dl className="mt-3 grid gap-2 sm:grid-cols-[180px_1fr]">
+        {rows.map(([k, v]) => (
+          <div key={k} className="contents">
+            <dt className="text-body-sm" style={{ color: "var(--color-text-secondary)" }}>{k}</dt>
+            <dd className="text-body-sm whitespace-pre-line">{v}</dd>
+          </div>
+        ))}
+      </dl>
+    </div>
   );
 }

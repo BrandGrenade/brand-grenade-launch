@@ -2,7 +2,7 @@
 CREATE TEMP TABLE r(name text, ok boolean);
 
 INSERT INTO r SELECT 'existing runs are Campaign with no deal fields',
-  bool_and(brief_type = 'campaign' AND deal_transaction_type IS NULL AND deal_decision_questions IS NULL) FROM public.sessions;
+  bool_and(brief_type = 'campaign' AND deal_transaction_type IS NULL AND deal_decision_questions IS NULL) FROM public.sessions WHERE created_at < '2026-10-15';
 
 DO $$ BEGIN
   BEGIN
@@ -33,6 +33,10 @@ DO $$ BEGIN
     UPDATE public.sessions SET deal_decision_questions = ARRAY['Other?'] WHERE id = '00000000-0000-0000-0000-0000000071d1';
     INSERT INTO r VALUES ('deal fields immutable after Stage 1', false);
   EXCEPTION WHEN raise_exception THEN INSERT INTO r VALUES ('deal fields immutable after Stage 1', true); END;
+  BEGIN
+    UPDATE public.sessions SET stage_1_output = NULL, brief_text = 'amended', version_reason = 'resubmit' WHERE id = '00000000-0000-0000-0000-0000000071d1';
+    INSERT INTO r SELECT 'resubmit keeps deal fields', (SELECT brief_type = 'deal' AND deal_decision_questions = ARRAY['Can it stretch?'] FROM public.sessions WHERE id = '00000000-0000-0000-0000-0000000071d1');
+  EXCEPTION WHEN OTHERS THEN INSERT INTO r VALUES ('resubmit keeps deal fields: ' || SQLERRM, false); END;
 END $$;
 
 DO $$ BEGIN

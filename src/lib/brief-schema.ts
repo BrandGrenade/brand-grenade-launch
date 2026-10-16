@@ -139,6 +139,22 @@ export type BriefFields = {
   submittedBy: string;
   sections: Record<string, string>;
   supportingMaterials: string[]; // file names
+  /** T1: brief type, deal fields and current proposition kept with a saved brief. */
+  briefMeta?: BriefMeta;
+};
+
+export type BriefMeta = {
+  briefType: "campaign" | "deal";
+  runMode?: "full" | "diagnostic";
+  deal?: {
+    transactionType: string;
+    targetBrands: string[];
+    decisionQuestions: string[];
+    competitors: string[];
+    decisionDate: string;
+    depth: string;
+  } | null;
+  currentProposition?: { line: string; source: string; date: string } | null;
 };
 
 export type BriefVersion = {

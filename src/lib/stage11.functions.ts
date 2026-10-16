@@ -9,7 +9,7 @@ import {
   buildStage11UserMessage,
 } from "./stage11-prompt";
 import { countPropositions } from "./count-helpers";
-import { filterStructuredStream, splitStructured, structuredInstruction, validateStructured } from "./structured-output";
+import { filterStructuredStream, resolveCurrentProposition, splitStructured, structuredInstruction, validateStructured } from "./structured-output";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertSessionAccess } from "@/lib/auth-helpers.server";
 import { assertUpstreamStageOutput } from "./pipeline-integrity";
@@ -24,7 +24,7 @@ export const runStage11 = createServerFn({ method: "POST" })
     await assertUpstreamStageOutput(data.sessionId, 11);
     const { data: session, error } = await supabaseAdmin
       .from("sessions")
-      .select("brand_name, category, stage_2_output, stage_8_output, stage_10_output, stage_11_output, is_preflight_test, stage_10_structured")
+      .select("brand_name, category, stage_2_output, stage_8_output, stage_10_output, stage_11_output, is_preflight_test, stage_10_structured, brief_type, current_proposition, current_proposition_source, current_proposition_date, brand_positioning")
       .eq("id", data.sessionId)
       .single();
     if (error || !session) throw new Error(`Session not found: ${error?.message ?? "no row"}`);
@@ -52,13 +52,15 @@ export const runStage11 = createServerFn({ method: "POST" })
     });
 
     const s10 = (session as { stage_10_structured?: { scores?: { smp: string; code_verdict?: string }[] } | null }).stage_10_structured;
+    // T1: Deal briefs also test the current proposition (baseline only) in this same call.
+    const current = (session as { brief_type?: string | null }).brief_type === "deal" ? resolveCurrentProposition(session) : undefined;
     const sink = { raw: "" };
     let output = "";
     for await (const delta of withStreamSafety(
       { sessionId: data.sessionId, stageLabel: "Stage 11", outputColumn: "stage_11_output", errorColumn: "stage_11_error" },
       filterStructuredStream(streamClaude({
         systemPrompt: STAGE_11_SYSTEM_PROMPT,
-        userMessage: userMessage + structuredInstruction("11"),
+        userMessage: userMessage + structuredInstruction("11", current),
         maxTokens: 64000,
         sessionId: data.sessionId,
         stageLabel: "Stage 11",
@@ -84,6 +86,7 @@ export const runStage11 = createServerFn({ method: "POST" })
           const v = validateStructured("11", splitStructured(sink.raw).block, {
             expectedCount: s10?.scores?.length ?? propositionCount,
             stage10Eliminated: (s10?.scores ?? []).filter((r) => r.code_verdict === "ELIMINATED").map((r) => r.smp),
+            current,
           });
           return { stage_11_structured: v.structured, stage_11_structured_error: v.error };
         })(),
