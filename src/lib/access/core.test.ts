@@ -220,6 +220,13 @@ describe("BG access point", () => {
     expect(bad.ok).toBe(false);
   });
 
+  it("T1: stage11/13 current position are not_produced when not scored", async () => {
+    for (const id of ["stage11_current_position", "stage13_current_position"]) {
+      const r = await g(DIAG, id);
+      expect(r.content_status).toBe("not_produced");
+    }
+  });
+
   it("invalid requests", async () => {
     expect((await err(call(db, HUB, "delete_run", { client_ref: "hub-c1" }))).code).toBe("invalid_request");
     expect((await err(call(db, HUB, "get_output", { client_ref: "hub-c1", run_id: RUN }))).code).toBe("invalid_request");
