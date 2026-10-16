@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
-  STRUCTURED_OPEN, STRUCTURED_CLOSE, validateStructured, structuredInstruction,
+  validateStructured, structuredInstruction,
   checkStageCurrentPosition, resolveCurrentProposition,
 } from "./structured-output";
 import { sessionFieldsFromMeta } from "./deal-brief";
@@ -22,7 +22,7 @@ const s13 = (cp: unknown) => ({
   ownership: { own: "o", behave: "b", sustain: "s" }, adjustments: [], section5: { mode: "GUARDRAILS", items: [] }, commitments: ["c"],
   ...(cp === undefined ? {} : { current_position: cp }),
 });
-const wrap = (o: unknown) => `${STRUCTURED_OPEN}\n${JSON.stringify(o)}\n${STRUCTURED_CLOSE}`;
+const wrap = (o: unknown) => JSON.stringify(o);
 const client = resolveCurrentProposition({ current_proposition: "Built to last", current_proposition_source: "Brief", current_proposition_date: "2026-10-01" });
 const stored = resolveCurrentProposition({ brand_positioning: "Drive the future" });
 const none = resolveCurrentProposition({});
