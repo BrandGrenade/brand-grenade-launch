@@ -26,6 +26,7 @@ import {
   composeBriefText as composeStructuredBriefText,
   briefFieldsFromLegacyText,
   type BriefFields,
+  type BriefMeta,
   type BriefSection as Section,
 } from "@/lib/brief-schema";
 
@@ -125,6 +126,17 @@ function BriefIntake() {
   const [currentPropDate, setCurrentPropDate] = useState("");
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  // Edit mode: deal fields as stored on the run (fixed once Stage 1 has run; kept on resubmit).
+  const [editRun, setEditRun] = useState<Record<string, unknown> | null>(null);
+  useEffect(() => {
+    if (!editSessionId) return;
+    void supabase
+      .from("sessions")
+      .select("brief_type, run_mode, deal_transaction_type, deal_target_brands, deal_decision_questions, deal_competitors, deal_decision_date, deal_depth, current_proposition, current_proposition_source, current_proposition_date")
+      .eq("id", editSessionId)
+      .maybeSingle()
+      .then(({ data }) => setEditRun((data as Record<string, unknown> | null) ?? null));
+  }, [editSessionId]);
 
   /** Populate every field from a structured BriefFields object. */
   function applyBriefFields(b: BriefFields) {
@@ -678,6 +690,8 @@ function BriefIntake() {
             </div>
           )}
 
+          {isEditMode && editRun && <EditRunDealPanel row={editRun} />}
+
           {/* RUN TYPE + CURRENT PROPOSITION */}
           {!isEditMode && (
             <div className="mt-6 space-y-4 rounded-md border p-4" style={{ borderColor: "var(--color-border)" }}>
@@ -1139,5 +1153,46 @@ function BigUploadIcon() {
         strokeLinejoin="round"
       />
     </svg>
+  );
+}
+
+function EditRunDealPanel({ row }: { row: Record<string, unknown> }) {
+  const isDeal = row.brief_type === "deal";
+  const list = (v: unknown) => (Array.isArray(v) ? (v as string[]) : []);
+  const rows: [string, string][] = [
+    ["Brief type", isDeal ? "Deal" : "Campaign"],
+    ["Run type", row.run_mode === "diagnostic" ? "Diagnostic" : "Full"],
+    ...(isDeal
+      ? ([
+          ["Transaction type", String(row.deal_transaction_type ?? "—")],
+          ["Depth", String(row.deal_depth ?? "—")],
+          ["Target brand(s)", list(row.deal_target_brands).join("; ") || "—"],
+          ["Named competitors", list(row.deal_competitors).join("; ") || "—"],
+          ["Decision questions", list(row.deal_decision_questions).map((q, i) => `${i + 1}. ${q}`).join("\n") || "—"],
+          ["Decision date", String(row.deal_decision_date ?? "—")],
+        ] as [string, string][])
+      : []),
+    ...(row.current_proposition
+      ? ([[
+          "Current proposition",
+          `${row.current_proposition}${row.current_proposition_source ? ` — ${row.current_proposition_source}` : ""}${row.current_proposition_date ? `, ${row.current_proposition_date}` : ""}`,
+        ]] as [string, string][])
+      : []),
+  ];
+  return (
+    <div className="mt-6 rounded-md border p-4" style={{ borderColor: "var(--color-border)" }} data-testid="edit-run-deal-panel">
+      <p className="text-body-sm font-semibold">Brief type and deal fields</p>
+      <p className="text-body-sm" style={{ color: "var(--color-text-secondary)" }}>
+        Fixed for this run and kept unchanged when you resubmit.
+      </p>
+      <dl className="mt-3 grid gap-2 sm:grid-cols-[180px_1fr]">
+        {rows.map(([k, v]) => (
+          <div key={k} className="contents">
+            <dt className="text-body-sm" style={{ color: "var(--color-text-secondary)" }}>{k}</dt>
+            <dd className="text-body-sm whitespace-pre-line">{v}</dd>
+          </div>
+        ))}
+      </dl>
+    </div>
   );
 }
