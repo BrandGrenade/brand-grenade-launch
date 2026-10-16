@@ -1,4 +1,5 @@
-import { DealFieldsSchema, linesToList, TRANSACTION_TYPES, DEAL_DEPTHS } from "@/lib/deal-brief";
+import { DealFieldsSchema, linesToList, TRANSACTION_TYPES, DEAL_DEPTHS, sessionFieldsFromMeta } from "@/lib/deal-brief";
+import { supabase } from "@/integrations/supabase/client";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -135,6 +136,20 @@ function BriefIntake() {
     setValues(() => ({ ...b.sections }));
     setExistingFileNames(b.supportingMaterials ?? []);
     setOpenMap(Object.fromEntries(SECTIONS.map((s) => [s.num, true])));
+    const m = b.briefMeta;
+    if (m) {
+      setBriefType(m.briefType === "deal" ? "deal" : "campaign");
+      setRunMode(m.runMode ?? (m.briefType === "deal" ? "diagnostic" : "full"));
+      setDealTx(m.deal?.transactionType ?? "");
+      setDealDepth(m.deal?.depth ?? "");
+      setDealTargets((m.deal?.targetBrands ?? []).join("\n"));
+      setDealQuestions((m.deal?.decisionQuestions ?? []).join("\n"));
+      setDealCompetitors((m.deal?.competitors ?? []).join("\n"));
+      setDealDate(m.deal?.decisionDate ?? "");
+      setCurrentProp(m.currentProposition?.line ?? "");
+      setCurrentPropSource(m.currentProposition?.source ?? "");
+      setCurrentPropDate(m.currentProposition?.date ?? "");
+    }
     if (typeof window !== "undefined") {
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
@@ -162,6 +177,12 @@ function BriefIntake() {
       loadSavedBrief(b);
       return;
     }
+    const meta = sessionFieldsFromMeta(b.brief_fields.briefMeta);
+    if (!meta.ok) {
+      applyBriefFields(b.brief_fields);
+      toast.message("This Deal brief is missing deal fields — complete them and click Submit.");
+      return;
+    }
     setSubmitting(true);
     setSubmitError(null);
     try {
@@ -172,6 +193,7 @@ function BriefIntake() {
           briefText: b.brief_text,
           briefFields: b.brief_fields,
           sourceBriefId: b.brief_id,
+          ...meta.fields,
         },
       });
       navigate({ to: "/pipeline", search: { session: sessionId } });
@@ -181,6 +203,27 @@ function BriefIntake() {
       applyBriefFields(b.brief_fields);
       toast.error("Briefing Room handoff failed — the brief is pre-loaded for manual review.");
     }
+  }
+
+  function currentBriefMeta(): BriefMeta {
+    const cp = currentProp.trim()
+      ? { line: currentProp.trim(), source: currentPropSource.trim(), date: currentPropDate }
+      : null;
+    return {
+      briefType,
+      runMode,
+      deal: briefType === "deal"
+        ? {
+            transactionType: dealTx,
+            targetBrands: linesToList(dealTargets),
+            decisionQuestions: linesToList(dealQuestions),
+            competitors: linesToList(dealCompetitors),
+            decisionDate: dealDate,
+            depth: dealDepth,
+          }
+        : null,
+      currentProposition: cp,
+    };
   }
 
   function currentBriefFields(): BriefFields {
@@ -195,6 +238,7 @@ function BriefIntake() {
         ...existingFileNames,
         ...files.map((f) => f.name),
       ],
+      ...(isEditMode ? {} : { briefMeta: currentBriefMeta() }),
     };
   }
 
