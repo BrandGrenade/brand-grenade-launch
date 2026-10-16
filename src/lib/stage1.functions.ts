@@ -57,14 +57,29 @@ export const createSession = createServerFn({ method: "POST" })
         ]
       : [];
     let inheritedSource: string | null = null;
+    // A full run continuing a Deal diagnostic keeps its brief type and deal fields.
+    let inheritedDeal: Record<string, unknown> | null = null;
     if (data.continuesDiagnosticId) {
       const { assertSessionAccess: check } = await import("@/lib/auth-helpers.server");
       await check(data.continuesDiagnosticId, context.userId);
       const { data: src } = await supabaseAdmin
-        .from("sessions").select("run_mode, bg_source_id").eq("id", data.continuesDiagnosticId).single();
+        .from("sessions")
+        .select("run_mode, bg_source_id, brief_type, deal_transaction_type, deal_target_brands, deal_decision_questions, deal_competitors, deal_decision_date, deal_depth, current_proposition, current_proposition_source, current_proposition_date")
+        .eq("id", data.continuesDiagnosticId).single();
       if ((src as { run_mode?: string } | null)?.run_mode !== "diagnostic") throw new Error("Source run is not a diagnostic run");
       if (data.runMode !== "full") throw new Error("A run continuing a diagnostic must be a full run");
       inheritedSource = (src as { bg_source_id?: string | null }).bg_source_id ?? null;
+      const s = src as Record<string, unknown>;
+      if (s.brief_type === "deal") {
+        inheritedDeal = {
+          brief_type: "deal",
+          deal_transaction_type: s.deal_transaction_type, deal_target_brands: s.deal_target_brands,
+          deal_decision_questions: s.deal_decision_questions, deal_competitors: s.deal_competitors,
+          deal_decision_date: s.deal_decision_date, deal_depth: s.deal_depth,
+          current_proposition: s.current_proposition, current_proposition_source: s.current_proposition_source,
+          current_proposition_date: s.current_proposition_date,
+        };
+      }
     }
     const cp = data.currentProposition?.trim() || null;
     const { data: row, error } = await supabaseAdmin
