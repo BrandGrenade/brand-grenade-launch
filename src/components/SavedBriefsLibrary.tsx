@@ -156,6 +156,11 @@ export function SavedBriefsSection({
                 <p className="text-body-sm mt-1 text-text-secondary">
                   {b.category || "—"}
                 </p>
+                {b.brief_fields?.briefMeta?.briefType === "deal" && (
+                  <p className="text-body-sm mt-1 text-text-secondary" data-testid="saved-brief-deal">
+                    Deal · {b.brief_fields.briefMeta.deal?.transactionType || "—"} · {(b.brief_fields.briefMeta.deal?.decisionQuestions ?? []).length} decision question(s)
+                  </p>
+                )}
                 <p className="text-body-sm mt-3" style={{ color: "var(--color-text-tertiary)" }}>
                   Saved {fmt(b.created_at)}
                 </p>
@@ -257,7 +262,7 @@ export function SavedBriefsPicker({
                   <div className="min-w-0 flex-1">
                     <p className="text-body text-text-primary truncate">
                       {b.brand_name}
-                      <span className="text-text-tertiary"> · {b.category || "—"}</span>
+                      <span className="text-text-tertiary"> · {b.category || "—"}{b.brief_fields?.briefMeta?.briefType === "deal" ? " · Deal" : ""}</span>
                     </p>
                     <p className="text-body-sm text-text-tertiary">Saved {fmt(b.created_at)}</p>
                   </div>

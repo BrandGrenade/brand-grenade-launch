@@ -106,8 +106,7 @@ export const Stage10Schema = z.object({
 const result = z.enum(["HOLDS", "WOBBLES", "CRACKS"]);
 const test = z.object({ result, rationale: str });
 const STAGE11_VERDICTS = ["VALIDATED", "VALIDATED — EXPOSED", "VALIDATED WITH STRATEGIC NOTE", "REWRITTEN", "ELIMINATED"] as const;
-export const Stage11Schema = z.object({
-  blocks: z.array(z.object({
+const Stage11Block = z.object({
     smp: str, field_name: z.string(), iconic_tier: z.boolean(),
     tests: z.object({
       T1: test, T2: test, T3: test, T4: test,
@@ -121,7 +120,10 @@ export const Stage11Schema = z.object({
     exposure_note: z.string().nullable(), strategic_note: z.string().nullable(),
     rewrite: z.object({ line: str, reason: str }).nullable(),
     iconic_final: z.enum(["CONFIRMED", "DOWNGRADED", "N/A"]),
-  })),
+});
+export const Stage11Schema = z.object({
+  blocks: z.array(Stage11Block),
+  current_position: Stage11Block.nullable().optional(),
   surviving_set: z.array(z.string()),
   exposed_count: z.number().int().min(0),
   divergence_preserved: z.boolean(),
@@ -143,6 +145,10 @@ export const Stage13Schema = z.object({
     items: z.array(z.object({ text: str, dimension: z.string().nullable(), horizon: z.string().nullable() })),
   }),
   commitments: z.array(str),
+  current_position: z.object({
+    credibility: z.object(Object.fromEntries(CRED.map((k) => [k, dim])) as Record<(typeof CRED)[number], typeof dim>),
+    most_vulnerable: z.enum(CRED),
+  }).nullable().optional(),
 });
 
 // ── Code checks ──────────────────────────────────────────────────────────
@@ -182,6 +188,26 @@ function enrichRow(r: Stage10Row, preflight: boolean) {
   };
   const v = evaluateStage10Verdict(dims);
   return { ...r, composite: computeWeightedComposite(dims), code_verdict: preflight ? "PASS" : v.verdict, code_verdict_reason: preflight ? "" : v.reason };
+}
+
+/** Shared T1 current-position envelope for Stages 11 and 13 (same label rules as Stage 10). */
+function currentEnvelope(stage: "11" | "13", cur: CurrentPropositionSource, payload: Record<string, unknown> | null | undefined): Record<string, unknown> {
+  if (cur.kind === "none") {
+    return { status: "not_scored", is_current: true, excluded_from_selection: true, reason: "No current proposition supplied on the brief and no stored brand positioning — not scored." };
+  }
+  if (!payload) {
+    return { status: "not_scored", is_current: true, excluded_from_selection: true, line: cur.line, reason: `Current proposition was supplied but the Stage ${stage} call returned no ${stage === "11" ? "test block" : "credibility scores"} for it.` };
+  }
+  return {
+    status: "scored",
+    line: cur.line,
+    evidence_label: cur.kind === "client" ? "Client-supplied" : "Unverified",
+    source: cur.source,
+    source_date: cur.kind === "client" ? cur.date : null,
+    is_current: true,
+    excluded_from_selection: true,
+    ...payload,
+  };
 }
 
 const DIM_KEYS = ["fame", "truth_strength", "competitive_impossibility", "brand_permission", "clean_air", "commercial_precedent"] as const;
@@ -273,7 +299,16 @@ export function validateStructured(
       }
       if (b.fatal.length > 0 && b.verdict !== "ELIMINATED" && b.verdict !== "REWRITTEN") problems.push(`${b.smp}: fatal tests listed but verdict ${b.verdict}`);
     }
-    return problems.length ? { structured: null, error: problems.join("; ") } : { structured: d, error: null };
+    if (problems.length) return { structured: null, error: problems.join("; ") };
+    const { current_position: cp11, ...rest11 } = d;
+    if (!ctx.current) return { structured: rest11, error: null };
+    if (ctx.current.kind !== "none" && cp11) {
+      const line = ctx.current.line.toLowerCase().trim();
+      if (d.surviving_set.some((x) => x.toLowerCase().trim() === line)) {
+        return { structured: null, error: "current proposition appears in surviving_set; it must be excluded from selection" };
+      }
+    }
+    return { structured: { ...rest11, current_position: currentEnvelope("11", ctx.current, cp11 ?? null) }, error: null };
   }
   const p = Stage13Schema.safeParse(json);
   if (!p.success) return { structured: null, error: zodMsg(p.error) };
@@ -284,7 +319,10 @@ export function validateStructured(
     const want = d.forcing_test.verdict === "FORCING PROPOSITION" ? "OPERATIONAL_REQUIREMENTS" : "GUARDRAILS";
     if (d.section5.mode !== want) problems.push(`section5 mode ${d.section5.mode} does not match forcing verdict`);
   } else if (d.section5.mode !== "GUARDRAILS") problems.push("section5 must be GUARDRAILS when the forcing test is not triggered");
-  return problems.length ? { structured: null, error: problems.join("; ") } : { structured: d, error: null };
+  if (problems.length) return { structured: null, error: problems.join("; ") };
+  const { current_position: cp13, ...rest13 } = d;
+  if (!ctx.current) return { structured: rest13, error: null };
+  return { structured: { ...rest13, current_position: currentEnvelope("13", ctx.current, cp13 ?? null) }, error: null };
 }
 
 // ── Prompt addenda (appended to the user message; text answer unchanged) ──
@@ -301,6 +339,16 @@ export function structuredInstruction(stage: StructuredStage, current?: CurrentP
     extra = current && current.kind !== "none"
       ? `\nCURRENT POSITION (baseline only): also score the brand's CURRENT proposition "${current.line}" with the identical rubric, anchors and evidence rules, and put it ONLY in "current_position" of the data block. Do NOT mention, score or rank it anywhere in the written answer; it is not a candidate and is excluded from selection.`
       : `\nSet "current_position" to null.`;
+  }
+  if (stage === "11" && current) {
+    extra = current.kind !== "none"
+      ? `\nCURRENT POSITION (baseline only): also run the brand's CURRENT proposition "${current.line}" through all eight tests (T1–T8) with the identical rules, and put that one block ONLY in "current_position" of the data block (same shape as a "blocks" entry). Do NOT mention or test it anywhere in the written answer, do NOT add it to "blocks" or "surviving_set"; it is not a candidate and is excluded from selection.`
+      : `\nAdd "current_position": null to the data block.`;
+  }
+  if (stage === "13" && current) {
+    extra = current.kind !== "none"
+      ? `\nCURRENT POSITION (baseline only): also score the brand's CURRENT proposition "${current.line}" on the same six credibility dimensions with the identical anchors, and add to the data block "current_position":{"credibility":{"product_truth_alignment":{"score":1,"justification":""},"audience_permission":{},"tonal_compatibility":{},"behavioural_capacity":{},"cultural_authority":{},"historical_consistency":{}},"most_vulnerable":"<dimension>"}. Do NOT mention or score it anywhere in the written answer; it is not a candidate, is excluded from selection, and does not change the verdict.`
+      : `\nAdd "current_position": null to the data block.`;
   }
   return `
 
@@ -328,5 +376,22 @@ export const Stage10CurrentPositionSchema = Stage10Row.extend({
 });
 export function checkCurrentPosition(v: unknown): { ok: true } | { ok: false; reason: string } {
   const r = Stage10CurrentPositionSchema.safeParse(v);
+  return r.success ? { ok: true } : { ok: false, reason: zodMsg(r.error) };
+}
+
+// ── Stage 11 / 13 current position (T1 stored shape) ─────────────────────
+const CurrentBase = {
+  status: z.literal("scored"),
+  line: str,
+  evidence_label: z.enum(["Client-supplied", "Unverified"]),
+  source: z.string().nullable(),
+  source_date: z.string().nullable(),
+  is_current: z.literal(true),
+  excluded_from_selection: z.literal(true),
+};
+export const Stage11CurrentPositionSchema = Stage11Block.extend(CurrentBase);
+export const Stage13CurrentPositionSchema = Stage13Schema.shape.current_position.unwrap().unwrap().extend(CurrentBase);
+export function checkStageCurrentPosition(stage: "11" | "13", v: unknown): { ok: true } | { ok: false; reason: string } {
+  const r = (stage === "11" ? Stage11CurrentPositionSchema : Stage13CurrentPositionSchema).safeParse(v);
   return r.success ? { ok: true } : { ok: false, reason: zodMsg(r.error) };
 }
