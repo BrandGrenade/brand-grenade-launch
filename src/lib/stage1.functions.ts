@@ -102,6 +102,7 @@ export const createSession = createServerFn({ method: "POST" })
         current_proposition_source: cp ? data.currentPropositionSource?.trim() || null : null,
         current_proposition_date: cp ? data.currentPropositionDate ?? null : null,
         continues_diagnostic_id: data.continuesDiagnosticId ?? null,
+        ...(inheritedDeal ?? {}),
         brand_name: data.brandName,
         category: data.category,
         brief_text: data.briefText,
