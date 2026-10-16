@@ -5,6 +5,7 @@
 //   to the sessions.retry_status column (consumed by the pipeline right panel).
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { resolveModel, effortConfig, MIGRATION_ACTIVE, type Effort } from "./model-policy";
+import { isDealFramedStage, DEAL_CONTEXT_MARKER, buildDealContext, type DealRow } from "./deal-brief";
 
 const ANTHROPIC_URL = "https://api.anthropic.com/v1/messages";
 // Per-chunk inactivity budget. The previous flat 180s wall-clock abort would
