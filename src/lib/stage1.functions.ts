@@ -6,6 +6,7 @@ import { STAGE_1_SYSTEM_PROMPT, buildStage1UserMessage } from "./stage1-prompt";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertSessionAccess } from "@/lib/auth-helpers.server";
 import { findBannedWordHits, generateWithBannedWordGate, type OutputGateMode } from "./output-banned-word-gate";
+import { BRIEF_TYPES, DealFieldsSchema } from "./deal-brief";
 
 const BriefFieldsSchema = z
   .object({
@@ -32,6 +33,14 @@ const CreateSessionInput = z.object({
   currentPropositionDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   /** Locked diagnostic run this full run continues from (never altered). */
   continuesDiagnosticId: z.string().uuid().optional(),
+  briefType: z.enum(BRIEF_TYPES).default("campaign"),
+  deal: DealFieldsSchema.optional(),
+}).superRefine((d, ctx) => {
+  if (d.briefType === "deal") {
+    if (!d.deal) ctx.addIssue({ code: "custom", message: "Deal briefs need every deal field." });
+    if (!d.currentProposition?.trim() || !d.currentPropositionSource?.trim() || !d.currentPropositionDate)
+      ctx.addIssue({ code: "custom", message: "Deal briefs need the current proposition with source and date." });
+  } else if (d.deal) ctx.addIssue({ code: "custom", message: "Deal fields are only allowed on Deal briefs." });
 });
 
 export const createSession = createServerFn({ method: "POST" })
@@ -62,6 +71,17 @@ export const createSession = createServerFn({ method: "POST" })
       .from("sessions")
       .insert({
         run_mode: data.runMode,
+        brief_type: data.briefType,
+        ...(data.briefType === "deal" && data.deal
+          ? {
+              deal_transaction_type: data.deal.transactionType,
+              deal_target_brands: data.deal.targetBrands,
+              deal_decision_questions: data.deal.decisionQuestions,
+              deal_competitors: data.deal.competitors,
+              deal_decision_date: data.deal.decisionDate,
+              deal_depth: data.deal.depth,
+            }
+          : {}),
         diagnostic_status: data.runMode === "diagnostic" ? "in_progress" : null,
         current_proposition: cp,
         current_proposition_source: cp ? data.currentPropositionSource?.trim() || null : null,
