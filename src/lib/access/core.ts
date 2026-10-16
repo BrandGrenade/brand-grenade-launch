@@ -1,4 +1,4 @@
-import { checkCurrentPosition } from "@/lib/structured-output";
+import { checkCurrentPosition, checkStageCurrentPosition } from "@/lib/structured-output";
 import { parseStage22Architecture, parseStage22Assets } from "./stage22-parse";
 // BG access point — pure request logic. Read-only: the Db interface exposes
 // reads only, so nothing in here can write to BG data. The server adapter
@@ -62,8 +62,8 @@ export const OUTPUTS_BY_TABLE: Record<RunTable, string[]> = {
   briefing_room_workspaces: ["room02.steps"],
   saved_briefs: ["room02.saved_brief"],
   sessions: [
-    "stage02", "stage04b", "stage09", "stage09_loc", "stage10", "stage10_current_position", "stage11",
-    "stage12_propositions", "stage13", ...STAGE16_FORMATS.map((f) => `stage16.${f}`),
+    "stage02", "stage04b", "stage09", "stage09_loc", "stage10", "stage10_current_position", "stage11", "stage11_current_position",
+    "stage12_propositions", "stage13", "stage13_current_position", ...STAGE16_FORMATS.map((f) => `stage16.${f}`),
     "stage21_channels", "stage22_architecture", "stage22_assets",
   ],
   stimulus_runs: ["room04.lenses", "room04.gates", "room04.final_prompts"],
@@ -260,6 +260,25 @@ async function buildOutput(outputId: string, c: Ctx): Promise<Built> {
         evidence: [{ claim: String(cp.line ?? ""), ...lab }],
         fields,
       };
+    }
+    case "stage11_current_position":
+    case "stage13_current_position": {
+      const n = outputId === "stage11_current_position" ? "11" : "13";
+      const sv = `${outputId}.v1`;
+      const fields = [`stage_${n}_structured`];
+      const s = c.get(`stage_${n}_structured`) as Record<string, unknown> | null;
+      const cp = s?.current_position as Record<string, unknown> | undefined;
+      if (!cp) return { content_status: "not_produced", schema_version: sv, content: null, evidence: [], fields };
+      if (cp.status !== "scored") {
+        return { content_status: "not_produced", schema_version: sv, content: { status: cp.status ?? null, reason: cp.reason ?? null }, evidence: [], fields };
+      }
+      const chk = checkStageCurrentPosition(n, cp);
+      if (!chk.ok) {
+        return { content_status: "partial", schema_version: sv, content: { reason: `Failed T1 current-position schema: ${chk.reason}`, record: cp }, evidence: [], fields };
+      }
+      const disp = typeof cp.evidence_label === "string" ? cp.evidence_label : null;
+      const lab = disp && DISPLAY_TO_BG[disp] ? mapLabel(DISPLAY_TO_BG[disp]) : { bg_label: disp, label: "Missing" };
+      return { content_status: "structured", schema_version: sv, content: cp, evidence: [{ claim: String(cp.line ?? ""), ...lab }], fields };
     }
     case "room00.claims": {
       const fields = ["synthesiser_claims"];
