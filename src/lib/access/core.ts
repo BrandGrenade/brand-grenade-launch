@@ -70,7 +70,7 @@ export const OUTPUTS_BY_TABLE: Record<RunTable, string[]> = {
 };
 const ALL_OUTPUTS = new Set(Object.values(OUTPUTS_BY_TABLE).flat());
 /** Creative and activation outputs — never part of a diagnostic run. */
-const NOT_IN_DIAGNOSTIC = (id: string) => id.startsWith("stage16.") || id.startsWith("stage21") || id.startsWith("stage22");
+const NOT_IN_DIAGNOSTIC = (id: string) => (id.startsWith("stage16.") && id !== "stage16.valuation") || id.startsWith("stage21") || id.startsWith("stage22");
 
 const SECOND_BRAIN = (id: string) =>
   id === "room02.saved_brief" || id.startsWith("stage16.") || id === "room04.final_prompts" || id === "stage22_architecture";
@@ -403,8 +403,9 @@ function fetchRoute(clientRef: string, runId: string, v: number, outputId: strin
   return { method: "POST", path: ACCESS_ROUTE, body: { request: "get_output", params: { client_ref: clientRef, run_id: runId, version: v, output_id: outputId } } };
 }
 function documents(c: Ctx, clientRef: string) {
-  if (c.run.table !== "sessions" || isDiagnostic(c.run)) return [];
-  return STAGE16_FORMATS.filter((f) => text(c.get(`stage_16_${f}_output`))).map((f) => ({
+  if (c.run.table !== "sessions") return [];
+  const formats = isDiagnostic(c.run) ? ["valuation"] : STAGE16_FORMATS;
+  return formats.filter((f) => text(c.get(`stage_16_${f}_output`))).map((f) => ({
     document_id: documentId(c.run.id, f, c.v),
     output_id: `stage16.${f}`,
     format: f,

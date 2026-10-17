@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { AccessError, handleAccess, mapLabel, type Db, type Key, type LogEntry, type RunRec, type VersionRow } from "./core";
+import { diagnosticFixture } from "../diagnostic-valuation.fixture";
+import { buildDiagnosticValuation } from "../diagnostic-valuation";
 
 const C1 = "11111111-1111-4111-8111-111111111111";
 const C2 = "22222222-2222-4222-8222-222222222222";
@@ -224,6 +226,34 @@ describe("BG access point", () => {
     for (const id of ["stage11_current_position", "stage13_current_position"]) {
       const r = await g(DIAG, id);
       expect(r.content_status).toBe("not_produced");
+    }
+  });
+
+  it("B1: diagnostic valuation is text_only, listed and retrievable, other formats stay excluded", async () => {
+    const db = makeDb();
+    const run = await db.findRun(DIAG);
+    if (!run) throw new Error("Missing diagnostic fixture");
+    const document = buildDiagnosticValuation(diagnosticFixture());
+    run.row.stage_16_valuation_output = document;
+    const params = { client_ref: "hub-c1", run_id: DIAG, version: 1 };
+    const out = await call(db, HUB, "get_output", { ...params, output_id: "stage16.valuation" });
+    expect(out.content_status).toBe("text_only");
+    expect(out.content).toEqual({ text: document });
+    const docs = await call(db, HUB, "list_documents", params);
+    expect((docs.documents as { format: string }[]).map((d) => d.format)).toEqual(["valuation"]);
+    expect((await call(db, SB, "get_output", { ...params, output_id: "stage16.valuation" })).content_status).toBe("text_only");
+    expect((await call(db, HUB, "get_output", { ...params, output_id: "stage16.agency" })).content_status).toBe("not_produced");
+  });
+
+  it.each(["diagnostic", "full"])("B1: Deal %s serves both produced baselines structured", async (mode) => {
+    const db = makeDb();
+    const run = await db.findRun(DIAG);
+    if (!run) throw new Error("Missing diagnostic fixture");
+    Object.assign(run.row, diagnosticFixture(), { run_mode: mode });
+    for (const stage of ["11", "13"]) {
+      const out = await call(db, HUB, "get_output", { client_ref: "hub-c1", run_id: DIAG, version: 1, output_id: `stage${stage}_current_position` });
+      expect(out.content_status).toBe("structured");
+      expect(out.content).toMatchObject({ is_current: true, excluded_from_selection: true, evidence_label: "Client-supplied", line: "Existing position" });
     }
   });
 

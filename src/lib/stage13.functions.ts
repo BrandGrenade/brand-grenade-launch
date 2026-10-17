@@ -8,6 +8,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertSessionAccess } from "@/lib/auth-helpers.server";
 import { assertUpstreamStageOutput } from "./pipeline-integrity";
 import { findBannedWordHits, generateWithBannedWordGate, type OutputGateMode } from "./output-banned-word-gate";
+import { buildDiagnosticValuation } from "./diagnostic-valuation";
 
 const BrandIntelInput = z.object({
   sessionId: z.string().uuid(),
@@ -60,7 +61,7 @@ export const runStage13 = createServerFn({ method: "POST" })
     const { data: session, error } = await supabaseAdmin
       .from("sessions")
       .select(
-        "brand_name, category, selected_smp, selected_smp_field_name, stage_2_output, stage_10_output, stage_11_output, stage_12_output, stage_13_output, brand_intelligence, is_preflight_test, brief_type, current_proposition, current_proposition_source, current_proposition_date, brand_positioning"
+        "brand_name, category, selected_smp, selected_smp_field_name, stage_2_output, stage_10_output, stage_11_output, stage_12_output, stage_13_output, brand_intelligence, is_preflight_test, brief_type, current_proposition, current_proposition_source, current_proposition_date, brand_positioning, run_mode, stage_9_structured, stage_10_structured, stage_11_structured"
       )
       .eq("id", data.sessionId)
       .single();
@@ -129,16 +130,21 @@ export const runStage13 = createServerFn({ method: "POST" })
       throw new Error(msg);
     }
 
+    const v = validateStructured("13", structuredBlock, { current });
+    // Assemble before the completion update: the database locks that same write.
+    // No later-stage execution, unlocked window, backfill or second model call.
+    const diagnosticDocument = session.run_mode === "diagnostic"
+      ? { stage_16_valuation_output: buildDiagnosticValuation({ ...session, stage_13_structured: v.structured }) }
+      : {};
     const { error: ue } = await supabaseAdmin
       .from("sessions")
       .update({
         stage_13_output: output,
         stage_13_error: null,
         stage_status: "complete:13",
-        ...(() => {
-          const v = validateStructured("13", structuredBlock, { current });
-          return { stage_13_structured: v.structured, stage_13_structured_error: v.error };
-        })(),
+        stage_13_structured: v.structured,
+        stage_13_structured_error: v.error,
+        ...diagnosticDocument,
       } as never)
       .eq("id", data.sessionId);
     if (ue) throw new Error(`Failed to save Stage 13 output: ${ue.message}`);

@@ -788,7 +788,7 @@ Write 600 words maximum. No heading. No preamble. Start immediately.`;
 
 export const VALUATION_DURABILITY_PROMPT = `You are a brand strategist preparing an input pack for a professional intangible-asset valuer.
 
-Write the Durability and Risk Read from the supplied pressure-test output. Take each of the five conditions in turn, state the verdict exactly as recorded (Holds / Wobbles / Cracks), summarise the reasoning, and describe the qualitative risk factor a valuer would want reflected when they select their own rates. Never suggest a rate, a direction of adjustment in numeric terms, or a magnitude.
+Write the Durability and Risk Read from the supplied pressure-test output. Take each test T1–T7 in turn, plus T8 where applicable (Iconic Tier), state each result exactly as recorded (Holds / Wobbles / Cracks), and report the proposition verdict separately. If a test is missing in the supplied output, say it is missing; never invent a result. summarise the reasoning, and describe the qualitative risk factor a valuer would want reflected when they select their own rates. Never suggest a rate, a direction of adjustment in numeric terms, or a magnitude.
 
 Close with one paragraph naming the strongest durability signal and the most material residual risk.
 
