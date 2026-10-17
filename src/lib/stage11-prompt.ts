@@ -86,7 +86,7 @@ A flag is a DISCRIMINATOR, not a courtesy. If most of the set carries the same f
 - Never flag a proposition simply because it is bold. Boldness is not exposure.
 
 T8 — ICONIC TIER SUSTAINABILITY (only for Iconic Tier flagged propositions)
-Does the proposition genuinely require all three truth types to be simultaneously active, or does it function with only one or two? Verdict: HOLDS (Iconic confirmed) / DOWNGRADE (Iconic flag removed). Never fatal.
+Does the proposition genuinely require all three truth types to be simultaneously active, or does it function with only one or two? Result: HOLDS / WOBBLES / CRACKS (N/A when not Iconic Tier). HOLDS confirms Iconic status; WOBBLES or CRACKS removes the Iconic flag, recorded separately as ICONIC TIER FINAL STATUS: DOWNGRADED. Never fatal.
 
 ════════════════════════════════════════
 PER-PROPOSITION VERDICT LOGIC
