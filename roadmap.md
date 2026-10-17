@@ -1,6 +1,7 @@
 # Roadmap
 
-- [ ] B1: structured-only diagnostic Valuation Input Brief, durability/T8 corrections, Deal baseline checks; automated and saved database suites must pass before publishing.
+- [x] B1 implementation: structured-only diagnostic Valuation Input Brief saved atomically with Stage 13, durability/T8 corrections, Deal diagnostic/full baseline tests; 153/153 automated tests passed.
+- [ ] B1 publication: BLOCKED until F1a/F1b/F1d/T1/A1 saved database checks pass; sandbox test role lacks execution permission for bg_resolve_hub and update permission for bg_access_keys. Every attempted check was transaction-wrapped and rolled back; no live walkthrough or publication.
 
 - [ ] Correct the Hub sending-details example to Marlowe Motor Company. BLOCKED: example belongs to Pixel Perfect Replica; cross-project access is read-only. Located at src/components/admin/OpsTabs.tsx:128. Audit found no other old-name mentions in either app’s source/prompts; prior Brand Grenade connection-test chat still mentions it.
 
