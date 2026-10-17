@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { AccessError, handleAccess, mapLabel, type Db, type Key, type LogEntry, type RunRec, type VersionRow } from "./core";
-import { diagnosticFixture } from "../diagnostic-valuation.test";
+import { diagnosticFixture } from "../diagnostic-valuation.fixture";
 import { buildDiagnosticValuation } from "../diagnostic-valuation";
 
 const C1 = "11111111-1111-4111-8111-111111111111";
