@@ -4,6 +4,8 @@ import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { BriefFields } from "@/lib/brief-schema";
+import { readHubContext, hubColumns, HUB_SYNC_MESSAGE } from "@/lib/hub/context";
+import { ProjectClient } from "@/components/ProjectClient";
 
 export const PENDING_BRIEF_STORAGE_KEY = "brand-grenade:pending-saved-brief";
 
@@ -45,9 +47,15 @@ export async function saveBrief(input: {
     toast.error("You must be signed in to save a brief");
     return null;
   }
+  const hub = readHubContext();
+  if (hub) {
+    const { data: client, error } = await supabase.rpc("bg_lookup_hub_client", { _hub_client_id: hub.client });
+    if (error || !client?.[0]) { toast.error(HUB_SYNC_MESSAGE); return null; }
+  }
   const { data, error } = await supabase
     .from("saved_briefs")
     .insert({
+      ...hubColumns(),
       user_id: userId,
       brand_name: input.brandName,
       category: input.category,
@@ -61,7 +69,7 @@ export async function saveBrief(input: {
     toast.error("Failed to save brief");
     return null;
   }
-  if (input.link?.clientId && input.link?.engagementId) {
+  if (!hub && input.link?.clientId && input.link?.engagementId) {
     const { error: linkErr } = await supabase.rpc("bg_user_link_run", {
       _table: "saved_briefs",
       _run_id: data.brief_id,
@@ -164,6 +172,7 @@ export function SavedBriefsSection({
                 }}
               >
                 <h3 className="text-h3 text-text-primary">{b.brand_name}</h3>
+                <div className="mt-2"><ProjectClient table="saved_briefs" id={b.brief_id} /></div>
                 <p className="text-body-sm mt-1 text-text-secondary">
                   {b.category || "—"}
                 </p>
@@ -276,6 +285,7 @@ export function SavedBriefsPicker({
                       <span className="text-text-tertiary"> · {b.category || "—"}{b.brief_fields?.briefMeta?.briefType === "deal" ? " · Deal" : ""}</span>
                     </p>
                     <p className="text-body-sm text-text-tertiary">Saved {fmt(b.created_at)}</p>
+                    <ProjectClient table="saved_briefs" id={b.brief_id} />
                   </div>
                   <button
                     type="button"

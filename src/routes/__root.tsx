@@ -14,6 +14,7 @@ import { MobileGate } from "@/components/MobileGate";
 import { AppFooter } from "@/components/AppFooter";
 import { LaunchStrip } from "@/components/LaunchStrip";
 import { HubBanner } from "@/components/HubBanner";
+import { HubClientProvider, HubArrivalGate } from "@/components/HubClientProvider";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/context/AuthContext";
 import { initAnalytics, trackPageView } from "@/lib/analytics";
@@ -164,12 +165,14 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
+        <HubClientProvider>
         <LaunchStrip />
         <HubBanner />
-        <Outlet />
+        <HubArrivalGate><Outlet /></HubArrivalGate>
         <AppFooter />
         <MobileGate />
         <Toaster />
+        </HubClientProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

@@ -8,6 +8,7 @@
 
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { HubInput } from "./hub/input";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { streamClaude } from "./claude.server";
 import { withIntelligenceWatchdog } from "./intelligence-stream-watchdog";
@@ -40,6 +41,7 @@ const FileMetaSchema = z.object({
 });
 
 const CreateInput = z.object({
+  hub: HubInput,
   brand_name: z.string().trim().min(1).max(200),
   category: z.string().trim().min(1).max(200),
   brief_type: z.enum(["commercial", "government"]),
@@ -62,9 +64,12 @@ export const createIntelligenceSession = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => CreateInput.parse(input))
   .handler(async ({ data, context }): Promise<{ sessionId: string }> => {
     const { supabase, userId } = context;
+    const { checkedHubColumns } = await import("./hub/client.server");
+    const hub = await checkedHubColumns(supabase, data.hub);
     const { data: row, error } = await supabase
       .from("intelligence_sessions")
       .insert({
+        ...hub,
         user_id: userId,
         brand_name: data.brand_name,
         category: data.category,
@@ -88,7 +93,7 @@ export const createIntelligenceSession = createServerFn({ method: "POST" })
     if (error || !row) {
       throw new Error(error?.message ?? "Failed to create intelligence session");
     }
-    if (data.client_id && data.engagement_id) {
+    if (!data.hub && data.client_id && data.engagement_id) {
       const { error: linkErr } = await supabase.rpc("bg_user_link_run", {
         _table: "intelligence_sessions",
         _run_id: row.id,

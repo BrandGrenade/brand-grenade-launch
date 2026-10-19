@@ -1,5 +1,8 @@
 # Roadmap
 
+- [x] Shared Hub client list, idempotent ensure_client, client-only run links and admin project attachment: 184 app tests, 35 isolated SQL checks and concurrent access-handler integration passed; publication requested for brandgrenade.app. Deployment completion and real Hub sync remain unverified; no live walkthrough per instruction.
+- [x] Hub ensures clients first; unknown arrivals show the specified syncing message and Retry without creating clients or including names in URLs. Automated interaction and creation-handler checks passed.
+
 - [x] B1 implementation: structured-only diagnostic Valuation Input Brief saved atomically with Stage 13, durability/T8 corrections, Deal diagnostic/full baseline tests; 153/153 automated tests passed.
 - [ ] B1 publication: BLOCKED until F1a/F1b/F1d/T1/A1 saved database checks pass; sandbox test role lacks execution permission for bg_resolve_hub and update permission for bg_access_keys. Every attempted check was transaction-wrapped and rolled back; no live walkthrough or publication.
 

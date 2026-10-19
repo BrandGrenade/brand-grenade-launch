@@ -134,6 +134,20 @@
       "when": 1792378049656,
       "tag": "0018_user_run_link_picker",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1792385372159,
+      "tag": "0019_shared_hub_clients",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1792385513803,
+      "tag": "0020_preserve_hub_trigger_execution",
+      "breakpoints": true
     }
   ]
 }

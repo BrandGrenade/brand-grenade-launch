@@ -1,3 +1,4 @@
+import { readHubContext } from "@/lib/hub/context";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
@@ -18,6 +19,10 @@ export const Route = createFileRoute("/brief/new")({
   head: () => ({
     meta: [
       { title: "New Brief — Brand Grenade" },
+      { property: "og:title", content: "New Brief — Brand Grenade" },
+      { property: "og:description", content: "Prepare a brief. Save it to your library or save and run it through the pipeline immediately." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       {
         name: "description",
         content:
@@ -88,6 +93,7 @@ function NewBriefPage() {
     try {
       const { sessionId } = await createSessionFn({
         data: {
+          hub: readHubContext(),
           brandName: saved.brand_name,
           category: saved.category,
           briefText: saved.brief_text,

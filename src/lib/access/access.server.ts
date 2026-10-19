@@ -1,5 +1,5 @@
-// Server adapter for the BG access point. Every BG read is a SELECT; the only
-// write is the append-only request log. Keys are compared by SHA-256 hash.
+// Run reads are unchanged. Client synchronization uses two narrowly scoped
+// database functions; ensure_client cannot read or change runs.
 import { AccessError, HTTP_STATUS, handleAccess, type Db, type Key, type LogEntry, type RunRec, type RunTable, type Scope, type VersionRow } from "./core";
 
 const TABLES: { table: RunTable; idCol: string }[] = [
@@ -28,6 +28,16 @@ export function supabaseDb(sb: any): Db {
   const cols = (t: RunTable) => (t === "intelligence_sessions" ? INTEL_COLS : "*");
   const rec = (t: { table: RunTable; idCol: string }, row: Record<string, unknown>): RunRec => ({ table: t.table, id: String(row[t.idCol]), row });
   return {
+    async listClients() {
+      const { data, error } = await sb.rpc("bg_shared_clients");
+      if (error) throw new AccessError("unavailable", "Temporarily unavailable.");
+      return data ?? [];
+    },
+    async ensureClient(hubClientId, name) {
+      const { data, error } = await sb.rpc("bg_ensure_client", { _hub_client_id: hubClientId, _name: name });
+      if (error || !data?.[0]) throw new AccessError("unavailable", "Temporarily unavailable.");
+      return data[0];
+    },
     async resolveClient(ref) {
       const { data } = await sb.from("bg_external_ids").select("bg_client_id").eq("system", "hub_client").eq("external_id", ref).maybeSingle();
       return data?.bg_client_id ?? null;

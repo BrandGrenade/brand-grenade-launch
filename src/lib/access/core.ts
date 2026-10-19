@@ -1,8 +1,7 @@
 import { checkCurrentPosition, checkStageCurrentPosition } from "@/lib/structured-output";
 import { parseStage22Architecture, parseStage22Assets } from "./stage22-parse";
-// BG access point — pure request logic. Read-only: the Db interface exposes
-// reads only, so nothing in here can write to BG data. The server adapter
-// (access.server.ts) supplies the reads and writes the request log.
+// Run access remains read-only. Only the separately scoped ensure_client
+// request may create a client and its Hub mapping; it cannot touch runs.
 import { z } from "zod";
 
 export type Scope = "hub_tools" | "second_brain" | "admin";
@@ -12,7 +11,7 @@ import { dealSummary } from "../deal-brief";
 /** T1: brief type + deal fields (Strategy Engine runs only; other Rooms have no brief type). */
 const briefInfo = (r: RunRec) => (r.table === "sessions" ? dealSummary(r.row) : { brief_type: null, deal: null });
 
-export const REQUESTS = ["list_runs", "run_manifest", "get_output", "list_documents", "document_metadata", "provenance"] as const;
+export const REQUESTS = ["list_clients", "ensure_client", "list_runs", "run_manifest", "get_output", "list_documents", "document_metadata", "provenance"] as const;
 export type RequestName = (typeof REQUESTS)[number];
 
 export const ACCESS_ROUTE = "/api/public/bg-access";
@@ -42,6 +41,8 @@ export type RunRec = { table: RunTable; id: string; row: Row };
 export type VersionRow = { field: string; version_no: number; content: unknown; reason: string; created_at: string };
 
 export interface Db {
+  listClients(): Promise<SharedClient[]>;
+  ensureClient(hubClientId: string, name: string): Promise<SharedClient>;
   resolveClient(clientRef: string): Promise<string | null>;
   resolveEngagement(bgClientId: string, ref: string): Promise<string | null>;
   listLinkedRuns(bgClientId: string, engagementId: string | null): Promise<RunRec[]>;
@@ -53,6 +54,7 @@ export interface Db {
 }
 
 export type Key = { id: string; scope: Scope };
+export type SharedClient = { bg_client_id: string; hub_client_id: string | null; name: string; created_at: string };
 
 // ── Allowed outputs ────────────────────────────────────────────────────────
 export const STAGE16_FORMATS = ["agency", "consulting", "workshop", "vision", "valuation"] as const;
@@ -76,6 +78,7 @@ const SECOND_BRAIN = (id: string) =>
   id === "room02.saved_brief" || id.startsWith("stage16.") || id === "room04.final_prompts" || id === "stage22_architecture";
 
 export function scopeAllowsRequest(scope: Scope, req: RequestName): boolean {
+  if (req === "list_clients" || req === "ensure_client") return scope === "hub_tools";
   if (scope === "admin") return req === "list_runs" || req === "run_manifest";
   return true;
 }
@@ -121,6 +124,8 @@ const uuid = z.string().uuid();
 const ver = z.number().int().min(1).max(100000);
 const out = z.string().min(1).max(100);
 const PARAMS = {
+  list_clients: z.object({}).strict(),
+  ensure_client: z.object({ hub_client_id: ref, name: ref }).strict(),
   list_runs: z.object({ client_ref: ref, engagement: ref.optional() }).strict(),
   run_manifest: z.object({ client_ref: ref, run_id: uuid, version: ver.optional() }).strict(),
   get_output: z.object({ client_ref: ref, run_id: uuid, version: ver, output_id: out }).strict(),
@@ -465,11 +470,23 @@ export async function handleAccess(
   const p = PARAMS[name].safeParse(b.data.params);
   if (!p.success) throw new AccessError("invalid_request", `Invalid params: ${p.error.issues.map((i) => i.path.join(".") || i.message).join(", ")}`.slice(0, 300));
   const params = p.data as Record<string, unknown>;
-  const clientRef = String(params.client_ref);
-  log.client_ref = clientRef;
+  const clientRef = typeof params.client_ref === "string" ? params.client_ref : null;
+  log.client_ref = clientRef ?? (typeof params.hub_client_id === "string" ? params.hub_client_id : null);
   if (typeof params.run_id === "string") log.run_id = params.run_id;
   if (typeof params.output_id === "string") log.output_id = params.output_id;
   if (!scopeAllowsRequest(key.scope, name)) throw new AccessError("forbidden_scope", "This key's scope does not allow that request.");
+
+  if (name === "list_clients" || name === "ensure_client") {
+    const content = name === "list_clients"
+      ? { clients: await db.listClients() }
+      : { client: await db.ensureClient(String(params.hub_client_id), String(params.name)) };
+    return { scope: key.scope, client_ref: log.client_ref, bg_client_id: null, engagement_id: null,
+      run_id: null, room: null, run_mode: null, run_status: null, version: null, locked: null,
+      output_id: null, schema_version: `${name}.v1`, content_status: "structured", content,
+      evidence: [], checkpoints: [], documents: [], provenance: null, legacy: null,
+      earlier_versions_kept: null, generated_at: now() };
+  }
+  if (!clientRef) throw new AccessError("invalid_request", "Client reference required.");
 
   const bgClientId = await db.resolveClient(clientRef);
   if (!bgClientId) throw NOT_FOUND();

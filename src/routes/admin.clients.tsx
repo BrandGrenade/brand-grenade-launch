@@ -13,6 +13,7 @@ import {
   createBgMapping,
   getLinkingOverview,
   linkRun,
+  attachProjectClient,
   lockRunEarly,
 } from "@/lib/bg-clients.functions";
 
@@ -40,6 +41,7 @@ function ClientsAdmin() {
   const addEng = useServerFn(createBgEngagement);
   const addMap = useServerFn(createBgMapping);
   const link = useServerFn(linkRun);
+  const attach = useServerFn(attachProjectClient);
   const lockRun = useServerFn(lockRunEarly);
   const [lockTable, setLockTable] = useState<"sessions" | "briefing_room_workspaces">("sessions");
   const [lockId, setLockId] = useState("");
@@ -210,8 +212,10 @@ function ClientsAdmin() {
                           <Button
                             size="sm"
                             variant="outline"
-                            disabled={!ch.client || !ch.eng}
-                            onClick={() => run(() => link({ data: { table: r.table, runId: r.id, clientId: ch.client, engagementId: ch.eng } }), `Linked to ${clientName_.get(ch.client)}`)}
+                            disabled={!ch.client}
+                            onClick={() => run(() => ch.eng
+                              ? link({ data: { table: r.table, runId: r.id, clientId: ch.client, engagementId: ch.eng } })
+                              : attach({ data: { table: r.table, runId: r.id, clientId: ch.client } }), `Linked to ${clientName_.get(ch.client)}`)}
                           >Link</Button>
                         </td>
                       </tr>

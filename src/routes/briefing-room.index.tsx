@@ -1,3 +1,4 @@
+import { readHubContext } from "@/lib/hub/context";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
@@ -17,6 +18,10 @@ export const Route = createFileRoute("/briefing-room/")({
   head: () => ({
     meta: [
       { title: "Briefing Room — Brand Grenade" },
+      { property: "og:title", content: "Briefing Room — Brand Grenade" },
+      { property: "og:description", content: "Diagnose the real problem, categorise the truths, and find the tension before the brief enters the pipeline." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       {
         name: "description",
         content:
@@ -59,6 +64,7 @@ function BriefingRoomIndex() {
     try {
       const { id } = await create({
         data: {
+          hub: readHubContext(),
           brandName: brand.trim(),
           category: category.trim(),
           ...(link?.clientId && link?.engagementId
