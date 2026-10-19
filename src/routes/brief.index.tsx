@@ -1,4 +1,5 @@
 import { readHubContext } from "@/lib/hub/context";
+import { useHubBrand } from "@/hooks/use-hub-brand";
 import { DealFieldsSchema, linesToList, TRANSACTION_TYPES, DEAL_DEPTHS, sessionFieldsFromMeta } from "@/lib/deal-brief";
 import { supabase } from "@/integrations/supabase/client";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
@@ -91,7 +92,7 @@ function BriefIntake() {
 
   // Header fields
   const [briefTitle, setBriefTitle] = useState("");
-  const [brand, setBrand] = useState("");
+  const [brand, setBrand, hubBrand] = useHubBrand();
   const [category, setCategory] = useState("");
   const [link, setLink] = useState<ClientLink>(null);
   const [date, setDate] = useState(todayISO());
@@ -480,6 +481,7 @@ function BriefIntake() {
           <HeaderField label="Brand / Company Name">
             <input
               value={brand}
+              readOnly={hubBrand}
               onChange={(e) => setBrand(e.target.value)}
               className="input-base h-11 w-full"
               maxLength={120}

@@ -17,7 +17,7 @@ export const lookupHubClient = createServerFn({ method: "POST" })
     const { data: rows, error } = await (context.supabase as any).rpc("bg_lookup_hub_client", { _hub_client_id: data.client });
     if (error) throw new Error("Client lookup unavailable");
     const row = rows?.[0];
-    return row ? { name: row.client_name as string } : null;
+    return row ? { name: row.client_name as string, clientId: row.client_id as string } : null;
   });
 
 /** Attach the hub client/job to a record the user owns, if not already linked. */

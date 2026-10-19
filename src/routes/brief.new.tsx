@@ -1,4 +1,5 @@
 import { readHubContext } from "@/lib/hub/context";
+import { useHubBrand } from "@/hooks/use-hub-brand";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
@@ -37,7 +38,7 @@ function NewBriefPage() {
   const createSessionFn = useServerFn(createSession);
   const runLocFn = useServerFn(runLeftOfCentre);
 
-  const [brand, setBrand] = useState("");
+  const [brand, setBrand, hubBrand] = useHubBrand();
   const [category, setCategory] = useState("");
   const [briefText, setBriefText] = useState("");
   const [link, setLink] = useState<ClientLink>(null);
@@ -137,6 +138,7 @@ function NewBriefPage() {
           <Field label="Brand name">
             <input
               value={brand}
+              readOnly={hubBrand}
               onChange={(e) => setBrand(e.target.value)}
               className="input-base h-11 w-full"
               maxLength={120}

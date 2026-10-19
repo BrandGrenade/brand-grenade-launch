@@ -182,7 +182,7 @@ export function IntelligenceForm({
   cancelLabel = "Cancel",
   onSubmit,
 }: IntelligenceFormProps) {
-  const [brand, setBrand] = useState(initialBrand);
+  const [brand, setBrand, hubBrand] = useHubBrand(initialBrand);
   const [category, setCategory] = useState(initialCategory);
   const [briefType, setBriefType] = useState<BriefType>(initialBriefType);
   const [markets, setMarkets] = useState(initialMarkets);
@@ -383,6 +383,7 @@ export function IntelligenceForm({
               <Input
                 id="brand"
                 value={brand}
+                readOnly={hubBrand}
                 onChange={(e) => setBrand(e.target.value)}
                 maxLength={200}
                 className="mt-1.5"

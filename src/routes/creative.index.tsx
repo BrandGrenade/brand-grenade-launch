@@ -5,6 +5,10 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { TopNav } from "@/components/TopNav";
 import { supabase } from "@/integrations/supabase/client";
+import { useHubClient } from "@/components/HubClientProvider";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 
 const AMBER = "#C81E1E";
 const MUTED = "#8B8680";
@@ -39,26 +43,36 @@ type Row = {
 };
 
 function CreativeIndex() {
+  const { hub, name, clientId } = useHubClient();
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
+  const [chosenProject, setChosenProject] = useState("");
 
   useEffect(() => {
     let cancelled = false;
+    setLoading(true);
+    setRows([]);
+    setChosenProject("");
     void (async () => {
       // Same rule as the dashboard's Creative Stimulus Engine column: every session
       // the user can reach has a creative room, whether or not Stage 21 has
       // produced channel briefs yet. Filtering on stage_21_outputs here made
       // brands linked from the dashboard disappear from "All sessions".
-      const [{ data: sessions }, { data: runs }] = await Promise.all([
-        supabase
+      let projects = supabase
           .from("sessions")
           .select("id, brand_name, updated_at, stage_21_outputs")
-          .order("updated_at", { ascending: false })
-          .limit(100),
+          .order("updated_at", { ascending: false });
+      if (hub) {
+        if (!clientId) return;
+        projects = projects.eq("bg_client_id", clientId);
+      }
+      const [{ data: sessions }, { data: runs }] = await Promise.all([
+        projects.limit(100),
         supabase.from("stimulus_runs").select("session_id"),
       ]);
 
       if (cancelled) return;
+      setChosenProject(sessions?.[0]?.id ?? "");
       const withRuns = new Set((runs ?? []).map((r) => r.session_id));
       setRows(
         (sessions ?? []).map((s) => ({
@@ -76,7 +90,7 @@ function CreativeIndex() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [hub?.client, clientId]);
 
   return (
     <>
@@ -105,6 +119,16 @@ function CreativeIndex() {
           happens here.
         </p>
 
+        {hub && name ? <div className="mt-6 grid gap-4">
+          <div><Label htmlFor="creative-client">Client</Label><Input id="creative-client" value={name} readOnly className="mt-1.5" /></div>
+          {!loading && rows.length > 0 ? <div>
+            <Label htmlFor="creative-project">Project</Label>
+            <select id="creative-project" className="input-base mt-1.5 h-10 w-full" value={chosenProject} onChange={(event) => setChosenProject(event.target.value)}>
+              {rows.map((row) => <option key={row.id} value={row.id}>{row.brand_name || name} · {row.updated_at ? new Date(row.updated_at).toLocaleDateString() : "Strategy run"}</option>)}
+            </select>
+            {chosenProject ? <Button asChild className="mt-3"><Link to="/creative/$sessionId" params={{ sessionId: chosenProject }}>Open Creative Engine</Link></Button> : null}
+          </div> : null}
+        </div> : null}
         <div style={{ marginTop: 32, display: "grid", gap: 16 }}>
           {loading && (
             <div className="text-body-sm" style={{ color: MUTED }}>
