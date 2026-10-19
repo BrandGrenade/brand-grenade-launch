@@ -1,5 +1,7 @@
 # Roadmap
 
+- [x] Intelligence Lab progress: confirmed completion separated from estimated streaming markers; last saved activity timer verified on authenticated real JLR run without restarting it; 195 tests pass and preview build OK. Individual layer completion remains unavailable from the existing single-call engine; no publication requested.
+
 - [x] Hub arrival client identity: authenticated JLR arrivals show the top label and prefilled identity in all five Rooms and quick Brief; unknown Retry blocks forms; real Briefing creation persisted linked JLR; 190/190 tests pass. Creative source selection passes automated coverage; real JLR Creative start cannot be verified until JLR has a linked Strategy parent. Publish requested after passing checks.
 
 - [x] Shared Hub client list, idempotent ensure_client, client-only run links and admin project attachment: 184 app tests, 35 isolated SQL checks and concurrent access-handler integration passed; publication requested for brandgrenade.app. Deployment completion and real Hub sync remain unverified; no live walkthrough per instruction.

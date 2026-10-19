@@ -39,12 +39,18 @@ import {
 import { openDocument00AMinto } from "@/lib/intelligence/doc-00A-minto";
 import { researchEvidenceFromSession } from "@/lib/intelligence/research-evidence";
 import { SupervisionStatus } from "@/components/SupervisionStatus";
+import { RunProgress } from "@/components/intelligence/RunProgress";
 
 
 export const Route = createFileRoute("/intelligence/$id")({
   head: () => ({
     meta: [
       { title: "Intelligence report — Brand Grenade" },
+      { name: "description", content: "Track your Brand Grenade Intelligence Lab analysis and review territory intelligence." },
+      { property: "og:title", content: "Intelligence report — Brand Grenade" },
+      { property: "og:description", content: "Track Intelligence Lab analysis and review territory intelligence." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -188,6 +194,7 @@ interface SessionRow {
   report_metadata: unknown;
   last_error: string | null;
   completed_at: string | null;
+  updated_at: string | null;
   territory_input: string | null;
   additional_context: string | null;
   input_primary_consumer: string | null;
@@ -407,7 +414,7 @@ function IntelligenceRunPage() {
       const { data } = await supabase
         .from("intelligence_sessions")
         .select(
-          "id, user_id, brand_name, category, status, stage_status, current_layer, final_report, report_metadata, last_error, completed_at, territory_input, additional_context, input_primary_consumer, input_brand_health, input_competitive_audit, input_cultural_trends, input_audience_segmentation, input_bg_intel_pack",
+          "id, user_id, brand_name, category, status, stage_status, current_layer, final_report, report_metadata, last_error, completed_at, updated_at, territory_input, additional_context, input_primary_consumer, input_brand_health, input_competitive_audit, input_cultural_trends, input_audience_segmentation, input_bg_intel_pack",
         )
         .eq("id", id)
         .maybeSingle();
@@ -556,6 +563,7 @@ function IntelligenceRunPage() {
             </h1>
           </div>
           <Card className="mt-6 p-6 border-destructive/40">
+            <div className="mb-6"><RunProgress row={row} /></div>
             <div className="flex items-start gap-3">
               <AlertCircle className="h-5 w-5 flex-shrink-0 text-destructive mt-0.5" />
               <div className="flex-1">
@@ -641,9 +649,6 @@ function IntelligenceRunPage() {
     ? row.stage_status.slice("doc00a:".length)
     : null;
   if (row.status === "running" && !revisingId && !doc00aProgress) {
-    const layer = row.current_layer ?? 0;
-    const pct = Math.min(100, Math.max(5, Math.round((layer / 10) * 100)));
-    const queued = row.stage_status === "queued";
     return (
       <div className="min-h-screen bg-background">
         <TopNav />
@@ -659,18 +664,7 @@ function IntelligenceRunPage() {
             ) : null}
           </div>
           <Card className="mt-8 p-6">
-            <p className="text-body text-text-primary font-medium">
-              {queued ? "Queued — waiting for the engine to pick up the run" : `Analysing… layer ${Math.max(1, layer)} of 10`}
-            </p>
-            <p className="mt-2 text-sm text-text-secondary">
-              The intelligence engine is streaming. This page updates automatically.
-            </p>
-            <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-card/5">
-              <div
-                className="h-full rounded-full transition-all"
-                style={{ width: `${pct}%`, backgroundColor: "#C81E1E" }}
-              />
-            </div>
+            <RunProgress row={row} />
             <div className="mt-5">
               <Button
                 variant="outline"
