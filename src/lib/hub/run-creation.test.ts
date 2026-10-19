@@ -42,7 +42,7 @@ describe("actual Room creation handlers", () => {
   });
   it.each(cases)("%s rejects unknown clients before inserting", async (_name, fn, data) => {
     state.known = false;
-    await expect(invoke(fn, { ...data, hub })).rejects.toThrow("This client is still syncing from the Hub — try again in a moment");
+    await expect(invoke(fn, { ...data, hub })).rejects.toThrow("This client is still syncing from the Hub — try again");
     expect(state.inserted).toHaveLength(0);
     expect(state.rpc).toEqual(["bg_lookup_hub_client"]);
   });

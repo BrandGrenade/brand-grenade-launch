@@ -1,4 +1,5 @@
 import { readHubContext } from "@/lib/hub/context";
+import { useHubBrand } from "@/hooks/use-hub-brand";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
@@ -42,7 +43,7 @@ function BriefingRoomIndex() {
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
-  const [brand, setBrand] = useState("");
+  const [brand, setBrand, hubBrand] = useHubBrand();
   const [category, setCategory] = useState("");
   const [link, setLink] = useState<ClientLink>(null);
   const [busy, setBusy] = useState(false);
@@ -131,6 +132,7 @@ function BriefingRoomIndex() {
                 <span className="text-label text-text-secondary">Brand</span>
                 <input
                   value={brand}
+                  readOnly={hubBrand}
                   onChange={(e) => setBrand(e.target.value)}
                   className="input-base h-10 w-full"
                   placeholder="e.g. Patagonia"

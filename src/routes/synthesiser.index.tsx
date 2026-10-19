@@ -7,6 +7,7 @@
 // existed.
 
 import { useState } from "react";
+import { useHubBrand } from "@/hooks/use-hub-brand";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ArrowRight } from "lucide-react";
 import { z } from "zod";
@@ -46,7 +47,7 @@ export const Route = createFileRoute("/synthesiser/")({
 function SynthesiserRoom() {
   const navigate = useNavigate();
   const search = Route.useSearch();
-  const [brand, setBrand] = useState(search.brand ?? "");
+  const [brand, setBrand, hubBrand] = useHubBrand(search.brand ?? "");
   const [category, setCategory] = useState("");
   const [runId, setRunId] = useState<string | null>(null);
   const [link, setLink] = useState<ClientLink>(null);
@@ -131,6 +132,7 @@ function SynthesiserRoom() {
                 <Input
                   id="syn-brand"
                   value={brand}
+                  readOnly={hubBrand}
                   onChange={(e) => setBrand(e.target.value)}
                   maxLength={200}
                   className="mt-1.5"

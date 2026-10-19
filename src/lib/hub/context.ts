@@ -3,7 +3,7 @@
 // never used for authentication.
 
 export type HubContext = { client: string; job: string | null; ctx: string | null };
-export const HUB_SYNC_MESSAGE = "This client is still syncing from the Hub — try again in a moment";
+export const HUB_SYNC_MESSAGE = "This client is still syncing from the Hub — try again";
 
 const KEY = "bg_hub_context";
 const EVT = "bg-hub-context";

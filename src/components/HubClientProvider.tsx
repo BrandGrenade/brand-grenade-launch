@@ -6,7 +6,7 @@ import { lookupHubClient } from "@/lib/hub.functions";
 import { captureHubContextFromUrl, onHubContextChange, readHubContext, HUB_SYNC_MESSAGE, type HubContext } from "@/lib/hub/context";
 import { Button } from "@/components/ui/button";
 
-const HubClient = createContext<{ hub: HubContext | null; name: string | null; pending: boolean; retry: () => void }>({ hub: null, name: null, pending: false, retry: () => {} });
+const HubClient = createContext<{ hub: HubContext | null; name: string | null; clientId: string | null; ready: boolean; pending: boolean; retry: () => void }>({ hub: null, name: null, clientId: null, ready: false, pending: false, retry: () => {} });
 export const useHubClient = () => useContext(HubClient);
 
 export function HubClientProvider({ children }: { children: ReactNode }) {
@@ -14,13 +14,14 @@ export function HubClientProvider({ children }: { children: ReactNode }) {
   const { user, isAuthReady } = useAuth();
   const lookup = useServerFn(lookupHubClient);
   const [hub, setHub] = useState<HubContext | null>(null);
-  const [resolved, setResolved] = useState<{ client: string; name: string } | null>(null);
+  const [resolved, setResolved] = useState<{ client: string; name: string; clientId: string } | null>(null);
+  const [capturedHref, setCapturedHref] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [attempt, setAttempt] = useState(0);
   const retry = useCallback(() => setAttempt((v) => v + 1), []);
   useEffect(() => {
     const read = () => setHub(readHubContext());
-    captureHubContextFromUrl(); read();
+    captureHubContextFromUrl(); read(); setCapturedHref(loc.href);
     return onHubContextChange(read);
   }, [loc.href]);
   useEffect(() => {
@@ -29,21 +30,27 @@ export function HubClientProvider({ children }: { children: ReactNode }) {
     let cancelled = false;
     setPending(true);
     void lookup({ data: { client: hub.client } }).then((client) => {
-      if (!cancelled) setResolved(client ? { client: hub.client, name: client.name } : null);
+      if (!cancelled) setResolved(client ? { client: hub.client, name: client.name, clientId: client.clientId } : null);
     }).catch(() => {}).finally(() => { if (!cancelled) setPending(false); });
     return () => { cancelled = true; };
   }, [hub?.client, user?.id, isAuthReady, attempt, lookup]);
-  const name = resolved?.client === hub?.client ? resolved?.name ?? null : null;
-  return <HubClient.Provider value={{ hub, name, pending, retry }}>{children}</HubClient.Provider>;
+  const ready = capturedHref === loc.href;
+  const match = ready && resolved?.client === hub?.client;
+  const name = match ? resolved?.name ?? null : null;
+  const clientId = match ? resolved?.clientId ?? null : null;
+  return <HubClient.Provider value={{ hub, name, clientId, ready, pending, retry }}>{children}</HubClient.Provider>;
 }
 
 /** No unknown client can reach a Room's start action; Retry only repeats lookup. */
 export function HubArrivalGate({ children }: { children: ReactNode }) {
-  const { hub, name, pending, retry } = useHubClient();
+  const { hub, name, ready, pending, retry } = useHubClient();
   const { user, isAuthReady } = useAuth();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const room = /^\/(synthesiser|intelligence|briefing-room|brief|pipeline|creative|complete|detonation|walkthrough)(\/|$)/.test(pathname);
-  if (!room || !hub || !isAuthReady || !user || name) return children;
+  if (!room) return children;
+  if (!ready) return <main className="mx-auto max-w-xl px-6 py-20"><p className="text-body text-foreground">Syncing client…</p></main>;
+  if (!hub || !isAuthReady || !user) return children;
+  if (name) return <><div className="h-11" aria-hidden /><div className="fixed inset-x-0 top-[124px] z-80 flex h-11 items-center border-b border-border bg-muted px-5 text-body text-foreground"><strong>Client: {name}</strong></div>{children}</>;
   return <main className="mx-auto max-w-xl px-6 py-20">
     <p className="text-body text-foreground">{pending ? "Syncing client…" : HUB_SYNC_MESSAGE}</p>
     <Button className="mt-4" variant="outline" onClick={retry} disabled={pending}>Retry</Button>

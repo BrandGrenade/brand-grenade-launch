@@ -2,6 +2,7 @@
 // Used by /intelligence/new (create) and /intelligence/$id/edit (edit + re-run).
 
 import { useMemo, useRef, useState } from "react";
+import { useHubBrand } from "@/hooks/use-hub-brand";
 import { Link } from "@tanstack/react-router";
 import { Check, Circle, FileText, Loader2, Upload, X } from "lucide-react";
 import { toast } from "sonner";
@@ -182,7 +183,7 @@ export function IntelligenceForm({
   cancelLabel = "Cancel",
   onSubmit,
 }: IntelligenceFormProps) {
-  const [brand, setBrand] = useState(initialBrand);
+  const [brand, setBrand, hubBrand] = useHubBrand(initialBrand);
   const [category, setCategory] = useState(initialCategory);
   const [briefType, setBriefType] = useState<BriefType>(initialBriefType);
   const [markets, setMarkets] = useState(initialMarkets);
@@ -383,6 +384,7 @@ export function IntelligenceForm({
               <Input
                 id="brand"
                 value={brand}
+                readOnly={hubBrand}
                 onChange={(e) => setBrand(e.target.value)}
                 maxLength={200}
                 className="mt-1.5"
