@@ -153,6 +153,8 @@ export const createBriefingWorkspace = createServerFn({ method: "POST" })
       .object({
         brandName: z.string().max(200).default(""),
         category: z.string().max(200).default(""),
+        clientId: z.string().uuid().nullish(),
+        engagementId: z.string().uuid().nullish(),
       })
       .parse(i),
   )
@@ -168,7 +170,17 @@ export const createBriefingWorkspace = createServerFn({ method: "POST" })
       .select("id")
       .single();
     if (error) throw new Error(error.message);
-    return { id: (row as { id: string }).id };
+    const id = (row as { id: string }).id;
+    if (data.clientId && data.engagementId) {
+      const { error: linkErr } = await context.supabase.rpc("bg_user_link_run", {
+        _table: "briefing_room_workspaces",
+        _run_id: id,
+        _client: data.clientId,
+        _engagement: data.engagementId,
+      });
+      if (linkErr) throw new Error(linkErr.message);
+    }
+    return { id };
   });
 
 export const getBriefingWorkspace = createServerFn({ method: "POST" })

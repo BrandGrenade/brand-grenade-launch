@@ -10,6 +10,7 @@ import {
   createBriefingWorkspace,
   deleteBriefingWorkspace,
 } from "@/lib/briefing-room.functions";
+import { ClientPicker, type ClientLink } from "@/components/ClientPicker";
 
 export const Route = createFileRoute("/briefing-room/")({
   component: BriefingRoomIndex,
@@ -38,6 +39,7 @@ function BriefingRoomIndex() {
   const [creating, setCreating] = useState(false);
   const [brand, setBrand] = useState("");
   const [category, setCategory] = useState("");
+  const [link, setLink] = useState<ClientLink>(null);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -56,7 +58,13 @@ function BriefingRoomIndex() {
     setBusy(true);
     try {
       const { id } = await create({
-        data: { brandName: brand.trim(), category: category.trim() },
+        data: {
+          brandName: brand.trim(),
+          category: category.trim(),
+          ...(link?.clientId && link?.engagementId
+            ? { clientId: link.clientId, engagementId: link.engagementId }
+            : {}),
+        },
       });
       navigate({ to: "/briefing-room/$id", params: { id } });
     } catch (e) {
@@ -131,6 +139,7 @@ function BriefingRoomIndex() {
                   placeholder="e.g. Outdoor apparel"
                 />
               </label>
+              <ClientPicker value={link} onChange={setLink} />
               <div className="flex items-center gap-3 pt-1">
                 <button
                   type="button"
