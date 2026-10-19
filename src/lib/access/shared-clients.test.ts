@@ -7,7 +7,7 @@ const call = (db: Db, request: string, params = {}, scope: Scope = "hub_tools") 
   return handleAccess(db, { id: "existing-key", scope }, { request, params }, log);
 };
 const fixture = () => {
-  const clients: SharedClient[] = [{ bg_client_id: "bg-created", hub_client_id: null, name: "JLR", created_at: "2026-10-19" }];
+  const clients: SharedClient[] = [{ bg_client_id: "123e4567-e89b-42d3-a456-426614174000", hub_client_id: null, name: "JLR", created_at: "2026-10-19" }];
   const runRead = vi.fn(() => { throw new Error("Client requests must not touch runs"); });
   const db: Db = {
     listClients: vi.fn(async () => clients),
