@@ -2,7 +2,7 @@
 // Run: bun scripts/test-shared-client-access.ts postgresql://user@localhost:port/database
 import postgres from "postgres";
 import { randomUUID } from "node:crypto";
-import { handleAccessRequest } from "../src/lib/access/access.server";
+import { mock } from "bun:test";
 
 const url = process.argv[2];
 if (!url || !["localhost", "127.0.0.1"].includes(new URL(url).hostname)) throw new Error("An isolated localhost database is required");
@@ -22,10 +22,12 @@ const sb = {
     throw new Error("Client requests must not access run tables");
   },
 };
+mock.module("../src/integrations/supabase/client.server", () => ({ supabaseAdmin: sb }));
+const { handleAccessRequest } = await import("../src/lib/access/access.server");
 const request = async (name: string, params: Record<string, string>) => {
   const response = await handleAccessRequest(new Request("http://localhost/api/public/bg-access", {
     method: "POST", headers: { "content-type": "application/json", "x-bg-access-key": key }, body: JSON.stringify({ request: name, params }),
-  }), sb);
+  }));
   if (response.status !== 200) throw new Error(`Access request failed: ${response.status}`);
   return response.json();
 };
