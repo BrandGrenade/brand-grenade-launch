@@ -23,7 +23,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { createSession } from "@/lib/stage1.functions";
 import { deleteBrandPermanently } from "@/lib/brand-register.functions";
 import { useIsAdmin } from "@/lib/demo-mode";
-import { unlockRepositoryAdminFromPlatform } from "@/lib/repo-admin.functions";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -102,7 +101,6 @@ function Dashboard() {
   const navigate = useNavigate();
   const createSessionFn = useServerFn(createSession);
   const deleteBrandPermanentlyFn = useServerFn(deleteBrandPermanently);
-  const unlockRepoAdminFn = useServerFn(unlockRepositoryAdminFromPlatform);
   const isAdmin = useIsAdmin();
   const { rows, loading, error, refresh } = useBrandRegister();
 
@@ -212,13 +210,8 @@ function Dashboard() {
     }
   };
 
-  const handleOpenRepositoriesAdmin = async () => {
-    try {
-      await unlockRepoAdminFn({});
-      navigate({ to: "/admin/repositories" });
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Admin access failed");
-    }
+  const handleOpenClientsAdmin = () => {
+    navigate({ to: "/admin/clients" });
   };
 
   const stats = useMemo(
@@ -269,7 +262,7 @@ function Dashboard() {
             {isAdmin && (
               <button
                 type="button"
-                onClick={handleOpenRepositoriesAdmin}
+                onClick={handleOpenClientsAdmin}
                 className="inline-flex h-10 items-center justify-center self-start rounded-lg px-4 text-[13px] font-semibold uppercase tracking-[0.12em] transition-opacity hover:opacity-90"
                 style={{
                   backgroundColor: "#C81E1E",
