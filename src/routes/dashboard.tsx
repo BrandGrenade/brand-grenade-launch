@@ -264,7 +264,7 @@ function Dashboard() {
             {isAdmin && (
               <button
                 type="button"
-                onClick={handleOpenRepositoriesAdmin}
+                onClick={handleOpenClientsAdmin}
                 className="inline-flex h-10 items-center justify-center self-start rounded-lg px-4 text-[13px] font-semibold uppercase tracking-[0.12em] transition-opacity hover:opacity-90"
                 style={{
                   backgroundColor: "#C81E1E",
