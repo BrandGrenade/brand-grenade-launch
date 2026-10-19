@@ -16,6 +16,7 @@ import {
   PENDING_BRIEF_STORAGE_KEY,
   type SavedBrief,
 } from "@/components/SavedBriefsLibrary";
+import { ClientPicker, type ClientLink } from "@/components/ClientPicker";
 import {
   Collapsible,
   CollapsibleContent,
@@ -87,6 +88,7 @@ function BriefIntake() {
   const [briefTitle, setBriefTitle] = useState("");
   const [brand, setBrand] = useState("");
   const [category, setCategory] = useState("");
+  const [link, setLink] = useState<ClientLink>(null);
   const [date, setDate] = useState(todayISO());
   const [submittedBy, setSubmittedBy] = useState("");
 
@@ -268,6 +270,7 @@ function BriefIntake() {
       category: category.trim() || "Unspecified",
       briefText,
       briefFields,
+      link: !isEditMode && link?.clientId && link?.engagementId ? { clientId: link.clientId, engagementId: link.engagementId } : null,
     });
     setSaving(false);
     if (saved) {
@@ -729,6 +732,11 @@ function BriefIntake() {
           )}
 
           {/* SUBMIT + SAVE */}
+          {!isEditMode && (
+            <div className="mt-6">
+              <ClientPicker value={link} onChange={setLink} />
+            </div>
+          )}
           <div className="mt-6 flex flex-col gap-3 sm:flex-row">
             <button
               type="submit"
