@@ -17,6 +17,15 @@ const fixture = () => {
       const c = { bg_client_id: `bg-${clients.length}`, hub_client_id, name, created_at: "2026-10-19" };
       clients.push(c); return c;
     }),
+    attachClient: vi.fn(async (bg_client_id, hub_client_id) => {
+      const c = clients.find((x) => x.bg_client_id === bg_client_id);
+      if (!c) throw new AccessError("not_found", "Not found.");
+      const byHub = clients.find((x) => x.hub_client_id === hub_client_id);
+      if (byHub && byHub.bg_client_id !== bg_client_id) throw new AccessError("invalid_request", "Already attached to a different client.");
+      if (c.hub_client_id && c.hub_client_id !== hub_client_id) throw new AccessError("invalid_request", "Already attached to a different client.");
+      c.hub_client_id = hub_client_id;
+      return c;
+    }),
     resolveClient: runRead, resolveEngagement: runRead, listLinkedRuns: runRead, findRun: runRead,
     versions: runRead, claims: runRead, stimulus: runRead, actorName: runRead,
   };
