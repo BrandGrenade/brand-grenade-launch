@@ -245,6 +245,13 @@ export function TopNav({ session }: { session?: SessionContext }) {
                       navigate({ to: "/admin/repositories" });
                     }}
                   />
+                  <MenuItem
+                    label="Clients & Run Linking"
+                    onClick={() => {
+                      setOpen(false);
+                      navigate({ to: "/admin/clients" });
+                    }}
+                  />
                 )}
                 <MenuItem
                   label="Sign Out"
