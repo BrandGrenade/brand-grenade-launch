@@ -18,6 +18,8 @@ After ensuring, the Hub opens an existing Room with `?client=<hub-client-referen
 
 ## Automated checks
 
+Final results: 184/184 application tests in 37 files; 35/35 isolated SQL checks; access-handler-to-SQL concurrent integration passed. Preview build reports OK. Security scan has five pre-existing warnings, no critical findings.
+
 - Full application suite, including source-handler creation checks for Strategy, Intelligence, Briefing, saved briefs and Synthesiser.
 - Automated UI interactions: unknown arrival blocks starts, Retry releases after sync, exact-project admin attachment, partner control absence.
 - Isolated PostgreSQL checks: client-only links on all six run tables, Creative Engine inheritance, existing source inheritance, no name matching, once-only admin attachment, unchanged brief/document content and browser link-field protections.
