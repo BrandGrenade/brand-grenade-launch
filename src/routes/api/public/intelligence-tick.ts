@@ -11,8 +11,8 @@
 // ONE unowned job and runs it to completion while streaming keep-alive bytes,
 // so the invocation stays attached to a live connection for the whole run.
 //
-// Safe to call unauthenticated: it only picks up queued work, or work whose
-// heartbeat has been dead for STALE_RUN_MS, and every claim is optimistic on
+// Safe to call unauthenticated: it only picks up queued work or unclaimed
+// revisions, and every claim is optimistic on
 // the row's observed state so overlapping calls cannot double-run a job.
 // Targeting a specific session (sessionId / force) requires the tick secret.
 
@@ -107,8 +107,11 @@ async function claimNext(
       };
     }
 
+    // Unforced calls only take queued work. Dead mid-stream runs are put back
+    // on `queued` by the reliability supervisor, which also caps restarts.
     const isQueued = stage === "queued";
-    if (!isQueued && !opts.force && quietFor(row.updated_at) < staleRunMs) continue;
+    if (!isQueued && !opts.force) continue;
+    if (!isQueued && quietFor(row.updated_at) < staleRunMs && !opts.only) continue;
 
     // Taking over a dead mid-stream run counts as a retry so a run that keeps
     // dying ends in a visible failure (MAX_RETRIES) instead of looping.
