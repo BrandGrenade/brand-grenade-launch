@@ -64,18 +64,15 @@ const intelligenceDomain: JobDomain = {
 };
 
 /**
- * Stalled per-territory revisions. Recoverable: the dispatch persists the
- * human instruction in report_metadata.pending_revision, so the supervisor can
- * re-run exactly the revision that was asked for instead of throwing it away.
- * Detached for the same reason as the analysis domain — a revision is a
- * multi-minute streamed call that outlives the tick request.
+ * Stalled per-territory revisions. Executed and retried by
+ * /api/public/intelligence-tick; this is only the final dead-man's switch
+ * that releases the session with the original territory kept.
  */
 const intelligenceReviseDomain: JobDomain = {
   name: "intelligence-revise",
-  timeoutMs: 3 * 60_000,
-  maxAttempts: 2,
+  timeoutMs: INTEL_DEAD_MS,
+  maxAttempts: 1,
   backoffMs: DEFAULT_BACKOFF,
-  detached: true,
   async list(admin) {
     const { data } = await admin
       .from("intelligence_sessions")
@@ -90,36 +87,7 @@ const intelligenceReviseDomain: JobDomain = {
         detail: "Territory revision",
         row: r,
       }))
-      .filter((j) => j.quietMs >= 3 * 60_000);
-  },
-  async recover(admin, job) {
-    const meta = (job.row as Record<string, any> | undefined)?.report_metadata;
-    const pending =
-      meta && typeof meta === "object" && !Array.isArray(meta)
-        ? (meta as Record<string, any>)["pending_revision"]
-        : null;
-    const territoryId: string | undefined =
-      pending?.territory_id ??
-      String((job.row as Record<string, any> | undefined)?.stage_status ?? "").split(":")[1];
-    const instructions: string | undefined = pending?.instructions;
-    if (!territoryId || !instructions) {
-      // Nothing durable to replay (revision requested before instructions were
-      // persisted): release the session with the original territory intact.
-      await admin
-        .from("intelligence_sessions")
-        .update({
-          status: "complete",
-          stage_status: "complete:10",
-          last_error:
-            "Territory revision stalled and could not be resumed — the original territory was kept. Please request the revision again.",
-        })
-        .eq("id", job.jobId);
-      return;
-    }
-    const { reviseTerritoryRun } = await import("@/lib/intelligence-revise.server");
-    const mode = pending?.mode === "replace" ? "replace" : "revise";
-    const r = await reviseTerritoryRun({ sessionId: job.jobId, territoryId, instructions, mode });
-    if (!r.success) throw new Error(r.error ?? "Territory revision failed");
+      .filter((j) => j.quietMs >= INTEL_DEAD_MS);
   },
   async escalate(admin, job) {
     await admin
