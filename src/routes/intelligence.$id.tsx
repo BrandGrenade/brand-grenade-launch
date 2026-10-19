@@ -563,6 +563,7 @@ function IntelligenceRunPage() {
             </h1>
           </div>
           <Card className="mt-6 p-6 border-destructive/40">
+            <div className="mb-6"><RunProgress row={row} /></div>
             <div className="flex items-start gap-3">
               <AlertCircle className="h-5 w-5 flex-shrink-0 text-destructive mt-0.5" />
               <div className="flex-1">
