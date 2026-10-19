@@ -212,13 +212,8 @@ function Dashboard() {
     }
   };
 
-  const handleOpenRepositoriesAdmin = async () => {
-    try {
-      await unlockRepoAdminFn({});
-      navigate({ to: "/admin/repositories" });
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Admin access failed");
-    }
+  const handleOpenClientsAdmin = () => {
+    navigate({ to: "/admin/clients" });
   };
 
   const stats = useMemo(
