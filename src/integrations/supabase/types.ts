@@ -2990,6 +2990,15 @@ export type Database = {
         }
         Returns: string
       }
+      bg_attach_client: {
+        Args: { _bg_client_id: string; _hub_client_id: string }
+        Returns: {
+          bg_client_id: string
+          created_at: string
+          hub_client_id: string
+          name: string
+        }[]
+      }
       bg_client_options: {
         Args: never
         Returns: {
