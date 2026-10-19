@@ -2,6 +2,7 @@
 // Used by /intelligence/new (create) and /intelligence/$id/edit (edit + re-run).
 
 import { useMemo, useRef, useState } from "react";
+import { useHubBrand } from "@/hooks/use-hub-brand";
 import { Link } from "@tanstack/react-router";
 import { Check, Circle, FileText, Loader2, Upload, X } from "lucide-react";
 import { toast } from "sonner";
