@@ -50,7 +50,7 @@ export function HubArrivalGate({ children }: { children: ReactNode }) {
   if (!room) return children;
   if (!ready) return <main className="mx-auto max-w-xl px-6 py-20"><p className="text-body text-foreground">Syncing client…</p></main>;
   if (!hub || !isAuthReady || !user) return children;
-  if (name) return <><div className="border-b border-border bg-muted px-5 py-3 text-body text-foreground"><strong>Client: {name}</strong></div>{children}</>;
+  if (name) return <><div className="h-11" aria-hidden /><div className="fixed inset-x-0 top-[124px] z-80 flex h-11 items-center border-b border-border bg-muted px-5 text-body text-foreground"><strong>Client: {name}</strong></div>{children}</>;
   return <main className="mx-auto max-w-xl px-6 py-20">
     <p className="text-body text-foreground">{pending ? "Syncing client…" : HUB_SYNC_MESSAGE}</p>
     <Button className="mt-4" variant="outline" onClick={retry} disabled={pending}>Retry</Button>
