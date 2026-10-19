@@ -11,6 +11,7 @@ import {
   saveBrief,
   PENDING_BRIEF_STORAGE_KEY,
 } from "@/components/SavedBriefsLibrary";
+import { ClientPicker, type ClientLink } from "@/components/ClientPicker";
 
 export const Route = createFileRoute("/brief/new")({
   component: NewBriefPage,
@@ -34,7 +35,9 @@ function NewBriefPage() {
   const [brand, setBrand] = useState("");
   const [category, setCategory] = useState("");
   const [briefText, setBriefText] = useState("");
+  const [link, setLink] = useState<ClientLink>(null);
   const [busy, setBusy] = useState<"none" | "save" | "run">("none");
+  const linkReady = link?.clientId && link?.engagementId ? { clientId: link.clientId, engagementId: link.engagementId } : null;
 
   const canSubmit =
     brand.trim().length >= 2 &&
@@ -52,6 +55,7 @@ function NewBriefPage() {
       brandName: brand.trim(),
       category: category.trim() || "Unspecified",
       briefText: briefText.trim(),
+      link: linkReady,
     });
     setBusy("none");
     if (saved) {
@@ -71,6 +75,7 @@ function NewBriefPage() {
       brandName: brand.trim(),
       category: category.trim(),
       briefText: briefText.trim(),
+      link: linkReady,
     });
     if (!saved) {
       setBusy("none");
@@ -141,6 +146,7 @@ function NewBriefPage() {
               placeholder="e.g. Outdoor apparel"
             />
           </Field>
+          <ClientPicker value={link} onChange={setLink} />
           <Field label="Brief">
             <textarea
               value={briefText}
