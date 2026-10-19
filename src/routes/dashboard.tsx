@@ -23,7 +23,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { createSession } from "@/lib/stage1.functions";
 import { deleteBrandPermanently } from "@/lib/brand-register.functions";
 import { useIsAdmin } from "@/lib/demo-mode";
-import { unlockRepositoryAdminFromPlatform } from "@/lib/repo-admin.functions";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -102,8 +101,6 @@ function Dashboard() {
   const navigate = useNavigate();
   const createSessionFn = useServerFn(createSession);
   const deleteBrandPermanentlyFn = useServerFn(deleteBrandPermanently);
-  const unlockRepoAdminFn = useServerFn(unlockRepositoryAdminFromPlatform);
-  const isAdmin = useIsAdmin();
   const { rows, loading, error, refresh } = useBrandRegister();
 
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
