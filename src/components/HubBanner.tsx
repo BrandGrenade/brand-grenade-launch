@@ -55,7 +55,7 @@ export function HubBanner() {
   return (
     <div className="fixed inset-x-0 bottom-0 z-50 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-border bg-muted px-5 py-1.5 text-[12px] text-foreground">
       <span>
-        <strong>{name}</strong>
+        <strong>Client: {name}</strong>
       </span>
       {prior ? <a className="text-muted-foreground underline" href={room.openPath(prior.id)}>Open previous work</a> : null}
       <Button type="button" variant="ghost" size="sm" onClick={clearHubContext} className="ml-auto">
