@@ -44,7 +44,7 @@ describe("shared clients access requests", () => {
   it("list_clients includes BG-created unmapped clients and cannot read runs", async () => {
     const { db, runRead } = fixture();
     const r = await call(db, "list_clients");
-    expect(r.content).toEqual({ clients: [{ bg_client_id: "bg-created", hub_client_id: null, name: "JLR", created_at: "2026-10-19" }] });
+    expect(r.content).toEqual({ clients: [{ bg_client_id: "123e4567-e89b-42d3-a456-426614174000", hub_client_id: null, name: "JLR", created_at: "2026-10-19" }] });
     expect(r.content_status).toBe("structured");
     expect(r.run_id).toBeNull();
     expect(runRead).not.toHaveBeenCalled();
@@ -65,7 +65,6 @@ describe("shared clients access requests", () => {
   it("attach_client attaches once and a repeat is a no-op returning the same record", async () => {
     const { db, clients, runRead } = fixture();
     const a = await call(db, "attach_client", { bg_client_id: "123e4567-e89b-42d3-a456-426614174000", hub_client_id: "hub-jlr" });
-    clients[0].bg_client_id = "123e4567-e89b-42d3-a456-426614174000"; // fixture id aligned
     const b = await call(db, "attach_client", { bg_client_id: "123e4567-e89b-42d3-a456-426614174000", hub_client_id: "hub-jlr" });
     expect(a.content).toEqual(b.content);
     expect(clients.filter((c) => c.hub_client_id === "hub-jlr")).toHaveLength(1);
