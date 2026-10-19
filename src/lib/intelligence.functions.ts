@@ -52,6 +52,9 @@ const CreateInput = z.object({
   input_audience_segmentation: z.string().max(400_000).nullish(),
   input_bg_intel_pack: z.string().max(400_000).nullish(),
   input_files: z.array(FileMetaSchema).max(100).optional(),
+  // Optional start-form client link; applied by the database after insert.
+  client_id: z.string().uuid().nullish(),
+  engagement_id: z.string().uuid().nullish(),
 });
 
 export const createIntelligenceSession = createServerFn({ method: "POST" })
@@ -84,6 +87,15 @@ export const createIntelligenceSession = createServerFn({ method: "POST" })
       .single();
     if (error || !row) {
       throw new Error(error?.message ?? "Failed to create intelligence session");
+    }
+    if (data.client_id && data.engagement_id) {
+      const { error: linkErr } = await supabase.rpc("bg_user_link_run", {
+        _table: "intelligence_sessions",
+        _run_id: row.id,
+        _client: data.client_id,
+        _engagement: data.engagement_id,
+      });
+      if (linkErr) throw new Error(linkErr.message);
     }
     return { sessionId: row.id };
   });
