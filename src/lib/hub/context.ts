@@ -3,6 +3,7 @@
 // never used for authentication.
 
 export type HubContext = { client: string; job: string | null; ctx: string | null };
+export const HUB_SYNC_MESSAGE = "This client is still syncing from the Hub — try again in a moment";
 
 const KEY = "bg_hub_context";
 const EVT = "bg-hub-context";
@@ -17,6 +18,7 @@ export function captureHubContextFromUrl(): void {
     job: p.get("job")?.trim().slice(0, 200) || null,
     ctx: p.get("ctx")?.slice(0, 2000) || null,
   };
+  if (sessionStorage.getItem(KEY) === JSON.stringify(next)) return;
   sessionStorage.setItem(KEY, JSON.stringify(next));
   window.dispatchEvent(new Event(EVT));
 }
@@ -35,6 +37,9 @@ export function readHubContext(): HubContext | null {
 
 export function clearHubContext(): void {
   sessionStorage.removeItem(KEY);
+  const url = new URL(window.location.href);
+  for (const key of ["client", "job", "ctx"]) url.searchParams.delete(key);
+  window.history.replaceState(window.history.state, "", url);
   window.dispatchEvent(new Event(EVT));
 }
 

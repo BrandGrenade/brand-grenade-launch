@@ -27,6 +27,10 @@ export const Route = createFileRoute("/synthesiser/")({
   head: () => ({
     meta: [
       { title: "Research Synthesiser — Brand Grenade" },
+      { property: "og:title", content: "Research Synthesiser — Brand Grenade" },
+      { property: "og:description", content: "Turn disparate research into strategic intelligence. Diverse inputs. Structured evidence." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       {
         name: "description",
         content:

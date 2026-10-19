@@ -1,3 +1,4 @@
+import { readHubContext } from "@/lib/hub/context";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
@@ -26,6 +27,10 @@ export const Route = createFileRoute("/intelligence/new")({
   head: () => ({
     meta: [
       { title: "Strategic Territory Intelligence Lab — Brand Grenade" },
+      { property: "og:title", content: "Strategic Territory Intelligence Lab — Brand Grenade" },
+      { property: "og:description", content: "Provide research inputs. The Intelligence Lab produces a ranked strategic territory intelligence report." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       {
         name: "description",
         content:
@@ -54,6 +59,7 @@ function IntelligenceNewPage() {
       const { sessionId } = await createFn({
         data: {
           ...values,
+          hub: readHubContext(),
           ...(link?.clientId && link?.engagementId
             ? { client_id: link.clientId, engagement_id: link.engagementId }
             : {}),

@@ -1,0 +1,1 @@
+GRANT EXECUTE ON FUNCTION public.bg_resolve_hub(text,text) TO PUBLIC;

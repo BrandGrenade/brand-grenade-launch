@@ -1119,6 +1119,9 @@ export type Database = {
           category: string
           created_at: string
           engagement_id: string | null
+          hub_client: string | null
+          hub_ctx: string | null
+          hub_job: string | null
           link_status: string
           user_id: string
         }
@@ -1132,6 +1135,9 @@ export type Database = {
           category?: string
           created_at?: string
           engagement_id?: string | null
+          hub_client?: string | null
+          hub_ctx?: string | null
+          hub_job?: string | null
           link_status?: string
           user_id: string
         }
@@ -1145,6 +1151,9 @@ export type Database = {
           category?: string
           created_at?: string
           engagement_id?: string | null
+          hub_client?: string | null
+          hub_ctx?: string | null
+          hub_job?: string | null
           link_status?: string
           user_id?: string
         }
@@ -2968,6 +2977,10 @@ export type Database = {
       }
     }
     Functions: {
+      bg_admin_attach_client: {
+        Args: { _client: string; _run_id: string; _table: string }
+        Returns: string
+      }
       bg_admin_link_run: {
         Args: {
           _client: string
@@ -2987,7 +3000,23 @@ export type Database = {
         }[]
       }
       bg_diagnostic_complete: { Args: { n: Json }; Returns: boolean }
+      bg_ensure_client: {
+        Args: { _hub_client_id: string; _name: string }
+        Returns: {
+          bg_client_id: string
+          created_at: string
+          hub_client_id: string
+          name: string
+        }[]
+      }
       bg_is_admin: { Args: { _uid: string }; Returns: boolean }
+      bg_lookup_hub_client: {
+        Args: { _hub_client_id: string }
+        Returns: {
+          client_id: string
+          client_name: string
+        }[]
+      }
       bg_output_field: {
         Args: { _k: string; _table: string; _versioned: boolean }
         Returns: boolean
@@ -2995,6 +3024,15 @@ export type Database = {
       bg_resolve_hub: {
         Args: { _client: string; _job: string }
         Returns: Record<string, unknown>
+      }
+      bg_shared_clients: {
+        Args: never
+        Returns: {
+          bg_client_id: string
+          created_at: string
+          hub_client_id: string
+          name: string
+        }[]
       }
       bg_source_link: {
         Args: { _owner: string; _source: string; _table: string }

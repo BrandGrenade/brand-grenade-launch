@@ -5,6 +5,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { getClientOptions, type ClientOption } from "@/lib/bg-clients.functions";
+import { useIsAdmin } from "@/lib/demo-mode";
+import { onHubContextChange, readHubContext } from "@/lib/hub/context";
 
 export type ClientLink = { clientId: string; engagementId: string } | null;
 
@@ -13,10 +15,17 @@ const selectCls = "h-9 rounded-md border border-input bg-background px-2 text-bo
 export function ClientPicker({ value, onChange }: { value: ClientLink; onChange: (v: ClientLink) => void }) {
   const fetchOptions = useServerFn(getClientOptions);
   const [options, setOptions] = useState<ClientOption[]>([]);
+  const isAdmin = useIsAdmin();
+  const [fromHub, setFromHub] = useState(false);
 
   useEffect(() => {
-    void fetchOptions().then(setOptions).catch(() => setOptions([]));
-  }, [fetchOptions]);
+    if (isAdmin) void fetchOptions().then(setOptions).catch(() => setOptions([]));
+  }, [fetchOptions, isAdmin]);
+  useEffect(() => {
+    const refresh = () => setFromHub(!!readHubContext());
+    refresh();
+    return onHubContextChange(refresh);
+  }, []);
 
   const clients = useMemo(() => {
     const m = new Map<string, string>();
@@ -28,7 +37,7 @@ export function ClientPicker({ value, onChange }: { value: ClientLink; onChange:
     [options, value?.clientId],
   );
 
-  if (clients.length === 0) return null;
+  if (!isAdmin || fromHub || clients.length === 0) return null;
 
   return (
     <div className="flex flex-col gap-1.5">
@@ -54,7 +63,7 @@ export function ClientPicker({ value, onChange }: { value: ClientLink; onChange:
           >
             <option value="">Engagement…</option>
             {engagements.map((e) => (
-              <option key={e.engagement_id} value={e.engagement_id!}>{e.engagement_name}</option>
+              <option key={e.engagement_id} value={e.engagement_id ?? ""}>{e.engagement_name}</option>
             ))}
           </select>
         ) : null}

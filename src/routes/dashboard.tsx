@@ -1,3 +1,5 @@
+import { readHubContext } from "@/lib/hub/context";
+import { ProjectClient } from "@/components/ProjectClient";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { roomLabel } from "@/lib/rooms";
 import { useMemo, useState } from "react";
@@ -56,6 +58,10 @@ export const Route = createFileRoute("/dashboard")({
   head: () => ({
     meta: [
       { title: "Brand Register — Brand Grenade" },
+      { property: "og:title", content: "Brand Register — Brand Grenade" },
+      { property: "og:description", content: "One row per brand. Every Intelligence Lab analysis, Briefing Room session, Strategy Pipeline, and Brand Detonation for that brand, in one register." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       {
         name: "description",
         content:
@@ -168,6 +174,7 @@ function Dashboard() {
     try {
       const { sessionId } = await createSessionFn({
         data: {
+          hub: readHubContext(),
           brandName: pendingLegacy.brand_name,
           category: pendingLegacy.category || "Unspecified",
           briefText: pendingLegacy.brief_text,
@@ -1274,6 +1281,9 @@ function ExpandedSection({
 
 function RunActions({ run }: { run: BrandRun }) {
   const items: React.ReactNode[] = [];
+  const [prefix, id] = run.id.split(":");
+  const table = prefix === "intel" ? "intelligence_sessions" : prefix === "brief" ? "briefing_room_workspaces" : prefix === "creative" ? "stimulus_runs" : prefix === "pipe" || prefix === "phase2" ? "sessions" : null;
+  if (table && id) items.push(<ProjectClient key="client" table={table} id={id} />);
   if (run.href && run.hrefSearch) {
     items.push(
       <TextLink key="view" href={run.href} search={run.hrefSearch} label="View" />,

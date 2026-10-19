@@ -1,3 +1,4 @@
+import { readHubContext } from "@/lib/hub/context";
 import { DealFieldsSchema, linesToList, TRANSACTION_TYPES, DEAL_DEPTHS, sessionFieldsFromMeta } from "@/lib/deal-brief";
 import { supabase } from "@/integrations/supabase/client";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
@@ -44,6 +45,10 @@ export const Route = createFileRoute("/brief/")({
   head: () => ({
     meta: [
       { title: "Strategy Pipeline — Brand Grenade" },
+      { property: "og:title", content: "Strategy Pipeline — Brand Grenade" },
+      { property: "og:description", content: "Submit a strategy brief. Nine sections covering challenge, audience, brand truths, category and constraints." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       {
         name: "description",
         content:
@@ -202,6 +207,7 @@ function BriefIntake() {
     try {
       const { sessionId } = await createSessionFn({
         data: {
+          hub: readHubContext(),
           brandName: b.brief_fields.brandName || b.brand_name,
           category: b.brief_fields.category || b.category,
           briefText: b.brief_text,
@@ -382,6 +388,7 @@ function BriefIntake() {
       }
       const { sessionId } = await createSessionFn({
         data: {
+          hub: readHubContext(),
           brandName: brand.trim(),
           category: category.trim() || "Unspecified",
           briefText,
@@ -418,6 +425,7 @@ function BriefIntake() {
       };
       const { sessionId } = await createSessionFn({
         data: {
+          hub: readHubContext(),
           brandName: brand.trim(),
           category: category.trim() || "Unspecified",
           briefText,

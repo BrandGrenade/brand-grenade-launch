@@ -88,6 +88,18 @@ export const createBgClient = createServerFn({ method: "POST" })
     return { id: row.id as string };
   });
 
+export const getProjectClient = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => z.object({ table: RunTableEnum, runId: z.string().uuid() }).parse(i))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context as Ctx);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const idCol = data.table === "saved_briefs" ? "brief_id" : "id";
+    const { data: row, error } = await (supabaseAdmin as any).from(data.table).select("bg_client_id").eq(idCol, data.runId).maybeSingle();
+    if (error || !row) throw new Error("Project client could not be loaded");
+    return { clientId: row.bg_client_id as string | null };
+  });
+
 export const createBgEngagement = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i) => z.object({ clientId: z.string().uuid(), name: z.string().trim().min(1).max(200) }).parse(i))
@@ -156,9 +168,22 @@ export type ClientOption = { client_id: string; client_name: string; engagement_
 export const getClientOptions = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
+    await assertAdmin(context as Ctx);
     const { data, error } = await (context as Ctx).supabase.rpc("bg_client_options");
     if (error) throw new Error(error.message);
     return (data ?? []) as ClientOption[];
+  });
+
+export const attachProjectClient = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => z.object({ table: RunTableEnum, runId: z.string().uuid(), clientId: z.string().uuid() }).parse(i))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context as Ctx);
+    const { data: status, error } = await (context as Ctx).supabase.rpc("bg_admin_attach_client", {
+      _table: data.table, _run_id: data.runId, _client: data.clientId,
+    });
+    if (error) throw new Error(error.message);
+    return { status: status as string };
   });
 
 export const linkOwnRun = createServerFn({ method: "POST" })

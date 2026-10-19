@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { HubInput } from "./hub/input";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { streamClaude } from "./claude.server";
 import { STAGE_1_SYSTEM_PROMPT, buildStage1UserMessage } from "./stage1-prompt";
@@ -21,6 +22,7 @@ const BriefFieldsSchema = z
   .optional();
 
 const CreateSessionInput = z.object({
+  hub: HubInput,
   brandName: z.string().min(1).max(200),
   category: z.string().min(1).max(200),
   briefText: z.string().min(20).max(50000),
@@ -47,6 +49,8 @@ export const createSession = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => CreateSessionInput.parse(input))
   .handler(async ({ data, context }) => {
+    const { checkedHubColumns } = await import("./hub/client.server");
+    const hub = await checkedHubColumns(context.supabase, data.hub);
     const briefVersions = data.briefFields
       ? [
           {
@@ -85,6 +89,7 @@ export const createSession = createServerFn({ method: "POST" })
     const { data: row, error } = await supabaseAdmin
       .from("sessions")
       .insert({
+        ...hub,
         run_mode: data.runMode,
         brief_type: data.briefType,
         ...(data.briefType === "deal" && data.deal

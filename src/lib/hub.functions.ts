@@ -9,6 +9,17 @@ const Hub = z.object({
   ctx: z.string().max(2000).nullable(),
 });
 
+/** Arrival is read-only: the Hub must ensure the client before sending a link. */
+export const lookupHubClient = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => z.object({ client: z.string().trim().min(1).max(200) }).parse(i))
+  .handler(async ({ data, context }) => {
+    const { data: rows, error } = await (context.supabase as any).rpc("bg_lookup_hub_client", { _hub_client_id: data.client });
+    if (error) throw new Error("Client lookup unavailable");
+    const row = rows?.[0];
+    return row ? { name: row.client_name as string } : null;
+  });
+
 /** Attach the hub client/job to a record the user owns, if not already linked. */
 export const stampHubContext = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

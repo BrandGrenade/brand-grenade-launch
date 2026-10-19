@@ -3,7 +3,7 @@
 // Intelligence Lab.
 
 import { supabase } from "@/integrations/supabase/client";
-import { hubColumns } from "@/lib/hub/context";
+import { hubColumns, readHubContext } from "@/lib/hub/context";
 import { SYNTHESISER_CATEGORIES, type SynthesisedClaim } from "@/lib/synthesiser/types";
 
 const HEADING = new Map(SYNTHESISER_CATEGORIES.map((c) => [c.key, c.title]));
@@ -71,13 +71,18 @@ export async function recordSynthesiserRun(input: {
       return input.id;
     }
 
+    const hub = readHubContext();
+    if (hub) {
+      const { data: client, error } = await supabase.rpc("bg_lookup_hub_client", { _hub_client_id: hub.client });
+      if (error || !client?.[0]) return null;
+    }
     const { data, error } = await supabase
       .from("synthesiser_runs")
       .insert({ ...patch, ...hubColumns(), user_id: userId })
       .select("id")
       .single();
     if (error || !data) return null;
-    if (input.link?.clientId && input.link?.engagementId) {
+    if (!hub && input.link?.clientId && input.link?.engagementId) {
       await supabase.rpc("bg_user_link_run", {
         _table: "synthesiser_runs",
         _run_id: data.id,

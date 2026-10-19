@@ -1,3 +1,4 @@
+import { readHubContext } from "@/lib/hub/context";
 import { useEffect, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
@@ -64,6 +65,7 @@ export function RunModePanel({ sessionId, refreshKey }: { sessionId: string; ref
                 try {
                   const { sessionId: id } = await create({
                     data: {
+                      hub: readHubContext(),
                       brandName: row.brand_name,
                       category: row.category,
                       briefText: row.brief_text,

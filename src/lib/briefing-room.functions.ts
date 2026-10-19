@@ -5,6 +5,7 @@
 
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { HubInput } from "./hub/input";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { callClaude } from "./claude.server";
 import {
@@ -151,6 +152,7 @@ export const createBriefingWorkspace = createServerFn({ method: "POST" })
   .inputValidator((i) =>
     z
       .object({
+        hub: HubInput,
         brandName: z.string().max(200).default(""),
         category: z.string().max(200).default(""),
         clientId: z.string().uuid().nullish(),
@@ -159,11 +161,14 @@ export const createBriefingWorkspace = createServerFn({ method: "POST" })
       .parse(i),
   )
   .handler(async ({ data, context }) => {
+    const { checkedHubColumns } = await import("./hub/client.server");
+    const hub = await checkedHubColumns(context.supabase, data.hub);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: row, error } = await supabaseAdmin
       .from("briefing_room_workspaces")
       .insert({
-        user_id: context.userId!,
+        ...hub,
+        user_id: context.userId,
         brand_name: data.brandName,
         category: data.category,
       })
@@ -171,7 +176,7 @@ export const createBriefingWorkspace = createServerFn({ method: "POST" })
       .single();
     if (error) throw new Error(error.message);
     const id = (row as { id: string }).id;
-    if (data.clientId && data.engagementId) {
+    if (!data.hub && data.clientId && data.engagementId) {
       const { error: linkErr } = await context.supabase.rpc("bg_user_link_run", {
         _table: "briefing_room_workspaces",
         _run_id: id,
