@@ -22,25 +22,33 @@ const quietSince = (...times: (string | null | undefined)[]): number => {
 /* 1. Intelligence Lab analysis — fully recoverable server-side.       */
 /* ------------------------------------------------------------------ */
 
-// Observed healthy runs heartbeat every few seconds while streaming and
-// complete inside ~15 min. Dispatch (queued -> first layer) is seconds.
-const INTEL_QUEUED_MS = 90_000; // dead-man's-switch on a lost dispatch
+// Execution is owned by /api/public/intelligence-tick, which stays attached
+// to a live connection for the whole run and is woken by a database trigger
+// whenever a row is queued. Recovery used to run the analysis through
+// ctx.waitUntil, which the runtime cancels ~30s after the tick answers, so
+// every "recovery" froze at running:0 (JLR, 19 Oct 2026). Recovery now only
+// re-queues the row (a fast DB write); the trigger wakes the driver.
+const INTEL_QUEUED_MS = 3 * 60_000; // a queued wake-up that never started
 const INTEL_RUNNING_MS = 5 * 60_000; // dead stream mid-run
+
+async function requeue(admin: Admin, id: string): Promise<void> {
+  // Two writes so the wake-up trigger (fires on entering `queued`) also fires
+  // for a row that was already queued but whose wake-up was lost.
+  await admin.from("intelligence_sessions").update({ stage_status: "requeue" }).eq("id", id).eq("status", "running");
+  const { error } = await admin
+    .from("intelligence_sessions")
+    .update({ stage_status: "queued" })
+    .eq("id", id)
+    .eq("status", "running");
+  if (error) throw new Error(error.message);
+}
 
 const intelligenceDomain: JobDomain = {
   name: "intelligence",
   timeoutMs: INTEL_QUEUED_MS,
   maxAttempts: 3,
-  // Lifetime ceiling: a run that keeps inching forward and dying must still
-  // terminate in a visible failure rather than retry (and bill) forever.
   maxTotalAttempts: 5,
   backoffMs: DEFAULT_BACKOFF,
-
-  // A full analysis is a ~10 minute streamed run — far longer than the tick
-  // request that discovers it. Awaiting it inline meant the scheduler hung up,
-  // the Worker invocation was cancelled mid-stream, and the run froze part-way
-  // (observed 2026-09-19: session 22c0ba9b froze at running:2 on every tick).
-  detached: true,
   async list(admin) {
     const { data } = await admin
       .from("intelligence_sessions")
@@ -48,8 +56,6 @@ const intelligenceDomain: JobDomain = {
       .eq("status", "running");
     const jobs: SupervisedJob[] = [];
     for (const row of (data ?? []) as Record<string, string>[]) {
-      // A stalled territory revision must never escalate into a full re-run:
-      // the stored report is still valid, so it is released, not retried.
       if (row.stage_status?.startsWith("revising:")) continue;
       const quiet = quietSince(row.updated_at, row.started_at);
       const threshold = row.stage_status === "queued" ? INTEL_QUEUED_MS : INTEL_RUNNING_MS;
@@ -65,9 +71,7 @@ const intelligenceDomain: JobDomain = {
     return jobs;
   },
   async recover(admin, job) {
-    const { executeIntelligenceRun } = await import("@/lib/intelligence.functions");
-    const r = await executeIntelligenceRun(admin as never, job.ownerUserId ?? undefined, job.jobId, true);
-    if (!r.success) throw new Error(r.error ?? "Intelligence run failed");
+    await requeue(admin, job.jobId);
   },
   async escalate(admin, job, message) {
     await admin
@@ -78,18 +82,15 @@ const intelligenceDomain: JobDomain = {
 };
 
 /**
- * Stalled per-territory revisions. Recoverable: the dispatch persists the
- * human instruction in report_metadata.pending_revision, so the supervisor can
- * re-run exactly the revision that was asked for instead of throwing it away.
- * Detached for the same reason as the analysis domain — a revision is a
- * multi-minute streamed call that outlives the tick request.
+ * Stalled per-territory revisions. Executed by /api/public/intelligence-tick
+ * (woken by the same trigger when a pending revision is recorded); recovery
+ * clears the claim so the trigger wakes the driver again.
  */
 const intelligenceReviseDomain: JobDomain = {
   name: "intelligence-revise",
-  timeoutMs: 3 * 60_000,
+  timeoutMs: 5 * 60_000,
   maxAttempts: 2,
   backoffMs: DEFAULT_BACKOFF,
-  detached: true,
   async list(admin) {
     const { data } = await admin
       .from("intelligence_sessions")
@@ -104,21 +105,13 @@ const intelligenceReviseDomain: JobDomain = {
         detail: "Territory revision",
         row: r,
       }))
-      .filter((j) => j.quietMs >= 3 * 60_000);
+      .filter((j) => j.quietMs >= 5 * 60_000);
   },
   async recover(admin, job) {
     const meta = (job.row as Record<string, any> | undefined)?.report_metadata;
     const pending =
-      meta && typeof meta === "object" && !Array.isArray(meta)
-        ? (meta as Record<string, any>)["pending_revision"]
-        : null;
-    const territoryId: string | undefined =
-      pending?.territory_id ??
-      String((job.row as Record<string, any> | undefined)?.stage_status ?? "").split(":")[1];
-    const instructions: string | undefined = pending?.instructions;
-    if (!territoryId || !instructions) {
-      // Nothing durable to replay (revision requested before instructions were
-      // persisted): release the session with the original territory intact.
+      meta && typeof meta === "object" && !Array.isArray(meta) ? (meta as Record<string, any>)["pending_revision"] : null;
+    if (!pending?.instructions) {
       await admin
         .from("intelligence_sessions")
         .update({
@@ -130,10 +123,14 @@ const intelligenceReviseDomain: JobDomain = {
         .eq("id", job.jobId);
       return;
     }
-    const { reviseTerritoryRun } = await import("@/lib/intelligence-revise.server");
-    const mode = pending?.mode === "replace" ? "replace" : "revise";
-    const r = await reviseTerritoryRun({ sessionId: job.jobId, territoryId, instructions, mode });
-    if (!r.success) throw new Error(r.error ?? "Territory revision failed");
+    const next = { ...pending };
+    delete next["claimed_at"];
+    const { error } = await admin
+      .from("intelligence_sessions")
+      .update({ report_metadata: { ...meta, pending_revision: { ...next, requeued_at: new Date().toISOString() } } })
+      .eq("id", job.jobId)
+      .eq("status", "running");
+    if (error) throw new Error(error.message);
   },
   async escalate(admin, job) {
     await admin

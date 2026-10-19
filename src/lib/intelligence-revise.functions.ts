@@ -57,16 +57,8 @@ export const reviseIntelligenceTerritory = createServerFn({ method: "POST" })
       } as never)
       .eq("id", data.intelligenceSessionId);
 
-    const { scheduleBackground } = await import("./background.server");
-    const { reviseTerritoryRun } = await import("./intelligence-revise.server");
-    scheduleBackground(
-      reviseTerritoryRun({
-        sessionId: data.intelligenceSessionId,
-        territoryId: data.territoryId,
-        instructions: data.instructions,
-        mode,
-      }),
-      `intelligence-revise:${data.intelligenceSessionId}`,
-    );
+    // Executed by /api/public/intelligence-tick (scheduled every minute,
+    // attached to a live connection). Work started here via ctx.waitUntil is
+    // cancelled ~30s after this request returns.
     return { started: true };
   });
