@@ -36,6 +36,8 @@ export async function saveBrief(input: {
   briefFields?: BriefFields;
   /** Briefing Room workspace this brief came from (client/engagement inherited). */
   sourceWorkspaceId?: string;
+  /** Optional client/engagement chosen on the start form; linked via the database. */
+  link?: { clientId: string; engagementId: string } | null;
 }): Promise<SavedBrief | null> {
   const { data: userRes } = await supabase.auth.getUser();
   const userId = userRes.user?.id;
@@ -58,6 +60,15 @@ export async function saveBrief(input: {
   if (error) {
     toast.error("Failed to save brief");
     return null;
+  }
+  if (input.link?.clientId && input.link?.engagementId) {
+    const { error: linkErr } = await supabase.rpc("bg_user_link_run", {
+      _table: "saved_briefs",
+      _run_id: data.brief_id,
+      _client: input.link.clientId,
+      _engagement: input.link.engagementId,
+    });
+    if (linkErr) toast.error("Brief saved, but the client link failed — link it from the admin page");
   }
   return data as unknown as SavedBrief;
 }
