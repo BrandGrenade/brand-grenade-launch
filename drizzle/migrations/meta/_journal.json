@@ -148,6 +148,13 @@
       "when": 1792385513803,
       "tag": "0020_preserve_hub_trigger_execution",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1792386726157,
+      "tag": "0021_attach_hub_client",
+      "breakpoints": true
     }
   ]
 }

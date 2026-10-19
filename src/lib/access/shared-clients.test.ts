@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { handleAccess, type Db, type LogEntry, type Scope, type SharedClient } from "./core";
+import { AccessError, handleAccess, type Db, type LogEntry, type Scope, type SharedClient } from "./core";
 import { supabaseDb } from "./access.server";
 
 const call = (db: Db, request: string, params = {}, scope: Scope = "hub_tools") => {
@@ -7,7 +7,7 @@ const call = (db: Db, request: string, params = {}, scope: Scope = "hub_tools") 
   return handleAccess(db, { id: "existing-key", scope }, { request, params }, log);
 };
 const fixture = () => {
-  const clients: SharedClient[] = [{ bg_client_id: "bg-created", hub_client_id: null, name: "JLR", created_at: "2026-10-19" }];
+  const clients: SharedClient[] = [{ bg_client_id: "123e4567-e89b-42d3-a456-426614174000", hub_client_id: null, name: "JLR", created_at: "2026-10-19" }];
   const runRead = vi.fn(() => { throw new Error("Client requests must not touch runs"); });
   const db: Db = {
     listClients: vi.fn(async () => clients),
@@ -16,6 +16,15 @@ const fixture = () => {
       if (existing) return existing;
       const c = { bg_client_id: `bg-${clients.length}`, hub_client_id, name, created_at: "2026-10-19" };
       clients.push(c); return c;
+    }),
+    attachClient: vi.fn(async (bg_client_id, hub_client_id) => {
+      const c = clients.find((x) => x.bg_client_id === bg_client_id);
+      if (!c) throw new AccessError("not_found", "Not found.");
+      const byHub = clients.find((x) => x.hub_client_id === hub_client_id);
+      if (byHub && byHub.bg_client_id !== bg_client_id) throw new AccessError("invalid_request", "Already attached to a different client.");
+      if (c.hub_client_id && c.hub_client_id !== hub_client_id) throw new AccessError("invalid_request", "Already attached to a different client.");
+      c.hub_client_id = hub_client_id;
+      return c;
     }),
     resolveClient: runRead, resolveEngagement: runRead, listLinkedRuns: runRead, findRun: runRead,
     versions: runRead, claims: runRead, stimulus: runRead, actorName: runRead,
@@ -35,7 +44,7 @@ describe("shared clients access requests", () => {
   it("list_clients includes BG-created unmapped clients and cannot read runs", async () => {
     const { db, runRead } = fixture();
     const r = await call(db, "list_clients");
-    expect(r.content).toEqual({ clients: [{ bg_client_id: "bg-created", hub_client_id: null, name: "JLR", created_at: "2026-10-19" }] });
+    expect(r.content).toEqual({ clients: [{ bg_client_id: "123e4567-e89b-42d3-a456-426614174000", hub_client_id: null, name: "JLR", created_at: "2026-10-19" }] });
     expect(r.content_status).toBe("structured");
     expect(r.run_id).toBeNull();
     expect(runRead).not.toHaveBeenCalled();
@@ -52,6 +61,31 @@ describe("shared clients access requests", () => {
       await expect(call(db, "ensure_client", params)).rejects.toMatchObject({ code: "invalid_request" });
     await expect(call(db, "list_clients", { client_ref: "h" })).rejects.toMatchObject({ code: "invalid_request" });
     expect(db.ensureClient).not.toHaveBeenCalled();
+  });
+  it("attach_client attaches once and a repeat is a no-op returning the same record", async () => {
+    const { db, clients, runRead } = fixture();
+    const a = await call(db, "attach_client", { bg_client_id: "123e4567-e89b-42d3-a456-426614174000", hub_client_id: "hub-jlr" });
+    const b = await call(db, "attach_client", { bg_client_id: "123e4567-e89b-42d3-a456-426614174000", hub_client_id: "hub-jlr" });
+    expect(a.content).toEqual(b.content);
+    expect(clients.filter((c) => c.hub_client_id === "hub-jlr")).toHaveLength(1);
+    expect(runRead).not.toHaveBeenCalled();
+  });
+  it("attach_client refuses both conflict cases and never reads runs", async () => {
+    const { db, clients, runRead } = fixture();
+    clients.push({ bg_client_id: "bg-other", hub_client_id: "hub-taken", name: "Other", created_at: "2026-10-19" });
+    // Hub id already attached to a different BG client
+    await expect(call(db, "attach_client", { bg_client_id: "123e4567-e89b-42d3-a456-426614174000", hub_client_id: "hub-taken" })).rejects.toMatchObject({ code: "invalid_request" });
+    // BG client already attached to a different Hub id
+    clients[0].hub_client_id = "hub-jlr";
+    await expect(call(db, "attach_client", { bg_client_id: "123e4567-e89b-42d3-a456-426614174000", hub_client_id: "hub-new" })).rejects.toMatchObject({ code: "invalid_request" });
+    expect(runRead).not.toHaveBeenCalled();
+  });
+  it("attach_client validates params and is hub_tools only", async () => {
+    const { db } = fixture();
+    await expect(call(db, "attach_client", { bg_client_id: "not-a-uuid", hub_client_id: "h" })).rejects.toMatchObject({ code: "invalid_request" });
+    await expect(call(db, "attach_client", { bg_client_id: "123e4567-e89b-42d3-a456-426614174000" })).rejects.toMatchObject({ code: "invalid_request" });
+    await expect(call(db, "attach_client", { bg_client_id: "123e4567-e89b-42d3-a456-426614174000", hub_client_id: "h" }, "admin")).rejects.toMatchObject({ code: "forbidden_scope" });
+    expect(db.attachClient).not.toHaveBeenCalled();
   });
   it("server adapter uses client-only RPCs, not run queries", async () => {
     const rpc = vi.fn(async (name: string) => ({ data: name === "bg_shared_clients" ? [] : [{ bg_client_id: "one", hub_client_id: "h", name: "JLR", created_at: "2026-10-19" }], error: null }));
