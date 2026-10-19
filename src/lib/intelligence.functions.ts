@@ -274,28 +274,12 @@ export const runIntelligenceAnalysis = createServerFn({ method: "POST" })
     }
 
 
-    // The background job returns failure objects rather than throwing, so a
-    // rejected-promise logger alone loses every early-exit reason (session not
-    // found, unauthorised, run-in-progress, retry ceiling). Record them.
-    const { scheduleBackground } = await import("./background.server");
-    scheduleBackground(
-      executeIntelligenceRun(supabase, userId, sessionId, true).then(async (result) => {
-        if (result.success) return result;
-        console.error(
-          `[intelligence:${sessionId}] run did not start: ${result.error}`,
-        );
-        try {
-          await supabaseAdmin
-            .from("intelligence_sessions")
-            .update({ status: "failed", last_error: `Run did not start: ${result.error}` })
-            .eq("id", sessionId);
-        } catch {
-          /* best effort */
-        }
-        return result;
-      }),
-      `intelligence:${sessionId}`,
-    );
+    // The run itself is executed by /api/public/intelligence-tick, which the
+    // scheduler calls every minute and which stays attached to a live
+    // connection for the whole multi-minute stream. Background work started
+    // from this request (ctx.waitUntil) is cancelled ~30s after we return,
+    // which is what froze runs at `running:0`.
+    void userId;
     return { success: true, sessionId };
   });
 
