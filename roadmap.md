@@ -1,6 +1,6 @@
 # Roadmap
 
-- [ ] Hub arrival client identity: show the mapped client at the top, prefill all five Room start forms, block unknown clients with Retry, test JLR and the existing suite, then publish if passing.
+- [x] Hub arrival client identity: authenticated JLR arrivals show the top label and prefilled identity in all five Rooms and quick Brief; unknown Retry blocks forms; real Briefing creation persisted linked JLR; 190/190 tests pass. Creative source selection passes automated coverage; real JLR Creative start cannot be verified until JLR has a linked Strategy parent. Publish requested after passing checks.
 
 - [x] Shared Hub client list, idempotent ensure_client, client-only run links and admin project attachment: 184 app tests, 35 isolated SQL checks and concurrent access-handler integration passed; publication requested for brandgrenade.app. Deployment completion and real Hub sync remain unverified; no live walkthrough per instruction.
 - [x] Hub ensures clients first; unknown arrivals show the specified syncing message and Retry without creating clients or including names in URLs. Automated interaction and creation-handler checks passed.
