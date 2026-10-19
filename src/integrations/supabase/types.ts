@@ -2977,6 +2977,15 @@ export type Database = {
         }
         Returns: string
       }
+      bg_client_options: {
+        Args: never
+        Returns: {
+          client_id: string
+          client_name: string
+          engagement_id: string
+          engagement_name: string
+        }[]
+      }
       bg_diagnostic_complete: { Args: { n: Json }; Returns: boolean }
       bg_is_admin: { Args: { _uid: string }; Returns: boolean }
       bg_output_field: {
@@ -2990,6 +2999,15 @@ export type Database = {
       bg_source_link: {
         Args: { _owner: string; _source: string; _table: string }
         Returns: Record<string, unknown>
+      }
+      bg_user_link_run: {
+        Args: {
+          _client: string
+          _engagement: string
+          _run_id: string
+          _table: string
+        }
+        Returns: string
       }
       can_access_session: {
         Args: { _session_id: string; _user_id: string }
