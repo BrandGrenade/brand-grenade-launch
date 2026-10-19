@@ -22,25 +22,19 @@ const quietSince = (...times: (string | null | undefined)[]): number => {
 /* 1. Intelligence Lab analysis — fully recoverable server-side.       */
 /* ------------------------------------------------------------------ */
 
-// Observed healthy runs heartbeat every few seconds while streaming and
-// complete inside ~15 min. Dispatch (queued -> first layer) is seconds.
-const INTEL_QUEUED_MS = 90_000; // dead-man's-switch on a lost dispatch
-const INTEL_RUNNING_MS = 5 * 60_000; // dead stream mid-run
+// Execution and restarts are owned by /api/public/intelligence-tick, which
+// stays attached to a live connection for the whole run. Recovery from here
+// used ctx.waitUntil, which the runtime cancels ~30s after the tick answers,
+// so every "recovery" froze at running:0 (JLR, 19 Oct 2026). This domain is
+// now only the final dead-man's switch: a run quiet far beyond the driver's
+// own takeover window is stopped with a visible message.
+const INTEL_DEAD_MS = 20 * 60_000;
 
 const intelligenceDomain: JobDomain = {
   name: "intelligence",
-  timeoutMs: INTEL_QUEUED_MS,
-  maxAttempts: 3,
-  // Lifetime ceiling: a run that keeps inching forward and dying must still
-  // terminate in a visible failure rather than retry (and bill) forever.
-  maxTotalAttempts: 5,
+  timeoutMs: INTEL_DEAD_MS,
+  maxAttempts: 1,
   backoffMs: DEFAULT_BACKOFF,
-
-  // A full analysis is a ~10 minute streamed run — far longer than the tick
-  // request that discovers it. Awaiting it inline meant the scheduler hung up,
-  // the Worker invocation was cancelled mid-stream, and the run froze part-way
-  // (observed 2026-09-19: session 22c0ba9b froze at running:2 on every tick).
-  detached: true,
   async list(admin) {
     const { data } = await admin
       .from("intelligence_sessions")
@@ -48,12 +42,9 @@ const intelligenceDomain: JobDomain = {
       .eq("status", "running");
     const jobs: SupervisedJob[] = [];
     for (const row of (data ?? []) as Record<string, string>[]) {
-      // A stalled territory revision must never escalate into a full re-run:
-      // the stored report is still valid, so it is released, not retried.
       if (row.stage_status?.startsWith("revising:")) continue;
       const quiet = quietSince(row.updated_at, row.started_at);
-      const threshold = row.stage_status === "queued" ? INTEL_QUEUED_MS : INTEL_RUNNING_MS;
-      if (quiet < threshold) continue;
+      if (quiet < INTEL_DEAD_MS) continue;
       jobs.push({
         jobId: row.id,
         ownerUserId: row.user_id,
@@ -63,11 +54,6 @@ const intelligenceDomain: JobDomain = {
       });
     }
     return jobs;
-  },
-  async recover(admin, job) {
-    const { executeIntelligenceRun } = await import("@/lib/intelligence.functions");
-    const r = await executeIntelligenceRun(admin as never, job.ownerUserId ?? undefined, job.jobId, true);
-    if (!r.success) throw new Error(r.error ?? "Intelligence run failed");
   },
   async escalate(admin, job, message) {
     await admin
