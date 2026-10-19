@@ -17,6 +17,7 @@ import { Label } from "@/components/ui/label";
 import { ResearchSynthesiserPanel } from "@/components/intelligence/ResearchSynthesiserPanel";
 import { writeSynthesiserHandoff } from "@/lib/synthesiser/handoff";
 import { recordSynthesiserRun } from "@/lib/synthesiser/runs";
+import { ClientPicker, type ClientLink } from "@/components/ClientPicker";
 import type { SynthesiserCategory } from "@/lib/synthesiser/types";
 
 const searchSchema = z.object({ brand: z.string().optional() });
@@ -44,6 +45,8 @@ function SynthesiserRoom() {
   const [brand, setBrand] = useState(search.brand ?? "");
   const [category, setCategory] = useState("");
   const [runId, setRunId] = useState<string | null>(null);
+  const [link, setLink] = useState<ClientLink>(null);
+  const linkReady = link?.clientId && link?.engagementId ? { clientId: link.clientId, engagementId: link.engagementId } : null;
 
   function goToLab(fields?: Partial<Record<SynthesiserCategory, string>>) {
     if (fields) {
@@ -140,6 +143,9 @@ function SynthesiserRoom() {
                 />
               </div>
             </div>
+            <div className="mt-5">
+              <ClientPicker value={link} onChange={setLink} />
+            </div>
           </Card>
 
           <div className="mt-8">
@@ -154,6 +160,7 @@ function SynthesiserRoom() {
                   category: category.trim() || null,
                   status: "in_progress",
                   claimCount,
+                  link: linkReady,
                 }).then((id) => setRunId(id));
               }}
               onApply={(fields, claimCount, claims) => {
@@ -164,6 +171,7 @@ function SynthesiserRoom() {
                   status: "applied",
                   claimCount,
                   claims,
+                  link: linkReady,
                 });
                 goToLab(fields);
               }}

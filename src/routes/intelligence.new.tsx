@@ -10,6 +10,7 @@ import {
   runIntelligenceAnalysis,
 } from "@/lib/intelligence.functions";
 import { consumeSynthesiserHandoff } from "@/lib/synthesiser/handoff";
+import { ClientPicker, type ClientLink } from "@/components/ClientPicker";
 import {
   IntelligenceForm,
   type IntelligenceFormValues,
@@ -45,11 +46,19 @@ function IntelligenceNewPage() {
   // renders exactly as it always has.
   const [handoff] = useState(() => consumeSynthesiserHandoff());
   const [initialBrand] = useState(handoff?.brand || (search.brand ?? ""));
+  const [link, setLink] = useState<ClientLink>(null);
 
 
   async function handleSubmit(values: IntelligenceFormValues): Promise<void> {
     try {
-      const { sessionId } = await createFn({ data: values });
+      const { sessionId } = await createFn({
+        data: {
+          ...values,
+          ...(link?.clientId && link?.engagementId
+            ? { client_id: link.clientId, engagement_id: link.engagementId }
+            : {}),
+        },
+      });
       void runFn({ data: { intelligenceSessionId: sessionId } }).catch(
         (err: unknown) => {
           console.warn("[Intelligence] run failed:", err);
@@ -111,6 +120,10 @@ function IntelligenceNewPage() {
                 — optional.
               </p>
             )}
+          </div>
+
+          <div className="mt-6">
+            <ClientPicker value={link} onChange={setLink} />
           </div>
 
           <IntelligenceForm

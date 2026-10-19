@@ -147,6 +147,36 @@ export const linkRun = createServerFn({ method: "POST" })
     return { status: status as string };
   });
 
+// Start-form client picker. Any signed-in user may list client/engagement
+// names and link a run they own at creation; the database enforces ownership,
+// the engagement/client pair, and records the link event.
+
+export type ClientOption = { client_id: string; client_name: string; engagement_id: string | null; engagement_name: string | null };
+
+export const getClientOptions = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await (context as Ctx).supabase.rpc("bg_client_options");
+    if (error) throw new Error(error.message);
+    return (data ?? []) as ClientOption[];
+  });
+
+export const linkOwnRun = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) =>
+    z.object({ table: RunTableEnum, runId: z.string().uuid(), clientId: z.string().uuid(), engagementId: z.string().uuid() }).parse(i),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: status, error } = await (context as Ctx).supabase.rpc("bg_user_link_run", {
+      _table: data.table,
+      _run_id: data.runId,
+      _client: data.clientId,
+      _engagement: data.engagementId,
+    });
+    if (error) throw new Error(error.message);
+    return { status: status as string };
+  });
+
 /** Admin: lock a Strategy Pipeline run or Briefing Room workspace before it completes. Locks are permanent. */
 export const lockRunEarly = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

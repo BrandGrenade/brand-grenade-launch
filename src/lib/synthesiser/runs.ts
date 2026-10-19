@@ -45,6 +45,8 @@ export async function recordSynthesiserRun(input: {
   status: SynthesiserRunStatus;
   claimCount: number;
   claims?: SynthesisedClaim[];
+  /** Optional client/engagement chosen on the start form; linked via the database. */
+  link?: { clientId: string; engagementId: string } | null;
 }): Promise<string | null> {
   try {
     const { data: auth } = await supabase.auth.getUser();
@@ -75,6 +77,14 @@ export async function recordSynthesiserRun(input: {
       .select("id")
       .single();
     if (error || !data) return null;
+    if (input.link?.clientId && input.link?.engagementId) {
+      await supabase.rpc("bg_user_link_run", {
+        _table: "synthesiser_runs",
+        _run_id: data.id,
+        _client: input.link.clientId,
+        _engagement: input.link.engagementId,
+      });
+    }
     if (input.status === "applied" && input.claims) await storeClaims(data.id, input.claims);
     return data.id;
   } catch {
