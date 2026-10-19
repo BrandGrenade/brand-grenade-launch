@@ -101,6 +101,7 @@ function Dashboard() {
   const navigate = useNavigate();
   const createSessionFn = useServerFn(createSession);
   const deleteBrandPermanentlyFn = useServerFn(deleteBrandPermanently);
+  const isAdmin = useIsAdmin();
   const { rows, loading, error, refresh } = useBrandRegister();
 
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
