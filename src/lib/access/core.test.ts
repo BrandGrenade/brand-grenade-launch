@@ -31,6 +31,7 @@ function makeDb(versions: Record<string, VersionRow[]> = {}): Db {
   return {
     listClients: async () => [],
     ensureClient: async (hub_client_id, name) => ({ bg_client_id: C1, hub_client_id, name, created_at: "2026-10-19" }),
+    attachClient: async (bg_client_id, hub_client_id) => ({ bg_client_id, hub_client_id, name: "C1", created_at: "2026-10-19" }),
     resolveClient: async (r) => (r === "hub-c1" ? C1 : r === "hub-c2" ? C2 : null),
     resolveEngagement: async (c, r) => (c === C1 && r === "job-1" ? E1 : null),
     listLinkedRuns: async (c) => runs.filter((r) => r.row.bg_client_id === c && r.row.link_status === "linked"),
