@@ -11,7 +11,7 @@ import { dealSummary } from "../deal-brief";
 /** T1: brief type + deal fields (Strategy Engine runs only; other Rooms have no brief type). */
 const briefInfo = (r: RunRec) => (r.table === "sessions" ? dealSummary(r.row) : { brief_type: null, deal: null });
 
-export const REQUESTS = ["list_clients", "ensure_client", "list_runs", "run_manifest", "get_output", "list_documents", "document_metadata", "provenance"] as const;
+export const REQUESTS = ["list_clients", "ensure_client", "attach_client", "list_runs", "run_manifest", "get_output", "list_documents", "document_metadata", "provenance"] as const;
 export type RequestName = (typeof REQUESTS)[number];
 
 export const ACCESS_ROUTE = "/api/public/bg-access";
@@ -43,6 +43,7 @@ export type VersionRow = { field: string; version_no: number; content: unknown; 
 export interface Db {
   listClients(): Promise<SharedClient[]>;
   ensureClient(hubClientId: string, name: string): Promise<SharedClient>;
+  attachClient(bgClientId: string, hubClientId: string): Promise<SharedClient>;
   resolveClient(clientRef: string): Promise<string | null>;
   resolveEngagement(bgClientId: string, ref: string): Promise<string | null>;
   listLinkedRuns(bgClientId: string, engagementId: string | null): Promise<RunRec[]>;
@@ -78,7 +79,7 @@ const SECOND_BRAIN = (id: string) =>
   id === "room02.saved_brief" || id.startsWith("stage16.") || id === "room04.final_prompts" || id === "stage22_architecture";
 
 export function scopeAllowsRequest(scope: Scope, req: RequestName): boolean {
-  if (req === "list_clients" || req === "ensure_client") return scope === "hub_tools";
+  if (req === "list_clients" || req === "ensure_client" || req === "attach_client") return scope === "hub_tools";
   if (scope === "admin") return req === "list_runs" || req === "run_manifest";
   return true;
 }
@@ -126,6 +127,7 @@ const out = z.string().min(1).max(100);
 const PARAMS = {
   list_clients: z.object({}).strict(),
   ensure_client: z.object({ hub_client_id: ref, name: ref }).strict(),
+  attach_client: z.object({ bg_client_id: uuid, hub_client_id: ref }).strict(),
   list_runs: z.object({ client_ref: ref, engagement: ref.optional() }).strict(),
   run_manifest: z.object({ client_ref: ref, run_id: uuid, version: ver.optional() }).strict(),
   get_output: z.object({ client_ref: ref, run_id: uuid, version: ver, output_id: out }).strict(),
@@ -476,10 +478,12 @@ export async function handleAccess(
   if (typeof params.output_id === "string") log.output_id = params.output_id;
   if (!scopeAllowsRequest(key.scope, name)) throw new AccessError("forbidden_scope", "This key's scope does not allow that request.");
 
-  if (name === "list_clients" || name === "ensure_client") {
+  if (name === "list_clients" || name === "ensure_client" || name === "attach_client") {
     const content = name === "list_clients"
       ? { clients: await db.listClients() }
-      : { client: await db.ensureClient(String(params.hub_client_id), String(params.name)) };
+      : name === "ensure_client"
+        ? { client: await db.ensureClient(String(params.hub_client_id), String(params.name)) }
+        : { client: await db.attachClient(String(params.bg_client_id), String(params.hub_client_id)) };
     return { scope: key.scope, client_ref: log.client_ref, bg_client_id: null, engagement_id: null,
       run_id: null, room: null, run_mode: null, run_status: null, version: null, locked: null,
       output_id: null, schema_version: `${name}.v1`, content_status: "structured", content,

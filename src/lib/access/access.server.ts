@@ -38,6 +38,17 @@ export function supabaseDb(sb: any): Db {
       if (error || !data?.[0]) throw new AccessError("unavailable", "Temporarily unavailable.");
       return data[0];
     },
+    async attachClient(bgClientId, hubClientId) {
+      const { data, error } = await sb.rpc("bg_attach_client", { _bg_client_id: bgClientId, _hub_client_id: hubClientId });
+      if (error) {
+        const msg = String(error.message ?? "");
+        if (msg.includes("not_found")) throw new AccessError("not_found", "Not found.");
+        if (msg.includes("hub_id_attached") || msg.includes("bg_client_attached")) throw new AccessError("invalid_request", "Already attached to a different client.");
+        throw new AccessError("unavailable", "Temporarily unavailable.");
+      }
+      if (!data?.[0]) throw new AccessError("unavailable", "Temporarily unavailable.");
+      return data[0];
+    },
     async resolveClient(ref) {
       const { data } = await sb.from("bg_external_ids").select("bg_client_id").eq("system", "hub_client").eq("external_id", ref).maybeSingle();
       return data?.bg_client_id ?? null;
