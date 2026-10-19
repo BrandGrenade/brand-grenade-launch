@@ -22,18 +22,32 @@ const quietSince = (...times: (string | null | undefined)[]): number => {
 /* 1. Intelligence Lab analysis — fully recoverable server-side.       */
 /* ------------------------------------------------------------------ */
 
-// Execution and restarts are owned by /api/public/intelligence-tick, which
-// stays attached to a live connection for the whole run. Recovery from here
-// used ctx.waitUntil, which the runtime cancels ~30s after the tick answers,
-// so every "recovery" froze at running:0 (JLR, 19 Oct 2026). This domain is
-// now only the final dead-man's switch: a run quiet far beyond the driver's
-// own takeover window is stopped with a visible message.
-const INTEL_DEAD_MS = 20 * 60_000;
+// Execution is owned by /api/public/intelligence-tick, which stays attached
+// to a live connection for the whole run and is woken by a database trigger
+// whenever a row is queued. Recovery used to run the analysis through
+// ctx.waitUntil, which the runtime cancels ~30s after the tick answers, so
+// every "recovery" froze at running:0 (JLR, 19 Oct 2026). Recovery now only
+// re-queues the row (a fast DB write); the trigger wakes the driver.
+const INTEL_QUEUED_MS = 3 * 60_000; // a queued wake-up that never started
+const INTEL_RUNNING_MS = 5 * 60_000; // dead stream mid-run
+
+async function requeue(admin: Admin, id: string): Promise<void> {
+  // Two writes so the wake-up trigger (fires on entering `queued`) also fires
+  // for a row that was already queued but whose wake-up was lost.
+  await admin.from("intelligence_sessions").update({ stage_status: "requeue" }).eq("id", id).eq("status", "running");
+  const { error } = await admin
+    .from("intelligence_sessions")
+    .update({ stage_status: "queued" })
+    .eq("id", id)
+    .eq("status", "running");
+  if (error) throw new Error(error.message);
+}
 
 const intelligenceDomain: JobDomain = {
   name: "intelligence",
-  timeoutMs: INTEL_DEAD_MS,
-  maxAttempts: 1,
+  timeoutMs: INTEL_QUEUED_MS,
+  maxAttempts: 3,
+  maxTotalAttempts: 5,
   backoffMs: DEFAULT_BACKOFF,
   async list(admin) {
     const { data } = await admin
@@ -44,7 +58,8 @@ const intelligenceDomain: JobDomain = {
     for (const row of (data ?? []) as Record<string, string>[]) {
       if (row.stage_status?.startsWith("revising:")) continue;
       const quiet = quietSince(row.updated_at, row.started_at);
-      if (quiet < INTEL_DEAD_MS) continue;
+      const threshold = row.stage_status === "queued" ? INTEL_QUEUED_MS : INTEL_RUNNING_MS;
+      if (quiet < threshold) continue;
       jobs.push({
         jobId: row.id,
         ownerUserId: row.user_id,
@@ -55,6 +70,9 @@ const intelligenceDomain: JobDomain = {
     }
     return jobs;
   },
+  async recover(admin, job) {
+    await requeue(admin, job.jobId);
+  },
   async escalate(admin, job, message) {
     await admin
       .from("intelligence_sessions")
@@ -64,14 +82,14 @@ const intelligenceDomain: JobDomain = {
 };
 
 /**
- * Stalled per-territory revisions. Executed and retried by
- * /api/public/intelligence-tick; this is only the final dead-man's switch
- * that releases the session with the original territory kept.
+ * Stalled per-territory revisions. Executed by /api/public/intelligence-tick
+ * (woken by the same trigger when a pending revision is recorded); recovery
+ * clears the claim so the trigger wakes the driver again.
  */
 const intelligenceReviseDomain: JobDomain = {
   name: "intelligence-revise",
-  timeoutMs: INTEL_DEAD_MS,
-  maxAttempts: 1,
+  timeoutMs: 5 * 60_000,
+  maxAttempts: 2,
   backoffMs: DEFAULT_BACKOFF,
   async list(admin) {
     const { data } = await admin
@@ -87,7 +105,32 @@ const intelligenceReviseDomain: JobDomain = {
         detail: "Territory revision",
         row: r,
       }))
-      .filter((j) => j.quietMs >= INTEL_DEAD_MS);
+      .filter((j) => j.quietMs >= 5 * 60_000);
+  },
+  async recover(admin, job) {
+    const meta = (job.row as Record<string, any> | undefined)?.report_metadata;
+    const pending =
+      meta && typeof meta === "object" && !Array.isArray(meta) ? (meta as Record<string, any>)["pending_revision"] : null;
+    if (!pending?.instructions) {
+      await admin
+        .from("intelligence_sessions")
+        .update({
+          status: "complete",
+          stage_status: "complete:10",
+          last_error:
+            "Territory revision stalled and could not be resumed — the original territory was kept. Please request the revision again.",
+        })
+        .eq("id", job.jobId);
+      return;
+    }
+    const next = { ...pending };
+    delete next["claimed_at"];
+    const { error } = await admin
+      .from("intelligence_sessions")
+      .update({ report_metadata: { ...meta, pending_revision: { ...next, requeued_at: new Date().toISOString() } } })
+      .eq("id", job.jobId)
+      .eq("status", "running");
+    if (error) throw new Error(error.message);
   },
   async escalate(admin, job) {
     await admin
