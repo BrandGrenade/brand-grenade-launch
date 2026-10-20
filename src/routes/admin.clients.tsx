@@ -124,7 +124,7 @@ function ClientsAdmin() {
             <Card className="mt-6 p-6">
               <h2 className="text-h3 text-text-primary">Runs by client and job</h2>
               <p className="mt-1 mb-3 text-body-sm text-text-secondary">Every run, grouped Client → Job → Runs. Archived runs are listed further down.</p>
-              {register.isLoading ? <p className="text-text-secondary">Loading…</p> : <ClientRunRegister groups={registerGroups} onChanged={() => void refresh()} />}
+              {register.error ? <p className="text-destructive">Runs could not be loaded: {(register.error as Error).message}</p> : register.isLoading ? <p className="text-text-secondary">Loading…</p> : <ClientRunRegister groups={registerGroups} onChanged={() => void refresh()} />}
             </Card>
 
             <Card className="mt-6 p-6">

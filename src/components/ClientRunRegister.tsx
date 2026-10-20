@@ -13,6 +13,7 @@ import {
   AlertDialogFooter,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { ProjectClient } from "@/components/ProjectClient";
 
 const linkCls = "text-[13px] font-medium text-text-secondary underline hover:text-text-primary";
 
@@ -119,7 +120,7 @@ function RunTable({ job, onChanged }: { job: JobGroup; onChanged: () => void }) 
               <td className="px-2">{r.runType ?? "—"}</td>
               <td className="px-2" title={formatAbsolute(r.date)}>{new Date(r.date).toLocaleDateString("en-GB")}</td>
               <td className="px-2">{r.status}</td>
-              <td className="px-2"><RunRowActions run={r} onArchived={onChanged} /></td>
+              <td className="px-2"><div className="flex items-center gap-3">{!r.clientId && <ProjectClient table={r.table} id={r.id} unlinked onAttached={onChanged} />}<RunRowActions run={r} onArchived={onChanged} /></div></td>
             </tr>
           ))}
         </tbody>
@@ -134,7 +135,7 @@ function JobSection({ job, clientName, onChanged }: { job: JobGroup; clientName:
     <div className="mt-3 rounded-md border border-border bg-background p-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="text-[13px] font-semibold text-text-primary">
-          Job: {job.name} <span className="font-normal text-text-tertiary">· {job.runs.length} run{job.runs.length === 1 ? "" : "s"}</span>
+          {job.engagementId === null && job.key.startsWith("brand:") ? "Brand" : "Job"}: {job.name} <span className="font-normal text-text-tertiary">· {job.runs.length} run{job.runs.length === 1 ? "" : "s"}</span>
         </div>
         <GroupHeaderActions scope="job-wide" title={`${clientName} · ${job.name}`} runs={job.runs} expanded={open} onViewAll={() => setOpen((v) => !v)} />
       </div>
@@ -144,7 +145,7 @@ function JobSection({ job, clientName, onChanged }: { job: JobGroup; clientName:
 }
 
 export function ClientRunRegister({ groups, onChanged }: { groups: ClientGroup[]; onChanged: () => void }) {
-  const [open, setOpen] = useState<Set<string>>(() => new Set());
+  const [open, setOpen] = useState<Set<string>>(() => new Set(["__none__"]));
   const toggle = (k: string) => setOpen((p) => { const n = new Set(p); if (n.has(k)) n.delete(k); else n.add(k); return n; });
   return (
     <div className="space-y-3">

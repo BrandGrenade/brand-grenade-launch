@@ -73,13 +73,14 @@ export function groupRuns(runs: RegisterRun[], names: GroupName[]): ClientGroup[
       };
       clients.set(cKey, c);
     }
-    const jKey = r.clientId && r.engagementId ? r.engagementId : "__nojob__";
+    // Unlinked runs are listed under the brand name each run was created with.
+    const jKey = !r.clientId ? `brand:${r.brand.trim().toLowerCase() || "—"}` : r.engagementId ? r.engagementId : "__nojob__";
     let j = c.jobs.find((x) => x.key === jKey);
     if (!j) {
       j = {
         key: jKey,
         engagementId: jKey === "__nojob__" ? null : r.engagementId,
-        name: jKey === "__nojob__" ? NO_JOB : (jobNames.get(jKey) ?? "Job"),
+        name: !r.clientId ? (r.brand.trim() || "No brand") : jKey === "__nojob__" ? NO_JOB : (jobNames.get(jKey) ?? "Job"),
         runs: [],
       };
       c.jobs.push(j);
