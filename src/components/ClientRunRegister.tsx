@@ -145,12 +145,13 @@ function JobSection({ job, clientName, onChanged }: { job: JobGroup; clientName:
 }
 
 export function ClientRunRegister({ groups, onChanged }: { groups: ClientGroup[]; onChanged: () => void }) {
-  const [open, setOpen] = useState<Set<string>>(() => new Set(["__none__"]));
-  const toggle = (k: string) => setOpen((p) => { const n = new Set(p); if (n.has(k)) n.delete(k); else n.add(k); return n; });
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const isExpanded = (key: string) => expanded[key] ?? (key === "__none__" || key === groups[0]?.key);
+  const toggle = (key: string) => setExpanded((previous) => ({ ...previous, [key]: !isExpanded(key) }));
   return (
     <div className="space-y-3">
       {groups.map((c) => {
-        const isOpen = open.has(c.key);
+        const isOpen = isExpanded(c.key);
         const all = c.jobs.flatMap((j) => j.runs);
         return (
           <section key={c.key} className="rounded-lg border border-border bg-card-surface p-4">

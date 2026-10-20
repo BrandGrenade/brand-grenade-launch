@@ -92,10 +92,8 @@ export function groupRuns(runs: RegisterRun[], names: GroupName[]): ClientGroup[
   const out = [...clients.values()];
   for (const c of out) {
     for (const j of c.jobs) j.runs.sort((a, b) => b.date.localeCompare(a.date));
-    // Named jobs first (newest activity first), "No job" last.
-    c.jobs.sort((a, b) =>
-      a.engagementId === null ? 1 : b.engagementId === null ? -1 : (b.runs[0]?.date ?? "").localeCompare(a.runs[0]?.date ?? ""),
-    );
+    // Newest run first, including runs without a job.
+    c.jobs.sort((a, b) => (b.runs[0]?.date ?? "").localeCompare(a.runs[0]?.date ?? ""));
   }
   // Linked clients first, newest activity first; the unlinked bucket last.
   out.sort((a, b) => (a.clientId === null ? 1 : b.clientId === null ? -1 : b.latest.localeCompare(a.latest)));

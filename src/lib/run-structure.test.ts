@@ -27,6 +27,19 @@ const names = [
 ];
 
 describe("Client → Job → Runs", () => {
+  it("shows the latest JLR Intelligence run before older jobs and runs", () => {
+    const restoredId = "4740d024-9ce8-4757-905b-91767ce2dff0";
+    const groups = groupRuns([
+      run({ id: "older-job", engagementId: "j1", date: "2026-10-19T00:00:00Z" }),
+      run({ id: "older-no-job", date: "2026-10-18T00:00:00Z" }),
+      run({ id: "other-client", clientId: "c2", date: "2026-10-19T03:00:00Z" }),
+      run({ id: restoredId, table: "intelligence_sessions", date: "2026-10-20T04:14:09.964646Z", openHref: `/intelligence/${restoredId}` }),
+    ], names);
+    expect(groups[0].name).toBe("JLR");
+    expect(groups[0].jobs[0].name).toBe(NO_JOB);
+    expect(groups[0].jobs[0].runs.map((r) => r.id)).toEqual([restoredId, "older-no-job"]);
+    expect(groups[0].jobs[0].runs[0].openHref).toBe(`/intelligence/${restoredId}`);
+  });
   it("a second job for the same client keeps its own runs", () => {
     const g = groupRuns([run({ id: "a", engagementId: "j1" }), run({ id: "b", engagementId: "j2" }), run({ id: "c", engagementId: "j1" })], names);
     expect(g).toHaveLength(1);
