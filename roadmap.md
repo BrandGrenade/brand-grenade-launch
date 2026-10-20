@@ -1,6 +1,6 @@
 # Roadmap
 
-- [ ] Verify restored JLR Intelligence run link and newest-first placement on dashboard and Admin; preserve report and versions.
+- [x] JLR run 4740d024 verified first and expanded under JLR on dashboard/Admin in authenticated preview; 209 tests pass, build OK, no data changes or publication. Report opens with history/handoff, but current saved report has five territories; requested three remain in saved version 7db2daf8 (05:38 UTC), so prior restoration claim is not verified.
 
 - [x] Intelligence Lab progress: confirmed completion separated from estimated streaming markers; last saved activity timer verified on authenticated real JLR run without restarting it; 195 tests pass and preview build OK. Individual layer completion remains unavailable from the existing single-call engine; no publication requested.
 
