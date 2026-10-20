@@ -88,6 +88,8 @@ export type Database = {
       }
       bg_clients: {
         Row: {
+          archived_at: string | null
+          archived_by: string | null
           created_at: string
           created_by: string | null
           id: string
@@ -95,6 +97,8 @@ export type Database = {
           notes: string | null
         }
         Insert: {
+          archived_at?: string | null
+          archived_by?: string | null
           created_at?: string
           created_by?: string | null
           id?: string
@@ -102,6 +106,8 @@ export type Database = {
           notes?: string | null
         }
         Update: {
+          archived_at?: string | null
+          archived_by?: string | null
           created_at?: string
           created_by?: string | null
           id?: string
@@ -273,6 +279,8 @@ export type Database = {
       }
       briefing_room_workspaces: {
         Row: {
+          archived_at: string | null
+          archived_by: string | null
           bg_client_id: string | null
           bg_source_id: string | null
           brand_name: string
@@ -304,6 +312,8 @@ export type Database = {
           version_reason: string | null
         }
         Insert: {
+          archived_at?: string | null
+          archived_by?: string | null
           bg_client_id?: string | null
           bg_source_id?: string | null
           brand_name?: string
@@ -335,6 +345,8 @@ export type Database = {
           version_reason?: string | null
         }
         Update: {
+          archived_at?: string | null
+          archived_by?: string | null
           bg_client_id?: string | null
           bg_source_id?: string | null
           brand_name?: string
@@ -630,6 +642,8 @@ export type Database = {
       intelligence_sessions: {
         Row: {
           additional_context: string | null
+          archived_at: string | null
+          archived_by: string | null
           bg_client_id: string | null
           brand_name: string
           category: string | null
@@ -674,6 +688,8 @@ export type Database = {
         }
         Insert: {
           additional_context?: string | null
+          archived_at?: string | null
+          archived_by?: string | null
           bg_client_id?: string | null
           brand_name: string
           category?: string | null
@@ -718,6 +734,8 @@ export type Database = {
         }
         Update: {
           additional_context?: string | null
+          archived_at?: string | null
+          archived_by?: string | null
           bg_client_id?: string | null
           brand_name?: string
           category?: string | null
@@ -1221,6 +1239,8 @@ export type Database = {
       }
       sessions: {
         Row: {
+          archived_at: string | null
+          archived_by: string | null
           bg_client_id: string | null
           bg_source_id: string | null
           brand_audience_relationship: string | null
@@ -1451,6 +1471,8 @@ export type Database = {
           version_reason: string | null
         }
         Insert: {
+          archived_at?: string | null
+          archived_by?: string | null
           bg_client_id?: string | null
           bg_source_id?: string | null
           brand_audience_relationship?: string | null
@@ -1681,6 +1703,8 @@ export type Database = {
           version_reason?: string | null
         }
         Update: {
+          archived_at?: string | null
+          archived_by?: string | null
           bg_client_id?: string | null
           bg_source_id?: string | null
           brand_audience_relationship?: string | null
@@ -2447,6 +2471,8 @@ export type Database = {
       }
       stimulus_runs: {
         Row: {
+          archived_at: string | null
+          archived_by: string | null
           bg_client_id: string | null
           brief_stale_ack_at: string | null
           channel_brief: string
@@ -2485,6 +2511,8 @@ export type Database = {
           winning_line_direction_id: string | null
         }
         Insert: {
+          archived_at?: string | null
+          archived_by?: string | null
           bg_client_id?: string | null
           brief_stale_ack_at?: string | null
           channel_brief?: string
@@ -2523,6 +2551,8 @@ export type Database = {
           winning_line_direction_id?: string | null
         }
         Update: {
+          archived_at?: string | null
+          archived_by?: string | null
           bg_client_id?: string | null
           brief_stale_ack_at?: string | null
           channel_brief?: string
@@ -2742,6 +2772,8 @@ export type Database = {
       synthesiser_runs: {
         Row: {
           applied_at: string | null
+          archived_at: string | null
+          archived_by: string | null
           bg_client_id: string | null
           brand_name: string
           category: string | null
@@ -2760,6 +2792,8 @@ export type Database = {
         }
         Insert: {
           applied_at?: string | null
+          archived_at?: string | null
+          archived_by?: string | null
           bg_client_id?: string | null
           brand_name: string
           category?: string | null
@@ -2778,6 +2812,8 @@ export type Database = {
         }
         Update: {
           applied_at?: string | null
+          archived_at?: string | null
+          archived_by?: string | null
           bg_client_id?: string | null
           brand_name?: string
           category?: string | null
@@ -2881,9 +2917,12 @@ export type Database = {
     Views: {
       brand_register_briefings: {
         Row: {
+          archived_at: string | null
+          bg_client_id: string | null
           brand_name: string | null
           category: string | null
           created_at: string | null
+          engagement_id: string | null
           has_diagnosis: boolean | null
           has_relevance: boolean | null
           has_tensions: boolean | null
@@ -2894,9 +2933,12 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          archived_at?: string | null
+          bg_client_id?: string | null
           brand_name?: string | null
           category?: string | null
           created_at?: string | null
+          engagement_id?: string | null
           has_diagnosis?: never
           has_relevance?: never
           has_tensions?: never
@@ -2907,9 +2949,12 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          archived_at?: string | null
+          bg_client_id?: string | null
           brand_name?: string | null
           category?: string | null
           created_at?: string | null
+          engagement_id?: string | null
           has_diagnosis?: never
           has_relevance?: never
           has_tensions?: never
@@ -2919,14 +2964,33 @@ export type Database = {
           status?: string | null
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "briefing_room_workspaces_bg_client_id_fkey"
+            columns: ["bg_client_id"]
+            isOneToOne: false
+            referencedRelation: "bg_clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "briefing_room_workspaces_engagement_id_fkey"
+            columns: ["engagement_id"]
+            isOneToOne: false
+            referencedRelation: "bg_engagements"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       brand_register_sessions: {
         Row: {
+          archived_at: string | null
+          bg_client_id: string | null
           brand_name: string | null
+          brief_type: string | null
           category: string | null
           created_at: string | null
           current_stage: number | null
+          engagement_id: string | null
           has_stage_16_consulting: boolean | null
           has_stage_17: boolean | null
           has_stage_22: boolean | null
@@ -2935,15 +2999,20 @@ export type Database = {
           is_preflight_test: boolean | null
           last_heartbeat_at: string | null
           phase_2_status: string | null
+          run_mode: string | null
           stage_status: string | null
           status: string | null
           updated_at: string | null
         }
         Insert: {
+          archived_at?: string | null
+          bg_client_id?: string | null
           brand_name?: string | null
+          brief_type?: string | null
           category?: string | null
           created_at?: string | null
           current_stage?: number | null
+          engagement_id?: string | null
           has_stage_16_consulting?: never
           has_stage_17?: never
           has_stage_22?: never
@@ -2952,15 +3021,20 @@ export type Database = {
           is_preflight_test?: boolean | null
           last_heartbeat_at?: string | null
           phase_2_status?: string | null
+          run_mode?: string | null
           stage_status?: string | null
           status?: string | null
           updated_at?: string | null
         }
         Update: {
+          archived_at?: string | null
+          bg_client_id?: string | null
           brand_name?: string | null
+          brief_type?: string | null
           category?: string | null
           created_at?: string | null
           current_stage?: number | null
+          engagement_id?: string | null
           has_stage_16_consulting?: never
           has_stage_17?: never
           has_stage_22?: never
@@ -2969,11 +3043,27 @@ export type Database = {
           is_preflight_test?: boolean | null
           last_heartbeat_at?: string | null
           phase_2_status?: string | null
+          run_mode?: string | null
           stage_status?: string | null
           status?: string | null
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "sessions_bg_client_id_fkey"
+            columns: ["bg_client_id"]
+            isOneToOne: false
+            referencedRelation: "bg_clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sessions_engagement_id_fkey"
+            columns: ["engagement_id"]
+            isOneToOne: false
+            referencedRelation: "bg_engagements"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Functions: {
@@ -2990,6 +3080,10 @@ export type Database = {
         }
         Returns: string
       }
+      bg_admin_remove_client: {
+        Args: { _client: string; _confirm_name: string; _mode: string }
+        Returns: string
+      }
       bg_attach_client: {
         Args: { _bg_client_id: string; _hub_client_id: string }
         Returns: {
@@ -2997,6 +3091,15 @@ export type Database = {
           created_at: string
           hub_client_id: string
           name: string
+        }[]
+      }
+      bg_client_holdings: {
+        Args: { _client: string }
+        Returns: {
+          archived_runs: number
+          client_name: string
+          jobs: number
+          runs: number
         }[]
       }
       bg_client_options: {
@@ -3033,6 +3136,19 @@ export type Database = {
       bg_resolve_hub: {
         Args: { _client: string; _job: string }
         Returns: Record<string, unknown>
+      }
+      bg_run_group_names: {
+        Args: never
+        Returns: {
+          client_id: string
+          client_name: string
+          engagement_id: string
+          engagement_name: string
+        }[]
+      }
+      bg_set_run_archived: {
+        Args: { _archived: boolean; _run_id: string; _table: string }
+        Returns: string
       }
       bg_shared_clients: {
         Args: never
