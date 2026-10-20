@@ -40,6 +40,12 @@ type Claimed =
       territoryId: string;
       instructions: string;
       mode: "revise" | "replace";
+    }
+  | {
+      kind: "doc00a";
+      row: Row;
+      instructions?: string;
+      territoryIds?: string[];
     };
 
 const quietFor = (iso: string | null) => Date.now() - (iso ? Date.parse(iso) : 0);
@@ -200,6 +206,31 @@ export const Route = createFileRoute("/api/public/intelligence-tick")({
                 mode: claimed.mode,
               });
               return { id, kind: "revision", outcome: r.success ? "completed" : `failed: ${r.error}` };
+            }
+            if (claimed.kind === "doc00a") {
+              const { regenerateDocument00ARun } = await import("@/lib/doc00a-regenerate.server");
+              const r = await regenerateDocument00ARun({
+                sessionId: id,
+                instructions: claimed.instructions,
+                territoryIds: claimed.territoryIds,
+              });
+              // Clear the pending request whatever the outcome.
+              try {
+                const { data: cur } = await supabaseAdmin
+                  .from("intelligence_sessions")
+                  .select("report_metadata")
+                  .eq("id", id)
+                  .maybeSingle();
+                const m =
+                  cur?.report_metadata && typeof cur.report_metadata === "object" && !Array.isArray(cur.report_metadata)
+                    ? { ...(cur.report_metadata as Record<string, unknown>) }
+                    : {};
+                delete m["pending_doc00a_regeneration"];
+                await supabaseAdmin.from("intelligence_sessions").update({ report_metadata: m } as never).eq("id", id);
+              } catch {
+                /* best effort */
+              }
+              return { id, kind: "doc00a", outcome: r.success ? "completed" : `failed: ${r.error}` };
             }
             const r = await executeIntelligenceRun(supabaseAdmin as never, claimed.row.user_id, id, true);
             if (!r.success) {
