@@ -65,6 +65,45 @@ async function claimNext(
   for (const row of (rows ?? []) as Row[]) {
     const stage = row.stage_status ?? "";
 
+    if (stage.startsWith("doc00a:")) {
+      const meta = metaOf(row);
+      const pending = meta["pending_doc00a_regeneration"];
+      const claimedAt = pending?.claimed_at ? Date.parse(pending.claimed_at) : 0;
+      const owned = claimedAt && Date.now() - claimedAt < REVISION_STALE_MS;
+      if (owned && !opts.force) continue;
+      const attempts = Number(pending?.attempts ?? 0);
+      if (!pending || attempts >= MAX_REVISION_ATTEMPTS) {
+        await admin
+          .from("intelligence_sessions")
+          .update({
+            status: "complete",
+            stage_status: "complete:10",
+            last_error:
+              "Document 00A regeneration could not be completed — the previous report was kept unchanged. Please request the regeneration again.",
+          })
+          .eq("id", row.id)
+          .eq("stage_status", stage);
+        continue;
+      }
+      const nextMeta = {
+        ...meta,
+        pending_doc00a_regeneration: { ...pending, claimed_at: new Date().toISOString(), attempts: attempts + 1 },
+      };
+      const { data: won } = await admin
+        .from("intelligence_sessions")
+        .update({ report_metadata: nextMeta })
+        .eq("id", row.id)
+        .eq("updated_at", row.updated_at)
+        .select("id");
+      if (!won?.length) continue;
+      return {
+        kind: "doc00a",
+        row,
+        instructions: typeof pending.instructions === "string" ? pending.instructions : undefined,
+        territoryIds: Array.isArray(pending.territory_ids) ? pending.territory_ids : undefined,
+      };
+    }
+
     if (stage.startsWith("revising:")) {
       const meta = metaOf(row);
       const pending = meta["pending_revision"];
