@@ -62,7 +62,29 @@ export const regenerateDocument00A = createServerFn({ method: "POST" })
         sessionId: data.intelligenceSessionId,
         instructions: data.instructions,
         territoryIds: data.territoryIds,
-      }).then(async (res) => {
+      })
+        .catch(async (e) => {
+          // A failed regeneration must never strand the session: the last good
+          // report stays live and the error is surfaced on the report page.
+          console.error(`[doc00a:${data.intelligenceSessionId}] regeneration crashed`, e);
+          try {
+            await supabaseAdmin
+              .from("intelligence_sessions")
+              .update({
+                status: "complete",
+                stage_status: "complete:10",
+                last_error: `Document 00A regeneration failed; the previous report was kept unchanged. (${String(
+                  e instanceof Error ? e.message : e,
+                ).slice(0, 500)})`,
+              } as never)
+              .eq("id", data.intelligenceSessionId)
+              .eq("status", "running");
+          } catch {
+            /* best effort */
+          }
+          return { success: false as const, error: "regeneration crashed" };
+        })
+        .then(async (res) => {
         try {
           const { data: cur } = await supabaseAdmin
             .from("intelligence_sessions")
