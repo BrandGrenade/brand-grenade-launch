@@ -241,8 +241,8 @@ function Dashboard() {
               <span className="text-label text-text-secondary">Brand Register</span>
               <h1 className="text-h2 mt-3 text-text-primary">Your Brands</h1>
               <p className="text-body mt-2 text-text-secondary">
-                One row per brand. Every Intelligence Lab analysis, Briefing
-                Room session, Strategy Pipeline, and Brand Detonation lives here.
+                Every run, grouped by client, then job. Open, download or
+                archive each run on its own row.
               </p>
             </div>
             {isAdmin && (
