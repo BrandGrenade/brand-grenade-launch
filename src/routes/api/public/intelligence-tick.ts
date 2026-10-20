@@ -244,9 +244,19 @@ export const Route = createFileRoute("/api/public/intelligence-tick")({
           } catch (e) {
             const message = e instanceof Error ? e.message : String(e);
             console.error(`[intelligence-tick:${id}]`, e);
+            // A failed revision or regeneration must never hide the report:
+            // restore the completed status and keep the last good report live.
+            const failedPatch =
+              claimed.kind === "analysis"
+                ? { status: "failed", last_error: `Run error: ${message}` }
+                : {
+                    status: "complete",
+                    stage_status: "complete:10",
+                    last_error: `${claimed.kind === "doc00a" ? "Document 00A regeneration" : "Territory revision"} failed; the previous report was kept unchanged. (${message.slice(0, 400)})`,
+                  };
             await supabaseAdmin
               .from("intelligence_sessions")
-              .update({ status: "failed", last_error: `Run error: ${message}` })
+              .update(failedPatch as never)
               .eq("id", id)
               .eq("status", "running");
             return { id, kind: claimed.kind, outcome: `error: ${message}` };
