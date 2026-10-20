@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { useQuery } from "@tanstack/react-query";
 import { useIsAdmin } from "@/lib/demo-mode";
 import { attachProjectClient, getClientOptions, getProjectClient, type ClientOption } from "@/lib/bg-clients.functions";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -8,14 +7,23 @@ import { toast } from "sonner";
 
 type Table = "sessions" | "intelligence_sessions" | "briefing_room_workspaces" | "synthesiser_runs" | "saved_briefs" | "stimulus_runs";
 
+let optionsCache: Promise<ClientOption[]> | null = null;
+
 /** Admin-only, once-only attachment for the exact project ID, never its name. */
 export function ProjectClient({ table, id, unlinked, onAttached }: { table: Table; id: string; unlinked?: boolean; onAttached?: () => void }) {
   const admin = useIsAdmin();
   const options = useServerFn(getClientOptions);
   const attach = useServerFn(attachProjectClient);
   const getProject = useServerFn(getProjectClient);
-  const opts = useQuery({ queryKey: ["bg-client-options"], queryFn: () => options(), enabled: admin, staleTime: 60_000 });
-  const clients: ClientOption[] = [...new Map((opts.data ?? []).map((r) => [r.client_id, r])).values()];
+  const [clients, setClients] = useState<ClientOption[]>([]);
+  useEffect(() => {
+    if (!admin) return;
+    let cancelled = false;
+    // One shared request for the option list, however many rows show a dropdown.
+    optionsCache ??= options().catch((e) => { optionsCache = null; throw e; });
+    void optionsCache.then((rows) => { if (!cancelled) setClients([...new Map(rows.map((r) => [r.client_id, r])).values()]); }).catch(() => {});
+    return () => { cancelled = true; };
+  }, [admin, options]);
   const [clientId, setClientId] = useState<string | null | undefined>(unlinked ? null : undefined);
   const [busy, setBusy] = useState(false);
   useEffect(() => {
