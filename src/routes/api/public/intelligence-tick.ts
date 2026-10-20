@@ -40,6 +40,12 @@ type Claimed =
       territoryId: string;
       instructions: string;
       mode: "revise" | "replace";
+    }
+  | {
+      kind: "doc00a";
+      row: Row;
+      instructions?: string;
+      territoryIds?: string[];
     };
 
 const quietFor = (iso: string | null) => Date.now() - (iso ? Date.parse(iso) : 0);
@@ -64,6 +70,45 @@ async function claimNext(
 
   for (const row of (rows ?? []) as Row[]) {
     const stage = row.stage_status ?? "";
+
+    if (stage.startsWith("doc00a:")) {
+      const meta = metaOf(row);
+      const pending = meta["pending_doc00a_regeneration"];
+      const claimedAt = pending?.claimed_at ? Date.parse(pending.claimed_at) : 0;
+      const owned = claimedAt && Date.now() - claimedAt < REVISION_STALE_MS;
+      if (owned && !opts.force) continue;
+      const attempts = Number(pending?.attempts ?? 0);
+      if (!pending || attempts >= MAX_REVISION_ATTEMPTS) {
+        await admin
+          .from("intelligence_sessions")
+          .update({
+            status: "complete",
+            stage_status: "complete:10",
+            last_error:
+              "Document 00A regeneration could not be completed — the previous report was kept unchanged. Please request the regeneration again.",
+          })
+          .eq("id", row.id)
+          .eq("stage_status", stage);
+        continue;
+      }
+      const nextMeta = {
+        ...meta,
+        pending_doc00a_regeneration: { ...pending, claimed_at: new Date().toISOString(), attempts: attempts + 1 },
+      };
+      const { data: won } = await admin
+        .from("intelligence_sessions")
+        .update({ report_metadata: nextMeta })
+        .eq("id", row.id)
+        .eq("updated_at", row.updated_at)
+        .select("id");
+      if (!won?.length) continue;
+      return {
+        kind: "doc00a",
+        row,
+        instructions: typeof pending.instructions === "string" ? pending.instructions : undefined,
+        territoryIds: Array.isArray(pending.territory_ids) ? pending.territory_ids : undefined,
+      };
+    }
 
     if (stage.startsWith("revising:")) {
       const meta = metaOf(row);
@@ -162,6 +207,31 @@ export const Route = createFileRoute("/api/public/intelligence-tick")({
               });
               return { id, kind: "revision", outcome: r.success ? "completed" : `failed: ${r.error}` };
             }
+            if (claimed.kind === "doc00a") {
+              const { regenerateDocument00ARun } = await import("@/lib/doc00a-regenerate.server");
+              const r = await regenerateDocument00ARun({
+                sessionId: id,
+                instructions: claimed.instructions,
+                territoryIds: claimed.territoryIds,
+              });
+              // Clear the pending request whatever the outcome.
+              try {
+                const { data: cur } = await supabaseAdmin
+                  .from("intelligence_sessions")
+                  .select("report_metadata")
+                  .eq("id", id)
+                  .maybeSingle();
+                const m =
+                  cur?.report_metadata && typeof cur.report_metadata === "object" && !Array.isArray(cur.report_metadata)
+                    ? { ...(cur.report_metadata as Record<string, unknown>) }
+                    : {};
+                delete m["pending_doc00a_regeneration"];
+                await supabaseAdmin.from("intelligence_sessions").update({ report_metadata: m } as never).eq("id", id);
+              } catch {
+                /* best effort */
+              }
+              return { id, kind: "doc00a", outcome: r.success ? "completed" : `failed: ${r.error}` };
+            }
             const r = await executeIntelligenceRun(supabaseAdmin as never, claimed.row.user_id, id, true);
             if (!r.success) {
               await supabaseAdmin
@@ -174,9 +244,19 @@ export const Route = createFileRoute("/api/public/intelligence-tick")({
           } catch (e) {
             const message = e instanceof Error ? e.message : String(e);
             console.error(`[intelligence-tick:${id}]`, e);
+            // A failed revision or regeneration must never hide the report:
+            // restore the completed status and keep the last good report live.
+            const failedPatch =
+              claimed.kind === "analysis"
+                ? { status: "failed", last_error: `Run error: ${message}` }
+                : {
+                    status: "complete",
+                    stage_status: "complete:10",
+                    last_error: `${claimed.kind === "doc00a" ? "Document 00A regeneration" : "Territory revision"} failed; the previous report was kept unchanged. (${message.slice(0, 400)})`,
+                  };
             await supabaseAdmin
               .from("intelligence_sessions")
-              .update({ status: "failed", last_error: `Run error: ${message}` })
+              .update(failedPatch as never)
               .eq("id", id)
               .eq("status", "running");
             return { id, kind: claimed.kind, outcome: `error: ${message}` };

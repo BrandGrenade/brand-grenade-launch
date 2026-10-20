@@ -55,36 +55,9 @@ export const regenerateDocument00A = createServerFn({ method: "POST" })
       } as never)
       .eq("id", data.intelligenceSessionId);
 
-    const { scheduleBackground } = await import("./background.server");
-    const { regenerateDocument00ARun } = await import("./doc00a-regenerate.server");
-    scheduleBackground(
-      regenerateDocument00ARun({
-        sessionId: data.intelligenceSessionId,
-        instructions: data.instructions,
-        territoryIds: data.territoryIds,
-      }).then(async (res) => {
-        try {
-          const { data: cur } = await supabaseAdmin
-            .from("intelligence_sessions")
-            .select("report_metadata")
-            .eq("id", data.intelligenceSessionId)
-            .maybeSingle();
-          const m =
-            cur?.report_metadata && typeof cur.report_metadata === "object" && !Array.isArray(cur.report_metadata)
-              ? { ...(cur.report_metadata as Record<string, unknown>) }
-              : {};
-          delete m["pending_doc00a_regeneration"];
-          await supabaseAdmin
-            .from("intelligence_sessions")
-            .update({ report_metadata: m } as never)
-            .eq("id", data.intelligenceSessionId);
-        } catch {
-          /* best effort */
-        }
-        return res;
-      }),
-      `doc00a-regenerate:${data.intelligenceSessionId}`,
-    );
-
+    // Executed by /api/public/intelligence-tick (scheduled every minute,
+    // attached to a live connection). Work started here via ctx.waitUntil is
+    // cancelled ~30s after this request returns — that is exactly how session
+    // 4740d024 was stranded on "running" with the report page hidden.
     return { started: true };
   });
