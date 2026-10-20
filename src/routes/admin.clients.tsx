@@ -220,7 +220,7 @@ function ClientsAdmin() {
                       <tr key={`${r.table}:${r.id}`} className="border-t border-border">
                         <td className="py-2">{r.brand || "—"}</td>
                         <td>{RUN_ROOM[r.table] ?? r.table}</td>
-                        <td>{r.bg_client_id ? (clientName_.get(r.bg_client_id) ?? "—") : "—"}</td>
+                        <td>{r.bg_client_id ? String(clientName_.get(r.bg_client_id) ?? "—") : "—"}</td>
                         <td>{new Date(r.archived_at).toLocaleDateString("en-GB")}</td>
                         <td><Button size="sm" variant="outline" onClick={() => run(() => restore({ data: { table: r.table, runId: r.id } }), "Run restored")}>Restore</Button></td>
                       </tr>

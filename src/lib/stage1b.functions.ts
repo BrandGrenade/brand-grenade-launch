@@ -267,7 +267,7 @@ export const resubmitBriefStructured = createServerFn({ method: "POST" })
       .update({
         ...DOWNSTREAM_RESET,
         brief_text: data.briefText,
-        brief_versions: [...existing, newVersion],
+        brief_versions: [...existing, newVersion] as unknown as import("@/integrations/supabase/types").Json,
         brand_name: data.briefFields.brandName || session.brand_name,
         category: data.briefFields.category || session.category,
         current_stage: 1,
