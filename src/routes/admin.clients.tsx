@@ -15,7 +15,13 @@ import {
   linkRun,
   attachProjectClient,
   lockRunEarly,
+  listArchivedRuns,
+  restoreRun,
+  getAdminRunRegister,
 } from "@/lib/bg-clients.functions";
+import { groupRuns, toRegisterRuns } from "@/lib/run-register";
+import { ClientRunRegister } from "@/components/ClientRunRegister";
+import { ClientRemoval } from "@/components/admin/ClientRemoval";
 
 export const Route = createFileRoute("/admin/clients")({
   head: () => ({
@@ -33,6 +39,14 @@ export const Route = createFileRoute("/admin/clients")({
   component: ClientsAdmin,
 });
 
+const RUN_ROOM: Record<string, string> = {
+  sessions: "Strategy Pipeline",
+  briefing_room_workspaces: "Briefing Room",
+  intelligence_sessions: "Intelligence Lab",
+  synthesiser_runs: "Research Synthesiser",
+  stimulus_runs: "Creative Engine",
+};
+
 const selectCls = "h-9 rounded-md border border-input bg-background px-2 text-body-sm text-text-primary";
 
 function ClientsAdmin() {
@@ -43,12 +57,18 @@ function ClientsAdmin() {
   const link = useServerFn(linkRun);
   const attach = useServerFn(attachProjectClient);
   const lockRun = useServerFn(lockRunEarly);
+  const archivedFn = useServerFn(listArchivedRuns);
+  const restore = useServerFn(restoreRun);
+  const registerFn = useServerFn(getAdminRunRegister);
+  const register = useQuery({ queryKey: ["bg-register"], queryFn: () => registerFn(), retry: false });
+  const registerGroups = useMemo(() => (register.data ? groupRuns(toRegisterRuns(register.data), register.data.names) : []), [register.data]);
+  const archived = useQuery({ queryKey: ["bg-archived"], queryFn: () => archivedFn(), retry: false });
   const [lockTable, setLockTable] = useState<"sessions" | "briefing_room_workspaces">("sessions");
   const [lockId, setLockId] = useState("");
   const [lockReason, setLockReason] = useState("");
   const qc = useQueryClient();
   const q = useQuery({ queryKey: ["bg-linking"], queryFn: () => overview(), retry: false });
-  const refresh = () => qc.invalidateQueries({ queryKey: ["bg-linking"] });
+  const refresh = () => Promise.all([qc.invalidateQueries({ queryKey: ["bg-linking"] }), qc.invalidateQueries({ queryKey: ["bg-archived"] }), qc.invalidateQueries({ queryKey: ["bg-register"] })]);
 
   const [clientName, setClientName] = useState("");
   const [engClient, setEngClient] = useState("");
@@ -99,6 +119,12 @@ function ClientsAdmin() {
                   ))}
                 </tbody>
               </table>
+            </Card>
+
+            <Card className="mt-6 p-6">
+              <h2 className="text-h3 text-text-primary">Runs by client and job</h2>
+              <p className="mt-1 mb-3 text-body-sm text-text-secondary">Every run, grouped Client → Job → Runs. Archived runs are listed further down.</p>
+              {register.isLoading ? <p className="text-text-secondary">Loading…</p> : <ClientRunRegister groups={registerGroups} onChanged={() => void refresh()} />}
             </Card>
 
             <Card className="mt-6 p-6">
@@ -162,7 +188,7 @@ function ClientsAdmin() {
               <h2 className="text-h3 text-text-primary">Clients, engagements and Hub ids</h2>
               {d.clients.length === 0 ? <p className="mt-3 text-text-secondary">No clients yet.</p> : (
                 <table className="mt-3 w-full text-body-sm text-text-primary">
-                  <thead className="text-text-secondary"><tr><th className="py-1 text-left">Client</th><th className="text-left">Engagements</th><th className="text-left">Hub ids</th></tr></thead>
+                  <thead className="text-text-secondary"><tr><th className="py-1 text-left">Client</th><th className="text-left">Engagements</th><th className="text-left">Hub ids</th><th className="text-left">Client actions</th></tr></thead>
                   <tbody>
                     {d.clients.map((c: any) => (
                       <tr key={c.id} className="border-t border-border align-top">
@@ -173,6 +199,30 @@ function ClientsAdmin() {
                             <div key={m.id}>{m.system === "hub_client" ? "Client" : `Job → ${engName_.get(m.engagement_id) ?? "?"}`}: {m.external_id}</div>
                           ))}
                         </td>
+                        <td className="py-2">
+                          {c.archived_at ? <span className="text-text-tertiary">Archived</span> : <ClientRemoval clientId={c.id} clientName={c.name} onDone={() => void refresh()} />}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </Card>
+
+            <Card className="mt-6 overflow-x-auto p-6">
+              <h2 className="text-h3 text-text-primary">Archived runs</h2>
+              <p className="mt-1 text-body-sm text-text-secondary">Archived runs are hidden from normal lists and kept for audit. Restore one at a time.</p>
+              {(archived.data ?? []).length === 0 ? <p className="mt-3 text-text-secondary">No archived runs.</p> : (
+                <table className="mt-3 w-full text-body-sm text-text-primary">
+                  <thead className="text-text-secondary"><tr><th className="py-1 text-left">Brand</th><th className="text-left">Room</th><th className="text-left">Client</th><th className="text-left">Archived</th><th /></tr></thead>
+                  <tbody>
+                    {(archived.data ?? []).map((r) => (
+                      <tr key={`${r.table}:${r.id}`} className="border-t border-border">
+                        <td className="py-2">{r.brand || "—"}</td>
+                        <td>{RUN_ROOM[r.table] ?? r.table}</td>
+                        <td>{r.bg_client_id ? String(clientName_.get(r.bg_client_id) ?? "—") : "—"}</td>
+                        <td>{new Date(r.archived_at).toLocaleDateString("en-GB")}</td>
+                        <td><Button size="sm" variant="outline" onClick={() => run(() => restore({ data: { table: r.table, runId: r.id } }), "Run restored")}>Restore</Button></td>
                       </tr>
                     ))}
                   </tbody>

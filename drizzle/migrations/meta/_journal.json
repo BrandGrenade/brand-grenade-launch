@@ -162,6 +162,13 @@
       "when": 1792407205504,
       "tag": "0022_intelligence_wake_trigger",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1792455053814,
+      "tag": "0023_run_archive_and_client_admin",
+      "breakpoints": true
     }
   ]
 }

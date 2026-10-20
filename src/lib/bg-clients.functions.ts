@@ -31,7 +31,7 @@ export const getLinkingOverview = createServerFn({ method: "GET" })
     await assertAdmin(context as Ctx);
     const sb = (context as Ctx).supabase;
     const [clients, engagements, mappings] = await Promise.all([
-      sb.from("bg_clients").select("id, name, notes, created_at").order("name"),
+      sb.from("bg_clients").select("id, name, notes, created_at, archived_at").order("name"),
       sb.from("bg_engagements").select("id, bg_client_id, name, created_at").order("name"),
       sb.from("bg_external_ids").select("id, bg_client_id, engagement_id, system, external_id, created_at").order("created_at"),
     ]);
@@ -221,4 +221,88 @@ export const lockRunEarly = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     if (!row) throw new Error("Run not found, or it is already locked.");
     return { ok: true };
+  });
+
+// ─── Archive / restore / remove client (admin) ─────────────────────
+
+const ARCHIVABLE = ["sessions", "briefing_room_workspaces", "intelligence_sessions", "synthesiser_runs", "stimulus_runs"] as const;
+
+/** Admin: jobs and runs a client holds, for the named confirmation. */
+export const getClientHoldings = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => z.object({ clientId: z.string().uuid() }).parse(i))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context as Ctx);
+    const { data: rows, error } = await (context as Ctx).supabase.rpc("bg_client_holdings", { _client: data.clientId });
+    if (error) throw new Error(error.message);
+    const r = (rows ?? [])[0];
+    if (!r) throw new Error("Client not found");
+    return { name: r.client_name as string, jobs: r.jobs as number, runs: r.runs as number, archivedRuns: r.archived_runs as number };
+  });
+
+/** Admin: archive a whole client (and its runs) or delete an empty one. Name must match exactly. */
+export const removeClient = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => z.object({ clientId: z.string().uuid(), confirmName: z.string(), mode: z.enum(["archive", "delete"]) }).parse(i))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context as Ctx);
+    const { data: status, error } = await (context as Ctx).supabase.rpc("bg_admin_remove_client", {
+      _client: data.clientId, _confirm_name: data.confirmName, _mode: data.mode,
+    });
+    if (error) throw new Error(error.message);
+    return { status: status as string };
+  });
+
+/** Admin: archived runs, newest first, for restoring. */
+export const listArchivedRuns = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context as Ctx);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const out: Array<{ table: (typeof ARCHIVABLE)[number]; id: string; brand: string; archived_at: string; bg_client_id: string | null }> = [];
+    for (const t of ARCHIVABLE) {
+      const cols = t === "stimulus_runs" ? "id, archived_at, bg_client_id" : "id, brand_name, archived_at, bg_client_id";
+      const { data } = await (supabaseAdmin as any).from(t).select(cols).not("archived_at", "is", null).order("archived_at", { ascending: false }).limit(200);
+      for (const r of data ?? []) out.push({ table: t, id: r.id, brand: r.brand_name ?? "", archived_at: r.archived_at, bg_client_id: r.bg_client_id ?? null });
+    }
+    out.sort((a, b) => b.archived_at.localeCompare(a.archived_at));
+    return out;
+  });
+
+/** Admin: restore one archived run. */
+export const restoreRun = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => z.object({ table: z.enum(ARCHIVABLE), runId: z.string().uuid() }).parse(i))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context as Ctx);
+    const { data: status, error } = await (context as Ctx).supabase.rpc("bg_set_run_archived", { _table: data.table, _run_id: data.runId, _archived: false });
+    if (error) throw new Error(error.message);
+    return { status: status as string };
+  });
+
+/** Admin: every non-archived run with its client/job link, for the Client → Job → Runs view. */
+export const getAdminRunRegister = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context as Ctx);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const sb = supabaseAdmin as any;
+    const [s, w, i, y, c, n] = await Promise.all([
+      sb.from("brand_register_sessions").select("id,brand_name,status,created_at,has_stage_16_consulting,has_stage_22,bg_client_id,engagement_id,brief_type,run_mode,archived_at").eq("is_preflight_test", false).is("archived_at", null).order("created_at", { ascending: false }).limit(2000),
+      sb.from("brand_register_briefings").select("id,brand_name,status,created_at,bg_client_id,engagement_id,archived_at").is("archived_at", null).limit(2000),
+      sb.from("intelligence_sessions").select("id,brand_name,status,created_at,brief_type:report_metadata->>brief_type,bg_client_id,engagement_id,archived_at").is("archived_at", null).limit(2000),
+      sb.from("synthesiser_runs").select("id,brand_name,status,created_at,bg_client_id,engagement_id,archived_at").is("archived_at", null).limit(2000),
+      sb.from("stimulus_runs").select("id,session_id,status,run_mode,created_at,bg_client_id,engagement_id,archived_at").is("archived_at", null).limit(2000),
+      sb.from("bg_engagements").select("id,name,bg_client_id"),
+    ]);
+    const clients = await sb.from("bg_clients").select("id,name");
+    const names = [
+      ...(clients.data ?? []).map((cl: any) => ({ client_id: cl.id, client_name: cl.name, engagement_id: null, engagement_name: null })),
+      ...(n.data ?? []).map((e: any) => ({ client_id: e.bg_client_id, client_name: "", engagement_id: e.id, engagement_name: e.name })),
+    ].filter((x) => x.client_name || x.engagement_id);
+    return {
+      sessions: s.data ?? [], workspaces: w.data ?? [],
+      intelligence: (i.data ?? []).map((r: any) => ({ ...r, report_metadata: { brief_type: r.brief_type } })),
+      synthesiser: y.data ?? [], stimulus: c.data ?? [], names,
+    };
   });
