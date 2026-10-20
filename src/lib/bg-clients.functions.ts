@@ -222,3 +222,60 @@ export const lockRunEarly = createServerFn({ method: "POST" })
     if (!row) throw new Error("Run not found, or it is already locked.");
     return { ok: true };
   });
+
+// ─── Archive / restore / remove client (admin) ─────────────────────
+
+const ARCHIVABLE = ["sessions", "briefing_room_workspaces", "intelligence_sessions", "synthesiser_runs", "stimulus_runs"] as const;
+
+/** Admin: jobs and runs a client holds, for the named confirmation. */
+export const getClientHoldings = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => z.object({ clientId: z.string().uuid() }).parse(i))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context as Ctx);
+    const { data: rows, error } = await (context as Ctx).supabase.rpc("bg_client_holdings", { _client: data.clientId });
+    if (error) throw new Error(error.message);
+    const r = (rows ?? [])[0];
+    if (!r) throw new Error("Client not found");
+    return { name: r.client_name as string, jobs: r.jobs as number, runs: r.runs as number, archivedRuns: r.archived_runs as number };
+  });
+
+/** Admin: archive a whole client (and its runs) or delete an empty one. Name must match exactly. */
+export const removeClient = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => z.object({ clientId: z.string().uuid(), confirmName: z.string(), mode: z.enum(["archive", "delete"]) }).parse(i))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context as Ctx);
+    const { data: status, error } = await (context as Ctx).supabase.rpc("bg_admin_remove_client", {
+      _client: data.clientId, _confirm_name: data.confirmName, _mode: data.mode,
+    });
+    if (error) throw new Error(error.message);
+    return { status: status as string };
+  });
+
+/** Admin: archived runs, newest first, for restoring. */
+export const listArchivedRuns = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context as Ctx);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const out: Array<{ table: (typeof ARCHIVABLE)[number]; id: string; brand: string; archived_at: string; bg_client_id: string | null }> = [];
+    for (const t of ARCHIVABLE) {
+      const cols = t === "stimulus_runs" ? "id, archived_at, bg_client_id" : "id, brand_name, archived_at, bg_client_id";
+      const { data } = await (supabaseAdmin as any).from(t).select(cols).not("archived_at", "is", null).order("archived_at", { ascending: false }).limit(200);
+      for (const r of data ?? []) out.push({ table: t, id: r.id, brand: r.brand_name ?? "", archived_at: r.archived_at, bg_client_id: r.bg_client_id ?? null });
+    }
+    out.sort((a, b) => b.archived_at.localeCompare(a.archived_at));
+    return out;
+  });
+
+/** Admin: restore one archived run. */
+export const restoreRun = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => z.object({ table: z.enum(ARCHIVABLE), runId: z.string().uuid() }).parse(i))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context as Ctx);
+    const { data: status, error } = await (context as Ctx).supabase.rpc("bg_set_run_archived", { _table: data.table, _run_id: data.runId, _archived: false });
+    if (error) throw new Error(error.message);
+    return { status: status as string };
+  });
