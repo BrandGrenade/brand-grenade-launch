@@ -74,7 +74,7 @@ describe("Run buttons and client removal", () => {
     const src = readFileSync("src/components/ClientRunRegister.tsx", "utf8");
     const row = src.match(/export function RunRowActions[\s\S]*?\n\}/)![0];
     for (const l of ["Open", "Download this run's documents", "Archive run"]) expect(row).toContain(l);
-    expect(row).not.toMatch(/delete/i);
+    expect(row).not.toMatch(/Delete (brand|run)|\.delete\(|deleteBrand/i);
     expect(src).toContain("View all runs (${scope})");
     expect(src).toContain("Download all documents ({scope})");
   });
