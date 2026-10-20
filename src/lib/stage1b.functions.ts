@@ -226,6 +226,20 @@ const DOWNSTREAM_RESET: Record<string, null | false | string> = {
   retry_status: null,
 };
 
+/**
+ * Edits never replace a brief: when no version history exists yet, the
+ * original brief is recorded as version 1 before the edit becomes version 2.
+ */
+export function keepOriginalBriefVersion(
+  versions: unknown,
+  originalText: string | null,
+  createdAt: string | null,
+): Array<{ version?: number; [k: string]: unknown }> {
+  const list = (Array.isArray(versions) ? versions : []) as Array<{ version?: number }>;
+  if (list.length > 0 || !originalText) return list;
+  return [{ version: 1, brief_text: originalText, submitted_at: createdAt, original: true }];
+}
+
 export const resubmitBriefStructured = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => ResubmitStructuredInput.parse(input))
@@ -233,12 +247,12 @@ export const resubmitBriefStructured = createServerFn({ method: "POST" })
     await assertSessionAccess(data.sessionId, context.userId);
     const { data: session, error: loadErr } = await supabaseAdmin
       .from("sessions")
-      .select("brief_versions, brand_name, category")
+      .select("brief_versions, brand_name, category, brief_text, created_at")
       .eq("id", data.sessionId)
       .single();
     if (loadErr || !session) throw new Error(`Session not found: ${loadErr?.message ?? "no row"}`);
 
-    const existing = (Array.isArray(session.brief_versions) ? session.brief_versions : []) as Array<{ version?: number }>;
+    const existing = keepOriginalBriefVersion(session.brief_versions, session.brief_text, session.created_at);
     const nextVersion = existing.length > 0
       ? Math.max(...existing.map((v) => Number(v?.version) || 0)) + 1
       : 2; // first edit always becomes v2 even if v1 was never recorded (legacy)

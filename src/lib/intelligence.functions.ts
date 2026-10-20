@@ -106,6 +106,16 @@ export const createIntelligenceSession = createServerFn({ method: "POST" })
   });
 
 
+const INPUT_KEYS = ["brand_name", "category", "territory_input", "additional_context", "input_primary_consumer", "input_brand_health", "input_competitive_audit", "input_cultural_trends", "input_audience_segmentation", "input_bg_intel_pack", "input_files"] as const;
+
+/** Appends the current inputs as an earlier version (never drops prior ones). */
+export function appendInputVersion(prior: unknown, current: Record<string, unknown>): Array<Record<string, unknown>> {
+  const list = Array.isArray(prior) ? (prior as Array<Record<string, unknown>>) : [];
+  const snapshot: Record<string, unknown> = { version: list.length + 1, saved_at: current.updated_at ?? null };
+  for (const k of INPUT_KEYS) snapshot[k] = current[k] ?? null;
+  return [...list, snapshot];
+}
+
 const UpdateInput = CreateInput.extend({
   intelligenceSessionId: z.string().uuid(),
 });
@@ -119,7 +129,7 @@ export const updateAndRerunIntelligenceSession = createServerFn({ method: "POST"
 
     const { data: existing, error: readErr } = await supabase
       .from("intelligence_sessions")
-      .select("id, user_id, status, stage_status, current_layer, final_report, report_metadata, retry_count, last_error, started_at, completed_at")
+      .select("id, user_id, status, stage_status, current_layer, final_report, report_metadata, retry_count, last_error, started_at, completed_at, updated_at, brand_name, category, territory_input, additional_context, input_primary_consumer, input_brand_health, input_competitive_audit, input_cultural_trends, input_audience_segmentation, input_bg_intel_pack, input_files")
       .eq("id", sessionId)
       .maybeSingle();
     if (readErr || !existing) throw new Error("Intelligence session not found");
@@ -154,6 +164,8 @@ export const updateAndRerunIntelligenceSession = createServerFn({ method: "POST"
         report_metadata: {
           ...existingMeta,
           brief_type: data.brief_type,
+          // Edits never replace the earlier brief: keep it as a prior version.
+          input_versions: appendInputVersion(existingMeta.input_versions, existing as Record<string, unknown>),
         } as unknown as import("@/integrations/supabase/types").Json,
         retry_count: hasReport ? existing.retry_count : 0,
         last_error: hasReport ? existing.last_error : null,
