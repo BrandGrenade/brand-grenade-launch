@@ -23,7 +23,8 @@ import {
 } from "@/components/SavedBriefsLibrary";
 import { supabase } from "@/integrations/supabase/client";
 import { createSession } from "@/lib/stage1.functions";
-import { deleteBrandPermanently } from "@/lib/brand-register.functions";
+import { useRunRegister } from "@/lib/run-register";
+import { ClientRunRegister } from "@/components/ClientRunRegister";
 import { useIsAdmin } from "@/lib/demo-mode";
 import {
   DropdownMenu,
@@ -106,7 +107,7 @@ const PAGINATION_THRESHOLD = 50;
 function Dashboard() {
   const navigate = useNavigate();
   const createSessionFn = useServerFn(createSession);
-  const deleteBrandPermanentlyFn = useServerFn(deleteBrandPermanently);
+  const runRegister = useRunRegister();
   const isAdmin = useIsAdmin();
   const { rows, loading, error, refresh } = useBrandRegister();
 
@@ -114,8 +115,6 @@ function Dashboard() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<FilterKey>("all");
   const [page, setPage] = useState(0);
-  const [pendingDelete, setPendingDelete] = useState<BrandRow | null>(null);
-  const [deleting, setDeleting] = useState(false);
   const [pendingLegacy, setPendingLegacy] = useState<SavedBrief | null>(null);
   const [legacyRunning, setLegacyRunning] = useState(false);
 
@@ -130,6 +129,14 @@ function Dashboard() {
       );
     });
   }, [rows, search, filter]);
+
+  const visibleGroups = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return runRegister.groups;
+    return runRegister.groups.filter(
+      (g) => g.name.toLowerCase().includes(q) || g.jobs.some((j) => j.name.toLowerCase().includes(q) || j.runs.some((r) => r.brand.toLowerCase().includes(q))),
+    );
+  }, [runRegister.groups, search]);
 
   const paginated = useMemo(() => {
     if (rows.length < PAGINATION_THRESHOLD) return filtered;
@@ -186,34 +193,6 @@ function Dashboard() {
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed to start run");
       setLegacyRunning(false);
-    }
-  };
-
-  const handleDeleteBrand = async () => {
-    if (!pendingDelete) return;
-    setDeleting(true);
-    const brand = pendingDelete;
-    try {
-      const result = await deleteBrandPermanentlyFn({
-        data: {
-          brandKey: brand.key,
-          brandName: brand.displayName,
-          sessionIds: brand.sessionIds,
-          workspaceIds: brand.workspaceIds,
-          savedBriefIds: brand.savedBriefIds,
-          intelligenceIds: brand.intelligenceIds,
-        },
-      });
-      setPendingDelete(null);
-      toast.success(
-        `Deleted ${brand.displayName} (${result.totalDeleted} record${result.totalDeleted === 1 ? "" : "s"}).`,
-        { duration: 3000, style: { color: "#E5484D" } },
-      );
-      void refresh();
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Delete failed");
-    } finally {
-      setDeleting(false);
     }
   };
 
@@ -307,7 +286,7 @@ function Dashboard() {
                 <Search size={14} style={{ color: "var(--color-text-tertiary)" }} />
                 <input
                   type="text"
-                  placeholder="Search brand or category"
+                  placeholder="Search client, job or brand"
                   value={search}
                   onChange={(e) => {
                     setSearch(e.target.value);
@@ -349,104 +328,25 @@ function Dashboard() {
           )}
 
           <div id="brand-register" className="mt-6 scroll-mt-24">
-            {error && (
+            {(error || runRegister.error) && (
               <p className="text-body" style={{ color: "#E5484D" }}>
-                Failed to load register: {error}
+                Failed to load register: {error ?? runRegister.error}
               </p>
             )}
-            {loading ? (
-              <p className="text-body text-text-tertiary">Loading brands…</p>
-            ) : rows.length === 0 ? (
+            {runRegister.loading ? (
+              <p className="text-body text-text-tertiary">Loading clients and runs…</p>
+            ) : runRegister.groups.length === 0 ? (
               <EmptyState />
-            ) : filtered.length === 0 ? (
+            ) : visibleGroups.length === 0 ? (
               <NoMatchesState onClear={() => { setSearch(""); setFilter("all"); }} />
             ) : (
-              <>
-                <BrandRegisterTable
-                  rows={paginated}
-                  expanded={expanded}
-                  onToggle={toggleExpanded}
-                  onOpenExpanded={openExpanded}
-                  onRequestDelete={setPendingDelete}
-                />
-                {rows.length >= PAGINATION_THRESHOLD && (
-                  <PaginationBar
-                    page={page}
-                    pageCount={pageCount}
-                    onPage={setPage}
-                  />
-                )}
-              </>
+              <ClientRunRegister groups={visibleGroups} onChanged={() => { void runRegister.refresh(); void refresh(); }} />
             )}
           </div>
 
           <SavedBriefsSection onLoad={handleLoadSavedBrief} />
         </div>
       </main>
-
-      <AlertDialog
-        open={pendingDelete !== null}
-        onOpenChange={(open) => {
-          if (!open && !deleting) setPendingDelete(null);
-        }}
-      >
-        <AlertDialogContent
-          className="border-0 p-0 sm:max-w-[420px]"
-          style={{
-            backgroundColor: "#1C1A18",
-            border: "1px solid #C81E1E",
-            borderRadius: 12,
-            padding: 32,
-          }}
-        >
-          <AlertDialogHeader>
-            <AlertDialogTitle asChild>
-              <h3 className="text-h3" style={{ color: "#EDE8E0" }}>
-                Delete {pendingDelete?.displayName ?? "this brand"}?
-              </h3>
-            </AlertDialogTitle>
-            <AlertDialogDescription
-              className="text-body"
-              style={{ color: "#8B8680", marginTop: 8 }}
-            >
-              This will permanently delete all records for{" "}
-              {pendingDelete?.displayName ?? "this brand"} across the Strategy
-              Pipeline, Briefing Room, Saved Briefs, and Intelligence Lab. This
-              cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter
-            className="flex flex-row justify-end gap-3 sm:space-x-0"
-            style={{ marginTop: 24 }}
-          >
-            <button
-              type="button"
-              disabled={deleting}
-              onClick={() => setPendingDelete(null)}
-              className="inline-flex h-9 items-center justify-center rounded-lg px-4 text-[13px] font-medium transition-colors hover:bg-[var(--color-surface-2)] disabled:opacity-50"
-              style={{
-                border: "1px solid var(--color-border)",
-                color: "var(--color-text-primary)",
-              }}
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              disabled={deleting}
-              onClick={handleDeleteBrand}
-              className="inline-flex h-9 items-center justify-center rounded-lg px-4 text-[13px] transition-opacity hover:opacity-90 disabled:opacity-50"
-              style={{
-                backgroundColor: "#C81E1E",
-                color: "#EDE8E0",
-                fontWeight: 600,
-              }}
-            >
-              {deleting ? "Deleting…" : "Delete permanently"}
-            </button>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
 
       <AlertDialog
         open={pendingLegacy !== null}
@@ -803,47 +703,7 @@ function BrandRegisterRow({
           />
 
         </td>
-        <td className="px-3 py-4" style={{ whiteSpace: "nowrap" }}>
-          <div className="flex items-center justify-end">
-            <DropdownMenu>
-              <DropdownMenuTrigger
-                aria-label="Brand actions"
-                className="inline-flex h-8 w-8 items-center justify-center rounded-md text-text-secondary transition-colors hover:bg-[var(--color-surface-2)] hover:text-text-primary focus:outline-none"
-              >
-                <MoreHorizontal className="h-4 w-4" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-52">
-                <DropdownMenuItem
-                  onSelect={(e) => {
-                    e.preventDefault();
-                    onOpenExpanded(row.key);
-                  }}
-                >
-                  View all runs
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onSelect={(e) => {
-                    e.preventDefault();
-                    toast.info(
-                      "Bulk download will connect once the deliverables system is wired.",
-                    );
-                  }}
-                >
-                  Download all documents
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onSelect={(e) => {
-                    e.preventDefault();
-                    onRequestDelete(row);
-                  }}
-                  style={{ color: "#E5484D" }}
-                >
-                  Delete brand
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </td>
+        <td className="px-3 py-4" />
       </tr>
       {open && (
         <tr style={{ backgroundColor: rowBg }}>
