@@ -17,7 +17,10 @@ import {
   lockRunEarly,
   listArchivedRuns,
   restoreRun,
+  getAdminRunRegister,
 } from "@/lib/bg-clients.functions";
+import { groupRuns, toRegisterRuns } from "@/lib/run-register";
+import { ClientRunRegister } from "@/components/ClientRunRegister";
 import { ClientRemoval } from "@/components/admin/ClientRemoval";
 
 export const Route = createFileRoute("/admin/clients")({
@@ -56,13 +59,16 @@ function ClientsAdmin() {
   const lockRun = useServerFn(lockRunEarly);
   const archivedFn = useServerFn(listArchivedRuns);
   const restore = useServerFn(restoreRun);
+  const registerFn = useServerFn(getAdminRunRegister);
+  const register = useQuery({ queryKey: ["bg-register"], queryFn: () => registerFn(), retry: false });
+  const registerGroups = useMemo(() => (register.data ? groupRuns(toRegisterRuns(register.data), register.data.names) : []), [register.data]);
   const archived = useQuery({ queryKey: ["bg-archived"], queryFn: () => archivedFn(), retry: false });
   const [lockTable, setLockTable] = useState<"sessions" | "briefing_room_workspaces">("sessions");
   const [lockId, setLockId] = useState("");
   const [lockReason, setLockReason] = useState("");
   const qc = useQueryClient();
   const q = useQuery({ queryKey: ["bg-linking"], queryFn: () => overview(), retry: false });
-  const refresh = () => Promise.all([qc.invalidateQueries({ queryKey: ["bg-linking"] }), qc.invalidateQueries({ queryKey: ["bg-archived"] })]);
+  const refresh = () => Promise.all([qc.invalidateQueries({ queryKey: ["bg-linking"] }), qc.invalidateQueries({ queryKey: ["bg-archived"] }), qc.invalidateQueries({ queryKey: ["bg-register"] })]);
 
   const [clientName, setClientName] = useState("");
   const [engClient, setEngClient] = useState("");
@@ -113,6 +119,12 @@ function ClientsAdmin() {
                   ))}
                 </tbody>
               </table>
+            </Card>
+
+            <Card className="mt-6 p-6">
+              <h2 className="text-h3 text-text-primary">Runs by client and job</h2>
+              <p className="mt-1 mb-3 text-body-sm text-text-secondary">Every run, grouped Client → Job → Runs. Archived runs are listed further down.</p>
+              {register.isLoading ? <p className="text-text-secondary">Loading…</p> : <ClientRunRegister groups={registerGroups} onChanged={() => void refresh()} />}
             </Card>
 
             <Card className="mt-6 p-6">

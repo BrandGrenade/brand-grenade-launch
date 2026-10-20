@@ -55,7 +55,7 @@ export function groupRuns(runs: RegisterRun[], names: GroupName[]): ClientGroup[
   const clientNames = new Map<string, string>();
   const jobNames = new Map<string, string>();
   for (const n of names) {
-    clientNames.set(n.client_id, n.client_name);
+    if (n.client_name) clientNames.set(n.client_id, n.client_name);
     if (n.engagement_id && n.engagement_name) jobNames.set(n.engagement_id, n.engagement_name);
   }
   const clients = new Map<string, ClientGroup>();
@@ -179,7 +179,7 @@ export function useRunRegister() {
         .eq("is_preflight_test", false).is("archived_at", null).order("created_at", { ascending: false }).limit(1000),
       sb.from("brand_register_briefings").select("id,brand_name,status,created_at,bg_client_id,engagement_id,archived_at")
         .is("archived_at", null).order("created_at", { ascending: false }).limit(1000),
-      sb.from("intelligence_sessions").select("id,brand_name,status,created_at,report_metadata->brief_type,bg_client_id,engagement_id,archived_at")
+      sb.from("intelligence_sessions").select("id,brand_name,status,created_at,brief_type:report_metadata->>brief_type,bg_client_id,engagement_id,archived_at")
         .is("archived_at", null).order("created_at", { ascending: false }).limit(1000),
       sb.from("synthesiser_runs").select("id,brand_name,status,created_at,bg_client_id,engagement_id,archived_at")
         .is("archived_at", null).order("created_at", { ascending: false }).limit(1000),

@@ -279,3 +279,30 @@ export const restoreRun = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { status: status as string };
   });
+
+/** Admin: every non-archived run with its client/job link, for the Client → Job → Runs view. */
+export const getAdminRunRegister = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context as Ctx);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const sb = supabaseAdmin as any;
+    const [s, w, i, y, c, n] = await Promise.all([
+      sb.from("brand_register_sessions").select("id,brand_name,status,created_at,has_stage_16_consulting,has_stage_22,bg_client_id,engagement_id,brief_type,run_mode,archived_at").eq("is_preflight_test", false).is("archived_at", null).order("created_at", { ascending: false }).limit(2000),
+      sb.from("brand_register_briefings").select("id,brand_name,status,created_at,bg_client_id,engagement_id,archived_at").is("archived_at", null).limit(2000),
+      sb.from("intelligence_sessions").select("id,brand_name,status,created_at,brief_type:report_metadata->>brief_type,bg_client_id,engagement_id,archived_at").is("archived_at", null).limit(2000),
+      sb.from("synthesiser_runs").select("id,brand_name,status,created_at,bg_client_id,engagement_id,archived_at").is("archived_at", null).limit(2000),
+      sb.from("stimulus_runs").select("id,session_id,status,run_mode,created_at,bg_client_id,engagement_id,archived_at").is("archived_at", null).limit(2000),
+      sb.from("bg_engagements").select("id,name,bg_client_id"),
+    ]);
+    const clients = await sb.from("bg_clients").select("id,name");
+    const names = [
+      ...(clients.data ?? []).map((cl: any) => ({ client_id: cl.id, client_name: cl.name, engagement_id: null, engagement_name: null })),
+      ...(n.data ?? []).map((e: any) => ({ client_id: e.bg_client_id, client_name: "", engagement_id: e.id, engagement_name: e.name })),
+    ].filter((x) => x.client_name || x.engagement_id);
+    return {
+      sessions: s.data ?? [], workspaces: w.data ?? [],
+      intelligence: (i.data ?? []).map((r: any) => ({ ...r, report_metadata: { brief_type: r.brief_type } })),
+      synthesiser: y.data ?? [], stimulus: c.data ?? [], names,
+    };
+  });
