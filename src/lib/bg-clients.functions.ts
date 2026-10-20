@@ -31,7 +31,7 @@ export const getLinkingOverview = createServerFn({ method: "GET" })
     await assertAdmin(context as Ctx);
     const sb = (context as Ctx).supabase;
     const [clients, engagements, mappings] = await Promise.all([
-      sb.from("bg_clients").select("id, name, notes, created_at").order("name"),
+      sb.from("bg_clients").select("id, name, notes, created_at, archived_at").order("name"),
       sb.from("bg_engagements").select("id, bg_client_id, name, created_at").order("name"),
       sb.from("bg_external_ids").select("id, bg_client_id, engagement_id, system, external_id, created_at").order("created_at"),
     ]);
