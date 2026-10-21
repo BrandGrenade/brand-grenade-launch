@@ -1,6 +1,6 @@
 # Roadmap
 
-- [ ] Stage 8 B/C/D: budgets/retry/stop-reason handling and bold-label parsing repaired; 216 tests pass, build OK. Real Opus 5 calls at 16000 tokens returned end_turn with 2995–4465 thinking tokens; final rerun blocked by Anthropic insufficient credits. Existing JLR Stage 8 left intact; all-four saved/UI verification incomplete. Nothing published.
+- [x] Stage 8 bold-label regression covered; 217 tests pass. Separate JLR verification run 89cc0435-33c3-4ffd-a2d0-215e8b506e5d saved Base/Breach/Fuse/Flashpoint across all five territories (20 candidates); B/C/D stop_reason=end_turn. Original JLR session 3470f1ad-b322-4230-8e3d-bf0072e95b7a unchanged in every field. Publication requested after verification; deployment completion remains unconfirmed.
 
 - [x] JLR run 4740d024 verified first and expanded under JLR on dashboard/Admin in authenticated preview; 209 tests pass, build OK, no data changes or publication. Report opens with history/handoff, but current saved report has five territories; requested three remain in saved version 7db2daf8 (05:38 UTC), so prior restoration claim is not verified.
 
