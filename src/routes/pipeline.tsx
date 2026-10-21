@@ -443,6 +443,10 @@ export const Route = createFileRoute("/pipeline")({
         content:
           "20-stage strategy room. Track stages, review outputs, and act on human checkpoints.",
       },
+      { property: "og:title", content: "Strategy Pipeline — Brand Grenade" },
+      { property: "og:description", content: "Track strategic propositions, review outputs, and act on human checkpoints in Brand Grenade." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
 });
