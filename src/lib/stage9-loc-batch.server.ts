@@ -203,7 +203,7 @@ export async function runStage9LocBatches(args: {
           const rows = await collect({
             systemPrompt: STAGE_9_SYSTEM_PROMPT,
             userMessage: `${userMessage}\n\n==== YOUR PREVIOUS OUTPUT ====\n${text}${buildCoverageRetryNote(missing)}`,
-            maxTokens: 2000,
+            maxTokens: 8000,
             sessionId: args.sessionId,
             stageLabel: `Stage 9 LOC batch ${i + 1} disposition retry`,
             stageNumber: "9",

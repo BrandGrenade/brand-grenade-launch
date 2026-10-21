@@ -1238,7 +1238,7 @@ Rewrite as ONE abstract sentence under the strict contract. Return only the sent
     const raw = await args.callClaude({
       systemPrompt,
       userMessage: buildUser(leaks),
-      maxTokens: 300,
+      maxTokens: 8000,
       sessionId: args.sessionId,
       stageLabel: "LOC abstract-opportunity",
       stageNumber: "9-loc",

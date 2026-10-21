@@ -186,7 +186,7 @@ export const runStage9 = createServerFn({ method: "POST" })
           rows = await collectClaudeText({
             systemPrompt: STAGE_9_SYSTEM_PROMPT + stage9Directive,
             userMessage: `${userMessage}\n\n==== YOUR PREVIOUS OUTPUT ====\n${output}${buildCoverageRetryNote(missing)}`,
-            maxTokens: 4000,
+            maxTokens: 8000,
             sessionId: data.sessionId,
             stageLabel: `Stage 9 (disposition coverage retry ${attempt})`,
             stageNumber: "9",

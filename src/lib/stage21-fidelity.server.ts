@@ -75,7 +75,7 @@ async function checkOne(args: {
         `CHANNEL BRIEF UNDER REVIEW — ${args.channel}`,
         args.brief.trim(),
       ].join("\n"),
-      maxTokens: 2000,
+      maxTokens: 8000,
       sessionId: args.sessionId,
       stageLabel: `Fidelity check (${args.channel})`,
       stageNumber: "21F",

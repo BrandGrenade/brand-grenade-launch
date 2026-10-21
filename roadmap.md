@@ -1,5 +1,8 @@
 # Roadmap
 
+- [x] Raised all seven LOW helper categories (eight call sites) to 8000; 245 tests pass, build OK; published fixes. Live signed-in JLR retry 7 completed: exactly eight requested engines changed, all 13 successful; five original locked engine records/anchors byte-for-byte unchanged, all later-stage fields unchanged; saved instruction verified at submission and lines visible after reload. Backup engine v15/document v7/packages v7/validation v6. Validation scores rerun for all engines as existing logic does; protected package engineOutput unchanged. Production logs confirm selected engines/adjudicators/anchors end_turn.
+- [ ] Full published/preview code parity confirmation: live selective controls and actual completed retry verified, but no deployment commit attestation available and production telemetry redacts token numbers; other helper budgets/parser/Stage 8 paths not independently exercised on live. No additional runs authorized.
+
 - [x] LOC retry repair: ticked=regenerate; locked/unticked records preserved. JLR backup saved 06:05 UTC (engine v7, markdown/packages/scores v3); five approved lines/support restored and locked; only eight requested engines rerun. Authenticated preview readback: 13/13 outputs/packages, end_turn including LOC anchor checks; all other session fields unchanged. 238 tests pass, build OK. Code not published; stored JLR results saved.
 
 - [x] LOC refusal fix: reworded shared process instruction (old wording refused as reasoning_extraction; new wording 3/3 on fictional brand), errored stages clickable, LOC budget 8000. JLR 3470f1ad LOC rerun: 13/13 engines produced output, 10 passed brand-anchor gate; Stage 8 unchanged (no new Stage 8 version). 230 tests pass. Not yet published.
