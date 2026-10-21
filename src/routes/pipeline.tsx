@@ -4726,6 +4726,8 @@ export function splitStage8Propositions(text: string): Array<{ name: string; mar
   //   - markdown headings (#, ##, ###, ####)
   //   - bold-only label lines like "**Proposition 1 — Name**" / "**Territory 2: …**"
   const isHeader = (raw: string): { name: string } | null => {
+    // The engine set belongs to its territory, not to a new selectable territory.
+    if (/^\s*###\s+CANDIDATE SET\s*[—-]/i.test(raw)) return null;
     const h = raw.match(/^\s*#{1,4}\s+(.+?)\s*$/);
     if (h) {
       const name = cleanName(h[1]);
