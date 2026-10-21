@@ -313,7 +313,7 @@ export const runLeftOfCentre = createServerFn({ method: "POST" })
       workspace,
     });
 
-    // Mark running (and wipe stale outputs if forcing, unless engine is in keep set).
+    // Mark running; keep locked/unticked records verbatim.
     // loc_generated_at doubles as the run heartbeat while status='running'.
     await supabaseAdmin
       .from("sessions")
@@ -376,9 +376,7 @@ export const runLeftOfCentre = createServerFn({ method: "POST" })
       });
       const contextVector = await embedText(brandContext);
 
-      // CHALLENGER OBJECTIVE — Engine 08 (Enemy First) is guaranteed to fire.
-      // It is never skipped by a selective retry, and a failed run is retried
-      // once before the pool is assembled.
+      // Challenger priority affects display only, never explicit retry selection.
       const { sessionRequiresEnemyFirstPriority } = await import("./strategic-objective.server");
       const enemyFirstPriority = await sessionRequiresEnemyFirstPriority(data.sessionId);
 
