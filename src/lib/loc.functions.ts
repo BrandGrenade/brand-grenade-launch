@@ -71,7 +71,9 @@ async function runOneEngine(args: {
     const raw = await callClaude({
       systemPrompt,
       userMessage,
-      maxTokens: 4000,
+      // Budget covers high-effort reasoning plus the JSON answer; 4000 truncated
+      // Invented Authority (stop_reason=max_tokens, 908 chars) on JLR.
+      maxTokens: 8000,
       sessionId: args.sessionId,
       stageLabel: `LOC ${args.engine}`,
       stageNumber: "9-loc",

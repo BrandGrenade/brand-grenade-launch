@@ -1,5 +1,7 @@
 # Roadmap
 
+- [x] LOC refusal fix: reworded shared process instruction (old wording refused as reasoning_extraction; new wording 3/3 on fictional brand), errored stages clickable, LOC budget 8000. JLR 3470f1ad LOC rerun: 13/13 engines produced output, 10 passed brand-anchor gate; Stage 8 unchanged (no new Stage 8 version). 230 tests pass. Not yet published.
+
 - [x] JLR twelve missing B/C/D slots filled only; backup version 2 saved first. Exact reversal comparison proves all other Stage 8 characters and Ladder unchanged; only stage_8_output/updated_at changed. All twelve candidates visible on signed-in readback; open-page four-kept/one-excluded selection comparison unchanged. No whole-stage or later-stage run, no publication. Selections remain browser-local under existing behavior.
 
 - [x] Stage 8 bold-label regression covered; 217 tests pass. Separate JLR verification run 89cc0435-33c3-4ffd-a2d0-215e8b506e5d saved Base/Breach/Fuse/Flashpoint across all five territories (20 candidates); B/C/D stop_reason=end_turn. Original JLR session 3470f1ad-b322-4230-8e3d-bf0072e95b7a unchanged in every field. Publication requested after verification; deployment completion remains unconfirmed.

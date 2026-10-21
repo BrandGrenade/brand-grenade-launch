@@ -3848,8 +3848,10 @@ function LeftPanel({
         {stages.map((s) => {
           const status = statuses[s.id];
           const selected = s.id === selectedId;
+          // Errored stages stay clickable so the user can open them and retry
+          // (an unclickable 08B "Error" left no route to the LOC retry button).
           const interactive =
-            status === "complete" || status === "running" || status === "checkpoint";
+            status === "complete" || status === "running" || status === "checkpoint" || status === "error";
           return (
             <li key={s.id} style={{ borderTop: "1px solid var(--color-surface-3)" }}>
               <button
