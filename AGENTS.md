@@ -18,5 +18,5 @@
 - Intelligence Lab analyses and territory revisions run only inside /api/public/intelligence-tick, woken by the `bg_intelligence_wake` trigger when a row is queued or a revision recorded, and streaming keep-alives until done; the reliability supervisor only re-queues stalled rows; why: work handed to ctx.waitUntil is cancelled ~30s after the request returns, which froze runs at running:0.
 - Archive via `bg_set_run_archived`: owner/admin archive, admin-only restore, direct edits blocked. Admin client removal via `bg_admin_remove_client` requires exact name and refuses deletion with runs; why: preserve audit/Hub snapshots.
 - Dashboard/Admin: newest first incl. No job; expand latest client.
-- Stage 8 budgets include reasoning; buffered calls retry incomplete answers once, retaining stop reasons and never retrying denials/refusals.
+- Helper budgets have call-site tests. Stage 8 budgets include reasoning; retry incomplete answers once with stop reasons, never refusals.
 - LOC process is a client-facing craft note. Selective retries regenerate ticked engines only; locked/unticked records stay verbatim, including anchors; why: protect approved work.
