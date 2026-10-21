@@ -1,5 +1,7 @@
 # Roadmap
 
+- [ ] Raise all seven LOW helper categories to 8000; test and publish today's Stage 8/8B fixes; verify live release parity without changing preview-only model migration; back up JLR, restore/lock five original lines, regenerate only eight selected engines with saved instruction, verify preserved fields and live readback.
+
 - [x] LOC retry repair: ticked=regenerate; locked/unticked records preserved. JLR backup saved 06:05 UTC (engine v7, markdown/packages/scores v3); five approved lines/support restored and locked; only eight requested engines rerun. Authenticated preview readback: 13/13 outputs/packages, end_turn including LOC anchor checks; all other session fields unchanged. 238 tests pass, build OK. Code not published; stored JLR results saved.
 
 - [x] LOC refusal fix: reworded shared process instruction (old wording refused as reasoning_extraction; new wording 3/3 on fictional brand), errored stages clickable, LOC budget 8000. JLR 3470f1ad LOC rerun: 13/13 engines produced output, 10 passed brand-anchor gate; Stage 8 unchanged (no new Stage 8 version). 230 tests pass. Not yet published.

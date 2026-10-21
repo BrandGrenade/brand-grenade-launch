@@ -215,7 +215,7 @@ async function runStimulusEngine(args: {
     const verdict = await callClaude({
       systemPrompt: `You are a creative director choosing between candidate propositions produced by the same creative engine from different forced stimuli. Choose the ONE with the sharpest, most surprising, most specific proposition that still says something true and usable. Penalise generic marketing language, restatements of the obvious, and lines that could belong to any organisation. Reply with the candidate number ONLY — a single digit, nothing else.`,
       userMessage: listing,
-      maxTokens: 10,
+      maxTokens: 8000,
       sessionId: args.sessionId,
       stageLabel: `LOC ${args.engine} adjudication`,
       stageNumber: "9-loc",

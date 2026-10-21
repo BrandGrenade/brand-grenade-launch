@@ -135,7 +135,7 @@ async function runOne(args: {
         const reply: string = await callClaude({
           systemPrompt: COMPRESSION_SYSTEM_PROMPT,
           userMessage: buildCompressionMessage({ engine, territoryName, line }),
-          maxTokens: 4000,
+          maxTokens: 8000,
           retryIncompleteResponse: true,
           skipUniversalWrapper: true,
           sessionId,
@@ -295,7 +295,7 @@ export async function enforceBaseLengthGate(
         const reply: string = await callClaude({
           systemPrompt: COMPRESSION_SYSTEM_PROMPT,
           userMessage: buildCompressionMessage({ engine: "breach", territoryName: territory, line: bare }),
-          maxTokens: 4000,
+          maxTokens: 8000,
           retryIncompleteResponse: true,
           skipUniversalWrapper: true,
           sessionId,

@@ -132,7 +132,7 @@ export async function scoreStage20Brief(args: {
   const raw = await callClaude({
     systemPrompt: SCORER_SYSTEM_PROMPT,
     userMessage,
-    maxTokens: 4000,
+    maxTokens: 8000,
     sessionId: args.sessionId,
     stageLabel: "Stage 20 (scorer)",
     stageNumber: "20",
