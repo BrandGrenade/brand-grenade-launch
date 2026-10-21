@@ -357,12 +357,12 @@ export const saveSelectionRationale = createServerFn({ method: "POST" })
       .from("sessions").select("selected_smp, stage_12_output, selection_source")
       .eq("id", data.sessionId).single();
     if (readError || !session?.selected_smp) throw new Error("Select a proposition before confirming its rationale");
-    if (session.selection_source !== "CORE" && !data.rationale.f_loc_legacy?.trim()) {
+    if ((session.selection_source === "LOC" || session.selection_source === "COMBINED") && !data.rationale.f_loc_legacy?.trim()) {
       throw new Error("The LOC legacy relationship must be supplied before confirmation");
     }
     const rationale = Object.fromEntries(Object.entries(data.rationale).filter((entry): entry is [string, string] => typeof entry[1] === "string"));
     const output = fillSelectionDeliverable(session.stage_12_output ?? "", session.selected_smp, rationale);
-    const { error } = await supabaseAdmin
+    const { error } = await context.supabase
       .from("sessions")
       .update({
         selection_rationale: rationale,
