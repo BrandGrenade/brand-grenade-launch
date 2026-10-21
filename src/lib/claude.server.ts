@@ -61,6 +61,15 @@ export interface CallClaudeArgs {
    * field is rejected). Omit to use the per-stage policy in model-policy.ts.
    */
   effort?: Effort;
+  /** Buffered callers only: retry an incomplete answer once, discarding partial text. */
+  retryIncompleteResponse?: boolean;
+}
+
+export class ClaudeResponseError extends Error {
+  constructor(message: string, public stopReason: string | null, public retryableIncomplete: boolean) {
+    super(message);
+    this.name = "ClaudeResponseError";
+  }
 }
 
 
@@ -366,6 +375,19 @@ async function openWithRetry(
  * and write it to the database exactly once when the stream ends.
  */
 export async function callClaude(args: CallClaudeArgs): Promise<string> {
+  if (args.retryIncompleteResponse) {
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        return await callClaude({ ...args, retryIncompleteResponse: false });
+      } catch (error) {
+        if (!(error instanceof ClaudeResponseError) || !error.retryableIncomplete || attempt === 2) throw error;
+        await setRetryStatus(args.sessionId, `${args.stageLabel ?? "Claude"}: ${error.message} Retrying once…`);
+        await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
+      } finally {
+        await setRetryStatus(args.sessionId, null);
+      }
+    }
+  }
   let output = "";
   for await (const delta of streamClaude(args)) {
     output += delta;
@@ -446,7 +468,12 @@ export async function* streamClaude(args: CallClaudeArgs): AsyncGenerator<string
             const evt = JSON.parse(payload) as {
               type?: string;
               delta?: { type?: string; text?: string; stop_reason?: string };
+              error?: { type?: string; message?: string };
             };
+            if (evt.type === "error") {
+              // Preserve provider errors; never turn a denial into an empty-answer retry.
+              throw new ClaudeResponseError(`Claude stream error ${evt.error?.type ?? "unknown"}: ${evt.error?.message ?? "no reason supplied"}`, null, false);
+            }
             if (evt.type === "content_block_delta" && evt.delta?.type === "text_delta" && evt.delta.text) {
               chars += evt.delta.text.length;
               yield evt.delta.text;
@@ -455,13 +482,15 @@ export async function* streamClaude(args: CallClaudeArgs): AsyncGenerator<string
             } else if (evt.type === "message_stop") {
               sawMessageStop = true;
             }
-          } catch {
+          } catch (error) {
+            if (error instanceof ClaudeResponseError) throw error;
             // ignore partial / non-JSON SSE lines
           }
         }
         if (done) break;
       }
-    } catch {
+    } catch (error) {
+      if (error instanceof ClaudeResponseError) throw error;
       // Network drop or idle-abort mid-stream — return what we have so the
       // outer loop decides whether to retry.
     } finally {
@@ -499,12 +528,17 @@ export async function* streamClaude(args: CallClaudeArgs): AsyncGenerator<string
   const stopReason = result?.stopReason ?? null;
   const sawMessageStop = Boolean(result?.sawMessageStop);
   __telemetryChars = totalChars;
-  if (totalChars === 0) { __telemetryFailed = true; __telemetryError = "empty"; throw new Error("Claude returned an empty response"); }
+  console.log(`[CLAUDE-RESPONSE] stage=${__telemetryLabel} session=${__telemetrySession} model=${__telemetryModel} max_tokens=${args.maxTokens ?? 64000} stop_reason=${stopReason ?? "missing"} message_stop=${sawMessageStop} text_chars=${totalChars}`);
+  if (stopReason === "refusal") throw new ClaudeResponseError("Claude stop_reason=refusal: the provider declined this request.", stopReason, false);
   if (stopReason === "max_tokens") {
     __telemetryFailed = true; __telemetryError = "max_tokens_truncation";
-    throw new Error(
-      `Claude response truncated: hit max_tokens cap (${totalChars} chars produced). Raise maxTokens for this stage.`,
+    throw new ClaudeResponseError(
+      `Claude stop_reason=max_tokens: response truncated at max_tokens=${args.maxTokens ?? 64000} (${totalChars} text chars produced).`, stopReason, true,
     );
+  }
+  if (totalChars === 0) {
+    __telemetryFailed = true; __telemetryError = `empty stop_reason=${stopReason ?? "missing"}`;
+    throw new ClaudeResponseError(`Claude stop_reason=${stopReason ?? "missing"}: no answer text received (max_tokens=${args.maxTokens ?? 64000}, message_stop=${sawMessageStop}).`, stopReason, sawMessageStop && stopReason === "end_turn");
   }
   if (!sawMessageStop) {
     __telemetryFailed = true; __telemetryError = "no_message_stop";

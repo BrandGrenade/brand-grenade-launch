@@ -1,5 +1,7 @@
 # Roadmap
 
+- [ ] Stage 8 B/C/D: inspect live failures, increase reasoning-inclusive budgets, one bounded incomplete-response retry, retain actual stop/error on cards, rerun JLR and verify all four candidates without publication.
+
 - [x] JLR run 4740d024 verified first and expanded under JLR on dashboard/Admin in authenticated preview; 209 tests pass, build OK, no data changes or publication. Report opens with history/handoff, but current saved report has five territories; requested three remain in saved version 7db2daf8 (05:38 UTC), so prior restoration claim is not verified.
 
 - [x] Intelligence Lab progress: confirmed completion separated from estimated streaming markers; last saved activity timer verified on authenticated real JLR run without restarting it; 195 tests pass and preview build OK. Individual layer completion remains unavailable from the existing single-call engine; no publication requested.

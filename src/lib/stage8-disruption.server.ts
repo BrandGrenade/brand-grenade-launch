@@ -105,19 +105,22 @@ async function runOne(args: {
       await callClaude({
         systemPrompt: getDisruptionSystemPrompt(engine),
         userMessage: buildDisruptionUserMessage(args),
-        maxTokens: 2000,
+        maxTokens: 16000,
+        retryIncompleteResponse: true,
+        skipUniversalWrapper: true,
         sessionId,
         stageLabel: `Stage 8 ${DISRUPTION_ENGINE_LABEL[engine]} — ${territoryName}`,
         stageNumber: "8",
         stageName: "Proposition Generation",
       })
     ).trim();
-    if (!raw) throw new Error("empty output");
+    if (!raw) throw new Error("No answer text received after the engine retry.");
 
     let proposition = pickLine(raw, /^\s*PROPOSITION:\s*(.+)$/i);
     const anchor = pickLine(raw, /^\s*Anchor:\s*(.+)$/i);
     const earlierDraft = pickLine(raw, /^\s*Earlier draft:\s*(.+)$/i);
     const cut = pickLine(raw, /^\s*Cut:\s*(.+)$/i);
+    if (!proposition) throw new Error("Claude stop_reason=end_turn: required PROPOSITION field missing.");
 
     const isRefusal = !!proposition && /^no credible/i.test(proposition);
 
@@ -131,7 +134,9 @@ async function runOne(args: {
         const reply: string = await callClaude({
           systemPrompt: COMPRESSION_SYSTEM_PROMPT,
           userMessage: buildCompressionMessage({ engine, territoryName, line }),
-          maxTokens: 200,
+          maxTokens: 4000,
+          retryIncompleteResponse: true,
+          skipUniversalWrapper: true,
           sessionId,
           stageLabel: `Stage 8 ${DISRUPTION_ENGINE_LABEL[engine]} length gate — ${territoryName}`,
           stageNumber: "8",
@@ -289,7 +294,9 @@ export async function enforceBaseLengthGate(
         const reply: string = await callClaude({
           systemPrompt: COMPRESSION_SYSTEM_PROMPT,
           userMessage: buildCompressionMessage({ engine: "breach", territoryName: territory, line: bare }),
-          maxTokens: 200,
+          maxTokens: 4000,
+          retryIncompleteResponse: true,
+          skipUniversalWrapper: true,
           sessionId,
           stageLabel: `Stage 8 base length gate — ${territory}`,
           stageNumber: "8",
@@ -324,7 +331,7 @@ function renderCandidateSet(base: string | null, candidates: DisruptionCandidate
   candidates.forEach((c, i) => {
     const label = `**${letters[i] ?? String(i + 2)} · ${DISRUPTION_ENGINE_LABEL[c.engine]}**`;
     if (!c.proposition) {
-      rows.push(`${label} — _no output — ${c.error ?? "engine returned nothing"}_`);
+      rows.push(`${label} — _Generation failed: ${c.error ?? "no answer text received"}_`);
       return;
     }
     const w = c.words ? `  _(${c.words}w)_` : "";
