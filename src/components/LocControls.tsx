@@ -278,7 +278,7 @@ export function LocControls({ sessionId }: { sessionId: string }) {
           style={{ borderColor: "var(--color-error, #C81E1E)", background: "color-mix(in oklab, var(--color-error, #C81E1E) 6%, transparent)" }}
         >
           <div className="mb-2 font-semibold" style={{ color: "var(--color-error, #E5484D)" }}>
-            {failedEngines.length} engine{failedEngines.length === 1 ? "" : "s"} failed validation
+            {failedEngines.length} engine{failedEngines.length === 1 ? "" : "s"} failed generation or output parsing
           </div>
           <ul className="space-y-1">
             {failedEngines.map(({ engine, error }) => (
