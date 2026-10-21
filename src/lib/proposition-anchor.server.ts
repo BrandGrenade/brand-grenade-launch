@@ -139,7 +139,8 @@ Decide whether a real capability defends this exact line. Return JSON only.`;
     const raw = await callClaude({
       systemPrompt: GATE_SYSTEM_PROMPT,
       userMessage,
-      maxTokens: 600,
+      maxTokens: args.label.startsWith("Stage 8") ? 8000 : 600,
+      ...(args.label.startsWith("Stage 8") ? { retryIncompleteResponse: true, skipUniversalWrapper: true } : {}),
       sessionId: args.sessionId,
       stageLabel: `Anchor gate — ${args.label}`,
       stageNumber: "anchor-gate",
