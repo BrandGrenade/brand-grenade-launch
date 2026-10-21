@@ -1,11 +1,12 @@
 import { RATIONALE_FIELDS } from "@/lib/selection-rationale";
 import { Button } from "@/components/ui/button";
 
-export function Stage12Result({ smp, fieldName, rationale, onEdit }: {
+export function Stage12Result({ smp, fieldName, rationale, onEdit, onContinue }: {
   smp: string; fieldName?: string | null; rationale: Record<string, string> | null;
   onEdit?: () => void;
+  onContinue?: () => void;
 }) {
-  return <div className="space-y-8">
+  return <div className="space-y-8 pb-20">
     <header>
       <span className="text-label text-text-secondary">Stage 12 — Proposition Selection</span>
       <h1 className="text-h2 mt-3 text-text-primary">Selection confirmed</h1>
@@ -19,7 +20,10 @@ export function Stage12Result({ smp, fieldName, rationale, onEdit }: {
         <p className="mt-2 whitespace-pre-wrap text-text-secondary">{rationale[f.key] || "Not supplied"}</p>
       </div>) : <p className="text-destructive">The selection is saved, but the rationale has not been saved.</p>}
       {rationale?.f_loc_legacy && <p className="whitespace-pre-wrap text-text-secondary">{rationale.f_loc_legacy}</p>}
-      {onEdit && <Button variant="outline" onClick={onEdit}>Review selection rationale</Button>}
+      <div className="flex flex-wrap gap-3">
+        {onContinue && <Button onClick={onContinue}>Continue to Brand Fit Validation →</Button>}
+        {onEdit && <Button variant="outline" onClick={onEdit}>Review selection rationale</Button>}
+      </div>
     </section>
   </div>;
 }
