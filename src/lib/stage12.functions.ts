@@ -14,6 +14,7 @@ import {
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertSessionAccess } from "@/lib/auth-helpers.server";
 import { assertUpstreamStageOutput } from "./pipeline-integrity";
+import { fillSelectionDeliverable, selectionRationaleSchema } from "./selection-rationale";
 import {
   extractRecommendedTerritory,
   territoryPromptBlockForSelection,
@@ -344,7 +345,7 @@ export const saveSelectedSMP = createServerFn({ method: "POST" })
 
 const SaveRationale = z.object({
   sessionId: z.string().uuid(),
-  rationale: z.record(z.string(), z.string().max(5000)),
+  rationale: selectionRationaleSchema,
 });
 
 export const saveSelectionRationale = createServerFn({ method: "POST" })
@@ -352,13 +353,25 @@ export const saveSelectionRationale = createServerFn({ method: "POST" })
   .inputValidator((i) => SaveRationale.parse(i))
   .handler(async ({ data, context }) => {
     await assertSessionAccess(data.sessionId, context.userId);
+    const { data: session, error: readError } = await context.supabase
+      .from("sessions").select("selected_smp, stage_12_output, selection_source")
+      .eq("id", data.sessionId).single();
+    if (readError || !session?.selected_smp) throw new Error("Select a proposition before confirming its rationale");
+    if (session.selection_source !== "CORE" && !data.rationale.f_loc_legacy?.trim()) {
+      throw new Error("The LOC legacy relationship must be supplied before confirmation");
+    }
+    const rationale = Object.fromEntries(Object.entries(data.rationale).filter((entry): entry is [string, string] => typeof entry[1] === "string"));
+    const output = fillSelectionDeliverable(session.stage_12_output ?? "", session.selected_smp, rationale);
     const { error } = await supabaseAdmin
       .from("sessions")
       .update({
-        selection_rationale: data.rationale,
+        selection_rationale: rationale,
+        stage_12_output: output,
+        version_reason: "Checkpoint C: saved human selection rationale",
+        version_actor: context.userId,
         checkpoint_c_confirmed: true,
       })
       .eq("id", data.sessionId);
     if (error) throw new Error(`Failed to save selection rationale: ${error.message}`);
-    return { ok: true };
+    return { ok: true, rationale, output };
   });

@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { Spinner } from "@/components/ui/busy";
+import { Button } from "@/components/ui/button";
 
 interface SelectionRationaleProps {
   selectedSMP?: string;
@@ -200,7 +201,7 @@ export function SelectionRationale({
           </div>
         ))}
 
-        <button
+        <Button
           type="button"
           disabled={!canSubmit || submitting}
           onClick={() => canSubmit && !submitting && onConfirm(values)}
@@ -223,7 +224,7 @@ export function SelectionRationale({
           }}
         >
           {submitting ? <><Spinner /> Saving…</> : "Confirm selection — Continue →"}
-        </button>
+        </Button>
 
 
         <p
