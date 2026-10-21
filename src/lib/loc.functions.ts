@@ -77,12 +77,26 @@ async function runOneEngine(args: {
       // Invented Authority (stop_reason=max_tokens, 908 chars) on JLR.
       maxTokens: LOC_ENGINE_MAX_TOKENS,
       retryIncompleteResponse: LOC_ENGINE_RETRY_INCOMPLETE,
+      skipUniversalWrapper: true,
       sessionId: args.sessionId,
       stageLabel: `LOC ${args.engine}`,
       stageNumber: "9-loc",
       stageName: `LOC ${args.engine}`,
     });
-    const output = parseEngineOutput(raw, args.engine);
+    let output: EngineOutput;
+    try {
+      output = parseEngineOutput(raw, args.engine);
+    } catch (parseError) {
+      if (!(parseError instanceof Error) || !parseError.message.includes("empty proposition")) throw parseError;
+      // One output-format retry, never a replay of a denial/refusal.
+      const repaired = await callClaude({
+        systemPrompt, userMessage, maxTokens: LOC_ENGINE_MAX_TOKENS,
+        skipUniversalWrapper: true,
+        sessionId: args.sessionId, stageLabel: `LOC ${args.engine} empty-proposition retry`,
+        stageNumber: "9-loc", stageName: `LOC ${args.engine}`,
+      });
+      output = parseEngineOutput(repaired, args.engine);
+    }
     return { engine: args.engine, output };
   } catch (e) {
     return {
@@ -299,7 +313,7 @@ export const runLeftOfCentre = createServerFn({ method: "POST" })
       workspace,
     });
 
-    // Mark running (and wipe stale outputs if forcing, unless engine is in keep set).
+    // Mark running; keep locked/unticked records verbatim.
     // loc_generated_at doubles as the run heartbeat while status='running'.
     await supabaseAdmin
       .from("sessions")
@@ -362,9 +376,7 @@ export const runLeftOfCentre = createServerFn({ method: "POST" })
       });
       const contextVector = await embedText(brandContext);
 
-      // CHALLENGER OBJECTIVE — Engine 08 (Enemy First) is guaranteed to fire.
-      // It is never skipped by a selective retry, and a failed run is retried
-      // once before the pool is assembled.
+      // Challenger priority affects display only, never explicit retry selection.
       const { sessionRequiresEnemyFirstPriority } = await import("./strategic-objective.server");
       const enemyFirstPriority = await sessionRequiresEnemyFirstPriority(data.sessionId);
 

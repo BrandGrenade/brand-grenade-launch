@@ -205,7 +205,7 @@ export function LocControls({ sessionId }: { sessionId: string }) {
 
         <div className="ml-auto flex items-center gap-2">
           {(!status || status.loc_status == null || state === "failed" || stuck) && (
-            <button
+            <Button variant="outline" size="sm"
               type="button"
               className="rounded border px-3 py-1"
               style={{ borderColor: "var(--color-border-strong, #8B8680)" }}
@@ -219,10 +219,10 @@ export function LocControls({ sessionId }: { sessionId: string }) {
                   : state === "failed"
                     ? "Error — click to retry"
                     : "Generate LOC"}
-            </button>
+            </Button>
           )}
           {state === "running" && (
-            <button
+            <Button variant="outline" size="sm"
               type="button"
               className="rounded border px-3 py-1"
               style={{ borderColor: "var(--color-border-strong, #8B8680)" }}
@@ -240,11 +240,11 @@ export function LocControls({ sessionId }: { sessionId: string }) {
               }}
             >
               {stuck ? "Recover stuck run" : "Force restart"}
-            </button>
+            </Button>
           )}
 
           {hasFailures && state !== "running" && (
-            <button
+            <Button variant="outline" size="sm"
               type="button"
               className="rounded border px-3 py-1"
               style={{ borderColor: "var(--color-border-strong, #8B8680)", background: "var(--color-warning, #C81E1E)", color: "#0A0908" }}
@@ -257,9 +257,9 @@ export function LocControls({ sessionId }: { sessionId: string }) {
               title={`Re-fire only the ${failedEngines.length} failed engine${failedEngines.length === 1 ? "" : "s"}; keep successful outputs`}
             >
               Retry {failedEngines.length} failed engine{failedEngines.length === 1 ? "" : "s"}
-            </button>
+            </Button>
           )}
-          <button
+          <Button variant="outline" size="sm"
             type="button"
             className="rounded border px-3 py-1"
             style={{ borderColor: "var(--color-border-strong, #8B8680)" }}
@@ -267,7 +267,7 @@ export function LocControls({ sessionId }: { sessionId: string }) {
             onClick={() => setShowRetryPanel((v) => !v)}
           >
             {showRetryPanel ? "Close retry panel" : "Retry with instructions…"}
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -321,7 +321,7 @@ export function LocControls({ sessionId }: { sessionId: string }) {
             </div>
           </div>
           <div className="flex justify-end gap-2">
-            <button
+            <Button variant="outline" size="sm"
               type="button"
               className="rounded border px-3 py-1"
               style={{ borderColor: "var(--color-border-strong, #8B8680)" }}
@@ -334,7 +334,7 @@ export function LocControls({ sessionId }: { sessionId: string }) {
               }
             >
               {busy ? <><Spinner /> Firing…</> : "Fire retry"}
-            </button>
+            </Button>
           </div>
         </div>
       )}
