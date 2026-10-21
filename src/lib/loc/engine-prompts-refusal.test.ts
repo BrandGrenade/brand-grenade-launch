@@ -1,21 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { getEngineSystemPrompt } from "./engine-prompts";
-import type { EngineName } from "./task-types";
+import { LOC_ENGINES } from "./task-types";
 
 // Claude refused every LOC engine (stop_reason=refusal, category
 // reasoning_extraction) while the shared output contract asked for the
 // "actual intermediate work" "step by step". These phrases must not return.
-const ENGINES: EngineName[] = [
-  "inversion",
-  "wrong_room",
-  "delete_customer",
-  "random_connection",
-  "time_displacement",
-  "enemy_first",
-  "the_unsayable",
-  "one_word_ownership",
-  "invented_authority",
-];
+const ENGINES = LOC_ENGINES;
 
 describe("LOC engine prompts avoid reasoning-extraction wording", () => {
   for (const engine of ENGINES) {
