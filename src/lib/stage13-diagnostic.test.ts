@@ -21,6 +21,7 @@ vi.mock("./checkpoint-gate", () => ({ requireConfirmedSelection: vi.fn() }));
 vi.mock("./claude.server", () => ({ streamClaude: async function* (args: Record<string, unknown>) { state.calls.push(args); yield state.response; } }));
 vi.mock("./output-banned-word-gate", () => ({ findBannedWordHits: () => [], generateWithBannedWordGate: async (args: { generate: (attempt: number) => Promise<string> }) => ({ output: await args.generate(1) }) }));
 import { runStage13 } from "./stage13.functions";
+import { jlrRationale, jlrSelection } from "./selection-rationale.fixture";
 
 // Exercise the actual handler, replacing only external persistence/model/auth boundaries.
 const invoke = async () => {
@@ -34,6 +35,13 @@ beforeEach(() => {
   state.updates = []; state.calls = [];
 });
 describe("B1 Stage 13 completion", () => {
+  it("receives the chosen JLR proposition, every rationale answer and the human guard-rail", async () => {
+    state.session.selected_smp = jlrSelection;
+    state.session.selection_rationale = jlrRationale;
+    await invoke();
+    expect(state.calls[0].userMessage).toContain(jlrSelection);
+    for (const answer of Object.values(jlrRationale)) expect(state.calls[0].userMessage).toContain(answer);
+  });
   it("persists diagnostic valuation atomically with Stage 13 before the lock, without continuing", async () => {
     await invoke();
     expect(state.calls).toHaveLength(1);
