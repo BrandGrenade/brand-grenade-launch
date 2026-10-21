@@ -19,4 +19,4 @@
 - Archive via `bg_set_run_archived`: owner/admin archive, admin-only restore, direct edits blocked. Admin client removal via `bg_admin_remove_client` requires exact name and refuses deletion with runs; why: preserve audit/Hub snapshots.
 - Dashboard/Admin: newest first incl. No job; expand latest client.
 - Stage 8 budgets include reasoning; buffered calls retry incomplete answers once, retaining stop reasons and never retrying denials/refusals.
-- LOC `process` field is a client-facing craft note, never "step by step"/"intermediate work"; why: Claude refuses that as reasoning_extraction. Test: src/lib/loc/engine-prompts-refusal.test.ts.
+- LOC process is a client-facing craft note. Selective retries regenerate ticked engines only; locked/unticked records stay verbatim, including anchors; why: protect approved work.
