@@ -49,7 +49,11 @@ It must be eight words or fewer. Fewer is almost always stronger.
 
 Generate twenty candidate lines internally. Return only the single strongest — the one that passes the pub test, the stranger test, and makes you pause before you move on.`;
 
-const PROCESS_FIELD_SPEC = `"process": "<MANDATORY — 3-5 sentences showing this engine's move being executed step by step. Not a summary of the line. Not a rationale. The actual intermediate work: the sacred assumption you named and inverted, the wrong room you chose and inhabited, the customer you removed and the ideology you found, the random stimulus you named and connected, the moment you located, the word you claimed, and so on. If the process field does not visibly show THIS engine's move being performed, the output is invalid and will be rejected.>"`;
+// Worded as a client-facing craft note. The earlier wording ("step by step …
+// the actual intermediate work") was refused by Claude as reasoning
+// extraction (stop_reason=refusal, category reasoning_extraction) on every
+// engine. Covered by src/lib/loc/engine-prompts-refusal.test.ts.
+const PROCESS_FIELD_SPEC = `"process": "<MANDATORY — 3-5 sentences written for the client, explaining how this engine's move shaped the line: the category assumption that was inverted, the assigned world the line came from, the belief the brand holds without customers, how the assigned stimulus connects to the brand, the moment located, the word claimed, and so on. This is a visible craft note in the deliverable. If it does not show THIS engine's move, the output is invalid.>"`;
 
 // Per-engine mandatory intermediate outputs. These fields make the move
 // auditable and unfakeable — they must exist BEFORE the proposition is
@@ -105,7 +109,7 @@ const OUTPUT_CONTRACT = (engineId: EngineName) => {
     ? ""
     : `  ${ANCHOR_JSON_FIELD_SPEC},\n`;
   const hasIntermediates = intermediates.length > 0;
-  const contractPreamble = `OUTPUT — return exactly one JSON object, no prose, no markdown fences. The "process" field${hasIntermediates ? " AND every intermediate field below are" : " is"} MANDATORY${hasIntermediates ? ". Intermediate fields must be produced BEFORE the proposition — they make the move auditable and unfakeable" : " and must show the move being executed"}. Outputs missing any required field are rejected:`;
+  const contractPreamble = `OUTPUT — return exactly one JSON object, no prose, no markdown fences. The "process" field${hasIntermediates ? " AND every intermediate field below are" : " is"} MANDATORY${hasIntermediates ? ". Intermediate fields must be produced BEFORE the proposition — they show the client how the move shaped the line" : " and must show the move being executed"}. Outputs missing any required field are rejected:`;
   if (engineId === "one_word_ownership") {
     return `${contractPreamble}
 
