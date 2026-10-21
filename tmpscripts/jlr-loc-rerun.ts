@@ -80,7 +80,11 @@ const competitorOwned = competitorOwnedConditionalStage9Words({
 });
 
 const usage: Array<{ label: string; usage: ClaudeUsage }> = [];
-const section = await runStage9LocBatches({
+const SAVED = "/tmp/jlr/loc-section-new.txt";
+const useSaved = process.argv.includes("--use-saved");
+const section = useSaved
+  ? (await import("node:fs")).readFileSync(SAVED, "utf8")
+  : await runStage9LocBatches({
   sessionId: SESSION_ID,
   brandName: session.brand_name,
   category: session.category,
