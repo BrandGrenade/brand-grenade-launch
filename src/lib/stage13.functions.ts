@@ -9,6 +9,7 @@ import { assertSessionAccess } from "@/lib/auth-helpers.server";
 import { assertUpstreamStageOutput } from "./pipeline-integrity";
 import { findBannedWordHits, generateWithBannedWordGate, type OutputGateMode } from "./output-banned-word-gate";
 import { buildDiagnosticValuation } from "./diagnostic-valuation";
+import { selectionRationaleText } from "./selection-rationale";
 
 const BrandIntelInput = z.object({
   sessionId: z.string().uuid(),
@@ -61,7 +62,7 @@ export const runStage13 = createServerFn({ method: "POST" })
     const { data: session, error } = await supabaseAdmin
       .from("sessions")
       .select(
-        "brand_name, category, selected_smp, selected_smp_field_name, stage_2_output, stage_10_output, stage_11_output, stage_12_output, stage_13_output, brand_intelligence, is_preflight_test, brief_type, current_proposition, current_proposition_source, current_proposition_date, brand_positioning, run_mode, stage_9_structured, stage_10_structured, stage_11_structured"
+        "brand_name, category, selected_smp, selected_smp_field_name, selection_rationale, stage_2_output, stage_10_output, stage_11_output, stage_12_output, stage_13_output, brand_intelligence, is_preflight_test, brief_type, current_proposition, current_proposition_source, current_proposition_date, brand_positioning, run_mode, stage_9_structured, stage_10_structured, stage_11_structured"
       )
       .eq("id", data.sessionId)
       .single();
@@ -89,7 +90,7 @@ export const runStage13 = createServerFn({ method: "POST" })
           category: session.category,
           selectedSMP: session.selected_smp,
           selectedSMPFieldName: session.selected_smp_field_name ?? "",
-          stage12Output: "",
+          stage12Output: session.selection_rationale ? selectionRationaleText(session.selected_smp, session.selection_rationale as Record<string, string>) : "",
           stage10Output: "",
           stage11Output: "",
           cmm: "",

@@ -1,11 +1,13 @@
 import { useState, useMemo } from "react";
 import { Spinner } from "@/components/ui/busy";
+import { Button } from "@/components/ui/button";
 
 interface SelectionRationaleProps {
   selectedSMP?: string;
   selectionSource?: "CORE" | "LOC" | "COMBINED";
   onConfirm: (values: Record<string, string>) => void;
   submitting?: boolean;
+  initialValues?: Record<string, string>;
 }
 
 
@@ -80,8 +82,9 @@ export function SelectionRationale({
   selectionSource = "CORE",
   onConfirm,
   submitting = false,
+  initialValues = {},
 }: SelectionRationaleProps) {
-  const [values, setValues] = useState<Record<string, string>>({});
+  const [values, setValues] = useState<Record<string, string>>(initialValues);
 
   const FIELDS = useMemo(
     () =>
@@ -200,7 +203,7 @@ export function SelectionRationale({
           </div>
         ))}
 
-        <button
+        <Button
           type="button"
           disabled={!canSubmit || submitting}
           onClick={() => canSubmit && !submitting && onConfirm(values)}
@@ -223,7 +226,7 @@ export function SelectionRationale({
           }}
         >
           {submitting ? <><Spinner /> Saving…</> : "Confirm selection — Continue →"}
-        </button>
+        </Button>
 
 
         <p
