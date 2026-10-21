@@ -378,7 +378,8 @@ export async function callClaude(args: CallClaudeArgs): Promise<string> {
   if (args.retryIncompleteResponse) {
     for (let attempt = 1; attempt <= 2; attempt++) {
       try {
-        return await callClaude({ ...args, retryIncompleteResponse: false });
+        const retryArgs = { ...args, retryIncompleteResponse: false };
+        return await callClaude(retryArgs);
       } catch (error) {
         if (!(error instanceof ClaudeResponseError) || !error.retryableIncomplete || attempt === 2) throw error;
         await setRetryStatus(args.sessionId, `${args.stageLabel ?? "Claude"}: ${error.message} Retrying once…`);
