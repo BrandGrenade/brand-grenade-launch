@@ -11,6 +11,7 @@ import { RequireAuth } from "@/components/RequireAuth";
 import { LocControls } from "@/components/LocControls";
 import { Checkpoint, buildRevisionInstruction } from "@/components/Checkpoint";
 import { SelectionRationale } from "@/components/SelectionRationale";
+import { Stage12Result } from "@/components/Stage12Result";
 import { BrandIntelligence } from "@/components/BrandIntelligence";
 import { SMPSelection, type SMPCard } from "@/components/SMPSelection";
 import { supabase } from "@/integrations/supabase/client";
@@ -661,6 +662,7 @@ interface SessionData {
   brand_intelligence: Record<string, string> | null;
   selected_smp: string | null;
   selected_smp_field_name: string | null;
+  selection_rationale: Record<string, string> | null;
   current_stage: number;
   status: string;
   stage_status: string | null;
@@ -1067,7 +1069,7 @@ function PipelineView() {
     supabase
       .from("sessions")
       .select(
-        "id, brand_name, category, updated_at, brief_text, brief_versions, current_stage, status, stage_status, phase_2_status, stage_1_output, stage_1_tension_score, stage_1b_required, stage_1b_output, stage_1_error, stage_2_output, stage_2_error, stage_3_output, stage_3_error, stage_4_output, stage_4_error, stage_4b_output, stage_4b_error, stage_5_output, stage_5_error, stage_6_output, stage_6_error, stage_7_output, stage_7_error, stage_8_output, stage_8_error, stage_9_output, stage_9_leftofcentre_output, stage_9_error, loc_status, loc_error, loc_decision_packages, loc_retry_count, loc_generated_at, stage_10_output, stage_10_error, stage_11_output, stage_11_error, stage_12_output, stage_12_error, stage_13_output, stage_13_error, stage_13b_output, stage_13b_error, stage_14_output, stage_14_error, stage_14b_output, stage_14b_error, stage_14c_output, stage_14c_error, stage_15_output, stage_15_error, stage_16_consulting_output, stage_16_error, brand_intelligence, selected_smp, selected_smp_field_name, selection_source, selection_engine, selected_loc_expression, checkpoint_a_confirmed, checkpoint_b_confirmed, checkpoint_c_confirmed, strategy_signoff_confirmed, strategy_signoff_stop, retry_status",
+        "id, brand_name, category, updated_at, brief_text, brief_versions, current_stage, status, stage_status, phase_2_status, stage_1_output, stage_1_tension_score, stage_1b_required, stage_1b_output, stage_1_error, stage_2_output, stage_2_error, stage_3_output, stage_3_error, stage_4_output, stage_4_error, stage_4b_output, stage_4b_error, stage_5_output, stage_5_error, stage_6_output, stage_6_error, stage_7_output, stage_7_error, stage_8_output, stage_8_error, stage_9_output, stage_9_leftofcentre_output, stage_9_error, loc_status, loc_error, loc_decision_packages, loc_retry_count, loc_generated_at, stage_10_output, stage_10_error, stage_11_output, stage_11_error, stage_12_output, stage_12_error, stage_13_output, stage_13_error, stage_13b_output, stage_13b_error, stage_14_output, stage_14_error, stage_14b_output, stage_14b_error, stage_14c_output, stage_14c_error, stage_15_output, stage_15_error, stage_16_consulting_output, stage_16_error, brand_intelligence, selected_smp, selected_smp_field_name, selection_rationale, selection_source, selection_engine, selected_loc_expression, checkpoint_a_confirmed, checkpoint_b_confirmed, checkpoint_c_confirmed, strategy_signoff_confirmed, strategy_signoff_stop, retry_status",
       )
 
       .eq("id", sessionId)
@@ -1402,7 +1404,7 @@ function PipelineView() {
       const { data } = await supabase
         .from("sessions")
         .select(
-          "id, brand_name, category, updated_at, brief_text, brief_versions, current_stage, status, stage_status, phase_2_status, stage_1_output, stage_1_tension_score, stage_1b_required, stage_1b_output, stage_1_error, stage_2_output, stage_2_error, stage_3_output, stage_3_error, stage_4_output, stage_4_error, stage_4b_output, stage_4b_error, stage_5_output, stage_5_error, stage_6_output, stage_6_error, stage_7_output, stage_7_error, stage_8_output, stage_8_error, stage_9_output, stage_9_leftofcentre_output, stage_9_error, loc_status, loc_error, loc_decision_packages, loc_retry_count, loc_generated_at, stage_10_output, stage_10_error, stage_11_output, stage_11_error, stage_12_output, stage_12_error, stage_13_output, stage_13_error, stage_13b_output, stage_13b_error, stage_14_output, stage_14_error, stage_14b_output, stage_14b_error, stage_14c_output, stage_14c_error, stage_15_output, stage_15_error, stage_16_consulting_output, stage_16_error, brand_intelligence, selected_smp, selected_smp_field_name, selection_source, selection_engine, selected_loc_expression, checkpoint_a_confirmed, checkpoint_b_confirmed, checkpoint_c_confirmed, retry_status",
+          "id, brand_name, category, updated_at, brief_text, brief_versions, current_stage, status, stage_status, phase_2_status, stage_1_output, stage_1_tension_score, stage_1b_required, stage_1b_output, stage_1_error, stage_2_output, stage_2_error, stage_3_output, stage_3_error, stage_4_output, stage_4_error, stage_4b_output, stage_4b_error, stage_5_output, stage_5_error, stage_6_output, stage_6_error, stage_7_output, stage_7_error, stage_8_output, stage_8_error, stage_9_output, stage_9_leftofcentre_output, stage_9_error, loc_status, loc_error, loc_decision_packages, loc_retry_count, loc_generated_at, stage_10_output, stage_10_error, stage_11_output, stage_11_error, stage_12_output, stage_12_error, stage_13_output, stage_13_error, stage_13b_output, stage_13b_error, stage_14_output, stage_14_error, stage_14b_output, stage_14b_error, stage_14c_output, stage_14c_error, stage_15_output, stage_15_error, stage_16_consulting_output, stage_16_error, brand_intelligence, selected_smp, selected_smp_field_name, selection_rationale, selection_source, selection_engine, selected_loc_expression, checkpoint_a_confirmed, checkpoint_b_confirmed, checkpoint_c_confirmed, retry_status",
         )
         .eq("id", sessionId)
         .single();
@@ -2982,7 +2984,7 @@ function PipelineView() {
       setSelectedId("09");
       return;
     }
-    if (stageId === "12" && selectedStatus === "checkpoint") return;
+    if (stageId === "12" && (selectedStatus === "checkpoint" || !session?.selection_rationale)) return;
     if (stageId === "13" && !intelSubmitted) return;
     if (!nextStage) return;
     // Checkpoint D — Master Brand Strategy Sign-Off gate between Stage 13/13B and Stage 14.
@@ -3347,7 +3349,7 @@ function PipelineView() {
               }
               await handleRetryStage(id);
             }}
-            showRationale={rationaleForId === selectedId}
+            showRationale={false}
             showBrandIntel={selectedId === "13" && !intelSubmitted && selectedStatus === "running"}
             showStage1bResubmit={
               selectedId === "01B" &&
@@ -3406,6 +3408,10 @@ function PipelineView() {
               window.location.href = `/detonation?session=${sessionId}`;
             }}
             onConfirmCheckpoint={async (stageId, notes) => {
+              if (stageId === "12") {
+                setRationaleForId("12");
+                return;
+              }
               if (stageId === "08" || stageId === "08B") {
                 const ok = await advanceFromStage8();
                 if (!ok) return;
@@ -3537,9 +3543,11 @@ function PipelineView() {
                     if (!sessionId) return;
                     setSavingRationale(true);
                     try {
-                      await saveSelectionRationaleFn({
+                      const saved = await saveSelectionRationaleFn({
                         data: { sessionId, rationale: values },
                       });
+                      setStage12Output(saved.output);
+                      setSession((prev) => prev ? { ...prev, selected_smp: selectedSMP?.smpLine ?? prev.selected_smp, selection_rationale: saved.rationale, stage_12_output: saved.output, checkpoint_c_confirmed: true } : prev);
                       setRationaleForId(null);
                       setStatuses((prev) => ({ ...prev, "12": "complete" }));
                     } catch (err) {
@@ -3551,6 +3559,8 @@ function PipelineView() {
                     }
                   }}
                 />
+              ) : selectedId === "12" && selectedStatus === "complete" ? (
+                <Stage12Result smp={session?.selected_smp ?? selectedSMP?.smpLine ?? ""} fieldName={session?.selected_smp_field_name} rationale={session?.selection_rationale ?? null} />
               ) : null
             }
             retryStatus={session?.retry_status ?? null}
@@ -4241,7 +4251,7 @@ function RightPanel({
           />
         ) : showRationale ? (
           <div style={{ paddingBottom: 80 }}>
-            <SelectionRationale onConfirm={() => onConfirmCheckpoint(stage.id)} />
+            {customCheckpoint}
           </div>
         ) : showBrandIntel ? (
           <div style={{ paddingBottom: 80 }}>
@@ -5113,9 +5123,9 @@ function BottomBar({
   const continueLabel = pipelineComplete
     ? "Begin Brand Detonation →"
     : nextStage
-      ? `Continue to Stage ${nextStage.number} →`
+      ? `Continue to Stage ${Number(nextStage.number)} →`
       : "Continue →";
-  const continueDisabled = status === "running" || (!pipelineComplete && !nextStage);
+  const continueDisabled = status === "running" || (stage.id === "12" && status !== "complete") || (!pipelineComplete && !nextStage);
 
   return (
     <div
