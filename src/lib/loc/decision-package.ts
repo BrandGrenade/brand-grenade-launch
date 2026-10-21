@@ -49,6 +49,7 @@ export function renderLocFullMarkdown(args: {
   retryCount: number;
   generatedAt: string;
   sourceNote: string;
+  engineStates?: Partial<Record<EngineName, { error?: string; output?: EngineOutput }>>;
 }): string {
   // Count only engines that actually produced a proposition line.
   const withOutput = args.packages.filter(
@@ -67,7 +68,12 @@ export function renderLocFullMarkdown(args: {
     if (p) {
       ordered.push(renderLocDecisionPackage(p));
     } else {
-      ordered.push(`## ${LOC_ENGINE_LABEL[engine]}\n\n_(engine failed to return output)_`);
+      const state = args.engineStates?.[engine];
+      if (state?.output) {
+        ordered.push(`${renderLocDecisionPackage({ engine, engineOutput: state.output })}\n\n_Not eligible for selection — ${state.output.anchorReason ?? "brand-anchor check did not pass"}_`);
+      } else {
+        ordered.push(`## ${LOC_ENGINE_LABEL[engine]}\n\n_${state?.error ?? "No saved engine result; generation has not completed."}_`);
+      }
     }
   }
 

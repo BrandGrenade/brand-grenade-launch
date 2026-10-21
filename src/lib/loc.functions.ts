@@ -34,12 +34,14 @@ import {
 } from "./loc/decision-package";
 import { LOC_ENGINES, type EngineName } from "./loc/task-types";
 import { runValidationPass, type EngineValidationEntry } from "./loc/validation";
+import { locRetryPlan, LOC_ENGINE_MAX_TOKENS, LOC_ENGINE_RETRY_INCOMPLETE } from "./loc/retry-policy";
 
 const RunInput = z.object({
   sessionId: z.string().uuid(),
   force: z.boolean().optional(),
   retryInstructions: z.string().max(8000).optional(),
   keepEngines: z.array(z.enum(LOC_ENGINES as unknown as [EngineName, ...EngineName[]])).optional(),
+  regenerateEngines: z.array(z.enum(LOC_ENGINES as unknown as [EngineName, ...EngineName[]])).optional(),
 });
 
 const StatusInput = z.object({ sessionId: z.string().uuid() });
@@ -73,7 +75,8 @@ async function runOneEngine(args: {
       userMessage,
       // Budget covers high-effort reasoning plus the JSON answer; 4000 truncated
       // Invented Authority (stop_reason=max_tokens, 908 chars) on JLR.
-      maxTokens: 8000,
+      maxTokens: LOC_ENGINE_MAX_TOKENS,
+      retryIncompleteResponse: LOC_ENGINE_RETRY_INCOMPLETE,
       sessionId: args.sessionId,
       stageLabel: `LOC ${args.engine}`,
       stageNumber: "9-loc",
@@ -244,7 +247,7 @@ export const runLeftOfCentre = createServerFn({ method: "POST" })
         loc_status: string | null;
         loc_retry_count: number | null;
         loc_generated_at: string | null;
-        loc_engine_outputs: Record<string, { ok: boolean; output?: EngineOutput; error?: string }> | null;
+        loc_engine_outputs: Record<string, { ok: boolean; output?: EngineOutput; error?: string; locked?: boolean }> | null;
       }>();
 
     if (session.checkpoint_c_confirmed) {
@@ -270,8 +273,9 @@ export const runLeftOfCentre = createServerFn({ method: "POST" })
     }
 
     const retryCount = data.force ? (locRow?.loc_retry_count ?? 0) + 1 : locRow?.loc_retry_count ?? 0;
-    const keepSet = new Set<EngineName>(data.keepEngines ?? []);
     const priorOutputs = locRow?.loc_engine_outputs ?? {};
+    const { keepSet, enginesToRun, preserved: preservedOutputs } = locRetryPlan(priorOutputs, data.regenerateEngines, data.keepEngines);
+    if (enginesToRun.length === 0) return { ok: true, sessionId: data.sessionId, unchanged: true };
 
     let workspace: WorkspaceInputSnapshot | null = null;
     try {
@@ -297,12 +301,6 @@ export const runLeftOfCentre = createServerFn({ method: "POST" })
 
     // Mark running (and wipe stale outputs if forcing, unless engine is in keep set).
     // loc_generated_at doubles as the run heartbeat while status='running'.
-    const preservedOutputs: Record<string, unknown> = {};
-    if (data.force && keepSet.size > 0) {
-      for (const e of keepSet) {
-        if (priorOutputs[e]?.ok) preservedOutputs[e] = priorOutputs[e];
-      }
-    }
     await supabaseAdmin
       .from("sessions")
       .update({
@@ -369,12 +367,10 @@ export const runLeftOfCentre = createServerFn({ method: "POST" })
       // once before the pool is assembled.
       const { sessionRequiresEnemyFirstPriority } = await import("./strategic-objective.server");
       const enemyFirstPriority = await sessionRequiresEnemyFirstPriority(data.sessionId);
-      if (enemyFirstPriority) keepSet.delete("enemy_first" as EngineName);
 
       // Fire engines in parallel — skip any engine the user asked to keep.
       // Each engine bumps the heartbeat on completion so the client's
       // no-activity watchdog only trips when work has genuinely stalled.
-      const enginesToRun = LOC_ENGINES.filter((e) => !keepSet.has(e));
       const engineResults = await Promise.all(
         enginesToRun.map(async (engine) => {
           const kind = STIMULUS_ENGINES[engine];
@@ -401,20 +397,6 @@ export const runLeftOfCentre = createServerFn({ method: "POST" })
         }),
       );
 
-      if (enemyFirstPriority) {
-        const idx = engineResults.findIndex((r) => r.engine === "enemy_first");
-        if (idx >= 0 && !engineResults[idx]!.output) {
-          const retry = await runOneEngine({
-            engine: "enemy_first" as EngineName,
-            sessionId: data.sessionId,
-            inputs,
-            retryInstructions: data.retryInstructions,
-            abstractOpportunity,
-          });
-          engineResults[idx] = retry;
-          await bumpHeartbeat();
-        }
-      }
 
       const engineOutputsRecord: Record<string, unknown> = { ...preservedOutputs };
       for (const r of engineResults) {
@@ -462,6 +444,7 @@ export const runLeftOfCentre = createServerFn({ method: "POST" })
         .slice(0, 12000);
       await Promise.all(
         successful.map(async (r) => {
+          if (keepSet.has(r.engine)) return;
           const verdict = await enforcePropositionAnchor({
             sessionId: data.sessionId,
             proposition: r.output.proposition,
@@ -483,7 +466,7 @@ export const runLeftOfCentre = createServerFn({ method: "POST" })
       await bumpHeartbeat();
 
       const anchored = successful.filter((r) => r.output.anchored);
-      let forSelection = anchored.length > 0 ? anchored : successful;
+      let forSelection = anchored.length > 0 ? successful.filter(r => r.output.anchored || keepSet.has(r.engine)) : successful;
       // Challenger: Engine 08 is never dropped from the selection pool, even
       // if the anchor gate rejected it — it is surfaced flagged instead.
       if (enemyFirstPriority && !forSelection.some((r) => r.engine === "enemy_first")) {
@@ -520,6 +503,11 @@ export const runLeftOfCentre = createServerFn({ method: "POST" })
         retryCount,
         generatedAt,
         sourceNote: inputs.sourceNote,
+        engineStates: Object.fromEntries(LOC_ENGINES.map(engine => {
+          const r = successful.find(result => result.engine === engine);
+          const failure = engineResults.find(result => result.engine === engine);
+          return [engine, { error: failure?.error ?? priorOutputs[engine]?.error, output: r?.output }];
+        })),
       });
 
       const packagesJson = packages.map((p) => {
@@ -552,6 +540,7 @@ export const runLeftOfCentre = createServerFn({ method: "POST" })
             entries: validationEntries,
           },
           loc_decision_packages: packagesJson,
+          loc_engine_outputs: engineOutputsRecord,
           stage_9_leftofcentre_output: markdown,
           loc_status: "complete",
           loc_generated_at: generatedAt,

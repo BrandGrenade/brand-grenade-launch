@@ -4,8 +4,9 @@ import { toast } from "sonner";
 import { runLeftOfCentre, getLocStatus, resetStuckLoc } from "@/lib/loc.functions";
 import { LOC_ENGINES, LOC_ENGINE_LABEL, type EngineName } from "@/lib/loc/task-types";
 import { Spinner } from "@/components/ui/busy";
+import { Button } from "@/components/ui/button";
 
-type EngineOutputEntry = { ok: boolean; error?: string; output?: unknown };
+type EngineOutputEntry = { ok: boolean; error?: string; output?: unknown; locked?: boolean };
 
 type LocStatusRow = {
   loc_status: string | null;
@@ -33,7 +34,7 @@ export function LocControls({ sessionId }: { sessionId: string }) {
   const [busy, setBusy] = useState(false);
   const [showRetryPanel, setShowRetryPanel] = useState(false);
   const [retryInstructions, setRetryInstructions] = useState("");
-  const [keepEngines, setKeepEngines] = useState<Set<EngineName>>(new Set());
+  const [regenerateEngines, setRegenerateEngines] = useState<Set<EngineName>>(new Set());
   const [now, setNow] = useState(() => Date.now());
   const autoFiredRef = useRef(false);
   const lastActivityRef = useRef<{ heartbeat: string | null; engineCount: number; observedAt: number } | null>(null);
@@ -78,7 +79,7 @@ export function LocControls({ sessionId }: { sessionId: string }) {
     return { failedEngines: failed, successfulEngines: success };
   }, [status?.loc_engine_outputs]);
 
-  async function trigger(force: boolean, opts?: { retryInstructions?: string; keepEngines?: EngineName[] }) {
+  async function trigger(force: boolean, opts?: { retryInstructions?: string; regenerateEngines?: EngineName[] }) {
     if ((busy && !force) || locked) return;
     setBusy(true);
     try {
@@ -87,7 +88,7 @@ export function LocControls({ sessionId }: { sessionId: string }) {
           sessionId,
           force,
           ...(opts?.retryInstructions ? { retryInstructions: opts.retryInstructions } : {}),
-          ...(opts?.keepEngines && opts.keepEngines.length > 0 ? { keepEngines: opts.keepEngines } : {}),
+          ...(opts?.regenerateEngines ? { regenerateEngines: opts.regenerateEngines } : {}),
         },
       });
       toast.success(force ? "Left-of-Centre retry started" : "Left-of-Centre generation started");
@@ -174,8 +175,8 @@ export function LocControls({ sessionId }: { sessionId: string }) {
     : state === "failed" ? "var(--color-error, #C81E1E)"
     : "var(--color-text-tertiary)";
 
-  function toggleKeep(engine: EngineName) {
-    setKeepEngines((prev) => {
+  function toggleRegenerate(engine: EngineName) {
+    setRegenerateEngines((prev) => {
       const next = new Set(prev);
       if (next.has(engine)) next.delete(engine);
       else next.add(engine);
@@ -250,7 +251,7 @@ export function LocControls({ sessionId }: { sessionId: string }) {
               disabled={busy || locked}
               onClick={() =>
                 trigger(true, {
-                  keepEngines: successfulEngines,
+                  regenerateEngines: failedEngines.map(({ engine }) => engine),
                 })
               }
               title={`Re-fire only the ${failedEngines.length} failed engine${failedEngines.length === 1 ? "" : "s"}; keep successful outputs`}
@@ -277,7 +278,7 @@ export function LocControls({ sessionId }: { sessionId: string }) {
           style={{ borderColor: "var(--color-error, #C81E1E)", background: "color-mix(in oklab, var(--color-error, #C81E1E) 6%, transparent)" }}
         >
           <div className="mb-2 font-semibold" style={{ color: "var(--color-error, #E5484D)" }}>
-            {failedEngines.length} engine{failedEngines.length === 1 ? "" : "s"} failed validation
+            {failedEngines.length} engine{failedEngines.length === 1 ? "" : "s"} failed generation or output parsing
           </div>
           <ul className="space-y-1">
             {failedEngines.map(({ engine, error }) => (
@@ -309,12 +310,12 @@ export function LocControls({ sessionId }: { sessionId: string }) {
             />
           </div>
           <div>
-            <div className="text-body-sm font-semibold mb-1">Keep these engines (skip retry — carry prior output forward)</div>
+            <div className="text-body-sm font-semibold mb-1">Regenerate selected engines</div>
             <div className="grid grid-cols-1 gap-1 sm:grid-cols-2">
               {LOC_ENGINES.map((e) => (
                 <label key={e} className="flex items-center gap-2 text-body-sm">
-                  <input type="checkbox" checked={keepEngines.has(e)} onChange={() => toggleKeep(e)} />
-                  <span>{LOC_ENGINE_LABEL[e]}</span>
+                  <input type="checkbox" checked={regenerateEngines.has(e)} disabled={status?.loc_engine_outputs?.[e]?.locked} onChange={() => toggleRegenerate(e)} />
+                  <span>{LOC_ENGINE_LABEL[e]}{status?.loc_engine_outputs?.[e]?.locked ? " · Locked" : ""}</span>
                 </label>
               ))}
             </div>
@@ -324,11 +325,11 @@ export function LocControls({ sessionId }: { sessionId: string }) {
               type="button"
               className="rounded border px-3 py-1"
               style={{ borderColor: "var(--color-border-strong, #8B8680)" }}
-              disabled={busy}
+              disabled={busy || regenerateEngines.size === 0}
               onClick={() =>
                 trigger(true, {
                   retryInstructions: retryInstructions.trim() || undefined,
-                  keepEngines: Array.from(keepEngines),
+                  regenerateEngines: Array.from(regenerateEngines),
                 })
               }
             >

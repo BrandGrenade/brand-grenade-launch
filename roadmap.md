@@ -1,5 +1,7 @@
 # Roadmap
 
+- [ ] Repair LOC retry selection and error reporting; back up JLR Stage 8B, restore/lock engines 02/07/09/11/12, rerun only 01/03/04/05/06/08/10/13 with the existing directive, verify preserved data and later stages.
+
 - [x] LOC refusal fix: reworded shared process instruction (old wording refused as reasoning_extraction; new wording 3/3 on fictional brand), errored stages clickable, LOC budget 8000. JLR 3470f1ad LOC rerun: 13/13 engines produced output, 10 passed brand-anchor gate; Stage 8 unchanged (no new Stage 8 version). 230 tests pass. Not yet published.
 
 - [x] JLR twelve missing B/C/D slots filled only; backup version 2 saved first. Exact reversal comparison proves all other Stage 8 characters and Ladder unchanged; only stage_8_output/updated_at changed. All twelve candidates visible on signed-in readback; open-page four-kept/one-excluded selection comparison unchanged. No whole-stage or later-stage run, no publication. Selections remain browser-local under existing behavior.
