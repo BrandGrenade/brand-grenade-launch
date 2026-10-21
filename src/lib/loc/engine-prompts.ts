@@ -9,6 +9,7 @@
 import type { LocInputs } from "./brief-extract";
 import { renderLocInputsBlock } from "./brief-extract";
 import { parseJsonLenient } from "./json-sanitize";
+import { extractLocJson } from "./extract-json";
 import type { EngineName } from "./task-types";
 import { LOC_ENGINE_LABEL } from "./task-types";
 import { ANCHOR_JSON_FIELD_SPEC, ANCHOR_PROMPT_RULE } from "../proposition-anchor";
@@ -1312,12 +1313,7 @@ export type EngineOutput = {
 
 export function parseEngineOutput(raw: string, engine: EngineName): EngineOutput {
   const trimmed = raw.trim();
-  const jsonStart = trimmed.indexOf("{");
-  const jsonEnd = trimmed.lastIndexOf("}");
-  if (jsonStart === -1 || jsonEnd === -1) {
-    throw new Error(`${engine} engine did not return JSON. Raw: ${trimmed.slice(0, 200)}`);
-  }
-  const slice = trimmed.slice(jsonStart, jsonEnd + 1);
+  const slice = extractLocJson(trimmed);
   const parsed = parseJsonLenient<Record<string, unknown>>(slice);
   let proposition = String(parsed.proposition ?? "").trim();
   const descriptor = String(parsed.descriptor ?? "").trim();
