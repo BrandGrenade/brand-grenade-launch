@@ -7,7 +7,7 @@
 // alongside the Funnel batch afterwards. This keeps token budget and wall
 // clock inside safe limits while putting both sources on equal footing.
 
-import { streamClaude } from "./claude.server";
+import { streamClaude, type ClaudeUsage } from "./claude.server";
 import { STAGE_9_SYSTEM_PROMPT } from "./stage9-prompt";
 import {
   UNIVERSAL_BANNED_STAGE9_LIST,
@@ -144,6 +144,8 @@ export async function runStage9LocBatches(args: {
   stage7DominantSignal?: string;
   candidates: LocCandidate[];
   competitorOwnedConditionalWords?: readonly string[];
+  /** Optional per-call token usage reporter (fires once per batch call). */
+  onUsage?: (usage: ClaudeUsage, label: string) => void;
 }): Promise<string> {
   const candidates = args.candidates.filter((c) => c.proposition);
   if (candidates.length === 0) return "";
@@ -180,6 +182,9 @@ export async function runStage9LocBatches(args: {
             stageLabel: `Stage 9 LOC batch ${i + 1}/${batches.length}`,
             stageNumber: "9",
             stageName: "Distinctiveness Check (LOC batch)",
+            onUsage: args.onUsage
+              ? (u) => args.onUsage!(u, `LOC batch ${i + 1}/${batches.length}`)
+              : undefined,
           })
         ).trim();
       } catch (e) {
@@ -208,6 +213,9 @@ export async function runStage9LocBatches(args: {
             stageLabel: `Stage 9 LOC batch ${i + 1} disposition retry`,
             stageNumber: "9",
             stageName: "Distinctiveness Check (LOC batch)",
+            onUsage: args.onUsage
+              ? (u) => args.onUsage!(u, `LOC batch ${i + 1} disposition retry`)
+              : undefined,
           });
           const accepted = rows
             .split("\n")
