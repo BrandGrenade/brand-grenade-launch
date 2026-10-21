@@ -3550,7 +3550,14 @@ function PipelineView() {
                       setStage12Output(saved.output);
                       setSession((prev) => prev ? { ...prev, selected_smp: selectedSMP?.smpLine ?? prev.selected_smp, selection_rationale: saved.rationale, stage_12_output: saved.output, checkpoint_c_confirmed: true } : prev);
                       setRationaleForId(null);
-                      setStatuses((prev) => ({ ...prev, "12": "complete" }));
+                      // The button reads "Confirm selection — Continue →": once the
+                      // answers are saved, move straight on to Brand Fit Validation.
+                      setStatuses((prev) => ({
+                        ...prev,
+                        "12": "complete",
+                        "13": prev["13"] === "complete" ? "complete" : "running",
+                      }));
+                      setSelectedId("13");
                     } catch (err) {
                       setStage12Error(
                         err instanceof Error ? err.message : "Failed to save rationale",
@@ -3561,7 +3568,13 @@ function PipelineView() {
                   }}
                 />
               ) : selectedId === "12" && selectedStatus === "complete" ? (
-                <Stage12Result smp={session?.selected_smp ?? selectedSMP?.smpLine ?? ""} fieldName={session?.selected_smp_field_name} rationale={session?.selection_rationale ?? null} onEdit={() => setRationaleForId("12")} />
+                <Stage12Result
+                  smp={session?.selected_smp ?? selectedSMP?.smpLine ?? ""}
+                  fieldName={session?.selected_smp_field_name}
+                  rationale={session?.selection_rationale ?? null}
+                  onEdit={() => setRationaleForId("12")}
+                  onContinue={session?.selection_rationale ? () => void handleContinueStage() : undefined}
+                />
               ) : null
             }
             retryStatus={session?.retry_status ?? null}
