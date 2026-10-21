@@ -17,6 +17,6 @@
 - Deal runs also score the current proposition as a baseline in the same Stage 11 (T1–T8 block) and Stage 13 (six credibility dimensions) calls, stored as `current_position` (is_current, excluded_from_selection, Stage 10 label rules) inside `stage_N_structured`; Campaign records never carry it; why: one call per stage, no change to text output or selection. Saved briefs keep deal data in `brief_fields.briefMeta`. Tests: src/lib/t1-current-position.test.ts.
 - Intelligence Lab analyses and territory revisions run only inside /api/public/intelligence-tick, woken by the `bg_intelligence_wake` trigger when a row is queued or a revision recorded, and streaming keep-alives until done; the reliability supervisor only re-queues stalled rows; why: work handed to ctx.waitUntil is cancelled ~30s after the request returns, which froze runs at running:0.
 - Archive via `bg_set_run_archived`: owner/admin archive, admin-only restore, direct edits blocked. Admin client removal via `bg_admin_remove_client` requires exact name and refuses deletion with runs; why: preserve audit/Hub snapshots.
-- Dashboard/Admin group newest first, including No job; expand latest client.
+- Dashboard/Admin: newest first incl. No job; expand latest client.
 - Stage 8 budgets include reasoning; buffered calls retry incomplete answers once, retaining stop reasons and never retrying denials/refusals.
 - LOC `process` field is a client-facing craft note, never "step by step"/"intermediate work"; why: Claude refuses that as reasoning_extraction. Test: src/lib/loc/engine-prompts-refusal.test.ts.
