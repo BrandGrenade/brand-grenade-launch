@@ -80,7 +80,8 @@ export function extractBaseProposition(markdown: string): string | null {
 
 function pickLine(text: string, label: RegExp): string | null {
   for (const raw of text.split("\n")) {
-    const m = raw.match(label);
+    // Claude may bold either the label or its whole line; preserve the value.
+    const m = raw.replace(/\*\*/g, "").match(label);
     if (m) return m[1].trim().replace(/^["“”'‘’]+|["“”'‘’]+$/g, "").trim();
   }
   return null;
