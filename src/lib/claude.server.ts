@@ -63,7 +63,17 @@ export interface CallClaudeArgs {
   effort?: Effort;
   /** Buffered callers only: retry an incomplete answer once, discarding partial text. */
   retryIncompleteResponse?: boolean;
+  /** Optional callback fired once per call with the token usage reported by
+   *  the Anthropic stream (summed across connection retries). */
+  onUsage?: (usage: ClaudeUsage) => void;
 }
+
+export type ClaudeUsage = {
+  inputTokens: number;
+  outputTokens: number;
+  cacheReadInputTokens: number;
+  cacheCreationInputTokens: number;
+};
 
 export class ClaudeResponseError extends Error {
   constructor(message: string, public stopReason: string | null, public retryableIncomplete: boolean) {
@@ -423,6 +433,7 @@ export async function* streamClaude(args: CallClaudeArgs): AsyncGenerator<string
   try {
 
   type StreamAttemptResult = { chars: number; stopReason: string | null; sawMessageStop: boolean };
+  const usageTotal: ClaudeUsage = { inputTokens: 0, outputTokens: 0, cacheReadInputTokens: 0, cacheCreationInputTokens: 0 };
 
   // Single attempt: opens an SSE stream and yields deltas as they arrive.
   // This is deliberately live, not buffered, so withStreamSafety can persist
@@ -470,7 +481,17 @@ export async function* streamClaude(args: CallClaudeArgs): AsyncGenerator<string
               type?: string;
               delta?: { type?: string; text?: string; stop_reason?: string };
               error?: { type?: string; message?: string };
+              message?: { usage?: { input_tokens?: number; cache_creation_input_tokens?: number; cache_read_input_tokens?: number } };
+              usage?: { output_tokens?: number };
             };
+            if (evt.type === "message_start" && evt.message?.usage) {
+              usageTotal.inputTokens += evt.message.usage.input_tokens ?? 0;
+              usageTotal.cacheCreationInputTokens += evt.message.usage.cache_creation_input_tokens ?? 0;
+              usageTotal.cacheReadInputTokens += evt.message.usage.cache_read_input_tokens ?? 0;
+            }
+            if (evt.type === "message_delta" && evt.usage?.output_tokens) {
+              usageTotal.outputTokens = evt.usage.output_tokens;
+            }
             if (evt.type === "error") {
               // Preserve provider errors; never turn a denial into an empty-answer retry.
               throw new ClaudeResponseError(`Claude stream error ${evt.error?.type ?? "unknown"}: ${evt.error?.message ?? "no reason supplied"}`, null, false);
@@ -529,6 +550,11 @@ export async function* streamClaude(args: CallClaudeArgs): AsyncGenerator<string
   const stopReason = result?.stopReason ?? null;
   const sawMessageStop = Boolean(result?.sawMessageStop);
   __telemetryChars = totalChars;
+  try {
+    args.onUsage?.(usageTotal);
+  } catch {
+    // Usage reporting is best-effort; never fail the call because of it.
+  }
   console.log(`[CLAUDE-RESPONSE] stage=${__telemetryLabel} session=${__telemetrySession} model=${__telemetryModel} max_tokens=${args.maxTokens ?? 64000} stop_reason=${stopReason ?? "missing"} message_stop=${sawMessageStop} text_chars=${totalChars}`);
   if (stopReason === "refusal") throw new ClaudeResponseError("Claude stop_reason=refusal: the provider declined this request.", stopReason, false);
   if (stopReason === "max_tokens") {
