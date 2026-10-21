@@ -3535,6 +3535,7 @@ function PipelineView() {
                 />
               ) : selectedId === "12" && rationaleForId === "12" ? (
                 <SelectionRationale
+                  initialValues={session?.selection_rationale ?? {}}
                   selectedSMP={selectedSMP?.smpLine ?? session?.selected_smp ?? ""}
                   selectionSource={selectedSource ?? ((session as unknown as { selection_source?: "CORE" | "LOC" | "COMBINED" } | null)?.selection_source) ?? "CORE"}
                   submitting={savingRationale}
@@ -3560,7 +3561,7 @@ function PipelineView() {
                   }}
                 />
               ) : selectedId === "12" && selectedStatus === "complete" ? (
-                <Stage12Result smp={session?.selected_smp ?? selectedSMP?.smpLine ?? ""} fieldName={session?.selected_smp_field_name} rationale={session?.selection_rationale ?? null} />
+                <Stage12Result smp={session?.selected_smp ?? selectedSMP?.smpLine ?? ""} fieldName={session?.selected_smp_field_name} rationale={session?.selection_rationale ?? null} onEdit={() => setRationaleForId("12")} />
               ) : null
             }
             retryStatus={session?.retry_status ?? null}

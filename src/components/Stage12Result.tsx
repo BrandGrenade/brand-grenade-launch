@@ -1,7 +1,9 @@
 import { RATIONALE_FIELDS } from "@/lib/selection-rationale";
+import { Button } from "@/components/ui/button";
 
-export function Stage12Result({ smp, fieldName, rationale }: {
+export function Stage12Result({ smp, fieldName, rationale, onEdit }: {
   smp: string; fieldName?: string | null; rationale: Record<string, string> | null;
+  onEdit?: () => void;
 }) {
   return <div className="space-y-8">
     <header>
@@ -17,6 +19,7 @@ export function Stage12Result({ smp, fieldName, rationale }: {
         <p className="mt-2 whitespace-pre-wrap text-text-secondary">{rationale[f.key] || "Not supplied"}</p>
       </div>) : <p className="text-destructive">The selection is saved, but the rationale has not been saved.</p>}
       {rationale?.f_loc_legacy && <p className="whitespace-pre-wrap text-text-secondary">{rationale.f_loc_legacy}</p>}
+      {onEdit && <Button variant="outline" onClick={onEdit}>Review selection rationale</Button>}
     </section>
   </div>;
 }

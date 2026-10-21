@@ -7,6 +7,7 @@ interface SelectionRationaleProps {
   selectionSource?: "CORE" | "LOC" | "COMBINED";
   onConfirm: (values: Record<string, string>) => void;
   submitting?: boolean;
+  initialValues?: Record<string, string>;
 }
 
 
@@ -81,8 +82,9 @@ export function SelectionRationale({
   selectionSource = "CORE",
   onConfirm,
   submitting = false,
+  initialValues = {},
 }: SelectionRationaleProps) {
-  const [values, setValues] = useState<Record<string, string>>({});
+  const [values, setValues] = useState<Record<string, string>>(initialValues);
 
   const FIELDS = useMemo(
     () =>
