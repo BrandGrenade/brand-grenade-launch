@@ -177,7 +177,9 @@ export async function runStage9LocBatches(args: {
           await collect({
             systemPrompt: STAGE_9_SYSTEM_PROMPT,
             userMessage,
-            maxTokens: 16000,
+            // 16000 truncated batch 1 at ~10k chars under high reasoning
+            // effort (thinking tokens share the budget) — raised to 32000.
+            maxTokens: 32000,
             sessionId: args.sessionId,
             stageLabel: `Stage 9 LOC batch ${i + 1}/${batches.length}`,
             stageNumber: "9",
