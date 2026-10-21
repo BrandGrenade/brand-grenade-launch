@@ -1,7 +1,7 @@
 
 - Partner Hub events use Room status/document/sign-off triggers, a private outbox and server sender; why: identical across stages/models without stage changes.
 - Intelligence Lab progress separates estimated character-based stream markers from confirmed completion and reads saved activity timestamps; why: its single model call does not persist individual layer completions.
-- Score-line parsers must accept the cleaned form "N/10 (revised from M/10)." and be tested on text passed through stripDocumentMetadata; why: the cleaner rewrites review markers before parsing, and a raw-text-only test let Jaguar downloads break twice.
+- Score-line parsers must accept the cleaned form "N/10 (revised from M/10)." and be tested on stripDocumentMetadata output; why: the cleaner rewrites markers before parsing; raw-text-only tests broke Jaguar downloads twice.
 - Keep the public methodology headline in platform-metrics separate from the audited register count; why: public copy updates must not change the underlying inventory or other platform metrics.
 - Repository visitor passwords are bcrypt-only (no scrypt fallback, no readable column); why: readable passwords must never be stored or shown — admins reset, never view.
 - Run-to-client links are database-controlled through Hub mapping, source inheritance, owner picker RPCs or admin attachment RPCs; client-only Hub links are valid and inheritance wins; why: names and browser-written link fields never authorize links.
