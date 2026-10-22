@@ -1,5 +1,7 @@
 # Roadmap
 
+- [ ] Fix next-stage identifiers and navigation across full/Deal/diagnostic runs; test, verify JLR without rerunning stages, publish.
+
 - [x] JLR Stage 12: full session backup saved in run history; six answers recovered verbatim and Deliverable 3 filled. Fixed discarded-form branch and save-before-confirm path; signed-in JLR form resubmission/reload verified all six answers and enabled Continue to Stage 13. 251 tests pass, build OK; Stage 13 input test includes proposition/answers/guard-rail. All upstream/later-stage fields unchanged. No Stage 13 run or publish.
 
 - [x] Raised all seven LOW helper categories (eight call sites) to 8000; 245 tests pass, build OK; published fixes. Live signed-in JLR retry 7 completed: exactly eight requested engines changed, all 13 successful; five original locked engine records/anchors byte-for-byte unchanged, all later-stage fields unchanged; saved instruction verified at submission and lines visible after reload. Backup engine v15/document v7/packages v7/validation v6. Validation scores rerun for all engines as existing logic does; protected package engineOutput unchanged. Production logs confirm selected engines/adjudicators/anchors end_turn.

@@ -55,6 +55,7 @@ import { PENDING_BRIEF_EDIT_STORAGE_KEY } from "@/routes/brief.index";
 import { FileText, PencilLine } from "lucide-react";
 import { Spinner } from "@/components/ui/busy";
 import { NUMBERED_STAGE_COUNT } from "@/lib/stage-manifest";
+import { PIPELINE_STAGES as STAGES, nextPipelineStage, pipelineContinueLabel, type PipelineStage as Stage } from "@/lib/pipeline-navigation";
 
 const CLIENT_STREAM_IDLE_MS = 8 * 60_000;
 const DB_COMPLETION_POLL_MS = 5_000;
@@ -458,44 +459,6 @@ export const Route = createFileRoute("/pipeline")({
 
 type StageStatus = "pending" | "running" | "complete" | "checkpoint" | "error";
 
-interface Stage {
-  id: string;
-  number: string;
-  name: string;
-  conditional?: boolean;
-  checkpoint?: boolean;
-}
-
-const STAGES: Stage[] = [
-  { id: "01", number: "01", name: "Brief Analysis", checkpoint: true },
-  { id: "01B", number: "01B", name: "Brief Enhancement", conditional: true },
-  { id: "02", number: "02", name: "Category Intelligence" },
-  { id: "03", number: "03", name: "Strategic Frameworks" },
-  { id: "04", number: "04", name: "Strategic Universes" },
-  { id: "04B", number: "04B", name: "Asset Mining & Product Facts" },
-  { id: "05", number: "05", name: "Insight Generation" },
-  { id: "06", number: "06", name: "Insight Validation" },
-  { id: "07", number: "07", name: "Territory Synthesis" },
-  { id: "08", number: "08", name: "Proposition Generation", checkpoint: true },
-  { id: "08B", number: "08B", name: "Left-of-Centre Engines" },
-  { id: "09", number: "09", name: "Distinctiveness Check" },
-  { id: "10", number: "10", name: "Proposition Scoring" },
-  { id: "11", number: "11", name: "Integrity Testing" },
-  { id: "12", number: "12", name: "Proposition Selection", checkpoint: true },
-  { id: "13", number: "13", name: "Brand Fit Validation" },
-  { id: "13B", number: "13B", name: "Historical Validation", conditional: true },
-  { id: "14", number: "14", name: "Territory Mapping" },
-  { id: "14B", number: "14B", name: "Channel Expression", conditional: true },
-  { id: "14C", number: "14C", name: "Brand World Definition", conditional: true },
-  { id: "15", number: "15", name: "Coherence Audit" },
-  // Document Assembly (Stage 16) intentionally runs ONLY after Phase 2 is complete
-  // (Stages 17–22 + Checkpoint D territory selection + Checkpoint E detonation
-  // selection). It is generated on demand from the deliverables page (`/complete`),
-  // never from the Phase 1 strategy pipeline. Adding it back here would
-  // re-introduce the fabrication bug where the vision document invented a
-  // Detonation section before Phase 2 had run.
-];
-
 const CHECKPOINT_LETTERS: Record<string, "A" | "B" | "C"> = {
   "01": "A",
   "08": "B",
@@ -604,6 +567,7 @@ function formatSubmittedBriefForStageOutput(text: string): string {
 // ────────────────────────────────────────────────────────────────────────────
 
 interface SessionData {
+  run_mode: string;
   id: string;
   brand_name: string;
   category: string;
@@ -1069,7 +1033,7 @@ function PipelineView() {
     supabase
       .from("sessions")
       .select(
-        "id, brand_name, category, updated_at, brief_text, brief_versions, current_stage, status, stage_status, phase_2_status, stage_1_output, stage_1_tension_score, stage_1b_required, stage_1b_output, stage_1_error, stage_2_output, stage_2_error, stage_3_output, stage_3_error, stage_4_output, stage_4_error, stage_4b_output, stage_4b_error, stage_5_output, stage_5_error, stage_6_output, stage_6_error, stage_7_output, stage_7_error, stage_8_output, stage_8_error, stage_9_output, stage_9_leftofcentre_output, stage_9_error, loc_status, loc_error, loc_decision_packages, loc_retry_count, loc_generated_at, stage_10_output, stage_10_error, stage_11_output, stage_11_error, stage_12_output, stage_12_error, stage_13_output, stage_13_error, stage_13b_output, stage_13b_error, stage_14_output, stage_14_error, stage_14b_output, stage_14b_error, stage_14c_output, stage_14c_error, stage_15_output, stage_15_error, stage_16_consulting_output, stage_16_error, brand_intelligence, selected_smp, selected_smp_field_name, selection_rationale, selection_source, selection_engine, selected_loc_expression, checkpoint_a_confirmed, checkpoint_b_confirmed, checkpoint_c_confirmed, strategy_signoff_confirmed, strategy_signoff_stop, retry_status",
+        "id, run_mode, brand_name, category, updated_at, brief_text, brief_versions, current_stage, status, stage_status, phase_2_status, stage_1_output, stage_1_tension_score, stage_1b_required, stage_1b_output, stage_1_error, stage_2_output, stage_2_error, stage_3_output, stage_3_error, stage_4_output, stage_4_error, stage_4b_output, stage_4b_error, stage_5_output, stage_5_error, stage_6_output, stage_6_error, stage_7_output, stage_7_error, stage_8_output, stage_8_error, stage_9_output, stage_9_leftofcentre_output, stage_9_error, loc_status, loc_error, loc_decision_packages, loc_retry_count, loc_generated_at, stage_10_output, stage_10_error, stage_11_output, stage_11_error, stage_12_output, stage_12_error, stage_13_output, stage_13_error, stage_13b_output, stage_13b_error, stage_14_output, stage_14_error, stage_14b_output, stage_14b_error, stage_14c_output, stage_14c_error, stage_15_output, stage_15_error, stage_16_consulting_output, stage_16_error, brand_intelligence, selected_smp, selected_smp_field_name, selection_rationale, selection_source, selection_engine, selected_loc_expression, checkpoint_a_confirmed, checkpoint_b_confirmed, checkpoint_c_confirmed, strategy_signoff_confirmed, strategy_signoff_stop, retry_status",
       )
 
       .eq("id", sessionId)
@@ -1404,7 +1368,7 @@ function PipelineView() {
       const { data } = await supabase
         .from("sessions")
         .select(
-          "id, brand_name, category, updated_at, brief_text, brief_versions, current_stage, status, stage_status, phase_2_status, stage_1_output, stage_1_tension_score, stage_1b_required, stage_1b_output, stage_1_error, stage_2_output, stage_2_error, stage_3_output, stage_3_error, stage_4_output, stage_4_error, stage_4b_output, stage_4b_error, stage_5_output, stage_5_error, stage_6_output, stage_6_error, stage_7_output, stage_7_error, stage_8_output, stage_8_error, stage_9_output, stage_9_leftofcentre_output, stage_9_error, loc_status, loc_error, loc_decision_packages, loc_retry_count, loc_generated_at, stage_10_output, stage_10_error, stage_11_output, stage_11_error, stage_12_output, stage_12_error, stage_13_output, stage_13_error, stage_13b_output, stage_13b_error, stage_14_output, stage_14_error, stage_14b_output, stage_14b_error, stage_14c_output, stage_14c_error, stage_15_output, stage_15_error, stage_16_consulting_output, stage_16_error, brand_intelligence, selected_smp, selected_smp_field_name, selection_rationale, selection_source, selection_engine, selected_loc_expression, checkpoint_a_confirmed, checkpoint_b_confirmed, checkpoint_c_confirmed, retry_status",
+          "id, run_mode, brand_name, category, updated_at, brief_text, brief_versions, current_stage, status, stage_status, phase_2_status, stage_1_output, stage_1_tension_score, stage_1b_required, stage_1b_output, stage_1_error, stage_2_output, stage_2_error, stage_3_output, stage_3_error, stage_4_output, stage_4_error, stage_4b_output, stage_4b_error, stage_5_output, stage_5_error, stage_6_output, stage_6_error, stage_7_output, stage_7_error, stage_8_output, stage_8_error, stage_9_output, stage_9_leftofcentre_output, stage_9_error, loc_status, loc_error, loc_decision_packages, loc_retry_count, loc_generated_at, stage_10_output, stage_10_error, stage_11_output, stage_11_error, stage_12_output, stage_12_error, stage_13_output, stage_13_error, stage_13b_output, stage_13b_error, stage_14_output, stage_14_error, stage_14b_output, stage_14b_error, stage_14c_output, stage_14c_error, stage_15_output, stage_15_error, stage_16_consulting_output, stage_16_error, brand_intelligence, selected_smp, selected_smp_field_name, selection_rationale, selection_source, selection_engine, selected_loc_expression, checkpoint_a_confirmed, checkpoint_b_confirmed, checkpoint_c_confirmed, retry_status",
         )
         .eq("id", sessionId)
         .single();
@@ -2677,21 +2641,17 @@ function PipelineView() {
     }
     return null;
   })();
-  const nextStage = (() => {
-    for (let i = selectedIdx + 1; i < STAGES.length; i++) {
-      if (STAGES[i].id === "01B" && !session?.stage_1b_required) continue;
-      return STAGES[i];
-    }
-    return null;
-  })();
+  const nextStage = nextPipelineStage(selectedId, !!session?.stage_1b_required, session?.run_mode);
   const nextStageStatus: StageStatus | null = nextStage ? statuses[nextStage.id] : null;
   // Stage 15 is the persisted boundary between the Strategy Pipeline and Phase 2.
   // Do not gate this transition on every in-memory sidebar status: synthetic
   // rows such as 08B can remain pending after reload even when the database
   // proves the strategy and all Phase 2 work are complete.
-  const pipelineComplete =
+  const pipelineComplete = session?.run_mode === "diagnostic"
+    ? selectedId === "13" && isPersistedStageComplete(session, "13", 13, session.stage_13_output)
+    : selectedId === "15" && (
     (session !== null && isPersistedStageComplete(session, "15", 15, session.stage_15_output)) ||
-    mainStages.every((s) => statuses[s.id] === "complete");
+    mainStages.every((s) => statuses[s.id] === "complete"));
 
   // Dynamic document title: "[Brand] — Stage X — Brand Grenade"
   useEffect(() => {
@@ -2994,6 +2954,10 @@ function PipelineView() {
       !session?.strategy_signoff_confirmed
     ) {
       setStrategySignoffOpen(true);
+      return;
+    }
+    if (statuses[nextStage.id] === "complete" || statuses[nextStage.id] === "checkpoint") {
+      setSelectedId(nextStage.id);
       return;
     }
     if (statuses[nextStage.id] === "running") {
@@ -3399,13 +3363,14 @@ function PipelineView() {
             nextStage={nextStage}
             nextStageStatus={nextStageStatus}
             pipelineComplete={pipelineComplete}
+            diagnostic={session?.run_mode === "diagnostic"}
             onBack={() => {
               if (prevStage) setSelectedId(prevStage.id);
             }}
             onContinue={handleContinueStage}
             onViewFinal={() => {
               if (!sessionId) return;
-              window.location.href = `/detonation?session=${sessionId}`;
+              window.location.href = session?.run_mode === "diagnostic" ? "/dashboard" : `/detonation?session=${sessionId}`;
             }}
             onConfirmCheckpoint={async (stageId, notes) => {
               if (stageId === "12") {
@@ -4141,6 +4106,7 @@ function RightPanel({
   nextStage,
   nextStageStatus,
   pipelineComplete,
+  diagnostic,
   onContinue,
   onBack,
   onViewFinal,
@@ -4182,6 +4148,7 @@ function RightPanel({
   nextStage: Stage | null;
   nextStageStatus: StageStatus | null;
   pipelineComplete: boolean;
+  diagnostic: boolean;
   onContinue: () => void;
   onBack: () => void;
   onViewFinal: () => void;
@@ -4383,6 +4350,7 @@ function RightPanel({
         nextStageStatus={nextStageStatus}
         isViewingHistorical={!!isViewingHistorical}
         pipelineComplete={pipelineComplete}
+        diagnostic={diagnostic}
         onContinue={onContinue}
         onBack={onBack}
         onRetry={onRetry}
@@ -5115,6 +5083,7 @@ function BottomBar({
   nextStage,
   isViewingHistorical,
   pipelineComplete,
+  diagnostic,
   onContinue,
   onBack,
   onRetry,
@@ -5128,17 +5097,14 @@ function BottomBar({
   nextStageStatus: StageStatus | null;
   isViewingHistorical: boolean;
   pipelineComplete: boolean;
+  diagnostic: boolean;
   onContinue: () => void;
   onBack: () => void;
   onRetry: () => void;
   onReturnToCurrent: () => void;
   onViewFinal: () => void;
 }) {
-  const continueLabel = pipelineComplete
-    ? "Begin Brand Detonation →"
-    : nextStage
-      ? `Continue to Stage ${Number(nextStage.number)} →`
-      : "Continue →";
+  const continueLabel = pipelineContinueLabel(nextStage, pipelineComplete, diagnostic);
   const continueDisabled = status === "running" || (stage.id === "12" && status !== "complete") || (!pipelineComplete && !nextStage);
 
   return (
