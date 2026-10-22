@@ -14,6 +14,20 @@ export const submitDemoRequest = createServerFn({ method: 'POST' })
   .inputValidator((input: unknown) => DemoRequestSchema.parse(input))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import('@/integrations/supabase/client.server')
+    const { getRequestIP } = await import('@tanstack/react-start/server')
+
+    // 0. Basic per-IP rate limit: 5 submissions per hour (IP stored only as a hash).
+    const ip = getRequestIP({ xForwardedFor: true }) || 'unknown'
+    const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(ip.trim()))
+    const ipHash = Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, '0')).join('')
+    const since = new Date(Date.now() - 3600_000).toISOString()
+    const { count } = await supabaseAdmin
+      .from('demo_request_rate')
+      .select('id', { count: 'exact', head: true })
+      .eq('ip_hash', ipHash)
+      .gt('created_at', since)
+    if ((count ?? 0) >= 5) throw new Error('Too many requests. Please try again later.')
+    await supabaseAdmin.from('demo_request_rate').insert({ ip_hash: ipHash })
 
     // 1. Persist first — never lose a lead.
     const { data: inserted, error: insertError } = await supabaseAdmin
