@@ -1,6 +1,6 @@
 # Roadmap
 
-- [ ] Fix next-stage identifiers and navigation across full/Deal/diagnostic runs; test, verify JLR without rerunning stages, publish.
+- [x] Fixed string next-stage labels and full/Deal/diagnostic boundaries; 337 tests pass, preview build OK; every available JLR stage label checked and Stage 12 → saved Stage 13 verified without rerunning. Publication requested; deployment not yet independently verified.
 
 - [x] JLR Stage 12: full session backup saved in run history; six answers recovered verbatim and Deliverable 3 filled. Fixed discarded-form branch and save-before-confirm path; signed-in JLR form resubmission/reload verified all six answers and enabled Continue to Stage 13. 251 tests pass, build OK; Stage 13 input test includes proposition/answers/guard-rail. All upstream/later-stage fields unchanged. No Stage 13 run or publish.
 
