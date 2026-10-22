@@ -2884,6 +2884,11 @@ function PipelineView() {
 
   const handleContinueStage = async () => {
     const stageId = selected.id;
+    // Browsing saved stages must not invoke regeneration or checkpoint writes.
+    if (nextStage && (statuses[nextStage.id] === "complete" || statuses[nextStage.id] === "checkpoint")) {
+      setSelectedId(nextStage.id);
+      return;
+    }
     if (stageId === "01" && selectedStatus === "checkpoint") {
       if (sessionId) {
         const { error } = await supabase
