@@ -1776,12 +1776,23 @@ function Stage20b({ session, onChange, goNext }: { session: SessionRow; onChange
     }
     setBusy(true); setErr(null);
     try {
-      // Generation runs detached on the server; this screen polls for it, so a
-      // slow model call or a dropped connection can no longer kill the stage.
-      await start({ data: { sessionId: session.id, audienceInput: inputs } });
+      // Generation runs inside the start request itself (scheduleBackground's
+      // waitUntil is cancelled ~30s after the response returns on this
+      // platform). Fire start without awaiting so this poll loop runs
+      // concurrently: it observes completion, surfaces real errors, and
+      // restarts the job when a dropped connection leaves a stale sentinel.
+      let startDone = false;
+      let startErr: unknown = null;
+      const kick = (audienceInput: Stage20bInputs) => {
+        startDone = false;
+        startErr = null;
+        start({ data: { sessionId: session.id, audienceInput } })
+          .catch((e) => { startErr = e; })
+          .finally(() => { startDone = true; });
+      };
+      kick(inputs);
 
       const deadline = Date.now() + 20 * 60 * 1000;
-      let recoveredStaleJob = false;
       for (;;) {
         await new Promise((r) => setTimeout(r, 5000));
         let r: Awaited<ReturnType<typeof load>>;
@@ -1795,14 +1806,14 @@ function Stage20b({ session, onChange, goNext }: { session: SessionRow; onChange
           break;
         }
         if (r.error) throw new Error(r.error);
-        if (r.stale && !recoveredStaleJob && r.audienceInput) {
-          recoveredStaleJob = true;
-          await start({
-            data: {
-              sessionId: session.id,
-              audienceInput: r.audienceInput as Stage20bInputs,
-            },
-          });
+        if (startDone && startErr) {
+          throw startErr instanceof Error ? startErr : new Error("Stage 20B failed");
+        }
+        if (r.stale && r.audienceInput) {
+          // The previous attempt died (dropped connection or worker loss).
+          // Each start refreshes updated_at, so this re-fires at most once
+          // per staleness window until the deadline.
+          kick(r.audienceInput as Stage20bInputs);
         }
         if (Date.now() > deadline) {
           throw new Error(
