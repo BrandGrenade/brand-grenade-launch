@@ -169,6 +169,13 @@
       "when": 1792455053814,
       "tag": "0023_run_archive_and_client_admin",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1792669139174,
+      "tag": "0024_harden_demo_requests_and_email_fns",
+      "breakpoints": true
     }
   ]
 }
