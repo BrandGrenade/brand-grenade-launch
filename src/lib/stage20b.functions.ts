@@ -30,7 +30,16 @@ const RunInput = z.object({
   redirect: z.string().trim().max(4000).optional(),
 });
 
-/** Kicks the channel strategy off in the background and returns immediately. */
+/**
+ * Records the channel-strategy request and returns immediately. The
+ * bg_stage20b_wake trigger on sessions wakes /api/public/stage20b-tick, which
+ * claims the job and runs it to completion while streaming keep-alives — the
+ * generation must NOT run inside this request: it sends no bytes until
+ * completion, so on the published runtime the idle connection is dropped and
+ * the worker is cancelled mid-stream, leaving the sentinel forever (JLR,
+ * 22 Oct 2026). The client also fires the tick directly as a backup wake and
+ * polls loadStage20b for the result.
+ */
 export const startStage20b = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i) => RunInput.parse(i))
@@ -39,9 +48,7 @@ export const startStage20b = createServerFn({ method: "POST" })
     const { requireConfirmedSelection } = await import("./checkpoint-gate");
     await requireConfirmedSelection(data.sessionId, "F");
 
-    const { loadStage20bSession, assertStage20bReady, generateStage20b } = await import(
-      "./stage20b.server"
-    );
+    const { loadStage20bSession, assertStage20bReady } = await import("./stage20b.server");
     assertStage20bReady(await loadStage20bSession(data.sessionId));
 
     await supabaseAdmin
@@ -55,20 +62,7 @@ export const startStage20b = createServerFn({ method: "POST" })
       })
       .eq("id", data.sessionId);
 
-    // Run the generation inside this request, not via scheduleBackground:
-    // work handed to ctx.waitUntil is cancelled ~30s after the response
-    // returns on this platform, which killed every Stage 20B job silently and
-    // left the __STAGE_20B_RUNNING__ sentinel forever — blocking Stages 21
-    // and 22 (the "Stage 22 hang"). The client polls loadStage20b while this
-    // request is open; a dropped connection leaves the sentinel, which the
-    // poll loop's stale-recovery path restarts.
-    const output = await generateStage20b({
-      sessionId: data.sessionId,
-      audienceInput: data.audienceInput,
-      ...(data.redirect ? { redirect: data.redirect } : {}),
-    });
-
-    return { started: true as const, output };
+    return { started: true as const };
   });
 
 /** Synchronous run — used by the automated Tier Two / preflight harnesses. */
