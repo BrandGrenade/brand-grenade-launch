@@ -60,6 +60,7 @@ import { Route as ApiPublicIntelligenceTickRouteImport } from './routes/api/publ
 import { Route as ApiPublicOrchestrationTickRouteImport } from './routes/api/public/orchestration-tick'
 import { Route as ApiPublicReliabilityTickRouteImport } from './routes/api/public/reliability-tick'
 import { Route as ApiPublicSmpScoreTickRouteImport } from './routes/api/public/smp-score-tick'
+import { Route as ApiPublicStage20bTickRouteImport } from './routes/api/public/stage20b-tick'
 import { Route as ApiPublicSweepTickRouteImport } from './routes/api/public/sweep-tick'
 import { Route as CreativeSessionIdIndexRouteImport } from './routes/creative.$sessionId.index'
 import { Route as CreativeSessionIdChannelsRouteImport } from './routes/creative.$sessionId.channels'
@@ -331,6 +332,11 @@ const ApiPublicSmpScoreTickRoute = ApiPublicSmpScoreTickRouteImport.update({
   path: '/api/public/smp-score-tick',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicStage20bTickRoute = ApiPublicStage20bTickRouteImport.update({
+  id: '/api/public/stage20b-tick',
+  path: '/api/public/stage20b-tick',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicSweepTickRoute = ApiPublicSweepTickRouteImport.update({
   id: '/api/public/sweep-tick',
   path: '/api/public/sweep-tick',
@@ -451,6 +457,7 @@ export interface FileRoutesByFullPath {
   '/api/public/orchestration-tick': typeof ApiPublicOrchestrationTickRoute
   '/api/public/reliability-tick': typeof ApiPublicReliabilityTickRoute
   '/api/public/smp-score-tick': typeof ApiPublicSmpScoreTickRoute
+  '/api/public/stage20b-tick': typeof ApiPublicStage20bTickRoute
   '/api/public/sweep-tick': typeof ApiPublicSweepTickRoute
   '/creative/$sessionId/channels': typeof CreativeSessionIdChannelsRoute
   '/creative/$sessionId/orchestration': typeof CreativeSessionIdOrchestrationRoute
@@ -509,6 +516,7 @@ export interface FileRoutesByTo {
   '/api/public/orchestration-tick': typeof ApiPublicOrchestrationTickRoute
   '/api/public/reliability-tick': typeof ApiPublicReliabilityTickRoute
   '/api/public/smp-score-tick': typeof ApiPublicSmpScoreTickRoute
+  '/api/public/stage20b-tick': typeof ApiPublicStage20bTickRoute
   '/api/public/sweep-tick': typeof ApiPublicSweepTickRoute
   '/creative/$sessionId/channels': typeof CreativeSessionIdChannelsRoute
   '/creative/$sessionId/orchestration': typeof CreativeSessionIdOrchestrationRoute
@@ -575,6 +583,7 @@ export interface FileRoutesById {
   '/api/public/orchestration-tick': typeof ApiPublicOrchestrationTickRoute
   '/api/public/reliability-tick': typeof ApiPublicReliabilityTickRoute
   '/api/public/smp-score-tick': typeof ApiPublicSmpScoreTickRoute
+  '/api/public/stage20b-tick': typeof ApiPublicStage20bTickRoute
   '/api/public/sweep-tick': typeof ApiPublicSweepTickRoute
   '/creative/$sessionId/channels': typeof CreativeSessionIdChannelsRoute
   '/creative/$sessionId/orchestration': typeof CreativeSessionIdOrchestrationRoute
@@ -642,6 +651,7 @@ export interface FileRouteTypes {
     | '/api/public/orchestration-tick'
     | '/api/public/reliability-tick'
     | '/api/public/smp-score-tick'
+    | '/api/public/stage20b-tick'
     | '/api/public/sweep-tick'
     | '/creative/$sessionId/channels'
     | '/creative/$sessionId/orchestration'
@@ -700,6 +710,7 @@ export interface FileRouteTypes {
     | '/api/public/orchestration-tick'
     | '/api/public/reliability-tick'
     | '/api/public/smp-score-tick'
+    | '/api/public/stage20b-tick'
     | '/api/public/sweep-tick'
     | '/creative/$sessionId/channels'
     | '/creative/$sessionId/orchestration'
@@ -765,6 +776,7 @@ export interface FileRouteTypes {
     | '/api/public/orchestration-tick'
     | '/api/public/reliability-tick'
     | '/api/public/smp-score-tick'
+    | '/api/public/stage20b-tick'
     | '/api/public/sweep-tick'
     | '/creative/$sessionId/channels'
     | '/creative/$sessionId/orchestration'
@@ -819,6 +831,7 @@ export interface RootRouteChildren {
   ApiPublicOrchestrationTickRoute: typeof ApiPublicOrchestrationTickRoute
   ApiPublicReliabilityTickRoute: typeof ApiPublicReliabilityTickRoute
   ApiPublicSmpScoreTickRoute: typeof ApiPublicSmpScoreTickRoute
+  ApiPublicStage20bTickRoute: typeof ApiPublicStage20bTickRoute
   ApiPublicSweepTickRoute: typeof ApiPublicSweepTickRoute
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
   ApiPublicHooksTier2HarnessRoute: typeof ApiPublicHooksTier2HarnessRoute
@@ -1187,6 +1200,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicSmpScoreTickRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/stage20b-tick': {
+      id: '/api/public/stage20b-tick'
+      path: '/api/public/stage20b-tick'
+      fullPath: '/api/public/stage20b-tick'
+      preLoaderRoute: typeof ApiPublicStage20bTickRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/sweep-tick': {
       id: '/api/public/sweep-tick'
       path: '/api/public/sweep-tick'
@@ -1415,6 +1435,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicOrchestrationTickRoute: ApiPublicOrchestrationTickRoute,
   ApiPublicReliabilityTickRoute: ApiPublicReliabilityTickRoute,
   ApiPublicSmpScoreTickRoute: ApiPublicSmpScoreTickRoute,
+  ApiPublicStage20bTickRoute: ApiPublicStage20bTickRoute,
   ApiPublicSweepTickRoute: ApiPublicSweepTickRoute,
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
   ApiPublicHooksTier2HarnessRoute: ApiPublicHooksTier2HarnessRoute,
