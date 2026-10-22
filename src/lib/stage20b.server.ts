@@ -1,10 +1,11 @@
 // Stage 20B — Channel Strategy engine.
 //
-// The generation itself is a single multi-minute model call. It must never be
-// tethered to the browser's HTTP request: the Worker invocation dies the moment
-// the client connection drops, which is what made this stage look like it
-// "timed out" and never produced a channel strategy. Callers run it through
-// `scheduleBackground()` and poll the session row.
+// The generation itself is a single multi-minute model call. It runs inside
+// the startStage20b request while the client polls the session row; a dropped
+// connection leaves the __STAGE_20B_RUNNING__ sentinel, which the poll loop's
+// stale-recovery path restarts. It must NOT run via scheduleBackground:
+// ctx.waitUntil work is cancelled ~30s after the response returns on this
+// platform, which killed every job silently and blocked Stages 21 and 22.
 
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { callClaude } from "./claude.server";

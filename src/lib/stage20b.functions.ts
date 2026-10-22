@@ -56,17 +56,20 @@ export const startStage20b = createServerFn({ method: "POST" })
       })
       .eq("id", data.sessionId);
 
-    const { scheduleBackground } = await import("./background.server");
-    scheduleBackground(
-      generateStage20b({
-        sessionId: data.sessionId,
-        audienceInput: data.audienceInput,
-        ...(data.redirect ? { redirect: data.redirect } : {}),
-      }),
-      "stage-20b",
-    );
+    // Run the generation inside this request, not via scheduleBackground:
+    // work handed to ctx.waitUntil is cancelled ~30s after the response
+    // returns on this platform, which killed every Stage 20B job silently and
+    // left the __STAGE_20B_RUNNING__ sentinel forever — blocking Stages 21
+    // and 22 (the "Stage 22 hang"). The client polls loadStage20b while this
+    // request is open; a dropped connection leaves the sentinel, which the
+    // poll loop's stale-recovery path restarts.
+    const output = await generateStage20b({
+      sessionId: data.sessionId,
+      audienceInput: data.audienceInput,
+      ...(data.redirect ? { redirect: data.redirect } : {}),
+    });
 
-    return { started: true as const };
+    return { started: true as const, output };
   });
 
 /** Synchronous run — used by the automated Tier Two / preflight harnesses. */
