@@ -176,6 +176,13 @@
       "when": 1792669139174,
       "tag": "0024_harden_demo_requests_and_email_fns",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1792693664630,
+      "tag": "0025_stage20b_wake_trigger",
+      "breakpoints": true
     }
   ]
 }
