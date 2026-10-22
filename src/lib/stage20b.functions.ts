@@ -9,11 +9,10 @@ import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertSessionAccess } from "@/lib/auth-helpers.server";
-import type { Stage20bAudienceInput } from "./stage20b.server";
+import { STAGE_20B_RUNNING, type Stage20bAudienceInput } from "./stage20b.server";
 
 export type { Stage20bAudienceInput } from "./stage20b.server";
 
-const STAGE_20B_RUNNING = "__STAGE_20B_RUNNING__";
 const STAGE_20B_STALE_MS = 8 * 60 * 1000;
 
 const AudienceInput = z.object({
@@ -101,7 +100,8 @@ export const loadStage20b = createServerFn({ method: "POST" })
       .single();
     if (error) throw new Error(error.message);
     const storedError = (row?.stage_20b_error as string | null) ?? null;
-    const running = storedError === STAGE_20B_RUNNING;
+    // Prefix match: the tick claims the sentinel by appending ":claimed:<n>".
+    const running = storedError?.startsWith(STAGE_20B_RUNNING) === true;
     return {
       output: (row?.stage_20b_output as string | null) ?? null,
       error: running ? null : storedError,

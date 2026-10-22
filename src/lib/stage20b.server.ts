@@ -1,13 +1,21 @@
 // Stage 20B — Channel Strategy engine.
 //
 // The generation itself is a single multi-minute model call. It runs inside
-// the startStage20b request while the client polls the session row; a dropped
-// connection leaves the __STAGE_20B_RUNNING__ sentinel, which the poll loop's
-// stale-recovery path restarts. It must NOT run via scheduleBackground:
-// ctx.waitUntil work is cancelled ~30s after the response returns on this
-// platform, which killed every job silently and blocked Stages 21 and 22.
+// the /api/public/stage20b-tick request, which streams keep-alive bytes for
+// the whole run so the invocation stays attached to a live connection;
+// startStage20b only records the request (the __STAGE_20B_RUNNING__ sentinel)
+// and the bg_stage20b_wake trigger wakes the tick. Running it inside the
+// start request sent no bytes until completion, so on the published runtime
+// the idle connection was dropped and the worker cancelled mid-stream,
+// leaving the sentinel forever (JLR, 22 Oct 2026). It must NOT run via
+// scheduleBackground either: ctx.waitUntil work is cancelled ~30s after the
+// response returns on this platform.
 
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+
+/** Queued-for-generation marker on sessions.stage_20b_error. The tick claims
+ *  it by appending ":claimed:<attempt>"; see stage20b-tick.server.ts. */
+export const STAGE_20B_RUNNING = "__STAGE_20B_RUNNING__";
 import { callClaude } from "./claude.server";
 import { STAGE_20B_CHANNEL_STRATEGY_PROMPT } from "./stage20b-prompt";
 import {

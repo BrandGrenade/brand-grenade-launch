@@ -1776,17 +1776,22 @@ function Stage20b({ session, onChange, goNext }: { session: SessionRow; onChange
     }
     setBusy(true); setErr(null);
     try {
-      // Generation runs inside the start request itself (scheduleBackground's
-      // waitUntil is cancelled ~30s after the response returns on this
-      // platform). Fire start without awaiting so this poll loop runs
-      // concurrently: it observes completion, surfaces real errors, and
-      // restarts the job when a dropped connection leaves a stale sentinel.
+      // start only records the request (the running sentinel); the
+      // bg_stage20b_wake trigger wakes /api/public/stage20b-tick, which runs
+      // the generation while streaming keep-alives. We also fire the tick
+      // directly as a backup wake, and this poll loop observes completion,
+      // surfaces real errors, and re-fires the tick when a dead attempt
+      // leaves a stale sentinel.
+      const fireTick = () => {
+        fetch("/api/public/stage20b-tick", { method: "POST" }).catch(() => {});
+      };
       let startDone = false;
       let startErr: unknown = null;
       const kick = (audienceInput: Stage20bInputs) => {
         startDone = false;
         startErr = null;
         start({ data: { sessionId: session.id, audienceInput } })
+          .then(() => fireTick())
           .catch((e) => { startErr = e; })
           .finally(() => { startDone = true; });
       };
@@ -1811,9 +1816,10 @@ function Stage20b({ session, onChange, goNext }: { session: SessionRow; onChange
         }
         if (r.stale && r.audienceInput) {
           // The previous attempt died (dropped connection or worker loss).
-          // Each start refreshes updated_at, so this re-fires at most once
-          // per staleness window until the deadline.
-          kick(r.audienceInput as Stage20bInputs);
+          // The tick re-claims a quiet claimed row only after its claim
+          // window, and a successful re-claim refreshes updated_at, so this
+          // re-fires at most once per staleness window until the deadline.
+          fireTick();
         }
         if (Date.now() > deadline) {
           throw new Error(
