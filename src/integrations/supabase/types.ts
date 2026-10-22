@@ -433,6 +433,24 @@ export type Database = {
         }
         Relationships: []
       }
+      demo_request_rate: {
+        Row: {
+          created_at: string
+          id: number
+          ip_hash: string
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          ip_hash: string
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          ip_hash?: string
+        }
+        Relationships: []
+      }
       demo_requests: {
         Row: {
           company: string
