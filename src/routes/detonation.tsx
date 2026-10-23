@@ -51,7 +51,8 @@ const detonationSearchSchema = z.object({
   // straight to the Creative Stimulus panel.
   panel: z.enum(["creative"]).optional(),
   // Open the run directly at a Phase 2 stage, e.g. ?stage=21.
-  stage: z.enum(["17", "17B", "18", "19", "20", "20B", "21", "22"]).optional(),
+  // Plain numbers arrive parsed as numbers (?stage=21 → 21), so coerce first.
+  stage: z.preprocess((v) => (v == null ? undefined : String(v).toUpperCase()), z.enum(["17", "17B", "18", "19", "20", "20B", "21", "22"]).optional()).catch(undefined),
 });
 
 export const Route = createFileRoute("/detonation")({
