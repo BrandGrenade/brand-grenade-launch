@@ -41,4 +41,6 @@
 
 - [ ] Partner Hub link: blocked on HUB_INGEST_KEY; document files (PDF/DOCX or 24h signed link) and export events not yet sent
 
-- [ ] JLR sweep: repair output-budget exhaustion, background-only lease runner, preserve saved lenses, verify remaining work, tests and publication.
+- [ ] JLR sweep completion: runner/budget repairs tested and publication requested; 24/37 saved, original 18 unchanged. BLOCKED: Anthropic credit balance too low; job paused without retries.
+
+- [ ] JLR sweep speed: original batching/input verified unchanged; reduced six-second handoffs to bounded multi-batch keep-alive slices and independent throttled-lens retries; 352 tests pass, build OK. Finish 13 pending lenses BLOCKED on provider credits; original 18 preserved.
