@@ -21,3 +21,4 @@
 - Stage 12 confirms only after saving rationale, fills Deliverable 3 deterministically, and shares saved answers with the confirmed view and Stage 13; why: never discard human answers.
 - Test helper call-site budgets including reasoning; retry incomplete answers once, never refusals.
 - LOC process is a client-facing craft note. Selective retries regenerate ticked engines only; locked/unticked records stay verbatim, including anchors; why: protect approved work.
+- Big-idea generation is owned by leased private sweep jobs and streaming tick slices; browser actions enqueue only, completed lenses are skipped and terminal errors pause the job; why: prevent duplicate spending and idle-cutoff stalls.
