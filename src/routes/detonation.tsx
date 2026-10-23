@@ -50,6 +50,8 @@ const detonationSearchSchema = z.object({
   // Deep-link target inside the page. "creative" opens Stage 21 and scrolls
   // straight to the Creative Stimulus panel.
   panel: z.enum(["creative"]).optional(),
+  // Open the run directly at a Phase 2 stage, e.g. ?stage=21.
+  stage: z.enum(["17", "17B", "18", "19", "20", "20B", "21", "22"]).optional(),
 });
 
 export const Route = createFileRoute("/detonation")({
@@ -734,7 +736,7 @@ function resolveResumeStage(s: SessionRow | null): string {
 
 // ── Main page ────────────────────────────────────────────────────────────
 function DetonationPage() {
-  const { session: sessionId, panel } = Route.useSearch();
+  const { session: sessionId, panel, stage: stageParam } = Route.useSearch();
   const { user, isAuthReady } = useAuth();
   const [session, setSession] = useState<SessionRow | null>(null);
   const [loading, setLoading] = useState(true);
@@ -742,7 +744,7 @@ function DetonationPage() {
   // ?panel=creative deep-links straight into Stage 21, where the Creative
   // Stimulus Engine lives.
   const [activeStage, setActiveStage] = useState<string>(
-    panel === "creative" ? "21" : "17",
+    panel === "creative" ? "21" : stageParam ?? "17",
   );
   // On first load, resume at the stage actually in progress instead of
   // resetting to Stage 17. Only runs once, so later manual navigation sticks.
@@ -750,9 +752,9 @@ function DetonationPage() {
   useEffect(() => {
     if (resumedRef.current || !session) return;
     resumedRef.current = true;
-    if (panel === "creative") return;
+    if (panel === "creative" || stageParam) return;
     setActiveStage(resolveResumeStage(session));
-  }, [session, panel]);
+  }, [session, panel, stageParam]);
 
   useEffect(() => {
     if (panel === "creative" && activeStage === "21") return;
