@@ -1,8 +1,21 @@
 import { describe, expect, it } from "vitest";
-import { sweepErrorRetryable, sweepLeaseLive, retrySweepLens, SWEEP_BATCH_SIZE, SWEEP_SLICE_BATCHES } from "./sweep-job-policy";
+import { sweepCreditExhausted, sweepMayAdvance, sweepErrorRetryable, sweepLeaseLive, retrySweepLens, SWEEP_BATCH_SIZE, SWEEP_SLICE_BATCHES } from "./sweep-job-policy";
 import { readFileSync } from "node:fs";
 
 describe("sweep job recovery", () => {
+  it("stops credit exhaustion even when wrapped as a provider server error", async () => {
+    const error = new Error("Claude API 503: Your credit balance is too low to access the Anthropic API.");
+    let attempts = 0;
+    expect(sweepCreditExhausted(error)).toBe(true);
+    expect(sweepErrorRetryable(error)).toBe(false);
+    await expect(retrySweepLens(async () => { attempts += 1; throw error; }, async () => { throw new Error("Must not wait or retry"); })).rejects.toBe(error);
+    expect(attempts).toBe(1);
+  });
+  it("does not automatically advance a stopped credit job", () => {
+    expect(sweepMayAdvance("failed", "AI credit exhausted — top up and press Resume")).toBe(false);
+    expect(sweepMayAdvance("generating", "Your credit balance is too low")).toBe(false);
+    expect(sweepMayAdvance("generating", null)).toBe(true);
+  });
   it("retains original three-lens batches across a bounded keep-alive slice", () => {
     expect(SWEEP_BATCH_SIZE).toBe(3);
     expect(SWEEP_SLICE_BATCHES).toBe(5);

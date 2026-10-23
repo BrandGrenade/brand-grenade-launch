@@ -10,6 +10,7 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertSessionAccess } from "@/lib/auth-helpers.server";
 import { STIMULUS_LENSES } from "./stimulus/lenses";
+import { sweepCreditExhausted, SWEEP_CREDIT_MESSAGE } from "./stimulus/sweep-job-policy";
 import { loadGrounding } from "./stimulus/big-idea-sweep.server";
 
 export const BIG_IDEA_CHANNEL_LABEL = "Campaign big idea (pre-channel)";
@@ -146,6 +147,7 @@ export const resumeBigIdeaSweep = createServerFn({ method: "POST" })
 
     const queued = await queueSweepJob(run.id, true);
     if (!queued) return { started: false as const, alreadyRunning: true as const, remaining };
+    await supabaseAdmin.from("stimulus_runs").update({ status: "generating", error: null, last_batch_at: new Date().toISOString() }).eq("id", run.id);
     return { started: true as const, alreadyRunning: false as const, remaining };
   });
 
@@ -170,12 +172,8 @@ export const advanceBigIdeaSweep = createServerFn({ method: "POST" })
       .eq("run_id", run.id)
       .eq("status", "pending");
     if ((before ?? 0) === 0) return { remaining: 0, advanced: false as const };
-
-    await supabaseAdmin
-      .from("stimulus_runs")
-      .update({ status: "generating", error: null, last_batch_at: new Date().toISOString() })
-      .eq("id", run.id);
-
+    const { data: job } = await supabaseAdmin.from("stimulus_sweep_jobs").select("status").eq("run_id", run.id).maybeSingle();
+    if (job?.status === "paused") return { remaining: before ?? 0, advanced: false as const };
     await queueSweepJob(run.id);
 
     const { count: after } = await supabaseAdmin
@@ -299,6 +297,9 @@ export const bigIdeaSweepProgress = createServerFn({ method: "POST" })
       .from("stimulus_directions")
       .select("status")
       .eq("run_id", run.id);
+    const { data: job } = await supabaseAdmin.from("stimulus_sweep_jobs").select("status,error").eq("run_id", run.id).maybeSingle();
+    const paused = job?.status === "paused";
+    const progressError = paused ? job.error : row?.error;
 
     const all = rows ?? [];
     const pending = all.filter((r) => r.status === "pending").length;
@@ -308,11 +309,11 @@ export const bigIdeaSweepProgress = createServerFn({ method: "POST" })
     const generated = all.length - pending - failed;
     const beat = row?.last_batch_at ? Date.parse(row.last_batch_at) : 0;
     const stalled =
-      pending > 0 && (row?.status !== "generating" || Date.now() - beat > SWEEP_STALL_MS);
+      pending > 0 && (paused || row?.status !== "generating" || Date.now() - beat > SWEEP_STALL_MS);
 
     return {
-      status: row?.status ?? "unknown",
-      error: row?.error ?? null,
+      status: paused ? "failed" : row?.status ?? "unknown",
+      error: sweepCreditExhausted(progressError) ? SWEEP_CREDIT_MESSAGE : progressError ?? null,
       total: all.length,
       generated,
       pending,

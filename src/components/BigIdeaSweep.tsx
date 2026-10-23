@@ -6,6 +6,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
+import { sweepMayAdvance } from "@/lib/stimulus/sweep-job-policy";
 import {
   startBigIdeaRun,
   resumeBigIdeaSweep,
@@ -730,6 +731,7 @@ export function BigIdeaSweep({
           const p = (await readProgress({ data: { runId: id } })) as SweepState;
           setSweep(p);
           await refresh(id);
+          if (p.pending > 0 && !sweepMayAdvance(p.status, p.error)) break;
 
           // Background (waitUntil) slices are not reliably given the ~60s a
           // batch needs — an invocation can be torn down mid model-call, which
@@ -741,12 +743,7 @@ export function BigIdeaSweep({
             try {
               await advance({ data: { runId: id } });
             } catch {
-              /* transient — retried on the next tick */
-              try {
-                await resume({ data: { runId: id, force: true } });
-              } catch {
-                /* ignore */
-              }
+              // Watchers must never clear a durable pause; Resume is explicit.
               await new Promise((r) => setTimeout(r, 6000));
             }
             continue;
@@ -771,7 +768,7 @@ export function BigIdeaSweep({
         pollingRef.current = false;
       }
     },
-    [readProgress, refresh, ledger, resume, advance],
+    [readProgress, refresh, ledger, advance],
   );
 
   // Open the session's most meaningful big idea sweep. A newer sweep that has

@@ -1,6 +1,6 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { runBigIdeaBatch } from "./big-idea-sweep.server";
-import { sweepErrorRetryable, sweepLeaseLive, SWEEP_BATCH_SIZE, SWEEP_SLICE_BATCHES, SWEEP_COOLDOWN_MS } from "./sweep-job-policy";
+import { sweepCreditExhausted, SWEEP_CREDIT_MESSAGE, sweepErrorRetryable, sweepLeaseLive, SWEEP_BATCH_SIZE, SWEEP_SLICE_BATCHES, SWEEP_COOLDOWN_MS } from "./sweep-job-policy";
 
 // Every entry point consults the durable pause state. Only an explicit resume
 // may clear a paused job; page views cannot restart terminal failures.
@@ -53,7 +53,7 @@ export async function runSweepJob(job: NonNullable<Awaited<ReturnType<typeof cla
     }
     return { remaining: pending ?? 0 };
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
+    const message = sweepCreditExhausted(error) ? SWEEP_CREDIT_MESSAGE : error instanceof Error ? error.message : String(error);
     const retry = sweepErrorRetryable(error) && job.remaining_hops > 1;
     if (retry) await new Promise(resolve => setTimeout(resolve, 60_000));
     await supabaseAdmin.from("stimulus_sweep_jobs").update({ status: retry ? "queued" : "paused", error: message, remaining_hops: job.remaining_hops - 1, lease_token: null, lease_until: null, updated_at: new Date().toISOString() }).eq("run_id", job.run_id).eq("lease_token", job.lease_token ?? "");

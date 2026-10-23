@@ -22,3 +22,4 @@
 - Test helper call-site budgets including reasoning; retry incomplete answers once, never refusals.
 - LOC process is a client-facing craft note. Selective retries regenerate ticked engines only; locked/unticked records stay verbatim, including anchors; why: protect approved work.
 - Big-idea generation is owned by leased private sweep jobs and streaming tick slices of original three-lens batches; browser actions enqueue only, completed lenses are skipped, throttled batch recovery retries individual lenses, and terminal errors pause the job; why: preserve grounding/collision semantics without per-batch handoff delays or duplicate spending.
+- Sweep credit exhaustion is terminal across batch, lens recovery, job and browser watchers; only an explicit Resume clears the durable pause; why: prevent automatic paid retries or hidden restarts after account exhaustion.

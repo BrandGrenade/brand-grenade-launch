@@ -1,6 +1,17 @@
+export const SWEEP_CREDIT_MESSAGE = "AI credit exhausted — top up and press Resume";
+
+export function sweepCreditExhausted(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error);
+  return /credit balance is too low|AI credit exhausted/i.test(message);
+}
+
+export function sweepMayAdvance(status: string, error: unknown): boolean {
+  return status === "generating" && !sweepCreditExhausted(error);
+}
+
 export function sweepErrorRetryable(error: unknown): boolean {
   const message = error instanceof Error ? error.message : String(error);
-  return /Claude API (429|5\d\d):/.test(message);
+  return !sweepCreditExhausted(error) && /Claude API (429|5\d\d):/.test(message);
 }
 
 export function sweepLeaseLive(job: { status: string; lease_until: string | null }, now = Date.now()): boolean {
