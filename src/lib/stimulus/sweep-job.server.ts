@@ -1,6 +1,6 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { runBigIdeaBatch } from "./big-idea-sweep.server";
-import { sweepErrorRetryable, sweepLeaseLive } from "./sweep-job-policy";
+import { sweepErrorRetryable, sweepLeaseLive, SWEEP_BATCH_SIZE, SWEEP_SLICE_BATCHES, SWEEP_COOLDOWN_MS } from "./sweep-job-policy";
 
 // Every entry point consults the durable pause state. Only an explicit resume
 // may clear a paused job; page views cannot restart terminal failures.
@@ -34,13 +34,19 @@ export async function runSweepJob(job: NonNullable<Awaited<ReturnType<typeof cla
   }, 30_000);
   try {
     await supabaseAdmin.from("stimulus_runs").update({ status: "generating", error: null }).eq("id", job.run_id);
-    // One bounded batch per invocation. The database wakes the next hop only
-    // after this batch lands, with a cooldown and a carried iteration budget.
-    const result = await runBigIdeaBatch(job.run_id, 3);
-    if (result.remaining > 0 && job.remaining_hops <= 1) throw new Error("Sweep iteration budget exhausted; resume required.");
-    if (result.remaining > 0) await new Promise(resolve => setTimeout(resolve, 6000));
+    // Original three-lens batches advance inside the keep-alive request, not
+    // through a fresh database/HTTP handoff after every model call.
+    let batches = 0;
+    let remaining = 1;
+    while (remaining > 0 && batches < Math.min(SWEEP_SLICE_BATCHES, job.remaining_hops)) {
+      const result = await runBigIdeaBatch(job.run_id, SWEEP_BATCH_SIZE);
+      batches += 1;
+      remaining = result.remaining;
+      if (remaining > 0) await new Promise(resolve => setTimeout(resolve, SWEEP_COOLDOWN_MS));
+    }
+    if (remaining > 0 && job.remaining_hops <= batches) throw new Error("Sweep iteration budget exhausted; resume required.");
     const { count: pending } = await supabaseAdmin.from("stimulus_directions").select("id", { count: "exact", head: true }).eq("run_id", job.run_id).eq("status", "pending");
-    await supabaseAdmin.from("stimulus_sweep_jobs").update({ status: pending ? "queued" : "complete", remaining_hops: job.remaining_hops - 1, lease_token: null, lease_until: null, error: null, updated_at: new Date().toISOString() }).eq("run_id", job.run_id).eq("lease_token", job.lease_token ?? "");
+    await supabaseAdmin.from("stimulus_sweep_jobs").update({ status: pending ? "queued" : "complete", remaining_hops: job.remaining_hops - batches, lease_token: null, lease_until: null, error: null, updated_at: new Date().toISOString() }).eq("run_id", job.run_id).eq("lease_token", job.lease_token ?? "");
     if (!pending) {
       const { buildLedgerForRun } = await import("./convergence-ledger-run.server");
       await buildLedgerForRun(job.run_id);

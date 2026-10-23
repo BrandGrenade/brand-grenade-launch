@@ -14,6 +14,7 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { callClaude } from "@/lib/claude.server";
 import { getLens } from "./lenses";
+import { retrySweepLens } from "./sweep-job-policy";
 import {
   BIG_IDEA_SYSTEM_PROMPT,
   buildBigIdeaUserMessage,
@@ -191,7 +192,7 @@ export async function runBigIdeaBatch(
   const MAX_COLLISION_REGENS = 2;
 
   try {
-    const raw = await callClaude({
+    const batchArgs = {
       stageNumber: "cs-bigidea",
       systemPrompt: BIG_IDEA_SYSTEM_PROMPT,
       userMessage: buildBigIdeaUserMessage({
@@ -206,7 +207,25 @@ export async function runBigIdeaBatch(
       temperature: 1,
       sessionId: run.session_id,
       stageLabel: "Creative Stimulus — big idea sweep",
-    });
+    };
+    let raw: string;
+    try {
+      raw = await callClaude(batchArgs);
+    } catch (error) {
+      // A batch-level rate limit identifies no individual lens. Split only
+      // this unsuccessful batch; each throttled lens retries independently.
+      const message = error instanceof Error ? error.message : String(error);
+      if (!/Claude API 429:/.test(message)) throw error;
+      const settled = await Promise.allSettled(lenses.map(lens => retrySweepLens(() => callClaude({
+        ...batchArgs,
+        userMessage: buildBigIdeaUserMessage({ ...g, smp: run.smp || g.smp, lenses: [lens], priorTensions, creativeGuidance: liveGuidance() }),
+        stageLabel: "Creative Stimulus — rate-limited lens recovery",
+      }))));
+      raw = settled.filter((result): result is PromiseFulfilledResult<string> => result.status === "fulfilled").map(result => result.value).join("\n\n");
+      // Save successful siblings before surfacing any exhausted rate limit.
+      const rejected = settled.find(result => result.status === "rejected");
+      if (rejected?.status === "rejected") deferredError = rejected.reason;
+    }
     const parsed = parseBigIdeaResponse(raw);
     for (const p of pending) {
       let hit = parsed[p.lens_id];
@@ -218,7 +237,7 @@ export async function runBigIdeaBatch(
       // single-lens call before it is ever recorded as failed.
       if (!hit?.idea?.trim() && lens) {
         try {
-          const soloRaw = await callClaude({
+          const soloRaw = await retrySweepLens(() => callClaude({
             stageNumber: "cs-bigidea",
             systemPrompt: BIG_IDEA_SYSTEM_PROMPT,
             userMessage: buildBigIdeaUserMessage({
@@ -233,7 +252,7 @@ export async function runBigIdeaBatch(
             temperature: 1,
             sessionId: run.session_id,
             stageLabel: "Creative Stimulus — single-lens recovery",
-          });
+          }));
           const solo = parseBigIdeaResponse(soloRaw)[p.lens_id];
           if (solo?.idea?.trim()) hit = solo;
         } catch (soloErr) {
@@ -255,7 +274,7 @@ export async function runBigIdeaBatch(
             .join("; ")}.`,
           `This is regeneration attempt ${regens} of ${MAX_COLLISION_REGENS}.`,
         ].join(" ");
-        const regenRaw = await callClaude({
+        const regenRaw = await retrySweepLens(() => callClaude({
           stageNumber: "cs-bigidea",
           systemPrompt: BIG_IDEA_SYSTEM_PROMPT,
           userMessage: buildBigIdeaUserMessage({
@@ -271,7 +290,7 @@ export async function runBigIdeaBatch(
           temperature: 1,
           sessionId: run.session_id,
           stageLabel: "Creative Stimulus — collision regeneration",
-        });
+        }));
         const again = parseBigIdeaResponse(regenRaw)[p.lens_id];
         if (!again?.idea?.trim()) break;
         hit = again;
