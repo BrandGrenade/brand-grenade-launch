@@ -1,6 +1,6 @@
 # Roadmap
 
-- [ ] Resume JLR's 13 pending lenses while preserving all 24 saved; add terminal credit-exhaustion message, test and publish, verify completion and saved-lens preservation.
+- [x] Resumed JLR's 13 pending lenses: 37/37 generated, job complete and no error; all 24 original full-row hashes unchanged. Credit exhaustion now halts recovery/watchers with the requested message until explicit Resume; signed-in stopped/resume/completed UI verified, 354 tests pass, build OK; publication requested and live site responds.
 
 - [x] Fixed string next-stage labels and full/Deal/diagnostic boundaries; 337 tests pass, preview build OK; every available JLR stage label checked and Stage 12 → saved Stage 13 verified without rerunning. Publication requested; deployment not yet independently verified.
 
@@ -43,6 +43,6 @@
 
 - [ ] Partner Hub link: blocked on HUB_INGEST_KEY; document files (PDF/DOCX or 24h signed link) and export events not yet sent
 
-- [ ] JLR sweep completion: runner/budget repairs tested and publication requested; 24/37 saved, original 18 unchanged. BLOCKED: Anthropic credit balance too low; job paused without retries.
+- [x] JLR sweep completion: 37/37 saved after explicit Resume following credit top-up; original 24 unchanged.
 
-- [ ] JLR sweep speed: original batching/input verified unchanged; reduced six-second handoffs to bounded multi-batch keep-alive slices and independent throttled-lens retries; 352 tests pass, build OK. Finish 13 pending lenses BLOCKED on provider credits; original 18 preserved.
+- [x] JLR sweep speed: original batching/input retained with bounded multi-batch keep-alive slices and independent throttled-lens retries; all 37 now complete, original 24 preserved.
