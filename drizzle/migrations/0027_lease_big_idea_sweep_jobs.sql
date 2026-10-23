@@ -1,0 +1,8 @@
+CREATE TABLE public.stimulus_sweep_jobs (run_id uuid PRIMARY KEY REFERENCES public.stimulus_runs(id), status text NOT NULL DEFAULT 'queued' CHECK(status IN ('queued','running','paused','complete')), wake_token uuid NOT NULL DEFAULT gen_random_uuid(), lease_token uuid, lease_until timestamptz, remaining_hops integer NOT NULL DEFAULT 30, error text, updated_at timestamptz NOT NULL DEFAULT now());
+GRANT ALL ON public.stimulus_sweep_jobs TO service_role;
+REVOKE ALL ON public.stimulus_sweep_jobs FROM anon, authenticated;
+ALTER TABLE public.stimulus_sweep_jobs ENABLE ROW LEVEL SECURITY;
+CREATE OR REPLACE FUNCTION public.bg_sweep_job_wake() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$ BEGIN IF NEW.status='queued' AND (TG_OP='INSERT' OR OLD.status IS DISTINCT FROM NEW.status) THEN PERFORM net.http_post(url:='https://project--00f8f168-9af0-4e35-a994-3f3194d41422.lovable.app/api/public/sweep-tick',headers:=jsonb_build_object('Content-Type','application/json','x-sweep-job-token',NEW.wake_token::text),body:=jsonb_build_object('runId',NEW.run_id),timeout_milliseconds:=1200000); END IF; RETURN NEW; END; $$;
+REVOKE ALL ON FUNCTION public.bg_sweep_job_wake() FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.bg_sweep_job_wake() TO service_role;
+CREATE TRIGGER bg_sweep_job_wake AFTER INSERT OR UPDATE OF status ON public.stimulus_sweep_jobs FOR EACH ROW EXECUTE FUNCTION public.bg_sweep_job_wake();
