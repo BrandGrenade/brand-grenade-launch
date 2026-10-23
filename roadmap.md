@@ -40,3 +40,5 @@
 - [x] Report number of research sources used in the Research Synthesiser and the Nissan Intelligence Lab run.
 
 - [ ] Partner Hub link: blocked on HUB_INGEST_KEY; document files (PDF/DOCX or 24h signed link) and export events not yet sent
+
+- [ ] JLR sweep: repair output-budget exhaustion, background-only lease runner, preserve saved lenses, verify remaining work, tests and publication.
