@@ -189,6 +189,29 @@ function CreativeRoom() {
             />
           </nav>
 
+          {!loading && session?.locked_big_idea?.trim() && session.locked_campaign_line?.trim() && (
+            <Link
+              to="/detonation"
+              search={{ session: sessionId, stage: "21" }}
+              className="text-mono"
+              style={{
+                display: "inline-block",
+                marginTop: 14,
+                border: `1px solid ${AMBER}`,
+                backgroundColor: `${AMBER}18`,
+                color: AMBER,
+                borderRadius: 8,
+                padding: "10px 16px",
+                fontSize: 11,
+                letterSpacing: "0.12em",
+                textTransform: "uppercase",
+                textDecoration: "none",
+              }}
+            >
+              Big Idea locked · Run Stage 21 — Channel Briefs →
+            </Link>
+          )}
+
           {/* Background input — the session's strategy, collapsed by default. */}
           {!loading && session && (
             <div
