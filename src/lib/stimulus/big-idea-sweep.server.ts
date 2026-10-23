@@ -190,6 +190,7 @@ export async function runBigIdeaBatch(
   // this same batch), so a rewrite that dodges lens A but lands on lens B is
   // caught rather than waved through.
   const MAX_COLLISION_REGENS = 2;
+  let deferredError: unknown;
 
   try {
     const batchArgs = {
@@ -231,6 +232,7 @@ export async function runBigIdeaBatch(
       let hit = parsed[p.lens_id];
       let regens = 0;
       const lens = getLens(p.lens_id);
+      if (!hit?.idea?.trim() && deferredError) continue;
 
       // A batched response occasionally drops (or truncates) one lens block.
       // That is a parse miss, not a creative failure, so the lens gets its own
@@ -363,6 +365,7 @@ export async function runBigIdeaBatch(
           rootTension: hit.rootTension.trim(),
         });
     }
+    if (deferredError) throw deferredError;
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Big idea generation failed";
     await supabaseAdmin.from("stimulus_runs").update({ error: msg }).eq("id", run.id);
