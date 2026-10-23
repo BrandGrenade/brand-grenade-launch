@@ -202,7 +202,7 @@ export async function runBigIdeaBatch(
         creativeGuidance: liveGuidance(),
       }),
       skipUniversalWrapper: true,
-      maxTokens: 8000,
+      maxTokens: 32000,
       temperature: 1,
       sessionId: run.session_id,
       stageLabel: "Creative Stimulus — big idea sweep",
@@ -229,7 +229,7 @@ export async function runBigIdeaBatch(
               creativeGuidance: liveGuidance(),
             }),
             skipUniversalWrapper: true,
-            maxTokens: 3000,
+            maxTokens: 16000,
             temperature: 1,
             sessionId: run.session_id,
             stageLabel: "Creative Stimulus — single-lens recovery",
@@ -267,7 +267,7 @@ export async function runBigIdeaBatch(
             creativeGuidance: liveGuidance(),
           }),
           skipUniversalWrapper: true,
-          maxTokens: 3000,
+          maxTokens: 16000,
           temperature: 1,
           sessionId: run.session_id,
           stageLabel: "Creative Stimulus — collision regeneration",
@@ -317,7 +317,8 @@ export async function runBigIdeaBatch(
                   ((p as { generation_attempts?: number }).generation_attempts ?? 0) + 1,
               },
         )
-        .eq("id", p.id);
+        .eq("id", p.id)
+        .eq("status", "pending");
 
       if (hit?.idea?.trim()) {
         // The original take is banked as Attempt 1 the moment it exists, so a
@@ -415,64 +416,7 @@ export async function driveBigIdeaSweep(
   batchSize = 3,
   budgetMs = DRIVE_BUDGET_MS,
 ): Promise<void> {
-  let consecutiveFailures = 0;
-  const startedAt = Date.now();
-  let complete = false;
-
-  for (let guard = 0; guard < 60; guard++) {
-    if (Date.now() - startedAt > budgetMs) {
-      // Budget spent mid-sweep: hand off cleanly to the next invocation.
-      await markBatchLanded(runId);
-      return;
-    }
-
-    // Stop if a human (or a newer drive) took the run out of `generating`.
-    const { data: run } = await supabaseAdmin
-      .from("stimulus_runs")
-      .select("status")
-      .eq("id", runId)
-      .single();
-    if (!run || (run.status !== "generating" && run.status !== "failed")) return;
-
-    try {
-      const { done } = await runBigIdeaBatch(runId, batchSize);
-      consecutiveFailures = 0;
-      if (done) {
-        // `done` means no pending rows; finishOrRequeue may have re-queued
-        // failed lenses, in which case the loop keeps going.
-        const stillPending = await countByStatus(runId, "pending");
-        if (stillPending === 0) {
-          complete = true;
-          break;
-        }
-      }
-    } catch (e) {
-      consecutiveFailures += 1;
-      const msg = e instanceof Error ? e.message : "Batch failed";
-      if (consecutiveFailures >= 3) {
-        await supabaseAdmin
-          .from("stimulus_runs")
-          .update({
-            status: "failed",
-            error: `Sweep stopped after 3 consecutive batch failures — ${msg}`,
-          })
-          .eq("id", runId);
-        return;
-      }
-      // Transient (model timeout / 503). Pause, keep the heartbeat fresh, retry.
-      await markBatchLanded(runId);
-      await new Promise((r) => setTimeout(r, 5000));
-    }
-  }
-
-  if (!complete) return;
-
-  // Sweep complete — build the full-set convergence ledger in the same
-  // background invocation so it never depends on the browser staying open.
-  try {
-    const { buildLedgerForRun } = await import("./convergence-ledger-run.server");
-    await buildLedgerForRun(runId);
-  } catch (e) {
-    console.error("[big-idea-ledger]", e);
-  }
+  // Compatibility callers enqueue only; the tick runner exclusively owns work.
+  const { queueSweepJob } = await import("./sweep-job.server");
+  await queueSweepJob(runId);
 }

@@ -105,8 +105,8 @@ export const generateBigIdeaBatch = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const run = await assertRunAccess(data.runId, context.userId);
-    const { runBigIdeaBatch } = await import("./stimulus/big-idea-sweep.server");
-    return await runBigIdeaBatch(run.id, data.batchSize);
+    const { queueSweepJob } = await import("./stimulus/sweep-job.server");
+    return { queued: await queueSweepJob(run.id) };
   });
 
 /**
@@ -122,8 +122,7 @@ export const resumeBigIdeaSweep = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const run = await assertRunAccess(data.runId, context.userId);
-    const { driveBigIdeaSweep, SWEEP_STALL_MS } = await import("./stimulus/big-idea-sweep.server");
-    const { scheduleBackground } = await import("./background.server");
+    const { queueSweepJob } = await import("./stimulus/sweep-job.server");
 
     const { data: row } = await supabaseAdmin
       .from("stimulus_runs")
@@ -145,17 +144,8 @@ export const resumeBigIdeaSweep = createServerFn({ method: "POST" })
       return { started: false as const, alreadyRunning: false as const, remaining: 0 };
     }
 
-    const beat = row?.last_batch_at ? Date.parse(row.last_batch_at) : 0;
-    const live = row?.status === "generating" && Date.now() - beat < SWEEP_STALL_MS;
-    if (live && !data.force)
-      return { started: false as const, alreadyRunning: true as const, remaining };
-
-    await supabaseAdmin
-      .from("stimulus_runs")
-      .update({ status: "generating", error: null, last_batch_at: new Date().toISOString() })
-      .eq("id", run.id);
-
-    scheduleBackground(driveBigIdeaSweep(run.id), "big-idea-sweep");
+    const queued = await queueSweepJob(run.id, true);
+    if (!queued) return { started: false as const, alreadyRunning: true as const, remaining };
     return { started: true as const, alreadyRunning: false as const, remaining };
   });
 
@@ -172,7 +162,7 @@ export const advanceBigIdeaSweep = createServerFn({ method: "POST" })
   .inputValidator((i) => z.object({ runId: z.string().uuid() }).parse(i))
   .handler(async ({ data, context }) => {
     const run = await assertRunAccess(data.runId, context.userId);
-    const { driveBigIdeaSweep } = await import("./stimulus/big-idea-sweep.server");
+    const { queueSweepJob } = await import("./stimulus/sweep-job.server");
 
     const { count: before } = await supabaseAdmin
       .from("stimulus_directions")
@@ -186,7 +176,7 @@ export const advanceBigIdeaSweep = createServerFn({ method: "POST" })
       .update({ status: "generating", error: null, last_batch_at: new Date().toISOString() })
       .eq("id", run.id);
 
-    await driveBigIdeaSweep(run.id, 3, 45 * 1000);
+    await queueSweepJob(run.id);
 
     const { count: after } = await supabaseAdmin
       .from("stimulus_directions")
@@ -279,15 +269,15 @@ export const retryBigIdeaLens = createServerFn({ method: "POST" })
     await supabaseAdmin
       .from("stimulus_directions")
       .update({ status: "pending", error: null, generation_attempts: 0 })
-      .eq("id", row.id);
+      .eq("id", row.id)
+      .eq("status", "failed");
     await supabaseAdmin
       .from("stimulus_runs")
       .update({ status: "generating", error: null, last_batch_at: new Date().toISOString() })
       .eq("id", run.id);
 
-    const { driveBigIdeaSweep } = await import("./stimulus/big-idea-sweep.server");
-    const { scheduleBackground } = await import("./background.server");
-    scheduleBackground(driveBigIdeaSweep(run.id), "big-idea-lens-retry");
+    const { queueSweepJob } = await import("./stimulus/sweep-job.server");
+    await queueSweepJob(run.id, true);
     return { queued: true as const };
   });
 

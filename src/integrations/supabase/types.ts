@@ -2719,6 +2719,47 @@ export type Database = {
           },
         ]
       }
+      stimulus_sweep_jobs: {
+        Row: {
+          error: string | null
+          lease_token: string | null
+          lease_until: string | null
+          remaining_hops: number
+          run_id: string
+          status: string
+          updated_at: string
+          wake_token: string
+        }
+        Insert: {
+          error?: string | null
+          lease_token?: string | null
+          lease_until?: string | null
+          remaining_hops?: number
+          run_id: string
+          status?: string
+          updated_at?: string
+          wake_token?: string
+        }
+        Update: {
+          error?: string | null
+          lease_token?: string | null
+          lease_until?: string | null
+          remaining_hops?: number
+          run_id?: string
+          status?: string
+          updated_at?: string
+          wake_token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stimulus_sweep_jobs_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: true
+            referencedRelation: "stimulus_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       suppressed_emails: {
         Row: {
           created_at: string
