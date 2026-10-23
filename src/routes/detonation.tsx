@@ -1738,6 +1738,51 @@ const STAGE_20B_FIELDS: Array<{
   },
 ];
 
+/** Path to Room 04 for this run. Navigation only — no stage logic. */
+function OpenCreativeEnginePanel({ session }: { session: SessionRow }) {
+  const locked = Boolean(session.locked_big_idea?.trim() && session.locked_campaign_line?.trim());
+  return (
+    <div
+      style={{
+        border: `1px solid ${AMBER}`,
+        backgroundColor: `${AMBER}0F`,
+        borderRadius: 8,
+        padding: "16px 20px",
+        margin: "0 0 20px",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: 16,
+        flexWrap: "wrap",
+      }}
+    >
+      <div className="text-body-sm" style={{ color: "#EDE8E0", maxWidth: 520 }}>
+        {locked
+          ? `Big Idea locked in Room 04: "${session.locked_campaign_line}"`
+          : "Stage 21 needs a locked Big Idea. Lock it in Room 04 · Creative Stimulus Engine for this run."}
+      </div>
+      <Link
+        to={locked ? "/creative/$sessionId/shortlist" : "/creative/$sessionId"}
+        params={{ sessionId: session.id }}
+        className="text-mono"
+        style={{
+          border: `1px solid ${AMBER}`,
+          color: AMBER,
+          borderRadius: 8,
+          padding: "10px 16px",
+          fontSize: 11,
+          letterSpacing: "0.12em",
+          textTransform: "uppercase",
+          textDecoration: "none",
+          whiteSpace: "nowrap",
+        }}
+      >
+        Open Creative Engine for this run →
+      </Link>
+    </div>
+  );
+}
+
 function Stage20b({ session, onChange, goNext }: { session: SessionRow; onChange: () => void | Promise<void>; goNext: () => void }) {
   const start = useServerFn(startStage20b);
   const load = useServerFn(loadStage20b);
@@ -1854,6 +1899,7 @@ function Stage20b({ session, onChange, goNext }: { session: SessionRow; onChange
         subtitle="Before the channel briefs are written, capture the audience intelligence that drives every channel decision. The output of this stage is the primary brief that Stage 21 writes from."
       />
       {err && <ErrorBanner message={err} />}
+      <OpenCreativeEnginePanel session={session} />
       {!canRun && (
         <ErrorBanner message="Stage 20 must be approved before Stage 20B can run." />
       )}
@@ -2283,6 +2329,7 @@ function Stage21({ session, onChange, goNext }: { session: SessionRow; onChange:
       <SectionTitle kicker="STAGE 21" title="Channel Briefs" subtitle="One detonation brief per active channel. Click a card to expand." />
       {err && <ErrorBanner message={err} />}
       {stage21BlockedReason && <ErrorBanner message={stage21BlockedReason} />}
+      <OpenCreativeEnginePanel session={session} />
       {!outputs || outputEntries.length === 0 ? (
         <div
           style={{
