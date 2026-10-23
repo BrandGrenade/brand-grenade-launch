@@ -14,7 +14,7 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { callClaude } from "@/lib/claude.server";
 import { getLens } from "./lenses";
-import { retrySweepLens } from "./sweep-job-policy";
+import { retrySweepLens, sweepCreditExhausted } from "./sweep-job-policy";
 import {
   BIG_IDEA_SYSTEM_PROMPT,
   buildBigIdeaUserMessage,
@@ -216,6 +216,7 @@ export async function runBigIdeaBatch(
       // A batch-level rate limit identifies no individual lens. Split only
       // this unsuccessful batch; each throttled lens retries independently.
       const message = error instanceof Error ? error.message : String(error);
+      if (sweepCreditExhausted(error)) throw error;
       if (!/Claude API 429:/.test(message)) throw error;
       const settled = await Promise.allSettled(lenses.map(lens => retrySweepLens(() => callClaude({
         ...batchArgs,
@@ -258,6 +259,7 @@ export async function runBigIdeaBatch(
           const solo = parseBigIdeaResponse(soloRaw)[p.lens_id];
           if (solo?.idea?.trim()) hit = solo;
         } catch (soloErr) {
+          if (sweepCreditExhausted(soloErr)) throw soloErr;
           console.error("[big-idea-solo]", p.lens_id, soloErr);
         }
       }
