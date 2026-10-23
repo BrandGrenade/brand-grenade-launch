@@ -3734,6 +3734,7 @@ function LeftPanel({
   currentMainNumber,
   totalMain,
   hasBrief,
+  sessionId,
 }: {
   stages: Stage[];
   statuses: Record<string, StageStatus>;
