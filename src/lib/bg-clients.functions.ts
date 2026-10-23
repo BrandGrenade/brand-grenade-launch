@@ -288,7 +288,7 @@ export const getAdminRunRegister = createServerFn({ method: "GET" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const sb = supabaseAdmin as any;
     const [s, w, i, y, c, n] = await Promise.all([
-      sb.from("brand_register_sessions").select("id,brand_name,status,created_at,has_stage_16_consulting,has_stage_22,bg_client_id,engagement_id,brief_type,run_mode,archived_at").eq("is_preflight_test", false).is("archived_at", null).order("created_at", { ascending: false }).limit(2000),
+      sb.from("brand_register_sessions").select("id,brand_name,status,created_at,current_stage,has_stage_16_consulting,has_stage_15,has_stage_16,has_stage_17,has_stage_17b,has_stage_18,has_stage_19,has_stage_20,stage_20_approved,has_stage_20b,has_stage_21,has_stage_22,bg_client_id,engagement_id,brief_type,run_mode,archived_at").eq("is_preflight_test", false).is("archived_at", null).order("created_at", { ascending: false }).limit(2000),
       sb.from("brand_register_briefings").select("id,brand_name,status,created_at,bg_client_id,engagement_id,archived_at").is("archived_at", null).limit(2000),
       sb.from("intelligence_sessions").select("id,brand_name,status,created_at,brief_type:report_metadata->>brief_type,bg_client_id,engagement_id,archived_at").is("archived_at", null).limit(2000),
       sb.from("synthesiser_runs").select("id,brand_name,status,created_at,bg_client_id,engagement_id,archived_at").is("archived_at", null).limit(2000),
