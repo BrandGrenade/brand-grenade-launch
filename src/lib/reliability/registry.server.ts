@@ -176,12 +176,8 @@ const bigIdeaDomain: JobDomain = {
     return jobs;
   },
   async recover(admin, job) {
-    const { driveBigIdeaSweep } = await import("@/lib/stimulus/big-idea-sweep.server");
-    await admin
-      .from("stimulus_runs")
-      .update({ status: "generating", error: null, last_batch_at: new Date().toISOString() })
-      .eq("id", job.jobId);
-    await driveBigIdeaSweep(job.jobId);
+    const { queueSweepJob } = await import("@/lib/stimulus/sweep-job.server");
+    await queueSweepJob(job.jobId);
   },
   async escalate(admin, job, message) {
     await admin.from("stimulus_runs").update({ status: "failed", error: message }).eq("id", job.jobId);

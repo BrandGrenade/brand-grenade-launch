@@ -269,15 +269,15 @@ export const retryBigIdeaLens = createServerFn({ method: "POST" })
     await supabaseAdmin
       .from("stimulus_directions")
       .update({ status: "pending", error: null, generation_attempts: 0 })
-      .eq("id", row.id);
+      .eq("id", row.id)
+      .eq("status", "failed");
     await supabaseAdmin
       .from("stimulus_runs")
       .update({ status: "generating", error: null, last_batch_at: new Date().toISOString() })
       .eq("id", run.id);
 
-    const { driveBigIdeaSweep } = await import("./stimulus/big-idea-sweep.server");
-    const { scheduleBackground } = await import("./background.server");
-    scheduleBackground(driveBigIdeaSweep(run.id), "big-idea-lens-retry");
+    const { queueSweepJob } = await import("./stimulus/sweep-job.server");
+    await queueSweepJob(run.id, true);
     return { queued: true as const };
   });
 
