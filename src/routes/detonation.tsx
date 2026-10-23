@@ -848,7 +848,8 @@ function DetonationPage() {
   );
 
   const phase2Index = PHASE_2_STAGES.findIndex((s) => s.number === activeStage);
-  const unifiedStage = phase2Index >= 0 ? 16 + phase2Index + 1 : 17;
+  // Show the stage's own number ("20B" → 20); index arithmetic overcounted (Stage 21 showed 23).
+  const unifiedStage = phase2Index >= 0 ? Number.parseInt(activeStage, 10) : 17;
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
