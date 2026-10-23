@@ -42,3 +42,5 @@
 - [ ] Partner Hub link: blocked on HUB_INGEST_KEY; document files (PDF/DOCX or 24h signed link) and export events not yet sent
 
 - [ ] JLR sweep: repair output-budget exhaustion, background-only lease runner, preserve saved lenses, verify remaining work, tests and publication.
+
+- [ ] JLR sweep speed: establish original batching/input, keep keep-alive and re-claim, finish pending lenses without replacing saved work.
