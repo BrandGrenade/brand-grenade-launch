@@ -297,6 +297,9 @@ export const bigIdeaSweepProgress = createServerFn({ method: "POST" })
       .from("stimulus_directions")
       .select("status")
       .eq("run_id", run.id);
+    const { data: job } = await supabaseAdmin.from("stimulus_sweep_jobs").select("status,error").eq("run_id", run.id).maybeSingle();
+    const paused = job?.status === "paused";
+    const progressError = paused ? job.error : row?.error;
 
     const all = rows ?? [];
     const pending = all.filter((r) => r.status === "pending").length;
@@ -306,11 +309,11 @@ export const bigIdeaSweepProgress = createServerFn({ method: "POST" })
     const generated = all.length - pending - failed;
     const beat = row?.last_batch_at ? Date.parse(row.last_batch_at) : 0;
     const stalled =
-      pending > 0 && (row?.status !== "generating" || Date.now() - beat > SWEEP_STALL_MS);
+      pending > 0 && (paused || row?.status !== "generating" || Date.now() - beat > SWEEP_STALL_MS);
 
     return {
-      status: row?.status ?? "unknown",
-      error: sweepCreditExhausted(row?.error) ? SWEEP_CREDIT_MESSAGE : row?.error ?? null,
+      status: paused ? "failed" : row?.status ?? "unknown",
+      error: sweepCreditExhausted(progressError) ? SWEEP_CREDIT_MESSAGE : progressError ?? null,
       total: all.length,
       generated,
       pending,
