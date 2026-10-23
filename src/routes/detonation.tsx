@@ -2330,7 +2330,6 @@ function Stage21({ session, onChange, goNext }: { session: SessionRow; onChange:
       {err && <ErrorBanner message={err} />}
       {stage21BlockedReason && <ErrorBanner message={stage21BlockedReason} />}
       <OpenCreativeEnginePanel session={session} />
-      {!session.locked_big_idea && err && /lock/i.test(err) && null}
       {!outputs || outputEntries.length === 0 ? (
         <div
           style={{
