@@ -1,3 +1,4 @@
+import { furthestStageLabel, laterStageStatuses, type RunProgressFlags } from "@/lib/run-stage-progress";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { tokens } from "@/styles/tokens";
@@ -3154,6 +3155,7 @@ function PipelineView() {
           currentMainNumber={Math.max(1, session?.current_stage ?? currentMainNumber)}
           totalMain={mainStages.length}
           hasBrief={Boolean(session?.brief_text || (session?.brief_versions?.length ?? 0) > 0)}
+          sessionId={sessionId}
         />
         {selectedId === "BRIEF" ? (
           <section className="relative flex min-w-0 flex-1 flex-col bg-background">
@@ -3732,6 +3734,7 @@ function LeftPanel({
   currentMainNumber,
   totalMain,
   hasBrief,
+  sessionId,
 }: {
   stages: Stage[];
   statuses: Record<string, StageStatus>;
@@ -3741,8 +3744,12 @@ function LeftPanel({
   currentMainNumber: number;
   totalMain: number;
   hasBrief: boolean;
+  sessionId?: string | null;
 }) {
   const briefSelected = selectedId === "BRIEF";
+  const laterFlags = useLaterStageFlags(sessionId ?? null);
+  const later = laterFlags ? laterStageStatuses(laterFlags) : [];
+  const headerStage = laterFlags ? furthestStageLabel({ ...laterFlags, current_stage: Math.max(currentMainNumber, laterFlags.current_stage ?? 0) }) : String(currentMainNumber);
   return (
     <aside className="hidden w-[280px] shrink-0 overflow-y-auto border-r border-border bg-background py-6 md:block">
       <header className="px-5 pb-5">
@@ -3760,7 +3767,7 @@ function LeftPanel({
           />
         </div>
         <p className="text-body-sm mt-2" style={{ color: "var(--color-text-tertiary)" }}>
-          Stage {currentMainNumber} of {NUMBERED_STAGE_COUNT}
+          Stage {headerStage} of {NUMBERED_STAGE_COUNT}
         </p>
       </header>
 
@@ -3914,8 +3921,56 @@ function LeftPanel({
           );
         })}
       </ul>
+      {later.length > 0 && sessionId && (
+        <ul aria-label="Later stages">
+          {later.map((st) => {
+            const open = st.status !== "pending";
+            const color = st.status === "complete" ? "var(--color-success)" : st.status === "ready" ? "var(--color-warning)" : tokens.muted;
+            const inner = (
+              <>
+                <span className="shrink-0" style={{ fontFamily: `'${tokens.fontMono}', monospace`, color: tokens.muted, minWidth: 28, fontSize: 13 }}>{st.number}</span>
+                <span className="flex-1 truncate" style={{ fontFamily: `'${tokens.fontBody}', sans-serif`, color: tokens.white }}>{st.name}</span>
+                <span className="text-label shrink-0" style={{ color, fontSize: 10 }}>{st.status === "complete" ? "Complete" : st.status === "ready" ? "Ready" : "Pending"}</span>
+              </>
+            );
+            return (
+              <li key={st.id} style={{ borderTop: "1px solid var(--color-surface-3)" }}>
+                {open ? (
+                  <Link
+                    to={st.id === "16" ? "/complete" : "/detonation"}
+                    search={(st.id === "16" ? { session: sessionId } : { session: sessionId, stage: st.id }) as never}
+                    className="flex w-full items-center gap-3 px-5 py-2.5 text-left hover:bg-muted"
+                  >{inner}</Link>
+                ) : (
+                  <div className="flex w-full items-center gap-3 px-5 py-2.5">{inner}</div>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      )}
     </aside>
   );
+}
+
+function useLaterStageFlags(sessionId: string | null): RunProgressFlags | null {
+  const [flags, setFlags] = useState<RunProgressFlags | null>(null);
+  useEffect(() => {
+    if (!sessionId) return;
+    let alive = true;
+    const load = async () => {
+      const { data } = await supabase
+        .from("brand_register_sessions" as never)
+        .select("current_stage,has_stage_15,has_stage_16,has_stage_17,has_stage_17b,has_stage_18,has_stage_19,has_stage_20,stage_20_approved,has_stage_20b,has_stage_21,has_stage_22")
+        .eq("id", sessionId)
+        .maybeSingle();
+      if (alive && data) setFlags(data as RunProgressFlags);
+    };
+    void load();
+    const t = setInterval(load, 15000);
+    return () => { alive = false; clearInterval(t); };
+  }, [sessionId]);
+  return flags;
 }
 
 function StageRowStatusLabel({

@@ -3009,8 +3009,16 @@ export type Database = {
           created_at: string | null
           current_stage: number | null
           engagement_id: string | null
+          has_stage_15: boolean | null
+          has_stage_16: boolean | null
           has_stage_16_consulting: boolean | null
           has_stage_17: boolean | null
+          has_stage_17b: boolean | null
+          has_stage_18: boolean | null
+          has_stage_19: boolean | null
+          has_stage_20: boolean | null
+          has_stage_20b: boolean | null
+          has_stage_21: boolean | null
           has_stage_22: boolean | null
           id: string | null
           interrupted_stage: number | null
@@ -3018,6 +3026,7 @@ export type Database = {
           last_heartbeat_at: string | null
           phase_2_status: string | null
           run_mode: string | null
+          stage_20_approved: boolean | null
           stage_status: string | null
           status: string | null
           updated_at: string | null
@@ -3031,8 +3040,16 @@ export type Database = {
           created_at?: string | null
           current_stage?: number | null
           engagement_id?: string | null
+          has_stage_15?: never
+          has_stage_16?: never
           has_stage_16_consulting?: never
           has_stage_17?: never
+          has_stage_17b?: never
+          has_stage_18?: never
+          has_stage_19?: never
+          has_stage_20?: never
+          has_stage_20b?: never
+          has_stage_21?: never
           has_stage_22?: never
           id?: string | null
           interrupted_stage?: number | null
@@ -3040,6 +3057,7 @@ export type Database = {
           last_heartbeat_at?: string | null
           phase_2_status?: string | null
           run_mode?: string | null
+          stage_20_approved?: never
           stage_status?: string | null
           status?: string | null
           updated_at?: string | null
@@ -3053,8 +3071,16 @@ export type Database = {
           created_at?: string | null
           current_stage?: number | null
           engagement_id?: string | null
+          has_stage_15?: never
+          has_stage_16?: never
           has_stage_16_consulting?: never
           has_stage_17?: never
+          has_stage_17b?: never
+          has_stage_18?: never
+          has_stage_19?: never
+          has_stage_20?: never
+          has_stage_20b?: never
+          has_stage_21?: never
           has_stage_22?: never
           id?: string | null
           interrupted_stage?: number | null
@@ -3062,6 +3088,7 @@ export type Database = {
           last_heartbeat_at?: string | null
           phase_2_status?: string | null
           run_mode?: string | null
+          stage_20_approved?: never
           stage_status?: string | null
           status?: string | null
           updated_at?: string | null

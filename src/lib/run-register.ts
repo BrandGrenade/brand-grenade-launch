@@ -1,3 +1,5 @@
+import { furthestStageLabel } from "./run-stage-progress";
+import { NUMBERED_STAGE_COUNT } from "./stage-manifest";
 // Run register: every run grouped Client → Job → Runs.
 // Grouping uses only database-controlled client/engagement links; runs are
 // never matched to a client by brand name. Archived runs are hidden here and
@@ -122,7 +124,7 @@ export function toRegisterRuns(rows: {
       table: "sessions", id: s.id, room: roomLabel("pipeline"), brand: s.brand_name ?? "",
       clientId: s.bg_client_id ?? null, engagementId: s.engagement_id ?? null,
       briefType: label(s.brief_type ?? "campaign"), runType: label(s.run_mode ?? "full"),
-      date: s.created_at, status: label(s.status),
+      date: s.created_at, status: s.status === "complete" || s.has_stage_22 ? label(s.status) : `${label(s.status)} · Stage ${furthestStageLabel(s)} of ${NUMBERED_STAGE_COUNT}`,
       openHref: `/pipeline?session=${encodeURIComponent(s.id)}`,
       documentsHref: docs ? `/complete?session=${encodeURIComponent(s.id)}` : null,
     });
@@ -174,7 +176,7 @@ export function useRunRegister() {
     const sb = supabase as any;
     const [s, w, i, y, c, n] = await Promise.all([
       sb.from("brand_register_sessions")
-        .select("id,brand_name,status,created_at,has_stage_16_consulting,has_stage_22,bg_client_id,engagement_id,brief_type,run_mode,archived_at")
+        .select("id,brand_name,status,created_at,current_stage,has_stage_16_consulting,has_stage_15,has_stage_16,has_stage_17,has_stage_17b,has_stage_18,has_stage_19,has_stage_20,stage_20_approved,has_stage_20b,has_stage_21,has_stage_22,bg_client_id,engagement_id,brief_type,run_mode,archived_at")
         .eq("is_preflight_test", false).is("archived_at", null).order("created_at", { ascending: false }).limit(1000),
       sb.from("brand_register_briefings").select("id,brand_name,status,created_at,bg_client_id,engagement_id,archived_at")
         .is("archived_at", null).order("created_at", { ascending: false }).limit(1000),

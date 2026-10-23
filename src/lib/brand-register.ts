@@ -1,3 +1,4 @@
+import { furthestStageLabel, type RunProgressFlags } from "./run-stage-progress";
 // Brand Register — client-side aggregation over sessions,
 // briefing_room_workspaces, saved_briefs, and (best-effort)
 // intelligence_sessions, keyed by normalised brand name.
@@ -120,7 +121,7 @@ type SessionRow = {
   stage_status: string | null;
   interrupted_stage: number | null;
   last_heartbeat_at: string | null;
-};
+} & RunProgressFlags;
 
 type WorkspaceRow = {
   id: string;
@@ -244,7 +245,7 @@ function derivePipeline(sessions: SessionRow[]): SystemStatus {
 
   return {
     state: "in_progress",
-    label: `Stage ${stage} of ${NUMBERED_STAGE_COUNT}`,
+    label: `Stage ${furthestStageLabel(latest)} of ${NUMBERED_STAGE_COUNT}`,
     timestamp: null,
     href: "/pipeline",
     hrefSearch: { session: latest.id },
@@ -628,7 +629,7 @@ function assemble({
             : "in_progress",
         label: pipelineComplete
           ? "Pipeline complete"
-          : `Stage ${s.current_stage ?? 1} of ${NUMBERED_STAGE_COUNT}`,
+          : `Stage ${furthestStageLabel(s)} of ${NUMBERED_STAGE_COUNT}`,
         href: "/pipeline",
         hrefSearch: { session: s.id },
         downloadHref: null,
@@ -739,7 +740,7 @@ export function useBrandRegister(): UseBrandRegisterResult {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .from("brand_register_sessions" as any)
         .select(
-          "id,brand_name,category,status,current_stage,created_at,updated_at,has_stage_16_consulting,phase_2_status,has_stage_17,has_stage_22,stage_status,interrupted_stage,last_heartbeat_at",
+          "id,brand_name,category,status,current_stage,created_at,updated_at,has_stage_16_consulting,phase_2_status,has_stage_17,has_stage_22,stage_status,interrupted_stage,last_heartbeat_at,has_stage_15,has_stage_16,has_stage_17b,has_stage_18,has_stage_19,has_stage_20,stage_20_approved,has_stage_20b,has_stage_21",
         )
         .eq("is_preflight_test", false)
         .order("updated_at", { ascending: false })
