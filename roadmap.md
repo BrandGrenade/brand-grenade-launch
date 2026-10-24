@@ -1,6 +1,6 @@
 # Roadmap
 
-- [ ] Preserve Creative rewrite judgements and Step 2 winner choices; restore JLR ideas 05/17/19/20 to prior judgement or Keep if unrecorded, verify unchanged text/history and shortlist.
+- [x] Creative version updates preserve judgement; Step 2 rewrite refreshes retain chosen idea/line, with explicit Kill available there. JLR 05/17/19/20 restored to Keep (prior status unrecorded), signed-in shortlist verified; text/history hashes unchanged. 365 tests and preview build pass. No real rewrite run and no publication.
 
 - [x] Creative Stimulus: removed both line caps and parser line truncation, de-duplicated Field 2 master prefix, refreshed guided-rewrite root tension/alignment/rationale, and preserved explicitly specified lines. 360 tests pass, preview build OK; signed-in JLR display verified all 37 expressions with no duplicate master. No saved ideas rewritten, no publication.
 - [ ] Creative Stimulus real AI rewrite end-to-end verification: not performed to avoid rewriting an existing approved JLR idea solely for testing; mocked generation/persistence tests pass, but real-model compliance with the new craft/self-edit instruction remains unverified.
