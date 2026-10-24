@@ -617,6 +617,13 @@ function IdeaCard({
             <Btn onClick={onPickLine} active={isLineWinner} disabled={locked || !d.campaign_line}>
               {isLineWinner ? "Chosen as winning line" : "Choose this master line"}
             </Btn>
+            <Btn disabled={busy || locked} onClick={async () => {
+              setBusy(true);
+              try { await onTriage("kill", instinct); }
+              finally { setBusy(false); }
+            }}>
+              Kill this idea
+            </Btn>
           </>
         )}
       </div>
