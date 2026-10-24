@@ -617,6 +617,13 @@ function IdeaCard({
             <Btn onClick={onPickLine} active={isLineWinner} disabled={locked || !d.campaign_line}>
               {isLineWinner ? "Chosen as winning line" : "Choose this master line"}
             </Btn>
+            <Btn disabled={busy || locked} onClick={async () => {
+              setBusy(true);
+              try { await onTriage("kill", instinct); }
+              finally { setBusy(false); }
+            }}>
+              Kill this idea
+            </Btn>
           </>
         )}
       </div>
@@ -707,13 +714,15 @@ export function BigIdeaSweep({
   const pollingRef = useRef(false);
 
   const refresh = useCallback(
-    async (id: string) => {
+    async (id: string, preserveChoices = false) => {
       const r = await load({ data: { runId: id } });
       const list = r.directions as unknown as Idea[];
       setIdeas(list);
       setRun(r.run as RunMeta);
-      setPickIdea((r.run as RunMeta).winning_direction_id ?? null);
-      setPickLine((r.run as RunMeta).winning_line_direction_id ?? null);
+      if (!preserveChoices) {
+        setPickIdea((r.run as RunMeta).winning_direction_id ?? null);
+        setPickLine((r.run as RunMeta).winning_line_direction_id ?? null);
+      }
     },
     [load],
   );
@@ -1340,7 +1349,7 @@ export function BigIdeaSweep({
                     expectedLensId: d.lens_id,
                   },
                 });
-                if (runId) await refresh(runId);
+                if (runId) await refresh(runId, true);
               }}
 
               onRetry={async () => {
@@ -1362,7 +1371,7 @@ export function BigIdeaSweep({
           run={run}
           directions={ideas as unknown as RatedDirection[]}
           onRefresh={async () => {
-            if (runId) await refresh(runId);
+            if (runId) await refresh(runId, true);
           }}
           onRevise={async (directionId, notes) => {
             const target = ideas.find((x) => x.id === directionId);
@@ -1374,7 +1383,7 @@ export function BigIdeaSweep({
                 expectedLensId: target?.lens_id ?? null,
               },
             });
-            if (runId) await refresh(runId);
+            if (runId) await refresh(runId, true);
           }}
 
         />
