@@ -6,6 +6,7 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { callClaude } from "@/lib/claude.server";
 import { getLens } from "@/lib/stimulus/lenses";
+import { specifiedRevisionLine } from "@/lib/stimulus/idea-lines";
 import {
   STIMULUS_SYSTEM_PROMPT,
   buildStimulusUserMessage,
@@ -34,6 +35,7 @@ type RunRow = {
   channel_brief: string;
   smp: string;
   run_mode?: string;
+  creative_guidance?: string | null;
 };
 
 /**
@@ -109,7 +111,7 @@ export async function recordInitialAttempt(input: {
   return attempt.id;
 }
 
-function buildInstruction(mode: RegenMode, notes: string | undefined, priors: string[]): string {
+function buildInstruction(mode: RegenMode, notes: string | undefined, priors: string[], isBigIdea: boolean): string {
   const priorBlock =
     priors.length > 0
       ? [
@@ -126,6 +128,11 @@ function buildInstruction(mode: RegenMode, notes: string | undefined, priors: st
       (notes ?? "").trim(),
       "",
       "Rewrite this lens's output so it obeys the revision instruction. Same output contract. Do not repeat any previous version.",
+      ...(isBigIdea ? [
+        "Regenerate every field from this revised idea: THE BIG IDEA, ROOT TENSION, IDEA COLLISION CHECK, CANDIDATE MASTER LINE, EXPRESSION UNDER MASTER (when a master is locked), GUIDANCE ALIGNMENT, and WHY IT WINS. Never carry over old root tension, alignment or rationale.",
+        "Judge GUIDANCE ALIGNMENT against both the sweep's creative guidance (if supplied) and this revision instruction. Output it even if there was no original sweep guidance.",
+        "If the instruction specifies a line verbatim (including an end line in quotes), reproduce it exactly in the requested Field 1 or Field 2. With no field specified, use Field 2 when a master is locked, otherwise Field 1. Do not substitute, shorten or self-edit specified wording. Field 2 contains the supporting expression only, never an added master prefix.",
+      ] : []),
     ].join("\n");
   }
 
@@ -169,6 +176,11 @@ export async function regenerateDirection(opts: {
     .single();
 
   const masterLine = (sessionRow?.stage_18_detonation_line ?? "").trim();
+  const { data: guidanceRow, error: guidanceError } = isBigIdea
+    ? await supabaseAdmin.from("stimulus_runs").select("creative_guidance").eq("id", run.id).single()
+    : { data: null, error: null };
+  if (guidanceError) throw new Error(`Could not load sweep guidance: ${guidanceError.message}`);
+  const guidance = guidanceRow?.creative_guidance?.trim() || run.creative_guidance?.trim();
 
   const base = isBigIdea
     ? buildBigIdeaUserMessage({
@@ -188,6 +200,7 @@ export async function regenerateDirection(opts: {
           .join("\n\n")
           .slice(0, 14000),
         lenses: [lens],
+        creativeGuidance: guidance ? { text: guidance, totalLenses: 37, generated: 0, aligned: 0, remaining: 0 } : null,
       })
     : buildStimulusUserMessage({
         brandName: sessionRow?.brand_name ?? "—",
@@ -203,7 +216,7 @@ export async function regenerateDirection(opts: {
   const currentText = (row.direction ?? "").trim();
   if (currentText && !priors.includes(currentText)) priors.push(currentText);
 
-  const userMessage = [base, "", buildInstruction(mode, notes, priors)].join("\n");
+  const userMessage = [base, "", buildInstruction(mode, notes, priors, isBigIdea)].join("\n");
 
   const raw = await callClaude({
     stageNumber: "cs-regen",
@@ -217,6 +230,13 @@ export async function regenerateDirection(opts: {
   });
 
   const bigParsed = isBigIdea ? parseBigIdeaResponse(raw)[lens.id] : undefined;
+  if (bigParsed && mode === "revise") {
+    if (!bigParsed.rootTension || !bigParsed.guidanceAlignment || !bigParsed.rationale) {
+      throw new Error("Rewrite omitted root tension, guidance alignment or why it wins; the previous idea has been kept unchanged.");
+    }
+    const specified = specifiedRevisionLine(notes ?? "", Boolean(masterLine));
+    if (specified) bigParsed[specified.field] = specified.text;
+  }
   const text = isBigIdea
     ? bigParsed?.idea?.trim() || raw.trim()
     : parseStimulusResponse(raw)[lens.id]?.trim() || raw.trim();
@@ -298,6 +318,9 @@ export async function regenerateDirection(opts: {
               : null,
             master_line_at_generation: masterLine || null,
             rationale: bigParsed?.rationale || null,
+            root_tension: bigParsed?.rootTension || null,
+            guidance_alignment: bigParsed?.guidanceAlignment || (guidance || mode === "revise" ? "unstated" : null),
+            guidance_alignment_note: bigParsed?.guidanceAlignmentNote || null,
             line_check: null,
           }
         : {}),

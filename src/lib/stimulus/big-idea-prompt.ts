@@ -34,7 +34,8 @@ FIELD 1 — THE CANDIDATE MASTER LINE
 Each lens produces ONE candidate master line, aimed at the highest standard on the FIRST attempt — the caliber of "Just Do It" or "We Try Harder". This is not a draft to be fixed later. It is a candidate to BECOME (or replace) the brand's master line, and it is judged as such.
 
 Shape — mandatory, not aspirational:
-- Three to seven words. No exceptions, no subordinate clauses, no conjunctions that soften.
+- Write each line at exactly the length it needs and not one word more. A great line can be two words or a full sentence. Every word must earn its place: if a word can go without losing meaning, rhythm or surprise, cut it. No explaining, no stacked adjectives, no lists, no strategy language. Write it the way a world-class copywriter would — the line you would put on a poster, not the sentence you would put in a brief.
+- This craft rule applies to both Field 1 and Field 2. There is no word cap. Never truncate a line. Soft check only: if either line exceeds 12 words, self-edit it once and keep the shorter version only if it is better. Word count is information, not a pass/fail threshold. Explicitly specified verbatim revision lines are fixed: do not self-edit or substitute them.
 - It must stand alone on a poster with ZERO context — no idea underneath it, no explanation beside it.
 - It carries the idea. It does not explain, summarise, restate or annotate the idea.
 - Declarative. Present tense. Active voice. Zero hedging.
@@ -45,7 +46,7 @@ Forbidden: a compressed restatement of the big idea above it. That is a thesis, 
 FIVE MANDATORY STRESS TESTS — all five must pass before the line is output. Run them silently; do not print them.
 Test 1 — Tension. Does the line hold a genuine felt contradiction or charge, rather than stating one? If the tension has to be explained, it has failed.
 Test 2 — Exclusion. Could a direct competitor, or a different proposition in this category, run this line unchanged? If yes, it is generic — rewrite it.
-Test 3 — Standalone. Does it survive with no context, no explanation and no second sentence? If it needs support, compress further.
+Test 3 — Standalone. Does it survive with no context, no explanation and no second sentence? If it needs support, rewrite it to stand alone; do not truncate it.
 Test 4 — Spoken Language. Read aloud, does it land with force in a single breath, as something a person would actually say?
 Test 5 — Category Convention. Does it break the category's default way of speaking, or reproduce it?
 A line that fails any test is rewritten before output, not shipped with a caveat.
@@ -54,8 +55,8 @@ FIELD 2 — EXPRESSION UNDER MASTER
 Produce this field ONLY when the user message supplies a LOCKED MASTER LINE. If none is supplied, omit this field entirely — do not invent a master line, do not substitute your own candidate, and do not output the label with nothing under it.
 
 When a locked master line IS supplied, it is fixed and mandatory. You are not rewriting it, not improving it, not competing with it and not defending it. Your job is the opposite: show how THIS lens's idea earns its place underneath it. Write one line of supporting expression that locks up with the master line — the kind of second line that would sit beneath it on the same poster, or run as this idea's specific execution tagline.
-- Reproduce the master line verbatim, then the supporting expression, in the shape: <Master line> <Supporting expression>
-- The supporting expression is itself short — under ten words — and specific to this idea, not a generic sub-line that would work under any idea.
+- Output only the supporting expression. Do not prefix it with the master line: the display shows the locked master separately, once.
+- The supporting expression follows the same craft rule and soft check as Field 1, with no word cap, and is specific to this idea, not a generic sub-line that would work under any idea.
 - The pairing must read as one thought in two beats, not as two lines arguing with each other.
 
 THE RATIONALE
@@ -100,10 +101,10 @@ IDEA COLLISION CHECK
 <Either "CLEAR" or "COLLIDES WITH <prior lens id> — <one line on the shared root tension, naming the territory both share>". If it collides with more than one, list each on its own line.>
 
 CANDIDATE MASTER LINE
-<3–7 words. Standalone. No quotation marks, no explanation.>
+<Exactly the length it needs, no word cap. Standalone. No quotation marks, no explanation.>
 
 EXPRESSION UNDER MASTER
-<Only if a locked master line was supplied. One line: the master line verbatim, then this idea's supporting expression. Omit this label entirely if no master line was supplied.>
+<Only if a locked master line was supplied. This idea's supporting expression only, without the master prefix, with no word cap. Omit this label entirely if no master line was supplied.>
 
 GUIDANCE ALIGNMENT
 <Only if CREATIVE GUIDANCE was supplied for this sweep. Exactly "ALIGNED — <one clause>" or "NOT ALIGNED — <one clause>", judging this idea honestly against the guidance. Omit this label entirely if no guidance was supplied. Never mark an idea ALIGNED to hit a quota if it is not.>
@@ -357,7 +358,7 @@ export function parseBigIdeaResponse(raw: string): Record<string, ParsedBigIdea>
     out[id] = {
       idea: idea || body.trim(),
       line: firstLine(line),
-      expressionUnderMaster: firstLine(expression),
+      expressionUnderMaster: expression.trim(),
       rationale,
       rootTension: firstLine(sections["ROOT TENSION"] ?? ""),
       collisions: parseCollisionField(collisionField),
