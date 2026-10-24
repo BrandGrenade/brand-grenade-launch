@@ -1376,7 +1376,7 @@ export function BigIdeaSweep({
                 expectedLensId: target?.lens_id ?? null,
               },
             });
-            if (runId) await refresh(runId);
+            if (runId) await refresh(runId, true);
           }}
 
         />

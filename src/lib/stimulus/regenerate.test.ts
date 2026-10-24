@@ -58,4 +58,27 @@ describe("guided rewrite persistence", () => {
     await expect(regenerateDirection(options)).rejects.toThrow("previous idea has been kept unchanged");
     expect(mocks.writes).toHaveLength(0);
   });
+  it.each(["keep", "keep_in_play", "kill"])("preserves %s through repeated rewrites and never touches winner choices", async (status) => {
+    mocks.call.mockResolvedValue(response);
+    let current: Record<string, unknown> = { status, direction: "Old idea" };
+    for (let rewrite = 0; rewrite < 3; rewrite += 1) {
+      mocks.writes.length = 0;
+      await regenerateDirection({ ...options, direction: { ...options.direction, direction: String(current.direction) } });
+      const saved = mocks.writes.find(w => w.table === "stimulus_directions")?.values;
+      expect(saved).toBeDefined();
+      expect(saved).not.toHaveProperty("status");
+      current = { ...current, ...saved };
+      expect(current.status).toBe(status);
+      expect(["keep", "keep_in_play"].includes(String(current.status))).toBe(status !== "kill");
+      expect(mocks.writes.filter(w => w.table === "stimulus_runs")).toHaveLength(0);
+    }
+  });
+  it("preserves a status-button change made while the rewrite is running", async () => {
+    let status = "keep";
+    mocks.call.mockImplementation(async () => { status = "kill"; return response; });
+    await regenerateDirection(options);
+    const saved = mocks.writes.find(w => w.table === "stimulus_directions")?.values;
+    const resultingRow = { status, ...saved };
+    expect(resultingRow.status).toBe("kill");
+  });
 });
