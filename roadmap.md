@@ -1,5 +1,7 @@
 # Roadmap
 
+- [ ] Creative Stimulus: remove both line caps, de-duplicate Field 2 master prefix, refresh all guided-rewrite fields and preserve specified verbatim lines; test without changing other sweep/shortlist/export behavior.
+
 - [x] Resumed JLR's 13 pending lenses: 37/37 generated, job complete and no error; all 24 original full-row hashes unchanged. Credit exhaustion now halts recovery/watchers with the requested message until explicit Resume; signed-in stopped/resume/completed UI verified, 354 tests pass, build OK; publication requested and live site responds.
 
 - [x] Fixed string next-stage labels and full/Deal/diagnostic boundaries; 337 tests pass, preview build OK; every available JLR stage label checked and Stage 12 → saved Stage 13 verified without rerunning. Publication requested; deployment not yet independently verified.
