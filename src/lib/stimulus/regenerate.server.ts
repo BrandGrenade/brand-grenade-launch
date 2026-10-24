@@ -324,7 +324,8 @@ export async function regenerateDirection(opts: {
             line_check: null,
           }
         : {}),
-      status: "generated",
+      // Judgement belongs to the user, not the version. Omit status entirely
+      // so a status-button click during generation is preserved too.
       ...(mode === "revise"
         ? { revise_notes: (notes ?? "").trim(), revise_count: (row.revise_count ?? 0) + 1 }
         : {}),
@@ -377,7 +378,7 @@ export async function activateAttempt(directionId: string, attemptId: string) {
       gate_one_approved: false,
       gate_one_approved_at: null,
       gate_one_snapshot: null,
-      status: "generated",
+      // Restoring a take must not change its user's shortlist judgement.
       error: null,
     })
     .eq("id", directionId);
