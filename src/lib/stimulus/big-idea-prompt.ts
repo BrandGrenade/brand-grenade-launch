@@ -357,7 +357,7 @@ export function parseBigIdeaResponse(raw: string): Record<string, ParsedBigIdea>
 
     out[id] = {
       idea: idea || body.trim(),
-      line: firstLine(line),
+      line: line.trim().replace(/^["“”']|["“”']$/g, ""),
       expressionUnderMaster: expression.trim(),
       rationale,
       rootTension: firstLine(sections["ROOT TENSION"] ?? ""),

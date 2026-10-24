@@ -9,6 +9,12 @@ describe("uncapped idea lines", () => {
     expect(parsed.line).toBe(line);
     expect(parsed.expressionUnderMaster).toBe(line);
   });
+  it("never discards a wrapped line's remaining words", () => {
+    const line = "Every car earns the name\nthrough character, not a badge.";
+    const parsed = parseBigIdeaResponse(`### LENS: silent_proof\nTHE BIG IDEA\nIdea\nCANDIDATE MASTER LINE\n${line}\nEXPRESSION UNDER MASTER\n${line}\nWHY IT WINS\nWhy`).silent_proof;
+    expect(parsed.line).toBe(line);
+    expect(parsed.expressionUnderMaster).toBe(line);
+  });
   it("shows one master for historical pairings and supporting-only output", () => {
     const master = "The name comes last.";
     expect(supportingExpression(`${master} ${master} Every car earns it.`, master)).toBe("Every car earns it.");
