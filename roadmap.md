@@ -1,6 +1,7 @@
 # Roadmap
 
-- [ ] Creative Stimulus: remove both line caps, de-duplicate Field 2 master prefix, refresh all guided-rewrite fields and preserve specified verbatim lines; test without changing other sweep/shortlist/export behavior.
+- [x] Creative Stimulus: removed both line caps and parser line truncation, de-duplicated Field 2 master prefix, refreshed guided-rewrite root tension/alignment/rationale, and preserved explicitly specified lines. 360 tests pass, preview build OK; signed-in JLR display verified all 37 expressions with no duplicate master. No saved ideas rewritten, no publication.
+- [ ] Creative Stimulus real AI rewrite end-to-end verification: not performed to avoid rewriting an existing approved JLR idea solely for testing; mocked generation/persistence tests pass, but real-model compliance with the new craft/self-edit instruction remains unverified.
 
 - [x] Resumed JLR's 13 pending lenses: 37/37 generated, job complete and no error; all 24 original full-row hashes unchanged. Credit exhaustion now halts recovery/watchers with the requested message until explicit Resume; signed-in stopped/resume/completed UI verified, 354 tests pass, build OK; publication requested and live site responds.
 
