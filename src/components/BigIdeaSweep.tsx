@@ -7,6 +7,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { sweepMayAdvance } from "@/lib/stimulus/sweep-job-policy";
+import { supportingExpression } from "@/lib/stimulus/idea-lines";
 import {
   startBigIdeaRun,
   resumeBigIdeaSweep,
@@ -189,7 +190,7 @@ function wordCount(v: string) {
  */
 function ExpressionBlock({ d }: { d: Idea }) {
   const master = (d.master_line_at_generation ?? "").trim();
-  const expression = (d.expression_under_master ?? "").trim();
+  const expression = supportingExpression(d.expression_under_master ?? "", master);
   const paired = Boolean(master && expression);
 
   return (
@@ -206,7 +207,7 @@ function ExpressionBlock({ d }: { d: Idea }) {
         className="text-mono"
         style={{ color: MUTED, fontSize: 10, letterSpacing: "0.14em", textTransform: "uppercase" }}
       >
-        {paired ? "Field 2 · Expression under master" : "Field 2 · Not applicable yet"}
+        {paired ? `Field 2 · Expression under master · ${wordCount(expression)} words` : "Field 2 · Not applicable yet"}
       </div>
       {paired ? (
         <>
@@ -233,7 +234,6 @@ function ExpressionBlock({ d }: { d: Idea }) {
 function LineBlock({ d }: { d: Idea }) {
   const c = d.line_check;
   const words = wordCount(d.campaign_line ?? "");
-  const overLength = words > 7;
   return (
     <div style={{ marginTop: 18, borderTop: "1px solid #1C1A18", paddingTop: 16 }}>
       <div
@@ -251,9 +251,8 @@ function LineBlock({ d }: { d: Idea }) {
       >
         <span>Field 1 · Candidate master line</span>
         {words > 0 && (
-          <span style={{ color: overLength ? RED : MUTED }}>
+          <span style={{ color: MUTED }}>
             {words} {words === 1 ? "word" : "words"}
-            {overLength ? " · over the 3–7 word standard" : ""}
           </span>
         )}
       </div>
@@ -1263,7 +1262,7 @@ export function BigIdeaSweep({
                 <span
                   className="text-mono"
                   style={{
-                    color: wordCount(d.campaign_line ?? "") > 7 ? RED : MUTED,
+                    color: MUTED,
                     fontSize: 10,
                     letterSpacing: "0.1em",
                   }}
