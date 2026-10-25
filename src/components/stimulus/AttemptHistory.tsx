@@ -30,6 +30,7 @@ const ORIGIN_LABEL: Record<string, string> = {
   initial: "first output",
   revise: "revised",
   try_again: "try again",
+  manual_edit: "edited by hand",
 };
 
 function chip(active: boolean, disabled: boolean): React.CSSProperties {

@@ -1,5 +1,8 @@
 # Roadmap
 
+- [x] JLR Living Series exact description/expression saved as version 7; prior rewrite 6 completed 05:09 UTC with reworded description and incorrect Field 2. All previous attempts retained; Field 1, root tension, guidance, rationale and Keep unchanged.
+- [x] Manual edits on all 37 sweep and all shortlist cards: authenticated atomic append with active-version conflict checks; exact signed-in save/reload created identical version 8 for verification, shortlist retained. 368 tests pass, preview build OK. No regeneration or publication; permanent controls are preview-only until published.
+
 - [x] Creative version updates preserve judgement; Step 2 rewrite refreshes retain chosen idea/line, with explicit Kill available there. JLR 05/17/19/20 restored to Keep (prior status unrecorded), signed-in shortlist verified; text/history hashes unchanged. 365 tests and preview build pass. No real rewrite run and no publication.
 
 - [x] Creative Stimulus: removed both line caps and parser line truncation, de-duplicated Field 2 master prefix, refreshed guided-rewrite root tension/alignment/rationale, and preserved explicitly specified lines. 360 tests pass, preview build OK; signed-in JLR display verified all 37 expressions with no duplicate master. No saved ideas rewritten, no publication.

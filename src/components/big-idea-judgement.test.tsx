@@ -2,7 +2,8 @@
 import React from "react";
 import { afterEach, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
-const state = vi.hoisted(() => ({ load: vi.fn(), revise: vi.fn(), triage: vi.fn() }));
+const state = vi.hoisted(() => ({ load: vi.fn(), revise: vi.fn(), triage: vi.fn(), edit: vi.fn() }));
+vi.mock("@/lib/stimulus-manual-edit.functions", () => ({ saveManualIdeaEdit: state.edit }));
 vi.mock("@tanstack/react-start", () => ({ useServerFn: (fn: unknown) => fn }));
 vi.mock("@/lib/stimulus.functions", () => ({ loadStimulusRun: state.load, reviseStimulusDirection: state.revise, triageStimulusDirection: state.triage }));
 vi.mock("@/lib/stimulus-bigidea.functions", () => ({
@@ -38,6 +39,16 @@ it("Step 2 retains kept cards and independent winner picks through repeated rewr
     expect(screen.getByRole("button", { name: "Chosen as winning line" })).toBeTruthy();
     expect(directions.map(d => d.status)).toEqual(["keep", "keep_in_play"]);
   }
+  state.edit.mockImplementation(async ({ data }: { data: { description: string; field1: string; field2: string } }) => {
+    directions = directions.map(d => d.id === "idea" ? { ...d, direction: data.description, campaign_line: data.field1 } : d);
+  });
+  fireEvent.click(screen.getAllByRole("button", { name: "Edit by hand" })[0]);
+  fireEvent.change(screen.getByRole("textbox", { name: "Description" }), { target: { value: "Hand corrected" } });
+  fireEvent.click(screen.getByRole("button", { name: "Save new version" }));
+  await waitFor(() => expect(screen.getByText("Hand corrected")).toBeTruthy());
+  expect(screen.getByRole("button", { name: "Chosen as winning idea" })).toBeTruthy();
+  expect(screen.getByRole("button", { name: "Chosen as winning line" })).toBeTruthy();
+  expect(directions.map(d => d.status)).toEqual(["keep", "keep_in_play"]);
   fireEvent.click(screen.getAllByRole("button", { name: "Kill this idea" })[0]);
   await waitFor(() => expect(screen.queryByText("Idea Five")).toBeNull());
   expect(state.triage).toHaveBeenCalledWith({ data: { directionId: "idea", status: "kill", instinctBrief: "" } });

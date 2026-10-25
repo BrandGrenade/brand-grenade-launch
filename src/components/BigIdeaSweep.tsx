@@ -8,6 +8,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { sweepMayAdvance } from "@/lib/stimulus/sweep-job-policy";
 import { supportingExpression } from "@/lib/stimulus/idea-lines";
+import { ManualIdeaEdit } from "@/components/stimulus/ManualIdeaEdit";
 import {
   startBigIdeaRun,
   resumeBigIdeaSweep,
@@ -88,6 +89,7 @@ type IdeaConvergence = ConvergenceVerdict & { fullSet?: ConvergenceVerdict };
 
 type Idea = {
   id: string;
+  active_attempt_id?: string | null;
   lens_id: string;
   lens_name: string;
   sort_order: number;
@@ -443,6 +445,7 @@ function IdeaCard({
   onPickIdea,
   onPickLine,
   onRetry,
+  onManualSaved,
 }: {
   d: Idea;
   isWinner: boolean;
@@ -455,6 +458,7 @@ function IdeaCard({
   onPickIdea: () => void;
   onPickLine: () => void;
   onRetry: () => Promise<void>;
+  onManualSaved: () => Promise<void>;
 }) {
   const lens = getLens(d.lens_id);
   // A lens with no idea text has NOT produced a candidate. It must never fall
@@ -608,6 +612,7 @@ function IdeaCard({
         <Btn onClick={() => setShowRevise((v) => !v)} disabled={busy}>
           Rewrite this idea
         </Btn>
+        {!ungenerated && <ManualIdeaEdit idea={d} disabled={busy} onSaved={onManualSaved} />}
         {mode === "sweep" && <RawIdeaExportButton directionId={d.id} />}
         {mode === "shortlist" && (
           <>
@@ -1332,6 +1337,7 @@ export function BigIdeaSweep({
                 if (!pickLine && d.campaign_line?.trim()) setPickLine(d.id);
               }}
               onPickLine={() => setPickLine(d.id)}
+              onManualSaved={async () => { if (runId) await refresh(runId, true); }}
               onTriage={async (status, instinct) => {
                 await triage({ data: { directionId: d.id, status, instinctBrief: instinct } });
                 setIdeas((prev) =>
