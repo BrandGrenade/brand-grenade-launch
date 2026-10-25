@@ -3215,6 +3215,16 @@ export type Database = {
           client_name: string
         }[]
       }
+      bg_manual_edit_idea: {
+        Args: {
+          _description: string
+          _direction_id: string
+          _expected_attempt_id: string
+          _field1: string
+          _field2: string
+        }
+        Returns: string
+      }
       bg_output_field: {
         Args: { _k: string; _table: string; _versioned: boolean }
         Returns: boolean
