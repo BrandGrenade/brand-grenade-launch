@@ -135,6 +135,16 @@ export function CreativeEngineDeliverables({
     }
   };
 
+  const downloadOffline = (channel: string, text: string) => {
+    const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `offline-creative-brief-${channel.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const Card = ({
     title,
     note,
@@ -235,6 +245,15 @@ export function CreativeEngineDeliverables({
             onClick={() => void runBatch("shortlist", state.shortlistIds)}
           />
         )}
+        {state.offlineBriefs.map((b) => (
+          <Card
+            key={b.channel}
+            title={`Offline creative brief — ${b.channel}`}
+            note={`Direction and rationale for a team working away from the platform · generated ${new Date(b.createdAt).toLocaleString("en-AU")}`}
+            busyKey={`offline-${b.channel}`}
+            onClick={() => downloadOffline(b.channel, b.text)}
+          />
+        ))}
       </div>
       {err && <div style={{ marginTop: 8, fontSize: 13, color: "#E5484D" }}>{err}</div>}
     </div>
