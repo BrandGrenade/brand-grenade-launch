@@ -218,6 +218,13 @@
       "when": 1793008244195,
       "tag": "0030_stage16_permanent_lock_rule",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1793008285363,
+      "tag": "0031_stage16_completed_backfill_locked",
+      "breakpoints": true
     }
   ]
 }
