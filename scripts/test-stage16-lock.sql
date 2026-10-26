@@ -14,7 +14,7 @@ UPDATE public.sessions SET stage_16_vision_output = 'partial', status = 'running
 UPDATE public.sessions SET stage_16_vision_output = 'partial more' WHERE id = '00000000-0000-0000-0000-0000000016a1';
 UPDATE public.sessions SET stage_16_vision_output = 'VISION FINAL', stage_16_error = NULL, status = 'complete', stage_status = 'complete:16' WHERE id = '00000000-0000-0000-0000-0000000016a1';
 INSERT INTO r SELECT 'first Stage 16 save allowed on locked run', stage_16_vision_output = 'VISION FINAL' AND 'vision' = ANY(stage_16_completed_formats) FROM public.sessions WHERE id = '00000000-0000-0000-0000-0000000016a1';
-INSERT INTO r SELECT 'locked run status unchanged by document save', status <> 'running' AND current_stage = 15 AND stage_status = 'complete:15' FROM public.sessions WHERE id = '00000000-0000-0000-0000-0000000016a1';
+INSERT INTO r SELECT 'locked run status unchanged by document save', status = 'running' AND current_stage = 15 AND stage_status = 'complete:15' FROM public.sessions WHERE id = '00000000-0000-0000-0000-0000000016a1';
 
 DO $$ BEGIN
   BEGIN
