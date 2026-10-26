@@ -11,7 +11,8 @@ export async function recoverJlrMandate(userId: string, report: (message: string
   must(fetched);
   const orch = fetched.data as Row;
   if (!orch?.mandate_text || !String(orch.mandate_applied_at).startsWith("2026-10-26T04:15:02")) throw new Error("The saved mandate has changed; recovery stopped.");
-  if (orch.status !== "complete" || orch.driver_status === "running") throw new Error("Another orchestration operation is in progress.");
+  const previousRecovery = Array.isArray(orch.mandate_log) ? orch.mandate_log.at(-1) : null;
+  if (orch.status !== "complete" || (orch.driver_status === "running" && (previousRecovery?.status === "running" || Date.now() - Date.parse(orch.driver_heartbeat_at || "") < 90_000))) throw new Error("Another orchestration operation is in progress.");
   const selected = await db.from("stimulus_prompts").select("*").eq("orchestration_id", orch.id).order("sort_order");
   must(selected);
   const rows = selected.data as Row[];
