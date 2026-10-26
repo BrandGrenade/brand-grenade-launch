@@ -29,6 +29,6 @@ describe("Stage 16 (Document Assembly) in later-stage navigation", () => {
 
   it("never counts as the furthest pipeline stage", () => {
     expect(furthestStageLabel({ has_stage_15: true, has_stage_16: true, has_stage_17: true })).toBe("17B");
-    expect(furthestStageLabel({ has_stage_15: true, has_stage_16: true })).toBe("15");
+    expect(furthestStageLabel({ has_stage_15: true, has_stage_16: true, current_stage: 15 })).toBe("15");
   });
 });
