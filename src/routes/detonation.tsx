@@ -935,6 +935,63 @@ function DetonationPage() {
                   </li>
                 );
               })}
+              {/* Stage 16 (Document Assembly) runs after Phase 2 on the
+                  Deliverables page — listed here so it is reachable from the
+                  stage navigation on every run. */}
+              {sessionId && session && (() => {
+                const s16Done = Boolean(
+                  session.stage_16_consulting_output ||
+                    session.stage_16_agency_output ||
+                    session.stage_16_workshop_output ||
+                    session.stage_16_vision_output ||
+                    session.stage_16_valuation_output,
+                );
+                const s16Running =
+                  !s16Done &&
+                  Boolean(
+                    session.stage_16_error?.startsWith("__STAGE_16_RUNNING__") ||
+                      (session.status === "running" && session.current_stage === 16),
+                  );
+                const s16Label = s16Done ? "Complete" : s16Running ? "Running" : "Not run";
+                const s16Color = s16Done ? "#C81E1E" : s16Running ? tokens.amber : tokens.muted;
+                return (
+                  <li key="stage-16">
+                    <Link
+                      to="/complete"
+                      search={{ session: sessionId } as never}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = tokens.bgSecondary;
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = "transparent";
+                      }}
+                      style={{
+                        width: "100%", textAlign: "left", cursor: "pointer",
+                        display: "flex", alignItems: "center", gap: 10, padding: "8px 10px",
+                        borderRadius: 6, border: "none", textDecoration: "none",
+                        backgroundColor: "transparent",
+                        borderLeft: "2px solid transparent",
+                      }}
+                    >
+                      <span style={{
+                        fontFamily: `'${tokens.fontMono}', monospace`, fontSize: 13,
+                        color: tokens.muted, minWidth: 28, letterSpacing: "0.06em",
+                      }}>16</span>
+                      <span style={{
+                        fontFamily: `'${tokens.fontBody}', sans-serif`, fontSize: 13,
+                        color: tokens.white, flex: 1, fontWeight: 400,
+                      }}>Document Assembly</span>
+                      <span style={{
+                        fontFamily: `'${tokens.fontMono}', monospace`, fontSize: 8,
+                        textTransform: "uppercase", letterSpacing: "0.1em",
+                        color: s16Color,
+                      }}>
+                        {s16Label}
+                      </span>
+                    </Link>
+                  </li>
+                );
+              })()}
             </ul>
           </div>
         </aside>
