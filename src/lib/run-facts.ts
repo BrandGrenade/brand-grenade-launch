@@ -46,6 +46,36 @@ export interface RunFacts {
 
 type Row = Record<string, unknown>;
 
+/** Diagnostic runs stop after Stage 13; full runs cover all 22 stages. */
+export function stagesOnPath(session: Row): number {
+  return session.run_mode === "diagnostic" ? 13 : NUMBERED_STAGE_COLUMNS.length;
+}
+
+/**
+ * Whether numbered stage N has saved output. Stage 16 has no single column —
+ * it is complete when any of its document formats is saved. Stage 21 stores
+ * its channel briefs in the `stage_21_outputs` map.
+ */
+export function stageHasOutput(session: Row, n: number): boolean {
+  if (n === 16) return STAGE_16_FORMAT_COLUMNS.some((c) => text(session, c).length > 0);
+  if (n === 21) {
+    const m = session.stage_21_outputs;
+    if (m && typeof m === "object") {
+      return Object.values(m as Record<string, unknown>).some(
+        (v) => typeof v === "string" && v.trim().length > 0,
+      );
+    }
+    return text(session, "stage_21_output").length > 0;
+  }
+  return text(session, `stage_${n}_output`).length > 0;
+}
+
+export function countCompletedStages(session: Row): number {
+  let count = 0;
+  for (let n = 1; n <= stagesOnPath(session); n++) if (stageHasOutput(session, n)) count++;
+  return count;
+}
+
 function text(row: Row, key: string): string {
   const v = row[key];
   return typeof v === "string" ? v.trim() : "";
@@ -74,7 +104,7 @@ export function deriveRunFacts(
   session: Row,
   includeFormat?: "agency" | "consulting" | "workshop" | "vision" | "valuation",
 ): RunFacts {
-  const stagesCompleted = NUMBERED_STAGE_COLUMNS.filter((c) => text(session, c)).length;
+  const stagesCompleted = countCompletedStages(session);
 
   const stage8 = text(session, "stage_8_output");
   const stage10 = text(session, "stage_10_output");
@@ -109,7 +139,7 @@ export function deriveRunFacts(
 
   return {
     stagesCompleted,
-    stagesTotal: NUMBERED_STAGE_COLUMNS.length,
+    stagesTotal: stagesOnPath(session),
     propositionsConsidered,
     propositionsScored,
     propositionsPassed: passedNames.size,
