@@ -97,6 +97,10 @@ type SessionRow = {
   stage_16_agency_output: string | null;
   stage_16_workshop_output: string | null;
   stage_16_vision_output: string | null;
+  stage_16_valuation_output: string | null;
+  stage_16_error: string | null;
+  status: string | null;
+  current_stage: number | null;
   stage_17_output: string | null;
   stage_17_selected_territory: string | null;
   stage_17b_output: string | null;
@@ -121,7 +125,7 @@ type SessionRow = {
 };
 
 const SESSION_COLS =
-  "id, brand_name, selected_smp, user_id, phase_2_status, phase_2_current_stage, doc_consulting_url, doc_agency_url, doc_workshop_url, checkpoint_a_confirmed, checkpoint_b_confirmed, checkpoint_c_confirmed, stage_16_format, stage_16_consulting_output, stage_16_agency_output, stage_16_workshop_output, stage_16_vision_output, stage_17_output, stage_17_selected_territory, stage_17b_output, stage_18_output, stage_18_selected_detonation, stage_18_detonation_line, stage_19_output, stage_20_output, stage_20_approved, stage_20b_output, stage_20b_audience_input, stage_21_outputs, stage_21_fidelity, stage_21_fidelity_override, stage_22_output, stage_22_brand_architecture, stage_22_distinctive_assets, locked_big_idea, locked_campaign_line, locked_big_idea_lens, locked_big_idea_at";
+  "id, brand_name, selected_smp, user_id, phase_2_status, phase_2_current_stage, doc_consulting_url, doc_agency_url, doc_workshop_url, checkpoint_a_confirmed, checkpoint_b_confirmed, checkpoint_c_confirmed, stage_16_format, stage_16_consulting_output, stage_16_agency_output, stage_16_workshop_output, stage_16_vision_output, stage_16_valuation_output, stage_16_error, status, current_stage, stage_17_output, stage_17_selected_territory, stage_17b_output, stage_18_output, stage_18_selected_detonation, stage_18_detonation_line, stage_19_output, stage_20_output, stage_20_approved, stage_20b_output, stage_20b_audience_input, stage_21_outputs, stage_21_fidelity, stage_21_fidelity_override, stage_22_output, stage_22_brand_architecture, stage_22_distinctive_assets, locked_big_idea, locked_campaign_line, locked_big_idea_lens, locked_big_idea_at";
 
 
 
@@ -931,6 +935,63 @@ function DetonationPage() {
                   </li>
                 );
               })}
+              {/* Stage 16 (Document Assembly) runs after Phase 2 on the
+                  Deliverables page — listed here so it is reachable from the
+                  stage navigation on every run. */}
+              {sessionId && session && (() => {
+                const s16Done = Boolean(
+                  session.stage_16_consulting_output ||
+                    session.stage_16_agency_output ||
+                    session.stage_16_workshop_output ||
+                    session.stage_16_vision_output ||
+                    session.stage_16_valuation_output,
+                );
+                const s16Running =
+                  !s16Done &&
+                  Boolean(
+                    session.stage_16_error?.startsWith("__STAGE_16_RUNNING__") ||
+                      (session.status === "running" && session.current_stage === 16),
+                  );
+                const s16Label = s16Done ? "Complete" : s16Running ? "Running" : "Not run";
+                const s16Color = s16Done ? "#C81E1E" : s16Running ? tokens.amber : tokens.muted;
+                return (
+                  <li key="stage-16">
+                    <Link
+                      to="/complete"
+                      search={{ session: sessionId } as never}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = tokens.bgSecondary;
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = "transparent";
+                      }}
+                      style={{
+                        width: "100%", textAlign: "left", cursor: "pointer",
+                        display: "flex", alignItems: "center", gap: 10, padding: "8px 10px",
+                        borderRadius: 6, border: "none", textDecoration: "none",
+                        backgroundColor: "transparent",
+                        borderLeft: "2px solid transparent",
+                      }}
+                    >
+                      <span style={{
+                        fontFamily: `'${tokens.fontMono}', monospace`, fontSize: 13,
+                        color: tokens.muted, minWidth: 28, letterSpacing: "0.06em",
+                      }}>16</span>
+                      <span style={{
+                        fontFamily: `'${tokens.fontBody}', sans-serif`, fontSize: 13,
+                        color: tokens.white, flex: 1, fontWeight: 400,
+                      }}>Document Assembly</span>
+                      <span style={{
+                        fontFamily: `'${tokens.fontMono}', monospace`, fontSize: 8,
+                        textTransform: "uppercase", letterSpacing: "0.1em",
+                        color: s16Color,
+                      }}>
+                        {s16Label}
+                      </span>
+                    </Link>
+                  </li>
+                );
+              })()}
             </ul>
           </div>
         </aside>
@@ -2496,36 +2557,85 @@ function Stage22({ session, onChange }: { session: SessionRow; onChange: () => v
   const [assets, setAssets] = useState<string | null>(session.stage_22_distinctive_assets);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
   const autoTriggeredRef = useRef(false);
+  const pollingRef = useRef(false);
 
   useEffect(() => { setArchitecture(session.stage_22_brand_architecture); }, [session.stage_22_brand_architecture]);
   useEffect(() => { setAssets(session.stage_22_distinctive_assets); }, [session.stage_22_distinctive_assets]);
+
+  // Stage 22 always runs on the background runner (runStage22 only queues it)
+  // because the pair of multi-minute model calls is cancelled mid-stream when
+  // run inside the request on the published runtime. Poll until the output
+  // appears or the runner records a terminal error.
+  const pollUntilDone = useCallback(async () => {
+    if (pollingRef.current) return;
+    pollingRef.current = true;
+    try {
+      for (;;) {
+        await new Promise((res) => setTimeout(res, 5000));
+        const r = await load({ data: { sessionId: session.id } });
+        if (r.architecture) {
+          setArchitecture(r.architecture);
+          setAssets(r.assets);
+          setBusy(false);
+          await onChange();
+          return;
+        }
+        if (!r.running) {
+          setErr(r.error ?? "Stage 22 stopped before producing output. Run it again.");
+          setBusy(false);
+          return;
+        }
+        setAttempt(r.attempt);
+      }
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Stage 22 status check failed");
+      setBusy(false);
+    } finally {
+      pollingRef.current = false;
+    }
+  }, [load, session.id, onChange]);
 
   useEffect(() => {
     if (architecture === null && assets === null && !session.stage_22_brand_architecture && !session.stage_22_distinctive_assets) {
       load({ data: { sessionId: session.id } }).then((r) => {
         if (r.architecture) setArchitecture(r.architecture);
         if (r.assets) setAssets(r.assets);
+        if (!r.architecture && r.running) {
+          // A run is already in flight (queued here or by the wake trigger) —
+          // resume watching it so the page fills in when it lands.
+          setBusy(true);
+          setAttempt(r.attempt);
+          void pollUntilDone();
+        }
       }).catch(() => {});
     }
-  }, [architecture, assets, load, session.id, session.stage_22_brand_architecture, session.stage_22_distinctive_assets]);
+  }, [architecture, assets, load, session.id, session.stage_22_brand_architecture, session.stage_22_distinctive_assets, pollUntilDone]);
 
   const handleRun = async () => {
     setBusy(true); setErr(null);
     try {
       const r = await run({ data: { sessionId: session.id } });
-      setArchitecture(r.architecture); setAssets(r.assets); await onChange();
-    } catch (e) { setErr(e instanceof Error ? e.message : "Stage 22 failed"); }
-    finally { setBusy(false); }
+      if (!r.queued) {
+        setArchitecture(r.architecture); setAssets(r.assets); setBusy(false); await onChange();
+        return;
+      }
+      void pollUntilDone();
+    } catch (e) { setErr(e instanceof Error ? e.message : "Stage 22 failed"); setBusy(false); }
   };
 
   const handleRegenerate = async () => {
     setBusy(true); setErr(null);
     try {
       const r = await regenerate({ data: { sessionId: session.id } });
-      setArchitecture(r.architecture); setAssets(r.assets); await onChange();
-    } catch (e) { setErr(e instanceof Error ? e.message : "Regeneration failed"); }
-    finally { setBusy(false); }
+      if (!r.queued) {
+        setArchitecture(r.architecture); setAssets(r.assets); setBusy(false); await onChange();
+        return;
+      }
+      setArchitecture(null); setAssets(null);
+      void pollUntilDone();
+    } catch (e) { setErr(e instanceof Error ? e.message : "Regeneration failed"); setBusy(false); }
   };
 
   useEffect(() => {
@@ -2565,9 +2675,16 @@ function Stage22({ session, onChange }: { session: SessionRow; onChange: () => v
       {err && <ErrorBanner message={err} />}
       {stage22BlockedReason && <ErrorBanner message={stage22BlockedReason} />}
       {!architecture ? (
-        <AmberButton onClick={handleRun} disabled={busy || !!stage22BlockedReason}>
-          {busy && !stage22BlockedReason && <Spinner />} {busy && !stage22BlockedReason ? "Generating…" : stage22BlockedReason ? "Blocked — see above" : "Run Stage 22"}
-        </AmberButton>
+        <div>
+          <AmberButton onClick={handleRun} disabled={busy || !!stage22BlockedReason}>
+            {busy && !stage22BlockedReason && <Spinner />} {busy && !stage22BlockedReason ? `Generating…${attempt > 1 ? ` (attempt ${attempt})` : ""}` : stage22BlockedReason ? "Blocked — see above" : "Run Stage 22"}
+          </AmberButton>
+          {busy && !stage22BlockedReason && (
+            <p className="text-body-sm" style={{ color: "var(--color-text-tertiary)", marginTop: 12 }}>
+              Running in the background — this takes a few minutes. You can leave this page; the result will be here when you return.
+            </p>
+          )}
+        </div>
 
       ) : (
         <div id="phase2-print-region">

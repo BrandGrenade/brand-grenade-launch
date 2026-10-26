@@ -13,9 +13,10 @@ export type RunProgressFlags = {
   has_stage_20b?: boolean | null;
   has_stage_21?: boolean | null;
   has_stage_22?: boolean | null;
+  stage_16_running?: boolean | null;
 };
 
-export type LaterStageStatus = "complete" | "ready" | "pending";
+export type LaterStageStatus = "complete" | "running" | "ready" | "pending";
 export type LaterStage = { id: string; number: string; name: string; status: LaterStageStatus };
 
 const LATER: Array<{ id: string; name: string; done: (f: RunProgressFlags) => boolean }> = [
@@ -39,12 +40,19 @@ export function laterStageStatuses(f: RunProgressFlags): LaterStage[] {
     prevDone = done;
     return { id: s.id, number: s.id, name: s.name, status };
   });
-  // Stage 16 (document assembly) runs after Phase 2; ready once Stage 15 exists.
+  // Stage 16 (document assembly) runs after Phase 2; ready once Stage 15
+  // exists, "running" while the background runner holds it.
   out.push({
     id: "16",
     number: "16",
     name: "Document Assembly",
-    status: f.has_stage_16 ? "complete" : phase1Done ? "ready" : "pending",
+    status: f.has_stage_16
+      ? "complete"
+      : f.stage_16_running
+        ? "running"
+        : phase1Done
+          ? "ready"
+          : "pending",
   });
   return out;
 }

@@ -1,24 +1,34 @@
 import { describe, expect, it } from "vitest";
 import { furthestStageLabel, laterStageStatuses } from "./run-stage-progress";
 
-const jlr = {
-  current_stage: 15, has_stage_15: true, has_stage_17: true, has_stage_17b: true, has_stage_18: true,
-  has_stage_19: true, has_stage_20: true, stage_20_approved: true, has_stage_20b: true,
-  has_stage_21: false, has_stage_22: false, has_stage_16: false,
-};
+describe("Stage 16 (Document Assembly) in later-stage navigation", () => {
+  it("is listed on every run, after every Phase 2 stage", () => {
+    const stages = laterStageStatuses({ has_stage_15: true });
+    expect(stages.map((s) => s.id)).toEqual(["17", "17B", "18", "19", "20", "20B", "21", "22", "16"]);
+  });
 
-describe("run stage progress from saved outputs", () => {
-  it("shows 17–20B complete and 21 ready despite current_stage 15", () => {
-    const s = Object.fromEntries(laterStageStatuses(jlr).map((x) => [x.id, x.status]));
-    expect(s).toMatchObject({ "17": "complete", "17B": "complete", "18": "complete", "19": "complete", "20": "complete", "20B": "complete", "21": "ready", "22": "pending" });
+  it("is not run when Phase 1 is done but no document exists", () => {
+    const s16 = laterStageStatuses({ has_stage_15: true }).find((s) => s.id === "16");
+    expect(s16?.status).toBe("ready");
   });
-  it("dashboard label is Stage 21, not 15", () => {
-    expect(furthestStageLabel(jlr)).toBe("21");
+
+  it("is pending before Phase 1 finishes", () => {
+    const s16 = laterStageStatuses({ current_stage: 3 }).find((s) => s.id === "16");
+    expect(s16?.status).toBe("pending");
   });
-  it("unapproved Stage 20 is not complete", () => {
-    expect(furthestStageLabel({ ...jlr, stage_20_approved: false, has_stage_20b: false })).toBe("20");
+
+  it("is running while the background runner holds it", () => {
+    const s16 = laterStageStatuses({ has_stage_15: true, stage_16_running: true }).find((s) => s.id === "16");
+    expect(s16?.status).toBe("running");
   });
-  it("falls back to current_stage before Phase 2", () => {
-    expect(furthestStageLabel({ current_stage: 9 })).toBe("9");
+
+  it("is complete once any Stage 16 document exists, even if a rerun is queued", () => {
+    const s16 = laterStageStatuses({ has_stage_15: true, has_stage_16: true, stage_16_running: true }).find((s) => s.id === "16");
+    expect(s16?.status).toBe("complete");
+  });
+
+  it("never counts as the furthest pipeline stage", () => {
+    expect(furthestStageLabel({ has_stage_15: true, has_stage_16: true, has_stage_17: true })).toBe("17B");
+    expect(furthestStageLabel({ has_stage_15: true, has_stage_16: true, current_stage: 15 })).toBe("15");
   });
 });
