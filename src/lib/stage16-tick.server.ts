@@ -122,8 +122,16 @@ export async function runClaimedStage16(claim: Stage16Claim): Promise<{ ok: bool
     }
     return { ok: true };
   } catch (e) {
-    // generateStage16Format already persisted the partial output and error.
-    return { ok: false, error: e instanceof Error ? e.message : String(e) };
+    // generateStage16Format persists partial output + error for failures
+    // inside the generation; failures before that (session load, Phase 2
+    // lock) escape — persist those too, replacing the sentinel.
+    const msg = e instanceof Error ? e.message : String(e);
+    await supabaseAdmin
+      .from("sessions")
+      .update({ stage_16_error: msg })
+      .eq("id", claim.sessionId)
+      .like("stage_16_error", `${STAGE_16_RUNNING}%`);
+    return { ok: false, error: msg };
   } finally {
     clearInterval(heartbeat);
   }

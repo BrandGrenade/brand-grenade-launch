@@ -101,8 +101,18 @@ export async function runClaimedStage22(claim: Stage22Claim): Promise<{ ok: bool
     await generateStage22(claim.sessionId);
     return { ok: true };
   } catch (e) {
-    // generateStage22 already wrote the real error to stage_22_error.
-    return { ok: false, error: e instanceof Error ? e.message : String(e) };
+    // generateStage22 writes the real error for failures inside the
+    // generation itself, but precondition failures (upstream stage, fidelity
+    // gate) throw before that — persist those too, replacing the sentinel,
+    // so the failure is visible instead of silently staying "claimed".
+    const msg = e instanceof Error ? e.message : String(e);
+    await supabaseAdmin
+      .from("sessions")
+      .update({ stage_22_error: msg })
+      .eq("id", claim.sessionId)
+      .like("stage_22_error", `${STAGE_22_RUNNING}%`)
+      .is("stage_22_output", null);
+    return { ok: false, error: msg };
   } finally {
     clearInterval(heartbeat);
   }
