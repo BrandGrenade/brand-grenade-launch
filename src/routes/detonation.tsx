@@ -2557,36 +2557,85 @@ function Stage22({ session, onChange }: { session: SessionRow; onChange: () => v
   const [assets, setAssets] = useState<string | null>(session.stage_22_distinctive_assets);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
   const autoTriggeredRef = useRef(false);
+  const pollingRef = useRef(false);
 
   useEffect(() => { setArchitecture(session.stage_22_brand_architecture); }, [session.stage_22_brand_architecture]);
   useEffect(() => { setAssets(session.stage_22_distinctive_assets); }, [session.stage_22_distinctive_assets]);
+
+  // Stage 22 always runs on the background runner (runStage22 only queues it)
+  // because the pair of multi-minute model calls is cancelled mid-stream when
+  // run inside the request on the published runtime. Poll until the output
+  // appears or the runner records a terminal error.
+  const pollUntilDone = useCallback(async () => {
+    if (pollingRef.current) return;
+    pollingRef.current = true;
+    try {
+      for (;;) {
+        await new Promise((res) => setTimeout(res, 5000));
+        const r = await load({ data: { sessionId: session.id } });
+        if (r.architecture) {
+          setArchitecture(r.architecture);
+          setAssets(r.assets);
+          setBusy(false);
+          await onChange();
+          return;
+        }
+        if (!r.running) {
+          setErr(r.error ?? "Stage 22 stopped before producing output. Run it again.");
+          setBusy(false);
+          return;
+        }
+        setAttempt(r.attempt);
+      }
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Stage 22 status check failed");
+      setBusy(false);
+    } finally {
+      pollingRef.current = false;
+    }
+  }, [load, session.id, onChange]);
 
   useEffect(() => {
     if (architecture === null && assets === null && !session.stage_22_brand_architecture && !session.stage_22_distinctive_assets) {
       load({ data: { sessionId: session.id } }).then((r) => {
         if (r.architecture) setArchitecture(r.architecture);
         if (r.assets) setAssets(r.assets);
+        if (!r.architecture && r.running) {
+          // A run is already in flight (queued here or by the wake trigger) —
+          // resume watching it so the page fills in when it lands.
+          setBusy(true);
+          setAttempt(r.attempt);
+          void pollUntilDone();
+        }
       }).catch(() => {});
     }
-  }, [architecture, assets, load, session.id, session.stage_22_brand_architecture, session.stage_22_distinctive_assets]);
+  }, [architecture, assets, load, session.id, session.stage_22_brand_architecture, session.stage_22_distinctive_assets, pollUntilDone]);
 
   const handleRun = async () => {
     setBusy(true); setErr(null);
     try {
       const r = await run({ data: { sessionId: session.id } });
-      setArchitecture(r.architecture); setAssets(r.assets); await onChange();
-    } catch (e) { setErr(e instanceof Error ? e.message : "Stage 22 failed"); }
-    finally { setBusy(false); }
+      if (!r.queued) {
+        setArchitecture(r.architecture); setAssets(r.assets); setBusy(false); await onChange();
+        return;
+      }
+      void pollUntilDone();
+    } catch (e) { setErr(e instanceof Error ? e.message : "Stage 22 failed"); setBusy(false); }
   };
 
   const handleRegenerate = async () => {
     setBusy(true); setErr(null);
     try {
       const r = await regenerate({ data: { sessionId: session.id } });
-      setArchitecture(r.architecture); setAssets(r.assets); await onChange();
-    } catch (e) { setErr(e instanceof Error ? e.message : "Regeneration failed"); }
-    finally { setBusy(false); }
+      if (!r.queued) {
+        setArchitecture(r.architecture); setAssets(r.assets); setBusy(false); await onChange();
+        return;
+      }
+      setArchitecture(null); setAssets(null);
+      void pollUntilDone();
+    } catch (e) { setErr(e instanceof Error ? e.message : "Regeneration failed"); setBusy(false); }
   };
 
   useEffect(() => {
