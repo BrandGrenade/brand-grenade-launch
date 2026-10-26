@@ -48,12 +48,14 @@ export function CreativeEngineDeliverables({
     sweepIds: [],
     lensCount: 0,
     shortlistIds: [],
+    offlineBriefs: [],
   });
   const [busy, setBusy] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
   const fullExport = useServerFn(getFullFinishedExport);
   const batchExport = useServerFn(getRawIdeaExportBatch);
+  const listOffline = useServerFn(listOfflineCreativeBriefs);
 
   useEffect(() => {
     let cancelled = false;
@@ -68,6 +70,12 @@ export function CreativeEngineDeliverables({
         sessionId,
       );
 
+      // Offline creative briefs: the latest generated brief per channel.
+      const offline = await listOffline({ data: { sessionId } });
+      const offlineBriefs = Object.entries(offline.byChannel)
+        .map(([channel, b]) => ({ channel, text: b.text, createdAt: b.createdAt }))
+        .sort((a, b) => a.channel.localeCompare(b.channel));
+
       if (cancelled) return;
       setState({
         orchestrationId: chosen?.id ?? null,
@@ -79,6 +87,7 @@ export function CreativeEngineDeliverables({
         sweepIds,
         lensCount,
         shortlistIds,
+        offlineBriefs,
       });
     })();
     return () => {
@@ -87,7 +96,10 @@ export function CreativeEngineDeliverables({
   }, [sessionId]);
 
   const nothing =
-    !state.orchestrationId && state.sweepIds.length === 0 && state.shortlistIds.length === 0;
+    !state.orchestrationId &&
+    state.sweepIds.length === 0 &&
+    state.shortlistIds.length === 0 &&
+    state.offlineBriefs.length === 0;
   if (nothing) return null;
 
   const runOrchestration = async (mode: "download" | "print") => {
