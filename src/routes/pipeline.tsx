@@ -3925,12 +3925,22 @@ function LeftPanel({
         <ul aria-label="Later stages">
           {later.map((st) => {
             const open = st.status !== "pending";
-            const color = st.status === "complete" ? "var(--color-success)" : st.status === "ready" ? "var(--color-warning)" : tokens.muted;
+            const color = st.status === "complete" ? "var(--color-success)" : st.status === "running" ? "var(--color-primary)" : st.status === "ready" ? "var(--color-warning)" : tokens.muted;
+            const statusLabel =
+              st.status === "complete"
+                ? "Complete"
+                : st.status === "running"
+                  ? "Running…"
+                  : st.id === "16"
+                    ? "Not run"
+                    : st.status === "ready"
+                      ? "Ready"
+                      : "Pending";
             const inner = (
               <>
                 <span className="shrink-0" style={{ fontFamily: `'${tokens.fontMono}', monospace`, color: tokens.muted, minWidth: 28, fontSize: 13 }}>{st.number}</span>
                 <span className="flex-1 truncate" style={{ fontFamily: `'${tokens.fontBody}', sans-serif`, color: tokens.white }}>{st.name}</span>
-                <span className="text-label shrink-0" style={{ color, fontSize: 10 }}>{st.status === "complete" ? "Complete" : st.status === "ready" ? "Ready" : "Pending"}</span>
+                <span className="text-label shrink-0" style={{ color, fontSize: 10 }}>{statusLabel}</span>
               </>
             );
             return (
@@ -3961,10 +3971,18 @@ function useLaterStageFlags(sessionId: string | null): RunProgressFlags | null {
     const load = async () => {
       const { data } = await supabase
         .from("brand_register_sessions" as never)
-        .select("current_stage,has_stage_15,has_stage_16,has_stage_17,has_stage_17b,has_stage_18,has_stage_19,has_stage_20,stage_20_approved,has_stage_20b,has_stage_21,has_stage_22")
+        .select("current_stage,status,has_stage_15,has_stage_16,has_stage_17,has_stage_17b,has_stage_18,has_stage_19,has_stage_20,stage_20_approved,has_stage_20b,has_stage_21,has_stage_22")
         .eq("id", sessionId)
         .maybeSingle();
-      if (alive && data) setFlags(data as RunProgressFlags);
+      if (alive && data) {
+        const row = data as RunProgressFlags & { status?: string | null };
+        setFlags({
+          ...row,
+          // Stage 16 runs in the background; the runner marks the session
+          // running at stage 16 for the whole document generation.
+          stage_16_running: row.status === "running" && row.current_stage === 16,
+        });
+      }
     };
     void load();
     const t = setInterval(load, 15000);
