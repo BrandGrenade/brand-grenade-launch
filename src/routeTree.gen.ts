@@ -57,6 +57,7 @@ import { Route as AdminPreviewSlugRouteImport } from './routes/admin.preview.$sl
 import { Route as ApiPublicBgAccessRouteImport } from './routes/api/public/bg-access'
 import { Route as ApiPublicHubTickRouteImport } from './routes/api/public/hub-tick'
 import { Route as ApiPublicIntelligenceTickRouteImport } from './routes/api/public/intelligence-tick'
+import { Route as ApiPublicJlrMandateRecoveryRouteImport } from './routes/api/public/jlr-mandate-recovery'
 import { Route as ApiPublicOrchestrationTickRouteImport } from './routes/api/public/orchestration-tick'
 import { Route as ApiPublicReliabilityTickRouteImport } from './routes/api/public/reliability-tick'
 import { Route as ApiPublicSmpScoreTickRouteImport } from './routes/api/public/smp-score-tick'
@@ -315,6 +316,12 @@ const ApiPublicIntelligenceTickRoute =
     path: '/api/public/intelligence-tick',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicJlrMandateRecoveryRoute =
+  ApiPublicJlrMandateRecoveryRouteImport.update({
+    id: '/api/public/jlr-mandate-recovery',
+    path: '/api/public/jlr-mandate-recovery',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicOrchestrationTickRoute =
   ApiPublicOrchestrationTickRouteImport.update({
     id: '/api/public/orchestration-tick',
@@ -454,6 +461,7 @@ export interface FileRoutesByFullPath {
   '/api/public/bg-access': typeof ApiPublicBgAccessRoute
   '/api/public/hub-tick': typeof ApiPublicHubTickRoute
   '/api/public/intelligence-tick': typeof ApiPublicIntelligenceTickRoute
+  '/api/public/jlr-mandate-recovery': typeof ApiPublicJlrMandateRecoveryRoute
   '/api/public/orchestration-tick': typeof ApiPublicOrchestrationTickRoute
   '/api/public/reliability-tick': typeof ApiPublicReliabilityTickRoute
   '/api/public/smp-score-tick': typeof ApiPublicSmpScoreTickRoute
@@ -513,6 +521,7 @@ export interface FileRoutesByTo {
   '/api/public/bg-access': typeof ApiPublicBgAccessRoute
   '/api/public/hub-tick': typeof ApiPublicHubTickRoute
   '/api/public/intelligence-tick': typeof ApiPublicIntelligenceTickRoute
+  '/api/public/jlr-mandate-recovery': typeof ApiPublicJlrMandateRecoveryRoute
   '/api/public/orchestration-tick': typeof ApiPublicOrchestrationTickRoute
   '/api/public/reliability-tick': typeof ApiPublicReliabilityTickRoute
   '/api/public/smp-score-tick': typeof ApiPublicSmpScoreTickRoute
@@ -580,6 +589,7 @@ export interface FileRoutesById {
   '/api/public/bg-access': typeof ApiPublicBgAccessRoute
   '/api/public/hub-tick': typeof ApiPublicHubTickRoute
   '/api/public/intelligence-tick': typeof ApiPublicIntelligenceTickRoute
+  '/api/public/jlr-mandate-recovery': typeof ApiPublicJlrMandateRecoveryRoute
   '/api/public/orchestration-tick': typeof ApiPublicOrchestrationTickRoute
   '/api/public/reliability-tick': typeof ApiPublicReliabilityTickRoute
   '/api/public/smp-score-tick': typeof ApiPublicSmpScoreTickRoute
@@ -648,6 +658,7 @@ export interface FileRouteTypes {
     | '/api/public/bg-access'
     | '/api/public/hub-tick'
     | '/api/public/intelligence-tick'
+    | '/api/public/jlr-mandate-recovery'
     | '/api/public/orchestration-tick'
     | '/api/public/reliability-tick'
     | '/api/public/smp-score-tick'
@@ -707,6 +718,7 @@ export interface FileRouteTypes {
     | '/api/public/bg-access'
     | '/api/public/hub-tick'
     | '/api/public/intelligence-tick'
+    | '/api/public/jlr-mandate-recovery'
     | '/api/public/orchestration-tick'
     | '/api/public/reliability-tick'
     | '/api/public/smp-score-tick'
@@ -773,6 +785,7 @@ export interface FileRouteTypes {
     | '/api/public/bg-access'
     | '/api/public/hub-tick'
     | '/api/public/intelligence-tick'
+    | '/api/public/jlr-mandate-recovery'
     | '/api/public/orchestration-tick'
     | '/api/public/reliability-tick'
     | '/api/public/smp-score-tick'
@@ -828,6 +841,7 @@ export interface RootRouteChildren {
   ApiPublicBgAccessRoute: typeof ApiPublicBgAccessRoute
   ApiPublicHubTickRoute: typeof ApiPublicHubTickRoute
   ApiPublicIntelligenceTickRoute: typeof ApiPublicIntelligenceTickRoute
+  ApiPublicJlrMandateRecoveryRoute: typeof ApiPublicJlrMandateRecoveryRoute
   ApiPublicOrchestrationTickRoute: typeof ApiPublicOrchestrationTickRoute
   ApiPublicReliabilityTickRoute: typeof ApiPublicReliabilityTickRoute
   ApiPublicSmpScoreTickRoute: typeof ApiPublicSmpScoreTickRoute
@@ -1179,6 +1193,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicIntelligenceTickRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/jlr-mandate-recovery': {
+      id: '/api/public/jlr-mandate-recovery'
+      path: '/api/public/jlr-mandate-recovery'
+      fullPath: '/api/public/jlr-mandate-recovery'
+      preLoaderRoute: typeof ApiPublicJlrMandateRecoveryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/orchestration-tick': {
       id: '/api/public/orchestration-tick'
       path: '/api/public/orchestration-tick'
@@ -1432,6 +1453,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicBgAccessRoute: ApiPublicBgAccessRoute,
   ApiPublicHubTickRoute: ApiPublicHubTickRoute,
   ApiPublicIntelligenceTickRoute: ApiPublicIntelligenceTickRoute,
+  ApiPublicJlrMandateRecoveryRoute: ApiPublicJlrMandateRecoveryRoute,
   ApiPublicOrchestrationTickRoute: ApiPublicOrchestrationTickRoute,
   ApiPublicReliabilityTickRoute: ApiPublicReliabilityTickRoute,
   ApiPublicSmpScoreTickRoute: ApiPublicSmpScoreTickRoute,

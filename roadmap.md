@@ -1,5 +1,7 @@
 # Roadmap
 
+- [x] JLR Gate Two recovered only the four failed channels under the saved mandate, with full-row backups and six generated versions retained (Retail used two retries). All nine final checks present; CD passed. Earned rejection and target notes cleared, five protected full rows byte-identical. Signed-in streamed progress and saved result verified; 371 tests/build pass. Gate Two remains unconfirmed for Adrian; progress/control code not published.
+
 - [x] JLR Living Series exact description/expression saved as version 7; prior rewrite 6 completed 05:09 UTC with reworded description and incorrect Field 2. All previous attempts retained; Field 1, root tension, guidance, rationale and Keep unchanged.
 - [x] Manual edits on all 37 sweep and all shortlist cards: authenticated atomic append with active-version conflict checks; exact signed-in save/reload created identical version 8 for verification, shortlist retained. 368 tests pass, preview build OK. No regeneration or publication; permanent controls are preview-only until published.
 
