@@ -63,6 +63,8 @@ export function buildOfflineCreativeBriefMessage(args: {
   lockedLens: string | null;
   whyItWins: string;
   guardrails: string;
+  /** Binding factual corrections that override any conflicting input wording. */
+  factCorrections?: string;
 }): string {
   return [
     "BINDING INPUT — THE LOCKED CAMPAIGN BIG IDEA AND LINE",
@@ -90,6 +92,14 @@ export function buildOfflineCreativeBriefMessage(args: {
     "═══ ESTABLISHED GUARDRAILS AND BRAND NON-NEGOTIABLES ═══",
     args.guardrails || "—",
     "",
+    ...(args.factCorrections?.trim()
+      ? [
+          "═══ FACT CORRECTIONS — BINDING ═══",
+          "The following facts are correct and override any conflicting wording anywhere in the inputs above. Use the corrected facts wherever these people or events are mentioned.",
+          args.factCorrections.trim(),
+          "",
+        ]
+      : []),
     "Write the offline creative brief using the output contract. Direction and rationale only — no scripts, no shot detail.",
   ].join("\n");
 }
