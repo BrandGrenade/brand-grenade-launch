@@ -2,7 +2,6 @@
 -- everything else still refused. Self-rolling-back: ends by raising S16_LOCK_RESULTS.
 CREATE TEMP TABLE r(name text, ok boolean);
 GRANT ALL ON r TO authenticated;
-CREATE TEMP TABLE _mark(x int);
 
 INSERT INTO public.sessions (id, brand_name, category, strategic_mode, brief_text, status, current_stage, user_id, stage_1_output, stage_status)
 SELECT '00000000-0000-0000-0000-0000000016a1', 'S16 lock test', 'test', strategic_mode, 'brief', 'running', 15, user_id, 'S1', 'complete:15'
