@@ -215,8 +215,20 @@ export function useRunRegister() {
     ]);
     const err = s.error ?? w.error ?? i.error ?? y.error ?? c.error;
     setError(err ? err.message : null);
+    // Which Creative Stimulus runs hold at least one saved direction (i.e.
+    // have deliverables to show on the parent session's Deliverables page).
+    const stimulusIds = (c.data ?? []).map((r: AnyRow) => r.id);
+    const stimulusWithDocs = new Set<string>();
+    if (stimulusIds.length > 0) {
+      const { data: dirs } = await sb
+        .from("stimulus_directions")
+        .select("run_id")
+        .in("run_id", stimulusIds)
+        .limit(5000);
+      for (const d of dirs ?? []) stimulusWithDocs.add(d.run_id);
+    }
     const intel = (i.data ?? []).map((r: AnyRow) => ({ ...r, report_metadata: { brief_type: r.brief_type } }));
-    setRuns(toRegisterRuns({ sessions: s.data ?? [], workspaces: w.data ?? [], intelligence: intel, synthesiser: y.data ?? [], stimulus: c.data ?? [] }));
+    setRuns(toRegisterRuns({ sessions: s.data ?? [], workspaces: w.data ?? [], intelligence: intel, synthesiser: y.data ?? [], stimulus: c.data ?? [] }, stimulusWithDocs));
     setNames((n.data ?? []) as GroupName[]);
     setLoading(false);
   }, []);
