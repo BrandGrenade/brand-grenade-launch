@@ -13,6 +13,7 @@ import {
   getFullFinishedExport,
   getRawIdeaExportBatch,
 } from "@/lib/stimulus-gate-two.functions";
+import { listOfflineCreativeBriefs } from "@/lib/stimulus-channel.functions";
 import {
   buildFullFinishedExport,
   buildRawIdeaBatchExport,
@@ -31,6 +32,7 @@ type State = {
   sweepIds: string[];
   lensCount: number;
   shortlistIds: string[];
+  offlineBriefs: { channel: string; text: string; createdAt: string }[];
 };
 
 export function CreativeEngineDeliverables({
