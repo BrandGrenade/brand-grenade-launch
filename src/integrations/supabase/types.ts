@@ -1112,6 +1112,7 @@ export type Database = {
         Row: {
           close_reason: string | null
           closed_at: string | null
+          format: string | null
           id: string
           open_reason: string
           opened_at: string
@@ -1122,6 +1123,7 @@ export type Database = {
         Insert: {
           close_reason?: string | null
           closed_at?: string | null
+          format?: string | null
           id?: string
           open_reason: string
           opened_at?: string
@@ -1132,6 +1134,7 @@ export type Database = {
         Update: {
           close_reason?: string | null
           closed_at?: string | null
+          format?: string | null
           id?: string
           open_reason?: string
           opened_at?: string
@@ -1440,6 +1443,7 @@ export type Database = {
           stage_15_error: string | null
           stage_15_output: string | null
           stage_16_agency_output: string | null
+          stage_16_completed_formats: string[]
           stage_16_consulting_output: string | null
           stage_16_error: string | null
           stage_16_format: string | null
@@ -1672,6 +1676,7 @@ export type Database = {
           stage_15_error?: string | null
           stage_15_output?: string | null
           stage_16_agency_output?: string | null
+          stage_16_completed_formats?: string[]
           stage_16_consulting_output?: string | null
           stage_16_error?: string | null
           stage_16_format?: string | null
@@ -1904,6 +1909,7 @@ export type Database = {
           stage_15_error?: string | null
           stage_15_output?: string | null
           stage_16_agency_output?: string | null
+          stage_16_completed_formats?: string[]
           stage_16_consulting_output?: string | null
           stage_16_error?: string | null
           stage_16_format?: string | null
@@ -3239,6 +3245,10 @@ export type Database = {
           hub_client_id: string
           name: string
         }[]
+      }
+      bg_grant_stage16_regeneration: {
+        Args: { _format: string; _reason: string; _run_id: string }
+        Returns: string
       }
       bg_is_admin: { Args: { _uid: string }; Returns: boolean }
       bg_lookup_hub_client: {

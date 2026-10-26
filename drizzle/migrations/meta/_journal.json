@@ -211,6 +211,13 @@
       "when": 1793004957286,
       "tag": "0029_stage16_lock_exemption",
       "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1793008244195,
+      "tag": "0030_stage16_permanent_lock_rule",
+      "breakpoints": true
     }
   ]
 }
