@@ -225,6 +225,13 @@
       "when": 1793008285363,
       "tag": "0031_stage16_completed_backfill_locked",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1793008467241,
+      "tag": "0032_stage16_lock_rule_versions",
+      "breakpoints": true
     }
   ]
 }
