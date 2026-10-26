@@ -7,6 +7,10 @@
 import { useCallback, useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { applyGateTwoMandate, getMandateOptions } from "@/lib/stimulus-mandate.functions";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { LoaderCircle, RefreshCw } from "lucide-react";
+import { JLR_ORCHESTRATION_ID } from "@/lib/stimulus/jlr-mandate-recovery";
 
 const AMBER = "#F2665F";
 const MUTED = "#A8A29A";
@@ -50,6 +54,54 @@ export function StimulusMandate({
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [result, setResult] = useState<string | null>(null);
+  const [recoveryBusy, setRecoveryBusy] = useState(false);
+  const [recoveryProgress, setRecoveryProgress] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (orchestrationId !== JLR_ORCHESTRATION_ID) return;
+    let stopped = false;
+    const observe = async () => {
+      const { data } = await supabase.from("stimulus_orchestrations").select("phase_note, driver_status").eq("id", orchestrationId).maybeSingle();
+      if (!stopped && data?.phase_note?.startsWith("Mandate recovery")) setRecoveryProgress(data.phase_note);
+    };
+    void observe();
+    const timer = setInterval(() => void observe(), 4000);
+    return () => { stopped = true; clearInterval(timer); };
+  }, [orchestrationId]);
+
+  const recover = async () => {
+    setRecoveryBusy(true);
+    setErr(null);
+    setRecoveryProgress("Mandate recovery: preparing four channels; five protected channels unchanged.");
+    try {
+      const { data } = await supabase.auth.getSession();
+      if (!data.session) throw new Error("Sign in to recover the channels.");
+      const response = await fetch("/api/public/jlr-mandate-recovery", { method: "POST", headers: { Authorization: `Bearer ${data.session.access_token}` } });
+      if (!response.ok || !response.body) throw new Error(await response.text() || "Recovery could not start.");
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let pending = "";
+      let completed = false;
+      for (;;) {
+        const chunk = await reader.read();
+        if (chunk.done) break;
+        pending += decoder.decode(chunk.value, { stream: true });
+        const lines = pending.split("\n");
+        pending = lines.pop() ?? "";
+        for (const line of lines) {
+          if (!line.trim()) continue;
+          const event = JSON.parse(line);
+          if (event.message) setRecoveryProgress(event.message);
+          if (event.error) throw new Error(event.error);
+          if (event.done) { completed = true; setResult(event.message); }
+        }
+      }
+      if (!completed) throw new Error("The connection ended before completion; check saved progress before retrying.");
+      await refresh();
+      await onApplied();
+    } catch (e) { setErr(e instanceof Error ? e.message : "Recovery failed."); }
+    finally { setRecoveryBusy(false); }
+  };
 
   const refresh = useCallback(async () => {
     try {
@@ -103,6 +155,19 @@ export function StimulusMandate({
           <div className="text-body-sm" style={{ color: "#EDE8E0", marginTop: 6, whiteSpace: "pre-wrap" }}>
             {current.text}
           </div>
+        </div>
+      )}
+
+      {orchestrationId === JLR_ORCHESTRATION_ID && current && (
+        <div className="mt-4 border-t border-border pt-3">
+          <Button variant="outline" disabled={recoveryBusy || busy} onClick={() => void recover()} className="h-auto min-h-9 whitespace-normal text-left">
+            {recoveryBusy ? <LoaderCircle className="animate-spin motion-reduce:animate-none" /> : <RefreshCw />}
+            Recover the four failed channels
+          </Button>
+          {recoveryProgress && <div role="status" aria-live="polite" className="mt-3 flex items-start gap-2 text-sm text-foreground">
+            {recoveryBusy && <LoaderCircle className="mt-0.5 size-4 shrink-0 animate-spin motion-reduce:animate-none" />}
+            <span>{recoveryProgress}</span>
+          </div>}
         </div>
       )}
 
