@@ -62,7 +62,7 @@ export function StimulusMandate({
     let stopped = false;
     const observe = async () => {
       const { data } = await supabase.from("stimulus_orchestrations").select("phase_note, driver_status").eq("id", orchestrationId).maybeSingle();
-      if (!stopped && data?.phase_note?.startsWith("Mandate recovery")) setRecoveryProgress(data.phase_note);
+      if (!stopped && data?.phase_note && (data.phase_note.startsWith("Mandate recovery") || data.phase_note.startsWith("All 9 channels carry the mandate") || data.phase_note.startsWith("Gate Two remains blocked."))) setRecoveryProgress(data.phase_note);
     };
     void observe();
     const timer = setInterval(() => void observe(), 4000);
