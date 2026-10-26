@@ -349,14 +349,18 @@ export const loadStage22 = createServerFn({ method: "POST" })
     await assertSessionAccess(data.sessionId, context.userId);
     const { data: row, error } = await supabaseAdmin
       .from("sessions")
-      .select("stage_22_output, stage_22_brand_architecture, stage_22_distinctive_assets")
+      .select("stage_22_output, stage_22_brand_architecture, stage_22_distinctive_assets, stage_22_error")
       .eq("id", data.sessionId)
       .single();
     if (error) throw new Error(error.message);
+    const sentinel = parseStage22Sentinel((row?.stage_22_error as string | null) ?? null);
     return {
       output: (row?.stage_22_output as string | null) ?? null,
       architecture: (row?.stage_22_brand_architecture as string | null) ?? null,
       assets: (row?.stage_22_distinctive_assets as string | null) ?? null,
+      error: sentinel.running ? null : ((row?.stage_22_error as string | null) ?? null),
+      running: sentinel.running,
+      attempt: sentinel.attempt,
     };
   });
 
