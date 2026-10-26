@@ -177,11 +177,15 @@ export function toRegisterRuns(
     });
   }
   for (const r of rows.stimulus.filter(live)) {
+    // A Creative Stimulus run has deliverables once it holds any saved
+    // direction; its documents live on the parent session's Deliverables page.
+    const docs = stimulusWithDocs?.has(r.id) === true;
     out.push({
       table: "stimulus_runs", id: r.id, room: roomLabel("creative"), brand: sessionBrand.get(r.session_id) ?? "",
       clientId: r.bg_client_id ?? null, engagementId: r.engagement_id ?? null,
       briefType: null, runType: label(r.run_mode), date: r.created_at, status: label(r.status),
-      openHref: `/creative/${r.session_id}`, documentsHref: null,
+      openHref: `/creative/${r.session_id}`,
+      documentsHref: docs ? `/complete?session=${encodeURIComponent(r.session_id)}` : null,
     });
   }
   return out;
