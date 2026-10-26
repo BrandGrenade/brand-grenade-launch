@@ -106,20 +106,41 @@ const label = (s: string | null | undefined) => (s ? s.charAt(0).toUpperCase() +
 
 type AnyRow = Record<string, any>;
 
+/** A Pipeline run has deliverables once any document-bearing stage exists. */
+export function sessionHasDeliverables(s: AnyRow): boolean {
+  return (
+    s.has_stage_15 === true ||
+    s.has_stage_16 === true ||
+    s.has_stage_16_consulting === true ||
+    s.has_stage_17 === true ||
+    s.has_stage_17b === true ||
+    s.has_stage_18 === true ||
+    s.has_stage_19 === true ||
+    s.has_stage_20 === true ||
+    s.has_stage_20b === true ||
+    s.has_stage_21 === true ||
+    s.has_stage_22 === true
+  );
+}
+
 /** Converts stored rows to register runs. Archived rows are dropped. */
-export function toRegisterRuns(rows: {
-  sessions: AnyRow[];
-  workspaces: AnyRow[];
-  intelligence: AnyRow[];
-  synthesiser: AnyRow[];
-  stimulus: AnyRow[];
-}): RegisterRun[] {
+export function toRegisterRuns(
+  rows: {
+    sessions: AnyRow[];
+    workspaces: AnyRow[];
+    intelligence: AnyRow[];
+    synthesiser: AnyRow[];
+    stimulus: AnyRow[];
+  },
+  /** Creative Stimulus run ids that have at least one saved direction. */
+  stimulusWithDocs?: Set<string>,
+): RegisterRun[] {
   const live = (r: AnyRow) => !r.archived_at;
   const out: RegisterRun[] = [];
   const sessionBrand = new Map<string, string>();
   for (const s of rows.sessions) sessionBrand.set(s.id, s.brand_name ?? "");
   for (const s of rows.sessions.filter(live)) {
-    const docs = s.has_stage_22 === true || s.has_stage_16_consulting === true;
+    const docs = sessionHasDeliverables(s);
     out.push({
       table: "sessions", id: s.id, room: roomLabel("pipeline"), brand: s.brand_name ?? "",
       clientId: s.bg_client_id ?? null, engagementId: s.engagement_id ?? null,
