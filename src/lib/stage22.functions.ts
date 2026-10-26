@@ -189,62 +189,130 @@ async function generateBoth(
   return { architecture, assets };
 }
 
+// Queued-for-generation marker on sessions.stage_22_error. The stage22-tick
+// route claims it by appending ":claimed:<attempt>"; see stage22-tick.server.ts.
+export const STAGE_22_RUNNING = "__STAGE_22_RUNNING__";
+
+export type Stage22Sentinel = { running: boolean; claimed: boolean; attempt: number };
+
+export function parseStage22Sentinel(err: string | null): Stage22Sentinel {
+  if (!err || !err.startsWith(STAGE_22_RUNNING)) return { running: false, claimed: false, attempt: 0 };
+  const m = err.match(/:claimed:(\d+)$/);
+  return { running: true, claimed: Boolean(m), attempt: m ? parseInt(m[1], 10) : 0 };
+}
+
+/**
+ * Full Stage 22 generation, safe to run detached from the requesting
+ * connection — the /api/public/stage22-tick route drives it while streaming
+ * keep-alive bytes. Running this inside the start request sent no bytes for
+ * minutes, so on the published runtime the idle connection was dropped and the
+ * worker cancelled mid-stream, losing the output (JLR, 26 Oct 2026). Writes
+ * the real error to stage_22_error on failure.
+ */
+export async function generateStage22(
+  sessionId: string,
+): Promise<{ output: string; architecture: string; assets: string }> {
+  await assertUpstreamStageOutput(sessionId, 22);
+  {
+    const { requireNoFidelityBreak } = await import("./stage21-fidelity-gate.server");
+    await requireNoFidelityBreak(sessionId, "Stage 22 (Brand Architecture)");
+  }
+  const { data: session, error } = await supabaseAdmin
+    .from("sessions")
+    .select(STAGE22_SELECT)
+    .eq("id", sessionId)
+    .single();
+  if (error || !session) throw new Error(`Session not found: ${error?.message ?? "no row"}`);
+  const s = session as unknown as Stage22Session;
+  if (!s.stage_20_output) throw new Error("Stage 20 must complete before Stage 22");
+
+  if (s.stage_22_output) {
+    return {
+      output: s.stage_22_output,
+      architecture: s.stage_22_brand_architecture ?? "",
+      assets: s.stage_22_distinctive_assets ?? "",
+    };
+  }
+
+  let architecture: string;
+  let assets: string;
+  try {
+    ({ architecture, assets } = await generateBoth(sessionId, s, "", ""));
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "Stage 22 failed";
+    await supabaseAdmin
+      .from("sessions")
+      .update({ stage_22_error: msg })
+      .eq("id", sessionId);
+    throw e instanceof Error ? e : new Error(msg);
+  }
+
+  const combined = `${architecture.trim()}\n\n---\n\n${assets.trim()}`;
+  const { error: saveErr } = await supabaseAdmin
+    .from("sessions")
+    .update({
+      stage_22_output: combined,
+      stage_22_brand_architecture: architecture,
+      stage_22_distinctive_assets: assets,
+      stage_22_error: null,
+      phase_2_current_stage: "22",
+      phase_2_status: "complete",
+    })
+    .eq("id", sessionId);
+  if (saveErr) throw new Error(`Failed to save Stage 22 output: ${saveErr.message}`);
+  return { output: combined, architecture, assets };
+}
+
+/** Queues Stage 22 for the background runner. No-op when output exists or a run is already queued/claimed. */
+async function queueStage22(sessionId: string): Promise<void> {
+  const { data: row } = await supabaseAdmin
+    .from("sessions")
+    .select("stage_22_error, stage_22_output")
+    .eq("id", sessionId)
+    .single();
+  if (row?.stage_22_output) return;
+  if (parseStage22Sentinel((row?.stage_22_error as string | null) ?? null).running) return;
+  await supabaseAdmin
+    .from("sessions")
+    .update({ stage_22_error: STAGE_22_RUNNING })
+    .eq("id", sessionId);
+}
+
 const RunInput = z.object({ sessionId: z.string().uuid() });
+
+export type Stage22RunResult =
+  | { queued: true; output: null; architecture: null; assets: null }
+  | { queued: false; output: string; architecture: string; assets: string };
 
 export const runStage22 = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i) => RunInput.parse(i))
-  .handler(async ({ data, context }) => {
+  .handler(async ({ data, context }): Promise<Stage22RunResult> => {
     await assertSessionAccess(data.sessionId, context.userId);
     await assertUpstreamStageOutput(data.sessionId, 22);
     {
       const { requireNoFidelityBreak } = await import("./stage21-fidelity-gate.server");
       await requireNoFidelityBreak(data.sessionId, "Stage 22 (Brand Architecture)");
     }
-    const { data: session, error } = await supabaseAdmin
+    // Never generates in-request: two multi-minute model calls inside the
+    // start request are cancelled mid-stream on the published runtime (the
+    // Stage 20B failure mode). Returns the cached output when present,
+    // otherwise queues the background runner; the UI polls loadStage22.
+    const { data: row } = await supabaseAdmin
       .from("sessions")
-      .select("brand_name, category, selected_smp, stage_5_output, stage_13_output, stage_14c_output, stage_17_selected_territory, stage_17b_output, stage_18_selected_detonation, locked_big_idea, locked_campaign_line, locked_big_idea_lens, stage_19_output, stage_20_output, truth_product, truth_consumer, truth_cultural, brand_intel_type, brand_intel_values, brand_intel_tone, brand_intel_assets, stage_22_output, stage_22_brand_architecture, stage_22_distinctive_assets")
+      .select("stage_22_output, stage_22_brand_architecture, stage_22_distinctive_assets")
       .eq("id", data.sessionId)
       .single();
-    if (error || !session) throw new Error(`Session not found: ${error?.message ?? "no row"}`);
-    const s = session as unknown as Stage22Session;
-    if (!s.stage_20_output) throw new Error("Stage 20 must complete before Stage 22");
-
-    if (s.stage_22_output) {
+    if (row?.stage_22_output) {
       return {
-        output: s.stage_22_output,
-        architecture: s.stage_22_brand_architecture ?? "",
-        assets: s.stage_22_distinctive_assets ?? "",
+        queued: false,
+        output: row.stage_22_output,
+        architecture: (row.stage_22_brand_architecture as string | null) ?? "",
+        assets: (row.stage_22_distinctive_assets as string | null) ?? "",
       };
     }
-
-    let architecture: string;
-    let assets: string;
-    try {
-      ({ architecture, assets } = await generateBoth(data.sessionId, s, "", ""));
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : "Stage 22 failed";
-      await supabaseAdmin
-        .from("sessions")
-        .update({ stage_22_error: msg })
-        .eq("id", data.sessionId);
-      throw e instanceof Error ? e : new Error(msg);
-    }
-
-    const combined = `${architecture.trim()}\n\n---\n\n${assets.trim()}`;
-    const { error: saveErr } = await supabaseAdmin
-      .from("sessions")
-      .update({
-        stage_22_output: combined,
-        stage_22_brand_architecture: architecture,
-        stage_22_distinctive_assets: assets,
-        stage_22_error: null,
-        phase_2_current_stage: '22',
-        phase_2_status: "complete",
-      })
-      .eq("id", data.sessionId);
-    if (saveErr) throw new Error(`Failed to save Stage 22 output: ${saveErr.message}`);
-    return { output: combined, architecture, assets };
+    await queueStage22(data.sessionId);
+    return { queued: true, output: null, architecture: null, assets: null };
   });
 
 export const saveStage22 = createServerFn({ method: "POST" })
