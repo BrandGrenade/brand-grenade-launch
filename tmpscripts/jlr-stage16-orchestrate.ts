@@ -55,11 +55,12 @@ for (const [format, column] of FORMATS) {
   for (;;) {
     await new Promise((res) => setTimeout(res, POLL_MS));
     r = await row();
-    if (r[column]) {
+    const err = r.stage_16_error ?? "";
+    // Partial per-section saves fill the column while the sentinel is still set.
+    if (r[column] && !err) {
       console.log(`done ${format}: ${r[column]!.length} chars`);
       break;
     }
-    const err = r.stage_16_error ?? "";
     if (err && !err.startsWith("__STAGE_16_RUNNING__")) {
       console.log(`ERROR ${format}: ${err}`);
       process.exit(1);

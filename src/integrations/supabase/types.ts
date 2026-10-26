@@ -1108,6 +1108,39 @@ export type Database = {
           },
         ]
       }
+      run_lock_exemptions: {
+        Row: {
+          close_reason: string | null
+          closed_at: string | null
+          id: string
+          open_reason: string
+          opened_at: string
+          opened_by: string
+          run_id: string
+          scope: string
+        }
+        Insert: {
+          close_reason?: string | null
+          closed_at?: string | null
+          id?: string
+          open_reason: string
+          opened_at?: string
+          opened_by: string
+          run_id: string
+          scope: string
+        }
+        Update: {
+          close_reason?: string | null
+          closed_at?: string | null
+          id?: string
+          open_reason?: string
+          opened_at?: string
+          opened_by?: string
+          run_id?: string
+          scope?: string
+        }
+        Relationships: []
+      }
       run_output_versions: {
         Row: {
           content: Json

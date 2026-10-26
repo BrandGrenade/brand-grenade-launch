@@ -204,6 +204,13 @@
       "when": 1792972073555,
       "tag": "0028_manual_idea_edits",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1793004957286,
+      "tag": "0029_stage16_lock_exemption",
+      "breakpoints": true
     }
   ]
 }
