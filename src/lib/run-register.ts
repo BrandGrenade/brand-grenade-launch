@@ -106,20 +106,41 @@ const label = (s: string | null | undefined) => (s ? s.charAt(0).toUpperCase() +
 
 type AnyRow = Record<string, any>;
 
+/** A Pipeline run has deliverables once any document-bearing stage exists. */
+export function sessionHasDeliverables(s: AnyRow): boolean {
+  return (
+    s.has_stage_15 === true ||
+    s.has_stage_16 === true ||
+    s.has_stage_16_consulting === true ||
+    s.has_stage_17 === true ||
+    s.has_stage_17b === true ||
+    s.has_stage_18 === true ||
+    s.has_stage_19 === true ||
+    s.has_stage_20 === true ||
+    s.has_stage_20b === true ||
+    s.has_stage_21 === true ||
+    s.has_stage_22 === true
+  );
+}
+
 /** Converts stored rows to register runs. Archived rows are dropped. */
-export function toRegisterRuns(rows: {
-  sessions: AnyRow[];
-  workspaces: AnyRow[];
-  intelligence: AnyRow[];
-  synthesiser: AnyRow[];
-  stimulus: AnyRow[];
-}): RegisterRun[] {
+export function toRegisterRuns(
+  rows: {
+    sessions: AnyRow[];
+    workspaces: AnyRow[];
+    intelligence: AnyRow[];
+    synthesiser: AnyRow[];
+    stimulus: AnyRow[];
+  },
+  /** Creative Stimulus run ids that have at least one saved direction. */
+  stimulusWithDocs?: Set<string>,
+): RegisterRun[] {
   const live = (r: AnyRow) => !r.archived_at;
   const out: RegisterRun[] = [];
   const sessionBrand = new Map<string, string>();
   for (const s of rows.sessions) sessionBrand.set(s.id, s.brand_name ?? "");
   for (const s of rows.sessions.filter(live)) {
-    const docs = s.has_stage_22 === true || s.has_stage_16_consulting === true;
+    const docs = sessionHasDeliverables(s);
     out.push({
       table: "sessions", id: s.id, room: roomLabel("pipeline"), brand: s.brand_name ?? "",
       clientId: s.bg_client_id ?? null, engagementId: s.engagement_id ?? null,
@@ -156,11 +177,15 @@ export function toRegisterRuns(rows: {
     });
   }
   for (const r of rows.stimulus.filter(live)) {
+    // A Creative Stimulus run has deliverables once it holds any saved
+    // direction; its documents live on the parent session's Deliverables page.
+    const docs = stimulusWithDocs?.has(r.id) === true;
     out.push({
       table: "stimulus_runs", id: r.id, room: roomLabel("creative"), brand: sessionBrand.get(r.session_id) ?? "",
       clientId: r.bg_client_id ?? null, engagementId: r.engagement_id ?? null,
       briefType: null, runType: label(r.run_mode), date: r.created_at, status: label(r.status),
-      openHref: `/creative/${r.session_id}`, documentsHref: null,
+      openHref: `/creative/${r.session_id}`,
+      documentsHref: docs ? `/complete?session=${encodeURIComponent(r.session_id)}` : null,
     });
   }
   return out;
@@ -190,8 +215,20 @@ export function useRunRegister() {
     ]);
     const err = s.error ?? w.error ?? i.error ?? y.error ?? c.error;
     setError(err ? err.message : null);
+    // Which Creative Stimulus runs hold at least one saved direction (i.e.
+    // have deliverables to show on the parent session's Deliverables page).
+    const stimulusIds = (c.data ?? []).map((r: AnyRow) => r.id);
+    const stimulusWithDocs = new Set<string>();
+    if (stimulusIds.length > 0) {
+      const { data: dirs } = await sb
+        .from("stimulus_directions")
+        .select("run_id")
+        .in("run_id", stimulusIds)
+        .limit(5000);
+      for (const d of dirs ?? []) stimulusWithDocs.add(d.run_id);
+    }
     const intel = (i.data ?? []).map((r: AnyRow) => ({ ...r, report_metadata: { brief_type: r.brief_type } }));
-    setRuns(toRegisterRuns({ sessions: s.data ?? [], workspaces: w.data ?? [], intelligence: intel, synthesiser: y.data ?? [], stimulus: c.data ?? [] }));
+    setRuns(toRegisterRuns({ sessions: s.data ?? [], workspaces: w.data ?? [], intelligence: intel, synthesiser: y.data ?? [], stimulus: c.data ?? [] }, stimulusWithDocs));
     setNames((n.data ?? []) as GroupName[]);
     setLoading(false);
   }, []);

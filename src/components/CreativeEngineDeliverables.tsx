@@ -13,6 +13,7 @@ import {
   getFullFinishedExport,
   getRawIdeaExportBatch,
 } from "@/lib/stimulus-gate-two.functions";
+import { listOfflineCreativeBriefs } from "@/lib/stimulus-channel.functions";
 import {
   buildFullFinishedExport,
   buildRawIdeaBatchExport,
@@ -31,6 +32,7 @@ type State = {
   sweepIds: string[];
   lensCount: number;
   shortlistIds: string[];
+  offlineBriefs: { channel: string; text: string; createdAt: string }[];
 };
 
 export function CreativeEngineDeliverables({
@@ -46,12 +48,14 @@ export function CreativeEngineDeliverables({
     sweepIds: [],
     lensCount: 0,
     shortlistIds: [],
+    offlineBriefs: [],
   });
   const [busy, setBusy] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
   const fullExport = useServerFn(getFullFinishedExport);
   const batchExport = useServerFn(getRawIdeaExportBatch);
+  const listOffline = useServerFn(listOfflineCreativeBriefs);
 
   useEffect(() => {
     let cancelled = false;
@@ -66,6 +70,12 @@ export function CreativeEngineDeliverables({
         sessionId,
       );
 
+      // Offline creative briefs: the latest generated brief per channel.
+      const offline = await listOffline({ data: { sessionId } });
+      const offlineBriefs = Object.entries(offline.byChannel)
+        .map(([channel, b]) => ({ channel, text: b.text, createdAt: b.createdAt }))
+        .sort((a, b) => a.channel.localeCompare(b.channel));
+
       if (cancelled) return;
       setState({
         orchestrationId: chosen?.id ?? null,
@@ -77,6 +87,7 @@ export function CreativeEngineDeliverables({
         sweepIds,
         lensCount,
         shortlistIds,
+        offlineBriefs,
       });
     })();
     return () => {
@@ -85,7 +96,10 @@ export function CreativeEngineDeliverables({
   }, [sessionId]);
 
   const nothing =
-    !state.orchestrationId && state.sweepIds.length === 0 && state.shortlistIds.length === 0;
+    !state.orchestrationId &&
+    state.sweepIds.length === 0 &&
+    state.shortlistIds.length === 0 &&
+    state.offlineBriefs.length === 0;
   if (nothing) return null;
 
   const runOrchestration = async (mode: "download" | "print") => {
@@ -119,6 +133,16 @@ export function CreativeEngineDeliverables({
     } finally {
       setBusy(null);
     }
+  };
+
+  const downloadOffline = (channel: string, text: string) => {
+    const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `offline-creative-brief-${channel.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   const Card = ({
@@ -221,6 +245,15 @@ export function CreativeEngineDeliverables({
             onClick={() => void runBatch("shortlist", state.shortlistIds)}
           />
         )}
+        {state.offlineBriefs.map((b) => (
+          <Card
+            key={b.channel}
+            title={`Offline creative brief — ${b.channel}`}
+            note={`Direction and rationale for a team working away from the platform · generated ${new Date(b.createdAt).toLocaleString("en-AU")}`}
+            busyKey={`offline-${b.channel}`}
+            onClick={() => downloadOffline(b.channel, b.text)}
+          />
+        ))}
       </div>
       {err && <div style={{ marginTop: 8, fontSize: 13, color: "#E5484D" }}>{err}</div>}
     </div>

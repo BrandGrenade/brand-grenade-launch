@@ -59,6 +59,8 @@ export async function runOfflineCreativeBrief(args: {
   sessionId: string;
   userId: string;
   channelName: string;
+  /** Binding factual corrections applied over the stored inputs. */
+  factCorrections?: string;
 }): Promise<{ runId: string; directionId: string; text: string }> {
   const session = await loadLockedSession(args.sessionId);
   const outputs = session.stage_21_outputs ?? {};
@@ -104,6 +106,7 @@ export async function runOfflineCreativeBrief(args: {
           lockedLens: session.locked_big_idea_lens ?? null,
           whyItWins,
           guardrails,
+          factCorrections: args.factCorrections,
         }),
         skipUniversalWrapper: true,
         maxTokens: 4000,
