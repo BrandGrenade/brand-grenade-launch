@@ -38,7 +38,7 @@ export async function selectOperativeSweep(
 
   const { data: dirs } = await sb
     .from("stimulus_directions")
-    .select("id, run_id, lens_name, sort_order, gate_one_approved, direction")
+    .select("id, run_id, lens_name, sort_order, gate_one_approved, status, direction")
     .in("run_id", runIds)
     .order("sort_order", { ascending: true });
   const all = ((dirs ?? []) as any[]).filter(
@@ -67,7 +67,7 @@ export async function selectOperativeSweep(
     runId,
     directionIds: sweep.map((d) => d.id as string),
     lensCount: new Set(sweep.map((d) => d.lens_name).filter(Boolean)).size,
-    shortlistIds: all.filter((d) => d.gate_one_approved).map((d) => d.id as string),
+    shortlistIds: sweep.filter((d) => isShortlisted(d)).map((d) => d.id as string),
   };
 }
 
@@ -94,4 +94,9 @@ export async function countOperativePrompts(sb: Client, sessionId: string): Prom
     .select("id", { count: "exact", head: true })
     .eq("orchestration_id", orch.id);
   return count ?? 0;
+}
+
+/** Gate One shortlist: approved at Gate One, or kept (Keep / Keep in play). */
+export function isShortlisted(d: { gate_one_approved?: boolean | null; status?: string | null }): boolean {
+  return d.gate_one_approved === true || d.status === "keep" || d.status === "keep_in_play";
 }

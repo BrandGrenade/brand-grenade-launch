@@ -201,7 +201,7 @@ function CompletePage() {
     supabase
       .from("sessions")
       .select(
-        `id, brand_name, category, brief_text, selected_smp, selected_smp_field_name, user_id, doc_consulting_url, doc_agency_url, doc_workshop_url, phase_2_status, updated_at, created_at, stage_17_selected_territory, stage_18_selected_detonation, stage_22_brand_architecture, stage_22_distinctive_assets, checkpoint_a_confirmed, checkpoint_b_confirmed, checkpoint_c_confirmed, checkpoint_d_confirmed, checkpoint_e_confirmed, checkpoint_f_confirmed, strategy_signoff_confirmed, locked_big_idea_run_id, locked_big_idea, locked_campaign_line, locked_big_idea_lens, locked_big_idea_at, selection_rationale, ${FULL_RUN_SESSION_COLUMNS}`,
+        `id, brand_name, category, brief_text, selected_smp, selected_smp_field_name, user_id, doc_consulting_url, doc_agency_url, doc_workshop_url, phase_2_status, updated_at, created_at, stage_17_selected_territory, stage_18_selected_detonation, stage_22_brand_architecture, stage_22_distinctive_assets, checkpoint_a_confirmed, checkpoint_b_confirmed, checkpoint_c_confirmed, checkpoint_d_confirmed, checkpoint_e_confirmed, checkpoint_f_confirmed, strategy_signoff_confirmed, locked_big_idea_run_id, locked_big_idea, locked_campaign_line, locked_big_idea_lens, locked_big_idea_at, selection_rationale, locked_at, ${FULL_RUN_SESSION_COLUMNS}`,
       )
       .eq("id", sessionId)
       .maybeSingle()
@@ -594,7 +594,8 @@ function CompletePage() {
         {/* Download section */}
         <div style={{ marginTop: 32 }}>
           {(() => {
-            const runGenerate = async (force = false, fmt: Format = format) => {
+            const runGenerate = async (force = false, fmt: Format = format, reason?: string) => {
+              if (reason === "") return;
               // The document type is passed in explicitly. Reading `format` from
               // this render's closure after a setFormat() served the previously
               // selected type on the first click (stale closure).
@@ -634,7 +635,7 @@ function CompletePage() {
                 );
                 try {
                   const stream = await runStage16Fn({
-                    data: { sessionId: session.id, format: "valuation", force },
+                    data: { sessionId: session.id, format: "valuation", force, reason },
                   });
                   let finalOutput = "";
                   for await (const chunk of stream as AsyncIterable<{
@@ -689,7 +690,7 @@ function CompletePage() {
                 );
                 try {
                   const stream = await runStage16Fn({
-                    data: { sessionId: session.id, format: "vision", force },
+                    data: { sessionId: session.id, format: "vision", force, reason },
                   });
                   let finalOutput = "";
                   for await (const chunk of stream as AsyncIterable<{
@@ -750,12 +751,19 @@ function CompletePage() {
                 );
               }
             };
+            // Locked runs: regenerating a saved Stage 16 document is admin-only
+            // and needs a reason, which is recorded with the kept old version.
+            const reasonFor = (id: Format): string | undefined => {
+              if (!(session as unknown as { locked_at?: string | null })?.locked_at) return undefined;
+              if (id !== "vision" && id !== "valuation") return undefined;
+              return window.prompt("This run is locked. Admins only: why regenerate this document? The current version is kept in history.")?.trim() || "";
+            };
             const handleRegenerate = (id: Format) => {
               setFormat(id);
               // Run synchronously with the clicked type — no deferred tick, so
               // the stale-closure format can't be used and the new tab still
               // opens inside the click.
-              void runGenerate(true, id);
+              void runGenerate(true, id, reasonFor(id));
             };
             // Expose handler to the cards rendered above via a ref.
             regenerateRef.current = handleRegenerate;
@@ -1542,7 +1550,7 @@ function Phase2Deliverables({ session }: { session: SessionRow }) {
   const download = async (
     docType:
       | "detonation_territory" | "detonation_intelligence" | "the_detonation"
-      | "activation_architecture" | "master_brief" | "channel_brief"
+      | "activation_architecture" | "master_brief" | "channel_strategy" | "channel_brief"
       | "distinctive_assets" | "brand_architecture" | "all_phase2",
     label: string,
     channelKey?: string,
@@ -1615,6 +1623,7 @@ function Phase2Deliverables({ session }: { session: SessionRow }) {
 
   const showActivation =
     session.stage_20_output ||
+    session.stage_20b_output ||
     channelKeys.length > 0;
 
   const showBrandIdentity =
@@ -1658,6 +1667,9 @@ function Phase2Deliverables({ session }: { session: SessionRow }) {
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: 12 }}>
             {session.stage_20_output && (
               <Card title="Master Detonation Brief" busyKey="Master Detonation Brief" onClick={() => download("master_brief", "Master Detonation Brief")} />
+            )}
+            {session.stage_20b_output && (
+              <Card title="Channel Strategy" subtitle="Stage 20B — channel roles, audiences and mechanics" busyKey="Channel Strategy" onClick={() => download("channel_strategy", "Channel Strategy")} />
             )}
             {channelKeys.map((ch) => {
               const body = channels[ch] ?? "";

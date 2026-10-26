@@ -17,6 +17,7 @@ export type Phase2DocType =
   | "the_detonation"
   | "activation_architecture"
   | "master_brief"
+  | "channel_strategy"
   | "channel_brief"
   | "distinctive_assets"
   | "brand_architecture"
@@ -31,6 +32,7 @@ export interface Phase2Session {
   stage_18_selected_detonation: string | null;
   stage_19_output: string | null;
   stage_20_output: string | null;
+  stage_20b_output?: string | null;
   stage_21_outputs: Record<string, string> | null;
   stage_22_brand_architecture: string | null;
   stage_22_distinctive_assets: string | null;
@@ -444,6 +446,10 @@ export function buildPhase2Document(
       // Canonical ten-section Minto template (shared with the other primary
       // deliverables) — returns a complete document, not a body fragment.
       return buildMasterDetonationDocument(session as unknown as MintoSession);
+    case "channel_strategy":
+      title = "Channel Strategy";
+      body = plainBody("BRAND DETONATION", title, brand, session.stage_20b_output ?? "");
+      break;
     case "channel_brief": {
       const ch = channelKey ?? "";
       const content = session.stage_21_outputs?.[ch] ?? "";
