@@ -211,6 +211,27 @@
       "when": 1793004957286,
       "tag": "0029_stage16_lock_exemption",
       "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1793008244195,
+      "tag": "0030_stage16_permanent_lock_rule",
+      "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1793008285363,
+      "tag": "0031_stage16_completed_backfill_locked",
+      "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1793008467241,
+      "tag": "0032_stage16_lock_rule_versions",
+      "breakpoints": true
     }
   ]
 }

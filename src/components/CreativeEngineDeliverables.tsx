@@ -239,8 +239,8 @@ export function CreativeEngineDeliverables({
         )}
         {state.shortlistIds.length > 0 && (
           <Card
-            title="Shortlist — Gate One approved"
-            note={`The ideas taken through Gate One, with ratings and approval notes (${state.shortlistIds.length})`}
+            title="Gate One Shortlist"
+            note={`The ideas kept at Gate One (Keep, Keep in play or approved), with ratings and notes (${state.shortlistIds.length})`}
             busyKey="shortlist"
             onClick={() => void runBatch("shortlist", state.shortlistIds)}
           />
