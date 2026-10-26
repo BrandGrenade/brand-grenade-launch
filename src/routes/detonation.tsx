@@ -2675,9 +2675,16 @@ function Stage22({ session, onChange }: { session: SessionRow; onChange: () => v
       {err && <ErrorBanner message={err} />}
       {stage22BlockedReason && <ErrorBanner message={stage22BlockedReason} />}
       {!architecture ? (
-        <AmberButton onClick={handleRun} disabled={busy || !!stage22BlockedReason}>
-          {busy && !stage22BlockedReason && <Spinner />} {busy && !stage22BlockedReason ? "Generating…" : stage22BlockedReason ? "Blocked — see above" : "Run Stage 22"}
-        </AmberButton>
+        <div>
+          <AmberButton onClick={handleRun} disabled={busy || !!stage22BlockedReason}>
+            {busy && !stage22BlockedReason && <Spinner />} {busy && !stage22BlockedReason ? `Generating…${attempt > 1 ? ` (attempt ${attempt})` : ""}` : stage22BlockedReason ? "Blocked — see above" : "Run Stage 22"}
+          </AmberButton>
+          {busy && !stage22BlockedReason && (
+            <p className="text-body-sm" style={{ color: "var(--color-text-tertiary)", marginTop: 12 }}>
+              Running in the background — this takes a few minutes. You can leave this page; the result will be here when you return.
+            </p>
+          )}
+        </div>
 
       ) : (
         <div id="phase2-print-region">
