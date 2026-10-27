@@ -34,7 +34,8 @@ describe("saved JLR evidence recovery", () => {
     const cards = r?.propositions as {number:number;smp:string;owns:string;scores:Record<string,number>}[];
     expect(cards).toHaveLength(4);
     expect(cards[2]).toMatchObject({number:3,smp:"The jaguar doesn't share its name lightly.",scores:{fame:8}});
-    expect(cards[2].owns.length).toBeGreaterThan(300);
+    const savedParagraph = fixture["12"].split('**"The jaguar doesn\'t share its name lightly."**')[1].split("WHAT THIS PROPOSITION OWNS")[1].split("THE TRUTH IT IS BUILT ON")[0].replace(/^[─═=]{3,}\s*$/gm, "").trim();
+    expect(cards[2].owns).toBe(savedParagraph);
   });
   it("unsupported or incomplete evidence never becomes invented structured data", () => {
     for(const n of ["10","11","13"] as const) expect(recoverSavedStage(n,"Incomplete document")).toBeNull();
