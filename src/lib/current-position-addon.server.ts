@@ -12,10 +12,10 @@ const SYNTH = '8ac87434-3bad-4921-b605-0b57acb26f54';
 const LAB = '4740d024-9ce8-4757-905b-91767ce2dff0';
 const LAB_V1 = 'e18524c5-b52d-4e17-8216-c162d5440398';
 
-async function checked<T>(operation: () => PromiseLike<{ data: T; error: { message: string } | null }>): Promise<T> {
+async function checked<T>(operation: () => PromiseLike<{ data: T; error: { message: string } | null }>): Promise<NonNullable<T>> {
   let message = '';
   for (let attempt=0;attempt<3;attempt++) {
-    const r=await operation(); if (!r.error) return r.data; message=r.error.message;
+    const r=await operation(); if (!r.error && r.data !== null && r.data !== undefined) return r.data; if (!r.error) return [] as NonNullable<T>; message=r.error.message;
     if(attempt<2) await new Promise(r=>setTimeout(r,500*(attempt+1)));
   }
   throw new Error(`${BASELINE_ERRORS.save}: ${message}`);
