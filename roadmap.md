@@ -12,4 +12,5 @@ Previous Stage 16/22 work completed and verified in the preceding conversation.
 
 - [x] Checked existing runners and live controls: JLR is locked, the access version is 96, Stage 11/13 baselines are Deal-only, and historical null values need explicit preservation. Existing runners cannot safely perform this add-on.
 - [x] Checked the named research: saved Infiniti audience claims cite September 2021 and the experience refresh cites 2023, but source_date fields are null; neither is a verified current brand proposition. Minimum new assessment work is baseline-only 10/11/13, using Infiniti rather than Jaguar evidence.
-- [ ] Implement and execute a version-aware baseline add-on after review of the plan; no existing stage execution, run-data changes, or model calls have occurred.
+- [x] Approval received to build, test, publish and verify without further confirmation, conditional on sufficient proposition evidence; complete the evidence gate first.
+- [ ] Implement and execute the version-aware baseline add-on. Blocker: establish enough saved Infiniti positioning evidence to derive a current brand proposition without inventing it; no existing stage execution, run-data changes, or model calls have occurred.
