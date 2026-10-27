@@ -1,3 +1,4 @@
+import { resolveStructuredRecord, saveStructuredStage } from "./structured-stage-save";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
@@ -18,7 +19,7 @@ import {
 } from "./output-banned-word-gate";
 
 import { countPropositions } from "./count-helpers";
-import { splitStructured, structuredInstruction, validateStructured } from "./structured-output";
+import { splitStructured, structuredInstruction } from "./structured-output";
 import {
   extractStage8Candidates,
   missingDispositions,
@@ -288,18 +289,22 @@ export const runStage9 = createServerFn({ method: "POST" })
 
     const combined = output + leftOfCentre;
 
-    const { error: updateErr } = await supabaseAdmin
+    const { error: updateErr } = await saveStructuredStage(
+      () => supabaseAdmin
       .from("sessions")
       .update({
         stage_9_output: output,
         stage_9_error: null,
         ...(() => {
-          const v = validateStructured("9", structuredBlock);
+          const v = resolveStructuredRecord("9", structuredBlock, output);
           return { stage_9_structured: v.structured, stage_9_structured_error: v.error };
         })(),
         stage_status: "complete:9",
       } as never)
-      .eq("id", data.sessionId);
+      .eq("id", data.sessionId),
+      (message) => supabaseAdmin.from("sessions").update({ stage_9_error: message }).eq("id", data.sessionId),
+      "Stage 9 structured output save",
+    );
     if (updateErr) throw new Error(`Failed to save Stage 9 output: ${updateErr.message}`);
 
 

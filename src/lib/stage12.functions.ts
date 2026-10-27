@@ -1,3 +1,5 @@
+import { recoverStage12 } from "./saved-stage-records";
+import { saveStructuredStage } from "./structured-stage-save";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
@@ -280,21 +282,23 @@ export const runStage12 = createServerFn({ method: "POST" })
     // session status from awaiting_checkpoint, because the human may have
     // already selected an SMP from the Stage 11 fallback by the time this
     // finishes streaming.
-    const { confirmWrite } = await import("./confirm-write");
-    const writeRes = await confirmWrite(
+    const cards = recoverStage12(output) ?? recoverStage12(output);
+    const writeRes = await saveStructuredStage(
       () =>
         supabaseAdmin
           .from("sessions")
           .update({
             stage_12_output: output,
-            stage_12_error: null,
+            stage_12_smps: cards as never,
+            stage_12_error: cards ? null : "Platform structured-data error after retry: saved Stage 12 cards could not be reconstructed",
             status: "awaiting_checkpoint",
             stage_status: "complete:12",
           })
           .eq("id", data.sessionId),
+      (message) => supabaseAdmin.from("sessions").update({stage_12_error:message}).eq("id",data.sessionId),
       "Stage 12 output save",
     );
-    if (!writeRes.ok) throw new Error(writeRes.error);
+    if (writeRes.error) throw new Error(writeRes.error.message);
 
     yield { done: true as const, output };
   });

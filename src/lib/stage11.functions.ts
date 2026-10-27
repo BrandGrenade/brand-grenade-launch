@@ -1,3 +1,4 @@
+import { resolveStructuredRecord, saveStructuredStage } from "./structured-stage-save";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
@@ -9,7 +10,7 @@ import {
   buildStage11UserMessage,
 } from "./stage11-prompt";
 import { countPropositions } from "./count-helpers";
-import { filterStructuredStream, resolveCurrentProposition, splitStructured, structuredInstruction, validateStructured } from "./structured-output";
+import { filterStructuredStream, resolveCurrentProposition, splitStructured, structuredInstruction } from "./structured-output";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertSessionAccess } from "@/lib/auth-helpers.server";
 import { assertUpstreamStageOutput } from "./pipeline-integrity";
@@ -73,7 +74,8 @@ export const runStage11 = createServerFn({ method: "POST" })
       }
 
 
-    const { error: updateErr } = await supabaseAdmin
+    const { error: updateErr } = await saveStructuredStage(
+      () => supabaseAdmin
       .from("sessions")
       .update({
         stage_11_output: output,
@@ -83,7 +85,7 @@ export const runStage11 = createServerFn({ method: "POST" })
         // are never treated as comparable.
         stage_11_logic_version: STAGE_11_LOGIC_VERSION,
         ...(() => {
-          const v = validateStructured("11", splitStructured(sink.raw).block, {
+          const v = resolveStructuredRecord("11", splitStructured(sink.raw).block, output, {
             expectedCount: s10?.scores?.length ?? propositionCount,
             stage10Eliminated: (s10?.scores ?? []).filter((r) => r.code_verdict === "ELIMINATED").map((r) => r.smp),
             current,
@@ -91,7 +93,10 @@ export const runStage11 = createServerFn({ method: "POST" })
           return { stage_11_structured: v.structured, stage_11_structured_error: v.error };
         })(),
       } as never)
-      .eq("id", data.sessionId);
+      .eq("id", data.sessionId),
+      (message) => supabaseAdmin.from("sessions").update({ stage_11_error: message }).eq("id", data.sessionId),
+      "Stage 11 structured output save",
+    );
     if (updateErr) throw new Error(`Failed to save Stage 11 output: ${updateErr.message}`);
 
     yield { done: true as const, output };
