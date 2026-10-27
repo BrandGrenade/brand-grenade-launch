@@ -55,6 +55,8 @@ import { Route as WalkthroughIndexRouteImport } from './routes/walkthrough.index
 import { Route as WalkthroughSessionIdRouteImport } from './routes/walkthrough.$sessionId'
 import { Route as AdminPreviewSlugRouteImport } from './routes/admin.preview.$slug'
 import { Route as ApiPublicBgAccessRouteImport } from './routes/api/public/bg-access'
+import { Route as ApiPublicCurrentPositionAddonRouteImport } from './routes/api/public/current-position-addon'
+import { Route as ApiPublicCurrentPositionTickRouteImport } from './routes/api/public/current-position-tick'
 import { Route as ApiPublicHubTickRouteImport } from './routes/api/public/hub-tick'
 import { Route as ApiPublicIntelligenceTickRouteImport } from './routes/api/public/intelligence-tick'
 import { Route as ApiPublicJlrMandateRecoveryRouteImport } from './routes/api/public/jlr-mandate-recovery'
@@ -307,6 +309,18 @@ const ApiPublicBgAccessRoute = ApiPublicBgAccessRouteImport.update({
   path: '/api/public/bg-access',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicCurrentPositionAddonRoute =
+  ApiPublicCurrentPositionAddonRouteImport.update({
+    id: '/api/public/current-position-addon',
+    path: '/api/public/current-position-addon',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicCurrentPositionTickRoute =
+  ApiPublicCurrentPositionTickRouteImport.update({
+    id: '/api/public/current-position-tick',
+    path: '/api/public/current-position-tick',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHubTickRoute = ApiPublicHubTickRouteImport.update({
   id: '/api/public/hub-tick',
   path: '/api/public/hub-tick',
@@ -471,6 +485,8 @@ export interface FileRoutesByFullPath {
   '/walkthrough/': typeof WalkthroughIndexRoute
   '/admin/preview/$slug': typeof AdminPreviewSlugRoute
   '/api/public/bg-access': typeof ApiPublicBgAccessRoute
+  '/api/public/current-position-addon': typeof ApiPublicCurrentPositionAddonRoute
+  '/api/public/current-position-tick': typeof ApiPublicCurrentPositionTickRoute
   '/api/public/hub-tick': typeof ApiPublicHubTickRoute
   '/api/public/intelligence-tick': typeof ApiPublicIntelligenceTickRoute
   '/api/public/jlr-mandate-recovery': typeof ApiPublicJlrMandateRecoveryRoute
@@ -533,6 +549,8 @@ export interface FileRoutesByTo {
   '/walkthrough': typeof WalkthroughIndexRoute
   '/admin/preview/$slug': typeof AdminPreviewSlugRoute
   '/api/public/bg-access': typeof ApiPublicBgAccessRoute
+  '/api/public/current-position-addon': typeof ApiPublicCurrentPositionAddonRoute
+  '/api/public/current-position-tick': typeof ApiPublicCurrentPositionTickRoute
   '/api/public/hub-tick': typeof ApiPublicHubTickRoute
   '/api/public/intelligence-tick': typeof ApiPublicIntelligenceTickRoute
   '/api/public/jlr-mandate-recovery': typeof ApiPublicJlrMandateRecoveryRoute
@@ -603,6 +621,8 @@ export interface FileRoutesById {
   '/walkthrough/': typeof WalkthroughIndexRoute
   '/admin/preview/$slug': typeof AdminPreviewSlugRoute
   '/api/public/bg-access': typeof ApiPublicBgAccessRoute
+  '/api/public/current-position-addon': typeof ApiPublicCurrentPositionAddonRoute
+  '/api/public/current-position-tick': typeof ApiPublicCurrentPositionTickRoute
   '/api/public/hub-tick': typeof ApiPublicHubTickRoute
   '/api/public/intelligence-tick': typeof ApiPublicIntelligenceTickRoute
   '/api/public/jlr-mandate-recovery': typeof ApiPublicJlrMandateRecoveryRoute
@@ -674,6 +694,8 @@ export interface FileRouteTypes {
     | '/walkthrough/'
     | '/admin/preview/$slug'
     | '/api/public/bg-access'
+    | '/api/public/current-position-addon'
+    | '/api/public/current-position-tick'
     | '/api/public/hub-tick'
     | '/api/public/intelligence-tick'
     | '/api/public/jlr-mandate-recovery'
@@ -736,6 +758,8 @@ export interface FileRouteTypes {
     | '/walkthrough'
     | '/admin/preview/$slug'
     | '/api/public/bg-access'
+    | '/api/public/current-position-addon'
+    | '/api/public/current-position-tick'
     | '/api/public/hub-tick'
     | '/api/public/intelligence-tick'
     | '/api/public/jlr-mandate-recovery'
@@ -805,6 +829,8 @@ export interface FileRouteTypes {
     | '/walkthrough/'
     | '/admin/preview/$slug'
     | '/api/public/bg-access'
+    | '/api/public/current-position-addon'
+    | '/api/public/current-position-tick'
     | '/api/public/hub-tick'
     | '/api/public/intelligence-tick'
     | '/api/public/jlr-mandate-recovery'
@@ -863,6 +889,8 @@ export interface RootRouteChildren {
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
   AdminPreviewSlugRoute: typeof AdminPreviewSlugRoute
   ApiPublicBgAccessRoute: typeof ApiPublicBgAccessRoute
+  ApiPublicCurrentPositionAddonRoute: typeof ApiPublicCurrentPositionAddonRoute
+  ApiPublicCurrentPositionTickRoute: typeof ApiPublicCurrentPositionTickRoute
   ApiPublicHubTickRoute: typeof ApiPublicHubTickRoute
   ApiPublicIntelligenceTickRoute: typeof ApiPublicIntelligenceTickRoute
   ApiPublicJlrMandateRecoveryRoute: typeof ApiPublicJlrMandateRecoveryRoute
@@ -1205,6 +1233,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicBgAccessRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/current-position-addon': {
+      id: '/api/public/current-position-addon'
+      path: '/api/public/current-position-addon'
+      fullPath: '/api/public/current-position-addon'
+      preLoaderRoute: typeof ApiPublicCurrentPositionAddonRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/current-position-tick': {
+      id: '/api/public/current-position-tick'
+      path: '/api/public/current-position-tick'
+      fullPath: '/api/public/current-position-tick'
+      preLoaderRoute: typeof ApiPublicCurrentPositionTickRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hub-tick': {
       id: '/api/public/hub-tick'
       path: '/api/public/hub-tick'
@@ -1491,6 +1533,8 @@ const rootRouteChildren: RootRouteChildren = {
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
   AdminPreviewSlugRoute: AdminPreviewSlugRoute,
   ApiPublicBgAccessRoute: ApiPublicBgAccessRoute,
+  ApiPublicCurrentPositionAddonRoute: ApiPublicCurrentPositionAddonRoute,
+  ApiPublicCurrentPositionTickRoute: ApiPublicCurrentPositionTickRoute,
   ApiPublicHubTickRoute: ApiPublicHubTickRoute,
   ApiPublicIntelligenceTickRoute: ApiPublicIntelligenceTickRoute,
   ApiPublicJlrMandateRecoveryRoute: ApiPublicJlrMandateRecoveryRoute,

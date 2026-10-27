@@ -239,6 +239,13 @@
       "when": 1793076353371,
       "tag": "0033_synthesiser_claims_error",
       "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1793097357803,
+      "tag": "0034_current_position_addon_jobs",
+      "breakpoints": true
     }
   ]
 }

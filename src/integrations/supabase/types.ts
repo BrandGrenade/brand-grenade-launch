@@ -433,6 +433,131 @@ export type Database = {
         }
         Relationships: []
       }
+      current_position_addon_attempts: {
+        Row: {
+          attempt: number
+          created_at: string
+          error_code: string | null
+          error_message: string | null
+          id: string
+          job_id: string
+          raw_output: string
+          result: Json | null
+          stage: string
+        }
+        Insert: {
+          attempt: number
+          created_at?: string
+          error_code?: string | null
+          error_message?: string | null
+          id?: string
+          job_id: string
+          raw_output?: string
+          result?: Json | null
+          stage: string
+        }
+        Update: {
+          attempt?: number
+          created_at?: string
+          error_code?: string | null
+          error_message?: string | null
+          id?: string
+          job_id?: string
+          raw_output?: string
+          result?: Json | null
+          stage?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "current_position_addon_attempts_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "current_position_addon_jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      current_position_addon_jobs: {
+        Row: {
+          actor_id: string
+          completed_at: string | null
+          completed_stages: string[]
+          created_at: string
+          error_code: string | null
+          error_message: string | null
+          heartbeat_at: string | null
+          id: string
+          lease_token: string | null
+          lease_until: string | null
+          proposition: string
+          published_version: number | null
+          results: Json
+          session_id: string
+          source_fingerprint: string
+          source_manifest: Json
+          source_version: number
+          status: string
+          wake_token: string
+        }
+        Insert: {
+          actor_id: string
+          completed_at?: string | null
+          completed_stages?: string[]
+          created_at?: string
+          error_code?: string | null
+          error_message?: string | null
+          heartbeat_at?: string | null
+          id?: string
+          lease_token?: string | null
+          lease_until?: string | null
+          proposition: string
+          published_version?: number | null
+          results?: Json
+          session_id: string
+          source_fingerprint: string
+          source_manifest: Json
+          source_version: number
+          status?: string
+          wake_token?: string
+        }
+        Update: {
+          actor_id?: string
+          completed_at?: string | null
+          completed_stages?: string[]
+          created_at?: string
+          error_code?: string | null
+          error_message?: string | null
+          heartbeat_at?: string | null
+          id?: string
+          lease_token?: string | null
+          lease_until?: string | null
+          proposition?: string
+          published_version?: number | null
+          results?: Json
+          session_id?: string
+          source_fingerprint?: string
+          source_manifest?: Json
+          source_version?: number
+          status?: string
+          wake_token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "current_position_addon_jobs_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "brand_register_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "current_position_addon_jobs_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       demo_request_rate: {
         Row: {
           created_at: string
@@ -3274,6 +3399,20 @@ export type Database = {
       bg_output_field: {
         Args: { _k: string; _table: string; _versioned: boolean }
         Returns: boolean
+      }
+      bg_publish_current_position_addon: {
+        Args: { _job: string; _lease: string }
+        Returns: number
+      }
+      bg_queue_current_position_addon: {
+        Args: {
+          _actor: string
+          _manifest: Json
+          _proposition: string
+          _session: string
+          _version: number
+        }
+        Returns: string
       }
       bg_resolve_hub: {
         Args: { _client: string; _job: string }
