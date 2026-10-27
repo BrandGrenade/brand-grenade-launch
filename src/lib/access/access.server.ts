@@ -150,6 +150,8 @@ export function supabaseDb(sb: any): Db {
   };
 }
 
+export const ACCESS_DEADLINE_MS = 20_000;
+
 function errorBody(requestId: string, code: AccessError["code"], message: string) {
   return { request_id: requestId, error_code: code, message };
 }
@@ -174,7 +176,13 @@ export async function handleAccessRequest(request: Request): Promise<Response> {
     } catch {
       throw new AccessError("invalid_request", "Body must be JSON.");
     }
-    const out = await handleAccess(supabaseDb(sb), key, body, log);
+    // Hard deadline: answer with a named error well before the Hub's timeout,
+    // instead of hanging with no answer.
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const deadline = new Promise<never>((_, rej) => {
+      timer = setTimeout(() => rej(new AccessError("unavailable", "access_timeout: the request took too long. Retry shortly.")), ACCESS_DEADLINE_MS);
+    });
+    const out = await Promise.race([handleAccess(supabaseDb(sb), key, body, log), deadline]).finally(() => clearTimeout(timer));
     res = Response.json({ request_id: requestId, ...out }, { headers: { "cache-control": "no-store" } });
   } catch (e) {
     const err = e instanceof AccessError ? e : new AccessError("unavailable", "Temporarily unavailable.");
