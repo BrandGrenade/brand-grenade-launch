@@ -93,6 +93,13 @@ export function supabaseDb(sb: any): Db {
       );
       return per.flat();
     },
+    async versionMeta(table, id) {
+      const { data } = await retryRead(
+        () => sb.from("run_output_versions").select("field, version_no, reason, created_at").eq("run_table", table).eq("run_id", id).limit(100000),
+        "version_history_read_failed",
+      );
+      return ((data ?? []) as Omit<VersionRow, "content">[]).map((r) => ({ ...r, content: null }));
+    },
     async versionCounts(table, ids) {
       const counts = new Map<string, number>();
       if (!ids.length) return counts;

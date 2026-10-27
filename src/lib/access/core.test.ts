@@ -293,3 +293,20 @@ describe("list_runs performance guard", () => {
     for (const cols of Object.values(LIST_COLS)) expect(cols).not.toMatch(/\*|_output|final_report/);
   });
 });
+
+describe("single-run reads skip version content", () => {
+  const hist = [{ field: "stage_2_output", version_no: 1, content: "v1 text", reason: "rerun", created_at: "2026-10-02T00:00:00Z" }];
+  it("current version reads metadata only; earlier version still reads content", async () => {
+    const db = makeDb({ [RUN]: hist });
+    let full = 0;
+    const orig = db.versions;
+    db.versions = async (t, i) => { full++; return orig(t, i); };
+    db.versionMeta = async (t, i) => (await orig(t, i)).map((r) => ({ ...r, content: null }));
+    const cur = await call(db, HUB, "run_manifest", { client_ref: "hub-c1", run_id: RUN });
+    expect(full).toBe(0);
+    expect((cur.content as any).current_version).toBe(2);
+    const old = await call(db, HUB, "get_output", { client_ref: "hub-c1", run_id: RUN, version: 1, output_id: "stage02" });
+    expect(full).toBe(1);
+    expect((old.content as any).text).toBe("v1 text");
+  });
+});
