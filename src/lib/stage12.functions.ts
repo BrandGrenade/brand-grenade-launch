@@ -1,3 +1,4 @@
+import { recoverStage12 } from "./saved-stage-records";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
@@ -287,7 +288,8 @@ export const runStage12 = createServerFn({ method: "POST" })
           .from("sessions")
           .update({
             stage_12_output: output,
-            stage_12_error: null,
+            stage_12_smps: recoverStage12(output) as never,
+            stage_12_error: recoverStage12(output) ? null : "Platform structured-data error after retry: saved Stage 12 cards could not be reconstructed",
             status: "awaiting_checkpoint",
             stage_status: "complete:12",
           })

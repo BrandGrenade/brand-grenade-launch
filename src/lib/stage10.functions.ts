@@ -1,3 +1,4 @@
+import { resolveStructuredRecord, saveStructuredStage } from "./structured-stage-save";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
@@ -7,7 +8,7 @@ import { STAGE_10_SYSTEM_PROMPT, buildStage10UserMessage } from "./stage10-promp
 import { applyStage10CodeGate } from "./stage12-filter";
 
 import { countPropositions } from "./count-helpers";
-import { filterStructuredStream, resolveCurrentProposition, splitStructured, structuredInstruction, validateStructured } from "./structured-output";
+import { filterStructuredStream, resolveCurrentProposition, splitStructured, structuredInstruction } from "./structured-output";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertSessionAccess } from "@/lib/auth-helpers.server";
 import { assertUpstreamStageOutput } from "./pipeline-integrity";
@@ -79,22 +80,26 @@ export const runStage10 = createServerFn({ method: "POST" })
     });
     const finalOutput = gated.output;
 
-    const { error: updateErr } = await supabaseAdmin
+    const { error: updateErr } = await saveStructuredStage(
+      () => supabaseAdmin
       .from("sessions")
       .update({
         stage_10_output: finalOutput,
         stage_10_error: null,
         stage_status: "complete:10",
         ...(() => {
-          const v = validateStructured("10", splitStructured(sink.raw).block, {
-            expectedCount: propositionCount,
+          const v = resolveStructuredRecord("10", splitStructured(sink.raw).block, finalOutput, {
+            expectedCount: gated.scores.length,
             current,
             isPreflight: session.is_preflight_test === true,
           });
           return { stage_10_structured: v.structured, stage_10_structured_error: v.error };
         })(),
       } as never)
-      .eq("id", data.sessionId);
+      .eq("id", data.sessionId),
+      (message) => supabaseAdmin.from("sessions").update({ stage_10_error: message }).eq("id", data.sessionId),
+      "Stage 10 structured output save",
+    );
     if (updateErr) throw new Error(`Failed to save Stage 10 output: ${updateErr.message}`);
 
     yield { done: true as const, output: finalOutput };

@@ -1,9 +1,10 @@
+import { resolveStructuredRecord, saveStructuredStage } from "./structured-stage-save";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { streamClaude } from "./claude.server";
 import { STAGE_13_SYSTEM_PROMPT, buildStage13UserMessage } from "./stage13-prompt";
-import { resolveCurrentProposition, splitStructured, structuredInstruction, validateStructured } from "./structured-output";
+import { resolveCurrentProposition, splitStructured, structuredInstruction } from "./structured-output";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertSessionAccess } from "@/lib/auth-helpers.server";
 import { assertUpstreamStageOutput } from "./pipeline-integrity";
@@ -131,13 +132,14 @@ export const runStage13 = createServerFn({ method: "POST" })
       throw new Error(msg);
     }
 
-    const v = validateStructured("13", structuredBlock, { current });
+    const v = resolveStructuredRecord("13", structuredBlock, output, { current });
     // Assemble before the completion update: the database locks that same write.
     // No later-stage execution, unlocked window, backfill or second model call.
     const diagnosticDocument = session.run_mode === "diagnostic"
       ? { stage_16_valuation_output: buildDiagnosticValuation({ ...session, stage_13_structured: v.structured }) }
       : {};
-    const { error: ue } = await supabaseAdmin
+    const { error: ue } = await saveStructuredStage(
+      () => supabaseAdmin
       .from("sessions")
       .update({
         stage_13_output: output,
@@ -147,7 +149,10 @@ export const runStage13 = createServerFn({ method: "POST" })
         stage_13_structured_error: v.error,
         ...diagnosticDocument,
       } as never)
-      .eq("id", data.sessionId);
+      .eq("id", data.sessionId),
+      (message) => supabaseAdmin.from("sessions").update({ stage_13_error: message }).eq("id", data.sessionId),
+      "Stage 13 structured output save",
+    );
     if (ue) throw new Error(`Failed to save Stage 13 output: ${ue.message}`);
 
     yield { done: true as const, output };
