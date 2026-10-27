@@ -3,8 +3,7 @@ import { BASELINE_STAGES, BASELINE_ERRORS, INFINITI_PROPOSITION, parseBaseline, 
 import { STAGE_10_SYSTEM_PROMPT } from './stage10-prompt';
 import { STAGE_11_SYSTEM_PROMPT } from './stage11-prompt';
 import { STAGE_13_SYSTEM_PROMPT } from './stage13-prompt';
-import { Stage10Schema, Stage11Schema, Stage13Schema } from './structured-output';
-import { callClaude } from './claude.server';
+import { callClaude, type ClaudeCallArgs } from './claude.server';
 
 const sb = supabaseAdmin;
 const SESSION = '3470f1ad-b322-4230-8e3d-bf0072e95b7a';
@@ -52,6 +51,12 @@ function example(stage: BaselineStage) {
   return '{"credibility":{"product_truth_alignment":{"score":1,"justification":"evidence"},"audience_permission":{"score":1,"justification":"evidence"},"tonal_compatibility":{"score":1,"justification":"evidence"},"behavioural_capacity":{"score":1,"justification":"evidence"},"cultural_authority":{"score":1,"justification":"evidence"},"historical_consistency":{"score":1,"justification":"evidence"}},"most_vulnerable":"historical_consistency"}';
 }
 
+function assess(stage: BaselineStage,args:Omit<ClaudeCallArgs,'stageNumber'>) {
+  if(stage==='10')return callClaude({...args,stageNumber:'10'});
+  if(stage==='11')return callClaude({...args,stageNumber:'11'});
+  return callClaude({...args,stageNumber:'13'});
+}
+
 export async function runBaselineJob(jobId:string, emit:(value:object)=>void) {
   let job=await loadBaseline(jobId);
   if(job.status==='complete'||job.status==='failed'||job.status==='paused') return {status:job.status,error:job.error_message,version:job.published_version};
@@ -75,9 +80,9 @@ export async function runBaselineJob(jobId:string, emit:(value:object)=>void) {
         let raw='';
         try {
           const prompt=stage==='10'?STAGE_10_SYSTEM_PROMPT:stage==='11'?STAGE_11_SYSTEM_PROMPT:STAGE_13_SYSTEM_PROMPT;
-          raw=await callClaude({systemPrompt:prompt+'\nADD-ON OUTPUT OVERRIDE: return ONLY the single JSON baseline object specified below, no candidate set, prose document, new proposition or downstream action.',
+          raw=await assess(stage,{systemPrompt:prompt+'\nADD-ON OUTPUT OVERRIDE: return ONLY the single JSON baseline object specified below, no candidate set, prose document, new proposition or downstream action.',
             userMessage:`BRAND: Infiniti\nCATEGORY: premium automotive\nBUY-SIDE CONTEXT: Jaguar × Infiniti; evaluate the existing Infiniti position, NOT the proposed merged Jaguar campaign.\nEXACT BG-DERIVED CURRENT PROPOSITION: ${job.proposition}\nAssess only this baseline under the unchanged rubric. Do not rewrite the proposition. Use only the evidence below; keep unverified/client-supplied qualifiers and explicitly identify missing evidence. Do not import Jaguar product truths, heritage or performance into Infiniti. Competitor positioning not documented must be labelled a hypothesis, never a verified occupancy claim. Missing evidence is a limitation, not proof of a false claim.\nSOURCE MANIFEST:\n${JSON.stringify(job.source_manifest)}\nPRIOR BASELINE ASSESSMENTS:\n${JSON.stringify(job.results)}\nReturn JSON in this exact shape (scores/justifications are examples, replace them with your assessment):\n${example(stage)}\n${last?`Previous response failed schema validation: ${last}. Repair the schema, not the proposition.`:''}`,
-            stageNumber:stage,stageLabel:`Infiniti baseline ${stage}`,model:'claude-opus-5',maxTokens:64000,effort:'high',skipUniversalWrapper:true});
+            stageLabel:`Infiniti baseline ${stage}`,model:'claude-opus-5',maxTokens:64000,effort:'high',skipUniversalWrapper:true});
           const result=parseBaseline(stage,raw,job.proposition,job.source_manifest as Record<string,unknown>);
           if(heartbeatError)throw new Error(heartbeatError);
           await checked(()=>sb.from('current_position_addon_attempts').update({raw_output:raw,result}).eq('id',record.id));
