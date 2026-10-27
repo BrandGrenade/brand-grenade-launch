@@ -3,7 +3,7 @@ import { BASELINE_STAGES, BASELINE_ERRORS, INFINITI_PROPOSITION, parseBaseline, 
 import { STAGE_10_SYSTEM_PROMPT } from './stage10-prompt';
 import { STAGE_11_SYSTEM_PROMPT } from './stage11-prompt';
 import { STAGE_13_SYSTEM_PROMPT } from './stage13-prompt';
-import { callClaude, type ClaudeCallArgs } from './claude.server';
+import { callClaude } from './claude.server';
 
 const sb = supabaseAdmin;
 const SESSION = '3470f1ad-b322-4230-8e3d-bf0072e95b7a';
@@ -51,7 +51,7 @@ function example(stage: BaselineStage) {
   return '{"credibility":{"product_truth_alignment":{"score":1,"justification":"evidence"},"audience_permission":{"score":1,"justification":"evidence"},"tonal_compatibility":{"score":1,"justification":"evidence"},"behavioural_capacity":{"score":1,"justification":"evidence"},"cultural_authority":{"score":1,"justification":"evidence"},"historical_consistency":{"score":1,"justification":"evidence"}},"most_vulnerable":"historical_consistency"}';
 }
 
-function assess(stage: BaselineStage,args:Omit<ClaudeCallArgs,'stageNumber'>) {
+function assess(stage: BaselineStage,args:Omit<Parameters<typeof callClaude>[0],'stageNumber'>) {
   if(stage==='10')return callClaude({...args,stageNumber:'10'});
   if(stage==='11')return callClaude({...args,stageNumber:'11'});
   return callClaude({...args,stageNumber:'13'});
