@@ -24,7 +24,7 @@ export const LIST_COLS: Record<RunTable, string> = {
 };
 
 /** One retry on a failed/transient read, then a named error the Hub can show. */
-async function retryRead<T extends { error: unknown }>(fn: () => PromiseLike<T>, name: string): Promise<T> {
+async function retryRead<T extends { error: unknown; data?: any }>(fn: () => PromiseLike<T>, name: string): Promise<T> {
   let last: T | null = null;
   for (let i = 0; i < 2; i++) {
     last = await fn();
