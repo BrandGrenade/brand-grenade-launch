@@ -52,6 +52,8 @@ export interface Db {
   findRun(runId: string): Promise<RunRec | null>;
   versions(table: RunTable, runId: string): Promise<VersionRow[]>;
   /** Current version per run from version timestamps only (list_runs). */
+  /** Version rows without content (field, reason, created_at). */
+  versionMeta?(table: RunTable, runId: string): Promise<VersionRow[]>;
   versionCounts?(table: RunTable, runIds: string[]): Promise<Map<string, number>>;
   claims(synthRunId: string): Promise<Row[]>;
   stimulus(runId: string): Promise<{ directions: Row[]; prompts: Row[]; orchestrations: Row[] }>;
@@ -470,7 +472,14 @@ async function scopedRun(db: Db, bgClientId: string, runId: string): Promise<Run
   return run;
 }
 async function ctxFor(db: Db, run: RunRec, v: number | undefined): Promise<Ctx> {
-  const vc = versionCtx(VERSIONED.includes(run.table) ? await db.versions(run.table, run.id) : []);
+  // Version history content is only needed to read an earlier version. For the
+  // current version, read history metadata only (timestamps, field, reason).
+  let vc: VersionCtx;
+  if (!VERSIONED.includes(run.table)) vc = versionCtx([]);
+  else if (db.versionMeta) {
+    vc = versionCtx(await db.versionMeta(run.table, run.id));
+    if (v !== undefined && v < vc.current) vc = versionCtx(await db.versions(run.table, run.id));
+  } else vc = versionCtx(await db.versions(run.table, run.id));
   const ver = v ?? vc.current;
   if (ver < 1 || ver > vc.current) throw NOT_FOUND();
   const baseline = run.table === 'sessions' && db.baselineJobs ? baselineAtVersion(await db.baselineJobs(run.id),ver) : null;

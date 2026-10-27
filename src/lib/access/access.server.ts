@@ -93,6 +93,13 @@ export function supabaseDb(sb: any): Db {
       );
       return per.flat();
     },
+    async versionMeta(table, id) {
+      const { data } = await retryRead(
+        () => sb.from("run_output_versions").select("field, version_no, reason, created_at").eq("run_table", table).eq("run_id", id).limit(100000),
+        "version_history_read_failed",
+      );
+      return ((data ?? []) as Omit<VersionRow, "content">[]).map((r) => ({ ...r, content: null }));
+    },
     async versionCounts(table, ids) {
       const counts = new Map<string, number>();
       if (!ids.length) return counts;
@@ -109,13 +116,19 @@ export function supabaseDb(sb: any): Db {
       for (const id of ids) counts.set(id, (sets.get(id)?.size ?? 0) + 1);
       return counts;
     },
+    // Locate the run's Room with id-only lookups in parallel, then read one full row.
     async findRun(id) {
-      for (const t of TABLES) {
-        const { data, error } = await sb.from(t.table).select(cols(t.table)).eq(t.idCol, id).maybeSingle();
-        if (error) throw new AccessError("unavailable", "Temporarily unavailable.");
-        if (data) return rec(t, data);
-      }
-      return null;
+      if (!/^[0-9a-f-]{36}$/i.test(id)) return null;
+      const hits = await Promise.all(
+        TABLES.map(async (t) => {
+          const { data } = await retryRead(() => sb.from(t.table).select(t.idCol).eq(t.idCol, id).maybeSingle(), "run_lookup_failed");
+          return data ? t : null;
+        }),
+      );
+      const t = hits.find(Boolean);
+      if (!t) return null;
+      const { data } = await retryRead(() => sb.from(t.table).select(cols(t.table)).eq(t.idCol, id).maybeSingle(), "run_read_failed");
+      return data ? rec(t, data) : null;
     },
     async versions(table, id) {
       const { data, error } = await sb.from("run_output_versions").select("field, version_no, content, reason, created_at").eq("run_table", table).eq("run_id", id);
