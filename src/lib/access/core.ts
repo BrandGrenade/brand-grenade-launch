@@ -51,6 +51,8 @@ export interface Db {
   listLinkedRuns(bgClientId: string, engagementId: string | null): Promise<RunRec[]>;
   findRun(runId: string): Promise<RunRec | null>;
   versions(table: RunTable, runId: string): Promise<VersionRow[]>;
+  /** Current version per run from version timestamps only (list_runs). */
+  versionCounts?(table: RunTable, runIds: string[]): Promise<Map<string, number>>;
   claims(synthRunId: string): Promise<Row[]>;
   stimulus(runId: string): Promise<{ directions: Row[]; prompts: Row[]; orchestrations: Row[] }>;
   actorName(uid: string): Promise<string | null>;
@@ -545,11 +547,18 @@ export async function handleAccess(
       eng = await db.resolveEngagement(bgClientId, String(params.engagement));
       if (!eng) throw NOT_FOUND();
     }
-    const runs = await db.listLinkedRuns(bgClientId, eng);
+    const runs = (await db.listLinkedRuns(bgClientId, eng)).filter((r) => r.row.link_status === "linked" && r.row.bg_client_id === bgClientId);
+    // Version numbers: one batched timestamp-only read per Room (never version content).
+    const counts = new Map<string, number>();
+    for (const t of VERSIONED) {
+      const ids = runs.filter((r) => r.table === t).map((r) => r.id);
+      if (!ids.length) continue;
+      if (db.versionCounts) for (const [id, n] of await db.versionCounts(t, ids)) counts.set(`${t}:${id}`, n);
+      else for (const id of ids) counts.set(`${t}:${id}`, versionCtx(await db.versions(t, id)).current);
+    }
     const items = [];
     for (const r of runs) {
-      if (r.row.link_status !== "linked" || r.row.bg_client_id !== bgClientId) continue;
-      const vc = versionCtx(VERSIONED.includes(r.table) ? await db.versions(r.table, r.id) : []);
+      const vc = { current: counts.get(`${r.table}:${r.id}`) ?? 1 };
       items.push({
         run_id: r.id,
         room: ROOM_OF[r.table],
