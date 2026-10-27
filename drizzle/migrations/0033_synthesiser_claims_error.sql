@@ -1,0 +1,1 @@
+ALTER TABLE public.synthesiser_runs ADD COLUMN IF NOT EXISTS claims_error text;
