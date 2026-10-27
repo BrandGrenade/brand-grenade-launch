@@ -11,10 +11,10 @@ const SYNTH = '8ac87434-3bad-4921-b605-0b57acb26f54';
 const LAB = '4740d024-9ce8-4757-905b-91767ce2dff0';
 const LAB_V1 = 'e18524c5-b52d-4e17-8216-c162d5440398';
 
-async function checked<T>(operation: () => PromiseLike<{ data: T; error: { message: string } | null }>): Promise<NonNullable<T>> {
+async function checked<T>(operation: () => PromiseLike<{ data: T; error: { message: string } | null }>): Promise<T> {
   let message = '';
   for (let attempt=0;attempt<3;attempt++) {
-    const r=await operation(); if (!r.error && r.data !== null && r.data !== undefined) return r.data; if (!r.error) return [] as NonNullable<T>; message=r.error.message;
+    const r=await operation(); if (!r.error) return r.data; message=r.error.message;
     if(attempt<2) await new Promise(r=>setTimeout(r,500*(attempt+1)));
   }
   throw new Error(`${BASELINE_ERRORS.save}: ${message}`);
@@ -25,6 +25,7 @@ export async function queueInfinitiBaseline(actor: string) {
     checked(()=>sb.from('synthesiser_claims').select('position,heading,claim_text,label,source,source_date').eq('synthesiser_run_id',SYNTH).order('position')),
     checked(()=>sb.from('intelligence_report_versions').select('id,final_report,created_at,reason').eq('session_id',LAB).eq('id',LAB_V1).single()),
   ]);
+  if(!history)throw new Error(`${BASELINE_ERRORS.evidence}: saved v1 report not found`);
   const report=history.final_report ?? '';
   const position=report.indexOf("Infiniti brand's existing positioning");
   const refresh=(claims ?? []).find(c=>c.claim_text.includes("Infiniti's 2023 brand refresh"));
@@ -42,7 +43,9 @@ export async function queueInfinitiBaseline(actor: string) {
 }
 
 export async function loadBaseline(jobId: string) {
-  return checked(()=>sb.from('current_position_addon_jobs').select('*').eq('id',jobId).single());
+  const job=await checked(()=>sb.from('current_position_addon_jobs').select('*').eq('id',jobId).single());
+  if(!job)throw new Error('BASELINE_JOB_NOT_FOUND');
+  return job;
 }
 
 function example(stage: BaselineStage) {
@@ -62,7 +65,10 @@ export async function runBaselineJob(jobId:string, emit:(value:object)=>void) {
   if(job.status==='complete'||job.status==='failed'||job.status==='paused') return {status:job.status,error:job.error_message,version:job.published_version};
   if(job.status==='running'&&job.lease_until&&Date.parse(job.lease_until)>Date.now()) return {status:'running'};
   const lease=crypto.randomUUID();
-  const won=await checked(()=>sb.from('current_position_addon_jobs').update({status:'running',lease_token:lease,lease_until:new Date(Date.now()+180000).toISOString(),heartbeat_at:new Date().toISOString()}).eq('id',jobId).eq('status',job.status).select('id'));
+  const won=await checked(()=>{
+    const claim=sb.from('current_position_addon_jobs').update({status:'running',lease_token:lease,lease_until:new Date(Date.now()+180000).toISOString(),heartbeat_at:new Date().toISOString()}).eq('id',jobId).eq('status',job.status);
+    return (job.lease_token ? claim.eq('lease_token',job.lease_token):claim.is('lease_token',null)).select('id');
+  });
   if(!won?.length)return {status:'running'};
   let heartbeatError:string|null=null;
   const timer=setInterval(()=>{ void checked(()=>sb.from('current_position_addon_jobs').update({heartbeat_at:new Date().toISOString(),lease_until:new Date(Date.now()+180000).toISOString()}).eq('id',jobId).eq('lease_token',lease)).catch(e=>{heartbeatError=String(e);}); },30000);
@@ -77,6 +83,7 @@ export async function runBaselineJob(jobId:string, emit:(value:object)=>void) {
       for(let attempt=first;attempt<=3;attempt++) {
         emit({stage,attempt,message:`Assessing Infiniti current position — Stage ${stage}`});
         const record=await checked(()=>sb.from('current_position_addon_attempts').insert({job_id:jobId,stage,attempt}).select('id').single());
+        if(!record)throw new Error(`${BASELINE_ERRORS.save}: attempt record was not returned`);
         let raw='';
         try {
           const prompt=stage==='10'?STAGE_10_SYSTEM_PROMPT:stage==='11'?STAGE_11_SYSTEM_PROMPT:STAGE_13_SYSTEM_PROMPT;

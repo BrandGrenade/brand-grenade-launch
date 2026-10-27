@@ -85,7 +85,6 @@ const stage13Record = z
 
 const withText = (record: z.ZodTypeAny) => z.object({ record, text: str }).passthrough();
 
-const currentPosition = z.object({ status: z.literal("scored"), line: str }).passthrough();
 
 export const CONTRACTS: OutputContract[] = [
   // ── Room 00 · Research Synthesiser ─────────────────────────────────────
