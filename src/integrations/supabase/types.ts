@@ -2876,6 +2876,7 @@ export type Database = {
           brand_name: string
           category: string | null
           claim_count: number
+          claims_error: string | null
           claims_stored: boolean
           created_at: string
           engagement_id: string | null
@@ -2896,6 +2897,7 @@ export type Database = {
           brand_name: string
           category?: string | null
           claim_count?: number
+          claims_error?: string | null
           claims_stored?: boolean
           created_at?: string
           engagement_id?: string | null
@@ -2916,6 +2918,7 @@ export type Database = {
           brand_name?: string
           category?: string | null
           claim_count?: number
+          claims_error?: string | null
           claims_stored?: boolean
           created_at?: string
           engagement_id?: string | null

@@ -25,10 +25,19 @@ async function storeClaims(runId: string, claims: SynthesisedClaim[]) {
   if (!run || run.claims_stored) return;
   const rows = claimRecords(runId, claims);
   if (rows.length) {
-    const { error } = await supabase.from("synthesiser_claims").insert(rows);
-    if (error) return;
+    let { error } = await supabase.from("synthesiser_claims").insert(rows);
+    if (error) ({ error } = await supabase.from("synthesiser_claims").insert(rows));
+    if (error) {
+      // Never block the user, but never fail silently either: the error is
+      // recorded on the run so the missing claims are visible and repairable.
+      await supabase
+        .from("synthesiser_runs")
+        .update({ claims_error: `Platform structured-data save error after retry: ${error.message}` })
+        .eq("id", runId);
+      return;
+    }
   }
-  await supabase.from("synthesiser_runs").update({ claims_stored: true }).eq("id", runId);
+  await supabase.from("synthesiser_runs").update({ claims_stored: true, claims_error: null }).eq("id", runId);
 }
 
 export type SynthesiserRunStatus = "in_progress" | "applied";
