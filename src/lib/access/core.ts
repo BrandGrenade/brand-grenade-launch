@@ -1,4 +1,5 @@
 import { checkCurrentPosition, checkStageCurrentPosition } from "@/lib/structured-output";
+import { recoverSavedStage, recoverStage12 } from "../saved-stage-records";
 import { parseStage22Architecture, parseStage22Assets } from "./stage22-parse";
 // Run access remains read-only. Only the separately scoped ensure_client
 // request may create a client and its Hub mapping; it cannot touch runs.
@@ -214,7 +215,11 @@ async function buildOutput(outputId: string, c: Ctx): Promise<Built> {
     const t = text(c.get(tf));
     const s = c.get(sf);
     if (t && present(s)) return { content_status: "structured", schema_version: `stage${m[1]}.structured.v1`, content: { record: s, text: t }, evidence: [], fields: [tf, sf] };
-    if (t) return { content_status: "text_only", schema_version: `stage${m[1]}.text.v1`, content: { text: t }, evidence: [], fields: [tf] };
+    if (t && n !== "9" && typeof run.row.created_at === "string" && run.row.created_at >= "2026-10-15") {
+      const recovered = recoverSavedStage(n as "10" | "11" | "13", t);
+      if (recovered) return { content_status: "structured", schema_version: `stage${m[1]}.structured.v1`, content: { record: recovered, text: t }, evidence: [], fields: [tf] };
+    }
+    if (t) return { content_status: "text_only", schema_version: `stage${m[1]}.text.v1`, content: { text: t, ...(c.get(`stage_${n}_structured_error`) ? { platform_error: c.get(`stage_${n}_structured_error`) } : {}) }, evidence: [], fields: [tf] };
     return { content_status: "not_produced", schema_version: `stage${m[1]}.text.v1`, content: null, evidence: [], fields: [tf] };
   }
   if (outputId.startsWith("stage16.")) {
@@ -226,7 +231,15 @@ async function buildOutput(outputId: string, c: Ctx): Promise<Built> {
     case "stage04b": return textOutput("stage_4b_output", "stage04b.text.v1", c);
     case "stage22_architecture": return stage22Output("stage_22_brand_architecture", "stage22_architecture", parseStage22Architecture, c);
     case "stage22_assets": return stage22Output("stage_22_distinctive_assets", "stage22_assets", parseStage22Assets, c);
-    case "stage12_propositions": return jsonOutput("stage_12_smps", "stage12_propositions.v1", c);
+    case "stage12_propositions": {
+      const stored = c.get("stage_12_smps");
+      if (present(stored)) return jsonOutput("stage_12_smps", "stage12_propositions.v1", c);
+      const document = text(c.get("stage_12_output"));
+      const recovered = document ? recoverStage12(document) : null;
+      return recovered
+        ? { content_status: "structured", schema_version: "stage12_propositions.v1", content: recovered, evidence: [], fields: ["stage_12_output"] }
+        : { content_status: document ? "partial" : "not_produced", schema_version: "stage12_propositions.v1", content: document ? { platform_error: "Saved Stage 12 document could not be reconstructed safely" } : null, evidence: [], fields: ["stage_12_output"] };
+    }
     case "stage21_channels": return jsonOutput("stage_21_outputs", "stage21_channels.v1", c);
     case "stage09_loc": {
       const fields = ["loc_engine_outputs", "loc_validation", "loc_decision_packages"];

@@ -104,7 +104,7 @@ export function recoverStage11(text: string): Record<string, unknown> | null {
 
 export function recoverStage13(text: string): Record<string, unknown> | null {
   const t = flat(text);
-  const section = (n: string) => t.match(new RegExp(`^## Section ${n}[^\\n]*\\n+([\\s\\S]*?)(?=\\n## Section |$)`,"m"))?.[1]?.replace(/^---\s*$/gm, "").trim() ?? "";
+  const section = (n: string) => t.match(new RegExp(`^## Section ${n}[^\\n]*\\n+([\\s\\S]*?)(?=\\n## Section |(?![\\s\\S]))`,"m"))?.[1]?.replace(/^---\s*$/gm, "").trim() ?? "";
   const values = Object.fromEntries(credibility.map((k,i)=> {
     const m = t.match(new RegExp(`^${credibilityLabels[i]}\\s*[—–]\\s*(\\d+)(?:\\/10)?\\.\\s*([^\\n]+)`,"im"));
     return [k,{score:Number(m?.[1]),justification:m?.[2] ?? ""}];
