@@ -13,6 +13,27 @@ const TABLES: { table: RunTable; idCol: string }[] = [
 // Retired Intelligence Lab layer fields are never selected.
 const INTEL_COLS =
   "id, brand_name, status, final_report, created_at, updated_at, completed_at, hub_job, bg_client_id, engagement_id, link_status";
+const BASE_LIST = "brand_name, status, created_at, bg_client_id, engagement_id, link_status";
+export const LIST_COLS: Record<RunTable, string> = {
+  synthesiser_runs: `id, ${BASE_LIST}`,
+  intelligence_sessions: `id, ${BASE_LIST}`,
+  briefing_room_workspaces: `id, ${BASE_LIST}, locked_at, earlier_versions_kept`,
+  saved_briefs: "brief_id, brand_name, created_at, bg_client_id, engagement_id, link_status",
+  sessions: `id, ${BASE_LIST}, locked_at, earlier_versions_kept, run_mode, diagnostic_status, brief_type, current_proposition, current_proposition_source, current_proposition_date, deal_transaction_type, deal_target_brands, deal_decision_questions, deal_competitors, deal_decision_date, deal_depth`,
+  stimulus_runs: "id, status, created_at, run_mode, locked_at, bg_client_id, engagement_id, link_status",
+};
+
+/** One retry on a failed/transient read, then a named error the Hub can show. */
+async function retryRead<T extends { error: unknown; data?: any }>(fn: () => PromiseLike<T>, name: string): Promise<T> {
+  let last: T | null = null;
+  for (let i = 0; i < 2; i++) {
+    last = await fn();
+    if (!last.error) return last;
+    if (i === 0) await new Promise((r) => setTimeout(r, 250));
+  }
+  console.error("bg-access", name, (last?.error as { message?: string })?.message ?? "error");
+  throw new AccessError("unavailable", `Temporarily unavailable (${name}). Retry shortly.`);
+}
 
 export async function sha256Hex(s: string): Promise<string> {
   const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s));
@@ -57,16 +78,36 @@ export function supabaseDb(sb: any): Db {
       const { data } = await sb.from("bg_external_ids").select("engagement_id").eq("system", "hub_job").eq("bg_client_id", clientId).eq("external_id", ref).maybeSingle();
       return data?.engagement_id ?? null;
     },
+    // list_runs reads summary columns only, all Rooms in parallel; full rows
+    // (megabytes of stage outputs) are read only for a single-run request.
     async listLinkedRuns(clientId, eng) {
-      const out: RunRec[] = [];
-      for (const t of TABLES) {
-        let q = sb.from(t.table).select(cols(t.table)).eq("bg_client_id", clientId).eq("link_status", "linked");
-        if (eng) q = q.eq("engagement_id", eng);
-        const { data, error } = await q.order("created_at", { ascending: false }).limit(500);
-        if (error) throw new AccessError("unavailable", "Temporarily unavailable.");
-        for (const r of data ?? []) out.push(rec(t, r));
+      const per = await Promise.all(
+        TABLES.map(async (t) => {
+          const { data } = await retryRead(() => {
+            let q = sb.from(t.table).select(LIST_COLS[t.table]).eq("bg_client_id", clientId).eq("link_status", "linked");
+            if (eng) q = q.eq("engagement_id", eng);
+            return q.order("created_at", { ascending: false }).limit(500);
+          }, "list_runs_read_failed");
+          return (data ?? []).map((r: Record<string, unknown>) => rec(t, r));
+        }),
+      );
+      return per.flat();
+    },
+    async versionCounts(table, ids) {
+      const counts = new Map<string, number>();
+      if (!ids.length) return counts;
+      const { data } = await retryRead(
+        () => sb.from("run_output_versions").select("run_id, created_at").eq("run_table", table).in("run_id", ids).limit(100000),
+        "list_runs_versions_failed",
+      );
+      const sets = new Map<string, Set<string>>();
+      for (const r of data ?? []) {
+        const s = sets.get(String(r.run_id)) ?? new Set<string>();
+        s.add(String(r.created_at));
+        sets.set(String(r.run_id), s);
       }
-      return out;
+      for (const id of ids) counts.set(id, (sets.get(id)?.size ?? 0) + 1);
+      return counts;
     },
     async findRun(id) {
       for (const t of TABLES) {
@@ -109,6 +150,8 @@ export function supabaseDb(sb: any): Db {
   };
 }
 
+export const ACCESS_DEADLINE_MS = 20_000;
+
 function errorBody(requestId: string, code: AccessError["code"], message: string) {
   return { request_id: requestId, error_code: code, message };
 }
@@ -133,7 +176,13 @@ export async function handleAccessRequest(request: Request): Promise<Response> {
     } catch {
       throw new AccessError("invalid_request", "Body must be JSON.");
     }
-    const out = await handleAccess(supabaseDb(sb), key, body, log);
+    // Hard deadline: answer with a named error well before the Hub's timeout,
+    // instead of hanging with no answer.
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const deadline = new Promise<never>((_, rej) => {
+      timer = setTimeout(() => rej(new AccessError("unavailable", "access_timeout: the request took too long. Retry shortly.")), ACCESS_DEADLINE_MS);
+    });
+    const out = await Promise.race([handleAccess(supabaseDb(sb), key, body, log), deadline]).finally(() => clearTimeout(timer));
     res = Response.json({ request_id: requestId, ...out }, { headers: { "cache-control": "no-store" } });
   } catch (e) {
     const err = e instanceof AccessError ? e : new AccessError("unavailable", "Temporarily unavailable.");

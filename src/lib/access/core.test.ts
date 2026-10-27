@@ -275,3 +275,21 @@ describe("BG access point", () => {
     expect(src).toContain('from("bg_access_log").insert');
   });
 });
+
+describe("list_runs performance guard", () => {
+  it("uses batched version counts and never reads version content when available", async () => {
+    const db = makeDb();
+    let contentReads = 0;
+    const counted: string[] = [];
+    db.versions = async () => { contentReads++; return []; };
+    db.versionCounts = async (_t, ids) => { counted.push(...ids); return new Map(ids.map((i) => [i, i === RUN ? 97 : 1])); };
+    const r = await call(db, HUB, "list_runs", { client_ref: "hub-c1" });
+    expect(contentReads).toBe(0);
+    expect((r.content as any).runs.find((x: any) => x.run_id === RUN).version).toBe(97);
+    expect(counted).toContain(RUN);
+  });
+  it("list query never selects full stage outputs", async () => {
+    const { LIST_COLS } = await import("./access.server");
+    for (const cols of Object.values(LIST_COLS)) expect(cols).not.toMatch(/\*|_output|final_report/);
+  });
+});
