@@ -1,6 +1,7 @@
 import { checkCurrentPosition, checkStageCurrentPosition } from "@/lib/structured-output";
 import { recoverSavedStage, recoverStage12 } from "../saved-stage-records";
 import { parseStage22Architecture, parseStage22Assets } from "./stage22-parse";
+import { baselineAtVersion } from '../current-position-addon';
 // Run access remains read-only. Only the separately scoped ensure_client
 // request may create a client and its Hub mapping; it cannot touch runs.
 import { z } from "zod";
@@ -53,6 +54,7 @@ export interface Db {
   claims(synthRunId: string): Promise<Row[]>;
   stimulus(runId: string): Promise<{ directions: Row[]; prompts: Row[]; orchestrations: Row[] }>;
   actorName(uid: string): Promise<string | null>;
+  baselineJobs?(runId: string): Promise<Row[]>;
 }
 
 export type Key = { id: string; scope: Scope };
@@ -161,6 +163,7 @@ type Ctx = {
   v: number;
   get: (field: string) => unknown;
   db: Db;
+  baseline: Row | null;
 };
 const isDiagnostic = (run: RunRec) => run.table === "sessions" && run.row.run_mode === "diagnostic";
 const runStatus = (run: RunRec) => (isDiagnostic(run) ? (run.row.diagnostic_status as string | null) : (run.row.status as string | null) ?? null);
@@ -213,11 +216,13 @@ async function buildOutput(outputId: string, c: Ctx): Promise<Built> {
     const n = String(Number(m[1]));
     const tf = `stage_${n}_output`, sf = `stage_${n}_structured`;
     const t = text(c.get(tf));
-    const s = c.get(sf);
+    const original = c.get(sf);
+    const baseline = (c.baseline?.results as Row | undefined)?.[n];
+    const s = baseline && original && typeof original === 'object' ? { ...original, current_position: baseline } : original;
     if (t && present(s)) return { content_status: "structured", schema_version: `stage${m[1]}.structured.v1`, content: { record: s, text: t }, evidence: [], fields: [tf, sf] };
     if (t && n !== "9" && typeof run.row.created_at === "string" && run.row.created_at >= "2026-10-15") {
       const recovered = recoverSavedStage(n as "10" | "11" | "13", t);
-      if (recovered) return { content_status: "structured", schema_version: `stage${m[1]}.structured.v1`, content: { record: recovered, text: t }, evidence: [], fields: [tf] };
+      if (recovered) return { content_status: "structured", schema_version: `stage${m[1]}.structured.v1`, content: { record: baseline ? {...recovered,current_position:baseline}:recovered, text: t }, evidence: [], fields: [tf] };
     }
     if (t) return { content_status: "text_only", schema_version: `stage${m[1]}.text.v1`, content: { text: t, ...(c.get(`stage_${n}_structured_error`) ? { platform_error: c.get(`stage_${n}_structured_error`) } : {}) }, evidence: [], fields: [tf] };
     return { content_status: "not_produced", schema_version: `stage${m[1]}.text.v1`, content: null, evidence: [], fields: [tf] };
@@ -261,7 +266,7 @@ async function buildOutput(outputId: string, c: Ctx): Promise<Built> {
     }
     case "stage10_current_position": {
       const s = c.get("stage_10_structured") as Record<string, unknown> | null;
-      const cp = s?.current_position as Record<string, unknown> | undefined;
+      const cp = ((c.baseline?.results as Row | undefined)?.['10'] ?? s?.current_position) as Record<string, unknown> | undefined;
       const fields = ["stage_10_structured"];
       if (!cp) return { content_status: "not_produced", schema_version: "stage10_current_position.v1", content: null, evidence: [], fields };
       if (cp.status !== "scored") {
@@ -287,7 +292,7 @@ async function buildOutput(outputId: string, c: Ctx): Promise<Built> {
       const sv = `${outputId}.v1`;
       const fields = [`stage_${n}_structured`];
       const s = c.get(`stage_${n}_structured`) as Record<string, unknown> | null;
-      const cp = s?.current_position as Record<string, unknown> | undefined;
+      const cp = ((c.baseline?.results as Row | undefined)?.[n] ?? s?.current_position) as Record<string, unknown> | undefined;
       if (!cp) return { content_status: "not_produced", schema_version: sv, content: null, evidence: [], fields };
       if (cp.status !== "scored") {
         return { content_status: "not_produced", schema_version: sv, content: { status: cp.status ?? null, reason: cp.reason ?? null }, evidence: [], fields };
@@ -466,7 +471,8 @@ async function ctxFor(db: Db, run: RunRec, v: number | undefined): Promise<Ctx> 
   const vc = versionCtx(VERSIONED.includes(run.table) ? await db.versions(run.table, run.id) : []);
   const ver = v ?? vc.current;
   if (ver < 1 || ver > vc.current) throw NOT_FOUND();
-  return { run, vc, v: ver, db, get: (f) => fieldAt(run, vc, ver, f) };
+  const baseline = run.table === 'sessions' && db.baselineJobs ? baselineAtVersion(await db.baselineJobs(run.id),ver) : null;
+  return { run, vc, v: ver, db, baseline, get: (f) => fieldAt(run, vc, ver, f) };
 }
 
 export async function handleAccess(

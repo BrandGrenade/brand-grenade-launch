@@ -5,7 +5,7 @@
 // field the Hub relies on. contracts.test.ts proves every allow-list entry
 // has a contract and that real JLR payloads satisfy them.
 import { z } from "zod";
-import { Stage9Schema } from "../structured-output";
+import { Stage9Schema, Stage10CurrentPositionSchema, Stage11CurrentPositionSchema, Stage13CurrentPositionSchema } from "../structured-output";
 import { Stage12PropositionsSchema } from "../saved-stage-records";
 
 export type ContractStatus = "structured" | "text_only" | "unavailable" | "conditional";
@@ -185,12 +185,12 @@ export const CONTRACTS: OutputContract[] = [
     note: "LOC engine outputs, validation and decision packages.",
   },
   { output_id: "stage10", schema_version: "stage10.structured.v1", status: "structured", content: withText(stage10Record), note: "Six-dimension scores per candidate." },
-  { output_id: "stage10_current_position", schema_version: "stage10_current_position.v1", status: "conditional", content: currentPosition, note: "Deal briefs only; not_produced on Campaign briefs." },
+  { output_id: "stage10_current_position", schema_version: "stage10_current_position.v1", status: "conditional", content: Stage10CurrentPositionSchema, note: "Deal baseline or explicitly published version-aware Campaign add-on; otherwise not_produced." },
   { output_id: "stage11", schema_version: "stage11.structured.v1", status: "structured", content: withText(stage11Record), note: "T1–T8 forcing tests per candidate with verdicts." },
-  { output_id: "stage11_current_position", schema_version: "stage11_current_position.v1", status: "conditional", content: currentPosition, note: "Deal briefs only; not_produced on Campaign briefs." },
+  { output_id: "stage11_current_position", schema_version: "stage11_current_position.v1", status: "conditional", content: Stage11CurrentPositionSchema, note: "Deal baseline or explicitly published version-aware Campaign add-on; otherwise not_produced." },
   { output_id: "stage12_propositions", schema_version: "stage12_propositions.v1", status: "structured", content: Stage12PropositionsSchema, note: "Proposition cards with strategic quality scores." },
   { output_id: "stage13", schema_version: "stage13.structured.v1", status: "structured", content: withText(stage13Record), note: "Credibility verdict, ownership answers and commitments." },
-  { output_id: "stage13_current_position", schema_version: "stage13_current_position.v1", status: "conditional", content: currentPosition, note: "Deal briefs only; not_produced on Campaign briefs." },
+  { output_id: "stage13_current_position", schema_version: "stage13_current_position.v1", status: "conditional", content: Stage13CurrentPositionSchema, note: "Deal baseline or explicitly published version-aware Campaign add-on; otherwise not_produced." },
   { output_id: "stage16.agency", schema_version: "stage16.document.v1", status: "text_only", content: textDoc, note: "Final document; served as text." },
   { output_id: "stage16.consulting", schema_version: "stage16.document.v1", status: "text_only", content: textDoc, note: "Final document; served as text." },
   { output_id: "stage16.workshop", schema_version: "stage16.document.v1", status: "text_only", content: textDoc, note: "Final document; served as text." },

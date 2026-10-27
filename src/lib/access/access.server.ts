@@ -101,6 +101,11 @@ export function supabaseDb(sb: any): Db {
       const { data } = await sb.rpc("hub_actor", { _uid: uid });
       return typeof data === "string" && data ? data : null;
     },
+    async baselineJobs(id) {
+      const {data,error}=await sb.from('current_position_addon_jobs').select('id,status,published_version,results,source_manifest,error_code,error_message').eq('session_id',id).eq('status','complete');
+      if(error)throw new AccessError('unavailable','Baseline evidence temporarily unavailable.');
+      return data ?? [];
+    },
   };
 }
 
