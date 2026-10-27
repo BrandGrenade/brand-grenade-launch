@@ -88,10 +88,12 @@ export function recoverStage11(text: string): Record<string, unknown> | null {
     }
     const verdict = line(b, "SMP VERDICT");
     if (!verdict) return null;
+    const rewriteLine = b.match(/^REWRITE(?:\s*\([^)]*\))?:\s*[*_]*["“]([^"”\n]+)["”]/im)?.[1];
+    if (/REWRITTEN/.test(verdict) && !rewriteLine) return null;
     return { smp: h[1], field_name: h[2], iconic_tier: /ICONIC TIER FLAG:\s*YES/i.test(b), tests, verdict,
       fatal: list(b.match(/\[FATAL:\s*([^\]]+)\]/i)?.[1] ?? null), flags: list(b.match(/\[FLAGS:\s*([^\]]+)\]/i)?.[1] ?? null),
       exposure_note: line(b,"EXPOSURE NOTE"), strategic_note: line(b,"STRATEGIC NOTE"),
-      rewrite: null, iconic_final: line(b,"ICONIC TIER FINAL STATUS"), source_text: b };
+      rewrite: rewriteLine ? {line:rewriteLine,reason:line(b,"REWRITE REASON") ?? "Not separately recorded in saved text"} : null, iconic_final: line(b,"ICONIC TIER FINAL STATUS"), source_text: b };
   });
   const expected = Number(line(flat(text), "PROPOSITIONS RECEIVED FROM STAGE 10"));
   if (!expected || result.length !== expected || result.some(b=>!b)) return null;
@@ -99,7 +101,10 @@ export function recoverStage11(text: string): Record<string, unknown> | null {
   const surviving = result.filter(b=>b && !/ELIMINATED/.test(b.verdict ?? ""));
   const declared = Number(flat(text).match(/Surviving set size:\s*(\d+)/i)?.[1]);
   if (declared !== surviving.length) return null;
-  return { blocks: result, surviving_set: surviving.map(b=>b?.smp), exposed_count: Number(flat(text).match(/Of which EXPOSED:\s*(\d+)/i)?.[1]), divergence_preserved: /Divergence preserved post-rewrite:\s*YES/i.test(text), recovery: "saved_text" };
+  const exposed = Number(flat(text).match(/Of which EXPOSED:\s*(\d+)/i)?.[1]);
+  const divergence = flat(text).match(/Divergence preserved post-rewrite:\s*(YES|NO)/i)?.[1];
+  if (!Number.isInteger(exposed) || !divergence) return null;
+  return { blocks: result, surviving_set: surviving.map(b=>b?.rewrite?.line ?? b?.smp), exposed_count: exposed, divergence_preserved: divergence.toUpperCase()==="YES", recovery: "saved_text" };
 }
 
 export function recoverStage13(text: string): Record<string, unknown> | null {
