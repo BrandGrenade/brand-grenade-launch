@@ -7,3 +7,9 @@ Previous Stage 16/22 work completed and verified in the preceding conversation.
 3. [x] Add reliable structured save retry and recorded platform errors; regression tests.
 4. [x] Call list_runs and actual preview HTTP access point for JLR v96; all five outputs structured, Stage 11 has all eight tests, unchanged session row. Stage 12 schema in docs/hub-structured-evidence.md.
 5. [x] Published with authorization; actual live HTTP list_runs returned JLR v96 and all five get_output responses were structured (Stage 10: six candidates; Stage 11: six blocks, each with eight tests; Stage 12: four cards). All 415 tests passed; JLR row unchanged; temporary verification key revoked.
+
+## Infiniti current-position add-on
+
+- [x] Checked existing runners and live controls: JLR is locked, the access version is 96, Stage 11/13 baselines are Deal-only, and historical null values need explicit preservation. Existing runners cannot safely perform this add-on.
+- [x] Checked the named research: saved Infiniti audience claims cite September 2021 and the experience refresh cites 2023, but source_date fields are null; neither is a verified current brand proposition. Minimum new assessment work is baseline-only 10/11/13, using Infiniti rather than Jaguar evidence.
+- [ ] Implement and execute a version-aware baseline add-on after review of the plan; no existing stage execution, run-data changes, or model calls have occurred.
