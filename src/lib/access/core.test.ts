@@ -115,6 +115,16 @@ describe("BG access point", () => {
     expect(mapLabel("something_else")).toEqual({ bg_label: "something_else", label: "Missing" });
   });
 
+  it('serves repeated Room 00 claims once while preserving all category evidence', async () => {
+    const db = makeDb();
+    db.claims = async () => [{ position: 1, heading: 'H1', claim_text: 'Same', label: 'verified', source: 'one' }, { position: 2, heading: 'H2', claim_text: 'Same', label: 'unverified', source: 'two' }];
+    const result = await call(db, HUB, 'get_output', { client_ref: 'hub-c1', run_id: SYNTH, version: 1, output_id: 'room00.claims' });
+    expect((result.content as any).claims).toHaveLength(1);
+    expect((result.content as any).claims[0].headings).toEqual(['H1', 'H2']);
+    expect((result.content as any).claims[0].occurrences).toHaveLength(2);
+    expect(result.evidence).toHaveLength(1);
+  });
+
   it("checkpoints record approver names and 'not recorded' for legacy approvals", async () => {
     const r = await g(RUN, "stage02");
     const cps = r.checkpoints as any[];

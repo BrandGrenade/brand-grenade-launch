@@ -16,6 +16,14 @@ function database():Db {
 const call=(version:number,output_id='stage10_current_position',db=database())=>handleAccess(db,{id:'key',scope:'hub_tools'},{request:'get_output',params:{client_ref:'hub-jlr',run_id:R,version,output_id}},{scope:null,key_id:null,client_ref:null,run_id:null,request:null,output_id:null} as LogEntry);
 
 describe('version-aware current-position add-on',()=>{
+  it('serves the new valuation only at v97, retaining the v96 Brief', async () => {
+    const db = database();
+    const find = db.findRun;
+    db.findRun = async id => { const run = await find(id); return run ? { ...run, row: { ...run.row, stage_16_valuation_output: 'Exact v96 Brief' } } : null; };
+    db.baselineJobs = async () => [{ status: 'complete', published_version: 97, results: { '10': cp }, valuation_document: 'v97 Infiniti baseline Brief' }];
+    expect((await call(96, 'stage16.valuation', db)).content).toEqual({ text: 'Exact v96 Brief' });
+    expect((await call(97, 'stage16.valuation', db)).content).toMatchObject({ text: 'v97 Infiniti baseline Brief', baseline_version: 97 });
+  });
   it('never exposes v97 baseline on v96, including null predecessors',async()=>{
     const before=await call(96);expect(before.content_status).toBe('not_produced');expect(before.content).toBeNull();
     const after=await call(97);expect(after.content_status).toBe('structured');expect(after.content).toMatchObject({line,derivation_label:'BG-derived',subject_brand:'Infiniti',excluded_from_selection:true});
