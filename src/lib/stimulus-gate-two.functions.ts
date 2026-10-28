@@ -151,43 +151,60 @@ export const retrySetWithAmendment = createServerFn({ method: "POST" })
     const orch = await orchestrationForUser(data.orchestrationId, context.userId);
     const now = new Date().toISOString();
     const amendments = Array.isArray(orch.amendment_log) ? orch.amendment_log : [];
-
     const { data: prompts } = await db
       .from("stimulus_prompts")
-      .select("id, revision_log")
+      .select("id")
       .eq("orchestration_id", orch.id)
       .eq("status", "active");
-
-    for (const p of ((prompts ?? []) as AnyRow[])) {
-      const log = Array.isArray(p.revision_log) ? p.revision_log : [];
-      await db
-        .from("stimulus_prompts")
-        .update({
-          wad_status: "revising",
-          wad_notes: data.notes,
-          gate_two_approved: false,
-          gate_two_approved_at: null,
-          gate_two_snapshot: null,
-          revision_log: [...log, { gate: "two", scope: "whole_set", notes: data.notes, at: now }],
-        })
-        .eq("id", p.id);
-    }
-
+    const ids = ((prompts ?? []) as AnyRow[]).map((p) => p.id as string);
+    if (ids.length === 0) throw new Error("No active channel prompts to amend.");
+    // The amendment is binding: saved first, then every channel is rewritten
+    // and checked (applied / partly / not) by the background runner.
     await db
       .from("stimulus_orchestrations")
       .update({
-        status: "wad",
+        pending_amendment: data.notes,
         cd_status: "pending",
-        cd_revision_count: 0,
-        gate_two_confirmed: false,
-        gate_two_confirmed_at: null,
         gate_two_notes: null,
-        amendment_log: [...amendments, { notes: data.notes, at: now, prompts: (prompts ?? []).length }],
-        phase_note: `Gate Two: whole set sent back with amendment notes. Regenerating craft pass, then CD.`,
+        amendment_log: [...amendments, { notes: data.notes, at: now, by: context.userId, prompts: ids.length }],
       })
       .eq("id", orch.id);
+    const { queueRepair } = await import("@/lib/stimulus/orchestration-core.server");
+    await queueRepair(orch.id, ids, "amendment", `Gate Two amendment: applying to ${ids.length} channel(s), then rebuilding the registry.`);
+    return { ok: true, resent: ids.length };
+  });
 
-    return { ok: true, resent: (prompts ?? []).length };
+const issueKind = z.enum(["mandate", "amendment", "fidelity"]);
+
+/** CD option after platform retries: adapt the mandate/amendment for this channel type. */
+export const adaptPromptIssue = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => z.object({ promptId: z.string().uuid(), kind: z.enum(["mandate", "amendment"]) }).parse(i))
+  .handler(async ({ data, context }) => {
+    const { prompt, orch } = await promptForUser(data.promptId, context.userId);
+    if (orch.gate_two_confirmed) throw new Error("Gate Two is already confirmed.");
+    const { queueRepair } = await import("@/lib/stimulus/orchestration-core.server");
+    await queueRepair(orch.id, [prompt.id], data.kind === "mandate" ? "mandate_adapt" : "amendment_adapt", `Adapting the ${data.kind} for ${prompt.channel_name}.`);
+    return { ok: true };
+  });
+
+/** CD option after platform retries: approve with a noted issue (who, when, why). */
+export const approveWithNotedIssue = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) =>
+    z.object({ promptId: z.string().uuid(), kind: issueKind, note: z.string().trim().min(3).max(2000) }).parse(i),
+  )
+  .handler(async ({ data, context }) => {
+    const { prompt, orch } = await promptForUser(data.promptId, context.userId);
+    if (orch.gate_two_confirmed) throw new Error("Gate Two is already confirmed.");
+    const list = Array.isArray(prompt.issue_resolutions) ? prompt.issue_resolutions : [];
+    const entry = { kind: data.kind, action: "approved_with_issue", note: data.note, by: context.userId, at: new Date().toISOString() };
+    const log = Array.isArray(prompt.revision_log) ? prompt.revision_log : [];
+    await db
+      .from("stimulus_prompts")
+      .update({ issue_resolutions: [...list, entry], revision_log: [...log, { ...entry, kind: `noted_issue_${data.kind}` }] })
+      .eq("id", prompt.id);
+    return { ok: true };
   });
 
 /** Final CD sign-off on the set. Freezes the complete two-gate decision record. */

@@ -99,123 +99,12 @@ export const applyGateTwoMandate = createServerFn({ method: "POST" })
 
     const { data: promptRows } = await db
       .from("stimulus_prompts")
-      .select("id, channel_name, lens_name, working_prompt, final_prompt, revision_log")
-      .eq("orchestration_id", orch.id)
-      .neq("status", "rejected");
-    const prompts = (promptRows ?? []) as AnyRow[];
-    if (prompts.length === 0) throw new Error("No active prompts in this set to mandate against.");
-
-    const passes = await import("@/lib/stimulus/orchestrate.server");
-    const now = new Date().toISOString();
-    const failures: string[] = [];
-
-    let absent = 0;
-    let weak = 0;
-
-    for (const p of prompts) {
-      const base = (p.final_prompt as string) ?? (p.working_prompt as string) ?? "";
-      if (!base) continue;
-      try {
-        const rewritten = await passes.applyMandateToPrompt({
-          mandate: mandateText,
-          channelName: p.channel_name as string,
-          lensName: p.lens_name as string,
-          prompt: base,
-        });
-        // The mandate is expressed natively per channel, so a string match proves
-        // nothing. Ask a closed question instead: is the element actually there?
-        let compliance: { verdict: string; carrier: string; reason: string };
-        try {
-          compliance = await passes.checkMandateCompliance({
-            mandate: mandateText,
-            channelName: p.channel_name as string,
-            lensName: p.lens_name as string,
-            prompt: rewritten,
-          });
-        } catch {
-          compliance = { verdict: "absent", carrier: "", reason: "Compliance check failed to run." };
-        }
-        if (compliance.verdict === "absent") absent += 1;
-        if (compliance.verdict === "weak") weak += 1;
-        const log = Array.isArray(p.revision_log) ? p.revision_log : [];
-        await db
-          .from("stimulus_prompts")
-          .update({
-            working_prompt: rewritten,
-            final_prompt: rewritten,
-            // The approved artefact has changed; approval must be re-earned.
-            gate_two_approved: false,
-            gate_two_approved_at: null,
-            gate_two_snapshot: null,
-            mandate_compliance: compliance.verdict,
-            mandate_carrier: compliance.carrier || compliance.reason,
-            mandate_checked_at: now,
-            revision_log: [
-              ...log,
-              {
-                at: now,
-                kind: "gate_two_mandate",
-                mandate: mandateText,
-                source,
-                compliance: compliance.verdict,
-                carrier: compliance.carrier,
-                compliance_reason: compliance.reason,
-              },
-            ],
-            error: null,
-          })
-          .eq("id", p.id);
-      } catch (e) {
-        failures.push(`${p.channel_name}: ${e instanceof Error ? e.message : "rewrite failed"}`);
-      }
-    }
-
-
-    // Mandatory cohesion re-run — the set is re-judged as a whole.
-    const ctxRow = await db
-      .from("sessions")
-      .select("brand_name, selected_smp, stage_18_detonation_line")
-      .eq("id", orch.session_id)
-      .single();
-    const ctx = ctxRow.data ?? {};
-
-    const { data: refreshed } = await db
-      .from("stimulus_prompts")
-      .select("id, channel_name, lens_name, final_prompt, working_prompt")
-      .eq("orchestration_id", orch.id)
-      .neq("status", "rejected");
-
-    const { data: registry } = await db
-      .from("stimulus_signatures")
-      .select("name, category, description, source_channel")
+      .select("id")
       .eq("orchestration_id", orch.id)
       .eq("status", "active");
-
-    const cd = await passes.runCreativeDirectorPass({
-      brandName: (ctx.brand_name as string) ?? "—",
-      smp: (ctx.selected_smp as string) ?? "",
-      detonationLine: (ctx.stage_18_detonation_line as string) ?? "",
-      prompts: ((refreshed ?? []) as AnyRow[]).map((p) => ({
-        id: p.id as string,
-        channelName: p.channel_name as string,
-        lensName: p.lens_name as string,
-        prompt: (p.final_prompt as string) ?? (p.working_prompt as string) ?? "",
-      })),
-      crossRefs: [],
-      registry: ((registry ?? []) as AnyRow[]).map((s) => ({
-        name: s.name as string,
-        category: s.category as string,
-        description: s.description as string,
-        sourceChannel: (s.source_channel as string) ?? "—",
-      })),
-      revisionNote: `A Creative Director mandate has just been applied across the whole set:\n${mandateText}\n\nJudge cohesion with the mandate in force. Name any channel where the mandate sits weakly or has flattened the idea.`,
-    });
-
-    for (const n of cd.prompt_notes ?? []) {
-      await db.from("stimulus_prompts").update({ cd_note: n.note }).eq("id", n.prompt_id);
-    }
-
-    const cdStatus = cd.cohesion === "pass" ? "revised" : "flagged";
+    const ids = ((promptRows ?? []) as AnyRow[]).map((p) => p.id as string);
+    if (ids.length === 0) throw new Error("No active prompts in this set to mandate against.");
+    const now = new Date().toISOString();
     const log = Array.isArray(orch.mandate_log) ? orch.mandate_log : [];
     await db
       .from("stimulus_orchestrations")
@@ -224,45 +113,12 @@ export const applyGateTwoMandate = createServerFn({ method: "POST" })
         mandate_source: source,
         mandate_signature_id: data.signatureId ?? null,
         mandate_applied_at: now,
-        mandate_log: [
-          ...log,
-          {
-            at: now,
-            mandate: mandateText,
-            source,
-            promptsRewritten: prompts.length - failures.length,
-            failures,
-            cohesion: cd.cohesion,
-            complianceAbsent: absent,
-            complianceWeak: weak,
-          },
-        ],
-        cd_output: cd.reasoning,
-        cd_status: cdStatus,
-        // Set-level Gate Two confirmation is void once the prompts change.
-        gate_two_confirmed: false,
-        gate_two_confirmed_at: null,
-        phase_note:
-          absent > 0
-            ? `Mandate applied, but the compliance check found the mandated element ABSENT in ${absent} channel(s). Gate Two is blocked until those carry it.`
-            : cdStatus === "flagged"
-              ? "Mandate applied. Cohesion flagged — read the Creative Director note before confirming Gate Two."
-              : weak > 0
-                ? `Mandate applied and the set re-judged as cohesive. The element sits weakly in ${weak} channel(s) — review before confirming.`
-                : "Mandate applied and the set re-judged as cohesive. Gate Two approvals need re-confirming.",
-        error: failures.length ? `Mandate failed on: ${failures.join("; ")}` : null,
+        mandate_log: [...log, { at: now, by: context.userId, mandate: mandateText, source, prompts: ids.length }],
       })
       .eq("id", orch.id);
-
-    return {
-      promptsRewritten: prompts.length - failures.length,
-      failures,
-      cohesion: cd.cohesion as string,
-      cdOutput: cd.reasoning as string,
-      cdStatus,
-      complianceAbsent: absent,
-      complianceWeak: weak,
-    };
+    // Every channel is rewritten and checked by the background runner; an
+    // absent mandate retries twice before the CD is offered a decision.
+    const { queueRepair } = await import("@/lib/stimulus/orchestration-core.server");
+    await queueRepair(orch.id, ids, "mandate", `Mandate: applying to ${ids.length} channel(s).`);
+    return { queued: ids.length };
   });
-
-

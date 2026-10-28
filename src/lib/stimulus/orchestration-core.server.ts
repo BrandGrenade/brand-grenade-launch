@@ -328,6 +328,8 @@ export async function orchestrationStep(orchestrationId: string, userId: string)
             prompt: base,
             suggestions,
             assetRules,
+            // "Regenerate with this reason" / "Send back with notes" is binding.
+            revisionNote: p.wad_status === "revising" && p.wad_notes ? `CREATIVE DIRECTOR REASON — apply it: ${p.wad_notes}` : undefined,
           });
 
           if (result.verdict === "fail" && result.revised_prompt) {
