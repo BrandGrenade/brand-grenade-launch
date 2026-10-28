@@ -85,7 +85,28 @@ export async function setPhase(id: string, patch: AnyRow) {
 
 
 /** One phase-slice of the orchestration state machine. */
+/**
+ * One slice of the step machine. A single slice can hold a model call for well
+ * over a minute, so the heartbeat is kept alive while it runs: otherwise the
+ * browser pump or the watchdog sees a "stale" driver and steps the same run in
+ * parallel.
+ */
 export async function orchestrationStep(orchestrationId: string, userId: string) {
+  const beat = setInterval(() => {
+    void db
+      .from("stimulus_orchestrations")
+      .update({ driver_heartbeat_at: new Date().toISOString() })
+      .eq("id", orchestrationId)
+      .eq("driver_status", "running");
+  }, 20_000);
+  try {
+    return await orchestrationStepInner(orchestrationId, userId);
+  } finally {
+    clearInterval(beat);
+  }
+}
+
+async function orchestrationStepInner(orchestrationId: string, userId: string) {
     const orch = await loadOrchestration(orchestrationId, userId);
     const id = orch.id as string;
     const ctx = await sessionContext(orch.session_id as string);
