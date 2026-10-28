@@ -715,6 +715,9 @@ async function repairSlice(orch: AnyRow, ctx: Ctx, passes: Passes) {
   });
   const linesErr = linesCheck(rewritten, locked.field1, locked.field2);
   if (linesErr && check.verdict === "present") check = { ...check, verdict: "weak", reason: `${linesErr} ${check.reason}` };
+  // Test-only fault switch (database-restricted to test copy runs, off by default).
+  const fault = testFault(orch, "mandate_channel", p.channel_name) && p.repair_kind === "mandate";
+  if (fault) check = { ...check, verdict: "absent", reason: `TEST FAULT (forced mandate failure; real verdict was ${check.verdict}).`, carrier: "" };
 
   const passed = amend ? check.verdict === "present" : check.verdict !== "absent";
   const retryAgain = !passed && canRetry(retries);
@@ -729,6 +732,7 @@ async function repairSlice(orch: AnyRow, ctx: Ctx, passes: Passes) {
       revision_log: [
         ...log,
         { at: now, kind: `gate_two_${p.repair_kind}`, attempt: retries + 1, instruction, before: base, compliance: check },
+        ...(fault ? [{ at: now, kind: "test_fault_injected", fault: "mandate_absent", attempt: retries + 1 }] : []),
       ],
       ...(amend
         ? {
@@ -783,6 +787,15 @@ async function fidelitySlice(orch: AnyRow, passes: Passes) {
       .eq("id", p.id);
     return { done: false, phase: "fidelity", note: `${p.channel_name}: not checked.` };
   }
+  const fFault = testFault(orch, "fidelity_channel", p.channel_name);
+  if (fFault) {
+    const realScore = result.score;
+    result.reasoning = `TEST FAULT (forced score 4; real score was ${realScore}/10). ${result.reasoning}`;
+    result.score = 4;
+    const fl = Array.isArray(p.revision_log) ? p.revision_log : [];
+    p.revision_log = [...fl, { at: new Date().toISOString(), kind: "test_fault_injected", fault: "fidelity_below", attempt: retries + 1, real_score: realScore }];
+    await db.from("stimulus_prompts").update({ revision_log: p.revision_log }).eq("id", p.id);
+  }
   const below = fidelityBelow(result.score);
   if (below && canRetry(retries)) {
     const locked = await lockedFor(p.direction_id);
@@ -818,6 +831,11 @@ async function fidelitySlice(orch: AnyRow, passes: Passes) {
     })
     .eq("id", p.id);
   return { done: false, phase: "fidelity", note: `${p.channel_name}: ${result.score}/10.` };
+}
+
+function testFault(orch: AnyRow, key: "mandate_channel" | "fidelity_channel", channel: string) {
+  const f = orch.test_faults as AnyRow | null;
+  return Boolean(f && typeof f[key] === "string" && f[key] === channel);
 }
 
 // ------------------------------------------------------------------ background driver
