@@ -184,7 +184,7 @@ export const reviseStimulusDirection = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { data: row, error } = await supabaseAdmin
       .from("stimulus_directions")
-      .select("id, run_id, lens_id, lens_name, sort_order, direction, revise_count")
+      .select("id, run_id, lens_id, lens_name, sort_order, direction, revise_count, convergence")
       .eq("id", data.directionId)
       .single();
     if (error || !row) throw new Error("Direction not found");
