@@ -9,6 +9,14 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { assertSessionAccess } from "@/lib/auth-helpers.server";
 import { scheduleBackground } from "@/lib/background.server";
 import type { BrandAssetRules } from "./orchestration-prompts";
+import { lockedLinesBlock } from "./orchestration-prompts";
+import {
+  amendmentStatus,
+  canRetry,
+  field2Placement,
+  fidelityBelow,
+  linesCheck,
+} from "./platform-retry-rules";
 
 const PROMPT_BATCH = 2;
 
@@ -110,9 +118,10 @@ export async function orchestrationStep(orchestrationId: string, userId: string)
         }
         const batch = prompts.slice(0, PROMPT_BATCH);
         for (const p of batch) {
+          await db.from("stimulus_prompts").update({ run_state: "running" }).eq("id", p.id);
           const { data: dir } = await db
             .from("stimulus_directions")
-            .select("direction, instinct_brief, lens_name")
+            .select("direction, instinct_brief, lens_name, campaign_line, expression_under_master")
             .eq("id", p.direction_id)
             .single();
           const { data: run } = await db
@@ -120,7 +129,7 @@ export async function orchestrationStep(orchestrationId: string, userId: string)
             .select("channel_brief, smp")
             .eq("id", p.run_id)
             .single();
-          const text = await passes.writeInitialPrompt({
+          const write = () => passes.writeInitialPrompt({
             brandName: ctx.brandName,
             category: ctx.category,
             channelName: p.channel_name as string,
@@ -131,10 +140,25 @@ export async function orchestrationStep(orchestrationId: string, userId: string)
             direction: (dir?.direction as string) ?? "",
             instinctBrief: (dir?.instinct_brief as string) ?? null,
             assetRules,
+            field1: (dir?.campaign_line as string) ?? null,
+            field2: (dir?.expression_under_master as string) ?? null,
           });
+          // Locked lines are binding: retry up to twice, then name the fault.
+          let text = await write();
+          let linesErr = linesCheck(text, dir?.campaign_line ?? null, dir?.expression_under_master ?? null);
+          for (let r = 0; linesErr && canRetry(r); r++) {
+            text = await write();
+            linesErr = linesCheck(text, dir?.campaign_line ?? null, dir?.expression_under_master ?? null);
+          }
           await db
             .from("stimulus_prompts")
-            .update({ initial_prompt: text, working_prompt: text, error: null })
+            .update({
+              initial_prompt: text,
+              working_prompt: text,
+              field2_placement: field2Placement(text),
+              run_state: linesErr ? "failed" : "done",
+              error: linesErr ? `Platform error after 2 retries: ${linesErr}` : null,
+            })
             .eq("id", p.id);
         }
         const remaining = prompts.length - batch.length;
@@ -161,12 +185,26 @@ export async function orchestrationStep(orchestrationId: string, userId: string)
             .select("instinct_brief")
             .eq("id", p.direction_id)
             .single();
+          const { data: lockedDir } = await db
+            .from("stimulus_directions")
+            .select("direction, campaign_line, expression_under_master")
+            .eq("id", p.direction_id)
+            .single();
+          const amendments = (Array.isArray(orch.amendment_log) ? orch.amendment_log : [])
+            .map((a: AnyRow) => String(a.notes ?? ""))
+            .concat(orch.mandate_text ? [String(orch.mandate_text)] : [])
+            .filter(Boolean);
           const sigs = await passes.extractSignatures({
             channelName: p.channel_name as string,
             lensName: p.lens_name as string,
             smp: ctx.smp,
-            prompt: (p.initial_prompt as string) ?? "",
+            prompt: (p.final_prompt as string) ?? (p.working_prompt as string) ?? (p.initial_prompt as string) ?? "",
             instinctBrief: (dir?.instinct_brief as string) ?? null,
+            lockedIdea: [
+              lockedDir?.direction ?? "",
+              lockedLinesBlock(lockedDir?.campaign_line ?? null, lockedDir?.expression_under_master ?? null),
+            ].join("\n\n"),
+            amendments,
           });
           if (sigs.length) {
             await db.from("stimulus_signatures").insert(
@@ -180,6 +218,16 @@ export async function orchestrationStep(orchestrationId: string, userId: string)
                 description: s.description,
                 origin: s.origin,
                 registry_version: orch.registry_version ?? 1,
+                // The registry only carries devices from the locked idea, its
+                // lines or applied amendments. Channel inventions are kept as
+                // removed rows so the removal is listed, never silent.
+                ...(s.basis === "channel_invention" && s.origin !== "instinct_brief"
+                  ? {
+                      status: "retired",
+                      retired_at: new Date().toISOString(),
+                      retired_reason: "Removed: not from the locked idea, its lines or an applied amendment.",
+                    }
+                  : {}),
               })),
             );
           }
@@ -433,19 +481,23 @@ export async function orchestrationStep(orchestrationId: string, userId: string)
 
         const cdStatus =
           finalCd.cohesion === "pass" ? (revisionCount ? "revised" : "passed") : "flagged";
+        await queueFidelity(id);
         await setPhase(id, {
-          status: "complete",
+          status: "fidelity",
           cd_output: finalCd.reasoning,
           cd_status: cdStatus,
           cd_revision_count: revisionCount,
           error: null,
           phase_note:
             cdStatus === "flagged"
-              ? "Cohesion still failing after one automatic revision — flagged for a human before Gate Two."
-              : "Orchestration complete. Ready for Gate Two.",
+              ? "Cohesion still failing after one automatic revision — checking fidelity per channel."
+              : "Creative Director pass complete. Checking fidelity per channel.",
         });
-        return { done: true, phase: "complete", note: `Creative Director pass: ${cdStatus}.` };
+        return { done: false, phase: "fidelity", note: `Creative Director pass: ${cdStatus}.` };
       }
+
+      if (status === "repair") return await repairSlice(orch, ctx, passes);
+      if (status === "fidelity") return await fidelitySlice(orch, passes);
 
       return { done: true, phase: status, note: "Nothing left to run." };
     } catch (e) {
