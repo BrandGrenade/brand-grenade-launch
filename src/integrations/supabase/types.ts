@@ -497,6 +497,9 @@ export type Database = {
           source_manifest: Json
           source_version: number
           status: string
+          valuation_document: string | null
+          valuation_document_error: string | null
+          valuation_document_saved_at: string | null
           wake_token: string
         }
         Insert: {
@@ -518,6 +521,9 @@ export type Database = {
           source_manifest: Json
           source_version: number
           status?: string
+          valuation_document?: string | null
+          valuation_document_error?: string | null
+          valuation_document_saved_at?: string | null
           wake_token?: string
         }
         Update: {
@@ -539,6 +545,9 @@ export type Database = {
           source_manifest?: Json
           source_version?: number
           status?: string
+          valuation_document?: string | null
+          valuation_document_error?: string | null
+          valuation_document_saved_at?: string | null
           wake_token?: string
         }
         Relationships: [

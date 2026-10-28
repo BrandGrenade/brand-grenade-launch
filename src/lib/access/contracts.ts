@@ -107,7 +107,7 @@ export const CONTRACTS: OutputContract[] = [
         )
         .min(1),
     }),
-    note: "One row per claim per heading, in text-block order, with the Hub evidence label mapped.",
+    note: "One row per exact claim, with headings and original evidence occurrences retained and the Hub evidence label mapped.",
   },
   // ── Room 01 · Intelligence Lab ─────────────────────────────────────────
   {

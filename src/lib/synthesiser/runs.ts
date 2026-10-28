@@ -8,14 +8,17 @@ import { SYNTHESISER_CATEGORIES, type SynthesisedClaim } from "@/lib/synthesiser
 
 const HEADING = new Map(SYNTHESISER_CATEGORIES.map((c) => [c.key, c.title]));
 
-/** One record per claim per heading it appears under, in text-block order. */
+/** One record per exact claim; all category headings retained on that row. */
 export function claimRecords(runId: string, claims: SynthesisedClaim[]) {
   const rows: Array<{ synthesiser_run_id: string; heading: string; claim_text: string; label: SynthesisedClaim["status"]; source: string | null; source_date: null; position: number }> = [];
-  for (const cat of SYNTHESISER_CATEGORIES) {
-    for (const c of claims) {
-      if (!c.categories.includes(cat.key)) continue;
-      rows.push({ synthesiser_run_id: runId, heading: HEADING.get(cat.key)!, claim_text: c.claim, label: c.status, source: c.sourceDocument || null, source_date: null, position: rows.length + 1 });
+  for (const c of claims) {
+    const existing = rows.find(r => r.claim_text === c.claim);
+    const headings = SYNTHESISER_CATEGORIES.filter(cat => c.categories.includes(cat.key)).map(cat => HEADING.get(cat.key) ?? cat.title);
+    if (existing) {
+      existing.heading = [...new Set([...existing.heading.split('; '), ...headings])].join('; ');
+      continue;
     }
+    rows.push({ synthesiser_run_id: runId, heading: headings.join('; ') || 'Brand Grenade Intelligence Pack', claim_text: c.claim, label: c.status, source: c.sourceDocument || null, source_date: null, position: rows.length + 1 });
   }
   return rows;
 }
@@ -25,8 +28,9 @@ async function storeClaims(runId: string, claims: SynthesisedClaim[]) {
   if (!run || run.claims_stored) return;
   const rows = claimRecords(runId, claims);
   if (rows.length) {
-    let { error } = await supabase.from("synthesiser_claims").insert(rows);
-    if (error) ({ error } = await supabase.from("synthesiser_claims").insert(rows));
+    const save = () => supabase.from("synthesiser_claims").upsert(rows, { onConflict: "synthesiser_run_id,position", ignoreDuplicates: true });
+    let { error } = await save();
+    if (error) ({ error } = await save());
     if (error) {
       // Never block the user, but never fail silently either: the error is
       // recorded on the run so the missing claims are visible and repairable.
