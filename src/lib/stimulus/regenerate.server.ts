@@ -280,6 +280,19 @@ export async function regenerateDirection(opts: {
   }
   const attemptNo = (last?.attempt_no ?? 0) + 1;
 
+  // CE1-5: a rewrite refreshes the Idea collision check from the rewrite's own
+  // declared collisions. The previous value is kept on the attempt row.
+  const newConvergence = bigParsed
+    ? {
+        source: "rewrite",
+        verdict: bigParsed.collisions.length > 0 ? "COLLIDES" : "CLEAR",
+        collidesWith: bigParsed.collisions.map((c) => c.lensId),
+        why: bigParsed.collisions.map((c) => c.why).filter(Boolean).join(" · "),
+        regenerations: 0,
+        refreshedAt: new Date().toISOString(),
+      }
+    : null;
+
 
   const { data: attempt, error: aErr } = await supabaseAdmin
     .from("stimulus_direction_attempts")
@@ -294,6 +307,9 @@ export async function regenerateDirection(opts: {
         isBigIdea && masterLine ? bigParsed?.expressionUnderMaster || null : null,
       master_line_at_generation: isBigIdea ? masterLine || null : null,
       rationale: isBigIdea ? bigParsed?.rationale || null : null,
+      root_tension: isBigIdea ? bigParsed?.rootTension || null : null,
+      convergence: (newConvergence ?? null) as never,
+      previous_convergence: ((row as { convergence?: unknown }).convergence ?? null) as never,
       line_check: null,
       revise_notes: mode === "revise" ? (notes ?? "").trim() : null,
       ratings: null,
@@ -321,6 +337,7 @@ export async function regenerateDirection(opts: {
             root_tension: bigParsed?.rootTension || null,
             guidance_alignment: bigParsed?.guidanceAlignment || (guidance || mode === "revise" ? "unstated" : null),
             guidance_alignment_note: bigParsed?.guidanceAlignmentNote || null,
+            convergence: newConvergence as never,
             line_check: null,
           }
         : {}),
@@ -330,6 +347,8 @@ export async function regenerateDirection(opts: {
         ? { revise_notes: (notes ?? "").trim(), revise_count: (row.revise_count ?? 0) + 1 }
         : {}),
       error: null,
+      rewrite_error: null,
+      rewrite_error_at: null,
       ratings: null,
       rating_status: "unrated",
       rating_error: null,
