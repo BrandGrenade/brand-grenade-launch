@@ -90,6 +90,8 @@ type IdeaConvergence = ConvergenceVerdict & { fullSet?: ConvergenceVerdict };
 type Idea = {
   id: string;
   active_attempt_id?: string | null;
+  rewrite_error?: string | null;
+  revise_notes?: string | null;
   lens_id: string;
   lens_name: string;
   sort_order: number;
