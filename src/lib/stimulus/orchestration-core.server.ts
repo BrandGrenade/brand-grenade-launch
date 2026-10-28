@@ -97,7 +97,8 @@ export async function orchestrationStep(orchestrationId: string, userId: string)
       .from("stimulus_orchestrations")
       .update({ driver_heartbeat_at: new Date().toISOString() })
       .eq("id", orchestrationId)
-      .eq("driver_status", "running");
+      .eq("driver_status", "running")
+      .then(() => undefined, () => undefined);
   }, 20_000);
   try {
     return await orchestrationStepInner(orchestrationId, userId);
