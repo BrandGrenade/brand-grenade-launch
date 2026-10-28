@@ -93,6 +93,7 @@ export interface ExtractedSignature {
   name: string;
   description: string;
   origin: "extracted" | "instinct_brief";
+  basis: "locked_idea" | "locked_lines" | "amendment" | "channel_invention";
 }
 
 const VALID_CATEGORIES: SignatureCategory[] = ["sonic", "visual", "verbal", "structural"];
@@ -114,6 +115,9 @@ export async function extractSignatures(
       name: s.name.trim(),
       description: (s.description ?? "").trim(),
       origin: s.origin === "instinct_brief" ? "instinct_brief" : "extracted",
+      basis: (["locked_idea", "locked_lines", "amendment"] as const).includes(s.basis as never)
+        ? s.basis
+        : "channel_invention",
     }));
 }
 
