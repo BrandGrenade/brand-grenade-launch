@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 import { generateStrategicPlatformPdf } from "@/lib/pdf-generator";
 import { runStage16 } from "@/lib/stage16.functions";
+import { getValuationAddon } from '@/lib/addon-valuation.functions';
 import {
   buildPhase2Document,
   buildAllPhase2,
@@ -56,6 +57,10 @@ export const Route = createFileRoute("/complete")({
         content:
           "Strategic platform document ready. Select an output format and download.",
       },
+      { property: 'og:title', content: 'Deliverables — Brand Grenade' },
+      { property: 'og:description', content: 'Saved strategy, valuation and creative documents for your Brand Grenade run.' },
+      { property: 'og:type', content: 'website' },
+      { name: 'twitter:card', content: 'summary_large_image' },
     ],
   }),
 });
@@ -172,6 +177,7 @@ async function openDocument(url: string) {
 function CompletePage() {
   const { session: sessionId } = Route.useSearch();
   const runStage16Fn = useServerFn(runStage16);
+  const getValuationAddonFn = useServerFn(getValuationAddon);
   const { user } = useAuth();
   // edge fn invoked directly via supabase.functions.invoke
   const [format, setFormat] = useState<Format>("vision");
@@ -205,10 +211,20 @@ function CompletePage() {
       )
       .eq("id", sessionId)
       .maybeSingle()
-      .then(({ data, error }) => {
+      .then(async ({ data, error }) => {
         if (cancelled) return;
         if (error) console.error("Failed to load session", error);
-        setSession((data as unknown as SessionRow) ?? null);
+        let loaded = (data as unknown as SessionRow) ?? null;
+        if (loaded) {
+          try {
+            const addon = await getValuationAddonFn({ data: { sessionId } });
+            if (addon) loaded = { ...loaded, stage_16_valuation_output: addon.text };
+          } catch (e) {
+            setLastError(e instanceof Error ? e.message : 'VALUATION_DOCUMENT_READ_FAILED');
+          }
+        }
+        if (cancelled) return;
+        setSession(loaded);
         setLoading(false);
         const urlParams =
           typeof window !== "undefined"

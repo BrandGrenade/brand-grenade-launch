@@ -1,0 +1,2 @@
+ALTER TABLE public.current_position_addon_jobs ADD COLUMN IF NOT EXISTS valuation_document text, ADD COLUMN IF NOT EXISTS valuation_document_error text, ADD COLUMN IF NOT EXISTS valuation_document_saved_at timestamptz;
+COMMENT ON COLUMN public.current_position_addon_jobs.valuation_document IS 'Valuation Input Brief assembled from the source-version document plus validated baseline assessments. Does not change Campaign content or access version.';

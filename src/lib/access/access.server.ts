@@ -136,7 +136,7 @@ export function supabaseDb(sb: any): Db {
       return (data ?? []) as VersionRow[];
     },
     async claims(id) {
-      const { data } = await sb.from("synthesiser_claims").select("heading, claim_text, label, source, source_date, position").eq("synthesiser_run_id", id).order("position");
+      const { data } = await retryRead(() => sb.from("synthesiser_claims").select("heading, claim_text, label, source, source_date, position").eq("synthesiser_run_id", id).order("position"), "ROOM00_CLAIMS_READ_FAILED");
       return data ?? [];
     },
     async stimulus(runId) {
@@ -156,8 +156,7 @@ export function supabaseDb(sb: any): Db {
       return typeof data === "string" && data ? data : null;
     },
     async baselineJobs(id) {
-      const {data,error}=await sb.from('current_position_addon_jobs').select('id,status,published_version,results,source_manifest,error_code,error_message').eq('session_id',id).eq('status','complete');
-      if(error)throw new AccessError('unavailable','Baseline evidence temporarily unavailable.');
+      const {data}=await retryRead(() => sb.from('current_position_addon_jobs').select('id,status,published_version,results,source_manifest,error_code,error_message,valuation_document,valuation_document_error').eq('session_id',id).eq('status','complete'), 'BASELINE_EVIDENCE_READ_FAILED');
       return data ?? [];
     },
   };

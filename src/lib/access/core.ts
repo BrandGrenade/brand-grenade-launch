@@ -2,6 +2,7 @@ import { checkCurrentPosition, checkStageCurrentPosition } from "@/lib/structure
 import { recoverSavedStage, recoverStage12 } from "../saved-stage-records";
 import { parseStage22Architecture, parseStage22Assets } from "./stage22-parse";
 import { baselineAtVersion } from '../current-position-addon';
+import { uniqueClaims } from '../synthesiser/unique-claims';
 // Run access remains read-only. Only the separately scoped ensure_client
 // request may create a client and its Hub mapping; it cannot touch runs.
 import { z } from "zod";
@@ -233,6 +234,12 @@ async function buildOutput(outputId: string, c: Ctx): Promise<Built> {
   }
   if (outputId.startsWith("stage16.")) {
     const f = outputId.slice(8);
+    if (f === 'valuation' && c.baseline?.valuation_document) {
+      return { content_status: 'text_only', schema_version: 'stage16.document.v1', content: { text: c.baseline.valuation_document, baseline_version: c.baseline.published_version }, evidence: [], fields: ['current_position_addon_jobs.valuation_document'] };
+    }
+    if (f === 'valuation' && c.baseline?.valuation_document_error) {
+      throw new AccessError('unavailable', String(c.baseline.valuation_document_error));
+    }
     return textOutput(`stage_16_${f}_output`, "stage16.document.v1", c);
   }
   switch (outputId) {
@@ -313,7 +320,7 @@ async function buildOutput(outputId: string, c: Ctx): Promise<Built> {
       const fields = ["synthesiser_claims"];
       if (!run.row.claims_stored) return { content_status: "not_produced", schema_version: "room00.claims.v1", content: null, evidence: [], fields };
       const rows = await c.db.claims(run.id);
-      const claims = rows.map((r) => ({ position: r.position, heading: r.heading, claim: r.claim_text, source: r.source ?? null, source_date: r.source_date ?? null, ...mapLabel(r.label) }));
+      const claims = uniqueClaims(rows.map(r => ({ ...r, claim_text: r.claim_text, heading: r.heading, source: r.source, source_date: r.source_date, label: r.label }))).map((r) => ({ position: r.position, heading: r.heading, headings: r.headings, occurrences: r.occurrences, claim: r.claim_text, source: r.source ?? null, source_date: r.source_date ?? null, ...mapLabel(r.label) }));
       return {
         content_status: "structured",
         schema_version: "room00.claims.v1",

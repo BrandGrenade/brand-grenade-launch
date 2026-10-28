@@ -1,5 +1,10 @@
 # Roadmap — Partner Hub structured evidence (27 Oct 2026)
 
+## Two repairs — 28 Oct 2026
+- [x] Saved valuation Brief revision 2 at v97 with validated Infiniti Stage 10/11/13 assessments and saved Jaguar comparison; entire sessions row byte-identical, v96 retained.
+- [x] New Synthesiser saves one exact claim with combined headings and idempotent retries. Existing access responses group claims and retain all source/category occurrences; stored 329 rows unchanged.
+- [x] 464 tests passed; clean preview build, basic security checks clear. Published and verified actual live Deliverables download plus Hub v96 (28,460 chars, 6.081s), v97 (47,723 chars, 2.900s), Room 00 (215 unique claims/evidence, 1.733s). Temporary verification keys revoked; stopped.
+
 Previous Stage 16/22 work completed and verified in the preceding conversation.
 
 1. [x] Diagnose and report missing JLR structured records before changes.
