@@ -22,7 +22,7 @@ it("Step 2 retains kept cards and independent winner picks through repeated rewr
     { id: "line", lens_id: "living_series", lens_name: "Idea Seventeen", sort_order: 16, status: "keep_in_play", direction: "Other", campaign_line: "Independent line", rating_status: "unrated" },
   ];
   state.load.mockImplementation(async () => ({ run: { winning_direction_id: null, winning_line_direction_id: null }, directions }));
-  state.revise.mockImplementation(async () => { directions = directions.map(d => d.id === "idea" ? { ...d, direction: "Revised" } : d); });
+  state.revise.mockImplementation(async () => { directions = directions.map(d => d.id === "idea" ? { ...d, direction: "Revised" } : d); return { ok: true }; });
   state.triage.mockImplementation(async ({ data }: { data: { directionId: string; status: string } }) => { directions = directions.map(d => d.id === data.directionId ? { ...d, status: data.status } : d); });
   render(<BigIdeaSweep sessionId="session" mode="shortlist" />);
   await screen.findByText("Idea Five");
