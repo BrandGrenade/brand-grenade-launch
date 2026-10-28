@@ -21,6 +21,8 @@ import {
   type SignatureCategory,
 } from "./orchestration-prompts";
 
+import { MAX_PLATFORM_RETRIES } from "./platform-retry-rules";
+
 const ANTHROPIC_URL = "https://api.anthropic.com/v1/messages";
 const MODEL = "claude-sonnet-4-5-20250929";
 const REQUEST_TIMEOUT_MS = 240_000;
@@ -74,6 +76,24 @@ function extractJson<T>(text: string): T {
   return JSON.parse(text.slice(start, end + 1)) as T;
 }
 
+/**
+ * A JSON pass whose reply cannot be parsed is a platform fault, not a creative
+ * one: retry it up to MAX_PLATFORM_RETRIES times before surfacing the error.
+ */
+async function anthropicJson<T>(args: Parameters<typeof anthropic>[0]): Promise<T> {
+  let last: unknown;
+  for (let attempt = 0; attempt <= MAX_PLATFORM_RETRIES; attempt++) {
+    try {
+      return extractJson<T>(await anthropic(args));
+    } catch (e) {
+      last = e;
+      if (!(e instanceof SyntaxError) && !(e instanceof Error && /no JSON object|empty response/.test(e.message))) throw e;
+    }
+  }
+  const msg = last instanceof Error ? last.message : String(last);
+  throw new Error(`Platform error: the model returned unreadable output ${MAX_PLATFORM_RETRIES + 1} times (${msg}).`);
+}
+
 export type { BrandAssetRules };
 
 // -------------------------------------------------------------- initial prompt
@@ -101,12 +121,11 @@ const VALID_CATEGORIES: SignatureCategory[] = ["sonic", "visual", "verbal", "str
 export async function extractSignatures(
   a: Parameters<typeof buildExtractionMessage>[0],
 ): Promise<ExtractedSignature[]> {
-  const text = await anthropic({
+  const parsed = await anthropicJson<{ signatures?: ExtractedSignature[] }>({
     system: EXTRACTION_SYSTEM,
     message: buildExtractionMessage(a),
     maxTokens: 2500,
   });
-  const parsed = extractJson<{ signatures?: ExtractedSignature[] }>(text);
   return (parsed.signatures ?? [])
     .filter((s) => s && VALID_CATEGORIES.includes(s.category) && s.name?.trim())
     .slice(0, 4)
@@ -133,12 +152,11 @@ export async function proposeCrossReferences(
   a: Parameters<typeof buildPropagationMessage>[0],
 ): Promise<PropagationSuggestion[]> {
   if (a.registry.length === 0) return [];
-  const text = await anthropic({
+  const parsed = await anthropicJson<{ suggestions?: PropagationSuggestion[] }>({
     system: PROPAGATION_SYSTEM,
     message: buildPropagationMessage(a),
     maxTokens: 2500,
   });
-  const parsed = extractJson<{ suggestions?: PropagationSuggestion[] }>(text);
   return (parsed.suggestions ?? [])
     .filter((s) => s && s.suggestion?.trim())
     .slice(0, 3)
@@ -161,12 +179,11 @@ export interface WriterAdResult {
 export async function runWriterAdPass(
   a: Parameters<typeof buildWriterAdMessage>[0],
 ): Promise<WriterAdResult> {
-  const text = await anthropic({
+  const p = await anthropicJson<Partial<WriterAdResult>>({
     system: WRITER_AD_SYSTEM,
     message: buildWriterAdMessage(a),
     maxTokens: 5000,
   });
-  const p = extractJson<Partial<WriterAdResult>>(text);
   return {
     verdict: p.verdict === "fail" ? "fail" : "pass",
     reasoning: (p.reasoning ?? "").trim(),
@@ -187,12 +204,11 @@ export interface CdResult {
 export async function runCreativeDirectorPass(
   a: Parameters<typeof buildCdMessage>[0],
 ): Promise<CdResult> {
-  const text = await anthropic({
+  const p = await anthropicJson<Partial<CdResult>>({
     system: CD_SYSTEM,
     message: buildCdMessage(a),
     maxTokens: 8000,
   });
-  const p = extractJson<Partial<CdResult>>(text);
   return {
     cohesion: p.cohesion === "fail" ? "fail" : "pass",
     reasoning: (p.reasoning ?? "").trim(),
@@ -272,12 +288,11 @@ export async function checkMandateCompliance(a: {
   lensName: string;
   prompt: string;
 }): Promise<MandateComplianceResult> {
-  const text = await anthropic({
+  const p = await anthropicJson<Partial<MandateComplianceResult>>({
     system: MANDATE_COMPLIANCE_SYSTEM,
     message: buildMandateComplianceMessage(a),
     maxTokens: 700,
   });
-  const p = extractJson<Partial<MandateComplianceResult>>(text);
   let verdict: MandateComplianceResult["verdict"] =
     p.verdict === "absent" ? "absent" : p.verdict === "weak" ? "weak" : "present";
   const carrier = (p.carrier ?? "").trim();
