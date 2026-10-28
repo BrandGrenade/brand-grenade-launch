@@ -275,9 +275,7 @@ export function StimulusMandate({
                   },
                 });
                 setResult(
-                  `Mandate applied to ${r.promptsRewritten} prompt(s). Cohesion: ${r.cohesion}.${
-                    r.failures.length ? ` Failed on — ${r.failures.join("; ")}` : ""
-                  }`,
+                  `Mandate queued for ${r.queued} channel(s). Each is rewritten and checked; a channel that misses it is retried twice automatically. Progress shows at the top of Step 4.`,
                 );
                 setText("");
                 setChosenSig(null);
