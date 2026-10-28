@@ -1,9 +1,16 @@
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("@/integrations/supabase/client", () => ({ supabase: {} }));
+const mocks = vi.hoisted(() => ({ upsert: vi.fn() }));
+vi.mock("@/integrations/supabase/client", () => ({ supabase: {
+  auth: { getUser: async () => ({ data: { user: { id: 'actor' } } }) },
+  from: (table: string) => table === 'synthesiser_claims' ? { upsert: mocks.upsert } : {
+    select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: { claims_stored: false } }) }) }),
+    update: () => ({ eq: async () => ({ error: null }) }),
+  },
+} }));
 vi.mock("@/lib/hub/context", () => ({ hubColumns: () => ({}) }));
 
-import { claimRecords } from "./runs";
+import { claimRecords, recordSynthesiserRun } from "./runs";
 import type { SynthesisedClaim } from "./types";
 
 const c = (claim: string, categories: SynthesisedClaim["categories"], status: SynthesisedClaim["status"]): SynthesisedClaim => ({
@@ -11,6 +18,13 @@ const c = (claim: string, categories: SynthesisedClaim["categories"], status: Sy
 });
 
 describe("synthesiser claim records", () => {
+  it('retries idempotently, never replacing an already saved claim', async () => {
+    mocks.upsert.mockResolvedValueOnce({ error: { message: 'Transient failure' } }).mockResolvedValueOnce({ error: null });
+    await recordSynthesiserRun({ id: 'run-1', brandName: 'JLR', category: 'Cars', status: 'applied', claimCount: 1, claims: [c('A', ['input_primary_consumer', 'input_brand_health'], 'verified')] });
+    expect(mocks.upsert).toHaveBeenCalledTimes(2);
+    expect(mocks.upsert.mock.calls[0][0]).toHaveLength(1);
+    expect(mocks.upsert.mock.calls[1][1]).toEqual({ onConflict: 'synthesiser_run_id,position', ignoreDuplicates: true });
+  });
   it("writes each claim once while retaining all headings, labels and sources", () => {
     const rows = claimRecords("run-1", [
       c("A", ["input_brand_health"], "verified"),
