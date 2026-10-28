@@ -85,7 +85,29 @@ export async function setPhase(id: string, patch: AnyRow) {
 
 
 /** One phase-slice of the orchestration state machine. */
+/**
+ * One slice of the step machine. A single slice can hold a model call for well
+ * over a minute, so the heartbeat is kept alive while it runs: otherwise the
+ * browser pump or the watchdog sees a "stale" driver and steps the same run in
+ * parallel.
+ */
 export async function orchestrationStep(orchestrationId: string, userId: string) {
+  const beat = setInterval(() => {
+    void db
+      .from("stimulus_orchestrations")
+      .update({ driver_heartbeat_at: new Date().toISOString() })
+      .eq("id", orchestrationId)
+      .eq("driver_status", "running")
+      .then(() => undefined, () => undefined);
+  }, 20_000);
+  try {
+    return await orchestrationStepInner(orchestrationId, userId);
+  } finally {
+    clearInterval(beat);
+  }
+}
+
+async function orchestrationStepInner(orchestrationId: string, userId: string) {
     const orch = await loadOrchestration(orchestrationId, userId);
     const id = orch.id as string;
     const ctx = await sessionContext(orch.session_id as string);
@@ -544,6 +566,27 @@ async function lockedFor(directionId: string) {
   };
 }
 
+/** A worker that stopped mid-attempt releases its claim after this long. */
+const CLAIM_STALE_MS = 6 * 60_000;
+
+/**
+ * Single-flight claim on one channel attempt. Two drivers (browser pump, the
+ * background runner or the watchdog) may step the same orchestration; only the
+ * one that moves the row from its observed state to running does the work, so
+ * a channel is never checked or rewritten twice at once.
+ */
+async function claimPrompt(p: AnyRow): Promise<boolean> {
+  const fresh = p.run_state === "running" && Date.now() - Date.parse(String(p.updated_at)) < CLAIM_STALE_MS;
+  if (fresh) {
+    await new Promise((r) => setTimeout(r, 5000));
+    return false;
+  }
+  let q = db.from("stimulus_prompts").update({ run_state: "running" }).eq("id", p.id).eq("updated_at", p.updated_at);
+  q = p.run_state == null ? q.is("run_state", null) : q.eq("run_state", p.run_state);
+  const { data } = await q.select("id");
+  return Array.isArray(data) && data.length === 1;
+}
+
 async function queueFidelity(id: string) {
   await db
     .from("stimulus_prompts")
@@ -685,7 +728,7 @@ async function repairSlice(orch: AnyRow, ctx: Ctx, passes: Passes) {
   if (!instruction.trim()) throw new Error("No saved mandate or amendment to apply.");
   const locked = await lockedFor(p.direction_id);
   const lastReason = amend ? p.amendment_reason : p.mandate_carrier;
-  await db.from("stimulus_prompts").update({ run_state: "running" }).eq("id", p.id);
+  if (!(await claimPrompt(p))) return { done: false, phase: "repair", note: `${p.channel_name}: in progress elsewhere.` };
   await setPhase(id, {
     phase_note: `${amend ? "Amendment" : "Mandate"}${adapt ? " adaptation" : ""}: ${p.channel_name} — attempt ${retries + 1} of 3.`,
   });
@@ -715,6 +758,9 @@ async function repairSlice(orch: AnyRow, ctx: Ctx, passes: Passes) {
   });
   const linesErr = linesCheck(rewritten, locked.field1, locked.field2);
   if (linesErr && check.verdict === "present") check = { ...check, verdict: "weak", reason: `${linesErr} ${check.reason}` };
+  // Test-only fault switch (database-restricted to test copy runs, off by default).
+  const fault = testFault(orch, "mandate_channel", p.channel_name) && p.repair_kind === "mandate";
+  if (fault) check = { ...check, verdict: "absent", reason: `TEST FAULT (forced mandate failure; real verdict was ${check.verdict}).`, carrier: "" };
 
   const passed = amend ? check.verdict === "present" : check.verdict !== "absent";
   const retryAgain = !passed && canRetry(retries);
@@ -729,6 +775,7 @@ async function repairSlice(orch: AnyRow, ctx: Ctx, passes: Passes) {
       revision_log: [
         ...log,
         { at: now, kind: `gate_two_${p.repair_kind}`, attempt: retries + 1, instruction, before: base, compliance: check },
+        ...(fault ? [{ at: now, kind: "test_fault_injected", fault: "mandate_absent", attempt: retries + 1 }] : []),
       ],
       ...(amend
         ? {
@@ -766,7 +813,7 @@ async function fidelitySlice(orch: AnyRow, passes: Passes) {
     return { done: true, phase: "complete", note: "Fidelity checked on every channel." };
   }
   const retries = p.fidelity_retries ?? 0;
-  await db.from("stimulus_prompts").update({ run_state: "running" }).eq("id", p.id);
+  if (!(await claimPrompt(p))) return { done: false, phase: "fidelity", note: `${p.channel_name}: in progress elsewhere.` };
   await setPhase(id, { phase_note: `Fidelity: ${p.channel_name} — check ${retries + 1} of 3.` });
   const prompt = (p.final_prompt as string) ?? (p.working_prompt as string) ?? "";
   const { runChannelFidelityCheck } = await import("@/lib/stage21-fidelity.server");
@@ -782,6 +829,15 @@ async function fidelitySlice(orch: AnyRow, passes: Passes) {
       .update({ repair_kind: null, run_state: "done", fidelity_status: "not_checked", fidelity_reason: "No locked idea on this run to check against." })
       .eq("id", p.id);
     return { done: false, phase: "fidelity", note: `${p.channel_name}: not checked.` };
+  }
+  const fFault = testFault(orch, "fidelity_channel", p.channel_name);
+  if (fFault) {
+    const realScore = result.score;
+    result.reasoning = `TEST FAULT (forced score 4; real score was ${realScore}/10). ${result.reasoning}`;
+    result.score = 4;
+    const fl = Array.isArray(p.revision_log) ? p.revision_log : [];
+    p.revision_log = [...fl, { at: new Date().toISOString(), kind: "test_fault_injected", fault: "fidelity_below", attempt: retries + 1, real_score: realScore }];
+    await db.from("stimulus_prompts").update({ revision_log: p.revision_log }).eq("id", p.id);
   }
   const below = fidelityBelow(result.score);
   if (below && canRetry(retries)) {
@@ -818,6 +874,11 @@ async function fidelitySlice(orch: AnyRow, passes: Passes) {
     })
     .eq("id", p.id);
   return { done: false, phase: "fidelity", note: `${p.channel_name}: ${result.score}/10.` };
+}
+
+function testFault(orch: AnyRow, key: "mandate_channel" | "fidelity_channel", channel: string) {
+  const f = orch.test_faults as AnyRow | null;
+  return Boolean(f && typeof f[key] === "string" && f[key] === channel);
 }
 
 // ------------------------------------------------------------------ background driver

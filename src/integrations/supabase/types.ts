@@ -1649,6 +1649,7 @@ export type Database = {
           strategy_signoff_stop: boolean
           strategy_signoff_stop_at: string | null
           stream_last_delta_at: string | null
+          test_copy_of: string | null
           truth_consumer: string | null
           truth_cultural: string | null
           truth_cultural_confidence: string | null
@@ -1882,6 +1883,7 @@ export type Database = {
           strategy_signoff_stop?: boolean
           strategy_signoff_stop_at?: string | null
           stream_last_delta_at?: string | null
+          test_copy_of?: string | null
           truth_consumer?: string | null
           truth_cultural?: string | null
           truth_cultural_confidence?: string | null
@@ -2115,6 +2117,7 @@ export type Database = {
           strategy_signoff_stop?: boolean
           strategy_signoff_stop_at?: string | null
           stream_last_delta_at?: string | null
+          test_copy_of?: string | null
           truth_consumer?: string | null
           truth_cultural?: string | null
           truth_cultural_confidence?: string | null
@@ -2465,6 +2468,7 @@ export type Database = {
           repair_next: string | null
           session_id: string
           status: string
+          test_faults: Json | null
           updated_at: string
         }
         Insert: {
@@ -2495,6 +2499,7 @@ export type Database = {
           repair_next?: string | null
           session_id: string
           status?: string
+          test_faults?: Json | null
           updated_at?: string
         }
         Update: {
@@ -2525,6 +2530,7 @@ export type Database = {
           repair_next?: string | null
           session_id?: string
           status?: string
+          test_faults?: Json | null
           updated_at?: string
         }
         Relationships: [
