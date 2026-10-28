@@ -1,5 +1,10 @@
 # Roadmap — Partner Hub structured evidence (27 Oct 2026)
 
+## Two repairs — 28 Oct 2026
+- [ ] Assemble and save the v97 valuation brief with the validated Infiniti baseline; preserve v96 and run locks/content.
+- [ ] Save new Synthesiser claims once and deduplicate existing access responses without deleting rows.
+- [ ] Run regression tests, publish, verify live valuation/download and 215 distinct claims, revoke verification key, stop.
+
 Previous Stage 16/22 work completed and verified in the preceding conversation.
 
 1. [x] Diagnose and report missing JLR structured records before changes.
