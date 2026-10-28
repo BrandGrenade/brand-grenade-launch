@@ -73,7 +73,18 @@ NEGATIVE / EXCLUDE:
 DELIBERATE IMPERFECTION:
 <the one named, chosen flaw and why it earns its place>
 BRAND ASSET HANDLING:
-<how the real brand assets are referenced and placed — or "No brand asset required">`;
+<how the real brand assets are referenced and placed — or "No brand asset required">
+FIELD 2 PLACEMENT:
+<where the locked Field 2 line appears in this execution, verbatim — or why this format cannot carry it>`;
+
+/** Locked lines block, passed verbatim into every channel prompt pass. */
+export function lockedLinesBlock(field1: string | null, field2: string | null): string {
+  if (!field1?.trim() && !field2?.trim()) return "";
+  return `LOCKED LINES — carry verbatim, never paraphrase:
+FIELD 1 (master line): ${field1?.trim() || "—"}
+FIELD 2 (expression line): ${field2?.trim() || "—"}
+Field 1 must appear word for word in the PROMPT. In the FIELD 2 PLACEMENT section, state exactly where Field 2 appears, quoting it verbatim, or why this format cannot carry it.`;
+}
 
 export function buildInitialPromptMessage(a: {
   brandName: string;
@@ -86,8 +97,12 @@ export function buildInitialPromptMessage(a: {
   direction: string;
   instinctBrief: string | null;
   assetRules: BrandAssetRules | null;
+  field1?: string | null;
+  field2?: string | null;
 }): string {
-  return `BRAND: ${a.brandName} (${a.category})
+  return `${lockedLinesBlock(a.field1 ?? null, a.field2 ?? null)}
+
+BRAND: ${a.brandName} (${a.category})
 CHANNEL: ${a.channelName}
 SMP: ${a.smp}
 DETONATION LINE: ${a.detonationLine || "—"}
@@ -125,7 +140,9 @@ DISCIPLINE
 - If an element came from the human Initial Instinct Brief (a deliberate music direction, a casting choice), mark origin "instinct_brief". It carries equal weight to auto-extracted elements.
 
 Return ONLY a JSON object:
-{"signatures":[{"category":"sonic|visual|verbal|structural","name":"<short handle, max 8 words>","description":"<what it is, concretely, in one or two sentences>","origin":"extracted|instinct_brief"}]}`;
+{"signatures":[{"category":"sonic|visual|verbal|structural","name":"<short handle, max 8 words>","description":"<what it is, concretely, in one or two sentences>","origin":"extracted|instinct_brief","basis":"locked_idea|locked_lines|amendment|channel_invention"}]}
+
+BASIS — say where each device comes from: the locked idea, its locked lines, an applied Creative Director amendment, or invented by this channel ("channel_invention"). Be honest; channel inventions are removed from the registry.`;
 
 export function buildExtractionMessage(a: {
   channelName: string;
@@ -133,8 +150,16 @@ export function buildExtractionMessage(a: {
   smp: string;
   prompt: string;
   instinctBrief: string | null;
+  lockedIdea?: string | null;
+  amendments?: string[];
 }): string {
-  return `CHANNEL: ${a.channelName}
+  return `LOCKED IDEA:
+${a.lockedIdea?.trim() || "—"}
+
+APPLIED AMENDMENTS:
+${a.amendments?.length ? a.amendments.map((x) => `- ${x}`).join("\n") : "None."}
+
+CHANNEL: ${a.channelName}
 LENS: ${a.lensName}
 SMP (a verbal signature must NOT simply be this): ${a.smp}
 
@@ -295,6 +320,8 @@ export const COHESION_REVISION_SYSTEM = `BRAND GRENADE — COHESION REVISION
 
 The Creative Director judged the set incohesive and named what this specific prompt needs. Rewrite this one prompt to close the gap, without flattening it into the others. Keep the section format exactly. Keep its deliberate imperfection, or replace it with a better one — never delete it.
 
+Keep any LOCKED LINES verbatim and keep the FIELD 2 PLACEMENT section.
+
 Return ONLY the rewritten prompt text, in the same section format. No commentary.`;
 
 /* --------------------------------------------------------- Gate Two mandate */
@@ -316,6 +343,8 @@ RULES
 · Do not paste the mandate text in verbatim as a bolted-on line. Work it into the prompt where it belongs.
 · Change as little else as possible. Keep the section format exactly. Keep the idea, the tone and any deliberate imperfection intact.
 · If the mandate genuinely fights this channel's idea, still carry it — resolve the tension in the prompt rather than dropping the mandate. The cohesion pass will flag anything that ends up weak.
+
+Keep any LOCKED LINES verbatim and keep the FIELD 2 PLACEMENT section.
 
 Return ONLY the rewritten prompt text, in the same section format. No commentary.`;
 

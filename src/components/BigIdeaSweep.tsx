@@ -90,6 +90,8 @@ type IdeaConvergence = ConvergenceVerdict & { fullSet?: ConvergenceVerdict };
 type Idea = {
   id: string;
   active_attempt_id?: string | null;
+  rewrite_error?: string | null;
+  revise_notes?: string | null;
   lens_id: string;
   lens_name: string;
   sort_order: number;
@@ -469,6 +471,23 @@ function IdeaCard({
   const [notes, setNotes] = useState("");
   const [showRevise, setShowRevise] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [rewriteError, setRewriteError] = useState<string | null>(d.rewrite_error ?? null);
+  const [lastNotes, setLastNotes] = useState("");
+  useEffect(() => setRewriteError(d.rewrite_error ?? null), [d.rewrite_error]);
+  const runRewrite = async (text: string) => {
+    setBusy(true);
+    setLastNotes(text);
+    try {
+      await onRevise(text);
+      setRewriteError(null);
+      setNotes("");
+      setShowRevise(false);
+    } catch (e) {
+      setRewriteError(e instanceof Error ? e.message : "Rewrite failed (platform error). Your idea is unchanged.");
+    } finally {
+      setBusy(false);
+    }
+  };
 
   useEffect(() => setInstinct(d.instinct_brief ?? ""), [d.instinct_brief]);
 
@@ -656,20 +675,21 @@ function IdeaCard({
           <div style={{ marginTop: 8 }}>
             <Btn
               disabled={busy || !notes.trim()}
-              onClick={async () => {
-                setBusy(true);
-                try {
-                  await onRevise(notes.trim());
-                  setNotes("");
-                  setShowRevise(false);
-                } finally {
-                  setBusy(false);
-                }
-              }}
+              onClick={() => void runRewrite(notes.trim())}
             >
               {busy ? <><Spinner /> Rewriting…</> : "Rewrite through this lens"}
             </Btn>
           </div>
+        </div>
+      )}
+      {rewriteError && (
+        <div role="alert" className="text-body-sm" style={{ marginTop: 10, color: RED, display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+          <span>{rewriteError}</span>
+          {(lastNotes || d.revise_notes) && (
+            <Btn disabled={busy} onClick={() => void runRewrite(lastNotes || String(d.revise_notes ?? ""))}>
+              {busy ? <><Spinner /> Retrying…</> : "Retry"}
+            </Btn>
+          )}
         </div>
       )}
     </div>
@@ -701,7 +721,21 @@ export function BigIdeaSweep({
   const lock = useServerFn(lockWinningIdea);
   const unlock = useServerFn(unlockWinningIdea);
   const triage = useServerFn(triageStimulusDirection);
-  const revise = useServerFn(reviseStimulusDirection);
+  const reviseOnce = useServerFn(reviseStimulusDirection);
+  // CE1-6: a failed rewrite retries up to twice, then shows a plain platform
+  // error with Retry. The idea's text and status never change on failure.
+  const revise = useCallback(
+    async (args: { data: { directionId: string; notes: string; expectedSlot: number | null; expectedLensId: string | null } }) => {
+      let last: { message: string } | null = null;
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        const r = await reviseOnce({ data: { ...args.data, attempt } });
+        if (r.ok) return;
+        last = r;
+      }
+      throw new Error(last?.message ?? "Rewrite failed (platform error). Your idea is unchanged.");
+    },
+    [reviseOnce],
+  );
 
   const [runId, setRunId] = useState<string | null>(null);
   const [runs, setRuns] = useState<RunSummary[]>([]);

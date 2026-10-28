@@ -1,7 +1,7 @@
 // CREATIVE STIMULUS ENGINE — PHASE 3 UI. The Orchestration Engine.
 // Session-level: runs across every Gate One-confirmed channel at once.
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import {
   startOrchestration,
@@ -20,7 +20,10 @@ import {
   retrySetWithAmendment,
   confirmGateTwo,
   getFullFinishedExport,
+  adaptPromptIssue,
+  approveWithNotedIssue,
 } from "@/lib/stimulus-gate-two.functions";
+import { hasResolution, type IssueKind } from "@/lib/stimulus/platform-retry-rules";
 import { buildFullFinishedExport, download } from "@/lib/stimulus-export";
 import { SIGNATURE_CATEGORIES } from "@/lib/stimulus/orchestration-prompts";
 import { StimulusMandate } from "@/components/stimulus/StimulusMandate";
@@ -41,6 +44,8 @@ const PHASES: { id: string; label: string }[] = [
   { id: "propagate", label: "2 · Propagation" },
   { id: "wad", label: "3 · Writer / AD" },
   { id: "cd", label: "4 · Creative Director" },
+  { id: "repair", label: "Applying mandate / amendment" },
+  { id: "fidelity", label: "Fidelity check" },
   { id: "complete", label: "Ready for Gate Two" },
 ];
 
@@ -198,6 +203,131 @@ function BrandAssetPanel({ brandName }: { brandName: string }) {
   );
 }
 
+const TH: React.CSSProperties = { padding: "6px 8px", fontWeight: 400 };
+const TD: React.CSSProperties = { padding: "10px 8px" };
+
+function amendmentLabel(s: string) {
+  return s === "applied"
+    ? "Amendment applied"
+    : s === "partly"
+      ? "Amendment partly applied — retrying"
+      : s === "not_applied"
+        ? "Amendment not applied — retrying"
+        : "Platform could not apply the amendment";
+}
+
+function channelIssues(p: Row): IssueKind[] {
+  const out: IssueKind[] = [];
+  if (p.mandate_compliance === "absent" && !hasResolution(p.issue_resolutions, "mandate")) out.push("mandate");
+  if (p.amendment_status === "platform_failed" && !hasResolution(p.issue_resolutions, "amendment")) out.push("amendment");
+  if (p.fidelity_status === "below" && !hasResolution(p.issue_resolutions, "fidelity")) out.push("fidelity");
+  return out;
+}
+
+const STATE_TONE: Record<string, string> = { queued: MUTED, running: AMBER, done: "#7FB77E", failed: RED };
+
+/** Fixed at the top of Step 4 while a job runs; reads saved per-channel state. */
+function ChannelProgress({ prompts }: { prompts: Row[] }) {
+  const done = prompts.filter((p) => p.run_state === "done" || p.run_state === "failed").length;
+  return (
+    <div style={{ position: "sticky", top: 0, zIndex: 5, background: "#0A0908", paddingTop: 10, paddingBottom: 10, marginTop: 10, borderBottom: "1px solid #1C1A18" }}>
+      <ProgressBar value={done} total={Math.max(1, prompts.length)} label={`${done} of ${prompts.length} channels done`} />
+      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 8 }}>
+        {prompts.map((p) => {
+          const st = (p.run_state as string) ?? "queued";
+          return (
+            <Label key={p.id} tone={STATE_TONE[st] ?? MUTED}>
+              {st === "running" ? <Spinner size={9} style={{ marginRight: 6 }} /> : null}
+              {`${p.channel_name} · ${st}`}
+            </Label>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function ChannelNotes(props: {
+  channel: string;
+  label: string;
+  tone: string;
+  placeholder: string;
+  value: string;
+  onChange: (v: string) => void;
+  confirm: string;
+  busy: boolean;
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  return (
+    <label style={{ display: "block" }}>
+      <span className="text-mono" style={{ color: props.tone, fontSize: 10, letterSpacing: "0.1em" }}>
+        {`${props.label} — ${props.channel}`.toUpperCase()}
+      </span>
+      <textarea
+        aria-label={`${props.label} — ${props.channel}`}
+        value={props.value}
+        onChange={(e) => props.onChange(e.target.value)}
+        rows={2}
+        placeholder={props.placeholder}
+        style={{ width: "100%", marginTop: 4, background: "#0A0908", color: "#EDE8E0", border: `1px solid ${props.tone}55`, borderRadius: 6, padding: 8, fontFamily: "inherit", fontSize: 13 }}
+      />
+      <div style={{ marginTop: 8, display: "flex", gap: 8 }}>
+        <Btn active tone={props.tone} disabled={props.busy || !props.value.trim()} onClick={props.onConfirm}>{props.confirm}</Btn>
+        <Btn onClick={props.onCancel}>Cancel</Btn>
+      </div>
+    </label>
+  );
+}
+
+function IssueDecision(props: {
+  channel: string;
+  kind: IssueKind;
+  reason?: string | null;
+  busy: boolean;
+  onAdapt?: () => void;
+  onApprove: (note: string) => Promise<void>;
+}) {
+  const [noting, setNoting] = useState(false);
+  const [noteText, setNoteText] = useState("");
+  const title =
+    props.kind === "mandate"
+      ? "Mandate absent after 2 platform retries"
+      : props.kind === "amendment"
+        ? "Platform could not apply the amendment"
+        : "Below fidelity after 2 platform retries";
+  return (
+    <div style={{ border: `1px solid ${RED}55`, borderRadius: 6, padding: 10, marginTop: 6 }}>
+      <div className="text-body-sm" style={{ color: RED }}>{title}{props.reason ? ` — ${props.reason}` : ""}</div>
+      <div className="text-body-sm" style={{ color: MUTED, marginTop: 4 }}>This is a platform result, not your decision. Choose how to proceed:</div>
+      <div style={{ display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
+        {props.onAdapt && (
+          <Btn active disabled={props.busy} onClick={props.onAdapt}>
+            {props.kind === "mandate" ? "Adapt the mandate for this channel type" : "Adapt the amendment for this channel type"}
+          </Btn>
+        )}
+        <Btn disabled={props.busy} onClick={() => setNoting((v) => !v)}>Approve with a noted issue</Btn>
+      </div>
+      {noting && (
+        <div style={{ marginTop: 8 }}>
+          <ChannelNotes
+            channel={props.channel}
+            label="Noted issue"
+            tone={AMBER}
+            placeholder="Why this is approved as it stands. Recorded with your name and the time."
+            value={noteText}
+            onChange={setNoteText}
+            confirm="Approve with this note"
+            busy={props.busy}
+            onCancel={() => setNoting(false)}
+            onConfirm={() => void props.onApprove(noteText.trim()).then(() => { setNoting(false); setNoteText(""); })}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function StimulusOrchestration({
   sessionId,
   brandName,
@@ -219,6 +349,8 @@ export function StimulusOrchestration({
   const retrySet = useServerFn(retrySetWithAmendment);
   const confirmTwo = useServerFn(confirmGateTwo);
   const fullExport = useServerFn(getFullFinishedExport);
+  const adapt = useServerFn(adaptPromptIssue);
+  const approveIssue = useServerFn(approveWithNotedIssue);
 
   const [open, setOpen] = useState(defaultOpen);
   const [busy, setBusy] = useState(false);
@@ -278,6 +410,19 @@ export function StimulusOrchestration({
     },
     [load],
   );
+
+  const act = async (fn: () => Promise<unknown>, failMsg: string) => {
+    setBusy(true);
+    setErr(null);
+    try {
+      await fn();
+      if (orchId) await refreshState(orchId);
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : failMsg);
+    } finally {
+      setBusy(false);
+    }
+  };
 
   /**
    * Hand the run to the server and watch the row. The work itself is detached
@@ -511,19 +656,187 @@ export function StimulusOrchestration({
                 </div>
               )}
 
-              {/* ---------------- Campaign Signature Registry ---------------- */}
-              <div style={{ marginTop: 20 }}>
-                <div className="text-mono" style={{ color: AMBER, fontSize: 10, letterSpacing: "0.12em" }}>
+              {/* ---------------- Per-channel progress (from saved rows) ---------------- */}
+              {orch.status !== "complete" && (
+                <ChannelProgress prompts={activePrompts} />
+              )}
+
+              {/* ---------------- Summary table ---------------- */}
+              <div style={{ marginTop: 18, overflowX: "auto", opacity: orch.status !== "complete" ? 0.5 : 1 }}>
+                <table className="text-body-sm" style={{ width: "100%", borderCollapse: "collapse", color: "#EDE8E0" }}>
+                  <thead>
+                    <tr className="text-mono" style={{ color: MUTED, fontSize: 10, letterSpacing: "0.1em", textAlign: "left" }}>
+                      <th style={TH}>CHANNEL</th>
+                      <th style={TH}>STATUS</th>
+                      <th style={TH}>FIDELITY</th>
+                      <th style={TH}>MANDATE</th>
+                      <th style={TH}>ACTIONS</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {activePrompts.map((p) => {
+                      const isOpen = expanded === p.id;
+                      const issues = channelIssues(p);
+                      return (
+                        <Fragment key={p.id}>
+                          <tr style={{ borderTop: "1px solid #1C1A18", verticalAlign: "top" }}>
+                            <td style={TD}>
+                              <div style={{ color: AMBER }}>{p.channel_name}</div>
+                              <div style={{ color: MUTED, fontSize: 12 }}>{p.lens_name}</div>
+                            </td>
+                            <td style={TD}>
+                              <div>{p.gate_two_approved ? "Signed off" : `Craft: ${p.wad_status}`}</div>
+                              {p.amendment_status && <div style={{ color: p.amendment_status === "applied" ? MUTED : RED, fontSize: 12 }}>{amendmentLabel(p.amendment_status)}</div>}
+                              {p.error && <div style={{ color: RED, fontSize: 12 }}>{p.error}</div>}
+                            </td>
+                            <td style={TD}>
+                              {typeof p.fidelity_score === "number" ? `${p.fidelity_score}/10` : "—"}
+                              {p.fidelity_status === "below" && <div style={{ color: RED, fontSize: 12 }}>Below fidelity after 2 platform retries</div>}
+                            </td>
+                            <td style={TD}>
+                              {!orch.mandate_text ? "No mandate" : p.mandate_compliance === "absent" ? <span style={{ color: RED }}>Absent after 2 platform retries</span> : p.mandate_compliance ?? "Pending"}
+                            </td>
+                            <td style={TD}>
+                              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                                <Btn onClick={() => setExpanded(isOpen ? null : p.id)}>{isOpen ? "Collapse" : "Open"}</Btn>
+                                <Btn disabled={busy || Boolean(orch.gate_two_confirmed)} onClick={() => { setSendBackFor(sendBackFor === p.id ? null : p.id); setRejectFor(null); }}>
+                                  Regenerate with this reason
+                                </Btn>
+                                <Btn tone={RED} disabled={busy || Boolean(orch.gate_two_confirmed)} onClick={() => { setRejectFor(rejectFor === p.id ? null : p.id); setSendBackFor(null); }}>
+                                  Drop this channel
+                                </Btn>
+                                {orch.status === "complete" && (
+                                  <Btn
+                                    tone={GREEN}
+                                    active={Boolean(p.gate_two_approved)}
+                                    disabled={busy || Boolean(orch.gate_two_confirmed)}
+                                    onClick={() => void act(() => approveTwo({ data: { promptId: p.id, approved: !p.gate_two_approved } }), "Gate Two sign-off failed")}
+                                  >
+                                    {p.gate_two_approved ? "Signed off — undo" : "Sign off (on-brief)"}
+                                  </Btn>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+
+                          {issues.length > 0 && orch.status === "complete" && !orch.gate_two_confirmed && (
+                            <tr><td colSpan={5} style={{ ...TD, paddingTop: 0 }}>
+                              {issues.map((kind) => (
+                                <IssueDecision
+                                  key={kind}
+                                  channel={p.channel_name}
+                                  kind={kind}
+                                  reason={kind === "mandate" ? p.mandate_carrier : kind === "amendment" ? p.amendment_reason : p.fidelity_reason}
+                                  busy={busy}
+                                  onAdapt={kind === "fidelity" ? undefined : () => void act(async () => { await adapt({ data: { promptId: p.id, kind } }); if (orchId) await drive(orchId); }, "Adaptation failed")}
+                                  onApprove={(note) => act(() => approveIssue({ data: { promptId: p.id, kind, note } }), "Could not record the noted issue")}
+                                />
+                              ))}
+                            </td></tr>
+                          )}
+
+                          {sendBackFor === p.id && (
+                            <tr><td colSpan={5} style={TD}>
+                              <ChannelNotes
+                                channel={p.channel_name}
+                                label="Reason to regenerate"
+                                tone={AMBER}
+                                placeholder="What this channel needs. The prompt is regenerated against this reason, then the set is re-checked."
+                                value={sendBackNotes}
+                                onChange={setSendBackNotes}
+                                confirm="Regenerate with this reason"
+                                busy={busy}
+                                onCancel={() => setSendBackFor(null)}
+                                onConfirm={() => void act(async () => {
+                                  await sendBack({ data: { promptId: p.id, notes: sendBackNotes.trim() } });
+                                  setSendBackFor(null);
+                                  setSendBackNotes("");
+                                  if (orchId) await drive(orchId);
+                                }, "Regenerate failed")}
+                              />
+                            </td></tr>
+                          )}
+
+                          {rejectFor === p.id && (
+                            <tr><td colSpan={5} style={TD}>
+                              <ChannelNotes
+                                channel={p.channel_name}
+                                label="Why drop this channel"
+                                tone={RED}
+                                placeholder="This removes the channel from the set. Its signatures retire and dependent prompts re-propagate. Its history is kept."
+                                value={rejectReason}
+                                onChange={setRejectReason}
+                                confirm="Drop this channel"
+                                busy={busy}
+                                onCancel={() => setRejectFor(null)}
+                                onConfirm={() => void act(async () => {
+                                  const r = await reject({ data: { promptId: p.id, reason: rejectReason.trim() } });
+                                  setNote(`Channel dropped: ${r.retiredSignatures} signature(s) retired, ${r.repropagatedPrompts} prompt(s) re-propagating at registry v${r.registryVersion}.`);
+                                  setRejectFor(null);
+                                  setRejectReason("");
+                                  if (orchId) await drive(orchId);
+                                }, "Drop failed")}
+                              />
+                            </td></tr>
+                          )}
+
+                          {isOpen && (
+                            <tr><td colSpan={5} style={TD}>
+                              {p.field2_placement && <div style={{ color: MUTED, marginBottom: 6 }}>Field 2 placement: {p.field2_placement}</div>}
+                              <pre className="text-body-sm" style={{ whiteSpace: "pre-wrap", color: "#EDE8E0", background: "#0A0908", border: "1px solid #1C1A18", borderRadius: 6, padding: 12, fontFamily: "inherit" }}>
+                                {p.final_prompt || p.working_prompt || p.initial_prompt || "Not written yet."}
+                              </pre>
+                              {(p.wad_reasoning || p.wad_notes || p.cd_note || p.fidelity_reason) && (
+                                <details style={{ marginTop: 8 }}>
+                                  <summary className="text-mono" style={{ color: MUTED, fontSize: 10, cursor: "pointer" }}>CD AND CRAFT NOTES — {p.channel_name.toUpperCase()}</summary>
+                                  {p.wad_reasoning && <div style={{ color: MUTED, marginTop: 6, whiteSpace: "pre-wrap" }}>{p.wad_reasoning}</div>}
+                                  {p.wad_notes && <div style={{ color: MUTED, marginTop: 6, whiteSpace: "pre-wrap" }}>{p.wad_notes}</div>}
+                                  {p.cd_note && <div style={{ color: AMBER, marginTop: 6 }}>CD note: {p.cd_note}</div>}
+                                  {p.fidelity_reason && <div style={{ color: MUTED, marginTop: 6 }}>Fidelity: {p.fidelity_reason}</div>}
+                                  {p.mandate_carrier && <div style={{ color: MUTED, marginTop: 6 }}>Mandate: {p.mandate_carrier}</div>}
+                                </details>
+                              )}
+                              {refsFor(p.id).length > 0 && (
+                                <details style={{ marginTop: 8 }}>
+                                  <summary className="text-mono" style={{ color: MUTED, fontSize: 10, cursor: "pointer" }}>CROSS-REFERENCES — {refsFor(p.id).length}</summary>
+                                  {refsFor(p.id).map((c) => (
+                                    <div key={c.id} style={{ border: "1px solid #1C1A18", borderRadius: 6, padding: 10, marginTop: 6 }}>
+                                      <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
+                                        <Label tone={c.status === "accepted" ? GREEN : c.status === "suggested" ? MUTED : RED}>{c.status === "suggested" ? "suggestion" : c.status}</Label>
+                                        {c.status !== "voided" && (
+                                          <>
+                                            <Btn tone={GREEN} disabled={busy} onClick={async () => { await decide({ data: { crossRefId: c.id, decision: "accepted" } }); if (orchId) await refreshState(orchId); }}>Accept</Btn>
+                                            <Btn tone={RED} disabled={busy} onClick={async () => { await decide({ data: { crossRefId: c.id, decision: "rejected" } }); if (orchId) await refreshState(orchId); }}>Reject suggestion</Btn>
+                                          </>
+                                        )}
+                                      </div>
+                                      <div style={{ marginTop: 6 }}>{c.suggestion}</div>
+                                      {c.rationale && <div style={{ color: MUTED, marginTop: 4 }}>{c.rationale}</div>}
+                                      {c.decision_reason && <div style={{ color: MUTED, marginTop: 4, fontStyle: "italic" }}>{c.decision_reason}</div>}
+                                    </div>
+                                  ))}
+                                </details>
+                              )}
+                            </td></tr>
+                          )}
+                        </Fragment>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* ---------------- Campaign Signature Registry (collapsed) ---------------- */}
+              <details style={{ marginTop: 18 }}>
+                <summary className="text-mono" style={{ color: AMBER, fontSize: 10, letterSpacing: "0.12em", cursor: "pointer" }}>
                   CAMPAIGN SIGNATURE REGISTRY — {activeSignatures.length} ACTIVE
-                  {retiredSignatures.length ? ` · ${retiredSignatures.length} RETIRED` : ""}
-                </div>
+                  {retiredSignatures.length ? ` · ${retiredSignatures.length} REMOVED` : ""}
+                </summary>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 10, marginTop: 10 }}>
                   {activeSignatures.map((s) => (
                     <div key={s.id} style={{ border: "1px solid #1C1A18", borderRadius: 6, padding: 10 }}>
                       <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 6 }}>
-                        <Label tone={AMBER}>
-                          {SIGNATURE_CATEGORIES.find((c) => c.id === s.category)?.label ?? s.category}
-                        </Label>
+                        <Label tone={AMBER}>{SIGNATURE_CATEGORIES.find((c) => c.id === s.category)?.label ?? s.category}</Label>
                         {s.origin === "instinct_brief" && <Label tone={GREEN}>human instinct</Label>}
                         <Label>{s.source_channel}</Label>
                       </div>
@@ -531,298 +844,23 @@ export function StimulusOrchestration({
                       <div className="text-body-sm" style={{ color: MUTED, marginTop: 4 }}>{s.description}</div>
                     </div>
                   ))}
-                  {retiredSignatures.map((s) => (
-                    <div key={s.id} style={{ border: `1px dashed ${RED}55`, borderRadius: 6, padding: 10, opacity: 0.7 }}>
-                      <Label tone={RED}>retired</Label>
-                      <div className="text-body-sm" style={{ color: MUTED, marginTop: 6 }}>
-                        {s.name} — {s.retired_reason}
-                      </div>
-                    </div>
-                  ))}
                 </div>
-              </div>
-
-              {/* ---------------- Prompts ---------------- */}
-              <div style={{ marginTop: 22, display: "grid", gap: 12 }}>
-                {activePrompts.map((p) => {
-                  const refs = refsFor(p.id);
-                  const isOpen = expanded === p.id;
-                  const tone =
-                    p.wad_status === "flagged" ? RED : p.wad_status === "pending" ? MUTED : GREEN;
-                  return (
-                    <div key={p.id} style={{ border: "1px solid #1C1A18", borderRadius: 8, padding: 14 }}>
-                      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-                        <Label tone={AMBER}>{p.channel_name}</Label>
-                        <Label>{p.lens_name}</Label>
-                        <Label tone={tone}>{`craft: ${p.wad_status}`}</Label>
-                        {refs.length > 0 && <Label>{`${refs.length} cross-ref`}</Label>}
-                        <Btn onClick={() => setExpanded(isOpen ? null : p.id)}>{isOpen ? "Collapse" : "Open"}</Btn>
-                        <Btn tone={RED} onClick={() => setRejectFor(rejectFor === p.id ? null : p.id)}>
-                          Reject at CD
-                        </Btn>
-                        {orch.status === "complete" && (
-                          <>
-                            <Label tone={p.gate_two_approved ? GREEN : MUTED}>
-                              {p.gate_two_approved ? "gate two: signed off" : "gate two: pending"}
-                            </Label>
-                            <Btn
-                              tone={GREEN}
-                              active={Boolean(p.gate_two_approved)}
-                              disabled={busy || Boolean(orch.gate_two_confirmed)}
-                              onClick={async () => {
-                                setBusy(true);
-                                setErr(null);
-                                try {
-                                  await approveTwo({
-                                    data: { promptId: p.id, approved: !p.gate_two_approved },
-                                  });
-                                  if (orchId) await refreshState(orchId);
-                                } catch (e) {
-                                  setErr(e instanceof Error ? e.message : "Gate Two sign-off failed");
-                                } finally {
-                                  setBusy(false);
-                                }
-                              }}
-                            >
-                              {p.gate_two_approved ? "Signed off — undo" : "Sign off (on-brief)"}
-                            </Btn>
-                            <Btn
-                              disabled={busy || Boolean(orch.gate_two_confirmed)}
-                              onClick={() => setSendBackFor(sendBackFor === p.id ? null : p.id)}
-                            >
-                              Send back with notes
-                            </Btn>
-                          </>
-                        )}
+                {retiredSignatures.length > 0 && (
+                  <div style={{ marginTop: 12 }}>
+                    <div className="text-mono" style={{ color: RED, fontSize: 10, letterSpacing: "0.12em" }}>REMOVED DEVICES</div>
+                    {retiredSignatures.map((s) => (
+                      <div key={s.id} className="text-body-sm" style={{ color: MUTED, marginTop: 4 }}>
+                        {s.name} ({s.source_channel}) — {s.retired_reason}
                       </div>
-
-                      {sendBackFor === p.id && (
-                        <div style={{ marginTop: 10 }}>
-                          <textarea
-                            value={sendBackNotes}
-                            onChange={(e) => setSendBackNotes(e.target.value)}
-                            rows={2}
-                            placeholder="On-brief / on-strategy notes for this prompt. Craft pass re-runs on it, then a full CD re-check."
-                            style={{
-                              width: "100%",
-                              background: "#0A0908",
-                              color: "#EDE8E0",
-                              border: `1px solid ${AMBER}55`,
-                              borderRadius: 6,
-                              padding: 8,
-                              fontFamily: "inherit",
-                              fontSize: 13,
-                            }}
-                          />
-                          <div style={{ marginTop: 8, display: "flex", gap: 8 }}>
-                            <Btn
-                              active
-                              disabled={busy || !sendBackNotes.trim()}
-                              onClick={async () => {
-                                if (!orchId) return;
-                                setBusy(true);
-                                setErr(null);
-                                try {
-                                  await sendBack({
-                                    data: { promptId: p.id, notes: sendBackNotes.trim() },
-                                  });
-                                  setSendBackFor(null);
-                                  setSendBackNotes("");
-                                } catch (e) {
-                                  setErr(e instanceof Error ? e.message : "Send back failed");
-                                  setBusy(false);
-                                  return;
-                                }
-                                setBusy(false);
-                                await drive(orchId);
-                              }}
-                            >
-                              Send back and rework
-                            </Btn>
-                            <Btn onClick={() => setSendBackFor(null)}>Cancel</Btn>
-                          </div>
-                        </div>
-                      )}
-
-
-                      {rejectFor === p.id && (
-                        <div style={{ marginTop: 10 }}>
-                          <textarea
-                            value={rejectReason}
-                            onChange={(e) => setRejectReason(e.target.value)}
-                            rows={2}
-                            placeholder="Why is this direction out? Its signatures retire and dependent prompts re-propagate."
-                            style={{
-                              width: "100%",
-                              background: "#0A0908",
-                              color: "#EDE8E0",
-                              border: `1px solid ${RED}55`,
-                              borderRadius: 6,
-                              padding: 8,
-                              fontFamily: "inherit",
-                              fontSize: 13,
-                            }}
-                          />
-                          <div style={{ marginTop: 8, display: "flex", gap: 8 }}>
-                            <Btn
-                              tone={RED}
-                              active
-                              disabled={busy || !rejectReason.trim()}
-                              onClick={async () => {
-                                if (!orchId) return;
-                                setBusy(true);
-                                try {
-                                  const r = await reject({
-                                    data: { promptId: p.id, reason: rejectReason.trim() },
-                                  });
-                                  setNote(
-                                    `Late rejection: ${r.retiredSignatures} signature(s) retired, ${r.repropagatedPrompts} prompt(s) re-propagating at registry v${r.registryVersion}.`,
-                                  );
-                                  setRejectFor(null);
-                                  setRejectReason("");
-                                } finally {
-                                  setBusy(false);
-                                }
-                                await drive(orchId);
-                              }}
-                            >
-                              Confirm rejection
-                            </Btn>
-                            <Btn onClick={() => setRejectFor(null)}>Cancel</Btn>
-                          </div>
-                        </div>
-                      )}
-
-                      {p.wad_reasoning && (
-                        <div className="text-body-sm" style={{ color: tone, marginTop: 10, whiteSpace: "pre-wrap" }}>
-                          {p.wad_reasoning}
-                        </div>
-                      )}
-                      {p.wad_notes && (
-                        <div className="text-body-sm" style={{ color: MUTED, marginTop: 6, whiteSpace: "pre-wrap" }}>
-                          {p.wad_notes}
-                        </div>
-                      )}
-                      {p.cd_note && (
-                        <div className="text-body-sm" style={{ color: AMBER, marginTop: 6 }}>
-                          CD note: {p.cd_note}
-                        </div>
-                      )}
-                      {p.mandate_compliance && p.mandate_compliance !== "present" && (
-                        <div
-                          className="text-body-sm"
-                          style={{
-                            color: p.mandate_compliance === "absent" ? RED : AMBER,
-                            marginTop: 6,
-                          }}
-                        >
-                          {p.mandate_compliance === "absent"
-                            ? "MANDATE ABSENT — this channel does not carry the mandated element. Gate Two is blocked until it does."
-                            : "Mandate weak — the element is traceable but thin here."}
-                          {p.mandate_carrier ? ` (${p.mandate_carrier})` : ""}
-                        </div>
-                      )}
-                      {p.mandate_compliance === "present" && p.mandate_carrier && (
-                        <div className="text-body-sm" style={{ color: GREEN, marginTop: 6 }}>
-                          Mandate carried: “{p.mandate_carrier}”
-                        </div>
-                      )}
-
-
-                      {refs.length > 0 && (
-                        <div style={{ marginTop: 12, display: "grid", gap: 8 }}>
-                          {refs.map((c) => (
-                            <div
-                              key={c.id}
-                              style={{
-                                border: `1px solid ${
-                                  c.status === "accepted" ? GREEN : c.status === "rejected" || c.status === "voided" ? RED : "#1C1A18"
-                                }55`,
-                                borderRadius: 6,
-                                padding: 10,
-                              }}
-                            >
-                              <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
-                                <Label
-                                  tone={
-                                    c.status === "accepted"
-                                      ? GREEN
-                                      : c.status === "rejected" || c.status === "voided"
-                                        ? RED
-                                        : MUTED
-                                  }
-                                >
-                                  {c.status === "suggested" ? "suggestion" : c.status}
-                                </Label>
-                                {c.status !== "voided" && (
-                                  <>
-                                    <Btn
-                                      tone={GREEN}
-                                      disabled={busy}
-                                      onClick={async () => {
-                                        await decide({ data: { crossRefId: c.id, decision: "accepted" } });
-                                        if (orchId) await refreshState(orchId);
-                                      }}
-                                    >
-                                      Accept
-                                    </Btn>
-                                    <Btn
-                                      tone={RED}
-                                      disabled={busy}
-                                      onClick={async () => {
-                                        await decide({ data: { crossRefId: c.id, decision: "rejected" } });
-                                        if (orchId) await refreshState(orchId);
-                                      }}
-                                    >
-                                      Reject
-                                    </Btn>
-                                  </>
-                                )}
-                              </div>
-                              <div className="text-body-sm" style={{ color: "#EDE8E0", marginTop: 6 }}>
-                                {c.suggestion}
-                              </div>
-                              {c.rationale && (
-                                <div className="text-body-sm" style={{ color: MUTED, marginTop: 4 }}>
-                                  {c.rationale}
-                                </div>
-                              )}
-                              {c.decision_reason && (
-                                <div className="text-body-sm" style={{ color: MUTED, marginTop: 4, fontStyle: "italic" }}>
-                                  {c.decision_reason}
-                                </div>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-
-                      {isOpen && (
-                        <pre
-                          className="text-body-sm"
-                          style={{
-                            marginTop: 12,
-                            whiteSpace: "pre-wrap",
-                            color: "#EDE8E0",
-                            background: "#0A0908",
-                            border: "1px solid #1C1A18",
-                            borderRadius: 6,
-                            padding: 12,
-                            fontFamily: "inherit",
-                          }}
-                        >
-                          {p.final_prompt || p.working_prompt || p.initial_prompt || "Not written yet."}
-                        </pre>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
+                    ))}
+                  </div>
+                )}
+              </details>
 
               {rejectedPrompts.length > 0 && (
                 <div style={{ marginTop: 16 }}>
                   <div className="text-mono" style={{ color: RED, fontSize: 10, letterSpacing: "0.12em" }}>
-                    REJECTED AT THE CD PASS
+                    DROPPED CHANNELS
                   </div>
                   {rejectedPrompts.map((p) => (
                     <div key={p.id} className="text-body-sm" style={{ color: MUTED, marginTop: 6 }}>
@@ -833,7 +871,7 @@ export function StimulusOrchestration({
               )}
 
               {orch.cd_output && (
-                <div
+                <details
                   style={{
                     marginTop: 20,
                     border: `1px solid ${orch.cd_status === "flagged" ? RED : AMBER}55`,
@@ -841,14 +879,14 @@ export function StimulusOrchestration({
                     padding: 14,
                   }}
                 >
-                  <div className="text-mono" style={{ color: orch.cd_status === "flagged" ? RED : AMBER, fontSize: 10, letterSpacing: "0.12em" }}>
+                  <summary className="text-mono" style={{ color: orch.cd_status === "flagged" ? RED : AMBER, fontSize: 10, letterSpacing: "0.12em", cursor: "pointer" }}>
                     CREATIVE DIRECTOR JUDGMENT — {String(orch.cd_status).toUpperCase()}
                     {orch.cd_revision_count ? " (after one automatic revision)" : ""}
-                  </div>
+                  </summary>
                   <div className="text-body-sm" style={{ color: "#EDE8E0", marginTop: 8, whiteSpace: "pre-wrap" }}>
                     {orch.cd_output}
                   </div>
-                </div>
+                </details>
               )}
 
               {/* ---------------- Gate Two ---------------- */}
@@ -885,6 +923,7 @@ export function StimulusOrchestration({
                     promptCount={activePrompts.length}
                     onApplied={async () => {
                       await refreshState(orchId!);
+                      await drive(orchId!);
                     }}
                   />
 
@@ -894,7 +933,8 @@ export function StimulusOrchestration({
                         value={gateTwoNote}
                         onChange={(e) => setGateTwoNote(e.target.value)}
                         rows={2}
-                        placeholder="Sign-off note for the decision record (optional)."
+                        aria-label="Gate Two sign-off note — whole set"
+                        placeholder="Sign-off note for the whole set, for the decision record (optional)."
                         style={{
                           width: "100%",
                           marginTop: 10,
@@ -971,7 +1011,8 @@ export function StimulusOrchestration({
                         value={amendNotes}
                         onChange={(e) => setAmendNotes(e.target.value)}
                         rows={2}
-                        placeholder="What is wrong with the whole set. Every active prompt is regenerated against these notes."
+                        aria-label="Amendment — all channels"
+                        placeholder="Amendment for all channels. Binding: every channel is rewritten, checked (applied / partly / not) and retried up to twice."
                         style={{
                           width: "100%",
                           background: "#0A0908",

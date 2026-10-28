@@ -2227,6 +2227,7 @@ export type Database = {
         Row: {
           attempt_no: number
           campaign_line: string | null
+          convergence: Json | null
           created_at: string
           direction: string | null
           direction_id: string
@@ -2235,16 +2236,19 @@ export type Database = {
           line_check: Json | null
           master_line_at_generation: string | null
           origin: string
+          previous_convergence: Json | null
           rated_at: string | null
           rating_status: string
           ratings: Json | null
           rationale: string | null
           revise_notes: string | null
+          root_tension: string | null
           run_id: string
         }
         Insert: {
           attempt_no: number
           campaign_line?: string | null
+          convergence?: Json | null
           created_at?: string
           direction?: string | null
           direction_id: string
@@ -2253,16 +2257,19 @@ export type Database = {
           line_check?: Json | null
           master_line_at_generation?: string | null
           origin?: string
+          previous_convergence?: Json | null
           rated_at?: string | null
           rating_status?: string
           ratings?: Json | null
           rationale?: string | null
           revise_notes?: string | null
+          root_tension?: string | null
           run_id: string
         }
         Update: {
           attempt_no?: number
           campaign_line?: string | null
+          convergence?: Json | null
           created_at?: string
           direction?: string | null
           direction_id?: string
@@ -2271,11 +2278,13 @@ export type Database = {
           line_check?: Json | null
           master_line_at_generation?: string | null
           origin?: string
+          previous_convergence?: Json | null
           rated_at?: string | null
           rating_status?: string
           ratings?: Json | null
           rationale?: string | null
           revise_notes?: string | null
+          root_tension?: string | null
           run_id?: string
         }
         Relationships: [
@@ -2326,6 +2335,8 @@ export type Database = {
           rationale: string | null
           revise_count: number
           revise_notes: string | null
+          rewrite_error: string | null
+          rewrite_error_at: string | null
           root_tension: string | null
           run_id: string
           sort_order: number
@@ -2362,6 +2373,8 @@ export type Database = {
           rationale?: string | null
           revise_count?: number
           revise_notes?: string | null
+          rewrite_error?: string | null
+          rewrite_error_at?: string | null
           root_tension?: string | null
           run_id: string
           sort_order?: number
@@ -2398,6 +2411,8 @@ export type Database = {
           rationale?: string | null
           revise_count?: number
           revise_notes?: string | null
+          rewrite_error?: string | null
+          rewrite_error_at?: string | null
           root_tension?: string | null
           run_id?: string
           sort_order?: number
@@ -2444,8 +2459,10 @@ export type Database = {
           mandate_signature_id: string | null
           mandate_source: string | null
           mandate_text: string | null
+          pending_amendment: string | null
           phase_note: string | null
           registry_version: number
+          repair_next: string | null
           session_id: string
           status: string
           updated_at: string
@@ -2472,8 +2489,10 @@ export type Database = {
           mandate_signature_id?: string | null
           mandate_source?: string | null
           mandate_text?: string | null
+          pending_amendment?: string | null
           phase_note?: string | null
           registry_version?: number
+          repair_next?: string | null
           session_id: string
           status?: string
           updated_at?: string
@@ -2500,8 +2519,10 @@ export type Database = {
           mandate_signature_id?: string | null
           mandate_source?: string | null
           mandate_text?: string | null
+          pending_amendment?: string | null
           phase_note?: string | null
           registry_version?: number
+          repair_next?: string | null
           session_id?: string
           status?: string
           updated_at?: string
@@ -2532,11 +2553,19 @@ export type Database = {
       }
       stimulus_prompts: {
         Row: {
+          amendment_reason: string | null
+          amendment_retries: number
+          amendment_status: string | null
           cd_note: string | null
           channel_name: string
           created_at: string
           direction_id: string
           error: string | null
+          fidelity_reason: string | null
+          fidelity_retries: number
+          fidelity_score: number | null
+          fidelity_status: string | null
+          field2_placement: string | null
           final_prompt: string | null
           gate_two_approved: boolean
           gate_two_approved_at: string | null
@@ -2545,16 +2574,20 @@ export type Database = {
           gate_two_snapshot: Json | null
           id: string
           initial_prompt: string | null
+          issue_resolutions: Json
           lens_name: string
           mandate_carrier: string | null
           mandate_checked_at: string | null
           mandate_compliance: string | null
+          mandate_retries: number
           orchestration_id: string
           propagated: boolean
           rejected_at: string | null
           rejected_reason: string | null
+          repair_kind: string | null
           revision_log: Json
           run_id: string
+          run_state: string | null
           signatures_extracted: boolean
           sort_order: number
           status: string
@@ -2567,11 +2600,19 @@ export type Database = {
           working_prompt: string | null
         }
         Insert: {
+          amendment_reason?: string | null
+          amendment_retries?: number
+          amendment_status?: string | null
           cd_note?: string | null
           channel_name: string
           created_at?: string
           direction_id: string
           error?: string | null
+          fidelity_reason?: string | null
+          fidelity_retries?: number
+          fidelity_score?: number | null
+          fidelity_status?: string | null
+          field2_placement?: string | null
           final_prompt?: string | null
           gate_two_approved?: boolean
           gate_two_approved_at?: string | null
@@ -2580,16 +2621,20 @@ export type Database = {
           gate_two_snapshot?: Json | null
           id?: string
           initial_prompt?: string | null
+          issue_resolutions?: Json
           lens_name?: string
           mandate_carrier?: string | null
           mandate_checked_at?: string | null
           mandate_compliance?: string | null
+          mandate_retries?: number
           orchestration_id: string
           propagated?: boolean
           rejected_at?: string | null
           rejected_reason?: string | null
+          repair_kind?: string | null
           revision_log?: Json
           run_id: string
+          run_state?: string | null
           signatures_extracted?: boolean
           sort_order?: number
           status?: string
@@ -2602,11 +2647,19 @@ export type Database = {
           working_prompt?: string | null
         }
         Update: {
+          amendment_reason?: string | null
+          amendment_retries?: number
+          amendment_status?: string | null
           cd_note?: string | null
           channel_name?: string
           created_at?: string
           direction_id?: string
           error?: string | null
+          fidelity_reason?: string | null
+          fidelity_retries?: number
+          fidelity_score?: number | null
+          fidelity_status?: string | null
+          field2_placement?: string | null
           final_prompt?: string | null
           gate_two_approved?: boolean
           gate_two_approved_at?: string | null
@@ -2615,16 +2668,20 @@ export type Database = {
           gate_two_snapshot?: Json | null
           id?: string
           initial_prompt?: string | null
+          issue_resolutions?: Json
           lens_name?: string
           mandate_carrier?: string | null
           mandate_checked_at?: string | null
           mandate_compliance?: string | null
+          mandate_retries?: number
           orchestration_id?: string
           propagated?: boolean
           rejected_at?: string | null
           rejected_reason?: string | null
+          repair_kind?: string | null
           revision_log?: Json
           run_id?: string
+          run_state?: string | null
           signatures_extracted?: boolean
           sort_order?: number
           status?: string

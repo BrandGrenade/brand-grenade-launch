@@ -9,6 +9,14 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { assertSessionAccess } from "@/lib/auth-helpers.server";
 import { scheduleBackground } from "@/lib/background.server";
 import type { BrandAssetRules } from "./orchestration-prompts";
+import { lockedLinesBlock } from "./orchestration-prompts";
+import {
+  amendmentStatus,
+  canRetry,
+  field2Placement,
+  fidelityBelow,
+  linesCheck,
+} from "./platform-retry-rules";
 
 const PROMPT_BATCH = 2;
 
@@ -59,6 +67,14 @@ export async function loadAssetRules(userId: string, brandName: string): Promise
 }
 
 export async function setPhase(id: string, patch: AnyRow) {
+  // Entering a whole-set phase re-queues every active channel so the Step 4
+  // progress bar shows per-channel state from the saved rows (survives refresh).
+  if (["extract", "propagate", "wad", "cd"].includes(patch.status)) {
+    await db.from("stimulus_prompts").update({ run_state: "queued" }).eq("orchestration_id", id).eq("status", "active");
+  }
+  if (patch.status === "complete") {
+    await db.from("stimulus_prompts").update({ run_state: "done" }).eq("orchestration_id", id).eq("status", "active").neq("run_state", "failed");
+  }
   // Every phase write doubles as a liveness heartbeat, so a browser-driven
   // step keeps the row visibly alive exactly like the background driver does.
   await db
@@ -110,9 +126,10 @@ export async function orchestrationStep(orchestrationId: string, userId: string)
         }
         const batch = prompts.slice(0, PROMPT_BATCH);
         for (const p of batch) {
+          await db.from("stimulus_prompts").update({ run_state: "running" }).eq("id", p.id);
           const { data: dir } = await db
             .from("stimulus_directions")
-            .select("direction, instinct_brief, lens_name")
+            .select("direction, instinct_brief, lens_name, campaign_line, expression_under_master")
             .eq("id", p.direction_id)
             .single();
           const { data: run } = await db
@@ -120,7 +137,7 @@ export async function orchestrationStep(orchestrationId: string, userId: string)
             .select("channel_brief, smp")
             .eq("id", p.run_id)
             .single();
-          const text = await passes.writeInitialPrompt({
+          const write = () => passes.writeInitialPrompt({
             brandName: ctx.brandName,
             category: ctx.category,
             channelName: p.channel_name as string,
@@ -131,10 +148,25 @@ export async function orchestrationStep(orchestrationId: string, userId: string)
             direction: (dir?.direction as string) ?? "",
             instinctBrief: (dir?.instinct_brief as string) ?? null,
             assetRules,
+            field1: (dir?.campaign_line as string) ?? null,
+            field2: (dir?.expression_under_master as string) ?? null,
           });
+          // Locked lines are binding: retry up to twice, then name the fault.
+          let text = await write();
+          let linesErr = linesCheck(text, dir?.campaign_line ?? null, dir?.expression_under_master ?? null);
+          for (let r = 0; linesErr && canRetry(r); r++) {
+            text = await write();
+            linesErr = linesCheck(text, dir?.campaign_line ?? null, dir?.expression_under_master ?? null);
+          }
           await db
             .from("stimulus_prompts")
-            .update({ initial_prompt: text, working_prompt: text, error: null })
+            .update({
+              initial_prompt: text,
+              working_prompt: text,
+              field2_placement: field2Placement(text),
+              run_state: linesErr ? "failed" : "done",
+              error: linesErr ? `Platform error after 2 retries: ${linesErr}` : null,
+            })
             .eq("id", p.id);
         }
         const remaining = prompts.length - batch.length;
@@ -161,12 +193,26 @@ export async function orchestrationStep(orchestrationId: string, userId: string)
             .select("instinct_brief")
             .eq("id", p.direction_id)
             .single();
+          const { data: lockedDir } = await db
+            .from("stimulus_directions")
+            .select("direction, campaign_line, expression_under_master")
+            .eq("id", p.direction_id)
+            .single();
+          const amendments = (Array.isArray(orch.amendment_log) ? orch.amendment_log : [])
+            .map((a: AnyRow) => String(a.notes ?? ""))
+            .concat(orch.mandate_text ? [String(orch.mandate_text)] : [])
+            .filter(Boolean);
           const sigs = await passes.extractSignatures({
             channelName: p.channel_name as string,
             lensName: p.lens_name as string,
             smp: ctx.smp,
-            prompt: (p.initial_prompt as string) ?? "",
+            prompt: (p.final_prompt as string) ?? (p.working_prompt as string) ?? (p.initial_prompt as string) ?? "",
             instinctBrief: (dir?.instinct_brief as string) ?? null,
+            lockedIdea: [
+              lockedDir?.direction ?? "",
+              lockedLinesBlock(lockedDir?.campaign_line ?? null, lockedDir?.expression_under_master ?? null),
+            ].join("\n\n"),
+            amendments,
           });
           if (sigs.length) {
             await db.from("stimulus_signatures").insert(
@@ -180,10 +226,20 @@ export async function orchestrationStep(orchestrationId: string, userId: string)
                 description: s.description,
                 origin: s.origin,
                 registry_version: orch.registry_version ?? 1,
+                // The registry only carries devices from the locked idea, its
+                // lines or applied amendments. Channel inventions are kept as
+                // removed rows so the removal is listed, never silent.
+                ...(s.basis === "channel_invention" && s.origin !== "instinct_brief"
+                  ? {
+                      status: "retired",
+                      retired_at: new Date().toISOString(),
+                      retired_reason: "Removed: not from the locked idea, its lines or an applied amendment.",
+                    }
+                  : {}),
               })),
             );
           }
-          await db.from("stimulus_prompts").update({ signatures_extracted: true }).eq("id", p.id);
+          await db.from("stimulus_prompts").update({ signatures_extracted: true, run_state: "done" }).eq("id", p.id);
         }
         return {
           done: false,
@@ -233,7 +289,7 @@ export async function orchestrationStep(orchestrationId: string, userId: string)
               registry_version: orch.registry_version ?? 1,
             });
           }
-          await db.from("stimulus_prompts").update({ propagated: true }).eq("id", p.id);
+          await db.from("stimulus_prompts").update({ propagated: true, run_state: "done" }).eq("id", p.id);
         }
         return {
           done: false,
@@ -272,6 +328,8 @@ export async function orchestrationStep(orchestrationId: string, userId: string)
             prompt: base,
             suggestions,
             assetRules,
+            // "Regenerate with this reason" / "Send back with notes" is binding.
+            revisionNote: p.wad_status === "revising" && p.wad_notes ? `CREATIVE DIRECTOR REASON — apply it: ${p.wad_notes}` : undefined,
           });
 
           if (result.verdict === "fail" && result.revised_prompt) {
@@ -297,6 +355,7 @@ export async function orchestrationStep(orchestrationId: string, userId: string)
                   wad_reasoning: second.reasoning,
                   wad_notes: `First pass failed: ${result.reasoning}\nImperfection: ${second.imperfection_verdict}`,
                   wad_revision_count: 1,
+                  run_state: "done",
                 })
                 .eq("id", p.id);
             } else {
@@ -310,6 +369,7 @@ export async function orchestrationStep(orchestrationId: string, userId: string)
                   wad_reasoning: second.reasoning,
                   wad_notes: `Still weak after one automatic revision. First pass: ${result.reasoning}\nImperfection: ${second.imperfection_verdict}`,
                   wad_revision_count: 1,
+                  run_state: "done",
                 })
                 .eq("id", p.id);
             }
@@ -321,6 +381,7 @@ export async function orchestrationStep(orchestrationId: string, userId: string)
                 wad_reasoning: result.reasoning,
                 wad_notes: `Failed the craft pass and no revision was returned. Imperfection: ${result.imperfection_verdict}`,
                 final_prompt: base,
+                run_state: "done",
               })
               .eq("id", p.id);
           } else {
@@ -331,6 +392,7 @@ export async function orchestrationStep(orchestrationId: string, userId: string)
                 wad_reasoning: result.reasoning,
                 wad_notes: `Imperfection: ${result.imperfection_verdict}`,
                 final_prompt: base,
+                run_state: "done",
               })
               .eq("id", p.id);
           }
@@ -433,19 +495,23 @@ export async function orchestrationStep(orchestrationId: string, userId: string)
 
         const cdStatus =
           finalCd.cohesion === "pass" ? (revisionCount ? "revised" : "passed") : "flagged";
+        await queueFidelity(id);
         await setPhase(id, {
-          status: "complete",
+          status: "fidelity",
           cd_output: finalCd.reasoning,
           cd_status: cdStatus,
           cd_revision_count: revisionCount,
           error: null,
           phase_note:
             cdStatus === "flagged"
-              ? "Cohesion still failing after one automatic revision — flagged for a human before Gate Two."
-              : "Orchestration complete. Ready for Gate Two.",
+              ? "Cohesion still failing after one automatic revision — checking fidelity per channel."
+              : "Creative Director pass complete. Checking fidelity per channel.",
         });
-        return { done: true, phase: "complete", note: `Creative Director pass: ${cdStatus}.` };
+        return { done: false, phase: "fidelity", note: `Creative Director pass: ${cdStatus}.` };
       }
+
+      if (status === "repair") return await repairSlice(orch, ctx, passes);
+      if (status === "fidelity") return await fidelitySlice(orch, passes);
 
       return { done: true, phase: status, note: "Nothing left to run." };
     } catch (e) {
@@ -458,6 +524,300 @@ export async function orchestrationStep(orchestrationId: string, userId: string)
 
 
     }
+}
+
+// ------------------------------------------------------------------ platform repair
+
+type Passes = typeof import("./orchestrate.server");
+type Ctx = Awaited<ReturnType<typeof sessionContext>>;
+
+async function lockedFor(directionId: string) {
+  const { data } = await db
+    .from("stimulus_directions")
+    .select("direction, campaign_line, expression_under_master")
+    .eq("id", directionId)
+    .single();
+  return {
+    idea: (data?.direction as string) ?? "",
+    field1: (data?.campaign_line as string) ?? null,
+    field2: (data?.expression_under_master as string) ?? null,
+  };
+}
+
+async function queueFidelity(id: string) {
+  await db
+    .from("stimulus_prompts")
+    .update({ repair_kind: "fidelity", fidelity_retries: 0, run_state: "queued" })
+    .eq("orchestration_id", id)
+    .eq("status", "active");
+}
+
+/**
+ * Queues channels for a binding rewrite (mandate, amendment or a CD-requested
+ * adaptation). The step machine then works one attempt per slice, so each
+ * request stays short and the job resumes from the saved rows.
+ */
+export async function queueRepair(
+  orchestrationId: string,
+  promptIds: string[],
+  kind: "mandate" | "mandate_adapt" | "amendment" | "amendment_adapt",
+  note: string,
+) {
+  const amend = kind.startsWith("amendment");
+  for (const pid of promptIds) {
+    await db
+      .from("stimulus_prompts")
+      .update({
+        repair_kind: kind,
+        run_state: "queued",
+        ...(amend ? { amendment_retries: 0, amendment_status: null, amendment_reason: null } : { mandate_retries: 0 }),
+        gate_two_approved: false,
+        gate_two_approved_at: null,
+        gate_two_approved_by: null,
+        gate_two_snapshot: null,
+      })
+      .eq("id", pid)
+      .eq("orchestration_id", orchestrationId);
+  }
+  await setPhase(orchestrationId, {
+    status: "repair",
+    repair_next: kind === "amendment" ? "extract" : "cd_review",
+    gate_two_confirmed: false,
+    gate_two_confirmed_at: null,
+    driver_status: "idle",
+    error: null,
+    phase_note: note,
+  });
+}
+
+async function repairSlice(orch: AnyRow, ctx: Ctx, passes: Passes) {
+  const id = orch.id as string;
+  const { data: rows } = await db
+    .from("stimulus_prompts")
+    .select("*")
+    .eq("orchestration_id", id)
+    .eq("status", "active")
+    .in("repair_kind", ["mandate", "mandate_adapt", "amendment", "amendment_adapt"])
+    .order("sort_order", { ascending: true })
+    .limit(1);
+  const p = ((rows ?? []) as AnyRow[])[0];
+
+  if (!p) {
+    if (orch.repair_next === "extract") {
+      // Rebuild the Signature Registry against the amended set. Old rows are
+      // retired, never deleted, so every earlier registry stays in history.
+      const now = new Date().toISOString();
+      await db
+        .from("stimulus_signatures")
+        .update({ status: "retired", retired_at: now, retired_reason: "Registry rebuilt after a Gate Two amendment." })
+        .eq("orchestration_id", id)
+        .eq("status", "active");
+      await db
+        .from("stimulus_cross_refs")
+        .update({ status: "voided", decision_reason: "Registry rebuilt after a Gate Two amendment." })
+        .eq("orchestration_id", id)
+        .eq("status", "suggested");
+      // The amended prompt is kept as written: the craft pass is not re-run on
+      // it, so the amendment cannot be quietly undone.
+      await db
+        .from("stimulus_prompts")
+        .update({ signatures_extracted: false, propagated: false, wad_status: "passed" })
+        .eq("orchestration_id", id)
+        .eq("status", "active");
+      await setPhase(id, {
+        status: "extract",
+        registry_version: (orch.registry_version ?? 1) + 1,
+        repair_next: null,
+        phase_note: "Amendment applied. Rebuilding the Campaign Signature Registry.",
+      });
+      return { done: false, phase: "extract", note: "Rebuilding the registry." };
+    }
+    // Mandate or adaptation: the set is re-judged as a whole, without rewrites.
+    const { data: set } = await db
+      .from("stimulus_prompts")
+      .select("id, channel_name, lens_name, final_prompt, working_prompt")
+      .eq("orchestration_id", id)
+      .eq("status", "active");
+    const { data: registry } = await db
+      .from("stimulus_signatures")
+      .select("name, category, description, source_channel")
+      .eq("orchestration_id", id)
+      .eq("status", "active");
+    const cd = await passes.runCreativeDirectorPass({
+      brandName: ctx.brandName,
+      smp: ctx.smp,
+      detonationLine: ctx.detonationLine,
+      prompts: ((set ?? []) as AnyRow[]).map((x) => ({
+        id: x.id,
+        channelName: x.channel_name,
+        lensName: x.lens_name,
+        prompt: x.final_prompt ?? x.working_prompt ?? "",
+      })),
+      crossRefs: [],
+      registry: ((registry ?? []) as AnyRow[]).map((r) => ({
+        name: r.name,
+        category: r.category,
+        description: r.description,
+        sourceChannel: r.source_channel ?? "—",
+      })),
+      revisionNote: orch.mandate_text
+        ? `A binding Creative Director mandate is in force:\n${orch.mandate_text}\nJudge the set with it in force. Do not rewrite.`
+        : undefined,
+    });
+    for (const n of cd.prompt_notes ?? []) {
+      await db.from("stimulus_prompts").update({ cd_note: n.note }).eq("id", n.prompt_id);
+    }
+    await queueFidelity(id);
+    await setPhase(id, {
+      status: "fidelity",
+      repair_next: null,
+      cd_output: cd.reasoning,
+      cd_status: cd.cohesion === "pass" ? "revised" : "flagged",
+      phase_note: "Set re-judged. Checking fidelity per channel.",
+    });
+    return { done: false, phase: "fidelity", note: "Repair complete." };
+  }
+
+  const amend = String(p.repair_kind).startsWith("amendment");
+  const adapt = String(p.repair_kind).endsWith("_adapt");
+  const retries = (amend ? p.amendment_retries : p.mandate_retries) ?? 0;
+  const instruction = amend ? String(orch.pending_amendment ?? "") : String(orch.mandate_text ?? "");
+  if (!instruction.trim()) throw new Error("No saved mandate or amendment to apply.");
+  const locked = await lockedFor(p.direction_id);
+  const lastReason = amend ? p.amendment_reason : p.mandate_carrier;
+  await db.from("stimulus_prompts").update({ run_state: "running" }).eq("id", p.id);
+  await setPhase(id, {
+    phase_note: `${amend ? "Amendment" : "Mandate"}${adapt ? " adaptation" : ""}: ${p.channel_name} — attempt ${retries + 1} of 3.`,
+  });
+
+  const binding = [
+    instruction,
+    adapt
+      ? `ADAPT FOR THIS CHANNEL TYPE: earlier attempts could not carry this literally. Express it in the form a ${p.channel_name} execution can genuinely carry (a format, a sequence, a spoken line, a placement), keeping its meaning.`
+      : "",
+    retries > 0 && lastReason ? `PREVIOUS ATTEMPT FELL SHORT: ${lastReason}` : "",
+    lockedLinesBlock(locked.field1, locked.field2),
+  ]
+    .filter(Boolean)
+    .join("\n\n");
+  const base = (p.final_prompt as string) ?? (p.working_prompt as string) ?? "";
+  const rewritten = await passes.applyMandateToPrompt({
+    mandate: binding,
+    channelName: p.channel_name,
+    lensName: p.lens_name,
+    prompt: base,
+  });
+  let check = await passes.checkMandateCompliance({
+    mandate: instruction,
+    channelName: p.channel_name,
+    lensName: p.lens_name,
+    prompt: rewritten,
+  });
+  const linesErr = linesCheck(rewritten, locked.field1, locked.field2);
+  if (linesErr && check.verdict === "present") check = { ...check, verdict: "weak", reason: `${linesErr} ${check.reason}` };
+
+  const passed = amend ? check.verdict === "present" : check.verdict !== "absent";
+  const retryAgain = !passed && canRetry(retries);
+  const now = new Date().toISOString();
+  const log = Array.isArray(p.revision_log) ? p.revision_log : [];
+  await db
+    .from("stimulus_prompts")
+    .update({
+      working_prompt: rewritten,
+      final_prompt: rewritten,
+      field2_placement: field2Placement(rewritten),
+      revision_log: [
+        ...log,
+        { at: now, kind: `gate_two_${p.repair_kind}`, attempt: retries + 1, instruction, before: base, compliance: check },
+      ],
+      ...(amend
+        ? {
+            amendment_status: passed ? "applied" : retryAgain ? amendmentStatus(check.verdict) : "platform_failed",
+            amendment_reason: check.reason || check.carrier,
+            amendment_retries: retryAgain ? retries + 1 : retries,
+          }
+        : {
+            mandate_compliance: check.verdict,
+            mandate_carrier: check.carrier || check.reason,
+            mandate_checked_at: now,
+            mandate_retries: retryAgain ? retries + 1 : retries,
+          }),
+      repair_kind: retryAgain ? p.repair_kind : null,
+      run_state: retryAgain ? "queued" : passed ? "done" : "failed",
+      error: null,
+    })
+    .eq("id", p.id);
+  return { done: false, phase: "repair", note: `${p.channel_name}: ${check.verdict}.` };
+}
+
+async function fidelitySlice(orch: AnyRow, passes: Passes) {
+  const id = orch.id as string;
+  const { data: rows } = await db
+    .from("stimulus_prompts")
+    .select("*")
+    .eq("orchestration_id", id)
+    .eq("status", "active")
+    .eq("repair_kind", "fidelity")
+    .order("sort_order", { ascending: true })
+    .limit(1);
+  const p = ((rows ?? []) as AnyRow[])[0];
+  if (!p) {
+    await setPhase(id, { status: "complete", error: null, phase_note: "Orchestration complete. Ready for Gate Two." });
+    return { done: true, phase: "complete", note: "Fidelity checked on every channel." };
+  }
+  const retries = p.fidelity_retries ?? 0;
+  await db.from("stimulus_prompts").update({ run_state: "running" }).eq("id", p.id);
+  await setPhase(id, { phase_note: `Fidelity: ${p.channel_name} — check ${retries + 1} of 3.` });
+  const prompt = (p.final_prompt as string) ?? (p.working_prompt as string) ?? "";
+  const { runChannelFidelityCheck } = await import("@/lib/stage21-fidelity.server");
+  const report = await runChannelFidelityCheck({
+    sessionId: orch.session_id,
+    leadExpression: null,
+    outputs: { [p.channel_name]: prompt },
+  });
+  const result = report.results[0];
+  if (!report.leadExpressionPresent || !result) {
+    await db
+      .from("stimulus_prompts")
+      .update({ repair_kind: null, run_state: "done", fidelity_status: "not_checked", fidelity_reason: "No locked idea on this run to check against." })
+      .eq("id", p.id);
+    return { done: false, phase: "fidelity", note: `${p.channel_name}: not checked.` };
+  }
+  const below = fidelityBelow(result.score);
+  if (below && canRetry(retries)) {
+    const locked = await lockedFor(p.direction_id);
+    const rewritten = await passes.reviseForCohesion({
+      channelName: p.channel_name,
+      prompt,
+      note: `FIDELITY TO THE LOCKED IDEA scored ${result.score}/10: ${result.reasoning}\nRewrite so this channel adapts the locked idea faithfully.\n\nLOCKED IDEA:\n${locked.idea}\n\n${lockedLinesBlock(locked.field1, locked.field2)}`,
+    });
+    const log = Array.isArray(p.revision_log) ? p.revision_log : [];
+    await db
+      .from("stimulus_prompts")
+      .update({
+        working_prompt: rewritten,
+        final_prompt: rewritten,
+        field2_placement: field2Placement(rewritten),
+        fidelity_score: result.score,
+        fidelity_reason: result.reasoning,
+        fidelity_retries: retries + 1,
+        run_state: "queued",
+        revision_log: [...log, { at: new Date().toISOString(), kind: "fidelity_retry", attempt: retries + 1, score: result.score, before: prompt }],
+      })
+      .eq("id", p.id);
+    return { done: false, phase: "fidelity", note: `${p.channel_name}: ${result.score}/10, retrying.` };
+  }
+  await db
+    .from("stimulus_prompts")
+    .update({
+      fidelity_score: result.score,
+      fidelity_reason: result.reasoning,
+      fidelity_status: below ? "below" : "pass",
+      repair_kind: null,
+      run_state: below ? "failed" : "done",
+    })
+    .eq("id", p.id);
+  return { done: false, phase: "fidelity", note: `${p.channel_name}: ${result.score}/10.` };
 }
 
 // ------------------------------------------------------------------ background driver

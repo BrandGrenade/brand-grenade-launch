@@ -176,13 +176,15 @@ export const reviseStimulusDirection = createServerFn({ method: "POST" })
         // landing in the wrong idea's slot.
         expectedSlot: z.number().int().min(1).max(99).nullish(),
         expectedLensId: z.string().nullish(),
+        // 1 = first attempt; the browser retries up to twice more (3 in all).
+        attempt: z.number().int().min(1).max(3).default(1),
       })
       .parse(i),
   )
   .handler(async ({ data, context }) => {
     const { data: row, error } = await supabaseAdmin
       .from("stimulus_directions")
-      .select("id, run_id, lens_id, lens_name, sort_order, direction, revise_count")
+      .select("id, run_id, lens_id, lens_name, sort_order, direction, revise_count, convergence")
       .eq("id", data.directionId)
       .single();
     if (error || !row) throw new Error("Direction not found");
@@ -197,13 +199,27 @@ export const reviseStimulusDirection = createServerFn({ method: "POST" })
     });
 
     const { regenerateDirection } = await import("./stimulus/regenerate.server");
-    const result = await regenerateDirection({
-      direction: row,
-      run,
-      mode: "revise",
-      notes: data.notes,
-    });
-    return { direction: result.direction };
+    try {
+      const result = await regenerateDirection({
+        direction: row,
+        run,
+        mode: "revise",
+        notes: data.notes,
+      });
+      return { ok: true as const, direction: result.direction };
+    } catch (e) {
+      // Nothing on the idea changes on failure — not its text, not its status.
+      // Only the visible platform error is recorded, on the final attempt.
+      const reason = e instanceof Error ? e.message : "unknown error";
+      const { rewriteFailureMessage } = await import("./stimulus/platform-retry-rules");
+      if (data.attempt >= 3) {
+        await supabaseAdmin
+          .from("stimulus_directions")
+          .update({ rewrite_error: rewriteFailureMessage(reason), rewrite_error_at: new Date().toISOString() })
+          .eq("id", row.id);
+      }
+      return { ok: false as const, attempt: data.attempt, reason, message: rewriteFailureMessage(reason) };
+    }
   });
 
 
