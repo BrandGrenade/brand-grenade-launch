@@ -320,7 +320,7 @@ async function buildOutput(outputId: string, c: Ctx): Promise<Built> {
       const fields = ["synthesiser_claims"];
       if (!run.row.claims_stored) return { content_status: "not_produced", schema_version: "room00.claims.v1", content: null, evidence: [], fields };
       const rows = await c.db.claims(run.id);
-      const claims = uniqueClaims(rows.map(r => ({ ...r, claim_text: r.claim_text, heading: r.heading }))).map((r) => ({ position: r.position, heading: r.heading, headings: r.headings, occurrences: r.occurrences, claim: r.claim_text, source: r.source ?? null, source_date: r.source_date ?? null, ...mapLabel(r.label) }));
+      const claims = uniqueClaims(rows.map(r => ({ ...r, claim_text: r.claim_text, heading: r.heading, source: r.source, source_date: r.source_date, label: r.label }))).map((r) => ({ position: r.position, heading: r.heading, headings: r.headings, occurrences: r.occurrences, claim: r.claim_text, source: r.source ?? null, source_date: r.source_date ?? null, ...mapLabel(r.label) }));
       return {
         content_status: "structured",
         schema_version: "room00.claims.v1",
