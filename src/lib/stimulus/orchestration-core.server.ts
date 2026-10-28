@@ -544,6 +544,27 @@ async function lockedFor(directionId: string) {
   };
 }
 
+/** A worker that stopped mid-attempt releases its claim after this long. */
+const CLAIM_STALE_MS = 6 * 60_000;
+
+/**
+ * Single-flight claim on one channel attempt. Two drivers (browser pump, the
+ * background runner or the watchdog) may step the same orchestration; only the
+ * one that moves the row from its observed state to running does the work, so
+ * a channel is never checked or rewritten twice at once.
+ */
+async function claimPrompt(p: AnyRow): Promise<boolean> {
+  const fresh = p.run_state === "running" && Date.now() - Date.parse(String(p.updated_at)) < CLAIM_STALE_MS;
+  if (fresh) {
+    await new Promise((r) => setTimeout(r, 5000));
+    return false;
+  }
+  let q = db.from("stimulus_prompts").update({ run_state: "running" }).eq("id", p.id).eq("updated_at", p.updated_at);
+  q = p.run_state == null ? q.is("run_state", null) : q.eq("run_state", p.run_state);
+  const { data } = await q.select("id");
+  return Array.isArray(data) && data.length === 1;
+}
+
 async function queueFidelity(id: string) {
   await db
     .from("stimulus_prompts")
@@ -685,7 +706,7 @@ async function repairSlice(orch: AnyRow, ctx: Ctx, passes: Passes) {
   if (!instruction.trim()) throw new Error("No saved mandate or amendment to apply.");
   const locked = await lockedFor(p.direction_id);
   const lastReason = amend ? p.amendment_reason : p.mandate_carrier;
-  await db.from("stimulus_prompts").update({ run_state: "running" }).eq("id", p.id);
+  if (!(await claimPrompt(p))) return { done: false, phase: "repair", note: `${p.channel_name}: in progress elsewhere.` };
   await setPhase(id, {
     phase_note: `${amend ? "Amendment" : "Mandate"}${adapt ? " adaptation" : ""}: ${p.channel_name} — attempt ${retries + 1} of 3.`,
   });
@@ -770,7 +791,7 @@ async function fidelitySlice(orch: AnyRow, passes: Passes) {
     return { done: true, phase: "complete", note: "Fidelity checked on every channel." };
   }
   const retries = p.fidelity_retries ?? 0;
-  await db.from("stimulus_prompts").update({ run_state: "running" }).eq("id", p.id);
+  if (!(await claimPrompt(p))) return { done: false, phase: "fidelity", note: `${p.channel_name}: in progress elsewhere.` };
   await setPhase(id, { phase_note: `Fidelity: ${p.channel_name} — check ${retries + 1} of 3.` });
   const prompt = (p.final_prompt as string) ?? (p.working_prompt as string) ?? "";
   const { runChannelFidelityCheck } = await import("@/lib/stage21-fidelity.server");
